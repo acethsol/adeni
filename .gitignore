@@ -1,0 +1,18 @@
+## Build artifacts
+bin/
+obj/
+TestResults/
+coverage/
+
+## IDE
+.vs/
+.idea/
+*.user
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Secrets
+appsettings.*.local.json
+*.pfx

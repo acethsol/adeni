@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Adeni.Api/Adeni.Api.csproj" />
+    <Project Path="src/Adeni.Application/Adeni.Application.csproj" />
+    <Project Path="src/Adeni.Domain/Adeni.Domain.csproj" />
+    <Project Path="src/Adeni.Infrastructure/Adeni.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Adeni.Api.Tests/Adeni.Api.Tests.csproj" />
+    <Project Path="tests/Adeni.Application.Tests/Adeni.Application.Tests.csproj" />
+    <Project Path="tests/Adeni.Domain.Tests/Adeni.Domain.Tests.csproj" />
+    <Project Path="tests/Adeni.Infrastructure.Tests/Adeni.Infrastructure.Tests.csproj" />
+  </Folder>
+</Solution>
