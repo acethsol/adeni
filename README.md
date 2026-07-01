@@ -30,12 +30,12 @@ tests/                      # 77+ unit/integration tests
 | Feature | Implementation |
 |---------|----------------|
 | Auth0 JWT | `AddAdeniAuth()` — RS256, audience/issuer validation |
+| Auth sync | `POST /api/v1/auth/sync` — upsert customer or business user |
+| Admin verification | `GET /admin/businesses/pending`, approve/reject with audit |
 | Admin MFA policy | `AdminMfaPolicy` requires `amr: mfa` claim |
 | PostgreSQL + EF Core | `AdeniDbContext`, schemas `identity`, `tenancy`, `admin` |
 | Tenant global filters | `TenantMatches()` on `BusinessUser`, `Tenant` |
-| Cross-tenant guard | `TenantAccessMiddleware` + audit on 403 |
-| Audit persistence | `EfAuditLogWriter` → `admin.audit_logs` |
-| Key Vault | Skipped in Development/Testing; required in staging/prod |
+| In-memory fallback | Auto when no connection string in Dev/Testing |
 
 ## Configuration
 
@@ -64,11 +64,8 @@ dotnet ef database update --project src/Adeni.Infrastructure --startup-project s
 
 ## Remote
 
-Target GitHub org: **acethsol** (same as careaxis-api, aceth-web).
+**GitHub:** [github.com/acethsol/adeni](https://github.com/acethsol/adeni)
 
 ```powershell
-git remote add origin https://github.com/acethsol/adeni.git
-git push -u origin main
+git push origin main
 ```
-
-Create the empty repo at https://github.com/organizations/acethsol/repositories/new if it does not exist.

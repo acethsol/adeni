@@ -27,7 +27,7 @@ builder.Services.AddScoped<ICurrentUser>(sp =>
     sp.GetRequiredService<IHttpContextAccessor>().HttpContext?.User.ToCurrentUser()
     ?? new HttpCurrentUser(null, [], null, false));
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
 builder.Services.AddControllers();
 builder.Services.AddHealthChecks();
 
