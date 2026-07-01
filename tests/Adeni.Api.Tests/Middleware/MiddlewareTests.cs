@@ -70,6 +70,35 @@ public sealed class SecurityHeadersMiddlewareTests
 
         Assert.False(context.Response.Headers.ContainsKey("Strict-Transport-Security"));
     }
+
+    [Fact]
+    public async Task Uses_strict_csp_for_api_routes()
+    {
+        var context = new DefaultHttpContext();
+        context.Request.Path = "/api/v1/categories";
+        var middleware = new SecurityHeadersMiddleware(_ => Task.CompletedTask);
+
+        await middleware.InvokeAsync(context);
+
+        Assert.Equal(
+            "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+            context.Response.Headers["Content-Security-Policy"].ToString());
+    }
+
+    [Theory]
+    [InlineData("/scalar/v1")]
+    [InlineData("/openapi/v1.json")]
+    [InlineData("/swagger")]
+    public async Task Uses_documentation_csp_for_openapi_ui_routes(string path)
+    {
+        var context = new DefaultHttpContext();
+        context.Request.Path = path;
+        var middleware = new SecurityHeadersMiddleware(_ => Task.CompletedTask);
+
+        await middleware.InvokeAsync(context);
+
+        Assert.Contains("script-src 'self' 'unsafe-inline'", context.Response.Headers["Content-Security-Policy"].ToString());
+    }
 }
 
 public sealed class AuditMiddlewareTests

@@ -7,24 +7,54 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: adeni
+          POSTGRES_USER: adeni
+          POSTGRES_PASSWORD: adeni_ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U adeni -d adeni"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+    env:
+      ConnectionStrings__AdeniDb: Host=localhost;Port=5432;Database=adeni;Username=adeni;Password=adeni_ci_password
+      Redis__ConnectionString: localhost:6379
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: 10.0.x
 
       - name: Restore
         run: dotnet restore Adeni.slnx
 
       - name: Build
-        run: dotnet build Adeni.slnx --no-restore -c Release
+        run: dotnet build Adeni.slnx -c Release --no-restore
 
-      - name: Test with coverage
-        run: dotnet test Adeni.slnx --no-build -c Release --collect:"XPlat Code Coverage"
+      - name: Test
+        run: dotnet test Adeni.slnx -c Release --no-build --verbosity normal
 
       - name: Vulnerability scan
-        run: dotnet list package --vulnerable --include-transitive
+        run: dotnet list Adeni.slnx package --vulnerable --include-transitive

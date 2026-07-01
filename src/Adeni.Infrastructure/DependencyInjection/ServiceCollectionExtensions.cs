@@ -5,7 +5,10 @@ using Adeni.Application.Admin;
 using Adeni.Application.Auth;
 using Adeni.Infrastructure.Admin;
 using Adeni.Infrastructure.Auditing;
+using Adeni.Application.Catalog;
 using Adeni.Infrastructure.Auth;
+using Adeni.Infrastructure.Caching;
+using Adeni.Infrastructure.Catalog;
 using Adeni.Infrastructure.Context;
 using Adeni.Infrastructure.Identity;
 using Adeni.Infrastructure.Persistence;
@@ -44,9 +47,11 @@ public static class ServiceCollectionExtensions
             services.AddSingleton<IAuditLogWriter, InMemoryAuditLogWriter>();
         }
 
+        services.AddAdeniCaching(configuration, environment);
         services.AddAdeniAuth(configuration);
         services.AddScoped<IAuthSyncService, AuthSyncService>();
         services.AddScoped<IAdminBusinessService, AdminBusinessService>();
+        services.AddSingleton<ICategoryService, CategoryService>();
 
         return services;
     }

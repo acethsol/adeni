@@ -1,6 +1,8 @@
 # Database setup
 
-Docker is not required but is the fastest path for local development.
+Docker is **optional**. It is only a convenience for running PostgreSQL (and Redis) locally without installing them. The API also supports a local PostgreSQL install, or an in-memory database for tests.
+
+See [caching-setup.md](./caching-setup.md) for Redis configuration.
 
 ## Option A — Docker (recommended)
 
@@ -40,3 +42,18 @@ curl http://localhost:5xxx/health
 ```
 
 Expect `"database": "healthy"` when PostgreSQL is connected.
+
+## Optional dev UIs
+
+Postgres and Redis do **not** include a web UI by default. Start Adminer and RedisInsight with:
+
+```powershell
+docker compose --profile ui up -d
+```
+
+| Tool | URL | Login |
+|------|-----|-------|
+| **Adminer** (PostgreSQL) | http://localhost:8080 | System: PostgreSQL, Server: `postgres`, User: `adeni`, Password: `adeni_dev_password`, Database: `adeni` |
+| **RedisInsight** (Redis) | http://localhost:5540 | Add database → Host: `redis`, Port: `6379` |
+
+Alternative desktop tools: [DBeaver](https://dbeaver.io/) or [Azure Data Studio](https://azure.microsoft.com/products/data-studio) for Postgres; [Another Redis Desktop Manager](https://github.com/qishibo/AnotherRedisDesktopManager) for Redis.

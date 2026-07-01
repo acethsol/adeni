@@ -6,36 +6,47 @@ Trusted local services marketplace API — **.NET 10**, **DDD/Clean Architecture
 
 ```powershell
 cd C:\DEV\Aceth\adeni
-docker compose up -d          # PostgreSQL
+docker compose up -d                              # PostgreSQL + Redis
+docker compose --profile ui up -d                 # optional: Adminer + RedisInsight
 dotnet restore Adeni.slnx
+dotnet ef database update --project src/Adeni.Infrastructure --startup-project src/Adeni.Api
 dotnet test Adeni.slnx -c Release
-dotnet run --project src/Adeni.Api
+dotnet run --project src/Adeni.Api --launch-profile http
 ```
 
-Health: `GET http://localhost:5xxx/health`
+| Endpoint | URL |
+|----------|-----|
+| Health | http://localhost:5169/health |
+| API docs (dev) | http://localhost:5169/scalar/v1 |
+| PostgreSQL UI | http://localhost:8080 (Adminer, `--profile ui`) |
+| Redis UI | http://localhost:5540 (RedisInsight, `--profile ui`) |
+
+See [docs/database-setup.md](docs/database-setup.md) and [docs/caching-setup.md](docs/caching-setup.md).
 
 ## Solution structure
 
 ```
 src/
 ├── Adeni.Domain/           # Entities, Result<T>, value objects
-├── Adeni.Application/      # Abstractions, PiiMasker, Auth0 options
-├── Adeni.Infrastructure/   # EF Core, Auth0 JWT, Key Vault, audit persistence
-└── Adeni.Api/              # Middleware pipeline, controllers
-tests/                      # 77+ unit/integration tests
+├── Adeni.Application/      # Abstractions, caching, catalog, PiiMasker
+├── Adeni.Infrastructure/   # EF Core, Redis, Auth0 JWT, Key Vault, audit
+└── Adeni.Api/              # Middleware pipeline, controllers, OpenAPI/Scalar
+tests/                      # 88 unit/integration tests
 ```
 
-## M0 features (current)
+## Current features
 
 | Feature | Implementation |
 |---------|----------------|
 | Auth0 JWT | `AddAdeniAuth()` — RS256, audience/issuer validation |
 | Auth sync | `POST /api/v1/auth/sync` — upsert customer or business user |
 | Admin verification | `GET /admin/businesses/pending`, approve/reject with audit |
+| Categories | `GET /api/v1/categories` — Redis-cached beauty vertical |
+| Redis caching | `ICacheService`, slot locks, health check |
 | Admin MFA policy | `AdminMfaPolicy` requires `amr: mfa` claim |
 | PostgreSQL + EF Core | `AdeniDbContext`, schemas `identity`, `tenancy`, `admin` |
-| Tenant global filters | `TenantMatches()` on `BusinessUser`, `Tenant` |
-| In-memory fallback | Auto when no connection string in Dev/Testing |
+| Dev API docs | Scalar UI + OpenAPI 3.1 (Development only) |
+| In-memory fallback | Auto when Postgres/Redis not configured in Dev/Testing |
 
 ## Configuration
 
@@ -44,17 +55,24 @@ tests/                      # 77+ unit/integration tests
 ```json
 {
   "ConnectionStrings": { "AdeniDb": "Host=localhost;..." },
+  "Redis": { "ConnectionString": "localhost:6379" },
   "Auth0": { "Enabled": false }
 }
 ```
 
 Set `Auth0:Enabled=true` when testing Auth0 integration. See [docs/auth0-setup.md](docs/auth0-setup.md).
 
-## Database migrations
+## Sprints
 
-```powershell
-dotnet ef database update --project src/Adeni.Infrastructure --startup-project src/Adeni.Api
-```
+| Sprint | Focus | Status |
+|--------|-------|--------|
+| **0** | Foundation, Redis, OpenAPI, CI, dev UIs | In progress |
+| **1** | Business onboarding (register → verify → approve) | Next |
+| **2** | Discovery + public business profiles | Planned |
+| **3** | Auth0 + Flutter shell | Planned |
+| **4** | Booking + Redis slot locks | Planned |
+
+Details: [docs/sprints.md](docs/sprints.md)
 
 ## Compliance docs (Confluence)
 

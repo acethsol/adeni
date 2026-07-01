@@ -1,4 +1,15 @@
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: adeni-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   postgres:
     image: postgres:16-alpine
     container_name: adeni-postgres
@@ -16,5 +27,28 @@ services:
       timeout: 5s
       retries: 5
 
+  adminer:
+    profiles: [ui]
+    image: adminer:latest
+    container_name: adeni-adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  redisinsight:
+    profiles: [ui]
+    image: redis/redisinsight:latest
+    container_name: adeni-redisinsight
+    ports:
+      - "5540:5540"
+    volumes:
+      - adeni_redisinsight_data:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+
 volumes:
   adeni_pg_data:
+  adeni_redisinsight_data:

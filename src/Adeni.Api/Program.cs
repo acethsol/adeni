@@ -31,6 +31,11 @@ builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
 builder.Services.AddControllers();
 builder.Services.AddHealthChecks();
 
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddAdeniOpenApi();
+}
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -43,6 +48,8 @@ if (app.Environment.IsDevelopment())
     {
         Log.Warning(ex, "Database migration skipped — ensure PostgreSQL is running (docker compose up -d).");
     }
+
+    app.MapAdeniOpenApi();
 }
 
 app.UseSerilogRequestLogging();

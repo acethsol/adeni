@@ -1,13 +1,18 @@
 namespace Adeni.Api.Controllers;
 
+using Adeni.Application.Caching;
 using Adeni.Infrastructure.Auth;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 [ApiController]
 [Route("health")]
-public sealed class HealthController(IServiceProvider services) : ControllerBase
+public sealed class HealthController(
+    IServiceProvider services,
+    IOptions<RedisOptions> redisOptions,
+    IRedisHealthCheck redisHealthCheck) : ControllerBase
 {
     [HttpGet]
     [AllowAnonymous]
@@ -34,7 +39,27 @@ public sealed class HealthController(IServiceProvider services) : ControllerBase
             }
         }
 
-        var status = checks.Values.All(v => v is "healthy" or "not_configured") ? "healthy" : "degraded";
+        if (!redisOptions.Value.Enabled)
+        {
+            checks["cache"] = "memory_fallback";
+        }
+        else
+        {
+            try
+            {
+                checks["cache"] = await redisHealthCheck.PingAsync(cancellationToken)
+                    ? "healthy"
+                    : "unhealthy";
+            }
+            catch (Exception)
+            {
+                checks["cache"] = "unhealthy";
+            }
+        }
+
+        var status = checks.Values.All(v => v is "healthy" or "not_configured" or "memory_fallback")
+            ? "healthy"
+            : "degraded";
         return Ok(new { status, service = "adeni-api", checks });
     }
 }
