@@ -4,12 +4,14 @@ using Adeni.Application.Abstractions;
 using Adeni.Application.Admin;
 using Adeni.Application.Auth;
 using Adeni.Application.Catalog;
+using Adeni.Application.Discovery;
 using Adeni.Application.Tenancy;
 using Adeni.Infrastructure.Admin;
 using Adeni.Infrastructure.Auditing;
 using Adeni.Infrastructure.Auth;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Catalog;
+using Adeni.Infrastructure.Discovery;
 using Adeni.Infrastructure.Context;
 using Adeni.Infrastructure.Identity;
 using Adeni.Infrastructure.Persistence;
@@ -54,6 +56,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthSyncService, AuthSyncService>();
         services.AddScoped<IAdminBusinessService, AdminBusinessService>();
         services.AddScoped<IBusinessOnboardingService, BusinessOnboardingService>();
+        services.AddScoped<IDiscoveryService, DiscoveryService>();
         services.AddSingleton<ICategoryService, CategoryService>();
 
         return services;

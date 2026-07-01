@@ -3,6 +3,7 @@ namespace Adeni.Infrastructure.Tests.Admin;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Admin;
 using Adeni.Infrastructure.Auditing;
+using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Context;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -74,6 +75,8 @@ public sealed class AdminBusinessServiceTests
     private static ServiceProvider BuildProvider()
     {
         var services = new ServiceCollection();
+        services.AddDistributedMemoryCache();
+        services.AddSingleton<Application.Caching.ICacheService, Adeni.Infrastructure.Caching.DistributedCacheService>();
         services.AddSingleton<Application.Abstractions.ICorrelationContext, CorrelationContext>();
         services.AddScoped<TenantContext>();
         services.AddScoped<Application.Abstractions.ITenantContext>(sp => sp.GetRequiredService<TenantContext>());

@@ -42,6 +42,8 @@ tests/                      # 88 unit/integration tests
 | Auth sync | `POST /api/v1/auth/sync` — upsert customer or business user |
 | Admin verification | `GET /admin/businesses/pending`, approve/reject with audit |
 | Categories | `GET /api/v1/categories` — Redis-cached beauty vertical |
+| Discovery | `GET /api/v1/discovery` — geo search (Verified only, Redis-cached) |
+| Public profiles | `GET /api/v1/businesses/{slug}` — masked phone, Redis-cached |
 | Redis caching | `ICacheService`, slot locks, health check |
 | Admin MFA policy | `AdminMfaPolicy` requires `amr: mfa` claim |
 | PostgreSQL + EF Core | `AdeniDbContext`, schemas `identity`, `tenancy`, `admin` |
@@ -67,9 +69,9 @@ Set `Auth0:Enabled=true` when testing Auth0 integration. See [docs/auth0-setup.m
 | Sprint | Focus | Status |
 |--------|-------|--------|
 | **0** | Foundation, Redis, OpenAPI, CI, dev UIs | Done |
-| **1** | Business onboarding (register → verify → approve) | **Current** |
-| **2** | Discovery + public business profiles | Planned |
-| **3** | Auth0 + Flutter shell | Planned |
+| **1** | Business onboarding (register → verify → approve) | Done |
+| **2** | Discovery + public business profiles | Done |
+| **3** | Auth0 + Flutter shell | **Current** |
 | **4** | Booking + Redis slot locks | Planned |
 
 Details: [docs/sprints.md](docs/sprints.md)

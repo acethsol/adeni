@@ -2,6 +2,7 @@ namespace Adeni.Infrastructure.Admin;
 
 using Adeni.Application.Abstractions;
 using Adeni.Application.Admin;
+using Adeni.Application.Caching;
 using Adeni.Domain.Auditing;
 using Adeni.Domain.Common;
 using Adeni.Domain.Tenancy;
@@ -11,7 +12,8 @@ using Microsoft.EntityFrameworkCore;
 public sealed class AdminBusinessService(
     AdeniDbContext dbContext,
     IAuditLogWriter auditLogWriter,
-    ICorrelationContext correlationContext) : IAdminBusinessService
+    ICorrelationContext correlationContext,
+    ICacheService cache) : IAdminBusinessService
 {
     public async Task<IReadOnlyList<PendingBusinessResponse>> GetPendingVerificationsAsync(
         CancellationToken cancellationToken = default) =>
@@ -85,6 +87,7 @@ public sealed class AdminBusinessService(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await cache.RemoveAsync(CacheKeys.TenantProfile(tenantId), cancellationToken);
 
         await auditLogWriter.WriteAsync(new AuditEntry(
             Guid.NewGuid(),

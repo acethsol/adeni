@@ -10,21 +10,11 @@
 - [x] Optional dev UIs (Adminer, RedisInsight)
 - [x] Commit + push to GitHub
 
-## Sprint 1 — Business onboarding (supply side) ← **current**
+## Sprint 1 — Business onboarding (supply side) ✅
 
-**Goal:** A business can register, submit verification, and be approved by admin.
+**Done when:** Register → submit docs → admin approves → tenant status `Verified`.
 
-| Task | Endpoint / artifact |
-|------|---------------------|
-| Tenant registration | `POST /api/v1/tenant/register` |
-| Verification submit | `POST /api/v1/tenant/verification` |
-| Business profile read/update | `GET/PATCH /api/v1/tenant/profile` |
-| Schema | `BusinessProfile`, `VerificationDocument` entities + migration |
-| Tests | Service + integration tests for full approve flow |
-
-**Done when:** Register → submit docs → admin approves → tenant status `Active`.
-
-## Sprint 2 — Discovery (demand side)
+## Sprint 2 — Discovery (demand side) ✅
 
 **Goal:** Customers can find approved businesses near them.
 
@@ -36,7 +26,7 @@
 
 **Done when:** Approved business appears in geo/category search with cached response.
 
-## Sprint 3 — Auth0 + Flutter shell
+## Sprint 3 — Auth0 + Flutter shell ← **current**
 
 **Goal:** Real authentication end-to-end on mobile.
 
