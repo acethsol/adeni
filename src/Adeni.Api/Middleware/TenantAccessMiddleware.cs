@@ -12,7 +12,7 @@ public sealed class TenantAccessMiddleware(
 
     public async Task InvokeAsync(HttpContext context, ICurrentUser currentUser, IAuditLogWriter auditLogWriter)
     {
-        if (!context.Request.Path.StartsWithSegments("/api/v1/tenant", StringComparison.OrdinalIgnoreCase))
+        if (!RequiresTenantHeader(context.Request.Path))
         {
             await next(context);
             return;
@@ -73,4 +73,8 @@ public sealed class TenantAccessMiddleware(
             DateTimeOffset.UtcNow,
             $"{{\"route\":\"{context.Request.Path}\"}}"));
     }
+
+    public static bool RequiresTenantHeader(PathString path) =>
+        path.StartsWithSegments("/api/v1/tenant", StringComparison.OrdinalIgnoreCase)
+        && !path.StartsWithSegments("/api/v1/tenant/register", StringComparison.OrdinalIgnoreCase);
 }

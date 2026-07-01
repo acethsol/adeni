@@ -6,6 +6,7 @@ using Adeni.Domain.Tenancy;
 public sealed record PendingBusinessResponse(
     Guid Id,
     string Name,
+    string Slug,
     TenantStatus Status,
     DateTimeOffset CreatedAt);
 

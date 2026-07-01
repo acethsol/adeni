@@ -10,4 +10,7 @@ public sealed record Error(string Code, string Message)
 
     public static Error Validation(string detail) =>
         new("validation", detail);
+
+    public static Error Conflict(string detail) =>
+        new("conflict", detail);
 }

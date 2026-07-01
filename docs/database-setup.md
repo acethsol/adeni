@@ -53,7 +53,18 @@ docker compose --profile ui up -d
 
 | Tool | URL | Login |
 |------|-----|-------|
-| **Adminer** (PostgreSQL) | http://localhost:8080 | System: PostgreSQL, Server: `postgres`, User: `adeni`, Password: `adeni_dev_password`, Database: `adeni` |
-| **RedisInsight** (Redis) | http://localhost:5540 | Add database → Host: `redis`, Port: `6379` |
+| **Adminer** (PostgreSQL) | http://localhost:8080 | System: **PostgreSQL**, Server: **`postgres`** (not `localhost` or `db`), User: **`adeni`**, Password: **`adeni_dev_password`**, Database: **`adeni`** |
+| **RedisInsight** (Redis) | http://localhost:5540 | Pre-configured as **adeni-redis** — or add manually with Host: **`redis`** (not `127.0.0.1`) |
 
-Alternative desktop tools: [DBeaver](https://dbeaver.io/) or [Azure Data Studio](https://azure.microsoft.com/products/data-studio) for Postgres; [Another Redis Desktop Manager](https://github.com/qishibo/AnotherRedisDesktopManager) for Redis.
+### Why not `localhost` or `127.0.0.1`?
+
+Adminer and RedisInsight run **inside Docker**. From inside a container, `localhost` means that container itself — not your machine and not the Postgres/Redis containers. Use the **Docker Compose service names**: `postgres` and `redis`.
+
+If you already tried wrong settings, recreate the UI containers:
+
+```powershell
+docker compose --profile ui down
+docker compose --profile ui up -d
+```
+
+Alternative desktop tools: [DBeaver](https://dbeaver.io/) or [Azure Data Studio](https://azure.microsoft.com/products/data-studio) for Postgres (connect to `localhost:5432`); [Another Redis Desktop Manager](https://github.com/qishibo/AnotherRedisDesktopManager) for Redis (connect to `localhost:6379`).

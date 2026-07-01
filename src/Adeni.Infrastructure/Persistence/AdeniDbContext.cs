@@ -16,6 +16,10 @@ public sealed class AdeniDbContext(
 
     public DbSet<Tenant> Tenants => Set<Tenant>();
 
+    public DbSet<BusinessProfile> BusinessProfiles => Set<BusinessProfile>();
+
+    public DbSet<VerificationDocument> VerificationDocuments => Set<VerificationDocument>();
+
     public DbSet<AuditLogRecord> AuditLogs => Set<AuditLogRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -39,6 +43,30 @@ public sealed class AdeniDbContext(
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Name).HasMaxLength(200);
             entity.HasQueryFilter(x => TenantMatches(x.Id));
+        });
+
+        modelBuilder.Entity<BusinessProfile>(entity =>
+        {
+            entity.ToTable("business_profiles", "tenancy");
+            entity.HasKey(x => x.TenantId);
+            entity.HasIndex(x => x.Slug).IsUnique();
+            entity.Property(x => x.Slug).HasMaxLength(64);
+            entity.Property(x => x.Description).HasMaxLength(2000);
+            entity.Property(x => x.CategorySlug).HasMaxLength(64);
+            entity.Property(x => x.Phone).HasMaxLength(32);
+            entity.Property(x => x.AddressLine).HasMaxLength(500);
+            entity.Property(x => x.Area).HasMaxLength(120);
+            entity.HasOne(x => x.Tenant).WithOne().HasForeignKey<BusinessProfile>(x => x.TenantId);
+            entity.HasQueryFilter(x => TenantMatches(x.TenantId));
+        });
+
+        modelBuilder.Entity<VerificationDocument>(entity =>
+        {
+            entity.ToTable("verification_documents", "tenancy");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.ReferenceNumber).HasMaxLength(128);
+            entity.HasOne(x => x.Tenant).WithMany().HasForeignKey(x => x.TenantId);
+            entity.HasQueryFilter(x => TenantMatches(x.TenantId));
         });
 
         modelBuilder.Entity<BusinessUser>(entity =>

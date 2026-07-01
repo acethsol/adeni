@@ -19,7 +19,15 @@ public sealed class AdminBusinessService(
             .AsNoTracking()
             .Where(t => t.Status == TenantStatus.PendingVerification)
             .OrderBy(t => t.CreatedAt)
-            .Select(t => new PendingBusinessResponse(t.Id, t.Name, t.Status, t.CreatedAt))
+            .Select(t => new PendingBusinessResponse(
+                t.Id,
+                t.Name,
+                dbContext.BusinessProfiles
+                    .Where(p => p.TenantId == t.Id)
+                    .Select(p => p.Slug)
+                    .FirstOrDefault() ?? string.Empty,
+                t.Status,
+                t.CreatedAt))
             .ToListAsync(cancellationToken);
 
     public async Task<Result<Unit>> ApproveAsync(

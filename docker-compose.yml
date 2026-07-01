@@ -31,6 +31,8 @@ services:
     profiles: [ui]
     image: adminer:latest
     container_name: adeni-adminer
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
     ports:
       - "8080:8080"
     depends_on:
@@ -41,6 +43,10 @@ services:
     profiles: [ui]
     image: redis/redisinsight:latest
     container_name: adeni-redisinsight
+    environment:
+      RI_REDIS_HOST: redis
+      RI_REDIS_PORT: "6379"
+      RI_REDIS_ALIAS: adeni-redis
     ports:
       - "5540:5540"
     volumes:

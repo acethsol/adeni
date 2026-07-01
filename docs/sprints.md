@@ -2,15 +2,15 @@
 
 ## Sprint 0 — Foundation & dev tooling ✅
 
-- [x] DDD scaffold, SOC 2 Sprint 0 controls, 88 tests
+- [x] DDD scaffold, SOC 2 Sprint 0 controls, 92 tests
 - [x] Docker Postgres + Redis
 - [x] Redis caching (`ICacheService`, categories endpoint)
 - [x] OpenAPI + Scalar (Development)
 - [x] GitHub Actions CI (test + vulnerability scan)
 - [x] Optional dev UIs (Adminer, RedisInsight)
-- [ ] Commit + push to GitHub
+- [x] Commit + push to GitHub
 
-## Sprint 1 — Business onboarding (supply side)
+## Sprint 1 — Business onboarding (supply side) ← **current**
 
 **Goal:** A business can register, submit verification, and be approved by admin.
 

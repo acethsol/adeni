@@ -3,15 +3,17 @@ namespace Adeni.Infrastructure.DependencyInjection;
 using Adeni.Application.Abstractions;
 using Adeni.Application.Admin;
 using Adeni.Application.Auth;
+using Adeni.Application.Catalog;
+using Adeni.Application.Tenancy;
 using Adeni.Infrastructure.Admin;
 using Adeni.Infrastructure.Auditing;
-using Adeni.Application.Catalog;
 using Adeni.Infrastructure.Auth;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Catalog;
 using Adeni.Infrastructure.Context;
 using Adeni.Infrastructure.Identity;
 using Adeni.Infrastructure.Persistence;
+using Adeni.Infrastructure.Tenancy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -51,6 +53,7 @@ public static class ServiceCollectionExtensions
         services.AddAdeniAuth(configuration);
         services.AddScoped<IAuthSyncService, AuthSyncService>();
         services.AddScoped<IAdminBusinessService, AdminBusinessService>();
+        services.AddScoped<IBusinessOnboardingService, BusinessOnboardingService>();
         services.AddSingleton<ICategoryService, CategoryService>();
 
         return services;

@@ -95,6 +95,14 @@ public sealed class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
         Assert.Contains(writer!.Entries, e => e.Action == AuditActions.CrossTenantDenied);
     }
 
+    [Theory]
+    [InlineData("/api/v1/tenant/profile", true)]
+    [InlineData("/api/v1/tenant/register", false)]
+    public void RequiresTenantHeader_matches_expected_routes(string path, bool expected)
+    {
+        Assert.Equal(expected, TenantAccessMiddleware.RequiresTenantHeader(path));
+    }
+
     private sealed record TestCurrentUser(string UserId, Guid TenantGuid) : ICurrentUser
     {
         public IReadOnlyCollection<string> Roles { get; } = ["business"];

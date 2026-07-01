@@ -66,8 +66,8 @@ Set `Auth0:Enabled=true` when testing Auth0 integration. See [docs/auth0-setup.m
 
 | Sprint | Focus | Status |
 |--------|-------|--------|
-| **0** | Foundation, Redis, OpenAPI, CI, dev UIs | In progress |
-| **1** | Business onboarding (register → verify → approve) | Next |
+| **0** | Foundation, Redis, OpenAPI, CI, dev UIs | Done |
+| **1** | Business onboarding (register → verify → approve) | **Current** |
 | **2** | Discovery + public business profiles | Planned |
 | **3** | Auth0 + Flutter shell | Planned |
 | **4** | Booking + Redis slot locks | Planned |
