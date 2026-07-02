@@ -1,9 +1,12 @@
 namespace Adeni.Api.Middleware;
 
+using Serilog.Context;
+
 public sealed class CorrelationIdMiddleware(RequestDelegate next)
 {
     public const string HeaderName = "X-Correlation-Id";
     public const string ItemKey = "CorrelationId";
+    public const string LogContextPropertyName = "correlationId";
 
     public async Task InvokeAsync(HttpContext context)
     {
@@ -16,6 +19,9 @@ public sealed class CorrelationIdMiddleware(RequestDelegate next)
         context.Response.Headers[HeaderName] = correlationId;
         context.TraceIdentifier = correlationId;
 
-        await next(context);
+        using (LogContext.PushProperty(LogContextPropertyName, correlationId))
+        {
+            await next(context);
+        }
     }
 }

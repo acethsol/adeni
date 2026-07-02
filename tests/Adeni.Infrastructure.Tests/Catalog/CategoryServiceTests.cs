@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 public sealed class CategoryServiceTests
 {
     [Fact]
-    public async Task GetBeautyCategoriesAsync_uses_categories_cache_key()
+    public async Task GetCategoriesAsync_uses_categories_cache_key()
     {
         var services = new ServiceCollection();
         services.AddDistributedMemoryCache();
@@ -19,10 +19,10 @@ public sealed class CategoryServiceTests
         var cache = provider.GetRequiredService<IDistributedCache>();
         var categories = provider.GetRequiredService<Application.Catalog.ICategoryService>();
 
-        var first = await categories.GetBeautyCategoriesAsync();
-        var second = await categories.GetBeautyCategoriesAsync();
+        var first = await categories.GetCategoriesAsync();
+        var second = await categories.GetCategoriesAsync();
 
-        Assert.Equal(4, first.Count);
+        Assert.Equal(7, first.Count);
         Assert.Equal(first, second);
         Assert.NotNull(await cache.GetStringAsync("categories:all"));
     }

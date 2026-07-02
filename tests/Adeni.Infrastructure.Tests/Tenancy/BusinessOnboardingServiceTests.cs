@@ -114,6 +114,44 @@ public sealed class BusinessOnboardingServiceTests
         Assert.Equal("conflict", second.Error.Code);
     }
 
+    [Fact]
+    public async Task Register_accepts_non_beauty_category()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var service = scope.ServiceProvider.GetRequiredService<BusinessOnboardingService>();
+
+        var result = await service.RegisterAsync(
+            ValidRequest with
+            {
+                BusinessName = "Lekki Plumbing",
+                Slug = "lekki-plumbing",
+                CategorySlug = "plumbers"
+            },
+            "auth0|owner-plumber");
+
+        Assert.True(result.IsSuccess);
+
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        var profile = await db.BusinessProfiles.FirstAsync(p => p.Slug == "lekki-plumbing");
+        Assert.Equal("plumbers", profile.CategorySlug);
+    }
+
+    [Fact]
+    public async Task Register_rejects_unknown_category()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var service = scope.ServiceProvider.GetRequiredService<BusinessOnboardingService>();
+
+        var result = await service.RegisterAsync(
+            ValidRequest with { CategorySlug = "unknown-vertical" },
+            "auth0|owner-1");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("validation", result.Error.Code);
+    }
+
     private static ServiceProvider BuildProvider()
     {
         var services = new ServiceCollection();

@@ -8,6 +8,6 @@ public sealed record CategoryResponse(
 
 public interface ICategoryService
 {
-    Task<IReadOnlyList<CategoryResponse>> GetBeautyCategoriesAsync(
+    Task<IReadOnlyList<CategoryResponse>> GetCategoriesAsync(
         CancellationToken cancellationToken = default);
 }

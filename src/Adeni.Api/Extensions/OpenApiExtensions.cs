@@ -12,7 +12,7 @@ public static class OpenApiExtensions
             {
                 document.Info.Title = "Adeni API";
                 document.Info.Version = "v1";
-                document.Info.Description = "Trusted local services marketplace — Lagos launch.";
+                document.Info.Description = "Trusted local services marketplace.";
                 return Task.CompletedTask;
             });
         });

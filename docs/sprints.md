@@ -2,47 +2,48 @@
 
 ## Sprint 0 — Foundation & dev tooling ✅
 
-- [x] DDD scaffold, SOC 2 Sprint 0 controls, 92 tests
-- [x] Docker Postgres + Redis
-- [x] Redis caching (`ICacheService`, categories endpoint)
-- [x] OpenAPI + Scalar (Development)
-- [x] GitHub Actions CI (test + vulnerability scan)
-- [x] Optional dev UIs (Adminer, RedisInsight)
-- [x] Commit + push to GitHub
+- [x] DDD scaffold, SOC 2 Sprint 0 controls
+- [x] Docker Postgres + Redis, OpenAPI/Scalar, CI, dev UIs
 
-## Sprint 1 — Business onboarding (supply side) ✅
+## Sprint 1 — Business onboarding ✅
 
-**Done when:** Register → submit docs → admin approves → tenant status `Verified`.
+Register → submit docs → admin approves → tenant `Verified`.
 
-## Sprint 2 — Discovery (demand side) ✅
+## Sprint 2 — Discovery ✅
 
-**Goal:** Customers can find approved businesses near them.
+- `GET /api/v1/discovery`, `GET /api/v1/businesses/{slug}`
+- Redis keys: `discovery:*`, `tenant:{id}:profile`
 
-| Task | Endpoint / artifact |
-|------|---------------------|
-| Discovery search | `GET /api/v1/discovery?lat=&lng=&category=&page=` |
-| Public profile | `GET /api/v1/businesses/{slug}` |
-| Caching | `discovery:*` and `tenant:{id}:profile` keys |
+## Sprint 3 — Auth0 + client foundation ✅
 
-**Done when:** Approved business appears in geo/category search with cached response.
+**Backend (done):**
 
-## Sprint 3 — Auth0 + Flutter shell ← **current**
+- [x] `GET /api/v1/auth/me`
+- [x] CORS for web clients
+- [x] `appsettings.Staging.json`
 
-**Goal:** Real authentication end-to-end on mobile.
+**Frontend pivot (July 2026 — ADR-010):**
 
-| Task | Artifact |
-|------|----------|
-| Auth0 tenant + apps | Staging config, MFA Login Action |
-| Enable JWT in dev/staging | `Auth0:Enabled=true` |
-| Flutter project | Auth0 login, auth sync, categories list |
+- [x] Confluence updated ([Frontend Architecture v1](https://aceth.atlassian.net/wiki/spaces/SD/pages/26968065))
+- [x] Flutter archived → `mobile/_archive/adeni_app_flutter`
+- [x] Monorepo: `apps/web` (Next.js), `apps/mobile` (Expo), `packages/*`
 
-## Sprint 4 — Booking
+## Sprint 3b — Web public shell ✅
 
-**Goal:** First bookable appointment with concurrency safety.
+**Goal:** SEO-ready discovery landing wired to existing API; market-aware, industry-neutral shell.
 
-| Task | Endpoint / artifact |
-|------|---------------------|
-| Services CRUD | Business manages services |
-| Availability | Business hours + slots |
-| Booking create | `POST /api/v1/bookings` |
-| Slot locks | Redis `slot-lock:*` via `IDistributedLockProvider` |
+| Task | Status |
+|------|--------|
+| Public landing | ✅ `/` — categories from API, Lagos market config |
+| Business profile SSR | ✅ `/businesses/[slug]` |
+| Discover page | ✅ `/discover` → discovery API + category filters |
+| Dynamic market/categories | ✅ `packages/shared` market config; generic category API |
+| Auth0 Next.js SDK | ✅ Login + role-gated `/business` and `/admin` |
+
+## Sprint 4 — Booking ← **current**
+
+Services CRUD, availability, `POST /api/v1/bookings`, Redis slot locks.
+
+## Sprint 5 — Expo mobile loop
+
+Unified app: browse, book, business booking management (after web booking works).

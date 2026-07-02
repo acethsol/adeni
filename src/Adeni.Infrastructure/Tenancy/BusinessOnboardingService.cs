@@ -301,10 +301,10 @@ public sealed partial class BusinessOnboardingService(
             return Result.Failure(Error.Validation("Area is required."));
         }
 
-        var categories = await categoryService.GetBeautyCategoriesAsync(cancellationToken);
+        var categories = await categoryService.GetCategoriesAsync(cancellationToken);
         if (!categories.Any(c => c.Slug.Equals(categorySlug.Trim(), StringComparison.OrdinalIgnoreCase)))
         {
-            return Result.Failure(Error.Validation("Category is not valid for the beauty vertical."));
+            return Result.Failure(Error.Validation("Category is not valid."));
         }
 
         return Result.Success();

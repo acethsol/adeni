@@ -1,6 +1,6 @@
-# Adeni Backend
+# Adeni
 
-Trusted local services marketplace API — **.NET 10**, **DDD/Clean Architecture**, **SOC 2 controls built in from Sprint 0**.
+Trusted local services marketplace — **.NET 10 API** + **Next.js web** + **Expo mobile**, SOC 2 controls from Sprint 0.
 
 ## Quick start
 
@@ -8,84 +8,70 @@ Trusted local services marketplace API — **.NET 10**, **DDD/Clean Architecture
 cd C:\DEV\Aceth\adeni
 docker compose up -d                              # PostgreSQL + Redis
 docker compose --profile ui up -d                 # optional: Adminer + RedisInsight
-dotnet restore Adeni.slnx
 dotnet ef database update --project src/Adeni.Infrastructure --startup-project src/Adeni.Api
 dotnet test Adeni.slnx -c Release
 dotnet run --project src/Adeni.Api --launch-profile http
+
+# Frontend (separate terminal)
+npm install
+npm run dev:web                                   # http://localhost:3000
 ```
 
-| Endpoint | URL |
-|----------|-----|
-| Health | http://localhost:5169/health |
+| Service | URL |
+|---------|-----|
+| API | http://localhost:5169 |
 | API docs (dev) | http://localhost:5169/scalar/v1 |
+| Web app | http://localhost:3000 |
 | PostgreSQL UI | http://localhost:8080 (Adminer, `--profile ui`) |
 | Redis UI | http://localhost:5540 (RedisInsight, `--profile ui`) |
 
-See [docs/database-setup.md](docs/database-setup.md) and [docs/caching-setup.md](docs/caching-setup.md).
+See [docs/database-setup.md](docs/database-setup.md), [docs/caching-setup.md](docs/caching-setup.md), [docs/frontend.md](docs/frontend.md), [docs/observability.md](docs/observability.md).
 
-## Solution structure
+## Repository structure
 
 ```
-src/
-├── Adeni.Domain/           # Entities, Result<T>, value objects
-├── Adeni.Application/      # Abstractions, caching, catalog, PiiMasker
-├── Adeni.Infrastructure/   # EF Core, Redis, Auth0 JWT, Key Vault, audit
-└── Adeni.Api/              # Middleware pipeline, controllers, OpenAPI/Scalar
-tests/                      # 88 unit/integration tests
+src/                     .NET backend (DDD / Clean Architecture)
+apps/web/                Next.js — public, business, admin
+apps/mobile/             Expo — unified customer + business app
+packages/api-client/     Typed API client (shared)
+packages/shared/         Zod schemas, roles
+mobile/_archive/         Retired Flutter prototype (July 2026)
+tests/                   Backend unit/integration tests
 ```
 
-## Current features
+## Current features (API)
 
 | Feature | Implementation |
 |---------|----------------|
 | Auth0 JWT | `AddAdeniAuth()` — RS256, audience/issuer validation |
-| Auth sync | `POST /api/v1/auth/sync` — upsert customer or business user |
-| Admin verification | `GET /admin/businesses/pending`, approve/reject with audit |
-| Categories | `GET /api/v1/categories` — Redis-cached beauty vertical |
-| Discovery | `GET /api/v1/discovery` — geo search (Verified only, Redis-cached) |
-| Public profiles | `GET /api/v1/businesses/{slug}` — masked phone, Redis-cached |
+| Auth sync | `POST /api/v1/auth/sync`, `GET /api/v1/auth/me` |
+| Admin verification | Pending queue, approve/reject with audit |
+| Categories | `GET /api/v1/categories` — Redis-cached |
+| Discovery | `GET /api/v1/discovery` — geo search (Verified only) |
+| Public profiles | `GET /api/v1/businesses/{slug}` — masked phone |
 | Redis caching | `ICacheService`, slot locks, health check |
-| Admin MFA policy | `AdminMfaPolicy` requires `amr: mfa` claim |
-| PostgreSQL + EF Core | `AdeniDbContext`, schemas `identity`, `tenancy`, `admin` |
-| Dev API docs | Scalar UI + OpenAPI 3.1 (Development only) |
-| In-memory fallback | Auto when Postgres/Redis not configured in Dev/Testing |
-
-## Configuration
-
-**Development** (`appsettings.Development.json`):
-
-```json
-{
-  "ConnectionStrings": { "AdeniDb": "Host=localhost;..." },
-  "Redis": { "ConnectionString": "localhost:6379" },
-  "Auth0": { "Enabled": false }
-}
-```
-
-Set `Auth0:Enabled=true` when testing Auth0 integration. See [docs/auth0-setup.md](docs/auth0-setup.md).
+| CORS | Next.js web origins (`localhost:3000`) |
 
 ## Sprints
 
 | Sprint | Focus | Status |
 |--------|-------|--------|
 | **0** | Foundation, Redis, OpenAPI, CI, dev UIs | Done |
-| **1** | Business onboarding (register → verify → approve) | Done |
-| **2** | Discovery + public business profiles | Done |
-| **3** | Auth0 + Flutter shell | **Current** |
-| **4** | Booking + Redis slot locks | Planned |
+| **1** | Business onboarding | Done |
+| **2** | Discovery + public profiles | Done |
+| **3** | Auth0 + client shell (backend); frontend pivot | Done |
+| **3b** | Next.js + Expo monorepo scaffold | **Current** |
+| **4** | Booking + Redis slot locks | Next |
 
 Details: [docs/sprints.md](docs/sprints.md)
 
 ## Compliance docs (Confluence)
 
+- [Adeni Product Bible](https://aceth.atlassian.net/wiki/spaces/SD/pages/26279937)
+- [Frontend Architecture v1](https://aceth.atlassian.net/wiki/spaces/SD/pages/26968065)
+- [Observability v1](https://aceth.atlassian.net/wiki/spaces/SD/pages/27230210)
 - [SOC 2 Compliance Framework](https://aceth.atlassian.net/wiki/spaces/SD/pages/26247170)
-- [MFA Enforcement Runbook](https://aceth.atlassian.net/wiki/spaces/SD/pages/26247205)
-- [Privacy Policy Legal Review Checklist](https://aceth.atlassian.net/wiki/spaces/SD/pages/26738699)
 
 ## Remote
 
 **GitHub:** [github.com/acethsol/adeni](https://github.com/acethsol/adeni)
-
-```powershell
-git push origin main
-```

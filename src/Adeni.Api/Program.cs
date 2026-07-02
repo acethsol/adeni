@@ -1,5 +1,6 @@
 using Adeni.Api.Auth;
 using Adeni.Api.Extensions;
+using Adeni.Api.Middleware;
 using Adeni.Application.Abstractions;
 using Adeni.Application.DependencyInjection;
 using Adeni.Infrastructure.Configuration;
@@ -28,6 +29,8 @@ builder.Services.AddScoped<ICurrentUser>(sp =>
     ?? new HttpCurrentUser(null, [], null, false));
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
+builder.Services.AddAdeniCors(builder.Configuration, builder.Environment);
+builder.Services.AddAdeniObservability(builder.Configuration);
 builder.Services.AddControllers();
 builder.Services.AddHealthChecks();
 
@@ -52,8 +55,19 @@ if (app.Environment.IsDevelopment())
     app.MapAdeniOpenApi();
 }
 
-app.UseSerilogRequestLogging();
+app.UseSerilogRequestLogging(options =>
+{
+    options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+    {
+        if (httpContext.Items.TryGetValue(CorrelationIdMiddleware.ItemKey, out var correlationId)
+            && correlationId is not null)
+        {
+            diagnosticContext.Set(CorrelationIdMiddleware.LogContextPropertyName, correlationId);
+        }
+    };
+});
 app.UseHttpsRedirection();
+app.UseAdeniCors();
 app.UseAdeniSecurityPipeline();
 app.UseAuthorization();
 app.MapControllers();

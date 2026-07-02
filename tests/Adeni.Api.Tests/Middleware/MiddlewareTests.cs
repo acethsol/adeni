@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Http;
 using Adeni.Infrastructure.Context;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using Serilog;
+using Serilog.Context;
+using Serilog.Events;
 
 public sealed class CorrelationIdMiddlewareTests
 {
@@ -41,6 +44,43 @@ public sealed class CorrelationIdMiddlewareTests
 
         Assert.False(string.IsNullOrWhiteSpace(context.Items[CorrelationIdMiddleware.ItemKey]?.ToString()));
     }
+
+    [Fact]
+    public async Task Enriches_serilog_log_context_with_correlation_id()
+    {
+        LogEvent? captured = null;
+        var context = new DefaultHttpContext();
+        context.Request.Headers[CorrelationIdMiddleware.HeaderName] = "ctx-id";
+
+        Log.Logger = new LoggerConfiguration()
+            .Enrich.FromLogContext()
+            .WriteTo.Sink(new CaptureSink(e => captured = e))
+            .CreateLogger();
+
+        try
+        {
+            var middleware = new CorrelationIdMiddleware(_ =>
+            {
+                Log.Information("correlation probe");
+                return Task.CompletedTask;
+            });
+
+            await middleware.InvokeAsync(context);
+
+            Assert.NotNull(captured);
+            Assert.True(captured!.Properties.ContainsKey(CorrelationIdMiddleware.LogContextPropertyName));
+            Assert.Equal("\"ctx-id\"", captured.Properties[CorrelationIdMiddleware.LogContextPropertyName].ToString());
+        }
+        finally
+        {
+            Log.CloseAndFlush();
+        }
+    }
+}
+
+internal sealed class CaptureSink(Action<LogEvent> capture) : Serilog.Core.ILogEventSink
+{
+    public void Emit(LogEvent logEvent) => capture(logEvent);
 }
 
 public sealed class SecurityHeadersMiddlewareTests

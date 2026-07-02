@@ -16,3 +16,15 @@ Thumbs.db
 ## Secrets
 appsettings.*.local.json
 *.pfx
+
+## Node / frontend
+node_modules/
+.next/
+out/
+dist/
+.expo/
+.turbo/
+*.tsbuildinfo
+
+## Agent / IDE local
+.claude/

@@ -12,7 +12,7 @@ public sealed class CategoriesController(ICategoryService categories) : Controll
     [AllowAnonymous]
     public async Task<IActionResult> Get(CancellationToken cancellationToken)
     {
-        var items = await categories.GetBeautyCategoriesAsync(cancellationToken);
+        var items = await categories.GetCategoriesAsync(cancellationToken);
         return Ok(new { items });
     }
 }

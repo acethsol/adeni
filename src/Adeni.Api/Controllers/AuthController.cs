@@ -1,5 +1,6 @@
 namespace Adeni.Api.Controllers;
 
+using Adeni.Api.Auth;
 using Adeni.Application.Admin;
 using Adeni.Application.Auth;
 using Adeni.Infrastructure.Auth;
@@ -41,6 +42,29 @@ public sealed class AuthController(
                 "validation" => BadRequest(new { title = error.Message }),
                 _ => NotFound(new { title = error.Message })
             });
+    }
+
+    [HttpGet("me")]
+    public IActionResult Me()
+    {
+        if (!auth0Options.Value.Enabled)
+        {
+            return StatusCode(
+                StatusCodes.Status501NotImplemented,
+                new { title = "Auth0 is disabled. Enable Auth0:Enabled to use this endpoint." });
+        }
+
+        if (User.Identity?.IsAuthenticated != true)
+        {
+            return Unauthorized();
+        }
+
+        var user = User.ToCurrentUser();
+        return Ok(new AuthSessionResponse(
+            user.UserId,
+            user.Roles,
+            user.TenantId?.Value,
+            user.HasMfa));
     }
 }
 
