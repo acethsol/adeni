@@ -78,3 +78,54 @@ export const pendingBusinessesResponseSchema = z.object({
 });
 
 export type PendingBusiness = z.infer<typeof pendingBusinessSchema>;
+
+export const serviceOfferingSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  priceAmount: z.number(),
+  currency: z.string(),
+  durationMinutes: z.number(),
+  isActive: z.boolean(),
+});
+
+export const serviceOfferingsResponseSchema = z.object({
+  items: z.array(serviceOfferingSchema),
+});
+
+export type ServiceOffering = z.infer<typeof serviceOfferingSchema>;
+
+export const availableSlotSchema = z.object({
+  startAt: z.string(),
+  endAt: z.string(),
+});
+
+export const availableSlotsResponseSchema = z.object({
+  items: z.array(availableSlotSchema),
+});
+
+export type AvailableSlot = z.infer<typeof availableSlotSchema>;
+
+export const bookingResponseSchema = z.object({
+  id: z.string(),
+  tenantId: z.string(),
+  serviceOfferingId: z.string(),
+  serviceName: z.string(),
+  customerId: z.string(),
+  startAt: z.string(),
+  endAt: z.string(),
+  status: z.number(),
+  customerNotes: z.string().nullable().optional(),
+  createdAt: z.string(),
+});
+
+export type BookingResponse = z.infer<typeof bookingResponseSchema>;
+
+export const createBookingRequestSchema = z.object({
+  tenantId: z.string().uuid(),
+  serviceOfferingId: z.string().uuid(),
+  startAt: z.string(),
+  customerNotes: z.string().max(1000).optional(),
+});
+
+export type CreateBookingRequest = z.infer<typeof createBookingRequestSchema>;

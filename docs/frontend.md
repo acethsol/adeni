@@ -53,6 +53,8 @@ Market context is resolved at runtime (cookie, query param, env, future geo). Se
 
 Protected routes: `/business` (business role), `/admin` (admin role). Without Auth0 env vars, portals show setup instructions instead of login.
 
+Public booking: `/businesses/{slug}` loads services + slots; `POST /api/bookings` (Next proxy) requires Auth0 session or `DEV_CUSTOMER_AUTH0_SUB` in dev.
+
 ## Run mobile (Expo)
 
 ```powershell

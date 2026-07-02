@@ -38,6 +38,18 @@ export const markets = {
       "Onboarding salons and barbers here now. Home services and more categories on the way.",
     isLive: true,
   },
+  abuja: {
+    id: "abuja",
+    name: "Abuja",
+    countryCode: "NG",
+    currency: "NGN",
+    timeZoneId: "Africa/Lagos",
+    defaultLocation: { lat: 9.0765, lng: 7.3986 },
+    tagline: "Trusted local services, bookable in one place",
+    description:
+      "See verified businesses near you, check availability, and book with confidence — no endless messages or maybes.",
+    isLive: false,
+  },
   ottawa: {
     id: "ottawa",
     name: "Ottawa",
@@ -50,6 +62,18 @@ export const markets = {
       "See verified businesses near you, check availability, and book with confidence — no endless messages or maybes.",
     isLive: false,
   },
+  toronto: {
+    id: "toronto",
+    name: "Toronto",
+    countryCode: "CA",
+    currency: "CAD",
+    timeZoneId: "America/Toronto",
+    defaultLocation: { lat: 43.6532, lng: -79.3832 },
+    tagline: "Trusted local services, bookable in one place",
+    description:
+      "See verified businesses near you, check availability, and book with confidence — no endless messages or maybes.",
+    isLive: false,
+  },
   houston: {
     id: "houston",
     name: "Houston",
@@ -57,6 +81,18 @@ export const markets = {
     currency: "USD",
     timeZoneId: "America/Chicago",
     defaultLocation: { lat: 29.7604, lng: -95.3698 },
+    tagline: "Trusted local services, bookable in one place",
+    description:
+      "See verified businesses near you, check availability, and book with confidence — no endless messages or maybes.",
+    isLive: false,
+  },
+  dallas: {
+    id: "dallas",
+    name: "Dallas",
+    countryCode: "US",
+    currency: "USD",
+    timeZoneId: "America/Chicago",
+    defaultLocation: { lat: 32.7767, lng: -96.797 },
     tagline: "Trusted local services, bookable in one place",
     description:
       "See verified businesses near you, check availability, and book with confidence — no endless messages or maybes.",

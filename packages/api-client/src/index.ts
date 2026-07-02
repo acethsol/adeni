@@ -1,14 +1,22 @@
 import {
   authSessionSchema,
+  availableSlotsResponseSchema,
+  bookingResponseSchema,
   categoriesResponseSchema,
+  createBookingRequestSchema,
   discoveryResponseSchema,
   pendingBusinessesResponseSchema,
   publicBusinessProfileSchema,
+  serviceOfferingsResponseSchema,
   type AuthSession,
+  type AvailableSlot,
+  type BookingResponse,
   type Category,
+  type CreateBookingRequest,
   type DiscoveryResponse,
   type PendingBusiness,
   type PublicBusinessProfile,
+  type ServiceOffering,
 } from "@adeni/shared";
 
 export class AdeniApiError extends Error {
@@ -89,6 +97,40 @@ export class AdeniApiClient {
       `/api/v1/businesses/${encodeURIComponent(slug)}`,
     );
     return publicBusinessProfileSchema.parse(await response.json());
+  }
+
+  async getBusinessServices(slug: string): Promise<ServiceOffering[]> {
+    const response = await this.request(
+      `/api/v1/businesses/${encodeURIComponent(slug)}/services`,
+    );
+    const payload = serviceOfferingsResponseSchema.parse(await response.json());
+    return payload.items;
+  }
+
+  async getBusinessSlots(
+    slug: string,
+    params: { serviceId: string; from: string; to: string },
+  ): Promise<AvailableSlot[]> {
+    const query = new URLSearchParams({
+      serviceId: params.serviceId,
+      from: params.from,
+      to: params.to,
+    });
+    const response = await this.request(
+      `/api/v1/businesses/${encodeURIComponent(slug)}/slots?${query.toString()}`,
+    );
+    const payload = availableSlotsResponseSchema.parse(await response.json());
+    return payload.items;
+  }
+
+  async createBooking(request: CreateBookingRequest): Promise<BookingResponse> {
+    const body = createBookingRequestSchema.parse(request);
+    const response = await this.request("/api/v1/bookings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return bookingResponseSchema.parse(await response.json());
   }
 
   async getMe(): Promise<AuthSession> {

@@ -85,6 +85,7 @@ static async Task ApplyDevelopmentMigrationsAsync(IServiceProvider services)
 
     var dbContext = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
     await dbContext.Database.MigrateAsync();
+    await DevelopmentDataSeeder.SeedAsync(dbContext);
 }
 
 public partial class Program;

@@ -8,8 +8,11 @@ public static class KnownMarketCatalog
     public static readonly IReadOnlySet<string> All = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
         "lagos",
+        "abuja",
         "ottawa",
+        "toronto",
         "houston",
+        "dallas",
     };
 
     public static bool IsValid(string? marketId) =>

@@ -40,22 +40,10 @@ Register → submit docs → admin approves → tenant `Verified`.
 | Dynamic market/categories | ✅ `packages/shared` market config; generic category API |
 | Auth0 Next.js SDK | ✅ Login + role-gated `/business` and `/admin` |
 
-## Sprint 4 — Booking ← **current**
+## Sprint 4 — Booking ✅
 
-Services CRUD, availability, `POST /api/v1/bookings`, Redis slot locks.
+Services CRUD, availability, `POST /api/v1/bookings`, Redis slot locks, geo markets, multi-branch locations, web booking UI.
 
-| Task | Status |
-|------|--------|
-| Domain + migration (`booking` schema) | ✅ |
-| Service catalog CRUD | ✅ |
-| Weekly availability + slot generation | ✅ |
-| Create booking + slot lock | ✅ |
-| Business accept/reject | ✅ |
-| Public `/{slug}/services` + `/{slug}/slots` | ✅ |
-| Geo market resolution (web + mobile) | ✅ |
-| Multi-branch `BusinessLocation` model | ✅ |
-| Web booking UI | Pending |
-
-## Sprint 5 — Expo mobile loop
+## Sprint 5 — Expo mobile loop ← **next**
 
 Unified app: browse, book, business booking management (after web booking works).

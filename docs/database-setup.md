@@ -43,6 +43,23 @@ curl http://localhost:5xxx/health
 
 Expect `"database": "healthy"` when PostgreSQL is connected.
 
+## Development sample data
+
+When the API runs in **Development** with PostgreSQL connected, it auto-seeds six verified businesses (idempotent — skips if `lekki-cuts` already exists). Each has one service and Mon–Sat 9:00–17:00 availability.
+
+| Slug | Market | City |
+|------|--------|------|
+| `lekki-cuts` | lagos | Lagos |
+| `abuja-glow-salon` | abuja | Abuja |
+| `ottawa-capitol-cuts` | ottawa | Ottawa |
+| `toronto-annex-salon` | toronto | Toronto |
+| `houston-montrose-barber` | houston | Houston |
+| `dallas-deep-ellum-cuts` | dallas | Dallas |
+
+Browse by market: `http://localhost:3000/?market=abuja` (sets cookie), then open `/discover`. Or use `NEXT_PUBLIC_ADENI_MARKET=toronto` in web env.
+
+To re-seed from scratch, delete rows or drop the database and restart the API after migrations.
+
 ## Optional dev UIs
 
 Postgres and Redis do **not** include a web UI by default. Start Adminer and RedisInsight with:
