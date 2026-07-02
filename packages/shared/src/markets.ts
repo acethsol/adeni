@@ -15,13 +15,13 @@ export type MarketConfig = {
   description: string;
   /** Optional GTM banner shown only when this market is active. */
   launchNote?: string;
-  /** Supply/discovery enabled for this market. */
+  /** Supply / GTM status — does not restrict market access in the app. */
   isLive: boolean;
 };
 
 /**
  * Market catalog — data, not platform logic.
- * GTM launches by flipping `isLive` and onboarding supply; no code forks per city.
+ * GTM launches by flipping `isLive` when supply is ready; all markets remain browsable.
  */
 export const markets = {
   lagos: {

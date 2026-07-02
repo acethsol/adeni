@@ -25,6 +25,7 @@ public sealed class AdeniDbContextTenantFilterTests
         tenantContext.EnableTenantFilter(new TenantId(tenantA));
 
         var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        db.SyncTenantFilter();
         var users = await db.BusinessUsers.ToListAsync();
 
         Assert.Single(users);
@@ -46,6 +47,7 @@ public sealed class AdeniDbContextTenantFilterTests
         tenantContext.DisableTenantFilter();
 
         var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        db.SyncTenantFilter();
         var users = await db.BusinessUsers.ToListAsync();
 
         Assert.Equal(2, users.Count);

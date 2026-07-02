@@ -84,6 +84,9 @@ static async Task ApplyDevelopmentMigrationsAsync(IServiceProvider services)
     }
 
     var dbContext = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+    var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
+    tenantContext.DisableTenantFilter();
+    dbContext.SyncTenantFilter();
     await dbContext.Database.MigrateAsync();
     await DevelopmentDataSeeder.SeedAsync(dbContext);
 }

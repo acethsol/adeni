@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { formatCoordinatePair } from "@adeni/shared";
+import { formatCoordinatePair, resolveMarket } from "@adeni/shared";
 import { COORDS_COOKIE_NAME } from "@/lib/market";
 
 type GeoBody = {
@@ -39,7 +39,14 @@ export async function POST(request: Request) {
     );
   }
 
-  const response = NextResponse.json({ ok: true });
+  const resolved = resolveMarket({ coordinates });
+
+  const response = NextResponse.json({
+    ok: true,
+    marketId: resolved.market.id,
+    source: resolved.source,
+  });
+
   response.cookies.set(
     COORDS_COOKIE_NAME,
     formatCoordinatePair(coordinates),

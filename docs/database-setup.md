@@ -45,20 +45,22 @@ Expect `"database": "healthy"` when PostgreSQL is connected.
 
 ## Development sample data
 
-When the API runs in **Development** with PostgreSQL connected, it auto-seeds six verified businesses (idempotent — skips if `lekki-cuts` already exists). Each has one service and Mon–Sat 9:00–17:00 availability.
+When the API runs in **Development** with PostgreSQL connected, it auto-seeds sample businesses (idempotent — skips slugs that already exist). Each business has one service and Mon–Sat 9:00–17:00 availability.
 
-| Slug | Market | City |
-|------|--------|------|
-| `lekki-cuts` | lagos | Lagos |
-| `abuja-glow-salon` | abuja | Abuja |
-| `ottawa-capitol-cuts` | ottawa | Ottawa |
-| `toronto-annex-salon` | toronto | Toronto |
-| `houston-montrose-barber` | houston | Houston |
-| `dallas-deep-ellum-cuts` | dallas | Dallas |
+| Market | Seed count | GTM live |
+|--------|------------|----------|
+| `lagos` | 12 | yes |
+| `abuja` | 5 | no |
+| `ottawa` | 5 | no |
+| `toronto` | 5 | no |
+| `houston` | 5 | no |
+| `dallas` | 5 | no |
 
-Browse by market: `http://localhost:3000/?market=abuja` (sets cookie), then open `/discover`. Or use `NEXT_PUBLIC_ADENI_MARKET=toronto` in web env.
+**37 businesses** across barbers, hair salons, nail/spa, and makeup/brows. Lagos has the largest set. Restart the API to append any new slugs without resetting the DB.
 
-To re-seed from scratch, delete rows or drop the database and restart the API after migrations.
+Browse by market: `http://localhost:3000/?market=toronto` (sets cookie), then open `/discover`.
+
+To re-seed from scratch, drop the database and restart the API after migrations.
 
 ## Optional dev UIs
 

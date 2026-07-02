@@ -6,7 +6,7 @@ Adeni launches city by city (GTM), but the **platform is market-agnostic**. Lago
 
 | Layer | What it is | Example |
 | --- | --- | --- |
-| **Market catalog** | Data in `@adeni/shared` | `lagos`, `ottawa`, `houston` with `isLive`, currency, timezone, copy |
+| **Market catalog** | Data in `@adeni/shared` | `lagos`, `ottawa`, `houston` with `isLive` (GTM supply flag), currency, timezone, copy |
 | **Runtime context** | Which market the user is in | Cookie, query param, geo, or deployment override |
 | **Deployment config** | Ops choice for a given environment | `Market:DefaultTimeZoneId` in appsettings for the API host |
 | **Tenant data** | Where a business operates | `BusinessLocation` branches under tenant profile |
@@ -19,9 +19,12 @@ Shared helper: `resolveMarket()` in `packages/shared/src/market-resolver.ts`.
 
 Priority:
 
-1. **Explicit** — cookie `adeni_market`, header `x-adeni-market`, or env `NEXT_PUBLIC_ADENI_MARKET` / `EXPO_PUBLIC_ADENI_MARKET`
-2. **Geo** — browser/device coordinates → nearest live market (`adeni_coords` cookie on web)
-3. **Fallback** — first market in the catalog with `isLive: true`
+1. **Explicit** — cookie `adeni_market` (from `?market=` only), or header `x-adeni-market`
+2. **Geo** — browser/device coordinates → nearest catalog market within range (`adeni_coords` cookie on web)
+3. **Env fallback** — `NEXT_PUBLIC_ADENI_MARKET` / `EXPO_PUBLIC_ADENI_MARKET` when location is unavailable
+4. **Fallback** — first GTM live market (`isLive: true`), or first catalog entry if none are live yet
+
+All catalog markets are browsable via `?market=` or geo. `isLive` only marks where GTM supply is active — not a platform gate.
 
 Discovery search uses device coordinates when available, otherwise the active market center.
 
@@ -56,7 +59,7 @@ Tenant (brand)           e.g. "Lekki Cuts"
 
 1. Add an entry to `packages/shared/src/markets.ts`
 2. Onboard supply in that geography
-3. Set `isLive: true` when ready to show in the app
+3. Set `isLive: true` when supply is ready for GTM (optional banner via `launchNote`)
 4. Configure deployment timezone/currency as needed
 
 No new routes, no forked UI, no Lagos-specific branches.

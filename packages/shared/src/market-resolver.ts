@@ -1,6 +1,7 @@
 import {
   getMarketById,
   listLiveMarkets,
+  listMarkets,
   type MarketConfig,
   type MarketLocation,
 } from "./markets";
@@ -10,7 +11,7 @@ export type MarketResolutionInput = {
   marketId?: string | null;
   /** Browser / device location when available. */
   coordinates?: MarketLocation | null;
-  /** Max distance (km) to match a live market from coordinates. */
+  /** Max distance (km) to match a market from coordinates. */
   maxDistanceKm?: number;
 };
 
@@ -32,20 +33,55 @@ export function resolveMarket(input: MarketResolutionInput = {}): ResolvedMarket
   }
 
   if (input.coordinates) {
-    const geoMatch = findNearestLiveMarket(input.coordinates, maxDistanceKm);
+    const geoMatch = findNearestMarket(input.coordinates, maxDistanceKm);
     if (geoMatch) {
       return { market: geoMatch, source: "geo" };
     }
   }
 
-  const fallback = listLiveMarkets()[0];
-  if (!fallback) {
-    throw new Error("No live markets configured in the market catalog.");
-  }
-
+  const fallback = getDefaultMarket();
   return { market: fallback, source: "fallback" };
 }
 
+/** Default when no explicit selection or geo match — prefers GTM live market, else first catalog entry. */
+export function getDefaultMarket(): MarketConfig {
+  const live = listLiveMarkets()[0];
+  if (live) {
+    return live;
+  }
+
+  const all = listMarkets();
+  if (all.length === 0) {
+    throw new Error("No markets configured in the market catalog.");
+  }
+
+  return all[0];
+}
+
+/** Nearest market from the full catalog within range. */
+export function findNearestMarket(
+  coordinates: MarketLocation,
+  maxDistanceKm: number,
+): MarketConfig | null {
+  let best: MarketConfig | null = null;
+  let bestDistance = Number.POSITIVE_INFINITY;
+
+  for (const market of listMarkets()) {
+    const distance = distanceKm(coordinates, market.defaultLocation);
+    if (distance < bestDistance) {
+      best = market;
+      bestDistance = distance;
+    }
+  }
+
+  if (best === null || bestDistance > maxDistanceKm) {
+    return null;
+  }
+
+  return best;
+}
+
+/** Nearest GTM-live market within range (for supply-focused flows). */
 export function findNearestLiveMarket(
   coordinates: MarketLocation,
   maxDistanceKm: number,

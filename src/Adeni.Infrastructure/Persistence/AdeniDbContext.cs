@@ -11,6 +11,17 @@ public sealed class AdeniDbContext(
     DbContextOptions<AdeniDbContext> options,
     ITenantContext tenantContext) : DbContext(options)
 {
+    /// <summary>
+    /// When set, global query filters restrict rows to this tenant. Null means no filter.
+    /// Synced from <see cref="ITenantContext"/> before each request (and at startup for seeding).
+    /// </summary>
+    internal Guid? ActiveTenantFilterId { get; private set; }
+
+    public void SyncTenantFilter() =>
+        ActiveTenantFilterId = tenantContext.IsTenantFilterActive && tenantContext.CurrentTenantId.HasValue
+            ? tenantContext.CurrentTenantId.Value.Value
+            : null;
+
     public DbSet<Customer> Customers => Set<Customer>();
 
     public DbSet<BusinessUser> BusinessUsers => Set<BusinessUser>();
@@ -51,7 +62,7 @@ public sealed class AdeniDbContext(
             entity.ToTable("tenants", "tenancy");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Name).HasMaxLength(200);
-            entity.HasQueryFilter(x => TenantMatches(x.Id));
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.Id == ActiveTenantFilterId);
         });
 
         modelBuilder.Entity<BusinessProfile>(entity =>
@@ -62,7 +73,7 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.CategorySlug).HasMaxLength(64);
             entity.Property(x => x.Phone).HasMaxLength(32);
             entity.HasOne(x => x.Tenant).WithOne().HasForeignKey<BusinessProfile>(x => x.TenantId);
-            entity.HasQueryFilter(x => TenantMatches(x.TenantId));
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 
         modelBuilder.Entity<BusinessLocation>(entity =>
@@ -79,7 +90,11 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.Area).HasMaxLength(120);
             entity.Property(x => x.TimeZoneId).HasMaxLength(64);
             entity.HasOne(x => x.Tenant).WithMany().HasForeignKey(x => x.TenantId);
-            entity.HasQueryFilter(x => TenantMatches(x.TenantId));
+            entity.HasOne<BusinessProfile>()
+                .WithMany(x => x.Locations)
+                .HasForeignKey(x => x.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 
         modelBuilder.Entity<VerificationDocument>(entity =>
@@ -88,7 +103,7 @@ public sealed class AdeniDbContext(
             entity.HasKey(x => x.Id);
             entity.Property(x => x.ReferenceNumber).HasMaxLength(128);
             entity.HasOne(x => x.Tenant).WithMany().HasForeignKey(x => x.TenantId);
-            entity.HasQueryFilter(x => TenantMatches(x.TenantId));
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 
         modelBuilder.Entity<BusinessUser>(entity =>
@@ -99,7 +114,7 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.Auth0Sub).HasMaxLength(128);
             entity.Property(x => x.Role).HasMaxLength(32);
             entity.HasOne(x => x.Tenant).WithMany().HasForeignKey(x => x.TenantId);
-            entity.HasQueryFilter(x => TenantMatches(x.TenantId));
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 
         modelBuilder.Entity<AuditLogRecord>(entity =>
@@ -122,7 +137,7 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.Currency).HasMaxLength(3);
             entity.Property(x => x.PriceAmount).HasPrecision(12, 2);
             entity.HasIndex(x => new { x.TenantId, x.IsActive });
-            entity.HasQueryFilter(x => TenantMatches(x.TenantId));
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 
         modelBuilder.Entity<WeeklyAvailability>(entity =>
@@ -130,7 +145,7 @@ public sealed class AdeniDbContext(
             entity.ToTable("weekly_availability", "booking");
             entity.HasKey(x => x.Id);
             entity.HasIndex(x => new { x.TenantId, x.DayOfWeek });
-            entity.HasQueryFilter(x => TenantMatches(x.TenantId));
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 
         modelBuilder.Entity<BookingRecord>(entity =>
@@ -145,11 +160,7 @@ public sealed class AdeniDbContext(
                 .WithMany()
                 .HasForeignKey(x => x.ServiceOfferingId)
                 .OnDelete(DeleteBehavior.Restrict);
-            entity.HasQueryFilter(x => TenantMatches(x.TenantId));
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
     }
-
-    internal bool TenantMatches(Guid entityTenantId) =>
-        !tenantContext.IsTenantFilterActive
-        || (tenantContext.CurrentTenantId?.Value == entityTenantId);
 }
