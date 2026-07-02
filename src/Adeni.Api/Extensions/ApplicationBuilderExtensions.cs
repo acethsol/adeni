@@ -13,6 +13,7 @@ public static class ApplicationBuilderExtensions
         if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Testing")
         {
             app.UseMiddleware<DevBusinessAuthMiddleware>();
+            app.UseMiddleware<DevCustomerAuthMiddleware>();
         }
 
         app.UseMiddleware<TenantScopeMiddleware>();

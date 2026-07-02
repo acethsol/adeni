@@ -14,11 +14,14 @@ export const categoriesResponseSchema = z.object({
 export type Category = z.infer<typeof categorySchema>;
 
 export const discoveryBusinessItemSchema = z.object({
+  locationId: z.string(),
   tenantId: z.string(),
   name: z.string(),
+  locationName: z.string(),
   slug: z.string(),
   categorySlug: z.string(),
   area: z.string(),
+  marketId: z.string(),
   distanceKm: z.number(),
   latitude: z.number(),
   longitude: z.number(),
@@ -35,11 +38,14 @@ export type DiscoveryBusinessItem = z.infer<typeof discoveryBusinessItemSchema>;
 export type DiscoveryResponse = z.infer<typeof discoveryResponseSchema>;
 
 export const publicBusinessProfileSchema = z.object({
+  locationId: z.string(),
   tenantId: z.string(),
   name: z.string(),
+  locationName: z.string(),
   slug: z.string(),
   categorySlug: z.string(),
   area: z.string(),
+  marketId: z.string(),
   addressLine: z.string(),
   description: z.string(),
   phoneMasked: z.string(),
@@ -62,6 +68,7 @@ export const pendingBusinessSchema = z.object({
   id: z.string(),
   name: z.string(),
   slug: z.string(),
+  marketId: z.string(),
   status: z.string(),
   createdAt: z.string(),
 });

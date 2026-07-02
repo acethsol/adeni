@@ -3,27 +3,39 @@ namespace Adeni.Application.Tenancy;
 using Adeni.Domain.Common;
 using Adeni.Domain.Tenancy;
 
-public sealed record RegisterBusinessRequest(
-    string BusinessName,
+public sealed record BusinessLocationRequest(
     string Slug,
-    string CategorySlug,
-    string Phone,
+    string? Name,
     string AddressLine,
     string Area,
-    string? Description,
+    string MarketId,
     double? Latitude,
-    double? Longitude);
+    double? Longitude,
+    string? TimeZoneId = null);
+
+public sealed record RegisterBusinessRequest(
+    string BusinessName,
+    string CategorySlug,
+    string Phone,
+    BusinessLocationRequest Location,
+    string? Description = null);
 
 public sealed record UpdateBusinessProfileRequest(
     string BusinessName,
-    string Slug,
     string CategorySlug,
     string Phone,
+    string? Description = null);
+
+public sealed record UpsertBusinessLocationRequest(
+    string Slug,
+    string? Name,
     string AddressLine,
     string Area,
-    string? Description,
+    string MarketId,
     double? Latitude,
-    double? Longitude);
+    double? Longitude,
+    string? TimeZoneId = null,
+    bool? IsPrimary = null);
 
 public sealed record VerificationDocumentRequest(
     VerificationDocumentType DocumentType,
@@ -32,20 +44,29 @@ public sealed record VerificationDocumentRequest(
 public sealed record SubmitVerificationRequest(
     IReadOnlyList<VerificationDocumentRequest> Documents);
 
+public sealed record BusinessLocationResponse(
+    Guid Id,
+    string Slug,
+    string Name,
+    string AddressLine,
+    string Area,
+    string MarketId,
+    double? Latitude,
+    double? Longitude,
+    string? TimeZoneId,
+    bool IsPrimary,
+    bool IsActive);
+
 public sealed record BusinessProfileResponse(
     Guid TenantId,
     string BusinessName,
-    string Slug,
     TenantStatus Status,
     string CategorySlug,
     string Phone,
-    string AddressLine,
-    string Area,
     string Description,
-    double? Latitude,
-    double? Longitude,
     DateTimeOffset CreatedAt,
     DateTimeOffset? VerifiedAt,
+    IReadOnlyList<BusinessLocationResponse> Locations,
     IReadOnlyList<VerificationDocumentResponse> VerificationDocuments);
 
 public sealed record VerificationDocumentResponse(
@@ -78,6 +99,33 @@ public interface IBusinessOnboardingService
     Task<Result> SubmitVerificationAsync(
         Guid tenantId,
         SubmitVerificationRequest request,
+        string auth0Sub,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IBusinessLocationService
+{
+    Task<Result<IReadOnlyList<BusinessLocationResponse>>> ListAsync(
+        Guid tenantId,
+        string auth0Sub,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<BusinessLocationResponse>> AddAsync(
+        Guid tenantId,
+        UpsertBusinessLocationRequest request,
+        string auth0Sub,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<BusinessLocationResponse>> UpdateAsync(
+        Guid tenantId,
+        Guid locationId,
+        UpsertBusinessLocationRequest request,
+        string auth0Sub,
+        CancellationToken cancellationToken = default);
+
+    Task<Result> DeactivateAsync(
+        Guid tenantId,
+        Guid locationId,
         string auth0Sub,
         CancellationToken cancellationToken = default);
 }

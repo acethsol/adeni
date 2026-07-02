@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { Category } from "@adeni/shared";
 import { PublicHeader } from "@/components/public-header";
-import { createApiClient, getApiBaseUrl, getConfiguredMarket } from "@/lib/adeni";
+import { createApiClient, getApiBaseUrl } from "@/lib/adeni";
+import { getActiveMarketConfig } from "@/lib/market";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const market = getConfiguredMarket();
+  const market = await getActiveMarketConfig();
 
   return {
     title: `Adeni — ${market.tagline} in ${market.name}`,
@@ -47,7 +48,7 @@ function formatGroupLabel(parentSlug: string) {
 }
 
 export default async function HomePage() {
-  const market = getConfiguredMarket();
+  const market = await getActiveMarketConfig();
   const categories = await getCategories();
   const groupedCategories = groupCategories(categories);
 

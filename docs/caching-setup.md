@@ -13,6 +13,20 @@ Redis is required in staging and production (Azure Cache for Redis). Local devel
 
 The API uses `ICacheService` (`IDistributedCache` under the hood) and `IDistributedLockProvider` for slot locking.
 
+## Market time zone (booking)
+
+Weekly availability and slot generation interpret open hours in a **configured time zone**, not a hard-coded city:
+
+```json
+"Market": {
+  "DefaultTimeZoneId": "Africa/Lagos"
+}
+```
+
+- Set `DefaultTimeZoneId` per deployment (IANA id, e.g. `America/Toronto`, `Africa/Lagos`).
+- Optional per-business override: `business_profiles.time_zone_id` (falls back to market default).
+- Code defaults to `UTC` if the id is missing or unknown on the host.
+
 ## Option A — Docker (optional convenience)
 
 Docker is **not required** to run the API. It is only a quick way to spin up PostgreSQL and Redis locally without installing them.

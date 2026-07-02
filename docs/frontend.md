@@ -43,15 +43,13 @@ Optional env (`apps/web/.env.local` — copy from `apps/web/.env.local.example`)
 ```
 APP_BASE_URL=http://localhost:3000
 ADENI_API_URL=http://localhost:5169
+# Optional dev override — otherwise first live market or ?market= cookie
 NEXT_PUBLIC_ADENI_MARKET=lagos
 AUTH0_DOMAIN=your-tenant.auth0.com
-AUTH0_CLIENT_ID=...
-AUTH0_CLIENT_SECRET=...
-AUTH0_SECRET=...
-AUTH0_AUDIENCE=https://api.adeni.io
+...
 ```
 
-Market copy and default map center come from `@adeni/shared` (`packages/shared/src/markets.ts`). Categories are loaded from the API — not hard-coded to a single vertical.
+Market context is resolved at runtime (cookie, query param, env, future geo). See [markets.md](./markets.md). Copy and map center come from the active `MarketConfig` in `@adeni/shared`.
 
 Protected routes: `/business` (business role), `/admin` (admin role). Without Auth0 env vars, portals show setup instructions instead of login.
 

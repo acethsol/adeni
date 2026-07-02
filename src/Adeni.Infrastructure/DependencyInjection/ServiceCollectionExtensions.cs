@@ -4,12 +4,15 @@ using Adeni.Application.Abstractions;
 using Adeni.Application.Admin;
 using Adeni.Application.Auth;
 using Adeni.Application.Catalog;
+using Adeni.Application.Booking;
 using Adeni.Application.Discovery;
+using Adeni.Application.Markets;
 using Adeni.Application.Tenancy;
 using Adeni.Infrastructure.Admin;
 using Adeni.Infrastructure.Auditing;
 using Adeni.Infrastructure.Auth;
 using Adeni.Infrastructure.Caching;
+using Adeni.Infrastructure.Booking;
 using Adeni.Infrastructure.Catalog;
 using Adeni.Infrastructure.Discovery;
 using Adeni.Infrastructure.Context;
@@ -52,12 +55,18 @@ public static class ServiceCollectionExtensions
         }
 
         services.AddAdeniCaching(configuration, environment);
+        services.Configure<MarketOptions>(configuration.GetSection(MarketOptions.SectionName));
         services.AddAdeniAuth(configuration);
         services.AddScoped<IAuthSyncService, AuthSyncService>();
         services.AddScoped<IAdminBusinessService, AdminBusinessService>();
         services.AddScoped<IBusinessOnboardingService, BusinessOnboardingService>();
+        services.AddScoped<IBusinessLocationService, BusinessLocationService>();
         services.AddScoped<IDiscoveryService, DiscoveryService>();
         services.AddSingleton<ICategoryService, CategoryService>();
+        services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
+        services.AddScoped<ITenantSchedulingTimeZone, TenantSchedulingTimeZone>();
+        services.AddScoped<IAvailabilityService, AvailabilityService>();
+        services.AddScoped<IBookingService, BookingService>();
 
         return services;
     }

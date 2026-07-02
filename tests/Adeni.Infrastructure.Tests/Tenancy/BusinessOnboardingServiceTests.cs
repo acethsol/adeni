@@ -15,16 +15,21 @@ using Microsoft.Extensions.DependencyInjection;
 
 public sealed class BusinessOnboardingServiceTests
 {
-    private static readonly RegisterBusinessRequest ValidRequest = new(
-        "Lekki Cuts",
+    private static readonly BusinessLocationRequest ValidLocation = new(
         "lekki-cuts",
-        "barbers",
-        "+2348012345678",
+        "Lekki",
         "12 Admiralty Way",
         "Lekki",
-        "Premium barber shop",
+        "lagos",
         6.4474,
         3.4700);
+
+    private static readonly RegisterBusinessRequest ValidRequest = new(
+        "Lekki Cuts",
+        "barbers",
+        "+2348012345678",
+        ValidLocation,
+        "Premium barber shop");
 
     [Fact]
     public async Task Register_creates_tenant_profile_and_returns_draft()
@@ -42,6 +47,7 @@ public sealed class BusinessOnboardingServiceTests
         var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
         Assert.Equal(1, await db.Tenants.CountAsync());
         Assert.Equal(1, await db.BusinessProfiles.CountAsync());
+        Assert.Equal(1, await db.BusinessLocations.CountAsync());
     }
 
     [Fact]
@@ -59,8 +65,8 @@ public sealed class BusinessOnboardingServiceTests
             tenantId,
             new SubmitVerificationRequest(
             [
-                new(Domain.Tenancy.VerificationDocumentType.Cac, "RC123456"),
-                new(Domain.Tenancy.VerificationDocumentType.NationalId, "A12345678")
+                new(VerificationDocumentType.Cac, "RC123456"),
+                new(VerificationDocumentType.NationalId, "A12345678")
             ]),
             auth0Sub);
 
@@ -84,7 +90,7 @@ public sealed class BusinessOnboardingServiceTests
         var tenantId = (await onboarding.RegisterAsync(ValidRequest, auth0Sub)).Value!.TenantId;
         await onboarding.SubmitVerificationAsync(
             tenantId,
-            new SubmitVerificationRequest([new(Domain.Tenancy.VerificationDocumentType.Cac, "RC123456")]),
+            new SubmitVerificationRequest([new(VerificationDocumentType.Cac, "RC123456")]),
             auth0Sub);
 
         var pending = await admin.GetPendingVerificationsAsync();
@@ -98,6 +104,7 @@ public sealed class BusinessOnboardingServiceTests
         Assert.True(profile.IsSuccess);
         Assert.Equal(TenantStatus.Verified, profile.Value!.Status);
         Assert.NotNull(profile.Value.VerifiedAt);
+        Assert.Single(profile.Value.Locations);
     }
 
     [Fact]
@@ -108,10 +115,28 @@ public sealed class BusinessOnboardingServiceTests
         var service = scope.ServiceProvider.GetRequiredService<BusinessOnboardingService>();
 
         await service.RegisterAsync(ValidRequest, "auth0|owner-1");
-        var second = await service.RegisterAsync(ValidRequest with { Slug = "lekki-cuts" }, "auth0|owner-2");
+        var second = await service.RegisterAsync(ValidRequest, "auth0|owner-2");
 
         Assert.True(second.IsFailure);
         Assert.Equal("conflict", second.Error.Code);
+    }
+
+    [Fact]
+    public async Task Register_rejects_invalid_market()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var service = scope.ServiceProvider.GetRequiredService<BusinessOnboardingService>();
+
+        var result = await service.RegisterAsync(
+            ValidRequest with
+            {
+                Location = ValidLocation with { MarketId = "invalid-city" }
+            },
+            "auth0|owner-bad-market");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("validation", result.Error.Code);
     }
 
     [Fact]
@@ -125,16 +150,17 @@ public sealed class BusinessOnboardingServiceTests
             ValidRequest with
             {
                 BusinessName = "Lekki Plumbing",
-                Slug = "lekki-plumbing",
-                CategorySlug = "plumbers"
+                CategorySlug = "plumbers",
+                Location = ValidLocation with { Slug = "lekki-plumbing" }
             },
             "auth0|owner-plumber");
 
         Assert.True(result.IsSuccess);
 
         var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
-        var profile = await db.BusinessProfiles.FirstAsync(p => p.Slug == "lekki-plumbing");
+        var profile = await db.BusinessProfiles.FirstAsync();
         Assert.Equal("plumbers", profile.CategorySlug);
+        Assert.Equal("lekki-plumbing", await db.BusinessLocations.Select(x => x.Slug).FirstAsync());
     }
 
     [Fact]

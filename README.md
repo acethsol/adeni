@@ -50,6 +50,7 @@ tests/                   Backend unit/integration tests
 | Discovery | `GET /api/v1/discovery` — geo search (Verified only) |
 | Public profiles | `GET /api/v1/businesses/{slug}` — masked phone |
 | Redis caching | `ICacheService`, slot locks, health check |
+| Booking | Services CRUD, weekly availability, slot search, `POST /api/v1/bookings` |
 | CORS | Next.js web origins (`localhost:3000`) |
 
 ## Sprints

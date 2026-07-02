@@ -3,11 +3,14 @@ namespace Adeni.Application.Discovery;
 using Adeni.Domain.Common;
 
 public sealed record DiscoveryBusinessItem(
+    Guid LocationId,
     Guid TenantId,
     string Name,
+    string LocationName,
     string Slug,
     string CategorySlug,
     string Area,
+    string MarketId,
     double DistanceKm,
     double Latitude,
     double Longitude);
@@ -19,11 +22,14 @@ public sealed record DiscoveryResult(
     int TotalCount);
 
 public sealed record PublicBusinessProfile(
+    Guid LocationId,
     Guid TenantId,
     string Name,
+    string LocationName,
     string Slug,
     string CategorySlug,
     string Area,
+    string MarketId,
     string AddressLine,
     string Description,
     string PhoneMasked,
@@ -36,6 +42,7 @@ public interface IDiscoveryService
         double latitude,
         double longitude,
         string? categorySlug,
+        string? marketId,
         int page,
         int pageSize,
         CancellationToken cancellationToken = default);

@@ -1,10 +1,9 @@
 namespace Adeni.Domain.Tenancy;
 
+/// <summary>Brand-level profile (1:1 with tenant). Branches live in <see cref="BusinessLocation"/>.</summary>
 public sealed class BusinessProfile : ITenantEntity
 {
     public Guid TenantId { get; set; }
-
-    public string Slug { get; set; } = string.Empty;
 
     public string Description { get; set; } = string.Empty;
 
@@ -12,15 +11,9 @@ public sealed class BusinessProfile : ITenantEntity
 
     public string Phone { get; set; } = string.Empty;
 
-    public string AddressLine { get; set; } = string.Empty;
-
-    public string Area { get; set; } = string.Empty;
-
-    public double? Latitude { get; set; }
-
-    public double? Longitude { get; set; }
-
     public DateTimeOffset UpdatedAt { get; set; }
 
     public Tenant? Tenant { get; set; }
+
+    public ICollection<BusinessLocation> Locations { get; set; } = new List<BusinessLocation>();
 }

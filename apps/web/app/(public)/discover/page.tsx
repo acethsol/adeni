@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { Category } from "@adeni/shared";
 import { PublicHeader } from "@/components/public-header";
-import { createApiClient, getConfiguredMarket } from "@/lib/adeni";
+import { createApiClient } from "@/lib/adeni";
+import { getActiveMarketConfig, getDiscoveryLocation } from "@/lib/market";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const market = getConfiguredMarket();
+  const market = await getActiveMarketConfig();
 
   return {
     title: `Discover services in ${market.name} — Adeni`,
@@ -27,7 +28,8 @@ async function getCategories(): Promise<Category[]> {
 }
 
 export default async function DiscoverPage({ searchParams }: Props) {
-  const market = getConfiguredMarket();
+  const market = await getActiveMarketConfig();
+  const searchLocation = await getDiscoveryLocation();
   const { category } = await searchParams;
   const categories = await getCategories();
   const selectedCategory = category?.trim().toLowerCase() || null;
@@ -39,8 +41,9 @@ export default async function DiscoverPage({ searchParams }: Props) {
   try {
     const client = createApiClient();
     const result = await client.searchDiscovery({
-      lat: market.defaultLocation.lat,
-      lng: market.defaultLocation.lng,
+      lat: searchLocation.lat,
+      lng: searchLocation.lng,
+      market: market.id,
       category: selectedCategory,
     });
     businesses = result.items;

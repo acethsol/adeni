@@ -7,6 +7,7 @@ public sealed record PendingBusinessResponse(
     Guid Id,
     string Name,
     string Slug,
+    string MarketId,
     TenantStatus Status,
     DateTimeOffset CreatedAt);
 

@@ -1,9 +1,8 @@
 namespace Adeni.Infrastructure.Tenancy;
 
-using System.Text.RegularExpressions;
 using Adeni.Application.Catalog;
+using Adeni.Application.Markets;
 using Adeni.Application.Tenancy;
-using Adeni.Domain.Auditing;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
 using Adeni.Domain.Tenancy;
@@ -11,12 +10,10 @@ using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Result = Adeni.Domain.Common.Result;
 
-public sealed partial class BusinessOnboardingService(
+public sealed class BusinessOnboardingService(
     AdeniDbContext dbContext,
     ICategoryService categoryService) : IBusinessOnboardingService
 {
-    private static readonly Regex SlugPattern = SlugRegex();
-
     public async Task<Result<RegisterBusinessResponse>> RegisterAsync(
         RegisterBusinessRequest request,
         string auth0Sub,
@@ -28,11 +25,10 @@ public sealed partial class BusinessOnboardingService(
             return Result.Failure<RegisterBusinessResponse>(validation.Error);
         }
 
-        var normalizedSlug = NormalizeSlug(request.Slug);
-        var slugTaken = await dbContext.BusinessProfiles
-            .AsNoTracking()
-            .AnyAsync(p => p.Slug == normalizedSlug, cancellationToken);
-        if (slugTaken)
+        var normalizedSlug = LocationFieldValidator.NormalizeSlug(request.Location.Slug);
+        if (await dbContext.BusinessLocations.AsNoTracking().AnyAsync(
+                x => x.IsActive && x.Slug == normalizedSlug,
+                cancellationToken))
         {
             return Result.Failure<RegisterBusinessResponse>(Error.Conflict("Business slug is already taken."));
         }
@@ -86,12 +82,30 @@ public sealed partial class BusinessOnboardingService(
             dbContext.BusinessProfiles.Add(profile);
         }
 
-        ApplyProfile(profile, request, normalizedSlug, now);
+        ApplyBrandProfile(profile, request, now);
+
+        var location = await dbContext.BusinessLocations
+            .FirstOrDefaultAsync(x => x.TenantId == businessUser.TenantId && x.IsPrimary, cancellationToken);
+
+        if (location is null)
+        {
+            location = new BusinessLocation
+            {
+                Id = Guid.NewGuid(),
+                TenantId = businessUser.TenantId,
+                IsPrimary = true,
+                IsActive = true,
+                CreatedAt = now,
+            };
+            dbContext.BusinessLocations.Add(location);
+        }
+
+        ApplyLocation(location, request.Location, normalizedSlug, now);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return Result.Success(new RegisterBusinessResponse(
             businessUser.TenantId,
-            profile.Slug,
+            location.Slug,
             businessUser.Tenant!.Status));
     }
 
@@ -107,7 +121,18 @@ public sealed partial class BusinessOnboardingService(
         }
 
         var (tenant, profile) = access.Value!;
-        return Result.Success(MapProfile(tenant, profile, await GetDocumentsAsync(tenantId, cancellationToken)));
+        var locations = await dbContext.BusinessLocations
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId && x.IsActive)
+            .OrderByDescending(x => x.IsPrimary)
+            .ThenBy(x => x.Name)
+            .ToListAsync(cancellationToken);
+
+        return Result.Success(MapProfile(
+            tenant,
+            profile,
+            locations,
+            await GetDocumentsAsync(tenantId, cancellationToken)));
     }
 
     public async Task<Result<BusinessProfileResponse>> UpdateProfileAsync(
@@ -130,33 +155,32 @@ public sealed partial class BusinessOnboardingService(
                 Error.Validation("Profile can only be edited while in draft or rejected status."));
         }
 
-        var validation = await ValidateProfileFieldsAsync(
+        var validation = await ValidateBrandFieldsAsync(
             request.BusinessName,
-            request.Slug,
             request.CategorySlug,
             request.Phone,
-            request.AddressLine,
-            request.Area,
             cancellationToken);
         if (validation.IsFailure)
         {
             return Result.Failure<BusinessProfileResponse>(validation.Error);
         }
 
-        var normalizedSlug = NormalizeSlug(request.Slug);
-        var slugTaken = await dbContext.BusinessProfiles
-            .AsNoTracking()
-            .AnyAsync(p => p.Slug == normalizedSlug && p.TenantId != tenantId, cancellationToken);
-        if (slugTaken)
-        {
-            return Result.Failure<BusinessProfileResponse>(Error.Conflict("Business slug is already taken."));
-        }
-
         tenant.Name = request.BusinessName.Trim();
-        ApplyProfile(profile, request, normalizedSlug, DateTimeOffset.UtcNow);
+        ApplyBrandProfile(profile, request, DateTimeOffset.UtcNow);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return Result.Success(MapProfile(tenant, profile, await GetDocumentsAsync(tenantId, cancellationToken)));
+        var locations = await dbContext.BusinessLocations
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId && x.IsActive)
+            .OrderByDescending(x => x.IsPrimary)
+            .ThenBy(x => x.Name)
+            .ToListAsync(cancellationToken);
+
+        return Result.Success(MapProfile(
+            tenant,
+            profile,
+            locations,
+            await GetDocumentsAsync(tenantId, cancellationToken)));
     }
 
     public async Task<Result> SubmitVerificationAsync(
@@ -171,14 +195,17 @@ public sealed partial class BusinessOnboardingService(
             return Result.Failure(access.Error);
         }
 
-        var (tenant, profile) = access.Value!;
+        var (tenant, _) = access.Value!;
 
         if (tenant.Status is not TenantStatus.Draft and not TenantStatus.Rejected)
         {
             return Result.Failure(Error.Validation("Verification can only be submitted from draft or rejected status."));
         }
 
-        if (string.IsNullOrWhiteSpace(profile.Slug))
+        var hasActiveLocation = await dbContext.BusinessLocations
+            .AsNoTracking()
+            .AnyAsync(x => x.TenantId == tenantId && x.IsActive && x.Slug != string.Empty, cancellationToken);
+        if (!hasActiveLocation)
         {
             return Result.Failure(Error.Validation("Complete business registration before submitting verification."));
         }
@@ -256,23 +283,29 @@ public sealed partial class BusinessOnboardingService(
 
     private async Task<Result> ValidateRegistrationAsync(
         RegisterBusinessRequest request,
-        CancellationToken cancellationToken) =>
-        await ValidateProfileFieldsAsync(
+        CancellationToken cancellationToken)
+    {
+        var brandValidation = await ValidateBrandFieldsAsync(
             request.BusinessName,
-            request.Slug,
             request.CategorySlug,
             request.Phone,
-            request.AddressLine,
-            request.Area,
             cancellationToken);
+        if (brandValidation.IsFailure)
+        {
+            return brandValidation;
+        }
 
-    private async Task<Result> ValidateProfileFieldsAsync(
+        return LocationFieldValidator.Validate(
+            request.Location.Slug,
+            request.Location.AddressLine,
+            request.Location.Area,
+            request.Location.MarketId);
+    }
+
+    private async Task<Result> ValidateBrandFieldsAsync(
         string businessName,
-        string slug,
         string categorySlug,
         string phone,
-        string addressLine,
-        string area,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(businessName) || businessName.Trim().Length < 2)
@@ -280,25 +313,9 @@ public sealed partial class BusinessOnboardingService(
             return Result.Failure(Error.Validation("Business name must be at least 2 characters."));
         }
 
-        var normalizedSlug = NormalizeSlug(slug);
-        if (!SlugPattern.IsMatch(normalizedSlug))
-        {
-            return Result.Failure(Error.Validation("Slug must be 3-64 lowercase letters, numbers, or hyphens."));
-        }
-
         if (string.IsNullOrWhiteSpace(phone) || phone.Trim().Length < 10)
         {
             return Result.Failure(Error.Validation("Phone number must be at least 10 characters."));
-        }
-
-        if (string.IsNullOrWhiteSpace(addressLine) || addressLine.Trim().Length < 5)
-        {
-            return Result.Failure(Error.Validation("Address must be at least 5 characters."));
-        }
-
-        if (string.IsNullOrWhiteSpace(area) || area.Trim().Length < 2)
-        {
-            return Result.Failure(Error.Validation("Area is required."));
         }
 
         var categories = await categoryService.GetCategoriesAsync(cancellationToken);
@@ -310,41 +327,44 @@ public sealed partial class BusinessOnboardingService(
         return Result.Success();
     }
 
-    private static void ApplyProfile(
+    private static void ApplyBrandProfile(
         BusinessProfile profile,
         RegisterBusinessRequest request,
-        string normalizedSlug,
         DateTimeOffset updatedAt)
     {
-        profile.Slug = normalizedSlug;
         profile.CategorySlug = request.CategorySlug.Trim().ToLowerInvariant();
         profile.Phone = request.Phone.Trim();
-        profile.AddressLine = request.AddressLine.Trim();
-        profile.Area = request.Area.Trim();
         profile.Description = request.Description?.Trim() ?? string.Empty;
-        profile.Latitude = request.Latitude;
-        profile.Longitude = request.Longitude;
         profile.UpdatedAt = updatedAt;
     }
 
-    private static void ApplyProfile(
+    private static void ApplyBrandProfile(
         BusinessProfile profile,
         UpdateBusinessProfileRequest request,
-        string normalizedSlug,
         DateTimeOffset updatedAt)
     {
-        profile.Slug = normalizedSlug;
         profile.CategorySlug = request.CategorySlug.Trim().ToLowerInvariant();
         profile.Phone = request.Phone.Trim();
-        profile.AddressLine = request.AddressLine.Trim();
-        profile.Area = request.Area.Trim();
         profile.Description = request.Description?.Trim() ?? string.Empty;
-        profile.Latitude = request.Latitude;
-        profile.Longitude = request.Longitude;
         profile.UpdatedAt = updatedAt;
     }
 
-    private static string NormalizeSlug(string slug) => slug.Trim().ToLowerInvariant();
+    private static void ApplyLocation(
+        BusinessLocation location,
+        BusinessLocationRequest request,
+        string normalizedSlug,
+        DateTimeOffset updatedAt)
+    {
+        location.Slug = normalizedSlug;
+        location.Name = string.IsNullOrWhiteSpace(request.Name) ? request.Area.Trim() : request.Name.Trim();
+        location.MarketId = KnownMarketCatalog.Normalize(request.MarketId);
+        location.AddressLine = request.AddressLine.Trim();
+        location.Area = request.Area.Trim();
+        location.Latitude = request.Latitude;
+        location.Longitude = request.Longitude;
+        location.TimeZoneId = string.IsNullOrWhiteSpace(request.TimeZoneId) ? null : request.TimeZoneId.Trim();
+        location.UpdatedAt = updatedAt;
+    }
 
     private async Task<IReadOnlyList<VerificationDocument>> GetDocumentsAsync(
         Guid tenantId,
@@ -358,23 +378,17 @@ public sealed partial class BusinessOnboardingService(
     private static BusinessProfileResponse MapProfile(
         Tenant tenant,
         BusinessProfile profile,
+        IReadOnlyList<BusinessLocation> locations,
         IReadOnlyList<VerificationDocument> documents) =>
         new(
             tenant.Id,
             tenant.Name,
-            profile.Slug,
             tenant.Status,
             profile.CategorySlug,
             profile.Phone,
-            profile.AddressLine,
-            profile.Area,
             profile.Description,
-            profile.Latitude,
-            profile.Longitude,
             tenant.CreatedAt,
             tenant.VerifiedAt,
+            BusinessLocationService.MapLocations(locations),
             documents.Select(d => new VerificationDocumentResponse(d.DocumentType, d.SubmittedAt)).ToList());
-
-    [GeneratedRegex("^[a-z0-9](?:[a-z0-9-]{1,62}[a-z0-9])?$")]
-    private static partial Regex SlugRegex();
 }

@@ -13,6 +13,7 @@ using Microsoft.Extensions.Options;
 [Route("api/v1/tenant")]
 public sealed class TenantController(
     IBusinessOnboardingService onboardingService,
+    IBusinessLocationService locationService,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpPost("register")]
@@ -73,6 +74,69 @@ public sealed class TenantController(
         }
 
         var result = await onboardingService.SubmitVerificationAsync(tenantId.Value, request, auth0Sub, cancellationToken);
+        return MapResult(result, () => NoContent());
+    }
+
+    [HttpGet("locations")]
+    public async Task<IActionResult> ListLocations(CancellationToken cancellationToken)
+    {
+        var auth0Sub = ResolveAuth0Sub();
+        var tenantId = ResolveTenantId();
+        if (auth0Sub is null || tenantId is null)
+        {
+            return Unauthorized();
+        }
+
+        var result = await locationService.ListAsync(tenantId.Value, auth0Sub, cancellationToken);
+        return MapResult(result, locations => Ok(new { items = locations }));
+    }
+
+    [HttpPost("locations")]
+    public async Task<IActionResult> AddLocation(
+        [FromBody] UpsertBusinessLocationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var auth0Sub = ResolveAuth0Sub();
+        var tenantId = ResolveTenantId();
+        if (auth0Sub is null || tenantId is null)
+        {
+            return Unauthorized();
+        }
+
+        var result = await locationService.AddAsync(tenantId.Value, request, auth0Sub, cancellationToken);
+        return MapResult(result, location => Ok(location));
+    }
+
+    [HttpPatch("locations/{locationId:guid}")]
+    public async Task<IActionResult> UpdateLocation(
+        Guid locationId,
+        [FromBody] UpsertBusinessLocationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var auth0Sub = ResolveAuth0Sub();
+        var tenantId = ResolveTenantId();
+        if (auth0Sub is null || tenantId is null)
+        {
+            return Unauthorized();
+        }
+
+        var result = await locationService.UpdateAsync(tenantId.Value, locationId, request, auth0Sub, cancellationToken);
+        return MapResult(result, location => Ok(location));
+    }
+
+    [HttpDelete("locations/{locationId:guid}")]
+    public async Task<IActionResult> DeactivateLocation(
+        Guid locationId,
+        CancellationToken cancellationToken)
+    {
+        var auth0Sub = ResolveAuth0Sub();
+        var tenantId = ResolveTenantId();
+        if (auth0Sub is null || tenantId is null)
+        {
+            return Unauthorized();
+        }
+
+        var result = await locationService.DeactivateAsync(tenantId.Value, locationId, auth0Sub, cancellationToken);
         return MapResult(result, () => NoContent());
     }
 

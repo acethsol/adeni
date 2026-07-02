@@ -1,18 +1,26 @@
 import { StyleSheet } from "react-native";
-import { getMarket } from "@adeni/shared";
 import { Text, View } from "@/components/Themed";
-
-const market = getMarket();
+import { useActiveMarket } from "@/lib/market";
 
 export default function HomeScreen() {
+  const { market, loading } = useActiveMarket();
+
   return (
     <View style={styles.container}>
       <Text style={styles.brand}>Adeni</Text>
       <Text style={styles.subtitle}>
         {market.tagline} in {market.name}
       </Text>
-      <Text style={styles.body}>{market.description}</Text>
-      <Text style={styles.note}>{market.launchNote}</Text>
+      {loading ? (
+        <Text style={styles.body}>Finding services near you…</Text>
+      ) : (
+        <>
+          <Text style={styles.body}>{market.description}</Text>
+          {market.launchNote ? (
+            <Text style={styles.note}>{market.launchNote}</Text>
+          ) : null}
+        </>
+      )}
     </View>
   );
 }

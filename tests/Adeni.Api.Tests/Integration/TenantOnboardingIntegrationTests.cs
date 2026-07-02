@@ -37,14 +37,17 @@ public sealed class TenantOnboardingIntegrationTests : IClassFixture<WebApplicat
 
         var registerResponse = await client.PostAsJsonAsync("/api/v1/tenant/register", new RegisterBusinessRequest(
             "Integration Salon",
-            "integration-salon",
             "hair-salons",
             "+2348098765432",
-            "21 Ozumba Mbadiwe",
-            "Victoria Island",
-            "Test salon",
-            null,
-            null));
+            new BusinessLocationRequest(
+                "integration-salon",
+                "Victoria Island",
+                "21 Ozumba Mbadiwe",
+                "Victoria Island",
+                "lagos",
+                null,
+                null),
+            "Test salon"));
 
         Assert.Equal(HttpStatusCode.OK, registerResponse.StatusCode);
         var registered = await registerResponse.Content.ReadFromJsonAsync<RegisterBusinessResponse>();

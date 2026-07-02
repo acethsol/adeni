@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PublicHeader } from "@/components/public-header";
-import { createApiClient, getConfiguredMarket } from "@/lib/adeni";
+import { createApiClient } from "@/lib/adeni";
+import { getActiveMarketConfig } from "@/lib/market";
 
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const market = getConfiguredMarket();
+  const market = await getActiveMarketConfig();
 
   try {
     const client = createApiClient();

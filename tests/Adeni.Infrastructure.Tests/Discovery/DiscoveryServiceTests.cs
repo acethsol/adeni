@@ -1,11 +1,11 @@
 namespace Adeni.Infrastructure.Tests.Discovery;
 
 using Adeni.Application.Caching;
-using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Context;
 using Adeni.Infrastructure.Discovery;
 using Adeni.Infrastructure.Persistence;
+using Adeni.Infrastructure.Tests.TestData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,13 +19,13 @@ public sealed class DiscoveryServiceTests
         using var scope = provider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
 
-        SeedVerifiedBusiness(db, "lekki-cuts", "Lekki Cuts", "barbers", "Lekki", 6.4474, 3.4700);
-        SeedVerifiedBusiness(db, "vi-salon", "VI Salon", "hair-salons", "Victoria Island", 6.4281, 3.4219);
-        SeedDraftBusiness(db, "draft-shop", "Draft Shop", "barbers", "Lekki", 6.4474, 3.4700);
+        BusinessTestSeed.SeedVerifiedBusiness(db, "lekki-cuts", "Lekki Cuts", "barbers", "Lekki", 6.4474, 3.4700);
+        BusinessTestSeed.SeedVerifiedBusiness(db, "vi-salon", "VI Salon", "hair-salons", "Victoria Island", 6.4281, 3.4219);
+        BusinessTestSeed.SeedDraftBusiness(db, "draft-shop", "Draft Shop", "barbers", "Lekki", 6.4474, 3.4700);
         await db.SaveChangesAsync();
 
         var service = scope.ServiceProvider.GetRequiredService<DiscoveryService>();
-        var result = await service.SearchAsync(6.4474, 3.4700, null, 1, 20);
+        var result = await service.SearchAsync(6.4474, 3.4700, null, null, 1, 20);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Value!.TotalCount);
@@ -40,16 +40,35 @@ public sealed class DiscoveryServiceTests
         using var scope = provider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
 
-        SeedVerifiedBusiness(db, "lekki-cuts", "Lekki Cuts", "barbers", "Lekki", 6.4474, 3.4700);
-        SeedVerifiedBusiness(db, "vi-salon", "VI Salon", "hair-salons", "Victoria Island", 6.4281, 3.4219);
+        BusinessTestSeed.SeedVerifiedBusiness(db, "lekki-cuts", "Lekki Cuts", "barbers", "Lekki", 6.4474, 3.4700);
+        BusinessTestSeed.SeedVerifiedBusiness(db, "vi-salon", "VI Salon", "hair-salons", "Victoria Island", 6.4281, 3.4219);
         await db.SaveChangesAsync();
 
         var service = scope.ServiceProvider.GetRequiredService<DiscoveryService>();
-        var result = await service.SearchAsync(6.4474, 3.4700, "barbers", 1, 20);
+        var result = await service.SearchAsync(6.4474, 3.4700, "barbers", null, 1, 20);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Value!.Items);
         Assert.Equal("barbers", result.Value.Items[0].CategorySlug);
+    }
+
+    [Fact]
+    public async Task Search_filters_by_market()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+
+        BusinessTestSeed.SeedVerifiedBusiness(db, "lekki-cuts", "Lekki Cuts", "barbers", "Lekki", 6.4474, 3.4700, "lagos");
+        BusinessTestSeed.SeedVerifiedBusiness(db, "ottawa-cuts", "Ottawa Cuts", "barbers", "Centretown", 6.4474, 3.4700, "ottawa");
+        await db.SaveChangesAsync();
+
+        var service = scope.ServiceProvider.GetRequiredService<DiscoveryService>();
+        var result = await service.SearchAsync(6.4474, 3.4700, null, "lagos", 1, 20);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Value!.Items);
+        Assert.Equal("lagos", result.Value.Items[0].MarketId);
     }
 
     [Fact]
@@ -60,7 +79,7 @@ public sealed class DiscoveryServiceTests
         var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
         var cache = scope.ServiceProvider.GetRequiredService<ICacheService>();
 
-        var tenantId = SeedVerifiedBusiness(db, "lekki-cuts", "Lekki Cuts", "barbers", "Lekki", 6.4474, 3.4700);
+        BusinessTestSeed.SeedVerifiedBusiness(db, "lekki-cuts", "Lekki Cuts", "barbers", "Lekki", 6.4474, 3.4700);
         await db.SaveChangesAsync();
 
         var service = scope.ServiceProvider.GetRequiredService<DiscoveryService>();
@@ -70,7 +89,8 @@ public sealed class DiscoveryServiceTests
         Assert.True(first.IsSuccess);
         Assert.True(second.IsSuccess);
         Assert.Contains("[REDACTED]", first.Value!.PhoneMasked);
-        Assert.NotNull(await cache.GetAsync<Application.Discovery.PublicBusinessProfile>(CacheKeys.TenantProfile(tenantId)));
+        Assert.NotNull(await cache.GetAsync<Application.Discovery.PublicBusinessProfile>(
+            CacheKeys.LocationProfile("lekki-cuts")));
     }
 
     [Fact]
@@ -80,7 +100,7 @@ public sealed class DiscoveryServiceTests
         using var scope = provider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
 
-        SeedDraftBusiness(db, "draft-shop", "Draft Shop", "barbers", "Lekki", 6.4474, 3.4700);
+        BusinessTestSeed.SeedDraftBusiness(db, "draft-shop", "Draft Shop", "barbers", "Lekki", 6.4474, 3.4700);
         await db.SaveChangesAsync();
 
         var service = scope.ServiceProvider.GetRequiredService<DiscoveryService>();
@@ -88,71 +108,6 @@ public sealed class DiscoveryServiceTests
 
         Assert.True(result.IsFailure);
         Assert.Equal("not_found", result.Error.Code);
-    }
-
-    private static Guid SeedVerifiedBusiness(
-        AdeniDbContext db,
-        string slug,
-        string name,
-        string category,
-        string area,
-        double lat,
-        double lng)
-    {
-        var tenantId = Guid.NewGuid();
-        db.Tenants.Add(new Tenant
-        {
-            Id = tenantId,
-            Name = name,
-            Status = TenantStatus.Verified,
-            CreatedAt = DateTimeOffset.UtcNow,
-            VerifiedAt = DateTimeOffset.UtcNow
-        });
-        db.BusinessProfiles.Add(new BusinessProfile
-        {
-            TenantId = tenantId,
-            Slug = slug,
-            CategorySlug = category,
-            Area = area,
-            AddressLine = "Test address",
-            Phone = "+2348012345678",
-            Description = "Test",
-            Latitude = lat,
-            Longitude = lng,
-            UpdatedAt = DateTimeOffset.UtcNow
-        });
-        return tenantId;
-    }
-
-    private static void SeedDraftBusiness(
-        AdeniDbContext db,
-        string slug,
-        string name,
-        string category,
-        string area,
-        double lat,
-        double lng)
-    {
-        var tenantId = Guid.NewGuid();
-        db.Tenants.Add(new Tenant
-        {
-            Id = tenantId,
-            Name = name,
-            Status = TenantStatus.Draft,
-            CreatedAt = DateTimeOffset.UtcNow
-        });
-        db.BusinessProfiles.Add(new BusinessProfile
-        {
-            TenantId = tenantId,
-            Slug = slug,
-            CategorySlug = category,
-            Area = area,
-            AddressLine = "Test address",
-            Phone = "+2348012345678",
-            Latitude = lat,
-            Longitude = lng,
-            UpdatedAt = DateTimeOffset.UtcNow
-        });
     }
 
     private static ServiceProvider BuildProvider()

@@ -47,14 +47,25 @@ public sealed class DiscoveryIntegrationTests : IClassFixture<WebApplicationFact
             db.BusinessProfiles.Add(new BusinessProfile
             {
                 TenantId = tenantId,
-                Slug = slug,
                 CategorySlug = "hair-salons",
-                Area = "Lekki",
-                AddressLine = "1 Test Road",
                 Phone = "+2348099999999",
                 Description = "Visible in discovery",
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+            db.BusinessLocations.Add(new BusinessLocation
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                Slug = slug,
+                Name = "Lekki",
+                MarketId = "lagos",
+                AddressLine = "1 Test Road",
+                Area = "Lekki",
                 Latitude = 6.4474,
                 Longitude = 3.4700,
+                IsPrimary = true,
+                IsActive = true,
+                CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
             });
             await db.SaveChangesAsync();

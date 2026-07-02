@@ -34,7 +34,7 @@ Register → submit docs → admin approves → tenant `Verified`.
 
 | Task | Status |
 |------|--------|
-| Public landing | ✅ `/` — categories from API, Lagos market config |
+| Public landing | ✅ `/` — categories from API, runtime market context |
 | Business profile SSR | ✅ `/businesses/[slug]` |
 | Discover page | ✅ `/discover` → discovery API + category filters |
 | Dynamic market/categories | ✅ `packages/shared` market config; generic category API |
@@ -43,6 +43,18 @@ Register → submit docs → admin approves → tenant `Verified`.
 ## Sprint 4 — Booking ← **current**
 
 Services CRUD, availability, `POST /api/v1/bookings`, Redis slot locks.
+
+| Task | Status |
+|------|--------|
+| Domain + migration (`booking` schema) | ✅ |
+| Service catalog CRUD | ✅ |
+| Weekly availability + slot generation | ✅ |
+| Create booking + slot lock | ✅ |
+| Business accept/reject | ✅ |
+| Public `/{slug}/services` + `/{slug}/slots` | ✅ |
+| Geo market resolution (web + mobile) | ✅ |
+| Multi-branch `BusinessLocation` model | ✅ |
+| Web booking UI | Pending |
 
 ## Sprint 5 — Expo mobile loop
 

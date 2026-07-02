@@ -24,10 +24,24 @@ public sealed class AdminBusinessService(
             .Select(t => new PendingBusinessResponse(
                 t.Id,
                 t.Name,
-                dbContext.BusinessProfiles
-                    .Where(p => p.TenantId == t.Id)
-                    .Select(p => p.Slug)
-                    .FirstOrDefault() ?? string.Empty,
+                dbContext.BusinessLocations
+                    .Where(location => location.TenantId == t.Id && location.IsActive && location.IsPrimary)
+                    .Select(location => location.Slug)
+                    .FirstOrDefault()
+                    ?? dbContext.BusinessLocations
+                        .Where(location => location.TenantId == t.Id && location.IsActive)
+                        .Select(location => location.Slug)
+                        .FirstOrDefault()
+                    ?? string.Empty,
+                dbContext.BusinessLocations
+                    .Where(location => location.TenantId == t.Id && location.IsActive && location.IsPrimary)
+                    .Select(location => location.MarketId)
+                    .FirstOrDefault()
+                    ?? dbContext.BusinessLocations
+                        .Where(location => location.TenantId == t.Id && location.IsActive)
+                        .Select(location => location.MarketId)
+                        .FirstOrDefault()
+                    ?? string.Empty,
                 t.Status,
                 t.CreatedAt))
             .ToListAsync(cancellationToken);
@@ -87,7 +101,17 @@ public sealed class AdminBusinessService(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        await cache.RemoveAsync(CacheKeys.TenantProfile(tenantId), cancellationToken);
+
+        var slugs = await dbContext.BusinessLocations
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId && x.IsActive)
+            .Select(x => x.Slug)
+            .ToListAsync(cancellationToken);
+
+        foreach (var slug in slugs)
+        {
+            await cache.RemoveAsync(CacheKeys.LocationProfile(slug), cancellationToken);
+        }
 
         await auditLogWriter.WriteAsync(new AuditEntry(
             Guid.NewGuid(),
