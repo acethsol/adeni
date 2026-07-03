@@ -240,3 +240,29 @@ export function formatBookingStatus(status: number): string {
 export function formatTenantStatus(status: number): string {
   return TENANT_STATUS_LABELS[status] ?? "Unknown";
 }
+
+export const verificationDocumentRequestSchema = z.object({
+  documentType: z.number().int(),
+  referenceNumber: z.string().min(1),
+});
+
+export const submitVerificationRequestSchema = z.object({
+  documents: z.array(verificationDocumentRequestSchema).min(1),
+});
+
+export type SubmitVerificationRequest = z.infer<typeof submitVerificationRequestSchema>;
+
+export const DAY_OF_WEEK_LABELS: Record<number, string> = {
+  0: "Sunday",
+  1: "Monday",
+  2: "Tuesday",
+  3: "Wednesday",
+  4: "Thursday",
+  5: "Friday",
+  6: "Saturday",
+};
+
+export const VERIFICATION_DOCUMENT_LABELS: Record<number, string> = {
+  0: "CAC registration",
+  1: "National ID",
+};

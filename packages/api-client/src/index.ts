@@ -11,6 +11,7 @@ import {
   publicBusinessProfileSchema,
   serviceOfferingSchema,
   serviceOfferingsResponseSchema,
+  submitVerificationRequestSchema,
   tenantBookingsResponseSchema,
   updateBusinessProfileRequestSchema,
   updateServiceOfferingRequestSchema,
@@ -26,6 +27,7 @@ import {
   type PendingBusiness,
   type PublicBusinessProfile,
   type ServiceOffering,
+  type SubmitVerificationRequest,
   type UpdateBusinessProfileRequest,
   type UpdateServiceOfferingRequest,
   type WeeklyAvailabilityRule,
@@ -256,6 +258,17 @@ export class AdeniApiClient {
     });
     const payload = weeklyAvailabilityResponseSchema.parse(await response.json());
     return payload.items;
+  }
+
+  async submitTenantVerification(
+    request: SubmitVerificationRequest,
+  ): Promise<void> {
+    const body = submitVerificationRequestSchema.parse(request);
+    await this.request("/api/v1/tenant/verification", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
   }
 
   async getMe(): Promise<AuthSession> {

@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { href: "/business", label: "Overview", exact: true },
   { href: "/business/bookings", label: "Bookings" },
   { href: "/business/services", label: "Services" },
+  { href: "/business/availability", label: "Availability" },
   { href: "/business/profile", label: "Profile" },
 ];
 

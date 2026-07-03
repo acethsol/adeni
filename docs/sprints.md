@@ -69,7 +69,7 @@ Bring the web business portal to parity with mobile — profile, services, avail
 | Booking inbox (accept/reject) | ✅ |
 | Profile view + edit | ✅ |
 | Services list | ✅ |
-| Services CRUD UI | ⬜ |
-| Weekly availability UI | ⬜ |
-| Verification submission | ⬜ |
+| Services CRUD UI | ✅ |
+| Weekly availability UI | ✅ |
+| Verification submission | ✅ |
 | Multi-location management | ⬜ |

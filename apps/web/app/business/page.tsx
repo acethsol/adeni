@@ -95,6 +95,12 @@ export default async function BusinessPortalPage() {
               Manage services
             </Link>
             <Link
+              href="/business/availability"
+              className="rounded-full border border-[#1b4332]/20 px-5 py-2.5 text-sm font-medium"
+            >
+              Set availability
+            </Link>
+            <Link
               href="/business/profile"
               className="rounded-full border border-[#1b4332]/20 px-5 py-2.5 text-sm font-medium"
             >
