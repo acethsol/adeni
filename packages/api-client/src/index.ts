@@ -8,6 +8,7 @@ import {
   pendingBusinessesResponseSchema,
   publicBusinessProfileSchema,
   serviceOfferingsResponseSchema,
+  tenantBookingsResponseSchema,
   type AuthSession,
   type AvailableSlot,
   type BookingResponse,
@@ -33,6 +34,8 @@ export type AdeniApiClientOptions = {
   baseUrl: string;
   accessToken?: string | null;
   tenantId?: string | null;
+  /** Development only — maps to X-Dev-Auth0-Sub when Auth0 is disabled on the API. */
+  devAuth0Sub?: string | null;
   fetchImpl?: typeof fetch;
 };
 
@@ -48,6 +51,7 @@ export type DiscoverySearchParams = {
 export class AdeniApiClient {
   private accessToken: string | null;
   private tenantId: string | null;
+  private devAuth0Sub: string | null;
   private readonly baseUrl: string;
   private readonly fetchImpl: typeof fetch;
 
@@ -55,11 +59,16 @@ export class AdeniApiClient {
     this.baseUrl = options.baseUrl.replace(/\/$/, "");
     this.accessToken = options.accessToken ?? null;
     this.tenantId = options.tenantId ?? null;
+    this.devAuth0Sub = options.devAuth0Sub ?? null;
     this.fetchImpl = options.fetchImpl ?? fetch;
   }
 
   setAccessToken(token: string | null) {
     this.accessToken = token;
+  }
+
+  setDevAuth0Sub(auth0Sub: string | null) {
+    this.devAuth0Sub = auth0Sub;
   }
 
   setTenantId(tenantId: string | null) {
@@ -133,6 +142,35 @@ export class AdeniApiClient {
     return bookingResponseSchema.parse(await response.json());
   }
 
+  async getTenantBookings(): Promise<BookingResponse[]> {
+    const response = await this.request("/api/v1/tenant/bookings");
+    const payload = tenantBookingsResponseSchema.parse(await response.json());
+    return payload.items;
+  }
+
+  async acceptTenantBooking(bookingId: string): Promise<BookingResponse> {
+    const response = await this.request(
+      `/api/v1/tenant/bookings/${encodeURIComponent(bookingId)}/accept`,
+      { method: "POST" },
+    );
+    return bookingResponseSchema.parse(await response.json());
+  }
+
+  async rejectTenantBooking(
+    bookingId: string,
+    reason?: string,
+  ): Promise<BookingResponse> {
+    const response = await this.request(
+      `/api/v1/tenant/bookings/${encodeURIComponent(bookingId)}/reject`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: reason ?? null }),
+      },
+    );
+    return bookingResponseSchema.parse(await response.json());
+  }
+
   async getMe(): Promise<AuthSession> {
     const response = await this.request("/api/v1/auth/me");
     return authSessionSchema.parse(await response.json());
@@ -150,6 +188,8 @@ export class AdeniApiClient {
 
     if (this.accessToken) {
       headers.set("Authorization", `Bearer ${this.accessToken}`);
+    } else if (this.devAuth0Sub) {
+      headers.set("X-Dev-Auth0-Sub", this.devAuth0Sub);
     }
 
     if (this.tenantId) {

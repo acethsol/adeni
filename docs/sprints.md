@@ -44,6 +44,16 @@ Register → submit docs → admin approves → tenant `Verified`.
 
 Services CRUD, availability, `POST /api/v1/bookings`, Redis slot locks, geo markets, multi-branch locations, web booking UI.
 
-## Sprint 5 — Expo mobile loop ← **next**
+## Sprint 5 — Expo mobile loop ✅
 
-Unified app: browse, book, business booking management (after web booking works).
+Unified app: browse, book, business booking management.
+
+| Task | Status |
+|------|--------|
+| API client + market/geo context | ✅ |
+| Home tab (categories, market copy) | ✅ |
+| Discover tab (list + category filters) | ✅ |
+| Business profile screen | ✅ |
+| Customer booking flow | ✅ |
+| Auth0 Native login | ✅ |
+| Business booking management | ✅ |

@@ -1,6 +1,7 @@
 namespace Adeni.Infrastructure.Persistence;
 
 using Adeni.Domain.Booking;
+using Adeni.Domain.Identity;
 using Adeni.Domain.Tenancy;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 public static class DevelopmentDataSeeder
 {
     public const string SeedMarkerSlug = "lekki-cuts";
+    public const string DevBusinessAuth0Sub = "auth0|local-business";
 
     private static readonly IReadOnlyDictionary<string, (string Currency, string TimeZoneId)> MarketDefaults =
         new Dictionary<string, (string, string)>(StringComparer.OrdinalIgnoreCase)
@@ -126,5 +128,42 @@ public static class DevelopmentDataSeeder
         {
             await db.SaveChangesAsync(cancellationToken);
         }
+
+        await SeedDevBusinessOwnerAsync(db, cancellationToken);
+    }
+
+    private static async Task SeedDevBusinessOwnerAsync(
+        AdeniDbContext db,
+        CancellationToken cancellationToken)
+    {
+        if (await db.BusinessUsers
+                .IgnoreQueryFilters()
+                .AnyAsync(user => user.Auth0Sub == DevBusinessAuth0Sub, cancellationToken))
+        {
+            return;
+        }
+
+        var location = await db.BusinessLocations
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                entry => entry.Slug == SeedMarkerSlug,
+                cancellationToken);
+
+        if (location is null)
+        {
+            return;
+        }
+
+        db.BusinessUsers.Add(new BusinessUser
+        {
+            Id = Guid.NewGuid(),
+            TenantId = location.TenantId,
+            Auth0Sub = DevBusinessAuth0Sub,
+            Role = "owner",
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+
+        await db.SaveChangesAsync(cancellationToken);
     }
 }

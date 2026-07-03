@@ -121,6 +121,10 @@ export const bookingResponseSchema = z.object({
 
 export type BookingResponse = z.infer<typeof bookingResponseSchema>;
 
+export const tenantBookingsResponseSchema = z.object({
+  items: z.array(bookingResponseSchema),
+});
+
 export const createBookingRequestSchema = z.object({
   tenantId: z.string().uuid(),
   serviceOfferingId: z.string().uuid(),
