@@ -58,7 +58,7 @@ Unified app: browse, book, business booking management.
 | Auth0 Native login | ✅ |
 | Business booking management | ✅ |
 
-## Sprint 6 — Business portal (web) ← **in progress**
+## Sprint 6 — Business portal (web) ✅
 
 Bring the web business portal to parity with mobile — profile, services, availability, booking inbox.
 
@@ -72,4 +72,6 @@ Bring the web business portal to parity with mobile — profile, services, avail
 | Services CRUD UI | ✅ |
 | Weekly availability UI | ✅ |
 | Verification submission | ✅ |
-| Multi-location management | ⬜ |
+| Multi-location management | ✅ |
+
+## Sprint 6 — Business portal (web) ✅

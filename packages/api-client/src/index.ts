@@ -2,6 +2,7 @@ import {
   authSessionSchema,
   availableSlotsResponseSchema,
   bookingResponseSchema,
+  businessLocationSchema,
   businessProfileSchema,
   categoriesResponseSchema,
   createBookingRequestSchema,
@@ -13,13 +14,16 @@ import {
   serviceOfferingsResponseSchema,
   submitVerificationRequestSchema,
   tenantBookingsResponseSchema,
+  tenantLocationsResponseSchema,
   updateBusinessProfileRequestSchema,
+  upsertBusinessLocationRequestSchema,
   updateServiceOfferingRequestSchema,
   weeklyAvailabilityResponseSchema,
   type AuthSession,
   type AvailableSlot,
   type BookingResponse,
   type BusinessProfile,
+  type BusinessLocation,
   type Category,
   type CreateBookingRequest,
   type CreateServiceOfferingRequest,
@@ -30,6 +34,7 @@ import {
   type SubmitVerificationRequest,
   type UpdateBusinessProfileRequest,
   type UpdateServiceOfferingRequest,
+  type UpsertBusinessLocationRequest,
   type WeeklyAvailabilityRule,
 } from "@adeni/shared";
 
@@ -269,6 +274,47 @@ export class AdeniApiClient {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
+  }
+
+  async getTenantLocations(): Promise<BusinessLocation[]> {
+    const response = await this.request("/api/v1/tenant/locations");
+    const payload = tenantLocationsResponseSchema.parse(await response.json());
+    return payload.items;
+  }
+
+  async addTenantLocation(
+    request: UpsertBusinessLocationRequest,
+  ): Promise<BusinessLocation> {
+    const body = upsertBusinessLocationRequestSchema.parse(request);
+    const response = await this.request("/api/v1/tenant/locations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return businessLocationSchema.parse(await response.json());
+  }
+
+  async updateTenantLocation(
+    locationId: string,
+    request: UpsertBusinessLocationRequest,
+  ): Promise<BusinessLocation> {
+    const body = upsertBusinessLocationRequestSchema.parse(request);
+    const response = await this.request(
+      `/api/v1/tenant/locations/${encodeURIComponent(locationId)}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+    return businessLocationSchema.parse(await response.json());
+  }
+
+  async deactivateTenantLocation(locationId: string): Promise<void> {
+    await this.request(
+      `/api/v1/tenant/locations/${encodeURIComponent(locationId)}`,
+      { method: "DELETE" },
+    );
   }
 
   async getMe(): Promise<AuthSession> {

@@ -150,6 +150,26 @@ export const businessLocationSchema = z.object({
 
 export type BusinessLocation = z.infer<typeof businessLocationSchema>;
 
+export const tenantLocationsResponseSchema = z.object({
+  items: z.array(businessLocationSchema),
+});
+
+export const upsertBusinessLocationRequestSchema = z.object({
+  slug: z.string().min(3).max(64),
+  name: z.string().optional(),
+  addressLine: z.string().min(5),
+  area: z.string().min(2),
+  marketId: z.string().min(1),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
+  timeZoneId: z.string().nullable().optional(),
+  isPrimary: z.boolean().optional(),
+});
+
+export type UpsertBusinessLocationRequest = z.infer<
+  typeof upsertBusinessLocationRequestSchema
+>;
+
 export const verificationDocumentSchema = z.object({
   documentType: z.number(),
   submittedAt: z.string(),
