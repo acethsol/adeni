@@ -7,6 +7,7 @@ import {
   categoriesResponseSchema,
   createBookingRequestSchema,
   createServiceOfferingRequestSchema,
+  customerBookingsResponseSchema,
   discoveryResponseSchema,
   pendingBusinessesResponseSchema,
   publicBusinessProfileSchema,
@@ -27,6 +28,7 @@ import {
   type Category,
   type CreateBookingRequest,
   type CreateServiceOfferingRequest,
+  type CustomerBookingResponse,
   type DiscoveryResponse,
   type PendingBusiness,
   type PublicBusinessProfile,
@@ -158,6 +160,12 @@ export class AdeniApiClient {
       body: JSON.stringify(body),
     });
     return bookingResponseSchema.parse(await response.json());
+  }
+
+  async getMyBookings(): Promise<CustomerBookingResponse[]> {
+    const response = await this.request("/api/v1/bookings");
+    const payload = customerBookingsResponseSchema.parse(await response.json());
+    return payload.items;
   }
 
   async getTenantBookings(): Promise<BookingResponse[]> {

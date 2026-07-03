@@ -103,6 +103,24 @@ internal static class BookingMapper
             entity.Status,
             entity.CustomerNotes,
             entity.CreatedAt);
+
+    public static CustomerBookingResponse ToCustomerResponse(
+        BookingRecord entity,
+        string serviceName,
+        string businessName,
+        string businessSlug) =>
+        new(
+            entity.Id,
+            entity.TenantId,
+            businessName,
+            businessSlug,
+            entity.ServiceOfferingId,
+            serviceName,
+            entity.StartAt,
+            entity.EndAt,
+            entity.Status,
+            entity.CustomerNotes,
+            entity.CreatedAt);
 }
 
 internal static class BookingConflictChecker

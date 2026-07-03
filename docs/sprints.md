@@ -74,4 +74,18 @@ Bring the web business portal to parity with mobile — profile, services, avail
 | Verification submission | ✅ |
 | Multi-location management | ✅ |
 
-## Sprint 6 — Business portal (web) ✅
+## Sprint 7 — Customer bookings ✅
+
+Let customers view booking history on web and mobile.
+
+| Task | Status |
+|------|--------|
+| `GET /api/v1/bookings` (customer list) | ✅ |
+| Shared schema + API client | ✅ |
+| Web `/my-bookings` page | ✅ |
+| Mobile my bookings screen | ✅ |
+
+## Next up
+
+1. Staging + Auth0 E2E
+2. Obs 1 — App Insights on API

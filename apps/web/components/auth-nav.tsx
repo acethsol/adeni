@@ -22,6 +22,9 @@ export async function AuthNav() {
 
   return (
     <div className="flex items-center gap-3">
+      <Link href="/my-bookings" className="text-sm font-medium hover:underline">
+        My bookings
+      </Link>
       <span className="hidden text-sm text-[#1b4332]/70 sm:inline">
         {session.name ?? session.email ?? "Signed in"}
       </span>

@@ -15,6 +15,19 @@ public sealed record BookingResponse(
     string? CustomerNotes,
     DateTimeOffset CreatedAt);
 
+public sealed record CustomerBookingResponse(
+    Guid Id,
+    Guid TenantId,
+    string BusinessName,
+    string BusinessSlug,
+    Guid ServiceOfferingId,
+    string ServiceName,
+    DateTimeOffset StartAt,
+    DateTimeOffset EndAt,
+    BookingStatus Status,
+    string? CustomerNotes,
+    DateTimeOffset CreatedAt);
+
 public sealed record CreateBookingRequest(
     Guid TenantId,
     Guid ServiceOfferingId,
@@ -30,6 +43,10 @@ public interface IBookingService
 
     Task<IReadOnlyList<BookingResponse>> ListForTenantAsync(
         Guid tenantId,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<CustomerBookingResponse>> ListForCustomerAsync(
+        string customerAuth0Sub,
         CancellationToken cancellationToken = default);
 
     Task<Result<BookingResponse>> AcceptAsync(

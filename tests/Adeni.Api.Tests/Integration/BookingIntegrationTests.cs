@@ -123,7 +123,24 @@ public sealed class BookingIntegrationTests : IClassFixture<WebApplicationFactor
             });
 
         Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+
+        var listResponse = await bookingClient.GetAsync("/api/v1/bookings");
+        Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
+
+        var listPayload = await listResponse.Content.ReadFromJsonAsync<CustomerBookingsPayload>();
+        Assert.NotNull(listPayload);
+        Assert.NotEmpty(listPayload!.Items);
+        Assert.Equal("Haircut", listPayload.Items[0].ServiceName);
+        Assert.Equal("Booking Integration Shop", listPayload.Items[0].BusinessName);
+        Assert.Equal(slug, listPayload.Items[0].BusinessSlug);
     }
+
+    private sealed record CustomerBookingsPayload(IReadOnlyList<CustomerBookingItem> Items);
+
+    private sealed record CustomerBookingItem(
+        string ServiceName,
+        string BusinessName,
+        string BusinessSlug);
 
     private sealed record SlotsPayload(IReadOnlyList<SlotItem> Items);
 

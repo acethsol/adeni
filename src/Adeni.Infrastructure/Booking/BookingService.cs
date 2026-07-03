@@ -134,6 +134,52 @@ public sealed class BookingService(
             .ToArray();
     }
 
+    public async Task<IReadOnlyList<CustomerBookingResponse>> ListForCustomerAsync(
+        string customerAuth0Sub,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(customerAuth0Sub))
+        {
+            return Array.Empty<CustomerBookingResponse>();
+        }
+
+        var rows = await (
+            from booking in dbContext.Bookings.AsNoTracking()
+            join customer in dbContext.Customers.AsNoTracking() on booking.CustomerId equals customer.Id
+            join service in dbContext.ServiceOfferings.AsNoTracking() on booking.ServiceOfferingId equals service.Id
+            join tenant in dbContext.Tenants.AsNoTracking() on booking.TenantId equals tenant.Id
+            where customer.Auth0Sub == customerAuth0Sub
+            orderby booking.StartAt descending
+            select new { booking, ServiceName = service.Name, BusinessName = tenant.Name })
+            .ToListAsync(cancellationToken);
+
+        if (rows.Count == 0)
+        {
+            return Array.Empty<CustomerBookingResponse>();
+        }
+
+        var tenantIds = rows.Select(x => x.booking.TenantId).Distinct().ToArray();
+        var slugRows = await dbContext.BusinessLocations
+            .AsNoTracking()
+            .Where(x => tenantIds.Contains(x.TenantId) && x.IsActive)
+            .Select(x => new { x.TenantId, x.Slug, x.IsPrimary })
+            .ToListAsync(cancellationToken);
+
+        var slugByTenant = slugRows
+            .GroupBy(x => x.TenantId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderByDescending(x => x.IsPrimary).First().Slug);
+
+        return rows
+            .Select(x => BookingMapper.ToCustomerResponse(
+                x.booking,
+                x.ServiceName,
+                x.BusinessName,
+                slugByTenant.GetValueOrDefault(x.booking.TenantId, string.Empty)))
+            .ToArray();
+    }
+
     public Task<Result<BookingResponse>> AcceptAsync(
         Guid tenantId,
         Guid bookingId,

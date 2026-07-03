@@ -74,6 +74,13 @@ function RootLayoutNav() {
                 headerBackTitle: "Back",
               }}
             />
+            <Stack.Screen
+              name="my-bookings"
+              options={{
+                title: "My bookings",
+                headerBackTitle: "Back",
+              }}
+            />
             <Stack.Screen name="modal" options={{ presentation: "modal" }} />
           </Stack>
         </ThemeProvider>

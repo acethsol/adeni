@@ -121,6 +121,26 @@ export const bookingResponseSchema = z.object({
 
 export type BookingResponse = z.infer<typeof bookingResponseSchema>;
 
+export const customerBookingResponseSchema = z.object({
+  id: z.string(),
+  tenantId: z.string(),
+  businessName: z.string(),
+  businessSlug: z.string(),
+  serviceOfferingId: z.string(),
+  serviceName: z.string(),
+  startAt: z.string(),
+  endAt: z.string(),
+  status: z.number(),
+  customerNotes: z.string().nullable().optional(),
+  createdAt: z.string(),
+});
+
+export type CustomerBookingResponse = z.infer<typeof customerBookingResponseSchema>;
+
+export const customerBookingsResponseSchema = z.object({
+  items: z.array(customerBookingResponseSchema),
+});
+
 export const tenantBookingsResponseSchema = z.object({
   items: z.array(bookingResponseSchema),
 });

@@ -28,6 +28,19 @@ public sealed class BookingsController(
         return ApiResults.FromResult(result, payload => Created($"/api/v1/bookings/{payload.Id}", payload));
     }
 
+    [HttpGet]
+    public async Task<IActionResult> List(CancellationToken cancellationToken)
+    {
+        var auth0Sub = ResolveCustomerAuth0Sub();
+        if (auth0Sub is null)
+        {
+            return Unauthorized();
+        }
+
+        var items = await bookings.ListForCustomerAsync(auth0Sub, cancellationToken);
+        return Ok(new { items });
+    }
+
     private string? ResolveCustomerAuth0Sub()
     {
         if (User.Identity?.IsAuthenticated == true)

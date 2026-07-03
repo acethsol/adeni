@@ -140,6 +140,24 @@ export default function AccountScreen() {
           ) : null}
         </View>
 
+        {isBookingEnabled ? (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>My bookings</Text>
+            <Text style={styles.hint}>
+              View upcoming and past appointments you have booked.
+            </Text>
+            <Pressable
+              onPress={() => router.push("/my-bookings")}
+              style={({ pressed }) => [
+                styles.primaryButton,
+                pressed && styles.buttonPressed,
+              ]}
+            >
+              <Text style={styles.primaryButtonText}>View bookings</Text>
+            </Pressable>
+          </View>
+        ) : null}
+
         {isBusinessUser || isBusinessInboxEnabled ? (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Business</Text>
