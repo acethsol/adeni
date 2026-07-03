@@ -2,22 +2,33 @@ import {
   authSessionSchema,
   availableSlotsResponseSchema,
   bookingResponseSchema,
+  businessProfileSchema,
   categoriesResponseSchema,
   createBookingRequestSchema,
+  createServiceOfferingRequestSchema,
   discoveryResponseSchema,
   pendingBusinessesResponseSchema,
   publicBusinessProfileSchema,
+  serviceOfferingSchema,
   serviceOfferingsResponseSchema,
   tenantBookingsResponseSchema,
+  updateBusinessProfileRequestSchema,
+  updateServiceOfferingRequestSchema,
+  weeklyAvailabilityResponseSchema,
   type AuthSession,
   type AvailableSlot,
   type BookingResponse,
+  type BusinessProfile,
   type Category,
   type CreateBookingRequest,
+  type CreateServiceOfferingRequest,
   type DiscoveryResponse,
   type PendingBusiness,
   type PublicBusinessProfile,
   type ServiceOffering,
+  type UpdateBusinessProfileRequest,
+  type UpdateServiceOfferingRequest,
+  type WeeklyAvailabilityRule,
 } from "@adeni/shared";
 
 export class AdeniApiError extends Error {
@@ -169,6 +180,82 @@ export class AdeniApiClient {
       },
     );
     return bookingResponseSchema.parse(await response.json());
+  }
+
+  async getTenantProfile(): Promise<BusinessProfile> {
+    const response = await this.request("/api/v1/tenant/profile");
+    return businessProfileSchema.parse(await response.json());
+  }
+
+  async updateTenantProfile(
+    request: UpdateBusinessProfileRequest,
+  ): Promise<BusinessProfile> {
+    const body = updateBusinessProfileRequestSchema.parse(request);
+    const response = await this.request("/api/v1/tenant/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return businessProfileSchema.parse(await response.json());
+  }
+
+  async getTenantServices(): Promise<ServiceOffering[]> {
+    const response = await this.request("/api/v1/tenant/services");
+    const payload = serviceOfferingsResponseSchema.parse(await response.json());
+    return payload.items;
+  }
+
+  async createTenantService(
+    request: CreateServiceOfferingRequest,
+  ): Promise<ServiceOffering> {
+    const body = createServiceOfferingRequestSchema.parse(request);
+    const response = await this.request("/api/v1/tenant/services", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return serviceOfferingSchema.parse(await response.json());
+  }
+
+  async updateTenantService(
+    serviceId: string,
+    request: UpdateServiceOfferingRequest,
+  ): Promise<ServiceOffering> {
+    const body = updateServiceOfferingRequestSchema.parse(request);
+    const response = await this.request(
+      `/api/v1/tenant/services/${encodeURIComponent(serviceId)}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+    return serviceOfferingSchema.parse(await response.json());
+  }
+
+  async deactivateTenantService(serviceId: string): Promise<void> {
+    await this.request(
+      `/api/v1/tenant/services/${encodeURIComponent(serviceId)}`,
+      { method: "DELETE" },
+    );
+  }
+
+  async getTenantAvailability(): Promise<WeeklyAvailabilityRule[]> {
+    const response = await this.request("/api/v1/tenant/availability");
+    const payload = weeklyAvailabilityResponseSchema.parse(await response.json());
+    return payload.items;
+  }
+
+  async replaceTenantAvailability(
+    rules: WeeklyAvailabilityRule[],
+  ): Promise<WeeklyAvailabilityRule[]> {
+    const response = await this.request("/api/v1/tenant/availability", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: rules }),
+    });
+    const payload = weeklyAvailabilityResponseSchema.parse(await response.json());
+    return payload.items;
   }
 
   async getMe(): Promise<AuthSession> {

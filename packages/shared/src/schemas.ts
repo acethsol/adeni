@@ -133,3 +133,110 @@ export const createBookingRequestSchema = z.object({
 });
 
 export type CreateBookingRequest = z.infer<typeof createBookingRequestSchema>;
+
+export const businessLocationSchema = z.object({
+  id: z.string(),
+  slug: z.string(),
+  name: z.string(),
+  addressLine: z.string(),
+  area: z.string(),
+  marketId: z.string(),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
+  timeZoneId: z.string().nullable().optional(),
+  isPrimary: z.boolean(),
+  isActive: z.boolean(),
+});
+
+export type BusinessLocation = z.infer<typeof businessLocationSchema>;
+
+export const verificationDocumentSchema = z.object({
+  documentType: z.number(),
+  submittedAt: z.string(),
+});
+
+export const businessProfileSchema = z.object({
+  tenantId: z.string(),
+  businessName: z.string(),
+  status: z.number(),
+  categorySlug: z.string(),
+  phone: z.string(),
+  description: z.string(),
+  createdAt: z.string(),
+  verifiedAt: z.string().nullable().optional(),
+  locations: z.array(businessLocationSchema),
+  verificationDocuments: z.array(verificationDocumentSchema),
+});
+
+export type BusinessProfile = z.infer<typeof businessProfileSchema>;
+
+export const updateBusinessProfileRequestSchema = z.object({
+  businessName: z.string().min(1),
+  categorySlug: z.string().min(1),
+  phone: z.string().min(1),
+  description: z.string().optional(),
+});
+
+export type UpdateBusinessProfileRequest = z.infer<
+  typeof updateBusinessProfileRequestSchema
+>;
+
+export const weeklyAvailabilityRuleSchema = z.object({
+  dayOfWeek: z.number().int().min(0).max(6),
+  openTime: z.string(),
+  closeTime: z.string(),
+});
+
+export type WeeklyAvailabilityRule = z.infer<typeof weeklyAvailabilityRuleSchema>;
+
+export const weeklyAvailabilityResponseSchema = z.object({
+  items: z.array(weeklyAvailabilityRuleSchema),
+});
+
+export const createServiceOfferingRequestSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().nullable().optional(),
+  priceAmount: z.number().positive(),
+  currency: z.string().min(3).max(3),
+  durationMinutes: z.number().int().positive(),
+});
+
+export type CreateServiceOfferingRequest = z.infer<
+  typeof createServiceOfferingRequestSchema
+>;
+
+export const updateServiceOfferingRequestSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().nullable().optional(),
+  priceAmount: z.number().positive(),
+  currency: z.string().min(3).max(3),
+  durationMinutes: z.number().int().positive(),
+  isActive: z.boolean(),
+});
+
+export type UpdateServiceOfferingRequest = z.infer<
+  typeof updateServiceOfferingRequestSchema
+>;
+
+export const BOOKING_STATUS_LABELS: Record<number, string> = {
+  0: "Pending",
+  1: "Confirmed",
+  2: "Rejected",
+  3: "Cancelled",
+};
+
+export const TENANT_STATUS_LABELS: Record<number, string> = {
+  0: "Draft",
+  1: "Pending verification",
+  2: "Verified",
+  3: "Rejected",
+  4: "Suspended",
+};
+
+export function formatBookingStatus(status: number): string {
+  return BOOKING_STATUS_LABELS[status] ?? "Unknown";
+}
+
+export function formatTenantStatus(status: number): string {
+  return TENANT_STATUS_LABELS[status] ?? "Unknown";
+}

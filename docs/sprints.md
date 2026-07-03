@@ -57,3 +57,19 @@ Unified app: browse, book, business booking management.
 | Customer booking flow | ✅ |
 | Auth0 Native login | ✅ |
 | Business booking management | ✅ |
+
+## Sprint 6 — Business portal (web) ← **in progress**
+
+Bring the web business portal to parity with mobile — profile, services, availability, booking inbox.
+
+| Task | Status |
+|------|--------|
+| Portal shell + dev business auth | ✅ |
+| Dashboard overview | ✅ |
+| Booking inbox (accept/reject) | ✅ |
+| Profile view + edit | ✅ |
+| Services list | ✅ |
+| Services CRUD UI | ⬜ |
+| Weekly availability UI | ⬜ |
+| Verification submission | ⬜ |
+| Multi-location management | ⬜ |
