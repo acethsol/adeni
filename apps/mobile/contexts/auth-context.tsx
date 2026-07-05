@@ -9,9 +9,13 @@ import {
 } from "react";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
-import type { AuthSession as ApiAuthSession } from "@adeni/shared";
+import type { AuthSession as ApiAuthSession, BusinessContextResponse } from "@adeni/shared";
 import { AdeniRoles } from "@adeni/shared";
 import { AdeniApiClient } from "@adeni/api-client";
+import {
+  createBusinessApiClient as buildBusinessApiClient,
+  loadBusinessContext,
+} from "@/lib/business-api";
 import {
   getAuth0Audience,
   getAuth0ClientId,
@@ -44,11 +48,16 @@ type AuthContextValue = {
   profileEmail: string | null;
   isBusinessUser: boolean;
   tenantId: string | null;
+  businessContext: BusinessContextResponse | null;
+  hasBusinessAccount: boolean;
+  isBusinessPortalEnabled: boolean;
   isBookingEnabled: boolean;
   isBusinessInboxEnabled: boolean;
   login: () => Promise<void>;
   logout: () => Promise<void>;
   createApiClient: (mode?: "customer" | "business") => AdeniApiClient;
+  createBusinessApiClient: () => Promise<AdeniApiClient>;
+  refreshBusinessContext: () => Promise<void>;
   refreshSession: () => Promise<void>;
 };
 
@@ -77,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [tokens, setTokens] = useState<StoredAuthTokens | null>(null);
   const [apiSession, setApiSession] = useState<ApiAuthSession | null>(null);
+  const [businessContext, setBusinessContext] = useState<BusinessContextResponse | null>(null);
 
   const [request, response, promptAsync] = AuthSession.useAuthRequest(
     {
@@ -118,9 +128,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ? Boolean(accessToken)
     : Boolean(accessToken || getDevCustomerAuth0Sub());
 
+  const isBusinessPortalEnabled = auth0Configured
+    ? Boolean(accessToken)
+    : Boolean(accessToken || getDevBusinessAuth0Sub());
+
+  const resolvedBusinessTenantId = businessContext?.tenantId ?? tenantId;
+  const hasBusinessAccount = businessContext !== null;
+
   const isBusinessInboxEnabled = auth0Configured
-    ? Boolean(accessToken && isBusinessUser && tenantId)
-    : Boolean(getDevBusinessAuth0Sub() || (accessToken && isBusinessUser && tenantId));
+    ? Boolean(accessToken && resolvedBusinessTenantId)
+    : Boolean(getDevBusinessAuth0Sub() || (accessToken && resolvedBusinessTenantId));
 
   const syncApiSession = useCallback(async (token: string | null, devSub?: string) => {
     if (!token && !devSub) {
@@ -186,18 +203,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return stored;
   }, [auth0Configured]);
 
+  const refreshBusinessContext = useCallback(async () => {
+    const devBusinessSub = getDevBusinessAuth0Sub();
+    if (!accessToken && !devBusinessSub) {
+      setBusinessContext(null);
+      return;
+    }
+
+    const context = await loadBusinessContext({
+      accessToken,
+      devAuth0Sub: accessToken ? null : devBusinessSub,
+    });
+    setBusinessContext(context);
+  }, [accessToken]);
+
   const refreshSession = useCallback(async () => {
     const stored = await ensureFreshTokens();
     if (stored?.accessToken) {
       await syncApiSession(stored.accessToken);
+      await refreshBusinessContext();
       return;
     }
 
     const devSub = getDevBusinessAuth0Sub() ?? getDevCustomerAuth0Sub();
     if (!auth0Configured && devSub) {
       await syncApiSession(null, devSub);
+      await refreshBusinessContext();
     }
-  }, [auth0Configured, ensureFreshTokens, syncApiSession]);
+  }, [auth0Configured, ensureFreshTokens, refreshBusinessContext, syncApiSession]);
 
   useEffect(() => {
     let cancelled = false;
@@ -220,6 +253,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (!cancelled) {
+        await refreshBusinessContext();
         setLoading(false);
       }
     }
@@ -229,7 +263,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [auth0Configured, ensureFreshTokens, syncApiSession]);
+  }, [auth0Configured, ensureFreshTokens, refreshBusinessContext, syncApiSession]);
 
   useEffect(() => {
     if (response?.type !== "success" || !request?.codeVerifier) {
@@ -285,6 +319,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await applyTokens(null);
   }, [applyTokens]);
 
+  const createBusinessApiClient = useCallback(async () => {
+    return buildBusinessApiClient({
+      accessToken,
+      devAuth0Sub: accessToken ? null : resolveDevAuth0Sub("business"),
+      tenantId: resolvedBusinessTenantId,
+    });
+  }, [accessToken, resolvedBusinessTenantId]);
+
   const createApiClient = useCallback(
     (mode: "customer" | "business" = "customer"): AdeniApiClient => {
       const devSub = accessToken ? null : resolveDevAuth0Sub(mode);
@@ -294,15 +336,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         devAuth0Sub: devSub,
       });
 
-      if (mode === "business" && tenantId) {
-        client.setTenantId(tenantId);
-      } else if (mode === "business" && devSub && apiSession?.tenantId) {
-        client.setTenantId(apiSession.tenantId);
+      if (mode === "business" && resolvedBusinessTenantId) {
+        client.setTenantId(resolvedBusinessTenantId);
       }
 
       return client;
     },
-    [accessToken, apiSession?.tenantId, tenantId],
+    [accessToken, resolvedBusinessTenantId],
   );
 
   const value = useMemo<AuthContextValue>(
@@ -315,11 +355,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profileEmail,
       isBusinessUser,
       tenantId,
+      businessContext,
+      hasBusinessAccount,
+      isBusinessPortalEnabled,
       isBookingEnabled,
       isBusinessInboxEnabled,
       login,
       logout,
       createApiClient,
+      createBusinessApiClient,
+      refreshBusinessContext,
       refreshSession,
     }),
     [
@@ -331,11 +376,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profileEmail,
       isBusinessUser,
       tenantId,
+      businessContext,
+      hasBusinessAccount,
+      isBusinessPortalEnabled,
       isBookingEnabled,
       isBusinessInboxEnabled,
       login,
       logout,
       createApiClient,
+      createBusinessApiClient,
+      refreshBusinessContext,
       refreshSession,
     ],
   );

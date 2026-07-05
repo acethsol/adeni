@@ -26,17 +26,19 @@ Copy `.env.example` to `.env` and adjust for physical devices.
 
 **Local booking (no Auth0):** With the API in Development (`Auth0:Enabled: false`), set `EXPO_PUBLIC_DEV_CUSTOMER_AUTH0_SUB=auth0|local-customer` so the app sends `X-Dev-Auth0-Sub` on booking requests (same pattern as web `DEV_CUSTOMER_AUTH0_SUB`).
 
-**Local business inbox:** Set `EXPO_PUBLIC_DEV_BUSINESS_AUTH0_SUB=auth0|local-business` — dev seed links this sub to the `lekki-cuts` tenant. Open **Account → Booking inbox**.
+**Local business inbox:** Set `EXPO_PUBLIC_DEV_BUSINESS_AUTH0_SUB=auth0|local-business` — dev seed links this sub to the `lekki-cuts` tenant. Open **Account → Business profile** or **Booking inbox**.
+
+**Business onboarding:** **Account → Register business** creates your tenant, then **Business profile** to edit details and submit verification documents.
 
 **Auth0 Native:** Set `EXPO_PUBLIC_AUTH0_*` vars and add callback URL `adeni://callback` on your Auth0 Native application. Sign in from the **Account** tab.
 
 Uses `@adeni/api-client` and `@adeni/shared` from the monorepo (`metro.config.js`).
 
-## Sprint 5 progress
+## Progress
 
-| Slice | Status |
-|-------|--------|
-| Browse (home, discover, business profile) | ✅ |
-| Customer booking flow | ✅ |
+| Area | Status |
+|------|--------|
+| Customer browse, book, my bookings, cancel | ✅ |
 | Auth0 Native login | ✅ |
-| Business booking management | ✅ |
+| Business register + profile + verification | ✅ |
+| Business booking inbox | ✅ |

@@ -14,7 +14,8 @@ export default function AccountScreen() {
     profileName,
     profileEmail,
     apiSession,
-    isBusinessUser,
+    isBusinessPortalEnabled,
+    hasBusinessAccount,
     isBusinessInboxEnabled,
     isBookingEnabled,
     login,
@@ -158,21 +159,48 @@ export default function AccountScreen() {
           </View>
         ) : null}
 
-        {isBusinessUser || isBusinessInboxEnabled ? (
+        {isBusinessPortalEnabled || hasBusinessAccount ? (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Business</Text>
             <Text style={styles.hint}>
-              Review pending bookings and accept or reject requests.
+              {hasBusinessAccount
+                ? "Manage your profile, verification, and booking inbox."
+                : "Register your business to appear on Adeni and accept bookings."}
             </Text>
-            <Pressable
-              onPress={() => router.push("/business/bookings")}
-              style={({ pressed }) => [
-                styles.primaryButton,
-                pressed && styles.buttonPressed,
-              ]}
-            >
-              <Text style={styles.primaryButtonText}>Open booking inbox</Text>
-            </Pressable>
+            {hasBusinessAccount ? (
+              <>
+                <Pressable
+                  onPress={() => router.push("/business/profile")}
+                  style={({ pressed }) => [
+                    styles.primaryButton,
+                    pressed && styles.buttonPressed,
+                  ]}
+                >
+                  <Text style={styles.primaryButtonText}>Business profile</Text>
+                </Pressable>
+                {isBusinessInboxEnabled ? (
+                  <Pressable
+                    onPress={() => router.push("/business/bookings")}
+                    style={({ pressed }) => [
+                      styles.secondaryButton,
+                      pressed && styles.buttonPressed,
+                    ]}
+                  >
+                    <Text style={styles.secondaryButtonText}>Open booking inbox</Text>
+                  </Pressable>
+                ) : null}
+              </>
+            ) : (
+              <Pressable
+                onPress={() => router.push("/business/register")}
+                style={({ pressed }) => [
+                  styles.primaryButton,
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                <Text style={styles.primaryButtonText}>Register business</Text>
+              </Pressable>
+            )}
           </View>
         ) : null}
       </ScrollView>

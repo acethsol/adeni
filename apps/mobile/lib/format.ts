@@ -28,6 +28,18 @@ export function slotRange(from: Date, days: number) {
   return { from: start.toISOString(), to: end.toISOString() };
 }
 
+const TENANT_STATUS_LABELS: Record<number, string> = {
+  0: "Draft",
+  1: "Pending verification",
+  2: "Verified",
+  3: "Rejected",
+  4: "Suspended",
+};
+
+export function formatTenantStatus(status: number): string {
+  return TENANT_STATUS_LABELS[status] ?? "Unknown";
+}
+
 const BOOKING_STATUS_LABELS: Record<number, string> = {
   0: "Pending",
   1: "Confirmed",

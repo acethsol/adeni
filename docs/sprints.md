@@ -96,6 +96,18 @@ Close remaining product gaps before staging deploy.
 | Customer cancel booking | ✅ |
 | SOC2-09 customer export/delete admin | ✅ |
 
+## Sprint 9 — Mobile business onboarding ✅
+
+Business owners can register and manage verification from the Expo app.
+
+| Task | Status |
+|------|--------|
+| Business tenant resolution via `getBusinessContext` | ✅ |
+| Register business screen | ✅ |
+| Profile edit + verification submit | ✅ |
+| Account tab business navigation | ✅ |
+| Booking inbox uses resolved tenant | ✅ |
+
 ## Next up
 
 1. Staging + Auth0 E2E

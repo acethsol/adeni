@@ -75,6 +75,20 @@ function RootLayoutNav() {
               }}
             />
             <Stack.Screen
+              name="business/register"
+              options={{
+                title: "Register business",
+                headerBackTitle: "Back",
+              }}
+            />
+            <Stack.Screen
+              name="business/profile"
+              options={{
+                title: "Business profile",
+                headerBackTitle: "Back",
+              }}
+            />
+            <Stack.Screen
               name="my-bookings"
               options={{
                 title: "My bookings",

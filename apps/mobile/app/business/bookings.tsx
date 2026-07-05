@@ -20,8 +20,12 @@ const PENDING_STATUS = 0;
 
 export default function BusinessBookingsScreen() {
   const router = useRouter();
-  const { loading: authLoading, isBusinessInboxEnabled, createApiClient, refreshSession } =
-    useAuth();
+  const {
+    loading: authLoading,
+    isBusinessInboxEnabled,
+    createBusinessApiClient,
+    refreshSession,
+  } = useAuth();
   const [bookings, setBookings] = useState<BookingResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +36,7 @@ export default function BusinessBookingsScreen() {
     setError(null);
 
     try {
-      const client = createApiClient("business");
+      const client = await createBusinessApiClient();
       const items = await client.getTenantBookings();
       setBookings(items);
     } catch (err) {
@@ -46,7 +50,7 @@ export default function BusinessBookingsScreen() {
     } finally {
       setLoading(false);
     }
-  }, [createApiClient]);
+  }, [createBusinessApiClient]);
 
   useEffect(() => {
     if (authLoading) {
@@ -66,7 +70,7 @@ export default function BusinessBookingsScreen() {
     setError(null);
 
     try {
-      const client = createApiClient("business");
+      const client = await createBusinessApiClient();
       const updated = await client.acceptTenantBooking(bookingId);
       setBookings((current) =>
         current.map((item) => (item.id === bookingId ? updated : item)),
@@ -83,7 +87,7 @@ export default function BusinessBookingsScreen() {
     setError(null);
 
     try {
-      const client = createApiClient("business");
+      const client = await createBusinessApiClient();
       const updated = await client.rejectTenantBooking(bookingId);
       setBookings((current) =>
         current.map((item) => (item.id === bookingId ? updated : item)),
