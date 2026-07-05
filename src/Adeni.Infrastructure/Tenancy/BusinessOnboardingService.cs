@@ -109,6 +109,43 @@ public sealed class BusinessOnboardingService(
             businessUser.Tenant!.Status));
     }
 
+    public async Task<Result<BusinessContextResponse>> GetBusinessContextAsync(
+        string auth0Sub,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(auth0Sub))
+        {
+            return Result.Failure<BusinessContextResponse>(Error.Forbidden("Authentication is required."));
+        }
+
+        var businessUser = await dbContext.BusinessUsers
+            .AsNoTracking()
+            .FirstOrDefaultAsync(b => b.Auth0Sub == auth0Sub, cancellationToken);
+
+        if (businessUser is null)
+        {
+            return Result.Failure<BusinessContextResponse>(Error.NotFound("Business account"));
+        }
+
+        var row = await (
+            from location in dbContext.BusinessLocations.AsNoTracking()
+            join tenant in dbContext.Tenants.AsNoTracking() on location.TenantId equals tenant.Id
+            where location.TenantId == businessUser.TenantId && location.IsActive
+            orderby location.IsPrimary descending
+            select new { location.Slug, tenant.Status })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (row is null)
+        {
+            return Result.Failure<BusinessContextResponse>(Error.NotFound("Business location"));
+        }
+
+        return Result.Success(new BusinessContextResponse(
+            businessUser.TenantId,
+            row.Slug,
+            row.Status));
+    }
+
     public async Task<Result<BusinessProfileResponse>> GetProfileAsync(
         Guid tenantId,
         string auth0Sub,

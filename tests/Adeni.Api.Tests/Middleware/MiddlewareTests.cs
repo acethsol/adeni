@@ -2,10 +2,15 @@ namespace Adeni.Api.Tests.Middleware;
 
 using Adeni.Api.Middleware;
 using Adeni.Application.Abstractions;
+using Adeni.Application.Caching;
+using Adeni.Application.Markets;
 using Adeni.Domain.Auditing;
 using Adeni.Infrastructure.Auditing;
+using Adeni.Infrastructure.Caching;
+using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Http;
 using Adeni.Infrastructure.Context;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Serilog;
@@ -254,7 +259,8 @@ public sealed class TenantAccessMiddlewareInvokeTests
         await middleware.InvokeAsync(
             context,
             new StubCurrentUser("user", tenant),
-            new InMemoryAuditLogWriter());
+            new InMemoryAuditLogWriter(),
+            CreateEmptyDbContext());
 
         Assert.True(nextCalled);
         Assert.True(tenantContext.IsTenantFilterActive);
@@ -272,9 +278,26 @@ public sealed class TenantAccessMiddlewareInvokeTests
         await middleware.InvokeAsync(
             context,
             new StubCurrentUser("user", Guid.NewGuid()),
-            new InMemoryAuditLogWriter());
+            new InMemoryAuditLogWriter(),
+            CreateEmptyDbContext());
 
         Assert.Equal(StatusCodes.Status400BadRequest, context.Response.StatusCode);
+    }
+
+    private static AdeniDbContext CreateEmptyDbContext()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddDistributedMemoryCache();
+        services.AddSingleton<ICacheService, DistributedCacheService>();
+        services.AddSingleton<IDistributedLockProvider, NoOpLockProvider>();
+        services.Configure<MarketOptions>(options => options.DefaultTimeZoneId = "UTC");
+        services.AddDbContext<AdeniDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));
+        services.AddScoped<Adeni.Infrastructure.Context.TenantContext>();
+        services.AddScoped<ITenantContext>(sp =>
+            sp.GetRequiredService<Adeni.Infrastructure.Context.TenantContext>());
+        var provider = services.BuildServiceProvider();
+        return provider.GetRequiredService<AdeniDbContext>();
     }
 }
 

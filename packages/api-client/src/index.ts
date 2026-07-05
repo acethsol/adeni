@@ -1,16 +1,23 @@
 import {
   authSessionSchema,
+  adminCustomersResponseSchema,
   availableSlotsResponseSchema,
   bookingResponseSchema,
+  businessContextResponseSchema,
   businessLocationSchema,
   businessProfileSchema,
   categoriesResponseSchema,
   createBookingRequestSchema,
   createServiceOfferingRequestSchema,
   customerBookingsResponseSchema,
+  customerBookingResponseSchema,
+  customerDataExportSchema,
   discoveryResponseSchema,
   pendingBusinessesResponseSchema,
   publicBusinessProfileSchema,
+  registerBusinessRequestSchema,
+  registerBusinessResponseSchema,
+  rejectBusinessRequestSchema,
   serviceOfferingSchema,
   serviceOfferingsResponseSchema,
   submitVerificationRequestSchema,
@@ -21,17 +28,22 @@ import {
   updateServiceOfferingRequestSchema,
   weeklyAvailabilityResponseSchema,
   type AuthSession,
+  type AdminCustomerSummary,
   type AvailableSlot,
   type BookingResponse,
+  type BusinessContextResponse,
   type BusinessProfile,
   type BusinessLocation,
   type Category,
   type CreateBookingRequest,
   type CreateServiceOfferingRequest,
   type CustomerBookingResponse,
+  type CustomerDataExport,
   type DiscoveryResponse,
   type PendingBusiness,
   type PublicBusinessProfile,
+  type RegisterBusinessRequest,
+  type RegisterBusinessResponse,
   type ServiceOffering,
   type SubmitVerificationRequest,
   type UpdateBusinessProfileRequest,
@@ -168,6 +180,14 @@ export class AdeniApiClient {
     return payload.items;
   }
 
+  async cancelMyBooking(bookingId: string): Promise<CustomerBookingResponse> {
+    const response = await this.request(
+      `/api/v1/bookings/${encodeURIComponent(bookingId)}/cancel`,
+      { method: "POST" },
+    );
+    return customerBookingResponseSchema.parse(await response.json());
+  }
+
   async getTenantBookings(): Promise<BookingResponse[]> {
     const response = await this.request("/api/v1/tenant/bookings");
     const payload = tenantBookingsResponseSchema.parse(await response.json());
@@ -200,6 +220,23 @@ export class AdeniApiClient {
   async getTenantProfile(): Promise<BusinessProfile> {
     const response = await this.request("/api/v1/tenant/profile");
     return businessProfileSchema.parse(await response.json());
+  }
+
+  async getBusinessContext(): Promise<BusinessContextResponse> {
+    const response = await this.request("/api/v1/tenant/context");
+    return businessContextResponseSchema.parse(await response.json());
+  }
+
+  async registerBusiness(
+    request: RegisterBusinessRequest,
+  ): Promise<RegisterBusinessResponse> {
+    const body = registerBusinessRequestSchema.parse(request);
+    const response = await this.request("/api/v1/tenant/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return registerBusinessResponseSchema.parse(await response.json());
   }
 
   async updateTenantProfile(
@@ -334,6 +371,46 @@ export class AdeniApiClient {
     const response = await this.request("/api/v1/admin/businesses/pending");
     const payload = pendingBusinessesResponseSchema.parse(await response.json());
     return payload.items;
+  }
+
+  async approvePendingBusiness(tenantId: string): Promise<void> {
+    await this.request(
+      `/api/v1/admin/businesses/${encodeURIComponent(tenantId)}/approve`,
+      { method: "POST" },
+    );
+  }
+
+  async rejectPendingBusiness(tenantId: string, reason: string): Promise<void> {
+    const body = rejectBusinessRequestSchema.parse({ reason });
+    await this.request(
+      `/api/v1/admin/businesses/${encodeURIComponent(tenantId)}/reject`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+  }
+
+  async searchAdminCustomers(email: string): Promise<AdminCustomerSummary[]> {
+    const query = new URLSearchParams({ email });
+    const response = await this.request(`/api/v1/admin/customers?${query.toString()}`);
+    const payload = adminCustomersResponseSchema.parse(await response.json());
+    return payload.items;
+  }
+
+  async exportAdminCustomer(customerId: string): Promise<CustomerDataExport> {
+    const response = await this.request(
+      `/api/v1/admin/customers/${encodeURIComponent(customerId)}/export`,
+    );
+    return customerDataExportSchema.parse(await response.json());
+  }
+
+  async initiateAdminCustomerDelete(customerId: string): Promise<void> {
+    await this.request(
+      `/api/v1/admin/customers/${encodeURIComponent(customerId)}/delete`,
+      { method: "POST" },
+    );
   }
 
   private async request(path: string, init: RequestInit = {}): Promise<Response> {

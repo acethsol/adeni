@@ -55,6 +55,7 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.Name).HasMaxLength(200);
             entity.Property(x => x.Email).HasMaxLength(320);
             entity.Property(x => x.Phone).HasMaxLength(32);
+            entity.Property(x => x.ErasureRequestedAt);
         });
 
         modelBuilder.Entity<Tenant>(entity =>

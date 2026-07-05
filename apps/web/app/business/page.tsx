@@ -60,7 +60,15 @@ export default async function BusinessPortalPage() {
       ) : null}
 
       {loadError ? (
-        <p className="text-sm text-[#1b4332]/70">{loadError}</p>
+        <div className="space-y-4">
+          <p className="text-sm text-[#1b4332]/70">{loadError}</p>
+          <Link
+            href="/business/register"
+            className="inline-block rounded-full bg-[#1b4332] px-5 py-2.5 text-sm font-medium text-white"
+          >
+            Register your business
+          </Link>
+        </div>
       ) : profile ? (
         <>
           <div className="grid gap-4 sm:grid-cols-3">

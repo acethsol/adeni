@@ -11,30 +11,47 @@ export function isBusinessPortalDevMode(): boolean {
   return !isAuth0Configured() && Boolean(getDevBusinessAuth0Sub());
 }
 
+async function resolveBusinessTenantId(client: AdeniApiClient): Promise<string | null> {
+  if (isAuth0Configured()) {
+    try {
+      const session = await client.getMe();
+      if (session.tenantId) {
+        return session.tenantId;
+      }
+    } catch {
+      // Fall through to business context lookup.
+    }
+  }
+
+  try {
+    const context = await client.getBusinessContext();
+    return context.tenantId;
+  } catch {
+    return null;
+  }
+}
+
 export async function createBusinessApiClient(): Promise<AdeniApiClient> {
   const client = createApiClient();
   const accessToken = await getAccessToken();
 
   if (accessToken) {
     client.setAccessToken(accessToken);
-    try {
-      const session = await client.getMe();
-      if (session.tenantId) {
-        client.setTenantId(session.tenantId);
-      }
-    } catch {
-      // Tenant may still resolve from JWT claims on tenant routes.
+  } else {
+    const devSub = getDevBusinessAuth0Sub();
+    if (devSub) {
+      client.setDevAuth0Sub(devSub);
+    } else {
+      throw new Error("Business API access requires Auth0 or DEV_BUSINESS_AUTH0_SUB.");
     }
-    return client;
   }
 
-  const devSub = getDevBusinessAuth0Sub();
-  if (devSub) {
-    client.setDevAuth0Sub(devSub);
-    return client;
+  const tenantId = await resolveBusinessTenantId(client);
+  if (tenantId) {
+    client.setTenantId(tenantId);
   }
 
-  throw new Error("Business API access requires Auth0 or DEV_BUSINESS_AUTH0_SUB.");
+  return client;
 }
 
 export async function businessApiFetch(
@@ -51,6 +68,18 @@ export async function businessApiFetch(
     headers.set("X-Dev-Auth0-Sub", getDevBusinessAuth0Sub()!);
   } else {
     return new Response(JSON.stringify({ title: "Unauthorized" }), { status: 401 });
+  }
+
+  const client = createApiClient();
+  if (accessToken) {
+    client.setAccessToken(accessToken);
+  } else {
+    client.setDevAuth0Sub(getDevBusinessAuth0Sub()!);
+  }
+
+  const tenantId = await resolveBusinessTenantId(client);
+  if (tenantId) {
+    headers.set("X-Tenant-Id", tenantId);
   }
 
   return fetch(`${getApiBaseUrl()}${path}`, {

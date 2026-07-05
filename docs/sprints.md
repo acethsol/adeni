@@ -85,6 +85,17 @@ Let customers view booking history on web and mobile.
 | Web `/my-bookings` page | ✅ |
 | Mobile my bookings screen | ✅ |
 
+## Sprint 8 — MVP gap closure ✅
+
+Close remaining product gaps before staging deploy.
+
+| Task | Status |
+|------|--------|
+| Admin approve/reject UI | ✅ |
+| Business self-signup web flow | ✅ |
+| Customer cancel booking | ✅ |
+| SOC2-09 customer export/delete admin | ✅ |
+
 ## Next up
 
 1. Staging + Auth0 E2E

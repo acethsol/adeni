@@ -41,6 +41,19 @@ public sealed class BookingsController(
         return Ok(new { items });
     }
 
+    [HttpPost("{id:guid}/cancel")]
+    public async Task<IActionResult> Cancel(Guid id, CancellationToken cancellationToken)
+    {
+        var auth0Sub = ResolveCustomerAuth0Sub();
+        if (auth0Sub is null)
+        {
+            return Unauthorized();
+        }
+
+        var result = await bookings.CancelAsync(auth0Sub, id, cancellationToken);
+        return ApiResults.FromResult(result, Ok);
+    }
+
     private string? ResolveCustomerAuth0Sub()
     {
         if (User.Identity?.IsAuthenticated == true)

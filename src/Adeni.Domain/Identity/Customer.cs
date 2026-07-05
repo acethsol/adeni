@@ -13,4 +13,6 @@ public sealed class Customer
     public string? Phone { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset? ErasureRequestedAt { get; set; }
 }

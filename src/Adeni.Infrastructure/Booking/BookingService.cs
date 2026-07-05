@@ -193,6 +193,60 @@ public sealed class BookingService(
         CancellationToken cancellationToken = default) =>
         UpdateStatusAsync(tenantId, bookingId, BookingStatus.Rejected, reason, cancellationToken);
 
+    public async Task<Result<CustomerBookingResponse>> CancelAsync(
+        string customerAuth0Sub,
+        Guid bookingId,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(customerAuth0Sub))
+        {
+            return Result.Failure<CustomerBookingResponse>(Error.Forbidden("Customer authentication is required."));
+        }
+
+        var row = await (
+            from booking in dbContext.Bookings
+            join customer in dbContext.Customers on booking.CustomerId equals customer.Id
+            join service in dbContext.ServiceOfferings.AsNoTracking() on booking.ServiceOfferingId equals service.Id
+            join tenant in dbContext.Tenants.AsNoTracking() on booking.TenantId equals tenant.Id
+            where booking.Id == bookingId && customer.Auth0Sub == customerAuth0Sub
+            select new { booking, ServiceName = service.Name, BusinessName = tenant.Name })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (row is null)
+        {
+            return Result.Failure<CustomerBookingResponse>(Error.NotFound("Booking"));
+        }
+
+        if (row.booking.Status is not (BookingStatus.Pending or BookingStatus.Confirmed))
+        {
+            return Result.Failure<CustomerBookingResponse>(
+                Error.Conflict("Only pending or confirmed bookings can be cancelled."));
+        }
+
+        if (row.booking.StartAt <= DateTimeOffset.UtcNow)
+        {
+            return Result.Failure<CustomerBookingResponse>(
+                Error.Conflict("Past bookings cannot be cancelled."));
+        }
+
+        row.booking.Status = BookingStatus.Cancelled;
+        row.booking.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var slug = await dbContext.BusinessLocations
+            .AsNoTracking()
+            .Where(x => x.TenantId == row.booking.TenantId && x.IsActive)
+            .OrderByDescending(x => x.IsPrimary)
+            .Select(x => x.Slug)
+            .FirstOrDefaultAsync(cancellationToken) ?? string.Empty;
+
+        return Result.Success(BookingMapper.ToCustomerResponse(
+            row.booking,
+            row.ServiceName,
+            row.BusinessName,
+            slug));
+    }
+
     private async Task<Result<BookingResponse>> UpdateStatusAsync(
         Guid tenantId,
         Guid bookingId,

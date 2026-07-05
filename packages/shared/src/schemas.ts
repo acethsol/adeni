@@ -79,6 +79,86 @@ export const pendingBusinessesResponseSchema = z.object({
 
 export type PendingBusiness = z.infer<typeof pendingBusinessSchema>;
 
+export const rejectBusinessRequestSchema = z.object({
+  reason: z.string().min(10),
+});
+
+export const adminCustomerSummarySchema = z.object({
+  id: z.string(),
+  auth0Sub: z.string(),
+  name: z.string(),
+  email: z.string().nullable().optional(),
+  createdAt: z.string(),
+  erasureRequestedAt: z.string().nullable().optional(),
+});
+
+export type AdminCustomerSummary = z.infer<typeof adminCustomerSummarySchema>;
+
+export const adminCustomersResponseSchema = z.object({
+  items: z.array(adminCustomerSummarySchema),
+});
+
+export const customerBookingExportItemSchema = z.object({
+  id: z.string(),
+  tenantId: z.string(),
+  serviceName: z.string(),
+  startAt: z.string(),
+  endAt: z.string(),
+  status: z.string(),
+  customerNotes: z.string().nullable().optional(),
+  createdAt: z.string(),
+});
+
+export const customerDataExportSchema = z.object({
+  customerId: z.string(),
+  auth0Sub: z.string(),
+  name: z.string(),
+  email: z.string().nullable().optional(),
+  phone: z.string().nullable().optional(),
+  createdAt: z.string(),
+  erasureRequestedAt: z.string().nullable().optional(),
+  bookings: z.array(customerBookingExportItemSchema),
+});
+
+export type CustomerDataExport = z.infer<typeof customerDataExportSchema>;
+
+export const registerBusinessLocationSchema = z.object({
+  slug: z.string().min(3).max(64),
+  name: z.string().optional(),
+  addressLine: z.string().min(5),
+  area: z.string().min(2),
+  marketId: z.string().min(1),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
+  timeZoneId: z.string().nullable().optional(),
+});
+
+export const registerBusinessRequestSchema = z.object({
+  businessName: z.string().min(2),
+  categorySlug: z.string().min(1),
+  phone: z.string().min(10),
+  location: registerBusinessLocationSchema,
+  description: z.string().optional(),
+});
+
+export type RegisterBusinessRequest = z.infer<typeof registerBusinessRequestSchema>;
+
+export const registerBusinessResponseSchema = z.object({
+  tenantId: z.string(),
+  slug: z.string(),
+  status: z.number(),
+});
+
+export type RegisterBusinessResponse = z.infer<typeof registerBusinessResponseSchema>;
+
+export const businessContextResponseSchema = z.object({
+  tenantId: z.string(),
+  slug: z.string(),
+  status: z.number(),
+});
+
+export type BusinessContextResponse = z.infer<typeof businessContextResponseSchema>;
+
 export const serviceOfferingSchema = z.object({
   id: z.string(),
   name: z.string(),

@@ -19,6 +19,7 @@ export function MyBookingsList() {
   const [bookings, setBookings] = useState<CustomerBookingResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionId, setActionId] = useState<string | null>(null);
 
   const loadBookings = useCallback(async () => {
     setLoading(true);
@@ -43,6 +44,28 @@ export function MyBookingsList() {
   useEffect(() => {
     void loadBookings();
   }, [loadBookings]);
+
+  async function handleCancel(bookingId: string) {
+    setActionId(bookingId);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/bookings/${encodeURIComponent(bookingId)}/cancel`, {
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error("Cancel failed");
+      }
+      const updated = (await response.json()) as CustomerBookingResponse;
+      setBookings((current) =>
+        current.map((item) => (item.id === bookingId ? updated : item)),
+      );
+    } catch {
+      setError("Could not cancel this booking.");
+    } finally {
+      setActionId(null);
+    }
+  }
 
   if (loading) {
     return <p className="text-sm text-[#1b4332]/70">Loading your bookings…</p>;
@@ -85,7 +108,12 @@ export function MyBookingsList() {
           <h2 className="text-lg font-semibold">Upcoming ({upcoming.length})</h2>
           <ul className="mt-4 space-y-3">
             {upcoming.map((booking) => (
-              <BookingCard key={booking.id} booking={booking} />
+              <BookingCard
+                key={booking.id}
+                booking={booking}
+                busy={actionId === booking.id}
+                onCancel={() => void handleCancel(booking.id)}
+              />
             ))}
           </ul>
         </section>
@@ -110,13 +138,22 @@ export function MyBookingsList() {
 function BookingCard({
   booking,
   compact = false,
+  busy = false,
+  onCancel,
 }: {
   booking: CustomerBookingResponse;
   compact?: boolean;
+  busy?: boolean;
+  onCancel?: () => void;
 }) {
   const businessHref = booking.businessSlug
     ? `/businesses/${booking.businessSlug}`
     : null;
+  const canCancel =
+    !compact &&
+    onCancel &&
+    (booking.status === 0 || booking.status === 1) &&
+    new Date(booking.startAt) > new Date();
 
   const content = (
     <>
@@ -140,6 +177,16 @@ function BookingCard({
             <p className="mt-2 text-sm italic text-[#1b4332]/80">
               &ldquo;{booking.customerNotes}&rdquo;
             </p>
+          ) : null}
+          {canCancel ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={onCancel}
+              className="mt-4 rounded-full border border-[#1b4332]/20 px-4 py-2 text-sm font-medium hover:bg-[#f6f8f6] disabled:opacity-60"
+            >
+              {busy ? "Cancelling…" : "Cancel booking"}
+            </button>
           ) : null}
         </div>
         <span className="mt-2 shrink-0 text-sm font-medium text-[#40916c] sm:mt-0">

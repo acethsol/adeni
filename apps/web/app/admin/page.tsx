@@ -1,4 +1,6 @@
 import { AdeniRoles } from "@adeni/shared";
+import { AdminCustomerPrivacyPanel } from "@/components/admin-customer-privacy-panel";
+import { AdminVerificationQueue } from "@/components/admin-verification-queue";
 import { AuthSetupCallout } from "@/components/auth-setup-callout";
 import { PortalShell } from "@/components/portal-shell";
 import { createAuthenticatedApiClient } from "@/lib/adeni";
@@ -35,7 +37,7 @@ export default async function AdminPortalPage() {
   return (
     <PortalShell
       title="Admin portal"
-      description="Verification queue and moderation — Auth0 admin role required."
+      description="Verification queue, customer privacy tools — Auth0 admin role required."
     >
       <div className="rounded-xl border border-[#1b4332]/10 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold">Signed in as admin</h2>
@@ -47,28 +49,10 @@ export default async function AdminPortalPage() {
 
       <section className="mt-8">
         <h2 className="text-lg font-semibold">Pending verifications</h2>
-        {queueError ? (
-          <p className="mt-4 text-sm text-[#1b4332]/70">{queueError}</p>
-        ) : pending.length === 0 ? (
-          <p className="mt-4 text-sm text-[#1b4332]/70">No businesses awaiting review.</p>
-        ) : (
-          <ul className="mt-4 divide-y divide-[#1b4332]/10 rounded-xl border border-[#1b4332]/10 bg-white">
-            {pending.map((business) => (
-              <li key={business.id} className="flex items-center justify-between px-5 py-4">
-                <div>
-                  <p className="font-medium">{business.name}</p>
-                  <p className="text-sm text-[#1b4332]/60">
-                    {business.slug} · {business.status}
-                  </p>
-                </div>
-                <time className="text-xs text-[#1b4332]/50">
-                  {new Date(business.createdAt).toLocaleDateString()}
-                </time>
-              </li>
-            ))}
-          </ul>
-        )}
+        <AdminVerificationQueue initialItems={pending} initialError={queueError} />
       </section>
+
+      <AdminCustomerPrivacyPanel />
     </PortalShell>
   );
 }

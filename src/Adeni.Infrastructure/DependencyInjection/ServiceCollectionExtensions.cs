@@ -59,6 +59,7 @@ public static class ServiceCollectionExtensions
         services.AddAdeniAuth(configuration);
         services.AddScoped<IAuthSyncService, AuthSyncService>();
         services.AddScoped<IAdminBusinessService, AdminBusinessService>();
+        services.AddScoped<IAdminCustomerService, AdminCustomerService>();
         services.AddScoped<IBusinessOnboardingService, BusinessOnboardingService>();
         services.AddScoped<IBusinessLocationService, BusinessLocationService>();
         services.AddScoped<IDiscoveryService, DiscoveryService>();

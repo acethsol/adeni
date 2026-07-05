@@ -31,6 +31,19 @@ public sealed class TenantController(
         return MapResult(result, Ok);
     }
 
+    [HttpGet("context")]
+    public async Task<IActionResult> GetContext(CancellationToken cancellationToken)
+    {
+        var auth0Sub = ResolveAuth0Sub();
+        if (auth0Sub is null)
+        {
+            return Unauthorized();
+        }
+
+        var result = await onboardingService.GetBusinessContextAsync(auth0Sub, cancellationToken);
+        return MapResult(result, Ok);
+    }
+
     [HttpGet("profile")]
     public async Task<IActionResult> GetProfile(CancellationToken cancellationToken)
     {

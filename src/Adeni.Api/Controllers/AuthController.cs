@@ -115,3 +115,50 @@ public sealed class AdminBusinessesController(IAdminBusinessService adminBusines
 }
 
 public sealed record RejectBusinessRequest(string Reason);
+
+[ApiController]
+[Route("api/v1/admin/customers")]
+[Authorize(Policy = AuthServiceCollectionExtensions.AdminMfaPolicy)]
+public sealed class AdminCustomersController(IAdminCustomerService adminCustomerService) : ControllerBase
+{
+    [HttpGet]
+    public async Task<IActionResult> Search([FromQuery] string? email, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return BadRequest(new { title = "Email query parameter is required." });
+        }
+
+        var items = await adminCustomerService.SearchAsync(email, cancellationToken);
+        return Ok(new { items });
+    }
+
+    [HttpGet("{id:guid}/export")]
+    public async Task<IActionResult> Export(Guid id, CancellationToken cancellationToken)
+    {
+        var adminId = User.FindFirst("sub")?.Value ?? "admin";
+        var result = await adminCustomerService.ExportAsync(id, adminId, cancellationToken);
+
+        return result.Match<IActionResult>(
+            payload => Ok(payload),
+            error => error.Code switch
+            {
+                _ => NotFound(new { title = error.Message })
+            });
+    }
+
+    [HttpPost("{id:guid}/delete")]
+    public async Task<IActionResult> InitiateDelete(Guid id, CancellationToken cancellationToken)
+    {
+        var adminId = User.FindFirst("sub")?.Value ?? "admin";
+        var result = await adminCustomerService.InitiateErasureAsync(id, adminId, cancellationToken);
+
+        return result.Match<IActionResult>(
+            _ => NoContent(),
+            error => error.Code switch
+            {
+                "conflict" => Conflict(new { title = error.Message }),
+                _ => NotFound(new { title = error.Message })
+            });
+    }
+}

@@ -59,4 +59,9 @@ public interface IBookingService
         Guid bookingId,
         string? reason,
         CancellationToken cancellationToken = default);
+
+    Task<Result<CustomerBookingResponse>> CancelAsync(
+        string customerAuth0Sub,
+        Guid bookingId,
+        CancellationToken cancellationToken = default);
 }

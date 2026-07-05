@@ -21,6 +21,7 @@ export default function MyBookingsScreen() {
   const [bookings, setBookings] = useState<CustomerBookingResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionId, setActionId] = useState<string | null>(null);
 
   const loadBookings = useCallback(async () => {
     setLoading(true);
@@ -55,6 +56,23 @@ export default function MyBookingsScreen() {
 
     setLoading(false);
   }, [authLoading, isBookingEnabled, loadBookings]);
+
+  async function handleCancel(bookingId: string) {
+    setActionId(bookingId);
+    setError(null);
+
+    try {
+      const client = createApiClient("customer");
+      const updated = await client.cancelMyBooking(bookingId);
+      setBookings((current) =>
+        current.map((item) => (item.id === bookingId ? updated : item)),
+      );
+    } catch {
+      setError("Could not cancel this booking.");
+    } finally {
+      setActionId(null);
+    }
+  }
 
   const upcoming = bookings.filter(
     (booking) => booking.status !== 2 && booking.status !== 3,
@@ -95,7 +113,12 @@ export default function MyBookingsScreen() {
             <Text style={styles.sectionLabel}>Upcoming ({upcoming.length})</Text>
             <View style={styles.list}>
               {upcoming.map((booking) => (
-                <BookingCard key={booking.id} booking={booking} />
+                <BookingCard
+                  key={booking.id}
+                  booking={booking}
+                  busy={actionId === booking.id}
+                  onCancel={() => void handleCancel(booking.id)}
+                />
               ))}
             </View>
           </>
@@ -119,11 +142,19 @@ export default function MyBookingsScreen() {
 function BookingCard({
   booking,
   muted = false,
+  busy = false,
+  onCancel,
 }: {
   booking: CustomerBookingResponse;
   muted?: boolean;
+  busy?: boolean;
+  onCancel?: () => void;
 }) {
   const router = useRouter();
+  const canCancel =
+    onCancel &&
+    (booking.status === 0 || booking.status === 1) &&
+    new Date(booking.startAt) > new Date();
 
   return (
     <View style={[styles.card, muted && styles.cardMuted]}>
@@ -133,6 +164,20 @@ function BookingCard({
       <Text style={styles.status}>{formatBookingStatus(booking.status)}</Text>
       {booking.customerNotes ? (
         <Text style={styles.notes}>&ldquo;{booking.customerNotes}&rdquo;</Text>
+      ) : null}
+      {canCancel ? (
+        <Pressable
+          onPress={onCancel}
+          disabled={busy}
+          style={({ pressed }) => [
+            styles.cancelButton,
+            (busy || pressed) && styles.buttonPressed,
+          ]}
+        >
+          <Text style={styles.cancelButtonText}>
+            {busy ? "Cancelling…" : "Cancel booking"}
+          </Text>
+        </Pressable>
       ) : null}
       {booking.businessSlug ? (
         <Pressable
@@ -265,6 +310,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: adeniTheme.text,
+  },
+  cancelButton: {
+    marginTop: 14,
+    alignSelf: "flex-start",
+    borderWidth: 1,
+    borderColor: "#fecaca",
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  cancelButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#991b1b",
   },
   buttonPressed: {
     opacity: 0.9,

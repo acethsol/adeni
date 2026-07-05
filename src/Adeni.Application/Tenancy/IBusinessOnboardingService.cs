@@ -78,10 +78,19 @@ public sealed record RegisterBusinessResponse(
     string Slug,
     TenantStatus Status);
 
+public sealed record BusinessContextResponse(
+    Guid TenantId,
+    string Slug,
+    TenantStatus Status);
+
 public interface IBusinessOnboardingService
 {
     Task<Result<RegisterBusinessResponse>> RegisterAsync(
         RegisterBusinessRequest request,
+        string auth0Sub,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<BusinessContextResponse>> GetBusinessContextAsync(
         string auth0Sub,
         CancellationToken cancellationToken = default);
 

@@ -3,6 +3,8 @@ namespace Adeni.Api.Middleware;
 using Adeni.Application.Abstractions;
 using Adeni.Domain.Auditing;
 using Adeni.Domain.Tenancy;
+using Adeni.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 public sealed class TenantAccessMiddleware(
     RequestDelegate next,
@@ -10,7 +12,11 @@ public sealed class TenantAccessMiddleware(
 {
     public const string TenantHeaderName = "X-Tenant-Id";
 
-    public async Task InvokeAsync(HttpContext context, ICurrentUser currentUser, IAuditLogWriter auditLogWriter)
+    public async Task InvokeAsync(
+        HttpContext context,
+        ICurrentUser currentUser,
+        IAuditLogWriter auditLogWriter,
+        AdeniDbContext dbContext)
     {
         if (!RequiresTenantHeader(context.Request.Path))
         {
@@ -35,7 +41,24 @@ public sealed class TenantAccessMiddleware(
         }
 
         var userTenant = currentUser.TenantId;
-        if (userTenant is null || userTenant.Value.IsEmpty || userTenant.Value.Value != requestedTenantGuid)
+        var tenantAllowed = userTenant is not null
+            && !userTenant.Value.IsEmpty
+            && userTenant.Value.Value == requestedTenantGuid;
+
+        if (!tenantAllowed && context.User.Identity?.IsAuthenticated == true)
+        {
+            var auth0Sub = context.User.FindFirst("sub")?.Value;
+            if (!string.IsNullOrWhiteSpace(auth0Sub))
+            {
+                var businessUser = await dbContext.BusinessUsers
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(b => b.Auth0Sub == auth0Sub);
+
+                tenantAllowed = businessUser is not null && businessUser.TenantId == requestedTenantGuid;
+            }
+        }
+
+        if (!tenantAllowed)
         {
             await LogCrossTenantAttemptAsync(context, currentUser, auditLogWriter, requestedTenantGuid);
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
@@ -76,5 +99,6 @@ public sealed class TenantAccessMiddleware(
 
     public static bool RequiresTenantHeader(PathString path) =>
         path.StartsWithSegments("/api/v1/tenant", StringComparison.OrdinalIgnoreCase)
-        && !path.StartsWithSegments("/api/v1/tenant/register", StringComparison.OrdinalIgnoreCase);
+        && !path.StartsWithSegments("/api/v1/tenant/register", StringComparison.OrdinalIgnoreCase)
+        && !path.StartsWithSegments("/api/v1/tenant/context", StringComparison.OrdinalIgnoreCase);
 }

@@ -196,6 +196,42 @@ public sealed class BookingFlowTests
     }
 
     [Fact]
+    public async Task Customer_can_cancel_upcoming_booking()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var tenantId = await SeedVerifiedTenantAsync(scope.ServiceProvider);
+
+        var catalog = scope.ServiceProvider.GetRequiredService<IServiceCatalogService>();
+        var availability = scope.ServiceProvider.GetRequiredService<IAvailabilityService>();
+        var bookings = scope.ServiceProvider.GetRequiredService<IBookingService>();
+
+        var service = await catalog.CreateAsync(
+            tenantId,
+            new CreateServiceOfferingRequest("Fade", null, 5000m, "NGN", 30),
+            CancellationToken.None);
+
+        await availability.ReplaceWeeklyRulesAsync(
+            tenantId,
+            [new WeeklyAvailabilityRule(DayOfWeek.Monday, new TimeOnly(9, 0), new TimeOnly(17, 0))],
+            CancellationToken.None);
+
+        const string customerSub = "auth0|customer-cancel";
+        var slotStart = NextMondayAt(new TimeOnly(10, 0));
+        var created = await bookings.CreateAsync(
+            customerSub,
+            new CreateBookingRequest(tenantId, service.Value!.Id, slotStart, null),
+            CancellationToken.None);
+
+        Assert.True(created.IsSuccess);
+
+        var cancelled = await bookings.CancelAsync(customerSub, created.Value!.Id, CancellationToken.None);
+
+        Assert.True(cancelled.IsSuccess);
+        Assert.Equal(BookingStatus.Cancelled, cancelled.Value!.Status);
+    }
+
+    [Fact]
     public async Task Business_profile_time_zone_overrides_market_default()
     {
         await using var provider = BuildProvider(defaultTimeZoneId: "UTC");

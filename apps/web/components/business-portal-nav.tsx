@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: "/business/availability", label: "Availability" },
   { href: "/business/locations", label: "Locations" },
   { href: "/business/profile", label: "Profile" },
+  { href: "/business/register", label: "Register" },
 ];
 
 export function BusinessPortalNav() {
