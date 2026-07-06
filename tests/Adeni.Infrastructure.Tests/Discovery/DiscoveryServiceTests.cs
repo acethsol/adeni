@@ -25,7 +25,7 @@ public sealed class DiscoveryServiceTests
         await db.SaveChangesAsync();
 
         var service = scope.ServiceProvider.GetRequiredService<DiscoveryService>();
-        var result = await service.SearchAsync(6.4474, 3.4700, null, null, 1, 20);
+        var result = await service.SearchAsync(6.4474, 3.4700, null, null, null, 1, 20);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Value!.TotalCount);
@@ -45,7 +45,7 @@ public sealed class DiscoveryServiceTests
         await db.SaveChangesAsync();
 
         var service = scope.ServiceProvider.GetRequiredService<DiscoveryService>();
-        var result = await service.SearchAsync(6.4474, 3.4700, "barbers", null, 1, 20);
+        var result = await service.SearchAsync(6.4474, 3.4700, "barbers", null, null, 1, 20);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Value!.Items);
@@ -64,11 +64,30 @@ public sealed class DiscoveryServiceTests
         await db.SaveChangesAsync();
 
         var service = scope.ServiceProvider.GetRequiredService<DiscoveryService>();
-        var result = await service.SearchAsync(6.4474, 3.4700, null, "lagos", 1, 20);
+        var result = await service.SearchAsync(6.4474, 3.4700, null, "lagos", null, 1, 20);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Value!.Items);
         Assert.Equal("lagos", result.Value.Items[0].MarketId);
+    }
+
+    [Fact]
+    public async Task Search_filters_by_query()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+
+        BusinessTestSeed.SeedVerifiedBusiness(db, "lekki-cuts", "Lekki Cuts", "barbers", "Lekki", 6.4474, 3.4700);
+        BusinessTestSeed.SeedVerifiedBusiness(db, "vi-salon", "VI Salon", "hair-salons", "Victoria Island", 6.4281, 3.4219);
+        await db.SaveChangesAsync();
+
+        var service = scope.ServiceProvider.GetRequiredService<DiscoveryService>();
+        var result = await service.SearchAsync(6.4474, 3.4700, null, null, "lekki", 1, 20);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Value!.Items);
+        Assert.Equal("lekki-cuts", result.Value.Items[0].Slug);
     }
 
     [Fact]

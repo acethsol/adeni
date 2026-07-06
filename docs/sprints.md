@@ -121,6 +121,20 @@ Shared tokens, UI primitives, empty/loading states, and TanStack Query on web + 
 | TanStack Query (categories, discovery, bookings) | ✅ |
 | Docs: [design-system.md](./design-system.md) | ✅ |
 
+## Sprint 11 — Discovery UX (in progress)
+
+Global search, visual discovery cards, and Ask Adeni rule-based search.
+
+| Task | Status |
+|------|--------|
+| API `GET /discovery?q=` keyword filter | ✅ |
+| Global search bar (web header + mobile discover) | ✅ |
+| Category visuals + image business cards | ✅ |
+| Ask Adeni panel + rule-based intent parser | ✅ |
+| LLM agent (11d) | Deferred |
+
+Confluence: [Sprint 11 — Discovery UX](https://aceth.atlassian.net/wiki/spaces/SD/pages/28540929)
+
 ## Next up
 
 1. Staging + Auth0 E2E

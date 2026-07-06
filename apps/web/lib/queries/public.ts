@@ -20,6 +20,7 @@ export function useDiscovery(params: {
   lng: number;
   market: string;
   category?: string | null;
+  q?: string | null;
   enabled?: boolean;
 }) {
   const { enabled = true, ...discoveryParams } = params;
@@ -33,6 +34,7 @@ export function useDiscovery(params: {
         lng: discoveryParams.lng,
         market: discoveryParams.market,
         category: discoveryParams.category ?? undefined,
+        q: discoveryParams.q ?? undefined,
       });
       return result.items;
     },

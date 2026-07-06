@@ -43,6 +43,7 @@ public interface IDiscoveryService
         double longitude,
         string? categorySlug,
         string? marketId,
+        string? query,
         int page,
         int pageSize,
         CancellationToken cancellationToken = default);

@@ -21,8 +21,8 @@ public static class CacheKeys
 {
     public static string LocationProfile(string slug) => $"location:{slug}:profile";
     public static string TenantProfile(Guid tenantId) => $"tenant:{tenantId:N}:profile";
-    public static string Discovery(double lat, double lng, string? category, string? marketId, int page) =>
-        $"discovery:{lat:F3}:{lng:F3}:{category ?? "all"}:{marketId ?? "any"}:{page}";
+    public static string Discovery(double lat, double lng, string? category, string? marketId, int page, string? query) =>
+        $"discovery:{lat:F3}:{lng:F3}:{category ?? "all"}:{marketId ?? "any"}:{page}:{query ?? ""}";
     public static string CategoriesAll => "categories:all";
     public static string SlotLock(Guid tenantId, DateTimeOffset start, Guid serviceId) =>
         $"slot-lock:{tenantId:N}:{start.UtcDateTime:O}:{serviceId:N}";

@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import type { Category } from "@adeni/shared";
 import { PublicHeader } from "@/components/public-header";
+import { AskAdeniPanel } from "@/components/ask-adeni-panel";
+import { CategoryTile } from "@/components/category-tile";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Callout } from "@/components/ui/callout";
 import { PageHeader } from "@/components/ui/page-header";
 import { createApiClient, getApiBaseUrl } from "@/lib/adeni";
 import { getActiveMarketConfig } from "@/lib/market";
+import { getCategoryVisual } from "@adeni/shared";
 
 export const revalidate = 3600;
 
@@ -84,8 +85,12 @@ export default async function HomePage() {
           ) : null}
         </section>
 
+        <section className="mt-12">
+          <AskAdeniPanel />
+        </section>
+
         <section className="mt-16">
-          <h2 className="text-lg font-semibold">Categories</h2>
+          <h2 className="text-lg font-semibold">Browse by category</h2>
           {categories.length === 0 ? (
             <Callout tone="warning" className="mt-4">
               Start the API at {getApiBaseUrl()} to load categories.
@@ -95,21 +100,13 @@ export default async function HomePage() {
               {[...groupedCategories.entries()].map(([parentSlug, items]) => (
                 <div key={parentSlug}>
                   <h3 className="text-sm font-semibold uppercase tracking-wide text-accent">
+                    {getCategoryVisual(parentSlug, formatGroupLabel(parentSlug)).icon}{" "}
                     {formatGroupLabel(parentSlug)}
                   </h3>
-                  <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <ul className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {items.map((category) => (
                       <li key={category.id}>
-                        <Link href={`/discover?category=${category.slug}`}>
-                          <Card
-                            interactive
-                            padding="sm"
-                            className="transition-colors hover:border-accent/40"
-                          >
-                            <p className="font-medium">{category.name}</p>
-                            <p className="text-sm text-muted-foreground">{category.slug}</p>
-                          </Card>
-                        </Link>
+                        <CategoryTile category={category} />
                       </li>
                     ))}
                   </ul>

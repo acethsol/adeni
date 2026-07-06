@@ -16,11 +16,12 @@ public sealed class DiscoveryController(IDiscoveryService discovery) : Controlle
         [FromQuery] double lng,
         [FromQuery] string? category,
         [FromQuery] string? market,
+        [FromQuery] string? q,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default)
     {
-        var result = await discovery.SearchAsync(lat, lng, category, market, page, pageSize, cancellationToken);
+        var result = await discovery.SearchAsync(lat, lng, category, market, q, page, pageSize, cancellationToken);
 
         return result.Match<IActionResult>(
             payload => Ok(new

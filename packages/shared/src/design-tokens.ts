@@ -95,6 +95,7 @@ export const queryKeys = {
     lng: number;
     market: string;
     category?: string | null;
+    q?: string | null;
     page?: number;
   }) => ["discovery", params] as const,
   businessProfile: (slug: string) => ["business-profile", slug] as const,

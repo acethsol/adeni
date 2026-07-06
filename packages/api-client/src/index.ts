@@ -76,6 +76,7 @@ export type DiscoverySearchParams = {
   lng: number;
   category?: string | null;
   market?: string | null;
+  q?: string | null;
   page?: number;
   pageSize?: number;
 };
@@ -127,6 +128,10 @@ export class AdeniApiClient {
 
     if (params.market) {
       query.set("market", params.market);
+    }
+
+    if (params.q) {
+      query.set("q", params.q);
     }
 
     const response = await this.request(`/api/v1/discovery?${query.toString()}`);

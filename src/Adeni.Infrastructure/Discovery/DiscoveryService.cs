@@ -21,6 +21,7 @@ public sealed class DiscoveryService(
         double longitude,
         string? categorySlug,
         string? marketId,
+        string? query,
         int page,
         int pageSize,
         CancellationToken cancellationToken = default)
@@ -51,8 +52,11 @@ public sealed class DiscoveryService(
         var normalizedCategory = string.IsNullOrWhiteSpace(categorySlug)
             ? null
             : categorySlug.Trim().ToLowerInvariant();
+        var normalizedQuery = string.IsNullOrWhiteSpace(query)
+            ? null
+            : query.Trim().ToLowerInvariant();
 
-        var cacheKey = CacheKeys.Discovery(latitude, longitude, normalizedCategory, normalizedMarket, page);
+        var cacheKey = CacheKeys.Discovery(latitude, longitude, normalizedCategory, normalizedMarket, page, normalizedQuery);
 
         return SearchCachedAsync(
             cacheKey,
@@ -60,6 +64,7 @@ public sealed class DiscoveryService(
             longitude,
             normalizedCategory,
             normalizedMarket,
+            normalizedQuery,
             page,
             effectivePageSize,
             cancellationToken);
@@ -98,6 +103,7 @@ public sealed class DiscoveryService(
         double longitude,
         string? categorySlug,
         string? marketId,
+        string? searchQuery,
         int page,
         int pageSize,
         CancellationToken cancellationToken)
@@ -107,7 +113,13 @@ public sealed class DiscoveryService(
             CacheTtl.Discovery,
             async ct =>
             {
-                var items = await LoadDiscoveryItemsAsync(latitude, longitude, categorySlug, marketId, ct);
+                var items = await LoadDiscoveryItemsAsync(
+                    latitude,
+                    longitude,
+                    categorySlug,
+                    marketId,
+                    searchQuery,
+                    ct);
                 var totalCount = items.Count;
                 var pageItems = items
                     .Skip((page - 1) * pageSize)
@@ -126,6 +138,7 @@ public sealed class DiscoveryService(
         double longitude,
         string? categorySlug,
         string? marketId,
+        string? searchQuery,
         CancellationToken cancellationToken)
     {
         var query = dbContext.BusinessLocations
@@ -153,6 +166,18 @@ public sealed class DiscoveryService(
         }
 
         var businesses = await query.ToListAsync(cancellationToken);
+
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            businesses = businesses
+                .Where(x =>
+                    x.tenant.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)
+                    || x.location.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)
+                    || x.location.Area.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)
+                    || x.profile.CategorySlug.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)
+                    || x.profile.Description.Contains(searchQuery, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
 
         return businesses
             .Select(x => new DiscoveryBusinessItem(

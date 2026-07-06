@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import type { Category } from "@adeni/shared";
-import { PublicHeader } from "@/components/public-header";
-import { Card } from "@/components/ui/card";
+import type { DiscoveryBusinessItem } from "@adeni/shared";
+import { BusinessDiscoveryCard } from "@/components/business-discovery-card";
+import { AskAdeniPanel } from "@/components/ask-adeni-panel";
 import { Callout } from "@/components/ui/callout";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
+import { PublicHeader } from "@/components/public-header";
+import { CategoryFilterLinks } from "@/components/discover-category-filters";
+import type { Category } from "@adeni/shared";
+import { parseSearchIntent } from "@adeni/shared";
 import { createApiClient } from "@/lib/adeni";
 import { getActiveMarketConfig, getDiscoveryLocation } from "@/lib/market";
-import { cn } from "@/lib/cn";
 
 export const revalidate = 120;
 
@@ -22,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 type Props = {
-  searchParams: Promise<{ category?: string }>;
+  searchParams: Promise<{ category?: string; q?: string }>;
 };
 
 async function getCategories(): Promise<Category[]> {
@@ -34,24 +36,15 @@ async function getCategories(): Promise<Category[]> {
   }
 }
 
-function filterChipClass(active: boolean) {
-  return cn(
-    "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
-    active
-      ? "bg-primary text-primary-foreground shadow-sm"
-      : "border border-border-strong bg-surface text-foreground hover:border-accent/40",
-  );
-}
-
 export default async function DiscoverPage({ searchParams }: Props) {
   const market = await getActiveMarketConfig();
   const searchLocation = await getDiscoveryLocation();
-  const { category } = await searchParams;
+  const { category, q } = await searchParams;
   const categories = await getCategories();
   const selectedCategory = category?.trim().toLowerCase() || null;
+  const searchQuery = q?.trim() || null;
 
-  let businesses: Awaited<ReturnType<ReturnType<typeof createApiClient>["searchDiscovery"]>>["items"] =
-    [];
+  let businesses: DiscoveryBusinessItem[] = [];
   let loadError: string | null = null;
 
   try {
@@ -61,6 +54,7 @@ export default async function DiscoverPage({ searchParams }: Props) {
       lng: searchLocation.lng,
       market: market.id,
       category: selectedCategory,
+      q: searchQuery,
     });
     businesses = result.items;
   } catch {
@@ -69,34 +63,35 @@ export default async function DiscoverPage({ searchParams }: Props) {
 
   const categoryName =
     categories.find((item) => item.slug === selectedCategory)?.name ?? null;
+  const intentSummary = searchQuery ? parseSearchIntent(searchQuery).summary : null;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <PublicHeader />
 
-      <main className="mx-auto max-w-5xl px-6 py-16">
+      <main className="mx-auto max-w-5xl px-6 py-12">
         <PageHeader
           eyebrow={market.name}
           title="Discover services"
-          description={`Showing results near ${market.name}${categoryName ? ` · ${categoryName}` : ""}.`}
+          description={
+            searchQuery
+              ? `${intentSummary ?? `Results for “${searchQuery}”`} near ${market.name}.`
+              : `Showing results near ${market.name}${categoryName ? ` · ${categoryName}` : ""}.`
+          }
         />
 
-        {categories.length > 0 && (
-          <div className="mt-6 flex flex-wrap gap-2">
-            <Link href="/discover" className={filterChipClass(!selectedCategory)}>
-              All
-            </Link>
-            {categories.map((item) => (
-              <Link
-                key={item.id}
-                href={`/discover?category=${item.slug}`}
-                className={filterChipClass(selectedCategory === item.slug)}
-              >
-                {item.name}
-              </Link>
-            ))}
-          </div>
-        )}
+        <div className="mt-8">
+          <AskAdeniPanel />
+        </div>
+
+        {categories.length > 0 ? (
+          <CategoryFilterLinks
+            categories={categories}
+            selectedCategory={selectedCategory}
+            searchQuery={searchQuery}
+            className="mt-8"
+          />
+        ) : null}
 
         {loadError ? (
           <Callout tone="error" className="mt-8">
@@ -105,30 +100,22 @@ export default async function DiscoverPage({ searchParams }: Props) {
         ) : businesses.length === 0 ? (
           <EmptyState
             className="mt-8"
-            title="No verified businesses yet"
+            title={searchQuery ? "No matches found" : "No verified businesses yet"}
             description={
-              selectedCategory
-                ? "Try another category or list your business on Adeni."
-                : "Onboard supply via the business portal to appear here."
+              searchQuery
+                ? "Try Ask Adeni with different words or browse all categories."
+                : selectedCategory
+                  ? "Try another category or list your business on Adeni."
+                  : "Onboard supply via the business portal to appear here."
             }
-            actionLabel="List your business"
-            actionHref="/business/register"
+            actionLabel={searchQuery ? "Browse all" : "List your business"}
+            actionHref={searchQuery ? "/discover" : "/business/register"}
           />
         ) : (
-          <ul className="mt-8 grid gap-4 sm:grid-cols-2">
+          <ul className="mt-8 grid gap-5 sm:grid-cols-2">
             {businesses.map((business) => (
               <li key={business.tenantId}>
-                <Link href={`/businesses/${business.slug}`}>
-                  <Card interactive padding="md" className="hover:border-accent/40">
-                    <p className="text-lg font-semibold">{business.name}</p>
-                    <p className="mt-1 text-sm text-muted">
-                      {business.area} · {business.categorySlug.replace("-", " ")}
-                    </p>
-                    <p className="mt-2 text-xs font-semibold text-accent">
-                      {business.distanceKm.toFixed(1)} km away
-                    </p>
-                  </Card>
-                </Link>
+                <BusinessDiscoveryCard business={business} />
               </li>
             ))}
           </ul>

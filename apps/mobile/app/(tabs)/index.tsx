@@ -1,10 +1,11 @@
 import { useRouter } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { Category } from "@adeni/shared";
+import { getCategoryVisual } from "@adeni/shared";
 import { Screen, ScreenHeader } from "@/components/adeni/Screen";
+import { AskAdeniPanel } from "@/components/ui/AskAdeniPanel";
 import { Button } from "@/components/ui/Button";
 import { Callout } from "@/components/ui/Callout";
-import { Card } from "@/components/ui/Card";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import { useMarket } from "@/contexts/market-context";
 import { useCategories } from "@/lib/queries/public";
@@ -39,32 +40,37 @@ export default function HomeScreen() {
           </Callout>
         ) : null}
 
-        <Button title="Browse services" onPress={() => router.push("/discover")} containerStyle={styles.cta} />
+        <Button
+          title="Browse services"
+          onPress={() => router.push("/discover")}
+          containerStyle={styles.cta}
+        />
+
+        <AskAdeniPanel />
 
         {isLoading ? (
           <SkeletonList count={2} />
         ) : categories.length > 0 ? (
           <View style={styles.categories}>
-            <Text style={styles.sectionTitle}>Categories</Text>
+            <Text style={styles.sectionTitle}>Browse by category</Text>
             {[...grouped.entries()].map(([parentSlug, items]) => (
               <View key={parentSlug} style={styles.group}>
-                <Text style={styles.groupLabel}>{formatGroupLabel(parentSlug)}</Text>
+                <Text style={styles.groupLabel}>
+                  {getCategoryVisual(parentSlug, formatGroupLabel(parentSlug)).icon}{" "}
+                  {formatGroupLabel(parentSlug)}
+                </Text>
                 <View style={styles.groupList}>
                   {items.map((category) => (
-                    <Pressable
+                    <CategoryTile
                       key={category.id}
+                      category={category}
                       onPress={() =>
                         router.push({
                           pathname: "/discover",
                           params: { category: category.slug },
                         })
                       }
-                    >
-                      <Card padding="sm" style={styles.categoryCard}>
-                        <Text style={styles.categoryName}>{category.name}</Text>
-                        <Text style={styles.categorySlug}>{category.slug}</Text>
-                      </Card>
-                    </Pressable>
+                    />
                   ))}
                 </View>
               </View>
@@ -76,8 +82,21 @@ export default function HomeScreen() {
   );
 }
 
+function CategoryTile({ category, onPress }: { category: Category; onPress: () => void }) {
+  const visual = getCategoryVisual(category.slug, category.name);
+
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.tile, pressed && styles.tilePressed]}>
+      <Image source={{ uri: visual.imageUrl }} style={styles.tileImage} resizeMode="cover" />
+      <View style={styles.tileOverlay} />
+      <Text style={styles.tileIcon}>{visual.icon}</Text>
+      <Text style={styles.tileName}>{category.name}</Text>
+    </Pressable>
+  );
+}
+
 function groupCategories(categories: Category[]) {
-  const groups = new Map<string, typeof categories>();
+  const groups = new Map<string, Category[]>();
 
   for (const category of categories) {
     const key = category.parentSlug ?? "general";
@@ -102,14 +121,15 @@ function formatGroupLabel(parentSlug: string) {
 
 const styles = StyleSheet.create({
   content: {
-    paddingHorizontal: adeniTheme.spacing.xl,
     paddingBottom: adeniTheme.spacing["3xl"],
   },
   cta: {
     marginTop: adeniTheme.spacing.xl,
+    marginHorizontal: adeniTheme.spacing.xl,
   },
   categories: {
     marginTop: adeniTheme.spacing["3xl"],
+    paddingHorizontal: adeniTheme.spacing.xl,
   },
   sectionTitle: {
     ...adeniTheme.typography.titleSm,
@@ -126,17 +146,33 @@ const styles = StyleSheet.create({
     marginTop: adeniTheme.spacing.md,
     gap: adeniTheme.spacing.md,
   },
-  categoryCard: {
+  tile: {
+    height: 120,
+    borderRadius: adeniTheme.radius.lg,
+    overflow: "hidden",
     marginBottom: adeniTheme.spacing.md,
+    justifyContent: "flex-end",
+    padding: adeniTheme.spacing.lg,
   },
-  categoryName: {
-    fontSize: adeniTheme.typography.body.fontSize,
-    fontWeight: "600",
-    color: adeniTheme.text,
+  tilePressed: {
+    opacity: 0.92,
   },
-  categorySlug: {
-    marginTop: 2,
-    fontSize: adeniTheme.typography.caption.fontSize,
-    color: adeniTheme.textMuted,
+  tileImage: {
+    ...StyleSheet.absoluteFill,
+  },
+  tileOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(0,0,0,0.35)",
+  },
+  tileIcon: {
+    fontSize: 18,
+    zIndex: 1,
+  },
+  tileName: {
+    marginTop: 4,
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#ffffff",
+    zIndex: 1,
   },
 });
