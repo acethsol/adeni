@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getOptionalSession } from "@/lib/auth/session";
 import { isAuth0Configured } from "@/lib/auth/config";
+import { Button } from "@/components/ui/button";
 
 export async function AuthNav() {
   if (!isAuth0Configured()) {
@@ -11,29 +12,23 @@ export async function AuthNav() {
 
   if (!session) {
     return (
-      <Link
-        href="/auth/login"
-        className="rounded-full border border-[#1b4332]/20 px-4 py-1.5 text-sm font-medium"
-      >
+      <Button href="/auth/login" variant="secondary" size="sm">
         Log in
-      </Link>
+      </Button>
     );
   }
 
   return (
-    <div className="flex items-center gap-3">
-      <Link href="/my-bookings" className="text-sm font-medium hover:underline">
+    <div className="flex items-center gap-2 sm:gap-3">
+      <Link href="/my-bookings" className="hidden text-sm font-semibold text-accent hover:underline sm:inline">
         My bookings
       </Link>
-      <span className="hidden text-sm text-[#1b4332]/70 sm:inline">
+      <span className="hidden text-sm text-muted md:inline">
         {session.name ?? session.email ?? "Signed in"}
       </span>
-      <Link
-        href="/auth/logout"
-        className="rounded-full border border-[#1b4332]/20 px-4 py-1.5 text-sm font-medium"
-      >
+      <Button href="/auth/logout" variant="secondary" size="sm">
         Log out
-      </Link>
+      </Button>
     </div>
   );
 }

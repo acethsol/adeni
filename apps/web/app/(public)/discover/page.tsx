@@ -2,8 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { Category } from "@adeni/shared";
 import { PublicHeader } from "@/components/public-header";
+import { Card } from "@/components/ui/card";
+import { Callout } from "@/components/ui/callout";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import { createApiClient } from "@/lib/adeni";
 import { getActiveMarketConfig, getDiscoveryLocation } from "@/lib/market";
+import { cn } from "@/lib/cn";
+
+export const revalidate = 120;
 
 export async function generateMetadata(): Promise<Metadata> {
   const market = await getActiveMarketConfig();
@@ -25,6 +32,15 @@ async function getCategories(): Promise<Category[]> {
   } catch {
     return [];
   }
+}
+
+function filterChipClass(active: boolean) {
+  return cn(
+    "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+    active
+      ? "bg-primary text-primary-foreground shadow-sm"
+      : "border border-border-strong bg-surface text-foreground hover:border-accent/40",
+  );
 }
 
 export default async function DiscoverPage({ searchParams }: Props) {
@@ -55,40 +71,26 @@ export default async function DiscoverPage({ searchParams }: Props) {
     categories.find((item) => item.slug === selectedCategory)?.name ?? null;
 
   return (
-    <div className="min-h-screen bg-[#f6f8f6] text-[#1b4332]">
+    <div className="min-h-screen bg-background text-foreground">
       <PublicHeader />
 
       <main className="mx-auto max-w-5xl px-6 py-16">
-        <p className="text-sm font-semibold uppercase tracking-widest text-[#40916c]">
-          {market.name}
-        </p>
-        <h1 className="mt-2 text-3xl font-bold">Discover services</h1>
-        <p className="mt-3 text-[#1b4332]/80">
-          Showing results near {market.name}
-          {categoryName ? ` · ${categoryName}` : ""}.
-        </p>
+        <PageHeader
+          eyebrow={market.name}
+          title="Discover services"
+          description={`Showing results near ${market.name}${categoryName ? ` · ${categoryName}` : ""}.`}
+        />
 
         {categories.length > 0 && (
           <div className="mt-6 flex flex-wrap gap-2">
-            <Link
-              href="/discover"
-              className={`rounded-full px-4 py-2 text-sm font-medium ${
-                selectedCategory
-                  ? "border border-[#1b4332]/20 bg-white"
-                  : "bg-[#1b4332] text-white"
-              }`}
-            >
+            <Link href="/discover" className={filterChipClass(!selectedCategory)}>
               All
             </Link>
             {categories.map((item) => (
               <Link
                 key={item.id}
                 href={`/discover?category=${item.slug}`}
-                className={`rounded-full px-4 py-2 text-sm font-medium ${
-                  selectedCategory === item.slug
-                    ? "bg-[#1b4332] text-white"
-                    : "border border-[#1b4332]/20 bg-white"
-                }`}
+                className={filterChipClass(selectedCategory === item.slug)}
               >
                 {item.name}
               </Link>
@@ -97,28 +99,35 @@ export default async function DiscoverPage({ searchParams }: Props) {
         )}
 
         {loadError ? (
-          <p className="mt-8 text-sm text-[#1b4332]/70">{loadError}</p>
+          <Callout tone="error" className="mt-8">
+            {loadError}
+          </Callout>
         ) : businesses.length === 0 ? (
-          <p className="mt-8 text-sm text-[#1b4332]/70">
-            No verified businesses found yet
-            {selectedCategory ? ` for this category` : ""}. Onboard supply via the
-            business portal.
-          </p>
+          <EmptyState
+            className="mt-8"
+            title="No verified businesses yet"
+            description={
+              selectedCategory
+                ? "Try another category or list your business on Adeni."
+                : "Onboard supply via the business portal to appear here."
+            }
+            actionLabel="List your business"
+            actionHref="/business/register"
+          />
         ) : (
           <ul className="mt-8 grid gap-4 sm:grid-cols-2">
             {businesses.map((business) => (
               <li key={business.tenantId}>
-                <Link
-                  href={`/businesses/${business.slug}`}
-                  className="block rounded-xl border border-[#1b4332]/10 bg-white p-5 shadow-sm transition hover:border-[#40916c]/40"
-                >
-                  <p className="text-lg font-semibold">{business.name}</p>
-                  <p className="mt-1 text-sm text-[#1b4332]/70">
-                    {business.area} · {business.categorySlug.replace("-", " ")}
-                  </p>
-                  <p className="mt-2 text-xs text-[#40916c]">
-                    {business.distanceKm.toFixed(1)} km away
-                  </p>
+                <Link href={`/businesses/${business.slug}`}>
+                  <Card interactive padding="md" className="hover:border-accent/40">
+                    <p className="text-lg font-semibold">{business.name}</p>
+                    <p className="mt-1 text-sm text-muted">
+                      {business.area} · {business.categorySlug.replace("-", " ")}
+                    </p>
+                    <p className="mt-2 text-xs font-semibold text-accent">
+                      {business.distanceKm.toFixed(1)} km away
+                    </p>
+                  </Card>
                 </Link>
               </li>
             ))}

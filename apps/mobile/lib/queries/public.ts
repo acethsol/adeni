@@ -1,0 +1,41 @@
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys, staleTimes } from "@adeni/shared";
+import { createPublicApiClient } from "@/lib/api";
+
+export function useCategories() {
+  return useQuery({
+    queryKey: queryKeys.categories,
+    queryFn: async () => {
+      const client = createPublicApiClient();
+      return client.getCategories();
+    },
+    staleTime: staleTimes.categories,
+  });
+}
+
+export function useDiscovery(params: {
+  lat: number;
+  lng: number;
+  market: string;
+  category?: string | null;
+  enabled?: boolean;
+}) {
+  const { enabled = true, ...discoveryParams } = params;
+
+  return useQuery({
+    queryKey: queryKeys.discovery(discoveryParams),
+    queryFn: async () => {
+      const client = createPublicApiClient();
+      const result = await client.searchDiscovery({
+        lat: discoveryParams.lat,
+        lng: discoveryParams.lng,
+        market: discoveryParams.market,
+        category: discoveryParams.category ?? undefined,
+        pageSize: 50,
+      });
+      return result.items;
+    },
+    staleTime: staleTimes.discovery,
+    enabled,
+  });
+}

@@ -1,47 +1,19 @@
-import { useEffect, useState } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
 import { useRouter } from "expo-router";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { Category } from "@adeni/shared";
 import { Screen, ScreenHeader } from "@/components/adeni/Screen";
+import { Button } from "@/components/ui/Button";
+import { Callout } from "@/components/ui/Callout";
+import { Card } from "@/components/ui/Card";
+import { SkeletonList } from "@/components/ui/Skeleton";
 import { useMarket } from "@/contexts/market-context";
-import { createPublicApiClient } from "@/lib/api";
+import { useCategories } from "@/lib/queries/public";
 import { adeniTheme } from "@/lib/theme";
 
 export default function HomeScreen() {
   const router = useRouter();
   const { market, loading: marketLoading, locationDenied } = useMarket();
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadCategories() {
-      try {
-        const client = createPublicApiClient();
-        const items = await client.getCategories();
-        if (!cancelled) {
-          setCategories(items);
-        }
-      } catch {
-        if (!cancelled) {
-          setError("Could not load categories. Is the API running?");
-        }
-      }
-    }
-
-    void loadCategories();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const { data: categories = [], isLoading, error } = useCategories();
 
   const grouped = groupCategories(categories);
 
@@ -54,27 +26,24 @@ export default function HomeScreen() {
           subtitle={market.description}
         />
 
-        {error ? <Text style={styles.inlineError}>{error}</Text> : null}
-
-        {market.launchNote ? (
-          <Text style={styles.launchNote}>{market.launchNote}</Text>
+        {error ? (
+          <Callout tone="error">Could not load categories. Is the API running?</Callout>
         ) : null}
+
+        {market.launchNote ? <Callout tone="info">{market.launchNote}</Callout> : null}
 
         {locationDenied ? (
-          <Text style={styles.locationHint}>
-            Location access is off — showing the default market. Enable location for
-            nearby results.
-          </Text>
+          <Callout tone="warning">
+            Location access is off — showing the default market. Enable location for nearby
+            results.
+          </Callout>
         ) : null}
 
-        <Pressable
-          style={({ pressed }) => [styles.primaryButton, pressed && styles.buttonPressed]}
-          onPress={() => router.push("/discover")}
-        >
-          <Text style={styles.primaryButtonText}>Browse services</Text>
-        </Pressable>
+        <Button title="Browse services" onPress={() => router.push("/discover")} containerStyle={styles.cta} />
 
-        {categories.length > 0 ? (
+        {isLoading ? (
+          <SkeletonList count={2} />
+        ) : categories.length > 0 ? (
           <View style={styles.categories}>
             <Text style={styles.sectionTitle}>Categories</Text>
             {[...grouped.entries()].map(([parentSlug, items]) => (
@@ -84,7 +53,6 @@ export default function HomeScreen() {
                   {items.map((category) => (
                     <Pressable
                       key={category.id}
-                      style={({ pressed }) => [styles.categoryCard, pressed && styles.cardPressed]}
                       onPress={() =>
                         router.push({
                           pathname: "/discover",
@@ -92,8 +60,10 @@ export default function HomeScreen() {
                         })
                       }
                     >
-                      <Text style={styles.categoryName}>{category.name}</Text>
-                      <Text style={styles.categorySlug}>{category.slug}</Text>
+                      <Card padding="sm" style={styles.categoryCard}>
+                        <Text style={styles.categoryName}>{category.name}</Text>
+                        <Text style={styles.categorySlug}>{category.slug}</Text>
+                      </Card>
                     </Pressable>
                   ))}
                 </View>
@@ -107,7 +77,7 @@ export default function HomeScreen() {
 }
 
 function groupCategories(categories: Category[]) {
-  const groups = new Map<string, Category[]>();
+  const groups = new Map<string, typeof categories>();
 
   for (const category of categories) {
     const key = category.parentSlug ?? "general";
@@ -132,83 +102,41 @@ function formatGroupLabel(parentSlug: string) {
 
 const styles = StyleSheet.create({
   content: {
-    paddingHorizontal: 20,
-    paddingBottom: 32,
+    paddingHorizontal: adeniTheme.spacing.xl,
+    paddingBottom: adeniTheme.spacing["3xl"],
   },
-  launchNote: {
-    marginTop: 8,
-    fontSize: 14,
-    lineHeight: 20,
-    color: adeniTheme.textSubtle,
-  },
-  inlineError: {
-    marginTop: 12,
-    fontSize: 14,
-    lineHeight: 20,
-    color: adeniTheme.textMuted,
-  },
-  locationHint: {
-    marginTop: 12,
-    fontSize: 13,
-    lineHeight: 19,
-    color: adeniTheme.textSubtle,
-  },
-  primaryButton: {
-    marginTop: 20,
-    alignSelf: "flex-start",
-    backgroundColor: adeniTheme.primary,
-    borderRadius: 999,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-  },
-  primaryButtonText: {
-    color: "#ffffff",
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  buttonPressed: {
-    opacity: 0.9,
+  cta: {
+    marginTop: adeniTheme.spacing.xl,
   },
   categories: {
-    marginTop: 28,
+    marginTop: adeniTheme.spacing["3xl"],
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
+    ...adeniTheme.typography.titleSm,
     color: adeniTheme.text,
   },
   group: {
-    marginTop: 16,
+    marginTop: adeniTheme.spacing.lg,
   },
   groupLabel: {
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
+    ...adeniTheme.typography.eyebrow,
     color: adeniTheme.accent,
   },
   groupList: {
-    marginTop: 10,
-    gap: 10,
+    marginTop: adeniTheme.spacing.md,
+    gap: adeniTheme.spacing.md,
   },
   categoryCard: {
-    backgroundColor: adeniTheme.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: adeniTheme.border,
-    padding: 14,
-  },
-  cardPressed: {
-    borderColor: adeniTheme.accent,
+    marginBottom: adeniTheme.spacing.md,
   },
   categoryName: {
-    fontSize: 16,
+    fontSize: adeniTheme.typography.body.fontSize,
     fontWeight: "600",
     color: adeniTheme.text,
   },
   categorySlug: {
     marginTop: 2,
-    fontSize: 13,
+    fontSize: adeniTheme.typography.caption.fontSize,
     color: adeniTheme.textMuted,
   },
 });

@@ -5,6 +5,7 @@
   "dependencies": {
     "@adeni/api-client": "*",
     "@adeni/shared": "*",
+    "@tanstack/react-query": "^5.101.2",
     "expo": "~57.0.1",
     "expo-auth-session": "~57.0.1",
     "expo-constants": "~57.0.2",

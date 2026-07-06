@@ -108,6 +108,19 @@ Business owners can register and manage verification from the Expo app.
 | Account tab business navigation | ✅ |
 | Booking inbox uses resolved tenant | ✅ |
 
+## Sprint 10 — Design system, polish & client caching ✅
+
+Shared tokens, UI primitives, empty/loading states, and TanStack Query on web + mobile.
+
+| Task | Status |
+|------|--------|
+| `@adeni/shared` design tokens + query keys | ✅ |
+| Web `components/ui/*` + Tailwind theme | ✅ |
+| Mobile `components/ui/*` + shared theme | ✅ |
+| Public shells & key pages refactored | ✅ |
+| TanStack Query (categories, discovery, bookings) | ✅ |
+| Docs: [design-system.md](./design-system.md) | ✅ |
+
 ## Next up
 
 1. Staging + Auth0 E2E

@@ -12,7 +12,7 @@ export function Screen({ children, loading, error, style, ...rest }: Props) {
     <SafeAreaView style={[styles.safe, style]} edges={["top", "left", "right"]} {...rest}>
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator color={adeniTheme.accent} />
+          <ActivityIndicator color={adeniTheme.accent} size="large" />
         </View>
       ) : error ? (
         <View style={styles.centered}>
@@ -52,35 +52,31 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    padding: 24,
+    padding: adeniTheme.spacing["2xl"],
   },
   error: {
     textAlign: "center",
-    color: adeniTheme.textMuted,
-    lineHeight: 22,
+    color: adeniTheme.destructive,
+    fontSize: adeniTheme.typography.bodySm.fontSize,
+    lineHeight: adeniTheme.typography.bodySm.lineHeight,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 12,
+    paddingHorizontal: adeniTheme.spacing.xl,
+    paddingTop: adeniTheme.spacing.sm,
+    paddingBottom: adeniTheme.spacing.md,
   },
   eyebrow: {
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
+    ...adeniTheme.typography.eyebrow,
     color: adeniTheme.accent,
   },
   title: {
-    marginTop: 4,
-    fontSize: 28,
-    fontWeight: "700",
+    marginTop: adeniTheme.spacing.xs,
+    ...adeniTheme.typography.titleLg,
     color: adeniTheme.text,
   },
   subtitle: {
-    marginTop: 8,
-    fontSize: 15,
-    lineHeight: 22,
+    marginTop: adeniTheme.spacing.sm,
+    ...adeniTheme.typography.body,
     color: adeniTheme.textMuted,
   },
 });

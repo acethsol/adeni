@@ -1,3 +1,4 @@
+import { QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -7,6 +8,7 @@ import "react-native-reanimated";
 import { useColorScheme } from "@/components/useColorScheme";
 import { AuthProvider } from "@/contexts/auth-context";
 import { MarketProvider } from "@/contexts/market-context";
+import { mobileQueryClient } from "@/lib/query-client";
 import { adeniTheme } from "@/lib/theme";
 
 export { ErrorBoundary } from "expo-router";
@@ -55,10 +57,11 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   return (
-    <AuthProvider>
-      <MarketProvider>
-        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : adeniNavigationTheme}>
-          <Stack>
+    <QueryClientProvider client={mobileQueryClient}>
+      <AuthProvider>
+        <MarketProvider>
+          <ThemeProvider value={colorScheme === "dark" ? DarkTheme : adeniNavigationTheme}>
+            <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen
               name="business/[slug]"
@@ -100,5 +103,6 @@ function RootLayoutNav() {
         </ThemeProvider>
       </MarketProvider>
     </AuthProvider>
+    </QueryClientProvider>
   );
 }
