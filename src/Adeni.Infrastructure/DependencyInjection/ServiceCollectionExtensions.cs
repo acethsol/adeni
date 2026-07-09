@@ -7,6 +7,7 @@ using Adeni.Application.Catalog;
 using Adeni.Application.Booking;
 using Adeni.Application.Discovery;
 using Adeni.Application.Markets;
+using Adeni.Application.Reviews;
 using Adeni.Application.Tenancy;
 using Adeni.Infrastructure.Admin;
 using Adeni.Infrastructure.Auditing;
@@ -18,6 +19,7 @@ using Adeni.Infrastructure.Discovery;
 using Adeni.Infrastructure.Context;
 using Adeni.Infrastructure.Identity;
 using Adeni.Infrastructure.Persistence;
+using Adeni.Infrastructure.Reviews;
 using Adeni.Infrastructure.Tenancy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -68,6 +70,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITenantSchedulingTimeZone, TenantSchedulingTimeZone>();
         services.AddScoped<IAvailabilityService, AvailabilityService>();
         services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<IReviewService, ReviewService>();
 
         return services;
     }

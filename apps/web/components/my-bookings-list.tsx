@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { CustomerBookingResponse } from "@adeni/shared";
 import { formatBookingStatus, queryKeys, staleTimes } from "@adeni/shared";
+import { BookingReviewForm, BookingReviewSummary } from "@/components/booking-review-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -84,7 +85,7 @@ export function MyBookingsList() {
     (booking) => booking.status !== 2 && booking.status !== 3,
   );
   const past = bookings.filter(
-    (booking) => booking.status === 2 || booking.status === 3,
+    (booking) => booking.status === 2 || booking.status === 3 || booking.canReview || booking.hasReview,
   );
 
   return (
@@ -116,6 +117,15 @@ export function MyBookingsList() {
             {past.map((booking) => (
               <div key={booking.id} className="px-5 py-4">
                 <BookingCard booking={booking} compact />
+                {booking.hasReview && booking.reviewRating ? (
+                  <BookingReviewSummary rating={booking.reviewRating} />
+                ) : null}
+                {booking.canReview ? (
+                  <BookingReviewForm
+                    booking={booking}
+                    onSubmitted={() => void queryClient.invalidateQueries({ queryKey: queryKeys.myBookings })}
+                  />
+                ) : null}
               </div>
             ))}
           </Card>

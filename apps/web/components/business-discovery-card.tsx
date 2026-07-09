@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { DiscoveryBusinessItem } from "@adeni/shared";
-import { formatCategoryLabel, resolveBusinessCoverImage } from "@adeni/shared";
+import { formatCategoryLabel, formatRatingSummary, resolveBusinessCoverImage } from "@adeni/shared";
+import { StarRating } from "@/components/star-rating";
 import { MapPin } from "lucide-react";
 
 type Props = {
@@ -29,6 +30,16 @@ export function BusinessDiscoveryCard({ business }: Props) {
           <span className="shrink-0 text-xs font-medium text-muted">Verified</span>
         </div>
         <p className="text-sm text-muted">{categoryLabel}</p>
+        <p className="flex items-center gap-2 text-sm text-muted">
+          {business.reviewCount ? (
+            <>
+              <StarRating rating={business.ratingAvg ?? 0} />
+              <span>{formatRatingSummary(business.ratingAvg, business.reviewCount)}</span>
+            </>
+          ) : (
+            <span>New</span>
+          )}
+        </p>
         <p className="flex items-center gap-1 text-sm text-muted">
           <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
           {business.area} · {business.distanceKm.toFixed(1)} km

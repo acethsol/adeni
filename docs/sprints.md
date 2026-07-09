@@ -17,14 +17,14 @@
 | 9 | Mobile business onboarding | ✅ Done |
 | 10 | Design system & caching | ✅ Done |
 | 11 | Discovery UX | ✅ Done |
-| **12** | **Media & tenant hardening** | **In progress** |
-| 13 | Reviews & ratings | Planned |
+| **12** | **Media & tenant hardening** | ✅ Done |
+| **13** | **Reviews & ratings** | **In progress** |
 | 14 | Deployment, AI & observability | Planned |
 | — | Sprint 11d LLM agent | → Sprint 14 |
 | — | Staging deploy + Auth0 E2E | → Sprint 14 |
 | — | App Insights (Obs 1) | → Sprint 14 |
 
-**Not yet tackled:** Sprint 13 (reviews), Sprint 14 (staging, LLM agent, App Insights).
+**Not yet tackled:** Sprint 14 (staging, LLM agent, App Insights).
 
 ---
 ## Sprint 0 — Foundation & dev tooling ✅
@@ -164,7 +164,7 @@ Global search, visual discovery cards, fused Ask Adeni search, and profile heroe
 
 Confluence: [Sprint 11 — Discovery UX](https://aceth.atlassian.net/wiki/spaces/SD/pages/28540929)
 
-## Sprint 12 — Media & tenant hardening (in progress)
+## Sprint 12 — Media & tenant hardening ✅
 
 | Task | Status |
 |------|--------|
@@ -194,16 +194,16 @@ See [media-storage.md](./media-storage.md).
 
 Confluence: [Sprint 12 — Media & tenant hardening](https://aceth.atlassian.net/wiki/spaces/SD/pages/28540956)
 
-## Sprint 13 — Reviews & ratings (planned)
+## Sprint 13 — Reviews & ratings (in progress)
 
 | Task | Status |
 |------|--------|
-| `reviews` schema + one-review-per-booking constraint | Planned |
-| `POST /bookings/{id}/review` + public list API | Planned |
-| `ratingAvg` / `reviewCount` on discovery + profile DTOs | Planned |
-| Customer review flow (web + mobile my-bookings) | Planned |
-| Star ratings on discovery cards + profile section | Planned |
-| Admin soft-hide + audit (`review.hidden`) | Planned |
+| `reviews` schema + one-review-per-booking constraint | ✅ |
+| `POST /bookings/{id}/review` + public list API | ✅ |
+| `ratingAvg` / `reviewCount` on discovery + profile DTOs | ✅ |
+| Customer review flow (web + mobile my-bookings) | ✅ |
+| Star ratings on discovery cards + profile section | ✅ |
+| Admin soft-hide + audit (`review.hidden`) | ✅ |
 
 Confluence: [Sprint 13 — Reviews & ratings](https://aceth.atlassian.net/wiki/spaces/SD/pages/28672001)
 
@@ -217,6 +217,5 @@ Confluence: [Sprint 13 — Reviews & ratings](https://aceth.atlassian.net/wiki/s
 
 ## Next up
 
-1. **Sprint 12** — blob storage, cover upload, tenant isolation tests *(in progress)*
-2. **Sprint 13** — reviews & ratings
-3. **Sprint 14** — staging, LLM agent, App Insights
+1. **Sprint 13** — reviews & ratings *(in progress — implementation complete)*
+2. **Sprint 14** — staging, LLM agent, App Insights

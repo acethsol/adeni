@@ -12,6 +12,8 @@ public sealed record DiscoveryBusinessItem(
     string Area,
     string MarketId,
     string? CoverImageUrl,
+    double? RatingAvg,
+    int ReviewCount,
     double DistanceKm,
     double Latitude,
     double Longitude);
@@ -35,6 +37,8 @@ public sealed record PublicBusinessProfile(
     string Description,
     string PhoneMasked,
     string? CoverImageUrl,
+    double? RatingAvg,
+    int ReviewCount,
     double? Latitude,
     double? Longitude);
 

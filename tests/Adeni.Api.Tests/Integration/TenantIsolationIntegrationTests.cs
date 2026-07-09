@@ -75,6 +75,45 @@ public sealed class TenantIsolationIntegrationTests : IClassFixture<WebApplicati
     }
 
     [Fact]
+    public async Task Tenant_cannot_access_other_tenant_bookings()
+    {
+        var tenantA = Guid.NewGuid();
+        var tenantB = Guid.NewGuid();
+
+        var factory = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment("Testing");
+            builder.ConfigureAppConfiguration((_, config) =>
+            {
+                config.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["ConnectionStrings:AdeniDb"] = string.Empty,
+                    ["Redis:ConnectionString"] = string.Empty
+                });
+            });
+            builder.ConfigureServices(services =>
+            {
+                services.AddSingleton<IAuditLogWriter, InMemoryAuditLogWriter>();
+                services.AddScoped<ICurrentUser>(_ => new TestCurrentUser("auth0|owner-a", tenantA));
+            });
+        });
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+            SeedTenantWithService(db, tenantA, "auth0|owner-a", "service-a");
+            SeedTenantWithService(db, tenantB, "auth0|owner-b", "service-b");
+        }
+
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add(TenantAccessMiddleware.TenantHeaderName, tenantB.ToString());
+
+        var response = await client.GetAsync("/api/v1/tenant/bookings");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Tenant_can_access_own_services()
     {
         var tenantA = Guid.NewGuid();

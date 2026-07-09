@@ -78,8 +78,27 @@ export default function MyBookingsScreen() {
     (booking) => booking.status !== 2 && booking.status !== 3,
   );
   const past = bookings.filter(
-    (booking) => booking.status === 2 || booking.status === 3,
+    (booking) =>
+      booking.status === 2 ||
+      booking.status === 3 ||
+      booking.canReview ||
+      booking.hasReview,
   );
+
+  async function handleReview(bookingId: string, rating: number) {
+    setActionId(bookingId);
+    setError(null);
+
+    try {
+      const client = createApiClient("customer");
+      await client.createBookingReview(bookingId, { rating });
+      await loadBookings();
+    } catch {
+      setError("Could not submit review.");
+    } finally {
+      setActionId(null);
+    }
+  }
 
   return (
     <Screen loading={authLoading || loading}>
@@ -129,7 +148,13 @@ export default function MyBookingsScreen() {
             <Text style={styles.sectionLabel}>Past</Text>
             <View style={styles.list}>
               {past.map((booking) => (
-                <BookingCard key={booking.id} booking={booking} muted />
+                <BookingCard
+                  key={booking.id}
+                  booking={booking}
+                  muted
+                  busy={actionId === booking.id}
+                  onReview={(rating) => void handleReview(booking.id, rating)}
+                />
               ))}
             </View>
           </>
@@ -144,11 +169,13 @@ function BookingCard({
   muted = false,
   busy = false,
   onCancel,
+  onReview,
 }: {
   booking: CustomerBookingResponse;
   muted?: boolean;
   busy?: boolean;
   onCancel?: () => void;
+  onReview?: (rating: number) => void;
 }) {
   const router = useRouter();
   const canCancel =
@@ -164,6 +191,26 @@ function BookingCard({
       <Text style={styles.status}>{formatBookingStatus(booking.status)}</Text>
       {booking.customerNotes ? (
         <Text style={styles.notes}>&ldquo;{booking.customerNotes}&rdquo;</Text>
+      ) : null}
+      {booking.hasReview && booking.reviewRating ? (
+        <Text style={styles.notes}>You rated this visit {booking.reviewRating}/5</Text>
+      ) : null}
+      {booking.canReview && onReview ? (
+        <View style={styles.reviewRow}>
+          {[1, 2, 3, 4, 5].map((rating) => (
+            <Pressable
+              key={rating}
+              disabled={busy}
+              onPress={() => onReview(rating)}
+              style={({ pressed }) => [
+                styles.reviewButton,
+                (busy || pressed) && styles.buttonPressed,
+              ]}
+            >
+              <Text style={styles.reviewButtonText}>{rating}★</Text>
+            </Pressable>
+          ))}
+        </View>
       ) : null}
       {canCancel ? (
         <Pressable
@@ -324,6 +371,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: "#991b1b",
+  },
+  reviewRow: {
+    marginTop: 12,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  reviewButton: {
+    borderWidth: 1,
+    borderColor: adeniTheme.borderStrong,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  reviewButtonText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: adeniTheme.text,
   },
   buttonPressed: {
     opacity: 0.9,

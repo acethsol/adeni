@@ -12,7 +12,8 @@ using Microsoft.EntityFrameworkCore;
 public sealed class BookingService(
     AdeniDbContext dbContext,
     IAvailabilityService availabilityService,
-    IDistributedLockProvider lockProvider) : IBookingService
+    IDistributedLockProvider lockProvider,
+    Application.Reviews.IReviewService reviewService) : IBookingService
 {
     public async Task<Result<BookingResponse>> CreateAsync(
         string customerAuth0Sub,
@@ -171,12 +172,28 @@ public sealed class BookingService(
                 g => g.Key,
                 g => g.OrderByDescending(x => x.IsPrimary).First().Slug);
 
+        var bookingIds = rows.Select(x => x.booking.Id).ToArray();
+        var reviewsByBooking = await reviewService.GetReviewsForBookingsAsync(bookingIds, cancellationToken);
+        var now = DateTimeOffset.UtcNow;
+
         return rows
-            .Select(x => BookingMapper.ToCustomerResponse(
-                x.booking,
-                x.ServiceName,
-                x.BusinessName,
-                slugByTenant.GetValueOrDefault(x.booking.TenantId, string.Empty)))
+            .Select(x =>
+            {
+                reviewsByBooking.TryGetValue(x.booking.Id, out var review);
+                var hasReview = review is not null;
+                var canReview = !hasReview
+                    && x.booking.Status == BookingStatus.Confirmed
+                    && x.booking.EndAt <= now;
+
+                return BookingMapper.ToCustomerResponse(
+                    x.booking,
+                    x.ServiceName,
+                    x.BusinessName,
+                    slugByTenant.GetValueOrDefault(x.booking.TenantId, string.Empty),
+                    canReview,
+                    hasReview,
+                    review?.Rating);
+            })
             .ToArray();
     }
 

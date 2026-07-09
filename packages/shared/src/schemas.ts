@@ -23,6 +23,8 @@ export const discoveryBusinessItemSchema = z.object({
   area: z.string(),
   marketId: z.string(),
   coverImageUrl: z.string().url().nullable().optional(),
+  ratingAvg: z.number().nullable().optional(),
+  reviewCount: z.number().int().nonnegative().optional(),
   distanceKm: z.number(),
   latitude: z.number(),
   longitude: z.number(),
@@ -51,6 +53,8 @@ export const publicBusinessProfileSchema = z.object({
   description: z.string(),
   phoneMasked: z.string(),
   coverImageUrl: z.string().url().nullable().optional(),
+  ratingAvg: z.number().nullable().optional(),
+  reviewCount: z.number().int().nonnegative().optional(),
   latitude: z.number().nullable(),
   longitude: z.number().nullable(),
 });
@@ -215,9 +219,58 @@ export const customerBookingResponseSchema = z.object({
   status: z.number(),
   customerNotes: z.string().nullable().optional(),
   createdAt: z.string(),
+  canReview: z.boolean().optional(),
+  hasReview: z.boolean().optional(),
+  reviewRating: z.number().int().min(1).max(5).nullable().optional(),
 });
 
 export type CustomerBookingResponse = z.infer<typeof customerBookingResponseSchema>;
+
+export const createReviewRequestSchema = z.object({
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().max(1000).optional(),
+});
+
+export const reviewResponseSchema = z.object({
+  id: z.string(),
+  bookingId: z.string(),
+  tenantId: z.string(),
+  rating: z.number().int().min(1).max(5),
+  comment: z.string(),
+  createdAt: z.string(),
+});
+
+export const publicReviewItemSchema = z.object({
+  id: z.string(),
+  rating: z.number().int().min(1).max(5),
+  comment: z.string(),
+  createdAt: z.string(),
+  customerDisplayName: z.string(),
+});
+
+export const publicReviewsResponseSchema = z.object({
+  items: z.array(publicReviewItemSchema),
+  page: z.number(),
+  pageSize: z.number(),
+  totalCount: z.number(),
+});
+
+export type CreateReviewRequest = z.infer<typeof createReviewRequestSchema>;
+export type ReviewResponse = z.infer<typeof reviewResponseSchema>;
+export type PublicReviewItem = z.infer<typeof publicReviewItemSchema>;
+export type PublicReviewsResponse = z.infer<typeof publicReviewsResponseSchema>;
+
+export function formatRatingSummary(
+  ratingAvg?: number | null,
+  reviewCount?: number | null,
+): string {
+  if (!reviewCount) {
+    return "New";
+  }
+
+  const avg = ratingAvg ?? 0;
+  return `${avg.toFixed(1)} (${reviewCount})`;
+}
 
 export const customerBookingsResponseSchema = z.object({
   items: z.array(customerBookingResponseSchema),

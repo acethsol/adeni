@@ -3,11 +3,13 @@ namespace Adeni.Infrastructure.Tests.Booking;
 using Adeni.Application.Booking;
 using Adeni.Application.Caching;
 using Adeni.Application.Markets;
+using Adeni.Application.Reviews;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Booking;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Persistence;
+using Adeni.Infrastructure.Reviews;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -315,6 +317,7 @@ public sealed class BookingFlowTests
         services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
         services.AddScoped<ITenantSchedulingTimeZone, TenantSchedulingTimeZone>();
         services.AddScoped<IAvailabilityService, AvailabilityService>();
+        services.AddScoped<IReviewService, ReviewService>();
         services.AddScoped<IBookingService, BookingService>();
         return services.BuildServiceProvider();
     }

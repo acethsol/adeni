@@ -3,6 +3,7 @@ namespace Adeni.Api.Controllers;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
 using Adeni.Application.Booking;
+using Adeni.Application.Reviews;
 using Adeni.Infrastructure.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -11,6 +12,7 @@ using Microsoft.Extensions.Options;
 [Route("api/v1/bookings")]
 public sealed class BookingsController(
     IBookingService bookings,
+    IReviewService reviews,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpPost]
@@ -52,6 +54,22 @@ public sealed class BookingsController(
 
         var result = await bookings.CancelAsync(auth0Sub, id, cancellationToken);
         return ApiResults.FromResult(result, Ok);
+    }
+
+    [HttpPost("{id:guid}/review")]
+    public async Task<IActionResult> CreateReview(
+        Guid id,
+        [FromBody] CreateReviewRequest request,
+        CancellationToken cancellationToken)
+    {
+        var auth0Sub = ResolveCustomerAuth0Sub();
+        if (auth0Sub is null)
+        {
+            return Unauthorized();
+        }
+
+        var result = await reviews.CreateForBookingAsync(auth0Sub, id, request, cancellationToken);
+        return ApiResults.FromResult(result, payload => Created($"/api/v1/bookings/{id}/review", payload));
     }
 
     private string? ResolveCustomerAuth0Sub()

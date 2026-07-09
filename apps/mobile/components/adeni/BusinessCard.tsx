@@ -1,6 +1,6 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import type { DiscoveryBusinessItem } from "@adeni/shared";
-import { formatCategoryLabel, resolveBusinessCoverImage } from "@adeni/shared";
+import { formatCategoryLabel, formatRatingSummary, resolveBusinessCoverImage } from "@adeni/shared";
 import { adeniTheme } from "@/lib/theme";
 
 type Props = {
@@ -25,6 +25,11 @@ export function BusinessCard({ business, onPress }: Props) {
           <Text style={styles.verified}>Verified</Text>
         </View>
         <Text style={styles.meta}>{categoryLabel}</Text>
+        <Text style={styles.meta}>
+          {business.reviewCount
+            ? formatRatingSummary(business.ratingAvg, business.reviewCount)
+            : "New"}
+        </Text>
         <Text style={styles.meta}>
           {business.area} · {business.distanceKm.toFixed(1)} km
         </Text>

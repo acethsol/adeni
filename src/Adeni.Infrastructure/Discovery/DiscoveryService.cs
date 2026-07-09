@@ -13,7 +13,8 @@ using Microsoft.EntityFrameworkCore;
 public sealed class DiscoveryService(
     AdeniDbContext dbContext,
     ICacheService cache,
-    IFileStorage fileStorage) : IDiscoveryService
+    IFileStorage fileStorage,
+    Application.Reviews.IReviewService reviewService) : IDiscoveryService
 {
     private const int DefaultPageSize = 20;
     private const int MaxPageSize = 50;
@@ -182,13 +183,20 @@ public sealed class DiscoveryService(
         }
 
         var items = new List<DiscoveryBusinessItem>();
-        foreach (var x in businesses
-                     .OrderBy(row => GeoDistance.HaversineKm(
-                         latitude,
-                         longitude,
-                         row.location.Latitude!.Value,
-                         row.location.Longitude!.Value)))
+        var ordered = businesses
+            .OrderBy(row => GeoDistance.HaversineKm(
+                latitude,
+                longitude,
+                row.location.Latitude!.Value,
+                row.location.Longitude!.Value))
+            .ToList();
+
+        var tenantIds = ordered.Select(x => x.tenant.Id).Distinct().ToArray();
+        var ratings = await reviewService.GetRatingSummariesAsync(tenantIds, cancellationToken);
+
+        foreach (var x in ordered)
         {
+            ratings.TryGetValue(x.tenant.Id, out var summary);
             items.Add(new DiscoveryBusinessItem(
                 x.location.Id,
                 x.tenant.Id,
@@ -199,6 +207,8 @@ public sealed class DiscoveryService(
                 x.location.Area,
                 x.location.MarketId,
                 await ResolveCoverImageUrlAsync(x.profile.CoverImageKey, cancellationToken),
+                summary?.RatingAvg,
+                summary?.ReviewCount ?? 0,
                 GeoDistance.HaversineKm(
                     latitude,
                     longitude,
@@ -247,6 +257,9 @@ public sealed class DiscoveryService(
             return null;
         }
 
+        var ratings = await reviewService.GetRatingSummariesAsync([business.tenant.Id], cancellationToken);
+        ratings.TryGetValue(business.tenant.Id, out var summary);
+
         return new PublicBusinessProfile(
             business.location.Id,
             business.tenant.Id,
@@ -260,6 +273,8 @@ public sealed class DiscoveryService(
             business.profile.Description,
             PiiMasker.MaskPhone(business.profile.Phone),
             await ResolveCoverImageUrlAsync(business.profile.CoverImageKey, cancellationToken),
+            summary?.RatingAvg,
+            summary?.ReviewCount ?? 0,
             business.location.Latitude,
             business.location.Longitude);
     }

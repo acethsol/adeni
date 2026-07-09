@@ -4,6 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatCategoryLabel, resolveBusinessCoverImage } from "@adeni/shared";
 import { BookingPanel } from "@/components/booking-panel";
+import { BusinessReviewsSection } from "@/components/business-reviews-section";
+import { StarRating } from "@/components/star-rating";
 import { PublicHeader } from "@/components/public-header";
 import { createApiClient } from "@/lib/adeni";
 import { isAuth0Configured } from "@/lib/auth/config";
@@ -37,9 +39,10 @@ export default async function BusinessProfilePage({ params }: Props) {
 
   try {
     const client = createApiClient();
-    const [profile, services] = await Promise.all([
+    const [profile, services, reviews] = await Promise.all([
       client.getBusinessProfile(slug),
       client.getBusinessServices(slug).catch(() => []),
+      client.getBusinessReviews(slug).catch(() => ({ items: [], page: 1, pageSize: 10, totalCount: 0 })),
     ]);
 
     const session = await getOptionalSession();
@@ -76,6 +79,15 @@ export default async function BusinessProfilePage({ params }: Props) {
               {profile.locationName !== profile.name ? `${profile.locationName} · ` : ""}
               {profile.area} · {formatCategoryLabel(profile.categorySlug)}
             </p>
+            {profile.reviewCount ? (
+              <div className="mt-3 flex items-center gap-2 text-sm text-[#1b4332]/80">
+                <StarRating rating={profile.ratingAvg ?? 0} size="md" />
+                <span>
+                  {(profile.ratingAvg ?? 0).toFixed(1)} · {profile.reviewCount} review
+                  {profile.reviewCount === 1 ? "" : "s"}
+                </span>
+              </div>
+            ) : null}
 
             {profile.description ? (
               <p className="mt-6 leading-relaxed text-[#1b4332]/85">
@@ -94,6 +106,12 @@ export default async function BusinessProfilePage({ params }: Props) {
               </div>
             </dl>
           </div>
+
+          <BusinessReviewsSection
+            reviews={reviews.items}
+            ratingAvg={profile.ratingAvg}
+            reviewCount={profile.reviewCount}
+          />
 
           <BookingPanel
             slug={slug}

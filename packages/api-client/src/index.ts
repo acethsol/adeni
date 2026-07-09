@@ -29,6 +29,9 @@ import {
   mediaUploadUrlResponseSchema,
   updateCoverImageRequestSchema,
   updateCoverImageResponseSchema,
+  createReviewRequestSchema,
+  reviewResponseSchema,
+  publicReviewsResponseSchema,
   updateServiceOfferingRequestSchema,
   weeklyAvailabilityResponseSchema,
   type AuthSession,
@@ -51,6 +54,9 @@ import {
   type ServiceOffering,
   type SubmitVerificationRequest,
   type UpdateBusinessProfileRequest,
+  type CreateReviewRequest,
+  type ReviewResponse,
+  type PublicReviewsResponse,
   type UpdateCoverImageRequest,
   type MediaUploadUrlResponse,
   type UpdateServiceOfferingRequest,
@@ -197,6 +203,43 @@ export class AdeniApiClient {
       { method: "POST" },
     );
     return customerBookingResponseSchema.parse(await response.json());
+  }
+
+  async createBookingReview(
+    bookingId: string,
+    request: CreateReviewRequest,
+  ): Promise<ReviewResponse> {
+    const body = createReviewRequestSchema.parse(request);
+    const response = await this.request(
+      `/api/v1/bookings/${encodeURIComponent(bookingId)}/review`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+    return reviewResponseSchema.parse(await response.json());
+  }
+
+  async getBusinessReviews(
+    slug: string,
+    page = 1,
+    pageSize = 10,
+  ): Promise<PublicReviewsResponse> {
+    const query = new URLSearchParams({
+      page: String(page),
+      pageSize: String(pageSize),
+    });
+    const response = await this.request(
+      `/api/v1/businesses/${encodeURIComponent(slug)}/reviews?${query.toString()}`,
+    );
+    return publicReviewsResponseSchema.parse(await response.json());
+  }
+
+  async hideAdminReview(reviewId: string): Promise<void> {
+    await this.request(`/api/v1/admin/reviews/${encodeURIComponent(reviewId)}`, {
+      method: "DELETE",
+    });
   }
 
   async getTenantBookings(): Promise<BookingResponse[]> {

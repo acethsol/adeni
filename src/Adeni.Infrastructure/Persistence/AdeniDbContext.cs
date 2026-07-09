@@ -42,6 +42,8 @@ public sealed class AdeniDbContext(
 
     public DbSet<BookingRecord> Bookings => Set<BookingRecord>();
 
+    public DbSet<Review> Reviews => Set<Review>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("public");
@@ -162,6 +164,16 @@ public sealed class AdeniDbContext(
                 .WithMany()
                 .HasForeignKey(x => x.ServiceOfferingId)
                 .OnDelete(DeleteBehavior.Restrict);
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<Review>(entity =>
+        {
+            entity.ToTable("reviews", "booking");
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => x.BookingId).IsUnique();
+            entity.HasIndex(x => new { x.TenantId, x.IsHidden, x.CreatedAt });
+            entity.Property(x => x.Comment).HasMaxLength(1000);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
     }

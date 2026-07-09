@@ -108,7 +108,10 @@ internal static class BookingMapper
         BookingRecord entity,
         string serviceName,
         string businessName,
-        string businessSlug) =>
+        string businessSlug,
+        bool canReview = false,
+        bool hasReview = false,
+        byte? reviewRating = null) =>
         new(
             entity.Id,
             entity.TenantId,
@@ -120,7 +123,10 @@ internal static class BookingMapper
             entity.EndAt,
             entity.Status,
             entity.CustomerNotes,
-            entity.CreatedAt);
+            entity.CreatedAt,
+            canReview,
+            hasReview,
+            reviewRating);
 }
 
 internal static class BookingConflictChecker

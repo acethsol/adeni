@@ -2,6 +2,7 @@ namespace Adeni.Api.Controllers;
 
 using Adeni.Application.Booking;
 using Adeni.Application.Discovery;
+using Adeni.Application.Reviews;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -44,7 +45,8 @@ public sealed class DiscoveryController(IDiscoveryService discovery) : Controlle
 public sealed class BusinessesController(
     IDiscoveryService discovery,
     IServiceCatalogService services,
-    IAvailabilityService availability) : ControllerBase
+    IAvailabilityService availability,
+    IReviewService reviews) : ControllerBase
 {
     [HttpGet("{slug}")]
     [AllowAnonymous]
@@ -86,5 +88,30 @@ public sealed class BusinessesController(
             cancellationToken);
 
         return ApiResults.FromResult(result, slots => Ok(new { items = slots }));
+    }
+
+    [HttpGet("{slug}/reviews")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetReviews(
+        string slug,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await reviews.ListPublicBySlugAsync(slug, page, pageSize, cancellationToken);
+
+        return result.Match<IActionResult>(
+            payload => Ok(new
+            {
+                items = payload.Items,
+                page = payload.Page,
+                pageSize = payload.PageSize,
+                totalCount = payload.TotalCount
+            }),
+            error => error.Code switch
+            {
+                "validation" => BadRequest(new { title = error.Message }),
+                _ => NotFound(new { title = error.Message })
+            });
     }
 }

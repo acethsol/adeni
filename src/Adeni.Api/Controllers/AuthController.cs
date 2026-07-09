@@ -3,6 +3,7 @@ namespace Adeni.Api.Controllers;
 using Adeni.Api.Auth;
 using Adeni.Application.Admin;
 using Adeni.Application.Auth;
+using Adeni.Application.Reviews;
 using Adeni.Infrastructure.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -158,6 +159,26 @@ public sealed class AdminCustomersController(IAdminCustomerService adminCustomer
             error => error.Code switch
             {
                 "conflict" => Conflict(new { title = error.Message }),
+                _ => NotFound(new { title = error.Message })
+            });
+    }
+}
+
+[ApiController]
+[Route("api/v1/admin/reviews")]
+[Authorize(Policy = AuthServiceCollectionExtensions.AdminMfaPolicy)]
+public sealed class AdminReviewsController(IReviewService reviewService) : ControllerBase
+{
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Hide(Guid id, CancellationToken cancellationToken)
+    {
+        var adminId = User.FindFirst("sub")?.Value ?? "admin";
+        var result = await reviewService.HideAsync(id, adminId, cancellationToken);
+
+        return result.Match<IActionResult>(
+            _ => NoContent(),
+            error => error.Code switch
+            {
                 _ => NotFound(new { title = error.Message })
             });
     }

@@ -26,7 +26,10 @@ public sealed record CustomerBookingResponse(
     DateTimeOffset EndAt,
     BookingStatus Status,
     string? CustomerNotes,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    bool CanReview = false,
+    bool HasReview = false,
+    byte? ReviewRating = null);
 
 public sealed record CreateBookingRequest(
     Guid TenantId,
