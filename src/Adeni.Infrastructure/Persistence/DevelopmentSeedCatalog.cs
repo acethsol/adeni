@@ -1,8 +1,10 @@
 namespace Adeni.Infrastructure.Persistence;
 
-/// <summary>Dev-only sample businesses — keep slugs unique. GTM live markets get the largest sets.</summary>
+/// <summary>Dev-only sample businesses — handcrafted anchors plus ~1k generated bulk entries.</summary>
 internal static class DevelopmentSeedCatalog
 {
+    internal const int TargetTotalCount = 1000;
+
     internal sealed record SampleBusiness(
         string Slug,
         string Name,
@@ -20,7 +22,10 @@ internal static class DevelopmentSeedCatalog
         decimal PriceAmount,
         int DurationMinutes);
 
-    internal static readonly SampleBusiness[] All =
+    internal static IReadOnlyList<SampleBusiness> All =>
+        Anchors.Concat(DevelopmentSeedGenerator.GenerateBulk()).ToArray();
+
+    private static readonly SampleBusiness[] Anchors =
     [
         // —— Lagos (GTM live — largest seed set) ——
         S("lekki-cuts", "Lekki Cuts", "Lekki", "lagos", "barbers", "Lekki Phase 1",

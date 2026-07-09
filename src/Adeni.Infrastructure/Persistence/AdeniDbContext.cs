@@ -73,6 +73,7 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.Description).HasMaxLength(2000);
             entity.Property(x => x.CategorySlug).HasMaxLength(64);
             entity.Property(x => x.Phone).HasMaxLength(32);
+            entity.Property(x => x.CoverImageKey).HasMaxLength(512);
             entity.HasOne(x => x.Tenant).WithOne().HasForeignKey<BusinessProfile>(x => x.TenantId);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });

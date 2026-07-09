@@ -25,6 +25,10 @@ import {
   tenantLocationsResponseSchema,
   updateBusinessProfileRequestSchema,
   upsertBusinessLocationRequestSchema,
+  mediaUploadUrlRequestSchema,
+  mediaUploadUrlResponseSchema,
+  updateCoverImageRequestSchema,
+  updateCoverImageResponseSchema,
   updateServiceOfferingRequestSchema,
   weeklyAvailabilityResponseSchema,
   type AuthSession,
@@ -47,6 +51,8 @@ import {
   type ServiceOffering,
   type SubmitVerificationRequest,
   type UpdateBusinessProfileRequest,
+  type UpdateCoverImageRequest,
+  type MediaUploadUrlResponse,
   type UpdateServiceOfferingRequest,
   type UpsertBusinessLocationRequest,
   type WeeklyAvailabilityRule,
@@ -254,6 +260,34 @@ export class AdeniApiClient {
       body: JSON.stringify(body),
     });
     return businessProfileSchema.parse(await response.json());
+  }
+
+  async createCoverUploadUrl(
+    contentType: string,
+    contentLength: number,
+  ): Promise<MediaUploadUrlResponse> {
+    const body = mediaUploadUrlRequestSchema.parse({
+      purpose: "cover",
+      contentType,
+      contentLength,
+    });
+    const response = await this.request("/api/v1/tenant/media/upload-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return mediaUploadUrlResponseSchema.parse(await response.json());
+  }
+
+  async updateTenantCoverImage(request: UpdateCoverImageRequest): Promise<string> {
+    const body = updateCoverImageRequestSchema.parse(request);
+    const response = await this.request("/api/v1/tenant/profile/cover", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const payload = updateCoverImageResponseSchema.parse(await response.json());
+    return payload.coverImageUrl;
   }
 
   async getTenantServices(): Promise<ServiceOffering[]> {

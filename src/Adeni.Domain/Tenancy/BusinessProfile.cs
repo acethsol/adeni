@@ -11,6 +11,8 @@ public sealed class BusinessProfile : ITenantEntity
 
     public string Phone { get; set; } = string.Empty;
 
+    public string? CoverImageKey { get; set; }
+
     public DateTimeOffset UpdatedAt { get; set; }
 
     public Tenant? Tenant { get; set; }

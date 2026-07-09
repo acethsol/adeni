@@ -12,6 +12,7 @@ import type { AdeniApiError } from "@adeni/api-client";
 import type { BusinessProfile } from "@adeni/shared";
 import { VERIFICATION_DOCUMENT_LABELS } from "@adeni/shared";
 import { Screen } from "@/components/adeni/Screen";
+import { BusinessCoverUpload } from "@/components/adeni/BusinessCoverUpload";
 import { useAuth } from "@/contexts/auth-context";
 import { formatTenantStatus } from "@/lib/format";
 import { isAuth0Configured } from "@/lib/auth/config";
@@ -125,6 +126,12 @@ export default function BusinessProfileScreen() {
                 }
               />
             </View>
+
+            <BusinessCoverUpload
+              categorySlug={profile.categorySlug}
+              coverImageUrl={profile.coverImageUrl}
+              createClient={createBusinessApiClient}
+            />
 
             <ProfileEditor
               profile={profile}

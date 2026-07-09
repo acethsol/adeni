@@ -11,9 +11,9 @@ import { isCustomerDevMode } from "@/lib/customer-api";
 export default async function MyBookingsPage() {
   if (!canAccessMyBookings()) {
     return (
-      <>
+      <div className="flex flex-1 flex-col">
         <PublicHeader />
-        <main className="mx-auto max-w-3xl px-6 py-10">
+        <main className="mx-auto max-w-3xl flex-1 px-6 py-10">
           <h1 className="text-3xl font-bold tracking-tight text-[#1b4332]">
             My bookings
           </h1>
@@ -24,16 +24,16 @@ export default async function MyBookingsPage() {
             <AuthSetupCallout />
           </div>
         </main>
-      </>
+      </div>
     );
   }
 
   const hasSession = await hasMyBookingsSession();
 
   return (
-    <>
+    <div className="flex flex-1 flex-col">
       <PublicHeader />
-      <main className="mx-auto max-w-3xl px-6 py-10">
+      <main className="mx-auto max-w-3xl flex-1 px-6 py-10">
         <h1 className="text-3xl font-bold tracking-tight text-[#1b4332]">
           My bookings
         </h1>
@@ -66,6 +66,6 @@ export default async function MyBookingsPage() {
           </div>
         )}
       </main>
-    </>
+    </div>
   );
 }

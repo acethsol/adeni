@@ -1,10 +1,12 @@
 namespace Adeni.Infrastructure.Tests.Discovery;
 
 using Adeni.Application.Caching;
+using Adeni.Application.Storage;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Context;
 using Adeni.Infrastructure.Discovery;
 using Adeni.Infrastructure.Persistence;
+using Adeni.Infrastructure.Tests.Storage;
 using Adeni.Infrastructure.Tests.TestData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
@@ -137,6 +139,7 @@ public sealed class DiscoveryServiceTests
         services.AddScoped<TenantContext>();
         services.AddScoped<Application.Abstractions.ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
         services.AddDbContext<AdeniDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));
+        services.AddSingleton<IFileStorage, FakeFileStorage>();
         services.AddScoped<DiscoveryService>();
         return services.BuildServiceProvider();
     }

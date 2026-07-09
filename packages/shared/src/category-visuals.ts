@@ -107,6 +107,19 @@ export function getBusinessCoverImage(categorySlug: string): string {
   return getCategoryVisual(categorySlug).imageUrl;
 }
 
+/** Prefer tenant-uploaded cover; fall back to category placeholder. */
+export function resolveBusinessCoverImage(
+  categorySlug: string,
+  coverImageUrl?: string | null,
+): string {
+  const uploaded = coverImageUrl?.trim();
+  if (uploaded) {
+    return uploaded;
+  }
+
+  return getBusinessCoverImage(categorySlug);
+}
+
 export function formatCategoryLabel(slug: string): string {
   return slug
     .split("-")

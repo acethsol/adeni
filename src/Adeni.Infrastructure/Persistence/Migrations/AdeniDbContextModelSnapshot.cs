@@ -333,6 +333,10 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<string>("CoverImageKey")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(2000)

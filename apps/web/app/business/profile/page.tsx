@@ -1,6 +1,7 @@
 import { formatTenantStatus, VERIFICATION_DOCUMENT_LABELS } from "@adeni/shared";
 import { AuthSetupCallout } from "@/components/auth-setup-callout";
 import { BusinessPortalShell } from "@/components/business-portal-shell";
+import { BusinessCoverUpload } from "@/components/business-cover-upload";
 import { BusinessProfileForm } from "@/components/business-profile-form";
 import { BusinessVerificationForm } from "@/components/business-verification-form";
 import {
@@ -43,7 +44,7 @@ export default async function BusinessProfilePage() {
         <p className="text-sm text-[#1b4332]/70">{loadError}</p>
       ) : profile ? (
         <>
-          <div className="grid gap-8 lg:grid-cols-[1fr_1.2fr]">
+          <div className="grid gap-8 lg:grid-cols-2">
             <div className="rounded-xl border border-[#1b4332]/10 bg-white p-6 shadow-sm">
               <h2 className="text-lg font-semibold">Status</h2>
               <dl className="mt-4 space-y-3 text-sm">
@@ -77,6 +78,19 @@ export default async function BusinessProfilePage() {
                   </div>
                 ) : null}
               </dl>
+            </div>
+
+            <div className="rounded-xl border border-[#1b4332]/10 bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-semibold">Cover photo</h2>
+              <p className="mt-1 text-sm text-[#1b4332]/60">
+                Shown on discovery cards and your public profile.
+              </p>
+              <div className="mt-4">
+                <BusinessCoverUpload
+                  categorySlug={profile.categorySlug}
+                  coverImageUrl={profile.coverImageUrl}
+                />
+              </div>
             </div>
 
             <div className="rounded-xl border border-[#1b4332]/10 bg-white p-6 shadow-sm">

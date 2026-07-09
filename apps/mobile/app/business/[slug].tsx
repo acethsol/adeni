@@ -1,16 +1,11 @@
 import { useEffect, useState } from "react";
-
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-
 import type { PublicBusinessProfile, ServiceOffering } from "@adeni/shared";
-
+import { formatCategoryLabel, resolveBusinessCoverImage } from "@adeni/shared";
 import { BookingPanel } from "@/components/adeni/BookingPanel";
-
 import { Screen } from "@/components/adeni/Screen";
 import { createPublicApiClient } from "@/lib/api";
-
 import { adeniTheme } from "@/lib/theme";
 
 
@@ -113,7 +108,9 @@ export default function BusinessProfileScreen() {
 
   }, [slug]);
 
-
+  const coverImageUrl = profile
+    ? resolveBusinessCoverImage(profile.categorySlug, profile.coverImageUrl)
+    : null;
 
   return (
 
@@ -123,17 +120,19 @@ export default function BusinessProfileScreen() {
 
       <Screen loading={loading} error={error}>
 
-        {profile ? (
-
+        {profile && coverImageUrl ? (
           <ScrollView contentContainerStyle={styles.content}>
-
             <Pressable onPress={() => router.back()}>
-
               <Text style={styles.backLink}>← Back</Text>
-
             </Pressable>
 
-
+            <View style={styles.hero}>
+              <Image
+                source={{ uri: coverImageUrl }}
+                style={styles.heroImage}
+                resizeMode="cover"
+              />
+            </View>
 
             <View style={styles.card}>
 
@@ -145,7 +144,7 @@ export default function BusinessProfileScreen() {
 
                 {profile.locationName !== profile.name ? `${profile.locationName} · ` : ""}
 
-                {profile.area} · {profile.categorySlug.replace(/-/g, " ")}
+                {profile.area} · {formatCategoryLabel(profile.categorySlug)}
 
               </Text>
 
@@ -174,7 +173,6 @@ export default function BusinessProfileScreen() {
             <BookingPanel slug={profile.slug} tenantId={profile.tenantId} services={services} />
 
           </ScrollView>
-
         ) : null}
 
       </Screen>
@@ -216,17 +214,22 @@ const styles = StyleSheet.create({
   },
 
   backLink: {
-
     fontSize: 14,
-
     fontWeight: "600",
-
     color: adeniTheme.accent,
-
     marginBottom: 12,
-
   },
-
+  hero: {
+    height: 220,
+    borderRadius: adeniTheme.radius.md,
+    overflow: "hidden",
+    marginBottom: adeniTheme.spacing.lg,
+    backgroundColor: adeniTheme.background,
+  },
+  heroImage: {
+    width: "100%",
+    height: "100%",
+  },
   card: {
 
     backgroundColor: adeniTheme.surface,

@@ -4,6 +4,7 @@ using Adeni.Application.Caching;
 using Adeni.Application.Discovery;
 using Adeni.Application.Markets;
 using Adeni.Application.Security;
+using Adeni.Application.Storage;
 using Adeni.Domain.Common;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
@@ -11,7 +12,8 @@ using Microsoft.EntityFrameworkCore;
 
 public sealed class DiscoveryService(
     AdeniDbContext dbContext,
-    ICacheService cache) : IDiscoveryService
+    ICacheService cache,
+    IFileStorage fileStorage) : IDiscoveryService
 {
     private const int DefaultPageSize = 20;
     private const int MaxPageSize = 50;
@@ -179,8 +181,15 @@ public sealed class DiscoveryService(
                 .ToList();
         }
 
-        return businesses
-            .Select(x => new DiscoveryBusinessItem(
+        var items = new List<DiscoveryBusinessItem>();
+        foreach (var x in businesses
+                     .OrderBy(row => GeoDistance.HaversineKm(
+                         latitude,
+                         longitude,
+                         row.location.Latitude!.Value,
+                         row.location.Longitude!.Value)))
+        {
+            items.Add(new DiscoveryBusinessItem(
                 x.location.Id,
                 x.tenant.Id,
                 x.tenant.Name,
@@ -189,15 +198,29 @@ public sealed class DiscoveryService(
                 x.profile.CategorySlug,
                 x.location.Area,
                 x.location.MarketId,
+                await ResolveCoverImageUrlAsync(x.profile.CoverImageKey, cancellationToken),
                 GeoDistance.HaversineKm(
                     latitude,
                     longitude,
                     x.location.Latitude!.Value,
                     x.location.Longitude!.Value),
                 x.location.Latitude!.Value,
-                x.location.Longitude!.Value))
-            .OrderBy(x => x.DistanceKm)
-            .ToList();
+                x.location.Longitude!.Value));
+        }
+
+        return items;
+    }
+
+    private async Task<string?> ResolveCoverImageUrlAsync(
+        string? coverImageKey,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(coverImageKey))
+        {
+            return null;
+        }
+
+        return await fileStorage.GetDownloadUrlAsync(coverImageKey, cancellationToken);
     }
 
     private async Task<PublicBusinessProfile?> LoadPublicProfileAsync(
@@ -236,6 +259,7 @@ public sealed class DiscoveryService(
             business.location.AddressLine,
             business.profile.Description,
             PiiMasker.MaskPhone(business.profile.Phone),
+            await ResolveCoverImageUrlAsync(business.profile.CoverImageKey, cancellationToken),
             business.location.Latitude,
             business.location.Longitude);
     }

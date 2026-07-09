@@ -1,5 +1,32 @@
 # Sprint plan
 
+## Status overview (July 2026)
+
+| Sprint | Name | Status |
+|--------|------|--------|
+| 0 | Foundation & dev tooling | ✅ Done |
+| 1 | Business onboarding | ✅ Done |
+| 2 | Discovery API | ✅ Done |
+| 3 | Auth0 + client foundation | ✅ Done |
+| 3b | Web public shell | ✅ Done |
+| 4 | Booking | ✅ Done |
+| 5 | Expo mobile loop | ✅ Done |
+| 6 | Business portal (web) | ✅ Done |
+| 7 | Customer bookings | ✅ Done |
+| 8 | MVP gap closure | ✅ Done |
+| 9 | Mobile business onboarding | ✅ Done |
+| 10 | Design system & caching | ✅ Done |
+| 11 | Discovery UX | ✅ Done |
+| **12** | **Media & tenant hardening** | **In progress** |
+| 13 | Reviews & ratings | Planned |
+| 14 | Deployment, AI & observability | Planned |
+| — | Sprint 11d LLM agent | → Sprint 14 |
+| — | Staging deploy + Auth0 E2E | → Sprint 14 |
+| — | App Insights (Obs 1) | → Sprint 14 |
+
+**Not yet tackled:** Sprint 13 (reviews), Sprint 14 (staging, LLM agent, App Insights).
+
+---
 ## Sprint 0 — Foundation & dev tooling ✅
 
 - [x] DDD scaffold, SOC 2 Sprint 0 controls
@@ -121,21 +148,75 @@ Shared tokens, UI primitives, empty/loading states, and TanStack Query on web + 
 | TanStack Query (categories, discovery, bookings) | ✅ |
 | Docs: [design-system.md](./design-system.md) | ✅ |
 
-## Sprint 11 — Discovery UX (in progress)
+## Sprint 11 — Discovery UX ✅
 
-Global search, visual discovery cards, and Ask Adeni rule-based search.
+Global search, visual discovery cards, fused Ask Adeni search, and profile heroes.
 
 | Task | Status |
 |------|--------|
 | API `GET /discovery?q=` keyword filter | ✅ |
-| Global search bar (web header + mobile discover) | ✅ |
+| Fused DiscoverySearch (web header + mobile home/discover) | ✅ |
 | Category visuals + image business cards | ✅ |
-| Ask Adeni panel + rule-based intent parser | ✅ |
-| LLM agent (11d) | Deferred |
+| Ask Adeni rule-based intent parser | ✅ |
+| Business profile hero image (category fallback) | ✅ |
+| Business cover upload + blob storage | Deferred → [media-storage.md](./media-storage.md) |
+| LLM agent (11d) | → Sprint 14 |
 
 Confluence: [Sprint 11 — Discovery UX](https://aceth.atlassian.net/wiki/spaces/SD/pages/28540929)
 
+## Sprint 12 — Media & tenant hardening (in progress)
+
+| Task | Status |
+|------|--------|
+| **12a** `IFileStorage` port (Local + Azure Blob) | ✅ |
+| **12b** `cover_image_key` + presigned upload URL API | ✅ |
+| **12c** Business portal cover photo upload UI (web + mobile) | ✅ |
+| **12e** Tenant isolation hardening (see below) | ✅ |
+
+**Deferred to Sprint 14:** staging deploy, Auth0 E2E, LLM agent (11d), App Insights.
+
+### 12e — Tenant isolation hardening
+
+Foundation exists (middleware + EF global filters + audit). Sprint 12 closes gaps before staging.
+
+| Task | Status |
+|------|--------|
+| Integration tests: tenant A cannot access tenant B bookings/services | ✅ |
+| Integration tests: EF filter blocks cross-tenant reads when filter enabled | ✅ |
+| Architecture test: every `ITenantEntity` has a global query filter | ✅ |
+| Expand `AdeniDbContextTenantFilterTests` (bookings, services, locations) | ✅ |
+| Document cross-tenant vs intentionally public routes | ✅ `docs/tenant-isolation.md` |
+| Cache key convention: tenant-private keys must include `{tenantId}` | ✅ `docs/tenant-isolation.md` |
+
+**Current model (no change):** `/api/v1/tenant/*` requires `X-Tenant-Id` → `TenantAccessMiddleware` → EF filter ON. Public discovery/customer routes intentionally cross-tenant. Admin routes role-gated, filter OFF.
+
+See [media-storage.md](./media-storage.md).
+
+Confluence: [Sprint 12 — Media & tenant hardening](https://aceth.atlassian.net/wiki/spaces/SD/pages/28540956)
+
+## Sprint 13 — Reviews & ratings (planned)
+
+| Task | Status |
+|------|--------|
+| `reviews` schema + one-review-per-booking constraint | Planned |
+| `POST /bookings/{id}/review` + public list API | Planned |
+| `ratingAvg` / `reviewCount` on discovery + profile DTOs | Planned |
+| Customer review flow (web + mobile my-bookings) | Planned |
+| Star ratings on discovery cards + profile section | Planned |
+| Admin soft-hide + audit (`review.hidden`) | Planned |
+
+Confluence: [Sprint 13 — Reviews & ratings](https://aceth.atlassian.net/wiki/spaces/SD/pages/28672001)
+
+## Sprint 14 — Deployment, AI & observability (planned)
+
+| Task | Status |
+|------|--------|
+| Staging deploy + Auth0 E2E (was 12d) | Planned |
+| Sprint 11d — LLM Ask Adeni agent | Planned |
+| Obs 1 — App Insights on API | Planned |
+
 ## Next up
 
-1. Staging + Auth0 E2E
-2. Obs 1 — App Insights on API
+1. **Sprint 12** — blob storage, cover upload, tenant isolation tests *(in progress)*
+2. **Sprint 13** — reviews & ratings
+3. **Sprint 14** — staging, LLM agent, App Insights

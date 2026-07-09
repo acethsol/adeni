@@ -67,7 +67,8 @@ public sealed record BusinessProfileResponse(
     DateTimeOffset CreatedAt,
     DateTimeOffset? VerifiedAt,
     IReadOnlyList<BusinessLocationResponse> Locations,
-    IReadOnlyList<VerificationDocumentResponse> VerificationDocuments);
+    IReadOnlyList<VerificationDocumentResponse> VerificationDocuments,
+    string? CoverImageUrl = null);
 
 public sealed record VerificationDocumentResponse(
     VerificationDocumentType DocumentType,

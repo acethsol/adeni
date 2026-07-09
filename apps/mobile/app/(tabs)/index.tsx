@@ -3,7 +3,7 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-nati
 import type { Category } from "@adeni/shared";
 import { getCategoryVisual } from "@adeni/shared";
 import { Screen, ScreenHeader } from "@/components/adeni/Screen";
-import { AskAdeniPanel } from "@/components/ui/AskAdeniPanel";
+import { DiscoverySearch } from "@/components/ui/DiscoverySearch";
 import { Button } from "@/components/ui/Button";
 import { Callout } from "@/components/ui/Callout";
 import { SkeletonList } from "@/components/ui/Skeleton";
@@ -40,13 +40,13 @@ export default function HomeScreen() {
           </Callout>
         ) : null}
 
+        <DiscoverySearch />
+
         <Button
           title="Browse services"
           onPress={() => router.push("/discover")}
           containerStyle={styles.cta}
         />
-
-        <AskAdeniPanel />
 
         {isLoading ? (
           <SkeletonList count={2} />
@@ -88,9 +88,9 @@ function CategoryTile({ category, onPress }: { category: Category; onPress: () =
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.tile, pressed && styles.tilePressed]}>
       <Image source={{ uri: visual.imageUrl }} style={styles.tileImage} resizeMode="cover" />
-      <View style={styles.tileOverlay} />
-      <Text style={styles.tileIcon}>{visual.icon}</Text>
-      <Text style={styles.tileName}>{category.name}</Text>
+      <Text style={styles.tileName}>
+        {visual.icon} {category.name}
+      </Text>
     </Pressable>
   );
 }
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     paddingBottom: adeniTheme.spacing["3xl"],
   },
   cta: {
-    marginTop: adeniTheme.spacing.xl,
+    marginTop: adeniTheme.spacing.lg,
     marginHorizontal: adeniTheme.spacing.xl,
   },
   categories: {
@@ -147,32 +147,21 @@ const styles = StyleSheet.create({
     gap: adeniTheme.spacing.md,
   },
   tile: {
-    height: 120,
-    borderRadius: adeniTheme.radius.lg,
-    overflow: "hidden",
     marginBottom: adeniTheme.spacing.md,
-    justifyContent: "flex-end",
-    padding: adeniTheme.spacing.lg,
   },
   tilePressed: {
     opacity: 0.92,
   },
   tileImage: {
-    ...StyleSheet.absoluteFill,
-  },
-  tileOverlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: "rgba(0,0,0,0.35)",
-  },
-  tileIcon: {
-    fontSize: 18,
-    zIndex: 1,
+    height: 140,
+    width: "100%",
+    borderRadius: adeniTheme.radius.md,
+    backgroundColor: adeniTheme.background,
   },
   tileName: {
-    marginTop: 4,
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#ffffff",
-    zIndex: 1,
+    marginTop: adeniTheme.spacing.sm,
+    fontSize: 15,
+    fontWeight: "600",
+    color: adeniTheme.text,
   },
 });

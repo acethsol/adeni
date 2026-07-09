@@ -2,6 +2,7 @@ namespace Adeni.Infrastructure.Tenancy;
 
 using Adeni.Application.Catalog;
 using Adeni.Application.Markets;
+using Adeni.Application.Storage;
 using Adeni.Application.Tenancy;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
@@ -12,7 +13,8 @@ using Result = Adeni.Domain.Common.Result;
 
 public sealed class BusinessOnboardingService(
     AdeniDbContext dbContext,
-    ICategoryService categoryService) : IBusinessOnboardingService
+    ICategoryService categoryService,
+    IFileStorage fileStorage) : IBusinessOnboardingService
 {
     public async Task<Result<RegisterBusinessResponse>> RegisterAsync(
         RegisterBusinessRequest request,
@@ -165,11 +167,13 @@ public sealed class BusinessOnboardingService(
             .ThenBy(x => x.Name)
             .ToListAsync(cancellationToken);
 
-        return Result.Success(MapProfile(
+        return Result.Success(await MapProfileAsync(
             tenant,
             profile,
             locations,
-            await GetDocumentsAsync(tenantId, cancellationToken)));
+            await GetDocumentsAsync(tenantId, cancellationToken),
+            fileStorage,
+            cancellationToken));
     }
 
     public async Task<Result<BusinessProfileResponse>> UpdateProfileAsync(
@@ -213,11 +217,13 @@ public sealed class BusinessOnboardingService(
             .ThenBy(x => x.Name)
             .ToListAsync(cancellationToken);
 
-        return Result.Success(MapProfile(
+        return Result.Success(await MapProfileAsync(
             tenant,
             profile,
             locations,
-            await GetDocumentsAsync(tenantId, cancellationToken)));
+            await GetDocumentsAsync(tenantId, cancellationToken),
+            fileStorage,
+            cancellationToken));
     }
 
     public async Task<Result> SubmitVerificationAsync(
@@ -412,12 +418,21 @@ public sealed class BusinessOnboardingService(
             .OrderBy(d => d.SubmittedAt)
             .ToListAsync(cancellationToken);
 
-    private static BusinessProfileResponse MapProfile(
+    private static async Task<BusinessProfileResponse> MapProfileAsync(
         Tenant tenant,
         BusinessProfile profile,
         IReadOnlyList<BusinessLocation> locations,
-        IReadOnlyList<VerificationDocument> documents) =>
-        new(
+        IReadOnlyList<VerificationDocument> documents,
+        IFileStorage fileStorage,
+        CancellationToken cancellationToken)
+    {
+        string? coverImageUrl = null;
+        if (!string.IsNullOrWhiteSpace(profile.CoverImageKey))
+        {
+            coverImageUrl = await fileStorage.GetDownloadUrlAsync(profile.CoverImageKey, cancellationToken);
+        }
+
+        return new BusinessProfileResponse(
             tenant.Id,
             tenant.Name,
             tenant.Status,
@@ -427,5 +442,7 @@ public sealed class BusinessOnboardingService(
             tenant.CreatedAt,
             tenant.VerifiedAt,
             BusinessLocationService.MapLocations(locations),
-            documents.Select(d => new VerificationDocumentResponse(d.DocumentType, d.SubmittedAt)).ToList());
+            documents.Select(d => new VerificationDocumentResponse(d.DocumentType, d.SubmittedAt)).ToList(),
+            coverImageUrl);
+    }
 }

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { formatCategoryLabel, resolveBusinessCoverImage } from "@adeni/shared";
 import { BookingPanel } from "@/components/booking-panel";
 import { PublicHeader } from "@/components/public-header";
 import { createApiClient } from "@/lib/adeni";
@@ -43,15 +45,27 @@ export default async function BusinessProfilePage({ params }: Props) {
     const session = await getOptionalSession();
     const bookingEnabled =
       Boolean(session) || (!isAuth0Configured() && Boolean(process.env.DEV_CUSTOMER_AUTH0_SUB));
+    const coverImageUrl = resolveBusinessCoverImage(profile.categorySlug, profile.coverImageUrl);
 
     return (
-      <div className="min-h-screen bg-[#f6f8f6] text-[#1b4332]">
-        <PublicHeader />
+      <div className="flex flex-1 flex-col">
+        <PublicHeader searchMode="compact" />
 
         <main className="mx-auto max-w-3xl px-6 py-16">
           <Link href="/discover" className="text-sm font-medium text-[#40916c]">
             ← Back to discover
           </Link>
+
+          <div className="relative mt-6 aspect-[16/9] overflow-hidden rounded-xl bg-muted">
+            <Image
+              src={coverImageUrl}
+              alt=""
+              fill
+              priority
+              sizes="(max-width: 768px) 100vw, 768px"
+              className="object-cover"
+            />
+          </div>
 
           <div className="mt-6 rounded-2xl border border-[#1b4332]/10 bg-white p-8 shadow-sm">
             <p className="text-sm font-semibold uppercase tracking-widest text-[#40916c]">
@@ -60,7 +74,7 @@ export default async function BusinessProfilePage({ params }: Props) {
             <h1 className="mt-2 text-3xl font-bold">{profile.name}</h1>
             <p className="mt-2 text-[#1b4332]/80">
               {profile.locationName !== profile.name ? `${profile.locationName} · ` : ""}
-              {profile.area} · {profile.categorySlug.replace("-", " ")}
+              {profile.area} · {formatCategoryLabel(profile.categorySlug)}
             </p>
 
             {profile.description ? (

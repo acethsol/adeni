@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import type { DiscoveryBusinessItem } from "@adeni/shared";
 import { BusinessDiscoveryCard } from "@/components/business-discovery-card";
-import { AskAdeniPanel } from "@/components/ask-adeni-panel";
 import { Callout } from "@/components/ui/callout";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { PublicHeader } from "@/components/public-header";
+import { HeroDiscoverySearch } from "@/components/hero-discovery-search";
 import { CategoryFilterLinks } from "@/components/discover-category-filters";
 import type { Category } from "@adeni/shared";
 import { parseSearchIntent } from "@adeni/shared";
@@ -55,6 +55,7 @@ export default async function DiscoverPage({ searchParams }: Props) {
       market: market.id,
       category: selectedCategory,
       q: searchQuery,
+      pageSize: 50,
     });
     businesses = result.items;
   } catch {
@@ -66,8 +67,8 @@ export default async function DiscoverPage({ searchParams }: Props) {
   const intentSummary = searchQuery ? parseSearchIntent(searchQuery).summary : null;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <PublicHeader />
+    <div className="flex flex-1 flex-col">
+      <PublicHeader searchMode="hero-handoff" />
 
       <main className="mx-auto max-w-5xl px-6 py-12">
         <PageHeader
@@ -81,7 +82,7 @@ export default async function DiscoverPage({ searchParams }: Props) {
         />
 
         <div className="mt-8">
-          <AskAdeniPanel />
+          <HeroDiscoverySearch />
         </div>
 
         {categories.length > 0 ? (
@@ -112,7 +113,7 @@ export default async function DiscoverPage({ searchParams }: Props) {
             actionHref={searchQuery ? "/discover" : "/business/register"}
           />
         ) : (
-          <ul className="mt-8 grid gap-5 sm:grid-cols-2">
+          <ul className="mt-8 grid gap-x-6 gap-y-8 sm:grid-cols-2">
             {businesses.map((business) => (
               <li key={business.tenantId}>
                 <BusinessDiscoveryCard business={business} />

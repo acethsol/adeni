@@ -168,3 +168,77 @@ export function buildDiscoverSearchParams(intent: SearchIntent): {
 
   return params;
 }
+
+const CONVERSATIONAL_PATTERN =
+  /\b(near me|i need|i want|looking for|find me|someone|appointment|book a|help me)\b/i;
+
+/** True when input looks like natural language rather than a short keyword. */
+export function shouldParseAsIntent(input: string): boolean {
+  const trimmed = input.trim();
+  if (!trimmed) {
+    return false;
+  }
+
+  if (trimmed.split(/\s+/).length >= 4) {
+    return true;
+  }
+
+  if (CONVERSATIONAL_PATTERN.test(trimmed)) {
+    return true;
+  }
+
+  const normalized = trimmed.toLowerCase();
+  for (const keywords of Object.values(CATEGORY_KEYWORDS)) {
+    if (keywords.some((keyword) => normalized.includes(keyword))) {
+      return true;
+    }
+  }
+
+  for (const hint of AREA_HINTS) {
+    if (normalized.includes(hint)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+export type DiscoverySearchParams = {
+  category?: string;
+  q?: string;
+  summary?: string;
+};
+
+/** Route a single search box to keyword or intent-based discover params. */
+export function resolveDiscoverySearch(input: string): DiscoverySearchParams {
+  const trimmed = input.trim();
+  if (!trimmed) {
+    return {};
+  }
+
+  if (shouldParseAsIntent(trimmed)) {
+    const intent = parseSearchIntent(trimmed);
+    return {
+      ...buildDiscoverSearchParams(intent),
+      summary: intent.summary,
+    };
+  }
+
+  return {
+    q: trimmed,
+    summary: `Search for “${trimmed}”`,
+  };
+}
+
+export function discoverSearchToPath(params: DiscoverySearchParams): string {
+  const search = new URLSearchParams();
+  if (params.category) {
+    search.set("category", params.category);
+  }
+  if (params.q) {
+    search.set("q", params.q);
+  }
+
+  const query = search.toString();
+  return query ? `/discover?${query}` : "/discover";
+}

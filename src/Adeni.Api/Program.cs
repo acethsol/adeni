@@ -7,6 +7,10 @@ using Adeni.Infrastructure.Configuration;
 using Adeni.Infrastructure.DependencyInjection;
 using Adeni.Infrastructure.Logging;
 using Adeni.Infrastructure.Persistence;
+using Adeni.Application.Storage;
+using Adeni.Infrastructure.Storage;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -29,6 +33,7 @@ builder.Services.AddScoped<ICurrentUser>(sp =>
     ?? new HttpCurrentUser(null, [], null, false));
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
+builder.Services.AddAdeniStorage(builder.Configuration, builder.Environment);
 builder.Services.AddAdeniCors(builder.Configuration, builder.Environment);
 builder.Services.AddAdeniObservability(builder.Configuration);
 builder.Services.AddControllers();
@@ -40,6 +45,7 @@ if (builder.Environment.IsDevelopment())
 }
 
 var app = builder.Build();
+var fileStorage = app.Services.GetRequiredService<IFileStorage>();
 
 if (app.Environment.IsDevelopment())
 {
@@ -67,6 +73,20 @@ app.UseSerilogRequestLogging(options =>
     };
 });
 app.UseHttpsRedirection();
+
+var storageProvider = app.Configuration.GetSection(StorageOptions.SectionName)["Provider"] ?? "Local";
+if (string.Equals(storageProvider, "Local", StringComparison.OrdinalIgnoreCase)
+    && fileStorage is LocalFileStorage localFileStorage)
+{
+    var localRoot = localFileStorage.GetRootPath();
+    Directory.CreateDirectory(localRoot);
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(localRoot),
+        RequestPath = "/media"
+    });
+}
+
 app.UseAdeniCors();
 app.UseAdeniSecurityPipeline();
 app.UseAuthorization();

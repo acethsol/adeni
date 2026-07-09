@@ -4,6 +4,5 @@ export { Input } from "./Input";
 export { Badge } from "./Badge";
 export { EmptyState } from "./EmptyState";
 export { Skeleton, SkeletonCard, SkeletonList } from "./Skeleton";
-export { AskAdeniPanel } from "./AskAdeniPanel";
-export { GlobalSearchBar } from "./GlobalSearchBar";
+export { DiscoverySearch } from "./DiscoverySearch";
 export { Callout } from "./Callout";

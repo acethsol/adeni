@@ -1,6 +1,6 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import type { DiscoveryBusinessItem } from "@adeni/shared";
-import { getBusinessCoverImage, getCategoryVisual } from "@adeni/shared";
+import { formatCategoryLabel, resolveBusinessCoverImage } from "@adeni/shared";
 import { adeniTheme } from "@/lib/theme";
 
 type Props = {
@@ -9,25 +9,25 @@ type Props = {
 };
 
 export function BusinessCard({ business, onPress }: Props) {
-  const visual = getCategoryVisual(business.categorySlug);
-  const imageUrl = getBusinessCoverImage(business.categorySlug);
+  const imageUrl = resolveBusinessCoverImage(business.categorySlug, business.coverImageUrl);
+  const categoryLabel = formatCategoryLabel(business.categorySlug);
 
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-    >
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}>
       <View style={styles.imageWrap}>
         <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
-        <View style={styles.imageOverlay} />
-        <Text style={styles.badge}>
-          {visual.icon} {visual.label}
-        </Text>
       </View>
       <View style={styles.body}>
-        <Text style={styles.name}>{business.name}</Text>
-        <Text style={styles.meta}>{business.area}</Text>
-        <Text style={styles.distance}>{business.distanceKm.toFixed(1)} km away</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.name} numberOfLines={2}>
+            {business.name}
+          </Text>
+          <Text style={styles.verified}>Verified</Text>
+        </View>
+        <Text style={styles.meta}>{categoryLabel}</Text>
+        <Text style={styles.meta}>
+          {business.area} · {business.distanceKm.toFixed(1)} km
+        </Text>
       </View>
     </Pressable>
   );
@@ -35,59 +35,44 @@ export function BusinessCard({ business, onPress }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: adeniTheme.surface,
-    borderRadius: adeniTheme.radius.lg,
-    borderWidth: 1,
-    borderColor: adeniTheme.border,
-    overflow: "hidden",
-    ...adeniTheme.shadows.sm,
+    marginBottom: adeniTheme.spacing.xs,
   },
   cardPressed: {
-    borderColor: adeniTheme.accent,
-    opacity: 0.96,
+    opacity: 0.92,
   },
   imageWrap: {
-    height: 160,
+    height: 220,
+    borderRadius: adeniTheme.radius.md,
+    overflow: "hidden",
     backgroundColor: adeniTheme.background,
   },
   image: {
     width: "100%",
     height: "100%",
   },
-  imageOverlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: "rgba(0,0,0,0.15)",
-  },
-  badge: {
-    position: "absolute",
-    bottom: 10,
-    left: 10,
-    backgroundColor: "rgba(255,255,255,0.92)",
-    borderRadius: adeniTheme.radius.full,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    fontSize: 12,
-    fontWeight: "600",
-    color: adeniTheme.text,
-    overflow: "hidden",
-  },
   body: {
-    padding: adeniTheme.spacing.lg,
+    marginTop: adeniTheme.spacing.md,
+    gap: 2,
+  },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: adeniTheme.spacing.sm,
   },
   name: {
-    fontSize: 17,
+    flex: 1,
+    fontSize: 16,
     fontWeight: "600",
     color: adeniTheme.text,
   },
-  meta: {
-    marginTop: 4,
-    fontSize: 14,
+  verified: {
+    fontSize: 12,
+    fontWeight: "500",
     color: adeniTheme.textMuted,
   },
-  distance: {
-    marginTop: 8,
-    fontSize: 12,
-    fontWeight: "600",
-    color: adeniTheme.accent,
+  meta: {
+    fontSize: 14,
+    color: adeniTheme.textMuted,
   },
 });

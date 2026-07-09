@@ -4,9 +4,8 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { BusinessCard } from "@/components/adeni/BusinessCard";
 import { CategoryFilter } from "@/components/adeni/CategoryFilter";
 import { Screen, ScreenHeader } from "@/components/adeni/Screen";
-import { AskAdeniPanel } from "@/components/ui/AskAdeniPanel";
+import { DiscoverySearch } from "@/components/ui/DiscoverySearch";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { GlobalSearchBar } from "@/components/ui/GlobalSearchBar";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import { Callout } from "@/components/ui/Callout";
 import { useMarket } from "@/contexts/market-context";
@@ -75,11 +74,18 @@ export default function DiscoverScreen() {
                     : `Verified businesses near ${market.name}.`
               }
             />
-            <GlobalSearchBar
+            <DiscoverySearch
               defaultValue={searchQuery}
-              onSubmit={(value) => applySearch(value)}
+              marginHorizontal={false}
+              onNavigate={(params) => {
+                setSearchQuery(params.q ?? "");
+                setSelectedCategory(params.category?.trim().toLowerCase() ?? null);
+                router.setParams({
+                  category: params.category,
+                  q: params.q,
+                });
+              }}
             />
-            <AskAdeniPanel />
             <View style={styles.filters}>
               <CategoryFilter
                 categories={categories}

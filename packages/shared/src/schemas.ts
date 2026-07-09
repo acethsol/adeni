@@ -22,6 +22,7 @@ export const discoveryBusinessItemSchema = z.object({
   categorySlug: z.string(),
   area: z.string(),
   marketId: z.string(),
+  coverImageUrl: z.string().url().nullable().optional(),
   distanceKm: z.number(),
   latitude: z.number(),
   longitude: z.number(),
@@ -49,6 +50,7 @@ export const publicBusinessProfileSchema = z.object({
   addressLine: z.string(),
   description: z.string(),
   phoneMasked: z.string(),
+  coverImageUrl: z.string().url().nullable().optional(),
   latitude: z.number().nullable(),
   longitude: z.number().nullable(),
 });
@@ -286,6 +288,7 @@ export const businessProfileSchema = z.object({
   verifiedAt: z.string().nullable().optional(),
   locations: z.array(businessLocationSchema),
   verificationDocuments: z.array(verificationDocumentSchema),
+  coverImageUrl: z.string().url().nullable().optional(),
 });
 
 export type BusinessProfile = z.infer<typeof businessProfileSchema>;
@@ -300,6 +303,32 @@ export const updateBusinessProfileRequestSchema = z.object({
 export type UpdateBusinessProfileRequest = z.infer<
   typeof updateBusinessProfileRequestSchema
 >;
+
+export const mediaUploadPurposeSchema = z.enum(["cover", "Cover"]);
+
+export const mediaUploadUrlRequestSchema = z.object({
+  purpose: mediaUploadPurposeSchema,
+  contentType: z.string().min(1),
+  contentLength: z.number().int().positive(),
+});
+
+export const mediaUploadUrlResponseSchema = z.object({
+  uploadUrl: z.string().url(),
+  storageKey: z.string().min(1),
+  expiresAt: z.string(),
+});
+
+export const updateCoverImageRequestSchema = z.object({
+  coverImageKey: z.string().min(1),
+});
+
+export const updateCoverImageResponseSchema = z.object({
+  coverImageUrl: z.string().url(),
+});
+
+export type MediaUploadUrlRequest = z.infer<typeof mediaUploadUrlRequestSchema>;
+export type MediaUploadUrlResponse = z.infer<typeof mediaUploadUrlResponseSchema>;
+export type UpdateCoverImageRequest = z.infer<typeof updateCoverImageRequestSchema>;
 
 export const weeklyAvailabilityRuleSchema = z.object({
   dayOfWeek: z.number().int().min(0).max(6),

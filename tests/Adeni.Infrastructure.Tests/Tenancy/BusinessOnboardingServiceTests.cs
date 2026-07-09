@@ -9,6 +9,8 @@ using Adeni.Infrastructure.Catalog;
 using Adeni.Infrastructure.Context;
 using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Tenancy;
+using Adeni.Application.Storage;
+using Adeni.Infrastructure.Tests.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
@@ -189,6 +191,7 @@ public sealed class BusinessOnboardingServiceTests
         services.AddSingleton<Application.Abstractions.ICorrelationContext, CorrelationContext>();
         services.AddSingleton<Application.Abstractions.IAuditLogWriter, InMemoryAuditLogWriter>();
         services.AddDbContext<AdeniDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));
+        services.AddSingleton<IFileStorage, FakeFileStorage>();
         services.AddScoped<BusinessOnboardingService>();
         services.AddScoped<AdminBusinessService>();
         return services.BuildServiceProvider();

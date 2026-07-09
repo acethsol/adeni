@@ -6,7 +6,7 @@ using Adeni.Domain.Tenancy;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
-/// Idempotent dev seed — verified businesses across all markets (largest set in GTM live markets).
+/// Idempotent dev seed — ~1,000 verified businesses across all markets (Lagos-heavy).
 /// Skips slugs that already exist so new samples can be appended without a DB reset.
 /// </summary>
 public static class DevelopmentDataSeeder
@@ -25,7 +25,9 @@ public static class DevelopmentDataSeeder
             ["dallas"] = ("USD", "America/Chicago"),
         };
 
-    public static async Task SeedAsync(AdeniDbContext db, CancellationToken cancellationToken = default)
+    private static async Task SeedSamplesAsync(
+        AdeniDbContext db,
+        CancellationToken cancellationToken)
     {
         var existingSlugs = await db.BusinessLocations
             .IgnoreQueryFilters()
@@ -36,6 +38,7 @@ public static class DevelopmentDataSeeder
         var slugSet = existingSlugs.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var now = DateTimeOffset.UtcNow;
         var added = 0;
+        const int saveBatchSize = 100;
 
         foreach (var sample in DevelopmentSeedCatalog.All)
         {
@@ -122,13 +125,22 @@ public static class DevelopmentDataSeeder
 
             slugSet.Add(sample.Slug);
             added++;
+
+            if (added % saveBatchSize == 0)
+            {
+                await db.SaveChangesAsync(cancellationToken);
+            }
         }
 
-        if (added > 0)
+        if (added % saveBatchSize != 0)
         {
             await db.SaveChangesAsync(cancellationToken);
         }
+    }
 
+    public static async Task SeedAsync(AdeniDbContext db, CancellationToken cancellationToken = default)
+    {
+        await SeedSamplesAsync(db, cancellationToken);
         await SeedDevBusinessOwnerAsync(db, cancellationToken);
     }
 

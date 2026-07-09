@@ -47,18 +47,18 @@ Expect `"database": "healthy"` when PostgreSQL is connected.
 
 When the API runs in **Development** with PostgreSQL connected, it auto-seeds sample businesses (idempotent — skips slugs that already exist). Each business has one service and Mon–Sat 9:00–17:00 availability.
 
-| Market | Seed count | GTM live |
-|--------|------------|----------|
-| `lagos` | 12 | yes |
-| `abuja` | 5 | no |
-| `ottawa` | 5 | no |
-| `toronto` | 5 | no |
-| `houston` | 5 | no |
-| `dallas` | 5 | no |
+| Market | Total (approx.) | Handcrafted | Generated bulk | GTM live |
+|--------|-----------------|-------------|----------------|----------|
+| `lagos` | 475 | 12 | 463 | yes |
+| `abuja` | 105 | 5 | 100 | no |
+| `ottawa` | 105 | 5 | 100 | no |
+| `toronto` | 105 | 5 | 100 | no |
+| `houston` | 105 | 5 | 100 | no |
+| `dallas` | 105 | 5 | 100 | no |
 
-**37 businesses** across barbers, hair salons, nail/spa, and makeup/brows. Lagos has the largest set. Restart the API to append any new slugs without resetting the DB.
+**~1,000 businesses** across beauty and home-services categories. Lagos has the largest set. Generated slugs use `{market}-seed-{category}-{####}` (e.g. `lagos-seed-barbers-0042`). Restart the API to append any new slugs without resetting the DB.
 
-Browse by market: `http://localhost:3000/?market=toronto` (sets cookie), then open `/discover`.
+**First run after upgrade** may take 30–60s while ~963 new businesses are inserted (batched saves of 100).
 
 To re-seed from scratch, drop the database and restart the API after migrations.
 

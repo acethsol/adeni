@@ -35,6 +35,7 @@ export function useDiscovery(params: {
         market: discoveryParams.market,
         category: discoveryParams.category ?? undefined,
         q: discoveryParams.q ?? undefined,
+        pageSize: 50,
       });
       return result.items;
     },

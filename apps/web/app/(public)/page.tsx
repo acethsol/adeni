@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { Category } from "@adeni/shared";
 import { PublicHeader } from "@/components/public-header";
-import { AskAdeniPanel } from "@/components/ask-adeni-panel";
+import { HeroDiscoverySearch } from "@/components/hero-discovery-search";
 import { CategoryTile } from "@/components/category-tile";
 import { Button } from "@/components/ui/button";
 import { Callout } from "@/components/ui/callout";
@@ -60,8 +60,8 @@ export default async function HomePage() {
   const groupedCategories = groupCategories(categories);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <PublicHeader />
+    <div className="flex flex-1 flex-col">
+      <PublicHeader searchMode="hero-handoff" />
 
       <main className="mx-auto max-w-5xl px-6 py-16">
         <section className="max-w-2xl">
@@ -78,15 +78,14 @@ export default async function HomePage() {
               </>
             }
           />
+          <div className="mt-8">
+            <HeroDiscoverySearch />
+          </div>
           {market.launchNote ? (
             <Callout tone="info" className="mt-6">
               {market.launchNote}
             </Callout>
           ) : null}
-        </section>
-
-        <section className="mt-12">
-          <AskAdeniPanel />
         </section>
 
         <section className="mt-16">
