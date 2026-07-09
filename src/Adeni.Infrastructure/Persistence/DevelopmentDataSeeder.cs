@@ -13,6 +13,7 @@ public static class DevelopmentDataSeeder
 {
     public const string SeedMarkerSlug = "lekki-cuts";
     public const string DevBusinessAuth0Sub = "auth0|local-business";
+    public const string DevCustomerAuth0Sub = "auth0|local-customer";
 
     private static readonly IReadOnlyDictionary<string, (string Currency, string TimeZoneId)> MarketDefaults =
         new Dictionary<string, (string, string)>(StringComparer.OrdinalIgnoreCase)
@@ -142,6 +143,7 @@ public static class DevelopmentDataSeeder
     {
         await SeedSamplesAsync(db, cancellationToken);
         await SeedDevBusinessOwnerAsync(db, cancellationToken);
+        await SeedDevReviewFixtureAsync(db, cancellationToken);
     }
 
     private static async Task SeedDevBusinessOwnerAsync(
@@ -174,6 +176,94 @@ public static class DevelopmentDataSeeder
             Auth0Sub = DevBusinessAuth0Sub,
             Role = "owner",
             CreatedAt = DateTimeOffset.UtcNow,
+        });
+
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task SeedDevReviewFixtureAsync(
+        AdeniDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var location = await db.BusinessLocations
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(entry => entry.Slug == SeedMarkerSlug, cancellationToken);
+
+        if (location is null)
+        {
+            return;
+        }
+
+        var customer = await db.Customers
+            .FirstOrDefaultAsync(entry => entry.Auth0Sub == DevCustomerAuth0Sub, cancellationToken);
+
+        if (customer is null)
+        {
+            customer = new Customer
+            {
+                Id = Guid.NewGuid(),
+                Auth0Sub = DevCustomerAuth0Sub,
+                Name = "Local Customer",
+                CreatedAt = DateTimeOffset.UtcNow,
+            };
+            db.Customers.Add(customer);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
+        var completedBookingIds = await db.Bookings
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(booking =>
+                booking.CustomerId == customer.Id
+                && booking.TenantId == location.TenantId
+                && booking.Status == BookingStatus.Confirmed
+                && booking.EndAt <= DateTimeOffset.UtcNow)
+            .Select(booking => booking.Id)
+            .ToListAsync(cancellationToken);
+
+        if (completedBookingIds.Count > 0)
+        {
+            var reviewedBookingIds = await db.Reviews
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(review => completedBookingIds.Contains(review.BookingId))
+                .Select(review => review.BookingId)
+                .ToListAsync(cancellationToken);
+
+            if (completedBookingIds.Except(reviewedBookingIds).Any())
+            {
+                return;
+            }
+        }
+
+        var service = await db.ServiceOfferings
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(entry => entry.TenantId == location.TenantId && entry.IsActive)
+            .OrderBy(entry => entry.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (service is null)
+        {
+            return;
+        }
+
+        var startAt = DateTimeOffset.UtcNow.AddDays(-3);
+        var endAt = startAt.AddMinutes(service.DurationMinutes);
+
+        db.Bookings.Add(new BookingRecord
+        {
+            Id = Guid.NewGuid(),
+            TenantId = location.TenantId,
+            ServiceOfferingId = service.Id,
+            CustomerId = customer.Id,
+            StartAt = startAt,
+            EndAt = endAt,
+            Status = BookingStatus.Confirmed,
+            CustomerNotes = "Dev seed — ready for review E2E",
+            CreatedAt = startAt,
+            UpdatedAt = startAt,
         });
 
         await db.SaveChangesAsync(cancellationToken);

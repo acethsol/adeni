@@ -194,7 +194,7 @@ See [media-storage.md](./media-storage.md).
 
 Confluence: [Sprint 12 — Media & tenant hardening](https://aceth.atlassian.net/wiki/spaces/SD/pages/28540956)
 
-## Sprint 13 — Reviews & ratings (in progress)
+## Sprint 13 — Reviews & ratings ✅
 
 | Task | Status |
 |------|--------|
@@ -204,6 +204,7 @@ Confluence: [Sprint 12 — Media & tenant hardening](https://aceth.atlassian.net
 | Customer review flow (web + mobile my-bookings) | ✅ |
 | Star ratings on discovery cards + profile section | ✅ |
 | Admin soft-hide + audit (`review.hidden`) | ✅ |
+| Live E2E + integration test (completed booking → review → public ratings) | ✅ |
 
 Confluence: [Sprint 13 — Reviews & ratings](https://aceth.atlassian.net/wiki/spaces/SD/pages/28672001)
 
@@ -217,5 +218,4 @@ Confluence: [Sprint 13 — Reviews & ratings](https://aceth.atlassian.net/wiki/s
 
 ## Next up
 
-1. **Sprint 13** — reviews & ratings *(in progress — implementation complete)*
-2. **Sprint 14** — staging, LLM agent, App Insights
+1. **Sprint 14** — staging, LLM agent, App Insights
