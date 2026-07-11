@@ -7,3 +7,4 @@ export * from "./schemas";
 export * from "./design-tokens";
 export * from "./category-visuals";
 export * from "./search-intent";
+export * from "./i18n";

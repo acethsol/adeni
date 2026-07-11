@@ -5,7 +5,7 @@ import { DiscoverySearch } from "@/components/discovery-search";
 
 function HeroDiscoverySearchFallback() {
   return (
-    <div className="mx-auto h-14 w-full max-w-2xl animate-pulse rounded-full border border-border bg-surface shadow-sm" />
+    <div className="mx-auto h-14 w-full max-w-2xl animate-pulse rounded-full border border-border bg-subtle shadow-sm" />
   );
 }
 

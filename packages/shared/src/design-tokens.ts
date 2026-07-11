@@ -1,7 +1,8 @@
 /** Cross-platform Adeni design tokens — single source of truth for web and mobile. */
 export const adeniColors = {
-  background: "#f6f8f6",
+  background: "#ffffff",
   surface: "#ffffff",
+  subtle: "#f7faf8",
   text: "#1b4332",
   textMuted: "rgba(27, 67, 50, 0.7)",
   textSubtle: "rgba(27, 67, 50, 0.55)",

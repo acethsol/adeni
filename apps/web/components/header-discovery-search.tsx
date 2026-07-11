@@ -23,13 +23,18 @@ function DiscoverySearchFallback({ variant }: { variant: DiscoverySearchVariant 
 
 type Props = {
   className?: string;
+  marketName?: string;
   variant?: DiscoverySearchVariant;
 };
 
-export function HeaderDiscoverySearch({ className, variant = "default" }: Props) {
+export function HeaderDiscoverySearch({
+  className,
+  marketName,
+  variant = "default",
+}: Props) {
   return (
     <Suspense fallback={<DiscoverySearchFallback variant={variant} />}>
-      <DiscoverySearch className={className} variant={variant} />
+      <DiscoverySearch className={className} marketName={marketName} variant={variant} />
     </Suspense>
   );
 }

@@ -2,12 +2,16 @@ import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Screen, ScreenHeader } from "@/components/adeni/Screen";
+import { LocaleCurrencySheet, FooterLocaleButtons } from "@/components/adeni/LocaleCurrencySheet";
 import { useAuth } from "@/contexts/auth-context";
+import { useLocale } from "@/contexts/locale-context";
 import { isAuth0Configured } from "@/lib/auth/config";
 import { adeniTheme } from "@/lib/theme";
 
 export default function AccountScreen() {
   const router = useRouter();
+  const { t } = useLocale();
+  const [pickerOpen, setPickerOpen] = useState(false);
   const {
     loading,
     isAuthenticated,
@@ -52,6 +56,7 @@ export default function AccountScreen() {
 
   return (
     <Screen loading={loading}>
+      <LocaleCurrencySheet visible={pickerOpen} onClose={() => setPickerOpen(false)} />
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenHeader
           eyebrow="Account"
@@ -64,6 +69,11 @@ export default function AccountScreen() {
         />
 
         {authError ? <Text style={styles.error}>{authError}</Text> : null}
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>{t("locale.title")}</Text>
+          <FooterLocaleButtons onOpen={() => setPickerOpen(true)} />
+        </View>
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Session</Text>

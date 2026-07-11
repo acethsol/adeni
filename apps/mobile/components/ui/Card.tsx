@@ -4,10 +4,11 @@ import { adeniTheme } from "@/lib/theme";
 type Props = ViewProps & {
   title?: string;
   description?: string;
-  padding?: "sm" | "md" | "lg";
+  padding?: "none" | "sm" | "md" | "lg";
 };
 
 const paddingMap = {
+  none: 0,
   sm: adeniTheme.spacing.lg,
   md: adeniTheme.spacing.xl,
   lg: adeniTheme.spacing["2xl"],

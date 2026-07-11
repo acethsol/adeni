@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getMarketById } from "@adeni/shared";
-import { MARKET_COOKIE_NAME } from "@/lib/market";
+import { MARKET_COOKIE_NAME } from "@/lib/market-constants";
 
 export function applyMarketCookie(request: NextRequest, response: NextResponse): NextResponse {
   const queryMarket = request.nextUrl.searchParams.get("market")?.trim().toLowerCase();

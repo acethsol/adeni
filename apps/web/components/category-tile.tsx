@@ -1,7 +1,13 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { Category } from "@adeni/shared";
-import { getCategoryVisual } from "@adeni/shared";
+import { getCategoryVisual, getDefaultBusinessCoverImage } from "@adeni/shared";
+import {
+  MediaCard,
+  MediaCardBody,
+  MediaCardImage,
+  MediaCardMeta,
+  MediaCardTitle,
+} from "@/components/ui/media-card";
 
 type Props = {
   category: Category;
@@ -9,22 +15,24 @@ type Props = {
 
 export function CategoryTile({ category }: Props) {
   const visual = getCategoryVisual(category.slug, category.name);
+  const fallbackImageUrl = getDefaultBusinessCoverImage();
 
   return (
-    <Link href={`/discover?category=${category.slug}`} className="group block">
-      <div className="relative aspect-[5/3] w-full overflow-hidden rounded-xl bg-muted">
-        <Image
+    <Link href={`/discover?category=${category.slug}`} className="block h-full">
+      <MediaCard>
+        <MediaCardImage
           src={visual.imageUrl}
-          alt=""
-          fill
-          sizes="(max-width: 640px) 100vw, 33vw"
-          className="object-cover"
+          fallbackSrc={fallbackImageUrl}
+          sizes="(max-width: 640px) 85vw, 280px"
         />
-      </div>
-      <p className="mt-2 text-sm font-semibold text-foreground">
-        <span aria-hidden>{visual.icon} </span>
-        {category.name}
-      </p>
+        <MediaCardBody>
+          <MediaCardTitle>
+            <span aria-hidden>{visual.icon} </span>
+            {category.name}
+          </MediaCardTitle>
+          <MediaCardMeta>Browse in {category.name.toLowerCase()}</MediaCardMeta>
+        </MediaCardBody>
+      </MediaCard>
     </Link>
   );
 }

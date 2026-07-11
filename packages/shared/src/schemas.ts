@@ -272,6 +272,18 @@ export function formatRatingSummary(
   return `${avg.toFixed(1)} (${reviewCount})`;
 }
 
+export function formatReviewCount(
+  reviewCount?: number | null,
+  emptyLabel = "—",
+): string {
+  if (!reviewCount) {
+    return emptyLabel;
+  }
+
+  const label = reviewCount === 1 ? "review" : "reviews";
+  return `${reviewCount.toLocaleString()} ${label}`;
+}
+
 export const customerBookingsResponseSchema = z.object({
   items: z.array(customerBookingResponseSchema),
 });

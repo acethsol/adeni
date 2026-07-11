@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { formatCategoryLabel, resolveBusinessCoverImage } from "@adeni/shared";
+import {
+  formatCategoryLabel,
+  getBusinessCoverImage,
+  resolveBusinessCoverImage,
+} from "@adeni/shared";
 import { BookingPanel } from "@/components/booking-panel";
 import { BusinessReviewsSection } from "@/components/business-reviews-section";
 import { StarRating } from "@/components/star-rating";
+import { RemoteImage } from "@/components/ui/remote-image";
 import { PublicHeader } from "@/components/public-header";
 import { createApiClient } from "@/lib/adeni";
 import { isAuth0Configured } from "@/lib/auth/config";
@@ -49,6 +53,7 @@ export default async function BusinessProfilePage({ params }: Props) {
     const bookingEnabled =
       Boolean(session) || (!isAuth0Configured() && Boolean(process.env.DEV_CUSTOMER_AUTH0_SUB));
     const coverImageUrl = resolveBusinessCoverImage(profile.categorySlug, profile.coverImageUrl);
+    const coverFallbackUrl = getBusinessCoverImage(profile.categorySlug);
 
     return (
       <div className="flex flex-1 flex-col">
@@ -60,8 +65,9 @@ export default async function BusinessProfilePage({ params }: Props) {
           </Link>
 
           <div className="relative mt-6 aspect-[16/9] overflow-hidden rounded-xl bg-muted">
-            <Image
+            <RemoteImage
               src={coverImageUrl}
+              fallbackSrc={coverFallbackUrl}
               alt=""
               fill
               priority

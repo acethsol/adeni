@@ -5,11 +5,14 @@ import { Callout } from "@/components/ui/callout";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { PublicHeader } from "@/components/public-header";
+import { HERO_SEARCH_ANCHOR_ID } from "@/lib/hero-search";
+import { canAccessMyBookings } from "@/lib/customer-access";
 import { HeroDiscoverySearch } from "@/components/hero-discovery-search";
 import { CategoryFilterLinks } from "@/components/discover-category-filters";
 import type { Category } from "@adeni/shared";
 import { parseSearchIntent } from "@adeni/shared";
 import { createApiClient } from "@/lib/adeni";
+import { publicCardGridClass, publicContainerClass } from "@/lib/layout-classes";
 import { getActiveMarketConfig, getDiscoveryLocation } from "@/lib/market";
 
 export const revalidate = 120;
@@ -68,11 +71,17 @@ export default async function DiscoverPage({ searchParams }: Props) {
 
   return (
     <div className="flex flex-1 flex-col">
-      <PublicHeader searchMode="hero-handoff" />
+      <PublicHeader
+        searchMode="hero-handoff"
+        marketId={market.id}
+        marketName={market.name}
+        currency={market.currency}
+        countryCode={market.countryCode}
+        showBookingsNav={canAccessMyBookings()}
+      />
 
-      <main className="mx-auto max-w-5xl px-6 py-12">
+      <main className={`${publicContainerClass} py-12 lg:py-14`}>
         <PageHeader
-          eyebrow={market.name}
           title="Discover services"
           description={
             searchQuery
@@ -81,7 +90,7 @@ export default async function DiscoverPage({ searchParams }: Props) {
           }
         />
 
-        <div className="mt-8">
+        <div id={HERO_SEARCH_ANCHOR_ID} className="mt-8 scroll-mt-28">
           <HeroDiscoverySearch />
         </div>
 
@@ -113,7 +122,7 @@ export default async function DiscoverPage({ searchParams }: Props) {
             actionHref={searchQuery ? "/discover" : "/business/register"}
           />
         ) : (
-          <ul className="mt-8 grid gap-x-6 gap-y-8 sm:grid-cols-2">
+          <ul className={`${publicCardGridClass} mt-8`}>
             {businesses.map((business) => (
               <li key={business.tenantId}>
                 <BusinessDiscoveryCard business={business} />

@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Globe } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { publicContainerClass } from "@/lib/layout-classes";
+import { LocaleCurrencySwitcher } from "@/components/locale-currency-switcher";
 
 type FooterLink = {
   label: string;
@@ -59,14 +60,17 @@ const legalLinks: FooterLink[] = [
 
 type Props = {
   className?: string;
+  marketId: string;
+  currency: string;
+  countryCode: string;
 };
 
-export function PublicFooter({ className }: Props) {
+export function PublicFooter({ className, marketId, currency, countryCode }: Props) {
   const year = new Date().getFullYear();
 
   return (
-    <footer className={cn("mt-auto border-t border-border bg-[#eef2ef]", className)}>
-      <div className="mx-auto max-w-5xl px-6 py-12">
+    <footer className={cn("mt-auto border-t border-border bg-subtle", className)}>
+      <div className={`${publicContainerClass} py-12`}>
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           {sections.map((section) => (
             <div key={section.title}>
@@ -101,23 +105,12 @@ export function PublicFooter({ className }: Props) {
             ))}
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-semibold text-foreground shadow-sm transition-colors hover:border-border-strong"
-              aria-label="Language and region"
-            >
-              <Globe className="h-4 w-4" aria-hidden />
-              English
-            </button>
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-semibold text-foreground shadow-sm transition-colors hover:border-border-strong"
-              aria-label="Currency"
-            >
-              ₦ NGN
-            </button>
-          </div>
+          <LocaleCurrencySwitcher
+            currentMarketId={marketId}
+            currentCurrency={currency}
+            countryCode={countryCode}
+            mode="footer"
+          />
         </div>
       </div>
     </footer>

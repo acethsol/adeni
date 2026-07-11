@@ -11,23 +11,28 @@ import {
 } from "@adeni/shared";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
+import { useTranslation } from "@/components/locale-provider";
 
 export type DiscoverySearchVariant = "hero" | "default" | "compact";
 
 type Props = {
   className?: string;
   placeholder?: string;
+  marketName?: string;
   syncFromUrl?: boolean;
   variant?: DiscoverySearchVariant;
 };
 
 export function DiscoverySearch({
   className,
-  placeholder = "Search or ask — barber in Lekki, braids near me…",
+  placeholder,
+  marketName,
   syncFromUrl = true,
   variant = "default",
 }: Props) {
   const router = useRouter();
+  const { t } = useTranslation();
+  const resolvedPlaceholder = placeholder ?? t("search.placeholder");
   const searchParams = useSearchParams();
   const listboxId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -92,41 +97,53 @@ export function DiscoverySearch({
     navigate(value);
   }
 
-  function openSearch() {
-    setOpen(true);
-    requestAnimationFrame(() => inputRef.current?.focus());
-  }
-
-  const queryLabel = value.trim() || "Search or ask";
+  const queryLabel = value.trim() || t("search.searchOrAsk");
+  const locationLabel = marketName ?? t("search.nearYou");
   const categoryLabel = urlCategory
     ? formatCategoryLabel(urlCategory)
-    : "Any category";
+    : t("search.anyCategory");
+
+  const isHeaderCompact = variant === "compact";
+
+  function openSearch() {
+    setOpen(true);
+  }
+
+  useEffect(() => {
+    if (open && isHeaderCompact) {
+      inputRef.current?.focus();
+    }
+  }, [open, isHeaderCompact]);
 
   return (
     <div ref={containerRef} className={cn("relative w-full", className)}>
-      {variant === "compact" ? (
+      {isHeaderCompact ? (
         <button
           type="button"
-          onClick={openSearch}
+          onMouseDown={(event) => {
+            event.preventDefault();
+            openSearch();
+          }}
+          hidden={open}
           aria-expanded={open}
           aria-controls={listboxId}
-          aria-label="Open search"
+          aria-label={t("nav.search")}
           className={cn(
-            "flex w-full items-center rounded-full border border-border bg-surface text-left shadow-md transition-shadow hover:shadow-lg",
+            "flex w-full min-w-0 cursor-pointer items-center rounded-full border border-border bg-surface text-left shadow-md transition-shadow hover:shadow-lg",
             open && "ring-2 ring-accent/20",
           )}
         >
-          <span className="hidden min-w-0 flex-1 truncate px-4 py-2.5 text-sm font-semibold text-foreground sm:block sm:border-r sm:border-border">
+          <span className="pointer-events-none hidden min-w-0 flex-1 truncate px-4 py-2.5 text-sm font-semibold text-foreground sm:block sm:border-r sm:border-border">
             {queryLabel}
           </span>
-          <span className="hidden min-w-0 flex-1 truncate px-4 py-2.5 text-sm text-muted md:block md:border-r md:border-border">
+          <span className="pointer-events-none hidden min-w-0 flex-1 truncate px-4 py-2.5 text-sm text-muted md:block md:border-r md:border-border">
             <MapPin className="mr-1 inline h-3.5 w-3.5 shrink-0" aria-hidden />
-            Near you
+            {locationLabel}
           </span>
-          <span className="min-w-0 flex-1 truncate px-4 py-2.5 text-sm text-muted sm:border-r sm:border-border">
+          <span className="pointer-events-none min-w-0 flex-1 truncate px-4 py-2.5 text-sm text-muted sm:border-r sm:border-border">
             {categoryLabel}
           </span>
-          <span className="m-1.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-primary-foreground">
+          <span className="pointer-events-none m-1.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-primary-foreground">
             <Search className="h-4 w-4" aria-hidden />
           </span>
         </button>
@@ -145,7 +162,7 @@ export function DiscoverySearch({
             value={value}
             onChange={(event) => setValue(event.target.value)}
             onFocus={() => setOpen(true)}
-            placeholder={placeholder}
+            placeholder={resolvedPlaceholder}
             role="combobox"
             aria-expanded={open}
             aria-controls={listboxId}
@@ -161,7 +178,7 @@ export function DiscoverySearch({
         </form>
       )}
 
-      {variant === "compact" && open ? (
+      {isHeaderCompact && open ? (
         <form onSubmit={handleSubmit} role="search" className="absolute left-0 right-0 top-0 z-10">
           <Search
             className="pointer-events-none absolute left-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -172,7 +189,7 @@ export function DiscoverySearch({
             type="search"
             value={value}
             onChange={(event) => setValue(event.target.value)}
-            placeholder={placeholder}
+            placeholder={resolvedPlaceholder}
             aria-label="Search or ask Adeni"
             className="w-full rounded-full border border-accent bg-surface py-2.5 pl-10 pr-4 text-sm text-foreground shadow-md ring-2 ring-accent/20 outline-none"
           />
@@ -184,8 +201,8 @@ export function DiscoverySearch({
           id={listboxId}
           role="listbox"
           className={cn(
-            "absolute left-0 right-0 z-50 overflow-hidden rounded-2xl border border-border bg-surface shadow-md",
-            variant === "compact" ? "top-[calc(100%+0.5rem)]" : "top-[calc(100%+0.5rem)]",
+            "absolute left-0 right-0 overflow-hidden rounded-2xl border border-border bg-surface shadow-md",
+            isHeaderCompact ? "top-[calc(100%+0.5rem)] z-[60]" : "top-[calc(100%+0.5rem)] z-50",
           )}
         >
           <AskAdeniPanelContent
@@ -236,7 +253,7 @@ function AskAdeniPanelContent({
               role="option"
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => onNavigate(example)}
-              className="rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-accent/40 hover:text-foreground"
+              className="rounded-full border border-border bg-subtle px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-accent/40 hover:text-foreground"
             >
               {example}
             </button>

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { MarketGeoSync } from "@/components/market-geo-sync";
+import { LocaleProvider } from "@/components/locale-provider";
+import { getLocale } from "@/lib/locale";
 import { AppProviders } from "./providers";
 import "./globals.css";
 
@@ -19,20 +21,24 @@ export const metadata: Metadata = {
   description: "Trusted local services marketplace",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+
   return (
     <html
-      lang="en"
+      lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <AppProviders>
-          <MarketGeoSync />
-          {children}
+          <LocaleProvider locale={locale}>
+            <MarketGeoSync />
+            {children}
+          </LocaleProvider>
         </AppProviders>
       </body>
     </html>

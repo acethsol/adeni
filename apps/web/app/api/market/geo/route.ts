@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { formatCoordinatePair, resolveMarket } from "@adeni/shared";
-import { COORDS_COOKIE_NAME } from "@/lib/market";
+import { COORDS_COOKIE_NAME } from "@/lib/market-constants";
 
 type GeoBody = {
   lat?: unknown;

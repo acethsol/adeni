@@ -34,8 +34,6 @@ export const markets = {
     tagline: "Trusted local services, bookable in one place",
     description:
       "See verified businesses near you, check availability, and book with confidence — no endless messages or maybes.",
-    launchNote:
-      "Onboarding salons and barbers here now. Home services and more categories on the way.",
     isLive: true,
   },
   abuja: {

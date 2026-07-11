@@ -7,6 +7,7 @@ import "react-native-reanimated";
 
 import { useColorScheme } from "@/components/useColorScheme";
 import { AuthProvider } from "@/contexts/auth-context";
+import { LocaleProvider } from "@/contexts/locale-context";
 import { MarketProvider } from "@/contexts/market-context";
 import { mobileQueryClient } from "@/lib/query-client";
 import { adeniTheme } from "@/lib/theme";
@@ -59,8 +60,9 @@ function RootLayoutNav() {
   return (
     <QueryClientProvider client={mobileQueryClient}>
       <AuthProvider>
-        <MarketProvider>
-          <ThemeProvider value={colorScheme === "dark" ? DarkTheme : adeniNavigationTheme}>
+        <LocaleProvider>
+          <MarketProvider>
+            <ThemeProvider value={colorScheme === "dark" ? DarkTheme : adeniNavigationTheme}>
             <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen
@@ -101,8 +103,9 @@ function RootLayoutNav() {
             <Stack.Screen name="modal" options={{ presentation: "modal" }} />
           </Stack>
         </ThemeProvider>
-      </MarketProvider>
-    </AuthProvider>
+          </MarketProvider>
+        </LocaleProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

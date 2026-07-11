@@ -7,9 +7,7 @@ import {
   type MarketLocation,
   type ResolvedMarket,
 } from "@adeni/shared";
-
-export const MARKET_COOKIE_NAME = "adeni_market";
-export const COORDS_COOKIE_NAME = "adeni_coords";
+import { COORDS_COOKIE_NAME, MARKET_COOKIE_NAME } from "@/lib/market-constants";
 
 export function resolveMarketFromEnv(): string | undefined {
   return process.env.NEXT_PUBLIC_ADENI_MARKET ?? process.env.ADENI_MARKET;

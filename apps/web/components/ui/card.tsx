@@ -3,11 +3,12 @@ import { cn } from "@/lib/cn";
 
 type Props = HTMLAttributes<HTMLDivElement> & {
   children: ReactNode;
-  padding?: "sm" | "md" | "lg";
+  padding?: "none" | "sm" | "md" | "lg";
   interactive?: boolean;
 };
 
 const paddingClasses = {
+  none: "",
   sm: "p-4",
   md: "p-5",
   lg: "p-6",
@@ -25,7 +26,7 @@ export function Card({
       className={cn(
         "rounded-xl border border-border bg-surface shadow-sm",
         paddingClasses[padding],
-        interactive && "transition-shadow hover:shadow-md",
+        interactive && "transition-all hover:border-border-strong hover:shadow-md",
         className,
       )}
       {...rest}

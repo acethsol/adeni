@@ -1,50 +1,89 @@
-import Image from "next/image";
+"use client";
+
 import Link from "next/link";
+import { ShieldCheck } from "lucide-react";
 import type { DiscoveryBusinessItem } from "@adeni/shared";
-import { formatCategoryLabel, formatRatingSummary, resolveBusinessCoverImage } from "@adeni/shared";
+import {
+  formatCategoryLabel,
+  getBusinessCoverImage,
+  getReviewCountLabel,
+  resolveBusinessCoverImage,
+} from "@adeni/shared";
+import { useTranslation } from "@/components/locale-provider";
+import { ReviewAwaitingHint } from "@/components/review-awaiting-hint";
 import { StarRating } from "@/components/star-rating";
-import { MapPin } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  MediaCard,
+  MediaCardActions,
+  MediaCardBody,
+  MediaCardMeta,
+  MediaCardTitle,
+} from "@/components/ui/media-card";
+import { RemoteImage } from "@/components/ui/remote-image";
+import { cn } from "@/lib/cn";
 
 type Props = {
   business: DiscoveryBusinessItem;
+  className?: string;
 };
 
-export function BusinessDiscoveryCard({ business }: Props) {
+export function BusinessDiscoveryCard({ business, className }: Props) {
+  const { locale, t } = useTranslation();
   const imageUrl = resolveBusinessCoverImage(business.categorySlug, business.coverImageUrl);
+  const fallbackImageUrl = getBusinessCoverImage(business.categorySlug);
   const categoryLabel = formatCategoryLabel(business.categorySlug);
+  const hasReviews = Boolean(business.reviewCount && business.reviewCount > 0);
+  const reviewLabel = hasReviews ? getReviewCountLabel(locale, business.reviewCount) : null;
+  const awaitingReviewsLabel = t("business.awaitingReviews");
 
   return (
-    <Link href={`/businesses/${business.slug}`} className="group block">
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-muted">
-        <Image
-          src={imageUrl}
-          alt=""
-          fill
-          sizes="(max-width: 640px) 100vw, 50vw"
-          className="object-cover"
-        />
-      </div>
-      <div className="mt-3 space-y-1">
-        <div className="flex items-start justify-between gap-3">
-          <p className="font-semibold leading-snug text-foreground">{business.name}</p>
-          <span className="shrink-0 text-xs font-medium text-muted">Verified</span>
+    <Link href={`/businesses/${business.slug}`} className={cn("block h-full", className)}>
+      <MediaCard>
+        <div className="relative aspect-[5/4] w-full overflow-hidden bg-muted">
+          <RemoteImage
+            src={imageUrl}
+            fallbackSrc={fallbackImageUrl}
+            alt=""
+            fill
+            sizes="280px"
+            className="object-cover"
+          />
+          <div className="absolute left-3 top-3 z-10">
+            <span className="inline-flex items-center gap-1 rounded-full border border-accent/20 bg-surface/95 px-2.5 py-1 text-xs font-semibold text-accent shadow-sm backdrop-blur-sm">
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
+              {t("business.verified")}
+            </span>
+          </div>
         </div>
-        <p className="text-sm text-muted">{categoryLabel}</p>
-        <p className="flex items-center gap-2 text-sm text-muted">
-          {business.reviewCount ? (
-            <>
-              <StarRating rating={business.ratingAvg ?? 0} />
-              <span>{formatRatingSummary(business.ratingAvg, business.reviewCount)}</span>
-            </>
-          ) : (
-            <span>New</span>
-          )}
-        </p>
-        <p className="flex items-center gap-1 text-sm text-muted">
-          <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
-          {business.area} · {business.distanceKm.toFixed(1)} km
-        </p>
-      </div>
+
+        <MediaCardBody>
+          <MediaCardTitle>{business.name}</MediaCardTitle>
+
+          <div className="flex min-h-5 items-center gap-2 text-sm">
+            <StarRating
+              rating={hasReviews ? (business.ratingAvg ?? 0) : 0}
+              tone="accent"
+            />
+            <span className={cn(hasReviews ? "font-medium text-foreground" : "text-muted")}>
+              {hasReviews ? (
+                `${(business.ratingAvg ?? 0).toFixed(1)} · ${reviewLabel}`
+              ) : (
+                <ReviewAwaitingHint label={awaitingReviewsLabel} />
+              )}
+            </span>
+          </div>
+
+          <MediaCardMeta>
+            {categoryLabel} · {business.area} · {business.distanceKm.toFixed(1)} km
+          </MediaCardMeta>
+
+          <MediaCardActions>
+            <Badge tone="accent">View profile</Badge>
+            <Badge tone="accent">Book now</Badge>
+          </MediaCardActions>
+        </MediaCardBody>
+      </MediaCard>
     </Link>
   );
 }

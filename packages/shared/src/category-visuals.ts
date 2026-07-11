@@ -52,7 +52,7 @@ export const categoryVisuals: Record<string, CategoryVisual> = {
     label: "Plumbers",
     icon: "🔧",
     imageUrl:
-      "https://images.unsplash.com/photo-1585704032915-c3400ca276e5?w=800&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=800&auto=format&fit=crop&q=80",
     gradient: ["#023e8a", "#0077b6"],
   },
   electricians: {
@@ -105,6 +105,10 @@ export function getCategoryVisual(slug: string, fallbackLabel?: string): Categor
 
 export function getBusinessCoverImage(categorySlug: string): string {
   return getCategoryVisual(categorySlug).imageUrl;
+}
+
+export function getDefaultBusinessCoverImage(): string {
+  return DEFAULT_VISUAL.imageUrl;
 }
 
 /** Prefer tenant-uploaded cover; fall back to category placeholder. */
