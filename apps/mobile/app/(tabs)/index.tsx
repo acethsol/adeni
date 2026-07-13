@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SymbolView } from "expo-symbols";
 import type { Category } from "@adeni/shared";
-import { getCategoryVisual } from "@adeni/shared";
+import { getCategoryVisual, getMarketDescription, getMarketTagline } from "@adeni/shared";
 import { Screen } from "@/components/adeni/Screen";
 import { LocaleCurrencySheet } from "@/components/adeni/LocaleCurrencySheet";
 import { StickySearchHeader } from "@/components/adeni/StickySearchHeader";
@@ -20,7 +20,7 @@ const STICKY_SEARCH_OFFSET = 140;
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { market, loading: marketLoading, locationDenied } = useMarket();
   const { data: categories = [], isLoading, error } = useCategories();
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -59,8 +59,8 @@ export default function HomeScreen() {
         }}
       >
         <View style={styles.hero}>
-          <Text style={styles.title}>{market.tagline}</Text>
-          <Text style={styles.subtitle}>{market.description}</Text>
+          <Text style={styles.title}>{getMarketTagline(locale)}</Text>
+          <Text style={styles.subtitle}>{getMarketDescription(locale)}</Text>
         </View>
 
         {error ? (

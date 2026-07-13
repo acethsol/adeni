@@ -1,61 +1,64 @@
 import Link from "next/link";
+import { buildLocaleRegionPresets, t } from "@adeni/shared";
 import { cn } from "@/lib/cn";
 import { publicContainerClass } from "@/lib/layout-classes";
+import { getLocale } from "@/lib/locale";
 import { LocaleCurrencySwitcher } from "@/components/locale-currency-switcher";
+import { getMarkets } from "@/lib/markets-api";
 
 type FooterLink = {
-  label: string;
+  labelKey: string;
   href: string;
 };
 
 type FooterSection = {
-  title: string;
+  titleKey: string;
   links: FooterLink[];
 };
 
 const sections: FooterSection[] = [
   {
-    title: "Support",
+    titleKey: "footer.sections.support",
     links: [
-      { label: "Help centre", href: "/discover" },
-      { label: "Trust & verification", href: "/discover" },
-      { label: "Booking help", href: "/my-bookings" },
-      { label: "Contact us", href: "/discover" },
+      { labelKey: "footer.links.helpCentre", href: "/discover" },
+      { labelKey: "footer.links.trustVerification", href: "/discover" },
+      { labelKey: "footer.links.bookingHelp", href: "/my-bookings" },
+      { labelKey: "footer.links.contactUs", href: "/discover" },
     ],
   },
   {
-    title: "Discover",
+    titleKey: "footer.sections.discover",
     links: [
-      { label: "Browse services", href: "/discover" },
-      { label: "Beauty & grooming", href: "/discover?category=barbers" },
-      { label: "Home services", href: "/discover?category=plumbers" },
-      { label: "Verified providers", href: "/discover" },
+      { labelKey: "footer.links.browseServices", href: "/discover" },
+      { labelKey: "footer.links.beautyGrooming", href: "/discover?category=barbers" },
+      { labelKey: "footer.links.homeServices", href: "/discover?category=plumbers" },
+      { labelKey: "footer.links.verifiedProviders", href: "/discover" },
     ],
   },
   {
-    title: "For business",
+    titleKey: "footer.sections.business",
     links: [
-      { label: "List your business", href: "/business/register" },
-      { label: "Business portal", href: "/business" },
-      { label: "Get verified", href: "/business/profile" },
-      { label: "Manage bookings", href: "/business/bookings" },
+      { labelKey: "footer.links.listBusiness", href: "/business/register" },
+      { labelKey: "footer.links.businessPortal", href: "/business" },
+      { labelKey: "footer.links.getVerified", href: "/business/profile" },
+      { labelKey: "footer.links.manageBookings", href: "/business/bookings" },
     ],
   },
   {
-    title: "Adeni",
+    titleKey: "footer.sections.adeni",
     links: [
-      { label: "How it works", href: "/" },
-      { label: "About", href: "/" },
-      { label: "Privacy", href: "/" },
-      { label: "Terms", href: "/" },
+      { labelKey: "footer.links.howItWorks", href: "/" },
+      { labelKey: "footer.links.about", href: "/" },
+      { labelKey: "footer.links.privacy", href: "/" },
+      { labelKey: "footer.links.terms", href: "/" },
     ],
   },
 ];
 
 const legalLinks: FooterLink[] = [
-  { label: "Privacy", href: "/" },
-  { label: "Terms", href: "/" },
-  { label: "Sitemap", href: "/discover" },
+  { labelKey: "footer.links.privacy", href: "/" },
+  { labelKey: "footer.links.terms", href: "/" },
+  { labelKey: "footer.links.sitemap", href: "/discover" },
 ];
 
 type Props = {
@@ -65,7 +68,9 @@ type Props = {
   countryCode: string;
 };
 
-export function PublicFooter({ className, marketId, currency, countryCode }: Props) {
+export async function PublicFooter({ className, marketId, currency, countryCode }: Props) {
+  const [locale, markets] = await Promise.all([getLocale(), getMarkets()]);
+  const presets = buildLocaleRegionPresets(markets);
   const year = new Date().getFullYear();
 
   return (
@@ -73,16 +78,18 @@ export function PublicFooter({ className, marketId, currency, countryCode }: Pro
       <div className={`${publicContainerClass} py-12`}>
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           {sections.map((section) => (
-            <div key={section.title}>
-              <h2 className="text-sm font-semibold text-foreground">{section.title}</h2>
+            <div key={section.titleKey}>
+              <h2 className="text-sm font-semibold text-foreground">
+                {t(locale, section.titleKey)}
+              </h2>
               <ul className="mt-4 space-y-3">
                 {section.links.map((link) => (
-                  <li key={`${section.title}-${link.label}`}>
+                  <li key={`${section.titleKey}-${link.labelKey}`}>
                     <Link
                       href={link.href}
                       className="text-sm text-muted transition-colors hover:text-foreground hover:underline"
                     >
-                      {link.label}
+                      {t(locale, link.labelKey)}
                     </Link>
                   </li>
                 ))}
@@ -96,9 +103,9 @@ export function PublicFooter({ className, marketId, currency, countryCode }: Pro
             <span>© {year} Adeni</span>
             <span aria-hidden>·</span>
             {legalLinks.map((link, index) => (
-              <span key={link.label} className="inline-flex items-center gap-2">
+              <span key={link.labelKey} className="inline-flex items-center gap-2">
                 <Link href={link.href} className="hover:text-foreground hover:underline">
-                  {link.label}
+                  {t(locale, link.labelKey)}
                 </Link>
                 {index < legalLinks.length - 1 ? <span aria-hidden>·</span> : null}
               </span>
@@ -110,6 +117,7 @@ export function PublicFooter({ className, marketId, currency, countryCode }: Pro
             currentCurrency={currency}
             countryCode={countryCode}
             mode="footer"
+            presets={presets}
           />
         </div>
       </div>

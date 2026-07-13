@@ -14,7 +14,8 @@ using Result = Adeni.Domain.Common.Result;
 public sealed class BusinessOnboardingService(
     AdeniDbContext dbContext,
     ICategoryService categoryService,
-    IFileStorage fileStorage) : IBusinessOnboardingService
+    IFileStorage fileStorage,
+    IMarketCatalog marketCatalog) : IBusinessOnboardingService
 {
     public async Task<Result<RegisterBusinessResponse>> RegisterAsync(
         RegisterBusinessRequest request,
@@ -102,7 +103,7 @@ public sealed class BusinessOnboardingService(
             dbContext.BusinessLocations.Add(location);
         }
 
-        ApplyLocation(location, request.Location, normalizedSlug, now);
+        ApplyLocation(location, request.Location, normalizedSlug, marketCatalog.Normalize(request.Location.MarketId), now);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return Result.Success(new RegisterBusinessResponse(
@@ -342,7 +343,8 @@ public sealed class BusinessOnboardingService(
             request.Location.Slug,
             request.Location.AddressLine,
             request.Location.Area,
-            request.Location.MarketId);
+            request.Location.MarketId,
+            marketCatalog);
     }
 
     private async Task<Result> ValidateBrandFieldsAsync(
@@ -396,11 +398,12 @@ public sealed class BusinessOnboardingService(
         BusinessLocation location,
         BusinessLocationRequest request,
         string normalizedSlug,
+        string normalizedMarketId,
         DateTimeOffset updatedAt)
     {
         location.Slug = normalizedSlug;
         location.Name = string.IsNullOrWhiteSpace(request.Name) ? request.Area.Trim() : request.Name.Trim();
-        location.MarketId = KnownMarketCatalog.Normalize(request.MarketId);
+        location.MarketId = normalizedMarketId;
         location.AddressLine = request.AddressLine.Trim();
         location.Area = request.Area.Trim();
         location.Latitude = request.Latitude;

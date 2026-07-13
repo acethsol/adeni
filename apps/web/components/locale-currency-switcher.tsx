@@ -8,12 +8,15 @@ import { Check, Globe, X } from "lucide-react";
 import {
   buildLocaleRegionPresets,
   countryName,
+  defaultLocale,
   findLocaleRegionPreset,
   formatFooterLanguageLabel,
   getCurrencySymbol,
+  mapApiMarketToConfig,
+  marketsResponseSchema,
   type LocaleRegionPreset,
 } from "@adeni/shared";
-import { setLocaleRegion } from "@/app/actions/locale";
+import { setLocaleRegion, setTranslationPreference } from "@/app/actions/locale";
 import { useTranslation } from "@/components/locale-provider";
 import { cn } from "@/lib/cn";
 
@@ -23,6 +26,7 @@ type Props = {
   countryCode: string;
   className?: string;
   mode?: "footer" | "trigger";
+  presets?: LocaleRegionPreset[];
   trigger?: (props: { open: () => void }) => ReactNode;
 };
 
@@ -32,16 +36,55 @@ export function LocaleCurrencySwitcher({
   countryCode,
   className,
   mode = "footer",
+  presets: presetsProp,
   trigger,
 }: Props) {
   const router = useRouter();
-  const { locale, t } = useTranslation();
+  const { locale, t, translateContent } = useTranslation();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [applyingId, setApplyingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const presets = useMemo(() => buildLocaleRegionPresets(), []);
+  const [fetchedPresets, setFetchedPresets] = useState<LocaleRegionPreset[] | null>(null);
+
+  useEffect(() => {
+    if (presetsProp) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadPresets() {
+      try {
+        const response = await fetch("/api/v1/markets");
+        if (!response.ok) {
+          return;
+        }
+        const payload = marketsResponseSchema.parse(await response.json());
+        if (cancelled) {
+          return;
+        }
+        const catalog = payload.items.map(mapApiMarketToConfig);
+        setFetchedPresets(buildLocaleRegionPresets(catalog));
+      } catch {
+        if (!cancelled) {
+          setFetchedPresets(buildLocaleRegionPresets());
+        }
+      }
+    }
+
+    void loadPresets();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [presetsProp]);
+
+  const presets = useMemo(
+    () => presetsProp ?? fetchedPresets ?? buildLocaleRegionPresets(),
+    [presetsProp, fetchedPresets],
+  );
   const currentPresetId = `${locale}-${currentMarketId}`;
 
   const languageLabel = formatFooterLanguageLabel(locale, countryCode);
@@ -83,6 +126,13 @@ export function LocaleCurrencySwitcher({
       await setLocaleRegion(preset.locale, preset.marketId);
       setApplyingId(null);
       setOpen(false);
+      router.refresh();
+    });
+  }
+
+  function toggleTranslation() {
+    startTransition(async () => {
+      await setTranslationPreference(!translateContent);
       router.refresh();
     });
   }
@@ -210,6 +260,42 @@ export function LocaleCurrencySwitcher({
                         </button>
                       );
                     })}
+                  </div>
+                </div>
+
+                <div className="border-t border-border px-5 py-4 sm:px-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{t("locale.translation")}</p>
+                      <p className="mt-1 text-xs text-muted">{t("locale.translationHint")}</p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={translateContent}
+                      aria-label={
+                        translateContent
+                          ? t("locale.translationEnabled")
+                          : t("locale.translationDisabled")
+                      }
+                      disabled={locale === defaultLocale || isPending}
+                      onClick={toggleTranslation}
+                      className={cn(
+                        "relative inline-flex h-7 w-12 shrink-0 rounded-full border transition-colors",
+                        locale === defaultLocale
+                          ? "cursor-not-allowed border-border bg-subtle opacity-50"
+                          : translateContent
+                            ? "border-accent bg-accent"
+                            : "border-border-strong bg-surface",
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
+                          translateContent ? "translate-x-5" : "translate-x-1",
+                        )}
+                      />
+                    </button>
                   </div>
                 </div>
               </div>

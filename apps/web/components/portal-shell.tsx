@@ -13,7 +13,7 @@ export function PortalShell({ title, description, children }: Props) {
     <div className="min-h-screen bg-background text-foreground">
       <PublicHeader />
       <main className="mx-auto max-w-5xl px-6 py-16">
-        <PageHeader title={title} description={description} backHref="/" backLabel="← Back to home" />
+        <PageHeader title={title} description={description} backHref="/" backLabel="Back to home" />
         <div className="mt-8">{children}</div>
       </main>
     </div>

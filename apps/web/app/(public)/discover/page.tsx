@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import type { DiscoveryBusinessItem } from "@adeni/shared";
-import { BusinessDiscoveryCard } from "@/components/business-discovery-card";
 import { Callout } from "@/components/ui/callout";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
@@ -9,20 +7,22 @@ import { HERO_SEARCH_ANCHOR_ID } from "@/lib/hero-search";
 import { canAccessMyBookings } from "@/lib/customer-access";
 import { HeroDiscoverySearch } from "@/components/hero-discovery-search";
 import { CategoryFilterLinks } from "@/components/discover-category-filters";
-import type { Category } from "@adeni/shared";
-import { parseSearchIntent } from "@adeni/shared";
+import { DiscoverBusinessGrid } from "@/components/discover-business-grid";
+import type { Category, DiscoveryResponse } from "@adeni/shared";
+import { DISCOVERY_PAGE_SIZE, getCategoryLabel, parseSearchIntent, t } from "@adeni/shared";
 import { createApiClient } from "@/lib/adeni";
-import { publicCardGridClass, publicContainerClass } from "@/lib/layout-classes";
+import { publicContainerClass } from "@/lib/layout-classes";
 import { getActiveMarketConfig, getDiscoveryLocation } from "@/lib/market";
+import { getLocale } from "@/lib/locale";
 
 export const revalidate = 120;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const market = await getActiveMarketConfig();
+  const [market, locale] = await Promise.all([getActiveMarketConfig(), getLocale()]);
 
   return {
-    title: `Discover services in ${market.name} — Adeni`,
-    description: `Find verified local service providers near you in ${market.name}.`,
+    title: t(locale, "discover.metaTitle", { market: market.name }),
+    description: t(locale, "discover.metaDescription", { market: market.name }),
   };
 }
 
@@ -40,15 +40,15 @@ async function getCategories(): Promise<Category[]> {
 }
 
 export default async function DiscoverPage({ searchParams }: Props) {
-  const market = await getActiveMarketConfig();
+  const [market, locale] = await Promise.all([getActiveMarketConfig(), getLocale()]);
   const searchLocation = await getDiscoveryLocation();
   const { category, q } = await searchParams;
   const categories = await getCategories();
   const selectedCategory = category?.trim().toLowerCase() || null;
   const searchQuery = q?.trim() || null;
 
-  let businesses: DiscoveryBusinessItem[] = [];
   let loadError: string | null = null;
+  let initialPage: DiscoveryResponse | null = null;
 
   try {
     const client = createApiClient();
@@ -56,18 +56,33 @@ export default async function DiscoverPage({ searchParams }: Props) {
       lat: searchLocation.lat,
       lng: searchLocation.lng,
       market: market.id,
-      category: selectedCategory,
-      q: searchQuery,
-      pageSize: 50,
+      category: selectedCategory ?? undefined,
+      q: searchQuery ?? undefined,
+      page: 1,
+      pageSize: DISCOVERY_PAGE_SIZE,
+      sort: "distance",
     });
-    businesses = result.items;
+    if (result.totalCount > 0) {
+      initialPage = result;
+    }
   } catch {
-    loadError = "Could not load nearby businesses. Is the API running?";
+    loadError = t(locale, "discover.loadError");
   }
 
-  const categoryName =
-    categories.find((item) => item.slug === selectedCategory)?.name ?? null;
+  const categoryRecord = categories.find((item) => item.slug === selectedCategory);
+  const categoryName = categoryRecord
+    ? getCategoryLabel(locale, categoryRecord.slug, categoryRecord.name)
+    : null;
   const intentSummary = searchQuery ? parseSearchIntent(searchQuery).summary : null;
+
+  const description = searchQuery
+    ? t(locale, "discover.searchNearMarket", {
+        summary: intentSummary ?? `“${searchQuery}”`,
+        market: market.name,
+      })
+    : categoryName
+      ? t(locale, "discover.nearMarketCategory", { market: market.name, category: categoryName })
+      : t(locale, "discover.nearMarket", { market: market.name });
 
   return (
     <div className="flex flex-1 flex-col">
@@ -81,14 +96,7 @@ export default async function DiscoverPage({ searchParams }: Props) {
       />
 
       <main className={`${publicContainerClass} py-12 lg:py-14`}>
-        <PageHeader
-          title="Discover services"
-          description={
-            searchQuery
-              ? `${intentSummary ?? `Results for “${searchQuery}”`} near ${market.name}.`
-              : `Showing results near ${market.name}${categoryName ? ` · ${categoryName}` : ""}.`
-          }
-        />
+        <PageHeader title={t(locale, "discover.title")} description={description} />
 
         <div id={HERO_SEARCH_ANCHOR_ID} className="mt-8 scroll-mt-28">
           <HeroDiscoverySearch />
@@ -107,28 +115,35 @@ export default async function DiscoverPage({ searchParams }: Props) {
           <Callout tone="error" className="mt-8">
             {loadError}
           </Callout>
-        ) : businesses.length === 0 ? (
+        ) : !initialPage ? (
           <EmptyState
             className="mt-8"
-            title={searchQuery ? "No matches found" : "No verified businesses yet"}
+            title={
+              searchQuery
+                ? t(locale, "discover.noMatchesTitle")
+                : t(locale, "discover.noBusinessesTitle")
+            }
             description={
               searchQuery
-                ? "Try Ask Adeni with different words or browse all categories."
+                ? t(locale, "discover.noMatchesDescription")
                 : selectedCategory
-                  ? "Try another category or list your business on Adeni."
-                  : "Onboard supply via the business portal to appear here."
+                  ? t(locale, "discover.noCategoryDescription")
+                  : t(locale, "discover.noBusinessesDescription")
             }
-            actionLabel={searchQuery ? "Browse all" : "List your business"}
+            actionLabel={
+              searchQuery ? t(locale, "discover.browseAll") : t(locale, "discover.listBusiness")
+            }
             actionHref={searchQuery ? "/discover" : "/business/register"}
           />
         ) : (
-          <ul className={`${publicCardGridClass} mt-8`}>
-            {businesses.map((business) => (
-              <li key={business.tenantId}>
-                <BusinessDiscoveryCard business={business} />
-              </li>
-            ))}
-          </ul>
+          <DiscoverBusinessGrid
+            lat={searchLocation.lat}
+            lng={searchLocation.lng}
+            market={market.id}
+            category={selectedCategory}
+            q={searchQuery}
+            initialPage={initialPage}
+          />
         )}
       </main>
     </div>

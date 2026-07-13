@@ -1,5 +1,6 @@
 import { AdeniRoles } from "@adeni/shared";
 import { AdminCustomerPrivacyPanel } from "@/components/admin-customer-privacy-panel";
+import { AdminMarketsPanel } from "@/components/admin-markets-panel";
 import { AdminVerificationQueue } from "@/components/admin-verification-queue";
 import { AuthSetupCallout } from "@/components/auth-setup-callout";
 import { PortalShell } from "@/components/portal-shell";
@@ -24,7 +25,11 @@ export default async function AdminPortalPage() {
   let pending: Awaited<
     ReturnType<Awaited<ReturnType<typeof createAuthenticatedApiClient>>["getPendingBusinesses"]>
   > = [];
+  let markets: Awaited<
+    ReturnType<Awaited<ReturnType<typeof createAuthenticatedApiClient>>["getAdminMarkets"]>
+  > = [];
   let queueError: string | null = null;
+  let marketsError: string | null = null;
 
   try {
     const client = await createAuthenticatedApiClient();
@@ -32,6 +37,14 @@ export default async function AdminPortalPage() {
   } catch {
     queueError =
       "Could not load the verification queue. Ensure Auth0 is enabled on the API and your admin token includes the admin role (+ MFA if required).";
+  }
+
+  try {
+    const client = await createAuthenticatedApiClient();
+    markets = await client.getAdminMarkets();
+  } catch {
+    marketsError =
+      "Could not load markets. Ensure your admin token includes the admin role (+ MFA if required).";
   }
 
   return (
@@ -51,6 +64,8 @@ export default async function AdminPortalPage() {
         <h2 className="text-lg font-semibold">Pending verifications</h2>
         <AdminVerificationQueue initialItems={pending} initialError={queueError} />
       </section>
+
+      <AdminMarketsPanel initialItems={markets} initialError={marketsError} />
 
       <AdminCustomerPrivacyPanel />
     </PortalShell>

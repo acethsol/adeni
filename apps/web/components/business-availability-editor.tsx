@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { DAY_OF_WEEK_LABELS, type WeeklyAvailabilityRule } from "@adeni/shared";
+import { SkeletonList } from "@/components/ui/skeleton";
+import { useActionLoading } from "@/contexts/action-loading-context";
+import { Button } from "@/components/ui/button";
 
 type DayRow = {
   dayOfWeek: number;
@@ -55,6 +58,7 @@ function rulesToRows(rules: WeeklyAvailabilityRule[]): DayRow[] {
 }
 
 export function BusinessAvailabilityEditor() {
+  const { run } = useActionLoading();
   const [rows, setRows] = useState<DayRow[]>(buildDefaultRows);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -99,21 +103,23 @@ export function BusinessAvailabilityEditor() {
       }));
 
     try {
-      const response = await fetch("/api/business/availability", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: rules }),
+      await run("Saving weekly hours…", async () => {
+        const response = await fetch("/api/business/availability", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ items: rules }),
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(
+            typeof payload.title === "string" ? payload.title : "Could not save availability.",
+          );
+        }
+
+        setRows(rulesToRows((payload as { items: WeeklyAvailabilityRule[] }).items ?? []));
+        setMessage("Weekly hours saved.");
       });
-
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(
-          typeof payload.title === "string" ? payload.title : "Could not save availability.",
-        );
-      }
-
-      setRows(rulesToRows((payload as { items: WeeklyAvailabilityRule[] }).items ?? []));
-      setMessage("Weekly hours saved.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save availability.");
     } finally {
@@ -122,7 +128,7 @@ export function BusinessAvailabilityEditor() {
   }
 
   if (loading) {
-    return <p className="text-sm text-[#1b4332]/70">Loading availability…</p>;
+    return <SkeletonList count={2} />;
   }
 
   return (
@@ -200,13 +206,9 @@ export function BusinessAvailabilityEditor() {
         ))}
       </ul>
 
-      <button
-        type="submit"
-        disabled={saving}
-        className="rounded-full bg-[#1b4332] px-5 py-2.5 text-sm font-medium text-white disabled:opacity-60"
-      >
-        {saving ? "Saving…" : "Save weekly hours"}
-      </button>
+      <Button type="submit" loading={saving} loadingLabel="Saving…">
+        Save weekly hours
+      </Button>
     </form>
   );
 }

@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import { VERIFICATION_DOCUMENT_LABELS } from "@adeni/shared";
+import { Button } from "@/components/ui/button";
+import { useActionLoading } from "@/contexts/action-loading-context";
 
 type Props = {
   canSubmit: boolean;
 };
 
 export function BusinessVerificationForm({ canSubmit }: Props) {
+  const { run } = useActionLoading();
   const [documentType, setDocumentType] = useState(0);
   const [referenceNumber, setReferenceNumber] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -25,25 +28,27 @@ export function BusinessVerificationForm({ canSubmit }: Props) {
     setError(null);
 
     try {
-      const response = await fetch("/api/business/verification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          documents: [{ documentType, referenceNumber: referenceNumber.trim() }],
-        }),
+      await run("Submitting verification…", async () => {
+        const response = await fetch("/api/business/verification", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            documents: [{ documentType, referenceNumber: referenceNumber.trim() }],
+          }),
+        });
+
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(
+            typeof payload.title === "string"
+              ? payload.title
+              : "Could not submit verification.",
+          );
+        }
+
+        setMessage("Verification submitted. An admin will review your business.");
+        setReferenceNumber("");
       });
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(
-          typeof payload.title === "string"
-            ? payload.title
-            : "Could not submit verification.",
-        );
-      }
-
-      setMessage("Verification submitted. An admin will review your business.");
-      setReferenceNumber("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not submit verification.");
     } finally {
@@ -96,13 +101,9 @@ export function BusinessVerificationForm({ canSubmit }: Props) {
         </label>
       </div>
 
-      <button
-        type="submit"
-        disabled={submitting}
-        className="mt-4 rounded-full bg-[#1b4332] px-5 py-2.5 text-sm font-medium text-white disabled:opacity-60"
-      >
-        {submitting ? "Submitting…" : "Submit for verification"}
-      </button>
+      <Button type="submit" loading={submitting} loadingLabel="Submitting…">
+        Submit for verification
+      </Button>
     </form>
   );
 }

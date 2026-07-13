@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { MarketGeoSync } from "@/components/market-geo-sync";
 import { LocaleProvider } from "@/components/locale-provider";
 import { getLocale } from "@/lib/locale";
+import { getTranslationPreference } from "@/lib/content-translation";
 import { AppProviders } from "./providers";
 import "./globals.css";
 
@@ -26,7 +27,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const locale = await getLocale();
+  const [locale, translateContent] = await Promise.all([
+    getLocale(),
+    getTranslationPreference(),
+  ]);
 
   return (
     <html
@@ -35,7 +39,7 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <AppProviders>
-          <LocaleProvider locale={locale}>
+          <LocaleProvider locale={locale} translateContent={translateContent}>
             <MarketGeoSync />
             {children}
           </LocaleProvider>

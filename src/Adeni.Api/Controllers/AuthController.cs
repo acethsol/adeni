@@ -183,3 +183,71 @@ public sealed class AdminReviewsController(IReviewService reviewService) : Contr
             });
     }
 }
+
+[ApiController]
+[Route("api/v1/admin/markets")]
+[Authorize(Policy = AuthServiceCollectionExtensions.AdminMfaPolicy)]
+public sealed class AdminMarketsController(IAdminMarketService adminMarketService) : ControllerBase
+{
+    [HttpGet]
+    public async Task<IActionResult> List(CancellationToken cancellationToken)
+    {
+        var items = await adminMarketService.ListAsync(cancellationToken);
+        return Ok(new { items });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create(
+        [FromBody] CreateMarketRequest body,
+        CancellationToken cancellationToken)
+    {
+        var adminId = User.FindFirst("sub")?.Value ?? "admin";
+        var result = await adminMarketService.CreateAsync(body, adminId, cancellationToken);
+
+        return result.Match<IActionResult>(
+            market => CreatedAtAction(nameof(List), new { id = market.Id }, market),
+            error => error.Code switch
+            {
+                "validation" => BadRequest(new { title = error.Message }),
+                "conflict" => Conflict(new { title = error.Message }),
+                _ => BadRequest(new { title = error.Message })
+            });
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(
+        string id,
+        [FromBody] UpdateMarketRequest body,
+        CancellationToken cancellationToken)
+    {
+        var adminId = User.FindFirst("sub")?.Value ?? "admin";
+        var result = await adminMarketService.UpdateAsync(id, body, adminId, cancellationToken);
+
+        return result.Match<IActionResult>(
+            market => Ok(market),
+            error => error.Code switch
+            {
+                "validation" => BadRequest(new { title = error.Message }),
+                _ => NotFound(new { title = error.Message })
+            });
+    }
+
+    [HttpPatch("{id}/live")]
+    public async Task<IActionResult> SetLive(
+        string id,
+        [FromBody] SetMarketLiveRequest body,
+        CancellationToken cancellationToken)
+    {
+        var adminId = User.FindFirst("sub")?.Value ?? "admin";
+        var result = await adminMarketService.SetLiveAsync(id, body.IsLive, adminId, cancellationToken);
+
+        return result.Match<IActionResult>(
+            _ => NoContent(),
+            error => error.Code switch
+            {
+                _ => NotFound(new { title = error.Message })
+            });
+    }
+}
+
+public sealed record SetMarketLiveRequest(bool IsLive);

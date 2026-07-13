@@ -1,0 +1,64 @@
+{
+  "markets": [
+    {
+      "id": "lagos",
+      "name": "Lagos",
+      "countryCode": "NG",
+      "currency": "NGN",
+      "timeZoneId": "Africa/Lagos",
+      "defaultLocation": { "lat": 6.5244, "lng": 3.3792 },
+      "languages": ["en"],
+      "isLive": true
+    },
+    {
+      "id": "abuja",
+      "name": "Abuja",
+      "countryCode": "NG",
+      "currency": "NGN",
+      "timeZoneId": "Africa/Lagos",
+      "defaultLocation": { "lat": 9.0765, "lng": 7.3986 },
+      "languages": ["en"],
+      "isLive": false
+    },
+    {
+      "id": "ottawa",
+      "name": "Ottawa",
+      "countryCode": "CA",
+      "currency": "CAD",
+      "timeZoneId": "America/Toronto",
+      "defaultLocation": { "lat": 45.4215, "lng": -75.6972 },
+      "languages": ["en", "fr"],
+      "isLive": false
+    },
+    {
+      "id": "toronto",
+      "name": "Toronto",
+      "countryCode": "CA",
+      "currency": "CAD",
+      "timeZoneId": "America/Toronto",
+      "defaultLocation": { "lat": 43.6532, "lng": -79.3832 },
+      "languages": ["en", "fr"],
+      "isLive": false
+    },
+    {
+      "id": "houston",
+      "name": "Houston",
+      "countryCode": "US",
+      "currency": "USD",
+      "timeZoneId": "America/Chicago",
+      "defaultLocation": { "lat": 29.7604, "lng": -95.3698 },
+      "languages": ["en", "es"],
+      "isLive": false
+    },
+    {
+      "id": "dallas",
+      "name": "Dallas",
+      "countryCode": "US",
+      "currency": "USD",
+      "timeZoneId": "America/Chicago",
+      "defaultLocation": { "lat": 32.7767, "lng": -96.797 },
+      "languages": ["en", "es"],
+      "isLive": false
+    }
+  ]
+}

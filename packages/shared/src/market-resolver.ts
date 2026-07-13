@@ -1,5 +1,6 @@
 import {
   getMarketById,
+  getMarketByIdFromCatalog,
   listLiveMarkets,
   listMarkets,
   type MarketConfig,
@@ -22,51 +23,60 @@ export type ResolvedMarket = {
 
 const DEFAULT_MAX_DISTANCE_KM = 250;
 
-export function resolveMarket(input: MarketResolutionInput = {}): ResolvedMarket {
+export function resolveMarket(
+  input: MarketResolutionInput = {},
+  catalog?: MarketConfig[],
+): ResolvedMarket {
+  const markets = catalog ?? listMarkets();
   const maxDistanceKm = input.maxDistanceKm ?? DEFAULT_MAX_DISTANCE_KM;
 
   if (input.marketId) {
-    const explicit = getMarketById(input.marketId);
+    const explicit = catalog
+      ? getMarketByIdFromCatalog(input.marketId, catalog)
+      : getMarketById(input.marketId);
     if (explicit) {
       return { market: explicit, source: "explicit" };
     }
   }
 
   if (input.coordinates) {
-    const geoMatch = findNearestMarket(input.coordinates, maxDistanceKm);
+    const geoMatch = findNearestMarket(input.coordinates, maxDistanceKm, markets);
     if (geoMatch) {
       return { market: geoMatch, source: "geo" };
     }
   }
 
-  const fallback = getDefaultMarket();
+  const fallback = getDefaultMarket(markets);
   return { market: fallback, source: "fallback" };
 }
 
 /** Default when no explicit selection or geo match — prefers GTM live market, else first catalog entry. */
-export function getDefaultMarket(): MarketConfig {
-  const live = listLiveMarkets()[0];
+export function getDefaultMarket(catalog?: MarketConfig[]): MarketConfig {
+  const markets = catalog ?? listMarkets();
+  const liveMarkets = catalog ? catalog.filter((market) => market.isLive) : listLiveMarkets();
+  const live = liveMarkets[0];
   if (live) {
     return live;
   }
 
-  const all = listMarkets();
-  if (all.length === 0) {
+  if (markets.length === 0) {
     throw new Error("No markets configured in the market catalog.");
   }
 
-  return all[0];
+  return markets[0];
 }
 
 /** Nearest market from the full catalog within range. */
 export function findNearestMarket(
   coordinates: MarketLocation,
   maxDistanceKm: number,
+  catalog?: MarketConfig[],
 ): MarketConfig | null {
+  const markets = catalog ?? listMarkets();
   let best: MarketConfig | null = null;
   let bestDistance = Number.POSITIVE_INFINITY;
 
-  for (const market of listMarkets()) {
+  for (const market of markets) {
     const distance = distanceKm(coordinates, market.defaultLocation);
     if (distance < bestDistance) {
       best = market;
@@ -85,11 +95,13 @@ export function findNearestMarket(
 export function findNearestLiveMarket(
   coordinates: MarketLocation,
   maxDistanceKm: number,
+  catalog?: MarketConfig[],
 ): MarketConfig | null {
+  const markets = (catalog ?? listMarkets()).filter((market) => market.isLive);
   let best: MarketConfig | null = null;
   let bestDistance = Number.POSITIVE_INFINITY;
 
-  for (const market of listLiveMarkets()) {
+  for (const market of markets) {
     const distance = distanceKm(coordinates, market.defaultLocation);
     if (distance < bestDistance) {
       best = market;

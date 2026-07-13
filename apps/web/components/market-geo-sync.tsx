@@ -26,7 +26,10 @@ export function MarketGeoSync() {
         });
 
         if (response.ok) {
-          router.refresh();
+          // Avoid router.refresh() on discover — it cancels in-flight infinite scroll.
+          if (!window.location.pathname.startsWith("/discover")) {
+            router.refresh();
+          }
         }
       } catch {
         // Ignore — fallback market still works.

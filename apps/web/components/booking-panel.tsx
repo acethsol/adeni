@@ -3,6 +3,11 @@
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import type { BookingResponse, ServiceOffering } from "@adeni/shared";
+import { LoadingPanel } from "@/components/loading-panel";
+import { BackLink } from "@/components/ui/back-link";
+import { FlowStepProgress } from "@/components/ui/flow-step-progress";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useActionLoading } from "@/contexts/action-loading-context";
 
 type Props = {
   slug: string;
@@ -13,6 +18,12 @@ type Props = {
 };
 
 type Step = "service" | "slot" | "confirm" | "done";
+
+const BOOKING_STEPS = [
+  { id: "service", label: "Service" },
+  { id: "slot", label: "Time" },
+  { id: "confirm", label: "Confirm" },
+] as const;
 
 function formatPrice(amount: number, currency: string) {
   try {
@@ -51,6 +62,7 @@ export function BookingPanel({
   bookingEnabled,
   loginHref,
 }: Props) {
+  const { run } = useActionLoading();
   const [step, setStep] = useState<Step>("service");
   const [selectedService, setSelectedService] = useState<ServiceOffering | null>(null);
   const [slots, setSlots] = useState<{ startAt: string; endAt: string }[]>([]);
@@ -114,37 +126,42 @@ export function BookingPanel({
     setError(null);
 
     try {
-      const response = await fetch("/api/bookings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tenantId,
-          serviceOfferingId: selectedService.id,
-          startAt: selectedSlot,
-          customerNotes: notes.trim() || undefined,
-        }),
+      await run("Confirming your booking…", async () => {
+        const response = await fetch("/api/bookings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tenantId,
+            serviceOfferingId: selectedService.id,
+            startAt: selectedSlot,
+            customerNotes: notes.trim() || undefined,
+          }),
+        });
+
+        const payload = await response.json().catch(() => ({}));
+
+        if (response.status === 401) {
+          setError("Sign in to complete your booking.");
+          throw new Error("Sign in to complete your booking.");
+        }
+
+        if (!response.ok) {
+          const message =
+            typeof payload.title === "string"
+              ? payload.title
+              : "Booking failed. That slot may have been taken.";
+          throw new Error(message);
+        }
+
+        setBooking(payload as BookingResponse);
+        setStep("done");
       });
-
-      const payload = await response.json().catch(() => ({}));
-
-      if (response.status === 401) {
-        setError("Sign in to complete your booking.");
-        return;
+    } catch (err) {
+      if (err instanceof Error && err.message !== "Sign in to complete your booking.") {
+        setError(err.message);
+      } else if (!(err instanceof Error)) {
+        setError("Booking failed. Please try again.");
       }
-
-      if (!response.ok) {
-        const message =
-          typeof payload.title === "string"
-            ? payload.title
-            : "Booking failed. That slot may have been taken.";
-        setError(message);
-        return;
-      }
-
-      setBooking(payload as BookingResponse);
-      setStep("done");
-    } catch {
-      setError("Booking failed. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -182,6 +199,10 @@ export function BookingPanel({
       <p className="mt-1 text-sm text-[#1b4332]/70">
         Choose a service and pick an available time.
       </p>
+
+      {step !== "service" ? (
+        <FlowStepProgress steps={[...BOOKING_STEPS]} currentStepId={step} className="mt-5" />
+      ) : null}
 
       {!bookingEnabled ? (
         <p className="mt-4 text-sm text-[#1b4332]/70">
@@ -226,21 +247,19 @@ export function BookingPanel({
 
       {step === "slot" && selectedService && (
         <div className="mt-6">
-          <button
-            type="button"
+          <BackLink
+            label="Change service"
+            hint="Browse all services"
             onClick={() => {
               setStep("service");
               setSelectedService(null);
               setSlots([]);
             }}
-            className="text-sm font-medium text-[#40916c]"
-          >
-            ← Change service
-          </button>
-          <p className="mt-3 font-medium">{selectedService.name}</p>
+          />
+          <p className="mt-4 font-medium">{selectedService.name}</p>
 
           {loadingSlots ? (
-            <p className="mt-4 text-sm text-[#1b4332]/70">Loading available times…</p>
+            <LoadingPanel message="Loading available times…" variant="card" className="mt-4" />
           ) : slots.length === 0 ? (
             <p className="mt-4 text-sm text-[#1b4332]/70">
               No open slots in the next 7 days. Check back soon.
@@ -268,13 +287,11 @@ export function BookingPanel({
 
       {step === "confirm" && selectedService && selectedSlot && (
         <div className="mt-6">
-          <button
-            type="button"
+          <BackLink
+            label="Pick another time"
+            hint="Available slots"
             onClick={() => setStep("slot")}
-            className="text-sm font-medium text-[#40916c]"
-          >
-            ← Pick another time
-          </button>
+          />
 
           <dl className="mt-4 space-y-2 text-sm">
             <div>
@@ -310,8 +327,9 @@ export function BookingPanel({
               type="button"
               onClick={() => void handleConfirmBooking()}
               disabled={submitting}
-              className="mt-6 rounded-full bg-[#1b4332] px-6 py-3 text-sm font-semibold text-white disabled:opacity-60"
+              className="mt-6 inline-flex items-center justify-center gap-2 rounded-full bg-[#1b4332] px-6 py-3 text-sm font-semibold text-white disabled:opacity-60"
             >
+              {submitting ? <LoadingSpinner size="sm" label="Booking" className="border-primary-foreground/30 border-t-primary-foreground" /> : null}
               {submitting ? "Booking…" : "Confirm booking"}
             </button>
           ) : (

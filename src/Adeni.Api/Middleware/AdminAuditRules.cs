@@ -46,6 +46,25 @@ public static class AdminAuditRules
             return Domain.Auditing.AuditActions.CustomerDeleted;
         }
 
+        if (path.Contains("/admin/markets", StringComparison.OrdinalIgnoreCase))
+        {
+            if (HttpMethods.IsPost(context.Request.Method))
+            {
+                return Domain.Auditing.AuditActions.MarketCreated;
+            }
+
+            if (path.EndsWith("/live", StringComparison.OrdinalIgnoreCase)
+                && HttpMethods.IsPatch(context.Request.Method))
+            {
+                return Domain.Auditing.AuditActions.MarketLiveToggled;
+            }
+
+            if (HttpMethods.IsPut(context.Request.Method))
+            {
+                return Domain.Auditing.AuditActions.MarketUpdated;
+            }
+        }
+
         return $"admin.{context.Request.Method.ToLowerInvariant()}";
     }
 

@@ -20,7 +20,8 @@ internal static partial class LocationFieldValidator
         string slug,
         string addressLine,
         string area,
-        string marketId)
+        string marketId,
+        IMarketCatalog marketCatalog)
     {
         var normalizedSlug = slug.Trim().ToLowerInvariant();
         if (!SlugPattern.IsMatch(normalizedSlug))
@@ -28,7 +29,7 @@ internal static partial class LocationFieldValidator
             return Result.Failure(Error.Validation("Slug must be 3-64 lowercase letters, numbers, or hyphens."));
         }
 
-        if (!KnownMarketCatalog.IsValid(marketId))
+        if (!marketCatalog.IsValid(marketId))
         {
             return Result.Failure(Error.Validation("Market is not valid."));
         }
@@ -54,7 +55,8 @@ internal static partial class LocationFieldValidator
 
 public sealed class BusinessLocationService(
     AdeniDbContext dbContext,
-    ICacheService cache) : IBusinessLocationService
+    ICacheService cache,
+    IMarketCatalog marketCatalog) : IBusinessLocationService
 {
     public async Task<Result<IReadOnlyList<BusinessLocationResponse>>> ListAsync(
         Guid tenantId,
@@ -100,7 +102,8 @@ public sealed class BusinessLocationService(
             request.Slug,
             request.AddressLine,
             request.Area,
-            request.MarketId);
+            request.MarketId,
+            marketCatalog);
         if (validation.IsFailure)
         {
             return Result.Failure<BusinessLocationResponse>(validation.Error);
@@ -129,7 +132,7 @@ public sealed class BusinessLocationService(
             TenantId = tenantId,
             Slug = normalizedSlug,
             Name = ResolveLocationName(request.Name, request.Area),
-            MarketId = KnownMarketCatalog.Normalize(request.MarketId),
+            MarketId = marketCatalog.Normalize(request.MarketId),
             AddressLine = request.AddressLine.Trim(),
             Area = request.Area.Trim(),
             Latitude = request.Latitude,
@@ -178,7 +181,8 @@ public sealed class BusinessLocationService(
             request.Slug,
             request.AddressLine,
             request.Area,
-            request.MarketId);
+            request.MarketId,
+            marketCatalog);
         if (validation.IsFailure)
         {
             return Result.Failure<BusinessLocationResponse>(validation.Error);
@@ -198,7 +202,7 @@ public sealed class BusinessLocationService(
 
         location.Slug = normalizedSlug;
         location.Name = ResolveLocationName(request.Name, request.Area);
-        location.MarketId = KnownMarketCatalog.Normalize(request.MarketId);
+        location.MarketId = marketCatalog.Normalize(request.MarketId);
         location.AddressLine = request.AddressLine.Trim();
         location.Area = request.Area.Trim();
         location.Latitude = request.Latitude;

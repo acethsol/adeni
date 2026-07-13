@@ -22,7 +22,11 @@ export const discoveryBusinessItemSchema = z.object({
   categorySlug: z.string(),
   area: z.string(),
   marketId: z.string(),
-  coverImageUrl: z.string().url().nullable().optional(),
+  coverImageUrl: z
+    .union([z.string().url(), z.literal("")])
+    .nullable()
+    .optional()
+    .transform((value) => (value === "" ? null : value)),
   ratingAvg: z.number().nullable().optional(),
   reviewCount: z.number().int().nonnegative().optional(),
   distanceKm: z.number(),
@@ -52,7 +56,11 @@ export const publicBusinessProfileSchema = z.object({
   addressLine: z.string(),
   description: z.string(),
   phoneMasked: z.string(),
-  coverImageUrl: z.string().url().nullable().optional(),
+  coverImageUrl: z
+    .union([z.string().url(), z.literal("")])
+    .nullable()
+    .optional()
+    .transform((value) => (value === "" ? null : value)),
   ratingAvg: z.number().nullable().optional(),
   reviewCount: z.number().int().nonnegative().optional(),
   latitude: z.number().nullable(),
@@ -103,6 +111,75 @@ export type AdminCustomerSummary = z.infer<typeof adminCustomerSummarySchema>;
 export const adminCustomersResponseSchema = z.object({
   items: z.array(adminCustomerSummarySchema),
 });
+
+export const marketConfigSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  countryCode: z.string(),
+  currency: z.string(),
+  timeZoneId: z.string(),
+  defaultLocation: z.object({
+    lat: z.number(),
+    lng: z.number(),
+  }),
+  languages: z.array(z.string()),
+  isLive: z.boolean(),
+  launchNote: z.string().nullable().optional(),
+});
+
+export const marketsResponseSchema = z.object({
+  items: z.array(marketConfigSchema),
+});
+
+export type MarketApiItem = z.infer<typeof marketConfigSchema>;
+
+export const adminMarketSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  countryCode: z.string(),
+  currency: z.string(),
+  timeZoneId: z.string(),
+  defaultLat: z.number(),
+  defaultLng: z.number(),
+  languages: z.array(z.string()),
+  isLive: z.boolean(),
+  launchNote: z.string().nullable().optional(),
+  updatedAt: z.string(),
+});
+
+export const adminMarketsResponseSchema = z.object({
+  items: z.array(adminMarketSchema),
+});
+
+export const createMarketRequestSchema = z.object({
+  id: z.string().min(2).max(32),
+  name: z.string().min(2),
+  countryCode: z.string().length(2),
+  currency: z.string().length(3),
+  timeZoneId: z.string().min(1),
+  defaultLat: z.number().min(-90).max(90),
+  defaultLng: z.number().min(-180).max(180),
+  languages: z.array(z.string()).min(1),
+  isLive: z.boolean(),
+  launchNote: z.string().nullable().optional(),
+});
+
+export const updateMarketRequestSchema = z.object({
+  name: z.string().min(2),
+  countryCode: z.string().length(2),
+  currency: z.string().length(3),
+  timeZoneId: z.string().min(1),
+  defaultLat: z.number().min(-90).max(90),
+  defaultLng: z.number().min(-180).max(180),
+  languages: z.array(z.string()).min(1),
+  launchNote: z.string().nullable().optional(),
+});
+
+export const setMarketLiveRequestSchema = z.object({
+  isLive: z.boolean(),
+});
+
+export type AdminMarket = z.infer<typeof adminMarketSchema>;
 
 export const customerBookingExportItemSchema = z.object({
   id: z.string(),
@@ -353,7 +430,11 @@ export const businessProfileSchema = z.object({
   verifiedAt: z.string().nullable().optional(),
   locations: z.array(businessLocationSchema),
   verificationDocuments: z.array(verificationDocumentSchema),
-  coverImageUrl: z.string().url().nullable().optional(),
+  coverImageUrl: z
+    .union([z.string().url(), z.literal("")])
+    .nullable()
+    .optional()
+    .transform((value) => (value === "" ? null : value)),
 });
 
 export type BusinessProfile = z.infer<typeof businessProfileSchema>;

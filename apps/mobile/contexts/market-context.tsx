@@ -3,10 +3,12 @@ import * as Location from "expo-location";
 import {
   resolveMarket,
   resolveSearchLocation,
+  listMarkets,
   type MarketConfig,
   type MarketLocation,
   type ResolvedMarket,
 } from "@adeni/shared";
+import { createPublicApiClient } from "@/lib/api";
 import { readStoredMarketId, writeStoredMarketId } from "@/lib/locale-storage";
 
 export type ActiveMarketState = {
@@ -23,10 +25,11 @@ const envMarketId = process.env.EXPO_PUBLIC_ADENI_MARKET?.trim() || undefined;
 
 function resolveFromInputs(
   coordinates: MarketLocation | null,
-  explicitMarketId?: string,
+  explicitMarketId: string | undefined,
+  catalog: MarketConfig[],
 ): Pick<ActiveMarketState, "market" | "source" | "coordinates" | "searchLocation"> {
   if (explicitMarketId) {
-    const resolved = resolveMarket({ marketId: explicitMarketId, coordinates });
+    const resolved = resolveMarket({ marketId: explicitMarketId, coordinates }, catalog);
     return {
       market: resolved.market,
       source: resolved.source,
@@ -36,7 +39,7 @@ function resolveFromInputs(
   }
 
   if (coordinates) {
-    const geoResolved = resolveMarket({ coordinates });
+    const geoResolved = resolveMarket({ coordinates }, catalog);
     if (geoResolved.source === "geo") {
       return {
         market: geoResolved.market,
@@ -48,7 +51,7 @@ function resolveFromInputs(
   }
 
   if (envMarketId) {
-    const resolved = resolveMarket({ marketId: envMarketId, coordinates });
+    const resolved = resolveMarket({ marketId: envMarketId, coordinates }, catalog);
     return {
       market: resolved.market,
       source: resolved.source,
@@ -57,7 +60,7 @@ function resolveFromInputs(
     };
   }
 
-  const resolved = resolveMarket({ coordinates });
+  const resolved = resolveMarket({ coordinates }, catalog);
   return {
     market: resolved.market,
     source: resolved.source,
@@ -71,8 +74,31 @@ const MarketContext = createContext<ActiveMarketState | null>(null);
 export function MarketProvider({ children }: { children: ReactNode }) {
   const [manualMarketId, setManualMarketId] = useState<string | null>(null);
   const [coordinates, setCoordinates] = useState<MarketLocation | null>(null);
+  const [catalog, setCatalog] = useState<MarketConfig[]>(listMarkets());
   const [loading, setLoading] = useState(true);
   const [locationDenied, setLocationDenied] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCatalog() {
+      try {
+        const client = createPublicApiClient();
+        const markets = await client.getMarkets();
+        if (!cancelled && markets.length > 0) {
+          setCatalog(markets);
+        }
+      } catch {
+        // Keep JSON fallback catalog.
+      }
+    }
+
+    void loadCatalog();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -137,7 +163,7 @@ export function MarketProvider({ children }: { children: ReactNode }) {
     await writeStoredMarketId(marketId);
   }, []);
 
-  const resolved = resolveFromInputs(coordinates, manualMarketId ?? envMarketId);
+  const resolved = resolveFromInputs(coordinates, manualMarketId ?? envMarketId, catalog);
 
   const value: ActiveMarketState = {
     ...resolved,

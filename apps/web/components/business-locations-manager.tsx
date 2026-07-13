@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import type { BusinessLocation } from "@adeni/shared";
-import { markets } from "@adeni/shared";
+import type { BusinessLocation, MarketConfig } from "@adeni/shared";
 
 type Props = {
   initialLocations: BusinessLocation[];
   defaultMarketId?: string;
+  markets: MarketConfig[];
 };
 
 type LocationDraft = {
@@ -17,11 +17,6 @@ type LocationDraft = {
   marketId: string;
   isPrimary: boolean;
 };
-
-const MARKET_OPTIONS = Object.values(markets).map((market) => ({
-  id: market.id,
-  name: market.name,
-}));
 
 const EMPTY_DRAFT = (marketId: string): LocationDraft => ({
   slug: "",
@@ -35,7 +30,13 @@ const EMPTY_DRAFT = (marketId: string): LocationDraft => ({
 export function BusinessLocationsManager({
   initialLocations,
   defaultMarketId = "lagos",
+  markets,
 }: Props) {
+  const marketOptions = markets.map((market) => ({
+    id: market.id,
+    name: market.name,
+  }));
+
   const [locations, setLocations] = useState(initialLocations);
   const [draft, setDraft] = useState<LocationDraft>(() => EMPTY_DRAFT(defaultMarketId));
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -238,7 +239,7 @@ export function BusinessLocationsManager({
             onChange={(event) => onChange({ ...value, marketId: event.target.value })}
             className="mt-1 w-full rounded-lg border border-[#1b4332]/20 px-3 py-2"
           >
-            {MARKET_OPTIONS.map((market) => (
+            {marketOptions.map((market) => (
               <option key={market.id} value={market.id}>
                 {market.name}
               </option>

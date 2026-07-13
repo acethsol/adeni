@@ -97,7 +97,8 @@ export const queryKeys = {
     market: string;
     category?: string | null;
     q?: string | null;
-    page?: number;
+    pageSize?: number;
+    sort?: "distance" | "featured";
   }) => ["discovery", params] as const,
   businessProfile: (slug: string) => ["business-profile", slug] as const,
   myBookings: ["bookings", "mine"] as const,
@@ -112,3 +113,6 @@ export const staleTimes = {
   businessProfile: 5 * 60 * 1000,
   bookings: 30 * 1000,
 } as const;
+
+export const DISCOVERY_PAGE_SIZE = 20;
+export const FEATURED_PAGE_SIZE = 12;

@@ -25,6 +25,7 @@ export default async function BusinessAvailabilityPage() {
       title="Weekly availability"
       description="Customers can only book during these hours."
       devMode={access.mode === "dev"}
+      hasBusiness
     >
       <BusinessAvailabilityEditor />
     </BusinessPortalShell>

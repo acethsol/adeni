@@ -3,6 +3,7 @@ namespace Adeni.Infrastructure.Persistence;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Identity;
 using Adeni.Domain.Tenancy;
+using Adeni.Infrastructure.Markets;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
@@ -141,9 +142,19 @@ public static class DevelopmentDataSeeder
 
     public static async Task SeedAsync(AdeniDbContext db, CancellationToken cancellationToken = default)
     {
+        await MarketCatalogSeeder.SeedIfEmptyAsync(db, new SeedHostEnvironment(), cancellationToken);
         await SeedSamplesAsync(db, cancellationToken);
         await SeedDevBusinessOwnerAsync(db, cancellationToken);
         await SeedDevReviewFixtureAsync(db, cancellationToken);
+    }
+
+    private sealed class SeedHostEnvironment : Microsoft.Extensions.Hosting.IHostEnvironment
+    {
+        public string EnvironmentName { get; set; } = "Development";
+        public string ApplicationName { get; set; } = "Adeni";
+        public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
+        public Microsoft.Extensions.FileProviders.IFileProvider ContentRootFileProvider { get; set; } =
+            new Microsoft.Extensions.FileProviders.NullFileProvider();
     }
 
     private static async Task SeedDevBusinessOwnerAsync(

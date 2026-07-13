@@ -20,9 +20,23 @@ public sealed class DiscoveryController(IDiscoveryService discovery) : Controlle
         [FromQuery] string? q,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
+        [FromQuery] string sort = "distance",
         CancellationToken cancellationToken = default)
     {
-        var result = await discovery.SearchAsync(lat, lng, category, market, q, page, pageSize, cancellationToken);
+        var discoverySort = string.Equals(sort, "featured", StringComparison.OrdinalIgnoreCase)
+            ? DiscoverySort.Featured
+            : DiscoverySort.Distance;
+
+        var result = await discovery.SearchAsync(
+            lat,
+            lng,
+            category,
+            market,
+            q,
+            page,
+            pageSize,
+            discoverySort,
+            cancellationToken);
 
         return result.Match<IActionResult>(
             payload => Ok(new

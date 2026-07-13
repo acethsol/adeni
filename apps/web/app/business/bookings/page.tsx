@@ -25,6 +25,7 @@ export default async function BusinessBookingsPage() {
       title="Booking inbox"
       description="Accept or reject pending customer bookings."
       devMode={access.mode === "dev"}
+      hasBusiness
     >
       <BusinessBookingInbox />
     </BusinessPortalShell>

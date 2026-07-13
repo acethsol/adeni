@@ -1,43 +1,65 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { queryKeys, staleTimes } from "@adeni/shared";
-import { createApiClient } from "@/lib/adeni";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import {
+  DISCOVERY_PAGE_SIZE,
+  queryKeys,
+  staleTimes,
+  type DiscoveryResponse,
+} from "@adeni/shared";
+import { createPublicApiClient } from "@/lib/public-api";
 
-export function useCategories() {
-  return useQuery({
-    queryKey: queryKeys.categories,
-    queryFn: async () => {
-      const client = createApiClient();
-      return client.getCategories();
-    },
-    staleTime: staleTimes.categories,
-  });
-}
-
-export function useDiscovery(params: {
+export function useInfiniteDiscovery(params: {
   lat: number;
   lng: number;
   market: string;
   category?: string | null;
   q?: string | null;
+  pageSize?: number;
+  sort?: "distance" | "featured";
   enabled?: boolean;
+  initialPage?: DiscoveryResponse;
 }) {
-  const { enabled = true, ...discoveryParams } = params;
+  const {
+    enabled = true,
+    pageSize = DISCOVERY_PAGE_SIZE,
+    sort = "distance",
+    initialPage,
+    ...discoveryParams
+  } = params;
 
-  return useQuery({
-    queryKey: queryKeys.discovery(discoveryParams),
-    queryFn: async () => {
-      const client = createApiClient();
-      const result = await client.searchDiscovery({
+  return useInfiniteQuery({
+    queryKey: queryKeys.discovery({
+      ...discoveryParams,
+      pageSize,
+      sort,
+    }),
+    initialPageParam: 1,
+    initialData: initialPage
+      ? {
+          pages: [initialPage],
+          pageParams: [1],
+        }
+      : undefined,
+    initialDataUpdatedAt: initialPage ? Date.now() : undefined,
+    refetchOnMount: initialPage ? false : undefined,
+    retry: false,
+    queryFn: async ({ pageParam }): Promise<DiscoveryResponse> => {
+      const client = createPublicApiClient();
+      return client.searchDiscovery({
         lat: discoveryParams.lat,
         lng: discoveryParams.lng,
         market: discoveryParams.market,
         category: discoveryParams.category ?? undefined,
         q: discoveryParams.q ?? undefined,
-        pageSize: 50,
+        page: pageParam,
+        pageSize,
+        sort,
       });
-      return result.items;
+    },
+    getNextPageParam: (lastPage) => {
+      const loaded = lastPage.page * lastPage.pageSize;
+      return loaded < lastPage.totalCount ? lastPage.page + 1 : undefined;
     },
     staleTime: staleTimes.discovery,
     enabled,

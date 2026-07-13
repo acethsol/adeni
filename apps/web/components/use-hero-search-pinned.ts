@@ -16,40 +16,45 @@ export function useHeroSearchPinned(enabled: boolean): boolean {
       return;
     }
 
-    let rafId = 0;
+    let observer: IntersectionObserver | null = null;
+    let retryId = 0;
 
-    function measure() {
+    function attach(target: HTMLElement) {
+      observer = new IntersectionObserver(
+        ([entry]) => {
+          setPinned(!entry.isIntersecting);
+        },
+        {
+          root: null,
+          rootMargin: `-${HEADER_HEIGHT}px 0px 0px 0px`,
+          threshold: 0,
+        },
+      );
+
+      observer.observe(target);
+    }
+
+    function tryAttach() {
       const target = document.getElementById(HERO_SEARCH_ANCHOR_ID);
       if (!target) {
         return false;
       }
 
-      const rect = target.getBoundingClientRect();
-      setPinned(rect.bottom <= HEADER_HEIGHT);
+      attach(target);
       return true;
     }
 
-    function scheduleMeasure() {
-      cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(measure);
+    if (!tryAttach()) {
+      retryId = window.setInterval(() => {
+        if (tryAttach()) {
+          window.clearInterval(retryId);
+        }
+      }, 100);
     }
 
-    scheduleMeasure();
-
-    const retryId = window.setInterval(() => {
-      if (measure()) {
-        window.clearInterval(retryId);
-      }
-    }, 100);
-
-    window.addEventListener("scroll", scheduleMeasure, { passive: true });
-    window.addEventListener("resize", scheduleMeasure, { passive: true });
-
     return () => {
-      cancelAnimationFrame(rafId);
       window.clearInterval(retryId);
-      window.removeEventListener("scroll", scheduleMeasure);
-      window.removeEventListener("resize", scheduleMeasure);
+      observer?.disconnect();
     };
   }, [enabled, pathname]);
 

@@ -22,7 +22,6 @@ export function BusinessCard({ business, onPress }: Props) {
   const categoryLabel = formatCategoryLabel(business.categorySlug);
   const hasReviews = Boolean(business.reviewCount && business.reviewCount > 0);
   const reviewLabel = hasReviews ? getReviewCountLabel(locale, business.reviewCount) : null;
-  const awaitingReviewsLabel = t("business.awaitingReviews");
 
   return (
     <Pressable
@@ -40,6 +39,20 @@ export function BusinessCard({ business, onPress }: Props) {
             />
             <Text style={styles.verifiedText}>{t("business.verified")}</Text>
           </View>
+          {!hasReviews ? (
+            <View
+              style={styles.newBadge}
+              accessible
+              accessibilityLabel={t("business.awaitingReviews")}
+            >
+              <SymbolView
+                name={{ ios: "sparkles", android: "auto_awesome", web: "auto_awesome" }}
+                tintColor={adeniTheme.primary}
+                size={14}
+              />
+              <Text style={styles.newBadgeText}>{t("business.newBadge")}</Text>
+            </View>
+          ) : null}
         </View>
 
         <Text style={styles.name} numberOfLines={1}>
@@ -52,22 +65,7 @@ export function BusinessCard({ business, onPress }: Props) {
               {`★ ${(business.ratingAvg ?? 0).toFixed(1)} · ${reviewLabel}`}
             </Text>
           ) : (
-            <View
-              style={styles.awaitingReviews}
-              accessible
-              accessibilityLabel={awaitingReviewsLabel}
-            >
-              <Text style={styles.emptyStars}>☆☆☆☆☆</Text>
-              <SymbolView
-                name={{
-                  ios: "bubble.left.and.bubble.right",
-                  android: "chat_bubble_outline",
-                  web: "chat_bubble_outline",
-                }}
-                tintColor={adeniTheme.textMuted}
-                size={14}
-              />
-            </View>
+            <Text style={styles.emptyStars}>☆☆☆☆☆</Text>
           )}
         </View>
 
@@ -122,6 +120,26 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: adeniTheme.accent,
   },
+  newBadge: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    zIndex: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(15, 23, 42, 0.15)",
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  newBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: adeniTheme.primary,
+  },
   name: {
     marginTop: adeniTheme.spacing.lg,
     marginHorizontal: adeniTheme.spacing.lg,
@@ -139,11 +157,6 @@ const styles = StyleSheet.create({
     marginHorizontal: adeniTheme.spacing.lg,
     minHeight: 20,
     justifyContent: "center",
-  },
-  awaitingReviews: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
   },
   emptyStars: {
     fontSize: adeniTheme.typography.bodySm.fontSize,

@@ -1,6 +1,8 @@
 import {
   authSessionSchema,
   adminCustomersResponseSchema,
+  adminMarketsResponseSchema,
+  adminMarketSchema,
   availableSlotsResponseSchema,
   bookingResponseSchema,
   businessContextResponseSchema,
@@ -8,16 +10,20 @@ import {
   businessProfileSchema,
   categoriesResponseSchema,
   createBookingRequestSchema,
+  createMarketRequestSchema,
   createServiceOfferingRequestSchema,
   customerBookingsResponseSchema,
   customerBookingResponseSchema,
   customerDataExportSchema,
   discoveryResponseSchema,
+  marketsResponseSchema,
+  mapApiMarketToConfig,
   pendingBusinessesResponseSchema,
   publicBusinessProfileSchema,
   registerBusinessRequestSchema,
   registerBusinessResponseSchema,
   rejectBusinessRequestSchema,
+  setMarketLiveRequestSchema,
   serviceOfferingSchema,
   serviceOfferingsResponseSchema,
   submitVerificationRequestSchema,
@@ -32,10 +38,12 @@ import {
   createReviewRequestSchema,
   reviewResponseSchema,
   publicReviewsResponseSchema,
+  updateMarketRequestSchema,
   updateServiceOfferingRequestSchema,
   weeklyAvailabilityResponseSchema,
   type AuthSession,
   type AdminCustomerSummary,
+  type AdminMarket,
   type AvailableSlot,
   type BookingResponse,
   type BusinessContextResponse,
@@ -47,6 +55,7 @@ import {
   type CustomerBookingResponse,
   type CustomerDataExport,
   type DiscoveryResponse,
+  type MarketConfig,
   type PendingBusiness,
   type PublicBusinessProfile,
   type RegisterBusinessRequest,
@@ -91,6 +100,7 @@ export type DiscoverySearchParams = {
   q?: string | null;
   page?: number;
   pageSize?: number;
+  sort?: "distance" | "featured";
 };
 
 export class AdeniApiClient {
@@ -126,6 +136,12 @@ export class AdeniApiClient {
     return payload.items;
   }
 
+  async getMarkets(): Promise<MarketConfig[]> {
+    const response = await this.request("/api/v1/markets");
+    const payload = marketsResponseSchema.parse(await response.json());
+    return payload.items.map(mapApiMarketToConfig);
+  }
+
   async searchDiscovery(params: DiscoverySearchParams): Promise<DiscoveryResponse> {
     const query = new URLSearchParams({
       lat: String(params.lat),
@@ -144,6 +160,10 @@ export class AdeniApiClient {
 
     if (params.q) {
       query.set("q", params.q);
+    }
+
+    if (params.sort) {
+      query.set("sort", params.sort);
     }
 
     const response = await this.request(`/api/v1/discovery?${query.toString()}`);
@@ -493,6 +513,46 @@ export class AdeniApiClient {
       `/api/v1/admin/customers/${encodeURIComponent(customerId)}/delete`,
       { method: "POST" },
     );
+  }
+
+  async getAdminMarkets(): Promise<AdminMarket[]> {
+    const response = await this.request("/api/v1/admin/markets");
+    const payload = adminMarketsResponseSchema.parse(await response.json());
+    return payload.items;
+  }
+
+  async createAdminMarket(
+    body: Parameters<typeof createMarketRequestSchema.parse>[0],
+  ): Promise<AdminMarket> {
+    const payload = createMarketRequestSchema.parse(body);
+    const response = await this.request("/api/v1/admin/markets", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return adminMarketSchema.parse(await response.json());
+  }
+
+  async updateAdminMarket(
+    id: string,
+    body: Parameters<typeof updateMarketRequestSchema.parse>[0],
+  ): Promise<AdminMarket> {
+    const payload = updateMarketRequestSchema.parse(body);
+    const response = await this.request(`/api/v1/admin/markets/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return adminMarketSchema.parse(await response.json());
+  }
+
+  async setAdminMarketLive(id: string, isLive: boolean): Promise<void> {
+    const body = setMarketLiveRequestSchema.parse({ isLive });
+    await this.request(`/api/v1/admin/markets/${encodeURIComponent(id)}/live`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
   }
 
   private async request(path: string, init: RequestInit = {}): Promise<Response> {

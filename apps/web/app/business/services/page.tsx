@@ -51,6 +51,7 @@ export default async function BusinessServicesPage() {
       title="Services"
       description="Add, edit, and deactivate bookable services on your public profile."
       devMode={access.mode === "dev"}
+      hasBusiness
     >
       {loadError ? (
         <p className="text-sm text-[#1b4332]/70">{loadError}</p>

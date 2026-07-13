@@ -1,5 +1,5 @@
-import { getMarketById, listMarkets } from "../markets";
-import { getLocaleOption, supportedLocales, type LocaleId } from "./types";
+import { getMarketById, getMarketByIdFromCatalog, listMarkets, type MarketConfig } from "../markets";
+import { getLocaleOption, type LocaleId } from "./types";
 
 export type LocaleRegionPreset = {
   id: string;
@@ -18,40 +18,37 @@ const countryNames: Record<string, string> = {
   US: "United States",
 };
 
-/** Languages offered per country — Airbnb-style pairings. */
-const languagesByCountry: Record<string, LocaleId[]> = {
-  NG: ["en"],
-  CA: ["en", "fr"],
-  US: ["en", "es"],
-};
-
 function languageLabel(locale: LocaleId): string {
   return getLocaleOption(locale).nativeLabel;
 }
 
-function regionLabelForMarket(marketId: string, countryCode: string): string {
-  const market = getMarketById(marketId);
+function regionLabelForMarket(
+  marketId: string,
+  countryCode: string,
+  catalog?: MarketConfig[],
+): string {
+  const market = catalog
+    ? getMarketByIdFromCatalog(marketId, catalog)
+    : getMarketById(marketId);
   if (!market) {
     return countryNames[countryCode] ?? countryCode;
   }
 
-  // City-first for Adeni; country shown in footer as (CA), (NG), etc.
   return market.name;
 }
 
-export function buildLocaleRegionPresets(): LocaleRegionPreset[] {
+export function buildLocaleRegionPresets(catalog?: MarketConfig[]): LocaleRegionPreset[] {
   const presets: LocaleRegionPreset[] = [];
+  const markets = catalog ?? listMarkets();
 
-  for (const market of listMarkets()) {
-    const locales = languagesByCountry[market.countryCode] ?? ["en"];
-
-    for (const locale of locales) {
+  for (const market of markets) {
+    for (const locale of market.languages) {
       presets.push({
         id: `${locale}-${market.id}`,
         locale,
         marketId: market.id,
         languageLabel: languageLabel(locale),
-        regionLabel: regionLabelForMarket(market.id, market.countryCode),
+        regionLabel: regionLabelForMarket(market.id, market.countryCode, markets),
         countryCode: market.countryCode,
         currency: market.currency,
         suggested: market.isLive || (market.countryCode === "CA" && locale === "en"),
@@ -65,9 +62,10 @@ export function buildLocaleRegionPresets(): LocaleRegionPreset[] {
 export function findLocaleRegionPreset(
   locale: string,
   marketId: string,
+  catalog?: MarketConfig[],
 ): LocaleRegionPreset | null {
   return (
-    buildLocaleRegionPresets().find(
+    buildLocaleRegionPresets(catalog).find(
       (preset) => preset.locale === locale && preset.marketId === marketId,
     ) ?? null
   );

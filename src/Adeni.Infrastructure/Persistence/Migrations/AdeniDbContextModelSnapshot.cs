@@ -227,6 +227,63 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                     b.ToTable("weekly_availability", "booking");
                 });
 
+            modelBuilder.Entity("Adeni.Domain.Catalog.CatalogMarket", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("CountryCode")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<double>("DefaultLat")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("DefaultLng")
+                        .HasColumnType("double precision");
+
+                    b.Property<bool>("IsLive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LanguagesJson")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("LaunchNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("TimeZoneId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsLive");
+
+                    b.ToTable("markets", "catalog");
+                });
+
             modelBuilder.Entity("Adeni.Domain.Identity.BusinessUser", b =>
                 {
                     b.Property<Guid>("Id")

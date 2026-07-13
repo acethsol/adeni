@@ -4,7 +4,7 @@ import {
   getRolesFromAuth0User,
   type AdeniRole,
 } from "@adeni/shared";
-import { auth0 } from "./auth0";
+import { getAuth0 } from "./auth0";
 import { isAuth0Configured } from "./config";
 
 function loginRedirect(request: NextRequest, returnTo: string) {
@@ -22,7 +22,7 @@ export async function runAuthMiddleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const authResponse = await auth0.middleware(request);
+  const authResponse = await getAuth0().middleware(request);
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith("/auth")) {
@@ -36,7 +36,7 @@ export async function runAuthMiddleware(request: NextRequest) {
     return authResponse;
   }
 
-  const session = await auth0.getSession(request);
+  const session = await getAuth0().getSession(request);
   if (!session?.user) {
     return loginRedirect(request, pathname);
   }

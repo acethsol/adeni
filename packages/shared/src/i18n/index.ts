@@ -30,5 +30,15 @@ export function t(
 export * from "./types";
 export { getCurrencySymbol } from "./currency";
 export * from "./locale-regions";
+export { getCategoryLabel, getCategoryGroupLabel } from "./categories";
 export { getReviewCountLabel } from "./reviews";
+export { getMarketTagline, getMarketDescription } from "./market-copy";
+export { formatBookingStatusLabel } from "./bookings";
+export { getAskAdeniPrompts } from "./search-prompts";
+export {
+  TRANSLATION_COOKIE_NAME,
+  DEFAULT_CONTENT_SOURCE_LOCALE,
+  resolveTranslationPreference,
+  shouldTranslateContent,
+} from "./content-translation";
 export { enMessages, frMessages, esMessages, ptMessages };

@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { getMarketById, isLocaleId, LOCALE_COOKIE_NAME, type LocaleId } from "@adeni/shared";
+import { getMarketById, isLocaleId, LOCALE_COOKIE_NAME, TRANSLATION_COOKIE_NAME, type LocaleId } from "@adeni/shared";
 import { MARKET_COOKIE_NAME } from "@/lib/market-constants";
 
 export async function setLocaleCookie(locale: LocaleId) {
@@ -37,4 +37,15 @@ export async function setMarketCookie(marketId: string) {
 
 export async function setLocaleRegion(locale: LocaleId, marketId: string) {
   await Promise.all([setLocaleCookie(locale), setMarketCookie(marketId)]);
+}
+
+export async function setTranslationPreference(enabled: boolean) {
+  const cookieStore = await cookies();
+  cookieStore.set(TRANSLATION_COOKIE_NAME, enabled ? "1" : "0", {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: "lax",
+  });
+
+  revalidatePath("/", "layout");
 }

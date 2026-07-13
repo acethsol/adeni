@@ -1,7 +1,17 @@
 import type { NextConfig } from "next";
 
+const apiBaseUrl = process.env.ADENI_API_URL ?? "http://localhost:5169";
+
 const nextConfig: NextConfig = {
   transpilePackages: ["@adeni/api-client", "@adeni/shared"],
+  async rewrites() {
+    return [
+      {
+        source: "/api/v1/:path*",
+        destination: `${apiBaseUrl}/api/v1/:path*`,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {

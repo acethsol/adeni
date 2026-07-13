@@ -3,6 +3,7 @@ namespace Adeni.Infrastructure.Persistence;
 using Adeni.Application.Abstractions;
 using Adeni.Domain.Auditing;
 using Adeni.Domain.Booking;
+using Adeni.Domain.Catalog;
 using Adeni.Domain.Identity;
 using Adeni.Domain.Tenancy;
 using Microsoft.EntityFrameworkCore;
@@ -43,6 +44,8 @@ public sealed class AdeniDbContext(
     public DbSet<BookingRecord> Bookings => Set<BookingRecord>();
 
     public DbSet<Review> Reviews => Set<Review>();
+
+    public DbSet<CatalogMarket> CatalogMarkets => Set<CatalogMarket>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -175,6 +178,20 @@ public sealed class AdeniDbContext(
             entity.HasIndex(x => new { x.TenantId, x.IsHidden, x.CreatedAt });
             entity.Property(x => x.Comment).HasMaxLength(1000);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<CatalogMarket>(entity =>
+        {
+            entity.ToTable("markets", "catalog");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasMaxLength(32);
+            entity.Property(x => x.Name).HasMaxLength(120);
+            entity.Property(x => x.CountryCode).HasMaxLength(2);
+            entity.Property(x => x.Currency).HasMaxLength(3);
+            entity.Property(x => x.TimeZoneId).HasMaxLength(64);
+            entity.Property(x => x.LanguagesJson).HasMaxLength(64);
+            entity.Property(x => x.LaunchNote).HasMaxLength(500);
+            entity.HasIndex(x => x.IsLive);
         });
     }
 }

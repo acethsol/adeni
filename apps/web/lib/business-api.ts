@@ -1,5 +1,5 @@
 import { AdeniApiClient } from "@adeni/api-client";
-import { createApiClient, getApiBaseUrl } from "./adeni";
+import { createPublicApiClient, getApiBaseUrl } from "./public-api";
 import { getAccessToken } from "./auth/session";
 import { isAuth0Configured } from "./auth/config";
 
@@ -32,7 +32,7 @@ async function resolveBusinessTenantId(client: AdeniApiClient): Promise<string |
 }
 
 export async function createBusinessApiClient(): Promise<AdeniApiClient> {
-  const client = createApiClient();
+  const client = createPublicApiClient();
   const accessToken = await getAccessToken();
 
   if (accessToken) {
@@ -70,7 +70,7 @@ export async function businessApiFetch(
     return new Response(JSON.stringify({ title: "Unauthorized" }), { status: 401 });
   }
 
-  const client = createApiClient();
+  const client = createPublicApiClient();
   if (accessToken) {
     client.setAccessToken(accessToken);
   } else {

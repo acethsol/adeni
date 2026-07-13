@@ -52,6 +52,7 @@ public interface IDiscoveryService
         string? query,
         int page,
         int pageSize,
+        DiscoverySort sort = DiscoverySort.Distance,
         CancellationToken cancellationToken = default);
 
     Task<Result<PublicBusinessProfile>> GetPublicProfileBySlugAsync(

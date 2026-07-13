@@ -4,13 +4,13 @@ import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import type { DiscoveryBusinessItem } from "@adeni/shared";
 import {
-  formatCategoryLabel,
   getBusinessCoverImage,
+  getCategoryLabel,
   getReviewCountLabel,
   resolveBusinessCoverImage,
 } from "@adeni/shared";
 import { useTranslation } from "@/components/locale-provider";
-import { ReviewAwaitingHint } from "@/components/review-awaiting-hint";
+import { NewReviewsBadge } from "@/components/new-reviews-badge";
 import { StarRating } from "@/components/star-rating";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -26,16 +26,16 @@ import { cn } from "@/lib/cn";
 type Props = {
   business: DiscoveryBusinessItem;
   className?: string;
+  imagePriority?: boolean;
 };
 
-export function BusinessDiscoveryCard({ business, className }: Props) {
+export function BusinessDiscoveryCard({ business, className, imagePriority = false }: Props) {
   const { locale, t } = useTranslation();
   const imageUrl = resolveBusinessCoverImage(business.categorySlug, business.coverImageUrl);
   const fallbackImageUrl = getBusinessCoverImage(business.categorySlug);
-  const categoryLabel = formatCategoryLabel(business.categorySlug);
+  const categoryLabel = getCategoryLabel(locale, business.categorySlug);
   const hasReviews = Boolean(business.reviewCount && business.reviewCount > 0);
   const reviewLabel = hasReviews ? getReviewCountLabel(locale, business.reviewCount) : null;
-  const awaitingReviewsLabel = t("business.awaitingReviews");
 
   return (
     <Link href={`/businesses/${business.slug}`} className={cn("block h-full", className)}>
@@ -47,6 +47,7 @@ export function BusinessDiscoveryCard({ business, className }: Props) {
             alt=""
             fill
             sizes="280px"
+            priority={imagePriority}
             className="object-cover"
           />
           <div className="absolute left-3 top-3 z-10">
@@ -55,6 +56,14 @@ export function BusinessDiscoveryCard({ business, className }: Props) {
               {t("business.verified")}
             </span>
           </div>
+          {!hasReviews ? (
+            <div className="absolute right-3 top-3 z-10">
+              <NewReviewsBadge
+                badgeLabel={t("business.newBadge")}
+                tooltipLabel={t("business.awaitingReviews")}
+              />
+            </div>
+          ) : null}
         </div>
 
         <MediaCardBody>
@@ -65,13 +74,11 @@ export function BusinessDiscoveryCard({ business, className }: Props) {
               rating={hasReviews ? (business.ratingAvg ?? 0) : 0}
               tone="accent"
             />
-            <span className={cn(hasReviews ? "font-medium text-foreground" : "text-muted")}>
-              {hasReviews ? (
-                `${(business.ratingAvg ?? 0).toFixed(1)} · ${reviewLabel}`
-              ) : (
-                <ReviewAwaitingHint label={awaitingReviewsLabel} />
-              )}
-            </span>
+            {hasReviews ? (
+              <span className="font-medium text-foreground">
+                {(business.ratingAvg ?? 0).toFixed(1)} · {reviewLabel}
+              </span>
+            ) : null}
           </div>
 
           <MediaCardMeta>
@@ -79,8 +86,8 @@ export function BusinessDiscoveryCard({ business, className }: Props) {
           </MediaCardMeta>
 
           <MediaCardActions>
-            <Badge tone="accent">View profile</Badge>
-            <Badge tone="accent">Book now</Badge>
+            <Badge tone="accent">{t("business.viewProfile")}</Badge>
+            <Badge tone="accent">{t("business.bookNow")}</Badge>
           </MediaCardActions>
         </MediaCardBody>
       </MediaCard>

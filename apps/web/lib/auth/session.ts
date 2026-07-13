@@ -5,7 +5,7 @@ import {
   getTenantIdFromAuth0User,
   type AdeniRole,
 } from "@adeni/shared";
-import { auth0 } from "./auth0";
+import { getAuth0 } from "./auth0";
 import { isAuth0Configured } from "./config";
 
 export type WebSession = {
@@ -31,7 +31,7 @@ export async function getOptionalSession(): Promise<WebSession | null> {
     return null;
   }
 
-  const session = await auth0.getSession();
+  const session = await getAuth0().getSession();
   if (!session?.user) {
     return null;
   }
@@ -67,7 +67,7 @@ export async function getAccessToken(): Promise<string | null> {
   }
 
   try {
-    const { token } = await auth0.getAccessToken();
+    const { token } = await getAuth0().getAccessToken();
     return token ?? null;
   } catch {
     return null;

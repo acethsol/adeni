@@ -6,6 +6,7 @@ import { useState } from "react";
 type Props = Omit<ImageProps, "src" | "onError"> & {
   src: string;
   fallbackSrc: string;
+  priority?: boolean;
 };
 
 export function RemoteImage({ src, fallbackSrc, alt = "", ...rest }: Props) {

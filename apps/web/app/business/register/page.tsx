@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { AuthSetupCallout } from "@/components/auth-setup-callout";
+import { BusinessAlreadyRegistered } from "@/components/business-already-registered";
 import { BusinessPortalShell } from "@/components/business-portal-shell";
 import { BusinessRegisterForm } from "@/components/business-register-form";
 import {
@@ -8,13 +8,14 @@ import {
 } from "@/lib/business-access";
 import { createApiClient } from "@/lib/adeni";
 import { createBusinessApiClient } from "@/lib/business-api";
+import { getMarkets } from "@/lib/markets-api";
 
 export default async function BusinessRegisterPage() {
   if (!canAccessBusinessPortal()) {
     return (
       <BusinessPortalShell
-        title="Register your business"
-        description="Create your Adeni business profile and submit for verification."
+        title="Join Adeni"
+        description="Create your business profile and start accepting bookings in your city."
       >
         <AuthSetupCallout />
       </BusinessPortalShell>
@@ -24,35 +25,36 @@ export default async function BusinessRegisterPage() {
   await requireBusinessPortalAccess("/business/register");
 
   const categoriesClient = createApiClient();
-  const categories = await categoriesClient.getCategories();
+  const [categories, markets] = await Promise.all([
+    categoriesClient.getCategories(),
+    getMarkets(),
+  ]);
 
-  let hasBusiness = false;
+  let profile = null;
   try {
     const client = await createBusinessApiClient();
-    await client.getTenantProfile();
-    hasBusiness = true;
+    profile = await client.getTenantProfile();
   } catch {
-    hasBusiness = false;
+    profile = null;
   }
 
-  if (hasBusiness) {
+  if (profile) {
+    const primaryLocation =
+      profile.locations.find((item) => item.isPrimary) ?? profile.locations[0];
+
     return (
       <BusinessPortalShell
         title="Register your business"
-        description="You already have a business linked to this account."
+        description="Your account is already linked to a business on Adeni."
+        hasBusiness
       >
-        <div className="rounded-xl border border-[#1b4332]/10 bg-white p-8 text-center shadow-sm">
-          <p className="font-medium">Business account found</p>
-          <p className="mt-2 text-sm text-[#1b4332]/70">
-            Continue to your portal to manage profile, services, and bookings.
-          </p>
-          <Link
-            href="/business"
-            className="mt-5 inline-block rounded-full bg-[#1b4332] px-5 py-2.5 text-sm font-medium text-white"
-          >
-            Go to business portal
-          </Link>
-        </div>
+        <BusinessAlreadyRegistered
+          businessName={profile.businessName}
+          categorySlug={profile.categorySlug}
+          status={profile.status}
+          primarySlug={primaryLocation?.slug}
+          primaryLocationName={primaryLocation?.name}
+        />
       </BusinessPortalShell>
     );
   }
@@ -60,9 +62,9 @@ export default async function BusinessRegisterPage() {
   return (
     <BusinessPortalShell
       title="Register your business"
-      description="Tell customers who you are, where you are, and what you offer. You can submit verification documents after registering."
+      description="Tell customers who you are, where you are, and what you offer. Verification comes next."
     >
-      <BusinessRegisterForm categories={categories} />
+      <BusinessRegisterForm categories={categories} markets={markets} />
     </BusinessPortalShell>
   );
 }

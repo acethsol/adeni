@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import type { BookingResponse } from "@adeni/shared";
 import { formatBookingStatus } from "@adeni/shared";
+import { SkeletonList } from "@/components/ui/skeleton";
+import { useActionLoading } from "@/contexts/action-loading-context";
 
 const PENDING_STATUS = 0;
 
@@ -17,6 +19,7 @@ function formatSlotTime(iso: string) {
 }
 
 export function BusinessBookingInbox() {
+  const { run } = useActionLoading();
   const [bookings, setBookings] = useState<BookingResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,20 +54,22 @@ export function BusinessBookingInbox() {
     setError(null);
 
     try {
-      const response = await fetch(`/api/business/bookings/${bookingId}/${action}`, {
-        method: "POST",
-        headers: action === "reject" ? { "Content-Type": "application/json" } : undefined,
-        body: action === "reject" ? JSON.stringify({ reason: null }) : undefined,
+      await run(action === "accept" ? "Accepting booking…" : "Rejecting booking…", async () => {
+        const response = await fetch(`/api/business/bookings/${bookingId}/${action}`, {
+          method: "POST",
+          headers: action === "reject" ? { "Content-Type": "application/json" } : undefined,
+          body: action === "reject" ? JSON.stringify({ reason: null }) : undefined,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to ${action} booking`);
+        }
+
+        const updated = (await response.json()) as BookingResponse;
+        setBookings((current) =>
+          current.map((item) => (item.id === bookingId ? updated : item)),
+        );
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to ${action} booking`);
-      }
-
-      const updated = (await response.json()) as BookingResponse;
-      setBookings((current) =>
-        current.map((item) => (item.id === bookingId ? updated : item)),
-      );
     } catch {
       setError(`Could not ${action} this booking.`);
     } finally {
@@ -76,7 +81,7 @@ export function BusinessBookingInbox() {
   const recent = bookings.filter((booking) => booking.status !== PENDING_STATUS);
 
   if (loading) {
-    return <p className="text-sm text-[#1b4332]/70">Loading bookings…</p>;
+    return <SkeletonList count={3} />;
   }
 
   return (

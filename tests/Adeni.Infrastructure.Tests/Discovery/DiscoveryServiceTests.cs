@@ -1,11 +1,13 @@
 namespace Adeni.Infrastructure.Tests.Discovery;
 
 using Adeni.Application.Caching;
+using Adeni.Application.Markets;
 using Adeni.Application.Reviews;
 using Adeni.Application.Storage;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Context;
 using Adeni.Infrastructure.Discovery;
+using Adeni.Infrastructure.Markets;
 using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Reviews;
 using Adeni.Infrastructure.Tests.Storage;
@@ -16,6 +18,38 @@ using Microsoft.Extensions.DependencyInjection;
 
 public sealed class DiscoveryServiceTests
 {
+    [Fact]
+    public async Task Search_paginates_results()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+
+        for (var index = 0; index < 3; index++)
+        {
+            BusinessTestSeed.SeedVerifiedBusiness(
+                db,
+                $"shop-{index}",
+                $"Shop {index}",
+                "barbers",
+                $"Area {index}",
+                6.4474 + (index * 0.01),
+                3.4700);
+        }
+
+        await db.SaveChangesAsync();
+
+        var service = scope.ServiceProvider.GetRequiredService<DiscoveryService>();
+        var pageOne = await service.SearchAsync(6.4474, 3.4700, null, null, null, 1, 2);
+        var pageTwo = await service.SearchAsync(6.4474, 3.4700, null, null, null, 2, 2);
+
+        Assert.True(pageOne.IsSuccess);
+        Assert.True(pageTwo.IsSuccess);
+        Assert.Equal(3, pageOne.Value!.TotalCount);
+        Assert.Equal(2, pageOne.Value.Items.Count);
+        Assert.Single(pageTwo.Value!.Items);
+    }
+
     [Fact]
     public async Task Search_returns_verified_businesses_sorted_by_distance()
     {
@@ -138,12 +172,21 @@ public sealed class DiscoveryServiceTests
         var services = new ServiceCollection();
         services.AddDistributedMemoryCache();
         services.AddSingleton<ICacheService, DistributedCacheService>();
+        services.AddSingleton<MarketCatalogState>();
+        services.AddSingleton<IMarketCatalog, SyncMarketCatalog>();
         services.AddScoped<TenantContext>();
         services.AddScoped<Application.Abstractions.ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
         services.AddDbContext<AdeniDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));
         services.AddSingleton<IFileStorage, FakeFileStorage>();
         services.AddScoped<IReviewService, ReviewService>();
         services.AddScoped<DiscoveryService>();
-        return services.BuildServiceProvider();
+        var provider = services.BuildServiceProvider();
+        var catalogState = provider.GetRequiredService<MarketCatalogState>();
+        catalogState.Update(
+        [
+            new MarketDefinition("lagos", "Lagos", "NG", "NGN", "Africa/Lagos", new MarketLocation(6.5244, 3.3792), ["en"], true, null),
+            new MarketDefinition("ottawa", "Ottawa", "CA", "CAD", "America/Toronto", new MarketLocation(45.4215, -75.6972), ["en", "fr"], false, null),
+        ]);
+        return provider;
     }
 }

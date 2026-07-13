@@ -3,6 +3,7 @@ using Adeni.Api.Extensions;
 using Adeni.Api.Middleware;
 using Adeni.Application.Abstractions;
 using Adeni.Application.DependencyInjection;
+using Adeni.Application.Markets;
 using Adeni.Infrastructure.Configuration;
 using Adeni.Infrastructure.DependencyInjection;
 using Adeni.Infrastructure.Logging;
@@ -61,6 +62,8 @@ if (app.Environment.IsDevelopment())
     app.MapAdeniOpenApi();
 }
 
+await WarmMarketCatalogAsync(app.Services);
+
 app.UseSerilogRequestLogging(options =>
 {
     options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
@@ -109,6 +112,45 @@ static async Task ApplyDevelopmentMigrationsAsync(IServiceProvider services)
     dbContext.SyncTenantFilter();
     await dbContext.Database.MigrateAsync();
     await DevelopmentDataSeeder.SeedAsync(dbContext);
+    var loader = scope.ServiceProvider.GetRequiredService<IMarketCatalogLoader>();
+    await loader.EnsureLoadedAsync();
+}
+
+static async Task WarmMarketCatalogAsync(IServiceProvider services)
+{
+    using var scope = services.CreateScope();
+    var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+    if (string.IsNullOrWhiteSpace(configuration.GetConnectionString("AdeniDb")))
+    {
+        var inMemoryLoader = scope.ServiceProvider.GetService<IMarketCatalogLoader>();
+        if (inMemoryLoader is not null)
+        {
+            try
+            {
+                await inMemoryLoader.EnsureLoadedAsync();
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Market catalog warm-up skipped.");
+            }
+        }
+
+        return;
+    }
+
+    try
+    {
+        var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
+        tenantContext.DisableTenantFilter();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        dbContext.SyncTenantFilter();
+        var loader = scope.ServiceProvider.GetRequiredService<IMarketCatalogLoader>();
+        await loader.EnsureLoadedAsync();
+    }
+    catch (Exception ex)
+    {
+        Log.Warning(ex, "Market catalog warm-up skipped.");
+    }
 }
 
 public partial class Program;

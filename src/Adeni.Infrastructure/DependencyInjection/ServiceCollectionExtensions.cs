@@ -20,7 +20,9 @@ using Adeni.Infrastructure.Context;
 using Adeni.Infrastructure.Identity;
 using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Reviews;
+using Adeni.Infrastructure.Markets;
 using Adeni.Infrastructure.Tenancy;
+using Adeni.Infrastructure.Translation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -57,6 +59,8 @@ public static class ServiceCollectionExtensions
         }
 
         services.AddAdeniCaching(configuration, environment);
+        services.AddAdeniMarkets();
+        services.AddAdeniTranslation(configuration, environment);
         services.Configure<MarketOptions>(configuration.GetSection(MarketOptions.SectionName));
         services.AddAdeniAuth(configuration);
         services.AddScoped<IAuthSyncService, AuthSyncService>();

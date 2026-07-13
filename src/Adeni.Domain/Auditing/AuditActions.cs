@@ -10,4 +10,7 @@ public static class AuditActions
     public const string CustomerExported = "customer.exported";
     public const string CustomerDeleted = "customer.deleted";
     public const string CrossTenantDenied = "security.cross_tenant_denied";
+    public const string MarketCreated = "market.created";
+    public const string MarketUpdated = "market.updated";
+    public const string MarketLiveToggled = "market.live_toggled";
 }

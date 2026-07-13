@@ -6,6 +6,7 @@ import {
   requireBusinessPortalAccess,
 } from "@/lib/business-access";
 import { createBusinessApiClient } from "@/lib/business-api";
+import { getMarkets } from "@/lib/markets-api";
 
 export default async function BusinessLocationsPage() {
   if (!canAccessBusinessPortal()) {
@@ -26,6 +27,7 @@ export default async function BusinessLocationsPage() {
   > = [];
   let defaultMarketId = "lagos";
   let loadError: string | null = null;
+  const markets = await getMarkets();
 
   try {
     const client = await createBusinessApiClient();
@@ -43,6 +45,7 @@ export default async function BusinessLocationsPage() {
       title="Locations"
       description="Add branches, set your primary location, and manage public profile URLs."
       devMode={access.mode === "dev"}
+      hasBusiness
     >
       {loadError ? (
         <p className="text-sm text-[#1b4332]/70">{loadError}</p>
@@ -50,6 +53,7 @@ export default async function BusinessLocationsPage() {
         <BusinessLocationsManager
           initialLocations={locations}
           defaultMarketId={defaultMarketId}
+          markets={markets}
         />
       )}
     </BusinessPortalShell>

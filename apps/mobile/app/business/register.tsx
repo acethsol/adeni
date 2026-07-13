@@ -9,8 +9,8 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import type { AdeniApiError } from "@adeni/api-client";
-import type { Category } from "@adeni/shared";
-import { markets } from "@adeni/shared";
+import type { Category, MarketConfig } from "@adeni/shared";
+import { listMarkets } from "@adeni/shared";
 import { Screen } from "@/components/adeni/Screen";
 import { useAuth } from "@/contexts/auth-context";
 import { createPublicApiClient } from "@/lib/api";
@@ -28,6 +28,7 @@ export default function BusinessRegisterScreen() {
   } = useAuth();
 
   const [categories, setCategories] = useState<Category[]>([]);
+  const [markets, setMarkets] = useState<MarketConfig[]>(listMarkets());
   const [businessName, setBusinessName] = useState("");
   const [categorySlug, setCategorySlug] = useState("barbers");
   const [phone, setPhone] = useState("");
@@ -41,16 +42,20 @@ export default function BusinessRegisterScreen() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void createPublicApiClient()
-      .getCategories()
-      .then((items) => {
+    const client = createPublicApiClient();
+    void Promise.all([client.getCategories(), client.getMarkets()])
+      .then(([items, marketItems]) => {
         setCategories(items);
         if (items[0]) {
           setCategorySlug(items[0].slug);
         }
+        if (marketItems.length > 0) {
+          setMarkets(marketItems);
+          setMarketId(marketItems[0].id);
+        }
       })
       .catch(() => {
-        setError("Could not load categories.");
+        setError("Could not load registration options.");
       });
   }, []);
 
@@ -106,7 +111,7 @@ export default function BusinessRegisterScreen() {
     }
   }
 
-  const marketOptions = Object.values(markets);
+  const marketOptions = markets;
 
   return (
     <Screen loading={authLoading}>

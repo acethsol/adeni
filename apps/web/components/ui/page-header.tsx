@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
+import { BackLink } from "@/components/ui/back-link";
 import { cn } from "@/lib/cn";
 
 type Props = {
@@ -17,16 +17,14 @@ export function PageHeader({
   title,
   description,
   backHref,
-  backLabel = "← Back",
+  backLabel = "Back",
   actions,
   className,
 }: Props) {
   return (
     <header className={cn("space-y-3", className)}>
       {backHref ? (
-        <Link href={backHref} className="text-sm font-semibold text-accent hover:underline">
-          {backLabel}
-        </Link>
+        <BackLink href={backHref} label={backLabel} variant="trail" className="mb-1" />
       ) : null}
       {eyebrow ? (
         <p className="text-xs font-bold uppercase tracking-widest text-accent">{eyebrow}</p>

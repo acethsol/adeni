@@ -1,18 +1,16 @@
-import { AdeniApiClient } from "@adeni/api-client";
-import { getAccessToken } from "./auth/session";
-import { isAuth0Configured } from "./auth/config";
-
-export function getApiBaseUrl() {
-  return process.env.ADENI_API_URL ?? "http://localhost:5169";
-}
-
-export function createApiClient() {
-  return new AdeniApiClient({ baseUrl: getApiBaseUrl() });
-}
+export {
+  getApiBaseUrl,
+  createPublicApiClient,
+  createPublicApiClient as createApiClient,
+} from "./public-api";
 
 export async function createAuthenticatedApiClient() {
-  const client = createApiClient();
+  const { createPublicApiClient } = await import("./public-api");
+  const { isAuth0Configured } = await import("./auth/config");
+  const client = createPublicApiClient();
+
   if (isAuth0Configured()) {
+    const { getAccessToken } = await import("./auth/session");
     const token = await getAccessToken();
     client.setAccessToken(token);
   }

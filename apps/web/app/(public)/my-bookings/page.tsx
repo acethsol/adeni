@@ -1,27 +1,41 @@
-import Link from "next/link";
 import { AuthSetupCallout } from "@/components/auth-setup-callout";
 import { MyBookingsList } from "@/components/my-bookings-list";
 import { PublicHeader } from "@/components/public-header";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { Callout } from "@/components/ui/callout";
+import { t } from "@adeni/shared";
 import {
   canAccessMyBookings,
   hasMyBookingsSession,
 } from "@/lib/customer-access";
 import { isCustomerDevMode } from "@/lib/customer-api";
+import { publicContainerClass } from "@/lib/layout-classes";
+import { getLocale } from "@/lib/locale";
+import { getActiveMarketConfig } from "@/lib/market";
 
 export default async function MyBookingsPage() {
+  const [market, locale] = await Promise.all([getActiveMarketConfig(), getLocale()]);
+
   if (!canAccessMyBookings()) {
     return (
       <div className="flex flex-1 flex-col">
-        <PublicHeader />
-        <main className="mx-auto max-w-3xl flex-1 px-6 py-10">
-          <h1 className="text-3xl font-bold tracking-tight text-[#1b4332]">
-            My bookings
-          </h1>
-          <p className="mt-2 text-[#1b4332]/70">
-            Sign in to view appointments you have booked.
-          </p>
-          <div className="mt-8">
-            <AuthSetupCallout />
+        <PublicHeader
+          searchMode="none"
+          marketId={market.id}
+          marketName={market.name}
+          currency={market.currency}
+          countryCode={market.countryCode}
+        />
+        <main className={`${publicContainerClass} py-12 lg:py-14`}>
+          <div className="mx-auto max-w-4xl">
+            <PageHeader
+              title={t(locale, "bookings.title")}
+              description={t(locale, "bookings.signInDescription")}
+            />
+            <div className="mt-8">
+              <AuthSetupCallout />
+            </div>
           </div>
         </main>
       </div>
@@ -32,39 +46,47 @@ export default async function MyBookingsPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <PublicHeader />
-      <main className="mx-auto max-w-3xl flex-1 px-6 py-10">
-        <h1 className="text-3xl font-bold tracking-tight text-[#1b4332]">
-          My bookings
-        </h1>
-        <p className="mt-2 text-[#1b4332]/70">
-          Appointments you have booked on Adeni.
-        </p>
+      <PublicHeader
+        searchMode="none"
+        marketId={market.id}
+        marketName={market.name}
+        currency={market.currency}
+        countryCode={market.countryCode}
+        showBookingsNav={canAccessMyBookings()}
+      />
 
-        {isCustomerDevMode() ? (
-          <p className="mt-4 rounded-lg border border-[#40916c]/20 bg-[#f6f8f6] px-4 py-3 text-sm text-[#1b4332]/80">
-            Local dev mode — using <code>DEV_CUSTOMER_AUTH0_SUB</code>.
-          </p>
-        ) : null}
+      <main className={`${publicContainerClass} py-12 lg:py-14`}>
+        <div className="mx-auto w-full max-w-4xl">
+          <PageHeader
+            title={t(locale, "bookings.title")}
+            description={t(locale, "bookings.description")}
+            actions={
+              <Button href="/discover" variant="secondary" size="sm">
+                {t(locale, "bookings.bookAnother")}
+              </Button>
+            }
+          />
 
-        {!hasSession ? (
-          <div className="mt-8 rounded-xl border border-[#1b4332]/10 bg-white p-8 text-center shadow-sm">
-            <p className="font-medium text-[#1b4332]">Sign in to continue</p>
-            <p className="mt-2 text-sm text-[#1b4332]/70">
-              Your booking history is tied to your Adeni account.
-            </p>
-            <Link
-              href="/auth/login?returnTo=/my-bookings"
-              className="mt-5 inline-block rounded-full bg-[#1b4332] px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
-            >
-              Log in
-            </Link>
-          </div>
-        ) : (
-          <div className="mt-8">
-            <MyBookingsList />
-          </div>
-        )}
+          {isCustomerDevMode() ? (
+            <Callout tone="info" className="mt-6">
+              {t(locale, "bookings.devMode")}
+            </Callout>
+          ) : null}
+
+          {!hasSession ? (
+            <div className="mt-8 rounded-2xl border border-border bg-surface p-8 text-center shadow-sm">
+              <p className="font-semibold text-foreground">{t(locale, "bookings.signInTitle")}</p>
+              <p className="mt-2 text-sm text-muted">{t(locale, "bookings.signInHint")}</p>
+              <Button href="/auth/login?returnTo=/my-bookings" className="mt-5">
+                {t(locale, "bookings.logIn")}
+              </Button>
+            </div>
+          ) : (
+            <div className="mt-8">
+              <MyBookingsList />
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );

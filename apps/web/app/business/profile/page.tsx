@@ -39,6 +39,7 @@ export default async function BusinessProfilePage() {
       title="Profile"
       description="Update your business details shown to customers."
       devMode={access.mode === "dev"}
+      hasBusiness
     >
       {loadError ? (
         <p className="text-sm text-[#1b4332]/70">{loadError}</p>

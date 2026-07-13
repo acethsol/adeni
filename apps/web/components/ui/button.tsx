@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { cn } from "@/lib/cn";
 
 type Variant = "primary" | "secondary" | "ghost" | "destructive";
@@ -25,6 +26,8 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: Variant;
   size?: Size;
   href?: string;
+  loading?: boolean;
+  loadingLabel?: string;
   children: ReactNode;
 };
 
@@ -33,15 +36,19 @@ export function Button({
   size = "md",
   href,
   className,
+  loading = false,
+  loadingLabel,
   children,
+  disabled,
   ...rest
 }: Props) {
   const classes = cn(
-    "inline-flex items-center justify-center rounded-full font-semibold transition-opacity",
+    "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-opacity",
     variantClasses[variant],
     sizeClasses[size],
     className,
   );
+  const label = loadingLabel ?? children;
 
   if (href) {
     return (
@@ -52,8 +59,9 @@ export function Button({
   }
 
   return (
-    <button type="button" className={classes} {...rest}>
-      {children}
+    <button type="button" className={classes} disabled={disabled || loading} aria-busy={loading} {...rest}>
+      {loading ? <LoadingSpinner size="sm" label={typeof label === "string" ? label : "Loading"} /> : null}
+      {loading ? loadingLabel ?? children : children}
     </button>
   );
 }

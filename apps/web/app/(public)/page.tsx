@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { Category, DiscoveryBusinessItem } from "@adeni/shared";
 import { CalendarCheck, MapPin, ShieldCheck } from "lucide-react";
-import { t } from "@adeni/shared";
+import { t, getCategoryLabel, getCategoryGroupLabel, getMarketTagline, getMarketDescription } from "@adeni/shared";
 import { PublicHeader } from "@/components/public-header";
 import { HERO_SEARCH_ANCHOR_ID } from "@/lib/hero-search";
 import { canAccessMyBookings } from "@/lib/customer-access";
@@ -19,16 +19,21 @@ import {
 } from "@/lib/layout-classes";
 import { getActiveMarketConfig, getDiscoveryLocation } from "@/lib/market";
 import { getLocale } from "@/lib/locale";
-import { getCategoryVisual } from "@adeni/shared";
+import { getCategoryVisual, FEATURED_PAGE_SIZE } from "@adeni/shared";
 
 export const revalidate = 3600;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const market = await getActiveMarketConfig();
+  const [market, locale] = await Promise.all([getActiveMarketConfig(), getLocale()]);
+  const tagline = getMarketTagline(locale);
+  const description = getMarketDescription(locale);
 
   return {
-    title: `Adeni — ${market.tagline} in ${market.name}`,
-    description: `Discover verified local service providers in ${market.name}. ${market.description}`,
+    title: t(locale, "home.metaTitle", { tagline, market: market.name }),
+    description: t(locale, "home.metaDescription", {
+      market: market.name,
+      description,
+    }),
   };
 }
 
@@ -52,7 +57,9 @@ async function getFeaturedBusinesses(
       lat,
       lng,
       market: marketId,
-      pageSize: 12,
+      page: 1,
+      pageSize: FEATURED_PAGE_SIZE,
+      sort: "featured",
     });
     return result.items;
   } catch {
@@ -73,15 +80,8 @@ function groupCategories(categories: Category[]) {
   return groups;
 }
 
-function formatGroupLabel(parentSlug: string) {
-  if (parentSlug === "general") {
-    return "General";
-  }
-
-  return parentSlug
-    .split("-")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+function formatGroupLabel(parentSlug: string, locale: Awaited<ReturnType<typeof getLocale>>) {
+  return getCategoryGroupLabel(locale, parentSlug);
 }
 
 const trustItemKeys = [
@@ -116,10 +116,10 @@ export default async function HomePage() {
         <div className={`${publicContainerClass} py-12 lg:py-16`}>
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-              {market.tagline}
+              {getMarketTagline(locale)}
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted sm:text-lg">
-              {market.description}
+              {getMarketDescription(locale)}
             </p>
 
             <div id={HERO_SEARCH_ANCHOR_ID} className="mt-8 scroll-mt-28">
@@ -181,18 +181,19 @@ export default async function HomePage() {
 
           {categories.length === 0 ? (
             <Callout tone="warning" className="mt-6">
-              Start the API at {getApiBaseUrl()} to load categories.
+              {t(locale, "home.apiOffline", { url: getApiBaseUrl() })}
             </Callout>
           ) : (
             <>
               <div className="mt-6 flex flex-wrap gap-2">
                 {categories.map((category) => {
-                  const visual = getCategoryVisual(category.slug, category.name);
+                  const label = getCategoryLabel(locale, category.slug, category.name);
+                  const visual = getCategoryVisual(category.slug, label);
                   return (
                     <CategoryChip
                       key={category.id}
                       href={`/discover?category=${category.slug}`}
-                      label={category.name}
+                      label={label}
                       icon={visual.icon}
                     />
                   );
@@ -203,8 +204,8 @@ export default async function HomePage() {
                 {[...groupedCategories.entries()].map(([parentSlug, items]) => (
                   <div key={parentSlug}>
                     <h3 className="text-sm font-semibold uppercase tracking-wide text-accent">
-                      {getCategoryVisual(parentSlug, formatGroupLabel(parentSlug)).icon}{" "}
-                      {formatGroupLabel(parentSlug)}
+                      {getCategoryVisual(parentSlug, formatGroupLabel(parentSlug, locale)).icon}{" "}
+                      {formatGroupLabel(parentSlug, locale)}
                     </h3>
                     <ul className={`${publicCardGridClass} mt-4`}>
                       {items.map((category) => (

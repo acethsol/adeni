@@ -13,7 +13,7 @@ import { SkeletonList } from "@/components/ui/Skeleton";
 import { Callout } from "@/components/ui/Callout";
 import { useLocale } from "@/contexts/locale-context";
 import { useMarket } from "@/contexts/market-context";
-import { useCategories, useDiscovery } from "@/lib/queries/public";
+import { useCategories, useInfiniteDiscovery } from "@/lib/queries/public";
 import { adeniTheme } from "@/lib/theme";
 
 const STICKY_SEARCH_OFFSET = 120;
@@ -37,12 +37,15 @@ export default function DiscoverScreen() {
 
   const { data: categories = [] } = useCategories();
   const {
-    data: businesses = [],
+    data,
     isLoading,
     isFetching,
+    isFetchingNextPage,
     error,
     refetch,
-  } = useDiscovery({
+    fetchNextPage,
+    hasNextPage,
+  } = useInfiniteDiscovery({
     lat: searchLocation.lat,
     lng: searchLocation.lng,
     market: market.id,
@@ -50,6 +53,9 @@ export default function DiscoverScreen() {
     q: searchQuery || null,
     enabled: !marketLoading,
   });
+
+  const businesses = data?.pages.flatMap((page) => page.items) ?? [];
+  const totalCount = data?.pages[0]?.totalCount ?? 0;
 
   const categoryLabel =
     categories.find((item) => item.slug === selectedCategory)?.name ?? null;
@@ -92,7 +98,22 @@ export default function DiscoverScreen() {
         }}
         scrollEventThrottle={16}
         refreshControl={
-          <RefreshControl refreshing={isFetching && !isLoading} onRefresh={() => void refetch()} />
+          <RefreshControl refreshing={isFetching && !isLoading && !isFetchingNextPage} onRefresh={() => void refetch()} />
+        }
+        onEndReachedThreshold={0.4}
+        onEndReached={() => {
+          if (hasNextPage && !isFetchingNextPage) {
+            void fetchNextPage();
+          }
+        }}
+        ListFooterComponent={
+          isFetchingNextPage ? (
+            <Text style={styles.footerText}>Loading more…</Text>
+          ) : hasNextPage ? null : businesses.length > 0 ? (
+            <Text style={styles.footerText}>
+              Showing {businesses.length} of {totalCount}
+            </Text>
+          ) : null
         }
         ListHeaderComponent={
           <View style={styles.headerBlock}>
@@ -222,5 +243,11 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: adeniTheme.spacing.md,
+  },
+  footerText: {
+    textAlign: "center",
+    paddingVertical: adeniTheme.spacing.lg,
+    fontSize: adeniTheme.typography.bodySm.fontSize,
+    color: adeniTheme.textMuted,
   },
 });

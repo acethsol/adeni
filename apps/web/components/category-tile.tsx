@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import type { Category } from "@adeni/shared";
-import { getCategoryVisual, getDefaultBusinessCoverImage } from "@adeni/shared";
+import { getCategoryLabel, getCategoryVisual, getDefaultBusinessCoverImage } from "@adeni/shared";
+import { useTranslation } from "@/components/locale-provider";
 import {
   MediaCard,
   MediaCardBody,
@@ -14,7 +17,9 @@ type Props = {
 };
 
 export function CategoryTile({ category }: Props) {
-  const visual = getCategoryVisual(category.slug, category.name);
+  const { locale, t } = useTranslation();
+  const label = getCategoryLabel(locale, category.slug, category.name);
+  const visual = getCategoryVisual(category.slug, label);
   const fallbackImageUrl = getDefaultBusinessCoverImage();
 
   return (
@@ -28,9 +33,11 @@ export function CategoryTile({ category }: Props) {
         <MediaCardBody>
           <MediaCardTitle>
             <span aria-hidden>{visual.icon} </span>
-            {category.name}
+            {label}
           </MediaCardTitle>
-          <MediaCardMeta>Browse in {category.name.toLowerCase()}</MediaCardMeta>
+          <MediaCardMeta>
+            {t("categories.browseIn", { category: label.toLowerCase() })}
+          </MediaCardMeta>
         </MediaCardBody>
       </MediaCard>
     </Link>

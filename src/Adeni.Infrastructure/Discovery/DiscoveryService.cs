@@ -14,7 +14,8 @@ public sealed class DiscoveryService(
     AdeniDbContext dbContext,
     ICacheService cache,
     IFileStorage fileStorage,
-    Application.Reviews.IReviewService reviewService) : IDiscoveryService
+    Application.Reviews.IReviewService reviewService,
+    IMarketCatalog marketCatalog) : IDiscoveryService
 {
     private const int DefaultPageSize = 20;
     private const int MaxPageSize = 50;
@@ -27,6 +28,7 @@ public sealed class DiscoveryService(
         string? query,
         int page,
         int pageSize,
+        DiscoverySort sort = DiscoverySort.Distance,
         CancellationToken cancellationToken = default)
     {
         if (latitude is < -90 or > 90 || longitude is < -180 or > 180)
@@ -43,12 +45,12 @@ public sealed class DiscoveryService(
         string? normalizedMarket = null;
         if (!string.IsNullOrWhiteSpace(marketId))
         {
-            if (!KnownMarketCatalog.IsValid(marketId))
+            if (!marketCatalog.IsValid(marketId))
             {
                 return Task.FromResult(Result.Failure<DiscoveryResult>(Error.Validation("Market is not valid.")));
             }
 
-            normalizedMarket = KnownMarketCatalog.Normalize(marketId);
+            normalizedMarket = marketCatalog.Normalize(marketId);
         }
 
         var effectivePageSize = pageSize <= 0 ? DefaultPageSize : Math.Min(pageSize, MaxPageSize);
@@ -58,8 +60,17 @@ public sealed class DiscoveryService(
         var normalizedQuery = string.IsNullOrWhiteSpace(query)
             ? null
             : query.Trim().ToLowerInvariant();
+        var sortKey = sort == DiscoverySort.Featured ? "featured" : "distance";
 
-        var cacheKey = CacheKeys.Discovery(latitude, longitude, normalizedCategory, normalizedMarket, page, normalizedQuery);
+        var cacheKey = CacheKeys.Discovery(
+            latitude,
+            longitude,
+            normalizedCategory,
+            normalizedMarket,
+            page,
+            effectivePageSize,
+            normalizedQuery,
+            sortKey);
 
         return SearchCachedAsync(
             cacheKey,
@@ -70,6 +81,7 @@ public sealed class DiscoveryService(
             normalizedQuery,
             page,
             effectivePageSize,
+            sort,
             cancellationToken);
     }
 
@@ -109,39 +121,281 @@ public sealed class DiscoveryService(
         string? searchQuery,
         int page,
         int pageSize,
+        DiscoverySort sort,
         CancellationToken cancellationToken)
     {
         var result = await cache.GetOrCreateAsync(
             cacheKey,
             CacheTtl.Discovery,
-            async ct =>
-            {
-                var items = await LoadDiscoveryItemsAsync(
-                    latitude,
-                    longitude,
-                    categorySlug,
-                    marketId,
-                    searchQuery,
-                    ct);
-                var totalCount = items.Count;
-                var pageItems = items
-                    .Skip((page - 1) * pageSize)
-                    .Take(pageSize)
-                    .ToList();
-
-                return new DiscoveryResult(pageItems, page, pageSize, totalCount);
-            },
+            ct => LoadDiscoveryPageAsync(
+                latitude,
+                longitude,
+                categorySlug,
+                marketId,
+                searchQuery,
+                page,
+                pageSize,
+                sort,
+                ct),
             cancellationToken);
 
         return Result.Success(result);
     }
 
-    private async Task<IReadOnlyList<DiscoveryBusinessItem>> LoadDiscoveryItemsAsync(
+    private async Task<DiscoveryResult> LoadDiscoveryPageAsync(
         double latitude,
         double longitude,
         string? categorySlug,
         string? marketId,
         string? searchQuery,
+        int page,
+        int pageSize,
+        DiscoverySort sort,
+        CancellationToken cancellationToken)
+    {
+        if (dbContext.Database.IsRelational())
+        {
+            return await LoadDiscoveryPageRelationalAsync(
+                latitude,
+                longitude,
+                categorySlug,
+                marketId,
+                searchQuery,
+                page,
+                pageSize,
+                sort,
+                cancellationToken);
+        }
+
+        return await LoadDiscoveryPageInMemoryAsync(
+            latitude,
+            longitude,
+            categorySlug,
+            marketId,
+            searchQuery,
+            page,
+            pageSize,
+            sort,
+            cancellationToken);
+    }
+
+    private async Task<DiscoveryResult> LoadDiscoveryPageRelationalAsync(
+        double latitude,
+        double longitude,
+        string? categorySlug,
+        string? marketId,
+        string? searchQuery,
+        int page,
+        int pageSize,
+        DiscoverySort sort,
+        CancellationToken cancellationToken)
+    {
+        var verifiedStatus = (int)TenantStatus.Verified;
+        var likeQuery = searchQuery is null ? null : $"%{searchQuery}%";
+        var offset = (page - 1) * pageSize;
+
+        var totalCount = await dbContext.Database
+            .SqlQuery<int>($"""
+                SELECT COUNT(*)::int AS "Value"
+                FROM tenancy.business_locations bl
+                INNER JOIN tenancy.tenants t ON t."Id" = bl."TenantId"
+                INNER JOIN tenancy.business_profiles bp ON bp."TenantId" = t."Id"
+                WHERE bl."IsActive" = TRUE
+                  AND bl."Latitude" IS NOT NULL
+                  AND bl."Longitude" IS NOT NULL
+                  AND t."Status" = {verifiedStatus}
+                  AND ({categorySlug}::text IS NULL OR LOWER(bp."CategorySlug") = {categorySlug})
+                  AND ({marketId}::text IS NULL OR LOWER(bl."MarketId") = {marketId})
+                  AND (
+                    {likeQuery}::text IS NULL OR (
+                      LOWER(t."Name") LIKE {likeQuery}
+                      OR LOWER(bl."Name") LIKE {likeQuery}
+                      OR LOWER(bl."Area") LIKE {likeQuery}
+                      OR LOWER(bp."CategorySlug") LIKE {likeQuery}
+                      OR LOWER(bp."Description") LIKE {likeQuery}
+                    )
+                  )
+                """)
+            .SingleAsync(cancellationToken);
+
+        List<DiscoverySearchRow> rows = sort == DiscoverySort.Featured
+            ? await dbContext.Database.SqlQuery<DiscoverySearchRow>($"""
+                WITH rating_summary AS (
+                    SELECT
+                        r."TenantId" AS tenant_id,
+                        ROUND(AVG(r."Rating")::numeric, 1)::float AS rating_avg,
+                        COUNT(*)::int AS review_count
+                    FROM booking.reviews r
+                    WHERE NOT r."IsHidden"
+                    GROUP BY r."TenantId"
+                ),
+                candidates AS (
+                    SELECT
+                        bl."Id" AS "LocationId",
+                        bl."TenantId" AS "TenantId",
+                        t."Name" AS "Name",
+                        bl."Name" AS "LocationName",
+                        bl."Slug" AS "Slug",
+                        bp."CategorySlug" AS "CategorySlug",
+                        bl."Area" AS "Area",
+                        bl."MarketId" AS "MarketId",
+                        bp."CoverImageKey" AS "CoverImageKey",
+                        bl."Latitude" AS "Latitude",
+                        bl."Longitude" AS "Longitude",
+                        (6371.0 * 2 * ASIN(SQRT(
+                            POWER(SIN(RADIANS(bl."Latitude" - {latitude}) / 2.0), 2) +
+                            COS(RADIANS({latitude})) * COS(RADIANS(bl."Latitude")) *
+                            POWER(SIN(RADIANS(bl."Longitude" - {longitude}) / 2.0), 2)
+                        ))) AS distance_km,
+                        rating_summary.rating_avg AS "RatingAvg",
+                        COALESCE(rating_summary.review_count, 0) AS "ReviewCount"
+                    FROM tenancy.business_locations bl
+                    INNER JOIN tenancy.tenants t ON t."Id" = bl."TenantId"
+                    INNER JOIN tenancy.business_profiles bp ON bp."TenantId" = t."Id"
+                    LEFT JOIN rating_summary ON rating_summary.tenant_id = t."Id"
+                    WHERE bl."IsActive" = TRUE
+                      AND bl."Latitude" IS NOT NULL
+                      AND bl."Longitude" IS NOT NULL
+                      AND t."Status" = {verifiedStatus}
+                      AND ({categorySlug}::text IS NULL OR LOWER(bp."CategorySlug") = {categorySlug})
+                      AND ({marketId}::text IS NULL OR LOWER(bl."MarketId") = {marketId})
+                      AND (
+                        {likeQuery}::text IS NULL OR (
+                          LOWER(t."Name") LIKE {likeQuery}
+                          OR LOWER(bl."Name") LIKE {likeQuery}
+                          OR LOWER(bl."Area") LIKE {likeQuery}
+                          OR LOWER(bp."CategorySlug") LIKE {likeQuery}
+                          OR LOWER(bp."Description") LIKE {likeQuery}
+                        )
+                      )
+                )
+                SELECT
+                    "LocationId",
+                    "TenantId",
+                    "Name",
+                    "LocationName",
+                    "Slug",
+                    "CategorySlug",
+                    "Area",
+                    "MarketId",
+                    "CoverImageKey",
+                    ROUND(distance_km::numeric, 2)::float AS "DistanceKm",
+                    "Latitude",
+                    "Longitude",
+                    "RatingAvg",
+                    "ReviewCount"
+                FROM candidates
+                ORDER BY
+                  COALESCE("RatingAvg", 0) DESC,
+                  "ReviewCount" DESC,
+                  "DistanceKm" ASC
+                OFFSET {offset} LIMIT {pageSize}
+                """).ToListAsync(cancellationToken)
+            : await dbContext.Database.SqlQuery<DiscoverySearchRow>($"""
+                WITH candidates AS (
+                    SELECT
+                        bl."Id" AS "LocationId",
+                        bl."TenantId" AS "TenantId",
+                        t."Name" AS "Name",
+                        bl."Name" AS "LocationName",
+                        bl."Slug" AS "Slug",
+                        bp."CategorySlug" AS "CategorySlug",
+                        bl."Area" AS "Area",
+                        bl."MarketId" AS "MarketId",
+                        bp."CoverImageKey" AS "CoverImageKey",
+                        bl."Latitude" AS "Latitude",
+                        bl."Longitude" AS "Longitude",
+                        (6371.0 * 2 * ASIN(SQRT(
+                            POWER(SIN(RADIANS(bl."Latitude" - {latitude}) / 2.0), 2) +
+                            COS(RADIANS({latitude})) * COS(RADIANS(bl."Latitude")) *
+                            POWER(SIN(RADIANS(bl."Longitude" - {longitude}) / 2.0), 2)
+                        ))) AS distance_km
+                    FROM tenancy.business_locations bl
+                    INNER JOIN tenancy.tenants t ON t."Id" = bl."TenantId"
+                    INNER JOIN tenancy.business_profiles bp ON bp."TenantId" = t."Id"
+                    WHERE bl."IsActive" = TRUE
+                      AND bl."Latitude" IS NOT NULL
+                      AND bl."Longitude" IS NOT NULL
+                      AND t."Status" = {verifiedStatus}
+                      AND ({categorySlug}::text IS NULL OR LOWER(bp."CategorySlug") = {categorySlug})
+                      AND ({marketId}::text IS NULL OR LOWER(bl."MarketId") = {marketId})
+                      AND (
+                        {likeQuery}::text IS NULL OR (
+                          LOWER(t."Name") LIKE {likeQuery}
+                          OR LOWER(bl."Name") LIKE {likeQuery}
+                          OR LOWER(bl."Area") LIKE {likeQuery}
+                          OR LOWER(bp."CategorySlug") LIKE {likeQuery}
+                          OR LOWER(bp."Description") LIKE {likeQuery}
+                        )
+                      )
+                )
+                SELECT
+                    "LocationId",
+                    "TenantId",
+                    "Name",
+                    "LocationName",
+                    "Slug",
+                    "CategorySlug",
+                    "Area",
+                    "MarketId",
+                    "CoverImageKey",
+                    ROUND(distance_km::numeric, 2)::float AS "DistanceKm",
+                    "Latitude",
+                    "Longitude",
+                    NULL::float AS "RatingAvg",
+                    0 AS "ReviewCount"
+                FROM candidates
+                ORDER BY "DistanceKm" ASC
+                OFFSET {offset} LIMIT {pageSize}
+                """).ToListAsync(cancellationToken);
+
+        if (rows.Count > 0 && sort == DiscoverySort.Distance)
+        {
+            var tenantIds = rows.Select(x => x.TenantId).Distinct().ToArray();
+            var ratings = await reviewService.GetRatingSummariesAsync(tenantIds, cancellationToken);
+            rows = rows
+                .Select(row =>
+                {
+                    ratings.TryGetValue(row.TenantId, out var summary);
+                    row.RatingAvg = summary?.RatingAvg;
+                    row.ReviewCount = summary?.ReviewCount ?? 0;
+                    return row;
+                })
+                .ToList();
+        }
+
+        var items = new List<DiscoveryBusinessItem>(rows.Count);
+        foreach (var row in rows)
+        {
+            items.Add(new DiscoveryBusinessItem(
+                row.LocationId,
+                row.TenantId,
+                row.Name,
+                row.LocationName,
+                row.Slug,
+                row.CategorySlug,
+                row.Area,
+                row.MarketId,
+                await ResolveCoverImageUrlAsync(row.CoverImageKey, cancellationToken),
+                row.RatingAvg,
+                row.ReviewCount,
+                row.DistanceKm,
+                row.Latitude,
+                row.Longitude));
+        }
+
+        return new DiscoveryResult(items, page, pageSize, totalCount);
+    }
+
+    private async Task<DiscoveryResult> LoadDiscoveryPageInMemoryAsync(
+        double latitude,
+        double longitude,
+        string? categorySlug,
+        string? marketId,
+        string? searchQuery,
+        int page,
+        int pageSize,
+        DiscoverySort sort,
         CancellationToken cancellationToken)
     {
         var query = dbContext.BusinessLocations
@@ -168,57 +422,74 @@ public sealed class DiscoveryService(
             query = query.Where(x => x.profile.CategorySlug == categorySlug);
         }
 
-        var businesses = await query.ToListAsync(cancellationToken);
-
         if (!string.IsNullOrWhiteSpace(searchQuery))
         {
-            businesses = businesses
-                .Where(x =>
-                    x.tenant.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)
-                    || x.location.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)
-                    || x.location.Area.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)
-                    || x.profile.CategorySlug.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)
-                    || x.profile.Description.Contains(searchQuery, StringComparison.OrdinalIgnoreCase))
-                .ToList();
+            query = query.Where(x =>
+                x.tenant.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)
+                || x.location.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)
+                || x.location.Area.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)
+                || x.profile.CategorySlug.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)
+                || x.profile.Description.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
         }
 
-        var items = new List<DiscoveryBusinessItem>();
-        var ordered = businesses
-            .OrderBy(row => GeoDistance.HaversineKm(
-                latitude,
-                longitude,
-                row.location.Latitude!.Value,
-                row.location.Longitude!.Value))
-            .ToList();
+        var totalCount = await query.CountAsync(cancellationToken);
+        var businesses = await query.ToListAsync(cancellationToken);
 
-        var tenantIds = ordered.Select(x => x.tenant.Id).Distinct().ToArray();
+        var tenantIds = businesses.Select(x => x.tenant.Id).Distinct().ToArray();
         var ratings = await reviewService.GetRatingSummariesAsync(tenantIds, cancellationToken);
 
-        foreach (var x in ordered)
-        {
-            ratings.TryGetValue(x.tenant.Id, out var summary);
-            items.Add(new DiscoveryBusinessItem(
-                x.location.Id,
-                x.tenant.Id,
-                x.tenant.Name,
-                x.location.Name,
-                x.location.Slug,
-                x.profile.CategorySlug,
-                x.location.Area,
-                x.location.MarketId,
-                await ResolveCoverImageUrlAsync(x.profile.CoverImageKey, cancellationToken),
-                summary?.RatingAvg,
-                summary?.ReviewCount ?? 0,
-                GeoDistance.HaversineKm(
+        var ordered = businesses
+            .Select(x =>
+            {
+                ratings.TryGetValue(x.tenant.Id, out var summary);
+                var distanceKm = GeoDistance.HaversineKm(
                     latitude,
                     longitude,
                     x.location.Latitude!.Value,
-                    x.location.Longitude!.Value),
-                x.location.Latitude!.Value,
-                x.location.Longitude!.Value));
+                    x.location.Longitude!.Value);
+
+                return new
+                {
+                    x.location,
+                    x.tenant,
+                    x.profile,
+                    summary,
+                    distanceKm,
+                };
+            })
+            .ToList();
+
+        var pageRows = (sort == DiscoverySort.Featured
+            ? ordered
+                .OrderByDescending(x => x.summary?.RatingAvg ?? 0)
+                .ThenByDescending(x => x.summary?.ReviewCount ?? 0)
+                .ThenBy(x => x.distanceKm)
+            : ordered.OrderBy(x => x.distanceKm))
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        var items = new List<DiscoveryBusinessItem>(pageRows.Count);
+        foreach (var row in pageRows)
+        {
+            items.Add(new DiscoveryBusinessItem(
+                row.location.Id,
+                row.tenant.Id,
+                row.tenant.Name,
+                row.location.Name,
+                row.location.Slug,
+                row.profile.CategorySlug,
+                row.location.Area,
+                row.location.MarketId,
+                await ResolveCoverImageUrlAsync(row.profile.CoverImageKey, cancellationToken),
+                row.summary?.RatingAvg,
+                row.summary?.ReviewCount ?? 0,
+                Math.Round(row.distanceKm, 2),
+                row.location.Latitude!.Value,
+                row.location.Longitude!.Value));
         }
 
-        return items;
+        return new DiscoveryResult(items, page, pageSize, totalCount);
     }
 
     private async Task<string?> ResolveCoverImageUrlAsync(

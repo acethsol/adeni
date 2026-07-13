@@ -8,6 +8,7 @@ import {
   type ResolvedMarket,
 } from "@adeni/shared";
 import { COORDS_COOKIE_NAME, MARKET_COOKIE_NAME } from "@/lib/market-constants";
+import { getMarkets } from "@/lib/markets-api";
 
 export function resolveMarketFromEnv(): string | undefined {
   return process.env.NEXT_PUBLIC_ADENI_MARKET ?? process.env.ADENI_MARKET;
@@ -19,22 +20,25 @@ export async function getStoredCoordinates(): Promise<MarketLocation | null> {
 }
 
 export async function getActiveMarket(): Promise<ResolvedMarket> {
-  const cookieStore = await cookies();
-  const headerStore = await headers();
+  const [catalog, cookieStore, headerStore] = await Promise.all([
+    getMarkets(),
+    cookies(),
+    headers(),
+  ]);
 
   const explicitMarket = cookieStore.get(MARKET_COOKIE_NAME)?.value
     ?? headerStore.get("x-adeni-market")
     ?? undefined;
-  const coordinates = await getStoredCoordinates();
+  const coordinates = parseCoordinatePair(cookieStore.get(COORDS_COOKIE_NAME)?.value);
 
   // URL/cookie override (?market=) — intentional user selection.
   if (explicitMarket) {
-    return resolveMarket({ marketId: explicitMarket, coordinates });
+    return resolveMarket({ marketId: explicitMarket, coordinates }, catalog);
   }
 
   // Device location beats dev env default when coordinates are available.
   if (coordinates) {
-    const geoResolved = resolveMarket({ coordinates });
+    const geoResolved = resolveMarket({ coordinates }, catalog);
     if (geoResolved.source === "geo") {
       return geoResolved;
     }
@@ -42,10 +46,10 @@ export async function getActiveMarket(): Promise<ResolvedMarket> {
 
   const envMarket = resolveMarketFromEnv();
   if (envMarket) {
-    return resolveMarket({ marketId: envMarket, coordinates });
+    return resolveMarket({ marketId: envMarket, coordinates }, catalog);
   }
 
-  return resolveMarket({ coordinates });
+  return resolveMarket({ coordinates }, catalog);
 }
 
 export async function getActiveMarketConfig(): Promise<MarketConfig> {

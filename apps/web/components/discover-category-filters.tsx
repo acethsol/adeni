@@ -1,5 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import type { Category } from "@adeni/shared";
+import { getCategoryLabel } from "@adeni/shared";
+import { useTranslation } from "@/components/locale-provider";
 import { cn } from "@/lib/cn";
 
 type Props = {
@@ -36,10 +40,12 @@ export function CategoryFilterLinks({
   searchQuery,
   className,
 }: Props) {
+  const { locale, t } = useTranslation();
+
   return (
     <div className={cn("flex flex-wrap gap-2", className)}>
       <Link href={buildDiscoverHref(null, searchQuery)} className={filterChipClass(!selectedCategory)}>
-        All
+        {t("categories.all")}
       </Link>
       {categories.map((item) => (
         <Link
@@ -47,7 +53,7 @@ export function CategoryFilterLinks({
           href={buildDiscoverHref(item.slug, searchQuery)}
           className={filterChipClass(selectedCategory === item.slug)}
         >
-          {item.name}
+          {getCategoryLabel(locale, item.slug, item.name)}
         </Link>
       ))}
     </div>

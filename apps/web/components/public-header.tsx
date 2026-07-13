@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { publicContainerClass } from "@/lib/layout-classes";
 
-export type PublicHeaderSearchMode = "hero-handoff" | "compact" | "inline";
+export type PublicHeaderSearchMode = "hero-handoff" | "compact" | "inline" | "none";
 
 type Props = {
   searchMode?: PublicHeaderSearchMode;
@@ -69,6 +69,8 @@ export function PublicHeader({
   const showCompactSearch =
     searchMode === "compact" || (usesHeroHandoff && searchPinned);
   const showInlineSearch = searchMode === "inline";
+  const showSearch = searchMode !== "none";
+  const usesHeaderSearchSlot = usesHeroHandoff || searchMode === "compact";
 
   const isDiscover = pathname === "/discover" || pathname.startsWith("/discover/");
   const isBookings = pathname === "/my-bookings";
@@ -77,28 +79,27 @@ export function PublicHeader({
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur-md transition-shadow duration-300",
+        "sticky top-0 z-40 overflow-visible border-b border-border bg-surface/95 backdrop-blur-md transition-shadow duration-300",
         showCompactSearch && usesHeroHandoff && "shadow-md",
       )}
     >
       <div
         className={cn(
           publicContainerClass,
+          "overflow-visible",
           showInlineSearch ? "space-y-3 py-4" : "py-3",
         )}
       >
         <div
           className={cn(
-            "relative flex items-center gap-3",
+            "items-center gap-3 overflow-visible",
+            showCompactSearch && usesHeaderSearchSlot
+              ? "grid grid-cols-[auto_minmax(0,1fr)_auto]"
+              : "flex",
             showCompactSearch && usesHeroHandoff && "min-h-12",
           )}
         >
-          <div
-            className={cn(
-              "flex shrink-0 items-center gap-2 sm:gap-3",
-              showCompactSearch && usesHeroHandoff && "relative z-10",
-            )}
-          >
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <Link href="/" className="group flex items-center gap-2.5">
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-sm transition-transform group-hover:scale-[1.02]">
                 A
@@ -140,21 +141,13 @@ export function PublicHeader({
             />
           </div>
 
-          {(usesHeroHandoff || searchMode === "compact") && (
-            <div
-              className={cn(
-                "pointer-events-none absolute left-1/2 top-1/2 z-30 w-[min(100%,52rem)] -translate-x-1/2 -translate-y-1/2 px-2 transition-all duration-300 ease-out sm:px-4",
-                showCompactSearch
-                  ? "pointer-events-auto scale-100 opacity-100"
-                  : "scale-[0.98] opacity-0",
-              )}
-              aria-hidden={!showCompactSearch}
-            >
+          {showSearch && usesHeaderSearchSlot && showCompactSearch ? (
+            <div className="min-w-0 justify-self-stretch px-1 sm:px-2">
               <HeaderDiscoverySearch variant="compact" marketName={marketName} />
             </div>
-          )}
+          ) : null}
 
-          <nav className="relative z-10 ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
+          <nav className={cn("flex shrink-0 items-center justify-end gap-1 sm:gap-2", !showCompactSearch && "ml-auto")}>
             <div
               className={cn(
                 "hidden items-center gap-1 sm:flex sm:gap-2",
@@ -211,7 +204,7 @@ export function PublicHeader({
           </nav>
         </div>
 
-        {showInlineSearch ? (
+        {showSearch && showInlineSearch ? (
           <div className="transition-opacity duration-200">
             <HeaderDiscoverySearch variant="default" />
           </div>
