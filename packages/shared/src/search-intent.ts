@@ -1,4 +1,4 @@
-/** Rule-based search intent parser — MVP bridge until LLM agent (Sprint 11d). */
+/** Rule-based search intent parser — MVP bridge until LLM agent (Sprint 20). */
 export type SearchIntent = {
   query: string | null;
   category: string | null;

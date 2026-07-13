@@ -18,13 +18,17 @@
 | 10 | Design system & caching | ✅ Done |
 | 11 | Discovery UX | ✅ Done |
 | **12** | **Media & tenant hardening** | ✅ Done |
-| **13** | **Reviews & ratings** | **In progress** |
-| 14 | Deployment, AI & observability | Planned |
-| — | Sprint 11d LLM agent | → Sprint 14 |
-| — | Staging deploy + Auth0 E2E | → Sprint 14 |
-| — | App Insights (Obs 1) | → Sprint 14 |
+| **13** | **Reviews & ratings** | ✅ Done |
+| **14** | **UX polish & guardrails** | **Planned** |
+| 15 | Booking experience v2 | Planned |
+| 16–19 | — (unscheduled) | — |
+| 20 | Deployment, AI & observability | Planned |
+| — | Sprint 11d LLM agent | → Sprint 20 |
+| — | Staging deploy + Auth0 E2E | → Sprint 20 |
+| — | App Insights (Obs 1) | → Sprint 20 |
+| — | Booking notifications, auto-confirm, payments, waitlist | → Sprint 15 |
 
-**Not yet tackled:** Sprint 14 (staging, LLM agent, App Insights).
+**Next up:** Sprint 14 (error page, toasts, form validation, confirm dialogs, empty states, discovery filters).
 
 ---
 ## Sprint 0 — Foundation & dev tooling ✅
@@ -160,7 +164,7 @@ Global search, visual discovery cards, fused Ask Adeni search, and profile heroe
 | Ask Adeni rule-based intent parser | ✅ |
 | Business profile hero image (category fallback) | ✅ |
 | Business cover upload + blob storage | Deferred → [media-storage.md](./media-storage.md) |
-| LLM agent (11d) | → Sprint 14 |
+| LLM agent (11d) | → Sprint 20 |
 
 Confluence: [Sprint 11 — Discovery UX](https://aceth.atlassian.net/wiki/spaces/SD/pages/28540929)
 
@@ -173,7 +177,7 @@ Confluence: [Sprint 11 — Discovery UX](https://aceth.atlassian.net/wiki/spaces
 | **12c** Business portal cover photo upload UI (web + mobile) | ✅ |
 | **12e** Tenant isolation hardening (see below) | ✅ |
 
-**Deferred to Sprint 14:** staging deploy, Auth0 E2E, LLM agent (11d), App Insights.
+**Deferred to Sprint 20:** staging deploy, Auth0 E2E, LLM agent (11d), App Insights.
 
 ### 12e — Tenant isolation hardening
 
@@ -208,7 +212,41 @@ Confluence: [Sprint 12 — Media & tenant hardening](https://aceth.atlassian.net
 
 Confluence: [Sprint 13 — Reviews & ratings](https://aceth.atlassian.net/wiki/spaces/SD/pages/28672001)
 
-## Sprint 14 — Deployment, AI & observability (planned)
+## Sprint 14 — UX polish & guardrails (planned)
+
+Cross-cutting user-experience gaps identified outside the booking flow: feedback, guardrails, consistency, and discovery.
+
+| Task | Status |
+|------|--------|
+| **14a** Global feedback layer — web `error.tsx` / `not-found.tsx`, toast/snackbar system for save/copy confirmations | Planned |
+| **14b** Field-level form validation — wire existing `ui/input.tsx` error state into register, verification, locations, profile forms | Planned |
+| **14c** Confirmation dialogs — shared `Dialog`/`AlertDialog` component; apply to reject booking, remove location, deactivate service, approve business, toggle market live, cancel booking (web + mobile) | Planned |
+| **14d** Empty-state consistency — replace plain "No X yet" text with `EmptyState` in locations, services, booking inbox, admin queue, mobile my-bookings | Planned |
+| **14e** Discovery filters — expose sort (distance/featured), add price/rating filters, "clear all filters" affordance (web + mobile) | Planned |
+| **14f** Accessibility pass — skip-to-content link, `focus-visible` rings on `Button`/`BackLink`, `aria-label` on icon-only controls (stretch) | Planned |
+
+**Out of scope for 14:** staging deploy, LLM agent, App Insights → Sprint 20. Booking notifications/auto-confirm/payments/waitlist → Sprint 15.
+
+Confluence: [Sprint 14 — UX polish & guardrails](https://aceth.atlassian.net/wiki/spaces/SD/pages/30769154)
+
+## Sprint 15 — Booking experience v2 (planned)
+
+Close the gaps between MVP booking (request → manual accept) and a production-ready customer/business loop.
+
+| Task | Status |
+|------|--------|
+| **15a** Booking notifications — email and/or push when status changes (pending → confirmed/rejected, cancellation) | Planned |
+| **15b** Auto-confirm — tenant setting to skip manual accept for trusted businesses | Planned |
+| **15c** Slot freshness — exclude past slots in API + client; friendly error if slot expires before submit | Planned |
+| **15d** Payments at booking — deposit or pay-in-full via payment provider (design + API + web/mobile checkout step) | Planned |
+| **15e** Waitlist — customer joins waitlist when no slots; notify when slot opens | Planned |
+| **15f** Recurring bookings — repeat weekly/biweekly option on confirm step (stretch) | Planned |
+
+Confluence: [Sprint 15 — Booking experience v2](https://aceth.atlassian.net/wiki/spaces/SD/pages/30801921)
+
+## Sprint 20 — Deployment, AI & observability (planned)
+
+Infrastructure and platform work deferred from the original Sprint 14 plan.
 
 | Task | Status |
 |------|--------|
@@ -216,6 +254,12 @@ Confluence: [Sprint 13 — Reviews & ratings](https://aceth.atlassian.net/wiki/s
 | Sprint 11d — LLM Ask Adeni agent | Planned |
 | Obs 1 — App Insights on API | Planned |
 
+See [observability.md](./observability.md) for Obs 2–4 follow-ons.
+
+Confluence: [Sprint 20 — Deployment, AI & observability](https://aceth.atlassian.net/wiki/spaces/SD/pages/30834689)
+
 ## Next up
 
-1. **Sprint 14** — staging, LLM agent, App Insights
+1. **Sprint 14** — UX polish & guardrails (error page, toasts, form validation, confirm dialogs, empty states, discovery filters)
+2. **Sprint 15** — booking notifications, auto-confirm, slot UX, payments, waitlist
+3. **Sprint 20** — staging, LLM agent, App Insights
