@@ -10,6 +10,7 @@ type FetchDiscoveryPageInput = {
   page: number;
   pageSize?: number;
   sort?: "distance" | "featured";
+  minRating?: number | null;
 };
 
 /** Browser-safe discovery fetch via same-origin API proxy (no server actions). */
@@ -34,6 +35,10 @@ export async function fetchDiscoveryPage(
 
   if (input.q) {
     query.set("q", input.q);
+  }
+
+  if (input.minRating) {
+    query.set("minRating", String(input.minRating));
   }
 
   const response = await fetch(`/api/v1/discovery?${query.toString()}`, {

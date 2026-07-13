@@ -16,6 +16,8 @@ type Props = {
   market: string;
   category?: string | null;
   q?: string | null;
+  sort?: "distance" | "featured";
+  minRating?: number | null;
   initialPage?: DiscoveryResponse;
 };
 
@@ -30,12 +32,14 @@ export function DiscoverBusinessGrid({
   market,
   category,
   q,
+  sort = "distance",
+  minRating = null,
   initialPage,
 }: Props) {
   const { t } = useTranslation();
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const autoLoadPausedRef = useRef(false);
-  const queryKey = `${lat},${lng},${market},${category ?? ""},${q ?? ""}`;
+  const queryKey = `${lat},${lng},${market},${category ?? ""},${q ?? ""},${sort},${minRating ?? ""}`;
   const queryKeyRef = useRef(queryKey);
 
   const [pages, setPages] = useState<DiscoveryResponse[]>(
@@ -74,7 +78,8 @@ export function DiscoverBusinessGrid({
           category,
           q,
           page: 1,
-          sort: "distance",
+          sort,
+          minRating,
         });
         if (!cancelled) {
           setPages([result]);
@@ -95,7 +100,7 @@ export function DiscoverBusinessGrid({
     return () => {
       cancelled = true;
     };
-  }, [initialPage, lat, lng, market, category, q]);
+  }, [initialPage, lat, lng, market, category, q, sort, minRating]);
 
   const businesses = pages.flatMap((page) => page.items);
   const totalCount = pages[0]?.totalCount ?? initialPage?.totalCount ?? 0;
@@ -127,7 +132,8 @@ export function DiscoverBusinessGrid({
           category,
           q,
           page: nextPage,
-          sort: "distance",
+          sort,
+          minRating,
         });
         setPages((current) => [...current, result]);
       } catch {
@@ -137,7 +143,7 @@ export function DiscoverBusinessGrid({
         setIsLoadingMore(false);
       }
     },
-    [category, hasNextPage, isLoadingMore, lat, lng, market, pages, q],
+    [category, hasNextPage, isLoadingMore, lat, lng, market, minRating, pages, q, sort],
   );
 
   useEffect(() => {

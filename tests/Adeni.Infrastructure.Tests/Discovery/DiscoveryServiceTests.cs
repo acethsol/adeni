@@ -1,9 +1,11 @@
 namespace Adeni.Infrastructure.Tests.Discovery;
 
 using Adeni.Application.Caching;
+using Adeni.Application.Discovery;
 using Adeni.Application.Markets;
 using Adeni.Application.Reviews;
 using Adeni.Application.Storage;
+using Adeni.Domain.Booking;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Context;
 using Adeni.Infrastructure.Discovery;
@@ -126,6 +128,44 @@ public sealed class DiscoveryServiceTests
         Assert.True(result.IsSuccess);
         Assert.Single(result.Value!.Items);
         Assert.Equal("lekki-cuts", result.Value.Items[0].Slug);
+    }
+
+    [Fact]
+    public async Task Search_filters_by_minimum_rating()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+
+        var highRatedTenantId = BusinessTestSeed.SeedVerifiedBusiness(
+            db, "top-cuts", "Top Cuts", "barbers", "Lekki", 6.4474, 3.4700);
+        var lowRatedTenantId = BusinessTestSeed.SeedVerifiedBusiness(
+            db, "budget-cuts", "Budget Cuts", "barbers", "Lekki", 6.4474, 3.4700);
+
+        AddReview(db, highRatedTenantId, rating: 5);
+        AddReview(db, lowRatedTenantId, rating: 2);
+        await db.SaveChangesAsync();
+
+        var service = scope.ServiceProvider.GetRequiredService<DiscoveryService>();
+        var result = await service.SearchAsync(
+            6.4474, 3.4700, null, null, null, 1, 20, DiscoverySort.Distance, minRating: 4);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Value!.Items);
+        Assert.Equal("top-cuts", result.Value.Items[0].Slug);
+    }
+
+    private static void AddReview(AdeniDbContext db, Guid tenantId, byte rating)
+    {
+        db.Reviews.Add(new Review
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            BookingId = Guid.NewGuid(),
+            CustomerId = Guid.NewGuid(),
+            Rating = rating,
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
     }
 
     [Fact]

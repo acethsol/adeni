@@ -1,7 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { ShieldCheck } from "lucide-react";
 import type { PendingBusiness } from "@adeni/shared";
+import { EmptyState } from "@/components/ui/empty-state";
+import { useConfirm } from "@/contexts/confirm-context";
+import { useToast } from "@/contexts/toast-context";
 
 type Props = {
   initialItems: PendingBusiness[];
@@ -9,6 +13,8 @@ type Props = {
 };
 
 export function AdminVerificationQueue({ initialItems, initialError }: Props) {
+  const confirm = useConfirm();
+  const toast = useToast();
   const [items, setItems] = useState(initialItems);
   const [error, setError] = useState(initialError);
   const [actionId, setActionId] = useState<string | null>(null);
@@ -35,38 +41,48 @@ export function AdminVerificationQueue({ initialItems, initialError }: Props) {
     }
   }, [initialError, reload]);
 
-  async function handleApprove(tenantId: string) {
-    setActionId(tenantId);
+  async function handleApprove(business: PendingBusiness) {
+    const confirmed = await confirm({
+      title: `Approve ${business.name}?`,
+      description: "The business will go live and appear in discovery immediately.",
+      confirmLabel: "Approve business",
+    });
+    if (!confirmed) {
+      return;
+    }
+
+    setActionId(business.id);
     setError(null);
 
     try {
       const response = await fetch(
-        `/api/admin/businesses/${encodeURIComponent(tenantId)}/approve`,
+        `/api/admin/businesses/${encodeURIComponent(business.id)}/approve`,
         { method: "POST" },
       );
       if (!response.ok) {
         throw new Error("Approve failed");
       }
-      setItems((current) => current.filter((item) => item.id !== tenantId));
+      setItems((current) => current.filter((item) => item.id !== business.id));
+      toast.success("Business approved", { description: business.name });
     } catch {
-      setError("Could not approve this business.");
+      toast.error("Could not approve this business.");
     } finally {
       setActionId(null);
     }
   }
 
-  async function handleReject(tenantId: string) {
+  async function handleReject(business: PendingBusiness) {
     if (rejectReason.trim().length < 10) {
       setError("Rejection reason must be at least 10 characters.");
       return;
     }
 
-    setActionId(tenantId);
+    setActionId(business.id);
     setError(null);
 
     try {
       const response = await fetch(
-        `/api/admin/businesses/${encodeURIComponent(tenantId)}/reject`,
+        `/api/admin/businesses/${encodeURIComponent(business.id)}/reject`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -76,11 +92,12 @@ export function AdminVerificationQueue({ initialItems, initialError }: Props) {
       if (!response.ok) {
         throw new Error("Reject failed");
       }
-      setItems((current) => current.filter((item) => item.id !== tenantId));
+      setItems((current) => current.filter((item) => item.id !== business.id));
       setRejectId(null);
       setRejectReason("");
+      toast.success("Business rejected", { description: business.name });
     } catch {
-      setError("Could not reject this business.");
+      toast.error("Could not reject this business.");
     } finally {
       setActionId(null);
     }
@@ -92,7 +109,12 @@ export function AdminVerificationQueue({ initialItems, initialError }: Props) {
 
   if (items.length === 0) {
     return (
-      <p className="mt-4 text-sm text-[#1b4332]/70">No businesses awaiting review.</p>
+      <EmptyState
+        className="mt-4"
+        icon={<ShieldCheck className="h-6 w-6" aria-hidden />}
+        title="All caught up"
+        description="No businesses are awaiting review right now."
+      />
     );
   }
 
@@ -125,7 +147,7 @@ export function AdminVerificationQueue({ initialItems, initialError }: Props) {
                     <button
                       type="button"
                       disabled={actionId === business.id}
-                      onClick={() => void handleReject(business.id)}
+                      onClick={() => void handleReject(business)}
                       className="rounded-full bg-[#1b4332] px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
                     >
                       Confirm reject
@@ -155,7 +177,7 @@ export function AdminVerificationQueue({ initialItems, initialError }: Props) {
                   <button
                     type="button"
                     disabled={actionId === business.id}
-                    onClick={() => void handleApprove(business.id)}
+                    onClick={() => void handleApprove(business)}
                     className="rounded-full bg-[#40916c] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60"
                   >
                     {actionId === business.id ? "Saving…" : "Approve"}

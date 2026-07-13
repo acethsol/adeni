@@ -151,7 +151,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <main className={`${publicContainerClass} py-12 lg:py-16`}>
+      <main id="main-content" className={`${publicContainerClass} py-12 lg:py-16`}>
         {featuredBusinesses.length > 0 ? (
           <section>
             <SectionHeader

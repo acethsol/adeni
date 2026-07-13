@@ -27,7 +27,7 @@ export default async function MyBookingsPage() {
           currency={market.currency}
           countryCode={market.countryCode}
         />
-        <main className={`${publicContainerClass} py-12 lg:py-14`}>
+        <main id="main-content" className={`${publicContainerClass} py-12 lg:py-14`}>
           <div className="mx-auto max-w-4xl">
             <PageHeader
               title={t(locale, "bookings.title")}
@@ -55,7 +55,7 @@ export default async function MyBookingsPage() {
         showBookingsNav={canAccessMyBookings()}
       />
 
-      <main className={`${publicContainerClass} py-12 lg:py-14`}>
+      <main id="main-content" className={`${publicContainerClass} py-12 lg:py-14`}>
         <div className="mx-auto w-full max-w-4xl">
           <PageHeader
             title={t(locale, "bookings.title")}

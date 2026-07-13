@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { NavigationProgress } from "@/components/navigation-progress";
 import { ActionLoadingProvider } from "@/contexts/action-loading-context";
+import { ConfirmProvider } from "@/contexts/confirm-context";
+import { ToastProvider } from "@/contexts/toast-context";
 
 export function AppProviders({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -21,10 +23,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ActionLoadingProvider>
-        <NavigationProgress />
-        {children}
-      </ActionLoadingProvider>
+      <ToastProvider>
+        <ConfirmProvider>
+          <ActionLoadingProvider>
+            <NavigationProgress />
+            {children}
+          </ActionLoadingProvider>
+        </ConfirmProvider>
+      </ToastProvider>
     </QueryClientProvider>
   );
 }

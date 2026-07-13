@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { MarketGeoSync } from "@/components/market-geo-sync";
 import { LocaleProvider } from "@/components/locale-provider";
+import { SkipLink } from "@/components/ui/skip-link";
 import { getLocale } from "@/lib/locale";
 import { getTranslationPreference } from "@/lib/content-translation";
 import { AppProviders } from "./providers";
@@ -38,6 +39,7 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <SkipLink />
         <AppProviders>
           <LocaleProvider locale={locale} translateContent={translateContent}>
             <MarketGeoSync />

@@ -113,7 +113,7 @@ export default async function BusinessProfilePage({ params }: Props) {
       <div className="flex flex-1 flex-col">
         <PublicHeader searchMode="compact" />
 
-        <main className="mx-auto max-w-3xl px-6 py-16">
+        <main id="main-content" className="mx-auto max-w-3xl px-6 py-16">
           <BackLink
             href="/discover"
             label={t(locale, "business.backToDiscover")}

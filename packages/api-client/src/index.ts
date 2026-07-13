@@ -101,6 +101,7 @@ export type DiscoverySearchParams = {
   page?: number;
   pageSize?: number;
   sort?: "distance" | "featured";
+  minRating?: number | null;
 };
 
 export class AdeniApiClient {
@@ -164,6 +165,10 @@ export class AdeniApiClient {
 
     if (params.sort) {
       query.set("sort", params.sort);
+    }
+
+    if (params.minRating) {
+      query.set("minRating", String(params.minRating));
     }
 
     const response = await this.request(`/api/v1/discovery?${query.toString()}`);

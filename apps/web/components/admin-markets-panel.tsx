@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import type { AdminMarket } from "@adeni/shared";
+import { useConfirm } from "@/contexts/confirm-context";
+import { useToast } from "@/contexts/toast-context";
 
 const SUPPORTED_LANGUAGES = ["en", "fr", "es", "pt"] as const;
 
@@ -55,9 +57,10 @@ export function AdminMarketsPanel({
   initialItems: AdminMarket[];
   initialError: string | null;
 }) {
+  const confirm = useConfirm();
+  const toast = useToast();
   const [markets, setMarkets] = useState(initialItems);
   const [error, setError] = useState<string | null>(initialError);
-  const [message, setMessage] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [createDraft, setCreateDraft] = useState<MarketDraft>(emptyDraft);
@@ -74,9 +77,21 @@ export function AdminMarketsPanel({
   }
 
   async function handleToggleLive(market: AdminMarket) {
+    if (market.isLive) {
+      const confirmed = await confirm({
+        title: `Take ${market.name} offline?`,
+        description:
+          "Customers in this market will no longer see businesses in discovery until it's turned live again.",
+        confirmLabel: "Take offline",
+        tone: "destructive",
+      });
+      if (!confirmed) {
+        return;
+      }
+    }
+
     setBusyId(market.id);
     setError(null);
-    setMessage(null);
 
     try {
       const response = await fetch(`/api/admin/markets/${encodeURIComponent(market.id)}/live`, {
@@ -92,9 +107,9 @@ export function AdminMarketsPanel({
           item.id === market.id ? { ...item, isLive: !market.isLive } : item,
         ),
       );
-      setMessage(`${market.name} is now ${market.isLive ? "off" : "live"}.`);
+      toast.success(`${market.name} is now ${market.isLive ? "off" : "live"}`);
     } catch {
-      setError("Could not update live status.");
+      toast.error("Could not update live status.");
     } finally {
       setBusyId(null);
     }
@@ -104,7 +119,6 @@ export function AdminMarketsPanel({
     event.preventDefault();
     setBusyId("create");
     setError(null);
-    setMessage(null);
 
     try {
       const response = await fetch("/api/admin/markets", {
@@ -132,9 +146,11 @@ export function AdminMarketsPanel({
       await refreshMarkets();
       setShowCreate(false);
       setCreateDraft(emptyDraft());
-      setMessage("Market created.");
+      toast.success("Market created", { description: createDraft.name });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not create market.");
+      const messageText = err instanceof Error ? err.message : "Could not create market.";
+      setError(messageText);
+      toast.error(messageText);
     } finally {
       setBusyId(null);
     }
@@ -147,7 +163,6 @@ export function AdminMarketsPanel({
 
     setBusyId(marketId);
     setError(null);
-    setMessage(null);
 
     try {
       const response = await fetch(`/api/admin/markets/${encodeURIComponent(marketId)}`, {
@@ -176,9 +191,11 @@ export function AdminMarketsPanel({
       );
       setEditingId(null);
       setEditDraft(null);
-      setMessage("Market updated.");
+      toast.success("Market updated", { description: updated.name });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not update market.");
+      const messageText = err instanceof Error ? err.message : "Could not update market.";
+      setError(messageText);
+      toast.error(messageText);
     } finally {
       setBusyId(null);
     }
@@ -236,7 +253,6 @@ export function AdminMarketsPanel({
       </div>
 
       {error ? <p className="mt-4 text-sm text-red-700">{error}</p> : null}
-      {message ? <p className="mt-4 text-sm text-[#1b4332]">{message}</p> : null}
 
       {showCreate ? (
         <form

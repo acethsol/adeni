@@ -21,6 +21,7 @@ public sealed class DiscoveryController(IDiscoveryService discovery) : Controlle
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         [FromQuery] string sort = "distance",
+        [FromQuery] int? minRating = null,
         CancellationToken cancellationToken = default)
     {
         var discoverySort = string.Equals(sort, "featured", StringComparison.OrdinalIgnoreCase)
@@ -36,6 +37,7 @@ public sealed class DiscoveryController(IDiscoveryService discovery) : Controlle
             page,
             pageSize,
             discoverySort,
+            minRating,
             cancellationToken);
 
         return result.Match<IActionResult>(

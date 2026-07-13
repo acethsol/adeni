@@ -53,6 +53,7 @@ public interface IDiscoveryService
         int page,
         int pageSize,
         DiscoverySort sort = DiscoverySort.Distance,
+        int? minRating = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<PublicBusinessProfile>> GetPublicProfileBySlugAsync(

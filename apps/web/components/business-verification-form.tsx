@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { VERIFICATION_DOCUMENT_LABELS } from "@adeni/shared";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useActionLoading } from "@/contexts/action-loading-context";
+import { useToast } from "@/contexts/toast-context";
 
 type Props = {
   canSubmit: boolean;
@@ -11,8 +13,10 @@ type Props = {
 
 export function BusinessVerificationForm({ canSubmit }: Props) {
   const { run } = useActionLoading();
+  const toast = useToast();
   const [documentType, setDocumentType] = useState(0);
   const [referenceNumber, setReferenceNumber] = useState("");
+  const [referenceError, setReferenceError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +27,13 @@ export function BusinessVerificationForm({ canSubmit }: Props) {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+
+    if (referenceNumber.trim().length < 4) {
+      setReferenceError("Reference number must be at least 4 characters.");
+      return;
+    }
+    setReferenceError(null);
+
     setSubmitting(true);
     setMessage(null);
     setError(null);
@@ -49,8 +60,11 @@ export function BusinessVerificationForm({ canSubmit }: Props) {
         setMessage("Verification submitted. An admin will review your business.");
         setReferenceNumber("");
       });
+      toast.success("Verification submitted");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not submit verification.");
+      const messageText = err instanceof Error ? err.message : "Could not submit verification.";
+      setError(messageText);
+      toast.error(messageText);
     } finally {
       setSubmitting(false);
     }
@@ -89,16 +103,19 @@ export function BusinessVerificationForm({ canSubmit }: Props) {
           </select>
         </label>
 
-        <label className="block">
-          <span className="text-sm font-medium text-[#1b4332]/70">Reference number</span>
-          <input
-            required
-            value={referenceNumber}
-            onChange={(event) => setReferenceNumber(event.target.value)}
-            placeholder="e.g. RC123456"
-            className="mt-1 w-full rounded-lg border border-[#1b4332]/20 px-3 py-2"
-          />
-        </label>
+        <Input
+          label="Reference number"
+          required
+          value={referenceNumber}
+          onChange={(event) => {
+            setReferenceNumber(event.target.value);
+            if (referenceError) {
+              setReferenceError(null);
+            }
+          }}
+          placeholder="e.g. RC123456"
+          error={referenceError ?? undefined}
+        />
       </div>
 
       <Button type="submit" loading={submitting} loadingLabel="Submitting…">

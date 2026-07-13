@@ -6,6 +6,7 @@ import { useTranslation } from "@/components/locale-provider";
 import { StarRating } from "@/components/star-rating";
 import { Button } from "@/components/ui/button";
 import { useActionLoading } from "@/contexts/action-loading-context";
+import { useToast } from "@/contexts/toast-context";
 
 type Props = {
   booking: CustomerBookingResponse;
@@ -15,6 +16,7 @@ type Props = {
 export function BookingReviewForm({ booking, onSubmitted }: Props) {
   const { t } = useTranslation();
   const { run } = useActionLoading();
+  const toast = useToast();
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -45,8 +47,11 @@ export function BookingReviewForm({ booking, onSubmitted }: Props) {
 
         onSubmitted();
       });
+      toast.success(t("bookings.review.submit"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("bookings.review.submitError"));
+      const messageText = err instanceof Error ? err.message : t("bookings.review.submitError");
+      setError(messageText);
+      toast.error(messageText);
     } finally {
       setSubmitting(false);
     }

@@ -145,6 +145,13 @@ export const frMessages: Messages = {
     loadMore: "Voir plus",
     seenAll: "Vous avez vu tous les résultats à proximité.",
     gridLoadError: "Impossible de charger les entreprises. Vérifiez que l'API fonctionne et actualisez la page.",
+    sortLabel: "Trier",
+    sortDistance: "Plus proche",
+    sortFeatured: "Mieux notés",
+    minRatingLabel: "Note",
+    minRatingAny: "Toute note",
+    minRatingValue: "{value}+ étoiles",
+    clearFilters: "Effacer les filtres",
   },
   content: {
     translated: "Traduit",

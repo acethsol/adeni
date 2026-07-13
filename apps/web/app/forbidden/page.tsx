@@ -5,7 +5,7 @@ export default function ForbiddenPage() {
   return (
     <div className="min-h-screen bg-[#f6f8f6] text-[#1b4332]">
       <PublicHeader />
-      <main className="mx-auto max-w-lg px-6 py-24 text-center">
+      <main id="main-content" className="mx-auto max-w-lg px-6 py-24 text-center">
         <p className="text-sm font-semibold uppercase tracking-widest text-[#40916c]">
           403
         </p>

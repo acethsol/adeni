@@ -2,24 +2,58 @@
 
 import { useState } from "react";
 import type { BusinessProfile } from "@adeni/shared";
+import { Button } from "@/components/ui/button";
+import { Input, Textarea } from "@/components/ui/input";
+import { useToast } from "@/contexts/toast-context";
 
 type Props = {
   profile: BusinessProfile;
 };
 
+type FieldErrors = {
+  businessName?: string;
+  categorySlug?: string;
+  phone?: string;
+};
+
+const PHONE_PATTERN = /^\+?[0-9\s-]{7,20}$/;
+
 export function BusinessProfileForm({ profile }: Props) {
+  const toast = useToast();
   const [businessName, setBusinessName] = useState(profile.businessName);
   const [categorySlug, setCategorySlug] = useState(profile.categorySlug);
   const [phone, setPhone] = useState(profile.phone);
   const [description, setDescription] = useState(profile.description);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  function validate(): FieldErrors {
+    const errors: FieldErrors = {};
+    if (!businessName.trim()) {
+      errors.businessName = "Business name is required.";
+    }
+    if (!categorySlug.trim()) {
+      errors.categorySlug = "Category slug is required.";
+    }
+    if (!phone.trim()) {
+      errors.phone = "Phone number is required.";
+    } else if (!PHONE_PATTERN.test(phone.trim())) {
+      errors.phone = "Enter a valid phone number.";
+    }
+    return errors;
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+
+    const errors = validate();
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
+
     setSaving(true);
-    setMessage(null);
     setError(null);
 
     try {
@@ -41,9 +75,11 @@ export function BusinessProfileForm({ profile }: Props) {
         );
       }
 
-      setMessage("Profile saved.");
+      toast.success("Profile saved");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save profile.");
+      const messageText = err instanceof Error ? err.message : "Could not save profile.";
+      setError(messageText);
+      toast.error(messageText);
     } finally {
       setSaving(false);
     }
@@ -51,60 +87,53 @@ export function BusinessProfileForm({ profile }: Props) {
 
   return (
     <form onSubmit={(event) => void handleSubmit(event)} className="space-y-5">
-      {message ? (
-        <p className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800">{message}</p>
-      ) : null}
       {error ? (
-        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
+        <p className="rounded-lg bg-destructive-bg px-4 py-3 text-sm text-destructive">{error}</p>
       ) : null}
 
-      <label className="block">
-        <span className="text-sm font-medium text-[#1b4332]/70">Business name</span>
-        <input
-          required
-          value={businessName}
-          onChange={(event) => setBusinessName(event.target.value)}
-          className="mt-1 w-full rounded-lg border border-[#1b4332]/20 px-3 py-2"
-        />
-      </label>
+      <Input
+        label="Business name"
+        required
+        value={businessName}
+        onChange={(event) => {
+          setBusinessName(event.target.value);
+          setFieldErrors((current) => ({ ...current, businessName: undefined }));
+        }}
+        error={fieldErrors.businessName}
+      />
 
-      <label className="block">
-        <span className="text-sm font-medium text-[#1b4332]/70">Category slug</span>
-        <input
-          required
-          value={categorySlug}
-          onChange={(event) => setCategorySlug(event.target.value)}
-          className="mt-1 w-full rounded-lg border border-[#1b4332]/20 px-3 py-2"
-        />
-      </label>
+      <Input
+        label="Category slug"
+        required
+        value={categorySlug}
+        onChange={(event) => {
+          setCategorySlug(event.target.value);
+          setFieldErrors((current) => ({ ...current, categorySlug: undefined }));
+        }}
+        error={fieldErrors.categorySlug}
+      />
 
-      <label className="block">
-        <span className="text-sm font-medium text-[#1b4332]/70">Phone</span>
-        <input
-          required
-          value={phone}
-          onChange={(event) => setPhone(event.target.value)}
-          className="mt-1 w-full rounded-lg border border-[#1b4332]/20 px-3 py-2"
-        />
-      </label>
+      <Input
+        label="Phone"
+        required
+        value={phone}
+        onChange={(event) => {
+          setPhone(event.target.value);
+          setFieldErrors((current) => ({ ...current, phone: undefined }));
+        }}
+        error={fieldErrors.phone}
+      />
 
-      <label className="block">
-        <span className="text-sm font-medium text-[#1b4332]/70">Description</span>
-        <textarea
-          value={description}
-          onChange={(event) => setDescription(event.target.value)}
-          rows={4}
-          className="mt-1 w-full rounded-lg border border-[#1b4332]/20 px-3 py-2"
-        />
-      </label>
+      <Textarea
+        label="Description"
+        value={description}
+        onChange={(event) => setDescription(event.target.value)}
+        rows={4}
+      />
 
-      <button
-        type="submit"
-        disabled={saving}
-        className="rounded-full bg-[#1b4332] px-5 py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60"
-      >
-        {saving ? "Saving…" : "Save profile"}
-      </button>
+      <Button type="submit" loading={saving} loadingLabel="Saving…">
+        Save profile
+      </Button>
     </form>
   );
 }

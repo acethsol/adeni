@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { MapPin } from "lucide-react";
 import type { BusinessLocation, MarketConfig } from "@adeni/shared";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/contexts/toast-context";
+import { useConfirm } from "@/contexts/confirm-context";
 
 type Props = {
   initialLocations: BusinessLocation[];
@@ -18,6 +24,8 @@ type LocationDraft = {
   isPrimary: boolean;
 };
 
+type DraftErrors = Partial<Record<keyof LocationDraft, string>>;
+
 const EMPTY_DRAFT = (marketId: string): LocationDraft => ({
   slug: "",
   name: "",
@@ -26,6 +34,29 @@ const EMPTY_DRAFT = (marketId: string): LocationDraft => ({
   marketId,
   isPrimary: false,
 });
+
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+function validateDraft(draft: LocationDraft): DraftErrors {
+  const errors: DraftErrors = {};
+
+  const slug = draft.slug.trim().toLowerCase();
+  if (!slug) {
+    errors.slug = "URL slug is required.";
+  } else if (!SLUG_PATTERN.test(slug)) {
+    errors.slug = "Use lowercase letters, numbers, and hyphens only.";
+  }
+
+  if (!draft.addressLine.trim()) {
+    errors.addressLine = "Address is required.";
+  }
+
+  if (!draft.area.trim()) {
+    errors.area = "Area is required.";
+  }
+
+  return errors;
+}
 
 export function BusinessLocationsManager({
   initialLocations,
@@ -37,19 +68,27 @@ export function BusinessLocationsManager({
     name: market.name,
   }));
 
+  const toast = useToast();
+  const confirm = useConfirm();
+
   const [locations, setLocations] = useState(initialLocations);
   const [draft, setDraft] = useState<LocationDraft>(() => EMPTY_DRAFT(defaultMarketId));
+  const [draftErrors, setDraftErrors] = useState<DraftErrors>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<LocationDraft | null>(null);
+  const [editErrors, setEditErrors] = useState<DraftErrors>({});
   const [busy, setBusy] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
 
   async function handleCreate(event: React.FormEvent) {
     event.preventDefault();
+
+    const errors = validateDraft(draft);
+    setDraftErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
+
     setBusy("create");
-    setError(null);
-    setMessage(null);
 
     try {
       const response = await fetch("/api/business/locations", {
@@ -82,9 +121,10 @@ export function BusinessLocationsManager({
         );
       });
       setDraft(EMPTY_DRAFT(defaultMarketId));
-      setMessage("Location added.");
+      setDraftErrors({});
+      toast.success("Location added", { description: created.name });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not add location.");
+      toast.error(err instanceof Error ? err.message : "Could not add location.");
     } finally {
       setBusy(null);
     }
@@ -100,8 +140,7 @@ export function BusinessLocationsManager({
       marketId: location.marketId,
       isPrimary: location.isPrimary,
     });
-    setError(null);
-    setMessage(null);
+    setEditErrors({});
   }
 
   async function handleUpdate(locationId: string) {
@@ -109,9 +148,13 @@ export function BusinessLocationsManager({
       return;
     }
 
+    const errors = validateDraft(editDraft);
+    setEditErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
+
     setBusy(locationId);
-    setError(null);
-    setMessage(null);
 
     try {
       const response = await fetch(`/api/business/locations/${locationId}`, {
@@ -152,21 +195,30 @@ export function BusinessLocationsManager({
       );
       setEditingId(null);
       setEditDraft(null);
-      setMessage("Location updated.");
+      toast.success("Location updated");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not update location.");
+      toast.error(err instanceof Error ? err.message : "Could not update location.");
     } finally {
       setBusy(null);
     }
   }
 
-  async function handleDeactivate(locationId: string) {
-    setBusy(`deactivate-${locationId}`);
-    setError(null);
-    setMessage(null);
+  async function handleDeactivate(location: BusinessLocation) {
+    const confirmed = await confirm({
+      title: `Remove ${location.name}?`,
+      description:
+        "This location will no longer accept bookings or appear on your public profile. This can't be undone from here.",
+      confirmLabel: "Remove location",
+      tone: "destructive",
+    });
+    if (!confirmed) {
+      return;
+    }
+
+    setBusy(`deactivate-${location.id}`);
 
     try {
-      const response = await fetch(`/api/business/locations/${locationId}`, {
+      const response = await fetch(`/api/business/locations/${location.id}`, {
         method: "DELETE",
       });
 
@@ -177,10 +229,10 @@ export function BusinessLocationsManager({
         );
       }
 
-      setLocations((current) => current.filter((item) => item.id !== locationId));
-      setMessage("Location removed.");
+      setLocations((current) => current.filter((item) => item.id !== location.id));
+      toast.success("Location removed", { description: location.name });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not remove location.");
+      toast.error(err instanceof Error ? err.message : "Could not remove location.");
     } finally {
       setBusy(null);
     }
@@ -189,55 +241,49 @@ export function BusinessLocationsManager({
   function renderDraftFields(
     value: LocationDraft,
     onChange: (next: LocationDraft) => void,
+    errors: DraftErrors,
     slugDisabled = false,
   ) {
     return (
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block">
-          <span className="text-sm font-medium text-[#1b4332]/70">URL slug</span>
-          <input
-            required
-            disabled={slugDisabled}
-            value={value.slug}
-            onChange={(event) => onChange({ ...value, slug: event.target.value })}
-            placeholder="lekki-branch"
-            className="mt-1 w-full rounded-lg border border-[#1b4332]/20 px-3 py-2 disabled:opacity-60"
-          />
-        </label>
-        <label className="block">
-          <span className="text-sm font-medium text-[#1b4332]/70">Display name</span>
-          <input
-            value={value.name}
-            onChange={(event) => onChange({ ...value, name: event.target.value })}
-            placeholder="Optional — defaults to area"
-            className="mt-1 w-full rounded-lg border border-[#1b4332]/20 px-3 py-2"
-          />
-        </label>
-        <label className="block sm:col-span-2">
-          <span className="text-sm font-medium text-[#1b4332]/70">Address</span>
-          <input
+        <Input
+          label="URL slug"
+          required
+          disabled={slugDisabled}
+          value={value.slug}
+          onChange={(event) => onChange({ ...value, slug: event.target.value })}
+          placeholder="lekki-branch"
+          error={errors.slug}
+        />
+        <Input
+          label="Display name"
+          value={value.name}
+          onChange={(event) => onChange({ ...value, name: event.target.value })}
+          placeholder="Optional — defaults to area"
+        />
+        <div className="sm:col-span-2">
+          <Input
+            label="Address"
             required
             value={value.addressLine}
             onChange={(event) => onChange({ ...value, addressLine: event.target.value })}
-            className="mt-1 w-full rounded-lg border border-[#1b4332]/20 px-3 py-2"
+            error={errors.addressLine}
           />
-        </label>
+        </div>
+        <Input
+          label="Area"
+          required
+          value={value.area}
+          onChange={(event) => onChange({ ...value, area: event.target.value })}
+          error={errors.area}
+        />
         <label className="block">
-          <span className="text-sm font-medium text-[#1b4332]/70">Area</span>
-          <input
-            required
-            value={value.area}
-            onChange={(event) => onChange({ ...value, area: event.target.value })}
-            className="mt-1 w-full rounded-lg border border-[#1b4332]/20 px-3 py-2"
-          />
-        </label>
-        <label className="block">
-          <span className="text-sm font-medium text-[#1b4332]/70">Market</span>
+          <span className="text-sm font-semibold text-muted-foreground">Market</span>
           <select
             required
             value={value.marketId}
             onChange={(event) => onChange({ ...value, marketId: event.target.value })}
-            className="mt-1 w-full rounded-lg border border-[#1b4332]/20 px-3 py-2"
+            className="mt-2 w-full rounded-xl border border-border-strong bg-surface px-4 py-3 text-sm text-foreground outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-accent/20"
           >
             {marketOptions.map((market) => (
               <option key={market.id} value={market.id}>
@@ -252,7 +298,7 @@ export function BusinessLocationsManager({
             checked={value.isPrimary}
             onChange={(event) => onChange({ ...value, isPrimary: event.target.checked })}
           />
-          <span className="text-sm text-[#1b4332]/80">Set as primary location</span>
+          <span className="text-sm text-muted">Set as primary location</span>
         </label>
       </div>
     );
@@ -260,106 +306,96 @@ export function BusinessLocationsManager({
 
   return (
     <div className="space-y-8">
-      {message ? (
-        <p className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800">{message}</p>
-      ) : null}
-      {error ? (
-        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
-      ) : null}
-
       <form
         onSubmit={(event) => void handleCreate(event)}
-        className="rounded-xl border border-[#1b4332]/10 bg-white p-6 shadow-sm"
+        className="rounded-xl border border-border bg-surface p-6 shadow-sm"
       >
-        <h2 className="text-lg font-semibold">Add location</h2>
-        <p className="mt-2 text-sm text-[#1b4332]/70">
-          Each branch gets its own public URL at{" "}
-          <code className="text-xs">/businesses/your-slug</code>.
+        <h2 className="text-lg font-semibold text-foreground">Add location</h2>
+        <p className="mt-2 text-sm text-muted">
+          Each branch gets its own public URL at <code className="text-xs">/businesses/your-slug</code>.
         </p>
-        <div className="mt-4">{renderDraftFields(draft, setDraft)}</div>
-        <button
-          type="submit"
-          disabled={busy === "create"}
-          className="mt-4 rounded-full bg-[#1b4332] px-5 py-2.5 text-sm font-medium text-white disabled:opacity-60"
-        >
-          {busy === "create" ? "Adding…" : "Add location"}
-        </button>
+        <div className="mt-4">{renderDraftFields(draft, setDraft, draftErrors)}</div>
+        <Button type="submit" loading={busy === "create"} loadingLabel="Adding…" className="mt-4">
+          Add location
+        </Button>
       </form>
 
       <section>
-        <h2 className="text-lg font-semibold">Your locations</h2>
+        <h2 className="text-lg font-semibold text-foreground">Your locations</h2>
         {locations.length === 0 ? (
-          <p className="mt-3 text-sm text-[#1b4332]/70">No locations yet.</p>
+          <EmptyState
+            className="mt-3"
+            icon={<MapPin className="h-6 w-6" aria-hidden />}
+            title="No locations yet"
+            description="Add your first branch above to start accepting bookings there."
+          />
         ) : (
           <ul className="mt-4 space-y-3">
             {locations.map((location) => (
               <li
                 key={location.id}
-                className="rounded-xl border border-[#1b4332]/10 bg-white p-5 shadow-sm"
+                className="rounded-xl border border-border bg-surface p-5 shadow-sm"
               >
                 {editingId === location.id && editDraft ? (
                   <div>
-                    {renderDraftFields(editDraft, setEditDraft)}
+                    {renderDraftFields(editDraft, setEditDraft, editErrors)}
                     <div className="mt-4 flex gap-2">
-                      <button
-                        type="button"
+                      <Button
+                        size="sm"
                         onClick={() => void handleUpdate(location.id)}
-                        disabled={busy === location.id}
-                        className="rounded-full bg-[#1b4332] px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+                        loading={busy === location.id}
+                        loadingLabel="Saving…"
                       >
                         Save
-                      </button>
-                      <button
-                        type="button"
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
                         onClick={() => {
                           setEditingId(null);
                           setEditDraft(null);
                         }}
-                        className="rounded-full border border-[#1b4332]/20 px-4 py-2 text-sm font-medium"
                       >
                         Cancel
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-medium">{location.name}</p>
+                        <p className="font-medium text-foreground">{location.name}</p>
                         {location.isPrimary ? (
-                          <span className="rounded-full bg-[#40916c]/10 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-[#40916c]">
+                          <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-accent">
                             Primary
                           </span>
                         ) : null}
                       </div>
-                      <p className="mt-1 text-sm text-[#1b4332]/70">{location.addressLine}</p>
-                      <p className="text-sm text-[#1b4332]/60">
+                      <p className="mt-1 text-sm text-muted">{location.addressLine}</p>
+                      <p className="text-sm text-muted-foreground">
                         {location.area} · {location.marketId}
                       </p>
                       <a
                         href={`/businesses/${location.slug}`}
-                        className="mt-2 inline-block text-sm font-medium text-[#40916c]"
+                        className="mt-2 inline-block text-sm font-medium text-accent"
                       >
                         /businesses/{location.slug}
                       </a>
                     </div>
                     <div className="flex shrink-0 flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => startEdit(location)}
-                        className="rounded-full border border-[#1b4332]/20 px-3 py-1.5 text-sm font-medium"
-                      >
+                      <Button variant="secondary" size="sm" onClick={() => startEdit(location)}>
                         Edit
-                      </button>
+                      </Button>
                       {locations.length > 1 ? (
-                        <button
-                          type="button"
-                          onClick={() => void handleDeactivate(location.id)}
-                          disabled={busy === `deactivate-${location.id}`}
-                          className="rounded-full border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 disabled:opacity-60"
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => void handleDeactivate(location)}
+                          loading={busy === `deactivate-${location.id}`}
+                          loadingLabel="Removing…"
                         >
                           Remove
-                        </button>
+                        </Button>
                       ) : null}
                     </div>
                   </div>

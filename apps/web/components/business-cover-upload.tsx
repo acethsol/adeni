@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { resolveBusinessCoverImage } from "@adeni/shared";
+import { useToast } from "@/contexts/toast-context";
 
 type Props = {
   categorySlug: string;
@@ -17,8 +18,8 @@ export function BusinessCoverUpload({ categorySlug, coverImageUrl }: Props) {
     resolveBusinessCoverImage(categorySlug, coverImageUrl),
   );
   const [uploading, setUploading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -26,7 +27,6 @@ export function BusinessCoverUpload({ categorySlug, coverImageUrl }: Props) {
       return;
     }
 
-    setMessage(null);
     setError(null);
 
     if (!ALLOWED_TYPES.has(file.type)) {
@@ -91,9 +91,11 @@ export function BusinessCoverUpload({ categorySlug, coverImageUrl }: Props) {
           ? confirmPayload.coverImageUrl
           : previewUrl;
       setPreviewUrl(nextUrl);
-      setMessage("Cover photo updated.");
+      toast.success("Cover photo updated");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not upload cover image.");
+      const messageText = err instanceof Error ? err.message : "Could not upload cover image.";
+      setError(messageText);
+      toast.error(messageText);
     } finally {
       setUploading(false);
       if (inputRef.current) {
@@ -109,9 +111,6 @@ export function BusinessCoverUpload({ categorySlug, coverImageUrl }: Props) {
         <img src={previewUrl} alt="Business cover" className="h-48 w-full object-cover" />
       </div>
 
-      {message ? (
-        <p className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800">{message}</p>
-      ) : null}
       {error ? (
         <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
       ) : null}

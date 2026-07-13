@@ -145,6 +145,13 @@ export const ptMessages: Messages = {
     loadMore: "Carregar mais",
     seenAll: "Você viu todos os resultados próximos.",
     gridLoadError: "Não foi possível carregar negócios. Verifique se a API está funcionando e atualize a página.",
+    sortLabel: "Ordenar",
+    sortDistance: "Mais próximo",
+    sortFeatured: "Mais avaliados",
+    minRatingLabel: "Avaliação",
+    minRatingAny: "Qualquer avaliação",
+    minRatingValue: "{value}+ estrelas",
+    clearFilters: "Limpar filtros",
   },
   content: {
     translated: "Traduzido",

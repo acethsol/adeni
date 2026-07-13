@@ -145,6 +145,13 @@ export const esMessages: Messages = {
     loadMore: "Cargar más",
     seenAll: "Has visto todos los resultados cercanos.",
     gridLoadError: "No se pudieron cargar negocios. Comprueba que la API funciona y actualiza la página.",
+    sortLabel: "Ordenar",
+    sortDistance: "Más cercano",
+    sortFeatured: "Mejor calificados",
+    minRatingLabel: "Calificación",
+    minRatingAny: "Cualquier calificación",
+    minRatingValue: "{value}+ estrellas",
+    clearFilters: "Limpiar filtros",
   },
   content: {
     translated: "Traducido",

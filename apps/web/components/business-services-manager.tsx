@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { Sparkles } from "lucide-react";
 import type { ServiceOffering } from "@adeni/shared";
+import { EmptyState } from "@/components/ui/empty-state";
 
 type Props = {
   initialServices: ServiceOffering[];
@@ -246,7 +248,12 @@ export function BusinessServicesManager({
       <section>
         <h2 className="text-lg font-semibold">Your services</h2>
         {services.length === 0 ? (
-          <p className="mt-3 text-sm text-[#1b4332]/70">No services yet.</p>
+          <EmptyState
+            className="mt-3"
+            icon={<Sparkles className="h-6 w-6" aria-hidden />}
+            title="No services yet"
+            description="Add your first service above so customers can start booking."
+          />
         ) : (
           <ul className="mt-4 space-y-3">
             {services.map((service) => (

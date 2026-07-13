@@ -10,6 +10,7 @@ import { useRouter } from "expo-router";
 import type { AdeniApiError } from "@adeni/api-client";
 import type { CustomerBookingResponse } from "@adeni/shared";
 import { Screen } from "@/components/adeni/Screen";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { useAuth } from "@/contexts/auth-context";
 import { formatBookingStatus, formatSlotTime } from "@/lib/format";
 import { isAuth0Configured } from "@/lib/auth/config";
@@ -124,7 +125,12 @@ export default function MyBookingsScreen() {
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
         {isBookingEnabled && bookings.length === 0 && !error ? (
-          <Text style={styles.empty}>No bookings yet. Discover a business and book your first visit.</Text>
+          <EmptyState
+            title="No bookings yet"
+            description="Discover a business and book your first visit."
+            actionLabel="Browse businesses"
+            onAction={() => router.push("/(tabs)/discover")}
+          />
         ) : null}
 
         {isBookingEnabled && upcoming.length > 0 ? (
@@ -286,12 +292,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fef2f2",
     color: "#991b1b",
     fontSize: 14,
-  },
-  empty: {
-    marginTop: 20,
-    fontSize: 14,
-    lineHeight: 20,
-    color: adeniTheme.textMuted,
   },
   sectionLabel: {
     marginTop: 24,

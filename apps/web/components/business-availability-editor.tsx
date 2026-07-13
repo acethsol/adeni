@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { DAY_OF_WEEK_LABELS, type WeeklyAvailabilityRule } from "@adeni/shared";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { useActionLoading } from "@/contexts/action-loading-context";
+import { useToast } from "@/contexts/toast-context";
 import { Button } from "@/components/ui/button";
 
 type DayRow = {
@@ -59,11 +60,11 @@ function rulesToRows(rules: WeeklyAvailabilityRule[]): DayRow[] {
 
 export function BusinessAvailabilityEditor() {
   const { run } = useActionLoading();
+  const toast = useToast();
   const [rows, setRows] = useState<DayRow[]>(buildDefaultRows);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
 
   const loadAvailability = useCallback(async () => {
     setLoading(true);
@@ -92,7 +93,6 @@ export function BusinessAvailabilityEditor() {
     event.preventDefault();
     setSaving(true);
     setError(null);
-    setMessage(null);
 
     const rules = rows
       .filter((row) => row.enabled)
@@ -118,10 +118,12 @@ export function BusinessAvailabilityEditor() {
         }
 
         setRows(rulesToRows((payload as { items: WeeklyAvailabilityRule[] }).items ?? []));
-        setMessage("Weekly hours saved.");
+        toast.success("Weekly hours saved");
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save availability.");
+      const messageText = err instanceof Error ? err.message : "Could not save availability.";
+      setError(messageText);
+      toast.error(messageText);
     } finally {
       setSaving(false);
     }
@@ -133,9 +135,6 @@ export function BusinessAvailabilityEditor() {
 
   return (
     <form onSubmit={(event) => void handleSave(event)} className="space-y-6">
-      {message ? (
-        <p className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800">{message}</p>
-      ) : null}
       {error ? (
         <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
       ) : null}

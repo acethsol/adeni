@@ -31,8 +31,9 @@ public static class CacheKeys
         int page,
         int pageSize,
         string? query,
-        string sort) =>
-        $"discovery:{lat:F3}:{lng:F3}:{category ?? "all"}:{marketId ?? "any"}:{page}:{pageSize}:{query ?? ""}:{sort}";
+        string sort,
+        int? minRating = null) =>
+        $"discovery:{lat:F3}:{lng:F3}:{category ?? "all"}:{marketId ?? "any"}:{page}:{pageSize}:{query ?? ""}:{sort}:{minRating ?? 0}";
     public static string CategoriesAll => "categories:all";
     public static string MarketsAll => "markets:all";
     public static string Translation(string source, string target, string textHash) =>

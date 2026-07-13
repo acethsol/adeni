@@ -1,11 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { Search } from "lucide-react";
 import type { AdminCustomerSummary, CustomerDataExport } from "@adeni/shared";
+import { EmptyState } from "@/components/ui/empty-state";
+import { useConfirm } from "@/contexts/confirm-context";
+import { useToast } from "@/contexts/toast-context";
 
 export function AdminCustomerPrivacyPanel() {
+  const confirm = useConfirm();
+  const toast = useToast();
   const [email, setEmail] = useState("");
   const [searching, setSearching] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const [customers, setCustomers] = useState<AdminCustomerSummary[]>([]);
   const [exportData, setExportData] = useState<CustomerDataExport | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -18,6 +25,7 @@ export function AdminCustomerPrivacyPanel() {
     setError(null);
     setMessage(null);
     setExportData(null);
+    setHasSearched(true);
 
     try {
       const query = new URLSearchParams({ email: email.trim() });
@@ -50,39 +58,45 @@ export function AdminCustomerPrivacyPanel() {
       setExportData((await response.json()) as CustomerDataExport);
       setMessage("Customer data exported. Download JSON below.");
     } catch {
-      setError("Could not export customer data.");
+      toast.error("Could not export customer data.");
     } finally {
       setBusyId(null);
     }
   }
 
-  async function handleDelete(customerId: string) {
-    if (!window.confirm("Initiate erasure for this customer? PII will be cleared immediately.")) {
+  async function handleDelete(customer: AdminCustomerSummary) {
+    const confirmed = await confirm({
+      title: "Initiate erasure for this customer?",
+      description: `${customer.name || customer.email || "This customer"}'s PII will be cleared immediately and cannot be recovered.`,
+      confirmLabel: "Initiate erasure",
+      tone: "destructive",
+    });
+    if (!confirmed) {
       return;
     }
 
-    setBusyId(customerId);
+    setBusyId(customer.id);
     setError(null);
     setMessage(null);
 
     try {
       const response = await fetch(
-        `/api/admin/customers/${encodeURIComponent(customerId)}/delete`,
+        `/api/admin/customers/${encodeURIComponent(customer.id)}/delete`,
         { method: "POST" },
       );
       if (!response.ok) {
         throw new Error("Delete failed");
       }
-      setMessage("Erasure initiated for this customer.");
       setCustomers((current) =>
         current.map((item) =>
-          item.id === customerId
+          item.id === customer.id
             ? { ...item, name: "[erased]", email: null, erasureRequestedAt: new Date().toISOString() }
             : item,
         ),
       );
+      toast.success("Erasure initiated");
     } catch {
-      setError("Could not initiate customer erasure.");
+      toast.error("Could not initiate customer erasure.");
     } finally {
       setBusyId(null);
     }
@@ -116,6 +130,15 @@ export function AdminCustomerPrivacyPanel() {
       {error ? <p className="mt-4 text-sm text-red-800">{error}</p> : null}
       {message ? <p className="mt-4 text-sm text-[#40916c]">{message}</p> : null}
 
+      {hasSearched && !searching && customers.length === 0 && !error ? (
+        <EmptyState
+          className="mt-4"
+          icon={<Search className="h-6 w-6" aria-hidden />}
+          title="No customers found"
+          description="Try a different email address."
+        />
+      ) : null}
+
       {customers.length > 0 ? (
         <ul className="mt-4 divide-y divide-[#1b4332]/10 rounded-xl border border-[#1b4332]/10 bg-white">
           {customers.map((customer) => (
@@ -143,7 +166,7 @@ export function AdminCustomerPrivacyPanel() {
                 <button
                   type="button"
                   disabled={busyId === customer.id || Boolean(customer.erasureRequestedAt)}
-                  onClick={() => void handleDelete(customer.id)}
+                  onClick={() => void handleDelete(customer)}
                   className="rounded-full border border-red-200 px-4 py-2 text-sm font-medium text-red-800 disabled:opacity-60"
                 >
                   Initiate erasure

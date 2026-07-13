@@ -5,14 +5,20 @@ import { useEffect, useState } from "react";
 import { Building2, MapPin, Sparkles } from "lucide-react";
 import type { Category, MarketConfig } from "@adeni/shared";
 import { Button } from "@/components/ui/button";
+import { Input, Textarea } from "@/components/ui/input";
 import { BusinessPortalCard } from "@/components/business-portal-card";
 import { useActionLoading } from "@/contexts/action-loading-context";
-import { cn } from "@/lib/cn";
 
 type Props = {
   categories: Category[];
   markets: MarketConfig[];
 };
+
+type FieldName = "businessName" | "phone" | "slug" | "addressLine" | "area";
+type FieldErrors = Partial<Record<FieldName, string>>;
+
+const PHONE_PATTERN = /^\+?[0-9\s-]{7,20}$/;
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 const steps = [
   {
@@ -45,6 +51,49 @@ export function BusinessRegisterForm({ categories, markets }: Props) {
   const [area, setArea] = useState("");
   const [marketId, setMarketId] = useState(markets[0]?.id ?? "lagos");
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+
+  function clearFieldError(field: FieldName) {
+    setFieldErrors((current) => {
+      if (!current[field]) {
+        return current;
+      }
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  }
+
+  function validate(): FieldErrors {
+    const errors: FieldErrors = {};
+
+    if (!businessName.trim()) {
+      errors.businessName = "Business name is required.";
+    }
+
+    if (!phone.trim()) {
+      errors.phone = "Phone number is required.";
+    } else if (!PHONE_PATTERN.test(phone.trim())) {
+      errors.phone = "Enter a valid phone number.";
+    }
+
+    const trimmedSlug = slug.trim().toLowerCase();
+    if (!trimmedSlug) {
+      errors.slug = "Public slug is required.";
+    } else if (!SLUG_PATTERN.test(trimmedSlug)) {
+      errors.slug = "Use lowercase letters, numbers, and hyphens only.";
+    }
+
+    if (!addressLine.trim()) {
+      errors.addressLine = "Address is required.";
+    }
+
+    if (!area.trim()) {
+      errors.area = "Area is required.";
+    }
+
+    return errors;
+  }
 
   useEffect(() => {
     if (!slug && businessName) {
@@ -63,6 +112,12 @@ export function BusinessRegisterForm({ categories, markets }: Props) {
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
+
+    const errors = validate();
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
 
     await run("Creating your business profile…", async () => {
       const response = await fetch("/api/business/register", {
@@ -115,16 +170,19 @@ export function BusinessRegisterForm({ categories, markets }: Props) {
             This is what customers see on your public profile.
           </p>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <label className="block text-sm sm:col-span-2">
-              <span className="font-medium text-foreground">Business name</span>
-              <input
+            <div className="sm:col-span-2">
+              <Input
+                label="Business name"
                 required
                 value={businessName}
-                onChange={(event) => setBusinessName(event.target.value)}
-                className={inputClass}
+                onChange={(event) => {
+                  setBusinessName(event.target.value);
+                  clearFieldError("businessName");
+                }}
                 placeholder="Lekki Cuts"
+                error={fieldErrors.businessName}
               />
-            </label>
+            </div>
             <label className="block text-sm">
               <span className="font-medium text-foreground">Category</span>
               <select
@@ -139,26 +197,26 @@ export function BusinessRegisterForm({ categories, markets }: Props) {
                 ))}
               </select>
             </label>
-            <label className="block text-sm">
-              <span className="font-medium text-foreground">Phone</span>
-              <input
-                required
-                value={phone}
-                onChange={(event) => setPhone(event.target.value)}
-                className={inputClass}
-                placeholder="+234 ..."
-              />
-            </label>
-            <label className="block text-sm sm:col-span-2">
-              <span className="font-medium text-foreground">Description (optional)</span>
-              <textarea
+            <Input
+              label="Phone"
+              required
+              value={phone}
+              onChange={(event) => {
+                setPhone(event.target.value);
+                clearFieldError("phone");
+              }}
+              placeholder="+234 ..."
+              error={fieldErrors.phone}
+            />
+            <div className="sm:col-span-2">
+              <Textarea
+                label="Description (optional)"
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
                 rows={3}
-                className={inputClass}
                 placeholder="What makes your business special?"
               />
-            </label>
+            </div>
           </div>
         </BusinessPortalCard>
 
@@ -168,47 +226,52 @@ export function BusinessRegisterForm({ categories, markets }: Props) {
             Sets your public URL and which market you appear in.
           </p>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <label className="block text-sm">
-              <span className="font-medium text-foreground">Public slug</span>
-              <input
+            <div>
+              <Input
+                label="Public slug"
                 required
                 value={slug}
-                onChange={(event) => setSlug(event.target.value)}
+                onChange={(event) => {
+                  setSlug(event.target.value);
+                  clearFieldError("slug");
+                }}
                 placeholder="lekki-cuts"
-                className={cn(inputClass, "font-mono")}
+                className="font-mono"
+                error={fieldErrors.slug}
               />
               <span className="mt-1 block text-xs text-muted">
                 adeni.com/businesses/{slug || "your-slug"}
               </span>
-            </label>
-            <label className="block text-sm">
-              <span className="font-medium text-foreground">Location name (optional)</span>
-              <input
-                value={locationName}
-                onChange={(event) => setLocationName(event.target.value)}
-                className={inputClass}
-                placeholder="Lekki Phase 1"
-              />
-            </label>
-            <label className="block text-sm sm:col-span-2">
-              <span className="font-medium text-foreground">Address</span>
-              <input
+            </div>
+            <Input
+              label="Location name (optional)"
+              value={locationName}
+              onChange={(event) => setLocationName(event.target.value)}
+              placeholder="Lekki Phase 1"
+            />
+            <div className="sm:col-span-2">
+              <Input
+                label="Address"
                 required
                 value={addressLine}
-                onChange={(event) => setAddressLine(event.target.value)}
-                className={inputClass}
+                onChange={(event) => {
+                  setAddressLine(event.target.value);
+                  clearFieldError("addressLine");
+                }}
+                error={fieldErrors.addressLine}
               />
-            </label>
-            <label className="block text-sm">
-              <span className="font-medium text-foreground">Area</span>
-              <input
-                required
-                value={area}
-                onChange={(event) => setArea(event.target.value)}
-                className={inputClass}
-                placeholder="Lekki"
-              />
-            </label>
+            </div>
+            <Input
+              label="Area"
+              required
+              value={area}
+              onChange={(event) => {
+                setArea(event.target.value);
+                clearFieldError("area");
+              }}
+              placeholder="Lekki"
+              error={fieldErrors.area}
+            />
             <label className="block text-sm">
               <span className="font-medium text-foreground">Market</span>
               <select

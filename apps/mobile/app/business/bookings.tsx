@@ -11,6 +11,7 @@ import { useRouter } from "expo-router";
 import type { AdeniApiError } from "@adeni/api-client";
 import type { BookingResponse } from "@adeni/shared";
 import { Screen } from "@/components/adeni/Screen";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { useAuth } from "@/contexts/auth-context";
 import { formatBookingStatus, formatSlotTime } from "@/lib/format";
 import { isAuth0Configured } from "@/lib/auth/config";
@@ -141,7 +142,10 @@ export default function BusinessBookingsScreen() {
             </Text>
 
             {pending.length === 0 ? (
-              <Text style={styles.empty}>No pending bookings right now.</Text>
+              <EmptyState
+                title="No pending bookings"
+                description="New booking requests will show up here for you to accept or reject."
+              />
             ) : (
               <View style={styles.list}>
                 {pending.map((booking) => (
@@ -298,11 +302,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     textTransform: "uppercase",
     color: adeniTheme.accent,
-  },
-  empty: {
-    marginTop: 12,
-    fontSize: 14,
-    color: adeniTheme.textMuted,
   },
   list: {
     marginTop: 12,

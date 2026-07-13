@@ -29,6 +29,7 @@ public sealed class DiscoveryService(
         int page,
         int pageSize,
         DiscoverySort sort = DiscoverySort.Distance,
+        int? minRating = null,
         CancellationToken cancellationToken = default)
     {
         if (latitude is < -90 or > 90 || longitude is < -180 or > 180)
@@ -40,6 +41,11 @@ public sealed class DiscoveryService(
         if (page < 1)
         {
             return Task.FromResult(Result.Failure<DiscoveryResult>(Error.Validation("Page must be at least 1.")));
+        }
+
+        if (minRating is < 1 or > 5)
+        {
+            return Task.FromResult(Result.Failure<DiscoveryResult>(Error.Validation("Minimum rating must be between 1 and 5.")));
         }
 
         string? normalizedMarket = null;
@@ -70,7 +76,8 @@ public sealed class DiscoveryService(
             page,
             effectivePageSize,
             normalizedQuery,
-            sortKey);
+            sortKey,
+            minRating);
 
         return SearchCachedAsync(
             cacheKey,
@@ -82,6 +89,7 @@ public sealed class DiscoveryService(
             page,
             effectivePageSize,
             sort,
+            minRating,
             cancellationToken);
     }
 
@@ -122,6 +130,7 @@ public sealed class DiscoveryService(
         int page,
         int pageSize,
         DiscoverySort sort,
+        int? minRating,
         CancellationToken cancellationToken)
     {
         var result = await cache.GetOrCreateAsync(
@@ -136,6 +145,7 @@ public sealed class DiscoveryService(
                 page,
                 pageSize,
                 sort,
+                minRating,
                 ct),
             cancellationToken);
 
@@ -151,6 +161,7 @@ public sealed class DiscoveryService(
         int page,
         int pageSize,
         DiscoverySort sort,
+        int? minRating,
         CancellationToken cancellationToken)
     {
         if (dbContext.Database.IsRelational())
@@ -164,6 +175,7 @@ public sealed class DiscoveryService(
                 page,
                 pageSize,
                 sort,
+                minRating,
                 cancellationToken);
         }
 
@@ -176,6 +188,7 @@ public sealed class DiscoveryService(
             page,
             pageSize,
             sort,
+            minRating,
             cancellationToken);
     }
 
@@ -188,6 +201,7 @@ public sealed class DiscoveryService(
         int page,
         int pageSize,
         DiscoverySort sort,
+        int? minRating,
         CancellationToken cancellationToken)
     {
         var verifiedStatus = (int)TenantStatus.Verified;
@@ -196,16 +210,26 @@ public sealed class DiscoveryService(
 
         var totalCount = await dbContext.Database
             .SqlQuery<int>($"""
+                WITH rating_summary AS (
+                    SELECT
+                        r."TenantId" AS tenant_id,
+                        ROUND(AVG(r."Rating")::numeric, 1)::float AS rating_avg
+                    FROM booking.reviews r
+                    WHERE NOT r."IsHidden"
+                    GROUP BY r."TenantId"
+                )
                 SELECT COUNT(*)::int AS "Value"
                 FROM tenancy.business_locations bl
                 INNER JOIN tenancy.tenants t ON t."Id" = bl."TenantId"
                 INNER JOIN tenancy.business_profiles bp ON bp."TenantId" = t."Id"
+                LEFT JOIN rating_summary ON rating_summary.tenant_id = t."Id"
                 WHERE bl."IsActive" = TRUE
                   AND bl."Latitude" IS NOT NULL
                   AND bl."Longitude" IS NOT NULL
                   AND t."Status" = {verifiedStatus}
                   AND ({categorySlug}::text IS NULL OR LOWER(bp."CategorySlug") = {categorySlug})
                   AND ({marketId}::text IS NULL OR LOWER(bl."MarketId") = {marketId})
+                  AND ({minRating}::int IS NULL OR COALESCE(rating_summary.rating_avg, 0) >= {minRating}::int)
                   AND (
                     {likeQuery}::text IS NULL OR (
                       LOWER(t."Name") LIKE {likeQuery}
@@ -259,6 +283,7 @@ public sealed class DiscoveryService(
                       AND t."Status" = {verifiedStatus}
                       AND ({categorySlug}::text IS NULL OR LOWER(bp."CategorySlug") = {categorySlug})
                       AND ({marketId}::text IS NULL OR LOWER(bl."MarketId") = {marketId})
+                      AND ({minRating}::int IS NULL OR COALESCE(rating_summary.rating_avg, 0) >= {minRating}::int)
                       AND (
                         {likeQuery}::text IS NULL OR (
                           LOWER(t."Name") LIKE {likeQuery}
@@ -292,7 +317,15 @@ public sealed class DiscoveryService(
                 OFFSET {offset} LIMIT {pageSize}
                 """).ToListAsync(cancellationToken)
             : await dbContext.Database.SqlQuery<DiscoverySearchRow>($"""
-                WITH candidates AS (
+                WITH rating_summary AS (
+                    SELECT
+                        r."TenantId" AS tenant_id,
+                        ROUND(AVG(r."Rating")::numeric, 1)::float AS rating_avg
+                    FROM booking.reviews r
+                    WHERE NOT r."IsHidden"
+                    GROUP BY r."TenantId"
+                ),
+                candidates AS (
                     SELECT
                         bl."Id" AS "LocationId",
                         bl."TenantId" AS "TenantId",
@@ -313,12 +346,14 @@ public sealed class DiscoveryService(
                     FROM tenancy.business_locations bl
                     INNER JOIN tenancy.tenants t ON t."Id" = bl."TenantId"
                     INNER JOIN tenancy.business_profiles bp ON bp."TenantId" = t."Id"
+                    LEFT JOIN rating_summary ON rating_summary.tenant_id = t."Id"
                     WHERE bl."IsActive" = TRUE
                       AND bl."Latitude" IS NOT NULL
                       AND bl."Longitude" IS NOT NULL
                       AND t."Status" = {verifiedStatus}
                       AND ({categorySlug}::text IS NULL OR LOWER(bp."CategorySlug") = {categorySlug})
                       AND ({marketId}::text IS NULL OR LOWER(bl."MarketId") = {marketId})
+                      AND ({minRating}::int IS NULL OR COALESCE(rating_summary.rating_avg, 0) >= {minRating}::int)
                       AND (
                         {likeQuery}::text IS NULL OR (
                           LOWER(t."Name") LIKE {likeQuery}
@@ -396,6 +431,7 @@ public sealed class DiscoveryService(
         int page,
         int pageSize,
         DiscoverySort sort,
+        int? minRating,
         CancellationToken cancellationToken)
     {
         var query = dbContext.BusinessLocations
@@ -432,7 +468,6 @@ public sealed class DiscoveryService(
                 || x.profile.Description.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
         }
 
-        var totalCount = await query.CountAsync(cancellationToken);
         var businesses = await query.ToListAsync(cancellationToken);
 
         var tenantIds = businesses.Select(x => x.tenant.Id).Distinct().ToArray();
@@ -457,7 +492,10 @@ public sealed class DiscoveryService(
                     distanceKm,
                 };
             })
+            .Where(x => minRating is null || (x.summary?.RatingAvg ?? 0) >= minRating)
             .ToList();
+
+        var totalCount = ordered.Count;
 
         var pageRows = (sort == DiscoverySort.Featured
             ? ordered

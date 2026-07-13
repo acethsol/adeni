@@ -143,6 +143,13 @@ export const enMessages: Messages = {
     loadMore: "Load more",
     seenAll: "You've seen all nearby results.",
     gridLoadError: "Could not load businesses. Check that the API is running and refresh the page.",
+    sortLabel: "Sort",
+    sortDistance: "Nearest",
+    sortFeatured: "Highest rated",
+    minRatingLabel: "Rating",
+    minRatingAny: "Any rating",
+    minRatingValue: "{value}+ stars",
+    clearFilters: "Clear filters",
   },
   content: {
     translated: "Translated",
