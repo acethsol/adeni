@@ -13,6 +13,10 @@ public sealed class BusinessProfile : ITenantEntity
 
     public string? CoverImageKey { get; set; }
 
+    public BusinessType BusinessType { get; set; } = BusinessType.ScheduledAppointment;
+
+    public bool AutoConfirmBookings { get; set; }
+
     public DateTimeOffset UpdatedAt { get; set; }
 
     public Tenant? Tenant { get; set; }

@@ -2,12 +2,14 @@ namespace Adeni.Infrastructure.Tests.Booking;
 
 using Adeni.Application.Booking;
 using Adeni.Application.Caching;
+using Adeni.Application.Events;
 using Adeni.Application.Markets;
 using Adeni.Application.Reviews;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Booking;
 using Adeni.Infrastructure.Caching;
+using Adeni.Infrastructure.Events;
 using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Reviews;
 using Microsoft.EntityFrameworkCore;
@@ -310,6 +312,7 @@ public sealed class BookingFlowTests
         services.AddSingleton<ICacheService, DistributedCacheService>();
         services.AddSingleton<IDistributedLockProvider, NoOpLockProvider>();
         services.Configure<MarketOptions>(options => options.DefaultTimeZoneId = defaultTimeZoneId);
+        services.AddAdeniDomainEvents();
         services.AddDbContext<AdeniDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));
         services.AddScoped<Adeni.Infrastructure.Context.TenantContext>();
         services.AddScoped<Application.Abstractions.ITenantContext>(sp =>

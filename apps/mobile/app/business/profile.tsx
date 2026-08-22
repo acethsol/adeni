@@ -1,18 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import type { AdeniApiError } from "@adeni/api-client";
 import type { BusinessProfile } from "@adeni/shared";
 import { VERIFICATION_DOCUMENT_LABELS } from "@adeni/shared";
-import { Screen } from "@/components/adeni/Screen";
+import { Screen, ScreenHeader } from "@/components/adeni/Screen";
+import { BusinessTabs } from "@/components/adeni/BusinessTabs";
 import { BusinessCoverUpload } from "@/components/adeni/BusinessCoverUpload";
+import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Callout } from "@/components/ui/Callout";
 import { useAuth } from "@/contexts/auth-context";
 import { formatTenantStatus } from "@/lib/format";
 import { isAuth0Configured } from "@/lib/auth/config";
@@ -72,77 +71,82 @@ export default function BusinessProfileScreen() {
   }, [authLoading, hasBusinessAccount, isBusinessPortalEnabled, loadProfile]);
 
   const canSubmitVerification = profile?.status === 0 || profile?.status === 3;
+  const canManage = isBusinessPortalEnabled && hasBusinessAccount;
 
   return (
     <Screen loading={authLoading || loading}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Pressable onPress={() => router.back()}>
-          <Text style={styles.backLink}>← Back</Text>
-        </Pressable>
+        <ScreenHeader
+          eyebrow="Business portal"
+          title="Profile"
+          subtitle="Update your public details and submit verification documents."
+        />
 
-        <Text style={styles.title}>Business profile</Text>
-        <Text style={styles.subtitle}>
-          Update your public details and submit verification documents.
-        </Text>
+        {canManage ? <BusinessTabs /> : null}
 
-        {!isBusinessPortalEnabled ? (
-          <View style={styles.callout}>
-            <Text style={styles.calloutTitle}>Sign in required</Text>
-            <Text style={styles.calloutBody}>
+        <View style={styles.section}>
+          {!isBusinessPortalEnabled ? (
+            <Callout title="Sign in required">
               {isAuth0Configured()
                 ? "Sign in from the Account tab to manage your business."
                 : "Set EXPO_PUBLIC_DEV_BUSINESS_AUTH0_SUB in .env for local business mode."}
-            </Text>
-          </View>
-        ) : null}
+            </Callout>
+          ) : null}
 
-        {!hasBusinessAccount && isBusinessPortalEnabled ? (
-          <View style={styles.callout}>
-            <Text style={styles.calloutBody}>
-              You have not registered a business on this account yet.
-            </Text>
-            <Pressable
-              style={styles.primaryButton}
-              onPress={() => router.push("/business/register")}
-            >
-              <Text style={styles.primaryButtonText}>Register business</Text>
-            </Pressable>
-          </View>
-        ) : null}
-
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-
-        {profile ? (
-          <>
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Status</Text>
-              <DetailRow label="Verification" value={formatTenantStatus(profile.status)} />
-              <DetailRow
-                label="Primary location"
-                value={
-                  profile.locations[0]
-                    ? `${profile.locations[0].name} · /businesses/${profile.locations[0].slug}`
-                    : "—"
-                }
+          {!hasBusinessAccount && isBusinessPortalEnabled ? (
+            <>
+              <Callout title="No business yet">
+                You have not registered a business on this account yet.
+              </Callout>
+              <Button
+                title="Register business"
+                onPress={() => router.push("/business/register")}
+                containerStyle={styles.registerButton}
               />
-            </View>
+            </>
+          ) : null}
 
-            <BusinessCoverUpload
-              categorySlug={profile.categorySlug}
-              coverImageUrl={profile.coverImageUrl}
-              createClient={createBusinessApiClient}
-            />
+          {error && !profile ? <Callout tone="error">{error}</Callout> : null}
 
-            <ProfileEditor
-              profile={profile}
-              onSaved={(next) => setProfile(next)}
-            />
+          {profile ? (
+            <>
+              <Card style={styles.statusCard} title="Status">
+                <View style={styles.statusRow}>
+                  <Badge
+                    label={formatTenantStatus(profile.status)}
+                    tone={profile.status === 2 ? "success" : profile.status === 3 ? "destructive" : "default"}
+                  />
+                </View>
+                <DetailRow
+                  label="Primary location"
+                  value={
+                    profile.locations[0]
+                      ? `${profile.locations[0].name} · /businesses/${profile.locations[0].slug}`
+                      : "—"
+                  }
+                />
+              </Card>
 
-            {canSubmitVerification ? (
-              <VerificationForm onSubmitted={() => void loadProfile()} />
-            ) : null}
-          </>
-        ) : null}
+              <View style={styles.blockSpacing}>
+                <BusinessCoverUpload
+                  categorySlug={profile.categorySlug}
+                  coverImageUrl={profile.coverImageUrl}
+                  createClient={createBusinessApiClient}
+                />
+              </View>
+
+              <View style={styles.blockSpacing}>
+                <ProfileEditor profile={profile} onSaved={(next) => setProfile(next)} />
+              </View>
+
+              {canSubmitVerification ? (
+                <View style={styles.blockSpacing}>
+                  <VerificationForm onSubmitted={() => void loadProfile()} />
+                </View>
+              ) : null}
+            </>
+          ) : null}
+        </View>
       </ScrollView>
     </Screen>
   );
@@ -187,30 +191,25 @@ function ProfileEditor({
   }
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>Edit profile</Text>
+    <Card title="Edit profile">
       {message ? <Text style={styles.success}>{message}</Text> : null}
       {error ? <Text style={styles.errorInline}>{error}</Text> : null}
-      <FormField label="Business name" value={businessName} onChangeText={setBusinessName} />
-      <FormField label="Category slug" value={categorySlug} onChangeText={setCategorySlug} autoCapitalize="none" />
-      <FormField label="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
-      <FormField
-        label="Description"
-        value={description}
-        onChangeText={setDescription}
-        multiline
+      <Input label="Business name" value={businessName} onChangeText={setBusinessName} />
+      <Input
+        label="Category slug"
+        value={categorySlug}
+        onChangeText={setCategorySlug}
+        autoCapitalize="none"
       />
-      <Pressable
+      <Input label="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+      <Input label="Description" value={description} onChangeText={setDescription} multiline />
+      <Button
+        title={saving ? "Saving…" : "Save profile"}
         onPress={() => void handleSave()}
-        disabled={saving}
-        style={({ pressed }) => [
-          styles.primaryButton,
-          (saving || pressed) && styles.buttonDisabled,
-        ]}
-      >
-        <Text style={styles.primaryButtonText}>{saving ? "Saving…" : "Save profile"}</Text>
-      </Pressable>
-    </View>
+        loading={saving}
+        containerStyle={styles.saveButton}
+      />
+    </Card>
   );
 }
 
@@ -243,11 +242,7 @@ function VerificationForm({ onSubmitted }: { onSubmitted: () => void }) {
   }
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>Submit verification</Text>
-      <Text style={styles.hint}>
-        Provide a registration or ID reference for admin review.
-      </Text>
+    <Card title="Submit verification" description="Provide a registration or ID reference for admin review.">
       {message ? <Text style={styles.success}>{message}</Text> : null}
       {error ? <Text style={styles.errorInline}>{error}</Text> : null}
 
@@ -259,38 +254,28 @@ function VerificationForm({ onSubmitted }: { onSubmitted: () => void }) {
             onPress={() => setDocumentType(Number(value))}
             style={[styles.chip, documentType === Number(value) && styles.chipActive]}
           >
-            <Text
-              style={[
-                styles.chipText,
-                documentType === Number(value) && styles.chipTextActive,
-              ]}
-            >
+            <Text style={[styles.chipText, documentType === Number(value) && styles.chipTextActive]}>
               {label}
             </Text>
           </Pressable>
         ))}
       </View>
 
-      <FormField
+      <Input
         label="Reference number"
         value={referenceNumber}
         onChangeText={setReferenceNumber}
         autoCapitalize="characters"
       />
 
-      <Pressable
+      <Button
+        title={submitting ? "Submitting…" : "Submit for verification"}
         onPress={() => void handleSubmit()}
+        loading={submitting}
         disabled={submitting || referenceNumber.trim().length === 0}
-        style={({ pressed }) => [
-          styles.primaryButton,
-          (submitting || pressed) && styles.buttonDisabled,
-        ]}
-      >
-        <Text style={styles.primaryButtonText}>
-          {submitting ? "Submitting…" : "Submit for verification"}
-        </Text>
-      </Pressable>
-    </View>
+        containerStyle={styles.saveButton}
+      />
+    </Card>
   );
 }
 
@@ -303,116 +288,29 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function FormField({
-  label,
-  value,
-  onChangeText,
-  multiline = false,
-  keyboardType,
-  autoCapitalize,
-}: {
-  label: string;
-  value: string;
-  onChangeText: (value: string) => void;
-  multiline?: boolean;
-  keyboardType?: "default" | "phone-pad";
-  autoCapitalize?: "none" | "sentences" | "characters";
-}) {
-  return (
-    <View style={styles.fieldBlock}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        multiline={multiline}
-        keyboardType={keyboardType}
-        autoCapitalize={autoCapitalize}
-        style={[styles.input, multiline && styles.inputMultiline]}
-      />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   content: {
-    paddingHorizontal: 20,
-    paddingBottom: 32,
+    paddingBottom: adeniTheme.spacing["3xl"],
   },
-  backLink: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: adeniTheme.accent,
-    marginBottom: 12,
+  section: {
+    paddingHorizontal: adeniTheme.spacing.xl,
   },
-  title: {
-    fontSize: 26,
-    fontWeight: "700",
-    color: adeniTheme.text,
+  registerButton: {
+    marginTop: adeniTheme.spacing.md,
   },
-  subtitle: {
-    marginTop: 8,
-    fontSize: 15,
-    lineHeight: 22,
-    color: adeniTheme.textMuted,
+  statusCard: {
+    marginTop: adeniTheme.spacing.xl,
   },
-  callout: {
-    marginTop: 20,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: adeniTheme.border,
-    backgroundColor: adeniTheme.surface,
+  statusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
-  calloutTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: adeniTheme.text,
-  },
-  calloutBody: {
-    marginTop: 8,
-    fontSize: 14,
-    lineHeight: 20,
-    color: adeniTheme.textMuted,
-  },
-  error: {
-    marginTop: 16,
-    padding: 10,
-    borderRadius: 8,
-    backgroundColor: "#fef2f2",
-    color: "#991b1b",
-    fontSize: 14,
-  },
-  errorInline: {
-    marginTop: 12,
-    color: "#991b1b",
-    fontSize: 14,
-  },
-  success: {
-    marginTop: 12,
-    color: adeniTheme.accent,
-    fontSize: 14,
-  },
-  card: {
-    marginTop: 20,
-    backgroundColor: adeniTheme.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: adeniTheme.border,
-    padding: 20,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: adeniTheme.text,
-  },
-  hint: {
-    marginTop: 8,
-    fontSize: 14,
-    lineHeight: 20,
-    color: adeniTheme.textMuted,
+  blockSpacing: {
+    marginTop: adeniTheme.spacing.xl,
   },
   detailRow: {
-    marginTop: 14,
+    marginTop: adeniTheme.spacing.md,
   },
   detailLabel: {
     fontSize: 13,
@@ -424,42 +322,25 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: adeniTheme.text,
   },
-  fieldBlock: {
-    marginTop: 16,
-  },
   fieldLabel: {
+    marginTop: adeniTheme.spacing.lg,
     fontSize: 13,
     fontWeight: "600",
     color: adeniTheme.textSubtle,
   },
-  input: {
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: adeniTheme.borderStrong,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: adeniTheme.text,
-    backgroundColor: "#ffffff",
-  },
-  inputMultiline: {
-    minHeight: 96,
-    textAlignVertical: "top",
-  },
   chipRow: {
-    marginTop: 10,
+    marginTop: adeniTheme.spacing.sm,
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: adeniTheme.spacing.sm,
   },
   chip: {
     borderWidth: 1,
     borderColor: adeniTheme.borderStrong,
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: "#ffffff",
+    borderRadius: adeniTheme.radius.full,
+    paddingHorizontal: adeniTheme.spacing.lg,
+    paddingVertical: adeniTheme.spacing.sm,
+    backgroundColor: adeniTheme.surface,
   },
   chipActive: {
     backgroundColor: adeniTheme.primary,
@@ -471,22 +352,20 @@ const styles = StyleSheet.create({
     color: adeniTheme.text,
   },
   chipTextActive: {
-    color: "#ffffff",
+    color: adeniTheme.primaryForeground,
   },
-  primaryButton: {
-    marginTop: 16,
-    alignSelf: "flex-start",
-    backgroundColor: adeniTheme.primary,
-    borderRadius: 999,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+  saveButton: {
+    marginTop: adeniTheme.spacing.xl,
+    alignSelf: "stretch",
   },
-  primaryButtonText: {
-    color: "#ffffff",
-    fontSize: 15,
-    fontWeight: "600",
+  success: {
+    marginTop: adeniTheme.spacing.md,
+    fontSize: 14,
+    color: adeniTheme.accent,
   },
-  buttonDisabled: {
-    opacity: 0.65,
+  errorInline: {
+    marginTop: adeniTheme.spacing.md,
+    fontSize: 14,
+    color: adeniTheme.destructive,
   },
 });

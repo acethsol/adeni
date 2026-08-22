@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { Lock } from "lucide-react";
 import type { BusinessProfile } from "@adeni/shared";
+import { formatTenantStatus } from "@adeni/shared";
 import { Button } from "@/components/ui/button";
+import { Callout } from "@/components/ui/callout";
 import { Input, Textarea } from "@/components/ui/input";
 import { useToast } from "@/contexts/toast-context";
+import { useUnsavedChangesGuard } from "@/contexts/navigation-guard-context";
 
 type Props = {
   profile: BusinessProfile;
@@ -16,29 +20,70 @@ type FieldErrors = {
   phone?: string;
 };
 
+type FormValues = {
+  businessName: string;
+  categorySlug: string;
+  phone: string;
+  description: string;
+};
+
 const PHONE_PATTERN = /^\+?[0-9\s-]{7,20}$/;
+
+function toValues(profile: BusinessProfile): FormValues {
+  return {
+    businessName: profile.businessName,
+    categorySlug: profile.categorySlug,
+    phone: profile.phone,
+    description: profile.description,
+  };
+}
 
 export function BusinessProfileForm({ profile }: Props) {
   const toast = useToast();
-  const [businessName, setBusinessName] = useState(profile.businessName);
-  const [categorySlug, setCategorySlug] = useState(profile.categorySlug);
-  const [phone, setPhone] = useState(profile.phone);
-  const [description, setDescription] = useState(profile.description);
+  const canEdit = profile.status === 0 || profile.status === 3;
+
+  const initialValues = useMemo(() => toValues(profile), [profile]);
+  const [values, setValues] = useState<FormValues>(initialValues);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isDirty =
+    values.businessName !== initialValues.businessName ||
+    values.categorySlug !== initialValues.categorySlug ||
+    values.phone !== initialValues.phone ||
+    values.description !== initialValues.description;
+
+  useUnsavedChangesGuard(canEdit && isDirty);
+
+  if (!canEdit) {
+    return (
+      <div className="space-y-4">
+        <Callout tone="info">
+          Your profile is locked while status is <strong>{formatTenantStatus(profile.status)}</strong>. Business
+          details can only be edited in Draft or Rejected status. Contact support if you need changes made.
+        </Callout>
+        <dl className="space-y-3 rounded-xl border border-border bg-subtle/40 p-4 text-sm">
+          <ReadOnlyRow label="Business name" value={profile.businessName} />
+          <ReadOnlyRow label="Category slug" value={profile.categorySlug} />
+          <ReadOnlyRow label="Phone" value={profile.phone} />
+          <ReadOnlyRow label="Description" value={profile.description || "—"} />
+        </dl>
+      </div>
+    );
+  }
+
   function validate(): FieldErrors {
     const errors: FieldErrors = {};
-    if (!businessName.trim()) {
+    if (!values.businessName.trim()) {
       errors.businessName = "Business name is required.";
     }
-    if (!categorySlug.trim()) {
+    if (!values.categorySlug.trim()) {
       errors.categorySlug = "Category slug is required.";
     }
-    if (!phone.trim()) {
+    if (!values.phone.trim()) {
       errors.phone = "Phone number is required.";
-    } else if (!PHONE_PATTERN.test(phone.trim())) {
+    } else if (!PHONE_PATTERN.test(values.phone.trim())) {
       errors.phone = "Enter a valid phone number.";
     }
     return errors;
@@ -46,6 +91,8 @@ export function BusinessProfileForm({ profile }: Props) {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+
+    if (!isDirty) return;
 
     const errors = validate();
     setFieldErrors(errors);
@@ -61,10 +108,10 @@ export function BusinessProfileForm({ profile }: Props) {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          businessName,
-          categorySlug,
-          phone,
-          description: description.trim() || undefined,
+          businessName: values.businessName,
+          categorySlug: values.categorySlug,
+          phone: values.phone,
+          description: values.description.trim() || undefined,
         }),
       });
 
@@ -94,9 +141,9 @@ export function BusinessProfileForm({ profile }: Props) {
       <Input
         label="Business name"
         required
-        value={businessName}
+        value={values.businessName}
         onChange={(event) => {
-          setBusinessName(event.target.value);
+          setValues((current) => ({ ...current, businessName: event.target.value }));
           setFieldErrors((current) => ({ ...current, businessName: undefined }));
         }}
         error={fieldErrors.businessName}
@@ -105,9 +152,9 @@ export function BusinessProfileForm({ profile }: Props) {
       <Input
         label="Category slug"
         required
-        value={categorySlug}
+        value={values.categorySlug}
         onChange={(event) => {
-          setCategorySlug(event.target.value);
+          setValues((current) => ({ ...current, categorySlug: event.target.value }));
           setFieldErrors((current) => ({ ...current, categorySlug: undefined }));
         }}
         error={fieldErrors.categorySlug}
@@ -116,9 +163,9 @@ export function BusinessProfileForm({ profile }: Props) {
       <Input
         label="Phone"
         required
-        value={phone}
+        value={values.phone}
         onChange={(event) => {
-          setPhone(event.target.value);
+          setValues((current) => ({ ...current, phone: event.target.value }));
           setFieldErrors((current) => ({ ...current, phone: undefined }));
         }}
         error={fieldErrors.phone}
@@ -126,14 +173,26 @@ export function BusinessProfileForm({ profile }: Props) {
 
       <Textarea
         label="Description"
-        value={description}
-        onChange={(event) => setDescription(event.target.value)}
+        value={values.description}
+        onChange={(event) => setValues((current) => ({ ...current, description: event.target.value }))}
         rows={4}
       />
 
-      <Button type="submit" loading={saving} loadingLabel="Saving…">
+      <Button type="submit" loading={saving} loadingLabel="Saving…" disabled={!isDirty}>
         Save profile
       </Button>
     </form>
+  );
+}
+
+function ReadOnlyRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <dt className="flex items-center gap-1.5 text-muted">
+        <Lock className="h-3 w-3 shrink-0" aria-hidden />
+        {label}
+      </dt>
+      <dd className="text-right font-medium text-foreground">{value}</dd>
+    </div>
   );
 }

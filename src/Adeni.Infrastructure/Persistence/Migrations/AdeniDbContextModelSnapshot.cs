@@ -114,6 +114,37 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                     b.ToTable("bookings", "booking");
                 });
 
+            modelBuilder.Entity("Adeni.Domain.Booking.QuoteRequestRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("ServiceAddress")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "CreatedAt");
+
+                    b.ToTable("quote_requests", "booking");
+                });
+
             modelBuilder.Entity("Adeni.Domain.Booking.Review", b =>
                 {
                     b.Property<Guid>("Id")
@@ -200,6 +231,40 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                     b.HasIndex("TenantId", "IsActive");
 
                     b.ToTable("service_offerings", "booking");
+                });
+
+            modelBuilder.Entity("Adeni.Domain.Booking.WaitlistEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("NotifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("PreferredFrom")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("PreferredTo")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ServiceOfferingId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "ServiceOfferingId", "NotifiedAt");
+
+                    b.ToTable("waitlist_entries", "booking");
                 });
 
             modelBuilder.Entity("Adeni.Domain.Booking.WeeklyAvailability", b =>
@@ -354,6 +419,48 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                     b.ToTable("customers", "identity");
                 });
 
+            modelBuilder.Entity("Adeni.Domain.Payments.PaymentIntentRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<Guid?>("BookingId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<string>("ProviderReference")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Status", "CreatedAt");
+
+                    b.ToTable("payment_intents", "payments");
+                });
+
             modelBuilder.Entity("Adeni.Domain.Tenancy.BusinessLocation", b =>
                 {
                     b.Property<Guid>("Id")
@@ -426,6 +533,12 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                 {
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("AutoConfirmBookings")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("BusinessType")
+                        .HasColumnType("integer");
 
                     b.Property<string>("CategorySlug")
                         .IsRequired()

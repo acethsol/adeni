@@ -5,6 +5,7 @@ import { useState, type ReactNode } from "react";
 import { NavigationProgress } from "@/components/navigation-progress";
 import { ActionLoadingProvider } from "@/contexts/action-loading-context";
 import { ConfirmProvider } from "@/contexts/confirm-context";
+import { NavigationGuardProvider } from "@/contexts/navigation-guard-context";
 import { ToastProvider } from "@/contexts/toast-context";
 
 export function AppProviders({ children }: { children: ReactNode }) {
@@ -25,10 +26,12 @@ export function AppProviders({ children }: { children: ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <ConfirmProvider>
-          <ActionLoadingProvider>
-            <NavigationProgress />
-            {children}
-          </ActionLoadingProvider>
+          <NavigationGuardProvider>
+            <ActionLoadingProvider>
+              <NavigationProgress />
+              {children}
+            </ActionLoadingProvider>
+          </NavigationGuardProvider>
         </ConfirmProvider>
       </ToastProvider>
     </QueryClientProvider>

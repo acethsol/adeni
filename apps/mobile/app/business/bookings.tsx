@@ -1,16 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
-import { useRouter } from "expo-router";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import type { AdeniApiError } from "@adeni/api-client";
 import type { BookingResponse } from "@adeni/shared";
-import { Screen } from "@/components/adeni/Screen";
+import { Screen, ScreenHeader } from "@/components/adeni/Screen";
+import { BusinessTabs } from "@/components/adeni/BusinessTabs";
+import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Callout } from "@/components/ui/Callout";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useAuth } from "@/contexts/auth-context";
 import { formatBookingStatus, formatSlotTime } from "@/lib/format";
@@ -20,7 +17,6 @@ import { adeniTheme } from "@/lib/theme";
 const PENDING_STATUS = 0;
 
 export default function BusinessBookingsScreen() {
-  const router = useRouter();
   const {
     loading: authLoading,
     isBusinessInboxEnabled,
@@ -101,83 +97,85 @@ export default function BusinessBookingsScreen() {
   }
 
   const pending = bookings.filter((booking) => booking.status === PENDING_STATUS);
+  const history = bookings.filter((booking) => booking.status !== PENDING_STATUS);
 
   return (
     <Screen loading={authLoading || loading}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Pressable onPress={() => router.back()}>
-          <Text style={styles.backLink}>← Back</Text>
-        </Pressable>
+        <ScreenHeader
+          eyebrow="Business portal"
+          title="Booking inbox"
+          subtitle="Review and respond to customer booking requests."
+        />
 
-        <Text style={styles.title}>Booking inbox</Text>
-        <Text style={styles.subtitle}>
-          Review and respond to customer booking requests.
-        </Text>
+        {isBusinessInboxEnabled ? <BusinessTabs /> : null}
 
-        {!isBusinessInboxEnabled ? (
-          <View style={styles.callout}>
-            <Text style={styles.calloutTitle}>Business access required</Text>
-            <Text style={styles.calloutBody}>
-              {isAuth0Configured()
-                ? "Sign in with a business account linked to your tenant."
-                : "Set EXPO_PUBLIC_DEV_BUSINESS_AUTH0_SUB in .env for local business mode, or sign in with Auth0."}
-            </Text>
-            {isAuth0Configured() ? (
-              <Pressable
-                style={styles.secondaryButton}
-                onPress={() => void refreshSession().then(() => loadBookings())}
-              >
-                <Text style={styles.secondaryButtonText}>Retry</Text>
-              </Pressable>
-            ) : null}
-          </View>
-        ) : null}
+        <View style={styles.section}>
+          {!isBusinessInboxEnabled ? (
+            <>
+              <Callout title="Business access required">
+                {isAuth0Configured()
+                  ? "Sign in with a business account linked to your tenant."
+                  : "Set EXPO_PUBLIC_DEV_BUSINESS_AUTH0_SUB in .env for local business mode, or sign in with Auth0."}
+              </Callout>
+              {isAuth0Configured() ? (
+                <Button
+                  title="Retry"
+                  variant="secondary"
+                  onPress={() => void refreshSession().then(() => loadBookings())}
+                  containerStyle={styles.retryButton}
+                />
+              ) : null}
+            </>
+          ) : null}
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+          {error ? <Callout tone="error">{error}</Callout> : null}
 
-        {isBusinessInboxEnabled ? (
-          <>
-            <Text style={styles.sectionLabel}>
-              Pending ({pending.length})
-            </Text>
+          {isBusinessInboxEnabled ? (
+            <>
+              <Text style={styles.sectionLabel}>Pending ({pending.length})</Text>
 
-            {pending.length === 0 ? (
-              <EmptyState
-                title="No pending bookings"
-                description="New booking requests will show up here for you to accept or reject."
-              />
-            ) : (
-              <View style={styles.list}>
-                {pending.map((booking) => (
-                  <BookingCard
-                    key={booking.id}
-                    booking={booking}
-                    busy={actionId === booking.id}
-                    onAccept={() => void handleAccept(booking.id)}
-                    onReject={() => void handleReject(booking.id)}
-                  />
-                ))}
-              </View>
-            )}
-
-            {bookings.length > pending.length ? (
-              <>
-                <Text style={styles.sectionLabel}>Recent</Text>
+              {pending.length === 0 ? (
+                <EmptyState
+                  title="No pending bookings"
+                  description="New booking requests will show up here for you to accept or reject."
+                />
+              ) : (
                 <View style={styles.list}>
-                  {bookings
-                    .filter((booking) => booking.status !== PENDING_STATUS)
-                    .map((booking) => (
-                      <View key={booking.id} style={styles.historyCard}>
-                        <Text style={styles.serviceName}>{booking.serviceName}</Text>
-                        <Text style={styles.meta}>{formatSlotTime(booking.startAt)}</Text>
-                        <Text style={styles.status}>{formatBookingStatus(booking.status)}</Text>
-                      </View>
-                    ))}
+                  {pending.map((booking) => (
+                    <BookingCard
+                      key={booking.id}
+                      booking={booking}
+                      busy={actionId === booking.id}
+                      onAccept={() => void handleAccept(booking.id)}
+                      onReject={() => void handleReject(booking.id)}
+                    />
+                  ))}
                 </View>
-              </>
-            ) : null}
-          </>
-        ) : null}
+              )}
+
+              {history.length > 0 ? (
+                <>
+                  <Text style={styles.sectionLabel}>Recent</Text>
+                  <View style={styles.list}>
+                    {history.map((booking) => (
+                      <Card key={booking.id} style={styles.historyCard} padding="sm">
+                        <View style={styles.historyHeader}>
+                          <Text style={styles.serviceName}>{booking.serviceName}</Text>
+                          <Badge
+                            label={formatBookingStatus(booking.status)}
+                            tone={booking.status === 1 ? "success" : "default"}
+                          />
+                        </View>
+                        <Text style={styles.meta}>{formatSlotTime(booking.startAt)}</Text>
+                      </Card>
+                    ))}
+                  </View>
+                </>
+              ) : null}
+            </>
+          ) : null}
+        </View>
       </ScrollView>
     </Screen>
   );
@@ -195,108 +193,33 @@ function BookingCard({
   onReject: () => void;
 }) {
   return (
-    <View style={styles.card}>
+    <Card style={styles.card}>
       <Text style={styles.serviceName}>{booking.serviceName}</Text>
       <Text style={styles.meta}>{formatSlotTime(booking.startAt)}</Text>
       {booking.customerNotes ? (
-        <Text style={styles.notes}>"{booking.customerNotes}"</Text>
+        <Text style={styles.notes}>&ldquo;{booking.customerNotes}&rdquo;</Text>
       ) : null}
 
       <View style={styles.actions}>
-        <Pressable
-          onPress={onReject}
-          disabled={busy}
-          style={({ pressed }) => [
-            styles.rejectButton,
-            (busy || pressed) && styles.buttonDisabled,
-          ]}
-        >
-          <Text style={styles.rejectButtonText}>Reject</Text>
-        </Pressable>
-        <Pressable
-          onPress={onAccept}
-          disabled={busy}
-          style={({ pressed }) => [
-            styles.acceptButton,
-            (busy || pressed) && styles.buttonDisabled,
-          ]}
-        >
-          {busy ? (
-            <ActivityIndicator color="#ffffff" size="small" />
-          ) : (
-            <Text style={styles.acceptButtonText}>Accept</Text>
-          )}
-        </Pressable>
+        <Button title="Reject" variant="secondary" size="sm" disabled={busy} onPress={onReject} />
+        <Button title="Accept" size="sm" loading={busy} onPress={onAccept} />
       </View>
-    </View>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
   content: {
-    paddingHorizontal: 20,
-    paddingBottom: 32,
+    paddingBottom: adeniTheme.spacing["3xl"],
   },
-  backLink: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: adeniTheme.accent,
-    marginBottom: 12,
+  section: {
+    paddingHorizontal: adeniTheme.spacing.xl,
   },
-  title: {
-    fontSize: 26,
-    fontWeight: "700",
-    color: adeniTheme.text,
-  },
-  subtitle: {
-    marginTop: 8,
-    fontSize: 15,
-    lineHeight: 22,
-    color: adeniTheme.textMuted,
-  },
-  callout: {
-    marginTop: 20,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: adeniTheme.border,
-    backgroundColor: adeniTheme.surface,
-  },
-  calloutTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: adeniTheme.text,
-  },
-  calloutBody: {
-    marginTop: 8,
-    fontSize: 14,
-    lineHeight: 20,
-    color: adeniTheme.textMuted,
-  },
-  secondaryButton: {
-    marginTop: 14,
-    alignSelf: "flex-start",
-    borderWidth: 1,
-    borderColor: adeniTheme.borderStrong,
-    borderRadius: 999,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  secondaryButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: adeniTheme.text,
-  },
-  error: {
-    marginTop: 16,
-    padding: 10,
-    borderRadius: 8,
-    backgroundColor: "#fef2f2",
-    color: "#991b1b",
-    fontSize: 14,
+  retryButton: {
+    marginTop: adeniTheme.spacing.md,
   },
   sectionLabel: {
-    marginTop: 24,
+    marginTop: adeniTheme.spacing["2xl"],
     fontSize: 12,
     fontWeight: "700",
     letterSpacing: 0.8,
@@ -304,78 +227,38 @@ const styles = StyleSheet.create({
     color: adeniTheme.accent,
   },
   list: {
-    marginTop: 12,
-    gap: 12,
+    marginTop: adeniTheme.spacing.md,
+    gap: adeniTheme.spacing.md,
   },
-  card: {
-    backgroundColor: adeniTheme.surface,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: adeniTheme.border,
-    padding: 16,
-  },
-  historyCard: {
-    backgroundColor: adeniTheme.surface,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: adeniTheme.border,
-    padding: 14,
+  card: {},
+  historyCard: {},
+  historyHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: adeniTheme.spacing.sm,
   },
   serviceName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
     color: adeniTheme.text,
   },
   meta: {
-    marginTop: 6,
-    fontSize: 14,
+    marginTop: 4,
+    fontSize: 13,
     color: adeniTheme.textMuted,
   },
   notes: {
-    marginTop: 10,
+    marginTop: adeniTheme.spacing.sm,
     fontSize: 14,
     lineHeight: 20,
     fontStyle: "italic",
     color: adeniTheme.text,
   },
-  status: {
-    marginTop: 6,
-    fontSize: 13,
-    fontWeight: "600",
-    color: adeniTheme.accent,
-  },
   actions: {
-    marginTop: 16,
+    marginTop: adeniTheme.spacing.lg,
     flexDirection: "row",
     justifyContent: "flex-end",
-    gap: 10,
-  },
-  rejectButton: {
-    borderWidth: 1,
-    borderColor: adeniTheme.borderStrong,
-    borderRadius: 999,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  rejectButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: adeniTheme.text,
-  },
-  acceptButton: {
-    minWidth: 96,
-    alignItems: "center",
-    backgroundColor: adeniTheme.primary,
-    borderRadius: 999,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-  },
-  acceptButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#ffffff",
-  },
-  buttonDisabled: {
-    opacity: 0.65,
+    gap: adeniTheme.spacing.sm,
   },
 });

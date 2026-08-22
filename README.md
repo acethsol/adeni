@@ -2,6 +2,8 @@
 
 Trusted local services marketplace — **.NET 10 API** + **Next.js web** + **Expo mobile**, SOC 2 controls from Sprint 0.
 
+**Strategy:** [docs/product-strategy.md](docs/product-strategy.md) — positioning, revenue model, GTM wedge, AI roadmap.
+
 ## Quick start
 
 ```powershell
@@ -25,12 +27,12 @@ npm run dev:web                                   # http://localhost:3000
 | PostgreSQL UI | http://localhost:8080 (Adminer, `--profile ui`) |
 | Redis UI | http://localhost:5540 (RedisInsight, `--profile ui`) |
 
-See [docs/database-setup.md](docs/database-setup.md), [docs/caching-setup.md](docs/caching-setup.md), [docs/frontend.md](docs/frontend.md), [docs/observability.md](docs/observability.md).
+See [docs/database-setup.md](docs/database-setup.md), [docs/caching-setup.md](docs/caching-setup.md), [docs/frontend.md](docs/frontend.md), [docs/architecture.md](docs/architecture.md), [docs/observability.md](docs/observability.md).
 
 ## Repository structure
 
 ```
-src/                     .NET backend (DDD / Clean Architecture)
+src/                     .NET backend — **modular monolith** (see docs/architecture.md)
 apps/web/                Next.js — public, business, admin
 apps/mobile/             Expo — unified customer + business app
 packages/api-client/     Typed API client (shared)
@@ -61,14 +63,17 @@ tests/                   Backend unit/integration tests
 | **1** | Business onboarding | Done |
 | **2** | Discovery + public profiles | Done |
 | **3** | Auth0 + client shell (backend); frontend pivot | Done |
-| **3b** | Next.js + Expo monorepo scaffold | **Current** |
-| **4** | Booking + Redis slot locks | Next |
+| **13** | Reviews & ratings | Done |
+| **14** | UX polish & guardrails | Done |
+| **15–20** | Booking v2 → SaaS → Paystack → Messaging → Trust → AI/deploy | Planned |
 
-Details: [docs/sprints.md](docs/sprints.md)
+Details: [docs/sprints.md](docs/sprints.md) · Strategy: [docs/product-strategy.md](docs/product-strategy.md)
 
 ## Compliance docs (Confluence)
 
 - [Adeni Product Bible](https://aceth.atlassian.net/wiki/spaces/SD/pages/26279937)
+- [Modular monolith architecture](https://aceth.atlassian.net/wiki/spaces/SD/pages/42139649)
+- [Product strategy & revenue model](https://aceth.atlassian.net/wiki/spaces/SD/pages/41091073)
 - [Frontend Architecture v1](https://aceth.atlassian.net/wiki/spaces/SD/pages/26968065)
 - [Observability v1](https://aceth.atlassian.net/wiki/spaces/SD/pages/27230210)
 - [SOC 2 Compliance Framework](https://aceth.atlassian.net/wiki/spaces/SD/pages/26247170)

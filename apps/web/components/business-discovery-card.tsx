@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
+import { discoveryCtaLabel } from "@adeni/shared";
 import type { DiscoveryBusinessItem } from "@adeni/shared";
 import {
   getBusinessCoverImage,
@@ -36,6 +37,7 @@ export function BusinessDiscoveryCard({ business, className, imagePriority = fal
   const categoryLabel = getCategoryLabel(locale, business.categorySlug);
   const hasReviews = Boolean(business.reviewCount && business.reviewCount > 0);
   const reviewLabel = hasReviews ? getReviewCountLabel(locale, business.reviewCount) : null;
+  const ctaLabel = discoveryCtaLabel(business.discoveryCta);
 
   return (
     <Link href={`/businesses/${business.slug}`} className={cn("block h-full", className)}>
@@ -87,7 +89,7 @@ export function BusinessDiscoveryCard({ business, className, imagePriority = fal
 
           <MediaCardActions>
             <Badge tone="accent">{t("business.viewProfile")}</Badge>
-            <Badge tone="accent">{t("business.bookNow")}</Badge>
+            <Badge tone="accent">{ctaLabel}</Badge>
           </MediaCardActions>
         </MediaCardBody>
       </MediaCard>

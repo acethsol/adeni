@@ -10,10 +10,18 @@ import {
   PlusCircle,
   Scissors,
   UserCircle,
+  type LucideIcon,
 } from "lucide-react";
+import { hasCapability, type Capability } from "@adeni/shared";
 import { cn } from "@/lib/cn";
+import { useSidebarTooltip } from "@/lib/use-sidebar-tooltip";
 
-const NAV_ITEMS = [
+const NAV_CAPABILITIES: Partial<Record<string, Capability>> = {
+  "/business/bookings": "calendar",
+  "/business/availability": "calendar",
+};
+
+export const BUSINESS_NAV_ITEMS = [
   { href: "/business", label: "Overview", exact: true, icon: LayoutDashboard },
   { href: "/business/bookings", label: "Bookings", icon: CalendarDays },
   { href: "/business/services", label: "Services", icon: Scissors },
@@ -22,75 +30,125 @@ const NAV_ITEMS = [
   { href: "/business/profile", label: "Profile", icon: UserCircle },
 ] as const;
 
-const REGISTER_ITEM = {
+export const BUSINESS_REGISTER_ITEM = {
   href: "/business/register",
   label: "Register",
   icon: PlusCircle,
 } as const;
 
+/** Resolves the current nav item's label for use in topbar breadcrumbs. */
+export function useBusinessPortalPageLabel() {
+  const pathname = usePathname();
+  const items = [...BUSINESS_NAV_ITEMS, BUSINESS_REGISTER_ITEM];
+  const match = items.find((item) =>
+    "exact" in item && item.exact ? pathname === item.href : pathname.startsWith(item.href),
+  );
+  return match?.label;
+}
+
 type Props = {
   showRegister?: boolean;
+  onNavigate?: () => void;
+  collapsed?: boolean;
+  className?: string;
+  capabilities?: readonly string[];
 };
 
-export function BusinessPortalNav({ showRegister = true }: Props) {
+function filterNavItems<T extends { href: string }>(items: readonly T[], capabilities?: readonly string[]) {
+  return items.filter((item) => {
+    const capability = NAV_CAPABILITIES[item.href];
+    return !capability || hasCapability(capabilities, capability);
+  });
+}
+
+export function BusinessPortalNavLinks({
+  showRegister = true,
+  onNavigate,
+  collapsed = false,
+  className,
+  capabilities,
+}: Props) {
   const pathname = usePathname();
-  const items = showRegister ? [...NAV_ITEMS, REGISTER_ITEM] : NAV_ITEMS;
+  const visibleNav = filterNavItems(BUSINESS_NAV_ITEMS, capabilities);
+  const items = showRegister ? [...visibleNav, BUSINESS_REGISTER_ITEM] : visibleNav;
+
+  return (
+    <nav className={cn("flex flex-col gap-1", className)} aria-label="Business portal">
+      {items.map((item) => {
+        const active =
+          "exact" in item && item.exact ? pathname === item.href : pathname.startsWith(item.href);
+
+        return (
+          <NavLinkItem
+            key={item.href}
+            href={item.href}
+            label={item.label}
+            icon={item.icon}
+            active={active}
+            collapsed={collapsed}
+            onNavigate={onNavigate}
+          />
+        );
+      })}
+    </nav>
+  );
+}
+
+function NavLinkItem({
+  href,
+  label,
+  icon: Icon,
+  active,
+  collapsed,
+  onNavigate,
+}: {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  active: boolean;
+  collapsed: boolean;
+  onNavigate?: () => void;
+}) {
+  const tooltip = useSidebarTooltip<HTMLAnchorElement>(label, collapsed);
 
   return (
     <>
-      <nav
-        className="hidden lg:flex lg:flex-col lg:gap-1"
-        aria-label="Business portal"
+      <Link
+        ref={tooltip.ref}
+        href={href}
+        onClick={onNavigate}
+        onMouseEnter={tooltip.onMouseEnter}
+        onMouseLeave={tooltip.onMouseLeave}
+        onFocus={tooltip.onFocus}
+        onBlur={tooltip.onBlur}
+        aria-current={active ? "page" : undefined}
+        className={cn(
+          "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors",
+          collapsed && "justify-center px-0",
+          active ? "bg-white/15 text-white shadow-sm" : "text-white/65 hover:bg-white/8 hover:text-white",
+        )}
       >
-        {items.map((item) => {
-          const active = "exact" in item && item.exact
-            ? pathname === item.href
-            : pathname.startsWith(item.href);
-          const Icon = item.icon;
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors",
-                active
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted hover:bg-subtle hover:text-foreground",
-              )}
-            >
-              <Icon className="h-4 w-4 shrink-0" aria-hidden />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-
-      <nav
-        className="flex gap-2 overflow-x-auto pb-1 lg:hidden"
-        aria-label="Business portal"
-      >
-        {items.map((item) => {
-          const active = "exact" in item && item.exact
-            ? pathname === item.href
-            : pathname.startsWith(item.href);
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-colors",
-                active
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "bg-surface text-muted ring-1 ring-border hover:text-foreground",
-              )}
-            >
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
+        {active ? (
+          <span
+            className="absolute inset-y-1.5 left-0 w-1 rounded-full bg-accent"
+            aria-hidden
+          />
+        ) : null}
+        <Icon
+          className={cn(
+            "h-4 w-4 shrink-0 transition-colors",
+            active ? "text-accent" : "text-white/40 group-hover:text-white/70",
+          )}
+          aria-hidden
+        />
+        {collapsed ? null : (
+          <>
+            {label}
+            {active ? <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden /> : null}
+          </>
+        )}
+      </Link>
+      {tooltip.tooltip}
     </>
   );
 }

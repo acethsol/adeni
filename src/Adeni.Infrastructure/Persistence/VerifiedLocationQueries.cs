@@ -1,7 +1,6 @@
-namespace Adeni.Infrastructure.Tenancy;
+namespace Adeni.Infrastructure.Persistence;
 
 using Adeni.Domain.Tenancy;
-using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 internal static class VerifiedLocationQueries

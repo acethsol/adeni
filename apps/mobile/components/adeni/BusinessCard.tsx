@@ -1,11 +1,7 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { SymbolView } from "expo-symbols";
 import type { DiscoveryBusinessItem } from "@adeni/shared";
-import {
-  formatCategoryLabel,
-  getReviewCountLabel,
-  resolveBusinessCoverImage,
-} from "@adeni/shared";
+import { discoveryCtaLabel } from "@adeni/shared";
 import { useLocale } from "@/contexts/locale-context";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
@@ -75,7 +71,7 @@ export function BusinessCard({ business, onPress }: Props) {
 
         <View style={styles.actions}>
           <Badge label="View profile" tone="accent" />
-          <Badge label="Book now" tone="accent" />
+          <Badge label={discoveryCtaLabel(business.discoveryCta)} tone="accent" />
         </View>
       </Card>
     </Pressable>

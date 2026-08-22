@@ -13,6 +13,7 @@ using Microsoft.Extensions.Options;
 public sealed class BookingsController(
     IBookingService bookings,
     IReviewService reviews,
+    IWaitlistService waitlist,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpPost]
@@ -70,6 +71,21 @@ public sealed class BookingsController(
 
         var result = await reviews.CreateForBookingAsync(auth0Sub, id, request, cancellationToken);
         return ApiResults.FromResult(result, payload => Created($"/api/v1/bookings/{id}/review", payload));
+    }
+
+    [HttpPost("waitlist")]
+    public async Task<IActionResult> JoinWaitlist(
+        [FromBody] JoinWaitlistRequest request,
+        CancellationToken cancellationToken)
+    {
+        var auth0Sub = ResolveCustomerAuth0Sub();
+        if (auth0Sub is null)
+        {
+            return Unauthorized();
+        }
+
+        var result = await waitlist.JoinAsync(auth0Sub, request, cancellationToken);
+        return ApiResults.FromResult(result, payload => Created($"/api/v1/bookings/waitlist/{payload.Id}", payload));
     }
 
     private string? ResolveCustomerAuth0Sub()

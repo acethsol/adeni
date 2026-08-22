@@ -1,10 +1,13 @@
 namespace Adeni.Api.Controllers;
 
+using Adeni.Api.Middleware;
+using Adeni.Application.Auth;
 using Adeni.Application.Booking;
 using Adeni.Application.Discovery;
 using Adeni.Application.Reviews;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 [ApiController]
 [Route("api/v1/discovery")]
@@ -62,7 +65,9 @@ public sealed class BusinessesController(
     IDiscoveryService discovery,
     IServiceCatalogService services,
     IAvailabilityService availability,
-    IReviewService reviews) : ControllerBase
+    IReviewService reviews,
+    IQuoteRequestService quoteRequests,
+    IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet("{slug}")]
     [AllowAnonymous]
@@ -129,5 +134,40 @@ public sealed class BusinessesController(
                 "validation" => BadRequest(new { title = error.Message }),
                 _ => NotFound(new { title = error.Message })
             });
+    }
+
+    [HttpPost("{slug}/quote-requests")]
+    public async Task<IActionResult> CreateQuoteRequest(
+        string slug,
+        [FromBody] CreateQuoteRequestRequest request,
+        CancellationToken cancellationToken)
+    {
+        var auth0Sub = ResolveCustomerAuth0Sub();
+        if (auth0Sub is null)
+        {
+            return Unauthorized();
+        }
+
+        var result = await quoteRequests.CreateBySlugAsync(auth0Sub, slug, request, cancellationToken);
+        return ApiResults.FromResult(
+            result,
+            payload => Created($"/api/v1/businesses/{slug}/quote-requests/{payload.Id}", payload));
+    }
+
+    private string? ResolveCustomerAuth0Sub()
+    {
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            return User.FindFirst("sub")?.Value;
+        }
+
+        if (!auth0Options.Value.Enabled
+            && Request.Headers.TryGetValue(DevCustomerAuthMiddleware.DevAuth0SubHeader, out var devSub)
+            && !string.IsNullOrWhiteSpace(devSub))
+        {
+            return devSub.ToString();
+        }
+
+        return null;
     }
 }

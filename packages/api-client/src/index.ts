@@ -36,6 +36,12 @@ import {
   updateCoverImageRequestSchema,
   updateCoverImageResponseSchema,
   createReviewRequestSchema,
+  createQuoteRequestSchema,
+  quoteRequestResponseSchema,
+  joinWaitlistRequestSchema,
+  initializePaymentRequestSchema,
+  paymentIntentResponseSchema,
+  updateBusinessSettingsRequestSchema,
   reviewResponseSchema,
   publicReviewsResponseSchema,
   updateMarketRequestSchema,
@@ -63,6 +69,12 @@ import {
   type ServiceOffering,
   type SubmitVerificationRequest,
   type UpdateBusinessProfileRequest,
+  type UpdateBusinessSettingsRequest,
+  type CreateQuoteRequest,
+  type QuoteRequestResponse,
+  type JoinWaitlistRequest,
+  type InitializePaymentRequest,
+  type PaymentIntentResponse,
   type CreateReviewRequest,
   type ReviewResponse,
   type PublicReviewsResponse,
@@ -328,6 +340,56 @@ export class AdeniApiClient {
       body: JSON.stringify(body),
     });
     return businessProfileSchema.parse(await response.json());
+  }
+
+  async updateTenantSettings(
+    request: UpdateBusinessSettingsRequest,
+  ): Promise<BusinessProfile> {
+    const body = updateBusinessSettingsRequestSchema.parse(request);
+    const response = await this.request("/api/v1/tenant/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return businessProfileSchema.parse(await response.json());
+  }
+
+  async createQuoteRequest(
+    slug: string,
+    request: CreateQuoteRequest,
+  ): Promise<QuoteRequestResponse> {
+    const body = createQuoteRequestSchema.parse(request);
+    const response = await this.request(
+      `/api/v1/businesses/${encodeURIComponent(slug)}/quote-requests`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+    return quoteRequestResponseSchema.parse(await response.json());
+  }
+
+  async joinWaitlist(request: JoinWaitlistRequest): Promise<{ id: string }> {
+    const body = joinWaitlistRequestSchema.parse(request);
+    const response = await this.request("/api/v1/bookings/waitlist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return (await response.json()) as { id: string };
+  }
+
+  async initializePayment(
+    request: InitializePaymentRequest,
+  ): Promise<PaymentIntentResponse> {
+    const body = initializePaymentRequestSchema.parse(request);
+    const response = await this.request("/api/v1/payments/initialize", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return paymentIntentResponseSchema.parse(await response.json());
   }
 
   async createCoverUploadUrl(

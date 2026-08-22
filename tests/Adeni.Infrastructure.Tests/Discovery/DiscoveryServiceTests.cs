@@ -1,12 +1,15 @@
 namespace Adeni.Infrastructure.Tests.Discovery;
 
 using Adeni.Application.Caching;
+using Adeni.Application.Catalog;
 using Adeni.Application.Discovery;
 using Adeni.Application.Markets;
 using Adeni.Application.Reviews;
 using Adeni.Application.Storage;
 using Adeni.Domain.Booking;
 using Adeni.Infrastructure.Caching;
+using Adeni.Infrastructure.Tests.Catalog;
+using Adeni.Infrastructure.Catalog;
 using Adeni.Infrastructure.Context;
 using Adeni.Infrastructure.Discovery;
 using Adeni.Infrastructure.Markets;
@@ -214,6 +217,7 @@ public sealed class DiscoveryServiceTests
         services.AddSingleton<ICacheService, DistributedCacheService>();
         services.AddSingleton<MarketCatalogState>();
         services.AddSingleton<IMarketCatalog, SyncMarketCatalog>();
+        services.AddCategoryWorkflowCatalog();
         services.AddScoped<TenantContext>();
         services.AddScoped<Application.Abstractions.ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
         services.AddDbContext<AdeniDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));

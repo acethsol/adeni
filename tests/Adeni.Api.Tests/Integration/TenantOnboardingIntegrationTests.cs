@@ -31,7 +31,8 @@ public sealed class TenantOnboardingIntegrationTests : IClassFixture<WebApplicat
     [Fact]
     public async Task Register_submit_and_profile_flow_works_in_testing()
     {
-        const string auth0Sub = "auth0|integration-owner";
+        var slug = $"integration-{Guid.NewGuid():N}"[..24].TrimEnd('-');
+        var auth0Sub = $"auth0|integration-owner-{Guid.NewGuid():N}";
         var client = _factory.CreateClient();
         client.DefaultRequestHeaders.Add(DevBusinessAuthMiddleware.DevAuth0SubHeader, auth0Sub);
 
@@ -40,7 +41,7 @@ public sealed class TenantOnboardingIntegrationTests : IClassFixture<WebApplicat
             "hair-salons",
             "+2348098765432",
             new BusinessLocationRequest(
-                "integration-salon",
+                slug,
                 "Victoria Island",
                 "21 Ozumba Mbadiwe",
                 "Victoria Island",

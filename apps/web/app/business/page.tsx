@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import {
   ArrowRight,
   CalendarDays,
@@ -7,44 +8,51 @@ import {
   Scissors,
   ShieldCheck,
   Sparkles,
+  Star,
   UserCircle,
+  Wallet,
 } from "lucide-react";
 import { formatTenantStatus } from "@adeni/shared";
-import { AuthSetupCallout } from "@/components/auth-setup-callout";
+import { BusinessOverviewCharts } from "@/components/business-overview-charts";
 import { BusinessPortalCard } from "@/components/business-portal-card";
 import { BusinessPortalShell } from "@/components/business-portal-shell";
 import { Button } from "@/components/ui/button";
-import {
-  canAccessBusinessPortal,
-  requireBusinessPortalAccess,
-} from "@/lib/business-access";
 import { createBusinessApiClient } from "@/lib/business-api";
 
-export default async function BusinessPortalPage() {
-  if (!canAccessBusinessPortal()) {
-    return (
-      <BusinessPortalShell
-        title="Grow with Adeni"
-        description="Manage bookings, services, and your public profile — all in one place."
-      >
-        <AuthSetupCallout />
-        <BusinessPortalCard className="mt-6 max-w-xl">
-          <p className="text-sm text-muted">
-            For local dev without Auth0, set{" "}
-            <code className="text-xs">DEV_BUSINESS_AUTH0_SUB=auth0|local-business</code> in{" "}
-            <code className="text-xs">.env.local</code> (linked to{" "}
-            <code className="text-xs">lekki-cuts</code> in dev seed).
-          </p>
-        </BusinessPortalCard>
-      </BusinessPortalShell>
-    );
+const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+function startOfWeek(date: Date): Date {
+  const result = new Date(date);
+  const day = result.getDay();
+  const diff = (day === 0 ? -6 : 1) - day;
+  result.setDate(result.getDate() + diff);
+  result.setHours(0, 0, 0, 0);
+  return result;
+}
+
+function formatCurrency(amount: number, currency: string) {
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  } catch {
+    return `${currency} ${amount.toFixed(0)}`;
   }
+}
 
-  const access = await requireBusinessPortalAccess("/business");
-
+export default async function BusinessPortalPage() {
   let profile = null;
   let bookingsCount = 0;
   let servicesCount = 0;
+  let charts: {
+    weekly: { label: string; count: number; isToday: boolean }[];
+    statusBreakdown: { status: number; count: number }[];
+    totalBookings: number;
+  } | null = null;
+  let revenueLabel: string | null = null;
+  let rating: { avg: number | null; count: number } | null = null;
   let loadError: string | null = null;
 
   try {
@@ -56,6 +64,42 @@ export default async function BusinessPortalPage() {
     ]);
     bookingsCount = bookings.filter((item) => item.status === 0).length;
     servicesCount = services.filter((item) => item.isActive).length;
+
+    const weekStart = startOfWeek(new Date());
+    const weekly = DAY_LABELS.map((label, index) => {
+      const dayDate = new Date(weekStart);
+      dayDate.setDate(weekStart.getDate() + index);
+      const count = bookings.filter((booking) => {
+        if (booking.status === 2 || booking.status === 3) return false;
+        const startDate = new Date(booking.startAt);
+        return startDate.toDateString() === dayDate.toDateString();
+      }).length;
+      return { label, count, isToday: dayDate.toDateString() === new Date().toDateString() };
+    });
+
+    const statusBreakdown = [0, 1, 2, 3].map((status) => ({
+      status,
+      count: bookings.filter((item) => item.status === status).length,
+    }));
+
+    charts = { weekly, statusBreakdown, totalBookings: bookings.length };
+
+    const serviceById = new Map(services.map((service) => [service.id, service]));
+    const confirmedRevenue = bookings
+      .filter((item) => item.status === 1)
+      .reduce((sum, item) => sum + (serviceById.get(item.serviceOfferingId)?.priceAmount ?? 0), 0);
+    const currency = services[0]?.currency ?? "NGN";
+    revenueLabel = formatCurrency(confirmedRevenue, currency);
+
+    const primaryLocation = profile.locations.find((item) => item.isPrimary) ?? profile.locations[0];
+    if (primaryLocation) {
+      try {
+        const publicProfile = await client.getBusinessProfile(primaryLocation.slug);
+        rating = { avg: publicProfile.ratingAvg ?? null, count: publicProfile.reviewCount ?? 0 };
+      } catch {
+        rating = null;
+      }
+    }
   } catch {
     loadError =
       "Could not load business data. Ensure the API is running and your business account is linked.";
@@ -67,25 +111,14 @@ export default async function BusinessPortalPage() {
     <BusinessPortalShell
       title="Overview"
       description="Your command center for bookings, services, and customer-facing profile."
-      devMode={access.mode === "dev"}
-      hasBusiness={Boolean(profile)}
       actions={
         profile && primaryLocation ? (
-          <Button href={`/businesses/${primaryLocation.slug}`} variant="secondary">
+          <Button href={`/businesses/${primaryLocation.slug}`} variant="secondary" target="_blank">
             View public profile
           </Button>
         ) : undefined
       }
     >
-      {access.session ? (
-        <p className="mb-6 text-sm text-muted">
-          Signed in as{" "}
-          <span className="font-semibold text-foreground">
-            {access.session.name ?? access.session.email ?? "business user"}
-          </span>
-        </p>
-      ) : null}
-
       {loadError ? (
         <BusinessPortalCard>
           <p className="text-sm text-muted">{loadError}</p>
@@ -95,12 +128,8 @@ export default async function BusinessPortalPage() {
         </BusinessPortalCard>
       ) : profile ? (
         <div className="space-y-8">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <StatCard
-              label="Status"
-              value={formatTenantStatus(profile.status)}
-              hint="Verification progress"
-            />
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            <StatCard label="Status" value={formatTenantStatus(profile.status)} hint="Verification progress" />
             <StatCard
               label="Pending bookings"
               value={String(bookingsCount)}
@@ -111,7 +140,27 @@ export default async function BusinessPortalPage() {
               value={String(servicesCount)}
               hint="Visible to customers"
             />
+            <StatCard
+              label="Confirmed revenue"
+              value={revenueLabel ?? "—"}
+              hint="From confirmed bookings"
+              icon={<Wallet className="h-4 w-4" aria-hidden />}
+            />
+            <StatCard
+              label="Rating"
+              value={rating?.avg ? rating.avg.toFixed(1) : "New"}
+              hint={rating?.count ? `${rating.count} review${rating.count === 1 ? "" : "s"}` : "No reviews yet"}
+              icon={<Star className="h-4 w-4" aria-hidden />}
+            />
           </div>
+
+          {charts ? (
+            <BusinessOverviewCharts
+              weekly={charts.weekly}
+              statusBreakdown={charts.statusBreakdown}
+              totalBookings={charts.totalBookings}
+            />
+          ) : null}
 
           <BusinessPortalCard padding="lg" className="relative overflow-hidden">
             <div
@@ -151,7 +200,7 @@ export default async function BusinessPortalPage() {
             <h3 className="text-sm font-bold uppercase tracking-widest text-accent">
               Quick actions
             </h3>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <QuickAction
                 href="/business/bookings"
                 icon={CalendarDays}
@@ -179,8 +228,8 @@ export default async function BusinessPortalPage() {
               <QuickAction
                 href="/business/profile"
                 icon={UserCircle}
-                title="Profile & verification"
-                description="Photos, description, and trust badge."
+                title="Profile & reviews"
+                description="Photos, description, and customer feedback."
               />
               <QuickAction
                 href="/business/profile"
@@ -200,14 +249,19 @@ function StatCard({
   label,
   value,
   hint,
+  icon,
 }: {
   label: string;
   value: string;
   hint: string;
+  icon?: ReactNode;
 }) {
   return (
     <BusinessPortalCard>
-      <p className="text-xs font-bold uppercase tracking-wider text-accent">{label}</p>
+      <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-accent">
+        {icon}
+        {label}
+      </p>
       <p className="mt-2 text-3xl font-bold tracking-tight text-foreground">{value}</p>
       <p className="mt-1 text-xs text-muted">{hint}</p>
     </BusinessPortalCard>

@@ -1,6 +1,6 @@
 # Adeni — Product Requirements Document (PRD v1)
 
-> **Status:** Build specification | **Version:** 1.1 | **Parent:** [Adeni Product Bible](https://aceth.atlassian.net/wiki/spaces/SD/pages/26279937) | **Compliance:** [SOC 2 Compliance Framework v1](https://aceth.atlassian.net/wiki/spaces/SD/pages/26247170)
+> **Status:** Build specification | **Version:** 1.1 | **Parent:** [Adeni Product Bible](https://aceth.atlassian.net/wiki/spaces/SD/pages/26279937) | **Strategy:** [product-strategy.md](./product-strategy.md) | **Compliance:** [SOC 2 Compliance Framework v1](https://aceth.atlassian.net/wiki/spaces/SD/pages/26247170)
 
 ---
 

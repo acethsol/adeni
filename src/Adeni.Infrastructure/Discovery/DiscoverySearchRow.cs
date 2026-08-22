@@ -29,4 +29,6 @@ internal sealed class DiscoverySearchRow
     public double? RatingAvg { get; set; }
 
     public int ReviewCount { get; set; }
+
+    public int BusinessType { get; set; }
 }

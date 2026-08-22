@@ -5,7 +5,6 @@ using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
-using Adeni.Infrastructure.Tenancy;
 using Microsoft.EntityFrameworkCore;
 
 public sealed class AvailabilityService(
@@ -182,6 +181,7 @@ public sealed class AvailabilityService(
 
         var slots = SlotGenerator
             .GenerateSlotStarts(schedulingTimeZone, rules, rangeStart, rangeEnd, service.DurationMinutes)
+            .Where(start => start > DateTimeOffset.UtcNow)
             .Where(start =>
             {
                 var end = start.AddMinutes(service.DurationMinutes);

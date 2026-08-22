@@ -16,7 +16,9 @@ public sealed record DiscoveryBusinessItem(
     int ReviewCount,
     double DistanceKm,
     double Latitude,
-    double Longitude);
+    double Longitude,
+    string BusinessType = "scheduled_appointment",
+    string DiscoveryCta = "book_now");
 
 public sealed record DiscoveryResult(
     IReadOnlyList<DiscoveryBusinessItem> Items,
@@ -40,7 +42,10 @@ public sealed record PublicBusinessProfile(
     double? RatingAvg,
     int ReviewCount,
     double? Latitude,
-    double? Longitude);
+    double? Longitude,
+    string BusinessType = "scheduled_appointment",
+    IReadOnlyList<string>? Capabilities = null,
+    string DiscoveryCta = "book_now");
 
 public interface IDiscoveryService
 {

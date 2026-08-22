@@ -1,23 +1,8 @@
-import { AuthSetupCallout } from "@/components/auth-setup-callout";
 import { BusinessPortalShell } from "@/components/business-portal-shell";
 import { BusinessServicesManager } from "@/components/business-services-manager";
-import {
-  canAccessBusinessPortal,
-  requireBusinessPortalAccess,
-} from "@/lib/business-access";
 import { createBusinessApiClient } from "@/lib/business-api";
 
 export default async function BusinessServicesPage() {
-  if (!canAccessBusinessPortal()) {
-    return (
-      <BusinessPortalShell title="Services" description="Manage your bookable services.">
-        <AuthSetupCallout />
-      </BusinessPortalShell>
-    );
-  }
-
-  const access = await requireBusinessPortalAccess("/business/services");
-
   let services: Awaited<
     ReturnType<Awaited<ReturnType<typeof createBusinessApiClient>>["getTenantServices"]>
   > = [];
@@ -50,11 +35,9 @@ export default async function BusinessServicesPage() {
     <BusinessPortalShell
       title="Services"
       description="Add, edit, and deactivate bookable services on your public profile."
-      devMode={access.mode === "dev"}
-      hasBusiness
     >
       {loadError ? (
-        <p className="text-sm text-[#1b4332]/70">{loadError}</p>
+        <p className="text-sm text-muted">{loadError}</p>
       ) : (
         <BusinessServicesManager
           initialServices={services}

@@ -1,6 +1,7 @@
 namespace Adeni.Infrastructure.Discovery;
 
 using Adeni.Application.Caching;
+using Adeni.Application.Catalog;
 using Adeni.Application.Discovery;
 using Adeni.Application.Markets;
 using Adeni.Application.Security;
@@ -15,7 +16,8 @@ public sealed class DiscoveryService(
     ICacheService cache,
     IFileStorage fileStorage,
     Application.Reviews.IReviewService reviewService,
-    IMarketCatalog marketCatalog) : IDiscoveryService
+    IMarketCatalog marketCatalog,
+    IBusinessCapabilitiesService businessCapabilitiesService) : IDiscoveryService
 {
     private const int DefaultPageSize = 20;
     private const int MaxPageSize = 50;
@@ -261,6 +263,7 @@ public sealed class DiscoveryService(
                         bl."Name" AS "LocationName",
                         bl."Slug" AS "Slug",
                         bp."CategorySlug" AS "CategorySlug",
+                        bp."BusinessType" AS "BusinessType",
                         bl."Area" AS "Area",
                         bl."MarketId" AS "MarketId",
                         bp."CoverImageKey" AS "CoverImageKey",
@@ -301,6 +304,7 @@ public sealed class DiscoveryService(
                     "LocationName",
                     "Slug",
                     "CategorySlug",
+                    "BusinessType",
                     "Area",
                     "MarketId",
                     "CoverImageKey",
@@ -333,6 +337,7 @@ public sealed class DiscoveryService(
                         bl."Name" AS "LocationName",
                         bl."Slug" AS "Slug",
                         bp."CategorySlug" AS "CategorySlug",
+                        bp."BusinessType" AS "BusinessType",
                         bl."Area" AS "Area",
                         bl."MarketId" AS "MarketId",
                         bp."CoverImageKey" AS "CoverImageKey",
@@ -371,6 +376,7 @@ public sealed class DiscoveryService(
                     "LocationName",
                     "Slug",
                     "CategorySlug",
+                    "BusinessType",
                     "Area",
                     "MarketId",
                     "CoverImageKey",
@@ -402,6 +408,7 @@ public sealed class DiscoveryService(
         var items = new List<DiscoveryBusinessItem>(rows.Count);
         foreach (var row in rows)
         {
+            var businessType = (BusinessType)row.BusinessType;
             items.Add(new DiscoveryBusinessItem(
                 row.LocationId,
                 row.TenantId,
@@ -416,7 +423,9 @@ public sealed class DiscoveryService(
                 row.ReviewCount,
                 row.DistanceKm,
                 row.Latitude,
-                row.Longitude));
+                row.Longitude,
+                BusinessTypeMapping.ToApiValue(businessType),
+                businessCapabilitiesService.GetDiscoveryCta(businessType)));
         }
 
         return new DiscoveryResult(items, page, pageSize, totalCount);
@@ -524,7 +533,9 @@ public sealed class DiscoveryService(
                 row.summary?.ReviewCount ?? 0,
                 Math.Round(row.distanceKm, 2),
                 row.location.Latitude!.Value,
-                row.location.Longitude!.Value));
+                row.location.Longitude!.Value,
+                BusinessTypeMapping.ToApiValue(row.profile.BusinessType),
+                businessCapabilitiesService.GetDiscoveryCta(row.profile.BusinessType)));
         }
 
         return new DiscoveryResult(items, page, pageSize, totalCount);
@@ -585,6 +596,9 @@ public sealed class DiscoveryService(
             summary?.RatingAvg,
             summary?.ReviewCount ?? 0,
             business.location.Latitude,
-            business.location.Longitude);
+            business.location.Longitude,
+            BusinessTypeMapping.ToApiValue(business.profile.BusinessType),
+            businessCapabilitiesService.GetCapabilities(business.profile.BusinessType, business.profile.CategorySlug),
+            businessCapabilitiesService.GetDiscoveryCta(business.profile.BusinessType));
     }
 }

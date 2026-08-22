@@ -74,6 +74,22 @@ public sealed class TenantController(
         return MapResult(result, Ok);
     }
 
+    [HttpPatch("settings")]
+    public async Task<IActionResult> UpdateSettings(
+        [FromBody] UpdateBusinessSettingsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var auth0Sub = ResolveAuth0Sub();
+        var tenantId = ResolveTenantId();
+        if (auth0Sub is null || tenantId is null)
+        {
+            return Unauthorized();
+        }
+
+        var result = await onboardingService.UpdateSettingsAsync(tenantId.Value, request, auth0Sub, cancellationToken);
+        return MapResult(result, Ok);
+    }
+
     [HttpPost("verification")]
     public async Task<IActionResult> SubmitVerification(
         [FromBody] SubmitVerificationRequest request,

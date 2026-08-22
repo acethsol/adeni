@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import type { PublicBusinessProfile, ServiceOffering } from "@adeni/shared";
-import { formatCategoryLabel, resolveBusinessCoverImage } from "@adeni/shared";
+import { formatCategoryLabel, resolveBusinessCoverImage, shouldShowQuoteFlow } from "@adeni/shared";
 import { BookingPanel } from "@/components/adeni/BookingPanel";
+import { QuoteRequestPanel } from "@/components/adeni/QuoteRequestPanel";
 import { Screen } from "@/components/adeni/Screen";
 import { createPublicApiClient } from "@/lib/api";
 import { adeniTheme } from "@/lib/theme";
@@ -170,7 +171,11 @@ export default function BusinessProfileScreen() {
 
 
 
-            <BookingPanel slug={profile.slug} tenantId={profile.tenantId} services={services} />
+            {shouldShowQuoteFlow(profile) ? (
+              <QuoteRequestPanel slug={profile.slug} client={createPublicApiClient()} />
+            ) : (
+              <BookingPanel slug={profile.slug} tenantId={profile.tenantId} services={services} />
+            )}
 
           </ScrollView>
         ) : null}

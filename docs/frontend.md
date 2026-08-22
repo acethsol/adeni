@@ -1,6 +1,6 @@
 # Adeni frontend monorepo
 
-Next.js (web) + Expo (mobile) clients for the Adeni marketplace API.
+Next.js (web) + Expo (mobile) clients for the Adeni marketplace API. Backend is a **modular monolith** — see [architecture.md](./architecture.md).
 
 ## Structure
 

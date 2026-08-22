@@ -32,6 +32,8 @@ export const discoveryBusinessItemSchema = z.object({
   distanceKm: z.number(),
   latitude: z.number(),
   longitude: z.number(),
+  businessType: z.enum(["scheduled_appointment", "quote_request"]).optional(),
+  discoveryCta: z.enum(["book_now", "get_quote"]).optional(),
 });
 
 export const discoveryResponseSchema = z.object({
@@ -65,6 +67,9 @@ export const publicBusinessProfileSchema = z.object({
   reviewCount: z.number().int().nonnegative().optional(),
   latitude: z.number().nullable(),
   longitude: z.number().nullable(),
+  businessType: z.enum(["scheduled_appointment", "quote_request"]).optional(),
+  capabilities: z.array(z.string()).optional(),
+  discoveryCta: z.enum(["book_now", "get_quote"]).optional(),
 });
 
 export type PublicBusinessProfile = z.infer<typeof publicBusinessProfileSchema>;
@@ -435,6 +440,9 @@ export const businessProfileSchema = z.object({
     .nullable()
     .optional()
     .transform((value) => (value === "" ? null : value)),
+  businessType: z.enum(["scheduled_appointment", "quote_request"]).optional(),
+  capabilities: z.array(z.string()).optional(),
+  autoConfirmBookings: z.boolean().optional(),
 });
 
 export type BusinessProfile = z.infer<typeof businessProfileSchema>;
@@ -449,6 +457,62 @@ export const updateBusinessProfileRequestSchema = z.object({
 export type UpdateBusinessProfileRequest = z.infer<
   typeof updateBusinessProfileRequestSchema
 >;
+
+export const updateBusinessSettingsRequestSchema = z.object({
+  autoConfirmBookings: z.boolean(),
+});
+
+export type UpdateBusinessSettingsRequest = z.infer<
+  typeof updateBusinessSettingsRequestSchema
+>;
+
+export const createQuoteRequestSchema = z.object({
+  description: z.string().min(10).max(2000),
+  serviceAddress: z.string().max(500).optional(),
+});
+
+export type CreateQuoteRequest = z.infer<typeof createQuoteRequestSchema>;
+
+export const quoteRequestResponseSchema = z.object({
+  id: z.string(),
+  tenantId: z.string(),
+  description: z.string(),
+  serviceAddress: z.string().nullable().optional(),
+  createdAt: z.string(),
+});
+
+export type QuoteRequestResponse = z.infer<typeof quoteRequestResponseSchema>;
+
+export const joinWaitlistRequestSchema = z.object({
+  tenantId: z.string().uuid(),
+  serviceOfferingId: z.string().uuid(),
+  preferredFrom: z.string().optional(),
+  preferredTo: z.string().optional(),
+});
+
+export type JoinWaitlistRequest = z.infer<typeof joinWaitlistRequestSchema>;
+
+export const initializePaymentRequestSchema = z.object({
+  tenantId: z.string().uuid(),
+  bookingId: z.string().uuid().optional(),
+  amount: z.number().positive(),
+  currency: z.string().length(3),
+});
+
+export type InitializePaymentRequest = z.infer<typeof initializePaymentRequestSchema>;
+
+export const paymentIntentResponseSchema = z.object({
+  id: z.string(),
+  tenantId: z.string(),
+  bookingId: z.string().nullable().optional(),
+  amount: z.number(),
+  currency: z.string(),
+  status: z.string(),
+  checkoutUrl: z.string(),
+  providerReference: z.string(),
+});
+
+export type PaymentIntentResponse = z.infer<typeof paymentIntentResponseSchema>;
 
 export const mediaUploadPurposeSchema = z.enum(["cover", "Cover"]);
 

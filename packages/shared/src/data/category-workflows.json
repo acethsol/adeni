@@ -1,0 +1,48 @@
+{
+  "defaultBusinessType": "scheduled_appointment",
+  "businessTypes": {
+    "scheduled_appointment": {
+      "discoveryCta": "book_now"
+    },
+    "quote_request": {
+      "discoveryCta": "get_quote",
+      "capabilities": [
+        "quotes",
+        "on_site_address",
+        "photo_upload",
+        "license_badge",
+        "deposits",
+        "reviews"
+      ]
+    }
+  },
+  "categories": {
+    "barbers": {
+      "defaultBusinessType": "scheduled_appointment",
+      "capabilities": ["calendar", "fixed_pricing", "reviews"]
+    },
+    "hair-salons": {
+      "defaultBusinessType": "scheduled_appointment",
+      "capabilities": ["calendar", "fixed_pricing", "reviews", "multi_service"]
+    },
+    "nail-spa": {
+      "defaultBusinessType": "scheduled_appointment",
+      "capabilities": ["calendar", "fixed_pricing", "reviews", "multi_service"]
+    },
+    "makeup-brows": {
+      "defaultBusinessType": "scheduled_appointment",
+      "capabilities": ["calendar", "fixed_pricing", "reviews", "multi_service"]
+    },
+    "plumbers": {
+      "defaultBusinessType": "quote_request"
+    },
+    "electricians": {
+      "defaultBusinessType": "quote_request"
+    },
+    "cleaning": {
+      "defaultBusinessType": "scheduled_appointment",
+      "capabilities": ["calendar", "fixed_pricing", "reviews", "service_area", "on_site_address"]
+    }
+  },
+  "appointmentFallbackCapabilities": ["calendar", "fixed_pricing", "reviews"]
+}

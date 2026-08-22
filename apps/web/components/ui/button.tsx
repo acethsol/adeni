@@ -26,6 +26,8 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: Variant;
   size?: Size;
   href?: string;
+  target?: string;
+  rel?: string;
   loading?: boolean;
   loadingLabel?: string;
   children: ReactNode;
@@ -35,6 +37,8 @@ export function Button({
   variant = "primary",
   size = "md",
   href,
+  target,
+  rel,
   className,
   loading = false,
   loadingLabel,
@@ -52,7 +56,7 @@ export function Button({
 
   if (href) {
     return (
-      <Link href={href} className={classes}>
+      <Link href={href} target={target} rel={target === "_blank" ? rel ?? "noopener noreferrer" : rel} className={classes}>
         {children}
       </Link>
     );

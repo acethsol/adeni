@@ -1,12 +1,16 @@
 namespace Adeni.Infrastructure.Tests.Tenancy;
 
+using Adeni.Application.Catalog;
+using Adeni.Application.Markets;
 using Adeni.Application.Tenancy;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Admin;
 using Adeni.Infrastructure.Auditing;
 using Adeni.Infrastructure.Caching;
+using Adeni.Infrastructure.Tests.Catalog;
 using Adeni.Infrastructure.Catalog;
 using Adeni.Infrastructure.Context;
+using Adeni.Infrastructure.Markets;
 using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Tenancy;
 using Adeni.Application.Storage;
@@ -186,6 +190,9 @@ public sealed class BusinessOnboardingServiceTests
         services.AddDistributedMemoryCache();
         services.AddSingleton<Application.Caching.ICacheService, DistributedCacheService>();
         services.AddSingleton<Application.Catalog.ICategoryService, CategoryService>();
+        services.AddSingleton<MarketCatalogState>();
+        services.AddSingleton<IMarketCatalog, SyncMarketCatalog>();
+        services.AddCategoryWorkflowCatalog();
         services.AddScoped<TenantContext>();
         services.AddScoped<Application.Abstractions.ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
         services.AddSingleton<Application.Abstractions.ICorrelationContext, CorrelationContext>();
@@ -194,6 +201,11 @@ public sealed class BusinessOnboardingServiceTests
         services.AddSingleton<IFileStorage, FakeFileStorage>();
         services.AddScoped<BusinessOnboardingService>();
         services.AddScoped<AdminBusinessService>();
-        return services.BuildServiceProvider();
+        var provider = services.BuildServiceProvider();
+        provider.GetRequiredService<MarketCatalogState>().Update(
+        [
+            new MarketDefinition("lagos", "Lagos", "NG", "NGN", "Africa/Lagos", new MarketLocation(6.5244, 3.3792), ["en"], true, null),
+        ]);
+        return provider;
     }
 }

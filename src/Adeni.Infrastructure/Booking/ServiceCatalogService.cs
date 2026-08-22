@@ -5,7 +5,6 @@ using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
-using Adeni.Infrastructure.Tenancy;
 using Microsoft.EntityFrameworkCore;
 
 public sealed class ServiceCatalogService(AdeniDbContext dbContext) : IServiceCatalogService

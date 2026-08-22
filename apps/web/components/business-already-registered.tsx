@@ -89,6 +89,7 @@ export function BusinessAlreadyRegistered({
             {primarySlug ? (
               <Button
                 href={`/businesses/${primarySlug}`}
+                target="_blank"
                 variant="secondary"
                 size="lg"
                 className="gap-2"

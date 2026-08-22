@@ -2,7 +2,9 @@ namespace Adeni.Infrastructure.Booking;
 
 using Adeni.Application.Booking;
 using Adeni.Application.Caching;
+using Adeni.Application.Events;
 using Adeni.Domain.Booking;
+using Adeni.Domain.Booking.Events;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
 using Adeni.Domain.Tenancy;
@@ -13,7 +15,8 @@ public sealed class BookingService(
     AdeniDbContext dbContext,
     IAvailabilityService availabilityService,
     IDistributedLockProvider lockProvider,
-    Application.Reviews.IReviewService reviewService) : IBookingService
+    Application.Reviews.IReviewService reviewService,
+    IDomainEventCollector domainEventCollector) : IBookingService
 {
     public async Task<Result<BookingResponse>> CreateAsync(
         string customerAuth0Sub,
@@ -27,8 +30,13 @@ public sealed class BookingService(
 
         if (request.StartAt <= DateTimeOffset.UtcNow)
         {
-            return Result.Failure<BookingResponse>(Error.Validation("Booking start must be in the future."));
+            return Result.Failure<BookingResponse>(
+                Error.Validation("That time slot has passed. Please choose a new time."));
         }
+
+        var profile = await dbContext.BusinessProfiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.TenantId == request.TenantId, cancellationToken);
 
         var tenant = await dbContext.Tenants
             .AsNoTracking()
@@ -88,10 +96,17 @@ public sealed class BookingService(
 
             if (!isAvailable)
             {
+                if (request.StartAt <= DateTimeOffset.UtcNow)
+                {
+                    return Result.Failure<BookingResponse>(
+                        Error.Validation("That time slot has passed. Please choose a new time."));
+                }
+
                 return Result.Failure<BookingResponse>(Error.Conflict("That time slot is no longer available."));
             }
 
             var now = DateTimeOffset.UtcNow;
+            var autoConfirm = profile?.AutoConfirmBookings == true;
             var booking = new BookingRecord
             {
                 Id = Guid.NewGuid(),
@@ -100,13 +115,23 @@ public sealed class BookingService(
                 CustomerId = customer.Id,
                 StartAt = request.StartAt,
                 EndAt = request.StartAt.AddMinutes(service.DurationMinutes),
-                Status = BookingStatus.Pending,
+                Status = autoConfirm ? BookingStatus.Confirmed : BookingStatus.Pending,
                 CustomerNotes = string.IsNullOrWhiteSpace(request.CustomerNotes)
                     ? null
                     : request.CustomerNotes.Trim(),
                 CreatedAt = now,
                 UpdatedAt = now
             };
+
+            if (autoConfirm)
+            {
+                domainEventCollector.Add(new BookingConfirmed(
+                    booking.Id,
+                    booking.TenantId,
+                    booking.CustomerId,
+                    booking.StartAt,
+                    now));
+            }
 
             dbContext.Bookings.Add(booking);
             await dbContext.SaveChangesAsync(cancellationToken);
@@ -248,6 +273,12 @@ public sealed class BookingService(
 
         row.booking.Status = BookingStatus.Cancelled;
         row.booking.UpdatedAt = DateTimeOffset.UtcNow;
+        domainEventCollector.Add(new BookingCancelled(
+            row.booking.Id,
+            row.booking.TenantId,
+            row.booking.CustomerId,
+            row.booking.StartAt,
+            DateTimeOffset.UtcNow));
         await dbContext.SaveChangesAsync(cancellationToken);
 
         var slug = await dbContext.BusinessLocations
@@ -287,6 +318,27 @@ public sealed class BookingService(
         booking.Status = status;
         booking.BusinessNotes = string.IsNullOrWhiteSpace(businessNotes) ? null : businessNotes.Trim();
         booking.UpdatedAt = DateTimeOffset.UtcNow;
+
+        var now = DateTimeOffset.UtcNow;
+        switch (status)
+        {
+            case BookingStatus.Confirmed:
+                domainEventCollector.Add(new BookingConfirmed(
+                    booking.Id,
+                    booking.TenantId,
+                    booking.CustomerId,
+                    booking.StartAt,
+                    now));
+                break;
+            case BookingStatus.Rejected:
+                domainEventCollector.Add(new BookingRejected(
+                    booking.Id,
+                    booking.TenantId,
+                    booking.CustomerId,
+                    booking.BusinessNotes,
+                    now));
+                break;
+        }
 
         var serviceName = await dbContext.ServiceOfferings
             .AsNoTracking()

@@ -1,17 +1,13 @@
 import { useEffect, useState } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import type { AdeniApiError } from "@adeni/api-client";
 import type { Category, MarketConfig } from "@adeni/shared";
 import { listMarkets } from "@adeni/shared";
-import { Screen } from "@/components/adeni/Screen";
+import { Screen, ScreenHeader } from "@/components/adeni/Screen";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Callout } from "@/components/ui/Callout";
 import { useAuth } from "@/contexts/auth-context";
 import { createPublicApiClient } from "@/lib/api";
 import { isAuth0Configured } from "@/lib/auth/config";
@@ -73,7 +69,7 @@ export default function BusinessRegisterScreen() {
 
   useEffect(() => {
     if (!authLoading && hasBusinessAccount) {
-      router.replace("/business/profile");
+      router.replace("/business");
     }
   }, [authLoading, hasBusinessAccount, router]);
 
@@ -98,237 +94,137 @@ export default function BusinessRegisterScreen() {
       });
 
       await refreshBusinessContext();
-      router.replace("/business/profile");
-    } catch (err) {
-      const apiError = err as AdeniApiError;
-      setError(
-        apiError.message === "Request failed: /api/v1/tenant/register"
-          ? "Registration failed. Check your details and try again."
-          : "Registration failed. Check your details and try again.",
-      );
+      router.replace("/business");
+    } catch {
+      setError("Registration failed. Check your details and try again.");
     } finally {
       setSubmitting(false);
     }
   }
 
-  const marketOptions = markets;
-
   return (
     <Screen loading={authLoading}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Register your business</Text>
-        <Text style={styles.subtitle}>
-          Create your Adeni profile and submit verification from the next screen.
-        </Text>
+        <ScreenHeader
+          eyebrow="Business portal"
+          title="Register your business"
+          subtitle="Create your Adeni profile and submit verification from the next screen."
+        />
 
-        {!isBusinessPortalEnabled ? (
-          <View style={styles.callout}>
-            <Text style={styles.calloutTitle}>Sign in required</Text>
-            <Text style={styles.calloutBody}>
+        <View style={styles.section}>
+          {!isBusinessPortalEnabled ? (
+            <Callout title="Sign in required">
               {isAuth0Configured()
                 ? "Sign in from the Account tab to register a business."
                 : "Set EXPO_PUBLIC_DEV_BUSINESS_AUTH0_SUB in .env for local business mode, or sign in with Auth0."}
-            </Text>
-          </View>
-        ) : null}
+            </Callout>
+          ) : null}
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+          {error ? <Callout tone="error">{error}</Callout> : null}
 
-        {isBusinessPortalEnabled ? (
-          <>
-            <FormField label="Business name" value={businessName} onChangeText={setBusinessName} />
-            <Text style={styles.fieldLabel}>Category</Text>
-            <View style={styles.chipRow}>
-              {categories.map((category) => (
-                <Pressable
-                  key={category.slug}
-                  onPress={() => setCategorySlug(category.slug)}
-                  style={[
-                    styles.chip,
-                    categorySlug === category.slug && styles.chipActive,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      categorySlug === category.slug && styles.chipTextActive,
-                    ]}
+          {isBusinessPortalEnabled ? (
+            <Card style={styles.formCard}>
+              <Input label="Business name" value={businessName} onChangeText={setBusinessName} />
+
+              <Text style={styles.fieldLabel}>Category</Text>
+              <View style={styles.chipRow}>
+                {categories.map((category) => (
+                  <Pressable
+                    key={category.slug}
+                    onPress={() => setCategorySlug(category.slug)}
+                    style={[styles.chip, categorySlug === category.slug && styles.chipActive]}
                   >
-                    {category.name}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-            <FormField label="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
-            <FormField
-              label="Description (optional)"
-              value={description}
-              onChangeText={setDescription}
-              multiline
-            />
+                    <Text
+                      style={[styles.chipText, categorySlug === category.slug && styles.chipTextActive]}
+                    >
+                      {category.name}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
 
-            <Text style={styles.sectionTitle}>Primary location</Text>
-            <FormField label="Public slug" value={slug} onChangeText={setSlug} autoCapitalize="none" />
-            <FormField
-              label="Location name (optional)"
-              value={locationName}
-              onChangeText={setLocationName}
-            />
-            <FormField label="Address" value={addressLine} onChangeText={setAddressLine} />
-            <FormField label="Area" value={area} onChangeText={setArea} />
-            <Text style={styles.fieldLabel}>Market</Text>
-            <View style={styles.chipRow}>
-              {marketOptions.map((market) => (
-                <Pressable
-                  key={market.id}
-                  onPress={() => setMarketId(market.id)}
-                  style={[styles.chip, marketId === market.id && styles.chipActive]}
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      marketId === market.id && styles.chipTextActive,
-                    ]}
+              <Input label="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+              <Input
+                label="Description (optional)"
+                value={description}
+                onChangeText={setDescription}
+                multiline
+              />
+
+              <Text style={styles.sectionTitle}>Primary location</Text>
+              <Input label="Public slug" value={slug} onChangeText={setSlug} autoCapitalize="none" />
+              <Input
+                label="Location name (optional)"
+                value={locationName}
+                onChangeText={setLocationName}
+              />
+              <Input label="Address" value={addressLine} onChangeText={setAddressLine} />
+              <Input label="Area" value={area} onChangeText={setArea} />
+
+              <Text style={styles.fieldLabel}>Market</Text>
+              <View style={styles.chipRow}>
+                {markets.map((market) => (
+                  <Pressable
+                    key={market.id}
+                    onPress={() => setMarketId(market.id)}
+                    style={[styles.chip, marketId === market.id && styles.chipActive]}
                   >
-                    {market.name}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
+                    <Text style={[styles.chipText, marketId === market.id && styles.chipTextActive]}>
+                      {market.name}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
 
-            <Pressable
-              onPress={() => void handleSubmit()}
-              disabled={submitting}
-              style={({ pressed }) => [
-                styles.primaryButton,
-                (submitting || pressed) && styles.buttonDisabled,
-              ]}
-            >
-              <Text style={styles.primaryButtonText}>
-                {submitting ? "Creating business…" : "Register business"}
-              </Text>
-            </Pressable>
-          </>
-        ) : null}
+              <Button
+                title={submitting ? "Creating business…" : "Register business"}
+                onPress={() => void handleSubmit()}
+                loading={submitting}
+                disabled={submitting || !businessName.trim() || !phone.trim()}
+                containerStyle={styles.submitButton}
+              />
+            </Card>
+          ) : null}
+        </View>
       </ScrollView>
     </Screen>
   );
 }
 
-function FormField({
-  label,
-  value,
-  onChangeText,
-  multiline = false,
-  keyboardType,
-  autoCapitalize,
-}: {
-  label: string;
-  value: string;
-  onChangeText: (value: string) => void;
-  multiline?: boolean;
-  keyboardType?: "default" | "phone-pad";
-  autoCapitalize?: "none" | "sentences";
-}) {
-  return (
-    <View style={styles.fieldBlock}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        multiline={multiline}
-        keyboardType={keyboardType}
-        autoCapitalize={autoCapitalize}
-        style={[styles.input, multiline && styles.inputMultiline]}
-      />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   content: {
-    paddingHorizontal: 20,
-    paddingBottom: 32,
+    paddingBottom: adeniTheme.spacing["3xl"],
   },
-  title: {
-    fontSize: 26,
-    fontWeight: "700",
-    color: adeniTheme.text,
+  section: {
+    paddingHorizontal: adeniTheme.spacing.xl,
   },
-  subtitle: {
-    marginTop: 8,
-    fontSize: 15,
-    lineHeight: 22,
-    color: adeniTheme.textMuted,
+  formCard: {
+    marginTop: adeniTheme.spacing.xl,
   },
-  callout: {
-    marginTop: 20,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: adeniTheme.border,
-    backgroundColor: adeniTheme.surface,
-  },
-  calloutTitle: {
+  sectionTitle: {
+    marginTop: adeniTheme.spacing["2xl"],
     fontSize: 16,
     fontWeight: "600",
     color: adeniTheme.text,
   },
-  calloutBody: {
-    marginTop: 8,
-    fontSize: 14,
-    lineHeight: 20,
-    color: adeniTheme.textMuted,
-  },
-  error: {
-    marginTop: 16,
-    padding: 10,
-    borderRadius: 8,
-    backgroundColor: "#fef2f2",
-    color: "#991b1b",
-    fontSize: 14,
-  },
-  sectionTitle: {
-    marginTop: 24,
-    fontSize: 18,
-    fontWeight: "600",
-    color: adeniTheme.text,
-  },
-  fieldBlock: {
-    marginTop: 16,
-  },
   fieldLabel: {
+    marginTop: adeniTheme.spacing.lg,
     fontSize: 13,
     fontWeight: "600",
     color: adeniTheme.textSubtle,
   },
-  input: {
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: adeniTheme.borderStrong,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: adeniTheme.text,
-    backgroundColor: adeniTheme.surface,
-  },
-  inputMultiline: {
-    minHeight: 96,
-    textAlignVertical: "top",
-  },
   chipRow: {
-    marginTop: 10,
+    marginTop: adeniTheme.spacing.sm,
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: adeniTheme.spacing.sm,
   },
   chip: {
     borderWidth: 1,
     borderColor: adeniTheme.borderStrong,
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    borderRadius: adeniTheme.radius.full,
+    paddingHorizontal: adeniTheme.spacing.lg,
+    paddingVertical: adeniTheme.spacing.sm,
     backgroundColor: adeniTheme.surface,
   },
   chipActive: {
@@ -341,22 +237,10 @@ const styles = StyleSheet.create({
     color: adeniTheme.text,
   },
   chipTextActive: {
-    color: "#ffffff",
+    color: adeniTheme.primaryForeground,
   },
-  primaryButton: {
-    marginTop: 28,
-    alignSelf: "flex-start",
-    backgroundColor: adeniTheme.primary,
-    borderRadius: 999,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-  },
-  primaryButtonText: {
-    color: "#ffffff",
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  buttonDisabled: {
-    opacity: 0.65,
+  submitButton: {
+    marginTop: adeniTheme.spacing["2xl"],
+    alignSelf: "stretch",
   },
 });

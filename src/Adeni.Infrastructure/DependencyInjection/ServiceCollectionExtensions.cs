@@ -1,23 +1,20 @@
 namespace Adeni.Infrastructure.DependencyInjection;
 
 using Adeni.Application.Abstractions;
-using Adeni.Application.Admin;
-using Adeni.Application.Auth;
-using Adeni.Application.Catalog;
-using Adeni.Application.Booking;
-using Adeni.Application.Discovery;
+using Adeni.Application.Caching;
 using Adeni.Application.Markets;
-using Adeni.Application.Reviews;
-using Adeni.Application.Tenancy;
 using Adeni.Infrastructure.Admin;
 using Adeni.Infrastructure.Auditing;
 using Adeni.Infrastructure.Auth;
-using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Booking;
+using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Catalog;
-using Adeni.Infrastructure.Discovery;
 using Adeni.Infrastructure.Context;
+using Adeni.Infrastructure.Discovery;
+using Adeni.Infrastructure.Events;
 using Adeni.Infrastructure.Identity;
+using Adeni.Infrastructure.Notifications;
+using Adeni.Infrastructure.Payments;
 using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Reviews;
 using Adeni.Infrastructure.Markets;
@@ -59,22 +56,20 @@ public static class ServiceCollectionExtensions
         }
 
         services.AddAdeniCaching(configuration, environment);
+        services.AddAdeniDomainEvents();
         services.AddAdeniMarkets();
         services.AddAdeniTranslation(configuration, environment);
         services.Configure<MarketOptions>(configuration.GetSection(MarketOptions.SectionName));
         services.AddAdeniAuth(configuration);
-        services.AddScoped<IAuthSyncService, AuthSyncService>();
-        services.AddScoped<IAdminBusinessService, AdminBusinessService>();
-        services.AddScoped<IAdminCustomerService, AdminCustomerService>();
-        services.AddScoped<IBusinessOnboardingService, BusinessOnboardingService>();
-        services.AddScoped<IBusinessLocationService, BusinessLocationService>();
-        services.AddScoped<IDiscoveryService, DiscoveryService>();
-        services.AddSingleton<ICategoryService, CategoryService>();
-        services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
-        services.AddScoped<ITenantSchedulingTimeZone, TenantSchedulingTimeZone>();
-        services.AddScoped<IAvailabilityService, AvailabilityService>();
-        services.AddScoped<IBookingService, BookingService>();
-        services.AddScoped<IReviewService, ReviewService>();
+        services.AddIdentityModule();
+        services.AddAdminModule();
+        services.AddTenancyModule();
+        services.AddCatalogModule();
+        services.AddBookingModule();
+        services.AddReviewsModule();
+        services.AddDiscoveryModule();
+        services.AddNotificationsModule();
+        services.AddPaymentsModule();
 
         return services;
     }

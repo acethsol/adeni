@@ -9,7 +9,6 @@ using Adeni.Application.Markets;
 using Adeni.Domain.Auditing;
 using Adeni.Domain.Catalog;
 using Adeni.Domain.Common;
-using Adeni.Infrastructure.Markets;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 

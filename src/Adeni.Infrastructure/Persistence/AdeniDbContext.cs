@@ -1,16 +1,20 @@
 namespace Adeni.Infrastructure.Persistence;
 
 using Adeni.Application.Abstractions;
+using Adeni.Application.Events;
 using Adeni.Domain.Auditing;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Catalog;
 using Adeni.Domain.Identity;
+using Adeni.Domain.Payments;
 using Adeni.Domain.Tenancy;
 using Microsoft.EntityFrameworkCore;
 
 public sealed class AdeniDbContext(
     DbContextOptions<AdeniDbContext> options,
-    ITenantContext tenantContext) : DbContext(options)
+    ITenantContext tenantContext,
+    IDomainEventCollector? domainEventCollector = null,
+    IDomainEventDispatcher? domainEventDispatcher = null) : DbContext(options)
 {
     /// <summary>
     /// When set, global query filters restrict rows to this tenant. Null means no filter.
@@ -47,6 +51,12 @@ public sealed class AdeniDbContext(
 
     public DbSet<CatalogMarket> CatalogMarkets => Set<CatalogMarket>();
 
+    public DbSet<WaitlistEntry> WaitlistEntries => Set<WaitlistEntry>();
+
+    public DbSet<QuoteRequestRecord> QuoteRequests => Set<QuoteRequestRecord>();
+
+    public DbSet<PaymentIntentRecord> PaymentIntents => Set<PaymentIntentRecord>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("public");
@@ -79,6 +89,7 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.CategorySlug).HasMaxLength(64);
             entity.Property(x => x.Phone).HasMaxLength(32);
             entity.Property(x => x.CoverImageKey).HasMaxLength(512);
+            entity.Property(x => x.BusinessType).HasConversion<int>();
             entity.HasOne(x => x.Tenant).WithOne().HasForeignKey<BusinessProfile>(x => x.TenantId);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
@@ -193,5 +204,50 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.LaunchNote).HasMaxLength(500);
             entity.HasIndex(x => x.IsLive);
         });
+
+        modelBuilder.Entity<WaitlistEntry>(entity =>
+        {
+            entity.ToTable("waitlist_entries", "booking");
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => new { x.TenantId, x.ServiceOfferingId, x.NotifiedAt });
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<QuoteRequestRecord>(entity =>
+        {
+            entity.ToTable("quote_requests", "booking");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Description).HasMaxLength(2000);
+            entity.Property(x => x.ServiceAddress).HasMaxLength(500);
+            entity.HasIndex(x => new { x.TenantId, x.CreatedAt });
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<PaymentIntentRecord>(entity =>
+        {
+            entity.ToTable("payment_intents", "payments");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Currency).HasMaxLength(3);
+            entity.Property(x => x.Amount).HasPrecision(12, 2);
+            entity.Property(x => x.ProviderReference).HasMaxLength(128);
+            entity.HasIndex(x => new { x.TenantId, x.Status, x.CreatedAt });
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+    }
+
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        var result = await base.SaveChangesAsync(cancellationToken);
+
+        if (domainEventCollector is not null && domainEventDispatcher is not null)
+        {
+            var events = domainEventCollector.TakeAll();
+            foreach (var domainEvent in events)
+            {
+                await domainEventDispatcher.PublishAsync(domainEvent, cancellationToken);
+            }
+        }
+
+        return result;
     }
 }

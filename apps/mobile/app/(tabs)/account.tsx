@@ -180,13 +180,13 @@ export default function AccountScreen() {
             {hasBusinessAccount ? (
               <>
                 <Pressable
-                  onPress={() => router.push("/business/profile")}
+                  onPress={() => router.push("/business")}
                   style={({ pressed }) => [
                     styles.primaryButton,
                     pressed && styles.buttonPressed,
                   ]}
                 >
-                  <Text style={styles.primaryButtonText}>Business profile</Text>
+                  <Text style={styles.primaryButtonText}>Open business portal</Text>
                 </Pressable>
                 {isBusinessInboxEnabled ? (
                   <Pressable

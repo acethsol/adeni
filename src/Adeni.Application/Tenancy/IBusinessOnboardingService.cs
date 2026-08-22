@@ -57,6 +57,8 @@ public sealed record BusinessLocationResponse(
     bool IsPrimary,
     bool IsActive);
 
+public sealed record UpdateBusinessSettingsRequest(bool AutoConfirmBookings);
+
 public sealed record BusinessProfileResponse(
     Guid TenantId,
     string BusinessName,
@@ -68,7 +70,10 @@ public sealed record BusinessProfileResponse(
     DateTimeOffset? VerifiedAt,
     IReadOnlyList<BusinessLocationResponse> Locations,
     IReadOnlyList<VerificationDocumentResponse> VerificationDocuments,
-    string? CoverImageUrl = null);
+    string? CoverImageUrl = null,
+    string BusinessType = "scheduled_appointment",
+    IReadOnlyList<string>? Capabilities = null,
+    bool AutoConfirmBookings = false);
 
 public sealed record VerificationDocumentResponse(
     VerificationDocumentType DocumentType,
@@ -103,6 +108,12 @@ public interface IBusinessOnboardingService
     Task<Result<BusinessProfileResponse>> UpdateProfileAsync(
         Guid tenantId,
         UpdateBusinessProfileRequest request,
+        string auth0Sub,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<BusinessProfileResponse>> UpdateSettingsAsync(
+        Guid tenantId,
+        UpdateBusinessSettingsRequest request,
         string auth0Sub,
         CancellationToken cancellationToken = default);
 

@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <Content Include="..\..\packages\shared\src\data\markets.json" Link="Markets\markets.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\packages\shared\src\data\category-workflows.json" Link="Catalog\category-workflows.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

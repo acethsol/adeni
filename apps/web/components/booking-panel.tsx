@@ -15,6 +15,7 @@ type Props = {
   services: ServiceOffering[];
   bookingEnabled: boolean;
   loginHref: string;
+  supportsDeposits?: boolean;
 };
 
 type Step = "service" | "slot" | "confirm" | "done";
@@ -61,6 +62,7 @@ export function BookingPanel({
   services,
   bookingEnabled,
   loginHref,
+  supportsDeposits = false,
 }: Props) {
   const { run } = useActionLoading();
   const [step, setStep] = useState<Step>("service");
@@ -101,7 +103,10 @@ export function BookingPanel({
         }
 
         const payload = (await response.json()) as { items: { startAt: string; endAt: string }[] };
-        setSlots(payload.items ?? []);
+        const freshSlots = (payload.items ?? []).filter(
+          (slot) => new Date(slot.startAt).getTime() > Date.now(),
+        );
+        setSlots(freshSlots);
         setStep("slot");
       } catch {
         setError("Could not load available times. Try again in a moment.");
@@ -119,6 +124,14 @@ export function BookingPanel({
 
   async function handleConfirmBooking() {
     if (!selectedService || !selectedSlot) {
+      return;
+    }
+
+    if (new Date(selectedSlot).getTime() <= Date.now()) {
+      setError("That time slot has passed. Please choose a new time.");
+      setStep("slot");
+      setSelectedSlot(null);
+      await loadSlots(selectedService);
       return;
     }
 
@@ -187,7 +200,10 @@ export function BookingPanel({
         <h2 className="mt-2 text-xl font-bold">{booking.serviceName}</h2>
         <p className="mt-2 text-[#1b4332]/80">{formatSlotTime(booking.startAt)}</p>
         <p className="mt-4 text-sm text-[#1b4332]/70">
-          Status: pending confirmation from the business. You will be notified once they accept.
+          Status:{" "}
+          {booking.status === 1
+            ? "confirmed — you're all set."
+            : "pending confirmation from the business. You will be notified once they accept."}
         </p>
       </section>
     );
@@ -261,9 +277,38 @@ export function BookingPanel({
           {loadingSlots ? (
             <LoadingPanel message="Loading available times…" variant="card" className="mt-4" />
           ) : slots.length === 0 ? (
-            <p className="mt-4 text-sm text-[#1b4332]/70">
-              No open slots in the next 7 days. Check back soon.
-            </p>
+            <div className="mt-4 space-y-3">
+              <p className="text-sm text-[#1b4332]/70">
+                No open slots in the next 7 days.
+              </p>
+              {bookingEnabled ? (
+                <button
+                  type="button"
+                  className="text-sm font-medium text-[#40916c] underline"
+                  onClick={async () => {
+                    try {
+                      const response = await fetch("/api/bookings/waitlist", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          tenantId,
+                          serviceOfferingId: selectedService.id,
+                        }),
+                      });
+                      if (!response.ok) {
+                        throw new Error("Could not join waitlist.");
+                      }
+                      setError(null);
+                      alert("You're on the waitlist. We'll notify you when a slot opens.");
+                    } catch {
+                      setError("Could not join waitlist. Try again.");
+                    }
+                  }}
+                >
+                  Join waitlist
+                </button>
+              ) : null}
+            </div>
           ) : (
             <ul className="mt-4 grid gap-2 sm:grid-cols-2">
               {slots.map((slot) => (
@@ -321,6 +366,12 @@ export function BookingPanel({
               placeholder="Anything the business should know?"
             />
           </label>
+
+          {supportsDeposits ? (
+            <p className="mt-4 rounded-lg border border-dashed border-[#40916c]/40 bg-[#f6f8f6] px-3 py-2 text-sm text-[#1b4332]/80">
+              Payment checkout is coming soon. Your booking will be submitted without charging for now.
+            </p>
+          ) : null}
 
           {bookingEnabled ? (
             <button

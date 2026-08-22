@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/cn";
 
 type NavSession = {
   name: string | null;
@@ -15,7 +17,13 @@ type NavState = {
   session: NavSession | null;
 };
 
-export function AuthNavClient() {
+type Props = {
+  hideBookingsLink?: boolean;
+  tone?: "light" | "dark";
+  compact?: boolean;
+};
+
+export function AuthNavClient({ hideBookingsLink = false, tone = "light", compact = false }: Props = {}) {
   const [state, setState] = useState<NavState>({
     loading: true,
     configured: false,
@@ -52,7 +60,7 @@ export function AuthNavClient() {
   }, []);
 
   if (state.loading) {
-    return <span className="inline-block h-9 w-20" aria-hidden />;
+    return <span className={cn("inline-block h-9", compact ? "w-9" : "w-20")} aria-hidden />;
   }
 
   if (!state.configured) {
@@ -60,6 +68,18 @@ export function AuthNavClient() {
   }
 
   if (!state.session) {
+    if (compact) {
+      return (
+        <Link
+          href="/auth/login"
+          title="Log in"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+        >
+          <LogOut className="h-4 w-4 rotate-180" aria-hidden />
+        </Link>
+      );
+    }
+
     return (
       <Button href="/auth/login" variant="secondary" size="sm">
         Log in
@@ -67,15 +87,37 @@ export function AuthNavClient() {
     );
   }
 
+  if (compact) {
+    return (
+      <Link
+        href="/auth/logout"
+        title="Log out"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+      >
+        <LogOut className="h-4 w-4" aria-hidden />
+      </Link>
+    );
+  }
+
   return (
     <div className="flex items-center gap-2 sm:gap-3">
-      <Link
-        href="/my-bookings"
-        className="hidden text-sm font-semibold text-accent hover:underline sm:inline"
+      {hideBookingsLink ? null : (
+        <Link
+          href="/my-bookings"
+          className={cn(
+            "hidden text-sm font-semibold hover:underline sm:inline",
+            tone === "dark" ? "text-white" : "text-accent",
+          )}
+        >
+          My bookings
+        </Link>
+      )}
+      <span
+        className={cn(
+          "hidden truncate text-sm md:inline",
+          tone === "dark" ? "text-white/60" : "text-muted",
+        )}
       >
-        My bookings
-      </Link>
-      <span className="hidden text-sm text-muted md:inline">
         {state.session.name ?? state.session.email ?? "Signed in"}
       </span>
       <Button href="/auth/logout" variant="secondary" size="sm">

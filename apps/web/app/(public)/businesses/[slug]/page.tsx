@@ -8,6 +8,8 @@ import {
   t,
 } from "@adeni/shared";
 import { BookingPanel } from "@/components/booking-panel";
+import { QuoteRequestPanel } from "@/components/quote-request-panel";
+import { shouldShowQuoteFlow } from "@adeni/shared";
 import { BusinessReviewsSection } from "@/components/business-reviews-section";
 import { StarRating } from "@/components/star-rating";
 import { BackLink } from "@/components/ui/back-link";
@@ -96,6 +98,7 @@ export default async function BusinessProfilePage({ params }: Props) {
     const session = await getOptionalSession();
     const bookingEnabled =
       Boolean(session) || (!isAuth0Configured() && Boolean(process.env.DEV_CUSTOMER_AUTH0_SUB));
+    const showQuoteFlow = shouldShowQuoteFlow(profile);
     const coverImageUrl = resolveBusinessCoverImage(profile.categorySlug, profile.coverImageUrl);
     const coverFallbackUrl = getBusinessCoverImage(profile.categorySlug);
     const categoryLabel = getCategoryLabel(locale, profile.categorySlug);
@@ -180,13 +183,22 @@ export default async function BusinessProfilePage({ params }: Props) {
             reviewCount={profile.reviewCount}
           />
 
-          <BookingPanel
-            slug={slug}
-            tenantId={profile.tenantId}
-            services={translatedServices}
-            bookingEnabled={bookingEnabled}
-            loginHref={`/auth/login?returnTo=${encodeURIComponent(returnPath)}`}
-          />
+          {showQuoteFlow ? (
+            <QuoteRequestPanel
+              slug={slug}
+              enabled={bookingEnabled}
+              loginHref={`/auth/login?returnTo=${encodeURIComponent(returnPath)}`}
+            />
+          ) : (
+            <BookingPanel
+              slug={slug}
+              tenantId={profile.tenantId}
+              services={translatedServices}
+              bookingEnabled={bookingEnabled}
+              loginHref={`/auth/login?returnTo=${encodeURIComponent(returnPath)}`}
+              supportsDeposits={profile.capabilities?.includes("deposits") ?? false}
+            />
+          )}
         </main>
       </div>
     );

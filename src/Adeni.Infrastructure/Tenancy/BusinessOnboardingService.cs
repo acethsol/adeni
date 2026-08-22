@@ -14,6 +14,7 @@ using Result = Adeni.Domain.Common.Result;
 public sealed class BusinessOnboardingService(
     AdeniDbContext dbContext,
     ICategoryService categoryService,
+    IBusinessCapabilitiesService businessCapabilitiesService,
     IFileStorage fileStorage,
     IMarketCatalog marketCatalog) : IBusinessOnboardingService
 {
@@ -86,6 +87,7 @@ public sealed class BusinessOnboardingService(
         }
 
         ApplyBrandProfile(profile, request, now);
+        profile.BusinessType = businessCapabilitiesService.GetDefaultBusinessType(request.CategorySlug);
 
         var location = await dbContext.BusinessLocations
             .FirstOrDefaultAsync(x => x.TenantId == businessUser.TenantId && x.IsPrimary, cancellationToken);
@@ -174,6 +176,7 @@ public sealed class BusinessOnboardingService(
             locations,
             await GetDocumentsAsync(tenantId, cancellationToken),
             fileStorage,
+            businessCapabilitiesService,
             cancellationToken));
     }
 
@@ -224,6 +227,41 @@ public sealed class BusinessOnboardingService(
             locations,
             await GetDocumentsAsync(tenantId, cancellationToken),
             fileStorage,
+            businessCapabilitiesService,
+            cancellationToken));
+    }
+
+    public async Task<Result<BusinessProfileResponse>> UpdateSettingsAsync(
+        Guid tenantId,
+        UpdateBusinessSettingsRequest request,
+        string auth0Sub,
+        CancellationToken cancellationToken = default)
+    {
+        var access = await ResolveAccessAsync(tenantId, auth0Sub, cancellationToken);
+        if (access.IsFailure)
+        {
+            return Result.Failure<BusinessProfileResponse>(access.Error);
+        }
+
+        var (tenant, profile) = access.Value!;
+        profile.AutoConfirmBookings = request.AutoConfirmBookings;
+        profile.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var locations = await dbContext.BusinessLocations
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId && x.IsActive)
+            .OrderByDescending(x => x.IsPrimary)
+            .ThenBy(x => x.Name)
+            .ToListAsync(cancellationToken);
+
+        return Result.Success(await MapProfileAsync(
+            tenant,
+            profile,
+            locations,
+            await GetDocumentsAsync(tenantId, cancellationToken),
+            fileStorage,
+            businessCapabilitiesService,
             cancellationToken));
     }
 
@@ -427,6 +465,7 @@ public sealed class BusinessOnboardingService(
         IReadOnlyList<BusinessLocation> locations,
         IReadOnlyList<VerificationDocument> documents,
         IFileStorage fileStorage,
+        IBusinessCapabilitiesService businessCapabilitiesService,
         CancellationToken cancellationToken)
     {
         string? coverImageUrl = null;
@@ -434,6 +473,8 @@ public sealed class BusinessOnboardingService(
         {
             coverImageUrl = await fileStorage.GetDownloadUrlAsync(profile.CoverImageKey, cancellationToken);
         }
+
+        var capabilities = businessCapabilitiesService.GetCapabilities(profile.BusinessType, profile.CategorySlug);
 
         return new BusinessProfileResponse(
             tenant.Id,
@@ -446,6 +487,9 @@ public sealed class BusinessOnboardingService(
             tenant.VerifiedAt,
             BusinessLocationService.MapLocations(locations),
             documents.Select(d => new VerificationDocumentResponse(d.DocumentType, d.SubmittedAt)).ToList(),
-            coverImageUrl);
+            coverImageUrl,
+            BusinessTypeMapping.ToApiValue(profile.BusinessType),
+            capabilities,
+            profile.AutoConfirmBookings);
     }
 }

@@ -1,9 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles } from "lucide-react";
+import { Clock3, Pencil, PlusCircle, Sparkles, Tag, Trash2 } from "lucide-react";
 import type { ServiceOffering } from "@adeni/shared";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Input, Textarea } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modal";
+import { useConfirm } from "@/contexts/confirm-context";
+import { useToast } from "@/contexts/toast-context";
 
 type Props = {
   initialServices: ServiceOffering[];
@@ -18,6 +24,8 @@ type ServiceDraft = {
   durationMinutes: string;
 };
 
+type DraftErrors = Partial<Record<keyof ServiceDraft, string>>;
+
 const EMPTY_DRAFT = (currency: string): ServiceDraft => ({
   name: "",
   description: "",
@@ -25,6 +33,30 @@ const EMPTY_DRAFT = (currency: string): ServiceDraft => ({
   currency,
   durationMinutes: "30",
 });
+
+function validateDraft(draft: ServiceDraft): DraftErrors {
+  const errors: DraftErrors = {};
+
+  if (!draft.name.trim()) {
+    errors.name = "Service name is required.";
+  }
+
+  const price = Number(draft.priceAmount);
+  if (!draft.priceAmount.trim() || Number.isNaN(price) || price < 0) {
+    errors.priceAmount = "Enter a valid price.";
+  }
+
+  if (!draft.currency.trim() || draft.currency.trim().length !== 3) {
+    errors.currency = "Use a 3-letter currency code.";
+  }
+
+  const duration = Number(draft.durationMinutes);
+  if (!draft.durationMinutes.trim() || Number.isNaN(duration) || duration <= 0) {
+    errors.durationMinutes = "Enter a valid duration.";
+  }
+
+  return errors;
+}
 
 function formatPrice(amount: number, currency: string) {
   try {
@@ -34,338 +66,288 @@ function formatPrice(amount: number, currency: string) {
   }
 }
 
-export function BusinessServicesManager({
-  initialServices,
-  defaultCurrency = "NGN",
-}: Props) {
+export function BusinessServicesManager({ initialServices, defaultCurrency = "NGN" }: Props) {
+  const toast = useToast();
+  const confirm = useConfirm();
+
   const [services, setServices] = useState(initialServices);
-  const [draft, setDraft] = useState<ServiceDraft>(() => EMPTY_DRAFT(defaultCurrency));
+  const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editDraft, setEditDraft] = useState<ServiceDraft | null>(null);
+  const [draft, setDraft] = useState<ServiceDraft>(() => EMPTY_DRAFT(defaultCurrency));
+  const [originalDraft, setOriginalDraft] = useState<ServiceDraft | null>(null);
+  const [draftErrors, setDraftErrors] = useState<DraftErrors>({});
   const [busy, setBusy] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
 
-  async function handleCreate(event: React.FormEvent) {
-    event.preventDefault();
-    setBusy("create");
-    setError(null);
-    setMessage(null);
+  const isUnchanged =
+    editingId !== null &&
+    originalDraft !== null &&
+    Object.keys(draft).every((key) => draft[key as keyof ServiceDraft] === originalDraft[key as keyof ServiceDraft]);
 
-    try {
-      const response = await fetch("/api/business/services", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: draft.name.trim(),
-          description: draft.description.trim() || null,
-          priceAmount: Number(draft.priceAmount),
-          currency: draft.currency.trim().toUpperCase(),
-          durationMinutes: Number(draft.durationMinutes),
-        }),
-      });
-
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(typeof payload.title === "string" ? payload.title : "Could not create service.");
-      }
-
-      setServices((current) => [...current, payload as ServiceOffering]);
-      setDraft(EMPTY_DRAFT(defaultCurrency));
-      setMessage("Service added.");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not create service.");
-    } finally {
-      setBusy(null);
-    }
+  function openCreateModal() {
+    setEditingId(null);
+    setDraft(EMPTY_DRAFT(defaultCurrency));
+    setOriginalDraft(null);
+    setDraftErrors({});
+    setModalOpen(true);
   }
 
-  function startEdit(service: ServiceOffering) {
-    setEditingId(service.id);
-    setEditDraft({
+  function openEditModal(service: ServiceOffering) {
+    const snapshot: ServiceDraft = {
       name: service.name,
       description: service.description ?? "",
       priceAmount: String(service.priceAmount),
       currency: service.currency,
       durationMinutes: String(service.durationMinutes),
-    });
-    setError(null);
-    setMessage(null);
+    };
+    setEditingId(service.id);
+    setDraft(snapshot);
+    setOriginalDraft(snapshot);
+    setDraftErrors({});
+    setModalOpen(true);
   }
 
-  async function handleUpdate(serviceId: string) {
-    if (!editDraft) {
+  function closeModal() {
+    setModalOpen(false);
+    setEditingId(null);
+  }
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+
+    if (isUnchanged) {
       return;
     }
 
-    setBusy(serviceId);
-    setError(null);
-    setMessage(null);
+    const errors = validateDraft(draft);
+    setDraftErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
+
+    const body = {
+      name: draft.name.trim(),
+      description: draft.description.trim() || null,
+      priceAmount: Number(draft.priceAmount),
+      currency: draft.currency.trim().toUpperCase(),
+      durationMinutes: Number(draft.durationMinutes),
+    };
+
+    setBusy("submit");
 
     try {
-      const existing = services.find((item) => item.id === serviceId);
-      if (!existing) {
-        return;
+      if (editingId) {
+        const existing = services.find((item) => item.id === editingId);
+        const response = await fetch(`/api/business/services/${editingId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...body, isActive: existing?.isActive ?? true }),
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(typeof payload.title === "string" ? payload.title : "Could not update service.");
+        }
+
+        setServices((current) => current.map((item) => (item.id === editingId ? (payload as ServiceOffering) : item)));
+        toast.success("Service updated");
+      } else {
+        const response = await fetch("/api/business/services", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(typeof payload.title === "string" ? payload.title : "Could not create service.");
+        }
+
+        setServices((current) => [...current, payload as ServiceOffering]);
+        toast.success("Service added", { description: body.name });
       }
 
-      const response = await fetch(`/api/business/services/${serviceId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: editDraft.name.trim(),
-          description: editDraft.description.trim() || null,
-          priceAmount: Number(editDraft.priceAmount),
-          currency: editDraft.currency.trim().toUpperCase(),
-          durationMinutes: Number(editDraft.durationMinutes),
-          isActive: existing.isActive,
-        }),
-      });
-
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(typeof payload.title === "string" ? payload.title : "Could not update service.");
-      }
-
-      setServices((current) =>
-        current.map((item) => (item.id === serviceId ? (payload as ServiceOffering) : item)),
-      );
-      setEditingId(null);
-      setEditDraft(null);
-      setMessage("Service updated.");
+      closeModal();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not update service.");
+      toast.error(err instanceof Error ? err.message : "Could not save service.");
     } finally {
       setBusy(null);
     }
   }
 
-  async function handleDeactivate(serviceId: string) {
-    setBusy(`deactivate-${serviceId}`);
-    setError(null);
-    setMessage(null);
+  async function handleDeactivate(service: ServiceOffering) {
+    const confirmed = await confirm({
+      title: `Deactivate ${service.name}?`,
+      description: "Customers won't be able to book this service anymore. You can't undo this from here.",
+      confirmLabel: "Deactivate",
+      tone: "destructive",
+    });
+    if (!confirmed) {
+      return;
+    }
+
+    setBusy(`deactivate-${service.id}`);
 
     try {
-      const response = await fetch(`/api/business/services/${serviceId}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(`/api/business/services/${service.id}`, { method: "DELETE" });
 
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
-        throw new Error(
-          typeof payload.title === "string" ? payload.title : "Could not deactivate service.",
-        );
+        throw new Error(typeof payload.title === "string" ? payload.title : "Could not deactivate service.");
       }
 
       setServices((current) =>
-        current.map((item) =>
-          item.id === serviceId ? { ...item, isActive: false } : item,
-        ),
+        current.map((item) => (item.id === service.id ? { ...item, isActive: false } : item)),
       );
-      setMessage("Service deactivated.");
+      toast.success("Service deactivated", { description: service.name });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not deactivate service.");
+      toast.error(err instanceof Error ? err.message : "Could not deactivate service.");
     } finally {
       setBusy(null);
     }
   }
 
   return (
-    <div className="space-y-8">
-      {message ? (
-        <p className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800">{message}</p>
-      ) : null}
-      {error ? (
-        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
-      ) : null}
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold text-foreground">Your services</h2>
+        <Button onClick={openCreateModal} size="sm" className="gap-1.5">
+          <PlusCircle className="h-4 w-4" aria-hidden />
+          Add service
+        </Button>
+      </div>
 
-      <form
-        onSubmit={(event) => void handleCreate(event)}
-        className="rounded-xl border border-[#1b4332]/10 bg-white p-6 shadow-sm"
+      {services.length === 0 ? (
+        <EmptyState
+          icon={<Sparkles className="h-6 w-6" aria-hidden />}
+          title="No services yet"
+          description="Add your first service so customers can start booking."
+          actionLabel="Add service"
+          onAction={openCreateModal}
+        />
+      ) : (
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {services.map((service) => (
+            <li
+              key={service.id}
+              className="flex flex-col justify-between gap-4 rounded-2xl border border-border bg-surface p-5 shadow-sm transition-all hover:border-accent/30 hover:shadow-md"
+            >
+              <div>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-semibold text-foreground">{service.name}</p>
+                  <Badge tone={service.isActive ? "success" : "default"}>
+                    {service.isActive ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Clock3 className="h-3.5 w-3.5" aria-hidden />
+                    {service.durationMinutes} min
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Tag className="h-3.5 w-3.5" aria-hidden />
+                    {formatPrice(service.priceAmount, service.currency)}
+                  </span>
+                </div>
+                {service.description ? (
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{service.description}</p>
+                ) : null}
+              </div>
+
+              {service.isActive ? (
+                <div className="flex gap-2">
+                  <Button variant="secondary" size="sm" onClick={() => openEditModal(service)} className="gap-1.5">
+                    <Pencil className="h-3.5 w-3.5" aria-hidden />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => void handleDeactivate(service)}
+                    loading={busy === `deactivate-${service.id}`}
+                    loadingLabel="Deactivating…"
+                    className="gap-1.5"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                    Deactivate
+                  </Button>
+                </div>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <Modal
+        open={modalOpen}
+        onClose={closeModal}
+        title={editingId ? "Edit service" : "Add service"}
+        description="Set what customers can book and how much it costs."
+        footer={
+          <>
+            <Button variant="secondary" onClick={closeModal}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="service-draft-form"
+              loading={busy === "submit"}
+              loadingLabel={editingId ? "Saving…" : "Adding…"}
+              disabled={isUnchanged}
+            >
+              {editingId ? "Save changes" : "Add service"}
+            </Button>
+          </>
+        }
       >
-        <h2 className="text-lg font-semibold">Add service</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <label className="block sm:col-span-2">
-            <span className="text-sm font-medium text-[#1b4332]/70">Name</span>
-            <input
-              required
-              value={draft.name}
-              onChange={(event) => setDraft({ ...draft, name: event.target.value })}
-              className="mt-1 w-full rounded-lg border border-[#1b4332]/20 px-3 py-2"
-            />
-          </label>
-          <label className="block sm:col-span-2">
-            <span className="text-sm font-medium text-[#1b4332]/70">Description</span>
-            <textarea
-              value={draft.description}
-              onChange={(event) => setDraft({ ...draft, description: event.target.value })}
-              rows={2}
-              className="mt-1 w-full rounded-lg border border-[#1b4332]/20 px-3 py-2"
-            />
-          </label>
-          <label className="block">
-            <span className="text-sm font-medium text-[#1b4332]/70">Price</span>
-            <input
+        <form id="service-draft-form" onSubmit={(event) => void handleSubmit(event)} className="space-y-4">
+          <Input
+            label="Name"
+            required
+            autoFocus
+            value={draft.name}
+            onChange={(event) => setDraft({ ...draft, name: event.target.value })}
+            placeholder="Classic haircut"
+            error={draftErrors.name}
+          />
+          <Textarea
+            label="Description"
+            value={draft.description}
+            onChange={(event) => setDraft({ ...draft, description: event.target.value })}
+            rows={2}
+            placeholder="Optional details customers see before booking"
+          />
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Input
+              label="Price"
               required
               type="number"
               min="0"
               step="0.01"
               value={draft.priceAmount}
               onChange={(event) => setDraft({ ...draft, priceAmount: event.target.value })}
-              className="mt-1 w-full rounded-lg border border-[#1b4332]/20 px-3 py-2"
+              error={draftErrors.priceAmount}
             />
-          </label>
-          <label className="block">
-            <span className="text-sm font-medium text-[#1b4332]/70">Currency</span>
-            <input
+            <Input
+              label="Currency"
               required
               maxLength={3}
+              className="uppercase"
               value={draft.currency}
               onChange={(event) => setDraft({ ...draft, currency: event.target.value })}
-              className="mt-1 w-full rounded-lg border border-[#1b4332]/20 px-3 py-2 uppercase"
+              error={draftErrors.currency}
             />
-          </label>
-          <label className="block">
-            <span className="text-sm font-medium text-[#1b4332]/70">Duration (minutes)</span>
-            <input
+            <Input
+              label="Duration (min)"
               required
               type="number"
               min="1"
               value={draft.durationMinutes}
               onChange={(event) => setDraft({ ...draft, durationMinutes: event.target.value })}
-              className="mt-1 w-full rounded-lg border border-[#1b4332]/20 px-3 py-2"
+              error={draftErrors.durationMinutes}
             />
-          </label>
-        </div>
-        <button
-          type="submit"
-          disabled={busy === "create"}
-          className="mt-4 rounded-full bg-[#1b4332] px-5 py-2.5 text-sm font-medium text-white disabled:opacity-60"
-        >
-          {busy === "create" ? "Adding…" : "Add service"}
-        </button>
-      </form>
-
-      <section>
-        <h2 className="text-lg font-semibold">Your services</h2>
-        {services.length === 0 ? (
-          <EmptyState
-            className="mt-3"
-            icon={<Sparkles className="h-6 w-6" aria-hidden />}
-            title="No services yet"
-            description="Add your first service above so customers can start booking."
-          />
-        ) : (
-          <ul className="mt-4 space-y-3">
-            {services.map((service) => (
-              <li
-                key={service.id}
-                className="rounded-xl border border-[#1b4332]/10 bg-white p-5 shadow-sm"
-              >
-                {editingId === service.id && editDraft ? (
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="block sm:col-span-2">
-                      <span className="text-sm font-medium text-[#1b4332]/70">Name</span>
-                      <input
-                        value={editDraft.name}
-                        onChange={(event) =>
-                          setEditDraft({ ...editDraft, name: event.target.value })
-                        }
-                        className="mt-1 w-full rounded-lg border border-[#1b4332]/20 px-3 py-2"
-                      />
-                    </label>
-                    <label className="block">
-                      <span className="text-sm font-medium text-[#1b4332]/70">Price</span>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={editDraft.priceAmount}
-                        onChange={(event) =>
-                          setEditDraft({ ...editDraft, priceAmount: event.target.value })
-                        }
-                        className="mt-1 w-full rounded-lg border border-[#1b4332]/20 px-3 py-2"
-                      />
-                    </label>
-                    <label className="block">
-                      <span className="text-sm font-medium text-[#1b4332]/70">Duration (min)</span>
-                      <input
-                        type="number"
-                        min="1"
-                        value={editDraft.durationMinutes}
-                        onChange={(event) =>
-                          setEditDraft({ ...editDraft, durationMinutes: event.target.value })
-                        }
-                        className="mt-1 w-full rounded-lg border border-[#1b4332]/20 px-3 py-2"
-                      />
-                    </label>
-                    <div className="flex gap-2 sm:col-span-2">
-                      <button
-                        type="button"
-                        onClick={() => void handleUpdate(service.id)}
-                        disabled={busy === service.id}
-                        className="rounded-full bg-[#1b4332] px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-                      >
-                        Save
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingId(null);
-                          setEditDraft(null);
-                        }}
-                        className="rounded-full border border-[#1b4332]/20 px-4 py-2 text-sm font-medium"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <p className="font-medium">{service.name}</p>
-                      <p className="text-sm text-[#1b4332]/60">
-                        {service.durationMinutes} min ·{" "}
-                        {formatPrice(service.priceAmount, service.currency)}
-                      </p>
-                      {service.description ? (
-                        <p className="mt-1 text-sm text-[#1b4332]/70">{service.description}</p>
-                      ) : null}
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <span
-                        className={`text-xs font-semibold uppercase tracking-wide ${
-                          service.isActive ? "text-[#40916c]" : "text-[#1b4332]/40"
-                        }`}
-                      >
-                        {service.isActive ? "Active" : "Inactive"}
-                      </span>
-                      {service.isActive ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => startEdit(service)}
-                            className="rounded-full border border-[#1b4332]/20 px-3 py-1.5 text-sm font-medium"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => void handleDeactivate(service.id)}
-                            disabled={busy === `deactivate-${service.id}`}
-                            className="rounded-full border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 disabled:opacity-60"
-                          >
-                            Deactivate
-                          </button>
-                        </>
-                      ) : null}
-                    </div>
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

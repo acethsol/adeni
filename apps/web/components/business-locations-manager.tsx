@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin } from "lucide-react";
+import { MapPin, Pencil, PlusCircle, Star, Trash2 } from "lucide-react";
 import type { BusinessLocation, MarketConfig } from "@adeni/shared";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modal";
 import { useToast } from "@/contexts/toast-context";
 import { useConfirm } from "@/contexts/confirm-context";
 
@@ -72,15 +74,55 @@ export function BusinessLocationsManager({
   const confirm = useConfirm();
 
   const [locations, setLocations] = useState(initialLocations);
-  const [draft, setDraft] = useState<LocationDraft>(() => EMPTY_DRAFT(defaultMarketId));
-  const [draftErrors, setDraftErrors] = useState<DraftErrors>({});
+  const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editDraft, setEditDraft] = useState<LocationDraft | null>(null);
-  const [editErrors, setEditErrors] = useState<DraftErrors>({});
+  const [draft, setDraft] = useState<LocationDraft>(() => EMPTY_DRAFT(defaultMarketId));
+  const [originalDraft, setOriginalDraft] = useState<LocationDraft | null>(null);
+  const [draftErrors, setDraftErrors] = useState<DraftErrors>({});
   const [busy, setBusy] = useState<string | null>(null);
 
-  async function handleCreate(event: React.FormEvent) {
+  const isUnchanged =
+    editingId !== null &&
+    originalDraft !== null &&
+    Object.keys(draft).every(
+      (key) => draft[key as keyof LocationDraft] === originalDraft[key as keyof LocationDraft],
+    );
+
+  function openCreateModal() {
+    setEditingId(null);
+    setDraft(EMPTY_DRAFT(defaultMarketId));
+    setOriginalDraft(null);
+    setDraftErrors({});
+    setModalOpen(true);
+  }
+
+  function openEditModal(location: BusinessLocation) {
+    const snapshot: LocationDraft = {
+      slug: location.slug,
+      name: location.name,
+      addressLine: location.addressLine,
+      area: location.area,
+      marketId: location.marketId,
+      isPrimary: location.isPrimary,
+    };
+    setEditingId(location.id);
+    setDraft(snapshot);
+    setOriginalDraft(snapshot);
+    setDraftErrors({});
+    setModalOpen(true);
+  }
+
+  function closeModal() {
+    setModalOpen(false);
+    setEditingId(null);
+  }
+
+  async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+
+    if (isUnchanged) {
+      return;
+    }
 
     const errors = validateDraft(draft);
     setDraftErrors(errors);
@@ -88,116 +130,79 @@ export function BusinessLocationsManager({
       return;
     }
 
-    setBusy("create");
+    setBusy("submit");
 
     try {
-      const response = await fetch("/api/business/locations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          slug: draft.slug.trim().toLowerCase(),
-          name: draft.name.trim() || undefined,
-          addressLine: draft.addressLine.trim(),
-          area: draft.area.trim(),
-          marketId: draft.marketId,
-          isPrimary: draft.isPrimary || undefined,
-        }),
-      });
+      if (editingId) {
+        const response = await fetch(`/api/business/locations/${editingId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            slug: draft.slug.trim().toLowerCase(),
+            name: draft.name.trim() || undefined,
+            addressLine: draft.addressLine.trim(),
+            area: draft.area.trim(),
+            marketId: draft.marketId,
+            isPrimary: draft.isPrimary,
+          }),
+        });
 
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(
-          typeof payload.title === "string" ? payload.title : "Could not add location.",
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(typeof payload.title === "string" ? payload.title : "Could not update location.");
+        }
+
+        const updated = payload as BusinessLocation;
+        setLocations((current) =>
+          current
+            .map((item) => {
+              if (item.id === editingId) {
+                return updated;
+              }
+              if (updated.isPrimary) {
+                return { ...item, isPrimary: false };
+              }
+              return item;
+            })
+            .sort((a, b) =>
+              a.isPrimary === b.isPrimary ? a.name.localeCompare(b.name) : a.isPrimary ? -1 : 1,
+            ),
         );
-      }
+        toast.success("Location updated");
+      } else {
+        const response = await fetch("/api/business/locations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            slug: draft.slug.trim().toLowerCase(),
+            name: draft.name.trim() || undefined,
+            addressLine: draft.addressLine.trim(),
+            area: draft.area.trim(),
+            marketId: draft.marketId,
+            isPrimary: draft.isPrimary || undefined,
+          }),
+        });
 
-      const created = payload as BusinessLocation;
-      setLocations((current) => {
-        const next = draft.isPrimary
-          ? current.map((item) => ({ ...item, isPrimary: false }))
-          : current;
-        return [...next, created].sort((a, b) =>
-          a.isPrimary === b.isPrimary ? a.name.localeCompare(b.name) : a.isPrimary ? -1 : 1,
-        );
-      });
-      setDraft(EMPTY_DRAFT(defaultMarketId));
-      setDraftErrors({});
-      toast.success("Location added", { description: created.name });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not add location.");
-    } finally {
-      setBusy(null);
-    }
-  }
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(typeof payload.title === "string" ? payload.title : "Could not add location.");
+        }
 
-  function startEdit(location: BusinessLocation) {
-    setEditingId(location.id);
-    setEditDraft({
-      slug: location.slug,
-      name: location.name,
-      addressLine: location.addressLine,
-      area: location.area,
-      marketId: location.marketId,
-      isPrimary: location.isPrimary,
-    });
-    setEditErrors({});
-  }
-
-  async function handleUpdate(locationId: string) {
-    if (!editDraft) {
-      return;
-    }
-
-    const errors = validateDraft(editDraft);
-    setEditErrors(errors);
-    if (Object.keys(errors).length > 0) {
-      return;
-    }
-
-    setBusy(locationId);
-
-    try {
-      const response = await fetch(`/api/business/locations/${locationId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          slug: editDraft.slug.trim().toLowerCase(),
-          name: editDraft.name.trim() || undefined,
-          addressLine: editDraft.addressLine.trim(),
-          area: editDraft.area.trim(),
-          marketId: editDraft.marketId,
-          isPrimary: editDraft.isPrimary,
-        }),
-      });
-
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(
-          typeof payload.title === "string" ? payload.title : "Could not update location.",
-        );
-      }
-
-      const updated = payload as BusinessLocation;
-      setLocations((current) =>
-        current
-          .map((item) => {
-            if (item.id === locationId) {
-              return updated;
-            }
-            if (updated.isPrimary) {
-              return { ...item, isPrimary: false };
-            }
-            return item;
-          })
-          .sort((a, b) =>
+        const created = payload as BusinessLocation;
+        setLocations((current) => {
+          const next = draft.isPrimary
+            ? current.map((item) => ({ ...item, isPrimary: false }))
+            : current;
+          return [...next, created].sort((a, b) =>
             a.isPrimary === b.isPrimary ? a.name.localeCompare(b.name) : a.isPrimary ? -1 : 1,
-          ),
-      );
-      setEditingId(null);
-      setEditDraft(null);
-      toast.success("Location updated");
+          );
+        });
+        toast.success("Location added", { description: created.name });
+      }
+
+      closeModal();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not update location.");
+      toast.error(err instanceof Error ? err.message : "Could not save location.");
     } finally {
       setBusy(null);
     }
@@ -238,173 +243,158 @@ export function BusinessLocationsManager({
     }
   }
 
-  function renderDraftFields(
-    value: LocationDraft,
-    onChange: (next: LocationDraft) => void,
-    errors: DraftErrors,
-    slugDisabled = false,
-  ) {
-    return (
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Input
-          label="URL slug"
-          required
-          disabled={slugDisabled}
-          value={value.slug}
-          onChange={(event) => onChange({ ...value, slug: event.target.value })}
-          placeholder="lekki-branch"
-          error={errors.slug}
-        />
-        <Input
-          label="Display name"
-          value={value.name}
-          onChange={(event) => onChange({ ...value, name: event.target.value })}
-          placeholder="Optional — defaults to area"
-        />
-        <div className="sm:col-span-2">
-          <Input
-            label="Address"
-            required
-            value={value.addressLine}
-            onChange={(event) => onChange({ ...value, addressLine: event.target.value })}
-            error={errors.addressLine}
-          />
-        </div>
-        <Input
-          label="Area"
-          required
-          value={value.area}
-          onChange={(event) => onChange({ ...value, area: event.target.value })}
-          error={errors.area}
-        />
-        <label className="block">
-          <span className="text-sm font-semibold text-muted-foreground">Market</span>
-          <select
-            required
-            value={value.marketId}
-            onChange={(event) => onChange({ ...value, marketId: event.target.value })}
-            className="mt-2 w-full rounded-xl border border-border-strong bg-surface px-4 py-3 text-sm text-foreground outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-accent/20"
-          >
-            {marketOptions.map((market) => (
-              <option key={market.id} value={market.id}>
-                {market.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex items-center gap-2 sm:col-span-2">
-          <input
-            type="checkbox"
-            checked={value.isPrimary}
-            onChange={(event) => onChange({ ...value, isPrimary: event.target.checked })}
-          />
-          <span className="text-sm text-muted">Set as primary location</span>
-        </label>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-8">
-      <form
-        onSubmit={(event) => void handleCreate(event)}
-        className="rounded-xl border border-border bg-surface p-6 shadow-sm"
-      >
-        <h2 className="text-lg font-semibold text-foreground">Add location</h2>
-        <p className="mt-2 text-sm text-muted">
-          Each branch gets its own public URL at <code className="text-xs">/businesses/your-slug</code>.
-        </p>
-        <div className="mt-4">{renderDraftFields(draft, setDraft, draftErrors)}</div>
-        <Button type="submit" loading={busy === "create"} loadingLabel="Adding…" className="mt-4">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold text-foreground">Your locations</h2>
+        <Button onClick={openCreateModal} size="sm" className="gap-1.5">
+          <PlusCircle className="h-4 w-4" aria-hidden />
           Add location
         </Button>
-      </form>
+      </div>
 
-      <section>
-        <h2 className="text-lg font-semibold text-foreground">Your locations</h2>
-        {locations.length === 0 ? (
-          <EmptyState
-            className="mt-3"
-            icon={<MapPin className="h-6 w-6" aria-hidden />}
-            title="No locations yet"
-            description="Add your first branch above to start accepting bookings there."
+      {locations.length === 0 ? (
+        <EmptyState
+          icon={<MapPin className="h-6 w-6" aria-hidden />}
+          title="No locations yet"
+          description="Add your first branch to start accepting bookings there."
+          actionLabel="Add location"
+          onAction={openCreateModal}
+        />
+      ) : (
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {locations.map((location) => (
+            <li
+              key={location.id}
+              className="flex flex-col justify-between gap-4 rounded-2xl border border-border bg-surface p-5 shadow-sm transition-all hover:border-accent/30 hover:shadow-md"
+            >
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-semibold text-foreground">{location.name}</p>
+                  {location.isPrimary ? (
+                    <Badge tone="accent" className="gap-1">
+                      <Star className="h-3 w-3" aria-hidden />
+                      Primary
+                    </Badge>
+                  ) : null}
+                </div>
+                <p className="mt-2 text-sm text-muted">{location.addressLine}</p>
+                <p className="text-sm text-muted-foreground">
+                  {location.area} · {location.marketId}
+                </p>
+                <a
+                  href={`/businesses/${location.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-block text-sm font-medium text-accent hover:underline"
+                >
+                  /businesses/{location.slug}
+                </a>
+              </div>
+
+              <div className="flex gap-2">
+                <Button variant="secondary" size="sm" onClick={() => openEditModal(location)} className="gap-1.5">
+                  <Pencil className="h-3.5 w-3.5" aria-hidden />
+                  Edit
+                </Button>
+                {locations.length > 1 ? (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => void handleDeactivate(location)}
+                    loading={busy === `deactivate-${location.id}`}
+                    loadingLabel="Removing…"
+                    className="gap-1.5"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                    Remove
+                  </Button>
+                ) : null}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <Modal
+        open={modalOpen}
+        onClose={closeModal}
+        title={editingId ? "Edit location" : "Add location"}
+        description="Each branch gets its own public URL at /businesses/your-slug."
+        footer={
+          <>
+            <Button variant="secondary" onClick={closeModal}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="location-draft-form"
+              loading={busy === "submit"}
+              loadingLabel={editingId ? "Saving…" : "Adding…"}
+              disabled={isUnchanged}
+            >
+              {editingId ? "Save changes" : "Add location"}
+            </Button>
+          </>
+        }
+      >
+        <form id="location-draft-form" onSubmit={(event) => void handleSubmit(event)} className="grid gap-4 sm:grid-cols-2">
+          <Input
+            label="URL slug"
+            required
+            autoFocus
+            value={draft.slug}
+            onChange={(event) => setDraft({ ...draft, slug: event.target.value })}
+            placeholder="lekki-branch"
+            error={draftErrors.slug}
           />
-        ) : (
-          <ul className="mt-4 space-y-3">
-            {locations.map((location) => (
-              <li
-                key={location.id}
-                className="rounded-xl border border-border bg-surface p-5 shadow-sm"
-              >
-                {editingId === location.id && editDraft ? (
-                  <div>
-                    {renderDraftFields(editDraft, setEditDraft, editErrors)}
-                    <div className="mt-4 flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => void handleUpdate(location.id)}
-                        loading={busy === location.id}
-                        loadingLabel="Saving…"
-                      >
-                        Save
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => {
-                          setEditingId(null);
-                          setEditDraft(null);
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-medium text-foreground">{location.name}</p>
-                        {location.isPrimary ? (
-                          <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-accent">
-                            Primary
-                          </span>
-                        ) : null}
-                      </div>
-                      <p className="mt-1 text-sm text-muted">{location.addressLine}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {location.area} · {location.marketId}
-                      </p>
-                      <a
-                        href={`/businesses/${location.slug}`}
-                        className="mt-2 inline-block text-sm font-medium text-accent"
-                      >
-                        /businesses/{location.slug}
-                      </a>
-                    </div>
-                    <div className="flex shrink-0 flex-wrap gap-2">
-                      <Button variant="secondary" size="sm" onClick={() => startEdit(location)}>
-                        Edit
-                      </Button>
-                      {locations.length > 1 ? (
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => void handleDeactivate(location)}
-                          loading={busy === `deactivate-${location.id}`}
-                          loadingLabel="Removing…"
-                        >
-                          Remove
-                        </Button>
-                      ) : null}
-                    </div>
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+          <Input
+            label="Display name"
+            value={draft.name}
+            onChange={(event) => setDraft({ ...draft, name: event.target.value })}
+            placeholder="Optional — defaults to area"
+          />
+          <div className="sm:col-span-2">
+            <Input
+              label="Address"
+              required
+              value={draft.addressLine}
+              onChange={(event) => setDraft({ ...draft, addressLine: event.target.value })}
+              error={draftErrors.addressLine}
+            />
+          </div>
+          <Input
+            label="Area"
+            required
+            value={draft.area}
+            onChange={(event) => setDraft({ ...draft, area: event.target.value })}
+            error={draftErrors.area}
+          />
+          <label className="block">
+            <span className="text-sm font-semibold text-muted-foreground">Market</span>
+            <select
+              required
+              value={draft.marketId}
+              onChange={(event) => setDraft({ ...draft, marketId: event.target.value })}
+              className="mt-2 w-full rounded-xl border border-border-strong bg-surface px-4 py-3 text-sm text-foreground outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-accent/20"
+            >
+              {marketOptions.map((market) => (
+                <option key={market.id} value={market.id}>
+                  {market.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex items-center gap-2 sm:col-span-2">
+            <input
+              type="checkbox"
+              checked={draft.isPrimary}
+              onChange={(event) => setDraft({ ...draft, isPrimary: event.target.checked })}
+            />
+            <span className="text-sm text-muted">Set as primary location</span>
+          </label>
+        </form>
+      </Modal>
     </div>
   );
 }
