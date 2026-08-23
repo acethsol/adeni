@@ -1,0 +1,36 @@
+---
+description: Adeni backend — architecture, security, and agent standing plays
+alwaysApply: true
+---
+
+# Adeni agent rules
+
+Read [AGENTS.md](../../AGENTS.md) for the full playbook. These rules always apply.
+
+## Project
+
+Trusted local services marketplace API (.NET 10, PostgreSQL, Redis, Auth0). Flutter client. Lagos / beauty vertical. SOC 2 controls from day one.
+
+## Architecture
+
+`Domain` → `Application` ← `Infrastructure` ← `Api`. Services return `Result<T>`. Controllers use `.Match()`. Register DI in `ServiceCollectionExtensions`.
+
+## Security (non-negotiable)
+
+- Tenant isolation: EF query filters + `TenantAccessMiddleware` + `X-Tenant-Id` header
+- PII: use `PiiMasker`; never log full phone/email/body
+- Admin `/admin/*` mutations must audit to `admin.audit_logs`
+- Admin JWTs need `amr: mfa` when MFA policy enabled
+- `DevBusinessAuthMiddleware` only in Development/Testing
+
+## Current focus
+
+Sprint 3: Auth0 + Flutter shell. See [docs/sprints.md](../../docs/sprints.md). Do not start booking unless asked.
+
+## Workflow
+
+Use AGENTS.md standing plays: spec → implement → debug → security audit → tests → review. Minimal diffs. Run `dotnet test Adeni.slnx -c Release` before PR.
+
+## Tests
+
+Integration tests: `WebApplicationFactory<Program>`, environment `Testing`, empty DB/Redis connection strings for in-memory fallback.
