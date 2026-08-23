@@ -103,7 +103,7 @@ public sealed class TenantController(
         }
 
         var result = await onboardingService.SubmitVerificationAsync(tenantId.Value, request, auth0Sub, cancellationToken);
-        return MapResult(result, () => NoContent());
+        return ApiResults.FromResult(result, () => NoContent(), HttpContext);
     }
 
     [HttpGet("locations")]
@@ -117,7 +117,7 @@ public sealed class TenantController(
         }
 
         var result = await locationService.ListAsync(tenantId.Value, auth0Sub, cancellationToken);
-        return MapResult(result, locations => Ok(new { items = locations }));
+        return ApiResults.FromResult(result, locations => Ok(new { items = locations }), HttpContext);
     }
 
     [HttpPost("locations")]
@@ -133,7 +133,7 @@ public sealed class TenantController(
         }
 
         var result = await locationService.AddAsync(tenantId.Value, request, auth0Sub, cancellationToken);
-        return MapResult(result, location => Ok(location));
+        return ApiResults.FromResult(result, location => Ok(location), HttpContext);
     }
 
     [HttpPatch("locations/{locationId:guid}")]
@@ -150,7 +150,7 @@ public sealed class TenantController(
         }
 
         var result = await locationService.UpdateAsync(tenantId.Value, locationId, request, auth0Sub, cancellationToken);
-        return MapResult(result, location => Ok(location));
+        return ApiResults.FromResult(result, location => Ok(location), HttpContext);
     }
 
     [HttpDelete("locations/{locationId:guid}")]
@@ -166,7 +166,7 @@ public sealed class TenantController(
         }
 
         var result = await locationService.DeactivateAsync(tenantId.Value, locationId, auth0Sub, cancellationToken);
-        return MapResult(result, () => NoContent());
+        return ApiResults.FromResult(result, () => NoContent(), HttpContext);
     }
 
     private string? ResolveAuth0Sub()
@@ -204,24 +204,8 @@ public sealed class TenantController(
     }
 
     private IActionResult MapResult<T>(Domain.Common.Result<T> result, Func<T, IActionResult> onSuccess) =>
-        result.Match<IActionResult>(
-            onSuccess,
-            error => error.Code switch
-            {
-                "validation" => BadRequest(new { title = error.Message }),
-                "conflict" => Conflict(new { title = error.Message }),
-                "forbidden" => Forbid(),
-                _ => NotFound(new { title = error.Message })
-            });
+        ApiResults.FromResult(result, onSuccess, HttpContext);
 
     private IActionResult MapResult(Domain.Common.Result result, Func<IActionResult> onSuccess) =>
-        result.Match<IActionResult>(
-            onSuccess,
-            error => error.Code switch
-            {
-                "validation" => BadRequest(new { title = error.Message }),
-                "conflict" => Conflict(new { title = error.Message }),
-                "forbidden" => Forbid(),
-                _ => NotFound(new { title = error.Message })
-            });
+        ApiResults.FromResult(result, onSuccess, HttpContext);
 }

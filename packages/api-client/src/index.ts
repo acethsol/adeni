@@ -3,6 +3,9 @@ import {
   adminCustomersResponseSchema,
   adminMarketsResponseSchema,
   adminMarketSchema,
+  adminBusinessesResponseSchema,
+  setSubscriptionTierRequestSchema,
+  subscriptionUsageSchema,
   availableSlotsResponseSchema,
   bookingResponseSchema,
   businessContextResponseSchema,
@@ -50,6 +53,8 @@ import {
   type AuthSession,
   type AdminCustomerSummary,
   type AdminMarket,
+  type AdminBusinessSummary,
+  type SubscriptionUsage,
   type AvailableSlot,
   type BookingResponse,
   type BusinessContextResponse,
@@ -83,6 +88,8 @@ import {
   type UpdateServiceOfferingRequest,
   type UpsertBusinessLocationRequest,
   type WeeklyAvailabilityRule,
+  localizeErrorResponse,
+  type ApiErrorResponse,
 } from "@adeni/shared";
 
 export class AdeniApiError extends Error {
@@ -101,6 +108,8 @@ export type AdeniApiClientOptions = {
   tenantId?: string | null;
   /** Development only — maps to X-Dev-Auth0-Sub when Auth0 is disabled on the API. */
   devAuth0Sub?: string | null;
+  /** Locale for translating API error codes (defaults to en). */
+  locale?: string;
   fetchImpl?: typeof fetch;
 };
 
@@ -120,6 +129,7 @@ export class AdeniApiClient {
   private accessToken: string | null;
   private tenantId: string | null;
   private devAuth0Sub: string | null;
+  private readonly locale: string;
   private readonly baseUrl: string;
   private readonly fetchImpl: typeof fetch;
 
@@ -128,6 +138,7 @@ export class AdeniApiClient {
     this.accessToken = options.accessToken ?? null;
     this.tenantId = options.tenantId ?? null;
     this.devAuth0Sub = options.devAuth0Sub ?? null;
+    this.locale = options.locale ?? "en";
     this.fetchImpl = options.fetchImpl ?? fetch;
   }
 
@@ -531,6 +542,11 @@ export class AdeniApiClient {
     );
   }
 
+  async getTenantSubscriptionUsage(): Promise<SubscriptionUsage> {
+    const response = await this.request("/api/v1/tenant/subscription");
+    return subscriptionUsageSchema.parse(await response.json());
+  }
+
   async getMe(): Promise<AuthSession> {
     const response = await this.request("/api/v1/auth/me");
     return authSessionSchema.parse(await response.json());
@@ -555,6 +571,27 @@ export class AdeniApiClient {
       `/api/v1/admin/businesses/${encodeURIComponent(tenantId)}/reject`,
       {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+  }
+
+  async getAdminBusinesses(): Promise<AdminBusinessSummary[]> {
+    const response = await this.request("/api/v1/admin/businesses");
+    const payload = adminBusinessesResponseSchema.parse(await response.json());
+    return payload.items;
+  }
+
+  async setAdminBusinessSubscriptionTier(
+    tenantId: string,
+    tier: "free" | "pro" | "business",
+  ): Promise<void> {
+    const body = setSubscriptionTierRequestSchema.parse({ tier });
+    await this.request(
+      `/api/v1/admin/businesses/${encodeURIComponent(tenantId)}/subscription-tier`,
+      {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       },
@@ -642,7 +679,8 @@ export class AdeniApiClient {
     });
 
     if (!response.ok) {
-      throw new AdeniApiError(`Request failed: ${path}`, response.status);
+      const payload = (await response.json().catch(() => ({}))) as ApiErrorResponse;
+      throw new AdeniApiError(localizeErrorResponse(this.locale, payload), response.status);
     }
 
     return response;

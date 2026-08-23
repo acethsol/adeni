@@ -6,6 +6,7 @@ using Adeni.Application.Events;
 using Adeni.Application.Markets;
 using Adeni.Application.Notifications;
 using Adeni.Application.Reviews;
+using Adeni.Application.Subscriptions;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Booking;
@@ -14,6 +15,7 @@ using Adeni.Infrastructure.Events;
 using Adeni.Infrastructure.Notifications;
 using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Reviews;
+using Adeni.Infrastructure.Subscriptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -131,6 +133,7 @@ public sealed class DomainEventDispatcherTests
         services.AddScoped<ITenantSchedulingTimeZone, TenantSchedulingTimeZone>();
         services.AddScoped<IAvailabilityService, AvailabilityService>();
         services.AddScoped<IReviewService, ReviewService>();
+        services.AddScoped<IEntitlementsService, EntitlementsService>();
         services.AddScoped<IBookingService, BookingService>();
         return services.BuildServiceProvider();
     }

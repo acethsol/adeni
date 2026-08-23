@@ -1,4 +1,5 @@
 import type { Messages } from "../types";
+import { frErrorMessages } from "../errors";
 
 export const frMessages: Messages = {
   nav: {
@@ -190,4 +191,5 @@ export const frMessages: Messages = {
       unknown: "Inconnu",
     },
   },
+  errors: frErrorMessages,
 };

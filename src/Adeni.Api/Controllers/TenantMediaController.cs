@@ -81,13 +81,5 @@ public sealed class TenantMediaController(
     }
 
     private IActionResult MapResult<T>(Domain.Common.Result<T> result, Func<T, IActionResult> onSuccess) =>
-        result.Match<IActionResult>(
-            onSuccess,
-            error => error.Code switch
-            {
-                "validation" => BadRequest(new { title = error.Message }),
-                "conflict" => Conflict(new { title = error.Message }),
-                "forbidden" => Forbid(),
-                _ => NotFound(new { title = error.Message })
-            });
+        ApiResults.FromResult(result, onSuccess, HttpContext);
 }

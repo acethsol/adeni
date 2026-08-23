@@ -174,6 +174,7 @@ Extraction steps (when justified): copy module folders → new service → repla
 | Payments as isolated module | ⚠️ Stub only (`IPaymentProvider`) | **17** (Paystack) |
 | Messaging as isolated module | ❌ | **18** |
 | Notifications decoupled from Booking | ✅ Domain events (logging stub) | **15b** |
+| Subscriptions / entitlements module | ✅ Tiers + gating; billing stub | **16** (Paystack checkout → 17+) |
 
 ---
 

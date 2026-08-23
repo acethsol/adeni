@@ -9,6 +9,7 @@ import { SkeletonList } from "@/components/ui/skeleton";
 import { useActionLoading } from "@/contexts/action-loading-context";
 import { useToast } from "@/contexts/toast-context";
 import { useUnsavedChangesGuard } from "@/contexts/navigation-guard-context";
+import { useApiErrorMessage } from "@/lib/api-error";
 
 type TimeBlock = { openTime: string; closeTime: string };
 
@@ -116,6 +117,7 @@ function formatHourLabel(hour: number): string {
 export function BusinessAvailabilityEditor() {
   const { run } = useActionLoading();
   const toast = useToast();
+  const { formatApiError } = useApiErrorMessage();
   const [rows, setRows] = useState<DayRow[]>(buildDefaultRows);
   const [savedSignature, setSavedSignature] = useState(() => rowsSignature(buildDefaultRows()));
   const [loading, setLoading] = useState(true);
@@ -169,9 +171,7 @@ export function BusinessAvailabilityEditor() {
 
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) {
-          throw new Error(
-            typeof payload.title === "string" ? payload.title : "Could not save availability.",
-          );
+          throw new Error(formatApiError(payload, "Could not save availability."));
         }
 
         const nextRows = rulesToRows((payload as { items: WeeklyAvailabilityRule[] }).items ?? []);

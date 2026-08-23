@@ -2,6 +2,7 @@ namespace Adeni.Application.Tenancy;
 
 using Adeni.Domain.Common;
 using Adeni.Domain.Tenancy;
+using Adeni.Application.Subscriptions;
 
 public sealed record BusinessLocationRequest(
     string Slug,
@@ -73,7 +74,9 @@ public sealed record BusinessProfileResponse(
     string? CoverImageUrl = null,
     string BusinessType = "scheduled_appointment",
     IReadOnlyList<string>? Capabilities = null,
-    bool AutoConfirmBookings = false);
+    bool AutoConfirmBookings = false,
+    string SubscriptionTier = "free",
+    TenantEntitlements? Entitlements = null);
 
 public sealed record VerificationDocumentResponse(
     VerificationDocumentType DocumentType,

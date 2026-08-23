@@ -38,7 +38,7 @@ public sealed class TenantServicesController(
         }
 
         var result = await services.CreateAsync(tenantId, request, cancellationToken);
-        return ApiResults.FromResult(result, payload => Created($"/api/v1/tenant/services/{payload.Id}", payload));
+        return ApiResults.FromResult(result, payload => Created($"/api/v1/tenant/services/{payload.Id}", payload), HttpContext);
     }
 
     [HttpPatch("{id:guid}")]
@@ -53,7 +53,7 @@ public sealed class TenantServicesController(
         }
 
         var result = await services.UpdateAsync(tenantId, id, request, cancellationToken);
-        return ApiResults.FromResult(result, Ok);
+        return ApiResults.FromResult(result, Ok, HttpContext);
     }
 
     [HttpDelete("{id:guid}")]
@@ -65,7 +65,7 @@ public sealed class TenantServicesController(
         }
 
         var result = await services.DeactivateAsync(tenantId, id, cancellationToken);
-        return ApiResults.FromResult(result, () => NoContent());
+        return ApiResults.FromResult(result, () => NoContent(), HttpContext);
     }
 
     private string? ResolveAuth0Sub()

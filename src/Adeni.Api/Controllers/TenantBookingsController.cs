@@ -35,7 +35,7 @@ public sealed class TenantBookingsController(
         }
 
         var result = await bookings.AcceptAsync(tenantId, id, cancellationToken);
-        return ApiResults.FromResult(result, Ok);
+        return ApiResults.FromResult(result, Ok, HttpContext);
     }
 
     [HttpPost("{id:guid}/reject")]
@@ -50,7 +50,7 @@ public sealed class TenantBookingsController(
         }
 
         var result = await bookings.RejectAsync(tenantId, id, body.Reason, cancellationToken);
-        return ApiResults.FromResult(result, Ok);
+        return ApiResults.FromResult(result, Ok, HttpContext);
     }
 
     private string? ResolveAuth0Sub()

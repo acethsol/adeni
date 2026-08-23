@@ -3,6 +3,7 @@ namespace Adeni.Infrastructure.Tenancy;
 using Adeni.Application.Catalog;
 using Adeni.Application.Markets;
 using Adeni.Application.Storage;
+using Adeni.Application.Subscriptions;
 using Adeni.Application.Tenancy;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
@@ -490,6 +491,8 @@ public sealed class BusinessOnboardingService(
             coverImageUrl,
             BusinessTypeMapping.ToApiValue(profile.BusinessType),
             capabilities,
-            profile.AutoConfirmBookings);
+            profile.AutoConfirmBookings,
+            SubscriptionTierMapping.ToApiValue(tenant.SubscriptionTier),
+            SubscriptionEntitlements.ForTier(tenant.SubscriptionTier));
     }
 }

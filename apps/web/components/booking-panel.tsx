@@ -8,6 +8,7 @@ import { BackLink } from "@/components/ui/back-link";
 import { FlowStepProgress } from "@/components/ui/flow-step-progress";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useActionLoading } from "@/contexts/action-loading-context";
+import { useApiErrorMessage } from "@/lib/api-error";
 
 type Props = {
   slug: string;
@@ -65,6 +66,7 @@ export function BookingPanel({
   supportsDeposits = false,
 }: Props) {
   const { run } = useActionLoading();
+  const { formatApiError } = useApiErrorMessage();
   const [step, setStep] = useState<Step>("service");
   const [selectedService, setSelectedService] = useState<ServiceOffering | null>(null);
   const [slots, setSlots] = useState<{ startAt: string; endAt: string }[]>([]);
@@ -159,10 +161,7 @@ export function BookingPanel({
         }
 
         if (!response.ok) {
-          const message =
-            typeof payload.title === "string"
-              ? payload.title
-              : "Booking failed. That slot may have been taken.";
+          const message = formatApiError(payload, "Booking failed. That slot may have been taken.");
           throw new Error(message);
         }
 

@@ -5,13 +5,16 @@ using Adeni.Application.Caching;
 using Adeni.Application.Events;
 using Adeni.Application.Markets;
 using Adeni.Application.Reviews;
+using Adeni.Application.Subscriptions;
 using Adeni.Domain.Booking;
+using Adeni.Domain.Common;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Booking;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Events;
 using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Reviews;
+using Adeni.Infrastructure.Subscriptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -84,7 +87,7 @@ public sealed class BookingFlowTests
 
         Assert.True(first.IsSuccess);
         Assert.True(second.IsFailure);
-        Assert.Equal("conflict", second.Error.Code);
+        Assert.Equal(ErrorCodes.SlotUnavailable, second.Error.Code);
     }
 
     [Fact]
@@ -321,6 +324,7 @@ public sealed class BookingFlowTests
         services.AddScoped<ITenantSchedulingTimeZone, TenantSchedulingTimeZone>();
         services.AddScoped<IAvailabilityService, AvailabilityService>();
         services.AddScoped<IReviewService, ReviewService>();
+        services.AddScoped<IEntitlementsService, EntitlementsService>();
         services.AddScoped<IBookingService, BookingService>();
         return services.BuildServiceProvider();
     }

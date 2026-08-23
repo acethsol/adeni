@@ -1,4 +1,5 @@
 using Adeni.Api.Auth;
+using Adeni.Api.Errors;
 using Adeni.Api.Extensions;
 using Adeni.Api.Middleware;
 using Adeni.Application.Abstractions;
@@ -38,6 +39,8 @@ builder.Services.AddAdeniStorage(builder.Configuration, builder.Environment);
 builder.Services.AddAdeniCors(builder.Configuration, builder.Environment);
 builder.Services.AddAdeniObservability(builder.Configuration);
 builder.Services.AddControllers();
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddHealthChecks();
 
 if (builder.Environment.IsDevelopment())
@@ -64,6 +67,7 @@ if (app.Environment.IsDevelopment())
 
 await WarmMarketCatalogAsync(app.Services);
 
+app.UseExceptionHandler();
 app.UseSerilogRequestLogging(options =>
 {
     options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>

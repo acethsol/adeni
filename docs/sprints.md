@@ -21,7 +21,7 @@
 | **13** | **Reviews & ratings** | ✅ Done |
 | **14** | **UX polish & guardrails** | ✅ Done |
 | 15 | Architecture foundation + booking v2 + business types | ✅ Done |
-| **16** | **Business SaaS & monetization** | Planned |
+| **16** | **Business SaaS & monetization** | ✅ Done |
 | **17** | **Commerce orchestration (Paystack)** | Planned |
 | **18** | **Messaging & WhatsApp bridge** | Planned |
 | **19** | **Trust depth & quote workflows** | Planned |
@@ -31,7 +31,7 @@
 | — | App Insights (Obs 1) | → Sprint 20 |
 | — | Booking notifications, auto-confirm, payments, waitlist | → Sprint 15 |
 
-**Next up:** Sprint 16 (**Business SaaS & monetization**). See [product-strategy.md §4.1](./product-strategy.md#41-saas-subscriptions--foundation-mrrarr).
+**Next up:** Sprint 17 (**Commerce orchestration — Paystack**). See [product-strategy.md §4.3](./product-strategy.md#43-fintech--orchestration-not-custody).
 
 ---
 ## Sprint 0 — Foundation & dev tooling ✅
@@ -256,19 +256,19 @@ Confluence: [Sprint 14 — UX polish & guardrails](https://aceth.atlassian.net/w
 
 Confluence: [Sprint 15 — Booking experience v2](https://aceth.atlassian.net/wiki/spaces/SD/pages/30801921)
 
-## Sprint 16 — Business SaaS & monetization (planned)
+## Sprint 16 — Business SaaS & monetization ✅ Done
 
 Turn the business portal from a free tool into a **monetizable operating system**. Foundation for MRR/ARR. See [product-strategy.md §4.1](./product-strategy.md#41-saas-subscriptions--foundation-mrrarr).
 
 | Task | Status |
 |------|--------|
-| **16a** Subscription tiers schema — `Free` / `Pro` / `Business` entitlements on tenant; feature flags in API | Planned |
-| **16b** Entitlements middleware — gate bookings/month, messaging, analytics, multi-location by tier | Planned |
-| **16c** Portal upgrade UX — plan comparison, upgrade prompts, usage meters (bookings used/limit) | Planned |
-| **16d** Business analytics v2 — revenue trends, booking funnel, repeat-customer rate, service mix (build on overview charts) | Planned |
-| **16e** Share kit — copy booking link, QR code, Instagram/WhatsApp share templates for public profile | Planned |
-| **16f** Billing provider design — Paystack Subscriptions or Stripe Billing integration spec; webhook handling (implement stub) | Planned |
-| **16g** Admin tier override — manually set tenant plan for pilot businesses | Planned |
+| **16a** Subscription tiers schema — `Free` / `Pro` / `Business` entitlements on tenant; feature flags in API | ✅ Done |
+| **16b** Entitlements middleware — gate bookings/month, messaging, analytics, multi-location by tier | ✅ Done |
+| **16c** Portal upgrade UX — plan comparison, upgrade prompts, usage meters (bookings used/limit) | ✅ Done |
+| **16d** Business analytics v2 — revenue trends, booking funnel, repeat-customer rate, service mix (build on overview charts) | ✅ Done |
+| **16e** Share kit — copy booking link, QR code, Instagram/WhatsApp share templates for public profile | ✅ Done |
+| **16f** Billing provider design — Paystack Subscriptions or Stripe Billing integration spec; webhook handling (implement stub) | ✅ Done (stub + [subscription-billing.md](./subscription-billing.md)) |
+| **16g** Admin tier override — manually set tenant plan for pilot businesses | ✅ Done |
 
 **Revenue unlocked:** SaaS MRR. **Metric:** paying businesses × ARPU.
 
@@ -346,10 +346,9 @@ Confluence: [Sprint 20 — Deployment, AI, observability & architecture](https:/
 
 ## Next up
 
-1. **Sprint 16** — SaaS tiers, entitlements, business analytics, share kit
-2. **Sprint 17** — Paystack orchestration, payment links, deposits (no custody)
-3. **Sprint 18** — messaging + WhatsApp bridge
-4. **Sprint 19** — tiered verification, **full quote workflows** (on Sprint 15 framework)
-5. **Sprint 20** — staging, LLM agent, observability
+1. **Sprint 17** — Paystack orchestration, payment links, deposits (no custody)
+2. **Sprint 18** — messaging + WhatsApp bridge
+3. **Sprint 19** — tiered verification, **full quote workflows** (on Sprint 15 framework)
+4. **Sprint 20** — staging, LLM agent, observability
 
 Strategy reference: [product-strategy.md](./product-strategy.md) — [§3.5 Business types](./product-strategy.md#35-business-types--workflow-capabilities), [architecture.md](./architecture.md) (modular monolith)

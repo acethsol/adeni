@@ -37,7 +37,7 @@ public sealed class TenantAvailabilityController(
         }
 
         var result = await availability.ReplaceWeeklyRulesAsync(tenantId, body.Items, cancellationToken);
-        return ApiResults.FromResult(result, rules => Ok(new { items = rules }));
+        return ApiResults.FromResult(result, rules => Ok(new { items = rules }), HttpContext);
     }
 
     private string? ResolveAuth0Sub()

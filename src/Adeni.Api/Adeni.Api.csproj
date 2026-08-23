@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Adeni.Api.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Adeni.Application\Adeni.Application.csproj" />
     <ProjectReference Include="..\Adeni.Infrastructure\Adeni.Infrastructure.csproj" />
   </ItemGroup>

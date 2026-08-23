@@ -1,5 +1,6 @@
 namespace Adeni.Api.Controllers;
 
+using Adeni.Api.Errors;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
 using Adeni.Application.Booking;
@@ -108,7 +109,7 @@ public sealed class BusinessesController(
             to,
             cancellationToken);
 
-        return ApiResults.FromResult(result, slots => Ok(new { items = slots }));
+        return ApiResults.FromResult(result, slots => Ok(new { items = slots }), HttpContext);
     }
 
     [HttpGet("{slug}/reviews")]
@@ -129,11 +130,7 @@ public sealed class BusinessesController(
                 pageSize = payload.PageSize,
                 totalCount = payload.TotalCount
             }),
-            error => error.Code switch
-            {
-                "validation" => BadRequest(new { title = error.Message }),
-                _ => NotFound(new { title = error.Message })
-            });
+            error => ApiErrorResponseMapper.ToActionResult(error, HttpContext));
     }
 
     [HttpPost("{slug}/quote-requests")]
@@ -151,7 +148,8 @@ public sealed class BusinessesController(
         var result = await quoteRequests.CreateBySlugAsync(auth0Sub, slug, request, cancellationToken);
         return ApiResults.FromResult(
             result,
-            payload => Created($"/api/v1/businesses/{slug}/quote-requests/{payload.Id}", payload));
+            payload => Created($"/api/v1/businesses/{slug}/quote-requests/{payload.Id}", payload),
+            HttpContext);
     }
 
     private string? ResolveCustomerAuth0Sub()

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   CalendarDays,
   Clock3,
+  CreditCard,
   LayoutDashboard,
   MapPin,
   PlusCircle,
@@ -28,6 +29,7 @@ export const BUSINESS_NAV_ITEMS = [
   { href: "/business/availability", label: "Availability", icon: Clock3 },
   { href: "/business/locations", label: "Locations", icon: MapPin },
   { href: "/business/profile", label: "Profile", icon: UserCircle },
+  { href: "/business/plan", label: "Plan", icon: CreditCard },
 ] as const;
 
 export const BUSINESS_REGISTER_ITEM = {

@@ -11,9 +11,22 @@ public sealed record PendingBusinessResponse(
     TenantStatus Status,
     DateTimeOffset CreatedAt);
 
+public sealed record AdminBusinessSummaryResponse(
+    Guid Id,
+    string Name,
+    string Slug,
+    TenantStatus Status,
+    string SubscriptionTier,
+    DateTimeOffset CreatedAt);
+
+public sealed record SetSubscriptionTierRequest(string Tier);
+
 public interface IAdminBusinessService
 {
     Task<IReadOnlyList<PendingBusinessResponse>> GetPendingVerificationsAsync(
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<AdminBusinessSummaryResponse>> ListBusinessesAsync(
         CancellationToken cancellationToken = default);
 
     Task<Result<Unit>> ApproveAsync(Guid tenantId, string adminId, CancellationToken cancellationToken = default);
@@ -22,6 +35,12 @@ public interface IAdminBusinessService
         Guid tenantId,
         string adminId,
         string reason,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<Unit>> SetSubscriptionTierAsync(
+        Guid tenantId,
+        string tier,
+        string adminId,
         CancellationToken cancellationToken = default);
 }
 

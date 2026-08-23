@@ -424,6 +424,53 @@ export const verificationDocumentSchema = z.object({
   submittedAt: z.string(),
 });
 
+export const tenantEntitlementsSchema = z.object({
+  monthlyBookingLimit: z.number().nullable(),
+  basicCalendar: z.boolean(),
+  messaging: z.boolean(),
+  analytics: z.boolean(),
+  reminders: z.boolean(),
+  multiLocation: z.boolean(),
+  staffManagement: z.boolean(),
+  prioritySupport: z.boolean(),
+});
+
+export type TenantEntitlements = z.infer<typeof tenantEntitlementsSchema>;
+
+export const subscriptionTierSchema = z.enum(["free", "pro", "business"]);
+
+export type SubscriptionTier = z.infer<typeof subscriptionTierSchema>;
+
+export const subscriptionUsageSchema = z.object({
+  tier: subscriptionTierSchema,
+  entitlements: tenantEntitlementsSchema,
+  bookingsUsedThisMonth: z.number().int().nonnegative(),
+  bookingsLimitThisMonth: z.number().int().positive().nullable(),
+});
+
+export type SubscriptionUsage = z.infer<typeof subscriptionUsageSchema>;
+
+export const adminBusinessSummarySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  slug: z.string(),
+  status: z.number(),
+  subscriptionTier: subscriptionTierSchema,
+  createdAt: z.string(),
+});
+
+export type AdminBusinessSummary = z.infer<typeof adminBusinessSummarySchema>;
+
+export const adminBusinessesResponseSchema = z.object({
+  items: z.array(adminBusinessSummarySchema),
+});
+
+export const setSubscriptionTierRequestSchema = z.object({
+  tier: subscriptionTierSchema,
+});
+
+export type SetSubscriptionTierRequest = z.infer<typeof setSubscriptionTierRequestSchema>;
+
 export const businessProfileSchema = z.object({
   tenantId: z.string(),
   businessName: z.string(),
@@ -443,6 +490,8 @@ export const businessProfileSchema = z.object({
   businessType: z.enum(["scheduled_appointment", "quote_request"]).optional(),
   capabilities: z.array(z.string()).optional(),
   autoConfirmBookings: z.boolean().optional(),
+  subscriptionTier: subscriptionTierSchema.optional(),
+  entitlements: tenantEntitlementsSchema.optional(),
 });
 
 export type BusinessProfile = z.infer<typeof businessProfileSchema>;

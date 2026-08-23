@@ -6,6 +6,7 @@ import { hasCapability } from "@adeni/shared";
 import { Button } from "@/components/ui/button";
 import { Callout } from "@/components/ui/callout";
 import { useToast } from "@/contexts/toast-context";
+import { useApiErrorMessage } from "@/lib/api-error";
 
 type Props = {
   profile: BusinessProfile;
@@ -13,6 +14,7 @@ type Props = {
 
 export function BusinessBookingSettings({ profile }: Props) {
   const toast = useToast();
+  const { formatApiError } = useApiErrorMessage();
   const [autoConfirm, setAutoConfirm] = useState(profile.autoConfirmBookings ?? false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +36,7 @@ export function BusinessBookingSettings({ profile }: Props) {
 
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(typeof payload.title === "string" ? payload.title : "Could not save settings.");
+        throw new Error(formatApiError(payload, "Could not save settings."));
       }
 
       toast.success("Booking settings saved.");

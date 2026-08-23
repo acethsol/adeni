@@ -1,6 +1,7 @@
 namespace Adeni.Api.Controllers;
 
 using Adeni.Api.Auth;
+using Adeni.Api.Errors;
 using Adeni.Application.Admin;
 using Adeni.Application.Auth;
 using Adeni.Application.Reviews;
@@ -37,12 +38,7 @@ public sealed class AuthController(
 
         return result.Match<IActionResult>(
             profile => Ok(profile),
-            error => error.Code switch
-            {
-                "forbidden" => Forbid(),
-                "validation" => BadRequest(new { title = error.Message }),
-                _ => NotFound(new { title = error.Message })
-            });
+            error => ApiErrorResponseMapper.ToActionResult(error, HttpContext));
     }
 
     [HttpGet("me")]
@@ -79,6 +75,35 @@ public sealed class AdminBusinessesController(IAdminBusinessService adminBusines
     {
         var items = await adminBusinessService.GetPendingVerificationsAsync(cancellationToken);
         return Ok(new { items });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> List(CancellationToken cancellationToken)
+    {
+        var items = await adminBusinessService.ListBusinessesAsync(cancellationToken);
+        return Ok(new { items });
+    }
+
+    [HttpPatch("{id:guid}/subscription-tier")]
+    public async Task<IActionResult> SetSubscriptionTier(
+        Guid id,
+        [FromBody] SetSubscriptionTierRequest body,
+        CancellationToken cancellationToken)
+    {
+        var adminId = User.FindFirst("sub")?.Value ?? "admin";
+        var result = await adminBusinessService.SetSubscriptionTierAsync(
+            id,
+            body.Tier,
+            adminId,
+            cancellationToken);
+
+        return result.Match<IActionResult>(
+            _ => NoContent(),
+            error => error.Code switch
+            {
+                "validation" => BadRequest(new { title = error.Message }),
+                _ => NotFound(new { title = error.Message })
+            });
     }
 
     [HttpPost("{id:guid}/approve")]

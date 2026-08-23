@@ -362,7 +362,7 @@ Keeps payment logic out of Booking and avoids rewrite when fintech layer lands.
 | Ask Adeni search | ✅ Rule-based | LLM agent |
 | Messaging | ❌ | Sprint 18 |
 | Payments | ❌ | Sprint 15 + 17 |
-| SaaS billing | ❌ | Sprint 16 |
+| SaaS billing | ✅ Sprint 16 (tiers + stub) | Paystack checkout Sprint 17+ |
 | Staff management | ❌ | Backlog |
 | Quote requests | ❌ | Sprint 19 |
 

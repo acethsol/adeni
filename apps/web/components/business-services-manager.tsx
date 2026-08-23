@@ -10,6 +10,7 @@ import { Input, Textarea } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { useConfirm } from "@/contexts/confirm-context";
 import { useToast } from "@/contexts/toast-context";
+import { useApiErrorMessage } from "@/lib/api-error";
 
 type Props = {
   initialServices: ServiceOffering[];
@@ -69,6 +70,7 @@ function formatPrice(amount: number, currency: string) {
 export function BusinessServicesManager({ initialServices, defaultCurrency = "NGN" }: Props) {
   const toast = useToast();
   const confirm = useConfirm();
+  const { formatApiError } = useApiErrorMessage();
 
   const [services, setServices] = useState(initialServices);
   const [modalOpen, setModalOpen] = useState(false);
@@ -145,7 +147,7 @@ export function BusinessServicesManager({ initialServices, defaultCurrency = "NG
 
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) {
-          throw new Error(typeof payload.title === "string" ? payload.title : "Could not update service.");
+          throw new Error(formatApiError(payload, "Could not update service."));
         }
 
         setServices((current) => current.map((item) => (item.id === editingId ? (payload as ServiceOffering) : item)));
@@ -159,7 +161,7 @@ export function BusinessServicesManager({ initialServices, defaultCurrency = "NG
 
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) {
-          throw new Error(typeof payload.title === "string" ? payload.title : "Could not create service.");
+          throw new Error(formatApiError(payload, "Could not create service."));
         }
 
         setServices((current) => [...current, payload as ServiceOffering]);
@@ -192,7 +194,7 @@ export function BusinessServicesManager({ initialServices, defaultCurrency = "NG
 
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
-        throw new Error(typeof payload.title === "string" ? payload.title : "Could not deactivate service.");
+        throw new Error(formatApiError(payload, "Could not deactivate service."));
       }
 
       setServices((current) =>

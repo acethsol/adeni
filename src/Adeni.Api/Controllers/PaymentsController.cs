@@ -13,13 +13,13 @@ public sealed class PaymentsController(IPaymentProvider paymentProvider) : Contr
         CancellationToken cancellationToken)
     {
         var result = await paymentProvider.InitializeAsync(request, cancellationToken);
-        return ApiResults.FromResult(result, Ok);
+        return ApiResults.FromResult(result, Ok, HttpContext);
     }
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
     {
         var result = await paymentProvider.GetAsync(id, cancellationToken);
-        return ApiResults.FromResult(result, Ok);
+        return ApiResults.FromResult(result, Ok, HttpContext);
     }
 }

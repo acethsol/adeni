@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { useToast } from "@/contexts/toast-context";
 import { useConfirm } from "@/contexts/confirm-context";
+import { useApiErrorMessage } from "@/lib/api-error";
 
 type Props = {
   initialLocations: BusinessLocation[];
@@ -72,6 +73,7 @@ export function BusinessLocationsManager({
 
   const toast = useToast();
   const confirm = useConfirm();
+  const { formatApiError } = useApiErrorMessage();
 
   const [locations, setLocations] = useState(initialLocations);
   const [modalOpen, setModalOpen] = useState(false);
@@ -149,7 +151,7 @@ export function BusinessLocationsManager({
 
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) {
-          throw new Error(typeof payload.title === "string" ? payload.title : "Could not update location.");
+          throw new Error(formatApiError(payload, "Could not update location."));
         }
 
         const updated = payload as BusinessLocation;
@@ -185,7 +187,7 @@ export function BusinessLocationsManager({
 
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) {
-          throw new Error(typeof payload.title === "string" ? payload.title : "Could not add location.");
+          throw new Error(formatApiError(payload, "Could not add location."));
         }
 
         const created = payload as BusinessLocation;
@@ -230,7 +232,7 @@ export function BusinessLocationsManager({
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
         throw new Error(
-          typeof payload.title === "string" ? payload.title : "Could not remove location.",
+          formatApiError(payload, "Could not remove location."),
         );
       }
 

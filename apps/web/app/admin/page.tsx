@@ -1,4 +1,5 @@
 import { AdeniRoles } from "@adeni/shared";
+import { AdminSubscriptionPanel } from "@/components/admin-subscription-panel";
 import { AdminCustomerPrivacyPanel } from "@/components/admin-customer-privacy-panel";
 import { AdminMarketsPanel } from "@/components/admin-markets-panel";
 import { AdminVerificationQueue } from "@/components/admin-verification-queue";
@@ -30,6 +31,10 @@ export default async function AdminPortalPage() {
   > = [];
   let queueError: string | null = null;
   let marketsError: string | null = null;
+  let businesses: Awaited<
+    ReturnType<Awaited<ReturnType<typeof createAuthenticatedApiClient>>["getAdminBusinesses"]>
+  > = [];
+  let businessesError: string | null = null;
 
   try {
     const client = await createAuthenticatedApiClient();
@@ -45,6 +50,14 @@ export default async function AdminPortalPage() {
   } catch {
     marketsError =
       "Could not load markets. Ensure your admin token includes the admin role (+ MFA if required).";
+  }
+
+  try {
+    const client = await createAuthenticatedApiClient();
+    businesses = await client.getAdminBusinesses();
+  } catch {
+    businessesError =
+      "Could not load businesses for subscription overrides. Ensure your admin token includes the admin role.";
   }
 
   return (
@@ -66,6 +79,14 @@ export default async function AdminPortalPage() {
       </section>
 
       <AdminMarketsPanel initialItems={markets} initialError={marketsError} />
+
+      <section className="mt-8">
+        <h2 className="text-lg font-semibold">Subscription tiers (pilots)</h2>
+        <p className="mt-1 text-sm text-[#1b4332]/70">
+          Override a business plan for pilot programs before Paystack billing is live.
+        </p>
+        <AdminSubscriptionPanel initialItems={businesses} initialError={businessesError} />
+      </section>
 
       <AdminCustomerPrivacyPanel />
     </PortalShell>

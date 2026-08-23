@@ -1,5 +1,7 @@
 namespace Adeni.Domain.Tenancy;
 
+using Adeni.Domain.Subscriptions;
+
 public sealed class Tenant
 {
     public Guid Id { get; set; }
@@ -7,6 +9,8 @@ public sealed class Tenant
     public string Name { get; set; } = string.Empty;
 
     public TenantStatus Status { get; set; } = TenantStatus.Draft;
+
+    public SubscriptionTier SubscriptionTier { get; set; } = SubscriptionTier.Free;
 
     public DateTimeOffset CreatedAt { get; set; }
 

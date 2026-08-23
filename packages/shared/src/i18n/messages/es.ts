@@ -1,4 +1,5 @@
 import type { Messages } from "../types";
+import { esErrorMessages } from "../errors";
 
 export const esMessages: Messages = {
   nav: {
@@ -190,4 +191,5 @@ export const esMessages: Messages = {
       unknown: "Desconocido",
     },
   },
+  errors: esErrorMessages,
 };

@@ -17,6 +17,8 @@ public sealed class ModuleBoundaryArchitectureTests
         "Adeni.Infrastructure.Markets",
         "Adeni.Infrastructure.Storage",
         "Adeni.Infrastructure.Notifications",
+        "Adeni.Infrastructure.Payments",
+        "Adeni.Infrastructure.Subscriptions",
     ];
 
     [Fact]

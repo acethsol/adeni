@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using Adeni.Application.Catalog;
 using Adeni.Application.Markets;
 using Adeni.Application.Caching;
+using Adeni.Application.Subscriptions;
 using Adeni.Application.Tenancy;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
@@ -56,7 +57,8 @@ internal static partial class LocationFieldValidator
 public sealed class BusinessLocationService(
     AdeniDbContext dbContext,
     ICacheService cache,
-    IMarketCatalog marketCatalog) : IBusinessLocationService
+    IMarketCatalog marketCatalog,
+    IEntitlementsService entitlementsService) : IBusinessLocationService
 {
     public async Task<Result<IReadOnlyList<BusinessLocationResponse>>> ListAsync(
         Guid tenantId,
@@ -113,6 +115,20 @@ public sealed class BusinessLocationService(
         if (await SlugTakenAsync(normalizedSlug, null, cancellationToken))
         {
             return Result.Failure<BusinessLocationResponse>(Error.Conflict("Location slug is already taken."));
+        }
+
+        var activeLocationCount = await dbContext.BusinessLocations
+            .AsNoTracking()
+            .CountAsync(x => x.TenantId == tenantId && x.IsActive, cancellationToken);
+
+        var locationEntitlement = await entitlementsService.EnsureCanAddLocationAsync(
+            tenantId,
+            tenant.SubscriptionTier,
+            activeLocationCount,
+            cancellationToken);
+        if (locationEntitlement.IsFailure)
+        {
+            return Result.Failure<BusinessLocationResponse>(locationEntitlement.Error);
         }
 
         var now = DateTimeOffset.UtcNow;
@@ -271,7 +287,7 @@ public sealed class BusinessLocationService(
     {
         if (string.IsNullOrWhiteSpace(auth0Sub))
         {
-            return Result.Failure<Tenant>(Error.Forbidden("Authentication is required."));
+            return Result.Failure<Tenant>(ErrorCodes.AuthRequiredError());
         }
 
         var businessUser = await dbContext.BusinessUsers
@@ -280,7 +296,7 @@ public sealed class BusinessLocationService(
 
         if (businessUser is null || businessUser.TenantId != tenantId)
         {
-            return Result.Failure<Tenant>(Error.Forbidden("You do not have access to this business."));
+            return Result.Failure<Tenant>(ErrorCodes.BusinessAccessDeniedError());
         }
 
         var tenant = await dbContext.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);

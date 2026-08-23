@@ -5,6 +5,7 @@ import { discoveryCtaLabel } from "@adeni/shared";
 import { Callout } from "@/components/ui/callout";
 import { Input, Textarea } from "@/components/ui/input";
 import { useActionLoading } from "@/contexts/action-loading-context";
+import { useApiErrorMessage } from "@/lib/api-error";
 
 type Props = {
   slug: string;
@@ -14,6 +15,7 @@ type Props = {
 
 export function QuoteRequestPanel({ slug, loginHref, enabled }: Props) {
   const { run } = useActionLoading();
+  const { formatApiError } = useApiErrorMessage();
   const [description, setDescription] = useState("");
   const [serviceAddress, setServiceAddress] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +55,7 @@ export function QuoteRequestPanel({ slug, loginHref, enabled }: Props) {
 
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) {
-          throw new Error(typeof payload.title === "string" ? payload.title : "Could not send quote request.");
+          throw new Error(formatApiError(payload, "Could not send quote request."));
         }
 
         setSubmitted(true);

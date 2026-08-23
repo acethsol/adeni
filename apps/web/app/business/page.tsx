@@ -16,8 +16,10 @@ import { formatTenantStatus } from "@adeni/shared";
 import { BusinessOverviewCharts } from "@/components/business-overview-charts";
 import { BusinessPortalCard } from "@/components/business-portal-card";
 import { BusinessPortalShell } from "@/components/business-portal-shell";
+import { SubscriptionUsageMeter } from "@/components/subscription-usage-meter";
 import { Button } from "@/components/ui/button";
 import { createBusinessApiClient } from "@/lib/business-api";
+import type { SubscriptionUsage } from "@adeni/shared";
 
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -53,15 +55,23 @@ export default async function BusinessPortalPage() {
   } | null = null;
   let revenueLabel: string | null = null;
   let rating: { avg: number | null; count: number } | null = null;
+  let subscriptionUsage: SubscriptionUsage | null = null;
+  let advancedAnalytics: {
+    funnel: { label: string; count: number; color: string }[];
+    repeatCustomerRate: number | null;
+    serviceMix: { label: string; count: number; percent: number }[];
+  } | null = null;
   let loadError: string | null = null;
 
   try {
     const client = await createBusinessApiClient();
     profile = await client.getTenantProfile();
-    const [bookings, services] = await Promise.all([
+    const [bookings, services, usage] = await Promise.all([
       client.getTenantBookings(),
       client.getTenantServices(),
+      client.getTenantSubscriptionUsage(),
     ]);
+    subscriptionUsage = usage;
     bookingsCount = bookings.filter((item) => item.status === 0).length;
     servicesCount = services.filter((item) => item.isActive).length;
 
@@ -85,6 +95,47 @@ export default async function BusinessPortalPage() {
     charts = { weekly, statusBreakdown, totalBookings: bookings.length };
 
     const serviceById = new Map(services.map((service) => [service.id, service]));
+
+    if (usage.entitlements.analytics) {
+      const pending = bookings.filter((b) => b.status === 0).length;
+      const confirmed = bookings.filter((b) => b.status === 1).length;
+      const rejected = bookings.filter((b) => b.status === 2).length;
+      const cancelled = bookings.filter((b) => b.status === 3).length;
+
+      const customerCounts = new Map<string, number>();
+      for (const booking of bookings) {
+        customerCounts.set(booking.customerId, (customerCounts.get(booking.customerId) ?? 0) + 1);
+      }
+      const uniqueCustomers = customerCounts.size;
+      const repeatCustomers = [...customerCounts.values()].filter((count) => count > 1).length;
+
+      const serviceCounts = new Map<string, number>();
+      for (const booking of bookings) {
+        const name = serviceById.get(booking.serviceOfferingId)?.name ?? booking.serviceName;
+        serviceCounts.set(name, (serviceCounts.get(name) ?? 0) + 1);
+      }
+      const totalForMix = bookings.length || 1;
+      const serviceMix = [...serviceCounts.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([label, count]) => ({
+          label,
+          count,
+          percent: Math.round((count / totalForMix) * 100),
+        }));
+
+      advancedAnalytics = {
+        funnel: [
+          { label: "Pending", count: pending, color: "bg-amber-400" },
+          { label: "Confirmed", count: confirmed, color: "bg-accent" },
+          { label: "Rejected", count: rejected, color: "bg-destructive/70" },
+          { label: "Cancelled", count: cancelled, color: "bg-muted-foreground/50" },
+        ],
+        repeatCustomerRate: uniqueCustomers >= 2 ? repeatCustomers / uniqueCustomers : null,
+        serviceMix,
+      };
+    }
+
     const confirmedRevenue = bookings
       .filter((item) => item.status === 1)
       .reduce((sum, item) => sum + (serviceById.get(item.serviceOfferingId)?.priceAmount ?? 0), 0);
@@ -128,6 +179,10 @@ export default async function BusinessPortalPage() {
         </BusinessPortalCard>
       ) : profile ? (
         <div className="space-y-8">
+          {subscriptionUsage ? (
+            <SubscriptionUsageMeter usage={subscriptionUsage} compact />
+          ) : null}
+
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <StatCard label="Status" value={formatTenantStatus(profile.status)} hint="Verification progress" />
             <StatCard
@@ -159,6 +214,10 @@ export default async function BusinessPortalPage() {
               weekly={charts.weekly}
               statusBreakdown={charts.statusBreakdown}
               totalBookings={charts.totalBookings}
+              showAdvancedAnalytics={subscriptionUsage?.entitlements.analytics ?? false}
+              funnel={advancedAnalytics?.funnel}
+              repeatCustomerRate={advancedAnalytics?.repeatCustomerRate}
+              serviceMix={advancedAnalytics?.serviceMix}
             />
           ) : null}
 

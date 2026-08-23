@@ -28,7 +28,7 @@ public sealed class BookingsController(
         }
 
         var result = await bookings.CreateAsync(auth0Sub, request, cancellationToken);
-        return ApiResults.FromResult(result, payload => Created($"/api/v1/bookings/{payload.Id}", payload));
+        return ApiResults.FromResult(result, payload => Created($"/api/v1/bookings/{payload.Id}", payload), HttpContext);
     }
 
     [HttpGet]
@@ -54,7 +54,7 @@ public sealed class BookingsController(
         }
 
         var result = await bookings.CancelAsync(auth0Sub, id, cancellationToken);
-        return ApiResults.FromResult(result, Ok);
+        return ApiResults.FromResult(result, Ok, HttpContext);
     }
 
     [HttpPost("{id:guid}/review")]
@@ -70,7 +70,7 @@ public sealed class BookingsController(
         }
 
         var result = await reviews.CreateForBookingAsync(auth0Sub, id, request, cancellationToken);
-        return ApiResults.FromResult(result, payload => Created($"/api/v1/bookings/{id}/review", payload));
+        return ApiResults.FromResult(result, payload => Created($"/api/v1/bookings/{id}/review", payload), HttpContext);
     }
 
     [HttpPost("waitlist")]
@@ -85,7 +85,7 @@ public sealed class BookingsController(
         }
 
         var result = await waitlist.JoinAsync(auth0Sub, request, cancellationToken);
-        return ApiResults.FromResult(result, payload => Created($"/api/v1/bookings/waitlist/{payload.Id}", payload));
+        return ApiResults.FromResult(result, payload => Created($"/api/v1/bookings/waitlist/{payload.Id}", payload), HttpContext);
     }
 
     private string? ResolveCustomerAuth0Sub()

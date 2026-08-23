@@ -1,4 +1,5 @@
 import { Star } from "lucide-react";
+import { BusinessShareKit } from "@/components/business-share-kit";
 import { BusinessPortalCard } from "@/components/business-portal-card";
 import { BusinessPortalShell } from "@/components/business-portal-shell";
 import { BusinessCoverUpload } from "@/components/business-cover-upload";
@@ -20,6 +21,8 @@ export default async function BusinessProfilePage() {
     loadError = "Could not load profile.";
   }
 
+  const primaryLocation = profile?.locations.find((item) => item.isPrimary) ?? profile?.locations[0];
+
   return (
     <BusinessPortalShell
       title="Profile"
@@ -29,7 +32,15 @@ export default async function BusinessProfilePage() {
         <p className="text-sm text-muted">{loadError}</p>
       ) : profile ? (
         <>
-          <div className="grid gap-8 lg:grid-cols-2 xl:grid-cols-3">
+          {primaryLocation ? (
+            <BusinessShareKit
+              businessName={profile.businessName}
+              slug={primaryLocation.slug}
+              phone={profile.phone}
+            />
+          ) : null}
+
+          <div className="mt-8 grid gap-8 lg:grid-cols-2 xl:grid-cols-3">
             <BusinessPortalCard>
               <h2 className="text-lg font-semibold text-foreground">Verification status</h2>
               <div className="mt-4">

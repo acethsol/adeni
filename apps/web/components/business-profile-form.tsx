@@ -9,6 +9,7 @@ import { Callout } from "@/components/ui/callout";
 import { Input, Textarea } from "@/components/ui/input";
 import { useToast } from "@/contexts/toast-context";
 import { useUnsavedChangesGuard } from "@/contexts/navigation-guard-context";
+import { useApiErrorMessage } from "@/lib/api-error";
 
 type Props = {
   profile: BusinessProfile;
@@ -40,6 +41,7 @@ function toValues(profile: BusinessProfile): FormValues {
 
 export function BusinessProfileForm({ profile }: Props) {
   const toast = useToast();
+  const { formatApiError } = useApiErrorMessage();
   const canEdit = profile.status === 0 || profile.status === 3;
 
   const initialValues = useMemo(() => toValues(profile), [profile]);
@@ -117,9 +119,7 @@ export function BusinessProfileForm({ profile }: Props) {
 
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(
-          typeof payload.title === "string" ? payload.title : "Could not save profile.",
-        );
+        throw new Error(formatApiError(payload, "Could not save profile."));
       }
 
       toast.success("Profile saved");

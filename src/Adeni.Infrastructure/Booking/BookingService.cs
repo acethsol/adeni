@@ -3,6 +3,7 @@ namespace Adeni.Infrastructure.Booking;
 using Adeni.Application.Booking;
 using Adeni.Application.Caching;
 using Adeni.Application.Events;
+using Adeni.Application.Subscriptions;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Booking.Events;
 using Adeni.Domain.Common;
@@ -16,7 +17,8 @@ public sealed class BookingService(
     IAvailabilityService availabilityService,
     IDistributedLockProvider lockProvider,
     Application.Reviews.IReviewService reviewService,
-    IDomainEventCollector domainEventCollector) : IBookingService
+    IDomainEventCollector domainEventCollector,
+    IEntitlementsService entitlementsService) : IBookingService
 {
     public async Task<Result<BookingResponse>> CreateAsync(
         string customerAuth0Sub,
@@ -25,13 +27,12 @@ public sealed class BookingService(
     {
         if (string.IsNullOrWhiteSpace(customerAuth0Sub))
         {
-            return Result.Failure<BookingResponse>(Error.Forbidden("Customer authentication is required."));
+            return Result.Failure<BookingResponse>(ErrorCodes.CustomerAuthRequiredError());
         }
 
         if (request.StartAt <= DateTimeOffset.UtcNow)
         {
-            return Result.Failure<BookingResponse>(
-                Error.Validation("That time slot has passed. Please choose a new time."));
+            return Result.Failure<BookingResponse>(ErrorCodes.SlotExpiredError());
         }
 
         var profile = await dbContext.BusinessProfiles
@@ -47,6 +48,15 @@ public sealed class BookingService(
         if (tenant is null)
         {
             return Result.Failure<BookingResponse>(Error.NotFound("Business"));
+        }
+
+        var entitlementCheck = await entitlementsService.EnsureCanCreateBookingAsync(
+            request.TenantId,
+            tenant.SubscriptionTier,
+            cancellationToken);
+        if (entitlementCheck.IsFailure)
+        {
+            return Result.Failure<BookingResponse>(entitlementCheck.Error);
         }
 
         var service = await dbContext.ServiceOfferings
@@ -82,7 +92,7 @@ public sealed class BookingService(
         var slotLock = await lockProvider.TryAcquireAsync(lockKey, CacheTtl.SlotLock, cancellationToken);
         if (slotLock is null)
         {
-            return Result.Failure<BookingResponse>(Error.Conflict("That time slot is being booked. Try again."));
+            return Result.Failure<BookingResponse>(ErrorCodes.SlotLockedError());
         }
 
         await using (slotLock)
@@ -98,11 +108,10 @@ public sealed class BookingService(
             {
                 if (request.StartAt <= DateTimeOffset.UtcNow)
                 {
-                    return Result.Failure<BookingResponse>(
-                        Error.Validation("That time slot has passed. Please choose a new time."));
+                    return Result.Failure<BookingResponse>(ErrorCodes.SlotExpiredError());
                 }
 
-                return Result.Failure<BookingResponse>(Error.Conflict("That time slot is no longer available."));
+                return Result.Failure<BookingResponse>(ErrorCodes.SlotUnavailableError());
             }
 
             var now = DateTimeOffset.UtcNow;
@@ -242,7 +251,7 @@ public sealed class BookingService(
     {
         if (string.IsNullOrWhiteSpace(customerAuth0Sub))
         {
-            return Result.Failure<CustomerBookingResponse>(Error.Forbidden("Customer authentication is required."));
+            return Result.Failure<CustomerBookingResponse>(ErrorCodes.CustomerAuthRequiredError());
         }
 
         var row = await (

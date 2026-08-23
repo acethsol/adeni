@@ -3,6 +3,7 @@ namespace Adeni.Infrastructure.Admin;
 using Adeni.Application.Abstractions;
 using Adeni.Application.Admin;
 using Adeni.Application.Caching;
+using Adeni.Application.Subscriptions;
 using Adeni.Domain.Auditing;
 using Adeni.Domain.Common;
 using Adeni.Domain.Tenancy;
@@ -45,6 +46,59 @@ public sealed class AdminBusinessService(
                 t.Status,
                 t.CreatedAt))
             .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<AdminBusinessSummaryResponse>> ListBusinessesAsync(
+        CancellationToken cancellationToken = default) =>
+        await dbContext.Tenants
+            .AsNoTracking()
+            .OrderByDescending(t => t.CreatedAt)
+            .Take(200)
+            .Select(t => new AdminBusinessSummaryResponse(
+                t.Id,
+                t.Name,
+                dbContext.BusinessLocations
+                    .Where(location => location.TenantId == t.Id && location.IsActive && location.IsPrimary)
+                    .Select(location => location.Slug)
+                    .FirstOrDefault()
+                    ?? dbContext.BusinessLocations
+                        .Where(location => location.TenantId == t.Id && location.IsActive)
+                        .Select(location => location.Slug)
+                        .FirstOrDefault()
+                    ?? string.Empty,
+                t.Status,
+                SubscriptionTierMapping.ToApiValue(t.SubscriptionTier),
+                t.CreatedAt))
+            .ToListAsync(cancellationToken);
+
+    public async Task<Result<Unit>> SetSubscriptionTierAsync(
+        Guid tenantId,
+        string tier,
+        string adminId,
+        CancellationToken cancellationToken = default)
+    {
+        var tenant = await dbContext.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+        if (tenant is null)
+        {
+            return Result.Failure<Unit>(Error.NotFound("Business"));
+        }
+
+        var normalizedTier = SubscriptionTierMapping.FromApiValue(tier);
+        tenant.SubscriptionTier = normalizedTier;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        await auditLogWriter.WriteAsync(new AuditEntry(
+            Guid.NewGuid(),
+            adminId,
+            "tenant.subscription_tier_updated",
+            "tenant",
+            tenantId.ToString(),
+            correlationContext.CorrelationId,
+            DateTimeOffset.UtcNow,
+            $"{{\"tier\":\"{SubscriptionTierMapping.ToApiValue(normalizedTier)}\"}}"),
+            cancellationToken);
+
+        return Result.Success(Unit.Value);
+    }
 
     public async Task<Result<Unit>> ApproveAsync(
         Guid tenantId,
