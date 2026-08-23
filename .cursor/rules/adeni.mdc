@@ -1,5 +1,5 @@
 ---
-description: Adeni backend — architecture, security, and agent standing plays
+description: Adeni — architecture, v1 scope, security, and agent standing plays
 alwaysApply: true
 ---
 
@@ -9,28 +9,34 @@ Read [AGENTS.md](../../AGENTS.md) for the full playbook. These rules always appl
 
 ## Project
 
-Trusted local services marketplace API (.NET 10, PostgreSQL, Redis, Auth0). Flutter client. Lagos / beauty vertical. SOC 2 controls from day one.
+Local services marketplace (Lagos, beauty wedge). .NET modular monolith + Next.js web + Expo mobile. Trust-first, SOC 2 from day one.
+
+## Strategy & scope
+
+- [product-strategy.md](../../docs/product-strategy.md) — positioning, revenue, **out of scope**
+- [architecture.md](../../docs/architecture.md) — module boundaries, no microservices early
+- v1: discovery + booking + portals + Paystack orchestration (no wallet/custody)
+- Next sprint: see [sprints.md](../../docs/sprints.md) (Sprint 17 Paystack when current)
 
 ## Architecture
 
-`Domain` → `Application` ← `Infrastructure` ← `Api`. Services return `Result<T>`. Controllers use `.Match()`. Register DI in `ServiceCollectionExtensions`.
+`Domain` → `Application` ← `Infrastructure` ← `Api`. Modules via `I*Service` only. `Result<T>` + `.Match()` in controllers. Shared types in `packages/shared`.
+
+## Specs before code
+
+Copy [docs/specs/_template.md](../../docs/specs/_template.md) → `docs/specs/sprint-XX-name.md` before non-trivial features.
 
 ## Security (non-negotiable)
 
-- Tenant isolation: EF query filters + `TenantAccessMiddleware` + `X-Tenant-Id` header
-- PII: use `PiiMasker`; never log full phone/email/body
-- Admin `/admin/*` mutations must audit to `admin.audit_logs`
-- Admin JWTs need `amr: mfa` when MFA policy enabled
+- Tenant: EF query filters + `TenantAccessMiddleware` + `X-Tenant-Id`
+- PII: `PiiMasker`; never log full phone/email/body
+- Admin `/admin/*` → audit logs; MFA when policy enabled
 - `DevBusinessAuthMiddleware` only in Development/Testing
 
-## Current focus
+## Calibration
 
-Sprint 3: Auth0 + Flutter shell. See [docs/sprints.md](../../docs/sprints.md). Do not start booking unless asked.
+Booking → Redis slot locks. Public profile → masked phone. Payments → orchestration only, no custody. UI → branch on `businessType`/capabilities, not category slugs.
 
 ## Workflow
 
-Use AGENTS.md standing plays: spec → implement → debug → security audit → tests → review. Minimal diffs. Run `dotnet test Adeni.slnx -c Release` before PR.
-
-## Tests
-
-Integration tests: `WebApplicationFactory<Program>`, environment `Testing`, empty DB/Redis connection strings for in-memory fallback.
+Standing plays in AGENTS.md. Minimal diffs. `dotnet test Adeni.slnx -c Release` before PR.
