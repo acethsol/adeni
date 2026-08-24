@@ -5,68 +5,73 @@ using Adeni.Domain.Common;
 using Adeni.Domain.Payments;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
-public sealed class StubPaymentProvider(AdeniDbContext dbContext) : IPaymentProvider
+public sealed class StubPaymentProvider(
+    AdeniDbContext dbContext,
+    IOptions<PaymentsOptions> paymentsOptions) : IPaymentProvider
 {
-    public async Task<Result<PaymentIntentResponse>> InitializeAsync(
-        InitializePaymentRequest request,
+    public string ProviderName => "Stub";
+
+    public async Task<Result<ProviderInitializeResult>> InitializeAsync(
+        ProviderInitializeRequest request,
         CancellationToken cancellationToken = default)
     {
         if (request.Amount <= 0)
         {
-            return Result.Failure<PaymentIntentResponse>(Error.Validation("Payment amount must be greater than zero."));
+            return Result.Failure<ProviderInitializeResult>(ErrorCodes.PaymentInvalidAmountError());
         }
 
         if (string.IsNullOrWhiteSpace(request.Currency) || request.Currency.Trim().Length != 3)
         {
-            return Result.Failure<PaymentIntentResponse>(Error.Validation("Currency must be a 3-letter ISO code."));
+            return Result.Failure<ProviderInitializeResult>(ErrorCodes.PaymentInvalidCurrencyError());
         }
 
-        var now = DateTimeOffset.UtcNow;
-        var reference = $"stub_{Guid.NewGuid():N}"[..24];
-        var entity = new PaymentIntentRecord
-        {
-            Id = Guid.NewGuid(),
-            TenantId = request.TenantId,
-            BookingId = request.BookingId,
-            Amount = request.Amount,
-            Currency = request.Currency.Trim().ToUpperInvariant(),
-            Status = PaymentIntentStatus.Pending,
-            ProviderReference = reference,
-            CreatedAt = now,
-            UpdatedAt = now,
-        };
+        var checkoutUrl =
+            $"{paymentsOptions.Value.StubCheckoutBaseUrl.TrimEnd('/')}/{request.ProviderReference}";
 
-        dbContext.PaymentIntents.Add(entity);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Result.Success(Map(entity));
+        return Result.Success(new ProviderInitializeResult(checkoutUrl, request.ProviderReference));
     }
 
-    public async Task<Result<PaymentIntentResponse>> GetAsync(
-        Guid paymentIntentId,
+    public async Task<Result<ProviderPaymentStatus>> GetProviderStatusAsync(
+        string providerReference,
         CancellationToken cancellationToken = default)
     {
         var entity = await dbContext.PaymentIntents
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == paymentIntentId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.ProviderReference == providerReference, cancellationToken);
 
         if (entity is null)
         {
-            return Result.Failure<PaymentIntentResponse>(Error.NotFound("Payment"));
+            return Result.Failure<ProviderPaymentStatus>(ErrorCodes.PaymentNotFoundError());
         }
 
-        return Result.Success(Map(entity));
+        return Result.Success(new ProviderPaymentStatus(
+            providerReference,
+            entity.Status == PaymentIntentStatus.Completed,
+            entity.Status == PaymentIntentStatus.Failed,
+            entity.Status == PaymentIntentStatus.Failed ? "Stub payment failed." : null));
     }
 
-    private static PaymentIntentResponse Map(PaymentIntentRecord entity) =>
-        new(
-            entity.Id,
-            entity.TenantId,
-            entity.BookingId,
-            entity.Amount,
-            entity.Currency,
-            entity.Status.ToString().ToLowerInvariant(),
-            $"/checkout/stub/{entity.ProviderReference}",
-            entity.ProviderReference);
+    public Task<Result<PaymentWebhookPayload>> ParseWebhookAsync(
+        string rawBody,
+        IReadOnlyDictionary<string, string> headers,
+        CancellationToken cancellationToken = default)
+    {
+        _ = rawBody;
+        _ = headers;
+        return Task.FromResult(Result.Failure<PaymentWebhookPayload>(ErrorCodes.PaymentWebhookInvalidError()));
+    }
+
+    public Task<Result<ProviderRefundResult>> RefundAsync(
+        string providerReference,
+        decimal? amount,
+        CancellationToken cancellationToken = default)
+    {
+        _ = providerReference;
+        return Task.FromResult(Result.Success(new ProviderRefundResult(
+            providerReference,
+            amount ?? 0m,
+            "processed")));
+    }
 }

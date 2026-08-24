@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Linking,
   Pressable,
   StyleSheet,
   Text,
@@ -18,11 +19,19 @@ type Props = {
   slug: string;
   tenantId: string;
   services: ServiceOffering[];
+  supportsDeposits?: boolean;
+  depositPercent?: number;
 };
 
 type Step = "service" | "slot" | "confirm" | "done";
 
-export function BookingPanel({ slug, tenantId, services }: Props) {
+export function BookingPanel({
+  slug,
+  tenantId,
+  services,
+  supportsDeposits = false,
+  depositPercent = 0,
+}: Props) {
   const { isBookingEnabled, createApiClient } = useAuth();
   const auth0Configured = isAuth0Configured();
   const [step, setStep] = useState<Step>("service");
@@ -87,6 +96,28 @@ export function BookingPanel({ slug, tenantId, services }: Props) {
         startAt: selectedSlot,
         customerNotes: notes.trim() || undefined,
       });
+
+      const requiresDeposit =
+        supportsDeposits && depositPercent > 0 && selectedService.priceAmount > 0;
+
+      if (requiresDeposit) {
+        const payment = await client.initializePayment({
+          tenantId,
+          bookingId: result.id,
+          currency: selectedService.currency,
+          type: "deposit",
+        });
+
+        const checkoutUrl = payment.checkoutUrl.startsWith("http")
+          ? payment.checkoutUrl
+          : `${process.env.EXPO_PUBLIC_WEB_BASE_URL ?? "http://localhost:3000"}${payment.checkoutUrl}`;
+
+        await Linking.openURL(checkoutUrl);
+        setBooking(result);
+        setStep("done");
+        return;
+      }
+
       setBooking(result);
       setStep("done");
     } catch (err) {
@@ -230,6 +261,17 @@ export function BookingPanel({ slug, tenantId, services }: Props) {
             placeholderTextColor={adeniTheme.textSubtle}
             style={styles.notesInput}
           />
+
+          {supportsDeposits && depositPercent > 0 ? (
+            <Text style={styles.depositHint}>
+              A {depositPercent}% deposit (
+              {formatPrice(
+                selectedService.priceAmount * (depositPercent / 100),
+                selectedService.currency,
+              )}
+              ) is required. You&apos;ll be redirected to checkout after confirming.
+            </Text>
+          ) : null}
 
           {isBookingEnabled ? (
             <Pressable
@@ -426,6 +468,15 @@ const styles = StyleSheet.create({
     color: adeniTheme.text,
     textAlignVertical: "top",
     backgroundColor: adeniTheme.background,
+  },
+  depositHint: {
+    marginTop: 12,
+    fontSize: 13,
+    lineHeight: 18,
+    color: adeniTheme.textMuted,
+    backgroundColor: "rgba(64, 145, 108, 0.08)",
+    borderRadius: 10,
+    padding: 12,
   },
   confirmButton: {
     marginTop: 20,

@@ -16,6 +16,7 @@ export function BusinessBookingSettings({ profile }: Props) {
   const toast = useToast();
   const { formatApiError } = useApiErrorMessage();
   const [autoConfirm, setAutoConfirm] = useState(profile.autoConfirmBookings ?? false);
+  const [depositPercent, setDepositPercent] = useState(profile.depositPercent ?? 0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,7 +32,7 @@ export function BusinessBookingSettings({ profile }: Props) {
       const response = await fetch("/api/business/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ autoConfirmBookings: autoConfirm }),
+        body: JSON.stringify({ autoConfirmBookings: autoConfirm, depositPercent }),
       });
 
       const payload = await response.json().catch(() => ({}));
@@ -66,6 +67,22 @@ export function BusinessBookingSettings({ profile }: Props) {
           </span>
         </span>
       </label>
+      {hasCapability(profile.capabilities, "deposits") ? (
+        <label className="block text-sm">
+          <span className="font-medium text-foreground">Deposit at confirm (%)</span>
+          <input
+            type="number"
+            min={0}
+            max={100}
+            value={depositPercent}
+            onChange={(event) => setDepositPercent(Number(event.target.value))}
+            className="mt-1 w-full max-w-xs rounded-lg border border-border px-3 py-2"
+          />
+          <span className="mt-1 block text-muted">
+            Customers pay this percentage when booking online. Set 0 to disable deposit checkout.
+          </span>
+        </label>
+      ) : null}
       {error ? <Callout tone="error">{error}</Callout> : null}
       <Button type="button" onClick={handleSave} disabled={saving}>
         {saving ? "Saving…" : "Save booking settings"}

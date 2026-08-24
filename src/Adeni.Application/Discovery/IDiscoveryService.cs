@@ -45,7 +45,8 @@ public sealed record PublicBusinessProfile(
     double? Longitude,
     string BusinessType = "scheduled_appointment",
     IReadOnlyList<string>? Capabilities = null,
-    string DiscoveryCta = "book_now");
+    string DiscoveryCta = "book_now",
+    int DepositPercent = 0);
 
 public interface IDiscoveryService
 {

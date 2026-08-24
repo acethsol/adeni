@@ -1,7 +1,12 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { SymbolView } from "expo-symbols";
 import type { DiscoveryBusinessItem } from "@adeni/shared";
-import { discoveryCtaLabel } from "@adeni/shared";
+import {
+  discoveryCtaLabel,
+  formatCategoryLabel,
+  getReviewCountLabel,
+  resolveBusinessCoverImage,
+} from "@adeni/shared";
 import { useLocale } from "@/contexts/locale-context";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";

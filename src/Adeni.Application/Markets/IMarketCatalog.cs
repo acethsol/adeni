@@ -11,7 +11,8 @@ public sealed record MarketDefinition(
     MarketLocation DefaultLocation,
     IReadOnlyList<string> Languages,
     bool IsLive,
-    string? LaunchNote = null);
+    string? LaunchNote = null,
+    decimal PlatformFeePercent = 0m);
 
 public interface IMarketCatalog
 {

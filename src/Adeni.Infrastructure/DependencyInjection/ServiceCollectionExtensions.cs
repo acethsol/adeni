@@ -70,7 +70,7 @@ public static class ServiceCollectionExtensions
         services.AddReviewsModule();
         services.AddDiscoveryModule();
         services.AddNotificationsModule();
-        services.AddPaymentsModule();
+        services.AddPaymentsModule(configuration);
         services.AddSubscriptionsModule();
 
         return services;

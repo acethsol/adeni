@@ -58,7 +58,7 @@ public sealed record BusinessLocationResponse(
     bool IsPrimary,
     bool IsActive);
 
-public sealed record UpdateBusinessSettingsRequest(bool AutoConfirmBookings);
+public sealed record UpdateBusinessSettingsRequest(bool AutoConfirmBookings, int DepositPercent = 0);
 
 public sealed record BusinessProfileResponse(
     Guid TenantId,
@@ -75,6 +75,7 @@ public sealed record BusinessProfileResponse(
     string BusinessType = "scheduled_appointment",
     IReadOnlyList<string>? Capabilities = null,
     bool AutoConfirmBookings = false,
+    int DepositPercent = 0,
     string SubscriptionTier = "free",
     TenantEntitlements? Entitlements = null);
 

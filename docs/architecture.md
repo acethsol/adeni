@@ -170,11 +170,11 @@ Extraction steps (when justified): copy module folders → new service → repla
 | Single flat DI registration | ✅ Per-module `AddXxxModule()` | **15a** |
 | Domain events | ✅ In-process dispatcher | **15a** |
 | Module boundary architecture tests | ✅ NetArchTest | **15a** |
-| PostgreSQL schema separation | ⚠️ Single EF model | Incremental with Payments (17) |
-| Payments as isolated module | ⚠️ Stub only (`IPaymentProvider`) | **17** (Paystack) |
+| PostgreSQL schema separation | ✅ `payments.*` schema extended (Sprint 17) | — |
+| Payments as isolated module | ✅ Paystack + stub providers, orchestrator, webhooks | — |
 | Messaging as isolated module | ❌ | **18** |
 | Notifications decoupled from Booking | ✅ Domain events (logging stub) | **15b** |
-| Subscriptions / entitlements module | ✅ Tiers + gating; billing stub | **16** (Paystack checkout → 17+) |
+| Subscriptions / entitlements module | ✅ Tiers + gating; billing stub (Paystack patterns aligned) | **17+** |
 
 ---
 

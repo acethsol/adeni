@@ -197,6 +197,7 @@ export default async function BusinessProfilePage({ params }: Props) {
               bookingEnabled={bookingEnabled}
               loginHref={`/auth/login?returnTo=${encodeURIComponent(returnPath)}`}
               supportsDeposits={profile.capabilities?.includes("deposits") ?? false}
+              depositPercent={profile.depositPercent ?? 0}
             />
           )}
         </main>

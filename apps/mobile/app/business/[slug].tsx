@@ -174,7 +174,13 @@ export default function BusinessProfileScreen() {
             {shouldShowQuoteFlow(profile) ? (
               <QuoteRequestPanel slug={profile.slug} client={createPublicApiClient()} />
             ) : (
-              <BookingPanel slug={profile.slug} tenantId={profile.tenantId} services={services} />
+              <BookingPanel
+                slug={profile.slug}
+                tenantId={profile.tenantId}
+                services={services}
+                supportsDeposits={profile.capabilities?.includes("deposits") ?? false}
+                depositPercent={profile.depositPercent ?? 0}
+              />
             )}
 
           </ScrollView>

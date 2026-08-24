@@ -40,4 +40,37 @@ public static class ErrorCodes
 
     public static Error BusinessAccessDeniedError() =>
         new(BusinessAccessDenied, "You do not have access to this business.");
+
+    public const string PaymentInvalidAmount = "payment.invalid_amount";
+    public const string PaymentInvalidCurrency = "payment.invalid_currency";
+    public const string PaymentNotFound = "payment.not_found";
+    public const string PaymentProviderError = "payment.provider_error";
+    public const string PaymentWebhookInvalid = "payment.webhook_invalid";
+    public const string PaymentAlreadyProcessed = "payment.already_processed";
+    public const string PaymentRefundNotAllowed = "payment.refund_not_allowed";
+    public const string PaymentDepositNotConfigured = "payment.deposit_not_configured";
+
+    public static Error PaymentInvalidAmountError() =>
+        new(PaymentInvalidAmount, "Payment amount must be greater than zero.");
+
+    public static Error PaymentInvalidCurrencyError() =>
+        new(PaymentInvalidCurrency, "Currency must be a 3-letter ISO code.");
+
+    public static Error PaymentNotFoundError() =>
+        new(PaymentNotFound, "Payment was not found.");
+
+    public static Error PaymentProviderFailedError() =>
+        new(PaymentProviderError, "Payment could not be processed. Please try again.");
+
+    public static Error PaymentWebhookInvalidError() =>
+        new(PaymentWebhookInvalid, "Webhook signature verification failed.");
+
+    public static Error PaymentAlreadyProcessedError() =>
+        new(PaymentAlreadyProcessed, "This payment has already been processed.");
+
+    public static Error PaymentRefundNotAllowedError() =>
+        new(PaymentRefundNotAllowed, "This payment cannot be refunded.");
+
+    public static Error PaymentDepositNotConfiguredError() =>
+        new(PaymentDepositNotConfigured, "Deposits are not configured for this business.");
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Banknote,
   CalendarDays,
   Clock3,
   CreditCard,
@@ -20,6 +21,7 @@ import { useSidebarTooltip } from "@/lib/use-sidebar-tooltip";
 const NAV_CAPABILITIES: Partial<Record<string, Capability>> = {
   "/business/bookings": "calendar",
   "/business/availability": "calendar",
+  "/business/payments": "deposits",
 };
 
 export const BUSINESS_NAV_ITEMS = [
@@ -27,6 +29,7 @@ export const BUSINESS_NAV_ITEMS = [
   { href: "/business/bookings", label: "Bookings", icon: CalendarDays },
   { href: "/business/services", label: "Services", icon: Scissors },
   { href: "/business/availability", label: "Availability", icon: Clock3 },
+  { href: "/business/payments", label: "Payments", icon: Banknote },
   { href: "/business/locations", label: "Locations", icon: MapPin },
   { href: "/business/profile", label: "Profile", icon: UserCircle },
   { href: "/business/plan", label: "Plan", icon: CreditCard },

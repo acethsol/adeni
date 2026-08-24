@@ -17,6 +17,9 @@ public sealed class BusinessProfile : ITenantEntity
 
     public bool AutoConfirmBookings { get; set; }
 
+    /// <summary>Deposit percentage (0–100) charged at booking confirm when deposits capability is enabled.</summary>
+    public int DepositPercent { get; set; }
+
     public DateTimeOffset UpdatedAt { get; set; }
 
     public Tenant? Tenant { get; set; }

@@ -65,7 +65,7 @@ export function QuoteRequestPanel({ slug, client }: Props) {
       />
       <View style={styles.actions}>
         <Button
-          label={submitting ? "Sending…" : "Request quote"}
+          title={submitting ? "Sending…" : "Request quote"}
           onPress={handleSubmit}
           disabled={submitting || description.trim().length < 10}
         />

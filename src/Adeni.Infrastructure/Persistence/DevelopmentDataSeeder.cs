@@ -145,6 +145,7 @@ public static class DevelopmentDataSeeder
         await MarketCatalogSeeder.SeedIfEmptyAsync(db, new SeedHostEnvironment(), cancellationToken);
         await SeedSamplesAsync(db, cancellationToken);
         await SeedDevBusinessOwnerAsync(db, cancellationToken);
+        await SeedDevDepositSettingsAsync(db, cancellationToken);
         await SeedDevReviewFixtureAsync(db, cancellationToken);
     }
 
@@ -277,6 +278,34 @@ public static class DevelopmentDataSeeder
             UpdatedAt = startAt,
         });
 
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task SeedDevDepositSettingsAsync(
+        AdeniDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var location = await db.BusinessLocations
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(entry => entry.Slug == SeedMarkerSlug, cancellationToken);
+
+        if (location is null)
+        {
+            return;
+        }
+
+        var profile = await db.BusinessProfiles
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(entry => entry.TenantId == location.TenantId, cancellationToken);
+
+        if (profile is null || profile.DepositPercent > 0)
+        {
+            return;
+        }
+
+        profile.DepositPercent = 30;
+        profile.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
     }
 }

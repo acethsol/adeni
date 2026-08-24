@@ -246,6 +246,7 @@ public sealed class BusinessOnboardingService(
 
         var (tenant, profile) = access.Value!;
         profile.AutoConfirmBookings = request.AutoConfirmBookings;
+        profile.DepositPercent = Math.Clamp(request.DepositPercent, 0, 100);
         profile.UpdatedAt = DateTimeOffset.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -492,6 +493,7 @@ public sealed class BusinessOnboardingService(
             BusinessTypeMapping.ToApiValue(profile.BusinessType),
             capabilities,
             profile.AutoConfirmBookings,
+            profile.DepositPercent,
             SubscriptionTierMapping.ToApiValue(tenant.SubscriptionTier),
             SubscriptionEntitlements.ForTier(tenant.SubscriptionTier));
     }

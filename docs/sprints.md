@@ -31,7 +31,7 @@
 | — | App Insights (Obs 1) | → Sprint 20 |
 | — | Booking notifications, auto-confirm, payments, waitlist | → Sprint 15 |
 
-**Next up:** Sprint 17 (**Commerce orchestration — Paystack**). See [product-strategy.md §4.3](./product-strategy.md#43-fintech--orchestration-not-custody).
+**Next up:** Sprint 18 (**Messaging & WhatsApp bridge**). See [product-strategy.md §7.4](./product-strategy.md#74-nigeria-specific-engineering-notes).
 
 ---
 ## Sprint 0 — Foundation & dev tooling ✅
@@ -274,19 +274,19 @@ Turn the business portal from a free tool into a **monetizable operating system*
 
 Confluence: [Sprint 16 — Business SaaS & monetization](https://aceth.atlassian.net/wiki/spaces/SD/pages/41222145)
 
-## Sprint 17 — Commerce orchestration (planned)
+## Sprint 17 — Commerce orchestration ✅
 
-**Non-custodial fintech** — Adeni orchestrates payments; licensed providers move money. Highest ROI: payment links usable on WhatsApp without marketplace traffic. See [product-strategy.md §4.3](./product-strategy.md#43-fintech--orchestration-not-custody).
+**Non-custodial fintech** — Adeni orchestrates payments; licensed providers move money. Highest ROI: payment links usable on WhatsApp without marketplace traffic. See [product-strategy.md §4.3](./product-strategy.md#43-fintech--orchestration-not-custody) and [payments.md](./payments.md).
 
 | Task | Status |
 |------|--------|
-| **17a** `IPaymentProvider` port + `PaymentIntent` domain — **Payments module**; provider-agnostic; no wallet/balance tables | Planned |
-| **17b** Paystack integration (NG) — initialize transaction, webhook confirm, idempotency | Planned |
-| **17c** Payment links & invoices — business creates “Pay ₦X” link; share via WhatsApp/SMS; receipt on success | Planned |
-| **17d** Booking deposit flow — optional deposit % at confirm; tie to Sprint 15 payments step | Planned |
-| **17e** Transaction ledger — business-facing payment history, reconciliation view in portal | Planned |
-| **17f** Platform fee config — Adeni take-rate (0% during Lagos pilot; configurable per market) | Planned |
-| **17g** Refund orchestration — initiate refund via provider; update booking/payment status | Planned |
+| **17a** `IPaymentProvider` port + `IPaymentOrchestrator` + `PaymentIntent` domain — **Payments module**; provider-agnostic; no wallet/balance tables | ✅ Done |
+| **17b** Paystack integration (NG) — initialize transaction, webhook confirm, idempotency | ✅ Done |
+| **17c** Payment links & invoices — business creates “Pay ₦X” link; share via WhatsApp/SMS; receipt on success | ✅ Done |
+| **17d** Booking deposit flow — optional deposit % at confirm; tie to Sprint 15 payments step | ✅ Done |
+| **17e** Transaction ledger — business-facing payment history, reconciliation view in portal | ✅ Done |
+| **17f** Platform fee config — Adeni take-rate (0% during Lagos pilot; configurable per market) | ✅ Done |
+| **17g** Refund orchestration — initiate refund via provider; update booking/payment status | ✅ Done |
 
 **Revenue unlocked:** GMV × take rate + payment rev-share. **Metric:** GMV per active business.
 
@@ -346,7 +346,7 @@ Confluence: [Sprint 20 — Deployment, AI, observability & architecture](https:/
 
 ## Next up
 
-1. **Sprint 17** — Paystack orchestration, payment links, deposits (no custody)
+1. **Sprint 18** — Messaging & WhatsApp bridge
 2. **Sprint 18** — messaging + WhatsApp bridge
 3. **Sprint 19** — tiered verification, **full quote workflows** (on Sprint 15 framework)
 4. **Sprint 20** — staging, LLM agent, observability

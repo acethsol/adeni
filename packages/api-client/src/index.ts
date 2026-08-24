@@ -44,6 +44,9 @@ import {
   joinWaitlistRequestSchema,
   initializePaymentRequestSchema,
   paymentIntentResponseSchema,
+  createPaymentLinkRequestSchema,
+  paymentLedgerResponseSchema,
+  refundPaymentRequestSchema,
   updateBusinessSettingsRequestSchema,
   reviewResponseSchema,
   publicReviewsResponseSchema,
@@ -80,6 +83,9 @@ import {
   type JoinWaitlistRequest,
   type InitializePaymentRequest,
   type PaymentIntentResponse,
+  type CreatePaymentLinkRequest,
+  type PaymentLedgerEntry,
+  type RefundPaymentRequest,
   type CreateReviewRequest,
   type ReviewResponse,
   type PublicReviewsResponse,
@@ -399,6 +405,60 @@ export class AdeniApiClient {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
+    });
+    return paymentIntentResponseSchema.parse(await response.json());
+  }
+
+  async getPayment(id: string): Promise<PaymentIntentResponse> {
+    const response = await this.request(`/api/v1/payments/${id}`);
+    return paymentIntentResponseSchema.parse(await response.json());
+  }
+
+  async createPaymentLink(
+    request: CreatePaymentLinkRequest,
+  ): Promise<PaymentIntentResponse> {
+    const body = createPaymentLinkRequestSchema.parse(request);
+    const response = await this.request("/api/v1/payments/links", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return paymentIntentResponseSchema.parse(await response.json());
+  }
+
+  async listPaymentLedger(
+    tenantId: string,
+    page = 1,
+    pageSize = 50,
+  ): Promise<PaymentLedgerEntry[]> {
+    const query = new URLSearchParams({
+      tenantId,
+      page: String(page),
+      pageSize: String(pageSize),
+    });
+    const response = await this.request(`/api/v1/payments/ledger?${query.toString()}`);
+    const payload = paymentLedgerResponseSchema.parse(await response.json());
+    return payload.items;
+  }
+
+  async refundPayment(
+    paymentIntentId: string,
+    request: RefundPaymentRequest,
+  ): Promise<PaymentIntentResponse> {
+    const body = refundPaymentRequestSchema.parse(request);
+    const response = await this.request(`/api/v1/payments/${paymentIntentId}/refund`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return paymentIntentResponseSchema.parse(await response.json());
+  }
+
+  async confirmStubPayment(reference: string): Promise<PaymentIntentResponse> {
+    const response = await this.request("/api/v1/payments/stub/confirm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reference }),
     });
     return paymentIntentResponseSchema.parse(await response.json());
   }

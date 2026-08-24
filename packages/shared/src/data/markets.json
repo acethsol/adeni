@@ -8,7 +8,8 @@
       "timeZoneId": "Africa/Lagos",
       "defaultLocation": { "lat": 6.5244, "lng": 3.3792 },
       "languages": ["en"],
-      "isLive": true
+      "isLive": true,
+      "platformFeePercent": 0
     },
     {
       "id": "abuja",

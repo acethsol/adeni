@@ -17,6 +17,7 @@ type Props = {
   bookingEnabled: boolean;
   loginHref: string;
   supportsDeposits?: boolean;
+  depositPercent?: number;
 };
 
 type Step = "service" | "slot" | "confirm" | "done";
@@ -64,6 +65,7 @@ export function BookingPanel({
   bookingEnabled,
   loginHref,
   supportsDeposits = false,
+  depositPercent = 0,
 }: Props) {
   const { run } = useActionLoading();
   const { formatApiError } = useApiErrorMessage();
@@ -166,6 +168,42 @@ export function BookingPanel({
         }
 
         setBooking(payload as BookingResponse);
+
+        const requiresDeposit =
+          supportsDeposits && depositPercent > 0 && selectedService.priceAmount > 0;
+
+        if (requiresDeposit) {
+          const paymentResponse = await fetch("/api/payments/initialize", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              tenantId,
+              bookingId: (payload as BookingResponse).id,
+              currency: selectedService.currency,
+              type: "deposit",
+            }),
+          });
+
+          const paymentPayload = await paymentResponse.json().catch(() => ({}));
+          if (!paymentResponse.ok) {
+            const message = formatApiError(
+              paymentPayload,
+              "Booking saved but deposit checkout could not start.",
+            );
+            throw new Error(message);
+          }
+
+          const checkoutUrl = paymentPayload.checkoutUrl as string;
+          if (checkoutUrl.startsWith("http")) {
+            window.location.href = checkoutUrl;
+          } else {
+            window.location.href = checkoutUrl.startsWith("/")
+              ? checkoutUrl
+              : `/checkout/stub/${paymentPayload.providerReference}`;
+          }
+          return;
+        }
+
         setStep("done");
       });
     } catch (err) {
@@ -366,9 +404,14 @@ export function BookingPanel({
             />
           </label>
 
-          {supportsDeposits ? (
-            <p className="mt-4 rounded-lg border border-dashed border-[#40916c]/40 bg-[#f6f8f6] px-3 py-2 text-sm text-[#1b4332]/80">
-              Payment checkout is coming soon. Your booking will be submitted without charging for now.
+          {supportsDeposits && depositPercent > 0 ? (
+            <p className="mt-4 rounded-lg border border-[#40916c]/30 bg-[#f6f8f6] px-3 py-2 text-sm text-[#1b4332]/80">
+              A {depositPercent}% deposit (
+              {formatPrice(
+                selectedService.priceAmount * (depositPercent / 100),
+                selectedService.currency,
+              )}
+              ) is required to secure your booking. You&apos;ll be redirected to checkout after confirming.
             </p>
           ) : null}
 

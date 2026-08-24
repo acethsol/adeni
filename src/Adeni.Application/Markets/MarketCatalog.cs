@@ -38,7 +38,8 @@ public sealed class MarketCatalog : IMarketCatalog
                 new MarketLocation(market.DefaultLocation.Lat, market.DefaultLocation.Lng),
                 market.Languages,
                 market.IsLive,
-                market.LaunchNote))
+                market.LaunchNote,
+                market.PlatformFeePercent))
             .ToArray();
 
         _ids = new HashSet<string>(_markets.Select(market => market.Id), StringComparer.OrdinalIgnoreCase);
@@ -98,6 +99,7 @@ public sealed class MarketCatalog : IMarketCatalog
         public required IReadOnlyList<string> Languages { get; init; }
         public required bool IsLive { get; init; }
         public string? LaunchNote { get; init; }
+        public decimal PlatformFeePercent { get; init; }
     }
 
     private sealed record MarketCatalogLocation(

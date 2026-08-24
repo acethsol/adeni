@@ -70,6 +70,7 @@ export const publicBusinessProfileSchema = z.object({
   businessType: z.enum(["scheduled_appointment", "quote_request"]).optional(),
   capabilities: z.array(z.string()).optional(),
   discoveryCta: z.enum(["book_now", "get_quote"]).optional(),
+  depositPercent: z.number().int().min(0).max(100).optional(),
 });
 
 export type PublicBusinessProfile = z.infer<typeof publicBusinessProfileSchema>;
@@ -490,6 +491,7 @@ export const businessProfileSchema = z.object({
   businessType: z.enum(["scheduled_appointment", "quote_request"]).optional(),
   capabilities: z.array(z.string()).optional(),
   autoConfirmBookings: z.boolean().optional(),
+  depositPercent: z.number().int().min(0).max(100).optional(),
   subscriptionTier: subscriptionTierSchema.optional(),
   entitlements: tenantEntitlementsSchema.optional(),
 });
@@ -509,6 +511,7 @@ export type UpdateBusinessProfileRequest = z.infer<
 
 export const updateBusinessSettingsRequestSchema = z.object({
   autoConfirmBookings: z.boolean(),
+  depositPercent: z.number().int().min(0).max(100).optional(),
 });
 
 export type UpdateBusinessSettingsRequest = z.infer<
@@ -544,8 +547,12 @@ export type JoinWaitlistRequest = z.infer<typeof joinWaitlistRequestSchema>;
 export const initializePaymentRequestSchema = z.object({
   tenantId: z.string().uuid(),
   bookingId: z.string().uuid().optional(),
-  amount: z.number().positive(),
+  amount: z.number().positive().optional(),
   currency: z.string().length(3),
+  type: z.enum(["deposit", "link", "invoice"]).optional(),
+  description: z.string().max(500).optional(),
+  customerEmail: z.string().email().optional(),
+  callbackUrl: z.string().url().optional(),
 });
 
 export type InitializePaymentRequest = z.infer<typeof initializePaymentRequestSchema>;
@@ -554,12 +561,56 @@ export const paymentIntentResponseSchema = z.object({
   id: z.string(),
   tenantId: z.string(),
   bookingId: z.string().nullable().optional(),
+  type: z.string(),
   amount: z.number(),
+  platformFeeAmount: z.number(),
   currency: z.string(),
   status: z.string(),
   checkoutUrl: z.string(),
   providerReference: z.string(),
+  description: z.string().nullable().optional(),
+  createdAt: z.string().optional(),
 });
+
+export const createPaymentLinkRequestSchema = z.object({
+  tenantId: z.string().uuid(),
+  amount: z.number().positive(),
+  currency: z.string().length(3),
+  description: z.string().min(1).max(500),
+  customerEmail: z.string().email().optional(),
+  callbackUrl: z.string().url().optional(),
+});
+
+export type CreatePaymentLinkRequest = z.infer<typeof createPaymentLinkRequestSchema>;
+
+export const paymentLedgerEntrySchema = z.object({
+  id: z.string(),
+  tenantId: z.string(),
+  bookingId: z.string().nullable().optional(),
+  type: z.string(),
+  amount: z.number(),
+  platformFeeAmount: z.number(),
+  currency: z.string(),
+  status: z.string(),
+  providerReference: z.string(),
+  description: z.string().nullable().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export const paymentLedgerResponseSchema = z.object({
+  items: z.array(paymentLedgerEntrySchema),
+});
+
+export type PaymentLedgerEntry = z.infer<typeof paymentLedgerEntrySchema>;
+
+export const refundPaymentRequestSchema = z.object({
+  tenantId: z.string().uuid(),
+  amount: z.number().positive().optional(),
+  reason: z.string().max(500).optional(),
+});
+
+export type RefundPaymentRequest = z.infer<typeof refundPaymentRequestSchema>;
 
 export type PaymentIntentResponse = z.infer<typeof paymentIntentResponseSchema>;
 

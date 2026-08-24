@@ -599,6 +599,7 @@ public sealed class DiscoveryService(
             business.location.Longitude,
             BusinessTypeMapping.ToApiValue(business.profile.BusinessType),
             businessCapabilitiesService.GetCapabilities(business.profile.BusinessType, business.profile.CategorySlug),
-            businessCapabilitiesService.GetDiscoveryCta(business.profile.BusinessType));
+            businessCapabilitiesService.GetDiscoveryCta(business.profile.BusinessType),
+            business.profile.DepositPercent);
     }
 }
