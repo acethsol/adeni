@@ -45,9 +45,9 @@ Check [docs/sprints.md](docs/sprints.md) for live status. As of last playbook up
 
 | | |
 |---|---|
-| **Done through** | Sprint 16 — Business SaaS & monetization |
-| **Next up** | Sprint 17 — Commerce orchestration (Paystack) |
-| **Then** | Sprint 18 messaging, Sprint 19 trust/quote depth, Sprint 20 deploy + AI + observability |
+| **Done through** | Sprint 17 — Commerce orchestration (Paystack) |
+| **Next up** | Sprint 18 — Messaging & WhatsApp bridge |
+| **Then** | Sprint 19 trust/quote depth, Sprint 20 deploy + AI + observability |
 
 Do not start work from a later sprint unless the user or sprint doc explicitly expands scope.
 
@@ -88,6 +88,7 @@ When the user or spec says these terms, interpret **Adeni's way** — not generi
 | **New backend feature** | Application port (`I*Service`) first; module folder in Domain; register in `ServiceCollectionExtensions`; no cross-Infrastructure imports |
 | **Frontend change** | Branch UI on `businessType` / capabilities from API — not hard-coded category slugs; update `packages/shared` if contract changes |
 | **Payment / Paystack** | Orchestration only — `IPaymentProvider` port, no wallet/balance tables; see product-strategy §4.3 |
+| **Webhook / payment event** | Verify provider signature **before** parsing JSON; idempotent handler; never mark paid on body alone — see [Webhook security (Murphy)](#webhook-security-murphy) |
 | **Quote request** | `quote_request` business type — not the default barber/salon flow; Sprint 19 depth |
 | **Admin action** | Must audit; admin JWT needs MFA when policy enabled |
 | **Cache** | Follow existing key patterns; invalidate on write; see [caching-setup.md](docs/caching-setup.md) |
@@ -157,6 +158,29 @@ Every feature must respect these. They are not optional polish.
 5. **Secrets** — Key Vault in staging/prod; nothing committed. See [auth0-setup.md](docs/auth0-setup.md).
 6. **Public endpoints** — discovery and profiles are anonymous; still validate input and cache safely.
 7. **Dev-only shortcuts** — `DevBusinessAuthMiddleware` only in Development/Testing. Never in production.
+8. **Payment webhooks** — verify provider signature before parsing; idempotent state transitions; rate-limit public webhook routes in staging/prod. See [Webhook security (Murphy)](#webhook-security-murphy).
+
+## Webhook security (Murphy)
+
+Source: [@mattmurphyai — payment webhook reel](https://www.instagram.com/reel/DcbzcfyioD9/) (Stripe example; same rules for Paystack).
+
+**The failure mode:** Accepting webhooks without signature verification lets anyone POST a fake “payment succeeded” payload. Your server marks the order paid and triggers fulfillment — no real money moved.
+
+**Required for every payment/subscription webhook endpoint:**
+
+| Rule | Adeni implementation |
+|------|------------------------|
+| **1. Signature verification** | Paystack: HMAC SHA512 of **raw body** vs `x-paystack-signature` in `PaystackPaymentProvider.ParseWebhookAsync`. Reject with `payment.webhook_invalid` if missing or wrong. **`Paystack:WebhookSecret` required in staging/prod.** |
+| **2. Idempotency** | `PaymentOrchestrator.ApplySuccessAsync` skips if status already `Completed`. Store `providerReference`; ignore duplicate success events. |
+| **3. Never trust body alone** | Resolve `PaymentIntentRecord` by provider reference; transition only through orchestrator + domain events (`PaymentCompleted`). |
+| **4. Endpoint protection** | Webhook routes have no JWT — **rate-limit** at edge/API (Sprint 20 / infra). Do not expose stub confirm in production. |
+| **5. Minimal logging** | Audit `payment.webhook_received`; log event type + intent id — not full payload (PII). |
+
+**Reference implementation:** `src/Adeni.Infrastructure/Payments/PaystackPaymentProvider.cs`, `PaymentOrchestrator.ProcessWebhookAsync`, [docs/payments.md](docs/payments.md).
+
+**Known gap:** `POST /api/v1/subscriptions/webhook` is still a **stub without signature verification**. When wiring Paystack Subscriptions, reuse the same Murphy rules — do not copy the stub pattern.
+
+**Security audit (play 4) must include:** Any new webhook endpoint checked against this table.
 
 ## Production readiness (13-layer lens)
 
@@ -219,6 +243,7 @@ Audit [PR/feature] against AGENTS.md security non-negotiables and v1 scope:
 - PII in logs or API responses (public profiles must mask phone)
 - Admin routes audited
 - New public endpoints rate-limit ready
+- Payment/subscription webhooks: signature + idempotency per [Webhook security (Murphy)](#webhook-security-murphy)
 - No secrets or dev middleware in prod paths
 - No out-of-scope features (payments custody, microservices, etc.)
 List findings as Critical / Should fix / OK.
@@ -281,6 +306,7 @@ Do not rewrite large sections without approval.
 | [docs/auth0-setup.md](docs/auth0-setup.md) | Auth0 claims, MFA |
 | [docs/database-setup.md](docs/database-setup.md) | Postgres, migrations |
 | [docs/caching-setup.md](docs/caching-setup.md) | Redis keys, health |
+| [docs/payments.md](docs/payments.md) | Paystack orchestration, webhooks, deposits |
 | [docs/tenant-isolation.md](docs/tenant-isolation.md) | Tenant middleware and filters |
 
 ## Do not
@@ -291,5 +317,7 @@ Do not rewrite large sections without approval.
 - Log raw phone numbers, emails, or message bodies
 - Disable tenant filters or audit middleware to "make tests pass"
 - Hard-code category checks in UI — use capabilities / businessType from API
-- Build Sprint 17+ features (Paystack, messaging, LLM agents) unless explicitly requested
+- Accept payment webhooks without signature verification or idempotent handling
+- Ship subscription webhooks without the same Murphy rules as payments
+- Build Sprint 18+ features (messaging, LLM agents) unless explicitly requested
 - Introduce microservices or wallet/custody tables

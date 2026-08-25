@@ -35,7 +35,7 @@ Copy [docs/specs/_template.md](../../docs/specs/_template.md) → `docs/specs/sp
 
 ## Calibration
 
-Booking → Redis slot locks. Public profile → masked phone. Payments → orchestration only, no custody. UI → branch on `businessType`/capabilities, not category slugs.
+Booking → Redis slot locks. Public profile → masked phone. Payments → orchestration only, no custody. **Webhooks → verify signature before JSON parse; idempotent state transitions** (Murphy). UI → branch on `businessType`/capabilities, not category slugs.
 
 ## Workflow
 

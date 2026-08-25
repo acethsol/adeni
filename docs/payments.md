@@ -53,6 +53,21 @@ Configure in `appsettings.json`:
 2. Copy the webhook secret into `Paystack:WebhookSecret`
 3. Paystack sends `charge.success`, `charge.failed`, and refund events — parsed into normalized payloads and applied idempotently (terminal states are not double-applied)
 
+### Webhook security (Murphy)
+
+From [@mattmurphyai](https://www.instagram.com/reel/DcbzcfyioD9/): never accept payment webhooks without signature verification — fake payloads can mark orders paid without real money.
+
+| Rule | Implementation |
+|------|----------------|
+| Verify signature first | `PaystackPaymentProvider` — HMAC SHA512 of raw body vs `x-paystack-signature`; `FixedTimeEquals` |
+| Idempotent processing | `PaymentOrchestrator` — skip if intent already `Completed` / refunded |
+| Resolve by reference | Lookup `PaymentIntentRecord` by `providerReference`, not client-supplied intent id in webhook body |
+| No payload logging | Audit event type + reference only |
+| Staging/prod | `Paystack:WebhookSecret` must be set; stub confirm route dev-only |
+
+Full agent rules: [AGENTS.md](../AGENTS.md#webhook-security-murphy).  
+**Gap:** `POST /api/v1/subscriptions/webhook` still lacks verification — apply same rules when wiring subscription billing.
+
 ## API endpoints
 
 | Method | Path | Purpose |

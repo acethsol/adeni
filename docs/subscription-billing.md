@@ -39,7 +39,7 @@ Stub implementation: `StubSubscriptionBillingProvider` (returns fake checkout UR
 
 `POST /api/v1/subscriptions/webhook`
 
-No signature verification in stub. Future Paystack wiring should validate `x-paystack-signature` before parsing.
+**No signature verification in stub** — this is the vulnerability pattern from [@mattmurphyai webhook security guidance](https://www.instagram.com/reel/DcbzcfyioD9/). Future Paystack wiring **must** validate `x-paystack-signature` on the raw body before parsing, with idempotent tier updates — same rules as [payments.md](./payments.md#webhook-security-murphy) and [AGENTS.md](../AGENTS.md#webhook-security-murphy).
 
 ### Normalized event shape
 

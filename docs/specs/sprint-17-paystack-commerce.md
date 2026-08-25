@@ -4,7 +4,7 @@
 |-------|-------|
 | **Sprint** | Sprint 17 — Commerce orchestration (Paystack) |
 | **Author** | Cloud Agent (standing play 1) |
-| **Status** | Approved |
+| **Status** | Implemented (P1–P4); see [docs/payments.md](../payments.md) |
 | **Created** | 2026-08-23 |
 
 ---
@@ -266,8 +266,61 @@ Local dev: Paystack disabled → `StubPaymentProvider`; or ngrok + test keys for
 
 ---
 
-## 13. Standing play next step
+## 14. Webhook security (Murphy)
+
+**Source:** [@mattmurphyai — Instagram reel DcbzcfyioD9](https://www.instagram.com/reel/DcbzcfyioD9/) — “You accept webhooks from Stripe without verifying the signature…”
+
+Same rules apply to Paystack and any future provider. This is a **non-negotiable** for Adeni trust/commerce.
+
+### The three Murphy fixes
+
+1. **Signature verification on every webhook** — verify before parsing JSON or updating state  
+2. **Idempotency** — replayed events must not double-confirm bookings or ledger entries  
+3. **Endpoint protection** — rate limiting on public webhook URLs; secrets in Key Vault only  
+
+### Adeni compliance matrix
+
+| Requirement | Payments (`/api/v1/payments/webhook`) | Subscriptions (`/api/v1/subscriptions/webhook`) |
+|-------------|--------------------------------------|-----------------------------------------------|
+| Signature before parse | ✅ `PaystackPaymentProvider` — `x-paystack-signature`, HMAC SHA512, constant-time compare | ❌ Stub only — **must fix when wiring Paystack Subscriptions** |
+| Idempotent success handler | ✅ `PaymentOrchestrator.ApplySuccessAsync` — no-op if `Completed` | ❌ Not implemented |
+| Resolve intent by provider ref | ✅ Lookup by `providerReference` | N/A |
+| Fulfillment only after verify | ✅ `PaymentCompleted` domain event → booking confirm | N/A |
+| Webhook secret required (staging/prod) | ✅ `Paystack:WebhookSecret` enforced when configured | ❌ |
+| Rate limiting | ⚠️ Planned (Sprint 20 / infra) | ⚠️ Same |
+| No full payload in logs | ✅ Audit + structured logs | ⚠️ Stub logs byte length only |
+
+### Implementation references
+
+- `src/Adeni.Infrastructure/Payments/PaystackPaymentProvider.cs` — `ParseWebhookAsync`
+- `src/Adeni.Infrastructure/Payments/PaymentOrchestrator.cs` — `ProcessWebhookAsync`, `ApplySuccessAsync`
+- `tests/Adeni.Infrastructure.Tests/Payments/PaystackPaymentProviderTests.cs` — `ParseWebhookAsync_rejects_missing_signature_when_secret_configured`
+- Agent playbook: [AGENTS.md](../../AGENTS.md#webhook-security-murphy)
+- Runbook: [docs/payments.md](../payments.md#webhook-security-murphy)
+
+### Remaining work
+
+- [ ] Rate-limit `POST /api/v1/payments/webhook` (and subscription webhook when live)
+- [ ] Harden `POST /api/v1/subscriptions/webhook` with Paystack signature + idempotency before SaaS billing goes live
+- [ ] Integration test: tampered signature → 400/401; duplicate `charge.success` → single booking confirm
+
+### Security audit checklist (play 4)
+
+When reviewing any PR touching webhooks:
+
+- [ ] Signature verified on **raw body** (not re-serialized JSON)
+- [ ] Handler idempotent for terminal payment states
+- [ ] No code path marks booking paid from initialize/redirect alone (webhook or verified provider API only)
+- [ ] Stub confirm route disabled outside Development
+- [ ] `WebhookSecret` documented in Key Vault / env, never committed
+
+---
+
+## 15. Standing play next step
+
+Sprint 17 core is shipped. For follow-up hardening:
 
 ```
-Standing play 2: Implement Sprint 17 Phase P1 (17a + 17b) per docs/specs/sprint-17-paystack-commerce.md.
+Standing play 4: Security audit payment webhooks against AGENTS.md Webhook security (Murphy).
+Close subscription webhook gap and add rate limiting plan.
 ```
