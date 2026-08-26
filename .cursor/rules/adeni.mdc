@@ -16,7 +16,7 @@ Local services marketplace (Lagos, beauty wedge). .NET modular monolith + Next.j
 - [product-strategy.md](../../docs/product-strategy.md) — positioning, revenue, **out of scope**
 - [architecture.md](../../docs/architecture.md) — module boundaries, no microservices early
 - v1: discovery + booking + portals + Paystack orchestration (no wallet/custody)
-- Next sprint: see [sprints.md](../../docs/sprints.md) (Sprint 17 Paystack when current)
+- Next sprint: see [sprints.md](../../docs/sprints.md) (Sprint 18 messaging)
 
 ## Architecture
 
@@ -35,7 +35,7 @@ Copy [docs/specs/_template.md](../../docs/specs/_template.md) → `docs/specs/sp
 
 ## Calibration
 
-Booking → Redis slot locks. Public profile → masked phone. Payments → orchestration only, no custody. **Webhooks → verify signature before JSON parse; idempotent state transitions** (Murphy). UI → branch on `businessType`/capabilities, not category slugs.
+Booking → Redis slot locks. Public profile → masked phone. Payments → orchestration only, no custody. **Webhooks → signature + idempotency** (Murphy). **API → `/api/v1/`, auth on mutations, stable error codes** (Murphy). UI → `businessType`/capabilities, not category slugs.
 
 ## Workflow
 

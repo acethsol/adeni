@@ -63,7 +63,7 @@ Summarized from [product-strategy.md §2–3, §8](docs/product-strategy.md). Wh
 - Booking (scheduled appointments); business portal + customer my-bookings
 - Business types foundation: `scheduled_appointment` (+ quote flow when Sprint 19 lands)
 - Auth0 end-to-end; tenant isolation; admin verification queue
-- SaaS tiers / entitlements (Sprint 16); Paystack **orchestration** next (Sprint 17) — no custody
+- SaaS tiers / entitlements (Sprint 16); Paystack orchestration (Sprint 17) — no custody
 - Modular monolith; one API deployable
 
 ### Out of scope (do not build unless asked)
@@ -89,6 +89,7 @@ When the user or spec says these terms, interpret **Adeni's way** — not generi
 | **Frontend change** | Branch UI on `businessType` / capabilities from API — not hard-coded category slugs; update `packages/shared` if contract changes |
 | **Payment / Paystack** | Orchestration only — `IPaymentProvider` port, no wallet/balance tables; see product-strategy §4.3 |
 | **Webhook / payment event** | Verify provider signature **before** parsing JSON; idempotent handler; never mark paid on body alone — see [Webhook security (Murphy)](#webhook-security-murphy) |
+| **New API endpoint / contract change** | `/api/v1/` only; auth on mutations; stable `code` errors; update `packages/shared` — see [API contract hardening (Murphy)](#api-contract-hardening-murphy) |
 | **Quote request** | `quote_request` business type — not the default barber/salon flow; Sprint 19 depth |
 | **Admin action** | Must audit; admin JWT needs MFA when policy enabled |
 | **Cache** | Follow existing key patterns; invalidate on write; see [caching-setup.md](docs/caching-setup.md) |
@@ -159,6 +160,7 @@ Every feature must respect these. They are not optional polish.
 6. **Public endpoints** — discovery and profiles are anonymous; still validate input and cache safely.
 7. **Dev-only shortcuts** — `DevBusinessAuthMiddleware` only in Development/Testing. Never in production.
 8. **Payment webhooks** — verify provider signature before parsing; idempotent state transitions; rate-limit public webhook routes in staging/prod. See [Webhook security (Murphy)](#webhook-security-murphy).
+9. **API contract** — version all routes under `/api/v1/`; authenticate mutating endpoints; stable error codes; plan deprecation before breaking changes. See [API contract hardening (Murphy)](#api-contract-hardening-murphy).
 
 ## Webhook security (Murphy)
 
@@ -181,6 +183,61 @@ Source: [@mattmurphyai — payment webhook reel](https://www.instagram.com/reel/
 **Known gap:** `POST /api/v1/subscriptions/webhook` is still a **stub without signature verification**. When wiring Paystack Subscriptions, reuse the same Murphy rules — do not copy the stub pattern.
 
 **Security audit (play 4) must include:** Any new webhook endpoint checked against this table.
+
+## API contract hardening (Murphy)
+
+Source: [@mattmurphyai — API security reel](https://www.instagram.com/reel/DcYrFHSAOhJ/) — “Your API is your contract. Harden it.”
+
+**The failure mode:** A forged POST/PATCH/DELETE hits your API with no proof of identity. The server mutates data — bookings, payments, tenant settings — with no questions asked.
+
+**Murphy’s three fixes:**
+
+1. **Request signing on every mutating endpoint** — caller proves the request is legitimate  
+2. **API versioning from day one** — never break clients silently  
+3. **Sunset headers + deprecation monitoring** — clients get machine-readable migration paths  
+
+### Adeni compliance matrix
+
+| Rule | Adeni today | Agent requirement |
+|------|-------------|-------------------|
+| **Version prefix** | All routes under `/api/v1/...`; clients use `packages/api-client` | New endpoints **must** use `/api/v1/`. v2 = new prefix, not silent breaks. |
+| **Stable error contract** | RFC 7807 + dotted `code` + i18n ([api-errors.md](docs/api-errors.md)) | New errors via `ErrorCodes` + `packages/shared` locales — never English-only UI strings. |
+| **Auth on mutations (app clients)** | Auth0 JWT (RS256) + roles; tenant routes need `X-Tenant-Id` + claim match | POST/PATCH/DELETE on tenant/business/admin data **require** JWT unless explicitly public-by-design. |
+| **Webhook / provider signing** | Paystack HMAC on payment webhooks | See [Webhook security (Murphy)](#webhook-security-murphy). |
+| **Idempotency on writes** | Payment intents + webhook replay protection | Add `Idempotency-Key` support for booking create and payment initialize when touching those flows. |
+| **Anonymous mutations** | Some public POSTs (bookings, discovery-adjacent) | Document in spec; rate-limit; validate strictly; prefer auth where possible. |
+| **Correlation** | `X-Correlation-Id` on every request/response | Preserve in clients; include in logs and Sentry/App Insights (Sprint 20). |
+| **Sunset / Deprecation headers** | Not implemented yet | Before removing or breaking v1 fields: add `Deprecation`, `Sunset`, `Link: rel="successor-version"` per [api-errors.md § Versioning](docs/api-errors.md#api-versioning--deprecation-murphy). |
+| **OpenAPI** | Scalar/OpenAPI in Development | Update when adding or changing public contract. |
+
+### What “request signing” means for Adeni
+
+Murphy’s “signing” is **not** duplicate HMAC on every browser call when Auth0 JWT already proves identity. Use the right trust layer per surface:
+
+| Surface | Trust mechanism |
+|---------|-----------------|
+| Web / mobile (logged in) | Auth0 JWT + tenant header where scoped |
+| Admin | JWT + MFA policy + audit |
+| Payment webhooks | Provider HMAC on raw body |
+| Future partner API | API key + HMAC or mTLS (backlog) |
+| Anonymous public POST | Validation + rate limits + idempotency key — **weakest**; minimize scope |
+
+### When changing the API contract
+
+1. Add/update Zod schemas in `packages/shared` and `api-client` methods  
+2. Add `ErrorCodes` entry if new failure modes  
+3. If deprecating: response headers + changelog note in spec — do **not** remove fields without sunset period  
+4. Integration test the HTTP contract  
+5. Security audit (play 4) checks auth on new mutating routes  
+
+**Known gaps:**
+
+- No `Deprecation` / `Sunset` response headers yet  
+- `Idempotency-Key` not universal on booking/payment POSTs  
+- Anonymous mutating routes need rate limiting (Sprint 20 / infra)  
+- `POST /api/v1/subscriptions/webhook` unsigned (see webhook section)  
+
+**Reference:** [docs/api-errors.md](docs/api-errors.md), `ApiErrorResponseMapper`, `CorrelationIdMiddleware`.
 
 ## Production readiness (13-layer lens)
 
@@ -244,6 +301,7 @@ Audit [PR/feature] against AGENTS.md security non-negotiables and v1 scope:
 - Admin routes audited
 - New public endpoints rate-limit ready
 - Payment/subscription webhooks: signature + idempotency per [Webhook security (Murphy)](#webhook-security-murphy)
+- New/changed API routes: auth on mutations, `/api/v1/`, shared schemas per [API contract hardening (Murphy)](#api-contract-hardening-murphy)
 - No secrets or dev middleware in prod paths
 - No out-of-scope features (payments custody, microservices, etc.)
 List findings as Critical / Should fix / OK.
@@ -302,6 +360,7 @@ Do not rewrite large sections without approval.
 | [docs/sprints.md](docs/sprints.md) | Sprint scope and status |
 | [docs/specs/](docs/specs/) | Feature specs (write before code) |
 | [docs/prd-v1.1-body.md](docs/prd-v1.1-body.md) | NFRs, SOC2 requirements |
+| [docs/api-errors.md](docs/api-errors.md) | RFC 7807 errors, versioning & deprecation policy |
 | [docs/observability.md](docs/observability.md) | App Insights + Sentry, correlation IDs |
 | [docs/auth0-setup.md](docs/auth0-setup.md) | Auth0 claims, MFA |
 | [docs/database-setup.md](docs/database-setup.md) | Postgres, migrations |
@@ -318,6 +377,8 @@ Do not rewrite large sections without approval.
 - Disable tenant filters or audit middleware to "make tests pass"
 - Hard-code category checks in UI — use capabilities / businessType from API
 - Accept payment webhooks without signature verification or idempotent handling
+- Add mutating API routes without auth (unless documented public-by-design in spec)
+- Break `/api/v1/` clients silently — use deprecation headers before removal
 - Ship subscription webhooks without the same Murphy rules as payments
 - Build Sprint 18+ features (messaging, LLM agents) unless explicitly requested
 - Introduce microservices or wallet/custody tables

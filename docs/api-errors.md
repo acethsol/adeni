@@ -77,3 +77,43 @@ Web apps can use `useApiErrorMessage()` from `apps/web/lib/api-error.ts`.
 | `internal.server_error` | 500 | — |
 
 Legacy generic codes (`validation`, `forbidden`, `conflict`, `not_found`) remain supported until call sites are migrated.
+
+## API versioning & deprecation (Murphy)
+
+Source: [@mattmurphyai — API contract reel](https://www.instagram.com/reel/DcYrFHSAOhJ/). Full agent rules: [AGENTS.md](../AGENTS.md#api-contract-hardening-murphy).
+
+### Versioning policy
+
+- **Current version:** `v1` — all public routes live under `/api/v1/...`.
+- **New endpoints:** Must use `/api/v1/` until a deliberate v2 programme starts.
+- **Breaking changes:** Never ship silently. Prefer additive changes (new optional fields, new endpoints).
+- **v2 introduction:** Parallel prefix `/api/v2/...`; keep v1 until sunset date passes.
+
+### Deprecation headers (target — not yet middleware)
+
+When an endpoint or field is scheduled for removal, responses should include:
+
+```http
+Deprecation: true
+Sunset: Sat, 01 Jan 2028 00:00:00 GMT
+Link: </api/v2/bookings>; rel="successor-version"
+```
+
+Clients and `@adeni/api-client` should log or surface `Deprecation` headers during staging tests.
+
+### Mutating endpoint checklist
+
+Before merging a new POST/PATCH/DELETE:
+
+| Check | Requirement |
+|-------|-------------|
+| Auth | JWT (Auth0) for tenant/business/admin; document if intentionally anonymous |
+| Tenant scope | `X-Tenant-Id` + claim match for tenant routes |
+| Errors | Dotted `code` in `ErrorCodes` + i18n keys |
+| Contract | Zod schema in `packages/shared`; api-client method updated |
+| Idempotency | `Idempotency-Key` header for payment/booking writes where duplicate risk exists |
+| Rate limit | Anonymous mutations flagged for edge rate limiting |
+
+### Correlation
+
+Every response includes `X-Correlation-Id` (see `CorrelationIdMiddleware`). Clients should send the same header on retries so support can trace forged or duplicate requests.
