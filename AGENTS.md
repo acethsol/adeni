@@ -366,6 +366,7 @@ Do not rewrite large sections without approval.
 | [docs/database-setup.md](docs/database-setup.md) | Postgres, migrations |
 | [docs/caching-setup.md](docs/caching-setup.md) | Redis keys, health |
 | [docs/payments.md](docs/payments.md) | Paystack orchestration, webhooks, deposits |
+| [docs/legal-launch-checklist.md](docs/legal-launch-checklist.md) | Privacy, Terms, NDPR launch gate (pre-production) |
 | [docs/tenant-isolation.md](docs/tenant-isolation.md) | Tenant middleware and filters |
 
 ## Do not

@@ -49,15 +49,15 @@ const sections: FooterSection[] = [
     links: [
       { labelKey: "footer.links.howItWorks", href: "/" },
       { labelKey: "footer.links.about", href: "/" },
-      { labelKey: "footer.links.privacy", href: "/" },
-      { labelKey: "footer.links.terms", href: "/" },
+      { labelKey: "footer.links.privacy", href: "/privacy" },
+      { labelKey: "footer.links.terms", href: "/terms" },
     ],
   },
 ];
 
 const legalLinks: FooterLink[] = [
-  { labelKey: "footer.links.privacy", href: "/" },
-  { labelKey: "footer.links.terms", href: "/" },
+  { labelKey: "footer.links.privacy", href: "/privacy" },
+  { labelKey: "footer.links.terms", href: "/terms" },
   { labelKey: "footer.links.sitemap", href: "/discover" },
 ];
 
