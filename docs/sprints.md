@@ -22,7 +22,7 @@
 | **14** | **UX polish & guardrails** | ✅ Done |
 | 15 | Architecture foundation + booking v2 + business types | ✅ Done |
 | **16** | **Business SaaS & monetization** | ✅ Done |
-| **17** | **Commerce orchestration (Paystack)** | Planned |
+| **17** | **Commerce orchestration (Paystack)** | ✅ Done |
 | **18** | **Messaging & WhatsApp bridge** | Planned |
 | **19** | **Trust depth & quote workflows** | Planned |
 | 20 | Deployment, AI & observability | Planned |
