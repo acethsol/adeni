@@ -6,6 +6,7 @@ using Adeni.Application.Auth;
 using Adeni.Application.Subscriptions;
 using Adeni.Infrastructure.Auth;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
 [ApiController]
@@ -69,7 +70,9 @@ public sealed class TenantSubscriptionController(
 [ApiController]
 [Route("api/v1/subscriptions")]
 public sealed class SubscriptionBillingController(
-    ISubscriptionBillingProvider billingProvider) : ControllerBase
+    ISubscriptionBillingProvider billingProvider,
+    IOptions<Auth0Options> auth0Options,
+    IHostEnvironment environment) : ControllerBase
 {
     /// <summary>Stub checkout — real Paystack integration deferred to Sprint 17.</summary>
     [HttpPost("checkout")]
@@ -77,6 +80,16 @@ public sealed class SubscriptionBillingController(
         [FromBody] CreateSubscriptionCheckoutRequest request,
         CancellationToken cancellationToken)
     {
+        if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
+        {
+            return Unauthorized();
+        }
+
+        if (request.TenantId != tenantId)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { title = "Cross-tenant access denied." });
+        }
+
         var result = await billingProvider.CreateCheckoutAsync(request, cancellationToken);
         return result.Match<IActionResult>(
             Ok,
@@ -87,6 +100,11 @@ public sealed class SubscriptionBillingController(
     [HttpPost("webhook")]
     public async Task<IActionResult> Webhook(CancellationToken cancellationToken)
     {
+        if (!IsDevOrTesting())
+        {
+            return NotFound();
+        }
+
         using var reader = new StreamReader(Request.Body);
         var rawBody = await reader.ReadToEndAsync(cancellationToken);
         var headers = Request.Headers.ToDictionary(
@@ -99,4 +117,42 @@ public sealed class SubscriptionBillingController(
             _ => Ok(new { received = true }),
             error => BadRequest(new { title = error.Message }));
     }
+
+    private string? ResolveAuth0Sub()
+    {
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            return User.FindFirst("sub")?.Value;
+        }
+
+        if (!auth0Options.Value.Enabled
+            && IsDevOrTesting()
+            && Request.Headers.TryGetValue(DevBusinessAuthMiddleware.DevAuth0SubHeader, out var devSub)
+            && !string.IsNullOrWhiteSpace(devSub))
+        {
+            return devSub.ToString();
+        }
+
+        return null;
+    }
+
+    private Guid? ResolveTenantId()
+    {
+        var tenantClaim = User.FindFirstValue(AdeniClaimTypes.TenantId);
+        if (Guid.TryParse(tenantClaim, out var tenantId))
+        {
+            return tenantId;
+        }
+
+        if (Request.Headers.TryGetValue(TenantAccessMiddleware.TenantHeaderName, out var headerValue)
+            && Guid.TryParse(headerValue, out tenantId))
+        {
+            return tenantId;
+        }
+
+        return null;
+    }
+
+    private bool IsDevOrTesting() =>
+        environment.IsDevelopment() || environment.EnvironmentName == "Testing";
 }
