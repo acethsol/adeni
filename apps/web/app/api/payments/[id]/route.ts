@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
 import { paymentIntentResponseSchema } from "@adeni/shared";
-import { getApiBaseUrl } from "@/lib/adeni";
+import { customerApiFetch } from "@/lib/customer-api";
 
 export async function GET(
   _request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
   const { id } = await context.params;
-  const response = await fetch(`${getApiBaseUrl()}/api/v1/payments/${id}`, {
-    headers: { Accept: "application/json" },
-  });
+  const response = await customerApiFetch(`/api/v1/payments/${id}`);
 
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {

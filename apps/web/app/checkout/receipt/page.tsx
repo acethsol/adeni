@@ -84,6 +84,17 @@ export default function PaymentReceiptPage() {
         >
           Done
         </Link>
+        <p className="mt-6 text-center text-xs text-[#1b4332]/60">
+          By paying you agreed to our{" "}
+          <Link href="/terms" className="underline">
+            Terms
+          </Link>{" "}
+          and{" "}
+          <Link href="/privacy" className="underline">
+            Privacy Policy
+          </Link>
+          .
+        </p>
       </section>
     </main>
   );

@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import type { Category, MarketConfig } from "@adeni/shared";
 import { listMarkets } from "@adeni/shared";
 import { Screen, ScreenHeader } from "@/components/adeni/Screen";
+import { LegalAcceptanceField } from "@/components/adeni/LegalAcceptanceField";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -36,6 +37,8 @@ export default function BusinessRegisterScreen() {
   const [marketId, setMarketId] = useState("lagos");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [acceptedLegal, setAcceptedLegal] = useState(false);
+  const [legalError, setLegalError] = useState<string | null>(null);
 
   useEffect(() => {
     const client = createPublicApiClient();
@@ -74,6 +77,12 @@ export default function BusinessRegisterScreen() {
   }, [authLoading, hasBusinessAccount, router]);
 
   async function handleSubmit() {
+    if (!acceptedLegal) {
+      setLegalError("Accept the Terms of Service and Privacy Policy to continue.");
+      return;
+    }
+
+    setLegalError(null);
     setSubmitting(true);
     setError(null);
 
@@ -176,11 +185,22 @@ export default function BusinessRegisterScreen() {
                 ))}
               </View>
 
+              <LegalAcceptanceField
+                checked={acceptedLegal}
+                onChange={(value) => {
+                  setAcceptedLegal(value);
+                  if (value) {
+                    setLegalError(null);
+                  }
+                }}
+                error={legalError}
+              />
+
               <Button
                 title={submitting ? "Creating business…" : "Register business"}
                 onPress={() => void handleSubmit()}
                 loading={submitting}
-                disabled={submitting || !businessName.trim() || !phone.trim()}
+                disabled={submitting || !businessName.trim() || !phone.trim() || !acceptedLegal}
                 containerStyle={styles.submitButton}
               />
             </Card>
