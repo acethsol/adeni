@@ -4,7 +4,7 @@
 |-------|-------|
 | **Sprint** | Sprint 18 — Messaging & WhatsApp bridge |
 | **Author** | Cloud Agent |
-| **Status** | Implemented (18a–18b, 18d, 18e) |
+| **Status** | Implemented |
 | **Created** | 2026-09-07 |
 
 ---
@@ -29,16 +29,16 @@ Let customers and businesses communicate in-app (Pro tier) while meeting Nigeria
 - [x] **18b** WhatsApp deep links — public business + booking-context links
 - [x] **18d** Message templates — tenant quick-replies (hours, location, pricing)
 - [x] **18e** Unread badge + business inbox (web portal)
-- [ ] **18c** Notification preferences — deferred
-- [ ] **18f** FAQ auto-responder — deferred (Sprint 20 AI precursor)
+- [x] **18c** Notification preferences — email, push (FCM), SMS/WhatsApp reminder channel per tenant
+- [x] **18f** FAQ auto-responder — rule-based replies for price/hours/availability
 
 ---
 
 ## 4. Out of scope
 
 - WhatsApp Business API / WABA webhooks
-- Push/FCM/SMS delivery (18c)
-- LLM auto-replies (18f / Sprint 20)
+- Push/FCM/SMS delivery adapters (18c stores prefs + gates logging stub)
+- LLM auto-replies (Sprint 20)
 - SignalR real-time (polling inbox for MVP)
 
 ---
@@ -74,8 +74,9 @@ Business routes return `403` + `subscription.messaging_required` on Free tier.
 
 ## 7. Acceptance criteria
 
-- [x] Customer creates thread, sends message
+- [x] Customer creates thread, sends message; customer web/mobile inbox
 - [x] Pro business lists threads, replies, uses templates
 - [x] Free business gets 403 on tenant message APIs
 - [x] Unread count drives portal badge
 - [x] Public profile + my-bookings open WhatsApp with context
+- [x] Tenant configures notification channels and FAQ auto-responder

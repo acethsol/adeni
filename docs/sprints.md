@@ -292,7 +292,7 @@ Confluence: [Sprint 16 — Business SaaS & monetization](https://aceth.atlassian
 
 Confluence: [Sprint 17 — Commerce orchestration (Paystack)](https://aceth.atlassian.net/wiki/spaces/SD/pages/41287681)
 
-## Sprint 18 — Messaging & WhatsApp bridge (planned)
+## Sprint 18 — Messaging & WhatsApp bridge (done)
 
 Close the fragmentation gap — businesses live on WhatsApp; Adeni must meet them there. See [product-strategy.md §7.4](./product-strategy.md#74-nigeria-specific-engineering-notes).
 
@@ -300,10 +300,10 @@ Close the fragmentation gap — businesses live on WhatsApp; Adeni must meet the
 |------|--------|
 | **18a** In-app messaging — **Messaging module**; customer ↔ business threads tied to booking or business profile | ✅ Done |
 | **18b** WhatsApp deep links — “Message on WhatsApp” with pre-filled booking context; “Book on Adeni” link in bio templates | ✅ Done |
-| **18c** Notification preferences — email, push (FCM), SMS/WhatsApp reminder channel per tenant | Planned |
+| **18c** Notification preferences — email, push (FCM), SMS/WhatsApp reminder channel per tenant | ✅ Done |
 | **18d** Message templates — business quick-replies (hours, pricing, location) | ✅ Done |
 | **18e** Unread badge + inbox in business portal topbar (extend bookings bell pattern) | ✅ Done |
-| **18f** Basic FAQ auto-responder — rule-based replies for price/hours/availability (precursor to business AI agent) | Planned |
+| **18f** Basic FAQ auto-responder — rule-based replies for price/hours/availability (precursor to business AI agent) | ✅ Done |
 
 **Revenue unlocked:** Pro tier messaging entitlement (Sprint 16). **Retention:** businesses stay because customers reach them where they already are.
 

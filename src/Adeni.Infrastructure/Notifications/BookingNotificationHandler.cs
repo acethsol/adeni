@@ -15,7 +15,8 @@ public sealed class BookingNotificationHandler(INotificationDispatcher notificat
                 "email",
                 domainEvent.CustomerId.ToString(),
                 "Booking confirmed",
-                $"Your booking {domainEvent.BookingId} at {domainEvent.StartAt:u} has been confirmed."),
+                $"Your booking {domainEvent.BookingId} at {domainEvent.StartAt:u} has been confirmed.",
+                domainEvent.TenantId),
             cancellationToken);
 
     public Task HandleAsync(BookingRejected domainEvent, CancellationToken cancellationToken = default) =>
@@ -26,7 +27,8 @@ public sealed class BookingNotificationHandler(INotificationDispatcher notificat
                 "Booking declined",
                 string.IsNullOrWhiteSpace(domainEvent.Reason)
                     ? $"Your booking {domainEvent.BookingId} was declined."
-                    : $"Your booking {domainEvent.BookingId} was declined: {domainEvent.Reason}"),
+                    : $"Your booking {domainEvent.BookingId} was declined: {domainEvent.Reason}",
+                domainEvent.TenantId),
             cancellationToken);
 
     public Task HandleAsync(BookingCancelled domainEvent, CancellationToken cancellationToken = default) =>
@@ -35,6 +37,7 @@ public sealed class BookingNotificationHandler(INotificationDispatcher notificat
                 "email",
                 domainEvent.CustomerId.ToString(),
                 "Booking cancelled",
-                $"Your booking {domainEvent.BookingId} scheduled for {domainEvent.StartAt:u} was cancelled."),
+                $"Your booking {domainEvent.BookingId} scheduled for {domainEvent.StartAt:u} was cancelled.",
+                domainEvent.TenantId),
             cancellationToken);
 }

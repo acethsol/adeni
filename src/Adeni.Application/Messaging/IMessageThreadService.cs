@@ -40,6 +40,10 @@ public sealed record WhatsAppLinkResponse(string Url, string? PhoneMasked);
 
 public sealed record MessageTemplateResponse(string Key, string Label, string Body);
 
+public sealed record MessagingSettingsResponse(bool FaqAutoResponderEnabled);
+
+public sealed record UpdateMessagingSettingsRequest(bool FaqAutoResponderEnabled);
+
 public enum MessageParticipantRole
 {
     Customer,
@@ -99,5 +103,16 @@ public interface IMessageThreadService
     Task<Result<IReadOnlyList<MessageTemplateResponse>>> GetTemplatesForTenantAsync(
         Guid tenantId,
         SubscriptionTier tier,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<MessagingSettingsResponse>> GetMessagingSettingsAsync(
+        Guid tenantId,
+        string auth0Sub,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<MessagingSettingsResponse>> UpdateMessagingSettingsAsync(
+        Guid tenantId,
+        UpdateMessagingSettingsRequest request,
+        string auth0Sub,
         CancellationToken cancellationToken = default);
 }

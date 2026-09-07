@@ -7,6 +7,7 @@ using Adeni.Domain.Booking;
 using Adeni.Domain.Catalog;
 using Adeni.Domain.Identity;
 using Adeni.Domain.Messaging;
+using Adeni.Domain.Notifications;
 using Adeni.Domain.Payments;
 using Adeni.Domain.Tenancy;
 using Microsoft.EntityFrameworkCore;
@@ -61,6 +62,9 @@ public sealed class AdeniDbContext(
     public DbSet<MessageThread> MessageThreads => Set<MessageThread>();
 
     public DbSet<Message> Messages => Set<Message>();
+
+    public DbSet<TenantNotificationPreferences> TenantNotificationPreferences =>
+        Set<TenantNotificationPreferences>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -271,6 +275,13 @@ public sealed class AdeniDbContext(
                 .WithMany()
                 .HasForeignKey(x => x.ThreadId)
                 .OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<TenantNotificationPreferences>(entity =>
+        {
+            entity.ToTable("tenant_notification_preferences", "notifications");
+            entity.HasKey(x => x.TenantId);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
     }

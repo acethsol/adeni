@@ -691,6 +691,32 @@ export const messageTemplatesResponseSchema = z.object({
   items: z.array(messageTemplateSchema),
 });
 
+export const notificationPreferencesSchema = z.object({
+  emailEnabled: z.boolean(),
+  pushEnabled: z.boolean(),
+  smsWhatsAppReminderEnabled: z.boolean(),
+});
+
+export type NotificationPreferences = z.infer<typeof notificationPreferencesSchema>;
+
+export const updateNotificationPreferencesRequestSchema = notificationPreferencesSchema;
+
+export type UpdateNotificationPreferencesRequest = z.infer<
+  typeof updateNotificationPreferencesRequestSchema
+>;
+
+export const messagingSettingsSchema = z.object({
+  faqAutoResponderEnabled: z.boolean(),
+});
+
+export type MessagingSettings = z.infer<typeof messagingSettingsSchema>;
+
+export const updateMessagingSettingsRequestSchema = messagingSettingsSchema;
+
+export type UpdateMessagingSettingsRequest = z.infer<
+  typeof updateMessagingSettingsRequestSchema
+>;
+
 export const mediaUploadPurposeSchema = z.enum(["cover", "Cover"]);
 
 export const mediaUploadUrlRequestSchema = z.object({

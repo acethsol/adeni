@@ -8,6 +8,7 @@ import {
   t,
 } from "@adeni/shared";
 import { BookingPanel } from "@/components/booking-panel";
+import { MessageBusinessButton } from "@/components/message-business-button";
 import { QuoteRequestPanel } from "@/components/quote-request-panel";
 import { shouldShowQuoteFlow } from "@adeni/shared";
 import { BusinessReviewsSection } from "@/components/business-reviews-section";
@@ -62,13 +63,14 @@ export default async function BusinessProfilePage({ params }: Props) {
 
   try {
     const client = createApiClient();
-    const [profile, services, reviews, whatsAppLink, locale, translateContent] = await Promise.all([
+    const [profile, services, reviews, whatsAppLink, session, locale, translateContent] = await Promise.all([
       client.getBusinessProfile(slug),
       client.getBusinessServices(slug).catch(() => []),
       client
         .getBusinessReviews(slug)
         .catch(() => ({ items: [], page: 1, pageSize: 10, totalCount: 0 })),
       client.getBusinessWhatsAppLink(slug).catch(() => null),
+      getOptionalSession(),
       getLocale(),
       getTranslationPreference(),
     ]);
@@ -178,11 +180,19 @@ export default async function BusinessProfilePage({ params }: Props) {
               </div>
             </dl>
 
-            {whatsAppLink ? (
-              <div className="mt-6">
-                <Button href={whatsAppLink.url} target="_blank" rel="noreferrer" variant="secondary">
-                  Message on WhatsApp
-                </Button>
+            {whatsAppLink || profile.tenantId ? (
+              <div className="mt-6 flex flex-wrap gap-3">
+                <MessageBusinessButton
+                  tenantId={profile.tenantId}
+                  businessName={profile.name}
+                  loginHref={`/auth/login?returnTo=${encodeURIComponent(returnPath)}`}
+                  isAuthenticated={Boolean(session)}
+                />
+                {whatsAppLink ? (
+                  <Button href={whatsAppLink.url} target="_blank" rel="noreferrer" variant="secondary">
+                    Message on WhatsApp
+                  </Button>
+                ) : null}
               </div>
             ) : null}
           </div>

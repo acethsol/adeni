@@ -59,6 +59,10 @@ import {
   unreadCountResponseSchema,
   whatsAppLinkResponseSchema,
   messageTemplatesResponseSchema,
+  notificationPreferencesSchema,
+  updateNotificationPreferencesRequestSchema,
+  messagingSettingsSchema,
+  updateMessagingSettingsRequestSchema,
   updateMarketRequestSchema,
   updateServiceOfferingRequestSchema,
   weeklyAvailabilityResponseSchema,
@@ -106,6 +110,10 @@ import {
   type UnreadCountResponse,
   type WhatsAppLinkResponse,
   type MessageTemplate,
+  type NotificationPreferences,
+  type UpdateNotificationPreferencesRequest,
+  type MessagingSettings,
+  type UpdateMessagingSettingsRequest,
   type UpdateCoverImageRequest,
   type MediaUploadUrlResponse,
   type UpdateServiceOfferingRequest,
@@ -834,6 +842,40 @@ export class AdeniApiClient {
     const response = await this.request("/api/v1/tenant/messages/templates");
     const payload = messageTemplatesResponseSchema.parse(await response.json());
     return payload.items;
+  }
+
+  async getNotificationPreferences(): Promise<NotificationPreferences> {
+    const response = await this.request("/api/v1/tenant/notification-preferences");
+    return notificationPreferencesSchema.parse(await response.json());
+  }
+
+  async updateNotificationPreferences(
+    request: UpdateNotificationPreferencesRequest,
+  ): Promise<NotificationPreferences> {
+    const body = updateNotificationPreferencesRequestSchema.parse(request);
+    const response = await this.request("/api/v1/tenant/notification-preferences", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return notificationPreferencesSchema.parse(await response.json());
+  }
+
+  async getMessagingSettings(): Promise<MessagingSettings> {
+    const response = await this.request("/api/v1/tenant/messages/settings");
+    return messagingSettingsSchema.parse(await response.json());
+  }
+
+  async updateMessagingSettings(
+    request: UpdateMessagingSettingsRequest,
+  ): Promise<MessagingSettings> {
+    const body = updateMessagingSettingsRequestSchema.parse(request);
+    const response = await this.request("/api/v1/tenant/messages/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return messagingSettingsSchema.parse(await response.json());
   }
 
   async getBusinessWhatsAppLink(slug: string): Promise<WhatsAppLinkResponse> {

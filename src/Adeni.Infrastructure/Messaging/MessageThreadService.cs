@@ -16,6 +16,7 @@ using Microsoft.Extensions.Configuration;
 public sealed class MessageThreadService(
     AdeniDbContext dbContext,
     IEntitlementsService entitlementsService,
+    IFaqAutoResponder faqAutoResponder,
     IConfiguration configuration) : IMessageThreadService
 {
     private const int MaxBodyLength = 4000;
@@ -180,6 +181,11 @@ public sealed class MessageThreadService(
 
         dbContext.Messages.Add(message);
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (role == MessageParticipantRole.Customer)
+        {
+            await TrySendFaqAutoReplyAsync(thread, cancellationToken);
+        }
 
         return Result.Success(MapMessage(message));
     }
@@ -525,6 +531,137 @@ public sealed class MessageThreadService(
         }
 
         return Result.Success<IReadOnlyList<MessageTemplateResponse>>(templates);
+    }
+
+    public async Task<Result<MessagingSettingsResponse>> GetMessagingSettingsAsync(
+        Guid tenantId,
+        string auth0Sub,
+        CancellationToken cancellationToken = default)
+    {
+        var access = await ResolveBusinessAccessAsync(tenantId, auth0Sub, cancellationToken);
+        if (access.IsFailure)
+        {
+            return Result.Failure<MessagingSettingsResponse>(access.Error);
+        }
+
+        var profile = access.Value!;
+        return Result.Success(new MessagingSettingsResponse(profile.FaqAutoResponderEnabled));
+    }
+
+    public async Task<Result<MessagingSettingsResponse>> UpdateMessagingSettingsAsync(
+        Guid tenantId,
+        UpdateMessagingSettingsRequest request,
+        string auth0Sub,
+        CancellationToken cancellationToken = default)
+    {
+        var access = await ResolveBusinessAccessAsync(tenantId, auth0Sub, cancellationToken);
+        if (access.IsFailure)
+        {
+            return Result.Failure<MessagingSettingsResponse>(access.Error);
+        }
+
+        var profile = access.Value!;
+        profile.FaqAutoResponderEnabled = request.FaqAutoResponderEnabled;
+        profile.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return Result.Success(new MessagingSettingsResponse(profile.FaqAutoResponderEnabled));
+    }
+
+    private async Task TrySendFaqAutoReplyAsync(
+        MessageThread thread,
+        CancellationToken cancellationToken)
+    {
+        var profile = await dbContext.BusinessProfiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.TenantId == thread.TenantId, cancellationToken);
+
+        if (profile is null || !profile.FaqAutoResponderEnabled)
+        {
+            return;
+        }
+
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == thread.TenantId, cancellationToken);
+
+        if (tenant is null)
+        {
+            return;
+        }
+
+        var entitlement = await entitlementsService.EnsureCanUseMessagingAsync(
+            thread.TenantId,
+            tenant.SubscriptionTier,
+            cancellationToken);
+
+        if (entitlement.IsFailure)
+        {
+            return;
+        }
+
+        var lastCustomerMessage = await dbContext.Messages
+            .AsNoTracking()
+            .Where(x => x.ThreadId == thread.Id && x.SenderType == MessageSenderType.Customer)
+            .OrderByDescending(x => x.CreatedAt)
+            .Select(x => x.Body)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(lastCustomerMessage))
+        {
+            return;
+        }
+
+        var replyBody = await faqAutoResponder.TryBuildReplyAsync(
+            thread.TenantId,
+            lastCustomerMessage,
+            cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(replyBody))
+        {
+            return;
+        }
+
+        var threadEntity = await dbContext.MessageThreads
+            .FirstAsync(x => x.Id == thread.Id, cancellationToken);
+
+        var autoMessage = new Message
+        {
+            Id = Guid.NewGuid(),
+            ThreadId = threadEntity.Id,
+            TenantId = threadEntity.TenantId,
+            SenderType = MessageSenderType.Business,
+            SenderAuth0Sub = "system:faq-auto-responder",
+            Body = replyBody,
+            CreatedAt = DateTimeOffset.UtcNow,
+        };
+
+        threadEntity.LastMessageAt = autoMessage.CreatedAt;
+        threadEntity.CustomerUnreadCount += 1;
+        dbContext.Messages.Add(autoMessage);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task<Result<BusinessProfile>> ResolveBusinessAccessAsync(
+        Guid tenantId,
+        string auth0Sub,
+        CancellationToken cancellationToken)
+    {
+        var hasAccess = await dbContext.BusinessUsers
+            .AsNoTracking()
+            .AnyAsync(x => x.TenantId == tenantId && x.Auth0Sub == auth0Sub, cancellationToken);
+
+        if (!hasAccess)
+        {
+            return Result.Failure<BusinessProfile>(Error.Forbidden("You do not have access to this business."));
+        }
+
+        var profile = await dbContext.BusinessProfiles
+            .FirstOrDefaultAsync(x => x.TenantId == tenantId, cancellationToken);
+
+        return profile is null
+            ? Result.Failure<BusinessProfile>(Error.NotFound("Business profile"))
+            : Result.Success(profile);
     }
 
     private async Task<MessageThread?> FindThreadAsync(

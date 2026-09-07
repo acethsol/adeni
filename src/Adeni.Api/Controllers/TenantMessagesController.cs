@@ -136,6 +136,34 @@ public sealed class TenantMessagesController(
         return ApiResults.FromResult(result, _ => NoContent(), HttpContext);
     }
 
+    [HttpGet("settings")]
+    public async Task<IActionResult> GetMessagingSettings(CancellationToken cancellationToken)
+    {
+        var auth0Sub = ResolveAuth0Sub();
+        if (auth0Sub is null || ResolveTenantId() is not { } tenantId)
+        {
+            return Unauthorized();
+        }
+
+        var result = await messaging.GetMessagingSettingsAsync(tenantId, auth0Sub, cancellationToken);
+        return ApiResults.FromResult(result, Ok, HttpContext);
+    }
+
+    [HttpPatch("settings")]
+    public async Task<IActionResult> UpdateMessagingSettings(
+        [FromBody] UpdateMessagingSettingsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var auth0Sub = ResolveAuth0Sub();
+        if (auth0Sub is null || ResolveTenantId() is not { } tenantId)
+        {
+            return Unauthorized();
+        }
+
+        var result = await messaging.UpdateMessagingSettingsAsync(tenantId, request, auth0Sub, cancellationToken);
+        return ApiResults.FromResult(result, Ok, HttpContext);
+    }
+
     private async Task<SubscriptionTier?> ResolveTierAsync(Guid tenantId, CancellationToken cancellationToken)
     {
         var tenant = await dbContext.Tenants
