@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import type { BookingResponse, ServiceOffering } from "@adeni/shared";
 import { LoadingPanel } from "@/components/loading-panel";
+import { LegalAcceptanceField } from "@/components/legal-acceptance-field";
 import { BackLink } from "@/components/ui/back-link";
 import { FlowStepProgress } from "@/components/ui/flow-step-progress";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -78,6 +79,8 @@ export function BookingPanel({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [booking, setBooking] = useState<BookingResponse | null>(null);
+  const [acceptedLegal, setAcceptedLegal] = useState(false);
+  const [legalError, setLegalError] = useState<string | null>(null);
 
   const activeServices = useMemo(
     () => services.filter((service) => service.isActive),
@@ -138,6 +141,13 @@ export function BookingPanel({
       await loadSlots(selectedService);
       return;
     }
+
+    if (!acceptedLegal) {
+      setLegalError("Accept the Terms of Service and Privacy Policy to confirm your booking.");
+      return;
+    }
+
+    setLegalError(null);
 
     setSubmitting(true);
     setError(null);
@@ -414,6 +424,18 @@ export function BookingPanel({
               ) is required to secure your booking. You&apos;ll be redirected to checkout after confirming.
             </p>
           ) : null}
+
+          <LegalAcceptanceField
+            checked={acceptedLegal}
+            onChange={(value) => {
+              setAcceptedLegal(value);
+              if (value) {
+                setLegalError(null);
+              }
+            }}
+            includePaymentsNote={supportsDeposits && depositPercent > 0}
+            error={legalError}
+          />
 
           {bookingEnabled ? (
             <button

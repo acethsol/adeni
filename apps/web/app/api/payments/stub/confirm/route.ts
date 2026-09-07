@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { paymentIntentResponseSchema } from "@adeni/shared";
 import { getApiBaseUrl } from "@/lib/adeni";
+import { isProductionDeployment } from "@/lib/env";
 
 export async function POST(request: Request) {
+  if (isProductionDeployment()) {
+    return NextResponse.json({ title: "Not found." }, { status: 404 });
+  }
   let body: unknown;
   try {
     body = await request.json();

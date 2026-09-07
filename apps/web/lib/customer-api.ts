@@ -2,13 +2,18 @@ import { AdeniApiClient } from "@adeni/api-client";
 import { createPublicApiClient, getApiBaseUrl } from "./public-api";
 import { getAccessToken } from "./auth/session";
 import { isAuth0Configured } from "./auth/config";
+import { isDevAuthAllowed } from "./env";
 
 function getDevCustomerAuth0Sub(): string | undefined {
+  if (!isDevAuthAllowed()) {
+    return undefined;
+  }
+
   return process.env.DEV_CUSTOMER_AUTH0_SUB?.trim() || undefined;
 }
 
 export function isCustomerDevMode(): boolean {
-  return !isAuth0Configured() && Boolean(getDevCustomerAuth0Sub());
+  return isDevAuthAllowed() && !isAuth0Configured() && Boolean(getDevCustomerAuth0Sub());
 }
 
 export async function createCustomerApiClient(): Promise<AdeniApiClient> {

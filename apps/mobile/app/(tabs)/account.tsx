@@ -1,11 +1,17 @@
 import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View, Linking } from "react-native";
 import { useRouter } from "expo-router";
 import { Screen, ScreenHeader } from "@/components/adeni/Screen";
 import { LocaleCurrencySheet, FooterLocaleButtons } from "@/components/adeni/LocaleCurrencySheet";
 import { useAuth } from "@/contexts/auth-context";
 import { useLocale } from "@/contexts/locale-context";
 import { isAuth0Configured } from "@/lib/auth/config";
+import {
+  getDevBusinessAuth0Sub,
+  getDevCustomerAuth0Sub,
+  getWebBaseUrl,
+  isDevAuthAllowed,
+} from "@/lib/env";
 import { adeniTheme } from "@/lib/theme";
 
 export default function AccountScreen() {
@@ -29,8 +35,8 @@ export default function AccountScreen() {
   const [busy, setBusy] = useState(false);
 
   const auth0Configured = isAuth0Configured();
-  const devCustomerSub = process.env.EXPO_PUBLIC_DEV_CUSTOMER_AUTH0_SUB?.trim();
-  const devBusinessSub = process.env.EXPO_PUBLIC_DEV_BUSINESS_AUTH0_SUB?.trim();
+  const devCustomerSub = getDevCustomerAuth0Sub();
+  const devBusinessSub = getDevBusinessAuth0Sub();
 
   async function handleLogin() {
     setAuthError(null);
@@ -130,7 +136,7 @@ export default function AccountScreen() {
             </Text>
           )}
 
-          {!auth0Configured ? (
+          {!auth0Configured && isDevAuthAllowed() ? (
             <View style={styles.devBlock}>
               <Text style={styles.devTitle}>Local dev mode</Text>
               {devCustomerSub ? (
@@ -149,6 +155,19 @@ export default function AccountScreen() {
               )}
             </View>
           ) : null}
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Legal</Text>
+          <Text style={styles.hint}>Review our policies before using Adeni.</Text>
+          <View style={styles.legalLinks}>
+            <Pressable onPress={() => void Linking.openURL(`${getWebBaseUrl()}/privacy`)}>
+              <Text style={styles.legalLink}>Privacy Policy</Text>
+            </Pressable>
+            <Pressable onPress={() => void Linking.openURL(`${getWebBaseUrl()}/terms`)}>
+              <Text style={styles.legalLink}>Terms of Service</Text>
+            </Pressable>
+          </View>
         </View>
 
         {isBookingEnabled ? (
@@ -320,5 +339,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
     color: adeniTheme.textSubtle,
+  },
+  legalLinks: {
+    marginTop: 12,
+    gap: 8,
+  },
+  legalLink: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: adeniTheme.accent,
+    textDecorationLine: "underline",
   },
 });

@@ -13,7 +13,9 @@ import type { BookingResponse, ServiceOffering } from "@adeni/shared";
 import { useAuth } from "@/contexts/auth-context";
 import { isAuth0Configured } from "@/lib/auth/config";
 import { formatPrice, formatSlotTime, slotRange } from "@/lib/format";
+import { getWebBaseUrl } from "@/lib/env";
 import { adeniTheme } from "@/lib/theme";
+import { LegalAcceptanceField } from "@/components/adeni/LegalAcceptanceField";
 
 type Props = {
   slug: string;
@@ -43,6 +45,8 @@ export function BookingPanel({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [booking, setBooking] = useState<BookingResponse | null>(null);
+  const [acceptedLegal, setAcceptedLegal] = useState(false);
+  const [legalError, setLegalError] = useState<string | null>(null);
 
   const activeServices = useMemo(
     () => services.filter((service) => service.isActive),
@@ -85,6 +89,12 @@ export function BookingPanel({
       return;
     }
 
+    if (!acceptedLegal) {
+      setLegalError("Accept the Terms of Service and Privacy Policy to confirm your booking.");
+      return;
+    }
+
+    setLegalError(null);
     setSubmitting(true);
     setError(null);
 
@@ -110,7 +120,7 @@ export function BookingPanel({
 
         const checkoutUrl = payment.checkoutUrl.startsWith("http")
           ? payment.checkoutUrl
-          : `${process.env.EXPO_PUBLIC_WEB_BASE_URL ?? "http://localhost:3000"}${payment.checkoutUrl}`;
+          : `${getWebBaseUrl()}${payment.checkoutUrl}`;
 
         await Linking.openURL(checkoutUrl);
         setBooking(result);
@@ -272,6 +282,18 @@ export function BookingPanel({
               ) is required. You&apos;ll be redirected to checkout after confirming.
             </Text>
           ) : null}
+
+          <LegalAcceptanceField
+            checked={acceptedLegal}
+            onChange={(value) => {
+              setAcceptedLegal(value);
+              if (value) {
+                setLegalError(null);
+              }
+            }}
+            includePaymentsNote={supportsDeposits && depositPercent > 0}
+            error={legalError}
+          />
 
           {isBookingEnabled ? (
             <Pressable

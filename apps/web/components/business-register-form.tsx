@@ -7,6 +7,7 @@ import type { Category, MarketConfig } from "@adeni/shared";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
 import { BusinessPortalCard } from "@/components/business-portal-card";
+import { LegalAcceptanceField } from "@/components/legal-acceptance-field";
 import { useActionLoading } from "@/contexts/action-loading-context";
 
 type Props = {
@@ -52,6 +53,8 @@ export function BusinessRegisterForm({ categories, markets }: Props) {
   const [marketId, setMarketId] = useState(markets[0]?.id ?? "lagos");
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [acceptedLegal, setAcceptedLegal] = useState(false);
+  const [legalError, setLegalError] = useState<string | null>(null);
 
   function clearFieldError(field: FieldName) {
     setFieldErrors((current) => {
@@ -118,6 +121,13 @@ export function BusinessRegisterForm({ categories, markets }: Props) {
     if (Object.keys(errors).length > 0) {
       return;
     }
+
+    if (!acceptedLegal) {
+      setLegalError("Accept the Terms of Service and Privacy Policy to continue.");
+      return;
+    }
+
+    setLegalError(null);
 
     await run("Creating your business profile…", async () => {
       const response = await fetch("/api/business/register", {
@@ -287,6 +297,19 @@ export function BusinessRegisterForm({ categories, markets }: Props) {
               </select>
             </label>
           </div>
+        </BusinessPortalCard>
+
+        <BusinessPortalCard>
+          <LegalAcceptanceField
+            checked={acceptedLegal}
+            onChange={(value) => {
+              setAcceptedLegal(value);
+              if (value) {
+                setLegalError(null);
+              }
+            }}
+            error={legalError}
+          />
         </BusinessPortalCard>
 
         <Button type="submit" size="lg" loading={isActive} loadingLabel="Creating business…">

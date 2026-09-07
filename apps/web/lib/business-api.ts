@@ -2,13 +2,18 @@ import { AdeniApiClient } from "@adeni/api-client";
 import { createPublicApiClient, getApiBaseUrl } from "./public-api";
 import { getAccessToken } from "./auth/session";
 import { isAuth0Configured } from "./auth/config";
+import { isDevAuthAllowed } from "./env";
 
 function getDevBusinessAuth0Sub(): string | undefined {
+  if (!isDevAuthAllowed()) {
+    return undefined;
+  }
+
   return process.env.DEV_BUSINESS_AUTH0_SUB?.trim() || undefined;
 }
 
 export function isBusinessPortalDevMode(): boolean {
-  return !isAuth0Configured() && Boolean(getDevBusinessAuth0Sub());
+  return isDevAuthAllowed() && !isAuth0Configured() && Boolean(getDevBusinessAuth0Sub());
 }
 
 async function resolveBusinessTenantId(client: AdeniApiClient): Promise<string | null> {

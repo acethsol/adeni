@@ -42,10 +42,10 @@ Privacy Policy must describe **how** a customer exercises export/delete (today: 
 |------|-------------|--------|
 | Footer Privacy link | `/privacy` | ✅ Wired (this sprint) |
 | Footer Terms link | `/terms` | ✅ Wired (this sprint) |
-| Sign-up / register acceptance | Checkbox + link to Terms & Privacy before account creation | 🔲 Todo |
-| Business registration | Accept Business Terms + Privacy | 🔲 Todo |
-| Booking checkout | Link to Terms (and refund/cancellation policy when payments live) | 🔲 Todo |
-| Mobile app | In-app links to same URLs | 🔲 Todo |
+| Sign-up / register acceptance | Checkbox + link to Terms & Privacy before account creation | ✅ Web + mobile business register; ✅ web booking checkout |
+| Business registration | Accept Business Terms + Privacy | ✅ Web + mobile |
+| Booking checkout | Link to Terms (and refund/cancellation policy when payments live) | ✅ Checkbox on web + mobile confirm step; receipt links Terms/Privacy |
+| Mobile app | In-app links to same URLs | ✅ Account tab → Privacy + Terms |
 | Confluence / legal review | [Privacy Policy Legal Review Checklist](https://aceth.atlassian.net/wiki/spaces/SD/pages/26738699) | 🔲 Legal sign-off |
 
 ---

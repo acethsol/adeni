@@ -4,6 +4,7 @@ import {
   getRolesFromAuth0User,
   type AdeniRole,
 } from "@adeni/shared";
+import { isProductionDeployment } from "../env";
 import { getAuth0 } from "./auth0";
 import { isAuth0Configured } from "./config";
 
@@ -18,12 +19,23 @@ function userHasPortalRole(roles: AdeniRole[], required: AdeniRole): boolean {
 }
 
 export async function runAuthMiddleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  if (
+    isProductionDeployment() &&
+    !isAuth0Configured() &&
+    (pathname.startsWith("/business") || pathname.startsWith("/admin"))
+  ) {
+    const setupUrl = new URL("/auth/setup-required", request.url);
+    setupUrl.searchParams.set("returnTo", pathname);
+    return NextResponse.redirect(setupUrl);
+  }
+
   if (!isAuth0Configured()) {
     return NextResponse.next();
   }
 
   const authResponse = await getAuth0().middleware(request);
-  const { pathname } = request.nextUrl;
 
   if (pathname.startsWith("/auth")) {
     return authResponse;

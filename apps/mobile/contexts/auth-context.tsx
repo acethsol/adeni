@@ -36,6 +36,10 @@ import {
   refreshAccessToken,
 } from "@/lib/auth/tokens";
 import { getApiBaseUrl } from "@/lib/api";
+import {
+  getDevBusinessAuth0Sub,
+  getDevCustomerAuth0Sub,
+} from "@/lib/env";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -62,14 +66,6 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-
-function getDevCustomerAuth0Sub(): string | undefined {
-  return process.env.EXPO_PUBLIC_DEV_CUSTOMER_AUTH0_SUB?.trim() || undefined;
-}
-
-function getDevBusinessAuth0Sub(): string | undefined {
-  return process.env.EXPO_PUBLIC_DEV_BUSINESS_AUTH0_SUB?.trim() || undefined;
-}
 
 function resolveDevAuth0Sub(mode: "customer" | "business"): string | undefined {
   return mode === "business" ? getDevBusinessAuth0Sub() : getDevCustomerAuth0Sub();
