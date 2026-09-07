@@ -44,6 +44,13 @@ const QUICK_LINKS = [
     ios: "mappin",
     android: "place",
   },
+  {
+    href: "/business/payments",
+    title: "Payments",
+    description: "Create links and track Paystack transactions.",
+    ios: "banknote",
+    android: "payments",
+  },
 ] as const;
 
 export default function BusinessOverviewScreen() {
@@ -112,7 +119,7 @@ export default function BusinessOverviewScreen() {
           subtitle="Your command center for bookings, services, and public profile."
         />
 
-        {hasBusinessAccount ? <BusinessTabs /> : null}
+        {hasBusinessAccount ? <BusinessTabs capabilities={profile?.capabilities} /> : null}
 
         <View style={styles.section}>
           {!isBusinessPortalEnabled ? (

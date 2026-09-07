@@ -6,6 +6,7 @@ import type { BusinessProfile } from "@adeni/shared";
 import { VERIFICATION_DOCUMENT_LABELS } from "@adeni/shared";
 import { Screen, ScreenHeader } from "@/components/adeni/Screen";
 import { BusinessTabs } from "@/components/adeni/BusinessTabs";
+import { BusinessBookingSettings } from "@/components/adeni/BusinessBookingSettings";
 import { BusinessCoverUpload } from "@/components/adeni/BusinessCoverUpload";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -82,7 +83,7 @@ export default function BusinessProfileScreen() {
           subtitle="Update your public details and submit verification documents."
         />
 
-        {canManage ? <BusinessTabs /> : null}
+        {canManage ? <BusinessTabs capabilities={profile?.capabilities} /> : null}
 
         <View style={styles.section}>
           {!isBusinessPortalEnabled ? (
@@ -133,6 +134,15 @@ export default function BusinessProfileScreen() {
                   coverImageUrl={profile.coverImageUrl}
                   createClient={createBusinessApiClient}
                 />
+              </View>
+
+              <View style={styles.blockSpacing}>
+                <Card title="Booking settings">
+                  <BusinessBookingSettings
+                    profile={profile}
+                    onSaved={(next) => setProfile(next)}
+                  />
+                </Card>
               </View>
 
               <View style={styles.blockSpacing}>
