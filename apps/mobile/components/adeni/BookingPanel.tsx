@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Linking,
@@ -47,6 +47,8 @@ export function BookingPanel({
   const [booking, setBooking] = useState<BookingResponse | null>(null);
   const [acceptedLegal, setAcceptedLegal] = useState(false);
   const [legalError, setLegalError] = useState<string | null>(null);
+  const bookingIdempotencyKeyRef = useRef<string | null>(null);
+  const paymentIdempotencyKeyRef = useRef<string | null>(null);
 
   const activeServices = useMemo(
     () => services.filter((service) => service.isActive),
@@ -95,28 +97,43 @@ export function BookingPanel({
     }
 
     setLegalError(null);
+
+    if (!bookingIdempotencyKeyRef.current) {
+      bookingIdempotencyKeyRef.current = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`;
+    }
+
     setSubmitting(true);
     setError(null);
 
     try {
       const client = createApiClient("customer");
-      const result = await client.createBooking({
-        tenantId,
-        serviceOfferingId: selectedService.id,
-        startAt: selectedSlot,
-        customerNotes: notes.trim() || undefined,
-      });
+      const result = await client.createBooking(
+        {
+          tenantId,
+          serviceOfferingId: selectedService.id,
+          startAt: selectedSlot,
+          customerNotes: notes.trim() || undefined,
+        },
+        bookingIdempotencyKeyRef.current,
+      );
 
       const requiresDeposit =
         supportsDeposits && depositPercent > 0 && selectedService.priceAmount > 0;
 
       if (requiresDeposit) {
-        const payment = await client.initializePayment({
-          tenantId,
-          bookingId: result.id,
-          currency: selectedService.currency,
-          type: "deposit",
-        });
+        if (!paymentIdempotencyKeyRef.current) {
+          paymentIdempotencyKeyRef.current = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-pay`;
+        }
+
+        const payment = await client.initializePayment(
+          {
+            tenantId,
+            bookingId: result.id,
+            currency: selectedService.currency,
+            type: "deposit",
+          },
+          paymentIdempotencyKeyRef.current,
+        );
 
         const checkoutUrl = payment.checkoutUrl.startsWith("http")
           ? payment.checkoutUrl

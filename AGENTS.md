@@ -233,8 +233,8 @@ Murphy’s “signing” is **not** duplicate HMAC on every browser call when Au
 **Known gaps:**
 
 - No `Deprecation` / `Sunset` response headers yet  
-- `Idempotency-Key` not universal on booking/payment POSTs  
-- Anonymous mutating routes need rate limiting (Sprint 20 / infra)  
+- ~~`Idempotency-Key` not universal on booking/payment POSTs~~ ✅ booking create + payment initialize (Sprint 17 hardening)  
+- ~~Anonymous mutating routes need rate limiting (Sprint 20 / infra)~~ ✅ baseline rate limits on webhooks, auth/sync, translate (Staging/Prod)  
 - `POST /api/v1/subscriptions/webhook` unsigned (see webhook section)  
 
 **Reference:** [docs/api-errors.md](docs/api-errors.md), `ApiErrorResponseMapper`, `CorrelationIdMiddleware`.

@@ -79,6 +79,11 @@ export async function POST(request: Request) {
     );
   }
 
+  const idempotencyKey = request.headers.get("Idempotency-Key");
+  if (idempotencyKey) {
+    headers.set("Idempotency-Key", idempotencyKey);
+  }
+
   const response = await fetch(`${getApiBaseUrl()}/api/v1/bookings`, {
     method: "POST",
     headers,

@@ -235,12 +235,16 @@ export class AdeniApiClient {
     return payload.items;
   }
 
-  async createBooking(request: CreateBookingRequest): Promise<BookingResponse> {
+  async createBooking(
+    request: CreateBookingRequest,
+    idempotencyKey?: string,
+  ): Promise<BookingResponse> {
     const body = createBookingRequestSchema.parse(request);
     const response = await this.request("/api/v1/bookings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
+      idempotencyKey,
     });
     return bookingResponseSchema.parse(await response.json());
   }
@@ -399,12 +403,14 @@ export class AdeniApiClient {
 
   async initializePayment(
     request: InitializePaymentRequest,
+    idempotencyKey?: string,
   ): Promise<PaymentIntentResponse> {
     const body = initializePaymentRequestSchema.parse(request);
     const response = await this.request("/api/v1/payments/initialize", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
+      idempotencyKey,
     });
     return paymentIntentResponseSchema.parse(await response.json());
   }
@@ -719,8 +725,12 @@ export class AdeniApiClient {
     });
   }
 
-  private async request(path: string, init: RequestInit = {}): Promise<Response> {
-    const headers = new Headers(init.headers);
+  private async request(
+    path: string,
+    init: RequestInit & { idempotencyKey?: string } = {},
+  ): Promise<Response> {
+    const { idempotencyKey, ...requestInit } = init;
+    const headers = new Headers(requestInit.headers);
     headers.set("Accept", "application/json");
 
     if (this.accessToken) {
@@ -733,8 +743,12 @@ export class AdeniApiClient {
       headers.set("X-Tenant-Id", this.tenantId);
     }
 
+    if (idempotencyKey) {
+      headers.set("Idempotency-Key", idempotencyKey);
+    }
+
     const response = await this.fetchImpl(`${this.baseUrl}${path}`, {
-      ...init,
+      ...requestInit,
       headers,
     });
 

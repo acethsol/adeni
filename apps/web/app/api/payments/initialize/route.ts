@@ -42,6 +42,11 @@ export async function POST(request: Request) {
     return headersOrResponse;
   }
 
+  const idempotencyKey = request.headers.get("Idempotency-Key");
+  if (idempotencyKey) {
+    headersOrResponse.set("Idempotency-Key", idempotencyKey);
+  }
+
   const response = await fetch(`${getApiBaseUrl()}/api/v1/payments/initialize`, {
     method: "POST",
     headers: headersOrResponse,

@@ -22,6 +22,8 @@ public sealed class BookingRecord : ITenantEntity
 
     public string? BusinessNotes { get; set; }
 
+    public string? IdempotencyKey { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
 
     public DateTimeOffset UpdatedAt { get; set; }

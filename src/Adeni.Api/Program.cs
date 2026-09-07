@@ -38,6 +38,7 @@ builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
 builder.Services.AddAdeniStorage(builder.Configuration, builder.Environment);
 builder.Services.AddAdeniCors(builder.Configuration, builder.Environment);
 builder.Services.AddAdeniObservability(builder.Configuration);
+builder.Services.AddAdeniRateLimiting(builder.Environment);
 builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -97,6 +98,7 @@ if (string.Equals(storageProvider, "Local", StringComparison.OrdinalIgnoreCase)
 }
 
 app.UseAdeniCors();
+app.UseAdeniRateLimiting();
 app.UseAdeniSecurityPipeline();
 app.UseAuthorization();
 app.MapControllers();

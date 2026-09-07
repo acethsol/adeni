@@ -36,18 +36,18 @@ public sealed class DomainEventDispatcherTests
         var service = await catalog.CreateAsync(
             tenantId,
             new CreateServiceOfferingRequest("Fade", null, 5000m, "NGN", 30),
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         await availability.ReplaceWeeklyRulesAsync(
             tenantId,
             [new WeeklyAvailabilityRule(DayOfWeek.Monday, new TimeOnly(9, 0), new TimeOnly(17, 0))],
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         var slotStart = NextMondayAt(new TimeOnly(10, 0));
         var created = await bookings.CreateAsync(
             "auth0|customer-1",
             new CreateBookingRequest(tenantId, service.Value!.Id, slotStart, null),
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         var accepted = await bookings.AcceptAsync(tenantId, created.Value!.Id, CancellationToken.None);
 

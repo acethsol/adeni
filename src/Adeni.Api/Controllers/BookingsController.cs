@@ -1,5 +1,7 @@
 namespace Adeni.Api.Controllers;
 
+using Adeni.Api.Constants;
+using Adeni.Api.Extensions;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
 using Adeni.Application.Booking;
@@ -27,7 +29,17 @@ public sealed class BookingsController(
             return Unauthorized();
         }
 
-        var result = await bookings.CreateAsync(auth0Sub, request, cancellationToken);
+        if (Request.Headers.ContainsKey(IdempotencyHeaders.Key)
+            && Request.GetIdempotencyKey() is null)
+        {
+            return this.InvalidIdempotencyKeyResult();
+        }
+
+        var result = await bookings.CreateAsync(
+            auth0Sub,
+            request,
+            Request.GetIdempotencyKey(),
+            cancellationToken);
         return ApiResults.FromResult(result, payload => Created($"/api/v1/bookings/{payload.Id}", payload), HttpContext);
     }
 

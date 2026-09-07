@@ -42,6 +42,7 @@ public interface IBookingService
     Task<Result<BookingResponse>> CreateAsync(
         string customerAuth0Sub,
         CreateBookingRequest request,
+        string? idempotencyKey = null,
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<BookingResponse>> ListForTenantAsync(
