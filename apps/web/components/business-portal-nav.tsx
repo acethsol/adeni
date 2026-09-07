@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  MessageCircle,
   Banknote,
   CalendarDays,
   Clock3,
@@ -27,6 +28,7 @@ const NAV_CAPABILITIES: Partial<Record<string, Capability>> = {
 export const BUSINESS_NAV_ITEMS = [
   { href: "/business", label: "Overview", exact: true, icon: LayoutDashboard },
   { href: "/business/bookings", label: "Bookings", icon: CalendarDays },
+  { href: "/business/messages", label: "Messages", icon: MessageCircle },
   { href: "/business/services", label: "Services", icon: Scissors },
   { href: "/business/availability", label: "Availability", icon: Clock3 },
   { href: "/business/payments", label: "Payments", icon: Banknote },

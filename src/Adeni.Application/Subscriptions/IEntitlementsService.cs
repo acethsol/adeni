@@ -28,6 +28,11 @@ public interface IEntitlementsService
         int activeLocationCount,
         CancellationToken cancellationToken = default);
 
+    Task<Result> EnsureCanUseMessagingAsync(
+        Guid tenantId,
+        SubscriptionTier tier,
+        CancellationToken cancellationToken = default);
+
     Task<SubscriptionUsageResponse> GetUsageAsync(
         Guid tenantId,
         SubscriptionTier tier,

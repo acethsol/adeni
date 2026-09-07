@@ -45,8 +45,8 @@ Check [docs/sprints.md](docs/sprints.md) for live status. As of last playbook up
 
 | | |
 |---|---|
-| **Done through** | Sprint 17 — Commerce orchestration (Paystack) |
-| **Next up** | Sprint 18 — Messaging & WhatsApp bridge |
+| **Done through** | Sprint 18 — Messaging & WhatsApp bridge |
+| **Next up** | Sprint 19 — Trust depth & quote workflows |
 | **Then** | Sprint 19 trust/quote depth, Sprint 20 deploy + AI + observability |
 
 Do not start work from a later sprint unless the user or sprint doc explicitly expands scope.
@@ -381,5 +381,5 @@ Do not rewrite large sections without approval.
 - Add mutating API routes without auth (unless documented public-by-design in spec)
 - Break `/api/v1/` clients silently — use deprecation headers before removal
 - Ship subscription webhooks without the same Murphy rules as payments
-- Build Sprint 18+ features (messaging, LLM agents) unless explicitly requested
+- Build Sprint 19+ features (trust depth, LLM agents) unless explicitly requested
 - Introduce microservices or wallet/custody tables

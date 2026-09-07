@@ -23,7 +23,7 @@
 | 15 | Architecture foundation + booking v2 + business types | ✅ Done |
 | **16** | **Business SaaS & monetization** | ✅ Done |
 | **17** | **Commerce orchestration (Paystack)** | ✅ Done |
-| **18** | **Messaging & WhatsApp bridge** | Planned |
+| **18** | **Messaging & WhatsApp bridge** | ✅ Done |
 | **19** | **Trust depth & quote workflows** | Planned |
 | 20 | Deployment, AI & observability | Planned |
 | — | Sprint 11d LLM agent | → Sprint 20 |
@@ -31,7 +31,7 @@
 | — | App Insights (Obs 1) | → Sprint 20 |
 | — | Booking notifications, auto-confirm, payments, waitlist | → Sprint 15 |
 
-**Next up:** Sprint 18 (**Messaging & WhatsApp bridge**). See [product-strategy.md §7.4](./product-strategy.md#74-nigeria-specific-engineering-notes).
+**Next up:** Sprint 19 (**Trust depth & quote workflows**). See [product-strategy.md §3.5](./product-strategy.md#35-business-types--workflow-capabilities).
 
 ---
 ## Sprint 0 — Foundation & dev tooling ✅
@@ -298,11 +298,11 @@ Close the fragmentation gap — businesses live on WhatsApp; Adeni must meet the
 
 | Task | Status |
 |------|--------|
-| **18a** In-app messaging — **Messaging module**; customer ↔ business threads tied to booking or business profile | Planned |
-| **18b** WhatsApp deep links — “Message on WhatsApp” with pre-filled booking context; “Book on Adeni” link in bio templates | Planned |
+| **18a** In-app messaging — **Messaging module**; customer ↔ business threads tied to booking or business profile | ✅ Done |
+| **18b** WhatsApp deep links — “Message on WhatsApp” with pre-filled booking context; “Book on Adeni” link in bio templates | ✅ Done |
 | **18c** Notification preferences — email, push (FCM), SMS/WhatsApp reminder channel per tenant | Planned |
-| **18d** Message templates — business quick-replies (hours, pricing, location) | Planned |
-| **18e** Unread badge + inbox in business portal topbar (extend bookings bell pattern) | Planned |
+| **18d** Message templates — business quick-replies (hours, pricing, location) | ✅ Done |
+| **18e** Unread badge + inbox in business portal topbar (extend bookings bell pattern) | ✅ Done |
 | **18f** Basic FAQ auto-responder — rule-based replies for price/hours/availability (precursor to business AI agent) | Planned |
 
 **Revenue unlocked:** Pro tier messaging entitlement (Sprint 16). **Retention:** businesses stay because customers reach them where they already are.
@@ -346,9 +346,8 @@ Confluence: [Sprint 20 — Deployment, AI, observability & architecture](https:/
 
 ## Next up
 
-1. **Sprint 18** — Messaging & WhatsApp bridge
-2. **Sprint 18** — messaging + WhatsApp bridge
-3. **Sprint 19** — tiered verification, **full quote workflows** (on Sprint 15 framework)
-4. **Sprint 20** — staging, LLM agent, observability
+1. **Sprint 19** — Trust depth & quote workflows
+2. **Sprint 19** — tiered verification, **full quote workflows** (on Sprint 15 framework)
+3. **Sprint 20** — staging, LLM agent, observability
 
 Strategy reference: [product-strategy.md](./product-strategy.md) — [§3.5 Business types](./product-strategy.md#35-business-types--workflow-capabilities), [architecture.md](./architecture.md) (modular monolith)

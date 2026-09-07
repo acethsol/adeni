@@ -6,6 +6,7 @@ using Adeni.Domain.Auditing;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Catalog;
 using Adeni.Domain.Identity;
+using Adeni.Domain.Messaging;
 using Adeni.Domain.Payments;
 using Adeni.Domain.Tenancy;
 using Microsoft.EntityFrameworkCore;
@@ -56,6 +57,10 @@ public sealed class AdeniDbContext(
     public DbSet<QuoteRequestRecord> QuoteRequests => Set<QuoteRequestRecord>();
 
     public DbSet<PaymentIntentRecord> PaymentIntents => Set<PaymentIntentRecord>();
+
+    public DbSet<MessageThread> MessageThreads => Set<MessageThread>();
+
+    public DbSet<Message> Messages => Set<Message>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -241,6 +246,31 @@ public sealed class AdeniDbContext(
             entity.HasIndex(x => new { x.TenantId, x.Status, x.CreatedAt });
             entity.HasIndex(x => x.ProviderReference).IsUnique();
             entity.HasIndex(x => x.IdempotencyKey).IsUnique().HasFilter("\"IdempotencyKey\" IS NOT NULL");
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<MessageThread>(entity =>
+        {
+            entity.ToTable("message_threads", "messaging");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Subject).HasMaxLength(200);
+            entity.Property(x => x.Status).HasConversion<int>();
+            entity.HasIndex(x => new { x.TenantId, x.LastMessageAt });
+            entity.HasIndex(x => new { x.TenantId, x.CustomerId, x.BookingId });
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<Message>(entity =>
+        {
+            entity.ToTable("messages", "messaging");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.SenderAuth0Sub).HasMaxLength(128);
+            entity.Property(x => x.Body).HasMaxLength(4000);
+            entity.HasIndex(x => new { x.ThreadId, x.CreatedAt });
+            entity.HasOne(x => x.Thread)
+                .WithMany()
+                .HasForeignKey(x => x.ThreadId)
+                .OnDelete(DeleteBehavior.Cascade);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
     }

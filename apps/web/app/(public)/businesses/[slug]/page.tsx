@@ -13,6 +13,7 @@ import { shouldShowQuoteFlow } from "@adeni/shared";
 import { BusinessReviewsSection } from "@/components/business-reviews-section";
 import { StarRating } from "@/components/star-rating";
 import { BackLink } from "@/components/ui/back-link";
+import { Button } from "@/components/ui/button";
 import { RemoteImage } from "@/components/ui/remote-image";
 import { PublicHeader } from "@/components/public-header";
 import { createApiClient } from "@/lib/adeni";
@@ -61,12 +62,13 @@ export default async function BusinessProfilePage({ params }: Props) {
 
   try {
     const client = createApiClient();
-    const [profile, services, reviews, locale, translateContent] = await Promise.all([
+    const [profile, services, reviews, whatsAppLink, locale, translateContent] = await Promise.all([
       client.getBusinessProfile(slug),
       client.getBusinessServices(slug).catch(() => []),
       client
         .getBusinessReviews(slug)
         .catch(() => ({ items: [], page: 1, pageSize: 10, totalCount: 0 })),
+      client.getBusinessWhatsAppLink(slug).catch(() => null),
       getLocale(),
       getTranslationPreference(),
     ]);
@@ -175,6 +177,14 @@ export default async function BusinessProfilePage({ params }: Props) {
                 <dd className="mt-1">{profile.phoneMasked}</dd>
               </div>
             </dl>
+
+            {whatsAppLink ? (
+              <div className="mt-6">
+                <Button href={whatsAppLink.url} target="_blank" rel="noreferrer" variant="secondary">
+                  Message on WhatsApp
+                </Button>
+              </div>
+            ) : null}
           </div>
 
           <BusinessReviewsSection
