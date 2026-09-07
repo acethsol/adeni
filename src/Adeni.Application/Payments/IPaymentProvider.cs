@@ -123,6 +123,7 @@ public interface IPaymentOrchestrator
 {
     Task<Result<PaymentIntentResponse>> InitializeAsync(
         InitializePaymentRequest request,
+        string? idempotencyKey = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<PaymentIntentResponse>> CreatePaymentLinkAsync(

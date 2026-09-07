@@ -36,18 +36,18 @@ public sealed class BookingFlowTests
         var service = await catalog.CreateAsync(
             tenantId,
             new CreateServiceOfferingRequest("Fade", "Skin fade", 5000m, "NGN", 30),
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         await availability.ReplaceWeeklyRulesAsync(
             tenantId,
             [new WeeklyAvailabilityRule(DayOfWeek.Monday, new TimeOnly(9, 0), new TimeOnly(17, 0))],
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         var slotStart = NextMondayAt(new TimeOnly(10, 0));
         var created = await bookings.CreateAsync(
             "auth0|customer-1",
             new CreateBookingRequest(tenantId, service.Value!.Id, slotStart, "First visit"),
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         Assert.True(created.IsSuccess);
         Assert.Equal(BookingStatus.Pending, created.Value!.Status);
@@ -68,22 +68,22 @@ public sealed class BookingFlowTests
         var service = await catalog.CreateAsync(
             tenantId,
             new CreateServiceOfferingRequest("Fade", null, 5000m, "NGN", 30),
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         await availability.ReplaceWeeklyRulesAsync(
             tenantId,
             [new WeeklyAvailabilityRule(DayOfWeek.Monday, new TimeOnly(9, 0), new TimeOnly(17, 0))],
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         var slotStart = NextMondayAt(new TimeOnly(10, 0));
         var first = await bookings.CreateAsync(
             "auth0|customer-1",
             new CreateBookingRequest(tenantId, service.Value!.Id, slotStart, null),
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
         var second = await bookings.CreateAsync(
             "auth0|customer-2",
             new CreateBookingRequest(tenantId, service.Value.Id, slotStart, null),
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         Assert.True(first.IsSuccess);
         Assert.True(second.IsFailure);
@@ -104,18 +104,18 @@ public sealed class BookingFlowTests
         var service = await catalog.CreateAsync(
             tenantId,
             new CreateServiceOfferingRequest("Fade", null, 5000m, "NGN", 30),
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         await availability.ReplaceWeeklyRulesAsync(
             tenantId,
             [new WeeklyAvailabilityRule(DayOfWeek.Monday, new TimeOnly(9, 0), new TimeOnly(17, 0))],
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         var slotStart = NextMondayAt(new TimeOnly(11, 0));
         var created = await bookings.CreateAsync(
             "auth0|customer-1",
             new CreateBookingRequest(tenantId, service.Value!.Id, slotStart, null),
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         var accepted = await bookings.AcceptAsync(tenantId, created.Value!.Id, CancellationToken.None);
 
@@ -137,18 +137,18 @@ public sealed class BookingFlowTests
         var service = await catalog.CreateAsync(
             tenantId,
             new CreateServiceOfferingRequest("Fade", null, 5000m, "NGN", 30),
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         await availability.ReplaceWeeklyRulesAsync(
             tenantId,
             [new WeeklyAvailabilityRule(DayOfWeek.Monday, new TimeOnly(9, 0), new TimeOnly(12, 0))],
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         var slotStart = NextMondayAt(new TimeOnly(10, 0));
         await bookings.CreateAsync(
             "auth0|customer-1",
             new CreateBookingRequest(tenantId, service.Value!.Id, slotStart, null),
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         var rangeStart = slotStart.AddHours(-1);
         var rangeEnd = slotStart.AddHours(3);
@@ -157,7 +157,7 @@ public sealed class BookingFlowTests
             service.Value.Id,
             rangeStart,
             rangeEnd,
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         Assert.True(slots.IsSuccess);
         Assert.DoesNotContain(slots.Value!, s => s.StartAt == slotStart);
@@ -177,19 +177,19 @@ public sealed class BookingFlowTests
         var service = await catalog.CreateAsync(
             tenantId,
             new CreateServiceOfferingRequest("Fade", null, 5000m, "NGN", 30),
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         await availability.ReplaceWeeklyRulesAsync(
             tenantId,
             [new WeeklyAvailabilityRule(DayOfWeek.Monday, new TimeOnly(9, 0), new TimeOnly(17, 0))],
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         const string customerSub = "auth0|customer-list";
         var slotStart = NextMondayAt(new TimeOnly(10, 0));
         var created = await bookings.CreateAsync(
             customerSub,
             new CreateBookingRequest(tenantId, service.Value!.Id, slotStart, "My visit"),
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         Assert.True(created.IsSuccess);
 
@@ -216,19 +216,19 @@ public sealed class BookingFlowTests
         var service = await catalog.CreateAsync(
             tenantId,
             new CreateServiceOfferingRequest("Fade", null, 5000m, "NGN", 30),
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         await availability.ReplaceWeeklyRulesAsync(
             tenantId,
             [new WeeklyAvailabilityRule(DayOfWeek.Monday, new TimeOnly(9, 0), new TimeOnly(17, 0))],
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         const string customerSub = "auth0|customer-cancel";
         var slotStart = NextMondayAt(new TimeOnly(10, 0));
         var created = await bookings.CreateAsync(
             customerSub,
             new CreateBookingRequest(tenantId, service.Value!.Id, slotStart, null),
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         Assert.True(created.IsSuccess);
 

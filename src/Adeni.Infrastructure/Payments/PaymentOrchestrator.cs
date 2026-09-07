@@ -1,6 +1,7 @@
 namespace Adeni.Infrastructure.Payments;
 
 using Adeni.Application.Abstractions;
+using Adeni.Application.Common;
 using Adeni.Application.Events;
 using Adeni.Application.Payments;
 using Adeni.Domain.Auditing;
@@ -22,6 +23,7 @@ public sealed class PaymentOrchestrator(
 {
     public Task<Result<PaymentIntentResponse>> InitializeAsync(
         InitializePaymentRequest request,
+        string? idempotencyKey = null,
         CancellationToken cancellationToken = default) =>
         CreatePaymentIntentAsync(
             request.TenantId,
@@ -32,6 +34,7 @@ public sealed class PaymentOrchestrator(
             request.Description,
             request.CustomerEmail,
             request.CallbackUrl,
+            idempotencyKey,
             cancellationToken);
 
     public Task<Result<PaymentIntentResponse>> CreatePaymentLinkAsync(
@@ -46,6 +49,7 @@ public sealed class PaymentOrchestrator(
             request.Description,
             request.CustomerEmail,
             request.CallbackUrl,
+            idempotencyKey: null,
             cancellationToken);
 
     public async Task<Result<PaymentIntentResponse>> GetAsync(
@@ -230,8 +234,22 @@ public sealed class PaymentOrchestrator(
         string? description,
         string? customerEmail,
         string? callbackUrl,
+        string? idempotencyKey,
         CancellationToken cancellationToken)
     {
+        var normalizedIdempotencyKey = IdempotencyKeyNormalizer.Normalize(idempotencyKey);
+        if (normalizedIdempotencyKey is not null)
+        {
+            var existing = await dbContext.PaymentIntents
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.IdempotencyKey == normalizedIdempotencyKey, cancellationToken);
+
+            if (existing is not null)
+            {
+                return Result.Success(Map(existing));
+            }
+        }
+
         var resolvedAmountResult = await ResolveAmountAsync(tenantId, bookingId, amount, type, cancellationToken);
         if (resolvedAmountResult.IsFailure)
         {
@@ -273,7 +291,7 @@ public sealed class PaymentOrchestrator(
             Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
             CustomerEmail = string.IsNullOrWhiteSpace(customerEmail) ? null : customerEmail.Trim(),
             CallbackUrl = string.IsNullOrWhiteSpace(callbackUrl) ? null : callbackUrl.Trim(),
-            IdempotencyKey = reference,
+            IdempotencyKey = normalizedIdempotencyKey,
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -298,7 +316,10 @@ public sealed class PaymentOrchestrator(
         }
 
         entity.ProviderReference = providerResult.Value!.ProviderReference;
-        entity.IdempotencyKey = entity.ProviderReference;
+        if (normalizedIdempotencyKey is null)
+        {
+            entity.IdempotencyKey = entity.ProviderReference;
+        }
 
         dbContext.PaymentIntents.Add(entity);
         await dbContext.SaveChangesAsync(cancellationToken);

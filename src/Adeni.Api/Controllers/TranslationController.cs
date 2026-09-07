@@ -1,8 +1,10 @@
 namespace Adeni.Api.Controllers;
 
+using Adeni.Api.Extensions;
 using Adeni.Application.Translation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 public sealed record TranslateRequest(
     IReadOnlyList<string>? Texts,
@@ -15,6 +17,7 @@ public sealed class TranslationController(ITranslationService translation) : Con
 {
     [HttpPost]
     [AllowAnonymous]
+    [EnableRateLimiting(RateLimitingExtensions.PublicMutationPolicy)]
     public async Task<IActionResult> Translate(
         [FromBody] TranslateRequest request,
         CancellationToken cancellationToken)

@@ -121,6 +121,52 @@ public sealed class PaymentIntegrationTests : IClassFixture<WebApplicationFactor
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
+    [Fact]
+    public async Task Initialize_WithIdempotencyKey_ReturnsSamePaymentOnRetry()
+    {
+        const string customerSub = "auth0|payment-idem-customer";
+        var tenantId = Guid.NewGuid();
+        const string idempotencyKey = "payment-idem-test-key";
+
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add(DevCustomerAuthMiddleware.DevAuth0SubHeader, customerSub);
+
+        var body = new
+        {
+            tenantId,
+            bookingId = (Guid?)null,
+            amount = 1500m,
+            currency = "NGN",
+            type = "link"
+        };
+
+        using var firstRequest = new HttpRequestMessage(HttpMethod.Post, "/api/v1/payments/initialize")
+        {
+            Content = JsonContent.Create(body),
+        };
+        firstRequest.Headers.Add("Idempotency-Key", idempotencyKey);
+
+        using var secondRequest = new HttpRequestMessage(HttpMethod.Post, "/api/v1/payments/initialize")
+        {
+            Content = JsonContent.Create(body),
+        };
+        secondRequest.Headers.Add("Idempotency-Key", idempotencyKey);
+
+        var firstResponse = await client.SendAsync(firstRequest);
+        var secondResponse = await client.SendAsync(secondRequest);
+
+        Assert.Equal(HttpStatusCode.OK, firstResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, secondResponse.StatusCode);
+
+        var firstPayload = await firstResponse.Content.ReadFromJsonAsync<PaymentCreatedPayload>();
+        var secondPayload = await secondResponse.Content.ReadFromJsonAsync<PaymentCreatedPayload>();
+        Assert.NotNull(firstPayload);
+        Assert.NotNull(secondPayload);
+        Assert.Equal(firstPayload!.Id, secondPayload!.Id);
+    }
+
+    private sealed record PaymentCreatedPayload(Guid Id);
+
     private static void SeedTenantWithBusinessUser(AdeniDbContext db, Guid tenantId, string auth0Sub)
     {
         var now = DateTimeOffset.UtcNow;

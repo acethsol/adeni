@@ -135,6 +135,116 @@ public sealed class BookingIntegrationTests : IClassFixture<WebApplicationFactor
         Assert.Equal(slug, listPayload.Items[0].BusinessSlug);
     }
 
+    [Fact]
+    public async Task CreateBooking_WithIdempotencyKey_ReturnsSameBookingOnRetry()
+    {
+        var slug = $"idem-{Guid.NewGuid():N}"[..20];
+        var tenantId = Guid.Empty;
+        var serviceId = Guid.Empty;
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+            tenantId = Guid.NewGuid();
+            db.Tenants.Add(new Tenant
+            {
+                Id = tenantId,
+                Name = "Idempotency Shop",
+                Status = TenantStatus.Verified,
+                CreatedAt = DateTimeOffset.UtcNow,
+                VerifiedAt = DateTimeOffset.UtcNow
+            });
+            db.BusinessProfiles.Add(new BusinessProfile
+            {
+                TenantId = tenantId,
+                CategorySlug = "barbers",
+                Phone = "+2348011111111",
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+            db.BusinessLocations.Add(new BusinessLocation
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                Slug = slug,
+                Name = "Lekki",
+                MarketId = "lagos",
+                AddressLine = "1 Idem Road",
+                Area = "Lekki",
+                IsPrimary = true,
+                IsActive = true,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+            serviceId = Guid.NewGuid();
+            db.ServiceOfferings.Add(new ServiceOffering
+            {
+                Id = serviceId,
+                TenantId = tenantId,
+                Name = "Cut",
+                PriceAmount = 4000m,
+                Currency = "NGN",
+                DurationMinutes = 30,
+                IsActive = true,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+            db.WeeklyAvailabilities.Add(new WeeklyAvailability
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                DayOfWeek = DayOfWeek.Monday,
+                OpenTime = new TimeOnly(9, 0),
+                CloseTime = new TimeOnly(17, 0)
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var monday = NextMondayUtc();
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Dev-Auth0-Sub", "auth0|idem-customer");
+
+        var slotsResponse = await client.GetAsync(
+            $"/api/v1/businesses/{slug}/slots?serviceId={serviceId}&from={Uri.EscapeDataString(monday.AddHours(-1).ToString("O"))}&to={Uri.EscapeDataString(monday.AddDays(1).ToString("O"))}");
+        var slotsPayload = await slotsResponse.Content.ReadFromJsonAsync<SlotsPayload>();
+        Assert.NotNull(slotsPayload);
+        Assert.NotEmpty(slotsPayload!.Items);
+
+        const string idempotencyKey = "booking-idem-test-key";
+        var body = new
+        {
+            tenantId,
+            serviceOfferingId = serviceId,
+            startAt = slotsPayload.Items[0].StartAt,
+            customerNotes = "Retry test"
+        };
+
+        using var firstRequest = new HttpRequestMessage(HttpMethod.Post, "/api/v1/bookings")
+        {
+            Content = JsonContent.Create(body),
+        };
+        firstRequest.Headers.Add("Idempotency-Key", idempotencyKey);
+
+        using var secondRequest = new HttpRequestMessage(HttpMethod.Post, "/api/v1/bookings")
+        {
+            Content = JsonContent.Create(body),
+        };
+        secondRequest.Headers.Add("Idempotency-Key", idempotencyKey);
+
+        var firstResponse = await client.SendAsync(firstRequest);
+        var secondResponse = await client.SendAsync(secondRequest);
+
+        Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, secondResponse.StatusCode);
+
+        var firstPayload = await firstResponse.Content.ReadFromJsonAsync<BookingCreatedPayload>();
+        var secondPayload = await secondResponse.Content.ReadFromJsonAsync<BookingCreatedPayload>();
+        Assert.NotNull(firstPayload);
+        Assert.NotNull(secondPayload);
+        Assert.Equal(firstPayload!.Id, secondPayload!.Id);
+    }
+
+    private sealed record BookingCreatedPayload(Guid Id);
+
     private sealed record CustomerBookingsPayload(IReadOnlyList<CustomerBookingItem> Items);
 
     private sealed record CustomerBookingItem(

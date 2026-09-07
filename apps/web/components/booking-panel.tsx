@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { BookingResponse, ServiceOffering } from "@adeni/shared";
 import { LoadingPanel } from "@/components/loading-panel";
 import { LegalAcceptanceField } from "@/components/legal-acceptance-field";
@@ -81,6 +81,8 @@ export function BookingPanel({
   const [booking, setBooking] = useState<BookingResponse | null>(null);
   const [acceptedLegal, setAcceptedLegal] = useState(false);
   const [legalError, setLegalError] = useState<string | null>(null);
+  const bookingIdempotencyKeyRef = useRef<string | null>(null);
+  const paymentIdempotencyKeyRef = useRef<string | null>(null);
 
   const activeServices = useMemo(
     () => services.filter((service) => service.isActive),
@@ -149,6 +151,10 @@ export function BookingPanel({
 
     setLegalError(null);
 
+    if (!bookingIdempotencyKeyRef.current) {
+      bookingIdempotencyKeyRef.current = crypto.randomUUID();
+    }
+
     setSubmitting(true);
     setError(null);
 
@@ -156,7 +162,10 @@ export function BookingPanel({
       await run("Confirming your booking…", async () => {
         const response = await fetch("/api/bookings", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Idempotency-Key": bookingIdempotencyKeyRef.current,
+          },
           body: JSON.stringify({
             tenantId,
             serviceOfferingId: selectedService.id,
@@ -183,9 +192,16 @@ export function BookingPanel({
           supportsDeposits && depositPercent > 0 && selectedService.priceAmount > 0;
 
         if (requiresDeposit) {
+          if (!paymentIdempotencyKeyRef.current) {
+            paymentIdempotencyKeyRef.current = crypto.randomUUID();
+          }
+
           const paymentResponse = await fetch("/api/payments/initialize", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "Idempotency-Key": paymentIdempotencyKeyRef.current,
+            },
             body: JSON.stringify({
               tenantId,
               bookingId: (payload as BookingResponse).id,

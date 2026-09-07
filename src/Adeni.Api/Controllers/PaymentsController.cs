@@ -1,6 +1,8 @@
 namespace Adeni.Api.Controllers;
 
 using System.Security.Claims;
+using Adeni.Api.Constants;
+using Adeni.Api.Extensions;
 using Adeni.Api.Errors;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
@@ -8,6 +10,7 @@ using Adeni.Application.Payments;
 using Adeni.Infrastructure.Auth;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -29,7 +32,16 @@ public sealed class PaymentsController(
             return Unauthorized();
         }
 
-        var result = await paymentOrchestrator.InitializeAsync(request, cancellationToken);
+        if (Request.Headers.ContainsKey(IdempotencyHeaders.Key)
+            && Request.GetIdempotencyKey() is null)
+        {
+            return this.InvalidIdempotencyKeyResult();
+        }
+
+        var result = await paymentOrchestrator.InitializeAsync(
+            request,
+            Request.GetIdempotencyKey(),
+            cancellationToken);
         return ApiResults.FromResult(result, Ok, HttpContext);
     }
 
@@ -123,6 +135,7 @@ public sealed class PaymentsController(
     }
 
     [HttpPost("webhook")]
+    [EnableRateLimiting(RateLimitingExtensions.WebhookPolicy)]
     public async Task<IActionResult> Webhook(CancellationToken cancellationToken)
     {
         using var reader = new StreamReader(Request.Body);

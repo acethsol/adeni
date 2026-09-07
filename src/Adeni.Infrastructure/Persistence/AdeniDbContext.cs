@@ -173,6 +173,8 @@ public sealed class AdeniDbContext(
             entity.HasKey(x => x.Id);
             entity.Property(x => x.CustomerNotes).HasMaxLength(1000);
             entity.Property(x => x.BusinessNotes).HasMaxLength(1000);
+            entity.Property(x => x.IdempotencyKey).HasMaxLength(128);
+            entity.HasIndex(x => x.IdempotencyKey).IsUnique().HasFilter("\"IdempotencyKey\" IS NOT NULL");
             entity.HasIndex(x => new { x.TenantId, x.StartAt });
             entity.HasIndex(x => new { x.TenantId, x.Status, x.StartAt });
             entity.HasOne(x => x.ServiceOffering)
@@ -238,6 +240,7 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.IdempotencyKey).HasMaxLength(128);
             entity.HasIndex(x => new { x.TenantId, x.Status, x.CreatedAt });
             entity.HasIndex(x => x.ProviderReference).IsUnique();
+            entity.HasIndex(x => x.IdempotencyKey).IsUnique().HasFilter("\"IdempotencyKey\" IS NOT NULL");
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
     }

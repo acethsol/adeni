@@ -3,9 +3,11 @@ namespace Adeni.Api.Controllers;
 using System.Security.Claims;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
+using Adeni.Api.Extensions;
 using Adeni.Application.Subscriptions;
 using Adeni.Infrastructure.Auth;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
@@ -98,6 +100,7 @@ public sealed class SubscriptionBillingController(
 
     /// <summary>Stub webhook receiver — documents normalized event shape for future provider wiring.</summary>
     [HttpPost("webhook")]
+    [EnableRateLimiting(RateLimitingExtensions.WebhookPolicy)]
     public async Task<IActionResult> Webhook(CancellationToken cancellationToken)
     {
         if (!IsDevOrTesting())

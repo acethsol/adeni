@@ -1,5 +1,6 @@
 namespace Adeni.Api.Controllers;
 
+using Adeni.Api.Extensions;
 using Adeni.Api.Auth;
 using Adeni.Api.Errors;
 using Adeni.Application.Admin;
@@ -8,6 +9,7 @@ using Adeni.Application.Reviews;
 using Adeni.Infrastructure.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 
 [ApiController]
@@ -17,6 +19,7 @@ public sealed class AuthController(
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpPost("sync")]
+    [EnableRateLimiting(RateLimitingExtensions.AuthSyncPolicy)]
     public async Task<IActionResult> Sync(
         [FromBody] SyncAuthUserRequest request,
         CancellationToken cancellationToken)

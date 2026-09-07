@@ -2,6 +2,7 @@ namespace Adeni.Infrastructure.Booking;
 
 using Adeni.Application.Booking;
 using Adeni.Application.Caching;
+using Adeni.Application.Common;
 using Adeni.Application.Events;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Booking;
@@ -23,12 +24,15 @@ public sealed class BookingService(
     public async Task<Result<BookingResponse>> CreateAsync(
         string customerAuth0Sub,
         CreateBookingRequest request,
+        string? idempotencyKey = null,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(customerAuth0Sub))
         {
             return Result.Failure<BookingResponse>(ErrorCodes.CustomerAuthRequiredError());
         }
+
+        var normalizedIdempotencyKey = IdempotencyKeyNormalizer.Normalize(idempotencyKey);
 
         if (request.StartAt <= DateTimeOffset.UtcNow)
         {
@@ -88,6 +92,21 @@ public sealed class BookingService(
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
+        if (normalizedIdempotencyKey is not null)
+        {
+            var existing = await (
+                from booking in dbContext.Bookings.AsNoTracking()
+                join offering in dbContext.ServiceOfferings.AsNoTracking() on booking.ServiceOfferingId equals offering.Id
+                where booking.CustomerId == customer.Id && booking.IdempotencyKey == normalizedIdempotencyKey
+                select new { booking, offering.Name })
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (existing is not null)
+            {
+                return Result.Success(BookingMapper.ToResponse(existing.booking, existing.Name));
+            }
+        }
+
         var lockKey = CacheKeys.SlotLock(request.TenantId, request.StartAt, service.Id);
         var slotLock = await lockProvider.TryAcquireAsync(lockKey, CacheTtl.SlotLock, cancellationToken);
         if (slotLock is null)
@@ -128,6 +147,7 @@ public sealed class BookingService(
                 CustomerNotes = string.IsNullOrWhiteSpace(request.CustomerNotes)
                     ? null
                     : request.CustomerNotes.Trim(),
+                IdempotencyKey = normalizedIdempotencyKey,
                 CreatedAt = now,
                 UpdatedAt = now
             };
