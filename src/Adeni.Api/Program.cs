@@ -48,6 +48,8 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddAdeniOpenApi();
 }
 
+builder.ValidateProductionConfiguration();
+
 var app = builder.Build();
 var fileStorage = app.Services.GetRequiredService<IFileStorage>();
 

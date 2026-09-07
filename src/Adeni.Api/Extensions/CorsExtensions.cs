@@ -1,5 +1,8 @@
 namespace Adeni.Api.Extensions;
 
+using Adeni.Application.Auth;
+using Serilog;
+
 public static class CorsExtensions
 {
     public const string ClientPolicy = "AdeniClients";
@@ -9,8 +12,16 @@ public static class CorsExtensions
         IConfiguration configuration,
         IHostEnvironment environment)
     {
-        var origins = configuration.GetSection(Application.Auth.CorsOptions.SectionName)
-            .Get<string[]>() ?? [];
+        var corsOptions = configuration.GetSection(CorsOptions.SectionName).Get<CorsOptions>()
+            ?? new CorsOptions();
+        var origins = corsOptions.AllowedOrigins;
+
+        if (origins.Length == 0 && (environment.IsStaging() || environment.IsProduction()))
+        {
+            Log.Warning(
+                "Cors:AllowedOrigins is empty in {Environment}. Cross-origin requests will be denied.",
+                environment.EnvironmentName);
+        }
 
         services.AddCors(options =>
         {
@@ -25,7 +36,7 @@ public static class CorsExtensions
                     return;
                 }
 
-                if (environment.IsDevelopment() || environment.IsStaging() || environment.EnvironmentName == "Testing")
+                if (environment.IsDevelopment() || environment.EnvironmentName == "Testing")
                 {
                     policy.SetIsOriginAllowed(_ => true)
                         .AllowAnyHeader()

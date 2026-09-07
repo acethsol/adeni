@@ -7,12 +7,14 @@ using System.Text.Json;
 using Adeni.Application.Payments;
 using Adeni.Domain.Common;
 using Adeni.Domain.Payments;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 public sealed class PaystackPaymentProvider(
     HttpClient httpClient,
     IOptions<PaystackOptions> paystackOptions,
+    IHostEnvironment environment,
     ILogger<PaystackPaymentProvider> logger) : IPaymentProvider
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -128,21 +130,25 @@ public sealed class PaystackPaymentProvider(
         CancellationToken cancellationToken = default)
     {
         var options = paystackOptions.Value;
-        if (!string.IsNullOrWhiteSpace(options.WebhookSecret))
+        var isDevOrTesting = environment.IsDevelopment() || environment.EnvironmentName == "Testing";
+
+        if (!isDevOrTesting)
         {
-            if (!headers.TryGetValue("x-paystack-signature", out var signature)
-                || string.IsNullOrWhiteSpace(signature))
+            if (string.IsNullOrWhiteSpace(options.WebhookSecret))
             {
+                logger.LogError("Paystack webhook secret is not configured.");
                 return Task.FromResult(Result.Failure<PaymentWebhookPayload>(ErrorCodes.PaymentWebhookInvalidError()));
             }
 
-            var computed = ComputeHmacSha512(rawBody, options.WebhookSecret);
-            if (!CryptographicOperations.FixedTimeEquals(
-                    Encoding.UTF8.GetBytes(computed),
-                    Encoding.UTF8.GetBytes(signature)))
+            if (!TryValidateWebhookSignature(rawBody, headers, options.WebhookSecret))
             {
                 return Task.FromResult(Result.Failure<PaymentWebhookPayload>(ErrorCodes.PaymentWebhookInvalidError()));
             }
+        }
+        else if (!string.IsNullOrWhiteSpace(options.WebhookSecret)
+            && !TryValidateWebhookSignature(rawBody, headers, options.WebhookSecret))
+        {
+            return Task.FromResult(Result.Failure<PaymentWebhookPayload>(ErrorCodes.PaymentWebhookInvalidError()));
         }
 
         try
@@ -294,6 +300,23 @@ public sealed class PaystackPaymentProvider(
         currency.Equals("NGN", StringComparison.OrdinalIgnoreCase)
             ? (long)Math.Round(amount * 100m, 0, MidpointRounding.AwayFromZero)
             : (long)Math.Round(amount * 100m, 0, MidpointRounding.AwayFromZero);
+
+    private static bool TryValidateWebhookSignature(
+        string rawBody,
+        IReadOnlyDictionary<string, string> headers,
+        string webhookSecret)
+    {
+        if (!headers.TryGetValue("x-paystack-signature", out var signature)
+            || string.IsNullOrWhiteSpace(signature))
+        {
+            return false;
+        }
+
+        var computed = ComputeHmacSha512(rawBody, webhookSecret);
+        return CryptographicOperations.FixedTimeEquals(
+            Encoding.UTF8.GetBytes(computed),
+            Encoding.UTF8.GetBytes(signature));
+    }
 
     private static string ComputeHmacSha512(string payload, string secret)
     {
