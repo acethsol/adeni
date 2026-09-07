@@ -9,7 +9,13 @@ public sealed record PendingBusinessResponse(
     string Slug,
     string MarketId,
     TenantStatus Status,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    IReadOnlyList<PendingVerificationDocumentResponse> Documents);
+
+public sealed record PendingVerificationDocumentResponse(
+    string DocumentType,
+    string ReferenceNumber,
+    DateTimeOffset SubmittedAt);
 
 public sealed record AdminBusinessSummaryResponse(
     Guid Id,

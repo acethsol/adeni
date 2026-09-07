@@ -9,6 +9,7 @@ public sealed record ServiceOfferingResponse(
     string? Description,
     decimal PriceAmount,
     string Currency,
+    string PricingType,
     int DurationMinutes,
     bool IsActive);
 
@@ -17,7 +18,8 @@ public sealed record CreateServiceOfferingRequest(
     string? Description,
     decimal PriceAmount,
     string Currency,
-    int DurationMinutes);
+    int DurationMinutes,
+    string PricingType = "fixed");
 
 public sealed record UpdateServiceOfferingRequest(
     string Name,
@@ -25,6 +27,7 @@ public sealed record UpdateServiceOfferingRequest(
     decimal PriceAmount,
     string Currency,
     int DurationMinutes,
+    string PricingType,
     bool IsActive);
 
 public interface IServiceCatalogService

@@ -18,7 +18,20 @@ public sealed record PublicReviewItem(
     byte Rating,
     string Comment,
     DateTimeOffset CreatedAt,
-    string CustomerDisplayName);
+    string CustomerDisplayName,
+    string? OwnerReply = null,
+    DateTimeOffset? OwnerReplyAt = null);
+
+public sealed record TenantReviewItem(
+    Guid Id,
+    byte Rating,
+    string Comment,
+    DateTimeOffset CreatedAt,
+    string CustomerDisplayName,
+    string? OwnerReply,
+    DateTimeOffset? OwnerReplyAt);
+
+public sealed record ReplyToReviewRequest(string Reply);
 
 public sealed record PublicReviewsResult(
     IReadOnlyList<PublicReviewItem> Items,
@@ -55,5 +68,16 @@ public interface IReviewService
 
     Task<IReadOnlyDictionary<Guid, ReviewResponse>> GetReviewsForBookingsAsync(
         IReadOnlyCollection<Guid> bookingIds,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<TenantReviewItem>> ReplyAsync(
+        Guid tenantId,
+        string auth0Sub,
+        Guid reviewId,
+        ReplyToReviewRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<TenantReviewItem>> ListForTenantAsync(
+        Guid tenantId,
         CancellationToken cancellationToken = default);
 }

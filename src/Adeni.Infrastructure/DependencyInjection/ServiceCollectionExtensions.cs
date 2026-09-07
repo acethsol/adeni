@@ -21,6 +21,7 @@ using Adeni.Infrastructure.Markets;
 using Adeni.Infrastructure.Subscriptions;
 using Adeni.Infrastructure.Tenancy;
 using Adeni.Infrastructure.Translation;
+using Adeni.Infrastructure.Trust;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -72,6 +73,7 @@ public static class ServiceCollectionExtensions
         services.AddNotificationsModule();
         services.AddPaymentsModule(configuration);
         services.AddSubscriptionsModule();
+        services.AddTrustModule();
 
         return services;
     }

@@ -34,6 +34,9 @@ export const discoveryBusinessItemSchema = z.object({
   longitude: z.number(),
   businessType: z.enum(["scheduled_appointment", "quote_request"]).optional(),
   discoveryCta: z.enum(["book_now", "get_quote"]).optional(),
+  verificationBadges: z.array(z.string()).optional(),
+  verifiedSince: z.string().nullable().optional(),
+  completionRate: z.number().min(0).max(1).nullable().optional(),
 });
 
 export const discoveryResponseSchema = z.object({
@@ -71,6 +74,9 @@ export const publicBusinessProfileSchema = z.object({
   capabilities: z.array(z.string()).optional(),
   discoveryCta: z.enum(["book_now", "get_quote"]).optional(),
   depositPercent: z.number().int().min(0).max(100).optional(),
+  verificationBadges: z.array(z.string()).optional(),
+  verifiedSince: z.string().nullable().optional(),
+  completionRate: z.number().min(0).max(1).nullable().optional(),
 });
 
 export type PublicBusinessProfile = z.infer<typeof publicBusinessProfileSchema>;
@@ -84,6 +90,12 @@ export const authSessionSchema = z.object({
 
 export type AuthSession = z.infer<typeof authSessionSchema>;
 
+export const pendingVerificationDocumentSchema = z.object({
+  documentType: z.string(),
+  referenceNumber: z.string(),
+  submittedAt: z.string(),
+});
+
 export const pendingBusinessSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -91,6 +103,7 @@ export const pendingBusinessSchema = z.object({
   marketId: z.string(),
   status: z.string(),
   createdAt: z.string(),
+  documents: z.array(pendingVerificationDocumentSchema).optional(),
 });
 
 export const pendingBusinessesResponseSchema = z.object({
@@ -254,6 +267,7 @@ export const serviceOfferingSchema = z.object({
   description: z.string().nullable().optional(),
   priceAmount: z.number(),
   currency: z.string(),
+  pricingType: z.enum(["fixed", "quote_request", "hourly"]).optional(),
   durationMinutes: z.number(),
   isActive: z.boolean(),
 });
@@ -329,6 +343,8 @@ export const publicReviewItemSchema = z.object({
   comment: z.string(),
   createdAt: z.string(),
   customerDisplayName: z.string(),
+  ownerReply: z.string().nullable().optional(),
+  ownerReplyAt: z.string().nullable().optional(),
 });
 
 export const publicReviewsResponseSchema = z.object({
@@ -521,6 +537,7 @@ export type UpdateBusinessSettingsRequest = z.infer<
 export const createQuoteRequestSchema = z.object({
   description: z.string().min(10).max(2000),
   serviceAddress: z.string().max(500).optional(),
+  photoKeys: z.array(z.string()).max(5).optional(),
 });
 
 export type CreateQuoteRequest = z.infer<typeof createQuoteRequestSchema>;
@@ -530,10 +547,64 @@ export const quoteRequestResponseSchema = z.object({
   tenantId: z.string(),
   description: z.string(),
   serviceAddress: z.string().nullable().optional(),
+  photoKeys: z.array(z.string()).optional(),
+  status: z.string(),
+  quotedAmount: z.number().nullable().optional(),
+  quotedCurrency: z.string().nullable().optional(),
+  quoteNotes: z.string().nullable().optional(),
+  serviceOfferingId: z.string().nullable().optional(),
+  proposedStartAt: z.string().nullable().optional(),
+  proposedEndAt: z.string().nullable().optional(),
+  expiresAt: z.string().nullable().optional(),
+  bookingId: z.string().nullable().optional(),
   createdAt: z.string(),
 });
 
 export type QuoteRequestResponse = z.infer<typeof quoteRequestResponseSchema>;
+
+export const submitQuoteOfferRequestSchema = z.object({
+  amount: z.number().positive(),
+  currency: z.string().length(3),
+  notes: z.string().max(2000).optional(),
+  serviceOfferingId: z.string().uuid(),
+  proposedStartAt: z.string(),
+  proposedEndAt: z.string(),
+  expiresAt: z.string().optional(),
+});
+
+export type SubmitQuoteOfferRequest = z.infer<typeof submitQuoteOfferRequestSchema>;
+
+export const quoteRequestsResponseSchema = z.object({
+  items: z.array(quoteRequestResponseSchema),
+});
+
+export const verificationBadgeSchema = z.object({
+  badgeType: z.string(),
+  status: z.string(),
+  grantedAt: z.string().nullable().optional(),
+});
+
+export const requestVerificationBadgeRequestSchema = z.object({
+  badgeType: z.enum(["phone", "cac", "address", "license"]),
+  referenceNumber: z.string().max(128).optional(),
+});
+
+export type RequestVerificationBadgeRequest = z.infer<typeof requestVerificationBadgeRequestSchema>;
+export type VerificationBadge = z.infer<typeof verificationBadgeSchema>;
+
+export const QUOTE_STATUS_LABELS: Record<string, string> = {
+  submitted: "Awaiting quote",
+  quoted: "Quote received",
+  accepted: "Accepted",
+  declined: "Declined",
+  expired: "Expired",
+};
+
+export const replyToReviewRequestSchema = z.object({
+  reply: z.string().min(1).max(1000),
+});
+
+export const tenantReviewItemSchema = publicReviewItemSchema;
 
 export const joinWaitlistRequestSchema = z.object({
   tenantId: z.string().uuid(),
@@ -655,9 +726,10 @@ export const weeklyAvailabilityResponseSchema = z.object({
 export const createServiceOfferingRequestSchema = z.object({
   name: z.string().min(1),
   description: z.string().nullable().optional(),
-  priceAmount: z.number().positive(),
+  priceAmount: z.number().nonnegative(),
   currency: z.string().min(3).max(3),
   durationMinutes: z.number().int().positive(),
+  pricingType: z.enum(["fixed", "quote_request", "hourly"]).optional(),
 });
 
 export type CreateServiceOfferingRequest = z.infer<
@@ -667,9 +739,10 @@ export type CreateServiceOfferingRequest = z.infer<
 export const updateServiceOfferingRequestSchema = z.object({
   name: z.string().min(1),
   description: z.string().nullable().optional(),
-  priceAmount: z.number().positive(),
+  priceAmount: z.number().nonnegative(),
   currency: z.string().min(3).max(3),
   durationMinutes: z.number().int().positive(),
+  pricingType: z.enum(["fixed", "quote_request", "hourly"]).optional(),
   isActive: z.boolean(),
 });
 
@@ -724,4 +797,18 @@ export const DAY_OF_WEEK_LABELS: Record<number, string> = {
 export const VERIFICATION_DOCUMENT_LABELS: Record<number, string> = {
   0: "CAC registration",
   1: "National ID",
+  2: "Address proof",
+  3: "Trade license",
+};
+
+export const VERIFICATION_BADGE_LABELS: Record<string, string> = {
+  phone: "Phone verified",
+  cac: "CAC verified",
+  address: "Address verified",
+  license: "Licensed professional",
+};
+
+export const CATEGORY_REQUIRED_BADGES: Record<string, string[]> = {
+  plumbers: ["license"],
+  electricians: ["license"],
 };

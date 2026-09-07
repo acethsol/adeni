@@ -55,6 +55,8 @@ public sealed class AdeniDbContext(
 
     public DbSet<QuoteRequestRecord> QuoteRequests => Set<QuoteRequestRecord>();
 
+    public DbSet<TenantVerificationBadge> TenantVerificationBadges => Set<TenantVerificationBadge>();
+
     public DbSet<PaymentIntentRecord> PaymentIntents => Set<PaymentIntentRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -155,6 +157,7 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.Description).HasMaxLength(2000);
             entity.Property(x => x.Currency).HasMaxLength(3);
             entity.Property(x => x.PriceAmount).HasPrecision(12, 2);
+            entity.Property(x => x.PricingType).HasConversion<int>();
             entity.HasIndex(x => new { x.TenantId, x.IsActive });
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
@@ -191,6 +194,7 @@ public sealed class AdeniDbContext(
             entity.HasIndex(x => x.BookingId).IsUnique();
             entity.HasIndex(x => new { x.TenantId, x.IsHidden, x.CreatedAt });
             entity.Property(x => x.Comment).HasMaxLength(1000);
+            entity.Property(x => x.OwnerReply).HasMaxLength(1000);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 
@@ -222,7 +226,25 @@ public sealed class AdeniDbContext(
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Description).HasMaxLength(2000);
             entity.Property(x => x.ServiceAddress).HasMaxLength(500);
+            entity.Property(x => x.PhotoKeysJson).HasMaxLength(2000);
+            entity.Property(x => x.QuotedCurrency).HasMaxLength(3);
+            entity.Property(x => x.QuoteNotes).HasMaxLength(2000);
+            entity.Property(x => x.QuotedAmount).HasPrecision(12, 2);
+            entity.Property(x => x.Status).HasConversion<int>();
             entity.HasIndex(x => new { x.TenantId, x.CreatedAt });
+            entity.HasIndex(x => new { x.CustomerId, x.CreatedAt });
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<TenantVerificationBadge>(entity =>
+        {
+            entity.ToTable("tenant_verification_badges", "tenancy");
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => new { x.TenantId, x.BadgeType }).IsUnique();
+            entity.Property(x => x.ReferenceNumber).HasMaxLength(128);
+            entity.Property(x => x.GrantedByAdminId).HasMaxLength(128);
+            entity.Property(x => x.BadgeType).HasConversion<int>();
+            entity.Property(x => x.Status).HasConversion<int>();
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 

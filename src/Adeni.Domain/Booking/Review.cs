@@ -16,6 +16,10 @@ public sealed class Review : ITenantEntity
 
     public string Comment { get; set; } = string.Empty;
 
+    public string? OwnerReply { get; set; }
+
+    public DateTimeOffset? OwnerReplyAt { get; set; }
+
     public bool IsHidden { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }

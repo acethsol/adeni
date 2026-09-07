@@ -7,7 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Callout } from "@/components/ui/callout";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SkeletonList } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/input";
 import { cn } from "@/lib/cn";
+import { useApiErrorMessage } from "@/lib/api-error";
+import { useToast } from "@/contexts/toast-context";
 
 type ReviewsPayload = {
   ratingAvg: number | null;
@@ -45,12 +48,17 @@ function formatDate(value: string): string {
 }
 
 export function BusinessReviewsPanel() {
+  const toast = useToast();
+  const { formatApiError } = useApiErrorMessage();
   const [data, setData] = useState<ReviewsPayload | null>(null);
   const [items, setItems] = useState<PublicReviewItem[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [replyingId, setReplyingId] = useState<string | null>(null);
+  const [replyDraft, setReplyDraft] = useState("");
+  const [submittingReplyId, setSubmittingReplyId] = useState<string | null>(null);
 
   const load = useCallback(async (nextPage: number, append: boolean) => {
     if (append) {
@@ -80,6 +88,37 @@ export function BusinessReviewsPanel() {
   useEffect(() => {
     void load(1, false);
   }, [load]);
+
+  async function handleReply(reviewId: string) {
+    if (replyDraft.trim().length < 1) {
+      toast.error("Write a reply before posting.");
+      return;
+    }
+
+    setSubmittingReplyId(reviewId);
+
+    try {
+      const response = await fetch(`/api/business/reviews/${encodeURIComponent(reviewId)}/reply`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reply: replyDraft.trim() }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(formatApiError(payload, "Could not post reply."));
+      }
+
+      const updated = payload as PublicReviewItem;
+      setItems((current) => current.map((item) => (item.id === reviewId ? updated : item)));
+      setReplyingId(null);
+      setReplyDraft("");
+      toast.success("Reply posted");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not post reply.");
+    } finally {
+      setSubmittingReplyId(null);
+    }
+  }
 
   if (loading) {
     return <SkeletonList count={3} />;
@@ -129,6 +168,54 @@ export function BusinessReviewsPanel() {
                 {review.comment ? (
                   <p className="mt-2 text-sm leading-relaxed text-muted">{review.comment}</p>
                 ) : null}
+                {review.ownerReply ? (
+                  <div className="mt-3 rounded-lg border border-accent/20 bg-accent/5 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-accent">Your reply</p>
+                    <p className="mt-1 text-sm text-foreground">{review.ownerReply}</p>
+                  </div>
+                ) : replyingId === review.id ? (
+                  <div className="mt-3 space-y-2">
+                    <Textarea
+                      label="Public reply"
+                      rows={3}
+                      value={replyDraft}
+                      onChange={(event) => setReplyDraft(event.target.value)}
+                      placeholder="Thank the customer and address their feedback"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => void handleReply(review.id)}
+                        loading={submittingReplyId === review.id}
+                        loadingLabel="Posting…"
+                      >
+                        Post reply
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          setReplyingId(null);
+                          setReplyDraft("");
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="mt-3"
+                    onClick={() => {
+                      setReplyingId(review.id);
+                      setReplyDraft("");
+                    }}
+                  >
+                    Reply publicly
+                  </Button>
+                )}
               </li>
             ))}
           </ul>

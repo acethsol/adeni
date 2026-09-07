@@ -9,6 +9,7 @@ import {
 } from "@adeni/shared";
 import { BookingPanel } from "@/components/booking-panel";
 import { QuoteRequestPanel } from "@/components/quote-request-panel";
+import { TrustBadges } from "@/components/trust-badges";
 import { shouldShowQuoteFlow } from "@adeni/shared";
 import { BusinessReviewsSection } from "@/components/business-reviews-section";
 import { StarRating } from "@/components/star-rating";
@@ -153,6 +154,14 @@ export default async function BusinessProfilePage({ params }: Props) {
                 </span>
               </div>
             ) : null}
+
+            <div className="mt-4">
+              <TrustBadges
+                badges={profile.verificationBadges}
+                verifiedSince={profile.verifiedSince}
+                completionRate={profile.completionRate}
+              />
+            </div>
 
             {translatedDescription ? (
               <p className="mt-6 leading-relaxed text-foreground">

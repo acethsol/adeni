@@ -73,8 +73,11 @@ export function QuoteRequestPanel({ slug, loginHref, enabled }: Props) {
         <p className="text-sm font-semibold uppercase tracking-widest text-accent">Quote request sent</p>
         <h2 className="mt-2 text-xl font-bold">We received your job details</h2>
         <p className="mt-3 text-sm text-muted">
-          The business will review your request and follow up with a quote. Full quote workflows arrive in a later
-          release.
+          The business will review your request and send a formal quote. Track progress on{" "}
+          <a href="/my-quotes" className="font-semibold text-accent underline">
+            My quotes
+          </a>
+          .
         </p>
       </section>
     );
@@ -84,7 +87,7 @@ export function QuoteRequestPanel({ slug, loginHref, enabled }: Props) {
     <section className="mt-8 rounded-2xl border border-border bg-surface p-8 shadow-sm">
       <h2 className="text-lg font-semibold">{title}</h2>
       <p className="mt-2 text-sm text-muted">
-        Describe the job and where service is needed. Photo upload and formal quotes are coming soon.
+        Describe the job and where service is needed. The business will respond with a price and proposed schedule.
       </p>
 
       <div className="mt-6 space-y-4">
