@@ -51,6 +51,13 @@ const QUICK_LINKS = [
     ios: "banknote",
     android: "payments",
   },
+  {
+    href: "/business/plan",
+    title: "Plans & billing",
+    description: "Compare tiers and track monthly booking usage.",
+    ios: "creditcard",
+    android: "credit_card",
+  },
 ] as const;
 
 export default function BusinessOverviewScreen() {

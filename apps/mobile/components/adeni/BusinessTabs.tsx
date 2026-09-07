@@ -12,6 +12,7 @@ const BUSINESS_TABS = [
   { href: "/business/payments", label: "Payments", capability: "deposits" as Capability, ios: "banknote", android: "payments" },
   { href: "/business/locations", label: "Locations", ios: "mappin", android: "place" },
   { href: "/business/profile", label: "Profile", ios: "person", android: "person" },
+  { href: "/business/plan", label: "Plan", ios: "creditcard", android: "credit_card" },
 ] as const;
 
 type Props = {

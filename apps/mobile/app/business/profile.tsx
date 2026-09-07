@@ -8,6 +8,8 @@ import { Screen, ScreenHeader } from "@/components/adeni/Screen";
 import { BusinessTabs } from "@/components/adeni/BusinessTabs";
 import { BusinessBookingSettings } from "@/components/adeni/BusinessBookingSettings";
 import { BusinessCoverUpload } from "@/components/adeni/BusinessCoverUpload";
+import { BusinessReviewsPanel } from "@/components/adeni/BusinessReviewsPanel";
+import { BusinessShareKit } from "@/components/adeni/BusinessShareKit";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -73,6 +75,8 @@ export default function BusinessProfileScreen() {
 
   const canSubmitVerification = profile?.status === 0 || profile?.status === 3;
   const canManage = isBusinessPortalEnabled && hasBusinessAccount;
+  const primaryLocation =
+    profile?.locations.find((item) => item.isPrimary) ?? profile?.locations[0];
 
   return (
     <Screen loading={authLoading || loading}>
@@ -136,6 +140,15 @@ export default function BusinessProfileScreen() {
                 />
               </View>
 
+              {primaryLocation ? (
+                <View style={styles.blockSpacing}>
+                  <BusinessShareKit
+                    businessName={profile.businessName}
+                    slug={primaryLocation.slug}
+                  />
+                </View>
+              ) : null}
+
               <View style={styles.blockSpacing}>
                 <Card title="Booking settings">
                   <BusinessBookingSettings
@@ -154,6 +167,12 @@ export default function BusinessProfileScreen() {
                   <VerificationForm onSubmitted={() => void loadProfile()} />
                 </View>
               ) : null}
+
+              <View style={styles.blockSpacing}>
+                <Card title="Customer reviews">
+                  <BusinessReviewsPanel />
+                </Card>
+              </View>
             </>
           ) : null}
         </View>
