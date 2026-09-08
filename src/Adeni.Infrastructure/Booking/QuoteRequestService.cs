@@ -2,6 +2,7 @@ namespace Adeni.Infrastructure.Booking;
 
 using System.Text.Json;
 using Adeni.Application.Booking;
+using Adeni.Application.Storage;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
@@ -9,7 +10,7 @@ using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-public sealed class QuoteRequestService(AdeniDbContext dbContext) : IQuoteRequestService
+public sealed class QuoteRequestService(AdeniDbContext dbContext, IFileStorage fileStorage) : IQuoteRequestService
 {
     private const int MaxPhotoKeys = 5;
 
@@ -43,6 +44,12 @@ public sealed class QuoteRequestService(AdeniDbContext dbContext) : IQuoteReques
 
         var customer = await GetOrCreateCustomerAsync(customerAuth0Sub, cancellationToken);
 
+        var photoKeysResult = await ValidatePhotoKeysAsync(customer.Id, request.PhotoKeys, cancellationToken);
+        if (photoKeysResult.IsFailure)
+        {
+            return Result.Failure<QuoteRequestResponse>(photoKeysResult.Error);
+        }
+
         var record = new QuoteRequestRecord
         {
             Id = Guid.NewGuid(),
@@ -52,7 +59,7 @@ public sealed class QuoteRequestService(AdeniDbContext dbContext) : IQuoteReques
             ServiceAddress = string.IsNullOrWhiteSpace(request.ServiceAddress)
                 ? null
                 : request.ServiceAddress.Trim(),
-            PhotoKeysJson = SerializePhotoKeys(request.PhotoKeys),
+            PhotoKeysJson = SerializePhotoKeys(photoKeysResult.Value),
             Status = QuoteRequestStatus.Submitted,
             CreatedAt = DateTimeOffset.UtcNow,
         };
@@ -307,15 +314,24 @@ public sealed class QuoteRequestService(AdeniDbContext dbContext) : IQuoteReques
             .AsNoTracking()
             .AnyAsync(x => x.TenantId == tenantId && x.Auth0Sub == auth0Sub, cancellationToken);
 
-    private Task<QuoteRequestResponse> MapAsync(
+    private async Task<QuoteRequestResponse> MapAsync(
         QuoteRequestRecord record,
-        CancellationToken cancellationToken) =>
-        Task.FromResult(new QuoteRequestResponse(
+        CancellationToken cancellationToken)
+    {
+        var photoKeys = DeserializePhotoKeys(record.PhotoKeysJson);
+        var photoUrls = new List<string>(photoKeys.Count);
+        foreach (var key in photoKeys)
+        {
+            photoUrls.Add(await fileStorage.GetDownloadUrlAsync(key, cancellationToken));
+        }
+
+        return new QuoteRequestResponse(
             record.Id,
             record.TenantId,
             record.Description,
             record.ServiceAddress,
-            DeserializePhotoKeys(record.PhotoKeysJson),
+            photoKeys,
+            photoUrls,
             record.Status.ToString().ToLowerInvariant(),
             record.QuotedAmount,
             record.QuotedCurrency,
@@ -325,7 +341,45 @@ public sealed class QuoteRequestService(AdeniDbContext dbContext) : IQuoteReques
             record.ProposedEndAt,
             record.ExpiresAt,
             record.BookingId,
-            record.CreatedAt));
+            record.CreatedAt);
+    }
+
+    private async Task<Result<IReadOnlyList<string>>> ValidatePhotoKeysAsync(
+        Guid customerId,
+        IReadOnlyList<string>? photoKeys,
+        CancellationToken cancellationToken)
+    {
+        if (photoKeys is null || photoKeys.Count == 0)
+        {
+            return Result.Success<IReadOnlyList<string>>([]);
+        }
+
+        var expectedPrefix = $"customers/{customerId:N}/quote-photos/";
+        var validated = new List<string>();
+
+        foreach (var rawKey in photoKeys.Take(MaxPhotoKeys))
+        {
+            if (string.IsNullOrWhiteSpace(rawKey))
+            {
+                continue;
+            }
+
+            var key = rawKey.Trim();
+            if (!key.StartsWith(expectedPrefix, StringComparison.Ordinal))
+            {
+                return Result.Failure<IReadOnlyList<string>>(Error.Validation("Photo key is not valid for this customer."));
+            }
+
+            if (!await fileStorage.ExistsAsync(key, cancellationToken))
+            {
+                return Result.Failure<IReadOnlyList<string>>(Error.Validation("Photo upload was not found. Upload photos before submitting."));
+            }
+
+            validated.Add(key);
+        }
+
+        return Result.Success<IReadOnlyList<string>>(validated);
+    }
 
     private static string? SerializePhotoKeys(IReadOnlyList<string>? photoKeys)
     {

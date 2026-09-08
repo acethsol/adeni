@@ -126,6 +126,7 @@ import {
   type UpdateMessagingSettingsRequest,
   type UpdateCoverImageRequest,
   type MediaUploadUrlResponse,
+  type MediaUploadUrlRequest,
   type UpdateServiceOfferingRequest,
   type UpsertBusinessLocationRequest,
   type WeeklyAvailabilityRule,
@@ -408,6 +409,27 @@ export class AdeniApiClient {
       body: JSON.stringify(body),
     });
     return businessProfileSchema.parse(await response.json());
+  }
+
+  async createQuotePhotoUploadUrl(
+    request: MediaUploadUrlRequest,
+  ): Promise<MediaUploadUrlResponse> {
+    const body = mediaUploadUrlRequestSchema.parse({
+      ...request,
+      purpose: "quote_photo",
+    });
+    const response = await this.request("/api/v1/customer/media/upload-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return mediaUploadUrlResponseSchema.parse(await response.json());
+  }
+
+  async listTenantVerificationBadges(): Promise<VerificationBadge[]> {
+    const response = await this.request("/api/v1/tenant/verification/badges");
+    const payload = (await response.json()) as { items: VerificationBadge[] };
+    return payload.items ?? [];
   }
 
   async createQuoteRequest(

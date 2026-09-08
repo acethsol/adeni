@@ -194,6 +194,15 @@ export default function AccountScreen() {
             >
               <Text style={styles.secondaryButtonText}>View messages</Text>
             </Pressable>
+            <Pressable
+              onPress={() => router.push("/my-quotes")}
+              style={({ pressed }) => [
+                styles.secondaryButton,
+                pressed && styles.buttonPressed,
+              ]}
+            >
+              <Text style={styles.secondaryButtonText}>View quotes</Text>
+            </Pressable>
           </View>
         ) : null}
 

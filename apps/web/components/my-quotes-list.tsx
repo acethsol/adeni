@@ -165,6 +165,13 @@ export function MyQuotesList() {
           {quote.serviceAddress ? (
             <p className="mt-2 text-sm text-muted">Service at: {quote.serviceAddress}</p>
           ) : null}
+          {quote.photoUrls && quote.photoUrls.length > 0 ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {quote.photoUrls.map((url) => (
+                <img key={url} src={url} alt="" className="h-16 w-16 rounded-lg object-cover" />
+              ))}
+            </div>
+          ) : null}
           <time className="mt-2 block text-xs text-muted-foreground">
             Requested {formatDateTime(quote.createdAt)}
           </time>

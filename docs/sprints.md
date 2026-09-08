@@ -346,8 +346,6 @@ Confluence: [Sprint 20 — Deployment, AI, observability & architecture](https:/
 
 ## Next up
 
-1. **Sprint 19** — Trust depth & quote workflows
-2. **Sprint 19** — tiered verification, **full quote workflows** (on Sprint 15 framework)
-3. **Sprint 20** — staging, LLM agent, observability
+1. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, business AI agent, App Insights, ops dashboards
 
 Strategy reference: [product-strategy.md](./product-strategy.md) — [§3.5 Business types](./product-strategy.md#35-business-types--workflow-capabilities), [architecture.md](./architecture.md) (modular monolith)

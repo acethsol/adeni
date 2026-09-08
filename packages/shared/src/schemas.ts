@@ -548,6 +548,7 @@ export const quoteRequestResponseSchema = z.object({
   description: z.string(),
   serviceAddress: z.string().nullable().optional(),
   photoKeys: z.array(z.string()).optional(),
+  photoUrls: z.array(z.string()).optional(),
   status: z.string(),
   quotedAmount: z.number().nullable().optional(),
   quotedCurrency: z.string().nullable().optional(),
@@ -788,7 +789,7 @@ export type UpdateMessagingSettingsRequest = z.infer<
   typeof updateMessagingSettingsRequestSchema
 >;
 
-export const mediaUploadPurposeSchema = z.enum(["cover", "Cover"]);
+export const mediaUploadPurposeSchema = z.enum(["cover", "Cover", "quote_photo"]);
 
 export const mediaUploadUrlRequestSchema = z.object({
   purpose: mediaUploadPurposeSchema,

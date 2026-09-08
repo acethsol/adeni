@@ -46,3 +46,11 @@ Differentiate on trust (tiered verification badges) and service-type flexibility
 - Pay-to-verify badges
 - Automated CAC API integration (19g is research only)
 - LLM quote drafting (Sprint 20)
+
+---
+
+## 5. Delivery notes
+
+- Web + mobile parity for quotes, badges, review replies, and service pricing types
+- Quote photo upload via customer-scoped media endpoint (`/api/v1/customer/media/upload-url`)
+- Merge **PR #6** (Sprint 18) before **PR #7** (Sprint 19) to keep history clean

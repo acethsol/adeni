@@ -5,6 +5,7 @@ import type { PublicBusinessProfile, ServiceOffering } from "@adeni/shared";
 import { formatCategoryLabel, resolveBusinessCoverImage, shouldShowQuoteFlow } from "@adeni/shared";
 import { BookingPanel } from "@/components/adeni/BookingPanel";
 import { QuoteRequestPanel } from "@/components/adeni/QuoteRequestPanel";
+import { TrustBadges } from "@/components/adeni/TrustBadges";
 import { Screen } from "@/components/adeni/Screen";
 import { createPublicApiClient } from "@/lib/api";
 import { adeniTheme } from "@/lib/theme";
@@ -149,6 +150,12 @@ export default function BusinessProfileScreen() {
 
               </Text>
 
+              <TrustBadges
+                badges={profile.verificationBadges}
+                verifiedSince={profile.verifiedSince}
+                completionRate={profile.completionRate}
+              />
+
 
 
               {profile.description ? (
@@ -172,7 +179,7 @@ export default function BusinessProfileScreen() {
 
 
             {shouldShowQuoteFlow(profile) ? (
-              <QuoteRequestPanel slug={profile.slug} client={createPublicApiClient()} />
+              <QuoteRequestPanel slug={profile.slug} />
             ) : (
               <BookingPanel
                 slug={profile.slug}

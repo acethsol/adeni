@@ -26,6 +26,7 @@ public static class StorageServiceCollectionExtensions
         }
 
         services.AddScoped<ITenantMediaService, TenantMediaService>();
+        services.AddScoped<ICustomerMediaService, CustomerMediaService>();
         return services;
     }
 }

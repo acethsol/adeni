@@ -21,6 +21,7 @@ type ServiceDraft = {
   priceAmount: string;
   currency: string;
   durationMinutes: string;
+  pricingType: "fixed" | "quote_request" | "hourly";
 };
 
 const emptyDraft = (currency = "NGN"): ServiceDraft => ({
@@ -29,6 +30,7 @@ const emptyDraft = (currency = "NGN"): ServiceDraft => ({
   priceAmount: "",
   currency,
   durationMinutes: "30",
+  pricingType: "fixed",
 });
 
 export default function BusinessServicesScreen() {
@@ -98,6 +100,7 @@ export default function BusinessServicesScreen() {
         priceAmount: Number(draft.priceAmount),
         currency: draft.currency.trim().toUpperCase(),
         durationMinutes: Number(draft.durationMinutes),
+        pricingType: draft.pricingType,
       });
       setServices((current) => [...current, created]);
       setDraft(emptyDraft(draft.currency));
@@ -117,6 +120,7 @@ export default function BusinessServicesScreen() {
       priceAmount: String(service.priceAmount),
       currency: service.currency,
       durationMinutes: String(service.durationMinutes),
+      pricingType: service.pricingType ?? "fixed",
     });
     setMessage(null);
     setError(null);
@@ -139,6 +143,7 @@ export default function BusinessServicesScreen() {
         priceAmount: Number(editDraft.priceAmount),
         currency: editDraft.currency.trim().toUpperCase(),
         durationMinutes: Number(editDraft.durationMinutes),
+        pricingType: editDraft.pricingType,
         isActive: service.isActive,
       });
       setServices((current) => current.map((item) => (item.id === service.id ? updated : item)));
@@ -241,6 +246,24 @@ export default function BusinessServicesScreen() {
                   value={draft.durationMinutes}
                   onChangeText={(value) => setDraft({ ...draft, durationMinutes: value })}
                   keyboardType="number-pad"
+                />
+                <Text style={styles.pricingHint}>
+                  Pricing: {draft.pricingType.replace("_", " ")} · tap to change
+                </Text>
+                <Button
+                  title="Change pricing type"
+                  variant="secondary"
+                  onPress={() =>
+                    setDraft((current) => ({
+                      ...current,
+                      pricingType:
+                        current.pricingType === "fixed"
+                          ? "hourly"
+                          : current.pricingType === "hourly"
+                            ? "quote_request"
+                            : "fixed",
+                    }))
+                  }
                 />
                 <Button
                   title={creating ? "Adding…" : "Add service"}
@@ -370,6 +393,10 @@ const styles = StyleSheet.create({
   submitButton: {
     marginTop: adeniTheme.spacing.xl,
     alignSelf: "stretch",
+  },
+  pricingHint: {
+    color: adeniTheme.textMuted,
+    fontSize: adeniTheme.typography.bodySm.fontSize,
   },
   sectionLabel: {
     marginTop: adeniTheme.spacing["2xl"],

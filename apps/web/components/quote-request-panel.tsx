@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { discoveryCtaLabel } from "@adeni/shared";
 import { Callout } from "@/components/ui/callout";
 import { Input, Textarea } from "@/components/ui/input";
@@ -13,16 +13,86 @@ type Props = {
   enabled: boolean;
 };
 
+const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_PHOTOS = 5;
+
 export function QuoteRequestPanel({ slug, loginHref, enabled }: Props) {
   const { run } = useActionLoading();
   const { formatApiError } = useApiErrorMessage();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [description, setDescription] = useState("");
   const [serviceAddress, setServiceAddress] = useState("");
+  const [photoKeys, setPhotoKeys] = useState<string[]>([]);
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const title = discoveryCtaLabel("get_quote");
+
+  async function handlePhotoSelect(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []);
+    event.target.value = "";
+
+    if (files.length === 0) {
+      return;
+    }
+
+    setUploadingPhotos(true);
+    setError(null);
+
+    try {
+      const nextKeys = [...photoKeys];
+
+      for (const file of files) {
+        if (nextKeys.length >= MAX_PHOTOS) {
+          break;
+        }
+
+        if (!ALLOWED_TYPES.has(file.type)) {
+          throw new Error("Use JPEG, PNG, or WebP photos.");
+        }
+
+        if (file.size > MAX_BYTES) {
+          throw new Error("Each photo must be 5 MB or smaller.");
+        }
+
+        const slotResponse = await fetch("/api/customer/media/upload-url", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            purpose: "quote_photo",
+            contentType: file.type,
+            contentLength: file.size,
+          }),
+        });
+
+        const slotPayload = await slotResponse.json().catch(() => ({}));
+        if (!slotResponse.ok) {
+          throw new Error(formatApiError(slotPayload, "Could not start photo upload."));
+        }
+
+        const uploadResponse = await fetch(slotPayload.uploadUrl as string, {
+          method: "PUT",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error("Photo upload failed.");
+        }
+
+        nextKeys.push(slotPayload.storageKey as string);
+      }
+
+      setPhotoKeys(nextKeys);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not upload photos.");
+    } finally {
+      setUploadingPhotos(false);
+    }
+  }
 
   if (!enabled) {
     return (
@@ -50,6 +120,7 @@ export function QuoteRequestPanel({ slug, loginHref, enabled }: Props) {
           body: JSON.stringify({
             description: description.trim(),
             serviceAddress: serviceAddress.trim() || undefined,
+            photoKeys: photoKeys.length > 0 ? photoKeys : undefined,
           }),
         });
 
@@ -104,11 +175,27 @@ export function QuoteRequestPanel({ slug, loginHref, enabled }: Props) {
           onChange={(event) => setServiceAddress(event.target.value)}
           placeholder="Street, area, city"
         />
+        <div>
+          <p className="text-sm font-medium text-foreground">Photos (optional)</p>
+          <p className="mt-1 text-xs text-muted">Add up to {MAX_PHOTOS} photos of the job site or issue.</p>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            className="mt-2 block w-full text-sm"
+            onChange={(event) => void handlePhotoSelect(event)}
+            disabled={uploadingPhotos || photoKeys.length >= MAX_PHOTOS}
+          />
+          {photoKeys.length > 0 ? (
+            <p className="mt-2 text-xs text-muted">{photoKeys.length} photo(s) attached</p>
+          ) : null}
+        </div>
         {error ? <Callout tone="error">{error}</Callout> : null}
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={submitting || description.trim().length < 10}
+          disabled={submitting || uploadingPhotos || description.trim().length < 10}
           className="inline-flex rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60"
         >
           {submitting ? "Sending…" : "Request quote"}

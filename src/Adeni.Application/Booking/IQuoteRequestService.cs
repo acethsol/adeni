@@ -13,6 +13,7 @@ public sealed record QuoteRequestResponse(
     string Description,
     string? ServiceAddress,
     IReadOnlyList<string> PhotoKeys,
+    IReadOnlyList<string> PhotoUrls,
     string Status,
     decimal? QuotedAmount,
     string? QuotedCurrency,
