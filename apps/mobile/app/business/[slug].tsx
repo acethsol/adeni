@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import type { PublicBusinessProfile, ServiceOffering } from "@adeni/shared";
+import type { PublicBusinessProfile, PublicReviewItem, ServiceOffering } from "@adeni/shared";
 import { formatCategoryLabel, resolveBusinessCoverImage, shouldShowQuoteFlow } from "@adeni/shared";
 import { BookingPanel } from "@/components/adeni/BookingPanel";
+import { BusinessReviewsSection } from "@/components/adeni/BusinessReviewsSection";
 import { QuoteRequestPanel } from "@/components/adeni/QuoteRequestPanel";
+import { TrustBadges } from "@/components/adeni/TrustBadges";
 import { Screen } from "@/components/adeni/Screen";
 import { createPublicApiClient } from "@/lib/api";
 import { adeniTheme } from "@/lib/theme";
@@ -18,6 +20,7 @@ export default function BusinessProfileScreen() {
   const [profile, setProfile] = useState<PublicBusinessProfile | null>(null);
 
   const [services, setServices] = useState<ServiceOffering[]>([]);
+  const [reviews, setReviews] = useState<PublicReviewItem[]>([]);
 
   const [loading, setLoading] = useState(true);
 
@@ -55,11 +58,13 @@ export default function BusinessProfileScreen() {
 
         const client = createPublicApiClient();
 
-        const [business, serviceItems] = await Promise.all([
+        const [business, serviceItems, reviewPayload] = await Promise.all([
 
           client.getBusinessProfile(slug),
 
           client.getBusinessServices(slug).catch(() => []),
+
+          client.getBusinessReviews(slug).catch(() => ({ items: [], page: 1, pageSize: 10, totalCount: 0 })),
 
         ]);
 
@@ -70,6 +75,7 @@ export default function BusinessProfileScreen() {
           setProfile(business);
 
           setServices(serviceItems);
+          setReviews(reviewPayload.items ?? []);
 
         }
 
@@ -149,6 +155,12 @@ export default function BusinessProfileScreen() {
 
               </Text>
 
+              <TrustBadges
+                badges={profile.verificationBadges}
+                verifiedSince={profile.verifiedSince}
+                completionRate={profile.completionRate}
+              />
+
 
 
               {profile.description ? (
@@ -171,8 +183,14 @@ export default function BusinessProfileScreen() {
 
 
 
+            <BusinessReviewsSection
+              reviews={reviews}
+              ratingAvg={profile.ratingAvg}
+              reviewCount={profile.reviewCount}
+            />
+
             {shouldShowQuoteFlow(profile) ? (
-              <QuoteRequestPanel slug={profile.slug} client={createPublicApiClient()} />
+              <QuoteRequestPanel slug={profile.slug} />
             ) : (
               <BookingPanel
                 slug={profile.slug}

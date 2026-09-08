@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
   },
   boxChecked: {
     borderColor: adeniTheme.accent,
-    backgroundColor: adeniTheme.accentSoft,
+    backgroundColor: `${adeniTheme.accent}18`,
   },
   checkmark: {
     fontSize: 12,
@@ -92,6 +92,6 @@ const styles = StyleSheet.create({
   error: {
     marginTop: adeniTheme.spacing.sm,
     fontSize: 13,
-    color: adeniTheme.danger,
+    color: adeniTheme.destructive,
   },
 });

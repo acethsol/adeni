@@ -127,7 +127,9 @@ public sealed class ReviewService(
                 x.review.Rating,
                 x.review.Comment,
                 x.review.CreatedAt,
-                string.IsNullOrWhiteSpace(x.customer.Name) ? "Adeni customer" : x.customer.Name.Trim()))
+                string.IsNullOrWhiteSpace(x.customer.Name) ? "Adeni customer" : x.customer.Name.Trim(),
+                x.review.OwnerReply,
+                x.review.OwnerReplyAt))
             .ToListAsync(cancellationToken);
 
         return Result.Success(new PublicReviewsResult(items, page, effectivePageSize, totalCount));
@@ -200,6 +202,71 @@ public sealed class ReviewService(
         return reviews.ToDictionary(x => x.BookingId, MapReview);
     }
 
+    public async Task<IReadOnlyList<TenantReviewItem>> ListForTenantAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        var items = await dbContext.Reviews
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId && !x.IsHidden)
+            .Join(
+                dbContext.Customers.AsNoTracking(),
+                review => review.CustomerId,
+                customer => customer.Id,
+                (review, customer) => new { review, customer })
+            .OrderByDescending(x => x.review.CreatedAt)
+            .Take(50)
+            .ToListAsync(cancellationToken);
+
+        return items
+            .Select(x => MapTenantReview(x.review, x.customer.Name))
+            .ToList();
+    }
+
+    public async Task<Result<TenantReviewItem>> ReplyAsync(
+        Guid tenantId,
+        string auth0Sub,
+        Guid reviewId,
+        ReplyToReviewRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var hasAccess = await dbContext.BusinessUsers
+            .AsNoTracking()
+            .AnyAsync(x => x.TenantId == tenantId && x.Auth0Sub == auth0Sub, cancellationToken);
+
+        if (!hasAccess)
+        {
+            return Result.Failure<TenantReviewItem>(Error.Forbidden("You do not have access to this business."));
+        }
+
+        var reply = request.Reply?.Trim() ?? string.Empty;
+        if (reply.Length is 0 or > MaxCommentLength)
+        {
+            return Result.Failure<TenantReviewItem>(Error.Validation("Reply must be between 1 and 1000 characters."));
+        }
+
+        var review = await dbContext.Reviews
+            .FirstOrDefaultAsync(x => x.Id == reviewId && x.TenantId == tenantId && !x.IsHidden, cancellationToken);
+
+        if (review is null)
+        {
+            return Result.Failure<TenantReviewItem>(Error.NotFound("Review"));
+        }
+
+        review.OwnerReply = reply;
+        review.OwnerReplyAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await InvalidateCachesForTenantAsync(tenantId, cancellationToken);
+
+        var customerName = await dbContext.Customers
+            .AsNoTracking()
+            .Where(x => x.Id == review.CustomerId)
+            .Select(x => x.Name)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return Result.Success(MapTenantReview(review, customerName));
+    }
+
     private async Task InvalidateCachesForTenantAsync(Guid tenantId, CancellationToken cancellationToken)
     {
         await cache.RemoveAsync(CacheKeys.TenantProfile(tenantId), cancellationToken);
@@ -224,4 +291,14 @@ public sealed class ReviewService(
             review.Rating,
             review.Comment,
             review.CreatedAt);
+
+    private static TenantReviewItem MapTenantReview(Review review, string? customerName) =>
+        new(
+            review.Id,
+            review.Rating,
+            review.Comment,
+            review.CreatedAt,
+            string.IsNullOrWhiteSpace(customerName) ? "Adeni customer" : customerName.Trim(),
+            review.OwnerReply,
+            review.OwnerReplyAt);
 }

@@ -128,6 +128,9 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("BookingId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -139,14 +142,50 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
+                    b.Property<DateTimeOffset?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PhotoKeysJson")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset?>("ProposedEndAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ProposedStartAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("QuoteNotes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<decimal?>("QuotedAmount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<DateTimeOffset?>("QuotedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("QuotedCurrency")
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
                     b.Property<string>("ServiceAddress")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
+
+                    b.Property<Guid?>("ServiceOfferingId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CustomerId", "CreatedAt");
 
                     b.HasIndex("TenantId", "CreatedAt");
 
@@ -178,6 +217,13 @@ namespace Adeni.Infrastructure.Persistence.Migrations
 
                     b.Property<bool>("IsHidden")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("OwnerReply")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTimeOffset?>("OwnerReplyAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<byte>("Rating")
                         .HasColumnType("smallint");
@@ -227,6 +273,9 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                     b.Property<decimal>("PriceAmount")
                         .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)");
+
+                    b.Property<int>("PricingType")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
@@ -738,6 +787,43 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("tenants", "tenancy");
+                });
+
+            modelBuilder.Entity("Adeni.Domain.Tenancy.TenantVerificationBadge", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("BadgeType")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("GrantedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("GrantedByAdminId")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("ReferenceNumber")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "BadgeType")
+                        .IsUnique();
+
+                    b.ToTable("tenant_verification_badges", "tenancy");
                 });
 
             modelBuilder.Entity("Adeni.Domain.Tenancy.VerificationDocument", b =>

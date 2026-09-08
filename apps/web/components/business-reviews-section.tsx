@@ -49,6 +49,17 @@ export function BusinessReviewsSection({ reviews, ratingAvg, reviewCount }: Prop
                 className="mt-2 text-sm text-muted"
               />
             ) : null}
+            {review.ownerReply ? (
+              <div className="mt-3 rounded-lg border border-accent/20 bg-accent/5 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-accent">Business reply</p>
+                <TranslatedText
+                  as="p"
+                  text={review.ownerReply}
+                  showBadge
+                  className="mt-1 text-sm text-foreground"
+                />
+              </div>
+            ) : null}
             <p className="mt-2 text-xs text-muted-foreground">
               {new Date(review.createdAt).toLocaleDateString(locale)}
             </p>

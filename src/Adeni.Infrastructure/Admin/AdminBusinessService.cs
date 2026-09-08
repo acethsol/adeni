@@ -17,35 +17,62 @@ public sealed class AdminBusinessService(
     ICacheService cache) : IAdminBusinessService
 {
     public async Task<IReadOnlyList<PendingBusinessResponse>> GetPendingVerificationsAsync(
-        CancellationToken cancellationToken = default) =>
-        await dbContext.Tenants
+        CancellationToken cancellationToken = default)
+    {
+        var tenants = await dbContext.Tenants
             .AsNoTracking()
             .Where(t => t.Status == TenantStatus.PendingVerification)
             .OrderBy(t => t.CreatedAt)
-            .Select(t => new PendingBusinessResponse(
+            .Select(t => new
+            {
                 t.Id,
                 t.Name,
-                dbContext.BusinessLocations
-                    .Where(location => location.TenantId == t.Id && location.IsActive && location.IsPrimary)
-                    .Select(location => location.Slug)
-                    .FirstOrDefault()
-                    ?? dbContext.BusinessLocations
-                        .Where(location => location.TenantId == t.Id && location.IsActive)
-                        .Select(location => location.Slug)
-                        .FirstOrDefault()
-                    ?? string.Empty,
-                dbContext.BusinessLocations
-                    .Where(location => location.TenantId == t.Id && location.IsActive && location.IsPrimary)
-                    .Select(location => location.MarketId)
-                    .FirstOrDefault()
-                    ?? dbContext.BusinessLocations
-                        .Where(location => location.TenantId == t.Id && location.IsActive)
-                        .Select(location => location.MarketId)
-                        .FirstOrDefault()
-                    ?? string.Empty,
                 t.Status,
-                t.CreatedAt))
+                t.CreatedAt,
+            })
             .ToListAsync(cancellationToken);
+
+        if (tenants.Count == 0)
+        {
+            return [];
+        }
+
+        var tenantIds = tenants.Select(x => x.Id).ToList();
+        var locations = await dbContext.BusinessLocations
+            .AsNoTracking()
+            .Where(x => tenantIds.Contains(x.TenantId) && x.IsActive)
+            .ToListAsync(cancellationToken);
+
+        var documents = await dbContext.VerificationDocuments
+            .AsNoTracking()
+            .Where(x => tenantIds.Contains(x.TenantId))
+            .ToListAsync(cancellationToken);
+
+        return tenants.Select(tenant =>
+        {
+            var primary = locations
+                .Where(x => x.TenantId == tenant.Id)
+                .OrderByDescending(x => x.IsPrimary)
+                .FirstOrDefault();
+
+            var docs = documents
+                .Where(x => x.TenantId == tenant.Id)
+                .Select(x => new PendingVerificationDocumentResponse(
+                    x.DocumentType.ToString().ToLowerInvariant(),
+                    x.ReferenceNumber,
+                    x.SubmittedAt))
+                .ToList();
+
+            return new PendingBusinessResponse(
+                tenant.Id,
+                tenant.Name,
+                primary?.Slug ?? string.Empty,
+                primary?.MarketId ?? string.Empty,
+                tenant.Status,
+                tenant.CreatedAt,
+                docs);
+        }).ToList();
+    }
 
     public async Task<IReadOnlyList<AdminBusinessSummaryResponse>> ListBusinessesAsync(
         CancellationToken cancellationToken = default) =>

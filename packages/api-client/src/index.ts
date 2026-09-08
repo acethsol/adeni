@@ -41,6 +41,12 @@ import {
   createReviewRequestSchema,
   createQuoteRequestSchema,
   quoteRequestResponseSchema,
+  quoteRequestsResponseSchema,
+  submitQuoteOfferRequestSchema,
+  replyToReviewRequestSchema,
+  requestVerificationBadgeRequestSchema,
+  verificationBadgeSchema,
+  publicReviewItemSchema,
   joinWaitlistRequestSchema,
   initializePaymentRequestSchema,
   paymentIntentResponseSchema,
@@ -93,6 +99,10 @@ import {
   type UpdateBusinessSettingsRequest,
   type CreateQuoteRequest,
   type QuoteRequestResponse,
+  type SubmitQuoteOfferRequest,
+  type RequestVerificationBadgeRequest,
+  type VerificationBadge,
+  type PublicReviewItem,
   type JoinWaitlistRequest,
   type InitializePaymentRequest,
   type PaymentIntentResponse,
@@ -116,6 +126,7 @@ import {
   type UpdateMessagingSettingsRequest,
   type UpdateCoverImageRequest,
   type MediaUploadUrlResponse,
+  type MediaUploadUrlRequest,
   type UpdateServiceOfferingRequest,
   type UpsertBusinessLocationRequest,
   type WeeklyAvailabilityRule,
@@ -400,6 +411,27 @@ export class AdeniApiClient {
     return businessProfileSchema.parse(await response.json());
   }
 
+  async createQuotePhotoUploadUrl(
+    request: MediaUploadUrlRequest,
+  ): Promise<MediaUploadUrlResponse> {
+    const body = mediaUploadUrlRequestSchema.parse({
+      ...request,
+      purpose: "quote_photo",
+    });
+    const response = await this.request("/api/v1/customer/media/upload-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return mediaUploadUrlResponseSchema.parse(await response.json());
+  }
+
+  async listTenantVerificationBadges(): Promise<VerificationBadge[]> {
+    const response = await this.request("/api/v1/tenant/verification/badges");
+    const payload = (await response.json()) as { items: VerificationBadge[] };
+    return payload.items ?? [];
+  }
+
   async createQuoteRequest(
     slug: string,
     request: CreateQuoteRequest,
@@ -414,6 +446,81 @@ export class AdeniApiClient {
       },
     );
     return quoteRequestResponseSchema.parse(await response.json());
+  }
+
+  async listCustomerQuotes(): Promise<QuoteRequestResponse[]> {
+    const response = await this.request("/api/v1/quotes");
+    const payload = quoteRequestsResponseSchema.parse(await response.json());
+    return payload.items;
+  }
+
+  async acceptQuote(quoteRequestId: string): Promise<QuoteRequestResponse> {
+    const response = await this.request(
+      `/api/v1/quotes/${encodeURIComponent(quoteRequestId)}/accept`,
+      { method: "POST" },
+    );
+    return quoteRequestResponseSchema.parse(await response.json());
+  }
+
+  async declineQuote(quoteRequestId: string): Promise<QuoteRequestResponse> {
+    const response = await this.request(
+      `/api/v1/quotes/${encodeURIComponent(quoteRequestId)}/decline`,
+      { method: "POST" },
+    );
+    return quoteRequestResponseSchema.parse(await response.json());
+  }
+
+  async listTenantQuotes(): Promise<QuoteRequestResponse[]> {
+    const response = await this.request("/api/v1/tenant/quotes");
+    const payload = quoteRequestsResponseSchema.parse(await response.json());
+    return payload.items;
+  }
+
+  async submitQuoteOffer(
+    quoteRequestId: string,
+    request: SubmitQuoteOfferRequest,
+  ): Promise<QuoteRequestResponse> {
+    const body = submitQuoteOfferRequestSchema.parse(request);
+    const response = await this.request(
+      `/api/v1/tenant/quotes/${encodeURIComponent(quoteRequestId)}/offer`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+    return quoteRequestResponseSchema.parse(await response.json());
+  }
+
+  async listTenantReviews(): Promise<PublicReviewItem[]> {
+    const response = await this.request("/api/v1/tenant/reviews");
+    const payload = (await response.json()) as { items: PublicReviewItem[] };
+    return payload.items ?? [];
+  }
+
+  async replyToReview(reviewId: string, reply: string): Promise<PublicReviewItem> {
+    const body = replyToReviewRequestSchema.parse({ reply });
+    const response = await this.request(
+      `/api/v1/tenant/reviews/${encodeURIComponent(reviewId)}/reply`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+    return publicReviewItemSchema.parse(await response.json());
+  }
+
+  async requestVerificationBadge(
+    request: RequestVerificationBadgeRequest,
+  ): Promise<VerificationBadge> {
+    const body = requestVerificationBadgeRequestSchema.parse(request);
+    const response = await this.request("/api/v1/tenant/verification/badges", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return verificationBadgeSchema.parse(await response.json());
   }
 
   async joinWaitlist(request: JoinWaitlistRequest): Promise<{ id: string }> {

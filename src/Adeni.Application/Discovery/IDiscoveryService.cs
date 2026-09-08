@@ -18,7 +18,10 @@ public sealed record DiscoveryBusinessItem(
     double Latitude,
     double Longitude,
     string BusinessType = "scheduled_appointment",
-    string DiscoveryCta = "book_now");
+    string DiscoveryCta = "book_now",
+    IReadOnlyList<string>? VerificationBadges = null,
+    DateTimeOffset? VerifiedSince = null,
+    double? CompletionRate = null);
 
 public sealed record DiscoveryResult(
     IReadOnlyList<DiscoveryBusinessItem> Items,
@@ -46,7 +49,10 @@ public sealed record PublicBusinessProfile(
     string BusinessType = "scheduled_appointment",
     IReadOnlyList<string>? Capabilities = null,
     string DiscoveryCta = "book_now",
-    int DepositPercent = 0);
+    int DepositPercent = 0,
+    IReadOnlyList<string>? VerificationBadges = null,
+    DateTimeOffset? VerifiedSince = null,
+    double? CompletionRate = null);
 
 public interface IDiscoveryService
 {

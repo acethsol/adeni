@@ -85,8 +85,30 @@ internal static class ServiceOfferingMapper
             entity.Description,
             entity.PriceAmount,
             entity.Currency,
+            PricingTypeMapping.ToApiValue(entity.PricingType),
             entity.DurationMinutes,
             entity.IsActive);
+}
+
+internal static class PricingTypeMapping
+{
+    public static string ToApiValue(PricingType pricingType) =>
+        pricingType switch
+        {
+            PricingType.Fixed => "fixed",
+            PricingType.QuoteRequest => "quote_request",
+            PricingType.Hourly => "hourly",
+            _ => "fixed",
+        };
+
+    public static PricingType FromApiValue(string value) =>
+        value.ToLowerInvariant() switch
+        {
+            "fixed" => PricingType.Fixed,
+            "quote_request" => PricingType.QuoteRequest,
+            "hourly" => PricingType.Hourly,
+            _ => PricingType.Fixed,
+        };
 }
 
 internal static class BookingMapper

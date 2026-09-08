@@ -406,9 +406,31 @@ public sealed class DiscoveryService(
         }
 
         var items = new List<DiscoveryBusinessItem>(rows.Count);
+        var tenantIdsForTrust = rows.Select(x => x.TenantId).Distinct().ToList();
+        var badgesByTenant = await DiscoveryTrustSignals.LoadBadgesAsync(
+            dbContext,
+            tenantIdsForTrust,
+            cancellationToken);
+        var completionByTenant = await DiscoveryTrustSignals.LoadCompletionRatesAsync(
+            dbContext,
+            tenantIdsForTrust,
+            cancellationToken);
+        var verifiedSinceByTenant = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(x => tenantIdsForTrust.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, x => x.VerifiedAt, cancellationToken);
+
         foreach (var row in rows)
         {
             var businessType = (BusinessType)row.BusinessType;
+            badgesByTenant.TryGetValue(row.TenantId, out var badges);
+            if (!DiscoveryTrustSignals.MeetsCategoryBadgeRequirements(row.CategorySlug, badges))
+            {
+                continue;
+            }
+
+            completionByTenant.TryGetValue(row.TenantId, out var completionRate);
+            verifiedSinceByTenant.TryGetValue(row.TenantId, out var verifiedSince);
             items.Add(new DiscoveryBusinessItem(
                 row.LocationId,
                 row.TenantId,
@@ -425,7 +447,10 @@ public sealed class DiscoveryService(
                 row.Latitude,
                 row.Longitude,
                 BusinessTypeMapping.ToApiValue(businessType),
-                businessCapabilitiesService.GetDiscoveryCta(businessType)));
+                businessCapabilitiesService.GetDiscoveryCta(businessType),
+                badges,
+                verifiedSince,
+                completionRate));
         }
 
         return new DiscoveryResult(items, page, pageSize, totalCount);
@@ -517,8 +542,25 @@ public sealed class DiscoveryService(
             .ToList();
 
         var items = new List<DiscoveryBusinessItem>(pageRows.Count);
+        var tenantIdsForTrust = pageRows.Select(x => x.tenant.Id).Distinct().ToList();
+        var badgesByTenant = await DiscoveryTrustSignals.LoadBadgesAsync(
+            dbContext,
+            tenantIdsForTrust,
+            cancellationToken);
+        var completionByTenant = await DiscoveryTrustSignals.LoadCompletionRatesAsync(
+            dbContext,
+            tenantIdsForTrust,
+            cancellationToken);
+
         foreach (var row in pageRows)
         {
+            badgesByTenant.TryGetValue(row.tenant.Id, out var badges);
+            if (!DiscoveryTrustSignals.MeetsCategoryBadgeRequirements(row.profile.CategorySlug, badges))
+            {
+                continue;
+            }
+
+            completionByTenant.TryGetValue(row.tenant.Id, out var completionRate);
             items.Add(new DiscoveryBusinessItem(
                 row.location.Id,
                 row.tenant.Id,
@@ -535,7 +577,10 @@ public sealed class DiscoveryService(
                 row.location.Latitude!.Value,
                 row.location.Longitude!.Value,
                 BusinessTypeMapping.ToApiValue(row.profile.BusinessType),
-                businessCapabilitiesService.GetDiscoveryCta(row.profile.BusinessType)));
+                businessCapabilitiesService.GetDiscoveryCta(row.profile.BusinessType),
+                badges,
+                row.tenant.VerifiedAt,
+                completionRate));
         }
 
         return new DiscoveryResult(items, page, pageSize, totalCount);
@@ -579,6 +624,16 @@ public sealed class DiscoveryService(
 
         var ratings = await reviewService.GetRatingSummariesAsync([business.tenant.Id], cancellationToken);
         ratings.TryGetValue(business.tenant.Id, out var summary);
+        var badges = await DiscoveryTrustSignals.LoadBadgesAsync(
+            dbContext,
+            [business.tenant.Id],
+            cancellationToken);
+        var completionRates = await DiscoveryTrustSignals.LoadCompletionRatesAsync(
+            dbContext,
+            [business.tenant.Id],
+            cancellationToken);
+        completionRates.TryGetValue(business.tenant.Id, out var completionRate);
+        badges.TryGetValue(business.tenant.Id, out var badgeList);
 
         return new PublicBusinessProfile(
             business.location.Id,
@@ -600,6 +655,9 @@ public sealed class DiscoveryService(
             BusinessTypeMapping.ToApiValue(business.profile.BusinessType),
             businessCapabilitiesService.GetCapabilities(business.profile.BusinessType, business.profile.CategorySlug),
             businessCapabilitiesService.GetDiscoveryCta(business.profile.BusinessType),
-            business.profile.DepositPercent);
+            business.profile.DepositPercent,
+            badgeList,
+            business.tenant.VerifiedAt,
+            completionRate);
     }
 }

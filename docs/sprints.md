@@ -309,20 +309,20 @@ Close the fragmentation gap — businesses live on WhatsApp; Adeni must meet the
 
 Confluence: [Sprint 18 — Messaging & WhatsApp bridge](https://aceth.atlassian.net/wiki/spaces/SD/pages/41320449)
 
-## Sprint 19 — Trust depth & quote workflows (planned)
+## Sprint 19 — Trust depth & quote workflows (complete)
 
-Differentiate on trust and **service-type flexibility** — builds on the business-type framework from Sprint 15. See [product-strategy.md §3.5](./product-strategy.md#35-business-types--workflow-capabilities).
+Differentiate on trust and **service-type flexibility** — builds on the business-type framework from Sprint 15. See [product-strategy.md §3.5](./product-strategy.md#35-business-types--workflow-capabilities). Spec: [sprint-19-trust-quotes.md](./specs/sprint-19-trust-quotes.md).
 
 | Task | Status |
 |------|--------|
-| **19a** Tiered verification badges — phone, CAC, address, license; display on profile + discovery cards; admin grant workflow | Planned |
-| **19b** Verification upgrade UX — business requests advanced checks; admin review queue | Planned |
-| **19c** Service pricing types — `fixed` vs `quote_request` vs `hourly` on offerings; constrained by tenant `businessType` | Planned |
-| **19d** Full quote request flow — customer describes job + uploads photos; business submits quote; customer accepts → books (replaces Sprint 15 stub) | Planned |
-| **19e** Business review responses — owner can reply publicly to customer reviews | Planned |
-| **19f** Discovery trust signals — badge stack, “Verified since”, completion rate (when data exists) | Planned |
-| **19g** CAC verification integration research — CAC API or manual workflow doc for Nigeria (stretch) | Planned |
-| **19h** Category-specific verification requirements — e.g. license badge required for `plumbers`/`electricians`; basic for beauty categories | Planned |
+| **19a** Tiered verification badges — phone, CAC, address, license; display on profile + discovery cards; admin grant workflow | Done |
+| **19b** Verification upgrade UX — business requests advanced checks; admin review queue shows documents | Done |
+| **19c** Service pricing types — `fixed` vs `quote_request` vs `hourly` on offerings; constrained by tenant `businessType` | Done |
+| **19d** Full quote request flow — customer describes job; business submits quote; customer accepts → books | Done |
+| **19e** Business review responses — owner can reply publicly to customer reviews | Done |
+| **19f** Discovery trust signals — badge stack, “Verified since”, completion rate (when data exists) | Done |
+| **19g** CAC verification integration research — research doc (stretch) | Done |
+| **19h** Category-specific verification requirements — license badge required for `plumbers`/`electricians` in discovery | Done |
 
 **Revenue unlocked:** premium verification checks (transparent, optional). **Differentiator:** instant quotes for variable-price services (photographers, plumbers, caterers).
 
@@ -346,8 +346,6 @@ Confluence: [Sprint 20 — Deployment, AI, observability & architecture](https:/
 
 ## Next up
 
-1. **Sprint 19** — Trust depth & quote workflows
-2. **Sprint 19** — tiered verification, **full quote workflows** (on Sprint 15 framework)
-3. **Sprint 20** — staging, LLM agent, observability
+1. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, business AI agent, App Insights, ops dashboards
 
 Strategy reference: [product-strategy.md](./product-strategy.md) — [§3.5 Business types](./product-strategy.md#35-business-types--workflow-capabilities), [architecture.md](./architecture.md) (modular monolith)

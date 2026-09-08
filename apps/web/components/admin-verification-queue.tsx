@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import type { PendingBusiness } from "@adeni/shared";
+import { VERIFICATION_DOCUMENT_LABELS } from "@adeni/shared";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useConfirm } from "@/contexts/confirm-context";
 import { useToast } from "@/contexts/toast-context";
@@ -131,6 +132,16 @@ export function AdminVerificationQueue({ initialItems, initialError }: Props) {
               <time className="mt-1 block text-xs text-[#1b4332]/50">
                 Submitted {new Date(business.createdAt).toLocaleDateString()}
               </time>
+              {business.documents && business.documents.length > 0 ? (
+                <ul className="mt-3 space-y-1 text-sm text-[#1b4332]/70">
+                  {business.documents.map((doc) => (
+                    <li key={`${doc.documentType}-${doc.referenceNumber}`}>
+                      {VERIFICATION_DOCUMENT_LABELS[Number(doc.documentType)] ?? doc.documentType}:{" "}
+                      <span className="font-medium">{doc.referenceNumber}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
             </div>
 
             <div className="flex flex-col gap-2 sm:items-end">

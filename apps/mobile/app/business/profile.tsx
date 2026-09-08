@@ -7,6 +7,8 @@ import { VERIFICATION_DOCUMENT_LABELS } from "@adeni/shared";
 import { Screen, ScreenHeader } from "@/components/adeni/Screen";
 import { BusinessTabs } from "@/components/adeni/BusinessTabs";
 import { BusinessCoverUpload } from "@/components/adeni/BusinessCoverUpload";
+import { BusinessBadgeUpgrade } from "@/components/adeni/BusinessBadgeUpgrade";
+import { BusinessReviewsPanel } from "@/components/adeni/BusinessReviewsPanel";
 import { BusinessPortalSettings } from "@/components/adeni/BusinessPortalSettings";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -145,6 +147,14 @@ export default function BusinessProfileScreen() {
                   <VerificationForm onSubmitted={() => void loadProfile()} />
                 </View>
               ) : null}
+
+              <View style={styles.blockSpacing}>
+                <BusinessBadgeUpgrade />
+              </View>
+
+              <View style={styles.blockSpacing}>
+                <BusinessReviewsPanel />
+              </View>
 
               <BusinessPortalSettings />
             </>

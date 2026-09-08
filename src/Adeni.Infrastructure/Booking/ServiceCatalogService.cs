@@ -62,6 +62,13 @@ public sealed class ServiceCatalogService(AdeniDbContext dbContext) : IServiceCa
         }
 
         var now = DateTimeOffset.UtcNow;
+        var pricingType = PricingTypeMapping.FromApiValue(request.PricingType);
+        var pricingValidation = await ValidatePricingTypeAsync(tenantId, pricingType, cancellationToken);
+        if (pricingValidation.IsFailure)
+        {
+            return Result.Failure<ServiceOfferingResponse>(pricingValidation.Error);
+        }
+
         var entity = new ServiceOffering
         {
             Id = Guid.NewGuid(),
@@ -70,6 +77,7 @@ public sealed class ServiceCatalogService(AdeniDbContext dbContext) : IServiceCa
             Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(),
             PriceAmount = request.PriceAmount,
             Currency = request.Currency.Trim().ToUpperInvariant(),
+            PricingType = pricingType,
             DurationMinutes = request.DurationMinutes,
             IsActive = true,
             CreatedAt = now,
@@ -106,6 +114,14 @@ public sealed class ServiceCatalogService(AdeniDbContext dbContext) : IServiceCa
         entity.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
         entity.PriceAmount = request.PriceAmount;
         entity.Currency = request.Currency.Trim().ToUpperInvariant();
+        var pricingType = PricingTypeMapping.FromApiValue(request.PricingType);
+        var pricingValidation = await ValidatePricingTypeAsync(tenantId, pricingType, cancellationToken);
+        if (pricingValidation.IsFailure)
+        {
+            return Result.Failure<ServiceOfferingResponse>(pricingValidation.Error);
+        }
+
+        entity.PricingType = pricingType;
         entity.DurationMinutes = request.DurationMinutes;
         entity.IsActive = request.IsActive;
         entity.UpdatedAt = DateTimeOffset.UtcNow;
@@ -143,7 +159,8 @@ public sealed class ServiceCatalogService(AdeniDbContext dbContext) : IServiceCa
             return Result.Failure(Error.Validation("Service name is required."));
         }
 
-        if (request.PriceAmount < 0)
+        var pricingType = PricingTypeMapping.FromApiValue(request.PricingType);
+        if (pricingType != PricingType.QuoteRequest && request.PriceAmount < 0)
         {
             return Result.Failure(Error.Validation("Price must be zero or greater."));
         }
@@ -161,11 +178,39 @@ public sealed class ServiceCatalogService(AdeniDbContext dbContext) : IServiceCa
         return Result.Success();
     }
 
+    private async Task<Result> ValidatePricingTypeAsync(
+        Guid tenantId,
+        PricingType pricingType,
+        CancellationToken cancellationToken)
+    {
+        var profile = await dbContext.BusinessProfiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.TenantId == tenantId, cancellationToken);
+
+        if (profile is null)
+        {
+            return Result.Failure(Error.NotFound("Business profile"));
+        }
+
+        if (pricingType == PricingType.QuoteRequest && profile.BusinessType != BusinessType.QuoteRequest)
+        {
+            return Result.Failure(Error.Validation("Quote-request pricing is only available for quote-type businesses."));
+        }
+
+        if (pricingType == PricingType.Hourly && profile.BusinessType == BusinessType.QuoteRequest)
+        {
+            return Result.Failure(Error.Validation("Hourly pricing is not available for quote-type businesses."));
+        }
+
+        return Result.Success();
+    }
+
     private static Result ValidateUpdate(UpdateServiceOfferingRequest request) =>
         ValidateCreate(new CreateServiceOfferingRequest(
             request.Name,
             request.Description,
             request.PriceAmount,
             request.Currency,
-            request.DurationMinutes));
+            request.DurationMinutes,
+            request.PricingType));
 }

@@ -1,4 +1,5 @@
 import { Star } from "lucide-react";
+import { BusinessBadgeUpgrade } from "@/components/business-badge-upgrade";
 import { BusinessShareKit } from "@/components/business-share-kit";
 import { BusinessPortalCard } from "@/components/business-portal-card";
 import { BusinessPortalShell } from "@/components/business-portal-shell";
@@ -93,6 +94,10 @@ export default async function BusinessProfilePage() {
           </div>
 
           <BusinessVerificationForm canSubmit={profile.status === 0 || profile.status === 3} />
+
+          <div className="mt-8">
+            <BusinessBadgeUpgrade />
+          </div>
 
           <BusinessPortalCard padding="lg" className="mt-8">
             <div className="flex items-center gap-2">

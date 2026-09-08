@@ -16,6 +16,8 @@ public sealed class ServiceOffering : ITenantEntity
 
     public string Currency { get; set; } = "NGN";
 
+    public PricingType PricingType { get; set; } = PricingType.Fixed;
+
     public int DurationMinutes { get; set; }
 
     public bool IsActive { get; set; } = true;

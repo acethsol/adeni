@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, CalendarDays, Compass, MapPin, MessageCircle } from "lucide-react";
+import { Briefcase, CalendarDays, Compass, FileText, MapPin, MessageCircle } from "lucide-react";
 import { AuthNavClient } from "@/components/auth-nav-client";
 import { HeaderDiscoverySearch } from "@/components/header-discovery-search";
 import { LocaleCurrencySwitcher } from "@/components/locale-currency-switcher";
@@ -76,6 +76,7 @@ export function PublicHeader({
 
   const isDiscover = pathname === "/discover" || pathname.startsWith("/discover/");
   const isBookings = pathname === "/my-bookings";
+  const isQuotes = pathname === "/my-quotes";
   const isMessages = pathname === "/my-messages";
   const isBusiness = pathname.startsWith("/business");
 
@@ -165,13 +166,22 @@ export function PublicHeader({
                 className="hidden md:inline-flex"
               />
               {showBookingsNav ? (
-                <NavLink
-                  href="/my-bookings"
-                  label={t("nav.bookings")}
-                  icon={CalendarDays}
-                  active={isBookings}
-                  className="hidden lg:inline-flex"
-                />
+                <>
+                  <NavLink
+                    href="/my-bookings"
+                    label={t("nav.bookings")}
+                    icon={CalendarDays}
+                    active={isBookings}
+                    className="hidden lg:inline-flex"
+                  />
+                  <NavLink
+                    href="/my-quotes"
+                    label="Quotes"
+                    icon={FileText}
+                    active={isQuotes}
+                    className="hidden xl:inline-flex"
+                  />
+                </>
               ) : null}
               {showMessagesNav ? (
                 <NavLink
