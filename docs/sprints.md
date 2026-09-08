@@ -24,14 +24,14 @@
 | **16** | **Business SaaS & monetization** | ✅ Done |
 | **17** | **Commerce orchestration (Paystack)** | ✅ Done |
 | **18** | **Messaging & WhatsApp bridge** | ✅ Done |
-| **19** | **Trust depth & quote workflows** | Planned |
+| **19** | **Trust depth & quote workflows** | ✅ Done |
 | 20 | Deployment, AI & observability | Planned |
 | — | Sprint 11d LLM agent | → Sprint 20 |
 | — | Staging deploy + Auth0 E2E | → Sprint 20 |
 | — | App Insights (Obs 1) | → Sprint 20 |
 | — | Booking notifications, auto-confirm, payments, waitlist | → Sprint 15 |
 
-**Next up:** Sprint 19 (**Trust depth & quote workflows**). See [product-strategy.md §3.5](./product-strategy.md#35-business-types--workflow-capabilities).
+**Next up:** Sprint 20 (**Deployment, AI & observability**). See [observability.md](./observability.md).
 
 ---
 ## Sprint 0 — Foundation & dev tooling ✅
