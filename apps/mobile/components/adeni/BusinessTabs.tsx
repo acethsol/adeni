@@ -1,20 +1,27 @@
 import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
 import { useRouter, usePathname } from "expo-router";
 import { SymbolView } from "expo-symbols";
+import { hasCapability, type Capability } from "@adeni/shared";
 import { adeniTheme } from "@/lib/theme";
 
 const BUSINESS_TABS = [
   { href: "/business", label: "Overview", exact: true, ios: "square.grid.2x2", android: "dashboard" },
-  { href: "/business/bookings", label: "Bookings", ios: "calendar", android: "event" },
+  { href: "/business/bookings", label: "Bookings", capability: "calendar" as Capability, ios: "calendar", android: "event" },
   { href: "/business/quotes", label: "Quotes", ios: "doc.text", android: "request_quote" },
   { href: "/business/messages", label: "Messages", ios: "message", android: "chat" },
   { href: "/business/services", label: "Services", ios: "scissors", android: "content_cut" },
-  { href: "/business/availability", label: "Hours", ios: "clock", android: "schedule" },
+  { href: "/business/availability", label: "Hours", capability: "calendar" as Capability, ios: "clock", android: "schedule" },
+  { href: "/business/payments", label: "Payments", capability: "deposits" as Capability, ios: "banknote", android: "payments" },
   { href: "/business/locations", label: "Locations", ios: "mappin", android: "place" },
   { href: "/business/profile", label: "Profile", ios: "person", android: "person" },
+  { href: "/business/plan", label: "Plan", ios: "creditcard", android: "credit_card" },
 ] as const;
 
-export function BusinessTabs() {
+type Props = {
+  capabilities?: readonly string[];
+};
+
+export function BusinessTabs({ capabilities }: Props) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -25,7 +32,13 @@ export function BusinessTabs() {
       contentContainerStyle={styles.row}
       style={styles.scroller}
     >
-      {BUSINESS_TABS.map((tab) => {
+      {BUSINESS_TABS.filter((tab) => {
+        if (!("capability" in tab) || !tab.capability || !capabilities) {
+          return true;
+        }
+
+        return hasCapability(capabilities, tab.capability);
+      }).map((tab) => {
         const active = "exact" in tab && tab.exact
           ? pathname === tab.href
           : pathname.startsWith(tab.href);

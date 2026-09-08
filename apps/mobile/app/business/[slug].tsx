@@ -189,6 +189,7 @@ export default function BusinessProfileScreen() {
               reviewCount={profile.reviewCount}
             />
 
+
             {shouldShowQuoteFlow(profile) ? (
               <QuoteRequestPanel slug={profile.slug} />
             ) : (

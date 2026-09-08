@@ -6,9 +6,11 @@ import type { BusinessProfile } from "@adeni/shared";
 import { VERIFICATION_DOCUMENT_LABELS } from "@adeni/shared";
 import { Screen, ScreenHeader } from "@/components/adeni/Screen";
 import { BusinessTabs } from "@/components/adeni/BusinessTabs";
+import { BusinessBookingSettings } from "@/components/adeni/BusinessBookingSettings";
 import { BusinessCoverUpload } from "@/components/adeni/BusinessCoverUpload";
 import { BusinessBadgeUpgrade } from "@/components/adeni/BusinessBadgeUpgrade";
 import { BusinessReviewsPanel } from "@/components/adeni/BusinessReviewsPanel";
+import { BusinessShareKit } from "@/components/adeni/BusinessShareKit";
 import { BusinessPortalSettings } from "@/components/adeni/BusinessPortalSettings";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -75,6 +77,8 @@ export default function BusinessProfileScreen() {
 
   const canSubmitVerification = profile?.status === 0 || profile?.status === 3;
   const canManage = isBusinessPortalEnabled && hasBusinessAccount;
+  const primaryLocation =
+    profile?.locations.find((item) => item.isPrimary) ?? profile?.locations[0];
 
   return (
     <Screen loading={authLoading || loading}>
@@ -85,7 +89,7 @@ export default function BusinessProfileScreen() {
           subtitle="Update your public details and submit verification documents."
         />
 
-        {canManage ? <BusinessTabs /> : null}
+        {canManage ? <BusinessTabs capabilities={profile?.capabilities} /> : null}
 
         <View style={styles.section}>
           {!isBusinessPortalEnabled ? (
@@ -136,6 +140,24 @@ export default function BusinessProfileScreen() {
                   coverImageUrl={profile.coverImageUrl}
                   createClient={createBusinessApiClient}
                 />
+              </View>
+
+              {primaryLocation ? (
+                <View style={styles.blockSpacing}>
+                  <BusinessShareKit
+                    businessName={profile.businessName}
+                    slug={primaryLocation.slug}
+                  />
+                </View>
+              ) : null}
+
+              <View style={styles.blockSpacing}>
+                <Card title="Booking settings">
+                  <BusinessBookingSettings
+                    profile={profile}
+                    onSaved={(next) => setProfile(next)}
+                  />
+                </Card>
               </View>
 
               <View style={styles.blockSpacing}>

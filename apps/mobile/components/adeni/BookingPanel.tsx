@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Linking,
   Pressable,
   StyleSheet,
@@ -47,6 +48,7 @@ export function BookingPanel({
   const [booking, setBooking] = useState<BookingResponse | null>(null);
   const [acceptedLegal, setAcceptedLegal] = useState(false);
   const [legalError, setLegalError] = useState<string | null>(null);
+  const [joiningWaitlist, setJoiningWaitlist] = useState(false);
   const bookingIdempotencyKeyRef = useRef<string | null>(null);
   const paymentIdempotencyKeyRef = useRef<string | null>(null);
 
@@ -159,6 +161,36 @@ export function BookingPanel({
     }
   }
 
+  async function handleJoinWaitlist() {
+    if (!selectedService || !isBookingEnabled) {
+      return;
+    }
+
+    setJoiningWaitlist(true);
+    setError(null);
+
+    try {
+      const client = createApiClient("customer");
+      await client.joinWaitlist({
+        tenantId,
+        serviceOfferingId: selectedService.id,
+      });
+      Alert.alert(
+        "You're on the waitlist",
+        "We'll notify you when a slot opens.",
+      );
+    } catch (err) {
+      const apiError = err as AdeniApiError;
+      if (apiError.statusCode === 401) {
+        setError("Sign in to join the waitlist.");
+      } else {
+        setError("Could not join waitlist. Try again.");
+      }
+    } finally {
+      setJoiningWaitlist(false);
+    }
+  }
+
   if (activeServices.length === 0) {
     return (
       <View style={styles.section}>
@@ -243,7 +275,20 @@ export function BookingPanel({
           {loadingSlots ? (
             <Text style={styles.hint}>Loading available times…</Text>
           ) : slots.length === 0 ? (
-            <Text style={styles.hint}>No open slots in the next 7 days. Check back soon.</Text>
+            <View style={styles.emptySlots}>
+              <Text style={styles.hint}>No open slots in the next 7 days.</Text>
+              {isBookingEnabled ? (
+                <Pressable
+                  onPress={() => void handleJoinWaitlist()}
+                  disabled={joiningWaitlist}
+                  style={({ pressed }) => [pressed && styles.rowPressed]}
+                >
+                  <Text style={styles.waitlistLink}>
+                    {joiningWaitlist ? "Joining waitlist…" : "Join waitlist"}
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
           ) : (
             <View style={styles.slotGrid}>
               {slots.map((slot) => (
@@ -532,5 +577,15 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 15,
     fontWeight: "600",
+  },
+  emptySlots: {
+    marginTop: 8,
+    gap: 8,
+  },
+  waitlistLink: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: adeniTheme.accent,
+    textDecorationLine: "underline",
   },
 });
