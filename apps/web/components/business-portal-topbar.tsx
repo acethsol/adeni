@@ -3,6 +3,7 @@
 import { ChevronRight } from "lucide-react";
 import { useBusinessPortalPageLabel } from "@/components/business-portal-nav";
 import { BusinessPortalBell } from "@/components/business-portal-bell";
+import { BusinessPortalMessagesBell } from "@/components/business-portal-messages-bell";
 import { BusinessPortalUserMenu } from "@/components/business-portal-user-menu";
 
 type Props = {
@@ -38,6 +39,7 @@ export function BusinessPortalTopbar({
 
       <div className="flex items-center gap-1.5">
         <BusinessPortalBell />
+        <BusinessPortalMessagesBell />
         <div className="mx-1 h-6 w-px bg-border" aria-hidden />
         <BusinessPortalUserMenu
           businessName={businessName}

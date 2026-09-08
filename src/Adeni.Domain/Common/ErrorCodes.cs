@@ -73,4 +73,23 @@ public static class ErrorCodes
 
     public static Error PaymentDepositNotConfiguredError() =>
         new(PaymentDepositNotConfigured, "Deposits are not configured for this business.");
+
+    public const string MessagingNotEntitled = "subscription.messaging_required";
+    public const string ThreadNotFound = "messaging.thread_not_found";
+    public const string ThreadClosed = "messaging.thread_closed";
+    public const string MessageBodyInvalid = "messaging.message_body_invalid";
+
+    public static Error MessagingNotEntitledError() =>
+        new(
+            MessagingNotEntitled,
+            "In-app messaging requires the Pro plan or higher. Upgrade to reply to customers.");
+
+    public static Error ThreadNotFoundError() =>
+        new(ThreadNotFound, "Message thread was not found.");
+
+    public static Error ThreadClosedError() =>
+        new(ThreadClosed, "This conversation is closed.");
+
+    public static Error MessageBodyInvalidError() =>
+        new(MessageBodyInvalid, "Message must be between 1 and 4000 characters.");
 }

@@ -20,6 +20,7 @@ public sealed class ModuleBoundaryArchitectureTests
         "Adeni.Infrastructure.Payments",
         "Adeni.Infrastructure.Subscriptions",
         "Adeni.Infrastructure.Trust",
+        "Adeni.Infrastructure.Messaging",
     ];
 
     [Fact]

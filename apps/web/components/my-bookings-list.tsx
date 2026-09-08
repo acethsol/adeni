@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Callout } from "@/components/ui/callout";
 import { EmptyState } from "@/components/ui/empty-state";
-import { SkeletonList } from "@/components/ui/skeleton";
+import { WhatsAppBookingButton } from "@/components/whatsapp-booking-button";
 
 function formatSlotTime(iso: string, locale: string) {
   return new Intl.DateTimeFormat(locale, {
@@ -204,6 +204,11 @@ function BookingCardContent({
           >
             {busy ? t("bookings.cancelling") : t("bookings.cancelBooking")}
           </Button>
+        ) : null}
+        {(booking.status === 0 || booking.status === 1) ? (
+          <div className="mt-3">
+            <WhatsAppBookingButton bookingId={booking.id} />
+          </div>
         ) : null}
       </div>
       <Badge tone="accent" className="self-start">

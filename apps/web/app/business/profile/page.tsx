@@ -5,6 +5,8 @@ import { BusinessPortalCard } from "@/components/business-portal-card";
 import { BusinessPortalShell } from "@/components/business-portal-shell";
 import { BusinessCoverUpload } from "@/components/business-cover-upload";
 import { BusinessBookingSettings } from "@/components/business-booking-settings";
+import { BusinessMessagingSettings } from "@/components/business-messaging-settings";
+import { BusinessNotificationSettings } from "@/components/business-notification-settings";
 import { BusinessProfileForm } from "@/components/business-profile-form";
 import { BusinessReviewsPanel } from "@/components/business-reviews-panel";
 import { BusinessVerificationForm } from "@/components/business-verification-form";
@@ -66,6 +68,20 @@ export default async function BusinessProfilePage() {
               <h2 className="text-lg font-semibold text-foreground">Booking settings</h2>
               <div className="mt-4">
                 <BusinessBookingSettings profile={profile} />
+              </div>
+            </BusinessPortalCard>
+
+            <BusinessPortalCard>
+              <h2 className="text-lg font-semibold text-foreground">Notification preferences</h2>
+              <div className="mt-4">
+                <BusinessNotificationSettings />
+              </div>
+            </BusinessPortalCard>
+
+            <BusinessPortalCard>
+              <h2 className="text-lg font-semibold text-foreground">Messaging settings</h2>
+              <div className="mt-4">
+                <BusinessMessagingSettings />
               </div>
             </BusinessPortalCard>
 

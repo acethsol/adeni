@@ -5,6 +5,7 @@ using Adeni.Api.Extensions;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
 using Adeni.Application.Booking;
+using Adeni.Application.Messaging;
 using Adeni.Application.Reviews;
 using Adeni.Infrastructure.Auth;
 using Microsoft.AspNetCore.Mvc;
@@ -16,6 +17,7 @@ public sealed class BookingsController(
     IBookingService bookings,
     IReviewService reviews,
     IWaitlistService waitlist,
+    IMessageThreadService messaging,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpPost]
@@ -98,6 +100,19 @@ public sealed class BookingsController(
 
         var result = await waitlist.JoinAsync(auth0Sub, request, cancellationToken);
         return ApiResults.FromResult(result, payload => Created($"/api/v1/bookings/waitlist/{payload.Id}", payload), HttpContext);
+    }
+
+    [HttpGet("{id:guid}/whatsapp-link")]
+    public async Task<IActionResult> GetWhatsAppLink(Guid id, CancellationToken cancellationToken)
+    {
+        var auth0Sub = ResolveCustomerAuth0Sub();
+        if (auth0Sub is null)
+        {
+            return Unauthorized();
+        }
+
+        var result = await messaging.BuildBookingWhatsAppLinkAsync(auth0Sub, id, cancellationToken);
+        return ApiResults.FromResult(result, Ok, HttpContext);
     }
 
     private string? ResolveCustomerAuth0Sub()

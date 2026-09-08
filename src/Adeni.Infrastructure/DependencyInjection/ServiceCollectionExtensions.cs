@@ -18,6 +18,7 @@ using Adeni.Infrastructure.Payments;
 using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Reviews;
 using Adeni.Infrastructure.Markets;
+using Adeni.Infrastructure.Messaging;
 using Adeni.Infrastructure.Subscriptions;
 using Adeni.Infrastructure.Tenancy;
 using Adeni.Infrastructure.Translation;
@@ -74,6 +75,7 @@ public static class ServiceCollectionExtensions
         services.AddPaymentsModule(configuration);
         services.AddSubscriptionsModule();
         services.AddTrustModule();
+        services.AddMessagingModule();
 
         return services;
     }

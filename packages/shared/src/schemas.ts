@@ -685,6 +685,109 @@ export type RefundPaymentRequest = z.infer<typeof refundPaymentRequestSchema>;
 
 export type PaymentIntentResponse = z.infer<typeof paymentIntentResponseSchema>;
 
+export const createMessageThreadRequestSchema = z.object({
+  tenantId: z.string().uuid(),
+  bookingId: z.string().uuid().optional(),
+});
+
+export type CreateMessageThreadRequest = z.infer<typeof createMessageThreadRequestSchema>;
+
+export const sendMessageRequestSchema = z.object({
+  body: z.string().min(1).max(4000),
+});
+
+export type SendMessageRequest = z.infer<typeof sendMessageRequestSchema>;
+
+export const messageThreadSummarySchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  bookingId: z.string().uuid().nullable().optional(),
+  customerDisplayName: z.string(),
+  businessName: z.string().nullable().optional(),
+  preview: z.string().nullable().optional(),
+  lastMessageAt: z.string(),
+  unreadCount: z.number().int().nonnegative(),
+});
+
+export type MessageThreadSummary = z.infer<typeof messageThreadSummarySchema>;
+
+export const messageResponseSchema = z.object({
+  id: z.string().uuid(),
+  threadId: z.string().uuid(),
+  senderType: z.enum(["customer", "business"]),
+  body: z.string(),
+  createdAt: z.string(),
+});
+
+export type MessageResponse = z.infer<typeof messageResponseSchema>;
+
+export const messageThreadDetailSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  bookingId: z.string().uuid().nullable().optional(),
+  status: z.string(),
+  customerDisplayName: z.string(),
+  businessName: z.string().nullable().optional(),
+  messages: z.array(messageResponseSchema),
+});
+
+export type MessageThreadDetail = z.infer<typeof messageThreadDetailSchema>;
+
+export const messageThreadsResponseSchema = z.object({
+  items: z.array(messageThreadSummarySchema),
+});
+
+export const unreadCountResponseSchema = z.object({
+  count: z.number().int().nonnegative(),
+});
+
+export type UnreadCountResponse = z.infer<typeof unreadCountResponseSchema>;
+
+export const whatsAppLinkResponseSchema = z.object({
+  url: z.string().url(),
+  phoneMasked: z.string().nullable().optional(),
+});
+
+export type WhatsAppLinkResponse = z.infer<typeof whatsAppLinkResponseSchema>;
+
+export const messageTemplateSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  body: z.string(),
+});
+
+export type MessageTemplate = z.infer<typeof messageTemplateSchema>;
+
+export const messageTemplatesResponseSchema = z.object({
+  items: z.array(messageTemplateSchema),
+});
+
+export const notificationPreferencesSchema = z.object({
+  emailEnabled: z.boolean(),
+  pushEnabled: z.boolean(),
+  smsWhatsAppReminderEnabled: z.boolean(),
+});
+
+export type NotificationPreferences = z.infer<typeof notificationPreferencesSchema>;
+
+export const updateNotificationPreferencesRequestSchema = notificationPreferencesSchema;
+
+export type UpdateNotificationPreferencesRequest = z.infer<
+  typeof updateNotificationPreferencesRequestSchema
+>;
+
+export const messagingSettingsSchema = z.object({
+  faqAutoResponderEnabled: z.boolean(),
+});
+
+export type MessagingSettings = z.infer<typeof messagingSettingsSchema>;
+
+export const updateMessagingSettingsRequestSchema = messagingSettingsSchema;
+
+export type UpdateMessagingSettingsRequest = z.infer<
+  typeof updateMessagingSettingsRequestSchema
+>;
+
 export const mediaUploadPurposeSchema = z.enum(["cover", "Cover"]);
 
 export const mediaUploadUrlRequestSchema = z.object({

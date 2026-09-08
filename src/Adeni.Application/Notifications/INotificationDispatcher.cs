@@ -9,4 +9,5 @@ public sealed record NotificationMessage(
     string Channel,
     string RecipientKey,
     string Subject,
-    string Body);
+    string Body,
+    Guid? TenantId = null);
