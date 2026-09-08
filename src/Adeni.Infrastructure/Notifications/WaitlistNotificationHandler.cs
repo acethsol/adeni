@@ -22,7 +22,8 @@ public sealed class WaitlistNotificationHandler(
                 "email",
                 domainEvent.TenantId.ToString(),
                 "Waitlist slot available",
-                $"A slot opened at {domainEvent.StartAt:u} for service {domainEvent.ServiceOfferingId}."),
+                $"A slot opened at {domainEvent.StartAt:u} for service {domainEvent.ServiceOfferingId}.",
+                domainEvent.TenantId),
             cancellationToken);
     }
 }

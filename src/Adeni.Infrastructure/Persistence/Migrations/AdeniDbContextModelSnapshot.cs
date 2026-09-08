@@ -427,6 +427,107 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                     b.ToTable("customers", "identity");
                 });
 
+            modelBuilder.Entity("Adeni.Domain.Messaging.Message", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SenderAuth0Sub")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<int>("SenderType")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ThreadId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ThreadId", "CreatedAt");
+
+                    b.ToTable("messages", "messaging");
+                });
+
+            modelBuilder.Entity("Adeni.Domain.Messaging.MessageThread", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("BookingId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("BusinessUnreadCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CustomerUnreadCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("LastMessageAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Subject")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "LastMessageAt");
+
+                    b.HasIndex("TenantId", "CustomerId", "BookingId");
+
+                    b.ToTable("message_threads", "messaging");
+                });
+
+            modelBuilder.Entity("Adeni.Domain.Notifications.TenantNotificationPreferences", b =>
+                {
+                    b.Property<Guid>("TenantId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("EmailEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("PushEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("SmsWhatsAppReminderEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("TenantId");
+
+                    b.ToTable("tenant_notification_preferences", "notifications");
+                });
+
             modelBuilder.Entity("Adeni.Domain.Payments.PaymentIntentRecord", b =>
                 {
                     b.Property<Guid>("Id")
@@ -595,6 +696,9 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
+                    b.Property<bool>("FaqAutoResponderEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -683,6 +787,17 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("Adeni.Domain.Messaging.Message", b =>
+                {
+                    b.HasOne("Adeni.Domain.Messaging.MessageThread", "Thread")
+                        .WithMany()
+                        .HasForeignKey("ThreadId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Thread");
                 });
 
             modelBuilder.Entity("Adeni.Domain.Tenancy.BusinessLocation", b =>

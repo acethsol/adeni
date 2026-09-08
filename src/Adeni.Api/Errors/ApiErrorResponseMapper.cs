@@ -71,6 +71,7 @@ internal static class ApiErrorResponseMapper
                 StatusCodes.Status500InternalServerError,
             _ when code.StartsWith("booking.", StringComparison.Ordinal) => ResolveBookingStatusCode(code),
             _ when code.StartsWith("payment.", StringComparison.Ordinal) => ResolvePaymentStatusCode(code),
+            _ when code.StartsWith("messaging.", StringComparison.Ordinal) => ResolveMessagingStatusCode(code),
             _ => StatusCodes.Status404NotFound,
         };
 
@@ -91,6 +92,15 @@ internal static class ApiErrorResponseMapper
             ErrorCodes.SlotExpired => StatusCodes.Status400BadRequest,
             ErrorCodes.SlotUnavailable or ErrorCodes.SlotLocked =>
                 StatusCodes.Status409Conflict,
+            _ => StatusCodes.Status400BadRequest,
+        };
+
+    private static int ResolveMessagingStatusCode(string code) =>
+        code switch
+        {
+            ErrorCodes.ThreadNotFound => StatusCodes.Status404NotFound,
+            ErrorCodes.ThreadClosed => StatusCodes.Status409Conflict,
+            ErrorCodes.MessageBodyInvalid => StatusCodes.Status400BadRequest,
             _ => StatusCodes.Status400BadRequest,
         };
 

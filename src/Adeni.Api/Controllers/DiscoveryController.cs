@@ -5,6 +5,7 @@ using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
 using Adeni.Application.Booking;
 using Adeni.Application.Discovery;
+using Adeni.Application.Messaging;
 using Adeni.Application.Reviews;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -68,6 +69,7 @@ public sealed class BusinessesController(
     IAvailabilityService availability,
     IReviewService reviews,
     IQuoteRequestService quoteRequests,
+    IMessageThreadService messaging,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet("{slug}")]
@@ -131,6 +133,14 @@ public sealed class BusinessesController(
                 totalCount = payload.TotalCount
             }),
             error => ApiErrorResponseMapper.ToActionResult(error, HttpContext));
+    }
+
+    [HttpGet("{slug}/whatsapp-link")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetWhatsAppLink(string slug, CancellationToken cancellationToken)
+    {
+        var result = await messaging.BuildBusinessWhatsAppLinkAsync(slug, cancellationToken);
+        return ApiResults.FromResult(result, Ok, HttpContext);
     }
 
     [HttpPost("{slug}/quote-requests")]

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, CalendarDays, Compass, MapPin } from "lucide-react";
+import { Briefcase, CalendarDays, Compass, MapPin, MessageCircle } from "lucide-react";
 import { AuthNavClient } from "@/components/auth-nav-client";
 import { HeaderDiscoverySearch } from "@/components/header-discovery-search";
 import { LocaleCurrencySwitcher } from "@/components/locale-currency-switcher";
@@ -21,6 +21,7 @@ type Props = {
   currency?: string;
   countryCode?: string;
   showBookingsNav?: boolean;
+  showMessagesNav?: boolean;
 };
 
 function NavLink({
@@ -60,6 +61,7 @@ export function PublicHeader({
   currency = "NGN",
   countryCode = "NG",
   showBookingsNav = false,
+  showMessagesNav = false,
 }: Props) {
   const pathname = usePathname();
   const { t } = useTranslation();
@@ -74,6 +76,7 @@ export function PublicHeader({
 
   const isDiscover = pathname === "/discover" || pathname.startsWith("/discover/");
   const isBookings = pathname === "/my-bookings";
+  const isMessages = pathname === "/my-messages";
   const isBusiness = pathname.startsWith("/business");
 
   return (
@@ -167,6 +170,15 @@ export function PublicHeader({
                   label={t("nav.bookings")}
                   icon={CalendarDays}
                   active={isBookings}
+                  className="hidden lg:inline-flex"
+                />
+              ) : null}
+              {showMessagesNav ? (
+                <NavLink
+                  href="/my-messages"
+                  label="Messages"
+                  icon={MessageCircle}
+                  active={isMessages}
                   className="hidden lg:inline-flex"
                 />
               ) : null}

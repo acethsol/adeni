@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { ChevronLeft, ChevronRight, Compass, Menu, X } from "lucide-react";
 import { AuthNavClient } from "@/components/auth-nav-client";
 import { BusinessPortalBell } from "@/components/business-portal-bell";
+import { BusinessPortalMessagesBell } from "@/components/business-portal-messages-bell";
 import { BusinessPortalNavLinks, useBusinessPortalPageLabel } from "@/components/business-portal-nav";
 import { useBusinessSidebar } from "@/contexts/business-sidebar-context";
 import { cn } from "@/lib/cn";
@@ -82,6 +83,7 @@ export function BusinessPortalChrome({ hasBusiness = true, capabilities }: Props
         </div>
         <div className="flex items-center gap-1">
           <BusinessPortalBell />
+          <BusinessPortalMessagesBell />
           <Link
             href="/discover"
             className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-subtle hover:text-foreground"
