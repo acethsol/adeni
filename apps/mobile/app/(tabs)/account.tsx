@@ -185,6 +185,24 @@ export default function AccountScreen() {
             >
               <Text style={styles.primaryButtonText}>View bookings</Text>
             </Pressable>
+            <Pressable
+              onPress={() => router.push("/my-messages")}
+              style={({ pressed }) => [
+                styles.secondaryButton,
+                pressed && styles.buttonPressed,
+              ]}
+            >
+              <Text style={styles.secondaryButtonText}>View messages</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => router.push("/my-quotes")}
+              style={({ pressed }) => [
+                styles.secondaryButton,
+                pressed && styles.buttonPressed,
+              ]}
+            >
+              <Text style={styles.secondaryButtonText}>View quotes</Text>
+            </Pressable>
           </View>
         ) : null}
 
@@ -208,15 +226,26 @@ export default function AccountScreen() {
                   <Text style={styles.primaryButtonText}>Open business portal</Text>
                 </Pressable>
                 {isBusinessInboxEnabled ? (
-                  <Pressable
-                    onPress={() => router.push("/business/bookings")}
-                    style={({ pressed }) => [
-                      styles.secondaryButton,
-                      pressed && styles.buttonPressed,
-                    ]}
-                  >
-                    <Text style={styles.secondaryButtonText}>Open booking inbox</Text>
-                  </Pressable>
+                  <>
+                    <Pressable
+                      onPress={() => router.push("/business/bookings")}
+                      style={({ pressed }) => [
+                        styles.secondaryButton,
+                        pressed && styles.buttonPressed,
+                      ]}
+                    >
+                      <Text style={styles.secondaryButtonText}>Open booking inbox</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => router.push("/business/messages")}
+                      style={({ pressed }) => [
+                        styles.secondaryButton,
+                        pressed && styles.buttonPressed,
+                      ]}
+                    >
+                      <Text style={styles.secondaryButtonText}>Open messages</Text>
+                    </Pressable>
+                  </>
                 ) : null}
               </>
             ) : (

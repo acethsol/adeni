@@ -1,9 +1,12 @@
 import { Star } from "lucide-react";
+import { BusinessBadgeUpgrade } from "@/components/business-badge-upgrade";
 import { BusinessShareKit } from "@/components/business-share-kit";
 import { BusinessPortalCard } from "@/components/business-portal-card";
 import { BusinessPortalShell } from "@/components/business-portal-shell";
 import { BusinessCoverUpload } from "@/components/business-cover-upload";
 import { BusinessBookingSettings } from "@/components/business-booking-settings";
+import { BusinessMessagingSettings } from "@/components/business-messaging-settings";
+import { BusinessNotificationSettings } from "@/components/business-notification-settings";
 import { BusinessProfileForm } from "@/components/business-profile-form";
 import { BusinessReviewsPanel } from "@/components/business-reviews-panel";
 import { BusinessVerificationForm } from "@/components/business-verification-form";
@@ -69,6 +72,20 @@ export default async function BusinessProfilePage() {
             </BusinessPortalCard>
 
             <BusinessPortalCard>
+              <h2 className="text-lg font-semibold text-foreground">Notification preferences</h2>
+              <div className="mt-4">
+                <BusinessNotificationSettings />
+              </div>
+            </BusinessPortalCard>
+
+            <BusinessPortalCard>
+              <h2 className="text-lg font-semibold text-foreground">Messaging settings</h2>
+              <div className="mt-4">
+                <BusinessMessagingSettings />
+              </div>
+            </BusinessPortalCard>
+
+            <BusinessPortalCard>
               <h2 className="text-lg font-semibold text-foreground">Edit profile</h2>
               <div className="mt-4">
                 <BusinessProfileForm profile={profile} />
@@ -77,6 +94,10 @@ export default async function BusinessProfilePage() {
           </div>
 
           <BusinessVerificationForm canSubmit={profile.status === 0 || profile.status === 3} />
+
+          <div className="mt-8">
+            <BusinessBadgeUpgrade />
+          </div>
 
           <BusinessPortalCard padding="lg" className="mt-8">
             <div className="flex items-center gap-2">

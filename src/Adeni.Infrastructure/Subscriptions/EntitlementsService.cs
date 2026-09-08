@@ -70,6 +70,20 @@ public sealed class EntitlementsService(AdeniDbContext dbContext) : IEntitlement
         return Task.FromResult(Result.Failure(ErrorCodes.MultiLocationRequiredError()));
     }
 
+    public Task<Result> EnsureCanUseMessagingAsync(
+        Guid tenantId,
+        SubscriptionTier tier,
+        CancellationToken cancellationToken = default)
+    {
+        var entitlements = GetEntitlements(tier);
+        if (entitlements.Messaging)
+        {
+            return Task.FromResult(Result.Success());
+        }
+
+        return Task.FromResult(Result.Failure(ErrorCodes.MessagingNotEntitledError()));
+    }
+
     public async Task<SubscriptionUsageResponse> GetUsageAsync(
         Guid tenantId,
         SubscriptionTier tier,

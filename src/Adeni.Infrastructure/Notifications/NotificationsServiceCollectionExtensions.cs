@@ -9,7 +9,9 @@ public static class NotificationsServiceCollectionExtensions
 {
     public static IServiceCollection AddNotificationsModule(this IServiceCollection services)
     {
-        services.AddScoped<INotificationDispatcher, LoggingNotificationDispatcher>();
+        services.AddScoped<LoggingNotificationDispatcher>();
+        services.AddScoped<INotificationDispatcher, PreferenceAwareNotificationDispatcher>();
+        services.AddScoped<INotificationPreferencesService, NotificationPreferencesService>();
         services.AddScoped<IDomainEventHandler<BookingConfirmed>, BookingNotificationHandler>();
         services.AddScoped<IDomainEventHandler<BookingRejected>, BookingNotificationHandler>();
         services.AddScoped<IDomainEventHandler<BookingCancelled>, BookingNotificationHandler>();

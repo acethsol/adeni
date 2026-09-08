@@ -41,6 +41,12 @@ import {
   createReviewRequestSchema,
   createQuoteRequestSchema,
   quoteRequestResponseSchema,
+  quoteRequestsResponseSchema,
+  submitQuoteOfferRequestSchema,
+  replyToReviewRequestSchema,
+  requestVerificationBadgeRequestSchema,
+  verificationBadgeSchema,
+  publicReviewItemSchema,
   joinWaitlistRequestSchema,
   initializePaymentRequestSchema,
   paymentIntentResponseSchema,
@@ -50,6 +56,19 @@ import {
   updateBusinessSettingsRequestSchema,
   reviewResponseSchema,
   publicReviewsResponseSchema,
+  createMessageThreadRequestSchema,
+  sendMessageRequestSchema,
+  messageThreadSummarySchema,
+  messageThreadDetailSchema,
+  messageThreadsResponseSchema,
+  messageResponseSchema,
+  unreadCountResponseSchema,
+  whatsAppLinkResponseSchema,
+  messageTemplatesResponseSchema,
+  notificationPreferencesSchema,
+  updateNotificationPreferencesRequestSchema,
+  messagingSettingsSchema,
+  updateMessagingSettingsRequestSchema,
   updateMarketRequestSchema,
   updateServiceOfferingRequestSchema,
   weeklyAvailabilityResponseSchema,
@@ -80,6 +99,10 @@ import {
   type UpdateBusinessSettingsRequest,
   type CreateQuoteRequest,
   type QuoteRequestResponse,
+  type SubmitQuoteOfferRequest,
+  type RequestVerificationBadgeRequest,
+  type VerificationBadge,
+  type PublicReviewItem,
   type JoinWaitlistRequest,
   type InitializePaymentRequest,
   type PaymentIntentResponse,
@@ -89,8 +112,21 @@ import {
   type CreateReviewRequest,
   type ReviewResponse,
   type PublicReviewsResponse,
+  type CreateMessageThreadRequest,
+  type SendMessageRequest,
+  type MessageThreadSummary,
+  type MessageThreadDetail,
+  type MessageResponse,
+  type UnreadCountResponse,
+  type WhatsAppLinkResponse,
+  type MessageTemplate,
+  type NotificationPreferences,
+  type UpdateNotificationPreferencesRequest,
+  type MessagingSettings,
+  type UpdateMessagingSettingsRequest,
   type UpdateCoverImageRequest,
   type MediaUploadUrlResponse,
+  type MediaUploadUrlRequest,
   type UpdateServiceOfferingRequest,
   type UpsertBusinessLocationRequest,
   type WeeklyAvailabilityRule,
@@ -375,6 +411,27 @@ export class AdeniApiClient {
     return businessProfileSchema.parse(await response.json());
   }
 
+  async createQuotePhotoUploadUrl(
+    request: MediaUploadUrlRequest,
+  ): Promise<MediaUploadUrlResponse> {
+    const body = mediaUploadUrlRequestSchema.parse({
+      ...request,
+      purpose: "quote_photo",
+    });
+    const response = await this.request("/api/v1/customer/media/upload-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return mediaUploadUrlResponseSchema.parse(await response.json());
+  }
+
+  async listTenantVerificationBadges(): Promise<VerificationBadge[]> {
+    const response = await this.request("/api/v1/tenant/verification/badges");
+    const payload = (await response.json()) as { items: VerificationBadge[] };
+    return payload.items ?? [];
+  }
+
   async createQuoteRequest(
     slug: string,
     request: CreateQuoteRequest,
@@ -389,6 +446,81 @@ export class AdeniApiClient {
       },
     );
     return quoteRequestResponseSchema.parse(await response.json());
+  }
+
+  async listCustomerQuotes(): Promise<QuoteRequestResponse[]> {
+    const response = await this.request("/api/v1/quotes");
+    const payload = quoteRequestsResponseSchema.parse(await response.json());
+    return payload.items;
+  }
+
+  async acceptQuote(quoteRequestId: string): Promise<QuoteRequestResponse> {
+    const response = await this.request(
+      `/api/v1/quotes/${encodeURIComponent(quoteRequestId)}/accept`,
+      { method: "POST" },
+    );
+    return quoteRequestResponseSchema.parse(await response.json());
+  }
+
+  async declineQuote(quoteRequestId: string): Promise<QuoteRequestResponse> {
+    const response = await this.request(
+      `/api/v1/quotes/${encodeURIComponent(quoteRequestId)}/decline`,
+      { method: "POST" },
+    );
+    return quoteRequestResponseSchema.parse(await response.json());
+  }
+
+  async listTenantQuotes(): Promise<QuoteRequestResponse[]> {
+    const response = await this.request("/api/v1/tenant/quotes");
+    const payload = quoteRequestsResponseSchema.parse(await response.json());
+    return payload.items;
+  }
+
+  async submitQuoteOffer(
+    quoteRequestId: string,
+    request: SubmitQuoteOfferRequest,
+  ): Promise<QuoteRequestResponse> {
+    const body = submitQuoteOfferRequestSchema.parse(request);
+    const response = await this.request(
+      `/api/v1/tenant/quotes/${encodeURIComponent(quoteRequestId)}/offer`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+    return quoteRequestResponseSchema.parse(await response.json());
+  }
+
+  async listTenantReviews(): Promise<PublicReviewItem[]> {
+    const response = await this.request("/api/v1/tenant/reviews");
+    const payload = (await response.json()) as { items: PublicReviewItem[] };
+    return payload.items ?? [];
+  }
+
+  async replyToReview(reviewId: string, reply: string): Promise<PublicReviewItem> {
+    const body = replyToReviewRequestSchema.parse({ reply });
+    const response = await this.request(
+      `/api/v1/tenant/reviews/${encodeURIComponent(reviewId)}/reply`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+    return publicReviewItemSchema.parse(await response.json());
+  }
+
+  async requestVerificationBadge(
+    request: RequestVerificationBadgeRequest,
+  ): Promise<VerificationBadge> {
+    const body = requestVerificationBadgeRequestSchema.parse(request);
+    const response = await this.request("/api/v1/tenant/verification/badges", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return verificationBadgeSchema.parse(await response.json());
   }
 
   async joinWaitlist(request: JoinWaitlistRequest): Promise<{ id: string }> {
@@ -723,6 +855,148 @@ export class AdeniApiClient {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
+  }
+
+  async createMessageThread(
+    request: CreateMessageThreadRequest,
+  ): Promise<MessageThreadSummary> {
+    const body = createMessageThreadRequestSchema.parse(request);
+    const response = await this.request("/api/v1/messages/threads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return messageThreadSummarySchema.parse(await response.json());
+  }
+
+  async listCustomerMessageThreads(): Promise<MessageThreadSummary[]> {
+    const response = await this.request("/api/v1/messages/threads");
+    const payload = messageThreadsResponseSchema.parse(await response.json());
+    return payload.items;
+  }
+
+  async getCustomerMessageThread(id: string, limit = 50): Promise<MessageThreadDetail> {
+    const response = await this.request(
+      `/api/v1/messages/threads/${encodeURIComponent(id)}?limit=${limit}`,
+    );
+    return messageThreadDetailSchema.parse(await response.json());
+  }
+
+  async sendCustomerMessage(
+    threadId: string,
+    request: SendMessageRequest,
+  ): Promise<MessageResponse> {
+    const body = sendMessageRequestSchema.parse(request);
+    const response = await this.request(
+      `/api/v1/messages/threads/${encodeURIComponent(threadId)}/messages`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+    return messageResponseSchema.parse(await response.json());
+  }
+
+  async markCustomerThreadRead(threadId: string): Promise<void> {
+    await this.request(`/api/v1/messages/threads/${encodeURIComponent(threadId)}/read`, {
+      method: "POST",
+    });
+  }
+
+  async listTenantMessageThreads(): Promise<MessageThreadSummary[]> {
+    const response = await this.request("/api/v1/tenant/messages/threads");
+    const payload = messageThreadsResponseSchema.parse(await response.json());
+    return payload.items;
+  }
+
+  async getTenantMessageUnreadCount(): Promise<number> {
+    const response = await this.request("/api/v1/tenant/messages/unread-count");
+    const payload = unreadCountResponseSchema.parse(await response.json());
+    return payload.count;
+  }
+
+  async getTenantMessageThread(id: string, limit = 50): Promise<MessageThreadDetail> {
+    const response = await this.request(
+      `/api/v1/tenant/messages/threads/${encodeURIComponent(id)}?limit=${limit}`,
+    );
+    return messageThreadDetailSchema.parse(await response.json());
+  }
+
+  async sendTenantMessage(
+    threadId: string,
+    request: SendMessageRequest,
+  ): Promise<MessageResponse> {
+    const body = sendMessageRequestSchema.parse(request);
+    const response = await this.request(
+      `/api/v1/tenant/messages/threads/${encodeURIComponent(threadId)}/messages`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+    return messageResponseSchema.parse(await response.json());
+  }
+
+  async markTenantThreadRead(threadId: string): Promise<void> {
+    await this.request(`/api/v1/tenant/messages/threads/${encodeURIComponent(threadId)}/read`, {
+      method: "POST",
+    });
+  }
+
+  async getTenantMessageTemplates(): Promise<MessageTemplate[]> {
+    const response = await this.request("/api/v1/tenant/messages/templates");
+    const payload = messageTemplatesResponseSchema.parse(await response.json());
+    return payload.items;
+  }
+
+  async getNotificationPreferences(): Promise<NotificationPreferences> {
+    const response = await this.request("/api/v1/tenant/notification-preferences");
+    return notificationPreferencesSchema.parse(await response.json());
+  }
+
+  async updateNotificationPreferences(
+    request: UpdateNotificationPreferencesRequest,
+  ): Promise<NotificationPreferences> {
+    const body = updateNotificationPreferencesRequestSchema.parse(request);
+    const response = await this.request("/api/v1/tenant/notification-preferences", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return notificationPreferencesSchema.parse(await response.json());
+  }
+
+  async getMessagingSettings(): Promise<MessagingSettings> {
+    const response = await this.request("/api/v1/tenant/messages/settings");
+    return messagingSettingsSchema.parse(await response.json());
+  }
+
+  async updateMessagingSettings(
+    request: UpdateMessagingSettingsRequest,
+  ): Promise<MessagingSettings> {
+    const body = updateMessagingSettingsRequestSchema.parse(request);
+    const response = await this.request("/api/v1/tenant/messages/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return messagingSettingsSchema.parse(await response.json());
+  }
+
+  async getBusinessWhatsAppLink(slug: string): Promise<WhatsAppLinkResponse> {
+    const response = await this.request(
+      `/api/v1/businesses/${encodeURIComponent(slug)}/whatsapp-link`,
+    );
+    return whatsAppLinkResponseSchema.parse(await response.json());
+  }
+
+  async getBookingWhatsAppLink(bookingId: string): Promise<WhatsAppLinkResponse> {
+    const response = await this.request(
+      `/api/v1/bookings/${encodeURIComponent(bookingId)}/whatsapp-link`,
+    );
+    return whatsAppLinkResponseSchema.parse(await response.json());
   }
 
   private async request(

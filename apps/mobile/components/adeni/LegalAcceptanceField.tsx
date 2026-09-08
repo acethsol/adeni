@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
   },
   boxChecked: {
     borderColor: adeniTheme.accent,
-    backgroundColor: "rgba(64, 145, 108, 0.1)",
+    backgroundColor: `${adeniTheme.accent}18`,
   },
   checkmark: {
     fontSize: 12,

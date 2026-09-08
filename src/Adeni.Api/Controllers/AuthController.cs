@@ -71,7 +71,9 @@ public sealed class AuthController(
 [ApiController]
 [Route("api/v1/admin/businesses")]
 [Authorize(Policy = AuthServiceCollectionExtensions.AdminMfaPolicy)]
-public sealed class AdminBusinessesController(IAdminBusinessService adminBusinessService) : ControllerBase
+public sealed class AdminBusinessesController(
+    IAdminBusinessService adminBusinessService,
+    Application.Trust.IVerificationBadgeService verificationBadges) : ControllerBase
 {
     [HttpGet("pending")]
     public async Task<IActionResult> GetPending(CancellationToken cancellationToken)
@@ -115,13 +117,17 @@ public sealed class AdminBusinessesController(IAdminBusinessService adminBusines
         var adminId = User.FindFirst("sub")?.Value ?? "admin";
         var result = await adminBusinessService.ApproveAsync(id, adminId, cancellationToken);
 
-        return result.Match<IActionResult>(
-            _ => NoContent(),
-            error => error.Code switch
+        return await result.Match<Task<IActionResult>>(
+            async _ =>
+            {
+                await verificationBadges.GrantInitialBadgesOnApprovalAsync(id, cancellationToken);
+                return NoContent();
+            },
+            error => Task.FromResult<IActionResult>(error.Code switch
             {
                 "validation" => BadRequest(new { title = error.Message }),
                 _ => NotFound(new { title = error.Message })
-            });
+            }));
     }
 
     [HttpPost("{id:guid}/reject")]

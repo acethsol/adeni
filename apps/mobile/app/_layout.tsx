@@ -122,6 +122,34 @@ function RootLayoutNav() {
               }}
             />
             <Stack.Screen
+              name="business/quotes"
+              options={{
+                title: "Quotes",
+                headerBackTitle: "Back",
+              }}
+            />
+            <Stack.Screen
+              name="my-quotes"
+              options={{
+                title: "My quotes",
+                headerBackTitle: "Back",
+              }}
+            />
+            <Stack.Screen
+              name="my-messages"
+              options={{
+                title: "My messages",
+                headerBackTitle: "Back",
+              }}
+            />
+            <Stack.Screen
+              name="business/messages"
+              options={{
+                title: "Messages",
+                headerBackTitle: "Back",
+              }}
+            />
+            <Stack.Screen
               name="my-bookings"
               options={{
                 title: "My bookings",

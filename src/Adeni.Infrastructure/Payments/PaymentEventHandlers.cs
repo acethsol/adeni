@@ -90,7 +90,8 @@ public sealed class PaymentNotificationHandler(INotificationDispatcher notificat
                 "email",
                 domainEvent.TenantId.ToString(),
                 "Payment received",
-                $"Payment {domainEvent.PaymentIntentId} of {domainEvent.Amount} {domainEvent.Currency} was confirmed."),
+                $"Payment {domainEvent.PaymentIntentId} of {domainEvent.Amount} {domainEvent.Currency} was confirmed.",
+                domainEvent.TenantId),
             cancellationToken);
 
     public Task HandleAsync(PaymentFailed domainEvent, CancellationToken cancellationToken = default) =>
@@ -99,6 +100,7 @@ public sealed class PaymentNotificationHandler(INotificationDispatcher notificat
                 "email",
                 domainEvent.TenantId.ToString(),
                 "Payment failed",
-                $"Payment {domainEvent.PaymentIntentId} failed.{(string.IsNullOrWhiteSpace(domainEvent.Reason) ? "" : $" Reason: {domainEvent.Reason}")}"),
+                $"Payment {domainEvent.PaymentIntentId} failed.{(string.IsNullOrWhiteSpace(domainEvent.Reason) ? "" : $" Reason: {domainEvent.Reason}")}",
+                domainEvent.TenantId),
             cancellationToken);
 }

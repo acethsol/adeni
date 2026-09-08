@@ -13,6 +13,7 @@ import {
 import { useTranslation } from "@/components/locale-provider";
 import { NewReviewsBadge } from "@/components/new-reviews-badge";
 import { StarRating } from "@/components/star-rating";
+import { TrustBadges } from "@/components/trust-badges";
 import { Badge } from "@/components/ui/badge";
 import {
   MediaCard,
@@ -86,6 +87,13 @@ export function BusinessDiscoveryCard({ business, className, imagePriority = fal
           <MediaCardMeta>
             {categoryLabel} · {business.area} · {business.distanceKm.toFixed(1)} km
           </MediaCardMeta>
+
+          <TrustBadges
+            badges={business.verificationBadges}
+            verifiedSince={business.verifiedSince}
+            completionRate={business.completionRate}
+            compact
+          />
 
           <MediaCardActions>
             <Badge tone="accent">{t("business.viewProfile")}</Badge>

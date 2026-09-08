@@ -8,6 +8,7 @@ import {
   resolveBusinessCoverImage,
 } from "@adeni/shared";
 import { useLocale } from "@/contexts/locale-context";
+import { TrustBadges } from "@/components/adeni/TrustBadges";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { adeniTheme } from "@/lib/theme";
@@ -73,6 +74,12 @@ export function BusinessCard({ business, onPress }: Props) {
         <Text style={styles.meta} numberOfLines={1}>
           {categoryLabel} · {business.area} · {business.distanceKm.toFixed(1)} km
         </Text>
+
+        <TrustBadges
+          badges={business.verificationBadges}
+          verifiedSince={business.verifiedSince}
+          completionRate={business.completionRate}
+        />
 
         <View style={styles.actions}>
           <Badge label="View profile" tone="accent" />

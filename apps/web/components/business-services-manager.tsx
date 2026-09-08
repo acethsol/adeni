@@ -23,6 +23,7 @@ type ServiceDraft = {
   priceAmount: string;
   currency: string;
   durationMinutes: string;
+  pricingType: "fixed" | "quote_request" | "hourly";
 };
 
 type DraftErrors = Partial<Record<keyof ServiceDraft, string>>;
@@ -33,6 +34,7 @@ const EMPTY_DRAFT = (currency: string): ServiceDraft => ({
   priceAmount: "",
   currency,
   durationMinutes: "30",
+  pricingType: "fixed",
 });
 
 function validateDraft(draft: ServiceDraft): DraftErrors {
@@ -100,6 +102,7 @@ export function BusinessServicesManager({ initialServices, defaultCurrency = "NG
       priceAmount: String(service.priceAmount),
       currency: service.currency,
       durationMinutes: String(service.durationMinutes),
+      pricingType: service.pricingType ?? "fixed",
     };
     setEditingId(service.id);
     setDraft(snapshot);
@@ -132,6 +135,7 @@ export function BusinessServicesManager({ initialServices, defaultCurrency = "NG
       priceAmount: Number(draft.priceAmount),
       currency: draft.currency.trim().toUpperCase(),
       durationMinutes: Number(draft.durationMinutes),
+      pricingType: draft.pricingType,
     };
 
     setBusy("submit");
@@ -248,6 +252,9 @@ export function BusinessServicesManager({ initialServices, defaultCurrency = "NG
                   <span className="inline-flex items-center gap-1.5">
                     <Tag className="h-3.5 w-3.5" aria-hidden />
                     {formatPrice(service.priceAmount, service.currency)}
+                    {service.pricingType && service.pricingType !== "fixed"
+                      ? ` · ${service.pricingType === "hourly" ? "Hourly" : "Quote"}`
+                      : ""}
                   </span>
                 </div>
                 {service.description ? (
@@ -348,6 +355,23 @@ export function BusinessServicesManager({ initialServices, defaultCurrency = "NG
               error={draftErrors.durationMinutes}
             />
           </div>
+          <label className="block text-sm font-medium text-foreground">
+            Pricing type
+            <select
+              className="mt-1.5 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm"
+              value={draft.pricingType}
+              onChange={(event) =>
+                setDraft({
+                  ...draft,
+                  pricingType: event.target.value as ServiceDraft["pricingType"],
+                })
+              }
+            >
+              <option value="fixed">Fixed price</option>
+              <option value="hourly">Hourly rate</option>
+              <option value="quote_request">Quote on request</option>
+            </select>
+          </label>
         </form>
       </Modal>
     </div>

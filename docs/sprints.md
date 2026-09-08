@@ -23,15 +23,15 @@
 | 15 | Architecture foundation + booking v2 + business types | ✅ Done |
 | **16** | **Business SaaS & monetization** | ✅ Done |
 | **17** | **Commerce orchestration (Paystack)** | ✅ Done |
-| **18** | **Messaging & WhatsApp bridge** | Planned |
-| **19** | **Trust depth & quote workflows** | Planned |
+| **18** | **Messaging & WhatsApp bridge** | ✅ Done |
+| **19** | **Trust depth & quote workflows** | ✅ Done |
 | 20 | Deployment, AI & observability | Planned |
 | — | Sprint 11d LLM agent | → Sprint 20 |
 | — | Staging deploy + Auth0 E2E | → Sprint 20 |
 | — | App Insights (Obs 1) | → Sprint 20 |
 | — | Booking notifications, auto-confirm, payments, waitlist | → Sprint 15 |
 
-**Next up:** Sprint 18 (**Messaging & WhatsApp bridge**). See [product-strategy.md §7.4](./product-strategy.md#74-nigeria-specific-engineering-notes).
+**Next up:** Sprint 20 (**Deployment, AI & observability**). See [observability.md](./observability.md).
 
 ---
 ## Sprint 0 — Foundation & dev tooling ✅
@@ -292,37 +292,37 @@ Confluence: [Sprint 16 — Business SaaS & monetization](https://aceth.atlassian
 
 Confluence: [Sprint 17 — Commerce orchestration (Paystack)](https://aceth.atlassian.net/wiki/spaces/SD/pages/41287681)
 
-## Sprint 18 — Messaging & WhatsApp bridge (planned)
+## Sprint 18 — Messaging & WhatsApp bridge (done)
 
 Close the fragmentation gap — businesses live on WhatsApp; Adeni must meet them there. See [product-strategy.md §7.4](./product-strategy.md#74-nigeria-specific-engineering-notes).
 
 | Task | Status |
 |------|--------|
-| **18a** In-app messaging — **Messaging module**; customer ↔ business threads tied to booking or business profile | Planned |
-| **18b** WhatsApp deep links — “Message on WhatsApp” with pre-filled booking context; “Book on Adeni” link in bio templates | Planned |
-| **18c** Notification preferences — email, push (FCM), SMS/WhatsApp reminder channel per tenant | Planned |
-| **18d** Message templates — business quick-replies (hours, pricing, location) | Planned |
-| **18e** Unread badge + inbox in business portal topbar (extend bookings bell pattern) | Planned |
-| **18f** Basic FAQ auto-responder — rule-based replies for price/hours/availability (precursor to business AI agent) | Planned |
+| **18a** In-app messaging — **Messaging module**; customer ↔ business threads tied to booking or business profile | ✅ Done |
+| **18b** WhatsApp deep links — “Message on WhatsApp” with pre-filled booking context; “Book on Adeni” link in bio templates | ✅ Done |
+| **18c** Notification preferences — email, push (FCM), SMS/WhatsApp reminder channel per tenant | ✅ Done |
+| **18d** Message templates — business quick-replies (hours, pricing, location) | ✅ Done |
+| **18e** Unread badge + inbox in business portal topbar (extend bookings bell pattern) | ✅ Done |
+| **18f** Basic FAQ auto-responder — rule-based replies for price/hours/availability (precursor to business AI agent) | ✅ Done |
 
 **Revenue unlocked:** Pro tier messaging entitlement (Sprint 16). **Retention:** businesses stay because customers reach them where they already are.
 
 Confluence: [Sprint 18 — Messaging & WhatsApp bridge](https://aceth.atlassian.net/wiki/spaces/SD/pages/41320449)
 
-## Sprint 19 — Trust depth & quote workflows (planned)
+## Sprint 19 — Trust depth & quote workflows (complete)
 
-Differentiate on trust and **service-type flexibility** — builds on the business-type framework from Sprint 15. See [product-strategy.md §3.5](./product-strategy.md#35-business-types--workflow-capabilities).
+Differentiate on trust and **service-type flexibility** — builds on the business-type framework from Sprint 15. See [product-strategy.md §3.5](./product-strategy.md#35-business-types--workflow-capabilities). Spec: [sprint-19-trust-quotes.md](./specs/sprint-19-trust-quotes.md).
 
 | Task | Status |
 |------|--------|
-| **19a** Tiered verification badges — phone, CAC, address, license; display on profile + discovery cards; admin grant workflow | Planned |
-| **19b** Verification upgrade UX — business requests advanced checks; admin review queue | Planned |
-| **19c** Service pricing types — `fixed` vs `quote_request` vs `hourly` on offerings; constrained by tenant `businessType` | Planned |
-| **19d** Full quote request flow — customer describes job + uploads photos; business submits quote; customer accepts → books (replaces Sprint 15 stub) | Planned |
-| **19e** Business review responses — owner can reply publicly to customer reviews | Planned |
-| **19f** Discovery trust signals — badge stack, “Verified since”, completion rate (when data exists) | Planned |
-| **19g** CAC verification integration research — CAC API or manual workflow doc for Nigeria (stretch) | Planned |
-| **19h** Category-specific verification requirements — e.g. license badge required for `plumbers`/`electricians`; basic for beauty categories | Planned |
+| **19a** Tiered verification badges — phone, CAC, address, license; display on profile + discovery cards; admin grant workflow | Done |
+| **19b** Verification upgrade UX — business requests advanced checks; admin review queue shows documents | Done |
+| **19c** Service pricing types — `fixed` vs `quote_request` vs `hourly` on offerings; constrained by tenant `businessType` | Done |
+| **19d** Full quote request flow — customer describes job; business submits quote; customer accepts → books | Done |
+| **19e** Business review responses — owner can reply publicly to customer reviews | Done |
+| **19f** Discovery trust signals — badge stack, “Verified since”, completion rate (when data exists) | Done |
+| **19g** CAC verification integration research — research doc (stretch) | Done |
+| **19h** Category-specific verification requirements — license badge required for `plumbers`/`electricians` in discovery | Done |
 
 **Revenue unlocked:** premium verification checks (transparent, optional). **Differentiator:** instant quotes for variable-price services (photographers, plumbers, caterers).
 
@@ -346,9 +346,6 @@ Confluence: [Sprint 20 — Deployment, AI, observability & architecture](https:/
 
 ## Next up
 
-1. **Sprint 18** — Messaging & WhatsApp bridge
-2. **Sprint 18** — messaging + WhatsApp bridge
-3. **Sprint 19** — tiered verification, **full quote workflows** (on Sprint 15 framework)
-4. **Sprint 20** — staging, LLM agent, observability
+1. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, business AI agent, App Insights, ops dashboards
 
 Strategy reference: [product-strategy.md](./product-strategy.md) — [§3.5 Business types](./product-strategy.md#35-business-types--workflow-capabilities), [architecture.md](./architecture.md) (modular monolith)

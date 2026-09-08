@@ -7,6 +7,8 @@ import { adeniTheme } from "@/lib/theme";
 const BUSINESS_TABS = [
   { href: "/business", label: "Overview", exact: true, ios: "square.grid.2x2", android: "dashboard" },
   { href: "/business/bookings", label: "Bookings", capability: "calendar" as Capability, ios: "calendar", android: "event" },
+  { href: "/business/quotes", label: "Quotes", ios: "doc.text", android: "request_quote" },
+  { href: "/business/messages", label: "Messages", ios: "message", android: "chat" },
   { href: "/business/services", label: "Services", ios: "scissors", android: "content_cut" },
   { href: "/business/availability", label: "Hours", capability: "calendar" as Capability, ios: "clock", android: "schedule" },
   { href: "/business/payments", label: "Payments", capability: "deposits" as Capability, ios: "banknote", android: "payments" },

@@ -6,6 +6,7 @@ import { formatCategoryLabel, resolveBusinessCoverImage, shouldShowQuoteFlow } f
 import { BookingPanel } from "@/components/adeni/BookingPanel";
 import { BusinessReviewsSection } from "@/components/adeni/BusinessReviewsSection";
 import { QuoteRequestPanel } from "@/components/adeni/QuoteRequestPanel";
+import { TrustBadges } from "@/components/adeni/TrustBadges";
 import { Screen } from "@/components/adeni/Screen";
 import { createPublicApiClient } from "@/lib/api";
 import { adeniTheme } from "@/lib/theme";
@@ -63,7 +64,7 @@ export default function BusinessProfileScreen() {
 
           client.getBusinessServices(slug).catch(() => []),
 
-          client.getBusinessReviews(slug, 1, 10).catch(() => ({ items: [], page: 1, pageSize: 10, totalCount: 0 })),
+          client.getBusinessReviews(slug).catch(() => ({ items: [], page: 1, pageSize: 10, totalCount: 0 })),
 
         ]);
 
@@ -74,8 +75,7 @@ export default function BusinessProfileScreen() {
           setProfile(business);
 
           setServices(serviceItems);
-
-          setReviews(reviewPayload.items);
+          setReviews(reviewPayload.items ?? []);
 
         }
 
@@ -155,6 +155,12 @@ export default function BusinessProfileScreen() {
 
               </Text>
 
+              <TrustBadges
+                badges={profile.verificationBadges}
+                verifiedSince={profile.verifiedSince}
+                completionRate={profile.completionRate}
+              />
+
 
 
               {profile.description ? (
@@ -184,9 +190,8 @@ export default function BusinessProfileScreen() {
             />
 
 
-
             {shouldShowQuoteFlow(profile) ? (
-              <QuoteRequestPanel slug={profile.slug} client={createPublicApiClient()} />
+              <QuoteRequestPanel slug={profile.slug} />
             ) : (
               <BookingPanel
                 slug={profile.slug}

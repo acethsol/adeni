@@ -8,8 +8,10 @@ import { Screen, ScreenHeader } from "@/components/adeni/Screen";
 import { BusinessTabs } from "@/components/adeni/BusinessTabs";
 import { BusinessBookingSettings } from "@/components/adeni/BusinessBookingSettings";
 import { BusinessCoverUpload } from "@/components/adeni/BusinessCoverUpload";
+import { BusinessBadgeUpgrade } from "@/components/adeni/BusinessBadgeUpgrade";
 import { BusinessReviewsPanel } from "@/components/adeni/BusinessReviewsPanel";
 import { BusinessShareKit } from "@/components/adeni/BusinessShareKit";
+import { BusinessPortalSettings } from "@/components/adeni/BusinessPortalSettings";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -169,10 +171,14 @@ export default function BusinessProfileScreen() {
               ) : null}
 
               <View style={styles.blockSpacing}>
-                <Card title="Customer reviews">
-                  <BusinessReviewsPanel />
-                </Card>
+                <BusinessBadgeUpgrade />
               </View>
+
+              <View style={styles.blockSpacing}>
+                <BusinessReviewsPanel />
+              </View>
+
+              <BusinessPortalSettings />
             </>
           ) : null}
         </View>
