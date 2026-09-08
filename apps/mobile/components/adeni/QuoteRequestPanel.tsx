@@ -1,4 +1,4 @@
-import { discoveryCtaLabel } from "@adeni/shared";
+import { discoveryCtaLabel, MAX_QUOTE_PHOTOS, MAX_UPLOAD_BYTES } from "@adeni/shared";
 import { useState } from "react";
 import { Alert, Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
@@ -7,9 +7,6 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useAuth } from "@/contexts/auth-context";
 import { adeniTheme } from "@/lib/theme";
-
-const MAX_BYTES = 5 * 1024 * 1024;
-const MAX_PHOTOS = 5;
 
 type Props = {
   slug: string;
@@ -27,7 +24,7 @@ export function QuoteRequestPanel({ slug }: Props) {
   const [submitted, setSubmitted] = useState(false);
 
   async function handleAddPhoto() {
-    if (photoKeys.length >= MAX_PHOTOS) {
+    if (photoKeys.length >= MAX_QUOTE_PHOTOS) {
       return;
     }
 
@@ -44,7 +41,7 @@ export function QuoteRequestPanel({ slug }: Props) {
 
     const asset = result.assets[0];
     const contentType = asset.mimeType ?? "image/jpeg";
-    if ((asset.fileSize ?? 0) > MAX_BYTES) {
+    if ((asset.fileSize ?? 0) > MAX_UPLOAD_BYTES) {
       Alert.alert("Photo must be 5 MB or smaller.");
       return;
     }
@@ -129,9 +126,9 @@ export function QuoteRequestPanel({ slug }: Props) {
           <Image key={uri} source={{ uri }} style={styles.photo} />
         ))}
       </View>
-      <Pressable onPress={() => void handleAddPhoto()} disabled={uploadingPhotos || photoKeys.length >= MAX_PHOTOS}>
+      <Pressable onPress={() => void handleAddPhoto()} disabled={uploadingPhotos || photoKeys.length >= MAX_QUOTE_PHOTOS}>
         <Text style={styles.photoLink}>
-          {uploadingPhotos ? "Uploading…" : `Add photo (${photoKeys.length}/${MAX_PHOTOS})`}
+          {uploadingPhotos ? "Uploading…" : `Add photo (${photoKeys.length}/${MAX_QUOTE_PHOTOS})`}
         </Text>
       </Pressable>
       <View style={styles.actions}>

@@ -59,7 +59,7 @@ Register → submit docs → admin approves → tenant `Verified`.
 **Frontend pivot (July 2026 — ADR-010):**
 
 - [x] Confluence updated ([Frontend Architecture v1](https://aceth.atlassian.net/wiki/spaces/SD/pages/26968065))
-- [x] Flutter archived → `mobile/_archive/adeni_app_flutter`
+- [x] Flutter retired (July 2026 pivot — ADR-010; archive not kept in repo)
 - [x] Monorepo: `apps/web` (Next.js), `apps/mobile` (Expo), `packages/*`
 
 ## Sprint 3b — Web public shell ✅

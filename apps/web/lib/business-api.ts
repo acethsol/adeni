@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { AdeniApiClient } from "@adeni/api-client";
 import { createPublicApiClient, getApiBaseUrl } from "./public-api";
 import { getAccessToken } from "./auth/session";
@@ -36,7 +37,7 @@ async function resolveBusinessTenantId(client: AdeniApiClient): Promise<string |
   }
 }
 
-export async function createBusinessApiClient(): Promise<AdeniApiClient> {
+export const createBusinessApiClient = cache(async (): Promise<AdeniApiClient> => {
   const client = createPublicApiClient();
   const accessToken = await getAccessToken();
 
@@ -57,7 +58,7 @@ export async function createBusinessApiClient(): Promise<AdeniApiClient> {
   }
 
   return client;
-}
+});
 
 export async function businessApiFetch(
   path: string,

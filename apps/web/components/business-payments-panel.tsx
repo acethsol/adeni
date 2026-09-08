@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { BusinessProfile, PaymentLedgerEntry } from "@adeni/shared";
-import { hasCapability } from "@adeni/shared";
+import { hasCapability, formatPrice } from "@adeni/shared";
 import { Button } from "@/components/ui/button";
 import { Callout } from "@/components/ui/callout";
 import { LoadingPanel } from "@/components/loading-panel";
@@ -12,14 +12,6 @@ import { useApiErrorMessage } from "@/lib/api-error";
 type Props = {
   profile: BusinessProfile;
 };
-
-function formatMoney(amount: number, currency: string) {
-  try {
-    return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(amount);
-  } catch {
-    return `${currency} ${amount.toFixed(2)}`;
-  }
-}
 
 function whatsAppShareUrl(description: string, checkoutUrl: string) {
   const text = encodeURIComponent(`Pay ${description} via Adeni: ${checkoutUrl}`);
@@ -108,7 +100,7 @@ export function BusinessPaymentsPanel({ profile }: Props) {
       return;
     }
 
-    if (!window.confirm(`Refund ${formatMoney(entry.amount, entry.currency)}?`)) {
+    if (!window.confirm(`Refund ${formatPrice(entry.amount, entry.currency)}?`)) {
       return;
     }
 
@@ -216,7 +208,7 @@ export function BusinessPaymentsPanel({ profile }: Props) {
             {ledger.map((entry) => (
               <li key={entry.id} className="flex flex-wrap items-start justify-between gap-3 py-4">
                 <div>
-                  <p className="font-medium">{formatMoney(entry.amount, entry.currency)}</p>
+                  <p className="font-medium">{formatPrice(entry.amount, entry.currency)}</p>
                   <p className="text-sm text-muted capitalize">
                     {entry.type} · {entry.status}
                   </p>

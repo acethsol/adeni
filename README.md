@@ -37,7 +37,7 @@ apps/web/                Next.js — public, business, admin
 apps/mobile/             Expo — unified customer + business app
 packages/api-client/     Typed API client (shared)
 packages/shared/         Zod schemas, roles
-mobile/_archive/         Retired Flutter prototype (July 2026)
+The Flutter prototype was retired in July 2026 (ADR-010) and is not kept in this repository.
 tests/                   Backend unit/integration tests
 ```
 

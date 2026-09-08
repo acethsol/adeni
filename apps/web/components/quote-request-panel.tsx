@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { discoveryCtaLabel } from "@adeni/shared";
+import { discoveryCtaLabel, MAX_QUOTE_PHOTOS, MAX_UPLOAD_BYTES } from "@adeni/shared";
 import { Callout } from "@/components/ui/callout";
 import { Input, Textarea } from "@/components/ui/input";
 import { useActionLoading } from "@/contexts/action-loading-context";
@@ -14,8 +14,6 @@ type Props = {
 };
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const MAX_BYTES = 5 * 1024 * 1024;
-const MAX_PHOTOS = 5;
 
 export function QuoteRequestPanel({ slug, loginHref, enabled }: Props) {
   const { run } = useActionLoading();
@@ -46,7 +44,7 @@ export function QuoteRequestPanel({ slug, loginHref, enabled }: Props) {
       const nextKeys = [...photoKeys];
 
       for (const file of files) {
-        if (nextKeys.length >= MAX_PHOTOS) {
+        if (nextKeys.length >= MAX_QUOTE_PHOTOS) {
           break;
         }
 
@@ -54,7 +52,7 @@ export function QuoteRequestPanel({ slug, loginHref, enabled }: Props) {
           throw new Error("Use JPEG, PNG, or WebP photos.");
         }
 
-        if (file.size > MAX_BYTES) {
+        if (file.size > MAX_UPLOAD_BYTES) {
           throw new Error("Each photo must be 5 MB or smaller.");
         }
 
@@ -177,7 +175,7 @@ export function QuoteRequestPanel({ slug, loginHref, enabled }: Props) {
         />
         <div>
           <p className="text-sm font-medium text-foreground">Photos (optional)</p>
-          <p className="mt-1 text-xs text-muted">Add up to {MAX_PHOTOS} photos of the job site or issue.</p>
+          <p className="mt-1 text-xs text-muted">Add up to {MAX_QUOTE_PHOTOS} photos of the job site or issue.</p>
           <input
             ref={fileInputRef}
             type="file"
@@ -185,7 +183,7 @@ export function QuoteRequestPanel({ slug, loginHref, enabled }: Props) {
             multiple
             className="mt-2 block w-full text-sm"
             onChange={(event) => void handlePhotoSelect(event)}
-            disabled={uploadingPhotos || photoKeys.length >= MAX_PHOTOS}
+            disabled={uploadingPhotos || photoKeys.length >= MAX_QUOTE_PHOTOS}
           />
           {photoKeys.length > 0 ? (
             <p className="mt-2 text-xs text-muted">{photoKeys.length} photo(s) attached</p>

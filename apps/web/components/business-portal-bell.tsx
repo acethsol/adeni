@@ -1,36 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
 import { Bell } from "lucide-react";
-import type { BookingResponse } from "@adeni/shared";
 import { cn } from "@/lib/cn";
+import { usePendingBookingsCount } from "@/lib/queries/portal-badges";
 
 export function BusinessPortalBell({ className }: { className?: string }) {
-  const pathname = usePathname();
-  const [count, setCount] = useState<number | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      try {
-        const response = await fetch("/api/business/bookings", { cache: "no-store" });
-        if (!response.ok) return;
-        const payload = (await response.json()) as { items: BookingResponse[] };
-        const pending = (payload.items ?? []).filter((item) => item.status === 0).length;
-        if (!cancelled) setCount(pending);
-      } catch {
-        if (!cancelled) setCount(null);
-      }
-    }
-
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [pathname]);
+  const { data: count = null } = usePendingBookingsCount();
 
   return (
     <Link

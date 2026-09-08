@@ -38,24 +38,37 @@ export default async function AdminPortalPage() {
 
   try {
     const client = await createAuthenticatedApiClient();
-    pending = await client.getPendingBusinesses();
+    const [pendingResult, marketsResult, businessesResult] = await Promise.allSettled([
+      client.getPendingBusinesses(),
+      client.getAdminMarkets(),
+      client.getAdminBusinesses(),
+    ]);
+
+    if (pendingResult.status === "fulfilled") {
+      pending = pendingResult.value;
+    } else {
+      queueError =
+        "Could not load the verification queue. Ensure Auth0 is enabled on the API and your admin token includes the admin role (+ MFA if required).";
+    }
+
+    if (marketsResult.status === "fulfilled") {
+      markets = marketsResult.value;
+    } else {
+      marketsError =
+        "Could not load markets. Ensure your admin token includes the admin role (+ MFA if required).";
+    }
+
+    if (businessesResult.status === "fulfilled") {
+      businesses = businessesResult.value;
+    } else {
+      businessesError =
+        "Could not load businesses for subscription overrides. Ensure your admin token includes the admin role.";
+    }
   } catch {
     queueError =
       "Could not load the verification queue. Ensure Auth0 is enabled on the API and your admin token includes the admin role (+ MFA if required).";
-  }
-
-  try {
-    const client = await createAuthenticatedApiClient();
-    markets = await client.getAdminMarkets();
-  } catch {
     marketsError =
       "Could not load markets. Ensure your admin token includes the admin role (+ MFA if required).";
-  }
-
-  try {
-    const client = await createAuthenticatedApiClient();
-    businesses = await client.getAdminBusinesses();
-  } catch {
     businessesError =
       "Could not load businesses for subscription overrides. Ensure your admin token includes the admin role.";
   }

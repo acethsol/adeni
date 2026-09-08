@@ -104,6 +104,8 @@ export const queryKeys = {
   myBookings: ["bookings", "mine"] as const,
   tenantBookings: (tenantId?: string | null) => ["bookings", "tenant", tenantId ?? "unknown"] as const,
   tenantProfile: (tenantId?: string | null) => ["tenant-profile", tenantId ?? "unknown"] as const,
+  businessPendingBookingsCount: () => ["business", "pending-bookings-count"] as const,
+  businessUnreadMessagesCount: () => ["business", "unread-messages-count"] as const,
 } as const;
 
 /** Stale times in ms — mirror backend CacheTtl where applicable. */
@@ -112,6 +114,7 @@ export const staleTimes = {
   discovery: 2 * 60 * 1000,
   businessProfile: 5 * 60 * 1000,
   bookings: 30 * 1000,
+  messages: 30 * 1000,
 } as const;
 
 export const DISCOVERY_PAGE_SIZE = 20;

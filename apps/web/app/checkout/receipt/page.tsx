@@ -4,15 +4,8 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { PaymentIntentResponse } from "@adeni/shared";
+import { formatPrice } from "@adeni/shared";
 import { LoadingPanel } from "@/components/loading-panel";
-
-function formatMoney(amount: number, currency: string) {
-  try {
-    return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(amount);
-  } catch {
-    return `${currency} ${amount.toFixed(2)}`;
-  }
-}
 
 export default function PaymentReceiptPage() {
   const searchParams = useSearchParams();
@@ -64,7 +57,7 @@ export default function PaymentReceiptPage() {
         <p className={`text-sm font-semibold uppercase tracking-widest ${succeeded ? "text-[#40916c]" : "text-amber-700"}`}>
           {succeeded ? "Payment successful" : `Payment ${payment.status}`}
         </p>
-        <h1 className="mt-2 text-2xl font-bold">{formatMoney(payment.amount, payment.currency)}</h1>
+        <h1 className="mt-2 text-2xl font-bold">{formatPrice(payment.amount, payment.currency)}</h1>
         {payment.description ? (
           <p className="mt-2 text-sm text-[#1b4332]/70">{payment.description}</p>
         ) : null}

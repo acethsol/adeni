@@ -1,38 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
 import { MessageCircle } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { useUnreadMessagesCount } from "@/lib/queries/portal-badges";
 
 export function BusinessPortalMessagesBell({ className }: { className?: string }) {
-  const pathname = usePathname();
-  const [count, setCount] = useState<number | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      try {
-        const response = await fetch("/api/business/messages/unread-count", { cache: "no-store" });
-        if (!response.ok) {
-          if (!cancelled) setCount(null);
-          return;
-        }
-
-        const payload = (await response.json()) as { count: number };
-        if (!cancelled) setCount(payload.count ?? 0);
-      } catch {
-        if (!cancelled) setCount(null);
-      }
-    }
-
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [pathname]);
+  const { data: count = null } = useUnreadMessagesCount();
 
   return (
     <Link

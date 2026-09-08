@@ -7,8 +7,3 @@ export function getCurrencySymbol(currency: string): string {
 
   return symbols[currency] ?? currency;
 }
-
-export function formatMarketCurrency(currency: string): string {
-  const symbol = getCurrencySymbol(currency);
-  return `${symbol} ${currency}`;
-}

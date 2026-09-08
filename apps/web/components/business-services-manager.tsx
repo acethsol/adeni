@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Clock3, Pencil, PlusCircle, Sparkles, Tag, Trash2 } from "lucide-react";
 import type { ServiceOffering } from "@adeni/shared";
+import { formatPrice } from "@adeni/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -59,14 +60,6 @@ function validateDraft(draft: ServiceDraft): DraftErrors {
   }
 
   return errors;
-}
-
-function formatPrice(amount: number, currency: string) {
-  try {
-    return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(amount);
-  } catch {
-    return `${currency} ${amount.toFixed(2)}`;
-  }
 }
 
 export function BusinessServicesManager({ initialServices, defaultCurrency = "NGN" }: Props) {

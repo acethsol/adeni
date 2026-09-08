@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { CalendarClock } from "lucide-react";
 import type { BookingResponse } from "@adeni/shared";
-import { formatBookingStatus } from "@adeni/shared";
+import { formatBookingStatus, formatSlotTime } from "@adeni/shared";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { useActionLoading } from "@/contexts/action-loading-context";
@@ -11,16 +11,6 @@ import { useConfirm } from "@/contexts/confirm-context";
 import { useToast } from "@/contexts/toast-context";
 
 const PENDING_STATUS = 0;
-
-function formatSlotTime(iso: string) {
-  return new Intl.DateTimeFormat(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(iso));
-}
 
 export function BusinessBookingInbox() {
   const { run } = useActionLoading();
