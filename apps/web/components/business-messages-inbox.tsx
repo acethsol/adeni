@@ -2,25 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { MessageTemplate, MessageThreadDetail, MessageThreadSummary } from "@adeni/shared";
+import { formatWhen } from "@adeni/shared";
 import { Button } from "@/components/ui/button";
 import { Callout } from "@/components/ui/callout";
 import { LoadingPanel } from "@/components/loading-panel";
 import { useToast } from "@/contexts/toast-context";
 import { useApiErrorMessage } from "@/lib/api-error";
 import { cn } from "@/lib/cn";
-
-function formatWhen(iso: string) {
-  try {
-    return new Date(iso).toLocaleString(undefined, {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  } catch {
-    return iso;
-  }
-}
 
 export function BusinessMessagesInbox() {
   const toast = useToast();

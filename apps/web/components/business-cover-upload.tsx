@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { resolveBusinessCoverImage } from "@adeni/shared";
+import { resolveBusinessCoverImage, MAX_UPLOAD_BYTES } from "@adeni/shared";
 import { useToast } from "@/contexts/toast-context";
 
 type Props = {
@@ -10,7 +10,6 @@ type Props = {
 };
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const MAX_BYTES = 5 * 1024 * 1024;
 
 export function BusinessCoverUpload({ categorySlug, coverImageUrl }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -34,7 +33,7 @@ export function BusinessCoverUpload({ categorySlug, coverImageUrl }: Props) {
       return;
     }
 
-    if (file.size > MAX_BYTES) {
+    if (file.size > MAX_UPLOAD_BYTES) {
       setError("Cover image must be 5 MB or smaller.");
       return;
     }

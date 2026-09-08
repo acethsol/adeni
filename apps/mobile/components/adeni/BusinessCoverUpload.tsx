@@ -3,9 +3,7 @@ import { Image } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { AdeniApiClient } from "@adeni/api-client";
-import { resolveBusinessCoverImage } from "@adeni/shared";
-
-const MAX_BYTES = 5 * 1024 * 1024;
+import { resolveBusinessCoverImage, MAX_UPLOAD_BYTES } from "@adeni/shared";
 
 type Props = {
   categorySlug: string;
@@ -51,7 +49,7 @@ export function BusinessCoverUpload({
       return;
     }
 
-    if ((asset.fileSize ?? 0) > MAX_BYTES) {
+    if ((asset.fileSize ?? 0) > MAX_UPLOAD_BYTES) {
       setError("Cover image must be 5 MB or smaller.");
       return;
     }

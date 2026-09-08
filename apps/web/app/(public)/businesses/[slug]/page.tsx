@@ -100,7 +100,6 @@ export default async function BusinessProfilePage({ params }: Props) {
       return { ...service, name, description };
     });
 
-    const session = await getOptionalSession();
     const bookingEnabled =
       Boolean(session) || (!isAuth0Configured() && Boolean(process.env.DEV_CUSTOMER_AUTH0_SUB));
     const showQuoteFlow = shouldShowQuoteFlow(profile);

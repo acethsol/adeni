@@ -11,7 +11,7 @@ apps/
 packages/
   api-client/          Typed .NET API client
   shared/              Zod schemas, roles, constants
-mobile/_archive/       Retired Flutter prototype
+The Flutter prototype was retired in the July 2026 pivot (ADR-010). It is not kept in this repository.
 ```
 
 ## Prerequisites

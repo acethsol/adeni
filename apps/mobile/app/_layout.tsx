@@ -156,7 +156,6 @@ function RootLayoutNav() {
                 headerBackTitle: "Back",
               }}
             />
-            <Stack.Screen name="modal" options={{ presentation: "modal" }} />
           </Stack>
         </ThemeProvider>
           </MarketProvider>

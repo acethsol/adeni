@@ -10,6 +10,7 @@ import {
 import { useRouter } from "expo-router";
 import type { AdeniApiError } from "@adeni/api-client";
 import type { MessageThreadDetail, MessageThreadSummary } from "@adeni/shared";
+import { formatWhen } from "@adeni/shared";
 import { Screen, ScreenHeader } from "@/components/adeni/Screen";
 import { Button } from "@/components/ui/Button";
 import { Callout } from "@/components/ui/Callout";
@@ -17,19 +18,6 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { useAuth } from "@/contexts/auth-context";
 import { isAuth0Configured } from "@/lib/auth/config";
 import { adeniTheme } from "@/lib/theme";
-
-function formatWhen(iso: string) {
-  try {
-    return new Date(iso).toLocaleString(undefined, {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  } catch {
-    return iso;
-  }
-}
 
 export default function MyMessagesScreen() {
   const router = useRouter();

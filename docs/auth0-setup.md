@@ -80,6 +80,6 @@ Use `appsettings.Staging.json` or environment variables — see previous docs.
 
 ## Archived Flutter client
 
-The Flutter prototype lives in `mobile/_archive/adeni_app_flutter` (July 2026 pivot). Do not use for new work.
+The Flutter prototype was retired in the July 2026 pivot (ADR-010). Do not use for new work.
 
 See [docs/frontend.md](frontend.md) and [Frontend Architecture v1 (Confluence)](https://aceth.atlassian.net/wiki/spaces/SD/pages/26968065).

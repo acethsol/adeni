@@ -38,9 +38,9 @@ Both apps use `@tanstack/react-query`:
 | My bookings | 30 sec | `queryKeys.myBookings` |
 
 - **Web provider:** `app/providers.tsx`
-- **Web hooks:** `lib/queries/public.ts`, `components/my-bookings-list.tsx`
+- **Web hooks:** `lib/queries/portal-badges.ts`, `components/my-bookings-list.tsx`
 - **Mobile provider:** `app/_layout.tsx` + `lib/query-client.ts`
-- **Mobile hooks:** `lib/queries/public.ts`, `lib/queries/bookings.ts`
+- **Mobile hooks:** `lib/queries/public.ts`
 
 Server-rendered Next.js pages also use `export const revalidate` on home (1h) and discover (2m) to align with API cache.
 

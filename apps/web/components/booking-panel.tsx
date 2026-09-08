@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { BookingResponse, ServiceOffering } from "@adeni/shared";
+import { formatPrice, formatSlotTime, slotRange } from "@adeni/shared";
 import { LoadingPanel } from "@/components/loading-panel";
 import { LegalAcceptanceField } from "@/components/legal-acceptance-field";
 import { BackLink } from "@/components/ui/back-link";
@@ -28,36 +29,6 @@ const BOOKING_STEPS = [
   { id: "slot", label: "Time" },
   { id: "confirm", label: "Confirm" },
 ] as const;
-
-function formatPrice(amount: number, currency: string) {
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-    }).format(amount);
-  } catch {
-    return `${currency} ${amount.toFixed(2)}`;
-  }
-}
-
-function formatSlotTime(iso: string) {
-  const date = new Date(iso);
-  return new Intl.DateTimeFormat(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date);
-}
-
-function slotRange(from: Date, days: number) {
-  const start = new Date(from);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(start);
-  end.setDate(end.getDate() + days);
-  return { from: start.toISOString(), to: end.toISOString() };
-}
 
 export function BookingPanel({
   slug,
@@ -164,7 +135,7 @@ export function BookingPanel({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Idempotency-Key": bookingIdempotencyKeyRef.current,
+            "Idempotency-Key": bookingIdempotencyKeyRef.current!,
           },
           body: JSON.stringify({
             tenantId,

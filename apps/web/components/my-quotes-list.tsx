@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { FileText } from "lucide-react";
 import type { QuoteRequestResponse } from "@adeni/shared";
-import { QUOTE_STATUS_LABELS } from "@adeni/shared";
+import { QUOTE_STATUS_LABELS, formatPrice, formatSlotTime } from "@adeni/shared";
 import { Button } from "@/components/ui/button";
 import { Callout } from "@/components/ui/callout";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -12,24 +12,6 @@ import { useActionLoading } from "@/contexts/action-loading-context";
 import { useConfirm } from "@/contexts/confirm-context";
 import { useToast } from "@/contexts/toast-context";
 import { useApiErrorMessage } from "@/lib/api-error";
-
-function formatDateTime(value: string): string {
-  return new Intl.DateTimeFormat(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
-
-function formatMoney(amount: number, currency: string): string {
-  try {
-    return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(amount);
-  } catch {
-    return `${currency} ${amount.toFixed(2)}`;
-  }
-}
 
 export function MyQuotesList() {
   const { run } = useActionLoading();
@@ -173,17 +155,17 @@ export function MyQuotesList() {
             </div>
           ) : null}
           <time className="mt-2 block text-xs text-muted-foreground">
-            Requested {formatDateTime(quote.createdAt)}
+            Requested {formatSlotTime(quote.createdAt)}
           </time>
 
           {quote.status === "quoted" && quote.quotedAmount != null && quote.quotedCurrency ? (
             <div className="mt-4 rounded-lg border border-accent/20 bg-accent/5 p-4">
               <p className="text-lg font-bold text-foreground">
-                {formatMoney(quote.quotedAmount, quote.quotedCurrency)}
+                {formatPrice(quote.quotedAmount, quote.quotedCurrency)}
               </p>
               {quote.proposedStartAt && quote.proposedEndAt ? (
                 <p className="mt-1 text-sm text-muted">
-                  Proposed: {formatDateTime(quote.proposedStartAt)} – {formatDateTime(quote.proposedEndAt)}
+                  Proposed: {formatSlotTime(quote.proposedStartAt)} – {formatSlotTime(quote.proposedEndAt)}
                 </p>
               ) : null}
               {quote.quoteNotes ? (

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { CustomerBookingResponse } from "@adeni/shared";
-import { formatBookingStatusLabel, queryKeys, staleTimes } from "@adeni/shared";
+import { formatBookingStatusLabel, formatSlotTime, queryKeys, staleTimes } from "@adeni/shared";
 import { BookingReviewForm, BookingReviewSummary } from "@/components/booking-review-form";
 import { TranslatedText } from "@/components/translated-text";
 import { useTranslation } from "@/components/locale-provider";
@@ -12,17 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Callout } from "@/components/ui/callout";
 import { EmptyState } from "@/components/ui/empty-state";
+import { SkeletonList } from "@/components/ui/skeleton";
 import { WhatsAppBookingButton } from "@/components/whatsapp-booking-button";
-
-function formatSlotTime(iso: string, locale: string) {
-  return new Intl.DateTimeFormat(locale, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(iso));
-}
 
 function isUpcomingBooking(booking: CustomerBookingResponse): boolean {
   if (booking.status === 2 || booking.status === 3) {
