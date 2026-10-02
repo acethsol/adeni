@@ -123,7 +123,8 @@ Concrete tactics:
 - [ ] Staging routing plan documented (Azure: Front Door / App Service / Container Apps paths).
 - [ ] OpenAPI codegen path chosen for Angular (e.g. `ng-openapi` or shared package strategy).
 - [ ] Auth0 applications/callback URLs defined for **discover**, **portal**, and **admin** origins.
-- [ ] First Angular app scaffold merged with CI (lint, test, build SSR where required).
+- [x] First Angular app scaffold merged (`apps/portal`, Auth0 SPA + `@adeni/api-client`, dev sub).
+- [ ] CI job for `npm run build:portal` on PRs.
 
 ## References
 

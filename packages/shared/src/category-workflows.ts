@@ -34,7 +34,7 @@ export function capabilitiesForBusiness(
     businessType === "quote_request" ? "quote_request" : "scheduled_appointment";
 
   if (normalizedType === "quote_request") {
-    return workflowCatalog.businessTypes.quote_request.capabilities ?? [];
+    return workflowCatalog.businessTypes["quote_request"].capabilities ?? [];
   }
 
   const normalizedCategory = categorySlug.trim().toLowerCase();

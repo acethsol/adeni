@@ -4,8 +4,9 @@
 
 | App type | Client | Used by |
 |----------|--------|---------|
-| **Regular Web** | Next.js (`@auth0/nextjs-auth0`) | Public, business, admin web |
-| **Native** | Expo AuthSession | iOS + Android mobile |
+| **Regular Web** | Next.js (`@auth0/nextjs-auth0`) | Legacy web until strangler completes |
+| **SPA (PKCE)** | `@auth0/auth0-angular` | `apps/portal`, `apps/discover`, `apps/admin` (Angular) |
+| **Native** | Expo AuthSession | iOS + Android mobile (until Flutter) |
 
 Create Auth0 **API** with identifier `https://api.adeni.io` (matches `Auth0:Audience`).
 
@@ -35,6 +36,13 @@ exports.onExecutePostLogin = async (event, api) => {
 2. Create **Action** `Require MFA for Admin` on Login flow.
 3. Set `Auth0:RequireMfaForAdmin=true` in API config.
 4. API policy `AdminMfaPolicy` rejects admin JWTs without `amr: mfa`.
+
+## Angular portal (`apps/portal`)
+
+1. Create Auth0 **Single Page Application** (not Regular Web).
+2. Callback / logout / web origins: `http://localhost:5173` (local).
+3. Set `auth0.domain`, `auth0.clientId`, and `auth0.audience` in `apps/portal/src/environments/environment.development.ts` (see `apps/portal/.env.example.md`).
+4. Local dev without Auth0: keep `devBusinessAuth0Sub` (same as Next `DEV_BUSINESS_AUTH0_SUB`) with API `Auth0:Enabled: false`.
 
 ## Next.js web
 

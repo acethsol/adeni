@@ -34,7 +34,7 @@ packages/
 
 | Step | Done |
 |------|------|
-| Scaffold `apps/portal` (Angular 22+; CSR or SSR only if needed) | ☐ |
+| Scaffold `apps/portal` (Angular 22+; CSR or SSR only if needed) | ☑ (Angular 19 until Node 22.22+) |
 | Scaffold `apps/admin` (Angular 22+; CSR typical) | ☐ |
 | Scaffold `apps/discover` (SSR/prerender for `/`, `/discover`, `/businesses/:slug`) | ☐ |
 | Root scripts: `dev:portal`, `dev:admin`, `dev:discover`, CI jobs per app | ☐ |
