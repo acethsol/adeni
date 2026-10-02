@@ -4,7 +4,7 @@ Angular strangler target for Next.js `/business/*`. See [ADR-012](../../docs/adr
 
 ## Stack
 
-- Angular **19** (upgrade to **22** when Node ≥ 22.22 — see root engines)
+- Angular **22** (requires **Node ≥ 22.22.3** — use `nvm use` from repo `.nvmrc`)
 - `@auth0/auth0-angular` (SPA / PKCE)
 - `@adeni/api-client` + `@adeni/shared` via TypeScript path mapping
 
