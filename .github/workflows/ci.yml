@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
-    branches: [main]
+    branches: [main, dev]
 
 jobs:
   build-and-test:
@@ -58,3 +58,20 @@ jobs:
 
       - name: Vulnerability scan
         run: dotnet list Adeni.slnx package --vulnerable --include-transitive
+
+  portal-angular:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.22.3"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Angular portal
+        run: npm run build:portal

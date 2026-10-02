@@ -1,6 +1,12 @@
 import { Routes } from "@angular/router";
 import { PortalShellComponent } from "./layout/portal-shell.component";
 import { DashboardComponent } from "./pages/dashboard/dashboard.component";
+import { BookingsComponent } from "./pages/bookings/bookings.component";
+import { ServicesComponent } from "./pages/services/services.component";
+import { LocationsComponent } from "./pages/locations/locations.component";
+import { AvailabilityComponent } from "./pages/availability/availability.component";
+import { ProfileComponent } from "./pages/profile/profile.component";
+import { RegisterComponent } from "./pages/register/register.component";
 import { PlaceholderPageComponent } from "./pages/placeholder/placeholder-page.component";
 import { SetupComponent } from "./pages/setup/setup.component";
 import { ForbiddenComponent } from "./pages/forbidden/forbidden.component";
@@ -17,31 +23,12 @@ export const routes: Routes = [
     children: [
       { path: "", pathMatch: "full", redirectTo: "dashboard" },
       { path: "dashboard", component: DashboardComponent },
-      {
-        path: "bookings",
-        component: PlaceholderPageComponent,
-        data: { title: "Bookings", slug: "bookings" },
-      },
-      {
-        path: "services",
-        component: PlaceholderPageComponent,
-        data: { title: "Services", slug: "services" },
-      },
-      {
-        path: "locations",
-        component: PlaceholderPageComponent,
-        data: { title: "Locations", slug: "locations" },
-      },
-      {
-        path: "availability",
-        component: PlaceholderPageComponent,
-        data: { title: "Availability", slug: "availability" },
-      },
-      {
-        path: "profile",
-        component: PlaceholderPageComponent,
-        data: { title: "Profile", slug: "profile" },
-      },
+      { path: "bookings", component: BookingsComponent },
+      { path: "services", component: ServicesComponent },
+      { path: "locations", component: LocationsComponent },
+      { path: "availability", component: AvailabilityComponent },
+      { path: "profile", component: ProfileComponent },
+      { path: "register", component: RegisterComponent },
       {
         path: "payments",
         component: PlaceholderPageComponent,

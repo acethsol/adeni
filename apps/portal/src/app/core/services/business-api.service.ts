@@ -14,8 +14,19 @@ export class BusinessApiService {
   private readonly config = inject(ADENI_PORTAL_CONFIG);
   private readonly auth = inject(AuthService, { optional: true });
 
-  private createClient(): AdeniApiClient {
+  createPublicClient(): AdeniApiClient {
     return new AdeniApiClient({ baseUrl: this.config.apiBaseUrl });
+  }
+
+  private createClient(): AdeniApiClient {
+    return this.createPublicClient();
+  }
+
+  async withAuthorizedClient<T>(
+    fn: (client: AdeniApiClient) => Promise<T>,
+  ): Promise<T> {
+    const client = await this.createAuthorizedClient();
+    return fn(client);
   }
 
   async createAuthorizedClient(): Promise<AdeniApiClient> {

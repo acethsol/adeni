@@ -1,0 +1,38 @@
+<app-portal-page
+  title="Availability"
+  description="Set weekly hours customers can book."
+>
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  } @else {
+    <section class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>Day</th>
+            <th>Closed</th>
+            <th>Open</th>
+            <th>Close</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows; track row.dayOfWeek) {
+            <tr>
+              <td>{{ dayLabels[row.dayOfWeek] }}</td>
+              <td><input type="checkbox" [(ngModel)]="row.closed" /></td>
+              <td><input type="time" [(ngModel)]="row.openTime" [disabled]="row.closed" /></td>
+              <td><input type="time" [(ngModel)]="row.closeTime" [disabled]="row.closed" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <button type="button" class="btn btn-primary save" [disabled]="saving()" (click)="save()">
+        {{ saving() ? "Saving…" : "Save hours" }}
+      </button>
+    </section>
+  }
+</app-portal-page>

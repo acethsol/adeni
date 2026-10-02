@@ -124,7 +124,7 @@ Concrete tactics:
 - [ ] OpenAPI codegen path chosen for Angular (e.g. `ng-openapi` or shared package strategy).
 - [ ] Auth0 applications/callback URLs defined for **discover**, **portal**, and **admin** origins.
 - [x] First Angular app scaffold merged (`apps/portal`, Auth0 SPA + `@adeni/api-client`, dev sub).
-- [ ] CI job for `npm run build:portal` on PRs.
+- [x] CI job for `npm run build:portal` on PRs (`.github/workflows/ci.yml` → `portal-angular`).
 
 ## References
 

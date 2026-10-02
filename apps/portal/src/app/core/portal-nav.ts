@@ -10,6 +10,7 @@ export const PORTAL_NAV: PortalNavItem[] = [
   { path: "/locations", label: "Locations" },
   { path: "/availability", label: "Availability" },
   { path: "/profile", label: "Profile" },
+  { path: "/register", label: "Register" },
   { path: "/payments", label: "Payments" },
   { path: "/plan", label: "Plan" },
 ];

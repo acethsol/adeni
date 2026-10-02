@@ -11,7 +11,7 @@ Companion to [ADR-012](./adr/ADR-012-angular-web-deferred-flutter.md). Use this 
 | Step | Done |
 |------|------|
 | ADR-012 accepted — three apps: `discover`, `portal`, `admin` | ☑ |
-| Add Auth0 SPA configs: discover, portal, admin origins + callback/logout URLs | ☐ |
+| Add Auth0 SPA configs: discover, portal, admin origins + callback/logout URLs | ☐ (deferred until Azure/staging) |
 | Choose OpenAPI → TypeScript client for Angular (regenerate in CI from `src/Adeni.Api`) | ☐ |
 | Document staging URL map (which paths hit Next vs each Angular app) | ☐ |
 | Copy market resolution rules from [markets.md](./markets.md) + `@adeni/shared` behavior | ☐ |
@@ -37,7 +37,7 @@ packages/
 | Scaffold `apps/portal` (Angular 22+; CSR or SSR only if needed) | ☑ |
 | Scaffold `apps/admin` (Angular 22+; CSR typical) | ☐ |
 | Scaffold `apps/discover` (SSR/prerender for `/`, `/discover`, `/businesses/:slug`) | ☐ |
-| Root scripts: `dev:portal`, `dev:admin`, `dev:discover`, CI jobs per app | ☐ |
+| Root scripts: `dev:portal`, `dev:admin`, `dev:discover`, CI jobs per app | ☑ portal (`dev:portal` + CI `portal-angular` job) |
 | Shared eslint/prettier or Nx boundary rules (optional) | ☐ |
 
 ---
@@ -109,12 +109,13 @@ Every handler under `apps/web/app/api/**` must end as **A**, **B**, or **C**:
 
 | Area | Next reference | Done |
 |------|----------------|------|
-| Auth0 login / role gate (business) | `/business/*` | ☐ |
-| Dashboard shell + nav | | ☐ |
-| Profile + cover upload | | ☐ |
-| Services CRUD | | ☐ |
-| Locations + availability | | ☐ |
-| Bookings inbox (accept/reject) | | ☐ |
+| Auth0 login / role gate (business) | `/business/*` | ☐ (dev sub OK; Auth0 SPA later) |
+| Dashboard shell + nav | | ☑ |
+| Profile + cover upload | | ☑ |
+| Services CRUD | | ☑ |
+| Locations + availability | | ☑ |
+| Bookings inbox (accept/reject) | | ☑ |
+| Register (new business) | | ☑ |
 | Reviews panel | | ☐ |
 | Payments / subscription / verification | | ☐ |
 | Settings + share kit / plan (if present) | | ☐ |
