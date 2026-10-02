@@ -11,7 +11,7 @@ Companion to [ADR-012](./adr/ADR-012-angular-web-deferred-flutter.md). Use this 
 | Step | Done |
 |------|------|
 | ADR-012 accepted — three apps: `discover`, `portal`, `admin` | ☑ |
-| Add Auth0 SPA configs: discover, portal, admin origins + callback/logout URLs | ☐ (deferred until Azure/staging) |
+| Add Auth0 SPA configs: discover, portal, admin origins + callback/logout URLs | ☑ wired in Angular env; **Auth0 tenant registration deferred** until staging (dev subs OK) |
 | Choose OpenAPI → TypeScript client for Angular (regenerate in CI from `src/Adeni.Api`) | ☐ |
 | Document staging URL map (which paths hit Next vs each Angular app) | ☐ |
 | Copy market resolution rules from [markets.md](./markets.md) + `@adeni/shared` behavior | ☐ |
@@ -144,10 +144,12 @@ Every handler under `apps/web/app/api/**` must end as **A**, **B**, or **C**:
 
 | Area | Next reference | Done |
 |------|----------------|------|
-| `/` landing + categories | SSR metadata | ☑ landing; categories on discover |
-| `/discover` search + filters | | ☑ MVP (Lagos default; filters partial) |
-| `/businesses/[slug]` profile SSR | JSON-LD / OG tags parity | ☑ profile + services; OG/JSON-LD later |
-| Booking flow + waitlist | | ☐ |
+| `/` landing + categories | SSR metadata | ☑ title/description + OG via `SeoService` |
+| `/discover` search + filters | | ☑ category, q, sort, minRating; market/geo cookies |
+| `/businesses/[slug]` profile SSR | JSON-LD / OG tags parity | ☑ LocalBusiness JSON-LD + OG on profile |
+| Booking flow + waitlist | | ☑ booking wizard, waitlist, deposit redirect; quote flow |
+| `/my-bookings` | | ☑ list + cancel |
+| Market cookies (`adeni_market`, `adeni_coords`, `?market=`) | | ☑ shared constants in `@adeni/shared` |
 | Quote requests (Sprint 19) | | ☐ |
 | Ask Adeni (rule-based → Sprint 20 LLM UI) | API-first widget | ☐ |
 | Legal / market cookie / `?market=` | | ☐ |

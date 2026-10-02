@@ -49,6 +49,13 @@ exports.onExecutePostLogin = async (event, api) => {
 1. Auth0 **SPA** (when staging/Azure is ready) — separate client; callback `http://localhost:5180`.
 2. Local dev without Auth0: `devAdminAuth0Sub: "auth0|local-admin"` in `apps/admin/src/environments/environment.development.ts` (`DevAdminAuthMiddleware` on the API).
 
+## Angular discover (`apps/discover`)
+
+1. Auth0 **SPA** for **customers** — separate client from portal/admin; callback `http://localhost:5190`.
+2. Local dev without Auth0: `devCustomerAuth0Sub: "auth0|local-customer"` (same as Next `DEV_CUSTOMER_AUTH0_SUB` / API seeder).
+3. See `apps/discover/.env.example.md` for environment fields (`publicAppUrl`, optional `envMarketId`).
+4. **You can defer Auth0 registration** until staging: leave `auth0.domain` / `clientId` empty and use dev customer sub with `Auth0:Enabled: false` on the API.
+
 ## Next.js web
 
 1. Create Auth0 **Regular Web Application** for Next.js.
@@ -82,7 +89,9 @@ Development (`appsettings.Development.json`):
 "Cors": {
   "AllowedOrigins": [
     "http://localhost:3000",
-    "http://localhost:5173"
+    "http://localhost:5173",
+    "http://localhost:5180",
+    "http://localhost:5190"
   ]
 }
 ```

@@ -38,4 +38,17 @@
       </ul>
     </section>
   }
+
+  @if (showQuoteFlow(p)) {
+    <app-quote-request-panel [slug]="p.slug" [enabled]="bookingEnabled()" />
+  } @else {
+    <app-booking-panel
+      [slug]="p.slug"
+      [tenantId]="p.tenantId"
+      [services]="services()"
+      [bookingEnabled]="bookingEnabled()"
+      [supportsDeposits]="supportsDeposits(p)"
+      [depositPercent]="p.depositPercent ?? 0"
+    />
+  }
 }

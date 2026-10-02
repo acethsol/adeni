@@ -1,0 +1,147 @@
+.panel {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+}
+
+.panel.success {
+  border-color: #6ee7b7;
+}
+
+h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.tiny {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.error {
+  color: #b91c1c;
+  font-size: 0.85rem;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.services {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.service-row {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.price {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.slots {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+}
+
+.slot-btn {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: #fff;
+  cursor: pointer;
+}
+
+.link {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--accent);
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.back {
+  margin-top: 0.5rem;
+}
+
+.summary {
+  margin: 1rem 0;
+  font-size: 0.9rem;
+}
+
+.summary dt {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.notes {
+  display: block;
+  font-size: 0.85rem;
+}
+
+.notes textarea {
+  width: 100%;
+  margin-top: 0.35rem;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+
+.deposit {
+  font-size: 0.85rem;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background: #ecfdf5;
+}
+
+.primary {
+  margin-top: 1rem;
+  padding: 0.65rem 1.25rem;
+  border: 0;
+  border-radius: 999px;
+  background: #0b3d2e;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary:disabled {
+  opacity: 0.6;
+}
+
+.strong {
+  font-weight: 600;
+}

@@ -1,6 +1,8 @@
 <header class="page-head">
   <h1>Discover</h1>
-  <p class="muted">Businesses near Lagos (dev default market).</p>
+  @if (market.market(); as m) {
+    <p class="muted">Businesses near you in {{ m.name }}.</p>
+  }
 </header>
 
 @if (error()) {
@@ -17,19 +19,31 @@
   <button type="submit">Search</button>
 </form>
 
-@if (categories().length > 0) {
-  <div class="filters">
+<div class="sort-row">
+  <span class="muted">Sort:</span>
+  <a routerLink="/discover" [queryParams]="filterQuery({ sort: 'distance' })" [class.active]="sort === 'distance'">Nearest</a>
+  <a routerLink="/discover" [queryParams]="filterQuery({ sort: 'featured' })" [class.active]="sort === 'featured'">Featured</a>
+  <span class="muted">Rating:</span>
+  @for (r of [4, 5]; track r) {
     <a
       routerLink="/discover"
-      [class.active]="!selectedCategory"
-      [queryParams]="{}"
+      [queryParams]="filterQuery({ minRating: minRating === r ? null : r })"
+      [class.active]="minRating === r"
     >
+      {{ r }}★+
+    </a>
+  }
+</div>
+
+@if (categories().length > 0) {
+  <div class="filters">
+    <a routerLink="/discover" [queryParams]="filterQuery({ category: null })" [class.active]="!selectedCategory">
       All
     </a>
     @for (cat of categories(); track cat.slug) {
       <a
         routerLink="/discover"
-        [queryParams]="{ category: cat.slug, q: searchQuery || null }"
+        [queryParams]="filterQuery({ category: cat.slug })"
         [class.active]="selectedCategory === cat.slug"
       >
         {{ cat.name }}
