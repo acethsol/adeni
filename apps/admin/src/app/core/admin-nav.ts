@@ -8,4 +8,5 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { path: "/pending", label: "Pending verifications" },
   { path: "/markets", label: "Markets" },
   { path: "/businesses", label: "Businesses" },
+  { path: "/customers", label: "Customer privacy" },
 ];

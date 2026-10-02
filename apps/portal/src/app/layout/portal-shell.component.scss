@@ -140,6 +140,12 @@
   font-weight: 700;
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .status-pill {
   padding: 0.35rem 0.65rem;
   border-radius: 999px;

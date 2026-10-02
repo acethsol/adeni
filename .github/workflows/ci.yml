@@ -78,3 +78,6 @@ jobs:
 
       - name: Build Angular admin
         run: npm run build:admin
+
+      - name: Build Angular discover
+        run: npm run build:discover

@@ -36,8 +36,8 @@ packages/
 |------|------|
 | Scaffold `apps/portal` (Angular 22+; CSR or SSR only if needed) | ☑ |
 | Scaffold `apps/admin` (Angular 22+; CSR typical) | ☑ |
-| Scaffold `apps/discover` (SSR/prerender for `/`, `/discover`, `/businesses/:slug`) | ☐ |
-| Root scripts: `dev:portal`, `dev:admin`, `dev:discover`, CI jobs per app | ☑ portal + admin (`dev:portal`, `dev:admin`; CI builds both) |
+| Scaffold `apps/discover` (SSR/prerender for `/`, `/discover`, `/businesses/:slug`) | ☑ MVP SSR (`/`, `/discover`, `/businesses/:slug`; booking flow later) |
+| Root scripts: `dev:portal`, `dev:admin`, `dev:discover`, CI jobs per app | ☑ (`dev:discover` :5190; CI builds portal + admin + discover) |
 | Shared eslint/prettier or Nx boundary rules (optional) | ☐ |
 
 ---
@@ -119,7 +119,8 @@ Every handler under `apps/web/app/api/**` must end as **A**, **B**, or **C**:
 | Reviews panel | | ☐ |
 | Payments / subscription / verification | | ☑ payments + plan; verification on profile |
 | Settings + share kit / plan (if present) | | ☑ share kit on profile; booking settings on profile |
-| Messaging (Sprint 18) | | ☐ |
+| Messaging (Sprint 18) | | ☑ WhatsApp templates + nav; in-app threads when API lands |
+| Pending bookings bell (topbar) | `business-portal-bell.tsx` | ☑ |
 
 **Cutover:** proxy `/business/*` to `apps/portal` in staging → production.
 
@@ -132,7 +133,7 @@ Every handler under `apps/web/app/api/**` must end as **A**, **B**, or **C**:
 | Auth0 login / role gate (admin only) | `/admin/*` | ☐ Auth0 SPA later; dev `auth0\|local-admin` |
 | Pending businesses approve/reject | | ☑ |
 | Business list + subscription tier | | ☑ |
-| Customers list / export / delete | | ☐ |
+| Customers list / export / delete | | ☑ `/customers` search, export, erasure |
 | Markets CRUD + go-live | | ☑ go-live toggle (CRUD later) |
 
 **Cutover:** proxy `/admin/*` to `apps/admin`. Prefer **separate origin or subdomain** in production (e.g. `admin.adeni.com`) if convenient.
@@ -143,9 +144,9 @@ Every handler under `apps/web/app/api/**` must end as **A**, **B**, or **C**:
 
 | Area | Next reference | Done |
 |------|----------------|------|
-| `/` landing + categories | SSR metadata | ☐ |
-| `/discover` search + filters | | ☐ |
-| `/businesses/[slug]` profile SSR | JSON-LD / OG tags parity | ☐ |
+| `/` landing + categories | SSR metadata | ☑ landing; categories on discover |
+| `/discover` search + filters | | ☑ MVP (Lagos default; filters partial) |
+| `/businesses/[slug]` profile SSR | JSON-LD / OG tags parity | ☑ profile + services; OG/JSON-LD later |
 | Booking flow + waitlist | | ☐ |
 | Quote requests (Sprint 19) | | ☐ |
 | Ask Adeni (rule-based → Sprint 20 LLM UI) | API-first widget | ☐ |

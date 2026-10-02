@@ -10,11 +10,12 @@ import {
   isAuth0Configured,
   isBusinessPortalDevMode,
 } from "../core/adeni-config";
+import { PendingBookingsBellComponent } from "../shared/pending-bookings-bell.component";
 
 @Component({
   selector: "app-portal-shell",
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, AsyncPipe],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, AsyncPipe, PendingBookingsBellComponent],
   templateUrl: "./portal-shell.component.html",
   styleUrl: "./portal-shell.component.scss",
 })

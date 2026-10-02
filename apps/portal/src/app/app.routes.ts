@@ -9,6 +9,7 @@ import { ProfileComponent } from "./pages/profile/profile.component";
 import { RegisterComponent } from "./pages/register/register.component";
 import { PaymentsComponent } from "./pages/payments/payments.component";
 import { PlanComponent } from "./pages/plan/plan.component";
+import { MessagesComponent } from "./pages/messages/messages.component";
 import { SetupComponent } from "./pages/setup/setup.component";
 import { ForbiddenComponent } from "./pages/forbidden/forbidden.component";
 import { portalAccessGuard } from "./core/guards/portal-access.guard";
@@ -25,6 +26,7 @@ export const routes: Routes = [
       { path: "", pathMatch: "full", redirectTo: "dashboard" },
       { path: "dashboard", component: DashboardComponent },
       { path: "bookings", component: BookingsComponent },
+      { path: "messages", component: MessagesComponent },
       { path: "services", component: ServicesComponent },
       { path: "locations", component: LocationsComponent },
       { path: "availability", component: AvailabilityComponent },

@@ -4,6 +4,7 @@ import { AdminDashboardComponent } from "./pages/dashboard/dashboard.component";
 import { AdminPendingComponent } from "./pages/pending/pending.component";
 import { AdminMarketsComponent } from "./pages/markets/markets.component";
 import { AdminBusinessesComponent } from "./pages/businesses/businesses.component";
+import { AdminCustomersComponent } from "./pages/customers/customers.component";
 import { SetupComponent } from "./pages/setup/setup.component";
 import { ForbiddenComponent } from "./pages/forbidden/forbidden.component";
 import { adminAccessGuard } from "./core/guards/admin-access.guard";
@@ -22,6 +23,7 @@ export const routes: Routes = [
       { path: "pending", component: AdminPendingComponent },
       { path: "markets", component: AdminMarketsComponent },
       { path: "businesses", component: AdminBusinessesComponent },
+      { path: "customers", component: AdminCustomersComponent },
     ],
   },
   { path: "**", redirectTo: "dashboard" },

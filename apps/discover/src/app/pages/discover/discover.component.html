@@ -1,0 +1,65 @@
+<header class="page-head">
+  <h1>Discover</h1>
+  <p class="muted">Businesses near Lagos (dev default market).</p>
+</header>
+
+@if (error()) {
+  <p class="error">{{ error() }}</p>
+}
+
+<form class="search" (submit)="$event.preventDefault(); load()">
+  <input
+    type="search"
+    name="q"
+    [(ngModel)]="searchQuery"
+    placeholder="Search services or businesses"
+  />
+  <button type="submit">Search</button>
+</form>
+
+@if (categories().length > 0) {
+  <div class="filters">
+    <a
+      routerLink="/discover"
+      [class.active]="!selectedCategory"
+      [queryParams]="{}"
+    >
+      All
+    </a>
+    @for (cat of categories(); track cat.slug) {
+      <a
+        routerLink="/discover"
+        [queryParams]="{ category: cat.slug, q: searchQuery || null }"
+        [class.active]="selectedCategory === cat.slug"
+      >
+        {{ cat.name }}
+      </a>
+    }
+  </div>
+}
+
+@if (loading()) {
+  <p class="muted">Loading…</p>
+} @else if (items().length === 0) {
+  <p class="muted">No businesses found.</p>
+} @else {
+  <p class="count">{{ totalCount() }} results</p>
+  <ul class="grid">
+    @for (item of items(); track item.locationId) {
+      <li>
+        <a class="card" [routerLink]="['/businesses', item.slug]">
+          <img [src]="coverFor(item.categorySlug, item.coverImageUrl)" alt="" />
+          <div>
+            <h2>{{ item.name }}</h2>
+            <p class="muted">
+              {{ categoryLabel("en", item.categorySlug) }} · {{ item.area }}
+              @if (item.distanceKm != null) {
+                · {{ item.distanceKm | number: "1.0-1" }} km
+              }
+            </p>
+          </div>
+        </a>
+      </li>
+    }
+  </ul>
+}
