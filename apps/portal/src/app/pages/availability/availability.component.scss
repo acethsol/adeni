@@ -1,0 +1,22 @@
+@use "../../shared/portal-card";
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+th,
+td {
+  padding: 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.save {
+  margin-top: 1rem;
+}
+
+.muted {
+  color: var(--text-muted);
+}

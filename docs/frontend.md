@@ -6,7 +6,10 @@ Next.js (web) + Expo (mobile) clients for the Adeni marketplace API. Backend is 
 
 ```
 apps/
-  web/                 Next.js — public, business, admin portals
+  discover/            Angular SSR — planned (ADR-012)
+  portal/              Angular — business portal (strangler; `npm run dev:portal`)
+  admin/               Angular — planned (ADR-012)
+  web/                 Next.js — legacy until strangler complete
   mobile/              Expo — unified customer + business app
 packages/
   api-client/          Typed .NET API client
@@ -68,3 +71,4 @@ Set API URL in app config (see `apps/mobile/README.md`).
 
 - [Frontend Architecture v1 (Confluence)](https://aceth.atlassian.net/wiki/spaces/SD/pages/26968065)
 - [auth0-setup.md](docs/auth0-setup.md)
+- **Web target (ADR-012):** `apps/discover`, `apps/portal`, `apps/admin` (Angular) — [ADR](./adr/ADR-012-angular-web-deferred-flutter.md), [checklist](./angular-migration-checklist.md). Until migration completes, use `apps/web` (Next.js) below.

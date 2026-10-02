@@ -1,0 +1,12 @@
+<section class="setup">
+  <h1>Configure business portal access</h1>
+  <p>
+    Set Auth0 SPA credentials in <code>src/environments/environment.development.ts</code>, or keep
+    <code>devBusinessAuth0Sub</code> for local API dev (Auth0 disabled on the API).
+  </p>
+  <ul>
+    <li>Copy fields from <code>apps/portal/.env.example.md</code> into your environment file.</li>
+    <li>Create an Auth0 <strong>Single Page Application</strong> (PKCE) for the portal — not the Next confidential client.</li>
+    <li>Callback URL: <code>http://localhost:5173</code></li>
+  </ul>
+</section>

@@ -1,0 +1,66 @@
+<app-portal-page
+  title="Register your business"
+  description="Tell customers who you are, where you are, and what you offer."
+>
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  } @else if (profile(); as p) {
+    <section class="card">
+      <h3>Already registered</h3>
+      <p>
+        <strong>{{ p.businessName }}</strong> is linked to this account.
+      </p>
+      <a routerLink="/dashboard" class="btn btn-primary">Go to dashboard</a>
+    </section>
+  } @else {
+    <section class="card">
+      <div class="field">
+        <label>Business name</label>
+        <input [(ngModel)]="businessName" (blur)="suggestSlug()" />
+      </div>
+      <div class="field">
+        <label>Category</label>
+        <select [(ngModel)]="categorySlug">
+          @for (cat of categories(); track cat.slug) {
+            <option [value]="cat.slug">{{ cat.name }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label>Phone</label>
+        <input [(ngModel)]="phone" />
+      </div>
+      <div class="field">
+        <label>Description</label>
+        <textarea rows="2" [(ngModel)]="description"></textarea>
+      </div>
+      <div class="field">
+        <label>Public slug</label>
+        <input [(ngModel)]="slug" />
+      </div>
+      <div class="field">
+        <label>Address</label>
+        <input [(ngModel)]="addressLine" />
+      </div>
+      <div class="field">
+        <label>Area</label>
+        <input [(ngModel)]="area" />
+      </div>
+      <div class="field">
+        <label>Market</label>
+        <select [(ngModel)]="marketId">
+          @for (m of markets(); track m.id) {
+            <option [value]="m.id">{{ m.name }}</option>
+          }
+        </select>
+      </div>
+      <button type="button" class="btn btn-primary" [disabled]="submitting()" (click)="submit()">
+        {{ submitting() ? "Submitting…" : "Register business" }}
+      </button>
+    </section>
+  }
+</app-portal-page>

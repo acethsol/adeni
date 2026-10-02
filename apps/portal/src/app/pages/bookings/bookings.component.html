@@ -1,0 +1,70 @@
+<app-portal-page
+  title="Booking inbox"
+  description="Accept or reject pending customer bookings."
+>
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="muted">Loading bookings…</p>
+  } @else {
+    <section class="card">
+      <h3>Pending ({{ pending().length }})</h3>
+      @if (pending().length === 0) {
+        <p class="muted">No pending bookings.</p>
+      } @else {
+        <ul class="booking-list">
+          @for (booking of pending(); track booking.id) {
+            <li class="list-row">
+              <div>
+                <strong>{{ booking.serviceName }}</strong>
+                <p class="muted">{{ formatSlotTime(booking.startAt) }}</p>
+                @if (booking.customerNotes) {
+                  <p class="note">“{{ booking.customerNotes }}”</p>
+                }
+              </div>
+              <div class="actions">
+                <button
+                  type="button"
+                  class="btn btn-danger"
+                  [disabled]="actionId() === booking.id"
+                  (click)="reject(booking)"
+                >
+                  Reject
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  [disabled]="actionId() === booking.id"
+                  (click)="accept(booking)"
+                >
+                  Accept
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <section class="card">
+      <h3>Recent</h3>
+      @if (recent().length === 0) {
+        <p class="muted">No past bookings yet.</p>
+      } @else {
+        <ul class="booking-list">
+          @for (booking of recent(); track booking.id) {
+            <li class="list-row">
+              <div>
+                <strong>{{ booking.serviceName }}</strong>
+                <p class="muted">{{ formatSlotTime(booking.startAt) }}</p>
+              </div>
+              <span class="status">{{ formatBookingStatus(booking.status) }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+</app-portal-page>

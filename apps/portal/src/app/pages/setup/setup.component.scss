@@ -1,0 +1,22 @@
+.setup {
+  max-width: 40rem;
+  margin: 4rem auto;
+  padding: 2rem;
+  border-radius: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+h1 {
+  margin: 0 0 0.75rem;
+  font-size: 1.35rem;
+}
+
+p {
+  color: var(--text-muted);
+}
+
+ul {
+  padding-left: 1.25rem;
+  line-height: 1.6;
+}

@@ -1,0 +1,71 @@
+<app-portal-page title="Locations" description="Manage branches and public profile URLs.">
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  <button type="button" class="btn btn-primary toolbar" (click)="openCreate()">Add location</button>
+
+  @if (showForm()) {
+    <section class="card">
+      <h3>{{ editingId() ? "Edit location" : "New location" }}</h3>
+      <div class="field">
+        <label>Slug</label>
+        <input [(ngModel)]="draft.slug" />
+      </div>
+      <div class="field">
+        <label>Display name</label>
+        <input [(ngModel)]="draft.name" />
+      </div>
+      <div class="field">
+        <label>Address</label>
+        <input [(ngModel)]="draft.addressLine" />
+      </div>
+      <div class="field">
+        <label>Area</label>
+        <input [(ngModel)]="draft.area" />
+      </div>
+      <div class="field">
+        <label>Market</label>
+        <select [(ngModel)]="draft.marketId">
+          @for (m of markets(); track m.id) {
+            <option [value]="m.id">{{ m.name }}</option>
+          }
+        </select>
+      </div>
+      <label class="check">
+        <input type="checkbox" [(ngModel)]="draft.isPrimary" />
+        Primary location
+      </label>
+      <div class="actions">
+        <button type="button" class="btn" (click)="cancelForm()">Cancel</button>
+        <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="save()">Save</button>
+      </div>
+    </section>
+  }
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  } @else {
+    <section class="card">
+      <ul class="plain">
+        @for (loc of locations(); track loc.id) {
+          <li class="list-row">
+            <div>
+              <strong>{{ loc.name || loc.slug }}</strong>
+              @if (loc.isPrimary) {
+                <span class="pill">Primary</span>
+              }
+              <p class="muted">{{ loc.addressLine }}, {{ loc.area }} · /businesses/{{ loc.slug }}</p>
+            </div>
+            <div class="actions">
+              <button type="button" class="btn" (click)="openEdit(loc)">Edit</button>
+              <button type="button" class="btn btn-danger" [disabled]="busy() === loc.id" (click)="remove(loc)">
+                Delete
+              </button>
+            </div>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</app-portal-page>
