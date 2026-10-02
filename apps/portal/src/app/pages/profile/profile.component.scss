@@ -1,0 +1,78 @@
+@use "../../shared/portal-card";
+
+.grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.span-all {
+  margin-bottom: 1rem;
+}
+
+.span-2 {
+  grid-column: span 2;
+}
+
+.share .link {
+  display: block;
+  word-break: break-all;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+
+.share .actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.review-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.9rem;
+}
+
+.ok {
+  margin-top: 0.5rem;
+  color: #065f46;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+  .grid,
+  .span-2 {
+    grid-column: auto;
+    grid-template-columns: 1fr;
+  }
+}
+
+h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.cover {
+  width: 100%;
+  max-height: 160px;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+label.btn {
+  display: inline-block;
+  cursor: pointer;
+}

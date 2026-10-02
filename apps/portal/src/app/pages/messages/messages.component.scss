@@ -1,0 +1,33 @@
+@use "../../shared/portal-card";
+
+.callout {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+
+.template h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.body {
+  margin: 0 0 0.75rem;
+  white-space: pre-wrap;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.ok {
+  color: #065f46;
+  margin-bottom: 0.75rem;
+}

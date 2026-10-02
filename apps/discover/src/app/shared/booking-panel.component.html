@@ -1,0 +1,135 @@
+@if (activeServices().length === 0) {
+  <section class="panel">
+    <h2>Book online</h2>
+    <p class="muted">Online booking is not available yet for this business.</p>
+  </section>
+} @else if (step() === "done" && booking(); as b) {
+  <section class="panel success">
+    <p class="eyebrow">Booking submitted</p>
+    <h2>{{ b.serviceName }}</h2>
+    <p>{{ formatSlot(b.startAt) }}</p>
+    <p class="muted">
+      @if (b.status === 1) {
+        Confirmed — you're all set.
+      } @else {
+        Pending confirmation from the business.
+      }
+    </p>
+  </section>
+} @else {
+  <section class="panel">
+    <h2>Book online</h2>
+    <p class="muted">Choose a service and pick an available time.</p>
+
+    @if (!bookingEnabled()) {
+      <p class="muted">
+        <button type="button" class="link" (click)="signIn()">Sign in</button>
+        to book an appointment.
+      </p>
+    }
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+
+    @if (step() === "service") {
+      <ul class="services">
+        @for (service of activeServices(); track service.id) {
+          <li>
+            <button
+              type="button"
+              class="service-row"
+              [disabled]="loadingSlots()"
+              (click)="selectService(service)"
+            >
+              <div>
+                <strong>{{ service.name }}</strong>
+                @if (service.description) {
+                  <p class="muted">{{ service.description }}</p>
+                }
+                <p class="tiny">{{ service.durationMinutes }} min</p>
+              </div>
+              <span class="price">
+                {{ service.priceAmount | currency: service.currency }}
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (step() === "slot" && selectedService(); as svc) {
+      <button type="button" class="link back" (click)="backToServices()">← Change service</button>
+      <p class="strong">{{ svc.name }}</p>
+
+      @if (loadingSlots()) {
+        <p class="muted">Loading available times…</p>
+      } @else if (slots().length === 0) {
+        <p class="muted">No open slots in the next 7 days.</p>
+        @if (bookingEnabled()) {
+          <button type="button" class="link" (click)="joinWaitlist()">Join waitlist</button>
+        }
+      } @else {
+        <ul class="slots">
+          @for (slot of slots(); track slot.startAt) {
+            <li>
+              <button
+                type="button"
+                class="slot-btn"
+                (click)="selectedSlot.set(slot.startAt); step.set('confirm')"
+              >
+                {{ formatSlot(slot.startAt) }}
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    }
+
+    @if (step() === "confirm" && selectedService(); as svc) {
+      @if (selectedSlot(); as slotIso) {
+        <button type="button" class="link back" (click)="step.set('slot')">← Pick another time</button>
+        <dl class="summary">
+          <div>
+            <dt>Service</dt>
+            <dd>{{ svc.name }}</dd>
+          </div>
+          <div>
+            <dt>Time</dt>
+            <dd>{{ formatSlot(slotIso) }}</dd>
+          </div>
+          <div>
+            <dt>Price</dt>
+            <dd>{{ svc.priceAmount | currency: svc.currency }}</dd>
+          </div>
+        </dl>
+
+        <label class="notes">
+          <span>Notes (optional)</span>
+          <textarea
+            [ngModel]="notes()"
+            (ngModelChange)="notes.set($event)"
+            rows="3"
+            maxlength="1000"
+            placeholder="Anything the business should know?"
+          ></textarea>
+        </label>
+
+        @if (supportsDeposits() && depositPercent() > 0) {
+          <p class="deposit">
+            A {{ depositPercent() }}% deposit is required after confirming. You'll be redirected to
+            checkout.
+          </p>
+        }
+
+        @if (bookingEnabled()) {
+          <button type="button" class="primary" [disabled]="submitting()" (click)="confirmBooking()">
+            {{ submitting() ? "Booking…" : "Confirm booking" }}
+          </button>
+        } @else {
+          <button type="button" class="primary" (click)="signIn()">Sign in to confirm</button>
+        }
+      }
+    }
+  </section>
+}

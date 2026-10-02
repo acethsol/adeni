@@ -1,0 +1,15 @@
+@use "../../shared/portal-card";
+
+.muted {
+  color: var(--text-muted);
+}
+
+h3 {
+  margin: 0 0 0.5rem;
+}
+
+a.btn {
+  display: inline-block;
+  margin-top: 0.75rem;
+  text-decoration: none;
+}

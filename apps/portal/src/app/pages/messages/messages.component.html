@@ -1,0 +1,52 @@
+<app-portal-page
+  title="Messages"
+  description="WhatsApp templates until in-app messaging (Sprint 18) ships."
+>
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+  @if (notice()) {
+    <p class="ok">{{ notice() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  } @else {
+    <section class="card callout">
+      <p>
+        In-app threads tied to bookings are planned for Sprint 18. For now, use these
+        WhatsApp message templates with customers.
+      </p>
+    </section>
+
+    @if (!primarySlug()) {
+      <section class="card">
+        <p class="muted">
+          Add a location with a public slug in Profile before sharing booking links.
+        </p>
+      </section>
+    }
+
+    @for (item of [
+      { title: "Booking confirmed", body: templateConfirm() },
+      { title: "Appointment reminder", body: templateReminder() },
+      { title: "Thank you / rebook", body: templateFollowUp() },
+    ]; track item.title) {
+      <section class="card template">
+        <h3>{{ item.title }}</h3>
+        <p class="body">{{ item.body }}</p>
+        <div class="actions">
+          <button type="button" class="btn" (click)="copy(item.body)">Copy</button>
+          <a
+            class="btn btn-primary"
+            [href]="whatsAppUrl(item.body)"
+            target="_blank"
+            rel="noopener"
+          >
+            Open WhatsApp
+          </a>
+        </div>
+      </section>
+    }
+  }
+</app-portal-page>

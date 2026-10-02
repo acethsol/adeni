@@ -1,0 +1,60 @@
+<div class="shell">
+  <aside class="sidebar">
+    <a class="brand" routerLink="/dashboard">
+      <span class="brand-mark">A</span>
+      <span class="brand-text">
+        <strong>Adeni</strong>
+        <small>Business</small>
+      </span>
+    </a>
+
+    @if (devMode) {
+      <p class="dev-banner">Local dev — API uses <code>X-Dev-Auth0-Sub</code></p>
+    }
+
+    <nav class="nav">
+      @for (item of nav; track item.path) {
+        <a
+          class="nav-link"
+          [routerLink]="item.path"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: item.path === '/dashboard' }"
+        >
+          {{ item.label }}
+        </a>
+      }
+    </nav>
+
+    <div class="sidebar-footer">
+      <a class="nav-link muted" [href]="discoverUrl()" target="_blank" rel="noopener">
+        View marketplace
+      </a>
+      @if (auth0Mode && auth) {
+        @if (auth.user$ | async; as user) {
+          <p class="user-line">{{ user.name ?? user.email }}</p>
+        }
+        <button type="button" class="btn-text" (click)="logout()">Log out</button>
+      }
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Business portal</p>
+        <h1 class="title">
+          {{ profile()?.businessName ?? "Your business" }}
+        </h1>
+      </div>
+      <div class="topbar-actions">
+        <app-pending-bookings-bell />
+        @if (profile()?.status) {
+          <span class="status-pill">{{ profile()?.status }}</span>
+        }
+      </div>
+    </header>
+    <main class="content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

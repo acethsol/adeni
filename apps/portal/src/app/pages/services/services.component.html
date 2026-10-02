@@ -1,0 +1,74 @@
+<app-portal-page
+  title="Services"
+  description="Add, edit, and deactivate bookable services on your public profile."
+>
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  <div class="toolbar">
+    <button type="button" class="btn btn-primary" (click)="openCreate()">Add service</button>
+  </div>
+
+  @if (showForm()) {
+    <section class="card form">
+      <h3>{{ editingId() ? "Edit service" : "New service" }}</h3>
+      <div class="field">
+        <label>Name</label>
+        <input [(ngModel)]="draft.name" />
+      </div>
+      <div class="field">
+        <label>Description</label>
+        <textarea rows="2" [(ngModel)]="draft.description"></textarea>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Price</label>
+          <input type="number" min="0" step="0.01" [(ngModel)]="draft.priceAmount" />
+        </div>
+        <div class="field">
+          <label>Currency</label>
+          <input maxlength="3" [(ngModel)]="draft.currency" />
+        </div>
+        <div class="field">
+          <label>Duration (min)</label>
+          <input type="number" min="1" [(ngModel)]="draft.durationMinutes" />
+        </div>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn" (click)="cancelForm()">Cancel</button>
+        <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="save()">Save</button>
+      </div>
+    </section>
+  }
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  } @else if (services().length === 0) {
+    <p class="muted">No services yet.</p>
+  } @else {
+    <section class="card">
+      <ul class="plain">
+        @for (service of services(); track service.id) {
+          <li class="list-row">
+            <div>
+              <strong>{{ service.name }}</strong>
+              <p class="muted">
+                {{ formatPrice(service.priceAmount, service.currency) }} ·
+                {{ service.durationMinutes }} min
+              </p>
+            </div>
+            <div class="actions">
+              <button type="button" class="btn" [disabled]="busy() === service.id" (click)="openEdit(service)">
+                Edit
+              </button>
+              <button type="button" class="btn btn-danger" [disabled]="busy() === service.id" (click)="deactivate(service)">
+                Deactivate
+              </button>
+            </div>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</app-portal-page>

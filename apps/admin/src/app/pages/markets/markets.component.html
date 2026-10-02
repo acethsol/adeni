@@ -1,0 +1,24 @@
+<app-portal-page title="Markets" description="Enable or disable markets for discovery.">
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  } @else {
+    <section class="card">
+      <ul class="plain">
+        @for (market of markets(); track market.id) {
+          <li class="list-row">
+            <div>
+              <strong>{{ market.name }}</strong>
+              <p class="muted">{{ market.id }} · {{ market.isLive ? "Live" : "Off" }}</p>
+            </div>
+            <button type="button" class="btn" (click)="toggleLive(market)">
+              {{ market.isLive ? "Take offline" : "Go live" }}
+            </button>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</app-portal-page>

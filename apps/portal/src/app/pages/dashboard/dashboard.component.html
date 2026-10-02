@@ -1,0 +1,37 @@
+@if (loadError()) {
+  <section class="card error">
+    <h2>Could not load business profile</h2>
+    <p>Check that the API is running on port 5169 and Redis/Postgres are up.</p>
+  </section>
+} @else if (profile()) {
+  <section class="card">
+    <h2>Welcome back</h2>
+    <p class="lede">
+      Angular business portal (strangler scaffold). Next screens will migrate here route by route.
+    </p>
+    <dl class="facts">
+      <div>
+        <dt>Business</dt>
+        <dd>{{ profile()!.businessName }}</dd>
+      </div>
+      <div>
+        <dt>Status</dt>
+        <dd>{{ profile()!.status }}</dd>
+      </div>
+      <div>
+        <dt>Locations</dt>
+        <dd>{{ profile()!.locations.length }}</dd>
+      </div>
+      @if (profile()!.subscriptionTier) {
+        <div>
+          <dt>Plan</dt>
+          <dd>{{ profile()!.subscriptionTier }}</dd>
+        </div>
+      }
+    </dl>
+  </section>
+} @else {
+  <section class="card">
+    <p>Loading profile…</p>
+  </section>
+}
