@@ -44,6 +44,11 @@ exports.onExecutePostLogin = async (event, api) => {
 3. Set `auth0.domain`, `auth0.clientId`, and `auth0.audience` in `apps/portal/src/environments/environment.development.ts` (see `apps/portal/.env.example.md`).
 4. Local dev without Auth0: keep `devBusinessAuth0Sub` (same as Next `DEV_BUSINESS_AUTH0_SUB`) with API `Auth0:Enabled: false`.
 
+## Angular admin (`apps/admin`)
+
+1. Auth0 **SPA** (when staging/Azure is ready) — separate client; callback `http://localhost:5180`.
+2. Local dev without Auth0: `devAdminAuth0Sub: "auth0|local-admin"` in `apps/admin/src/environments/environment.development.ts` (`DevAdminAuthMiddleware` on the API).
+
 ## Next.js web
 
 1. Create Auth0 **Regular Web Application** for Next.js.
