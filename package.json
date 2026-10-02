@@ -8,6 +8,8 @@
   "scripts": {
     "dev:web": "npm run dev --workspace @adeni/web",
     "dev:portal": "npm run dev --workspace @adeni/portal",
+    "dev:admin": "npm run dev --workspace @adeni/admin",
+    "build:admin": "npm run build --workspace @adeni/admin",
     "dev:mobile": "npm run start --workspace @adeni/mobile",
     "build:portal": "npm run build --workspace @adeni/portal",
     "build:web": "npm run build --workspace @adeni/web",

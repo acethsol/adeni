@@ -14,6 +14,7 @@ public static class ApplicationBuilderExtensions
         {
             app.UseMiddleware<DevBusinessAuthMiddleware>();
             app.UseMiddleware<DevCustomerAuthMiddleware>();
+            app.UseMiddleware<DevAdminAuthMiddleware>();
         }
 
         app.UseMiddleware<TenantScopeMiddleware>();

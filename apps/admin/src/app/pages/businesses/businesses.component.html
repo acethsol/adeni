@@ -1,0 +1,26 @@
+<app-portal-page title="Businesses" description="Subscription tier overrides for support.">
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  } @else {
+    <section class="card">
+      <ul class="plain">
+        @for (b of businesses(); track b.id) {
+          <li class="list-row">
+            <div>
+              <strong>{{ b.name }}</strong>
+              <p class="muted">{{ b.slug }} · current: {{ b.subscriptionTier }}</p>
+            </div>
+            <div class="actions">
+              @for (tier of tiers; track tier) {
+                <button type="button" class="btn" (click)="setTier(b, tier)">{{ tier }}</button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</app-portal-page>

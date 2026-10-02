@@ -6,8 +6,36 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.span-all {
+  margin-bottom: 1rem;
+}
+
 .span-2 {
   grid-column: span 2;
+}
+
+.share .link {
+  display: block;
+  word-break: break-all;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+
+.share .actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.review-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.9rem;
+}
+
+.ok {
+  margin-top: 0.5rem;
+  color: #065f46;
+  font-size: 0.85rem;
 }
 
 @media (max-width: 768px) {

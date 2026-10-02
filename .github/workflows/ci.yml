@@ -75,3 +75,6 @@ jobs:
 
       - name: Build Angular portal
         run: npm run build:portal
+
+      - name: Build Angular admin
+        run: npm run build:admin

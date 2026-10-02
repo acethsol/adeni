@@ -9,6 +9,21 @@
   @if (loading()) {
     <p class="muted">Loading…</p>
   } @else if (profile(); as p) {
+    @if (primarySlug()) {
+      <section class="card span-all share">
+        <h3>Share kit</h3>
+        <p class="muted">Public booking link for WhatsApp and Instagram bio.</p>
+        <code class="link">{{ publicBookingUrl() }}</code>
+        <div class="actions">
+          <button type="button" class="btn" (click)="copyPublicLink()">Copy link</button>
+          <a class="btn btn-primary" [href]="whatsAppShareUrl()" target="_blank" rel="noopener">WhatsApp</a>
+        </div>
+        @if (verificationMessage()) {
+          <p class="ok">{{ verificationMessage() }}</p>
+        }
+      </section>
+    }
+
     <div class="grid">
       <section class="card">
         <h3>Cover photo</h3>
@@ -49,6 +64,45 @@
           Save profile
         </button>
       </section>
+
+      <section class="card span-2">
+        <h3>Customer reviews</h3>
+        @if (reviewSummary().count > 0) {
+          <p>{{ reviewSummary().avg?.toFixed(1) }} avg · {{ reviewSummary().count }} reviews</p>
+        }
+        @if (reviews().length === 0) {
+          <p class="muted">No reviews yet.</p>
+        } @else {
+          <ul class="review-list">
+            @for (review of reviews(); track review.id) {
+              <li>
+                <strong>{{ review.rating }}/5</strong> — {{ review.comment || "No comment" }}
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      @if (canSubmitVerification()) {
+        <section class="card span-2">
+          <h3>Submit verification</h3>
+          <div class="field">
+            <label>Document type</label>
+            <select [(ngModel)]="verificationDocType">
+              @for (label of verificationLabels | keyvalue; track label.key) {
+                <option [ngValue]="+label.key">{{ label.value }}</option>
+              }
+            </select>
+          </div>
+          <div class="field">
+            <label>Reference number</label>
+            <input [(ngModel)]="verificationReference" />
+          </div>
+          <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="submitVerification()">
+            Submit for review
+          </button>
+        </section>
+      }
 
       <section class="card span-2">
         <h3>Booking settings</h3>

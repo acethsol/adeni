@@ -35,9 +35,9 @@ packages/
 | Step | Done |
 |------|------|
 | Scaffold `apps/portal` (Angular 22+; CSR or SSR only if needed) | ☑ |
-| Scaffold `apps/admin` (Angular 22+; CSR typical) | ☐ |
+| Scaffold `apps/admin` (Angular 22+; CSR typical) | ☑ |
 | Scaffold `apps/discover` (SSR/prerender for `/`, `/discover`, `/businesses/:slug`) | ☐ |
-| Root scripts: `dev:portal`, `dev:admin`, `dev:discover`, CI jobs per app | ☑ portal (`dev:portal` + CI `portal-angular` job) |
+| Root scripts: `dev:portal`, `dev:admin`, `dev:discover`, CI jobs per app | ☑ portal + admin (`dev:portal`, `dev:admin`; CI builds both) |
 | Shared eslint/prettier or Nx boundary rules (optional) | ☐ |
 
 ---
@@ -117,8 +117,8 @@ Every handler under `apps/web/app/api/**` must end as **A**, **B**, or **C**:
 | Bookings inbox (accept/reject) | | ☑ |
 | Register (new business) | | ☑ |
 | Reviews panel | | ☐ |
-| Payments / subscription / verification | | ☐ |
-| Settings + share kit / plan (if present) | | ☐ |
+| Payments / subscription / verification | | ☑ payments + plan; verification on profile |
+| Settings + share kit / plan (if present) | | ☑ share kit on profile; booking settings on profile |
 | Messaging (Sprint 18) | | ☐ |
 
 **Cutover:** proxy `/business/*` to `apps/portal` in staging → production.
@@ -129,11 +129,11 @@ Every handler under `apps/web/app/api/**` must end as **A**, **B**, or **C**:
 
 | Area | Next reference | Done |
 |------|----------------|------|
-| Auth0 login / role gate (admin only) | `/admin/*` | ☐ |
-| Pending businesses approve/reject | | ☐ |
-| Business list + subscription tier | | ☐ |
+| Auth0 login / role gate (admin only) | `/admin/*` | ☐ Auth0 SPA later; dev `auth0\|local-admin` |
+| Pending businesses approve/reject | | ☑ |
+| Business list + subscription tier | | ☑ |
 | Customers list / export / delete | | ☐ |
-| Markets CRUD + go-live | | ☐ |
+| Markets CRUD + go-live | | ☑ go-live toggle (CRUD later) |
 
 **Cutover:** proxy `/admin/*` to `apps/admin`. Prefer **separate origin or subdomain** in production (e.g. `admin.adeni.com`) if convenient.
 

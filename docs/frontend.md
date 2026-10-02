@@ -8,6 +8,7 @@ Next.js (web) + Expo (mobile) clients for the Adeni marketplace API. Backend is 
 apps/
   discover/            Angular SSR — planned (ADR-012)
   portal/              Angular — business portal (strangler; `npm run dev:portal`)
+  admin/               Angular — admin portal (`npm run dev:admin`, :5180)
   admin/               Angular — planned (ADR-012)
   web/                 Next.js — legacy until strangler complete
   mobile/              Expo — unified customer + business app
