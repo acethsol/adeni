@@ -1,0 +1,29 @@
+@use "../../shared/portal-card";
+
+h3 {
+  margin: 0 0 0.75rem;
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.plain {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.link-box {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.link-box code {
+  display: block;
+  word-break: break-all;
+  margin: 0.5rem 0;
+  font-size: 0.8rem;
+}

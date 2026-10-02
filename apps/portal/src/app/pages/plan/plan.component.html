@@ -1,0 +1,60 @@
+<app-portal-page
+  title="Plans & billing"
+  description="Compare Adeni plans, track usage, and upgrade when you're ready."
+>
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  } @else {
+    @if (usage(); as u) {
+      <section class="card usage" [class.warn]="isNearBookingLimit(u)">
+        <h3>Usage this month</h3>
+        <p>{{ formatBookingUsage(u) }}</p>
+        @if (isNearBookingLimit(u)) {
+          <p class="warn-text">You're approaching your monthly booking limit on the Free plan.</p>
+        }
+      </section>
+    }
+
+    <div class="tier-grid">
+      @for (tier of tiers; track tier) {
+        <section class="card tier" [class.current]="tier === currentTier()">
+          @if (tier === currentTier()) {
+            <span class="pill">Current plan</span>
+          }
+          <p class="tier-name">{{ planPricing[tier].name }}</p>
+          <p class="price">{{ planPricing[tier].priceLabel }}</p>
+          <p class="muted">{{ planPricing[tier].description }}</p>
+        </section>
+      }
+    </div>
+
+    <section class="card">
+      <h3>Feature comparison</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Feature</th>
+            @for (tier of tiers; track tier) {
+              <th>{{ tier }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of planComparison; track row.label) {
+            <tr>
+              <td>{{ row.label }}</td>
+              @for (tier of tiers; track tier) {
+                <td>{{ featureCell(row[tier]) }}</td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+      <p class="muted upgrade-note">Paid upgrades will be available after billing goes live on Azure.</p>
+    </section>
+  }
+</app-portal-page>

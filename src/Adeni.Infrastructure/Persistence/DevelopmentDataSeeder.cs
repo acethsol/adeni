@@ -15,6 +15,7 @@ public static class DevelopmentDataSeeder
     public const string SeedMarkerSlug = "lekki-cuts";
     public const string DevBusinessAuth0Sub = "auth0|local-business";
     public const string DevCustomerAuth0Sub = "auth0|local-customer";
+    public const string DevAdminAuth0Sub = "auth0|local-admin";
 
     private static readonly IReadOnlyDictionary<string, (string Currency, string TimeZoneId)> MarketDefaults =
         new Dictionary<string, (string, string)>(StringComparer.OrdinalIgnoreCase)

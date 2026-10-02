@@ -1,0 +1,66 @@
+<app-portal-page
+  title="Customer privacy"
+  description="Search by email, export data (DSAR), or initiate erasure."
+>
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+  @if (message()) {
+    <p class="ok">{{ message() }}</p>
+  }
+
+  <section class="card">
+    <form class="search" (submit)="$event.preventDefault(); search()">
+      <div class="field">
+        <label for="email">Customer email</label>
+        <input id="email" type="email" [(ngModel)]="email" name="email" required />
+      </div>
+      <button type="submit" class="btn btn-primary" [disabled]="searching()">
+        {{ searching() ? "Searching…" : "Search" }}
+      </button>
+    </form>
+  </section>
+
+  @if (hasSearched() && !searching() && customers().length === 0 && !error()) {
+    <section class="card"><p class="muted">No customers found.</p></section>
+  }
+
+  @if (customers().length > 0) {
+    <section class="card">
+      <ul class="plain">
+        @for (c of customers(); track c.id) {
+          <li class="list-row">
+            <div>
+              <strong>{{ c.name }}</strong>
+              <p class="muted">{{ c.email ?? "—" }} · {{ c.auth0Sub }}</p>
+              @if (c.erasureRequestedAt) {
+                <p class="warn">Erasure requested {{ c.erasureRequestedAt }}</p>
+              }
+            </div>
+            <div class="actions">
+              <button type="button" class="btn" [disabled]="busyId() === c.id" (click)="export(c.id)">
+                Export
+              </button>
+              <button
+                type="button"
+                class="btn btn-danger"
+                [disabled]="busyId() === c.id || c.erasureRequestedAt"
+                (click)="erase(c)"
+              >
+                Erasure
+              </button>
+            </div>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  @if (exportData(); as ex) {
+    <section class="card">
+      <h3>Export preview</h3>
+      <pre>{{ ex | json }}</pre>
+      <button type="button" class="btn btn-primary" (click)="downloadExport()">Download JSON</button>
+    </section>
+  }
+</app-portal-page>

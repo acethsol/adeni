@@ -11,7 +11,7 @@ Companion to [ADR-012](./adr/ADR-012-angular-web-deferred-flutter.md). Use this 
 | Step | Done |
 |------|------|
 | ADR-012 accepted — three apps: `discover`, `portal`, `admin` | ☑ |
-| Add Auth0 SPA configs: discover, portal, admin origins + callback/logout URLs | ☐ (deferred until Azure/staging) |
+| Add Auth0 SPA configs: discover, portal, admin origins + callback/logout URLs | ☑ wired in Angular env; **Auth0 tenant registration deferred** until staging (dev subs OK) |
 | Choose OpenAPI → TypeScript client for Angular (regenerate in CI from `src/Adeni.Api`) | ☐ |
 | Document staging URL map (which paths hit Next vs each Angular app) | ☐ |
 | Copy market resolution rules from [markets.md](./markets.md) + `@adeni/shared` behavior | ☐ |
@@ -35,9 +35,9 @@ packages/
 | Step | Done |
 |------|------|
 | Scaffold `apps/portal` (Angular 22+; CSR or SSR only if needed) | ☑ |
-| Scaffold `apps/admin` (Angular 22+; CSR typical) | ☐ |
-| Scaffold `apps/discover` (SSR/prerender for `/`, `/discover`, `/businesses/:slug`) | ☐ |
-| Root scripts: `dev:portal`, `dev:admin`, `dev:discover`, CI jobs per app | ☑ portal (`dev:portal` + CI `portal-angular` job) |
+| Scaffold `apps/admin` (Angular 22+; CSR typical) | ☑ |
+| Scaffold `apps/discover` (SSR/prerender for `/`, `/discover`, `/businesses/:slug`) | ☑ MVP SSR (`/`, `/discover`, `/businesses/:slug`; booking flow later) |
+| Root scripts: `dev:portal`, `dev:admin`, `dev:discover`, CI jobs per app | ☑ (`dev:discover` :5190; CI builds portal + admin + discover) |
 | Shared eslint/prettier or Nx boundary rules (optional) | ☐ |
 
 ---
@@ -117,9 +117,10 @@ Every handler under `apps/web/app/api/**` must end as **A**, **B**, or **C**:
 | Bookings inbox (accept/reject) | | ☑ |
 | Register (new business) | | ☑ |
 | Reviews panel | | ☐ |
-| Payments / subscription / verification | | ☐ |
-| Settings + share kit / plan (if present) | | ☐ |
-| Messaging (Sprint 18) | | ☐ |
+| Payments / subscription / verification | | ☑ payments + plan; verification on profile |
+| Settings + share kit / plan (if present) | | ☑ share kit on profile; booking settings on profile |
+| Messaging (Sprint 18) | | ☑ WhatsApp templates + nav; in-app threads when API lands |
+| Pending bookings bell (topbar) | `business-portal-bell.tsx` | ☑ |
 
 **Cutover:** proxy `/business/*` to `apps/portal` in staging → production.
 
@@ -129,11 +130,11 @@ Every handler under `apps/web/app/api/**` must end as **A**, **B**, or **C**:
 
 | Area | Next reference | Done |
 |------|----------------|------|
-| Auth0 login / role gate (admin only) | `/admin/*` | ☐ |
-| Pending businesses approve/reject | | ☐ |
-| Business list + subscription tier | | ☐ |
-| Customers list / export / delete | | ☐ |
-| Markets CRUD + go-live | | ☐ |
+| Auth0 login / role gate (admin only) | `/admin/*` | ☐ Auth0 SPA later; dev `auth0\|local-admin` |
+| Pending businesses approve/reject | | ☑ |
+| Business list + subscription tier | | ☑ |
+| Customers list / export / delete | | ☑ `/customers` search, export, erasure |
+| Markets CRUD + go-live | | ☑ go-live toggle (CRUD later) |
 
 **Cutover:** proxy `/admin/*` to `apps/admin`. Prefer **separate origin or subdomain** in production (e.g. `admin.adeni.com`) if convenient.
 
@@ -143,10 +144,12 @@ Every handler under `apps/web/app/api/**` must end as **A**, **B**, or **C**:
 
 | Area | Next reference | Done |
 |------|----------------|------|
-| `/` landing + categories | SSR metadata | ☐ |
-| `/discover` search + filters | | ☐ |
-| `/businesses/[slug]` profile SSR | JSON-LD / OG tags parity | ☐ |
-| Booking flow + waitlist | | ☐ |
+| `/` landing + categories | SSR metadata | ☑ title/description + OG via `SeoService` |
+| `/discover` search + filters | | ☑ category, q, sort, minRating; market/geo cookies |
+| `/businesses/[slug]` profile SSR | JSON-LD / OG tags parity | ☑ LocalBusiness JSON-LD + OG on profile |
+| Booking flow + waitlist | | ☑ booking wizard, waitlist, deposit redirect; quote flow |
+| `/my-bookings` | | ☑ list + cancel |
+| Market cookies (`adeni_market`, `adeni_coords`, `?market=`) | | ☑ shared constants in `@adeni/shared` |
 | Quote requests (Sprint 19) | | ☐ |
 | Ask Adeni (rule-based → Sprint 20 LLM UI) | API-first widget | ☐ |
 | Legal / market cookie / `?market=` | | ☐ |

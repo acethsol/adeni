@@ -1,0 +1,54 @@
+<p class="back">
+  <a routerLink="/discover">← Back to discover</a>
+</p>
+
+@if (loading()) {
+  <p class="muted">Loading…</p>
+} @else if (error()) {
+  <p class="error">{{ error() }}</p>
+} @else if (profile(); as p) {
+  <article class="profile">
+    <img [src]="coverFor(p.categorySlug, p.coverImageUrl)" alt="" />
+    <div>
+      <p class="eyebrow">{{ categoryLabel("en", p.categorySlug) }} · {{ p.area }}</p>
+      <h1>{{ p.name }}</h1>
+      <p class="muted">{{ p.locationName }} · {{ p.addressLine }}</p>
+      @if (p.description) {
+        <p class="desc">{{ p.description }}</p>
+      }
+      @if (p.ratingAvg != null && p.reviewCount) {
+        <p class="rating">★ {{ p.ratingAvg | number: "1.1-1" }} ({{ p.reviewCount }} reviews)</p>
+      }
+      <p class="phone">Contact: {{ p.phoneMasked }}</p>
+    </div>
+  </article>
+
+  @if (services().length > 0) {
+    <section class="services">
+      <h2>Services</h2>
+      <ul>
+        @for (s of services(); track s.id) {
+          <li>
+            <strong>{{ s.name }}</strong>
+            @if (s.priceAmount != null) {
+              <span class="muted">{{ s.currency }} {{ s.priceAmount | number }}</span>
+            }
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  @if (showQuoteFlow(p)) {
+    <app-quote-request-panel [slug]="p.slug" [enabled]="bookingEnabled()" />
+  } @else {
+    <app-booking-panel
+      [slug]="p.slug"
+      [tenantId]="p.tenantId"
+      [services]="services()"
+      [bookingEnabled]="bookingEnabled()"
+      [supportsDeposits]="supportsDeposits(p)"
+      [depositPercent]="p.depositPercent ?? 0"
+    />
+  }
+}

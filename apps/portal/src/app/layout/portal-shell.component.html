@@ -46,9 +46,12 @@
           {{ profile()?.businessName ?? "Your business" }}
         </h1>
       </div>
-      @if (profile()?.status) {
-        <span class="status-pill">{{ profile()?.status }}</span>
-      }
+      <div class="topbar-actions">
+        <app-pending-bookings-bell />
+        @if (profile()?.status) {
+          <span class="status-pill">{{ profile()?.status }}</span>
+        }
+      </div>
     </header>
     <main class="content">
       <router-outlet />

@@ -1,0 +1,46 @@
+@if (!enabled()) {
+  <section class="panel">
+    <h2>{{ title }}</h2>
+    <p class="muted">Sign in to describe your job and request a quote from this business.</p>
+    <button type="button" class="primary" (click)="signIn()">Sign in to continue</button>
+  </section>
+} @else if (submitted()) {
+  <section class="panel success">
+    <p class="eyebrow">Quote request sent</p>
+    <h2>We received your job details</h2>
+    <p class="muted">The business will review your request and follow up with a quote.</p>
+  </section>
+} @else {
+  <section class="panel">
+    <h2>{{ title }}</h2>
+    <p class="muted">Describe the job and where service is needed.</p>
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+
+    <label class="field">
+      <span>Describe the job</span>
+      <textarea
+        [ngModel]="description()"
+        (ngModelChange)="description.set($event)"
+        rows="5"
+        placeholder="Example: Kitchen sink is leaking under the cabinet."
+      ></textarea>
+    </label>
+
+    <label class="field">
+      <span>Service address (optional)</span>
+      <input
+        type="text"
+        [ngModel]="serviceAddress()"
+        (ngModelChange)="serviceAddress.set($event)"
+        placeholder="Street, area, city"
+      />
+    </label>
+
+    <button type="button" class="primary" [disabled]="submitting()" (click)="submit()">
+      {{ submitting() ? "Sending…" : "Send quote request" }}
+    </button>
+  </section>
+}

@@ -7,7 +7,9 @@ import { LocationsComponent } from "./pages/locations/locations.component";
 import { AvailabilityComponent } from "./pages/availability/availability.component";
 import { ProfileComponent } from "./pages/profile/profile.component";
 import { RegisterComponent } from "./pages/register/register.component";
-import { PlaceholderPageComponent } from "./pages/placeholder/placeholder-page.component";
+import { PaymentsComponent } from "./pages/payments/payments.component";
+import { PlanComponent } from "./pages/plan/plan.component";
+import { MessagesComponent } from "./pages/messages/messages.component";
 import { SetupComponent } from "./pages/setup/setup.component";
 import { ForbiddenComponent } from "./pages/forbidden/forbidden.component";
 import { portalAccessGuard } from "./core/guards/portal-access.guard";
@@ -24,21 +26,14 @@ export const routes: Routes = [
       { path: "", pathMatch: "full", redirectTo: "dashboard" },
       { path: "dashboard", component: DashboardComponent },
       { path: "bookings", component: BookingsComponent },
+      { path: "messages", component: MessagesComponent },
       { path: "services", component: ServicesComponent },
       { path: "locations", component: LocationsComponent },
       { path: "availability", component: AvailabilityComponent },
       { path: "profile", component: ProfileComponent },
       { path: "register", component: RegisterComponent },
-      {
-        path: "payments",
-        component: PlaceholderPageComponent,
-        data: { title: "Payments", slug: "payments" },
-      },
-      {
-        path: "plan",
-        component: PlaceholderPageComponent,
-        data: { title: "Plan", slug: "plan" },
-      },
+      { path: "payments", component: PaymentsComponent },
+      { path: "plan", component: PlanComponent },
     ],
   },
   { path: "**", redirectTo: "dashboard" },

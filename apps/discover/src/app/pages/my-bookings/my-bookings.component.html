@@ -1,0 +1,39 @@
+<h1>My bookings</h1>
+
+@if (devMode) {
+  <p class="banner">Local dev — API uses <code>X-Dev-Auth0-Sub</code> for customer bookings.</p>
+}
+
+@if (auth0Mode) {
+  <button type="button" class="link" (click)="logout()">Log out</button>
+}
+
+@if (loading()) {
+  <p class="muted">Loading…</p>
+} @else if (error()) {
+  <p class="error">{{ error() }}</p>
+} @else if (bookings().length === 0) {
+  <p class="muted">No bookings yet. <a routerLink="/discover">Discover businesses</a>.</p>
+} @else {
+  <ul class="list">
+    @for (b of bookings(); track b.id) {
+      <li class="card">
+        <div>
+          <strong>{{ b.serviceName }}</strong>
+          <p class="muted">{{ b.businessName }} · {{ b.startAt | date: "medium" }}</p>
+          <p class="muted">Status: {{ formatBookingStatus(b.status) }}</p>
+        </div>
+        @if (canCancel(b)) {
+          <button
+            type="button"
+            class="danger"
+            [disabled]="cancelId() === b.id"
+            (click)="cancel(b.id)"
+          >
+            Cancel
+          </button>
+        }
+      </li>
+    }
+  </ul>
+}

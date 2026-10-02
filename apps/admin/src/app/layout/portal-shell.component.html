@@ -1,0 +1,42 @@
+<div class="shell">
+  <aside class="sidebar">
+    <a class="brand" routerLink="/dashboard">
+      <span class="brand-mark">A</span>
+      <span class="brand-text">
+        <strong>Adeni</strong>
+        <small>Admin</small>
+      </span>
+    </a>
+
+    @if (devMode) {
+      <p class="dev-banner">Local dev — <code>auth0|local-admin</code></p>
+    }
+
+    <nav class="nav">
+      @for (item of nav; track item.path) {
+        <a class="nav-link" [routerLink]="item.path" routerLinkActive="active">{{ item.label }}</a>
+      }
+    </nav>
+
+    <div class="sidebar-footer">
+      @if (auth0Mode && auth) {
+        @if (auth.user$ | async; as user) {
+          <p class="user-line">{{ user.name ?? user.email }}</p>
+        }
+        <button type="button" class="btn-text" (click)="logout()">Log out</button>
+      }
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Admin portal</p>
+        <h1 class="title">Operations</h1>
+      </div>
+    </header>
+    <main class="content">
+      <router-outlet />
+    </main>
+  </div>
+</div>
