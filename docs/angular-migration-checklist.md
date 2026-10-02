@@ -1,8 +1,8 @@
 # Angular web migration checklist (strangler)
 
-Companion to [ADR-012](./adr/ADR-012-angular-web-deferred-flutter.md). Use this as a living parity list while Next.js (`apps/web`) is replaced by **portal-web** and **discover-web**.
+Companion to [ADR-012](./adr/ADR-012-angular-web-deferred-flutter.md). Use this as a living parity list while Next.js (`apps/web`) is replaced by **`apps/discover`**, **`apps/portal`**, and **`apps/admin`**.
 
-**Recommended order:** portal-web → discover-web → remove Next → Flutter mobile (phase 2).
+**Order:** portal → admin → discover → remove Next → Flutter mobile (phase 2).
 
 ---
 
@@ -10,10 +10,10 @@ Companion to [ADR-012](./adr/ADR-012-angular-web-deferred-flutter.md). Use this 
 
 | Step | Done |
 |------|------|
-| Accept or amend ADR-012 (migration order, admin as 3rd app vs lazy routes) | ☐ |
-| Add Auth0 SPA/native configs: discover origin, portal origin, callback/logout URLs | ☐ |
+| ADR-012 accepted — three apps: `discover`, `portal`, `admin` | ☑ |
+| Add Auth0 SPA configs: discover, portal, admin origins + callback/logout URLs | ☐ |
 | Choose OpenAPI → TypeScript client for Angular (regenerate in CI from `src/Adeni.Api`) | ☐ |
-| Document staging URL map (which paths hit Next vs Angular) | ☐ |
+| Document staging URL map (which paths hit Next vs each Angular app) | ☐ |
 | Copy market resolution rules from [markets.md](./markets.md) + `@adeni/shared` behavior | ☐ |
 
 ---
@@ -22,8 +22,9 @@ Companion to [ADR-012](./adr/ADR-012-angular-web-deferred-flutter.md). Use this 
 
 ```
 apps/
-  discover-web/     Angular SSR — public SEO
-  portal-web/       Angular — business (+ optional admin)
+  discover/         Angular SSR — public SEO, booking, Ask Adeni UI
+  portal/           Angular — business role
+  admin/            Angular — admin role only
   web/              Next.js — legacy until strangler complete
   mobile/           Expo — maintenance until Flutter
 packages/
@@ -33,9 +34,10 @@ packages/
 
 | Step | Done |
 |------|------|
-| Scaffold `portal-web` (Angular 22+, SSR if needed only for portal public pages) | ☐ |
-| Scaffold `discover-web` (SSR/prerender for `/`, `/discover`, `/businesses/:slug`) | ☐ |
-| Root `package.json` scripts: `dev:portal`, `dev:discover`, CI jobs | ☐ |
+| Scaffold `apps/portal` (Angular 22+; CSR or SSR only if needed) | ☐ |
+| Scaffold `apps/admin` (Angular 22+; CSR typical) | ☐ |
+| Scaffold `apps/discover` (SSR/prerender for `/`, `/discover`, `/businesses/:slug`) | ☐ |
+| Root scripts: `dev:portal`, `dev:admin`, `dev:discover`, CI jobs per app | ☐ |
 | Shared eslint/prettier or Nx boundary rules (optional) | ☐ |
 
 ---
@@ -47,10 +49,10 @@ Every handler under `apps/web/app/api/**` must end as **A**, **B**, or **C**:
 | Class | Meaning |
 |-------|---------|
 | **A — Direct API** | Angular calls `ADENI_API_URL` with Auth0 bearer; delete Next proxy |
-| **B — Thin BFF** | Keep a small server (Azure Functions, YARP, or minimal ASP.NET) only if secrets or cookie shaping require it |
+| **B — Thin BFF** | Keep a small server only if secrets or cookie shaping require it |
 | **C — Next-only temp** | Leave on Next until that app area migrates |
 
-### Public / discover
+### Public / discover → `apps/discover`
 
 | Next route | Class | Notes |
 |------------|-------|--------|
@@ -63,7 +65,7 @@ Every handler under `apps/web/app/api/**` must end as **A**, **B**, or **C**:
 | `.../api/bookings/[id]/cancel` | A | |
 | `.../api/bookings/[id]/review` | A | Customer auth |
 
-### Business portal
+### Business portal → `apps/portal`
 
 | Next route | Class | Notes |
 |------------|-------|--------|
@@ -79,31 +81,31 @@ Every handler under `apps/web/app/api/**` must end as **A**, **B**, or **C**:
 | `.../api/business/verification` | A | |
 | `.../api/business/register` | A | |
 | `.../api/business/media/upload-url` | A | SAS upload flow |
-| `.../api/payments/*` | A | Stub + initialize |
+| `.../api/payments/*` | A | Stub + initialize (customer checkout from discover may share) |
 
-### Admin
+### Admin → `apps/admin`
 
 | Next route | Class | Notes |
 |------------|-------|--------|
-| `.../api/admin/businesses/*` | A | Role guard |
+| `.../api/admin/businesses/*` | A | Admin role guard |
 | `.../api/admin/customers/*` | A | Export/delete |
 | `.../api/admin/markets/*` | A | Live toggle |
 
-### Auth helper
+### Auth helper (all apps)
 
 | Next route | Class | Notes |
 |------------|-------|--------|
-| `.../api/auth/nav` | A/B | Replace with Angular auth state + `/api/v1/auth/me` |
+| `.../api/auth/nav` | A/B | Angular auth state + `/api/v1/auth/me` per app |
 
 | Step | Done |
 |------|------|
 | All routes classified A/B/C | ☐ |
-| Angular HTTP interceptor: Auth0 token + `Idempotency-Key` where required | ☐ |
-| CORS verified for new origins on `Adeni.Api` | ☐ |
+| HTTP interceptor per app: Auth0 token + `Idempotency-Key` where required | ☐ |
+| CORS verified for discover, portal, admin origins on `Adeni.Api` | ☐ |
 
 ---
 
-## 3. Portal-web feature parity (migrate first)
+## 3. `apps/portal` feature parity (migrate first)
 
 | Area | Next reference | Done |
 |------|----------------|------|
@@ -118,11 +120,25 @@ Every handler under `apps/web/app/api/**` must end as **A**, **B**, or **C**:
 | Settings + share kit / plan (if present) | | ☐ |
 | Messaging (Sprint 18) | | ☐ |
 
-**Cutover:** proxy `/business` (and `/api/business` if any remain) to portal-web in staging → production.
+**Cutover:** proxy `/business/*` to `apps/portal` in staging → production.
 
 ---
 
-## 4. Discover-web feature parity
+## 4. `apps/admin` feature parity (second)
+
+| Area | Next reference | Done |
+|------|----------------|------|
+| Auth0 login / role gate (admin only) | `/admin/*` | ☐ |
+| Pending businesses approve/reject | | ☐ |
+| Business list + subscription tier | | ☐ |
+| Customers list / export / delete | | ☐ |
+| Markets CRUD + go-live | | ☐ |
+
+**Cutover:** proxy `/admin/*` to `apps/admin`. Prefer **separate origin or subdomain** in production (e.g. `admin.adeni.com`) if convenient.
+
+---
+
+## 5. `apps/discover` feature parity (third)
 
 | Area | Next reference | Done |
 |------|----------------|------|
@@ -134,16 +150,7 @@ Every handler under `apps/web/app/api/**` must end as **A**, **B**, or **C**:
 | Ask Adeni (rule-based → Sprint 20 LLM UI) | API-first widget | ☐ |
 | Legal / market cookie / `?market=` | | ☐ |
 
-**Cutover:** proxy `/`, `/discover`, `/businesses/*` to discover-web.
-
----
-
-## 5. Admin
-
-| Option | Done |
-|--------|------|
-| Lazy `/admin` in portal-web **or** separate `admin-web` | ☐ |
-| Parity with Next admin screens | ☐ |
+**Cutover:** proxy `/`, `/discover`, `/businesses/*` to `apps/discover`.
 
 ---
 
@@ -151,12 +158,12 @@ Every handler under `apps/web/app/api/**` must end as **A**, **B**, or **C**:
 
 | Check | Done |
 |-------|------|
-| E2E smoke: book, cancel, business accept, payment stub path | ☐ |
-| SSR crawl spot-check (slug pages, sitemap if applicable) | ☐ |
-| Auth0 production callbacks updated | ☐ |
+| E2E smoke: book, cancel, business accept, admin approve, payment stub path | ☐ |
+| SSR crawl spot-check (discover slug pages, sitemap if applicable) | ☐ |
+| Auth0 production callbacks updated for all three apps | ☐ |
 | No remaining **C** routes on Next | ☐ |
 | Delete or archive `apps/web`; update [frontend.md](./frontend.md) | ☐ |
-| Mark ADR-012 **Accepted**; note ADR-010 superseded for web stack in Confluence | ☐ |
+| Update Confluence: ADR-010 web stack superseded by ADR-012 | ☐ |
 
 ---
 
@@ -181,7 +188,7 @@ Not blocked by Angular migration:
 |------|------|
 | Backend tool endpoints documented in OpenAPI | ☐ |
 | LLM agent (Sprint 20) calls tools server-side | ☐ |
-| Chat component in discover-web (embed) | ☐ |
+| Chat component in `apps/discover` | ☐ |
 | Angular MCP / dev skills optional for maintainer productivity | ☐ |
 
 ---

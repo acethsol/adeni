@@ -68,4 +68,4 @@ Set API URL in app config (see `apps/mobile/README.md`).
 
 - [Frontend Architecture v1 (Confluence)](https://aceth.atlassian.net/wiki/spaces/SD/pages/26968065)
 - [auth0-setup.md](docs/auth0-setup.md)
-- **Proposed pivot:** [ADR-012 Angular dual-web + deferred Flutter](./adr/ADR-012-angular-web-deferred-flutter.md) and [migration checklist](./angular-migration-checklist.md) (strangler from Next; current stack unchanged until accepted)
+- **Web target (ADR-012):** `apps/discover`, `apps/portal`, `apps/admin` (Angular) — [ADR](./adr/ADR-012-angular-web-deferred-flutter.md), [checklist](./angular-migration-checklist.md). Until migration completes, use `apps/web` (Next.js) below.
