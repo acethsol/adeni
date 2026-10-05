@@ -15,7 +15,7 @@ public sealed class CategoryService(
         var marketKey = string.IsNullOrWhiteSpace(query.MarketId)
             ? "all"
             : query.MarketId.Trim().ToLowerInvariant();
-        var cacheKey = $"{CacheKeys.CategoriesAll}:{query.WellnessScope}:{query.IncludeNonV1}:{marketKey}";
+        var cacheKey = $"{CacheKeys.CategoriesAll}:{query.WellnessScope}:{query.IncludeDisabled}:{marketKey}";
 
         return cache.GetOrCreateAsync(
             cacheKey,

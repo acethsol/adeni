@@ -47,7 +47,7 @@ Expect `"database": "healthy"` when PostgreSQL is connected.
 
 When the API runs in **Development** with PostgreSQL connected, it auto-seeds sample businesses (idempotent — skips slugs that already exist). Each business has one wellness service and Mon–Sat 9:00–17:00 availability.
 
-Seed matches the Beauty & Wellness wedge: **Lagos + Ottawa** and the seven v1 categories (`hair-grooming`, `nails`, `skincare-aesthetics`, `spa-relaxation`, `massage-bodywork`, `fitness`, `yoga-pilates`). Home services and non-launch cities are not seeded.
+Seed matches the Beauty & Wellness wedge: **Lagos + Ottawa** and the seven enabled categories (`hair-grooming`, `nails`, `skincare-aesthetics`, `spa-relaxation`, `massage-bodywork`, `fitness`, `yoga-pilates`). Home services and non-launch cities are not seeded.
 
 | Market | Total | Handcrafted | Generated bulk |
 |--------|-------|-------------|----------------|

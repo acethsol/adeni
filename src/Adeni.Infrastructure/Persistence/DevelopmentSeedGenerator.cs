@@ -14,7 +14,7 @@ internal static class DevelopmentSeedGenerator
 
     internal const int TargetBulkCount = LagosBulkCount + OttawaBulkCount;
 
-    internal static readonly string[] V1CategorySlugs =
+    internal static readonly string[] CategorySlugs =
     [
         "hair-grooming",
         "nails",
@@ -70,7 +70,7 @@ internal static class DevelopmentSeedGenerator
 
     private static DevelopmentSeedCatalog.SampleBusiness Build(MarketBulkConfig market, int globalIndex, int marketIndex)
     {
-        var categorySlug = V1CategorySlugs[globalIndex % V1CategorySlugs.Length];
+        var categorySlug = CategorySlugs[globalIndex % CategorySlugs.Length];
         var area = market.Areas[marketIndex % market.Areas.Length];
         var suffix = Pick(CategorySuffixes[categorySlug], globalIndex);
         var name = $"{area} {suffix}";

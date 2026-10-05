@@ -201,7 +201,7 @@ export class AdeniApiClient {
   async getCategories(options?: {
     market?: string;
     wellness?: boolean;
-    includeNonV1?: boolean;
+    includeDisabled?: boolean;
   }): Promise<Category[]> {
     const query = new URLSearchParams();
     if (options?.market) {
@@ -210,8 +210,8 @@ export class AdeniApiClient {
     if (options?.wellness === false) {
       query.set("wellness", "false");
     }
-    if (options?.includeNonV1) {
-      query.set("includeNonV1", "true");
+    if (options?.includeDisabled) {
+      query.set("includeDisabled", "true");
     }
     const suffix = query.size > 0 ? `?${query.toString()}` : "";
     const response = await this.request(`/api/v1/categories${suffix}`);

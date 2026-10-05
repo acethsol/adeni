@@ -3,7 +3,7 @@ namespace Adeni.Application.Catalog;
 public sealed record CategoryListQuery(
     string? MarketId = null,
     bool WellnessScope = true,
-    bool IncludeNonV1 = false);
+    bool IncludeDisabled = false);
 
 public interface IWellnessCategoryCatalog
 {

@@ -17,6 +17,11 @@ Thumbs.db
 appsettings.*.local.json
 *.pfx
 
+## Flutter (apps/mobile)
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+
 ## Node / frontend
 node_modules/
 .next/
