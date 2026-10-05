@@ -1,48 +1,32 @@
-import * as SecureStore from "expo-secure-store";
 import {
   defaultLocale,
   isLocaleId,
   LOCALE_COOKIE_NAME,
   type LocaleId,
 } from "@adeni/shared";
+import { secureGetItem, secureSetItem } from "@/lib/secure-storage";
 
 const LOCALE_STORAGE_KEY = LOCALE_COOKIE_NAME;
 const MARKET_STORAGE_KEY = "adeni_market";
 
 export async function readStoredLocale(): Promise<LocaleId> {
-  try {
-    const value = await SecureStore.getItemAsync(LOCALE_STORAGE_KEY);
+  const value = await secureGetItem(LOCALE_STORAGE_KEY);
 
-    if (value && isLocaleId(value)) {
-      return value;
-    }
-  } catch {
-    // SecureStore unavailable on web dev — fall back to default.
+  if (value && isLocaleId(value)) {
+    return value;
   }
 
   return defaultLocale;
 }
 
 export async function writeStoredLocale(locale: LocaleId): Promise<void> {
-  try {
-    await SecureStore.setItemAsync(LOCALE_STORAGE_KEY, locale);
-  } catch {
-    // Ignore persistence errors in local dev.
-  }
+  await secureSetItem(LOCALE_STORAGE_KEY, locale);
 }
 
 export async function readStoredMarketId(): Promise<string | null> {
-  try {
-    return await SecureStore.getItemAsync(MARKET_STORAGE_KEY);
-  } catch {
-    return null;
-  }
+  return secureGetItem(MARKET_STORAGE_KEY);
 }
 
 export async function writeStoredMarketId(marketId: string): Promise<void> {
-  try {
-    await SecureStore.setItemAsync(MARKET_STORAGE_KEY, marketId);
-  } catch {
-    // Ignore persistence errors in local dev.
-  }
+  await secureSetItem(MARKET_STORAGE_KEY, marketId);
 }

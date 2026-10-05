@@ -79,6 +79,9 @@ Set API URL in app config (see `apps/mobile/README.md`).
 ## Docs
 
 - [Target client architecture](./target-client-architecture.md) — canonical diagram
+- [QA deploy runbook](./runbooks/qa-deploy.md) — Azure Container Apps, Auth0, migrations
+- [Git repo diligence](./runbooks/git-repo-diligence.md) — branch protection, CI, secrets
+- [Web testing checklist](./web-testing-checklist.md) — manual pass + agent/Playwright strategy
 - [Frontend Architecture v1 (Confluence)](https://aceth.atlassian.net/wiki/spaces/SD/pages/26968065)
 - [auth0-setup.md](./auth0-setup.md)
 - [ADR-012](./adr/ADR-012-angular-web-deferred-flutter.md), [angular migration checklist](./angular-migration-checklist.md)

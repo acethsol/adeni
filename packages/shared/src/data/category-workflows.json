@@ -47,7 +47,7 @@
     },
     "barbers": {
       "defaultBusinessType": "scheduled_appointment",
-      "capabilities": ["calendar", "fixed_pricing", "reviews"]
+      "capabilities": ["calendar", "fixed_pricing", "reviews", "deposits"]
     },
     "hair-salons": {
       "defaultBusinessType": "scheduled_appointment",

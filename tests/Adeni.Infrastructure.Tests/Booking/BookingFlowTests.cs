@@ -15,6 +15,7 @@ using Adeni.Infrastructure.Events;
 using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Reviews;
 using Adeni.Infrastructure.Subscriptions;
+using Adeni.Infrastructure.Tests.Catalog;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -239,6 +240,41 @@ public sealed class BookingFlowTests
     }
 
     [Fact]
+    public async Task Create_booking_normalizes_non_utc_offset_for_persistence()
+    {
+        await using var provider = BuildProvider(defaultTimeZoneId: "Africa/Lagos");
+        using var scope = provider.CreateScope();
+        var tenantId = await SeedVerifiedTenantAsync(scope.ServiceProvider, timeZoneId: "Africa/Lagos");
+
+        var catalog = scope.ServiceProvider.GetRequiredService<IServiceCatalogService>();
+        var availability = scope.ServiceProvider.GetRequiredService<IAvailabilityService>();
+        var bookings = scope.ServiceProvider.GetRequiredService<IBookingService>();
+
+        var service = await catalog.CreateAsync(
+            tenantId,
+            new CreateServiceOfferingRequest("Fade", null, 5000m, "NGN", 30),
+            CancellationToken.None);
+
+        await availability.ReplaceWeeklyRulesAsync(
+            tenantId,
+            [new WeeklyAvailabilityRule(DayOfWeek.Monday, new TimeOnly(9, 0), new TimeOnly(17, 0))],
+            CancellationToken.None);
+
+        var mondayUtc = NextMondayAt(new TimeOnly(10, 0));
+        var slotWithOffset = mondayUtc.ToOffset(TimeSpan.FromHours(1));
+
+        var created = await bookings.CreateAsync(
+            "auth0|customer-offset",
+            new CreateBookingRequest(tenantId, service.Value!.Id, slotWithOffset, null),
+            idempotencyKey: null,
+            cancellationToken: CancellationToken.None);
+
+        Assert.True(created.IsSuccess);
+        Assert.Equal(TimeSpan.Zero, created.Value!.StartAt.Offset);
+        Assert.Equal(mondayUtc, created.Value.StartAt);
+    }
+
+    [Fact]
     public async Task Business_profile_time_zone_overrides_market_default()
     {
         await using var provider = BuildProvider(defaultTimeZoneId: "UTC");
@@ -317,6 +353,7 @@ public sealed class BookingFlowTests
         services.Configure<MarketOptions>(options => options.DefaultTimeZoneId = defaultTimeZoneId);
         services.AddAdeniDomainEvents();
         services.AddDbContext<AdeniDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));
+        services.AddCategoryWorkflowCatalog();
         services.AddScoped<Adeni.Infrastructure.Context.TenantContext>();
         services.AddScoped<Application.Abstractions.ITenantContext>(sp =>
             sp.GetRequiredService<Adeni.Infrastructure.Context.TenantContext>());

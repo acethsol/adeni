@@ -26,8 +26,17 @@ public static class OpenApiExtensions
             options.WithOpenApiRoutePattern("/openapi/{documentName}.json");
         });
 
-        app.MapGet("/swagger", () => Results.Redirect("/scalar/v1"))
-            .ExcludeFromDescription();
+        app.MapGet("/swagger", (HttpContext context) =>
+        {
+            context.Response.Redirect("/scalar/v1");
+            return Task.CompletedTask;
+        }).ExcludeFromDescription();
+
+        app.MapGet("/", (HttpContext context) =>
+        {
+            context.Response.Redirect("/scalar/v1");
+            return Task.CompletedTask;
+        }).ExcludeFromDescription();
 
         return app;
     }

@@ -26,6 +26,24 @@ function getNextPageNumber(pages: DiscoveryResponse[]): number {
   return Number(lastPage) + 1;
 }
 
+function flattenDiscoveryItems(pages: DiscoveryResponse[]): DiscoveryBusinessItem[] {
+  const seenLocationIds = new Set<string>();
+  const items: DiscoveryBusinessItem[] = [];
+
+  for (const page of pages) {
+    for (const business of page.items) {
+      if (seenLocationIds.has(business.locationId)) {
+        continue;
+      }
+
+      seenLocationIds.add(business.locationId);
+      items.push(business);
+    }
+  }
+
+  return items;
+}
+
 export function DiscoverBusinessGrid({
   lat,
   lng,
@@ -39,6 +57,7 @@ export function DiscoverBusinessGrid({
   const { t } = useTranslation();
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const autoLoadPausedRef = useRef(false);
+  const loadMoreInFlightRef = useRef(false);
   const queryKey = `${lat},${lng},${market},${category ?? ""},${q ?? ""},${sort},${minRating ?? ""}`;
   const queryKeyRef = useRef(queryKey);
 
@@ -102,13 +121,13 @@ export function DiscoverBusinessGrid({
     };
   }, [initialPage, lat, lng, market, category, q, sort, minRating]);
 
-  const businesses = pages.flatMap((page) => page.items);
+  const businesses = flattenDiscoveryItems(pages);
   const totalCount = pages[0]?.totalCount ?? initialPage?.totalCount ?? 0;
   const hasNextPage = businesses.length > 0 && businesses.length < totalCount;
 
   const loadMore = useCallback(
     async (manual = false) => {
-      if (!hasNextPage || isLoadingMore) {
+      if (!hasNextPage || isLoadingMore || loadMoreInFlightRef.current) {
         return;
       }
 
@@ -122,6 +141,7 @@ export function DiscoverBusinessGrid({
 
       const nextPage = getNextPageNumber(pages);
       setLoadMoreError(false);
+      loadMoreInFlightRef.current = true;
       setIsLoadingMore(true);
 
       try {
@@ -135,11 +155,18 @@ export function DiscoverBusinessGrid({
           sort,
           minRating,
         });
-        setPages((current) => [...current, result]);
+        setPages((current) => {
+          if (current.some((page) => page.page === result.page)) {
+            return current;
+          }
+
+          return [...current, result];
+        });
       } catch {
         setLoadMoreError(true);
         autoLoadPausedRef.current = true;
       } finally {
+        loadMoreInFlightRef.current = false;
         setIsLoadingMore(false);
       }
     },
@@ -195,7 +222,7 @@ export function DiscoverBusinessGrid({
 
       <ul className={publicCardGridClass}>
         {businesses.map((business: DiscoveryBusinessItem, index: number) => (
-          <li key={`${business.tenantId}-${business.locationId}`}>
+          <li key={business.locationId}>
             <BusinessDiscoveryCard business={business} imagePriority={index < 4} />
           </li>
         ))}

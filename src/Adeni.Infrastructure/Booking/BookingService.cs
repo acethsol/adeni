@@ -33,8 +33,9 @@ public sealed class BookingService(
         }
 
         var normalizedIdempotencyKey = IdempotencyKeyNormalizer.Normalize(idempotencyKey);
+        var slotStart = request.StartAt.ToUniversalTime();
 
-        if (request.StartAt <= DateTimeOffset.UtcNow)
+        if (slotStart <= DateTimeOffset.UtcNow)
         {
             return Result.Failure<BookingResponse>(ErrorCodes.SlotExpiredError());
         }
@@ -107,7 +108,7 @@ public sealed class BookingService(
             }
         }
 
-        var lockKey = CacheKeys.SlotLock(request.TenantId, request.StartAt, service.Id);
+        var lockKey = CacheKeys.SlotLock(request.TenantId, slotStart, service.Id);
         var slotLock = await lockProvider.TryAcquireAsync(lockKey, CacheTtl.SlotLock, cancellationToken);
         if (slotLock is null)
         {
@@ -119,13 +120,13 @@ public sealed class BookingService(
             var isAvailable = await availabilityService.IsSlotAvailableAsync(
                 request.TenantId,
                 service.Id,
-                request.StartAt,
+                slotStart,
                 service.DurationMinutes,
                 cancellationToken);
 
             if (!isAvailable)
             {
-                if (request.StartAt <= DateTimeOffset.UtcNow)
+                if (slotStart <= DateTimeOffset.UtcNow)
                 {
                     return Result.Failure<BookingResponse>(ErrorCodes.SlotExpiredError());
                 }
@@ -141,8 +142,8 @@ public sealed class BookingService(
                 TenantId = request.TenantId,
                 ServiceOfferingId = service.Id,
                 CustomerId = customer.Id,
-                StartAt = request.StartAt,
-                EndAt = request.StartAt.AddMinutes(service.DurationMinutes),
+                StartAt = slotStart,
+                EndAt = slotStart.AddMinutes(service.DurationMinutes),
                 Status = autoConfirm ? BookingStatus.Confirmed : BookingStatus.Pending,
                 CustomerNotes = string.IsNullOrWhiteSpace(request.CustomerNotes)
                     ? null

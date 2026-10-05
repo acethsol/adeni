@@ -29,6 +29,8 @@ npm run dev:web                                   # http://localhost:3000
 
 See [docs/database-setup.md](docs/database-setup.md), [docs/caching-setup.md](docs/caching-setup.md), [docs/frontend.md](docs/frontend.md), [docs/architecture.md](docs/architecture.md), [docs/observability.md](docs/observability.md).
 
+**QA / Azure:** [docs/runbooks/qa-deploy.md](docs/runbooks/qa-deploy.md) · [docs/runbooks/git-repo-diligence.md](docs/runbooks/git-repo-diligence.md)
+
 ## Repository structure
 
 ```
