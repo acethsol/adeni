@@ -49,15 +49,17 @@ Every feature should reinforce at least one pillar:
 
 ---
 
-## 2. Go-to-market wedge (Nigeria first, global architecture)
+## 2. Go-to-market wedge (dual city, one vertical)
 
-ChatGPT research and market reality align on the same playbook:
+Playbook for **Adeni Beauty & Wellness** (beauty, wellness & self-care — not clinical healthcare in v1):
 
-1. **One city** — Lagos (already configured: `lagos` market, seeded businesses).
-2. **One vertical** — Beauty & grooming (barbers, salons, nails) — high WhatsApp volume, repeat bookings, price transparency.
-3. **Supply-first** — Personally onboard 100–300 businesses free; give them a **mini website + booking link** they can paste in Instagram bio and WhatsApp status.
-4. **Demand follows** — Reviews + “Book on Adeni” links create consumer pull; don't wait for organic discovery.
-5. **Expand vertically** — Home services → Healthcare → Professional — only after one wedge shows engagement.
+1. **Two launch markets** — Lagos + Ottawa (same product; market config controls featured categories and live supply — see [markets.md](./markets.md)).
+2. **One vertical** — Massage, spa, skincare/aesthetics, hair & grooming, nails, fitness, yoga/Pilates (see [beauty-wellness-taxonomy.md](./beauty-wellness-taxonomy.md)).
+3. **Supply-first** — Onboard businesses with a **mini website + booking link** for Instagram bio and WhatsApp status.
+4. **Demand follows** — Reviews and “Book on Adeni” links; discovery SEO on Angular discover SSR.
+5. **Expand later** — Home services (quote flow already in platform), then regulated categories (medical aesthetics, physio, mental health) only with compliance design.
+
+**Defer:** positioning Adeni as “wellness only” while hair/nails/aesthetics are in scope — that undercuts the wedge TAM.
 
 ### North-star metric (early)
 
@@ -111,7 +113,7 @@ Adeni is **not appointment-native** like Booksy. Different local service busines
 | **Business type** | How the business operates (operating model) | `scheduled_appointment`, `quote_request`, `walk_in_queue` |
 | **Workflow capabilities** | Features enabled for that type | calendar, quotes, deposits, on-site address, photo upload, license badges |
 
-Today the codebase has **categories only** (`CategoryService` + tenant `categorySlug`). Every tenant runs the same **scheduled appointment** workflow regardless of category. The business-type layer is the missing platform primitive.
+Today the codebase has **discovery categories** (`CategoryService` + tenant `categorySlug`), **business type** on `BusinessProfile` (`scheduled_appointment` | `quote_request`), and **category-aware defaults** in `packages/shared/src/data/category-workflows.json`. Gaps for Beauty & Wellness: multi-category businesses, service catalog per category, booking delivery type (class/session/experience/mobile), and wellness taxonomy replacing the legacy 7-slug demo catalog — see [beauty-wellness-taxonomy.md](./beauty-wellness-taxonomy.md).
 
 #### Business types (v1 + backlog)
 
