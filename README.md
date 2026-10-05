@@ -42,6 +42,8 @@ apps/admin/              Angular — admin portal
 packages/api-client/     Typed API client (shared)
 packages/shared/         Zod schemas, roles, wellness catalog
 
+apps/mobile/             Flutter — business mobile skeleton (owner / employee / front desk)
+
 Legacy **Next.js + Expo** clients: [docs/legacy-clients-archive.md](docs/legacy-clients-archive.md) (separate reference repo).
 tests/                   Backend unit/integration tests
 ```

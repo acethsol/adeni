@@ -57,7 +57,7 @@ This document is the **north-star diagram** for who talks to what on the public 
 | **Discover Web** | `apps/discover` | Consumers (web) | SSR for SEO, public discovery, business profiles, booking. Auth0 SPA for signed-in customers when enabled. |
 | **Business Portal** | `apps/portal` | Business tenants | Services, availability, bookings, profile, payments/plan. Auth0 SPA (business role) or dev sub locally. |
 | **Admin Portal** | `apps/admin` | Adeni staff | Pending verification, markets, businesses, customer privacy (export/erasure). Separate origin recommended in production (e.g. `admin.adeni.com`). |
-| **Flutter mobile** | *future* | Consumers (native) | **Target** after web GA; same API + OpenAPI/contracts as discover. |
+| **Flutter mobile** | `apps/mobile` | Business ops (owner, employee, front desk) | Skeleton in repo; consumer app after web GA. Same API + OpenAPI. |
 | **.NET API** | `src/Adeni.Api` | All of the above | Modular monolith; no business logic duplicated in clients. |
 | **PostgreSQL / Redis** | infra | API | Primary store + cache/session/rate-limit as configured. |
 

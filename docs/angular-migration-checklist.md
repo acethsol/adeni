@@ -171,14 +171,16 @@ Every handler that existed under archived Next `app/api/**` must end as **A**, *
 
 ---
 
-## 7. Flutter mobile (phase 2 — after web GA)
+## 7. Flutter mobile
 
 | Step | Done |
 |------|------|
 | Expo removed from monorepo (archive repo) | ☑ |
+| Business skeleton `apps/mobile` (owner / employee / front desk) | ☑ — [spec](./specs/flutter-business-mobile-skeleton.md) |
 | OpenAPI → Dart client | ☐ |
-| Auth0 native app (PKCE) | ☐ |
-| MVP: discover browse, book, account, messages | ☐ |
+| Auth0 native app (PKCE) for business | ☐ |
+| API check-in / check-out (front desk) | ☐ |
+| Consumer MVP: discover browse, book, account (after web GA) | ☐ |
 | Deep links to `/businesses/{slug}` on web until parity | ☐ |
 | Store release + deprecate Expo | ☐ |
 

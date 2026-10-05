@@ -12,7 +12,7 @@ Project DNA for Cursor Cloud Agents and local Agent sessions. Read this before c
 | Data | PostgreSQL, EF Core, Redis (cache + slot locks) |
 | Auth | Auth0 JWT (RS256), claims under `https://adeni.io/` |
 | Web | Angular — `apps/discover`, `apps/portal`, `apps/admin` (ADR-012) |
-| Mobile | Flutter consumer (planned post web GA); legacy Expo archived — [legacy-clients-archive.md](docs/legacy-clients-archive.md) |
+| Mobile | Flutter **business** skeleton (`apps/mobile`); consumer app post web GA — [flutter-business-mobile-skeleton.md](docs/specs/flutter-business-mobile-skeleton.md); legacy Expo archived |
 | Shared contracts | `packages/shared`, `packages/api-client` |
 | Compliance | SOC 2 from Sprint 0 — audit logs, PII masking, admin MFA |
 
@@ -30,7 +30,8 @@ src/
 apps/
 ├── discover/               # Angular SSR — public discovery & booking
 ├── portal/                 # Angular — business portal
-└── admin/                  # Angular — admin portal
+├── admin/                  # Angular — admin portal
+└── mobile/                 # Flutter — business ops (owner / employee / front desk)
 packages/
 ├── shared/                 # Zod schemas, capabilities, business types
 └── api-client/             # Typed HTTP client

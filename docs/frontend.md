@@ -9,12 +9,15 @@ apps/
   discover/            Angular SSR — public SEO, consumers (`npm run dev:discover`, :5190)
   portal/              Angular — business portal (`npm run dev:portal`, :5173)
   admin/               Angular — admin portal (`npm run dev:admin`, :5180)
+  mobile/              Flutter — business skeleton (owner / employee / front desk)
 packages/
   api-client/          Typed .NET API client
   shared/              Zod schemas, roles, constants, markets, wellness catalog
 ```
 
-Consumer **Flutter** (iOS + Android) is planned after web GA (ADR-012). Archived **Next.js + Expo** live in [legacy-clients-archive.md](./legacy-clients-archive.md).
+Flutter spec: [specs/flutter-business-mobile-skeleton.md](./specs/flutter-business-mobile-skeleton.md).
+
+Consumer **Flutter** (discover/book) remains planned after web GA (ADR-012). Archived **Next.js + Expo**: [legacy-clients-archive.md](./legacy-clients-archive.md).
 
 ## Prerequisites
 
