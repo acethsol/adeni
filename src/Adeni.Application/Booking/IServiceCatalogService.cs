@@ -11,7 +11,10 @@ public sealed record ServiceOfferingResponse(
     string Currency,
     string PricingType,
     int DurationMinutes,
-    bool IsActive);
+    bool IsActive,
+    string? CategorySlug = null,
+    string? CatalogServiceId = null,
+    string BookingDeliveryType = "appointment");
 
 public sealed record CreateServiceOfferingRequest(
     string Name,
@@ -19,7 +22,10 @@ public sealed record CreateServiceOfferingRequest(
     decimal PriceAmount,
     string Currency,
     int DurationMinutes,
-    string PricingType = "fixed");
+    string PricingType = "fixed",
+    string? CategorySlug = null,
+    string? CatalogServiceId = null,
+    string BookingDeliveryType = "appointment");
 
 public sealed record UpdateServiceOfferingRequest(
     string Name,
@@ -28,7 +34,10 @@ public sealed record UpdateServiceOfferingRequest(
     string Currency,
     int DurationMinutes,
     string PricingType,
-    bool IsActive);
+    bool IsActive,
+    string? CategorySlug = null,
+    string? CatalogServiceId = null,
+    string BookingDeliveryType = "appointment");
 
 public interface IServiceCatalogService
 {

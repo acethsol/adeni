@@ -17,7 +17,8 @@ public sealed class DiscoveryService(
     IFileStorage fileStorage,
     Application.Reviews.IReviewService reviewService,
     IMarketCatalog marketCatalog,
-    IBusinessCapabilitiesService businessCapabilitiesService) : IDiscoveryService
+    IBusinessCapabilitiesService businessCapabilitiesService,
+    ICategoryService categoryService) : IDiscoveryService
 {
     private const int DefaultPageSize = 20;
     private const int MaxPageSize = 50;
@@ -64,7 +65,7 @@ public sealed class DiscoveryService(
         var effectivePageSize = pageSize <= 0 ? DefaultPageSize : Math.Min(pageSize, MaxPageSize);
         var normalizedCategory = string.IsNullOrWhiteSpace(categorySlug)
             ? null
-            : categorySlug.Trim().ToLowerInvariant();
+            : categoryService.NormalizeSlug(categorySlug);
         var normalizedQuery = string.IsNullOrWhiteSpace(query)
             ? null
             : query.Trim().ToLowerInvariant();
@@ -209,6 +210,9 @@ public sealed class DiscoveryService(
         var verifiedStatus = (int)TenantStatus.Verified;
         var likeQuery = searchQuery is null ? null : $"%{searchQuery}%";
         var offset = (page - 1) * pageSize;
+        string[]? categoryMatchSlugs = string.IsNullOrWhiteSpace(categorySlug)
+            ? null
+            : categoryService.GetDiscoveryMatchSlugs(categorySlug).ToArray();
 
         var totalCount = await dbContext.Database
             .SqlQuery<int>($"""
@@ -229,7 +233,11 @@ public sealed class DiscoveryService(
                   AND bl."Latitude" IS NOT NULL
                   AND bl."Longitude" IS NOT NULL
                   AND t."Status" = {verifiedStatus}
-                  AND ({categorySlug}::text IS NULL OR LOWER(bp."CategorySlug") = {categorySlug})
+                  AND ({categorySlug}::text IS NULL OR LOWER(bp."CategorySlug") = ANY({categoryMatchSlugs}) OR EXISTS (
+                    SELECT 1 FROM tenancy.business_profile_categories bpc
+                    WHERE bpc."TenantId" = bp."TenantId"
+                      AND LOWER(bpc."CategorySlug") = ANY({categoryMatchSlugs})
+                  ))
                   AND ({marketId}::text IS NULL OR LOWER(bl."MarketId") = {marketId})
                   AND ({minRating}::int IS NULL OR COALESCE(rating_summary.rating_avg, 0) >= {minRating}::int)
                   AND (
@@ -284,7 +292,11 @@ public sealed class DiscoveryService(
                       AND bl."Latitude" IS NOT NULL
                       AND bl."Longitude" IS NOT NULL
                       AND t."Status" = {verifiedStatus}
-                      AND ({categorySlug}::text IS NULL OR LOWER(bp."CategorySlug") = {categorySlug})
+                      AND ({categorySlug}::text IS NULL OR LOWER(bp."CategorySlug") = ANY({categoryMatchSlugs}) OR EXISTS (
+                        SELECT 1 FROM tenancy.business_profile_categories bpc
+                        WHERE bpc."TenantId" = bp."TenantId"
+                          AND LOWER(bpc."CategorySlug") = ANY({categoryMatchSlugs})
+                      ))
                       AND ({marketId}::text IS NULL OR LOWER(bl."MarketId") = {marketId})
                       AND ({minRating}::int IS NULL OR COALESCE(rating_summary.rating_avg, 0) >= {minRating}::int)
                       AND (
@@ -356,7 +368,11 @@ public sealed class DiscoveryService(
                       AND bl."Latitude" IS NOT NULL
                       AND bl."Longitude" IS NOT NULL
                       AND t."Status" = {verifiedStatus}
-                      AND ({categorySlug}::text IS NULL OR LOWER(bp."CategorySlug") = {categorySlug})
+                      AND ({categorySlug}::text IS NULL OR LOWER(bp."CategorySlug") = ANY({categoryMatchSlugs}) OR EXISTS (
+                        SELECT 1 FROM tenancy.business_profile_categories bpc
+                        WHERE bpc."TenantId" = bp."TenantId"
+                          AND LOWER(bpc."CategorySlug") = ANY({categoryMatchSlugs})
+                      ))
                       AND ({marketId}::text IS NULL OR LOWER(bl."MarketId") = {marketId})
                       AND ({minRating}::int IS NULL OR COALESCE(rating_summary.rating_avg, 0) >= {minRating}::int)
                       AND (
@@ -487,9 +503,27 @@ public sealed class DiscoveryService(
             query = query.Where(x => x.location.MarketId == marketId);
         }
 
+        HashSet<string>? categoryMatchSlugs = null;
+        HashSet<Guid>? tenantIdsMatchingCategory = null;
         if (!string.IsNullOrWhiteSpace(categorySlug))
         {
-            query = query.Where(x => x.profile.CategorySlug == categorySlug);
+            categoryMatchSlugs = categoryService
+                .GetDiscoveryMatchSlugs(categoryService.NormalizeSlug(categorySlug))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var tenantIds = await dbContext.BusinessProfileCategories
+                .AsNoTracking()
+                .Where(c => categoryMatchSlugs.Contains(c.CategorySlug))
+                .Select(c => c.TenantId)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+            tenantIdsMatchingCategory = tenantIds.ToHashSet();
+        }
+
+        if (categoryMatchSlugs is not null && tenantIdsMatchingCategory is not null)
+        {
+            query = query.Where(x =>
+                categoryMatchSlugs.Contains(x.profile.CategorySlug)
+                || tenantIdsMatchingCategory.Contains(x.tenant.Id));
         }
 
         if (!string.IsNullOrWhiteSpace(searchQuery))

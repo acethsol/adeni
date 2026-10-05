@@ -17,6 +17,34 @@
     }
   },
   "categories": {
+    "massage-bodywork": {
+      "defaultBusinessType": "scheduled_appointment",
+      "capabilities": ["calendar", "fixed_pricing", "reviews", "multi_service"]
+    },
+    "spa-relaxation": {
+      "defaultBusinessType": "scheduled_appointment",
+      "capabilities": ["calendar", "fixed_pricing", "reviews", "multi_service"]
+    },
+    "skincare-aesthetics": {
+      "defaultBusinessType": "scheduled_appointment",
+      "capabilities": ["calendar", "fixed_pricing", "reviews", "multi_service"]
+    },
+    "hair-grooming": {
+      "defaultBusinessType": "scheduled_appointment",
+      "capabilities": ["calendar", "fixed_pricing", "reviews", "multi_service"]
+    },
+    "nails": {
+      "defaultBusinessType": "scheduled_appointment",
+      "capabilities": ["calendar", "fixed_pricing", "reviews", "multi_service"]
+    },
+    "fitness": {
+      "defaultBusinessType": "scheduled_appointment",
+      "capabilities": ["calendar", "fixed_pricing", "reviews"]
+    },
+    "yoga-pilates": {
+      "defaultBusinessType": "scheduled_appointment",
+      "capabilities": ["calendar", "fixed_pricing", "reviews"]
+    },
     "barbers": {
       "defaultBusinessType": "scheduled_appointment",
       "capabilities": ["calendar", "fixed_pricing", "reviews"]

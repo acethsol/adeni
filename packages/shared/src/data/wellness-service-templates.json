@@ -1,0 +1,186 @@
+{
+  "templatesByCategory": {
+    "massage-bodywork": [
+      {
+        "id": "massage-swedish",
+        "name": "Swedish Massage",
+        "defaultDurationMinutes": 60,
+        "bookingDeliveryType": "appointment"
+      },
+      {
+        "id": "massage-deep-tissue",
+        "name": "Deep Tissue Massage",
+        "defaultDurationMinutes": 60,
+        "bookingDeliveryType": "appointment"
+      },
+      {
+        "id": "massage-sports",
+        "name": "Sports Massage",
+        "defaultDurationMinutes": 45,
+        "bookingDeliveryType": "appointment"
+      },
+      {
+        "id": "massage-couples",
+        "name": "Couples Massage",
+        "defaultDurationMinutes": 60,
+        "bookingDeliveryType": "appointment"
+      },
+      {
+        "id": "massage-prenatal",
+        "name": "Prenatal Massage",
+        "defaultDurationMinutes": 60,
+        "bookingDeliveryType": "appointment"
+      },
+      {
+        "id": "massage-hot-stone",
+        "name": "Hot Stone Massage",
+        "defaultDurationMinutes": 75,
+        "bookingDeliveryType": "appointment"
+      },
+      {
+        "id": "massage-reflexology",
+        "name": "Reflexology",
+        "defaultDurationMinutes": 45,
+        "bookingDeliveryType": "appointment"
+      }
+    ],
+    "hair-grooming": [
+      {
+        "id": "hair-cut",
+        "name": "Haircut",
+        "defaultDurationMinutes": 45,
+        "bookingDeliveryType": "appointment"
+      },
+      {
+        "id": "hair-barbering",
+        "name": "Barbering",
+        "defaultDurationMinutes": 30,
+        "bookingDeliveryType": "appointment"
+      },
+      {
+        "id": "hair-braids",
+        "name": "Braids",
+        "defaultDurationMinutes": 120,
+        "bookingDeliveryType": "appointment"
+      },
+      {
+        "id": "hair-locs",
+        "name": "Locs",
+        "defaultDurationMinutes": 90,
+        "bookingDeliveryType": "appointment"
+      },
+      {
+        "id": "hair-styling",
+        "name": "Hair Styling",
+        "defaultDurationMinutes": 60,
+        "bookingDeliveryType": "appointment"
+      },
+      {
+        "id": "hair-color",
+        "name": "Hair Coloring",
+        "defaultDurationMinutes": 90,
+        "bookingDeliveryType": "appointment"
+      },
+      {
+        "id": "hair-treatment",
+        "name": "Hair Treatment",
+        "defaultDurationMinutes": 45,
+        "bookingDeliveryType": "appointment"
+      },
+      {
+        "id": "hair-beard",
+        "name": "Beard Grooming",
+        "defaultDurationMinutes": 20,
+        "bookingDeliveryType": "appointment"
+      }
+    ],
+    "nails": [
+      {
+        "id": "nails-manicure",
+        "name": "Manicure",
+        "defaultDurationMinutes": 45,
+        "bookingDeliveryType": "appointment"
+      },
+      {
+        "id": "nails-pedicure",
+        "name": "Pedicure",
+        "defaultDurationMinutes": 60,
+        "bookingDeliveryType": "appointment"
+      },
+      {
+        "id": "nails-gel",
+        "name": "Gel Nails",
+        "defaultDurationMinutes": 75,
+        "bookingDeliveryType": "appointment"
+      }
+    ],
+    "skincare-aesthetics": [
+      {
+        "id": "skin-facial",
+        "name": "Facial",
+        "defaultDurationMinutes": 60,
+        "bookingDeliveryType": "appointment"
+      },
+      {
+        "id": "skin-waxing",
+        "name": "Waxing",
+        "defaultDurationMinutes": 30,
+        "bookingDeliveryType": "appointment"
+      },
+      {
+        "id": "skin-brows-lashes",
+        "name": "Brows & Lashes",
+        "defaultDurationMinutes": 45,
+        "bookingDeliveryType": "appointment"
+      }
+    ],
+    "spa-relaxation": [
+      {
+        "id": "spa-day-package",
+        "name": "Day Spa Package",
+        "defaultDurationMinutes": 120,
+        "bookingDeliveryType": "experience"
+      },
+      {
+        "id": "spa-body-treatment",
+        "name": "Body Treatment",
+        "defaultDurationMinutes": 60,
+        "bookingDeliveryType": "appointment"
+      }
+    ],
+    "yoga-pilates": [
+      {
+        "id": "yoga-group-class",
+        "name": "Yoga Class",
+        "defaultDurationMinutes": 60,
+        "bookingDeliveryType": "class"
+      },
+      {
+        "id": "pilates-group-class",
+        "name": "Pilates Class",
+        "defaultDurationMinutes": 55,
+        "bookingDeliveryType": "class"
+      },
+      {
+        "id": "yoga-private",
+        "name": "Private Yoga Session",
+        "defaultDurationMinutes": 60,
+        "bookingDeliveryType": "session"
+      }
+    ],
+    "fitness": [
+      {
+        "id": "fitness-pt",
+        "name": "Personal Training",
+        "defaultDurationMinutes": 60,
+        "bookingDeliveryType": "session"
+      },
+      {
+        "id": "fitness-strength",
+        "name": "Strength & Conditioning",
+        "defaultDurationMinutes": 45,
+        "bookingDeliveryType": "session"
+      }
+    ]
+  }
+}

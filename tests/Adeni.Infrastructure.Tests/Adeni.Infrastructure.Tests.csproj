@@ -34,6 +34,8 @@
 
   <ItemGroup>
     <Content Include="..\..\packages\shared\src\data\category-workflows.json" Link="Catalog\category-workflows.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\packages\shared\src\data\wellness-categories.json" Link="Catalog\wellness-categories.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\packages\shared\src\data\wellness-service-templates.json" Link="Catalog\wellness-service-templates.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

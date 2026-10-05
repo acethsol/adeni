@@ -19,13 +19,15 @@ public sealed record RegisterBusinessRequest(
     string CategorySlug,
     string Phone,
     BusinessLocationRequest Location,
-    string? Description = null);
+    string? Description = null,
+    IReadOnlyList<string>? AdditionalCategorySlugs = null);
 
 public sealed record UpdateBusinessProfileRequest(
     string BusinessName,
     string CategorySlug,
     string Phone,
-    string? Description = null);
+    string? Description = null,
+    IReadOnlyList<string>? AdditionalCategorySlugs = null);
 
 public sealed record UpsertBusinessLocationRequest(
     string Slug,
@@ -65,6 +67,7 @@ public sealed record BusinessProfileResponse(
     string BusinessName,
     TenantStatus Status,
     string CategorySlug,
+    IReadOnlyList<string> AdditionalCategorySlugs,
     string Phone,
     string Description,
     DateTimeOffset CreatedAt,

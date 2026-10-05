@@ -1,7 +1,11 @@
 <app-portal-page
   title="Register your business"
-  description="Tell customers who you are, where you are, and what you offer."
+  description="Choose how customers find you on Discover — primary category, optional extras, then services."
 >
+  <p class="help-link">
+    <a routerLink="/setup">How this works for customers →</a>
+  </p>
+
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
@@ -14,7 +18,17 @@
       <p>
         <strong>{{ p.businessName }}</strong> is linked to this account.
       </p>
+      <p class="muted">
+        Primary: {{ categoryLabel("en", p.categorySlug) }}
+        @if (p.additionalCategorySlugs?.length) {
+          · Also listed under:
+          @for (slug of p.additionalCategorySlugs; track slug; let last = $last) {
+            {{ categoryLabel("en", slug) }}@if (!last) {, }
+          }
+        }
+      </p>
       <a routerLink="/dashboard" class="btn btn-primary">Go to dashboard</a>
+      <a routerLink="/services" class="btn btn-secondary">Add services</a>
     </section>
   } @else {
     <section class="card">
@@ -23,13 +37,43 @@
         <input [(ngModel)]="businessName" (blur)="suggestSlug()" />
       </div>
       <div class="field">
-        <label>Category</label>
-        <select [(ngModel)]="categorySlug">
+        <label>Market</label>
+        <select [(ngModel)]="marketId" (ngModelChange)="onMarketChange()">
+          @for (m of markets(); track m.id) {
+            <option [value]="m.id">{{ m.name }}</option>
+          }
+        </select>
+        <p class="hint">Explore categories on Discover are ordered for this market.</p>
+      </div>
+      <div class="field">
+        <label>Primary category</label>
+        <select [(ngModel)]="categorySlug" (ngModelChange)="onPrimaryCategoryChange()">
           @for (cat of categories(); track cat.slug) {
             <option [value]="cat.slug">{{ cat.name }}</option>
           }
         </select>
+        <p class="hint">Main type of business — used for your default listing label.</p>
       </div>
+      @if (additionalOptions().length > 0) {
+        <fieldset class="field additional">
+          <legend>Also list under (optional)</legend>
+          <p class="hint">Customers filtering these categories will still find you.</p>
+          <ul class="checkbox-list">
+            @for (cat of additionalOptions(); track cat.slug) {
+              <li>
+                <label>
+                  <input
+                    type="checkbox"
+                    [checked]="isAdditionalSelected(cat.slug)"
+                    (change)="toggleAdditional(cat.slug)"
+                  />
+                  {{ cat.name }}
+                </label>
+              </li>
+            }
+          </ul>
+        </fieldset>
+      }
       <div class="field">
         <label>Phone</label>
         <input [(ngModel)]="phone" />
@@ -49,14 +93,6 @@
       <div class="field">
         <label>Area</label>
         <input [(ngModel)]="area" />
-      </div>
-      <div class="field">
-        <label>Market</label>
-        <select [(ngModel)]="marketId">
-          @for (m of markets(); track m.id) {
-            <option [value]="m.id">{{ m.name }}</option>
-          }
-        </select>
       </div>
       <button type="button" class="btn btn-primary" [disabled]="submitting()" (click)="submit()">
         {{ submitting() ? "Submitting…" : "Register business" }}

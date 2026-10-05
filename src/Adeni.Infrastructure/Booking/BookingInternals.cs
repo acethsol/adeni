@@ -87,7 +87,33 @@ internal static class ServiceOfferingMapper
             entity.Currency,
             PricingTypeMapping.ToApiValue(entity.PricingType),
             entity.DurationMinutes,
-            entity.IsActive);
+            entity.IsActive,
+            entity.CategorySlug,
+            entity.CatalogServiceId,
+            BookingDeliveryTypeMapping.ToApiValue(entity.BookingDeliveryType));
+}
+
+internal static class BookingDeliveryTypeMapping
+{
+    public static string ToApiValue(BookingDeliveryType value) =>
+        value switch
+        {
+            BookingDeliveryType.Class => "class",
+            BookingDeliveryType.Session => "session",
+            BookingDeliveryType.Experience => "experience",
+            BookingDeliveryType.MobileAppointment => "mobile_appointment",
+            _ => "appointment",
+        };
+
+    public static BookingDeliveryType FromApiValue(string? value) =>
+        value?.Trim().ToLowerInvariant() switch
+        {
+            "class" => BookingDeliveryType.Class,
+            "session" => BookingDeliveryType.Session,
+            "experience" => BookingDeliveryType.Experience,
+            "mobile_appointment" => BookingDeliveryType.MobileAppointment,
+            _ => BookingDeliveryType.Appointment,
+        };
 }
 
 internal static class PricingTypeMapping

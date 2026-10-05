@@ -87,8 +87,15 @@ public sealed class BusinessOnboardingService(
             dbContext.BusinessProfiles.Add(profile);
         }
 
-        ApplyBrandProfile(profile, request, now);
-        profile.BusinessType = businessCapabilitiesService.GetDefaultBusinessType(request.CategorySlug);
+        ApplyBrandProfile(profile, request, now, categoryService);
+        profile.BusinessType = businessCapabilitiesService.GetDefaultBusinessType(profile.CategorySlug);
+        await BusinessProfileCategorySync.ReplaceAsync(
+            dbContext,
+            businessUser.TenantId,
+            profile.CategorySlug,
+            request.AdditionalCategorySlugs,
+            categoryService,
+            cancellationToken);
 
         var location = await dbContext.BusinessLocations
             .FirstOrDefaultAsync(x => x.TenantId == businessUser.TenantId && x.IsPrimary, cancellationToken);
@@ -205,6 +212,7 @@ public sealed class BusinessOnboardingService(
             request.BusinessName,
             request.CategorySlug,
             request.Phone,
+            request.AdditionalCategorySlugs,
             cancellationToken);
         if (validation.IsFailure)
         {
@@ -212,7 +220,14 @@ public sealed class BusinessOnboardingService(
         }
 
         tenant.Name = request.BusinessName.Trim();
-        ApplyBrandProfile(profile, request, DateTimeOffset.UtcNow);
+        ApplyBrandProfile(profile, request, DateTimeOffset.UtcNow, categoryService);
+        await BusinessProfileCategorySync.ReplaceAsync(
+            dbContext,
+            tenantId,
+            profile.CategorySlug,
+            request.AdditionalCategorySlugs,
+            categoryService,
+            cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         var locations = await dbContext.BusinessLocations
@@ -373,6 +388,7 @@ public sealed class BusinessOnboardingService(
             request.BusinessName,
             request.CategorySlug,
             request.Phone,
+            request.AdditionalCategorySlugs,
             cancellationToken);
         if (brandValidation.IsFailure)
         {
@@ -391,6 +407,7 @@ public sealed class BusinessOnboardingService(
         string businessName,
         string categorySlug,
         string phone,
+        IReadOnlyList<string>? additionalCategorySlugs,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(businessName) || businessName.Trim().Length < 2)
@@ -403,10 +420,37 @@ public sealed class BusinessOnboardingService(
             return Result.Failure(Error.Validation("Phone number must be at least 10 characters."));
         }
 
-        var categories = await categoryService.GetCategoriesAsync(cancellationToken);
-        if (!categories.Any(c => c.Slug.Equals(categorySlug.Trim(), StringComparison.OrdinalIgnoreCase)))
+        var allowed = await categoryService.GetCategoriesAsync(
+            new CategoryListQuery(WellnessScope: true, IncludeNonV1: false),
+            cancellationToken);
+        var allowedSlugs = allowed.Select(c => c.Slug).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var primary = categoryService.NormalizeSlug(categorySlug);
+        if (!allowedSlugs.Contains(primary) && !categoryService.IsKnownSlug(categorySlug))
         {
             return Result.Failure(Error.Validation("Category is not valid."));
+        }
+
+        if (!allowedSlugs.Contains(primary))
+        {
+            return Result.Failure(Error.Validation("Category is not available for Beauty & Wellness onboarding."));
+        }
+
+        if (additionalCategorySlugs is not null)
+        {
+            foreach (var raw in additionalCategorySlugs)
+            {
+                if (string.IsNullOrWhiteSpace(raw))
+                {
+                    continue;
+                }
+
+                var normalized = categoryService.NormalizeSlug(raw);
+                if (!allowedSlugs.Contains(normalized))
+                {
+                    return Result.Failure(Error.Validation($"Additional category '{raw}' is not valid."));
+                }
+            }
         }
 
         return Result.Success();
@@ -415,9 +459,10 @@ public sealed class BusinessOnboardingService(
     private static void ApplyBrandProfile(
         BusinessProfile profile,
         RegisterBusinessRequest request,
-        DateTimeOffset updatedAt)
+        DateTimeOffset updatedAt,
+        ICategoryService categoryService)
     {
-        profile.CategorySlug = request.CategorySlug.Trim().ToLowerInvariant();
+        profile.CategorySlug = categoryService.NormalizeSlug(request.CategorySlug);
         profile.Phone = request.Phone.Trim();
         profile.Description = request.Description?.Trim() ?? string.Empty;
         profile.UpdatedAt = updatedAt;
@@ -426,9 +471,10 @@ public sealed class BusinessOnboardingService(
     private static void ApplyBrandProfile(
         BusinessProfile profile,
         UpdateBusinessProfileRequest request,
-        DateTimeOffset updatedAt)
+        DateTimeOffset updatedAt,
+        ICategoryService categoryService)
     {
-        profile.CategorySlug = request.CategorySlug.Trim().ToLowerInvariant();
+        profile.CategorySlug = categoryService.NormalizeSlug(request.CategorySlug);
         profile.Phone = request.Phone.Trim();
         profile.Description = request.Description?.Trim() ?? string.Empty;
         profile.UpdatedAt = updatedAt;
@@ -461,7 +507,7 @@ public sealed class BusinessOnboardingService(
             .OrderBy(d => d.SubmittedAt)
             .ToListAsync(cancellationToken);
 
-    private static async Task<BusinessProfileResponse> MapProfileAsync(
+    private async Task<BusinessProfileResponse> MapProfileAsync(
         Tenant tenant,
         BusinessProfile profile,
         IReadOnlyList<BusinessLocation> locations,
@@ -477,12 +523,19 @@ public sealed class BusinessOnboardingService(
         }
 
         var capabilities = businessCapabilitiesService.GetCapabilities(profile.BusinessType, profile.CategorySlug);
+        var additionalCategorySlugs = await dbContext.BusinessProfileCategories
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenant.Id && !x.IsPrimary)
+            .OrderBy(x => x.CategorySlug)
+            .Select(x => x.CategorySlug)
+            .ToListAsync(cancellationToken);
 
         return new BusinessProfileResponse(
             tenant.Id,
             tenant.Name,
             tenant.Status,
             profile.CategorySlug,
+            additionalCategorySlugs,
             profile.Phone,
             profile.Description,
             tenant.CreatedAt,

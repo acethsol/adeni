@@ -247,6 +247,17 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<int>("BookingDeliveryType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CatalogServiceId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("CategorySlug")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -761,6 +772,23 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                     b.ToTable("business_profiles", "tenancy");
                 });
 
+            modelBuilder.Entity("Adeni.Domain.Tenancy.BusinessProfileCategory", b =>
+                {
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CategorySlug")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("TenantId", "CategorySlug");
+
+                    b.ToTable("business_profile_categories", "tenancy");
+                });
+
             modelBuilder.Entity("Adeni.Domain.Tenancy.Tenant", b =>
                 {
                     b.Property<Guid>("Id")
@@ -914,6 +942,17 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("Adeni.Domain.Tenancy.BusinessProfileCategory", b =>
+                {
+                    b.HasOne("Adeni.Domain.Tenancy.BusinessProfile", "Profile")
+                        .WithMany("Categories")
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Profile");
+                });
+
             modelBuilder.Entity("Adeni.Domain.Tenancy.VerificationDocument", b =>
                 {
                     b.HasOne("Adeni.Domain.Tenancy.Tenant", "Tenant")
@@ -927,6 +966,8 @@ namespace Adeni.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Adeni.Domain.Tenancy.BusinessProfile", b =>
                 {
+                    b.Navigation("Categories");
+
                     b.Navigation("Locations");
                 });
 #pragma warning restore 612, 618

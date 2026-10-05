@@ -20,6 +20,12 @@ public sealed class ServiceOffering : ITenantEntity
 
     public int DurationMinutes { get; set; }
 
+    public string? CategorySlug { get; set; }
+
+    public string? CatalogServiceId { get; set; }
+
+    public BookingDeliveryType BookingDeliveryType { get; set; } = BookingDeliveryType.Appointment;
+
     public bool IsActive { get; set; } = true;
 
     public DateTimeOffset CreatedAt { get; set; }

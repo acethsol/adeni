@@ -37,6 +37,8 @@ public sealed class AdeniDbContext(
 
     public DbSet<BusinessProfile> BusinessProfiles => Set<BusinessProfile>();
 
+    public DbSet<BusinessProfileCategory> BusinessProfileCategories => Set<BusinessProfileCategory>();
+
     public DbSet<BusinessLocation> BusinessLocations => Set<BusinessLocation>();
 
     public DbSet<VerificationDocument> VerificationDocuments => Set<VerificationDocument>();
@@ -106,6 +108,18 @@ public sealed class AdeniDbContext(
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 
+        modelBuilder.Entity<BusinessProfileCategory>(entity =>
+        {
+            entity.ToTable("business_profile_categories", "tenancy");
+            entity.HasKey(x => new { x.TenantId, x.CategorySlug });
+            entity.Property(x => x.CategorySlug).HasMaxLength(64);
+            entity.HasOne(x => x.Profile)
+                .WithMany(x => x.Categories)
+                .HasForeignKey(x => x.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
         modelBuilder.Entity<BusinessLocation>(entity =>
         {
             entity.ToTable("business_locations", "tenancy");
@@ -167,6 +181,9 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.Currency).HasMaxLength(3);
             entity.Property(x => x.PriceAmount).HasPrecision(12, 2);
             entity.Property(x => x.PricingType).HasConversion<int>();
+            entity.Property(x => x.CategorySlug).HasMaxLength(64);
+            entity.Property(x => x.CatalogServiceId).HasMaxLength(64);
+            entity.Property(x => x.BookingDeliveryType).HasConversion<int>();
             entity.HasIndex(x => new { x.TenantId, x.IsActive });
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });

@@ -1,13 +1,16 @@
 namespace Adeni.Infrastructure.Booking;
 
 using Adeni.Application.Booking;
+using Adeni.Application.Catalog;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-public sealed class ServiceCatalogService(AdeniDbContext dbContext) : IServiceCatalogService
+public sealed class ServiceCatalogService(
+    AdeniDbContext dbContext,
+    ICategoryService categoryService) : IServiceCatalogService
 {
     public async Task<IReadOnlyList<ServiceOfferingResponse>> ListForTenantAsync(
         Guid tenantId,
@@ -79,6 +82,9 @@ public sealed class ServiceCatalogService(AdeniDbContext dbContext) : IServiceCa
             Currency = request.Currency.Trim().ToUpperInvariant(),
             PricingType = pricingType,
             DurationMinutes = request.DurationMinutes,
+            CategorySlug = NormalizeOptionalCategorySlug(request.CategorySlug),
+            CatalogServiceId = NormalizeOptionalId(request.CatalogServiceId),
+            BookingDeliveryType = BookingDeliveryTypeMapping.FromApiValue(request.BookingDeliveryType),
             IsActive = true,
             CreatedAt = now,
             UpdatedAt = now
@@ -123,6 +129,9 @@ public sealed class ServiceCatalogService(AdeniDbContext dbContext) : IServiceCa
 
         entity.PricingType = pricingType;
         entity.DurationMinutes = request.DurationMinutes;
+        entity.CategorySlug = NormalizeOptionalCategorySlug(request.CategorySlug);
+        entity.CatalogServiceId = NormalizeOptionalId(request.CatalogServiceId);
+        entity.BookingDeliveryType = BookingDeliveryTypeMapping.FromApiValue(request.BookingDeliveryType);
         entity.IsActive = request.IsActive;
         entity.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -212,5 +221,14 @@ public sealed class ServiceCatalogService(AdeniDbContext dbContext) : IServiceCa
             request.PriceAmount,
             request.Currency,
             request.DurationMinutes,
-            request.PricingType));
+            request.PricingType,
+            request.CategorySlug,
+            request.CatalogServiceId,
+            request.BookingDeliveryType));
+
+    private string? NormalizeOptionalCategorySlug(string? slug) =>
+        string.IsNullOrWhiteSpace(slug) ? null : categoryService.NormalizeSlug(slug);
+
+    private static string? NormalizeOptionalId(string? id) =>
+        string.IsNullOrWhiteSpace(id) ? null : id.Trim();
 }

@@ -101,7 +101,7 @@ export class DiscoverComponent {
 
     try {
       const [categories, discovery] = await Promise.all([
-        client.getCategories().catch(() => [] as Category[]),
+        client.getCategories({ market: marketId, wellness: true }).catch(() => [] as Category[]),
         client.searchDiscovery({
           lat: loc.lat,
           lng: loc.lng,

@@ -32,7 +32,7 @@ public sealed class BusinessOnboardingServiceTests
 
     private static readonly RegisterBusinessRequest ValidRequest = new(
         "Lekki Cuts",
-        "barbers",
+        "hair-grooming",
         "+2348012345678",
         ValidLocation,
         "Premium barber shop");
@@ -146,7 +146,7 @@ public sealed class BusinessOnboardingServiceTests
     }
 
     [Fact]
-    public async Task Register_accepts_non_beauty_category()
+    public async Task Register_rejects_home_services_category_in_wellness_onboarding()
     {
         await using var provider = BuildProvider();
         using var scope = provider.CreateScope();
@@ -161,12 +161,34 @@ public sealed class BusinessOnboardingServiceTests
             },
             "auth0|owner-plumber");
 
+        Assert.True(result.IsFailure);
+        Assert.Equal("validation", result.Error.Code);
+    }
+
+    [Fact]
+    public async Task Register_normalizes_legacy_slug_and_syncs_additional_categories()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var service = scope.ServiceProvider.GetRequiredService<BusinessOnboardingService>();
+
+        var result = await service.RegisterAsync(
+            ValidRequest with
+            {
+                CategorySlug = "barbers",
+                AdditionalCategorySlugs = ["nails"],
+            },
+            "auth0|owner-legacy");
+
         Assert.True(result.IsSuccess);
 
         var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
         var profile = await db.BusinessProfiles.FirstAsync();
-        Assert.Equal("plumbers", profile.CategorySlug);
-        Assert.Equal("lekki-plumbing", await db.BusinessLocations.Select(x => x.Slug).FirstAsync());
+        Assert.Equal("hair-grooming", profile.CategorySlug);
+        var categories = await db.BusinessProfileCategories.OrderBy(x => x.CategorySlug).ToListAsync();
+        Assert.Equal(2, categories.Count);
+        Assert.Contains(categories, c => c.IsPrimary && c.CategorySlug == "hair-grooming");
+        Assert.Contains(categories, c => !c.IsPrimary && c.CategorySlug == "nails");
     }
 
     [Fact]
@@ -189,7 +211,6 @@ public sealed class BusinessOnboardingServiceTests
         var services = new ServiceCollection();
         services.AddDistributedMemoryCache();
         services.AddSingleton<Application.Caching.ICacheService, DistributedCacheService>();
-        services.AddSingleton<Application.Catalog.ICategoryService, CategoryService>();
         services.AddSingleton<MarketCatalogState>();
         services.AddSingleton<IMarketCatalog, SyncMarketCatalog>();
         services.AddCategoryWorkflowCatalog();

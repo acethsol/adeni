@@ -3,24 +3,34 @@ namespace Adeni.Infrastructure.Catalog;
 using Adeni.Application.Caching;
 using Adeni.Application.Catalog;
 
-public sealed class CategoryService(ICacheService cache) : ICategoryService
+public sealed class CategoryService(
+    ICacheService cache,
+    IWellnessCategoryCatalog wellnessCatalog) : ICategoryService
 {
-    private static readonly IReadOnlyList<CategoryResponse> Categories =
-    [
-        new(Guid.Parse("11111111-1111-1111-1111-111111111101"), "Barbers", "barbers", "beauty"),
-        new(Guid.Parse("11111111-1111-1111-1111-111111111102"), "Hair Salons", "hair-salons", "beauty"),
-        new(Guid.Parse("11111111-1111-1111-1111-111111111103"), "Nail & Spa", "nail-spa", "beauty"),
-        new(Guid.Parse("11111111-1111-1111-1111-111111111104"), "Makeup & Brows", "makeup-brows", "beauty"),
-        new(Guid.Parse("22222222-2222-2222-2222-222222222201"), "Plumbers", "plumbers", "home-services"),
-        new(Guid.Parse("22222222-2222-2222-2222-222222222202"), "Electricians", "electricians", "home-services"),
-        new(Guid.Parse("22222222-2222-2222-2222-222222222203"), "Cleaning", "cleaning", "home-services")
-    ];
-
     public Task<IReadOnlyList<CategoryResponse>> GetCategoriesAsync(
-        CancellationToken cancellationToken = default) =>
-        cache.GetOrCreateAsync(
-            CacheKeys.CategoriesAll,
+        CategoryListQuery? query = null,
+        CancellationToken cancellationToken = default)
+    {
+        query ??= new CategoryListQuery();
+        var marketKey = string.IsNullOrWhiteSpace(query.MarketId)
+            ? "all"
+            : query.MarketId.Trim().ToLowerInvariant();
+        var cacheKey = $"{CacheKeys.CategoriesAll}:{query.WellnessScope}:{query.IncludeNonV1}:{marketKey}";
+
+        return cache.GetOrCreateAsync(
+            cacheKey,
             CacheTtl.Categories,
-            _ => Task.FromResult(Categories),
+            _ => Task.FromResult(wellnessCatalog.ListCategories(query)),
             cancellationToken);
+    }
+
+    public string NormalizeSlug(string slug) => wellnessCatalog.NormalizeSlug(slug);
+
+    public bool IsKnownSlug(string slug) => wellnessCatalog.IsKnownSlug(slug);
+
+    public IReadOnlyList<string> GetDiscoveryMatchSlugs(string filterSlug) =>
+        wellnessCatalog.GetDiscoveryMatchSlugs(filterSlug);
+
+    public IReadOnlyList<ServiceTemplateResponse> GetServiceTemplates(string categorySlug) =>
+        wellnessCatalog.GetServiceTemplates(categorySlug);
 }

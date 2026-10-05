@@ -29,6 +29,8 @@ import {
   setMarketLiveRequestSchema,
   serviceOfferingSchema,
   serviceOfferingsResponseSchema,
+  serviceTemplateSchema,
+  type ServiceTemplate,
   submitVerificationRequestSchema,
   tenantBookingsResponseSchema,
   tenantLocationsResponseSchema,
@@ -133,6 +135,7 @@ import {
   localizeErrorResponse,
   type ApiErrorResponse,
 } from "@adeni/shared";
+import { z } from "zod";
 
 export class AdeniApiError extends Error {
   constructor(
@@ -196,9 +199,32 @@ export class AdeniApiClient {
     this.tenantId = tenantId;
   }
 
-  async getCategories(): Promise<Category[]> {
-    const response = await this.request("/api/v1/categories");
+  async getCategories(options?: {
+    market?: string;
+    wellness?: boolean;
+    includeNonV1?: boolean;
+  }): Promise<Category[]> {
+    const query = new URLSearchParams();
+    if (options?.market) {
+      query.set("market", options.market);
+    }
+    if (options?.wellness === false) {
+      query.set("wellness", "false");
+    }
+    if (options?.includeNonV1) {
+      query.set("includeNonV1", "true");
+    }
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
+    const response = await this.request(`/api/v1/categories${suffix}`);
     const payload = categoriesResponseSchema.parse(await response.json());
+    return payload.items;
+  }
+
+  async getCategoryServiceTemplates(categorySlug: string): Promise<ServiceTemplate[]> {
+    const response = await this.request(
+      `/api/v1/categories/${encodeURIComponent(categorySlug)}/service-templates`,
+    );
+    const payload = z.object({ items: z.array(serviceTemplateSchema) }).parse(await response.json());
     return payload.items;
   }
 
