@@ -1,6 +1,6 @@
 import { Component } from "@angular/core";
 import { RouterLink } from "@angular/router";
-import { PortalPageComponent } from "../../shared/portal-page.component";
+import { PortalPageComponent } from "@adeni/ui";
 
 @Component({
   selector: "app-admin-dashboard",

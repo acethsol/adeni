@@ -7,7 +7,7 @@ import {
   type SubscriptionTier,
   type SubscriptionUsage,
 } from "@adeni/shared";
-import { PortalPageComponent } from "../../shared/portal-page.component";
+import { PortalPageComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 
 @Component({

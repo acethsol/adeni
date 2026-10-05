@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal } from "@angular/core";
 import type { BusinessProfile } from "@adeni/shared";
-import { PortalPageComponent } from "../../shared/portal-page.component";
+import { PortalPageComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 

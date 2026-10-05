@@ -1,5 +1,6 @@
 import { Component, input } from "@angular/core";
 
+/** Standard page chrome for portal and admin (title, description, body slot). */
 @Component({
   selector: "app-portal-page",
   standalone: true,

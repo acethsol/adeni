@@ -13,6 +13,7 @@ apps/
 packages/
   api-client/          Typed .NET API client
   shared/              Zod schemas, roles, constants, markets, wellness catalog
+  ui/                  Shared Angular UI (portal + admin page chrome, staff SCSS)
 ```
 
 Flutter spec: [specs/flutter-business-mobile-skeleton.md](./specs/flutter-business-mobile-skeleton.md).

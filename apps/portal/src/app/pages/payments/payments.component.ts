@@ -2,9 +2,9 @@ import { Component, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import type { BusinessProfile, PaymentLedgerEntry } from "@adeni/shared";
 import { hasCapability } from "@adeni/shared";
-import { PortalPageComponent } from "../../shared/portal-page.component";
+import { PortalPageComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { formatPrice } from "../../shared/portal-format";
+import { formatPrice } from "@adeni/shared";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 
 @Component({

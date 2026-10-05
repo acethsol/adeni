@@ -20,7 +20,7 @@ Beauty & Wellness marketplace (Lagos + Ottawa). .NET modular monolith + Angular 
 
 ## Architecture
 
-`Domain` → `Application` ← `Infrastructure` ← `Api`. Modules via `I*Service` only. `Result<T>` + `.Match()` in controllers. Shared types in `packages/shared`.
+`Domain` → `Application` ← `Infrastructure` ← `Api`. Modules via `I*Service` only. `Result<T>` + `.Match()` in controllers. Client packages: `@adeni/shared` → `@adeni/api-client` → apps; cross-app Angular in `@adeni/ui` (AGENTS.md **Shared packages**).
 
 ## Specs before code
 
@@ -35,7 +35,7 @@ Copy [docs/specs/_template.md](../../docs/specs/_template.md) → `docs/specs/sp
 
 ## Calibration
 
-Booking → Redis slot locks. Public profile → masked phone. Payments → orchestration only, no custody. **Webhooks → signature + idempotency** (Murphy). **API → `/api/v1/`, auth on mutations, stable error codes** (Murphy). UI → `businessType`/capabilities, not category slugs.
+Booking → Redis slot locks. Public profile → masked phone. Payments → orchestration only, no custody. **Webhooks → signature + idempotency** (Murphy). **API → `/api/v1/`, auth on mutations, stable error codes** (Murphy). UI → `businessType`/capabilities, not category slugs. **Shared TS** → right package per AGENTS.md matrix (no duplicate helpers in apps).
 
 ## Workflow
 

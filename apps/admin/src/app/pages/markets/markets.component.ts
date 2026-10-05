@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal } from "@angular/core";
 import type { AdminMarket } from "@adeni/shared";
-import { PortalPageComponent } from "../../shared/portal-page.component";
+import { PortalPageComponent } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 
 @Component({

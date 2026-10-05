@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { DAY_OF_WEEK_LABELS, type WeeklyAvailabilityRule } from "@adeni/shared";
-import { PortalPageComponent } from "../../shared/portal-page.component";
+import { PortalPageComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 
 const DAYS_ORDER = [1, 2, 3, 4, 5, 6, 0];

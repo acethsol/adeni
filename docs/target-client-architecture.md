@@ -61,7 +61,7 @@ This document is the **north-star diagram** for who talks to what on the public 
 | **.NET API** | `src/Adeni.Api` | All of the above | Modular monolith; no business logic duplicated in clients. |
 | **PostgreSQL / Redis** | infra | API | Primary store + cache/session/rate-limit as configured. |
 
-**Shared contracts:** `packages/shared`, `packages/api-client` (TypeScript today; Flutter codegen from OpenAPI when mobile lands).
+**Shared contracts:** `packages/shared`, `packages/api-client` (TypeScript today; Flutter codegen from OpenAPI when mobile lands). **Shared Angular UI:** `packages/ui` (portal + admin).
 
 ---
 

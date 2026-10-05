@@ -17,7 +17,8 @@
     "baseUrl": "./",
     "paths": {
       "@adeni/api-client": ["../../packages/api-client/src/index.ts"],
-      "@adeni/shared": ["../../packages/shared/src/index.ts"]
+      "@adeni/shared": ["../../packages/shared/src/index.ts"],
+      "@adeni/ui": ["../../packages/ui/src/index.ts"]
     }
   },
   "angularCompilerOptions": {

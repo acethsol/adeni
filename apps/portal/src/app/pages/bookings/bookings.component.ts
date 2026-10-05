@@ -1,9 +1,9 @@
 import { Component, inject, OnInit, signal } from "@angular/core";
 import type { BookingResponse } from "@adeni/shared";
 import { formatBookingStatus } from "@adeni/shared";
-import { PortalPageComponent } from "../../shared/portal-page.component";
+import { PortalPageComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { formatSlotTime } from "../../shared/portal-format";
+import { formatSlotTime } from "@adeni/shared";
 
 const PENDING_STATUS = 0;
 

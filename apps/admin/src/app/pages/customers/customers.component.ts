@@ -2,7 +2,7 @@ import { Component, inject, signal } from "@angular/core";
 import { JsonPipe } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import type { AdminCustomerSummary, CustomerDataExport } from "@adeni/shared";
-import { PortalPageComponent } from "../../shared/portal-page.component";
+import { PortalPageComponent } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 
 @Component({

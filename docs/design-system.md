@@ -1,6 +1,6 @@
 # Design system & client caching
 
-Cross-platform tokens live in `@adeni/shared`. Angular apps (`discover`, `portal`, `admin`) use SCSS + component patterns per app; archived React clients documented in [legacy-clients-archive.md](./legacy-clients-archive.md).
+Cross-platform tokens live in `@adeni/shared`. Shared staff-app UI (page layout, cards, buttons, form fields) lives in `@adeni/ui`. Discover keeps consumer-specific components locally; archived React clients documented in [legacy-clients-archive.md](./legacy-clients-archive.md).
 
 ## Design tokens (`@adeni/shared`)
 
@@ -18,7 +18,7 @@ Cross-platform tokens live in `@adeni/shared`. Angular apps (`discover`, `portal
 | Portal | `apps/portal/src/styles.scss` |
 | Admin | `apps/admin/src/styles.scss` |
 
-Portal shared card/layout helpers: `apps/portal/src/app/shared/`.
+Staff layout SCSS: `@use "staff-layout" as *` (from `@adeni/ui`, via `stylePreprocessorOptions.includePaths` in portal/admin). Portal-only widgets (e.g. pending bookings bell): `apps/portal/src/app/shared/`.
 
 ## Client data fetching
 

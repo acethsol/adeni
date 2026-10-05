@@ -41,6 +41,7 @@ apps/portal/             Angular — business portal
 apps/admin/              Angular — admin portal
 packages/api-client/     Typed API client (shared)
 packages/shared/         Zod schemas, roles, wellness catalog
+packages/ui/             Shared Angular UI for portal + admin
 
 apps/mobile/             Flutter — business mobile skeleton (owner / employee / front desk)
 

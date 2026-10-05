@@ -146,6 +146,7 @@ The client stack is also a monolith split by **apps**, not micro-frontends:
 | Package | Role |
 |---------|------|
 | `packages/shared` | Business types, capabilities, Zod schemas — must match API contracts |
+| `packages/ui` | Shared Angular components/styles for staff apps (portal, admin) |
 | `packages/api-client` | HTTP client; one client, module-shaped endpoint groups |
 | `apps/discover` | Angular SSR; public discovery, profiles, booking entry |
 | `apps/portal` | Angular; business portal |

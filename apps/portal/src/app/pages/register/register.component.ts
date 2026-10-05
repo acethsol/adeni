@@ -3,7 +3,7 @@ import { FormsModule } from "@angular/forms";
 import { RouterLink } from "@angular/router";
 import type { BusinessProfile, Category, MarketConfig } from "@adeni/shared";
 import { getCategoryLabel } from "@adeni/shared";
-import { PortalPageComponent } from "../../shared/portal-page.component";
+import { PortalPageComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 
 const PHONE_PATTERN = /^\+?[0-9\s-]{7,20}$/;

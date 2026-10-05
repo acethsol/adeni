@@ -14,6 +14,7 @@ Project DNA for Cursor Cloud Agents and local Agent sessions. Read this before c
 | Web | Angular — `apps/discover`, `apps/portal`, `apps/admin` (ADR-012) |
 | Mobile | Flutter **business** skeleton (`apps/mobile`); consumer app post web GA — [flutter-business-mobile-skeleton.md](docs/specs/flutter-business-mobile-skeleton.md); legacy Expo archived |
 | Shared contracts | `packages/shared`, `packages/api-client` |
+| Shared Angular UI | `packages/ui` (portal + admin; discover stays app-local for consumer UI) |
 | Compliance | SOC 2 from Sprint 0 — audit logs, PII masking, admin MFA |
 
 **Strategy (read before large features):** [docs/product-strategy.md](docs/product-strategy.md)  
@@ -89,6 +90,7 @@ When the user or spec says these terms, interpret **Adeni's way** — not generi
 | **Public profile** | Mask phone in API responses; cache key `tenant:{id}:profile`; only `Verified` tenants in discovery |
 | **New backend feature** | Application port (`I*Service`) first; module folder in Domain; register in `ServiceCollectionExtensions`; no cross-Infrastructure imports |
 | **Frontend change** | Branch UI on `businessType` / capabilities from API — not hard-coded category slugs; update `packages/shared` if contract changes |
+| **Shared / common package** | Use the [shared packages](#shared-packages-typescript--angular) matrix — contracts → `@adeni/shared`, HTTP → `@adeni/api-client`, cross-app Angular UI → `@adeni/ui`; do not duplicate formatters or Zod in apps |
 | **Payment / Paystack** | Orchestration only — `IPaymentProvider` port, no wallet/balance tables; see product-strategy §4.3 |
 | **Webhook / payment event** | Verify provider signature **before** parsing JSON; idempotent handler; never mark paid on body alone — see [Webhook security (Murphy)](#webhook-security-murphy) |
 | **New API endpoint / contract change** | `/api/v1/` only; auth on mutations; stable `code` errors; update `packages/shared` — see [API contract hardening (Murphy)](#api-contract-hardening-murphy) |
@@ -127,8 +129,43 @@ return result.Match<IActionResult>(
 | HTTP, middleware | `Adeni.Api` |
 | Migrations | `Adeni.Infrastructure/Persistence/Migrations/` |
 | Shared API types | `packages/shared` |
+| Typed HTTP client methods | `packages/api-client` |
+| Shared Angular UI (portal + admin) | `packages/ui` |
 
 Register new services in `ServiceCollectionExtensions`. New modules: follow [architecture.md §4.4](docs/architecture.md).
+
+### Shared packages (TypeScript / Angular)
+
+**Dependency direction:** `apps/*` → `@adeni/ui` (optional) → `@adeni/api-client` → `@adeni/shared`. Never import Angular from `@adeni/shared`. Flutter/mobile does not consume these npm packages — mirror contracts via OpenAPI / hand-maintained DTOs.
+
+| Put it in `@adeni/shared` when… | Examples already there |
+|--------------------------------|-------------------------|
+| API request/response shape or validation | Zod schemas in `src/schemas`, exported types |
+| Stable error `code` + user-facing message keys | `api-errors`, `i18n/errors.ts` (all locales) |
+| Product constants used by API + clients | `roles`, `business-types`, `capabilities`, `subscription-tiers`, `category-workflows` |
+| Catalog / config JSON owned by product | `data/wellness-categories.json`, `wellness-service-templates.json`, `markets.ts` |
+| Cross-client pure TS (no framework) | `format.ts`, `market-resolver.ts`, `design-tokens.ts`, `geo`, `search-intent` |
+| Client cache key / stale-time conventions aligned with API | `design-tokens` query keys, [caching-setup.md](docs/caching-setup.md) |
+
+| Put it in `@adeni/api-client` when… | Examples |
+|-------------------------------------|----------|
+| A typed method calls `/api/v1/...` (or admin routes) | Existing client modules per domain |
+| Headers every app needs on requests | Correlation id, auth — centralize here, not per app |
+
+| Put it in `@adeni/ui` when… | Examples |
+|-----------------------------|----------|
+| Standalone Angular component used by **portal and/or admin** | `PortalPageComponent`, staff layout SCSS |
+| Presentational pattern duplicated across staff apps | Cards, buttons, fields, status chips (when extracted) |
+
+| Keep in **one app** (`apps/discover`, `apps/portal`, …) when… | Examples |
+|----------------------------------------------------------------|----------|
+| Route, page, or shell layout for that audience only | Discover booking panel, portal nav + pending bell |
+| Feature UI tied to one surface | Consumer SEO/discovery vs tenant admin tables |
+| App-specific Auth0 / tenant wiring | Thin wrappers OK; shared wiring moves to ui/api-client when duplicated |
+
+**When the API contract changes:** update Domain/Application → `@adeni/shared` (Zod + types) → `@adeni/api-client` → consuming apps. **When only presentation changes:** `@adeni/ui` or the app — not `shared`.
+
+**Anti-patterns:** duplicate `formatPrice` in an app; hard-code category slugs in UI instead of capabilities; add React/Angular imports to `shared`; put HTTP fetch logic in `shared` instead of `api-client`.
 
 ### API routes
 
