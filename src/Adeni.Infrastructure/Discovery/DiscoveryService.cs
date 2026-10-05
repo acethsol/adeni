@@ -510,13 +510,13 @@ public sealed class DiscoveryService(
             categoryMatchSlugs = categoryService
                 .GetDiscoveryMatchSlugs(categoryService.NormalizeSlug(categorySlug))
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var tenantIds = await dbContext.BusinessProfileCategories
+            var categoryTenantIds = await dbContext.BusinessProfileCategories
                 .AsNoTracking()
                 .Where(c => categoryMatchSlugs.Contains(c.CategorySlug))
                 .Select(c => c.TenantId)
                 .Distinct()
                 .ToListAsync(cancellationToken);
-            tenantIdsMatchingCategory = tenantIds.ToHashSet();
+            tenantIdsMatchingCategory = categoryTenantIds.ToHashSet();
         }
 
         if (categoryMatchSlugs is not null && tenantIdsMatchingCategory is not null)

@@ -98,11 +98,13 @@ internal sealed class WellnessCategoryCatalogJson : IWellnessCategoryCatalog
         var order = ResolveMarketOrder(query.MarketId);
         if (order.Count > 0)
         {
+            var orderIndex = order
+                .Select((slug, index) => (slug, index))
+                .ToDictionary(x => x.slug, x => x.index, StringComparer.OrdinalIgnoreCase);
             list = list
                 .OrderBy(c =>
                 {
-                    var index = order.IndexOf(c.Slug);
-                    return index < 0 ? int.MaxValue : index;
+                    return orderIndex.TryGetValue(c.Slug, out var index) ? index : int.MaxValue;
                 })
                 .ThenBy(c => c.Name, StringComparer.Ordinal)
                 .ToList();
