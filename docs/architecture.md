@@ -147,8 +147,11 @@ The client stack is also a monolith split by **apps**, not micro-frontends:
 |---------|------|
 | `packages/shared` | Business types, capabilities, Zod schemas — must match API contracts |
 | `packages/api-client` | HTTP client; one client, module-shaped endpoint groups |
-| `apps/web` | Next.js App Router; `/business`, `/admin`, public routes |
-| `apps/mobile` | Expo tabs; same API contracts as web |
+| `apps/discover` | Angular SSR; public discovery, profiles, booking entry |
+| `apps/portal` | Angular; business portal |
+| `apps/admin` | Angular; admin ops |
+
+Legacy Next.js + Expo: [legacy-clients-archive.md](./legacy-clients-archive.md).
 
 **Rule:** business-type workflow branching (Sprint 15) reads `capabilities[]` from shared config + API — never hard-code category slugs in UI without a shared definition.
 

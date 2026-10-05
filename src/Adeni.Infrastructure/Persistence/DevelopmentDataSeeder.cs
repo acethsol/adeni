@@ -7,8 +7,8 @@ using Adeni.Infrastructure.Markets;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
-/// Idempotent dev seed — ~1,000 verified businesses across all markets (Lagos-heavy).
-/// Skips slugs that already exist so new samples can be appended without a DB reset.
+/// Idempotent dev seed for the Beauty &amp; Wellness wedge (Lagos + Ottawa, v1 categories).
+/// Skips slugs that already exist. Drop tenant data and restart the API to reseed from scratch.
 /// </summary>
 public static class DevelopmentDataSeeder
 {
@@ -21,11 +21,7 @@ public static class DevelopmentDataSeeder
         new Dictionary<string, (string, string)>(StringComparer.OrdinalIgnoreCase)
         {
             ["lagos"] = ("NGN", "Africa/Lagos"),
-            ["abuja"] = ("NGN", "Africa/Lagos"),
             ["ottawa"] = ("CAD", "America/Toronto"),
-            ["toronto"] = ("CAD", "America/Toronto"),
-            ["houston"] = ("USD", "America/Chicago"),
-            ["dallas"] = ("USD", "America/Chicago"),
         };
 
     private static async Task SeedSamplesAsync(
@@ -72,6 +68,15 @@ public static class DevelopmentDataSeeder
                 Phone = sample.Phone,
                 Description = sample.Description,
                 UpdatedAt = now,
+                Categories =
+                [
+                    new BusinessProfileCategory
+                    {
+                        TenantId = tenantId,
+                        CategorySlug = sample.CategorySlug,
+                        IsPrimary = true,
+                    },
+                ],
             });
 
             db.BusinessLocations.Add(new BusinessLocation
@@ -101,6 +106,9 @@ public static class DevelopmentDataSeeder
                 PriceAmount = sample.PriceAmount,
                 Currency = marketDefaults.Currency,
                 DurationMinutes = sample.DurationMinutes,
+                CategorySlug = sample.CategorySlug,
+                CatalogServiceId = sample.CatalogServiceId,
+                BookingDeliveryType = sample.BookingDeliveryType,
                 IsActive = true,
                 CreatedAt = now,
                 UpdatedAt = now,

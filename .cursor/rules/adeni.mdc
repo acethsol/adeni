@@ -9,7 +9,7 @@ Read [AGENTS.md](../../AGENTS.md) for the full playbook. These rules always appl
 
 ## Project
 
-Local services marketplace (Lagos, beauty wedge). .NET modular monolith + Next.js web + Expo mobile. Trust-first, SOC 2 from day one.
+Beauty & Wellness marketplace (Lagos + Ottawa). .NET modular monolith + Angular discover/portal/admin. Trust-first, SOC 2 from day one. Legacy Next/Expo: docs/legacy-clients-archive.md.
 
 ## Strategy & scope
 

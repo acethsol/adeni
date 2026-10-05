@@ -65,14 +65,9 @@ This document is the **north-star diagram** for who talks to what on the public 
 
 ---
 
-## Transition (strangler) — not in the diagram box
+## Legacy clients (archived)
 
-| Legacy | Until |
-|--------|--------|
-| **Next.js** (`apps/web`) | Route-by-route cutover: public → discover, `/business/*` → portal, `/admin/*` → admin. Next **BFF** handlers (`apps/web/app/api/*`) deleted or replaced with direct API calls from Angular. |
-| **Expo** (`apps/mobile`) | Maintenance until Flutter consumer app ships; same API. |
-
-Do not draw a second API or duplicate domain rules in Next/Angular BFFs long term — classify each BFF route as **direct API**, **thin gateway**, or **temporary** ([angular-migration-checklist.md](./angular-migration-checklist.md)).
+Next.js and Expo were **removed from the main monorepo** (October 2026). Reference copy: [legacy-clients-archive.md](./legacy-clients-archive.md). New work uses **direct API** calls from Angular — no long-lived BFF layer.
 
 ---
 
@@ -84,8 +79,6 @@ Do not draw a second API or duplicate domain rules in Next/Angular BFFs long ter
 | Discover | `npm run dev:discover` | `http://localhost:5190` |
 | Portal | `npm run dev:portal` | `http://localhost:5173` |
 | Admin | `npm run dev:admin` | `http://localhost:5180` |
-| Web (legacy) | `npm run dev:web` | `http://localhost:3000` |
-
 Auth0: three **SPA** applications (discover, portal, admin) when staging is ready; local dev can use `X-Dev-Auth0-Sub` with `Auth0:Enabled: false` — see [auth0-setup.md](./auth0-setup.md).
 
 ---

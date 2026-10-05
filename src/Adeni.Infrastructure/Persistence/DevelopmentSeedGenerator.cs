@@ -1,45 +1,54 @@
 namespace Adeni.Infrastructure.Persistence;
 
-/// <summary>Deterministic bulk dev businesses — complements handcrafted anchors in <see cref="DevelopmentSeedCatalog"/>.</summary>
+using Adeni.Domain.Booking;
+
+/// <summary>
+/// Deterministic bulk dev businesses for the Beauty &amp; Wellness wedge.
+/// Lagos and Ottawa only — complements handcrafted anchors in <see cref="DevelopmentSeedCatalog"/>.
+/// </summary>
 internal static class DevelopmentSeedGenerator
 {
-    internal const int TargetBulkCount = 963;
+    internal const int LagosBulkCount = 126;
 
-    private static readonly string[] CategorySlugs =
+    internal const int OttawaBulkCount = 56;
+
+    internal const int TargetBulkCount = LagosBulkCount + OttawaBulkCount;
+
+    internal static readonly string[] V1CategorySlugs =
     [
-        "barbers",
-        "hair-salons",
-        "nail-spa",
-        "makeup-brows",
-        "plumbers",
-        "electricians",
-        "cleaning",
+        "hair-grooming",
+        "nails",
+        "skincare-aesthetics",
+        "spa-relaxation",
+        "massage-bodywork",
+        "fitness",
+        "yoga-pilates",
     ];
 
     private static readonly MarketBulkConfig[] MarketConfigs =
     [
         new(
             "lagos",
-            463,
+            LagosBulkCount,
             6.5244,
             3.3792,
             "+23480",
             "NGN",
             [
                 "Lekki", "Victoria Island", "Ikeja", "Yaba", "Surulere", "Ajah", "Maryland", "Ikoyi",
-                "Gbagada", "Festac", "Mushin", "Apapa", "Berger", "Ogba", "Magodo", "Banana Island",
-                "Ogudu", "Alimosho", "Egbeda", "Badagry",
+                "Gbagada", "Festac", "Magodo", "Ogudu",
             ]),
-        new("abuja", 100, 9.0765, 7.3986, "+23480", "NGN",
-            ["Wuse", "Garki", "Maitama", "Gwarinpa", "Kubwa", "Jabi", "Asokoro", "Utako", "Nyanya", "Lugbe"]),
-        new("ottawa", 100, 45.4215, -75.6972, "+1613", "CAD",
-            ["Centretown", "ByWard Market", "The Glebe", "Westboro", "Kanata", "Orleans", "Nepean", "Barrhaven", "Hintonburg", "Vanier"]),
-        new("toronto", 100, 43.6532, -79.3832, "+1416", "CAD",
-            ["The Annex", "Queen West", "Yorkville", "Kensington", "Leslieville", "Scarborough", "North York", "Etobicoke", "Liberty Village", "Distillery"]),
-        new("houston", 100, 29.7604, -95.3698, "+1713", "USD",
-            ["Montrose", "The Heights", "Midtown", "Rice Village", "Uptown", "Memorial", "Katy", "Sugar Land", "Pearland", "Spring"]),
-        new("dallas", 100, 32.7767, -96.7970, "+1214", "USD",
-            ["Deep Ellum", "Uptown", "Bishop Arts", "Preston Hollow", "Frisco", "Plano", "Oak Lawn", "Lower Greenville", "Lakewood", "Design District"]),
+        new(
+            "ottawa",
+            OttawaBulkCount,
+            45.4215,
+            -75.6972,
+            "+1613",
+            "CAD",
+            [
+                "Centretown", "ByWard Market", "The Glebe", "Westboro", "Kanata", "Orleans",
+                "Hintonburg", "Vanier",
+            ]),
     ];
 
     internal static IEnumerable<DevelopmentSeedCatalog.SampleBusiness> GenerateBulk()
@@ -61,7 +70,7 @@ internal static class DevelopmentSeedGenerator
 
     private static DevelopmentSeedCatalog.SampleBusiness Build(MarketBulkConfig market, int globalIndex, int marketIndex)
     {
-        var categorySlug = CategorySlugs[globalIndex % CategorySlugs.Length];
+        var categorySlug = V1CategorySlugs[globalIndex % V1CategorySlugs.Length];
         var area = market.Areas[marketIndex % market.Areas.Length];
         var suffix = Pick(CategorySuffixes[categorySlug], globalIndex);
         var name = $"{area} {suffix}";
@@ -83,11 +92,13 @@ internal static class DevelopmentSeedGenerator
             lat,
             lng,
             phone,
-            $"{name} — verified local {FormatCategory(categorySlug)} in {area}. Book online.",
+            $"{name} — verified {FormatCategory(categorySlug)} in {area}. Book online.",
             service.Name,
             service.Description,
             price,
-            service.DurationMinutes);
+            service.DurationMinutes,
+            service.CatalogServiceId,
+            service.DeliveryType);
     }
 
     private static (double Lat, double Lng) ScatterCoordinates(double centerLat, double centerLng, int index)
@@ -101,21 +112,27 @@ internal static class DevelopmentSeedGenerator
 
     private static decimal ServicePrice(string currency, string categorySlug, int index)
     {
-        var (min, max) = currency switch
+        var (min, max) = (currency, categorySlug) switch
         {
-            "NGN" => categorySlug is "plumbers" or "electricians" or "cleaning"
-                ? (15000m, 85000m)
-                : (5000m, 45000m),
-            "CAD" => categorySlug is "plumbers" or "electricians" or "cleaning"
-                ? (95m, 320m)
-                : (25m, 180m),
-            _ => categorySlug is "plumbers" or "electricians" or "cleaning"
-                ? (75m, 280m)
-                : (25m, 200m),
+            ("NGN", "spa-relaxation") => (18000m, 55000m),
+            ("NGN", "massage-bodywork") => (12000m, 40000m),
+            ("NGN", "skincare-aesthetics") => (9000m, 35000m),
+            ("NGN", "hair-grooming") => (6000m, 35000m),
+            ("NGN", "nails") => (8000m, 22000m),
+            ("NGN", "fitness") => (8000m, 25000m),
+            ("NGN", "yoga-pilates") => (5000m, 18000m),
+            ("CAD", "spa-relaxation") => (90m, 180m),
+            ("CAD", "massage-bodywork") => (75m, 150m),
+            ("CAD", "skincare-aesthetics") => (45m, 140m),
+            ("CAD", "hair-grooming") => (30m, 120m),
+            ("CAD", "nails") => (35m, 90m),
+            ("CAD", "fitness") => (40m, 100m),
+            ("CAD", "yoga-pilates") => (22m, 80m),
+            _ => (25m, 120m),
         };
 
         var step = (max - min) / 7;
-        return min + step * (index % 8);
+        return decimal.Round(min + step * (index % 8), 0);
     }
 
     private static string Pick(string[] options, int index) => options[index % options.Length];
@@ -138,62 +155,66 @@ internal static class DevelopmentSeedGenerator
         string Currency,
         string[] Areas);
 
-    private sealed record ServiceTemplate(string Name, string Description, int DurationMinutes);
+    private sealed record ServiceTemplate(
+        string CatalogServiceId,
+        string Name,
+        string Description,
+        int DurationMinutes,
+        BookingDeliveryType DeliveryType);
 
     private static readonly Dictionary<string, string[]> CategorySuffixes = new(StringComparer.Ordinal)
     {
-        ["barbers"] = ["Cuts", "Barber Co", "Fade Factory", "Grooming", "Clipper House", "Line Up", "Chair & Blade"],
-        ["hair-salons"] = ["Hair Studio", "Salon", "Hair Lounge", "Braids Co", "Colour House", "Silk Press", "Natural Hair"],
-        ["nail-spa"] = ["Nail Lounge", "Nail Spa", "Polish Bar", "Spa Day", "Nail House", "Glow Nails", "Mani Pedi"],
-        ["makeup-brows"] = ["Beauty Bar", "Brow Studio", "Glam Studio", "Lash Lounge", "Makeup Co", "Brow Bar", "Glow Bar"],
-        ["plumbers"] = ["Plumbing", "Pipe Pros", "Drain Fix", "Aqua Service", "Flow Masters", "Leak Patrol", "Pipe Works"],
-        ["electricians"] = ["Electric", "Wire Pros", "Power Fix", "Volt Service", "Circuit Co", "Spark Works", "Bright Wire"],
-        ["cleaning"] = ["Cleaning Co", "Fresh Home", "Sparkle Crew", "Clean Team", "Tidy Pros", "Shine Service", "Home Care"],
+        ["hair-grooming"] = ["Cuts", "Grooming", "Hair Studio", "Braids Co", "Colour House", "Barber Co"],
+        ["nails"] = ["Nail Lounge", "Nail Bar", "Polish Studio", "Nail House"],
+        ["skincare-aesthetics"] = ["Skin Studio", "Brow Bar", "Glow Studio", "Aesthetics"],
+        ["spa-relaxation"] = ["Day Spa", "Spa House", "Relaxation Studio"],
+        ["massage-bodywork"] = ["Massage Studio", "Bodywork", "Massage Co"],
+        ["fitness"] = ["Fitness Lab", "Strength Co", "Training Studio"],
+        ["yoga-pilates"] = ["Yoga Loft", "Pilates Studio", "Movement Studio"],
     };
 
     private static readonly Dictionary<string, ServiceTemplate[]> CategoryServices = new(StringComparer.Ordinal)
     {
-        ["barbers"] =
+        ["hair-grooming"] =
         [
-            new("Classic haircut", "Clippers, line-up, and neck finish.", 30),
-            new("Skin fade", "Skin fade with beard sculpt.", 45),
-            new("Beard trim", "Shape, line, and hot towel.", 20),
+            new("hair-barbering", "Barbering", "Clipper cut, line-up, and neck finish.", 30, BookingDeliveryType.Appointment),
+            new("hair-cut", "Haircut", "Consultation, cut, and style.", 45, BookingDeliveryType.Appointment),
+            new("hair-braids", "Braids", "Medium-length protective style.", 120, BookingDeliveryType.Appointment),
+            new("hair-beard", "Beard Grooming", "Shape, line, and hot towel.", 20, BookingDeliveryType.Appointment),
         ],
-        ["hair-salons"] =
+        ["nails"] =
         [
-            new("Silk press", "Wash, blow-dry, and silk press.", 90),
-            new("Knotless braids", "Medium length protective style.", 180),
-            new("Cut & blowout", "Consultation, cut, and styled finish.", 60),
+            new("nails-gel", "Gel Nails", "Shape, cuticle care, and gel polish.", 75, BookingDeliveryType.Appointment),
+            new("nails-manicure", "Manicure", "Classic manicure with polish.", 45, BookingDeliveryType.Appointment),
+            new("nails-pedicure", "Pedicure", "Soak, scrub, and polish.", 60, BookingDeliveryType.Appointment),
         ],
-        ["nail-spa"] =
+        ["skincare-aesthetics"] =
         [
-            new("Gel manicure", "Shape, cuticle care, and gel polish.", 60),
-            new("Spa pedicure", "Soak, scrub, massage, and polish.", 75),
-            new("Luxury manicure", "Full manicure with hand massage.", 55),
+            new("skin-facial", "Facial", "Cleanse, treatment, and moisturize.", 60, BookingDeliveryType.Appointment),
+            new("skin-brows-lashes", "Brows & Lashes", "Shape, tint, and lash lift.", 45, BookingDeliveryType.Appointment),
+            new("skin-waxing", "Waxing", "Brow or face wax.", 30, BookingDeliveryType.Appointment),
         ],
-        ["makeup-brows"] =
+        ["spa-relaxation"] =
         [
-            new("Brow shaping", "Thread or wax with optional tint.", 30),
-            new("Soft glam makeup", "Full face for events.", 60),
-            new("Lash lift", "Lift and tint.", 45),
+            new("spa-body-treatment", "Body Treatment", "Scrub and massage treatment.", 60, BookingDeliveryType.Appointment),
+            new("spa-day-package", "Day Spa Package", "Half-day spa with treatment and rest.", 120, BookingDeliveryType.Experience),
         ],
-        ["plumbers"] =
+        ["massage-bodywork"] =
         [
-            new("Leak repair", "Diagnose and fix common leaks.", 90),
-            new("Drain clearing", "Clear blocked sink or shower drain.", 60),
-            new("Tap installation", "Replace or install kitchen/bath tap.", 75),
+            new("massage-swedish", "Swedish Massage", "Full-body relaxation massage.", 60, BookingDeliveryType.Appointment),
+            new("massage-deep-tissue", "Deep Tissue Massage", "Focused pressure for tight muscles.", 60, BookingDeliveryType.Appointment),
+            new("massage-sports", "Sports Massage", "Pre- or post-training bodywork.", 45, BookingDeliveryType.Appointment),
         ],
-        ["electricians"] =
+        ["fitness"] =
         [
-            new("Outlet repair", "Fix or replace faulty outlet.", 60),
-            new("Light fitting", "Install ceiling or wall light.", 75),
-            new("Fault finding", "Trace and fix electrical fault.", 90),
+            new("fitness-pt", "Personal Training", "One-to-one strength session.", 60, BookingDeliveryType.Session),
+            new("fitness-strength", "Strength & Conditioning", "Coached strength session.", 45, BookingDeliveryType.Session),
         ],
-        ["cleaning"] =
+        ["yoga-pilates"] =
         [
-            new("Standard clean", "Kitchen, bath, and living areas.", 120),
-            new("Deep clean", "Detailed clean including appliances.", 180),
-            new("Move-out clean", "Full apartment turnover clean.", 240),
+            new("yoga-group-class", "Yoga Class", "Group yoga class.", 60, BookingDeliveryType.Class),
+            new("pilates-group-class", "Pilates Class", "Group mat Pilates.", 55, BookingDeliveryType.Class),
+            new("yoga-private", "Private Yoga Session", "One-to-one yoga.", 60, BookingDeliveryType.Session),
         ],
     };
 }

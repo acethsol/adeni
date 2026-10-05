@@ -56,20 +56,21 @@ exports.onExecutePostLogin = async (event, api) => {
 3. See `apps/discover/.env.example.md` for environment fields (`publicAppUrl`, optional `envMarketId`).
 4. **You can defer Auth0 registration** until staging: leave `auth0.domain` / `clientId` empty and use dev customer sub with `Auth0:Enabled: false` on the API.
 
-## Next.js web
+## Angular web (discover, portal, admin)
 
-1. Create Auth0 **Regular Web Application** for Next.js.
-2. Callback URLs: `http://localhost:3000/auth/callback`, staging/prod URLs.
-3. Allowed logout URLs: same origins.
-4. Install `@auth0/nextjs-auth0` in `apps/web` (Sprint 3b — done).
-5. Copy `apps/web/.env.local.example` → `.env.local` and set `APP_BASE_URL`, `AUTH0_*` vars.
-6. Callback URL: `http://localhost:3000/auth/callback` (v4 SDK auto-mounts `/auth/*` routes).
+Create three Auth0 **Single Page Application** clients (or one app with multiple callback URLs during early dev):
 
-## Expo mobile
+| App | Local origin | Env docs |
+|-----|--------------|----------|
+| Discover | `http://localhost:5190` | `apps/discover/.env.example.md` |
+| Portal | `http://localhost:5173` | `apps/portal/.env.example.md` |
+| Admin | `http://localhost:5180` | `apps/admin/.env.example.md` |
 
-1. Create Auth0 **Native** application for `apps/mobile`.
-2. Callback URL pattern per Expo / platform (see Auth0 Expo docs).
-3. Enable **Refresh Token Rotation** for native clients.
+Use Auth0 SPA SDK in each app; callbacks and logout URLs must match deployed origins.
+
+## Legacy Next.js / Expo
+
+Archived — see [legacy-clients-archive.md](./legacy-clients-archive.md) for Auth0 Regular Web / Native setup used historically.
 
 ## Local API development
 
@@ -88,7 +89,6 @@ Development (`appsettings.Development.json`):
 ```json
 "Cors": {
   "AllowedOrigins": [
-    "http://localhost:3000",
     "http://localhost:5173",
     "http://localhost:5180",
     "http://localhost:5190"

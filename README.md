@@ -1,6 +1,6 @@
 # Adeni
 
-Trusted local services marketplace — **.NET 10 API** + **Next.js web** + **Expo mobile**, SOC 2 controls from Sprint 0.
+Trusted local services marketplace — **.NET 10 API** + **Angular web clients** (discover / portal / admin), SOC 2 controls from Sprint 0.
 
 **Strategy:** [docs/product-strategy.md](docs/product-strategy.md) — positioning, revenue model, GTM wedge, AI roadmap.
 
@@ -16,14 +16,17 @@ dotnet run --project src/Adeni.Api --launch-profile http
 
 # Frontend (separate terminal)
 npm install
-npm run dev:web                                   # http://localhost:3000
+npm run dev:discover                              # http://localhost:5190 (public)
+npm run dev:portal                                # http://localhost:5173 (business)
 ```
 
 | Service | URL |
 |---------|-----|
 | API | http://localhost:5169 |
 | API docs (dev) | http://localhost:5169/scalar/v1 |
-| Web app | http://localhost:3000 |
+| Discover (Angular) | http://localhost:5190 |
+| Business portal | http://localhost:5173 |
+| Admin portal | http://localhost:5180 |
 | PostgreSQL UI | http://localhost:8080 (Adminer, `--profile ui`) |
 | Redis UI | http://localhost:5540 (RedisInsight, `--profile ui`) |
 
@@ -33,11 +36,13 @@ See [docs/database-setup.md](docs/database-setup.md), [docs/caching-setup.md](do
 
 ```
 src/                     .NET backend — **modular monolith** (see docs/architecture.md)
-apps/web/                Next.js — public, business, admin
-apps/mobile/             Expo — unified customer + business app
+apps/discover/           Angular SSR — public discovery & booking
+apps/portal/             Angular — business portal
+apps/admin/              Angular — admin portal
 packages/api-client/     Typed API client (shared)
-packages/shared/         Zod schemas, roles
-The Flutter prototype was retired in July 2026 (ADR-010) and is not kept in this repository.
+packages/shared/         Zod schemas, roles, wellness catalog
+
+Legacy **Next.js + Expo** clients: [docs/legacy-clients-archive.md](docs/legacy-clients-archive.md) (separate reference repo).
 tests/                   Backend unit/integration tests
 ```
 
@@ -53,7 +58,7 @@ tests/                   Backend unit/integration tests
 | Public profiles | `GET /api/v1/businesses/{slug}` — masked phone |
 | Redis caching | `ICacheService`, slot locks, health check |
 | Booking | Services CRUD, weekly availability, slot search, `POST /api/v1/bookings` |
-| CORS | Next.js web origins (`localhost:3000`) |
+| CORS | Angular dev origins (`5173`, `5180`, `5190`) |
 
 ## Sprints
 

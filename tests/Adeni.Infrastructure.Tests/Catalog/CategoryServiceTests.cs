@@ -26,6 +26,6 @@ public sealed class CategoryServiceTests
         Assert.Contains(first, c => c.Slug == "hair-grooming");
         Assert.DoesNotContain(first, c => c.Slug == "plumbers");
         Assert.Equal(first, second);
-        Assert.NotNull(await cache.GetStringAsync("categories:True:False:all"));
+        Assert.NotNull(await cache.GetStringAsync("categories:all:True:False:all"));
     }
 }

@@ -45,22 +45,18 @@ Expect `"database": "healthy"` when PostgreSQL is connected.
 
 ## Development sample data
 
-When the API runs in **Development** with PostgreSQL connected, it auto-seeds sample businesses (idempotent — skips slugs that already exist). Each business has one service and Mon–Sat 9:00–17:00 availability.
+When the API runs in **Development** with PostgreSQL connected, it auto-seeds sample businesses (idempotent — skips slugs that already exist). Each business has one wellness service and Mon–Sat 9:00–17:00 availability.
 
-| Market | Total (approx.) | Handcrafted | Generated bulk | GTM live |
-|--------|-----------------|-------------|----------------|----------|
-| `lagos` | 475 | 12 | 463 | yes |
-| `abuja` | 105 | 5 | 100 | no |
-| `ottawa` | 105 | 5 | 100 | no |
-| `toronto` | 105 | 5 | 100 | no |
-| `houston` | 105 | 5 | 100 | no |
-| `dallas` | 105 | 5 | 100 | no |
+Seed matches the Beauty & Wellness wedge: **Lagos + Ottawa** and the seven v1 categories (`hair-grooming`, `nails`, `skincare-aesthetics`, `spa-relaxation`, `massage-bodywork`, `fitness`, `yoga-pilates`). Home services and non-launch cities are not seeded.
 
-**~1,000 businesses** across beauty and home-services categories. Lagos has the largest set. Generated slugs use `{market}-seed-{category}-{####}` (e.g. `lagos-seed-barbers-0042`). Restart the API to append any new slugs without resetting the DB.
+| Market | Total | Handcrafted | Generated bulk |
+|--------|-------|-------------|----------------|
+| `lagos` | 133 | 7 | 126 |
+| `ottawa` | 63 | 7 | 56 |
 
-**First run after upgrade** may take 30–60s while ~963 new businesses are inserted (batched saves of 100).
+**196 businesses.** Generated slugs use `{market}-seed-{category}-{####}` (e.g. `lagos-seed-hair-grooming-0001`). `lekki-cuts` is the local dev-owner business. Restart the API to append any new slugs without resetting the DB.
 
-To re-seed from scratch, drop the database and restart the API after migrations.
+To re-seed from scratch, truncate tenant data (keep `catalog.markets` and `__EFMigrationsHistory`) and restart the API. The seeder will not replace rows whose slugs already exist.
 
 ## Optional dev UIs
 

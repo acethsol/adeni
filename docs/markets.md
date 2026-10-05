@@ -30,7 +30,7 @@ Discovery search uses device coordinates when available, otherwise the active ma
 
 Web:
 
-- `apps/web/lib/market.ts` — reads cookie/header/env per request
+- Angular discover — market cookie/header/env (see discover app services; legacy: archive repo `apps/web/lib/market.ts`)
 - `?market=lagos` on any page sets the cookie (via middleware)
 - No city name baked into components; copy comes from the resolved `MarketConfig`
 

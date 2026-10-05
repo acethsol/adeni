@@ -1,6 +1,6 @@
 # Angular web migration checklist (strangler)
 
-Companion to [ADR-012](./adr/ADR-012-angular-web-deferred-flutter.md). Use this as a living parity list while Next.js (`apps/web`) is replaced by **`apps/discover`**, **`apps/portal`**, and **`apps/admin`**.
+Companion to [ADR-012](./adr/ADR-012-angular-web-deferred-flutter.md). Use this as a living parity list while **`apps/discover`**, **`apps/portal`**, and **`apps/admin`** reach feature parity with the archived Next.js app ([legacy-clients-archive.md](./legacy-clients-archive.md)).
 
 **Order:** portal → admin → discover → remove Next → Flutter mobile (phase 2).
 
@@ -44,7 +44,7 @@ packages/
 
 ## 2. Next BFF → Angular (classify each route)
 
-Every handler under `apps/web/app/api/**` must end as **A**, **B**, or **C**:
+Every handler that existed under archived Next `app/api/**` must end as **A**, **B**, or **C** in Angular (see legacy repo):
 
 | Class | Meaning |
 |-------|---------|
@@ -166,7 +166,7 @@ Every handler under `apps/web/app/api/**` must end as **A**, **B**, or **C**:
 | SSR crawl spot-check (discover slug pages, sitemap if applicable) | ☐ |
 | Auth0 production callbacks updated for all three apps | ☐ |
 | No remaining **C** routes on Next | ☐ |
-| Delete or archive `apps/web`; update [frontend.md](./frontend.md) | ☐ |
+| Delete or archive `apps/web`; update [frontend.md](./frontend.md) | ☑ (see [legacy-clients-archive.md](./legacy-clients-archive.md)) |
 | Update Confluence: ADR-010 web stack superseded by ADR-012 | ☐ |
 
 ---
@@ -175,7 +175,7 @@ Every handler under `apps/web/app/api/**` must end as **A**, **B**, or **C**:
 
 | Step | Done |
 |------|------|
-| Policy: Expo **feature freeze** except P0 fixes | ☐ |
+| Expo removed from monorepo (archive repo) | ☑ |
 | OpenAPI → Dart client | ☐ |
 | Auth0 native app (PKCE) | ☐ |
 | MVP: discover browse, book, account, messages | ☐ |

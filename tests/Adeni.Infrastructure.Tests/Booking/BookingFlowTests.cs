@@ -15,6 +15,7 @@ using Adeni.Infrastructure.Events;
 using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Reviews;
 using Adeni.Infrastructure.Subscriptions;
+using Adeni.Infrastructure.Tests.Catalog;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -317,6 +318,7 @@ public sealed class BookingFlowTests
         services.Configure<MarketOptions>(options => options.DefaultTimeZoneId = defaultTimeZoneId);
         services.AddAdeniDomainEvents();
         services.AddDbContext<AdeniDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));
+        services.AddCategoryWorkflowCatalog();
         services.AddScoped<Adeni.Infrastructure.Context.TenantContext>();
         services.AddScoped<Application.Abstractions.ITenantContext>(sp =>
             sp.GetRequiredService<Adeni.Infrastructure.Context.TenantContext>());

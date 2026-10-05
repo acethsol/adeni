@@ -146,7 +146,7 @@ Migration: `20261005181138_WellnessTaxonomy`.
 
 - Class/capacity booking UX for `class` / `experience` delivery types  
 - Regulated 🔴 categories (compliance track)  
-- Normalize dev seed data to canonical slugs  
+- ~~Normalize dev seed data to canonical slugs~~ ✅ Lagos + Ottawa, v1 categories only
 - Optional market-level `hiddenCategorySlugs` in `markets.json`
 
 ---
