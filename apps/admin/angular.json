@@ -84,10 +84,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "portal:build:production"
+              "buildTarget": "admin:build:production"
             },
             "development": {
-              "buildTarget": "portal:build:development"
+              "buildTarget": "admin:build:development"
             }
           },
           "options": {
