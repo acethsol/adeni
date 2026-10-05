@@ -19,17 +19,21 @@ Ottawa and Lagos share **one taxonomy and one codebase**. **Market config** cont
 | Service templates per category | `packages/shared/src/data/wellness-service-templates.json` |
 | Operating model defaults | `packages/shared/src/data/category-workflows.json` |
 
+The file is the catalog on purpose. Discover, the portal, and the API all read `packages/shared`, and a business only stores a category slug. `catalog.markets` is copied into Postgres so discovery can filter locations in SQL. Categories are not. Set `enabled` to `false` to hide a category from Explore and onboarding; restart the API so the cache reloads.
+
 API: `GET /api/v1/categories?market=lagos&wellness=true` · `GET /api/v1/categories/{slug}/service-templates`
 
 Legacy slugs (`barbers`, `hair-salons`, …) normalize to canonical slugs for onboarding and discovery filters.
 
 ---
 
-## Consumer-facing “Explore” (v1)
+## Consumer-facing Explore
 
 Categories are **browse/filter chips**, not deep trees. Each category owns a **flat list of bookable services** (templates businesses can adopt or rename).
 
-| Explore label | Slug | V1 |
+`enabled` in `wellness-categories.json` is the live switch. Version notes stay in this document; the API does not branch on a version name.
+
+| Explore label | Slug | Enabled |
 | --- | --- | --- |
 | Massage & Bodywork | `massage-bodywork` | ✅ |
 | Spa & Relaxation | `spa-relaxation` | ✅ |
@@ -46,7 +50,7 @@ Categories are **browse/filter chips**, not deep trees. Each category owns a **f
 
 **Defer (🔴 later)** — licensing, clinical records, health data, privacy regimes: medical aesthetics, physio, chiropractic, mental health, registered dietitians.
 
-**Out of wedge:** home trades (`plumbers`, `electricians`, …) remain for quote demos but are hidden from wellness Explore/onboarding (`wellness=false` or `includeNonV1` for admin).
+**Out of wedge:** home trades (`plumbers`, `electricians`, …) stay in the catalog for quote demos but are hidden from Explore and onboarding (`enabled: false`, or `wellness=false` plus `includeDisabled=true` to list them).
 
 ### Example service lists (catalog templates, not subcategories)
 
@@ -114,7 +118,7 @@ Implemented via `marketFeaturedOrder` in `wellness-categories.json` (Lagos vs Ot
 ## How it works for **customers** (Discover)
 
 1. **Market** — Cookie/geo; Explore order from `marketFeaturedOrder`.
-2. **Explore** — Wellness v1 categories only.
+2. **Explore** — Enabled wellness categories only.
 3. **Results** — Primary, additional categories, or legacy primary slug.
 4. **Business page** — Services with optional category and delivery type.
 5. **Book** — Service → slot → confirm.
@@ -146,7 +150,7 @@ Migration: `20261005181138_WellnessTaxonomy`.
 
 - Class/capacity booking UX for `class` / `experience` delivery types  
 - Regulated 🔴 categories (compliance track)  
-- ~~Normalize dev seed data to canonical slugs~~ ✅ Lagos + Ottawa, v1 categories only
+- ~~Normalize dev seed data to canonical slugs~~ ✅ Lagos + Ottawa, enabled categories only
 - Optional market-level `hiddenCategorySlugs` in `markets.json`
 
 ---

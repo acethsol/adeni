@@ -13,13 +13,13 @@ public sealed class CategoriesController(ICategoryService categories) : Controll
     public async Task<IActionResult> Get(
         [FromQuery] string? market,
         [FromQuery] bool wellness = true,
-        [FromQuery] bool includeNonV1 = false,
+        [FromQuery] bool includeDisabled = false,
         CancellationToken cancellationToken = default)
     {
         var query = new CategoryListQuery(
             MarketId: market,
             WellnessScope: wellness,
-            IncludeNonV1: includeNonV1);
+            IncludeDisabled: includeDisabled);
         var items = await categories.GetCategoriesAsync(query, cancellationToken);
         return Ok(new { items });
     }

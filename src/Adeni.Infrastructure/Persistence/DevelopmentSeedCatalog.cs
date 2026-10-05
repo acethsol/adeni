@@ -3,7 +3,7 @@ namespace Adeni.Infrastructure.Persistence;
 using Adeni.Domain.Booking;
 
 /// <summary>
-/// Dev sample businesses for the Beauty &amp; Wellness wedge: Lagos and Ottawa, v1 categories only.
+/// Dev sample businesses for the Beauty &amp; Wellness wedge: Lagos and Ottawa, enabled categories only.
 /// </summary>
 internal static class DevelopmentSeedCatalog
 {
@@ -31,7 +31,7 @@ internal static class DevelopmentSeedCatalog
 
     private static readonly SampleBusiness[] Anchors =
     [
-        // Lagos — one named business per v1 category. lekki-cuts stays the dev-owner marker.
+        // Lagos — one named business per enabled category. lekki-cuts stays the dev-owner marker.
         S("lekki-cuts", "Lekki Cuts", "Lekki", "lagos", "hair-grooming", "Lekki Phase 1",
             "12 Admiralty Way, Lekki", 6.4474, 3.4700, "+2348012345678",
             "Fades, beard grooming, and line-ups in Lekki. Book online.",

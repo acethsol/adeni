@@ -82,9 +82,9 @@ internal sealed class WellnessCategoryCatalogJson : IWellnessCategoryCatalog
             entries = entries.Where(c => c.WellnessScope != false);
         }
 
-        if (!query.IncludeNonV1)
+        if (!query.IncludeDisabled)
         {
-            entries = entries.Where(c => c.V1Enabled);
+            entries = entries.Where(c => c.Enabled);
         }
 
         var list = entries
@@ -239,7 +239,7 @@ internal sealed class WellnessCategoryCatalogJson : IWellnessCategoryCatalog
 
         public string? ParentSlug { get; init; }
 
-        public bool V1Enabled { get; init; }
+        public bool Enabled { get; init; }
 
         public bool? WellnessScope { get; init; }
     }

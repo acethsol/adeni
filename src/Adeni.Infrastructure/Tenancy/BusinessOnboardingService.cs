@@ -421,7 +421,7 @@ public sealed class BusinessOnboardingService(
         }
 
         var allowed = await categoryService.GetCategoriesAsync(
-            new CategoryListQuery(WellnessScope: true, IncludeNonV1: false),
+            new CategoryListQuery(WellnessScope: true),
             cancellationToken);
         var allowedSlugs = allowed.Select(c => c.Slug).ToHashSet(StringComparer.OrdinalIgnoreCase);
 

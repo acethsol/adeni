@@ -7,7 +7,7 @@ using Adeni.Infrastructure.Markets;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
-/// Idempotent dev seed for the Beauty &amp; Wellness wedge (Lagos + Ottawa, v1 categories).
+/// Idempotent dev seed for the Beauty &amp; Wellness wedge (Lagos + Ottawa, enabled categories).
 /// Skips slugs that already exist. Drop tenant data and restart the API to reseed from scratch.
 /// </summary>
 public static class DevelopmentDataSeeder
