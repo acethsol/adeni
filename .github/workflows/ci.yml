@@ -54,6 +54,9 @@ jobs:
         run: dotnet build Adeni.slnx -c Release --no-restore
 
       - name: Test
+        env:
+          ConnectionStrings__AdeniDb: ""
+          Redis__ConnectionString: ""
         run: dotnet test Adeni.slnx -c Release --no-build --verbosity normal
 
       - name: Vulnerability scan

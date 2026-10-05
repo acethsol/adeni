@@ -281,6 +281,10 @@ export const serviceTemplateSchema = z.object({
 
 export type ServiceTemplate = z.infer<typeof serviceTemplateSchema>;
 
+export const serviceTemplatesResponseSchema = z.object({
+  items: z.array(serviceTemplateSchema),
+});
+
 export const serviceOfferingSchema = z.object({
   id: z.string(),
   name: z.string(),

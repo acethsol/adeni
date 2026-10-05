@@ -29,7 +29,7 @@ import {
   setMarketLiveRequestSchema,
   serviceOfferingSchema,
   serviceOfferingsResponseSchema,
-  serviceTemplateSchema,
+  serviceTemplatesResponseSchema,
   type ServiceTemplate,
   submitVerificationRequestSchema,
   tenantBookingsResponseSchema,
@@ -135,7 +135,6 @@ import {
   localizeErrorResponse,
   type ApiErrorResponse,
 } from "@adeni/shared";
-import { z } from "zod";
 
 export class AdeniApiError extends Error {
   constructor(
@@ -224,7 +223,7 @@ export class AdeniApiClient {
     const response = await this.request(
       `/api/v1/categories/${encodeURIComponent(categorySlug)}/service-templates`,
     );
-    const payload = z.object({ items: z.array(serviceTemplateSchema) }).parse(await response.json());
+    const payload = serviceTemplatesResponseSchema.parse(await response.json());
     return payload.items;
   }
 
