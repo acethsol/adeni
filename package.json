@@ -2,19 +2,18 @@
   "name": "adeni",
   "private": true,
   "workspaces": [
-    "apps/*",
+    "apps/discover",
+    "apps/portal",
+    "apps/admin",
     "packages/*"
   ],
   "scripts": {
-    "dev:web": "npm run dev --workspace @adeni/web",
     "dev:portal": "npm run dev --workspace @adeni/portal",
     "dev:admin": "npm run dev --workspace @adeni/admin",
     "dev:discover": "npm run dev --workspace @adeni/discover",
     "build:admin": "npm run build --workspace @adeni/admin",
     "build:discover": "npm run build --workspace @adeni/discover",
-    "dev:mobile": "npm run start --workspace @adeni/mobile",
     "build:portal": "npm run build --workspace @adeni/portal",
-    "build:web": "npm run build --workspace @adeni/web",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },

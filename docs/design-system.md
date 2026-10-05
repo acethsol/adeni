@@ -1,49 +1,27 @@
 # Design system & client caching
 
-Cross-platform tokens and UI primitives live in shared packages; web and mobile apps consume them consistently.
+Cross-platform tokens live in `@adeni/shared`. Angular apps (`discover`, `portal`, `admin`) use SCSS + component patterns per app; archived React clients documented in [legacy-clients-archive.md](./legacy-clients-archive.md).
 
 ## Design tokens (`@adeni/shared`)
 
 `packages/shared/src/design-tokens.ts` defines:
 
 - **Colors** — background, surface, primary, accent, muted, destructive
-- **Spacing / radius / typography / shadows** — used by mobile `StyleSheet` and documented for web Tailwind mapping
-- **Query keys & stale times** — aligned with API Redis TTLs
+- **Spacing / radius / typography / shadows**
+- **Query keys & stale times** — aligned with API Redis TTLs (for any TS client using TanStack Query)
 
-## Web (`apps/web`)
+## Angular apps
 
-| Layer | Location |
-|-------|----------|
-| Tailwind theme | `app/globals.css` — semantic utilities (`bg-primary`, `text-muted`, …) |
-| UI primitives | `components/ui/` — Button, Card, Input, Badge, EmptyState, Skeleton, PageHeader, Callout |
-| Class helper | `lib/cn.ts` |
+| App | Styles entry |
+|-----|----------------|
+| Discover | `apps/discover/src/styles.scss` |
+| Portal | `apps/portal/src/styles.scss` |
+| Admin | `apps/admin/src/styles.scss` |
 
-Prefer `components/ui/*` and semantic Tailwind classes over raw hex in pages.
+Portal shared card/layout helpers: `apps/portal/src/app/shared/`.
 
-## Mobile (`apps/mobile`)
+## Client data fetching
 
-| Layer | Location |
-|-------|----------|
-| Theme re-export | `lib/theme.ts` — imports from `@adeni/shared` |
-| UI primitives | `components/ui/` — mirrors web component names |
+Angular services call the .NET API via `packages/api-client` (or thin wrappers). Prefer API cache TTLs documented in [caching-setup.md](./caching-setup.md) when choosing client stale times.
 
-## Client caching (TanStack Query)
-
-Both apps use `@tanstack/react-query`:
-
-| Data | Stale time | Query key |
-|------|------------|-----------|
-| Categories | 1 hour | `queryKeys.categories` |
-| Discovery | 2 min | `queryKeys.discovery(params)` |
-| My bookings | 30 sec | `queryKeys.myBookings` |
-
-- **Web provider:** `app/providers.tsx`
-- **Web hooks:** `lib/queries/portal-badges.ts`, `components/my-bookings-list.tsx`
-- **Mobile provider:** `app/_layout.tsx` + `lib/query-client.ts`
-- **Mobile hooks:** `lib/queries/public.ts`
-
-Server-rendered Next.js pages also use `export const revalidate` on home (1h) and discover (2m) to align with API cache.
-
-## Backend cache (reference)
-
-See [caching-setup.md](./caching-setup.md) — Redis `ICacheService` on the API; client stale times mirror those TTLs.
+Legacy Next/Expo TanStack Query patterns remain in the archive repo for parity reference.

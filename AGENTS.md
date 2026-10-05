@@ -4,15 +4,15 @@ Project DNA for Cursor Cloud Agents and local Agent sessions. Read this before c
 
 ## What we are building
 
-**Adeni** is the operating and transaction layer for local service businesses — discovery, trust, booking, and business tooling. **Lagos first**, beauty & grooming wedge, supply-first GTM.
+**Adeni** is the operating and transaction layer for local service businesses — discovery, trust, booking, and business tooling. **Lagos + Ottawa**, **Beauty & Wellness** wedge, supply-first GTM.
 
 | Area | Stack |
 |------|-------|
 | API | .NET 10, modular monolith, Clean Architecture / DDD |
 | Data | PostgreSQL, EF Core, Redis (cache + slot locks) |
 | Auth | Auth0 JWT (RS256), claims under `https://adeni.io/` |
-| Web | Next.js (`apps/web`) |
-| Mobile | Expo / React Native (`apps/mobile`) |
+| Web | Angular — `apps/discover`, `apps/portal`, `apps/admin` (ADR-012) |
+| Mobile | Flutter consumer (planned post web GA); legacy Expo archived — [legacy-clients-archive.md](docs/legacy-clients-archive.md) |
 | Shared contracts | `packages/shared`, `packages/api-client` |
 | Compliance | SOC 2 from Sprint 0 — audit logs, PII masking, admin MFA |
 
@@ -28,8 +28,9 @@ src/
 ├── Adeni.Infrastructure/   # EF, Redis, Auth0, module implementations
 └── Adeni.Api/              # Controllers, middleware, composition root
 apps/
-├── web/                    # Next.js — discovery, portals, admin
-└── mobile/                 # Expo — customer + business flows
+├── discover/               # Angular SSR — public discovery & booking
+├── portal/                 # Angular — business portal
+└── admin/                  # Angular — admin portal
 packages/
 ├── shared/                 # Zod schemas, capabilities, business types
 └── api-client/             # Typed HTTP client

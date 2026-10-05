@@ -53,7 +53,7 @@ Translation keys live under `errors.<code>` in locale message files (en/fr/es/pt
 
 3. Fall back to `title`, then `detail`, then raw `code` if no translation exists yet.
 
-Web apps can use `useApiErrorMessage()` from `apps/web/lib/api-error.ts`.
+Angular clients should map `code` via shared locales in `packages/shared`. Legacy React helper: archived `apps/web/lib/api-error.ts`.
 
 ## Adding a new error
 
