@@ -1,9 +1,8 @@
-import { Injectable, Provider } from "@angular/core";
+import { Provider } from "@angular/core";
 import { Title } from "@angular/platform-browser";
 import { RouterStateSnapshot, TitleStrategy } from "@angular/router";
 
 /** Sets `Page · App` document titles from route `title` data. */
-@Injectable()
 export class AdeniDocumentTitleStrategy extends TitleStrategy {
   constructor(
     private readonly documentTitle: Title,

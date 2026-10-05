@@ -1,6 +1,6 @@
 import { inject, Injectable, Injector } from "@angular/core";
 import { AdeniApiClient } from "@adeni/api-client";
-import { auth0FirstValueFrom } from "../auth0-rxjs";
+import { auth0FirstValueFrom, resolveAuthService } from "../auth0-rxjs";
 import {
   ADENI_DISCOVER_CONFIG,
   isAuth0Configured,
@@ -105,18 +105,11 @@ export class CustomerApiService {
     return token ?? null;
   }
 
-  private async loadAuthService(): Promise<
-    import("@auth0/auth0-angular").AuthService | null
-  > {
+  private loadAuthService(): import("@auth0/auth0-angular").AuthService | null {
     if (typeof window === "undefined" || !isAuth0Configured(this.config)) {
       return null;
     }
 
-    const { AuthService } = await import("@auth0/auth0-angular");
-    try {
-      return this.injector.get(AuthService);
-    } catch {
-      return null;
-    }
+    return resolveAuthService(this.injector);
   }
 }

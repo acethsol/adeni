@@ -1,6 +1,6 @@
-import { Component, inject, OnInit, signal } from "@angular/core";
+import { Component, inject, Injector, OnInit, signal } from "@angular/core";
 import { RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
-import { AuthService } from "@auth0/auth0-angular";
+import type { AuthService } from "@auth0/auth0-angular";
 import { AsyncPipe } from "@angular/common";
 import type { BusinessProfile } from "@adeni/shared";
 import { PORTAL_NAV } from "../core/portal-nav";
@@ -11,6 +11,7 @@ import {
   isBusinessPortalDevMode,
 } from "../core/adeni-config";
 import { PendingBookingsBellComponent } from "../shared/pending-bookings-bell.component";
+import { resolveAuthService } from "../core/auth0-rxjs";
 
 @Component({
   selector: "app-portal-shell",
@@ -22,7 +23,10 @@ import { PendingBookingsBellComponent } from "../shared/pending-bookings-bell.co
 export class PortalShellComponent implements OnInit {
   readonly nav = PORTAL_NAV;
   readonly config = inject(ADENI_PORTAL_CONFIG);
-  readonly auth = inject(AuthService, { optional: true });
+  private readonly injector = inject(Injector);
+  readonly auth: AuthService | null = isAuth0Configured(this.config)
+    ? resolveAuthService(this.injector)
+    : null;
   private readonly businessApi = inject(BusinessApiService);
 
   readonly profile = signal<BusinessProfile | null>(null);

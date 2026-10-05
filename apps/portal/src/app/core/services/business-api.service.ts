@@ -1,8 +1,7 @@
-import { inject, Injectable } from "@angular/core";
-import { AuthService } from "@auth0/auth0-angular";
+import { inject, Injectable, Injector } from "@angular/core";
 import { AdeniApiClient } from "@adeni/api-client";
 import type { BusinessProfile } from "@adeni/shared";
-import { auth0FirstValueFrom } from "../auth0-rxjs";
+import { auth0FirstValueFrom, resolveAuthService } from "../auth0-rxjs";
 import {
   ADENI_PORTAL_CONFIG,
   isAuth0Configured,
@@ -12,7 +11,7 @@ import {
 @Injectable({ providedIn: "root" })
 export class BusinessApiService {
   private readonly config = inject(ADENI_PORTAL_CONFIG);
-  private readonly auth = inject(AuthService, { optional: true });
+  private readonly injector = inject(Injector);
 
   createPublicClient(): AdeniApiClient {
     return new AdeniApiClient({ baseUrl: this.config.apiBaseUrl });
@@ -32,9 +31,10 @@ export class BusinessApiService {
   async createAuthorizedClient(): Promise<AdeniApiClient> {
     const client = this.createClient();
 
-    if (isAuth0Configured(this.config) && this.auth) {
+    const auth = isAuth0Configured(this.config) ? resolveAuthService(this.injector) : null;
+    if (auth) {
       const token = await auth0FirstValueFrom<string>(
-        this.auth.getAccessTokenSilently({
+        auth.getAccessTokenSilently({
           authorizationParams: {
             audience: this.config.auth0.audience,
           },
