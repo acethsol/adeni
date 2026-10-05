@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import type { ServiceOffering, ServiceTemplate } from "@adeni/shared";
+import type { BookingDeliveryType, ServiceOffering, ServiceTemplate } from "@adeni/shared";
 import { getCategoryLabel } from "@adeni/shared";
 import { PortalPageComponent } from "../../shared/portal-page.component";
 import { BusinessApiService } from "../../core/services/business-api.service";
@@ -14,7 +14,7 @@ type ServiceDraft = {
   durationMinutes: string;
   categorySlug: string;
   catalogServiceId: string;
-  bookingDeliveryType: string;
+  bookingDeliveryType: BookingDeliveryType;
 };
 
 @Component({

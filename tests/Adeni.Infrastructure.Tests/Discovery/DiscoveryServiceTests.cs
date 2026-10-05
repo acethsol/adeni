@@ -84,15 +84,16 @@ public sealed class DiscoveryServiceTests
         var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
 
         BusinessTestSeed.SeedVerifiedBusiness(db, "lekki-cuts", "Lekki Cuts", "barbers", "Lekki", 6.4474, 3.4700);
-        BusinessTestSeed.SeedVerifiedBusiness(db, "vi-salon", "VI Salon", "hair-salons", "Victoria Island", 6.4281, 3.4219);
+        BusinessTestSeed.SeedVerifiedBusiness(db, "vi-nails", "VI Nails", "nails", "Victoria Island", 6.4281, 3.4219);
         await db.SaveChangesAsync();
 
         var service = scope.ServiceProvider.GetRequiredService<DiscoveryService>();
-        var result = await service.SearchAsync(6.4474, 3.4700, "barbers", null, null, 1, 20);
+        var result = await service.SearchAsync(6.4474, 3.4700, "nails", null, null, 1, 20);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Value!.Items);
-        Assert.Equal("barbers", result.Value.Items[0].CategorySlug);
+        Assert.Equal("nails", result.Value.Items[0].CategorySlug);
+        Assert.Equal("vi-nails", result.Value.Items[0].Slug);
     }
 
     [Fact]
