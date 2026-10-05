@@ -4,19 +4,10 @@ ADR-012 made **Angular** (`apps/discover`, `apps/portal`, `apps/admin`) the only
 
 | Archive | Location |
 |---------|----------|
-| **GitHub (recommended)** | Create `acethsol/adeni-legacy-clients` and push from local folder (see below) |
-| **Local path (dev machine)** | `C:\DEV\Aceth\adeni-legacy-clients` (git init done; commit `3a00af1`) |
+| **GitHub** | https://github.com/acethsol/adeni-legacy-clients |
+| **Local clone (optional)** | `git clone https://github.com/acethsol/adeni-legacy-clients.git` |
 
-### Push archive to GitHub (one time)
-
-```powershell
-cd C:\DEV\Aceth\adeni-legacy-clients
-git branch -M main
-git remote add origin https://github.com/acethsol/adeni-legacy-clients.git
-git push -u origin main
-```
-
-Snapshot commit when removed: see archive `README.md`.
+Snapshot commit when removed: see archive repo `README.md` (from `adeni` @ `d3b18d9`).
 
 ## Why remove from main repo?
 
