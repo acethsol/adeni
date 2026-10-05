@@ -11,19 +11,19 @@ import { adminAccessGuard } from "./core/guards/admin-access.guard";
 import { adminAuthGuard } from "./core/guards/admin-auth.guard";
 
 export const routes: Routes = [
-  { path: "setup", component: SetupComponent },
-  { path: "forbidden", component: ForbiddenComponent },
+  { path: "setup", component: SetupComponent, title: "Setup" },
+  { path: "forbidden", component: ForbiddenComponent, title: "Access denied" },
   {
     path: "",
     canActivate: [adminAccessGuard, adminAuthGuard],
     component: AdminShellComponent,
     children: [
       { path: "", pathMatch: "full", redirectTo: "dashboard" },
-      { path: "dashboard", component: AdminDashboardComponent },
-      { path: "pending", component: AdminPendingComponent },
-      { path: "markets", component: AdminMarketsComponent },
-      { path: "businesses", component: AdminBusinessesComponent },
-      { path: "customers", component: AdminCustomersComponent },
+      { path: "dashboard", component: AdminDashboardComponent, title: "Dashboard" },
+      { path: "pending", component: AdminPendingComponent, title: "Pending verifications" },
+      { path: "markets", component: AdminMarketsComponent, title: "Markets" },
+      { path: "businesses", component: AdminBusinessesComponent, title: "Businesses" },
+      { path: "customers", component: AdminCustomersComponent, title: "Customers" },
     ],
   },
   { path: "**", redirectTo: "dashboard" },

@@ -17,3 +17,12 @@ Component styles (cards, buttons, form fields):
 Requires `stylePreprocessorOptions.includePaths` → `../../packages/ui/src/styles` in the app `angular.json`.
 
 App-specific widgets remain under each app (e.g. portal `pending-bookings-bell`).
+
+Document titles (browser tab):
+
+```typescript
+import { provideAdeniDocumentTitle } from "@adeni/ui";
+
+// app.config.ts — with `title` on router routes
+provideAdeniDocumentTitle("Adeni Business");
+```

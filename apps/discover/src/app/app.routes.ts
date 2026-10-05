@@ -12,12 +12,13 @@ export const routes: Routes = [
     component: PublicShellComponent,
     children: [
       { path: "", pathMatch: "full", component: HomeComponent },
-      { path: "discover", component: DiscoverComponent },
+      { path: "discover", component: DiscoverComponent, title: "Explore" },
       { path: "businesses/:slug", component: BusinessProfileComponent },
       {
         path: "my-bookings",
         canActivate: [customerAuthGuard],
         component: MyBookingsComponent,
+        title: "My bookings",
       },
     ],
   },
