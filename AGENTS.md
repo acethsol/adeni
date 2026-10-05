@@ -4,17 +4,19 @@ Project DNA for Cursor Cloud Agents and local Agent sessions. Read this before c
 
 ## What we are building
 
-**Adeni** is the operating and transaction layer for local service businesses — discovery, trust, booking, and business tooling. **Lagos + Ottawa**, **Beauty & Wellness** wedge, supply-first GTM.
+**Adeni Beauty & Wellness** for **Ottawa + Lagos** — discovery, booking, commerce orchestration, and business tooling. V1 is **not** a multi-industry marketplace (no plumbers, restaurants, contractors, etc.). **Authority:** [docs/product-direction.md](docs/product-direction.md) wins over conflicting older notes.
 
 | Area | Stack |
 |------|-------|
 | API | .NET 10, modular monolith, Clean Architecture / DDD |
-| Data | PostgreSQL, EF Core, Redis (cache + slot locks) |
+| Data | PostgreSQL, EF Core, Redis (cache + slot locks where justified) |
 | Auth | Auth0 JWT (RS256), claims under `https://adeni.io/` |
-| Web | Angular — `apps/discover`, `apps/portal`, `apps/admin` (ADR-012) |
-| Mobile | Flutter **business** skeleton (`apps/mobile`); consumer app post web GA — [flutter-business-mobile-skeleton.md](docs/specs/flutter-business-mobile-skeleton.md); legacy Expo archived |
+| Web | Angular — `apps/discover` (SSR/SEO), `apps/portal`, `apps/admin` |
+| Mobile | Flutter — **consumer app primary** on mobile; `apps/mobile` business skeleton until aligned |
+| Realtime | SignalR (messaging) |
 | Shared contracts | `packages/shared`, `packages/api-client` |
-| Shared Angular UI | `packages/ui` (portal + admin; discover stays app-local for consumer UI) |
+| Shared Angular UI | `packages/ui` (+ Carbon-oriented patterns; brand via `@adeni/brand`) |
+| Brand | Option 3 SVG masters — `packages/brand`, [MASTER_SPEC.md](packages/brand/specification/MASTER_SPEC.md) |
 | Compliance | SOC 2 from Sprint 0 — audit logs, PII masking, admin MFA |
 
 **Strategy (read before large features):** [docs/product-strategy.md](docs/product-strategy.md)  
@@ -35,7 +37,9 @@ apps/
 └── mobile/                 # Flutter — business ops (owner / employee / front desk)
 packages/
 ├── shared/                 # Zod schemas, capabilities, business types
-└── api-client/             # Typed HTTP client
+├── api-client/             # Typed HTTP client
+├── brand/                  # Option 3 SVG identity + tokens (see MASTER_SPEC.md)
+└── ui/                     # Shared Angular UI (portal/admin/discover hooks)
 tests/                      # Unit + integration + architecture tests
 docs/                       # Strategy, sprints, specs, runbooks
 ```
@@ -100,6 +104,8 @@ When the user or spec says these terms, interpret **Adeni's way** — not generi
 | **Spec / feature** | Write `docs/specs/sprint-XX-name.md` from [template](docs/specs/_template.md) before coding |
 | **AI agent / Ask Adeni** | Tool-calling against Adeni APIs only — never direct DB access; Sprint 20 |
 | **Quick fix** | Minimal diff; match surrounding code; run tests — no drive-by refactors |
+| **Brand / logo** | Corrected Option 3 PNGs from `@adeni/brand`; use `AdeniBrandLockupComponent` / shipped logo PNGs — never CSS/HTML fake wordmark |
+| **V1 scope** | Beauty & Wellness, Ottawa + Lagos only — see [product-direction.md](docs/product-direction.md) |
 
 Add new rows here when the team corrects the agent twice on the same mistake.
 
@@ -131,6 +137,7 @@ return result.Match<IActionResult>(
 | Shared API types | `packages/shared` |
 | Typed HTTP client methods | `packages/api-client` |
 | Shared Angular UI (portal + admin) | `packages/ui` |
+| Option 3 PNG identity (corrected pack) | `packages/brand` — [CURSOR_BRAND_INSTRUCTIONS.md](packages/brand/CURSOR_BRAND_INSTRUCTIONS.md); never redraw in code |
 
 Register new services in `ServiceCollectionExtensions`. New modules: follow [architecture.md §4.4](docs/architecture.md).
 
@@ -152,9 +159,14 @@ Register new services in `ServiceCollectionExtensions`. New modules: follow [arc
 | A typed method calls `/api/v1/...` (or admin routes) | Existing client modules per domain |
 | Headers every app needs on requests | Correlation id, auth — centralize here, not per app |
 
+| Put it in `@adeni/brand` when… | Examples |
+|------------------------------|----------|
+| Approved PNG logos + URL constants + brand colors | `assets/brand/`, `resolveAdeniBrandImagePath`, `adeniBrandColors` |
+| Do **not** put here | API contracts, Angular components (`AdeniBrandLogoComponent` stays in `@adeni/ui`) |
+
 | Put it in `@adeni/ui` when… | Examples |
 |-----------------------------|----------|
-| Standalone Angular component used by **portal and/or admin** | `PortalPageComponent`, staff layout SCSS |
+| Standalone Angular component used by **portal and/or admin** | `PortalPageComponent`, staff layout SCSS, `AdeniBrandLogoComponent` |
 | Presentational pattern duplicated across staff apps | Cards, buttons, fields, status chips (when extracted) |
 
 | Keep in **one app** (`apps/discover`, `apps/portal`, …) when… | Examples |

@@ -24,13 +24,7 @@
 }
 
 .mark {
-  display: grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 0.5rem;
-  background: var(--accent);
-  color: #fff;
+  flex-shrink: 0;
 }
 
 .header-right {
@@ -44,8 +38,8 @@
   font-size: 0.75rem;
   padding: 0.25rem 0.5rem;
   border-radius: 999px;
-  background: #ecfdf5;
-  color: #065f46;
+  background: rgb(19 194 163 / 12%);
+  color: var(--adeni-ink, #161616);
 }
 
 nav a {

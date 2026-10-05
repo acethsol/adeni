@@ -17,41 +17,17 @@
 }
 
 .brand {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  display: block;
   text-decoration: none;
   color: inherit;
-}
-
-.brand-mark {
-  display: grid;
-  place-items: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 0.75rem;
-  background: rgb(255 255 255 / 15%);
-  font-weight: 700;
-}
-
-.brand-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-}
-
-.brand-text small {
-  font-size: 0.65rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  opacity: 0.65;
+  margin-bottom: 0.25rem;
 }
 
 .dev-banner {
   margin: 0;
   padding: 0.5rem 0.65rem;
   border-radius: 0.5rem;
-  background: rgb(16 185 129 / 20%);
+  background: rgb(127 86 255 / 18%);
   font-size: 0.75rem;
   line-height: 1.35;
 }

@@ -34,7 +34,7 @@ export const discoveryBusinessItemSchema = z.object({
   longitude: z.number(),
   businessType: z.enum(["scheduled_appointment", "quote_request"]).optional(),
   discoveryCta: z.enum(["book_now", "get_quote"]).optional(),
-  verificationBadges: z.array(z.string()).optional(),
+  verificationBadges: z.array(z.string()).nullish(),
   verifiedSince: z.string().nullable().optional(),
   completionRate: z.number().min(0).max(1).nullable().optional(),
 });
@@ -74,7 +74,7 @@ export const publicBusinessProfileSchema = z.object({
   capabilities: z.array(z.string()).optional(),
   discoveryCta: z.enum(["book_now", "get_quote"]).optional(),
   depositPercent: z.number().int().min(0).max(100).optional(),
-  verificationBadges: z.array(z.string()).optional(),
+  verificationBadges: z.array(z.string()).nullish(),
   verifiedSince: z.string().nullable().optional(),
   completionRate: z.number().min(0).max(1).nullable().optional(),
 });

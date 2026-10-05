@@ -35,9 +35,14 @@
 }
 
 .btn-primary {
-  background: #0b3d2e;
-  border-color: #0b3d2e;
+  background: var(--interactive, #6f42ff);
+  border-color: var(--interactive, #6f42ff);
   color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--interactive-hover, #7f56ff);
+  border-color: var(--interactive-hover, #7f56ff);
 }
 
 .btn-danger {

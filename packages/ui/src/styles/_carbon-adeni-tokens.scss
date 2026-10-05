@@ -1,0 +1,48 @@
+// Carbon-inspired layout tokens + Adeni Option 3 brand (see packages/brand/specification/MASTER_SPEC.md).
+// Not a full @carbon/styles install — semantic aliases apps already use, mapped to Carbon gray scale + Adeni accents.
+
+:root {
+  /* Adeni brand */
+  --adeni-purple: #7f56ff;
+  --adeni-teal: #13c2a3;
+  --adeni-charcoal: #0b0f14;
+  --adeni-light-gray: #f4f5f7;
+  --adeni-ink: #161616;
+  --interactive-hover: #6f42ff;
+
+  /* Carbon gray scale (subset) */
+  --cds-gray-10: #f4f4f4;
+  --cds-gray-20: #e0e0e0;
+  --cds-gray-30: #c6c6c6;
+  --cds-gray-50: #8d8d8d;
+  --cds-gray-70: #525252;
+  --cds-gray-90: #262626;
+  --cds-gray-100: #161616;
+
+  /* App semantics (portal, admin, discover) */
+  --bg-subtle: var(--cds-gray-10);
+  --surface: #ffffff;
+  --border: var(--cds-gray-20);
+  --text: var(--cds-gray-100);
+  --text-muted: var(--cds-gray-70);
+  --sidebar-bg: var(--adeni-charcoal);
+  --accent: var(--adeni-teal);
+  --interactive: var(--adeni-purple);
+
+  /* Spacing rhythm (Carbon 2px base) */
+  --space-03: 0.5rem;
+  --space-05: 1rem;
+  --space-06: 1.5rem;
+  --space-07: 2rem;
+
+  /* Type */
+  --font-family-sans:
+    "IBM Plex Sans",
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+}

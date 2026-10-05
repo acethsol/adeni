@@ -100,8 +100,8 @@ export class DiscoverComponent {
     );
 
     try {
-      const [categories, discovery] = await Promise.all([
-        client.getCategories({ market: marketId, wellness: true }).catch(() => [] as Category[]),
+      const [categoriesResult, discoveryResult] = await Promise.allSettled([
+        client.getCategories({ market: marketId, wellness: true }),
         client.searchDiscovery({
           lat: loc.lat,
           lng: loc.lng,
@@ -114,9 +114,22 @@ export class DiscoverComponent {
           minRating: this.minRating ?? undefined,
         }),
       ]);
-      this.categories.set(categories);
-      this.items.set(discovery.items);
-      this.totalCount.set(discovery.totalCount);
+
+      if (categoriesResult.status === "fulfilled") {
+        this.categories.set(categoriesResult.value);
+      } else {
+        this.categories.set([]);
+      }
+
+      if (discoveryResult.status === "fulfilled") {
+        this.items.set(discoveryResult.value.items);
+        this.totalCount.set(discoveryResult.value.totalCount);
+      } else {
+        console.error("Discovery load failed", discoveryResult.reason);
+        this.error.set("Could not load discovery results. Is the API running?");
+        this.items.set([]);
+        this.totalCount.set(0);
+      }
     } catch {
       this.error.set("Could not load discovery results. Is the API running?");
       this.items.set([]);

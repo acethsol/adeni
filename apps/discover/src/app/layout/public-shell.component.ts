@@ -9,11 +9,18 @@ import {
 import { CustomerApiService } from "../core/services/customer-api.service";
 import { MarketContextService } from "../core/services/market-context.service";
 import { MarketGeoSyncComponent } from "../shared/market-geo-sync.component";
+import { AdeniBrandLockupComponent } from "@adeni/ui";
 
 @Component({
   selector: "app-public-shell",
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, MarketGeoSyncComponent],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    MarketGeoSyncComponent,
+    AdeniBrandLockupComponent,
+  ],
   templateUrl: "./public-shell.component.html",
   styleUrl: "./public-shell.component.scss",
 })

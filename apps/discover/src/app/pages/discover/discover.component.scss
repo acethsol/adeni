@@ -6,6 +6,11 @@
   color: var(--text-muted);
 }
 
+.empty-hint a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 .error {
   color: #b91c1c;
 }

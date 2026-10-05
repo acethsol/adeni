@@ -8,6 +8,9 @@
     "packages/*"
   ],
   "scripts": {
+    "sync:brand": "node scripts/sync-brand-assets.mjs",
+    "generate:brand-favicons": "node scripts/generate-brand-favicons.mjs",
+    "postinstall": "node scripts/sync-brand-assets.mjs",
     "dev:portal": "npm run dev --workspace @adeni/portal",
     "dev:admin": "npm run dev --workspace @adeni/admin",
     "dev:discover": "npm run dev --workspace @adeni/discover",
@@ -22,5 +25,9 @@
   },
   "overrides": {
     "rxjs": "7.8.2"
+  },
+  "devDependencies": {
+    "png-to-ico": "^3.0.2",
+    "sharp": "^0.35.5"
   }
 }

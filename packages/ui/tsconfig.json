@@ -7,7 +7,10 @@
     "skipLibCheck": true,
     "experimentalDecorators": true,
     "isolatedModules": true,
-    "noEmit": true
+    "noEmit": true,
+    "paths": {
+      "@adeni/brand": ["../brand/src/index.ts"]
+    }
   },
   "include": ["src/**/*.ts"]
 }

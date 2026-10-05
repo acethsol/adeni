@@ -7,10 +7,14 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./styles/staff-layout": "./src/styles/_staff-layout.scss"
+    "./styles/staff-layout": "./src/styles/_staff-layout.scss",
+    "./styles/tokens": "./src/styles/_carbon-adeni-tokens.scss"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@adeni/brand": "*"
   },
   "peerDependencies": {
     "@angular/core": "^22.2.0",

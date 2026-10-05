@@ -1,6 +1,7 @@
 # Adeni — Product strategy & revenue model
 
-> **Status:** Living strategy document | **Last updated:** August 2026  
+> **Status:** Living strategy document | **Last updated:** October 2026  
+> **V1 authority:** [product-direction.md](./product-direction.md) supersedes this doc on conflicts (scope, brand, stack emphasis).
 > **Sources:** [ChatGPT strategy research (Jul–Aug 2026)](https://chatgpt.com/share/6a8779af-99d8-83ea-a72d-7de7e8873a1d), codebase audit, sprint history  
 > **Parent:** [Adeni Product Bible](https://aceth.atlassian.net/wiki/spaces/SD/pages/26279937) | **Confluence:** [Product strategy & revenue model](https://aceth.atlassian.net/wiki/spaces/SD/pages/41091073) | **Build spec:** [prd-v1.1-body.md](./prd-v1.1-body.md)
 
@@ -12,7 +13,7 @@
 
 Adeni is **not** “another Booksy” or “Nigerian Yelp.”
 
-It is the **operating and transaction layer for local service businesses**:
+It is the **Beauty & Wellness platform** (operating + transaction layer for wellness businesses in V1):
 
 | Layer | What it means |
 |-------|----------------|

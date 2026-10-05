@@ -9,10 +9,11 @@ Read [AGENTS.md](../../AGENTS.md) for the full playbook. These rules always appl
 
 ## Project
 
-Beauty & Wellness marketplace (Lagos + Ottawa). .NET modular monolith + Angular discover/portal/admin. Trust-first, SOC 2 from day one. Legacy Next/Expo: docs/legacy-clients-archive.md.
+Beauty & Wellness platform V1 (Ottawa + Lagos only — not multi-industry). .NET modular monolith + Angular discover/portal/admin + Flutter (consumer mobile primary). Option 3 brand SVG via `@adeni/brand`; Carbon for UI patterns. **Authority:** [product-direction.md](../../docs/product-direction.md).
 
 ## Strategy & scope
 
+- [product-direction.md](../../docs/product-direction.md) — V1 authority when docs conflict
 - [product-strategy.md](../../docs/product-strategy.md) — positioning, revenue, **out of scope**
 - [architecture.md](../../docs/architecture.md) — module boundaries, no microservices early
 - v1: discovery + booking + portals + Paystack orchestration (no wallet/custody)

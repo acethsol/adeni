@@ -12,11 +12,19 @@ import {
 } from "../core/adeni-config";
 import { PendingBookingsBellComponent } from "../shared/pending-bookings-bell.component";
 import { resolveAuthService } from "../core/auth0-rxjs";
+import { AdeniStaffSidebarBrandComponent } from "@adeni/ui";
 
 @Component({
   selector: "app-portal-shell",
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, AsyncPipe, PendingBookingsBellComponent],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    AsyncPipe,
+    PendingBookingsBellComponent,
+    AdeniStaffSidebarBrandComponent,
+  ],
   templateUrl: "./portal-shell.component.html",
   styleUrl: "./portal-shell.component.scss",
 })

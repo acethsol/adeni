@@ -1,0 +1,14 @@
+{
+  "brand": {
+    "purple": "#7F56FF",
+    "teal": "#13C2A3",
+    "charcoal": "#0B0F14",
+    "lightGray": "#F4F5F7",
+    "white": "#FFFFFF"
+  },
+  "logoDirection": "Option 3 \u2014 Premium & Distinctive",
+  "tagline": "BEAUTY \u2022 WELLNESS \u2022 YOU",
+  "taglineUsage": "Optional secondary lockup",
+  "uiDesignSystem": "Carbon Design System",
+  "uiTypeface": "IBM Plex Sans"
+}

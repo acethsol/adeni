@@ -1,11 +1,7 @@
 <div class="shell">
   <aside class="sidebar">
     <a class="brand" routerLink="/dashboard">
-      <span class="brand-mark">A</span>
-      <span class="brand-text">
-        <strong>Adeni</strong>
-        <small>Admin</small>
-      </span>
+      <adeni-staff-sidebar-brand caption="Admin" [logoHeight]="44" />
     </a>
 
     @if (devMode) {

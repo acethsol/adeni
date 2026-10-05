@@ -5,11 +5,12 @@ import { AsyncPipe } from "@angular/common";
 import { ADMIN_NAV } from "../core/admin-nav";
 import { ADENI_ADMIN_CONFIG, isAdminPortalDevMode, isAuth0Configured } from "../core/adeni-config";
 import { resolveAuthService } from "../core/auth0-rxjs";
+import { AdeniStaffSidebarBrandComponent } from "@adeni/ui";
 
 @Component({
   selector: "app-admin-shell",
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, AsyncPipe],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, AsyncPipe, AdeniStaffSidebarBrandComponent],
   templateUrl: "./portal-shell.component.html",
   styleUrl: "./portal-shell.component.scss",
 })

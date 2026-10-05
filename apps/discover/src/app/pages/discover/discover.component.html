@@ -57,7 +57,19 @@
 @if (loading()) {
   <p class="muted">Loading…</p>
 } @else if (items().length === 0) {
-  <p class="muted">No businesses found.</p>
+  @if (market.market(); as m) {
+    <p class="muted empty-hint">
+      @if (m.id === "lagos") {
+        No businesses match these filters yet.
+      } @else {
+        No listings in {{ m.name }} yet. Local seed data is in
+        <a routerLink="/" [queryParams]="{ market: 'lagos' }">Lagos</a>
+        for now.
+      }
+    </p>
+  } @else {
+    <p class="muted">No businesses found.</p>
+  }
 } @else {
   <p class="count">{{ totalCount() }} results</p>
   <ul class="grid">
