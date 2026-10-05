@@ -1,6 +1,6 @@
 # Adeni — Modular monolith architecture
 
-> **Status:** Living architecture doc | **Last updated:** August 2026  
+> **Status:** Living architecture doc | **Last updated:** October 2026  
 > **Parent:** [product-strategy.md §7.2](./product-strategy.md#72-architecture--modular-monolith-not-microservices) | **Confluence:** [Modular monolith architecture](https://aceth.atlassian.net/wiki/spaces/SD/pages/42139649)
 
 Adeni runs as a **modular monolith**: one deployable API, clear module boundaries, designed for extraction — **not** microservices on day one. This matches the ChatGPT strategy research and fits a solo/small team building toward local-service commerce infrastructure.
@@ -31,8 +31,11 @@ src/
   Adeni.Infrastructure/   Module implementations (adapters), EF, Redis, external APIs
   Adeni.Api/              HTTP controllers, middleware, composition root
 apps/
-  web/                    Next.js — route groups mirror portal surfaces, not backend modules
-  mobile/                 Expo
+  discover/               Angular SSR — public SEO, consumers (target; strangler off Next)
+  portal/                 Angular — business tenants
+  admin/                  Angular — internal ops
+  web/                    Next.js — legacy until strangler complete
+  mobile/                 Expo (Flutter consumer app deferred per ADR-012)
 packages/
   shared/                 Cross-client types aligned with API contracts
   api-client/             Typed HTTP client
@@ -40,6 +43,10 @@ tests/                    Unit + integration + architecture tests per module
 ```
 
 The **composition root** is `Adeni.Api` + `Infrastructure/DependencyInjection/ServiceCollectionExtensions.cs`. Target state: each module registers itself via `AddBookingModule()`, `AddTenancyModule()`, etc., called from the composition root.
+
+### 2.1 Target client architecture (internet-facing)
+
+Canonical diagram: **[target-client-architecture.md](./target-client-architecture.md)** — Discover (Angular SSR), Business Portal (Angular), Admin (Angular), Flutter mobile (target), all clients → one .NET API → PostgreSQL + Redis. Next.js and Expo remain during the ADR-012 strangler.
 
 ---
 
@@ -196,6 +203,8 @@ Confluence: [Modular monolith architecture](https://aceth.atlassian.net/wiki/spa
 |-----|---------|
 | [product-strategy.md](./product-strategy.md) | Business strategy + §7 technical input |
 | [tenant-isolation.md](./tenant-isolation.md) | Multi-tenant EF filters and route classes |
-| [frontend.md](./frontend.md) | Web + Expo monorepo |
+| [target-client-architecture.md](./target-client-architecture.md) | Internet-facing clients + API (canonical diagram) |
+| [frontend.md](./frontend.md) | Monorepo setup and dev commands |
+| [adr/ADR-012-angular-web-deferred-flutter.md](./adr/ADR-012-angular-web-deferred-flutter.md) | Angular strangler + deferred Flutter |
 | [observability.md](./observability.md) | App Insights, SLOs |
 | [sprints.md](./sprints.md) | Sprint 15a and module rollout by sprint |

@@ -128,6 +128,7 @@ Concrete tactics:
 
 ## References
 
+- [Target client architecture (canonical diagram)](../target-client-architecture.md)
 - [Frontend monorepo (current)](../frontend.md)
 - [Angular migration checklist](../angular-migration-checklist.md)
 - [Product strategy](../product-strategy.md) — supply-first GTM
