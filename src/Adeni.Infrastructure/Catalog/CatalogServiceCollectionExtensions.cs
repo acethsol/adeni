@@ -10,6 +10,8 @@ public static class CatalogServiceCollectionExtensions
     {
         services.AddSingleton(sp =>
             CategoryWorkflowCatalogJson.ReadFromFile(sp.GetRequiredService<IHostEnvironment>()));
+        services.AddSingleton<IWellnessCategoryCatalog>(sp =>
+            WellnessCategoryCatalogJson.ReadFromFile(sp.GetRequiredService<IHostEnvironment>()));
         services.AddSingleton<ICategoryService, CategoryService>();
         services.AddSingleton<IBusinessCapabilitiesService, BusinessCapabilitiesService>();
         return services;

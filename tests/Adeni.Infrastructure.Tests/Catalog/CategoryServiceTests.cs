@@ -13,7 +13,7 @@ public sealed class CategoryServiceTests
         var services = new ServiceCollection();
         services.AddDistributedMemoryCache();
         services.AddSingleton<ICacheService, Adeni.Infrastructure.Caching.DistributedCacheService>();
-        services.AddSingleton<Application.Catalog.ICategoryService, CategoryService>();
+        services.AddCategoryWorkflowCatalog();
         using var provider = services.BuildServiceProvider();
 
         var cache = provider.GetRequiredService<IDistributedCache>();
@@ -23,7 +23,9 @@ public sealed class CategoryServiceTests
         var second = await categories.GetCategoriesAsync();
 
         Assert.Equal(7, first.Count);
+        Assert.Contains(first, c => c.Slug == "hair-grooming");
+        Assert.DoesNotContain(first, c => c.Slug == "plumbers");
         Assert.Equal(first, second);
-        Assert.NotNull(await cache.GetStringAsync("categories:all"));
+        Assert.NotNull(await cache.GetStringAsync("categories:True:False:all"));
     }
 }

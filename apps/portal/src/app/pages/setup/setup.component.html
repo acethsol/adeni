@@ -1,12 +1,55 @@
-<section class="setup">
-  <h1>Configure business portal access</h1>
-  <p>
-    Set Auth0 SPA credentials in <code>src/environments/environment.development.ts</code>, or keep
-    <code>devBusinessAuth0Sub</code> for local API dev (Auth0 disabled on the API).
-  </p>
-  <ul>
-    <li>Copy fields from <code>apps/portal/.env.example.md</code> into your environment file.</li>
-    <li>Create an Auth0 <strong>Single Page Application</strong> (PKCE) for the portal — not the Next confidential client.</li>
-    <li>Callback URL: <code>http://localhost:5173</code></li>
-  </ul>
-</section>
+<main class="setup-page">
+  <header>
+    <h1>How Adeni works for your customers</h1>
+    <p class="lead">
+      When you register, you are building the listing customers see on Discover — categories first, then
+      bookable services.
+    </p>
+  </header>
+
+  <section class="flow">
+    <h2>Customer journey</h2>
+    <ol class="steps">
+      <li>
+        <strong>Pick a market</strong> — Lagos, Ottawa, or another city. Discovery and search use this
+        context.
+      </li>
+      <li>
+        <strong>Explore a category</strong> — e.g. Massage, Hair &amp; Grooming, Nails. Same taxonomy in
+        every market; featured order can differ.
+      </li>
+      <li>
+        <strong>Find your business</strong> — You appear when your <em>primary</em> or any
+        <em>additional</em> category matches the filter.
+      </li>
+      <li>
+        <strong>Book a service</strong> — Customer picks a service you added (from the catalog or custom),
+        chooses a slot, and confirms.
+      </li>
+    </ol>
+  </section>
+
+  <section class="flow">
+    <h2>Your setup (business portal)</h2>
+    <ol class="steps">
+      <li>
+        <strong>Primary category</strong> — Main type of business (used for SEO and default sorting).
+      </li>
+      <li>
+        <strong>Additional categories</strong> — Optional tags (spa also offering massage + nails).
+      </li>
+      <li>
+        <strong>Services</strong> — Add from Adeni templates or create your own; each ties to a category and
+        booking type (appointment, class, session, …).
+      </li>
+      <li>
+        <strong>Availability</strong> — Weekly hours so customers can book online.
+      </li>
+    </ol>
+  </section>
+
+  <div class="actions">
+    <a routerLink="/register" class="btn btn-primary">Register your business</a>
+    <a routerLink="/services" class="btn btn-secondary">Manage services</a>
+  </div>
+</main>

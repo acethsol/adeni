@@ -1,7 +1,8 @@
-import { Component, inject, OnInit, signal } from "@angular/core";
+import { Component, inject, OnInit, signal, computed } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { RouterLink } from "@angular/router";
 import type { BusinessProfile, Category, MarketConfig } from "@adeni/shared";
+import { getCategoryLabel } from "@adeni/shared";
 import { PortalPageComponent } from "../../shared/portal-page.component";
 import { BusinessApiService } from "../../core/services/business-api.service";
 
@@ -27,6 +28,7 @@ export class RegisterComponent implements OnInit {
 
   businessName = "";
   categorySlug = "";
+  additionalCategorySlugs: string[] = [];
   phone = "";
   description = "";
   slug = "";
@@ -34,22 +36,38 @@ export class RegisterComponent implements OnInit {
   area = "";
   marketId = "lagos";
 
+  readonly categoryLabel = getCategoryLabel;
+
+  readonly additionalOptions = computed(() =>
+    this.categories().filter((c) => c.slug !== this.categorySlug),
+  );
+
   ngOnInit(): void {
     void this.load();
+  }
+
+  async loadCategoriesForMarket(): Promise<void> {
+    const publicClient = this.api.createPublicClient();
+    const categories = await publicClient.getCategories({
+      market: this.marketId,
+      wellness: true,
+    });
+    this.categories.set(categories);
+    if (!categories.some((c) => c.slug === this.categorySlug)) {
+      this.categorySlug = categories[0]?.slug ?? "hair-grooming";
+      this.additionalCategorySlugs = this.additionalCategorySlugs.filter((s) => s !== this.categorySlug);
+    }
   }
 
   async load(): Promise<void> {
     this.loading.set(true);
     try {
       const publicClient = this.api.createPublicClient();
-      const [categories, markets] = await Promise.all([
-        publicClient.getCategories(),
-        publicClient.getMarkets(),
-      ]);
-      this.categories.set(categories);
+      const markets = await publicClient.getMarkets();
       this.markets.set(markets);
-      this.categorySlug = categories[0]?.slug ?? "barbers";
       this.marketId = markets[0]?.id ?? "lagos";
+      await this.loadCategoriesForMarket();
+      this.categorySlug = this.categories()[0]?.slug ?? "hair-grooming";
 
       try {
         const profile = await this.api.withAuthorizedClient((c) => c.getTenantProfile());
@@ -61,6 +79,31 @@ export class RegisterComponent implements OnInit {
       this.error.set("Could not load registration form.");
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  async onMarketChange(): Promise<void> {
+    try {
+      await this.loadCategoriesForMarket();
+    } catch {
+      this.error.set("Could not reload categories for this market.");
+    }
+  }
+
+  onPrimaryCategoryChange(): void {
+    this.additionalCategorySlugs = this.additionalCategorySlugs.filter((s) => s !== this.categorySlug);
+  }
+
+  isAdditionalSelected(slug: string): boolean {
+    return this.additionalCategorySlugs.includes(slug);
+  }
+
+  toggleAdditional(slug: string): void {
+    if (slug === this.categorySlug) return;
+    if (this.isAdditionalSelected(slug)) {
+      this.additionalCategorySlugs = this.additionalCategorySlugs.filter((s) => s !== slug);
+    } else {
+      this.additionalCategorySlugs = [...this.additionalCategorySlugs, slug];
     }
   }
 
@@ -94,6 +137,8 @@ export class RegisterComponent implements OnInit {
         c.registerBusiness({
           businessName: this.businessName.trim(),
           categorySlug: this.categorySlug,
+          additionalCategorySlugs:
+            this.additionalCategorySlugs.length > 0 ? this.additionalCategorySlugs : undefined,
           phone: this.phone.trim(),
           description: this.description.trim() || undefined,
           location: {

@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import type { ServiceOffering } from "@adeni/shared";
+import type { ServiceOffering, ServiceTemplate } from "@adeni/shared";
+import { getCategoryLabel } from "@adeni/shared";
 import { PortalPageComponent } from "../../shared/portal-page.component";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { formatPrice } from "../../shared/portal-format";
@@ -11,6 +12,9 @@ type ServiceDraft = {
   priceAmount: string;
   currency: string;
   durationMinutes: string;
+  categorySlug: string;
+  catalogServiceId: string;
+  bookingDeliveryType: string;
 };
 
 @Component({
@@ -29,11 +33,15 @@ export class ServicesComponent implements OnInit {
   readonly busy = signal<string | null>(null);
   readonly editingId = signal<string | null>(null);
   readonly showForm = signal(false);
+  readonly catalogLoading = signal(false);
+  readonly catalogTemplates = signal<ServiceTemplate[]>([]);
+  readonly primaryCategorySlug = signal("");
 
   defaultCurrency = "NGN";
   draft: ServiceDraft = this.emptyDraft();
 
   readonly formatPrice = formatPrice;
+  readonly categoryLabel = getCategoryLabel;
 
   ngOnInit(): void {
     void this.load();
@@ -46,6 +54,9 @@ export class ServicesComponent implements OnInit {
       priceAmount: "",
       currency: this.defaultCurrency,
       durationMinutes: "30",
+      categorySlug: this.primaryCategorySlug(),
+      catalogServiceId: "",
+      bookingDeliveryType: "appointment",
     };
   }
 
@@ -59,6 +70,9 @@ export class ServicesComponent implements OnInit {
           c.getTenantProfile().catch(() => null),
         ]);
         this.services.set(items);
+        if (profile?.categorySlug) {
+          this.primaryCategorySlug.set(profile.categorySlug);
+        }
         const marketId = profile?.locations[0]?.marketId?.toLowerCase();
         if (marketId === "lagos" || marketId === "abuja") this.defaultCurrency = "NGN";
         else if (marketId === "ottawa" || marketId === "toronto") this.defaultCurrency = "CAD";
@@ -71,10 +85,26 @@ export class ServicesComponent implements OnInit {
     }
   }
 
-  openCreate(): void {
+  async loadCatalog(categorySlug: string): Promise<void> {
+    this.catalogLoading.set(true);
+    try {
+      const templates = await this.api.createPublicClient().getCategoryServiceTemplates(categorySlug);
+      this.catalogTemplates.set(templates);
+    } catch {
+      this.catalogTemplates.set([]);
+    } finally {
+      this.catalogLoading.set(false);
+    }
+  }
+
+  async openCreate(): Promise<void> {
     this.editingId.set(null);
     this.draft = this.emptyDraft();
+    this.draft.categorySlug = this.primaryCategorySlug();
     this.showForm.set(true);
+    if (this.primaryCategorySlug()) {
+      await this.loadCatalog(this.primaryCategorySlug());
+    }
   }
 
   openEdit(service: ServiceOffering): void {
@@ -85,13 +115,26 @@ export class ServicesComponent implements OnInit {
       priceAmount: String(service.priceAmount),
       currency: service.currency,
       durationMinutes: String(service.durationMinutes),
+      categorySlug: service.categorySlug ?? this.primaryCategorySlug(),
+      catalogServiceId: service.catalogServiceId ?? "",
+      bookingDeliveryType: service.bookingDeliveryType ?? "appointment",
     };
     this.showForm.set(true);
+    void this.loadCatalog(this.draft.categorySlug);
+  }
+
+  applyTemplate(template: ServiceTemplate): void {
+    this.draft.name = template.name;
+    this.draft.durationMinutes = String(template.defaultDurationMinutes);
+    this.draft.catalogServiceId = template.id;
+    this.draft.bookingDeliveryType = template.bookingDeliveryType;
+    this.draft.categorySlug = this.draft.categorySlug || this.primaryCategorySlug();
   }
 
   cancelForm(): void {
     this.showForm.set(false);
     this.editingId.set(null);
+    this.catalogTemplates.set([]);
   }
 
   async save(): Promise<void> {
@@ -110,6 +153,9 @@ export class ServicesComponent implements OnInit {
       priceAmount: price,
       currency: this.draft.currency.trim().toUpperCase(),
       durationMinutes: Math.round(duration),
+      categorySlug: this.draft.categorySlug.trim() || undefined,
+      catalogServiceId: this.draft.catalogServiceId.trim() || undefined,
+      bookingDeliveryType: this.draft.bookingDeliveryType || "appointment",
     };
 
     try {

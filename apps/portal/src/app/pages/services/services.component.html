@@ -1,6 +1,6 @@
 <app-portal-page
   title="Services"
-  description="Add, edit, and deactivate bookable services on your public profile."
+  description="What customers book — pick from Adeni templates or create your own."
 >
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
@@ -13,6 +13,22 @@
   @if (showForm()) {
     <section class="card form">
       <h3>{{ editingId() ? "Edit service" : "New service" }}</h3>
+
+      @if (catalogTemplates().length > 0) {
+        <div class="catalog">
+          <p class="muted">Quick add from catalog ({{ categoryLabel("en", draft.categorySlug) }})</p>
+          <ul class="template-chips">
+            @for (t of catalogTemplates(); track t.id) {
+              <li>
+                <button type="button" class="chip" (click)="applyTemplate(t)">{{ t.name }}</button>
+              </li>
+            }
+          </ul>
+        </div>
+      } @else if (catalogLoading()) {
+        <p class="muted">Loading templates…</p>
+      }
+
       <div class="field">
         <label>Name</label>
         <input [(ngModel)]="draft.name" />
@@ -35,6 +51,16 @@
           <input type="number" min="1" [(ngModel)]="draft.durationMinutes" />
         </div>
       </div>
+      <div class="field">
+        <label>Booking type</label>
+        <select [(ngModel)]="draft.bookingDeliveryType">
+          <option value="appointment">Appointment (1:1 slot)</option>
+          <option value="class">Class (fixed start, capacity)</option>
+          <option value="session">Session (e.g. personal training)</option>
+          <option value="experience">Experience (e.g. spa block)</option>
+          <option value="mobile_appointment">Mobile appointment</option>
+        </select>
+      </div>
       <div class="actions">
         <button type="button" class="btn" (click)="cancelForm()">Cancel</button>
         <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="save()">Save</button>
@@ -45,7 +71,7 @@
   @if (loading()) {
     <p class="muted">Loading…</p>
   } @else if (services().length === 0) {
-    <p class="muted">No services yet.</p>
+    <p class="muted">No services yet — customers need at least one to book online.</p>
   } @else {
     <section class="card">
       <ul class="plain">
@@ -56,6 +82,9 @@
               <p class="muted">
                 {{ formatPrice(service.priceAmount, service.currency) }} ·
                 {{ service.durationMinutes }} min
+                @if (service.categorySlug) {
+                  · {{ categoryLabel("en", service.categorySlug) }}
+                }
               </p>
             </div>
             <div class="actions">

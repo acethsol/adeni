@@ -238,6 +238,7 @@ export const registerBusinessLocationSchema = z.object({
 export const registerBusinessRequestSchema = z.object({
   businessName: z.string().min(2),
   categorySlug: z.string().min(1),
+  additionalCategorySlugs: z.array(z.string()).optional(),
   phone: z.string().min(10),
   location: registerBusinessLocationSchema,
   description: z.string().optional(),
@@ -261,6 +262,25 @@ export const businessContextResponseSchema = z.object({
 
 export type BusinessContextResponse = z.infer<typeof businessContextResponseSchema>;
 
+export const bookingDeliveryTypeSchema = z.enum([
+  "appointment",
+  "class",
+  "session",
+  "experience",
+  "mobile_appointment",
+]);
+
+export type BookingDeliveryType = z.infer<typeof bookingDeliveryTypeSchema>;
+
+export const serviceTemplateSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  defaultDurationMinutes: z.number().int(),
+  bookingDeliveryType: bookingDeliveryTypeSchema,
+});
+
+export type ServiceTemplate = z.infer<typeof serviceTemplateSchema>;
+
 export const serviceOfferingSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -270,6 +290,9 @@ export const serviceOfferingSchema = z.object({
   pricingType: z.enum(["fixed", "quote_request", "hourly"]).optional(),
   durationMinutes: z.number(),
   isActive: z.boolean(),
+  categorySlug: z.string().nullable().optional(),
+  catalogServiceId: z.string().nullable().optional(),
+  bookingDeliveryType: bookingDeliveryTypeSchema.optional(),
 });
 
 export const serviceOfferingsResponseSchema = z.object({
@@ -493,6 +516,7 @@ export const businessProfileSchema = z.object({
   businessName: z.string(),
   status: z.number(),
   categorySlug: z.string(),
+  additionalCategorySlugs: z.array(z.string()).optional(),
   phone: z.string(),
   description: z.string(),
   createdAt: z.string(),
@@ -517,6 +541,7 @@ export type BusinessProfile = z.infer<typeof businessProfileSchema>;
 export const updateBusinessProfileRequestSchema = z.object({
   businessName: z.string().min(1),
   categorySlug: z.string().min(1),
+  additionalCategorySlugs: z.array(z.string()).optional(),
   phone: z.string().min(1),
   description: z.string().optional(),
 });
@@ -834,6 +859,9 @@ export const createServiceOfferingRequestSchema = z.object({
   currency: z.string().min(3).max(3),
   durationMinutes: z.number().int().positive(),
   pricingType: z.enum(["fixed", "quote_request", "hourly"]).optional(),
+  categorySlug: z.string().optional(),
+  catalogServiceId: z.string().optional(),
+  bookingDeliveryType: bookingDeliveryTypeSchema.optional(),
 });
 
 export type CreateServiceOfferingRequest = z.infer<
@@ -848,6 +876,9 @@ export const updateServiceOfferingRequestSchema = z.object({
   durationMinutes: z.number().int().positive(),
   pricingType: z.enum(["fixed", "quote_request", "hourly"]).optional(),
   isActive: z.boolean(),
+  categorySlug: z.string().optional(),
+  catalogServiceId: z.string().optional(),
+  bookingDeliveryType: bookingDeliveryTypeSchema.optional(),
 });
 
 export type UpdateServiceOfferingRequest = z.infer<

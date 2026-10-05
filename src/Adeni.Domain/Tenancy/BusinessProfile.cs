@@ -28,4 +28,6 @@ public sealed class BusinessProfile : ITenantEntity
     public Tenant? Tenant { get; set; }
 
     public ICollection<BusinessLocation> Locations { get; set; } = new List<BusinessLocation>();
+
+    public ICollection<BusinessProfileCategory> Categories { get; set; } = new List<BusinessProfileCategory>();
 }

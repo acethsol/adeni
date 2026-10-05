@@ -29,3 +29,25 @@
 h3 {
   margin: 0 0 0.75rem;
 }
+
+.catalog {
+  margin-bottom: 1rem;
+}
+
+.template-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+}
+
+.chip {
+  border: 1px solid var(--border, #e2e8f0);
+  background: var(--surface, #f8fafc);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
