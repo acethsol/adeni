@@ -601,12 +601,6 @@ export class PortalShellComponent {
     })).filter((group) => group.items.length > 0);
   }
 
-  private labelForUrl(url: string): string {
-    const path = url.split("?")[0] ?? "";
-    const item = PORTAL_NAV.find((entry) => path === entry.path || (!entry.exact && path.startsWith(`${entry.path}/`)));
-    return item ? this.navLabel(item) : this.navLabel(PORTAL_NAV[0]);
-  }
-
   private applyTheme(theme: PortalTheme): void {
     this.theme.set(theme);
     document.documentElement.dataset["theme"] = theme;

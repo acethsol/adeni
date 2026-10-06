@@ -49,6 +49,8 @@ export class AdminDashboardComponent implements OnInit {
     [...(this.pending() ?? [])].sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
   );
 
+  readonly waitingCount = computed(() => this.pending()?.length ?? null);
+
   readonly verifiedCount = computed(
     () => this.businesses()?.filter((item) => item.status === 2).length ?? null,
   );
@@ -81,25 +83,21 @@ export class AdminDashboardComponent implements OnInit {
   });
 
   readonly statusMix = computed(() =>
-    mixRows(
-      [0, 1, 2, 3, 4].map((status) => ({
-        key: String(status),
-        label: formatTenantStatus(status),
-        count: this.businesses()?.filter((item) => item.status === status).length ?? 0,
-        tone: `tone-${status}`,
-      })),
-    ),
+    [0, 1, 2, 3, 4].map((status) => ({
+      key: String(status),
+      label: formatTenantStatus(status),
+      count: this.businesses()?.filter((item) => item.status === status).length ?? 0,
+      tone: `tone-${status}`,
+    })),
   );
 
   readonly tierMix = computed(() =>
-    mixRows(
-      (["free", "pro", "business"] as const).map((tier) => ({
-        key: tier,
-        label: TIER_LABELS[tier],
-        count: this.businesses()?.filter((item) => item.subscriptionTier === tier).length ?? 0,
-        tone: `tier-${tier}`,
-      })),
-    ),
+    (["free", "pro", "business"] as const).map((tier) => ({
+      key: tier,
+      label: TIER_LABELS[tier],
+      count: this.businesses()?.filter((item) => item.subscriptionTier === tier).length ?? 0,
+      tone: `tier-${tier}`,
+    })),
   );
 
   readonly recent = computed(() =>
@@ -144,10 +142,6 @@ export class AdminDashboardComponent implements OnInit {
       this.loading.set(false);
     }
   }
-}
-
-function mixRows(rows: MixRow[]): MixRow[] {
-  return rows;
 }
 
 function ageLabel(iso: string): string {

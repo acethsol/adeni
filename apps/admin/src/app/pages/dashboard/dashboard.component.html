@@ -18,7 +18,7 @@
   <section class="kpis" aria-label="Operations summary">
     <a class="kpi" routerLink="/pending" [class.alert]="(pending()?.length ?? 0) > 0">
       <p class="kpi-label">Waiting</p>
-      <p class="kpi-value">{{ pending() === null ? "—" : pending()!.length }}</p>
+      <p class="kpi-value">{{ waitingCount() === null ? "—" : waitingCount() }}</p>
       <p class="kpi-hint">
         @if (queue().length > 0) {
           Oldest {{ ageLabel(queue()[0].createdAt) }}

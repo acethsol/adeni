@@ -15,50 +15,51 @@
   } @else {
     <app-portal-tabs [tabs]="tabs" />
     @if (tab() === "ledger") {
-    <section class="card">
-      <h3>Ledger</h3>
-      <div class="field">
-        <label>Amount ({{ defaultCurrency() }})</label>
-        <input type="number" min="0" step="0.01" [(ngModel)]="amount" />
-      </div>
-      <div class="field">
-        <label>Description</label>
-        <input [(ngModel)]="description" />
-      </div>
-      <button type="button" class="btn btn-primary" [disabled]="creating()" (click)="createLink()">
-        {{ creating() ? "Creating…" : "Create link" }}
-      </button>
-
-      @if (lastLink(); as link) {
-        <div class="link-box">
-          <p class="muted">Share checkout URL:</p>
-          <code>{{ link.checkoutUrl }}</code>
-          <a class="btn" [href]="whatsAppUrl(link)" target="_blank" rel="noopener">WhatsApp</a>
-        </div>
-      }
+      <section class="card">
+        <h3>Ledger</h3>
+        @if (ledger().length === 0) {
+          <p class="muted">No payment activity yet.</p>
+        } @else {
+          <ul class="plain">
+            @for (entry of ledger(); track entry.id) {
+              <li class="list-row">
+                <div>
+                  <strong>{{ entry.description || entry.type }}</strong>
+                  <p class="muted">
+                    {{ formatPrice(entry.amount, entry.currency) }} · {{ entry.status }}
+                  </p>
+                </div>
+                @if (entry.status === "completed") {
+                  <button type="button" class="btn btn-danger" (click)="refund(entry)">Refund</button>
+                }
+              </li>
+            }
+          </ul>
+        }
       </section>
     } @else {
-    <section class="card">
-      <h3>Create payment link</h3>
-      @if (ledger().length === 0) {
-        <p class="muted">No payment activity yet.</p>
-      } @else {
-        <ul class="plain">
-          @for (entry of ledger(); track entry.id) {
-            <li class="list-row">
-              <div>
-                <strong>{{ entry.description || entry.type }}</strong>
-                <p class="muted">
-                  {{ formatPrice(entry.amount, entry.currency) }} · {{ entry.status }}
-                </p>
-              </div>
-              @if (entry.status === "completed") {
-                <button type="button" class="btn btn-danger" (click)="refund(entry)">Refund</button>
-              }
-            </li>
-          }
-        </ul>
-      }
-    </section>
+      <section class="card">
+        <h3>Create payment link</h3>
+        <div class="field">
+          <label>Amount ({{ defaultCurrency() }})</label>
+          <input type="number" min="0" step="0.01" [(ngModel)]="amount" />
+        </div>
+        <div class="field">
+          <label>Description</label>
+          <input [(ngModel)]="description" />
+        </div>
+        <button type="button" class="btn btn-primary" [disabled]="creating()" (click)="createLink()">
+          {{ creating() ? "Creating…" : "Create link" }}
+        </button>
+
+        @if (lastLink(); as link) {
+          <div class="link-box">
+            <p class="muted">Share checkout URL:</p>
+            <code>{{ link.checkoutUrl }}</code>
+            <a class="btn" [href]="whatsAppUrl(link)" target="_blank" rel="noopener">WhatsApp</a>
+          </div>
+        }
+      </section>
+    }
   }
 </app-portal-page>
