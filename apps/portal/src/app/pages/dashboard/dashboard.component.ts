@@ -6,6 +6,8 @@ import {
   formatSlotTime,
   formatTenantStatus,
   getCategoryLabel,
+  hasCapability,
+  resolveCapabilities,
   type BookingResponse,
   type BusinessProfile,
   type ServiceOffering,
@@ -59,6 +61,15 @@ export class DashboardComponent implements OnInit {
     if (!profile) return null;
     const location = profile.locations.find((item) => item.isPrimary) ?? profile.locations[0];
     return location ? `${location.name} · ${location.area}` : null;
+  }
+
+  offers(capability: "quotes" | "calendar" | "deposits"): boolean {
+    const profile = this.profile();
+    if (!profile) return false;
+    return hasCapability(
+      resolveCapabilities(profile.businessType, profile.categorySlug, profile.capabilities),
+      capability,
+    );
   }
 
   publicProfileUrl(): string | null {

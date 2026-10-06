@@ -22,7 +22,7 @@ import {
 } from "@adeni/shared";
 import { ADENI_DISCOVER_CONFIG } from "../../core/adeni-config";
 import { CustomerApiService } from "../../core/services/customer-api.service";
-import { DiscoverLocaleService } from "../../core/services/discover-locale.service";
+import { AdeniLocaleService } from "@adeni/ui";
 import { MarketContextService } from "../../core/services/market-context.service";
 import { SeoService } from "../../core/services/seo.service";
 import { DiscoveryBusinessCardComponent } from "../../shared/discovery-business-card.component";
@@ -31,6 +31,7 @@ import { HeroCategoryStageComponent } from "../../shared/hero-category-stage.com
 const HOME_STATE_KEY = makeStateKey<{
   categories: Category[];
   featured: DiscoveryBusinessItem[];
+  marketId: string;
 }>("discover-home");
 
 type CategoryGroup = {
@@ -53,7 +54,7 @@ export class HomeComponent implements OnInit {
   private readonly api = inject(CustomerApiService);
   private readonly pendingTasks = inject(PendingTasks);
   private readonly transferState = inject(TransferState);
-  private readonly localeService = inject(DiscoverLocaleService);
+  private readonly localeService = inject(AdeniLocaleService);
   private readonly hydratedFromServer = signal(false);
   private allowMarketReload = false;
   private lastLoadedMarketId: string | null = null;
@@ -86,6 +87,7 @@ export class HomeComponent implements OnInit {
     if (cached) {
       this.categories.set(cached.categories);
       this.featured.set(cached.featured);
+      this.lastLoadedMarketId = cached.marketId;
       this.loading.set(false);
       this.hydratedFromServer.set(true);
       this.transferState.remove(HOME_STATE_KEY);
@@ -118,8 +120,13 @@ export class HomeComponent implements OnInit {
       this.config.publicAppUrl,
     );
     if (this.hydratedFromServer()) {
-      this.lastLoadedMarketId = this.market.market()?.id ?? null;
+      const clientMarketId = this.market.market()?.id ?? this.config.defaultMarketId;
       this.allowMarketReload = true;
+      // SSR cannot read market cookies, so TransferState is often Lagos while the
+      // client cookie is Ottawa — refetch when the hydrated market does not match.
+      if (clientMarketId !== this.lastLoadedMarketId) {
+        await this.pendingTasks.run(() => this.load());
+      }
       return;
     }
 
@@ -162,6 +169,7 @@ export class HomeComponent implements OnInit {
     this.transferState.set(HOME_STATE_KEY, {
       categories: this.categories(),
       featured,
+      marketId,
     });
     this.loading.set(false);
   }

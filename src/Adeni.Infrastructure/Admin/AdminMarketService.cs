@@ -21,7 +21,7 @@ public sealed partial class AdminMarketService(
 {
     private static readonly HashSet<string> SupportedLanguages = new(StringComparer.OrdinalIgnoreCase)
     {
-        "en", "fr", "es", "pt",
+        "en", "fr",
     };
 
     private static readonly JsonSerializerOptions SerializerOptions = new()

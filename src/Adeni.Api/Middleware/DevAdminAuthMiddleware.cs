@@ -16,9 +16,15 @@ public sealed class DevAdminAuthMiddleware(RequestDelegate next)
             {
                 new("sub", auth0Sub.ToString()),
                 new(AdeniClaimTypes.Roles, AdeniRoles.Admin),
+                // No Auth0 step-up exists for the seeded local admin. Development only.
+                new(AdeniClaimTypes.Amr, "mfa"),
             };
 
-            context.User = new ClaimsPrincipal(new ClaimsIdentity(claims, "DevAdminAuth"));
+            context.User = new ClaimsPrincipal(new ClaimsIdentity(
+                claims,
+                authenticationType: "DevAdminAuth",
+                nameType: "name",
+                roleType: AdeniClaimTypes.Roles));
         }
 
         await next(context);

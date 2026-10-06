@@ -52,8 +52,8 @@ export const enMessages: Messages = {
   },
   locale: {
     title: "Language and region",
-    pickerTitle: "Your Adeni world",
-    pickerSubtitle: "Pick a city and language — we switch instantly.",
+    pickerTitle: "Language and region",
+    pickerSubtitle: "Choose your city and preferred language. Your experience updates immediately.",
     language: "Language",
     currency: "Currency",
     translation: "Translation",

@@ -6,13 +6,11 @@ import type { AdeniBrandSurface } from "@adeni/brand";
 import {
   formatTenantStatus,
   hasCapability,
-  isLocaleId,
   resolveCapabilities,
-  supportedLocales,
   type BusinessProfile,
   type LocaleId,
 } from "@adeni/shared";
-import { AdeniBrandLogoComponent } from "@adeni/ui";
+import { AdeniBrandLogoComponent, AdeniLocaleService } from "@adeni/ui";
 import { filter, map, startWith } from "rxjs";
 import { ADENI_PORTAL_CONFIG, isAuth0Configured, isBusinessPortalDevMode } from "../core/adeni-config";
 import { resolveAuthService } from "../core/auth0-rxjs";
@@ -31,7 +29,6 @@ import { PortalNavIconComponent } from "./portal-nav-icon.component";
 
 const SIDEBAR_STORAGE_KEY = "adeni.portal.sidebar.collapsed";
 const THEME_STORAGE_KEY = "adeni.portal.theme";
-const LOCALE_STORAGE_KEY = "adeni.portal.locale";
 
 type PortalTheme = "light" | "dark";
 type ThemePreference = PortalTheme | "system";
@@ -147,80 +144,6 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     "/payments": "Paiements",
     "/plan": "Forfait",
   },
-  es: {
-    search: "Buscar",
-    appearance: "Apariencia",
-    language: "Idioma",
-    light: "Claro",
-    dark: "Oscuro",
-    system: "Sistema",
-    signOut: "Cerrar sesión",
-    settings: "Ajustes",
-    jump: "Ir a",
-    marketplace: "Mercado",
-    groupToday: "Hoy",
-    groupListing: "Ficha",
-    groupBusiness: "Negocio",
-    tabPending: "Pendientes",
-    tabUpcoming: "Próximas",
-    tabPast: "Pasadas",
-    tabDetails: "Detalles",
-    tabReviews: "Reseñas",
-    tabVerification: "Verificación",
-    tabInbox: "Bandeja",
-    tabWhatsapp: "WhatsApp",
-    tabLinks: "Enlaces",
-    tabLedger: "Movimientos",
-    "/dashboard": "Resumen",
-    "/bookings": "Reservas",
-    "/quotes": "Cotizaciones",
-    "/messages": "Mensajes",
-    "/services": "Servicios",
-    "/locations": "Ubicaciones",
-    "/availability": "Horario",
-    "/profile": "Perfil",
-    "/public-page": "Página pública",
-    "/register": "Registro",
-    "/payments": "Pagos",
-    "/plan": "Plan",
-  },
-  pt: {
-    search: "Pesquisar",
-    appearance: "Aparência",
-    language: "Idioma",
-    light: "Claro",
-    dark: "Escuro",
-    system: "Sistema",
-    signOut: "Sair",
-    settings: "Definições",
-    jump: "Ir para",
-    marketplace: "Mercado",
-    groupToday: "Hoje",
-    groupListing: "Ficha",
-    groupBusiness: "Negócio",
-    tabPending: "Pendentes",
-    tabUpcoming: "Próximas",
-    tabPast: "Anteriores",
-    tabDetails: "Detalhes",
-    tabReviews: "Avaliações",
-    tabVerification: "Verificação",
-    tabInbox: "Caixa",
-    tabWhatsapp: "WhatsApp",
-    tabLinks: "Links",
-    tabLedger: "Extrato",
-    "/dashboard": "Visão geral",
-    "/bookings": "Reservas",
-    "/quotes": "Orçamentos",
-    "/messages": "Mensagens",
-    "/services": "Serviços",
-    "/locations": "Locais",
-    "/availability": "Horário",
-    "/profile": "Perfil",
-    "/public-page": "Página pública",
-    "/register": "Registo",
-    "/payments": "Pagamentos",
-    "/plan": "Plano",
-  },
 };
 
 type SearchHit = {
@@ -248,18 +171,6 @@ function resolveTheme(preference: ThemePreference): PortalTheme {
     return preference;
   }
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
-
-function readLocale(): LocaleId {
-  try {
-    const stored = localStorage.getItem(LOCALE_STORAGE_KEY) ?? "";
-    if (isLocaleId(stored)) {
-      return stored;
-    }
-  } catch {
-    // Preference is optional.
-  }
-  return "en";
 }
 
 function initialsFor(name: string): string {
@@ -303,7 +214,9 @@ function readSidebarCollapsed(): boolean {
   styleUrl: "./portal-shell.component.scss",
 })
 export class PortalShellComponent {
-  readonly locales = supportedLocales;
+  private readonly localeService = inject(AdeniLocaleService);
+  readonly locales = this.localeService.locales;
+  readonly locale = this.localeService.locale;
   readonly formatTenantStatus = formatTenantStatus;
   readonly config = inject(ADENI_PORTAL_CONFIG);
   private readonly injector = inject(Injector);
@@ -319,7 +232,6 @@ export class PortalShellComponent {
   readonly collapsed = signal(readSidebarCollapsed());
   readonly themePreference = signal<ThemePreference>(readThemePreference());
   readonly theme = signal<PortalTheme>(resolveTheme(this.themePreference()));
-  readonly locale = signal<LocaleId>(readLocale());
   readonly logoSurface = computed<AdeniBrandSurface>(() => (this.theme() === "dark" ? "dark" : "light"));
   readonly settingsOpen = signal(false);
   readonly userOpen = signal(false);
@@ -364,7 +276,6 @@ export class PortalShellComponent {
   });
 
   constructor() {
-    document.documentElement.lang = this.locale();
     this.applyTheme(this.theme());
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const onSystemTheme = (): void => {
@@ -426,13 +337,7 @@ export class PortalShellComponent {
   }
 
   setLocale(locale: LocaleId): void {
-    this.locale.set(locale);
-    document.documentElement.lang = locale;
-    try {
-      localStorage.setItem(LOCALE_STORAGE_KEY, locale);
-    } catch {
-      // Preference is optional.
-    }
+    this.localeService.setLocale(locale);
     this.settingsOpen.set(false);
   }
 

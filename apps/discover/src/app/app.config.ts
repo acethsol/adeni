@@ -9,7 +9,7 @@ import {
   withComponentInputBinding,
   withInMemoryScrolling,
 } from "@angular/router";
-import { provideAdeniDocumentTitle } from "@adeni/ui";
+import { provideAdeniDocumentTitle, provideAdeniLocale } from "@adeni/ui";
 import { provideClientHydration } from "@angular/platform-browser";
 import { routes } from "./app.routes";
 import { provideAuth0 } from "@auth0/auth0-angular";
@@ -51,6 +51,7 @@ export const appConfig: ApplicationConfig = {
       }),
     ),
     provideAdeniDocumentTitle("Adeni Discover"),
+    ...provideAdeniLocale({ storage: "cookie" }),
     provideClientHydration(),
     {
       provide: ADENI_DISCOVER_CONFIG,

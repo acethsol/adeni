@@ -16,7 +16,7 @@ import {
   resolveDiscoverySearch,
   t,
 } from "@adeni/shared";
-import { DiscoverLocaleService } from "../core/services/discover-locale.service";
+import { AdeniLocaleService } from "@adeni/ui";
 import { MarketContextService } from "../core/services/market-context.service";
 
 export type DiscoverySearchVariant = "hero" | "compact" | "default";
@@ -30,7 +30,7 @@ export type DiscoverySearchVariant = "hero" | "compact" | "default";
 })
 export class DiscoverySearchComponent {
   private readonly router = inject(Router);
-  private readonly localeService = inject(DiscoverLocaleService);
+  private readonly localeService = inject(AdeniLocaleService);
   private readonly market = inject(MarketContextService);
   private readonly host = inject(ElementRef<HTMLElement>);
 

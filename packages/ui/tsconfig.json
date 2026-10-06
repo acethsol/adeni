@@ -9,7 +9,8 @@
     "isolatedModules": true,
     "noEmit": true,
     "paths": {
-      "@adeni/brand": ["../brand/src/index.ts"]
+      "@adeni/brand": ["../brand/src/index.ts"],
+      "@adeni/shared": ["../shared/src/index.ts"]
     }
   },
   "include": ["src/**/*.ts"]

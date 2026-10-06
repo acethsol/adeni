@@ -25,8 +25,6 @@ public sealed class TranslationService(
     {
         "en",
         "fr",
-        "es",
-        "pt",
     };
 
     private static readonly JsonSerializerOptions SerializerOptions = new()

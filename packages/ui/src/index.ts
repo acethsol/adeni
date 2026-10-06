@@ -6,3 +6,10 @@ export {
   AdeniDocumentTitleStrategy,
   provideAdeniDocumentTitle,
 } from "./adeni-document-title.strategy";
+export {
+  AdeniLocaleService,
+  provideAdeniLocale,
+  ADENI_LOCALE_CONFIG,
+  type AdeniLocaleConfig,
+  type AdeniLocaleStorageMode,
+} from "./locale/adeni-locale.service";

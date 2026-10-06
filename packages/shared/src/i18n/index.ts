@@ -1,15 +1,11 @@
 import type { LocaleId } from "./types";
 import { enMessages } from "./messages/en";
 import { frMessages } from "./messages/fr";
-import { esMessages } from "./messages/es";
-import { ptMessages } from "./messages/pt";
 import { defaultLocale, isLocaleId, translate, type Messages } from "./types";
 
 const catalog: Record<LocaleId, Messages> = {
   en: enMessages,
   fr: frMessages,
-  es: esMessages,
-  pt: ptMessages,
 };
 
 import { getCurrencySymbol } from "./currency";
@@ -41,4 +37,4 @@ export {
   resolveTranslationPreference,
   shouldTranslateContent,
 } from "./content-translation";
-export { enMessages, frMessages, esMessages, ptMessages };
+export { enMessages, frMessages };

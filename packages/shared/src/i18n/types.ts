@@ -1,4 +1,4 @@
-export type LocaleId = "en" | "fr" | "es" | "pt";
+export type LocaleId = "en" | "fr";
 
 export type LocaleOption = {
   id: LocaleId;
@@ -9,8 +9,6 @@ export type LocaleOption = {
 export const supportedLocales: LocaleOption[] = [
   { id: "en", label: "English", nativeLabel: "English" },
   { id: "fr", label: "French", nativeLabel: "Français" },
-  { id: "es", label: "Spanish", nativeLabel: "Español" },
-  { id: "pt", label: "Portuguese", nativeLabel: "Português" },
 ];
 
 export const defaultLocale: LocaleId = "en";

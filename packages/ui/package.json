@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@adeni/brand": "*"
+    "@adeni/brand": "*",
+    "@adeni/shared": "*"
   },
   "peerDependencies": {
     "@angular/core": "^22.2.0",

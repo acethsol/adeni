@@ -49,7 +49,7 @@ const message = localizeErrorResponse(locale, errorBody);
 
 `ApiErrorResponse` is the typed shape of the RFC 7807 JSON body (`code`, `params`, `correlationId`, …). It is distinct from `AdeniApiError`, the thrown exception class in `@adeni/api-client`.
 
-Translation keys live under `errors.<code>` in locale message files (en/fr/es/pt), e.g. `errors.subscription.booking_limit_reached`.
+Translation keys live under `errors.<code>` in locale message files (en/fr), e.g. `errors.subscription.booking_limit_reached`.
 
 3. Fall back to `title`, then `detail`, then raw `code` if no translation exists yet.
 
@@ -59,7 +59,7 @@ Angular clients should map `code` via shared locales in `packages/shared`. Legac
 
 1. Add a factory in `ErrorCodes` (`src/Adeni.Domain/Common/ErrorCodes.cs`) with a dotted code and optional `params`.
 2. Return it from the service via `Result.Failure(...)`.
-3. Add matching keys to `packages/shared/src/i18n/errors.ts` for all four locales.
+3. Add matching keys to `packages/shared/src/i18n/errors.ts` for all supported locales (en/fr).
 4. Map HTTP status in `ApiErrorResponseMapper` if the prefix is new.
 
 ## Error code catalog (initial)

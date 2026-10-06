@@ -9,7 +9,7 @@ import {
   type LocaleRegionPreset,
 } from "@adeni/shared";
 import { ADENI_DISCOVER_CONFIG } from "../core/adeni-config";
-import { DiscoverLocaleService } from "../core/services/discover-locale.service";
+import { AdeniLocaleService } from "@adeni/ui";
 import { MarketContextService } from "../core/services/market-context.service";
 
 type FooterLink = { labelKey: string; href: string; external?: boolean };
@@ -24,7 +24,7 @@ type FooterSection = { titleKey: string; links: FooterLink[] };
 })
 export class PublicFooterComponent {
   private readonly market = inject(MarketContextService);
-  private readonly localeService = inject(DiscoverLocaleService);
+  private readonly localeService = inject(AdeniLocaleService);
   private readonly config = inject(ADENI_DISCOVER_CONFIG);
 
   readonly pickerOpen = signal(false);

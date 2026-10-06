@@ -53,8 +53,8 @@ export const frMessages: Messages = {
   },
   locale: {
     title: "Langue et région",
-    pickerTitle: "Votre monde Adeni",
-    pickerSubtitle: "Choisissez une ville et une langue — changement immédiat.",
+    pickerTitle: "Langue et région",
+    pickerSubtitle: "Choisissez votre ville et votre langue préférée. L'expérience se met à jour immédiatement.",
     language: "Langue",
     currency: "Devise",
     translation: "Traduction",

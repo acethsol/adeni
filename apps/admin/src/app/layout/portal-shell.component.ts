@@ -4,14 +4,12 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import type { AuthService } from "@auth0/auth0-angular";
 import type { AdeniBrandSurface } from "@adeni/brand";
 import {
-  isLocaleId,
-  supportedLocales,
   type AdminBusinessSummary,
   type AdminMarket,
   type LocaleId,
   type PendingBusiness,
 } from "@adeni/shared";
-import { AdeniBrandLogoComponent } from "@adeni/ui";
+import { AdeniBrandLogoComponent, AdeniLocaleService } from "@adeni/ui";
 import { filter, map, startWith } from "rxjs";
 import { ADMIN_NAV, type AdminNavIconName, type AdminNavItem } from "../core/admin-nav";
 import { signOutAdminDev } from "../core/admin-dev-session";
@@ -22,7 +20,6 @@ import { AdminNavIconComponent } from "./admin-nav-icon.component";
 
 const SIDEBAR_STORAGE_KEY = "adeni.admin.sidebar.collapsed";
 const THEME_STORAGE_KEY = "adeni.admin.theme";
-const LOCALE_STORAGE_KEY = "adeni.admin.locale";
 
 type AdminTheme = "light" | "dark";
 type ThemePreference = AdminTheme | "system";
@@ -78,40 +75,6 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     "/businesses": "Établissements",
     "/customers": "Confidentialité clients",
   },
-  es: {
-    search: "Buscar",
-    appearance: "Apariencia",
-    language: "Idioma",
-    light: "Claro",
-    dark: "Oscuro",
-    system: "Sistema",
-    signOut: "Cerrar sesión",
-    settings: "Ajustes",
-    customers: "Buscar clientes",
-    jump: "Ir a",
-    "/dashboard": "Panel",
-    "/pending": "Verificaciones pendientes",
-    "/markets": "Mercados",
-    "/businesses": "Negocios",
-    "/customers": "Privacidad de clientes",
-  },
-  pt: {
-    search: "Pesquisar",
-    appearance: "Aparência",
-    language: "Idioma",
-    light: "Claro",
-    dark: "Escuro",
-    system: "Sistema",
-    signOut: "Sair",
-    settings: "Definições",
-    customers: "Pesquisar clientes",
-    jump: "Ir para",
-    "/dashboard": "Painel",
-    "/pending": "Verificações pendentes",
-    "/markets": "Mercados",
-    "/businesses": "Negócios",
-    "/customers": "Privacidade de clientes",
-  },
 };
 
 type SearchHit = {
@@ -151,18 +114,6 @@ function resolveTheme(preference: ThemePreference): AdminTheme {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-function readLocale(): LocaleId {
-  try {
-    const stored = localStorage.getItem(LOCALE_STORAGE_KEY) ?? "";
-    if (isLocaleId(stored)) {
-      return stored;
-    }
-  } catch {
-    // Preference is optional.
-  }
-  return "en";
-}
-
 function initialsFor(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) {
@@ -199,12 +150,14 @@ function readSidebarCollapsed(): boolean {
 })
 export class AdminShellComponent {
   readonly nav = ADMIN_NAV;
-  readonly locales = supportedLocales;
   readonly config = inject(ADENI_ADMIN_CONFIG);
   private readonly injector = inject(Injector);
   private readonly router = inject(Router);
   private readonly api = inject(AdminApiService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly localeService = inject(AdeniLocaleService);
+  readonly locales = this.localeService.locales;
+  readonly locale = this.localeService.locale;
   readonly auth: AuthService | null = isAuth0Configured(this.config)
     ? resolveAuthService(this.injector)
     : null;
@@ -214,7 +167,6 @@ export class AdminShellComponent {
   readonly collapsed = signal(readSidebarCollapsed());
   readonly themePreference = signal<ThemePreference>(readThemePreference());
   readonly theme = signal<AdminTheme>(resolveTheme(this.themePreference()));
-  readonly locale = signal<LocaleId>(readLocale());
   readonly logoSurface = computed<AdeniBrandSurface>(() => (this.theme() === "dark" ? "dark" : "light"));
   readonly settingsOpen = signal(false);
   readonly userOpen = signal(false);
@@ -314,7 +266,6 @@ export class AdminShellComponent {
   });
 
   constructor() {
-    document.documentElement.lang = this.locale();
     this.applyTheme(this.theme());
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const onSystemTheme = (): void => {
@@ -370,13 +321,7 @@ export class AdminShellComponent {
   }
 
   setLocale(locale: LocaleId): void {
-    this.locale.set(locale);
-    document.documentElement.lang = locale;
-    try {
-      localStorage.setItem(LOCALE_STORAGE_KEY, locale);
-    } catch {
-      // Preference is optional.
-    }
+    this.localeService.setLocale(locale);
     this.settingsOpen.set(false);
   }
 

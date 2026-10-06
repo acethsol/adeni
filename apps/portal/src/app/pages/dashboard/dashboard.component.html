@@ -131,14 +131,18 @@
   <section>
     <h3 class="section-title">Run the floor</h3>
     <div class="actions">
-      <a routerLink="/bookings">
-        <strong>Booking inbox</strong>
-        <span>Accept, reject, and see who is coming in.</span>
-      </a>
-      <a routerLink="/quotes">
-        <strong>Quotes</strong>
-        <span>Price custom work and turn it into a booking.</span>
-      </a>
+      @if (offers("calendar")) {
+        <a routerLink="/bookings" [queryParams]="{ tab: 'pending' }">
+          <strong>Booking inbox</strong>
+          <span>Accept, reject, and see who is coming in.</span>
+        </a>
+      }
+      @if (offers("quotes")) {
+        <a routerLink="/quotes">
+          <strong>Quotes</strong>
+          <span>Price custom work and turn it into a booking.</span>
+        </a>
+      }
       <a routerLink="/messages">
         <strong>Messages</strong>
         <span>Reply in the thread, or send a WhatsApp note.</span>
@@ -147,10 +151,12 @@
         <strong>Services</strong>
         <span>Prices, duration, and what clients can book.</span>
       </a>
-      <a routerLink="/availability">
-        <strong>Hours</strong>
-        <span>The week customers are allowed to book.</span>
-      </a>
+      @if (offers("calendar")) {
+        <a routerLink="/availability">
+          <strong>Hours</strong>
+          <span>The week customers are allowed to book.</span>
+        </a>
+      }
       <a routerLink="/profile">
         <strong>Profile</strong>
         <span>Cover, share link, reviews, and verification.</span>

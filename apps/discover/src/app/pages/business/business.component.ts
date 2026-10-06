@@ -32,7 +32,7 @@ import {
 } from "../../core/adeni-config";
 import { buildLocalBusinessJsonLd } from "../../core/seo-jsonld";
 import { CustomerApiService } from "../../core/services/customer-api.service";
-import { DiscoverLocaleService } from "../../core/services/discover-locale.service";
+import { AdeniLocaleService } from "@adeni/ui";
 import { SeoService } from "../../core/services/seo.service";
 import { MarketContextService } from "../../core/services/market-context.service";
 import { BookingPanelComponent } from "../../shared/booking-panel.component";
@@ -63,7 +63,7 @@ export class BusinessProfileComponent implements OnInit {
   private readonly seo = inject(SeoService);
   private readonly config = inject(ADENI_DISCOVER_CONFIG);
   private readonly market = inject(MarketContextService);
-  private readonly localeService = inject(DiscoverLocaleService);
+  private readonly localeService = inject(AdeniLocaleService);
   private readonly pendingTasks = inject(PendingTasks);
   private readonly transferState = inject(TransferState);
 

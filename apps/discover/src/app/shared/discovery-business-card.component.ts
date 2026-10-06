@@ -8,7 +8,7 @@ import {
   resolveBusinessCoverImage,
   t,
 } from "@adeni/shared";
-import { DiscoverLocaleService } from "../core/services/discover-locale.service";
+import { AdeniLocaleService } from "@adeni/ui";
 
 const BADGE_LABELS: Record<string, string> = {
   phone: "Phone",
@@ -25,7 +25,7 @@ const BADGE_LABELS: Record<string, string> = {
   styleUrl: "./discovery-business-card.component.scss",
 })
 export class DiscoveryBusinessCardComponent {
-  private readonly localeService = inject(DiscoverLocaleService);
+  private readonly localeService = inject(AdeniLocaleService);
 
   readonly item = input.required<DiscoveryBusinessItem>();
   readonly headingLevel = input<"h2" | "h3">("h3");
