@@ -195,13 +195,26 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     settings: "Definições",
     jump: "Ir para",
     marketplace: "Mercado",
+    groupToday: "Hoje",
+    groupListing: "Ficha",
+    groupBusiness: "Negócio",
+    tabPending: "Pendentes",
+    tabUpcoming: "Próximas",
+    tabPast: "Anteriores",
+    tabDetails: "Detalhes",
+    tabReviews: "Avaliações",
+    tabVerification: "Verificação",
+    tabInbox: "Caixa",
+    tabWhatsapp: "WhatsApp",
+    tabLinks: "Links",
+    tabLedger: "Extrato",
     "/dashboard": "Visão geral",
     "/bookings": "Reservas",
     "/quotes": "Orçamentos",
     "/messages": "Mensagens",
     "/services": "Serviços",
     "/locations": "Locais",
-    "/availability": "Disponibilidade",
+    "/availability": "Horário",
     "/profile": "Perfil",
     "/public-page": "Página pública",
     "/register": "Registo",
@@ -290,7 +303,6 @@ function readSidebarCollapsed(): boolean {
   styleUrl: "./portal-shell.component.scss",
 })
 export class PortalShellComponent {
-  readonly nav = PORTAL_NAV;
   readonly locales = supportedLocales;
   readonly formatTenantStatus = formatTenantStatus;
   readonly config = inject(ADENI_PORTAL_CONFIG);
@@ -316,6 +328,9 @@ export class PortalShellComponent {
   readonly searchIndex = signal(0);
   private readonly searchField = viewChild<ElementRef<HTMLInputElement>>("searchField");
   readonly profile = signal<BusinessProfile | null>(null);
+  readonly profileLoaded = signal(false);
+  readonly pendingBookings = signal(0);
+  readonly unreadMessages = signal(0);
   readonly accountName = signal(this.devMode ? "Local business" : "Business");
   readonly accountDetail = signal(this.devMode ? this.config.devBusinessAuth0Sub : "");
   readonly accountInitials = computed(() => initialsFor(this.accountName()));
@@ -327,10 +342,12 @@ export class PortalShellComponent {
     ),
     { initialValue: this.router.url },
   );
-  readonly pageLabel = computed(() => this.labelForUrl(this.url()));
+  readonly crumbs = computed(() => this.crumbsForUrl(this.url()));
+  readonly visibleGroups = computed(() => this.groupsForProfile());
   readonly searchResults = computed<SearchHit[]>(() => {
     const query = this.searchQuery().trim().toLowerCase();
-    const pages = this.nav
+    const pages = this.visibleGroups()
+      .flatMap((group) => group.items)
       .filter((item) => !query || this.navLabel(item).toLowerCase().includes(query) || item.label.toLowerCase().includes(query))
       .map((item) => ({
         id: item.path,
@@ -368,6 +385,18 @@ export class PortalShellComponent {
 
   text(key: ChromeKey): string {
     return CHROME[this.locale()][key];
+  }
+
+  groupLabel(group: PortalNavGroup): string {
+    if (group.id === "today") return this.text("groupToday");
+    if (group.id === "listing") return this.text("groupListing");
+    return this.text("groupBusiness");
+  }
+
+  badgeCount(item: PortalNavItem): number {
+    if (item.badge === "bookings") return this.pendingBookings();
+    if (item.badge === "messages") return this.unreadMessages();
+    return 0;
   }
 
   navLabel(item: PortalNavItem): string {
