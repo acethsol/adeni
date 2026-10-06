@@ -2,6 +2,7 @@ export const environment = {
   production: false,
   apiBaseUrl: "http://localhost:5169",
   publicAppUrl: "http://localhost:5190",
+  portalAppUrl: "http://localhost:5173",
   envMarketId: "",
   defaultMarketId: "lagos",
   defaultLocation: { lat: 6.5244, lng: 3.3792 },

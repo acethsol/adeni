@@ -22,6 +22,10 @@ public sealed class MarketCatalogLoader(
     public async Task EnsureLoadedAsync(CancellationToken cancellationToken = default)
     {
         await MarketCatalogSeeder.SeedIfEmptyAsync(dbContext, environment, cancellationToken);
+        if (await MarketCatalogSeeder.RemoveMarketsNotInFileAsync(dbContext, environment, cancellationToken))
+        {
+            await cache.RemoveAsync(CacheKeys.MarketsAll, cancellationToken);
+        }
 
         var markets = await cache.GetOrCreateAsync(
             CacheKeys.MarketsAll,

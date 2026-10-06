@@ -25,7 +25,11 @@ public sealed class AdminCustomerService(
         var normalized = email.Trim().ToLowerInvariant();
         return await dbContext.Customers
             .AsNoTracking()
-            .Where(c => c.Email != null && c.Email.ToLower() == normalized)
+            .Where(c =>
+                c.Name.ToLower().Contains(normalized)
+                || c.Auth0Sub.ToLower().Contains(normalized)
+                || (c.Email != null && c.Email.ToLower().Contains(normalized))
+                || (c.Phone != null && c.Phone.ToLower().Contains(normalized)))
             .OrderByDescending(c => c.CreatedAt)
             .Select(c => new AdminCustomerSummary(
                 c.Id,

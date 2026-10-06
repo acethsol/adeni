@@ -16,3 +16,4 @@ export * from "./i18n";
 export * from "./api-errors";
 export * from "./format";
 export * from "./media-limits";
+export * from "./public-page-templates";

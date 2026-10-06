@@ -15,6 +15,70 @@ const DEFAULT_VISUAL: Omit<CategoryVisual, "slug" | "label"> = {
 };
 
 export const categoryVisuals: Record<string, CategoryVisual> = {
+  "beauty-wellness": {
+    slug: "beauty-wellness",
+    label: "Beauty, wellness & self-care",
+    icon: "✦",
+    imageUrl:
+      "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&auto=format&fit=crop&q=80",
+    gradient: ["#1b4332", "#40916c"],
+  },
+  "massage-bodywork": {
+    slug: "massage-bodywork",
+    label: "Massage & Bodywork",
+    icon: "🤲",
+    imageUrl:
+      "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&auto=format&fit=crop&q=80",
+    gradient: ["#1b4332", "#2d6a4f"],
+  },
+  "spa-relaxation": {
+    slug: "spa-relaxation",
+    label: "Spa & Relaxation",
+    icon: "🧖",
+    imageUrl:
+      "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&auto=format&fit=crop&q=80",
+    gradient: ["#40916c", "#52b788"],
+  },
+  "skincare-aesthetics": {
+    slug: "skincare-aesthetics",
+    label: "Skincare & Aesthetics",
+    icon: "✨",
+    imageUrl:
+      "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=800&auto=format&fit=crop&q=80",
+    gradient: ["#9d4edd", "#c77dff"],
+  },
+  "hair-grooming": {
+    slug: "hair-grooming",
+    label: "Hair & Grooming",
+    icon: "✂️",
+    imageUrl:
+      "https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=800&auto=format&fit=crop&q=80",
+    gradient: ["#1b4332", "#2d6a4f"],
+  },
+  nails: {
+    slug: "nails",
+    label: "Nails",
+    icon: "💅",
+    imageUrl:
+      "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=800&auto=format&fit=crop&q=80",
+    gradient: ["#b5179e", "#7209b7"],
+  },
+  fitness: {
+    slug: "fitness",
+    label: "Fitness",
+    icon: "💪",
+    imageUrl:
+      "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&auto=format&fit=crop&q=80",
+    gradient: ["#023e8a", "#0077b6"],
+  },
+  "yoga-pilates": {
+    slug: "yoga-pilates",
+    label: "Yoga & Pilates",
+    icon: "🧘",
+    imageUrl:
+      "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&auto=format&fit=crop&q=80",
+    gradient: ["#40916c", "#74c69d"],
+  },
   barbers: {
     slug: "barbers",
     label: "Barbers",
@@ -135,5 +199,5 @@ export const ASK_ADENI_PROMPTS = [
   "Barber near me",
   "Hair salon for braids",
   "Nails this weekend",
-  "Plumber in my area",
+  "Massage near me",
 ] as const;

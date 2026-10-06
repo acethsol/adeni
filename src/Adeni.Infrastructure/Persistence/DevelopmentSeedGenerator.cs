@@ -8,9 +8,9 @@ using Adeni.Domain.Booking;
 /// </summary>
 internal static class DevelopmentSeedGenerator
 {
-    internal const int LagosBulkCount = 126;
+    internal const int LagosBulkCount = 1393;
 
-    internal const int OttawaBulkCount = 56;
+    internal const int OttawaBulkCount = 595;
 
     internal const int TargetBulkCount = LagosBulkCount + OttawaBulkCount;
 

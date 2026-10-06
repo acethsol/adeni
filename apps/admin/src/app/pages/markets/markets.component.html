@@ -7,7 +7,7 @@
   } @else {
     <section class="card">
       <ul class="plain">
-        @for (market of markets(); track market.id) {
+        @for (market of visible(); track market.id) {
           <li class="list-row">
             <div>
               <strong>{{ market.name }}</strong>

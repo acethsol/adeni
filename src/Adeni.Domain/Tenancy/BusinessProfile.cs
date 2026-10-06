@@ -13,6 +13,23 @@ public sealed class BusinessProfile : ITenantEntity
 
     public string? CoverImageKey { get; set; }
 
+    /// <summary>Square mark for public mini-site header (optional).</summary>
+    public string? LogoImageKey { get; set; }
+
+    /// <summary>Public page layout template id (<c>studio</c>, <c>spa</c>, <c>barber</c>, <c>luxe</c>).</summary>
+    public string PublicPageTemplateId { get; set; } = PublicPageTemplates.Studio;
+
+    /// <summary>Optional accent HEX (#RRGGBB) for public page CTAs.</summary>
+    public string? PublicPageAccentColor { get; set; }
+
+    public bool PublicPageShowAbout { get; set; } = true;
+
+    public bool PublicPageShowServices { get; set; } = true;
+
+    public bool PublicPageShowReviews { get; set; } = true;
+
+    public bool PublicPageShowVisit { get; set; } = true;
+
     public BusinessType BusinessType { get; set; } = BusinessType.ScheduledAppointment;
 
     public bool AutoConfirmBookings { get; set; }

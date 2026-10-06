@@ -1,52 +1,210 @@
-<div class="shell">
-  <aside class="sidebar">
-    <a class="brand" routerLink="/dashboard">
-      <adeni-staff-sidebar-brand caption="Business" [logoHeight]="44" />
-    </a>
+<div class="shell" [class.is-collapsed]="collapsed()">
+  @if (!collapsed()) {
+    <button type="button" class="sidebar-scrim" aria-label="Collapse sidebar" (click)="collapseSidebar()"></button>
+  }
 
-    @if (devMode) {
-      <p class="dev-banner">Local dev — API uses <code>X-Dev-Auth0-Sub</code></p>
-    }
+  <aside id="portal-sidebar" class="sidebar">
+    <div class="sidebar-head">
+      <a class="brand" routerLink="/dashboard" aria-label="Adeni business home">
+        @if (collapsed()) {
+          <adeni-brand-logo variant="mark" [surface]="logoSurface()" [size]="28" />
+        } @else {
+          <adeni-brand-logo variant="horizontal" [surface]="logoSurface()" [size]="34" />
+        }
+      </a>
+    </div>
 
-    <nav class="nav">
+    <p class="nav-section">Workspace</p>
+    <nav class="nav" aria-label="Business">
       @for (item of nav; track item.path) {
         <a
           class="nav-link"
           [routerLink]="item.path"
           routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: item.path === '/dashboard' }"
+          ariaCurrentWhenActive="page"
+          [routerLinkActiveOptions]="{ exact: !!item.exact }"
+          [attr.data-label]="collapsed() ? navLabel(item) : null"
         >
-          {{ item.label }}
+          <span class="nav-ico">
+            <app-portal-nav-icon [name]="item.icon" />
+          </span>
+          <span class="nav-label">{{ navLabel(item) }}</span>
         </a>
       }
+      <a
+        class="nav-link"
+        [href]="discoverUrl()"
+        target="_blank"
+        rel="noopener"
+        [attr.data-label]="collapsed() ? text('marketplace') : null"
+      >
+        <span class="nav-ico">
+          <app-portal-nav-icon name="launch" />
+        </span>
+        <span class="nav-label">{{ text("marketplace") }}</span>
+      </a>
     </nav>
 
-    <div class="sidebar-footer">
-      <a class="nav-link muted" [href]="discoverUrl()" target="_blank" rel="noopener">
-        View marketplace
-      </a>
-      @if (auth0Mode && auth) {
-        @if (auth.user$ | async; as user) {
-          <p class="user-line">{{ user.name ?? user.email }}</p>
-        }
-        <button type="button" class="btn-text" (click)="logout()">Log out</button>
-      }
+    <div class="sidebar-foot">
+      <p class="foot-item" [attr.data-label]="collapsed() ? 'Business portal' : null">
+        <span class="nav-ico">
+          <app-portal-nav-icon name="portal" />
+        </span>
+        <span class="nav-label">Business portal</span>
+      </p>
+      <button
+        type="button"
+        class="rail-toggle"
+        [attr.data-label]="collapsed() ? 'Expand' : 'Collapse'"
+        [attr.aria-expanded]="!collapsed()"
+        aria-controls="portal-sidebar"
+        [attr.aria-label]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+        (click)="toggleSidebar()"
+      >
+        <app-portal-nav-icon [name]="collapsed() ? 'expand' : 'collapse'" />
+      </button>
     </div>
   </aside>
 
   <div class="main">
     <header class="topbar">
-      <div>
-        <p class="eyebrow">Business portal</p>
-        <h1 class="title">
-          {{ profile()?.businessName ?? "Your business" }}
-        </h1>
+      <div class="topbar-lead">
+        <nav class="crumb" aria-label="Breadcrumb">
+          <span>Business</span>
+          <span class="crumb-sep" aria-hidden="true"></span>
+          <span class="crumb-current">{{ pageLabel() }}</span>
+        </nav>
       </div>
+
+      <div class="search-root" data-menu-root="search">
+        <form class="topbar-search" role="search" (submit)="submitSearch($event)">
+          <app-portal-nav-icon name="search" />
+          <input
+            #searchField
+            type="search"
+            [value]="searchQuery()"
+            [attr.placeholder]="text('search')"
+            [attr.aria-label]="text('search')"
+            [attr.aria-activedescendant]="searchOpen() ? 'portal-search-hit-' + searchIndex() : null"
+            autocomplete="off"
+            role="combobox"
+            aria-autocomplete="list"
+            [attr.aria-expanded]="searchOpen()"
+            aria-controls="portal-search-list"
+            (focus)="openSearch()"
+            (input)="onSearchInput($event)"
+            (keydown)="onSearchKey($event)"
+          />
+        </form>
+        @if (searchOpen() && searchResults().length) {
+          <div id="portal-search-list" class="menu menu-search" role="listbox" [attr.aria-label]="text('search')">
+            @if (!searchQuery().trim()) {
+              <p class="menu-label">{{ text("jump") }}</p>
+            }
+            @for (hit of searchResults(); track hit.id; let i = $index) {
+              <button
+                type="button"
+                class="menu-item"
+                role="option"
+                [id]="'portal-search-hit-' + i"
+                [class.is-active]="i === searchIndex()"
+                [attr.aria-selected]="i === searchIndex()"
+                (mouseenter)="searchIndex.set(i)"
+                (click)="openSearchHit(hit)"
+              >
+                <span class="nav-ico">
+                  <app-portal-nav-icon [name]="hit.icon" />
+                </span>
+                <span class="nav-label">{{ hit.label }}</span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+
       <div class="topbar-actions">
         <app-pending-bookings-bell />
-        @if (profile()?.status) {
-          <span class="status-pill">{{ profile()?.status }}</span>
-        }
+
+        <button
+          type="button"
+          class="header-btn"
+          [attr.aria-pressed]="theme() === 'dark'"
+          [attr.aria-label]="theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+          (click)="toggleTheme()"
+        >
+          <app-portal-nav-icon [name]="theme() === 'dark' ? 'light' : 'asleep'" />
+        </button>
+
+        <div class="menu-root" data-menu-root="settings">
+          <button
+            type="button"
+            class="header-btn"
+            aria-haspopup="menu"
+            [attr.aria-label]="text('settings')"
+            [attr.aria-expanded]="settingsOpen()"
+            (click)="toggleSettings($event)"
+          >
+            <app-portal-nav-icon name="settings" />
+          </button>
+          @if (settingsOpen()) {
+            <div class="menu" role="menu" [attr.aria-label]="text('settings')">
+              <p class="menu-label">{{ text("appearance") }}</p>
+              <button type="button" class="menu-item" role="menuitemradio" [attr.aria-checked]="themePreference() === 'light'" (click)="setTheme('light')">
+                <app-portal-nav-icon name="light" />
+                {{ text("light") }}
+              </button>
+              <button type="button" class="menu-item" role="menuitemradio" [attr.aria-checked]="themePreference() === 'dark'" (click)="setTheme('dark')">
+                <app-portal-nav-icon name="asleep" />
+                {{ text("dark") }}
+              </button>
+              <button type="button" class="menu-item" role="menuitemradio" [attr.aria-checked]="themePreference() === 'system'" (click)="setTheme('system')">
+                {{ text("system") }}
+              </button>
+              <div class="menu-rule" role="separator"></div>
+              <p class="menu-label">{{ text("language") }}</p>
+              @for (option of locales; track option.id) {
+                <button type="button" class="menu-item" role="menuitemradio" [attr.aria-checked]="locale() === option.id" (click)="setLocale(option.id)">
+                  {{ option.nativeLabel }}
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        <span class="topbar-rule" aria-hidden="true"></span>
+
+        <div class="menu-root" data-menu-root="user">
+          <button
+            type="button"
+            class="user-btn"
+            aria-haspopup="menu"
+            [attr.aria-expanded]="userOpen()"
+            [attr.aria-label]="'Account, ' + accountName()"
+            (click)="toggleUser($event)"
+          >
+            <span class="avatar" aria-hidden="true">{{ accountInitials() }}</span>
+            <span class="user-copy">
+              <span class="user-name">{{ accountName() }}</span>
+              <span class="user-role">{{ devMode ? "Local dev" : "Business" }}</span>
+            </span>
+            <span class="chev chev-sm" [class.is-open]="userOpen()" aria-hidden="true"></span>
+          </button>
+          @if (userOpen()) {
+            <div class="menu menu-account" role="menu" aria-label="Account">
+              <p class="menu-identity">{{ accountName() }}</p>
+              @if (accountDetail()) {
+                <p class="menu-meta">{{ accountDetail() }}</p>
+              }
+              @if (profile(); as business) {
+                <p class="menu-meta">{{ formatTenantStatus(business.status) }}</p>
+              }
+              <button type="button" class="menu-item menu-item-danger" role="menuitem" (click)="logout()">
+                <app-portal-nav-icon name="logout" />
+                {{ text("signOut") }}
+              </button>
+            </div>
+          }
+        </div>
       </div>
     </header>
     <main class="content">

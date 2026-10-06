@@ -14,26 +14,41 @@ export const enMessages: Messages = {
     changeMarket: "Change location",
   },
   home: {
-    browseServices: "Browse services",
-    listBusiness: "List your business",
+    eyebrow: "Beauty & wellness, made easy",
+    headlineLead: "Book beauty & wellness",
+    headlineAccent: "near you",
+    heroLead:
+      "Discover verified professionals, compare services, see real availability, and book in minutes.",
+    browseServices: "Explore wellness",
+    listBusiness: "For businesses",
+    trustedPros: "Trusted professionals",
+    avgRating: "4.9 average from real clients",
+    featuredNearYou: "Featured near you",
     popularNearYou: "Top rated near you",
     popularDescription:
       "Highest-rated verified businesses in your area — book online in a few taps.",
     browseCategory: "Browse by category",
     browseCategoryDescription:
-      "From beauty to home services — find the right pro for what you need.",
-    verifiedProviders: "Verified providers",
+      "From massage to fitness — find the right wellness pro for what you need.",
+    verifiedProviders: "Verified businesses",
+    realAvailability: "Real availability",
+    easyBooking: "Easy booking",
     bookInMinutes: "Book in minutes",
     trustedNearYou: "Trusted near you",
     seeAll: "See all",
+    socialProof: "Verified beauty & wellness in Ottawa & Lagos",
+    brandPill: "Self-care is a brighter you",
+    testimonialQuote: "Amazing experience — so relaxing and easy to book.",
+    nextAvailable: "Next available",
+    bookNow: "Book now",
     metaTitle: "Adeni — {tagline} in {market}",
     metaDescription: "Discover verified local service providers in {market}. {description}",
     apiOffline: "Start the API at {url} to load categories.",
   },
   market: {
-    tagline: "Trusted local services, bookable in one place",
+    tagline: "Book trusted beauty & wellness services near you",
     description:
-      "See verified businesses near you, check availability, and book with confidence — no endless messages or maybes.",
+      "Discover verified spas, salons, massage therapists, fitness and wellness professionals in Ottawa and Lagos. Compare services, see real availability, and book in minutes.",
   },
   locale: {
     title: "Language and region",
@@ -49,7 +64,7 @@ export const enMessages: Messages = {
     cancel: "Cancel",
   },
   search: {
-    placeholder: "Search or ask — barber in Lekki, braids near me…",
+    placeholder: "Search massage, facials, hair, nails, Pilates…",
     nearYou: "Near you",
     anyCategory: "Any category",
     searchOrAsk: "Search or ask",
@@ -62,7 +77,7 @@ export const enMessages: Messages = {
       barberNearMe: "Barber near me",
       hairSalonBraids: "Hair salon for braids",
       nailsWeekend: "Nails this weekend",
-      plumberArea: "Plumber in my area",
+      massageNearMe: "Massage near me",
     },
   },
   business: {
@@ -85,6 +100,7 @@ export const enMessages: Messages = {
     groups: {
       general: "General",
       beauty: "Beauty & grooming",
+      "beauty-wellness": "Beauty, wellness & self-care",
       "home-services": "Home services",
     },
     barbers: "Barbers",

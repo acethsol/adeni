@@ -1,0 +1,60 @@
+<div class="search-root" [class.hero]="variant() === 'hero'" [class.compact]="variant() === 'compact'">
+  @if (variant() === "compact" && !open()) {
+    <button type="button" class="pill-trigger" (click)="openPanel()" [attr.aria-label]="compactQueryLabel">
+      <span class="seg query">{{ compactQueryLabel }}</span>
+      <span class="seg place">{{ compactLocationLabel }}</span>
+      <span class="seg category">{{ compactCategoryLabel }}</span>
+      <span class="icon" aria-hidden="true">⌕</span>
+    </button>
+  } @else {
+    <form class="field" role="search" (submit)="submit($event)">
+      <span class="field-icon" aria-hidden="true">⌕</span>
+      <input
+        #searchInput
+        type="search"
+        name="q"
+        [(ngModel)]="query"
+        [placeholder]="placeholder"
+        autocomplete="off"
+        role="combobox"
+        [attr.aria-expanded]="open()"
+        [attr.aria-label]="findServices"
+        (focus)="open.set(true)"
+      />
+      @if (variant() === "hero") {
+        <button type="submit" class="hero-submit" [attr.aria-label]="findServices">→</button>
+      }
+    </form>
+  }
+
+  @if (open()) {
+    <div class="panel" role="listbox">
+      <div class="panel-head">
+        <p class="ask-title">✦ {{ askTitle }}</p>
+        <p class="ask-desc">{{ askDescription }}</p>
+      </div>
+      <div class="panel-body">
+        <p class="try">{{ tryAsking }}</p>
+        <div class="chips">
+          @for (prompt of prompts; track prompt) {
+            <button type="button" role="option" (mousedown)="$event.preventDefault()" (click)="navigate(prompt)">
+              {{ prompt }}
+            </button>
+          }
+        </div>
+        <button
+          type="button"
+          class="find"
+          [disabled]="!query.trim()"
+          (mousedown)="$event.preventDefault()"
+          (click)="submit()"
+        >
+          {{ findServices }}
+        </button>
+        @if (hint(); as h) {
+          <p class="hint">{{ h }}</p>
+        }
+      </div>
+    </div>
+  }
+</div>

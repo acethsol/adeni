@@ -56,6 +56,7 @@ import {
   paymentLedgerResponseSchema,
   refundPaymentRequestSchema,
   updateBusinessSettingsRequestSchema,
+  updatePublicPageRequestSchema,
   reviewResponseSchema,
   publicReviewsResponseSchema,
   createMessageThreadRequestSchema,
@@ -99,6 +100,7 @@ import {
   type SubmitVerificationRequest,
   type UpdateBusinessProfileRequest,
   type UpdateBusinessSettingsRequest,
+  type UpdatePublicPageRequest,
   type CreateQuoteRequest,
   type QuoteRequestResponse,
   type SubmitQuoteOfferRequest,
@@ -429,6 +431,18 @@ export class AdeniApiClient {
   ): Promise<BusinessProfile> {
     const body = updateBusinessSettingsRequestSchema.parse(request);
     const response = await this.request("/api/v1/tenant/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return businessProfileSchema.parse(await response.json());
+  }
+
+  async updateTenantPublicPage(
+    request: UpdatePublicPageRequest,
+  ): Promise<BusinessProfile> {
+    const body = updatePublicPageRequestSchema.parse(request);
+    const response = await this.request("/api/v1/tenant/public-page", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -1046,7 +1060,8 @@ export class AdeniApiClient {
       headers.set("Idempotency-Key", idempotencyKey);
     }
 
-    const response = await this.fetchImpl(`${this.baseUrl}${path}`, {
+    // Native fetch throws "Illegal invocation" when called as a method (`this.fetchImpl(...)`).
+    const response = await this.fetchImpl.call(globalThis, `${this.baseUrl}${path}`, {
       ...requestInit,
       headers,
     });

@@ -15,7 +15,7 @@ const PROMPT_KEYS = [
   "search.prompts.barberNearMe",
   "search.prompts.hairSalonBraids",
   "search.prompts.nailsWeekend",
-  "search.prompts.plumberArea",
+  "search.prompts.massageNearMe",
 ] as const;
 
 function resolveLocale(locale: LocaleId | string): LocaleId {

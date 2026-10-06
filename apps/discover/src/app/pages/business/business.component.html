@@ -1,54 +1,172 @@
-<p class="back">
-  <a routerLink="/discover">← Back to discover</a>
-</p>
-
 @if (loading()) {
-  <p class="muted">Loading…</p>
+  <p class="state muted">Loading…</p>
 } @else if (error()) {
-  <p class="error">{{ error() }}</p>
+  <div class="state">
+    <p class="error">{{ error() }}</p>
+    <a routerLink="/discover">← Back to discover</a>
+  </div>
 } @else if (profile(); as p) {
-  <article class="profile">
-    <img [src]="coverFor(p.categorySlug, p.coverImageUrl)" alt="" />
-    <div>
-      <p class="eyebrow">{{ categoryLabel("en", p.categorySlug) }} · {{ p.area }}</p>
-      <h1>{{ p.name }}</h1>
-      <p class="muted">{{ p.locationName }} · {{ p.addressLine }}</p>
-      @if (p.description) {
-        <p class="desc">{{ p.description }}</p>
-      }
-      @if (p.ratingAvg != null && p.reviewCount) {
-        <p class="rating">★ {{ p.ratingAvg | number: "1.1-1" }} ({{ p.reviewCount }} reviews)</p>
-      }
-      <p class="phone">Contact: {{ p.phoneMasked }}</p>
-    </div>
-  </article>
+  <div
+    class="site"
+    [attr.data-template]="templateId()"
+    [style.--g1]="visual()?.gradient[0] ?? '#1b4332'"
+    [style.--g2]="visual()?.gradient[1] ?? '#40916c'"
+    [style.--accent]="accentColor()"
+  >
+    <section class="hero" aria-label="Business">
+      <div
+        class="hero-media"
+        [style.background-image]="'url(' + coverUrl() + ')'"
+        role="img"
+        [attr.aria-label]="p.name"
+      ></div>
+      <div class="hero-shade" aria-hidden="true"></div>
 
-  @if (services().length > 0) {
-    <section class="services">
-      <h2>Services</h2>
-      <ul>
-        @for (s of services(); track s.id) {
-          <li>
-            <strong>{{ s.name }}</strong>
-            @if (s.priceAmount != null) {
-              <span class="muted">{{ s.currency }} {{ s.priceAmount | number }}</span>
-            }
-          </li>
+      <div class="hero-inner">
+        <a class="back" routerLink="/discover">← Discover</a>
+
+        @if (logoUrl(); as logo) {
+          <img class="logo" [src]="logo" [alt]="p.name" />
         }
-      </ul>
-    </section>
-  }
 
-  @if (showQuoteFlow(p)) {
-    <app-quote-request-panel [slug]="p.slug" [enabled]="bookingEnabled()" />
-  } @else {
-    <app-booking-panel
-      [slug]="p.slug"
-      [tenantId]="p.tenantId"
-      [services]="services()"
-      [bookingEnabled]="bookingEnabled()"
-      [supportsDeposits]="supportsDeposits(p)"
-      [depositPercent]="p.depositPercent ?? 0"
-    />
-  }
+        <p class="eyebrow">{{ categoryName() }} · {{ p.area }}</p>
+        <h1>{{ p.name }}</h1>
+        <p class="lead">{{ tagline() }}</p>
+
+        <div class="hero-actions">
+          <a class="cta" [routerLink]="['/businesses', p.slug]" fragment="book">{{ ctaLabel() }}</a>
+          @if (sections().services) {
+            <a class="ghost" [routerLink]="['/businesses', p.slug]" fragment="services">Services</a>
+          }
+        </div>
+
+        <p class="meta">
+          @if (p.ratingAvg != null && p.reviewCount) {
+            <span>★ {{ p.ratingAvg | number: "1.1-1" }} · {{ p.reviewCount }} reviews</span>
+          } @else {
+            <span>{{ ratingLine() }}</span>
+          }
+          @if (p.verifiedSince) {
+            <span class="verified">Verified on Adeni</span>
+          }
+        </p>
+      </div>
+    </section>
+
+    <nav class="site-nav" aria-label="On this page">
+      @if (sections().about) {
+        <a [routerLink]="['/businesses', p.slug]" fragment="about">About</a>
+      }
+      @if (sections().services) {
+        <a [routerLink]="['/businesses', p.slug]" fragment="services">Services</a>
+      }
+      <a [routerLink]="['/businesses', p.slug]" fragment="book">{{ ctaLabel() }}</a>
+      @if (sections().reviews && reviews().length > 0) {
+        <a [routerLink]="['/businesses', p.slug]" fragment="reviews">Reviews</a>
+      }
+      @if (sections().visit) {
+        <a [routerLink]="['/businesses', p.slug]" fragment="visit">Visit</a>
+      }
+    </nav>
+
+    <div class="body">
+      <div class="content">
+        @if (sections().about) {
+          <section id="about" class="block">
+            <h2>About</h2>
+            <p>
+              @if (p.description?.trim()) {
+                {{ p.description }}
+              } @else {
+                {{ p.name }} offers {{ categoryName().toLowerCase() }} in
+                {{ p.area }}, {{ p.locationName }}. Book online through Adeni.
+              }
+            </p>
+          </section>
+        }
+
+        @if (sections().services) {
+          <section id="services" class="block">
+            <h2>Services</h2>
+            @if (services().length === 0) {
+              <p class="muted">Menu coming soon — use the booking panel to check availability.</p>
+            } @else {
+              <ul class="menu">
+                @for (s of services(); track s.id) {
+                  <li>
+                    <div>
+                      <strong>{{ s.name }}</strong>
+                      @if (s.description) {
+                        <p>{{ s.description }}</p>
+                      }
+                      <span class="mins">{{ s.durationMinutes }} min</span>
+                    </div>
+                    @if (s.priceAmount != null) {
+                      <span class="price">{{ priceFor(s.priceAmount, s.currency, locale()) }}</span>
+                    }
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+        }
+
+        @if (sections().reviews && reviews().length > 0) {
+          <section id="reviews" class="block">
+            <h2>Reviews</h2>
+            <ul class="reviews">
+              @for (r of reviews(); track r.id) {
+                <li>
+                  <p class="stars" aria-label="Rating {{ r.rating }} of 5">
+                    @for (_ of [1, 2, 3, 4, 5]; track $index) {
+                      <span [class.on]="$index < r.rating">★</span>
+                    }
+                  </p>
+                  <p class="quote">{{ r.comment }}</p>
+                  <p class="by">{{ r.customerDisplayName }}</p>
+                  @if (r.ownerReply) {
+                    <p class="reply">Owner: {{ r.ownerReply }}</p>
+                  }
+                </li>
+              }
+            </ul>
+          </section>
+        }
+
+        @if (sections().visit) {
+          <section id="visit" class="block visit">
+            <h2>Visit</h2>
+            <p class="place">{{ p.locationName }} · {{ p.area }}</p>
+            <p>{{ p.addressLine }}</p>
+            <p class="phone">{{ p.phoneMasked }}</p>
+            <div class="share-row">
+              <button type="button" class="share" (click)="copyBookingLink()">
+                {{ linkCopied() ? "Link copied" : "Copy booking link" }}
+              </button>
+              @if (whatsappUrl(); as wa) {
+                <a class="share soft" [href]="wa" target="_blank" rel="noopener noreferrer">
+                  WhatsApp
+                </a>
+              }
+            </div>
+          </section>
+        }
+      </div>
+
+      <aside id="book" class="book-rail" aria-label="Book">
+        @if (showQuoteFlow(p)) {
+          <app-quote-request-panel [slug]="p.slug" [enabled]="bookingEnabled()" />
+        } @else {
+          <app-booking-panel
+            [slug]="p.slug"
+            [tenantId]="p.tenantId"
+            [services]="services()"
+            [bookingEnabled]="bookingEnabled()"
+            [supportsDeposits]="supportsDeposits(p)"
+            [depositPercent]="p.depositPercent ?? 0"
+          />
+        }
+      </aside>
+    </div>
+  </div>
 }

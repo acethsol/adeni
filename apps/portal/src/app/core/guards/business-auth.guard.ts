@@ -8,6 +8,7 @@ import {
   isAuth0Configured,
   isBusinessPortalDevMode,
 } from "../adeni-config";
+import { isPortalDevSignedOut } from "../portal-dev-session";
 
 /** Auth0 login + business role, or local dev sub bypass. */
 export const businessAuthGuard: CanActivateFn = async () => {
@@ -15,7 +16,7 @@ export const businessAuthGuard: CanActivateFn = async () => {
   const router = inject(Router);
 
   if (isBusinessPortalDevMode(config)) {
-    return true;
+    return isPortalDevSignedOut() ? router.createUrlTree(["/setup"]) : true;
   }
 
   if (!isAuth0Configured(config)) {

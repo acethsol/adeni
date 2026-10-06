@@ -1,22 +1,18 @@
-import { DecimalPipe } from "@angular/common";
 import { Component, inject, signal } from "@angular/core";
 import { ActivatedRoute, RouterLink } from "@angular/router";
-import { FormsModule } from "@angular/forms";
 import type { Category, DiscoveryBusinessItem } from "@adeni/shared";
-import {
-  DISCOVERY_PAGE_SIZE,
-  getCategoryLabel,
-  resolveBusinessCoverImage,
-} from "@adeni/shared";
+import { DISCOVERY_PAGE_SIZE } from "@adeni/shared";
 import { ADENI_DISCOVER_CONFIG } from "../../core/adeni-config";
 import { CustomerApiService } from "../../core/services/customer-api.service";
 import { MarketContextService } from "../../core/services/market-context.service";
 import { SeoService } from "../../core/services/seo.service";
+import { DiscoveryBusinessCardComponent } from "../../shared/discovery-business-card.component";
+import { DiscoverySearchComponent } from "../../shared/discovery-search.component";
 
 @Component({
   selector: "app-discover-page",
   standalone: true,
-  imports: [RouterLink, FormsModule, DecimalPipe],
+  imports: [RouterLink, DiscoverySearchComponent, DiscoveryBusinessCardComponent],
   templateUrl: "./discover.component.html",
   styleUrl: "./discover.component.scss",
 })
@@ -37,9 +33,6 @@ export class DiscoverComponent {
   selectedCategory = "";
   sort: "distance" | "featured" = "distance";
   minRating: number | null = null;
-
-  readonly coverFor = resolveBusinessCoverImage;
-  readonly categoryLabel = getCategoryLabel;
 
   constructor() {
     this.route.queryParamMap.subscribe(() => {

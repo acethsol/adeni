@@ -1,6 +1,70 @@
-<section class="hero">
-  <p class="eyebrow">Marketplace</p>
-  <h1>Find and book local services</h1>
-  <p class="lead">Browse verified businesses near you on Adeni.</p>
-  <a class="cta" routerLink="/discover">Explore discover</a>
-</section>
+<app-hero-category-stage [categories]="categories()" [featured]="featured()" />
+
+<div class="page">
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  } @else {
+    @if (featured().length > 0) {
+      <section>
+        <header class="section-head">
+          <div>
+            <h2>{{ popularTitle() }}</h2>
+            <p class="muted">{{ popularDescription() }}</p>
+          </div>
+          <a routerLink="/discover">{{ seeAllLabel() }}</a>
+        </header>
+        <ul class="grid">
+          @for (item of featured(); track item.locationId) {
+            <li>
+              <app-discovery-business-card [item]="item" />
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    <section [class.spaced]="featured().length > 0">
+      <header class="section-head">
+        <div>
+          <h2>{{ browseCategoryTitle() }}</h2>
+          <p class="muted">{{ browseCategoryDescription() }}</p>
+        </div>
+      </header>
+
+      @if (offlineMessage(); as message) {
+        <p class="note">{{ message }}</p>
+      } @else if (categories().length > 0) {
+        <div class="chips">
+          @for (category of categories(); track category.id) {
+            <a [routerLink]="['/discover']" [queryParams]="{ category: category.slug }">
+              <span aria-hidden="true">{{ categoryVisual(category).icon }}</span>
+              {{ categoryLabel(category.slug, category.name) }}
+            </a>
+          }
+        </div>
+
+        @for (group of categoryGroups(); track group.slug) {
+          <div class="group">
+            <h3>{{ group.icon }} {{ group.label }}</h3>
+            <ul class="grid">
+              @for (category of group.items; track category.id) {
+                <li>
+                  <a
+                    class="tile"
+                    [routerLink]="['/discover']"
+                    [queryParams]="{ category: category.slug }"
+                    [style.--tile-start]="categoryVisual(category).gradient[0]"
+                    [style.--tile-end]="categoryVisual(category).gradient[1]"
+                  >
+                    <img [src]="categoryVisual(category).imageUrl" alt="" />
+                    <span>{{ categoryVisual(category).icon }} {{ categoryLabel(category.slug, category.name) }}</span>
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      }
+    </section>
+  }
+</div>

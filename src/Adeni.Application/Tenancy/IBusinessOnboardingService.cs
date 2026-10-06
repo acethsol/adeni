@@ -62,6 +62,25 @@ public sealed record BusinessLocationResponse(
 
 public sealed record UpdateBusinessSettingsRequest(bool AutoConfirmBookings, int DepositPercent = 0);
 
+public sealed record PublicPageSectionsDto(
+    bool About = true,
+    bool Services = true,
+    bool Reviews = true,
+    bool Visit = true,
+    bool Book = true);
+
+public sealed record PublicPageConfigDto(
+    string TemplateId = "studio",
+    string? AccentColor = null,
+    string? LogoImageUrl = null,
+    PublicPageSectionsDto? Sections = null);
+
+public sealed record UpdatePublicPageRequest(
+    string TemplateId,
+    PublicPageSectionsDto Sections,
+    string? AccentColor = null,
+    string? LogoImageKey = null);
+
 public sealed record BusinessProfileResponse(
     Guid TenantId,
     string BusinessName,
@@ -80,7 +99,8 @@ public sealed record BusinessProfileResponse(
     bool AutoConfirmBookings = false,
     int DepositPercent = 0,
     string SubscriptionTier = "free",
-    TenantEntitlements? Entitlements = null);
+    TenantEntitlements? Entitlements = null,
+    PublicPageConfigDto? PublicPage = null);
 
 public sealed record VerificationDocumentResponse(
     VerificationDocumentType DocumentType,
@@ -121,6 +141,12 @@ public interface IBusinessOnboardingService
     Task<Result<BusinessProfileResponse>> UpdateSettingsAsync(
         Guid tenantId,
         UpdateBusinessSettingsRequest request,
+        string auth0Sub,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<BusinessProfileResponse>> UpdatePublicPageAsync(
+        Guid tenantId,
+        UpdatePublicPageRequest request,
         string auth0Sub,
         CancellationToken cancellationToken = default);
 

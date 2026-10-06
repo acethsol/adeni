@@ -42,6 +42,8 @@ export class ProfileComponent implements OnInit {
 
   readonly reviews = signal<PublicReviewItem[]>([]);
   readonly reviewSummary = signal<{ avg: number | null; count: number }>({ avg: null, count: 0 });
+  readonly replyingId = signal<string | null>(null);
+  replyDraft = "";
   readonly verificationMessage = signal<string | null>(null);
   verificationDocType = 0;
   verificationReference = "";
@@ -178,6 +180,25 @@ export class ProfileComponent implements OnInit {
       });
     } catch {
       this.reviews.set([]);
+    }
+  }
+
+  async sendReviewReply(reviewId: string): Promise<void> {
+    const reply = this.replyDraft.trim();
+    if (!reply) return;
+    this.saving.set(true);
+    this.error.set(null);
+    try {
+      const updated = await this.api.withAuthorizedClient((client) =>
+        client.replyToReview(reviewId, reply),
+      );
+      this.reviews.update((items) => items.map((item) => (item.id === updated.id ? updated : item)));
+      this.replyingId.set(null);
+      this.replyDraft = "";
+    } catch {
+      this.error.set("Could not post that reply.");
+    } finally {
+      this.saving.set(false);
     }
   }
 

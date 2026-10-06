@@ -669,6 +669,12 @@ public sealed class DiscoveryService(
         completionRates.TryGetValue(business.tenant.Id, out var completionRate);
         badges.TryGetValue(business.tenant.Id, out var badgeList);
 
+        string? logoImageUrl = null;
+        if (!string.IsNullOrWhiteSpace(business.profile.LogoImageKey))
+        {
+            logoImageUrl = await ResolveCoverImageUrlAsync(business.profile.LogoImageKey, cancellationToken);
+        }
+
         return new PublicBusinessProfile(
             business.location.Id,
             business.tenant.Id,
@@ -692,6 +698,7 @@ public sealed class DiscoveryService(
             business.profile.DepositPercent,
             badgeList,
             business.tenant.VerifiedAt,
-            completionRate);
+            completionRate,
+            Adeni.Application.Tenancy.PublicPageConfigMapper.FromProfile(business.profile, logoImageUrl));
     }
 }

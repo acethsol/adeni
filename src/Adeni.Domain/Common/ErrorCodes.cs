@@ -92,4 +92,19 @@ public static class ErrorCodes
 
     public static Error MessageBodyInvalidError() =>
         new(MessageBodyInvalid, "Message must be between 1 and 4000 characters.");
+
+    public const string PublicPageInvalidTemplate = "tenancy.public_page.invalid_template";
+    public const string PublicPageInvalidAccent = "tenancy.public_page.invalid_accent";
+    public const string PublicPageSectionsRequired = "tenancy.public_page.sections_required";
+
+    public static Error PublicPageInvalidTemplateError() =>
+        new(PublicPageInvalidTemplate, "Choose a valid public page template.");
+
+    public static Error PublicPageInvalidAccentError() =>
+        new(PublicPageInvalidAccent, "Accent color must be a hex value like #0F766E.");
+
+    public static Error PublicPageSectionsRequiredError() =>
+        new(
+            PublicPageSectionsRequired,
+            "Keep at least one of About, Services, or Visit visible.");
 }

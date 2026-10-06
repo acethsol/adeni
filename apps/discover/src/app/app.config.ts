@@ -4,7 +4,11 @@ import {
   provideBrowserGlobalErrorListeners,
   inject,
 } from "@angular/core";
-import { provideRouter, withComponentInputBinding } from "@angular/router";
+import {
+  provideRouter,
+  withComponentInputBinding,
+  withInMemoryScrolling,
+} from "@angular/router";
 import { provideAdeniDocumentTitle } from "@adeni/ui";
 import { provideClientHydration } from "@angular/platform-browser";
 import { routes } from "./app.routes";
@@ -38,7 +42,14 @@ function auth0Providers() {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes, withComponentInputBinding()),
+    provideRouter(
+      routes,
+      withComponentInputBinding(),
+      withInMemoryScrolling({
+        anchorScrolling: "enabled",
+        scrollPositionRestoration: "enabled",
+      }),
+    ),
     provideAdeniDocumentTitle("Adeni Discover"),
     provideClientHydration(),
     {

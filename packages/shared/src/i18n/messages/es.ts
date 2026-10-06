@@ -14,27 +14,42 @@ export const esMessages: Messages = {
     changeMarket: "Cambiar ubicación",
   },
   home: {
-    browseServices: "Ver servicios",
-    listBusiness: "Registrar mi negocio",
+    eyebrow: "Belleza y bienestar, fácil",
+    headlineLead: "Reserva belleza y bienestar",
+    headlineAccent: "cerca de ti",
+    heroLead:
+      "Descubre profesionales verificados, compara servicios, ve disponibilidad real y reserva en minutos.",
+    browseServices: "Explorar bienestar",
+    listBusiness: "Para negocios",
+    trustedPros: "Profesionales de confianza",
+    avgRating: "Promedio 4.9 de clientes reales",
+    featuredNearYou: "Destacado cerca de ti",
     popularNearYou: "Mejor valorados cerca de ti",
     popularDescription:
       "Negocios verificados mejor valorados en tu zona — reserva en línea en pocos toques.",
     browseCategory: "Explorar por categoría",
     browseCategoryDescription:
-      "De belleza a servicios del hogar — encuentra al profesional adecuado.",
-    verifiedProviders: "Proveedores verificados",
+      "Del masaje al fitness — encuentra al profesional de bienestar adecuado.",
+    verifiedProviders: "Negocios verificados",
+    realAvailability: "Disponibilidad real",
+    easyBooking: "Reserva fácil",
     bookInMinutes: "Reserva en minutos",
     trustedNearYou: "De confianza cerca de ti",
     seeAll: "Ver todo",
+    socialProof: "Belleza y bienestar verificados en Ottawa y Lagos",
+    brandPill: "El autocuidado es una versión más brillante de ti",
+    testimonialQuote: "Experiencia increíble: muy relajante y fácil de reservar.",
+    nextAvailable: "Próxima disponibilidad",
+    bookNow: "Reservar",
     metaTitle: "Adeni — {tagline} en {market}",
     metaDescription:
       "Descubre proveedores locales verificados en {market}. {description}",
     apiOffline: "Inicia la API en {url} para cargar categorías.",
   },
   market: {
-    tagline: "Servicios locales de confianza, reservables en un solo lugar",
+    tagline: "Reserva belleza y bienestar de confianza cerca de ti",
     description:
-      "Descubre negocios verificados cerca de ti, consulta disponibilidad y reserva con confianza — sin mensajes interminables.",
+      "Descubre spas, salones, masajistas, fitness y bienestar verificados en Ottawa y Lagos. Compara servicios, ve disponibilidad real y reserva en minutos.",
   },
   locale: {
     title: "Idioma y región",
@@ -64,7 +79,7 @@ export const esMessages: Messages = {
       barberNearMe: "Barbero cerca de mí",
       hairSalonBraids: "Salón de pelo para trenzas",
       nailsWeekend: "Uñas este fin de semana",
-      plumberArea: "Fontanero en mi zona",
+      massageNearMe: "Masaje cerca de mí",
     },
   },
   business: {
@@ -87,6 +102,7 @@ export const esMessages: Messages = {
     groups: {
       general: "General",
       beauty: "Belleza y cuidado",
+      "beauty-wellness": "Belleza, bienestar y cuidado personal",
       "home-services": "Servicios del hogar",
     },
     barbers: "Barberías",

@@ -344,8 +344,22 @@ See [observability.md](./observability.md) for Obs 2–4 follow-ons.
 
 Confluence: [Sprint 20 — Deployment, AI, observability & architecture](https://aceth.atlassian.net/wiki/spaces/SD/pages/30834689)
 
+## Sprint 21 — Public page templates ✅
+
+Branded mini-sites for discovery profiles — template picker + brand tokens in portal (no raw HTML). Spec: [sprint-21-public-page-templates.md](./specs/sprint-21-public-page-templates.md).
+
+| Task | Status |
+|------|--------|
+| **21a** Shared `publicPage` contract + four templates (`studio` / `spa` / `barber` / `luxe`) | ✅ Done |
+| **21b** Tenant `PATCH /api/v1/tenant/public-page` + public profile field + cache invalidation | ✅ Done |
+| **21c** Portal Public page settings + live preview | ✅ Done |
+| **21d** Discover template variants on `/businesses/:slug` (SSR) | ✅ Done |
+
+**Out of scope for 21:** HTML paste, block builder, embed widget, custom domain → Phase B/C in spec. Logo upload UI deferred (API field ready).
+
 ## Next up
 
 1. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, business AI agent, App Insights, ops dashboards
+2. **Sprint 21** — public page templates (Phase A) after Sprint 20 or when explicitly pulled forward
 
 Strategy reference: [product-strategy.md](./product-strategy.md) — [§3.5 Business types](./product-strategy.md#35-business-types--workflow-capabilities), [architecture.md](./architecture.md) (modular monolith)

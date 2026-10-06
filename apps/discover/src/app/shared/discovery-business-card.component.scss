@@ -1,0 +1,116 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  background: var(--surface);
+  text-decoration: none;
+  color: inherit;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgb(16 24 40 / 8%);
+}
+
+.media {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.55rem;
+}
+
+.media img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.badges {
+  position: absolute;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  max-width: calc(50% - 0.4rem);
+}
+
+.badges.trust {
+  left: 0.55rem;
+  top: 0.55rem;
+}
+
+.badges.review {
+  right: 0.55rem;
+  top: 0.55rem;
+  justify-content: flex-end;
+  max-width: none;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 94%);
+  color: #344054;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: 0 4px 12px rgb(16 24 40 / 12%);
+  white-space: nowrap;
+}
+
+.icon {
+  width: 0.85rem;
+  height: 0.85rem;
+  flex-shrink: 0;
+}
+
+.icon-text {
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
+.badge.verified {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.badge.rating {
+  background: rgb(17 17 17 / 78%);
+  color: #fff;
+}
+
+.badge.rating .icon-text {
+  color: #f5d76e;
+}
+
+.badge.rating .sep {
+  opacity: 0.55;
+  margin: 0 0.05rem;
+}
+
+.badge.new {
+  background: #f4ebff;
+  color: #6941c6;
+}
+
+.body h2,
+.body h3 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.meta {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}

@@ -103,6 +103,13 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.CategorySlug).HasMaxLength(64);
             entity.Property(x => x.Phone).HasMaxLength(32);
             entity.Property(x => x.CoverImageKey).HasMaxLength(512);
+            entity.Property(x => x.LogoImageKey).HasMaxLength(512);
+            entity.Property(x => x.PublicPageTemplateId).HasMaxLength(32).HasDefaultValue("studio");
+            entity.Property(x => x.PublicPageAccentColor).HasMaxLength(7);
+            entity.Property(x => x.PublicPageShowAbout).HasDefaultValue(true);
+            entity.Property(x => x.PublicPageShowServices).HasDefaultValue(true);
+            entity.Property(x => x.PublicPageShowReviews).HasDefaultValue(true);
+            entity.Property(x => x.PublicPageShowVisit).HasDefaultValue(true);
             entity.Property(x => x.BusinessType).HasConversion<int>();
             entity.HasOne(x => x.Tenant).WithOne().HasForeignKey<BusinessProfile>(x => x.TenantId);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);

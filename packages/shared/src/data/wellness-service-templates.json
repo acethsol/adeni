@@ -112,6 +112,18 @@
         "name": "Gel Nails",
         "defaultDurationMinutes": 75,
         "bookingDeliveryType": "appointment"
+      },
+      {
+        "id": "nails-art",
+        "name": "Nail Art",
+        "defaultDurationMinutes": 60,
+        "bookingDeliveryType": "appointment"
+      },
+      {
+        "id": "nails-combo",
+        "name": "Mani & Pedi",
+        "defaultDurationMinutes": 90,
+        "bookingDeliveryType": "appointment"
       }
     ],
     "skincare-aesthetics": [
@@ -132,6 +144,18 @@
         "name": "Brows & Lashes",
         "defaultDurationMinutes": 45,
         "bookingDeliveryType": "appointment"
+      },
+      {
+        "id": "skin-express",
+        "name": "Express Facial",
+        "defaultDurationMinutes": 30,
+        "bookingDeliveryType": "appointment"
+      },
+      {
+        "id": "skin-glow",
+        "name": "Glow Treatment",
+        "defaultDurationMinutes": 50,
+        "bookingDeliveryType": "appointment"
       }
     ],
     "spa-relaxation": [
@@ -146,6 +170,24 @@
         "name": "Body Treatment",
         "defaultDurationMinutes": 60,
         "bookingDeliveryType": "appointment"
+      },
+      {
+        "id": "spa-scalp",
+        "name": "Scalp & Shoulder Ritual",
+        "defaultDurationMinutes": 45,
+        "bookingDeliveryType": "appointment"
+      },
+      {
+        "id": "spa-express",
+        "name": "Express Refresh",
+        "defaultDurationMinutes": 30,
+        "bookingDeliveryType": "appointment"
+      },
+      {
+        "id": "spa-couples",
+        "name": "Couples Spa Hour",
+        "defaultDurationMinutes": 60,
+        "bookingDeliveryType": "experience"
       }
     ],
     "yoga-pilates": [
@@ -179,6 +221,30 @@
         "id": "fitness-strength",
         "name": "Strength & Conditioning",
         "defaultDurationMinutes": 45,
+        "bookingDeliveryType": "session"
+      },
+      {
+        "id": "fitness-hiit",
+        "name": "HIIT Session",
+        "defaultDurationMinutes": 45,
+        "bookingDeliveryType": "session"
+      },
+      {
+        "id": "fitness-mobility",
+        "name": "Mobility Session",
+        "defaultDurationMinutes": 45,
+        "bookingDeliveryType": "session"
+      },
+      {
+        "id": "fitness-small-group",
+        "name": "Small Group Training",
+        "defaultDurationMinutes": 50,
+        "bookingDeliveryType": "class"
+      },
+      {
+        "id": "fitness-assessment",
+        "name": "Fitness Assessment",
+        "defaultDurationMinutes": 30,
         "bookingDeliveryType": "session"
       }
     ]

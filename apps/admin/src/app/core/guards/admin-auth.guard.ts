@@ -8,13 +8,14 @@ import {
   isAdminPortalDevMode,
   isAuth0Configured,
 } from "../adeni-config";
+import { isAdminDevSignedOut } from "../admin-dev-session";
 
 export const adminAuthGuard: CanActivateFn = async () => {
   const config = inject(ADENI_ADMIN_CONFIG);
   const router = inject(Router);
 
   if (isAdminPortalDevMode(config)) {
-    return true;
+    return isAdminDevSignedOut() ? router.createUrlTree(["/setup"]) : true;
   }
 
   if (!isAuth0Configured(config)) {

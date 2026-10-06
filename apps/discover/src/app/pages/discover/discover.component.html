@@ -11,15 +11,9 @@
   <p class="error">{{ error() }}</p>
 }
 
-<form class="search" (submit)="$event.preventDefault(); load()">
-  <input
-    type="search"
-    name="q"
-    [(ngModel)]="searchQuery"
-    placeholder="Search services or businesses"
-  />
-  <button type="submit">Search</button>
-</form>
+<div class="search">
+  <app-discovery-search variant="default" [initialQuery]="searchQuery" />
+</div>
 
 <div class="sort-row">
   <span class="muted">Sort:</span>
@@ -75,18 +69,7 @@
   <ul class="grid">
     @for (item of items(); track item.locationId) {
       <li>
-        <a class="card" [routerLink]="['/businesses', item.slug]">
-          <img [src]="coverFor(item.categorySlug, item.coverImageUrl)" alt="" />
-          <div>
-            <h2>{{ item.name }}</h2>
-            <p class="muted">
-              {{ categoryLabel("en", item.categorySlug) }} · {{ item.area }}
-              @if (item.distanceKm != null) {
-                · {{ item.distanceKm | number: "1.0-1" }} km
-              }
-            </p>
-          </div>
-        </a>
+        <app-discovery-business-card [item]="item" headingLevel="h2" />
       </li>
     }
   </ul>

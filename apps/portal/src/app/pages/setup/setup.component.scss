@@ -22,6 +22,16 @@
   margin-bottom: 0.75rem;
 }
 
+.sign-in {
+  border: 0;
+  background: var(--adeni-purple, #7f56ff);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;

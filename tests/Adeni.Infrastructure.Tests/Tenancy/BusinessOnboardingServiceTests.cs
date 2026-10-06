@@ -38,6 +38,32 @@ public sealed class BusinessOnboardingServiceTests
         "Premium barber shop");
 
     [Fact]
+    public async Task UpdatePublicPage_persists_template_and_sections()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var service = scope.ServiceProvider.GetRequiredService<BusinessOnboardingService>();
+
+        var registered = await service.RegisterAsync(ValidRequest, "auth0|owner-page");
+        Assert.True(registered.IsSuccess);
+        var tenantId = registered.Value!.TenantId;
+
+        var updated = await service.UpdatePublicPageAsync(
+            tenantId,
+            new UpdatePublicPageRequest(
+                "barber",
+                new PublicPageSectionsDto(true, true, false, true, true),
+                "#111111"),
+            "auth0|owner-page");
+
+        Assert.True(updated.IsSuccess);
+        Assert.Equal("barber", updated.Value!.PublicPage!.TemplateId);
+        Assert.Equal("#111111", updated.Value.PublicPage.AccentColor);
+        Assert.False(updated.Value.PublicPage.Sections!.Reviews);
+        Assert.True(updated.Value.PublicPage.Sections.Book);
+    }
+
+    [Fact]
     public async Task Register_creates_tenant_profile_and_returns_draft()
     {
         await using var provider = BuildProvider();

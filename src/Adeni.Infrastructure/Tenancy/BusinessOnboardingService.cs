@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Tenancy;
 
+using Adeni.Application.Caching;
 using Adeni.Application.Catalog;
 using Adeni.Application.Markets;
 using Adeni.Application.Storage;
@@ -17,7 +18,8 @@ public sealed class BusinessOnboardingService(
     ICategoryService categoryService,
     IBusinessCapabilitiesService businessCapabilitiesService,
     IFileStorage fileStorage,
-    IMarketCatalog marketCatalog) : IBusinessOnboardingService
+    IMarketCatalog marketCatalog,
+    ICacheService cache) : IBusinessOnboardingService
 {
     public async Task<Result<RegisterBusinessResponse>> RegisterAsync(
         RegisterBusinessRequest request,
@@ -282,6 +284,64 @@ public sealed class BusinessOnboardingService(
             cancellationToken));
     }
 
+    public async Task<Result<BusinessProfileResponse>> UpdatePublicPageAsync(
+        Guid tenantId,
+        UpdatePublicPageRequest request,
+        string auth0Sub,
+        CancellationToken cancellationToken = default)
+    {
+        var access = await ResolveAccessAsync(tenantId, auth0Sub, cancellationToken);
+        if (access.IsFailure)
+        {
+            return Result.Failure<BusinessProfileResponse>(access.Error);
+        }
+
+        var validation = PublicPageConfigMapper.Validate(request);
+        if (validation.IsFailure)
+        {
+            return Result.Failure<BusinessProfileResponse>(validation.Error);
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.LogoImageKey))
+        {
+            var key = request.LogoImageKey.Trim();
+            var prefix = $"tenants/{tenantId}/";
+            if (!key.StartsWith(prefix, StringComparison.Ordinal))
+            {
+                return Result.Failure<BusinessProfileResponse>(
+                    Error.Validation("Logo image key is invalid for this business."));
+            }
+
+            if (!await fileStorage.ExistsAsync(key, cancellationToken))
+            {
+                return Result.Failure<BusinessProfileResponse>(
+                    Error.Validation("Logo image upload was not found. Upload the file before saving."));
+            }
+        }
+
+        var (tenant, profile) = access.Value!;
+        PublicPageConfigMapper.Apply(profile, request);
+        profile.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await InvalidateProfileCachesAsync(tenantId, cancellationToken);
+
+        var locations = await dbContext.BusinessLocations
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId && x.IsActive)
+            .OrderByDescending(x => x.IsPrimary)
+            .ThenBy(x => x.Name)
+            .ToListAsync(cancellationToken);
+
+        return Result.Success(await MapProfileAsync(
+            tenant,
+            profile,
+            locations,
+            await GetDocumentsAsync(tenantId, cancellationToken),
+            fileStorage,
+            businessCapabilitiesService,
+            cancellationToken));
+    }
+
     public async Task<Result> SubmitVerificationAsync(
         Guid tenantId,
         SubmitVerificationRequest request,
@@ -522,6 +582,12 @@ public sealed class BusinessOnboardingService(
             coverImageUrl = await fileStorage.GetDownloadUrlAsync(profile.CoverImageKey, cancellationToken);
         }
 
+        string? logoImageUrl = null;
+        if (!string.IsNullOrWhiteSpace(profile.LogoImageKey))
+        {
+            logoImageUrl = await fileStorage.GetDownloadUrlAsync(profile.LogoImageKey, cancellationToken);
+        }
+
         var capabilities = businessCapabilitiesService.GetCapabilities(profile.BusinessType, profile.CategorySlug);
         var additionalCategorySlugs = await dbContext.BusinessProfileCategories
             .AsNoTracking()
@@ -548,6 +614,23 @@ public sealed class BusinessOnboardingService(
             profile.AutoConfirmBookings,
             profile.DepositPercent,
             SubscriptionTierMapping.ToApiValue(tenant.SubscriptionTier),
-            SubscriptionEntitlements.ForTier(tenant.SubscriptionTier));
+            SubscriptionEntitlements.ForTier(tenant.SubscriptionTier),
+            PublicPageConfigMapper.FromProfile(profile, logoImageUrl));
+    }
+
+    private async Task InvalidateProfileCachesAsync(Guid tenantId, CancellationToken cancellationToken)
+    {
+        await cache.RemoveAsync(CacheKeys.TenantProfile(tenantId), cancellationToken);
+
+        var slugs = await dbContext.BusinessLocations
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId && x.IsActive)
+            .Select(x => x.Slug)
+            .ToListAsync(cancellationToken);
+
+        foreach (var slug in slugs)
+        {
+            await cache.RemoveAsync(CacheKeys.LocationProfile(slug), cancellationToken);
+        }
     }
 }

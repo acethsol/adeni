@@ -1,37 +1,164 @@
 @if (loadError()) {
-  <section class="card error">
-    <h2>Could not load business profile</h2>
-    <p>Check that the API is running on port 5169 and Redis/Postgres are up.</p>
+  <section class="panel error">
+    <h2>Could not load the studio</h2>
+    <p>The API on port 5169 did not return your business. Check that it is running, then refresh.</p>
+    <a class="btn btn-primary" routerLink="/register">Register your business</a>
   </section>
-} @else if (profile()) {
-  <section class="card">
-    <h2>Welcome back</h2>
-    <p class="lede">
-      Angular business portal (strangler scaffold). Next screens will migrate here route by route.
-    </p>
-    <dl class="facts">
+} @else if (profile(); as business) {
+  <section class="hero">
+    <div>
+      <p class="kicker">{{ categoryLine() }}</p>
+      <h2>{{ business.businessName }}</h2>
+      <p class="meta">
+        {{ formatTenantStatus(business.status) }}
+        @if (primaryLocationName(); as place) {
+          · {{ place }}
+        }
+      </p>
+    </div>
+    <div class="hero-actions">
+      @if (publicProfileUrl(); as url) {
+        <a class="btn btn-primary" [href]="url" target="_blank" rel="noopener">View public profile</a>
+      }
+      <a class="btn" routerLink="/bookings">
+        @if (pendingCount() > 0) {
+          {{ pendingCount() }} waiting
+        } @else {
+          Booking inbox
+        }
+      </a>
+    </div>
+  </section>
+
+  @if (usage(); as plan) {
+    <section class="usage">
       <div>
-        <dt>Business</dt>
-        <dd>{{ profile()!.businessName }}</dd>
+        <p class="usage-label">{{ plan.tier }} plan</p>
+        <p class="usage-value">
+          {{ plan.bookingsUsedThisMonth }}
+          @if (plan.bookingsLimitThisMonth) {
+            of {{ plan.bookingsLimitThisMonth }}
+          }
+          bookings this month
+        </p>
       </div>
-      <div>
-        <dt>Status</dt>
-        <dd>{{ profile()!.status }}</dd>
-      </div>
-      <div>
-        <dt>Locations</dt>
-        <dd>{{ profile()!.locations.length }}</dd>
-      </div>
-      @if (profile()!.subscriptionTier) {
-        <div>
-          <dt>Plan</dt>
-          <dd>{{ profile()!.subscriptionTier }}</dd>
+      @if (plan.bookingsLimitThisMonth) {
+        <div class="meter" aria-hidden="true">
+          <span [style.width.%]="usagePercent()"></span>
         </div>
       }
-    </dl>
+    </section>
+  }
+
+  <section class="stats">
+    <article>
+      <p class="stat-label">Pending</p>
+      <p class="stat-value">{{ pendingCount() }}</p>
+      <p class="stat-hint">Awaiting a yes or no</p>
+    </article>
+    <article>
+      <p class="stat-label">On the menu</p>
+      <p class="stat-value">{{ activeServices() }}</p>
+      <p class="stat-hint">Active services</p>
+    </article>
+    <article>
+      <p class="stat-label">Confirmed</p>
+      <p class="stat-value">{{ revenueLabel() }}</p>
+      <p class="stat-hint">From accepted bookings</p>
+    </article>
+    <article>
+      <p class="stat-label">Rating</p>
+      <p class="stat-value">{{ ratingLabel() }}</p>
+      <p class="stat-hint">{{ ratingHint() }}</p>
+    </article>
+  </section>
+
+  <section class="split">
+    <article class="panel">
+      <h3>This week</h3>
+      <p class="hint">Appointments still on the book, Monday to Sunday.</p>
+      <div class="bars">
+        @for (day of week(); track day.label) {
+          <div class="bar" [class.today]="day.isToday">
+            <div class="bar-track">
+              <span [style.height.%]="day.height"></span>
+            </div>
+            <p>{{ day.label }}</p>
+            <p class="count">{{ day.count }}</p>
+          </div>
+        }
+      </div>
+    </article>
+
+    <article class="panel">
+      <h3>Today’s chair</h3>
+      @if (today().length === 0) {
+        <p class="hint">Nothing left on today’s book. Open hours are still taking new bookings.</p>
+        <a class="text-link" routerLink="/availability">Check weekly hours</a>
+      } @else {
+        <ul class="today-list">
+          @for (booking of today(); track booking.id) {
+            <li>
+              <strong>{{ formatSlotTime(booking.startAt) }}</strong>
+              <span>{{ booking.serviceName }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </article>
+  </section>
+
+  <section class="panel mix">
+    <h3>Booking mix</h3>
+    <div class="mix-bar">
+      @for (slice of mix(); track slice.status) {
+        @if (slice.count > 0) {
+          <span class="slice s{{ slice.status }}" [style.flex-grow]="slice.count"></span>
+        }
+      }
+    </div>
+    <ul class="legend">
+      @for (slice of mix(); track slice.status) {
+        <li>
+          <i class="swatch s{{ slice.status }}"></i>
+          {{ slice.label }}
+          <strong>{{ slice.count }}</strong>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section>
+    <h3 class="section-title">Run the floor</h3>
+    <div class="actions">
+      <a routerLink="/bookings">
+        <strong>Booking inbox</strong>
+        <span>Accept, reject, and see who is coming in.</span>
+      </a>
+      <a routerLink="/quotes">
+        <strong>Quotes</strong>
+        <span>Price custom work and turn it into a booking.</span>
+      </a>
+      <a routerLink="/messages">
+        <strong>Messages</strong>
+        <span>Reply in the thread, or send a WhatsApp note.</span>
+      </a>
+      <a routerLink="/services">
+        <strong>Services</strong>
+        <span>Prices, duration, and what clients can book.</span>
+      </a>
+      <a routerLink="/availability">
+        <strong>Hours</strong>
+        <span>The week customers are allowed to book.</span>
+      </a>
+      <a routerLink="/profile">
+        <strong>Profile</strong>
+        <span>Cover, share link, reviews, and verification.</span>
+      </a>
+    </div>
   </section>
 } @else {
-  <section class="card">
-    <p>Loading profile…</p>
+  <section class="panel">
+    <p>Loading your studio…</p>
   </section>
 }

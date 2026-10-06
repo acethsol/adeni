@@ -52,7 +52,8 @@ public sealed record PublicBusinessProfile(
     int DepositPercent = 0,
     IReadOnlyList<string>? VerificationBadges = null,
     DateTimeOffset? VerifiedSince = null,
-    double? CompletionRate = null);
+    double? CompletionRate = null,
+    Adeni.Application.Tenancy.PublicPageConfigDto? PublicPage = null);
 
 public interface IDiscoveryService
 {

@@ -7,7 +7,7 @@
   } @else {
     <section class="card">
       <ul class="plain">
-        @for (b of businesses(); track b.id) {
+        @for (b of visible(); track b.id) {
           <li class="list-row">
             <div>
               <strong>{{ b.name }}</strong>

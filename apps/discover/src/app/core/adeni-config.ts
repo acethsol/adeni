@@ -6,6 +6,8 @@ export type AdeniDiscoverConfig = {
   apiBaseUrl: string;
   /** Canonical public origin for SEO (e.g. http://localhost:5190). */
   publicAppUrl: string;
+  /** Business portal origin. Empty hides “List your business” until a host is set. */
+  portalAppUrl: string;
   /** Optional ops override — mirrors `ADENI_MARKET` / `NEXT_PUBLIC_ADENI_MARKET`. */
   envMarketId: string;
   defaultMarketId: string;
@@ -27,6 +29,7 @@ export function adeniDiscoverConfigFactory(): AdeniDiscoverConfig {
     production: environment.production,
     apiBaseUrl: environment.apiBaseUrl.replace(/\/$/, ""),
     publicAppUrl: environment.publicAppUrl.replace(/\/$/, ""),
+    portalAppUrl: environment.portalAppUrl.replace(/\/$/, ""),
     envMarketId: environment.envMarketId.trim(),
     defaultMarketId: environment.defaultMarketId,
     defaultLocation: environment.defaultLocation,

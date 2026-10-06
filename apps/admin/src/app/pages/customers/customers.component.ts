@@ -1,6 +1,8 @@
 import { Component, inject, signal } from "@angular/core";
 import { JsonPipe } from "@angular/common";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
+import { ActivatedRoute } from "@angular/router";
 import type { AdminCustomerSummary, CustomerDataExport } from "@adeni/shared";
 import { PortalPageComponent } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
@@ -14,6 +16,7 @@ import { AdminApiService } from "../../core/services/admin-api.service";
 })
 export class AdminCustomersComponent {
   private readonly api = inject(AdminApiService);
+  private readonly route = inject(ActivatedRoute);
 
   email = "";
   readonly searching = signal(false);
@@ -23,6 +26,17 @@ export class AdminCustomersComponent {
   readonly customers = signal<AdminCustomerSummary[]>([]);
   readonly exportData = signal<CustomerDataExport | null>(null);
   readonly busyId = signal<string | null>(null);
+
+  constructor() {
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const email = params.get("email")?.trim() ?? "";
+      if (!email || (email === this.email && this.hasSearched())) {
+        return;
+      }
+      this.email = email;
+      void this.search();
+    });
+  }
 
   async search(): Promise<void> {
     this.searching.set(true);

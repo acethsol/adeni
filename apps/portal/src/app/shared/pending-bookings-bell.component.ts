@@ -34,15 +34,14 @@ const PENDING_STATUS = 0;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 2.25rem;
-      height: 2.25rem;
-      border-radius: 0.5rem;
+      width: 3rem;
+      height: 3rem;
       color: var(--text-muted);
       text-decoration: none;
     }
 
     .bell:hover {
-      background: var(--surface);
+      background: rgb(127 86 255 / 8%);
       color: var(--text);
     }
 

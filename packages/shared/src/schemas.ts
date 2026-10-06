@@ -49,6 +49,72 @@ export const discoveryResponseSchema = z.object({
 export type DiscoveryBusinessItem = z.infer<typeof discoveryBusinessItemSchema>;
 export type DiscoveryResponse = z.infer<typeof discoveryResponseSchema>;
 
+export const publicPageSectionsSchema = z.object({
+  about: z.boolean(),
+  services: z.boolean(),
+  reviews: z.boolean(),
+  visit: z.boolean(),
+  book: z.boolean(),
+});
+
+export const publicPageConfigSchema = z.object({
+  templateId: z.enum(["studio", "spa", "barber", "luxe"]),
+  accentColor: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/)
+    .nullable()
+    .optional(),
+  logoImageUrl: z
+    .union([z.string().url(), z.literal("")])
+    .nullable()
+    .optional()
+    .transform((value) => (value === "" ? null : value)),
+  sections: publicPageSectionsSchema,
+});
+
+export const updatePublicPageRequestSchema = z
+  .object({
+    templateId: z.enum(["studio", "spa", "barber", "luxe"]),
+    accentColor: z
+      .union([z.string().regex(/^#[0-9A-Fa-f]{6}$/), z.literal(""), z.null()])
+      .optional(),
+    logoImageKey: z.union([z.string().max(512), z.literal(""), z.null()]).optional(),
+    sections: publicPageSectionsSchema,
+  })
+  .superRefine((value, ctx) => {
+    if (!value.sections.about && !value.sections.services && !value.sections.visit) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "At least one of about, services, or visit must be enabled.",
+        path: ["sections"],
+      });
+    }
+    if (!value.sections.book) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Booking section cannot be disabled.",
+        path: ["sections", "book"],
+      });
+    }
+  });
+
+export type PublicPageSections = z.infer<typeof publicPageSectionsSchema>;
+export type PublicPageConfig = z.infer<typeof publicPageConfigSchema>;
+export type UpdatePublicPageRequest = z.infer<typeof updatePublicPageRequestSchema>;
+
+export const DEFAULT_PUBLIC_PAGE_CONFIG: PublicPageConfig = {
+  templateId: "studio",
+  accentColor: null,
+  logoImageUrl: null,
+  sections: {
+    about: true,
+    services: true,
+    reviews: true,
+    visit: true,
+    book: true,
+  },
+};
+
 export const publicBusinessProfileSchema = z.object({
   locationId: z.string(),
   tenantId: z.string(),
@@ -77,6 +143,7 @@ export const publicBusinessProfileSchema = z.object({
   verificationBadges: z.array(z.string()).nullish(),
   verifiedSince: z.string().nullable().optional(),
   completionRate: z.number().min(0).max(1).nullable().optional(),
+  publicPage: publicPageConfigSchema.optional(),
 });
 
 export type PublicBusinessProfile = z.infer<typeof publicBusinessProfileSchema>;
@@ -538,6 +605,7 @@ export const businessProfileSchema = z.object({
   depositPercent: z.number().int().min(0).max(100).optional(),
   subscriptionTier: subscriptionTierSchema.optional(),
   entitlements: tenantEntitlementsSchema.optional(),
+  publicPage: publicPageConfigSchema.optional(),
 });
 
 export type BusinessProfile = z.infer<typeof businessProfileSchema>;

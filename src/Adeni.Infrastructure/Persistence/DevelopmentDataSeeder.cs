@@ -1,8 +1,10 @@
 namespace Adeni.Infrastructure.Persistence;
 
+using Adeni.Application.Catalog;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Identity;
 using Adeni.Domain.Tenancy;
+using Adeni.Infrastructure.Catalog;
 using Adeni.Infrastructure.Markets;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,6 +40,7 @@ public static class DevelopmentDataSeeder
         var now = DateTimeOffset.UtcNow;
         var added = 0;
         const int saveBatchSize = 100;
+        var catalog = WellnessCategoryCatalogJson.ReadFromFile(new SeedHostEnvironment());
 
         foreach (var sample in DevelopmentSeedCatalog.All)
         {
@@ -97,22 +100,16 @@ public static class DevelopmentDataSeeder
                 UpdatedAt = now,
             });
 
-            db.ServiceOfferings.Add(new ServiceOffering
-            {
-                Id = Guid.NewGuid(),
-                TenantId = tenantId,
-                Name = sample.ServiceName,
-                Description = sample.ServiceDescription,
-                PriceAmount = sample.PriceAmount,
-                Currency = marketDefaults.Currency,
-                DurationMinutes = sample.DurationMinutes,
-                CategorySlug = sample.CategorySlug,
-                CatalogServiceId = sample.CatalogServiceId,
-                BookingDeliveryType = sample.BookingDeliveryType,
-                IsActive = true,
-                CreatedAt = now,
-                UpdatedAt = now,
-            });
+            AddServiceMenu(
+                db,
+                tenantId,
+                sample.CategorySlug,
+                marketDefaults.Currency,
+                sample,
+                catalog.GetServiceTemplates(sample.CategorySlug),
+                [],
+                now,
+                added);
 
             foreach (var day in new[]
                      {
@@ -151,12 +148,178 @@ public static class DevelopmentDataSeeder
 
     public static async Task SeedAsync(AdeniDbContext db, CancellationToken cancellationToken = default)
     {
-        await MarketCatalogSeeder.SeedIfEmptyAsync(db, new SeedHostEnvironment(), cancellationToken);
+        var environment = new SeedHostEnvironment();
+        await MarketCatalogSeeder.SeedIfEmptyAsync(db, environment, cancellationToken);
         await SeedSamplesAsync(db, cancellationToken);
+        await EnsureServiceMenusAsync(db, environment, cancellationToken);
         await SeedDevBusinessOwnerAsync(db, cancellationToken);
         await SeedDevDepositSettingsAsync(db, cancellationToken);
         await SeedDevReviewFixtureAsync(db, cancellationToken);
     }
+
+    private static async Task EnsureServiceMenusAsync(
+        AdeniDbContext db,
+        SeedHostEnvironment environment,
+        CancellationToken cancellationToken)
+    {
+        var catalog = WellnessCategoryCatalogJson.ReadFromFile(environment);
+        var businesses = await db.BusinessProfiles
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Select(profile => new { profile.TenantId, profile.CategorySlug })
+            .ToListAsync(cancellationToken);
+
+        var markets = await db.BusinessLocations
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(location => location.IsPrimary)
+            .Select(location => new { location.TenantId, location.MarketId })
+            .ToListAsync(cancellationToken);
+        var marketByTenant = markets.ToDictionary(x => x.TenantId, x => x.MarketId);
+
+        var existing = await db.ServiceOfferings
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(service => service.CatalogServiceId != null)
+            .Select(service => new { service.TenantId, service.CatalogServiceId })
+            .ToListAsync(cancellationToken);
+        var owned = existing
+            .Select(service => (service.TenantId, service.CatalogServiceId!))
+            .ToHashSet();
+
+        var now = DateTimeOffset.UtcNow;
+        var touched = 0;
+        foreach (var business in businesses)
+        {
+            if (!marketByTenant.TryGetValue(business.TenantId, out var marketId)
+                || !MarketDefaults.TryGetValue(marketId, out var marketDefaults))
+            {
+                continue;
+            }
+
+            var added = AddServiceMenu(
+                db,
+                business.TenantId,
+                business.CategorySlug,
+                marketDefaults.Currency,
+                sample: null,
+                catalog.GetServiceTemplates(business.CategorySlug),
+                owned,
+                now,
+                business.TenantId.GetHashCode());
+            if (added == 0)
+            {
+                continue;
+            }
+
+            touched++;
+            if (touched % 50 == 0)
+            {
+                await db.SaveChangesAsync(cancellationToken);
+            }
+        }
+
+        if (touched % 50 != 0)
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    private static int AddServiceMenu(
+        AdeniDbContext db,
+        Guid tenantId,
+        string categorySlug,
+        string currency,
+        DevelopmentSeedCatalog.SampleBusiness? sample,
+        IReadOnlyList<ServiceTemplateResponse> templates,
+        HashSet<(Guid TenantId, string CatalogServiceId)> owned,
+        DateTimeOffset now,
+        int salt)
+    {
+        var added = 0;
+        if (templates.Count == 0)
+        {
+            if (sample is null)
+            {
+                return 0;
+            }
+
+            db.ServiceOfferings.Add(new ServiceOffering
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                Name = sample.ServiceName,
+                Description = sample.ServiceDescription,
+                PriceAmount = sample.PriceAmount,
+                Currency = currency,
+                DurationMinutes = sample.DurationMinutes,
+                CategorySlug = categorySlug,
+                CatalogServiceId = sample.CatalogServiceId,
+                BookingDeliveryType = sample.BookingDeliveryType,
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+            return 1;
+        }
+
+        for (var index = 0; index < templates.Count; index++)
+        {
+            var template = templates[index];
+            if (!owned.Add((tenantId, template.Id)))
+            {
+                continue;
+            }
+
+            var isAnchor = sample?.CatalogServiceId == template.Id;
+            db.ServiceOfferings.Add(new ServiceOffering
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                Name = isAnchor ? sample!.ServiceName : template.Name,
+                Description = isAnchor
+                    ? sample!.ServiceDescription
+                    : $"{template.Name}. Book a time online.",
+                PriceAmount = isAnchor ? sample!.PriceAmount : MenuPrice(currency, index, salt),
+                Currency = currency,
+                DurationMinutes = isAnchor ? sample!.DurationMinutes : template.DefaultDurationMinutes,
+                CategorySlug = categorySlug,
+                CatalogServiceId = template.Id,
+                BookingDeliveryType = isAnchor
+                    ? sample!.BookingDeliveryType
+                    : ParseDelivery(template.BookingDeliveryType),
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+            added++;
+        }
+
+        return added;
+    }
+
+    private static decimal MenuPrice(string currency, int index, int salt)
+    {
+        var (min, span) = currency switch
+        {
+            "NGN" => (6000m, 4500m),
+            "CAD" => (30m, 16m),
+            _ => (30m, 16m),
+        };
+
+        var step = (index + (salt & 7)) % 8;
+        return decimal.Round(min + span * step, 0);
+    }
+
+    private static BookingDeliveryType ParseDelivery(string value) =>
+        value.Replace("_", "", StringComparison.OrdinalIgnoreCase).ToLowerInvariant() switch
+        {
+            "class" => BookingDeliveryType.Class,
+            "session" => BookingDeliveryType.Session,
+            "experience" => BookingDeliveryType.Experience,
+            "mobileappointment" => BookingDeliveryType.MobileAppointment,
+            _ => BookingDeliveryType.Appointment,
+        };
 
     private sealed class SeedHostEnvironment : Microsoft.Extensions.Hosting.IHostEnvironment
     {

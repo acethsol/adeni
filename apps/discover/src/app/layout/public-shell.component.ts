@@ -1,5 +1,6 @@
-import { Component, inject, OnInit, signal } from "@angular/core";
+import { Component, effect, inject, OnInit, signal } from "@angular/core";
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
+import { listMarkets } from "@adeni/shared";
 import { filter } from "rxjs";
 import {
   ADENI_DISCOVER_CONFIG,
@@ -7,8 +8,11 @@ import {
   isDiscoverCustomerDevMode,
 } from "../core/adeni-config";
 import { CustomerApiService } from "../core/services/customer-api.service";
+import { HeroSearchPinService } from "../core/services/hero-search-pin.service";
 import { MarketContextService } from "../core/services/market-context.service";
+import { DiscoverySearchComponent } from "../shared/discovery-search.component";
 import { MarketGeoSyncComponent } from "../shared/market-geo-sync.component";
+import { PublicFooterComponent } from "../shared/public-footer.component";
 import { AdeniBrandLockupComponent } from "@adeni/ui";
 
 @Component({
@@ -20,6 +24,8 @@ import { AdeniBrandLockupComponent } from "@adeni/ui";
     RouterLinkActive,
     MarketGeoSyncComponent,
     AdeniBrandLockupComponent,
+    DiscoverySearchComponent,
+    PublicFooterComponent,
   ],
   templateUrl: "./public-shell.component.html",
   styleUrl: "./public-shell.component.scss",
@@ -29,27 +35,72 @@ export class PublicShellComponent implements OnInit {
   private readonly router = inject(Router);
   readonly config = inject(ADENI_DISCOVER_CONFIG);
   private readonly customerApi = inject(CustomerApiService);
+  private readonly heroPin = inject(HeroSearchPinService);
 
   readonly auth0Mode = isAuth0Configured(this.config);
   readonly devCustomerMode = isDiscoverCustomerDevMode(this.config);
   readonly signedIn = signal(this.devCustomerMode);
+  readonly homeLayout = signal(this.isHome(this.router.url));
+  readonly flushLayout = signal(this.isFlush(this.router.url));
+  readonly searchPinned = this.heroPin.pinned;
+  readonly marketMenuOpen = signal(false);
+  readonly markets = listMarkets();
+
+  get portalUrl(): string | null {
+    const origin = this.config.portalAppUrl.trim();
+    return origin || null;
+  }
+
+  constructor() {
+    effect(() => {
+      this.heroPin.watch(this.homeLayout());
+    });
+  }
 
   ngOnInit(): void {
     this.syncMarketQuery();
     this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
-      .subscribe(() => this.syncMarketQuery());
+      .subscribe(() => {
+        this.syncMarketQuery();
+        this.marketMenuOpen.set(false);
+      });
 
     if (this.auth0Mode) {
       void this.customerApi.isLoggedIn().then((v) => this.signedIn.set(v));
     }
   }
 
+  toggleMarketMenu(): void {
+    this.marketMenuOpen.update((open) => !open);
+  }
+
+  selectMarket(marketId: string): void {
+    this.market.applyMarketQueryParam(marketId);
+    this.marketMenuOpen.set(false);
+  }
+
   private syncMarketQuery(): void {
+    this.homeLayout.set(this.isHome(this.router.url));
+    this.flushLayout.set(this.isFlush(this.router.url));
     const market = this.router.parseUrl(this.router.url).queryParams["market"];
     if (typeof market === "string" && market.trim()) {
       this.market.applyMarketQueryParam(market);
     }
+  }
+
+  private isHome(url: string): boolean {
+    const primary = this.router.parseUrl(url).root.children["primary"];
+    return !primary || primary.segments.length === 0;
+  }
+
+  private isFlush(url: string): boolean {
+    if (this.isHome(url)) {
+      return true;
+    }
+    const primary = this.router.parseUrl(url).root.children["primary"];
+    const first = primary?.segments[0]?.path;
+    return first === "businesses";
   }
 
   login(): void {

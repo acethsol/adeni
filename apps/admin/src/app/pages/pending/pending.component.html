@@ -4,12 +4,12 @@
   }
   @if (loading()) {
     <p class="muted">Loading…</p>
-  } @else if (items().length === 0) {
+  } @else if (visible().length === 0) {
     <section class="card"><p class="muted">Queue is empty.</p></section>
   } @else {
     <section class="card">
       <ul class="plain">
-        @for (item of items(); track item.id) {
+        @for (item of visible(); track item.id) {
           <li class="list-row">
             <div>
               <strong>{{ item.name }}</strong>

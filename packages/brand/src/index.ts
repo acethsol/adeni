@@ -26,7 +26,7 @@ export const adeniBrandWordmarkDarkPath = `${brandBase}/adeni-wordmark-dark.png`
 
 export const adeniBrandMarkAspect = 199 / 147;
 export const adeniBrandHorizontalAspect = 502 / 150;
-export const adeniBrandHorizontalDarkAspect = 454 / 146;
+export const adeniBrandHorizontalDarkAspect = 502 / 150;
 export const adeniBrandStackedAspect = 355 / 197;
 export const adeniBrandHorizontalTaglineAspect = 485 / 166;
 export const adeniBrandWordmarkAspect = 285 / 106;

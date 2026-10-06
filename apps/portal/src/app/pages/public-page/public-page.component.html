@@ -1,0 +1,97 @@
+<app-portal-page
+  title="Public page"
+  description="Choose how your Adeni booking page looks to customers."
+>
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+  @if (saved()) {
+    <p class="ok-banner">Saved. Customers will see this on your public page.</p>
+  }
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  } @else if (profile(); as p) {
+    <div class="layout">
+      <div class="controls">
+        <section class="card">
+          <h3>Template</h3>
+          <div class="template-grid">
+            @for (tpl of templates; track tpl.id) {
+              <button
+                type="button"
+                class="template"
+                [class.active]="templateId === tpl.id"
+                [attr.data-template]="tpl.id"
+                (click)="selectTemplate(tpl.id)"
+              >
+                <span class="swatch" aria-hidden="true"></span>
+                <strong>{{ tpl.label }}</strong>
+                <span>{{ tpl.description }}</span>
+              </button>
+            }
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>Brand accent</h3>
+          <label class="check">
+            <input type="checkbox" [(ngModel)]="useAccent" />
+            Use a custom accent color
+          </label>
+          @if (useAccent) {
+            <div class="color-row">
+              <input type="color" [(ngModel)]="accentColor" />
+              <input class="hex" type="text" [(ngModel)]="accentColor" maxlength="7" />
+            </div>
+          }
+        </section>
+
+        <section class="card">
+          <h3>Sections</h3>
+          <label class="check"><input type="checkbox" [(ngModel)]="showAbout" /> About</label>
+          <label class="check"><input type="checkbox" [(ngModel)]="showServices" /> Services</label>
+          <label class="check"><input type="checkbox" [(ngModel)]="showReviews" /> Reviews</label>
+          <label class="check"><input type="checkbox" [(ngModel)]="showVisit" /> Visit</label>
+          <p class="muted tiny">Booking is always on so customers can book or request a quote.</p>
+        </section>
+
+        <div class="actions">
+          <button type="button" class="btn primary" [disabled]="saving()" (click)="save()">
+            {{ saving() ? "Saving…" : "Save public page" }}
+          </button>
+          @if (liveUrl(); as url) {
+            <a class="btn" [href]="url" target="_blank" rel="noopener">Open live page</a>
+          }
+        </div>
+      </div>
+
+      <aside class="preview" [attr.data-template]="templateId" [style.--accent]="useAccent ? accentColor : '#0F766E'">
+        <p class="preview-label">Preview</p>
+        <div class="phone">
+          <div class="hero">
+            <p class="eyebrow">{{ p.categorySlug }} · {{ p.locations[0]?.area ?? "Your area" }}</p>
+            <h2>{{ p.businessName }}</h2>
+            <p class="lead">{{ p.description || "Your public booking page on Adeni." }}</p>
+            <span class="cta">Book now</span>
+          </div>
+          <div class="body">
+            @if (showAbout) {
+              <p><strong>About</strong> — short story about your business.</p>
+            }
+            @if (showServices) {
+              <p><strong>Services</strong> — menu and prices.</p>
+            }
+            @if (showReviews) {
+              <p><strong>Reviews</strong> — from completed bookings.</p>
+            }
+            @if (showVisit) {
+              <p><strong>Visit</strong> — address and contact.</p>
+            }
+            <p class="book"><strong>Book</strong> — always available.</p>
+          </div>
+        </div>
+      </aside>
+    </div>
+  }
+</app-portal-page>

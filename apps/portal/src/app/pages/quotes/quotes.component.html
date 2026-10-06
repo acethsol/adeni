@@ -1,0 +1,107 @@
+<app-portal-page
+  title="Quotes"
+  description="Custom work that does not fit a fixed menu price. Send a number, a time, and turn it into a booking."
+>
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="muted">Loading quotes…</p>
+  } @else if (quotes().length === 0) {
+    <section class="card">
+      <p class="muted">No quote requests yet. Clients send these from your public profile when a service is priced on request.</p>
+    </section>
+  } @else {
+    <section class="card">
+      <h3>Open</h3>
+      @if (openQuotes().length === 0) {
+        <p class="muted">Nothing waiting on a price.</p>
+      } @else {
+        <ul class="plain">
+          @for (quote of openQuotes(); track quote.id) {
+            <li class="list-row">
+              <div>
+                <strong>{{ statusLabel(quote.status) }}</strong>
+                <p>{{ quote.description }}</p>
+                <p class="muted">
+                  {{ formatSlotTime(quote.createdAt) }}
+                  @if (quote.quotedAmount && quote.quotedCurrency) {
+                    · {{ formatPrice(quote.quotedAmount, quote.quotedCurrency) }}
+                  }
+                  @if (quote.serviceAddress) {
+                    · {{ quote.serviceAddress }}
+                  }
+                </p>
+              </div>
+              @if (quote.status === "submitted") {
+                <button type="button" class="btn btn-primary" (click)="startOffer(quote)">Price it</button>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    @if (selected(); as quote) {
+      <section class="card form">
+        <h3>Send a quote</h3>
+        <p class="muted">{{ quote.description }}</p>
+        <div class="row">
+          <div class="field">
+            <label>Amount</label>
+            <input type="number" min="0" step="0.01" [(ngModel)]="amount" />
+          </div>
+          <div class="field">
+            <label>Currency</label>
+            <input maxlength="3" [(ngModel)]="currency" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Service</label>
+          <select [(ngModel)]="serviceOfferingId">
+            @for (service of services(); track service.id) {
+              <option [value]="service.id">{{ service.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Start</label>
+            <input type="datetime-local" [(ngModel)]="proposedStart" />
+          </div>
+          <div class="field">
+            <label>End</label>
+            <input type="datetime-local" [(ngModel)]="proposedEnd" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Notes</label>
+          <textarea rows="3" [(ngModel)]="notes"></textarea>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn" (click)="cancelOffer()">Cancel</button>
+          <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="sendOffer()">
+            {{ busy() ? "Sending…" : "Send quote" }}
+          </button>
+        </div>
+      </section>
+    }
+
+    @if (closedQuotes().length > 0) {
+      <section class="card">
+        <h3>Closed</h3>
+        <ul class="plain">
+          @for (quote of closedQuotes(); track quote.id) {
+            <li class="list-row">
+              <div>
+                <strong>{{ statusLabel(quote.status) }}</strong>
+                <p class="muted">{{ quote.description }}</p>
+              </div>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+</app-portal-page>

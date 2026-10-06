@@ -1,4 +1,8 @@
 <main class="setup-page">
+  @if (signedOut) {
+    <p class="lead">You are signed out of the local business session.</p>
+    <button type="button" class="sign-in" (click)="signIn()">Sign in</button>
+  }
   <header>
     <h1>How Adeni works for your customers</h1>
     <p class="lead">

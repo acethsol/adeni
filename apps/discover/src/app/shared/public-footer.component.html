@@ -1,0 +1,71 @@
+<footer class="footer">
+  <div class="inner">
+    <div class="columns">
+      @for (section of sections(); track section.titleKey) {
+        <div>
+          <h2>{{ label(section.titleKey) }}</h2>
+          <ul>
+            @for (link of section.links; track link.labelKey) {
+              <li>
+                @if (link.external) {
+                  <a [href]="link.href">{{ label(link.labelKey) }}</a>
+                } @else {
+                  <a [routerLink]="link.href.split('?')[0]" [queryParams]="queryParams(link.href)">
+                    {{ label(link.labelKey) }}
+                  </a>
+                }
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </div>
+
+    <div class="bottom">
+      <div class="legal">
+        <span>© {{ year }} Adeni</span>
+        @for (link of legalLinks; track link.labelKey; let last = $last) {
+          <span aria-hidden="true">·</span>
+          <a [routerLink]="link.href">{{ label(link.labelKey) }}</a>
+        }
+      </div>
+
+      <button type="button" class="locale-btn" (click)="openPicker()">
+        <span>{{ languageLabel() }}</span>
+        @if (currencyLabel()) {
+          <span class="dot" aria-hidden="true">·</span>
+          <span>{{ currencyLabel() }}</span>
+        }
+      </button>
+    </div>
+  </div>
+</footer>
+
+@if (pickerOpen()) {
+  <div class="overlay" (click)="closePicker()" role="presentation">
+    <div class="sheet" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Language and region">
+      <header>
+        <div>
+          <h3>{{ label("locale.pickerTitle") }}</h3>
+          <p>{{ label("locale.pickerSubtitle") }}</p>
+        </div>
+        <button type="button" class="close" (click)="closePicker()" aria-label="Close">×</button>
+      </header>
+      <ul>
+        @for (preset of presets(); track preset.id) {
+          <li>
+            <button type="button" [class.active]="isCurrent(preset)" (click)="applyPreset(preset)">
+              <span class="main">
+                <strong>{{ preset.languageLabel }}</strong>
+                <span>{{ preset.regionLabel }} · {{ preset.currency }}</span>
+              </span>
+              @if (isCurrent(preset)) {
+                <span class="check" aria-hidden="true">✓</span>
+              }
+            </button>
+          </li>
+        }
+      </ul>
+    </div>
+  </div>
+}

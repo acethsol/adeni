@@ -45,16 +45,16 @@ Expect `"database": "healthy"` when PostgreSQL is connected.
 
 ## Development sample data
 
-When the API runs in **Development** with PostgreSQL connected, it auto-seeds sample businesses (idempotent — skips slugs that already exist). Each business has one wellness service and Mon–Sat 9:00–17:00 availability.
+When the API runs in **Development** with PostgreSQL connected, it auto-seeds sample businesses (idempotent — skips slugs that already exist). Each business gets the full service menu for its category, plus Mon–Sat 9:00–17:00 availability. Restarting the API fills in any catalog services that are still missing.
 
 Seed matches the Beauty & Wellness wedge: **Lagos + Ottawa** and the seven enabled categories (`hair-grooming`, `nails`, `skincare-aesthetics`, `spa-relaxation`, `massage-bodywork`, `fitness`, `yoga-pilates`). Home services and non-launch cities are not seeded.
 
 | Market | Total | Handcrafted | Generated bulk |
 |--------|-------|-------------|----------------|
-| `lagos` | 133 | 7 | 126 |
-| `ottawa` | 63 | 7 | 56 |
+| `lagos` | 1,400 | 7 | 1,393 |
+| `ottawa` | 602 | 7 | 595 |
 
-**196 businesses.** Generated slugs use `{market}-seed-{category}-{####}` (e.g. `lagos-seed-hair-grooming-0001`). `lekki-cuts` is the local dev-owner business. Restart the API to append any new slugs without resetting the DB.
+**2,002 businesses**, spread evenly across the seven categories. Generated slugs use `{market}-seed-{category}-{####}` (e.g. `lagos-seed-hair-grooming-0001`). `lekki-cuts` is the local dev-owner business. Restart the API to append any new slugs without resetting the DB. The first seed of this set can take a minute or two.
 
 To re-seed from scratch, truncate tenant data (keep `catalog.markets` and `__EFMigrationsHistory`) and restart the API. The seeder will not replace rows whose slugs already exist.
 

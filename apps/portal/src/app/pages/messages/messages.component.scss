@@ -1,26 +1,7 @@
 @use "staff-layout" as *;
 
-.callout {
-  background: #ecfdf5;
-  border-color: #a7f3d0;
-}
-
-.template h3 {
-  margin: 0 0 0.5rem;
-  font-size: 1rem;
-}
-
-.body {
+h3 {
   margin: 0 0 0.75rem;
-  white-space: pre-wrap;
-  font-size: 0.9rem;
-  color: var(--text-muted);
-}
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
 }
 
 .muted {
@@ -29,5 +10,119 @@
 
 .ok {
   color: #065f46;
-  margin-bottom: 0.75rem;
+}
+
+.inbox {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) 1fr;
+  gap: 0.8rem;
+}
+
+.threads ul,
+.chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.threads button {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  padding: 0.75rem 0.15rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+.threads button.active {
+  background: rgb(127 86 255 / 8%);
+}
+
+.who {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+}
+
+.who i {
+  font-style: normal;
+  background: #7f56ff;
+  color: #fff;
+  border-radius: 999px;
+  min-width: 1.1rem;
+  padding: 0 0.3rem;
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+.preview,
+.when {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.transcript {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-height: 12rem;
+  margin-bottom: 0.8rem;
+}
+
+.transcript p {
+  margin: 0;
+  max-width: 80%;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.9rem;
+  background: var(--bg-subtle);
+}
+
+.transcript p.mine {
+  align-self: flex-end;
+  background: #161616;
+  color: #fff;
+}
+
+textarea {
+  width: 100%;
+  margin-bottom: 0.6rem;
+  padding: 0.6rem 0.7rem;
+  border-radius: 0.7rem;
+  border: 1px solid var(--border);
+  font: inherit;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.templates,
+.card + .card {
+  margin-top: 0.8rem;
+}
+
+.wa {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.7rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.wa p {
+  flex: 1 1 100%;
+  margin: 0;
+  color: var(--text-muted);
+}
+
+@media (max-width: 800px) {
+  .inbox {
+    grid-template-columns: 1fr;
+  }
 }

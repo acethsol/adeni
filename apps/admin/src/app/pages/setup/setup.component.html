@@ -1,4 +1,9 @@
 <section class="setup">
+  @if (signedOut) {
+    <h1>Signed out</h1>
+    <p>The local admin session has ended.</p>
+    <button type="button" class="sign-in" (click)="signIn()">Sign in</button>
+  } @else {
   <h1>Configure business portal access</h1>
   <p>
     Set Auth0 SPA credentials in <code>src/environments/environment.development.ts</code>, or keep
@@ -9,4 +14,5 @@
     <li>Create an Auth0 <strong>Single Page Application</strong> (PKCE) for the portal — not the Next confidential client.</li>
     <li>Callback URL: <code>http://localhost:5173</code></li>
   </ul>
+  }
 </section>

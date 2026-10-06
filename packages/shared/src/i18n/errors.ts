@@ -27,6 +27,13 @@ export const enErrorMessages: MessageTree = {
     customer_required: "Sign in to complete this action.",
     business_access_denied: "You do not have access to this business.",
   },
+  tenancy: {
+    public_page: {
+      invalid_template: "Choose a valid public page template.",
+      invalid_accent: "Accent color must be a hex value like #0F766E.",
+      sections_required: "Keep at least one of About, Services, or Visit visible.",
+    },
+  },
   validation: "Please check your input and try again.",
   forbidden: "You do not have permission to perform this action.",
   conflict: "This action could not be completed because of a conflict.",
@@ -62,6 +69,13 @@ export const frErrorMessages: MessageTree = {
     required: "Authentification requise.",
     customer_required: "Connectez-vous pour effectuer cette action.",
     business_access_denied: "Vous n'avez pas accès à cette entreprise.",
+  },
+  tenancy: {
+    public_page: {
+      invalid_template: "Choisissez un modèle de page publique valide.",
+      invalid_accent: "La couleur d'accent doit être un hexadécimal comme #0F766E.",
+      sections_required: "Gardez au moins À propos, Services ou Visite visible.",
+    },
   },
   validation: "Vérifiez vos informations et réessayez.",
   forbidden: "Vous n'avez pas l'autorisation d'effectuer cette action.",
@@ -99,6 +113,13 @@ export const esErrorMessages: MessageTree = {
     customer_required: "Inicia sesión para completar esta acción.",
     business_access_denied: "No tienes acceso a este negocio.",
   },
+  tenancy: {
+    public_page: {
+      invalid_template: "Elige una plantilla de página pública válida.",
+      invalid_accent: "El color de acento debe ser un hex como #0F766E.",
+      sections_required: "Mantén visible al menos Acerca de, Servicios o Visita.",
+    },
+  },
   validation: "Revisa tu información e inténtalo de nuevo.",
   forbidden: "No tienes permiso para realizar esta acción.",
   conflict: "No se pudo completar esta acción debido a un conflicto.",
@@ -124,6 +145,13 @@ export const ptErrorMessages: MessageTree = {
     required: "Autenticação necessária.",
     customer_required: "Entre para concluir esta ação.",
     business_access_denied: "Você não tem acesso a este negócio.",
+  },
+  tenancy: {
+    public_page: {
+      invalid_template: "Escolha um modelo de página pública válido.",
+      invalid_accent: "A cor de destaque deve ser um hex como #0F766E.",
+      sections_required: "Mantenha pelo menos Sobre, Serviços ou Visita visível.",
+    },
   },
   validation: "Verifique suas informações e tente novamente.",
   forbidden: "Você não tem permissão para realizar esta ação.",

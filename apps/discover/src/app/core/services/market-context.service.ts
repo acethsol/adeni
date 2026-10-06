@@ -4,6 +4,7 @@ import {
   formatCoordinatePair,
   MARKET_COOKIE_NAME,
   parseCoordinatePair,
+  listMarkets,
   resolveMarket,
   resolveSearchLocation,
   type MarketConfig,
@@ -37,10 +38,13 @@ export class MarketContextService {
   }
 
   private async doBootstrap(): Promise<void> {
+    const gtmIds = new Set(listMarkets().map((market) => market.id));
     try {
-      this.catalog = await this.api.createPublicClient().getMarkets();
+      const remote = await this.api.createPublicClient().getMarkets();
+      const gtm = remote.filter((market) => gtmIds.has(market.id));
+      this.catalog = gtm.length > 0 ? gtm : listMarkets();
     } catch {
-      this.catalog = [];
+      this.catalog = listMarkets();
     }
 
     this.applyResolution();
@@ -85,6 +89,14 @@ export class MarketContextService {
     );
 
     this.market.set(resolved.market);
-    this.searchLocation.set(resolveSearchLocation(resolved.market, coords));
+    const searchCoords = resolved.source === "geo" ? coords : null;
+    this.searchLocation.set(resolveSearchLocation(resolved.market, searchCoords));
+
+    const cookieIsKnown =
+      !cookieMarket ||
+      this.catalog.some((market) => market.id === cookieMarket);
+    if (cookieMarket && !cookieIsKnown) {
+      writeCookie(MARKET_COOKIE_NAME, "", 0);
+    }
   }
 }

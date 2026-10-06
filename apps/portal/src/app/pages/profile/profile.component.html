@@ -76,7 +76,19 @@
           <ul class="review-list">
             @for (review of reviews(); track review.id) {
               <li>
-                <strong>{{ review.rating }}/5</strong> — {{ review.comment || "No comment" }}
+                <strong>{{ review.customerDisplayName }}</strong>
+                · {{ review.rating }}/5
+                <p>{{ review.comment || "No comment" }}</p>
+                @if (review.ownerReply) {
+                  <p class="muted">Your reply: {{ review.ownerReply }}</p>
+                } @else if (replyingId() === review.id) {
+                  <textarea rows="2" [(ngModel)]="replyDraft"></textarea>
+                  <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="sendReviewReply(review.id)">
+                    Post reply
+                  </button>
+                } @else {
+                  <button type="button" class="btn" (click)="replyingId.set(review.id); replyDraft = ''">Reply</button>
+                }
               </li>
             }
           </ul>
