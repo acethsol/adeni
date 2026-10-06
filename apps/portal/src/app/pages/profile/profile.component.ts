@@ -1,6 +1,9 @@
 import { Component, inject, OnInit, signal } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
 import { KeyValuePipe } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+import { ActivatedRoute } from "@angular/router";
+import { map } from "rxjs";
 import type { BusinessProfile, PublicReviewItem } from "@adeni/shared";
 import {
   formatTenantStatus,
@@ -10,6 +13,7 @@ import {
 import { PortalPageComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
+import { PortalTabsComponent } from "../../shared/portal-tabs.component";
 
 const PHONE_PATTERN = /^\+?[0-9\s-]{7,20}$/;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -18,13 +22,22 @@ const MAX_BYTES = 5 * 1024 * 1024;
 @Component({
   selector: "app-profile",
   standalone: true,
-  imports: [PortalPageComponent, FormsModule, KeyValuePipe],
+  imports: [PortalPageComponent, FormsModule, KeyValuePipe, PortalTabsComponent],
   templateUrl: "./profile.component.html",
   styleUrl: "./profile.component.scss",
 })
 export class ProfileComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
   private readonly config = inject(ADENI_PORTAL_CONFIG);
+  private readonly route = inject(ActivatedRoute);
+  readonly tab = toSignal(this.route.queryParamMap.pipe(map((params) => params.get("tab") ?? "details")), {
+    initialValue: this.route.snapshot.queryParamMap.get("tab") ?? "details",
+  });
+  readonly tabs = [
+    { id: "details", label: "Details" },
+    { id: "reviews", label: "Reviews" },
+    { id: "verification", label: "Verification" },
+  ];
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);

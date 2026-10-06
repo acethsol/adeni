@@ -2,11 +2,10 @@ import { Component, inject, OnInit, signal } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { ActivatedRoute } from "@angular/router";
 import type { BookingResponse } from "@adeni/shared";
-import { formatBookingStatus } from "@adeni/shared";
+import { formatBookingStatus, formatSlotTime } from "@adeni/shared";
 import { PortalPageComponent } from "@adeni/ui";
 import { map } from "rxjs";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { formatSlotTime } from "@adeni/shared";
 import { PortalTabsComponent } from "../../shared/portal-tabs.component";
 
 const PENDING_STATUS = 0;
@@ -68,33 +67,11 @@ export class BookingsComponent implements OnInit {
     return "No pending bookings.";
   }
 
-@Component({
-  selector: "app-bookings",
-  standalone: true,
-  imports: [PortalPageComponent],
-  templateUrl: "./bookings.component.html",
-  styleUrl: "./bookings.component.scss",
-})
-export class BookingsComponent implements OnInit {
-  private readonly api = inject(BusinessApiService);
-
-  readonly loading = signal(true);
-  readonly error = signal<string | null>(null);
-  readonly bookings = signal<BookingResponse[]>([]);
-  readonly actionId = signal<string | null>(null);
-
-  readonly formatSlotTime = formatSlotTime;
-  readonly formatBookingStatus = formatBookingStatus;
-
-  ngOnInit(): void {
-    void this.load();
-  }
-
-  async reject(booking: BookingResponse): Promise<void> {
+  async load(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const items = await this.api.withAuthorizedClient((c) => c.getTenantBookings());
+      const items = await this.api.withAuthorizedClient((client) => client.getTenantBookings());
       this.bookings.set(items);
     } catch {
       this.error.set("Could not load bookings. Check API and dev business sub.");
@@ -119,10 +96,8 @@ export class BookingsComponent implements OnInit {
     this.actionId.set(booking.id);
     this.error.set(null);
     try {
-      const updated = await this.api.withAuthorizedClient((c) =>
-        action === "accept"
-          ? c.acceptTenantBooking(booking.id)
-          : c.rejectTenantBooking(booking.id),
+      const updated = await this.api.withAuthorizedClient((client) =>
+        action === "accept" ? client.acceptTenantBooking(booking.id) : client.rejectTenantBooking(booking.id),
       );
       this.bookings.update((list) => list.map((item) => (item.id === booking.id ? updated : item)));
     } catch {
@@ -131,4 +106,10 @@ export class BookingsComponent implements OnInit {
       this.actionId.set(null);
     }
   }
+}
+
+function startOfToday(): Date {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  return date;
 }

@@ -1,6 +1,8 @@
 import { Component, inject, OnInit, signal } from "@angular/core";
-import { RouterLink } from "@angular/router";
+import { toSignal } from "@angular/core/rxjs-interop";
+import { ActivatedRoute, RouterLink } from "@angular/router";
 import { FormsModule } from "@angular/forms";
+import { map } from "rxjs";
 import {
   formatSlotTime,
   type BusinessProfile,
@@ -11,17 +13,26 @@ import {
 import { PortalPageComponent } from "@adeni/ui";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { PortalTabsComponent } from "../../shared/portal-tabs.component";
 
 @Component({
   selector: "app-messages",
   standalone: true,
-  imports: [PortalPageComponent, FormsModule, RouterLink],
+  imports: [PortalPageComponent, FormsModule, RouterLink, PortalTabsComponent],
   templateUrl: "./messages.component.html",
   styleUrl: "./messages.component.scss",
 })
 export class MessagesComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
   private readonly config = inject(ADENI_PORTAL_CONFIG);
+  private readonly route = inject(ActivatedRoute);
+  readonly tab = toSignal(this.route.queryParamMap.pipe(map((params) => params.get("tab") ?? "inbox")), {
+    initialValue: this.route.snapshot.queryParamMap.get("tab") ?? "inbox",
+  });
+  readonly tabs = [
+    { id: "inbox", label: "Inbox" },
+    { id: "whatsapp", label: "WhatsApp" },
+  ];
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);

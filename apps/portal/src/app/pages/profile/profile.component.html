@@ -9,6 +9,66 @@
   @if (loading()) {
     <p class="muted">Loading…</p>
   } @else if (profile(); as p) {
+    <app-portal-tabs [tabs]="tabs" />
+
+    @if (tab() === "reviews") {
+      <section class="card">
+        <h3>Customer reviews</h3>
+        @if (reviewSummary().count > 0) {
+          <p>{{ reviewSummary().avg?.toFixed(1) }} avg · {{ reviewSummary().count }} reviews</p>
+        }
+        @if (reviews().length === 0) {
+          <p class="muted">No reviews yet.</p>
+        } @else {
+          <ul class="review-list">
+            @for (review of reviews(); track review.id) {
+              <li>
+                <strong>{{ review.customerDisplayName }}</strong>
+                · {{ review.rating }}/5
+                <p>{{ review.comment || "No comment" }}</p>
+                @if (review.ownerReply) {
+                  <p class="muted">Your reply: {{ review.ownerReply }}</p>
+                } @else if (replyingId() === review.id) {
+                  <textarea rows="2" [(ngModel)]="replyDraft"></textarea>
+                  <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="sendReviewReply(review.id)">
+                    Post reply
+                  </button>
+                } @else {
+                  <button type="button" class="btn" (click)="replyingId.set(review.id); replyDraft = ''">Reply</button>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    } @else if (tab() === "verification") {
+      <section class="card">
+        <h3>Verification</h3>
+        <p>{{ formatTenantStatus(p.status) }}</p>
+        @if (canSubmitVerification()) {
+          <div class="field">
+            <label>Document type</label>
+            <select [(ngModel)]="verificationDocType">
+              @for (label of verificationLabels | keyvalue; track label.key) {
+                <option [ngValue]="+label.key">{{ label.value }}</option>
+              }
+            </select>
+          </div>
+          <div class="field">
+            <label>Reference number</label>
+            <input [(ngModel)]="verificationReference" />
+          </div>
+          <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="submitVerification()">
+            Submit for review
+          </button>
+        } @else {
+          <p class="muted">This business is not waiting on a new verification submission.</p>
+        }
+        @if (verificationMessage()) {
+          <p class="ok">{{ verificationMessage() }}</p>
+        }
+      </section>
+    } @else {
     @if (primarySlug()) {
       <section class="card span-all share">
         <h3>Share kit</h3>
@@ -66,57 +126,6 @@
       </section>
 
       <section class="card span-2">
-        <h3>Customer reviews</h3>
-        @if (reviewSummary().count > 0) {
-          <p>{{ reviewSummary().avg?.toFixed(1) }} avg · {{ reviewSummary().count }} reviews</p>
-        }
-        @if (reviews().length === 0) {
-          <p class="muted">No reviews yet.</p>
-        } @else {
-          <ul class="review-list">
-            @for (review of reviews(); track review.id) {
-              <li>
-                <strong>{{ review.customerDisplayName }}</strong>
-                · {{ review.rating }}/5
-                <p>{{ review.comment || "No comment" }}</p>
-                @if (review.ownerReply) {
-                  <p class="muted">Your reply: {{ review.ownerReply }}</p>
-                } @else if (replyingId() === review.id) {
-                  <textarea rows="2" [(ngModel)]="replyDraft"></textarea>
-                  <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="sendReviewReply(review.id)">
-                    Post reply
-                  </button>
-                } @else {
-                  <button type="button" class="btn" (click)="replyingId.set(review.id); replyDraft = ''">Reply</button>
-                }
-              </li>
-            }
-          </ul>
-        }
-      </section>
-
-      @if (canSubmitVerification()) {
-        <section class="card span-2">
-          <h3>Submit verification</h3>
-          <div class="field">
-            <label>Document type</label>
-            <select [(ngModel)]="verificationDocType">
-              @for (label of verificationLabels | keyvalue; track label.key) {
-                <option [ngValue]="+label.key">{{ label.value }}</option>
-              }
-            </select>
-          </div>
-          <div class="field">
-            <label>Reference number</label>
-            <input [(ngModel)]="verificationReference" />
-          </div>
-          <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="submitVerification()">
-            Submit for review
-          </button>
-        </section>
-      }
-
-      <section class="card span-2">
         <h3>Booking settings</h3>
         <label class="check">
           <input type="checkbox" [(ngModel)]="autoConfirm" />
@@ -131,5 +140,6 @@
         </button>
       </section>
     </div>
+    }
   }
 </app-portal-page>

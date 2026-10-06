@@ -1,0 +1,198 @@
+@if (loading() && !data()) {
+  <p class="muted">Loading operations…</p>
+} @else if (data(); as snapshot) {
+  <header class="head">
+    <div>
+      <p class="kicker">Operations</p>
+      <h2>{{ headline() }}</h2>
+    </div>
+    <button type="button" class="refresh" [disabled]="loading()" (click)="load()">
+      {{ loading() ? "Refreshing…" : "Refresh" }}
+    </button>
+  </header>
+
+  @if (snapshot.pending === null || snapshot.businesses === null || snapshot.markets === null) {
+    <p class="warn">Some figures could not be loaded. Refresh to try again.</p>
+  }
+
+  <section class="kpis" aria-label="Operations summary">
+    <a class="kpi" routerLink="/pending" [class.alert]="(pending()?.length ?? 0) > 0">
+      <p class="kpi-label">Waiting</p>
+      <p class="kpi-value">{{ pending() === null ? "—" : pending()!.length }}</p>
+      <p class="kpi-hint">
+        @if (queue().length > 0) {
+          Oldest {{ ageLabel(queue()[0].createdAt) }}
+        } @else if (pending() === null) {
+          Queue unavailable
+        } @else {
+          Nothing in the queue
+        }
+      </p>
+    </a>
+    <a class="kpi" routerLink="/businesses">
+      <p class="kpi-label">Verified</p>
+      <p class="kpi-value">{{ verifiedCount() === null ? "—" : verifiedCount() }}</p>
+      <p class="kpi-hint">
+        @if (businesses(); as items) {
+          of {{ items.length }} businesses
+        } @else {
+          Business list unavailable
+        }
+      </p>
+    </a>
+    <a class="kpi" routerLink="/markets">
+      <p class="kpi-label">Live markets</p>
+      <p class="kpi-value">{{ liveCount() === null ? "—" : liveCount() }}</p>
+      <p class="kpi-hint">
+        @if (markets(); as items) {
+          of {{ items.length }} configured
+        } @else {
+          Market list unavailable
+        }
+      </p>
+    </a>
+    <a class="kpi" routerLink="/businesses">
+      <p class="kpi-label">Paid plans</p>
+      <p class="kpi-value">{{ paidCount() === null ? "—" : paidCount() }}</p>
+      <p class="kpi-hint">Pro and Business tiers</p>
+    </a>
+  </section>
+
+  <div class="grid">
+    <section class="panel">
+      <div class="panel-head">
+        <h3>Verification queue</h3>
+        <a routerLink="/pending">Review</a>
+      </div>
+      @if (pending() === null) {
+        <p class="empty">Could not load businesses waiting for verification.</p>
+      } @else if (queue().length === 0) {
+        <p class="empty">Nothing is waiting. New applications will show up here.</p>
+      } @else {
+        <ul class="rows">
+          @for (item of queue().slice(0, 6); track item.id) {
+            <li>
+              <a [routerLink]="['/pending']" [queryParams]="{ q: item.slug }">
+                <span>
+                  <strong>{{ item.name }}</strong>
+                  <span class="muted">{{ item.marketId }} · {{ ageLabel(item.createdAt) }}</span>
+                </span>
+                <span class="meta">{{ item.documents?.length ?? 0 }} docs</span>
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h3>Markets</h3>
+        <a routerLink="/markets">Manage</a>
+      </div>
+      @if (markets() === null) {
+        <p class="empty">Could not load markets.</p>
+      } @else if (markets()!.length === 0) {
+        <p class="empty">No markets are configured.</p>
+      } @else {
+        <ul class="rows">
+          @for (market of markets()!; track market.id) {
+            <li>
+              <a routerLink="/markets">
+                <span>
+                  <strong>{{ market.name }}</strong>
+                  <span class="muted">{{ market.countryCode }} · {{ market.currency }}</span>
+                </span>
+                <span class="pill" [class.live]="market.isLive">{{ market.isLive ? "Live" : "Offline" }}</span>
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  </div>
+
+  <div class="grid">
+    <section class="panel">
+      <div class="panel-head">
+        <h3>Business status</h3>
+      </div>
+      @if (businesses() === null) {
+        <p class="empty">Could not load businesses.</p>
+      } @else if (businesses()!.length === 0) {
+        <p class="empty">No businesses yet.</p>
+      } @else {
+        <div class="stack" aria-hidden="true">
+          @for (row of statusMix(); track row.key) {
+            @if (row.count > 0) {
+              <span [class]="row.tone" [style.flex-grow]="row.count"></span>
+            }
+          }
+        </div>
+        <ul class="legend">
+          @for (row of statusMix(); track row.key) {
+            <li>
+              <i [class]="row.tone"></i>
+              {{ row.label }}
+              <strong>{{ row.count }}</strong>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h3>Plans</h3>
+      </div>
+      @if (businesses() === null) {
+        <p class="empty">Could not load plans.</p>
+      } @else if (businesses()!.length === 0) {
+        <p class="empty">No businesses yet.</p>
+      } @else {
+        <div class="stack" aria-hidden="true">
+          @for (row of tierMix(); track row.key) {
+            @if (row.count > 0) {
+              <span [class]="row.tone" [style.flex-grow]="row.count"></span>
+            }
+          }
+        </div>
+        <ul class="legend">
+          @for (row of tierMix(); track row.key) {
+            <li>
+              <i [class]="row.tone"></i>
+              {{ row.label }}
+              <strong>{{ row.count }}</strong>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  </div>
+
+  <section class="panel recent">
+    <div class="panel-head">
+      <h3>Newest businesses</h3>
+      <a routerLink="/businesses">All businesses</a>
+    </div>
+    @if (businesses() === null) {
+      <p class="empty">Could not load businesses.</p>
+    } @else if (recent().length === 0) {
+      <p class="empty">No businesses yet.</p>
+    } @else {
+      <ul class="rows">
+        @for (item of recent(); track item.id) {
+          <li>
+            <a [routerLink]="['/businesses']" [queryParams]="{ q: item.slug }">
+              <span>
+                <strong>{{ item.name }}</strong>
+                <span class="muted">{{ formatTenantStatus(item.status) }} · {{ tierLabel(item.subscriptionTier) }}</span>
+              </span>
+              <span class="meta">{{ shortDate(item.createdAt) }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+}

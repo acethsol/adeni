@@ -1,22 +1,34 @@
 import { Component, inject, OnInit, signal } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
+import { ActivatedRoute } from "@angular/router";
+import { map } from "rxjs";
 import type { BusinessProfile, PaymentLedgerEntry } from "@adeni/shared";
 import { hasCapability } from "@adeni/shared";
 import { PortalPageComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { formatPrice } from "@adeni/shared";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
+import { PortalTabsComponent } from "../../shared/portal-tabs.component";
 
 @Component({
   selector: "app-payments",
   standalone: true,
-  imports: [PortalPageComponent, FormsModule],
+  imports: [PortalPageComponent, FormsModule, PortalTabsComponent],
   templateUrl: "./payments.component.html",
   styleUrl: "./payments.component.scss",
 })
 export class PaymentsComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
   private readonly config = inject(ADENI_PORTAL_CONFIG);
+  private readonly route = inject(ActivatedRoute);
+  readonly tab = toSignal(this.route.queryParamMap.pipe(map((params) => params.get("tab") ?? "links")), {
+    initialValue: this.route.snapshot.queryParamMap.get("tab") ?? "links",
+  });
+  readonly tabs = [
+    { id: "links", label: "Links" },
+    { id: "ledger", label: "Ledger" },
+  ];
 
   readonly loading = signal(true);
   readonly creating = signal(false);

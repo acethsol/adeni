@@ -12,11 +12,27 @@
   @if (loading()) {
     <p class="muted">Loading conversations…</p>
   } @else {
+    <app-portal-tabs [tabs]="tabs" />
+
+    @if (tab() === "whatsapp") {
+    <section class="card">
+      <h3>WhatsApp</h3>
+      <p class="muted">Use these when the client is on WhatsApp instead of Adeni.</p>
+      @for (item of whatsAppNotes(); track item.title) {
+        <div class="wa">
+          <strong>{{ item.title }}</strong>
+          <p>{{ item.body }}</p>
+          <a class="btn btn-primary" [href]="whatsAppUrl(item.body)" target="_blank" rel="noopener">Open WhatsApp</a>
+          <button type="button" class="btn" (click)="copy(item.body)">Copy</button>
+        </div>
+      }
+    </section>
+    } @else {
     @if (messagingLocked()) {
       <section class="card lock">
         <h3>In-app threads are on Pro</h3>
         <p class="muted">
-          Free includes WhatsApp notes below. Upgrade when you want booking conversations inside Adeni.
+          Free includes WhatsApp notes. Upgrade when you want booking conversations inside Adeni.
         </p>
         <a class="btn btn-primary" routerLink="/plan">See plans</a>
       </section>
@@ -87,17 +103,8 @@
       </section>
     }
 
-    <section class="card">
-      <h3>WhatsApp</h3>
-      <p class="muted">Use these when the client is on WhatsApp instead of Adeni.</p>
-      @for (item of whatsAppNotes(); track item.title) {
-        <div class="wa">
-          <strong>{{ item.title }}</strong>
-          <p>{{ item.body }}</p>
-          <a class="btn btn-primary" [href]="whatsAppUrl(item.body)" target="_blank" rel="noopener">Open WhatsApp</a>
-          <button type="button" class="btn" (click)="copy(item.body)">Copy</button>
-        </div>
-      }
-    </section>
+      </div>
+    }
+    }
   }
 </app-portal-page>
