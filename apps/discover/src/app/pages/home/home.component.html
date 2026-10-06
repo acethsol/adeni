@@ -23,8 +23,8 @@
       </section>
     }
 
-    <section [class.spaced]="featured().length > 0">
-      <header class="section-head">
+    <section class="categories" [class.spaced]="featured().length > 0">
+      <header class="section-head categories-head">
         <div>
           <h2>{{ browseCategoryTitle() }}</h2>
           <p class="muted">{{ browseCategoryDescription() }}</p>
@@ -34,21 +34,15 @@
       @if (offlineMessage(); as message) {
         <p class="note">{{ message }}</p>
       } @else if (categories().length > 0) {
-        <div class="chips">
-          @for (category of categories(); track category.id) {
-            <a [routerLink]="['/discover']" [queryParams]="{ category: category.slug }">
-              <span aria-hidden="true">{{ categoryVisual(category).icon }}</span>
-              {{ categoryLabel(category.slug, category.name) }}
-            </a>
-          }
-        </div>
-
         @for (group of categoryGroups(); track group.slug) {
           <div class="group">
-            <h3>{{ group.icon }} {{ group.label }}</h3>
-            <ul class="grid">
-              @for (category of group.items; track category.id) {
-                <li>
+            <header class="group-head">
+              <h3>{{ group.label }}</h3>
+              <span class="group-rule" aria-hidden="true"></span>
+            </header>
+            <ul class="mosaic">
+              @for (category of group.items; track category.id; let i = $index) {
+                <li [class.featured-tile]="i === 0">
                   <a
                     class="tile"
                     [routerLink]="['/discover']"
@@ -57,7 +51,12 @@
                     [style.--tile-end]="categoryVisual(category).gradient[1]"
                   >
                     <img [src]="categoryVisual(category).imageUrl" alt="" />
-                    <span>{{ categoryVisual(category).icon }} {{ categoryLabel(category.slug, category.name) }}</span>
+                    <span class="wash" aria-hidden="true"></span>
+                    <span class="glyph" aria-hidden="true">{{ categoryVisual(category).icon }}</span>
+                    <span class="tile-copy">
+                      <span class="tile-name">{{ categoryLabel(category.slug, category.name) }}</span>
+                      <span class="tile-cta">{{ browseCta() }} →</span>
+                    </span>
                   </a>
                 </li>
               }

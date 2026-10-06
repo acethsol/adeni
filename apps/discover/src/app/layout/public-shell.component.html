@@ -1,11 +1,18 @@
 <app-market-geo-sync />
 <div class="shell">
-  <header class="header" [class.pinned]="homeLayout() && searchPinned()">
+  <header
+    class="header"
+    [class.pinned]="headerCompact()"
+    [class.with-search]="showHeaderSearch() && !headerCompact()"
+    [style.--h1]="headerTone().h1"
+    [style.--h2]="headerTone().h2"
+    [style.--h3]="headerTone().h3"
+  >
     <a class="brand" routerLink="/">
-      <adeni-brand-lockup class="mark" [height]="36" surface="light" />
+      <adeni-brand-lockup class="mark" [height]="headerBrandHeight()" surface="light" />
     </a>
 
-    <nav class="nav">
+    <nav class="nav" aria-label="Primary" [class.hidden-when-pinned]="headerCompact()">
       <a routerLink="/discover" routerLinkActive="active">Explore</a>
       <a routerLink="/my-bookings" routerLinkActive="active">My bookings</a>
       @if (portalUrl; as businessUrl) {
@@ -13,9 +20,9 @@
       }
     </nav>
 
-    <div class="header-search" [class.visible]="homeLayout() && searchPinned()">
-      @if (homeLayout() && searchPinned()) {
-        <app-discovery-search variant="compact" />
+    <div class="header-search" [class.visible]="showHeaderSearch()">
+      @if (showHeaderSearch()) {
+        <app-discovery-search variant="compact" [initialQuery]="searchQuery()" />
       }
     </div>
 
@@ -25,23 +32,42 @@
           type="button"
           class="market-switch"
           [attr.aria-expanded]="marketMenuOpen()"
+          [attr.aria-label]="'City: ' + (market.market()?.name ?? 'Lagos')"
           (click)="toggleMarketMenu()"
         >
-          <span class="pin" aria-hidden="true"></span>
-          <span>{{ market.market()?.name ?? "Lagos" }}</span>
-          <span class="chevron" aria-hidden="true">▾</span>
+          <span class="place-mark" [attr.data-market]="market.market()?.id ?? 'lagos'" aria-hidden="true">
+            <span class="place-orb"></span>
+            <span class="place-glyph"></span>
+          </span>
+          <span class="market-copy">
+            <span class="market-kicker">Exploring</span>
+            <span class="market-name">{{ market.market()?.name ?? "Lagos" }}</span>
+          </span>
+          <span class="chevron" aria-hidden="true"></span>
         </button>
         @if (marketMenuOpen()) {
-          <div class="market-menu" role="listbox">
+          <div class="market-menu" role="listbox" aria-label="Choose a city">
+            <p class="menu-label">Choose a city</p>
             @for (m of markets; track m.id) {
               <button
                 type="button"
                 role="option"
                 [class.active]="market.market()?.id === m.id"
+                [attr.aria-selected]="market.market()?.id === m.id"
+                [attr.data-market]="m.id"
                 (click)="selectMarket(m.id)"
               >
-                <span class="pin" aria-hidden="true"></span>
-                {{ m.name }}
+                <span class="place-mark" [attr.data-market]="m.id" aria-hidden="true">
+                  <span class="place-orb"></span>
+                  <span class="place-glyph"></span>
+                </span>
+                <span class="market-copy">
+                  <span class="market-name">{{ m.name }}</span>
+                  <span class="market-meta">{{ marketPlaceLine(m.id) }}</span>
+                </span>
+                @if (market.market()?.id === m.id) {
+                  <span class="check" aria-hidden="true"></span>
+                }
               </button>
             }
           </div>
@@ -59,6 +85,7 @@
         <span class="dev">Dev customer</span>
       }
     </div>
+    <span class="header-accent" aria-hidden="true"></span>
   </header>
   <main [class.flush]="flushLayout()">
     <router-outlet />

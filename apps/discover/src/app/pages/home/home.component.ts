@@ -70,6 +70,7 @@ export class HomeComponent implements OnInit {
   readonly browseCategoryDescription = computed(() =>
     t(this.locale(), "home.browseCategoryDescription"),
   );
+  readonly browseCta = computed(() => t(this.locale(), "home.browseCta"));
 
   readonly loading = signal(true);
   readonly offlineMessage = signal<string | null>(null);

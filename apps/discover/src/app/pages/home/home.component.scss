@@ -11,13 +11,19 @@
   gap: 1rem;
 }
 
-.section-head h2 {
+.section-head h2,
+.categories-head h2 {
   margin: 0;
-  font-size: 1.35rem;
+  font-family: "Fraunces", "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+  font-size: clamp(1.55rem, 2.4vw, 2rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
 }
 
 .section-head p {
-  margin: 0.35rem 0 0;
+  margin: 0.4rem 0 0;
+  max-width: 34rem;
 }
 
 .section-head > a {
@@ -28,7 +34,7 @@
 }
 
 .spaced {
-  margin-top: 3rem;
+  margin-top: 3.25rem;
 }
 
 .muted {
@@ -44,50 +50,66 @@
   grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
 }
 
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 1.25rem;
-}
-
-.chips a {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.4rem 0.7rem;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--surface);
-  color: var(--text);
-  text-decoration: none;
-  font-size: 0.9rem;
-}
-
 .group {
-  margin-top: 2rem;
+  margin-top: 2.35rem;
 }
 
-.group h3 {
+.group-head {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 0.85rem;
+}
+
+.group-head h3 {
   margin: 0;
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--accent);
+  font-family: "Fraunces", "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: color-mix(in srgb, #1b4332 75%, #12141a);
+  white-space: nowrap;
+}
+
+.group-rule {
+  display: block;
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgb(22 22 22 / 14%), transparent 90%);
+}
+
+.mosaic {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: 8.75rem;
+}
+
+.featured-tile {
+  grid-column: span 2;
+  grid-row: span 2;
 }
 
 .tile {
+  --tile-start: #1b4332;
+  --tile-end: #40916c;
+
   position: relative;
-  display: flex;
-  align-items: flex-end;
-  min-height: 9.5rem;
-  padding: 1rem;
-  border-radius: 0.85rem;
+  display: block;
+  height: 100%;
+  min-height: 8.75rem;
   overflow: hidden;
+  border-radius: 0.4rem;
   color: #fff;
   text-decoration: none;
-  background: linear-gradient(160deg, var(--tile-start, #1b4332), var(--tile-end, #40916c));
+  background: linear-gradient(160deg, var(--tile-start), var(--tile-end));
+}
+
+.featured-tile .tile {
+  min-height: 100%;
 }
 
 .tile img {
@@ -96,20 +118,94 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 480ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.tile span {
-  position: relative;
-  z-index: 1;
-  font-weight: 700;
-  text-shadow: 0 1px 8px rgb(0 0 0 / 45%);
-}
-
-.tile::after {
-  content: "";
+.wash {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgb(0 0 0 / 55%), rgb(0 0 0 / 5%) 55%);
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      transparent 28%,
+      color-mix(in srgb, var(--tile-start) 55%, rgb(0 0 0 / 55%)) 100%
+    ),
+    linear-gradient(
+      125deg,
+      color-mix(in srgb, var(--tile-start) 35%, transparent),
+      transparent 50%,
+      color-mix(in srgb, var(--tile-end) 28%, transparent)
+    );
+}
+
+.glyph {
+  position: absolute;
+  top: 0.7rem;
+  left: 0.75rem;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 16%);
+  backdrop-filter: blur(6px);
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.tile-copy {
+  position: absolute;
+  z-index: 1;
+  left: 0.9rem;
+  right: 0.9rem;
+  bottom: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.tile-name {
+  font-family: "Fraunces", "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  text-shadow: 0 1px 10px rgb(0 0 0 / 35%);
+}
+
+.featured-tile .tile-name {
+  font-size: clamp(1.35rem, 2vw, 1.7rem);
+}
+
+.tile-cta {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.tile:hover img,
+.tile:focus-visible img {
+  transform: scale(1.05);
+}
+
+.tile:hover .tile-cta,
+.tile:focus-visible .tile-cta {
+  opacity: 0.95;
+  transform: translateY(0);
+}
+
+.tile:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--tile-start) 70%, #fff);
+  outline-offset: 3px;
 }
 
 .note {
@@ -121,9 +217,52 @@
   color: var(--text);
 }
 
+@media (max-width: 960px) {
+  .mosaic {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: 9rem;
+  }
+}
+
 @media (max-width: 640px) {
   .section-head {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .mosaic {
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: 8.25rem;
+    gap: 0.65rem;
+  }
+
+  .featured-tile {
+    grid-column: span 2;
+    grid-row: span 1;
+  }
+
+  .featured-tile .tile {
+    min-height: 11rem;
+  }
+
+  .featured-tile .tile-name {
+    font-size: 1.3rem;
+  }
+
+  .tile-cta {
+    opacity: 0.9;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile img,
+  .tile-cta {
+    transition: none;
+  }
+
+  .tile:hover img,
+  .tile:focus-visible img {
+    transform: none;
   }
 }

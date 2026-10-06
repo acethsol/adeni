@@ -18,6 +18,7 @@
         autocomplete="off"
         role="combobox"
         [attr.aria-expanded]="open()"
+        [attr.aria-controls]="open() ? 'discover-search-suggestions' : null"
         [attr.aria-label]="findServices"
         (focus)="open.set(true)"
       />
@@ -28,33 +29,18 @@
   }
 
   @if (open()) {
-    <div class="panel" role="listbox">
-      <div class="panel-head">
-        <p class="ask-title">✦ {{ askTitle }}</p>
-        <p class="ask-desc">{{ askDescription }}</p>
-      </div>
-      <div class="panel-body">
-        <p class="try">{{ tryAsking }}</p>
-        <div class="chips">
-          @for (prompt of prompts; track prompt) {
-            <button type="button" role="option" (mousedown)="$event.preventDefault()" (click)="navigate(prompt)">
-              {{ prompt }}
-            </button>
-          }
-        </div>
-        <button
-          type="button"
-          class="find"
-          [disabled]="!query.trim()"
-          (mousedown)="$event.preventDefault()"
-          (click)="submit()"
-        >
-          {{ findServices }}
-        </button>
-        @if (hint(); as h) {
-          <p class="hint">{{ h }}</p>
+    <div class="panel" id="discover-search-suggestions" role="listbox" [attr.aria-label]="tryAsking">
+      <p class="try">{{ tryAsking }}</p>
+      <div class="chips">
+        @for (prompt of prompts; track prompt) {
+          <button type="button" role="option" (mousedown)="$event.preventDefault()" (click)="navigate(prompt)">
+            {{ prompt }}
+          </button>
         }
       </div>
+      @if (hint(); as h) {
+        <p class="hint">{{ h }}</p>
+      }
     </div>
   }
 </div>

@@ -1,6 +1,12 @@
-<a class="card" [routerLink]="['/businesses', item().slug]">
+<a
+  class="card"
+  [routerLink]="['/businesses', item().slug]"
+  [style.--g1]="tone().g1"
+  [style.--g2]="tone().g2"
+>
   <div class="media">
     <img [src]="coverFor(item().categorySlug, item().coverImageUrl)" alt="" />
+    <span class="wash" aria-hidden="true"></span>
 
     <div class="badges trust" aria-label="Trust signals">
       @if (isVerified()) {
@@ -14,23 +20,7 @@
           {{ verifiedLabel() }}
         </span>
       }
-      @for (badge of extraBadges(); track badge) {
-        <span class="badge">
-          <span class="icon-text" aria-hidden="true">{{ badgeIcon(badge) }}</span>
-          {{ badge }}
-        </span>
-      }
-    </div>
-
-    <div class="badges review" aria-label="Reviews">
-      @if (hasReviews()) {
-        <span class="badge rating">
-          <span class="icon-text" aria-hidden="true">★</span>
-          {{ item().ratingAvg | number: "1.1-1" }}
-          <span class="sep">·</span>
-          {{ item().reviewCount }}
-        </span>
-      } @else {
+      @if (!hasReviews()) {
         <span class="badge new">
           <svg class="icon" viewBox="0 0 16 16" aria-hidden="true">
             <path
@@ -48,11 +38,19 @@
   </div>
 
   <div class="body">
-    @if (headingLevel() === "h2") {
-      <h2>{{ item().name }}</h2>
-    } @else {
-      <h3>{{ item().name }}</h3>
-    }
+    <div class="title-row">
+      @if (headingLevel() === "h2") {
+        <h2>{{ item().name }}</h2>
+      } @else {
+        <h3>{{ item().name }}</h3>
+      }
+      @if (hasReviews()) {
+        <span class="inline-rating" aria-label="Reviews">
+          <span aria-hidden="true">★</span>
+          {{ item().ratingAvg | number: "1.1-1" }}
+        </span>
+      }
+    </div>
 
     <p class="meta">
       {{ categoryName() }}

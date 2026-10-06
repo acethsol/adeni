@@ -1,4 +1,4 @@
-import { Component, effect, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, effect, inject, OnInit, signal } from "@angular/core";
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
 import { listMarkets } from "@adeni/shared";
 import { filter } from "rxjs";
@@ -14,6 +14,12 @@ import { DiscoverySearchComponent } from "../shared/discovery-search.component";
 import { MarketGeoSyncComponent } from "../shared/market-geo-sync.component";
 import { PublicFooterComponent } from "../shared/public-footer.component";
 import { AdeniBrandLockupComponent } from "@adeni/ui";
+
+/** Soft header atmosphere per market — Lagos warmer, Ottawa cooler/bluer. */
+const MARKET_HEADER_TONES: Record<string, { h1: string; h2: string; h3: string }> = {
+  lagos: { h1: "#1b4332", h2: "#13c2a3", h3: "#d8a23a" },
+  ottawa: { h1: "#123b4a", h2: "#2a9d8f", h3: "#7eb8c9" },
+};
 
 @Component({
   selector: "app-public-shell",
@@ -41,10 +47,22 @@ export class PublicShellComponent implements OnInit {
   readonly devCustomerMode = isDiscoverCustomerDevMode(this.config);
   readonly signedIn = signal(this.devCustomerMode);
   readonly homeLayout = signal(this.isHome(this.router.url));
+  readonly exploreLayout = signal(this.isExplore(this.router.url));
   readonly flushLayout = signal(this.isFlush(this.router.url));
   readonly searchPinned = this.heroPin.pinned;
+  readonly searchQuery = signal(this.readSearchQuery(this.router.url));
+  readonly showHeaderSearch = computed(
+    () => this.exploreLayout() || (this.homeLayout() && this.searchPinned()),
+  );
+  /** Home scroll-pin only — explores keeps nav + search together. */
+  readonly headerCompact = computed(() => this.homeLayout() && this.searchPinned());
   readonly marketMenuOpen = signal(false);
   readonly markets = listMarkets();
+  readonly headerTone = computed(() => {
+    const id = this.market.market()?.id ?? "lagos";
+    return MARKET_HEADER_TONES[id] ?? MARKET_HEADER_TONES["lagos"];
+  });
+  readonly headerBrandHeight = computed(() => (this.headerCompact() ? 30 : 36));
 
   get portalUrl(): string | null {
     const origin = this.config.portalAppUrl.trim();
@@ -80,9 +98,18 @@ export class PublicShellComponent implements OnInit {
     this.marketMenuOpen.set(false);
   }
 
+  marketPlaceLine(marketId: string): string {
+    if (marketId === "ottawa") {
+      return "Canada · Rideau";
+    }
+    return "Nigeria · Atlantic";
+  }
+
   private syncMarketQuery(): void {
     this.homeLayout.set(this.isHome(this.router.url));
+    this.exploreLayout.set(this.isExplore(this.router.url));
     this.flushLayout.set(this.isFlush(this.router.url));
+    this.searchQuery.set(this.readSearchQuery(this.router.url));
     const market = this.router.parseUrl(this.router.url).queryParams["market"];
     if (typeof market === "string" && market.trim()) {
       this.market.applyMarketQueryParam(market);
@@ -92,6 +119,16 @@ export class PublicShellComponent implements OnInit {
   private isHome(url: string): boolean {
     const primary = this.router.parseUrl(url).root.children["primary"];
     return !primary || primary.segments.length === 0;
+  }
+
+  private isExplore(url: string): boolean {
+    const primary = this.router.parseUrl(url).root.children["primary"];
+    return primary?.segments[0]?.path === "discover";
+  }
+
+  private readSearchQuery(url: string): string {
+    const q = this.router.parseUrl(url).queryParams["q"];
+    return typeof q === "string" ? q : "";
   }
 
   private isFlush(url: string): boolean {

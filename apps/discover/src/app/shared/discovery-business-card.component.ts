@@ -5,17 +5,11 @@ import type { DiscoveryBusinessItem } from "@adeni/shared";
 import {
   formatRatingSummary,
   getCategoryLabel,
+  getCategoryVisual,
   resolveBusinessCoverImage,
   t,
 } from "@adeni/shared";
 import { AdeniLocaleService } from "@adeni/ui";
-
-const BADGE_LABELS: Record<string, string> = {
-  phone: "Phone",
-  cac: "CAC",
-  address: "Address",
-  license: "License",
-};
 
 @Component({
   selector: "app-discovery-business-card",
@@ -37,6 +31,11 @@ export class DiscoveryBusinessCardComponent {
     getCategoryLabel(this.locale(), this.item().categorySlug),
   );
 
+  readonly tone = computed(() => {
+    const [g1, g2] = getCategoryVisual(this.item().categorySlug).gradient;
+    return { g1, g2 };
+  });
+
   readonly verifiedLabel = computed(() => t(this.locale(), "business.verified"));
   /** "New" when there are no reviews yet. */
   readonly newLabel = computed(() => formatRatingSummary(null, 0));
@@ -47,27 +46,4 @@ export class DiscoveryBusinessCardComponent {
     const item = this.item();
     return item.ratingAvg != null && (item.reviewCount ?? 0) > 0;
   });
-
-  readonly extraBadges = computed(() => {
-    const badges = this.item().verificationBadges ?? [];
-    return badges
-      .map((badge) => badge.trim().toLowerCase())
-      .filter((badge) => badge.length > 0)
-      .map((badge) => BADGE_LABELS[badge] ?? badge);
-  });
-
-  badgeIcon(label: string): string {
-    switch (label) {
-      case "Phone":
-        return "☎";
-      case "CAC":
-        return "▣";
-      case "Address":
-        return "⌖";
-      case "License":
-        return "▤";
-      default:
-        return "•";
-    }
-  }
 }
