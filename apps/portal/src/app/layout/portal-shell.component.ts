@@ -549,10 +549,62 @@ export class PortalShellComponent {
     this.searchOpen.set(false);
   }
 
+  private crumbsForUrl(url: string): { label: string; path?: string }[] {
+    const match = findPortalNavItem(url) ?? findPortalNavItem(PORTAL_NAV[0].path);
+    if (!match) {
+      return [{ label: this.text("groupToday") }];
+    }
+    const crumbs = [
+      { label: this.groupLabel(match.group) },
+      { label: this.navLabel(match.item), path: match.item.tabs ? match.item.path : undefined },
+    ];
+    const tabId = activePortalTab(url, match.item.tabs);
+    const tab = match.item.tabs?.find((entry) => entry.id === tabId);
+    if (tab) {
+      crumbs.push({ label: this.tabLabel(tab.id) });
+    }
+    return crumbs;
+  }
+
+  private tabLabel(id: string): string {
+    const key: ChromeKey | null =
+      id === "pending" ? "tabPending"
+      : id === "upcoming" ? "tabUpcoming"
+      : id === "past" ? "tabPast"
+      : id === "details" ? "tabDetails"
+      : id === "reviews" ? "tabReviews"
+      : id === "verification" ? "tabVerification"
+      : id === "inbox" ? "tabInbox"
+      : id === "whatsapp" ? "tabWhatsapp"
+      : id === "links" ? "tabLinks"
+      : id === "ledger" ? "tabLedger"
+      : null;
+    return key ? this.text(key) : id;
+  }
+
+  private groupsForProfile(): PortalNavGroup[] {
+    const profile = this.profile();
+    const capabilities = profile
+      ? resolveCapabilities(profile.businessType, profile.categorySlug, profile.capabilities)
+      : null;
+    return PORTAL_NAV_GROUPS.map((group) => ({
+      ...group,
+      items: group.items.filter((item) => {
+        if (item.unregisteredOnly) {
+          return this.profileLoaded() && !profile;
+        }
+        if (!capabilities) {
+          return true;
+        }
+        return !item.capability || hasCapability(capabilities, item.capability);
+      }),
+    })).filter((group) => group.items.length > 0);
+  }
+
   private labelForUrl(url: string): string {
     const path = url.split("?")[0] ?? "";
-    const item = this.nav.find((entry) => path === entry.path || (!entry.exact && path.startsWith(`${entry.path}/`)));
-    return item ? this.navLabel(item) : this.navLabel(this.nav[0]);
+    const item = PORTAL_NAV.find((entry) => path === entry.path || (!entry.exact && path.startsWith(`${entry.path}/`)));
+    return item ? this.navLabel(item) : this.navLabel(PORTAL_NAV[0]);
   }
 
   private applyTheme(theme: PortalTheme): void {
@@ -567,8 +619,27 @@ export class PortalShellComponent {
       if (profile?.businessName && this.devMode) {
         this.accountName.set(profile.businessName);
       }
+      await this.loadBadges();
     } catch {
       this.profile.set(null);
+    } finally {
+      this.profileLoaded.set(true);
+    }
+  }
+
+  private async loadBadges(): Promise<void> {
+    try {
+      const [bookings, unread] = await this.businessApi.withAuthorizedClient((client) =>
+        Promise.all([
+          client.getTenantBookings().catch(() => []),
+          client.getTenantMessageUnreadCount().catch(() => 0),
+        ]),
+      );
+      this.pendingBookings.set(bookings.filter((booking) => booking.status === 0).length);
+      this.unreadMessages.set(unread);
+    } catch {
+      this.pendingBookings.set(0);
+      this.unreadMessages.set(0);
     }
   }
 
