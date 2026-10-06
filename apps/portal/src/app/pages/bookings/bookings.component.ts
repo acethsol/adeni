@@ -1,11 +1,72 @@
 import { Component, inject, OnInit, signal } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
+import { ActivatedRoute } from "@angular/router";
 import type { BookingResponse } from "@adeni/shared";
 import { formatBookingStatus } from "@adeni/shared";
 import { PortalPageComponent } from "@adeni/ui";
+import { map } from "rxjs";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { formatSlotTime } from "@adeni/shared";
+import { PortalTabsComponent } from "../../shared/portal-tabs.component";
 
 const PENDING_STATUS = 0;
+const CONFIRMED_STATUS = 1;
+
+@Component({
+  selector: "app-bookings",
+  standalone: true,
+  imports: [PortalPageComponent, PortalTabsComponent],
+  templateUrl: "./bookings.component.html",
+  styleUrl: "./bookings.component.scss",
+})
+export class BookingsComponent implements OnInit {
+  private readonly api = inject(BusinessApiService);
+  private readonly route = inject(ActivatedRoute);
+  readonly tab = toSignal(this.route.queryParamMap.pipe(map((params) => params.get("tab") ?? "pending")), {
+    initialValue: this.route.snapshot.queryParamMap.get("tab") ?? "pending",
+  });
+
+  readonly loading = signal(true);
+  readonly error = signal<string | null>(null);
+  readonly bookings = signal<BookingResponse[]>([]);
+  readonly actionId = signal<string | null>(null);
+  readonly tabs = [
+    { id: "pending", label: "Pending" },
+    { id: "upcoming", label: "Upcoming" },
+    { id: "past", label: "Past" },
+  ];
+
+  readonly formatSlotTime = formatSlotTime;
+  readonly formatBookingStatus = formatBookingStatus;
+
+  ngOnInit(): void {
+    void this.load();
+  }
+
+  visible(): BookingResponse[] {
+    const today = startOfToday();
+    const tab = this.tab();
+    if (tab === "upcoming") {
+      return this.bookings().filter(
+        (booking) => booking.status === CONFIRMED_STATUS && new Date(booking.startAt) >= today,
+      );
+    }
+    if (tab === "past") {
+      return this.bookings().filter(
+        (booking) =>
+          booking.status === 2 ||
+          booking.status === 3 ||
+          (booking.status === CONFIRMED_STATUS && new Date(booking.startAt) < today),
+      );
+    }
+    return this.bookings().filter((booking) => booking.status === PENDING_STATUS);
+  }
+
+  emptyLabel(): string {
+    if (this.tab() === "upcoming") return "Nothing confirmed ahead.";
+    if (this.tab() === "past") return "No past bookings yet.";
+    return "No pending bookings.";
+  }
 
 @Component({
   selector: "app-bookings",
@@ -29,15 +90,7 @@ export class BookingsComponent implements OnInit {
     void this.load();
   }
 
-  pending(): BookingResponse[] {
-    return this.bookings().filter((b) => b.status === PENDING_STATUS);
-  }
-
-  recent(): BookingResponse[] {
-    return this.bookings().filter((b) => b.status !== PENDING_STATUS);
-  }
-
-  async load(): Promise<void> {
+  async reject(booking: BookingResponse): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
     try {
