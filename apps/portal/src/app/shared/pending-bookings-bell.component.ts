@@ -13,6 +13,7 @@ const PENDING_STATUS = 0;
     <a
       class="bell"
       routerLink="/bookings"
+      [queryParams]="{ tab: 'pending' }"
       [attr.aria-label]="
         pendingCount() ? pendingCount() + ' pending bookings' : 'Bookings'
       "

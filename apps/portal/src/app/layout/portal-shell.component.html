@@ -14,25 +14,32 @@
       </a>
     </div>
 
-    <p class="nav-section">Workspace</p>
     <nav class="nav" aria-label="Business">
-      @for (item of nav; track item.path) {
-        <a
-          class="nav-link"
-          [routerLink]="item.path"
-          routerLinkActive="active"
-          ariaCurrentWhenActive="page"
-          [routerLinkActiveOptions]="{ exact: !!item.exact }"
-          [attr.data-label]="collapsed() ? navLabel(item) : null"
-        >
-          <span class="nav-ico">
-            <app-portal-nav-icon [name]="item.icon" />
-          </span>
-          <span class="nav-label">{{ navLabel(item) }}</span>
-        </a>
+      @for (group of visibleGroups(); track group.id) {
+        <div class="nav-group">
+          <p class="nav-section">{{ groupLabel(group) }}</p>
+          @for (item of group.items; track item.path) {
+            <a
+              class="nav-link"
+              [routerLink]="item.path"
+              routerLinkActive="active"
+              ariaCurrentWhenActive="page"
+              [routerLinkActiveOptions]="{ exact: !!item.exact }"
+              [attr.data-label]="collapsed() ? navLabel(item) : null"
+            >
+              <span class="nav-ico">
+                <app-portal-nav-icon [name]="item.icon" />
+              </span>
+              <span class="nav-label">{{ navLabel(item) }}</span>
+              @if (badgeCount(item); as count) {
+                <span class="nav-count">{{ count > 9 ? "9+" : count }}</span>
+              }
+            </a>
+          }
+        </div>
       }
       <a
-        class="nav-link"
+        class="nav-link nav-external"
         [href]="discoverUrl()"
         target="_blank"
         rel="noopener"
@@ -70,9 +77,16 @@
     <header class="topbar">
       <div class="topbar-lead">
         <nav class="crumb" aria-label="Breadcrumb">
-          <span>Business</span>
-          <span class="crumb-sep" aria-hidden="true"></span>
-          <span class="crumb-current">{{ pageLabel() }}</span>
+          @for (crumb of crumbs(); track crumb.label; let last = $last) {
+            @if (last || !crumb.path) {
+              <span [class.crumb-current]="last">{{ crumb.label }}</span>
+            } @else {
+              <a [routerLink]="crumb.path">{{ crumb.label }}</a>
+            }
+            @if (!last) {
+              <span class="crumb-sep" aria-hidden="true"></span>
+            }
+          }
         </nav>
       </div>
 
