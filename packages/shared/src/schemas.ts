@@ -27,6 +27,7 @@ export const discoveryBusinessItemSchema = z.object({
     .nullable()
     .optional()
     .transform((value) => (value === "" ? null : value)),
+  imageUrls: z.array(z.string().url()).nullish(),
   ratingAvg: z.number().nullable().optional(),
   reviewCount: z.number().int().nonnegative().optional(),
   distanceKm: z.number(),
@@ -606,6 +607,14 @@ export const businessProfileSchema = z.object({
   subscriptionTier: subscriptionTierSchema.optional(),
   entitlements: tenantEntitlementsSchema.optional(),
   publicPage: publicPageConfigSchema.optional(),
+  galleryImages: z
+    .array(
+      z.object({
+        storageKey: z.string().min(1),
+        url: z.string().url(),
+      }),
+    )
+    .optional(),
 });
 
 export type BusinessProfile = z.infer<typeof businessProfileSchema>;
@@ -886,7 +895,13 @@ export type UpdateMessagingSettingsRequest = z.infer<
   typeof updateMessagingSettingsRequestSchema
 >;
 
-export const mediaUploadPurposeSchema = z.enum(["cover", "Cover", "quote_photo"]);
+export const mediaUploadPurposeSchema = z.enum([
+  "cover",
+  "Cover",
+  "gallery",
+  "Gallery",
+  "quote_photo",
+]);
 
 export const mediaUploadUrlRequestSchema = z.object({
   purpose: mediaUploadPurposeSchema,
@@ -908,9 +923,29 @@ export const updateCoverImageResponseSchema = z.object({
   coverImageUrl: z.string().url(),
 });
 
+export const galleryImageSchema = z.object({
+  storageKey: z.string().min(1),
+  url: z.string().url(),
+});
+
+export const galleryImagesResponseSchema = z.object({
+  items: z.array(galleryImageSchema),
+});
+
+export const addGalleryImageRequestSchema = z.object({
+  galleryImageKey: z.string().min(1),
+});
+
+export const removeGalleryImageRequestSchema = z.object({
+  galleryImageKey: z.string().min(1),
+});
+
 export type MediaUploadUrlRequest = z.infer<typeof mediaUploadUrlRequestSchema>;
 export type MediaUploadUrlResponse = z.infer<typeof mediaUploadUrlResponseSchema>;
 export type UpdateCoverImageRequest = z.infer<typeof updateCoverImageRequestSchema>;
+export type GalleryImage = z.infer<typeof galleryImageSchema>;
+export type AddGalleryImageRequest = z.infer<typeof addGalleryImageRequestSchema>;
+export type RemoveGalleryImageRequest = z.infer<typeof removeGalleryImageRequestSchema>;
 
 export const weeklyAvailabilityRuleSchema = z.object({
   dayOfWeek: z.number().int().min(0).max(6),

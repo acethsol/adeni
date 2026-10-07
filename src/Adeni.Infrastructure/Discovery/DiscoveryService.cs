@@ -275,6 +275,7 @@ public sealed class DiscoveryService(
                         bl."Area" AS "Area",
                         bl."MarketId" AS "MarketId",
                         bp."CoverImageKey" AS "CoverImageKey",
+                        bp."GalleryImageKeysJson" AS "GalleryImageKeysJson",
                         bl."Latitude" AS "Latitude",
                         bl."Longitude" AS "Longitude",
                         (6371.0 * 2 * ASIN(SQRT(
@@ -320,6 +321,7 @@ public sealed class DiscoveryService(
                     "Area",
                     "MarketId",
                     "CoverImageKey",
+                    "GalleryImageKeysJson",
                     ROUND(distance_km::numeric, 2)::float AS "DistanceKm",
                     "Latitude",
                     "Longitude",
@@ -353,6 +355,7 @@ public sealed class DiscoveryService(
                         bl."Area" AS "Area",
                         bl."MarketId" AS "MarketId",
                         bp."CoverImageKey" AS "CoverImageKey",
+                        bp."GalleryImageKeysJson" AS "GalleryImageKeysJson",
                         bl."Latitude" AS "Latitude",
                         bl."Longitude" AS "Longitude",
                         (6371.0 * 2 * ASIN(SQRT(
@@ -396,6 +399,7 @@ public sealed class DiscoveryService(
                     "Area",
                     "MarketId",
                     "CoverImageKey",
+                    "GalleryImageKeysJson",
                     ROUND(distance_km::numeric, 2)::float AS "DistanceKm",
                     "Latitude",
                     "Longitude",
@@ -447,6 +451,12 @@ public sealed class DiscoveryService(
 
             completionByTenant.TryGetValue(row.TenantId, out var completionRate);
             verifiedSinceByTenant.TryGetValue(row.TenantId, out var verifiedSince);
+            var coverUrl = await ResolveCoverImageUrlAsync(row.CoverImageKey, cancellationToken);
+            var imageUrls = await ResolveImageUrlsAsync(
+                row.CoverImageKey,
+                row.GalleryImageKeysJson,
+                coverUrl,
+                cancellationToken);
             items.Add(new DiscoveryBusinessItem(
                 row.LocationId,
                 row.TenantId,
@@ -456,7 +466,7 @@ public sealed class DiscoveryService(
                 row.CategorySlug,
                 row.Area,
                 row.MarketId,
-                await ResolveCoverImageUrlAsync(row.CoverImageKey, cancellationToken),
+                coverUrl,
                 row.RatingAvg,
                 row.ReviewCount,
                 row.DistanceKm,
@@ -466,7 +476,8 @@ public sealed class DiscoveryService(
                 businessCapabilitiesService.GetDiscoveryCta(businessType),
                 badges,
                 verifiedSince,
-                completionRate));
+                completionRate,
+                imageUrls));
         }
 
         return new DiscoveryResult(items, page, pageSize, totalCount);
@@ -595,6 +606,12 @@ public sealed class DiscoveryService(
             }
 
             completionByTenant.TryGetValue(row.tenant.Id, out var completionRate);
+            var coverUrl = await ResolveCoverImageUrlAsync(row.profile.CoverImageKey, cancellationToken);
+            var imageUrls = await ResolveImageUrlsAsync(
+                row.profile.CoverImageKey,
+                row.profile.GalleryImageKeysJson,
+                coverUrl,
+                cancellationToken);
             items.Add(new DiscoveryBusinessItem(
                 row.location.Id,
                 row.tenant.Id,
@@ -604,7 +621,7 @@ public sealed class DiscoveryService(
                 row.profile.CategorySlug,
                 row.location.Area,
                 row.location.MarketId,
-                await ResolveCoverImageUrlAsync(row.profile.CoverImageKey, cancellationToken),
+                coverUrl,
                 row.summary?.RatingAvg,
                 row.summary?.ReviewCount ?? 0,
                 Math.Round(row.distanceKm, 2),
@@ -614,7 +631,8 @@ public sealed class DiscoveryService(
                 businessCapabilitiesService.GetDiscoveryCta(row.profile.BusinessType),
                 badges,
                 row.tenant.VerifiedAt,
-                completionRate));
+                completionRate,
+                imageUrls));
         }
 
         return new DiscoveryResult(items, page, pageSize, totalCount);
@@ -630,6 +648,38 @@ public sealed class DiscoveryService(
         }
 
         return await fileStorage.GetDownloadUrlAsync(coverImageKey, cancellationToken);
+    }
+
+    private async Task<IReadOnlyList<string>> ResolveImageUrlsAsync(
+        string? coverImageKey,
+        string? galleryImageKeysJson,
+        string? coverUrl,
+        CancellationToken cancellationToken)
+    {
+        var urls = new List<string>();
+        if (!string.IsNullOrWhiteSpace(coverUrl))
+        {
+            urls.Add(coverUrl);
+        }
+        else if (!string.IsNullOrWhiteSpace(coverImageKey))
+        {
+            var resolved = await ResolveCoverImageUrlAsync(coverImageKey, cancellationToken);
+            if (!string.IsNullOrWhiteSpace(resolved))
+            {
+                urls.Add(resolved);
+            }
+        }
+
+        foreach (var key in Adeni.Infrastructure.Storage.TenantMediaService.DeserializeGalleryKeys(galleryImageKeysJson))
+        {
+            var url = await ResolveCoverImageUrlAsync(key, cancellationToken);
+            if (!string.IsNullOrWhiteSpace(url) && !urls.Contains(url, StringComparer.Ordinal))
+            {
+                urls.Add(url);
+            }
+        }
+
+        return urls;
     }
 
     private async Task<PublicBusinessProfile?> LoadPublicProfileAsync(

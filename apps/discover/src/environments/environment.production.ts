@@ -6,6 +6,7 @@ export const environment = {
   envMarketId: "",
   defaultMarketId: "lagos",
   defaultLocation: { lat: 6.5244, lng: 3.3792 },
+  mapboxAccessToken: "",
   devCustomerAuth0Sub: "",
   auth0: {
     domain: "",

@@ -33,7 +33,7 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.scss"],
+            "styles": ["src/mapbox-gl.css", "src/styles.scss"],
             "server": "src/main.server.ts",
             "outputMode": "server",
             "security": {

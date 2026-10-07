@@ -1,8 +1,11 @@
 namespace Adeni.Infrastructure.Storage;
 
+using System.Text.Json;
 using Adeni.Application.Caching;
 using Adeni.Application.Storage;
+using Adeni.Application.Tenancy;
 using Adeni.Domain.Common;
+using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,13 +14,19 @@ public sealed class TenantMediaService(
     IFileStorage fileStorage,
     ICacheService cache) : ITenantMediaService
 {
-    private const long MaxCoverBytes = 5 * 1024 * 1024;
+    public const int MaxGalleryImages = 5;
+    private const long MaxImageBytes = 5 * 1024 * 1024;
 
     private static readonly HashSet<string> AllowedContentTypes = new(StringComparer.OrdinalIgnoreCase)
     {
         "image/jpeg",
         "image/png",
         "image/webp"
+    };
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
     public async Task<Result<MediaUploadUrlResponse>> CreateUploadUrlAsync(
@@ -37,23 +46,19 @@ public sealed class TenantMediaService(
             return Result.Failure<MediaUploadUrlResponse>(Error.Validation("Upload purpose is not supported."));
         }
 
-        if (purpose != MediaUploadPurpose.Cover)
-        {
-            return Result.Failure<MediaUploadUrlResponse>(Error.Validation("Upload purpose is not supported."));
-        }
-
         if (!AllowedContentTypes.Contains(request.ContentType))
         {
             return Result.Failure<MediaUploadUrlResponse>(Error.Validation("Image type is not supported."));
         }
 
-        if (request.ContentLength <= 0 || request.ContentLength > MaxCoverBytes)
+        if (request.ContentLength <= 0 || request.ContentLength > MaxImageBytes)
         {
-            return Result.Failure<MediaUploadUrlResponse>(Error.Validation("Cover image must be between 1 byte and 5 MB."));
+            return Result.Failure<MediaUploadUrlResponse>(Error.Validation("Image must be between 1 byte and 5 MB."));
         }
 
         var extension = ExtensionForContentType(request.ContentType);
-        var storageKey = $"tenants/{tenantId:N}/covers/{Guid.NewGuid():N}{extension}";
+        var folder = purpose == MediaUploadPurpose.Gallery ? "gallery" : "covers";
+        var storageKey = $"tenants/{tenantId:N}/{folder}/{Guid.NewGuid():N}{extension}";
         var ttl = TimeSpan.FromMinutes(15);
         var uploadUrl = await fileStorage.GetUploadUrlAsync(storageKey, request.ContentType, ttl, cancellationToken);
 
@@ -103,6 +108,142 @@ public sealed class TenantMediaService(
         return Result.Success(coverImageUrl);
     }
 
+    public async Task<Result<IReadOnlyList<GalleryImageResponse>>> AddGalleryImageAsync(
+        Guid tenantId,
+        string auth0Sub,
+        AddGalleryImageRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var access = await ResolveAccessAsync(tenantId, auth0Sub, cancellationToken);
+        if (access.IsFailure)
+        {
+            return Result.Failure<IReadOnlyList<GalleryImageResponse>>(access.Error);
+        }
+
+        var profile = access.Value!;
+        var storageKey = request.GalleryImageKey?.Trim();
+        if (string.IsNullOrWhiteSpace(storageKey))
+        {
+            return Result.Failure<IReadOnlyList<GalleryImageResponse>>(Error.Validation("Gallery image key is required."));
+        }
+
+        var expectedPrefix = $"tenants/{tenantId:N}/gallery/";
+        if (!storageKey.StartsWith(expectedPrefix, StringComparison.Ordinal))
+        {
+            return Result.Failure<IReadOnlyList<GalleryImageResponse>>(
+                Error.Validation("Gallery image key is not valid for this business."));
+        }
+
+        if (!await fileStorage.ExistsAsync(storageKey, cancellationToken))
+        {
+            return Result.Failure<IReadOnlyList<GalleryImageResponse>>(
+                Error.Validation("Gallery image upload was not found. Upload the file before saving."));
+        }
+
+        var keys = DeserializeGalleryKeys(profile.GalleryImageKeysJson);
+        if (keys.Contains(storageKey, StringComparer.Ordinal))
+        {
+            return Result.Success(await ResolveGalleryAsync(keys, cancellationToken));
+        }
+
+        if (keys.Count >= MaxGalleryImages)
+        {
+            return Result.Failure<IReadOnlyList<GalleryImageResponse>>(
+                Error.Validation($"You can add up to {MaxGalleryImages} gallery photos."));
+        }
+
+        keys.Add(storageKey);
+        profile.GalleryImageKeysJson = SerializeGalleryKeys(keys);
+        profile.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await InvalidateProfileCachesAsync(tenantId, cancellationToken);
+
+        return Result.Success(await ResolveGalleryAsync(keys, cancellationToken));
+    }
+
+    public async Task<Result<IReadOnlyList<GalleryImageResponse>>> RemoveGalleryImageAsync(
+        Guid tenantId,
+        string auth0Sub,
+        RemoveGalleryImageRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var access = await ResolveAccessAsync(tenantId, auth0Sub, cancellationToken);
+        if (access.IsFailure)
+        {
+            return Result.Failure<IReadOnlyList<GalleryImageResponse>>(access.Error);
+        }
+
+        var profile = access.Value!;
+        var storageKey = request.GalleryImageKey?.Trim();
+        if (string.IsNullOrWhiteSpace(storageKey))
+        {
+            return Result.Failure<IReadOnlyList<GalleryImageResponse>>(Error.Validation("Gallery image key is required."));
+        }
+
+        var keys = DeserializeGalleryKeys(profile.GalleryImageKeysJson);
+        if (!keys.Remove(storageKey))
+        {
+            return Result.Failure<IReadOnlyList<GalleryImageResponse>>(Error.NotFound("Gallery image"));
+        }
+
+        profile.GalleryImageKeysJson = SerializeGalleryKeys(keys);
+        profile.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await InvalidateProfileCachesAsync(tenantId, cancellationToken);
+
+        return Result.Success(await ResolveGalleryAsync(keys, cancellationToken));
+    }
+
+    public static List<string> DeserializeGalleryKeys(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return [];
+        }
+
+        try
+        {
+            var parsed = JsonSerializer.Deserialize<List<string>>(json, JsonOptions);
+            return parsed?
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x.Trim())
+                .Distinct(StringComparer.Ordinal)
+                .Take(MaxGalleryImages)
+                .ToList()
+                ?? [];
+        }
+        catch (JsonException)
+        {
+            return [];
+        }
+    }
+
+    public static string? SerializeGalleryKeys(IReadOnlyList<string> keys)
+    {
+        var cleaned = keys
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => x.Trim())
+            .Distinct(StringComparer.Ordinal)
+            .Take(MaxGalleryImages)
+            .ToList();
+
+        return cleaned.Count == 0 ? null : JsonSerializer.Serialize(cleaned, JsonOptions);
+    }
+
+    private async Task<IReadOnlyList<GalleryImageResponse>> ResolveGalleryAsync(
+        IReadOnlyList<string> keys,
+        CancellationToken cancellationToken)
+    {
+        var items = new List<GalleryImageResponse>(keys.Count);
+        foreach (var key in keys)
+        {
+            var url = await fileStorage.GetDownloadUrlAsync(key, cancellationToken);
+            items.Add(new GalleryImageResponse(key, url));
+        }
+
+        return items;
+    }
+
     private async Task InvalidateProfileCachesAsync(Guid tenantId, CancellationToken cancellationToken)
     {
         await cache.RemoveAsync(CacheKeys.TenantProfile(tenantId), cancellationToken);
@@ -119,14 +260,14 @@ public sealed class TenantMediaService(
         }
     }
 
-    private async Task<Result<Domain.Tenancy.BusinessProfile>> ResolveAccessAsync(
+    private async Task<Result<BusinessProfile>> ResolveAccessAsync(
         Guid tenantId,
         string auth0Sub,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(auth0Sub))
         {
-            return Result.Failure<Domain.Tenancy.BusinessProfile>(Error.Forbidden("Authentication is required."));
+            return Result.Failure<BusinessProfile>(Error.Forbidden("Authentication is required."));
         }
 
         var businessUser = await dbContext.BusinessUsers
@@ -135,13 +276,13 @@ public sealed class TenantMediaService(
 
         if (businessUser is null || businessUser.TenantId != tenantId)
         {
-            return Result.Failure<Domain.Tenancy.BusinessProfile>(Error.Forbidden("You do not have access to this business."));
+            return Result.Failure<BusinessProfile>(Error.Forbidden("You do not have access to this business."));
         }
 
         var profile = await dbContext.BusinessProfiles.FirstOrDefaultAsync(p => p.TenantId == tenantId, cancellationToken);
         if (profile is null)
         {
-            return Result.Failure<Domain.Tenancy.BusinessProfile>(Error.NotFound("Business profile"));
+            return Result.Failure<BusinessProfile>(Error.NotFound("Business profile"));
         }
 
         return Result.Success(profile);
@@ -155,8 +296,19 @@ public sealed class TenantMediaService(
             return false;
         }
 
-        return value.Trim().Equals("cover", StringComparison.OrdinalIgnoreCase)
-            && (purpose = MediaUploadPurpose.Cover) == MediaUploadPurpose.Cover;
+        if (value.Trim().Equals("cover", StringComparison.OrdinalIgnoreCase))
+        {
+            purpose = MediaUploadPurpose.Cover;
+            return true;
+        }
+
+        if (value.Trim().Equals("gallery", StringComparison.OrdinalIgnoreCase))
+        {
+            purpose = MediaUploadPurpose.Gallery;
+            return true;
+        }
+
+        return false;
     }
 
     private static string ExtensionForContentType(string contentType) =>

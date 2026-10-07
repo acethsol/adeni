@@ -36,6 +36,12 @@ public sealed class AzureBlobFileStorage(IOptions<StorageOptions> options) : IFi
 
     public Task<string> GetDownloadUrlAsync(string storageKey, CancellationToken cancellationToken = default)
     {
+        if (storageKey.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+            || storageKey.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+        {
+            return Task.FromResult(storageKey);
+        }
+
         if (!string.IsNullOrWhiteSpace(_options.PublicBaseUrl))
         {
             return Task.FromResult($"{_options.PublicBaseUrl!.TrimEnd('/')}/{storageKey.TrimStart('/')}");

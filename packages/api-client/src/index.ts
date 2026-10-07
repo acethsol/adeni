@@ -40,6 +40,9 @@ import {
   mediaUploadUrlResponseSchema,
   updateCoverImageRequestSchema,
   updateCoverImageResponseSchema,
+  addGalleryImageRequestSchema,
+  removeGalleryImageRequestSchema,
+  galleryImagesResponseSchema,
   createReviewRequestSchema,
   createQuoteRequestSchema,
   quoteRequestResponseSchema,
@@ -129,6 +132,9 @@ import {
   type MessagingSettings,
   type UpdateMessagingSettingsRequest,
   type UpdateCoverImageRequest,
+  type AddGalleryImageRequest,
+  type RemoveGalleryImageRequest,
+  type GalleryImage,
   type MediaUploadUrlResponse,
   type MediaUploadUrlRequest,
   type UpdateServiceOfferingRequest,
@@ -657,6 +663,23 @@ export class AdeniApiClient {
     return mediaUploadUrlResponseSchema.parse(await response.json());
   }
 
+  async createGalleryUploadUrl(
+    contentType: string,
+    contentLength: number,
+  ): Promise<MediaUploadUrlResponse> {
+    const body = mediaUploadUrlRequestSchema.parse({
+      purpose: "gallery",
+      contentType,
+      contentLength,
+    });
+    const response = await this.request("/api/v1/tenant/media/upload-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return mediaUploadUrlResponseSchema.parse(await response.json());
+  }
+
   async updateTenantCoverImage(request: UpdateCoverImageRequest): Promise<string> {
     const body = updateCoverImageRequestSchema.parse(request);
     const response = await this.request("/api/v1/tenant/profile/cover", {
@@ -666,6 +689,26 @@ export class AdeniApiClient {
     });
     const payload = updateCoverImageResponseSchema.parse(await response.json());
     return payload.coverImageUrl;
+  }
+
+  async addTenantGalleryImage(request: AddGalleryImageRequest): Promise<GalleryImage[]> {
+    const body = addGalleryImageRequestSchema.parse(request);
+    const response = await this.request("/api/v1/tenant/profile/gallery", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return galleryImagesResponseSchema.parse(await response.json()).items;
+  }
+
+  async removeTenantGalleryImage(request: RemoveGalleryImageRequest): Promise<GalleryImage[]> {
+    const body = removeGalleryImageRequestSchema.parse(request);
+    const response = await this.request("/api/v1/tenant/profile/gallery", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return galleryImagesResponseSchema.parse(await response.json()).items;
   }
 
   async getTenantServices(): Promise<ServiceOffering[]> {

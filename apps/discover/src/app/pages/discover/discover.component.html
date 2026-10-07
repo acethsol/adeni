@@ -1,157 +1,236 @@
 <div
   class="explore"
+  [class.map-open]="showMap() && mobileView() === 'map'"
+  [class.no-map]="!showMap()"
   [style.--h1]="pageTone().h1"
   [style.--h2]="pageTone().h2"
   [style.--h3]="pageTone().h3"
 >
-  <div class="sticky-chrome">
-    @if (categories().length > 0) {
-      <div class="cat-rail" role="list">
-        <a
-          class="cat-item"
-          role="listitem"
-          routerLink="/discover"
-          [queryParams]="filterQuery({ category: null })"
-          [class.active]="!selectedCategory()"
-        >
-          <span class="cat-icon all" aria-hidden="true">
-            <span class="cat-glyph">✦</span>
-          </span>
-          <span class="cat-label">{{ label("discover.allCategories") }}</span>
-        </a>
-        @for (cat of categories(); track cat.slug) {
-          <a
-            class="cat-item"
-            role="listitem"
-            routerLink="/discover"
-            [queryParams]="filterQuery({ category: cat.slug })"
-            [class.active]="selectedCategory() === cat.slug"
-            [style.--c1]="categoryVisual(cat.slug, cat.name).gradient[0]"
-            [style.--c2]="categoryVisual(cat.slug, cat.name).gradient[1]"
-          >
-            <span class="cat-icon" aria-hidden="true">
-              <img [src]="categoryVisual(cat.slug, cat.name).imageUrl" alt="" />
-            </span>
-            <span class="cat-label">{{ categoryLabel(cat.slug, cat.name) }}</span>
-          </a>
-        }
-      </div>
-    }
+  @if (showMap()) {
+    <div class="mobile-toggle" role="group" [attr.aria-label]="label('discover.filtersButton')">
+      <button type="button" [class.active]="mobileView() === 'list'" (click)="mobileView.set('list')">
+        {{ label("discover.showList") }}
+      </button>
+      <button type="button" [class.active]="mobileView() === 'map'" (click)="mobileView.set('map')">
+        {{ label("discover.showMap") }}
+      </button>
+    </div>
+  }
 
-    <div class="chrome-actions">
-      <div class="filters-wrap">
-        <button
-          type="button"
-          class="filters-btn"
-          [class.active]="filtersOpen() || filterCount() > 0"
-          [attr.aria-expanded]="filtersOpen()"
-          (click)="toggleFilters()"
-        >
-          <span class="filters-ico" aria-hidden="true"></span>
-          {{ label("discover.filtersButton") }}
-          @if (filterCount() > 0) {
-            <span class="filters-count">{{ filterCount() }}</span>
-          }
-        </button>
+  <div class="board" [class.no-map]="!showMap()">
+    <aside class="filters" [attr.aria-label]="label('discover.filtersTitle')">
+      <div class="filters-card">
+        <p class="filters-kicker">{{ label("discover.filtersKicker") }}</p>
+        <h2>{{ label("discover.filtersTitle") }}</h2>
 
-        @if (filtersOpen()) {
-          <div class="filters-panel" role="dialog" [attr.aria-label]="label('discover.filtersButton')">
-            <div class="panel-block">
-              <p class="panel-label">{{ label("discover.sortLabel") }}</p>
-              <div class="seg">
+        <div class="filter-block">
+          <p class="filter-label">{{ label("discover.sortLabel") }}</p>
+          <div class="choice-stack">
+            <a
+              class="choice"
+              routerLink="/discover"
+              [queryParams]="filterQuery({ sort: 'distance' })"
+              [class.active]="sort() === 'distance'"
+            >
+              <span class="choice-mark" aria-hidden="true"></span>
+              <span class="choice-copy">
+                <strong>{{ label("discover.sortDistance") }}</strong>
+                <small>{{ label("discover.sortNearestHint") }}</small>
+              </span>
+            </a>
+            <a
+              class="choice"
+              routerLink="/discover"
+              [queryParams]="filterQuery({ sort: 'featured' })"
+              [class.active]="sort() === 'featured'"
+            >
+              <span class="choice-mark" aria-hidden="true"></span>
+              <span class="choice-copy">
+                <strong>{{ label("discover.sortFeatured") }}</strong>
+                <small>{{ label("discover.sortFeaturedHint") }}</small>
+              </span>
+            </a>
+          </div>
+        </div>
+
+        <div class="filter-block">
+          <p class="filter-label">{{ label("discover.minRatingLabel") }}</p>
+          <div class="rating-row">
+            <a
+              class="rating-chip"
+              routerLink="/discover"
+              [queryParams]="filterQuery({ minRating: null })"
+              [class.active]="minRating() == null"
+            >
+              {{ label("discover.minRatingAny") }}
+            </a>
+            @for (r of [4, 5]; track r) {
+              <a
+                class="rating-chip"
+                routerLink="/discover"
+                [queryParams]="filterQuery({ minRating: minRating() === r ? null : r })"
+                [class.active]="minRating() === r"
+              >
+                <span aria-hidden="true">★</span>
+                {{ r }}+
+              </a>
+            }
+          </div>
+        </div>
+
+        @if (categories().length > 0) {
+          <div class="filter-block categories">
+            <p class="filter-label">{{ label("discover.categoriesLabel") }}</p>
+            <div class="cat-list" role="list">
+              <a
+                class="cat-link"
+                role="listitem"
+                routerLink="/discover"
+                [queryParams]="filterQuery({ category: null })"
+                [class.active]="!selectedCategory()"
+              >
+                <span class="cat-swatch all" aria-hidden="true"></span>
+                <span>{{ label("discover.allCategories") }}</span>
+              </a>
+              @for (cat of categories(); track cat.slug) {
                 <a
+                  class="cat-link"
+                  role="listitem"
                   routerLink="/discover"
-                  [queryParams]="filterQuery({ sort: 'distance' })"
-                  [class.active]="sort() === 'distance'"
+                  [queryParams]="filterQuery({ category: cat.slug })"
+                  [class.active]="selectedCategory() === cat.slug"
                 >
-                  {{ label("discover.sortDistance") }}
+                  <span
+                    class="cat-swatch"
+                    [style.--c1]="categoryVisual(cat.slug, cat.name).gradient[0]"
+                    [style.--c2]="categoryVisual(cat.slug, cat.name).gradient[1]"
+                    aria-hidden="true"
+                  ></span>
+                  <span>{{ categoryLabel(cat.slug, cat.name) }}</span>
                 </a>
-                <a
-                  routerLink="/discover"
-                  [queryParams]="filterQuery({ sort: 'featured' })"
-                  [class.active]="sort() === 'featured'"
-                >
-                  {{ label("discover.sortFeatured") }}
-                </a>
-              </div>
-            </div>
-            <div class="panel-block">
-              <p class="panel-label">{{ label("discover.minRatingLabel") }}</p>
-              <div class="seg">
-                @for (r of [4, 5]; track r) {
-                  <a
-                    routerLink="/discover"
-                    [queryParams]="filterQuery({ minRating: minRating() === r ? null : r })"
-                    [class.active]="minRating() === r"
-                  >
-                    {{ label("discover.minRatingValue", { value: r }) }}
-                  </a>
-                }
-              </div>
+              }
             </div>
           </div>
         }
+
+        @if (hasActiveFilters()) {
+          <a class="clear" routerLink="/discover" [queryParams]="{}">{{ label("discover.clearFilters") }}</a>
+        }
       </div>
-    </div>
-  </div>
+    </aside>
 
-  @if (error(); as err) {
-    <p class="error">{{ err }}</p>
-  }
-
-  @if (hasActiveFilters()) {
-    <div class="summary">
-      @for (part of filterSummary(); track part.key) {
-        <a class="summary-chip" routerLink="/discover" [queryParams]="part.clear">
-          {{ part.label }}
-          <span aria-hidden="true">×</span>
-        </a>
+    <section class="results" aria-live="polite">
+      @if (error(); as err) {
+        <p class="error">{{ err }}</p>
       }
-      <a class="summary-clear" routerLink="/discover" [queryParams]="{}">{{ label("discover.clearFilters") }}</a>
-    </div>
-  }
 
-  <header class="page-head">
-    <p class="kicker">{{ kicker() }}</p>
-    <h1>{{ headline() }}</h1>
-  </header>
-
-  @if (loading()) {
-    <ul class="grid skeletons" aria-hidden="true">
-      @for (n of [1, 2, 3, 4, 5, 6, 7, 8]; track n) {
-        <li class="skeleton-card">
-          <span class="sk-media"></span>
-          <span class="sk-line"></span>
-          <span class="sk-line short"></span>
-        </li>
-      }
-    </ul>
-  } @else if (items().length === 0) {
-    <div class="empty">
-      <span class="empty-wash" aria-hidden="true"></span>
-      <h2>{{ label("discover.emptyTitle") }}</h2>
       @if (hasActiveFilters()) {
-        <p>{{ label("discover.emptyFiltered") }}</p>
-        <a class="empty-cta" routerLink="/discover" [queryParams]="{}">{{ label("discover.clearFilters") }}</a>
-      } @else if (market.market(); as m) {
-        @if (m.id === "lagos") {
-          <p>{{ label("discover.noMatchesDescription") }}</p>
-          <a class="empty-cta" routerLink="/">{{ label("discover.browseAll") }}</a>
+        <div class="summary">
+          @for (part of filterSummary(); track part.key) {
+            <a class="summary-chip" routerLink="/discover" [queryParams]="part.clear">
+              {{ part.label }}
+              <span aria-hidden="true">×</span>
+            </a>
+          }
+        </div>
+      }
+
+      <header class="page-head">
+        <p class="kicker">{{ kicker() }}</p>
+        <h1>{{ headline() }}</h1>
+      </header>
+
+      @if (loading()) {
+        <ul class="grid skeletons" aria-hidden="true">
+          @for (n of [1, 2, 3, 4, 5, 6]; track n) {
+            <li class="skeleton-card">
+              <span class="sk-media"></span>
+              <span class="sk-line"></span>
+              <span class="sk-line short"></span>
+            </li>
+          }
+        </ul>
+      } @else if (items().length === 0) {
+        <div class="empty">
+          <span class="empty-wash" aria-hidden="true"></span>
+          <div class="empty-icon" aria-hidden="true">
+            @if (hasActiveFilters()) {
+              <!-- Carbon Filter 32 — Apache-2.0, IBM -->
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor">
+                <path
+                  d="M18 28h-4a2 2 0 01-2-2v-7.59L4.59 11A2 2 0 014 9.59V6a2 2 0 012-2h20a2 2 0 012 2v3.59A2 2 0 0127.41 11L20 18.41V26a2 2 0 01-2 2zM6 6v3.59l8 8V26h4V17.59l8-8V6z"
+                />
+              </svg>
+            } @else {
+              <!-- Carbon Location 32 — Apache-2.0, IBM -->
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor">
+                <path
+                  d="M16 18a5 5 0 115-5 5.006 5.006 0 01-5 5zm0-8a3 3 0 103 3 3.003 3.003 0 00-3-3z"
+                />
+                <path
+                  d="M16 30l-8.436-9.949c-.048-.057-.348-.451-.348-.451A10.889 10.889 0 015 13a11 11 0 1122 0 10.884 10.884 0 01-2.215 6.597l-.001.003s-.3.394-.345.447zM8.813 18.395s.233.308.286.374L16 26.908l6.91-8.15c.044-.055.278-.365.279-.366A8.901 8.901 0 0025 13a9 9 0 10-18 0 8.905 8.905 0 001.813 5.395z"
+                />
+              </svg>
+            }
+          </div>
+          @if (hasActiveFilters()) {
+            <h2>{{ label("discover.emptyFilteredTitle") }}</h2>
+            <p>{{ label("discover.emptyFiltered") }}</p>
+            <a class="empty-cta" routerLink="/discover" [queryParams]="{}">{{ label("discover.clearFilters") }}</a>
+          } @else if (market.market(); as m) {
+            <h2>{{ label("discover.emptyTitle") }}</h2>
+            <p>{{ label("discover.emptyMarket", { market: m.name }) }}</p>
+          }
+        </div>
+      } @else {
+        <ul class="grid">
+          @for (item of items(); track item.locationId) {
+            <li
+              [class.active]="activeLocationId() === item.locationId"
+              (mouseenter)="activeLocationId.set(item.locationId)"
+              (focusin)="activeLocationId.set(item.locationId)"
+            >
+              <app-discovery-business-card [item]="item" headingLevel="h2" [imageCarousel]="true" />
+            </li>
+          }
+        </ul>
+
+        @if (hasMore() || loadingMore() || loadMoreError()) {
+          <div class="load-more" #loadMoreSentinel>
+            @if (loadMoreError(); as err) {
+              <p>{{ err }}</p>
+              <button type="button" class="retry" (click)="retryLoadMore()">
+                {{ label("discover.tryAgain") }}
+              </button>
+            } @else {
+              <p aria-live="polite">{{ label("discover.loadingMore") }}</p>
+            }
+          </div>
         } @else {
-          <p>{{ label("discover.emptyMarket", { market: m.name }) }}</p>
-          <a class="empty-cta" routerLink="/discover" [queryParams]="{ market: 'lagos' }">
-            {{ label("discover.switchToLagos") }}
-          </a>
+          <p class="seen-all">{{ label("discover.seenAll") }}</p>
         }
       }
+    </section>
+
+    @if (showMap()) {
+      <aside class="map-pane" [attr.aria-label]="label('discover.mapTitle')">
+        <app-discovery-map
+          [items]="items()"
+          [activeLocationId]="activeLocationId()"
+          [center]="mapCenter()"
+          (markerSelect)="onMarkerSelect($event)"
+        />
+      </aside>
+    }
+  </div>
+
+  @if (showLoadMorePanel()) {
+    <div class="load-panel" role="status" aria-live="polite">
+      <span class="load-spinner" aria-hidden="true"></span>
+      <div>
+        <strong>{{ label("discover.loadingMore") }}</strong>
+        <p>{{ label("discover.loadingMorePanel") }}</p>
+      </div>
     </div>
-  } @else {
-    <ul class="grid">
-      @for (item of items(); track item.locationId) {
-        <li>
-          <app-discovery-business-card [item]="item" headingLevel="h2" />
-        </li>
-      }
-    </ul>
   }
 </div>

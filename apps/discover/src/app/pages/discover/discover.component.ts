@@ -1,4 +1,15 @@
-import { Component, computed, effect, ElementRef, HostListener, inject, signal } from "@angular/core";
+import {
+  afterNextRender,
+  Component,
+  computed,
+  effect,
+  ElementRef,
+  inject,
+  Injector,
+  runInInjectionContext,
+  signal,
+  viewChild,
+} from "@angular/core";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import type { Category, DiscoveryBusinessItem } from "@adeni/shared";
 import {
@@ -13,16 +24,19 @@ import { CustomerApiService } from "../../core/services/customer-api.service";
 import { MarketContextService } from "../../core/services/market-context.service";
 import { SeoService } from "../../core/services/seo.service";
 import { DiscoveryBusinessCardComponent } from "../../shared/discovery-business-card.component";
+import { DiscoveryMapComponent } from "../../shared/discovery-map.component";
 
 const MARKET_TONES: Record<string, { h1: string; h2: string; h3: string }> = {
   lagos: { h1: "#1b4332", h2: "#13c2a3", h3: "#d8a23a" },
   ottawa: { h1: "#123b4a", h2: "#2a9d8f", h3: "#7eb8c9" },
 };
 
+const LOAD_MORE_PANEL_DELAY_MS = 450;
+
 @Component({
   selector: "app-discover-page",
   standalone: true,
-  imports: [RouterLink, DiscoveryBusinessCardComponent],
+  imports: [RouterLink, DiscoveryBusinessCardComponent, DiscoveryMapComponent],
   templateUrl: "./discover.component.html",
   styleUrl: "./discover.component.scss",
 })
@@ -33,18 +47,25 @@ export class DiscoverComponent {
   private readonly localeService = inject(AdeniLocaleService);
   readonly market = inject(MarketContextService);
   private readonly seo = inject(SeoService);
+  private readonly injector = inject(Injector);
+  private readonly loadMoreSentinel = viewChild<ElementRef<HTMLElement>>("loadMoreSentinel");
 
   readonly loading = signal(true);
+  readonly loadingMore = signal(false);
+  readonly showLoadMorePanel = signal(false);
   readonly error = signal<string | null>(null);
+  readonly loadMoreError = signal<string | null>(null);
   readonly categories = signal<Category[]>([]);
   readonly items = signal<DiscoveryBusinessItem[]>([]);
   readonly totalCount = signal(0);
+  readonly page = signal(1);
+  readonly activeLocationId = signal<string | null>(null);
+  readonly mobileView = signal<"list" | "map">("list");
 
   readonly searchQuery = signal("");
   readonly selectedCategory = signal("");
   readonly sort = signal<"distance" | "featured">("distance");
   readonly minRating = signal<number | null>(null);
-  readonly filtersOpen = signal(false);
 
   readonly locale = this.localeService.locale;
   readonly pageTone = computed(() => {
@@ -78,6 +99,9 @@ export class DiscoverComponent {
     const category = this.selectedCategoryLabel();
     return category ?? this.marketName();
   });
+  readonly hasMore = computed(
+    () => this.page() * DISCOVERY_PAGE_SIZE < this.totalCount(),
+  );
   readonly filterSummary = computed(() => {
     const parts: { key: string; label: string; clear: Record<string, string | null> }[] = [];
     const category = this.selectedCategoryLabel();
@@ -112,14 +136,16 @@ export class DiscoverComponent {
     return parts;
   });
   readonly hasActiveFilters = computed(() => this.filterSummary().length > 0);
-  readonly filterCount = computed(
-    () =>
-      (this.sort() === "featured" ? 1 : 0) +
-      (this.minRating() != null ? 1 : 0),
-  );
-  private readonly host = inject(ElementRef<HTMLElement>);
+  readonly showMap = computed(() => Boolean(this.config.mapboxAccessToken.trim()));
+  readonly mapCenter = computed(() => {
+    const loc = this.market.searchLocation();
+    return { lat: loc.lat, lng: loc.lng };
+  });
+
   private lastLoadedMarketId: string | null = null;
   private allowMarketReload = false;
+  private loadGeneration = 0;
+  private loadMorePanelTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.route.queryParamMap.subscribe(() => {
@@ -132,7 +158,6 @@ export class DiscoverComponent {
       this.minRating.set(
         Number.isFinite(rating) && rating >= 1 && rating <= 5 ? Math.round(rating) : null,
       );
-      this.filtersOpen.set(false);
       void this.load();
     });
 
@@ -143,21 +168,42 @@ export class DiscoverComponent {
       }
       void this.load();
     });
+
+    afterNextRender(() => {
+      runInInjectionContext(this.injector, () => {
+        effect((onCleanup) => {
+          const node = this.loadMoreSentinel()?.nativeElement ?? null;
+          if (!node || typeof IntersectionObserver === "undefined") {
+            return;
+          }
+
+          const observer = new IntersectionObserver(
+            (entries) => {
+              if (entries.some((entry) => entry.isIntersecting)) {
+                void this.loadMore();
+              }
+            },
+            { root: null, rootMargin: "480px 0px", threshold: 0 },
+          );
+          observer.observe(node);
+          onCleanup(() => observer.disconnect());
+        });
+      });
+    });
   }
 
-  toggleFilters(): void {
-    this.filtersOpen.update((open) => !open);
+  retryLoadMore(): void {
+    this.loadMoreError.set(null);
+    void this.loadMore();
   }
 
-  @HostListener("document:mousedown", ["$event"])
-  onDocumentMouseDown(event: MouseEvent): void {
-    if (!this.filtersOpen()) {
-      return;
-    }
-    const target = event.target as Node;
-    if (!this.host.nativeElement.querySelector(".filters-wrap")?.contains(target)) {
-      this.filtersOpen.set(false);
-    }
+  onMarkerSelect(locationId: string): void {
+    this.activeLocationId.set(locationId);
+    this.mobileView.set("list");
+    setTimeout(() => {
+      const node = document.querySelector(".grid > li.active") as HTMLElement | null;
+      node?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 0);
   }
 
   categoryVisual(slug: string, name?: string) {
@@ -201,9 +247,20 @@ export class DiscoverComponent {
   }
 
   async load(): Promise<void> {
+    const generation = ++this.loadGeneration;
+    this.clearLoadMorePanel();
     await this.market.bootstrap();
+    if (generation !== this.loadGeneration) {
+      return;
+    }
+
     this.loading.set(true);
+    this.loadingMore.set(false);
     this.error.set(null);
+    this.loadMoreError.set(null);
+    this.page.set(1);
+    this.activeLocationId.set(null);
+
     const client = this.api.createPublicClient();
     const loc = this.market.searchLocation();
     const marketId = this.market.market()?.id ?? this.config.defaultMarketId;
@@ -234,6 +291,10 @@ export class DiscoverComponent {
         }),
       ]);
 
+      if (generation !== this.loadGeneration) {
+        return;
+      }
+
       if (categoriesResult.status === "fulfilled") {
         this.categories.set(categoriesResult.value);
       } else {
@@ -243,6 +304,7 @@ export class DiscoverComponent {
       if (discoveryResult.status === "fulfilled") {
         this.items.set(discoveryResult.value.items);
         this.totalCount.set(discoveryResult.value.totalCount);
+        this.activeLocationId.set(discoveryResult.value.items[0]?.locationId ?? null);
       } else {
         console.error("Discovery load failed", discoveryResult.reason);
         this.error.set(t(this.locale(), "discover.loadError"));
@@ -250,13 +312,97 @@ export class DiscoverComponent {
         this.totalCount.set(0);
       }
     } catch {
+      if (generation !== this.loadGeneration) {
+        return;
+      }
       this.error.set(t(this.locale(), "discover.loadError"));
       this.items.set([]);
       this.totalCount.set(0);
     } finally {
-      this.lastLoadedMarketId = marketId;
-      this.allowMarketReload = true;
-      this.loading.set(false);
+      if (generation === this.loadGeneration) {
+        this.lastLoadedMarketId = marketId;
+        this.allowMarketReload = true;
+        this.loading.set(false);
+      }
     }
+  }
+
+  async loadMore(): Promise<void> {
+    if (this.loading() || this.loadingMore() || this.loadMoreError() || !this.hasMore()) {
+      return;
+    }
+
+    const generation = this.loadGeneration;
+    const nextPage = this.page() + 1;
+    let continuePaging = false;
+    this.loadingMore.set(true);
+    this.scheduleLoadMorePanel();
+
+    const client = this.api.createPublicClient();
+    const loc = this.market.searchLocation();
+    const marketId = this.market.market()?.id ?? this.config.defaultMarketId;
+
+    try {
+      const result = await client.searchDiscovery({
+        lat: loc.lat,
+        lng: loc.lng,
+        market: marketId,
+        page: nextPage,
+        pageSize: DISCOVERY_PAGE_SIZE,
+        category: this.selectedCategory() || undefined,
+        q: this.searchQuery().trim() || undefined,
+        sort: this.sort(),
+        minRating: this.minRating() ?? undefined,
+      });
+
+      if (generation !== this.loadGeneration) {
+        return;
+      }
+
+      this.page.set(nextPage);
+      this.totalCount.set(result.totalCount);
+
+      if (result.items.length > 0) {
+        this.items.update((current) => {
+          const seen = new Set(current.map((item) => item.locationId));
+          const appended = result.items.filter((item) => !seen.has(item.locationId));
+          return appended.length > 0 ? [...current, ...appended] : current;
+        });
+      } else if (nextPage * DISCOVERY_PAGE_SIZE < result.totalCount) {
+        continuePaging = true;
+      }
+    } catch (reason) {
+      if (generation !== this.loadGeneration) {
+        return;
+      }
+      console.error("Discovery load more failed", reason);
+      this.loadMoreError.set(t(this.locale(), "discover.loadMoreError"));
+    } finally {
+      if (generation === this.loadGeneration) {
+        this.loadingMore.set(false);
+        this.clearLoadMorePanel();
+      }
+    }
+
+    if (continuePaging && generation === this.loadGeneration) {
+      void this.loadMore();
+    }
+  }
+
+  private scheduleLoadMorePanel(): void {
+    this.clearLoadMorePanel();
+    this.loadMorePanelTimer = setTimeout(() => {
+      if (this.loadingMore()) {
+        this.showLoadMorePanel.set(true);
+      }
+    }, LOAD_MORE_PANEL_DELAY_MS);
+  }
+
+  private clearLoadMorePanel(): void {
+    if (this.loadMorePanelTimer) {
+      clearTimeout(this.loadMorePanelTimer);
+      this.loadMorePanelTimer = null;
+    }
+    this.showLoadMorePanel.set(false);
   }
 }

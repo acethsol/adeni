@@ -100,7 +100,10 @@ public sealed record BusinessProfileResponse(
     int DepositPercent = 0,
     string SubscriptionTier = "free",
     TenantEntitlements? Entitlements = null,
-    PublicPageConfigDto? PublicPage = null);
+    PublicPageConfigDto? PublicPage = null,
+    IReadOnlyList<GalleryImageResponse>? GalleryImages = null);
+
+public sealed record GalleryImageResponse(string StorageKey, string Url);
 
 public sealed record VerificationDocumentResponse(
     VerificationDocumentType DocumentType,

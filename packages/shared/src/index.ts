@@ -11,6 +11,7 @@ export * from "./category-workflows";
 export * from "./subscription-tiers";
 export * from "./design-tokens";
 export * from "./category-visuals";
+export * from "./wellness-taxonomy";
 export * from "./search-intent";
 export * from "./i18n";
 export * from "./api-errors";

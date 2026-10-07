@@ -20,6 +20,8 @@ internal sealed class DiscoverySearchRow
 
     public string? CoverImageKey { get; set; }
 
+    public string? GalleryImageKeysJson { get; set; }
+
     public double DistanceKm { get; set; }
 
     public double Latitude { get; set; }

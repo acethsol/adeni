@@ -1,33 +1,75 @@
 <footer class="footer">
   <div class="inner">
-    <div class="columns">
-      @for (section of sections(); track section.titleKey) {
-        <div>
-          <h2>{{ label(section.titleKey) }}</h2>
+    <div class="brand">
+      <a routerLink="/" class="brand-mark" aria-label="Adeni home">
+        <adeni-brand-lockup [height]="36" surface="light" />
+      </a>
+      <p class="tagline">{{ tagline() }}</p>
+    </div>
+
+    <div class="main">
+      <div class="link-columns">
+        <nav class="col" [attr.aria-label]="label('footer.sections.cities')">
+          <h2>{{ label("footer.sections.cities") }}</h2>
           <ul>
-            @for (link of section.links; track link.labelKey) {
+            @for (city of cityLinks(); track city.id) {
               <li>
-                @if (link.external) {
-                  <a [href]="link.href">{{ label(link.labelKey) }}</a>
-                } @else {
-                  <a [routerLink]="link.href.split('?')[0]" [queryParams]="queryParams(link.href)">
-                    {{ label(link.labelKey) }}
-                  </a>
-                }
+                <a
+                  routerLink="/discover"
+                  [queryParams]="{ market: city.id }"
+                  (click)="selectCity(city.id)"
+                >
+                  {{ city.name }}
+                </a>
               </li>
             }
           </ul>
+        </nav>
+
+        <nav class="col" [attr.aria-label]="label('footer.sections.account')">
+          <h2>{{ label("footer.sections.account") }}</h2>
+          <ul>
+            <li>
+              <a routerLink="/discover">{{ label("footer.links.explore") }}</a>
+            </li>
+            <li>
+              <a routerLink="/my-bookings">{{ label("footer.links.myBookings") }}</a>
+            </li>
+          </ul>
+        </nav>
+
+        <nav class="col" [attr.aria-label]="label('footer.sections.legal')">
+          <h2>{{ label("footer.sections.legal") }}</h2>
+          <ul>
+            <li>
+              <a routerLink="/privacy">{{ label("footer.links.privacy") }}</a>
+            </li>
+            <li>
+              <a routerLink="/terms">{{ label("footer.links.terms") }}</a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+
+      <aside class="business">
+        <h2>{{ label("footer.sections.business") }}</h2>
+        <p>{{ label("footer.businessLede") }}</p>
+        <div class="business-actions">
+          @if (portalRegisterUrl(); as registerUrl) {
+            <a class="cta" [href]="registerUrl">{{ label("footer.links.listBusiness") }}</a>
+          } @else {
+            <a class="cta" routerLink="/discover">{{ label("footer.links.listBusiness") }}</a>
+          }
+          @if (portalUrl(); as portal) {
+            <a class="ghost" [href]="portal">{{ label("footer.links.businessPortal") }}</a>
+          }
         </div>
-      }
+      </aside>
     </div>
 
     <div class="bottom">
       <div class="legal">
         <span>© {{ year }} Adeni</span>
-        @for (link of legalLinks; track link.labelKey; let last = $last) {
-          <span aria-hidden="true">·</span>
-          <a [routerLink]="link.href">{{ label(link.labelKey) }}</a>
-        }
       </div>
 
       <button type="button" class="locale-btn" (click)="openPicker()">
@@ -43,7 +85,13 @@
 
 @if (pickerOpen()) {
   <div class="overlay" (click)="closePicker()" role="presentation">
-    <div class="sheet" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Language and region">
+    <div
+      class="sheet"
+      (click)="$event.stopPropagation()"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Language and region"
+    >
       <header>
         <div>
           <h3>{{ label("locale.pickerTitle") }}</h3>
@@ -55,7 +103,7 @@
         @for (preset of presets(); track preset.id) {
           <li>
             <button type="button" [class.active]="isCurrent(preset)" (click)="applyPreset(preset)">
-              <span class="main">
+              <span class="main-label">
                 <strong>{{ preset.languageLabel }}</strong>
                 <span>{{ preset.regionLabel }} · {{ preset.currency }}</span>
               </span>

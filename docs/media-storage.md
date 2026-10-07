@@ -41,12 +41,14 @@ flowchart LR
 
 ```
 tenants/{tenantId}/covers/{uuid}.webp
+tenants/{tenantId}/gallery/{uuid}.webp
 tenants/{tenantId}/logos/{uuid}.webp
 tenants/{tenantId}/verification/{uuid}.pdf   # private container, signed URLs only
 ```
 
-- **Public container**: cover + logo (immutable UUID filenames; overwrite = new key).
+- **Public container**: cover + gallery + logo (immutable UUID filenames; overwrite = new key).
 - **Private container**: verification docs (admin-only signed download).
+- **Gallery**: up to 5 keys in `GalleryImageKeysJson`; discovery returns `imageUrls` = cover + gallery for Explore/map carousels.
 
 ## Client fallback (Sprint 11)
 

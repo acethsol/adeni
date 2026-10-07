@@ -103,6 +103,7 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.CategorySlug).HasMaxLength(64);
             entity.Property(x => x.Phone).HasMaxLength(32);
             entity.Property(x => x.CoverImageKey).HasMaxLength(512);
+            entity.Property(x => x.GalleryImageKeysJson).HasMaxLength(4000);
             entity.Property(x => x.LogoImageKey).HasMaxLength(512);
             entity.Property(x => x.PublicPageTemplateId).HasMaxLength(32).HasDefaultValue("studio");
             entity.Property(x => x.PublicPageAccentColor).HasMaxLength(7);

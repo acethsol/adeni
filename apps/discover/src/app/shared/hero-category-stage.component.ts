@@ -20,6 +20,7 @@ import {
 } from "@adeni/shared";
 import { AdeniBrandLockupComponent, AdeniLocaleService } from "@adeni/ui";
 import { interval } from "rxjs";
+import { ADENI_DISCOVER_CONFIG } from "../core/adeni-config";
 import { HERO_SEARCH_ANCHOR_ID } from "../core/services/hero-search-pin.service";
 import { DiscoverySearchComponent } from "./discovery-search.component";
 
@@ -71,6 +72,7 @@ type HeroCategoryChip = {
 export class HeroCategoryStageComponent implements OnInit {
   private readonly localeService = inject(AdeniLocaleService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly config = inject(ADENI_DISCOVER_CONFIG);
 
   readonly categories = input<Category[]>([]);
   /** Top featured discovery results for this market (API `sort=featured`). */
@@ -85,10 +87,17 @@ export class HeroCategoryStageComponent implements OnInit {
 
   readonly headlineLead = computed(() => t(this.locale(), "home.headlineLead"));
   readonly lead = computed(() => t(this.locale(), "home.heroLead"));
+  readonly browseServicesLabel = computed(() => t(this.locale(), "home.browseServices"));
+  readonly listBusinessLabel = computed(() => t(this.locale(), "home.listBusiness"));
   readonly bookNowLabel = computed(() => t(this.locale(), "home.bookNow"));
   readonly featuredLabel = computed(() => t(this.locale(), "home.featuredNearYou"));
   readonly verifiedLabel = computed(() => t(this.locale(), "business.verified"));
   readonly brandPill = computed(() => t(this.locale(), "home.brandPill"));
+
+  readonly portalUrl = computed(() => {
+    const origin = this.config.portalAppUrl.trim();
+    return origin ? origin.replace(/\/$/, "") : null;
+  });
 
   readonly chips = computed<HeroCategoryChip[]>(() => {
     const locale = this.locale();

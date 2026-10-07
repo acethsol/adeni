@@ -1,12 +1,41 @@
 <a
   class="card"
+  [class.row]="layout() === 'row'"
   [routerLink]="['/businesses', item().slug]"
   [style.--g1]="tone().g1"
   [style.--g2]="tone().g2"
 >
-  <div class="media">
-    <img [src]="coverFor(item().categorySlug, item().coverImageUrl)" alt="" />
+  <div class="media" [class.carousel]="showCarousel()">
+    <img [src]="activeImage()" alt="" />
     <span class="wash" aria-hidden="true"></span>
+
+    @if (index() != null) {
+      <span class="rank" aria-hidden="true">{{ index() }}</span>
+    }
+
+    @if (showCarousel()) {
+      <button
+        type="button"
+        class="nav prev"
+        aria-label="Previous photo"
+        (click)="prevImage($event)"
+      >
+        ‹
+      </button>
+      <button
+        type="button"
+        class="nav next"
+        aria-label="Next photo"
+        (click)="nextImage($event)"
+      >
+        ›
+      </button>
+      <div class="dots" aria-hidden="true">
+        @for (img of images(); track img; let i = $index) {
+          <span class="dot" [class.on]="i === activeImageIndex()"></span>
+        }
+      </div>
+    }
 
     <div class="badges trust" aria-label="Trust signals">
       @if (isVerified()) {

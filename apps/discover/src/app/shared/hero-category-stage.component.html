@@ -26,6 +26,13 @@
 
       <p class="lead">{{ lead() }}</p>
 
+      <div class="actions">
+        <a class="cta primary" routerLink="/discover">{{ browseServicesLabel() }}</a>
+        @if (portalUrl(); as businessUrl) {
+          <a class="cta secondary" [href]="businessUrl">{{ listBusinessLabel() }}</a>
+        }
+      </div>
+
       <div class="search-wrap" [id]="heroSearchAnchorId">
         <app-discovery-search variant="hero" />
       </div>

@@ -92,6 +92,32 @@
           {{ uploading() ? "Uploading…" : "Upload cover" }}
           <input type="file" accept="image/jpeg,image/png,image/webp" hidden (change)="onCoverSelected($event)" />
         </label>
+        <p class="muted">Main photo on Discover cards and your public page.</p>
+      </section>
+
+      <section class="card">
+        <h3>Gallery photos</h3>
+        <p class="muted">
+          Extra photos for Explore &amp; map previews (up to {{ maxGalleryPhotos }}). Customers browse with arrows.
+        </p>
+        <div class="gallery-grid">
+          @for (photo of galleryImages(); track photo.storageKey) {
+            <div class="gallery-item">
+              <img [src]="photo.url" alt="" />
+              <button type="button" class="remove" (click)="removeGalleryImage(photo.storageKey)">Remove</button>
+            </div>
+          }
+        </div>
+        <label class="btn" [class.disabled]="galleryImages().length >= maxGalleryPhotos">
+          {{ galleryUploading() ? "Uploading…" : "Add gallery photo" }}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            hidden
+            [disabled]="galleryImages().length >= maxGalleryPhotos || galleryUploading()"
+            (change)="onGallerySelected($event)"
+          />
+        </label>
       </section>
 
       <section class="card">

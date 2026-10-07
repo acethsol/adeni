@@ -6,6 +6,7 @@ using Adeni.Domain.Identity;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Catalog;
 using Adeni.Infrastructure.Markets;
+using Adeni.Infrastructure.Storage;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
@@ -152,6 +153,7 @@ public static class DevelopmentDataSeeder
         await MarketCatalogSeeder.SeedIfEmptyAsync(db, environment, cancellationToken);
         await SeedSamplesAsync(db, cancellationToken);
         await EnsureServiceMenusAsync(db, environment, cancellationToken);
+        await EnsureGalleryPhotosAsync(db, cancellationToken);
         await SeedDevBusinessOwnerAsync(db, cancellationToken);
         await SeedDevDepositSettingsAsync(db, cancellationToken);
         await SeedDevReviewFixtureAsync(db, cancellationToken);
@@ -224,6 +226,217 @@ public static class DevelopmentDataSeeder
             await db.SaveChangesAsync(cancellationToken);
         }
     }
+
+    private static async Task EnsureGalleryPhotosAsync(
+        AdeniDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var profiles = await db.BusinessProfiles
+            .IgnoreQueryFilters()
+            .Where(profile =>
+                profile.GalleryImageKeysJson == null
+                || profile.GalleryImageKeysJson == ""
+                || profile.GalleryImageKeysJson.Contains("images.unsplash.com"))
+            .ToListAsync(cancellationToken);
+
+        var now = DateTimeOffset.UtcNow;
+        var touched = 0;
+        foreach (var profile in profiles)
+        {
+            if (!GalleryPhotos.TryGetValue(profile.CategorySlug, out var photos) || photos.Length < 5)
+            {
+                continue;
+            }
+
+            var picked = PickPhotos(photos, profile.TenantId, 5);
+            if (string.IsNullOrWhiteSpace(profile.CoverImageKey)
+                || profile.CoverImageKey.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                profile.CoverImageKey = picked[0];
+            }
+
+            profile.GalleryImageKeysJson = TenantMediaService.SerializeGalleryKeys(picked.Skip(1).Take(4).ToArray());
+            profile.UpdatedAt = now;
+            touched++;
+
+            if (touched % 100 == 0)
+            {
+                await db.SaveChangesAsync(cancellationToken);
+            }
+        }
+
+        if (touched % 100 != 0)
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    private static string[] PickPhotos(string[] pool, Guid tenantId, int count)
+    {
+        var order = pool.ToArray();
+        var bytes = tenantId.ToByteArray();
+        var state = BitConverter.ToUInt32(bytes, 0)
+            ^ BitConverter.ToUInt32(bytes, 4)
+            ^ BitConverter.ToUInt32(bytes, 8);
+        for (var i = order.Length - 1; i > 0; i--)
+        {
+            state = unchecked(state * 1664525u + 1013904223u);
+            var swap = (int)(state % (uint)(i + 1));
+            (order[i], order[swap]) = (order[swap], order[i]);
+        }
+
+        return order.Take(count).ToArray();
+    }
+
+    private static string Photo(string id) =>
+        $"https://images.unsplash.com/{id}?w=1200&auto=format&fit=crop&q=80";
+
+    private static readonly Dictionary<string, string[]> GalleryPhotos = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["hair-grooming"] =
+        [
+            Photo("photo-1621605815971-fbc98d665033"),
+            Photo("photo-1560066984-138dadb4c035"),
+            Photo("photo-1503951914875-452162b0f3f1"),
+            Photo("photo-1595476108010-b4d1f102b1b1"),
+            Photo("photo-1562322140-8baeececf3df"),
+            Photo("photo-1521590832167-7bcbfaa6381f"),
+            Photo("photo-1605497788044-5a32c7078486"),
+            Photo("photo-1492106087820-71f1a00d2b11"),
+            Photo("photo-1519699047748-de8e457a634e"),
+            Photo("photo-1580618672591-eb180b1a973f"),
+            Photo("photo-1470259078422-826894b933aa"),
+            Photo("photo-1622286342621-4bd786c2447c"),
+            Photo("photo-1599351431202-1e0f0137899a"),
+            Photo("photo-1516975080664-ed2fc6a32937"),
+            Photo("photo-1500840216050-6ffa99d75160"),
+            Photo("photo-1622287162716-f311baa1a2b8"),
+            Photo("photo-1595475884562-073c30d45670"),
+            Photo("photo-1600948836101-f9ffda59d250"),
+            Photo("photo-1620331311520-246422fd82f9"),
+            Photo("photo-1633681926022-84c23e8cb2d6"),
+        ],
+        ["massage-bodywork"] =
+        [
+            Photo("photo-1544161515-4ab6ce6db874"),
+            Photo("photo-1600334129128-685c5582fd35"),
+            Photo("photo-1519824145371-296894a0daa9"),
+            Photo("photo-1591343395082-e120087004b4"),
+            Photo("photo-1519823551278-64ac92734fb1"),
+            Photo("photo-1600334089648-b0d9d3028eb2"),
+            Photo("photo-1545205597-3d9d02c29597"),
+            Photo("photo-1552196563-55cd4e45efb3"),
+            Photo("photo-1506126613408-eca07ce68773"),
+            Photo("photo-1540555700478-4be289fbecef"),
+            Photo("photo-1515377905703-c4788e51af15"),
+            Photo("photo-1571902943202-507ec2618e8f"),
+            Photo("photo-1599447421416-3414500d18a5"),
+            Photo("photo-1545389336-cf090694435e"),
+            Photo("photo-1506126279646-a697353d3166"),
+            Photo("photo-1575052814086-f385e2e2ad1b"),
+        ],
+        ["spa-relaxation"] =
+        [
+            Photo("photo-1540555700478-4be289fbecef"),
+            Photo("photo-1515377905703-c4788e51af15"),
+            Photo("photo-1571902943202-507ec2618e8f"),
+            Photo("photo-1600334089648-b0d9d3028eb2"),
+            Photo("photo-1552693673-1bf958298935"),
+            Photo("photo-1544161515-4ab6ce6db874"),
+            Photo("photo-1600334129128-685c5582fd35"),
+            Photo("photo-1519824145371-296894a0daa9"),
+            Photo("photo-1591343395082-e120087004b4"),
+            Photo("photo-1519823551278-64ac92734fb1"),
+            Photo("photo-1570172619644-dfd03ed5d881"),
+            Photo("photo-1616394584738-fc6e612e71b9"),
+            Photo("photo-1556228720-195a672e8a03"),
+            Photo("photo-1598440947619-2c35fc9aa908"),
+            Photo("photo-1612817288484-6f916006741a"),
+            Photo("photo-1545205597-3d9d02c29597"),
+        ],
+        ["skincare-aesthetics"] =
+        [
+            Photo("photo-1570172619644-dfd03ed5d881"),
+            Photo("photo-1616394584738-fc6e612e71b9"),
+            Photo("photo-1512290923902-8a9f81dc236c"),
+            Photo("photo-1487412947147-5cebf100ffc2"),
+            Photo("photo-1522335789203-aabd1fc54bc9"),
+            Photo("photo-1556228720-195a672e8a03"),
+            Photo("photo-1598440947619-2c35fc9aa908"),
+            Photo("photo-1612817288484-6f916006741a"),
+            Photo("photo-1556228578-0d85b1a4d571"),
+            Photo("photo-1596755389378-c31d21fd1273"),
+            Photo("photo-1611930022073-b7a4ba5fcccd"),
+            Photo("photo-1620916566398-39f1143ab7be"),
+            Photo("photo-1571781926291-c477ebfd024b"),
+            Photo("photo-1556228578-8c89e6adf883"),
+            Photo("photo-1512496015851-a90fb38ba796"),
+            Photo("photo-1596462502278-27bfdc403348"),
+            Photo("photo-1526045478516-99145907023c"),
+            Photo("photo-1515688594390-b649af70d282"),
+            Photo("photo-1487412720507-e7ab37603c6f"),
+            Photo("photo-1571290274554-6a2eaa771e5f"),
+        ],
+        ["nails"] =
+        [
+            Photo("photo-1604654894610-df63bc536371"),
+            Photo("photo-1519014816548-bf5fe059798b"),
+            Photo("photo-1632345031435-8727f6897d53"),
+            Photo("photo-1610992015732-2449b76344bc"),
+            Photo("photo-1457972729786-0411a3b2b626"),
+            Photo("photo-1522337094846-8a818192de1f"),
+            Photo("photo-1519415943484-9fa1873496d4"),
+            Photo("photo-1522337660859-02fbefca4702"),
+            Photo("photo-1583001931096-959e9a1a6223"),
+            Photo("photo-1571290274554-6a2eaa771e5f"),
+            Photo("photo-1596462502278-27bfdc403348"),
+            Photo("photo-1526045478516-99145907023c"),
+            Photo("photo-1512496015851-a90fb38ba796"),
+            Photo("photo-1582095133179-bfd08e2fc6b3"),
+            Photo("photo-1515688594390-b649af70d282"),
+            Photo("photo-1487412720507-e7ab37603c6f"),
+        ],
+        ["fitness"] =
+        [
+            Photo("photo-1517836357463-d25dfeac3438"),
+            Photo("photo-1534438327276-14e5300c3a48"),
+            Photo("photo-1571019614242-c5c5dee9f50b"),
+            Photo("photo-1518611012118-696072aa579a"),
+            Photo("photo-1574680096145-d05b474e2155"),
+            Photo("photo-1517963879433-6ad2b056d712"),
+            Photo("photo-1534258936925-c58bed479fcb"),
+            Photo("photo-1434682881908-b43d0467b798"),
+            Photo("photo-1517838277536-f5f99be501cd"),
+            Photo("photo-1581009146145-b5ef050c2e1e"),
+            Photo("photo-1540497077202-7c8a3999166f"),
+            Photo("photo-1576678927484-cc907957088c"),
+            Photo("photo-1550345332-09e3ac987658"),
+            Photo("photo-1571019613454-1cb2f99b2d8b"),
+            Photo("photo-1518310383802-640c2de311b2"),
+            Photo("photo-1476480862126-209bfaa8edc8"),
+            Photo("photo-1599058917212-d750089bc07e"),
+            Photo("photo-1434596922112-19c563067271"),
+        ],
+        ["yoga-pilates"] =
+        [
+            Photo("photo-1544367567-0f2fcb009e0b"),
+            Photo("photo-1506126613408-eca07ce68773"),
+            Photo("photo-1545389336-cf090694435e"),
+            Photo("photo-1599901860904-17e6ed7083a0"),
+            Photo("photo-1575052814086-f385e2e2ad1b"),
+            Photo("photo-1545205597-3d9d02c29597"),
+            Photo("photo-1506126279646-a697353d3166"),
+            Photo("photo-1552196563-55cd4e45efb3"),
+            Photo("photo-1599447421416-3414500d18a5"),
+            Photo("photo-1518611012118-696072aa579a"),
+            Photo("photo-1571019613454-1cb2f99b2d8b"),
+            Photo("photo-1518310383802-640c2de311b2"),
+            Photo("photo-1476480862126-209bfaa8edc8"),
+            Photo("photo-1550345332-09e3ac987658"),
+            Photo("photo-1434596922112-19c563067271"),
+            Photo("photo-1540497077202-7c8a3999166f"),
+        ],
+    };
 
     private static int AddServiceMenu(
         AdeniDbContext db,

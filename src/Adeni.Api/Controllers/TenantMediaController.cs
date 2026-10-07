@@ -46,6 +46,38 @@ public sealed class TenantMediaController(
         return MapResult(result, coverImageUrl => Ok(new { coverImageUrl }));
     }
 
+    [HttpPost("profile/gallery")]
+    public async Task<IActionResult> AddGalleryImage(
+        [FromBody] AddGalleryImageRequest request,
+        CancellationToken cancellationToken)
+    {
+        var auth0Sub = ResolveAuth0Sub();
+        var tenantId = ResolveTenantId();
+        if (auth0Sub is null || tenantId is null)
+        {
+            return Unauthorized();
+        }
+
+        var result = await mediaService.AddGalleryImageAsync(tenantId.Value, auth0Sub, request, cancellationToken);
+        return MapResult(result, items => Ok(new { items }));
+    }
+
+    [HttpDelete("profile/gallery")]
+    public async Task<IActionResult> RemoveGalleryImage(
+        [FromBody] RemoveGalleryImageRequest request,
+        CancellationToken cancellationToken)
+    {
+        var auth0Sub = ResolveAuth0Sub();
+        var tenantId = ResolveTenantId();
+        if (auth0Sub is null || tenantId is null)
+        {
+            return Unauthorized();
+        }
+
+        var result = await mediaService.RemoveGalleryImageAsync(tenantId.Value, auth0Sub, request, cancellationToken);
+        return MapResult(result, items => Ok(new { items }));
+    }
+
     private string? ResolveAuth0Sub()
     {
         if (User.Identity?.IsAuthenticated == true)

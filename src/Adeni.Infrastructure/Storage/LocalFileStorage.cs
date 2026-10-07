@@ -30,6 +30,11 @@ public sealed class LocalFileStorage(
 
     public Task<string> GetDownloadUrlAsync(string storageKey, CancellationToken cancellationToken = default)
     {
+        if (IsAbsoluteUrl(storageKey))
+        {
+            return Task.FromResult(storageKey);
+        }
+
         var url = $"{_options.PublicBaseUrl.TrimEnd('/')}/{storageKey.TrimStart('/')}";
         return Task.FromResult(url);
     }
@@ -66,6 +71,10 @@ public sealed class LocalFileStorage(
     }
 
     public string GetRootPath() => Path.GetFullPath(_options.RootPath);
+
+    private static bool IsAbsoluteUrl(string storageKey) =>
+        storageKey.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+        || storageKey.StartsWith("http://", StringComparison.OrdinalIgnoreCase);
 
     private string GetFullPath(string storageKey)
     {

@@ -4,9 +4,11 @@ import { KeyValuePipe } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute } from "@angular/router";
 import { map } from "rxjs";
-import type { BusinessProfile, PublicReviewItem } from "@adeni/shared";
+import type { BusinessProfile, GalleryImage, PublicReviewItem } from "@adeni/shared";
 import {
   formatTenantStatus,
+  MAX_GALLERY_PHOTOS,
+  MAX_UPLOAD_BYTES,
   resolveBusinessCoverImage,
   VERIFICATION_DOCUMENT_LABELS,
 } from "@adeni/shared";
@@ -17,7 +19,7 @@ import { PortalTabsComponent } from "../../shared/portal-tabs.component";
 
 const PHONE_PATTERN = /^\+?[0-9\s-]{7,20}$/;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_BYTES = MAX_UPLOAD_BYTES;
 
 @Component({
   selector: "app-profile",
@@ -44,7 +46,10 @@ export class ProfileComponent implements OnInit {
   readonly profile = signal<BusinessProfile | null>(null);
   readonly saving = signal(false);
   readonly uploading = signal(false);
+  readonly galleryUploading = signal(false);
   readonly coverPreview = signal<string>("");
+  readonly galleryImages = signal<GalleryImage[]>([]);
+  readonly maxGalleryPhotos = MAX_GALLERY_PHOTOS;
 
   businessName = "";
   categorySlug = "";
@@ -86,6 +91,7 @@ export class ProfileComponent implements OnInit {
       this.autoConfirm = p.autoConfirmBookings ?? false;
       this.depositPercent = p.depositPercent ?? 0;
       this.coverPreview.set(resolveBusinessCoverImage(p.categorySlug, p.coverImageUrl));
+      this.galleryImages.set(p.galleryImages ?? []);
       await this.loadReviews(p);
     } catch {
       this.error.set("Could not load profile.");
@@ -278,6 +284,59 @@ export class ProfileComponent implements OnInit {
     } finally {
       this.uploading.set(false);
       input.value = "";
+    }
+  }
+
+  async onGallerySelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file || !this.profile()) return;
+
+    if (this.galleryImages().length >= MAX_GALLERY_PHOTOS) {
+      this.error.set(`You can add up to ${MAX_GALLERY_PHOTOS} gallery photos.`);
+      input.value = "";
+      return;
+    }
+    if (!ALLOWED_TYPES.has(file.type)) {
+      this.error.set("Use JPEG, PNG, or WebP.");
+      return;
+    }
+    if (file.size > MAX_BYTES) {
+      this.error.set("Photo must be 5 MB or smaller.");
+      return;
+    }
+
+    this.galleryUploading.set(true);
+    this.error.set(null);
+    try {
+      const items = await this.api.withAuthorizedClient(async (c) => {
+        const slot = await c.createGalleryUploadUrl(file.type, file.size);
+        const upload = await fetch(slot.uploadUrl, {
+          method: "PUT",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+        if (!upload.ok) throw new Error("upload failed");
+        return c.addTenantGalleryImage({ galleryImageKey: slot.storageKey });
+      });
+      this.galleryImages.set(items);
+    } catch {
+      this.error.set("Gallery upload failed.");
+    } finally {
+      this.galleryUploading.set(false);
+      input.value = "";
+    }
+  }
+
+  async removeGalleryImage(storageKey: string): Promise<void> {
+    this.error.set(null);
+    try {
+      const items = await this.api.withAuthorizedClient((c) =>
+        c.removeTenantGalleryImage({ galleryImageKey: storageKey }),
+      );
+      this.galleryImages.set(items);
+    } catch {
+      this.error.set("Could not remove gallery photo.");
     }
   }
 }

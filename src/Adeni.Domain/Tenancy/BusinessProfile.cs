@@ -13,6 +13,9 @@ public sealed class BusinessProfile : ITenantEntity
 
     public string? CoverImageKey { get; set; }
 
+    /// <summary>JSON array of extra gallery storage keys (cover is separate; max 5).</summary>
+    public string? GalleryImageKeysJson { get; set; }
+
     /// <summary>Square mark for public mini-site header (optional).</summary>
     public string? LogoImageKey { get; set; }
 

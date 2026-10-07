@@ -21,7 +21,8 @@ public sealed record DiscoveryBusinessItem(
     string DiscoveryCta = "book_now",
     IReadOnlyList<string>? VerificationBadges = null,
     DateTimeOffset? VerifiedSince = null,
-    double? CompletionRate = null);
+    double? CompletionRate = null,
+    IReadOnlyList<string>? ImageUrls = null);
 
 public sealed record DiscoveryResult(
     IReadOnlyList<DiscoveryBusinessItem> Items,

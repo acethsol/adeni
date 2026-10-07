@@ -188,6 +188,26 @@ export function resolveBusinessCoverImage(
   return getBusinessCoverImage(categorySlug);
 }
 
+/**
+ * Ordered image list for Explore / map carousels.
+ * Uses API `imageUrls` when present; otherwise cover (or category placeholder).
+ */
+export function resolveBusinessImageUrls(
+  categorySlug: string,
+  coverImageUrl?: string | null,
+  imageUrls?: readonly string[] | null,
+): string[] {
+  const fromApi = (imageUrls ?? [])
+    .map((url) => url?.trim())
+    .filter((url): url is string => Boolean(url));
+
+  if (fromApi.length > 0) {
+    return [...new Set(fromApi)];
+  }
+
+  return [resolveBusinessCoverImage(categorySlug, coverImageUrl)];
+}
+
 export function formatCategoryLabel(slug: string): string {
   return slug
     .split("-")

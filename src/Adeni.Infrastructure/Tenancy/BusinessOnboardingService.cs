@@ -588,6 +588,14 @@ public sealed class BusinessOnboardingService(
             logoImageUrl = await fileStorage.GetDownloadUrlAsync(profile.LogoImageKey, cancellationToken);
         }
 
+        var galleryKeys = Adeni.Infrastructure.Storage.TenantMediaService.DeserializeGalleryKeys(profile.GalleryImageKeysJson);
+        var galleryImages = new List<GalleryImageResponse>(galleryKeys.Count);
+        foreach (var key in galleryKeys)
+        {
+            var url = await fileStorage.GetDownloadUrlAsync(key, cancellationToken);
+            galleryImages.Add(new GalleryImageResponse(key, url));
+        }
+
         var capabilities = businessCapabilitiesService.GetCapabilities(profile.BusinessType, profile.CategorySlug);
         var additionalCategorySlugs = await dbContext.BusinessProfileCategories
             .AsNoTracking()
@@ -615,7 +623,8 @@ public sealed class BusinessOnboardingService(
             profile.DepositPercent,
             SubscriptionTierMapping.ToApiValue(tenant.SubscriptionTier),
             SubscriptionEntitlements.ForTier(tenant.SubscriptionTier),
-            PublicPageConfigMapper.FromProfile(profile, logoImageUrl));
+            PublicPageConfigMapper.FromProfile(profile, logoImageUrl),
+            galleryImages);
     }
 
     private async Task InvalidateProfileCachesAsync(Guid tenantId, CancellationToken cancellationToken)

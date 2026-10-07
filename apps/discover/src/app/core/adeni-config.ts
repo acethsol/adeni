@@ -12,6 +12,8 @@ export type AdeniDiscoverConfig = {
   envMarketId: string;
   defaultMarketId: string;
   defaultLocation: { lat: number; lng: number };
+  /** Public Mapbox token (`pk.…`) — required for the Explore map. */
+  mapboxAccessToken: string;
   devCustomerAuth0Sub: string;
   auth0: {
     domain: string;
@@ -33,6 +35,7 @@ export function adeniDiscoverConfigFactory(): AdeniDiscoverConfig {
     envMarketId: environment.envMarketId.trim(),
     defaultMarketId: environment.defaultMarketId,
     defaultLocation: environment.defaultLocation,
+    mapboxAccessToken: environment.mapboxAccessToken.trim(),
     devCustomerAuth0Sub: environment.devCustomerAuth0Sub.trim(),
     auth0: {
       domain: environment.auth0.domain.trim(),

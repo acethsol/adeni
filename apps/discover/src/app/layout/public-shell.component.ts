@@ -132,7 +132,7 @@ export class PublicShellComponent implements OnInit {
   }
 
   private isFlush(url: string): boolean {
-    if (this.isHome(url)) {
+    if (this.isHome(url) || this.isExplore(url)) {
       return true;
     }
     const primary = this.router.parseUrl(url).root.children["primary"];
