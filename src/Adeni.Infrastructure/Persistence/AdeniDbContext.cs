@@ -53,6 +53,10 @@ public sealed class AdeniDbContext(
 
     public DbSet<StaffServiceLink> StaffServiceLinks => Set<StaffServiceLink>();
 
+    public DbSet<StaffWeeklyAvailability> StaffWeeklyAvailabilities => Set<StaffWeeklyAvailability>();
+
+    public DbSet<StaffLeave> StaffLeaves => Set<StaffLeave>();
+
     public DbSet<WeeklyAvailability> WeeklyAvailabilities => Set<WeeklyAvailability>();
 
     public DbSet<BookingRecord> Bookings => Set<BookingRecord>();
@@ -240,7 +244,10 @@ public sealed class AdeniDbContext(
         {
             entity.ToTable("staff_members", "booking");
             entity.HasKey(x => x.Id);
+            entity.Property(x => x.FirstName).HasMaxLength(80);
+            entity.Property(x => x.LastName).HasMaxLength(80);
             entity.Property(x => x.DisplayName).HasMaxLength(120);
+            entity.Property(x => x.RoleKey).HasMaxLength(40).HasDefaultValue(StaffRoleKeys.Other);
             entity.Property(x => x.Title).HasMaxLength(120);
             entity.Property(x => x.Bio).HasMaxLength(500);
             entity.Property(x => x.AvatarImageKey).HasMaxLength(512);
@@ -260,6 +267,31 @@ public sealed class AdeniDbContext(
             entity.HasOne(x => x.ServiceOffering)
                 .WithMany()
                 .HasForeignKey(x => x.ServiceOfferingId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<StaffWeeklyAvailability>(entity =>
+        {
+            entity.ToTable("staff_weekly_availability", "booking");
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => new { x.TenantId, x.StaffMemberId, x.DayOfWeek });
+            entity.HasOne(x => x.StaffMember)
+                .WithMany(x => x.WeeklyHours)
+                .HasForeignKey(x => x.StaffMemberId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<StaffLeave>(entity =>
+        {
+            entity.ToTable("staff_leave", "booking");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Reason).HasMaxLength(200);
+            entity.HasIndex(x => new { x.TenantId, x.StaffMemberId, x.StartAt });
+            entity.HasOne(x => x.StaffMember)
+                .WithMany(x => x.LeaveEntries)
+                .HasForeignKey(x => x.StaffMemberId)
                 .OnDelete(DeleteBehavior.Cascade);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });

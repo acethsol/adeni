@@ -70,9 +70,19 @@ internal static class ApiErrorResponseMapper
             _ when code.StartsWith("internal.", StringComparison.Ordinal) =>
                 StatusCodes.Status500InternalServerError,
             _ when code.StartsWith("booking.", StringComparison.Ordinal) => ResolveBookingStatusCode(code),
+            _ when code.StartsWith("staff.", StringComparison.Ordinal) => ResolveStaffStatusCode(code),
             _ when code.StartsWith("payment.", StringComparison.Ordinal) => ResolvePaymentStatusCode(code),
             _ when code.StartsWith("messaging.", StringComparison.Ordinal) => ResolveMessagingStatusCode(code),
             _ => StatusCodes.Status404NotFound,
+        };
+
+    private static int ResolveStaffStatusCode(string code) =>
+        code switch
+        {
+            ErrorCodes.StaffLeaveNotFound => StatusCodes.Status404NotFound,
+            ErrorCodes.StaffLeaveOverlap => StatusCodes.Status409Conflict,
+            ErrorCodes.StaffHoursInvalid => StatusCodes.Status400BadRequest,
+            _ => StatusCodes.Status400BadRequest,
         };
 
     private static int ResolvePaymentStatusCode(string code) =>

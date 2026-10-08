@@ -1,0 +1,65 @@
+<app-portal-page
+  [title]="calendar()?.displayName ? calendar()!.displayName + ' · Calendar' : 'Staff calendar'"
+  description="Bookings and leave for this team member."
+>
+  <div class="toolbar">
+    <a class="btn" routerLink="/staff">← Back to staff</a>
+    <div class="week-nav">
+      <button type="button" class="btn" (click)="prevWeek()">Previous</button>
+      <strong>{{ weekLabel() }}</strong>
+      <button type="button" class="btn" (click)="nextWeek()">Next</button>
+    </div>
+  </div>
+
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  } @else if (calendar(); as cal) {
+    <p class="muted">
+      @if (cal.inheritsBusinessHours) {
+        Hours: inherits business availability
+      } @else {
+        Hours: custom weekly schedule ({{ cal.hours.length }} window(s))
+      }
+    </p>
+
+    <section class="card">
+      <h3>Bookings</h3>
+      @if (cal.bookings.length === 0) {
+        <p class="muted">No bookings this week.</p>
+      } @else {
+        <ul class="events">
+          @for (b of cal.bookings; track b.id) {
+            <li>
+              <strong>{{ b.serviceName }}</strong>
+              <span>{{ formatWhen(b.startAt) }} → {{ formatWhen(b.endAt) }}</span>
+              <span class="tiny">{{ statusLabel(b.status) }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <section class="card">
+      <h3>Leave</h3>
+      @if (cal.leave.length === 0) {
+        <p class="muted">No leave this week.</p>
+      } @else {
+        <ul class="events leave">
+          @for (l of cal.leave; track l.id) {
+            <li>
+              <strong>Time off</strong>
+              <span>{{ formatWhen(l.startAt) }} → {{ formatWhen(l.endAt) }}</span>
+              @if (l.reason) {
+                <span class="tiny">{{ l.reason }}</span>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+</app-portal-page>

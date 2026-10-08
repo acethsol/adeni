@@ -10,6 +10,9 @@ public static class ErrorCodes
     public const string BookingClosed = "booking.closed";
     public const string StaffUnavailable = "booking.staff_unavailable";
     public const string StaffNotEligible = "booking.staff_not_eligible";
+    public const string StaffHoursInvalid = "staff.hours_invalid";
+    public const string StaffLeaveOverlap = "staff.leave_overlap";
+    public const string StaffLeaveNotFound = "staff.leave_not_found";
     public const string CartEmpty = "booking.cart_empty";
     public const string AddonRequiresParent = "booking.addon_requires_parent";
     public const string GuestLimit = "booking.guest_limit";
@@ -50,6 +53,15 @@ public static class ErrorCodes
 
     public static Error StaffNotEligibleError() =>
         new(StaffNotEligible, "That team member does not offer this service.");
+
+    public static Error StaffHoursInvalidError(string message = "Staff hours are invalid.") =>
+        new(StaffHoursInvalid, message);
+
+    public static Error StaffLeaveOverlapError() =>
+        new(StaffLeaveOverlap, "That leave range overlaps an existing leave entry.");
+
+    public static Error StaffLeaveNotFoundError() =>
+        new(StaffLeaveNotFound, "Leave entry was not found.");
 
     public static Error CartEmptyError() =>
         new(CartEmpty, "Add at least one service to book.");

@@ -1,11 +1,33 @@
 import { Component, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import type { ServiceOffering, StaffMember } from "@adeni/shared";
+import { RouterLink } from "@angular/router";
+import {
+  DAY_OF_WEEK_LABELS,
+  STAFF_ROLE_KEYS,
+  STAFF_ROLE_LABELS,
+  type ServiceOffering,
+  type StaffLeave,
+  type StaffMember,
+  type StaffRoleKey,
+  type WeeklyAvailabilityRule,
+} from "@adeni/shared";
 import { AdeniConfirmService, AdeniFeedbackService, PortalPageComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 
+const DAYS_ORDER = [1, 2, 3, 4, 5, 6, 0];
+
+type DayRow = {
+  dayOfWeek: number;
+  openTime: string;
+  closeTime: string;
+  closed: boolean;
+};
+
 type StaffDraft = {
+  firstName: string;
+  lastName: string;
   displayName: string;
+  roleKey: StaffRoleKey;
   title: string;
   bio: string;
   sortOrder: string;
@@ -13,10 +35,43 @@ type StaffDraft = {
   serviceOfferingIds: string[];
 };
 
+function toInputTime(value: string): string {
+  return value.slice(0, 5);
+}
+
+function toApiTime(value: string): string {
+  return value.length === 5 ? `${value}:00` : value;
+}
+
+function rulesToRows(rules: WeeklyAvailabilityRule[]): DayRow[] {
+  return DAYS_ORDER.map((dayOfWeek) => {
+    const rule = rules.find((r) => r.dayOfWeek === dayOfWeek);
+    if (!rule) {
+      return { dayOfWeek, openTime: "09:00", closeTime: "17:00", closed: true };
+    }
+    return {
+      dayOfWeek,
+      openTime: toInputTime(rule.openTime),
+      closeTime: toInputTime(rule.closeTime),
+      closed: false,
+    };
+  });
+}
+
+function rowsToRules(rows: DayRow[]): WeeklyAvailabilityRule[] {
+  return rows
+    .filter((row) => !row.closed)
+    .map((row) => ({
+      dayOfWeek: row.dayOfWeek,
+      openTime: toApiTime(row.openTime),
+      closeTime: toApiTime(row.closeTime),
+    }));
+}
+
 @Component({
   selector: "app-staff",
   standalone: true,
-  imports: [PortalPageComponent, FormsModule],
+  imports: [PortalPageComponent, FormsModule, RouterLink],
   templateUrl: "./staff.component.html",
   styleUrl: "./staff.component.scss",
 })
@@ -32,8 +87,16 @@ export class StaffComponent implements OnInit {
   readonly busy = signal<string | null>(null);
   readonly editingId = signal<string | null>(null);
   readonly showForm = signal(false);
+  readonly roleKeys = STAFF_ROLE_KEYS;
+  readonly roleLabels = STAFF_ROLE_LABELS;
+  readonly dayLabels = DAY_OF_WEEK_LABELS;
 
   draft: StaffDraft = this.emptyDraft();
+  hourRows: DayRow[] = rulesToRows([]);
+  leaveItems = signal<StaffLeave[]>([]);
+  leaveStart = "";
+  leaveEnd = "";
+  leaveReason = "";
 
   ngOnInit(): void {
     void this.load();
@@ -41,7 +104,10 @@ export class StaffComponent implements OnInit {
 
   emptyDraft(): StaffDraft {
     return {
+      firstName: "",
+      lastName: "",
       displayName: "",
+      roleKey: "other",
       title: "",
       bio: "",
       sortOrder: "0",
@@ -50,12 +116,27 @@ export class StaffComponent implements OnInit {
     };
   }
 
+  roleLabel(key: string): string {
+    return this.roleLabels[key as StaffRoleKey] ?? key;
+  }
+
   serviceName(id: string): string {
     return this.services().find((s) => s.id === id)?.name ?? "Service";
   }
 
   serviceNames(ids: string[]): string {
     return ids.map((id) => this.serviceName(id)).join(" · ");
+  }
+
+  syncDisplayName(): void {
+    if (this.editingId()) {
+      return;
+    }
+    const first = this.draft.firstName.trim();
+    const last = this.draft.lastName.trim();
+    if (first || last) {
+      this.draft.displayName = `${first} ${last}`.trim();
+    }
   }
 
   async load(): Promise<void> {
@@ -82,13 +163,21 @@ export class StaffComponent implements OnInit {
   openCreate(): void {
     this.editingId.set(null);
     this.draft = this.emptyDraft();
+    this.hourRows = rulesToRows([]);
+    this.leaveItems.set([]);
+    this.leaveStart = "";
+    this.leaveEnd = "";
+    this.leaveReason = "";
     this.showForm.set(true);
   }
 
-  openEdit(member: StaffMember): void {
+  async openEdit(member: StaffMember): Promise<void> {
     this.editingId.set(member.id);
     this.draft = {
+      firstName: member.firstName,
+      lastName: member.lastName,
       displayName: member.displayName,
+      roleKey: member.roleKey,
       title: member.title ?? "",
       bio: member.bio ?? "",
       sortOrder: String(member.sortOrder ?? 0),
@@ -96,12 +185,40 @@ export class StaffComponent implements OnInit {
       serviceOfferingIds: [...member.serviceOfferingIds],
     };
     this.showForm.set(true);
+    try {
+      await this.api.withAuthorizedClient(async (c) => {
+        const [hours, leave] = await Promise.all([
+          c.getTenantStaffHours(member.id),
+          c.listTenantStaffLeave(member.id),
+        ]);
+        this.hourRows = rulesToRows(hours);
+        this.leaveItems.set(leave);
+      });
+    } catch {
+      this.hourRows = rulesToRows([]);
+      this.leaveItems.set([]);
+    }
+  }
+
+  async copyBusinessHours(): Promise<void> {
+    try {
+      const rules = await this.api.withAuthorizedClient((c) => c.getTenantAvailability());
+      this.hourRows = rulesToRows(rules);
+      this.feedback.success("Copied business hours. Save to apply.");
+    } catch {
+      this.feedback.error("Could not load business hours.");
+    }
+  }
+
+  clearStaffHours(): void {
+    this.hourRows = rulesToRows([]);
   }
 
   cancelForm(): void {
     this.showForm.set(false);
     this.editingId.set(null);
     this.draft = this.emptyDraft();
+    this.leaveItems.set([]);
   }
 
   toggleService(serviceId: string): void {
@@ -114,8 +231,16 @@ export class StaffComponent implements OnInit {
   }
 
   async save(): Promise<void> {
-    const name = this.draft.displayName.trim();
-    if (name.length < 2) {
+    const firstName = this.draft.firstName.trim();
+    const lastName = this.draft.lastName.trim();
+    if (!firstName || !lastName) {
+      this.feedback.error("First and last name are required.");
+      return;
+    }
+
+    const displayName =
+      this.draft.displayName.trim() || `${firstName} ${lastName}`.trim();
+    if (displayName.length < 2) {
       this.feedback.error("Display name needs at least 2 characters.");
       return;
     }
@@ -129,7 +254,10 @@ export class StaffComponent implements OnInit {
         await this.api.withAuthorizedClient(async (c) => {
           if (editingId) {
             await c.updateTenantStaff(editingId, {
-              displayName: name,
+              firstName,
+              lastName,
+              displayName,
+              roleKey: this.draft.roleKey,
               title: this.draft.title.trim() || null,
               bio: this.draft.bio.trim() || null,
               sortOrder,
@@ -138,14 +266,22 @@ export class StaffComponent implements OnInit {
             await c.replaceTenantStaffServices(editingId, {
               serviceOfferingIds: this.draft.serviceOfferingIds,
             });
+            await c.replaceTenantStaffHours(editingId, rowsToRules(this.hourRows));
           } else {
-            await c.createTenantStaff({
-              displayName: name,
+            const created = await c.createTenantStaff({
+              firstName,
+              lastName,
+              displayName,
+              roleKey: this.draft.roleKey,
               title: this.draft.title.trim() || null,
               bio: this.draft.bio.trim() || null,
               sortOrder,
               serviceOfferingIds: this.draft.serviceOfferingIds,
             });
+            const hours = rowsToRules(this.hourRows);
+            if (hours.length > 0) {
+              await c.replaceTenantStaffHours(created.id, hours);
+            }
           }
         });
       }, editingId ? "Saving…" : "Adding…");
@@ -157,6 +293,62 @@ export class StaffComponent implements OnInit {
       this.feedback.error("Could not save team member.");
     } finally {
       this.busy.set(null);
+    }
+  }
+
+  async addLeave(): Promise<void> {
+    const editingId = this.editingId();
+    if (!editingId || !this.leaveStart || !this.leaveEnd) {
+      this.feedback.error("Choose leave start and end.");
+      return;
+    }
+
+    try {
+      const created = await this.api.withAuthorizedClient((c) =>
+        c.createTenantStaffLeave(editingId, {
+          startAt: new Date(this.leaveStart).toISOString(),
+          endAt: new Date(this.leaveEnd).toISOString(),
+          reason: this.leaveReason.trim() || null,
+        }),
+      );
+      this.leaveItems.update((items) => [...items, created].sort((a, b) => +new Date(a.startAt) - +new Date(b.startAt)));
+      this.leaveStart = "";
+      this.leaveEnd = "";
+      this.leaveReason = "";
+      if (created.conflictingBookingIds.length > 0) {
+        this.feedback.success(
+          `Leave saved. Warning: ${created.conflictingBookingIds.length} existing booking(s) overlap.`,
+        );
+      } else {
+        this.feedback.success("Leave saved.");
+      }
+    } catch {
+      this.feedback.error("Could not save leave.");
+    }
+  }
+
+  async removeLeave(leave: StaffLeave): Promise<void> {
+    const editingId = this.editingId();
+    if (!editingId) {
+      return;
+    }
+    const ok = await this.confirmDialog.confirm({
+      title: "Remove leave",
+      message: "Delete this leave block?",
+      confirmLabel: "Remove",
+      danger: true,
+    });
+    if (!ok) {
+      return;
+    }
+    try {
+      await this.api.withAuthorizedClient((c) =>
+        c.deleteTenantStaffLeave(editingId, leave.id),
+      );
+      this.leaveItems.update((items) => items.filter((x) => x.id !== leave.id));
+      this.feedback.success("Leave removed.");
+    } catch {
+      this.feedback.error("Could not remove leave.");
     }
   }
 
@@ -181,5 +373,12 @@ export class StaffComponent implements OnInit {
     } finally {
       this.busy.set(null);
     }
+  }
+
+  formatWhen(iso: string): string {
+    return new Date(iso).toLocaleString(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
   }
 }

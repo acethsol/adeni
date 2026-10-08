@@ -4,6 +4,7 @@ export * from "./market-resolver";
 export * from "./markets";
 export * from "./auth";
 export * from "./roles";
+export * from "./staff-roles";
 export * from "./schemas";
 export * from "./business-types";
 export * from "./capabilities";

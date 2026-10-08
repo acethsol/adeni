@@ -90,6 +90,102 @@ public sealed class TenantStaffController(
         return ApiResults.FromResult(result, Ok, HttpContext);
     }
 
+    [HttpGet("{id:guid}/hours")]
+    public async Task<IActionResult> GetHours(Guid id, CancellationToken cancellationToken)
+    {
+        if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
+        {
+            return Unauthorized();
+        }
+
+        var result = await staff.GetHoursAsync(tenantId, id, cancellationToken);
+        return ApiResults.FromResult(result, items => Ok(new { items }), HttpContext);
+    }
+
+    [HttpPut("{id:guid}/hours")]
+    public async Task<IActionResult> ReplaceHours(
+        Guid id,
+        [FromBody] ReplaceStaffHoursRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
+        {
+            return Unauthorized();
+        }
+
+        var result = await staff.ReplaceHoursAsync(
+            tenantId,
+            id,
+            request.Items ?? Array.Empty<WeeklyAvailabilityRule>(),
+            cancellationToken);
+        return ApiResults.FromResult(result, items => Ok(new { items }), HttpContext);
+    }
+
+    [HttpGet("{id:guid}/leave")]
+    public async Task<IActionResult> ListLeave(
+        Guid id,
+        [FromQuery] DateTimeOffset? from,
+        [FromQuery] DateTimeOffset? to,
+        CancellationToken cancellationToken)
+    {
+        if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
+        {
+            return Unauthorized();
+        }
+
+        var result = await staff.ListLeaveAsync(tenantId, id, from, to, cancellationToken);
+        return ApiResults.FromResult(result, items => Ok(new { items }), HttpContext);
+    }
+
+    [HttpPost("{id:guid}/leave")]
+    public async Task<IActionResult> CreateLeave(
+        Guid id,
+        [FromBody] CreateStaffLeaveRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
+        {
+            return Unauthorized();
+        }
+
+        var result = await staff.CreateLeaveAsync(tenantId, id, request, cancellationToken);
+        return ApiResults.FromResult(
+            result,
+            payload => Created($"/api/v1/tenant/staff/{id}/leave/{payload.Id}", payload),
+            HttpContext);
+    }
+
+    [HttpDelete("{id:guid}/leave/{leaveId:guid}")]
+    public async Task<IActionResult> DeleteLeave(
+        Guid id,
+        Guid leaveId,
+        CancellationToken cancellationToken)
+    {
+        if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
+        {
+            return Unauthorized();
+        }
+
+        var result = await staff.DeleteLeaveAsync(tenantId, id, leaveId, cancellationToken);
+        return ApiResults.FromResult(result, () => NoContent(), HttpContext);
+    }
+
+    [HttpGet("{id:guid}/calendar")]
+    public async Task<IActionResult> GetCalendar(
+        Guid id,
+        [FromQuery] DateTimeOffset from,
+        [FromQuery] DateTimeOffset to,
+        CancellationToken cancellationToken)
+    {
+        if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
+        {
+            return Unauthorized();
+        }
+
+        var result = await staff.GetCalendarAsync(tenantId, id, from, to, cancellationToken);
+        return ApiResults.FromResult(result, Ok, HttpContext);
+    }
+
     private string? ResolveAuth0Sub()
     {
         if (User.Identity?.IsAuthenticated == true)
@@ -126,3 +222,5 @@ public sealed class TenantStaffController(
 }
 
 public sealed record ReplaceStaffServicesRequest(IReadOnlyList<Guid>? ServiceOfferingIds);
+
+public sealed record ReplaceStaffHoursRequest(IReadOnlyList<WeeklyAvailabilityRule>? Items);

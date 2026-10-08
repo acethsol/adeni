@@ -19,6 +19,11 @@ export const enErrorMessages: MessageTree = {
     guest_limit: "Party size must be between 1 and {max}.",
     capacity_full: "This session is full for the selected party size.",
   },
+  staff: {
+    hours_invalid: "Staff hours are invalid.",
+    leave_overlap: "That leave range overlaps an existing leave entry.",
+    leave_not_found: "Leave entry was not found.",
+  },
   payment: {
     invalid_amount: "Payment amount must be greater than zero.",
     invalid_currency: "Currency must be a 3-letter ISO code.",
@@ -68,6 +73,11 @@ export const frErrorMessages: MessageTree = {
     addon_requires_parent: "Les options nécessitent un service principal.",
     guest_limit: "La taille du groupe doit être entre 1 et {max}.",
     capacity_full: "Cette séance est complète pour la taille de groupe choisie.",
+  },
+  staff: {
+    hours_invalid: "Les horaires du membre de l'équipe sont invalides.",
+    leave_overlap: "Cette période de congé chevauche une entrée existante.",
+    leave_not_found: "Entrée de congé introuvable.",
   },
   payment: {
     invalid_amount: "Le montant du paiement doit être supérieur à zéro.",

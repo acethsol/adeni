@@ -76,6 +76,46 @@ internal static class SlotGenerator
     }
 }
 
+public static class StaffScheduleHelper
+{
+    /// <summary>Empty staff rules inherit business hours; otherwise intersect per day.</summary>
+    public static IReadOnlyList<WeeklyAvailabilityRule> EffectiveRules(
+        IReadOnlyList<WeeklyAvailabilityRule> businessRules,
+        IReadOnlyList<WeeklyAvailabilityRule>? staffRules)
+    {
+        if (staffRules is null || staffRules.Count == 0)
+        {
+            return businessRules;
+        }
+
+        var result = new List<WeeklyAvailabilityRule>();
+        foreach (var staff in staffRules)
+        {
+            foreach (var business in businessRules.Where(b => b.DayOfWeek == staff.DayOfWeek))
+            {
+                var open = staff.OpenTime > business.OpenTime ? staff.OpenTime : business.OpenTime;
+                var close = staff.CloseTime < business.CloseTime ? staff.CloseTime : business.CloseTime;
+                if (close > open)
+                {
+                    result.Add(new WeeklyAvailabilityRule(staff.DayOfWeek, open, close));
+                }
+            }
+        }
+
+        return result;
+    }
+
+    public static bool OnLeave(
+        IReadOnlyList<StaffLeave> leaveEntries,
+        Guid staffMemberId,
+        DateTimeOffset startAt,
+        DateTimeOffset endAt) =>
+        leaveEntries.Any(leave =>
+            leave.StaffMemberId == staffMemberId
+            && leave.StartAt < endAt
+            && leave.EndAt > startAt);
+}
+
 internal static class ServiceOfferingMapper
 {
     public static ServiceOfferingResponse ToResponse(ServiceOffering entity) =>

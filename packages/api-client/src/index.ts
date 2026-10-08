@@ -67,9 +67,14 @@ import {
   serviceMenuGroupSchema,
   staffMemberSchema,
   staffMembersResponseSchema,
+  publicStaffMembersResponseSchema,
   createStaffMemberRequestSchema,
   updateStaffMemberRequestSchema,
   replaceStaffServicesRequestSchema,
+  staffLeaveSchema,
+  staffLeaveListResponseSchema,
+  createStaffLeaveRequestSchema,
+  staffCalendarResponseSchema,
   reviewResponseSchema,
   publicReviewsResponseSchema,
   createMessageThreadRequestSchema,
@@ -119,9 +124,14 @@ import {
   type CreateServiceMenuGroupRequest,
   type UpdateServiceMenuGroupRequest,
   type StaffMember,
+  type PublicStaffMember,
   type CreateStaffMemberRequest,
   type UpdateStaffMemberRequest,
   type ReplaceStaffServicesRequest,
+  type StaffLeave,
+  type CreateStaffLeaveRequest,
+  type StaffCalendarResponse,
+  type WeeklyAvailabilityRule,
   type ServiceOfferingsResponse,
   type CreateQuoteRequest,
   type QuoteRequestResponse,
@@ -314,7 +324,7 @@ export class AdeniApiClient {
   async getBusinessStaff(
     slug: string,
     params?: { serviceId?: string },
-  ): Promise<StaffMember[]> {
+  ): Promise<PublicStaffMember[]> {
     const query = new URLSearchParams();
     if (params?.serviceId) {
       query.set("serviceId", params.serviceId);
@@ -323,7 +333,7 @@ export class AdeniApiClient {
     const response = await this.request(
       `/api/v1/businesses/${encodeURIComponent(slug)}/staff${qs ? `?${qs}` : ""}`,
     );
-    return staffMembersResponseSchema.parse(await response.json()).items;
+    return publicStaffMembersResponseSchema.parse(await response.json()).items;
   }
 
   async getBusinessSlots(
@@ -914,6 +924,76 @@ export class AdeniApiClient {
       },
     );
     return staffMemberSchema.parse(await response.json());
+  }
+
+  async getTenantStaffHours(staffMemberId: string): Promise<WeeklyAvailabilityRule[]> {
+    const response = await this.request(
+      `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/hours`,
+    );
+    return weeklyAvailabilityResponseSchema.parse(await response.json()).items;
+  }
+
+  async replaceTenantStaffHours(
+    staffMemberId: string,
+    items: WeeklyAvailabilityRule[],
+  ): Promise<WeeklyAvailabilityRule[]> {
+    const response = await this.request(
+      `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/hours`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items }),
+      },
+    );
+    return weeklyAvailabilityResponseSchema.parse(await response.json()).items;
+  }
+
+  async listTenantStaffLeave(
+    staffMemberId: string,
+    params?: { from?: string; to?: string },
+  ): Promise<StaffLeave[]> {
+    const query = new URLSearchParams();
+    if (params?.from) query.set("from", params.from);
+    if (params?.to) query.set("to", params.to);
+    const qs = query.toString();
+    const response = await this.request(
+      `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/leave${qs ? `?${qs}` : ""}`,
+    );
+    return staffLeaveListResponseSchema.parse(await response.json()).items;
+  }
+
+  async createTenantStaffLeave(
+    staffMemberId: string,
+    request: CreateStaffLeaveRequest,
+  ): Promise<StaffLeave> {
+    const body = createStaffLeaveRequestSchema.parse(request);
+    const response = await this.request(
+      `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/leave`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+    return staffLeaveSchema.parse(await response.json());
+  }
+
+  async deleteTenantStaffLeave(staffMemberId: string, leaveId: string): Promise<void> {
+    await this.request(
+      `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/leave/${encodeURIComponent(leaveId)}`,
+      { method: "DELETE" },
+    );
+  }
+
+  async getTenantStaffCalendar(
+    staffMemberId: string,
+    params: { from: string; to: string },
+  ): Promise<StaffCalendarResponse> {
+    const query = new URLSearchParams({ from: params.from, to: params.to });
+    const response = await this.request(
+      `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/calendar?${query}`,
+    );
+    return staffCalendarResponseSchema.parse(await response.json());
   }
 
   async getTenantAvailability(): Promise<WeeklyAvailabilityRule[]> {

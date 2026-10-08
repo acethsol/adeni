@@ -601,9 +601,22 @@ export const createBookingRequestSchema = z
 
 export type CreateBookingRequest = z.infer<typeof createBookingRequestSchema>;
 
+export const staffRoleKeySchema = z.enum([
+  "stylist",
+  "barber",
+  "nail_tech",
+  "esthetician",
+  "therapist",
+  "receptionist",
+  "other",
+]);
+
 export const staffMemberSchema = z.object({
   id: z.string().uuid(),
+  firstName: z.string(),
+  lastName: z.string(),
   displayName: z.string(),
+  roleKey: staffRoleKeySchema,
   title: z.string().nullable().optional(),
   bio: z.string().nullable().optional(),
   isActive: z.boolean(),
@@ -614,12 +627,32 @@ export const staffMemberSchema = z.object({
 
 export type StaffMember = z.infer<typeof staffMemberSchema>;
 
+export const publicStaffMemberSchema = z.object({
+  id: z.string().uuid(),
+  displayName: z.string(),
+  roleKey: staffRoleKeySchema,
+  title: z.string().nullable().optional(),
+  bio: z.string().nullable().optional(),
+  sortOrder: z.number().int(),
+  avatarImageUrl: z.string().nullable().optional(),
+  serviceOfferingIds: z.array(z.string().uuid()),
+});
+
+export type PublicStaffMember = z.infer<typeof publicStaffMemberSchema>;
+
 export const staffMembersResponseSchema = z.object({
   items: z.array(staffMemberSchema),
 });
 
+export const publicStaffMembersResponseSchema = z.object({
+  items: z.array(publicStaffMemberSchema),
+});
+
 export const createStaffMemberRequestSchema = z.object({
-  displayName: z.string().min(2).max(120),
+  firstName: z.string().min(1).max(80),
+  lastName: z.string().min(1).max(80),
+  displayName: z.string().min(2).max(120).optional(),
+  roleKey: staffRoleKeySchema.optional(),
   title: z.string().max(120).nullable().optional(),
   bio: z.string().max(500).nullable().optional(),
   sortOrder: z.number().int().optional(),
@@ -629,7 +662,10 @@ export const createStaffMemberRequestSchema = z.object({
 export type CreateStaffMemberRequest = z.infer<typeof createStaffMemberRequestSchema>;
 
 export const updateStaffMemberRequestSchema = z.object({
+  firstName: z.string().min(1).max(80),
+  lastName: z.string().min(1).max(80),
   displayName: z.string().min(2).max(120),
+  roleKey: staffRoleKeySchema,
   title: z.string().max(120).nullable().optional(),
   bio: z.string().max(500).nullable().optional(),
   sortOrder: z.number().int(),
@@ -645,6 +681,30 @@ export const replaceStaffServicesRequestSchema = z.object({
 export type ReplaceStaffServicesRequest = z.infer<
   typeof replaceStaffServicesRequestSchema
 >;
+
+export const staffLeaveSchema = z.object({
+  id: z.string().uuid(),
+  staffMemberId: z.string().uuid(),
+  startAt: z.string(),
+  endAt: z.string(),
+  reason: z.string().nullable().optional(),
+  createdAt: z.string(),
+  conflictingBookingIds: z.array(z.string().uuid()),
+});
+
+export type StaffLeave = z.infer<typeof staffLeaveSchema>;
+
+export const staffLeaveListResponseSchema = z.object({
+  items: z.array(staffLeaveSchema),
+});
+
+export const createStaffLeaveRequestSchema = z.object({
+  startAt: z.string(),
+  endAt: z.string(),
+  reason: z.string().max(200).nullable().optional(),
+});
+
+export type CreateStaffLeaveRequest = z.infer<typeof createStaffLeaveRequestSchema>;
 
 export const businessLocationSchema = z.object({
   id: z.string(),
@@ -1110,6 +1170,33 @@ export type WeeklyAvailabilityRule = z.infer<typeof weeklyAvailabilityRuleSchema
 export const weeklyAvailabilityResponseSchema = z.object({
   items: z.array(weeklyAvailabilityRuleSchema),
 });
+
+export const staffCalendarBookingItemSchema = z.object({
+  id: z.string().uuid(),
+  serviceName: z.string(),
+  startAt: z.string(),
+  endAt: z.string(),
+  status: z.number().int(),
+  customerNotes: z.string().nullable().optional(),
+});
+
+export const staffCalendarLeaveItemSchema = z.object({
+  id: z.string().uuid(),
+  startAt: z.string(),
+  endAt: z.string(),
+  reason: z.string().nullable().optional(),
+});
+
+export const staffCalendarResponseSchema = z.object({
+  staffMemberId: z.string().uuid(),
+  displayName: z.string(),
+  hours: z.array(weeklyAvailabilityRuleSchema),
+  inheritsBusinessHours: z.boolean(),
+  bookings: z.array(staffCalendarBookingItemSchema),
+  leave: z.array(staffCalendarLeaveItemSchema),
+});
+
+export type StaffCalendarResponse = z.infer<typeof staffCalendarResponseSchema>;
 
 export const createServiceOfferingRequestSchema = z.object({
   name: z.string().min(1),

@@ -1,6 +1,6 @@
 <app-portal-page
   title="Staff"
-  description="Who customers can book — add stylists, therapists, or instructors and the services they offer."
+  description="Roster, roles, hours, and leave — customers book by display name."
 >
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
@@ -14,14 +14,37 @@
     <section class="card form">
       <h3>{{ editingId() ? "Edit team member" : "New team member" }}</h3>
 
+      <div class="row">
+        <div class="field">
+          <label>First name</label>
+          <input [(ngModel)]="draft.firstName" maxlength="80" (ngModelChange)="syncDisplayName()" />
+        </div>
+        <div class="field">
+          <label>Last name</label>
+          <input [(ngModel)]="draft.lastName" maxlength="80" (ngModelChange)="syncDisplayName()" />
+        </div>
+      </div>
+
       <div class="field">
-        <label>Display name</label>
+        <label>Display name (public)</label>
         <input [(ngModel)]="draft.displayName" maxlength="120" />
       </div>
-      <div class="field">
-        <label>Title (optional)</label>
-        <input [(ngModel)]="draft.title" maxlength="120" placeholder="Senior stylist" />
+
+      <div class="row">
+        <div class="field">
+          <label>Role</label>
+          <select [(ngModel)]="draft.roleKey">
+            @for (key of roleKeys; track key) {
+              <option [ngValue]="key">{{ roleLabels[key] }}</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label>Title (optional)</label>
+          <input [(ngModel)]="draft.title" maxlength="120" placeholder="Senior stylist" />
+        </div>
       </div>
+
       <div class="field">
         <label>Short bio (optional)</label>
         <textarea rows="2" [(ngModel)]="draft.bio" maxlength="500"></textarea>
@@ -64,6 +87,88 @@
         }
       </div>
 
+      <div class="hours-block">
+        <div class="hours-head">
+          <h4>Working hours</h4>
+          <div class="hours-actions">
+            <button type="button" class="btn" (click)="copyBusinessHours()">Copy business hours</button>
+            <button type="button" class="btn" (click)="clearStaffHours()">Inherit business hours</button>
+          </div>
+        </div>
+        <p class="muted">
+          Empty (all days closed here) means this person inherits the business availability calendar.
+        </p>
+        <table class="hours-table">
+          <thead>
+            <tr>
+              <th>Day</th>
+              <th>Off</th>
+              <th>Open</th>
+              <th>Close</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of hourRows; track row.dayOfWeek) {
+              <tr>
+                <td>{{ dayLabels[row.dayOfWeek] }}</td>
+                <td>
+                  <input type="checkbox" [(ngModel)]="row.closed" />
+                </td>
+                <td>
+                  <input type="time" [(ngModel)]="row.openTime" [disabled]="row.closed" />
+                </td>
+                <td>
+                  <input type="time" [(ngModel)]="row.closeTime" [disabled]="row.closed" />
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (editingId()) {
+        <div class="leave-block">
+          <h4>Leave / time off</h4>
+          <div class="row">
+            <div class="field">
+              <label>Start</label>
+              <input type="datetime-local" [(ngModel)]="leaveStart" />
+            </div>
+            <div class="field">
+              <label>End</label>
+              <input type="datetime-local" [(ngModel)]="leaveEnd" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Reason (optional)</label>
+            <input [(ngModel)]="leaveReason" maxlength="200" />
+          </div>
+          <button type="button" class="btn" (click)="addLeave()">Add leave</button>
+          @if (leaveItems().length > 0) {
+            <ul class="leave-list">
+              @for (leave of leaveItems(); track leave.id) {
+                <li>
+                  <span>
+                    {{ formatWhen(leave.startAt) }} → {{ formatWhen(leave.endAt) }}
+                    @if (leave.reason) {
+                      · {{ leave.reason }}
+                    }
+                    @if (leave.conflictingBookingIds.length > 0) {
+                      <em class="warn">
+                        · {{ leave.conflictingBookingIds.length }} booking conflict(s)
+                      </em>
+                    }
+                  </span>
+                  <button type="button" class="btn btn-danger" (click)="removeLeave(leave)">
+                    Remove
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+
       <div class="actions">
         <button
           type="button"
@@ -74,6 +179,9 @@
           Save
         </button>
         <button type="button" class="btn" (click)="cancelForm()">Cancel</button>
+        @if (editingId(); as id) {
+          <a class="btn" [routerLink]="['/staff', id, 'calendar']">Open calendar</a>
+        }
       </div>
     </section>
   }
@@ -93,9 +201,10 @@
         <li class="card list-row">
           <div class="copy">
             <strong>{{ member.displayName }}</strong>
-            @if (member.title) {
-              <span class="muted">{{ member.title }}</span>
-            }
+            <span class="muted"
+              >{{ member.firstName }} {{ member.lastName }} · {{ roleLabel(member.roleKey)
+              }}{{ member.title ? " · " + member.title : "" }}</span
+            >
             <span class="tiny" [class.off]="!member.isActive">
               {{ member.isActive ? "Bookable online" : "Inactive" }}
             </span>
@@ -108,6 +217,7 @@
             }
           </div>
           <div class="actions">
+            <a class="btn" [routerLink]="['/staff', member.id, 'calendar']">Calendar</a>
             <button type="button" class="btn" (click)="openEdit(member)">Edit</button>
             @if (member.isActive) {
               <button

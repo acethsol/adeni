@@ -143,13 +143,8 @@ public sealed class AvailabilityService(
             return false;
         }
 
-        var rules = await GetWeeklyRulesAsync(tenantId, cancellationToken);
+        var businessRules = await GetWeeklyRulesAsync(tenantId, cancellationToken);
         var schedulingTimeZone = await tenantSchedulingTimeZone.ForTenantAsync(tenantId, cancellationToken);
-        if (!SlotGenerator.FitsWeeklyRules(schedulingTimeZone, rules, startAt, durationMinutes))
-        {
-            return false;
-        }
-
         var endAt = startAt.AddMinutes(durationMinutes);
         var existing = await dbContext.Bookings
             .AsNoTracking()
@@ -180,9 +175,31 @@ public sealed class AvailabilityService(
             return false;
         }
 
+        if (eligibleStaffIds.Count == 0)
+        {
+            return SlotGenerator.FitsWeeklyRules(schedulingTimeZone, businessRules, startAt, durationMinutes)
+                && BookingConflictChecker.IsStaffSlotAvailable(
+                    existing,
+                    eligibleStaffIds,
+                    startAt,
+                    endAt,
+                    staffMemberId);
+        }
+
+        var hoursByStaff = await GetStaffHoursMapAsync(tenantId, eligibleStaffIds, cancellationToken);
+        var leave = await GetStaffLeaveAsync(tenantId, eligibleStaffIds, startAt, endAt, cancellationToken);
+        var covering = FilterStaffCoveringSlot(
+            eligibleStaffIds,
+            businessRules,
+            hoursByStaff,
+            leave,
+            schedulingTimeZone,
+            startAt,
+            durationMinutes);
+
         return BookingConflictChecker.IsStaffSlotAvailable(
             existing,
-            eligibleStaffIds,
+            covering,
             startAt,
             endAt,
             staffMemberId);
@@ -265,7 +282,7 @@ public sealed class AvailabilityService(
             }
         }
 
-        var rules = await GetWeeklyRulesAsync(tenantId, cancellationToken);
+        var businessRules = await GetWeeklyRulesAsync(tenantId, cancellationToken);
         var schedulingTimeZone = locationId is Guid resolvedLocationId
             ? await tenantSchedulingTimeZone.ForLocationAsync(resolvedLocationId, cancellationToken)
             : await tenantSchedulingTimeZone.ForTenantAsync(tenantId, cancellationToken);
@@ -274,15 +291,48 @@ public sealed class AvailabilityService(
             .Where(x => x.TenantId == tenantId)
             .ToListAsync(cancellationToken);
 
+        var hoursByStaff = eligibleStaffIds.Count == 0
+            ? new Dictionary<Guid, IReadOnlyList<WeeklyAvailabilityRule>>()
+            : await GetStaffHoursMapAsync(tenantId, eligibleStaffIds, cancellationToken);
+        var leave = eligibleStaffIds.Count == 0
+            ? Array.Empty<StaffLeave>()
+            : await GetStaffLeaveAsync(tenantId, eligibleStaffIds, rangeStart, rangeEnd, cancellationToken);
+
+        IReadOnlyList<WeeklyAvailabilityRule> generationRules = businessRules;
+        if (staffMemberId is Guid selectedStaffId)
+        {
+            hoursByStaff.TryGetValue(selectedStaffId, out var staffRules);
+            generationRules = StaffScheduleHelper.EffectiveRules(businessRules, staffRules);
+        }
+
         var slots = SlotGenerator
-            .GenerateSlotStarts(schedulingTimeZone, rules, rangeStart, rangeEnd, durationMinutes)
+            .GenerateSlotStarts(schedulingTimeZone, generationRules, rangeStart, rangeEnd, durationMinutes)
             .Where(start => start > DateTimeOffset.UtcNow)
             .Where(start =>
             {
                 var end = start.AddMinutes(durationMinutes);
+                if (eligibleStaffIds.Count == 0)
+                {
+                    return BookingConflictChecker.IsStaffSlotAvailable(
+                        existing,
+                        eligibleStaffIds,
+                        start,
+                        end,
+                        staffMemberId);
+                }
+
+                var covering = FilterStaffCoveringSlot(
+                    eligibleStaffIds,
+                    businessRules,
+                    hoursByStaff,
+                    leave,
+                    schedulingTimeZone,
+                    start,
+                    durationMinutes);
+
                 return BookingConflictChecker.IsStaffSlotAvailable(
                     existing,
-                    eligibleStaffIds,
+                    covering,
                     start,
                     end,
                     staffMemberId);
@@ -293,6 +343,60 @@ public sealed class AvailabilityService(
             .ToArray();
 
         return Result.Success<IReadOnlyList<AvailableSlotResponse>>(slots);
+    }
+
+    private async Task<Dictionary<Guid, IReadOnlyList<WeeklyAvailabilityRule>>> GetStaffHoursMapAsync(
+        Guid tenantId,
+        IReadOnlyList<Guid> staffIds,
+        CancellationToken cancellationToken)
+    {
+        var rows = await dbContext.StaffWeeklyAvailabilities
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId && staffIds.Contains(x.StaffMemberId))
+            .ToListAsync(cancellationToken);
+
+        return staffIds.ToDictionary(
+            id => id,
+            id => (IReadOnlyList<WeeklyAvailabilityRule>)rows
+                .Where(r => r.StaffMemberId == id)
+                .Select(r => new WeeklyAvailabilityRule(r.DayOfWeek, r.OpenTime, r.CloseTime))
+                .ToArray());
+    }
+
+    private async Task<IReadOnlyList<StaffLeave>> GetStaffLeaveAsync(
+        Guid tenantId,
+        IReadOnlyList<Guid> staffIds,
+        DateTimeOffset rangeStart,
+        DateTimeOffset rangeEnd,
+        CancellationToken cancellationToken) =>
+        await dbContext.StaffLeaves
+            .AsNoTracking()
+            .Where(x =>
+                x.TenantId == tenantId
+                && staffIds.Contains(x.StaffMemberId)
+                && x.StartAt < rangeEnd
+                && x.EndAt > rangeStart)
+            .ToListAsync(cancellationToken);
+
+    private static IReadOnlyList<Guid> FilterStaffCoveringSlot(
+        IReadOnlyList<Guid> eligibleStaffIds,
+        IReadOnlyList<WeeklyAvailabilityRule> businessRules,
+        IReadOnlyDictionary<Guid, IReadOnlyList<WeeklyAvailabilityRule>> hoursByStaff,
+        IReadOnlyList<StaffLeave> leave,
+        ISchedulingTimeZone schedulingTimeZone,
+        DateTimeOffset startAt,
+        int durationMinutes)
+    {
+        var endAt = startAt.AddMinutes(durationMinutes);
+        return eligibleStaffIds
+            .Where(id =>
+            {
+                hoursByStaff.TryGetValue(id, out var staffRules);
+                var effective = StaffScheduleHelper.EffectiveRules(businessRules, staffRules);
+                return SlotGenerator.FitsWeeklyRules(schedulingTimeZone, effective, startAt, durationMinutes)
+                    && !StaffScheduleHelper.OnLeave(leave, id, startAt, endAt);
+            })
+            .ToArray();
     }
 
     /// <summary>

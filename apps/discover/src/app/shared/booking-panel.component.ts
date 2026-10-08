@@ -1,7 +1,12 @@
 import { CurrencyPipe } from "@angular/common";
 import { Component, computed, inject, input, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import type { BookingResponse, ServiceMenuGroup, ServiceOffering, StaffMember } from "@adeni/shared";
+import type {
+  BookingResponse,
+  PublicStaffMember,
+  ServiceMenuGroup,
+  ServiceOffering,
+} from "@adeni/shared";
 import { t } from "@adeni/shared";
 import { AdeniApiError } from "@adeni/api-client";
 import { AdeniFeedbackService, AdeniLocaleService } from "@adeni/ui";
@@ -50,7 +55,7 @@ export class BookingPanelComponent {
   /** Ordered cart; primary = first non-add-on. */
   readonly selectedServices = signal<ServiceOffering[]>([]);
   readonly addingAnother = signal(false);
-  readonly staffOptions = signal<StaffMember[]>([]);
+  readonly staffOptions = signal<PublicStaffMember[]>([]);
   /** null = any available; set only after staff step (or skipped). */
   readonly selectedStaffId = signal<string | null>(null);
   readonly selectedStaffName = signal<string | null>(null);

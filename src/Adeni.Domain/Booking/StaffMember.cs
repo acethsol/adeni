@@ -9,7 +9,15 @@ public sealed class StaffMember : ITenantEntity
 
     public Guid TenantId { get; set; }
 
+    public string FirstName { get; set; } = string.Empty;
+
+    public string LastName { get; set; } = string.Empty;
+
+    /// <summary>Public booking label (defaults to First + Last).</summary>
     public string DisplayName { get; set; } = string.Empty;
+
+    /// <summary>One of <see cref="StaffRoleKeys"/>.</summary>
+    public string RoleKey { get; set; } = StaffRoleKeys.Other;
 
     public string? Title { get; set; }
 
@@ -26,4 +34,8 @@ public sealed class StaffMember : ITenantEntity
     public DateTimeOffset UpdatedAt { get; set; }
 
     public ICollection<StaffServiceLink> ServiceLinks { get; set; } = new List<StaffServiceLink>();
+
+    public ICollection<StaffWeeklyAvailability> WeeklyHours { get; set; } = new List<StaffWeeklyAvailability>();
+
+    public ICollection<StaffLeave> LeaveEntries { get; set; } = new List<StaffLeave>();
 }

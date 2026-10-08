@@ -380,9 +380,22 @@ Zenoti-depth booking: optional staff pick, multi-service/add-on cart, multi-gues
 
 **Out of scope for 23:** employee Auth0 logins, payroll/tips, room inventory, parallel chair optimizer, Flutter parity.
 
+## Sprint 24 — Staff ops (draft)
+
+Identity, roles, working hours, leave, staff calendar. **No payroll/tips** (Phase 4+ / finance). Spec: [sprint-24-staff-ops.md](./specs/sprint-24-staff-ops.md).
+
+| Task | Status |
+|------|--------|
+| **24a** First/last name, role keys, portal form | Done |
+| **24b** Per-staff weekly hours → slot intersection | Done |
+| **24c** Leave / time off → slot exclusion | Done |
+| **24d** Portal staff calendar (bookings + leave + hours) | Done |
+
+**Out of scope for 24:** payroll, tips, commissions, clock-in, staff Auth0 logins, auto-reassign on leave, financing.
+
 ## Next up
 
-1. **Staff depth** (backlog) — first/last name, role, working hours, leave, per-staff calendar
+1. **Sprint 24 — Staff ops** — approve [spec](./specs/sprint-24-staff-ops.md), then 24a→24d
 2. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, business AI agent, App Insights, ops dashboards
 
 Strategy reference: [product-strategy.md](./product-strategy.md) — [§3.5 Business types](./product-strategy.md#35-business-types--workflow-capabilities), [architecture.md](./architecture.md) (modular monolith)

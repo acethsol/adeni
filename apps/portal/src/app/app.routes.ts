@@ -4,6 +4,7 @@ import { DashboardComponent } from "./pages/dashboard/dashboard.component";
 import { BookingsComponent } from "./pages/bookings/bookings.component";
 import { ServicesComponent } from "./pages/services/services.component";
 import { StaffComponent } from "./pages/staff/staff.component";
+import { StaffCalendarComponent } from "./pages/staff/staff-calendar.component";
 import { LocationsComponent } from "./pages/locations/locations.component";
 import { AvailabilityComponent } from "./pages/availability/availability.component";
 import { ProfileComponent } from "./pages/profile/profile.component";
@@ -33,6 +34,11 @@ export const routes: Routes = [
       { path: "messages", component: MessagesComponent, title: "Messages" },
       { path: "services", component: ServicesComponent, title: "Services" },
       { path: "staff", component: StaffComponent, title: "Staff" },
+      {
+        path: "staff/:id/calendar",
+        component: StaffCalendarComponent,
+        title: "Staff calendar",
+      },
       { path: "locations", component: LocationsComponent, title: "Locations" },
       { path: "availability", component: AvailabilityComponent, title: "Availability" },
       { path: "profile", component: ProfileComponent, title: "Profile" },

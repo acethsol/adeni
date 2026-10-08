@@ -30,9 +30,18 @@ public sealed class StaffServiceTests
 
         var created = await staff.CreateAsync(
             tenantId,
-            new CreateStaffMemberRequest("Ada", "Stylist", null, 0, [service.Value!.Id]));
+            new CreateStaffMemberRequest(
+                "Ada",
+                "Okafor",
+                DisplayName: "Ada",
+                RoleKey: StaffRoleKeys.Stylist,
+                Title: "Senior stylist",
+                ServiceOfferingIds: [service.Value!.Id]));
         Assert.True(created.IsSuccess);
-        Assert.Equal("Ada", created.Value!.DisplayName);
+        Assert.Equal("Ada", created.Value!.FirstName);
+        Assert.Equal("Okafor", created.Value.LastName);
+        Assert.Equal("Ada", created.Value.DisplayName);
+        Assert.Equal(StaffRoleKeys.Stylist, created.Value.RoleKey);
         Assert.Equal([service.Value.Id], created.Value.ServiceOfferingIds);
 
         var replaced = await staff.ReplaceServicesAsync(tenantId, created.Value.Id, []);
@@ -61,7 +70,9 @@ public sealed class StaffServiceTests
             new CreateServiceOfferingRequest("Foreign", null, 1000m, "NGN", 30));
         Assert.True(foreign.IsSuccess);
 
-        var created = await staff.CreateAsync(tenantA, new CreateStaffMemberRequest("Bob"));
+        var created = await staff.CreateAsync(
+            tenantA,
+            new CreateStaffMemberRequest("Bob", "Mensah"));
         Assert.True(created.IsSuccess);
 
         var result = await staff.ReplaceServicesAsync(
@@ -134,6 +145,62 @@ public sealed class StaffServiceTests
                 start,
                 end,
                 Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task HoursAndLeave_RoundTrip_AndConflictWarning()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var tenantId = await SeedVerifiedTenantAsync(scope.ServiceProvider);
+        var staff = scope.ServiceProvider.GetRequiredService<IStaffService>();
+
+        var created = await staff.CreateAsync(tenantId, new CreateStaffMemberRequest("Chi", "Ade"));
+        Assert.True(created.IsSuccess);
+        var staffId = created.Value!.Id;
+
+        var hours = await staff.ReplaceHoursAsync(
+            tenantId,
+            staffId,
+            [new WeeklyAvailabilityRule(DayOfWeek.Monday, new TimeOnly(10, 0), new TimeOnly(14, 0))]);
+        Assert.True(hours.IsSuccess);
+        Assert.Single(hours.Value!);
+
+        var leaveStart = DateTimeOffset.UtcNow.AddDays(2);
+        var leave = await staff.CreateLeaveAsync(
+            tenantId,
+            staffId,
+            new CreateStaffLeaveRequest(leaveStart, leaveStart.AddHours(4), "Personal"));
+        Assert.True(leave.IsSuccess);
+        Assert.Empty(leave.Value!.ConflictingBookingIds);
+
+        var listed = await staff.ListLeaveAsync(tenantId, staffId);
+        Assert.True(listed.IsSuccess);
+        Assert.Single(listed.Value!);
+
+        var deleted = await staff.DeleteLeaveAsync(tenantId, staffId, leave.Value.Id);
+        Assert.True(deleted.IsSuccess);
+    }
+
+    [Fact]
+    public void EffectiveRules_IntersectBusinessAndStaff()
+    {
+        var business = new[]
+        {
+            new WeeklyAvailabilityRule(DayOfWeek.Monday, new TimeOnly(9, 0), new TimeOnly(17, 0)),
+        };
+        var staff = new[]
+        {
+            new WeeklyAvailabilityRule(DayOfWeek.Monday, new TimeOnly(10, 0), new TimeOnly(14, 0)),
+        };
+
+        var effective = StaffScheduleHelper.EffectiveRules(business, staff);
+        Assert.Single(effective);
+        Assert.Equal(new TimeOnly(10, 0), effective[0].OpenTime);
+        Assert.Equal(new TimeOnly(14, 0), effective[0].CloseTime);
+
+        var inherit = StaffScheduleHelper.EffectiveRules(business, []);
+        Assert.Equal(business, inherit);
     }
 
     private static async Task<Guid> SeedVerifiedTenantAsync(IServiceProvider provider)
