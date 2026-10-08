@@ -12,6 +12,12 @@ public sealed class BookingRecord : ITenantEntity
 
     public Guid CustomerId { get; set; }
 
+    /// <summary>Null = customer chose “any available”; business may assign later.</summary>
+    public Guid? StaffMemberId { get; set; }
+
+    /// <summary>Party size; MVP appointment duration scales by this count.</summary>
+    public int GuestCount { get; set; } = 1;
+
     public DateTimeOffset StartAt { get; set; }
 
     public DateTimeOffset EndAt { get; set; }
@@ -29,4 +35,10 @@ public sealed class BookingRecord : ITenantEntity
     public DateTimeOffset UpdatedAt { get; set; }
 
     public ServiceOffering? ServiceOffering { get; set; }
+
+    public StaffMember? StaffMember { get; set; }
+
+    public ICollection<BookingLine> Lines { get; set; } = new List<BookingLine>();
+
+    public ICollection<BookingGuest> Guests { get; set; } = new List<BookingGuest>();
 }

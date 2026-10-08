@@ -41,7 +41,8 @@ Categories are **browse/filter chips**, not deep trees. Each category owns a **f
 | Hair & Grooming | `hair-grooming` | ✅ |
 | Nails | `nails` | ✅ |
 | Fitness | `fitness` | ✅ |
-| Yoga & Pilates | `yoga-pilates` | ✅ |
+| Yoga | `yoga` | ✅ |
+| Pilates | `pilates` | ✅ |
 | Recovery & Performance | `recovery-performance` | 🟡 (catalog only; not in onboarding picker) |
 | Holistic Wellness | `holistic-wellness` | 🟡 |
 | Nutrition & Wellness Coaching | `nutrition-coaching` | 🟡 |

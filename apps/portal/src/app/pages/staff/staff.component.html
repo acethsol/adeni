@@ -1,0 +1,127 @@
+<app-portal-page
+  title="Staff"
+  description="Who customers can book — add stylists, therapists, or instructors and the services they offer."
+>
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  <div class="toolbar">
+    <button type="button" class="btn btn-primary" (click)="openCreate()">Add team member</button>
+  </div>
+
+  @if (showForm()) {
+    <section class="card form">
+      <h3>{{ editingId() ? "Edit team member" : "New team member" }}</h3>
+
+      <div class="field">
+        <label>Display name</label>
+        <input [(ngModel)]="draft.displayName" maxlength="120" />
+      </div>
+      <div class="field">
+        <label>Title (optional)</label>
+        <input [(ngModel)]="draft.title" maxlength="120" placeholder="Senior stylist" />
+      </div>
+      <div class="field">
+        <label>Short bio (optional)</label>
+        <textarea rows="2" [(ngModel)]="draft.bio" maxlength="500"></textarea>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Sort order</label>
+          <input type="number" [(ngModel)]="draft.sortOrder" />
+        </div>
+        @if (editingId()) {
+          <div class="field toggle-field">
+            <label class="checkbox">
+              <input type="checkbox" [(ngModel)]="draft.isActive" />
+              Active for online booking
+            </label>
+          </div>
+        }
+      </div>
+
+      <div class="field">
+        <label>Services they can perform</label>
+        <p class="muted">Leave all unchecked to allow every active service.</p>
+        @if (services().length === 0) {
+          <p class="muted">Add services first on the Services page.</p>
+        } @else {
+          <ul class="service-checks">
+            @for (service of services(); track service.id) {
+              <li>
+                <label class="checkbox">
+                  <input
+                    type="checkbox"
+                    [checked]="draft.serviceOfferingIds.includes(service.id)"
+                    (change)="toggleService(service.id)"
+                  />
+                  {{ service.name }}
+                </label>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+      <div class="actions">
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="busy() !== null"
+          (click)="save()"
+        >
+          Save
+        </button>
+        <button type="button" class="btn" (click)="cancelForm()">Cancel</button>
+      </div>
+    </section>
+  }
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  } @else if (staff().length === 0) {
+    <section class="card empty">
+      <p>
+        No team members yet. Add people so customers can pick “Any available” or a named
+        practitioner when booking.
+      </p>
+    </section>
+  } @else {
+    <ul class="plain staff-list">
+      @for (member of staff(); track member.id) {
+        <li class="card list-row">
+          <div class="copy">
+            <strong>{{ member.displayName }}</strong>
+            @if (member.title) {
+              <span class="muted">{{ member.title }}</span>
+            }
+            <span class="tiny" [class.off]="!member.isActive">
+              {{ member.isActive ? "Bookable online" : "Inactive" }}
+            </span>
+            @if (member.serviceOfferingIds.length > 0) {
+              <span class="tiny services-line">{{
+                serviceNames(member.serviceOfferingIds)
+              }}</span>
+            } @else {
+              <span class="tiny services-line">All services</span>
+            }
+          </div>
+          <div class="actions">
+            <button type="button" class="btn" (click)="openEdit(member)">Edit</button>
+            @if (member.isActive) {
+              <button
+                type="button"
+                class="btn btn-danger"
+                [disabled]="busy() === member.id"
+                (click)="deactivate(member)"
+              >
+                Deactivate
+              </button>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</app-portal-page>

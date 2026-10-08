@@ -8,7 +8,16 @@ public static class ErrorCodes
     public const string SlotUnavailable = "booking.slot_unavailable";
     public const string SlotLocked = "booking.slot_locked";
     public const string BookingClosed = "booking.closed";
+    public const string StaffUnavailable = "booking.staff_unavailable";
+    public const string StaffNotEligible = "booking.staff_not_eligible";
+    public const string CartEmpty = "booking.cart_empty";
+    public const string AddonRequiresParent = "booking.addon_requires_parent";
+    public const string GuestLimit = "booking.guest_limit";
+    public const string CapacityFull = "booking.capacity_full";
     public const string AuthRequired = "auth.required";
+
+    public const int MaxBookingGuests = 6;
+    public const int MaxBookingLines = 10;
     public const string CustomerAuthRequired = "auth.customer_required";
     public const string BusinessAccessDenied = "auth.business_access_denied";
     public const string InternalServerError = "internal.server_error";
@@ -35,6 +44,27 @@ public static class ErrorCodes
 
     public static Error BookingClosedError() =>
         new(BookingClosed, "This business is not accepting online bookings right now.");
+
+    public static Error StaffUnavailableError() =>
+        new(StaffUnavailable, "That team member is not available for the selected time.");
+
+    public static Error StaffNotEligibleError() =>
+        new(StaffNotEligible, "That team member does not offer this service.");
+
+    public static Error CartEmptyError() =>
+        new(CartEmpty, "Add at least one service to book.");
+
+    public static Error AddonRequiresParentError() =>
+        new(AddonRequiresParent, "Add-ons need a main service in your booking.");
+
+    public static Error GuestLimitError(int max = MaxBookingGuests) =>
+        new(
+            GuestLimit,
+            $"Party size must be between 1 and {max}.",
+            new Dictionary<string, object?> { ["max"] = max });
+
+    public static Error CapacityFullError() =>
+        new(CapacityFull, "This session is full for the selected party size.");
 
     public static Error AuthRequiredError() =>
         new(AuthRequired, "Authentication is required.");

@@ -9,6 +9,7 @@ public static class BookingServiceCollectionExtensions
     {
         services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
         services.AddScoped<IServiceMenuGroupService, ServiceMenuGroupService>();
+        services.AddScoped<IStaffService, StaffService>();
         services.AddScoped<ITenantSchedulingTimeZone, TenantSchedulingTimeZone>();
         services.AddScoped<IAvailabilityService, AvailabilityService>();
         services.AddScoped<IBookingService, BookingService>();

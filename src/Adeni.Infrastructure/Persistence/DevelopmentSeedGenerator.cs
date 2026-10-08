@@ -22,7 +22,8 @@ internal static class DevelopmentSeedGenerator
         "spa-relaxation",
         "massage-bodywork",
         "fitness",
-        "yoga-pilates",
+        "yoga",
+        "pilates",
     ];
 
     private static readonly MarketBulkConfig[] MarketConfigs =
@@ -120,14 +121,16 @@ internal static class DevelopmentSeedGenerator
             ("NGN", "hair-grooming") => (6000m, 35000m),
             ("NGN", "nails") => (8000m, 22000m),
             ("NGN", "fitness") => (8000m, 25000m),
-            ("NGN", "yoga-pilates") => (5000m, 18000m),
+            ("NGN", "yoga") => (5000m, 18000m),
+            ("NGN", "pilates") => (6000m, 20000m),
             ("CAD", "spa-relaxation") => (90m, 180m),
             ("CAD", "massage-bodywork") => (75m, 150m),
             ("CAD", "skincare-aesthetics") => (45m, 140m),
             ("CAD", "hair-grooming") => (30m, 120m),
             ("CAD", "nails") => (35m, 90m),
             ("CAD", "fitness") => (40m, 100m),
-            ("CAD", "yoga-pilates") => (22m, 80m),
+            ("CAD", "yoga") => (22m, 80m),
+            ("CAD", "pilates") => (28m, 95m),
             _ => (25m, 120m),
         };
 
@@ -170,7 +173,8 @@ internal static class DevelopmentSeedGenerator
         ["spa-relaxation"] = ["Day Spa", "Spa House", "Relaxation Studio"],
         ["massage-bodywork"] = ["Massage Studio", "Bodywork", "Massage Co"],
         ["fitness"] = ["Fitness Lab", "Strength Co", "Training Studio"],
-        ["yoga-pilates"] = ["Yoga Loft", "Pilates Studio", "Movement Studio"],
+        ["yoga"] = ["Yoga Loft", "Yoga House", "Movement Studio"],
+        ["pilates"] = ["Pilates Studio", "Reformer House", "Core Studio"],
     };
 
     private static readonly Dictionary<string, ServiceTemplate[]> CategoryServices = new(StringComparer.Ordinal)
@@ -210,11 +214,17 @@ internal static class DevelopmentSeedGenerator
             new("fitness-pt", "Personal Training", "One-to-one strength session.", 60, BookingDeliveryType.Session),
             new("fitness-strength", "Strength & Conditioning", "Coached strength session.", 45, BookingDeliveryType.Session),
         ],
-        ["yoga-pilates"] =
+        ["yoga"] =
         [
             new("yoga-group-class", "Yoga Class", "Group yoga class.", 60, BookingDeliveryType.Class),
-            new("pilates-group-class", "Pilates Class", "Group mat Pilates.", 55, BookingDeliveryType.Class),
             new("yoga-private", "Private Yoga Session", "One-to-one yoga.", 60, BookingDeliveryType.Session),
+            new("yoga-yin", "Yin Yoga", "Slow, held poses for mobility.", 75, BookingDeliveryType.Class),
+        ],
+        ["pilates"] =
+        [
+            new("pilates-group-class", "Pilates Class", "Group mat Pilates.", 55, BookingDeliveryType.Class),
+            new("pilates-reformer", "Reformer Pilates", "Guided reformer session.", 50, BookingDeliveryType.Class),
+            new("pilates-private", "Private Pilates Session", "One-to-one Pilates.", 55, BookingDeliveryType.Session),
         ],
     };
 }

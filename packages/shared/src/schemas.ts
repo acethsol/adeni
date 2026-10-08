@@ -395,6 +395,7 @@ export const serviceOfferingSchema = z.object({
   bookingDeliveryType: bookingDeliveryTypeSchema.optional(),
   menuGroupId: z.string().uuid().nullable().optional(),
   sortOrder: z.number().int().optional(),
+  isAddOn: z.boolean().optional().default(false),
 });
 
 export const serviceOfferingsResponseSchema = z.object({
@@ -438,6 +439,25 @@ export const availableSlotsResponseSchema = z.object({
 
 export type AvailableSlot = z.infer<typeof availableSlotSchema>;
 
+export const bookingLineResponseSchema = z.object({
+  serviceOfferingId: z.string().uuid(),
+  serviceName: z.string(),
+  priceAmount: z.number(),
+  currency: z.string(),
+  durationMinutes: z.number().int(),
+  sortOrder: z.number().int(),
+  isAddOn: z.boolean(),
+});
+
+export type BookingLineResponse = z.infer<typeof bookingLineResponseSchema>;
+
+export const bookingGuestResponseSchema = z.object({
+  displayName: z.string().nullable().optional(),
+  sortOrder: z.number().int(),
+});
+
+export type BookingGuestResponse = z.infer<typeof bookingGuestResponseSchema>;
+
 export const bookingResponseSchema = z.object({
   id: z.string(),
   tenantId: z.string(),
@@ -449,6 +469,13 @@ export const bookingResponseSchema = z.object({
   status: z.number(),
   customerNotes: z.string().nullable().optional(),
   createdAt: z.string(),
+  staffMemberId: z.string().uuid().nullable().optional(),
+  staffDisplayName: z.string().nullable().optional(),
+  guestCount: z.number().int().optional().default(1),
+  lines: z.array(bookingLineResponseSchema).nullable().optional(),
+  guests: z.array(bookingGuestResponseSchema).nullable().optional(),
+  totalPriceAmount: z.number().nullable().optional(),
+  currency: z.string().nullable().optional(),
 });
 
 export type BookingResponse = z.infer<typeof bookingResponseSchema>;
@@ -468,6 +495,13 @@ export const customerBookingResponseSchema = z.object({
   canReview: z.boolean().optional(),
   hasReview: z.boolean().optional(),
   reviewRating: z.number().int().min(1).max(5).nullable().optional(),
+  staffMemberId: z.string().uuid().nullable().optional(),
+  staffDisplayName: z.string().nullable().optional(),
+  guestCount: z.number().int().optional().default(1),
+  lines: z.array(bookingLineResponseSchema).nullable().optional(),
+  guests: z.array(bookingGuestResponseSchema).nullable().optional(),
+  totalPriceAmount: z.number().nullable().optional(),
+  currency: z.string().nullable().optional(),
 });
 
 export type CustomerBookingResponse = z.infer<typeof customerBookingResponseSchema>;
@@ -540,14 +574,77 @@ export const tenantBookingsResponseSchema = z.object({
   items: z.array(bookingResponseSchema),
 });
 
-export const createBookingRequestSchema = z.object({
-  tenantId: z.string().uuid(),
+export const createBookingLineRequestSchema = z.object({
   serviceOfferingId: z.string().uuid(),
-  startAt: z.string(),
-  customerNotes: z.string().max(1000).optional(),
+  staffMemberId: z.string().uuid().nullable().optional(),
 });
 
+export const createBookingGuestRequestSchema = z.object({
+  displayName: z.string().max(120).nullable().optional(),
+});
+
+export const createBookingRequestSchema = z
+  .object({
+    tenantId: z.string().uuid(),
+    serviceOfferingId: z.string().uuid().optional(),
+    startAt: z.string(),
+    customerNotes: z.string().max(1000).optional(),
+    staffMemberId: z.string().uuid().nullable().optional(),
+    lines: z.array(createBookingLineRequestSchema).min(1).max(10).optional(),
+    guestCount: z.number().int().min(1).max(6).optional(),
+    guests: z.array(createBookingGuestRequestSchema).max(6).optional(),
+  })
+  .refine((data) => (data.lines?.length ?? 0) > 0 || !!data.serviceOfferingId, {
+    message: "serviceOfferingId or lines is required",
+    path: ["serviceOfferingId"],
+  });
+
 export type CreateBookingRequest = z.infer<typeof createBookingRequestSchema>;
+
+export const staffMemberSchema = z.object({
+  id: z.string().uuid(),
+  displayName: z.string(),
+  title: z.string().nullable().optional(),
+  bio: z.string().nullable().optional(),
+  isActive: z.boolean(),
+  sortOrder: z.number().int(),
+  avatarImageUrl: z.string().nullable().optional(),
+  serviceOfferingIds: z.array(z.string().uuid()),
+});
+
+export type StaffMember = z.infer<typeof staffMemberSchema>;
+
+export const staffMembersResponseSchema = z.object({
+  items: z.array(staffMemberSchema),
+});
+
+export const createStaffMemberRequestSchema = z.object({
+  displayName: z.string().min(2).max(120),
+  title: z.string().max(120).nullable().optional(),
+  bio: z.string().max(500).nullable().optional(),
+  sortOrder: z.number().int().optional(),
+  serviceOfferingIds: z.array(z.string().uuid()).optional(),
+});
+
+export type CreateStaffMemberRequest = z.infer<typeof createStaffMemberRequestSchema>;
+
+export const updateStaffMemberRequestSchema = z.object({
+  displayName: z.string().min(2).max(120),
+  title: z.string().max(120).nullable().optional(),
+  bio: z.string().max(500).nullable().optional(),
+  sortOrder: z.number().int(),
+  isActive: z.boolean(),
+});
+
+export type UpdateStaffMemberRequest = z.infer<typeof updateStaffMemberRequestSchema>;
+
+export const replaceStaffServicesRequestSchema = z.object({
+  serviceOfferingIds: z.array(z.string().uuid()),
+});
+
+export type ReplaceStaffServicesRequest = z.infer<
+  typeof replaceStaffServicesRequestSchema
+>;
 
 export const businessLocationSchema = z.object({
   id: z.string(),
@@ -1026,6 +1123,7 @@ export const createServiceOfferingRequestSchema = z.object({
   bookingDeliveryType: bookingDeliveryTypeSchema.optional(),
   menuGroupId: z.string().uuid().nullable().optional(),
   sortOrder: z.number().int().optional(),
+  isAddOn: z.boolean().optional(),
 });
 
 export type CreateServiceOfferingRequest = z.infer<
@@ -1045,6 +1143,7 @@ export const updateServiceOfferingRequestSchema = z.object({
   bookingDeliveryType: bookingDeliveryTypeSchema.optional(),
   menuGroupId: z.string().uuid().nullable().optional(),
   sortOrder: z.number().int().optional(),
+  isAddOn: z.boolean().optional(),
 });
 
 export type UpdateServiceOfferingRequest = z.infer<

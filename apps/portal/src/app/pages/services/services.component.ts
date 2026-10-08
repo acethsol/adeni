@@ -22,6 +22,7 @@ type ServiceDraft = {
   bookingDeliveryType: BookingDeliveryType;
   menuGroupId: string;
   sortOrder: string;
+  isAddOn: boolean;
 };
 
 @Component({
@@ -70,6 +71,7 @@ export class ServicesComponent implements OnInit {
       bookingDeliveryType: "appointment",
       menuGroupId: "",
       sortOrder: "0",
+      isAddOn: false,
     };
   }
 
@@ -144,6 +146,7 @@ export class ServicesComponent implements OnInit {
       bookingDeliveryType: service.bookingDeliveryType ?? "appointment",
       menuGroupId: service.menuGroupId ?? "",
       sortOrder: String(service.sortOrder ?? 0),
+      isAddOn: service.isAddOn === true,
     };
     this.showForm.set(true);
     void this.loadCatalog(this.draft.categorySlug);
@@ -247,6 +250,7 @@ export class ServicesComponent implements OnInit {
       bookingDeliveryType: this.draft.bookingDeliveryType || "appointment",
       menuGroupId: this.draft.menuGroupId.trim() || null,
       sortOrder: Number.isNaN(sortOrder) ? 0 : Math.round(sortOrder),
+      isAddOn: this.draft.isAddOn,
     };
 
     try {

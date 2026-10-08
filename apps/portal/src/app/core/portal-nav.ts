@@ -6,6 +6,7 @@ export type PortalNavIconName =
   | "quotes"
   | "messages"
   | "services"
+  | "staff"
   | "locations"
   | "availability"
   | "profile"
@@ -86,6 +87,7 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
     label: "Listing",
     items: [
       { path: "/services", label: "Services", icon: "services" },
+      { path: "/staff", label: "Staff", icon: "staff", capability: "calendar" },
       { path: "/availability", label: "Hours", icon: "availability", capability: "calendar" },
       { path: "/locations", label: "Locations", icon: "locations" },
       { path: "/public-page", label: "Public page", icon: "public" },

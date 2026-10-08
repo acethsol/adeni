@@ -38,8 +38,17 @@ public static class CacheKeys
     public static string MarketsAll => "markets:all";
     public static string Translation(string source, string target, string textHash) =>
         $"translation:v1:{source}:{target}:{textHash}";
-    public static string SlotLock(Guid tenantId, DateTimeOffset start, Guid serviceId) =>
-        $"slot-lock:{tenantId:N}:{start.UtcDateTime:O}:{serviceId:N}";
+    public static string SlotLock(
+        Guid tenantId,
+        DateTimeOffset start,
+        Guid serviceId,
+        Guid? staffMemberId = null,
+        int? durationMinutes = null) =>
+        $"slot-lock:{tenantId:N}:{start.UtcDateTime:O}:{serviceId:N}"
+        + (staffMemberId is Guid staffId ? $":staff:{staffId:N}" : string.Empty)
+        + (durationMinutes is int mins ? $":dur:{mins}" : string.Empty);
+
+    public static string PublicStaff(string slug) => $"location:{slug}:staff";
 }
 
 public interface ICacheService

@@ -366,11 +366,23 @@ Zenoti-inspired storefront depth on the public booking page. Spec: [sprint-22-po
 | **22a** Per-tenant booking/payment/cancellation/terms policies + public-page section + Discover accept | ✅ Done |
 | **22b** Service menu groups (“collections”) + assign/order + Discover search | ✅ Done |
 
-**Out of scope for 22:** staff, multi-service cart, add-ons, multi-guest, rich HTML policies.
+**Out of scope for 22:** staff, multi-service cart, add-ons, multi-guest, rich HTML policies → **Sprint 23**.
+
+## Sprint 23 — Staff, cart & guests (draft)
+
+Zenoti-depth booking: optional staff pick, multi-service/add-on cart, multi-guest. Spec: [sprint-23-staff-cart-guests.md](./specs/sprint-23-staff-cart-guests.md).
+
+| Task | Status |
+|------|--------|
+| **23a** Staff roster + optional Discover pick + staff-aware slots | Done |
+| **23b** Multi-service cart + add-ons + deposit on total | Done |
+| **23c** Multi-guest (count + optional names / duration×guests) | Done |
+
+**Out of scope for 23:** employee Auth0 logins, payroll/tips, room inventory, parallel chair optimizer, Flutter parity.
 
 ## Next up
 
-1. **Sprint 22** — policies then service menu groups (this sprint)
+1. **Staff depth** (backlog) — first/last name, role, working hours, leave, per-staff calendar
 2. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, business AI agent, App Insights, ops dashboards
 
 Strategy reference: [product-strategy.md](./product-strategy.md) — [§3.5 Business types](./product-strategy.md#35-business-types--workflow-capabilities), [architecture.md](./architecture.md) (modular monolith)

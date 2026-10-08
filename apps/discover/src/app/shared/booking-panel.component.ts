@@ -1,13 +1,13 @@
 import { CurrencyPipe } from "@angular/common";
 import { Component, computed, inject, input, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import type { BookingResponse, ServiceMenuGroup, ServiceOffering } from "@adeni/shared";
+import type { BookingResponse, ServiceMenuGroup, ServiceOffering, StaffMember } from "@adeni/shared";
 import { t } from "@adeni/shared";
 import { AdeniApiError } from "@adeni/api-client";
 import { AdeniFeedbackService, AdeniLocaleService } from "@adeni/ui";
 import { CustomerApiService } from "../core/services/customer-api.service";
 
-type Step = "service" | "slot" | "confirm" | "done";
+type Step = "service" | "staff" | "slot" | "guests" | "confirm" | "done";
 
 type SlotDayGroup = {
   key: string;
@@ -20,6 +20,8 @@ type ServiceCollection = {
   name: string;
   services: ServiceOffering[];
 };
+
+const MAX_GUESTS = 6;
 
 @Component({
   selector: "app-booking-panel",
@@ -45,36 +47,81 @@ export class BookingPanelComponent {
 
   readonly locale = this.localeService.locale;
   readonly step = signal<Step>("service");
-  readonly selectedService = signal<ServiceOffering | null>(null);
+  /** Ordered cart; primary = first non-add-on. */
+  readonly selectedServices = signal<ServiceOffering[]>([]);
+  readonly addingAnother = signal(false);
+  readonly staffOptions = signal<StaffMember[]>([]);
+  /** null = any available; set only after staff step (or skipped). */
+  readonly selectedStaffId = signal<string | null>(null);
+  readonly selectedStaffName = signal<string | null>(null);
   readonly slots = signal<{ startAt: string; endAt: string }[]>([]);
   readonly selectedSlot = signal<string | null>(null);
+  readonly guestCount = signal(1);
+  readonly guestNames = signal<string[]>([""]);
   readonly notes = signal("");
   readonly serviceSearch = signal("");
   readonly policiesAccepted = signal(false);
   readonly loadingSlots = signal(false);
+  readonly loadingStaff = signal(false);
   readonly submitting = signal(false);
   readonly error = signal<string | null>(null);
   readonly booking = signal<BookingResponse | null>(null);
 
+  readonly primaryService = computed(
+    () => this.selectedServices().find((s) => !s.isAddOn) ?? null,
+  );
+
+  readonly availableAddOns = computed(() =>
+    this.allActiveServices().filter((s) => s.isAddOn),
+  );
+
+  readonly cartTotalMinutes = computed(() =>
+    this.selectedServices().reduce((sum, s) => sum + s.durationMinutes, 0),
+  );
+
+  readonly cartUnitPrice = computed(() =>
+    this.selectedServices().reduce((sum, s) => sum + s.priceAmount, 0),
+  );
+
+  readonly cartTotalPrice = computed(() => this.cartUnitPrice() * this.guestCount());
+
+  readonly cartCurrency = computed(
+    () => this.primaryService()?.currency ?? this.selectedServices()[0]?.currency ?? "NGN",
+  );
+
+  readonly hasStaffStep = computed(() => this.staffOptions().length > 0);
+
+  /** Service → Staff? → Guests → Time → Confirm (guests before time so slot duration matches party size). */
   readonly stepIndex = computed(() => {
+    const withStaff = this.hasStaffStep();
     switch (this.step()) {
       case "service":
         return 0;
-      case "slot":
+      case "staff":
         return 1;
+      case "guests":
+        return withStaff ? 2 : 1;
+      case "slot":
+        return withStaff ? 3 : 2;
       case "confirm":
       case "done":
-        return 2;
+        return withStaff ? 4 : 3;
     }
   });
+
+  readonly totalSteps = computed(() => (this.hasStaffStep() ? 5 : 4));
 
   readonly stepEyebrow = computed(() => {
     this.locale();
     switch (this.step()) {
       case "service":
         return this.label("business.booking.stepService");
+      case "staff":
+        return this.label("business.booking.stepStaff");
       case "slot":
         return this.label("business.booking.stepTime");
+      case "guests":
+        return this.label("business.booking.stepGuests");
       case "confirm":
         return this.label("business.booking.stepConfirm");
       default:
@@ -87,8 +134,12 @@ export class BookingPanelComponent {
     switch (this.step()) {
       case "service":
         return this.label("business.booking.titleService");
+      case "staff":
+        return this.label("business.booking.titleStaff");
       case "slot":
         return this.label("business.booking.titleTime");
+      case "guests":
+        return this.label("business.booking.titleGuests");
       case "confirm":
         return this.label("business.booking.titleConfirm");
       default:
@@ -103,14 +154,20 @@ export class BookingPanelComponent {
         count: this.activeServices().length,
       });
     }
+    if (this.step() === "staff") {
+      return this.label("business.booking.ledeStaff");
+    }
     if (this.step() === "slot") {
-      const svc = this.selectedService();
-      return svc
+      const primary = this.primaryService();
+      return primary
         ? this.label("business.booking.ledeService", {
-            name: svc.name,
-            minutes: svc.durationMinutes,
+            name: primary.name,
+            minutes: this.cartTotalMinutes(),
           })
         : null;
+    }
+    if (this.step() === "guests") {
+      return this.label("business.booking.ledeGuests");
     }
     return null;
   });
@@ -197,6 +254,10 @@ export class BookingPanelComponent {
     return this.allActiveServices();
   }
 
+  isInCart(serviceId: string): boolean {
+    return this.selectedServices().some((s) => s.id === serviceId);
+  }
+
   formatSlot(iso: string): string {
     return new Intl.DateTimeFormat(this.locale(), {
       weekday: "short",
@@ -214,12 +275,116 @@ export class BookingPanelComponent {
     }).format(new Date(iso));
   }
 
-  async selectService(service: ServiceOffering): Promise<void> {
-    this.selectedService.set(service);
-    await this.loadSlots(service);
+  selectService(service: ServiceOffering): void {
+    this.error.set(null);
+
+    if (service.isAddOn) {
+      if (!this.primaryService()) {
+        this.error.set(this.label("business.booking.addonRequiresParent"));
+        return;
+      }
+      this.toggleAddOn(service);
+      return;
+    }
+
+    if (this.addingAnother()) {
+      if (this.isInCart(service.id)) {
+        return;
+      }
+      this.selectedServices.update((cart) => [...cart, service]);
+      this.addingAnother.set(false);
+      return;
+    }
+
+    const primary = this.primaryService();
+    const rest = this.selectedServices().filter(
+      (s) => s.id !== primary?.id && s.id !== service.id,
+    );
+    this.selectedServices.set([service, ...rest]);
   }
 
-  async loadSlots(service: ServiceOffering): Promise<void> {
+  toggleAddOn(service: ServiceOffering): void {
+    if (!this.primaryService()) {
+      this.error.set(this.label("business.booking.addonRequiresParent"));
+      return;
+    }
+    const cart = this.selectedServices();
+    if (cart.some((s) => s.id === service.id)) {
+      this.selectedServices.set(cart.filter((s) => s.id !== service.id));
+    } else {
+      this.selectedServices.set([...cart, service]);
+    }
+  }
+
+  removeFromCart(service: ServiceOffering): void {
+    const primary = this.primaryService();
+    if (primary && service.id === primary.id) {
+      this.selectedServices.set([]);
+      return;
+    }
+    this.selectedServices.update((cart) => cart.filter((s) => s.id !== service.id));
+  }
+
+  startAddAnother(): void {
+    this.addingAnother.set(true);
+    this.error.set(null);
+  }
+
+  cancelAddAnother(): void {
+    this.addingAnother.set(false);
+  }
+
+  async continueFromServices(): Promise<void> {
+    const primary = this.primaryService();
+    if (!primary) {
+      this.error.set(this.label("business.booking.pickPrimaryFirst"));
+      return;
+    }
+
+    this.addingAnother.set(false);
+    this.selectedStaffId.set(null);
+    this.selectedStaffName.set(null);
+    this.staffOptions.set([]);
+    this.loadingStaff.set(true);
+    this.error.set(null);
+
+    try {
+      const staff = await this.api.createPublicClient().getBusinessStaff(this.slug(), {
+        serviceId: primary.id,
+      });
+      this.staffOptions.set(staff);
+      if (staff.length > 0) {
+        this.step.set("staff");
+      } else {
+        this.step.set("guests");
+      }
+    } catch {
+      this.error.set(this.label("business.booking.staffLoadFailed"));
+      this.step.set("guests");
+    } finally {
+      this.loadingStaff.set(false);
+    }
+  }
+
+  selectStaff(staffId: string | null, displayName: string | null): void {
+    if (!this.primaryService()) {
+      return;
+    }
+    this.selectedStaffId.set(staffId);
+    this.selectedStaffName.set(displayName);
+    this.step.set("guests");
+  }
+
+  async continueFromGuests(): Promise<void> {
+    await this.loadSlots(this.selectedStaffId());
+  }
+
+  async loadSlots(staffMemberId: string | null): Promise<void> {
+    const primary = this.primaryService();
+    if (!primary) {
+      return;
+    }
+
     this.loadingSlots.set(true);
     this.error.set(null);
     this.slots.set([]);
@@ -229,12 +394,16 @@ export class BookingPanelComponent {
     start.setHours(0, 0, 0, 0);
     const end = new Date(start);
     end.setDate(end.getDate() + 7);
+    const serviceIds = this.selectedServices().map((s) => s.id);
 
     try {
       const items = await this.api.createPublicClient().getBusinessSlots(this.slug(), {
-        serviceId: service.id,
+        serviceId: primary.id,
         from: start.toISOString(),
         to: end.toISOString(),
+        staffMemberId: staffMemberId ?? undefined,
+        serviceIds,
+        guestCount: this.guestCount(),
       });
       const fresh = items.filter((slot) => new Date(slot.startAt).getTime() > Date.now());
       this.slots.set(fresh);
@@ -246,9 +415,28 @@ export class BookingPanelComponent {
     }
   }
 
+  adjustGuests(delta: number): void {
+    const next = Math.min(MAX_GUESTS, Math.max(1, this.guestCount() + delta));
+    this.guestCount.set(next);
+    const names = [...this.guestNames()];
+    while (names.length < next) {
+      names.push("");
+    }
+    this.guestNames.set(names.slice(0, next));
+    // Party size changes appointment length — clear any prior time pick.
+    this.slots.set([]);
+    this.selectedSlot.set(null);
+  }
+
+  setGuestName(index: number, value: string): void {
+    const names = [...this.guestNames()];
+    names[index] = value;
+    this.guestNames.set(names);
+  }
+
   async joinWaitlist(): Promise<void> {
-    const service = this.selectedService();
-    if (!service || !this.bookingEnabled()) {
+    const primary = this.primaryService();
+    if (!primary || !this.bookingEnabled()) {
       return;
     }
 
@@ -256,7 +444,7 @@ export class BookingPanelComponent {
       await this.api.withAuthorizedClient((c) =>
         c.joinWaitlist({
           tenantId: this.tenantId(),
-          serviceOfferingId: service.id,
+          serviceOfferingId: primary.id,
         }),
       );
       this.error.set(null);
@@ -267,9 +455,10 @@ export class BookingPanelComponent {
   }
 
   async confirmBooking(): Promise<void> {
-    const service = this.selectedService();
+    const primary = this.primaryService();
+    const cart = this.selectedServices();
     const slot = this.selectedSlot();
-    if (!service || !slot || !this.bookingEnabled()) {
+    if (!primary || cart.length === 0 || !slot || !this.bookingEnabled()) {
       return;
     }
 
@@ -282,12 +471,18 @@ export class BookingPanelComponent {
       this.toastError(this.label("business.booking.slotPassed"));
       this.step.set("slot");
       this.selectedSlot.set(null);
-      await this.loadSlots(service);
+      await this.loadSlots(this.selectedStaffId());
       return;
     }
 
     this.submitting.set(true);
     this.error.set(null);
+
+    const guests = this.guestNames()
+      .slice(0, this.guestCount())
+      .map((name) => ({
+        displayName: name.trim() || null,
+      }));
 
     try {
       const created = await this.feedback.runLoading(
@@ -295,9 +490,13 @@ export class BookingPanelComponent {
           this.api.withAuthorizedClient((c) =>
             c.createBooking({
               tenantId: this.tenantId(),
-              serviceOfferingId: service.id,
+              serviceOfferingId: primary.id,
               startAt: slot,
               customerNotes: this.notes().trim() || undefined,
+              staffMemberId: this.selectedStaffId(),
+              guestCount: this.guestCount(),
+              guests,
+              lines: cart.map((s) => ({ serviceOfferingId: s.id })),
             }),
           ),
         this.label("business.booking.confirming"),
@@ -308,14 +507,14 @@ export class BookingPanelComponent {
       const needsDeposit =
         this.supportsDeposits() &&
         this.depositPercent() > 0 &&
-        service.priceAmount > 0;
+        this.cartTotalPrice() > 0;
 
       if (needsDeposit) {
         const payment = await this.api.withAuthorizedClient((c) =>
           c.initializePayment({
             tenantId: this.tenantId(),
             bookingId: created.id,
-            currency: service.currency,
+            currency: this.cartCurrency(),
             type: "deposit",
           }),
         );
@@ -361,8 +560,35 @@ export class BookingPanelComponent {
 
   backToServices(): void {
     this.step.set("service");
-    this.selectedService.set(null);
+    this.selectedServices.set([]);
+    this.addingAnother.set(false);
+    this.staffOptions.set([]);
+    this.selectedStaffId.set(null);
+    this.selectedStaffName.set(null);
     this.slots.set([]);
+    this.selectedSlot.set(null);
+    this.guestCount.set(1);
+    this.guestNames.set([""]);
+  }
+
+  backToStaff(): void {
+    if (this.hasStaffStep()) {
+      this.step.set("staff");
+      this.slots.set([]);
+      this.selectedSlot.set(null);
+    } else {
+      this.backToServices();
+    }
+  }
+
+  backToGuests(): void {
+    this.step.set("guests");
+    this.slots.set([]);
+    this.selectedSlot.set(null);
+  }
+
+  backToSlot(): void {
+    this.step.set("slot");
   }
 
   openPolicy(event: Event, sectionId: string): void {

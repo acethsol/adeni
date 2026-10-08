@@ -66,6 +66,7 @@ public sealed class DiscoveryController(IDiscoveryService discovery) : Controlle
 public sealed class BusinessesController(
     IDiscoveryService discovery,
     IServiceCatalogService services,
+    IStaffService staff,
     IAvailabilityService availability,
     IReviewService reviews,
     IQuoteRequestService quoteRequests,
@@ -95,6 +96,17 @@ public sealed class BusinessesController(
         return Ok(new { items = catalog.Items, groups = catalog.Groups });
     }
 
+    [HttpGet("{slug}/staff")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetStaff(
+        string slug,
+        [FromQuery] Guid? serviceId,
+        CancellationToken cancellationToken)
+    {
+        var result = await staff.ListPublicBySlugAsync(slug, serviceId, cancellationToken);
+        return ApiResults.FromResult(result, items => Ok(new { items }), HttpContext);
+    }
+
     [HttpGet("{slug}/slots")]
     [AllowAnonymous]
     public async Task<IActionResult> GetSlots(
@@ -102,13 +114,30 @@ public sealed class BusinessesController(
         [FromQuery] Guid serviceId,
         [FromQuery] DateTimeOffset from,
         [FromQuery] DateTimeOffset to,
-        CancellationToken cancellationToken)
+        [FromQuery] Guid? staffMemberId,
+        [FromQuery] string? serviceIds,
+        [FromQuery] int guestCount = 1,
+        CancellationToken cancellationToken = default)
     {
+        IReadOnlyList<Guid>? additional = null;
+        if (!string.IsNullOrWhiteSpace(serviceIds))
+        {
+            additional = serviceIds
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(part => Guid.TryParse(part, out var id) ? id : Guid.Empty)
+                .Where(id => id != Guid.Empty && id != serviceId)
+                .Distinct()
+                .ToArray();
+        }
+
         var result = await availability.GetAvailableSlotsBySlugAsync(
             slug,
             serviceId,
             from,
             to,
+            staffMemberId,
+            additional,
+            guestCount,
             cancellationToken);
 
         return ApiResults.FromResult(result, slots => Ok(new { items = slots }), HttpContext);

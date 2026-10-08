@@ -3,6 +3,7 @@ using System;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Adeni.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AdeniDbContext))]
-    partial class AdeniDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261008212001_Sprint23aStaffRoster")]
+    partial class Sprint23aStaffRoster
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -65,74 +68,6 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                     b.ToTable("audit_logs", "admin");
                 });
 
-            modelBuilder.Entity("Adeni.Domain.Booking.BookingGuest", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("BookingId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("DisplayName")
-                        .HasMaxLength(120)
-                        .HasColumnType("character varying(120)");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BookingId", "SortOrder");
-
-                    b.ToTable("booking_guests", "booking");
-                });
-
-            modelBuilder.Entity("Adeni.Domain.Booking.BookingLine", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("BookingId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("DurationMinutes")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsAddOn")
-                        .HasColumnType("boolean");
-
-                    b.Property<decimal>("PriceAmount")
-                        .HasPrecision(12, 2)
-                        .HasColumnType("numeric(12,2)");
-
-                    b.Property<string>("ServiceName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<Guid>("ServiceOfferingId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ServiceOfferingId");
-
-                    b.HasIndex("BookingId", "SortOrder");
-
-                    b.ToTable("booking_lines", "booking");
-                });
-
             modelBuilder.Entity("Adeni.Domain.Booking.BookingRecord", b =>
                 {
                     b.Property<Guid>("Id")
@@ -155,11 +90,6 @@ namespace Adeni.Infrastructure.Persistence.Migrations
 
                     b.Property<DateTimeOffset>("EndAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("GuestCount")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(1);
 
                     b.Property<string>("IdempotencyKey")
                         .HasMaxLength(128)
@@ -385,11 +315,6 @@ namespace Adeni.Infrastructure.Persistence.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
-
-                    b.Property<bool>("IsAddOn")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
 
                     b.Property<Guid?>("MenuGroupId")
                         .HasColumnType("uuid");
@@ -1141,36 +1066,6 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                     b.ToTable("verification_documents", "tenancy");
                 });
 
-            modelBuilder.Entity("Adeni.Domain.Booking.BookingGuest", b =>
-                {
-                    b.HasOne("Adeni.Domain.Booking.BookingRecord", "Booking")
-                        .WithMany("Guests")
-                        .HasForeignKey("BookingId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Booking");
-                });
-
-            modelBuilder.Entity("Adeni.Domain.Booking.BookingLine", b =>
-                {
-                    b.HasOne("Adeni.Domain.Booking.BookingRecord", "Booking")
-                        .WithMany("Lines")
-                        .HasForeignKey("BookingId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Adeni.Domain.Booking.ServiceOffering", "ServiceOffering")
-                        .WithMany()
-                        .HasForeignKey("ServiceOfferingId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Booking");
-
-                    b.Navigation("ServiceOffering");
-                });
-
             modelBuilder.Entity("Adeni.Domain.Booking.BookingRecord", b =>
                 {
                     b.HasOne("Adeni.Domain.Booking.ServiceOffering", "ServiceOffering")
@@ -1288,13 +1183,6 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Tenant");
-                });
-
-            modelBuilder.Entity("Adeni.Domain.Booking.BookingRecord", b =>
-                {
-                    b.Navigation("Guests");
-
-                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("Adeni.Domain.Booking.StaffMember", b =>

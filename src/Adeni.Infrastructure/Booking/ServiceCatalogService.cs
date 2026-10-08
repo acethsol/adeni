@@ -110,6 +110,7 @@ public sealed class ServiceCatalogService(
             BookingDeliveryType = BookingDeliveryTypeMapping.FromApiValue(request.BookingDeliveryType),
             MenuGroupId = request.MenuGroupId,
             SortOrder = request.SortOrder,
+            IsAddOn = request.IsAddOn,
             IsActive = true,
             CreatedAt = now,
             UpdatedAt = now
@@ -165,6 +166,7 @@ public sealed class ServiceCatalogService(
         entity.BookingDeliveryType = BookingDeliveryTypeMapping.FromApiValue(request.BookingDeliveryType);
         entity.MenuGroupId = request.MenuGroupId;
         entity.SortOrder = request.SortOrder;
+        entity.IsAddOn = request.IsAddOn;
         entity.IsActive = request.IsActive;
         entity.UpdatedAt = DateTimeOffset.UtcNow;
 

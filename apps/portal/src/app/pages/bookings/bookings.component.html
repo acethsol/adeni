@@ -22,6 +22,15 @@
             <div>
               <strong>{{ booking.serviceName }}</strong>
               <p class="muted">{{ formatSlotTime(booking.startAt) }}</p>
+              @if (booking.lines && booking.lines.length > 1) {
+                <p class="muted">{{ lineSummary(booking) }}</p>
+              }
+              @if (booking.guestCount && booking.guestCount > 1) {
+                <p class="muted">Party of {{ booking.guestCount }}</p>
+              }
+              @if (booking.staffDisplayName) {
+                <p class="muted">With {{ booking.staffDisplayName }}</p>
+              }
               @if (booking.customerNotes) {
                 <p class="note">“{{ booking.customerNotes }}”</p>
               }

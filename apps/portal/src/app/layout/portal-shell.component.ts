@@ -67,6 +67,7 @@ type ChromeKey =
   | "/quotes"
   | "/messages"
   | "/services"
+  | "/staff"
   | "/locations"
   | "/availability"
   | "/profile"
@@ -105,6 +106,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     "/quotes": "Quotes",
     "/messages": "Messages",
     "/services": "Services",
+    "/staff": "Staff",
     "/locations": "Locations",
     "/availability": "Hours",
     "/profile": "Profile",
@@ -142,6 +144,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     "/quotes": "Devis",
     "/messages": "Messages",
     "/services": "Services",
+    "/staff": "Équipe",
     "/locations": "Lieux",
     "/availability": "Horaires",
     "/profile": "Profil",

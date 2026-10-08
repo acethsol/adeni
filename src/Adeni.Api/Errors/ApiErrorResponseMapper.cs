@@ -90,8 +90,12 @@ internal static class ApiErrorResponseMapper
         code switch
         {
             ErrorCodes.SlotExpired => StatusCodes.Status400BadRequest,
-            ErrorCodes.SlotUnavailable or ErrorCodes.SlotLocked =>
+            ErrorCodes.SlotUnavailable or ErrorCodes.SlotLocked or ErrorCodes.StaffUnavailable
+                or ErrorCodes.CapacityFull =>
                 StatusCodes.Status409Conflict,
+            ErrorCodes.StaffNotEligible or ErrorCodes.CartEmpty or ErrorCodes.AddonRequiresParent
+                or ErrorCodes.GuestLimit =>
+                StatusCodes.Status400BadRequest,
             _ => StatusCodes.Status400BadRequest,
         };
 

@@ -39,6 +39,12 @@ public sealed class BookingService(
             return Result.Failure<BookingResponse>(ErrorCodes.SlotExpiredError());
         }
 
+        var guestCount = request.GuestCount <= 0 ? 1 : request.GuestCount;
+        if (guestCount > ErrorCodes.MaxBookingGuests)
+        {
+            return Result.Failure<BookingResponse>(ErrorCodes.GuestLimitError());
+        }
+
         var profile = await dbContext.BusinessProfiles
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.TenantId == request.TenantId, cancellationToken);
@@ -68,17 +74,71 @@ public sealed class BookingService(
             return Result.Failure<BookingResponse>(entitlementCheck.Error);
         }
 
-        var service = await dbContext.ServiceOfferings
-            .AsNoTracking()
-            .FirstOrDefaultAsync(
-                x => x.Id == request.ServiceOfferingId
-                    && x.TenantId == request.TenantId
-                    && x.IsActive,
-                cancellationToken);
+        var lineRequests = ResolveLineRequests(request);
+        if (lineRequests.Count == 0)
+        {
+            return Result.Failure<BookingResponse>(ErrorCodes.CartEmptyError());
+        }
 
-        if (service is null)
+        if (lineRequests.Count > ErrorCodes.MaxBookingLines)
+        {
+            return Result.Failure<BookingResponse>(
+                Error.Validation($"A booking can include at most {ErrorCodes.MaxBookingLines} services."));
+        }
+
+        var serviceIds = lineRequests.Select(x => x.ServiceOfferingId).Distinct().ToArray();
+        var services = await dbContext.ServiceOfferings
+            .AsNoTracking()
+            .Where(x => x.TenantId == request.TenantId && x.IsActive && serviceIds.Contains(x.Id))
+            .ToListAsync(cancellationToken);
+
+        if (services.Count != serviceIds.Length)
         {
             return Result.Failure<BookingResponse>(Error.NotFound("Service"));
+        }
+
+        var byId = services.ToDictionary(x => x.Id);
+        var orderedServices = lineRequests.Select(line => byId[line.ServiceOfferingId]).ToArray();
+        if (orderedServices.All(x => x.IsAddOn))
+        {
+            return Result.Failure<BookingResponse>(ErrorCodes.AddonRequiresParentError());
+        }
+
+        var primary = orderedServices.FirstOrDefault(x => !x.IsAddOn) ?? orderedServices[0];
+        var baseDuration = orderedServices.Sum(x => x.DurationMinutes);
+        var totalDuration = baseDuration * guestCount;
+        if (totalDuration is < 5 or > 480 * ErrorCodes.MaxBookingGuests)
+        {
+            return Result.Failure<BookingResponse>(
+                Error.Validation("Total appointment duration is out of range."));
+        }
+
+        string? staffDisplayName = null;
+        if (request.StaffMemberId is Guid staffId)
+        {
+            var staff = await dbContext.StaffMembers
+                .AsNoTracking()
+                .Include(x => x.ServiceLinks)
+                .FirstOrDefaultAsync(
+                    x => x.Id == staffId && x.TenantId == request.TenantId && x.IsActive,
+                    cancellationToken);
+
+            if (staff is null)
+            {
+                return Result.Failure<BookingResponse>(ErrorCodes.StaffUnavailableError());
+            }
+
+            foreach (var svc in orderedServices)
+            {
+                var eligible = staff.ServiceLinks.Count == 0
+                    || staff.ServiceLinks.Any(link => link.ServiceOfferingId == svc.Id);
+                if (!eligible)
+                {
+                    return Result.Failure<BookingResponse>(ErrorCodes.StaffNotEligibleError());
+                }
+            }
+
+            staffDisplayName = staff.DisplayName;
         }
 
         var customer = await dbContext.Customers
@@ -99,20 +159,39 @@ public sealed class BookingService(
 
         if (normalizedIdempotencyKey is not null)
         {
-            var existing = await (
-                from booking in dbContext.Bookings.AsNoTracking()
-                join offering in dbContext.ServiceOfferings.AsNoTracking() on booking.ServiceOfferingId equals offering.Id
-                where booking.CustomerId == customer.Id && booking.IdempotencyKey == normalizedIdempotencyKey
-                select new { booking, offering.Name })
-                .FirstOrDefaultAsync(cancellationToken);
+            var existing = await dbContext.Bookings
+                .AsNoTracking()
+                .Include(x => x.Lines)
+                .Include(x => x.Guests)
+                .FirstOrDefaultAsync(
+                    x => x.CustomerId == customer.Id && x.IdempotencyKey == normalizedIdempotencyKey,
+                    cancellationToken);
 
             if (existing is not null)
             {
-                return Result.Success(BookingMapper.ToResponse(existing.booking, existing.Name));
+                var existingName = existing.Lines.Count > 0
+                    ? existing.Lines.OrderBy(x => x.SortOrder).First().ServiceName
+                    : await dbContext.ServiceOfferings.AsNoTracking()
+                        .Where(x => x.Id == existing.ServiceOfferingId)
+                        .Select(x => x.Name)
+                        .FirstOrDefaultAsync(cancellationToken) ?? "Service";
+                var existingStaffName = existing.StaffMemberId is Guid existingStaffId
+                    ? await dbContext.StaffMembers.AsNoTracking()
+                        .Where(x => x.Id == existingStaffId)
+                        .Select(x => x.DisplayName)
+                        .FirstOrDefaultAsync(cancellationToken)
+                    : null;
+                return Result.Success(
+                    BookingMapper.ToResponse(existing, existingName, existingStaffName, primary.Currency));
             }
         }
 
-        var lockKey = CacheKeys.SlotLock(request.TenantId, request.StartAt.ToUniversalTime(), service.Id);
+        var lockKey = CacheKeys.SlotLock(
+            request.TenantId,
+            request.StartAt.ToUniversalTime(),
+            primary.Id,
+            request.StaffMemberId,
+            totalDuration);
         var slotLock = await lockProvider.TryAcquireAsync(lockKey, CacheTtl.SlotLock, cancellationToken);
         if (slotLock is null)
         {
@@ -121,11 +200,17 @@ public sealed class BookingService(
 
         await using (slotLock)
         {
+            var additionalIds = orderedServices
+                .Select(x => x.Id)
+                .Where(id => id != primary.Id)
+                .ToArray();
             var isAvailable = await availabilityService.IsSlotAvailableAsync(
                 request.TenantId,
-                service.Id,
-                request.StartAt,
-                service.DurationMinutes,
+                primary.Id,
+                request.StartAt.ToUniversalTime(),
+                totalDuration,
+                request.StaffMemberId,
+                additionalIds,
                 cancellationToken);
 
             if (!isAvailable)
@@ -133,6 +218,11 @@ public sealed class BookingService(
                 if (request.StartAt <= DateTimeOffset.UtcNow)
                 {
                     return Result.Failure<BookingResponse>(ErrorCodes.SlotExpiredError());
+                }
+
+                if (request.StaffMemberId is not null)
+                {
+                    return Result.Failure<BookingResponse>(ErrorCodes.StaffUnavailableError());
                 }
 
                 return Result.Failure<BookingResponse>(ErrorCodes.SlotUnavailableError());
@@ -145,10 +235,12 @@ public sealed class BookingService(
             {
                 Id = Guid.NewGuid(),
                 TenantId = request.TenantId,
-                ServiceOfferingId = service.Id,
+                ServiceOfferingId = primary.Id,
                 CustomerId = customer.Id,
+                StaffMemberId = request.StaffMemberId,
+                GuestCount = guestCount,
                 StartAt = startAtUtc,
-                EndAt = startAtUtc.AddMinutes(service.DurationMinutes),
+                EndAt = startAtUtc.AddMinutes(totalDuration),
                 Status = autoConfirm ? BookingStatus.Confirmed : BookingStatus.Pending,
                 CustomerNotes = string.IsNullOrWhiteSpace(request.CustomerNotes)
                     ? null
@@ -157,6 +249,42 @@ public sealed class BookingService(
                 CreatedAt = now,
                 UpdatedAt = now
             };
+
+            for (var i = 0; i < orderedServices.Length; i++)
+            {
+                var svc = orderedServices[i];
+                booking.Lines.Add(new BookingLine
+                {
+                    Id = Guid.NewGuid(),
+                    BookingId = booking.Id,
+                    TenantId = request.TenantId,
+                    ServiceOfferingId = svc.Id,
+                    SortOrder = i,
+                    PriceAmount = svc.PriceAmount,
+                    DurationMinutes = svc.DurationMinutes,
+                    ServiceName = svc.Name,
+                    IsAddOn = svc.IsAddOn,
+                });
+            }
+
+            var guestNames = request.Guests ?? Array.Empty<CreateBookingGuestRequest>();
+            for (var i = 0; i < guestNames.Count && i < guestCount; i++)
+            {
+                var name = guestNames[i].DisplayName?.Trim();
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    continue;
+                }
+
+                booking.Guests.Add(new BookingGuest
+                {
+                    Id = Guid.NewGuid(),
+                    BookingId = booking.Id,
+                    TenantId = request.TenantId,
+                    DisplayName = name.Length > 120 ? name[..120] : name,
+                    SortOrder = i,
+                });
+            }
 
             if (autoConfirm)
             {
@@ -171,7 +299,8 @@ public sealed class BookingService(
             dbContext.Bookings.Add(booking);
             await dbContext.SaveChangesAsync(cancellationToken);
 
-            return Result.Success(BookingMapper.ToResponse(booking, service.Name));
+            return Result.Success(
+                BookingMapper.ToResponse(booking, primary.Name, staffDisplayName, primary.Currency));
         }
     }
 
@@ -181,17 +310,48 @@ public sealed class BookingService(
     {
         var bookings = await dbContext.Bookings
             .AsNoTracking()
+            .Include(x => x.Lines)
+            .Include(x => x.Guests)
             .Where(x => x.TenantId == tenantId)
-            .Join(
-                dbContext.ServiceOfferings.AsNoTracking(),
-                booking => booking.ServiceOfferingId,
-                service => service.Id,
-                (booking, service) => new { booking, service.Name })
-            .OrderBy(x => x.booking.StartAt)
+            .OrderBy(x => x.StartAt)
             .ToListAsync(cancellationToken);
 
+        if (bookings.Count == 0)
+        {
+            return Array.Empty<BookingResponse>();
+        }
+
+        var serviceIds = bookings.Select(x => x.ServiceOfferingId).Distinct().ToArray();
+        var staffIds = bookings
+            .Where(x => x.StaffMemberId.HasValue)
+            .Select(x => x.StaffMemberId!.Value)
+            .Distinct()
+            .ToArray();
+
+        var services = await dbContext.ServiceOfferings.AsNoTracking()
+            .Where(x => serviceIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, cancellationToken);
+        var staffNames = staffIds.Length == 0
+            ? new Dictionary<Guid, string>()
+            : await dbContext.StaffMembers.AsNoTracking()
+                .Where(x => staffIds.Contains(x.Id))
+                .ToDictionaryAsync(x => x.Id, x => x.DisplayName, cancellationToken);
+
         return bookings
-            .Select(x => BookingMapper.ToResponse(x.booking, x.Name))
+            .Select(booking =>
+            {
+                services.TryGetValue(booking.ServiceOfferingId, out var service);
+                var name = booking.Lines.OrderBy(x => x.SortOrder).FirstOrDefault()?.ServiceName
+                    ?? service?.Name
+                    ?? "Service";
+                string? staffName = null;
+                if (booking.StaffMemberId is Guid sid)
+                {
+                    staffNames.TryGetValue(sid, out staffName);
+                }
+
+                return BookingMapper.ToResponse(booking, name, staffName, service?.Currency);
+            })
             .ToArray();
     }
 
@@ -204,22 +364,46 @@ public sealed class BookingService(
             return Array.Empty<CustomerBookingResponse>();
         }
 
-        var rows = await (
-            from booking in dbContext.Bookings.AsNoTracking()
-            join customer in dbContext.Customers.AsNoTracking() on booking.CustomerId equals customer.Id
-            join service in dbContext.ServiceOfferings.AsNoTracking() on booking.ServiceOfferingId equals service.Id
-            join tenant in dbContext.Tenants.AsNoTracking() on booking.TenantId equals tenant.Id
-            where customer.Auth0Sub == customerAuth0Sub
-            orderby booking.StartAt descending
-            select new { booking, ServiceName = service.Name, BusinessName = tenant.Name })
-            .ToListAsync(cancellationToken);
-
-        if (rows.Count == 0)
+        var customer = await dbContext.Customers.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Auth0Sub == customerAuth0Sub, cancellationToken);
+        if (customer is null)
         {
             return Array.Empty<CustomerBookingResponse>();
         }
 
-        var tenantIds = rows.Select(x => x.booking.TenantId).Distinct().ToArray();
+        var bookings = await dbContext.Bookings
+            .AsNoTracking()
+            .Include(x => x.Lines)
+            .Include(x => x.Guests)
+            .Where(x => x.CustomerId == customer.Id)
+            .OrderByDescending(x => x.StartAt)
+            .ToListAsync(cancellationToken);
+
+        if (bookings.Count == 0)
+        {
+            return Array.Empty<CustomerBookingResponse>();
+        }
+
+        var tenantIds = bookings.Select(x => x.TenantId).Distinct().ToArray();
+        var serviceIds = bookings.Select(x => x.ServiceOfferingId).Distinct().ToArray();
+        var staffIds = bookings
+            .Where(x => x.StaffMemberId.HasValue)
+            .Select(x => x.StaffMemberId!.Value)
+            .Distinct()
+            .ToArray();
+
+        var tenants = await dbContext.Tenants.AsNoTracking()
+            .Where(x => tenantIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, x => x.Name, cancellationToken);
+        var services = await dbContext.ServiceOfferings.AsNoTracking()
+            .Where(x => serviceIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, cancellationToken);
+        var staffNames = staffIds.Length == 0
+            ? new Dictionary<Guid, string>()
+            : await dbContext.StaffMembers.AsNoTracking()
+                .Where(x => staffIds.Contains(x.Id))
+                .ToDictionaryAsync(x => x.Id, x => x.DisplayName, cancellationToken);
+
         var slugRows = await dbContext.BusinessLocations
             .AsNoTracking()
             .Where(x => tenantIds.Contains(x.TenantId) && x.IsActive)
@@ -232,27 +416,38 @@ public sealed class BookingService(
                 g => g.Key,
                 g => g.OrderByDescending(x => x.IsPrimary).First().Slug);
 
-        var bookingIds = rows.Select(x => x.booking.Id).ToArray();
+        var bookingIds = bookings.Select(x => x.Id).ToArray();
         var reviewsByBooking = await reviewService.GetReviewsForBookingsAsync(bookingIds, cancellationToken);
         var now = DateTimeOffset.UtcNow;
 
-        return rows
-            .Select(x =>
+        return bookings
+            .Select(booking =>
             {
-                reviewsByBooking.TryGetValue(x.booking.Id, out var review);
+                reviewsByBooking.TryGetValue(booking.Id, out var review);
                 var hasReview = review is not null;
                 var canReview = !hasReview
-                    && x.booking.Status == BookingStatus.Confirmed
-                    && x.booking.EndAt <= now;
+                    && booking.Status == BookingStatus.Confirmed
+                    && booking.EndAt <= now;
+                services.TryGetValue(booking.ServiceOfferingId, out var service);
+                var name = booking.Lines.OrderBy(x => x.SortOrder).FirstOrDefault()?.ServiceName
+                    ?? service?.Name
+                    ?? "Service";
+                string? staffName = null;
+                if (booking.StaffMemberId is Guid sid)
+                {
+                    staffNames.TryGetValue(sid, out staffName);
+                }
 
                 return BookingMapper.ToCustomerResponse(
-                    x.booking,
-                    x.ServiceName,
-                    x.BusinessName,
-                    slugByTenant.GetValueOrDefault(x.booking.TenantId, string.Empty),
+                    booking,
+                    name,
+                    tenants.GetValueOrDefault(booking.TenantId, string.Empty),
+                    slugByTenant.GetValueOrDefault(booking.TenantId, string.Empty),
                     canReview,
                     hasReview,
-                    review?.Rating);
+                    review?.Rating,
+                    staffName,
+                    service?.Currency);
             })
             .ToArray();
     }
@@ -280,54 +475,76 @@ public sealed class BookingService(
             return Result.Failure<CustomerBookingResponse>(ErrorCodes.CustomerAuthRequiredError());
         }
 
-        var row = await (
-            from booking in dbContext.Bookings
-            join customer in dbContext.Customers on booking.CustomerId equals customer.Id
-            join service in dbContext.ServiceOfferings.AsNoTracking() on booking.ServiceOfferingId equals service.Id
-            join tenant in dbContext.Tenants.AsNoTracking() on booking.TenantId equals tenant.Id
-            where booking.Id == bookingId && customer.Auth0Sub == customerAuth0Sub
-            select new { booking, ServiceName = service.Name, BusinessName = tenant.Name })
-            .FirstOrDefaultAsync(cancellationToken);
+        var booking = await dbContext.Bookings
+            .Include(x => x.Lines)
+            .Include(x => x.Guests)
+            .FirstOrDefaultAsync(x => x.Id == bookingId, cancellationToken);
 
-        if (row is null)
+        if (booking is null)
         {
             return Result.Failure<CustomerBookingResponse>(Error.NotFound("Booking"));
         }
 
-        if (row.booking.Status is not (BookingStatus.Pending or BookingStatus.Confirmed))
+        var customer = await dbContext.Customers
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == booking.CustomerId, cancellationToken);
+
+        if (customer is null || customer.Auth0Sub != customerAuth0Sub)
+        {
+            return Result.Failure<CustomerBookingResponse>(Error.NotFound("Booking"));
+        }
+
+        if (booking.Status is not (BookingStatus.Pending or BookingStatus.Confirmed))
         {
             return Result.Failure<CustomerBookingResponse>(
                 Error.Conflict("Only pending or confirmed bookings can be cancelled."));
         }
 
-        if (row.booking.StartAt <= DateTimeOffset.UtcNow)
+        if (booking.StartAt <= DateTimeOffset.UtcNow)
         {
             return Result.Failure<CustomerBookingResponse>(
                 Error.Conflict("Past bookings cannot be cancelled."));
         }
 
-        row.booking.Status = BookingStatus.Cancelled;
-        row.booking.UpdatedAt = DateTimeOffset.UtcNow;
+        booking.Status = BookingStatus.Cancelled;
+        booking.UpdatedAt = DateTimeOffset.UtcNow;
         domainEventCollector.Add(new BookingCancelled(
-            row.booking.Id,
-            row.booking.TenantId,
-            row.booking.CustomerId,
-            row.booking.StartAt,
+            booking.Id,
+            booking.TenantId,
+            booking.CustomerId,
+            booking.StartAt,
             DateTimeOffset.UtcNow));
         await dbContext.SaveChangesAsync(cancellationToken);
 
+        var service = await dbContext.ServiceOfferings.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == booking.ServiceOfferingId, cancellationToken);
+        var businessName = await dbContext.Tenants.AsNoTracking()
+            .Where(x => x.Id == booking.TenantId)
+            .Select(x => x.Name)
+            .FirstOrDefaultAsync(cancellationToken) ?? string.Empty;
         var slug = await dbContext.BusinessLocations
             .AsNoTracking()
-            .Where(x => x.TenantId == row.booking.TenantId && x.IsActive)
+            .Where(x => x.TenantId == booking.TenantId && x.IsActive)
             .OrderByDescending(x => x.IsPrimary)
             .Select(x => x.Slug)
             .FirstOrDefaultAsync(cancellationToken) ?? string.Empty;
+        var cancelStaffName = booking.StaffMemberId is Guid cancelStaffId
+            ? await dbContext.StaffMembers.AsNoTracking()
+                .Where(x => x.Id == cancelStaffId)
+                .Select(x => x.DisplayName)
+                .FirstOrDefaultAsync(cancellationToken)
+            : null;
+        var name = booking.Lines.OrderBy(x => x.SortOrder).FirstOrDefault()?.ServiceName
+            ?? service?.Name
+            ?? "Service";
 
         return Result.Success(BookingMapper.ToCustomerResponse(
-            row.booking,
-            row.ServiceName,
-            row.BusinessName,
-            slug));
+            booking,
+            name,
+            businessName,
+            slug,
+            staffDisplayName: cancelStaffName,
+            currency: service?.Currency));
     }
 
     private async Task<Result<BookingResponse>> UpdateStatusAsync(
@@ -338,6 +555,8 @@ public sealed class BookingService(
         CancellationToken cancellationToken)
     {
         var booking = await dbContext.Bookings
+            .Include(x => x.Lines)
+            .Include(x => x.Guests)
             .FirstOrDefaultAsync(x => x.Id == bookingId && x.TenantId == tenantId, cancellationToken);
 
         if (booking is null)
@@ -375,13 +594,36 @@ public sealed class BookingService(
                 break;
         }
 
-        var serviceName = await dbContext.ServiceOfferings
+        var service = await dbContext.ServiceOfferings
             .AsNoTracking()
-            .Where(x => x.Id == booking.ServiceOfferingId)
-            .Select(x => x.Name)
-            .FirstAsync(cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == booking.ServiceOfferingId, cancellationToken);
+
+        var staffName = booking.StaffMemberId is Guid staffId
+            ? await dbContext.StaffMembers.AsNoTracking()
+                .Where(x => x.Id == staffId)
+                .Select(x => x.DisplayName)
+                .FirstOrDefaultAsync(cancellationToken)
+            : null;
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        return Result.Success(BookingMapper.ToResponse(booking, serviceName));
+        var name = booking.Lines.OrderBy(x => x.SortOrder).FirstOrDefault()?.ServiceName
+            ?? service?.Name
+            ?? "Service";
+        return Result.Success(BookingMapper.ToResponse(booking, name, staffName, service?.Currency));
+    }
+
+    private static IReadOnlyList<CreateBookingLineRequest> ResolveLineRequests(CreateBookingRequest request)
+    {
+        if (request.Lines is { Count: > 0 })
+        {
+            return request.Lines;
+        }
+
+        if (request.ServiceOfferingId == Guid.Empty)
+        {
+            return Array.Empty<CreateBookingLineRequest>();
+        }
+
+        return [new CreateBookingLineRequest(request.ServiceOfferingId, request.StaffMemberId)];
     }
 }

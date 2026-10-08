@@ -32,6 +32,9 @@ public sealed class ServiceOffering : ITenantEntity
     /// <summary>Order within the menu group (or among ungrouped services).</summary>
     public int SortOrder { get; set; }
 
+    /// <summary>Add-on service — cannot be booked alone without a primary service.</summary>
+    public bool IsAddOn { get; set; }
+
     public bool IsActive { get; set; } = true;
 
     public DateTimeOffset CreatedAt { get; set; }

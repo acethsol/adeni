@@ -41,6 +41,14 @@
       "defaultBusinessType": "scheduled_appointment",
       "capabilities": ["calendar", "fixed_pricing", "reviews"]
     },
+    "yoga": {
+      "defaultBusinessType": "scheduled_appointment",
+      "capabilities": ["calendar", "fixed_pricing", "reviews"]
+    },
+    "pilates": {
+      "defaultBusinessType": "scheduled_appointment",
+      "capabilities": ["calendar", "fixed_pricing", "reviews"]
+    },
     "yoga-pilates": {
       "defaultBusinessType": "scheduled_appointment",
       "capabilities": ["calendar", "fixed_pricing", "reviews"]

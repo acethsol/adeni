@@ -71,6 +71,22 @@ export const categoryVisuals: Record<string, CategoryVisual> = {
       "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&auto=format&fit=crop&q=80",
     gradient: ["#023e8a", "#0077b6"],
   },
+  yoga: {
+    slug: "yoga",
+    label: "Yoga",
+    icon: "🧘",
+    imageUrl:
+      "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&auto=format&fit=crop&q=80",
+    gradient: ["#40916c", "#74c69d"],
+  },
+  pilates: {
+    slug: "pilates",
+    label: "Pilates",
+    icon: "🤸",
+    imageUrl:
+      "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=800&auto=format&fit=crop&q=80",
+    gradient: ["#2d6a4f", "#95d5b2"],
+  },
   "yoga-pilates": {
     slug: "yoga-pilates",
     label: "Yoga & Pilates",

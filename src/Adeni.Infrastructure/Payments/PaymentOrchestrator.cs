@@ -358,7 +358,7 @@ public sealed class PaymentOrchestrator(
         }
 
         var bookingRow = await (
-            from booking in dbContext.Bookings.AsNoTracking()
+            from booking in dbContext.Bookings.AsNoTracking().Include(b => b.Lines)
             join service in dbContext.ServiceOfferings.AsNoTracking() on booking.ServiceOfferingId equals service.Id
             join profile in dbContext.BusinessProfiles.AsNoTracking() on booking.TenantId equals profile.TenantId
             where booking.Id == bookingId.Value && booking.TenantId == tenantId
@@ -375,8 +375,14 @@ public sealed class PaymentOrchestrator(
             return Result.Failure<(decimal, string)>(ErrorCodes.PaymentDepositNotConfiguredError());
         }
 
+        var cartTotal = bookingRow.booking.Lines.Count > 0
+            ? bookingRow.booking.Lines.Sum(x => x.PriceAmount)
+            : bookingRow.service.PriceAmount;
+        var guestCount = Math.Max(1, bookingRow.booking.GuestCount);
+        var taxableTotal = cartTotal * guestCount;
+
         var depositAmount = Math.Round(
-            bookingRow.service.PriceAmount * bookingRow.profile.DepositPercent / 100m,
+            taxableTotal * bookingRow.profile.DepositPercent / 100m,
             2,
             MidpointRounding.AwayFromZero);
 

@@ -32,7 +32,8 @@ const HERO_CHIP_ORDER = [
   "skincare-aesthetics",
   "massage-bodywork",
   "fitness",
-  "yoga-pilates",
+  "yoga",
+  "pilates",
 ] as const;
 
 const SHORT_LABELS: Record<string, string> = {
@@ -42,7 +43,8 @@ const SHORT_LABELS: Record<string, string> = {
   nails: "Nails",
   "skincare-aesthetics": "Skincare",
   fitness: "Fitness",
-  "yoga-pilates": "Yoga",
+  yoga: "Yoga",
+  pilates: "Pilates",
 };
 
 const ROTATE_MS = 3200;

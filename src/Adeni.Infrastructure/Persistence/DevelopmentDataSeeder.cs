@@ -417,7 +417,7 @@ public static class DevelopmentDataSeeder
             Photo("photo-1599058917212-d750089bc07e"),
             Photo("photo-1434596922112-19c563067271"),
         ],
-        ["yoga-pilates"] =
+        ["yoga"] =
         [
             Photo("photo-1544367567-0f2fcb009e0b"),
             Photo("photo-1506126613408-eca07ce68773"),
@@ -427,14 +427,22 @@ public static class DevelopmentDataSeeder
             Photo("photo-1545205597-3d9d02c29597"),
             Photo("photo-1506126279646-a697353d3166"),
             Photo("photo-1552196563-55cd4e45efb3"),
-            Photo("photo-1599447421416-3414500d18a5"),
+        ],
+        ["pilates"] =
+        [
             Photo("photo-1518611012118-696072aa579a"),
+            Photo("photo-1599447421416-3414500d18a5"),
             Photo("photo-1571019613454-1cb2f99b2d8b"),
             Photo("photo-1518310383802-640c2de311b2"),
             Photo("photo-1476480862126-209bfaa8edc8"),
             Photo("photo-1550345332-09e3ac987658"),
             Photo("photo-1434596922112-19c563067271"),
             Photo("photo-1540497077202-7c8a3999166f"),
+        ],
+        ["yoga-pilates"] =
+        [
+            Photo("photo-1544367567-0f2fcb009e0b"),
+            Photo("photo-1518611012118-696072aa579a"),
         ],
     };
 

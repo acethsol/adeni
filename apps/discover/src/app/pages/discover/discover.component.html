@@ -124,10 +124,6 @@
     </aside>
 
     <section class="results" aria-live="polite">
-      @if (error(); as err) {
-        <p class="error">{{ err }}</p>
-      }
-
       @if (hasActiveFilters()) {
         <div class="summary">
           @for (part of filterSummary(); track part.key) {
@@ -158,26 +154,19 @@
         <div class="empty">
           <span class="empty-wash" aria-hidden="true"></span>
           <div class="empty-icon" aria-hidden="true">
-            @if (hasActiveFilters()) {
-              <!-- Carbon Filter 32 — Apache-2.0, IBM -->
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor">
-                <path
-                  d="M18 28h-4a2 2 0 01-2-2v-7.59L4.59 11A2 2 0 014 9.59V6a2 2 0 012-2h20a2 2 0 012 2v3.59A2 2 0 0127.41 11L20 18.41V26a2 2 0 01-2 2zM6 6v3.59l8 8V26h4V17.59l8-8V6z"
-                />
-              </svg>
+            @if (hasActiveFilters() && !loadFailed()) {
+              <adeni-carbon-icon name="filter" [size]="40" />
             } @else {
-              <!-- Carbon Location 32 — Apache-2.0, IBM -->
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor">
-                <path
-                  d="M16 18a5 5 0 115-5 5.006 5.006 0 01-5 5zm0-8a3 3 0 103 3 3.003 3.003 0 00-3-3z"
-                />
-                <path
-                  d="M16 30l-8.436-9.949c-.048-.057-.348-.451-.348-.451A10.889 10.889 0 015 13a11 11 0 1122 0 10.884 10.884 0 01-2.215 6.597l-.001.003s-.3.394-.345.447zM8.813 18.395s.233.308.286.374L16 26.908l6.91-8.15c.044-.055.278-.365.279-.366A8.901 8.901 0 0025 13a9 9 0 10-18 0 8.905 8.905 0 001.813 5.395z"
-                />
-              </svg>
+              <adeni-carbon-icon name="map--center" [size]="40" />
             }
           </div>
-          @if (hasActiveFilters()) {
+          @if (loadFailed()) {
+            <h2>{{ label("discover.loadErrorTitle") }}</h2>
+            <p>{{ label("discover.loadError") }}</p>
+            <button type="button" class="empty-cta" (click)="load()">
+              {{ label("discover.tryAgain") }}
+            </button>
+          } @else if (hasActiveFilters()) {
             <h2>{{ label("discover.emptyFilteredTitle") }}</h2>
             <p>{{ label("discover.emptyFiltered") }}</p>
             <a class="empty-cta" routerLink="/discover" [queryParams]="{}">{{ label("discover.clearFilters") }}</a>

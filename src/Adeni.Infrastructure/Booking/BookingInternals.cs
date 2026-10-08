@@ -92,7 +92,8 @@ internal static class ServiceOfferingMapper
             entity.CatalogServiceId,
             BookingDeliveryTypeMapping.ToApiValue(entity.BookingDeliveryType),
             entity.MenuGroupId,
-            entity.SortOrder);
+            entity.SortOrder,
+            entity.IsAddOn);
 }
 
 internal static class BookingDeliveryTypeMapping
@@ -141,7 +142,11 @@ internal static class PricingTypeMapping
 
 internal static class BookingMapper
 {
-    public static BookingResponse ToResponse(BookingRecord entity, string serviceName) =>
+    public static BookingResponse ToResponse(
+        BookingRecord entity,
+        string serviceName,
+        string? staffDisplayName = null,
+        string? currency = null) =>
         new(
             entity.Id,
             entity.TenantId,
@@ -152,7 +157,14 @@ internal static class BookingMapper
             entity.EndAt,
             entity.Status,
             entity.CustomerNotes,
-            entity.CreatedAt);
+            entity.CreatedAt,
+            entity.StaffMemberId,
+            staffDisplayName,
+            entity.GuestCount,
+            MapLines(entity, currency),
+            MapGuests(entity),
+            SumLinePrices(entity),
+            currency);
 
     public static CustomerBookingResponse ToCustomerResponse(
         BookingRecord entity,
@@ -161,7 +173,9 @@ internal static class BookingMapper
         string businessSlug,
         bool canReview = false,
         bool hasReview = false,
-        byte? reviewRating = null) =>
+        byte? reviewRating = null,
+        string? staffDisplayName = null,
+        string? currency = null) =>
         new(
             entity.Id,
             entity.TenantId,
@@ -176,10 +190,61 @@ internal static class BookingMapper
             entity.CreatedAt,
             canReview,
             hasReview,
-            reviewRating);
+            reviewRating,
+            entity.StaffMemberId,
+            staffDisplayName,
+            entity.GuestCount,
+            MapLines(entity, currency),
+            MapGuests(entity),
+            SumLinePrices(entity),
+            currency);
+
+    private static IReadOnlyList<BookingLineResponse>? MapLines(BookingRecord entity, string? currency)
+    {
+        if (entity.Lines is null || entity.Lines.Count == 0)
+        {
+            return null;
+        }
+
+        var cur = currency ?? "NGN";
+        return entity.Lines
+            .OrderBy(x => x.SortOrder)
+            .Select(x => new BookingLineResponse(
+                x.ServiceOfferingId,
+                x.ServiceName,
+                x.PriceAmount,
+                cur,
+                x.DurationMinutes,
+                x.SortOrder,
+                x.IsAddOn))
+            .ToArray();
+    }
+
+    private static IReadOnlyList<BookingGuestResponse>? MapGuests(BookingRecord entity)
+    {
+        if (entity.Guests is null || entity.Guests.Count == 0)
+        {
+            return null;
+        }
+
+        return entity.Guests
+            .OrderBy(x => x.SortOrder)
+            .Select(x => new BookingGuestResponse(x.DisplayName, x.SortOrder))
+            .ToArray();
+    }
+
+    private static decimal? SumLinePrices(BookingRecord entity)
+    {
+        if (entity.Lines is null || entity.Lines.Count == 0)
+        {
+            return null;
+        }
+
+        return entity.Lines.Sum(x => x.PriceAmount) * Math.Max(1, entity.GuestCount);
+    }
 }
 
-internal static class BookingConflictChecker
+public static class BookingConflictChecker
 {
     public static bool OverlapsExisting(
         IEnumerable<BookingRecord> existing,
@@ -189,4 +254,56 @@ internal static class BookingConflictChecker
             booking.Status is BookingStatus.Pending or BookingStatus.Confirmed
             && booking.StartAt < endAt
             && booking.EndAt > startAt);
+
+    /// <summary>
+    /// When the tenant has active staff for the service, capacity is per roster.
+    /// Assigned bookings occupy that staff; unassigned bookings occupy anonymous capacity.
+    /// With no staff roster, falls back to a single shared calendar.
+    /// </summary>
+    public static bool IsStaffSlotAvailable(
+        IReadOnlyList<BookingRecord> existing,
+        IReadOnlyList<Guid> eligibleStaffIds,
+        DateTimeOffset startAt,
+        DateTimeOffset endAt,
+        Guid? requestedStaffMemberId)
+    {
+        if (eligibleStaffIds.Count == 0)
+        {
+            return !OverlapsExisting(existing, startAt, endAt);
+        }
+
+        var overlapping = existing
+            .Where(booking =>
+                booking.Status is BookingStatus.Pending or BookingStatus.Confirmed
+                && booking.StartAt < endAt
+                && booking.EndAt > startAt)
+            .ToArray();
+
+        var busyStaffIds = overlapping
+            .Where(b => b.StaffMemberId is Guid id && eligibleStaffIds.Contains(id))
+            .Select(b => b.StaffMemberId!.Value)
+            .Distinct()
+            .ToHashSet();
+
+        var nullOverlapping = overlapping.Count(b => b.StaffMemberId is null);
+        var used = busyStaffIds.Count + nullOverlapping;
+        var capacity = eligibleStaffIds.Count;
+
+        if (used >= capacity)
+        {
+            return false;
+        }
+
+        if (requestedStaffMemberId is Guid staffId)
+        {
+            if (!eligibleStaffIds.Contains(staffId))
+            {
+                return false;
+            }
+
+            return !busyStaffIds.Contains(staffId);
+        }
+
+        return true;
+    }
 }

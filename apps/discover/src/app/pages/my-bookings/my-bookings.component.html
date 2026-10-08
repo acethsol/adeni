@@ -1,39 +1,173 @@
-<h1>My bookings</h1>
+<div class="page">
+  <header class="page-head">
+    <span class="wash" aria-hidden="true"></span>
+    <div class="head-copy">
+      <p class="kicker">Adeni</p>
+      <h1>{{ label("bookings.title") }}</h1>
+      <p class="lede">{{ label("bookings.description") }}</p>
+    </div>
+    <div class="head-actions">
+      <a class="cds-btn cds-btn--primary" routerLink="/discover">{{
+        label("bookings.bookAnother")
+      }}</a>
+      @if (auth0Mode) {
+        <button type="button" class="ghost" (click)="logout()">{{ label("bookings.logOut") }}</button>
+      }
+    </div>
+  </header>
 
-@if (devMode) {
-  <p class="banner">Local dev — API uses <code>X-Dev-Auth0-Sub</code> for customer bookings.</p>
-}
+  @if (devMode) {
+    <p class="dev-banner">{{ label("bookings.devMode") }}</p>
+  }
 
-@if (auth0Mode) {
-  <button type="button" class="link" (click)="logout()">Log out</button>
-}
+  @if (loading()) {
+    <ul class="list skeletons" aria-hidden="true">
+      @for (n of [1, 2, 3]; track n) {
+        <li class="card skeleton">
+          <span class="sk-date"></span>
+          <span class="sk-body">
+            <span class="sk-line"></span>
+            <span class="sk-line short"></span>
+          </span>
+        </li>
+      }
+    </ul>
+  } @else if (loadFailed()) {
+    <div class="empty">
+      <div class="empty-icon" aria-hidden="true">
+        <adeni-carbon-icon name="calendar" [size]="40" />
+      </div>
+      <h2>{{ label("bookings.loadErrorTitle") }}</h2>
+      <p>{{ label("bookings.loadError") }}</p>
+      <button type="button" class="cds-btn cds-btn--primary" (click)="load()">
+        {{ label("discover.tryAgain") }}
+      </button>
+    </div>
+  } @else {
+    <div class="tabs cds-content-switcher" role="tablist" aria-label="Booking filters">
+      <button
+        type="button"
+        role="tab"
+        [class.active]="tab() === 'upcoming'"
+        [attr.aria-selected]="tab() === 'upcoming'"
+        (click)="tab.set('upcoming')"
+      >
+        {{ label("bookings.upcomingCount", { count: upcoming().length }) }}
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [class.active]="tab() === 'past'"
+        [attr.aria-selected]="tab() === 'past'"
+        (click)="tab.set('past')"
+      >
+        {{ label("bookings.pastCount", { count: past().length }) }}
+      </button>
+    </div>
 
-@if (loading()) {
-  <p class="muted">Loading…</p>
-} @else if (error()) {
-  <p class="error">{{ error() }}</p>
-} @else if (bookings().length === 0) {
-  <p class="muted">No bookings yet. <a routerLink="/discover">Discover businesses</a>.</p>
-} @else {
-  <ul class="list">
-    @for (b of bookings(); track b.id) {
-      <li class="card">
-        <div>
-          <strong>{{ b.serviceName }}</strong>
-          <p class="muted">{{ b.businessName }} · {{ b.startAt | date: "medium" }}</p>
-          <p class="muted">Status: {{ formatBookingStatus(b.status) }}</p>
+    @if (visible().length === 0) {
+      <div class="empty">
+        <div class="empty-icon" aria-hidden="true">
+          <adeni-carbon-icon name="calendar" [size]="40" />
         </div>
-        @if (canCancel(b)) {
-          <button
-            type="button"
-            class="danger"
-            [disabled]="cancelId() === b.id"
-            (click)="cancel(b.id)"
-          >
-            Cancel
-          </button>
+        @if (tab() === "upcoming") {
+          <h2>{{ label("bookings.emptyTitle") }}</h2>
+          <p>{{ label("bookings.emptyDescription") }}</p>
+          <a class="cds-btn cds-btn--primary" routerLink="/discover">{{
+            label("bookings.discoverBusinesses")
+          }}</a>
+        } @else {
+          <h2>{{ label("bookings.emptyPastTitle") }}</h2>
+          <p>{{ label("bookings.emptyPastDescription") }}</p>
         }
-      </li>
+      </div>
+    } @else {
+      <ul class="list">
+        @for (b of visible(); track b.id) {
+          <li class="card" [attr.data-status]="statusTone(b.status)">
+            @let when = dayPart(b.startAt);
+            <div class="date-block" aria-hidden="true">
+              <span class="weekday">{{ when.weekday }}</span>
+              <span class="day">{{ when.day }}</span>
+              <span class="month">{{ when.month }}</span>
+            </div>
+
+            <div class="body">
+              <div class="title-row">
+                <h2>{{ b.serviceName }}</h2>
+                <span class="status" [attr.data-tone]="statusTone(b.status)">{{
+                  statusLabel(b.status)
+                }}</span>
+              </div>
+              <p class="meta">
+                <a [routerLink]="['/businesses', b.businessSlug]">{{ b.businessName }}</a>
+                <span aria-hidden="true">·</span>
+                <time [attr.datetime]="b.startAt">{{ formatWhen(b.startAt) }}</time>
+              </p>
+              @if (b.staffDisplayName) {
+                <p class="detail">
+                  <span>{{ label("bookings.withStaff") }}</span>
+                  {{ b.staffDisplayName }}
+                </p>
+              }
+              @if ((b.guestCount ?? 1) > 1) {
+                <p class="detail">
+                  <span>{{ label("bookings.partyLabel") }}</span>
+                  {{ label("bookings.partyOf", { count: b.guestCount }) }}
+                </p>
+              }
+              @if (namedGuests(b); as names) {
+                @if (names.length > 0) {
+                  <p class="detail guests">
+                    <span>{{ label("bookings.guestsLabel") }}</span>
+                    {{ names.join(", ") }}
+                  </p>
+                }
+              }
+              @if (b.lines && b.lines.length > 1) {
+                <ul class="lines">
+                  @for (line of b.lines; track line.serviceOfferingId + '-' + line.sortOrder) {
+                    <li>
+                      {{ line.serviceName }}
+                      <span class="tiny"
+                        >{{ line.durationMinutes }}m
+                        @if (line.isAddOn) {
+                          · {{ label("bookings.addOn") }}
+                        }
+                      </span>
+                    </li>
+                  }
+                </ul>
+              }
+              @if (b.customerNotes?.trim()) {
+                <p class="notes">
+                  <span>{{ label("bookings.notesLabel") }}</span>
+                  {{ b.customerNotes }}
+                </p>
+              }
+              <div class="actions">
+                <a class="text-link" [routerLink]="['/businesses', b.businessSlug]">{{
+                  label("bookings.viewBusiness")
+                }}</a>
+                @if (canCancel(b)) {
+                  <button
+                    type="button"
+                    class="danger"
+                    [disabled]="cancelId() === b.id"
+                    (click)="cancel(b)"
+                  >
+                    {{
+                      cancelId() === b.id
+                        ? label("bookings.cancelling")
+                        : label("bookings.cancelBooking")
+                    }}
+                  </button>
+                }
+              </div>
+            </div>
+          </li>
+        }
+      </ul>
     }
-  </ul>
-}
+  }
+</div>

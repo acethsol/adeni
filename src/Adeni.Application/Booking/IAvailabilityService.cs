@@ -27,6 +27,9 @@ public interface IAvailabilityService
         Guid serviceId,
         DateTimeOffset rangeStart,
         DateTimeOffset rangeEnd,
+        Guid? staffMemberId = null,
+        IReadOnlyList<Guid>? additionalServiceIds = null,
+        int guestCount = 1,
         CancellationToken cancellationToken = default);
 
     Task<Result<IReadOnlyList<AvailableSlotResponse>>> GetAvailableSlotsBySlugAsync(
@@ -34,6 +37,9 @@ public interface IAvailabilityService
         Guid serviceId,
         DateTimeOffset rangeStart,
         DateTimeOffset rangeEnd,
+        Guid? staffMemberId = null,
+        IReadOnlyList<Guid>? additionalServiceIds = null,
+        int guestCount = 1,
         CancellationToken cancellationToken = default);
 
     Task<bool> IsSlotAvailableAsync(
@@ -41,5 +47,7 @@ public interface IAvailabilityService
         Guid serviceId,
         DateTimeOffset startAt,
         int durationMinutes,
+        Guid? staffMemberId = null,
+        IReadOnlyList<Guid>? additionalServiceIds = null,
         CancellationToken cancellationToken = default);
 }

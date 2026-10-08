@@ -190,7 +190,7 @@
         "bookingDeliveryType": "experience"
       }
     ],
-    "yoga-pilates": [
+    "yoga": [
       {
         "id": "yoga-group-class",
         "name": "Yoga Class",
@@ -198,15 +198,35 @@
         "bookingDeliveryType": "class"
       },
       {
+        "id": "yoga-private",
+        "name": "Private Yoga Session",
+        "defaultDurationMinutes": 60,
+        "bookingDeliveryType": "session"
+      },
+      {
+        "id": "yoga-yin",
+        "name": "Yin Yoga",
+        "defaultDurationMinutes": 75,
+        "bookingDeliveryType": "class"
+      }
+    ],
+    "pilates": [
+      {
         "id": "pilates-group-class",
         "name": "Pilates Class",
         "defaultDurationMinutes": 55,
         "bookingDeliveryType": "class"
       },
       {
-        "id": "yoga-private",
-        "name": "Private Yoga Session",
-        "defaultDurationMinutes": 60,
+        "id": "pilates-reformer",
+        "name": "Reformer Pilates",
+        "defaultDurationMinutes": 50,
+        "bookingDeliveryType": "class"
+      },
+      {
+        "id": "pilates-private",
+        "name": "Private Pilates Session",
+        "defaultDurationMinutes": 55,
         "bookingDeliveryType": "session"
       }
     ],

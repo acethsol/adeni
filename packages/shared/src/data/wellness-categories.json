@@ -12,7 +12,8 @@
     "barbers": "hair-grooming",
     "hair-salons": "hair-grooming",
     "nail-spa": "nails",
-    "makeup-brows": "skincare-aesthetics"
+    "makeup-brows": "skincare-aesthetics",
+    "yoga-pilates": "yoga"
   },
   "marketFeaturedOrder": {
     "lagos": [
@@ -22,13 +23,15 @@
       "skincare-aesthetics",
       "massage-bodywork",
       "fitness",
-      "yoga-pilates"
+      "yoga",
+      "pilates"
     ],
     "ottawa": [
       "massage-bodywork",
       "spa-relaxation",
       "skincare-aesthetics",
-      "yoga-pilates",
+      "yoga",
+      "pilates",
       "fitness",
       "hair-grooming",
       "nails"
@@ -40,7 +43,8 @@
       "hair-grooming",
       "nails",
       "fitness",
-      "yoga-pilates"
+      "yoga",
+      "pilates"
     ]
   },
   "categories": [
@@ -88,8 +92,15 @@
     },
     {
       "id": "33333333-3333-3333-3333-333333333307",
-      "name": "Yoga & Pilates",
-      "slug": "yoga-pilates",
+      "name": "Yoga",
+      "slug": "yoga",
+      "parentSlug": "beauty-wellness",
+      "enabled": true
+    },
+    {
+      "id": "33333333-3333-3333-3333-333333333310",
+      "name": "Pilates",
+      "slug": "pilates",
       "parentSlug": "beauty-wellness",
       "enabled": true
     },

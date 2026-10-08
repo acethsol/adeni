@@ -3,6 +3,17 @@ namespace Adeni.Application.Booking;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
 
+public sealed record BookingLineResponse(
+    Guid ServiceOfferingId,
+    string ServiceName,
+    decimal PriceAmount,
+    string Currency,
+    int DurationMinutes,
+    int SortOrder,
+    bool IsAddOn);
+
+public sealed record BookingGuestResponse(string? DisplayName, int SortOrder);
+
 public sealed record BookingResponse(
     Guid Id,
     Guid TenantId,
@@ -13,7 +24,14 @@ public sealed record BookingResponse(
     DateTimeOffset EndAt,
     BookingStatus Status,
     string? CustomerNotes,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    Guid? StaffMemberId = null,
+    string? StaffDisplayName = null,
+    int GuestCount = 1,
+    IReadOnlyList<BookingLineResponse>? Lines = null,
+    IReadOnlyList<BookingGuestResponse>? Guests = null,
+    decimal? TotalPriceAmount = null,
+    string? Currency = null);
 
 public sealed record CustomerBookingResponse(
     Guid Id,
@@ -29,13 +47,30 @@ public sealed record CustomerBookingResponse(
     DateTimeOffset CreatedAt,
     bool CanReview = false,
     bool HasReview = false,
-    byte? ReviewRating = null);
+    byte? ReviewRating = null,
+    Guid? StaffMemberId = null,
+    string? StaffDisplayName = null,
+    int GuestCount = 1,
+    IReadOnlyList<BookingLineResponse>? Lines = null,
+    IReadOnlyList<BookingGuestResponse>? Guests = null,
+    decimal? TotalPriceAmount = null,
+    string? Currency = null);
+
+public sealed record CreateBookingLineRequest(
+    Guid ServiceOfferingId,
+    Guid? StaffMemberId = null);
+
+public sealed record CreateBookingGuestRequest(string? DisplayName = null);
 
 public sealed record CreateBookingRequest(
     Guid TenantId,
     Guid ServiceOfferingId,
     DateTimeOffset StartAt,
-    string? CustomerNotes);
+    string? CustomerNotes = null,
+    Guid? StaffMemberId = null,
+    IReadOnlyList<CreateBookingLineRequest>? Lines = null,
+    int GuestCount = 1,
+    IReadOnlyList<CreateBookingGuestRequest>? Guests = null);
 
 public interface IBookingService
 {

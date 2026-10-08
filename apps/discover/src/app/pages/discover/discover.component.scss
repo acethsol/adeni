@@ -305,7 +305,7 @@
 }
 
 .board.no-map .grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .grid > li {
@@ -331,9 +331,12 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
+  min-height: 22rem;
   margin-top: 0.5rem;
-  padding: 2.75rem 1.75rem 2.5rem;
+  padding: 3.25rem 2rem 3rem;
+  text-align: center;
   border-radius: var(--cds-radius-none);
   border: 1px solid #ebebeb;
   background: #fff;
@@ -343,8 +346,8 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 50% 80% at 10% 0%, color-mix(in srgb, var(--h1) 14%, transparent), transparent 55%),
-    radial-gradient(ellipse 45% 70% at 90% 20%, color-mix(in srgb, var(--h2) 16%, transparent), transparent 50%);
+    radial-gradient(ellipse 55% 70% at 50% 0%, color-mix(in srgb, var(--h1) 18%, transparent), transparent 60%),
+    radial-gradient(ellipse 50% 60% at 50% 100%, color-mix(in srgb, var(--h2) 14%, transparent), transparent 55%);
   pointer-events: none;
 }
 
@@ -358,48 +361,55 @@
 .empty-icon {
   display: grid;
   place-items: center;
-  width: 3.25rem;
-  height: 3.25rem;
-  margin-bottom: 1rem;
-  border-radius: var(--cds-radius-none);
-  color: color-mix(in srgb, var(--h1) 78%, #222);
+  width: 5.5rem;
+  height: 5.5rem;
+  margin-bottom: 1.35rem;
+  border-radius: 50%;
+  color: color-mix(in srgb, var(--h1) 82%, #222);
   background: color-mix(in srgb, var(--h1) 12%, #fff);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--h1) 14%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--h1) 16%, transparent),
+    0 10px 28px color-mix(in srgb, var(--h1) 12%, transparent);
 }
 
-.empty-icon svg {
-  width: 1.65rem;
-  height: 1.65rem;
+.empty-icon :is(svg) {
+  width: 2.5rem;
+  height: 2.5rem;
 }
 
 .empty h2 {
   margin: 0;
-  font-size: 1.45rem;
-  font-weight: 650;
-  letter-spacing: -0.02em;
+  max-width: 22rem;
+  font-size: clamp(1.45rem, 2.4vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
   color: #222;
 }
 
 .empty p {
-  margin: 0.55rem 0 0;
-  max-width: 26rem;
+  margin: 0.7rem 0 0;
+  max-width: 28rem;
   color: #6a6a6a;
-  line-height: 1.5;
-  font-size: 0.95rem;
+  line-height: 1.55;
+  font-size: 1rem;
 }
 
 .empty-cta {
   display: inline-flex;
   align-items: center;
-  margin-top: var(--cds-spacing-05);
+  justify-content: center;
+  margin-top: 1.25rem;
   min-height: 3rem;
   padding: 0 var(--cds-spacing-05);
+  border: 0;
   border-radius: var(--cds-radius-none);
   background: var(--interactive);
   color: #fff;
+  font: inherit;
   font-weight: 600;
   font-size: var(--cds-body-compact-01-size);
   text-decoration: none;
+  cursor: pointer;
 }
 
 .empty-cta:hover {
@@ -550,6 +560,10 @@
 
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .board.no-map .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

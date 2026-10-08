@@ -47,7 +47,7 @@ Expect `"database": "healthy"` when PostgreSQL is connected.
 
 When the API runs in **Development** with PostgreSQL connected, it auto-seeds sample businesses (idempotent — skips slugs that already exist). Each business gets the full service menu for its category, a cover photo, four gallery photos, and Mon–Sat 9:00–17:00 availability. Restarting the API fills in any catalog services or gallery photos that are still missing.
 
-Seed matches the Beauty & Wellness wedge: **Lagos + Ottawa** and the seven enabled categories (`hair-grooming`, `nails`, `skincare-aesthetics`, `spa-relaxation`, `massage-bodywork`, `fitness`, `yoga-pilates`). Home services and non-launch cities are not seeded.
+Seed matches the Beauty & Wellness wedge: **Lagos + Ottawa** and the eight enabled categories (`hair-grooming`, `nails`, `skincare-aesthetics`, `spa-relaxation`, `massage-bodywork`, `fitness`, `yoga`, `pilates`). Legacy `yoga-pilates` aliases to `yoga`. Home services and non-launch cities are not seeded.
 
 | Market | Total | Handcrafted | Generated bulk |
 |--------|-------|-------------|----------------|

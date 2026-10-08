@@ -31,19 +31,46 @@
       }
     </header>
 
-    <ol class="steps" [attr.aria-label]="label('business.booking.stepsAria')">
+    <ol
+      class="steps"
+      [style.grid-template-columns]="'repeat(' + totalSteps() + ', 1fr)'"
+      [attr.aria-label]="label('business.booking.stepsAria')"
+    >
       <li [class.on]="stepIndex() === 0" [class.done]="stepIndex() > 0">
         <span aria-hidden="true">1</span>
         <em>{{ label("business.booking.stepLabelService") }}</em>
       </li>
-      <li [class.on]="stepIndex() === 1" [class.done]="stepIndex() > 1">
-        <span aria-hidden="true">2</span>
-        <em>{{ label("business.booking.stepLabelTime") }}</em>
-      </li>
-      <li [class.on]="stepIndex() === 2" [class.done]="step() === 'done'">
-        <span aria-hidden="true">3</span>
-        <em>{{ label("business.booking.stepLabelConfirm") }}</em>
-      </li>
+      @if (hasStaffStep()) {
+        <li [class.on]="stepIndex() === 1" [class.done]="stepIndex() > 1">
+          <span aria-hidden="true">2</span>
+          <em>{{ label("business.booking.stepLabelStaff") }}</em>
+        </li>
+        <li [class.on]="stepIndex() === 2" [class.done]="stepIndex() > 2">
+          <span aria-hidden="true">3</span>
+          <em>{{ label("business.booking.stepLabelGuests") }}</em>
+        </li>
+        <li [class.on]="stepIndex() === 3" [class.done]="stepIndex() > 3">
+          <span aria-hidden="true">4</span>
+          <em>{{ label("business.booking.stepLabelTime") }}</em>
+        </li>
+        <li [class.on]="stepIndex() === 4" [class.done]="step() === 'done'">
+          <span aria-hidden="true">5</span>
+          <em>{{ label("business.booking.stepLabelConfirm") }}</em>
+        </li>
+      } @else {
+        <li [class.on]="stepIndex() === 1" [class.done]="stepIndex() > 1">
+          <span aria-hidden="true">2</span>
+          <em>{{ label("business.booking.stepLabelGuests") }}</em>
+        </li>
+        <li [class.on]="stepIndex() === 2" [class.done]="stepIndex() > 2">
+          <span aria-hidden="true">3</span>
+          <em>{{ label("business.booking.stepLabelTime") }}</em>
+        </li>
+        <li [class.on]="stepIndex() === 3" [class.done]="step() === 'done'">
+          <span aria-hidden="true">4</span>
+          <em>{{ label("business.booking.stepLabelConfirm") }}</em>
+        </li>
+      }
     </ol>
 
     @if (!bookingEnabled()) {
@@ -63,63 +90,199 @@
     }
 
     @if (step() === "service") {
-      @if (services().length > 4) {
-        <label class="service-search">
-          <span class="visually-hidden">{{ label("business.searchServices") }}</span>
-          <input
-            type="search"
-            [placeholder]="label('business.searchServices')"
-            [ngModel]="serviceSearch()"
-            (ngModelChange)="serviceSearch.set($event)"
-          />
-        </label>
-      }
+      @if (primaryService(); as primary) {
+        <div class="selected-pill">
+          <div>
+            <strong>{{ primary.name }}</strong>
+            <span
+              >{{ label("business.minutes", { count: cartTotalMinutes() }) }} ·
+              {{ cartUnitPrice() | currency: cartCurrency() }}</span
+            >
+          </div>
+          <button type="button" class="link" (click)="selectedServices.set([])">{{
+            label("business.booking.change")
+          }}</button>
+        </div>
 
-      @if (filteredServices().length === 0) {
-        <p class="muted">{{ label("business.booking.noMatch") }}</p>
-      } @else {
-        @for (collection of serviceCollections(); track collection.id) {
-          <div class="service-collection">
-            @if (menuGroups().length > 0) {
-              <p class="collection-label">{{ collection.name }}</p>
-            }
-            <ul class="services">
-              @for (service of collection.services; track service.id) {
+        @if (selectedServices().length > 1) {
+          <ul class="cart-lines">
+            @for (line of selectedServices(); track line.id) {
+              @if (line.id !== primary.id) {
                 <li>
-                  <button
-                    type="button"
-                    class="service-row"
-                    [disabled]="loadingSlots()"
-                    (click)="selectService(service)"
-                  >
-                    <span class="service-copy">
-                      <strong>{{ service.name }}</strong>
-                      <span class="tiny">{{
-                        label("business.minutes", { count: service.durationMinutes })
-                      }}</span>
-                    </span>
-                    <span class="price">
-                      {{ service.priceAmount | currency: service.currency }}
-                    </span>
-                  </button>
+                  <span>{{ line.name }}</span>
+                  <button type="button" class="link" (click)="removeFromCart(line)">{{
+                    label("business.booking.remove")
+                  }}</button>
                 </li>
               }
-            </ul>
-          </div>
+            }
+          </ul>
+        }
+
+        @if (availableAddOns().length > 0) {
+          <p class="collection-label">{{ label("business.booking.addOns") }}</p>
+          <ul class="addon-chips">
+            @for (addon of availableAddOns(); track addon.id) {
+              <li>
+                <button
+                  type="button"
+                  class="chip"
+                  [class.on]="isInCart(addon.id)"
+                  (click)="toggleAddOn(addon)"
+                >
+                  {{ addon.name }}
+                </button>
+              </li>
+            }
+          </ul>
+        }
+
+        <div class="cart-actions">
+          @if (addingAnother()) {
+            <button type="button" class="link" (click)="cancelAddAnother()">{{
+              label("business.booking.cancelAdd")
+            }}</button>
+          } @else {
+            <button type="button" class="link" (click)="startAddAnother()">{{
+              label("business.booking.addAnother")
+            }}</button>
+          }
+          <button
+            type="button"
+            class="primary"
+            [disabled]="loadingStaff() || loadingSlots()"
+            (click)="continueFromServices()"
+          >
+            {{
+              loadingStaff() || loadingSlots()
+                ? label("business.booking.loadingStaff")
+                : label("business.booking.continue")
+            }}
+          </button>
+        </div>
+      }
+
+      @if (!primaryService() || addingAnother()) {
+        @if (services().length > 4) {
+          <label class="service-search">
+            <span class="visually-hidden">{{ label("business.searchServices") }}</span>
+            <input
+              type="search"
+              [placeholder]="label('business.searchServices')"
+              [ngModel]="serviceSearch()"
+              (ngModelChange)="serviceSearch.set($event)"
+            />
+          </label>
+        }
+
+        @if (addingAnother()) {
+          <p class="muted">{{ label("business.booking.addAnotherHint") }}</p>
+        }
+
+        @if (filteredServices().length === 0) {
+          <p class="muted">{{ label("business.booking.noMatch") }}</p>
+        } @else {
+          @for (collection of serviceCollections(); track collection.id) {
+            <div class="service-collection">
+              @if (menuGroups().length > 0) {
+                <p class="collection-label">{{ collection.name }}</p>
+              }
+              <ul class="services">
+                @for (service of collection.services; track service.id) {
+                  <li>
+                    <button
+                      type="button"
+                      class="service-row"
+                      [class.on]="isInCart(service.id)"
+                      [disabled]="loadingSlots()"
+                      (click)="selectService(service)"
+                    >
+                      <span class="service-copy">
+                        <strong>{{ service.name }}</strong>
+                        <span class="tiny">
+                          {{ label("business.minutes", { count: service.durationMinutes }) }}
+                          @if (service.isAddOn) {
+                            · {{ label("business.booking.addOnTag") }}
+                          }
+                        </span>
+                      </span>
+                      <span class="price">
+                        {{ service.priceAmount | currency: service.currency }}
+                      </span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
         }
       }
     }
 
-    @if (step() === "slot" && selectedService(); as svc) {
+    @if (step() === "staff" && primaryService(); as svc) {
+      <div class="selected-pill">
+        <div>
+          <strong>{{ svc.name }}</strong>
+          <span>{{ label("business.minutes", { count: cartTotalMinutes() }) }}</span>
+        </div>
+        <button type="button" class="link" (click)="backToServices()">{{
+          label("business.booking.change")
+        }}</button>
+      </div>
+
+      @if (loadingStaff()) {
+        <p class="muted loading-line">{{ label("business.booking.loadingStaff") }}</p>
+      } @else {
+        <ul class="services">
+          <li>
+            <button
+              type="button"
+              class="service-row"
+              [disabled]="loadingSlots()"
+              (click)="selectStaff(null, null)"
+            >
+              <span class="service-copy">
+                <strong>{{ label("business.booking.anyAvailable") }}</strong>
+                <span class="tiny">{{ label("business.booking.anyAvailableHint") }}</span>
+              </span>
+            </button>
+          </li>
+          @for (member of staffOptions(); track member.id) {
+            <li>
+              <button
+                type="button"
+                class="service-row"
+                [disabled]="loadingSlots()"
+                (click)="selectStaff(member.id, member.displayName)"
+              >
+                <span class="service-copy">
+                  <strong>{{ member.displayName }}</strong>
+                  @if (member.title) {
+                    <span class="tiny">{{ member.title }}</span>
+                  }
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    }
+
+    @if (step() === "slot" && primaryService(); as svc) {
       <div class="selected-pill">
         <div>
           <strong>{{ svc.name }}</strong>
           <span
-            >{{ label("business.minutes", { count: svc.durationMinutes }) }} ·
-            {{ svc.priceAmount | currency: svc.currency }}</span
-          >
+            >{{ label("business.minutes", { count: cartTotalMinutes() }) }} ·
+            {{ cartUnitPrice() | currency: cartCurrency() }}
+            @if (selectedStaffName(); as staffName) {
+              · {{ staffName }}
+            } @else if (hasStaffStep()) {
+              · {{ label("business.booking.anyAvailable") }}
+            }
+          </span>
         </div>
-        <button type="button" class="link" (click)="backToServices()">{{
+        <button type="button" class="link" (click)="backToGuests()">{{
           label("business.booking.change")
         }}</button>
       </div>
@@ -157,16 +320,100 @@
       }
     }
 
-    @if (step() === "confirm" && selectedService(); as svc) {
+    @if (step() === "guests") {
+      <button
+        type="button"
+        class="link back"
+        (click)="hasStaffStep() ? backToStaff() : backToServices()"
+      >
+        {{ label("business.booking.change") }}
+      </button>
+
+      <div class="guest-stepper">
+        <span class="guest-label">{{ label("business.booking.partySize") }}</span>
+        <div class="guest-controls">
+          <button
+            type="button"
+            class="stepper-btn"
+            [disabled]="guestCount() <= 1"
+            (click)="adjustGuests(-1)"
+            [attr.aria-label]="label('business.booking.guestFewer')"
+          >
+            −
+          </button>
+          <span class="guest-count" aria-live="polite">{{ guestCount() }}</span>
+          <button
+            type="button"
+            class="stepper-btn"
+            [disabled]="guestCount() >= 6"
+            (click)="adjustGuests(1)"
+            [attr.aria-label]="label('business.booking.guestMore')"
+          >
+            +
+          </button>
+        </div>
+      </div>
+
+      <div class="guest-names">
+        @for (name of guestNames(); track $index; let i = $index) {
+          <label class="notes">
+            <span>{{ label("business.booking.guestName", { n: i + 1 }) }}</span>
+            <input
+              type="text"
+              maxlength="120"
+              [ngModel]="name"
+              (ngModelChange)="setGuestName(i, $event)"
+              [placeholder]="label('business.booking.guestNamePlaceholder')"
+            />
+          </label>
+        }
+      </div>
+
+      <button
+        type="button"
+        class="primary"
+        [disabled]="loadingSlots()"
+        (click)="continueFromGuests()"
+      >
+        {{
+          loadingSlots()
+            ? label("business.booking.loadingSlots")
+            : label("business.booking.continue")
+        }}
+      </button>
+    }
+
+    @if (step() === "confirm" && primaryService()) {
       @if (selectedSlot(); as slotIso) {
-        <button type="button" class="link back" (click)="step.set('slot')">{{
+        <button type="button" class="link back" (click)="backToSlot()">{{
           label("business.booking.pickAnotherTime")
         }}</button>
 
         <div class="confirm-card">
-          <p class="confirm-service">{{ svc.name }}</p>
+          <ul class="confirm-lines">
+            @for (line of selectedServices(); track line.id) {
+              <li>
+                <span>{{ line.name }}</span>
+                <span>{{ line.priceAmount | currency: line.currency }}</span>
+              </li>
+            }
+          </ul>
+          <p class="confirm-meta">
+            {{ label("business.minutes", { count: cartTotalMinutes() }) }}
+            · {{ label("business.booking.partyOf", { count: guestCount() }) }}
+          </p>
+          @if (selectedStaffName(); as staffName) {
+            <p class="confirm-staff">{{ staffName }}</p>
+          } @else if (hasStaffStep()) {
+            <p class="confirm-staff">{{ label("business.booking.anyAvailable") }}</p>
+          }
           <p class="confirm-when">{{ formatSlot(slotIso) }}</p>
-          <p class="confirm-price">{{ svc.priceAmount | currency: svc.currency }}</p>
+          <p class="confirm-price">{{ cartTotalPrice() | currency: cartCurrency() }}</p>
+          @if (guestCount() > 1) {
+            <p class="tiny">
+              {{ cartUnitPrice() | currency: cartCurrency() }} × {{ guestCount() }}
+            </p>
+          }
         </div>
 
         <label class="notes">

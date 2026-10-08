@@ -65,6 +65,11 @@ import {
   updateServiceMenuGroupRequestSchema,
   serviceMenuGroupsResponseSchema,
   serviceMenuGroupSchema,
+  staffMemberSchema,
+  staffMembersResponseSchema,
+  createStaffMemberRequestSchema,
+  updateStaffMemberRequestSchema,
+  replaceStaffServicesRequestSchema,
   reviewResponseSchema,
   publicReviewsResponseSchema,
   createMessageThreadRequestSchema,
@@ -113,6 +118,10 @@ import {
   type ServiceMenuGroup,
   type CreateServiceMenuGroupRequest,
   type UpdateServiceMenuGroupRequest,
+  type StaffMember,
+  type CreateStaffMemberRequest,
+  type UpdateStaffMemberRequest,
+  type ReplaceStaffServicesRequest,
   type ServiceOfferingsResponse,
   type CreateQuoteRequest,
   type QuoteRequestResponse,
@@ -302,15 +311,46 @@ export class AdeniApiClient {
     return catalog.items;
   }
 
+  async getBusinessStaff(
+    slug: string,
+    params?: { serviceId?: string },
+  ): Promise<StaffMember[]> {
+    const query = new URLSearchParams();
+    if (params?.serviceId) {
+      query.set("serviceId", params.serviceId);
+    }
+    const qs = query.toString();
+    const response = await this.request(
+      `/api/v1/businesses/${encodeURIComponent(slug)}/staff${qs ? `?${qs}` : ""}`,
+    );
+    return staffMembersResponseSchema.parse(await response.json()).items;
+  }
+
   async getBusinessSlots(
     slug: string,
-    params: { serviceId: string; from: string; to: string },
+    params: {
+      serviceId: string;
+      from: string;
+      to: string;
+      staffMemberId?: string | null;
+      serviceIds?: string[];
+      guestCount?: number;
+    },
   ): Promise<AvailableSlot[]> {
     const query = new URLSearchParams({
       serviceId: params.serviceId,
       from: params.from,
       to: params.to,
     });
+    if (params.staffMemberId) {
+      query.set("staffMemberId", params.staffMemberId);
+    }
+    if (params.serviceIds?.length) {
+      query.set("serviceIds", params.serviceIds.join(","));
+    }
+    if (params.guestCount && params.guestCount > 1) {
+      query.set("guestCount", String(params.guestCount));
+    }
     const response = await this.request(
       `/api/v1/businesses/${encodeURIComponent(slug)}/slots?${query.toString()}`,
     );
@@ -820,6 +860,60 @@ export class AdeniApiClient {
       `/api/v1/tenant/services/${encodeURIComponent(serviceId)}`,
       { method: "DELETE" },
     );
+  }
+
+  async listTenantStaff(): Promise<StaffMember[]> {
+    const response = await this.request("/api/v1/tenant/staff");
+    return staffMembersResponseSchema.parse(await response.json()).items;
+  }
+
+  async createTenantStaff(request: CreateStaffMemberRequest): Promise<StaffMember> {
+    const body = createStaffMemberRequestSchema.parse(request);
+    const response = await this.request("/api/v1/tenant/staff", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return staffMemberSchema.parse(await response.json());
+  }
+
+  async updateTenantStaff(
+    staffMemberId: string,
+    request: UpdateStaffMemberRequest,
+  ): Promise<StaffMember> {
+    const body = updateStaffMemberRequestSchema.parse(request);
+    const response = await this.request(
+      `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+    return staffMemberSchema.parse(await response.json());
+  }
+
+  async deactivateTenantStaff(staffMemberId: string): Promise<void> {
+    await this.request(
+      `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/deactivate`,
+      { method: "POST" },
+    );
+  }
+
+  async replaceTenantStaffServices(
+    staffMemberId: string,
+    request: ReplaceStaffServicesRequest,
+  ): Promise<StaffMember> {
+    const body = replaceStaffServicesRequestSchema.parse(request);
+    const response = await this.request(
+      `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/services`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+    return staffMemberSchema.parse(await response.json());
   }
 
   async getTenantAvailability(): Promise<WeeklyAvailabilityRule[]> {

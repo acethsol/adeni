@@ -16,7 +16,8 @@ public sealed record ServiceOfferingResponse(
     string? CatalogServiceId = null,
     string BookingDeliveryType = "appointment",
     Guid? MenuGroupId = null,
-    int SortOrder = 0);
+    int SortOrder = 0,
+    bool IsAddOn = false);
 
 public sealed record CreateServiceOfferingRequest(
     string Name,
@@ -29,7 +30,8 @@ public sealed record CreateServiceOfferingRequest(
     string? CatalogServiceId = null,
     string BookingDeliveryType = "appointment",
     Guid? MenuGroupId = null,
-    int SortOrder = 0);
+    int SortOrder = 0,
+    bool IsAddOn = false);
 
 public sealed record UpdateServiceOfferingRequest(
     string Name,
@@ -43,7 +45,8 @@ public sealed record UpdateServiceOfferingRequest(
     string? CatalogServiceId = null,
     string BookingDeliveryType = "appointment",
     Guid? MenuGroupId = null,
-    int SortOrder = 0);
+    int SortOrder = 0,
+    bool IsAddOn = false);
 
 public sealed record ServiceCatalogListResponse(
     IReadOnlyList<ServiceOfferingResponse> Items,

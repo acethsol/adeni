@@ -18,7 +18,7 @@ import {
   getCategoryVisual,
   t,
 } from "@adeni/shared";
-import { AdeniLocaleService } from "@adeni/ui";
+import { AdeniCarbonIconComponent, AdeniLocaleService } from "@adeni/ui";
 import { ADENI_DISCOVER_CONFIG } from "../../core/adeni-config";
 import { CustomerApiService } from "../../core/services/customer-api.service";
 import { DiscoverLoadingService } from "../../core/services/discover-loading.service";
@@ -37,7 +37,12 @@ const LOAD_MORE_PANEL_DELAY_MS = 450;
 @Component({
   selector: "app-discover-page",
   standalone: true,
-  imports: [RouterLink, DiscoveryBusinessCardComponent, DiscoveryMapComponent],
+  imports: [
+    RouterLink,
+    DiscoveryBusinessCardComponent,
+    DiscoveryMapComponent,
+    AdeniCarbonIconComponent,
+  ],
   templateUrl: "./discover.component.html",
   styleUrl: "./discover.component.scss",
 })
@@ -54,7 +59,7 @@ export class DiscoverComponent {
 
   readonly loading = signal(true);
   readonly loadingMore = signal(false);
-  readonly error = signal<string | null>(null);
+  readonly loadFailed = signal(false);
   readonly loadMoreError = signal<string | null>(null);
   readonly categories = signal<Category[]>([]);
   readonly items = signal<DiscoveryBusinessItem[]>([]);
@@ -258,7 +263,7 @@ export class DiscoverComponent {
 
     this.loading.set(true);
     this.loadingMore.set(false);
-    this.error.set(null);
+    this.loadFailed.set(false);
     this.loadMoreError.set(null);
     this.page.set(1);
     this.activeLocationId.set(null);
@@ -311,17 +316,19 @@ export class DiscoverComponent {
         this.items.set(discoveryResult.value.items);
         this.totalCount.set(discoveryResult.value.totalCount);
         this.activeLocationId.set(discoveryResult.value.items[0]?.locationId ?? null);
+        this.loadFailed.set(false);
       } else {
         console.error("Discovery load failed", discoveryResult.reason);
-        this.error.set(t(this.locale(), "discover.loadError"));
+        this.loadFailed.set(true);
         this.items.set([]);
         this.totalCount.set(0);
       }
-    } catch {
+    } catch (err) {
       if (generation !== this.loadGeneration) {
         return;
       }
-      this.error.set(t(this.locale(), "discover.loadError"));
+      console.error("Discovery load failed", err);
+      this.loadFailed.set(true);
       this.items.set([]);
       this.totalCount.set(0);
     } finally {

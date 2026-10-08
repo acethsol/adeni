@@ -68,6 +68,13 @@ export class BookingsComponent implements OnInit {
     return "No pending bookings.";
   }
 
+  lineSummary(booking: BookingResponse): string {
+    if (!booking.lines?.length) {
+      return booking.serviceName;
+    }
+    return booking.lines.map((line) => line.serviceName).join(" · ");
+  }
+
   async load(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);

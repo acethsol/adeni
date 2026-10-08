@@ -69,7 +69,7 @@
   color: var(--text-muted);
 }
 
-.field input,
+.field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
 .field textarea,
 .field select {
   min-height: 2.5rem;
@@ -82,11 +82,30 @@
   color: var(--text);
 }
 
-.field input:focus,
+.field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):focus,
 .field textarea:focus,
 .field select:focus {
   outline: 2px solid var(--interactive);
   outline-offset: -2px;
+}
+
+.field input[type="checkbox"],
+.field input[type="radio"] {
+  min-height: 0;
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-bottom: none;
+  background: transparent;
+  accent-color: var(--interactive, #7f56ff);
+}
+
+.field input[type="checkbox"]:focus-visible,
+.field input[type="radio"]:focus-visible {
+  outline: 2px solid var(--interactive);
+  outline-offset: 2px;
 }
 
 .field textarea {

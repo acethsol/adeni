@@ -49,9 +49,17 @@ public sealed class AdeniDbContext(
 
     public DbSet<ServiceMenuGroup> ServiceMenuGroups => Set<ServiceMenuGroup>();
 
+    public DbSet<StaffMember> StaffMembers => Set<StaffMember>();
+
+    public DbSet<StaffServiceLink> StaffServiceLinks => Set<StaffServiceLink>();
+
     public DbSet<WeeklyAvailability> WeeklyAvailabilities => Set<WeeklyAvailability>();
 
     public DbSet<BookingRecord> Bookings => Set<BookingRecord>();
+
+    public DbSet<BookingLine> BookingLines => Set<BookingLine>();
+
+    public DbSet<BookingGuest> BookingGuests => Set<BookingGuest>();
 
     public DbSet<Review> Reviews => Set<Review>();
 
@@ -210,6 +218,7 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.CatalogServiceId).HasMaxLength(64);
             entity.Property(x => x.BookingDeliveryType).HasConversion<int>();
             entity.Property(x => x.SortOrder).HasDefaultValue(0);
+            entity.Property(x => x.IsAddOn).HasDefaultValue(false);
             entity.HasIndex(x => new { x.TenantId, x.IsActive });
             entity.HasIndex(x => new { x.TenantId, x.MenuGroupId, x.SortOrder });
             entity.HasOne(x => x.MenuGroup)
@@ -227,6 +236,34 @@ public sealed class AdeniDbContext(
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 
+        modelBuilder.Entity<StaffMember>(entity =>
+        {
+            entity.ToTable("staff_members", "booking");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.DisplayName).HasMaxLength(120);
+            entity.Property(x => x.Title).HasMaxLength(120);
+            entity.Property(x => x.Bio).HasMaxLength(500);
+            entity.Property(x => x.AvatarImageKey).HasMaxLength(512);
+            entity.HasIndex(x => new { x.TenantId, x.IsActive, x.SortOrder });
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<StaffServiceLink>(entity =>
+        {
+            entity.ToTable("staff_service_links", "booking");
+            entity.HasKey(x => new { x.StaffMemberId, x.ServiceOfferingId });
+            entity.HasIndex(x => new { x.TenantId, x.ServiceOfferingId });
+            entity.HasOne(x => x.StaffMember)
+                .WithMany(x => x.ServiceLinks)
+                .HasForeignKey(x => x.StaffMemberId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(x => x.ServiceOffering)
+                .WithMany()
+                .HasForeignKey(x => x.ServiceOfferingId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
         modelBuilder.Entity<BookingRecord>(entity =>
         {
             entity.ToTable("bookings", "booking");
@@ -237,10 +274,47 @@ public sealed class AdeniDbContext(
             entity.HasIndex(x => x.IdempotencyKey).IsUnique().HasFilter("\"IdempotencyKey\" IS NOT NULL");
             entity.HasIndex(x => new { x.TenantId, x.StartAt });
             entity.HasIndex(x => new { x.TenantId, x.Status, x.StartAt });
+            entity.Property(x => x.GuestCount).HasDefaultValue(1);
+            entity.HasIndex(x => new { x.TenantId, x.StaffMemberId, x.StartAt });
             entity.HasOne(x => x.ServiceOffering)
                 .WithMany()
                 .HasForeignKey(x => x.ServiceOfferingId)
                 .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.StaffMember)
+                .WithMany()
+                .HasForeignKey(x => x.StaffMemberId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasMany(x => x.Lines)
+                .WithOne(x => x.Booking)
+                .HasForeignKey(x => x.BookingId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasMany(x => x.Guests)
+                .WithOne(x => x.Booking)
+                .HasForeignKey(x => x.BookingId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<BookingLine>(entity =>
+        {
+            entity.ToTable("booking_lines", "booking");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.ServiceName).HasMaxLength(200);
+            entity.Property(x => x.PriceAmount).HasPrecision(12, 2);
+            entity.HasIndex(x => new { x.BookingId, x.SortOrder });
+            entity.HasOne(x => x.ServiceOffering)
+                .WithMany()
+                .HasForeignKey(x => x.ServiceOfferingId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<BookingGuest>(entity =>
+        {
+            entity.ToTable("booking_guests", "booking");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.DisplayName).HasMaxLength(120);
+            entity.HasIndex(x => new { x.BookingId, x.SortOrder });
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 

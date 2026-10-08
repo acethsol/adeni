@@ -7,13 +7,19 @@ import Checkmark16 from "@carbon/icons/es/checkmark/16";
 import CheckmarkFilled16 from "@carbon/icons/es/checkmark--filled/16";
 import ChevronDown16 from "@carbon/icons/es/chevron--down/16";
 import FlashFilled16 from "@carbon/icons/es/flash--filled/16";
+import Calendar32 from "@carbon/icons/es/calendar/32";
+import Filter32 from "@carbon/icons/es/filter/32";
 import LocationFilled20 from "@carbon/icons/es/location--filled/20";
 import LocationFilled32 from "@carbon/icons/es/location--filled/32";
+import MapCenter32 from "@carbon/icons/es/map--center/32";
 import Search20 from "@carbon/icons/es/search/20";
 
 export type AdeniCarbonIconName =
   | "location--filled"
   | "location--filled-32"
+  | "map--center"
+  | "filter"
+  | "calendar"
   | "search"
   | "arrow--right"
   | "chevron--down"
@@ -24,6 +30,9 @@ export type AdeniCarbonIconName =
 const ICONS: Record<AdeniCarbonIconName, IconDescriptor> = {
   "location--filled": LocationFilled20 as IconDescriptor,
   "location--filled-32": LocationFilled32 as IconDescriptor,
+  "map--center": MapCenter32 as IconDescriptor,
+  filter: Filter32 as IconDescriptor,
+  calendar: Calendar32 as IconDescriptor,
   search: Search20 as IconDescriptor,
   "arrow--right": ArrowRight20 as IconDescriptor,
   "chevron--down": ChevronDown16 as IconDescriptor,

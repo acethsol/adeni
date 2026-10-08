@@ -112,6 +112,12 @@
           <option value="mobile_appointment">Mobile appointment</option>
         </select>
       </div>
+      <div class="field checkbox-field">
+        <label>
+          <input type="checkbox" [(ngModel)]="draft.isAddOn" />
+          Add-on (cannot be booked alone)
+        </label>
+      </div>
       <div class="actions">
         <button type="button" class="btn" (click)="cancelForm()">Cancel</button>
         <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="save()">Save</button>
@@ -134,6 +140,9 @@
                 {{ formatPrice(service.priceAmount, service.currency) }} ·
                 {{ service.durationMinutes }} min ·
                 {{ groupName(service.menuGroupId) }}
+                @if (service.isAddOn) {
+                  · Add-on
+                }
                 @if (service.categorySlug) {
                   · {{ categoryLabel("en", service.categorySlug) }}
                 }

@@ -71,3 +71,11 @@ h3 {
   font-size: 0.875rem;
   cursor: pointer;
 }
+
+.checkbox-field label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+}
