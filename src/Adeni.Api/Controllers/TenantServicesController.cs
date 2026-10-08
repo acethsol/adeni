@@ -23,8 +23,8 @@ public sealed class TenantServicesController(
             return Unauthorized();
         }
 
-        var items = await services.ListForTenantAsync(tenantId.Value, cancellationToken);
-        return Ok(new { items });
+        var catalog = await services.ListForTenantAsync(tenantId.Value, cancellationToken);
+        return Ok(new { items = catalog.Items, groups = catalog.Groups });
     }
 
     [HttpPost]

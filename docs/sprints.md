@@ -357,9 +357,20 @@ Branded mini-sites for discovery profiles — template picker + brand tokens in 
 
 **Out of scope for 21:** HTML paste, block builder, embed widget, custom domain → Phase B/C in spec. Logo upload UI deferred (API field ready).
 
+## Sprint 22 — Policies & service menu (in progress)
+
+Zenoti-inspired storefront depth on the public booking page. Spec: [sprint-22-policies-and-service-menu.md](./specs/sprint-22-policies-and-service-menu.md).
+
+| Task | Status |
+|------|--------|
+| **22a** Per-tenant booking/payment/cancellation/terms policies + public-page section + Discover accept | ✅ Done |
+| **22b** Service menu groups (“collections”) + assign/order + Discover search | ✅ Done |
+
+**Out of scope for 22:** staff, multi-service cart, add-ons, multi-guest, rich HTML policies.
+
 ## Next up
 
-1. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, business AI agent, App Insights, ops dashboards
-2. **Sprint 21** — public page templates (Phase A) after Sprint 20 or when explicitly pulled forward
+1. **Sprint 22** — policies then service menu groups (this sprint)
+2. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, business AI agent, App Insights, ops dashboards
 
 Strategy reference: [product-strategy.md](./product-strategy.md) — [§3.5 Business types](./product-strategy.md#35-business-types--workflow-capabilities), [architecture.md](./architecture.md) (modular monolith)

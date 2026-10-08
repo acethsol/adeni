@@ -90,7 +90,9 @@ internal static class ServiceOfferingMapper
             entity.IsActive,
             entity.CategorySlug,
             entity.CatalogServiceId,
-            BookingDeliveryTypeMapping.ToApiValue(entity.BookingDeliveryType));
+            BookingDeliveryTypeMapping.ToApiValue(entity.BookingDeliveryType),
+            entity.MenuGroupId,
+            entity.SortOrder);
 }
 
 internal static class BookingDeliveryTypeMapping

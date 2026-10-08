@@ -3,7 +3,7 @@ import { toSignal } from "@angular/core/rxjs-interop";
 import { ActivatedRoute } from "@angular/router";
 import type { BookingResponse } from "@adeni/shared";
 import { formatBookingStatus, formatSlotTime } from "@adeni/shared";
-import { PortalPageComponent } from "@adeni/ui";
+import { AdeniConfirmService, PortalPageComponent } from "@adeni/ui";
 import { map } from "rxjs";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { PortalTabsComponent } from "../../shared/portal-tabs.component";
@@ -20,6 +20,7 @@ const CONFIRMED_STATUS = 1;
 })
 export class BookingsComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
+  private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly route = inject(ActivatedRoute);
   readonly tab = toSignal(this.route.queryParamMap.pipe(map((params) => params.get("tab") ?? "pending")), {
     initialValue: this.route.snapshot.queryParamMap.get("tab") ?? "pending",
@@ -86,7 +87,13 @@ export class BookingsComponent implements OnInit {
   }
 
   async reject(booking: BookingResponse): Promise<void> {
-    if (!confirm(`Reject ${booking.serviceName} on ${formatSlotTime(booking.startAt)}?`)) {
+    const ok = await this.confirmDialog.confirm({
+      title: "Reject booking?",
+      message: `Reject ${booking.serviceName} on ${formatSlotTime(booking.startAt)}? The customer will be notified.`,
+      confirmLabel: "Reject",
+      danger: true,
+    });
+    if (!ok) {
       return;
     }
     await this.runAction(booking, "reject");

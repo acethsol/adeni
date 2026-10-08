@@ -112,6 +112,26 @@ public sealed class TenantController(
         return MapResult(result, Ok);
     }
 
+    [HttpPatch("policies")]
+    public async Task<IActionResult> UpdatePolicies(
+        [FromBody] UpdateBusinessPoliciesRequest request,
+        CancellationToken cancellationToken)
+    {
+        var auth0Sub = ResolveAuth0Sub();
+        var tenantId = ResolveTenantId();
+        if (auth0Sub is null || tenantId is null)
+        {
+            return Unauthorized();
+        }
+
+        var result = await onboardingService.UpdatePoliciesAsync(
+            tenantId.Value,
+            request,
+            auth0Sub,
+            cancellationToken);
+        return MapResult(result, Ok);
+    }
+
     [HttpGet("notification-preferences")]
     public async Task<IActionResult> GetNotificationPreferences(CancellationToken cancellationToken)
     {

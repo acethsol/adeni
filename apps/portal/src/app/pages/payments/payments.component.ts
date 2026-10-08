@@ -5,7 +5,7 @@ import { ActivatedRoute } from "@angular/router";
 import { map } from "rxjs";
 import type { BusinessProfile, PaymentLedgerEntry } from "@adeni/shared";
 import { hasCapability } from "@adeni/shared";
-import { PortalPageComponent } from "@adeni/ui";
+import { AdeniConfirmService, PortalPageComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { formatPrice } from "@adeni/shared";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
@@ -20,6 +20,7 @@ import { PortalTabsComponent } from "../../shared/portal-tabs.component";
 })
 export class PaymentsComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
+  private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly config = inject(ADENI_PORTAL_CONFIG);
   private readonly route = inject(ActivatedRoute);
   readonly tab = toSignal(this.route.queryParamMap.pipe(map((params) => params.get("tab") ?? "links")), {
@@ -114,7 +115,15 @@ export class PaymentsComponent implements OnInit {
   async refund(entry: PaymentLedgerEntry): Promise<void> {
     const profile = this.profile();
     if (!profile || entry.status !== "completed") return;
-    if (!confirm(`Refund ${formatPrice(entry.amount, entry.currency)}?`)) return;
+    const ok = await this.confirmDialog.confirm({
+      title: "Refund payment?",
+      message: `Refund ${formatPrice(entry.amount, entry.currency)}? This cannot be undone from Adeni.`,
+      confirmLabel: "Refund",
+      danger: true,
+    });
+    if (!ok) {
+      return;
+    }
 
     this.error.set(null);
     try {

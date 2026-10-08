@@ -3,6 +3,7 @@ import { Component, inject, OnInit, signal } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import type { CustomerBookingResponse } from "@adeni/shared";
 import { formatBookingStatus } from "@adeni/shared";
+import { AdeniConfirmService } from "@adeni/ui";
 import { CustomerApiService } from "../../core/services/customer-api.service";
 import {
   ADENI_DISCOVER_CONFIG,
@@ -19,6 +20,7 @@ import {
 })
 export class MyBookingsComponent implements OnInit {
   private readonly api = inject(CustomerApiService);
+  private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly config = inject(ADENI_DISCOVER_CONFIG);
 
   readonly loading = signal(true);
@@ -56,7 +58,13 @@ export class MyBookingsComponent implements OnInit {
   }
 
   async cancel(id: string): Promise<void> {
-    if (!confirm("Cancel this booking?")) {
+    const ok = await this.confirmDialog.confirm({
+      title: "Cancel booking?",
+      message: "This appointment will be cancelled. You can book again if the slot is still open.",
+      confirmLabel: "Cancel booking",
+      danger: true,
+    });
+    if (!ok) {
       return;
     }
 

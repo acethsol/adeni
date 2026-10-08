@@ -1,31 +1,61 @@
 @if (activeServices().length === 0) {
   <section class="panel">
-    <h2>Book online</h2>
-    <p class="muted">Online booking is not available yet for this business.</p>
+    <header class="panel-head">
+      <p class="eyebrow">{{ label("business.booking.eyebrow") }}</p>
+      <h2>{{ label("business.booking.bookOnline") }}</h2>
+    </header>
+    <p class="muted">{{ label("business.booking.unavailable") }}</p>
   </section>
 } @else if (step() === "done" && booking(); as b) {
   <section class="panel success">
-    <p class="eyebrow">Booking submitted</p>
-    <h2>{{ b.serviceName }}</h2>
-    <p>{{ formatSlot(b.startAt) }}</p>
+    <header class="panel-head">
+      <p class="eyebrow">{{ label("business.booking.youreBooked") }}</p>
+      <h2>{{ b.serviceName }}</h2>
+    </header>
+    <p class="done-when">{{ formatSlot(b.startAt) }}</p>
     <p class="muted">
       @if (b.status === 1) {
-        Confirmed — you're all set.
+        {{ label("business.booking.confirmed") }}
       } @else {
-        Pending confirmation from the business.
+        {{ label("business.booking.pending") }}
       }
     </p>
   </section>
 } @else {
   <section class="panel">
-    <h2>Book online</h2>
-    <p class="muted">Choose a service and pick an available time.</p>
+    <header class="panel-head">
+      <p class="eyebrow">{{ stepEyebrow() }}</p>
+      <h2>{{ stepTitle() }}</h2>
+      @if (stepLede(); as lede) {
+        <p class="lede">{{ lede }}</p>
+      }
+    </header>
+
+    <ol class="steps" [attr.aria-label]="label('business.booking.stepsAria')">
+      <li [class.on]="stepIndex() === 0" [class.done]="stepIndex() > 0">
+        <span aria-hidden="true">1</span>
+        <em>{{ label("business.booking.stepLabelService") }}</em>
+      </li>
+      <li [class.on]="stepIndex() === 1" [class.done]="stepIndex() > 1">
+        <span aria-hidden="true">2</span>
+        <em>{{ label("business.booking.stepLabelTime") }}</em>
+      </li>
+      <li [class.on]="stepIndex() === 2" [class.done]="step() === 'done'">
+        <span aria-hidden="true">3</span>
+        <em>{{ label("business.booking.stepLabelConfirm") }}</em>
+      </li>
+    </ol>
 
     @if (!bookingEnabled()) {
-      <p class="muted">
-        <button type="button" class="link" (click)="signIn()">Sign in</button>
-        to book an appointment.
-      </p>
+      <div class="signin-callout">
+        <p>
+          {{ label("business.booking.signInBrowse") }}
+          <button type="button" class="link" (click)="signIn()">{{
+            label("business.booking.signIn")
+          }}</button>
+          {{ label("business.booking.signInToConfirm") }}
+        </p>
+      </div>
     }
 
     @if (error()) {
@@ -33,101 +63,174 @@
     }
 
     @if (step() === "service") {
-      <ul class="services">
-        @for (service of activeServices(); track service.id) {
-          <li>
-            <button
-              type="button"
-              class="service-row"
-              [disabled]="loadingSlots()"
-              (click)="selectService(service)"
-            >
-              <div>
-                <strong>{{ service.name }}</strong>
-                @if (service.description) {
-                  <p class="muted">{{ service.description }}</p>
-                }
-                <p class="tiny">{{ service.durationMinutes }} min</p>
-              </div>
-              <span class="price">
-                {{ service.priceAmount | currency: service.currency }}
-              </span>
-            </button>
-          </li>
+      @if (services().length > 4) {
+        <label class="service-search">
+          <span class="visually-hidden">{{ label("business.searchServices") }}</span>
+          <input
+            type="search"
+            [placeholder]="label('business.searchServices')"
+            [ngModel]="serviceSearch()"
+            (ngModelChange)="serviceSearch.set($event)"
+          />
+        </label>
+      }
+
+      @if (filteredServices().length === 0) {
+        <p class="muted">{{ label("business.booking.noMatch") }}</p>
+      } @else {
+        @for (collection of serviceCollections(); track collection.id) {
+          <div class="service-collection">
+            @if (menuGroups().length > 0) {
+              <p class="collection-label">{{ collection.name }}</p>
+            }
+            <ul class="services">
+              @for (service of collection.services; track service.id) {
+                <li>
+                  <button
+                    type="button"
+                    class="service-row"
+                    [disabled]="loadingSlots()"
+                    (click)="selectService(service)"
+                  >
+                    <span class="service-copy">
+                      <strong>{{ service.name }}</strong>
+                      <span class="tiny">{{
+                        label("business.minutes", { count: service.durationMinutes })
+                      }}</span>
+                    </span>
+                    <span class="price">
+                      {{ service.priceAmount | currency: service.currency }}
+                    </span>
+                  </button>
+                </li>
+              }
+            </ul>
+          </div>
         }
-      </ul>
+      }
     }
 
     @if (step() === "slot" && selectedService(); as svc) {
-      <button type="button" class="link back" (click)="backToServices()">← Change service</button>
-      <p class="strong">{{ svc.name }}</p>
+      <div class="selected-pill">
+        <div>
+          <strong>{{ svc.name }}</strong>
+          <span
+            >{{ label("business.minutes", { count: svc.durationMinutes }) }} ·
+            {{ svc.priceAmount | currency: svc.currency }}</span
+          >
+        </div>
+        <button type="button" class="link" (click)="backToServices()">{{
+          label("business.booking.change")
+        }}</button>
+      </div>
 
       @if (loadingSlots()) {
-        <p class="muted">Loading available times…</p>
+        <p class="muted loading-line">{{ label("business.booking.loadingSlots") }}</p>
       } @else if (slots().length === 0) {
-        <p class="muted">No open slots in the next 7 days.</p>
+        <p class="muted">{{ label("business.booking.noSlots") }}</p>
         @if (bookingEnabled()) {
-          <button type="button" class="link" (click)="joinWaitlist()">Join waitlist</button>
+          <button type="button" class="link" (click)="joinWaitlist()">{{
+            label("business.booking.joinWaitlist")
+          }}</button>
         }
       } @else {
-        <ul class="slots">
-          @for (slot of slots(); track slot.startAt) {
-            <li>
-              <button
-                type="button"
-                class="slot-btn"
-                (click)="selectedSlot.set(slot.startAt); step.set('confirm')"
-              >
-                {{ formatSlot(slot.startAt) }}
-              </button>
-            </li>
+        <div class="day-groups">
+          @for (day of slotDays(); track day.key) {
+            <div class="day-group">
+              <p class="day-label">{{ day.label }}</p>
+              <ul class="slots">
+                @for (slot of day.slots; track slot.startAt) {
+                  <li>
+                    <button
+                      type="button"
+                      class="slot-btn"
+                      (click)="selectedSlot.set(slot.startAt); step.set('confirm')"
+                    >
+                      {{ formatTime(slot.startAt) }}
+                    </button>
+                  </li>
+                }
+              </ul>
+            </div>
           }
-        </ul>
+        </div>
       }
     }
 
     @if (step() === "confirm" && selectedService(); as svc) {
       @if (selectedSlot(); as slotIso) {
-        <button type="button" class="link back" (click)="step.set('slot')">← Pick another time</button>
-        <dl class="summary">
-          <div>
-            <dt>Service</dt>
-            <dd>{{ svc.name }}</dd>
-          </div>
-          <div>
-            <dt>Time</dt>
-            <dd>{{ formatSlot(slotIso) }}</dd>
-          </div>
-          <div>
-            <dt>Price</dt>
-            <dd>{{ svc.priceAmount | currency: svc.currency }}</dd>
-          </div>
-        </dl>
+        <button type="button" class="link back" (click)="step.set('slot')">{{
+          label("business.booking.pickAnotherTime")
+        }}</button>
+
+        <div class="confirm-card">
+          <p class="confirm-service">{{ svc.name }}</p>
+          <p class="confirm-when">{{ formatSlot(slotIso) }}</p>
+          <p class="confirm-price">{{ svc.priceAmount | currency: svc.currency }}</p>
+        </div>
 
         <label class="notes">
-          <span>Notes (optional)</span>
+          <span>{{ label("business.booking.notesLabel") }}</span>
           <textarea
             [ngModel]="notes()"
             (ngModelChange)="notes.set($event)"
             rows="3"
             maxlength="1000"
-            placeholder="Anything the business should know?"
+            [placeholder]="label('business.booking.notesPlaceholder')"
           ></textarea>
         </label>
 
         @if (supportsDeposits() && depositPercent() > 0) {
           <p class="deposit">
-            A {{ depositPercent() }}% deposit is required after confirming. You'll be redirected to
-            checkout.
+            {{ label("business.booking.depositNotice", { percent: depositPercent() }) }}
           </p>
         }
 
+        @if (requirePolicyAcceptance() && hasPolicies()) {
+          <div class="policy-accept">
+            <input
+              id="policy-accept"
+              type="checkbox"
+              [ngModel]="policiesAccepted()"
+              (ngModelChange)="policiesAccepted.set($event)"
+            />
+            <label for="policy-accept">
+              {{ label("business.booking.acceptPrefix") }}
+              <a href="#policy-booking" (click)="openPolicy($event, 'policy-booking')">{{
+                label("business.booking.acceptBooking")
+              }}</a
+              >,
+              <a href="#policy-payment" (click)="openPolicy($event, 'policy-payment')">{{
+                label("business.booking.acceptPayment")
+              }}</a
+              >, {{ label("business.booking.acceptAnd") }}
+              <a href="#policy-cancellation" (click)="openPolicy($event, 'policy-cancellation')">{{
+                label("business.booking.acceptCancellation")
+              }}</a>
+              {{ label("business.booking.acceptSuffix") }}
+            </label>
+          </div>
+        }
+
         @if (bookingEnabled()) {
-          <button type="button" class="primary" [disabled]="submitting()" (click)="confirmBooking()">
-            {{ submitting() ? "Booking…" : "Confirm booking" }}
+          <button
+            type="button"
+            class="primary"
+            [disabled]="
+              submitting() || (requirePolicyAcceptance() && hasPolicies() && !policiesAccepted())
+            "
+            (click)="confirmBooking()"
+          >
+            {{
+              submitting()
+                ? label("business.booking.confirming")
+                : label("business.booking.confirm")
+            }}
           </button>
         } @else {
-          <button type="button" class="primary" (click)="signIn()">Sign in to confirm</button>
+          <button type="button" class="primary" (click)="signIn()">{{
+            label("business.booking.signInConfirm")
+          }}</button>
         }
       }
     }

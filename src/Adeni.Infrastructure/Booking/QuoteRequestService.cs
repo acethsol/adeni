@@ -42,6 +42,16 @@ public sealed class QuoteRequestService(AdeniDbContext dbContext, IFileStorage f
             return Result.Failure<QuoteRequestResponse>(Error.NotFound("Business"));
         }
 
+        var profileBooking = await dbContext.BusinessProfiles
+            .AsNoTracking()
+            .Where(p => p.TenantId == tenantId)
+            .Select(p => (bool?)p.PublicPageShowBook)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (profileBooking == false)
+        {
+            return Result.Failure<QuoteRequestResponse>(ErrorCodes.BookingClosedError());
+        }
+
         var customer = await GetOrCreateCustomerAsync(customerAuth0Sub, cancellationToken);
 
         var photoKeysResult = await ValidatePhotoKeysAsync(customer.Id, request.PhotoKeys, cancellationToken);
@@ -179,8 +189,8 @@ public sealed class QuoteRequestService(AdeniDbContext dbContext, IFileStorage f
         record.QuotedCurrency = request.Currency.Trim().ToUpperInvariant();
         record.QuoteNotes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
         record.ServiceOfferingId = request.ServiceOfferingId;
-        record.ProposedStartAt = request.ProposedStartAt;
-        record.ProposedEndAt = request.ProposedEndAt;
+        record.ProposedStartAt = request.ProposedStartAt.ToUniversalTime();
+        record.ProposedEndAt = request.ProposedEndAt.ToUniversalTime();
         record.QuotedAt = DateTimeOffset.UtcNow;
         record.ExpiresAt = request.ExpiresAt ?? DateTimeOffset.UtcNow.AddDays(7);
 
@@ -235,8 +245,8 @@ public sealed class QuoteRequestService(AdeniDbContext dbContext, IFileStorage f
             TenantId = record.TenantId,
             CustomerId = record.CustomerId,
             ServiceOfferingId = record.ServiceOfferingId.Value,
-            StartAt = record.ProposedStartAt.Value,
-            EndAt = record.ProposedEndAt.Value,
+            StartAt = record.ProposedStartAt.Value.ToUniversalTime(),
+            EndAt = record.ProposedEndAt.Value.ToUniversalTime(),
             Status = BookingStatus.Pending,
             CustomerNotes = $"Accepted quote {record.Id}",
             CreatedAt = DateTimeOffset.UtcNow,

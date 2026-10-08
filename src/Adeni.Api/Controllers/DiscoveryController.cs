@@ -91,8 +91,8 @@ public sealed class BusinessesController(
     [AllowAnonymous]
     public async Task<IActionResult> GetServices(string slug, CancellationToken cancellationToken)
     {
-        var items = await services.ListPublicBySlugAsync(slug, cancellationToken);
-        return Ok(new { items });
+        var catalog = await services.ListPublicBySlugAsync(slug, cancellationToken);
+        return Ok(new { items = catalog.Items, groups = catalog.Groups });
     }
 
     [HttpGet("{slug}/slots")]

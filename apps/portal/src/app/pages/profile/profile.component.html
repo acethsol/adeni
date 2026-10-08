@@ -153,9 +153,10 @@
 
       <section class="card span-2">
         <h3>Booking settings</h3>
-        <label class="check">
-          <input type="checkbox" [(ngModel)]="autoConfirm" />
-          Auto-confirm new bookings
+        <label class="cds-toggle">
+          <input type="checkbox" role="switch" [(ngModel)]="autoConfirm" />
+          <span class="cds-toggle__track" aria-hidden="true"></span>
+          <span class="cds-toggle__label">Auto-confirm new bookings</span>
         </label>
         <div class="field">
           <label for="deposit">Deposit % (0–100)</label>

@@ -62,12 +62,27 @@ public sealed record BusinessLocationResponse(
 
 public sealed record UpdateBusinessSettingsRequest(bool AutoConfirmBookings, int DepositPercent = 0);
 
+public sealed record BusinessPoliciesDto(
+    string? Booking = null,
+    string? Payment = null,
+    string? Cancellation = null,
+    string? Terms = null,
+    bool RequireAcceptance = false);
+
+public sealed record UpdateBusinessPoliciesRequest(
+    string? Booking = null,
+    string? Payment = null,
+    string? Cancellation = null,
+    string? Terms = null,
+    bool RequireAcceptance = false);
+
 public sealed record PublicPageSectionsDto(
     bool About = true,
     bool Services = true,
     bool Reviews = true,
     bool Visit = true,
-    bool Book = true);
+    bool Book = true,
+    bool Policies = false);
 
 public sealed record PublicPageConfigDto(
     string TemplateId = "studio",
@@ -101,7 +116,8 @@ public sealed record BusinessProfileResponse(
     string SubscriptionTier = "free",
     TenantEntitlements? Entitlements = null,
     PublicPageConfigDto? PublicPage = null,
-    IReadOnlyList<GalleryImageResponse>? GalleryImages = null);
+    IReadOnlyList<GalleryImageResponse>? GalleryImages = null,
+    BusinessPoliciesDto? Policies = null);
 
 public sealed record GalleryImageResponse(string StorageKey, string Url);
 
@@ -150,6 +166,12 @@ public interface IBusinessOnboardingService
     Task<Result<BusinessProfileResponse>> UpdatePublicPageAsync(
         Guid tenantId,
         UpdatePublicPageRequest request,
+        string auth0Sub,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<BusinessProfileResponse>> UpdatePoliciesAsync(
+        Guid tenantId,
+        UpdateBusinessPoliciesRequest request,
         string auth0Sub,
         CancellationToken cancellationToken = default);
 

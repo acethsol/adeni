@@ -1,7 +1,8 @@
-import { Component, inject, input, signal } from "@angular/core";
+import { Component, computed, inject, input, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { discoveryCtaLabel } from "@adeni/shared";
 import { AdeniApiError } from "@adeni/api-client";
+import { AdeniLocaleService } from "@adeni/ui";
 import { CustomerApiService } from "../core/services/customer-api.service";
 
 @Component({
@@ -13,11 +14,12 @@ import { CustomerApiService } from "../core/services/customer-api.service";
 })
 export class QuoteRequestPanelComponent {
   private readonly api = inject(CustomerApiService);
+  private readonly localeService = inject(AdeniLocaleService);
 
   readonly slug = input.required<string>();
   readonly enabled = input.required<boolean>();
 
-  readonly title = discoveryCtaLabel("get_quote");
+  readonly title = computed(() => discoveryCtaLabel("get_quote", this.localeService.locale()));
   readonly description = signal("");
   readonly serviceAddress = signal("");
   readonly error = signal<string | null>(null);

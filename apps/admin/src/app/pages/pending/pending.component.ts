@@ -2,7 +2,7 @@ import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { ActivatedRoute } from "@angular/router";
 import type { PendingBusiness } from "@adeni/shared";
-import { PortalPageComponent } from "@adeni/ui";
+import { AdeniFeedbackService, PortalPageComponent } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 
 @Component({
@@ -15,6 +15,7 @@ import { AdminApiService } from "../../core/services/admin-api.service";
 export class AdminPendingComponent implements OnInit {
   private readonly api = inject(AdminApiService);
   private readonly route = inject(ActivatedRoute);
+  private readonly feedback = inject(AdeniFeedbackService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -44,10 +45,14 @@ export class AdminPendingComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const pending = await this.api.withAuthorizedClient((c) => c.getPendingBusinesses());
-      this.items.set(pending);
+      await this.feedback.runLoading(async () => {
+        const pending = await this.api.withAuthorizedClient((c) => c.getPendingBusinesses());
+        this.items.set(pending);
+      }, "Loading queue…", "Fetching businesses awaiting verification");
     } catch {
-      this.error.set("Could not load pending businesses. Use Auth0 admin or dev admin sub.");
+      const message = "Could not load pending businesses. Use Auth0 admin or dev admin sub.";
+      this.error.set(message);
+      this.feedback.error(message);
     } finally {
       this.loading.set(false);
     }
@@ -56,10 +61,16 @@ export class AdminPendingComponent implements OnInit {
   async approve(item: PendingBusiness): Promise<void> {
     this.busyId.set(item.id);
     try {
-      await this.api.withAuthorizedClient((c) => c.approvePendingBusiness(item.id));
+      await this.feedback.runLoading(
+        () => this.api.withAuthorizedClient((c) => c.approvePendingBusiness(item.id)),
+        "Approving…",
+        item.name,
+      );
       this.items.update((list) => list.filter((x) => x.id !== item.id));
+      this.feedback.success(`${item.name} is now verified.`, "Approved");
     } catch {
       this.error.set("Approve failed.");
+      this.feedback.error("Approve failed.");
     } finally {
       this.busyId.set(null);
     }
@@ -70,10 +81,17 @@ export class AdminPendingComponent implements OnInit {
     if (!reason || reason.trim().length < 10) return;
     this.busyId.set(item.id);
     try {
-      await this.api.withAuthorizedClient((c) => c.rejectPendingBusiness(item.id, reason.trim()));
+      await this.feedback.runLoading(
+        () =>
+          this.api.withAuthorizedClient((c) => c.rejectPendingBusiness(item.id, reason.trim())),
+        "Rejecting…",
+        item.name,
+      );
       this.items.update((list) => list.filter((x) => x.id !== item.id));
+      this.feedback.success(`${item.name} was rejected.`, "Rejected");
     } catch {
       this.error.set("Reject failed.");
+      this.feedback.error("Reject failed.");
     } finally {
       this.busyId.set(null);
     }

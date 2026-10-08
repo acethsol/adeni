@@ -4,6 +4,26 @@
   margin-bottom: 1rem;
 }
 
+.groups-card {
+  margin-bottom: 1rem;
+}
+
+.group-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.group-add input {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.group-list {
+  margin-top: 0.5rem;
+}
+
 .row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

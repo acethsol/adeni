@@ -11,6 +11,7 @@ export const enErrorMessages: MessageTree = {
     slot_expired: "That time slot has passed. Please choose a new time.",
     slot_unavailable: "That time slot is no longer available.",
     slot_locked: "That time slot is being booked. Try again.",
+    closed: "This business is not accepting online bookings right now.",
   },
   payment: {
     invalid_amount: "Payment amount must be greater than zero.",
@@ -54,6 +55,7 @@ export const frErrorMessages: MessageTree = {
     slot_expired: "Ce créneau horaire est passé. Veuillez en choisir un autre.",
     slot_unavailable: "Ce créneau horaire n'est plus disponible.",
     slot_locked: "Ce créneau est en cours de réservation. Réessayez.",
+    closed: "Cette entreprise n'accepte pas les réservations en ligne pour le moment.",
   },
   payment: {
     invalid_amount: "Le montant du paiement doit être supérieur à zéro.",

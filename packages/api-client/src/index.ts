@@ -59,7 +59,12 @@ import {
   paymentLedgerResponseSchema,
   refundPaymentRequestSchema,
   updateBusinessSettingsRequestSchema,
+  updateBusinessPoliciesRequestSchema,
   updatePublicPageRequestSchema,
+  createServiceMenuGroupRequestSchema,
+  updateServiceMenuGroupRequestSchema,
+  serviceMenuGroupsResponseSchema,
+  serviceMenuGroupSchema,
   reviewResponseSchema,
   publicReviewsResponseSchema,
   createMessageThreadRequestSchema,
@@ -103,7 +108,12 @@ import {
   type SubmitVerificationRequest,
   type UpdateBusinessProfileRequest,
   type UpdateBusinessSettingsRequest,
+  type UpdateBusinessPoliciesRequest,
   type UpdatePublicPageRequest,
+  type ServiceMenuGroup,
+  type CreateServiceMenuGroupRequest,
+  type UpdateServiceMenuGroupRequest,
+  type ServiceOfferingsResponse,
   type CreateQuoteRequest,
   type QuoteRequestResponse,
   type SubmitQuoteOfferRequest,
@@ -280,12 +290,16 @@ export class AdeniApiClient {
     return publicBusinessProfileSchema.parse(await response.json());
   }
 
-  async getBusinessServices(slug: string): Promise<ServiceOffering[]> {
+  async getBusinessServiceCatalog(slug: string): Promise<ServiceOfferingsResponse> {
     const response = await this.request(
       `/api/v1/businesses/${encodeURIComponent(slug)}/services`,
     );
-    const payload = serviceOfferingsResponseSchema.parse(await response.json());
-    return payload.items;
+    return serviceOfferingsResponseSchema.parse(await response.json());
+  }
+
+  async getBusinessServices(slug: string): Promise<ServiceOffering[]> {
+    const catalog = await this.getBusinessServiceCatalog(slug);
+    return catalog.items;
   }
 
   async getBusinessSlots(
@@ -449,6 +463,18 @@ export class AdeniApiClient {
   ): Promise<BusinessProfile> {
     const body = updatePublicPageRequestSchema.parse(request);
     const response = await this.request("/api/v1/tenant/public-page", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return businessProfileSchema.parse(await response.json());
+  }
+
+  async updateTenantPolicies(
+    request: UpdateBusinessPoliciesRequest,
+  ): Promise<BusinessProfile> {
+    const body = updateBusinessPoliciesRequestSchema.parse(request);
+    const response = await this.request("/api/v1/tenant/policies", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -711,10 +737,54 @@ export class AdeniApiClient {
     return galleryImagesResponseSchema.parse(await response.json()).items;
   }
 
-  async getTenantServices(): Promise<ServiceOffering[]> {
+  async getTenantServiceCatalog(): Promise<ServiceOfferingsResponse> {
     const response = await this.request("/api/v1/tenant/services");
-    const payload = serviceOfferingsResponseSchema.parse(await response.json());
-    return payload.items;
+    return serviceOfferingsResponseSchema.parse(await response.json());
+  }
+
+  async getTenantServices(): Promise<ServiceOffering[]> {
+    const catalog = await this.getTenantServiceCatalog();
+    return catalog.items;
+  }
+
+  async listTenantServiceMenuGroups(): Promise<ServiceMenuGroup[]> {
+    const response = await this.request("/api/v1/tenant/service-menu-groups");
+    return serviceMenuGroupsResponseSchema.parse(await response.json()).items;
+  }
+
+  async createTenantServiceMenuGroup(
+    request: CreateServiceMenuGroupRequest,
+  ): Promise<ServiceMenuGroup> {
+    const body = createServiceMenuGroupRequestSchema.parse(request);
+    const response = await this.request("/api/v1/tenant/service-menu-groups", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return serviceMenuGroupSchema.parse(await response.json());
+  }
+
+  async updateTenantServiceMenuGroup(
+    groupId: string,
+    request: UpdateServiceMenuGroupRequest,
+  ): Promise<ServiceMenuGroup> {
+    const body = updateServiceMenuGroupRequestSchema.parse(request);
+    const response = await this.request(
+      `/api/v1/tenant/service-menu-groups/${encodeURIComponent(groupId)}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+    return serviceMenuGroupSchema.parse(await response.json());
+  }
+
+  async deleteTenantServiceMenuGroup(groupId: string): Promise<void> {
+    await this.request(
+      `/api/v1/tenant/service-menu-groups/${encodeURIComponent(groupId)}`,
+      { method: "DELETE" },
+    );
   }
 
   async createTenantService(

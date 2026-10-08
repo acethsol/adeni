@@ -2,7 +2,7 @@ import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { ActivatedRoute } from "@angular/router";
 import type { AdminBusinessSummary, SubscriptionTier } from "@adeni/shared";
-import { PortalPageComponent } from "@adeni/ui";
+import { AdeniFeedbackService, PortalPageComponent } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 
 @Component({
@@ -15,12 +15,15 @@ import { AdminApiService } from "../../core/services/admin-api.service";
 export class AdminBusinessesComponent implements OnInit {
   private readonly api = inject(AdminApiService);
   private readonly route = inject(ActivatedRoute);
+  private readonly feedback = inject(AdeniFeedbackService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly businesses = signal<AdminBusinessSummary[]>([]);
   readonly query = signal("");
-  readonly visible = computed(() => filterByQuery(this.businesses(), this.query(), (item) => [item.name, item.slug, item.subscriptionTier]));
+  readonly visible = computed(() =>
+    filterByQuery(this.businesses(), this.query(), (item) => [item.name, item.slug, item.subscriptionTier]),
+  );
   readonly tiers: SubscriptionTier[] = ["free", "pro", "business"];
 
   constructor() {
@@ -37,10 +40,13 @@ export class AdminBusinessesComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const items = await this.api.withAuthorizedClient((c) => c.getAdminBusinesses());
-      this.businesses.set(items);
+      await this.feedback.runLoading(async () => {
+        const items = await this.api.withAuthorizedClient((c) => c.getAdminBusinesses());
+        this.businesses.set(items);
+      }, "Loading businesses…", "Fetching tenant list");
     } catch {
       this.error.set("Could not load businesses.");
+      this.feedback.error("Could not load businesses.");
     } finally {
       this.loading.set(false);
     }
@@ -48,15 +54,28 @@ export class AdminBusinessesComponent implements OnInit {
 
   async setTier(business: AdminBusinessSummary, tier: SubscriptionTier): Promise<void> {
     try {
-      await this.api.withAuthorizedClient((c) => c.setAdminBusinessSubscriptionTier(business.id, tier));
+      await this.feedback.runLoading(
+        () =>
+          this.api.withAuthorizedClient((c) =>
+            c.setAdminBusinessSubscriptionTier(business.id, tier),
+          ),
+        "Updating plan…",
+        business.name,
+      );
       await this.load();
+      this.feedback.success(`${business.name} is now on ${tier}.`, "Subscription updated");
     } catch {
       this.error.set("Could not update subscription tier.");
+      this.feedback.error("Could not update subscription tier.");
     }
   }
 }
 
-function filterByQuery<T>(items: T[], query: string, parts: (item: T) => Array<string | null | undefined>): T[] {
+function filterByQuery<T>(
+  items: T[],
+  query: string,
+  parts: (item: T) => Array<string | null | undefined>,
+): T[] {
   const needle = query.trim().toLowerCase();
   if (!needle) {
     return items;

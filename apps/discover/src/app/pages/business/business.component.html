@@ -1,9 +1,9 @@
 @if (loading()) {
-  <p class="state muted">Loading…</p>
+  <p class="state muted">{{ label("business.loading") }}</p>
 } @else if (error()) {
   <div class="state">
     <p class="error">{{ error() }}</p>
-    <a routerLink="/discover">← Back to discover</a>
+    <a routerLink="/discover">← {{ label("business.backToDiscover") }}</a>
   </div>
 } @else if (profile(); as p) {
   <div
@@ -39,7 +39,7 @@
       }
 
       <div class="hero-inner">
-        <a class="back" routerLink="/discover">← Discover</a>
+        <a class="back" routerLink="/discover">← {{ label("business.discover") }}</a>
 
         @if (logoUrl(); as logo) {
           <img class="logo" [src]="logo" [alt]="p.name" />
@@ -50,50 +50,71 @@
         <p class="lead">{{ tagline() }}</p>
 
         <div class="hero-actions">
-          <a class="cta" href="#book" (click)="scrollToSection('book', $event)">{{ ctaLabel() }}</a>
+          @if (bookingOpen()) {
+            <a class="cta" href="#book" (click)="scrollToSection('book', $event)">{{ ctaLabel() }}</a>
+          }
           @if (sections().services) {
-            <a class="ghost" href="#services" (click)="scrollToSection('services', $event)">Services</a>
+            <a class="ghost" href="#services" (click)="scrollToSection('services', $event)">{{
+              label("business.services")
+            }}</a>
+          }
+          @if (!bookingOpen() && sections().visit) {
+            <a class="cta" href="#visit" (click)="scrollToSection('visit', $event)">{{
+              label("business.visit")
+            }}</a>
           }
         </div>
 
         <p class="meta">
           @if (p.ratingAvg != null && p.reviewCount) {
-            <span>★ {{ p.ratingAvg | number: "1.1-1" }} · {{ p.reviewCount }} reviews</span>
-          } @else {
-            <span>{{ ratingLine() }}</span>
+            <span
+              >★ {{ p.ratingAvg | number: "1.1-1" }} ·
+              {{ label("business.reviewsWithCount", { count: p.reviewCount }) }}</span
+            >
           }
           @if (p.verifiedSince) {
             <span class="trust verified">
               <adeni-carbon-icon name="checkmark--filled" [size]="14" />
-              Verified on Adeni
+              {{ label("business.verifiedOnAdeni") }}
             </span>
           }
           @if (isNew()) {
             <span class="trust new">
               <adeni-carbon-icon name="flash--filled" [size]="14" />
-              New
+              {{ label("business.new") }}
             </span>
           }
         </p>
       </div>
     </section>
 
-    <nav class="site-nav" aria-label="On this page">
+    <nav class="site-nav" [attr.aria-label]="label('business.navAria')">
       @if (sections().about) {
-        <a href="#about" (click)="scrollToSection('about', $event)">About</a>
+        <a href="#about" (click)="scrollToSection('about', $event)">{{ label("business.about") }}</a>
       }
       @if (sections().services) {
-        <a href="#services" (click)="scrollToSection('services', $event)">Services</a>
+        <a href="#services" (click)="scrollToSection('services', $event)">{{
+          label("business.services")
+        }}</a>
       }
-      <a href="#book" (click)="scrollToSection('book', $event)">{{ ctaLabel() }}</a>
+      @if (bookingOpen()) {
+        <a href="#book" (click)="scrollToSection('book', $event)">{{ ctaLabel() }}</a>
+      }
       @if (gallery().length > 1) {
-        <a href="#photos" (click)="scrollToSection('photos', $event)">Photos</a>
+        <a href="#photos" (click)="scrollToSection('photos', $event)">{{ label("business.photos") }}</a>
       }
       @if (sections().reviews && reviews().length > 0) {
-        <a href="#reviews" (click)="scrollToSection('reviews', $event)">Reviews</a>
+        <a href="#reviews" (click)="scrollToSection('reviews', $event)">{{
+          label("business.reviewsTitle")
+        }}</a>
       }
       @if (sections().visit) {
-        <a href="#visit" (click)="scrollToSection('visit', $event)">Visit</a>
+        <a href="#visit" (click)="scrollToSection('visit', $event)">{{ label("business.visit") }}</a>
+      }
+      @if (showPolicies()) {
+        <a href="#policies" (click)="scrollToSection('policies', $event)">{{
+          label("business.policies")
+        }}</a>
       }
     </nav>
 
@@ -101,13 +122,19 @@
       <div class="content">
         @if (sections().about) {
           <section id="about" class="block">
-            <h2>About</h2>
+            <h2>{{ label("business.about") }}</h2>
             <p>
               @if (p.description.trim()) {
                 {{ p.description }}
               } @else {
-                {{ p.name }} offers {{ categoryName().toLowerCase() }} in
-                {{ p.area }}, {{ p.locationName }}. Book online through Adeni.
+                {{
+                  label("business.aboutFallback", {
+                    name: p.name,
+                    category: categoryName().toLowerCase(),
+                    area: p.area,
+                    location: p.locationName,
+                  })
+                }}
               }
             </p>
           </section>
@@ -115,7 +142,7 @@
 
         @if (gallery().length > 1) {
           <section id="photos" class="block">
-            <h2>Photos</h2>
+            <h2>{{ label("business.photos") }}</h2>
             <ul class="photo-grid">
               @for (img of gallery(); track img; let i = $index) {
                 <li>
@@ -124,7 +151,7 @@
                     class="photo-tile"
                     [class.on]="i === galleryIndex()"
                     (click)="galleryIndex.set(i)"
-                    [attr.aria-label]="'Show photo ' + (i + 1)"
+                    [attr.aria-label]="label('business.showPhoto', { n: i + 1 })"
                   >
                     <img [src]="img" alt="" />
                   </button>
@@ -136,44 +163,138 @@
 
         @if (sections().services) {
           <section id="services" class="block">
-            <h2>Services</h2>
-            @if (services().length === 0) {
+            <div class="services-head">
+              <div>
+                <h2>{{ label("business.services") }}</h2>
+                @if (menuServices().length > 0 || serviceSearch()) {
+                  <p class="services-lede">
+                    {{
+                      menuServices().length === 1
+                        ? label("business.servicesLedeOne", { count: menuServices().length })
+                        : label("business.servicesLede", { count: menuServices().length })
+                    }}
+                  </p>
+                }
+              </div>
+              @if (bookingOpen()) {
+                <a class="services-jump" href="#book" (click)="scrollToSection('book', $event)">{{
+                  ctaLabel()
+                }}</a>
+              }
+            </div>
+
+            @if (services().length > 0) {
+              <label class="service-search">
+                <span class="visually-hidden">{{ label("business.searchServices") }}</span>
+                <input
+                  type="search"
+                  [placeholder]="label('business.searchServices')"
+                  [value]="serviceSearch()"
+                  (input)="serviceSearch.set($any($event.target).value)"
+                />
+              </label>
+            }
+
+            @if (menuServices().length === 0) {
               <p class="muted">
-                Menu coming soon —
-                <a href="#book" (click)="scrollToSection('book', $event)">open booking</a>
-                to check availability.
+                @if (serviceSearch()) {
+                  {{ label("business.noServicesMatch", { query: serviceSearch() }) }}
+                } @else if (bookingOpen()) {
+                  {{ label("business.menuComingSoonBook") }}
+                  <a href="#book" (click)="scrollToSection('book', $event)">{{
+                    label("business.openBooking")
+                  }}</a>
+                  {{ label("business.toCheckAvailability") }}
+                } @else {
+                  {{ label("business.menuComingSoon") }}
+                }
               </p>
             } @else {
-              <ul class="menu">
-                @for (s of services(); track s.id) {
-                  <li>
-                    <div>
-                      <strong>{{ s.name }}</strong>
-                      @if (s.description) {
-                        <p>{{ s.description }}</p>
-                      }
-                      <span class="mins">{{ s.durationMinutes }} min</span>
-                    </div>
-                    <div class="menu-aside">
-                      @if (s.priceAmount != null) {
-                        <span class="price">{{ priceFor(s.priceAmount, s.currency, locale()) }}</span>
-                      }
-                      @if (s.isActive) {
-                        <button type="button" class="book-mini" (click)="scrollToSection('book', $event)">
-                          Book
+              @for (collection of visibleCollections(); track collection.id) {
+                <div class="service-collection">
+                  @if (menuGroups().length > 0 || collection.id !== "__other") {
+                    <h3 class="collection-title">{{ collection.name }}</h3>
+                  }
+                  <ul class="service-grid">
+                    @for (s of collection.services; track s.id) {
+                      <li>
+                        <button
+                          type="button"
+                          class="service-card"
+                          (click)="bookService(s, $event)"
+                        >
+                          <span class="service-top">
+                            <strong>{{ s.name }}</strong>
+                            @if (s.priceAmount != null) {
+                              <span class="price">{{ priceFor(s.priceAmount, s.currency, locale()) }}</span>
+                            }
+                          </span>
+                          <span class="service-meta">
+                            <span class="mins">{{
+                              label("business.minutes", { count: s.durationMinutes })
+                            }}</span>
+                            @if (s.description) {
+                              <span class="service-desc">{{ s.description }}</span>
+                            }
+                          </span>
+                          <span class="service-cta">{{ label("business.book") }}</span>
                         </button>
-                      }
-                    </div>
-                  </li>
-                }
-              </ul>
+                      </li>
+                    }
+                  </ul>
+                </div>
+              }
+
+              @if (hiddenServiceCount() > 0 || servicesExpanded()) {
+                <button
+                  type="button"
+                  class="services-more"
+                  (click)="servicesExpanded.set(!servicesExpanded())"
+                >
+                  @if (servicesExpanded()) {
+                    {{ label("business.showFewer") }}
+                  } @else {
+                    {{ label("business.showMore", { count: hiddenServiceCount() }) }}
+                  }
+                </button>
+              }
+            }
+          </section>
+        }
+
+        @if (showPolicies()) {
+          <section id="policies" class="block policies">
+            <h2>{{ label("business.policies") }}</h2>
+            @if (p.policies?.booking; as bookingPolicy) {
+              <article id="policy-booking">
+                <h3>{{ label("business.policyBooking") }}</h3>
+                <p class="policy-text">{{ bookingPolicy }}</p>
+              </article>
+            }
+            @if (p.policies?.payment; as paymentPolicy) {
+              <article id="policy-payment">
+                <h3>{{ label("business.policyPayment") }}</h3>
+                <p class="policy-text">{{ paymentPolicy }}</p>
+              </article>
+            }
+            @if (p.policies?.cancellation; as cancelPolicy) {
+              <article id="policy-cancellation">
+                <h3>{{ label("business.policyCancellation") }}</h3>
+                <p class="policy-text">{{ cancelPolicy }}</p>
+              </article>
+            }
+            @if (p.policies?.terms; as termsPolicy) {
+              <article id="policy-terms">
+                <h3>{{ label("business.policyTerms") }}</h3>
+                <p class="policy-text">{{ termsPolicy }}</p>
+              </article>
             }
           </section>
         }
 
         @if (sections().reviews && reviews().length > 0) {
           <section id="reviews" class="block">
-            <h2>Reviews</h2>
+            <h2>{{ label("business.reviewsTitle") }}</h2>
             <ul class="reviews">
               @for (r of reviews(); track r.id) {
                 <li>
@@ -185,7 +306,7 @@
                   <p class="quote">{{ r.comment }}</p>
                   <p class="by">{{ r.customerDisplayName }}</p>
                   @if (r.ownerReply) {
-                    <p class="reply">Owner: {{ r.ownerReply }}</p>
+                    <p class="reply">{{ label("business.ownerReply", { reply: r.ownerReply }) }}</p>
                   }
                 </li>
               }
@@ -195,17 +316,44 @@
 
         @if (sections().visit) {
           <section id="visit" class="block visit">
-            <h2>Visit</h2>
+            <h2>{{ label("business.visit") }}</h2>
             <p class="place">{{ p.locationName }} · {{ p.area }}</p>
             <p>{{ p.addressLine }}</p>
             <p class="phone">{{ p.phoneMasked }}</p>
+
+            @if (mapsUrl(); as mapHref) {
+              <a
+                class="map-preview"
+                [href]="mapHref"
+                target="_blank"
+                rel="noopener noreferrer"
+                [attr.aria-label]="label('business.openInMaps', { name: p.name })"
+              >
+                <span class="map-preview-copy">
+                  <adeni-carbon-icon name="location--filled" [size]="20" />
+                  <span>
+                    <strong>{{ label("business.findOnMap") }}</strong>
+                    <small>{{ label("business.opensMaps") }}</small>
+                  </span>
+                </span>
+                <span class="map-preview-cta">{{ label("business.openMaps") }}</span>
+              </a>
+            }
+
             <div class="share-row">
+              @if (directionsUrl(); as directions) {
+                <a class="share soft" [href]="directions" target="_blank" rel="noopener noreferrer">
+                  {{ label("business.getDirections") }}
+                </a>
+              }
               <button type="button" class="share" (click)="copyBookingLink()">
-                {{ linkCopied() ? "Link copied" : "Copy booking link" }}
+                {{
+                  linkCopied() ? label("business.linkCopied") : label("business.shareBookingLink")
+                }}
               </button>
               @if (whatsappUrl(); as wa) {
                 <a class="share soft" [href]="wa" target="_blank" rel="noopener noreferrer">
-                  WhatsApp
+                  {{ label("business.messageWhatsApp") }}
                 </a>
               }
             </div>
@@ -213,18 +361,43 @@
         }
       </div>
 
-      <aside id="book" class="book-rail" aria-label="Book">
-        @if (showQuoteFlow(p)) {
-          <app-quote-request-panel [slug]="p.slug" [enabled]="bookingEnabled()" />
+      <aside
+        id="book"
+        class="book-rail"
+        [class.pulse]="bookRailPulse()"
+        [attr.aria-label]="
+          bookingOpen() ? label('business.book') : label('business.bookingUnavailable')
+        "
+      >
+        @if (bookingOpen()) {
+          @if (showQuoteFlow(p)) {
+            <app-quote-request-panel [slug]="p.slug" [enabled]="bookingEnabled()" />
+          } @else {
+            <app-booking-panel
+              [slug]="p.slug"
+              [tenantId]="p.tenantId"
+              [services]="services()"
+              [menuGroups]="menuGroups()"
+              [bookingEnabled]="bookingEnabled()"
+              [supportsDeposits]="supportsDeposits(p)"
+              [depositPercent]="p.depositPercent ?? 0"
+              [requirePolicyAcceptance]="p.policies?.requireAcceptance ?? false"
+              [hasPolicies]="showPolicies()"
+            />
+          }
         } @else {
-          <app-booking-panel
-            [slug]="p.slug"
-            [tenantId]="p.tenantId"
-            [services]="services()"
-            [bookingEnabled]="bookingEnabled()"
-            [supportsDeposits]="supportsDeposits(p)"
-            [depositPercent]="p.depositPercent ?? 0"
-          />
+          <section class="panel booking-closed">
+            <header class="panel-head">
+              <p class="eyebrow">{{ label("business.bookingClosedEyebrow") }}</p>
+              <h2>{{ label("business.bookingClosedTitle") }}</h2>
+            </header>
+            <p class="muted">{{ label("business.bookingClosedBody") }}</p>
+            @if (sections().visit) {
+              <a class="link" href="#visit" (click)="scrollToSection('visit', $event)">{{
+                label("business.goToVisit")
+              }}</a>
+            }
+          </section>
         }
       </aside>
     </div>

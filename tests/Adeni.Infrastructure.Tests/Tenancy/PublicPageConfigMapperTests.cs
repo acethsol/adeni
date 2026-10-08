@@ -54,4 +54,23 @@ public sealed class PublicPageConfigMapperTests
 
         Assert.True(result.IsSuccess);
     }
+
+    [Fact]
+    public void Validate_BookingOff_Succeeds()
+    {
+        var result = PublicPageConfigMapper.Validate(
+            new UpdatePublicPageRequest(
+                "studio",
+                new PublicPageSectionsDto(true, true, true, true, false)));
+
+        Assert.True(result.IsSuccess);
+    }
+
+    [Fact]
+    public void FromProfile_RespectsBookingToggle()
+    {
+        var profile = new Adeni.Domain.Tenancy.BusinessProfile { PublicPageShowBook = false };
+        var dto = PublicPageConfigMapper.FromProfile(profile, null);
+        Assert.False(dto.Sections?.Book);
+    }
 }

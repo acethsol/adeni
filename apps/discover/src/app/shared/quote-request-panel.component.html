@@ -1,6 +1,6 @@
 @if (!enabled()) {
   <section class="panel">
-    <h2>{{ title }}</h2>
+    <h2>{{ title() }}</h2>
     <p class="muted">Sign in to describe your job and request a quote from this business.</p>
     <button type="button" class="primary" (click)="signIn()">Sign in to continue</button>
   </section>
@@ -12,7 +12,7 @@
   </section>
 } @else {
   <section class="panel">
-    <h2>{{ title }}</h2>
+    <h2>{{ title() }}</h2>
     <p class="muted">Describe the job and where service is needed.</p>
 
     @if (error()) {

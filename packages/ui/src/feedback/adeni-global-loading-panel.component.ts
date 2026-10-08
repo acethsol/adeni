@@ -1,16 +1,16 @@
 import { Component, inject } from "@angular/core";
-import { DiscoverLoadingService } from "../core/services/discover-loading.service";
+import { AdeniFeedbackService } from "./adeni-feedback.service";
 
 @Component({
-  selector: "app-global-loading-panel",
+  selector: "adeni-global-loading-panel",
   standalone: true,
   template: `
-    @if (loading.visible()) {
-      <div class="load-panel" role="status" aria-live="polite">
+    @if (feedback.loadingVisible()) {
+      <div class="load-panel" role="status" aria-live="polite" aria-busy="true">
         <span class="load-spinner" aria-hidden="true"></span>
         <div>
-          <strong>{{ loading.label() }}</strong>
-          <p>{{ loading.detail() }}</p>
+          <strong>{{ feedback.loadingLabel() }}</strong>
+          <p>{{ feedback.loadingDetail() }}</p>
         </div>
       </div>
     }
@@ -20,38 +20,48 @@ import { DiscoverLoadingService } from "../core/services/discover-loading.servic
       position: fixed;
       left: 50%;
       bottom: 1.25rem;
-      z-index: 80;
+      z-index: 1200;
       display: flex;
       align-items: center;
       gap: 0.85rem;
       min-width: min(22rem, calc(100vw - 2rem));
       padding: 0.85rem 1.05rem;
-      border: 1px solid var(--cds-border-subtle);
-      border-radius: var(--cds-radius-none);
+      border: 1px solid var(--cds-border-subtle, #e0e0e0);
+      border-radius: var(--cds-radius-none, 0);
       background: rgb(255 255 255 / 96%);
+      color: var(--cds-text-primary, #161616);
       box-shadow: 0 2px 6px rgb(0 0 0 / 20%);
       transform: translateX(-50%);
       animation: panel-in 180ms ease;
     }
 
+    :host-context([data-theme="dark"]) .load-panel {
+      background: rgb(38 38 38 / 96%);
+      border-color: rgb(255 255 255 / 14%);
+      color: #f4f4f4;
+    }
+
     .load-panel strong {
       display: block;
       font-size: 0.9rem;
-      color: var(--cds-text-primary);
     }
 
     .load-panel p {
       margin: 0.15rem 0 0;
       font-size: 0.78rem;
-      color: var(--cds-text-secondary);
+      color: var(--cds-text-secondary, #525252);
+    }
+
+    :host-context([data-theme="dark"]) .load-panel p {
+      color: #c6c6c6;
     }
 
     .load-spinner {
       width: 1.35rem;
       height: 1.35rem;
       border-radius: 50%;
-      border: 2px solid var(--cds-gray-30);
-      border-top-color: var(--interactive);
+      border: 2px solid var(--cds-gray-30, #c6c6c6);
+      border-top-color: var(--interactive, #0f62fe);
       animation: spin 0.75s linear infinite;
       flex-shrink: 0;
     }
@@ -81,6 +91,6 @@ import { DiscoverLoadingService } from "../core/services/discover-loading.servic
     }
   `,
 })
-export class GlobalLoadingPanelComponent {
-  readonly loading = inject(DiscoverLoadingService);
+export class AdeniGlobalLoadingPanelComponent {
+  readonly feedback = inject(AdeniFeedbackService);
 }

@@ -55,7 +55,8 @@ public sealed record PublicBusinessProfile(
     DateTimeOffset? VerifiedSince = null,
     double? CompletionRate = null,
     Adeni.Application.Tenancy.PublicPageConfigDto? PublicPage = null,
-    IReadOnlyList<string>? ImageUrls = null);
+    IReadOnlyList<string>? ImageUrls = null,
+    Adeni.Application.Tenancy.BusinessPoliciesDto? Policies = null);
 
 public interface IDiscoveryService
 {

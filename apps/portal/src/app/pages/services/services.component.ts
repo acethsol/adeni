@@ -1,8 +1,13 @@
 import { Component, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import type { BookingDeliveryType, ServiceOffering, ServiceTemplate } from "@adeni/shared";
+import type {
+  BookingDeliveryType,
+  ServiceMenuGroup,
+  ServiceOffering,
+  ServiceTemplate,
+} from "@adeni/shared";
 import { getCategoryLabel } from "@adeni/shared";
-import { PortalPageComponent } from "@adeni/ui";
+import { AdeniConfirmService, AdeniFeedbackService, PortalPageComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { formatPrice } from "@adeni/shared";
 
@@ -15,6 +20,8 @@ type ServiceDraft = {
   categorySlug: string;
   catalogServiceId: string;
   bookingDeliveryType: BookingDeliveryType;
+  menuGroupId: string;
+  sortOrder: string;
 };
 
 @Component({
@@ -26,16 +33,20 @@ type ServiceDraft = {
 })
 export class ServicesComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
+  private readonly feedback = inject(AdeniFeedbackService);
+  private readonly confirmDialog = inject(AdeniConfirmService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly services = signal<ServiceOffering[]>([]);
+  readonly groups = signal<ServiceMenuGroup[]>([]);
   readonly busy = signal<string | null>(null);
   readonly editingId = signal<string | null>(null);
   readonly showForm = signal(false);
   readonly catalogLoading = signal(false);
   readonly catalogTemplates = signal<ServiceTemplate[]>([]);
   readonly primaryCategorySlug = signal("");
+  readonly newGroupName = signal("");
 
   defaultCurrency = "NGN";
   draft: ServiceDraft = this.emptyDraft();
@@ -57,29 +68,42 @@ export class ServicesComponent implements OnInit {
       categorySlug: this.primaryCategorySlug(),
       catalogServiceId: "",
       bookingDeliveryType: "appointment",
+      menuGroupId: "",
+      sortOrder: "0",
     };
+  }
+
+  groupName(groupId: string | null | undefined): string {
+    if (!groupId) {
+      return "Ungrouped";
+    }
+    return this.groups().find((g) => g.id === groupId)?.name ?? "Ungrouped";
   }
 
   async load(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
     try {
-      await this.api.withAuthorizedClient(async (c) => {
-        const [items, profile] = await Promise.all([
-          c.getTenantServices(),
-          c.getTenantProfile().catch(() => null),
-        ]);
-        this.services.set(items);
-        if (profile?.categorySlug) {
-          this.primaryCategorySlug.set(profile.categorySlug);
-        }
-        const marketId = profile?.locations[0]?.marketId?.toLowerCase();
-        if (marketId === "lagos" || marketId === "abuja") this.defaultCurrency = "NGN";
-        else if (marketId === "ottawa" || marketId === "toronto") this.defaultCurrency = "CAD";
-        else if (items[0]?.currency) this.defaultCurrency = items[0].currency;
-      });
+      await this.feedback.runLoading(async () => {
+        await this.api.withAuthorizedClient(async (c) => {
+          const [catalog, profile] = await Promise.all([
+            c.getTenantServiceCatalog(),
+            c.getTenantProfile().catch(() => null),
+          ]);
+          this.services.set(catalog.items);
+          this.groups.set(catalog.groups);
+          if (profile?.categorySlug) {
+            this.primaryCategorySlug.set(profile.categorySlug);
+          }
+          const marketId = profile?.locations[0]?.marketId?.toLowerCase();
+          if (marketId === "lagos" || marketId === "abuja") this.defaultCurrency = "NGN";
+          else if (marketId === "ottawa" || marketId === "toronto") this.defaultCurrency = "CAD";
+          else if (catalog.items[0]?.currency) this.defaultCurrency = catalog.items[0].currency;
+        });
+      }, "Loading services…", "Fetching menu and collections");
     } catch {
       this.error.set("Could not load services.");
+      this.feedback.error("Could not load services.");
     } finally {
       this.loading.set(false);
     }
@@ -118,6 +142,8 @@ export class ServicesComponent implements OnInit {
       categorySlug: service.categorySlug ?? this.primaryCategorySlug(),
       catalogServiceId: service.catalogServiceId ?? "",
       bookingDeliveryType: service.bookingDeliveryType ?? "appointment",
+      menuGroupId: service.menuGroupId ?? "",
+      sortOrder: String(service.sortOrder ?? 0),
     };
     this.showForm.set(true);
     void this.loadCatalog(this.draft.categorySlug);
@@ -137,9 +163,72 @@ export class ServicesComponent implements OnInit {
     this.catalogTemplates.set([]);
   }
 
+  async addGroup(): Promise<void> {
+    const name = this.newGroupName().trim();
+    if (name.length < 2) {
+      this.error.set("Collection name needs at least 2 characters.");
+      return;
+    }
+    this.busy.set("group");
+    this.error.set(null);
+    try {
+      const created = await this.feedback.runLoading(
+        () =>
+          this.api.withAuthorizedClient((c) =>
+            c.createTenantServiceMenuGroup({
+              name,
+              sortOrder: this.groups().length,
+            }),
+          ),
+        "Adding collection…",
+        name,
+      );
+      this.groups.update((list) => [...list, created].sort((a, b) => a.sortOrder - b.sortOrder));
+      this.newGroupName.set("");
+      this.feedback.success(`“${created.name}” is ready to assign.`, "Collection added");
+    } catch {
+      this.error.set("Could not create collection.");
+      this.feedback.error("Could not create collection.");
+    } finally {
+      this.busy.set(null);
+    }
+  }
+
+  async removeGroup(group: ServiceMenuGroup): Promise<void> {
+    const ok = await this.confirmDialog.confirm({
+      title: "Remove collection?",
+      message: `Remove “${group.name}”? Services stay on the menu, ungrouped.`,
+      confirmLabel: "Remove",
+      danger: true,
+    });
+    if (!ok) {
+      return;
+    }
+    this.busy.set(group.id);
+    this.error.set(null);
+    try {
+      await this.feedback.runLoading(
+        () => this.api.withAuthorizedClient((c) => c.deleteTenantServiceMenuGroup(group.id)),
+        "Removing collection…",
+        group.name,
+      );
+      this.groups.update((list) => list.filter((g) => g.id !== group.id));
+      this.services.update((list) =>
+        list.map((s) => (s.menuGroupId === group.id ? { ...s, menuGroupId: null } : s)),
+      );
+      this.feedback.success(`“${group.name}” removed. Services are ungrouped.`, "Collection removed");
+    } catch {
+      this.error.set("Could not remove collection.");
+      this.feedback.error("Could not remove collection.");
+    } finally {
+      this.busy.set(null);
+    }
+  }
+
   async save(): Promise<void> {
     const price = Number(this.draft.priceAmount);
     const duration = Number(this.draft.durationMinutes);
+    const sortOrder = Number(this.draft.sortOrder);
     if (!this.draft.name.trim() || Number.isNaN(price) || Number.isNaN(duration)) {
       this.error.set("Fill in name, price, and duration.");
       return;
@@ -156,35 +245,55 @@ export class ServicesComponent implements OnInit {
       categorySlug: this.draft.categorySlug.trim() || undefined,
       catalogServiceId: this.draft.catalogServiceId.trim() || undefined,
       bookingDeliveryType: this.draft.bookingDeliveryType || "appointment",
+      menuGroupId: this.draft.menuGroupId.trim() || null,
+      sortOrder: Number.isNaN(sortOrder) ? 0 : Math.round(sortOrder),
     };
 
     try {
-      const id = this.editingId();
-      if (id) {
-        const updated = await this.api.withAuthorizedClient((c) =>
-          c.updateTenantService(id, { ...createBody, isActive: true }),
-        );
-        this.services.update((list) => list.map((s) => (s.id === id ? updated : s)));
-      } else {
-        const created = await this.api.withAuthorizedClient((c) => c.createTenantService(createBody));
-        this.services.update((list) => [...list, created]);
-      }
+      await this.feedback.runLoading(async () => {
+        const id = this.editingId();
+        if (id) {
+          const updated = await this.api.withAuthorizedClient((c) =>
+            c.updateTenantService(id, { ...createBody, isActive: true }),
+          );
+          this.services.update((list) => list.map((s) => (s.id === id ? updated : s)));
+        } else {
+          const created = await this.api.withAuthorizedClient((c) => c.createTenantService(createBody));
+          this.services.update((list) => [...list, created]);
+        }
+      }, "Saving service…", createBody.name);
       this.cancelForm();
+      this.feedback.success(`“${createBody.name}” is on your menu.`, "Service saved");
     } catch {
       this.error.set("Could not save service.");
+      this.feedback.error("Could not save service.");
     } finally {
       this.busy.set(null);
     }
   }
 
   async deactivate(service: ServiceOffering): Promise<void> {
-    if (!confirm(`Deactivate ${service.name}?`)) return;
+    const ok = await this.confirmDialog.confirm({
+      title: "Deactivate service?",
+      message: `Deactivate “${service.name}”? Customers won’t be able to book it.`,
+      confirmLabel: "Deactivate",
+      danger: true,
+    });
+    if (!ok) {
+      return;
+    }
     this.busy.set(service.id);
     try {
-      await this.api.withAuthorizedClient((c) => c.deactivateTenantService(service.id));
+      await this.feedback.runLoading(
+        () => this.api.withAuthorizedClient((c) => c.deactivateTenantService(service.id)),
+        "Deactivating service…",
+        service.name,
+      );
       this.services.update((list) => list.filter((s) => s.id !== service.id));
+      this.feedback.success(`“${service.name}” is no longer bookable.`, "Service deactivated");
     } catch {
       this.error.set("Could not deactivate service.");
+      this.feedback.error("Could not deactivate service.");
     } finally {
       this.busy.set(null);
     }

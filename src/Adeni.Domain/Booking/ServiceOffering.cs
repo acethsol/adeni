@@ -26,9 +26,17 @@ public sealed class ServiceOffering : ITenantEntity
 
     public BookingDeliveryType BookingDeliveryType { get; set; } = BookingDeliveryType.Appointment;
 
+    /// <summary>Optional public-menu collection; null = ungrouped.</summary>
+    public Guid? MenuGroupId { get; set; }
+
+    /// <summary>Order within the menu group (or among ungrouped services).</summary>
+    public int SortOrder { get; set; }
+
     public bool IsActive { get; set; } = true;
 
     public DateTimeOffset CreatedAt { get; set; }
 
     public DateTimeOffset UpdatedAt { get; set; }
+
+    public ServiceMenuGroup? MenuGroup { get; set; }
 }

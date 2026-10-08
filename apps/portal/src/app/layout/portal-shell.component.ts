@@ -10,7 +10,13 @@ import {
   type BusinessProfile,
   type LocaleId,
 } from "@adeni/shared";
-import { AdeniBrandLogoComponent, AdeniLocaleService } from "@adeni/ui";
+import {
+  AdeniBrandLogoComponent,
+  AdeniConfirmHostComponent,
+  AdeniGlobalLoadingPanelComponent,
+  AdeniLocaleService,
+  AdeniToastHostComponent,
+} from "@adeni/ui";
 import { filter, map, startWith } from "rxjs";
 import { ADENI_PORTAL_CONFIG, isAuth0Configured, isBusinessPortalDevMode } from "../core/adeni-config";
 import { resolveAuthService } from "../core/auth0-rxjs";
@@ -207,6 +213,9 @@ function readSidebarCollapsed(): boolean {
     RouterLink,
     RouterLinkActive,
     AdeniBrandLogoComponent,
+    AdeniGlobalLoadingPanelComponent,
+    AdeniToastHostComponent,
+    AdeniConfirmHostComponent,
     PendingBookingsBellComponent,
     PortalNavIconComponent,
   ],

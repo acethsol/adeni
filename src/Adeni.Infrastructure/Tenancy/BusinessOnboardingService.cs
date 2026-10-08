@@ -342,6 +342,47 @@ public sealed class BusinessOnboardingService(
             cancellationToken));
     }
 
+    public async Task<Result<BusinessProfileResponse>> UpdatePoliciesAsync(
+        Guid tenantId,
+        UpdateBusinessPoliciesRequest request,
+        string auth0Sub,
+        CancellationToken cancellationToken = default)
+    {
+        var access = await ResolveAccessAsync(tenantId, auth0Sub, cancellationToken);
+        if (access.IsFailure)
+        {
+            return Result.Failure<BusinessProfileResponse>(access.Error);
+        }
+
+        var validation = PublicPageConfigMapper.ValidatePolicies(request);
+        if (validation.IsFailure)
+        {
+            return Result.Failure<BusinessProfileResponse>(validation.Error);
+        }
+
+        var (tenant, profile) = access.Value!;
+        PublicPageConfigMapper.ApplyPolicies(profile, request);
+        profile.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await InvalidateProfileCachesAsync(tenantId, cancellationToken);
+
+        var locations = await dbContext.BusinessLocations
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId && x.IsActive)
+            .OrderByDescending(x => x.IsPrimary)
+            .ThenBy(x => x.Name)
+            .ToListAsync(cancellationToken);
+
+        return Result.Success(await MapProfileAsync(
+            tenant,
+            profile,
+            locations,
+            await GetDocumentsAsync(tenantId, cancellationToken),
+            fileStorage,
+            businessCapabilitiesService,
+            cancellationToken));
+    }
+
     public async Task<Result> SubmitVerificationAsync(
         Guid tenantId,
         SubmitVerificationRequest request,
@@ -624,7 +665,8 @@ public sealed class BusinessOnboardingService(
             SubscriptionTierMapping.ToApiValue(tenant.SubscriptionTier),
             SubscriptionEntitlements.ForTier(tenant.SubscriptionTier),
             PublicPageConfigMapper.FromProfile(profile, logoImageUrl),
-            galleryImages);
+            galleryImages,
+            PublicPageConfigMapper.PoliciesFromProfile(profile));
     }
 
     private async Task InvalidateProfileCachesAsync(Guid tenantId, CancellationToken cancellationToken)

@@ -44,6 +44,8 @@ internal sealed class SchedulingTimeZone(TimeZoneInfo timeZone, string timeZoneI
     public DateTimeOffset ToUtc(DateTime date, TimeOnly time)
     {
         var local = DateTime.SpecifyKind(date.Date + time.ToTimeSpan(), DateTimeKind.Unspecified);
-        return new DateTimeOffset(local, timeZone.GetUtcOffset(local));
+        var withOffset = new DateTimeOffset(local, timeZone.GetUtcOffset(local));
+        // Npgsql timestamptz only accepts UTC (offset 0).
+        return withOffset.ToUniversalTime();
     }
 }

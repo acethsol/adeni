@@ -2,7 +2,7 @@ import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { ActivatedRoute } from "@angular/router";
 import type { AdminMarket } from "@adeni/shared";
-import { PortalPageComponent } from "@adeni/ui";
+import { AdeniFeedbackService, PortalPageComponent } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 
 @Component({
@@ -15,6 +15,7 @@ import { AdminApiService } from "../../core/services/admin-api.service";
 export class AdminMarketsComponent implements OnInit {
   private readonly api = inject(AdminApiService);
   private readonly route = inject(ActivatedRoute);
+  private readonly feedback = inject(AdeniFeedbackService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -44,23 +45,34 @@ export class AdminMarketsComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const items = await this.api.withAuthorizedClient((c) => c.getAdminMarkets());
-      this.markets.set(items);
+      await this.feedback.runLoading(async () => {
+        const items = await this.api.withAuthorizedClient((c) => c.getAdminMarkets());
+        this.markets.set(items);
+      }, "Loading markets…", "Fetching market catalog");
     } catch {
       this.error.set("Could not load markets.");
+      this.feedback.error("Could not load markets.");
     } finally {
       this.loading.set(false);
     }
   }
 
   async toggleLive(market: AdminMarket): Promise<void> {
+    const nextLive = !market.isLive;
     try {
-      await this.api.withAuthorizedClient((c) =>
-        c.setAdminMarketLive(market.id, !market.isLive),
+      await this.feedback.runLoading(
+        () => this.api.withAuthorizedClient((c) => c.setAdminMarketLive(market.id, nextLive)),
+        nextLive ? "Going live…" : "Taking offline…",
+        market.name,
       );
       await this.load();
+      this.feedback.success(
+        `${market.name} is now ${nextLive ? "live" : "offline"}.`,
+        "Market updated",
+      );
     } catch {
       this.error.set("Could not update market.");
+      this.feedback.error("Could not update market.");
     }
   }
 }

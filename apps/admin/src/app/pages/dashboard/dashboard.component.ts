@@ -7,6 +7,7 @@ import {
   type PendingBusiness,
   type SubscriptionTier,
 } from "@adeni/shared";
+import { AdeniFeedbackService } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 
 type LoadState = {
@@ -37,6 +38,7 @@ const TIER_LABELS: Record<SubscriptionTier, string> = {
 })
 export class AdminDashboardComponent implements OnInit {
   private readonly api = inject(AdminApiService);
+  private readonly feedback = inject(AdeniFeedbackService);
 
   readonly loading = signal(true);
   readonly data = signal<LoadState | null>(null);
@@ -118,26 +120,29 @@ export class AdminDashboardComponent implements OnInit {
   async load(): Promise<void> {
     this.loading.set(true);
     try {
-      const next = await this.api.withAuthorizedClient(async (client) => {
-        const [pending, businesses, markets] = await Promise.all([
-          client.getPendingBusinesses().then(
-            (items) => items,
-            () => null,
-          ),
-          client.getAdminBusinesses().then(
-            (items) => items,
-            () => null,
-          ),
-          client.getAdminMarkets().then(
-            (items) => items,
-            () => null,
-          ),
-        ]);
-        return { pending, businesses, markets };
-      });
-      this.data.set(next);
+      await this.feedback.runLoading(async () => {
+        const next = await this.api.withAuthorizedClient(async (client) => {
+          const [pending, businesses, markets] = await Promise.all([
+            client.getPendingBusinesses().then(
+              (items) => items,
+              () => null,
+            ),
+            client.getAdminBusinesses().then(
+              (items) => items,
+              () => null,
+            ),
+            client.getAdminMarkets().then(
+              (items) => items,
+              () => null,
+            ),
+          ]);
+          return { pending, businesses, markets };
+        });
+        this.data.set(next);
+      }, "Loading dashboard…", "Fetching queue, businesses, and markets");
     } catch {
       this.data.set({ pending: null, businesses: null, markets: null });
+      this.feedback.error("Could not load admin dashboard.");
     } finally {
       this.loading.set(false);
     }

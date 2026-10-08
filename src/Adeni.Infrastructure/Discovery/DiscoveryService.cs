@@ -757,6 +757,7 @@ public sealed class DiscoveryService(
             business.tenant.VerifiedAt,
             completionRate,
             Adeni.Application.Tenancy.PublicPageConfigMapper.FromProfile(business.profile, logoImageUrl),
-            imageUrls);
+            imageUrls,
+            Adeni.Application.Tenancy.PublicPageConfigMapper.PoliciesFromProfileOrNull(business.profile));
     }
 }

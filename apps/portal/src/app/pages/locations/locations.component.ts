@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import type { BusinessLocation, MarketConfig } from "@adeni/shared";
-import { PortalPageComponent } from "@adeni/ui";
+import { AdeniConfirmService, PortalPageComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -24,6 +24,7 @@ type LocationDraft = {
 })
 export class LocationsComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
+  private readonly confirmDialog = inject(AdeniConfirmService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -128,7 +129,15 @@ export class LocationsComponent implements OnInit {
   }
 
   async remove(loc: BusinessLocation): Promise<void> {
-    if (!confirm(`Delete location ${loc.slug}?`)) return;
+    const ok = await this.confirmDialog.confirm({
+      title: "Delete location?",
+      message: `Delete “${loc.name || loc.slug}”? It will no longer appear on your public page.`,
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!ok) {
+      return;
+    }
     this.busy.set(loc.id);
     try {
       await this.api.withAuthorizedClient((c) => c.deactivateTenantLocation(loc.id));

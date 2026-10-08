@@ -18,7 +18,8 @@ public static partial class PublicPageConfigMapper
                 profile.PublicPageShowServices,
                 profile.PublicPageShowReviews,
                 profile.PublicPageShowVisit,
-                Book: true));
+                profile.PublicPageShowBook,
+                profile.PublicPageShowPolicies));
 
     public static Result Validate(UpdatePublicPageRequest request)
     {
@@ -38,11 +39,6 @@ public static partial class PublicPageConfigMapper
             return Result.Failure(ErrorCodes.PublicPageSectionsRequiredError());
         }
 
-        if (!sections.Book)
-        {
-            return Result.Failure(ErrorCodes.PublicPageSectionsRequiredError());
-        }
-
         return Result.Success();
     }
 
@@ -54,6 +50,8 @@ public static partial class PublicPageConfigMapper
         profile.PublicPageShowServices = request.Sections.Services;
         profile.PublicPageShowReviews = request.Sections.Reviews;
         profile.PublicPageShowVisit = request.Sections.Visit;
+        profile.PublicPageShowBook = request.Sections.Book;
+        profile.PublicPageShowPolicies = request.Sections.Policies;
 
         if (request.LogoImageKey is null)
         {
@@ -62,6 +60,66 @@ public static partial class PublicPageConfigMapper
 
         var key = request.LogoImageKey.Trim();
         profile.LogoImageKey = key.Length == 0 ? null : key;
+    }
+
+    public const int MaxPolicyTextLength = 8000;
+
+    public static BusinessPoliciesDto PoliciesFromProfile(BusinessProfile profile) =>
+        new(
+            profile.PolicyBookingText,
+            profile.PolicyPaymentText,
+            profile.PolicyCancellationText,
+            profile.PolicyTermsText,
+            profile.RequirePolicyAcceptance);
+
+    public static BusinessPoliciesDto? PoliciesFromProfileOrNull(BusinessProfile profile)
+    {
+        var dto = PoliciesFromProfile(profile);
+        if (string.IsNullOrWhiteSpace(dto.Booking)
+            && string.IsNullOrWhiteSpace(dto.Payment)
+            && string.IsNullOrWhiteSpace(dto.Cancellation)
+            && string.IsNullOrWhiteSpace(dto.Terms)
+            && !dto.RequireAcceptance)
+        {
+            return null;
+        }
+
+        return dto;
+    }
+
+    public static Result ValidatePolicies(UpdateBusinessPoliciesRequest request)
+    {
+        if (ExceedsPolicyLength(request.Booking)
+            || ExceedsPolicyLength(request.Payment)
+            || ExceedsPolicyLength(request.Cancellation)
+            || ExceedsPolicyLength(request.Terms))
+        {
+            return Result.Failure(Error.Validation($"Each policy field must be at most {MaxPolicyTextLength} characters."));
+        }
+
+        return Result.Success();
+    }
+
+    public static void ApplyPolicies(BusinessProfile profile, UpdateBusinessPoliciesRequest request)
+    {
+        profile.PolicyBookingText = NormalizePolicyText(request.Booking);
+        profile.PolicyPaymentText = NormalizePolicyText(request.Payment);
+        profile.PolicyCancellationText = NormalizePolicyText(request.Cancellation);
+        profile.PolicyTermsText = NormalizePolicyText(request.Terms);
+        profile.RequirePolicyAcceptance = request.RequireAcceptance;
+    }
+
+    private static bool ExceedsPolicyLength(string? text) =>
+        text is not null && text.Length > MaxPolicyTextLength;
+
+    private static string? NormalizePolicyText(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        return text.Trim();
     }
 
     public static bool IsValidAccent(string? accent)

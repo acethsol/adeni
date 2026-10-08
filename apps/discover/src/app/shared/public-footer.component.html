@@ -56,18 +56,26 @@
         <p>{{ label("footer.businessLede") }}</p>
         <div class="business-actions">
           @if (portalRegisterUrl(); as registerUrl) {
-            <a class="cds-btn cds-btn--primary business-cta" [href]="registerUrl">{{
-              label("footer.links.listBusiness")
-            }}</a>
+            <a
+              class="cds-btn cds-btn--primary business-cta"
+              [href]="registerUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              >{{ label("footer.links.listBusiness") }}</a
+            >
           } @else {
             <a class="cds-btn cds-btn--primary business-cta" routerLink="/discover">{{
               label("footer.links.listBusiness")
             }}</a>
           }
           @if (portalUrl(); as portal) {
-            <a class="cds-btn cds-btn--tertiary business-ghost" [href]="portal">{{
-              label("footer.links.businessPortal")
-            }}</a>
+            <a
+              class="cds-btn cds-btn--tertiary business-ghost"
+              [href]="portal"
+              target="_blank"
+              rel="noopener noreferrer"
+              >{{ label("footer.links.businessPortal") }}</a
+            >
           }
         </div>
       </aside>

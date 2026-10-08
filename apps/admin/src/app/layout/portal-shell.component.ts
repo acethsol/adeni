@@ -9,7 +9,13 @@ import {
   type LocaleId,
   type PendingBusiness,
 } from "@adeni/shared";
-import { AdeniBrandLogoComponent, AdeniLocaleService } from "@adeni/ui";
+import {
+  AdeniBrandLogoComponent,
+  AdeniConfirmHostComponent,
+  AdeniGlobalLoadingPanelComponent,
+  AdeniLocaleService,
+  AdeniToastHostComponent,
+} from "@adeni/ui";
 import { filter, map, startWith } from "rxjs";
 import { ADMIN_NAV, type AdminNavIconName, type AdminNavItem } from "../core/admin-nav";
 import { signOutAdminDev } from "../core/admin-dev-session";
@@ -144,7 +150,16 @@ function readSidebarCollapsed(): boolean {
 @Component({
   selector: "app-admin-shell",
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, AdeniBrandLogoComponent, AdminNavIconComponent],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    AdeniBrandLogoComponent,
+    AdeniGlobalLoadingPanelComponent,
+    AdeniToastHostComponent,
+    AdeniConfirmHostComponent,
+    AdminNavIconComponent,
+  ],
   templateUrl: "./portal-shell.component.html",
   styleUrl: "./portal-shell.component.scss",
 })

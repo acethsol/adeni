@@ -14,7 +14,9 @@ public sealed record ServiceOfferingResponse(
     bool IsActive,
     string? CategorySlug = null,
     string? CatalogServiceId = null,
-    string BookingDeliveryType = "appointment");
+    string BookingDeliveryType = "appointment",
+    Guid? MenuGroupId = null,
+    int SortOrder = 0);
 
 public sealed record CreateServiceOfferingRequest(
     string Name,
@@ -25,7 +27,9 @@ public sealed record CreateServiceOfferingRequest(
     string PricingType = "fixed",
     string? CategorySlug = null,
     string? CatalogServiceId = null,
-    string BookingDeliveryType = "appointment");
+    string BookingDeliveryType = "appointment",
+    Guid? MenuGroupId = null,
+    int SortOrder = 0);
 
 public sealed record UpdateServiceOfferingRequest(
     string Name,
@@ -37,15 +41,21 @@ public sealed record UpdateServiceOfferingRequest(
     bool IsActive,
     string? CategorySlug = null,
     string? CatalogServiceId = null,
-    string BookingDeliveryType = "appointment");
+    string BookingDeliveryType = "appointment",
+    Guid? MenuGroupId = null,
+    int SortOrder = 0);
+
+public sealed record ServiceCatalogListResponse(
+    IReadOnlyList<ServiceOfferingResponse> Items,
+    IReadOnlyList<ServiceMenuGroupResponse> Groups);
 
 public interface IServiceCatalogService
 {
-    Task<IReadOnlyList<ServiceOfferingResponse>> ListForTenantAsync(
+    Task<ServiceCatalogListResponse> ListForTenantAsync(
         Guid tenantId,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<ServiceOfferingResponse>> ListPublicBySlugAsync(
+    Task<ServiceCatalogListResponse> ListPublicBySlugAsync(
         string slug,
         CancellationToken cancellationToken = default);
 

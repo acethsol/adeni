@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute } from "@angular/router";
 import type { AdminCustomerSummary, CustomerDataExport } from "@adeni/shared";
-import { PortalPageComponent } from "@adeni/ui";
+import { AdeniConfirmService, AdeniFeedbackService, PortalPageComponent } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 
 @Component({
@@ -17,6 +17,8 @@ import { AdminApiService } from "../../core/services/admin-api.service";
 export class AdminCustomersComponent {
   private readonly api = inject(AdminApiService);
   private readonly route = inject(ActivatedRoute);
+  private readonly feedback = inject(AdeniFeedbackService);
+  private readonly confirmDialog = inject(AdeniConfirmService);
 
   email = "";
   readonly searching = signal(false);
@@ -46,12 +48,15 @@ export class AdminCustomersComponent {
     this.exportData.set(null);
 
     try {
-      const items = await this.api.withAuthorizedClient((c) =>
-        c.searchAdminCustomers(this.email.trim()),
-      );
-      this.customers.set(items);
+      await this.feedback.runLoading(async () => {
+        const items = await this.api.withAuthorizedClient((c) =>
+          c.searchAdminCustomers(this.email.trim()),
+        );
+        this.customers.set(items);
+      }, "Searching customers…", this.email.trim() || "All matches");
     } catch {
       this.error.set("Could not search customers.");
+      this.feedback.error("Could not search customers.");
       this.customers.set([]);
     } finally {
       this.searching.set(false);
@@ -62,11 +67,17 @@ export class AdminCustomersComponent {
     this.busyId.set(customerId);
     this.error.set(null);
     try {
-      const data = await this.api.withAuthorizedClient((c) => c.exportAdminCustomer(customerId));
+      const data = await this.feedback.runLoading(
+        () => this.api.withAuthorizedClient((c) => c.exportAdminCustomer(customerId)),
+        "Exporting…",
+        "Building customer data package",
+      );
       this.exportData.set(data);
       this.message.set("Export loaded below — save JSON for your records.");
+      this.feedback.success("Customer export is ready below.", "Export ready");
     } catch {
       this.error.set("Export failed.");
+      this.feedback.error("Export failed.");
     } finally {
       this.busyId.set(null);
     }
@@ -82,21 +93,29 @@ export class AdminCustomersComponent {
     a.download = `adeni-customer-${data.customerId}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    this.feedback.info("JSON download started.", "Download");
   }
 
   async erase(customer: AdminCustomerSummary): Promise<void> {
-    if (
-      !confirm(
-        `Initiate erasure for ${customer.name || customer.email || "this customer"}? PII will be cleared and cannot be recovered.`,
-      )
-    ) {
+    const label = customer.name || customer.email || "this customer";
+    const ok = await this.confirmDialog.confirm({
+      title: "Initiate erasure?",
+      message: `Erase PII for ${label}? This cannot be recovered.`,
+      confirmLabel: "Erase",
+      danger: true,
+    });
+    if (!ok) {
       return;
     }
 
     this.busyId.set(customer.id);
     this.error.set(null);
     try {
-      await this.api.withAuthorizedClient((c) => c.initiateAdminCustomerDelete(customer.id));
+      await this.feedback.runLoading(
+        () => this.api.withAuthorizedClient((c) => c.initiateAdminCustomerDelete(customer.id)),
+        "Initiating erasure…",
+        customer.email ?? customer.name ?? customer.id,
+      );
       this.customers.update((list) =>
         list.map((item) =>
           item.id === customer.id
@@ -110,8 +129,10 @@ export class AdminCustomersComponent {
         ),
       );
       this.message.set("Erasure initiated.");
+      this.feedback.success("Customer PII erasure was initiated.", "Erasure started");
     } catch {
       this.error.set("Could not initiate erasure.");
+      this.feedback.error("Could not initiate erasure.");
     } finally {
       this.busyId.set(null);
     }

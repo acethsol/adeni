@@ -241,6 +241,36 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                     b.ToTable("reviews", "booking");
                 });
 
+            modelBuilder.Entity("Adeni.Domain.Booking.ServiceMenuGroup", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "SortOrder");
+
+                    b.ToTable("service_menu_groups", "booking");
+                });
+
             modelBuilder.Entity("Adeni.Domain.Booking.ServiceOffering", b =>
                 {
                     b.Property<Guid>("Id")
@@ -276,6 +306,9 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<Guid?>("MenuGroupId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -288,6 +321,11 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                     b.Property<int>("PricingType")
                         .HasColumnType("integer");
 
+                    b.Property<int>("SortOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
 
@@ -296,7 +334,11 @@ namespace Adeni.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("MenuGroupId");
+
                     b.HasIndex("TenantId", "IsActive");
+
+                    b.HasIndex("TenantId", "MenuGroupId", "SortOrder");
 
                     b.ToTable("service_offerings", "booking");
                 });
@@ -772,6 +814,22 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
+                    b.Property<string>("PolicyBookingText")
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)");
+
+                    b.Property<string>("PolicyCancellationText")
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)");
+
+                    b.Property<string>("PolicyPaymentText")
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)");
+
+                    b.Property<string>("PolicyTermsText")
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)");
+
                     b.Property<string>("PublicPageAccentColor")
                         .HasMaxLength(7)
                         .HasColumnType("character varying(7)");
@@ -780,6 +838,16 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
+
+                    b.Property<bool>("PublicPageShowBook")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("PublicPageShowPolicies")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<bool>("PublicPageShowReviews")
                         .ValueGeneratedOnAdd()
@@ -802,6 +870,9 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)")
                         .HasDefaultValue("studio");
+
+                    b.Property<bool>("RequirePolicyAcceptance")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -929,6 +1000,16 @@ namespace Adeni.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("ServiceOffering");
+                });
+
+            modelBuilder.Entity("Adeni.Domain.Booking.ServiceOffering", b =>
+                {
+                    b.HasOne("Adeni.Domain.Booking.ServiceMenuGroup", "MenuGroup")
+                        .WithMany()
+                        .HasForeignKey("MenuGroupId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("MenuGroup");
                 });
 
             modelBuilder.Entity("Adeni.Domain.Identity.BusinessUser", b =>

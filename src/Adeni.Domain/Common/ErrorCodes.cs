@@ -7,6 +7,7 @@ public static class ErrorCodes
     public const string SlotExpired = "booking.slot_expired";
     public const string SlotUnavailable = "booking.slot_unavailable";
     public const string SlotLocked = "booking.slot_locked";
+    public const string BookingClosed = "booking.closed";
     public const string AuthRequired = "auth.required";
     public const string CustomerAuthRequired = "auth.customer_required";
     public const string BusinessAccessDenied = "auth.business_access_denied";
@@ -31,6 +32,9 @@ public static class ErrorCodes
 
     public static Error SlotLockedError() =>
         new(SlotLocked, "That time slot is being booked. Try again.");
+
+    public static Error BookingClosedError() =>
+        new(BookingClosed, "This business is not accepting online bookings right now.");
 
     public static Error AuthRequiredError() =>
         new(AuthRequired, "Authentication is required.");

@@ -1,10 +1,46 @@
 <app-portal-page
   title="Services"
-  description="What customers book — pick from Adeni templates or create your own."
+  description="What customers book — organize into collections, or create your own."
 >
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
+
+  <section class="card groups-card">
+    <h3>Collections</h3>
+    <p class="muted">
+      Group services under headings on your public menu (e.g. Hair, Nails, Spa).
+    </p>
+    <div class="group-add">
+      <input
+        type="text"
+        placeholder="New collection name"
+        [ngModel]="newGroupName()"
+        (ngModelChange)="newGroupName.set($event)"
+        maxlength="120"
+      />
+      <button type="button" class="btn" [disabled]="busy() === 'group'" (click)="addGroup()">
+        Add collection
+      </button>
+    </div>
+    @if (groups().length > 0) {
+      <ul class="plain group-list">
+        @for (group of groups(); track group.id) {
+          <li class="list-row">
+            <strong>{{ group.name }}</strong>
+            <button
+              type="button"
+              class="btn btn-danger"
+              [disabled]="busy() === group.id"
+              (click)="removeGroup(group)"
+            >
+              Remove
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </section>
 
   <div class="toolbar">
     <button type="button" class="btn btn-primary" (click)="openCreate()">Add service</button>
@@ -51,6 +87,21 @@
           <input type="number" min="1" [(ngModel)]="draft.durationMinutes" />
         </div>
       </div>
+      <div class="row">
+        <div class="field">
+          <label>Collection</label>
+          <select [(ngModel)]="draft.menuGroupId">
+            <option value="">Ungrouped</option>
+            @for (group of groups(); track group.id) {
+              <option [value]="group.id">{{ group.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label>Sort order</label>
+          <input type="number" [(ngModel)]="draft.sortOrder" />
+        </div>
+      </div>
       <div class="field">
         <label>Booking type</label>
         <select [(ngModel)]="draft.bookingDeliveryType">
@@ -81,7 +132,8 @@
               <strong>{{ service.name }}</strong>
               <p class="muted">
                 {{ formatPrice(service.priceAmount, service.currency) }} ·
-                {{ service.durationMinutes }} min
+                {{ service.durationMinutes }} min ·
+                {{ groupName(service.menuGroupId) }}
                 @if (service.categorySlug) {
                   · {{ categoryLabel("en", service.categorySlug) }}
                 }

@@ -10,24 +10,26 @@ import {
   PendingTasks,
   signal,
   TransferState,
+  viewChild,
 } from "@angular/core";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import type {
   PublicBusinessProfile,
   PublicReviewItem,
+  ServiceMenuGroup,
   ServiceOffering,
 } from "@adeni/shared";
 import {
   DEFAULT_PUBLIC_PAGE_CONFIG,
   discoveryCtaLabel,
   formatPrice,
-  formatRatingSummary,
   getCategoryLabel,
   getCategoryVisual,
   resolveBusinessCoverImage,
   resolveBusinessImageUrls,
   resolvePublicPageTemplateId,
   shouldShowQuoteFlow,
+  t,
 } from "@adeni/shared";
 import { AdeniCarbonIconComponent, AdeniLocaleService } from "@adeni/ui";
 import {
@@ -46,8 +48,15 @@ const BUSINESS_STATE_KEY = makeStateKey<{
   slug: string;
   profile: PublicBusinessProfile;
   services: ServiceOffering[];
+  menuGroups: ServiceMenuGroup[];
   reviews: PublicReviewItem[];
 }>("discover-business-profile");
+
+type ServiceCollection = {
+  id: string;
+  name: string;
+  services: ServiceOffering[];
+};
 
 @Component({
   selector: "app-business-profile",
@@ -73,16 +82,24 @@ export class BusinessProfileComponent implements OnInit {
   private readonly transferState = inject(TransferState);
   private readonly pageLoading = inject(DiscoverLoadingService);
   private readonly injector = inject(Injector);
+  private readonly bookingPanel = viewChild(BookingPanelComponent);
+  private bookRailPulseTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly profile = signal<PublicBusinessProfile | null>(null);
   readonly services = signal<ServiceOffering[]>([]);
+  readonly menuGroups = signal<ServiceMenuGroup[]>([]);
   readonly reviews = signal<PublicReviewItem[]>([]);
   readonly bookingEnabled = signal(false);
   readonly linkCopied = signal(false);
   readonly whatsappUrl = signal<string | null>(null);
   readonly galleryIndex = signal(0);
+  readonly servicesExpanded = signal(false);
+  readonly serviceSearch = signal("");
+  readonly bookRailPulse = signal(false);
+
+  private static readonly SERVICES_PREVIEW = 6;
 
   readonly locale = this.localeService.locale;
   readonly coverFor = resolveBusinessCoverImage;
@@ -117,17 +134,110 @@ export class BusinessProfileComponent implements OnInit {
     return p ? getCategoryLabel(this.locale(), p.categorySlug) : "";
   });
 
-  readonly ctaLabel = computed(() => discoveryCtaLabel(this.profile()?.discoveryCta));
+  readonly ctaLabel = computed(() =>
+    discoveryCtaLabel(this.profile()?.discoveryCta, this.locale()),
+  );
 
-  readonly ratingLine = computed(() => {
-    const p = this.profile();
-    return p ? formatRatingSummary(p.ratingAvg, p.reviewCount) : "";
-  });
+  label(key: string, vars?: Record<string, string | number>): string {
+    return t(this.locale(), key, vars);
+  }
 
   readonly isNew = computed(() => {
     const p = this.profile();
     return Boolean(p && (p.reviewCount ?? 0) === 0);
   });
+
+  readonly directionsUrl = computed(() => {
+    const p = this.profile();
+    if (!p || p.latitude == null || p.longitude == null) {
+      return null;
+    }
+    const q = encodeURIComponent(`${p.latitude},${p.longitude}`);
+    return `https://www.google.com/maps/dir/?api=1&destination=${q}`;
+  });
+
+  readonly mapsUrl = computed(() => {
+    const p = this.profile();
+    if (!p) {
+      return null;
+    }
+    if (p.latitude != null && p.longitude != null) {
+      return `https://www.google.com/maps/search/?api=1&query=${p.latitude},${p.longitude}`;
+    }
+    const q = encodeURIComponent(`${p.addressLine}, ${p.area}`);
+    return `https://www.google.com/maps/search/?api=1&query=${q}`;
+  });
+
+  readonly menuServices = computed(() => {
+    const items = this.services();
+    const active = items.filter((s) => s.isActive !== false);
+    const base = active.length > 0 ? active : items;
+    const q = this.serviceSearch().trim().toLowerCase();
+    if (!q) {
+      return base;
+    }
+    return base.filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) ||
+        (s.description?.toLowerCase().includes(q) ?? false),
+    );
+  });
+
+  readonly serviceCollections = computed((): ServiceCollection[] => {
+    const items = this.menuServices();
+    const groups = [...this.menuGroups()].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
+    const collections: ServiceCollection[] = [];
+    const assigned = new Set<string>();
+
+    for (const group of groups) {
+      const services = items.filter((s) => s.menuGroupId === group.id);
+      if (services.length === 0) {
+        continue;
+      }
+      for (const s of services) {
+        assigned.add(s.id);
+      }
+      collections.push({ id: group.id, name: group.name, services });
+    }
+
+    const ungrouped = items.filter((s) => !assigned.has(s.id));
+    if (ungrouped.length > 0) {
+      collections.push({
+        id: "__other",
+        name: groups.length > 0 ? "Other services" : "Services",
+        services: ungrouped,
+      });
+    }
+
+    return collections;
+  });
+
+  readonly visibleCollections = computed((): ServiceCollection[] => {
+    const collections = this.serviceCollections();
+    if (this.servicesExpanded()) {
+      return collections;
+    }
+
+    let remaining = BusinessProfileComponent.SERVICES_PREVIEW;
+    const visible: ServiceCollection[] = [];
+    for (const collection of collections) {
+      if (remaining <= 0) {
+        break;
+      }
+      const slice = collection.services.slice(0, remaining);
+      remaining -= slice.length;
+      visible.push({ ...collection, services: slice });
+    }
+    return visible;
+  });
+
+  readonly hiddenServiceCount = computed(() =>
+    Math.max(
+      0,
+      this.menuServices().length -
+        this.visibleCollections().reduce((n, c) => n + c.services.length, 0),
+    ),
+  );
 
   readonly tagline = computed(() => {
     const p = this.profile();
@@ -156,10 +266,11 @@ export class BusinessProfileComponent implements OnInit {
       sections: {
         ...DEFAULT_PUBLIC_PAGE_CONFIG.sections,
         ...page.sections,
-        book: true,
       },
     };
   });
+
+  readonly bookingOpen = computed(() => this.sections().book !== false);
 
   readonly templateId = computed(() => this.publicPage().templateId);
 
@@ -170,6 +281,22 @@ export class BusinessProfileComponent implements OnInit {
   readonly logoUrl = computed(() => this.publicPage().logoImageUrl ?? null);
 
   readonly sections = computed(() => this.publicPage().sections);
+
+  readonly showPolicies = computed(() => {
+    if (!this.sections().policies) {
+      return false;
+    }
+    const policies = this.profile()?.policies;
+    if (!policies) {
+      return false;
+    }
+    return Boolean(
+      policies.booking?.trim() ||
+        policies.payment?.trim() ||
+        policies.cancellation?.trim() ||
+        policies.terms?.trim(),
+    );
+  });
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
@@ -192,6 +319,44 @@ export class BusinessProfileComponent implements OnInit {
     }
     el.scrollIntoView({ behavior: "smooth", block: "start" });
     history.replaceState(null, "", `#${sectionId}`);
+    if (sectionId === "book") {
+      this.pulseBookRail();
+    }
+  }
+
+  bookService(service: ServiceOffering, event?: Event): void {
+    event?.preventDefault();
+    if (!this.bookingOpen()) {
+      this.scrollToSection("visit", event);
+      return;
+    }
+    this.scrollToSection("book", event);
+    const panel = this.bookingPanel();
+    if (panel) {
+      void panel.selectService(service);
+      return;
+    }
+    // Panel may not be ready yet (quote flow / first paint) — retry once.
+    afterNextRender(
+      () => {
+        void this.bookingPanel()?.selectService(service);
+      },
+      { injector: this.injector },
+    );
+  }
+
+  private pulseBookRail(): void {
+    if (this.bookRailPulseTimer) {
+      clearTimeout(this.bookRailPulseTimer);
+    }
+    this.bookRailPulse.set(false);
+    this.bookRailPulseTimer = setTimeout(() => {
+      this.bookRailPulse.set(true);
+      this.bookRailPulseTimer = setTimeout(() => {
+        this.bookRailPulse.set(false);
+        this.bookRailPulseTimer = null;
+      }, 1100);
+    }, 16);
   }
 
   prevGalleryImage(event: Event): void {
@@ -235,6 +400,7 @@ export class BusinessProfileComponent implements OnInit {
     if (cached?.slug === slug) {
       this.profile.set(cached.profile);
       this.services.set(cached.services);
+      this.menuGroups.set(cached.menuGroups ?? []);
       this.reviews.set(cached.reviews);
       this.loading.set(false);
       this.transferState.remove(BUSINESS_STATE_KEY);
@@ -257,21 +423,23 @@ export class BusinessProfileComponent implements OnInit {
     const client = this.api.createPublicClient();
 
     try {
-      const [profile, services, reviews] = await Promise.all([
+      const [profile, catalog, reviews] = await Promise.all([
         client.getBusinessProfile(slug),
-        client.getBusinessServices(slug).catch(() => [] as ServiceOffering[]),
+        client.getBusinessServiceCatalog(slug).catch(() => ({ items: [] as ServiceOffering[], groups: [] as ServiceMenuGroup[] })),
         client
           .getBusinessReviews(slug, 1, 6)
           .then((r) => r.items)
           .catch(() => [] as PublicReviewItem[]),
       ]);
       this.profile.set(profile);
-      this.services.set(services);
+      this.services.set(catalog.items);
+      this.menuGroups.set(catalog.groups);
       this.reviews.set(reviews);
       this.transferState.set(BUSINESS_STATE_KEY, {
         slug,
         profile,
-        services,
+        services: catalog.items,
+        menuGroups: catalog.groups,
         reviews,
       });
       this.applySeo(profile, slug);
@@ -281,6 +449,7 @@ export class BusinessProfileComponent implements OnInit {
       this.error.set("Business not found or API unavailable.");
       this.profile.set(null);
       this.services.set([]);
+      this.menuGroups.set([]);
       this.reviews.set([]);
     } finally {
       this.loading.set(false);

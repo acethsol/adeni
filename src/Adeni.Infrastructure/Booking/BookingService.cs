@@ -54,6 +54,11 @@ public sealed class BookingService(
             return Result.Failure<BookingResponse>(Error.NotFound("Business"));
         }
 
+        if (profile?.PublicPageShowBook == false)
+        {
+            return Result.Failure<BookingResponse>(ErrorCodes.BookingClosedError());
+        }
+
         var entitlementCheck = await entitlementsService.EnsureCanCreateBookingAsync(
             request.TenantId,
             tenant.SubscriptionTier,
@@ -107,7 +112,7 @@ public sealed class BookingService(
             }
         }
 
-        var lockKey = CacheKeys.SlotLock(request.TenantId, request.StartAt, service.Id);
+        var lockKey = CacheKeys.SlotLock(request.TenantId, request.StartAt.ToUniversalTime(), service.Id);
         var slotLock = await lockProvider.TryAcquireAsync(lockKey, CacheTtl.SlotLock, cancellationToken);
         if (slotLock is null)
         {
@@ -135,14 +140,15 @@ public sealed class BookingService(
 
             var now = DateTimeOffset.UtcNow;
             var autoConfirm = profile?.AutoConfirmBookings == true;
+            var startAtUtc = request.StartAt.ToUniversalTime();
             var booking = new BookingRecord
             {
                 Id = Guid.NewGuid(),
                 TenantId = request.TenantId,
                 ServiceOfferingId = service.Id,
                 CustomerId = customer.Id,
-                StartAt = request.StartAt,
-                EndAt = request.StartAt.AddMinutes(service.DurationMinutes),
+                StartAt = startAtUtc,
+                EndAt = startAtUtc.AddMinutes(service.DurationMinutes),
                 Status = autoConfirm ? BookingStatus.Confirmed : BookingStatus.Pending,
                 CustomerNotes = string.IsNullOrWhiteSpace(request.CustomerNotes)
                     ? null

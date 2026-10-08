@@ -11,10 +11,15 @@ import { CustomerApiService } from "../core/services/customer-api.service";
 import { HeroSearchPinService } from "../core/services/hero-search-pin.service";
 import { MarketContextService } from "../core/services/market-context.service";
 import { DiscoverySearchComponent } from "../shared/discovery-search.component";
-import { GlobalLoadingPanelComponent } from "../shared/global-loading-panel.component";
 import { MarketGeoSyncComponent } from "../shared/market-geo-sync.component";
 import { PublicFooterComponent } from "../shared/public-footer.component";
-import { AdeniBrandLockupComponent, AdeniCarbonIconComponent } from "@adeni/ui";
+import {
+  AdeniBrandLockupComponent,
+  AdeniCarbonIconComponent,
+  AdeniConfirmHostComponent,
+  AdeniGlobalLoadingPanelComponent,
+  AdeniToastHostComponent,
+} from "@adeni/ui";
 
 /** Header accent tones — Adeni brand purple/teal (Carbon UI chrome). */
 const MARKET_HEADER_TONES: Record<string, { h1: string; h2: string; h3: string }> = {
@@ -33,7 +38,9 @@ const MARKET_HEADER_TONES: Record<string, { h1: string; h2: string; h3: string }
     AdeniBrandLockupComponent,
     AdeniCarbonIconComponent,
     DiscoverySearchComponent,
-    GlobalLoadingPanelComponent,
+    AdeniGlobalLoadingPanelComponent,
+    AdeniToastHostComponent,
+    AdeniConfirmHostComponent,
     PublicFooterComponent,
   ],
   templateUrl: "./public-shell.component.html",

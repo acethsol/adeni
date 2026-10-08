@@ -12,26 +12,43 @@ public sealed class ServiceCatalogService(
     AdeniDbContext dbContext,
     ICategoryService categoryService) : IServiceCatalogService
 {
-    public async Task<IReadOnlyList<ServiceOfferingResponse>> ListForTenantAsync(
+    public async Task<ServiceCatalogListResponse> ListForTenantAsync(
         Guid tenantId,
         CancellationToken cancellationToken = default)
     {
+        var groups = await dbContext.ServiceMenuGroups
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId)
+            .OrderBy(x => x.SortOrder)
+            .ThenBy(x => x.Name)
+            .ToListAsync(cancellationToken);
+
+        var groupOrder = groups.ToDictionary(g => g.Id, g => g.SortOrder);
+
         var items = await dbContext.ServiceOfferings
             .AsNoTracking()
             .Where(x => x.TenantId == tenantId && x.IsActive)
-            .OrderBy(x => x.Name)
             .ToListAsync(cancellationToken);
 
-        return items.Select(ServiceOfferingMapper.ToResponse).ToArray();
+        var ordered = items
+            .OrderBy(x => x.MenuGroupId is { } gid && groupOrder.TryGetValue(gid, out var go) ? go : int.MaxValue)
+            .ThenBy(x => x.SortOrder)
+            .ThenBy(x => x.Name)
+            .Select(ServiceOfferingMapper.ToResponse)
+            .ToArray();
+
+        return new ServiceCatalogListResponse(
+            ordered,
+            groups.Select(g => new ServiceMenuGroupResponse(g.Id, g.Name, g.SortOrder)).ToArray());
     }
 
-    public async Task<IReadOnlyList<ServiceOfferingResponse>> ListPublicBySlugAsync(
+    public async Task<ServiceCatalogListResponse> ListPublicBySlugAsync(
         string slug,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(slug))
         {
-            return [];
+            return new ServiceCatalogListResponse([], []);
         }
 
         var normalizedSlug = slug.Trim().ToLowerInvariant();
@@ -42,7 +59,7 @@ public sealed class ServiceCatalogService(
 
         if (tenantId == Guid.Empty)
         {
-            return [];
+            return new ServiceCatalogListResponse([], []);
         }
 
         return await ListForTenantAsync(tenantId, cancellationToken);
@@ -62,6 +79,12 @@ public sealed class ServiceCatalogService(
         if (!await TenantExistsAsync(tenantId, cancellationToken))
         {
             return Result.Failure<ServiceOfferingResponse>(Error.NotFound("Tenant"));
+        }
+
+        var menuGroupValidation = await ValidateMenuGroupAsync(tenantId, request.MenuGroupId, cancellationToken);
+        if (menuGroupValidation.IsFailure)
+        {
+            return Result.Failure<ServiceOfferingResponse>(menuGroupValidation.Error);
         }
 
         var now = DateTimeOffset.UtcNow;
@@ -85,6 +108,8 @@ public sealed class ServiceCatalogService(
             CategorySlug = NormalizeOptionalCategorySlug(request.CategorySlug),
             CatalogServiceId = NormalizeOptionalId(request.CatalogServiceId),
             BookingDeliveryType = BookingDeliveryTypeMapping.FromApiValue(request.BookingDeliveryType),
+            MenuGroupId = request.MenuGroupId,
+            SortOrder = request.SortOrder,
             IsActive = true,
             CreatedAt = now,
             UpdatedAt = now
@@ -116,6 +141,12 @@ public sealed class ServiceCatalogService(
             return Result.Failure<ServiceOfferingResponse>(Error.NotFound("Service"));
         }
 
+        var menuGroupValidation = await ValidateMenuGroupAsync(tenantId, request.MenuGroupId, cancellationToken);
+        if (menuGroupValidation.IsFailure)
+        {
+            return Result.Failure<ServiceOfferingResponse>(menuGroupValidation.Error);
+        }
+
         entity.Name = request.Name.Trim();
         entity.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
         entity.PriceAmount = request.PriceAmount;
@@ -132,6 +163,8 @@ public sealed class ServiceCatalogService(
         entity.CategorySlug = NormalizeOptionalCategorySlug(request.CategorySlug);
         entity.CatalogServiceId = NormalizeOptionalId(request.CatalogServiceId);
         entity.BookingDeliveryType = BookingDeliveryTypeMapping.FromApiValue(request.BookingDeliveryType);
+        entity.MenuGroupId = request.MenuGroupId;
+        entity.SortOrder = request.SortOrder;
         entity.IsActive = request.IsActive;
         entity.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -160,6 +193,25 @@ public sealed class ServiceCatalogService(
 
     private async Task<bool> TenantExistsAsync(Guid tenantId, CancellationToken cancellationToken) =>
         await dbContext.Tenants.AsNoTracking().AnyAsync(t => t.Id == tenantId, cancellationToken);
+
+    private async Task<Result> ValidateMenuGroupAsync(
+        Guid tenantId,
+        Guid? menuGroupId,
+        CancellationToken cancellationToken)
+    {
+        if (menuGroupId is null)
+        {
+            return Result.Success();
+        }
+
+        var exists = await dbContext.ServiceMenuGroups
+            .AsNoTracking()
+            .AnyAsync(x => x.Id == menuGroupId && x.TenantId == tenantId, cancellationToken);
+
+        return exists
+            ? Result.Success()
+            : Result.Failure(Error.Validation("Menu collection was not found for this business."));
+    }
 
     private static Result ValidateCreate(CreateServiceOfferingRequest request)
     {
@@ -224,7 +276,9 @@ public sealed class ServiceCatalogService(
             request.PricingType,
             request.CategorySlug,
             request.CatalogServiceId,
-            request.BookingDeliveryType));
+            request.BookingDeliveryType,
+            request.MenuGroupId,
+            request.SortOrder));
 
     private string? NormalizeOptionalCategorySlug(string? slug) =>
         string.IsNullOrWhiteSpace(slug) ? null : categoryService.NormalizeSlug(slug);

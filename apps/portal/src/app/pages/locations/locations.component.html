@@ -32,9 +32,10 @@
           }
         </select>
       </div>
-      <label class="check">
-        <input type="checkbox" [(ngModel)]="draft.isPrimary" />
-        Primary location
+      <label class="cds-toggle">
+        <input type="checkbox" role="switch" [(ngModel)]="draft.isPrimary" />
+        <span class="cds-toggle__track" aria-hidden="true"></span>
+        <span class="cds-toggle__label">Primary location</span>
       </label>
       <div class="actions">
         <button type="button" class="btn" (click)="cancelForm()">Cancel</button>

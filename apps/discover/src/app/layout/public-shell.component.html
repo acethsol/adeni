@@ -16,7 +16,7 @@
       <a routerLink="/discover" routerLinkActive="active">Explore</a>
       <a routerLink="/my-bookings" routerLinkActive="active">My bookings</a>
       @if (portalUrl; as businessUrl) {
-        <a [href]="businessUrl">For businesses</a>
+        <a [href]="businessUrl" target="_blank" rel="noopener noreferrer">For businesses</a>
       }
     </nav>
 
@@ -89,5 +89,7 @@
     <router-outlet />
   </main>
   <app-public-footer />
-  <app-global-loading-panel />
+  <adeni-global-loading-panel />
+  <adeni-toast-host />
+  <adeni-confirm-host />
 </div>

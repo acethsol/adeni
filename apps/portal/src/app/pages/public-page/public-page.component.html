@@ -2,13 +2,6 @@
   title="Public page"
   description="Choose how your Adeni booking page looks to customers."
 >
-  @if (error()) {
-    <p class="error-banner">{{ error() }}</p>
-  }
-  @if (saved()) {
-    <p class="ok-banner">Saved. Customers will see this on your public page.</p>
-  }
-
   @if (loading()) {
     <p class="muted">Loading…</p>
   } @else if (profile(); as p) {
@@ -35,30 +28,169 @@
 
         <section class="card">
           <h3>Brand accent</h3>
-          <label class="check">
-            <input type="checkbox" [(ngModel)]="useAccent" />
-            Use a custom accent color
+          <label class="cds-toggle">
+            <input
+              type="checkbox"
+              role="switch"
+              [(ngModel)]="useAccent"
+              (ngModelChange)="markDirty()"
+            />
+            <span class="cds-toggle__track" aria-hidden="true"></span>
+            <span class="cds-toggle__label">Use a custom accent color</span>
           </label>
           @if (useAccent) {
             <div class="color-row">
-              <input type="color" [(ngModel)]="accentColor" />
-              <input class="hex" type="text" [(ngModel)]="accentColor" maxlength="7" />
+              <input type="color" [(ngModel)]="accentColor" (ngModelChange)="markDirty()" />
+              <input
+                class="hex"
+                type="text"
+                [(ngModel)]="accentColor"
+                (ngModelChange)="markDirty()"
+                maxlength="7"
+              />
             </div>
           }
         </section>
 
         <section class="card">
           <h3>Sections</h3>
-          <label class="check"><input type="checkbox" [(ngModel)]="showAbout" /> About</label>
-          <label class="check"><input type="checkbox" [(ngModel)]="showServices" /> Services</label>
-          <label class="check"><input type="checkbox" [(ngModel)]="showReviews" /> Reviews</label>
-          <label class="check"><input type="checkbox" [(ngModel)]="showVisit" /> Visit</label>
-          <p class="muted tiny">Booking is always on so customers can book or request a quote.</p>
+          <p class="muted tiny">
+            Compose what visitors see. You can leave Booking closed until the chair is ready — the page
+            still shows up.
+          </p>
+          <label class="cds-toggle">
+            <input
+              type="checkbox"
+              role="switch"
+              [(ngModel)]="showAbout"
+              (ngModelChange)="markDirty()"
+            />
+            <span class="cds-toggle__track" aria-hidden="true"></span>
+            <span class="cds-toggle__label">About</span>
+          </label>
+          <label class="cds-toggle">
+            <input
+              type="checkbox"
+              role="switch"
+              [(ngModel)]="showServices"
+              (ngModelChange)="markDirty()"
+            />
+            <span class="cds-toggle__track" aria-hidden="true"></span>
+            <span class="cds-toggle__label">Services</span>
+          </label>
+          <label class="cds-toggle">
+            <input
+              type="checkbox"
+              role="switch"
+              [(ngModel)]="showReviews"
+              (ngModelChange)="markDirty()"
+            />
+            <span class="cds-toggle__track" aria-hidden="true"></span>
+            <span class="cds-toggle__label">Reviews</span>
+          </label>
+          <label class="cds-toggle">
+            <input
+              type="checkbox"
+              role="switch"
+              [(ngModel)]="showVisit"
+              (ngModelChange)="markDirty()"
+            />
+            <span class="cds-toggle__track" aria-hidden="true"></span>
+            <span class="cds-toggle__label">Visit</span>
+          </label>
+          <div class="booking-callout" [class.off]="!showBook">
+            <label class="cds-toggle">
+              <input
+                type="checkbox"
+                role="switch"
+                [(ngModel)]="showBook"
+                (ngModelChange)="markDirty()"
+              />
+              <span class="cds-toggle__track" aria-hidden="true"></span>
+              <span class="cds-toggle__label">Booking</span>
+            </label>
+            <p class="status muted tiny">
+              @if (showBook) {
+                Live — customers can book or request a quote.
+              } @else {
+                Quiet mode — profile stays public; no online bookings.
+              }
+            </p>
+          </div>
+          <label class="cds-toggle">
+            <input
+              type="checkbox"
+              role="switch"
+              [(ngModel)]="showPolicies"
+              (ngModelChange)="markDirty()"
+            />
+            <span class="cds-toggle__track" aria-hidden="true"></span>
+            <span class="cds-toggle__label">Policies</span>
+          </label>
+        </section>
+
+        <section class="card">
+          <h3>Business policies</h3>
+          <p class="muted tiny">
+            Shown on your public page when Policies is enabled. Plain text — newlines are kept.
+          </p>
+          <div class="field">
+            <label for="policy-booking">Booking policy</label>
+            <textarea
+              id="policy-booking"
+              rows="3"
+              maxlength="8000"
+              [(ngModel)]="policyBooking"
+              (ngModelChange)="markDirty()"
+            ></textarea>
+          </div>
+          <div class="field">
+            <label for="policy-payment">Payment &amp; deposit policy</label>
+            <textarea
+              id="policy-payment"
+              rows="3"
+              maxlength="8000"
+              [(ngModel)]="policyPayment"
+              (ngModelChange)="markDirty()"
+            ></textarea>
+          </div>
+          <div class="field">
+            <label for="policy-cancel">Cancellation &amp; no-show</label>
+            <textarea
+              id="policy-cancel"
+              rows="3"
+              maxlength="8000"
+              [(ngModel)]="policyCancellation"
+              (ngModelChange)="markDirty()"
+            ></textarea>
+          </div>
+          <div class="field">
+            <label for="policy-terms">Terms of service</label>
+            <textarea
+              id="policy-terms"
+              rows="3"
+              maxlength="8000"
+              [(ngModel)]="policyTerms"
+              (ngModelChange)="markDirty()"
+            ></textarea>
+          </div>
+          <label class="cds-toggle">
+            <input
+              type="checkbox"
+              role="switch"
+              [(ngModel)]="requirePolicyAcceptance"
+              (ngModelChange)="markDirty()"
+            />
+            <span class="cds-toggle__track" aria-hidden="true"></span>
+            <span class="cds-toggle__label"
+              >Require customers to accept policies before confirming a booking</span
+            >
+          </label>
         </section>
 
         <div class="actions">
-          <button type="button" class="btn primary" [disabled]="saving()" (click)="save()">
-            {{ saving() ? "Saving…" : "Save public page" }}
+          <button type="button" class="btn primary" [disabled]="!canSave()" (click)="save()">
+            {{ saving() ? "Saving…" : dirty() ? "Save" : "Saved" }}
           </button>
           @if (liveUrl(); as url) {
             <a class="btn" [href]="url" target="_blank" rel="noopener">Open live page</a>
@@ -73,7 +205,11 @@
             <p class="eyebrow">{{ p.categorySlug }} · {{ p.locations[0]?.area ?? "Your area" }}</p>
             <h2>{{ p.businessName }}</h2>
             <p class="lead">{{ p.description || "Your public booking page on Adeni." }}</p>
-            <span class="cta">Book now</span>
+            @if (showBook) {
+              <span class="cta">Book now</span>
+            } @else {
+              <span class="cta muted-cta">Booking paused</span>
+            }
           </div>
           <div class="body">
             @if (showAbout) {
@@ -88,7 +224,14 @@
             @if (showVisit) {
               <p><strong>Visit</strong> — address and contact.</p>
             }
-            <p class="book"><strong>Book</strong> — always available.</p>
+            @if (showPolicies) {
+              <p><strong>Policies</strong> — booking, payment, cancellation, terms.</p>
+            }
+            @if (showBook) {
+              <p class="book"><strong>Book</strong> — customers can book online.</p>
+            } @else {
+              <p><strong>Booking</strong> — offline for now.</p>
+            }
           </div>
         </div>
       </aside>

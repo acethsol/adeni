@@ -47,6 +47,8 @@ public sealed class AdeniDbContext(
 
     public DbSet<ServiceOffering> ServiceOfferings => Set<ServiceOffering>();
 
+    public DbSet<ServiceMenuGroup> ServiceMenuGroups => Set<ServiceMenuGroup>();
+
     public DbSet<WeeklyAvailability> WeeklyAvailabilities => Set<WeeklyAvailability>();
 
     public DbSet<BookingRecord> Bookings => Set<BookingRecord>();
@@ -111,6 +113,12 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.PublicPageShowServices).HasDefaultValue(true);
             entity.Property(x => x.PublicPageShowReviews).HasDefaultValue(true);
             entity.Property(x => x.PublicPageShowVisit).HasDefaultValue(true);
+            entity.Property(x => x.PublicPageShowBook).HasDefaultValue(true);
+            entity.Property(x => x.PublicPageShowPolicies).HasDefaultValue(false);
+            entity.Property(x => x.PolicyBookingText).HasMaxLength(8000);
+            entity.Property(x => x.PolicyPaymentText).HasMaxLength(8000);
+            entity.Property(x => x.PolicyCancellationText).HasMaxLength(8000);
+            entity.Property(x => x.PolicyTermsText).HasMaxLength(8000);
             entity.Property(x => x.BusinessType).HasConversion<int>();
             entity.HasOne(x => x.Tenant).WithOne().HasForeignKey<BusinessProfile>(x => x.TenantId);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
@@ -180,6 +188,15 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.CorrelationId).HasMaxLength(64);
         });
 
+        modelBuilder.Entity<ServiceMenuGroup>(entity =>
+        {
+            entity.ToTable("service_menu_groups", "booking");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).HasMaxLength(120);
+            entity.HasIndex(x => new { x.TenantId, x.SortOrder });
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
         modelBuilder.Entity<ServiceOffering>(entity =>
         {
             entity.ToTable("service_offerings", "booking");
@@ -192,7 +209,13 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.CategorySlug).HasMaxLength(64);
             entity.Property(x => x.CatalogServiceId).HasMaxLength(64);
             entity.Property(x => x.BookingDeliveryType).HasConversion<int>();
+            entity.Property(x => x.SortOrder).HasDefaultValue(0);
             entity.HasIndex(x => new { x.TenantId, x.IsActive });
+            entity.HasIndex(x => new { x.TenantId, x.MenuGroupId, x.SortOrder });
+            entity.HasOne(x => x.MenuGroup)
+                .WithMany()
+                .HasForeignKey(x => x.MenuGroupId)
+                .OnDelete(DeleteBehavior.SetNull);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 

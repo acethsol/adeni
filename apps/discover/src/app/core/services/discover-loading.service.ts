@@ -1,31 +1,20 @@
-import { Injectable, computed, signal } from "@angular/core";
+import { Injectable, inject } from "@angular/core";
+import { AdeniFeedbackService } from "@adeni/ui";
 
+/** @deprecated Prefer AdeniFeedbackService directly — kept as a thin alias for discover pages. */
 @Injectable({ providedIn: "root" })
 export class DiscoverLoadingService {
-  private readonly depth = signal(0);
-  private readonly labelSignal = signal("Loading…");
-  private readonly detailSignal = signal("Just a moment");
-
-  readonly visible = computed(() => this.depth() > 0);
-  readonly label = this.labelSignal.asReadonly();
-  readonly detail = this.detailSignal.asReadonly();
+  private readonly feedback = inject(AdeniFeedbackService);
 
   show(label = "Loading…", detail = "Just a moment"): void {
-    this.labelSignal.set(label);
-    this.detailSignal.set(detail);
-    this.depth.update((n) => n + 1);
+    this.feedback.showLoading(label, detail);
   }
 
   hide(): void {
-    this.depth.update((n) => Math.max(0, n - 1));
+    this.feedback.hideLoading();
   }
 
   async run<T>(work: () => Promise<T>, label?: string, detail?: string): Promise<T> {
-    this.show(label, detail);
-    try {
-      return await work();
-    } finally {
-      this.hide();
-    }
+    return this.feedback.runLoading(work, label, detail);
   }
 }

@@ -56,6 +56,7 @@ export const publicPageSectionsSchema = z.object({
   reviews: z.boolean(),
   visit: z.boolean(),
   book: z.boolean(),
+  policies: z.boolean().optional().default(false),
 });
 
 export const publicPageConfigSchema = z.object({
@@ -90,13 +91,6 @@ export const updatePublicPageRequestSchema = z
         path: ["sections"],
       });
     }
-    if (!value.sections.book) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Booking section cannot be disabled.",
-        path: ["sections", "book"],
-      });
-    }
   });
 
 export type PublicPageSections = z.infer<typeof publicPageSectionsSchema>;
@@ -113,8 +107,31 @@ export const DEFAULT_PUBLIC_PAGE_CONFIG: PublicPageConfig = {
     reviews: true,
     visit: true,
     book: true,
+    policies: false,
   },
 };
+
+export const businessPoliciesSchema = z.object({
+  booking: z.string().max(8000).nullable().optional(),
+  payment: z.string().max(8000).nullable().optional(),
+  cancellation: z.string().max(8000).nullable().optional(),
+  terms: z.string().max(8000).nullable().optional(),
+  requireAcceptance: z.boolean().optional().default(false),
+});
+
+export type BusinessPolicies = z.infer<typeof businessPoliciesSchema>;
+
+export const updateBusinessPoliciesRequestSchema = z.object({
+  booking: z.string().max(8000).nullable().optional(),
+  payment: z.string().max(8000).nullable().optional(),
+  cancellation: z.string().max(8000).nullable().optional(),
+  terms: z.string().max(8000).nullable().optional(),
+  requireAcceptance: z.boolean(),
+});
+
+export type UpdateBusinessPoliciesRequest = z.infer<
+  typeof updateBusinessPoliciesRequestSchema
+>;
 
 export const publicBusinessProfileSchema = z.object({
   locationId: z.string(),
@@ -147,6 +164,7 @@ export const publicBusinessProfileSchema = z.object({
   publicPage: publicPageConfigSchema.optional(),
   /** Cover + gallery URLs for the public profile page. */
   imageUrls: z.array(z.string().url()).nullish(),
+  policies: businessPoliciesSchema.nullish(),
 });
 
 export type PublicBusinessProfile = z.infer<typeof publicBusinessProfileSchema>;
@@ -355,6 +373,14 @@ export const serviceTemplatesResponseSchema = z.object({
   items: z.array(serviceTemplateSchema),
 });
 
+export const serviceMenuGroupSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  sortOrder: z.number().int(),
+});
+
+export type ServiceMenuGroup = z.infer<typeof serviceMenuGroupSchema>;
+
 export const serviceOfferingSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -367,13 +393,39 @@ export const serviceOfferingSchema = z.object({
   categorySlug: z.string().nullable().optional(),
   catalogServiceId: z.string().nullable().optional(),
   bookingDeliveryType: bookingDeliveryTypeSchema.optional(),
+  menuGroupId: z.string().uuid().nullable().optional(),
+  sortOrder: z.number().int().optional(),
 });
 
 export const serviceOfferingsResponseSchema = z.object({
   items: z.array(serviceOfferingSchema),
+  groups: z.array(serviceMenuGroupSchema).optional().default([]),
 });
 
 export type ServiceOffering = z.infer<typeof serviceOfferingSchema>;
+export type ServiceOfferingsResponse = z.infer<typeof serviceOfferingsResponseSchema>;
+
+export const createServiceMenuGroupRequestSchema = z.object({
+  name: z.string().min(2).max(120),
+  sortOrder: z.number().int().optional(),
+});
+
+export type CreateServiceMenuGroupRequest = z.infer<
+  typeof createServiceMenuGroupRequestSchema
+>;
+
+export const updateServiceMenuGroupRequestSchema = z.object({
+  name: z.string().min(2).max(120),
+  sortOrder: z.number().int(),
+});
+
+export type UpdateServiceMenuGroupRequest = z.infer<
+  typeof updateServiceMenuGroupRequestSchema
+>;
+
+export const serviceMenuGroupsResponseSchema = z.object({
+  items: z.array(serviceMenuGroupSchema),
+});
 
 export const availableSlotSchema = z.object({
   startAt: z.string(),
@@ -617,6 +669,7 @@ export const businessProfileSchema = z.object({
       }),
     )
     .optional(),
+  policies: businessPoliciesSchema.optional(),
 });
 
 export type BusinessProfile = z.infer<typeof businessProfileSchema>;
@@ -971,6 +1024,8 @@ export const createServiceOfferingRequestSchema = z.object({
   categorySlug: z.string().optional(),
   catalogServiceId: z.string().optional(),
   bookingDeliveryType: bookingDeliveryTypeSchema.optional(),
+  menuGroupId: z.string().uuid().nullable().optional(),
+  sortOrder: z.number().int().optional(),
 });
 
 export type CreateServiceOfferingRequest = z.infer<
@@ -988,6 +1043,8 @@ export const updateServiceOfferingRequestSchema = z.object({
   categorySlug: z.string().optional(),
   catalogServiceId: z.string().optional(),
   bookingDeliveryType: bookingDeliveryTypeSchema.optional(),
+  menuGroupId: z.string().uuid().nullable().optional(),
+  sortOrder: z.number().int().optional(),
 });
 
 export type UpdateServiceOfferingRequest = z.infer<

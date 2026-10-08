@@ -33,12 +33,32 @@ public sealed class BusinessProfile : ITenantEntity
 
     public bool PublicPageShowVisit { get; set; } = true;
 
+    /// <summary>When false, public booking/quote UI is hidden and new bookings are rejected.</summary>
+    public bool PublicPageShowBook { get; set; } = true;
+
+    public bool PublicPageShowPolicies { get; set; }
+
     public BusinessType BusinessType { get; set; } = BusinessType.ScheduledAppointment;
 
     public bool AutoConfirmBookings { get; set; }
 
     /// <summary>Deposit percentage (0–100) charged at booking confirm when deposits capability is enabled.</summary>
     public int DepositPercent { get; set; }
+
+    /// <summary>Business booking policy shown on the public page (plain text).</summary>
+    public string? PolicyBookingText { get; set; }
+
+    /// <summary>Payment &amp; deposit policy (plain text).</summary>
+    public string? PolicyPaymentText { get; set; }
+
+    /// <summary>Cancellation / no-show policy (plain text).</summary>
+    public string? PolicyCancellationText { get; set; }
+
+    /// <summary>Business terms of service (plain text).</summary>
+    public string? PolicyTermsText { get; set; }
+
+    /// <summary>When true, customer must accept policies before confirming a booking.</summary>
+    public bool RequirePolicyAcceptance { get; set; }
 
     /// <summary>When enabled, rule-based FAQ replies are sent automatically on incoming customer messages.</summary>
     public bool FaqAutoResponderEnabled { get; set; } = true;

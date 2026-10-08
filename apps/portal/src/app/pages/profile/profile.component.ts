@@ -12,7 +12,7 @@ import {
   resolveBusinessCoverImage,
   VERIFICATION_DOCUMENT_LABELS,
 } from "@adeni/shared";
-import { PortalPageComponent } from "@adeni/ui";
+import { AdeniFeedbackService, PortalPageComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { PortalTabsComponent } from "../../shared/portal-tabs.component";
@@ -31,6 +31,7 @@ const MAX_BYTES = MAX_UPLOAD_BYTES;
 export class ProfileComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
   private readonly config = inject(ADENI_PORTAL_CONFIG);
+  private readonly feedback = inject(AdeniFeedbackService);
   private readonly route = inject(ActivatedRoute);
   readonly tab = toSignal(this.route.queryParamMap.pipe(map((params) => params.get("tab") ?? "details")), {
     initialValue: this.route.snapshot.queryParamMap.get("tab") ?? "details",
@@ -82,19 +83,22 @@ export class ProfileComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const p = await this.api.withAuthorizedClient((c) => c.getTenantProfile());
-      this.profile.set(p);
-      this.businessName = p.businessName;
-      this.categorySlug = p.categorySlug;
-      this.phone = p.phone;
-      this.description = p.description ?? "";
-      this.autoConfirm = p.autoConfirmBookings ?? false;
-      this.depositPercent = p.depositPercent ?? 0;
-      this.coverPreview.set(resolveBusinessCoverImage(p.categorySlug, p.coverImageUrl));
-      this.galleryImages.set(p.galleryImages ?? []);
-      await this.loadReviews(p);
+      await this.feedback.runLoading(async () => {
+        const p = await this.api.withAuthorizedClient((c) => c.getTenantProfile());
+        this.profile.set(p);
+        this.businessName = p.businessName;
+        this.categorySlug = p.categorySlug;
+        this.phone = p.phone;
+        this.description = p.description ?? "";
+        this.autoConfirm = p.autoConfirmBookings ?? false;
+        this.depositPercent = p.depositPercent ?? 0;
+        this.coverPreview.set(resolveBusinessCoverImage(p.categorySlug, p.coverImageUrl));
+        this.galleryImages.set(p.galleryImages ?? []);
+        await this.loadReviews(p);
+      }, "Loading profile…", "Fetching business details");
     } catch {
       this.error.set("Could not load profile.");
+      this.feedback.error("Could not load profile.");
       this.profile.set(null);
     } finally {
       this.loading.set(false);
@@ -105,22 +109,30 @@ export class ProfileComponent implements OnInit {
     if (!this.canEdit()) return;
     if (!this.businessName.trim() || !this.categorySlug.trim() || !PHONE_PATTERN.test(this.phone.trim())) {
       this.error.set("Fix required fields before saving.");
+      this.feedback.error("Fix required fields before saving.");
       return;
     }
     this.saving.set(true);
     this.error.set(null);
     try {
-      const updated = await this.api.withAuthorizedClient((c) =>
-        c.updateTenantProfile({
-          businessName: this.businessName.trim(),
-          categorySlug: this.categorySlug.trim(),
-          phone: this.phone.trim(),
-          description: this.description.trim(),
-        }),
+      const updated = await this.feedback.runLoading(
+        () =>
+          this.api.withAuthorizedClient((c) =>
+            c.updateTenantProfile({
+              businessName: this.businessName.trim(),
+              categorySlug: this.categorySlug.trim(),
+              phone: this.phone.trim(),
+              description: this.description.trim(),
+            }),
+          ),
+        "Saving profile…",
+        "Updating business details",
       );
       this.profile.set(updated);
+      this.feedback.success("Business details updated.", "Profile saved");
     } catch {
       this.error.set("Could not save profile.");
+      this.feedback.error("Could not save profile.");
     } finally {
       this.saving.set(false);
     }
@@ -130,15 +142,22 @@ export class ProfileComponent implements OnInit {
     this.saving.set(true);
     this.error.set(null);
     try {
-      const updated = await this.api.withAuthorizedClient((c) =>
-        c.updateTenantSettings({
-          autoConfirmBookings: this.autoConfirm,
-          depositPercent: this.depositPercent,
-        }),
+      const updated = await this.feedback.runLoading(
+        () =>
+          this.api.withAuthorizedClient((c) =>
+            c.updateTenantSettings({
+              autoConfirmBookings: this.autoConfirm,
+              depositPercent: this.depositPercent,
+            }),
+          ),
+        "Saving settings…",
+        "Updating booking preferences",
       );
       this.profile.set(updated);
+      this.feedback.success("Booking settings updated.", "Settings saved");
     } catch {
       this.error.set("Could not save booking settings.");
+      this.feedback.error("Could not save booking settings.");
     } finally {
       this.saving.set(false);
     }
