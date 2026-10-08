@@ -36,14 +36,13 @@
           (click)="toggleMarketMenu()"
         >
           <span class="place-mark" [attr.data-market]="market.market()?.id ?? 'lagos'" aria-hidden="true">
-            <span class="place-orb"></span>
-            <span class="place-glyph"></span>
+            <adeni-carbon-icon name="location--filled" [size]="18" />
           </span>
           <span class="market-copy">
             <span class="market-kicker">Exploring</span>
             <span class="market-name">{{ market.market()?.name ?? "Lagos" }}</span>
           </span>
-          <span class="chevron" aria-hidden="true"></span>
+          <adeni-carbon-icon class="chevron" name="chevron--down" [size]="16" />
         </button>
         @if (marketMenuOpen()) {
           <div class="market-menu" role="listbox" aria-label="Choose a city">
@@ -58,15 +57,14 @@
                 (click)="selectMarket(m.id)"
               >
                 <span class="place-mark" [attr.data-market]="m.id" aria-hidden="true">
-                  <span class="place-orb"></span>
-                  <span class="place-glyph"></span>
+                  <adeni-carbon-icon name="location--filled" [size]="18" />
                 </span>
                 <span class="market-copy">
                   <span class="market-name">{{ m.name }}</span>
                   <span class="market-meta">{{ marketPlaceLine(m.id) }}</span>
                 </span>
                 @if (market.market()?.id === m.id) {
-                  <span class="check" aria-hidden="true"></span>
+                  <adeni-carbon-icon class="check" name="checkmark" [size]="16" />
                 }
               </button>
             }
@@ -76,10 +74,10 @@
 
       @if (auth0Mode) {
         @if (signedIn()) {
-          <button type="button" class="ghost" (click)="logout()">Log out</button>
+          <button type="button" class="cds-btn cds-btn--ghost" (click)="logout()">Log out</button>
         } @else {
-          <button type="button" class="ghost" (click)="login()">Sign in</button>
-          <button type="button" class="cta" (click)="login()">Get started</button>
+          <button type="button" class="cds-btn cds-btn--ghost" (click)="login()">Sign in</button>
+          <button type="button" class="cds-btn cds-btn--primary" (click)="login()">Get started</button>
         }
       } @else if (devCustomerMode) {
         <span class="dev">Dev customer</span>
@@ -91,4 +89,5 @@
     <router-outlet />
   </main>
   <app-public-footer />
+  <app-global-loading-panel />
 </div>

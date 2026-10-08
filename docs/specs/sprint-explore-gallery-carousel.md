@@ -16,7 +16,7 @@ Let customers browse multiple business photos on Explore cards and map pin previ
 ## 2. Context
 
 - Today each business has one `cover_image_key`; cards show a single image.
-- Similar apps (Airbnb-style) use prev/next on listing cards.
+- Listing cards support prev/next when multiple photos exist.
 - Module(s): Tenancy (media), Discovery, Discover web, Portal.
 
 ## 3. In scope

@@ -2,7 +2,7 @@
   max-width: 40rem;
   margin: 4rem auto;
   padding: 2rem;
-  border-radius: 1rem;
+  border-radius: var(--cds-radius-none);
   background: var(--surface);
   border: 1px solid var(--border);
 }

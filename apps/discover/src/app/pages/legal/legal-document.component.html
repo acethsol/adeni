@@ -1,0 +1,22 @@
+<article class="legal">
+  <header class="head">
+    <p class="kicker">{{ label("footer.sections.legal") }}</p>
+    <h1>{{ title() }}</h1>
+    <p class="meta">{{ updated() }}</p>
+  </header>
+
+  <p class="notice" role="note">{{ notice() }}</p>
+  <p class="intro">{{ intro() }}</p>
+
+  @for (section of sections(); track section.heading) {
+    <section>
+      <h2>{{ section.heading }}</h2>
+      <p>{{ section.body }}</p>
+    </section>
+  }
+
+  <p class="cross">
+    {{ label("legal.alsoSee") }}
+    <a [routerLink]="otherDocPath()">{{ otherDocLabel() }}</a>
+  </p>
+</article>

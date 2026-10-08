@@ -35,7 +35,9 @@ export class BookingPanelComponent {
   readonly booking = signal<BookingResponse | null>(null);
 
   activeServices(): ServiceOffering[] {
-    return this.services().filter((s) => s.isActive);
+    const items = this.services();
+    const active = items.filter((s) => s.isActive !== false);
+    return active.length > 0 ? active : items;
   }
 
   formatSlot(iso: string): string {

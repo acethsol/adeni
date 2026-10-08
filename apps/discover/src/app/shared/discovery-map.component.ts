@@ -13,9 +13,10 @@ import {
 import type { DiscoveryBusinessItem } from "@adeni/shared";
 import {
   getCategoryLabel,
+  getCategoryVisual,
   resolveBusinessImageUrls,
 } from "@adeni/shared";
-import { AdeniLocaleService } from "@adeni/ui";
+import { AdeniLocaleService, createCarbonIconElement } from "@adeni/ui";
 import { ADENI_DISCOVER_CONFIG } from "../core/adeni-config";
 
 type MapboxNS = typeof import("mapbox-gl");
@@ -124,17 +125,32 @@ export class DiscoveryMapComponent implements OnDestroy {
         style: "mapbox://styles/mapbox/streets-v12",
         center: [center.lng, center.lat],
         zoom: 11.5,
+        minZoom: 8,
+        maxZoom: 18,
         attributionControl: false,
         logoPosition: "bottom-left",
-        scrollZoom: false,
-        cooperativeGestures: true,
+        scrollZoom: true,
+        dragRotate: false,
+        pitchWithRotate: false,
+        cooperativeGestures: false,
       });
 
       this.map.addControl(
         new mapboxgl.AttributionControl({ compact: true }),
         "bottom-right",
       );
-      this.map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
+      this.map.addControl(
+        new mapboxgl.NavigationControl({ showCompass: false, visualizePitch: false }),
+        "top-right",
+      );
+
+      this.map.scrollZoom.enable();
+      this.map.scrollZoom.setWheelZoomRate(1 / 120);
+      this.map.scrollZoom.setZoomRate(1 / 100);
+      this.map.boxZoom.enable();
+      this.map.doubleClickZoom.enable();
+      this.map.touchZoomRotate.enable();
+      this.map.touchZoomRotate.disableRotation();
 
       this.map.on("click", () => this.closePreview());
 
@@ -198,22 +214,19 @@ export class DiscoveryMapComponent implements OnDestroy {
       let marker = this.markers.get(item.locationId);
       const active = item.locationId === activeId;
       if (!marker) {
-        const el = document.createElement("button");
-        el.type = "button";
-        el.className = `adeni-pin${active ? " active" : ""}`;
-        el.setAttribute("aria-label", item.name);
+        const el = this.createPinElement(item, active);
         el.addEventListener("click", (event) => {
           event.stopPropagation();
           this.markerSelect.emit(item.locationId);
           this.showPreview(item);
         });
-        marker = new this.mapbox.Marker({ element: el, anchor: "center" })
+        marker = new this.mapbox.Marker({ element: el, anchor: "bottom" })
           .setLngLat([lng, lat])
           .addTo(this.map);
         this.markers.set(item.locationId, marker);
       } else {
         marker.setLngLat([lng, lat]);
-        marker.getElement().classList.toggle("active", active);
+        this.stylePinElement(marker.getElement(), item, active);
       }
     }
 
@@ -227,7 +240,7 @@ export class DiscoveryMapComponent implements OnDestroy {
       if (hasBounds && items.length === 1) {
         this.map.jumpTo({ center: bounds.getCenter(), zoom: 13 });
       } else if (hasBounds) {
-        this.map.fitBounds(bounds, { padding: 56, maxZoom: 13, duration: 0 });
+        this.map.fitBounds(bounds, { padding: 64, maxZoom: 14, duration: 0 });
       } else {
         this.map.jumpTo({ center: [center.lng, center.lat], zoom: 12 });
       }
@@ -329,6 +342,31 @@ export class DiscoveryMapComponent implements OnDestroy {
     this.popup?.remove();
     this.popup = null;
     this.previewLocationId = null;
+  }
+
+  private createPinElement(item: DiscoveryBusinessItem, active: boolean): HTMLButtonElement {
+    const el = document.createElement("button");
+    el.type = "button";
+    el.setAttribute("aria-label", item.name);
+    el.appendChild(
+      createCarbonIconElement("location--filled-32", {
+        size: 36,
+        className: "adeni-pin-icon",
+      }),
+    );
+    this.stylePinElement(el, item, active);
+    return el;
+  }
+
+  private stylePinElement(
+    el: HTMLElement,
+    item: DiscoveryBusinessItem,
+    active: boolean,
+  ): void {
+    const visual = getCategoryVisual(item.categorySlug);
+    const [g1] = visual.gradient;
+    el.className = `adeni-pin${active ? " active" : ""}`;
+    el.style.setProperty("--pin-color", active ? "var(--cds-gray-100)" : g1);
   }
 }
 

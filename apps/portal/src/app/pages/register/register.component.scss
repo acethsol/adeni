@@ -36,7 +36,7 @@ a.btn {
 
 fieldset.additional {
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 8px;
+  border-radius: var(--cds-radius-none);
   padding: 0.75rem 1rem;
   margin-bottom: 1rem;
 }

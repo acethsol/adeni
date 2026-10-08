@@ -190,6 +190,7 @@ public sealed class DiscoveryServiceTests
         Assert.True(first.IsSuccess);
         Assert.True(second.IsSuccess);
         Assert.Contains("[REDACTED]", first.Value!.PhoneMasked);
+        Assert.NotNull(first.Value.ImageUrls);
         Assert.NotNull(await cache.GetAsync<Application.Discovery.PublicBusinessProfile>(
             CacheKeys.LocationProfile("lekki-cuts")));
     }

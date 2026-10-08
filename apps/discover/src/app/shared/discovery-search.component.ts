@@ -16,7 +16,7 @@ import {
   resolveDiscoverySearch,
   t,
 } from "@adeni/shared";
-import { AdeniLocaleService } from "@adeni/ui";
+import { AdeniCarbonIconComponent, AdeniLocaleService } from "@adeni/ui";
 import { MarketContextService } from "../core/services/market-context.service";
 
 export type DiscoverySearchVariant = "hero" | "compact" | "default";
@@ -24,7 +24,7 @@ export type DiscoverySearchVariant = "hero" | "compact" | "default";
 @Component({
   selector: "app-discovery-search",
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, AdeniCarbonIconComponent],
   templateUrl: "./discovery-search.component.html",
   styleUrl: "./discovery-search.component.scss",
 })

@@ -247,5 +247,76 @@ export const frMessages: Messages = {
       unknown: "Inconnu",
     },
   },
+  legal: {
+    alsoSee: "Voir aussi",
+    privacy: {
+      title: "Politique de confidentialité",
+      updated: "Dernière mise à jour : 8 octobre 2026 · Brouillon produit",
+      notice:
+        "Ceci est un texte produit provisoire, pas un avis juridique. Adeni publiera une politique examinée par un conseil avant le lancement public à Lagos.",
+      intro:
+        "Adeni aide à découvrir et réserver des entreprises de beauté et de bien-être vérifiées (par exemple Lagos et Ottawa). Cette page décrit, en langage simple, ce que la politique de confidentialité doit couvrir.",
+      sections: {
+        s1: {
+          heading: "Données collectées",
+          body: "Compte et identité via Auth0 (par ex. nom, e-mail, identifiants d’authentification).\nDétails de réservation que vous soumettez (service, horaire, lieu, messages associés).\nProfils et annonces fournis par les entreprises vérifiées.\nMétadonnées de paiement via des prestataires comme Paystack (Adeni ne détient pas les fonds).\nDonnées techniques nécessaires au service (appareil/navigateur, marché, diagnostics).",
+        },
+        s2: {
+          heading: "Utilisation",
+          body: "Pour faire fonctionner la découverte, la réservation et les outils entreprise.\nPour vérifier les entreprises, prévenir les abus et maintenir la confiance.\nPour communiquer au sujet des réservations et du compte.\nPour respecter les obligations légales et de sécurité (journaux d’audit admin).",
+        },
+        s3: {
+          heading: "Partage",
+          body: "Nous partageons des données avec des prestataires qui aident à exploiter Adeni (Auth0, Paystack, etc.) et avec l’entreprise que vous réservez.\nNous ne vendons pas vos informations personnelles.",
+        },
+        s4: {
+          heading: "Vos droits (y compris NDPR)",
+          body: "Selon votre marché, vous pouvez avoir des droits d’accès, de correction ou de suppression.\nEn v1, l’export et la suppression clients passent par des processus assistés par l’admin Adeni.\nContactez privacy@adeni.io (ou l’adresse de la politique finale) pour exercer une demande.",
+        },
+        s5: {
+          heading: "Conservation et sécurité",
+          body: "Nous conservons les données le temps nécessaire aux finalités ci-dessus, aux dossiers de réservation et aux exigences légales.\nNous appliquons l’isolation multi-locataire, le masquage des données personnelles dans les journaux et des contrôles d’accès admin.",
+        },
+        s6: {
+          heading: "Contact",
+          body: "Questions confidentialité : privacy@adeni.io\nJusqu’à la politique finale, cette page reste une orientation produit informative.",
+        },
+      },
+    },
+    terms: {
+      title: "Conditions d’utilisation",
+      updated: "Dernière mise à jour : 8 octobre 2026 · Brouillon produit",
+      notice:
+        "Ceci est un texte produit provisoire, pas des conditions approuvées par un avocat. Adeni publiera des Conditions examinées par un conseil avant le lancement public.",
+      intro:
+        "Ces conditions provisoires décrivent Adeni comme une place de marché beauté et bien-être : découverte, réservation et outils entreprise avec orchestration de paiement — sans garde de fonds.",
+      sections: {
+        s1: {
+          heading: "Le service Adeni",
+          body: "Adeni fournit des logiciels pour découvrir des entreprises vérifiées, demander ou réserver des rendez-vous, et gérer le compte associé.\nLes entreprises restent responsables des services qu’elles fournissent. Adeni n’est pas le prestataire du rendez-vous.",
+        },
+        s2: {
+          heading: "Comptes et usage acceptable",
+          body: "Fournissez des informations exactes et protégez vos identifiants.\nN’utilisez pas la plateforme de façon abusive (spam, fraude, harcèlement, activité illégale).\nNous pouvons suspendre ou résilier les comptes qui violent ces règles.",
+        },
+        s3: {
+          heading: "Réservations et paiements",
+          body: "La disponibilité et l’exécution sont contrôlées par l’entreprise.\nLorsque les paiements sont activés, Adeni orchestre le paiement via des prestataires agréés (ex. Paystack). Adeni n’opère pas de portefeuille et ne détient pas les fonds.\nAnnulations et remboursements suivent le parcours de réservation et les règles du prestataire.",
+        },
+        s4: {
+          heading: "Annonces professionnelles",
+          body: "Les entreprises doivent maintenir des informations exactes et respecter la loi.\nLa vérification renforce la confiance mais ne garantit pas la qualité d’un rendez-vous.\nDes conditions partenaires séparées couvriront vérification, frais et indemnisation.",
+        },
+        s5: {
+          heading: "Avertissements (à finaliser)",
+          body: "Les Conditions finales incluront limitation de responsabilité et droit applicable adaptés aux marchés Adeni (y compris le Nigeria pour Lagos).\nEn attendant, le service est fourni « tel que disponible ».",
+        },
+        s6: {
+          heading: "Contact",
+          body: "Questions : legal@adeni.io\nConsultez aussi la Politique de confidentialité.",
+        },
+      },
+    },
+  },
   errors: frErrorMessages,
 };

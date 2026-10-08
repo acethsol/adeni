@@ -2,7 +2,7 @@
   margin-top: 1.5rem;
   padding: 1.25rem;
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border-radius: var(--cds-radius-none);
   background: var(--surface);
 }
 
@@ -36,7 +36,7 @@ h2 {
   margin-top: 1rem;
   padding: 0.65rem 1.25rem;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--cds-radius-none);
   background: #0b3d2e;
   color: #fff;
   font-weight: 600;
@@ -55,5 +55,5 @@ h2 {
   margin-top: 0.35rem;
   padding: 0.5rem;
   border: 1px solid var(--border);
-  border-radius: 0.5rem;
+  border-radius: var(--cds-radius-none);
 }

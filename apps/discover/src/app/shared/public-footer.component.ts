@@ -57,10 +57,8 @@ export class PublicFooterComponent {
     return t(this.locale(), "footer.tagline", { market: market.name });
   });
 
-  /** Live markets only — city switches, not category repeats. */
-  readonly cityLinks = computed((): MarketConfig[] =>
-    listMarkets().filter((m) => m.isLive),
-  );
+  /** Full catalog — isLive is GTM supply, not a browse gate (see docs/markets.md). */
+  readonly cityLinks = computed((): MarketConfig[] => listMarkets());
 
   readonly portalRegisterUrl = computed(() => {
     const portal = this.config.portalAppUrl.trim();

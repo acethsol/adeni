@@ -1,8 +1,10 @@
 import { DecimalPipe } from "@angular/common";
 import {
+  afterNextRender,
   Component,
   computed,
   inject,
+  Injector,
   makeStateKey,
   OnInit,
   PendingTasks,
@@ -23,16 +25,18 @@ import {
   getCategoryLabel,
   getCategoryVisual,
   resolveBusinessCoverImage,
+  resolveBusinessImageUrls,
   resolvePublicPageTemplateId,
   shouldShowQuoteFlow,
 } from "@adeni/shared";
+import { AdeniCarbonIconComponent, AdeniLocaleService } from "@adeni/ui";
 import {
   ADENI_DISCOVER_CONFIG,
   isDiscoverCustomerDevMode,
 } from "../../core/adeni-config";
 import { buildLocalBusinessJsonLd } from "../../core/seo-jsonld";
 import { CustomerApiService } from "../../core/services/customer-api.service";
-import { AdeniLocaleService } from "@adeni/ui";
+import { DiscoverLoadingService } from "../../core/services/discover-loading.service";
 import { SeoService } from "../../core/services/seo.service";
 import { MarketContextService } from "../../core/services/market-context.service";
 import { BookingPanelComponent } from "../../shared/booking-panel.component";
@@ -53,6 +57,7 @@ const BUSINESS_STATE_KEY = makeStateKey<{
     DecimalPipe,
     BookingPanelComponent,
     QuoteRequestPanelComponent,
+    AdeniCarbonIconComponent,
   ],
   templateUrl: "./business.component.html",
   styleUrl: "./business.component.scss",
@@ -66,6 +71,8 @@ export class BusinessProfileComponent implements OnInit {
   private readonly localeService = inject(AdeniLocaleService);
   private readonly pendingTasks = inject(PendingTasks);
   private readonly transferState = inject(TransferState);
+  private readonly pageLoading = inject(DiscoverLoadingService);
+  private readonly injector = inject(Injector);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -75,6 +82,7 @@ export class BusinessProfileComponent implements OnInit {
   readonly bookingEnabled = signal(false);
   readonly linkCopied = signal(false);
   readonly whatsappUrl = signal<string | null>(null);
+  readonly galleryIndex = signal(0);
 
   readonly locale = this.localeService.locale;
   readonly coverFor = resolveBusinessCoverImage;
@@ -86,7 +94,20 @@ export class BusinessProfileComponent implements OnInit {
     return p ? getCategoryVisual(p.categorySlug) : null;
   });
 
+  readonly gallery = computed(() => {
+    const p = this.profile();
+    if (!p) {
+      return [] as string[];
+    }
+    return resolveBusinessImageUrls(p.categorySlug, p.coverImageUrl, p.imageUrls);
+  });
+
   readonly coverUrl = computed(() => {
+    const images = this.gallery();
+    if (images.length > 0) {
+      const idx = Math.min(this.galleryIndex(), images.length - 1);
+      return images[idx] ?? images[0] ?? "";
+    }
     const p = this.profile();
     return p ? this.coverFor(p.categorySlug, p.coverImageUrl) : "";
   });
@@ -101,6 +122,11 @@ export class BusinessProfileComponent implements OnInit {
   readonly ratingLine = computed(() => {
     const p = this.profile();
     return p ? formatRatingSummary(p.ratingAvg, p.reviewCount) : "";
+  });
+
+  readonly isNew = computed(() => {
+    const p = this.profile();
+    return Boolean(p && (p.reviewCount ?? 0) === 0);
   });
 
   readonly tagline = computed(() => {
@@ -158,6 +184,36 @@ export class BusinessProfileComponent implements OnInit {
     return profile.capabilities?.includes("deposits") ?? false;
   }
 
+  scrollToSection(sectionId: string, event?: Event): void {
+    event?.preventDefault();
+    const el = document.getElementById(sectionId);
+    if (!el) {
+      return;
+    }
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    history.replaceState(null, "", `#${sectionId}`);
+  }
+
+  prevGalleryImage(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const count = this.gallery().length;
+    if (count < 2) {
+      return;
+    }
+    this.galleryIndex.update((i) => (i - 1 + count) % count);
+  }
+
+  nextGalleryImage(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const count = this.gallery().length;
+    if (count < 2) {
+      return;
+    }
+    this.galleryIndex.update((i) => (i + 1) % count);
+  }
+
   async copyBookingLink(): Promise<void> {
     const p = this.profile();
     if (!p || typeof navigator === "undefined" || !navigator.clipboard) {
@@ -174,6 +230,7 @@ export class BusinessProfileComponent implements OnInit {
   }
 
   private async load(slug: string): Promise<void> {
+    this.galleryIndex.set(0);
     const cached = this.transferState.get(BUSINESS_STATE_KEY, null);
     if (cached?.slug === slug) {
       this.profile.set(cached.profile);
@@ -183,6 +240,7 @@ export class BusinessProfileComponent implements OnInit {
       this.transferState.remove(BUSINESS_STATE_KEY);
       this.applySeo(cached.profile, slug);
       void this.hydrateExtras(slug);
+      this.scrollToRouteFragment();
       return;
     }
 
@@ -194,6 +252,7 @@ export class BusinessProfileComponent implements OnInit {
     this.error.set(null);
     this.linkCopied.set(false);
     this.whatsappUrl.set(null);
+    this.pageLoading.show("Loading business…", "Fetching profile, services, and reviews");
 
     const client = this.api.createPublicClient();
 
@@ -217,6 +276,7 @@ export class BusinessProfileComponent implements OnInit {
       });
       this.applySeo(profile, slug);
       void this.hydrateExtras(slug);
+      this.scrollToRouteFragment();
     } catch {
       this.error.set("Business not found or API unavailable.");
       this.profile.set(null);
@@ -224,7 +284,21 @@ export class BusinessProfileComponent implements OnInit {
       this.reviews.set([]);
     } finally {
       this.loading.set(false);
+      this.pageLoading.hide();
     }
+  }
+
+  private scrollToRouteFragment(): void {
+    const fragment = this.route.snapshot.fragment;
+    if (!fragment || typeof document === "undefined") {
+      return;
+    }
+    afterNextRender(
+      () => {
+        window.setTimeout(() => this.scrollToSection(fragment), 50);
+      },
+      { injector: this.injector },
+    );
   }
 
   private async hydrateExtras(slug: string): Promise<void> {

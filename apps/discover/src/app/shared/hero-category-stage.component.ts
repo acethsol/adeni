@@ -155,7 +155,7 @@ export class HeroCategoryStageComponent implements OnInit {
   readonly stageTone = computed(() => {
     const chip = this.activeChip();
     return {
-      g1: chip?.gradient[0] ?? "#1b4332",
+      g1: chip?.gradient[0] ?? "#7f56ff",
       g2: chip?.gradient[1] ?? "#13c2a3",
     };
   });

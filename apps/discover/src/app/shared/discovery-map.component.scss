@@ -11,14 +11,13 @@
   height: 100%;
   min-height: inherit;
   overflow: hidden;
-  border-radius: 1.15rem;
-  border: 1px solid color-mix(in srgb, #1b4332 10%, #ebebeb);
-  background: #e7eef5;
-  box-shadow: 0 10px 28px rgb(16 24 40 / 5%);
+  border-radius: var(--cds-radius-none);
+  border: 1px solid var(--cds-border-subtle);
+  background: var(--cds-gray-20);
 }
 
 .map-shell.failed {
-  background: #f6f6f6;
+  background: var(--cds-gray-10);
 }
 
 .map-host {
@@ -26,6 +25,8 @@
   inset: 0;
   width: 100%;
   height: 100%;
+  /* Keep wheel/trackpad events on the map, not the page behind it. */
+  touch-action: pan-x pan-y;
 }
 
 .map-fallback,
@@ -39,17 +40,15 @@
 }
 
 .map-fallback {
-  background:
-    radial-gradient(ellipse 50% 60% at 30% 40%, rgb(27 67 50 / 12%), transparent 60%),
-    radial-gradient(ellipse 45% 55% at 70% 60%, rgb(19 194 163 / 14%), transparent 55%);
+  background: var(--cds-gray-10);
 }
 
 .map-fallback span {
   width: 2.4rem;
   height: 2.4rem;
-  border-radius: 999px;
-  border: 2px solid rgb(27 67 50 / 25%);
-  border-top-color: #1b4332;
+  border-radius: 50%;
+  border: 2px solid var(--cds-gray-30);
+  border-top-color: var(--interactive);
   animation: spin 0.8s linear infinite;
 }
 
@@ -68,25 +67,42 @@
 }
 
 :host ::ng-deep .adeni-pin {
-  display: block;
-  width: 1.15rem;
-  height: 1.15rem;
+  --pin-color: var(--interactive);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
   margin: 0;
   padding: 0;
-  border: 2.5px solid #fff;
-  border-radius: 999px;
-  background: #1b4332;
-  box-shadow: 0 4px 12px rgb(16 24 40 / 30%);
+  border: 0;
+  background: transparent;
+  color: var(--pin-color);
   cursor: pointer;
   appearance: none;
-  transition:
-    transform 140ms ease,
-    background 140ms ease;
+  filter: drop-shadow(0 4px 8px rgb(0 0 0 / 28%));
+  transition: transform 160ms cubic-bezier(0.2, 0, 0.38, 0.9);
+  z-index: 1;
+}
+
+:host ::ng-deep .adeni-pin:hover {
+  transform: translateY(-2px) scale(1.08);
+  z-index: 3;
 }
 
 :host ::ng-deep .adeni-pin.active {
-  background: #13c2a3;
-  transform: scale(1.2);
+  --pin-color: var(--cds-gray-100);
+  transform: translateY(-3px) scale(1.12);
+  z-index: 4;
+}
+
+:host ::ng-deep .adeni-pin-icon {
+  display: block;
+  width: 2.25rem;
+  height: 2.25rem;
+  fill: currentColor;
+  /* Carbon location--filled tip sits at the bottom of the viewBox. */
+  transform: translateY(2px);
 }
 
 :host ::ng-deep .mapboxgl-map {
@@ -104,53 +120,70 @@
 
 /* Required Mapbox logo — keep, but quieter. */
 :host ::ng-deep .mapboxgl-ctrl-logo {
-  opacity: 0.72;
-  margin: 0 0 0.45rem 0.55rem !important;
+  opacity: 0.62;
+  margin: 0 0 0.5rem 0.6rem !important;
 }
 
 :host ::ng-deep .mapboxgl-ctrl-attrib {
-  font-size: 0.62rem;
-  background: rgb(255 255 255 / 86%);
-  margin: 0 0.55rem 0.55rem 0;
-  border-radius: 0.45rem;
-  padding: 0.15rem 0.4rem;
+  font-size: 0.6rem;
+  background: rgb(255 255 255 / 82%);
+  margin: 0 0.6rem 0.55rem 0;
+  border-radius: var(--cds-radius-none);
+  padding: 0.15rem 0.45rem;
+  color: #667085;
 }
 
 :host ::ng-deep .mapboxgl-ctrl-top-right {
-  top: 0.65rem;
-  right: 0.65rem;
+  top: 0.75rem;
+  right: 0.75rem;
 }
 
 :host ::ng-deep .mapboxgl-ctrl-group {
   border: 0;
-  border-radius: 0.75rem;
+  border-radius: var(--cds-radius-none);
   overflow: hidden;
-  box-shadow: 0 8px 20px rgb(16 24 40 / 12%);
+  background: rgb(255 255 255 / 96%);
+  box-shadow:
+    0 0 0 1px rgb(22 22 22 / 6%),
+    0 10px 24px rgb(16 24 40 / 14%);
 }
 
 :host ::ng-deep .mapboxgl-ctrl-group button {
-  width: 2.1rem;
-  height: 2.1rem;
+  width: 2.35rem;
+  height: 2.35rem;
+  background: transparent;
+}
+
+:host ::ng-deep .mapboxgl-ctrl-group button + button {
+  border-top: 1px solid rgb(22 22 22 / 8%);
+}
+
+:host ::ng-deep .mapboxgl-ctrl-group button:hover {
+  background: rgb(247 248 250);
+}
+
+:host ::ng-deep .mapboxgl-ctrl-icon {
+  background-size: 18px 18px;
 }
 
 :host ::ng-deep .adeni-map-popup .mapboxgl-popup-content {
   padding: 0;
-  border-radius: 0.95rem;
+  border-radius: var(--cds-radius-none);
   overflow: hidden;
-  box-shadow: 0 16px 36px rgb(16 24 40 / 18%);
+  box-shadow: 0 18px 40px rgb(16 24 40 / 18%);
   border: 1px solid rgb(22 22 22 / 8%);
 }
 
 :host ::ng-deep .adeni-map-popup .mapboxgl-popup-close-button {
-  top: 0.35rem;
+  top: 0.4rem;
   right: 0.45rem;
-  width: 1.6rem;
-  height: 1.6rem;
-  border-radius: 999px;
-  background: rgb(255 255 255 / 92%);
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: var(--cds-radius-none);
+  background: rgb(255 255 255 / 94%);
   color: #222;
   font-size: 1.1rem;
-  line-height: 1.4rem;
+  line-height: 1.5rem;
   z-index: 2;
 }
 
@@ -185,7 +218,7 @@
   width: 1.7rem;
   height: 1.7rem;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--cds-radius-none);
   background: rgb(255 255 255 / 92%);
   color: #222;
   font-size: 1.15rem;
@@ -216,7 +249,7 @@
 :host ::ng-deep .adeni-preview-dots .dot {
   width: 0.32rem;
   height: 0.32rem;
-  border-radius: 999px;
+  border-radius: var(--cds-radius-none);
   background: rgb(255 255 255 / 55%);
 }
 

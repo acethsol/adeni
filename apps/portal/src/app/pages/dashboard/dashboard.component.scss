@@ -9,7 +9,7 @@
 .actions a {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 1.25rem;
+  border-radius: var(--cds-radius-none);
 }
 
 .hero {
@@ -55,7 +55,7 @@
 .btn {
   display: inline-flex;
   align-items: center;
-  border-radius: 999px;
+  border-radius: var(--cds-radius-none);
   padding: 0.55rem 1rem;
   font-size: 0.875rem;
   font-weight: 700;
@@ -94,7 +94,7 @@
 
 .meter {
   height: 0.45rem;
-  border-radius: 999px;
+  border-radius: var(--cds-radius-none);
   background: var(--bg-subtle);
   overflow: hidden;
 }
@@ -200,7 +200,7 @@
 .bar-track span {
   display: block;
   width: 100%;
-  border-radius: 0.55rem 0.55rem 0.2rem 0.2rem;
+  border-radius: var(--cds-radius-none);
   background: rgb(127 86 255 / 28%);
 }
 
@@ -248,7 +248,7 @@
   height: 0.7rem;
   margin-top: 1rem;
   overflow: hidden;
-  border-radius: 999px;
+  border-radius: var(--cds-radius-none);
   background: var(--bg-subtle);
 }
 
@@ -284,7 +284,7 @@
 .swatch {
   width: 0.55rem;
   height: 0.55rem;
-  border-radius: 999px;
+  border-radius: var(--cds-radius-none);
   display: inline-block;
   margin-right: 0.3rem;
 }

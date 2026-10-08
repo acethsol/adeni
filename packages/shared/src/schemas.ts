@@ -145,6 +145,8 @@ export const publicBusinessProfileSchema = z.object({
   verifiedSince: z.string().nullable().optional(),
   completionRate: z.number().min(0).max(1).nullable().optional(),
   publicPage: publicPageConfigSchema.optional(),
+  /** Cover + gallery URLs for the public profile page. */
+  imageUrls: z.array(z.string().url()).nullish(),
 });
 
 export type PublicBusinessProfile = z.infer<typeof publicBusinessProfileSchema>;

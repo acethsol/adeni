@@ -1,6 +1,6 @@
 .card {
-  --g1: #1b4332;
-  --g2: #13c2a3;
+  --g1: var(--brand-primary);
+  --g2: var(--brand-secondary);
 
   display: flex;
   flex-direction: column;
@@ -13,7 +13,7 @@
 .card:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--g1) 70%, #000);
   outline-offset: 3px;
-  border-radius: 0.85rem;
+  border-radius: var(--cds-radius-none);
 }
 
 .card.row {
@@ -22,7 +22,7 @@
   gap: 0.9rem;
   padding: 0.75rem;
   border: 1px solid #ebebeb;
-  border-radius: 1rem;
+  border-radius: var(--cds-radius-none);
   background: #fff;
   transition:
     border-color 140ms ease,
@@ -30,15 +30,14 @@
 }
 
 .card.row:hover {
-  border-color: color-mix(in srgb, var(--g1) 28%, #ddd);
-  box-shadow: 0 10px 24px rgb(16 24 40 / 6%);
+  border-color: var(--interactive);
 }
 
 .card.row .media {
   flex: 0 0 7.5rem;
   width: 7.5rem;
   aspect-ratio: 1;
-  border-radius: 0.75rem;
+  border-radius: var(--cds-radius-none);
 }
 
 .card.row .badges.trust {
@@ -69,8 +68,8 @@
   min-width: 1.55rem;
   height: 1.55rem;
   padding: 0 0.35rem;
-  border-radius: 999px;
-  background: #1b4332;
+  border-radius: var(--cds-radius-none);
+  background: var(--brand-ink);
   color: #fff;
   font-size: 0.72rem;
   font-weight: 700;
@@ -80,7 +79,7 @@
 .media {
   position: relative;
   overflow: hidden;
-  border-radius: 0.95rem;
+  border-radius: var(--cds-radius-none);
   background: color-mix(in srgb, var(--g1) 14%, #f3f0eb);
   aspect-ratio: 20 / 19;
 }
@@ -88,7 +87,7 @@
 /* Explore: taller tiles so 3-up cards read larger. */
 :host-context(.explore) .media {
   aspect-ratio: 4 / 5;
-  border-radius: 1.05rem;
+  border-radius: var(--cds-radius-none);
 }
 
 :host-context(.explore) .body {
@@ -124,7 +123,7 @@
   width: 1.85rem;
   height: 1.85rem;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--cds-radius-none);
   background: rgb(255 255 255 / 92%);
   color: #222;
   font-size: 1.25rem;
@@ -162,7 +161,7 @@
 .media.carousel .dot {
   width: 0.35rem;
   height: 0.35rem;
-  border-radius: 999px;
+  border-radius: var(--cds-radius-none);
   background: rgb(255 255 255 / 55%);
 }
 
@@ -201,7 +200,7 @@
   align-items: center;
   gap: 0.2rem;
   padding: 0.28rem 0.55rem;
-  border-radius: 999px;
+  border-radius: var(--cds-radius-none);
   background: rgb(255 255 255 / 92%);
   color: #344054;
   font-size: 0.68rem;

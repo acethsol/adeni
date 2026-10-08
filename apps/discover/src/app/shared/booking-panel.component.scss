@@ -2,7 +2,7 @@
   margin-top: 1.5rem;
   padding: 1.25rem;
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border-radius: var(--cds-radius-none);
   background: var(--surface);
 }
 
@@ -54,7 +54,7 @@ h2 {
   gap: 1rem;
   padding: 0.75rem;
   border: 1px solid var(--border);
-  border-radius: 0.5rem;
+  border-radius: var(--cds-radius-none);
   background: #fff;
   text-align: left;
   cursor: pointer;
@@ -78,7 +78,7 @@ h2 {
   width: 100%;
   padding: 0.5rem;
   border: 1px solid var(--border);
-  border-radius: 0.5rem;
+  border-radius: var(--cds-radius-none);
   background: #fff;
   cursor: pointer;
 }
@@ -117,13 +117,13 @@ h2 {
   margin-top: 0.35rem;
   padding: 0.5rem;
   border: 1px solid var(--border);
-  border-radius: 0.5rem;
+  border-radius: var(--cds-radius-none);
 }
 
 .deposit {
   font-size: 0.85rem;
   padding: 0.5rem;
-  border-radius: 0.5rem;
+  border-radius: var(--cds-radius-none);
   background: #ecfdf5;
 }
 
@@ -131,7 +131,7 @@ h2 {
   margin-top: 1rem;
   padding: 0.65rem 1.25rem;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--cds-radius-none);
   background: #0b3d2e;
   color: #fff;
   font-weight: 600;

@@ -55,7 +55,7 @@ h3 {
   width: 100%;
   max-height: 160px;
   object-fit: cover;
-  border-radius: 0.5rem;
+  border-radius: var(--cds-radius-none);
   margin-bottom: 0.75rem;
 }
 
@@ -91,7 +91,7 @@ label.btn.disabled {
 
 .gallery-item {
   position: relative;
-  border-radius: 0.5rem;
+  border-radius: var(--cds-radius-none);
   overflow: hidden;
   background: #f3f4f6;
 }
@@ -108,7 +108,7 @@ label.btn.disabled {
   right: 0.35rem;
   bottom: 0.35rem;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--cds-radius-none);
   padding: 0.25rem 0.55rem;
   font-size: 0.72rem;
   font-weight: 600;

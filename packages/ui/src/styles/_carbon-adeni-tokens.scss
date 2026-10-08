@@ -1,48 +1,109 @@
-// Carbon-inspired layout tokens + Adeni Option 3 brand (see packages/brand/specification/MASTER_SPEC.md).
-// Not a full @carbon/styles install — semantic aliases apps already use, mapped to Carbon gray scale + Adeni accents.
+// Carbon Design System tokens + Adeni Option 3 brand accents.
+// UI chrome uses Carbon gray scale, spacing, type, and radii.
+// Brand purple/teal are for interactive accents and identity — not a separate design system.
+// See packages/brand/specification/MASTER_SPEC.md and docs/product-direction.md.
 
 :root {
-  /* Adeni brand */
+  /* —— Adeni brand (Option 3) —— */
   --adeni-purple: #7f56ff;
+  --adeni-purple-deep: #6f42ff;
   --adeni-teal: #13c2a3;
+  --adeni-teal-light: #25d0bc;
   --adeni-charcoal: #0b0f14;
-  --adeni-light-gray: #f4f5f7;
   --adeni-ink: #161616;
-  --interactive-hover: #6f42ff;
+  --adeni-light-gray: #f4f5f7;
 
-  /* Carbon gray scale (subset) */
+  /* —— Carbon gray scale —— */
   --cds-gray-10: #f4f4f4;
   --cds-gray-20: #e0e0e0;
   --cds-gray-30: #c6c6c6;
+  --cds-gray-40: #a8a8a8;
   --cds-gray-50: #8d8d8d;
+  --cds-gray-60: #6f6f6f;
   --cds-gray-70: #525252;
+  --cds-gray-80: #393939;
   --cds-gray-90: #262626;
   --cds-gray-100: #161616;
 
-  /* App semantics (portal, admin, discover) */
-  --bg-subtle: var(--cds-gray-10);
-  --surface: #ffffff;
-  --border: var(--cds-gray-20);
-  --text: var(--cds-gray-100);
-  --text-muted: var(--cds-gray-70);
+  /* —— Carbon layers / fields —— */
+  --cds-layer-01: #ffffff;
+  --cds-layer-02: var(--cds-gray-10);
+  --cds-field-01: #ffffff;
+  --cds-border-subtle: var(--cds-gray-20);
+  --cds-border-strong: var(--cds-gray-50);
+  --cds-text-primary: var(--cds-gray-100);
+  --cds-text-secondary: var(--cds-gray-70);
+  --cds-text-helper: var(--cds-gray-60);
+  --cds-link-primary: var(--adeni-purple);
+  --cds-link-primary-hover: var(--adeni-purple-deep);
+  --cds-support-info: #0043ce;
+  --cds-support-success: #198038;
+  --cds-support-warning: #f1c21b;
+  --cds-support-error: #da1e28;
+
+  /* —— App semantics (portal, admin, discover) —— */
+  --bg-subtle: var(--cds-layer-02);
+  --surface: var(--cds-layer-01);
+  --border: var(--cds-border-subtle);
+  --text: var(--cds-text-primary);
+  --text-muted: var(--cds-text-secondary);
   --sidebar-bg: var(--adeni-charcoal);
   --accent: var(--adeni-teal);
   --interactive: var(--adeni-purple);
+  --interactive-hover: var(--adeni-purple-deep);
 
-  /* Spacing rhythm (Carbon 2px base) */
-  --space-03: 0.5rem;
-  --space-05: 1rem;
-  --space-06: 1.5rem;
-  --space-07: 2rem;
+  /* Brand pair used for accents / map / soft gradients */
+  --brand-primary: var(--adeni-purple);
+  --brand-secondary: var(--adeni-teal);
+  --brand-ink: var(--adeni-ink);
 
-  /* Type */
+  /* —— Carbon spacing (0.125rem / 2px base) —— */
+  --cds-spacing-01: 0.125rem;
+  --cds-spacing-02: 0.25rem;
+  --cds-spacing-03: 0.5rem;
+  --cds-spacing-04: 0.75rem;
+  --cds-spacing-05: 1rem;
+  --cds-spacing-06: 1.5rem;
+  --cds-spacing-07: 2rem;
+  --cds-spacing-08: 2.5rem;
+  --cds-spacing-09: 3rem;
+  --cds-spacing-10: 4rem;
+
+  /* Legacy aliases used in apps */
+  --space-03: var(--cds-spacing-03);
+  --space-05: var(--cds-spacing-05);
+  --space-06: var(--cds-spacing-06);
+  --space-07: var(--cds-spacing-07);
+
+  /* —— Radii (Carbon productive uses tight corners; pill only for tags/chips) —— */
+  --cds-radius-none: 0;
+  --cds-radius-sm: 0.25rem;
+  --cds-radius-md: 0.5rem;
+  --cds-radius-lg: 0.75rem;
+  --cds-radius-pill: 624.9375rem;
+
+  /* —— Type (IBM Plex — Carbon standard) —— */
   --font-family-sans:
     "IBM Plex Sans",
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    Roboto,
-    Helvetica,
+    "Helvetica Neue",
     Arial,
     sans-serif;
+  --font-family-display: var(--font-family-sans);
+  --font-family-mono: "IBM Plex Mono", "Menlo", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", Courier, monospace;
+
+  --cds-body-compact-01-size: 0.875rem;
+  --cds-body-compact-01-line: 1.125rem;
+  --cds-body-01-size: 0.875rem;
+  --cds-body-01-line: 1.25rem;
+  --cds-body-02-size: 1rem;
+  --cds-body-02-line: 1.5rem;
+  --cds-heading-compact-01-size: 0.875rem;
+  --cds-heading-03-size: 1.25rem;
+  --cds-heading-03-line: 1.75rem;
+  --cds-heading-04-size: 1.75rem;
+  --cds-heading-04-line: 2.25rem;
+  --cds-heading-05-size: 2rem;
+  --cds-heading-05-line: 2.5rem;
+  --cds-heading-06-size: 2.625rem;
+  --cds-heading-06-line: 3.125rem;
 }

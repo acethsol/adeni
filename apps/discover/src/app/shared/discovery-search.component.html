@@ -4,11 +4,11 @@
       <span class="seg query">{{ compactQueryLabel }}</span>
       <span class="seg place">{{ compactLocationLabel }}</span>
       <span class="seg category">{{ compactCategoryLabel }}</span>
-      <span class="icon" aria-hidden="true">⌕</span>
+      <adeni-carbon-icon class="icon" name="search" [size]="20" />
     </button>
   } @else {
     <form class="field" role="search" (submit)="submit($event)">
-      <span class="field-icon" aria-hidden="true">⌕</span>
+      <adeni-carbon-icon class="field-icon" name="search" [size]="20" />
       <input
         #searchInput
         type="search"
@@ -23,7 +23,9 @@
         (focus)="open.set(true)"
       />
       @if (variant() === "hero") {
-        <button type="submit" class="hero-submit" [attr.aria-label]="findServices">→</button>
+        <button type="submit" class="hero-submit" [attr.aria-label]="findServices">
+          <adeni-carbon-icon name="arrow--right" [size]="20" />
+        </button>
       }
     </form>
   }

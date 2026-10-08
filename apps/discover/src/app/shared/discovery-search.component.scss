@@ -20,7 +20,7 @@
 .field input {
   width: 100%;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--cds-radius-none);
   background: var(--surface);
   color: var(--text);
   font: inherit;
@@ -43,17 +43,16 @@
   right: 0.35rem;
   top: 50%;
   transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 2.45rem;
   height: 2.45rem;
   border: 0;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #1b4332, #13c2a3);
+  border-radius: var(--cds-radius-none);
+  background: var(--interactive);
   color: #fff;
-  font: inherit;
-  font-size: 1rem;
-  font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 6px 14px rgb(27 67 50 / 28%);
 }
 
 .compact .field input,
@@ -63,8 +62,10 @@
 }
 
 .field input:focus {
-  border-color: color-mix(in srgb, #13c2a3 55%, #1b4332);
-  box-shadow: 0 0 0 3px rgb(19 194 163 / 18%);
+  outline: 2px solid var(--interactive);
+  outline-offset: -2px;
+  border-color: var(--interactive);
+  box-shadow: none;
 }
 
 .pill-trigger {
@@ -73,20 +74,15 @@
   min-width: 0;
   align-items: center;
   padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--surface);
-  box-shadow: 0 4px 16px rgb(11 15 20 / 8%);
+  border: 1px solid var(--cds-border-subtle);
+  border-radius: var(--cds-radius-none);
+  background: var(--cds-layer-01);
   cursor: pointer;
   text-align: left;
-  transition:
-    box-shadow 180ms ease,
-    transform 180ms ease;
-  animation: search-in 220ms ease;
 }
 
 .pill-trigger:hover {
-  box-shadow: 0 8px 22px rgb(11 15 20 / 12%);
+  background: var(--cds-gray-10);
 }
 
 .seg {
@@ -116,8 +112,8 @@
   width: 2rem;
   height: 2rem;
   margin: 0.3rem;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #1b4332, #13c2a3);
+  border-radius: var(--cds-radius-none);
+  background: var(--interactive);
   color: #fff;
   flex-shrink: 0;
 }
@@ -130,7 +126,7 @@
   z-index: 50;
   padding: 0.85rem 0.95rem 0.95rem;
   border: 1px solid rgb(22 22 22 / 8%);
-  border-radius: 0.95rem;
+  border-radius: var(--cds-radius-none);
   background: rgb(255 255 255 / 96%);
   box-shadow: 0 16px 36px rgb(11 15 20 / 12%);
   backdrop-filter: blur(12px);
@@ -155,9 +151,9 @@
 
 .chips button {
   border: 1px solid rgb(22 22 22 / 8%);
-  border-radius: 999px;
+  border-radius: var(--cds-radius-none);
   background: transparent;
-  color: color-mix(in srgb, #1b4332 70%, #12141a);
+  color: color-mix(in srgb, var(--brand-ink) 70%, var(--cds-gray-100));
   font: inherit;
   font-size: 0.8rem;
   font-weight: 600;
@@ -172,7 +168,7 @@
 .chips button:hover {
   border-color: rgb(19 194 163 / 40%);
   background: rgb(19 194 163 / 8%);
-  color: #1b4332;
+  color: var(--brand-ink);
 }
 
 .hint {

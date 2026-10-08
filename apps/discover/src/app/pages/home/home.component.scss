@@ -14,7 +14,7 @@
 .section-head h2,
 .categories-head h2 {
   margin: 0;
-  font-family: "Fraunces", "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+  font-family: var(--font-family-display);
   font-size: clamp(1.55rem, 2.4vw, 2rem);
   font-weight: 600;
   letter-spacing: -0.03em;
@@ -63,11 +63,11 @@
 
 .group-head h3 {
   margin: 0;
-  font-family: "Fraunces", "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+  font-family: var(--font-family-display);
   font-size: 1.15rem;
   font-weight: 600;
   letter-spacing: -0.02em;
-  color: color-mix(in srgb, #1b4332 75%, #12141a);
+  color: color-mix(in srgb, var(--brand-ink) 75%, var(--cds-gray-100));
   white-space: nowrap;
 }
 
@@ -94,7 +94,7 @@
 }
 
 .tile {
-  --tile-start: #1b4332;
+  --tile-start: var(--brand-ink);
   --tile-end: #40916c;
 
   position: relative;
@@ -102,7 +102,7 @@
   height: 100%;
   min-height: 8.75rem;
   overflow: hidden;
-  border-radius: 0.4rem;
+  border-radius: var(--cds-radius-none);
   color: #fff;
   text-decoration: none;
   background: linear-gradient(160deg, var(--tile-start), var(--tile-end));
@@ -149,7 +149,7 @@
   justify-content: center;
   width: 1.85rem;
   height: 1.85rem;
-  border-radius: 999px;
+  border-radius: var(--cds-radius-none);
   background: rgb(255 255 255 / 16%);
   backdrop-filter: blur(6px);
   font-size: 0.9rem;
@@ -169,7 +169,7 @@
 }
 
 .tile-name {
-  font-family: "Fraunces", "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+  font-family: var(--font-family-display);
   font-size: 1.15rem;
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -212,7 +212,7 @@
   margin: 1.25rem 0 0;
   max-width: 36rem;
   padding: 0.75rem 0.9rem;
-  border-radius: 0.65rem;
+  border-radius: var(--cds-radius-none);
   background: rgb(19 194 163 / 10%);
   color: var(--text);
 }

@@ -21,14 +21,15 @@ import {
 import { AdeniLocaleService } from "@adeni/ui";
 import { ADENI_DISCOVER_CONFIG } from "../../core/adeni-config";
 import { CustomerApiService } from "../../core/services/customer-api.service";
+import { DiscoverLoadingService } from "../../core/services/discover-loading.service";
 import { MarketContextService } from "../../core/services/market-context.service";
 import { SeoService } from "../../core/services/seo.service";
 import { DiscoveryBusinessCardComponent } from "../../shared/discovery-business-card.component";
 import { DiscoveryMapComponent } from "../../shared/discovery-map.component";
 
 const MARKET_TONES: Record<string, { h1: string; h2: string; h3: string }> = {
-  lagos: { h1: "#1b4332", h2: "#13c2a3", h3: "#d8a23a" },
-  ottawa: { h1: "#123b4a", h2: "#2a9d8f", h3: "#7eb8c9" },
+  lagos: { h1: "#7f56ff", h2: "#13c2a3", h3: "#6f42ff" },
+  ottawa: { h1: "#6f42ff", h2: "#13c2a3", h3: "#7f56ff" },
 };
 
 const LOAD_MORE_PANEL_DELAY_MS = 450;
@@ -47,12 +48,12 @@ export class DiscoverComponent {
   private readonly localeService = inject(AdeniLocaleService);
   readonly market = inject(MarketContextService);
   private readonly seo = inject(SeoService);
+  private readonly pageLoading = inject(DiscoverLoadingService);
   private readonly injector = inject(Injector);
   private readonly loadMoreSentinel = viewChild<ElementRef<HTMLElement>>("loadMoreSentinel");
 
   readonly loading = signal(true);
   readonly loadingMore = signal(false);
-  readonly showLoadMorePanel = signal(false);
   readonly error = signal<string | null>(null);
   readonly loadMoreError = signal<string | null>(null);
   readonly categories = signal<Category[]>([]);
@@ -146,6 +147,7 @@ export class DiscoverComponent {
   private allowMarketReload = false;
   private loadGeneration = 0;
   private loadMorePanelTimer: ReturnType<typeof setTimeout> | null = null;
+  private loadMorePanelShown = false;
 
   constructor() {
     this.route.queryParamMap.subscribe(() => {
@@ -260,6 +262,10 @@ export class DiscoverComponent {
     this.loadMoreError.set(null);
     this.page.set(1);
     this.activeLocationId.set(null);
+    this.pageLoading.show(
+      t(this.locale(), "discover.loadingMore"),
+      t(this.locale(), "discover.loadingMorePanel"),
+    );
 
     const client = this.api.createPublicClient();
     const loc = this.market.searchLocation();
@@ -319,6 +325,7 @@ export class DiscoverComponent {
       this.items.set([]);
       this.totalCount.set(0);
     } finally {
+      this.pageLoading.hide();
       if (generation === this.loadGeneration) {
         this.lastLoadedMarketId = marketId;
         this.allowMarketReload = true;
@@ -393,7 +400,11 @@ export class DiscoverComponent {
     this.clearLoadMorePanel();
     this.loadMorePanelTimer = setTimeout(() => {
       if (this.loadingMore()) {
-        this.showLoadMorePanel.set(true);
+        this.pageLoading.show(
+          t(this.locale(), "discover.loadingMore"),
+          t(this.locale(), "discover.loadingMorePanel"),
+        );
+        this.loadMorePanelShown = true;
       }
     }, LOAD_MORE_PANEL_DELAY_MS);
   }
@@ -403,6 +414,9 @@ export class DiscoverComponent {
       clearTimeout(this.loadMorePanelTimer);
       this.loadMorePanelTimer = null;
     }
-    this.showLoadMorePanel.set(false);
+    if (this.loadMorePanelShown) {
+      this.pageLoading.hide();
+      this.loadMorePanelShown = false;
+    }
   }
 }

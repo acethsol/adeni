@@ -8,14 +8,17 @@
   "exports": {
     ".": "./src/index.ts",
     "./styles/staff-layout": "./src/styles/_staff-layout.scss",
-    "./styles/tokens": "./src/styles/_carbon-adeni-tokens.scss"
+    "./styles/tokens": "./src/styles/_carbon-adeni-tokens.scss",
+    "./styles/carbon-components": "./src/styles/_carbon-components.scss"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@adeni/brand": "*",
-    "@adeni/shared": "*"
+    "@adeni/shared": "*",
+    "@carbon/icon-helpers": "^10.84.0",
+    "@carbon/icons": "^11.90.0"
   },
   "peerDependencies": {
     "@angular/core": "^22.2.0",

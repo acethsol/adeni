@@ -7,7 +7,11 @@
   [style.--h3]="pageTone().h3"
 >
   @if (showMap()) {
-    <div class="mobile-toggle" role="group" [attr.aria-label]="label('discover.filtersButton')">
+    <div
+      class="mobile-toggle cds-content-switcher"
+      role="group"
+      [attr.aria-label]="label('discover.filtersButton')"
+    >
       <button type="button" [class.active]="mobileView() === 'list'" (click)="mobileView.set('list')">
         {{ label("discover.showList") }}
       </button>
@@ -224,13 +228,4 @@
     }
   </div>
 
-  @if (showLoadMorePanel()) {
-    <div class="load-panel" role="status" aria-live="polite">
-      <span class="load-spinner" aria-hidden="true"></span>
-      <div>
-        <strong>{{ label("discover.loadingMore") }}</strong>
-        <p>{{ label("discover.loadingMorePanel") }}</p>
-      </div>
-    </div>
-  }
 </div>

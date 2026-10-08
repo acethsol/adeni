@@ -1,4 +1,5 @@
 @use "carbon-adeni-tokens" as *;
+@use "carbon-components";
 
 *,
 *::before,
@@ -6,9 +7,27 @@
   box-sizing: border-box;
 }
 
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 body {
   margin: 0;
   font-family: var(--font-family-sans);
+  font-size: var(--cds-body-02-size);
+  line-height: var(--cds-body-02-line);
   background: var(--bg-subtle);
   color: var(--text);
+}
+
+a {
+  color: var(--cds-link-primary);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }

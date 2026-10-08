@@ -11,14 +11,15 @@ import { CustomerApiService } from "../core/services/customer-api.service";
 import { HeroSearchPinService } from "../core/services/hero-search-pin.service";
 import { MarketContextService } from "../core/services/market-context.service";
 import { DiscoverySearchComponent } from "../shared/discovery-search.component";
+import { GlobalLoadingPanelComponent } from "../shared/global-loading-panel.component";
 import { MarketGeoSyncComponent } from "../shared/market-geo-sync.component";
 import { PublicFooterComponent } from "../shared/public-footer.component";
-import { AdeniBrandLockupComponent } from "@adeni/ui";
+import { AdeniBrandLockupComponent, AdeniCarbonIconComponent } from "@adeni/ui";
 
-/** Soft header atmosphere per market — Lagos warmer, Ottawa cooler/bluer. */
+/** Header accent tones — Adeni brand purple/teal (Carbon UI chrome). */
 const MARKET_HEADER_TONES: Record<string, { h1: string; h2: string; h3: string }> = {
-  lagos: { h1: "#1b4332", h2: "#13c2a3", h3: "#d8a23a" },
-  ottawa: { h1: "#123b4a", h2: "#2a9d8f", h3: "#7eb8c9" },
+  lagos: { h1: "#7f56ff", h2: "#13c2a3", h3: "#6f42ff" },
+  ottawa: { h1: "#6f42ff", h2: "#13c2a3", h3: "#7f56ff" },
 };
 
 @Component({
@@ -30,7 +31,9 @@ const MARKET_HEADER_TONES: Record<string, { h1: string; h2: string; h3: string }
     RouterLinkActive,
     MarketGeoSyncComponent,
     AdeniBrandLockupComponent,
+    AdeniCarbonIconComponent,
     DiscoverySearchComponent,
+    GlobalLoadingPanelComponent,
     PublicFooterComponent,
   ],
   templateUrl: "./public-shell.component.html",

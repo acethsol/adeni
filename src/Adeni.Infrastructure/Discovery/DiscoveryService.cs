@@ -725,6 +725,13 @@ public sealed class DiscoveryService(
             logoImageUrl = await ResolveCoverImageUrlAsync(business.profile.LogoImageKey, cancellationToken);
         }
 
+        var coverUrl = await ResolveCoverImageUrlAsync(business.profile.CoverImageKey, cancellationToken);
+        var imageUrls = await ResolveImageUrlsAsync(
+            business.profile.CoverImageKey,
+            business.profile.GalleryImageKeysJson,
+            coverUrl,
+            cancellationToken);
+
         return new PublicBusinessProfile(
             business.location.Id,
             business.tenant.Id,
@@ -737,7 +744,7 @@ public sealed class DiscoveryService(
             business.location.AddressLine,
             business.profile.Description,
             PiiMasker.MaskPhone(business.profile.Phone),
-            await ResolveCoverImageUrlAsync(business.profile.CoverImageKey, cancellationToken),
+            coverUrl,
             summary?.RatingAvg,
             summary?.ReviewCount ?? 0,
             business.location.Latitude,
@@ -749,6 +756,7 @@ public sealed class DiscoveryService(
             badgeList,
             business.tenant.VerifiedAt,
             completionRate,
-            Adeni.Application.Tenancy.PublicPageConfigMapper.FromProfile(business.profile, logoImageUrl));
+            Adeni.Application.Tenancy.PublicPageConfigMapper.FromProfile(business.profile, logoImageUrl),
+            imageUrls);
     }
 }

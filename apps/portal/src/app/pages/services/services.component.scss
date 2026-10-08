@@ -46,7 +46,7 @@ h3 {
 .chip {
   border: 1px solid var(--border, #e2e8f0);
   background: var(--surface, #f8fafc);
-  border-radius: 999px;
+  border-radius: var(--cds-radius-none);
   padding: 0.35rem 0.75rem;
   font-size: 0.875rem;
   cursor: pointer;

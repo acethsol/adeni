@@ -1,8 +1,8 @@
 .hero {
-  --hero-ink: #12141a;
+  --hero-ink: var(--cds-gray-100);
   --hero-muted: rgb(18 20 26 / 68%);
-  --g1: #1b4332;
-  --g2: #13c2a3;
+  --g1: var(--brand-primary);
+  --g2: var(--brand-secondary);
 
   position: relative;
   isolation: isolate;
@@ -32,7 +32,7 @@
 
 .orb {
   position: absolute;
-  border-radius: 50%;
+  border-radius: var(--cds-radius-none);
   filter: blur(40px);
   opacity: 0.55;
   animation: drift 14s ease-in-out infinite alternate;
@@ -95,7 +95,7 @@
 
 h1 {
   margin: 0.55rem 0 0;
-  font-family: "Fraunces", "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+  font-family: var(--font-family-display);
   font-size: clamp(2.35rem, 5.2vw, 3.85rem);
   font-weight: 600;
   line-height: 1.12;
@@ -126,7 +126,6 @@ h1 {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  /* background-clip:text crops glyph ink; pad box so Fraunces descenders clear */
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
   animation: word-in 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -143,49 +142,8 @@ h1 {
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.65rem;
-  margin-top: 1.15rem;
-}
-
-.cta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.72rem 1.15rem;
-  border-radius: 999px;
-  font-size: 0.92rem;
-  font-weight: 700;
-  text-decoration: none;
-  letter-spacing: -0.01em;
-  transition:
-    transform 160ms ease,
-    background 160ms ease,
-    border-color 160ms ease;
-}
-
-.cta.primary {
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--g1) 92%, #000),
-    color-mix(in srgb, var(--g2) 55%, var(--g1))
-  );
-  color: #fff;
-  box-shadow: 0 10px 24px color-mix(in srgb, var(--g1) 22%, transparent);
-}
-
-.cta.primary:hover {
-  transform: translateY(-1px);
-}
-
-.cta.secondary {
-  border: 1px solid color-mix(in srgb, var(--g1) 22%, #ddd);
-  background: rgb(255 255 255 / 82%);
-  color: color-mix(in srgb, var(--g1) 85%, #111);
-}
-
-.cta.secondary:hover {
-  border-color: color-mix(in srgb, var(--g2) 40%, #ccc);
-  background: #fff;
+  gap: var(--cds-spacing-03);
+  margin-top: var(--cds-spacing-05);
 }
 
 .search-wrap {
@@ -206,7 +164,7 @@ h1 {
   align-items: center;
   gap: 0.35rem;
   padding: 0.28rem 0.55rem 0.28rem 0.28rem;
-  border-radius: 999px;
+  border-radius: var(--cds-radius-none);
   border: 1px solid rgb(255 255 255 / 70%);
   background: rgb(255 255 255 / 72%);
   box-shadow: 0 6px 16px rgb(16 24 40 / 6%);
@@ -226,7 +184,7 @@ h1 {
   place-items: center;
   width: 1.65rem;
   height: 1.65rem;
-  border-radius: 999px;
+  border-radius: var(--cds-radius-none);
   font-size: 0.82rem;
   line-height: 1;
 }
@@ -268,7 +226,7 @@ h1 {
 .stage-media {
   position: relative;
   min-height: min(58vh, 28rem);
-  border-radius: 1.5rem;
+  border-radius: var(--cds-radius-none);
   overflow: hidden;
   box-shadow:
     0 28px 60px rgb(16 24 40 / 14%),
@@ -302,7 +260,7 @@ h1 {
   display: grid;
   gap: 0.2rem;
   padding: 0.95rem 1rem;
-  border-radius: 1rem;
+  border-radius: var(--cds-radius-none);
   background: rgb(255 255 255 / 92%);
   backdrop-filter: blur(10px);
   color: inherit;
@@ -325,7 +283,7 @@ h1 {
 .tag {
   display: inline-flex;
   padding: 0.15rem 0.45rem;
-  border-radius: 999px;
+  border-radius: var(--cds-radius-none);
   background: color-mix(in srgb, var(--g1) 85%, #000);
   color: #fff;
   font-size: 0.65rem;
@@ -339,7 +297,7 @@ h1 {
 }
 
 .stage-caption strong {
-  font-family: "Fraunces", "Iowan Old Style", Palatino, serif;
+  font-family: var(--font-family-display);
   font-size: 1.15rem;
   font-weight: 600;
   line-height: 1.2;

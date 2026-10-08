@@ -33,7 +33,7 @@
 .card {
   padding: 1rem 1.1rem;
   border: 1px solid var(--border, #e4e7ec);
-  border-radius: 0.9rem;
+  border-radius: var(--cds-radius-none);
   background: #fff;
 }
 
@@ -53,7 +53,7 @@
   gap: 0.25rem;
   text-align: left;
   padding: 0.75rem;
-  border-radius: 0.75rem;
+  border-radius: var(--cds-radius-none);
   border: 1px solid var(--border, #e4e7ec);
   background: #fafafa;
   cursor: pointer;
@@ -72,7 +72,7 @@
 
 .template .swatch {
   height: 2.2rem;
-  border-radius: 0.45rem;
+  border-radius: var(--cds-radius-none);
   margin-bottom: 0.2rem;
 }
 
@@ -121,7 +121,7 @@
 .hex {
   flex: 1;
   border: 1px solid var(--border, #e4e7ec);
-  border-radius: 0.5rem;
+  border-radius: var(--cds-radius-none);
   padding: 0.45rem 0.6rem;
   font: inherit;
 }
@@ -137,7 +137,7 @@
   align-items: center;
   justify-content: center;
   border: 1px solid var(--border, #e4e7ec);
-  border-radius: 999px;
+  border-radius: var(--cds-radius-none);
   background: #fff;
   color: inherit;
   font: inherit;
@@ -169,7 +169,7 @@
 }
 
 .phone {
-  border-radius: 1.25rem;
+  border-radius: var(--cds-radius-none);
   overflow: hidden;
   border: 1px solid var(--border, #e4e7ec);
   background: #fff;
@@ -200,7 +200,7 @@
 }
 
 .preview[data-template="luxe"] .hero h2 {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-family-sans);
   font-weight: 500;
 }
 
@@ -229,7 +229,7 @@
   display: inline-flex;
   margin-top: 0.75rem;
   padding: 0.4rem 0.75rem;
-  border-radius: 999px;
+  border-radius: var(--cds-radius-none);
   background: #fff;
   color: #111;
   font-size: 0.75rem;

@@ -9,12 +9,12 @@ import {
   resolveBusinessImageUrls,
   t,
 } from "@adeni/shared";
-import { AdeniLocaleService } from "@adeni/ui";
+import { AdeniCarbonIconComponent, AdeniLocaleService } from "@adeni/ui";
 
 @Component({
   selector: "app-discovery-business-card",
   standalone: true,
-  imports: [RouterLink, DecimalPipe],
+  imports: [RouterLink, DecimalPipe, AdeniCarbonIconComponent],
   templateUrl: "./discovery-business-card.component.html",
   styleUrl: "./discovery-business-card.component.scss",
 })

@@ -41,7 +41,7 @@ pre {
   color: var(--text);
   border: 1px solid var(--border);
   padding: 0.75rem;
-  border-radius: 0.5rem;
+  border-radius: var(--cds-radius-none);
 }
 
 h3 {

@@ -245,5 +245,76 @@ export const enMessages: Messages = {
       unknown: "Unknown",
     },
   },
+  legal: {
+    alsoSee: "Also see",
+    privacy: {
+      title: "Privacy Policy",
+      updated: "Last updated: 8 October 2026 · Draft for product launch prep",
+      notice:
+        "This is a product placeholder, not lawyer-approved legal advice. Adeni will publish a counsel-reviewed Privacy Policy before general public launch in Lagos (see the legal launch checklist).",
+      intro:
+        "Adeni helps people discover and book verified beauty and wellness businesses in markets such as Lagos and Ottawa. This page explains, in plain language, what we intend the Privacy Policy to cover.",
+      sections: {
+        s1: {
+          heading: "What we collect",
+          body: "Account and identity data via Auth0 (for example name, email, and authentication identifiers).\nBooking details you submit (service, time, location, and related messages).\nBusiness profile and listing information provided by verified businesses.\nPayment orchestration metadata from providers such as Paystack (Adeni does not hold customer or business funds).\nTechnical data needed to run the service (for example device or browser signals, market preference, and diagnostics).",
+        },
+        s2: {
+          heading: "How we use data",
+          body: "To operate discovery, booking, and business tooling.\nTo verify businesses, prevent abuse, and keep the marketplace trustworthy.\nTo communicate about bookings and account activity.\nTo meet legal and security obligations (including audit logging for admin actions).",
+        },
+        s3: {
+          heading: "Sharing",
+          body: "We share data with service providers that help us run Adeni (for example Auth0 for sign-in and Paystack for payment orchestration), and with the business you book so they can fulfil the appointment.\nWe do not sell personal information.",
+        },
+        s4: {
+          heading: "Your rights (including NDPR)",
+          body: "Depending on your market, you may have rights to access, correct, or delete personal data.\nIn v1, customer export and deletion are handled through Adeni admin-assisted workflows. Self-serve privacy tools may follow later.\nContact privacy@adeni.io (or the address published in the final policy) to exercise a request.",
+        },
+        s5: {
+          heading: "Retention and security",
+          body: "We keep data only as long as needed for the purposes above, booking records, and legal requirements.\nWe apply tenant isolation, PII masking in logs, and access controls for admin tooling. No security measure is perfect; we work to reduce risk continuously.",
+        },
+        s6: {
+          heading: "Contact",
+          body: "Privacy questions: privacy@adeni.io\nUntil the final policy is published, treat this page as informational product guidance only.",
+        },
+      },
+    },
+    terms: {
+      title: "Terms of Service",
+      updated: "Last updated: 8 October 2026 · Draft for product launch prep",
+      notice:
+        "This is a product placeholder, not lawyer-approved Terms of Service. Adeni will publish counsel-reviewed Terms (including limitation of liability and governing law) before general public launch.",
+      intro:
+        "These draft terms describe how Adeni is meant to work as a beauty and wellness marketplace: discovery, booking, and business tooling with payment orchestration — not custody of funds.",
+      sections: {
+        s1: {
+          heading: "The Adeni service",
+          body: "Adeni provides software to discover verified businesses, request or book appointments, and manage related account activity.\nBusinesses remain responsible for the services they deliver. Adeni is not the service provider for beauty or wellness appointments.",
+        },
+        s2: {
+          heading: "Accounts and acceptable use",
+          body: "You must provide accurate information and keep credentials secure.\nDo not misuse the platform (spam, fraud, scraping that harms the service, harassment, or illegal activity).\nWe may suspend or terminate accounts that violate these rules or create risk for others.",
+        },
+        s3: {
+          heading: "Bookings and payments",
+          body: "Booking availability and fulfilment are controlled by the business.\nWhen payments are enabled, Adeni orchestrates checkout through licensed providers such as Paystack. Adeni does not operate a wallet or hold customer or business funds.\nCancellation and refund rules follow the booking flow and provider rules disclosed at checkout.",
+        },
+        s4: {
+          heading: "Business listings",
+          body: "Businesses must keep listing information accurate and comply with applicable law.\nVerification helps trust but does not guarantee quality or outcome of any appointment.\nSeparate business / partner terms will cover verification, fees, and indemnification in more detail.",
+        },
+        s5: {
+          heading: "Disclaimers (to be finalized by counsel)",
+          body: "The final Terms will include limitation of liability, disclaimers, and governing law appropriate for Adeni’s markets (including Nigeria for Lagos launch).\nUntil then, Adeni provides the service on an “as available” basis and does not warrant uninterrupted or error-free operation.",
+        },
+        s6: {
+          heading: "Contact",
+          body: "Questions about these draft terms: legal@adeni.io\nAlso review the Privacy Policy for how we handle personal data.",
+        },
+      },
+    },
+  },
   errors: enErrorMessages,
 };

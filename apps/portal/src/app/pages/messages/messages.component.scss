@@ -50,7 +50,7 @@ h3 {
   font-style: normal;
   background: #7f56ff;
   color: #fff;
-  border-radius: 999px;
+  border-radius: var(--cds-radius-none);
   min-width: 1.1rem;
   padding: 0 0.3rem;
   font-size: 0.7rem;
@@ -76,7 +76,7 @@ h3 {
   margin: 0;
   max-width: 80%;
   padding: 0.6rem 0.75rem;
-  border-radius: 0.9rem;
+  border-radius: var(--cds-radius-none);
   background: var(--bg-subtle);
 }
 
@@ -90,7 +90,7 @@ textarea {
   width: 100%;
   margin-bottom: 0.6rem;
   padding: 0.6rem 0.7rem;
-  border-radius: 0.7rem;
+  border-radius: var(--cds-radius-none);
   border: 1px solid var(--border);
   font: inherit;
 }

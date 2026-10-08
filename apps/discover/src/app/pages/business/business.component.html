@@ -9,7 +9,7 @@
   <div
     class="site"
     [attr.data-template]="templateId()"
-    [style.--g1]="visual()?.gradient[0] ?? '#1b4332'"
+    [style.--g1]="visual()?.gradient[0] ?? '#161616'"
     [style.--g2]="visual()?.gradient[1] ?? '#40916c'"
     [style.--accent]="accentColor()"
   >
@@ -21,6 +21,22 @@
         [attr.aria-label]="p.name"
       ></div>
       <div class="hero-shade" aria-hidden="true"></div>
+
+      @if (gallery().length > 1) {
+        <div class="hero-gallery-controls">
+          <button type="button" class="gallery-nav" aria-label="Previous photo" (click)="prevGalleryImage($event)">
+            ‹
+          </button>
+          <div class="gallery-dots" aria-hidden="true">
+            @for (img of gallery(); track img; let i = $index) {
+              <span class="dot" [class.on]="i === galleryIndex()"></span>
+            }
+          </div>
+          <button type="button" class="gallery-nav" aria-label="Next photo" (click)="nextGalleryImage($event)">
+            ›
+          </button>
+        </div>
+      }
 
       <div class="hero-inner">
         <a class="back" routerLink="/discover">← Discover</a>
@@ -34,9 +50,9 @@
         <p class="lead">{{ tagline() }}</p>
 
         <div class="hero-actions">
-          <a class="cta" [routerLink]="['/businesses', p.slug]" fragment="book">{{ ctaLabel() }}</a>
+          <a class="cta" href="#book" (click)="scrollToSection('book', $event)">{{ ctaLabel() }}</a>
           @if (sections().services) {
-            <a class="ghost" [routerLink]="['/businesses', p.slug]" fragment="services">Services</a>
+            <a class="ghost" href="#services" (click)="scrollToSection('services', $event)">Services</a>
           }
         </div>
 
@@ -47,7 +63,16 @@
             <span>{{ ratingLine() }}</span>
           }
           @if (p.verifiedSince) {
-            <span class="verified">Verified on Adeni</span>
+            <span class="trust verified">
+              <adeni-carbon-icon name="checkmark--filled" [size]="14" />
+              Verified on Adeni
+            </span>
+          }
+          @if (isNew()) {
+            <span class="trust new">
+              <adeni-carbon-icon name="flash--filled" [size]="14" />
+              New
+            </span>
           }
         </p>
       </div>
@@ -55,17 +80,20 @@
 
     <nav class="site-nav" aria-label="On this page">
       @if (sections().about) {
-        <a [routerLink]="['/businesses', p.slug]" fragment="about">About</a>
+        <a href="#about" (click)="scrollToSection('about', $event)">About</a>
       }
       @if (sections().services) {
-        <a [routerLink]="['/businesses', p.slug]" fragment="services">Services</a>
+        <a href="#services" (click)="scrollToSection('services', $event)">Services</a>
       }
-      <a [routerLink]="['/businesses', p.slug]" fragment="book">{{ ctaLabel() }}</a>
+      <a href="#book" (click)="scrollToSection('book', $event)">{{ ctaLabel() }}</a>
+      @if (gallery().length > 1) {
+        <a href="#photos" (click)="scrollToSection('photos', $event)">Photos</a>
+      }
       @if (sections().reviews && reviews().length > 0) {
-        <a [routerLink]="['/businesses', p.slug]" fragment="reviews">Reviews</a>
+        <a href="#reviews" (click)="scrollToSection('reviews', $event)">Reviews</a>
       }
       @if (sections().visit) {
-        <a [routerLink]="['/businesses', p.slug]" fragment="visit">Visit</a>
+        <a href="#visit" (click)="scrollToSection('visit', $event)">Visit</a>
       }
     </nav>
 
@@ -75,7 +103,7 @@
           <section id="about" class="block">
             <h2>About</h2>
             <p>
-              @if (p.description?.trim()) {
+              @if (p.description.trim()) {
                 {{ p.description }}
               } @else {
                 {{ p.name }} offers {{ categoryName().toLowerCase() }} in
@@ -85,11 +113,36 @@
           </section>
         }
 
+        @if (gallery().length > 1) {
+          <section id="photos" class="block">
+            <h2>Photos</h2>
+            <ul class="photo-grid">
+              @for (img of gallery(); track img; let i = $index) {
+                <li>
+                  <button
+                    type="button"
+                    class="photo-tile"
+                    [class.on]="i === galleryIndex()"
+                    (click)="galleryIndex.set(i)"
+                    [attr.aria-label]="'Show photo ' + (i + 1)"
+                  >
+                    <img [src]="img" alt="" />
+                  </button>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+
         @if (sections().services) {
           <section id="services" class="block">
             <h2>Services</h2>
             @if (services().length === 0) {
-              <p class="muted">Menu coming soon — use the booking panel to check availability.</p>
+              <p class="muted">
+                Menu coming soon —
+                <a href="#book" (click)="scrollToSection('book', $event)">open booking</a>
+                to check availability.
+              </p>
             } @else {
               <ul class="menu">
                 @for (s of services(); track s.id) {
@@ -101,9 +154,16 @@
                       }
                       <span class="mins">{{ s.durationMinutes }} min</span>
                     </div>
-                    @if (s.priceAmount != null) {
-                      <span class="price">{{ priceFor(s.priceAmount, s.currency, locale()) }}</span>
-                    }
+                    <div class="menu-aside">
+                      @if (s.priceAmount != null) {
+                        <span class="price">{{ priceFor(s.priceAmount, s.currency, locale()) }}</span>
+                      }
+                      @if (s.isActive) {
+                        <button type="button" class="book-mini" (click)="scrollToSection('book', $event)">
+                          Book
+                        </button>
+                      }
+                    </div>
                   </li>
                 }
               </ul>

@@ -12,7 +12,7 @@ h1 {
 
 .banner {
   padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
+  border-radius: var(--cds-radius-none);
   background: #ecfdf5;
   font-size: 0.85rem;
 }
@@ -32,7 +32,7 @@ h1 {
   gap: 1rem;
   padding: 1rem;
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border-radius: var(--cds-radius-none);
   background: var(--surface);
 }
 
@@ -41,7 +41,7 @@ h1 {
   background: #fef2f2;
   color: #b91c1c;
   padding: 0.35rem 0.75rem;
-  border-radius: 0.5rem;
+  border-radius: var(--cds-radius-none);
   cursor: pointer;
 }
 
