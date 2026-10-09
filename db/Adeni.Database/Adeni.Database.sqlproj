@@ -13,6 +13,8 @@
   <ItemGroup>
     <Build Remove="PreDeployment\**\*.sql" />
     <Build Remove="PostDeployment\**\*.sql" />
+    <Build Remove="_templates\**\*.sql" />
+    <None Include="_templates\**\*.sql" />
     <None Include="Adeni.Database.publish.xml" />
     <PreDeploy Include="PreDeployment\Script.PreDeployment.sql" />
     <PostDeploy Include="PostDeployment\Script.PostDeployment.sql" />

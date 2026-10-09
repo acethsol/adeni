@@ -1,6 +1,5 @@
 namespace Adeni.Infrastructure.Storage;
 
-using System.Text.Json;
 using Adeni.Application.Caching;
 using Adeni.Application.Storage;
 using Adeni.Application.Tenancy;
@@ -14,7 +13,7 @@ public sealed class TenantMediaService(
     IFileStorage fileStorage,
     ICacheService cache) : ITenantMediaService
 {
-    public const int MaxGalleryImages = 5;
+    public const int MaxGalleryImages = GalleryImageKeys.MaxCount;
     private const long MaxImageBytes = 5 * 1024 * 1024;
 
     private static readonly HashSet<string> AllowedContentTypes = new(StringComparer.OrdinalIgnoreCase)
@@ -22,11 +21,6 @@ public sealed class TenantMediaService(
         "image/jpeg",
         "image/png",
         "image/webp"
-    };
-
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
     public async Task<Result<MediaUploadUrlResponse>> CreateUploadUrlAsync(
@@ -140,7 +134,7 @@ public sealed class TenantMediaService(
                 Error.Validation("Gallery image upload was not found. Upload the file before saving."));
         }
 
-        var keys = DeserializeGalleryKeys(profile.GalleryImageKeysJson);
+        var keys = GalleryImageKeys.Deserialize(profile.GalleryImageKeysJson);
         if (keys.Contains(storageKey, StringComparer.Ordinal))
         {
             return Result.Success(await ResolveGalleryAsync(keys, cancellationToken));
@@ -153,7 +147,7 @@ public sealed class TenantMediaService(
         }
 
         keys.Add(storageKey);
-        profile.GalleryImageKeysJson = SerializeGalleryKeys(keys);
+        profile.GalleryImageKeysJson = GalleryImageKeys.Serialize(keys);
         profile.UpdatedAt = DateTimeOffset.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
         await InvalidateProfileCachesAsync(tenantId, cancellationToken);
@@ -180,54 +174,18 @@ public sealed class TenantMediaService(
             return Result.Failure<IReadOnlyList<GalleryImageResponse>>(Error.Validation("Gallery image key is required."));
         }
 
-        var keys = DeserializeGalleryKeys(profile.GalleryImageKeysJson);
+        var keys = GalleryImageKeys.Deserialize(profile.GalleryImageKeysJson);
         if (!keys.Remove(storageKey))
         {
             return Result.Failure<IReadOnlyList<GalleryImageResponse>>(Error.NotFound("Gallery image"));
         }
 
-        profile.GalleryImageKeysJson = SerializeGalleryKeys(keys);
+        profile.GalleryImageKeysJson = GalleryImageKeys.Serialize(keys);
         profile.UpdatedAt = DateTimeOffset.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
         await InvalidateProfileCachesAsync(tenantId, cancellationToken);
 
         return Result.Success(await ResolveGalleryAsync(keys, cancellationToken));
-    }
-
-    public static List<string> DeserializeGalleryKeys(string? json)
-    {
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return [];
-        }
-
-        try
-        {
-            var parsed = JsonSerializer.Deserialize<List<string>>(json, JsonOptions);
-            return parsed?
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Select(x => x.Trim())
-                .Distinct(StringComparer.Ordinal)
-                .Take(MaxGalleryImages)
-                .ToList()
-                ?? [];
-        }
-        catch (JsonException)
-        {
-            return [];
-        }
-    }
-
-    public static string? SerializeGalleryKeys(IReadOnlyList<string> keys)
-    {
-        var cleaned = keys
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Select(x => x.Trim())
-            .Distinct(StringComparer.Ordinal)
-            .Take(MaxGalleryImages)
-            .ToList();
-
-        return cleaned.Count == 0 ? null : JsonSerializer.Serialize(cleaned, JsonOptions);
     }
 
     private async Task<IReadOnlyList<GalleryImageResponse>> ResolveGalleryAsync(

@@ -629,7 +629,7 @@ public sealed class BusinessOnboardingService(
             logoImageUrl = await fileStorage.GetDownloadUrlAsync(profile.LogoImageKey, cancellationToken);
         }
 
-        var galleryKeys = Adeni.Infrastructure.Storage.TenantMediaService.DeserializeGalleryKeys(profile.GalleryImageKeysJson);
+        var galleryKeys = GalleryImageKeys.Deserialize(profile.GalleryImageKeysJson);
         var galleryImages = new List<GalleryImageResponse>(galleryKeys.Count);
         foreach (var key in galleryKeys)
         {

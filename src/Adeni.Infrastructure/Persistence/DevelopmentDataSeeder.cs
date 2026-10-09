@@ -1,12 +1,12 @@
 namespace Adeni.Infrastructure.Persistence;
 
 using Adeni.Application.Catalog;
+using Adeni.Application.Storage;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Identity;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Catalog;
 using Adeni.Infrastructure.Markets;
-using Adeni.Infrastructure.Storage;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
@@ -255,7 +255,7 @@ public static class DevelopmentDataSeeder
                 profile.CoverImageKey = picked[0];
             }
 
-            profile.GalleryImageKeysJson = TenantMediaService.SerializeGalleryKeys(picked.Skip(1).Take(4).ToArray());
+            profile.GalleryImageKeysJson = GalleryImageKeys.Serialize(picked.Skip(1).Take(4).ToArray());
             profile.UpdatedAt = now;
             touched++;
 

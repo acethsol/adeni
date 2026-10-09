@@ -22,8 +22,9 @@ public sealed class CategoryServiceTests
         var first = await categories.GetCategoriesAsync();
         var second = await categories.GetCategoriesAsync();
 
-        Assert.Equal(7, first.Count);
+        Assert.Equal(8, first.Count); // enabled beauty/wellness leaf categories (incl. pilates)
         Assert.Contains(first, c => c.Slug == "hair-grooming");
+        Assert.Contains(first, c => c.Slug == "pilates");
         Assert.DoesNotContain(first, c => c.Slug == "plumbers");
         Assert.Equal(first, second);
         Assert.NotNull(await cache.GetStringAsync("categories:all:True:False:all"));

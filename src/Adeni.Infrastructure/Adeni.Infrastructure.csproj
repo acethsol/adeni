@@ -10,6 +10,10 @@
 
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Adeni.Infrastructure.Tests" />
+  </ItemGroup>
+
 
 
   <ItemGroup>
