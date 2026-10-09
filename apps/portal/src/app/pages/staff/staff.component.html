@@ -14,173 +14,289 @@
     <section class="card form">
       <h3>{{ editingId() ? "Edit team member" : "New team member" }}</h3>
 
-      <div class="row">
-        <div class="field">
-          <label>First name</label>
-          <input [(ngModel)]="draft.firstName" maxlength="80" (ngModelChange)="syncDisplayName()" />
+      @if (isCreateWizard()) {
+        <div class="wizard-chrome" aria-label="Create steps">
+          <ol class="wizard-steps">
+            <li [class.active]="formTab() === 'profile'" [class.done]="createStepIndex() > 0">
+              <span class="n">1</span> Profile
+            </li>
+            <li [class.active]="formTab() === 'services'" [class.done]="createStepIndex() > 1">
+              <span class="n">2</span> Services
+            </li>
+            <li [class.active]="formTab() === 'hours'">
+              <span class="n">3</span> Hours
+            </li>
+          </ol>
+          <p class="wizard-lede">
+            Step {{ createStepIndex() + 1 }} of {{ createStepCount() }} —
+            {{ createStepLabel() }}
+          </p>
         </div>
-        <div class="field">
-          <label>Last name</label>
-          <input [(ngModel)]="draft.lastName" maxlength="80" (ngModelChange)="syncDisplayName()" />
+      } @else {
+        <div class="form-tabs" role="tablist" aria-label="Staff sections">
+          <button
+            type="button"
+            role="tab"
+            [attr.aria-selected]="formTab() === 'profile'"
+            [class.active]="formTab() === 'profile'"
+            (click)="setFormTab('profile')"
+          >
+            Profile
+          </button>
+          <button
+            type="button"
+            role="tab"
+            [attr.aria-selected]="formTab() === 'services'"
+            [class.active]="formTab() === 'services'"
+            (click)="setFormTab('services')"
+          >
+            Services
+          </button>
+          <button
+            type="button"
+            role="tab"
+            [attr.aria-selected]="formTab() === 'hours'"
+            [class.active]="formTab() === 'hours'"
+            (click)="setFormTab('hours')"
+          >
+            Hours
+          </button>
+          <button
+            type="button"
+            role="tab"
+            [attr.aria-selected]="formTab() === 'leave'"
+            [class.active]="formTab() === 'leave'"
+            (click)="setFormTab('leave')"
+          >
+            Leave
+          </button>
         </div>
-      </div>
+      }
 
-      <div class="field">
-        <label>Display name (public)</label>
-        <input [(ngModel)]="draft.displayName" maxlength="120" />
-      </div>
-
-      <div class="row">
-        <div class="field">
-          <label>Role</label>
-          <select [(ngModel)]="draft.roleKey">
-            @for (key of roleKeys; track key) {
-              <option [ngValue]="key">{{ roleLabels[key] }}</option>
-            }
-          </select>
-        </div>
-        <div class="field">
-          <label>Title (optional)</label>
-          <input [(ngModel)]="draft.title" maxlength="120" placeholder="Senior stylist" />
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Short bio (optional)</label>
-        <textarea rows="2" [(ngModel)]="draft.bio" maxlength="500"></textarea>
-      </div>
-      <div class="row">
-        <div class="field">
-          <label>Sort order</label>
-          <input type="number" [(ngModel)]="draft.sortOrder" />
-        </div>
-        @if (editingId()) {
-          <div class="field toggle-field">
-            <label class="checkbox">
-              <input type="checkbox" [(ngModel)]="draft.isActive" />
-              Active for online booking
-            </label>
-          </div>
-        }
-      </div>
-
-      <div class="field">
-        <label>Services they can perform</label>
-        <p class="muted">Leave all unchecked to allow every active service.</p>
-        @if (services().length === 0) {
-          <p class="muted">Add services first on the Services page.</p>
-        } @else {
-          <ul class="service-checks">
-            @for (service of services(); track service.id) {
-              <li>
-                <label class="checkbox">
-                  <input
-                    type="checkbox"
-                    [checked]="draft.serviceOfferingIds.includes(service.id)"
-                    (change)="toggleService(service.id)"
-                  />
-                  {{ service.name }}
-                </label>
-              </li>
-            }
-          </ul>
-        }
-      </div>
-
-      <div class="hours-block">
-        <div class="hours-head">
-          <h4>Working hours</h4>
-          <div class="hours-actions">
-            <button type="button" class="btn" (click)="copyBusinessHours()">Copy business hours</button>
-            <button type="button" class="btn" (click)="clearStaffHours()">Inherit business hours</button>
-          </div>
-        </div>
-        <p class="muted">
-          Empty (all days closed here) means this person inherits the business availability calendar.
-        </p>
-        <table class="hours-table">
-          <thead>
-            <tr>
-              <th>Day</th>
-              <th>Off</th>
-              <th>Open</th>
-              <th>Close</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of hourRows; track row.dayOfWeek) {
-              <tr>
-                <td>{{ dayLabels[row.dayOfWeek] }}</td>
-                <td>
-                  <input type="checkbox" [(ngModel)]="row.closed" />
-                </td>
-                <td>
-                  <input type="time" [(ngModel)]="row.openTime" [disabled]="row.closed" />
-                </td>
-                <td>
-                  <input type="time" [(ngModel)]="row.closeTime" [disabled]="row.closed" />
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      @if (editingId()) {
-        <div class="leave-block">
-          <h4>Leave / time off</h4>
+      @if (formTab() === "profile") {
+        <div class="tab-panel" role="tabpanel">
           <div class="row">
             <div class="field">
-              <label>Start</label>
-              <input type="datetime-local" [(ngModel)]="leaveStart" />
+              <label>First name</label>
+              <input
+                [(ngModel)]="draft.firstName"
+                maxlength="80"
+                (ngModelChange)="syncDisplayName()"
+              />
             </div>
             <div class="field">
-              <label>End</label>
-              <input type="datetime-local" [(ngModel)]="leaveEnd" />
+              <label>Last name</label>
+              <input
+                [(ngModel)]="draft.lastName"
+                maxlength="80"
+                (ngModelChange)="syncDisplayName()"
+              />
             </div>
           </div>
+
           <div class="field">
-            <label>Reason (optional)</label>
-            <input [(ngModel)]="leaveReason" maxlength="200" />
+            <label>Display name (public)</label>
+            <input [(ngModel)]="draft.displayName" maxlength="120" />
           </div>
-          <button type="button" class="btn" (click)="addLeave()">Add leave</button>
-          @if (leaveItems().length > 0) {
-            <ul class="leave-list">
-              @for (leave of leaveItems(); track leave.id) {
-                <li>
-                  <span>
-                    {{ formatWhen(leave.startAt) }} → {{ formatWhen(leave.endAt) }}
-                    @if (leave.reason) {
-                      · {{ leave.reason }}
-                    }
-                    @if (leave.conflictingBookingIds.length > 0) {
-                      <em class="warn">
-                        · {{ leave.conflictingBookingIds.length }} booking conflict(s)
-                      </em>
-                    }
-                  </span>
-                  <button type="button" class="btn btn-danger" (click)="removeLeave(leave)">
-                    Remove
-                  </button>
-                </li>
-              }
-            </ul>
-          }
+
+          <div class="row">
+            <div class="field">
+              <label>Role</label>
+              <select [(ngModel)]="draft.roleKey">
+                @for (key of availableRoles(); track key) {
+                  <option [ngValue]="key">{{ roleLabels[key] }}</option>
+                }
+              </select>
+              <p class="muted tiny-hint">
+                Practitioners match your categories; ops roles (manager, accountant, …)
+                are always available. Use title for a custom label.
+              </p>
+            </div>
+            <div class="field">
+              <label>Title (optional)</label>
+              <input [(ngModel)]="draft.title" maxlength="120" placeholder="Senior stylist" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Short bio (optional)</label>
+            <textarea rows="2" [(ngModel)]="draft.bio" maxlength="500"></textarea>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label>Sort order</label>
+              <input type="number" [(ngModel)]="draft.sortOrder" />
+            </div>
+            @if (editingId()) {
+              <div class="field toggle-field">
+                <label class="checkbox">
+                  <input type="checkbox" [(ngModel)]="draft.isActive" />
+                  Active for online booking
+                </label>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      @if (formTab() === "services") {
+        <div class="tab-panel" role="tabpanel">
+          <div class="field">
+            <label>Services they can perform</label>
+            <p class="muted">Leave all unchecked to allow every active service.</p>
+            @if (services().length === 0) {
+              <p class="muted">Add services first on the Services page.</p>
+            } @else {
+              <ul class="service-checks">
+                @for (service of services(); track service.id) {
+                  <li>
+                    <label class="checkbox">
+                      <input
+                        type="checkbox"
+                        [checked]="draft.serviceOfferingIds.includes(service.id)"
+                        (change)="toggleService(service.id)"
+                      />
+                      {{ service.name }}
+                    </label>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        </div>
+      }
+
+      @if (formTab() === "hours") {
+        <div class="tab-panel" role="tabpanel">
+          <div class="hours-block flat">
+            <div class="hours-head">
+              <h4>Working hours</h4>
+              <div class="hours-actions">
+                <button type="button" class="btn" (click)="copyBusinessHours()">
+                  Copy business hours
+                </button>
+                <button type="button" class="btn" (click)="clearStaffHours()">
+                  Inherit business hours
+                </button>
+              </div>
+            </div>
+            <p class="muted">
+              Empty (all days off here) means this person inherits the business availability
+              calendar.
+            </p>
+            <table class="hours-table">
+              <thead>
+                <tr>
+                  <th>Day</th>
+                  <th>Off</th>
+                  <th>Open</th>
+                  <th>Close</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of hourRows; track row.dayOfWeek) {
+                  <tr>
+                    <td>{{ dayLabels[row.dayOfWeek] }}</td>
+                    <td>
+                      <input type="checkbox" [(ngModel)]="row.closed" />
+                    </td>
+                    <td>
+                      <input type="time" [(ngModel)]="row.openTime" [disabled]="row.closed" />
+                    </td>
+                    <td>
+                      <input type="time" [(ngModel)]="row.closeTime" [disabled]="row.closed" />
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      @if (formTab() === "leave") {
+        <div class="tab-panel" role="tabpanel">
+          <div class="leave-block flat">
+            <h4>Leave / time off</h4>
+            <div class="row">
+              <div class="field">
+                <label>Start</label>
+                <input type="datetime-local" [(ngModel)]="leaveStart" />
+              </div>
+              <div class="field">
+                <label>End</label>
+                <input type="datetime-local" [(ngModel)]="leaveEnd" />
+              </div>
+            </div>
+            <div class="field">
+              <label>Reason (optional)</label>
+              <input [(ngModel)]="leaveReason" maxlength="200" />
+            </div>
+            <button type="button" class="btn" (click)="addLeave()">Add leave</button>
+            @if (leaveItems().length > 0) {
+              <ul class="leave-list">
+                @for (leave of leaveItems(); track leave.id) {
+                  <li>
+                    <span>
+                      {{ formatWhen(leave.startAt) }} → {{ formatWhen(leave.endAt) }}
+                      @if (leave.reason) {
+                        · {{ leave.reason }}
+                      }
+                      @if (leave.conflictingBookingIds.length > 0) {
+                        <em class="warn">
+                          · {{ leave.conflictingBookingIds.length }} booking conflict(s)
+                        </em>
+                      }
+                    </span>
+                    <button type="button" class="btn btn-danger" (click)="removeLeave(leave)">
+                      Remove
+                    </button>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="muted" style="margin-top: 0.75rem">No leave blocks yet.</p>
+            }
+          </div>
         </div>
       }
 
       <div class="actions">
-        <button
-          type="button"
-          class="btn btn-primary"
-          [disabled]="busy() !== null"
-          (click)="save()"
-        >
-          Save
-        </button>
-        <button type="button" class="btn" (click)="cancelForm()">Cancel</button>
-        @if (editingId(); as id) {
-          <a class="btn" [routerLink]="['/staff', id, 'calendar']">Open calendar</a>
+        @if (isCreateWizard()) {
+          <button type="button" class="btn" (click)="cancelForm()">Cancel</button>
+          @if (createStepIndex() > 0) {
+            <button type="button" class="btn" (click)="wizardBack()">Back</button>
+          }
+          @if (formTab() === "services" || formTab() === "hours") {
+            @if (!isLastCreateStep()) {
+              <button type="button" class="btn" (click)="wizardSkip()">Skip</button>
+            }
+          }
+          @if (!isLastCreateStep()) {
+            <button type="button" class="btn btn-primary" (click)="wizardNext()">Next</button>
+          } @else {
+            <button
+              type="button"
+              class="btn btn-primary"
+              [disabled]="busy() !== null"
+              (click)="save()"
+            >
+              Add teammate
+            </button>
+          }
+        } @else {
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="busy() !== null"
+            (click)="save()"
+          >
+            Save
+          </button>
+          <button type="button" class="btn" (click)="cancelForm()">Cancel</button>
+          @if (editingId(); as id) {
+            <a class="btn" [routerLink]="['/staff', id, 'calendar']">Open calendar</a>
+          }
         }
       </div>
     </section>
@@ -188,50 +304,90 @@
 
   @if (loading()) {
     <p class="muted">Loading…</p>
-  } @else if (staff().length === 0) {
-    <section class="card empty">
+  } @else if (staff().length === 0 && !showForm()) {
+    <section class="empty-stage" aria-labelledby="staff-empty-title">
+      <div class="empty-visual" aria-hidden="true">
+        <span class="silhouette s1"></span>
+        <span class="silhouette s2"></span>
+        <span class="silhouette s3"></span>
+      </div>
+      <h3 id="staff-empty-title">Your chairs are empty</h3>
       <p>
-        No team members yet. Add people so customers can pick “Any available” or a named
-        practitioner when booking.
+        Put a face to the fade, the set, the massage. Guests book people they trust —
+        add your stylists, barbers, and therapists so they can choose a favourite or
+        “Any available.”
       </p>
+      <ul class="empty-perks">
+        <li>Named booking on your public page</li>
+        <li>Hours and leave that protect their calendar</li>
+        <li>Services tied to who can actually do them</li>
+      </ul>
+      <button type="button" class="btn btn-primary" (click)="openCreate()">
+        Add your first teammate
+      </button>
     </section>
-  } @else {
-    <ul class="plain staff-list">
-      @for (member of staff(); track member.id) {
-        <li class="card list-row">
-          <div class="copy">
-            <strong>{{ member.displayName }}</strong>
-            <span class="muted"
-              >{{ member.firstName }} {{ member.lastName }} · {{ roleLabel(member.roleKey)
-              }}{{ member.title ? " · " + member.title : "" }}</span
+  } @else if (staff().length > 0) {
+    <div class="roster">
+      <div class="roster-head">
+        <p class="roster-kicker">On the floor</p>
+        <p class="roster-count">
+          {{ staff().length }}
+          {{ staff().length === 1 ? "teammate" : "teammates" }}
+        </p>
+      </div>
+      <ul class="plain staff-list">
+        @for (member of staff(); track member.id) {
+          <li class="staff-card" [class.inactive]="!member.isActive">
+            <div
+              class="avatar"
+              [attr.data-tone]="roleTone(member.roleKey)"
+              aria-hidden="true"
             >
-            <span class="tiny" [class.off]="!member.isActive">
-              {{ member.isActive ? "Bookable online" : "Inactive" }}
-            </span>
-            @if (member.serviceOfferingIds.length > 0) {
-              <span class="tiny services-line">{{
-                serviceNames(member.serviceOfferingIds)
-              }}</span>
-            } @else {
-              <span class="tiny services-line">All services</span>
-            }
-          </div>
-          <div class="actions">
-            <a class="btn" [routerLink]="['/staff', member.id, 'calendar']">Calendar</a>
-            <button type="button" class="btn" (click)="openEdit(member)">Edit</button>
-            @if (member.isActive) {
-              <button
-                type="button"
-                class="btn btn-danger"
-                [disabled]="busy() === member.id"
-                (click)="deactivate(member)"
-              >
-                Deactivate
-              </button>
-            }
-          </div>
-        </li>
-      }
-    </ul>
+              {{ initials(member) }}
+            </div>
+            <div class="copy">
+              <div class="title-row">
+                <strong>{{ member.displayName }}</strong>
+                <span class="role-tag" [attr.data-tone]="roleTone(member.roleKey)">
+                  {{ roleLabel(member.roleKey) }}
+                </span>
+                <span class="status-dot" [class.off]="!member.isActive">
+                  {{ member.isActive ? "Bookable" : "Inactive" }}
+                </span>
+              </div>
+              @if (memberMeta(member); as meta) {
+                <span class="muted">{{ meta }}</span>
+              }
+              <div class="service-chips">
+                @if (member.serviceOfferingIds.length === 0) {
+                  <span class="chip soft">All services</span>
+                } @else {
+                  @for (name of servicePreview(member); track name) {
+                    <span class="chip">{{ name }}</span>
+                  }
+                  @if (serviceOverflow(member) > 0) {
+                    <span class="chip soft">+{{ serviceOverflow(member) }}</span>
+                  }
+                }
+              </div>
+            </div>
+            <div class="row-actions">
+              <a [routerLink]="['/staff', member.id, 'calendar']">Calendar</a>
+              <button type="button" (click)="openEdit(member)">Edit</button>
+              @if (member.isActive) {
+                <button
+                  type="button"
+                  class="danger"
+                  [disabled]="busy() === member.id"
+                  (click)="deactivate(member)"
+                >
+                  Deactivate
+                </button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    </div>
   }
 </app-portal-page>

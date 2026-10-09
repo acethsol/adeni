@@ -453,10 +453,10 @@ public sealed class StaffService(
                 Error.Validation("Calendar range end must be after start."));
         }
 
-        if ((to - from).TotalDays > 31)
+        if ((to - from).TotalDays > 45)
         {
             return Result.Failure<StaffCalendarResponse>(
-                Error.Validation("Calendar range cannot exceed 31 days."));
+                Error.Validation("Calendar range cannot exceed 45 days."));
         }
 
         var member = await dbContext.StaffMembers

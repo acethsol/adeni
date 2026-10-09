@@ -1,10 +1,11 @@
-import { Component, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { RouterLink } from "@angular/router";
 import {
   DAY_OF_WEEK_LABELS,
-  STAFF_ROLE_KEYS,
   STAFF_ROLE_LABELS,
+  defaultStaffRoleForCategories,
+  staffRolesForCategories,
   type ServiceOffering,
   type StaffLeave,
   type StaffMember,
@@ -15,6 +16,11 @@ import { AdeniConfirmService, AdeniFeedbackService, PortalPageComponent } from "
 import { BusinessApiService } from "../../core/services/business-api.service";
 
 const DAYS_ORDER = [1, 2, 3, 4, 5, 6, 0];
+
+type StaffFormTab = "profile" | "services" | "hours" | "leave";
+
+/** Create wizard steps (Leave only after save). */
+const CREATE_STEPS: StaffFormTab[] = ["profile", "services", "hours"];
 
 type DayRow = {
   dayOfWeek: number;
@@ -87,9 +93,38 @@ export class StaffComponent implements OnInit {
   readonly busy = signal<string | null>(null);
   readonly editingId = signal<string | null>(null);
   readonly showForm = signal(false);
-  readonly roleKeys = STAFF_ROLE_KEYS;
+  readonly formTab = signal<StaffFormTab>("profile");
+  readonly categorySlugs = signal<string[]>([]);
+  /** Keep an existing role in the dropdown even if category filters would hide it. */
+  readonly preserveRoleKey = signal<string | null>(null);
   readonly roleLabels = STAFF_ROLE_LABELS;
   readonly dayLabels = DAY_OF_WEEK_LABELS;
+
+  readonly availableRoles = computed(() =>
+    staffRolesForCategories(this.categorySlugs(), this.preserveRoleKey()),
+  );
+
+  /** Create = wizard; edit = free tabs. */
+  readonly isCreateWizard = computed(() => this.showForm() && !this.editingId());
+
+  readonly createStepIndex = computed(() => {
+    const idx = CREATE_STEPS.indexOf(this.formTab());
+    return idx >= 0 ? idx : 0;
+  });
+
+  readonly createStepLabel = computed(() => {
+    const step = CREATE_STEPS[this.createStepIndex()] ?? "profile";
+    switch (step) {
+      case "profile":
+        return "Who they are";
+      case "services":
+        return "What they offer";
+      case "hours":
+        return "When they work";
+      default:
+        return "";
+    }
+  });
 
   draft: StaffDraft = this.emptyDraft();
   hourRows: DayRow[] = rulesToRows([]);
@@ -107,7 +142,7 @@ export class StaffComponent implements OnInit {
       firstName: "",
       lastName: "",
       displayName: "",
-      roleKey: "other",
+      roleKey: defaultStaffRoleForCategories(this.categorySlugs()),
       title: "",
       bio: "",
       sortOrder: "0",
@@ -118,6 +153,132 @@ export class StaffComponent implements OnInit {
 
   roleLabel(key: string): string {
     return this.roleLabels[key as StaffRoleKey] ?? key;
+  }
+
+  /** Role (+ title); legal name only when it differs from the public display name. */
+  memberMeta(member: StaffMember): string {
+    const parts: string[] = [];
+    if (member.title?.trim()) {
+      parts.push(member.title.trim());
+    }
+    const legal = `${member.firstName} ${member.lastName}`.trim();
+    if (
+      legal &&
+      legal.toLowerCase() !== member.displayName.trim().toLowerCase()
+    ) {
+      parts.push(legal);
+    }
+    return parts.join(" · ");
+  }
+
+  initials(member: StaffMember): string {
+    const fromParts = `${member.firstName?.[0] ?? ""}${member.lastName?.[0] ?? ""}`.trim();
+    if (fromParts.length >= 1) {
+      return fromParts.toUpperCase();
+    }
+    const words = member.displayName.trim().split(/\s+/).filter(Boolean);
+    if (words.length >= 2) {
+      return `${words[0]![0]}${words[1]![0]}`.toUpperCase();
+    }
+    return (member.displayName.trim().slice(0, 2) || "?").toUpperCase();
+  }
+
+  roleTone(roleKey: string): string {
+    switch (roleKey) {
+      case "stylist":
+      case "barber":
+        return "hair";
+      case "nail_tech":
+        return "nails";
+      case "esthetician":
+      case "therapist":
+        return "spa";
+      case "instructor":
+      case "trainer":
+        return "fit";
+      case "manager":
+      case "supervisor":
+        return "lead";
+      case "accountant":
+      case "inventory_manager":
+      case "hr":
+      case "marketing":
+      case "admin_staff":
+        return "ops";
+      default:
+        return "neutral";
+    }
+  }
+
+  servicePreview(member: StaffMember): string[] {
+    const names = member.serviceOfferingIds.map((id) => this.serviceName(id));
+    return names.slice(0, 3);
+  }
+
+  serviceOverflow(member: StaffMember): number {
+    return Math.max(0, member.serviceOfferingIds.length - 3);
+  }
+
+  setFormTab(tab: StaffFormTab): void {
+    if (this.isCreateWizard()) {
+      return;
+    }
+    if (tab === "leave" && !this.editingId()) {
+      return;
+    }
+    this.formTab.set(tab);
+  }
+
+  private profileReady(): boolean {
+    const first = this.draft.firstName.trim();
+    const last = this.draft.lastName.trim();
+    if (!first || !last) {
+      this.feedback.error("First and last name are required.");
+      return false;
+    }
+    const display =
+      this.draft.displayName.trim() || `${first} ${last}`.trim();
+    if (display.length < 2) {
+      this.feedback.error("Display name needs at least 2 characters.");
+      return false;
+    }
+    return true;
+  }
+
+  wizardBack(): void {
+    const idx = this.createStepIndex();
+    if (idx <= 0) {
+      return;
+    }
+    this.formTab.set(CREATE_STEPS[idx - 1]!);
+  }
+
+  wizardNext(): void {
+    const idx = this.createStepIndex();
+    const current = CREATE_STEPS[idx];
+    if (current === "profile" && !this.profileReady()) {
+      return;
+    }
+    if (idx >= CREATE_STEPS.length - 1) {
+      return;
+    }
+    this.formTab.set(CREATE_STEPS[idx + 1]!);
+  }
+
+  wizardSkip(): void {
+    const idx = this.createStepIndex();
+    if (idx <= 0 || idx >= CREATE_STEPS.length - 1) {
+      return;
+    }
+    this.formTab.set(CREATE_STEPS[idx + 1]!);
+  }
+
+  isLastCreateStep(): boolean {
+    return this.createStepIndex() >= CREATE_STEPS.length - 1;
+  }
+
+  createStepCount(): number {
+    return CREATE_STEPS.length;
   }
 
   serviceName(id: string): string {
@@ -145,12 +306,18 @@ export class StaffComponent implements OnInit {
     try {
       await this.feedback.runLoading(async () => {
         await this.api.withAuthorizedClient(async (c) => {
-          const [staff, catalog] = await Promise.all([
+          const [staff, catalog, profile] = await Promise.all([
             c.listTenantStaff(),
             c.getTenantServiceCatalog(),
+            c.getTenantProfile().catch(() => null),
           ]);
           this.staff.set(staff);
           this.services.set(catalog.items.filter((s) => s.isActive !== false));
+          const slugs = [
+            profile?.categorySlug,
+            ...(profile?.additionalCategorySlugs ?? []),
+          ].filter((s): s is string => !!s?.trim());
+          this.categorySlugs.set(slugs);
         });
       }, "Loading team…");
     } catch {
@@ -162,6 +329,8 @@ export class StaffComponent implements OnInit {
 
   openCreate(): void {
     this.editingId.set(null);
+    this.preserveRoleKey.set(null);
+    this.formTab.set("profile");
     this.draft = this.emptyDraft();
     this.hourRows = rulesToRows([]);
     this.leaveItems.set([]);
@@ -173,6 +342,8 @@ export class StaffComponent implements OnInit {
 
   async openEdit(member: StaffMember): Promise<void> {
     this.editingId.set(member.id);
+    this.preserveRoleKey.set(member.roleKey);
+    this.formTab.set("profile");
     this.draft = {
       firstName: member.firstName,
       lastName: member.lastName,
@@ -217,6 +388,8 @@ export class StaffComponent implements OnInit {
   cancelForm(): void {
     this.showForm.set(false);
     this.editingId.set(null);
+    this.preserveRoleKey.set(null);
+    this.formTab.set("profile");
     this.draft = this.emptyDraft();
     this.leaveItems.set([]);
   }
@@ -231,19 +404,15 @@ export class StaffComponent implements OnInit {
   }
 
   async save(): Promise<void> {
-    const firstName = this.draft.firstName.trim();
-    const lastName = this.draft.lastName.trim();
-    if (!firstName || !lastName) {
-      this.feedback.error("First and last name are required.");
+    if (!this.profileReady()) {
+      this.formTab.set("profile");
       return;
     }
 
+    const firstName = this.draft.firstName.trim();
+    const lastName = this.draft.lastName.trim();
     const displayName =
       this.draft.displayName.trim() || `${firstName} ${lastName}`.trim();
-    if (displayName.length < 2) {
-      this.feedback.error("Display name needs at least 2 characters.");
-      return;
-    }
 
     const sortOrder = Number.parseInt(this.draft.sortOrder, 10) || 0;
     const editingId = this.editingId();
@@ -311,7 +480,9 @@ export class StaffComponent implements OnInit {
           reason: this.leaveReason.trim() || null,
         }),
       );
-      this.leaveItems.update((items) => [...items, created].sort((a, b) => +new Date(a.startAt) - +new Date(b.startAt)));
+      this.leaveItems.update((items) =>
+        [...items, created].sort((a, b) => +new Date(a.startAt) - +new Date(b.startAt)),
+      );
       this.leaveStart = "";
       this.leaveEnd = "";
       this.leaveReason = "";

@@ -63,7 +63,8 @@ Give salon/spa owners a practical staff ops layer — identity, roles, working h
 ### Slice 24d — Staff calendar (portal)
 
 - [x] Portal route e.g. `/staff/:id/calendar` (or tab on staff detail)
-- [x] Week view: confirmed/pending bookings + leave blocks (+ hours inheritance note)
+- [x] **Custom month/week/day calendar** (no FullCalendar / 3rd-party) — hallmark floor board: month agenda grid, timed week/day blocks, leave bands, off-hour shading, now line, detail rail
+- [x] Month / week / day views: confirmed/pending bookings + leave (+ hours inheritance note); tap day → day timeline; tap block → detail rail
 - [x] Read-only from booking module list filtered by `staffMemberId` (+ leave API); no drag-reschedule in 24
 - [x] Deep-link from staff list / edit form → calendar
 

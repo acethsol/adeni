@@ -210,43 +210,47 @@ public sealed class DiscoveryService(
         var verifiedStatus = (int)TenantStatus.Verified;
         var likeQuery = searchQuery is null ? null : $"%{searchQuery}%";
         var offset = (page - 1) * pageSize;
-        string[]? categoryMatchSlugs = string.IsNullOrWhiteSpace(categorySlug)
+        var categoryCsv = string.IsNullOrWhiteSpace(categorySlug)
             ? null
-            : categoryService.GetDiscoveryMatchSlugs(categorySlug).ToArray();
+            : string.Join(',', categoryService.GetDiscoveryMatchSlugs(categorySlug));
 
         var totalCount = await dbContext.Database
             .SqlQuery<int>($"""
                 WITH rating_summary AS (
                     SELECT
-                        r."TenantId" AS tenant_id,
-                        ROUND(AVG(r."Rating")::numeric, 1)::float AS rating_avg
+                        r.[TenantId] AS tenant_id,
+                        CAST(ROUND(AVG(CAST(r.[Rating] AS float)), 1) AS float) AS rating_avg
                     FROM booking.reviews r
-                    WHERE NOT r."IsHidden"
-                    GROUP BY r."TenantId"
+                    WHERE r.[IsHidden] = 0
+                    GROUP BY r.[TenantId]
                 )
-                SELECT COUNT(*)::int AS "Value"
+                SELECT CAST(COUNT(*) AS int) AS [Value]
                 FROM tenancy.business_locations bl
-                INNER JOIN tenancy.tenants t ON t."Id" = bl."TenantId"
-                INNER JOIN tenancy.business_profiles bp ON bp."TenantId" = t."Id"
-                LEFT JOIN rating_summary ON rating_summary.tenant_id = t."Id"
-                WHERE bl."IsActive" = TRUE
-                  AND bl."Latitude" IS NOT NULL
-                  AND bl."Longitude" IS NOT NULL
-                  AND t."Status" = {verifiedStatus}
-                  AND ({categorySlug}::text IS NULL OR LOWER(bp."CategorySlug") = ANY({categoryMatchSlugs}) OR EXISTS (
-                    SELECT 1 FROM tenancy.business_profile_categories bpc
-                    WHERE bpc."TenantId" = bp."TenantId"
-                      AND LOWER(bpc."CategorySlug") = ANY({categoryMatchSlugs})
-                  ))
-                  AND ({marketId}::text IS NULL OR LOWER(bl."MarketId") = {marketId})
-                  AND ({minRating}::int IS NULL OR COALESCE(rating_summary.rating_avg, 0) >= {minRating}::int)
+                INNER JOIN tenancy.tenants t ON t.[Id] = bl.[TenantId]
+                INNER JOIN tenancy.business_profiles bp ON bp.[TenantId] = t.[Id]
+                LEFT JOIN rating_summary ON rating_summary.tenant_id = t.[Id]
+                WHERE bl.[IsActive] = 1
+                  AND bl.[Latitude] IS NOT NULL
+                  AND bl.[Longitude] IS NOT NULL
+                  AND t.[Status] = {verifiedStatus}
                   AND (
-                    {likeQuery}::text IS NULL OR (
-                      LOWER(t."Name") LIKE {likeQuery}
-                      OR LOWER(bl."Name") LIKE {likeQuery}
-                      OR LOWER(bl."Area") LIKE {likeQuery}
-                      OR LOWER(bp."CategorySlug") LIKE {likeQuery}
-                      OR LOWER(bp."Description") LIKE {likeQuery}
+                    {categoryCsv} IS NULL
+                    OR LOWER(bp.[CategorySlug]) IN (SELECT LOWER(LTRIM(RTRIM(value))) FROM STRING_SPLIT({categoryCsv}, ','))
+                    OR EXISTS (
+                        SELECT 1 FROM tenancy.business_profile_categories bpc
+                        WHERE bpc.[TenantId] = bp.[TenantId]
+                          AND LOWER(bpc.[CategorySlug]) IN (SELECT LOWER(LTRIM(RTRIM(value))) FROM STRING_SPLIT({categoryCsv}, ','))
+                    )
+                  )
+                  AND ({marketId} IS NULL OR LOWER(bl.[MarketId]) = {marketId})
+                  AND ({minRating} IS NULL OR COALESCE(rating_summary.rating_avg, 0) >= {minRating})
+                  AND (
+                    {likeQuery} IS NULL OR (
+                      LOWER(t.[Name]) LIKE {likeQuery}
+                      OR LOWER(bl.[Name]) LIKE {likeQuery}
+                      OR LOWER(bl.[Area]) LIKE {likeQuery}
+                      OR LOWER(bp.[CategorySlug]) LIKE {likeQuery}
+                      OR LOWER(bp.[Description]) LIKE {likeQuery}
                     )
                   )
                 """)
@@ -256,158 +260,166 @@ public sealed class DiscoveryService(
             ? await dbContext.Database.SqlQuery<DiscoverySearchRow>($"""
                 WITH rating_summary AS (
                     SELECT
-                        r."TenantId" AS tenant_id,
-                        ROUND(AVG(r."Rating")::numeric, 1)::float AS rating_avg,
-                        COUNT(*)::int AS review_count
+                        r.[TenantId] AS tenant_id,
+                        CAST(ROUND(AVG(CAST(r.[Rating] AS float)), 1) AS float) AS rating_avg,
+                        CAST(COUNT(*) AS int) AS review_count
                     FROM booking.reviews r
-                    WHERE NOT r."IsHidden"
-                    GROUP BY r."TenantId"
+                    WHERE r.[IsHidden] = 0
+                    GROUP BY r.[TenantId]
                 ),
                 candidates AS (
                     SELECT
-                        bl."Id" AS "LocationId",
-                        bl."TenantId" AS "TenantId",
-                        t."Name" AS "Name",
-                        bl."Name" AS "LocationName",
-                        bl."Slug" AS "Slug",
-                        bp."CategorySlug" AS "CategorySlug",
-                        bp."BusinessType" AS "BusinessType",
-                        bl."Area" AS "Area",
-                        bl."MarketId" AS "MarketId",
-                        bp."CoverImageKey" AS "CoverImageKey",
-                        bp."GalleryImageKeysJson" AS "GalleryImageKeysJson",
-                        bl."Latitude" AS "Latitude",
-                        bl."Longitude" AS "Longitude",
+                        bl.[Id] AS [LocationId],
+                        bl.[TenantId] AS [TenantId],
+                        t.[Name] AS [Name],
+                        bl.[Name] AS [LocationName],
+                        bl.[Slug] AS [Slug],
+                        bp.[CategorySlug] AS [CategorySlug],
+                        bp.[BusinessType] AS [BusinessType],
+                        bl.[Area] AS [Area],
+                        bl.[MarketId] AS [MarketId],
+                        bp.[CoverImageKey] AS [CoverImageKey],
+                        bp.[GalleryImageKeysJson] AS [GalleryImageKeysJson],
+                        bl.[Latitude] AS [Latitude],
+                        bl.[Longitude] AS [Longitude],
                         (6371.0 * 2 * ASIN(SQRT(
-                            POWER(SIN(RADIANS(bl."Latitude" - {latitude}) / 2.0), 2) +
-                            COS(RADIANS({latitude})) * COS(RADIANS(bl."Latitude")) *
-                            POWER(SIN(RADIANS(bl."Longitude" - {longitude}) / 2.0), 2)
+                            POWER(SIN(RADIANS(bl.[Latitude] - {latitude}) / 2.0), 2) +
+                            COS(RADIANS({latitude})) * COS(RADIANS(bl.[Latitude])) *
+                            POWER(SIN(RADIANS(bl.[Longitude] - {longitude}) / 2.0), 2)
                         ))) AS distance_km,
-                        rating_summary.rating_avg AS "RatingAvg",
-                        COALESCE(rating_summary.review_count, 0) AS "ReviewCount"
+                        rating_summary.rating_avg AS [RatingAvg],
+                        COALESCE(rating_summary.review_count, 0) AS [ReviewCount]
                     FROM tenancy.business_locations bl
-                    INNER JOIN tenancy.tenants t ON t."Id" = bl."TenantId"
-                    INNER JOIN tenancy.business_profiles bp ON bp."TenantId" = t."Id"
-                    LEFT JOIN rating_summary ON rating_summary.tenant_id = t."Id"
-                    WHERE bl."IsActive" = TRUE
-                      AND bl."Latitude" IS NOT NULL
-                      AND bl."Longitude" IS NOT NULL
-                      AND t."Status" = {verifiedStatus}
-                      AND ({categorySlug}::text IS NULL OR LOWER(bp."CategorySlug") = ANY({categoryMatchSlugs}) OR EXISTS (
-                        SELECT 1 FROM tenancy.business_profile_categories bpc
-                        WHERE bpc."TenantId" = bp."TenantId"
-                          AND LOWER(bpc."CategorySlug") = ANY({categoryMatchSlugs})
-                      ))
-                      AND ({marketId}::text IS NULL OR LOWER(bl."MarketId") = {marketId})
-                      AND ({minRating}::int IS NULL OR COALESCE(rating_summary.rating_avg, 0) >= {minRating}::int)
+                    INNER JOIN tenancy.tenants t ON t.[Id] = bl.[TenantId]
+                    INNER JOIN tenancy.business_profiles bp ON bp.[TenantId] = t.[Id]
+                    LEFT JOIN rating_summary ON rating_summary.tenant_id = t.[Id]
+                    WHERE bl.[IsActive] = 1
+                      AND bl.[Latitude] IS NOT NULL
+                      AND bl.[Longitude] IS NOT NULL
+                      AND t.[Status] = {verifiedStatus}
                       AND (
-                        {likeQuery}::text IS NULL OR (
-                          LOWER(t."Name") LIKE {likeQuery}
-                          OR LOWER(bl."Name") LIKE {likeQuery}
-                          OR LOWER(bl."Area") LIKE {likeQuery}
-                          OR LOWER(bp."CategorySlug") LIKE {likeQuery}
-                          OR LOWER(bp."Description") LIKE {likeQuery}
+                        {categoryCsv} IS NULL
+                        OR LOWER(bp.[CategorySlug]) IN (SELECT LOWER(LTRIM(RTRIM(value))) FROM STRING_SPLIT({categoryCsv}, ','))
+                        OR EXISTS (
+                            SELECT 1 FROM tenancy.business_profile_categories bpc
+                            WHERE bpc.[TenantId] = bp.[TenantId]
+                              AND LOWER(bpc.[CategorySlug]) IN (SELECT LOWER(LTRIM(RTRIM(value))) FROM STRING_SPLIT({categoryCsv}, ','))
+                        )
+                      )
+                      AND ({marketId} IS NULL OR LOWER(bl.[MarketId]) = {marketId})
+                      AND ({minRating} IS NULL OR COALESCE(rating_summary.rating_avg, 0) >= {minRating})
+                      AND (
+                        {likeQuery} IS NULL OR (
+                          LOWER(t.[Name]) LIKE {likeQuery}
+                          OR LOWER(bl.[Name]) LIKE {likeQuery}
+                          OR LOWER(bl.[Area]) LIKE {likeQuery}
+                          OR LOWER(bp.[CategorySlug]) LIKE {likeQuery}
+                          OR LOWER(bp.[Description]) LIKE {likeQuery}
                         )
                       )
                 )
                 SELECT
-                    "LocationId",
-                    "TenantId",
-                    "Name",
-                    "LocationName",
-                    "Slug",
-                    "CategorySlug",
-                    "BusinessType",
-                    "Area",
-                    "MarketId",
-                    "CoverImageKey",
-                    "GalleryImageKeysJson",
-                    ROUND(distance_km::numeric, 2)::float AS "DistanceKm",
-                    "Latitude",
-                    "Longitude",
-                    "RatingAvg",
-                    "ReviewCount"
+                    [LocationId],
+                    [TenantId],
+                    [Name],
+                    [LocationName],
+                    [Slug],
+                    [CategorySlug],
+                    [BusinessType],
+                    [Area],
+                    [MarketId],
+                    [CoverImageKey],
+                    [GalleryImageKeysJson],
+                    CAST(ROUND(distance_km, 2) AS float) AS [DistanceKm],
+                    [Latitude],
+                    [Longitude],
+                    [RatingAvg],
+                    [ReviewCount]
                 FROM candidates
                 ORDER BY
-                  COALESCE("RatingAvg", 0) DESC,
-                  "ReviewCount" DESC,
-                  "DistanceKm" ASC
-                OFFSET {offset} LIMIT {pageSize}
+                  COALESCE([RatingAvg], 0) DESC,
+                  [ReviewCount] DESC,
+                  [DistanceKm] ASC
+                OFFSET {offset} ROWS FETCH NEXT {pageSize} ROWS ONLY
                 """).ToListAsync(cancellationToken)
             : await dbContext.Database.SqlQuery<DiscoverySearchRow>($"""
                 WITH rating_summary AS (
                     SELECT
-                        r."TenantId" AS tenant_id,
-                        ROUND(AVG(r."Rating")::numeric, 1)::float AS rating_avg
+                        r.[TenantId] AS tenant_id,
+                        CAST(ROUND(AVG(CAST(r.[Rating] AS float)), 1) AS float) AS rating_avg
                     FROM booking.reviews r
-                    WHERE NOT r."IsHidden"
-                    GROUP BY r."TenantId"
+                    WHERE r.[IsHidden] = 0
+                    GROUP BY r.[TenantId]
                 ),
                 candidates AS (
                     SELECT
-                        bl."Id" AS "LocationId",
-                        bl."TenantId" AS "TenantId",
-                        t."Name" AS "Name",
-                        bl."Name" AS "LocationName",
-                        bl."Slug" AS "Slug",
-                        bp."CategorySlug" AS "CategorySlug",
-                        bp."BusinessType" AS "BusinessType",
-                        bl."Area" AS "Area",
-                        bl."MarketId" AS "MarketId",
-                        bp."CoverImageKey" AS "CoverImageKey",
-                        bp."GalleryImageKeysJson" AS "GalleryImageKeysJson",
-                        bl."Latitude" AS "Latitude",
-                        bl."Longitude" AS "Longitude",
+                        bl.[Id] AS [LocationId],
+                        bl.[TenantId] AS [TenantId],
+                        t.[Name] AS [Name],
+                        bl.[Name] AS [LocationName],
+                        bl.[Slug] AS [Slug],
+                        bp.[CategorySlug] AS [CategorySlug],
+                        bp.[BusinessType] AS [BusinessType],
+                        bl.[Area] AS [Area],
+                        bl.[MarketId] AS [MarketId],
+                        bp.[CoverImageKey] AS [CoverImageKey],
+                        bp.[GalleryImageKeysJson] AS [GalleryImageKeysJson],
+                        bl.[Latitude] AS [Latitude],
+                        bl.[Longitude] AS [Longitude],
                         (6371.0 * 2 * ASIN(SQRT(
-                            POWER(SIN(RADIANS(bl."Latitude" - {latitude}) / 2.0), 2) +
-                            COS(RADIANS({latitude})) * COS(RADIANS(bl."Latitude")) *
-                            POWER(SIN(RADIANS(bl."Longitude" - {longitude}) / 2.0), 2)
+                            POWER(SIN(RADIANS(bl.[Latitude] - {latitude}) / 2.0), 2) +
+                            COS(RADIANS({latitude})) * COS(RADIANS(bl.[Latitude])) *
+                            POWER(SIN(RADIANS(bl.[Longitude] - {longitude}) / 2.0), 2)
                         ))) AS distance_km
                     FROM tenancy.business_locations bl
-                    INNER JOIN tenancy.tenants t ON t."Id" = bl."TenantId"
-                    INNER JOIN tenancy.business_profiles bp ON bp."TenantId" = t."Id"
-                    LEFT JOIN rating_summary ON rating_summary.tenant_id = t."Id"
-                    WHERE bl."IsActive" = TRUE
-                      AND bl."Latitude" IS NOT NULL
-                      AND bl."Longitude" IS NOT NULL
-                      AND t."Status" = {verifiedStatus}
-                      AND ({categorySlug}::text IS NULL OR LOWER(bp."CategorySlug") = ANY({categoryMatchSlugs}) OR EXISTS (
-                        SELECT 1 FROM tenancy.business_profile_categories bpc
-                        WHERE bpc."TenantId" = bp."TenantId"
-                          AND LOWER(bpc."CategorySlug") = ANY({categoryMatchSlugs})
-                      ))
-                      AND ({marketId}::text IS NULL OR LOWER(bl."MarketId") = {marketId})
-                      AND ({minRating}::int IS NULL OR COALESCE(rating_summary.rating_avg, 0) >= {minRating}::int)
+                    INNER JOIN tenancy.tenants t ON t.[Id] = bl.[TenantId]
+                    INNER JOIN tenancy.business_profiles bp ON bp.[TenantId] = t.[Id]
+                    LEFT JOIN rating_summary ON rating_summary.tenant_id = t.[Id]
+                    WHERE bl.[IsActive] = 1
+                      AND bl.[Latitude] IS NOT NULL
+                      AND bl.[Longitude] IS NOT NULL
+                      AND t.[Status] = {verifiedStatus}
                       AND (
-                        {likeQuery}::text IS NULL OR (
-                          LOWER(t."Name") LIKE {likeQuery}
-                          OR LOWER(bl."Name") LIKE {likeQuery}
-                          OR LOWER(bl."Area") LIKE {likeQuery}
-                          OR LOWER(bp."CategorySlug") LIKE {likeQuery}
-                          OR LOWER(bp."Description") LIKE {likeQuery}
+                        {categoryCsv} IS NULL
+                        OR LOWER(bp.[CategorySlug]) IN (SELECT LOWER(LTRIM(RTRIM(value))) FROM STRING_SPLIT({categoryCsv}, ','))
+                        OR EXISTS (
+                            SELECT 1 FROM tenancy.business_profile_categories bpc
+                            WHERE bpc.[TenantId] = bp.[TenantId]
+                              AND LOWER(bpc.[CategorySlug]) IN (SELECT LOWER(LTRIM(RTRIM(value))) FROM STRING_SPLIT({categoryCsv}, ','))
+                        )
+                      )
+                      AND ({marketId} IS NULL OR LOWER(bl.[MarketId]) = {marketId})
+                      AND ({minRating} IS NULL OR COALESCE(rating_summary.rating_avg, 0) >= {minRating})
+                      AND (
+                        {likeQuery} IS NULL OR (
+                          LOWER(t.[Name]) LIKE {likeQuery}
+                          OR LOWER(bl.[Name]) LIKE {likeQuery}
+                          OR LOWER(bl.[Area]) LIKE {likeQuery}
+                          OR LOWER(bp.[CategorySlug]) LIKE {likeQuery}
+                          OR LOWER(bp.[Description]) LIKE {likeQuery}
                         )
                       )
                 )
                 SELECT
-                    "LocationId",
-                    "TenantId",
-                    "Name",
-                    "LocationName",
-                    "Slug",
-                    "CategorySlug",
-                    "BusinessType",
-                    "Area",
-                    "MarketId",
-                    "CoverImageKey",
-                    "GalleryImageKeysJson",
-                    ROUND(distance_km::numeric, 2)::float AS "DistanceKm",
-                    "Latitude",
-                    "Longitude",
-                    NULL::float AS "RatingAvg",
-                    0 AS "ReviewCount"
+                    [LocationId],
+                    [TenantId],
+                    [Name],
+                    [LocationName],
+                    [Slug],
+                    [CategorySlug],
+                    [BusinessType],
+                    [Area],
+                    [MarketId],
+                    [CoverImageKey],
+                    [GalleryImageKeysJson],
+                    CAST(ROUND(distance_km, 2) AS float) AS [DistanceKm],
+                    [Latitude],
+                    [Longitude],
+                    CAST(NULL AS float) AS [RatingAvg],
+                    0 AS [ReviewCount]
                 FROM candidates
-                ORDER BY "DistanceKm" ASC
-                OFFSET {offset} LIMIT {pageSize}
+                ORDER BY [DistanceKm] ASC
+                OFFSET {offset} ROWS FETCH NEXT {pageSize} ROWS ONLY
                 """).ToListAsync(cancellationToken);
 
         if (rows.Count > 0 && sort == DiscoverySort.Distance)

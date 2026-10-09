@@ -58,11 +58,11 @@ if (app.Environment.IsDevelopment())
 {
     try
     {
-        await ApplyDevelopmentMigrationsAsync(app.Services);
+        await SeedDevelopmentDataAsync(app.Services);
     }
     catch (Exception ex)
     {
-        Log.Warning(ex, "Database migration skipped — ensure PostgreSQL is running (docker compose up -d).");
+        Log.Warning(ex, "Development seed skipped — publish the database first (./scripts/publish-db.ps1) and ensure SQL Server is running.");
     }
 
     app.MapAdeniOpenApi();
@@ -105,7 +105,7 @@ app.MapControllers();
 
 app.Run();
 
-static async Task ApplyDevelopmentMigrationsAsync(IServiceProvider services)
+static async Task SeedDevelopmentDataAsync(IServiceProvider services)
 {
     using var scope = services.CreateScope();
     var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
@@ -118,7 +118,6 @@ static async Task ApplyDevelopmentMigrationsAsync(IServiceProvider services)
     var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
     tenantContext.DisableTenantFilter();
     dbContext.SyncTenantFilter();
-    await dbContext.Database.MigrateAsync();
     await DevelopmentDataSeeder.SeedAsync(dbContext);
     var loader = scope.ServiceProvider.GetRequiredService<IMarketCatalogLoader>();
     await loader.EnsureLoadedAsync();

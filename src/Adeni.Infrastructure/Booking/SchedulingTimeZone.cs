@@ -45,7 +45,7 @@ internal sealed class SchedulingTimeZone(TimeZoneInfo timeZone, string timeZoneI
     {
         var local = DateTime.SpecifyKind(date.Date + time.ToTimeSpan(), DateTimeKind.Unspecified);
         var withOffset = new DateTimeOffset(local, timeZone.GetUtcOffset(local));
-        // Npgsql timestamptz only accepts UTC (offset 0).
+        // Persist booking instants as UTC (offset 0) for SQL Server datetimeoffset consistency.
         return withOffset.ToUniversalTime();
     }
 }

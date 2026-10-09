@@ -307,7 +307,7 @@ This section captures **Cursor/codebase reality**, which diverges from early Cha
 | Flutter single codebase | Next.js web + Expo mobile monorepo (`packages/shared`, `@adeni/api-client`) | ✅ Correct pivot (ADR-010). SEO web + native mobile beats Flutter web for discovery. |
 | NativeScript mobile | Expo + React Native | ✅ Upgraded |
 | Auth0 | Auth0 (web + mobile) | ✅ As planned |
-| .NET + PostgreSQL + Redis | .NET + PostgreSQL + Redis | ✅ As planned |
+| .NET + SQL Server + Redis | .NET + SQL Server + Redis | ✅ As planned |
 
 ### 7.2 Architecture — modular monolith, not microservices
 
@@ -317,7 +317,7 @@ ChatGPT's later advice matches engineering best practice for a solo/small team. 
 
 | Rule | Detail |
 |------|--------|
-| **One deployable unit** | Single `Adeni.Api` + PostgreSQL; one release train |
+| **One deployable unit** | Single `Adeni.Api` + SQL Server; one release train |
 | **Module boundaries** | Tenancy, Booking, Discovery, Reviews, Catalog, Admin, Storage (+ Payments, Messaging, Notifications as they land) |
 | **Cross-module calls** | Application interfaces (`I*Service`) only — never reach into another module's Infrastructure |
 | **Domain events** | `BookingConfirmed`, `ReviewSubmitted`, … — in-process now, bus when a module extracts |

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build">
+  <Sdk Name="Microsoft.Build.Sql" Version="2.3.0" />
+  <PropertyGroup>
+    <Name>Adeni.Database</Name>
+    <!-- Azure SQL Edge / SQL Server 2019 surface; raise to Sql160 when targeting SQL Server 2022+ only. -->
+    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql150DatabaseSchemaProvider</DSP>
+    <ModelCollation>1033, CI</ModelCollation>
+    <RootPath>.</RootPath>
+    <RootNamespace>Adeni.Database</RootNamespace>
+    <ProjectGuid>{A7E3D1C0-4B2F-4E9A-9C11-6F0E8B2D5A41}</ProjectGuid>
+  </PropertyGroup>
+  <ItemGroup>
+    <Build Remove="PreDeployment\**\*.sql" />
+    <Build Remove="PostDeployment\**\*.sql" />
+    <None Include="Adeni.Database.publish.xml" />
+    <PreDeploy Include="PreDeployment\Script.PreDeployment.sql" />
+    <PostDeploy Include="PostDeployment\Script.PostDeployment.sql" />
+  </ItemGroup>
+</Project>
+

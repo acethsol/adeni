@@ -10,19 +10,44 @@ public sealed class AdeniDbContextFactory : IDesignTimeDbContextFactory<AdeniDbC
 {
     public AdeniDbContext CreateDbContext(string[] args)
     {
+        var apiDir = ResolveApiDirectory();
         var configuration = new ConfigurationBuilder()
+            .SetBasePath(apiDir)
             .AddJsonFile("appsettings.Development.json", optional: true)
             .AddEnvironmentVariables()
             .Build();
 
         var connectionString = configuration.GetConnectionString("AdeniDb")
-            ?? "Host=localhost;Port=5432;Database=adeni;Username=adeni;Password=adeni_dev_password";
+            ?? "Server=localhost,1433;Database=adeni;User Id=sa;Password=Adeni_Dev_Passw0rd!;TrustServerCertificate=True;Encrypt=False";
 
         var optionsBuilder = new DbContextOptionsBuilder<AdeniDbContext>();
-        optionsBuilder.UseNpgsql(connectionString, npgsql =>
-            npgsql.MigrationsHistoryTable("__ef_migrations_history", "admin"));
+        optionsBuilder.UseSqlServer(connectionString);
 
         return new AdeniDbContext(optionsBuilder.Options, new DesignTimeTenantContext());
+    }
+
+    private static string ResolveApiDirectory()
+    {
+        var cwd = Directory.GetCurrentDirectory();
+        var candidates = new[]
+        {
+            Path.Combine(cwd, "src", "Adeni.Api"),
+            Path.Combine(cwd, "..", "Adeni.Api"),
+            Path.Combine(cwd, "..", "..", "src", "Adeni.Api"),
+            Path.Combine(cwd, "..", "..", "..", "src", "Adeni.Api"),
+            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "Adeni.Api")),
+        };
+
+        foreach (var candidate in candidates)
+        {
+            var full = Path.GetFullPath(candidate);
+            if (File.Exists(Path.Combine(full, "appsettings.Development.json")))
+            {
+                return full;
+            }
+        }
+
+        return Path.GetFullPath(Path.Combine(cwd, "src", "Adeni.Api"));
     }
 
     private sealed class DesignTimeTenantContext : ITenantContext

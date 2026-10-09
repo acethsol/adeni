@@ -29,7 +29,7 @@ Weekly availability and slot generation interpret open hours in a **configured t
 
 ## Option A — Docker (optional convenience)
 
-Docker is **not required** to run the API. It is only a quick way to spin up PostgreSQL and Redis locally without installing them.
+Docker is **not required** to run the API. It is only a quick way to spin up SQL Server and Redis locally without installing them.
 
 ```powershell
 docker compose up -d

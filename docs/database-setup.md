@@ -1,34 +1,31 @@
 # Database setup
 
-Docker is **optional**. It is only a convenience for running PostgreSQL (and Redis) locally without installing them. The API also supports a local PostgreSQL install, or an in-memory database for tests.
+Adeni uses **SQL Server**. Schema is a git-managed **SQL Server Database Project** at [`db/Adeni.Database`](../db/README.md). Deploy with **SqlPackage** (pre/post-deployment scripts included). EF Core is the ORM only — no EF migrations.
 
-See [caching-setup.md](./caching-setup.md) for Redis configuration.
+Docker is **optional** for local SQL Server (Azure SQL Edge) and Redis. See [caching-setup.md](./caching-setup.md) for Redis.
 
 ## Option A — Docker (recommended)
 
 ```powershell
 docker compose up -d
-dotnet ef database update --project src/Adeni.Infrastructure --startup-project src/Adeni.Api
+./scripts/publish-db.ps1 -CreateNewDatabase
+dotnet run --project src/Adeni.Api --launch-profile http
 ```
 
-Connection string is preconfigured in `appsettings.Development.json`.
+| Step | Owns |
+|------|------|
+| `publish-db.ps1` | Build `.dacpac`, run pre-deploy → schema sync → post-deploy |
+| API (Development) | Idempotent sample seed only |
 
-## Option B — Local PostgreSQL install
+Connection string is preconfigured in `appsettings.Development.json`:
 
-1. Install PostgreSQL 16+
-2. Create database and user:
+`Server=localhost,1433;Database=adeni;User Id=sa;Password=Adeni_Dev_Passw0rd!;TrustServerCertificate=True;Encrypt=False`
 
-```sql
-CREATE USER adeni WITH PASSWORD 'adeni_dev_password';
-CREATE DATABASE adeni OWNER adeni;
-```
+## Option B — Local / Azure SQL
 
-3. Update `appsettings.Development.json` if your host/port differs
-4. Run migrations:
-
-```powershell
-dotnet ef database update --project src/Adeni.Infrastructure --startup-project src/Adeni.Api
-```
+1. Point `ConnectionStrings:AdeniDb` at the server
+2. `./scripts/publish-db.ps1 -CreateNewDatabase` (omit `-CreateNewDatabase` if the DB already exists)
+3. Start the API for Development seed (optional)
 
 ## Option C — No database (in-memory fallback)
 
@@ -37,49 +34,31 @@ When `ConnectionStrings:AdeniDb` is empty **and** environment is `Development` o
 ## Verify
 
 ```powershell
-dotnet run --project src/Adeni.Api
-curl http://localhost:5xxx/health
+dotnet run --project src/Adeni.Api --launch-profile http
+curl http://localhost:5169/health
 ```
 
-Expect `"database": "healthy"` when PostgreSQL is connected.
+Expect `"database": "healthy"` when SQL Server is connected and the project has been published.
 
 ## Development sample data
 
-When the API runs in **Development** with PostgreSQL connected, it auto-seeds sample businesses (idempotent — skips slugs that already exist). Each business gets the full service menu for its category, a cover photo, four gallery photos, and Mon–Sat 9:00–17:00 availability. Restarting the API fills in any catalog services or gallery photos that are still missing.
+When the API runs in **Development** with SQL Server connected, it auto-seeds sample businesses (idempotent — skips slugs that already exist). Schema must already exist via SqlPackage.
 
-Seed matches the Beauty & Wellness wedge: **Lagos + Ottawa** and the eight enabled categories (`hair-grooming`, `nails`, `skincare-aesthetics`, `spa-relaxation`, `massage-bodywork`, `fitness`, `yoga`, `pilates`). Legacy `yoga-pilates` aliases to `yoga`. Home services and non-launch cities are not seeded.
+Seed matches the Beauty & Wellness wedge: **Lagos + Ottawa** and the enabled wellness categories. See prior seed counts in git history / seeder constants if regenerating markets.
 
-| Market | Total | Handcrafted | Generated bulk |
-|--------|-------|-------------|----------------|
-| `lagos` | 1,400 | 7 | 1,393 |
-| `ottawa` | 602 | 7 | 595 |
+To re-seed from scratch, drop/recreate the `adeni` database, re-run `./scripts/publish-db.ps1 -CreateNewDatabase`, then restart the API.
 
-**2,002 businesses**, spread evenly across the seven categories. Generated slugs use `{market}-seed-{category}-{####}` (e.g. `lagos-seed-hair-grooming-0001`). `lekki-cuts` is the local dev-owner business. Restart the API to append any new slugs without resetting the DB. The first seed of this set can take a minute or two.
-
-To re-seed from scratch, truncate tenant data (keep `catalog.markets` and `__EFMigrationsHistory`) and restart the API. The seeder will not replace rows whose slugs already exist.
-
-## Optional dev UIs
-
-Postgres and Redis do **not** include a web UI by default. Start Adminer and RedisInsight with:
+## Optional Redis UI
 
 ```powershell
 docker compose --profile ui up -d
 ```
 
-| Tool | URL | Login |
+| Tool | URL | Notes |
 |------|-----|-------|
-| **Adminer** (PostgreSQL) | http://localhost:8080 | System: **PostgreSQL**, Server: **`postgres`** (not `localhost` or `db`), User: **`adeni`**, Password: **`adeni_dev_password`**, Database: **`adeni`** |
-| **RedisInsight** (Redis) | http://localhost:5540 | Pre-configured as **adeni-redis** — or add manually with Host: **`redis`** (not `127.0.0.1`) |
+| **RedisInsight** | http://localhost:5540 | Host inside Docker network: **`redis`** |
+| **Azure Data Studio / SSMS** | `localhost,1433` | sa / `Adeni_Dev_Passw0rd!`, database `adeni` |
 
-### Why not `localhost` or `127.0.0.1`?
+## Legacy PostgreSQL
 
-Adminer and RedisInsight run **inside Docker**. From inside a container, `localhost` means that container itself — not your machine and not the Postgres/Redis containers. Use the **Docker Compose service names**: `postgres` and `redis`.
-
-If you already tried wrong settings, recreate the UI containers:
-
-```powershell
-docker compose --profile ui down
-docker compose --profile ui up -d
-```
-
-Alternative desktop tools: [DBeaver](https://dbeaver.io/) or [Azure Data Studio](https://azure.microsoft.com/products/data-studio) for Postgres (connect to `localhost:5432`); [Another Redis Desktop Manager](https://github.com/qishibo/AnotherRedisDesktopManager) for Redis (connect to `localhost:6379`).
+Postgres EF migrations and early cutover helpers live in a separate archive: [legacy-postgres-archive.md](./legacy-postgres-archive.md) → https://github.com/acethsol/adeni-legacy-db

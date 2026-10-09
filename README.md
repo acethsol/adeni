@@ -8,11 +8,11 @@ Trusted local services marketplace — **.NET 10 API** + **Angular web clients**
 
 ```powershell
 cd C:\DEV\Aceth\adeni
-docker compose up -d                              # PostgreSQL + Redis
-docker compose --profile ui up -d                 # optional: Adminer + RedisInsight
-dotnet ef database update --project src/Adeni.Infrastructure --startup-project src/Adeni.Api
+docker compose up -d                              # SQL Server (Azure SQL Edge) + Redis
+docker compose --profile ui up -d                 # optional: RedisInsight
+./scripts/publish-db.ps1 -CreateNewDatabase       # SqlPackage: pre → schema → post
 dotnet test Adeni.slnx -c Release
-dotnet run --project src/Adeni.Api --launch-profile http
+dotnet run --project src/Adeni.Api --launch-profile http   # Development seed only
 
 # Frontend (separate terminal)
 npm install
@@ -27,7 +27,7 @@ npm run dev:portal                                # http://localhost:5173 (busin
 | Discover (Angular) | http://localhost:5190 |
 | Business portal | http://localhost:5173 |
 | Admin portal | http://localhost:5180 |
-| PostgreSQL UI | http://localhost:8080 (Adminer, `--profile ui`) |
+| SQL Server | `localhost,1433` (sa / see appsettings.Development.json) |
 | Redis UI | http://localhost:5540 (RedisInsight, `--profile ui`) |
 
 See [docs/database-setup.md](docs/database-setup.md), [docs/caching-setup.md](docs/caching-setup.md), [docs/frontend.md](docs/frontend.md), [docs/architecture.md](docs/architecture.md), [docs/observability.md](docs/observability.md).
@@ -36,6 +36,7 @@ See [docs/database-setup.md](docs/database-setup.md), [docs/caching-setup.md](do
 
 ```
 src/                     .NET backend — **modular monolith** (see docs/architecture.md)
+db/Adeni.Database/       SQL Server Database Project (.sqlproj + SqlPackage)
 apps/discover/           Angular SSR — public discovery & booking
 apps/portal/             Angular — business portal
 apps/admin/              Angular — admin portal
@@ -44,10 +45,10 @@ packages/shared/         Zod schemas, roles, wellness catalog
 packages/ui/             Shared Angular UI for portal + admin
 
 apps/mobile/             Flutter — business mobile skeleton (owner / employee / front desk)
-
-Legacy **Next.js + Expo** clients: [docs/legacy-clients-archive.md](docs/legacy-clients-archive.md) (separate reference repo).
 tests/                   Backend unit/integration tests
 ```
+
+**Archives (separate repos):** [Next.js + Expo](docs/legacy-clients-archive.md) · [PostgreSQL EF / compose](docs/legacy-postgres-archive.md)
 
 ## Current features (API)
 

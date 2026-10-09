@@ -9,7 +9,7 @@ Project DNA for Cursor Cloud Agents and local Agent sessions. Read this before c
 | Area | Stack |
 |------|-------|
 | API | .NET 10, modular monolith, Clean Architecture / DDD |
-| Data | PostgreSQL, EF Core, Redis (cache + slot locks where justified) |
+| Data | SQL Server (`db/Adeni.Database` + SqlPackage), EF Core ORM only, Redis (cache + slot locks where justified) |
 | Auth | Auth0 JWT (RS256), claims under `https://adeni.io/` |
 | Web | Angular — `apps/discover` (SSR/SEO), `apps/portal`, `apps/admin` |
 | Mobile | Flutter — **consumer app primary** on mobile; `apps/mobile` business skeleton until aligned |

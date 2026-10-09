@@ -1,65 +1,297 @@
 <app-portal-page
-  [title]="calendar()?.displayName ? calendar()!.displayName + ' · Calendar' : 'Staff calendar'"
-  description="Bookings and leave for this team member."
+  [title]="calendar()?.displayName ? calendar()!.displayName + ' · Floor' : 'Staff calendar'"
+  description="Month, week, and day board — bookings, leave, and hours on one calendar."
 >
-  <div class="toolbar">
-    <a class="btn" routerLink="/staff">← Back to staff</a>
-    <div class="week-nav">
-      <button type="button" class="btn" (click)="prevWeek()">Previous</button>
-      <strong>{{ weekLabel() }}</strong>
-      <button type="button" class="btn" (click)="nextWeek()">Next</button>
+  <div class="cal-shell">
+    <header class="cal-hero">
+      <div class="cal-hero-copy">
+        <a class="back-link" routerLink="/staff">← Staff</a>
+        <p class="cal-kicker">Practitioner board</p>
+        <h2 class="cal-name">{{ calendar()?.displayName ?? "…" }}</h2>
+        <p class="cal-hours">
+          @if (calendar(); as cal) {
+            @if (cal.inheritsBusinessHours) {
+              Hours follow the business schedule
+            } @else {
+              Custom weekly hours · {{ cal.hours.length }} open day(s)
+            }
+          } @else {
+            Loading schedule…
+          }
+        </p>
+      </div>
+
+      <div class="cal-stats" aria-label="Period summary">
+        <div class="stat">
+          <span class="stat-value">{{ stats().bookings }}</span>
+          <span class="stat-label">Bookings</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">{{ stats().confirmed }}</span>
+          <span class="stat-label">Confirmed</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">{{ stats().leave }}</span>
+          <span class="stat-label">Leave</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="cal-toolbar">
+      <div class="week-nav" role="group" aria-label="Navigate calendar">
+        <button type="button" class="nav-btn" (click)="prev()" aria-label="Previous">‹</button>
+        <div class="week-label-wrap">
+          <strong class="week-label">{{ periodLabel() }}</strong>
+          <button type="button" class="today-btn" (click)="goToday()">Today</button>
+        </div>
+        <button type="button" class="nav-btn" (click)="next()" aria-label="Next">›</button>
+      </div>
+
+      <div class="view-toggle" role="group" aria-label="Calendar view">
+        <button
+          type="button"
+          [class.active]="view() === 'month'"
+          (click)="setView('month')"
+        >
+          Month
+        </button>
+        <button
+          type="button"
+          [class.active]="view() === 'week'"
+          (click)="setView('week')"
+        >
+          Week
+        </button>
+        <button
+          type="button"
+          [class.active]="view() === 'day'"
+          (click)="setView('day')"
+        >
+          Day
+        </button>
+      </div>
+
+      <div class="legend" aria-hidden="true">
+        <span class="leg is-confirmed">Confirmed</span>
+        <span class="leg is-pending">Pending</span>
+        <span class="leg is-leave">Leave</span>
+        <span class="leg is-off">Off hours</span>
+      </div>
     </div>
-  </div>
 
-  @if (error()) {
-    <p class="error-banner">{{ error() }}</p>
-  }
+    @if (error()) {
+      <p class="error-banner">{{ error() }}</p>
+    }
 
-  @if (loading()) {
-    <p class="muted">Loading…</p>
-  } @else if (calendar(); as cal) {
-    <p class="muted">
-      @if (cal.inheritsBusinessHours) {
-        Hours: inherits business availability
-      } @else {
-        Hours: custom weekly schedule ({{ cal.hours.length }} window(s))
-      }
-    </p>
-
-    <section class="card">
-      <h3>Bookings</h3>
-      @if (cal.bookings.length === 0) {
-        <p class="muted">No bookings this week.</p>
-      } @else {
-        <ul class="events">
-          @for (b of cal.bookings; track b.id) {
-            <li>
-              <strong>{{ b.serviceName }}</strong>
-              <span>{{ formatWhen(b.startAt) }} → {{ formatWhen(b.endAt) }}</span>
-              <span class="tiny">{{ statusLabel(b.status) }}</span>
-            </li>
-          }
-        </ul>
-      }
-    </section>
-
-    <section class="card">
-      <h3>Leave</h3>
-      @if (cal.leave.length === 0) {
-        <p class="muted">No leave this week.</p>
-      } @else {
-        <ul class="events leave">
-          @for (l of cal.leave; track l.id) {
-            <li>
-              <strong>Time off</strong>
-              <span>{{ formatWhen(l.startAt) }} → {{ formatWhen(l.endAt) }}</span>
-              @if (l.reason) {
-                <span class="tiny">{{ l.reason }}</span>
+    @if (loading() && !calendar()) {
+      <div class="cal-skeleton" aria-busy="true">
+        <div class="skel-rail"></div>
+        @for (_ of [1, 2, 3, 4, 5, 6, 7]; track $index) {
+          <div class="skel-col"></div>
+        }
+      </div>
+    } @else if (calendar()) {
+      <div
+        class="cal-stage"
+        [class.is-day]="view() === 'day'"
+        [class.has-selection]="!!selectedBlock()"
+      >
+        @if (view() === "month") {
+          <div class="month-board">
+            <div class="month-dow" aria-hidden="true">
+              @for (label of weekdayLabels(); track label) {
+                <span>{{ label }}</span>
               }
-            </li>
+            </div>
+            <div class="month-grid">
+              @for (cell of monthCells(); track cell.key) {
+                <div
+                  class="month-cell"
+                  [class.is-today]="cell.isToday"
+                  [class.is-past]="cell.isPast"
+                  [class.is-outside]="!cell.inMonth"
+                  [class.is-closed]="cell.isClosed && cell.inMonth"
+                >
+                  <button
+                    type="button"
+                    class="month-dom-btn"
+                    (click)="openDay(cell)"
+                    [attr.aria-label]="'Open ' + cell.label + ' ' + cell.dateNum"
+                  >
+                    <span class="month-dom">{{ cell.dateNum }}</span>
+                  </button>
+                  <div class="month-items">
+                    @for (item of cell.items.slice(0, 3); track item.id) {
+                      <button
+                        type="button"
+                        class="month-pill"
+                        [class.is-leave]="item.kind === 'leave'"
+                        [class.is-pending]="item.status === 0"
+                        [class.is-confirmed]="item.status === 1"
+                        [class.is-rejected]="item.status === 2"
+                        [class.is-cancelled]="item.status === 3"
+                        (click)="selectBlock(item, $event)"
+                      >
+                        <em>{{ item.startLabel }}</em>
+                        {{ item.title }}
+                      </button>
+                    }
+                    @if (cell.items.length > 3) {
+                      <button type="button" class="month-more" (click)="openDay(cell)">
+                        +{{ cell.items.length - 3 }} more
+                      </button>
+                    }
+                  </div>
+                  <button
+                    type="button"
+                    class="month-hit"
+                    (click)="openDay(cell)"
+                    tabindex="-1"
+                    aria-hidden="true"
+                  ></button>
+                </div>
+              }
+            </div>
+          </div>
+        } @else {
+          <div class="cal-board">
+            <div class="day-heads" [style.--cols]="visibleDays().length">
+              <div class="gutter-head" aria-hidden="true"></div>
+              @for (day of visibleDays(); track day.key) {
+                <button
+                  type="button"
+                  class="day-head"
+                  [class.is-today]="day.isToday"
+                  [class.is-past]="day.isPast"
+                  [class.is-closed]="day.isClosed"
+                  [class.is-focus]="isFocusDay(day)"
+                  (click)="openDay(day)"
+                >
+                  <span class="dow">{{ view() === "day" ? day.label : day.shortLabel }}</span>
+                  <span class="dom">{{ day.dateNum }}</span>
+                  @if (day.bookingCount > 0) {
+                    <span class="density" [attr.data-n]="day.bookingCount > 3 ? 'hot' : 'warm'">
+                      {{ day.bookingCount }}
+                    </span>
+                  }
+                </button>
+              }
+            </div>
+
+            <div
+              class="time-grid"
+              [style.--cols]="visibleDays().length"
+              [style.height.px]="gridHeight()"
+            >
+              <div class="hour-rail" aria-hidden="true">
+                @for (hour of hourMarks(); track hour) {
+                  <div class="hour-mark" [style.top.px]="(hour - rangeHours().start) * 64">
+                    <span>{{ hourLabel(hour) }}</span>
+                  </div>
+                }
+              </div>
+
+              <div class="day-columns">
+                @for (day of visibleDays(); track day.key) {
+                  <div
+                    class="day-col"
+                    [class.is-today]="day.isToday"
+                    [class.is-closed]="day.isClosed"
+                    (click)="view() === 'week' ? openDay(day) : null"
+                  >
+                    @for (band of offBandStyle(day); track $index) {
+                      <div
+                        class="off-band"
+                        [style.top]="band.top"
+                        [style.height]="band.height"
+                      ></div>
+                    }
+
+                    @for (hour of hourMarks(); track hour) {
+                      <div
+                        class="hour-line"
+                        [style.top.px]="(hour - rangeHours().start) * 64"
+                      ></div>
+                    }
+
+                    @if (nowLine(); as now) {
+                      @if (now.dayKey === day.key) {
+                        <div class="now-line" [style.top.px]="now.top">
+                          <span class="now-dot"></span>
+                          <span class="now-label">{{ now.label }}</span>
+                        </div>
+                      }
+                    }
+
+                    @for (block of blocksForDay(day.key); track block.id) {
+                      <button
+                        type="button"
+                        class="event-block"
+                        [class.is-leave]="block.kind === 'leave'"
+                        [class.is-pending]="block.status === 0"
+                        [class.is-confirmed]="block.status === 1"
+                        [class.is-rejected]="block.status === 2"
+                        [class.is-cancelled]="block.status === 3"
+                        [class.is-selected]="selectedId() === block.id"
+                        [style.top.px]="block.top"
+                        [style.height.px]="block.height"
+                        (click)="selectBlock(block, $event)"
+                      >
+                        <span class="event-time">{{ block.startLabel }}</span>
+                        <span class="event-title">{{ block.title }}</span>
+                        @if (block.height >= 56 && block.statusLabel) {
+                          <span class="event-meta">{{ block.statusLabel }}</span>
+                        }
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+
+        <aside
+          #detailRail
+          class="detail-rail"
+          [class.is-open]="!!selectedBlock()"
+          [attr.aria-hidden]="selectedBlock() ? null : 'true'"
+        >
+          @if (selectedBlock(); as sel) {
+            <button type="button" class="rail-close" (click)="clearSelection()" aria-label="Close">
+              ×
+            </button>
+            <p class="rail-kicker">{{ sel.kind === "leave" ? "Leave" : "Appointment" }}</p>
+            <h3>{{ sel.title }}</h3>
+            <p class="rail-when">{{ sel.startLabel }} – {{ sel.endLabel }}</p>
+            @if (sel.statusLabel) {
+              <span
+                class="rail-status"
+                [class.is-pending]="sel.status === 0"
+                [class.is-confirmed]="sel.status === 1"
+                [class.is-rejected]="sel.status === 2"
+                [class.is-cancelled]="sel.status === 3"
+              >
+                {{ sel.statusLabel }}
+              </span>
+            }
+            @if (sel.subtitle) {
+              <p class="rail-notes">{{ sel.subtitle }}</p>
+            } @else if (sel.kind === "booking") {
+              <p class="rail-notes muted">No customer notes</p>
+            }
+            <p class="rail-hint muted">
+              Read-only for now — reschedule stays on the booking list.
+            </p>
+          } @else {
+            <p class="rail-empty-kicker">Tip</p>
+            <h3>Tap to explore</h3>
+            <p class="muted">
+              Tap a day to open its timeline. Tap a booking or leave block for details.
+            </p>
           }
-        </ul>
-      }
-    </section>
-  }
+        </aside>
+      </div>
+    }
+  </div>
 </app-portal-page>

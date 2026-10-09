@@ -607,7 +607,16 @@ export const staffRoleKeySchema = z.enum([
   "nail_tech",
   "esthetician",
   "therapist",
+  "instructor",
+  "trainer",
   "receptionist",
+  "supervisor",
+  "manager",
+  "accountant",
+  "inventory_manager",
+  "marketing",
+  "hr",
+  "admin_staff",
   "other",
 ]);
 
@@ -1196,6 +1205,8 @@ export const staffCalendarResponseSchema = z.object({
   leave: z.array(staffCalendarLeaveItemSchema),
 });
 
+export type StaffCalendarBookingItem = z.infer<typeof staffCalendarBookingItemSchema>;
+export type StaffCalendarLeaveItem = z.infer<typeof staffCalendarLeaveItemSchema>;
 export type StaffCalendarResponse = z.infer<typeof staffCalendarResponseSchema>;
 
 export const createServiceOfferingRequestSchema = z.object({

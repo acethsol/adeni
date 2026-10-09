@@ -11,7 +11,7 @@ Adeni runs as a **modular monolith**: one deployable API, clear module boundarie
 
 | Principle | Meaning |
 |-----------|---------|
-| **One deployable unit** | Single `Adeni.Api` process + one PostgreSQL database (schema-separated where useful). One release train, one observability surface. |
+| **One deployable unit** | Single `Adeni.Api` process + one SQL Server database (schema-separated where useful). One release train, one observability surface. |
 | **Modules, not layers only** | Clean Architecture layers (Domain → Application → Infrastructure → Api) **and** vertical modules (Booking, Tenancy, Discovery, …) inside those layers. |
 | **Communicate through contracts** | Modules expose `I*Service` interfaces in `Adeni.Application`. No module reaches into another module's Infrastructure folder or EF entities directly. |
 | **Domain events for side effects** | `BookingConfirmed` → notify, update analytics, enqueue review prompt. In-process dispatcher now; message bus when a module extracts. |
@@ -46,7 +46,7 @@ The **composition root** is `Adeni.Api` + `Infrastructure/DependencyInjection/Se
 
 ### 2.1 Target client architecture (internet-facing)
 
-Canonical diagram: **[target-client-architecture.md](./target-client-architecture.md)** — Discover (Angular SSR), Business Portal (Angular), Admin (Angular), Flutter mobile (target), all clients → one .NET API → PostgreSQL + Redis. Next.js and Expo remain during the ADR-012 strangler.
+Canonical diagram: **[target-client-architecture.md](./target-client-architecture.md)** — Discover (Angular SSR), Business Portal (Angular), Admin (Angular), Flutter mobile (target), all clients → one .NET API → SQL Server + Redis. Next.js and Expo remain during the ADR-012 strangler.
 
 ---
 
@@ -105,7 +105,7 @@ Adeni.Domain  →  nothing external
 | **Application service call** | Need another module to act or validate | Booking checks tenant status via Tenancy |
 | **Domain event** | Fire-and-forget side effect | `BookingConfirmed` → Notifications |
 | **Read model / query in owning module** | Discovery needs ratings | Reviews exposes `GetPublicRatingSummary(tenantId)` |
-| **Shared DB, separate schemas** | Same monolith, logical separation | `booking.*`, `tenancy.*`, `payments.*` PostgreSQL schemas (incremental) |
+| **Shared DB, separate schemas** | Same monolith, logical separation | `booking.*`, `tenancy.*`, `payments.*` SQL Server schemas (incremental) |
 
 **Avoid:** BookingService querying `Reviews` DbSet directly; Discovery embedding SQL against tenancy tables without going through a defined port.
 

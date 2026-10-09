@@ -168,7 +168,6 @@ import {
   type MediaUploadUrlRequest,
   type UpdateServiceOfferingRequest,
   type UpsertBusinessLocationRequest,
-  type WeeklyAvailabilityRule,
   localizeErrorResponse,
   type ApiErrorResponse,
 } from "@adeni/shared";

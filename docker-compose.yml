@@ -10,34 +10,24 @@ services:
       timeout: 3s
       retries: 5
 
-  postgres:
-    image: postgres:16-alpine
-    container_name: adeni-postgres
+  # Azure SQL Edge — works on amd64 and arm64 (Docker Desktop Apple/Windows ARM).
+  sqlserver:
+    image: mcr.microsoft.com/azure-sql-edge:latest
+    container_name: adeni-sqlserver
     environment:
-      POSTGRES_DB: adeni
-      POSTGRES_USER: adeni
-      POSTGRES_PASSWORD: adeni_dev_password
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Adeni_Dev_Passw0rd!"
     ports:
-      - "5432:5432"
+      - "1433:1433"
     volumes:
-      - adeni_pg_data:/var/lib/postgresql/data
+      - adeni_mssql_data:/var/opt/mssql
+    # Azure SQL Edge image has no sqlcmd; probe the TDS port instead.
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U adeni -d adeni"]
-      interval: 5s
+      test: ["CMD-SHELL", "timeout 1 bash -c '</dev/tcp/127.0.0.1/1433' || exit 1"]
+      interval: 10s
       timeout: 5s
-      retries: 5
-
-  adminer:
-    profiles: [ui]
-    image: adminer:latest
-    container_name: adeni-adminer
-    environment:
-      ADMINER_DEFAULT_SERVER: postgres
-    ports:
-      - "8080:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
+      retries: 10
+      start_period: 20s
 
   redisinsight:
     profiles: [ui]
@@ -56,5 +46,5 @@ services:
         condition: service_healthy
 
 volumes:
-  adeni_pg_data:
+  adeni_mssql_data:
   adeni_redisinsight_data:

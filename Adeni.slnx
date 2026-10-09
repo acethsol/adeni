@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/db/">
+    <Project Path="db/Adeni.Database/Adeni.Database.sqlproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/Adeni.Api/Adeni.Api.csproj" />
     <Project Path="src/Adeni.Application/Adeni.Application.csproj" />

@@ -11,20 +11,6 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: adeni
-          POSTGRES_USER: adeni
-          POSTGRES_PASSWORD: adeni_ci_password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U adeni -d adeni"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 5
-
       redis:
         image: redis:7-alpine
         ports:
@@ -36,7 +22,8 @@ jobs:
           --health-retries 5
 
     env:
-      ConnectionStrings__AdeniDb: Host=localhost;Port=5432;Database=adeni;Username=adeni;Password=adeni_ci_password
+      # Integration tests use InMemory (empty AdeniDb). Redis service reserved for future real-cache tests.
+      ConnectionStrings__AdeniDb: ""
       Redis__ConnectionString: localhost:6379
 
     steps:
@@ -52,6 +39,9 @@ jobs:
 
       - name: Build
         run: dotnet build Adeni.slnx -c Release --no-restore
+
+      - name: Build database project
+        run: dotnet build db/Adeni.Database/Adeni.Database.sqlproj -c Release
 
       - name: Test
         env:

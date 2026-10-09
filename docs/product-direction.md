@@ -25,7 +25,7 @@ Profile, locations, practitioners/staff, services, pricing, duration, availabili
 | API | .NET modular monolith |
 | Web | Angular — Discover (SSR/SEO), Business Portal, Admin |
 | Mobile | Flutter — **consumer app is the primary mobile focus**; business mobile follows portal depth |
-| Data | PostgreSQL |
+| Data | SQL Server |
 | Realtime messaging | SignalR |
 | Cache / locks | Redis where justified |
 | Cloud | Azure |

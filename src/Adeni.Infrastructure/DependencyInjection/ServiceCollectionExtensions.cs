@@ -43,8 +43,7 @@ public static class ServiceCollectionExtensions
         if (!string.IsNullOrWhiteSpace(connectionString))
         {
             services.AddDbContext<AdeniDbContext>(options =>
-                options.UseNpgsql(connectionString, npgsql =>
-                    npgsql.MigrationsHistoryTable("__ef_migrations_history", "admin")));
+                options.UseSqlServer(connectionString));
             services.AddScoped<IAuditLogWriter, EfAuditLogWriter>();
         }
         else if (environment.IsDevelopment() || environment.EnvironmentName == "Testing")
