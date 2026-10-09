@@ -1,6 +1,6 @@
 <Solution>
   <Folder Name="/db/">
-    <Project Path="db/Adeni.Database/Adeni.Database.sqlproj" />
+    <Project Path="db/Adeni.Database/Adeni.Database.sqlproj" Type="42ea0dbd-9cf1-443e-919e-be9c484e4577" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Adeni.Api/Adeni.Api.csproj" />
