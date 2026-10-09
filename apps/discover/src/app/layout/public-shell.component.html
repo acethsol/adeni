@@ -27,51 +27,6 @@
     </div>
 
     <div class="header-right">
-      <div class="market-wrap">
-        <button
-          type="button"
-          class="market-switch"
-          [attr.aria-expanded]="marketMenuOpen()"
-          [attr.aria-label]="'City: ' + (market.market()?.name ?? 'Lagos')"
-          (click)="toggleMarketMenu()"
-        >
-          <span class="place-mark" [attr.data-market]="market.market()?.id ?? 'lagos'" aria-hidden="true">
-            <adeni-carbon-icon name="location--filled" [size]="18" />
-          </span>
-          <span class="market-copy">
-            <span class="market-kicker">Exploring</span>
-            <span class="market-name">{{ market.market()?.name ?? "Lagos" }}</span>
-          </span>
-          <adeni-carbon-icon class="chevron" name="chevron--down" [size]="16" />
-        </button>
-        @if (marketMenuOpen()) {
-          <div class="market-menu" role="listbox" aria-label="Choose a city">
-            <p class="menu-label">Choose a city</p>
-            @for (m of markets; track m.id) {
-              <button
-                type="button"
-                role="option"
-                [class.active]="market.market()?.id === m.id"
-                [attr.aria-selected]="market.market()?.id === m.id"
-                [attr.data-market]="m.id"
-                (click)="selectMarket(m.id)"
-              >
-                <span class="place-mark" [attr.data-market]="m.id" aria-hidden="true">
-                  <adeni-carbon-icon name="location--filled" [size]="18" />
-                </span>
-                <span class="market-copy">
-                  <span class="market-name">{{ m.name }}</span>
-                  <span class="market-meta">{{ marketPlaceLine(m.id) }}</span>
-                </span>
-                @if (market.market()?.id === m.id) {
-                  <adeni-carbon-icon class="check" name="checkmark" [size]="16" />
-                }
-              </button>
-            }
-          </div>
-        }
-      </div>
-
       @if (auth0Mode) {
         @if (signedIn()) {
           <button type="button" class="cds-btn cds-btn--ghost" (click)="logout()">Log out</button>

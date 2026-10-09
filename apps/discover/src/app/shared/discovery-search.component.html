@@ -7,31 +7,74 @@
       <adeni-carbon-icon class="icon" name="search" [size]="20" />
     </button>
   } @else {
-    <form class="field" role="search" (submit)="submit($event)">
-      <adeni-carbon-icon class="field-icon" name="search" [size]="20" />
-      <input
-        #searchInput
-        type="search"
-        name="q"
-        [(ngModel)]="query"
-        [placeholder]="placeholder"
-        autocomplete="off"
-        role="combobox"
+    <form class="search-field" role="search" (submit)="submit($event)">
+      <button
+        type="button"
+        class="where-trigger"
         [attr.aria-expanded]="open()"
-        [attr.aria-controls]="open() ? 'discover-search-suggestions' : null"
-        [attr.aria-label]="findServices"
-        (focus)="open.set(true)"
-      />
-      @if (variant() === "hero") {
-        <button type="submit" class="hero-submit" [attr.aria-label]="findServices">
-          <adeni-carbon-icon name="arrow--right" [size]="20" />
-        </button>
-      }
+        [attr.aria-label]="whereLabel + ': ' + compactLocationLabel"
+        (click)="openWhere($event)"
+      >
+        <adeni-carbon-icon name="location--filled" [size]="18" />
+        <span class="where-copy">
+          <span class="where-kicker">{{ whereLabel }}</span>
+          <span class="where-name">{{ compactLocationLabel }}</span>
+        </span>
+      </button>
+      <div class="query-wrap">
+        <adeni-carbon-icon class="field-icon" name="search" [size]="20" />
+        <input
+          #searchInput
+          type="search"
+          name="q"
+          [(ngModel)]="query"
+          [placeholder]="placeholder"
+          autocomplete="off"
+          role="combobox"
+          [attr.aria-expanded]="open()"
+          [attr.aria-controls]="open() ? 'discover-search-suggestions' : null"
+          [attr.aria-label]="findServices"
+          (focus)="openPanel()"
+        />
+        @if (variant() === "hero") {
+          <button type="submit" class="hero-submit" [attr.aria-label]="findServices">
+            <adeni-carbon-icon name="arrow--right" [size]="20" />
+          </button>
+        }
+      </div>
     </form>
   }
 
   @if (open()) {
     <div class="panel" id="discover-search-suggestions" role="listbox" [attr.aria-label]="tryAsking">
+      <section class="where-block" [attr.aria-label]="chooseCity">
+        <p class="try">{{ chooseCity }}</p>
+        <div class="cities">
+          @for (m of markets(); track m.id) {
+            <button
+              type="button"
+              role="option"
+              class="city"
+              [class.active]="market.market()?.id === m.id"
+              [attr.aria-selected]="market.market()?.id === m.id"
+              (mousedown)="$event.preventDefault()"
+              (click)="selectMarket(m.id)"
+            >
+              <span class="city-mark" aria-hidden="true">
+                <adeni-carbon-icon name="location--filled" [size]="16" />
+              </span>
+              <span class="city-copy">
+                <span class="city-name">{{ m.name }}</span>
+                <span class="city-meta">{{ marketPlaceLine(m.id) }}</span>
+              </span>
+              @if (market.market()?.id === m.id) {
+                <adeni-carbon-icon class="check" name="checkmark" [size]="16" />
+              }
+            </button>
+          }
+        </div>
+      </section>
+
       <p class="try">{{ tryAsking }}</p>
       <div class="chips">
         @for (prompt of prompts; track prompt) {

@@ -1,5 +1,6 @@
 import {
   Component,
+  computed,
   effect,
   ElementRef,
   HostListener,
@@ -13,6 +14,7 @@ import { Router } from "@angular/router";
 import {
   discoverSearchToPath,
   getAskAdeniPrompts,
+  listMarkets,
   resolveDiscoverySearch,
   t,
 } from "@adeni/shared";
@@ -31,7 +33,7 @@ export type DiscoverySearchVariant = "hero" | "compact" | "default";
 export class DiscoverySearchComponent {
   private readonly router = inject(Router);
   private readonly localeService = inject(AdeniLocaleService);
-  private readonly market = inject(MarketContextService);
+  readonly market = inject(MarketContextService);
   private readonly host = inject(ElementRef<HTMLElement>);
 
   readonly variant = input<DiscoverySearchVariant>("default");
@@ -39,6 +41,23 @@ export class DiscoverySearchComponent {
 
   readonly open = signal(false);
   readonly hint = signal<string | null>(null);
+  /** Selected city first so the list matches where you're browsing. */
+  readonly markets = computed(() => {
+    const selectedId = this.market.market()?.id;
+    const all = listMarkets();
+    if (!selectedId) {
+      return all;
+    }
+    return [...all].sort((a, b) => {
+      if (a.id === selectedId) {
+        return -1;
+      }
+      if (b.id === selectedId) {
+        return 1;
+      }
+      return 0;
+    });
+  });
   query = "";
 
   private readonly inputEl = viewChild<ElementRef<HTMLInputElement>>("searchInput");
@@ -61,20 +80,20 @@ export class DiscoverySearchComponent {
     return getAskAdeniPrompts(this.locale);
   }
 
-  get askTitle(): string {
-    return t(this.locale, "search.askTitle");
-  }
-
-  get askDescription(): string {
-    return t(this.locale, "search.askDescription");
-  }
-
   get tryAsking(): string {
     return t(this.locale, "search.tryAsking");
   }
 
   get findServices(): string {
     return t(this.locale, "search.findServices");
+  }
+
+  get whereLabel(): string {
+    return t(this.locale, "search.where");
+  }
+
+  get chooseCity(): string {
+    return t(this.locale, "search.chooseCity");
   }
 
   get compactQueryLabel(): string {
@@ -94,8 +113,30 @@ export class DiscoverySearchComponent {
     queueMicrotask(() => this.inputEl()?.nativeElement.focus());
   }
 
+  openWhere(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.open.set(true);
+  }
+
   closePanel(): void {
     this.open.set(false);
+  }
+
+  selectMarket(marketId: string): void {
+    this.market.applyMarketQueryParam(marketId);
+    void this.router.navigate([], {
+      queryParams: { market: marketId },
+      queryParamsHandling: "merge",
+      replaceUrl: true,
+    });
+  }
+
+  marketPlaceLine(marketId: string): string {
+    if (marketId === "ottawa") {
+      return "Canada · Rideau";
+    }
+    return "Nigeria · Atlantic";
   }
 
   submit(event?: Event): void {

@@ -69,6 +69,8 @@ export const frMessages: Messages = {
   search: {
     placeholder: "Rechercher — coiffeur, manucure près de moi…",
     nearYou: "Près de vous",
+    where: "Où",
+    chooseCity: "Choisir une ville",
     anyCategory: "Toute catégorie",
     searchOrAsk: "Rechercher",
     askTitle: "Demandez à Adeni",

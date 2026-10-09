@@ -157,190 +157,6 @@
   gap: 0.55rem;
 }
 
-.market-wrap {
-  position: relative;
-}
-
-.market-switch {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--cds-spacing-03);
-  min-height: 2.5rem;
-  padding: 0 var(--cds-spacing-03) 0 var(--cds-spacing-02);
-  border: 1px solid var(--cds-border-subtle);
-  border-radius: var(--cds-radius-none);
-  background: var(--cds-layer-01);
-  color: var(--cds-text-primary);
-  font: inherit;
-  cursor: pointer;
-}
-
-.market-switch:hover {
-  background: var(--cds-gray-10);
-}
-
-.market-switch[aria-expanded="true"] {
-  outline: 2px solid var(--interactive);
-  outline-offset: -2px;
-}
-
-.place-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: var(--interactive);
-  color: #fff;
-}
-
-.market-copy {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.05rem;
-  line-height: 1.05;
-  text-align: left;
-  min-width: 0;
-}
-
-.market-kicker {
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  opacity: 0.62;
-}
-
-.market-name {
-  font-family: var(--font-family-display);
-  font-size: 1.05rem;
-  font-weight: 600;
-  letter-spacing: -0.025em;
-}
-
-.market-meta {
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  opacity: 0.68;
-}
-
-.chevron {
-  display: inline-flex;
-  color: var(--cds-text-secondary);
-  flex-shrink: 0;
-  transition: transform 180ms ease;
-}
-
-.market-switch[aria-expanded="true"] .chevron {
-  transform: rotate(180deg);
-}
-
-.market-menu {
-  position: absolute;
-  top: calc(100% + 0.5rem);
-  right: 0;
-  width: min(17rem, calc(100vw - 2rem));
-  padding: var(--cds-spacing-02);
-  border-radius: var(--cds-radius-none);
-  border: 1px solid var(--cds-border-subtle);
-  background: var(--cds-layer-01);
-  box-shadow: 0 2px 6px rgb(0 0 0 / 20%);
-  z-index: 50;
-}
-
-.menu-label {
-  margin: 0.15rem 0.55rem 0.45rem;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.market-menu button {
-  position: relative;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 0.7rem;
-  width: 100%;
-  border: 0;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  cursor: pointer;
-  padding: 0.6rem 0.55rem;
-  border-radius: var(--cds-radius-none);
-  text-align: left;
-  overflow: hidden;
-  transition: background 140ms ease, transform 140ms ease;
-}
-
-.market-menu button::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  background: linear-gradient(
-    115deg,
-    color-mix(in srgb, var(--h1) 10%, transparent),
-    color-mix(in srgb, var(--h2) 12%, transparent)
-  );
-  transition: opacity 160ms ease;
-}
-
-.market-menu button[data-market="ottawa"]::before {
-  background: linear-gradient(
-    115deg,
-    color-mix(in srgb, var(--brand-primary) 12%, transparent),
-    color-mix(in srgb, #7eb8c9 14%, transparent)
-  );
-}
-
-.market-menu button:hover,
-.market-menu button.active {
-  background: var(--cds-gray-10);
-}
-
-.market-menu button:hover::before,
-.market-menu button.active::before {
-  opacity: 1;
-}
-
-.market-menu button > * {
-  position: relative;
-  z-index: 1;
-}
-
-.market-menu .market-copy {
-  gap: 0.15rem;
-}
-
-.market-menu .market-name {
-  font-size: 1.05rem;
-}
-
-.check {
-  display: inline-flex;
-  color: var(--interactive);
-  flex-shrink: 0;
-}
-
-@keyframes menu-in {
-  from {
-    opacity: 0;
-    transform: translateY(-6px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
 .header-right .cds-btn {
   min-height: 2.5rem;
   padding: 0 var(--cds-spacing-04);
@@ -425,10 +241,6 @@ main.flush {
     padding: 0.35rem 0.85rem 0.45rem;
     grid-template-areas: "brand search" "right right";
   }
-
-  .market-kicker {
-    display: none;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -436,9 +248,7 @@ main.flush {
   .header,
   .header-search,
   .nav a::after,
-  .mark,
-  .market-switch,
-  .market-menu {
+  .mark {
     animation: none !important;
     transition: none !important;
   }

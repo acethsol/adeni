@@ -67,6 +67,8 @@ export const enMessages: Messages = {
   search: {
     placeholder: "Search massage, facials, hair, nails, Pilates…",
     nearYou: "Near you",
+    where: "Where",
+    chooseCity: "Choose a city",
     anyCategory: "Any category",
     searchOrAsk: "Search services",
     askTitle: "Ask Adeni",

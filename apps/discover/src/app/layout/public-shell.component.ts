@@ -1,6 +1,5 @@
 import { Component, computed, effect, inject, OnInit, signal } from "@angular/core";
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
-import { listMarkets } from "@adeni/shared";
 import { filter } from "rxjs";
 import {
   ADENI_DISCOVER_CONFIG,
@@ -15,7 +14,6 @@ import { MarketGeoSyncComponent } from "../shared/market-geo-sync.component";
 import { PublicFooterComponent } from "../shared/public-footer.component";
 import {
   AdeniBrandLockupComponent,
-  AdeniCarbonIconComponent,
   AdeniConfirmHostComponent,
   AdeniGlobalLoadingPanelComponent,
   AdeniToastHostComponent,
@@ -36,7 +34,6 @@ const MARKET_HEADER_TONES: Record<string, { h1: string; h2: string; h3: string }
     RouterLinkActive,
     MarketGeoSyncComponent,
     AdeniBrandLockupComponent,
-    AdeniCarbonIconComponent,
     DiscoverySearchComponent,
     AdeniGlobalLoadingPanelComponent,
     AdeniToastHostComponent,
@@ -66,8 +63,6 @@ export class PublicShellComponent implements OnInit {
   );
   /** Home scroll-pin only — explores keeps nav + search together. */
   readonly headerCompact = computed(() => this.homeLayout() && this.searchPinned());
-  readonly marketMenuOpen = signal(false);
-  readonly markets = listMarkets();
   readonly headerTone = computed(() => {
     const id = this.market.market()?.id ?? "lagos";
     return MARKET_HEADER_TONES[id] ?? MARKET_HEADER_TONES["lagos"];
@@ -91,28 +86,11 @@ export class PublicShellComponent implements OnInit {
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe(() => {
         this.syncMarketQuery();
-        this.marketMenuOpen.set(false);
       });
 
     if (this.auth0Mode) {
       void this.customerApi.isLoggedIn().then((v) => this.signedIn.set(v));
     }
-  }
-
-  toggleMarketMenu(): void {
-    this.marketMenuOpen.update((open) => !open);
-  }
-
-  selectMarket(marketId: string): void {
-    this.market.applyMarketQueryParam(marketId);
-    this.marketMenuOpen.set(false);
-  }
-
-  marketPlaceLine(marketId: string): string {
-    if (marketId === "ottawa") {
-      return "Canada · Rideau";
-    }
-    return "Nigeria · Atlantic";
   }
 
   private syncMarketQuery(): void {

@@ -5,8 +5,9 @@
   --g2: var(--brand-secondary);
 
   position: relative;
+  z-index: 5;
   isolation: isolate;
-  overflow: hidden;
+  overflow: visible;
   min-height: min(78vh, 40rem);
   border-bottom: 1px solid rgb(22 22 22 / 6%);
   color: var(--hero-ink);
@@ -147,6 +148,8 @@ h1 {
 }
 
 .search-wrap {
+  position: relative;
+  z-index: 30;
   margin-top: 1.35rem;
   max-width: 34rem;
   scroll-margin-top: 5.5rem;
