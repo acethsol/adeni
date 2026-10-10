@@ -582,6 +582,30 @@ a.btn {
   align-items: center;
 }
 
+.access-dot {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  padding: 0.1rem 0.45rem;
+  border-radius: 0.25rem;
+  color: var(--cds-text-secondary, #525252);
+  background: var(--cds-layer-02, #f4f4f4);
+}
+
+.access-dot[data-status="active"] {
+  color: var(--cds-support-success, #0e6027);
+  background: color-mix(in srgb, var(--cds-support-success, #24a148) 16%, transparent);
+}
+
+.access-dot[data-status="invite_pending"] {
+  color: var(--cds-support-warning, #8e6a00);
+  background: color-mix(in srgb, var(--cds-support-warning, #f1c21b) 22%, transparent);
+}
+
+.access-dot[data-status="none"] {
+  color: var(--cds-text-secondary, #525252);
+}
+
 .invite-backdrop {
   position: fixed;
   inset: 0;

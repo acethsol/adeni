@@ -78,6 +78,9 @@ import {
   createStaffInviteRequestSchema,
   staffPortalInviteSchema,
   staffPortalInvitesResponseSchema,
+  tenantAccessUserSchema,
+  tenantAccessUsersResponseSchema,
+  updateAccessUserRequestSchema,
   acceptStaffInviteRequestSchema,
   acceptStaffInviteResponseSchema,
   reviewResponseSchema,
@@ -137,6 +140,8 @@ import {
   type CreateStaffLeaveRequest,
   type CreateStaffInviteRequest,
   type StaffPortalInvite,
+  type TenantAccessUser,
+  type UpdateAccessUserRequest,
   type AcceptStaffInviteRequest,
   type AcceptStaffInviteResponse,
   type StaffCalendarResponse,
@@ -960,6 +965,34 @@ export class AdeniApiClient {
   async revokeTenantAccessInvite(inviteId: string): Promise<void> {
     await this.request(
       `/api/v1/tenant/access/invites/${encodeURIComponent(inviteId)}`,
+      { method: "DELETE" },
+    );
+  }
+
+  async listTenantAccessUsers(): Promise<TenantAccessUser[]> {
+    const response = await this.request("/api/v1/tenant/access/users");
+    return tenantAccessUsersResponseSchema.parse(await response.json()).items;
+  }
+
+  async updateTenantAccessUser(
+    businessUserId: string,
+    request: UpdateAccessUserRequest,
+  ): Promise<TenantAccessUser> {
+    const body = updateAccessUserRequestSchema.parse(request);
+    const response = await this.request(
+      `/api/v1/tenant/access/users/${encodeURIComponent(businessUserId)}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+    return tenantAccessUserSchema.parse(await response.json());
+  }
+
+  async revokeTenantAccessUser(businessUserId: string): Promise<void> {
+    await this.request(
+      `/api/v1/tenant/access/users/${encodeURIComponent(businessUserId)}`,
       { method: "DELETE" },
     );
   }

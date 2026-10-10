@@ -2,9 +2,12 @@ namespace Adeni.Infrastructure.Identity;
 
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
+using Adeni.Application.Abstractions;
 using Adeni.Application.Auth;
 using Adeni.Application.Notifications;
 using Adeni.Application.Security;
+using Adeni.Domain.Auditing;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Persistence;
@@ -16,6 +19,8 @@ public sealed class StaffAccessService(
     AdeniDbContext dbContext,
     INotificationDispatcher notifications,
     IConfiguration configuration,
+    IAuditLogWriter auditLogWriter,
+    ICorrelationContext correlationContext,
     ILogger<StaffAccessService> logger) : IStaffAccessService
 {
     private static readonly TimeSpan InviteTtl = TimeSpan.FromDays(7);
@@ -82,6 +87,14 @@ public sealed class StaffAccessService(
             tenantId,
             PiiMasker.MaskEmail(invite.Email));
 
+        await WriteAuditAsync(
+            invite.InvitedByAuth0Sub ?? "system",
+            AuditActions.StaffInviteResent,
+            "staff_portal_invite",
+            invite.Id.ToString(),
+            $"{{\"email\":\"{PiiMasker.MaskEmail(invite.Email)}\"}}",
+            cancellationToken);
+
         return Result.Success(ToResponse(invite, DateTimeOffset.UtcNow));
     }
 
@@ -110,6 +123,14 @@ public sealed class StaffAccessService(
             "Staff portal invite revoked {InviteId} for tenant {TenantId}",
             invite.Id,
             tenantId);
+
+        await WriteAuditAsync(
+            invite.InvitedByAuth0Sub ?? "system",
+            AuditActions.StaffInviteRevoked,
+            "staff_portal_invite",
+            invite.Id.ToString(),
+            null,
+            cancellationToken);
 
         return Result.Success();
     }
@@ -210,12 +231,143 @@ public sealed class StaffAccessService(
             invite.TenantId,
             businessUser.Role);
 
+        await WriteAuditAsync(
+            auth0Sub,
+            AuditActions.StaffInviteAccepted,
+            "business_user",
+            businessUser.Id.ToString(),
+            $"{{\"inviteId\":\"{invite.Id}\",\"role\":\"{businessUser.Role}\"}}",
+            cancellationToken);
+
         return Result.Success(new AcceptStaffInviteResponse(
             businessUser.Id,
             businessUser.Auth0Sub,
             businessUser.TenantId,
             businessUser.Role,
             businessUser.StaffMemberId));
+    }
+
+    public async Task<IReadOnlyList<TenantAccessUserResponse>> ListUsersAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        var users = await dbContext.BusinessUsers
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId)
+            .OrderBy(x => x.CreatedAt)
+            .Take(200)
+            .ToListAsync(cancellationToken);
+
+        return users.Select(ToUserResponse).ToArray();
+    }
+
+    public async Task<Result<TenantAccessUserResponse>> UpdateRoleAsync(
+        Guid tenantId,
+        Guid businessUserId,
+        UpdateAccessUserRequest request,
+        string actorAuth0Sub,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await dbContext.BusinessUsers
+            .FirstOrDefaultAsync(x => x.Id == businessUserId && x.TenantId == tenantId, cancellationToken);
+        if (user is null)
+        {
+            return Result.Failure<TenantAccessUserResponse>(Error.NotFound("Business user"));
+        }
+
+        var newRole = request.PermissionRole?.Trim().ToLowerInvariant();
+        if (!PortalPermissionRoles.IsValid(newRole))
+        {
+            return Result.Failure<TenantAccessUserResponse>(
+                Error.Validation("A valid permission role is required."));
+        }
+
+        var currentRole = PortalPermissionRoles.Normalize(user.Role);
+        if (currentRole == newRole)
+        {
+            return Result.Success(ToUserResponse(user));
+        }
+
+        if (currentRole == PortalPermissionRoles.Owner && newRole != PortalPermissionRoles.Owner)
+        {
+            var ownerCount = await CountOwnersAsync(tenantId, cancellationToken);
+            if (ownerCount <= 1)
+            {
+                return Result.Failure<TenantAccessUserResponse>(ErrorCodes.StaffLastOwnerError());
+            }
+        }
+
+        // Owners are created via registration — do not promote via this path.
+        if (newRole == PortalPermissionRoles.Owner && currentRole != PortalPermissionRoles.Owner)
+        {
+            return Result.Failure<TenantAccessUserResponse>(
+                Error.Validation("Owner access is created through business registration, not role edits."));
+        }
+
+        var previous = currentRole;
+        user.Role = newRole!;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation(
+            "Staff access role changed {BusinessUserId} tenant {TenantId} {From} -> {To} by {Actor}",
+            user.Id,
+            tenantId,
+            previous,
+            newRole,
+            actorAuth0Sub);
+
+        await WriteAuditAsync(
+            actorAuth0Sub,
+            AuditActions.StaffAccessRoleChanged,
+            "business_user",
+            user.Id.ToString(),
+            JsonSerializer.Serialize(new { from = previous, to = newRole }),
+            cancellationToken);
+
+        return Result.Success(ToUserResponse(user));
+    }
+
+    public async Task<Result> RevokeLoginAsync(
+        Guid tenantId,
+        Guid businessUserId,
+        string actorAuth0Sub,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await dbContext.BusinessUsers
+            .FirstOrDefaultAsync(x => x.Id == businessUserId && x.TenantId == tenantId, cancellationToken);
+        if (user is null)
+        {
+            return Result.Failure(Error.NotFound("Business user"));
+        }
+
+        if (PortalPermissionRoles.Normalize(user.Role) == PortalPermissionRoles.Owner)
+        {
+            var ownerCount = await CountOwnersAsync(tenantId, cancellationToken);
+            if (ownerCount <= 1)
+            {
+                return Result.Failure(ErrorCodes.StaffLastOwnerError());
+            }
+        }
+
+        var revokedRole = PortalPermissionRoles.Normalize(user.Role);
+        dbContext.BusinessUsers.Remove(user);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation(
+            "Staff access revoked {BusinessUserId} tenant {TenantId} by {Actor}",
+            businessUserId,
+            tenantId,
+            actorAuth0Sub);
+
+        await WriteAuditAsync(
+            actorAuth0Sub,
+            AuditActions.StaffAccessRevoked,
+            "business_user",
+            businessUserId.ToString(),
+            $"{{\"role\":\"{revokedRole}\"}}",
+            cancellationToken);
+
+        return Result.Success();
     }
 
     private async Task<Result<StaffPortalInviteResponse>> CreateInviteAsync(
@@ -305,7 +457,43 @@ public sealed class StaffAccessService(
             permissionRole,
             PiiMasker.MaskEmail(email));
 
+        await WriteAuditAsync(
+            invitedByAuth0Sub,
+            AuditActions.StaffInviteCreated,
+            "staff_portal_invite",
+            invite.Id.ToString(),
+            $"{{\"email\":\"{PiiMasker.MaskEmail(email)}\",\"role\":\"{permissionRole}\"}}",
+            cancellationToken);
+
         return Result.Success(ToResponse(invite, DateTimeOffset.UtcNow));
+    }
+
+    private Task<int> CountOwnersAsync(Guid tenantId, CancellationToken cancellationToken) =>
+        dbContext.BusinessUsers
+            .AsNoTracking()
+            .CountAsync(
+                x => x.TenantId == tenantId && x.Role == PortalPermissionRoles.Owner,
+                cancellationToken);
+
+    private async Task WriteAuditAsync(
+        string actorId,
+        string action,
+        string entityType,
+        string entityId,
+        string? metadataJson,
+        CancellationToken cancellationToken)
+    {
+        await auditLogWriter.WriteAsync(
+            new AuditEntry(
+                Guid.NewGuid(),
+                actorId,
+                action,
+                entityType,
+                entityId,
+                correlationContext.CorrelationId,
+                DateTimeOffset.UtcNow,
+                metadataJson),
+            cancellationToken);
     }
 
     private async Task SendInviteEmailAsync(
@@ -390,4 +578,11 @@ public sealed class StaffAccessService(
             status,
             invite.ExpiresAt);
     }
+
+    private static TenantAccessUserResponse ToUserResponse(BusinessUser user) =>
+        new(
+            user.Id,
+            PortalPermissionRoles.Normalize(user.Role),
+            user.StaffMemberId,
+            user.CreatedAt);
 }

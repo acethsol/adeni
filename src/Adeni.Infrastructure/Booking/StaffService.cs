@@ -5,6 +5,7 @@ using Adeni.Application.Caching;
 using Adeni.Application.Storage;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
+using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,10 +26,62 @@ public sealed class StaffService(
             .ThenBy(x => x.DisplayName)
             .ToListAsync(cancellationToken);
 
+        var staffIds = staff.Select(x => x.Id).ToArray();
+        var now = DateTimeOffset.UtcNow;
+
+        var linkedUsers = await dbContext.BusinessUsers
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId && x.StaffMemberId != null && staffIds.Contains(x.StaffMemberId.Value))
+            .Select(x => new { x.Id, x.StaffMemberId, x.Role })
+            .ToListAsync(cancellationToken);
+
+        var pendingInvites = await dbContext.StaffPortalInvites
+            .AsNoTracking()
+            .Where(x =>
+                x.TenantId == tenantId
+                && x.StaffMemberId != null
+                && staffIds.Contains(x.StaffMemberId.Value)
+                && x.Status == StaffPortalInviteStatuses.Pending
+                && x.ExpiresAt >= now)
+            .Select(x => new { x.Id, x.StaffMemberId })
+            .ToListAsync(cancellationToken);
+
+        var userByStaff = linkedUsers
+            .Where(x => x.StaffMemberId is not null)
+            .GroupBy(x => x.StaffMemberId!.Value)
+            .ToDictionary(g => g.Key, g => g.First());
+        var inviteByStaff = pendingInvites
+            .Where(x => x.StaffMemberId is not null)
+            .GroupBy(x => x.StaffMemberId!.Value)
+            .ToDictionary(g => g.Key, g => g.First());
+
         var responses = new List<StaffMemberResponse>(staff.Count);
         foreach (var member in staff)
         {
-            responses.Add(await ToResponseAsync(member, cancellationToken));
+            string accessStatus = PortalAccessStatuses.None;
+            Guid? inviteId = null;
+            Guid? businessUserId = null;
+            string? permissionRole = null;
+
+            if (userByStaff.TryGetValue(member.Id, out var user))
+            {
+                accessStatus = PortalAccessStatuses.Active;
+                businessUserId = user.Id;
+                permissionRole = PortalPermissionRoles.Normalize(user.Role);
+            }
+            else if (inviteByStaff.TryGetValue(member.Id, out var invite))
+            {
+                accessStatus = PortalAccessStatuses.InvitePending;
+                inviteId = invite.Id;
+            }
+
+            responses.Add(await ToResponseAsync(
+                member,
+                cancellationToken,
+                accessStatus,
+                inviteId,
+                businessUserId,
+                permissionRole));
         }
 
         return responses;
@@ -614,7 +667,11 @@ public sealed class StaffService(
 
     private async Task<StaffMemberResponse> ToResponseAsync(
         StaffMember entity,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string portalAccessStatus = PortalAccessStatuses.None,
+        Guid? portalInviteId = null,
+        Guid? businessUserId = null,
+        string? permissionRole = null)
     {
         string? avatarUrl = null;
         if (!string.IsNullOrWhiteSpace(entity.AvatarImageKey))
@@ -633,7 +690,11 @@ public sealed class StaffService(
             entity.IsActive,
             entity.SortOrder,
             avatarUrl,
-            entity.ServiceLinks.Select(x => x.ServiceOfferingId).ToArray());
+            entity.ServiceLinks.Select(x => x.ServiceOfferingId).ToArray(),
+            portalAccessStatus,
+            portalInviteId,
+            businessUserId,
+            permissionRole);
     }
 
     private async Task<PublicStaffMemberResponse> ToPublicResponseAsync(

@@ -70,5 +70,25 @@ public sealed class AuthControllerMeTests
             AcceptStaffInviteRequest request,
             CancellationToken cancellationToken = default) =>
             throw new NotImplementedException();
+
+        public Task<IReadOnlyList<TenantAccessUserResponse>> ListUsersAsync(
+            Guid tenantId,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public Task<Domain.Common.Result<TenantAccessUserResponse>> UpdateRoleAsync(
+            Guid tenantId,
+            Guid businessUserId,
+            UpdateAccessUserRequest request,
+            string actorAuth0Sub,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public Task<Domain.Common.Result> RevokeLoginAsync(
+            Guid tenantId,
+            Guid businessUserId,
+            string actorAuth0Sub,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
     }
 }

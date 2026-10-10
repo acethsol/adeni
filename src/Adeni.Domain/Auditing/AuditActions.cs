@@ -13,4 +13,10 @@ public static class AuditActions
     public const string MarketCreated = "market.created";
     public const string MarketUpdated = "market.updated";
     public const string MarketLiveToggled = "market.live_toggled";
+    public const string StaffInviteCreated = "staff.invite_created";
+    public const string StaffInviteAccepted = "staff.invite_accepted";
+    public const string StaffInviteResent = "staff.invite_resent";
+    public const string StaffInviteRevoked = "staff.invite_revoked";
+    public const string StaffAccessRoleChanged = "staff.access_role_changed";
+    public const string StaffAccessRevoked = "staff.access_revoked";
 }

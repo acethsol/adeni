@@ -13,7 +13,11 @@ public sealed record StaffMemberResponse(
     bool IsActive,
     int SortOrder,
     string? AvatarImageUrl,
-    IReadOnlyList<Guid> ServiceOfferingIds);
+    IReadOnlyList<Guid> ServiceOfferingIds,
+    string PortalAccessStatus = "none",
+    Guid? PortalInviteId = null,
+    Guid? BusinessUserId = null,
+    string? PermissionRole = null);
 
 /// <summary>Public discovery shape — no first/last name.</summary>
 public sealed record PublicStaffMemberResponse(

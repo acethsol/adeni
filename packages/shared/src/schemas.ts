@@ -623,6 +623,19 @@ export const staffRoleKeySchema = z.enum([
   "other",
 ]);
 
+export const portalPermissionRoleSchema = z.enum([
+  "owner",
+  "manager",
+  "receptionist",
+  "practitioner",
+  "accountant",
+  "ops",
+]);
+
+export const portalAccessStatusSchema = z.enum(["none", "invite_pending", "active"]);
+
+export type PortalAccessStatus = z.infer<typeof portalAccessStatusSchema>;
+
 export const staffMemberSchema = z.object({
   id: z.string().uuid(),
   firstName: z.string(),
@@ -635,6 +648,10 @@ export const staffMemberSchema = z.object({
   sortOrder: z.number().int(),
   avatarImageUrl: z.string().nullable().optional(),
   serviceOfferingIds: z.array(z.string().uuid()),
+  portalAccessStatus: portalAccessStatusSchema.optional().default("none"),
+  portalInviteId: z.string().uuid().nullable().optional(),
+  businessUserId: z.string().uuid().nullable().optional(),
+  permissionRole: portalPermissionRoleSchema.nullable().optional(),
 });
 
 export type StaffMember = z.infer<typeof staffMemberSchema>;
@@ -718,15 +735,6 @@ export const createStaffLeaveRequestSchema = z.object({
 
 export type CreateStaffLeaveRequest = z.infer<typeof createStaffLeaveRequestSchema>;
 
-export const portalPermissionRoleSchema = z.enum([
-  "owner",
-  "manager",
-  "receptionist",
-  "practitioner",
-  "accountant",
-  "ops",
-]);
-
 export const createStaffInviteRequestSchema = z.object({
   email: z.string().email().max(320),
   permissionRole: portalPermissionRoleSchema.exclude(["owner"]).optional(),
@@ -748,6 +756,25 @@ export type StaffPortalInvite = z.infer<typeof staffPortalInviteSchema>;
 export const staffPortalInvitesResponseSchema = z.object({
   items: z.array(staffPortalInviteSchema),
 });
+
+export const tenantAccessUserSchema = z.object({
+  businessUserId: z.string().uuid(),
+  permissionRole: portalPermissionRoleSchema,
+  staffMemberId: z.string().uuid().nullable().optional(),
+  createdAt: z.string(),
+});
+
+export type TenantAccessUser = z.infer<typeof tenantAccessUserSchema>;
+
+export const tenantAccessUsersResponseSchema = z.object({
+  items: z.array(tenantAccessUserSchema),
+});
+
+export const updateAccessUserRequestSchema = z.object({
+  permissionRole: portalPermissionRoleSchema.exclude(["owner"]),
+});
+
+export type UpdateAccessUserRequest = z.infer<typeof updateAccessUserRequestSchema>;
 
 export const acceptStaffInviteRequestSchema = z.object({
   token: z.string().min(8).max(200),
