@@ -40,6 +40,11 @@ export type PortalNavItem = {
   capability?: Capability;
   /** Portal RBAC — any listed permission grants access. */
   permission?: PortalPermission | readonly PortalPermission[];
+  /**
+   * Hide this item when the user also has this permission
+   * (e.g. “My calendar” for practitioners only — not owners with full staff).
+   */
+  excludeIfPermission?: PortalPermission;
   badge?: "bookings" | "messages";
   /** Shown only before a business profile exists. */
   unregisteredOnly?: boolean;
@@ -76,6 +81,14 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
           { id: "upcoming", label: "Upcoming" },
           { id: "past", label: "Past" },
         ],
+      },
+      {
+        path: "/my-calendar",
+        label: "My calendar",
+        icon: "availability",
+        capability: "calendar",
+        permission: "portal.staff.self",
+        excludeIfPermission: "portal.staff",
       },
       {
         path: "/quotes",

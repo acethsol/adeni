@@ -17,16 +17,27 @@
       </p>
     </div>
     <div class="hero-actions">
-      @if (publicProfileUrl(); as url) {
-        <a class="btn btn-primary" [href]="url" target="_blank" rel="noopener">View public profile</a>
-      }
-      <a class="btn" routerLink="/bookings">
-        @if (pendingCount() > 0) {
-          {{ pendingCount() }} waiting
-        } @else {
-          Booking inbox
+      @if (isPractitionerView()) {
+        <a class="btn btn-primary" routerLink="/my-calendar">My calendar</a>
+        <a class="btn" routerLink="/bookings">
+          @if (pendingCount() > 0) {
+            {{ pendingCount() }} waiting
+          } @else {
+            My bookings
+          }
+        </a>
+      } @else {
+        @if (publicProfileUrl(); as url) {
+          <a class="btn btn-primary" [href]="url" target="_blank" rel="noopener">View public profile</a>
         }
-      </a>
+        <a class="btn" routerLink="/bookings">
+          @if (pendingCount() > 0) {
+            {{ pendingCount() }} waiting
+          } @else {
+            Booking inbox
+          }
+        </a>
+      }
     </div>
   </section>
 

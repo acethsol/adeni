@@ -6,7 +6,7 @@
 |-------|-------|
 | **Sprint** | Sprint 25 — Staff accounts & permissions |
 | **Author** | Agent + product |
-| **Status** | In progress (25b) |
+| **Status** | In progress (25c) |
 | **Created** | 2026-10-10 |
 
 ---
@@ -103,9 +103,9 @@ Exact matrices live in `@adeni/shared` as a single source of truth; adjust in re
 
 ### Slice 25c — Scoped practitioner data
 
-- [ ] Bookings list / staff calendar APIs honor `portal.bookings.self`: filter by linked `StaffMemberId`.
-- [ ] Cross-staff calendar / deactivate / invite → `portal.staff` only.
-- [ ] Portal: practitioner landing = own calendar (or filtered bookings), hide roster admin.
+- [x] Bookings list / staff calendar APIs honor `portal.bookings.self`: filter by linked `StaffMemberId`.
+- [x] Cross-staff calendar / deactivate / invite → `portal.staff` only; own calendar/leave via `portal.staff.self`.
+- [x] Portal: practitioner landing = own calendar (`/my-calendar`); roster admin hidden.
 
 ### Slice 25d — Manage access UI
 

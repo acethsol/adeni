@@ -17,6 +17,7 @@ import type {
 } from "@adeni/shared";
 import { AdeniFeedbackService, PortalPageComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { PortalSessionService } from "../../core/services/portal-session.service";
 
 const PX_PER_HOUR = 64;
 const DEFAULT_START_HOUR = 8;
@@ -73,6 +74,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
+  private readonly session = inject(PortalSessionService);
 
   private readonly detailRail = viewChild<ElementRef<HTMLElement>>("detailRail");
 
@@ -353,13 +355,23 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    this.staffId = this.route.snapshot.paramMap.get("id") ?? "";
+    void this.bootstrap();
+  }
+
+  private async bootstrap(): Promise<void> {
+    await this.session.ensureLoaded();
+    this.staffId = this.route.snapshot.paramMap.get("id") ?? this.session.staffMemberId() ?? "";
     if (typeof window !== "undefined" && window.matchMedia("(max-width: 820px)").matches) {
       this.view.set("day");
       this.focusDay.set(startOfDay(new Date()));
     }
     this.tickTimer = setInterval(() => this.nowTick.set(Date.now()), 60_000);
-    void this.load();
+    await this.load();
+  }
+
+  /** Roster admins see a back link; practitioners viewing their own calendar do not. */
+  showRosterBackLink(): boolean {
+    return this.session.can("portal.staff");
   }
 
   ngOnDestroy(): void {

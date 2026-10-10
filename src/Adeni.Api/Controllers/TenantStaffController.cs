@@ -2,9 +2,11 @@ namespace Adeni.Api.Controllers;
 
 using System.Security.Claims;
 using Adeni.Api.Auth;
+using Adeni.Api.Errors;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
 using Adeni.Application.Booking;
+using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Auth;
 using Microsoft.AspNetCore.Mvc;
@@ -12,13 +14,13 @@ using Microsoft.Extensions.Options;
 
 [ApiController]
 [Route("api/v1/tenant/staff")]
-[RequiresPortalPermission(PortalPermissions.Staff)]
 public sealed class TenantStaffController(
     IStaffService staff,
     IStaffAccessService staffAccess,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet]
+    [RequiresPortalPermission(PortalPermissions.Staff)]
     public async Task<IActionResult> List(CancellationToken cancellationToken)
     {
         var tenantId = ResolveTenantId();
@@ -32,6 +34,7 @@ public sealed class TenantStaffController(
     }
 
     [HttpPost]
+    [RequiresPortalPermission(PortalPermissions.Staff)]
     public async Task<IActionResult> Create(
         [FromBody] CreateStaffMemberRequest request,
         CancellationToken cancellationToken)
@@ -49,6 +52,7 @@ public sealed class TenantStaffController(
     }
 
     [HttpPatch("{id:guid}")]
+    [RequiresPortalPermission(PortalPermissions.Staff)]
     public async Task<IActionResult> Update(
         Guid id,
         [FromBody] UpdateStaffMemberRequest request,
@@ -64,6 +68,7 @@ public sealed class TenantStaffController(
     }
 
     [HttpPost("{id:guid}/deactivate")]
+    [RequiresPortalPermission(PortalPermissions.Staff)]
     public async Task<IActionResult> Deactivate(Guid id, CancellationToken cancellationToken)
     {
         if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
@@ -76,6 +81,7 @@ public sealed class TenantStaffController(
     }
 
     [HttpPut("{id:guid}/services")]
+    [RequiresPortalPermission(PortalPermissions.Staff)]
     public async Task<IActionResult> ReplaceServices(
         Guid id,
         [FromBody] ReplaceStaffServicesRequest request,
@@ -95,8 +101,14 @@ public sealed class TenantStaffController(
     }
 
     [HttpGet("{id:guid}/hours")]
+    [RequiresPortalPermission(PortalPermissions.Staff, PortalPermissions.StaffSelf)]
     public async Task<IActionResult> GetHours(Guid id, CancellationToken cancellationToken)
     {
+        if (DenyUnlessStaffAccess(id) is { } denied)
+        {
+            return denied;
+        }
+
         if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
         {
             return Unauthorized();
@@ -107,6 +119,7 @@ public sealed class TenantStaffController(
     }
 
     [HttpPut("{id:guid}/hours")]
+    [RequiresPortalPermission(PortalPermissions.Staff)]
     public async Task<IActionResult> ReplaceHours(
         Guid id,
         [FromBody] ReplaceStaffHoursRequest request,
@@ -126,12 +139,18 @@ public sealed class TenantStaffController(
     }
 
     [HttpGet("{id:guid}/leave")]
+    [RequiresPortalPermission(PortalPermissions.Staff, PortalPermissions.StaffSelf)]
     public async Task<IActionResult> ListLeave(
         Guid id,
         [FromQuery] DateTimeOffset? from,
         [FromQuery] DateTimeOffset? to,
         CancellationToken cancellationToken)
     {
+        if (DenyUnlessStaffAccess(id) is { } denied)
+        {
+            return denied;
+        }
+
         if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
         {
             return Unauthorized();
@@ -142,11 +161,17 @@ public sealed class TenantStaffController(
     }
 
     [HttpPost("{id:guid}/leave")]
+    [RequiresPortalPermission(PortalPermissions.Staff, PortalPermissions.StaffSelf)]
     public async Task<IActionResult> CreateLeave(
         Guid id,
         [FromBody] CreateStaffLeaveRequest request,
         CancellationToken cancellationToken)
     {
+        if (DenyUnlessStaffAccess(id) is { } denied)
+        {
+            return denied;
+        }
+
         if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
         {
             return Unauthorized();
@@ -160,11 +185,17 @@ public sealed class TenantStaffController(
     }
 
     [HttpDelete("{id:guid}/leave/{leaveId:guid}")]
+    [RequiresPortalPermission(PortalPermissions.Staff, PortalPermissions.StaffSelf)]
     public async Task<IActionResult> DeleteLeave(
         Guid id,
         Guid leaveId,
         CancellationToken cancellationToken)
     {
+        if (DenyUnlessStaffAccess(id) is { } denied)
+        {
+            return denied;
+        }
+
         if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
         {
             return Unauthorized();
@@ -175,12 +206,18 @@ public sealed class TenantStaffController(
     }
 
     [HttpGet("{id:guid}/calendar")]
+    [RequiresPortalPermission(PortalPermissions.Staff, PortalPermissions.StaffSelf)]
     public async Task<IActionResult> GetCalendar(
         Guid id,
         [FromQuery] DateTimeOffset from,
         [FromQuery] DateTimeOffset to,
         CancellationToken cancellationToken)
     {
+        if (DenyUnlessStaffAccess(id) is { } denied)
+        {
+            return denied;
+        }
+
         if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
         {
             return Unauthorized();
@@ -191,6 +228,7 @@ public sealed class TenantStaffController(
     }
 
     [HttpPost("{id:guid}/invite")]
+    [RequiresPortalPermission(PortalPermissions.Staff)]
     public async Task<IActionResult> Invite(
         Guid id,
         [FromBody] CreateStaffInviteRequest request,
@@ -211,6 +249,19 @@ public sealed class TenantStaffController(
         return ApiResults.FromResult(
             result,
             payload => Created($"/api/v1/tenant/access/invites/{payload.InviteId}", payload),
+            HttpContext);
+    }
+
+    private IActionResult? DenyUnlessStaffAccess(Guid staffMemberId)
+    {
+        var access = PortalAccessHttpContext.Get(HttpContext);
+        if (PortalAccessHttpContext.CanAccessStaffMember(access, staffMemberId))
+        {
+            return null;
+        }
+
+        return ApiErrorResponseMapper.ToActionResult(
+            ErrorCodes.PermissionDeniedError(),
             HttpContext);
     }
 

@@ -6,6 +6,7 @@ import { formatBookingStatus, formatSlotTime } from "@adeni/shared";
 import { AdeniConfirmService, PortalPageComponent } from "@adeni/ui";
 import { map } from "rxjs";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { PortalSessionService } from "../../core/services/portal-session.service";
 import { PortalTabsComponent } from "../../shared/portal-tabs.component";
 
 const PENDING_STATUS = 0;
@@ -21,6 +22,7 @@ const CONFIRMED_STATUS = 1;
 export class BookingsComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
   private readonly confirmDialog = inject(AdeniConfirmService);
+  private readonly session = inject(PortalSessionService);
   private readonly route = inject(ActivatedRoute);
   readonly tab = toSignal(this.route.queryParamMap.pipe(map((params) => params.get("tab") ?? "pending")), {
     initialValue: this.route.snapshot.queryParamMap.get("tab") ?? "pending",
@@ -38,6 +40,13 @@ export class BookingsComponent implements OnInit {
 
   readonly formatSlotTime = formatSlotTime;
   readonly formatBookingStatus = formatBookingStatus;
+
+  pageDescription(): string {
+    if (this.session.can("portal.bookings.self") && !this.session.can("portal.bookings")) {
+      return "Your assigned appointments — accept requests, see who is coming in, and look back at finished visits.";
+    }
+    return "Accept new requests, see who is coming in, and look back at finished visits.";
+  }
 
   ngOnInit(): void {
     void this.load();

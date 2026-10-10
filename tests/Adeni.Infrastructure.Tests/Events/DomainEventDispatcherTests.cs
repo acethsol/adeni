@@ -50,7 +50,7 @@ public sealed class DomainEventDispatcherTests
             new CreateBookingRequest(tenantId, service.Value!.Id, slotStart, null),
             cancellationToken: CancellationToken.None);
 
-        var accepted = await bookings.AcceptAsync(tenantId, created.Value!.Id, CancellationToken.None);
+        var accepted = await bookings.AcceptAsync(tenantId, created.Value!.Id, cancellationToken: CancellationToken.None);
 
         Assert.True(accepted.IsSuccess);
         Assert.Equal(BookingStatus.Confirmed, accepted.Value!.Status);

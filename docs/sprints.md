@@ -34,7 +34,7 @@
 | — | App Insights (Obs 1) | → Sprint 20 |
 | — | Booking notifications, auto-confirm, payments, waitlist | → Sprint 15 |
 
-**Next up:** Sprint 25 (**Staff accounts & permissions**) — [spec](./specs/sprint-25-staff-accounts-permissions.md). Sprint 20 remains planned in parallel for deploy/observability.
+**Next up:** Sprint 25d (**Roster invite / revoke UI**) — [spec](./specs/sprint-25-staff-accounts-permissions.md). Sprint 20 remains planned in parallel for deploy/observability.
 
 ---
 ## Sprint 0 — Foundation & dev tooling ✅
@@ -404,14 +404,14 @@ Invite staff to the portal; permission roles control nav + API. Floor `roleKey` 
 |------|--------|
 | **25a** Permission model + tenant context permissions + portal/API gates | Done |
 | **25b** Invite email → accept → `BusinessUser` linked to tenant (+ optional staff) | Done |
-| **25c** Practitioner scoped bookings/calendar | Draft |
+| **25c** Practitioner scoped bookings/calendar | Done |
 | **25d** Roster invite / revoke UI | Draft |
 
 **Out of scope for 25:** payroll/tips, custom ACL builder, Auth0 Orgs-first, mobile staff login, moving staff out of booking schema.
 
 ## Next up
 
-1. **Sprint 25 — Staff accounts & permissions** — review [spec](./specs/sprint-25-staff-accounts-permissions.md), then 25a→25d
+1. **Sprint 25 — Staff accounts & permissions** — **25d** roster invite/revoke UI next ([spec](./specs/sprint-25-staff-accounts-permissions.md)); 25a–25c done
 2. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, business AI agent, App Insights, ops dashboards
 
 Strategy reference: [product-strategy.md](./product-strategy.md) — [§3.5 Business types](./product-strategy.md#35-business-types--workflow-capabilities), [architecture.md](./architecture.md) (modular monolith)
