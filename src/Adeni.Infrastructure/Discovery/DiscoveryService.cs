@@ -208,7 +208,14 @@ public sealed class DiscoveryService(
         int? minRating,
         CancellationToken cancellationToken)
     {
-        var likeQuery = searchQuery is null ? null : $"%{searchQuery}%";
+        // Space-separated tokens — SP ANDs each as LIKE %token% (order-independent).
+        var likeQuery = string.IsNullOrWhiteSpace(searchQuery)
+            ? null
+            : string.Join(
+                ' ',
+                searchQuery
+                    .Split([' ', '\t', ','], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Select(static t => t.ToLowerInvariant()));
         var offset = (page - 1) * pageSize;
         var categoryCsv = string.IsNullOrWhiteSpace(categorySlug)
             ? null
@@ -359,12 +366,21 @@ public sealed class DiscoveryService(
 
         if (!string.IsNullOrWhiteSpace(searchQuery))
         {
-            query = query.Where(x =>
-                x.tenant.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)
-                || x.location.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)
-                || x.location.Area.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)
-                || x.profile.CategorySlug.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)
-                || x.profile.Description.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
+            var tokens = searchQuery
+                .Split([' ', '\t', ','], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(static t => t.ToLowerInvariant())
+                .Distinct()
+                .ToArray();
+            foreach (var token in tokens)
+            {
+                var t = token;
+                query = query.Where(x =>
+                    x.tenant.Name.ToLower().Contains(t)
+                    || x.location.Name.ToLower().Contains(t)
+                    || x.location.Area.ToLower().Contains(t)
+                    || x.profile.CategorySlug.ToLower().Contains(t)
+                    || x.profile.Description.ToLower().Contains(t));
+            }
         }
 
         var businesses = await query.ToListAsync(cancellationToken);

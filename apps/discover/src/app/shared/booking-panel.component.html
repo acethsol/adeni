@@ -23,55 +23,11 @@
   </section>
 } @else {
   <section class="panel">
-    <header class="panel-head">
-      <p class="eyebrow">{{ stepEyebrow() }}</p>
-      <h2>{{ stepTitle() }}</h2>
-      @if (stepLede(); as lede) {
-        <p class="lede">{{ lede }}</p>
-      }
-    </header>
-
-    <ol
-      class="steps"
-      [style.grid-template-columns]="'repeat(' + totalSteps() + ', 1fr)'"
-      [attr.aria-label]="label('business.booking.stepsAria')"
+    <adeni-wizard
+      [steps]="bookingWizardSteps()"
+      [activeId]="step()"
+      [ariaLabel]="label('business.booking.stepsAria')"
     >
-      <li [class.on]="stepIndex() === 0" [class.done]="stepIndex() > 0">
-        <span aria-hidden="true">1</span>
-        <em>{{ label("business.booking.stepLabelService") }}</em>
-      </li>
-      @if (hasStaffStep()) {
-        <li [class.on]="stepIndex() === 1" [class.done]="stepIndex() > 1">
-          <span aria-hidden="true">2</span>
-          <em>{{ label("business.booking.stepLabelStaff") }}</em>
-        </li>
-        <li [class.on]="stepIndex() === 2" [class.done]="stepIndex() > 2">
-          <span aria-hidden="true">3</span>
-          <em>{{ label("business.booking.stepLabelGuests") }}</em>
-        </li>
-        <li [class.on]="stepIndex() === 3" [class.done]="stepIndex() > 3">
-          <span aria-hidden="true">4</span>
-          <em>{{ label("business.booking.stepLabelTime") }}</em>
-        </li>
-        <li [class.on]="stepIndex() === 4" [class.done]="step() === 'done'">
-          <span aria-hidden="true">5</span>
-          <em>{{ label("business.booking.stepLabelConfirm") }}</em>
-        </li>
-      } @else {
-        <li [class.on]="stepIndex() === 1" [class.done]="stepIndex() > 1">
-          <span aria-hidden="true">2</span>
-          <em>{{ label("business.booking.stepLabelGuests") }}</em>
-        </li>
-        <li [class.on]="stepIndex() === 2" [class.done]="stepIndex() > 2">
-          <span aria-hidden="true">3</span>
-          <em>{{ label("business.booking.stepLabelTime") }}</em>
-        </li>
-        <li [class.on]="stepIndex() === 3" [class.done]="step() === 'done'">
-          <span aria-hidden="true">4</span>
-          <em>{{ label("business.booking.stepLabelConfirm") }}</em>
-        </li>
-      }
-    </ol>
 
     @if (!bookingEnabled()) {
       <div class="signin-callout">
@@ -481,5 +437,6 @@
         }
       }
     }
+    </adeni-wizard>
   </section>
 }

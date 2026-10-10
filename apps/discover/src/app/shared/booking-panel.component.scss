@@ -49,60 +49,6 @@ h2 {
   font-size: 0.82rem;
 }
 
-.steps {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.4rem;
-  list-style: none;
-  margin: 0 0 1rem;
-  padding: 0;
-}
-
-.steps li {
-  display: grid;
-  justify-items: center;
-  gap: 0.3rem;
-  padding: 0 0 0.45rem;
-  border-bottom: 2px solid var(--cds-gray-20, #e0e0e0);
-  color: var(--text-muted);
-  text-align: center;
-}
-
-.steps li span {
-  display: inline-grid;
-  place-items: center;
-  width: 1.35rem;
-  height: 1.35rem;
-  border-radius: 50%;
-  background: var(--cds-gray-20, #e0e0e0);
-  color: var(--cds-text-secondary, #525252);
-  font-size: 0.7rem;
-  font-weight: 700;
-}
-
-.steps li em {
-  font-style: normal;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-}
-
-.steps li.on {
-  border-bottom-color: var(--interactive, #7f56ff);
-  color: var(--cds-text-primary, #161616);
-}
-
-.steps li.on span,
-.steps li.done span {
-  background: var(--interactive, #7f56ff);
-  color: #fff;
-}
-
-.steps li.done {
-  border-bottom-color: color-mix(in srgb, var(--interactive, #7f56ff) 45%, #e0e0e0);
-  color: var(--cds-text-secondary, #525252);
-}
-
 .signin-callout {
   margin: 0 0 0.85rem;
   padding: 0.65rem 0.75rem;

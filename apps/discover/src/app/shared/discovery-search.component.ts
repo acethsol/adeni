@@ -156,6 +156,9 @@ export class DiscoverySearchComponent {
     this.hint.set(params.summary ?? null);
     this.query = trimmed;
     this.closePanel();
+    if (params.market) {
+      this.market.applyMarketQueryParam(params.market);
+    }
     void this.router.navigateByUrl(discoverSearchToPath(params));
   }
 

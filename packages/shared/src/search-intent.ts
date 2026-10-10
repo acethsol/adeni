@@ -3,11 +3,24 @@ export type SearchIntent = {
   query: string | null;
   category: string | null;
   area: string | null;
+  /** Market implied by a known neighborhood / area phrase. */
+  marketId: string | null;
   summary: string;
 };
 
 const CATEGORY_KEYWORDS: Record<string, string[]> = {
-  barbers: ["barber", "barbers", "barbershop", "haircut", "fade", "line-up", "lineup", "trim", "cut"],
+  barbers: [
+    "barber",
+    "barbers",
+    "barbershop",
+    "haircut",
+    "fade",
+    "line-up",
+    "lineup",
+    "trim",
+    "cut",
+    "cuts",
+  ],
   "hair-salons": [
     "salon",
     "hair",
@@ -65,31 +78,32 @@ const STOP_WORDS = new Set([
   "services",
 ]);
 
-const AREA_HINTS = [
-  "lekki",
-  "ikeja",
-  "victoria island",
-  "vi",
-  "yaba",
-  "surulere",
-  "ajah",
-  "wuse",
-  "garki",
-  "maitama",
-  "centretown",
-  "glebe",
-  "kanata",
-  "annex",
-  "montrose",
-  "midtown",
-  "uptown",
-  "frisco",
-];
+/** Area phrase → Adeni market id (V1: Lagos + Ottawa only). */
+const AREA_TO_MARKET: Record<string, string> = {
+  lekki: "lagos",
+  ikeja: "lagos",
+  "victoria island": "lagos",
+  vi: "lagos",
+  yaba: "lagos",
+  surulere: "lagos",
+  ajah: "lagos",
+  centretown: "ottawa",
+  glebe: "ottawa",
+  kanata: "ottawa",
+};
+
+const AREA_HINTS = Object.keys(AREA_TO_MARKET);
 
 export function parseSearchIntent(input: string): SearchIntent {
   const normalized = input.trim().toLowerCase();
   if (!normalized) {
-    return { query: null, category: null, area: null, summary: "Browse all services" };
+    return {
+      query: null,
+      category: null,
+      area: null,
+      marketId: null,
+      summary: "Browse all services",
+    };
   }
 
   let category: string | null = null;
@@ -101,12 +115,15 @@ export function parseSearchIntent(input: string): SearchIntent {
   }
 
   let area: string | null = null;
-  for (const hint of AREA_HINTS) {
+  // Longer phrases first so "victoria island" wins over "vi".
+  for (const hint of [...AREA_HINTS].sort((a, b) => b.length - a.length)) {
     if (normalized.includes(hint)) {
       area = hint;
       break;
     }
   }
+
+  const marketId = area ? (AREA_TO_MARKET[area] ?? null) : null;
 
   const tokens = normalized
     .split(/[\s,]+/)
@@ -141,6 +158,7 @@ export function parseSearchIntent(input: string): SearchIntent {
     query,
     category,
     area,
+    marketId,
     summary: parts.length > 0 ? parts.join(" ") : `Search for “${input.trim()}”`,
   };
 }
@@ -155,15 +173,23 @@ function formatCategory(slug: string): string {
 export function buildDiscoverSearchParams(intent: SearchIntent): {
   category?: string;
   q?: string;
+  market?: string;
 } {
-  const params: { category?: string; q?: string } = {};
+  const params: { category?: string; q?: string; market?: string } = {};
   if (intent.category) {
     params.category = intent.category;
   }
 
-  const qParts = [intent.query, intent.area].filter(Boolean);
-  if (qParts.length > 0) {
-    params.q = qParts.join(" ");
+  // Prefer area for q when present — joining "cuts"+"lekki" into one phrase
+  // fails LIKE '%cuts lekki%' against names like "Lekki Cuts".
+  if (intent.area) {
+    params.q = intent.area;
+  } else if (intent.query) {
+    params.q = intent.query;
+  }
+
+  if (intent.marketId) {
+    params.market = intent.marketId;
   }
 
   return params;
@@ -206,6 +232,7 @@ export function shouldParseAsIntent(input: string): boolean {
 export type DiscoverySearchParams = {
   category?: string;
   q?: string;
+  market?: string;
   summary?: string;
 };
 
@@ -237,6 +264,9 @@ export function discoverSearchToPath(params: DiscoverySearchParams): string {
   }
   if (params.q) {
     search.set("q", params.q);
+  }
+  if (params.market) {
+    search.set("market", params.market);
   }
 
   const query = search.toString();

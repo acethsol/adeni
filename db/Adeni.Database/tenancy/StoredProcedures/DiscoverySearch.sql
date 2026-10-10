@@ -12,7 +12,9 @@ Parameters
   @CategoryCsv            Optional comma-separated category slugs (match primary
                           or business_profile_categories)
   @MarketId               Optional market id (e.g. lagos); compared case-insensitive
-  @LikeQuery              Optional LIKE pattern already wrapped (e.g. N'%spa%')
+  @LikeQuery              Optional space-separated tokens (each matched with LIKE
+                          %token% across name/area/category/description; ALL
+                          tokens must match). Legacy single '%phrase%' still works.
   @MinRating              Optional minimum average rating (1–5)
   @VerifiedStatus         Tenant status enum value (Verified = 2)
   @Sort                   N'featured' | N'distance'
@@ -149,11 +151,30 @@ BEGIN
           AND (
                 @LikeQuery IS NULL
                 OR (
-                    LOWER(t.[Name]) LIKE @LikeQuery
-                    OR LOWER(bl.[Name]) LIKE @LikeQuery
-                    OR LOWER(bl.[Area]) LIKE @LikeQuery
-                    OR LOWER(bp.[CategorySlug]) LIKE @LikeQuery
-                    OR LOWER(bp.[Description]) LIKE @LikeQuery
+                    -- Legacy: caller passed a single already-wrapped pattern.
+                    LEFT(@LikeQuery, 1) = N'%'
+                    AND (
+                        LOWER(t.[Name]) LIKE @LikeQuery
+                        OR LOWER(bl.[Name]) LIKE @LikeQuery
+                        OR LOWER(bl.[Area]) LIKE @LikeQuery
+                        OR LOWER(bp.[CategorySlug]) LIKE @LikeQuery
+                        OR LOWER(bp.[Description]) LIKE @LikeQuery
+                    )
+                )
+                OR (
+                    LEFT(@LikeQuery, 1) <> N'%'
+                    AND NOT EXISTS (
+                        SELECT 1
+                        FROM STRING_SPLIT(@LikeQuery, N' ') AS tok
+                        WHERE LEN(LTRIM(RTRIM(tok.[value]))) > 0
+                          AND NOT (
+                              LOWER(t.[Name]) LIKE N'%' + LOWER(LTRIM(RTRIM(tok.[value]))) + N'%'
+                              OR LOWER(bl.[Name]) LIKE N'%' + LOWER(LTRIM(RTRIM(tok.[value]))) + N'%'
+                              OR LOWER(bl.[Area]) LIKE N'%' + LOWER(LTRIM(RTRIM(tok.[value]))) + N'%'
+                              OR LOWER(bp.[CategorySlug]) LIKE N'%' + LOWER(LTRIM(RTRIM(tok.[value]))) + N'%'
+                              OR LOWER(bp.[Description]) LIKE N'%' + LOWER(LTRIM(RTRIM(tok.[value]))) + N'%'
+                          )
+                    )
                 )
               )
     )

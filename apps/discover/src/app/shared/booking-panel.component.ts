@@ -9,7 +9,7 @@ import type {
 } from "@adeni/shared";
 import { t } from "@adeni/shared";
 import { AdeniApiError } from "@adeni/api-client";
-import { AdeniFeedbackService, AdeniLocaleService } from "@adeni/ui";
+import { AdeniFeedbackService, AdeniLocaleService, AdeniWizardComponent, type AdeniWizardStep } from "@adeni/ui";
 import { CustomerApiService } from "../core/services/customer-api.service";
 
 type Step = "service" | "staff" | "slot" | "guests" | "confirm" | "done";
@@ -31,7 +31,7 @@ const MAX_GUESTS = 6;
 @Component({
   selector: "app-booking-panel",
   standalone: true,
-  imports: [FormsModule, CurrencyPipe],
+  imports: [FormsModule, CurrencyPipe, AdeniWizardComponent],
   templateUrl: "./booking-panel.component.html",
   styleUrl: "./booking-panel.component.scss",
 })
@@ -97,84 +97,52 @@ export class BookingPanelComponent {
   readonly hasStaffStep = computed(() => this.staffOptions().length > 0);
 
   /** Service → Staff? → Guests → Time → Confirm (guests before time so slot duration matches party size). */
-  readonly stepIndex = computed(() => {
-    const withStaff = this.hasStaffStep();
-    switch (this.step()) {
-      case "service":
-        return 0;
-      case "staff":
-        return 1;
-      case "guests":
-        return withStaff ? 2 : 1;
-      case "slot":
-        return withStaff ? 3 : 2;
-      case "confirm":
-      case "done":
-        return withStaff ? 4 : 3;
-    }
-  });
-
-  readonly totalSteps = computed(() => (this.hasStaffStep() ? 5 : 4));
-
-  readonly stepEyebrow = computed(() => {
+  readonly bookingWizardSteps = computed((): AdeniWizardStep[] => {
     this.locale();
-    switch (this.step()) {
-      case "service":
-        return this.label("business.booking.stepService");
-      case "staff":
-        return this.label("business.booking.stepStaff");
-      case "slot":
-        return this.label("business.booking.stepTime");
-      case "guests":
-        return this.label("business.booking.stepGuests");
-      case "confirm":
-        return this.label("business.booking.stepConfirm");
-      default:
-        return this.label("business.booking.eyebrow");
-    }
-  });
-
-  readonly stepTitle = computed(() => {
-    this.locale();
-    switch (this.step()) {
-      case "service":
-        return this.label("business.booking.titleService");
-      case "staff":
-        return this.label("business.booking.titleStaff");
-      case "slot":
-        return this.label("business.booking.titleTime");
-      case "guests":
-        return this.label("business.booking.titleGuests");
-      case "confirm":
-        return this.label("business.booking.titleConfirm");
-      default:
-        return this.label("business.booking.bookOnline");
-    }
-  });
-
-  readonly stepLede = computed(() => {
-    this.locale();
-    if (this.step() === "service") {
-      return this.label("business.booking.ledeServices", {
-        count: this.activeServices().length,
+    const steps: AdeniWizardStep[] = [
+      {
+        id: "service",
+        label: this.label("business.booking.stepLabelService"),
+        title: this.label("business.booking.titleService"),
+        lede: this.label("business.booking.ledeServices", {
+          count: this.activeServices().length,
+        }),
+      },
+    ];
+    if (this.hasStaffStep()) {
+      steps.push({
+        id: "staff",
+        label: this.label("business.booking.stepLabelStaff"),
+        title: this.label("business.booking.titleStaff"),
+        lede: this.label("business.booking.ledeStaff"),
       });
     }
-    if (this.step() === "staff") {
-      return this.label("business.booking.ledeStaff");
-    }
-    if (this.step() === "slot") {
-      const primary = this.primaryService();
-      return primary
-        ? this.label("business.booking.ledeService", {
-            name: primary.name,
-            minutes: this.cartTotalMinutes(),
-          })
-        : null;
-    }
-    if (this.step() === "guests") {
-      return this.label("business.booking.ledeGuests");
-    }
-    return null;
+    const primary = this.primaryService();
+    steps.push(
+      {
+        id: "guests",
+        label: this.label("business.booking.stepLabelGuests"),
+        title: this.label("business.booking.titleGuests"),
+        lede: this.label("business.booking.ledeGuests"),
+      },
+      {
+        id: "slot",
+        label: this.label("business.booking.stepLabelTime"),
+        title: this.label("business.booking.titleTime"),
+        lede: primary
+          ? this.label("business.booking.ledeService", {
+              name: primary.name,
+              minutes: this.cartTotalMinutes(),
+            })
+          : null,
+      },
+      {
+        id: "confirm",
+        label: this.label("business.booking.stepLabelConfirm"),
+        title: this.label("business.booking.titleConfirm"),
+      },
+    );
+    return steps;
   });
 
   readonly slotDays = computed((): SlotDayGroup[] => {
