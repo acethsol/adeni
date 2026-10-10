@@ -6,33 +6,47 @@
     <p class="error-banner">{{ error() }}</p>
   }
 
-  <div class="toolbar">
-    <button type="button" class="btn btn-primary" (click)="openCreate()">Add team member</button>
-  </div>
+  @if (!showForm()) {
+    <div class="toolbar">
+      <button type="button" class="btn btn-primary" (click)="openCreate()">Add team member</button>
+    </div>
+  }
 
   @if (showForm()) {
     <section class="card form">
-      <h3>{{ editingId() ? "Edit team member" : "New team member" }}</h3>
-
       @if (isCreateWizard()) {
-        <div class="wizard-chrome" aria-label="Create steps">
-          <ol class="wizard-steps">
-            <li [class.active]="formTab() === 'profile'" [class.done]="createStepIndex() > 0">
-              <span class="n">1</span> Profile
-            </li>
-            <li [class.active]="formTab() === 'services'" [class.done]="createStepIndex() > 1">
-              <span class="n">2</span> Services
-            </li>
-            <li [class.active]="formTab() === 'hours'">
-              <span class="n">3</span> Hours
-            </li>
-          </ol>
-          <p class="wizard-lede">
-            Step {{ createStepIndex() + 1 }} of {{ createStepCount() }} —
-            {{ createStepLabel() }}
-          </p>
-        </div>
+        <adeni-wizard
+          [steps]="createWizardSteps"
+          [activeId]="formTab()"
+          ariaLabel="Add a teammate"
+          [allowJump]="true"
+          (stepSelect)="wizardGo($event)"
+        >
+          <ng-container [ngTemplateOutlet]="staffPanels" />
+          <div wizardActions class="actions">
+            <button type="button" class="btn" (click)="cancelForm()">Cancel</button>
+            @if (createStepIndex() > 0) {
+              <button type="button" class="btn" (click)="wizardBack()">Back</button>
+            }
+            @if (!isLastCreateStep()) {
+              @if (formTab() === "services" || formTab() === "hours") {
+                <button type="button" class="btn" (click)="wizardSkip()">Skip</button>
+              }
+              <button type="button" class="btn btn-primary" (click)="wizardNext()">Next</button>
+            } @else {
+              <button
+                type="button"
+                class="btn btn-primary"
+                [disabled]="busy() !== null"
+                (click)="save()"
+              >
+                Add teammate
+              </button>
+            }
+          </div>
+        </adeni-wizard>
       } @else {
+        <h3>Edit team member</h3>
         <div class="form-tabs" role="tablist" aria-label="Staff sections">
           <button
             type="button"
@@ -71,8 +85,25 @@
             Leave
           </button>
         </div>
+        <ng-container [ngTemplateOutlet]="staffPanels" />
+        <div class="actions">
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="busy() !== null"
+            (click)="save()"
+          >
+            Save
+          </button>
+          <button type="button" class="btn" (click)="cancelForm()">Cancel</button>
+          @if (editingId(); as id) {
+            <a class="btn" [routerLink]="['/staff', id, 'calendar']">Open calendar</a>
+          }
+        </div>
       }
+    </section>
 
+    <ng-template #staffPanels>
       @if (formTab() === "profile") {
         <div class="tab-panel" role="tabpanel">
           <div class="row">
@@ -99,51 +130,49 @@
             <input [(ngModel)]="draft.displayName" maxlength="120" />
           </div>
 
-          <div class="row">
-            <div class="field">
-              <label>Role</label>
-              <select [(ngModel)]="draft.roleKey">
-                @for (key of availableRoles(); track key) {
-                  <option [ngValue]="key">{{ roleLabels[key] }}</option>
-                }
-              </select>
-              <p class="muted tiny-hint">
-                Practitioners match your categories; ops roles (manager, accountant, …)
-                are always available. Use title for a custom label.
-              </p>
-            </div>
+          <div class="field">
+            <label>Role</label>
+            <select [(ngModel)]="draft.roleKey">
+              @for (key of availableRoles(); track key) {
+                <option [ngValue]="key">{{ roleLabels[key] }}</option>
+              }
+            </select>
+          </div>
+
+          @if (!isCreateWizard()) {
             <div class="field">
               <label>Title (optional)</label>
               <input [(ngModel)]="draft.title" maxlength="120" placeholder="Senior stylist" />
             </div>
-          </div>
 
-          <div class="field">
-            <label>Short bio (optional)</label>
-            <textarea rows="2" [(ngModel)]="draft.bio" maxlength="500"></textarea>
-          </div>
-          <div class="row">
             <div class="field">
-              <label>Sort order</label>
-              <input type="number" [(ngModel)]="draft.sortOrder" />
+              <label>Short bio (optional)</label>
+              <textarea rows="2" [(ngModel)]="draft.bio" maxlength="500"></textarea>
             </div>
-            @if (editingId()) {
+          }
+          @if (editingId()) {
+            <div class="row">
+              <div class="field">
+                <label>Sort order</label>
+                <input type="number" [(ngModel)]="draft.sortOrder" />
+              </div>
               <div class="field toggle-field">
                 <label class="checkbox">
                   <input type="checkbox" [(ngModel)]="draft.isActive" />
                   Active for online booking
                 </label>
               </div>
-            }
-          </div>
+            </div>
+          }
         </div>
       }
 
       @if (formTab() === "services") {
         <div class="tab-panel" role="tabpanel">
           <div class="field">
-            <label>Services they can perform</label>
-            <p class="muted">Leave all unchecked to allow every active service.</p>
+            @if (!isCreateWizard()) {
+              <label>Services they can perform</label>
+            }
             @if (services().length === 0) {
               <p class="muted">Add services first on the Services page.</p>
             } @else {
@@ -170,7 +199,9 @@
         <div class="tab-panel" role="tabpanel">
           <div class="hours-block flat">
             <div class="hours-head">
-              <h4>Working hours</h4>
+              @if (!isCreateWizard()) {
+                <h4>Working hours</h4>
+              }
               <div class="hours-actions">
                 <button type="button" class="btn" (click)="copyBusinessHours()">
                   Copy business hours
@@ -181,14 +212,13 @@
               </div>
             </div>
             <p class="muted">
-              Empty (all days off here) means this person inherits the business availability
-              calendar.
+              Turn every day off (or use Inherit business hours) to follow the business calendar.
             </p>
             <table class="hours-table">
               <thead>
                 <tr>
                   <th>Day</th>
-                  <th>Off</th>
+                  <th>On</th>
                   <th>Open</th>
                   <th>Close</th>
                 </tr>
@@ -198,7 +228,17 @@
                   <tr>
                     <td>{{ dayLabels[row.dayOfWeek] }}</td>
                     <td>
-                      <input type="checkbox" [(ngModel)]="row.closed" />
+                      <label class="cds-toggle hours-day-toggle">
+                        <input
+                          type="checkbox"
+                          role="switch"
+                          [name]="'staff-day-on-' + row.dayOfWeek"
+                          [ngModel]="!row.closed"
+                          (ngModelChange)="setDayOn(row, $event)"
+                          [attr.aria-label]="dayLabels[row.dayOfWeek] + ' on'"
+                        />
+                        <span class="cds-toggle__track" aria-hidden="true"></span>
+                      </label>
                     </td>
                     <td>
                       <input type="time" [(ngModel)]="row.openTime" [disabled]="row.closed" />
@@ -261,45 +301,7 @@
         </div>
       }
 
-      <div class="actions">
-        @if (isCreateWizard()) {
-          <button type="button" class="btn" (click)="cancelForm()">Cancel</button>
-          @if (createStepIndex() > 0) {
-            <button type="button" class="btn" (click)="wizardBack()">Back</button>
-          }
-          @if (formTab() === "services" || formTab() === "hours") {
-            @if (!isLastCreateStep()) {
-              <button type="button" class="btn" (click)="wizardSkip()">Skip</button>
-            }
-          }
-          @if (!isLastCreateStep()) {
-            <button type="button" class="btn btn-primary" (click)="wizardNext()">Next</button>
-          } @else {
-            <button
-              type="button"
-              class="btn btn-primary"
-              [disabled]="busy() !== null"
-              (click)="save()"
-            >
-              Add teammate
-            </button>
-          }
-        } @else {
-          <button
-            type="button"
-            class="btn btn-primary"
-            [disabled]="busy() !== null"
-            (click)="save()"
-          >
-            Save
-          </button>
-          <button type="button" class="btn" (click)="cancelForm()">Cancel</button>
-          @if (editingId(); as id) {
-            <a class="btn" [routerLink]="['/staff', id, 'calendar']">Open calendar</a>
-          }
-        }
-      </div>
-    </section>
+    </ng-template>
   }
 
   @if (loading()) {
@@ -326,7 +328,7 @@
         Add your first teammate
       </button>
     </section>
-  } @else if (staff().length > 0) {
+  } @else if (staff().length > 0 && !showForm()) {
     <div class="roster">
       <div class="roster-head">
         <p class="roster-kicker">On the floor</p>

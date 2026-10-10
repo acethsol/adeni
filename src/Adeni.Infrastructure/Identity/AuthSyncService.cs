@@ -95,7 +95,7 @@ public sealed class AuthSyncService(AdeniDbContext dbContext) : IAuthSyncService
                 Id = Guid.NewGuid(),
                 TenantId = tenant.Id,
                 Auth0Sub = request.Auth0Sub,
-                Role = "owner",
+                Role = PortalPermissionRoles.Owner,
                 CreatedAt = DateTimeOffset.UtcNow,
                 Tenant = tenant
             };

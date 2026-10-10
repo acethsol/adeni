@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from "@angular/common";
 import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { RouterLink } from "@angular/router";
@@ -12,7 +13,13 @@ import {
   type StaffRoleKey,
   type WeeklyAvailabilityRule,
 } from "@adeni/shared";
-import { AdeniConfirmService, AdeniFeedbackService, PortalPageComponent } from "@adeni/ui";
+import {
+  AdeniConfirmService,
+  AdeniFeedbackService,
+  AdeniWizardComponent,
+  PortalPageComponent,
+  type AdeniWizardStep,
+} from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 
 const DAYS_ORDER = [1, 2, 3, 4, 5, 6, 0];
@@ -49,7 +56,30 @@ function toApiTime(value: string): string {
   return value.length === 5 ? `${value}:00` : value;
 }
 
+/** Empty schedule = inherit business hours (every day off here). */
+function inheritedHourRows(): DayRow[] {
+  return DAYS_ORDER.map((dayOfWeek) => ({
+    dayOfWeek,
+    openTime: "09:00",
+    closeTime: "17:00",
+    closed: true,
+  }));
+}
+
+/** Create default: Mon–Sat open, Sunday off — same shape as business hours. */
+function defaultWorkingRows(): DayRow[] {
+  return DAYS_ORDER.map((dayOfWeek) => ({
+    dayOfWeek,
+    openTime: "09:00",
+    closeTime: "17:00",
+    closed: dayOfWeek === 0,
+  }));
+}
+
 function rulesToRows(rules: WeeklyAvailabilityRule[]): DayRow[] {
+  if (rules.length === 0) {
+    return inheritedHourRows();
+  }
   return DAYS_ORDER.map((dayOfWeek) => {
     const rule = rules.find((r) => r.dayOfWeek === dayOfWeek);
     if (!rule) {
@@ -77,7 +107,7 @@ function rowsToRules(rows: DayRow[]): WeeklyAvailabilityRule[] {
 @Component({
   selector: "app-staff",
   standalone: true,
-  imports: [PortalPageComponent, FormsModule, RouterLink],
+  imports: [PortalPageComponent, FormsModule, RouterLink, AdeniWizardComponent, NgTemplateOutlet],
   templateUrl: "./staff.component.html",
   styleUrl: "./staff.component.scss",
 })
@@ -99,6 +129,26 @@ export class StaffComponent implements OnInit {
   readonly preserveRoleKey = signal<string | null>(null);
   readonly roleLabels = STAFF_ROLE_LABELS;
   readonly dayLabels = DAY_OF_WEEK_LABELS;
+  readonly createWizardSteps: readonly AdeniWizardStep[] = [
+    {
+      id: "profile",
+      label: "Profile",
+      title: "Team member profile",
+      lede: "The display name is shown to customers when they book.",
+    },
+    {
+      id: "services",
+      label: "Services",
+      title: "Assignable services",
+      lede: "Leave blank to allow every active service.",
+    },
+    {
+      id: "hours",
+      label: "Hours",
+      title: "Working hours",
+      lede: "Skip to follow the business calendar.",
+    },
+  ];
 
   readonly availableRoles = computed(() =>
     staffRolesForCategories(this.categorySlugs(), this.preserveRoleKey()),
@@ -110,20 +160,6 @@ export class StaffComponent implements OnInit {
   readonly createStepIndex = computed(() => {
     const idx = CREATE_STEPS.indexOf(this.formTab());
     return idx >= 0 ? idx : 0;
-  });
-
-  readonly createStepLabel = computed(() => {
-    const step = CREATE_STEPS[this.createStepIndex()] ?? "profile";
-    switch (step) {
-      case "profile":
-        return "Who they are";
-      case "services":
-        return "What they offer";
-      case "hours":
-        return "When they work";
-      default:
-        return "";
-    }
   });
 
   draft: StaffDraft = this.emptyDraft();
@@ -273,12 +309,16 @@ export class StaffComponent implements OnInit {
     this.formTab.set(CREATE_STEPS[idx + 1]!);
   }
 
-  isLastCreateStep(): boolean {
-    return this.createStepIndex() >= CREATE_STEPS.length - 1;
+  wizardGo(id: string): void {
+    const idx = CREATE_STEPS.indexOf(id as StaffFormTab);
+    if (idx < 0 || idx >= this.createStepIndex()) {
+      return;
+    }
+    this.formTab.set(CREATE_STEPS[idx]!);
   }
 
-  createStepCount(): number {
-    return CREATE_STEPS.length;
+  isLastCreateStep(): boolean {
+    return this.createStepIndex() >= CREATE_STEPS.length - 1;
   }
 
   serviceName(id: string): string {
@@ -332,7 +372,7 @@ export class StaffComponent implements OnInit {
     this.preserveRoleKey.set(null);
     this.formTab.set("profile");
     this.draft = this.emptyDraft();
-    this.hourRows = rulesToRows([]);
+    this.hourRows = defaultWorkingRows();
     this.leaveItems.set([]);
     this.leaveStart = "";
     this.leaveEnd = "";
@@ -382,7 +422,11 @@ export class StaffComponent implements OnInit {
   }
 
   clearStaffHours(): void {
-    this.hourRows = rulesToRows([]);
+    this.hourRows = inheritedHourRows();
+  }
+
+  setDayOn(row: DayRow, on: boolean): void {
+    row.closed = !on;
   }
 
   cancelForm(): void {

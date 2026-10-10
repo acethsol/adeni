@@ -26,12 +26,15 @@
 | **18** | **Messaging & WhatsApp bridge** | ✅ Done |
 | **19** | **Trust depth & quote workflows** | ✅ Done |
 | 20 | Deployment, AI & observability | Planned |
+| 23 | Staff, cart & guests | ✅ Done |
+| 24 | Staff ops | ✅ Done |
+| **25** | **Staff accounts & permissions** | Draft |
 | — | Sprint 11d LLM agent | → Sprint 20 |
 | — | Staging deploy + Auth0 E2E | → Sprint 20 |
 | — | App Insights (Obs 1) | → Sprint 20 |
 | — | Booking notifications, auto-confirm, payments, waitlist | → Sprint 15 |
 
-**Next up:** Sprint 20 (**Deployment, AI & observability**). See [observability.md](./observability.md).
+**Next up:** Sprint 25 (**Staff accounts & permissions**) — [spec](./specs/sprint-25-staff-accounts-permissions.md). Sprint 20 remains planned in parallel for deploy/observability.
 
 ---
 ## Sprint 0 — Foundation & dev tooling ✅
@@ -393,9 +396,22 @@ Identity, roles, working hours, leave, staff calendar. **No payroll/tips** (Phas
 
 **Out of scope for 24:** payroll, tips, commissions, clock-in, staff Auth0 logins, auto-reassign on leave, financing.
 
+## Sprint 25 — Staff accounts & permissions (draft)
+
+Invite staff to the portal; permission roles control nav + API. Floor `roleKey` stays a booking label. Spec: [sprint-25-staff-accounts-permissions.md](./specs/sprint-25-staff-accounts-permissions.md).
+
+| Task | Status |
+|------|--------|
+| **25a** Permission model + tenant context permissions + portal/API gates | Done |
+| **25b** Invite email → accept → `BusinessUser` linked to tenant (+ optional staff) | Draft |
+| **25c** Practitioner scoped bookings/calendar | Draft |
+| **25d** Roster invite / revoke UI | Draft |
+
+**Out of scope for 25:** payroll/tips, custom ACL builder, Auth0 Orgs-first, mobile staff login, moving staff out of booking schema.
+
 ## Next up
 
-1. **Sprint 24 — Staff ops** — approve [spec](./specs/sprint-24-staff-ops.md), then 24a→24d
+1. **Sprint 25 — Staff accounts & permissions** — review [spec](./specs/sprint-25-staff-accounts-permissions.md), then 25a→25d
 2. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, business AI agent, App Insights, ops dashboards
 
 Strategy reference: [product-strategy.md](./product-strategy.md) — [§3.5 Business types](./product-strategy.md#35-business-types--workflow-capabilities), [architecture.md](./architecture.md) (modular monolith)

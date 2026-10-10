@@ -39,6 +39,9 @@ export const enErrorMessages: MessageTree = {
     customer_required: "Sign in to complete this action.",
     business_access_denied: "You do not have access to this business.",
   },
+  permission: {
+    denied: "You do not have permission to do that.",
+  },
   tenancy: {
     public_page: {
       invalid_template: "Choose a valid public page template.",
@@ -93,6 +96,9 @@ export const frErrorMessages: MessageTree = {
     required: "Authentification requise.",
     customer_required: "Connectez-vous pour effectuer cette action.",
     business_access_denied: "Vous n'avez pas accès à cette entreprise.",
+  },
+  permission: {
+    denied: "Vous n'avez pas l'autorisation d'effectuer cette action.",
   },
   tenancy: {
     public_page: {

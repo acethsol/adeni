@@ -23,6 +23,7 @@ public static class ErrorCodes
     public const int MaxBookingLines = 10;
     public const string CustomerAuthRequired = "auth.customer_required";
     public const string BusinessAccessDenied = "auth.business_access_denied";
+    public const string PermissionDenied = "permission.denied";
     public const string InternalServerError = "internal.server_error";
 
     public static Error BookingLimitReachedError(int limit) =>
@@ -86,6 +87,9 @@ public static class ErrorCodes
 
     public static Error BusinessAccessDeniedError() =>
         new(BusinessAccessDenied, "You do not have access to this business.");
+
+    public static Error PermissionDeniedError() =>
+        new(PermissionDenied, "You do not have permission to do that.");
 
     public const string PaymentInvalidAmount = "payment.invalid_amount";
     public const string PaymentInvalidCurrency = "payment.invalid_currency";

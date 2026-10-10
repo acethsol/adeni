@@ -13,7 +13,7 @@
   margin-bottom: var(--cds-spacing-05);
   padding: var(--cds-spacing-04) var(--cds-spacing-05);
   border-radius: var(--cds-radius-none);
-  background: #fff1f1;
+  background: color-mix(in srgb, var(--cds-support-error) 12%, var(--surface));
   border: 1px solid var(--cds-support-error);
   border-left-width: 3px;
   color: var(--cds-support-error);
@@ -80,6 +80,18 @@
   background: var(--cds-field-01, var(--surface));
   font: inherit;
   color: var(--text);
+  color-scheme: inherit;
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 0.85;
+}
+
+.field select option {
+  background: var(--cds-field-01, var(--surface));
+  color: var(--text);
 }
 
 .field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):focus,
@@ -87,6 +99,13 @@
 .field select:focus {
   outline: 2px solid var(--interactive);
   outline-offset: -2px;
+}
+
+.field input:disabled,
+.field textarea:disabled,
+.field select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .field input[type="checkbox"],
@@ -131,4 +150,20 @@
 
 .list-row:last-child {
   border-bottom: 0;
+}
+
+/* Table-embedded controls (hours grids) follow the same field tokens. */
+table input[type="time"] {
+  min-height: 2.25rem;
+  padding: 0 var(--cds-spacing-03);
+  border: none;
+  border-bottom: 1px solid var(--cds-border-strong);
+  background: var(--cds-field-01, var(--surface));
+  color: var(--text);
+  font: inherit;
+  color-scheme: inherit;
+}
+
+table input[type="time"]:disabled {
+  opacity: 0.45;
 }

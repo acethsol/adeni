@@ -187,6 +187,7 @@ public sealed class AdeniDbContext(
             entity.HasIndex(x => x.Auth0Sub).IsUnique();
             entity.Property(x => x.Auth0Sub).HasMaxLength(128);
             entity.Property(x => x.Role).HasMaxLength(32);
+            entity.HasIndex(x => new { x.TenantId, x.StaffMemberId });
             entity.HasOne(x => x.Tenant).WithMany().HasForeignKey(x => x.TenantId);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });

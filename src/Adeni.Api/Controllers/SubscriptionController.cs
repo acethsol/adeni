@@ -1,10 +1,12 @@
 namespace Adeni.Api.Controllers;
 
 using System.Security.Claims;
+using Adeni.Api.Auth;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
 using Adeni.Api.Extensions;
 using Adeni.Application.Subscriptions;
+using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -13,6 +15,7 @@ using Microsoft.Extensions.Options;
 
 [ApiController]
 [Route("api/v1/tenant/subscription")]
+[RequiresPortalPermission(PortalPermissions.Overview, PortalPermissions.Plan)]
 public sealed class TenantSubscriptionController(
     ISubscriptionService subscriptionService,
     IOptions<Auth0Options> auth0Options) : ControllerBase
@@ -78,6 +81,7 @@ public sealed class SubscriptionBillingController(
 {
     /// <summary>Stub checkout — real Paystack integration deferred to Sprint 17.</summary>
     [HttpPost("checkout")]
+    [RequiresPortalPermission(PortalPermissions.Plan)]
     public async Task<IActionResult> CreateCheckout(
         [FromBody] CreateSubscriptionCheckoutRequest request,
         CancellationToken cancellationToken)

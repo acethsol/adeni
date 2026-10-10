@@ -6,6 +6,7 @@ import type { AdeniBrandSurface } from "@adeni/brand";
 import {
   formatTenantStatus,
   hasCapability,
+  hasPortalPermission,
   resolveCapabilities,
   type BusinessProfile,
   type LocaleId,
@@ -30,6 +31,7 @@ import {
   type PortalNavItem,
 } from "../core/portal-nav";
 import { BusinessApiService } from "../core/services/business-api.service";
+import { PortalSessionService } from "../core/services/portal-session.service";
 import { PendingBookingsBellComponent } from "../shared/pending-bookings-bell.component";
 import { PortalNavIconComponent } from "./portal-nav-icon.component";
 
@@ -234,6 +236,7 @@ export class PortalShellComponent {
   private readonly injector = inject(Injector);
   private readonly router = inject(Router);
   private readonly businessApi = inject(BusinessApiService);
+  private readonly portalSession = inject(PortalSessionService);
   private readonly destroyRef = inject(DestroyRef);
   readonly auth: AuthService | null = isAuth0Configured(this.config)
     ? resolveAuthService(this.injector)
@@ -504,11 +507,15 @@ export class PortalShellComponent {
     const capabilities = profile
       ? resolveCapabilities(profile.businessType, profile.categorySlug, profile.capabilities)
       : null;
+    const permissions = this.portalSession.permissions();
     return PORTAL_NAV_GROUPS.map((group) => ({
       ...group,
       items: group.items.filter((item) => {
         if (item.unregisteredOnly) {
           return this.profileLoaded() && !profile;
+        }
+        if (item.permission && !hasPortalPermission(permissions, item.permission)) {
+          return false;
         }
         if (!capabilities) {
           return true;
@@ -525,6 +532,7 @@ export class PortalShellComponent {
 
   private async loadProfile(): Promise<void> {
     try {
+      await this.portalSession.refresh();
       const profile = await this.businessApi.getTenantProfile();
       this.profile.set(profile);
       if (profile?.businessName && this.devMode) {

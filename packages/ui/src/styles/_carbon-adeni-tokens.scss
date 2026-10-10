@@ -107,3 +107,24 @@
   --cds-heading-06-size: 2.625rem;
   --cds-heading-06-line: 3.125rem;
 }
+
+/* Dark theme — keep Carbon field/layer tokens in sync so forms and chips stay readable. */
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  --cds-layer-01: var(--cds-gray-90);
+  --cds-layer-02: var(--cds-gray-100);
+  --cds-field-01: #393939;
+  --cds-border-subtle: var(--cds-gray-80);
+  --cds-border-strong: var(--cds-gray-60);
+  --cds-text-primary: var(--cds-gray-10);
+  --cds-text-secondary: var(--cds-gray-30);
+  --cds-text-helper: var(--cds-gray-40);
+
+  --bg-subtle: var(--cds-gray-100);
+  --surface: var(--cds-gray-90);
+  --border: var(--cds-gray-80);
+  --text: var(--cds-gray-10);
+  --text-muted: var(--cds-gray-30);
+  --interactive-hover: #c4b2ff;
+}

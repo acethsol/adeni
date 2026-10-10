@@ -155,10 +155,16 @@ public sealed class BusinessOnboardingService(
             return Result.Failure<BusinessContextResponse>(Error.NotFound("Business location"));
         }
 
+        var permissionRole = Domain.Identity.PortalPermissionRoles.Normalize(businessUser.Role);
+        var permissions = Domain.Identity.PortalPermissionRoles.PermissionsFor(permissionRole);
+
         return Result.Success(new BusinessContextResponse(
             businessUser.TenantId,
             row.Slug,
-            row.Status));
+            row.Status,
+            permissionRole,
+            permissions,
+            businessUser.StaffMemberId));
     }
 
     public async Task<Result<BusinessProfileResponse>> GetProfileAsync(

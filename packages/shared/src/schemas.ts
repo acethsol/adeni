@@ -346,6 +346,9 @@ export const businessContextResponseSchema = z.object({
   tenantId: z.string(),
   slug: z.string(),
   status: z.number(),
+  permissionRole: z.string().optional().default("owner"),
+  permissions: z.array(z.string()).optional().default([]),
+  staffMemberId: z.string().uuid().nullable().optional(),
 });
 
 export type BusinessContextResponse = z.infer<typeof businessContextResponseSchema>;

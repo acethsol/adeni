@@ -1,9 +1,10 @@
 CREATE TABLE [identity].[business_users] (
-    [Id]        UNIQUEIDENTIFIER   NOT NULL,
-    [TenantId]  UNIQUEIDENTIFIER   NOT NULL,
-    [Auth0Sub]  NVARCHAR (128)     NOT NULL,
-    [Role]      NVARCHAR (32)      NOT NULL,
-    [CreatedAt] DATETIMEOFFSET (7) NOT NULL,
+    [Id]            UNIQUEIDENTIFIER   NOT NULL,
+    [TenantId]      UNIQUEIDENTIFIER   NOT NULL,
+    [Auth0Sub]      NVARCHAR (128)     NOT NULL,
+    [Role]          NVARCHAR (32)      NOT NULL,
+    [StaffMemberId] UNIQUEIDENTIFIER   NULL,
+    [CreatedAt]     DATETIMEOFFSET (7) NOT NULL,
     CONSTRAINT [PK_business_users] PRIMARY KEY CLUSTERED ([Id] ASC),
     CONSTRAINT [FK_business_users_tenants_TenantId] FOREIGN KEY ([TenantId]) REFERENCES [tenancy].[tenants] ([Id]) ON DELETE CASCADE
 );
@@ -23,3 +24,8 @@ CREATE UNIQUE NONCLUSTERED INDEX [IX_business_users_Auth0Sub]
 
 GO
 
+CREATE NONCLUSTERED INDEX [IX_business_users_TenantId_StaffMemberId]
+    ON [identity].[business_users]([TenantId] ASC, [StaffMemberId] ASC);
+
+
+GO

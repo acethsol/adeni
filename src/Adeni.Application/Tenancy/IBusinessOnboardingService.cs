@@ -133,7 +133,10 @@ public sealed record RegisterBusinessResponse(
 public sealed record BusinessContextResponse(
     Guid TenantId,
     string Slug,
-    TenantStatus Status);
+    TenantStatus Status,
+    string PermissionRole,
+    IReadOnlyList<string> Permissions,
+    Guid? StaffMemberId);
 
 public interface IBusinessOnboardingService
 {

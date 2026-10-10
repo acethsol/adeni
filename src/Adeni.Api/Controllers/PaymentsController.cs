@@ -1,12 +1,14 @@
 namespace Adeni.Api.Controllers;
 
 using System.Security.Claims;
+using Adeni.Api.Auth;
 using Adeni.Api.Constants;
 using Adeni.Api.Extensions;
 using Adeni.Api.Errors;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
 using Adeni.Application.Payments;
+using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Auth;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
@@ -46,6 +48,7 @@ public sealed class PaymentsController(
     }
 
     [HttpPost("links")]
+    [RequiresPortalPermission(PortalPermissions.Payments)]
     public async Task<IActionResult> CreateLink(
         [FromBody] CreatePaymentLinkRequest request,
         CancellationToken cancellationToken)
@@ -90,6 +93,7 @@ public sealed class PaymentsController(
     }
 
     [HttpGet("ledger")]
+    [RequiresPortalPermission(PortalPermissions.Payments)]
     public async Task<IActionResult> Ledger(
         [FromQuery] Guid tenantId,
         [FromQuery] int page = 1,
@@ -114,6 +118,7 @@ public sealed class PaymentsController(
     }
 
     [HttpPost("{id:guid}/refund")]
+    [RequiresPortalPermission(PortalPermissions.Payments)]
     public async Task<IActionResult> Refund(
         Guid id,
         [FromBody] RefundPaymentRequest request,

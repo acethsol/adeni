@@ -18,6 +18,7 @@ import { SetupComponent } from "./pages/setup/setup.component";
 import { ForbiddenComponent } from "./pages/forbidden/forbidden.component";
 import { portalAccessGuard } from "./core/guards/portal-access.guard";
 import { businessAuthGuard } from "./core/guards/business-auth.guard";
+import { portalPermissionGuard } from "./core/guards/portal-permission.guard";
 
 export const routes: Routes = [
   { path: "setup", component: SetupComponent, title: "Setup" },
@@ -28,24 +29,85 @@ export const routes: Routes = [
     component: PortalShellComponent,
     children: [
       { path: "", pathMatch: "full", redirectTo: "dashboard" },
-      { path: "dashboard", component: DashboardComponent, title: "Dashboard" },
-      { path: "bookings", component: BookingsComponent, title: "Bookings" },
-      { path: "quotes", component: QuotesComponent, title: "Quotes" },
-      { path: "messages", component: MessagesComponent, title: "Messages" },
-      { path: "services", component: ServicesComponent, title: "Services" },
-      { path: "staff", component: StaffComponent, title: "Staff" },
+      {
+        path: "dashboard",
+        component: DashboardComponent,
+        title: "Dashboard",
+        canActivate: [portalPermissionGuard],
+      },
+      {
+        path: "bookings",
+        component: BookingsComponent,
+        title: "Bookings",
+        canActivate: [portalPermissionGuard],
+      },
+      {
+        path: "quotes",
+        component: QuotesComponent,
+        title: "Quotes",
+        canActivate: [portalPermissionGuard],
+      },
+      {
+        path: "messages",
+        component: MessagesComponent,
+        title: "Messages",
+        canActivate: [portalPermissionGuard],
+      },
+      {
+        path: "services",
+        component: ServicesComponent,
+        title: "Services",
+        canActivate: [portalPermissionGuard],
+      },
+      {
+        path: "staff",
+        component: StaffComponent,
+        title: "Staff",
+        canActivate: [portalPermissionGuard],
+      },
       {
         path: "staff/:id/calendar",
         component: StaffCalendarComponent,
         title: "Staff calendar",
+        canActivate: [portalPermissionGuard],
       },
-      { path: "locations", component: LocationsComponent, title: "Locations" },
-      { path: "availability", component: AvailabilityComponent, title: "Availability" },
-      { path: "profile", component: ProfileComponent, title: "Profile" },
-      { path: "public-page", component: PublicPageSettingsComponent, title: "Public page" },
+      {
+        path: "locations",
+        component: LocationsComponent,
+        title: "Locations",
+        canActivate: [portalPermissionGuard],
+      },
+      {
+        path: "availability",
+        component: AvailabilityComponent,
+        title: "Availability",
+        canActivate: [portalPermissionGuard],
+      },
+      {
+        path: "profile",
+        component: ProfileComponent,
+        title: "Profile",
+        canActivate: [portalPermissionGuard],
+      },
+      {
+        path: "public-page",
+        component: PublicPageSettingsComponent,
+        title: "Public page",
+        canActivate: [portalPermissionGuard],
+      },
       { path: "register", component: RegisterComponent, title: "Register" },
-      { path: "payments", component: PaymentsComponent, title: "Payments" },
-      { path: "plan", component: PlanComponent, title: "Plan" },
+      {
+        path: "payments",
+        component: PaymentsComponent,
+        title: "Payments",
+        canActivate: [portalPermissionGuard],
+      },
+      {
+        path: "plan",
+        component: PlanComponent,
+        title: "Plan",
+        canActivate: [portalPermissionGuard],
+      },
     ],
   },
   { path: "**", redirectTo: "dashboard" },

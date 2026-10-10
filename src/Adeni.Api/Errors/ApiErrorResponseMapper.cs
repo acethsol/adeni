@@ -63,6 +63,8 @@ internal static class ApiErrorResponseMapper
                 StatusCodes.Status403Forbidden,
             _ when code.StartsWith("auth.", StringComparison.Ordinal) =>
                 StatusCodes.Status403Forbidden,
+            _ when code.StartsWith("permission.", StringComparison.Ordinal) =>
+                StatusCodes.Status403Forbidden,
             _ when code.StartsWith("forbidden.", StringComparison.Ordinal) =>
                 StatusCodes.Status403Forbidden,
             _ when code.StartsWith("entitlement.", StringComparison.Ordinal) =>

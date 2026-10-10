@@ -1,4 +1,4 @@
-import type { Capability } from "@adeni/shared";
+import type { Capability, PortalPermission } from "@adeni/shared";
 
 export type PortalNavIconName =
   | "overview"
@@ -38,6 +38,8 @@ export type PortalNavItem = {
   icon: PortalNavIconName;
   exact?: boolean;
   capability?: Capability;
+  /** Portal RBAC — any listed permission grants access. */
+  permission?: PortalPermission | readonly PortalPermission[];
   badge?: "bookings" | "messages";
   /** Shown only before a business profile exists. */
   unregisteredOnly?: boolean;
@@ -55,12 +57,19 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
     id: "today",
     label: "Today",
     items: [
-      { path: "/dashboard", label: "Overview", icon: "overview", exact: true },
+      {
+        path: "/dashboard",
+        label: "Overview",
+        icon: "overview",
+        exact: true,
+        permission: "portal.overview",
+      },
       {
         path: "/bookings",
         label: "Bookings",
         icon: "bookings",
         capability: "calendar",
+        permission: ["portal.bookings", "portal.bookings.self"],
         badge: "bookings",
         tabs: [
           { id: "pending", label: "Pending" },
@@ -68,11 +77,18 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
           { id: "past", label: "Past" },
         ],
       },
-      { path: "/quotes", label: "Quotes", icon: "quotes", capability: "quotes" },
+      {
+        path: "/quotes",
+        label: "Quotes",
+        icon: "quotes",
+        capability: "quotes",
+        permission: "portal.quotes",
+      },
       {
         path: "/messages",
         label: "Messages",
         icon: "messages",
+        permission: "portal.messages",
         badge: "messages",
         tabs: [
           { id: "inbox", label: "Inbox" },
@@ -86,11 +102,28 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
     id: "listing",
     label: "Listing",
     items: [
-      { path: "/services", label: "Services", icon: "services" },
-      { path: "/staff", label: "Staff", icon: "staff", capability: "calendar" },
-      { path: "/availability", label: "Hours", icon: "availability", capability: "calendar" },
-      { path: "/locations", label: "Locations", icon: "locations" },
-      { path: "/public-page", label: "Public page", icon: "public" },
+      { path: "/services", label: "Services", icon: "services", permission: "portal.services" },
+      {
+        path: "/staff",
+        label: "Staff",
+        icon: "staff",
+        capability: "calendar",
+        permission: "portal.staff",
+      },
+      {
+        path: "/availability",
+        label: "Hours",
+        icon: "availability",
+        capability: "calendar",
+        permission: "portal.hours",
+      },
+      { path: "/locations", label: "Locations", icon: "locations", permission: "portal.locations" },
+      {
+        path: "/public-page",
+        label: "Public page",
+        icon: "public",
+        permission: "portal.public_page",
+      },
     ],
   },
   {
@@ -101,17 +134,25 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         path: "/profile",
         label: "Profile",
         icon: "profile",
+        permission: "portal.profile",
         tabs: [
           { id: "details", label: "Details" },
           { id: "reviews", label: "Reviews" },
           { id: "verification", label: "Verification" },
         ],
       },
-      { path: "/payments", label: "Payments", icon: "payments", capability: "deposits", tabs: [
-        { id: "links", label: "Links" },
-        { id: "ledger", label: "Ledger" },
-      ] },
-      { path: "/plan", label: "Plan", icon: "plan" },
+      {
+        path: "/payments",
+        label: "Payments",
+        icon: "payments",
+        capability: "deposits",
+        permission: "portal.payments",
+        tabs: [
+          { id: "links", label: "Links" },
+          { id: "ledger", label: "Ledger" },
+        ],
+      },
+      { path: "/plan", label: "Plan", icon: "plan", permission: "portal.plan" },
     ],
   },
 ];

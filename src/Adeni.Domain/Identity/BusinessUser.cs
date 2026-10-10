@@ -10,7 +10,11 @@ public sealed class BusinessUser : ITenantEntity
 
     public string Auth0Sub { get; set; } = string.Empty;
 
-    public string Role { get; set; } = "owner";
+    /// <summary>Portal RBAC role (<see cref="PortalPermissionRoles"/>), not floor staff roleKey.</summary>
+    public string Role { get; set; } = PortalPermissionRoles.Owner;
+
+    /// <summary>Optional link to booking roster member (Sprint 25b invite flow).</summary>
+    public Guid? StaffMemberId { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
 

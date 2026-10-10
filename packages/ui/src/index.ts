@@ -1,4 +1,5 @@
 export { PortalPageComponent } from "./staff-page.component";
+export { AdeniWizardComponent, type AdeniWizardStep } from "./adeni-wizard.component";
 export { AdeniBrandLogoComponent } from "./adeni-brand-logo.component";
 export { AdeniBrandLockupComponent } from "./adeni-brand-lockup.component";
 export { AdeniStaffSidebarBrandComponent } from "./adeni-staff-sidebar-brand.component";

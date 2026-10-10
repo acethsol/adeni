@@ -1,15 +1,18 @@
 namespace Adeni.Api.Controllers;
 
 using System.Security.Claims;
+using Adeni.Api.Auth;
 using Adeni.Api.Middleware;
 using Adeni.Application.Booking;
 using Adeni.Application.Auth;
+using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
 [ApiController]
 [Route("api/v1/tenant/bookings")]
+[RequiresPortalPermission(PortalPermissions.Bookings, PortalPermissions.BookingsSelf)]
 public sealed class TenantBookingsController(
     IBookingService bookings,
     IOptions<Auth0Options> auth0Options) : ControllerBase

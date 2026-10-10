@@ -23,7 +23,8 @@
 }
 
 .roster {
-  max-width: 48rem;
+  width: 100%;
+  max-width: 44rem;
 }
 
 .roster-head {
@@ -189,32 +190,62 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   padding: 0.18rem 0.45rem;
-  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--text) 6%, var(--surface));
+  border: 1px solid var(--border, #e0e0e0);
 }
 
 .role-tag[data-tone="hair"] {
   color: #5b34d6;
+  background: color-mix(in srgb, #7f56ff 12%, var(--surface));
+  border-color: color-mix(in srgb, #7f56ff 30%, var(--border));
 }
 
 .role-tag[data-tone="nails"] {
   color: #b8325e;
+  background: color-mix(in srgb, #d4537e 12%, var(--surface));
+  border-color: color-mix(in srgb, #d4537e 30%, var(--border));
 }
 
 .role-tag[data-tone="spa"] {
   color: #0e9f88;
+  background: color-mix(in srgb, #13c2a3 12%, var(--surface));
+  border-color: color-mix(in srgb, #13c2a3 30%, var(--border));
 }
 
 .role-tag[data-tone="fit"] {
   color: #1f5fa8;
+  background: color-mix(in srgb, #2d7dd2 12%, var(--surface));
+  border-color: color-mix(in srgb, #2d7dd2 30%, var(--border));
 }
 
 .role-tag[data-tone="lead"] {
-  color: #0b0f14;
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 8%, var(--surface));
+  border-color: color-mix(in srgb, var(--text) 18%, var(--border));
 }
 
 .role-tag[data-tone="ops"],
 .role-tag[data-tone="neutral"] {
-  color: #525252;
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--text) 6%, var(--surface));
+  border-color: var(--border);
+}
+
+:host-context(html[data-theme="dark"]) .role-tag[data-tone="hair"] {
+  color: #c4b2ff;
+}
+
+:host-context(html[data-theme="dark"]) .role-tag[data-tone="nails"] {
+  color: #f0a0b8;
+}
+
+:host-context(html[data-theme="dark"]) .role-tag[data-tone="spa"] {
+  color: #5ee0c8;
+}
+
+:host-context(html[data-theme="dark"]) .role-tag[data-tone="fit"] {
+  color: #7eb6ef;
 }
 
 .status-dot {
@@ -255,38 +286,40 @@
   font-size: 0.74rem;
   font-weight: 600;
   padding: 0.22rem 0.5rem;
-  background: var(--adeni-light-gray, #f4f5f7);
   color: var(--text);
+  background: color-mix(in srgb, var(--text) 8%, var(--surface));
+  border: 1px solid var(--border, #e0e0e0);
 }
 
 .chip.soft {
   color: var(--text-muted);
   background: transparent;
-  border: 1px dashed var(--border, #e0e0e0);
+  border-style: dashed;
 }
 
 .row-actions {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
   gap: 0.15rem;
-  min-width: 6.5rem;
 }
 
 .row-actions a,
 .row-actions button {
   appearance: none;
   margin: 0;
-  padding: 0.45rem 0.7rem;
+  padding: 0.4rem 0.65rem;
   border: none;
   background: transparent;
   color: var(--text);
   font: inherit;
   font-size: 0.82rem;
   font-weight: 650;
-  text-align: left;
+  text-align: center;
   text-decoration: none;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .row-actions a:hover,
@@ -316,9 +349,7 @@
 
   .row-actions {
     grid-column: 1 / -1;
-    flex-direction: row;
-    flex-wrap: wrap;
-    min-width: 0;
+    justify-content: flex-start;
   }
 }
 
@@ -432,63 +463,6 @@ h4 {
   font-size: 1rem;
 }
 
-.wizard-chrome {
-  margin: 0 0 1rem;
-}
-
-.wizard-steps {
-  list-style: none;
-  margin: 0 0 0.55rem;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
-  font-size: 0.82rem;
-  font-weight: 650;
-  color: var(--text-muted);
-}
-
-.wizard-steps li {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.wizard-steps .n {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.35rem;
-  height: 1.35rem;
-  border-radius: 50%;
-  border: 1px solid var(--border, #e0e0e0);
-  font-size: 0.72rem;
-}
-
-.wizard-steps li.active {
-  color: var(--text);
-}
-
-.wizard-steps li.active .n {
-  border-color: var(--adeni-purple, #7f56ff);
-  background: color-mix(in srgb, var(--adeni-purple, #7f56ff) 18%, transparent);
-}
-
-.wizard-steps li.done {
-  color: var(--text);
-}
-
-.wizard-steps li.done .n {
-  border-color: transparent;
-  background: color-mix(in srgb, var(--cds-support-success, #24a148) 22%, transparent);
-}
-
-.wizard-lede {
-  margin: 0;
-  font-size: 0.88rem;
-  color: var(--text-muted);
-}
-
 .form-tabs {
   display: flex;
   flex-wrap: wrap;
@@ -572,6 +546,12 @@ h4 {
 .hours-table td {
   padding: 0.35rem 0.4rem;
   text-align: left;
+  vertical-align: middle;
+}
+
+.hours-day-toggle {
+  margin: 0;
+  width: fit-content;
 }
 
 .leave-list {
