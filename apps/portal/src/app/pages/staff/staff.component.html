@@ -358,7 +358,7 @@
                 </span>
                 <span
                   class="access-dot"
-                  [attr.data-status]="member.portalAccessStatus ?? 'none'"
+                  [attr.data-status]="member.portalAccessStatus"
                 >
                   {{ accessLabel(member.portalAccessStatus) }}
                   @if (member.permissionRole) {
@@ -385,7 +385,7 @@
             <div class="row-actions">
               <a [routerLink]="['/staff', member.id, 'calendar']">Calendar</a>
               <button type="button" (click)="openEdit(member)">Edit</button>
-              @if ((member.portalAccessStatus ?? "none") === "none") {
+              @if (member.portalAccessStatus === "none") {
                 <button type="button" (click)="openInvite(member)">Invite</button>
               }
               @if (member.portalAccessStatus === "invite_pending") {
