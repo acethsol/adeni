@@ -6,7 +6,7 @@
 |-------|-------|
 | **Sprint** | Sprint 25 — Staff accounts & permissions |
 | **Author** | Agent + product |
-| **Status** | In progress (25a) |
+| **Status** | In progress (25b) |
 | **Created** | 2026-10-10 |
 
 ---
@@ -93,13 +93,13 @@ Exact matrices live in `@adeni/shared` as a single source of truth; adjust in re
 
 ### Slice 25b — Invite & link
 
-- [ ] Owner/manager with `portal.staff` can **Invite to portal** from a staff member (or “access only” invite without staff).
-- [ ] Persist `StaffPortalInvite`: tenant, email, permission role, optional `staffMemberId`, token hash, expiry, status (`pending` / `accepted` / `revoked` / `expired`).
-- [ ] Send invite email (reuse notification/email port if present; else queue + log in Development).
-- [ ] Accept path: user signs up / logs in with Auth0 → sync with invite token (or Auth0 `app_metadata.invite_token` / org invite) → create/update `BusinessUser` for **existing tenant**, set role, link `StaffMemberId`, mark invite accepted.
-- [ ] **Hard rule:** business Auth sync must **not** create a new `Tenant` unless this is true first-time **owner onboarding** (today’s register flow). Invited staff → fail closed if no matching invite / existing membership.
-- [ ] Auth0: document Organization **or** invite-token + Management API approach in [auth0-setup.md](../auth0-setup.md). Prefer **invite token in Adeni** for V1 (less Auth0 org complexity); stamp `tenant_id` + `permission_role` into `app_metadata` on accept when Management API is available.
-- [ ] Dev: seed invite + `X-Dev-Auth0-Sub` path that attaches a second business user to Lekki Cuts without new tenant.
+- [x] Owner/manager with `portal.staff` can **Invite to portal** from a staff member (or “access only” invite without staff).
+- [x] Persist `StaffPortalInvite`: tenant, email, permission role, optional `staffMemberId`, token hash, expiry, status (`pending` / `accepted` / `revoked` / `expired`).
+- [x] Send invite email (reuse notification/email port if present; else queue + log in Development).
+- [x] Accept path: user signs up / logs in with Auth0 → sync with invite token (or Auth0 `app_metadata.invite_token` / org invite) → create/update `BusinessUser` for **existing tenant**, set role, link `StaffMemberId`, mark invite accepted.
+- [x] **Hard rule:** business Auth sync must **not** create a new `Tenant` unless this is true first-time **owner onboarding** (today’s register flow). Invited staff → fail closed if no matching invite / existing membership.
+- [x] Auth0: document Organization **or** invite-token + Management API approach in [auth0-setup.md](../auth0-setup.md). Prefer **invite token in Adeni** for V1 (less Auth0 org complexity); stamp `tenant_id` + `permission_role` into `app_metadata` on accept when Management API is available.
+- [x] Dev: seed invite + `X-Dev-Auth0-Sub` path that attaches a second business user to Lekki Cuts without new tenant.
 
 ### Slice 25c — Scoped practitioner data
 

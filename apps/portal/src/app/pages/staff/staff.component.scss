@@ -581,3 +581,40 @@ a.btn {
   display: inline-flex;
   align-items: center;
 }
+
+.invite-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 40;
+}
+
+.invite-dialog {
+  position: fixed;
+  z-index: 41;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(24rem, calc(100vw - 2rem));
+  padding: 1.25rem 1.35rem;
+  background: var(--cds-layer-01, #fff);
+  color: var(--cds-text-primary, #161616);
+  border: 1px solid var(--cds-border-subtle-01, #e0e0e0);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+
+.invite-dialog h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.invite-dialog .field {
+  margin: 0.85rem 0;
+}
+
+.invite-dialog .actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}

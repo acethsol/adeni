@@ -75,6 +75,11 @@ import {
   staffLeaveListResponseSchema,
   createStaffLeaveRequestSchema,
   staffCalendarResponseSchema,
+  createStaffInviteRequestSchema,
+  staffPortalInviteSchema,
+  staffPortalInvitesResponseSchema,
+  acceptStaffInviteRequestSchema,
+  acceptStaffInviteResponseSchema,
   reviewResponseSchema,
   publicReviewsResponseSchema,
   createMessageThreadRequestSchema,
@@ -130,6 +135,10 @@ import {
   type ReplaceStaffServicesRequest,
   type StaffLeave,
   type CreateStaffLeaveRequest,
+  type CreateStaffInviteRequest,
+  type StaffPortalInvite,
+  type AcceptStaffInviteRequest,
+  type AcceptStaffInviteResponse,
   type StaffCalendarResponse,
   type WeeklyAvailabilityRule,
   type ServiceOfferingsResponse,
@@ -907,6 +916,62 @@ export class AdeniApiClient {
       `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/deactivate`,
       { method: "POST" },
     );
+  }
+
+  async inviteTenantStaff(
+    staffMemberId: string,
+    request: CreateStaffInviteRequest,
+  ): Promise<StaffPortalInvite> {
+    const body = createStaffInviteRequestSchema.parse(request);
+    const response = await this.request(
+      `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/invite`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+    return staffPortalInviteSchema.parse(await response.json());
+  }
+
+  async inviteTenantAccess(request: CreateStaffInviteRequest): Promise<StaffPortalInvite> {
+    const body = createStaffInviteRequestSchema.parse(request);
+    const response = await this.request("/api/v1/tenant/access/invites", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return staffPortalInviteSchema.parse(await response.json());
+  }
+
+  async listTenantAccessInvites(): Promise<StaffPortalInvite[]> {
+    const response = await this.request("/api/v1/tenant/access/invites");
+    return staffPortalInvitesResponseSchema.parse(await response.json()).items;
+  }
+
+  async resendTenantAccessInvite(inviteId: string): Promise<StaffPortalInvite> {
+    const response = await this.request(
+      `/api/v1/tenant/access/invites/${encodeURIComponent(inviteId)}/resend`,
+      { method: "POST" },
+    );
+    return staffPortalInviteSchema.parse(await response.json());
+  }
+
+  async revokeTenantAccessInvite(inviteId: string): Promise<void> {
+    await this.request(
+      `/api/v1/tenant/access/invites/${encodeURIComponent(inviteId)}`,
+      { method: "DELETE" },
+    );
+  }
+
+  async acceptStaffInvite(request: AcceptStaffInviteRequest): Promise<AcceptStaffInviteResponse> {
+    const body = acceptStaffInviteRequestSchema.parse(request);
+    const response = await this.request("/api/v1/auth/accept-staff-invite", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return acceptStaffInviteResponseSchema.parse(await response.json());
   }
 
   async replaceTenantStaffServices(

@@ -91,6 +91,23 @@ public static class ErrorCodes
     public static Error PermissionDeniedError() =>
         new(PermissionDenied, "You do not have permission to do that.");
 
+    public const string StaffInviteInvalid = "staff.invite_invalid";
+    public const string StaffInviteExpired = "staff.invite_expired";
+    public const string StaffInviteEmailMismatch = "staff.invite_email_mismatch";
+    public const string StaffLastOwner = "staff.last_owner";
+
+    public static Error StaffInviteInvalidError() =>
+        new(StaffInviteInvalid, "This invite link is invalid or no longer available.");
+
+    public static Error StaffInviteExpiredError() =>
+        new(StaffInviteExpired, "This invite has expired. Ask the business owner to resend it.");
+
+    public static Error StaffInviteEmailMismatchError() =>
+        new(StaffInviteEmailMismatch, "Sign in with the email address this invite was sent to.");
+
+    public static Error StaffLastOwnerError() =>
+        new(StaffLastOwner, "Cannot remove or demote the last owner of this business.");
+
     public const string PaymentInvalidAmount = "payment.invalid_amount";
     public const string PaymentInvalidCurrency = "payment.invalid_currency";
     public const string PaymentNotFound = "payment.not_found";

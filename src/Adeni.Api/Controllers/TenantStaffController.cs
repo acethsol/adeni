@@ -15,6 +15,7 @@ using Microsoft.Extensions.Options;
 [RequiresPortalPermission(PortalPermissions.Staff)]
 public sealed class TenantStaffController(
     IStaffService staff,
+    IStaffAccessService staffAccess,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet]
@@ -187,6 +188,30 @@ public sealed class TenantStaffController(
 
         var result = await staff.GetCalendarAsync(tenantId, id, from, to, cancellationToken);
         return ApiResults.FromResult(result, Ok, HttpContext);
+    }
+
+    [HttpPost("{id:guid}/invite")]
+    public async Task<IActionResult> Invite(
+        Guid id,
+        [FromBody] CreateStaffInviteRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (ResolveAuth0Sub() is not { } auth0Sub || ResolveTenantId() is not { } tenantId)
+        {
+            return Unauthorized();
+        }
+
+        var result = await staffAccess.InviteStaffMemberAsync(
+            tenantId,
+            id,
+            request,
+            auth0Sub,
+            cancellationToken);
+
+        return ApiResults.FromResult(
+            result,
+            payload => Created($"/api/v1/tenant/access/invites/{payload.InviteId}", payload),
+            HttpContext);
     }
 
     private string? ResolveAuth0Sub()

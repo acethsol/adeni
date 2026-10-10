@@ -28,6 +28,33 @@ export class BusinessApiService {
     return fn(client);
   }
 
+  /** Authenticated client without requiring an existing tenant membership (invite accept). */
+  async withInviteClient<T>(
+    fn: (client: AdeniApiClient) => Promise<T>,
+    devAuth0Sub?: string,
+  ): Promise<T> {
+    const client = this.createClient();
+    const auth = isAuth0Configured(this.config) ? resolveAuthService(this.injector) : null;
+    if (auth) {
+      const token = await auth0FirstValueFrom<string>(
+        auth.getAccessTokenSilently({
+          authorizationParams: {
+            audience: this.config.auth0.audience,
+          },
+        }),
+      );
+      client.setAccessToken(token);
+    } else if (isBusinessPortalDevMode(this.config)) {
+      client.setDevAuth0Sub(
+        (devAuth0Sub ?? this.config.devStaffAuth0Sub ?? this.config.devBusinessAuth0Sub).trim(),
+      );
+    } else {
+      throw new Error("Invite accept requires Auth0 or a Dev Auth0 sub.");
+    }
+
+    return fn(client);
+  }
+
   async createAuthorizedClient(): Promise<AdeniApiClient> {
     const client = this.createClient();
 

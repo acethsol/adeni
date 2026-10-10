@@ -403,7 +403,7 @@ Invite staff to the portal; permission roles control nav + API. Floor `roleKey` 
 | Task | Status |
 |------|--------|
 | **25a** Permission model + tenant context permissions + portal/API gates | Done |
-| **25b** Invite email → accept → `BusinessUser` linked to tenant (+ optional staff) | Draft |
+| **25b** Invite email → accept → `BusinessUser` linked to tenant (+ optional staff) | Done |
 | **25c** Practitioner scoped bookings/calendar | Draft |
 | **25d** Roster invite / revoke UI | Draft |
 

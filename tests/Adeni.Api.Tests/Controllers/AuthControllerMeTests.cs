@@ -12,6 +12,7 @@ public sealed class AuthControllerMeTests
     {
         var controller = new AuthController(
             new StubAuthSyncService(),
+            new StubStaffAccessService(),
             Options.Create(new Auth0Options { Enabled = false }));
 
         var result = controller.Me();
@@ -25,6 +26,48 @@ public sealed class AuthControllerMeTests
         public Task<Domain.Common.Result<UserProfileResponse>> SyncAsync(
             SyncAuthUserRequest request,
             string? authenticatedAuth0Sub,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+    }
+
+    private sealed class StubStaffAccessService : IStaffAccessService
+    {
+        public Task<Domain.Common.Result<StaffPortalInviteResponse>> InviteStaffMemberAsync(
+            Guid tenantId,
+            Guid staffMemberId,
+            CreateStaffInviteRequest request,
+            string invitedByAuth0Sub,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public Task<Domain.Common.Result<StaffPortalInviteResponse>> InviteAccessOnlyAsync(
+            Guid tenantId,
+            CreateStaffInviteRequest request,
+            string invitedByAuth0Sub,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public Task<IReadOnlyList<StaffPortalInviteResponse>> ListInvitesAsync(
+            Guid tenantId,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public Task<Domain.Common.Result<StaffPortalInviteResponse>> ResendAsync(
+            Guid tenantId,
+            Guid inviteId,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public Task<Domain.Common.Result> RevokeAsync(
+            Guid tenantId,
+            Guid inviteId,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public Task<Domain.Common.Result<AcceptStaffInviteResponse>> AcceptAsync(
+            string auth0Sub,
+            string? authenticatedEmail,
+            AcceptStaffInviteRequest request,
             CancellationToken cancellationToken = default) =>
             throw new NotImplementedException();
     }

@@ -16,6 +16,7 @@ import { MessagesComponent } from "./pages/messages/messages.component";
 import { QuotesComponent } from "./pages/quotes/quotes.component";
 import { SetupComponent } from "./pages/setup/setup.component";
 import { ForbiddenComponent } from "./pages/forbidden/forbidden.component";
+import { AcceptInviteComponent } from "./pages/accept-invite/accept-invite.component";
 import { portalAccessGuard } from "./core/guards/portal-access.guard";
 import { businessAuthGuard } from "./core/guards/business-auth.guard";
 import { portalPermissionGuard } from "./core/guards/portal-permission.guard";
@@ -23,6 +24,7 @@ import { portalPermissionGuard } from "./core/guards/portal-permission.guard";
 export const routes: Routes = [
   { path: "setup", component: SetupComponent, title: "Setup" },
   { path: "forbidden", component: ForbiddenComponent, title: "Access denied" },
+  { path: "accept-invite", component: AcceptInviteComponent, title: "Accept invite" },
   {
     path: "",
     canActivate: [portalAccessGuard, businessAuthGuard],

@@ -6,6 +6,7 @@ using Adeni.Domain.Booking;
 using Adeni.Domain.Identity;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Catalog;
+using Adeni.Infrastructure.Identity;
 using Adeni.Infrastructure.Markets;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,6 +18,12 @@ public static class DevelopmentDataSeeder
 {
     public const string SeedMarkerSlug = "lekki-cuts";
     public const string DevBusinessAuth0Sub = "auth0|local-business";
+
+    /// <summary>Second business login for invite accept tests (no tenant until invite accepted).</summary>
+    public const string DevStaffAuth0Sub = "auth0|local-staff";
+
+    /// <summary>Raw invite token seeded for Lekki Cuts — accept via /accept-invite?token=…</summary>
+    public const string DevStaffInviteToken = "dev-lekki-staff-invite-token";
     public const string DevCustomerAuth0Sub = "auth0|local-customer";
     public const string DevAdminAuth0Sub = "auth0|local-admin";
 
@@ -155,6 +162,7 @@ public static class DevelopmentDataSeeder
         await EnsureServiceMenusAsync(db, environment, cancellationToken);
         await EnsureGalleryPhotosAsync(db, cancellationToken);
         await SeedDevBusinessOwnerAsync(db, cancellationToken);
+        await SeedDevStaffInviteAsync(db, cancellationToken);
         await SeedDevDepositSettingsAsync(db, cancellationToken);
         await SeedDevReviewFixtureAsync(db, cancellationToken);
     }
@@ -581,6 +589,59 @@ public static class DevelopmentDataSeeder
             Auth0Sub = DevBusinessAuth0Sub,
             Role = "owner",
             CreatedAt = DateTimeOffset.UtcNow,
+        });
+
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task SeedDevStaffInviteAsync(
+        AdeniDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var location = await db.BusinessLocations
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(entry => entry.Slug == SeedMarkerSlug, cancellationToken);
+
+        if (location is null)
+        {
+            return;
+        }
+
+        var tokenHash = StaffAccessService.HashToken(DevStaffInviteToken);
+        if (await db.StaffPortalInvites
+                .IgnoreQueryFilters()
+                .AnyAsync(x => x.TokenHash == tokenHash, cancellationToken))
+        {
+            return;
+        }
+
+        if (await db.BusinessUsers
+                .IgnoreQueryFilters()
+                .AnyAsync(u => u.Auth0Sub == DevStaffAuth0Sub, cancellationToken))
+        {
+            return;
+        }
+
+        var staff = await db.StaffMembers
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(s => s.TenantId == location.TenantId && s.IsActive)
+            .OrderBy(s => s.SortOrder)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        db.StaffPortalInvites.Add(new StaffPortalInvite
+        {
+            Id = Guid.NewGuid(),
+            TenantId = location.TenantId,
+            Email = "fela@lekki.cuts",
+            PermissionRole = PortalPermissionRoles.Practitioner,
+            StaffMemberId = staff?.Id,
+            TokenHash = tokenHash,
+            Status = StaffPortalInviteStatuses.Pending,
+            ExpiresAt = DateTimeOffset.UtcNow.AddDays(30),
+            CreatedAt = DateTimeOffset.UtcNow,
+            InvitedByAuth0Sub = DevBusinessAuth0Sub,
         });
 
         await db.SaveChangesAsync(cancellationToken);

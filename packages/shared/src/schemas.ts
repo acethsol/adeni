@@ -718,6 +718,53 @@ export const createStaffLeaveRequestSchema = z.object({
 
 export type CreateStaffLeaveRequest = z.infer<typeof createStaffLeaveRequestSchema>;
 
+export const portalPermissionRoleSchema = z.enum([
+  "owner",
+  "manager",
+  "receptionist",
+  "practitioner",
+  "accountant",
+  "ops",
+]);
+
+export const createStaffInviteRequestSchema = z.object({
+  email: z.string().email().max(320),
+  permissionRole: portalPermissionRoleSchema.exclude(["owner"]).optional(),
+});
+
+export type CreateStaffInviteRequest = z.infer<typeof createStaffInviteRequestSchema>;
+
+export const staffPortalInviteSchema = z.object({
+  inviteId: z.string().uuid(),
+  email: z.string(),
+  permissionRole: portalPermissionRoleSchema,
+  staffMemberId: z.string().uuid().nullable().optional(),
+  status: z.enum(["pending", "accepted", "revoked", "expired"]),
+  expiresAt: z.string(),
+});
+
+export type StaffPortalInvite = z.infer<typeof staffPortalInviteSchema>;
+
+export const staffPortalInvitesResponseSchema = z.object({
+  items: z.array(staffPortalInviteSchema),
+});
+
+export const acceptStaffInviteRequestSchema = z.object({
+  token: z.string().min(8).max(200),
+});
+
+export type AcceptStaffInviteRequest = z.infer<typeof acceptStaffInviteRequestSchema>;
+
+export const acceptStaffInviteResponseSchema = z.object({
+  platformUserId: z.string().uuid(),
+  auth0Sub: z.string(),
+  tenantId: z.string().uuid(),
+  permissionRole: portalPermissionRoleSchema,
+  staffMemberId: z.string().uuid().nullable().optional(),
+});
+
+export type AcceptStaffInviteResponse = z.infer<typeof acceptStaffInviteResponseSchema>;
+
 export const businessLocationSchema = z.object({
   id: z.string(),
   slug: z.string(),

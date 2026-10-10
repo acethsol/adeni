@@ -4,9 +4,12 @@ import { FormsModule } from "@angular/forms";
 import { RouterLink } from "@angular/router";
 import {
   DAY_OF_WEEK_LABELS,
+  PORTAL_PERMISSION_ROLES,
   STAFF_ROLE_LABELS,
+  defaultPermissionRoleForFloorRole,
   defaultStaffRoleForCategories,
   staffRolesForCategories,
+  type PortalPermissionRole,
   type ServiceOffering,
   type StaffLeave,
   type StaffMember,
@@ -169,8 +172,51 @@ export class StaffComponent implements OnInit {
   leaveEnd = "";
   leaveReason = "";
 
+  readonly inviteTarget = signal<StaffMember | null>(null);
+  readonly inviteRoles = PORTAL_PERMISSION_ROLES.filter((r) => r !== "owner");
+  inviteEmail = "";
+  invitePermissionRole: Exclude<PortalPermissionRole, "owner"> = "practitioner";
+
   ngOnInit(): void {
     void this.load();
+  }
+
+  openInvite(member: StaffMember): void {
+    this.inviteTarget.set(member);
+    this.inviteEmail = "";
+    this.invitePermissionRole = defaultPermissionRoleForFloorRole(member.roleKey) as Exclude<
+      PortalPermissionRole,
+      "owner"
+    >;
+  }
+
+  closeInvite(): void {
+    this.inviteTarget.set(null);
+  }
+
+  async sendInvite(): Promise<void> {
+    const member = this.inviteTarget();
+    if (!member || !this.inviteEmail.trim()) {
+      return;
+    }
+
+    this.busy.set(member.id);
+    try {
+      await this.feedback.runLoading(async () => {
+        await this.api.withAuthorizedClient(async (c) => {
+          await c.inviteTenantStaff(member.id, {
+            email: this.inviteEmail.trim(),
+            permissionRole: this.invitePermissionRole,
+          });
+        });
+      });
+      this.feedback.success("Invite sent — check API logs for the accept link in Development.");
+      this.closeInvite();
+    } catch {
+      this.feedback.error("Could not send invite.");
+    } finally {
+      this.busy.set(null);
+    }
   }
 
   emptyDraft(): StaffDraft {

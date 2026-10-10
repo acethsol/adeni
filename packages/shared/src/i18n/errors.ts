@@ -23,6 +23,10 @@ export const enErrorMessages: MessageTree = {
     hours_invalid: "Staff hours are invalid.",
     leave_overlap: "That leave range overlaps an existing leave entry.",
     leave_not_found: "Leave entry was not found.",
+    invite_invalid: "This invite link is invalid or no longer available.",
+    invite_expired: "This invite has expired. Ask the business owner to resend it.",
+    invite_email_mismatch: "Sign in with the email address this invite was sent to.",
+    last_owner: "Cannot remove or demote the last owner of this business.",
   },
   payment: {
     invalid_amount: "Payment amount must be greater than zero.",
@@ -81,6 +85,10 @@ export const frErrorMessages: MessageTree = {
     hours_invalid: "Les horaires du membre de l'équipe sont invalides.",
     leave_overlap: "Cette période de congé chevauche une entrée existante.",
     leave_not_found: "Entrée de congé introuvable.",
+    invite_invalid: "Ce lien d'invitation est invalide ou n'est plus disponible.",
+    invite_expired: "Cette invitation a expiré. Demandez au propriétaire de la renvoyer.",
+    invite_email_mismatch: "Connectez-vous avec l'adresse e-mail à laquelle l'invitation a été envoyée.",
+    last_owner: "Impossible de retirer ou de rétrograder le dernier propriétaire.",
   },
   payment: {
     invalid_amount: "Le montant du paiement doit être supérieur à zéro.",

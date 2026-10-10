@@ -6,6 +6,8 @@ export type AdeniPortalConfig = {
   apiBaseUrl: string;
   discoverWebUrl: string;
   devBusinessAuth0Sub: string;
+  /** Dev Auth0 sub used when accepting a staff invite (must not be the owner sub). */
+  devStaffAuth0Sub: string;
   auth0: {
     domain: string;
     clientId: string;
@@ -21,6 +23,7 @@ export function adeniPortalConfigFactory(): AdeniPortalConfig {
     apiBaseUrl: environment.apiBaseUrl.replace(/\/$/, ""),
     discoverWebUrl: environment.discoverWebUrl.replace(/\/$/, ""),
     devBusinessAuth0Sub: environment.devBusinessAuth0Sub.trim(),
+    devStaffAuth0Sub: (environment.devStaffAuth0Sub ?? "auth0|local-staff").trim(),
     auth0: {
       domain: environment.auth0.domain.trim(),
       clientId: environment.auth0.clientId.trim(),

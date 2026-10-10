@@ -4,6 +4,7 @@ export const environment = {
   discoverWebUrl: "http://localhost:3000",
   /** Set when Auth0 is not configured; maps to X-Dev-Auth0-Sub (API Auth0.Enabled = false). */
   devBusinessAuth0Sub: "",
+  devStaffAuth0Sub: "auth0|local-staff",
   auth0: {
     domain: "",
     clientId: "",

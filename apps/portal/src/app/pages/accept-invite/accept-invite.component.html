@@ -1,0 +1,33 @@
+<main class="accept">
+  <p class="brand">Adeni</p>
+  <h1>Accept staff invite</h1>
+  <p class="lede">{{ message() }}</p>
+
+  @if (devMode && status() === "ready") {
+    <label class="field">
+      <span>Dev Auth0 sub (invitee)</span>
+      <input [(ngModel)]="devAuth0Sub" autocomplete="off" />
+    </label>
+  }
+
+  @if (auth0Mode && status() === "ready") {
+    <p class="hint">Use the Auth0 account that matches the invited email, then accept.</p>
+  }
+
+  <div class="actions">
+    @if (status() === "ready" || status() === "error") {
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="!tokenReady()"
+        (click)="accept()"
+      >
+        Accept invite
+      </button>
+    }
+    @if (status() === "working") {
+      <p class="muted">Accepting…</p>
+    }
+    <a routerLink="/dashboard">Back to portal</a>
+  </div>
+</main>

@@ -1,6 +1,8 @@
 namespace Adeni.Infrastructure.Tests.Identity;
 
 using Adeni.Application.Auth;
+using Adeni.Domain.Common;
+using Adeni.Domain.Identity;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Context;
 using Adeni.Infrastructure.Identity;
@@ -27,7 +29,7 @@ public sealed class AuthSyncServiceTests
     }
 
     [Fact]
-    public async Task Sync_creates_business_user_with_draft_tenant()
+    public async Task Sync_business_without_membership_does_not_create_tenant()
     {
         await using var provider = BuildProvider();
         using var scope = provider.CreateScope();
@@ -37,13 +39,46 @@ public sealed class AuthSyncServiceTests
             new SyncAuthUserRequest("auth0|biz1", "Salon Lagos", null, null, "business"),
             null);
 
-        Assert.True(result.IsSuccess);
-        Assert.Equal("business", result.Value!.Role);
-        Assert.NotNull(result.Value.TenantId);
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorCodes.BusinessAccessDenied, result.Error.Code);
 
         var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
-        var tenant = await db.Tenants.FirstAsync(t => t.Id == result.Value.TenantId);
-        Assert.Equal(TenantStatus.Draft, tenant.Status);
+        Assert.Empty(await db.Tenants.ToListAsync());
+        Assert.Empty(await db.BusinessUsers.IgnoreQueryFilters().ToListAsync());
+    }
+
+    [Fact]
+    public async Task Sync_business_returns_existing_membership()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        var tenantId = Guid.NewGuid();
+        db.Tenants.Add(new Tenant
+        {
+            Id = tenantId,
+            Name = "Lekki Cuts",
+            Status = TenantStatus.Verified,
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+        db.BusinessUsers.Add(new BusinessUser
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            Auth0Sub = "auth0|biz-existing",
+            Role = PortalPermissionRoles.Practitioner,
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+        await db.SaveChangesAsync();
+
+        var service = scope.ServiceProvider.GetRequiredService<AuthSyncService>();
+        var result = await service.SyncAsync(
+            new SyncAuthUserRequest("auth0|biz-existing", "Fela", "fela@example.com", null, "business"),
+            null);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(tenantId, result.Value!.TenantId);
+        Assert.Equal(1, await db.Tenants.CountAsync());
     }
 
     [Fact]

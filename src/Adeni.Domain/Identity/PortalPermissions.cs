@@ -113,4 +113,15 @@ public static class PortalPermissionRoles
 
     public static bool HasAny(string? role, params string[] permissions) =>
         permissions.Any(p => Has(role, p));
+
+    /// <summary>Floor <c>StaffMember.RoleKey</c> → default portal RBAC role when inviting.</summary>
+    public static string DefaultForFloorRole(string? roleKey) =>
+        (roleKey ?? string.Empty).Trim().ToLowerInvariant() switch
+        {
+            "receptionist" => Receptionist,
+            "manager" or "supervisor" => Manager,
+            "accountant" => Accountant,
+            "inventory_manager" or "marketing" or "hr" or "admin_staff" or "other" => Ops,
+            _ => Practitioner,
+        };
 }

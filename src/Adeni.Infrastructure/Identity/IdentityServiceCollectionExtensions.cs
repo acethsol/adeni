@@ -9,6 +9,7 @@ public static class IdentityServiceCollectionExtensions
     {
         services.AddScoped<IAuthSyncService, AuthSyncService>();
         services.AddScoped<IPortalPermissionService, PortalPermissionService>();
+        services.AddScoped<IStaffAccessService, StaffAccessService>();
         return services;
     }
 }

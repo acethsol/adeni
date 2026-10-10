@@ -3,6 +3,7 @@ namespace Adeni.Api.Controllers;
 using Adeni.Api.Extensions;
 using Adeni.Api.Auth;
 using Adeni.Api.Errors;
+using Adeni.Api.Middleware;
 using Adeni.Application.Admin;
 using Adeni.Application.Auth;
 using Adeni.Application.Reviews;
@@ -16,6 +17,7 @@ using Microsoft.Extensions.Options;
 [Route("api/v1/auth")]
 public sealed class AuthController(
     IAuthSyncService authSyncService,
+    IStaffAccessService staffAccess,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpPost("sync")]
@@ -65,6 +67,47 @@ public sealed class AuthController(
             user.Roles,
             user.TenantId?.Value,
             user.HasMfa));
+    }
+
+    /// <summary>
+    /// Attach an authenticated Auth0 user (or Dev business sub) to an existing tenant via invite token.
+    /// </summary>
+    [HttpPost("accept-staff-invite")]
+    [EnableRateLimiting(RateLimitingExtensions.AuthSyncPolicy)]
+    public async Task<IActionResult> AcceptStaffInvite(
+        [FromBody] AcceptStaffInviteRequest request,
+        CancellationToken cancellationToken)
+    {
+        var options = auth0Options.Value;
+        string? auth0Sub = null;
+        string? email = null;
+
+        if (options.Enabled)
+        {
+            if (User.Identity?.IsAuthenticated != true)
+            {
+                return Unauthorized();
+            }
+
+            auth0Sub = User.FindFirst("sub")?.Value;
+            email = User.FindFirst("email")?.Value
+                ?? User.FindFirst("https://adeni.io/email")?.Value;
+        }
+        else if (Request.Headers.TryGetValue(DevBusinessAuthMiddleware.DevAuth0SubHeader, out var devSub)
+                 && !string.IsNullOrWhiteSpace(devSub))
+        {
+            auth0Sub = devSub.ToString();
+        }
+
+        if (string.IsNullOrWhiteSpace(auth0Sub))
+        {
+            return Unauthorized();
+        }
+
+        var result = await staffAccess.AcceptAsync(auth0Sub, email, request, cancellationToken);
+        return result.Match<IActionResult>(
+            payload => Ok(payload),
+            error => ApiErrorResponseMapper.ToActionResult(error, HttpContext));
     }
 }
 

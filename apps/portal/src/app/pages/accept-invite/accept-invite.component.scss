@@ -1,0 +1,70 @@
+.accept {
+  max-width: 28rem;
+  margin: 4rem auto;
+  padding: 0 1.25rem;
+  font-family: var(--cds-body-compact-01-font-family, inherit);
+}
+
+.brand {
+  margin: 0 0 0.5rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  margin: 0 0 0.75rem;
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.lede,
+.hint,
+.muted {
+  color: var(--cds-text-secondary, #525252);
+  line-height: 1.45;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 1.25rem 0;
+}
+
+.field input {
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--cds-border-strong-01, #8d8d8d);
+  background: var(--cds-field-01, #f4f4f4);
+  color: var(--cds-text-primary, #161616);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin-top: 1.5rem;
+}
+
+.btn {
+  border: 1px solid transparent;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+  background: var(--cds-layer-01, #fff);
+  color: var(--cds-text-primary, #161616);
+}
+
+.btn-primary {
+  background: var(--cds-button-primary, #0f62fe);
+  color: #fff;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+a {
+  color: var(--cds-link-primary, #0f62fe);
+}

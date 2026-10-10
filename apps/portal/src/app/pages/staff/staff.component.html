@@ -376,6 +376,7 @@
             <div class="row-actions">
               <a [routerLink]="['/staff', member.id, 'calendar']">Calendar</a>
               <button type="button" (click)="openEdit(member)">Edit</button>
+              <button type="button" (click)="openInvite(member)">Invite</button>
               @if (member.isActive) {
                 <button
                   type="button"
@@ -390,6 +391,40 @@
           </li>
         }
       </ul>
+    </div>
+  }
+
+  @if (inviteTarget(); as target) {
+    <div class="invite-backdrop" role="presentation" (click)="closeInvite()"></div>
+    <div class="invite-dialog" role="dialog" aria-labelledby="invite-title">
+      <h3 id="invite-title">Invite to portal</h3>
+      <p class="muted">
+        {{ target.displayName }} can log in with the permission role you choose. This does not create a
+        new business.
+      </p>
+      <div class="field">
+        <label for="invite-email">Email</label>
+        <input id="invite-email" type="email" [(ngModel)]="inviteEmail" autocomplete="email" />
+      </div>
+      <div class="field">
+        <label for="invite-role">Permission role</label>
+        <select id="invite-role" [(ngModel)]="invitePermissionRole">
+          @for (role of inviteRoles; track role) {
+            <option [value]="role">{{ role }}</option>
+          }
+        </select>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn" (click)="closeInvite()">Cancel</button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="busy() === target.id || !inviteEmail.trim()"
+          (click)="sendInvite()"
+        >
+          Send invite
+        </button>
+      </div>
     </div>
   }
 </app-portal-page>

@@ -84,6 +84,10 @@ internal static class ApiErrorResponseMapper
             ErrorCodes.StaffLeaveNotFound => StatusCodes.Status404NotFound,
             ErrorCodes.StaffLeaveOverlap => StatusCodes.Status409Conflict,
             ErrorCodes.StaffHoursInvalid => StatusCodes.Status400BadRequest,
+            ErrorCodes.StaffInviteInvalid => StatusCodes.Status400BadRequest,
+            ErrorCodes.StaffInviteExpired => StatusCodes.Status410Gone,
+            ErrorCodes.StaffInviteEmailMismatch => StatusCodes.Status403Forbidden,
+            ErrorCodes.StaffLastOwner => StatusCodes.Status409Conflict,
             _ => StatusCodes.Status400BadRequest,
         };
 

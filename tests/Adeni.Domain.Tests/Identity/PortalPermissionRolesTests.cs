@@ -52,4 +52,13 @@ public sealed class PortalPermissionRolesTests
             PortalPermissionRoles.Practitioner,
             PortalPermissions.Plan));
     }
+
+    [Theory]
+    [InlineData("barber", PortalPermissionRoles.Practitioner)]
+    [InlineData("receptionist", PortalPermissionRoles.Receptionist)]
+    [InlineData("supervisor", PortalPermissionRoles.Manager)]
+    [InlineData("accountant", PortalPermissionRoles.Accountant)]
+    [InlineData("marketing", PortalPermissionRoles.Ops)]
+    public void DefaultForFloorRole_MapsInvitePrefill(string floor, string expected) =>
+        Assert.Equal(expected, PortalPermissionRoles.DefaultForFloorRole(floor));
 }

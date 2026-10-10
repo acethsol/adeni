@@ -3,6 +3,7 @@ export const environment = {
   apiBaseUrl: "https://api.adeni.io",
   discoverWebUrl: "https://adeni.com",
   devBusinessAuth0Sub: "",
+  devStaffAuth0Sub: "",
   auth0: {
     domain: "",
     clientId: "",

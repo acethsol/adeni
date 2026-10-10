@@ -72,6 +72,31 @@ Use Auth0 SPA SDK in each app; callbacks and logout URLs must match deployed ori
 
 Archived — see [legacy-clients-archive.md](./legacy-clients-archive.md) for Auth0 Regular Web / Native setup used historically.
 
+## Staff portal invites (Sprint 25b)
+
+V1 uses an **Adeni invite token** (not Auth0 Organizations).
+
+1. Owner/manager with `portal.staff` creates an invite (`POST /api/v1/tenant/staff/{id}/invite` or `/api/v1/tenant/access/invites`).
+2. Invitee receives email (logged in Development) with link: `{Portal:PublicBaseUrl}/accept-invite?token=…`.
+3. Invitee signs up / logs in with Auth0 (portal SPA), then `POST /api/v1/auth/accept-staff-invite` with `{ "token" }`.
+4. API creates a `BusinessUser` on the **existing** tenant, sets permission role + optional `StaffMemberId`, marks invite accepted.
+
+**Hard rule:** `POST /api/v1/auth/sync` with `roleHint=business` does **not** create a new tenant. Owner onboarding uses `POST /api/v1/tenant/register`. Unknown business users without membership get `auth.business_access_denied`.
+
+Optional later: stamp `tenant_id` + `permission_role` into Auth0 `app_metadata` via Management API after accept (Login Action already reads `tenant_id`).
+
+### Local Dev accept (Auth0 disabled)
+
+Development seeder creates a pending Lekki Cuts invite:
+
+| | |
+|--|--|
+| Raw token | `dev-lekki-staff-invite-token` |
+| Invitee sub | `auth0\|local-staff` |
+| Email | `fela@lekki.cuts` |
+
+Open `http://localhost:5173/accept-invite?token=dev-lekki-staff-invite-token`, accept with the Dev staff sub, then set `devBusinessAuth0Sub` to `auth0|local-staff` to browse as practitioner.
+
 ## Local API development
 
 Set in `appsettings.Development.json`:

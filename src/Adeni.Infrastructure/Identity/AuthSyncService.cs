@@ -3,7 +3,6 @@ namespace Adeni.Infrastructure.Identity;
 using Adeni.Application.Auth;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
-using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -82,29 +81,10 @@ public sealed class AuthSyncService(AdeniDbContext dbContext) : IAuthSyncService
 
         if (existing is null)
         {
-            var tenant = new Tenant
-            {
-                Id = Guid.NewGuid(),
-                Name = request.Name ?? "New business",
-                Status = TenantStatus.Draft,
-                CreatedAt = DateTimeOffset.UtcNow
-            };
-
-            existing = new BusinessUser
-            {
-                Id = Guid.NewGuid(),
-                TenantId = tenant.Id,
-                Auth0Sub = request.Auth0Sub,
-                Role = PortalPermissionRoles.Owner,
-                CreatedAt = DateTimeOffset.UtcNow,
-                Tenant = tenant
-            };
-
-            dbContext.Tenants.Add(tenant);
-            dbContext.BusinessUsers.Add(existing);
+            // Owner onboarding creates the tenant via POST /api/v1/tenant/register.
+            // Invited staff must accept a portal invite — never spawn a tenant here.
+            return Result.Failure<UserProfileResponse>(ErrorCodes.BusinessAccessDeniedError());
         }
-
-        await dbContext.SaveChangesAsync(cancellationToken);
 
         return Result.Success(new UserProfileResponse(
             existing.Id,

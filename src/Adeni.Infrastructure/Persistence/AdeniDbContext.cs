@@ -33,6 +33,8 @@ public sealed class AdeniDbContext(
 
     public DbSet<BusinessUser> BusinessUsers => Set<BusinessUser>();
 
+    public DbSet<StaffPortalInvite> StaffPortalInvites => Set<StaffPortalInvite>();
+
     public DbSet<Tenant> Tenants => Set<Tenant>();
 
     public DbSet<BusinessProfile> BusinessProfiles => Set<BusinessProfile>();
@@ -188,6 +190,22 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.Auth0Sub).HasMaxLength(128);
             entity.Property(x => x.Role).HasMaxLength(32);
             entity.HasIndex(x => new { x.TenantId, x.StaffMemberId });
+            entity.HasOne(x => x.Tenant).WithMany().HasForeignKey(x => x.TenantId);
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<StaffPortalInvite>(entity =>
+        {
+            entity.ToTable("staff_portal_invites", "identity");
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => x.TokenHash).IsUnique();
+            entity.HasIndex(x => new { x.TenantId, x.Status });
+            entity.HasIndex(x => new { x.TenantId, x.Email });
+            entity.Property(x => x.Email).HasMaxLength(320);
+            entity.Property(x => x.PermissionRole).HasMaxLength(32);
+            entity.Property(x => x.TokenHash).HasMaxLength(64);
+            entity.Property(x => x.Status).HasMaxLength(32);
+            entity.Property(x => x.InvitedByAuth0Sub).HasMaxLength(128);
             entity.HasOne(x => x.Tenant).WithMany().HasForeignKey(x => x.TenantId);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
