@@ -28,13 +28,14 @@
 | 20 | Deployment, AI & observability | Planned |
 | 23 | Staff, cart & guests | ✅ Done |
 | 24 | Staff ops | ✅ Done |
-| **25** | **Staff accounts & permissions** | Draft |
+| **25** | **Staff accounts & permissions** | ✅ Done |
+| **26** | **Stripe NA payments** | ✅ Done |
 | — | Sprint 11d LLM agent | → Sprint 20 |
 | — | Staging deploy + Auth0 E2E | → Sprint 20 |
 | — | App Insights (Obs 1) | → Sprint 20 |
 | — | Booking notifications, auto-confirm, payments, waitlist | → Sprint 15 |
 
-**Next up:** Sprint 25d (**Roster invite / revoke UI**) — [spec](./specs/sprint-25-staff-accounts-permissions.md). Sprint 20 remains planned in parallel for deploy/observability.
+**Next up:** Sprint 27 — payment loop (check-in → paid). Sprint 20 (deploy/AI/observability) remains planned in parallel. See [roadmap-modules.md](./roadmap-modules.md).
 
 ---
 ## Sprint 0 — Foundation & dev tooling ✅
@@ -409,10 +410,20 @@ Invite staff to the portal; permission roles control nav + API. Floor `roleKey` 
 
 **Out of scope for 25:** payroll/tips, custom ACL builder, Auth0 Orgs-first, mobile staff login, moving staff out of booking schema.
 
+## Sprint 26 — Stripe NA payments ✅
+
+Dual-market card commerce: Stripe beside Paystack behind `IPaymentProvider`. Spec: [sprint-26-stripe-na-payments.md](./specs/sprint-26-stripe-na-payments.md).
+
+| Task | Status |
+|------|--------|
+| **26a–h** Stripe provider, market default, signed webhooks, docs/tests | Done |
+
+**Out of scope for 26:** Terminal, booking paid-states loop, POS bridge, SaaS Billing.
+
 ## Next up
 
-1. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, business AI agent, App Insights, ops dashboards
-2. Review Sprint 25 acceptance / polish if gaps surface after 25c+25d merge
-3. **Module roadmap** — [roadmap-modules.md](./roadmap-modules.md); money/queue/POS detail in [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md)
+1. **Sprint 27** — payment loop (`checked_in` → `paid`, paid-at-till) — no POS required; see [roadmap §4](./roadmap-workflows-payments-queue.md#4-close-the-payment-loop-without-building-pos)
+2. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, App Insights, ops dashboards (parallel)
+3. Queue + kiosk → POS bridge (later)
 
-Strategy reference: [product-strategy.md](./product-strategy.md) — [§3.5 Business types](./product-strategy.md#35-business-types--workflow-capabilities), [architecture.md](./architecture.md), [roadmap-modules.md](./roadmap-modules.md)
+Strategy reference: [roadmap-modules.md](./roadmap-modules.md), [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md), [product-strategy.md](./product-strategy.md)

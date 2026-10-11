@@ -9,7 +9,8 @@
       "defaultLocation": { "lat": 6.5244, "lng": 3.3792 },
       "languages": ["en"],
       "isLive": true,
-      "platformFeePercent": 0
+      "platformFeePercent": 0,
+      "paymentProvider": "paystack"
     },
     {
       "id": "ottawa",
@@ -19,7 +20,9 @@
       "timeZoneId": "America/Toronto",
       "defaultLocation": { "lat": 45.4215, "lng": -75.6972 },
       "languages": ["en", "fr"],
-      "isLive": false
+      "isLive": false,
+      "platformFeePercent": 0,
+      "paymentProvider": "stripe"
     }
   ]
 }

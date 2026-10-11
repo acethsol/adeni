@@ -1,8 +1,9 @@
-# Payments (Sprint 17)
+# Payments (Sprint 17 + Sprint 26)
 
 Non-custodial payment orchestration via licensed providers. Adeni stores **payment intent state** and provider references only — no wallet or balance tables.
 
-**Roadmap:** dual-market providers (Paystack + Stripe), closing the in-salon payment loop, and optional POS bridge — see [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md).
+**Roadmap:** closing the in-salon payment loop and optional POS bridge — see [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md).  
+**Stripe NA:** [Sprint 26 spec](./specs/sprint-26-stripe-na-payments.md).
 
 ## Architecture
 
@@ -10,7 +11,7 @@ Non-custodial payment orchestration via licensed providers. Adeni stores **payme
 |-------|----------|
 | Domain | `src/Adeni.Domain/Payments/` — `PaymentIntentRecord`, statuses, types, domain events |
 | Application | `src/Adeni.Application/Payments/` — `IPaymentProvider`, `IPaymentOrchestrator`, `IPlatformFeeCalculator` |
-| Infrastructure | `src/Adeni.Infrastructure/Payments/` — `PaymentOrchestrator`, `PaystackPaymentProvider`, `StubPaymentProvider` |
+| Infrastructure | `PaymentOrchestrator`, `PaystackPaymentProvider`, `StripePaymentProvider`, `MarketDefaultPaymentProvider`, `StubPaymentProvider` |
 | API | `src/Adeni.Api/Controllers/PaymentsController.cs` |
 
 Booking and other modules coordinate through **`IPaymentOrchestrator`** (Application port). Infrastructure modules do not reference each other directly (NetArchTest enforced).
@@ -31,6 +32,13 @@ Configure in `appsettings.json`:
     "PublicKey": "",
     "WebhookSecret": "",
     "BaseUrl": "https://api.paystack.co"
+  },
+  "Stripe": {
+    "SecretKey": "",
+    "PublishableKey": "",
+    "WebhookSecret": "",
+    "BaseUrl": "https://api.stripe.com",
+    "WebhookToleranceSeconds": 300
   }
 }
 ```
@@ -39,21 +47,33 @@ Configure in `appsettings.json`:
 |---------------------|----------|
 | `Stub` | Local stub checkout at `/checkout/stub/{reference}` |
 | `Paystack` | Paystack REST initialize + hosted `authorization_url` |
+| `Stripe` | Stripe Checkout Session + hosted `url` |
+| `MarketDefault` | Lagos / default → Paystack; Ottawa → Stripe; webhooks routed by signature header |
+
+`markets.json` documents intended provider per market (`paymentProvider`: `paystack` \| `stripe`). Runtime `MarketDefault` maps `ottawa` → Stripe and everything else → Paystack.
 
 ## Environment variables
 
 | Variable | Description |
 |----------|-------------|
-| `Payments__Provider` | `Stub` or `Paystack` |
+| `Payments__Provider` | `Stub`, `Paystack`, `Stripe`, or `MarketDefault` |
 | `Paystack__SecretKey` | Paystack secret key (server) |
 | `Paystack__PublicKey` | Paystack public key (client metadata if needed) |
 | `Paystack__WebhookSecret` | HMAC secret for `x-paystack-signature` verification |
+| `Stripe__SecretKey` | Stripe secret key (server) |
+| `Stripe__PublishableKey` | Stripe publishable key (client if needed) |
+| `Stripe__WebhookSecret` | Secret for `Stripe-Signature` verification |
+| `Stripe__WebhookToleranceSeconds` | Max signature timestamp skew (default 300; `0` disables) |
 
 ## Webhook setup
 
-1. In Paystack dashboard, set webhook URL to: `https://<api-host>/api/v1/payments/webhook`
-2. Copy the webhook secret into `Paystack:WebhookSecret`
-3. Paystack sends `charge.success`, `charge.failed`, and refund events — parsed into normalized payloads and applied idempotently (terminal states are not double-applied)
+Same URL for both providers: `https://<api-host>/api/v1/payments/webhook`
+
+1. **Paystack** — set webhook URL; copy secret into `Paystack:WebhookSecret`
+2. **Stripe** — add endpoint for `checkout.session.completed` (and refund events as needed); copy signing secret into `Stripe:WebhookSecret`
+3. With `MarketDefault`, both secrets must be set in Staging/Production
+
+Events are parsed into normalized payloads and applied idempotently (terminal states are not double-applied).
 
 ### Webhook security (Murphy)
 
@@ -61,11 +81,11 @@ From [@mattmurphyai](https://www.instagram.com/reel/DcbzcfyioD9/): never accept 
 
 | Rule | Implementation |
 |------|----------------|
-| Verify signature first | `PaystackPaymentProvider` — HMAC SHA512 of raw body vs `x-paystack-signature`; `FixedTimeEquals` |
+| Verify signature first | Paystack: HMAC SHA512 vs `x-paystack-signature`; Stripe: HMAC SHA256 of `{t}.{body}` vs `Stripe-Signature` v1; `FixedTimeEquals` |
 | Idempotent processing | `PaymentOrchestrator` — skip if intent already `Completed` / refunded |
-| Resolve by reference | Lookup `PaymentIntentRecord` by `providerReference`, not client-supplied intent id in webhook body |
+| Resolve by reference | Lookup `PaymentIntentRecord` by `providerReference` (Stripe Checkout Session id `cs_…`) |
 | No payload logging | Audit event type + reference only |
-| Staging/prod | `Paystack:WebhookSecret` must be set; stub confirm route dev-only |
+| Staging/prod | Provider webhook secret(s) required; stub confirm route dev-only |
 
 Full agent rules: [AGENTS.md](../AGENTS.md#webhook-security-murphy).  
 **Gap:** `POST /api/v1/subscriptions/webhook` still lacks verification — apply same rules when wiring subscription billing.
@@ -79,14 +99,15 @@ Full agent rules: [AGENTS.md](../AGENTS.md#webhook-security-murphy).
 | `GET` | `/api/v1/payments/{id}` | Get payment intent |
 | `GET` | `/api/v1/payments/ledger?tenantId=` | Business payment history |
 | `POST` | `/api/v1/payments/{id}/refund` | Initiate refund |
-| `POST` | `/api/v1/payments/webhook` | Paystack webhook |
+| `POST` | `/api/v1/payments/webhook` | Paystack / Stripe webhook |
 | `POST` | `/api/v1/payments/stub/confirm` | Stub checkout confirmation (dev) |
 
 ## Platform fee
 
 - Configured per market in `packages/shared/src/data/markets.json` → `platformFeePercent`
-- Lagos pilot default: **0%**
-- Fee amount stored on `PaymentIntentRecord.PlatformFeeAmount` and passed to Paystack metadata as `platform_fee`
+- Lagos / Ottawa pilot default: **0%**
+- Fee amount stored on `PaymentIntentRecord.PlatformFeeAmount` and passed as provider metadata (`platform_fee`)
+- **v1:** platform collects; Stripe Connect destination charges deferred
 
 ## Booking deposits
 
@@ -106,7 +127,7 @@ All state transitions are written via `IAuditLogWriter`:
 
 ## Error codes
 
-Client-facing errors use dotted `payment.*` codes (see `ErrorCodes.cs` and `packages/shared/src/i18n/errors.ts`). Raw Paystack errors are never exposed.
+Client-facing errors use dotted `payment.*` codes (see `ErrorCodes.cs` and `packages/shared/src/i18n/errors.ts`). Raw provider errors are never exposed.
 
 ## Business portal
 

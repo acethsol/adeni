@@ -89,15 +89,44 @@ Adeni remains **non-custodial**. Licensed providers move money; Adeni owns inten
 Adeni is system of record for **bookings + customer journey**.  
 POS (if any) owns **cash drawer / retail SKUs**. We **bridge**, we do not replace the register.
 
+### How this works for us (no POS required)
+
+Most beauty & wellness shops in the wedge do **not** need a full register. Adeni closes money the same way Fresha-style apps do: the **booking is the ticket**.
+
+**Example — nail salon, no POS**
+
+1. Client books Silk press online → pays **deposit** via Paystack (Lagos) or Stripe (Ottawa) → booking confirmed  
+2. Client arrives → staff taps **Check in** on portal/phone (or kiosk)  
+3. Service finishes → staff taps **Complete**  
+4. Remaining balance collected by one of:
+   - **Pay link / QR** on the staff phone (client pays on their phone)  
+   - **Card reader** later (Stripe Terminal / Paystack equivalent) — still Adeni-initiated  
+   - **Paid at till** — cash/transfer outside Adeni; staff marks paid + optional note  
+5. Adeni ledger shows deposit + balance + method → owner sees today’s GMV without Square/Clover  
+
+```
+Client phone          Staff phone / portal           Adeni API
+    |                        |                          |
+    |-- book + deposit ----->|-- create payment ------->| Paystack/Stripe
+    |<---- checkout URL -----|<-------------------------|
+    |                        |                          |
+    |-- arrive ------------->|-- Check in ------------->| status checked_in
+    |                        |-- Complete ------------->| status completed
+    |<-- pay link / QR ------|-- Collect balance ------>| payment intent
+    |                        |-- or Paid at till ------>| status paid
+```
+
+**What we are not doing without POS:** retail product SKUs, cash drawer reconciliation, employee till shifts. Those stay out until a salon already has a POS and wants the **bridge**.
+
 ### Three layers
 
 ```
 1. Online loop (now → harden)
    book → deposit / pay link → webhook → booking confirmed → ledger
 
-2. In-salon loop (next)
+2. In-salon loop (next — Sprint 27)
    check-in → service complete → collect remaining balance
-   (Stripe Terminal / Paystack in-person / “Paid at till”)
+   (pay link / Terminal / “Paid at till”)
 
 3. POS bridge (later)
    sync paid status / ticket total with Square, Lightspeed, Clover, …
@@ -105,6 +134,8 @@ POS (if any) owns **cash drawer / retail SKUs**. We **bridge**, we do not replac
 ```
 
 ### Booking money states (minimum professional loop)
+
+Today’s enum is still `Pending | Confirmed | Rejected | Cancelled`. Expand in the payment-loop sprint:
 
 ```
 confirmed → checked_in → completed → paid
@@ -114,7 +145,7 @@ confirmed → checked_in → completed → paid
 | Action | Meaning |
 |--------|---------|
 | Collect balance | Remaining amount after deposit via provider or Terminal |
-| Paid at till | Mark paid; optional external reference |
+| Paid at till | Mark paid; optional external reference — **works with zero POS** |
 | POS sync | Webhook/API from partner POS updates `paid` + reference |
 | Receipt / ledger | Always visible in Adeni portal |
 
@@ -181,10 +212,10 @@ Walk-in queue     ───┘
 | **Later** | POS bridge (Square first); Terminal collect-balance; tips/commission *reporting* | Payment loop trusted |
 | **Much later** | Class/capacity UX, payroll, full memberships | Proven demand |
 
-### Suggested sprint-shaped slices (not committed numbers)
+### Suggested sprint-shaped slices
 
-1. **Payments NA** — Stripe `IPaymentProvider` + market default  
-2. **Payment loop** — check-in / complete / paid (+ paid-at-till)  
+1. **Sprint 26 — Payments NA** — Stripe `IPaymentProvider` + market default — [spec](./specs/sprint-26-stripe-na-payments.md)  
+2. **Sprint 27 — Payment loop** — check-in / complete / paid (+ paid-at-till); no POS required  
 3. **Queue v1** — join, board, call next, no-show, ETA  
 4. **Kiosk mode** — mobile fullscreen check-in shell  
 5. **POS bridge v1** — Square paid-status sync + external reference  
