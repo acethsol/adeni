@@ -219,8 +219,8 @@ Walk-in queue     ───┘
 2b. **Sprint 28 — Billing documents** — numbered receipt/invoice + PDF + email (not BI) — [spec](./specs/sprint-28-billing-documents.md) ✅  
 
 
-3. **Queue v1** — join, board, call next, no-show, ETA  
-4. **Kiosk mode** — mobile fullscreen check-in shell  
+3. **Sprint 29 — Queue v1** — join, board, call next, no-show, ETA — [spec](./specs/sprint-29-queue-v1.md)  
+4. **Sprint 30 — Kiosk mode** — mobile fullscreen check-in shell  
 5. **POS bridge v1** — Square paid-status sync + external reference  
 
 Each slice gets its own `docs/specs/sprint-XX-*.md` before implementation.
