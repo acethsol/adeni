@@ -148,19 +148,19 @@ export class StaffComponent implements OnInit, OnDestroy {
     {
       id: "profile",
       label: "Profile",
-      title: "Team member profile",
-      lede: "The display name is shown to customers when they book.",
+      title: "Profile",
+      lede: "Photo and name as customers will see them.",
     },
     {
       id: "services",
       label: "Services",
-      title: "Assignable services",
+      title: "Services",
       lede: "Leave blank to allow every active service.",
     },
     {
       id: "hours",
       label: "Hours",
-      title: "Working hours",
+      title: "Hours",
       lede: "Skip to follow the business calendar.",
     },
   ];
