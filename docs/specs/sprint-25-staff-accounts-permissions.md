@@ -109,9 +109,9 @@ Exact matrices live in `@adeni/shared` as a single source of truth; adjust in re
 
 ### Slice 25d — Manage access UI
 
-- [ ] Staff card / edit: login status (`No access` / `Invite pending` / `Active`), Invite / Resend / Revoke.
-- [ ] Cannot revoke last `owner`; cannot demote self if sole owner.
-- [ ] Audit: invite, accept, revoke, role change (tenant audit or existing admin-style log for business mutations — at least structured Warning/Information logs with `PiiMasker` on email).
+- [x] Staff card / edit: login status (`No access` / `Invite pending` / `Active`), Invite / Resend / Revoke.
+- [x] Cannot revoke last `owner`; cannot demote self if sole owner.
+- [x] Audit: invite, accept, revoke, role change (tenant audit or existing admin-style log for business mutations — at least structured Warning/Information logs with `PiiMasker` on email).
 
 ---
 
@@ -224,7 +224,7 @@ Follow [architecture.md](../architecture.md): Booking stays roster/hours; Identi
 - [ ] Integration: invite → accept → `/auth/me` permissions; nav-relevant keys present
 - [ ] Integration: practitioner cannot `GET` other staff calendar; can get own
 - [ ] Integration: receptionist denied `portal.plan` / staff invite
-- [ ] Integration: cannot revoke last owner
+- [x] Integration: cannot revoke last owner
 - [ ] Tenant cross-access denial on invite accept with forged tenant
 
 Run: `dotnet test Adeni.slnx -c Release`

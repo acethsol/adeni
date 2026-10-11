@@ -173,12 +173,25 @@ export class StaffComponent implements OnInit {
   leaveReason = "";
 
   readonly inviteTarget = signal<StaffMember | null>(null);
+  readonly roleTarget = signal<StaffMember | null>(null);
   readonly inviteRoles = PORTAL_PERMISSION_ROLES.filter((r) => r !== "owner");
   inviteEmail = "";
   invitePermissionRole: Exclude<PortalPermissionRole, "owner"> = "practitioner";
+  editPermissionRole: Exclude<PortalPermissionRole, "owner"> = "practitioner";
 
   ngOnInit(): void {
     void this.load();
+  }
+
+  accessLabel(status: StaffMember["portalAccessStatus"]): string {
+    switch (status) {
+      case "active":
+        return "Active";
+      case "invite_pending":
+        return "Invite pending";
+      default:
+        return "No access";
+    }
   }
 
   openInvite(member: StaffMember): void {
@@ -192,6 +205,19 @@ export class StaffComponent implements OnInit {
 
   closeInvite(): void {
     this.inviteTarget.set(null);
+  }
+
+  openChangeRole(member: StaffMember): void {
+    if (!member.businessUserId || member.permissionRole === "owner") {
+      return;
+    }
+    this.roleTarget.set(member);
+    this.editPermissionRole = (member.permissionRole ??
+      defaultPermissionRoleForFloorRole(member.roleKey)) as Exclude<PortalPermissionRole, "owner">;
+  }
+
+  closeChangeRole(): void {
+    this.roleTarget.set(null);
   }
 
   async sendInvite(): Promise<void> {
@@ -212,8 +238,97 @@ export class StaffComponent implements OnInit {
       });
       this.feedback.success("Invite sent — check API logs for the accept link in Development.");
       this.closeInvite();
+      await this.load();
     } catch {
       this.feedback.error("Could not send invite.");
+    } finally {
+      this.busy.set(null);
+    }
+  }
+
+  async resendInvite(member: StaffMember): Promise<void> {
+    if (!member.portalInviteId) {
+      return;
+    }
+    this.busy.set(member.id);
+    try {
+      await this.feedback.runLoading(async () => {
+        await this.api.withAuthorizedClient(async (c) => {
+          await c.resendTenantAccessInvite(member.portalInviteId!);
+        });
+      });
+      this.feedback.success("Invite resent.");
+      await this.load();
+    } catch {
+      this.feedback.error("Could not resend invite.");
+    } finally {
+      this.busy.set(null);
+    }
+  }
+
+  async revokeAccess(member: StaffMember): Promise<void> {
+    const pending = member.portalAccessStatus === "invite_pending" && member.portalInviteId;
+    const active = member.portalAccessStatus === "active" && member.businessUserId;
+    if (!pending && !active) {
+      return;
+    }
+
+    const ok = await this.confirmDialog.confirm({
+      title: pending ? "Revoke invite?" : "Revoke portal access?",
+      message: pending
+        ? `${member.displayName} will no longer be able to accept this invite.`
+        : `${member.displayName} will lose portal login immediately. You can invite them again later.`,
+      confirmLabel: "Revoke",
+      danger: true,
+    });
+    if (!ok) {
+      return;
+    }
+
+    this.busy.set(member.id);
+    try {
+      await this.feedback.runLoading(async () => {
+        await this.api.withAuthorizedClient(async (c) => {
+          if (pending) {
+            await c.revokeTenantAccessInvite(member.portalInviteId!);
+          } else {
+            await c.revokeTenantAccessUser(member.businessUserId!);
+          }
+        });
+      });
+      this.feedback.success(pending ? "Invite revoked." : "Portal access revoked.");
+      await this.load();
+    } catch {
+      this.feedback.error(
+        pending
+          ? "Could not revoke invite."
+          : "Could not revoke access. The last owner cannot be removed.",
+      );
+    } finally {
+      this.busy.set(null);
+    }
+  }
+
+  async saveRoleChange(): Promise<void> {
+    const member = this.roleTarget();
+    if (!member?.businessUserId) {
+      return;
+    }
+
+    this.busy.set(member.id);
+    try {
+      await this.feedback.runLoading(async () => {
+        await this.api.withAuthorizedClient(async (c) => {
+          await c.updateTenantAccessUser(member.businessUserId!, {
+            permissionRole: this.editPermissionRole,
+          });
+        });
+      });
+      this.feedback.success("Permission role updated.");
+      this.closeChangeRole();
+      await this.load();
+    } catch {
+      this.feedback.error("Could not change role. The last owner cannot be demoted.");
     } finally {
       this.busy.set(null);
     }

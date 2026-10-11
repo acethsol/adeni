@@ -4,6 +4,7 @@ using Adeni.Application.Booking;
 using Adeni.Application.Caching;
 using Adeni.Application.Storage;
 using Adeni.Domain.Booking;
+using Adeni.Domain.Identity;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Booking;
 using Adeni.Infrastructure.Caching;
@@ -201,6 +202,54 @@ public sealed class StaffServiceTests
 
         var inherit = StaffScheduleHelper.EffectiveRules(business, []);
         Assert.Equal(business, inherit);
+    }
+
+    [Fact]
+    public async Task ListForTenant_IncludesPortalAccessStatus()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var tenantId = await SeedVerifiedTenantAsync(scope.ServiceProvider);
+        var staff = scope.ServiceProvider.GetRequiredService<IStaffService>();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+
+        var none = await staff.CreateAsync(tenantId, new CreateStaffMemberRequest("No", "Access"));
+        var pending = await staff.CreateAsync(tenantId, new CreateStaffMemberRequest("Invite", "Pending"));
+        var active = await staff.CreateAsync(tenantId, new CreateStaffMemberRequest("Has", "Login"));
+        Assert.True(none.IsSuccess && pending.IsSuccess && active.IsSuccess);
+
+        db.StaffPortalInvites.Add(new StaffPortalInvite
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            Email = "pending@example.com",
+            PermissionRole = PortalPermissionRoles.Practitioner,
+            StaffMemberId = pending.Value!.Id,
+            TokenHash = Convert.ToHexString(Guid.NewGuid().ToByteArray()).ToLowerInvariant(),
+            Status = StaffPortalInviteStatuses.Pending,
+            ExpiresAt = DateTimeOffset.UtcNow.AddDays(3),
+            CreatedAt = DateTimeOffset.UtcNow,
+            InvitedByAuth0Sub = "auth0|owner",
+        });
+        db.BusinessUsers.Add(new BusinessUser
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            Auth0Sub = "auth0|active-staff",
+            Role = PortalPermissionRoles.Practitioner,
+            StaffMemberId = active.Value!.Id,
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+        await db.SaveChangesAsync();
+
+        var list = await staff.ListForTenantAsync(tenantId);
+        Assert.Equal(PortalAccessStatuses.None, list.Single(x => x.Id == none.Value!.Id).PortalAccessStatus);
+        Assert.Equal(PortalAccessStatuses.InvitePending, list.Single(x => x.Id == pending.Value!.Id).PortalAccessStatus);
+        Assert.NotNull(list.Single(x => x.Id == pending.Value!.Id).PortalInviteId);
+        var activeRow = list.Single(x => x.Id == active.Value!.Id);
+        Assert.Equal(PortalAccessStatuses.Active, activeRow.PortalAccessStatus);
+        Assert.Equal(PortalPermissionRoles.Practitioner, activeRow.PermissionRole);
+        Assert.NotNull(activeRow.BusinessUserId);
     }
 
     private static async Task<Guid> SeedVerifiedTenantAsync(IServiceProvider provider)

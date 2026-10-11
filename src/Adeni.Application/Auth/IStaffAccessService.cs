@@ -23,6 +23,14 @@ public sealed record AcceptStaffInviteResponse(
     string PermissionRole,
     Guid? StaffMemberId);
 
+public sealed record TenantAccessUserResponse(
+    Guid BusinessUserId,
+    string PermissionRole,
+    Guid? StaffMemberId,
+    DateTimeOffset CreatedAt);
+
+public sealed record UpdateAccessUserRequest(string PermissionRole);
+
 public interface IStaffAccessService
 {
     Task<Result<StaffPortalInviteResponse>> InviteStaffMemberAsync(
@@ -56,5 +64,22 @@ public interface IStaffAccessService
         string auth0Sub,
         string? authenticatedEmail,
         AcceptStaffInviteRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<TenantAccessUserResponse>> ListUsersAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<TenantAccessUserResponse>> UpdateRoleAsync(
+        Guid tenantId,
+        Guid businessUserId,
+        UpdateAccessUserRequest request,
+        string actorAuth0Sub,
+        CancellationToken cancellationToken = default);
+
+    Task<Result> RevokeLoginAsync(
+        Guid tenantId,
+        Guid businessUserId,
+        string actorAuth0Sub,
         CancellationToken cancellationToken = default);
 }

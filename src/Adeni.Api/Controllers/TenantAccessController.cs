@@ -74,6 +74,58 @@ public sealed class TenantAccessController(
         return ApiResults.FromResult(result, () => NoContent(), HttpContext);
     }
 
+    [HttpGet("users")]
+    public async Task<IActionResult> ListUsers(CancellationToken cancellationToken)
+    {
+        if (ResolveTenantId() is not { } tenantId)
+        {
+            return Unauthorized();
+        }
+
+        var items = await staffAccess.ListUsersAsync(tenantId, cancellationToken);
+        return Ok(new { items });
+    }
+
+    [HttpPatch("users/{businessUserId:guid}")]
+    public async Task<IActionResult> UpdateRole(
+        Guid businessUserId,
+        [FromBody] UpdateAccessUserRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (ResolveAuth0Sub() is not { } auth0Sub || ResolveTenantId() is not { } tenantId)
+        {
+            return Unauthorized();
+        }
+
+        var result = await staffAccess.UpdateRoleAsync(
+            tenantId,
+            businessUserId,
+            request,
+            auth0Sub,
+            cancellationToken);
+
+        return ApiResults.FromResult(result, Ok, HttpContext);
+    }
+
+    [HttpDelete("users/{businessUserId:guid}")]
+    public async Task<IActionResult> RevokeLogin(
+        Guid businessUserId,
+        CancellationToken cancellationToken)
+    {
+        if (ResolveAuth0Sub() is not { } auth0Sub || ResolveTenantId() is not { } tenantId)
+        {
+            return Unauthorized();
+        }
+
+        var result = await staffAccess.RevokeLoginAsync(
+            tenantId,
+            businessUserId,
+            auth0Sub,
+            cancellationToken);
+
+        return ApiResults.FromResult(result, () => NoContent(), HttpContext);
+    }
+
     private string? ResolveAuth0Sub()
     {
         if (User.Identity?.IsAuthenticated == true)

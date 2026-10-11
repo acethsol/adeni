@@ -356,6 +356,15 @@
                 <span class="status-dot" [class.off]="!member.isActive">
                   {{ member.isActive ? "Bookable" : "Inactive" }}
                 </span>
+                <span
+                  class="access-dot"
+                  [attr.data-status]="member.portalAccessStatus"
+                >
+                  {{ accessLabel(member.portalAccessStatus) }}
+                  @if (member.permissionRole) {
+                    · {{ member.permissionRole }}
+                  }
+                </span>
               </div>
               @if (memberMeta(member); as meta) {
                 <span class="muted">{{ meta }}</span>
@@ -376,7 +385,39 @@
             <div class="row-actions">
               <a [routerLink]="['/staff', member.id, 'calendar']">Calendar</a>
               <button type="button" (click)="openEdit(member)">Edit</button>
-              <button type="button" (click)="openInvite(member)">Invite</button>
+              @if (member.portalAccessStatus === "none") {
+                <button type="button" (click)="openInvite(member)">Invite</button>
+              }
+              @if (member.portalAccessStatus === "invite_pending") {
+                <button
+                  type="button"
+                  [disabled]="busy() === member.id"
+                  (click)="resendInvite(member)"
+                >
+                  Resend
+                </button>
+                <button
+                  type="button"
+                  class="danger"
+                  [disabled]="busy() === member.id"
+                  (click)="revokeAccess(member)"
+                >
+                  Revoke invite
+                </button>
+              }
+              @if (member.portalAccessStatus === "active") {
+                @if (member.permissionRole !== "owner") {
+                  <button type="button" (click)="openChangeRole(member)">Role</button>
+                  <button
+                    type="button"
+                    class="danger"
+                    [disabled]="busy() === member.id"
+                    (click)="revokeAccess(member)"
+                  >
+                    Revoke login
+                  </button>
+                }
+              }
               @if (member.isActive) {
                 <button
                   type="button"
@@ -423,6 +464,35 @@
           (click)="sendInvite()"
         >
           Send invite
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (roleTarget(); as target) {
+    <div class="invite-backdrop" role="presentation" (click)="closeChangeRole()"></div>
+    <div class="invite-dialog" role="dialog" aria-labelledby="role-title">
+      <h3 id="role-title">Change permission role</h3>
+      <p class="muted">
+        Updates what {{ target.displayName }} can open in the portal. Floor booking role is unchanged.
+      </p>
+      <div class="field">
+        <label for="edit-role">Permission role</label>
+        <select id="edit-role" [(ngModel)]="editPermissionRole">
+          @for (role of inviteRoles; track role) {
+            <option [value]="role">{{ role }}</option>
+          }
+        </select>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn" (click)="closeChangeRole()">Cancel</button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="busy() === target.id"
+          (click)="saveRoleChange()"
+        >
+          Save role
         </button>
       </div>
     </div>
