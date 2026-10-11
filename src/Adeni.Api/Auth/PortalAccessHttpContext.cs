@@ -25,6 +25,27 @@ internal static class PortalAccessHttpContext
         && !access.Permissions.Contains(PortalPermissions.Bookings);
 
     /// <summary>
+    /// Resolves the staff filter for bookings APIs.
+    /// When self-only without a linked <see cref="PortalAccessSnapshot.StaffMemberId"/>,
+    /// returns <c>failClosed: true</c> (caller must deny — never treat as unscoped).
+    /// </summary>
+    public static (bool FailClosed, Guid? StaffMemberId) ResolveBookingsStaffScope(
+        PortalAccessSnapshot? access)
+    {
+        if (!IsBookingsSelfOnly(access))
+        {
+            return (false, null);
+        }
+
+        if (access!.StaffMemberId is { } linked)
+        {
+            return (false, linked);
+        }
+
+        return (true, null);
+    }
+
+    /// <summary>
     /// True when the user can administer the full roster (<c>portal.staff</c>).
     /// </summary>
     public static bool CanManageStaff(PortalAccessSnapshot? access) =>
