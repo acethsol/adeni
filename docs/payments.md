@@ -2,7 +2,8 @@
 
 Non-custodial payment orchestration via licensed providers. Adeni stores **payment intent state** and provider references only — no wallet or balance tables.
 
-**Roadmap:** dual-market providers (Paystack + Stripe), closing the in-salon payment loop, and optional POS bridge — see [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md).
+**Roadmap:** dual-market providers (Paystack + Stripe), closing the in-salon payment loop, and optional POS bridge — see [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md).  
+**Next build:** [Sprint 26 — Stripe NA](./specs/sprint-26-stripe-na-payments.md) (draft).
 
 ## Architecture
 
