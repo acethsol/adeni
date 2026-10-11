@@ -1,37 +1,43 @@
 import { Component, HostListener, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
-import { AdeniApiClient } from "@adeni/api-client";
-import type { KioskStatusResponse, QueueTicketResponse, ServiceOffering } from "@adeni/shared";
+import type { BookingResponse, KioskStatusResponse } from "@adeni/shared";
+import { formatSlotTime, hasCapability } from "@adeni/shared";
+import { AdeniCarbonIconComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
+
+const CONFIRMED = 1;
+const CHECKED_IN = 4;
 
 @Component({
   selector: "app-kiosk",
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, AdeniCarbonIconComponent],
   templateUrl: "./kiosk.component.html",
   styleUrl: "./kiosk.component.scss",
 })
 export class KioskComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
   private readonly router = inject(Router);
-  private readonly config = inject(ADENI_PORTAL_CONFIG);
 
   readonly loading = signal(true);
-  readonly submitting = signal(false);
+  readonly checkingIn = signal<string | null>(null);
   readonly exiting = signal(false);
   readonly error = signal<string | null>(null);
   readonly status = signal<KioskStatusResponse | null>(null);
-  readonly services = signal<ServiceOffering[]>([]);
-  readonly ticket = signal<QueueTicketResponse | null>(null);
+  readonly bookings = signal<BookingResponse[]>([]);
+  readonly checkedIn = signal<BookingResponse | null>(null);
   readonly exitOpen = signal(false);
-  readonly businessName = signal("Join the queue");
+  readonly walkInOpen = signal(false);
+  readonly businessName = signal("Check in");
+  readonly queueEnabled = signal(false);
 
-  displayName = "";
-  phone = "";
-  serviceOfferingId = "";
+  search = "";
   exitPin = "";
+  walkInName = "";
+  walkInPhone = "";
+
+  readonly formatSlotTime = formatSlotTime;
 
   ngOnInit(): void {
     void this.bootstrap();
@@ -47,57 +53,87 @@ export class KioskComponent implements OnInit {
     this.error.set(null);
     try {
       await this.api.withAuthorizedClient(async (client) => {
-        const [status, profile, services] = await Promise.all([
+        const [status, profile, bookings] = await Promise.all([
           client.getTenantKioskStatus(),
           client.getTenantProfile(),
-          client.getTenantServices(),
+          client.getTenantBookings(),
         ]);
         this.status.set(status);
-        this.businessName.set(profile.businessName || "Join the queue");
-        this.services.set(services.filter((s) => s.isActive !== false));
-        if (!status.queueEnabled) {
-          this.error.set("Walk-in queue is not enabled for this business.");
-        } else if (!status.slug) {
-          this.error.set("Add a primary location slug before opening kiosk.");
-        }
+        this.businessName.set(profile.businessName || "Check in");
+        this.queueEnabled.set(
+          status.queueEnabled || hasCapability(profile.capabilities, "walk_in_queue"),
+        );
+        this.bookings.set(bookings);
       });
     } catch {
-      this.error.set("Could not open kiosk.");
+      this.error.set("Could not open check-in.");
     } finally {
       this.loading.set(false);
     }
   }
 
-  async join(): Promise<void> {
-    const slug = this.status()?.slug;
-    if (!slug || !this.displayName.trim() || !this.phone.trim()) {
-      this.error.set("Enter your name and phone to join.");
+  arrivals(): BookingResponse[] {
+    const q = this.search.trim().toLowerCase();
+    const today = startOfLocalDay();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return this.bookings()
+      .filter((b) => b.status === CONFIRMED || b.status === CHECKED_IN)
+      .filter((b) => {
+        const start = new Date(b.startAt);
+        return start >= today && start < tomorrow;
+      })
+      .filter((b) => {
+        if (!q) return true;
+        const hay = [
+          b.customerName,
+          b.customerPhoneMasked,
+          b.serviceName,
+          b.staffDisplayName,
+          ...(b.guests?.map((g) => g.displayName) ?? []),
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return hay.includes(q);
+      })
+      .sort((a, b) => +new Date(a.startAt) - +new Date(b.startAt));
+  }
+
+  clientLabel(booking: BookingResponse): string {
+    return (
+      booking.customerName?.trim() ||
+      booking.guests?.find((g) => g.displayName?.trim())?.displayName?.trim() ||
+      "Guest"
+    );
+  }
+
+  async checkIn(booking: BookingResponse): Promise<void> {
+    if (booking.status === CHECKED_IN) {
+      this.checkedIn.set(booking);
       return;
     }
-
-    this.submitting.set(true);
+    this.checkingIn.set(booking.id);
     this.error.set(null);
     try {
-      const client = new AdeniApiClient({ baseUrl: this.config.apiBaseUrl });
-      const ticket = await client.joinPublicQueue(slug, {
-        displayName: this.displayName.trim(),
-        phone: this.phone.trim(),
-        serviceOfferingId: this.serviceOfferingId || undefined,
-        partySize: 1,
-      });
-      this.ticket.set(ticket);
+      const updated = await this.api.withAuthorizedClient((client) =>
+        client.checkInTenantBooking(booking.id),
+      );
+      this.bookings.update((list) =>
+        list.map((item) => (item.id === booking.id ? updated : item)),
+      );
+      this.checkedIn.set(updated);
     } catch {
-      this.error.set("Could not join the queue. Ask the front desk for help.");
+      this.error.set("Could not check this client in. Ask the front desk.");
     } finally {
-      this.submitting.set(false);
+      this.checkingIn.set(null);
     }
   }
 
-  joinAnother(): void {
-    this.ticket.set(null);
-    this.displayName = "";
-    this.phone = "";
-    this.serviceOfferingId = "";
+  nextGuest(): void {
+    this.checkedIn.set(null);
+    this.search = "";
     this.error.set(null);
   }
 
@@ -115,10 +151,10 @@ export class KioskComponent implements OnInit {
   async confirmExit(): Promise<void> {
     const hasPin = this.status()?.hasPin === true;
     if (!hasPin) {
-      if (!window.confirm("Leave kiosk mode?")) {
+      if (!window.confirm("Leave check-in mode?")) {
         return;
       }
-      await this.router.navigateByUrl("/queue");
+      await this.router.navigateByUrl("/bookings?tab=upcoming");
       return;
     }
 
@@ -137,11 +173,42 @@ export class KioskComponent implements OnInit {
         this.error.set("Incorrect PIN.");
         return;
       }
-      await this.router.navigateByUrl("/queue");
+      await this.router.navigateByUrl("/bookings?tab=upcoming");
     } catch {
       this.error.set("Could not verify PIN.");
     } finally {
       this.exiting.set(false);
     }
   }
+
+  async addWalkIn(): Promise<void> {
+    if (!this.walkInName.trim() || !this.walkInPhone.trim()) {
+      this.error.set("Name and phone are required for walk-ins.");
+      return;
+    }
+    this.checkingIn.set("walk-in");
+    this.error.set(null);
+    try {
+      await this.api.withAuthorizedClient((client) =>
+        client.addTenantQueueTicket({
+          displayName: this.walkInName.trim(),
+          phone: this.walkInPhone.trim(),
+          partySize: 1,
+        }),
+      );
+      this.walkInName = "";
+      this.walkInPhone = "";
+      this.walkInOpen.set(false);
+    } catch {
+      this.error.set("Could not add walk-in. Use the Queue page if this continues.");
+    } finally {
+      this.checkingIn.set(null);
+    }
+  }
+}
+
+function startOfLocalDay(): Date {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
 }

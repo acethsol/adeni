@@ -93,9 +93,8 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
       },
       {
         path: "/kiosk",
-        label: "Kiosk",
-        icon: "availability",
-        capability: "walk_in_queue",
+        label: "Check-in",
+        icon: "bookings",
         permission: ["portal.bookings", "portal.bookings.self"],
         shellHidden: true,
       },

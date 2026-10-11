@@ -8,6 +8,42 @@
     <p class="error-banner">{{ error() }}</p>
   }
 
+  <section class="card kiosk-row">
+    <div class="section-head">
+      <div>
+        <h3>Front-desk check-in</h3>
+        <p class="muted">
+          Fullscreen tablet for clients to check in when they arrive.
+          @if (kioskStatus()?.hasPin) {
+            Staff exit PIN is set.
+          } @else {
+            Optional staff exit PIN not set.
+          }
+        </p>
+      </div>
+      <button type="button" class="btn btn-primary" (click)="openKiosk()">
+        Open check-in
+      </button>
+    </div>
+    <div class="pin-fields">
+      <input
+        [(ngModel)]="kioskPin"
+        placeholder="Exit PIN (4–8 digits)"
+        inputmode="numeric"
+        maxlength="8"
+        autocomplete="off"
+      />
+      <button type="button" class="btn" [disabled]="savingPin()" (click)="saveKioskPin()">
+        {{ kioskStatus()?.hasPin ? "Update PIN" : "Set PIN" }}
+      </button>
+      @if (kioskStatus()?.hasPin) {
+        <button type="button" class="btn" [disabled]="savingPin()" (click)="clearKioskPin()">
+          Clear PIN
+        </button>
+      }
+    </div>
+  </section>
+
   @if (loading()) {
     <p class="muted">Loading bookings…</p>
   } @else if (visible().length === 0) {

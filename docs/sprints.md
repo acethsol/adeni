@@ -453,13 +453,13 @@ Walk-in queue on the same floor board as appointments: join → call → start �
 
 **Out of scope for 29:** Tablet kiosk (→ Sprint 30), Zenoti optimizer, anonymous walk-ins, SMS provider.
 
-## Sprint 30 — Kiosk mode ✅
+## Sprint 30 — Front-desk check-in kiosk ✅
 
-Fullscreen join-queue shell for front-desk tablets + optional staff exit PIN. Spec: [sprint-30-kiosk-mode.md](./specs/sprint-30-kiosk-mode.md).
+Fullscreen arrival check-in for booked clients + optional staff exit PIN; walk-in join secondary. Spec: [sprint-30-kiosk-mode.md](./specs/sprint-30-kiosk-mode.md).
 
 | Task | Status |
 |------|--------|
-| **30a–h** Portal `/kiosk`, PIN APIs, discover `?kiosk=1`, docs/tests | Done |
+| **30a–h** Portal `/kiosk` check-in, PIN APIs, Adeni styling, docs/tests | Done |
 
 **Out of scope for 30:** Flutter native kiosk, MDM locked-task packaging, SMS “you’re up”.
 

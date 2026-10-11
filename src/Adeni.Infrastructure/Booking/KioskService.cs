@@ -52,15 +52,6 @@ public sealed class KioskService(
             return Result.Failure<KioskStatusResponse>(Error.NotFound("Business profile"));
         }
 
-        if (!capabilities.HasCapability(
-                profile.BusinessType,
-                profile.CategorySlug,
-                BusinessCapability.WalkInQueue))
-        {
-            return Result.Failure<KioskStatusResponse>(
-                Error.Forbidden("Walk-in queue is not enabled for this business."));
-        }
-
         if (request.Pin is null)
         {
             profile.KioskExitPinHash = null;
@@ -81,10 +72,14 @@ public sealed class KioskService(
         await dbContext.SaveChangesAsync(cancellationToken);
 
         var slug = await ResolvePrimarySlugAsync(tenantId, cancellationToken);
+        var queueEnabled = capabilities.HasCapability(
+            profile.BusinessType,
+            profile.CategorySlug,
+            BusinessCapability.WalkInQueue);
         return Result.Success(new KioskStatusResponse(
             !string.IsNullOrEmpty(profile.KioskExitPinHash),
             slug,
-            QueueEnabled: true));
+            queueEnabled));
     }
 
     public async Task<Result<VerifyKioskPinResponse>> VerifyPinAsync(

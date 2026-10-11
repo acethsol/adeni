@@ -1,7 +1,8 @@
 import { Component, inject, OnInit, signal } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
-import { ActivatedRoute } from "@angular/router";
-import type { BookingResponse } from "@adeni/shared";
+import { FormsModule } from "@angular/forms";
+import { ActivatedRoute, Router } from "@angular/router";
+import type { BookingResponse, KioskStatusResponse } from "@adeni/shared";
 import { formatBookingStatus, formatSlotTime } from "@adeni/shared";
 import { AdeniCarbonIconComponent, AdeniConfirmService, PortalPageComponent } from "@adeni/ui";
 import { map } from "rxjs";
@@ -18,7 +19,7 @@ const PAID_STATUS = 6;
 @Component({
   selector: "app-bookings",
   standalone: true,
-  imports: [PortalPageComponent, PortalTabsComponent, AdeniCarbonIconComponent],
+  imports: [PortalPageComponent, PortalTabsComponent, AdeniCarbonIconComponent, FormsModule],
   templateUrl: "./bookings.component.html",
   styleUrl: "./bookings.component.scss",
 })
@@ -27,6 +28,7 @@ export class BookingsComponent implements OnInit {
   private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly session = inject(PortalSessionService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   readonly tab = toSignal(this.route.queryParamMap.pipe(map((params) => params.get("tab") ?? "pending")), {
     initialValue: this.route.snapshot.queryParamMap.get("tab") ?? "pending",
   });
@@ -34,7 +36,10 @@ export class BookingsComponent implements OnInit {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly bookings = signal<BookingResponse[]>([]);
+  readonly kioskStatus = signal<KioskStatusResponse | null>(null);
+  readonly savingPin = signal(false);
   readonly actionId = signal<string | null>(null);
+  kioskPin = "";
   readonly tabs = [
     { id: "pending", label: "Pending" },
     { id: "upcoming", label: "Upcoming" },
@@ -99,13 +104,59 @@ export class BookingsComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const items = await this.api.withAuthorizedClient((client) => client.getTenantBookings());
-      this.bookings.set(items);
+      await this.api.withAuthorizedClient(async (client) => {
+        const [items, kiosk] = await Promise.all([
+          client.getTenantBookings(),
+          client.getTenantKioskStatus().catch(() => null),
+        ]);
+        this.bookings.set(items);
+        this.kioskStatus.set(kiosk);
+      });
     } catch {
       this.error.set("Could not load bookings. Check API and dev business sub.");
       this.bookings.set([]);
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  openKiosk(): void {
+    void this.router.navigateByUrl("/kiosk");
+  }
+
+  async saveKioskPin(): Promise<void> {
+    if (!/^\d{4,8}$/.test(this.kioskPin.trim())) {
+      this.error.set("Exit PIN must be 4–8 digits.");
+      return;
+    }
+    this.savingPin.set(true);
+    this.error.set(null);
+    try {
+      const status = await this.api.withAuthorizedClient((client) =>
+        client.setTenantKioskPin(this.kioskPin.trim()),
+      );
+      this.kioskStatus.set(status);
+      this.kioskPin = "";
+    } catch {
+      this.error.set("Could not save exit PIN.");
+    } finally {
+      this.savingPin.set(false);
+    }
+  }
+
+  async clearKioskPin(): Promise<void> {
+    this.savingPin.set(true);
+    this.error.set(null);
+    try {
+      const status = await this.api.withAuthorizedClient((client) =>
+        client.setTenantKioskPin(null),
+      );
+      this.kioskStatus.set(status);
+      this.kioskPin = "";
+    } catch {
+      this.error.set("Could not clear exit PIN.");
+    } finally {
+      this.savingPin.set(false);
     }
   }
 

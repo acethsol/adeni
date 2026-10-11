@@ -65,18 +65,19 @@ public sealed class KioskServiceTests
     }
 
     [Fact]
-    public async Task Set_pin_rejects_non_queue_categories()
+    public async Task Set_pin_works_without_walk_in_queue_capability()
     {
         await using var provider = BuildProvider();
         using var scope = provider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
         var kiosk = scope.ServiceProvider.GetRequiredService<IKioskService>();
 
-        var tenantId = await SeedBarberAsync(db, categorySlug: "massage-bodywork");
+        var tenantId = await SeedBarberAsync(db, categorySlug: "yoga");
         var set = await kiosk.SetPinAsync(tenantId, new SetKioskPinRequest("1234"));
 
-        Assert.True(set.IsFailure);
-        Assert.Contains("not enabled", set.Error.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.True(set.IsSuccess, set.Error?.Message);
+        Assert.True(set.Value!.HasPin);
+        Assert.False(set.Value.QueueEnabled);
     }
 
     [Fact]

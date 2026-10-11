@@ -35,7 +35,9 @@ public sealed record BookingResponse(
     string? SettlementSource = null,
     DateTimeOffset? PaidAt = null,
     string? ExternalPaymentReference = null,
-    decimal? RemainingBalanceAmount = null);
+    decimal? RemainingBalanceAmount = null,
+    string? CustomerName = null,
+    string? CustomerPhoneMasked = null);
 
 public sealed record MarkBookingPaidRequest(
     string? ExternalReference = null,

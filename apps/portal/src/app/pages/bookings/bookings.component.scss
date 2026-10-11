@@ -32,3 +32,37 @@ h3 {
   margin: 0;
   padding: 0;
 }
+
+.kiosk-row {
+  margin-bottom: var(--cds-spacing-05);
+}
+
+.kiosk-row .section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--cds-spacing-05);
+  margin-bottom: var(--cds-spacing-04);
+}
+
+.kiosk-row h3 {
+  margin: 0 0 var(--cds-spacing-02);
+}
+
+.pin-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cds-spacing-03);
+}
+
+.pin-fields input {
+  min-width: 12rem;
+  flex: 1;
+  min-height: 2.5rem;
+  padding: 0 var(--cds-spacing-04);
+  border: none;
+  border-bottom: 1px solid var(--cds-border-strong);
+  background: var(--cds-field-01, var(--surface));
+  font: inherit;
+  color: var(--text);
+}

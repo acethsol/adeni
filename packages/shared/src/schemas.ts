@@ -483,6 +483,8 @@ export const bookingResponseSchema = z.object({
   paidAt: z.string().nullable().optional(),
   externalPaymentReference: z.string().nullable().optional(),
   remainingBalanceAmount: z.number().nullable().optional(),
+  customerName: z.string().nullable().optional(),
+  customerPhoneMasked: z.string().nullable().optional(),
 });
 
 export type BookingResponse = z.infer<typeof bookingResponseSchema>;
