@@ -14,6 +14,7 @@ public static class BookingServiceCollectionExtensions
         services.AddScoped<IAvailabilityService, AvailabilityService>();
         services.AddScoped<IBookingService, BookingService>();
         services.AddScoped<IWaitlistService, WaitlistService>();
+        services.AddScoped<IQueueService, QueueService>();
         services.AddScoped<IQuoteRequestService, QuoteRequestService>();
         return services;
     }

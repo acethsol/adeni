@@ -32,12 +32,13 @@
 | **26** | **Stripe NA payments** | ✅ Done |
 | **27** | **In-salon payment loop** | ✅ Done |
 | **28** | **Billing documents** | ✅ Done |
+| **29** | **Queue v1** | ✅ Done |
 | — | Sprint 11d LLM agent | → Sprint 20 |
 | — | Staging deploy + Auth0 E2E | → Sprint 20 |
 | — | App Insights (Obs 1) | → Sprint 20 |
 | — | Booking notifications, auto-confirm, payments, waitlist | → Sprint 15 |
 
-**Next up:** Sprint 28 — billing documents (receipts/invoices PDF+email) — [spec](./specs/sprint-28-billing-documents.md). Sprint 20 remains parallel. See [roadmap-modules.md](./roadmap-modules.md).
+**Next up:** Sprint 30 — kiosk mode. Sprint 20 parallel. See [roadmap-modules.md](./roadmap-modules.md).
 
 ---
 ## Sprint 0 — Foundation & dev tooling ✅
@@ -432,20 +433,30 @@ Check-in → complete → collect balance / paid-at-till + lightweight receipt. 
 
 **Out of scope for 27:** Terminal, POS bridge, tax/PDF invoices, queue/kiosk.
 
-## Sprint 28 — Billing documents (draft)
+## Sprint 28 — Billing documents ✅
 
 Numbered receipts & invoices with shareable page, PDF, and email — not a reporting/BI tool. Spec: [sprint-28-billing-documents.md](./specs/sprint-28-billing-documents.md).
 
 | Task | Status |
 |------|--------|
-| **28a–x** Document model, issue rules, PDF/email, public page, portal hooks | Draft |
+| **28a–x** Document model, issue rules, PDF/email, public page, portal hooks | Done |
 
 **Out of scope for 28:** Dashboards/BI, tax e-file, POS, QuickBooks sync.
 
+## Sprint 29 — Queue v1 ✅
+
+Walk-in queue on the same floor board as appointments: join → call → start → done / no-show. Spec: [sprint-29-queue-v1.md](./specs/sprint-29-queue-v1.md).
+
+| Task | Status |
+|------|--------|
+| **29a–o** Capability, QueueTicket, public join, staff board, ETA, notifications | Done |
+
+**Out of scope for 29:** Tablet kiosk (→ Sprint 30), Zenoti optimizer, anonymous walk-ins, SMS provider.
+
 ## Next up
 
-1. **Approve + implement Sprint 28** — [billing documents](./specs/sprint-28-billing-documents.md)
-2. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, App Insights, ops dashboards (parallel)
-3. Queue + kiosk → POS bridge (later)
+1. **Sprint 30** — kiosk mode (fullscreen shell)
+2. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, App Insights (parallel)
+3. POS bridge (later)
 
 Strategy reference: [roadmap-modules.md](./roadmap-modules.md), [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md), [product-strategy.md](./product-strategy.md)

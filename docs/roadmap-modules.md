@@ -26,7 +26,7 @@ Each major build still needs a `docs/specs/sprint-XX-*.md` before implementation
 
 | # | Module | Status | Horizon | Code / docs | Notes |
 |---|--------|--------|---------|-------------|-------|
-| 1 | **Queue & check-in** | Planned | Then | Booking + new queue capability | Walk-in + kiosk; see deep dive §5 |
+| 1 | **Queue & check-in** | Partial | Now | Booking + `walk_in_queue` | [Sprint 29](./specs/sprint-29-queue-v1.md) ✅; kiosk → 30 |
 | 2 | **Payments & finance** | Partial | Now → Next | `Payments`, [payments.md](./payments.md) | Orchestration yes; payroll no |
 | 2b | **POS bridge** | Planned | Later | Payments adapter | Integrate, don’t build POS |
 | 3 | **Verification / trust** | Partial | Now | Tenancy + Admin | Tiers shipped; deepen CAC/automation |
@@ -50,10 +50,10 @@ Each major build still needs a `docs/specs/sprint-XX-*.md` before implementation
 | | |
 |--|--|
 | **Job** | Walk-ins and “I’m here” without a second OS |
-| **Surfaces** | Customer join link · staff Next board · tablet **kiosk mode** |
+| **Surfaces** | Customer join link · staff Next board · tablet **kiosk mode** (30) |
 | **States** | Waiting → Called → In service → Done / No-show |
 | **Ties to** | Same floor board as appointments; then payment loop |
-| **Spec path** | Deep dive → then `sprint-XX-queue-checkin.md` |
+| **Spec path** | [sprint-29-queue-v1.md](./specs/sprint-29-queue-v1.md) |
 | **Owner** | TBD |
 
 ### 3.2 Payments, finance & POS bridge

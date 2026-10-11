@@ -83,6 +83,13 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         ],
       },
       {
+        path: "/queue",
+        label: "Queue",
+        icon: "availability",
+        capability: "walk_in_queue",
+        permission: ["portal.bookings", "portal.bookings.self"],
+      },
+      {
         path: "/calendar",
         label: "Calendar",
         icon: "availability",

@@ -31,11 +31,11 @@
     },
     "hair-grooming": {
       "defaultBusinessType": "scheduled_appointment",
-      "capabilities": ["calendar", "fixed_pricing", "reviews", "multi_service"]
+      "capabilities": ["calendar", "fixed_pricing", "reviews", "multi_service", "walk_in_queue"]
     },
     "nails": {
       "defaultBusinessType": "scheduled_appointment",
-      "capabilities": ["calendar", "fixed_pricing", "reviews", "multi_service"]
+      "capabilities": ["calendar", "fixed_pricing", "reviews", "multi_service", "walk_in_queue"]
     },
     "fitness": {
       "defaultBusinessType": "scheduled_appointment",
@@ -55,7 +55,7 @@
     },
     "barbers": {
       "defaultBusinessType": "scheduled_appointment",
-      "capabilities": ["calendar", "fixed_pricing", "reviews"]
+      "capabilities": ["calendar", "fixed_pricing", "reviews", "walk_in_queue"]
     },
     "hair-salons": {
       "defaultBusinessType": "scheduled_appointment",
@@ -63,7 +63,7 @@
     },
     "nail-spa": {
       "defaultBusinessType": "scheduled_appointment",
-      "capabilities": ["calendar", "fixed_pricing", "reviews", "multi_service"]
+      "capabilities": ["calendar", "fixed_pricing", "reviews", "multi_service", "walk_in_queue"]
     },
     "makeup-brows": {
       "defaultBusinessType": "scheduled_appointment",

@@ -2,6 +2,7 @@ import { Routes } from "@angular/router";
 import { PortalShellComponent } from "./layout/portal-shell.component";
 import { DashboardComponent } from "./pages/dashboard/dashboard.component";
 import { BookingsComponent } from "./pages/bookings/bookings.component";
+import { QueueComponent } from "./pages/queue/queue.component";
 import { ServicesComponent } from "./pages/services/services.component";
 import { StaffComponent } from "./pages/staff/staff.component";
 import { StaffCalendarComponent } from "./pages/staff/staff-calendar.component";
@@ -48,6 +49,12 @@ export const routes: Routes = [
         path: "bookings",
         component: BookingsComponent,
         title: "Bookings",
+        canActivate: [portalPermissionGuard],
+      },
+      {
+        path: "queue",
+        component: QueueComponent,
+        title: "Queue",
         canActivate: [portalPermissionGuard],
       },
       {
