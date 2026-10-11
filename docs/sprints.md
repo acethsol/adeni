@@ -396,7 +396,7 @@ Identity, roles, working hours, leave, staff calendar. **No payroll/tips** (Phas
 
 **Out of scope for 24:** payroll, tips, commissions, clock-in, staff Auth0 logins, auto-reassign on leave, financing.
 
-## Sprint 25 — Staff accounts & permissions (draft)
+## Sprint 25 — Staff accounts & permissions
 
 Invite staff to the portal; permission roles control nav + API. Floor `roleKey` stays a booking label. Spec: [sprint-25-staff-accounts-permissions.md](./specs/sprint-25-staff-accounts-permissions.md).
 

@@ -222,9 +222,10 @@ Follow [architecture.md](../architecture.md): Booking stays roster/hours; Identi
 - [ ] Unit: permission template matrix; floor `roleKey` → default permission role
 - [ ] Unit: AuthSync invited user attaches to tenant; unknown business user without invite → forbidden (no tenant create)
 - [ ] Integration: invite → accept → `/auth/me` permissions; nav-relevant keys present
-- [ ] Integration: practitioner cannot `GET` other staff calendar; can get own
+- [x] Integration: practitioner cannot `GET` other staff calendar; can get own (API `CanAccessStaffMember` + portal `staffCalendarGuard`)
 - [ ] Integration: receptionist denied `portal.plan` / staff invite
 - [x] Integration: cannot revoke last owner
+- [x] Self-only bookings accept/reject fail closed when `StaffMemberId` is missing
 - [ ] Tenant cross-access denial on invite accept with forged tenant
 
 Run: `dotnet test Adeni.slnx -c Release`

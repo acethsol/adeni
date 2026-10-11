@@ -2,9 +2,11 @@ namespace Adeni.Api.Controllers;
 
 using System.Security.Claims;
 using Adeni.Api.Auth;
+using Adeni.Api.Errors;
 using Adeni.Api.Middleware;
-using Adeni.Application.Booking;
 using Adeni.Application.Auth;
+using Adeni.Application.Booking;
+using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Auth;
 using Microsoft.AspNetCore.Mvc;
@@ -25,17 +27,12 @@ public sealed class TenantBookingsController(
             return Unauthorized();
         }
 
-        var access = PortalAccessHttpContext.Get(HttpContext);
-        Guid? staffScope = null;
-        if (PortalAccessHttpContext.IsBookingsSelfOnly(access))
+        var (failClosed, staffScope) = PortalAccessHttpContext.ResolveBookingsStaffScope(
+            PortalAccessHttpContext.Get(HttpContext));
+        if (failClosed)
         {
-            // Fail closed: practitioners without a linked staff member see nothing.
-            if (access?.StaffMemberId is not { } linkedStaffId)
-            {
-                return Ok(new { items = Array.Empty<object>() });
-            }
-
-            staffScope = linkedStaffId;
+            // Practitioners without a linked staff member see nothing.
+            return Ok(new { items = Array.Empty<object>() });
         }
 
         var items = await bookings.ListForTenantAsync(tenantId, staffScope, cancellationToken);
@@ -50,8 +47,14 @@ public sealed class TenantBookingsController(
             return Unauthorized();
         }
 
-        var requireStaff = ResolveSelfStaffScope();
-        var result = await bookings.AcceptAsync(tenantId, id, requireStaff, cancellationToken);
+        if (ResolveSelfStaffScopeOrDeny() is not { } scoped)
+        {
+            return ApiErrorResponseMapper.ToActionResult(
+                ErrorCodes.PermissionDeniedError(),
+                HttpContext);
+        }
+
+        var result = await bookings.AcceptAsync(tenantId, id, scoped.StaffScope, cancellationToken);
         return ApiResults.FromResult(result, Ok, HttpContext);
     }
 
@@ -66,21 +69,39 @@ public sealed class TenantBookingsController(
             return Unauthorized();
         }
 
-        var requireStaff = ResolveSelfStaffScope();
-        var result = await bookings.RejectAsync(tenantId, id, body.Reason, requireStaff, cancellationToken);
+        if (ResolveSelfStaffScopeOrDeny() is not { } scoped)
+        {
+            return ApiErrorResponseMapper.ToActionResult(
+                ErrorCodes.PermissionDeniedError(),
+                HttpContext);
+        }
+
+        var result = await bookings.RejectAsync(
+            tenantId,
+            id,
+            body.Reason,
+            scoped.StaffScope,
+            cancellationToken);
         return ApiResults.FromResult(result, Ok, HttpContext);
     }
 
-    private Guid? ResolveSelfStaffScope()
+    /// <summary>
+    /// Null means deny (self-only without linked staff). Otherwise staff scope to enforce
+    /// (null StaffScope = full bookings access).
+    /// </summary>
+    private SelfStaffScope? ResolveSelfStaffScopeOrDeny()
     {
-        var access = PortalAccessHttpContext.Get(HttpContext);
-        if (!PortalAccessHttpContext.IsBookingsSelfOnly(access))
+        var (failClosed, staffScope) = PortalAccessHttpContext.ResolveBookingsStaffScope(
+            PortalAccessHttpContext.Get(HttpContext));
+        if (failClosed)
         {
             return null;
         }
 
-        return access?.StaffMemberId;
+        return new SelfStaffScope(staffScope);
     }
+
+    private readonly record struct SelfStaffScope(Guid? StaffScope);
 
     private string? ResolveAuth0Sub()
     {
