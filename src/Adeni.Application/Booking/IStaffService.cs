@@ -113,6 +113,12 @@ public interface IStaffService
         Guid staffMemberId,
         CancellationToken cancellationToken = default);
 
+    Task<Result<StaffMemberResponse>> UpdateAvatarAsync(
+        Guid tenantId,
+        Guid staffMemberId,
+        string avatarImageKey,
+        CancellationToken cancellationToken = default);
+
     Task<Result<StaffMemberResponse>> ReplaceServicesAsync(
         Guid tenantId,
         Guid staffMemberId,

@@ -5,7 +5,8 @@ using Adeni.Domain.Common;
 public enum MediaUploadPurpose
 {
     Cover,
-    Gallery
+    Gallery,
+    StaffAvatar
 }
 
 public sealed record MediaUploadUrlRequest(

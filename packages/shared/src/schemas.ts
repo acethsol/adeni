@@ -1198,8 +1198,16 @@ export const mediaUploadPurposeSchema = z.enum([
   "Cover",
   "gallery",
   "Gallery",
+  "staff_avatar",
+  "staffAvatar",
   "quote_photo",
 ]);
+
+export const updateStaffAvatarRequestSchema = z.object({
+  avatarImageKey: z.string().min(1),
+});
+
+export type UpdateStaffAvatarRequest = z.infer<typeof updateStaffAvatarRequestSchema>;
 
 export const mediaUploadUrlRequestSchema = z.object({
   purpose: mediaUploadPurposeSchema,

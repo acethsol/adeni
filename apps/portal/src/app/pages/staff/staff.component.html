@@ -6,106 +6,219 @@
     <p class="error-banner">{{ error() }}</p>
   }
 
-  @if (!showForm()) {
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  } @else if (staff().length === 0) {
+    <section class="empty-state" aria-labelledby="staff-empty-title">
+      <h3 id="staff-empty-title">No team members yet</h3>
+      <p>Add people so customers can book by name.</p>
+      <button type="button" class="btn btn-primary" (click)="openCreate()">Add team member</button>
+    </section>
+  } @else {
     <div class="toolbar">
       <button type="button" class="btn btn-primary" (click)="openCreate()">Add team member</button>
     </div>
+    <div class="roster">
+      <p class="roster-count">
+        {{ staff().length }}
+        {{ staff().length === 1 ? "teammate" : "teammates" }}
+      </p>
+      <ul class="plain staff-grid">
+        @for (member of staff(); track member.id) {
+          <li class="org-card" [class.inactive]="!member.isActive">
+            <div class="org-avatar" [attr.data-tone]="roleTone(member.roleKey)" aria-hidden="true">
+              @if (member.avatarImageUrl) {
+                <img [src]="member.avatarImageUrl" [alt]="" />
+              } @else {
+                <span>{{ initials(member) }}</span>
+              }
+            </div>
+            <strong class="org-name">{{ member.displayName }}</strong>
+            <span class="org-role">{{ roleLabel(member.roleKey) }}</span>
+            @if (member.title?.trim()) {
+              <span class="org-title">{{ member.title }}</span>
+            }
+            <div class="org-meta">
+              <span class="status-dot" [class.off]="!member.isActive">
+                {{ member.isActive ? "Bookable" : "Inactive" }}
+              </span>
+              <span class="access-dot" [attr.data-status]="member.portalAccessStatus">
+                {{ accessLabel(member.portalAccessStatus) }}
+              </span>
+            </div>
+            <div class="org-actions">
+              <a [routerLink]="['/staff', member.id, 'calendar']">Calendar</a>
+              <button type="button" (click)="openEdit(member)">Edit</button>
+              @if (member.portalAccessStatus === "none") {
+                <button type="button" (click)="openInvite(member)">Invite</button>
+              }
+              @if (member.portalAccessStatus === "invite_pending") {
+                <button
+                  type="button"
+                  [disabled]="busy() === member.id"
+                  (click)="resendInvite(member)"
+                >
+                  Resend
+                </button>
+                <button
+                  type="button"
+                  class="danger"
+                  [disabled]="busy() === member.id"
+                  (click)="revokeAccess(member)"
+                >
+                  Revoke
+                </button>
+              }
+              @if (member.portalAccessStatus === "active" && member.permissionRole !== "owner") {
+                <button type="button" (click)="openChangeRole(member)">Role</button>
+                <button
+                  type="button"
+                  class="danger"
+                  [disabled]="busy() === member.id"
+                  (click)="revokeAccess(member)"
+                >
+                  Revoke login
+                </button>
+              }
+              @if (member.isActive) {
+                <button
+                  type="button"
+                  class="danger"
+                  [disabled]="busy() === member.id"
+                  (click)="deactivate(member)"
+                >
+                  Deactivate
+                </button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    </div>
   }
 
-  @if (showForm()) {
-    <section class="card form">
-      @if (isCreateWizard()) {
-        <adeni-wizard
-          [steps]="createWizardSteps"
-          [activeId]="formTab()"
-          ariaLabel="Add a teammate"
-          [allowJump]="true"
-          (stepSelect)="wizardGo($event)"
-        >
-          <ng-container [ngTemplateOutlet]="staffPanels" />
-          <div wizardActions class="actions">
-            <button type="button" class="btn" (click)="cancelForm()">Cancel</button>
-            @if (createStepIndex() > 0) {
-              <button type="button" class="btn" (click)="wizardBack()">Back</button>
-            }
-            @if (!isLastCreateStep()) {
-              @if (formTab() === "services" || formTab() === "hours") {
-                <button type="button" class="btn" (click)="wizardSkip()">Skip</button>
-              }
-              <button type="button" class="btn btn-primary" (click)="wizardNext()">Next</button>
-            } @else {
-              <button
-                type="button"
-                class="btn btn-primary"
-                [disabled]="busy() !== null"
-                (click)="save()"
-              >
-                Add teammate
-              </button>
-            }
-          </div>
-        </adeni-wizard>
-      } @else {
-        <h3>Edit team member</h3>
-        <div class="form-tabs" role="tablist" aria-label="Staff sections">
-          <button
-            type="button"
-            role="tab"
-            [attr.aria-selected]="formTab() === 'profile'"
-            [class.active]="formTab() === 'profile'"
-            (click)="setFormTab('profile')"
-          >
-            Profile
-          </button>
-          <button
-            type="button"
-            role="tab"
-            [attr.aria-selected]="formTab() === 'services'"
-            [class.active]="formTab() === 'services'"
-            (click)="setFormTab('services')"
-          >
-            Services
-          </button>
-          <button
-            type="button"
-            role="tab"
-            [attr.aria-selected]="formTab() === 'hours'"
-            [class.active]="formTab() === 'hours'"
-            (click)="setFormTab('hours')"
-          >
-            Hours
-          </button>
-          <button
-            type="button"
-            role="tab"
-            [attr.aria-selected]="formTab() === 'leave'"
-            [class.active]="formTab() === 'leave'"
-            (click)="setFormTab('leave')"
-          >
-            Leave
-          </button>
-        </div>
+  <adeni-modal
+    [open]="showForm()"
+    [title]="editingId() ? 'Edit team member' : 'Add team member'"
+    [subtitle]="
+      editingId()
+        ? 'Update profile, services, hours, and leave.'
+        : 'The display name is shown to customers when they book.'
+    "
+    size="lg"
+    [hasFooter]="false"
+    (closed)="cancelForm()"
+  >
+    @if (isCreateWizard()) {
+      <adeni-wizard
+        [steps]="createWizardSteps"
+        [activeId]="formTab()"
+        ariaLabel="Add a teammate"
+        [allowJump]="true"
+        (stepSelect)="wizardGo($event)"
+      >
         <ng-container [ngTemplateOutlet]="staffPanels" />
-        <div class="actions">
-          <button
-            type="button"
-            class="btn btn-primary"
-            [disabled]="busy() !== null"
-            (click)="save()"
-          >
-            Save
-          </button>
+        <div wizardActions class="actions">
           <button type="button" class="btn" (click)="cancelForm()">Cancel</button>
-          @if (editingId(); as id) {
-            <a class="btn" [routerLink]="['/staff', id, 'calendar']">Open calendar</a>
+          @if (createStepIndex() > 0) {
+            <button type="button" class="btn" (click)="wizardBack()">Back</button>
+          }
+          @if (!isLastCreateStep()) {
+            @if (formTab() === "services" || formTab() === "hours") {
+              <button type="button" class="btn" (click)="wizardSkip()">Skip</button>
+            }
+            <button type="button" class="btn btn-primary" (click)="wizardNext()">Next</button>
+          } @else {
+            <button
+              type="button"
+              class="btn btn-primary"
+              [disabled]="busy() !== null"
+              (click)="save()"
+            >
+              Add teammate
+            </button>
           }
         </div>
-      }
-    </section>
+      </adeni-wizard>
+    } @else {
+      <div class="form-tabs" role="tablist" aria-label="Staff sections">
+        <button
+          type="button"
+          role="tab"
+          [attr.aria-selected]="formTab() === 'profile'"
+          [class.active]="formTab() === 'profile'"
+          (click)="setFormTab('profile')"
+        >
+          Profile
+        </button>
+        <button
+          type="button"
+          role="tab"
+          [attr.aria-selected]="formTab() === 'services'"
+          [class.active]="formTab() === 'services'"
+          (click)="setFormTab('services')"
+        >
+          Services
+        </button>
+        <button
+          type="button"
+          role="tab"
+          [attr.aria-selected]="formTab() === 'hours'"
+          [class.active]="formTab() === 'hours'"
+          (click)="setFormTab('hours')"
+        >
+          Hours
+        </button>
+        <button
+          type="button"
+          role="tab"
+          [attr.aria-selected]="formTab() === 'leave'"
+          [class.active]="formTab() === 'leave'"
+          (click)="setFormTab('leave')"
+        >
+          Leave
+        </button>
+      </div>
+      <ng-container [ngTemplateOutlet]="staffPanels" />
+      <div class="actions">
+        <button type="button" class="btn" (click)="cancelForm()">Cancel</button>
+        @if (editingId(); as id) {
+          <a class="btn" [routerLink]="['/staff', id, 'calendar']">Open calendar</a>
+        }
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="busy() !== null"
+          (click)="save()"
+        >
+          Save
+        </button>
+      </div>
+    }
 
     <ng-template #staffPanels>
       @if (formTab() === "profile") {
         <div class="tab-panel" role="tabpanel">
+          <div class="avatar-field">
+            <div class="org-avatar preview" [attr.data-tone]="roleTone(draft.roleKey)" aria-hidden="true">
+              @if (avatarPreviewUrl()) {
+                <img [src]="avatarPreviewUrl()!" alt="" />
+              } @else {
+                <span>{{ draftInitials() }}</span>
+              }
+            </div>
+            <div class="avatar-copy">
+              <label for="staff-avatar">Photo</label>
+              <p class="muted">JPEG, PNG, or WebP · max 5 MB</p>
+              <input
+                id="staff-avatar"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                (change)="onAvatarSelected($event)"
+              />
+            </div>
+          </div>
+
           <div class="row">
             <div class="field">
               <label>First name</label>
@@ -207,57 +320,39 @@
                   Copy business hours
                 </button>
                 <button type="button" class="btn" (click)="clearStaffHours()">
-                  Inherit business hours
+                  Follow business hours
                 </button>
               </div>
             </div>
-            <p class="muted">
-              Turn every day off (or use Inherit business hours) to follow the business calendar.
-            </p>
-            <table class="hours-table">
-              <thead>
-                <tr>
-                  <th>Day</th>
-                  <th>On</th>
-                  <th>Open</th>
-                  <th>Close</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (row of hourRows; track row.dayOfWeek) {
-                  <tr>
-                    <td>{{ dayLabels[row.dayOfWeek] }}</td>
-                    <td>
-                      <label class="cds-toggle hours-day-toggle">
-                        <input
-                          type="checkbox"
-                          role="switch"
-                          [name]="'staff-day-on-' + row.dayOfWeek"
-                          [ngModel]="!row.closed"
-                          (ngModelChange)="setDayOn(row, $event)"
-                          [attr.aria-label]="dayLabels[row.dayOfWeek] + ' on'"
-                        />
-                        <span class="cds-toggle__track" aria-hidden="true"></span>
-                      </label>
-                    </td>
-                    <td>
-                      <input type="time" [(ngModel)]="row.openTime" [disabled]="row.closed" />
-                    </td>
-                    <td>
-                      <input type="time" [(ngModel)]="row.closeTime" [disabled]="row.closed" />
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+            <div class="hours-grid">
+              @for (row of hourRows; track row.dayOfWeek) {
+                <div class="hours-row" [class.closed]="row.closed">
+                  <label class="day">
+                    <input
+                      type="checkbox"
+                      [checked]="!row.closed"
+                      (change)="setDayOn(row, $any($event.target).checked)"
+                    />
+                    {{ dayLabels[row.dayOfWeek] }}
+                  </label>
+                  @if (!row.closed) {
+                    <input type="time" [(ngModel)]="row.openTime" />
+                    <span class="to">to</span>
+                    <input type="time" [(ngModel)]="row.closeTime" />
+                  } @else {
+                    <span class="muted">Off</span>
+                  }
+                </div>
+              }
+            </div>
           </div>
         </div>
       }
 
-      @if (formTab() === "leave") {
+      @if (formTab() === "leave" && editingId()) {
         <div class="tab-panel" role="tabpanel">
-          <div class="leave-block flat">
-            <h4>Leave / time off</h4>
+          <div class="leave-block">
+            <h4>Leave</h4>
             <div class="row">
               <div class="field">
                 <label>Start</label>
@@ -273,176 +368,33 @@
               <input [(ngModel)]="leaveReason" maxlength="200" />
             </div>
             <button type="button" class="btn" (click)="addLeave()">Add leave</button>
-            @if (leaveItems().length > 0) {
-              <ul class="leave-list">
-                @for (leave of leaveItems(); track leave.id) {
-                  <li>
-                    <span>
-                      {{ formatWhen(leave.startAt) }} → {{ formatWhen(leave.endAt) }}
-                      @if (leave.reason) {
-                        · {{ leave.reason }}
-                      }
-                      @if (leave.conflictingBookingIds.length > 0) {
-                        <em class="warn">
-                          · {{ leave.conflictingBookingIds.length }} booking conflict(s)
-                        </em>
-                      }
-                    </span>
-                    <button type="button" class="btn btn-danger" (click)="removeLeave(leave)">
-                      Remove
-                    </button>
-                  </li>
-                }
-              </ul>
-            } @else {
-              <p class="muted" style="margin-top: 0.75rem">No leave blocks yet.</p>
-            }
+            <ul class="plain leave-list">
+              @for (item of leaveItems(); track item.id) {
+                <li>
+                  <span>
+                    {{ item.startAt | date: "medium" }} – {{ item.endAt | date: "medium" }}
+                    @if (item.reason) {
+                      · {{ item.reason }}
+                    }
+                  </span>
+                  <button type="button" class="danger" (click)="removeLeave(item)">Remove</button>
+                </li>
+              }
+            </ul>
           </div>
         </div>
       }
-
     </ng-template>
-  }
+  </adeni-modal>
 
-  @if (loading()) {
-    <p class="muted">Loading…</p>
-  } @else if (staff().length === 0 && !showForm()) {
-    <section class="empty-stage" aria-labelledby="staff-empty-title">
-      <div class="empty-visual" aria-hidden="true">
-        <span class="silhouette s1"></span>
-        <span class="silhouette s2"></span>
-        <span class="silhouette s3"></span>
-      </div>
-      <h3 id="staff-empty-title">Your chairs are empty</h3>
-      <p>
-        Put a face to the fade, the set, the massage. Guests book people they trust —
-        add your stylists, barbers, and therapists so they can choose a favourite or
-        “Any available.”
-      </p>
-      <ul class="empty-perks">
-        <li>Named booking on your public page</li>
-        <li>Hours and leave that protect their calendar</li>
-        <li>Services tied to who can actually do them</li>
-      </ul>
-      <button type="button" class="btn btn-primary" (click)="openCreate()">
-        Add your first teammate
-      </button>
-    </section>
-  } @else if (staff().length > 0 && !showForm()) {
-    <div class="roster">
-      <div class="roster-head">
-        <p class="roster-kicker">On the floor</p>
-        <p class="roster-count">
-          {{ staff().length }}
-          {{ staff().length === 1 ? "teammate" : "teammates" }}
-        </p>
-      </div>
-      <ul class="plain staff-list">
-        @for (member of staff(); track member.id) {
-          <li class="staff-card" [class.inactive]="!member.isActive">
-            <div
-              class="avatar"
-              [attr.data-tone]="roleTone(member.roleKey)"
-              aria-hidden="true"
-            >
-              {{ initials(member) }}
-            </div>
-            <div class="copy">
-              <div class="title-row">
-                <strong>{{ member.displayName }}</strong>
-                <span class="role-tag" [attr.data-tone]="roleTone(member.roleKey)">
-                  {{ roleLabel(member.roleKey) }}
-                </span>
-                <span class="status-dot" [class.off]="!member.isActive">
-                  {{ member.isActive ? "Bookable" : "Inactive" }}
-                </span>
-                <span
-                  class="access-dot"
-                  [attr.data-status]="member.portalAccessStatus"
-                >
-                  {{ accessLabel(member.portalAccessStatus) }}
-                  @if (member.permissionRole) {
-                    · {{ member.permissionRole }}
-                  }
-                </span>
-              </div>
-              @if (memberMeta(member); as meta) {
-                <span class="muted">{{ meta }}</span>
-              }
-              <div class="service-chips">
-                @if (member.serviceOfferingIds.length === 0) {
-                  <span class="chip soft">All services</span>
-                } @else {
-                  @for (name of servicePreview(member); track name) {
-                    <span class="chip">{{ name }}</span>
-                  }
-                  @if (serviceOverflow(member) > 0) {
-                    <span class="chip soft">+{{ serviceOverflow(member) }}</span>
-                  }
-                }
-              </div>
-            </div>
-            <div class="row-actions">
-              <a [routerLink]="['/staff', member.id, 'calendar']">Calendar</a>
-              <button type="button" (click)="openEdit(member)">Edit</button>
-              @if (member.portalAccessStatus === "none") {
-                <button type="button" (click)="openInvite(member)">Invite</button>
-              }
-              @if (member.portalAccessStatus === "invite_pending") {
-                <button
-                  type="button"
-                  [disabled]="busy() === member.id"
-                  (click)="resendInvite(member)"
-                >
-                  Resend
-                </button>
-                <button
-                  type="button"
-                  class="danger"
-                  [disabled]="busy() === member.id"
-                  (click)="revokeAccess(member)"
-                >
-                  Revoke invite
-                </button>
-              }
-              @if (member.portalAccessStatus === "active") {
-                @if (member.permissionRole !== "owner") {
-                  <button type="button" (click)="openChangeRole(member)">Role</button>
-                  <button
-                    type="button"
-                    class="danger"
-                    [disabled]="busy() === member.id"
-                    (click)="revokeAccess(member)"
-                  >
-                    Revoke login
-                  </button>
-                }
-              }
-              @if (member.isActive) {
-                <button
-                  type="button"
-                  class="danger"
-                  [disabled]="busy() === member.id"
-                  (click)="deactivate(member)"
-                >
-                  Deactivate
-                </button>
-              }
-            </div>
-          </li>
-        }
-      </ul>
-    </div>
-  }
-
-  @if (inviteTarget(); as target) {
-    <div class="invite-backdrop" role="presentation" (click)="closeInvite()"></div>
-    <div class="invite-dialog" role="dialog" aria-labelledby="invite-title">
-      <h3 id="invite-title">Invite to portal</h3>
-      <p class="muted">
-        {{ target.displayName }} can log in with the permission role you choose. This does not create a
-        new business.
-      </p>
+  <adeni-modal
+    [open]="inviteTarget() !== null"
+    title="Invite to portal"
+    subtitle="They can log in with the permission role you choose. This does not create a new business."
+    [hasFooter]="false"
+    (closed)="closeInvite()"
+  >
+    @if (inviteTarget(); as target) {
       <div class="field">
         <label for="invite-email">Email</label>
         <input id="invite-email" type="email" [(ngModel)]="inviteEmail" autocomplete="email" />
@@ -466,16 +418,17 @@
           Send invite
         </button>
       </div>
-    </div>
-  }
+    }
+  </adeni-modal>
 
-  @if (roleTarget(); as target) {
-    <div class="invite-backdrop" role="presentation" (click)="closeChangeRole()"></div>
-    <div class="invite-dialog" role="dialog" aria-labelledby="role-title">
-      <h3 id="role-title">Change permission role</h3>
-      <p class="muted">
-        Updates what {{ target.displayName }} can open in the portal. Floor booking role is unchanged.
-      </p>
+  <adeni-modal
+    [open]="roleTarget() !== null"
+    title="Change permission role"
+    subtitle="Updates what they can open in the portal. Floor booking role is unchanged."
+    [hasFooter]="false"
+    (closed)="closeChangeRole()"
+  >
+    @if (roleTarget(); as target) {
       <div class="field">
         <label for="edit-role">Permission role</label>
         <select id="edit-role" [(ngModel)]="editPermissionRole">
@@ -495,6 +448,6 @@
           Save role
         </button>
       </div>
-    </div>
-  }
+    }
+  </adeni-modal>
 </app-portal-page>

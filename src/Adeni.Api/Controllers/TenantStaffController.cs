@@ -80,6 +80,26 @@ public sealed class TenantStaffController(
         return ApiResults.FromResult(result, () => NoContent(), HttpContext);
     }
 
+    [HttpPut("{id:guid}/avatar")]
+    [RequiresPortalPermission(PortalPermissions.Staff)]
+    public async Task<IActionResult> UpdateAvatar(
+        Guid id,
+        [FromBody] UpdateStaffAvatarRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
+        {
+            return Unauthorized();
+        }
+
+        var result = await staff.UpdateAvatarAsync(
+            tenantId,
+            id,
+            request.AvatarImageKey,
+            cancellationToken);
+        return ApiResults.FromResult(result, Ok, HttpContext);
+    }
+
     [HttpPut("{id:guid}/services")]
     [RequiresPortalPermission(PortalPermissions.Staff)]
     public async Task<IActionResult> ReplaceServices(
@@ -303,3 +323,5 @@ public sealed class TenantStaffController(
 public sealed record ReplaceStaffServicesRequest(IReadOnlyList<Guid>? ServiceOfferingIds);
 
 public sealed record ReplaceStaffHoursRequest(IReadOnlyList<WeeklyAvailabilityRule>? Items);
+
+public sealed record UpdateStaffAvatarRequest(string AvatarImageKey);

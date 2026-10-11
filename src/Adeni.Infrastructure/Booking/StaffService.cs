@@ -274,6 +274,46 @@ public sealed class StaffService(
         return Result.Success();
     }
 
+    public async Task<Result<StaffMemberResponse>> UpdateAvatarAsync(
+        Guid tenantId,
+        Guid staffMemberId,
+        string avatarImageKey,
+        CancellationToken cancellationToken = default)
+    {
+        var storageKey = avatarImageKey?.Trim();
+        if (string.IsNullOrWhiteSpace(storageKey))
+        {
+            return Result.Failure<StaffMemberResponse>(Error.Validation("Avatar image key is required."));
+        }
+
+        var expectedPrefix = $"tenants/{tenantId:N}/staff/";
+        if (!storageKey.StartsWith(expectedPrefix, StringComparison.Ordinal))
+        {
+            return Result.Failure<StaffMemberResponse>(
+                Error.Validation("Avatar image key is not valid for this business."));
+        }
+
+        if (!await fileStorage.ExistsAsync(storageKey, cancellationToken))
+        {
+            return Result.Failure<StaffMemberResponse>(
+                Error.Validation("Avatar upload was not found. Upload the file before saving."));
+        }
+
+        var entity = await dbContext.StaffMembers
+            .Include(x => x.ServiceLinks)
+            .FirstOrDefaultAsync(x => x.Id == staffMemberId && x.TenantId == tenantId, cancellationToken);
+        if (entity is null)
+        {
+            return Result.Failure<StaffMemberResponse>(Error.NotFound("Staff member"));
+        }
+
+        entity.AvatarImageKey = storageKey;
+        entity.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await InvalidatePublicStaffCacheAsync(tenantId, cancellationToken);
+        return Result.Success(await ToResponseAsync(entity, cancellationToken));
+    }
+
     public async Task<Result<StaffMemberResponse>> ReplaceServicesAsync(
         Guid tenantId,
         Guid staffMemberId,

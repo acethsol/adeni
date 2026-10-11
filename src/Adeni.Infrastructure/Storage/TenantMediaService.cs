@@ -51,7 +51,12 @@ public sealed class TenantMediaService(
         }
 
         var extension = ExtensionForContentType(request.ContentType);
-        var folder = purpose == MediaUploadPurpose.Gallery ? "gallery" : "covers";
+        var folder = purpose switch
+        {
+            MediaUploadPurpose.Gallery => "gallery",
+            MediaUploadPurpose.StaffAvatar => "staff",
+            _ => "covers",
+        };
         var storageKey = $"tenants/{tenantId:N}/{folder}/{Guid.NewGuid():N}{extension}";
         var ttl = TimeSpan.FromMinutes(15);
         var uploadUrl = await fileStorage.GetUploadUrlAsync(storageKey, request.ContentType, ttl, cancellationToken);
@@ -263,6 +268,13 @@ public sealed class TenantMediaService(
         if (value.Trim().Equals("gallery", StringComparison.OrdinalIgnoreCase))
         {
             purpose = MediaUploadPurpose.Gallery;
+            return true;
+        }
+
+        if (value.Trim().Equals("staff_avatar", StringComparison.OrdinalIgnoreCase)
+            || value.Trim().Equals("staffAvatar", StringComparison.OrdinalIgnoreCase))
+        {
+            purpose = MediaUploadPurpose.StaffAvatar;
             return true;
         }
 

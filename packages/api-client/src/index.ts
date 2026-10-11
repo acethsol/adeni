@@ -81,6 +81,7 @@ import {
   tenantAccessUserSchema,
   tenantAccessUsersResponseSchema,
   updateAccessUserRequestSchema,
+  updateStaffAvatarRequestSchema,
   acceptStaffInviteRequestSchema,
   acceptStaffInviteResponseSchema,
   reviewResponseSchema,
@@ -142,6 +143,7 @@ import {
   type StaffPortalInvite,
   type TenantAccessUser,
   type UpdateAccessUserRequest,
+  type UpdateStaffAvatarRequest,
   type AcceptStaffInviteRequest,
   type AcceptStaffInviteResponse,
   type StaffCalendarResponse,
@@ -767,6 +769,39 @@ export class AdeniApiClient {
       body: JSON.stringify(body),
     });
     return mediaUploadUrlResponseSchema.parse(await response.json());
+  }
+
+  async createStaffAvatarUploadUrl(
+    contentType: string,
+    contentLength: number,
+  ): Promise<MediaUploadUrlResponse> {
+    const body = mediaUploadUrlRequestSchema.parse({
+      purpose: "staff_avatar",
+      contentType,
+      contentLength,
+    });
+    const response = await this.request("/api/v1/tenant/media/upload-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return mediaUploadUrlResponseSchema.parse(await response.json());
+  }
+
+  async updateTenantStaffAvatar(
+    staffMemberId: string,
+    request: UpdateStaffAvatarRequest,
+  ): Promise<StaffMember> {
+    const body = updateStaffAvatarRequestSchema.parse(request);
+    const response = await this.request(
+      `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/avatar`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+    return staffMemberSchema.parse(await response.json());
   }
 
   async updateTenantCoverImage(request: UpdateCoverImageRequest): Promise<string> {
