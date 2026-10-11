@@ -48,6 +48,8 @@ export type PortalNavItem = {
   badge?: "bookings" | "messages";
   /** Shown only before a business profile exists. */
   unregisteredOnly?: boolean;
+  /** Keep for permission routing but omit from sidebar chrome. */
+  shellHidden?: boolean;
   tabs?: PortalTab[];
 };
 
@@ -88,6 +90,14 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         icon: "availability",
         capability: "walk_in_queue",
         permission: ["portal.bookings", "portal.bookings.self"],
+      },
+      {
+        path: "/kiosk",
+        label: "Kiosk",
+        icon: "availability",
+        capability: "walk_in_queue",
+        permission: ["portal.bookings", "portal.bookings.self"],
+        shellHidden: true,
       },
       {
         path: "/calendar",

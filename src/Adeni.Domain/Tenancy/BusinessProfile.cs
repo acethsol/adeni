@@ -63,6 +63,9 @@ public sealed class BusinessProfile : ITenantEntity
     /// <summary>When enabled, rule-based FAQ replies are sent automatically on incoming customer messages.</summary>
     public bool FaqAutoResponderEnabled { get; set; } = true;
 
+    /// <summary>SHA-256 hex of <c>{tenantId:N}:{pin}</c> for kiosk exit PIN; null when unset.</summary>
+    public string? KioskExitPinHash { get; set; }
+
     public DateTimeOffset UpdatedAt { get; set; }
 
     public Tenant? Tenant { get; set; }

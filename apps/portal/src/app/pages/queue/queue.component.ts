@@ -1,10 +1,17 @@
 import { Component, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { Router } from "@angular/router";
 import type { AdeniApiClient } from "@adeni/api-client";
-import type { BusinessProfile, QueueTicketResponse, ServiceOffering } from "@adeni/shared";
+import type {
+  BusinessProfile,
+  KioskStatusResponse,
+  QueueTicketResponse,
+  ServiceOffering,
+} from "@adeni/shared";
 import { hasCapability } from "@adeni/shared";
 import { AdeniCarbonIconComponent, PortalPageComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 
 @Component({
   selector: "app-queue",
@@ -15,18 +22,23 @@ import { BusinessApiService } from "../../core/services/business-api.service";
 })
 export class QueueComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
+  private readonly router = inject(Router);
+  private readonly config = inject(ADENI_PORTAL_CONFIG);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly profile = signal<BusinessProfile | null>(null);
   readonly tickets = signal<QueueTicketResponse[]>([]);
   readonly services = signal<ServiceOffering[]>([]);
+  readonly kioskStatus = signal<KioskStatusResponse | null>(null);
   readonly actionId = signal<string | null>(null);
   readonly adding = signal(false);
+  readonly savingPin = signal(false);
 
   guestName = "";
   guestPhone = "";
   serviceOfferingId = "";
+  kioskPin = "";
 
   ngOnInit(): void {
     void this.load();
@@ -34,6 +46,13 @@ export class QueueComponent implements OnInit {
 
   supportsQueue(): boolean {
     return hasCapability(this.profile()?.capabilities, "walk_in_queue");
+  }
+
+  publicKioskUrl(): string | null {
+    const slug = this.kioskStatus()?.slug;
+    const base = this.config.discoverWebUrl?.replace(/\/$/, "");
+    if (!slug || !base) return null;
+    return `${base}/q/${encodeURIComponent(slug)}?kiosk=1`;
   }
 
   waiting(): QueueTicketResponse[] {
@@ -74,20 +93,62 @@ export class QueueComponent implements OnInit {
     this.error.set(null);
     try {
       await this.api.withAuthorizedClient(async (client) => {
-        const [profile, tickets, services] = await Promise.all([
+        const [profile, tickets, services, kiosk] = await Promise.all([
           client.getTenantProfile(),
           client.getTenantQueue(),
           client.getTenantServices(),
+          client.getTenantKioskStatus().catch(() => null),
         ]);
         this.profile.set(profile);
         this.tickets.set(tickets);
         this.services.set(services.filter((s) => s.isActive !== false));
+        this.kioskStatus.set(kiosk);
       });
     } catch {
       this.error.set("Could not load the queue.");
       this.tickets.set([]);
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  openKiosk(): void {
+    void this.router.navigateByUrl("/kiosk");
+  }
+
+  async saveKioskPin(): Promise<void> {
+    if (!/^\d{4,8}$/.test(this.kioskPin.trim())) {
+      this.error.set("Exit PIN must be 4–8 digits.");
+      return;
+    }
+    this.savingPin.set(true);
+    this.error.set(null);
+    try {
+      const status = await this.api.withAuthorizedClient((client) =>
+        client.setTenantKioskPin(this.kioskPin.trim()),
+      );
+      this.kioskStatus.set(status);
+      this.kioskPin = "";
+    } catch {
+      this.error.set("Could not save exit PIN.");
+    } finally {
+      this.savingPin.set(false);
+    }
+  }
+
+  async clearKioskPin(): Promise<void> {
+    this.savingPin.set(true);
+    this.error.set(null);
+    try {
+      const status = await this.api.withAuthorizedClient((client) =>
+        client.setTenantKioskPin(null),
+      );
+      this.kioskStatus.set(status);
+      this.kioskPin = "";
+    } catch {
+      this.error.set("Could not clear exit PIN.");
+    } finally {
+      this.savingPin.set(false);
     }
   }
 

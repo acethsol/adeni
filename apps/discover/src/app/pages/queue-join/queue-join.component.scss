@@ -67,3 +67,24 @@ select {
 .status {
   margin: 1.5rem 0;
 }
+
+.queue-page.kiosk {
+  max-width: 34rem;
+  padding: 3rem 1.5rem 3.5rem;
+}
+
+.queue-page.kiosk .brand {
+  font-size: clamp(2rem, 7vw, 2.8rem);
+}
+
+.queue-page.kiosk h1 {
+  font-size: 1.55rem;
+}
+
+.queue-page.kiosk input,
+.queue-page.kiosk select,
+.queue-page.kiosk .btn {
+  min-height: 3.25rem;
+  font-size: 1.15rem;
+  padding: 0.85rem 1rem;
+}

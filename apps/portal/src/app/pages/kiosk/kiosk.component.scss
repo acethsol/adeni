@@ -1,0 +1,154 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background:
+    radial-gradient(90% 60% at 10% 0%, rgba(18, 88, 72, 0.16), transparent 55%),
+    linear-gradient(165deg, #efe8dc 0%, #d9d1c3 100%);
+  color: #1a1814;
+  font-family: "Fraunces", "Source Serif 4", Georgia, serif;
+}
+
+.kiosk {
+  position: relative;
+  min-height: 100vh;
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 3.5rem 1.5rem 2.5rem;
+  box-sizing: border-box;
+}
+
+.exit-chip {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  border: 0;
+  background: transparent;
+  color: rgba(26, 24, 20, 0.35);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+}
+
+.hero {
+  margin-bottom: 1.75rem;
+}
+
+.brand {
+  margin: 0 0 0.4rem;
+  font-size: clamp(2.2rem, 7vw, 3.2rem);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(1.35rem, 4vw, 1.75rem);
+  font-weight: 500;
+}
+
+.lede,
+.status {
+  margin: 0.65rem 0 0;
+  color: rgba(26, 24, 20, 0.68);
+  font-size: 1.1rem;
+}
+
+.form {
+  display: grid;
+  gap: 1.15rem;
+  margin-top: 2rem;
+}
+
+label {
+  display: grid;
+  gap: 0.4rem;
+  font-size: 1.05rem;
+}
+
+input,
+select {
+  min-height: 3.25rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(26, 24, 20, 0.18);
+  border-radius: 4px;
+  background: rgba(255, 252, 247, 0.95);
+  font: inherit;
+  font-size: 1.15rem;
+}
+
+.btn {
+  min-height: 3.5rem;
+  margin-top: 0.35rem;
+  padding: 0.9rem 1.25rem;
+  border: 0;
+  border-radius: 4px;
+  background: #145a46;
+  color: #f7f4ef;
+  font: inherit;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.btn.ghost {
+  background: transparent;
+  color: #1a1814;
+  border: 1px solid rgba(26, 24, 20, 0.25);
+}
+
+.muted {
+  color: rgba(26, 24, 20, 0.65);
+}
+
+.center {
+  text-align: center;
+  margin-top: 30vh;
+}
+
+.error {
+  color: #8a1f1f;
+  margin: 1rem 0 0;
+}
+
+.exit-sheet {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(18, 16, 12, 0.45);
+  z-index: 20;
+}
+
+.exit-card {
+  width: min(100%, 24rem);
+  padding: 1.5rem;
+  background: #f7f2e9;
+  border-radius: 6px;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.exit-card h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.exit-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.exit-actions .btn {
+  min-height: 2.75rem;
+  font-size: 1rem;
+  margin-top: 0;
+}

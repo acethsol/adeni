@@ -13,6 +13,48 @@
       <p class="muted">Walk-in queue is not enabled for this business category.</p>
     </section>
   } @else {
+    <section class="card kiosk-row">
+      <div class="section-head">
+        <div>
+          <h3>Kiosk</h3>
+          <p class="muted">
+            Fullscreen guest join for a front-desk tablet.
+            @if (kioskStatus()?.hasPin) {
+              Exit PIN is set.
+            } @else {
+              Optional exit PIN not set — confirm to leave.
+            }
+          </p>
+        </div>
+        <button type="button" class="btn btn-primary" (click)="openKiosk()">
+          Open kiosk
+        </button>
+      </div>
+      <div class="fields pin-fields">
+        <input
+          [(ngModel)]="kioskPin"
+          placeholder="Exit PIN (4–8 digits)"
+          inputmode="numeric"
+          maxlength="8"
+          autocomplete="off"
+        />
+        <button type="button" class="btn" [disabled]="savingPin()" (click)="saveKioskPin()">
+          {{ kioskStatus()?.hasPin ? "Update PIN" : "Set PIN" }}
+        </button>
+        @if (kioskStatus()?.hasPin) {
+          <button type="button" class="btn" [disabled]="savingPin()" (click)="clearKioskPin()">
+            Clear PIN
+          </button>
+        }
+      </div>
+      @if (publicKioskUrl(); as url) {
+        <p class="muted public-link">
+          Public tablet link:
+          <a [href]="url" target="_blank" rel="noopener noreferrer">{{ url }}</a>
+        </p>
+      }
+    </section>
+
     <section class="card add-row">
       <h3>Add walk-in</h3>
       <div class="fields">

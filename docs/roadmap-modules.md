@@ -26,7 +26,7 @@ Each major build still needs a `docs/specs/sprint-XX-*.md` before implementation
 
 | # | Module | Status | Horizon | Code / docs | Notes |
 |---|--------|--------|---------|-------------|-------|
-| 1 | **Queue & check-in** | Partial | Now | Booking + `walk_in_queue` | [Sprint 29](./specs/sprint-29-queue-v1.md) ✅; kiosk → 30 |
+| 1 | **Queue & check-in** | Partial | Now | Booking + `walk_in_queue` | [Sprint 29](./specs/sprint-29-queue-v1.md) ✅; [Sprint 30 kiosk](./specs/sprint-30-kiosk-mode.md) ✅ |
 | 2 | **Payments & finance** | Partial | Now → Next | `Payments`, [payments.md](./payments.md) | Orchestration yes; payroll no |
 | 2b | **POS bridge** | Planned | Later | Payments adapter | Integrate, don’t build POS |
 | 3 | **Verification / trust** | Partial | Now | Tenancy + Admin | Tiers shipped; deepen CAC/automation |
