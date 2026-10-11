@@ -66,6 +66,8 @@ type ChromeKey =
   | "tabLedger"
   | "/dashboard"
   | "/bookings"
+  | "/calendar"
+  | "/my-calendar"
   | "/quotes"
   | "/messages"
   | "/services"
@@ -105,6 +107,8 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     tabLedger: "Ledger",
     "/dashboard": "Overview",
     "/bookings": "Bookings",
+    "/calendar": "Calendar",
+    "/my-calendar": "My calendar",
     "/quotes": "Quotes",
     "/messages": "Messages",
     "/services": "Services",
@@ -143,6 +147,8 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     tabLedger: "Journal",
     "/dashboard": "Aperçu",
     "/bookings": "Réservations",
+    "/calendar": "Calendrier",
+    "/my-calendar": "Mon calendrier",
     "/quotes": "Devis",
     "/messages": "Messages",
     "/services": "Services",

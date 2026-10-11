@@ -31,6 +31,7 @@
         </tbody>
       </table>
       <button type="button" class="btn btn-primary save" [disabled]="saving()" (click)="save()">
+        <adeni-carbon-icon name="save" [size]="16" />
         {{ saving() ? "Saving…" : "Save hours" }}
       </button>
     </section>

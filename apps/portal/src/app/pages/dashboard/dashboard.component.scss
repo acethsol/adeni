@@ -55,6 +55,7 @@
 .btn {
   display: inline-flex;
   align-items: center;
+  gap: 0.45rem;
   border-radius: var(--cds-radius-none);
   padding: 0.55rem 1rem;
   font-size: 0.875rem;
@@ -63,6 +64,7 @@
   border: 1px solid rgb(255 255 255 / 24%);
   color: #fff;
   background: rgb(255 255 255 / 8%);
+  white-space: nowrap;
 }
 
 .btn-primary {

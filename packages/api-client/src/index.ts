@@ -75,12 +75,14 @@ import {
   staffLeaveListResponseSchema,
   createStaffLeaveRequestSchema,
   staffCalendarResponseSchema,
+  staffTeamCalendarResponseSchema,
   createStaffInviteRequestSchema,
   staffPortalInviteSchema,
   staffPortalInvitesResponseSchema,
   tenantAccessUserSchema,
   tenantAccessUsersResponseSchema,
   updateAccessUserRequestSchema,
+  updateStaffAvatarRequestSchema,
   acceptStaffInviteRequestSchema,
   acceptStaffInviteResponseSchema,
   reviewResponseSchema,
@@ -142,9 +144,11 @@ import {
   type StaffPortalInvite,
   type TenantAccessUser,
   type UpdateAccessUserRequest,
+  type UpdateStaffAvatarRequest,
   type AcceptStaffInviteRequest,
   type AcceptStaffInviteResponse,
   type StaffCalendarResponse,
+  type StaffTeamCalendarResponse,
   type WeeklyAvailabilityRule,
   type ServiceOfferingsResponse,
   type CreateQuoteRequest,
@@ -769,6 +773,39 @@ export class AdeniApiClient {
     return mediaUploadUrlResponseSchema.parse(await response.json());
   }
 
+  async createStaffAvatarUploadUrl(
+    contentType: string,
+    contentLength: number,
+  ): Promise<MediaUploadUrlResponse> {
+    const body = mediaUploadUrlRequestSchema.parse({
+      purpose: "staff_avatar",
+      contentType,
+      contentLength,
+    });
+    const response = await this.request("/api/v1/tenant/media/upload-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return mediaUploadUrlResponseSchema.parse(await response.json());
+  }
+
+  async updateTenantStaffAvatar(
+    staffMemberId: string,
+    request: UpdateStaffAvatarRequest,
+  ): Promise<StaffMember> {
+    const body = updateStaffAvatarRequestSchema.parse(request);
+    const response = await this.request(
+      `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/avatar`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+    return staffMemberSchema.parse(await response.json());
+  }
+
   async updateTenantCoverImage(request: UpdateCoverImageRequest): Promise<string> {
     const body = updateCoverImageRequestSchema.parse(request);
     const response = await this.request("/api/v1/tenant/profile/cover", {
@@ -1091,6 +1128,15 @@ export class AdeniApiClient {
       `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/calendar?${query}`,
     );
     return staffCalendarResponseSchema.parse(await response.json());
+  }
+
+  async getTenantTeamCalendar(params: {
+    from: string;
+    to: string;
+  }): Promise<StaffTeamCalendarResponse> {
+    const query = new URLSearchParams({ from: params.from, to: params.to });
+    const response = await this.request(`/api/v1/tenant/staff/team-calendar?${query}`);
+    return staffTeamCalendarResponseSchema.parse(await response.json());
   }
 
   async getTenantAvailability(): Promise<WeeklyAvailabilityRule[]> {

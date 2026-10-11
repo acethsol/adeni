@@ -13,16 +13,36 @@ import type {
   StaffCalendarBookingItem,
   StaffCalendarLeaveItem,
   StaffCalendarResponse,
+  StaffTeamCalendarResponse,
   WeeklyAvailabilityRule,
 } from "@adeni/shared";
-import { AdeniFeedbackService, PortalPageComponent } from "@adeni/ui";
+import {
+  AdeniCarbonIconComponent,
+  AdeniFeedbackService,
+  CALENDAR_DAYS_ORDER,
+  PortalPageComponent,
+  addDays,
+  addMonths,
+  clipToDay,
+  dayKey,
+  endOfMonth,
+  formatBookedHours,
+  formatClock,
+  formatDay,
+  overlapsDay,
+  parseTimeToMinutes,
+  sameDay,
+  startOfDay,
+  startOfMonth,
+  startOfWeek,
+} from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { PortalSessionService } from "../../core/services/portal-session.service";
 
 const PX_PER_HOUR = 64;
 const DEFAULT_START_HOUR = 8;
 const DEFAULT_END_HOUR = 20;
-const DAYS_ORDER = [1, 2, 3, 4, 5, 6, 0] as const; // Mon → Sun
+const DAYS_ORDER = CALENDAR_DAYS_ORDER;
 
 type CalendarView = "month" | "week" | "day";
 
@@ -55,6 +75,8 @@ type PlacedBlock = {
   subtitle: string | null;
   status: number | null;
   statusLabel: string | null;
+  customerSelectedStaff: boolean;
+  staffDisplayName: string | null;
   booking: StaffCalendarBookingItem | null;
   leave: StaffCalendarLeaveItem | null;
 };
@@ -66,7 +88,7 @@ type MonthCell = DayColumn & {
 @Component({
   selector: "app-staff-calendar",
   standalone: true,
-  imports: [PortalPageComponent, RouterLink],
+  imports: [PortalPageComponent, RouterLink, AdeniCarbonIconComponent],
   templateUrl: "./staff-calendar.component.html",
   styleUrl: "./staff-calendar.component.scss",
 })
@@ -81,6 +103,11 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly calendar = signal<StaffCalendarResponse | null>(null);
+  readonly team = signal<StaffTeamCalendarResponse | null>(null);
+  /** Team board for owners/managers; member/self for a single practitioner. */
+  readonly teamMode = signal(false);
+  /** null = all staff on the team board. */
+  readonly filterStaffId = signal<string | null>(null);
   readonly weekStart = signal(startOfWeek(new Date()));
   readonly monthStart = signal(startOfMonth(new Date()));
   readonly view = signal<CalendarView>("week");
@@ -91,13 +118,88 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
   staffId = "";
   private tickTimer: ReturnType<typeof setInterval> | null = null;
 
+  readonly activeHours = computed((): WeeklyAvailabilityRule[] => {
+    if (this.teamMode()) {
+      const team = this.team();
+      const filter = this.filterStaffId();
+      if (!team || !filter) {
+        return [];
+      }
+      return team.staff.find((s) => s.staffMemberId === filter)?.hours ?? [];
+    }
+    return this.calendar()?.hours ?? [];
+  });
+
+  readonly inheritsBusinessHours = computed(() => {
+    if (this.teamMode()) {
+      const team = this.team();
+      const filter = this.filterStaffId();
+      if (!team || !filter) {
+        return true;
+      }
+      return team.staff.find((s) => s.staffMemberId === filter)?.inheritsBusinessHours ?? true;
+    }
+    return this.calendar()?.inheritsBusinessHours ?? false;
+  });
+
+  readonly sourceBookings = computed((): StaffCalendarBookingItem[] => {
+    if (this.teamMode()) {
+      const team = this.team();
+      if (!team) {
+        return [];
+      }
+      const filter = this.filterStaffId();
+      if (!filter) {
+        return team.bookings;
+      }
+      return team.bookings.filter((b) => b.staffMemberId === filter);
+    }
+    return this.calendar()?.bookings ?? [];
+  });
+
+  readonly sourceLeave = computed((): StaffCalendarLeaveItem[] => {
+    if (this.teamMode()) {
+      const team = this.team();
+      if (!team) {
+        return [];
+      }
+      const filter = this.filterStaffId();
+      if (!filter) {
+        return team.leave;
+      }
+      return team.leave.filter((l) => l.staffMemberId === filter);
+    }
+    return this.calendar()?.leave ?? [];
+  });
+
+  readonly boardTitle = computed(() => {
+    if (this.teamMode()) {
+      const filter = this.filterStaffId();
+      if (!filter) {
+        return "Team calendar";
+      }
+      return (
+        this.team()?.staff.find((s) => s.staffMemberId === filter)?.displayName ?? "Staff calendar"
+      );
+    }
+    return this.calendar()?.displayName ? `${this.calendar()!.displayName} · Floor` : "Staff calendar";
+  });
+
+  readonly boardSubtitle = computed(() => {
+    if (this.teamMode()) {
+      return "All practitioners — filter by person, track booked hours, spot customer-requested bookings.";
+    }
+    return "Month, week, and day board — bookings, leave, and hours on one calendar.";
+  });
+
+
   readonly rangeHours = computed(() => {
-    const cal = this.calendar();
+    const hours = this.activeHours();
     let start = DEFAULT_START_HOUR;
     let end = DEFAULT_END_HOUR;
-    if (cal?.hours.length) {
-      const opens = cal.hours.map((h) => parseTimeToMinutes(h.openTime) / 60);
-      const closes = cal.hours.map((h) => parseTimeToMinutes(h.closeTime) / 60);
+    if (hours.length) {
+      const opens = hours.map((h) => parseTimeToMinutes(h.openTime) / 60);
+      const closes = hours.map((h) => parseTimeToMinutes(h.closeTime) / 60);
       start = Math.max(6, Math.floor(Math.min(...opens)) - 1);
       end = Math.min(23, Math.ceil(Math.max(...closes)) + 1);
     }
@@ -122,19 +224,22 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
   });
 
   readonly days = computed((): DayColumn[] => {
-    const cal = this.calendar();
     const today = startOfDay(new Date());
-    const hoursByDow = indexHours(cal?.hours ?? []);
+    const hoursByDow = indexHours(this.activeHours());
     const month = this.monthStart();
+    const bookingsSrc = this.sourceBookings();
+    const leaveSrc = this.sourceLeave();
+    const hasSchedule = this.teamMode()
+      ? this.filterStaffId() != null
+      : this.calendar() != null;
+    const inherits = this.inheritsBusinessHours();
 
     const buildDay = (date: Date, inMonth: boolean): DayColumn => {
       const dayOfWeek = date.getDay();
       const key = dayKey(date);
       const rule = hoursByDow.get(dayOfWeek);
-      const bookings =
-        cal?.bookings.filter((b) => overlapsDay(b.startAt, b.endAt, date)) ?? [];
-      const leave =
-        cal?.leave.filter((l) => overlapsDay(l.startAt, l.endAt, date)) ?? [];
+      const bookings = bookingsSrc.filter((b) => overlapsDay(b.startAt, b.endAt, date));
+      const leave = leaveSrc.filter((l) => overlapsDay(l.startAt, l.endAt, date));
       return {
         date,
         key,
@@ -146,7 +251,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
         isPast: date < today,
         openMinutes: rule ? parseTimeToMinutes(rule.openTime) : null,
         closeMinutes: rule ? parseTimeToMinutes(rule.closeTime) : null,
-        isClosed: cal ? !rule && !cal.inheritsBusinessHours : false,
+        isClosed: hasSchedule ? !rule && !inherits : false,
         bookingCount: bookings.length,
         leaveCount: leave.length,
         inMonth,
@@ -223,8 +328,12 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
   });
 
   readonly blocks = computed((): PlacedBlock[] => {
-    const cal = this.calendar();
-    if (!cal) {
+    const bookings = this.sourceBookings();
+    const leaveItems = this.sourceLeave();
+    if (!this.teamMode() && !this.calendar()) {
+      return [];
+    }
+    if (this.teamMode() && !this.team()) {
       return [];
     }
     const { start } = this.rangeHours();
@@ -232,7 +341,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
     const out: PlacedBlock[] = [];
 
     for (const day of this.days()) {
-      for (const leave of cal.leave) {
+      for (const leave of leaveItems) {
         const clip = clipToDay(leave.startAt, leave.endAt, day.date);
         if (!clip) {
           continue;
@@ -247,22 +356,27 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
           height,
           startLabel: formatClock(clip.startMin),
           endLabel: formatClock(clip.endMin),
-          title: "Time off",
+          title: leave.staffDisplayName
+            ? `Time off · ${leave.staffDisplayName}`
+            : "Time off",
           subtitle: leave.reason ?? null,
           status: null,
           statusLabel: null,
+          customerSelectedStaff: false,
+          staffDisplayName: leave.staffDisplayName ?? null,
           booking: null,
           leave,
         });
       }
 
-      for (const booking of cal.bookings) {
+      for (const booking of bookings) {
         const clip = clipToDay(booking.startAt, booking.endAt, day.date);
         if (!clip) {
           continue;
         }
         const top = minutesToPx(clip.startMin - dayStartMin);
         const height = Math.max(36, minutesToPx(clip.endMin - clip.startMin));
+        const selected = booking.customerSelectedStaff !== false && !!booking.staffMemberId;
         out.push({
           id: `${booking.id}-${day.key}`,
           kind: "booking",
@@ -272,9 +386,13 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
           startLabel: formatClock(clip.startMin),
           endLabel: formatClock(clip.endMin),
           title: booking.serviceName,
-          subtitle: booking.customerNotes?.trim() || null,
+          subtitle:
+            booking.customerNotes?.trim()
+            || (this.teamMode() ? booking.staffDisplayName?.trim() || "Any available" : null),
           status: booking.status,
           statusLabel: statusLabel(booking.status),
+          customerSelectedStaff: selected,
+          staffDisplayName: booking.staffDisplayName ?? null,
           booking,
           leave: null,
         });
@@ -337,19 +455,25 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
   });
 
   readonly stats = computed(() => {
-    const cal = this.calendar();
-    if (!cal) {
-      return { bookings: 0, confirmed: 0, leave: 0 };
-    }
     const scopeDays = this.days().filter((d) => this.view() !== "month" || d.inMonth);
-    const bookings = cal.bookings.filter((b) =>
+    const bookings = this.sourceBookings().filter((b) =>
       scopeDays.some((d) => overlapsDay(b.startAt, b.endAt, d.date)),
     );
+    const confirmed = bookings.filter((b) => b.status === 1);
+    const bookedMinutes = confirmed.reduce((sum, b) => {
+      const ms = new Date(b.endAt).getTime() - new Date(b.startAt).getTime();
+      return sum + Math.max(0, Math.round(ms / 60000));
+    }, 0);
     return {
       bookings: bookings.length,
-      confirmed: bookings.filter((b) => b.status === 1).length,
-      leave: cal.leave.filter((l) =>
+      confirmed: confirmed.length,
+      leave: this.sourceLeave().filter((l) =>
         scopeDays.some((d) => overlapsDay(l.startAt, l.endAt, d.date)),
+      ).length,
+      bookedMinutes,
+      bookedHoursLabel: formatBookedHours(bookedMinutes),
+      requested: bookings.filter(
+        (b) => b.customerSelectedStaff !== false && !!b.staffMemberId,
       ).length,
     };
   });
@@ -360,13 +484,26 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
 
   private async bootstrap(): Promise<void> {
     await this.session.ensureLoaded();
-    this.staffId = this.route.snapshot.paramMap.get("id") ?? this.session.staffMemberId() ?? "";
+    const routeId = this.route.snapshot.paramMap.get("id");
+    const path = this.route.snapshot.routeConfig?.path ?? "";
+    const isTeamRoute = path === "calendar" || this.route.snapshot.data["teamCalendar"] === true;
+    this.teamMode.set(isTeamRoute && this.session.can("portal.staff"));
+    this.staffId = routeId ?? this.session.staffMemberId() ?? "";
     if (typeof window !== "undefined" && window.matchMedia("(max-width: 820px)").matches) {
       this.view.set("day");
       this.focusDay.set(startOfDay(new Date()));
     }
     this.tickTimer = setInterval(() => this.nowTick.set(Date.now()), 60_000);
     await this.load();
+  }
+
+  setStaffFilter(staffMemberId: string | null): void {
+    this.filterStaffId.set(staffMemberId);
+    this.clearSelection();
+  }
+
+  hoursLabel(minutes: number): string {
+    return formatBookedHours(minutes);
   }
 
   /** Roster admins see a back link; practitioners viewing their own calendar do not. */
@@ -477,7 +614,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
     const dayStart = start * 60;
     const dayEnd = end * 60;
     if (day.isClosed || day.openMinutes == null || day.closeMinutes == null) {
-      if (!this.calendar()?.inheritsBusinessHours || day.isClosed) {
+      if (!this.inheritsBusinessHours() || day.isClosed) {
         return [{ top: "0", height: `${this.gridHeight()}px` }];
       }
       return [];
@@ -540,7 +677,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
   }
 
   async load(): Promise<void> {
-    if (!this.staffId) {
+    if (!this.teamMode() && !this.staffId) {
       this.error.set("Staff member not found.");
       this.loading.set(false);
       return;
@@ -551,17 +688,30 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
     const { from, to } = this.loadRange();
     try {
       await this.feedback.runLoading(async () => {
-        const data = await this.api.withAuthorizedClient((c) =>
-          c.getTenantStaffCalendar(this.staffId, {
-            from: from.toISOString(),
-            to: to.toISOString(),
-          }),
-        );
-        this.calendar.set(data);
+        if (this.teamMode()) {
+          const data = await this.api.withAuthorizedClient((c) =>
+            c.getTenantTeamCalendar({
+              from: from.toISOString(),
+              to: to.toISOString(),
+            }),
+          );
+          this.team.set(data);
+          this.calendar.set(null);
+        } else {
+          const data = await this.api.withAuthorizedClient((c) =>
+            c.getTenantStaffCalendar(this.staffId, {
+              from: from.toISOString(),
+              to: to.toISOString(),
+            }),
+          );
+          this.calendar.set(data);
+          this.team.set(null);
+        }
       }, "Loading calendar…");
     } catch {
       this.error.set("Could not load calendar.");
       this.calendar.set(null);
+      this.team.set(null);
     } finally {
       this.loading.set(false);
     }
@@ -583,70 +733,6 @@ function statusLabel(status: number): string {
   }
 }
 
-function startOfWeek(date: Date): Date {
-  const d = startOfDay(date);
-  const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  return d;
-}
-
-function startOfMonth(date: Date): Date {
-  const d = startOfDay(date);
-  d.setDate(1);
-  return d;
-}
-
-function endOfMonth(date: Date): Date {
-  return addDays(addMonths(startOfMonth(date), 1), -1);
-}
-
-function startOfDay(date: Date): Date {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-function addDays(date: Date, days: number): Date {
-  const d = new Date(date);
-  d.setDate(d.getDate() + days);
-  return d;
-}
-
-function addMonths(date: Date, months: number): Date {
-  const d = new Date(date);
-  d.setMonth(d.getMonth() + months);
-  return d;
-}
-
-function sameDay(a: Date, b: Date): boolean {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
-}
-
-function dayKey(date: Date): string {
-  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
-}
-
-function formatDay(date: Date): string {
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-}
-
-function parseTimeToMinutes(value: string): number {
-  const [h, m] = value.split(":").map(Number);
-  return (h ?? 0) * 60 + (m ?? 0);
-}
-
-function formatClock(totalMinutes: number): string {
-  const h = Math.floor(totalMinutes / 60) % 24;
-  const m = totalMinutes % 60;
-  const d = new Date();
-  d.setHours(h, m, 0, 0);
-  return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-}
 
 function minutesToPx(minutes: number): number {
   return (minutes / 60) * PX_PER_HOUR;
@@ -658,27 +744,4 @@ function indexHours(hours: WeeklyAvailabilityRule[]): Map<number, WeeklyAvailabi
     map.set(rule.dayOfWeek, rule);
   }
   return map;
-}
-
-function overlapsDay(startIso: string, endIso: string, day: Date): boolean {
-  return clipToDay(startIso, endIso, day) != null;
-}
-
-function clipToDay(
-  startIso: string,
-  endIso: string,
-  day: Date,
-): { startMin: number; endMin: number } | null {
-  const dayStart = startOfDay(day).getTime();
-  const dayEnd = dayStart + 24 * 60 * 60 * 1000;
-  const start = new Date(startIso).getTime();
-  const end = new Date(endIso).getTime();
-  const clippedStart = Math.max(start, dayStart);
-  const clippedEnd = Math.min(end, dayEnd);
-  if (clippedEnd <= clippedStart) {
-    return null;
-  }
-  const startMin = Math.floor((clippedStart - dayStart) / 60000);
-  const endMin = Math.ceil((clippedEnd - dayStart) / 60000);
-  return { startMin, endMin };
 }

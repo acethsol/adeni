@@ -20,6 +20,7 @@
         maxlength="120"
       />
       <button type="button" class="btn" [disabled]="busy() === 'group'" (click)="addGroup()">
+        <adeni-carbon-icon name="add" [size]="16" />
         Add collection
       </button>
     </div>
@@ -43,7 +44,10 @@
   </section>
 
   <div class="toolbar">
-    <button type="button" class="btn btn-primary" (click)="openCreate()">Add service</button>
+    <button type="button" class="btn btn-primary" (click)="openCreate()">
+      <adeni-carbon-icon name="add" [size]="16" />
+      Add service
+    </button>
   </div>
 
   @if (showForm()) {
@@ -119,8 +123,14 @@
         </label>
       </div>
       <div class="actions">
-        <button type="button" class="btn" (click)="cancelForm()">Cancel</button>
-        <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="save()">Save</button>
+        <button type="button" class="btn" (click)="cancelForm()">
+          <adeni-carbon-icon name="close" [size]="16" />
+          Cancel
+        </button>
+        <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="save()">
+          <adeni-carbon-icon name="save" [size]="16" />
+          Save
+        </button>
       </div>
     </section>
   }
@@ -150,9 +160,11 @@
             </div>
             <div class="actions">
               <button type="button" class="btn" [disabled]="busy() === service.id" (click)="openEdit(service)">
+                <adeni-carbon-icon name="edit" [size]="16" />
                 Edit
               </button>
               <button type="button" class="btn btn-danger" [disabled]="busy() === service.id" (click)="deactivate(service)">
+                <adeni-carbon-icon name="misuse" [size]="16" />
                 Deactivate
               </button>
             </div>

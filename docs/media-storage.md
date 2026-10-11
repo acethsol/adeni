@@ -30,12 +30,12 @@ flowchart LR
 
 ## Upload flow (Sprint 12 target)
 
-1. `POST /api/v1/tenant/media/upload-url` — body: `{ purpose: "cover", contentType: "image/jpeg", contentLength }`
+1. `POST /api/v1/tenant/media/upload-url` — body: `{ purpose: "cover" | "gallery" | "staff_avatar", contentType: "image/jpeg", contentLength }`
 2. API validates tenant auth, size (e.g. ≤ 5 MB), and MIME allow-list (`image/jpeg`, `image/png`, `image/webp`).
 3. API returns `{ uploadUrl, storageKey, expiresAt }` — short-lived SAS (5–15 min).
 4. Client `PUT` file directly to blob.
-5. `PATCH /api/v1/tenant/profile` with `{ coverImageKey }` — API verifies key prefix `tenants/{tenantId}/`.
-6. Public read: API resolves key → CDN URL in discovery/profile DTOs as `coverImageUrl`.
+5. Confirm key on the owning resource — e.g. profile cover, gallery add, or `PUT /api/v1/tenant/staff/{id}/avatar` with `{ avatarImageKey }`. API verifies key prefix for that tenant + purpose.
+6. Public read: API resolves key → CDN/download URL in DTOs (`coverImageUrl`, `avatarImageUrl`, etc.).
 
 ## Path convention
 
@@ -43,12 +43,14 @@ flowchart LR
 tenants/{tenantId}/covers/{uuid}.webp
 tenants/{tenantId}/gallery/{uuid}.webp
 tenants/{tenantId}/logos/{uuid}.webp
+tenants/{tenantId}/staff/{uuid}.webp       # staff roster avatars (purpose: staff_avatar)
 tenants/{tenantId}/verification/{uuid}.pdf   # private container, signed URLs only
 ```
 
-- **Public container**: cover + gallery + logo (immutable UUID filenames; overwrite = new key).
+- **Public container**: cover + gallery + logo + staff avatars (immutable UUID filenames; overwrite = new key).
 - **Private container**: verification docs (admin-only signed download).
 - **Gallery**: up to 5 keys in `GalleryImageKeysJson`; discovery returns `imageUrls` = cover + gallery for Explore/map carousels.
+- **Staff avatar**: stored on `booking.staff_members.AvatarImageKey`; roster UI shows initials when null.
 
 ## Client fallback (Sprint 11)
 

@@ -1198,8 +1198,16 @@ export const mediaUploadPurposeSchema = z.enum([
   "Cover",
   "gallery",
   "Gallery",
+  "staff_avatar",
+  "staffAvatar",
   "quote_photo",
 ]);
+
+export const updateStaffAvatarRequestSchema = z.object({
+  avatarImageKey: z.string().min(1),
+});
+
+export type UpdateStaffAvatarRequest = z.infer<typeof updateStaffAvatarRequestSchema>;
 
 export const mediaUploadUrlRequestSchema = z.object({
   purpose: mediaUploadPurposeSchema,
@@ -1264,6 +1272,10 @@ export const staffCalendarBookingItemSchema = z.object({
   endAt: z.string(),
   status: z.number().int(),
   customerNotes: z.string().nullable().optional(),
+  /** Customer asked for this person (vs “any available”). */
+  customerSelectedStaff: z.boolean().optional().default(true),
+  staffMemberId: z.string().uuid().nullable().optional(),
+  staffDisplayName: z.string().nullable().optional(),
 });
 
 export const staffCalendarLeaveItemSchema = z.object({
@@ -1271,6 +1283,8 @@ export const staffCalendarLeaveItemSchema = z.object({
   startAt: z.string(),
   endAt: z.string(),
   reason: z.string().nullable().optional(),
+  staffMemberId: z.string().uuid().nullable().optional(),
+  staffDisplayName: z.string().nullable().optional(),
 });
 
 export const staffCalendarResponseSchema = z.object({
@@ -1282,9 +1296,27 @@ export const staffCalendarResponseSchema = z.object({
   leave: z.array(staffCalendarLeaveItemSchema),
 });
 
+export const staffTeamCalendarStaffSummarySchema = z.object({
+  staffMemberId: z.string().uuid(),
+  displayName: z.string(),
+  bookingCount: z.number().int(),
+  confirmedCount: z.number().int(),
+  bookedMinutes: z.number().int(),
+  hours: z.array(weeklyAvailabilityRuleSchema),
+  inheritsBusinessHours: z.boolean(),
+});
+
+export const staffTeamCalendarResponseSchema = z.object({
+  staff: z.array(staffTeamCalendarStaffSummarySchema),
+  bookings: z.array(staffCalendarBookingItemSchema),
+  leave: z.array(staffCalendarLeaveItemSchema),
+});
+
 export type StaffCalendarBookingItem = z.infer<typeof staffCalendarBookingItemSchema>;
 export type StaffCalendarLeaveItem = z.infer<typeof staffCalendarLeaveItemSchema>;
 export type StaffCalendarResponse = z.infer<typeof staffCalendarResponseSchema>;
+export type StaffTeamCalendarStaffSummary = z.infer<typeof staffTeamCalendarStaffSummarySchema>;
+export type StaffTeamCalendarResponse = z.infer<typeof staffTeamCalendarResponseSchema>;
 
 export const createServiceOfferingRequestSchema = z.object({
   name: z.string().min(1),

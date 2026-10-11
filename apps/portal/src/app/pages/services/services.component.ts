@@ -7,7 +7,12 @@ import type {
   ServiceTemplate,
 } from "@adeni/shared";
 import { getCategoryLabel } from "@adeni/shared";
-import { AdeniConfirmService, AdeniFeedbackService, PortalPageComponent } from "@adeni/ui";
+import {
+  AdeniCarbonIconComponent,
+  AdeniConfirmService,
+  AdeniFeedbackService,
+  PortalPageComponent,
+} from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { formatPrice } from "@adeni/shared";
 
@@ -28,7 +33,7 @@ type ServiceDraft = {
 @Component({
   selector: "app-services",
   standalone: true,
-  imports: [PortalPageComponent, FormsModule],
+  imports: [PortalPageComponent, FormsModule, AdeniCarbonIconComponent],
   templateUrl: "./services.component.html",
   styleUrl: "./services.component.scss",
 })

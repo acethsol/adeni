@@ -24,6 +24,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.45rem;
   min-height: 2.5rem;
   border-radius: var(--cds-radius-none);
   padding: 0 var(--cds-spacing-05);
@@ -33,6 +34,12 @@
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn > adeni-carbon-icon {
+  margin-inline: -0.1rem;
 }
 
 .btn:disabled {

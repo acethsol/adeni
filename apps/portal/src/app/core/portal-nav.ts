@@ -83,6 +83,13 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         ],
       },
       {
+        path: "/calendar",
+        label: "Calendar",
+        icon: "availability",
+        capability: "calendar",
+        permission: "portal.staff",
+      },
+      {
         path: "/my-calendar",
         label: "My calendar",
         icon: "availability",

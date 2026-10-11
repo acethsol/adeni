@@ -51,6 +51,13 @@ export const routes: Routes = [
         canActivate: [portalPermissionGuard],
       },
       {
+        path: "calendar",
+        component: StaffCalendarComponent,
+        title: "Team calendar",
+        canActivate: [portalPermissionGuard],
+        data: { teamCalendar: true },
+      },
+      {
         path: "my-calendar",
         component: StaffCalendarComponent,
         title: "My calendar",

@@ -12,7 +12,7 @@ import {
   resolveBusinessCoverImage,
   VERIFICATION_DOCUMENT_LABELS,
 } from "@adeni/shared";
-import { AdeniFeedbackService, PortalPageComponent } from "@adeni/ui";
+import { AdeniCarbonIconComponent, AdeniFeedbackService, PortalPageComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { PortalTabsComponent } from "../../shared/portal-tabs.component";
@@ -24,7 +24,13 @@ const MAX_BYTES = MAX_UPLOAD_BYTES;
 @Component({
   selector: "app-profile",
   standalone: true,
-  imports: [PortalPageComponent, FormsModule, KeyValuePipe, PortalTabsComponent],
+  imports: [
+    PortalPageComponent,
+    FormsModule,
+    KeyValuePipe,
+    PortalTabsComponent,
+    AdeniCarbonIconComponent,
+  ],
   templateUrl: "./profile.component.html",
   styleUrl: "./profile.component.scss",
 })
