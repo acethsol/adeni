@@ -92,6 +92,32 @@ public sealed class PaymentsController(
         return Ok(payment);
     }
 
+    [HttpGet("{id:guid}/receipt")]
+    public async Task<IActionResult> Receipt(Guid id, CancellationToken cancellationToken)
+    {
+        var customerSub = ResolveCustomerAuth0Sub();
+        var businessSub = ResolveBusinessAuth0Sub();
+        if (customerSub is null && businessSub is null)
+        {
+            return Unauthorized();
+        }
+
+        var paymentResult = await paymentOrchestrator.GetAsync(id, cancellationToken);
+        if (paymentResult.IsFailure)
+        {
+            return ApiResults.FromResult(paymentResult, Ok, HttpContext);
+        }
+
+        var payment = paymentResult.Value!;
+        if (!await CanAccessPaymentAsync(payment, customerSub, businessSub, cancellationToken))
+        {
+            return CrossTenantDenied();
+        }
+
+        var receipt = await paymentOrchestrator.GetReceiptAsync(id, cancellationToken);
+        return ApiResults.FromResult(receipt, Ok, HttpContext);
+    }
+
     [HttpGet("ledger")]
     [RequiresPortalPermission(PortalPermissions.Payments)]
     public async Task<IActionResult> Ledger(

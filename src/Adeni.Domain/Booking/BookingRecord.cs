@@ -24,6 +24,13 @@ public sealed class BookingRecord : ITenantEntity
 
     public BookingStatus Status { get; set; } = BookingStatus.Pending;
 
+    public BookingSettlementSource SettlementSource { get; set; } = BookingSettlementSource.None;
+
+    public DateTimeOffset? PaidAt { get; set; }
+
+    /// <summary>Optional till / POS / transfer reference when paid externally.</summary>
+    public string? ExternalPaymentReference { get; set; }
+
     public string? CustomerNotes { get; set; }
 
     public string? BusinessNotes { get; set; }

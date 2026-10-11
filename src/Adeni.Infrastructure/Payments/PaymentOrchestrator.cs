@@ -225,6 +225,46 @@ public sealed class PaymentOrchestrator(
         return Result.Success(Map(entity));
     }
 
+    public async Task<Result<PaymentReceiptResponse>> GetReceiptAsync(
+        Guid paymentIntentId,
+        CancellationToken cancellationToken = default)
+    {
+        var entity = await dbContext.PaymentIntents
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == paymentIntentId, cancellationToken);
+
+        if (entity is null)
+        {
+            return Result.Failure<PaymentReceiptResponse>(ErrorCodes.PaymentNotFoundError());
+        }
+
+        var businessName = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(x => x.Id == entity.TenantId)
+            .Select(x => x.Name)
+            .FirstOrDefaultAsync(cancellationToken) ?? "Business";
+
+        var method = entity.Type switch
+        {
+            PaymentIntentType.Deposit => "Online deposit",
+            PaymentIntentType.Link => "Online payment",
+            PaymentIntentType.Invoice => "Online invoice",
+            _ => "Online",
+        };
+
+        return Result.Success(new PaymentReceiptResponse(
+            entity.Id,
+            entity.BookingId,
+            businessName,
+            entity.Description,
+            entity.Amount,
+            entity.Currency,
+            entity.Status.ToString(),
+            entity.Status == PaymentIntentStatus.Completed ? entity.UpdatedAt : null,
+            method,
+            entity.ProviderReference));
+    }
+
     private async Task<Result<PaymentIntentResponse>> CreatePaymentIntentAsync(
         Guid tenantId,
         Guid? bookingId,

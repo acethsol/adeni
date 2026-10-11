@@ -31,7 +31,24 @@ public sealed record BookingResponse(
     IReadOnlyList<BookingLineResponse>? Lines = null,
     IReadOnlyList<BookingGuestResponse>? Guests = null,
     decimal? TotalPriceAmount = null,
-    string? Currency = null);
+    string? Currency = null,
+    string? SettlementSource = null,
+    DateTimeOffset? PaidAt = null,
+    string? ExternalPaymentReference = null,
+    decimal? RemainingBalanceAmount = null);
+
+public sealed record MarkBookingPaidRequest(
+    string? ExternalReference = null,
+    string? Note = null);
+
+public sealed record CollectBalanceResponse(
+    Guid BookingId,
+    Guid PaymentIntentId,
+    decimal Amount,
+    string Currency,
+    string CheckoutUrl,
+    string ProviderReference,
+    BookingResponse Booking);
 
 public sealed record CustomerBookingResponse(
     Guid Id,
@@ -99,6 +116,31 @@ public interface IBookingService
         Guid tenantId,
         Guid bookingId,
         string? reason,
+        Guid? requireStaffMemberId = null,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<BookingResponse>> CheckInAsync(
+        Guid tenantId,
+        Guid bookingId,
+        Guid? requireStaffMemberId = null,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<BookingResponse>> CompleteAsync(
+        Guid tenantId,
+        Guid bookingId,
+        Guid? requireStaffMemberId = null,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<BookingResponse>> MarkPaidAsync(
+        Guid tenantId,
+        Guid bookingId,
+        MarkBookingPaidRequest request,
+        Guid? requireStaffMemberId = null,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<CollectBalanceResponse>> CollectBalanceAsync(
+        Guid tenantId,
+        Guid bookingId,
         Guid? requireStaffMemberId = null,
         CancellationToken cancellationToken = default);
 
