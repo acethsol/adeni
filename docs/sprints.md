@@ -35,7 +35,7 @@
 | — | App Insights (Obs 1) | → Sprint 20 |
 | — | Booking notifications, auto-confirm, payments, waitlist | → Sprint 15 |
 
-**Next up:** Sprint 25d (**Roster invite / revoke UI**) — [spec](./specs/sprint-25-staff-accounts-permissions.md). Sprint 20 remains planned in parallel for deploy/observability.
+**Next up:** Sprint 27 — payment loop (check-in → paid). Sprint 20 (deploy/AI/observability) remains planned in parallel. See [roadmap-modules.md](./roadmap-modules.md).
 
 ---
 ## Sprint 0 — Foundation & dev tooling ✅
