@@ -153,6 +153,7 @@ Migration: `20261005181138_WellnessTaxonomy`.
 - Regulated 🔴 categories (compliance track)  
 - ~~Normalize dev seed data to canonical slugs~~ ✅ Lagos + Ottawa, enabled categories only
 - Optional market-level `hiddenCategorySlugs` in `markets.json`
+- Walk-in queue capability + check-in kiosk (see [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md))
 
 ---
 
