@@ -13,6 +13,8 @@ import LocationFilled20 from "@carbon/icons/es/location--filled/20";
 import LocationFilled32 from "@carbon/icons/es/location--filled/32";
 import MapCenter32 from "@carbon/icons/es/map--center/32";
 import Search20 from "@carbon/icons/es/search/20";
+import User16 from "@carbon/icons/es/user/16";
+import UserFilled16 from "@carbon/icons/es/user--filled/16";
 
 export type AdeniCarbonIconName =
   | "location--filled"
@@ -25,7 +27,9 @@ export type AdeniCarbonIconName =
   | "chevron--down"
   | "checkmark"
   | "checkmark--filled"
-  | "flash--filled";
+  | "flash--filled"
+  | "user"
+  | "user--filled";
 
 const ICONS: Record<AdeniCarbonIconName, IconDescriptor> = {
   "location--filled": LocationFilled20 as IconDescriptor,
@@ -39,6 +43,8 @@ const ICONS: Record<AdeniCarbonIconName, IconDescriptor> = {
   checkmark: Checkmark16 as IconDescriptor,
   "checkmark--filled": CheckmarkFilled16 as IconDescriptor,
   "flash--filled": FlashFilled16 as IconDescriptor,
+  user: User16 as IconDescriptor,
+  "user--filled": UserFilled16 as IconDescriptor,
 };
 
 function iconSize(icon: IconDescriptor, override?: number): number {

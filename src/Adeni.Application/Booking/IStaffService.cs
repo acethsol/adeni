@@ -70,19 +70,39 @@ public sealed record StaffCalendarBookingItem(
     DateTimeOffset StartAt,
     DateTimeOffset EndAt,
     int Status,
-    string? CustomerNotes);
+    string? CustomerNotes,
+    bool CustomerSelectedStaff = true,
+    Guid? StaffMemberId = null,
+    string? StaffDisplayName = null);
 
 public sealed record StaffCalendarLeaveItem(
     Guid Id,
     DateTimeOffset StartAt,
     DateTimeOffset EndAt,
-    string? Reason);
+    string? Reason,
+    Guid? StaffMemberId = null,
+    string? StaffDisplayName = null);
 
 public sealed record StaffCalendarResponse(
     Guid StaffMemberId,
     string DisplayName,
     IReadOnlyList<WeeklyAvailabilityRule> Hours,
     bool InheritsBusinessHours,
+    IReadOnlyList<StaffCalendarBookingItem> Bookings,
+    IReadOnlyList<StaffCalendarLeaveItem> Leave);
+
+/// <summary>Per-staff rollup for the owner/manager team calendar.</summary>
+public sealed record StaffTeamCalendarStaffSummary(
+    Guid StaffMemberId,
+    string DisplayName,
+    int BookingCount,
+    int ConfirmedCount,
+    int BookedMinutes,
+    IReadOnlyList<WeeklyAvailabilityRule> Hours,
+    bool InheritsBusinessHours);
+
+public sealed record StaffTeamCalendarResponse(
+    IReadOnlyList<StaffTeamCalendarStaffSummary> Staff,
     IReadOnlyList<StaffCalendarBookingItem> Bookings,
     IReadOnlyList<StaffCalendarLeaveItem> Leave);
 
@@ -158,6 +178,12 @@ public interface IStaffService
     Task<Result<StaffCalendarResponse>> GetCalendarAsync(
         Guid tenantId,
         Guid staffMemberId,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<StaffTeamCalendarResponse>> GetTeamCalendarAsync(
+        Guid tenantId,
         DateTimeOffset from,
         DateTimeOffset to,
         CancellationToken cancellationToken = default);

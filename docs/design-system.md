@@ -20,6 +20,10 @@ Cross-platform tokens live in `@adeni/shared`. Shared staff-app UI (page layout,
 
 Staff layout SCSS: `@use "staff-layout" as *` (from `@adeni/ui`, via `stylePreprocessorOptions.includePaths` in portal/admin). Portal-only widgets (e.g. pending bookings bell): `apps/portal/src/app/shared/`.
 
+### Floor calendar
+
+Month/week/day boards are a hallmark surface. Shared date helpers live in `@adeni/ui` (`calendar/calendar-date`). Spec: [specs/sprint-calendar-floor.md](./specs/sprint-calendar-floor.md) — team vs practitioner views, `customerSelectedStaff` Carbon user badge, hours-worked rollups, mobile day-first.
+
 ### Page actions (`PortalPageComponent`)
 
 Primary list actions (e.g. **Add team member**) go in the page header top-right via `pageActions`:

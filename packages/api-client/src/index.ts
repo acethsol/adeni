@@ -75,6 +75,7 @@ import {
   staffLeaveListResponseSchema,
   createStaffLeaveRequestSchema,
   staffCalendarResponseSchema,
+  staffTeamCalendarResponseSchema,
   createStaffInviteRequestSchema,
   staffPortalInviteSchema,
   staffPortalInvitesResponseSchema,
@@ -147,6 +148,7 @@ import {
   type AcceptStaffInviteRequest,
   type AcceptStaffInviteResponse,
   type StaffCalendarResponse,
+  type StaffTeamCalendarResponse,
   type WeeklyAvailabilityRule,
   type ServiceOfferingsResponse,
   type CreateQuoteRequest,
@@ -1126,6 +1128,15 @@ export class AdeniApiClient {
       `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/calendar?${query}`,
     );
     return staffCalendarResponseSchema.parse(await response.json());
+  }
+
+  async getTenantTeamCalendar(params: {
+    from: string;
+    to: string;
+  }): Promise<StaffTeamCalendarResponse> {
+    const query = new URLSearchParams({ from: params.from, to: params.to });
+    const response = await this.request(`/api/v1/tenant/staff/team-calendar?${query}`);
+    return staffTeamCalendarResponseSchema.parse(await response.json());
   }
 
   async getTenantAvailability(): Promise<WeeklyAvailabilityRule[]> {

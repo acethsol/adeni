@@ -1,17 +1,40 @@
-<app-portal-page
-  [title]="calendar()?.displayName ? calendar()!.displayName + ' · Floor' : 'Staff calendar'"
-  description="Month, week, and day board — bookings, leave, and hours on one calendar."
->
+<app-portal-page [title]="boardTitle()" [description]="boardSubtitle()">
+  @if (teamMode() && showRosterBackLink()) {
+    <a pageActions class="btn" routerLink="/staff">Staff roster</a>
+  }
+
   <div class="cal-shell">
     <header class="cal-hero">
       <div class="cal-hero-copy">
-        @if (showRosterBackLink()) {
+        @if (!teamMode() && showRosterBackLink()) {
           <a class="back-link" routerLink="/staff">← Staff</a>
         }
-        <p class="cal-kicker">Practitioner board</p>
-        <h2 class="cal-name">{{ calendar()?.displayName ?? "…" }}</h2>
+        <p class="cal-kicker">{{ teamMode() ? "Team board" : "Practitioner board" }}</p>
+        <h2 class="cal-name">
+          @if (teamMode()) {
+            {{ filterStaffId() ? boardTitle() : "Everyone" }}
+          } @else {
+            {{ calendar()?.displayName ?? "…" }}
+          }
+        </h2>
         <p class="cal-hours">
-          @if (calendar(); as cal) {
+          @if (teamMode()) {
+            @if (filterStaffId(); as id) {
+              @if (team()?.staff; as staff) {
+                @for (member of staff; track member.staffMemberId) {
+                  @if (member.staffMemberId === id) {
+                    @if (member.inheritsBusinessHours) {
+                      Hours follow the business schedule
+                    } @else {
+                      Custom weekly hours · {{ member.hours.length }} open day(s)
+                    }
+                  }
+                }
+              }
+            } @else {
+              Showing all active practitioners · tap a name to focus
+            }
+          } @else if (calendar(); as cal) {
             @if (cal.inheritsBusinessHours) {
               Hours follow the business schedule
             } @else {
@@ -33,11 +56,39 @@
           <span class="stat-label">Confirmed</span>
         </div>
         <div class="stat">
-          <span class="stat-value">{{ stats().leave }}</span>
-          <span class="stat-label">Leave</span>
+          <span class="stat-value">{{ stats().bookedHoursLabel }}</span>
+          <span class="stat-label">Hours worked</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">{{ stats().requested }}</span>
+          <span class="stat-label">Requested</span>
         </div>
       </div>
     </header>
+
+    @if (teamMode() && team(); as teamData) {
+      <div class="staff-filter" role="group" aria-label="Filter by practitioner">
+        <button
+          type="button"
+          class="staff-chip"
+          [class.active]="filterStaffId() === null"
+          (click)="setStaffFilter(null)"
+        >
+          All
+        </button>
+        @for (member of teamData.staff; track member.staffMemberId) {
+          <button
+            type="button"
+            class="staff-chip"
+            [class.active]="filterStaffId() === member.staffMemberId"
+            (click)="setStaffFilter(member.staffMemberId)"
+          >
+            <span>{{ member.displayName }}</span>
+            <em>{{ hoursLabel(member.bookedMinutes) }}</em>
+          </button>
+        }
+      </div>
+    }
 
     <div class="cal-toolbar">
       <div class="week-nav" role="group" aria-label="Navigate calendar">
@@ -77,6 +128,10 @@
         <span class="leg is-confirmed">Confirmed</span>
         <span class="leg is-pending">Pending</span>
         <span class="leg is-leave">Leave</span>
+        <span class="leg is-requested">
+          <adeni-carbon-icon name="user--filled" [size]="12" />
+          Requested
+        </span>
         <span class="leg is-off">Off hours</span>
       </div>
     </div>
@@ -85,14 +140,14 @@
       <p class="error-banner">{{ error() }}</p>
     }
 
-    @if (loading() && !calendar()) {
+    @if (loading() && !calendar() && !team()) {
       <div class="cal-skeleton" aria-busy="true">
         <div class="skel-rail"></div>
         @for (_ of [1, 2, 3, 4, 5, 6, 7]; track $index) {
           <div class="skel-col"></div>
         }
       </div>
-    } @else if (calendar()) {
+    } @else if (calendar() || team()) {
       <div
         class="cal-stage"
         [class.is-day]="view() === 'day'"
@@ -132,8 +187,16 @@
                         [class.is-confirmed]="item.status === 1"
                         [class.is-rejected]="item.status === 2"
                         [class.is-cancelled]="item.status === 3"
+                        [class.is-requested]="item.customerSelectedStaff"
                         (click)="selectBlock(item, $event)"
                       >
+                        @if (item.customerSelectedStaff) {
+                          <adeni-carbon-icon
+                            class="pill-user"
+                            name="user--filled"
+                            [size]="12"
+                          />
+                        }
                         <em>{{ item.startLabel }}</em>
                         {{ item.title }}
                       </button>
@@ -234,12 +297,20 @@
                         [class.is-confirmed]="block.status === 1"
                         [class.is-rejected]="block.status === 2"
                         [class.is-cancelled]="block.status === 3"
+                        [class.is-requested]="block.customerSelectedStaff"
                         [class.is-selected]="selectedId() === block.id"
                         [style.top.px]="block.top"
                         [style.height.px]="block.height"
                         (click)="selectBlock(block, $event)"
                       >
-                        <span class="event-time">{{ block.startLabel }}</span>
+                        <span class="event-head">
+                          <span class="event-time">{{ block.startLabel }}</span>
+                          @if (block.customerSelectedStaff) {
+                            <span class="event-requested" title="Customer requested this person">
+                              <adeni-carbon-icon name="user--filled" [size]="14" />
+                            </span>
+                          }
+                        </span>
                         <span class="event-title">{{ block.title }}</span>
                         @if (block.height >= 56 && block.statusLabel) {
                           <span class="event-meta">{{ block.statusLabel }}</span>
@@ -266,6 +337,15 @@
             <p class="rail-kicker">{{ sel.kind === "leave" ? "Leave" : "Appointment" }}</p>
             <h3>{{ sel.title }}</h3>
             <p class="rail-when">{{ sel.startLabel }} – {{ sel.endLabel }}</p>
+            @if (sel.customerSelectedStaff) {
+              <p class="rail-requested">
+                <adeni-carbon-icon name="user--filled" [size]="16" />
+                Customer requested this practitioner
+              </p>
+            }
+            @if (sel.staffDisplayName && teamMode()) {
+              <p class="rail-staff">{{ sel.staffDisplayName }}</p>
+            }
             @if (sel.statusLabel) {
               <span
                 class="rail-status"
@@ -277,8 +357,10 @@
                 {{ sel.statusLabel }}
               </span>
             }
-            @if (sel.subtitle) {
+            @if (sel.subtitle && sel.kind === "leave") {
               <p class="rail-notes">{{ sel.subtitle }}</p>
+            } @else if (sel.kind === "booking" && sel.booking?.customerNotes?.trim()) {
+              <p class="rail-notes">{{ sel.booking!.customerNotes }}</p>
             } @else if (sel.kind === "booking") {
               <p class="rail-notes muted">No customer notes</p>
             }

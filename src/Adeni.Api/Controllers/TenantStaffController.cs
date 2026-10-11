@@ -225,6 +225,22 @@ public sealed class TenantStaffController(
         return ApiResults.FromResult(result, () => NoContent(), HttpContext);
     }
 
+    [HttpGet("team-calendar")]
+    [RequiresPortalPermission(PortalPermissions.Staff)]
+    public async Task<IActionResult> GetTeamCalendar(
+        [FromQuery] DateTimeOffset from,
+        [FromQuery] DateTimeOffset to,
+        CancellationToken cancellationToken)
+    {
+        if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
+        {
+            return Unauthorized();
+        }
+
+        var result = await staff.GetTeamCalendarAsync(tenantId, from, to, cancellationToken);
+        return ApiResults.FromResult(result, Ok, HttpContext);
+    }
+
     [HttpGet("{id:guid}/calendar")]
     [RequiresPortalPermission(PortalPermissions.Staff, PortalPermissions.StaffSelf)]
     public async Task<IActionResult> GetCalendar(
