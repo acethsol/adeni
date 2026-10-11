@@ -36,7 +36,7 @@
 | — | App Insights (Obs 1) | → Sprint 20 |
 | — | Booking notifications, auto-confirm, payments, waitlist | → Sprint 15 |
 
-**Next up:** Sprint 27 — payment loop (check-in → paid). Sprint 20 (deploy/AI/observability) remains planned in parallel. See [roadmap-modules.md](./roadmap-modules.md).
+**Next up:** Sprint 20 (deploy/AI/observability). Queue + kiosk / POS bridge next on money roadmap — see [roadmap-modules.md](./roadmap-modules.md).
 
 ---
 ## Sprint 0 — Foundation & dev tooling ✅
@@ -421,10 +421,20 @@ Dual-market card commerce: Stripe beside Paystack behind `IPaymentProvider`. Spe
 
 **Out of scope for 26:** Terminal, booking paid-states loop, POS bridge, SaaS Billing.
 
+## Sprint 27 — In-salon payment loop ✅
+
+Check-in → complete → collect balance / paid-at-till + lightweight receipt. Spec: [sprint-27-payment-loop.md](./specs/sprint-27-payment-loop.md).
+
+| Task | Status |
+|------|--------|
+| **27a–l** Booking floor states, balance collect, mark-paid, receipt, portal actions | Done |
+
+**Out of scope for 27:** Terminal, POS bridge, tax/PDF invoices, queue/kiosk.
+
 ## Next up
 
-1. **Sprint 27** — payment loop (`checked_in` → `paid`, paid-at-till) — no POS required; see [roadmap §4](./roadmap-workflows-payments-queue.md#4-close-the-payment-loop-without-building-pos)
-2. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, App Insights, ops dashboards (parallel)
-3. Queue + kiosk → POS bridge (later)
+1. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, App Insights, ops dashboards (parallel)
+2. Queue + kiosk → POS bridge (later)
+3. Email receipt / tax PDF (later)
 
 Strategy reference: [roadmap-modules.md](./roadmap-modules.md), [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md), [product-strategy.md](./product-strategy.md)
