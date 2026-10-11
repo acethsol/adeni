@@ -50,10 +50,10 @@ Each major build still needs a `docs/specs/sprint-XX-*.md` before implementation
 | | |
 |--|--|
 | **Job** | Walk-ins and “I’m here” without a second OS |
-| **Surfaces** | Customer join link · staff Next board · tablet **kiosk mode** |
+| **Surfaces** | Customer join link · staff Next board · tablet **kiosk mode** (30) |
 | **States** | Waiting → Called → In service → Done / No-show |
 | **Ties to** | Same floor board as appointments; then payment loop |
-| **Spec path** | Deep dive → then `sprint-XX-queue-checkin.md` |
+| **Spec path** | [sprint-29-queue-v1.md](./specs/sprint-29-queue-v1.md) |
 | **Owner** | TBD |
 
 ### 3.2 Payments, finance & POS bridge

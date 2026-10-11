@@ -433,20 +433,30 @@ Check-in → complete → collect balance / paid-at-till + lightweight receipt. 
 
 **Out of scope for 27:** Terminal, POS bridge, tax/PDF invoices, queue/kiosk.
 
-## Sprint 28 — Billing documents (draft)
+## Sprint 28 — Billing documents ✅
 
 Numbered receipts & invoices with shareable page, PDF, and email — not a reporting/BI tool. Spec: [sprint-28-billing-documents.md](./specs/sprint-28-billing-documents.md).
 
 | Task | Status |
 |------|--------|
-| **28a–x** Document model, issue rules, PDF/email, public page, portal hooks | Draft |
+| **28a–x** Document model, issue rules, PDF/email, public page, portal hooks | Done |
 
 **Out of scope for 28:** Dashboards/BI, tax e-file, POS, QuickBooks sync.
 
+## Sprint 29 — Queue v1 (draft)
+
+Walk-in queue on the same floor board as appointments: join → call → start → done / no-show. Spec: [sprint-29-queue-v1.md](./specs/sprint-29-queue-v1.md).
+
+| Task | Status |
+|------|--------|
+| **29a–o** Capability, QueueTicket, public join, staff board, ETA, notifications | Draft |
+
+**Out of scope for 29:** Tablet kiosk (→ Sprint 30), Zenoti optimizer, anonymous walk-ins, SMS provider.
+
 ## Next up
 
-1. **Approve + implement Sprint 28** — [billing documents](./specs/sprint-28-billing-documents.md)
-2. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, App Insights, ops dashboards (parallel)
-3. Queue + kiosk → POS bridge (later)
+1. **Approve + implement Sprint 29** — [queue v1](./specs/sprint-29-queue-v1.md)
+2. **Sprint 30** — kiosk mode (fullscreen shell)
+3. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, App Insights (parallel)
 
 Strategy reference: [roadmap-modules.md](./roadmap-modules.md), [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md), [product-strategy.md](./product-strategy.md)
