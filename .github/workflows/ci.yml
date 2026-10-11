@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, dev]
 
+env:
+  ADENI_SQL_PASSWORD: "Adeni_Dev_Passw0rd!"
+  ADENI_SQL_CONNECTION: "Server=localhost,1433;Database=adeni;User Id=sa;Password=Adeni_Dev_Passw0rd!;TrustServerCertificate=True;Encrypt=False"
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -49,10 +53,64 @@ jobs:
           Redis__ConnectionString: ""
         run: dotnet test Adeni.slnx -c Release --no-build --verbosity normal
 
-      - name: Vulnerability scan
-        run: dotnet list Adeni.slnx package --vulnerable --include-transitive
+      - name: NuGet vulnerability scan (fail on findings)
+        run: bash scripts/assert-no-vulnerable-nuget.sh Adeni.slnx
 
-  portal-angular:
+  sqlserver:
+    runs-on: ubuntu-latest
+    services:
+      sqlserver:
+        # GitHub runners are amd64 — use full SQL Server (local Docker Compose uses Azure SQL Edge for ARM).
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_SA_PASSWORD: "Adeni_Dev_Passw0rd!"
+        ports:
+          - 1433:1433
+        # Healthcheck omitted — mssql image tooling varies; steps wait on TCP :1433.
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Setup PowerShell
+        # publish-db.ps1; ubuntu runners usually include pwsh — install if missing
+        run: |
+          if ! command -v pwsh >/dev/null 2>&1; then
+            dotnet tool install --global PowerShell
+            echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+          fi
+
+      - name: Wait for SQL Server
+        run: |
+          for i in $(seq 1 60); do
+            if (echo >/dev/tcp/127.0.0.1/1433) >/dev/null 2>&1; then
+              echo "SQL Server port is open (attempt $i)"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "SQL Server did not become ready"
+          exit 1
+
+      - name: Publish database (SqlPackage)
+        run: pwsh ./scripts/publish-db.ps1 -CreateNewDatabase -ConnectionString "${{ env.ADENI_SQL_CONNECTION }}"
+
+      - name: SQL Server discovery tests
+        env:
+          ADENI_SQLSERVER_TESTS: "1"
+          ConnectionStrings__AdeniDb: ${{ env.ADENI_SQL_CONNECTION }}
+        run: >
+          dotnet test tests/Adeni.Infrastructure.Tests/Adeni.Infrastructure.Tests.csproj
+          -c Release
+          --filter "Category=SqlServer"
+          --verbosity normal
+
+  frontend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -66,6 +124,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Typecheck workspaces
+        run: npm run typecheck
+
+      - name: Shared package tests
+        run: npm test --workspace @adeni/shared
+
       - name: Build Angular portal
         run: npm run build:portal
 
@@ -74,3 +138,9 @@ jobs:
 
       - name: Build Angular discover
         run: npm run build:discover
+
+      - name: npm audit (production, fail on high+)
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: npm audit (all deps, fail on critical)
+        run: npm audit --audit-level=critical

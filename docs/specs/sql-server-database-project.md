@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|-------|
 | **Sprint** | Platform (cross-cutting) |
-| **Status** | Done (local); CI SqlPackage step optional follow-up |
+| **Status** | Done (local + CI SqlPackage / Category=SqlServer) |
 | **Created** | 2026-10-09 |
 
 ## 1. Goal
@@ -23,9 +23,9 @@ Replace PostgreSQL with **SQL Server**, own schema in a **Microsoft.Build.Sql Da
 - [x] Update docs + CI (tests use InMemory)
 - [x] Unit tests for `StoredProcedureExecutor` + `DiscoverySearchExecutor.MapRow` (InMemory/fake ADO; always in CI)
 - [x] Opt-in SQL Server discovery tests (`Category=SqlServer`, `ADENI_SQLSERVER_TESTS=1`)
-- [ ] SqlPackage publish step in CI against a service container — follow-up
+- [x] SqlPackage publish step in CI against a service container (`sqlserver` job in `.github/workflows/ci.yml`)
 - [ ] Production Azure SQL provisioning — follow-up
-- [ ] Run `Category=SqlServer` tests in CI after SqlPackage — follow-up
+- [x] Run `Category=SqlServer` tests in CI after SqlPackage
 
 ## 3. Out of scope
 
