@@ -6,7 +6,7 @@
 |-------|-------|
 | **Sprint** | Sprint 29 — Queue v1 |
 | **Author** | Cloud Agent |
-| **Status** | Draft |
+| **Status** | Implemented |
 | **Created** | 2026-10-11 |
 
 ---
@@ -42,23 +42,23 @@ Queue tickets are first-class floor entities. When “In service” starts, opti
 
 ### Capability & domain
 
-- [ ] **29a** Enable `walk_in_queue` capability for categories that need it (nails, barbers, selected spas) via existing capabilities catalog — gate APIs + portal nav
-- [ ] **29b** New entity `QueueTicket` (name TBD) under Booking schema — **do not** reuse `WaitlistEntry`
+- [x] **29a** Enable `walk_in_queue` capability for categories that need it (nails, barbers, selected spas) via existing capabilities catalog — gate APIs + portal nav
+- [x] **29b** New entity `QueueTicket` (name TBD) under Booking schema — **do not** reuse `WaitlistEntry`
   - Fields: TenantId, optional ServiceOfferingId, optional StaffMemberId, CustomerId (or guest phone/name snapshot), Status, Position/JoinedAt, CalledAt, StartedAt, CompletedAt, NoShowAt, PartySize, Notes, optional BookingId
-- [ ] **29c** Status enum: `Waiting | Called | InService | Done | NoShow | Cancelled`
-- [ ] **29d** SQL tables + EF mapping + tenant filters
+- [x] **29c** Status enum: `Waiting | Called | InService | Done | NoShow | Cancelled`
+- [x] **29d** SQL tables + EF mapping + tenant filters
 
 ### Customer / public join
 
-- [ ] **29e** Public (or customer-auth) join: `POST /api/v1/public/queue/{tenantSlug}/join` with phone + name + optional serviceId
+- [x] **29e** Public (or customer-auth) join: `POST /api/v1/public/queue/{tenantSlug}/join` with phone + name + optional serviceId
   - Require phone (no anonymous walk-ins in v1)
   - Upsert/find customer by phone within tenant market rules where possible; else guest snapshot on ticket
-- [ ] **29f** Customer status: `GET /api/v1/public/queue/tickets/{token}` — position, ETA, status
-- [ ] **29g** Discover join page: `/q/{slug}` (or `/businesses/{slug}/queue`) — short form, one job
+- [x] **29f** Customer status: `GET /api/v1/public/queue/tickets/{token}` — position, ETA, status
+- [x] **29g** Discover join page: `/q/{slug}` (or `/businesses/{slug}/queue`) — short form, one job
 
 ### Staff floor board
 
-- [ ] **29h** Tenant APIs (portal.bookings or new portal.queue permission — prefer bookings + capability gate):
+- [x] **29h** Tenant APIs (portal.bookings or new portal.queue permission — prefer bookings + capability gate):
   - `GET /api/v1/tenant/queue` — active tickets (Waiting/Called/InService) + optional today’s Done/NoShow
   - `POST /api/v1/tenant/queue/{id}/call` — Waiting → Called; notify customer
   - `POST /api/v1/tenant/queue/{id}/start` — Called (or Waiting) → InService; optional assign staff; optional create/link booking
@@ -66,19 +66,19 @@ Queue tickets are first-class floor entities. When “In service” starts, opti
   - `POST /api/v1/tenant/queue/{id}/no-show` — Waiting/Called → NoShow
   - `POST /api/v1/tenant/queue/{id}/cancel` — Waiting → Cancelled
   - `POST /api/v1/tenant/queue` — staff can add walk-in on behalf of guest
-- [ ] **29i** Position = count of Waiting ahead + 1; ETA ≈ sum of avg duration of people ahead (service duration or tenant default 30m)
-- [ ] **29j** Portal page `/queue` (or Floor tab) — list Waiting / Called / In service with Next / No-show / Start actions
-- [ ] **29k** Practitioner scope: if `portal.bookings.self` only, filter tickets assigned to their staff member (unassigned visible to full bookings roles only)
+- [x] **29i** Position = count of Waiting ahead + 1; ETA ≈ sum of avg duration of people ahead (service duration or tenant default 30m)
+- [x] **29j** Portal page `/queue` (or Floor tab) — list Waiting / Called / In service with Next / No-show / Start actions
+- [x] **29k** Practitioner scope: if `portal.bookings.self` only, filter tickets assigned to their staff member (unassigned visible to full bookings roles only)
 
 ### Notifications
 
-- [ ] **29l** On Call: notify via `INotificationDispatcher` (email/stub + WhatsApp deep-link body if phone present) — “You’re up at {Business}”
-- [ ] **29m** Preference toggle on tenant notification prefs if one already exists for waitlist-style alerts
+- [x] **29l** On Call: notify via `INotificationDispatcher` (email/stub + WhatsApp deep-link body if phone present) — “You’re up at {Business}”
+- [x] **29m** Preference toggle on tenant notification prefs if one already exists for waitlist-style alerts
 
 ### Docs & tests
 
-- [ ] **29n** Update roadmap module status; shared schemas + api-client
-- [ ] **29o** Unit/integration: join → position; call → Called; no-show; start → InService; capability gate; tenant isolation; practitioner scope
+- [x] **29n** Update roadmap module status; shared schemas + api-client
+- [x] **29o** Unit/integration: join → position; call → Called; no-show; start → InService; capability gate; tenant isolation; practitioner scope
 
 ---
 
@@ -192,13 +192,13 @@ Indexes: (TenantId, Status, JoinedAt), PublicToken unique
 
 ## 10. Acceptance criteria
 
-- [ ] Customer can join via public slug and see position + ETA
-- [ ] Staff can Call → Start → Complete a ticket; No-show releases the line
-- [ ] Position/ETA update when someone ahead is called/no-showed
-- [ ] Capability-off tenant cannot join or see queue APIs
-- [ ] Practitioner with bookings.self only sees their assigned tickets (+ cannot steal unassigned without full bookings)
-- [ ] Waitlist (slot-opened) still works unchanged
-- [ ] Docs state kiosk is Sprint 30, not this sprint
+- [x] Customer can join via public slug and see position + ETA
+- [x] Staff can Call → Start → Complete a ticket; No-show releases the line
+- [x] Position/ETA update when someone ahead is called/no-showed
+- [x] Capability-off tenant cannot join or see queue APIs
+- [x] Practitioner with bookings.self only sees their assigned tickets (+ cannot steal unassigned without full bookings)
+- [x] Waitlist (slot-opened) still works unchanged
+- [x] Docs state kiosk is Sprint 30, not this sprint
 
 ---
 

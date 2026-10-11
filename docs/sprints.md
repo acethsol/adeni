@@ -32,13 +32,13 @@
 | **26** | **Stripe NA payments** | ✅ Done |
 | **27** | **In-salon payment loop** | ✅ Done |
 | **28** | **Billing documents** | ✅ Done |
-| **29** | **Queue v1** | Draft |
+| **29** | **Queue v1** | ✅ Done |
 | — | Sprint 11d LLM agent | → Sprint 20 |
 | — | Staging deploy + Auth0 E2E | → Sprint 20 |
 | — | App Insights (Obs 1) | → Sprint 20 |
 | — | Booking notifications, auto-confirm, payments, waitlist | → Sprint 15 |
 
-**Next up:** Sprint 29 — Queue v1 (walk-in floor board) — [spec](./specs/sprint-29-queue-v1.md). Kiosk = Sprint 30. See [roadmap-modules.md](./roadmap-modules.md).
+**Next up:** Sprint 30 — kiosk mode. Sprint 20 parallel. See [roadmap-modules.md](./roadmap-modules.md).
 
 ---
 ## Sprint 0 — Foundation & dev tooling ✅
@@ -443,20 +443,20 @@ Numbered receipts & invoices with shareable page, PDF, and email — not a repor
 
 **Out of scope for 28:** Dashboards/BI, tax e-file, POS, QuickBooks sync.
 
-## Sprint 29 — Queue v1 (draft)
+## Sprint 29 — Queue v1 ✅
 
 Walk-in queue on the same floor board as appointments: join → call → start → done / no-show. Spec: [sprint-29-queue-v1.md](./specs/sprint-29-queue-v1.md).
 
 | Task | Status |
 |------|--------|
-| **29a–o** Capability, QueueTicket, public join, staff board, ETA, notifications | Draft |
+| **29a–o** Capability, QueueTicket, public join, staff board, ETA, notifications | Done |
 
 **Out of scope for 29:** Tablet kiosk (→ Sprint 30), Zenoti optimizer, anonymous walk-ins, SMS provider.
 
 ## Next up
 
-1. **Approve + implement Sprint 29** — [queue v1](./specs/sprint-29-queue-v1.md)
-2. **Sprint 30** — kiosk mode (fullscreen shell)
-3. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, App Insights (parallel)
+1. **Sprint 30** — kiosk mode (fullscreen shell)
+2. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, App Insights (parallel)
+3. POS bridge (later)
 
 Strategy reference: [roadmap-modules.md](./roadmap-modules.md), [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md), [product-strategy.md](./product-strategy.md)

@@ -1,0 +1,50 @@
+<main class="queue-page">
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  } @else if (ticket(); as t) {
+    <header>
+      <p class="brand">{{ t.businessName || business()?.name }}</p>
+      <h1>You're in line</h1>
+      <p class="muted">Position {{ t.position }}@if (t.etaMinutes != null) { · about {{ t.etaMinutes }} min}</p>
+    </header>
+    <p class="status">We'll notify you when you're up. Keep this page or ask the front desk.</p>
+    <a class="btn" routerLink="/">Back home</a>
+  } @else if (business(); as biz) {
+    <header>
+      <p class="brand">{{ biz.name }}</p>
+      <h1>Join the queue</h1>
+      <p class="muted">Walk-ins welcome — leave your name and phone.</p>
+    </header>
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+
+    <form class="form" (ngSubmit)="join()">
+      <label>
+        Name
+        <input [(ngModel)]="displayName" name="displayName" required autocomplete="name" />
+      </label>
+      <label>
+        Phone
+        <input [(ngModel)]="phone" name="phone" required autocomplete="tel" />
+      </label>
+      @if (services().length > 0) {
+        <label>
+          Service
+          <select [(ngModel)]="serviceOfferingId" name="serviceOfferingId">
+            <option value="">Any available</option>
+            @for (service of services(); track service.id) {
+              <option [value]="service.id">{{ service.name }}</option>
+            }
+          </select>
+        </label>
+      }
+      <button type="submit" class="btn" [disabled]="submitting()">
+        {{ submitting() ? "Joining…" : "Join queue" }}
+      </button>
+    </form>
+  } @else {
+    <p class="error">{{ error() || "Business not found." }}</p>
+  }
+</main>

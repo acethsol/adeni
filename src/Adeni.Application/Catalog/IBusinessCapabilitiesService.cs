@@ -14,6 +14,7 @@ public static class BusinessCapability
     public const string Reviews = "reviews";
     public const string MultiService = "multi_service";
     public const string ServiceArea = "service_area";
+    public const string WalkInQueue = "walk_in_queue";
 }
 
 public static class DiscoveryCta

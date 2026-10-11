@@ -59,6 +59,10 @@ import {
   verificationBadgeSchema,
   publicReviewItemSchema,
   joinWaitlistRequestSchema,
+  joinQueueRequestSchema,
+  queueTicketResponseSchema,
+  queueTicketsResponseSchema,
+  staffAddQueueRequestSchema,
   initializePaymentRequestSchema,
   paymentIntentResponseSchema,
   createPaymentLinkRequestSchema,
@@ -169,6 +173,9 @@ import {
   type VerificationBadge,
   type PublicReviewItem,
   type JoinWaitlistRequest,
+  type JoinQueueRequest,
+  type QueueTicketResponse,
+  type StaffAddQueueRequest,
   type InitializePaymentRequest,
   type PaymentIntentResponse,
   type CreatePaymentLinkRequest,
@@ -790,6 +797,93 @@ export class AdeniApiClient {
       body: JSON.stringify(body),
     });
     return (await response.json()) as { id: string };
+  }
+
+  async joinPublicQueue(
+    slug: string,
+    request: JoinQueueRequest,
+  ): Promise<QueueTicketResponse> {
+    const body = joinQueueRequestSchema.parse(request);
+    const response = await this.request(
+      `/api/v1/public/queue/${encodeURIComponent(slug)}/join`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+    return queueTicketResponseSchema.parse(await response.json());
+  }
+
+  async getPublicQueueTicket(token: string): Promise<QueueTicketResponse> {
+    const response = await this.request(
+      `/api/v1/public/queue/tickets/${encodeURIComponent(token)}`,
+    );
+    return queueTicketResponseSchema.parse(await response.json());
+  }
+
+  async getTenantQueue(): Promise<QueueTicketResponse[]> {
+    const response = await this.request("/api/v1/tenant/queue");
+    return queueTicketsResponseSchema.parse(await response.json()).items;
+  }
+
+  async addTenantQueueTicket(
+    request: StaffAddQueueRequest,
+  ): Promise<QueueTicketResponse> {
+    const body = staffAddQueueRequestSchema.parse(request);
+    const response = await this.request("/api/v1/tenant/queue", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return queueTicketResponseSchema.parse(await response.json());
+  }
+
+  async callTenantQueueTicket(ticketId: string): Promise<QueueTicketResponse> {
+    const response = await this.request(
+      `/api/v1/tenant/queue/${encodeURIComponent(ticketId)}/call`,
+      { method: "POST" },
+    );
+    return queueTicketResponseSchema.parse(await response.json());
+  }
+
+  async startTenantQueueTicket(
+    ticketId: string,
+    staffMemberId?: string,
+  ): Promise<QueueTicketResponse> {
+    const response = await this.request(
+      `/api/v1/tenant/queue/${encodeURIComponent(ticketId)}/start`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ staffMemberId: staffMemberId ?? null }),
+      },
+    );
+    return queueTicketResponseSchema.parse(await response.json());
+  }
+
+  async completeTenantQueueTicket(ticketId: string): Promise<QueueTicketResponse> {
+    const response = await this.request(
+      `/api/v1/tenant/queue/${encodeURIComponent(ticketId)}/complete`,
+      { method: "POST" },
+    );
+    return queueTicketResponseSchema.parse(await response.json());
+  }
+
+  async noShowTenantQueueTicket(ticketId: string): Promise<QueueTicketResponse> {
+    const response = await this.request(
+      `/api/v1/tenant/queue/${encodeURIComponent(ticketId)}/no-show`,
+      { method: "POST" },
+    );
+    return queueTicketResponseSchema.parse(await response.json());
+  }
+
+  async cancelTenantQueueTicket(ticketId: string): Promise<QueueTicketResponse> {
+    const response = await this.request(
+      `/api/v1/tenant/queue/${encodeURIComponent(ticketId)}/cancel`,
+      { method: "POST" },
+    );
+    return queueTicketResponseSchema.parse(await response.json());
   }
 
   async initializePayment(

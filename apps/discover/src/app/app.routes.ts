@@ -6,6 +6,7 @@ import { BusinessProfileComponent } from "./pages/business/business.component";
 import { MyBookingsComponent } from "./pages/my-bookings/my-bookings.component";
 import { LegalDocumentComponent } from "./pages/legal/legal-document.component";
 import { PublicDocumentComponent } from "./pages/document/document.component";
+import { QueueJoinComponent } from "./pages/queue-join/queue-join.component";
 import { customerAuthGuard } from "./core/guards/customer-auth.guard";
 
 export const routes: Routes = [
@@ -26,6 +27,11 @@ export const routes: Routes = [
         path: "documents/:token",
         component: PublicDocumentComponent,
         title: "Document",
+      },
+      {
+        path: "q/:slug",
+        component: QueueJoinComponent,
+        title: "Join queue",
       },
       {
         path: "privacy",

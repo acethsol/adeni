@@ -73,6 +73,8 @@ public sealed class AdeniDbContext(
 
     public DbSet<WaitlistEntry> WaitlistEntries => Set<WaitlistEntry>();
 
+    public DbSet<QueueTicket> QueueTickets => Set<QueueTicket>();
+
     public DbSet<QuoteRequestRecord> QuoteRequests => Set<QuoteRequestRecord>();
 
     public DbSet<TenantVerificationBadge> TenantVerificationBadges => Set<TenantVerificationBadge>();
@@ -409,6 +411,30 @@ public sealed class AdeniDbContext(
             entity.ToTable("waitlist_entries", "booking");
             entity.HasKey(x => x.Id);
             entity.HasIndex(x => new { x.TenantId, x.ServiceOfferingId, x.NotifiedAt });
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<QueueTicket>(entity =>
+        {
+            entity.ToTable("queue_tickets", "booking");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.GuestName).HasMaxLength(200);
+            entity.Property(x => x.GuestPhone).HasMaxLength(40);
+            entity.Property(x => x.Notes).HasMaxLength(500);
+            entity.Property(x => x.PublicToken).HasMaxLength(64);
+            entity.Property(x => x.PartySize).HasDefaultValue(1);
+            entity.Property(x => x.Status).HasConversion<int>();
+            entity.HasIndex(x => x.PublicToken).IsUnique();
+            entity.HasIndex(x => new { x.TenantId, x.Status, x.JoinedAt });
+            entity.HasIndex(x => new { x.TenantId, x.StaffMemberId, x.Status });
+            entity.HasOne(x => x.ServiceOffering)
+                .WithMany()
+                .HasForeignKey(x => x.ServiceOfferingId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(x => x.StaffMember)
+                .WithMany()
+                .HasForeignKey(x => x.StaffMemberId)
+                .OnDelete(DeleteBehavior.SetNull);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 

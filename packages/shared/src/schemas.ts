@@ -1114,6 +1114,48 @@ export const joinWaitlistRequestSchema = z.object({
 
 export type JoinWaitlistRequest = z.infer<typeof joinWaitlistRequestSchema>;
 
+export const queueTicketResponseSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  status: z.string(),
+  position: z.number().int(),
+  etaMinutes: z.number().int().nullable().optional(),
+  displayName: z.string(),
+  phone: z.string(),
+  serviceName: z.string().nullable().optional(),
+  serviceOfferingId: z.string().uuid().nullable().optional(),
+  staffDisplayName: z.string().nullable().optional(),
+  staffMemberId: z.string().uuid().nullable().optional(),
+  partySize: z.number().int(),
+  notes: z.string().nullable().optional(),
+  joinedAt: z.string(),
+  publicToken: z.string(),
+  bookingId: z.string().uuid().nullable().optional(),
+  businessName: z.string().nullable().optional(),
+});
+
+export type QueueTicketResponse = z.infer<typeof queueTicketResponseSchema>;
+
+export const queueTicketsResponseSchema = z.object({
+  items: z.array(queueTicketResponseSchema),
+});
+
+export const joinQueueRequestSchema = z.object({
+  displayName: z.string().min(1).max(200),
+  phone: z.string().min(7).max(40),
+  serviceOfferingId: z.string().uuid().nullable().optional(),
+  partySize: z.number().int().min(1).max(6).optional(),
+  notes: z.string().max(500).optional(),
+});
+
+export type JoinQueueRequest = z.infer<typeof joinQueueRequestSchema>;
+
+export const staffAddQueueRequestSchema = joinQueueRequestSchema.extend({
+  staffMemberId: z.string().uuid().nullable().optional(),
+});
+
+export type StaffAddQueueRequest = z.infer<typeof staffAddQueueRequestSchema>;
+
 export const initializePaymentRequestSchema = z.object({
   tenantId: z.string().uuid(),
   bookingId: z.string().uuid().optional(),

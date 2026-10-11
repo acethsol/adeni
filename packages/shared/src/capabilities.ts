@@ -36,6 +36,8 @@ export const CAPABILITIES = [
 
   "service_area",
 
+  "walk_in_queue",
+
 ] as const;
 
 
