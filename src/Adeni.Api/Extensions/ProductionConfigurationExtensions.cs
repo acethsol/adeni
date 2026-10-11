@@ -28,13 +28,26 @@ public static class ProductionConfigurationExtensions
         }
 
         var paymentsProvider = configuration.GetSection(PaymentsOptions.SectionName)["Provider"] ?? "Stub";
-        if (string.Equals(paymentsProvider, "Paystack", StringComparison.OrdinalIgnoreCase))
+        var paystackWebhookSecret = configuration.GetSection(PaystackOptions.SectionName)["WebhookSecret"];
+        var stripeWebhookSecret = configuration.GetSection(StripeOptions.SectionName)["WebhookSecret"];
+
+        if (string.Equals(paymentsProvider, "Paystack", StringComparison.OrdinalIgnoreCase)
+            && string.IsNullOrWhiteSpace(paystackWebhookSecret))
         {
-            var webhookSecret = configuration.GetSection(PaystackOptions.SectionName)["WebhookSecret"];
-            if (string.IsNullOrWhiteSpace(webhookSecret))
-            {
-                errors.Add("Paystack:WebhookSecret must be set when Payments:Provider is Paystack.");
-            }
+            errors.Add("Paystack:WebhookSecret must be set when Payments:Provider is Paystack.");
+        }
+
+        if (string.Equals(paymentsProvider, "Stripe", StringComparison.OrdinalIgnoreCase)
+            && string.IsNullOrWhiteSpace(stripeWebhookSecret))
+        {
+            errors.Add("Stripe:WebhookSecret must be set when Payments:Provider is Stripe.");
+        }
+
+        if (string.Equals(paymentsProvider, "MarketDefault", StringComparison.OrdinalIgnoreCase)
+            && (string.IsNullOrWhiteSpace(paystackWebhookSecret) || string.IsNullOrWhiteSpace(stripeWebhookSecret)))
+        {
+            errors.Add(
+                "Paystack:WebhookSecret and Stripe:WebhookSecret must both be set when Payments:Provider is MarketDefault.");
         }
 
         if (errors.Count > 0)

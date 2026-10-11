@@ -28,7 +28,8 @@
 | 20 | Deployment, AI & observability | Planned |
 | 23 | Staff, cart & guests | ✅ Done |
 | 24 | Staff ops | ✅ Done |
-| **25** | **Staff accounts & permissions** | Draft |
+| **25** | **Staff accounts & permissions** | ✅ Done |
+| **26** | **Stripe NA payments** | ✅ Done |
 | — | Sprint 11d LLM agent | → Sprint 20 |
 | — | Staging deploy + Auth0 E2E | → Sprint 20 |
 | — | App Insights (Obs 1) | → Sprint 20 |
@@ -409,21 +410,20 @@ Invite staff to the portal; permission roles control nav + API. Floor `roleKey` 
 
 **Out of scope for 25:** payroll/tips, custom ACL builder, Auth0 Orgs-first, mobile staff login, moving staff out of booking schema.
 
-## Sprint 26 — Stripe NA payments (draft)
+## Sprint 26 — Stripe NA payments ✅
 
 Dual-market card commerce: Stripe beside Paystack behind `IPaymentProvider`. Spec: [sprint-26-stripe-na-payments.md](./specs/sprint-26-stripe-na-payments.md).
 
 | Task | Status |
 |------|--------|
-| **26a–h** Stripe provider, market default, signed webhooks, docs/tests | Draft |
+| **26a–h** Stripe provider, market default, signed webhooks, docs/tests | Done |
 
 **Out of scope for 26:** Terminal, booking paid-states loop, POS bridge, SaaS Billing.
 
 ## Next up
 
-1. **Approve + implement Sprint 26** — [stripe NA spec](./specs/sprint-26-stripe-na-payments.md)
-2. **Sprint 27** — payment loop (`checked_in` → `paid`, paid-at-till) — no POS required; see [roadmap §4](./roadmap-workflows-payments-queue.md#4-close-the-payment-loop-without-building-pos)
-3. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, App Insights, ops dashboards (parallel)
-4. Queue + kiosk → POS bridge (later)
+1. **Sprint 27** — payment loop (`checked_in` → `paid`, paid-at-till) — no POS required; see [roadmap §4](./roadmap-workflows-payments-queue.md#4-close-the-payment-loop-without-building-pos)
+2. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, App Insights, ops dashboards (parallel)
+3. Queue + kiosk → POS bridge (later)
 
 Strategy reference: [roadmap-modules.md](./roadmap-modules.md), [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md), [product-strategy.md](./product-strategy.md)

@@ -6,7 +6,7 @@
 |-------|-------|
 | **Sprint** | Sprint 26 — Stripe NA payments |
 | **Author** | Cloud Agent |
-| **Status** | Draft |
+| **Status** | Implemented |
 | **Created** | 2026-10-11 |
 
 ---
@@ -29,14 +29,14 @@ Ottawa / North America tenants can take booking deposits and pay links through *
 
 ## 3. In scope
 
-- [ ] **26a** `StripePaymentProvider` implementing `IPaymentProvider` (initialize, status, refund, webhook parse)
-- [ ] **26b** Config: `Payments:Provider` = `Stripe` **or** market-aware resolution (Lagos → Paystack, Ottawa → Stripe) with explicit override for staging
-- [ ] **26c** `Stripe` options section + env vars (`SecretKey`, `WebhookSecret`, `PublishableKey` if needed client-side)
-- [ ] **26d** Webhook endpoint path reuse or Stripe-specific route with **signature verification first** (Murphy rules — same as Paystack)
-- [ ] **26e** Idempotent intent updates; never log raw card/PII payloads
-- [ ] **26f** Platform fee metadata / application fee strategy documented (Connect later vs platform fee on intent — pick one for v1)
-- [ ] **26g** Tests: signature reject, happy-path complete, double-webhook noop, refund path
-- [ ] **26h** Docs: update [payments.md](../payments.md) + markets note for Ottawa `platformFeePercent` default
+- [x] **26a** `StripePaymentProvider` implementing `IPaymentProvider` (initialize, status, refund, webhook parse)
+- [x] **26b** Config: `Payments:Provider` = `Stripe` **or** market-aware resolution (Lagos → Paystack, Ottawa → Stripe) with explicit override for staging
+- [x] **26c** `Stripe` options section + env vars (`SecretKey`, `WebhookSecret`, `PublishableKey` if needed client-side)
+- [x] **26d** Webhook endpoint path reuse or Stripe-specific route with **signature verification first** (Murphy rules — same as Paystack)
+- [x] **26e** Idempotent intent updates; never log raw card/PII payloads
+- [x] **26f** Platform fee metadata / application fee strategy documented (Connect later vs platform fee on intent — pick one for v1)
+- [x] **26g** Tests: signature reject, happy-path complete, double-webhook noop, refund path
+- [x] **26h** Docs: update [payments.md](../payments.md) + markets note for Ottawa `platformFeePercent` default
 
 ## 4. Out of scope
 

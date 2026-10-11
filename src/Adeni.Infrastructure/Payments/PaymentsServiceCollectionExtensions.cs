@@ -12,12 +12,23 @@ public static class PaymentsServiceCollectionExtensions
     {
         services.Configure<PaymentsOptions>(configuration.GetSection(PaymentsOptions.SectionName));
         services.Configure<PaystackOptions>(configuration.GetSection(PaystackOptions.SectionName));
+        services.Configure<StripeOptions>(configuration.GetSection(StripeOptions.SectionName));
 
         var provider = configuration.GetSection(PaymentsOptions.SectionName)["Provider"] ?? "Stub";
 
         if (string.Equals(provider, "Paystack", StringComparison.OrdinalIgnoreCase))
         {
             services.AddHttpClient<IPaymentProvider, PaystackPaymentProvider>();
+        }
+        else if (string.Equals(provider, "Stripe", StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddHttpClient<IPaymentProvider, StripePaymentProvider>();
+        }
+        else if (string.Equals(provider, "MarketDefault", StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddHttpClient<PaystackPaymentProvider>();
+            services.AddHttpClient<StripePaymentProvider>();
+            services.AddScoped<IPaymentProvider, MarketDefaultPaymentProvider>();
         }
         else
         {
