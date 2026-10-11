@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import type { BusinessLocation, MarketConfig } from "@adeni/shared";
-import { AdeniConfirmService, PortalPageComponent } from "@adeni/ui";
+import { AdeniCarbonIconComponent, AdeniConfirmService, PortalPageComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -18,7 +18,7 @@ type LocationDraft = {
 @Component({
   selector: "app-locations",
   standalone: true,
-  imports: [PortalPageComponent, FormsModule],
+  imports: [PortalPageComponent, FormsModule, AdeniCarbonIconComponent],
   templateUrl: "./locations.component.html",
   styleUrl: "./locations.component.scss",
 })

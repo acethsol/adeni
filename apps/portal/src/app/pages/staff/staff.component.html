@@ -2,13 +2,17 @@
   title="Staff"
   description="Roster, roles, hours, and leave — customers book by display name."
 >
-  <a pageActions class="btn" routerLink="/calendar">Calendar</a>
+  <a pageActions class="btn" routerLink="/calendar">
+    <adeni-carbon-icon name="calendar" [size]="16" />
+    Calendar
+  </a>
   <button
     pageActions
     type="button"
     class="btn btn-primary"
     (click)="openCreate()"
   >
+    <adeni-carbon-icon name="add" [size]="16" />
     Add team member
   </button>
 
@@ -125,15 +129,24 @@
       >
         <ng-container [ngTemplateOutlet]="staffPanels" />
         <div wizardActions class="actions">
-          <button type="button" class="btn" (click)="cancelForm()">Cancel</button>
+          <button type="button" class="btn" (click)="cancelForm()">
+            <adeni-carbon-icon name="close" [size]="16" />
+            Cancel
+          </button>
           @if (createStepIndex() > 0) {
-            <button type="button" class="btn" (click)="wizardBack()">Back</button>
+            <button type="button" class="btn" (click)="wizardBack()">
+              <adeni-carbon-icon name="arrow--left" [size]="16" />
+              Back
+            </button>
           }
           @if (!isLastCreateStep()) {
             @if (formTab() === "services" || formTab() === "hours") {
               <button type="button" class="btn" (click)="wizardSkip()">Skip</button>
             }
-            <button type="button" class="btn btn-primary" (click)="wizardNext()">Next</button>
+            <button type="button" class="btn btn-primary" (click)="wizardNext()">
+              Next
+              <adeni-carbon-icon name="arrow--right" [size]="16" />
+            </button>
           } @else {
             <button
               type="button"
@@ -141,6 +154,7 @@
               [disabled]="busy() !== null"
               (click)="save()"
             >
+              <adeni-carbon-icon name="checkmark" [size]="16" />
               Add teammate
             </button>
           }
@@ -187,9 +201,15 @@
       </div>
       <ng-container [ngTemplateOutlet]="staffPanels" />
       <div class="actions">
-        <button type="button" class="btn" (click)="cancelForm()">Cancel</button>
+        <button type="button" class="btn" (click)="cancelForm()">
+          <adeni-carbon-icon name="close" [size]="16" />
+          Cancel
+        </button>
         @if (editingId(); as id) {
-          <a class="btn" [routerLink]="['/staff', id, 'calendar']">Open calendar</a>
+          <a class="btn" [routerLink]="['/staff', id, 'calendar']">
+            <adeni-carbon-icon name="calendar" [size]="16" />
+            Open calendar
+          </a>
         }
         <button
           type="button"
@@ -197,6 +217,7 @@
           [disabled]="busy() !== null"
           (click)="save()"
         >
+          <adeni-carbon-icon name="save" [size]="16" />
           Save
         </button>
       </div>
@@ -215,6 +236,7 @@
                 }
               </div>
               <span class="avatar-upload-cta">
+                <adeni-carbon-icon name="upload" [size]="16" />
                 {{ avatarPreviewUrl() ? "Change photo" : "Upload photo" }}
               </span>
               <input
@@ -419,13 +441,17 @@
         </select>
       </div>
       <div class="actions">
-        <button type="button" class="btn" (click)="closeInvite()">Cancel</button>
+        <button type="button" class="btn" (click)="closeInvite()">
+          <adeni-carbon-icon name="close" [size]="16" />
+          Cancel
+        </button>
         <button
           type="button"
           class="btn btn-primary"
           [disabled]="busy() === target.id || !inviteEmail.trim()"
           (click)="sendInvite()"
         >
+          <adeni-carbon-icon name="email" [size]="16" />
           Send invite
         </button>
       </div>
@@ -449,13 +475,17 @@
         </select>
       </div>
       <div class="actions">
-        <button type="button" class="btn" (click)="closeChangeRole()">Cancel</button>
+        <button type="button" class="btn" (click)="closeChangeRole()">
+          <adeni-carbon-icon name="close" [size]="16" />
+          Cancel
+        </button>
         <button
           type="button"
           class="btn btn-primary"
           [disabled]="busy() === target.id"
           (click)="saveRoleChange()"
         >
+          <adeni-carbon-icon name="save" [size]="16" />
           Save role
         </button>
       </div>

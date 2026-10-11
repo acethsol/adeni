@@ -75,8 +75,14 @@
         <p class="muted">Public booking link for WhatsApp and Instagram bio.</p>
         <code class="link">{{ publicBookingUrl() }}</code>
         <div class="actions">
-          <button type="button" class="btn" (click)="copyPublicLink()">Copy link</button>
-          <a class="btn btn-primary" [href]="whatsAppShareUrl()" target="_blank" rel="noopener">WhatsApp</a>
+          <button type="button" class="btn" (click)="copyPublicLink()">
+            <adeni-carbon-icon name="copy" [size]="16" />
+            Copy link
+          </button>
+          <a class="btn btn-primary" [href]="whatsAppShareUrl()" target="_blank" rel="noopener">
+            <adeni-carbon-icon name="launch" [size]="16" />
+            WhatsApp
+          </a>
         </div>
         @if (verificationMessage()) {
           <p class="ok">{{ verificationMessage() }}</p>
@@ -89,6 +95,7 @@
         <h3>Cover photo</h3>
         <img class="cover" [src]="coverPreview()" alt="" />
         <label class="btn">
+          <adeni-carbon-icon name="upload" [size]="16" />
           {{ uploading() ? "Uploading…" : "Upload cover" }}
           <input type="file" accept="image/jpeg,image/png,image/webp" hidden (change)="onCoverSelected($event)" />
         </label>
@@ -109,6 +116,7 @@
           }
         </div>
         <label class="btn" [class.disabled]="galleryImages().length >= maxGalleryPhotos">
+          <adeni-carbon-icon name="image" [size]="16" />
           {{ galleryUploading() ? "Uploading…" : "Add gallery photo" }}
           <input
             type="file"
@@ -147,6 +155,7 @@
           <textarea id="description" rows="3" [(ngModel)]="description" [disabled]="!canEdit()"></textarea>
         </div>
         <button type="button" class="btn btn-primary" [disabled]="!canEdit() || saving()" (click)="saveProfile()">
+          <adeni-carbon-icon name="save" [size]="16" />
           Save profile
         </button>
       </section>
@@ -163,6 +172,7 @@
           <input id="deposit" type="number" min="0" max="100" [(ngModel)]="depositPercent" />
         </div>
         <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="saveSettings()">
+          <adeni-carbon-icon name="save" [size]="16" />
           Save settings
         </button>
       </section>

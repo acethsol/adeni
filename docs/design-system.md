@@ -24,6 +24,17 @@ Staff layout SCSS: `@use "staff-layout" as *` (from `@adeni/ui`, via `stylePrepr
 
 Month/week/day boards are a hallmark surface. Shared date helpers live in `@adeni/ui` (`calendar/calendar-date`). Spec: [specs/sprint-calendar-floor.md](./specs/sprint-calendar-floor.md) — team vs practitioner views, `customerSelectedStaff` Carbon user badge, hours-worked rollups, mobile day-first.
 
+### Buttons + Carbon icons
+
+Portal/admin `.btn` rows use Carbon glyphs via `<adeni-carbon-icon name="…" [size]="16" />` inside the button (gap is built into `_staff-layout.scss`). Prefer 16px action icons: `add`, `save`, `edit`, `close`, `calendar`, `upload`, `checkmark`, `trash-can`, etc. from `@adeni/ui`.
+
+```html
+<button type="button" class="btn btn-primary" (click)="openCreate()">
+  <adeni-carbon-icon name="add" [size]="16" />
+  Add team member
+</button>
+```
+
 ### Page actions (`PortalPageComponent`)
 
 Primary list actions (e.g. **Add team member**) go in the page header top-right via `pageActions`:

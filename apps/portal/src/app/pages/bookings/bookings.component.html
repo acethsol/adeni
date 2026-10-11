@@ -43,6 +43,7 @@
                   [disabled]="actionId() === booking.id"
                   (click)="reject(booking)"
                 >
+                  <adeni-carbon-icon name="misuse" [size]="16" />
                   Reject
                 </button>
                 <button
@@ -51,6 +52,7 @@
                   [disabled]="actionId() === booking.id"
                   (click)="accept(booking)"
                 >
+                  <adeni-carbon-icon name="checkmark" [size]="16" />
                   Accept
                 </button>
               </div>

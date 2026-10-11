@@ -17,6 +17,7 @@ import {
   type WeeklyAvailabilityRule,
 } from "@adeni/shared";
 import {
+  AdeniCarbonIconComponent,
   AdeniConfirmService,
   AdeniFeedbackService,
   AdeniModalComponent,
@@ -120,6 +121,7 @@ function rowsToRules(rows: DayRow[]): WeeklyAvailabilityRule[] {
     RouterLink,
     AdeniWizardComponent,
     AdeniModalComponent,
+    AdeniCarbonIconComponent,
     NgTemplateOutlet,
     DatePipe,
   ],

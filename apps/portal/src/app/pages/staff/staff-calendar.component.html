@@ -1,6 +1,9 @@
 <app-portal-page [title]="boardTitle()" [description]="boardSubtitle()">
   @if (teamMode() && showRosterBackLink()) {
-    <a pageActions class="btn" routerLink="/staff">Staff roster</a>
+    <a pageActions class="btn" routerLink="/staff">
+      <adeni-carbon-icon name="user--follow" [size]="16" />
+      Staff roster
+    </a>
   }
 
   <div class="cal-shell">

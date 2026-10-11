@@ -2,7 +2,10 @@
   <section class="panel error">
     <h2>Could not load the studio</h2>
     <p>The API on port 5169 did not return your business. Check that it is running, then refresh.</p>
-    <a class="btn btn-primary" routerLink="/register">Register your business</a>
+    <a class="btn btn-primary" routerLink="/register">
+      <adeni-carbon-icon name="add" [size]="16" />
+      Register your business
+    </a>
   </section>
 } @else if (profile(); as business) {
   <section class="hero">
@@ -18,8 +21,12 @@
     </div>
     <div class="hero-actions">
       @if (isPractitionerView()) {
-        <a class="btn btn-primary" routerLink="/my-calendar">My calendar</a>
+        <a class="btn btn-primary" routerLink="/my-calendar">
+          <adeni-carbon-icon name="calendar" [size]="16" />
+          My calendar
+        </a>
         <a class="btn" routerLink="/bookings">
+          <adeni-carbon-icon name="time" [size]="16" />
           @if (pendingCount() > 0) {
             {{ pendingCount() }} waiting
           } @else {
@@ -28,9 +35,13 @@
         </a>
       } @else {
         @if (publicProfileUrl(); as url) {
-          <a class="btn btn-primary" [href]="url" target="_blank" rel="noopener">View public profile</a>
+          <a class="btn btn-primary" [href]="url" target="_blank" rel="noopener">
+            <adeni-carbon-icon name="launch" [size]="16" />
+            View public profile
+          </a>
         }
         <a class="btn" routerLink="/bookings">
+          <adeni-carbon-icon name="time" [size]="16" />
           @if (pendingCount() > 0) {
             {{ pendingCount() }} waiting
           } @else {
