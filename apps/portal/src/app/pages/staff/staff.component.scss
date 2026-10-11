@@ -69,7 +69,7 @@
 
 .staff-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr));
   gap: 1rem;
 }
 
@@ -79,9 +79,10 @@
   align-items: center;
   text-align: center;
   gap: 0.35rem;
-  padding: 1.35rem 1rem 1rem;
+  padding: 1.5rem 1rem 1rem;
   background: var(--surface, #fff);
   border: 1px solid var(--border, #e0e0e0);
+  border-radius: var(--cds-radius-none);
   transition:
     border-color 140ms ease,
     box-shadow 140ms ease;
@@ -97,19 +98,20 @@
 }
 
 .org-avatar {
-  width: 4.5rem;
-  height: 4.5rem;
-  border-radius: 50%;
+  width: 6rem;
+  height: 6rem;
+  border-radius: var(--cds-radius-none);
   display: grid;
   place-items: center;
   overflow: hidden;
-  margin-bottom: 0.45rem;
-  font-size: 1.15rem;
+  margin-bottom: 0.55rem;
+  font-size: 1.35rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   color: #fff;
   background: #697077;
   flex: 0 0 auto;
+  border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
 }
 
 .org-avatar img {
@@ -120,9 +122,10 @@
 }
 
 .org-avatar.preview {
-  width: 5rem;
-  height: 5rem;
-  font-size: 1.25rem;
+  width: 6.5rem;
+  height: 6.5rem;
+  font-size: 1.45rem;
+  margin-bottom: 0;
 }
 
 .org-avatar[data-tone="hair"] {
@@ -272,26 +275,39 @@
 .avatar-field {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
+  gap: 1.1rem;
+  margin-bottom: 1.35rem;
+  padding: 0.85rem;
+  background: var(--cds-layer-02, color-mix(in srgb, var(--text) 3%, var(--surface)));
+  border: 1px solid var(--border, #e0e0e0);
+  border-radius: var(--cds-radius-none);
 }
 
 .avatar-copy {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  align-items: flex-start;
+  gap: 0.4rem;
   min-width: 0;
 }
 
-.avatar-copy label {
+.avatar-label {
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-muted);
 }
 
-.avatar-copy input[type="file"] {
-  font-size: 0.85rem;
-  max-width: 100%;
+.avatar-copy .muted {
+  margin: 0;
+  line-height: 1.35;
+  max-width: 18rem;
+}
+
+label.btn {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  margin: 0;
 }
 
 .service-checks {
@@ -460,7 +476,12 @@ a.btn {
   }
 
   .staff-grid {
-    grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  }
+
+  .avatar-field {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .hours-row,

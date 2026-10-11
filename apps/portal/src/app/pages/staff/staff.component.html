@@ -208,14 +208,17 @@
               }
             </div>
             <div class="avatar-copy">
-              <label for="staff-avatar">Photo</label>
-              <p class="muted">JPEG, PNG, or WebP · max 5 MB</p>
-              <input
-                id="staff-avatar"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                (change)="onAvatarSelected($event)"
-              />
+              <span class="avatar-label">Photo</span>
+              <p class="muted">Shown on the roster and booking pickers. JPEG, PNG, or WebP · max 5 MB.</p>
+              <label class="btn">
+                {{ avatarPreviewUrl() ? "Change photo" : "Upload photo" }}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  hidden
+                  (change)="onAvatarSelected($event)"
+                />
+              </label>
             </div>
           </div>
 
