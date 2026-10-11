@@ -118,12 +118,14 @@ Run: `dotnet test Adeni.slnx -c Release`
 
 ## 9. Acceptance criteria
 
-- [ ] Ottawa-market tenant (or `Payments:Provider=Stripe`) can initialize a deposit/pay link and receive a Stripe-hosted checkout URL
-- [ ] Signed Stripe webhook marks intent completed; unsigned webhook rejected
-- [ ] Lagos / Paystack path still works when provider is Paystack
-- [ ] Stub path unchanged for local CI
-- [ ] [payments.md](../payments.md) documents both providers and env vars
-- [ ] No wallet/balance schema changes
+- [x] Ottawa-market tenant (or `Payments:Provider=Stripe`) can initialize a deposit/pay link and receive a Stripe-hosted checkout URL
+- [x] Signed Stripe webhook marks intent completed; unsigned webhook rejected
+- [x] Lagos / Paystack path still works when provider is Paystack
+- [x] Stub path unchanged for local CI
+- [x] [payments.md](../payments.md) documents both providers and env vars
+- [x] No wallet/balance schema changes
+
+*(Initialize/checkout URL against live Stripe requires keys in env; unit tests cover signature + payload parse. E2E with real Stripe keys is ops/staging.)*
 
 ---
 
