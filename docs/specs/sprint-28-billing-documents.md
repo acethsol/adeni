@@ -55,7 +55,7 @@ Businesses and customers get **real receipts and invoices** (numbered documents,
   - `Kind`: `Receipt` | `Invoice`
   - `Status`: `Draft` | `Issued` | `Void` (invoices may stay `Draft` until sent; receipts issue on payment complete)
   - Links: `TenantId`, optional `BookingId`, optional `PaymentIntentId`
-  - `DocumentNumber` (tenant-scoped sequence, human-readable e. -g. `RCP-2026-00042` / `INV-2026-00017`)
+  - `DocumentNumber` (tenant-scoped sequence, human-readable e.g. `RCP-2026-00042` / `INV-2026-00017`)
   - Parties: business display name + customer display/email (snapshot at issue time — no live PII join required for PDF)
   - Money: currency, subtotal, taxTotal (nullable v1), total
   - Line items: description, quantity, unitAmount, lineTotal (from booking lines when linked)
