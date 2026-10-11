@@ -8,6 +8,7 @@ public static class RateLimitingExtensions
     public const string WebhookPolicy = "webhook";
     public const string AuthSyncPolicy = "auth-sync";
     public const string PublicMutationPolicy = "public-mutation";
+    public const string PublicReadPolicy = "public-read";
 
     public static IServiceCollection AddAdeniRateLimiting(
         this IServiceCollection services,
@@ -27,6 +28,9 @@ public static class RateLimitingExtensions
 
             options.AddPolicy(PublicMutationPolicy, context =>
                 CreateFixedWindowLimiter(context, isRelaxed ? 10_000 : 60, TimeSpan.FromMinutes(1)));
+
+            options.AddPolicy(PublicReadPolicy, context =>
+                CreateFixedWindowLimiter(context, isRelaxed ? 10_000 : 180, TimeSpan.FromMinutes(1)));
         });
 
         return services;

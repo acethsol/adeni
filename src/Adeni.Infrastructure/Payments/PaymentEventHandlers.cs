@@ -2,22 +2,37 @@ namespace Adeni.Infrastructure.Payments;
 
 using Adeni.Application.Events;
 using Adeni.Application.Notifications;
+using Adeni.Application.Payments;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Booking.Events;
 using Adeni.Domain.Payments;
 using Adeni.Domain.Payments.Events;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 public sealed class PaymentBookingHandler(
     AdeniDbContext dbContext,
-    IDomainEventCollector domainEventCollector) :
+    IDomainEventCollector domainEventCollector,
+    IBillingDocumentService billingDocuments,
+    ILogger<PaymentBookingHandler> logger) :
     IDomainEventHandler<PaymentCompleted>,
     IDomainEventHandler<PaymentFailed>,
     IDomainEventHandler<RefundInitiated>
 {
     public async Task HandleAsync(PaymentCompleted domainEvent, CancellationToken cancellationToken = default)
     {
+        var receipt = await billingDocuments.IssueReceiptForPaymentAsync(
+            domainEvent.PaymentIntentId,
+            cancellationToken);
+        if (receipt.IsFailure)
+        {
+            logger.LogWarning(
+                "Could not issue receipt for payment {PaymentIntentId}: {Error}",
+                domainEvent.PaymentIntentId,
+                receipt.Error.Message);
+        }
+
         if (!domainEvent.BookingId.HasValue)
         {
             return;

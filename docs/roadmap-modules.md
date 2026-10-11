@@ -62,8 +62,8 @@ Each major build still needs a `docs/specs/sprint-XX-*.md` before implementation
 |--|--|
 | **Job** | Close money loop without becoming a bank or a register |
 | **Shipped** | Paystack orchestration, deposits, pay links, ledger, stub subscriptions |
-| **Next** | [Sprint 28 billing documents](./specs/sprint-28-billing-documents.md) (numbered receipt/invoice, PDF, email); then SaaS Billing |
-| **Shipped (26–27)** | Stripe + Paystack + `MarketDefault`; floor loop check-in → paid + lightweight receipt DTO |
+| **Next** | SaaS Billing; Terminal / POS bridge |
+| **Shipped (26–28)** | Stripe + Paystack + `MarketDefault`; floor loop; numbered receipts/invoices (PDF + email) |
 | **Then** | Terminal / collect balance; **POS bridge** (Square first) |
 | **Later fintech** | Tips/commission *reporting*, payout UX referral, Insights tier — still non-custodial |
 | **Not now** | Payroll, wallets, retail SKU catalog, BI/reporting tools for receipts |

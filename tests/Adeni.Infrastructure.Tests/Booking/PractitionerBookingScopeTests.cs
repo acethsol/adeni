@@ -219,8 +219,18 @@ public sealed class PractitionerBookingScopeTests
         services.AddScoped<IPlatformFeeCalculator, PlatformFeeCalculator>();
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
+        services.AddSingleton<Application.Notifications.INotificationDispatcher, ScopeTestNotifications>();
+        services.AddScoped<IBillingDocumentService, BillingDocumentService>();
         services.AddScoped<IBookingService, BookingService>();
         return services.BuildServiceProvider();
+    }
+
+    private sealed class ScopeTestNotifications : Application.Notifications.INotificationDispatcher
+    {
+        public Task SendAsync(
+            Application.Notifications.NotificationMessage message,
+            CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
     }
 
     private sealed class ScopeTestCorrelationContext : ICorrelationContext

@@ -6,7 +6,7 @@
 |-------|-------|
 | **Sprint** | Sprint 28 — Billing documents |
 | **Author** | Cloud Agent |
-| **Status** | Draft |
+| **Status** | Implemented |
 | **Created** | 2026-10-11 |
 
 ---
@@ -51,7 +51,7 @@ Businesses and customers get **real receipts and invoices** (numbered documents,
 
 ### Document model
 
-- [ ] **28a** Introduce `BillingDocument` (or equivalent) in Payments domain:
+- [x] **28a** Introduce `BillingDocument` (or equivalent) in Payments domain:
   - `Kind`: `Receipt` | `Invoice`
   - `Status`: `Draft` | `Issued` | `Void` (invoices may stay `Draft` until sent; receipts issue on payment complete)
   - Links: `TenantId`, optional `BookingId`, optional `PaymentIntentId`
@@ -60,44 +60,44 @@ Businesses and customers get **real receipts and invoices** (numbered documents,
   - Money: currency, subtotal, taxTotal (nullable v1), total
   - Line items: description, quantity, unitAmount, lineTotal (from booking lines when linked)
   - Timestamps: `IssuedAt`, `CreatedAt`, `UpdatedAt`
-- [ ] **28b** SQL project table(s) under `payments` schema + EF mapping
-- [ ] **28c** Numbering service: per-tenant, per-kind monotonic sequence (transaction-safe)
+- [x] **28b** SQL project table(s) under `payments` schema + EF mapping
+- [x] **28c** Numbering service: per-tenant, per-kind monotonic sequence (transaction-safe)
 
 ### Issue rules
 
-- [ ] **28d** **Receipt**: auto-issue when a payment intent reaches `Completed` (idempotent — one receipt per payment intent)
-- [ ] **28e** **Receipt for paid-at-till**: issue when booking transitions to `Paid` with `ExternalTill` settlement (no payment intent); link booking only
-- [ ] **28f** **Invoice**: business can create from completed booking balance **or** ad-hoc amount (extends today’s payment-link/invoice intent); issuing an invoice may initialize/collect payment but the document is first-class
-- [ ] **28g** Void with audit reason (no hard delete); voided docs keep number
+- [x] **28d** **Receipt**: auto-issue when a payment intent reaches `Completed` (idempotent — one receipt per payment intent)
+- [x] **28e** **Receipt for paid-at-till**: issue when booking transitions to `Paid` with `ExternalTill` settlement (no payment intent); link booking only
+- [x] **28f** **Invoice**: business can create from completed booking balance **or** ad-hoc amount (extends today’s payment-link/invoice intent); issuing an invoice may initialize/collect payment but the document is first-class
+- [x] **28g** Void with audit reason (no hard delete); voided docs keep number
 
 ### APIs
 
-- [ ] **28h** `GET /api/v1/payments/documents/{id}` — document DTO (auth: tenant staff with payments/bookings, or customer who owns linked booking/payment)
-- [ ] **28i** `GET /api/v1/payments/documents` — tenant list (filter by kind, bookingId, date range)
-- [ ] **28j** `POST /api/v1/payments/documents/invoices` — create/issue invoice for booking or ad-hoc
-- [ ] **28k** `POST /api/v1/payments/documents/{id}/void`
-- [ ] **28l** `GET /api/v1/payments/documents/{id}/pdf` — `application/pdf`
-- [ ] **28m** `POST /api/v1/payments/documents/{id}/email` — send to customer email (or override)
-- [ ] **28n** Public share: `GET /api/v1/public/documents/{token}` (signed/opaque token, no auth) for ReceiptBaseUrl / share links
-- [ ] **28o** Keep / evolve `GET /api/v1/payments/{id}/receipt` as thin alias → latest Receipt document for that payment (compat)
+- [x] **28h** `GET /api/v1/payments/documents/{id}` — document DTO (auth: tenant staff with payments/bookings, or customer who owns linked booking/payment)
+- [x] **28i** `GET /api/v1/payments/documents` — tenant list (filter by kind, bookingId, date range)
+- [x] **28j** `POST /api/v1/payments/documents/invoices` — create/issue invoice for booking or ad-hoc
+- [x] **28k** `POST /api/v1/payments/documents/{id}/void`
+- [x] **28l** `GET /api/v1/payments/documents/{id}/pdf` — `application/pdf`
+- [x] **28m** `POST /api/v1/payments/documents/{id}/email` — send to customer email (or override)
+- [x] **28n** Public share: `GET /api/v1/public/documents/{token}` (signed/opaque token, no auth) for ReceiptBaseUrl / share links
+- [x] **28o** Keep / evolve `GET /api/v1/payments/{id}/receipt` as thin alias → latest Receipt document for that payment (compat)
 
 ### PDF & email
 
-- [ ] **28p** HTML → PDF renderer (server-side; prefer QuestPDF or similar already-compatible .NET library — decide in open questions)
-- [ ] **28q** Brand-light template: business name, document kind + number, date, line items, total, method / “Paid at till”, Adeni footer (“Issued via Adeni”)
-- [ ] **28r** Email via `INotificationDispatcher` with HTML body + optional PDF attachment **or** deep link to public document URL if attachment is hard in v1
-- [ ] **28s** Prefer real SMTP/provider adapter behind dispatcher if still logging-only — minimum: structured send + link; stretch: SendGrid/SES if credentials exist in env
+- [x] **28p** HTML → PDF renderer (server-side; prefer QuestPDF or similar already-compatible .NET library — decide in open questions)
+- [x] **28q** Brand-light template: business name, document kind + number, date, line items, total, method / “Paid at till”, Adeni footer (“Issued via Adeni”)
+- [x] **28r** Email via `INotificationDispatcher` with HTML body + optional PDF attachment **or** deep link to public document URL if attachment is hard in v1
+- [x] **28s** Prefer real SMTP/provider adapter behind dispatcher if still logging-only — minimum: structured send + link; stretch: SendGrid/SES if credentials exist in env
 
 ### Surfaces
 
-- [ ] **28t** Discover (or shared) public document page at `ReceiptBaseUrl` /documents/{token}
-- [ ] **28u** Portal: Payments ledger → View receipt / Download PDF / Email; Bookings paid row → View receipt
-- [ ] **28v** Shared schemas + api-client
+- [x] **28t** Discover (or shared) public document page at `ReceiptBaseUrl` /documents/{token}
+- [x] **28u** Portal: Payments ledger → View receipt / Download PDF / Email; Bookings paid row → View receipt
+- [x] **28v** Shared schemas + api-client
 
 ### Docs & tests
 
-- [ ] **28w** Update [payments.md](../payments.md), roadmap module briefs; clarify Dashboards ≠ documents
-- [ ] **28x** Unit + integration: issue on payment complete; till receipt; number uniqueness; void; PDF bytes non-empty; email dispatch invoked; tenant isolation on list/get
+- [x] **28w** Update [payments.md](../payments.md), roadmap module briefs; clarify Dashboards ≠ documents
+- [x] **28x** Unit + integration: issue on payment complete; till receipt; number uniqueness; void; PDF bytes non-empty; email dispatch invoked; tenant isolation on list/get
 
 ---
 
@@ -228,14 +228,14 @@ Tenant isolation: query filters + API checks (same pattern as payment intents).
 
 ## 10. Acceptance criteria
 
-- [ ] Completing an online payment produces exactly one Issued receipt with a stable document number
-- [ ] Paid-at-till produces a receipt linked to the booking (no payment intent required)
-- [ ] PDF endpoint returns a non-empty PDF for an issued document
-- [ ] Public token URL renders document without auth; invalid token → 404
-- [ ] Email action invokes notification dispatcher with document link (and attachment if enabled)
-- [ ] Cross-tenant document access denied
-- [ ] Void prevents further email/PDF “active” presentation but preserves number for audit
-- [ ] Docs state clearly: reporting/BI is **not** part of this sprint
+- [x] Completing an online payment produces exactly one Issued receipt with a stable document number
+- [x] Paid-at-till produces a receipt linked to the booking (no payment intent required)
+- [x] PDF endpoint returns a non-empty PDF for an issued document
+- [x] Public token URL renders document without auth; invalid token → 404
+- [x] Email action invokes notification dispatcher with document link (and attachment if enabled)
+- [x] Cross-tenant document access denied
+- [x] Void prevents further email/PDF “active” presentation but preserves number for audit
+- [x] Docs state clearly: reporting/BI is **not** part of this sprint
 
 ---
 

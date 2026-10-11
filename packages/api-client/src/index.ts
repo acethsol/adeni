@@ -8,7 +8,10 @@ import {
   subscriptionUsageSchema,
   availableSlotsResponseSchema,
   bookingResponseSchema,
+  billingDocumentResponseSchema,
+  billingDocumentsResponseSchema,
   collectBalanceResponseSchema,
+  createInvoiceRequestSchema,
   markBookingPaidRequestSchema,
   paymentReceiptResponseSchema,
   businessContextResponseSchema,
@@ -112,8 +115,10 @@ import {
   type AdminBusinessSummary,
   type SubscriptionUsage,
   type AvailableSlot,
+  type BillingDocumentResponse,
   type BookingResponse,
   type CollectBalanceResponse,
+  type CreateInvoiceRequest,
   type MarkBookingPaidRequest,
   type PaymentReceiptResponse,
   type BusinessContextResponse,
@@ -532,6 +537,67 @@ export class AdeniApiClient {
       `/api/v1/payments/${encodeURIComponent(paymentIntentId)}/receipt`,
     );
     return paymentReceiptResponseSchema.parse(await response.json());
+  }
+
+  async listBillingDocuments(options?: {
+    kind?: string;
+    bookingId?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<BillingDocumentResponse[]> {
+    const params = new URLSearchParams();
+    if (options?.kind) params.set("kind", options.kind);
+    if (options?.bookingId) params.set("bookingId", options.bookingId);
+    if (options?.page) params.set("page", String(options.page));
+    if (options?.pageSize) params.set("pageSize", String(options.pageSize));
+    const query = params.toString();
+    const response = await this.request(
+      `/api/v1/payments/documents${query ? `?${query}` : ""}`,
+    );
+    return billingDocumentsResponseSchema.parse(await response.json()).items;
+  }
+
+  async getBillingDocument(documentId: string): Promise<BillingDocumentResponse> {
+    const response = await this.request(
+      `/api/v1/payments/documents/${encodeURIComponent(documentId)}`,
+    );
+    return billingDocumentResponseSchema.parse(await response.json());
+  }
+
+  async getBillingDocumentPdfUrl(documentId: string): Promise<string> {
+    return `${this.baseUrl}/api/v1/payments/documents/${encodeURIComponent(documentId)}/pdf`;
+  }
+
+  async emailBillingDocument(
+    documentId: string,
+    toEmail?: string,
+  ): Promise<BillingDocumentResponse> {
+    const response = await this.request(
+      `/api/v1/payments/documents/${encodeURIComponent(documentId)}/email`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ toEmail: toEmail ?? null }),
+      },
+    );
+    return billingDocumentResponseSchema.parse(await response.json());
+  }
+
+  async createInvoice(request: CreateInvoiceRequest): Promise<BillingDocumentResponse> {
+    const body = createInvoiceRequestSchema.parse(request);
+    const response = await this.request("/api/v1/payments/documents/invoices", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return billingDocumentResponseSchema.parse(await response.json());
+  }
+
+  async getPublicBillingDocument(token: string): Promise<BillingDocumentResponse> {
+    const response = await this.request(
+      `/api/v1/public/documents/${encodeURIComponent(token)}`,
+    );
+    return billingDocumentResponseSchema.parse(await response.json());
   }
 
   async getTenantProfile(): Promise<BusinessProfile> {

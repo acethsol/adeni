@@ -3,17 +3,25 @@
 Non-custodial payment orchestration via licensed providers. Adeni stores **payment intent state** and provider references only — no wallet or balance tables.
 
 **Roadmap:** closing the in-salon payment loop and optional POS bridge — see [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md).  
-**Stripe NA:** [Sprint 26](./specs/sprint-26-stripe-na-payments.md) ✅ · **Payment loop:** [Sprint 27](./specs/sprint-27-payment-loop.md) ✅ · **Billing documents:** [Sprint 28](./specs/sprint-28-billing-documents.md) (draft).
+**Stripe NA:** [Sprint 26](./specs/sprint-26-stripe-na-payments.md) ✅ · **Payment loop:** [Sprint 27](./specs/sprint-27-payment-loop.md) ✅ · **Billing documents:** [Sprint 28](./specs/sprint-28-billing-documents.md) ✅.
 
 ### Invoices vs receipts
 
 | | Status |
 |--|--------|
-| **Receipt (lightweight)** | `GET /api/v1/payments/{id}/receipt` — summary DTO (Sprint 27) |
-| **Billing documents** | Planned Sprint 28 — numbered Receipt/Invoice, PDF, email, public share link |
-| **Invoice (payment type)** | Ad-hoc pay request today; becomes first-class document in Sprint 28 |
-| **Reporting / BI** | Not a receipt solution — Dashboards module later consumes the ledger |
-| **Tax e-invoice / CRA–FIRS** | Out of scope for 28 |
+| **Billing documents** | Numbered Receipt/Invoice, PDF, email, public `/documents/{token}` |
+| **Receipt alias** | `GET /api/v1/payments/{id}/receipt` → issued receipt document |
+| **Reporting / BI** | Not a receipt solution — Dashboards later consumes the ledger |
+| **Tax e-invoice / CRA–FIRS** | Out of scope |
+
+### Document APIs (Sprint 28)
+
+| Method | Route |
+|--------|-------|
+| `GET` | `/api/v1/payments/documents` |
+| `GET` | `/api/v1/payments/documents/{id}` (+ `/pdf`, `/email`) |
+| `POST` | `/api/v1/payments/documents/invoices` |
+| `GET` | `/api/v1/public/documents/{token}` (+ `/pdf`) |
 
 ### Floor loop (Sprint 27)
 

@@ -79,6 +79,12 @@ public sealed class AdeniDbContext(
 
     public DbSet<PaymentIntentRecord> PaymentIntents => Set<PaymentIntentRecord>();
 
+    public DbSet<BillingDocument> BillingDocuments => Set<BillingDocument>();
+
+    public DbSet<BillingDocumentLine> BillingDocumentLines => Set<BillingDocumentLine>();
+
+    public DbSet<BillingDocumentSequence> BillingDocumentSequences => Set<BillingDocumentSequence>();
+
     public DbSet<MessageThread> MessageThreads => Set<MessageThread>();
 
     public DbSet<Message> Messages => Set<Message>();
@@ -449,6 +455,52 @@ public sealed class AdeniDbContext(
             entity.HasIndex(x => new { x.TenantId, x.Status, x.CreatedAt });
             entity.HasIndex(x => x.ProviderReference).IsUnique();
             entity.HasIndex(x => x.IdempotencyKey).IsUnique().HasFilter("[IdempotencyKey] IS NOT NULL");
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<BillingDocument>(entity =>
+        {
+            entity.ToTable("billing_documents", "payments");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.DocumentNumber).HasMaxLength(64);
+            entity.Property(x => x.BusinessNameSnapshot).HasMaxLength(200);
+            entity.Property(x => x.CustomerNameSnapshot).HasMaxLength(200);
+            entity.Property(x => x.CustomerEmailSnapshot).HasMaxLength(320);
+            entity.Property(x => x.Currency).HasMaxLength(3);
+            entity.Property(x => x.Subtotal).HasPrecision(12, 2);
+            entity.Property(x => x.TaxTotal).HasPrecision(12, 2);
+            entity.Property(x => x.Total).HasPrecision(12, 2);
+            entity.Property(x => x.MethodLabel).HasMaxLength(100);
+            entity.Property(x => x.PublicToken).HasMaxLength(64);
+            entity.Property(x => x.VoidReason).HasMaxLength(500);
+            entity.HasIndex(x => x.PublicToken).IsUnique();
+            entity.HasIndex(x => new { x.TenantId, x.DocumentNumber }).IsUnique();
+            entity.HasIndex(x => x.PaymentIntentId).IsUnique().HasFilter("[PaymentIntentId] IS NOT NULL");
+            entity.HasIndex(x => new { x.TenantId, x.Kind, x.IssuedAt });
+            entity.HasIndex(x => new { x.TenantId, x.BookingId });
+            entity.HasMany(x => x.Lines)
+                .WithOne(x => x.Document)
+                .HasForeignKey(x => x.DocumentId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<BillingDocumentLine>(entity =>
+        {
+            entity.ToTable("billing_document_lines", "payments");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Description).HasMaxLength(300);
+            entity.Property(x => x.Quantity).HasPrecision(12, 2);
+            entity.Property(x => x.UnitAmount).HasPrecision(12, 2);
+            entity.Property(x => x.LineTotal).HasPrecision(12, 2);
+            entity.HasIndex(x => new { x.DocumentId, x.SortOrder });
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<BillingDocumentSequence>(entity =>
+        {
+            entity.ToTable("billing_document_sequences", "payments");
+            entity.HasKey(x => new { x.TenantId, x.Kind });
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 

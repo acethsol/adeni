@@ -5,6 +5,7 @@ using Adeni.Application.Booking;
 using Adeni.Application.Caching;
 using Adeni.Application.Events;
 using Adeni.Application.Markets;
+using Adeni.Application.Notifications;
 using Adeni.Application.Payments;
 using Adeni.Application.Reviews;
 using Adeni.Application.Subscriptions;
@@ -244,6 +245,8 @@ public sealed class PaymentLoopTests
         services.AddScoped<IPlatformFeeCalculator, PlatformFeeCalculator>();
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
+        services.AddSingleton<INotificationDispatcher, LoopNotificationDispatcher>();
+        services.AddScoped<IBillingDocumentService, BillingDocumentService>();
         services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
         services.AddScoped<ITenantSchedulingTimeZone, TenantSchedulingTimeZone>();
         services.AddScoped<IAvailabilityService, AvailabilityService>();
@@ -251,6 +254,12 @@ public sealed class PaymentLoopTests
         services.AddScoped<IEntitlementsService, EntitlementsService>();
         services.AddScoped<IBookingService, BookingService>();
         return services.BuildServiceProvider();
+    }
+
+    private sealed class LoopNotificationDispatcher : INotificationDispatcher
+    {
+        public Task SendAsync(NotificationMessage message, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
     }
 
     private sealed class LagosMarketCatalog : IMarketCatalog

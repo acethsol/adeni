@@ -31,7 +31,7 @@
 | **25** | **Staff accounts & permissions** | ✅ Done |
 | **26** | **Stripe NA payments** | ✅ Done |
 | **27** | **In-salon payment loop** | ✅ Done |
-| **28** | **Billing documents** | Draft |
+| **28** | **Billing documents** | ✅ Done |
 | — | Sprint 11d LLM agent | → Sprint 20 |
 | — | Staging deploy + Auth0 E2E | → Sprint 20 |
 | — | App Insights (Obs 1) | → Sprint 20 |
