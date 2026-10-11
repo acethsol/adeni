@@ -1,9 +1,5 @@
 @use "staff-layout" as *;
 
-.toolbar {
-  margin-bottom: 1.25rem;
-}
-
 .row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

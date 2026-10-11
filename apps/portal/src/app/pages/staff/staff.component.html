@@ -2,6 +2,15 @@
   title="Staff"
   description="Roster, roles, hours, and leave — customers book by display name."
 >
+  <button
+    pageActions
+    type="button"
+    class="btn btn-primary"
+    (click)="openCreate()"
+  >
+    Add team member
+  </button>
+
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
@@ -12,12 +21,8 @@
     <section class="empty-state" aria-labelledby="staff-empty-title">
       <h3 id="staff-empty-title">No team members yet</h3>
       <p>Add people so customers can book by name.</p>
-      <button type="button" class="btn btn-primary" (click)="openCreate()">Add team member</button>
     </section>
   } @else {
-    <div class="toolbar">
-      <button type="button" class="btn btn-primary" (click)="openCreate()">Add team member</button>
-    </div>
     <div class="roster">
       <p class="roster-count">
         {{ staff().length }}

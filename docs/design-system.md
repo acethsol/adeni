@@ -20,6 +20,19 @@ Cross-platform tokens live in `@adeni/shared`. Shared staff-app UI (page layout,
 
 Staff layout SCSS: `@use "staff-layout" as *` (from `@adeni/ui`, via `stylePreprocessorOptions.includePaths` in portal/admin). Portal-only widgets (e.g. pending bookings bell): `apps/portal/src/app/shared/`.
 
+### Page actions (`PortalPageComponent`)
+
+Primary list actions (e.g. **Add team member**) go in the page header top-right via `pageActions`:
+
+```html
+<app-portal-page title="Staff" description="…">
+  <button pageActions type="button" class="btn btn-primary" (click)="openCreate()">
+    Add team member
+  </button>
+  …
+</app-portal-page>
+```
+
 ### Modals (`AdeniModalComponent`)
 
 Create/edit wizards and short forms in **portal and admin** use `adeni-modal` from `@adeni/ui` — not inline page sections or one-off dialog markup. Pattern:
