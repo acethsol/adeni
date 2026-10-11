@@ -15,6 +15,7 @@ import {
 } from "@adeni/shared";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { PortalSessionService } from "../../core/services/portal-session.service";
 
 type DayBar = { label: string; count: number; isToday: boolean; height: number };
 type StatusSlice = { status: number; label: string; count: number; percent: number };
@@ -31,6 +32,7 @@ const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 export class DashboardComponent implements OnInit {
   private readonly businessApi = inject(BusinessApiService);
   private readonly config = inject(ADENI_PORTAL_CONFIG);
+  private readonly session = inject(PortalSessionService);
 
   readonly formatTenantStatus = formatTenantStatus;
   readonly formatSlotTime = formatSlotTime;
@@ -78,6 +80,10 @@ export class DashboardComponent implements OnInit {
     const location = profile.locations.find((item) => item.isPrimary) ?? profile.locations[0];
     if (!location) return null;
     return `${this.config.discoverWebUrl}/businesses/${location.slug}`;
+  }
+
+  isPractitionerView(): boolean {
+    return this.session.can("portal.staff.self") && !this.session.can("portal.staff");
   }
 
   usagePercent(): number {

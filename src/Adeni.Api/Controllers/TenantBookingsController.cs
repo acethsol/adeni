@@ -25,7 +25,20 @@ public sealed class TenantBookingsController(
             return Unauthorized();
         }
 
-        var items = await bookings.ListForTenantAsync(tenantId, cancellationToken);
+        var access = PortalAccessHttpContext.Get(HttpContext);
+        Guid? staffScope = null;
+        if (PortalAccessHttpContext.IsBookingsSelfOnly(access))
+        {
+            // Fail closed: practitioners without a linked staff member see nothing.
+            if (access?.StaffMemberId is not { } linkedStaffId)
+            {
+                return Ok(new { items = Array.Empty<object>() });
+            }
+
+            staffScope = linkedStaffId;
+        }
+
+        var items = await bookings.ListForTenantAsync(tenantId, staffScope, cancellationToken);
         return Ok(new { items });
     }
 
@@ -37,7 +50,8 @@ public sealed class TenantBookingsController(
             return Unauthorized();
         }
 
-        var result = await bookings.AcceptAsync(tenantId, id, cancellationToken);
+        var requireStaff = ResolveSelfStaffScope();
+        var result = await bookings.AcceptAsync(tenantId, id, requireStaff, cancellationToken);
         return ApiResults.FromResult(result, Ok, HttpContext);
     }
 
@@ -52,8 +66,20 @@ public sealed class TenantBookingsController(
             return Unauthorized();
         }
 
-        var result = await bookings.RejectAsync(tenantId, id, body.Reason, cancellationToken);
+        var requireStaff = ResolveSelfStaffScope();
+        var result = await bookings.RejectAsync(tenantId, id, body.Reason, requireStaff, cancellationToken);
         return ApiResults.FromResult(result, Ok, HttpContext);
+    }
+
+    private Guid? ResolveSelfStaffScope()
+    {
+        var access = PortalAccessHttpContext.Get(HttpContext);
+        if (!PortalAccessHttpContext.IsBookingsSelfOnly(access))
+        {
+            return null;
+        }
+
+        return access?.StaffMemberId;
     }
 
     private string? ResolveAuth0Sub()

@@ -5,7 +5,9 @@
   <div class="cal-shell">
     <header class="cal-hero">
       <div class="cal-hero-copy">
-        <a class="back-link" routerLink="/staff">← Staff</a>
+        @if (showRosterBackLink()) {
+          <a class="back-link" routerLink="/staff">← Staff</a>
+        }
         <p class="cal-kicker">Practitioner board</p>
         <h2 class="cal-name">{{ calendar()?.displayName ?? "…" }}</h2>
         <p class="cal-hours">

@@ -82,6 +82,7 @@ public interface IBookingService
 
     Task<IReadOnlyList<BookingResponse>> ListForTenantAsync(
         Guid tenantId,
+        Guid? staffMemberId = null,
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<CustomerBookingResponse>> ListForCustomerAsync(
@@ -91,12 +92,14 @@ public interface IBookingService
     Task<Result<BookingResponse>> AcceptAsync(
         Guid tenantId,
         Guid bookingId,
+        Guid? requireStaffMemberId = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<BookingResponse>> RejectAsync(
         Guid tenantId,
         Guid bookingId,
         string? reason,
+        Guid? requireStaffMemberId = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<CustomerBookingResponse>> CancelAsync(

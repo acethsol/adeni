@@ -517,6 +517,12 @@ export class PortalShellComponent {
         if (item.permission && !hasPortalPermission(permissions, item.permission)) {
           return false;
         }
+        if (
+          item.excludeIfPermission &&
+          hasPortalPermission(permissions, item.excludeIfPermission)
+        ) {
+          return false;
+        }
         if (!capabilities) {
           return true;
         }

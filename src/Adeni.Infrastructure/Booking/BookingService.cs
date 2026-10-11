@@ -306,13 +306,21 @@ public sealed class BookingService(
 
     public async Task<IReadOnlyList<BookingResponse>> ListForTenantAsync(
         Guid tenantId,
+        Guid? staffMemberId = null,
         CancellationToken cancellationToken = default)
     {
-        var bookings = await dbContext.Bookings
+        var query = dbContext.Bookings
             .AsNoTracking()
             .Include(x => x.Lines)
             .Include(x => x.Guests)
-            .Where(x => x.TenantId == tenantId)
+            .Where(x => x.TenantId == tenantId);
+
+        if (staffMemberId is Guid scopedStaffId)
+        {
+            query = query.Where(x => x.StaffMemberId == scopedStaffId);
+        }
+
+        var bookings = await query
             .OrderBy(x => x.StartAt)
             .ToListAsync(cancellationToken);
 
@@ -455,15 +463,29 @@ public sealed class BookingService(
     public Task<Result<BookingResponse>> AcceptAsync(
         Guid tenantId,
         Guid bookingId,
+        Guid? requireStaffMemberId = null,
         CancellationToken cancellationToken = default) =>
-        UpdateStatusAsync(tenantId, bookingId, BookingStatus.Confirmed, null, cancellationToken);
+        UpdateStatusAsync(
+            tenantId,
+            bookingId,
+            BookingStatus.Confirmed,
+            null,
+            requireStaffMemberId,
+            cancellationToken);
 
     public Task<Result<BookingResponse>> RejectAsync(
         Guid tenantId,
         Guid bookingId,
         string? reason,
+        Guid? requireStaffMemberId = null,
         CancellationToken cancellationToken = default) =>
-        UpdateStatusAsync(tenantId, bookingId, BookingStatus.Rejected, reason, cancellationToken);
+        UpdateStatusAsync(
+            tenantId,
+            bookingId,
+            BookingStatus.Rejected,
+            reason,
+            requireStaffMemberId,
+            cancellationToken);
 
     public async Task<Result<CustomerBookingResponse>> CancelAsync(
         string customerAuth0Sub,
@@ -552,6 +574,7 @@ public sealed class BookingService(
         Guid bookingId,
         BookingStatus status,
         string? businessNotes,
+        Guid? requireStaffMemberId,
         CancellationToken cancellationToken)
     {
         var booking = await dbContext.Bookings
@@ -562,6 +585,12 @@ public sealed class BookingService(
         if (booking is null)
         {
             return Result.Failure<BookingResponse>(Error.NotFound("Booking"));
+        }
+
+        if (requireStaffMemberId is Guid requiredStaff
+            && booking.StaffMemberId != requiredStaff)
+        {
+            return Result.Failure<BookingResponse>(ErrorCodes.PermissionDeniedError());
         }
 
         if (booking.Status != BookingStatus.Pending)

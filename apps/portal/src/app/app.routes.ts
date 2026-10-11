@@ -20,6 +20,8 @@ import { AcceptInviteComponent } from "./pages/accept-invite/accept-invite.compo
 import { portalAccessGuard } from "./core/guards/portal-access.guard";
 import { businessAuthGuard } from "./core/guards/business-auth.guard";
 import { portalPermissionGuard } from "./core/guards/portal-permission.guard";
+import { homeRedirectGuard } from "./core/guards/home-redirect.guard";
+import { staffCalendarGuard } from "./core/guards/staff-calendar.guard";
 
 export const routes: Routes = [
   { path: "setup", component: SetupComponent, title: "Setup" },
@@ -30,7 +32,12 @@ export const routes: Routes = [
     canActivate: [portalAccessGuard, businessAuthGuard],
     component: PortalShellComponent,
     children: [
-      { path: "", pathMatch: "full", redirectTo: "dashboard" },
+      {
+        path: "",
+        pathMatch: "full",
+        canActivate: [homeRedirectGuard],
+        component: DashboardComponent,
+      },
       {
         path: "dashboard",
         component: DashboardComponent,
@@ -41,6 +48,12 @@ export const routes: Routes = [
         path: "bookings",
         component: BookingsComponent,
         title: "Bookings",
+        canActivate: [portalPermissionGuard],
+      },
+      {
+        path: "my-calendar",
+        component: StaffCalendarComponent,
+        title: "My calendar",
         canActivate: [portalPermissionGuard],
       },
       {
@@ -71,7 +84,7 @@ export const routes: Routes = [
         path: "staff/:id/calendar",
         component: StaffCalendarComponent,
         title: "Staff calendar",
-        canActivate: [portalPermissionGuard],
+        canActivate: [staffCalendarGuard],
       },
       {
         path: "locations",

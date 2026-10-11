@@ -58,6 +58,7 @@ public sealed class RequiresPortalPermissionAttribute : Attribute, IAsyncActionF
             return;
         }
 
+        PortalAccessHttpContext.Set(context.HttpContext, resolved.Value);
         await next();
     }
 
