@@ -479,9 +479,47 @@ export const bookingResponseSchema = z.object({
   guests: z.array(bookingGuestResponseSchema).nullable().optional(),
   totalPriceAmount: z.number().nullable().optional(),
   currency: z.string().nullable().optional(),
+  settlementSource: z.string().nullable().optional(),
+  paidAt: z.string().nullable().optional(),
+  externalPaymentReference: z.string().nullable().optional(),
+  remainingBalanceAmount: z.number().nullable().optional(),
 });
 
 export type BookingResponse = z.infer<typeof bookingResponseSchema>;
+
+export const markBookingPaidRequestSchema = z.object({
+  externalReference: z.string().max(200).nullable().optional(),
+  note: z.string().max(1000).nullable().optional(),
+});
+
+export type MarkBookingPaidRequest = z.infer<typeof markBookingPaidRequestSchema>;
+
+export const collectBalanceResponseSchema = z.object({
+  bookingId: z.string().uuid(),
+  paymentIntentId: z.string().uuid(),
+  amount: z.number(),
+  currency: z.string(),
+  checkoutUrl: z.string(),
+  providerReference: z.string(),
+  booking: bookingResponseSchema,
+});
+
+export type CollectBalanceResponse = z.infer<typeof collectBalanceResponseSchema>;
+
+export const paymentReceiptResponseSchema = z.object({
+  paymentIntentId: z.string().uuid(),
+  bookingId: z.string().uuid().nullable().optional(),
+  businessName: z.string(),
+  description: z.string().nullable().optional(),
+  amount: z.number(),
+  currency: z.string(),
+  status: z.string(),
+  paidAt: z.string().nullable().optional(),
+  method: z.string(),
+  providerReference: z.string(),
+});
+
+export type PaymentReceiptResponse = z.infer<typeof paymentReceiptResponseSchema>;
 
 export const customerBookingResponseSchema = z.object({
   id: z.string(),
@@ -1362,6 +1400,9 @@ export const BOOKING_STATUS_LABELS: Record<number, string> = {
   1: "Confirmed",
   2: "Rejected",
   3: "Cancelled",
+  4: "Checked in",
+  5: "Completed",
+  6: "Paid",
 };
 
 export const TENANT_STATUS_LABELS: Record<number, string> = {

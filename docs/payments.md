@@ -3,15 +3,26 @@
 Non-custodial payment orchestration via licensed providers. Adeni stores **payment intent state** and provider references only — no wallet or balance tables.
 
 **Roadmap:** closing the in-salon payment loop and optional POS bridge — see [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md).  
-**Stripe NA:** [Sprint 26](./specs/sprint-26-stripe-na-payments.md) ✅ · **Payment loop + receipt:** [Sprint 27](./specs/sprint-27-payment-loop.md) (draft).
+**Stripe NA:** [Sprint 26](./specs/sprint-26-stripe-na-payments.md) ✅ · **Payment loop + receipt:** [Sprint 27](./specs/sprint-27-payment-loop.md) ✅.
 
 ### Invoices vs receipts
 
-| | Today | Sprint 27 |
-|--|-------|-----------|
-| **Receipt** | Callback URL stub + ledger only | Lightweight receipt DTO + simple UI for completed payments |
-| **Invoice** | Payment *type* for ad-hoc pay requests | Unchanged — not a tax/accounting document |
-| **Tax PDF / e-invoice** | Not built | Still out of scope |
+| | Status |
+|--|--------|
+| **Receipt** | `GET /api/v1/payments/{id}/receipt` — lightweight summary (business, amount, method, paid at) |
+| **Invoice** | Payment *type* for ad-hoc pay requests — not a tax/accounting document |
+| **Tax PDF / e-invoice** | Not built — later |
+
+### Floor loop (Sprint 27)
+
+Booking statuses: `Confirmed → CheckedIn → Completed → Paid` (or auto-Paid on complete when deposits cover total).
+
+| Action | Route |
+|--------|-------|
+| Check in | `POST /api/v1/tenant/bookings/{id}/check-in` |
+| Complete | `POST /api/v1/tenant/bookings/{id}/complete` |
+| Collect balance | `POST /api/v1/tenant/bookings/{id}/collect-balance` |
+| Paid at till | `POST /api/v1/tenant/bookings/{id}/mark-paid` |
 
 ## Architecture
 

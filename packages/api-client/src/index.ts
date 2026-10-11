@@ -8,6 +8,9 @@ import {
   subscriptionUsageSchema,
   availableSlotsResponseSchema,
   bookingResponseSchema,
+  collectBalanceResponseSchema,
+  markBookingPaidRequestSchema,
+  paymentReceiptResponseSchema,
   businessContextResponseSchema,
   businessLocationSchema,
   businessProfileSchema,
@@ -110,6 +113,9 @@ import {
   type SubscriptionUsage,
   type AvailableSlot,
   type BookingResponse,
+  type CollectBalanceResponse,
+  type MarkBookingPaidRequest,
+  type PaymentReceiptResponse,
   type BusinessContextResponse,
   type BusinessProfile,
   type BusinessLocation,
@@ -477,6 +483,55 @@ export class AdeniApiClient {
       },
     );
     return bookingResponseSchema.parse(await response.json());
+  }
+
+  async checkInTenantBooking(bookingId: string): Promise<BookingResponse> {
+    const response = await this.request(
+      `/api/v1/tenant/bookings/${encodeURIComponent(bookingId)}/check-in`,
+      { method: "POST" },
+    );
+    return bookingResponseSchema.parse(await response.json());
+  }
+
+  async completeTenantBooking(bookingId: string): Promise<BookingResponse> {
+    const response = await this.request(
+      `/api/v1/tenant/bookings/${encodeURIComponent(bookingId)}/complete`,
+      { method: "POST" },
+    );
+    return bookingResponseSchema.parse(await response.json());
+  }
+
+  async markTenantBookingPaid(
+    bookingId: string,
+    request: MarkBookingPaidRequest = {},
+  ): Promise<BookingResponse> {
+    const body = markBookingPaidRequestSchema.parse(request);
+    const response = await this.request(
+      `/api/v1/tenant/bookings/${encodeURIComponent(bookingId)}/mark-paid`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+    return bookingResponseSchema.parse(await response.json());
+  }
+
+  async collectTenantBookingBalance(
+    bookingId: string,
+  ): Promise<CollectBalanceResponse> {
+    const response = await this.request(
+      `/api/v1/tenant/bookings/${encodeURIComponent(bookingId)}/collect-balance`,
+      { method: "POST" },
+    );
+    return collectBalanceResponseSchema.parse(await response.json());
+  }
+
+  async getPaymentReceipt(paymentIntentId: string): Promise<PaymentReceiptResponse> {
+    const response = await this.request(
+      `/api/v1/payments/${encodeURIComponent(paymentIntentId)}/receipt`,
+    );
+    return paymentReceiptResponseSchema.parse(await response.json());
   }
 
   async getTenantProfile(): Promise<BusinessProfile> {

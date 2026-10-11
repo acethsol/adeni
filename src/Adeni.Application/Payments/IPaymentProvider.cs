@@ -57,6 +57,18 @@ public sealed record PaymentLedgerEntry(
 
 public sealed record PaymentWebhookResult(bool Processed, string? Message = null);
 
+public sealed record PaymentReceiptResponse(
+    Guid PaymentIntentId,
+    Guid? BookingId,
+    string BusinessName,
+    string? Description,
+    decimal Amount,
+    string Currency,
+    string Status,
+    DateTimeOffset? PaidAt,
+    string Method,
+    string ProviderReference);
+
 public interface IPaymentProvider
 {
     string ProviderName { get; }
@@ -151,6 +163,10 @@ public interface IPaymentOrchestrator
 
     Task<Result<PaymentIntentResponse>> InitiateRefundAsync(
         RefundPaymentRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<PaymentReceiptResponse>> GetReceiptAsync(
+        Guid paymentIntentId,
         CancellationToken cancellationToken = default);
 }
 

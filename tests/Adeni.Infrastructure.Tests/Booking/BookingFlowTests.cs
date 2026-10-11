@@ -1,9 +1,11 @@
 namespace Adeni.Infrastructure.Tests.Booking;
 
+using Adeni.Application.Abstractions;
 using Adeni.Application.Booking;
 using Adeni.Application.Caching;
 using Adeni.Application.Events;
 using Adeni.Application.Markets;
+using Adeni.Application.Payments;
 using Adeni.Application.Reviews;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Booking;
@@ -12,12 +14,14 @@ using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Booking;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Events;
+using Adeni.Infrastructure.Payments;
 using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Reviews;
 using Adeni.Infrastructure.Subscriptions;
 using Adeni.Infrastructure.Tests.Catalog;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 public sealed class BookingFlowTests
 {
@@ -382,7 +386,45 @@ public sealed class BookingFlowTests
         services.AddScoped<IAvailabilityService, AvailabilityService>();
         services.AddScoped<IReviewService, ReviewService>();
         services.AddScoped<IEntitlementsService, EntitlementsService>();
+        services.Configure<PaymentsOptions>(options =>
+        {
+            options.Provider = "Stub";
+            options.StubCheckoutBaseUrl = "/checkout/stub";
+        });
+        services.AddSingleton<ICorrelationContext, LoopTestCorrelationContext>();
+        services.AddSingleton<IAuditLogWriter, LoopTestAuditLogWriter>();
+        services.AddSingleton<IMarketCatalog, LoopTestMarketCatalog>();
+        services.AddScoped<IPlatformFeeCalculator, PlatformFeeCalculator>();
+        services.AddScoped<IPaymentProvider, StubPaymentProvider>();
+        services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
         services.AddScoped<IBookingService, BookingService>();
         return services.BuildServiceProvider();
+    }
+
+    private sealed class LoopTestCorrelationContext : ICorrelationContext
+    {
+        public string CorrelationId { get; } = "booking-flow";
+        public void Set(string correlationId) { }
+    }
+
+    private sealed class LoopTestAuditLogWriter : IAuditLogWriter
+    {
+        public Task WriteAsync(Domain.Auditing.AuditEntry entry, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+    }
+
+    private sealed class LoopTestMarketCatalog : IMarketCatalog
+    {
+        public IReadOnlyList<MarketDefinition> List() =>
+            [new("lagos", "Lagos", "NG", "NGN", "Africa/Lagos", new(0, 0), ["en"], true, null, 0m)];
+
+        public IReadOnlyList<MarketDefinition> ListLive() => List();
+
+        public MarketDefinition? GetById(string marketId) =>
+            List().FirstOrDefault(m => m.Id == marketId);
+
+        public bool IsValid(string? marketId) => GetById(marketId ?? string.Empty) is not null;
+
+        public string Normalize(string marketId) => marketId.ToLowerInvariant();
     }
 }

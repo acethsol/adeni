@@ -6,7 +6,7 @@
 |-------|-------|
 | **Sprint** | Sprint 27 — Payment loop |
 | **Author** | Cloud Agent |
-| **Status** | Draft |
+| **Status** | Implemented |
 | **Created** | 2026-10-11 |
 
 ---
@@ -45,27 +45,27 @@ Staff can take a confirmed booking through **check-in → complete → collect b
 
 ### Floor lifecycle
 
-- [ ] **27a** Extend `BookingStatus` with `CheckedIn`, `Completed`, `Paid` (keep existing values stable)
-- [ ] **27b** Tenant APIs: `POST …/check-in`, `…/complete`, `…/mark-paid` (paid-at-till)
-- [ ] **27c** Transition guards: `Confirmed → CheckedIn → Completed → Paid`; reject illegal jumps; allow `Completed → Paid` only
-- [ ] **27d** Settlement metadata on booking (or payment link): `PaidOnline` | `PaidExternally` (+ optional external reference / note)
-- [ ] **27e** `POST …/collect-balance` — initialize payment for remaining amount (`bookingId`, type deposit/link); webhook success → `Paid` + `PaidOnline`
+- [x] **27a** Extend `BookingStatus` with `CheckedIn`, `Completed`, `Paid` (keep existing values stable)
+- [x] **27b** Tenant APIs: `POST …/check-in`, `…/complete`, `…/mark-paid` (paid-at-till)
+- [x] **27c** Transition guards: `Confirmed → CheckedIn → Completed → Paid`; reject illegal jumps; allow `Completed → Paid` only
+- [x] **27d** Settlement metadata on booking (or payment link): `PaidOnline` | `PaidExternally` (+ optional external reference / note)
+- [x] **27e** `POST …/collect-balance` — initialize payment for remaining amount (`bookingId`, type deposit/link); webhook success → `Paid` + `PaidOnline`
 
 ### Money math
 
-- [ ] **27f** Remaining balance = booking total − sum of completed payment intents for that booking (deposits + partials)
-- [ ] **27g** If remaining ≤ 0 after deposit alone, `Complete` may offer “Mark paid” without new charge (or auto-paid on complete — decide in open questions)
+- [x] **27f** Remaining balance = booking total − sum of completed payment intents for that booking (deposits + partials)
+- [x] **27g** If remaining ≤ 0 after deposit alone, `Complete` may offer “Mark paid” without new charge (or auto-paid on complete — decide in open questions)
 
 ### Receipt (lightweight)
 
-- [ ] **27h** `GET /api/v1/payments/{id}/receipt` — public-or-scoped receipt DTO (business name, amount, currency, status, paid at, booking ref, method)
-- [ ] **27i** Minimal receipt UI: discover or portal route using `ReceiptBaseUrl` (no PDF)
-- [ ] **27j** Portal bookings actions: Check in / Complete / Collect balance / Paid at till; show paid badge
+- [x] **27h** `GET /api/v1/payments/{id}/receipt` — public-or-scoped receipt DTO (business name, amount, currency, status, paid at, booking ref, method)
+- [x] **27i** Minimal receipt UI: discover or portal route using `ReceiptBaseUrl` (no PDF)
+- [x] **27j** Portal bookings actions: Check in / Complete / Collect balance / Paid at till; show paid badge
 
 ### Docs & tests
 
-- [ ] **27k** Update [payments.md](../payments.md) + roadmap §4; shared schemas / api-client
-- [ ] **27l** Unit + integration: transitions, balance math, mark-paid, collect-balance → webhook → Paid; receipt endpoint
+- [x] **27k** Update [payments.md](../payments.md) + roadmap §4; shared schemas / api-client
+- [x] **27l** Unit + integration: transitions, balance math, mark-paid, collect-balance → webhook → Paid; receipt endpoint
 
 ## 4. Out of scope
 
@@ -152,12 +152,12 @@ Staff can take a confirmed booking through **check-in → complete → collect b
 
 ## 8. Tests
 
-- [ ] Unit: illegal transitions fail closed
-- [ ] Unit: remaining balance with deposit + zero remaining
-- [ ] Integration: check-in → complete → mark-paid
-- [ ] Integration: complete → collect-balance → webhook → Paid
-- [ ] Receipt: business can read; other tenant denied
-- [ ] Practitioner cannot complete another stylist’s booking
+- [x] Unit: illegal transitions fail closed
+- [x] Unit: remaining balance with deposit + zero remaining
+- [x] Integration: check-in → complete → mark-paid
+- [x] Integration: complete → collect-balance → webhook → Paid
+- [x] Receipt: business can read; other tenant denied
+- [x] Practitioner cannot complete another stylist’s booking
 
 Run: `dotnet test Adeni.slnx -c Release`
 
@@ -165,12 +165,12 @@ Run: `dotnet test Adeni.slnx -c Release`
 
 ## 9. Acceptance criteria
 
-- [ ] Confirmed booking can be checked in, completed, and marked paid at till with optional note
-- [ ] Collect balance creates a provider checkout for remaining amount; webhook sets Paid
-- [ ] Portal bookings UI exposes the new actions with clear status labels
-- [ ] Receipt endpoint returns a usable summary for a completed payment
-- [ ] No POS / Terminal / tax-invoice requirements
-- [ ] Docs updated; CI green
+- [x] Confirmed booking can be checked in, completed, and marked paid at till with optional note
+- [x] Collect balance creates a provider checkout for remaining amount; webhook sets Paid
+- [x] Portal bookings UI exposes the new actions with clear status labels
+- [x] Receipt endpoint returns a usable summary for a completed payment
+- [x] No POS / Terminal / tax-invoice requirements
+- [x] Docs updated; CI green
 
 ---
 

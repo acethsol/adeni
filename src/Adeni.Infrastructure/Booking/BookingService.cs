@@ -4,11 +4,13 @@ using Adeni.Application.Booking;
 using Adeni.Application.Caching;
 using Adeni.Application.Common;
 using Adeni.Application.Events;
+using Adeni.Application.Payments;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Booking.Events;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
+using Adeni.Domain.Payments;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +21,8 @@ public sealed class BookingService(
     IDistributedLockProvider lockProvider,
     Application.Reviews.IReviewService reviewService,
     IDomainEventCollector domainEventCollector,
-    IEntitlementsService entitlementsService) : IBookingService
+    IEntitlementsService entitlementsService,
+    IPaymentOrchestrator paymentOrchestrator) : IBookingService
 {
     public async Task<Result<BookingResponse>> CreateAsync(
         string customerAuth0Sub,
@@ -487,6 +490,109 @@ public sealed class BookingService(
             requireStaffMemberId,
             cancellationToken);
 
+    public Task<Result<BookingResponse>> CheckInAsync(
+        Guid tenantId,
+        Guid bookingId,
+        Guid? requireStaffMemberId = null,
+        CancellationToken cancellationToken = default) =>
+        TransitionFloorAsync(
+            tenantId,
+            bookingId,
+            BookingStatus.CheckedIn,
+            requireStaffMemberId,
+            markPaidRequest: null,
+            cancellationToken);
+
+    public Task<Result<BookingResponse>> CompleteAsync(
+        Guid tenantId,
+        Guid bookingId,
+        Guid? requireStaffMemberId = null,
+        CancellationToken cancellationToken = default) =>
+        TransitionFloorAsync(
+            tenantId,
+            bookingId,
+            BookingStatus.Completed,
+            requireStaffMemberId,
+            markPaidRequest: null,
+            cancellationToken);
+
+    public Task<Result<BookingResponse>> MarkPaidAsync(
+        Guid tenantId,
+        Guid bookingId,
+        MarkBookingPaidRequest request,
+        Guid? requireStaffMemberId = null,
+        CancellationToken cancellationToken = default) =>
+        TransitionFloorAsync(
+            tenantId,
+            bookingId,
+            BookingStatus.Paid,
+            requireStaffMemberId,
+            request,
+            cancellationToken);
+
+    public async Task<Result<CollectBalanceResponse>> CollectBalanceAsync(
+        Guid tenantId,
+        Guid bookingId,
+        Guid? requireStaffMemberId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var loaded = await LoadTenantBookingAsync(tenantId, bookingId, requireStaffMemberId, cancellationToken);
+        if (loaded.IsFailure)
+        {
+            return Result.Failure<CollectBalanceResponse>(loaded.Error);
+        }
+
+        var (booking, service, staffName) = loaded.Value!;
+        if (booking.Status is not (BookingStatus.Completed or BookingStatus.CheckedIn))
+        {
+            return Result.Failure<CollectBalanceResponse>(
+                Error.Conflict("Collect balance is only available after check-in or completion."));
+        }
+
+        var remaining = await CalculateRemainingBalanceAsync(booking, cancellationToken);
+        if (remaining <= 0)
+        {
+            return Result.Failure<CollectBalanceResponse>(
+                Error.Conflict("No remaining balance to collect."));
+        }
+
+        var currency = service?.Currency ?? "NGN";
+        var paymentResult = await paymentOrchestrator.InitializeAsync(
+            new InitializePaymentRequest(
+                tenantId,
+                booking.Id,
+                remaining,
+                currency,
+                "link",
+                $"Balance — {booking.Lines.OrderBy(x => x.SortOrder).FirstOrDefault()?.ServiceName ?? service?.Name ?? "Service"}",
+                CustomerEmail: null,
+                CallbackUrl: null),
+            idempotencyKey: null,
+            cancellationToken);
+
+        if (paymentResult.IsFailure)
+        {
+            return Result.Failure<CollectBalanceResponse>(paymentResult.Error);
+        }
+
+        var payment = paymentResult.Value!;
+        var mapped = BookingMapper.ToResponse(
+            booking,
+            booking.Lines.OrderBy(x => x.SortOrder).FirstOrDefault()?.ServiceName ?? service?.Name ?? "Service",
+            staffName,
+            currency,
+            remaining);
+
+        return Result.Success(new CollectBalanceResponse(
+            booking.Id,
+            payment.Id,
+            payment.Amount,
+            payment.Currency,
+            payment.CheckoutUrl,
+            payment.ProviderReference,
+            mapped));
+    }
+
     public async Task<Result<CustomerBookingResponse>> CancelAsync(
         string customerAuth0Sub,
         Guid bookingId,
@@ -567,6 +673,144 @@ public sealed class BookingService(
             slug,
             staffDisplayName: cancelStaffName,
             currency: service?.Currency));
+    }
+
+    private async Task<Result<BookingResponse>> TransitionFloorAsync(
+        Guid tenantId,
+        Guid bookingId,
+        BookingStatus target,
+        Guid? requireStaffMemberId,
+        MarkBookingPaidRequest? markPaidRequest,
+        CancellationToken cancellationToken)
+    {
+        var loaded = await LoadTenantBookingAsync(tenantId, bookingId, requireStaffMemberId, cancellationToken);
+        if (loaded.IsFailure)
+        {
+            return Result.Failure<BookingResponse>(loaded.Error);
+        }
+
+        var (booking, service, staffName) = loaded.Value!;
+        var remaining = await CalculateRemainingBalanceAsync(booking, cancellationToken);
+
+        switch (target)
+        {
+            case BookingStatus.CheckedIn when booking.Status != BookingStatus.Confirmed:
+                return Result.Failure<BookingResponse>(
+                    Error.Conflict("Only confirmed bookings can be checked in."));
+            case BookingStatus.Completed when booking.Status != BookingStatus.CheckedIn:
+                return Result.Failure<BookingResponse>(
+                    Error.Conflict("Only checked-in bookings can be completed."));
+            case BookingStatus.Paid when booking.Status != BookingStatus.Completed:
+                return Result.Failure<BookingResponse>(
+                    Error.Conflict("Only completed bookings can be marked paid."));
+            case BookingStatus.CheckedIn:
+            case BookingStatus.Completed:
+            case BookingStatus.Paid:
+                break;
+            default:
+                return Result.Failure<BookingResponse>(Error.Conflict("Unsupported floor transition."));
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        booking.Status = target;
+        booking.UpdatedAt = now;
+
+        if (target == BookingStatus.Completed && remaining <= 0)
+        {
+            booking.Status = BookingStatus.Paid;
+            booking.SettlementSource = BookingSettlementSource.Online;
+            booking.PaidAt = now;
+        }
+        else if (target == BookingStatus.Paid)
+        {
+            booking.SettlementSource = BookingSettlementSource.ExternalTill;
+            booking.PaidAt = now;
+            booking.ExternalPaymentReference = string.IsNullOrWhiteSpace(markPaidRequest?.ExternalReference)
+                ? null
+                : markPaidRequest.ExternalReference.Trim();
+            if (!string.IsNullOrWhiteSpace(markPaidRequest?.Note))
+            {
+                var note = markPaidRequest.Note.Trim();
+                booking.BusinessNotes = string.IsNullOrWhiteSpace(booking.BusinessNotes)
+                    ? note
+                    : $"{booking.BusinessNotes}\n{note}";
+            }
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        remaining = await CalculateRemainingBalanceAsync(booking, cancellationToken);
+        var name = booking.Lines.OrderBy(x => x.SortOrder).FirstOrDefault()?.ServiceName
+            ?? service?.Name
+            ?? "Service";
+        return Result.Success(BookingMapper.ToResponse(
+            booking,
+            name,
+            staffName,
+            service?.Currency,
+            booking.Status == BookingStatus.Paid ? 0m : remaining));
+    }
+
+    private async Task<Result<(BookingRecord Booking, ServiceOffering? Service, string? StaffName)>> LoadTenantBookingAsync(
+        Guid tenantId,
+        Guid bookingId,
+        Guid? requireStaffMemberId,
+        CancellationToken cancellationToken)
+    {
+        var booking = await dbContext.Bookings
+            .Include(x => x.Lines)
+            .Include(x => x.Guests)
+            .FirstOrDefaultAsync(x => x.Id == bookingId && x.TenantId == tenantId, cancellationToken);
+
+        if (booking is null)
+        {
+            return Result.Failure<(BookingRecord, ServiceOffering?, string?)>(Error.NotFound("Booking"));
+        }
+
+        if (requireStaffMemberId is Guid requiredStaff
+            && booking.StaffMemberId != requiredStaff)
+        {
+            return Result.Failure<(BookingRecord, ServiceOffering?, string?)>(ErrorCodes.PermissionDeniedError());
+        }
+
+        var service = await dbContext.ServiceOfferings
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == booking.ServiceOfferingId, cancellationToken);
+
+        var staffName = booking.StaffMemberId is Guid staffId
+            ? await dbContext.StaffMembers.AsNoTracking()
+                .Where(x => x.Id == staffId)
+                .Select(x => x.DisplayName)
+                .FirstOrDefaultAsync(cancellationToken)
+            : null;
+
+        return Result.Success((booking, service, staffName));
+    }
+
+    private async Task<decimal> CalculateRemainingBalanceAsync(
+        BookingRecord booking,
+        CancellationToken cancellationToken)
+    {
+        var total = booking.Lines.Sum(x => x.PriceAmount);
+        if (total <= 0 && booking.ServiceOfferingId != Guid.Empty)
+        {
+            var servicePrice = await dbContext.ServiceOfferings
+                .AsNoTracking()
+                .Where(x => x.Id == booking.ServiceOfferingId)
+                .Select(x => (decimal?)x.PriceAmount)
+                .FirstOrDefaultAsync(cancellationToken);
+            total = servicePrice ?? 0m;
+        }
+
+        var paid = await dbContext.PaymentIntents
+            .AsNoTracking()
+            .Where(x =>
+                x.BookingId == booking.Id
+                && x.TenantId == booking.TenantId
+                && x.Status == PaymentIntentStatus.Completed)
+            .SumAsync(x => x.Amount, cancellationToken);
+
+        return Math.Max(0m, total - paid);
     }
 
     private async Task<Result<BookingResponse>> UpdateStatusAsync(

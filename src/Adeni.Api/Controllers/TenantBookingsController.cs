@@ -85,6 +85,90 @@ public sealed class TenantBookingsController(
         return ApiResults.FromResult(result, Ok, HttpContext);
     }
 
+    [HttpPost("{id:guid}/check-in")]
+    public async Task<IActionResult> CheckIn(Guid id, CancellationToken cancellationToken)
+    {
+        if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
+        {
+            return Unauthorized();
+        }
+
+        if (ResolveSelfStaffScopeOrDeny() is not { } scoped)
+        {
+            return ApiErrorResponseMapper.ToActionResult(
+                ErrorCodes.PermissionDeniedError(),
+                HttpContext);
+        }
+
+        var result = await bookings.CheckInAsync(tenantId, id, scoped.StaffScope, cancellationToken);
+        return ApiResults.FromResult(result, Ok, HttpContext);
+    }
+
+    [HttpPost("{id:guid}/complete")]
+    public async Task<IActionResult> Complete(Guid id, CancellationToken cancellationToken)
+    {
+        if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
+        {
+            return Unauthorized();
+        }
+
+        if (ResolveSelfStaffScopeOrDeny() is not { } scoped)
+        {
+            return ApiErrorResponseMapper.ToActionResult(
+                ErrorCodes.PermissionDeniedError(),
+                HttpContext);
+        }
+
+        var result = await bookings.CompleteAsync(tenantId, id, scoped.StaffScope, cancellationToken);
+        return ApiResults.FromResult(result, Ok, HttpContext);
+    }
+
+    [HttpPost("{id:guid}/mark-paid")]
+    public async Task<IActionResult> MarkPaid(
+        Guid id,
+        [FromBody] MarkBookingPaidRequest? body,
+        CancellationToken cancellationToken)
+    {
+        if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
+        {
+            return Unauthorized();
+        }
+
+        if (ResolveSelfStaffScopeOrDeny() is not { } scoped)
+        {
+            return ApiErrorResponseMapper.ToActionResult(
+                ErrorCodes.PermissionDeniedError(),
+                HttpContext);
+        }
+
+        var result = await bookings.MarkPaidAsync(
+            tenantId,
+            id,
+            body ?? new MarkBookingPaidRequest(),
+            scoped.StaffScope,
+            cancellationToken);
+        return ApiResults.FromResult(result, Ok, HttpContext);
+    }
+
+    [HttpPost("{id:guid}/collect-balance")]
+    public async Task<IActionResult> CollectBalance(Guid id, CancellationToken cancellationToken)
+    {
+        if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
+        {
+            return Unauthorized();
+        }
+
+        if (ResolveSelfStaffScopeOrDeny() is not { } scoped)
+        {
+            return ApiErrorResponseMapper.ToActionResult(
+                ErrorCodes.PermissionDeniedError(),
+                HttpContext);
+        }
+
+        var result = await bookings.CollectBalanceAsync(tenantId, id, scoped.StaffScope, cancellationToken);
+        return ApiResults.FromResult(result, Ok, HttpContext);
+    }
+
     /// <summary>
     /// Null means deny (self-only without linked staff). Otherwise staff scope to enforce
     /// (null StaffScope = full bookings access).

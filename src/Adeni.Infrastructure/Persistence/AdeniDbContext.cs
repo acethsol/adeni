@@ -323,11 +323,13 @@ public sealed class AdeniDbContext(
             entity.HasKey(x => x.Id);
             entity.Property(x => x.CustomerNotes).HasMaxLength(1000);
             entity.Property(x => x.BusinessNotes).HasMaxLength(1000);
+            entity.Property(x => x.ExternalPaymentReference).HasMaxLength(200);
             entity.Property(x => x.IdempotencyKey).HasMaxLength(128);
             entity.HasIndex(x => x.IdempotencyKey).IsUnique().HasFilter("[IdempotencyKey] IS NOT NULL");
             entity.HasIndex(x => new { x.TenantId, x.StartAt });
             entity.HasIndex(x => new { x.TenantId, x.Status, x.StartAt });
             entity.Property(x => x.GuestCount).HasDefaultValue(1);
+            entity.Property(x => x.SettlementSource).HasDefaultValue(BookingSettlementSource.None);
             entity.HasIndex(x => new { x.TenantId, x.StaffMemberId, x.StartAt });
             entity.HasOne(x => x.ServiceOffering)
                 .WithMany()

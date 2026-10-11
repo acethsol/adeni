@@ -34,6 +34,13 @@
               @if (booking.customerNotes) {
                 <p class="note">“{{ booking.customerNotes }}”</p>
               }
+              @if (booking.remainingBalanceAmount != null && booking.remainingBalanceAmount > 0) {
+                <p class="muted">
+                  Balance due:
+                  {{ booking.remainingBalanceAmount }}
+                  {{ booking.currency || "" }}
+                </p>
+              }
             </div>
             @if (tab() === "pending") {
               <div class="actions">
@@ -54,6 +61,54 @@
                 >
                   <adeni-carbon-icon name="checkmark" [size]="16" />
                   Accept
+                </button>
+              </div>
+            } @else if (booking.status === 1) {
+              <div class="actions">
+                <span class="status">{{ formatBookingStatus(booking.status) }}</span>
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  [disabled]="actionId() === booking.id"
+                  (click)="checkIn(booking)"
+                >
+                  <adeni-carbon-icon name="user" [size]="16" />
+                  Check in
+                </button>
+              </div>
+            } @else if (booking.status === 4) {
+              <div class="actions">
+                <span class="status">{{ formatBookingStatus(booking.status) }}</span>
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  [disabled]="actionId() === booking.id"
+                  (click)="complete(booking)"
+                >
+                  <adeni-carbon-icon name="checkmark" [size]="16" />
+                  Complete
+                </button>
+              </div>
+            } @else if (booking.status === 5) {
+              <div class="actions">
+                <span class="status">{{ formatBookingStatus(booking.status) }}</span>
+                <button
+                  type="button"
+                  class="btn"
+                  [disabled]="actionId() === booking.id"
+                  (click)="collectBalance(booking)"
+                >
+                  <adeni-carbon-icon name="launch" [size]="16" />
+                  Collect balance
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  [disabled]="actionId() === booking.id"
+                  (click)="markPaid(booking)"
+                >
+                  <adeni-carbon-icon name="checkmark" [size]="16" />
+                  Paid at till
                 </button>
               </div>
             } @else {

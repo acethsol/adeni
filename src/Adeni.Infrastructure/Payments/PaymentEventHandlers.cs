@@ -18,30 +18,68 @@ public sealed class PaymentBookingHandler(
 {
     public async Task HandleAsync(PaymentCompleted domainEvent, CancellationToken cancellationToken = default)
     {
-        if (!domainEvent.BookingId.HasValue || domainEvent.Type != PaymentIntentType.Deposit)
+        if (!domainEvent.BookingId.HasValue)
         {
             return;
         }
 
         var booking = await dbContext.Bookings
+            .Include(x => x.Lines)
             .FirstOrDefaultAsync(
                 x => x.Id == domainEvent.BookingId.Value && x.TenantId == domainEvent.TenantId,
                 cancellationToken);
 
-        if (booking is null || booking.Status != BookingStatus.Pending)
+        if (booking is null)
         {
             return;
         }
 
-        booking.Status = BookingStatus.Confirmed;
-        booking.UpdatedAt = DateTimeOffset.UtcNow;
+        var now = DateTimeOffset.UtcNow;
 
-        domainEventCollector.Add(new BookingConfirmed(
-            booking.Id,
-            booking.TenantId,
-            booking.CustomerId,
-            booking.StartAt,
-            DateTimeOffset.UtcNow));
+        // Deposit success still auto-confirms pending bookings.
+        if (domainEvent.Type == PaymentIntentType.Deposit && booking.Status == BookingStatus.Pending)
+        {
+            booking.Status = BookingStatus.Confirmed;
+            booking.UpdatedAt = now;
+
+            domainEventCollector.Add(new BookingConfirmed(
+                booking.Id,
+                booking.TenantId,
+                booking.CustomerId,
+                booking.StartAt,
+                now));
+        }
+
+        // Balance / any booking-linked payment may close the floor loop.
+        if (booking.Status is BookingStatus.Completed or BookingStatus.CheckedIn or BookingStatus.Confirmed)
+        {
+            var total = booking.Lines.Sum(x => x.PriceAmount);
+            if (total <= 0)
+            {
+                var servicePrice = await dbContext.ServiceOfferings
+                    .AsNoTracking()
+                    .Where(x => x.Id == booking.ServiceOfferingId)
+                    .Select(x => (decimal?)x.PriceAmount)
+                    .FirstOrDefaultAsync(cancellationToken);
+                total = servicePrice ?? 0m;
+            }
+
+            var paid = await dbContext.PaymentIntents
+                .AsNoTracking()
+                .Where(x =>
+                    x.BookingId == booking.Id
+                    && x.TenantId == booking.TenantId
+                    && x.Status == PaymentIntentStatus.Completed)
+                .SumAsync(x => x.Amount, cancellationToken);
+
+            if (total > 0 && paid >= total)
+            {
+                booking.Status = BookingStatus.Paid;
+                booking.SettlementSource = BookingSettlementSource.Online;
+                booking.PaidAt = now;
+                booking.UpdatedAt = now;
+            }
+        }
 
         await dbContext.SaveChangesAsync(cancellationToken);
     }

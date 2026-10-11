@@ -11,6 +11,9 @@ import { PortalTabsComponent } from "../../shared/portal-tabs.component";
 
 const PENDING_STATUS = 0;
 const CONFIRMED_STATUS = 1;
+const CHECKED_IN_STATUS = 4;
+const COMPLETED_STATUS = 5;
+const PAID_STATUS = 6;
 
 @Component({
   selector: "app-bookings",
@@ -43,9 +46,9 @@ export class BookingsComponent implements OnInit {
 
   pageDescription(): string {
     if (this.session.can("portal.bookings.self") && !this.session.can("portal.bookings")) {
-      return "Your assigned appointments — accept requests, see who is coming in, and look back at finished visits.";
+      return "Your assigned appointments — accept, check in, complete, and close payment.";
     }
-    return "Accept new requests, see who is coming in, and look back at finished visits.";
+    return "Accept requests, check clients in, complete visits, and collect or mark payment.";
   }
 
   ngOnInit(): void {
@@ -57,7 +60,11 @@ export class BookingsComponent implements OnInit {
     const tab = this.tab();
     if (tab === "upcoming") {
       return this.bookings().filter(
-        (booking) => booking.status === CONFIRMED_STATUS && new Date(booking.startAt) >= today,
+        (booking) =>
+          (booking.status === CONFIRMED_STATUS ||
+            booking.status === CHECKED_IN_STATUS ||
+            booking.status === COMPLETED_STATUS) &&
+          new Date(booking.startAt) >= today,
       );
     }
     if (tab === "past") {
@@ -65,14 +72,18 @@ export class BookingsComponent implements OnInit {
         (booking) =>
           booking.status === 2 ||
           booking.status === 3 ||
-          (booking.status === CONFIRMED_STATUS && new Date(booking.startAt) < today),
+          booking.status === PAID_STATUS ||
+          ((booking.status === CONFIRMED_STATUS ||
+            booking.status === CHECKED_IN_STATUS ||
+            booking.status === COMPLETED_STATUS) &&
+            new Date(booking.startAt) < today),
       );
     }
     return this.bookings().filter((booking) => booking.status === PENDING_STATUS);
   }
 
   emptyLabel(): string {
-    if (this.tab() === "upcoming") return "Nothing confirmed ahead.";
+    if (this.tab() === "upcoming") return "Nothing on the floor ahead.";
     if (this.tab() === "past") return "No past bookings yet.";
     return "No pending bookings.";
   }
@@ -99,7 +110,7 @@ export class BookingsComponent implements OnInit {
   }
 
   async accept(booking: BookingResponse): Promise<void> {
-    await this.runAction(booking, "accept");
+    await this.runStatusAction(booking, "accept");
   }
 
   async reject(booking: BookingResponse): Promise<void> {
@@ -112,16 +123,79 @@ export class BookingsComponent implements OnInit {
     if (!ok) {
       return;
     }
-    await this.runAction(booking, "reject");
+    await this.runStatusAction(booking, "reject");
   }
 
-  private async runAction(booking: BookingResponse, action: "accept" | "reject"): Promise<void> {
+  async checkIn(booking: BookingResponse): Promise<void> {
+    await this.runStatusAction(booking, "check-in");
+  }
+
+  async complete(booking: BookingResponse): Promise<void> {
+    await this.runStatusAction(booking, "complete");
+  }
+
+  async markPaid(booking: BookingResponse): Promise<void> {
+    const ok = await this.confirmDialog.confirm({
+      title: "Mark paid at till?",
+      message: `Mark ${booking.serviceName} as paid outside Adeni (cash/transfer)?`,
+      confirmLabel: "Mark paid",
+    });
+    if (!ok) {
+      return;
+    }
     this.actionId.set(booking.id);
     this.error.set(null);
     try {
       const updated = await this.api.withAuthorizedClient((client) =>
-        action === "accept" ? client.acceptTenantBooking(booking.id) : client.rejectTenantBooking(booking.id),
+        client.markTenantBookingPaid(booking.id, {}),
       );
+      this.bookings.update((list) => list.map((item) => (item.id === booking.id ? updated : item)));
+    } catch {
+      this.error.set("Could not mark this booking paid.");
+    } finally {
+      this.actionId.set(null);
+    }
+  }
+
+  async collectBalance(booking: BookingResponse): Promise<void> {
+    this.actionId.set(booking.id);
+    this.error.set(null);
+    try {
+      const result = await this.api.withAuthorizedClient((client) =>
+        client.collectTenantBookingBalance(booking.id),
+      );
+      this.bookings.update((list) =>
+        list.map((item) => (item.id === booking.id ? result.booking : item)),
+      );
+      if (result.checkoutUrl) {
+        window.open(result.checkoutUrl, "_blank", "noopener");
+      }
+    } catch {
+      this.error.set("Could not start balance collection.");
+    } finally {
+      this.actionId.set(null);
+    }
+  }
+
+  private async runStatusAction(
+    booking: BookingResponse,
+    action: "accept" | "reject" | "check-in" | "complete",
+  ): Promise<void> {
+    this.actionId.set(booking.id);
+    this.error.set(null);
+    try {
+      const updated = await this.api.withAuthorizedClient((client) => {
+        switch (action) {
+          case "accept":
+            return client.acceptTenantBooking(booking.id);
+          case "reject":
+            return client.rejectTenantBooking(booking.id);
+          case "check-in":
+            return client.checkInTenantBooking(booking.id);
+          case "complete":
+            return client.completeTenantBooking(booking.id);
+        }
+      });
       this.bookings.update((list) => list.map((item) => (item.id === booking.id ? updated : item)));
     } catch {
       this.error.set(`Could not ${action} this booking.`);
