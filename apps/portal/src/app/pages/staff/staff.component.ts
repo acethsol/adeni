@@ -1,5 +1,5 @@
-import { NgTemplateOutlet } from "@angular/common";
-import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { DatePipe, NgTemplateOutlet } from "@angular/common";
+import { Component, computed, inject, OnDestroy, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { RouterLink } from "@angular/router";
 import {
@@ -17,13 +17,18 @@ import {
   type WeeklyAvailabilityRule,
 } from "@adeni/shared";
 import {
+  AdeniCarbonIconComponent,
   AdeniConfirmService,
   AdeniFeedbackService,
+  AdeniModalComponent,
   AdeniWizardComponent,
   PortalPageComponent,
   type AdeniWizardStep,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
+
+const AVATAR_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
 
 const DAYS_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
@@ -110,11 +115,20 @@ function rowsToRules(rows: DayRow[]): WeeklyAvailabilityRule[] {
 @Component({
   selector: "app-staff",
   standalone: true,
-  imports: [PortalPageComponent, FormsModule, RouterLink, AdeniWizardComponent, NgTemplateOutlet],
+  imports: [
+    PortalPageComponent,
+    FormsModule,
+    RouterLink,
+    AdeniWizardComponent,
+    AdeniModalComponent,
+    AdeniCarbonIconComponent,
+    NgTemplateOutlet,
+    DatePipe,
+  ],
   templateUrl: "./staff.component.html",
   styleUrl: "./staff.component.scss",
 })
-export class StaffComponent implements OnInit {
+export class StaffComponent implements OnInit, OnDestroy {
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly confirmDialog = inject(AdeniConfirmService);
@@ -136,19 +150,19 @@ export class StaffComponent implements OnInit {
     {
       id: "profile",
       label: "Profile",
-      title: "Team member profile",
-      lede: "The display name is shown to customers when they book.",
+      title: "Profile",
+      lede: "Photo and name as customers will see them.",
     },
     {
       id: "services",
       label: "Services",
-      title: "Assignable services",
+      title: "Services",
       lede: "Leave blank to allow every active service.",
     },
     {
       id: "hours",
       label: "Hours",
-      title: "Working hours",
+      title: "Hours",
       lede: "Skip to follow the business calendar.",
     },
   ];
@@ -179,8 +193,82 @@ export class StaffComponent implements OnInit {
   invitePermissionRole: Exclude<PortalPermissionRole, "owner"> = "practitioner";
   editPermissionRole: Exclude<PortalPermissionRole, "owner"> = "practitioner";
 
+  /** Local object URL or existing remote avatar for the open form. */
+  readonly avatarPreviewUrl = signal<string | null>(null);
+  private avatarFile: File | null = null;
+  private avatarObjectUrl: string | null = null;
+
   ngOnInit(): void {
     void this.load();
+  }
+
+  ngOnDestroy(): void {
+    this.clearAvatarSelection();
+  }
+
+  draftInitials(): string {
+    const first = this.draft.firstName.trim();
+    const last = this.draft.lastName.trim();
+    const a = first.charAt(0);
+    const b = last.charAt(0);
+    const value = `${a}${b}`.toUpperCase();
+    return value || "?";
+  }
+
+  onAvatarSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+    if (!AVATAR_TYPES.has(file.type)) {
+      this.feedback.error("Use JPEG, PNG, or WebP.");
+      input.value = "";
+      return;
+    }
+    if (file.size > AVATAR_MAX_BYTES) {
+      this.feedback.error("Photo must be 5 MB or smaller.");
+      input.value = "";
+      return;
+    }
+
+    this.clearAvatarObjectUrl();
+    this.avatarFile = file;
+    this.avatarObjectUrl = URL.createObjectURL(file);
+    this.avatarPreviewUrl.set(this.avatarObjectUrl);
+  }
+
+  private clearAvatarObjectUrl(): void {
+    if (this.avatarObjectUrl) {
+      URL.revokeObjectURL(this.avatarObjectUrl);
+      this.avatarObjectUrl = null;
+    }
+  }
+
+  private clearAvatarSelection(): void {
+    this.clearAvatarObjectUrl();
+    this.avatarFile = null;
+    this.avatarPreviewUrl.set(null);
+  }
+
+  private async uploadAvatarIfNeeded(staffMemberId: string): Promise<void> {
+    const file = this.avatarFile;
+    if (!file) {
+      return;
+    }
+
+    await this.api.withAuthorizedClient(async (c) => {
+      const slot = await c.createStaffAvatarUploadUrl(file.type, file.size);
+      const upload = await fetch(slot.uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!upload.ok) {
+        throw new Error("upload failed");
+      }
+      await c.updateTenantStaffAvatar(staffMemberId, { avatarImageKey: slot.storageKey });
+    });
   }
 
   accessLabel(status: StaffMember["portalAccessStatus"]): string {
@@ -538,6 +626,7 @@ export class StaffComponent implements OnInit {
     this.leaveStart = "";
     this.leaveEnd = "";
     this.leaveReason = "";
+    this.clearAvatarSelection();
     this.showForm.set(true);
   }
 
@@ -556,6 +645,8 @@ export class StaffComponent implements OnInit {
       isActive: member.isActive,
       serviceOfferingIds: [...member.serviceOfferingIds],
     };
+    this.clearAvatarSelection();
+    this.avatarPreviewUrl.set(member.avatarImageUrl ?? null);
     this.showForm.set(true);
     try {
       await this.api.withAuthorizedClient(async (c) => {
@@ -597,6 +688,7 @@ export class StaffComponent implements OnInit {
     this.formTab.set("profile");
     this.draft = this.emptyDraft();
     this.leaveItems.set([]);
+    this.clearAvatarSelection();
   }
 
   toggleService(serviceId: string): void {
@@ -641,6 +733,7 @@ export class StaffComponent implements OnInit {
               serviceOfferingIds: this.draft.serviceOfferingIds,
             });
             await c.replaceTenantStaffHours(editingId, rowsToRules(this.hourRows));
+            await this.uploadAvatarIfNeeded(editingId);
           } else {
             const created = await c.createTenantStaff({
               firstName,
@@ -656,6 +749,7 @@ export class StaffComponent implements OnInit {
             if (hours.length > 0) {
               await c.replaceTenantStaffHours(created.id, hours);
             }
+            await this.uploadAvatarIfNeeded(created.id);
           }
         });
       }, editingId ? "Saving…" : "Adding…");

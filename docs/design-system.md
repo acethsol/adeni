@@ -20,6 +20,44 @@ Cross-platform tokens live in `@adeni/shared`. Shared staff-app UI (page layout,
 
 Staff layout SCSS: `@use "staff-layout" as *` (from `@adeni/ui`, via `stylePreprocessorOptions.includePaths` in portal/admin). Portal-only widgets (e.g. pending bookings bell): `apps/portal/src/app/shared/`.
 
+### Floor calendar
+
+Month/week/day boards are a hallmark surface. Shared date helpers live in `@adeni/ui` (`calendar/calendar-date`). Spec: [specs/sprint-calendar-floor.md](./specs/sprint-calendar-floor.md) — team vs practitioner views, `customerSelectedStaff` Carbon user badge, hours-worked rollups, mobile day-first.
+
+### Buttons + Carbon icons
+
+Portal/admin `.btn` rows use Carbon glyphs via `<adeni-carbon-icon name="…" [size]="16" />` inside the button (gap is built into `_staff-layout.scss`). Prefer 16px action icons: `add`, `save`, `edit`, `close`, `calendar`, `upload`, `checkmark`, `trash-can`, etc. from `@adeni/ui`.
+
+```html
+<button type="button" class="btn btn-primary" (click)="openCreate()">
+  <adeni-carbon-icon name="add" [size]="16" />
+  Add team member
+</button>
+```
+
+### Page actions (`PortalPageComponent`)
+
+Primary list actions (e.g. **Add team member**) go in the page header top-right via `pageActions`:
+
+```html
+<app-portal-page title="Staff" description="…">
+  <button pageActions type="button" class="btn btn-primary" (click)="openCreate()">
+    Add team member
+  </button>
+  …
+</app-portal-page>
+```
+
+### Modals (`AdeniModalComponent`)
+
+Create/edit wizards and short forms in **portal and admin** use `adeni-modal` from `@adeni/ui` — not inline page sections or one-off dialog markup. Pattern:
+
+- List/roster stays on the page (empty state when none).
+- **Add / Edit** opens `adeni-modal` (`size="lg"` for multi-step wizards).
+- Confirm destructive actions with `AdeniConfirmService` (already shared).
+
+Export: `AdeniModalComponent` / `AdeniModalSize` from `@adeni/ui`.
+
 ## Client data fetching
 
 Angular services call the .NET API via `packages/api-client` (or thin wrappers). Prefer API cache TTLs documented in [caching-setup.md](./caching-setup.md) when choosing client stale times.

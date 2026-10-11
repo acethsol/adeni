@@ -3,7 +3,7 @@ import { toSignal } from "@angular/core/rxjs-interop";
 import { ActivatedRoute } from "@angular/router";
 import type { BookingResponse } from "@adeni/shared";
 import { formatBookingStatus, formatSlotTime } from "@adeni/shared";
-import { AdeniConfirmService, PortalPageComponent } from "@adeni/ui";
+import { AdeniCarbonIconComponent, AdeniConfirmService, PortalPageComponent } from "@adeni/ui";
 import { map } from "rxjs";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { PortalSessionService } from "../../core/services/portal-session.service";
@@ -15,7 +15,7 @@ const CONFIRMED_STATUS = 1;
 @Component({
   selector: "app-bookings",
   standalone: true,
-  imports: [PortalPageComponent, PortalTabsComponent],
+  imports: [PortalPageComponent, PortalTabsComponent, AdeniCarbonIconComponent],
   templateUrl: "./bookings.component.html",
   styleUrl: "./bookings.component.scss",
 })

@@ -274,6 +274,46 @@ public sealed class StaffService(
         return Result.Success();
     }
 
+    public async Task<Result<StaffMemberResponse>> UpdateAvatarAsync(
+        Guid tenantId,
+        Guid staffMemberId,
+        string avatarImageKey,
+        CancellationToken cancellationToken = default)
+    {
+        var storageKey = avatarImageKey?.Trim();
+        if (string.IsNullOrWhiteSpace(storageKey))
+        {
+            return Result.Failure<StaffMemberResponse>(Error.Validation("Avatar image key is required."));
+        }
+
+        var expectedPrefix = $"tenants/{tenantId:N}/staff/";
+        if (!storageKey.StartsWith(expectedPrefix, StringComparison.Ordinal))
+        {
+            return Result.Failure<StaffMemberResponse>(
+                Error.Validation("Avatar image key is not valid for this business."));
+        }
+
+        if (!await fileStorage.ExistsAsync(storageKey, cancellationToken))
+        {
+            return Result.Failure<StaffMemberResponse>(
+                Error.Validation("Avatar upload was not found. Upload the file before saving."));
+        }
+
+        var entity = await dbContext.StaffMembers
+            .Include(x => x.ServiceLinks)
+            .FirstOrDefaultAsync(x => x.Id == staffMemberId && x.TenantId == tenantId, cancellationToken);
+        if (entity is null)
+        {
+            return Result.Failure<StaffMemberResponse>(Error.NotFound("Staff member"));
+        }
+
+        entity.AvatarImageKey = storageKey;
+        entity.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await InvalidatePublicStaffCacheAsync(tenantId, cancellationToken);
+        return Result.Success(await ToResponseAsync(entity, cancellationToken));
+    }
+
     public async Task<Result<StaffMemberResponse>> ReplaceServicesAsync(
         Guid tenantId,
         Guid staffMemberId,
@@ -570,8 +610,132 @@ public sealed class StaffService(
                 b.StartAt,
                 b.EndAt,
                 (int)b.Status,
-                b.CustomerNotes)).ToArray(),
-            leave.Select(l => new StaffCalendarLeaveItem(l.Id, l.StartAt, l.EndAt, l.Reason)).ToArray()));
+                b.CustomerNotes,
+                CustomerSelectedStaff: true,
+                StaffMemberId: member.Id,
+                StaffDisplayName: member.DisplayName)).ToArray(),
+            leave.Select(l => new StaffCalendarLeaveItem(
+                l.Id,
+                l.StartAt,
+                l.EndAt,
+                l.Reason,
+                member.Id,
+                member.DisplayName)).ToArray()));
+    }
+
+    public async Task<Result<StaffTeamCalendarResponse>> GetTeamCalendarAsync(
+        Guid tenantId,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        CancellationToken cancellationToken = default)
+    {
+        if (to <= from)
+        {
+            return Result.Failure<StaffTeamCalendarResponse>(
+                Error.Validation("Calendar range end must be after start."));
+        }
+
+        if ((to - from).TotalDays > 45)
+        {
+            return Result.Failure<StaffTeamCalendarResponse>(
+                Error.Validation("Calendar range cannot exceed 45 days."));
+        }
+
+        var fromUtc = from.ToUniversalTime();
+        var toUtc = to.ToUniversalTime();
+
+        var members = await dbContext.StaffMembers
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId && x.IsActive)
+            .OrderBy(x => x.SortOrder)
+            .ThenBy(x => x.DisplayName)
+            .ToListAsync(cancellationToken);
+
+        var memberIds = members.Select(x => x.Id).ToArray();
+        var memberNames = members.ToDictionary(x => x.Id, x => x.DisplayName);
+
+        var bookings = await dbContext.Bookings
+            .AsNoTracking()
+            .Include(x => x.Lines)
+            .Where(x =>
+                x.TenantId == tenantId
+                && x.StartAt < toUtc
+                && x.EndAt > fromUtc
+                && (x.Status == BookingStatus.Pending || x.Status == BookingStatus.Confirmed)
+                && (x.StaffMemberId == null || memberIds.Contains(x.StaffMemberId.Value)))
+            .OrderBy(x => x.StartAt)
+            .ToListAsync(cancellationToken);
+
+        var leave = await dbContext.StaffLeaves
+            .AsNoTracking()
+            .Where(x =>
+                x.TenantId == tenantId
+                && memberIds.Contains(x.StaffMemberId)
+                && x.StartAt < toUtc
+                && x.EndAt > fromUtc)
+            .OrderBy(x => x.StartAt)
+            .ToListAsync(cancellationToken);
+
+        var serviceIds = bookings.Select(x => x.ServiceOfferingId).Distinct().ToArray();
+        var serviceNames = await dbContext.ServiceOfferings
+            .AsNoTracking()
+            .Where(x => serviceIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, x => x.Name, cancellationToken);
+
+        var bookingItems = bookings.Select(b =>
+        {
+            var selected = b.StaffMemberId is not null;
+            string? staffName = null;
+            if (b.StaffMemberId is Guid sid)
+            {
+                memberNames.TryGetValue(sid, out staffName);
+            }
+
+            return new StaffCalendarBookingItem(
+                b.Id,
+                b.Lines.OrderBy(l => l.SortOrder).FirstOrDefault()?.ServiceName
+                    ?? serviceNames.GetValueOrDefault(b.ServiceOfferingId, "Service"),
+                b.StartAt,
+                b.EndAt,
+                (int)b.Status,
+                b.CustomerNotes,
+                CustomerSelectedStaff: selected,
+                StaffMemberId: b.StaffMemberId,
+                StaffDisplayName: staffName);
+        }).ToArray();
+
+        var leaveItems = leave.Select(l => new StaffCalendarLeaveItem(
+            l.Id,
+            l.StartAt,
+            l.EndAt,
+            l.Reason,
+            l.StaffMemberId,
+            memberNames.GetValueOrDefault(l.StaffMemberId))).ToArray();
+
+        var summaries = new List<StaffTeamCalendarStaffSummary>(members.Count);
+        foreach (var member in members)
+        {
+            var hoursResult = await GetHoursAsync(tenantId, member.Id, cancellationToken);
+            if (hoursResult.IsFailure)
+            {
+                return Result.Failure<StaffTeamCalendarResponse>(hoursResult.Error);
+            }
+
+            var mine = bookingItems.Where(b => b.StaffMemberId == member.Id).ToArray();
+            var confirmed = mine.Where(b => b.Status == (int)BookingStatus.Confirmed).ToArray();
+            var bookedMinutes = confirmed.Sum(b => Math.Max(0, (int)(b.EndAt - b.StartAt).TotalMinutes));
+
+            summaries.Add(new StaffTeamCalendarStaffSummary(
+                member.Id,
+                member.DisplayName,
+                mine.Length,
+                confirmed.Length,
+                bookedMinutes,
+                hoursResult.Value!,
+                hoursResult.Value!.Count == 0));
+        }
+
+        return Result.Success(new StaffTeamCalendarResponse(summaries, bookingItems, leaveItems));
     }
 
     private async Task<bool> StaffExistsAsync(
