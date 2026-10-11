@@ -200,25 +200,27 @@
       @if (formTab() === "profile") {
         <div class="tab-panel" role="tabpanel">
           <div class="avatar-field">
-            <div class="org-avatar preview" [attr.data-tone]="roleTone(draft.roleKey)" aria-hidden="true">
-              @if (avatarPreviewUrl()) {
-                <img [src]="avatarPreviewUrl()!" alt="" />
-              } @else {
-                <span>{{ draftInitials() }}</span>
-              }
-            </div>
+            <label class="avatar-upload">
+              <div class="org-avatar preview" [attr.data-tone]="roleTone(draft.roleKey)" aria-hidden="true">
+                @if (avatarPreviewUrl()) {
+                  <img [src]="avatarPreviewUrl()!" alt="" />
+                } @else {
+                  <span>{{ draftInitials() }}</span>
+                }
+              </div>
+              <span class="avatar-upload-cta">
+                {{ avatarPreviewUrl() ? "Change photo" : "Upload photo" }}
+              </span>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                hidden
+                (change)="onAvatarSelected($event)"
+              />
+            </label>
             <div class="avatar-copy">
               <span class="avatar-label">Photo</span>
               <p class="muted">Shown on the roster and booking pickers. JPEG, PNG, or WebP · max 5 MB.</p>
-              <label class="btn">
-                {{ avatarPreviewUrl() ? "Change photo" : "Upload photo" }}
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  hidden
-                  (change)="onAvatarSelected($event)"
-                />
-              </label>
             </div>
           </div>
 
