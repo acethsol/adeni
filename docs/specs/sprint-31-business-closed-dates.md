@@ -6,7 +6,7 @@
 |-------|-------|
 | **Sprint** | Sprint 31 — Business closed dates |
 | **Author** | Cloud Agent |
-| **Status** | Draft (awaiting approval) |
+| **Status** | Implemented |
 | **Created** | 2026-10-11 |
 
 ---
@@ -27,16 +27,16 @@ Owners can **open or close specific dates / date ranges** on a business calendar
 
 ## 3. In scope
 
-- [ ] **31a** Entity `BusinessClosedDate` (tenant-scoped): `Id`, `TenantId`, `StartDate` (date), `EndDate` (date, inclusive), optional `Reason` (short, owner-only), `CreatedAt`
-- [ ] **31b** APIs (portal.hours or portal.profile — prefer `portal.hours`):
+- [x] **31a** Entity `BusinessClosedDate` (tenant-scoped): `Id`, `TenantId`, `StartDate` (date), `EndDate` (date, inclusive), optional `Reason` (short, owner-only), `CreatedAt`
+- [x] **31b** APIs (portal.hours or portal.profile — prefer `portal.hours`):
   - `GET /api/v1/tenant/closed-dates`
   - `POST /api/v1/tenant/closed-dates` `{ startDate, endDate, reason? }`
   - `DELETE /api/v1/tenant/closed-dates/{id}`
-- [ ] **31c** Slot + create-booking guards: no public/tenant slots on closed dates; create booking fails with clear conflict if start falls in a closed range
-- [ ] **31d** Portal **Availability** page: month calendar (Adeni Carbon styling) — tap day to toggle closed/open; list of ranges with remove; create range (from→to)
-- [ ] **31e** Soft warning when new closed range overlaps existing confirmed/pending bookings (return conflicting booking ids; no auto-cancel)
-- [ ] **31f** Docs + shared schemas + unit tests (overlap, slot exclusion, inclusive end date)
-- [ ] **31g** Discover/public: closed days simply show no slots (no special messaging required in this sprint)
+- [x] **31c** Slot + create-booking guards: no public/tenant slots on closed dates; create booking fails with clear conflict if start falls in a closed range
+- [x] **31d** Portal **Availability** page: month calendar (Adeni Carbon styling) — tap day to toggle closed/open; list of ranges with remove; create range (from→to)
+- [x] **31e** Soft warning when new closed range overlaps existing confirmed/pending bookings (return conflicting booking ids; no auto-cancel)
+- [x] **31f** Docs + shared schemas + unit tests (overlap, slot exclusion, inclusive end date)
+- [x] **31g** Discover/public: closed days simply show no slots (no special messaging required in this sprint)
 
 ---
 
@@ -65,11 +65,11 @@ Owners can **open or close specific dates / date ranges** on a business calendar
 
 ## 6. Acceptance criteria
 
-- [ ] Owner closes a date range → those days produce **zero** bookable slots
-- [ ] Opening (delete closed range) restores slots subject to weekly hours
-- [ ] Portal month calendar shows closed days clearly; toggle/range create works on mobile + desktop
-- [ ] Existing confirmed booking inside a newly closed range is **warned**, not auto-cancelled
-- [ ] Practitioners without `portal.hours` cannot edit closed dates
+- [x] Owner closes a date range → those days produce **zero** bookable slots
+- [x] Opening (delete closed range) restores slots subject to weekly hours
+- [x] Portal month calendar shows closed days clearly; toggle/range create works on mobile + desktop
+- [x] Existing confirmed booking inside a newly closed range is **warned**, not auto-cancelled
+- [x] Practitioners without `portal.hours` cannot edit closed dates
 
 ---
 

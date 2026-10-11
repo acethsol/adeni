@@ -1429,6 +1429,31 @@ export const weeklyAvailabilityResponseSchema = z.object({
   items: z.array(weeklyAvailabilityRuleSchema),
 });
 
+export const businessClosedDateSchema = z.object({
+  id: z.string().uuid(),
+  startDate: z.string(),
+  endDate: z.string(),
+  reason: z.string().nullable().optional(),
+  createdAt: z.string(),
+  conflictingBookingIds: z.array(z.string().uuid()).nullable().optional(),
+});
+
+export type BusinessClosedDate = z.infer<typeof businessClosedDateSchema>;
+
+export const businessClosedDatesResponseSchema = z.object({
+  items: z.array(businessClosedDateSchema),
+});
+
+export const createBusinessClosedDateRequestSchema = z.object({
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  reason: z.string().max(200).nullable().optional(),
+});
+
+export type CreateBusinessClosedDateRequest = z.infer<
+  typeof createBusinessClosedDateRequestSchema
+>;
+
 export const staffCalendarBookingItemSchema = z.object({
   id: z.string().uuid(),
   serviceName: z.string(),

@@ -117,6 +117,9 @@ import {
   updateMarketRequestSchema,
   updateServiceOfferingRequestSchema,
   weeklyAvailabilityResponseSchema,
+  businessClosedDateSchema,
+  businessClosedDatesResponseSchema,
+  createBusinessClosedDateRequestSchema,
   type AuthSession,
   type AdminCustomerSummary,
   type AdminMarket,
@@ -169,6 +172,8 @@ import {
   type StaffCalendarResponse,
   type StaffTeamCalendarResponse,
   type WeeklyAvailabilityRule,
+  type BusinessClosedDate,
+  type CreateBusinessClosedDateRequest,
   type ServiceOfferingsResponse,
   type CreateQuoteRequest,
   type QuoteRequestResponse,
@@ -1401,6 +1406,29 @@ export class AdeniApiClient {
     });
     const payload = weeklyAvailabilityResponseSchema.parse(await response.json());
     return payload.items;
+  }
+
+  async getTenantClosedDates(): Promise<BusinessClosedDate[]> {
+    const response = await this.request("/api/v1/tenant/closed-dates");
+    return businessClosedDatesResponseSchema.parse(await response.json()).items;
+  }
+
+  async createTenantClosedDate(
+    request: CreateBusinessClosedDateRequest,
+  ): Promise<BusinessClosedDate> {
+    const body = createBusinessClosedDateRequestSchema.parse(request);
+    const response = await this.request("/api/v1/tenant/closed-dates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return businessClosedDateSchema.parse(await response.json());
+  }
+
+  async deleteTenantClosedDate(id: string): Promise<void> {
+    await this.request(`/api/v1/tenant/closed-dates/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
   }
 
   async submitTenantVerification(

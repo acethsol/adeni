@@ -61,6 +61,8 @@ public sealed class AdeniDbContext(
 
     public DbSet<WeeklyAvailability> WeeklyAvailabilities => Set<WeeklyAvailability>();
 
+    public DbSet<BusinessClosedDate> BusinessClosedDates => Set<BusinessClosedDate>();
+
     public DbSet<BookingRecord> Bookings => Set<BookingRecord>();
 
     public DbSet<BookingLine> BookingLines => Set<BookingLine>();
@@ -267,6 +269,15 @@ public sealed class AdeniDbContext(
             entity.ToTable("weekly_availability", "booking");
             entity.HasKey(x => x.Id);
             entity.HasIndex(x => new { x.TenantId, x.DayOfWeek });
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<BusinessClosedDate>(entity =>
+        {
+            entity.ToTable("business_closed_dates", "booking");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Reason).HasMaxLength(200);
+            entity.HasIndex(x => new { x.TenantId, x.StartDate, x.EndDate });
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 

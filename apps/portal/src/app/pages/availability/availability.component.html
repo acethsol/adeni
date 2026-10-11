@@ -1,15 +1,21 @@
 <app-portal-page
   title="Availability"
-  description="Set weekly hours customers can book."
+  description="Weekly hours and business closed dates — closed days cannot be booked."
 >
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (conflictWarning()) {
+    <p class="warn-banner">{{ conflictWarning() }}</p>
   }
 
   @if (loading()) {
     <p class="muted">Loading…</p>
   } @else {
     <section class="card">
+      <h3>Weekly hours</h3>
+      <p class="section-lead">Recurring open times customers can book.</p>
       <table>
         <thead>
           <tr>
@@ -34,6 +40,107 @@
         <adeni-carbon-icon name="save" [size]="16" />
         {{ saving() ? "Saving…" : "Save hours" }}
       </button>
+    </section>
+
+    <section class="card closed-section">
+      <h3>Closed dates</h3>
+      <p class="section-lead">
+        Block specific days or ranges (holidays, renovations). Tap a day to close or reopen a single-day block.
+      </p>
+
+      <div class="cal-toolbar">
+        <button type="button" class="nav-btn" (click)="prevMonth()" aria-label="Previous month">‹</button>
+        <strong class="month-label">{{ monthLabel() }}</strong>
+        <button type="button" class="nav-btn" (click)="nextMonth()" aria-label="Next month">›</button>
+      </div>
+
+      <div class="month-dow" aria-hidden="true">
+        @for (d of dowHeaders; track d) {
+          <span>{{ d }}</span>
+        }
+      </div>
+      <div class="month-grid" role="grid" [attr.aria-label]="monthLabel()">
+        @for (cell of calendarCells(); track cell.key) {
+          <button
+            type="button"
+            class="month-cell"
+            [class.is-outside]="cell.outside"
+            [class.is-today]="cell.today"
+            [class.is-closed]="cell.closed"
+            [disabled]="closedBusy()"
+            [attr.aria-pressed]="cell.closed"
+            [attr.aria-label]="
+              (cell.closed ? 'Closed ' : 'Open ') + cell.date + '. Activate to toggle.'
+            "
+            (click)="toggleDay(cell)"
+          >
+            <span class="month-dom">{{ cell.day }}</span>
+            @if (cell.closed) {
+              <span class="closed-tag">Closed</span>
+            }
+          </button>
+        }
+      </div>
+
+      <div class="range-form">
+        <h4>Add closed range</h4>
+        <div class="row">
+          <div class="field">
+            <label for="closed-start">From</label>
+            <input id="closed-start" type="date" [(ngModel)]="rangeStart" />
+          </div>
+          <div class="field">
+            <label for="closed-end">To</label>
+            <input id="closed-end" type="date" [(ngModel)]="rangeEnd" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="closed-reason">Reason (optional, owner-only)</label>
+          <input
+            id="closed-reason"
+            type="text"
+            maxlength="200"
+            [(ngModel)]="rangeReason"
+            placeholder="e.g. Holiday break"
+          />
+        </div>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="closedBusy()"
+          (click)="addClosedRange()"
+        >
+          <adeni-carbon-icon name="add" [size]="16" />
+          Close dates
+        </button>
+      </div>
+
+      <ul class="plain closed-list">
+        @for (item of closedRanges(); track item.id) {
+          <li>
+            <span>
+              @if (item.startDate === item.endDate) {
+                {{ item.startDate }}
+              } @else {
+                {{ item.startDate }} – {{ item.endDate }}
+              }
+              @if (item.reason) {
+                <em>· {{ item.reason }}</em>
+              }
+            </span>
+            <button
+              type="button"
+              class="danger"
+              [disabled]="closedBusy()"
+              (click)="removeClosed(item)"
+            >
+              Remove
+            </button>
+          </li>
+        } @empty {
+          <li class="muted empty">No closed dates yet.</li>
+        }
+      </ul>
     </section>
   }
 </app-portal-page>

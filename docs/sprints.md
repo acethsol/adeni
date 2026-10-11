@@ -463,18 +463,17 @@ Fullscreen arrival check-in for booked clients + optional staff exit PIN; walk-i
 
 **Out of scope for 30:** Flutter native kiosk, MDM locked-task packaging, SMS “you’re up”.
 
-## Sprint 31 — Business closed dates (draft)
+## Sprint 31 — Business closed dates (done)
 
 Airbnb-style open/closed dates for the whole business (on top of weekly hours + staff leave). Spec: [sprint-31-business-closed-dates.md](./specs/sprint-31-business-closed-dates.md).
 
 | Task | Status |
 |------|--------|
-| **31a–g** Closed-date entity, slot guards, Availability calendar UX | Draft |
+| **31a–g** Closed-date entity, slot guards, Availability calendar UX | Done |
 
 ## Next up
 
-1. **Sprint 31** — business closed dates (critical) — awaiting approval
-2. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, App Insights (parallel)
-3. POS bridge (later)
+1. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, App Insights (parallel)
+2. POS bridge (later)
 
 Strategy reference: [roadmap-modules.md](./roadmap-modules.md), [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md), [product-strategy.md](./product-strategy.md)

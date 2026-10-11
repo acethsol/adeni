@@ -9,7 +9,8 @@ using Microsoft.EntityFrameworkCore;
 
 public sealed class AvailabilityService(
     AdeniDbContext dbContext,
-    ITenantSchedulingTimeZone tenantSchedulingTimeZone) : IAvailabilityService
+    ITenantSchedulingTimeZone tenantSchedulingTimeZone,
+    IBusinessClosedDateService closedDates) : IAvailabilityService
 {
     public async Task<IReadOnlyList<WeeklyAvailabilityRule>> GetWeeklyRulesAsync(
         Guid tenantId,
@@ -145,6 +146,12 @@ public sealed class AvailabilityService(
 
         var businessRules = await GetWeeklyRulesAsync(tenantId, cancellationToken);
         var schedulingTimeZone = await tenantSchedulingTimeZone.ForTenantAsync(tenantId, cancellationToken);
+        var localDate = DateOnly.FromDateTime(schedulingTimeZone.ToLocal(startAt).Date);
+        if (await closedDates.IsClosedAsync(tenantId, localDate, cancellationToken))
+        {
+            return false;
+        }
+
         var endAt = startAt.AddMinutes(durationMinutes);
         var existing = await dbContext.Bookings
             .AsNoTracking()
@@ -298,6 +305,14 @@ public sealed class AvailabilityService(
             ? Array.Empty<StaffLeave>()
             : await GetStaffLeaveAsync(tenantId, eligibleStaffIds, rangeStart, rangeEnd, cancellationToken);
 
+        var rangeLocalStart = DateOnly.FromDateTime(schedulingTimeZone.ToLocal(rangeStart).Date);
+        var rangeLocalEnd = DateOnly.FromDateTime(schedulingTimeZone.ToLocal(rangeEnd).Date);
+        var closedRanges = await closedDates.ListRangesAsync(
+            tenantId,
+            rangeLocalStart,
+            rangeLocalEnd,
+            cancellationToken);
+
         IReadOnlyList<WeeklyAvailabilityRule> generationRules = businessRules;
         if (staffMemberId is Guid selectedStaffId)
         {
@@ -310,6 +325,12 @@ public sealed class AvailabilityService(
             .Where(start => start > DateTimeOffset.UtcNow)
             .Where(start =>
             {
+                var localDay = DateOnly.FromDateTime(schedulingTimeZone.ToLocal(start).Date);
+                if (closedRanges.Any(r => r.StartDate <= localDay && r.EndDate >= localDay))
+                {
+                    return false;
+                }
+
                 var end = start.AddMinutes(durationMinutes);
                 if (eligibleStaffIds.Count == 0)
                 {
