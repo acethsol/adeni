@@ -1,7 +1,7 @@
 # Roadmap — workflows, payments, queue & POS bridge
 
 > **Status:** Living product decisions | **Last updated:** October 2026  
-> **Parent:** [product-strategy.md](./product-strategy.md) · [beauty-wellness-taxonomy.md](./beauty-wellness-taxonomy.md) · [payments.md](./payments.md)  
+> **Parent:** [product-strategy.md](./product-strategy.md) · [roadmap-modules.md](./roadmap-modules.md) · [beauty-wellness-taxonomy.md](./beauty-wellness-taxonomy.md) · [payments.md](./payments.md)  
 > **Principle:** Compete without complexity — one primary operating model, market-aware money rails, integrate POS rather than build one.
 
 ---
@@ -207,6 +207,7 @@ Each slice gets its own `docs/specs/sprint-XX-*.md` before implementation.
 
 | Doc | Purpose |
 |-----|---------|
+| [roadmap-modules.md](./roadmap-modules.md) | Full module index + day-in-life + ownership board |
 | [product-strategy.md](./product-strategy.md) | Vision, revenue layers, business types |
 | [beauty-wellness-taxonomy.md](./beauty-wellness-taxonomy.md) | Categories + delivery types |
 | [payments.md](./payments.md) | Paystack orchestration today |

@@ -81,6 +81,8 @@ Canonical diagram: **[target-client-architecture.md](./target-client-architectur
 | **Quotes** | 19 | `IQuoteRequestService` | Full quote workflow on business-type framework |
 | **AI** | 20 | Tool-calling against existing module APIs only | No direct DB from LLM |
 
+Product-facing module roadmap (queue, POS bridge, dashboards, etc.): [roadmap-modules.md](./roadmap-modules.md).
+
 ---
 
 ## 4. Module rules
