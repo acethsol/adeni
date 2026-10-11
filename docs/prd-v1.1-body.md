@@ -30,7 +30,7 @@
 | **SOC2-04** | TLS 1.2+ on all endpoints; no HTTP fallback | HTTPS-only in staging/prod; HSTS header enabled; HTTP redirects to HTTPS | CC5, C1 |
 | **SOC2-05** | Secrets stored in Key Vault only in staging/prod | Connection strings, API keys via Azure Key Vault + Managed Identity; zero secrets in repo | CC6, CC5 |
 | **SOC2-06** | MFA enforced for admin and infrastructure accounts | Auth0 admin users require MFA; Azure/GitHub/Atlassian MFA enforced org-wide | CC6 |
-| **SOC2-07** | Dependency vulnerability scan on every PR | CI runs `dotnet list package --vulnerable` + Dependabot; PR blocked on critical CVEs | CC7 |
+| **SOC2-07** | Dependency vulnerability scan on every PR | CI fails on NuGet vulns + npm prod high / any critical; Dependabot (NuGet, npm, Actions) weekly | CC7 |
 | **SOC2-08** | Database backups with PITR; restore tested quarterly | Azure PostgreSQL PITR enabled (≥7 days); quarterly restore drill documented | A1, CC7 |
 | **SOC2-09** | Customer data export/delete capability (admin v1) | Admin can export JSON bundle and initiate erasure; action audit-logged; 30-day purge job | P6, P8 |
 | **SOC2-10** | Incident response plan tested annually | Tabletop exercise documented; on-call runbook current | CC7, CC4 |

@@ -4,6 +4,10 @@ Adeni uses **SQL Server**. Schema is a git-managed **SQL Server Database Project
 
 Docker is **optional** for local SQL Server (Azure SQL Edge) and Redis. See [caching-setup.md](./caching-setup.md) for Redis.
 
+## CI
+
+GitHub Actions job `sqlserver` (see [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)) publishes the dacpac with SqlPackage against SQL Server 2022, then runs `Category=SqlServer` tests. Local Docker Compose still uses Azure SQL Edge for ARM hosts.
+
 ## Option A — Docker (recommended)
 
 ```powershell

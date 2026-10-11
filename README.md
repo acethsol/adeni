@@ -30,7 +30,7 @@ npm run dev:portal                                # http://localhost:5173 (busin
 | SQL Server | `localhost,1433` (sa / see appsettings.Development.json) |
 | Redis UI | http://localhost:5540 (RedisInsight, `--profile ui`) |
 
-See [docs/database-setup.md](docs/database-setup.md), [docs/caching-setup.md](docs/caching-setup.md), [docs/frontend.md](docs/frontend.md), [docs/architecture.md](docs/architecture.md), [docs/observability.md](docs/observability.md).
+See [docs/database-setup.md](docs/database-setup.md), [docs/caching-setup.md](docs/caching-setup.md), [docs/frontend.md](docs/frontend.md), [docs/architecture.md](docs/architecture.md), [docs/observability.md](docs/observability.md), [docs/ci.md](docs/ci.md).
 
 ## Repository structure
 
