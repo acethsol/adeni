@@ -3,7 +3,15 @@
 Non-custodial payment orchestration via licensed providers. Adeni stores **payment intent state** and provider references only — no wallet or balance tables.
 
 **Roadmap:** closing the in-salon payment loop and optional POS bridge — see [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md).  
-**Stripe NA:** [Sprint 26 spec](./specs/sprint-26-stripe-na-payments.md).
+**Stripe NA:** [Sprint 26](./specs/sprint-26-stripe-na-payments.md) ✅ · **Payment loop + receipt:** [Sprint 27](./specs/sprint-27-payment-loop.md) (draft).
+
+### Invoices vs receipts
+
+| | Today | Sprint 27 |
+|--|-------|-----------|
+| **Receipt** | Callback URL stub + ledger only | Lightweight receipt DTO + simple UI for completed payments |
+| **Invoice** | Payment *type* for ad-hoc pay requests | Unchanged — not a tax/accounting document |
+| **Tax PDF / e-invoice** | Not built | Still out of scope |
 
 ## Architecture
 
