@@ -62,11 +62,11 @@ Each major build still needs a `docs/specs/sprint-XX-*.md` before implementation
 |--|--|
 | **Job** | Close money loop without becoming a bank or a register |
 | **Shipped** | Paystack orchestration, deposits, pay links, ledger, stub subscriptions |
-| **Next** | SaaS Billing; email receipt; Terminal / POS bridge |
-| **Shipped (26–27)** | Stripe + Paystack + `MarketDefault`; floor loop check-in → paid + receipt API |
+| **Next** | SaaS Billing; Terminal / POS bridge |
+| **Shipped (26–28)** | Stripe + Paystack + `MarketDefault`; floor loop; numbered receipts/invoices (PDF + email) |
 | **Then** | Terminal / collect balance; **POS bridge** (Square first) |
 | **Later fintech** | Tips/commission *reporting*, payout UX referral, Insights tier — still non-custodial |
-| **Not now** | Payroll, wallets, retail SKU catalog |
+| **Not now** | Payroll, wallets, retail SKU catalog, BI/reporting tools for receipts |
 | **Owner** | TBD |
 
 ### 3.3 Verification
@@ -96,7 +96,8 @@ Each major build still needs a `docs/specs/sprint-XX-*.md` before implementation
 | **Job** | “How is my floor today?” — not a BI suite |
 | **V1 owner metrics** | Pending, today’s board, hours worked, requested-staff rate, GMV when payments live, repeat clients |
 | **Ops (Adeni admin)** | GMV / MRR / active businesses (Sprint 20e) |
-| **Defer** | Full accounting, payroll reports, Zenoti-style analytics packs |
+| **Not for receipts** | Invoice/receipt PDFs live in Payments ([Sprint 28](./specs/sprint-28-billing-documents.md)); dashboards *consume* ledger later |
+| **Defer** | Full accounting, payroll reports, Zenoti-style analytics packs, external BI tools |
 | **Owner** | TBD |
 
 ### 3.6 Messaging

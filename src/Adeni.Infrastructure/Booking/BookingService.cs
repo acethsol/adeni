@@ -22,7 +22,8 @@ public sealed class BookingService(
     Application.Reviews.IReviewService reviewService,
     IDomainEventCollector domainEventCollector,
     IEntitlementsService entitlementsService,
-    IPaymentOrchestrator paymentOrchestrator) : IBookingService
+    IPaymentOrchestrator paymentOrchestrator,
+    IBillingDocumentService billingDocuments) : IBookingService
 {
     public async Task<Result<BookingResponse>> CreateAsync(
         string customerAuth0Sub,
@@ -738,6 +739,16 @@ public sealed class BookingService(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (booking.Status == BookingStatus.Paid
+            && booking.SettlementSource == BookingSettlementSource.ExternalTill)
+        {
+            await billingDocuments.IssueReceiptForTillPaymentAsync(
+                tenantId,
+                booking.Id,
+                booking.ExternalPaymentReference,
+                cancellationToken);
+        }
 
         remaining = await CalculateRemainingBalanceAsync(booking, cancellationToken);
         var name = booking.Lines.OrderBy(x => x.SortOrder).FirstOrDefault()?.ServiceName

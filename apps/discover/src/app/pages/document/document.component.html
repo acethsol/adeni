@@ -1,0 +1,47 @@
+<main class="doc-page">
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  } @else if (error()) {
+    <p class="error">{{ error() }}</p>
+  } @else if (document(); as doc) {
+    <header class="doc-header">
+      <p class="brand">{{ doc.businessName }}</p>
+      <h1>{{ kindLabel(doc.kind) }}</h1>
+      <p class="muted">{{ doc.documentNumber }}</p>
+    </header>
+
+    <section class="doc-body">
+      @if (doc.customerName) {
+        <p>Customer: {{ doc.customerName }}</p>
+      }
+      @if (doc.issuedAt) {
+        <p class="muted">Issued {{ doc.issuedAt | date: "medium" }}</p>
+      }
+      @if (doc.method) {
+        <p class="muted">{{ doc.method }}</p>
+      }
+
+      <ul class="lines">
+        @for (line of doc.lines; track line.sortOrder + line.description) {
+          <li>
+            <span>{{ line.description }}</span>
+            <span>{{ formatPrice(line.lineTotal, doc.currency) }}</span>
+          </li>
+        }
+      </ul>
+
+      <p class="total">
+        Total
+        <strong>{{ formatPrice(doc.total, doc.currency) }}</strong>
+      </p>
+
+      <a class="btn" [href]="pdfUrl(doc.publicToken)" target="_blank" rel="noopener">
+        Download PDF
+      </a>
+    </section>
+
+    <footer class="doc-footer">
+      <p class="muted">Issued via Adeni</p>
+    </footer>
+  }
+</main>

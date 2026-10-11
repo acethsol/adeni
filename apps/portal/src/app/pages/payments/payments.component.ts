@@ -3,11 +3,10 @@ import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute } from "@angular/router";
 import { map } from "rxjs";
-import type { BusinessProfile, PaymentLedgerEntry } from "@adeni/shared";
-import { hasCapability } from "@adeni/shared";
+import type { BillingDocumentResponse, BusinessProfile, PaymentLedgerEntry } from "@adeni/shared";
+import { formatPrice, hasCapability } from "@adeni/shared";
 import { AdeniConfirmService, PortalPageComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { formatPrice } from "@adeni/shared";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { PortalTabsComponent } from "../../shared/portal-tabs.component";
 
@@ -29,6 +28,7 @@ export class PaymentsComponent implements OnInit {
   readonly tabs = [
     { id: "links", label: "Links" },
     { id: "ledger", label: "Ledger" },
+    { id: "documents", label: "Documents" },
   ];
 
   readonly loading = signal(true);
@@ -36,7 +36,9 @@ export class PaymentsComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly profile = signal<BusinessProfile | null>(null);
   readonly ledger = signal<PaymentLedgerEntry[]>([]);
+  readonly documents = signal<BillingDocumentResponse[]>([]);
   readonly lastLink = signal<{ checkoutUrl: string; description: string } | null>(null);
+  readonly actionId = signal<string | null>(null);
 
   amount = "";
   description = "";
@@ -66,6 +68,8 @@ export class PaymentsComponent implements OnInit {
         this.profile.set(profile);
         const items = await c.listPaymentLedger(profile.tenantId);
         this.ledger.set(items);
+        const docs = await c.listBillingDocuments();
+        this.documents.set(docs);
       });
     } catch {
       this.error.set("Could not load payments.");
@@ -110,6 +114,23 @@ export class PaymentsComponent implements OnInit {
   whatsAppUrl(link: { checkoutUrl: string; description: string }): string {
     const text = encodeURIComponent(`Pay ${link.description} via Adeni: ${link.checkoutUrl}`);
     return `https://wa.me/?text=${text}`;
+  }
+
+  documentPublicUrl(doc: BillingDocumentResponse): string {
+    const path = doc.publicUrl.startsWith("/") ? doc.publicUrl : `/${doc.publicUrl}`;
+    return `${this.config.discoverWebUrl.replace(/\/$/, "")}${path}`;
+  }
+
+  async emailDocument(doc: BillingDocumentResponse): Promise<void> {
+    this.actionId.set(doc.id);
+    this.error.set(null);
+    try {
+      await this.api.withAuthorizedClient((c) => c.emailBillingDocument(doc.id));
+    } catch {
+      this.error.set("Could not email this document. Add a customer email and try again.");
+    } finally {
+      this.actionId.set(null);
+    }
   }
 
   async refund(entry: PaymentLedgerEntry): Promise<void> {

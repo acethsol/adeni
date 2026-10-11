@@ -507,19 +507,75 @@ export const collectBalanceResponseSchema = z.object({
 export type CollectBalanceResponse = z.infer<typeof collectBalanceResponseSchema>;
 
 export const paymentReceiptResponseSchema = z.object({
-  paymentIntentId: z.string().uuid(),
+  paymentIntentId: z.string().uuid().optional(),
   bookingId: z.string().uuid().nullable().optional(),
   businessName: z.string(),
   description: z.string().nullable().optional(),
-  amount: z.number(),
+  amount: z.number().optional(),
   currency: z.string(),
   status: z.string(),
   paidAt: z.string().nullable().optional(),
-  method: z.string(),
-  providerReference: z.string(),
+  method: z.string().nullable().optional(),
+  providerReference: z.string().optional(),
+  // Billing document fields (Sprint 28) — receipt endpoint may return a document
+  id: z.string().uuid().optional(),
+  kind: z.string().optional(),
+  documentNumber: z.string().optional(),
+  total: z.number().optional(),
+  publicUrl: z.string().optional(),
+  publicToken: z.string().optional(),
 });
 
 export type PaymentReceiptResponse = z.infer<typeof paymentReceiptResponseSchema>;
+
+export const billingDocumentLineSchema = z.object({
+  description: z.string(),
+  quantity: z.number(),
+  unitAmount: z.number(),
+  lineTotal: z.number(),
+  sortOrder: z.number().int(),
+});
+
+export const billingDocumentResponseSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  kind: z.string(),
+  status: z.string(),
+  documentNumber: z.string(),
+  bookingId: z.string().uuid().nullable().optional(),
+  paymentIntentId: z.string().uuid().nullable().optional(),
+  businessName: z.string(),
+  customerName: z.string().nullable().optional(),
+  customerEmail: z.string().nullable().optional(),
+  currency: z.string(),
+  subtotal: z.number(),
+  taxTotal: z.number().nullable().optional(),
+  total: z.number(),
+  method: z.string().nullable().optional(),
+  issuedAt: z.string().nullable().optional(),
+  lines: z.array(billingDocumentLineSchema),
+  publicUrl: z.string(),
+  publicToken: z.string(),
+});
+
+export type BillingDocumentResponse = z.infer<typeof billingDocumentResponseSchema>;
+
+export const billingDocumentsResponseSchema = z.object({
+  items: z.array(billingDocumentResponseSchema),
+});
+
+export const createInvoiceRequestSchema = z.object({
+  tenantId: z.string().uuid(),
+  bookingId: z.string().uuid().nullable().optional(),
+  amount: z.number().positive().optional(),
+  currency: z.string().length(3).optional(),
+  description: z.string().max(500).optional(),
+  customerEmail: z.string().email().optional(),
+  issue: z.boolean().optional(),
+  initializePayment: z.boolean().optional(),
+});
+
+export type CreateInvoiceRequest = z.infer<typeof createInvoiceRequestSchema>;
 
 export const customerBookingResponseSchema = z.object({
   id: z.string(),

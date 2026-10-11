@@ -37,6 +37,7 @@ public static class PaymentsServiceCollectionExtensions
 
         services.AddScoped<IPlatformFeeCalculator, PlatformFeeCalculator>();
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
+        services.AddScoped<IBillingDocumentService, BillingDocumentService>();
         services.AddScoped<PaymentBookingHandler>();
         services.AddScoped<PaymentNotificationHandler>();
         services.AddScoped<IDomainEventHandler<PaymentCompleted>, PaymentBookingHandler>();

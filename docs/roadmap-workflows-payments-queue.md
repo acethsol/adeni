@@ -216,6 +216,9 @@ Walk-in queue     ───┘
 
 1. **Sprint 26 — Payments NA** — Stripe `IPaymentProvider` + market default — [spec](./specs/sprint-26-stripe-na-payments.md) ✅  
 2. **Sprint 27 — Payment loop** — check-in / complete / paid (+ paid-at-till) + lightweight receipt — [spec](./specs/sprint-27-payment-loop.md) ✅  
+2b. **Sprint 28 — Billing documents** — numbered receipt/invoice + PDF + email (not BI) — [spec](./specs/sprint-28-billing-documents.md) ✅  
+
+
 3. **Queue v1** — join, board, call next, no-show, ETA  
 4. **Kiosk mode** — mobile fullscreen check-in shell  
 5. **POS bridge v1** — Square paid-status sync + external reference  

@@ -1,6 +1,6 @@
 <app-portal-page
   title="Payments"
-  description="Create payment links, track transactions, and manage refunds."
+  description="Create payment links, track transactions, and share receipts."
 >
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
@@ -32,6 +32,46 @@
                 @if (entry.status === "completed") {
                   <button type="button" class="btn btn-danger" (click)="refund(entry)">Refund</button>
                 }
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    } @else if (tab() === "documents") {
+      <section class="card">
+        <h3>Receipts & invoices</h3>
+        @if (documents().length === 0) {
+          <p class="muted">No documents yet. Completed payments issue receipts automatically.</p>
+        } @else {
+          <ul class="plain">
+            @for (doc of documents(); track doc.id) {
+              <li class="list-row">
+                <div>
+                  <strong>{{ doc.documentNumber }}</strong>
+                  <p class="muted">
+                    {{ doc.kind }} · {{ formatPrice(doc.total, doc.currency) }} · {{ doc.status }}
+                  </p>
+                </div>
+                <div class="actions">
+                  <a
+                    class="btn"
+                    [href]="documentPublicUrl(doc)"
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    View
+                  </a>
+                  @if (doc.status === "issued") {
+                    <button
+                      type="button"
+                      class="btn"
+                      [disabled]="actionId() === doc.id"
+                      (click)="emailDocument(doc)"
+                    >
+                      Email
+                    </button>
+                  }
+                </div>
               </li>
             }
           </ul>

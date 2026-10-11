@@ -151,6 +151,7 @@ public sealed class DomainEventDispatcherTests
         services.AddScoped<IPlatformFeeCalculator, PlatformFeeCalculator>();
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
+        services.AddScoped<IBillingDocumentService, BillingDocumentService>();
         services.AddScoped<IBookingService, BookingService>();
         return services.BuildServiceProvider();
     }

@@ -31,12 +31,13 @@
 | **25** | **Staff accounts & permissions** | ✅ Done |
 | **26** | **Stripe NA payments** | ✅ Done |
 | **27** | **In-salon payment loop** | ✅ Done |
+| **28** | **Billing documents** | ✅ Done |
 | — | Sprint 11d LLM agent | → Sprint 20 |
 | — | Staging deploy + Auth0 E2E | → Sprint 20 |
 | — | App Insights (Obs 1) | → Sprint 20 |
 | — | Booking notifications, auto-confirm, payments, waitlist | → Sprint 15 |
 
-**Next up:** Sprint 20 (deploy/AI/observability). Queue + kiosk / POS bridge next on money roadmap — see [roadmap-modules.md](./roadmap-modules.md).
+**Next up:** Sprint 28 — billing documents (receipts/invoices PDF+email) — [spec](./specs/sprint-28-billing-documents.md). Sprint 20 remains parallel. See [roadmap-modules.md](./roadmap-modules.md).
 
 ---
 ## Sprint 0 — Foundation & dev tooling ✅
@@ -431,10 +432,20 @@ Check-in → complete → collect balance / paid-at-till + lightweight receipt. 
 
 **Out of scope for 27:** Terminal, POS bridge, tax/PDF invoices, queue/kiosk.
 
+## Sprint 28 — Billing documents (draft)
+
+Numbered receipts & invoices with shareable page, PDF, and email — not a reporting/BI tool. Spec: [sprint-28-billing-documents.md](./specs/sprint-28-billing-documents.md).
+
+| Task | Status |
+|------|--------|
+| **28a–x** Document model, issue rules, PDF/email, public page, portal hooks | Draft |
+
+**Out of scope for 28:** Dashboards/BI, tax e-file, POS, QuickBooks sync.
+
 ## Next up
 
-1. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, App Insights, ops dashboards (parallel)
-2. Queue + kiosk → POS bridge (later)
-3. Email receipt / tax PDF (later)
+1. **Approve + implement Sprint 28** — [billing documents](./specs/sprint-28-billing-documents.md)
+2. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, App Insights, ops dashboards (parallel)
+3. Queue + kiosk → POS bridge (later)
 
 Strategy reference: [roadmap-modules.md](./roadmap-modules.md), [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md), [product-strategy.md](./product-strategy.md)

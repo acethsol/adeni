@@ -20,6 +20,7 @@ using Microsoft.Extensions.Options;
 [Route("api/v1/payments")]
 public sealed class PaymentsController(
     IPaymentOrchestrator paymentOrchestrator,
+    IBillingDocumentService billingDocuments,
     AdeniDbContext dbContext,
     IOptions<Auth0Options> auth0Options,
     IHostEnvironment environment) : ControllerBase
@@ -114,6 +115,13 @@ public sealed class PaymentsController(
             return CrossTenantDenied();
         }
 
+        var document = await billingDocuments.GetReceiptForPaymentAsync(id, cancellationToken);
+        if (document.IsSuccess)
+        {
+            return Ok(document.Value);
+        }
+
+        // Compat fallback to lightweight DTO if document issue fails.
         var receipt = await paymentOrchestrator.GetReceiptAsync(id, cancellationToken);
         return ApiResults.FromResult(receipt, Ok, HttpContext);
     }

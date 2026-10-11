@@ -5,6 +5,7 @@ import { DiscoverComponent } from "./pages/discover/discover.component";
 import { BusinessProfileComponent } from "./pages/business/business.component";
 import { MyBookingsComponent } from "./pages/my-bookings/my-bookings.component";
 import { LegalDocumentComponent } from "./pages/legal/legal-document.component";
+import { PublicDocumentComponent } from "./pages/document/document.component";
 import { customerAuthGuard } from "./core/guards/customer-auth.guard";
 
 export const routes: Routes = [
@@ -20,6 +21,11 @@ export const routes: Routes = [
         canActivate: [customerAuthGuard],
         component: MyBookingsComponent,
         title: "My bookings",
+      },
+      {
+        path: "documents/:token",
+        component: PublicDocumentComponent,
+        title: "Document",
       },
       {
         path: "privacy",
