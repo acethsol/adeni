@@ -38,7 +38,7 @@
 | — | App Insights (Obs 1) | → Sprint 20 |
 | — | Booking notifications, auto-confirm, payments, waitlist | → Sprint 15 |
 
-**Next up:** Sprint 28 — billing documents (receipts/invoices PDF+email) — [spec](./specs/sprint-28-billing-documents.md). Sprint 20 remains parallel. See [roadmap-modules.md](./roadmap-modules.md).
+**Next up:** Sprint 29 — Queue v1 (walk-in floor board) — [spec](./specs/sprint-29-queue-v1.md). Kiosk = Sprint 30. See [roadmap-modules.md](./roadmap-modules.md).
 
 ---
 ## Sprint 0 — Foundation & dev tooling ✅
