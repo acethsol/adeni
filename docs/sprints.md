@@ -413,5 +413,6 @@ Invite staff to the portal; permission roles control nav + API. Floor `roleKey` 
 
 1. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, business AI agent, App Insights, ops dashboards
 2. Review Sprint 25 acceptance / polish if gaps surface after 25c+25d merge
+3. **Workflows / money / queue** (sequenced in [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md)) — Stripe provider, payment loop states, walk-in queue + kiosk, POS bridge
 
-Strategy reference: [product-strategy.md](./product-strategy.md) — [§3.5 Business types](./product-strategy.md#35-business-types--workflow-capabilities), [architecture.md](./architecture.md) (modular monolith)
+Strategy reference: [product-strategy.md](./product-strategy.md) — [§3.5 Business types](./product-strategy.md#35-business-types--workflow-capabilities), [architecture.md](./architecture.md) (modular monolith), [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md)

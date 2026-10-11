@@ -403,6 +403,7 @@ From research — scope traps that kill marketplaces:
 | Doc | Purpose |
 |-----|---------|
 | [architecture.md](./architecture.md) | **Modular monolith** — module map, rules, extraction criteria |
+| [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md) | **Next decisions** — category fit, Stripe + Paystack, payment loop, queue/kiosk, POS bridge |
 | [sprints.md](./sprints.md) | Execution plan — Sprints 15–20 |
 | [prd-v1.1-body.md](./prd-v1.1-body.md) | Functional requirements |
 | [markets.md](./markets.md) | Multi-market configuration |
