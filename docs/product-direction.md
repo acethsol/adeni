@@ -57,4 +57,6 @@ One product for Ottawa and Lagos via configuration: country, city, currency, tim
 
 Inspect before large changes; smallest coherent diff; tests for important behavior; tenant/auth first-class; auditable financial/admin mutations; no speculative infrastructure.
 
+**Third-party tools (V1):** App Insights + Sentry + PostHog; notifications via Resend + Twilio (+ FCM when Flutter consumer ships); Mapbox for Discover maps; Azure Blob + CDN for media. Frozen matrix: [tooling-policy.md](./tooling-policy.md).
+
 **Related:** [product-strategy.md](./product-strategy.md) (revenue/GTM detail), [architecture.md](./architecture.md) (module map), [AGENTS.md](../AGENTS.md) (agent playbook).

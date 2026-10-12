@@ -18,8 +18,10 @@ flowchart LR
 | --- | --- |
 | **PostgreSQL** | `cover_image_key` (varchar), optional `logo_image_key`; tenant-scoped, indexed by `tenant_id` |
 | **Object storage** | Azure Blob Storage (prod/staging); local filesystem adapter for dev |
-| **CDN** | Azure CDN or Cloudflare in front of a public container for discovery cards and profile heroes |
-| **API** | `IFileStorage` port — same pattern as CareAxis (`UploadAsync`, `GetDownloadUrlAsync`, `DeleteAsync`) |
+| **CDN** | **Azure CDN or Azure Front Door** in front of the public container (V1 default per [tooling-policy.md](./tooling-policy.md)); Cloudflare only if policy is revised |
+| **API** | `IFileStorage` port — `GetUploadUrlAsync` / `GetDownloadUrlAsync` / `SaveAsync` / `DeleteAsync` |
+
+**V1 CDN wiring:** set `Storage:AzureBlob:PublicBaseUrl` to the CDN hostname so discovery/profile DTOs return edge URLs, not raw `*.blob.core.windows.net`. Use long cache TTL + immutable/versioned keys. Image resize/WebP variants are optional later (CDN alone does not transform).
 
 ## Why not the database?
 

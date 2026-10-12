@@ -298,10 +298,11 @@ AI gets layers 1–5 (frontend, API, DB, auth, hosting). Gaps to close before re
 |----------|-------|--------|
 | Now | Auth | Auth0 on staging; no dev auth on customer paths |
 | Now | Rate limiting | Public endpoints (discovery, profiles, auth/sync) |
-| Sprint 20 | Error tracking | App Insights + Sentry per [observability.md](docs/observability.md) |
+| Sprint 20 | Error tracking | App Insights + Sentry per [observability.md](docs/observability.md); product analytics: PostHog per [tooling-policy.md](docs/tooling-policy.md) |
 | Sprint 20 | CI/CD deploy | Staging → production pipeline |
 | Later | Postgres RLS | Defense-in-depth on tenant tables |
-| Later | CDN / scale | After core loop proven in Lagos |
+| Staging/prod | CDN | Azure CDN/Front Door on public blob (`PublicBaseUrl`) — [media-storage.md](docs/media-storage.md), [tooling-policy.md](docs/tooling-policy.md) |
+| Later | Scale search | Elasticsearch only if SQL discovery QPS demands it |
 
 ## Standing plays
 
@@ -413,6 +414,8 @@ Do not rewrite large sections without approval.
 | [docs/prd-v1.1-body.md](docs/prd-v1.1-body.md) | NFRs, SOC2 requirements |
 | [docs/api-errors.md](docs/api-errors.md) | RFC 7807 errors, versioning & deprecation policy |
 | [docs/observability.md](docs/observability.md) | App Insights + Sentry, correlation IDs |
+| [docs/tooling-policy.md](docs/tooling-policy.md) | Frozen V1 tools: App Insights, Sentry, PostHog, Resend, Twilio, Mapbox, Blob+CDN |
+| [docs/media-storage.md](docs/media-storage.md) | Azure Blob upload keys, public CDN URLs |
 | [docs/auth0-setup.md](docs/auth0-setup.md) | Auth0 claims, MFA |
 | [docs/database-setup.md](docs/database-setup.md) | Postgres, migrations |
 | [docs/caching-setup.md](docs/caching-setup.md) | Redis keys, health |

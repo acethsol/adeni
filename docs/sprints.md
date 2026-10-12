@@ -347,7 +347,7 @@ Infrastructure and platform work deferred from the original Sprint 14 plan. **Mo
 | Obs 1 — App Insights on API | Planned |
 | **20e** GMV / MRR / active-business dashboards — ops metrics aligned with [product-strategy.md §2](./product-strategy.md#2-go-to-market-wedge-nigeria-first-global-architecture) | Planned |
 
-See [observability.md](./observability.md) for Obs 2–4 follow-ons.
+See [observability.md](./observability.md) for Obs 2–5 follow-ons (Sentry, PostHog, SLOs). Frozen tool matrix: [tooling-policy.md](./tooling-policy.md).
 
 Confluence: [Sprint 20 — Deployment, AI, observability & architecture](https://aceth.atlassian.net/wiki/spaces/SD/pages/30834689)
 

@@ -4,16 +4,17 @@ Operational monitoring for Adeni API and clients.
 
 **Source of truth:** [Observability v1 (Confluence)](https://aceth.atlassian.net/wiki/spaces/SD/pages/27230210) — this file is a repo mirror; update Confluence first, then sync here.
 
-Adeni uses a **dual stack**: **Azure Application Insights** for platform operations and **Sentry** for client-side error debugging. Each tool has a clear scope so signals complement rather than duplicate each other.
+Adeni uses a **dual ops stack**: **Azure Application Insights** for platform operations and **Sentry** for client-side error debugging. **PostHog** covers product analytics and session replay (not crash tracking). Tool choices are frozen in [tooling-policy.md](./tooling-policy.md) — do not add Datadog/ELK/FullStory without updating that doc.
 
 ## Dual stack — Application Insights + Sentry
 
 | Tool | Primary role | Adeni surfaces |
 |------|----------------|----------------|
-| **Application Insights** | Platform ops — health, traces, dependencies, SLOs, Azure alerts, SOC 2 monitoring | .NET API, Next.js server, optional browser RUM |
-| **Sentry** | Developer workflow — grouped JS/React Native errors, releases, source maps, crash context | Expo mobile, optional Next.js browser |
+| **Application Insights** | Platform ops — health, traces, dependencies, SLOs, Azure alerts, SOC 2 monitoring | .NET API; optional server-side web if needed |
+| **Sentry** | Developer workflow — grouped JS/Flutter errors, releases, source maps, crash context | Angular discover/portal/admin; Flutter consumer (when live) |
+| **PostHog** | Product learning — funnels, session replay | Discover first; portal when useful — see [tooling-policy.md](./tooling-policy.md) |
 
-**Why both:** App Insights is already wired on the API (OpenTelemetry + Azure Monitor) and fits Azure deployment, availability tests, and cross-tenant alert rules. Sentry is stronger for Expo and frontend stack traces where App Insights mobile/browser UX is weaker.
+**Why App Insights + Sentry:** App Insights fits Azure deployment, availability tests, and API dependency alerts. Sentry is stronger for Angular/Flutter stack traces and release regressions. Neither replaces PostHog for “why did users abandon booking?”
 
 ### Correlation between tools
 
@@ -44,13 +45,13 @@ Do not configure both tools to page on-call for the same failure mode (e.g. API 
 
 ### Rollout by client
 
-| Client | Phase 1 (platform) | Phase 2 (client errors) |
-|--------|--------------------|-------------------------|
-| **API** | App Insights via `APPLICATIONINSIGHTS_CONNECTION_STRING` | — |
-| **Web (Next.js)** | App Insights server instrumentation + correlation ID | Sentry browser SDK (optional; source maps in CI) |
-| **Mobile (Expo)** | API-side errors only; correlation ID on API calls | Sentry React Native SDK + `correlationId` tag |
+| Client | Phase 1 (platform) | Phase 2 (client errors) | Product learning |
+|--------|--------------------|-------------------------|------------------|
+| **API** | App Insights via `APPLICATIONINSIGHTS_CONNECTION_STRING` | — | — |
+| **Discover / Portal / Admin (Angular)** | Correlation ID via `@adeni/api-client` | Sentry browser SDK + source maps in CI | PostHog on Discover first |
+| **Flutter (consumer)** | Correlation ID on API calls | Sentry Flutter SDK + `correlationId` tag | PostHog when consumer app ships |
 
-Local dev: neither tool required — Serilog console + optional Sentry DSN disabled by default.
+Local dev: tools optional — Serilog console; Sentry/PostHog DSNs disabled by default.
 
 ## Health endpoint contract
 
@@ -84,7 +85,7 @@ Every API request:
 3. Pushes `correlationId` into Serilog `LogContext` for all logs in the request.
 4. Stores on `admin.audit_logs.correlation_id`.
 
-**Clients (Next.js / Expo):** Generate a UUID per user action and send `X-Correlation-Id` on API calls. Attach the same ID to Sentry events when Sentry is enabled (see dual stack above).
+**Clients (Angular / Flutter):** Generate a UUID per user action and send `X-Correlation-Id` on API calls. Attach the same ID to Sentry (and PostHog where useful) when enabled.
 
 ## Logging
 
@@ -113,14 +114,18 @@ Instruments: ASP.NET Core requests, outbound HTTP. Traces appear in Application 
 
 ### Sentry (clients)
 
-Not required locally. In staging/prod, configure per app:
+Not required locally. In staging/prod, configure per Angular app (and Flutter when live):
 
 | App | Env vars (example) |
 |-----|---------------------|
-| Expo | `EXPO_PUBLIC_SENTRY_DSN`, `SENTRY_AUTH_TOKEN` (CI uploads for source maps) |
-| Next.js | `SENTRY_DSN`, `SENTRY_AUTH_TOKEN` |
+| Discover / Portal / Admin | `SENTRY_DSN` (or app-specific public DSN), `SENTRY_AUTH_TOKEN` for CI source maps |
+| Flutter | Sentry DSN via `--dart-define` / env; upload symbols in CI |
 
 Tag every event with `correlationId` when an API call was in flight. Link releases to git SHA in CI for regression detection.
+
+### PostHog (product analytics)
+
+See [tooling-policy.md](./tooling-policy.md). Not a substitute for Sentry. Mask PII; separate staging vs production projects.
 
 ## SLOs (MVP)
 
@@ -157,6 +162,8 @@ curl -H "X-Correlation-Id: demo-123" http://localhost:5169/health
 | **Obs 0** ✅ | Correlation ID + LogContext + OTel skeleton |
 | **Obs 1** | App Insights connection string on Azure App Service (API) |
 | **Obs 2** | External availability tests + platform alert rules (App Insights) |
-| **Obs 3a** | App Insights on Next.js (server + optional browser) + propagate `X-Correlation-Id` from `@adeni/api-client` |
-| **Obs 3b** | Sentry on Expo (+ optional Next.js browser) with `correlationId` tag and release/source maps |
+| **Obs 3a** | Propagate `X-Correlation-Id` from `@adeni/api-client` on all Angular apps |
+| **Obs 3b** | Sentry on Discover (+ portal/admin) with `correlationId` tag and release/source maps |
+| **Obs 3c** | PostHog on Discover (funnels + replay; PII masking) — [tooling-policy.md](./tooling-policy.md) |
 | **Obs 4** | SLO workbook + public status page (App Insights) |
+| **Obs 5** | Sentry (+ optional PostHog) on Flutter consumer |
