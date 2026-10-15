@@ -53,23 +53,25 @@
   </section>
 
   @if (usage(); as plan) {
-    <section class="usage">
+    <a class="usage" routerLink="/plan" [class.usage-warn]="isNearBookingLimit(plan)">
       <div>
-        <p class="usage-label">{{ plan.tier }} plan</p>
-        <p class="usage-value">
-          {{ plan.bookingsUsedThisMonth }}
-          @if (plan.bookingsLimitThisMonth) {
-            of {{ plan.bookingsLimitThisMonth }}
-          }
-          bookings this month
-        </p>
+        <p class="usage-label">{{ planUsageLabel() }}</p>
+        <p class="usage-value">{{ formatBookingUsage(plan) }}</p>
+        @if (planPriceHint(); as price) {
+          <p class="usage-meta">{{ price }} list · Manage plan</p>
+        } @else {
+          <p class="usage-meta">Manage plan</p>
+        }
+        @if (isNearBookingLimit(plan)) {
+          <p class="usage-warn-text">You're approaching your monthly booking limit.</p>
+        }
       </div>
       @if (plan.bookingsLimitThisMonth) {
         <div class="meter" aria-hidden="true">
           <span [style.width.%]="usagePercent()"></span>
         </div>
       }
-    </section>
+    </a>
   }
 
   <section class="stats">
@@ -84,9 +86,9 @@
       <p class="stat-hint">Active services</p>
     </article>
     <article>
-      <p class="stat-label">Confirmed</p>
+      <p class="stat-label">{{ revenueUsesCollected() ? "Collected" : "Booked value" }}</p>
       <p class="stat-value">{{ revenueLabel() }}</p>
-      <p class="stat-hint">From accepted bookings</p>
+      <p class="stat-hint">{{ revenueHint() }}</p>
     </article>
     <article>
       <p class="stat-label">Rating</p>
@@ -172,10 +174,17 @@
           <span>Price custom work and turn it into a booking.</span>
         </a>
       }
-      <a routerLink="/messages">
-        <strong>Messages</strong>
-        <span>Reply in the thread, or send a WhatsApp note.</span>
-      </a>
+      @if (hasEntitlement("messaging")) {
+        <a routerLink="/messages">
+          <strong>Messages</strong>
+          <span>Reply in the thread, or send a WhatsApp note.</span>
+        </a>
+      } @else {
+        <a routerLink="/messages">
+          <strong>WhatsApp</strong>
+          <span>Send a quick note outside the inbox.</span>
+        </a>
+      }
       <a routerLink="/services">
         <strong>Services</strong>
         <span>Prices, duration, and what clients can book.</span>

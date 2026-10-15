@@ -13,6 +13,10 @@ coverage/
 .DS_Store
 Thumbs.db
 
+## Local dev media / uploads (API)
+.data/
+**/.data/
+
 ## Secrets
 appsettings.*.local.json
 *.pfx

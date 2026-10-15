@@ -2,12 +2,18 @@ import { Component, inject, OnInit, signal } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import {
   BOOKING_STATUS_LABELS,
+  formatBookingUsage,
   formatPrice,
   formatSlotTime,
   formatTenantStatus,
   getCategoryLabel,
+  getMarketById,
+  getPlanDisplayForCountry,
   hasCapability,
+  hasTenantEntitlement,
+  isNearBookingLimit,
   resolveCapabilities,
+  subscriptionTierToSku,
   type BookingResponse,
   type BusinessProfile,
   type ServiceOffering,
@@ -42,12 +48,17 @@ export class DashboardComponent implements OnInit {
   readonly pendingCount = signal(0);
   readonly activeServices = signal(0);
   readonly revenueLabel = signal("—");
+  readonly revenueHint = signal("List price on confirmed bookings");
+  readonly revenueUsesCollected = signal(false);
   readonly ratingLabel = signal("New");
   readonly ratingHint = signal("No reviews yet");
   readonly week = signal<DayBar[]>([]);
   readonly mix = signal<StatusSlice[]>([]);
   readonly today = signal<BookingResponse[]>([]);
   readonly usage = signal<SubscriptionUsage | null>(null);
+
+  readonly formatBookingUsage = formatBookingUsage;
+  readonly isNearBookingLimit = isNearBookingLimit;
 
   ngOnInit(): void {
     void this.load();
@@ -73,6 +84,35 @@ export class DashboardComponent implements OnInit {
       resolveCapabilities(profile.businessType, profile.categorySlug, profile.capabilities),
       capability,
     );
+  }
+
+  hasEntitlement(key: "messaging" | "staffManagement" | "analytics"): boolean {
+    const profile = this.profile();
+    return hasTenantEntitlement(profile?.entitlements ?? null, key);
+  }
+
+  planUsageLabel(): string {
+    const usage = this.usage();
+    if (!usage) return "Plan";
+    return `${usage.tier} plan`;
+  }
+
+  planPriceHint(): string | null {
+    const profile = this.profile();
+    const usage = this.usage();
+    if (!profile || !usage) return null;
+    const countryCode = this.primaryCountryCode();
+    if (!countryCode) return null;
+    const sku = subscriptionTierToSku(usage.tier);
+    return getPlanDisplayForCountry(countryCode, sku)?.priceLabel ?? null;
+  }
+
+  primaryCountryCode(): string | null {
+    const profile = this.profile();
+    if (!profile) return null;
+    const location = profile.locations.find((item) => item.isPrimary) ?? profile.locations[0];
+    if (!location) return null;
+    return getMarketById(location.marketId)?.countryCode ?? null;
   }
 
   publicProfileUrl(): string | null {
@@ -103,6 +143,26 @@ export class DashboardComponent implements OnInit {
           client.getTenantServices(),
           client.getTenantSubscriptionUsage().catch(() => null),
         ]);
+        const caps = resolveCapabilities(
+          profile.businessType,
+          profile.categorySlug,
+          profile.capabilities,
+        );
+        let collectedTotal: number | null = null;
+        let collectedCurrency = services[0]?.currency ?? "NGN";
+        if (hasCapability(caps, "deposits")) {
+          try {
+            const ledger = await client.listPaymentLedger(profile.tenantId, 1, 100);
+            collectedTotal = ledger
+              .filter((entry) => entry.status === "completed")
+              .reduce((sum, entry) => sum + entry.amount, 0);
+            if (ledger[0]?.currency) {
+              collectedCurrency = ledger[0].currency;
+            }
+          } catch {
+            collectedTotal = null;
+          }
+        }
         const location = profile.locations.find((item) => item.isPrimary) ?? profile.locations[0];
         let rating: { avg: number | null; count: number } | null = null;
         if (location) {
@@ -116,11 +176,16 @@ export class DashboardComponent implements OnInit {
             rating = null;
           }
         }
-        return { profile, bookings, services, usage, rating };
+        return { profile, bookings, services, usage, rating, collectedTotal, collectedCurrency };
       });
 
       this.profile.set(snapshot.profile);
       this.applyBookings(snapshot.bookings, snapshot.services);
+      if (snapshot.collectedTotal != null) {
+        this.revenueUsesCollected.set(true);
+        this.revenueLabel.set(formatPrice(snapshot.collectedTotal, snapshot.collectedCurrency));
+        this.revenueHint.set("Completed online payments");
+      }
       this.usage.set(snapshot.usage);
       if (snapshot.rating?.avg) {
         this.ratingLabel.set(snapshot.rating.avg.toFixed(1));
