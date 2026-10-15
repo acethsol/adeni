@@ -204,6 +204,7 @@ public sealed class PractitionerBookingScopeTests
             sp.GetRequiredService<Adeni.Infrastructure.Context.TenantContext>());
         services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
         services.AddScoped<ITenantSchedulingTimeZone, TenantSchedulingTimeZone>();
+        services.AddScoped<IBusinessClosedDateService, BusinessClosedDateService>();
         services.AddScoped<IAvailabilityService, AvailabilityService>();
         services.AddScoped<IStaffService, StaffService>();
         services.AddScoped<IReviewService, ReviewService>();

@@ -109,7 +109,10 @@ static async Task SeedDevelopmentDataAsync(IServiceProvider services)
 {
     using var scope = services.CreateScope();
     var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-    if (string.IsNullOrWhiteSpace(configuration.GetConnectionString("AdeniDb")))
+    var environment = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
+    var hasSql = !string.IsNullOrWhiteSpace(configuration.GetConnectionString("AdeniDb"));
+    // Empty AdeniDb in Development uses the in-memory provider — still seed sample tenants.
+    if (!hasSql && !environment.IsDevelopment())
     {
         return;
     }
