@@ -1,16 +1,19 @@
-import { Component, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
-import { ActivatedRoute, RouterLink } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { FormsModule } from "@angular/forms";
 import { map } from "rxjs";
 import {
   formatSlotTime,
+  hasTenantEntitlement,
   type BusinessProfile,
   type MessageTemplate,
   type MessageThreadDetail,
   type MessageThreadSummary,
 } from "@adeni/shared";
-import { PortalPageComponent } from "@adeni/ui";
+import { AdeniPortalEmptyStateComponent, PortalPageComponent } from "@adeni/ui";
+import { filterPortalTabs } from "../../core/portal-access";
+import { findPortalNavItem } from "../../core/portal-nav";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { PortalTabsComponent } from "../../shared/portal-tabs.component";
@@ -18,7 +21,7 @@ import { PortalTabsComponent } from "../../shared/portal-tabs.component";
 @Component({
   selector: "app-messages",
   standalone: true,
-  imports: [PortalPageComponent, FormsModule, RouterLink, PortalTabsComponent],
+  imports: [PortalPageComponent, FormsModule, PortalTabsComponent, AdeniPortalEmptyStateComponent],
   templateUrl: "./messages.component.html",
   styleUrl: "./messages.component.scss",
 })
@@ -26,13 +29,23 @@ export class MessagesComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
   private readonly config = inject(ADENI_PORTAL_CONFIG);
   private readonly route = inject(ActivatedRoute);
-  readonly tab = toSignal(this.route.queryParamMap.pipe(map((params) => params.get("tab") ?? "inbox")), {
-    initialValue: this.route.snapshot.queryParamMap.get("tab") ?? "inbox",
+  private readonly router = inject(Router);
+  readonly tab = toSignal(this.route.queryParamMap.pipe(map((params) => params.get("tab") ?? "whatsapp")), {
+    initialValue: this.route.snapshot.queryParamMap.get("tab") ?? "whatsapp",
   });
-  readonly tabs = [
-    { id: "inbox", label: "Inbox" },
+
+  private readonly navTabs = findPortalNavItem("/messages")?.item.tabs ?? [
+    { id: "inbox", label: "Inbox", entitlement: "messaging" as const },
     { id: "whatsapp", label: "WhatsApp" },
   ];
+
+  readonly profile = signal<BusinessProfile | null>(null);
+  readonly visibleTabs = computed(() =>
+    filterPortalTabs(this.navTabs, this.profile()?.entitlements ?? null),
+  );
+  readonly messagingEntitled = computed(() =>
+    hasTenantEntitlement(this.profile()?.entitlements, "messaging"),
+  );
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -40,9 +53,7 @@ export class MessagesComponent implements OnInit {
   readonly threads = signal<MessageThreadSummary[]>([]);
   readonly templates = signal<MessageTemplate[]>([]);
   readonly detail = signal<MessageThreadDetail | null>(null);
-  readonly profile = signal<BusinessProfile | null>(null);
   readonly sending = signal(false);
-  readonly messagingLocked = signal(false);
   draft = "";
 
   readonly formatSlotTime = formatSlotTime;
@@ -59,21 +70,27 @@ export class MessagesComponent implements OnInit {
         const profile = await client.getTenantProfile();
         let threads: MessageThreadSummary[] = [];
         let templates: MessageTemplate[] = [];
-        let locked = false;
-        try {
+        if (hasTenantEntitlement(profile.entitlements, "messaging")) {
           [threads, templates] = await Promise.all([
             client.listTenantMessageThreads(),
             client.getTenantMessageTemplates(),
           ]);
-        } catch {
-          locked = true;
         }
-        return { threads, templates, profile, locked };
+        return { threads, templates, profile };
       });
       this.threads.set(snapshot.threads);
       this.templates.set(snapshot.templates);
       this.profile.set(snapshot.profile);
-      this.messagingLocked.set(snapshot.locked);
+      if (!this.route.snapshot.queryParamMap.get("tab")) {
+        const defaultTab = hasTenantEntitlement(snapshot.profile.entitlements, "messaging")
+          ? "inbox"
+          : "whatsapp";
+        await this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { tab: defaultTab },
+          replaceUrl: true,
+        });
+      }
     } catch {
       this.error.set("Could not load messages.");
     } finally {

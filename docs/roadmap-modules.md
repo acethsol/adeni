@@ -85,7 +85,7 @@ Each major build still needs a `docs/specs/sprint-XX-*.md` before implementation
 |--|--|
 | **Job** | MRR from operating tools + optional add-ons |
 | **Shipped** | Free / Pro / Business entitlements + gating |
-| **Next** | Real Paystack + Stripe Billing; signed subscription webhooks |
+| **Next** | Sprint 32 dashboard → Sprint 33 Paystack/Stripe Billing + MRR ([specs/sprint-33-saas-subscription-billing-mrr.md](./specs/sprint-33-saas-subscription-billing-mrr.md)) |
 | **Add-on candidates** | AI business agent · advanced verification · queue · Insights |
 | **Owner** | TBD |
 
@@ -97,7 +97,8 @@ Each major build still needs a `docs/specs/sprint-XX-*.md` before implementation
 | **V1 owner metrics** | Pending, today’s board, hours worked, requested-staff rate, GMV when payments live, repeat clients |
 | **Ops (Adeni admin)** | GMV / MRR / active businesses (Sprint 20e) |
 | **Not for receipts** | Invoice/receipt PDFs live in Payments ([Sprint 28](./specs/sprint-28-billing-documents.md)); dashboards *consume* ledger later |
-| **Defer** | Full accounting, payroll reports, Zenoti-style analytics packs, external BI tools |
+| **Defer** | Full accounting, payroll reports, external BI embeds |
+| **Sprint 32** | Zenoti-**style** customizable owner dashboard (widgets + charts), not Zenoti ERP depth — [spec](./specs/sprint-32-portal-dashboard-revisit.md) |
 | **Owner** | TBD |
 
 ### 3.6 Messaging
@@ -184,7 +185,7 @@ Each major build still needs a `docs/specs/sprint-XX-*.md` before implementation
 ## 6. Sequencing (modules → slices)
 
 ```
-Now     Calendar/staff polish · verification UX · owner today dashboard
+Now     Sprint 32 dashboard (widgets + charts + customize) · Sprint 33 SaaS billing
 Next    Stripe + SaaS billing · payment loop states · reminders · staff handoff notes
 Then    Queue v1 + check-in · kiosk mode
 Later   POS bridge · Terminal collect · Insights · AI agents

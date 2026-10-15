@@ -18,7 +18,12 @@
       <section class="card">
         <h3>Ledger</h3>
         @if (ledger().length === 0) {
-          <p class="muted">No payment activity yet.</p>
+          <adeni-portal-empty-state
+            [compact]="true"
+            icon="checkmark--filled"
+            title="No payment activity"
+            description="Deposits and checkout payments will show here once customers pay online."
+          />
         } @else {
           <ul class="plain">
             @for (entry of ledger(); track entry.id) {
@@ -41,7 +46,12 @@
       <section class="card">
         <h3>Receipts & invoices</h3>
         @if (documents().length === 0) {
-          <p class="muted">No documents yet. Completed payments issue receipts automatically.</p>
+          <adeni-portal-empty-state
+            [compact]="true"
+            icon="save"
+            title="No receipts yet"
+            description="Completed payments automatically generate receipts you can download or resend."
+          />
         } @else {
           <ul class="plain">
             @for (doc of documents(); track doc.id) {

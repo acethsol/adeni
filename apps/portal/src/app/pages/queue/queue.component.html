@@ -44,7 +44,13 @@
         </button>
       </div>
       @if (waiting().length === 0) {
-        <p class="muted">No one waiting.</p>
+        <adeni-portal-empty-state
+          [compact]="true"
+          [embedded]="true"
+          icon="time"
+          title="Waiting room is empty"
+          description="Walk-ins will appear here when they join the queue."
+        />
       } @else {
         <ul class="ticket-list">
           @for (ticket of waiting(); track ticket.id) {
@@ -85,7 +91,13 @@
     <section class="card">
       <h3>On the floor</h3>
       @if (active().length === 0) {
-        <p class="muted">No one called or in service.</p>
+        <adeni-portal-empty-state
+          [compact]="true"
+          [embedded]="true"
+          icon="user--filled"
+          title="Floor is clear"
+          description="Guests you call from the queue will show up here."
+        />
       } @else {
         <ul class="ticket-list">
           @for (ticket of active(); track ticket.id) {

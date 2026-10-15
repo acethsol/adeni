@@ -7,6 +7,7 @@ Adeni launches city by city (GTM), but the **platform is market-agnostic**. Lago
 | Layer | What it is | Example |
 | --- | --- | --- |
 | **Market catalog** | Data in `@adeni/shared` | `lagos`, `ottawa`, `houston` with `isLive` (GTM supply flag), currency, timezone, copy |
+| **Country pricing** | SaaS list prices + default GMV platform % | `NG` → ₦50,500 Starter; `CA` → $200 CAD Starter — [country-pricing.json](../packages/shared/src/data/country-pricing.json). **Abuja and Lagos share NG.** |
 | **Runtime context** | Which market the user is in | Cookie, query param, geo, or deployment override |
 | **Deployment config** | Ops choice for a given environment | `Market:DefaultTimeZoneId` in appsettings for the API host |
 | **Tenant data** | Where a business operates | `BusinessLocation` branches under tenant profile |

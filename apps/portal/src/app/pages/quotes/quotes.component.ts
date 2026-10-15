@@ -7,13 +7,13 @@ import {
   type QuoteRequestResponse,
   type ServiceOffering,
 } from "@adeni/shared";
-import { PortalPageComponent } from "@adeni/ui";
+import { AdeniPortalEmptyStateComponent, PortalPageComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 
 @Component({
   selector: "app-quotes",
   standalone: true,
-  imports: [PortalPageComponent, FormsModule],
+  imports: [PortalPageComponent, FormsModule, AdeniPortalEmptyStateComponent],
   templateUrl: "./quotes.component.html",
   styleUrl: "./quotes.component.scss",
 })

@@ -1,6 +1,10 @@
-# Subscription billing (Sprint 16 stub)
+# Subscription billing (Sprint 16 stub → Sprint 33 live)
 
-Provider-agnostic design for SaaS subscription billing. **Real Paystack Subscriptions integration is deferred to Sprint 17+** — this document defines the port, stub behavior, and webhook shape.
+Provider-agnostic design for SaaS subscription billing. **Implementation spec:** [sprint-33-saas-subscription-billing-mrr.md](./specs/sprint-33-saas-subscription-billing-mrr.md) (after [sprint-32-portal-dashboard-revisit.md](./specs/sprint-32-portal-dashboard-revisit.md)).
+
+**MRR (ops):** recurring revenue from business → Adeni subscriptions only — not GMV or customer invoices ([product-strategy §4.1](./product-strategy.md#41-saas-subscriptions--foundation-mrrarr)). Admin MRR v1 ships with Sprint 33; broader GMV/MRR dashboards remain Sprint 20e.
+
+Until Sprint 33 lands, this document defines the port, **stub** behavior, and webhook shape.
 
 ## Application port
 

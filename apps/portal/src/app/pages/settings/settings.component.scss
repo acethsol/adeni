@@ -1,0 +1,51 @@
+@use "staff-layout" as *;
+
+.settings-card {
+  max-width: 42rem;
+}
+
+.settings-card h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.lede {
+  margin: 0 0 1rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.hint {
+  margin: -0.25rem 0 1rem;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.cds-toggle {
+  margin-bottom: 0.65rem;
+}
+
+.cds-toggle + .hint {
+  margin-top: -0.35rem;
+  margin-left: 3.15rem;
+}
+
+.field + .hint {
+  margin-top: -0.5rem;
+}
+
+.settings-card .btn-primary {
+  margin-top: 0.25rem;
+}
+
+.settings-card a {
+  color: var(--interactive, #7f56ff);
+  font-weight: 600;
+}

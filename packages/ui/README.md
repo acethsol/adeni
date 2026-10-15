@@ -24,5 +24,6 @@ Document titles (browser tab):
 import { provideAdeniDocumentTitle } from "@adeni/ui";
 
 // app.config.ts — with `title` on router routes
-provideAdeniDocumentTitle("Adeni Business");
+...provideAdeniDocumentTitle("Adeni Business");
+// Portal: after profile load, AdeniDocumentTitleStrategy.setAppTitle(businessName)
 ```

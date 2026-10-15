@@ -133,10 +133,12 @@ Full agent rules: [AGENTS.md](../AGENTS.md#webhook-security-murphy).
 
 ## Platform fee
 
-- Configured per market in `packages/shared/src/data/markets.json` → `platformFeePercent`
-- Lagos / Ottawa pilot default: **0%**
-- Fee amount stored on `PaymentIntentRecord.PlatformFeeAmount` and passed as provider metadata (`platform_fee`)
-- **v1:** platform collects; Stripe Connect destination charges deferred
+- **Target:** configured per **country** in [country-pricing.json](../packages/shared/src/data/country-pricing.json) (`platformFeePercent`). Today still on each row in `markets.json` (pilot **0%**).
+- **Meaning:** Adeni’s **GMV fee** on customer → business payments — separate from Paystack/Stripe processing (pass-through). **Business-paid policy:** customer checkout total = business price only; platform fee deducted from business settlement ([§6.4](./pricing-and-monetization.md#64-gmv-platform-fee-business-paid-policy)). Full economics: [pricing-and-monetization.md §6](./pricing-and-monetization.md#6-customer-payments-pass-through-vs-platform-gmv-fee).
+- Fee amount stored on `PaymentIntentRecord.PlatformFeeAmount` and passed as provider metadata (`platform_fee`).
+- **Collection gap:** fee is **calculated and recorded** but not settled to Adeni until Connect (CA/US) / Paystack split (NG) — do not enable &gt;0% without a collection path.
+- **Setup guide (Connect + Split, including 0% NG):** [payment-provider-settlement.md](./payment-provider-settlement.md)
+- **Config:** [country-pricing.json](../packages/shared/src/data/country-pricing.json) → `gmvCollection` per country
 
 ## Booking deposits
 

@@ -23,10 +23,11 @@
   @if (loading()) {
     <p class="muted">Loading…</p>
   } @else if (staff().length === 0) {
-    <section class="empty-state" aria-labelledby="staff-empty-title">
-      <h3 id="staff-empty-title">No team members yet</h3>
-      <p>Add people so customers can book by name.</p>
-    </section>
+    <adeni-portal-empty-state
+      icon="user--follow"
+      title="Build your team"
+      description="Add staff so customers can book with the right person and you can manage calendars."
+    />
   } @else {
     <div class="roster">
       <p class="roster-count">
@@ -320,7 +321,13 @@
               <label>Services they can perform</label>
             }
             @if (services().length === 0) {
-              <p class="muted">Add services first on the Services page.</p>
+              <adeni-portal-empty-state
+                [compact]="true"
+                [embedded]="true"
+                icon="add"
+                title="No services to assign"
+                description="Create services first, then link them to this team member."
+              />
             } @else {
               <ul class="service-checks">
                 @for (service of services(); track service.id) {

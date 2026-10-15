@@ -4,7 +4,13 @@ import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import type { BookingResponse, KioskStatusResponse } from "@adeni/shared";
 import { formatBookingStatus, formatSlotTime } from "@adeni/shared";
-import { AdeniCarbonIconComponent, AdeniConfirmService, PortalPageComponent } from "@adeni/ui";
+import {
+  AdeniCarbonIconComponent,
+  AdeniConfirmService,
+  AdeniPortalEmptyStateComponent,
+  PortalPageComponent,
+  type AdeniCarbonIconName,
+} from "@adeni/ui";
 import { map } from "rxjs";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { PortalSessionService } from "../../core/services/portal-session.service";
@@ -19,7 +25,13 @@ const PAID_STATUS = 6;
 @Component({
   selector: "app-bookings",
   standalone: true,
-  imports: [PortalPageComponent, PortalTabsComponent, AdeniCarbonIconComponent, FormsModule],
+  imports: [
+    PortalPageComponent,
+    PortalTabsComponent,
+    AdeniCarbonIconComponent,
+    AdeniPortalEmptyStateComponent,
+    FormsModule,
+  ],
   templateUrl: "./bookings.component.html",
   styleUrl: "./bookings.component.scss",
 })
@@ -87,10 +99,26 @@ export class BookingsComponent implements OnInit {
     return this.bookings().filter((booking) => booking.status === PENDING_STATUS);
   }
 
-  emptyLabel(): string {
-    if (this.tab() === "upcoming") return "Nothing on the floor ahead.";
-    if (this.tab() === "past") return "No past bookings yet.";
-    return "No pending bookings.";
+  emptyState(): { title: string; description: string; icon: AdeniCarbonIconName } {
+    if (this.tab() === "upcoming") {
+      return {
+        title: "Nothing scheduled ahead",
+        description: "Confirmed appointments will show here as your calendar fills up.",
+        icon: "calendar-32",
+      };
+    }
+    if (this.tab() === "past") {
+      return {
+        title: "No past bookings",
+        description: "Completed and cancelled visits will appear here for your records.",
+        icon: "time",
+      };
+    }
+    return {
+      title: "Inbox is clear",
+      description: "New booking requests that need your response will land here first.",
+      icon: "calendar-32",
+    };
   }
 
   lineSummary(booking: BookingResponse): string {

@@ -115,32 +115,40 @@
         </button>
       </div>
 
-      <ul class="plain closed-list">
-        @for (item of closedRanges(); track item.id) {
-          <li>
-            <span>
-              @if (item.startDate === item.endDate) {
-                {{ item.startDate }}
-              } @else {
-                {{ item.startDate }} – {{ item.endDate }}
-              }
-              @if (item.reason) {
-                <em>· {{ item.reason }}</em>
-              }
-            </span>
-            <button
-              type="button"
-              class="danger"
-              [disabled]="closedBusy()"
-              (click)="removeClosed(item)"
-            >
-              Remove
-            </button>
-          </li>
-        } @empty {
-          <li class="muted empty">No closed dates yet.</li>
-        }
-      </ul>
+      @if (closedRanges().length === 0) {
+        <adeni-portal-empty-state
+          [compact]="true"
+          [embedded]="true"
+          icon="calendar"
+          title="No closed dates"
+          description="Add holidays or maintenance days when customers should not book online."
+        />
+      } @else {
+        <ul class="plain closed-list">
+          @for (item of closedRanges(); track item.id) {
+            <li>
+              <span>
+                @if (item.startDate === item.endDate) {
+                  {{ item.startDate }}
+                } @else {
+                  {{ item.startDate }} – {{ item.endDate }}
+                }
+                @if (item.reason) {
+                  <em>· {{ item.reason }}</em>
+                }
+              </span>
+              <button
+                type="button"
+                class="danger"
+                [disabled]="closedBusy()"
+                (click)="removeClosed(item)"
+              >
+                Remove
+              </button>
+            </li>
+          }
+        </ul>
+      }
     </section>
   }
 </app-portal-page>

@@ -33,12 +33,17 @@
 | **27** | **In-salon payment loop** | ✅ Done |
 | **28** | **Billing documents** | ✅ Done |
 | **29** | **Queue v1** | ✅ Done |
+| **30** | **Front-desk kiosk** | ✅ Done |
+| **31** | **Business closed dates** | ✅ Done |
+| **32** | **Business dashboard (Zenoti-style widgets)** | Planned |
+| **33** | **SaaS billing & MRR** | Planned |
+| **34** | **Payment settlement (Connect + split)** | Planned |
 | — | Sprint 11d LLM agent | → Sprint 20 |
 | — | Staging deploy + Auth0 E2E | → Sprint 20 |
 | — | App Insights (Obs 1) | → Sprint 20 |
 | — | Booking notifications, auto-confirm, payments, waitlist | → Sprint 15 |
 
-**Next up:** Sprint 30 — kiosk mode. Sprint 20 parallel. See [roadmap-modules.md](./roadmap-modules.md).
+**Next up:** Sprint 32 portal dashboard → Sprint 33 SaaS billing & MRR. Sprint 20 parallel. See [roadmap-modules.md](./roadmap-modules.md).
 
 ---
 ## Sprint 0 — Foundation & dev tooling ✅
@@ -277,7 +282,7 @@ Turn the business portal from a free tool into a **monetizable operating system*
 | **16f** Billing provider design — Paystack Subscriptions or Stripe Billing integration spec; webhook handling (implement stub) | ✅ Done (stub + [subscription-billing.md](./subscription-billing.md)) |
 | **16g** Admin tier override — manually set tenant plan for pilot businesses | ✅ Done |
 
-**Revenue unlocked:** SaaS MRR. **Metric:** paying businesses × ARPU.
+**Revenue unlocked:** SaaS MRR. **Metric:** paying businesses × ARPU. **Pricing v2:** [pricing-and-monetization.md](./pricing-and-monetization.md) (paid-only + trials/discounts).
 
 Confluence: [Sprint 16 — Business SaaS & monetization](https://aceth.atlassian.net/wiki/spaces/SD/pages/41222145)
 
@@ -471,9 +476,47 @@ Airbnb-style open/closed dates for the whole business (on top of weekly hours + 
 |------|--------|
 | **31a–g** Closed-date entity, slot guards, Availability calendar UX | Done |
 
+## Sprint 32 — Business dashboard (Zenoti-style) (next)
+
+Composable **widgets**, **charts**, and **per-user customizable layout** on portal home — not a static KPI page. Spec: [sprint-32-portal-dashboard-revisit.md](./specs/sprint-32-portal-dashboard-revisit.md).
+
+| Task | Status |
+|------|--------|
+| **32a** Foundation — honest KPIs, plan strip, gated shortcuts | Planned |
+| **32b** Widget grid + Carbon charts + default layout + edit mode | Planned |
+| **32c** Layout persistence API + per BusinessUser save | Planned |
+| **32d** Extended widget catalog (queue, staff, quotes, …) | Planned |
+
+**Sprint 33** can start after **32a**; full dashboard program (32b–32d) may overlap 33.
+
+## Sprint 33 — SaaS subscription billing & MRR (planned)
+
+Live business → Adeni recurring billing (Paystack/Stripe), signed webhooks, tenant billing history on `/plan`, admin MRR v1. **Not** customer receipts (Sprint 28). Spec: [sprint-33-saas-subscription-billing-mrr.md](./specs/sprint-33-saas-subscription-billing-mrr.md).
+
+| Task | Status |
+|------|--------|
+| **33a** Provider checkout + Murphy webhooks + tier sync | Planned |
+| **33b** Portal billing history + admin MRR metrics | Planned |
+
+## Sprint 34 — Payment settlement (Connect + Paystack split) (planned)
+
+Business-paid GMV fee via **Stripe Connect** (CA/US) and **Paystack split** (NG); configurable **0%** NG. Spec: [sprint-34-payment-settlement.md](./specs/sprint-34-payment-settlement.md) · design: [payment-provider-settlement.md](./payment-provider-settlement.md).
+
+| Task | Status |
+|------|--------|
+| **34a** Connect Express onboarding + destination charges | Planned |
+| **34b** Paystack subaccount + split (0% main share) | Planned |
+| **34c** Ledger gross/fee/net + enable NA effective GMV % | Planned |
+
 ## Next up
 
-1. **Sprint 20** — staging deploy, Auth0 E2E, LLM Ask Adeni, App Insights (parallel)
-2. POS bridge (later)
+**Implementation order:** [implementation-playbook-monetization.md](./implementation-playbook-monetization.md)
 
-Strategy reference: [roadmap-modules.md](./roadmap-modules.md), [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md), [product-strategy.md](./product-strategy.md)
+1. **Shared country-pricing** + **32a** dashboard foundation
+2. **Tenant billing schema** + **Sprint 33** SaaS checkout / trials / admin
+3. **32b–32d** dashboard widgets (parallel)
+4. **Sprint 34** settlement (Connect + split)
+5. **Sprint 20** — staging deploy, Auth0 E2E, LLM, App Insights (parallel)
+6. POS bridge (later)
+
+Strategy reference: [roadmap-modules.md](./roadmap-modules.md), [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md), [product-strategy.md](./product-strategy.md), [pricing-and-monetization.md](./pricing-and-monetization.md)

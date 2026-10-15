@@ -1,6 +1,6 @@
 <app-portal-page
   title="Messages"
-  description="Conversations tied to bookings. WhatsApp stays available when the client is not in the app."
+  description="WhatsApp note templates and, on Pro+, in-app booking conversations."
 >
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
@@ -10,98 +10,100 @@
   }
 
   @if (loading()) {
-    <p class="muted">Loading conversations…</p>
+    <p class="muted">Loading…</p>
   } @else {
-    <app-portal-tabs [tabs]="tabs" />
-
-    @if (tab() === "whatsapp") {
-    <section class="card">
-      <h3>WhatsApp</h3>
-      <p class="muted">Use these when the client is on WhatsApp instead of Adeni.</p>
-      @for (item of whatsAppNotes(); track item.title) {
-        <div class="wa">
-          <strong>{{ item.title }}</strong>
-          <p>{{ item.body }}</p>
-          <a class="btn btn-primary" [href]="whatsAppUrl(item.body)" target="_blank" rel="noopener">Open WhatsApp</a>
-          <button type="button" class="btn" (click)="copy(item.body)">Copy</button>
-        </div>
-      }
-    </section>
-    } @else {
-    @if (messagingLocked()) {
-      <section class="card lock">
-        <h3>In-app threads are on Pro</h3>
-        <p class="muted">
-          Free includes WhatsApp notes. Upgrade when you want booking conversations inside Adeni.
-        </p>
-        <a class="btn btn-primary" routerLink="/plan">See plans</a>
-      </section>
+    @if (visibleTabs().length > 1) {
+      <app-portal-tabs [tabs]="visibleTabs()" />
     }
-    @if (!messagingLocked()) {
+
+    @if (tab() === "whatsapp" || !messagingEntitled()) {
+      <section class="card">
+        <h3>WhatsApp</h3>
+        <p class="muted">Copy or open a pre-filled message when the client is on WhatsApp.</p>
+        @for (item of whatsAppNotes(); track item.title) {
+          <div class="wa">
+            <strong>{{ item.title }}</strong>
+            <p>{{ item.body }}</p>
+            <a class="btn btn-primary" [href]="whatsAppUrl(item.body)" target="_blank" rel="noopener">Open WhatsApp</a>
+            <button type="button" class="btn" (click)="copy(item.body)">Copy</button>
+          </div>
+        }
+      </section>
+    } @else {
       <div class="inbox">
-      <section class="card threads">
-        <h3>Inbox</h3>
-        @if (threads().length === 0) {
-          <p class="muted">No threads yet. They appear when a client messages you about a booking.</p>
-        } @else {
-          <ul>
-            @for (thread of threads(); track thread.id) {
+        <section class="card threads">
+          <h3>Inbox</h3>
+          @if (threads().length === 0) {
+            <adeni-portal-empty-state
+              [compact]="true"
+              icon="send"
+              title="Inbox is quiet"
+              description="Threads appear when a customer messages you about a booking."
+            />
+          } @else {
+            <ul>
+              @for (thread of threads(); track thread.id) {
+                <li>
+                  <button
+                    type="button"
+                    [class.active]="detail()?.id === thread.id"
+                    (click)="openThread(thread)"
+                  >
+                    <span class="who">
+                      {{ thread.customerDisplayName }}
+                      @if (thread.unreadCount > 0) {
+                        <i>{{ thread.unreadCount }}</i>
+                      }
+                    </span>
+                    <span class="preview">{{ thread.preview || "No preview" }}</span>
+                    <span class="when">{{ formatSlotTime(thread.lastMessageAt) }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+
+        <section class="card conversation">
+          @if (detail(); as thread) {
+            <h3>{{ thread.customerDisplayName }}</h3>
+            <div class="transcript">
+              @for (message of thread.messages; track message.id) {
+                <p [class.mine]="message.senderType === 'business'">
+                  {{ message.body }}
+                </p>
+              }
+            </div>
+            <form (submit)="$event.preventDefault(); send()">
+              <textarea rows="3" [(ngModel)]="draft" name="draft" placeholder="Write a reply"></textarea>
+              <button type="submit" class="btn btn-primary" [disabled]="sending() || !draft.trim()">
+                {{ sending() ? "Sending…" : "Send" }}
+              </button>
+            </form>
+          } @else {
+            <adeni-portal-empty-state
+              [compact]="true"
+              [embedded]="true"
+              icon="send"
+              title="Select a conversation"
+              description="Pick a thread from the inbox to read and reply."
+            />
+          }
+        </section>
+      </div>
+
+      @if (templates().length > 0) {
+        <section class="card templates">
+          <h3>Saved replies</h3>
+          <ul class="chips">
+            @for (template of templates(); track template.key) {
               <li>
-                <button
-                  type="button"
-                  [class.active]="detail()?.id === thread.id"
-                  (click)="openThread(thread)"
-                >
-                  <span class="who">
-                    {{ thread.customerDisplayName }}
-                    @if (thread.unreadCount > 0) {
-                      <i>{{ thread.unreadCount }}</i>
-                    }
-                  </span>
-                  <span class="preview">{{ thread.preview || "No preview" }}</span>
-                  <span class="when">{{ formatSlotTime(thread.lastMessageAt) }}</span>
-                </button>
+                <button type="button" class="btn" (click)="useTemplate(template)">{{ template.label }}</button>
               </li>
             }
           </ul>
-        }
-      </section>
-
-      <section class="card conversation">
-        @if (detail(); as thread) {
-          <h3>{{ thread.customerDisplayName }}</h3>
-          <div class="transcript">
-            @for (message of thread.messages; track message.id) {
-              <p [class.mine]="message.senderType === 'business'">
-                {{ message.body }}
-              </p>
-            }
-          </div>
-          <form (submit)="$event.preventDefault(); send()">
-            <textarea rows="3" [(ngModel)]="draft" name="draft" placeholder="Write a reply"></textarea>
-            <button type="submit" class="btn btn-primary" [disabled]="sending() || !draft.trim()">
-              {{ sending() ? "Sending…" : "Send" }}
-            </button>
-          </form>
-        } @else {
-          <p class="muted">Choose a conversation.</p>
-        }
-      </section>
-      </div>
-    }
-
-    @if (templates().length > 0) {
-      <section class="card templates">
-        <h3>Saved replies</h3>
-        <ul class="chips">
-          @for (template of templates(); track template.key) {
-            <li>
-              <button type="button" class="btn" (click)="useTemplate(template)">{{ template.label }}</button>
-            </li>
-          }
-        </ul>
-      </section>
-    }
+        </section>
+      }
     }
   }
 </app-portal-page>

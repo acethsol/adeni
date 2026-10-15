@@ -5,15 +5,14 @@ import type { AuthService } from "@auth0/auth0-angular";
 import type { AdeniBrandSurface } from "@adeni/brand";
 import {
   formatTenantStatus,
-  hasCapability,
-  hasPortalPermission,
-  resolveCapabilities,
+  hasTenantEntitlement,
   type BusinessProfile,
   type LocaleId,
 } from "@adeni/shared";
 import {
   AdeniBrandLogoComponent,
   AdeniConfirmHostComponent,
+  AdeniDocumentTitleStrategy,
   AdeniGlobalLoadingPanelComponent,
   AdeniLocaleService,
   AdeniToastHostComponent,
@@ -22,6 +21,7 @@ import { filter, map, startWith } from "rxjs";
 import { ADENI_PORTAL_CONFIG, isAuth0Configured, isBusinessPortalDevMode } from "../core/adeni-config";
 import { resolveAuthService } from "../core/auth0-rxjs";
 import { signOutPortalDev } from "../core/portal-dev-session";
+import { isPortalNavItemVisible, portalEntitlements } from "../core/portal-access";
 import {
   PORTAL_NAV,
   PORTAL_NAV_GROUPS,
@@ -58,6 +58,8 @@ type ChromeKey =
   | "tabUpcoming"
   | "tabPast"
   | "tabDetails"
+  | "tabOverview"
+  | "tabBusiness"
   | "tabReviews"
   | "tabVerification"
   | "tabInbox"
@@ -66,6 +68,7 @@ type ChromeKey =
   | "tabLedger"
   | "/dashboard"
   | "/bookings"
+  | "/queue"
   | "/calendar"
   | "/my-calendar"
   | "/quotes"
@@ -78,6 +81,7 @@ type ChromeKey =
   | "/public-page"
   | "/register"
   | "/payments"
+  | "/settings"
   | "/plan";
 
 const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
@@ -92,13 +96,15 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     settings: "Settings",
     jump: "Jump to",
     marketplace: "Marketplace",
-    groupToday: "Today",
-    groupListing: "Listing",
-    groupBusiness: "Business",
+    groupToday: "Operations",
+    groupListing: "Catalog",
+    groupBusiness: "Account",
     tabPending: "Pending",
     tabUpcoming: "Upcoming",
     tabPast: "Past",
     tabDetails: "Details",
+    tabOverview: "Overview",
+    tabBusiness: "Business details",
     tabReviews: "Reviews",
     tabVerification: "Verification",
     tabInbox: "Inbox",
@@ -107,6 +113,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     tabLedger: "Ledger",
     "/dashboard": "Overview",
     "/bookings": "Bookings",
+    "/queue": "Queue",
     "/calendar": "Calendar",
     "/my-calendar": "My calendar",
     "/quotes": "Quotes",
@@ -119,6 +126,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     "/public-page": "Public page",
     "/register": "Register",
     "/payments": "Payments",
+    "/settings": "Settings",
     "/plan": "Plan",
   },
   fr: {
@@ -132,13 +140,15 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     settings: "Paramètres",
     jump: "Aller à",
     marketplace: "Place de marché",
-    groupToday: "Aujourd'hui",
-    groupListing: "Vitrine",
-    groupBusiness: "Entreprise",
+    groupToday: "Opérations",
+    groupListing: "Catalogue",
+    groupBusiness: "Compte",
     tabPending: "En attente",
     tabUpcoming: "À venir",
     tabPast: "Passées",
     tabDetails: "Détails",
+    tabOverview: "Aperçu",
+    tabBusiness: "Informations",
     tabReviews: "Avis",
     tabVerification: "Vérification",
     tabInbox: "Boîte",
@@ -147,6 +157,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     tabLedger: "Journal",
     "/dashboard": "Aperçu",
     "/bookings": "Réservations",
+    "/queue": "File",
     "/calendar": "Calendrier",
     "/my-calendar": "Mon calendrier",
     "/quotes": "Devis",
@@ -159,6 +170,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     "/public-page": "Page publique",
     "/register": "Inscription",
     "/payments": "Paiements",
+    "/settings": "Paramètres",
     "/plan": "Forfait",
   },
 };
@@ -243,6 +255,7 @@ export class PortalShellComponent {
   private readonly router = inject(Router);
   private readonly businessApi = inject(BusinessApiService);
   private readonly portalSession = inject(PortalSessionService);
+  private readonly documentTitleStrategy = inject(AdeniDocumentTitleStrategy);
   private readonly destroyRef = inject(DestroyRef);
   readonly auth: AuthService | null = isAuth0Configured(this.config)
     ? resolveAuthService(this.injector)
@@ -327,12 +340,18 @@ export class PortalShellComponent {
 
   badgeCount(item: PortalNavItem): number {
     if (item.badge === "bookings") return this.pendingBookings();
-    if (item.badge === "messages") return this.unreadMessages();
+    if (item.badge === "messages") {
+      if (!hasTenantEntitlement(portalEntitlements(this.profile()), "messaging")) {
+        return 0;
+      }
+      return this.unreadMessages();
+    }
     return 0;
   }
 
   navLabel(item: PortalNavItem): string {
-    return this.text(item.path as ChromeKey);
+    const localized = CHROME[this.locale()][item.path as ChromeKey];
+    return localized || item.label;
   }
 
   toggleSidebar(): void {
@@ -497,7 +516,8 @@ export class PortalShellComponent {
       id === "pending" ? "tabPending"
       : id === "upcoming" ? "tabUpcoming"
       : id === "past" ? "tabPast"
-      : id === "details" ? "tabDetails"
+      : id === "overview" || id === "details" ? "tabOverview"
+      : id === "business" ? "tabBusiness"
       : id === "reviews" ? "tabReviews"
       : id === "verification" ? "tabVerification"
       : id === "inbox" ? "tabInbox"
@@ -510,33 +530,15 @@ export class PortalShellComponent {
 
   private groupsForProfile(): PortalNavGroup[] {
     const profile = this.profile();
-    const capabilities = profile
-      ? resolveCapabilities(profile.businessType, profile.categorySlug, profile.capabilities)
-      : null;
     const permissions = this.portalSession.permissions();
+    const ctx = {
+      profile,
+      profileLoaded: this.profileLoaded(),
+      permissions,
+    };
     return PORTAL_NAV_GROUPS.map((group) => ({
       ...group,
-      items: group.items.filter((item) => {
-        if (item.shellHidden) {
-          return false;
-        }
-        if (item.unregisteredOnly) {
-          return this.profileLoaded() && !profile;
-        }
-        if (item.permission && !hasPortalPermission(permissions, item.permission)) {
-          return false;
-        }
-        if (
-          item.excludeIfPermission &&
-          hasPortalPermission(permissions, item.excludeIfPermission)
-        ) {
-          return false;
-        }
-        if (!capabilities) {
-          return true;
-        }
-        return !item.capability || hasCapability(capabilities, item.capability);
-      }),
+      items: group.items.filter((item) => isPortalNavItemVisible(item, ctx)),
     })).filter((group) => group.items.length > 0);
   }
 
@@ -550,8 +552,11 @@ export class PortalShellComponent {
       await this.portalSession.refresh();
       const profile = await this.businessApi.getTenantProfile();
       this.profile.set(profile);
-      if (profile?.businessName && this.devMode) {
-        this.accountName.set(profile.businessName);
+      if (profile?.businessName) {
+        this.documentTitleStrategy.setAppTitle(profile.businessName);
+        if (this.devMode) {
+          this.accountName.set(profile.businessName);
+        }
       }
       await this.loadBadges();
     } catch {
@@ -563,10 +568,12 @@ export class PortalShellComponent {
 
   private async loadBadges(): Promise<void> {
     try {
+      const profile = this.profile();
+      const messaging = hasTenantEntitlement(portalEntitlements(profile), "messaging");
       const [bookings, unread] = await this.businessApi.withAuthorizedClient((client) =>
         Promise.all([
           client.getTenantBookings().catch(() => []),
-          client.getTenantMessageUnreadCount().catch(() => 0),
+          messaging ? client.getTenantMessageUnreadCount().catch(() => 0) : Promise.resolve(0),
         ]),
       );
       this.pendingBookings.set(bookings.filter((booking) => booking.status === 0).length);

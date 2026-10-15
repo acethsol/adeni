@@ -129,63 +129,18 @@
           </label>
         </section>
 
-        <section class="card">
-          <h3>Business policies</h3>
+        <section class="card policy-link-card">
+          <h3>Policy content</h3>
           <p class="muted tiny">
-            Shown on your public page when Policies is enabled. Plain text — newlines are kept.
+            Booking, payment, cancellation, and terms are edited under
+            <a routerLink="/settings" [queryParams]="{ tab: 'policies' }">Settings → Policies</a>.
+            Use the <strong>Policies</strong> toggle above to show or hide that block on this page.
           </p>
-          <div class="field">
-            <label for="policy-booking">Booking policy</label>
-            <textarea
-              id="policy-booking"
-              rows="3"
-              maxlength="8000"
-              [(ngModel)]="policyBooking"
-              (ngModelChange)="markDirty()"
-            ></textarea>
-          </div>
-          <div class="field">
-            <label for="policy-payment">Payment &amp; deposit policy</label>
-            <textarea
-              id="policy-payment"
-              rows="3"
-              maxlength="8000"
-              [(ngModel)]="policyPayment"
-              (ngModelChange)="markDirty()"
-            ></textarea>
-          </div>
-          <div class="field">
-            <label for="policy-cancel">Cancellation &amp; no-show</label>
-            <textarea
-              id="policy-cancel"
-              rows="3"
-              maxlength="8000"
-              [(ngModel)]="policyCancellation"
-              (ngModelChange)="markDirty()"
-            ></textarea>
-          </div>
-          <div class="field">
-            <label for="policy-terms">Terms of service</label>
-            <textarea
-              id="policy-terms"
-              rows="3"
-              maxlength="8000"
-              [(ngModel)]="policyTerms"
-              (ngModelChange)="markDirty()"
-            ></textarea>
-          </div>
-          <label class="cds-toggle">
-            <input
-              type="checkbox"
-              role="switch"
-              [(ngModel)]="requirePolicyAcceptance"
-              (ngModelChange)="markDirty()"
-            />
-            <span class="cds-toggle__track" aria-hidden="true"></span>
-            <span class="cds-toggle__label"
-              >Require customers to accept policies before confirming a booking</span
-            >
-          </label>
+          @if (hasPolicyContent()) {
+            <p class="policy-status ok tiny">Policy text is on file — preview shows the section when enabled.</p>
+          } @else {
+            <p class="policy-status muted tiny">No policy text yet. Add it in Settings before turning the section on.</p>
+          }
         </section>
 
         <div class="actions">

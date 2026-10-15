@@ -5,7 +5,7 @@ import { ActivatedRoute } from "@angular/router";
 import { map } from "rxjs";
 import type { BillingDocumentResponse, BusinessProfile, PaymentLedgerEntry } from "@adeni/shared";
 import { formatPrice, hasCapability } from "@adeni/shared";
-import { AdeniConfirmService, PortalPageComponent } from "@adeni/ui";
+import { AdeniConfirmService, AdeniPortalEmptyStateComponent, PortalPageComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { PortalTabsComponent } from "../../shared/portal-tabs.component";
@@ -13,7 +13,7 @@ import { PortalTabsComponent } from "../../shared/portal-tabs.component";
 @Component({
   selector: "app-payments",
   standalone: true,
-  imports: [PortalPageComponent, FormsModule, PortalTabsComponent],
+  imports: [PortalPageComponent, FormsModule, PortalTabsComponent, AdeniPortalEmptyStateComponent],
   templateUrl: "./payments.component.html",
   styleUrl: "./payments.component.scss",
 })

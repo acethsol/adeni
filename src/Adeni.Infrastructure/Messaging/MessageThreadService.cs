@@ -326,10 +326,11 @@ public sealed class MessageThreadService(
         SubscriptionTier tier,
         CancellationToken cancellationToken = default)
     {
+        // Badge poll: not entitled → 0 (avoid 403 noise on every shell load for Free tier).
         var entitlement = await entitlementsService.EnsureCanUseMessagingAsync(tenantId, tier, cancellationToken);
         if (entitlement.IsFailure)
         {
-            return Result.Failure<UnreadCountResponse>(entitlement.Error);
+            return Result.Success(new UnreadCountResponse(0));
         }
 
         var count = await dbContext.MessageThreads

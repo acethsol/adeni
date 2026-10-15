@@ -11,6 +11,7 @@ export * from "./business-types";
 export * from "./capabilities";
 export * from "./category-workflows";
 export * from "./subscription-tiers";
+export * from "./entitlements";
 export * from "./design-tokens";
 export * from "./category-visuals";
 export * from "./wellness-taxonomy";

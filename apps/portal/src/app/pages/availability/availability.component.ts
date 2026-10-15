@@ -9,6 +9,7 @@ import {
   AdeniCarbonIconComponent,
   AdeniConfirmService,
   AdeniFeedbackService,
+  AdeniPortalEmptyStateComponent,
   PortalPageComponent,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
@@ -102,7 +103,7 @@ function findRangeCovering(date: string, ranges: BusinessClosedDate[]): Business
 @Component({
   selector: "app-availability",
   standalone: true,
-  imports: [PortalPageComponent, FormsModule, AdeniCarbonIconComponent],
+  imports: [PortalPageComponent, FormsModule, AdeniCarbonIconComponent, AdeniPortalEmptyStateComponent],
   templateUrl: "./availability.component.html",
   styleUrl: "./availability.component.scss",
 })

@@ -1,8 +1,10 @@
-import type { Capability, PortalPermission } from "@adeni/shared";
+import type { Capability, PortalPermission, TenantEntitlementFlag } from "@adeni/shared";
 
 export type PortalNavIconName =
   | "overview"
   | "bookings"
+  | "queue"
+  | "calendar"
   | "quotes"
   | "messages"
   | "services"
@@ -25,11 +27,14 @@ export type PortalNavIconName =
   | "chevronDown"
   | "search";
 
+/** Group ids are stable; display labels live in portal chrome i18n. */
 export type PortalNavGroupId = "today" | "listing" | "business";
 
 export type PortalTab = {
   id: string;
   label: string;
+  /** Hide tab when the tenant's plan does not include this entitlement. */
+  entitlement?: TenantEntitlementFlag;
 };
 
 export type PortalNavItem = {
@@ -38,6 +43,8 @@ export type PortalNavItem = {
   icon: PortalNavIconName;
   exact?: boolean;
   capability?: Capability;
+  /** Subscription plan — hide route when not entitled (API enforces the same). */
+  entitlement?: TenantEntitlementFlag;
   /** Portal RBAC — any listed permission grants access. */
   permission?: PortalPermission | readonly PortalPermission[];
   /**
@@ -62,7 +69,7 @@ export type PortalNavGroup = {
 export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
   {
     id: "today",
-    label: "Today",
+    label: "Operations",
     items: [
       {
         path: "/dashboard",
@@ -87,7 +94,7 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
       {
         path: "/queue",
         label: "Queue",
-        icon: "availability",
+        icon: "queue",
         capability: "walk_in_queue",
         permission: ["portal.bookings", "portal.bookings.self"],
       },
@@ -101,14 +108,15 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
       {
         path: "/calendar",
         label: "Calendar",
-        icon: "availability",
+        icon: "calendar",
         capability: "calendar",
+        entitlement: "staffManagement",
         permission: "portal.staff",
       },
       {
         path: "/my-calendar",
         label: "My calendar",
-        icon: "availability",
+        icon: "calendar",
         capability: "calendar",
         permission: "portal.staff.self",
         excludeIfPermission: "portal.staff",
@@ -127,7 +135,7 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         permission: "portal.messages",
         badge: "messages",
         tabs: [
-          { id: "inbox", label: "Inbox" },
+          { id: "inbox", label: "Inbox", entitlement: "messaging" },
           { id: "whatsapp", label: "WhatsApp" },
         ],
       },
@@ -136,7 +144,7 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
   },
   {
     id: "listing",
-    label: "Listing",
+    label: "Catalog",
     items: [
       { path: "/services", label: "Services", icon: "services", permission: "portal.services" },
       {
@@ -144,6 +152,7 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         label: "Staff",
         icon: "staff",
         capability: "calendar",
+        entitlement: "staffManagement",
         permission: "portal.staff",
       },
       {
@@ -164,7 +173,7 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
   },
   {
     id: "business",
-    label: "Business",
+    label: "Account",
     items: [
       {
         path: "/profile",
@@ -172,7 +181,8 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         icon: "profile",
         permission: "portal.profile",
         tabs: [
-          { id: "details", label: "Details" },
+          { id: "overview", label: "Overview" },
+          { id: "business", label: "Business details" },
           { id: "reviews", label: "Reviews" },
           { id: "verification", label: "Verification" },
         ],
@@ -186,6 +196,18 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         tabs: [
           { id: "links", label: "Links" },
           { id: "ledger", label: "Ledger" },
+        ],
+      },
+      {
+        path: "/settings",
+        label: "Settings",
+        icon: "settings",
+        permission: "portal.profile",
+        tabs: [
+          { id: "bookings", label: "Bookings" },
+          { id: "notifications", label: "Notifications" },
+          { id: "policies", label: "Policies" },
+          { id: "messaging", label: "Messaging", entitlement: "messaging" },
         ],
       },
       { path: "/plan", label: "Plan", icon: "plan", permission: "portal.plan" },

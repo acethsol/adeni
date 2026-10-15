@@ -48,7 +48,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    provideAdeniDocumentTitle("Adeni Business"),
+    ...provideAdeniDocumentTitle("Adeni Business"),
     ...provideAdeniLocale({ storage: "localStorage", storageKey: "adeni.portal.locale" }),
     provideHttpClient(),
     {

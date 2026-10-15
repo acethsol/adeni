@@ -11,6 +11,7 @@ import {
   AdeniCarbonIconComponent,
   AdeniConfirmService,
   AdeniFeedbackService,
+  AdeniPortalEmptyStateComponent,
   PortalPageComponent,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
@@ -33,7 +34,7 @@ type ServiceDraft = {
 @Component({
   selector: "app-services",
   standalone: true,
-  imports: [PortalPageComponent, FormsModule, AdeniCarbonIconComponent],
+  imports: [PortalPageComponent, FormsModule, AdeniCarbonIconComponent, AdeniPortalEmptyStateComponent],
   templateUrl: "./services.component.html",
   styleUrl: "./services.component.scss",
 })

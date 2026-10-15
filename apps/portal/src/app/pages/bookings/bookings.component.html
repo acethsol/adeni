@@ -47,9 +47,12 @@
   @if (loading()) {
     <p class="muted">Loading bookings…</p>
   } @else if (visible().length === 0) {
-    <section class="card">
-      <p class="muted">{{ emptyLabel() }}</p>
-    </section>
+    @let empty = emptyState();
+    <adeni-portal-empty-state
+      [title]="empty.title"
+      [description]="empty.description"
+      [icon]="empty.icon"
+    />
   } @else {
     <section class="card">
       <ul class="booking-list">

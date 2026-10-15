@@ -3,7 +3,7 @@ import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
 import type { BookingResponse, KioskStatusResponse } from "@adeni/shared";
 import { formatSlotTime, hasCapability } from "@adeni/shared";
-import { AdeniCarbonIconComponent } from "@adeni/ui";
+import { AdeniCarbonIconComponent, AdeniPortalEmptyStateComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 
 const CONFIRMED = 1;
@@ -12,7 +12,7 @@ const CHECKED_IN = 4;
 @Component({
   selector: "app-kiosk",
   standalone: true,
-  imports: [FormsModule, AdeniCarbonIconComponent],
+  imports: [FormsModule, AdeniCarbonIconComponent, AdeniPortalEmptyStateComponent],
   templateUrl: "./kiosk.component.html",
   styleUrl: "./kiosk.component.scss",
 })

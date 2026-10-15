@@ -115,8 +115,15 @@
     <article class="panel">
       <h3>Today’s chair</h3>
       @if (today().length === 0) {
-        <p class="hint">Nothing left on today’s book. Open hours are still taking new bookings.</p>
-        <a class="text-link" routerLink="/availability">Check weekly hours</a>
+        <adeni-portal-empty-state
+          [compact]="true"
+          [embedded]="true"
+          icon="calendar"
+          title="Clear for today"
+          description="No appointments left on the book. Your open hours can still accept new bookings."
+        >
+          <a class="btn" routerLink="/availability">View hours</a>
+        </adeni-portal-empty-state>
       } @else {
         <ul class="today-list">
           @for (booking of today(); track booking.id) {

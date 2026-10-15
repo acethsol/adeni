@@ -13,6 +13,15 @@
   color: var(--text-muted, #667085);
 }
 
+.policy-link-card a {
+  color: var(--interactive, #7f56ff);
+  font-weight: 600;
+}
+
+.policy-status.ok {
+  color: #065f46;
+}
+
 .tiny {
   font-size: 0.82rem;
   margin: 0.5rem 0 0;

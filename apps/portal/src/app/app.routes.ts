@@ -14,6 +14,7 @@ import { PublicPageSettingsComponent } from "./pages/public-page/public-page.com
 import { RegisterComponent } from "./pages/register/register.component";
 import { PaymentsComponent } from "./pages/payments/payments.component";
 import { PlanComponent } from "./pages/plan/plan.component";
+import { SettingsComponent } from "./pages/settings/settings.component";
 import { MessagesComponent } from "./pages/messages/messages.component";
 import { QuotesComponent } from "./pages/quotes/quotes.component";
 import { SetupComponent } from "./pages/setup/setup.component";
@@ -136,6 +137,12 @@ export const routes: Routes = [
         path: "payments",
         component: PaymentsComponent,
         title: "Payments",
+        canActivate: [portalPermissionGuard],
+      },
+      {
+        path: "settings",
+        component: SettingsComponent,
+        title: "Settings",
         canActivate: [portalPermissionGuard],
       },
       {

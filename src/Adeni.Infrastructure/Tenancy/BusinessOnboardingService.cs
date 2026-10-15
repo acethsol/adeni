@@ -210,10 +210,16 @@ public sealed class BusinessOnboardingService(
 
         var (tenant, profile) = access.Value!;
 
-        if (tenant.Status is not TenantStatus.Draft and not TenantStatus.Rejected)
+        if (tenant.Status is TenantStatus.PendingVerification)
         {
             return Result.Failure<BusinessProfileResponse>(
-                Error.Validation("Profile can only be edited while in draft or rejected status."));
+                Error.Validation("Profile cannot be edited while verification is in progress."));
+        }
+
+        if (tenant.Status is TenantStatus.Suspended)
+        {
+            return Result.Failure<BusinessProfileResponse>(
+                Error.Validation("Profile cannot be edited while the business is suspended."));
         }
 
         var validation = await ValidateBrandFieldsAsync(

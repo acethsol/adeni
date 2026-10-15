@@ -1,18 +1,24 @@
-import { Component, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { KeyValuePipe } from "@angular/common";
 import { FormsModule } from "@angular/forms";
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute, RouterLink } from "@angular/router";
 import { map } from "rxjs";
-import type { BusinessProfile, GalleryImage, PublicReviewItem } from "@adeni/shared";
+import type { BusinessProfile, Category, GalleryImage, PublicReviewItem } from "@adeni/shared";
 import {
   formatTenantStatus,
+  getCategoryLabel,
   MAX_GALLERY_PHOTOS,
   MAX_UPLOAD_BYTES,
   resolveBusinessCoverImage,
   VERIFICATION_DOCUMENT_LABELS,
 } from "@adeni/shared";
-import { AdeniCarbonIconComponent, AdeniFeedbackService, PortalPageComponent } from "@adeni/ui";
+import {
+  AdeniCarbonIconComponent,
+  AdeniFeedbackService,
+  AdeniPortalEmptyStateComponent,
+  PortalPageComponent,
+} from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { PortalTabsComponent } from "../../shared/portal-tabs.component";
@@ -30,6 +36,8 @@ const MAX_BYTES = MAX_UPLOAD_BYTES;
     KeyValuePipe,
     PortalTabsComponent,
     AdeniCarbonIconComponent,
+    AdeniPortalEmptyStateComponent,
+    RouterLink,
   ],
   templateUrl: "./profile.component.html",
   styleUrl: "./profile.component.scss",
@@ -39,11 +47,23 @@ export class ProfileComponent implements OnInit {
   private readonly config = inject(ADENI_PORTAL_CONFIG);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly route = inject(ActivatedRoute);
-  readonly tab = toSignal(this.route.queryParamMap.pipe(map((params) => params.get("tab") ?? "details")), {
-    initialValue: this.route.snapshot.queryParamMap.get("tab") ?? "details",
-  });
+  readonly tab = toSignal(
+    this.route.queryParamMap.pipe(
+      map((params) => {
+        const value = params.get("tab") ?? "overview";
+        return value === "details" ? "overview" : value;
+      }),
+    ),
+    {
+      initialValue: (() => {
+        const value = this.route.snapshot.queryParamMap.get("tab") ?? "overview";
+        return value === "details" ? "overview" : value;
+      })(),
+    },
+  );
   readonly tabs = [
-    { id: "details", label: "Details" },
+    { id: "overview", label: "Overview" },
+    { id: "business", label: "Business details" },
     { id: "reviews", label: "Reviews" },
     { id: "verification", label: "Verification" },
   ];
@@ -60,16 +80,20 @@ export class ProfileComponent implements OnInit {
 
   businessName = "";
   categorySlug = "";
+  additionalCategorySlugs: string[] = [];
   phone = "";
   description = "";
-  autoConfirm = false;
-  depositPercent = 0;
-
+  readonly categories = signal<Category[]>([]);
+  readonly categoryLabel = getCategoryLabel;
+  readonly additionalOptions = computed(() =>
+    this.categories().filter((c) => c.slug !== this.categorySlug),
+  );
   readonly reviews = signal<PublicReviewItem[]>([]);
   readonly reviewSummary = signal<{ avg: number | null; count: number }>({ avg: null, count: 0 });
   readonly replyingId = signal<string | null>(null);
   replyDraft = "";
   readonly verificationMessage = signal<string | null>(null);
+  readonly shareNotice = signal<string | null>(null);
   verificationDocType = 0;
   verificationReference = "";
 
@@ -82,7 +106,21 @@ export class ProfileComponent implements OnInit {
 
   canEdit(): boolean {
     const p = this.profile();
-    return p ? p.status === 0 || p.status === 3 : false;
+    if (!p) return false;
+    // Draft, verified, and rejected can edit; pending review and suspended cannot (matches API).
+    return p.status === 0 || p.status === 2 || p.status === 3;
+  }
+
+  profileEditLockReason(): string | null {
+    const p = this.profile();
+    if (!p || this.canEdit()) return null;
+    if (p.status === 1) {
+      return "Your profile is with admin review — editing is paused until verification finishes.";
+    }
+    if (p.status === 4) {
+      return "This business is suspended. Contact support to update profile details.";
+    }
+    return "Profile editing is not available for this status.";
   }
 
   async load(): Promise<void> {
@@ -96,11 +134,10 @@ export class ProfileComponent implements OnInit {
         this.categorySlug = p.categorySlug;
         this.phone = p.phone;
         this.description = p.description ?? "";
-        this.autoConfirm = p.autoConfirmBookings ?? false;
-        this.depositPercent = p.depositPercent ?? 0;
+        this.additionalCategorySlugs = [...(p.additionalCategorySlugs ?? [])];
         this.coverPreview.set(resolveBusinessCoverImage(p.categorySlug, p.coverImageUrl));
         this.galleryImages.set(p.galleryImages ?? []);
-        await this.loadReviews(p);
+        await Promise.all([this.loadCategories(p), this.loadReviews(p)]);
       }, "Loading profile…", "Fetching business details");
     } catch {
       this.error.set("Could not load profile.");
@@ -127,6 +164,7 @@ export class ProfileComponent implements OnInit {
             c.updateTenantProfile({
               businessName: this.businessName.trim(),
               categorySlug: this.categorySlug.trim(),
+              additionalCategorySlugs: this.additionalCategorySlugs,
               phone: this.phone.trim(),
               description: this.description.trim(),
             }),
@@ -144,28 +182,48 @@ export class ProfileComponent implements OnInit {
     }
   }
 
-  async saveSettings(): Promise<void> {
-    this.saving.set(true);
-    this.error.set(null);
+  categoryLine(): string {
+    const p = this.profile();
+    if (!p) return "";
+    return getCategoryLabel("en", p.categorySlug);
+  }
+
+  primaryLocationName(): string | null {
+    const p = this.profile();
+    if (!p?.locations.length) return null;
+    const primary = p.locations.find((l) => l.isPrimary) ?? p.locations[0];
+    return primary?.area ?? primary?.name ?? null;
+  }
+
+  onPrimaryCategoryChange(): void {
+    this.additionalCategorySlugs = this.additionalCategorySlugs.filter((s) => s !== this.categorySlug);
+  }
+
+  isAdditionalSelected(slug: string): boolean {
+    return this.additionalCategorySlugs.includes(slug);
+  }
+
+  toggleAdditional(slug: string): void {
+    if (this.isAdditionalSelected(slug)) {
+      this.additionalCategorySlugs = this.additionalCategorySlugs.filter((s) => s !== slug);
+    } else {
+      this.additionalCategorySlugs = [...this.additionalCategorySlugs, slug];
+    }
+  }
+
+  async loadCategories(profile: BusinessProfile): Promise<void> {
+    const marketId =
+      profile.locations.find((l) => l.isPrimary)?.marketId ??
+      profile.locations[0]?.marketId ??
+      "lagos";
     try {
-      const updated = await this.feedback.runLoading(
-        () =>
-          this.api.withAuthorizedClient((c) =>
-            c.updateTenantSettings({
-              autoConfirmBookings: this.autoConfirm,
-              depositPercent: this.depositPercent,
-            }),
-          ),
-        "Saving settings…",
-        "Updating booking preferences",
-      );
-      this.profile.set(updated);
-      this.feedback.success("Booking settings updated.", "Settings saved");
+      const categories = await this.api.createPublicClient().getCategories({
+        market: marketId,
+        wellness: true,
+      });
+      this.categories.set(categories);
     } catch {
-      this.error.set("Could not save booking settings.");
-      this.feedback.error("Could not save booking settings.");
-    } finally {
-      this.saving.set(false);
+      this.categories.set([]);
     }
   }
 
@@ -185,7 +243,8 @@ export class ProfileComponent implements OnInit {
   async copyPublicLink(): Promise<void> {
     try {
       await navigator.clipboard.writeText(this.publicBookingUrl());
-      this.verificationMessage.set("Booking link copied.");
+      this.shareNotice.set("Booking link copied.");
+      this.feedback.success("Booking link copied.");
     } catch {
       this.error.set("Could not copy link.");
     }

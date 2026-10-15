@@ -189,28 +189,32 @@ Adeni is a **hybrid platform**: predictable SaaS (MRR/ARR) + transaction upside 
 
 ### 4.1 SaaS subscriptions — foundation (MRR/ARR)
 
-Businesses pay monthly for operating tools.
+Businesses pay monthly for operating tools. **No perpetual free tier** — acquisition uses **time-limited trials** and **admin-configured discounts** (see [pricing-and-monetization.md](./pricing-and-monetization.md)).
 
-| Tier | Indicative price | Includes |
-|------|------------------|----------|
-| **Free** | ₦0 | Profile, services, limited bookings/month, basic calendar |
-| **Pro** | ~₦5k–15k/mo | Unlimited bookings, messaging, reminders, analytics, AI add-on |
-| **Business** | ~₦25k+/mo | Multi-location, staff, priority support, advanced verification |
+| SKU (paid) | List price (by **country**, not city) | Includes |
+|------------|----------------------------------------|----------|
+| **Starter** | **NG ₦50k** · **CA $200** · **US $150** | Profile, calendar, bookings, basic dashboard, WhatsApp bridge |
+| **Professional** | **NG ₦70k** · **CA $250** · **US $200** | Starter + messaging, reminders, analytics dashboard |
+| **Business** | **NG ₦100k** · **CA $300** · **US $250** | Pro + multi-location, staff, priority support |
 
-Example scale (illustrative): 10,000 paying × $30/mo ≈ **$300k MRR / $3.6M ARR** before any transaction revenue.
+Details: [pricing-and-monetization.md](./pricing-and-monetization.md).
 
-**Implementation:** entitlements model in API + portal gating → Sprint 16.
+**Trials:** default e.g. 90 days on Professional for new verified businesses — length and SKU set in **admin market config**; extend/comp per tenant with audit.
+
+Example scale (illustrative): 10,000 paying × blended **$50–80/mo software ARPU** ≈ **$500k–800k MRR** before GMV fees and add-ons.
+
+**Implementation:** entitlements by SKU + billing status → Sprint 16 (today); live billing + trials → Sprint 33. Legacy `free` tier in code is **deprecated** per pricing doc migration.
 
 ### 4.2 Marketplace / transaction fees (GMV × take rate)
 
 When customers pay through Adeni:
 
-- Track **GMV** (gross merchandise value)
-- Apply **take rate** (e.g. 1–3% platform fee on top of payment provider costs)
+- Track **GMV** (gross merchandise value — the **business’s stated price**, not inflated for Adeni)
+- Apply **take rate** (e.g. 0.75% NA; 0% NG today) **deducted from business settlement** ([business-paid policy](./pricing-and-monetization.md#64-gmv-platform-fee-business-paid-policy)); customer checkout total unchanged
 
-Example: $20M monthly GMV × 2% = **$400k/month**.
+Example: $20M monthly GMV × 0.75% = **$150k/month** platform fee (before processing pass-through).
 
-Requires payments in flow → Sprint 15 (deposits) + Sprint 17 (orchestration).
+Requires payments in flow → Sprint 15 (deposits) + Sprint 17 (orchestration); collection via Connect / Paystack split → [payment-provider-settlement.md](./payment-provider-settlement.md).
 
 ### 4.3 Fintech — orchestration, not custody
 

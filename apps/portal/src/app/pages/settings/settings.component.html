@@ -1,0 +1,143 @@
+<app-portal-page
+  title="Settings"
+  description="Configure how bookings, notifications, policies, and messaging work for your business."
+>
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  <app-portal-tabs [tabs]="tabs()" />
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  } @else {
+    @if (tab() === "bookings") {
+      <section class="card settings-card">
+        <h3>Booking behaviour</h3>
+        <p class="lede">
+          Control how new appointments are accepted and whether deposits are required online.
+        </p>
+        <label class="cds-toggle">
+          <input type="checkbox" role="switch" [(ngModel)]="autoConfirm" />
+          <span class="cds-toggle__track" aria-hidden="true"></span>
+          <span class="cds-toggle__label">Auto-confirm new bookings</span>
+        </label>
+        <p class="hint">When off, new bookings stay pending until you accept them.</p>
+        <div class="field">
+          <label for="deposit">Deposit percent (0–100)</label>
+          <input
+            id="deposit"
+            type="number"
+            min="0"
+            max="100"
+            [(ngModel)]="depositPercent"
+          />
+        </div>
+        <p class="hint">0 means no deposit. Only applies when online payments are enabled for your plan.</p>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="saving()"
+          (click)="saveBookings()"
+        >
+          <adeni-carbon-icon name="save" [size]="16" />
+          Save booking settings
+        </button>
+      </section>
+    }
+
+    @if (tab() === "notifications") {
+      <section class="card settings-card">
+        <h3>Customer &amp; staff alerts</h3>
+        <p class="lede">Choose which channels Adeni may use for reminders and business alerts.</p>
+        <label class="cds-toggle">
+          <input type="checkbox" role="switch" [(ngModel)]="emailEnabled" />
+          <span class="cds-toggle__track" aria-hidden="true"></span>
+          <span class="cds-toggle__label">Email notifications</span>
+        </label>
+        <label class="cds-toggle">
+          <input type="checkbox" role="switch" [(ngModel)]="pushEnabled" />
+          <span class="cds-toggle__track" aria-hidden="true"></span>
+          <span class="cds-toggle__label">Push notifications</span>
+        </label>
+        <label class="cds-toggle">
+          <input type="checkbox" role="switch" [(ngModel)]="smsWhatsAppReminderEnabled" />
+          <span class="cds-toggle__track" aria-hidden="true"></span>
+          <span class="cds-toggle__label">SMS / WhatsApp reminders</span>
+        </label>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="saving()"
+          (click)="saveNotifications()"
+        >
+          <adeni-carbon-icon name="save" [size]="16" />
+          Save notification preferences
+        </button>
+      </section>
+    }
+
+    @if (tab() === "policies") {
+      <section class="card settings-card">
+        <h3>Customer-facing policies</h3>
+        <p class="lede">
+          This is the single place to edit policy text and acceptance rules. On
+          <a routerLink="/public-page">Public page</a>, you only choose whether the Policies section is
+          visible — not the wording.
+        </p>
+        <div class="field">
+          <label for="policy-booking">Booking policy</label>
+          <textarea id="policy-booking" rows="4" [(ngModel)]="policyBooking"></textarea>
+        </div>
+        <div class="field">
+          <label for="policy-payment">Payment policy</label>
+          <textarea id="policy-payment" rows="4" [(ngModel)]="policyPayment"></textarea>
+        </div>
+        <div class="field">
+          <label for="policy-cancellation">Cancellation policy</label>
+          <textarea id="policy-cancellation" rows="4" [(ngModel)]="policyCancellation"></textarea>
+        </div>
+        <div class="field">
+          <label for="policy-terms">Terms</label>
+          <textarea id="policy-terms" rows="4" [(ngModel)]="policyTerms"></textarea>
+        </div>
+        <label class="cds-toggle">
+          <input type="checkbox" role="switch" [(ngModel)]="requireAcceptance" />
+          <span class="cds-toggle__track" aria-hidden="true"></span>
+          <span class="cds-toggle__label">Require acceptance before booking</span>
+        </label>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="saving()"
+          (click)="savePolicies()"
+        >
+          <adeni-carbon-icon name="save" [size]="16" />
+          Save policies
+        </button>
+      </section>
+    }
+
+    @if (tab() === "messaging") {
+      <section class="card settings-card">
+        <h3>In-app messaging</h3>
+        <p class="lede">Automations for customer threads tied to bookings.</p>
+        <label class="cds-toggle">
+          <input type="checkbox" role="switch" [(ngModel)]="faqAutoResponderEnabled" />
+          <span class="cds-toggle__track" aria-hidden="true"></span>
+          <span class="cds-toggle__label">FAQ auto-responder</span>
+        </label>
+        <p class="hint">Sends a short canned reply when a new customer thread opens.</p>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="saving()"
+          (click)="saveMessaging()"
+        >
+          <adeni-carbon-icon name="save" [size]="16" />
+          Save messaging settings
+        </button>
+      </section>
+    }
+  }
+</app-portal-page>

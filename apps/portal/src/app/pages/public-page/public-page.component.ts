@@ -1,5 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { RouterLink } from "@angular/router";
 import type { BusinessProfile, PublicPageTemplateId } from "@adeni/shared";
 import {
   DEFAULT_PUBLIC_PAGE_CONFIG,
@@ -20,17 +21,12 @@ type PublicPageDraft = {
   showVisit: boolean;
   showBook: boolean;
   showPolicies: boolean;
-  policyBooking: string;
-  policyPayment: string;
-  policyCancellation: string;
-  policyTerms: string;
-  requirePolicyAcceptance: boolean;
 };
 
 @Component({
   selector: "app-public-page",
   standalone: true,
-  imports: [PortalPageComponent, FormsModule],
+  imports: [PortalPageComponent, FormsModule, RouterLink],
   templateUrl: "./public-page.component.html",
   styleUrl: "./public-page.component.scss",
 })
@@ -55,12 +51,6 @@ export class PublicPageSettingsComponent implements OnInit {
   showVisit = true;
   showBook = true;
   showPolicies = false;
-
-  policyBooking = "";
-  policyPayment = "";
-  policyCancellation = "";
-  policyTerms = "";
-  requirePolicyAcceptance = false;
 
   readonly dirty = computed(() => {
     this.formTick();
@@ -104,14 +94,8 @@ export class PublicPageSettingsComponent implements OnInit {
         this.showVisit = page.sections.visit;
         this.showBook = page.sections.book ?? true;
         this.showPolicies = page.sections.policies ?? false;
-        const policies = p.policies;
-        this.policyBooking = policies?.booking ?? "";
-        this.policyPayment = policies?.payment ?? "";
-        this.policyCancellation = policies?.cancellation ?? "";
-        this.policyTerms = policies?.terms ?? "";
-        this.requirePolicyAcceptance = policies?.requireAcceptance ?? false;
         this.captureSnapshot();
-      }, "Loading public page…", "Fetching template and policies");
+      }, "Loading public page…", "Fetching template and layout");
     } catch {
       this.profile.set(null);
       this.feedback.error("Could not load public page settings.");
@@ -139,27 +123,10 @@ export class PublicPageSettingsComponent implements OnInit {
       return;
     }
 
-    const hasPolicyContent = Boolean(
-      this.policyBooking.trim() ||
-        this.policyPayment.trim() ||
-        this.policyCancellation.trim() ||
-        this.policyTerms.trim(),
-    );
-    if (hasPolicyContent) {
-      this.showPolicies = true;
-    }
-
     this.saving.set(true);
     try {
       await this.feedback.runLoading(async () => {
         await this.api.withAuthorizedClient(async (c) => {
-          await c.updateTenantPolicies({
-            booking: this.policyBooking.trim() || null,
-            payment: this.policyPayment.trim() || null,
-            cancellation: this.policyCancellation.trim() || null,
-            terms: this.policyTerms.trim() || null,
-            requireAcceptance: this.requirePolicyAcceptance,
-          });
           const updated = await c.updateTenantPublicPage({
             templateId: this.templateId,
             accentColor: this.useAccent ? this.accentColor : null,
@@ -174,12 +141,12 @@ export class PublicPageSettingsComponent implements OnInit {
           });
           this.profile.set(updated);
         });
-      }, "Saving…", "Updating template, sections, and policies");
+      }, "Saving…", "Updating template and sections");
 
       this.captureSnapshot();
       this.feedback.success(
         this.showBook
-          ? "Template, sections, and policies are live on your booking page."
+          ? "Template and sections are live on your booking page."
           : "Saved. Online booking is off — customers can still view your page.",
         "Public page saved",
       );
@@ -195,6 +162,16 @@ export class PublicPageSettingsComponent implements OnInit {
     this.formTick.update((n) => n + 1);
   }
 
+  hasPolicyContent(): boolean {
+    const policies = this.profile()?.policies;
+    return Boolean(
+      policies?.booking?.trim() ||
+        policies?.payment?.trim() ||
+        policies?.cancellation?.trim() ||
+        policies?.terms?.trim(),
+    );
+  }
+
   private serializeDraft(): string {
     const draft: PublicPageDraft = {
       templateId: this.templateId,
@@ -206,11 +183,6 @@ export class PublicPageSettingsComponent implements OnInit {
       showVisit: this.showVisit,
       showBook: this.showBook,
       showPolicies: this.showPolicies,
-      policyBooking: this.policyBooking.trim(),
-      policyPayment: this.policyPayment.trim(),
-      policyCancellation: this.policyCancellation.trim(),
-      policyTerms: this.policyTerms.trim(),
-      requirePolicyAcceptance: this.requirePolicyAcceptance,
     };
     return JSON.stringify(draft);
   }

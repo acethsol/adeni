@@ -138,7 +138,11 @@
   @if (loading()) {
     <p class="muted">Loading…</p>
   } @else if (services().length === 0) {
-    <p class="muted">No services yet — customers need at least one to book online.</p>
+    <adeni-portal-empty-state
+      icon="add"
+      title="No services yet"
+      description="Add at least one service so customers can book online from your public page."
+    />
   } @else {
     <section class="card">
       <ul class="plain">

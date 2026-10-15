@@ -1,0 +1,57 @@
+{
+  "_comment": "SaaS list prices + GMV platform fee by ISO country. feeBearer business = platform % deducted from business settlement; customer pays business price only. gmvCollection.mode must be wired even when platformFeePercent is 0.",
+  "gmvFeeBearer": "business",
+  "countries": {
+    "NG": {
+      "currency": "NGN",
+      "paymentProvider": "paystack",
+      "skus": {
+        "starter": { "monthlyAmount": 50000 },
+        "professional": { "monthlyAmount": 70000 },
+        "business": { "monthlyAmount": 100000 }
+      },
+      "gmvCollection": {
+        "feeBearer": "business",
+        "mode": "paystack_split",
+        "platformFeePercent": 0,
+        "requireMerchantOnboarding": true,
+        "blockPaymentsUntilOnboarding": false,
+        "splitCode": null,
+        "_note": "0% to Adeni main today; subaccount still receives 100%. Raise platformFeePercent when policy changes."
+      }
+    },
+    "CA": {
+      "currency": "CAD",
+      "paymentProvider": "stripe",
+      "skus": {
+        "starter": { "monthlyAmount": 200 },
+        "professional": { "monthlyAmount": 250 },
+        "business": { "monthlyAmount": 300 }
+      },
+      "gmvCollection": {
+        "feeBearer": "business",
+        "mode": "stripe_connect",
+        "platformFeePercent": 0.75,
+        "requireMerchantOnboarding": true,
+        "blockPaymentsUntilOnboarding": true,
+        "_note": "Do not collect 0.75% until Connect + application_fee shipped; until then effective fee 0 or block per code gate."
+      }
+    },
+    "US": {
+      "currency": "USD",
+      "paymentProvider": "stripe",
+      "skus": {
+        "starter": { "monthlyAmount": 150 },
+        "professional": { "monthlyAmount": 200 },
+        "business": { "monthlyAmount": 250 }
+      },
+      "gmvCollection": {
+        "feeBearer": "business",
+        "mode": "stripe_connect",
+        "platformFeePercent": 0.75,
+        "requireMerchantOnboarding": true,
+        "blockPaymentsUntilOnboarding": true
+      }
+    }
+  }
+}

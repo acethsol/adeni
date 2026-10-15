@@ -21,9 +21,58 @@ public sealed class BillingDocumentService(
     IAuditLogWriter auditLogWriter,
     ICorrelationContext correlationContext) : IBillingDocumentService
 {
-    static BillingDocumentService()
+    private static readonly object QuestInitLock = new();
+    private static bool _questInitialized;
+    private static Exception? _questInitError;
+
+    private static void EnsureQuestPdfReady()
     {
-        QuestPDF.Settings.License = LicenseType.Community;
+        if (_questInitialized)
+        {
+            if (_questInitError is not null)
+            {
+                throw new InvalidOperationException(
+                    "PDF generation is unavailable on this runtime.",
+                    _questInitError);
+            }
+
+            return;
+        }
+
+        lock (QuestInitLock)
+        {
+            if (_questInitialized)
+            {
+                if (_questInitError is not null)
+                {
+                    throw new InvalidOperationException(
+                        "PDF generation is unavailable on this runtime.",
+                        _questInitError);
+                }
+
+                return;
+            }
+
+            try
+            {
+                QuestPDF.Settings.License = LicenseType.Community;
+            }
+            catch (Exception ex)
+            {
+                _questInitError = ex;
+            }
+            finally
+            {
+                _questInitialized = true;
+            }
+
+            if (_questInitError is not null)
+            {
+                throw new InvalidOperationException(
+                    "PDF generation is unavailable on this runtime.",
+                    _questInitError);
+            }
+        }
     }
 
     public async Task<Result<BillingDocumentResponse>> GetAsync(
@@ -724,6 +773,7 @@ public sealed class BillingDocumentService(
 
     private static byte[] BuildPdf(BillingDocument entity)
     {
+        EnsureQuestPdfReady();
         var kindLabel = entity.Kind == BillingDocumentKind.Receipt ? "Receipt" : "Invoice";
         return Document.Create(container =>
         {

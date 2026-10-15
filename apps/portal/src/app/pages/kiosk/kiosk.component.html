@@ -43,7 +43,12 @@
 
     <section class="arrivals">
       @if (arrivals().length === 0) {
-        <p class="muted empty">No matching appointments for today.</p>
+        <adeni-portal-empty-state
+          [compact]="true"
+          icon="calendar-32"
+          title="No arrivals yet"
+          description="Confirmed appointments for today will appear here for check-in."
+        />
       } @else {
         <ul class="arrival-list">
           @for (booking of arrivals(); track booking.id) {

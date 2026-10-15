@@ -9,7 +9,7 @@
         @if (collapsed()) {
           <adeni-brand-logo variant="mark" [surface]="logoSurface()" [size]="28" />
         } @else {
-          <adeni-brand-logo variant="horizontal" [surface]="logoSurface()" [size]="34" />
+          <adeni-brand-logo variant="horizontal" [surface]="logoSurface()" [size]="32" />
         }
       </a>
     </div>
@@ -17,7 +17,11 @@
     <nav class="nav" aria-label="Business">
       @for (group of visibleGroups(); track group.id) {
         <div class="nav-group">
-          <p class="nav-section">{{ groupLabel(group) }}</p>
+          @if (!collapsed()) {
+            <p class="nav-section">{{ groupLabel(group) }}</p>
+          } @else if (!$first) {
+            <div class="nav-divider" aria-hidden="true"></div>
+          }
           @for (item of group.items; track item.path) {
             <a
               class="nav-link"
@@ -25,14 +29,16 @@
               routerLinkActive="active"
               ariaCurrentWhenActive="page"
               [routerLinkActiveOptions]="{ exact: !!item.exact }"
+              [attr.title]="collapsed() ? navLabel(item) : null"
+              [attr.aria-label]="navLabel(item)"
               [attr.data-label]="collapsed() ? navLabel(item) : null"
             >
-              <span class="nav-ico">
+              <span class="nav-ico" aria-hidden="true">
                 <app-portal-nav-icon [name]="item.icon" />
               </span>
               <span class="nav-label">{{ navLabel(item) }}</span>
               @if (badgeCount(item); as count) {
-                <span class="nav-count">{{ count > 9 ? "9+" : count }}</span>
+                <span class="nav-count" aria-hidden="true">{{ count > 9 ? "9+" : count }}</span>
               }
             </a>
           }
@@ -43,9 +49,11 @@
         [href]="discoverUrl()"
         target="_blank"
         rel="noopener"
+        [attr.title]="collapsed() ? text('marketplace') : null"
+        [attr.aria-label]="text('marketplace')"
         [attr.data-label]="collapsed() ? text('marketplace') : null"
       >
-        <span class="nav-ico">
+        <span class="nav-ico" aria-hidden="true">
           <app-portal-nav-icon name="launch" />
         </span>
         <span class="nav-label">{{ text("marketplace") }}</span>
@@ -53,22 +61,20 @@
     </nav>
 
     <div class="sidebar-foot">
-      <p class="foot-item" [attr.data-label]="collapsed() ? 'Business portal' : null">
-        <span class="nav-ico">
-          <app-portal-nav-icon name="portal" />
-        </span>
-        <span class="nav-label">Business portal</span>
-      </p>
       <button
         type="button"
         class="rail-toggle"
-        [attr.data-label]="collapsed() ? 'Expand' : 'Collapse'"
+        [attr.title]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+        [attr.data-label]="collapsed() ? 'Expand' : null"
         [attr.aria-expanded]="!collapsed()"
         aria-controls="portal-sidebar"
         [attr.aria-label]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
         (click)="toggleSidebar()"
       >
         <app-portal-nav-icon [name]="collapsed() ? 'expand' : 'collapse'" />
+        @if (!collapsed()) {
+          <span class="rail-toggle-label">Collapse</span>
+        }
       </button>
     </div>
   </aside>
@@ -221,6 +227,7 @@
         </div>
       </div>
     </header>
+
     <main class="content">
       <router-outlet />
     </main>

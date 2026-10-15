@@ -13,7 +13,7 @@ import {
   type ServiceOffering,
   type SubscriptionUsage,
 } from "@adeni/shared";
-import { AdeniCarbonIconComponent } from "@adeni/ui";
+import { AdeniCarbonIconComponent, AdeniPortalEmptyStateComponent } from "@adeni/ui";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { PortalSessionService } from "../../core/services/portal-session.service";
@@ -26,7 +26,7 @@ const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 @Component({
   selector: "app-dashboard",
   standalone: true,
-  imports: [RouterLink, AdeniCarbonIconComponent],
+  imports: [RouterLink, AdeniCarbonIconComponent, AdeniPortalEmptyStateComponent],
   templateUrl: "./dashboard.component.html",
   styleUrl: "./dashboard.component.scss",
 })

@@ -3,13 +3,13 @@ import { FormsModule } from "@angular/forms";
 import type { AdeniApiClient } from "@adeni/api-client";
 import type { BusinessProfile, QueueTicketResponse, ServiceOffering } from "@adeni/shared";
 import { hasCapability } from "@adeni/shared";
-import { AdeniCarbonIconComponent, PortalPageComponent } from "@adeni/ui";
+import { AdeniCarbonIconComponent, AdeniPortalEmptyStateComponent, PortalPageComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 
 @Component({
   selector: "app-queue",
   standalone: true,
-  imports: [PortalPageComponent, FormsModule, AdeniCarbonIconComponent],
+  imports: [PortalPageComponent, FormsModule, AdeniCarbonIconComponent, AdeniPortalEmptyStateComponent],
   templateUrl: "./queue.component.html",
   styleUrl: "./queue.component.scss",
 })
