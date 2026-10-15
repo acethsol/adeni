@@ -517,6 +517,9 @@ export class PortalShellComponent {
     return PORTAL_NAV_GROUPS.map((group) => ({
       ...group,
       items: group.items.filter((item) => {
+        if (item.shellHidden) {
+          return false;
+        }
         if (item.unregisteredOnly) {
           return this.profileLoaded() && !profile;
         }

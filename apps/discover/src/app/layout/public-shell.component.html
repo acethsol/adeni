@@ -1,5 +1,6 @@
 <app-market-geo-sync />
-<div class="shell">
+<div class="shell" [class.kiosk]="kioskLayout()">
+  @if (!kioskLayout()) {
   <header
     class="header"
     [class.pinned]="headerCompact()"
@@ -40,10 +41,13 @@
     </div>
     <span class="header-accent" aria-hidden="true"></span>
   </header>
-  <main [class.flush]="flushLayout()">
+  }
+  <main [class.flush]="flushLayout() || kioskLayout()">
     <router-outlet />
   </main>
-  <app-public-footer />
+  @if (!kioskLayout()) {
+    <app-public-footer />
+  }
   <adeni-global-loading-panel />
   <adeni-toast-host />
   <adeni-confirm-host />

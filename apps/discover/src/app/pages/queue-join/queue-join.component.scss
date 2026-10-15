@@ -1,69 +1,103 @@
 .queue-page {
   min-height: 100vh;
-  padding: 2.5rem 1.25rem 3rem;
+  padding: var(--cds-spacing-08) var(--cds-spacing-06) var(--cds-spacing-09);
   max-width: 28rem;
   margin: 0 auto;
-  background:
-    radial-gradient(100% 70% at 90% 0%, rgba(20, 90, 70, 0.14), transparent 50%),
-    linear-gradient(180deg, #f3efe8 0%, #e5dfd4 100%);
-  color: #1c1a17;
-  font-family: "Source Serif 4", Georgia, serif;
+  background: var(--bg-subtle);
+  color: var(--text);
+  font-family: var(--font-family-sans);
 }
 
 .brand {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 600;
-  margin: 0 0 0.35rem;
+  margin: 0 0 var(--cds-spacing-02);
+  color: var(--interactive);
 }
 
 h1 {
   margin: 0;
   font-size: 1.35rem;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .form {
   display: grid;
-  gap: 1rem;
-  margin-top: 1.75rem;
+  gap: var(--cds-spacing-05);
+  margin-top: var(--cds-spacing-07);
 }
 
 label {
   display: grid;
-  gap: 0.35rem;
-  font-size: 0.95rem;
+  gap: var(--cds-spacing-02);
+  font-size: var(--cds-body-compact-01-size);
+  font-weight: 600;
+  color: var(--text-muted);
 }
 
 input,
 select {
-  padding: 0.65rem 0.75rem;
-  border: 1px solid rgba(28, 26, 23, 0.2);
-  border-radius: 2px;
-  background: #fffdf9;
+  min-height: 2.75rem;
+  padding: 0 var(--cds-spacing-04);
+  border: none;
+  border-bottom: 1px solid var(--cds-border-strong);
+  border-radius: var(--cds-radius-none);
+  background: var(--cds-field-01, var(--surface));
   font: inherit;
+  color: var(--text);
 }
 
 .btn {
-  display: inline-block;
-  margin-top: 0.5rem;
-  padding: 0.75rem 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: var(--cds-spacing-03);
+  min-height: 3rem;
+  padding: 0 var(--cds-spacing-05);
   border: 0;
-  background: #145a46;
-  color: #f7f4ef;
+  border-radius: var(--cds-radius-none);
+  background: var(--interactive);
+  color: #fff;
   text-decoration: none;
   text-align: center;
   cursor: pointer;
   font: inherit;
+  font-weight: 600;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: default;
 }
 
 .muted {
-  color: rgba(28, 26, 23, 0.65);
+  color: var(--text-muted);
 }
 
 .error {
-  color: #8a1f1f;
+  color: var(--cds-support-error);
 }
 
 .status {
-  margin: 1.5rem 0;
+  margin: var(--cds-spacing-06) 0;
+}
+
+.queue-page.kiosk {
+  max-width: 34rem;
+  padding: var(--cds-spacing-09) var(--cds-spacing-06) var(--cds-spacing-10);
+}
+
+.queue-page.kiosk .brand {
+  font-size: clamp(1.75rem, 5vw, 2.25rem);
+}
+
+.queue-page.kiosk h1 {
+  font-size: 1.5rem;
+}
+
+.queue-page.kiosk input,
+.queue-page.kiosk select,
+.queue-page.kiosk .btn {
+  min-height: 3.25rem;
+  font-size: 1.05rem;
 }

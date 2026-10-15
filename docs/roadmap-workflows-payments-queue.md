@@ -220,7 +220,7 @@ Walk-in queue     ───┘
 
 
 3. **Sprint 29 — Queue v1** — join, board, call next, no-show, ETA — [spec](./specs/sprint-29-queue-v1.md) ✅  
-4. **Sprint 30 — Kiosk mode** — mobile fullscreen check-in shell  
+4. **Sprint 30 — Check-in kiosk** — portal fullscreen arrival check-in + exit PIN — [spec](./specs/sprint-30-kiosk-mode.md) ✅  
 5. **POS bridge v1** — Square paid-status sync + external reference  
 
 Each slice gets its own `docs/specs/sprint-XX-*.md` before implementation.

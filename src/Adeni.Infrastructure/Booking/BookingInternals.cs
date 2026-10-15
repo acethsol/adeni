@@ -187,7 +187,9 @@ internal static class BookingMapper
         string serviceName,
         string? staffDisplayName = null,
         string? currency = null,
-        decimal? remainingBalanceAmount = null) =>
+        decimal? remainingBalanceAmount = null,
+        string? customerName = null,
+        string? customerPhoneMasked = null) =>
         new(
             entity.Id,
             entity.TenantId,
@@ -211,7 +213,9 @@ internal static class BookingMapper
                 : entity.SettlementSource.ToString(),
             entity.PaidAt,
             entity.ExternalPaymentReference,
-            remainingBalanceAmount);
+            remainingBalanceAmount,
+            customerName,
+            customerPhoneMasked);
 
     public static CustomerBookingResponse ToCustomerResponse(
         BookingRecord entity,

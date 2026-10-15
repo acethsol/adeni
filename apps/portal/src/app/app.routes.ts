@@ -3,6 +3,7 @@ import { PortalShellComponent } from "./layout/portal-shell.component";
 import { DashboardComponent } from "./pages/dashboard/dashboard.component";
 import { BookingsComponent } from "./pages/bookings/bookings.component";
 import { QueueComponent } from "./pages/queue/queue.component";
+import { KioskComponent } from "./pages/kiosk/kiosk.component";
 import { ServicesComponent } from "./pages/services/services.component";
 import { StaffComponent } from "./pages/staff/staff.component";
 import { StaffCalendarComponent } from "./pages/staff/staff-calendar.component";
@@ -28,6 +29,12 @@ export const routes: Routes = [
   { path: "setup", component: SetupComponent, title: "Setup" },
   { path: "forbidden", component: ForbiddenComponent, title: "Access denied" },
   { path: "accept-invite", component: AcceptInviteComponent, title: "Accept invite" },
+  {
+    path: "kiosk",
+    component: KioskComponent,
+    title: "Kiosk",
+    canActivate: [portalAccessGuard, businessAuthGuard, portalPermissionGuard],
+  },
   {
     path: "",
     canActivate: [portalAccessGuard, businessAuthGuard],

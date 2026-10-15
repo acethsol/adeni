@@ -483,6 +483,8 @@ export const bookingResponseSchema = z.object({
   paidAt: z.string().nullable().optional(),
   externalPaymentReference: z.string().nullable().optional(),
   remainingBalanceAmount: z.number().nullable().optional(),
+  customerName: z.string().nullable().optional(),
+  customerPhoneMasked: z.string().nullable().optional(),
 });
 
 export type BookingResponse = z.infer<typeof bookingResponseSchema>;
@@ -1155,6 +1157,32 @@ export const staffAddQueueRequestSchema = joinQueueRequestSchema.extend({
 });
 
 export type StaffAddQueueRequest = z.infer<typeof staffAddQueueRequestSchema>;
+
+export const kioskStatusResponseSchema = z.object({
+  hasPin: z.boolean(),
+  slug: z.string().nullable().optional(),
+  queueEnabled: z.boolean(),
+});
+
+export type KioskStatusResponse = z.infer<typeof kioskStatusResponseSchema>;
+
+export const setKioskPinRequestSchema = z.object({
+  pin: z.string().regex(/^\d{4,8}$/).nullable(),
+});
+
+export type SetKioskPinRequest = z.infer<typeof setKioskPinRequestSchema>;
+
+export const verifyKioskPinRequestSchema = z.object({
+  pin: z.string().min(1).max(8),
+});
+
+export type VerifyKioskPinRequest = z.infer<typeof verifyKioskPinRequestSchema>;
+
+export const verifyKioskPinResponseSchema = z.object({
+  ok: z.boolean(),
+});
+
+export type VerifyKioskPinResponse = z.infer<typeof verifyKioskPinResponseSchema>;
 
 export const initializePaymentRequestSchema = z.object({
   tenantId: z.string().uuid(),

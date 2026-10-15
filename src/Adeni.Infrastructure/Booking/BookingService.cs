@@ -5,6 +5,7 @@ using Adeni.Application.Caching;
 using Adeni.Application.Common;
 using Adeni.Application.Events;
 using Adeni.Application.Payments;
+using Adeni.Application.Security;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Booking.Events;
@@ -348,6 +349,10 @@ public sealed class BookingService(
             : await dbContext.StaffMembers.AsNoTracking()
                 .Where(x => staffIds.Contains(x.Id))
                 .ToDictionaryAsync(x => x.Id, x => x.DisplayName, cancellationToken);
+        var customerIds = bookings.Select(x => x.CustomerId).Distinct().ToArray();
+        var customers = await dbContext.Customers.AsNoTracking()
+            .Where(x => customerIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, cancellationToken);
 
         return bookings
             .Select(booking =>
@@ -362,7 +367,19 @@ public sealed class BookingService(
                     staffNames.TryGetValue(sid, out staffName);
                 }
 
-                return BookingMapper.ToResponse(booking, name, staffName, service?.Currency);
+                customers.TryGetValue(booking.CustomerId, out var customer);
+                var guestName = booking.Guests?
+                    .OrderBy(x => x.SortOrder)
+                    .Select(x => x.DisplayName)
+                    .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
+
+                return BookingMapper.ToResponse(
+                    booking,
+                    name,
+                    staffName,
+                    service?.Currency,
+                    customerName: guestName ?? customer?.Name,
+                    customerPhoneMasked: PiiMasker.MaskPhone(customer?.Phone));
             })
             .ToArray();
     }

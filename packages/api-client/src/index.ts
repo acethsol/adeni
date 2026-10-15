@@ -63,6 +63,10 @@ import {
   queueTicketResponseSchema,
   queueTicketsResponseSchema,
   staffAddQueueRequestSchema,
+  kioskStatusResponseSchema,
+  setKioskPinRequestSchema,
+  verifyKioskPinRequestSchema,
+  verifyKioskPinResponseSchema,
   initializePaymentRequestSchema,
   paymentIntentResponseSchema,
   createPaymentLinkRequestSchema,
@@ -176,6 +180,8 @@ import {
   type JoinQueueRequest,
   type QueueTicketResponse,
   type StaffAddQueueRequest,
+  type KioskStatusResponse,
+  type VerifyKioskPinResponse,
   type InitializePaymentRequest,
   type PaymentIntentResponse,
   type CreatePaymentLinkRequest,
@@ -884,6 +890,31 @@ export class AdeniApiClient {
       { method: "POST" },
     );
     return queueTicketResponseSchema.parse(await response.json());
+  }
+
+  async getTenantKioskStatus(): Promise<KioskStatusResponse> {
+    const response = await this.request("/api/v1/tenant/kiosk/status");
+    return kioskStatusResponseSchema.parse(await response.json());
+  }
+
+  async setTenantKioskPin(pin: string | null): Promise<KioskStatusResponse> {
+    const body = setKioskPinRequestSchema.parse({ pin });
+    const response = await this.request("/api/v1/tenant/kiosk/pin", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return kioskStatusResponseSchema.parse(await response.json());
+  }
+
+  async verifyTenantKioskPin(pin: string): Promise<VerifyKioskPinResponse> {
+    const body = verifyKioskPinRequestSchema.parse({ pin });
+    const response = await this.request("/api/v1/tenant/kiosk/verify-pin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return verifyKioskPinResponseSchema.parse(await response.json());
   }
 
   async initializePayment(

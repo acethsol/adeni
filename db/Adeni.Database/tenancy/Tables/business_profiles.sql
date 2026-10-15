@@ -23,6 +23,7 @@ CREATE TABLE [tenancy].[business_profiles] (
     [PolicyTermsText]         NVARCHAR (MAX)     NULL,
     [RequirePolicyAcceptance] BIT                NOT NULL,
     [FaqAutoResponderEnabled] BIT                NOT NULL,
+    [KioskExitPinHash]        NVARCHAR (64)      NULL,
     [UpdatedAt]               DATETIMEOFFSET (7) NOT NULL,
     CONSTRAINT [PK_business_profiles] PRIMARY KEY CLUSTERED ([TenantId] ASC),
     CONSTRAINT [FK_business_profiles_tenants_TenantId] FOREIGN KEY ([TenantId]) REFERENCES [tenancy].[tenants] ([Id]) ON DELETE CASCADE

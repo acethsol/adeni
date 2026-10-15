@@ -56,6 +56,7 @@ export class PublicShellComponent implements OnInit {
   readonly homeLayout = signal(this.isHome(this.router.url));
   readonly exploreLayout = signal(this.isExplore(this.router.url));
   readonly flushLayout = signal(this.isFlush(this.router.url));
+  readonly kioskLayout = signal(this.isKiosk(this.router.url));
   readonly searchPinned = this.heroPin.pinned;
   readonly searchQuery = signal(this.readSearchQuery(this.router.url));
   readonly showHeaderSearch = computed(
@@ -97,11 +98,23 @@ export class PublicShellComponent implements OnInit {
     this.homeLayout.set(this.isHome(this.router.url));
     this.exploreLayout.set(this.isExplore(this.router.url));
     this.flushLayout.set(this.isFlush(this.router.url));
+    this.kioskLayout.set(this.isKiosk(this.router.url));
     this.searchQuery.set(this.readSearchQuery(this.router.url));
     const market = this.router.parseUrl(this.router.url).queryParams["market"];
     if (typeof market === "string" && market.trim()) {
       this.market.applyMarketQueryParam(market);
     }
+  }
+
+  private isKiosk(url: string): boolean {
+    const tree = this.router.parseUrl(url);
+    const primary = tree.root.children["primary"];
+    const first = primary?.segments[0]?.path;
+    if (first !== "q") {
+      return false;
+    }
+    const kiosk = tree.queryParams["kiosk"];
+    return kiosk === "1" || kiosk === "true";
   }
 
   private isHome(url: string): boolean {

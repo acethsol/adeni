@@ -22,13 +22,24 @@ export class QueueJoinComponent implements OnInit {
   readonly business = signal<PublicBusinessProfile | null>(null);
   readonly services = signal<ServiceOffering[]>([]);
   readonly ticket = signal<QueueTicketResponse | null>(null);
+  readonly kioskMode = signal(false);
 
   displayName = "";
   phone = "";
   serviceOfferingId = "";
 
   ngOnInit(): void {
+    const kiosk = this.route.snapshot.queryParamMap.get("kiosk");
+    this.kioskMode.set(kiosk === "1" || kiosk === "true");
     void this.load();
+  }
+
+  joinAnother(): void {
+    this.ticket.set(null);
+    this.displayName = "";
+    this.phone = "";
+    this.serviceOfferingId = "";
+    this.error.set(null);
   }
 
   async load(): Promise<void> {

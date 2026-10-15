@@ -141,6 +141,7 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.PolicyPaymentText).HasMaxLength(8000);
             entity.Property(x => x.PolicyCancellationText).HasMaxLength(8000);
             entity.Property(x => x.PolicyTermsText).HasMaxLength(8000);
+            entity.Property(x => x.KioskExitPinHash).HasMaxLength(64);
             entity.Property(x => x.BusinessType).HasConversion<int>();
             entity.HasOne(x => x.Tenant).WithOne().HasForeignKey<BusinessProfile>(x => x.TenantId);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);

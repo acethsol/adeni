@@ -1,4 +1,4 @@
-<main class="queue-page">
+<main class="queue-page" [class.kiosk]="kioskMode()">
   @if (loading()) {
     <p class="muted">Loading…</p>
   } @else if (ticket(); as t) {
@@ -8,7 +8,11 @@
       <p class="muted">Position {{ t.position }}@if (t.etaMinutes != null) { · about {{ t.etaMinutes }} min}</p>
     </header>
     <p class="status">We'll notify you when you're up. Keep this page or ask the front desk.</p>
-    <a class="btn" routerLink="/">Back home</a>
+    @if (kioskMode()) {
+      <button type="button" class="btn" (click)="joinAnother()">Join another guest</button>
+    } @else {
+      <a class="btn" routerLink="/">Back home</a>
+    }
   } @else if (business(); as biz) {
     <header>
       <p class="brand">{{ biz.name }}</p>
