@@ -234,17 +234,20 @@ public sealed class TenantDashboardService(
         Guid? staffMemberId,
         CancellationToken cancellationToken)
     {
-        var rows = await ScopedBookings(tenantId, staffMemberId)
+        var startTimes = await ScopedBookings(tenantId, staffMemberId)
             .Where(x =>
                 x.StartAt >= from
                 && x.StartAt < to
                 && x.Status != BookingStatus.Cancelled
                 && x.Status != BookingStatus.Rejected)
-            .GroupBy(x => DateOnly.FromDateTime(x.StartAt.UtcDateTime))
-            .Select(g => new { Date = g.Key, Count = g.Count() })
+            .Select(x => x.StartAt)
             .ToListAsync(cancellationToken);
 
-        return FillDailyPoints(from, to, rows.ToDictionary(x => x.Date, x => (decimal)x.Count));
+        var byDay = startTimes
+            .GroupBy(x => DateOnly.FromDateTime(x.UtcDateTime))
+            .ToDictionary(g => g.Key, g => (decimal)g.Count());
+
+        return FillDailyPoints(from, to, byDay);
     }
 
     private async Task<(IReadOnlyList<TenantDashboardSeriesPoint> Points, string? Currency)> BuildCollectedSeriesAsync(
@@ -253,15 +256,19 @@ public sealed class TenantDashboardService(
         DateTimeOffset to,
         CancellationToken cancellationToken)
     {
-        var rows = await dbContext.PaymentIntents.AsNoTracking()
+        var payments = await dbContext.PaymentIntents.AsNoTracking()
             .Where(x =>
                 x.TenantId == tenantId
                 && x.Status == PaymentIntentStatus.Completed
                 && x.UpdatedAt >= from
                 && x.UpdatedAt < to)
+            .Select(x => new { x.UpdatedAt, x.Amount })
+            .ToListAsync(cancellationToken);
+
+        var rows = payments
             .GroupBy(x => DateOnly.FromDateTime(x.UpdatedAt.UtcDateTime))
             .Select(g => new { Date = g.Key, Total = g.Sum(x => x.Amount) })
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         var currency = await dbContext.PaymentIntents.AsNoTracking()
             .Where(x =>
@@ -284,7 +291,7 @@ public sealed class TenantDashboardService(
         Guid? staffMemberId,
         CancellationToken cancellationToken)
     {
-        var bookingIds = await ScopedBookings(tenantId, staffMemberId)
+        var bookingsInRange = await ScopedBookings(tenantId, staffMemberId)
             .Where(x =>
                 x.StartAt >= from
                 && x.StartAt < to
@@ -292,8 +299,12 @@ public sealed class TenantDashboardService(
                     || x.Status == BookingStatus.CheckedIn
                     || x.Status == BookingStatus.Completed
                     || x.Status == BookingStatus.Paid))
-            .Select(x => new { x.Id, Date = DateOnly.FromDateTime(x.StartAt.UtcDateTime) })
+            .Select(x => new { x.Id, x.StartAt })
             .ToListAsync(cancellationToken);
+
+        var bookingIds = bookingsInRange
+            .Select(x => new { x.Id, Date = DateOnly.FromDateTime(x.StartAt.UtcDateTime) })
+            .ToList();
 
         if (bookingIds.Count == 0)
         {

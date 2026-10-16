@@ -176,6 +176,7 @@ public static class DevelopmentDataSeeder
         await EnsureGalleryPhotosAsync(db, cancellationToken);
         await EnsureDevBusinessLogoAsync(db, cancellationToken);
         await SeedDevBusinessOwnerAsync(db, cancellationToken);
+        await EnsureDevPortalTenantBillingAsync(db, cancellationToken);
         await SeedDevStaffInviteAsync(db, cancellationToken);
         await SeedDevDepositSettingsAsync(db, cancellationToken);
         await SeedDevReviewFixtureAsync(db, cancellationToken);
@@ -636,6 +637,48 @@ public static class DevelopmentDataSeeder
             CreatedAt = DateTimeOffset.UtcNow,
         });
 
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Local portal owner (auth0|local-business) should see Professional trial entitlements, not legacy Free.
+    /// </summary>
+    private static async Task EnsureDevPortalTenantBillingAsync(
+        AdeniDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var owner = await db.BusinessUsers
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(user => user.Auth0Sub == DevBusinessAuth0Sub, cancellationToken);
+
+        if (owner is null)
+        {
+            return;
+        }
+
+        var tenant = await db.Tenants
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(entry => entry.Id == owner.TenantId, cancellationToken);
+
+        if (tenant is null)
+        {
+            return;
+        }
+
+        if (TenantBillingPolicy.ResolveEffectiveSku(tenant) == SubscriptionSku.Professional)
+        {
+            return;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        tenant.SubscriptionSku = SubscriptionSku.Professional;
+        TenantBillingPolicy.GrantTrial(
+            tenant,
+            TenantBillingDefaults.DefaultTrialDays,
+            SubscriptionSku.Professional,
+            now);
+        TenantBillingPolicy.ApplySkuToLegacyTier(tenant);
         await db.SaveChangesAsync(cancellationToken);
     }
 

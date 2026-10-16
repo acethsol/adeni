@@ -1,6 +1,6 @@
 import catalog from "./data/country-pricing.json";
 import { formatPrice } from "./format";
-import type { SubscriptionTier } from "./schemas";
+import type { SubscriptionTier, SubscriptionUsage } from "./schemas";
 import { z } from "zod";
 
 export const SUBSCRIPTION_SKUS = ["starter", "professional", "business"] as const;
@@ -17,6 +17,16 @@ export function formatSubscriptionSku(sku: SubscriptionSku | null | undefined): 
     return "—";
   }
   return SUBSCRIPTION_SKU_LABELS[sku] ?? sku;
+}
+
+/** Dashboard / plan strip — SKU names (Starter, Professional), not legacy “free”. */
+export function formatSubscriptionPlanLabel(usage: SubscriptionUsage): string {
+  const sku = resolveSubscriptionSku(usage.subscriptionSku, usage.tier);
+  const base = SUBSCRIPTION_SKU_LABELS[sku];
+  if (usage.billingStatus === "trialing") {
+    return `${base} trial`;
+  }
+  return base;
 }
 
 /** Prefer stored SKU; fall back to legacy display tier mapping. */

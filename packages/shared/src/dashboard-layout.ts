@@ -47,11 +47,15 @@ export type DashboardWidgetDefinition = {
 
 export const DASHBOARD_WIDGET_DEFINITIONS: DashboardWidgetDefinition[] = [
   { id: "plan_usage", title: "Plan & usage", ownerOnly: true },
-  { id: "kpis_row", title: "Key numbers" },
-  { id: "today_schedule", title: "Today's chair", requiredCapabilities: ["calendar"] },
+  { id: "kpis_row", title: "Overview" },
+  { id: "today_schedule", title: "Today's schedule", requiredCapabilities: ["calendar"] },
   { id: "pending_inbox", title: "Needs response", requiredCapabilities: ["calendar"], requiredPortalPermissions: ["portal.bookings"] },
   { id: "week_appointments", title: "Appointments over time", requiredCapabilities: ["calendar"] },
-  { id: "booking_mix", title: "Booking mix", requiredCapabilities: ["calendar"] },
+  {
+    id: "booking_mix",
+    title: "Booking mix",
+    requiredCapabilities: ["calendar"],
+  },
   { id: "collected_revenue", title: "Collected", requiredEntitlements: ["analytics"], requiredCapabilities: ["deposits"], ownerOnly: true },
   { id: "booked_value", title: "Booked value", requiredEntitlements: ["analytics"], ownerOnly: true },
   { id: "service_mix", title: "Top services", requiredEntitlements: ["analytics"], ownerOnly: true },
@@ -87,9 +91,8 @@ export const DEFAULT_OWNER_DASHBOARD_LAYOUT: DashboardLayout = {
     { id: "kpis_row", w: 12 },
     { id: "week_appointments", w: 8 },
     { id: "today_schedule", w: 4 },
-    { id: "booking_mix", w: 12 },
-    { id: "service_mix", w: 12 },
-    { id: "quick_actions", w: 12 },
+    { id: "booking_mix", w: 6 },
+    { id: "service_mix", w: 6 },
   ],
 };
 
@@ -100,7 +103,6 @@ export const DEFAULT_PRACTITIONER_DASHBOARD_LAYOUT: DashboardLayout = {
     { id: "kpis_row", w: 12 },
     { id: "today_schedule", w: 12 },
     { id: "week_appointments", w: 12 },
-    { id: "quick_actions", w: 12 },
   ],
 };
 

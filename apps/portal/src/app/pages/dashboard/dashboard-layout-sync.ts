@@ -38,8 +38,13 @@ export async function resolveDashboardLayoutFromApi(
   practitioner: boolean,
 ): Promise<DashboardLayout> {
   const fallback = resolveDashboardLayout(practitioner);
-  const fromApi = apiLayoutToDashboardLayout(await fetchLayout());
-  let layout = coerceDashboardLayout(fromApi, fallback);
+  let layout = fallback;
+  try {
+    const fromApi = apiLayoutToDashboardLayout(await fetchLayout());
+    layout = coerceDashboardLayout(fromApi, fallback);
+  } catch {
+    layout = cloneDashboardLayout(fallback);
+  }
 
   const legacy = loadLegacyDashboardLayout(tenantId, practitioner);
   if (!layoutsEqual(legacy, fallback) && layoutsEqual(layout, fallback)) {

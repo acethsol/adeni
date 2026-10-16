@@ -160,12 +160,56 @@
   font-size: 0.875rem;
 }
 
+.workflow-hints {
+  display: grid;
+  gap: var(--cds-spacing-04);
+  margin-bottom: var(--cds-spacing-05);
+}
+
+@media (min-width: 48rem) {
+  .workflow-hints {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.workflow-hint-item {
+  display: flex;
+  gap: var(--cds-spacing-04);
+  align-items: flex-start;
+  padding: var(--cds-spacing-04) var(--cds-spacing-05);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--text) 3%, var(--surface));
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.workflow-hint-item adeni-carbon-icon {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+  color: var(--interactive, #7f56ff);
+}
+
+.workflow-hint-item strong {
+  display: block;
+  margin-bottom: 0.2rem;
+  font-size: 0.875rem;
+  color: var(--text);
+}
+
+.workflow-hint-item p {
+  margin: 0;
+}
+
+/* Legacy single-block hint (pending, trust badges, businesses) */
 .workflow-hint {
   margin-bottom: var(--cds-spacing-05);
   padding: var(--cds-spacing-04) var(--cds-spacing-05);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: var(--text-muted);
   line-height: 1.45;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--text) 3%, var(--surface));
 }
 
 .workflow-hint strong {

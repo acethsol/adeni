@@ -11,6 +11,7 @@ export type AdeniStaffButtonIconPosition = "start" | "end";
   selector: "adeni-staff-btn",
   standalone: true,
   imports: [AdeniCarbonIconComponent, RouterLink],
+  styleUrl: "./adeni-staff-button.component.scss",
   template: `
     @if (routerLink(); as link) {
       <a [class]="hostClass()" [routerLink]="link" [queryParams]="queryParams() ?? undefined">
@@ -37,12 +38,6 @@ export type AdeniStaffButtonIconPosition = "start" | "end";
           <adeni-carbon-icon [name]="icon()" [size]="16" />
         }
       </button>
-    }
-  `,
-  styles: `
-    :host {
-      display: inline-flex;
-      max-width: 100%;
     }
   `,
 })

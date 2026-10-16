@@ -12,7 +12,12 @@ import {
   resolveSubscriptionSku,
   type SubscriptionTier,
 } from "@adeni/shared";
-import { AdeniFeedbackService } from "@adeni/ui";
+import {
+  AdeniCarbonIconComponent,
+  AdeniFeedbackService,
+  AdeniStaffButtonComponent,
+  PortalPageComponent,
+} from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 
 type LoadState = {
@@ -34,7 +39,7 @@ const TIER_LABELS: Record<SubscriptionTier, string> = {
 @Component({
   selector: "app-admin-dashboard",
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, PortalPageComponent, AdeniStaffButtonComponent, AdeniCarbonIconComponent],
   templateUrl: "./dashboard.component.html",
   styleUrl: "./dashboard.component.scss",
 })
@@ -91,6 +96,10 @@ export class AdminDashboardComponent implements OnInit {
   });
 
   readonly liveCount = computed(() => this.data()?.liveMarketCount ?? null);
+
+  readonly pageDescription = computed(
+    () => "Verification queue, markets, tenant directory, and SaaS billing at a glance.",
+  );
 
   readonly headline = computed(() => {
     const total = this.pendingTotal();

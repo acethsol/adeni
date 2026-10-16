@@ -9,7 +9,8 @@
     ".": "./src/index.ts",
     "./styles/staff-layout": "./src/styles/_staff-layout.scss",
     "./styles/tokens": "./src/styles/_carbon-adeni-tokens.scss",
-    "./styles/carbon-components": "./src/styles/_carbon-components.scss"
+    "./styles/carbon-components": "./src/styles/_carbon-components.scss",
+    "./styles/dashboard-shell": "./src/styles/_dashboard-shell.scss"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
@@ -26,9 +27,6 @@
     "@angular/router": "^22.2.0"
   },
   "devDependencies": {
-    "@angular/core": "^22.2.0",
-    "@angular/platform-browser": "^22.2.0",
-    "@angular/router": "^22.2.0",
     "typescript": "^5.8.2"
   }
 }

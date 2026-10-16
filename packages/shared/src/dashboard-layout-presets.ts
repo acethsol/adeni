@@ -22,7 +22,6 @@ const MANAGER_DASHBOARD_LAYOUT: DashboardLayout = {
     { id: "week_appointments", w: 8 },
     { id: "today_schedule", w: 4 },
     { id: "staff_leaderboard", w: 12 },
-    { id: "quick_actions", w: 12 },
   ],
 };
 
@@ -35,7 +34,6 @@ const FRONT_DESK_DASHBOARD_LAYOUT: DashboardLayout = {
     { id: "queue_now", w: 6 },
     { id: "today_schedule", w: 6 },
     { id: "quote_pipeline", w: 12 },
-    { id: "quick_actions", w: 12 },
   ],
 };
 

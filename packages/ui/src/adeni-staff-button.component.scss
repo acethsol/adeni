@@ -1,0 +1,10 @@
+@use "staff-layout" as *;
+
+:host {
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.btn-primary adeni-carbon-icon {
+  color: inherit;
+}

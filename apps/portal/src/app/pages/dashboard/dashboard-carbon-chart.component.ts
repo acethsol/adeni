@@ -24,7 +24,13 @@ export type DashboardCarbonChartKind = "bar" | "line" | "donut";
 
     .carbon-chart-holder {
       width: 100%;
-      min-height: 12rem;
+      min-height: 13.5rem;
+    }
+
+    .carbon-chart-holder :global(.cds--chart-holder),
+    .carbon-chart-holder :global(.layout-child),
+    .carbon-chart-holder :global(svg.layout-svg-wrapper) {
+      background: transparent !important;
     }
   `,
 })
@@ -55,6 +61,13 @@ export class DashboardCarbonChartComponent implements AfterViewInit, OnDestroy {
     this.chart = null;
   }
 
+  private resolveChartTheme(): "g10" | "g100" {
+    if (typeof document === "undefined") {
+      return "g10";
+    }
+    return document.documentElement.getAttribute("data-theme") === "dark" ? "g100" : "g10";
+  }
+
   private renderChart(): void {
     const holder = this.holderRef()?.nativeElement;
     if (!holder) {
@@ -62,7 +75,14 @@ export class DashboardCarbonChartComponent implements AfterViewInit, OnDestroy {
     }
 
     const rows = this.data();
-    const options = {
+    const theme = this.resolveChartTheme();
+    const colorScale = {
+      Appointments: "#7f56ff",
+      Collected: "#13c2a3",
+      Booked: "#13c2a3",
+      Bookings: "#7f56ff",
+    };
+    const barOptions = {
       title: "",
       axes: {
         bottom: {
@@ -74,17 +94,27 @@ export class DashboardCarbonChartComponent implements AfterViewInit, OnDestroy {
           scaleType: ScaleTypes.LINEAR,
         },
       },
-      height: "220px",
-      theme: "white",
+      height: "240px",
+      theme,
+      color: { scale: colorScale },
+      grid: {
+        x: { enabled: false },
+        y: { enabled: true, numberOfTicks: 4 },
+      },
       legend: { enabled: false },
       toolbar: { enabled: false },
+    };
+    const lineOptions = {
+      ...barOptions,
+      height: "220px",
+      grid: { x: { enabled: false }, y: { enabled: true } },
     };
 
     this.chart?.destroy();
 
     switch (this.kind()) {
       case "line":
-        this.chart = new LineChart(holder, { data: rows, options });
+        this.chart = new LineChart(holder, { data: rows, options: lineOptions });
         break;
       case "donut":
         this.chart = new DonutChart(holder, {
@@ -92,14 +122,19 @@ export class DashboardCarbonChartComponent implements AfterViewInit, OnDestroy {
           options: {
             title: "",
             height: "220px",
-            theme: "white",
+            theme,
+            color: {
+              pairing: {
+                option: 2,
+              },
+            },
             legend: { alignment: "center" },
             toolbar: { enabled: false },
           },
         });
         break;
       default:
-        this.chart = new SimpleBarChart(holder, { data: rows, options });
+        this.chart = new SimpleBarChart(holder, { data: rows, options: barOptions });
         break;
     }
   }

@@ -2,17 +2,28 @@
   title="Markets"
   description="Discovery cities and regions. Live markets appear in the public catalog; offline markets keep existing businesses but hide from new discovery."
 >
-  <aside class="workflow-hint card">
-    <strong>What changes when you…</strong>
-    <ul>
-      <li>
-        <strong>Take offline</strong> — Market drops from live discovery and market pickers; existing tenants and bookings stay tied to that market id.
-      </li>
-      <li>
-        <strong>Add a market</strong> — Creates catalog metadata (country, currency, map center). Businesses must still choose the market on their location; go live when ready for discovery.
-      </li>
-    </ul>
-  </aside>
+  <section class="workflow-hints" aria-label="Market actions">
+    <article class="workflow-hint-item">
+      <adeni-carbon-icon name="misuse" [size]="18" />
+      <div>
+        <strong>Take offline</strong>
+        <p>
+          Removes the market from discovery and pickers. Existing tenants and bookings keep the same
+          market id.
+        </p>
+      </div>
+    </article>
+    <article class="workflow-hint-item">
+      <adeni-carbon-icon name="add" [size]="18" />
+      <div>
+        <strong>Add a market</strong>
+        <p>
+          Creates catalog metadata (country, currency, map center). Businesses choose the market on
+          each location; go live when ready for discovery.
+        </p>
+      </div>
+    </article>
+  </section>
 
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>

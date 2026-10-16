@@ -23,41 +23,44 @@
             <div class="nav-divider" aria-hidden="true"></div>
           }
           @for (item of group.items; track item.path) {
-            <a
-              class="nav-link"
-              [routerLink]="item.path"
-              routerLinkActive="active"
-              ariaCurrentWhenActive="page"
-              [routerLinkActiveOptions]="{ exact: !!item.exact }"
-              [attr.title]="collapsed() ? navLabel(item) : null"
-              [attr.aria-label]="navLabel(item)"
-              [attr.data-label]="collapsed() ? navLabel(item) : null"
-            >
-              <span class="nav-ico" aria-hidden="true">
-                <app-portal-nav-icon [name]="item.icon" />
-              </span>
-              <span class="nav-label">{{ navLabel(item) }}</span>
-              @if (badgeCount(item); as count) {
-                <span class="nav-count" aria-hidden="true">{{ count > 9 ? "9+" : count }}</span>
-              }
-            </a>
+            @if (item.openDiscover) {
+              <a
+                class="nav-link nav-external"
+                [href]="discoverUrl()"
+                target="_blank"
+                rel="noopener"
+                [attr.title]="collapsed() ? discoverNavHint() : discoverNavHint()"
+                [attr.aria-label]="navLabel(item)"
+                [attr.data-label]="collapsed() ? navLabel(item) : null"
+              >
+                <span class="nav-ico" aria-hidden="true">
+                  <app-portal-nav-icon [name]="item.icon" />
+                </span>
+                <span class="nav-label">{{ navLabel(item) }}</span>
+              </a>
+            } @else {
+              <a
+                class="nav-link"
+                [routerLink]="item.path"
+                routerLinkActive="active"
+                ariaCurrentWhenActive="page"
+                [routerLinkActiveOptions]="{ exact: !!item.exact }"
+                [attr.title]="collapsed() ? navLabel(item) : null"
+                [attr.aria-label]="navLabel(item)"
+                [attr.data-label]="collapsed() ? navLabel(item) : null"
+              >
+                <span class="nav-ico" aria-hidden="true">
+                  <app-portal-nav-icon [name]="item.icon" />
+                </span>
+                <span class="nav-label">{{ navLabel(item) }}</span>
+                @if (badgeCount(item); as count) {
+                  <span class="nav-count" aria-hidden="true">{{ count > 9 ? "9+" : count }}</span>
+                }
+              </a>
+            }
           }
         </div>
       }
-      <a
-        class="nav-link nav-external"
-        [href]="discoverUrl()"
-        target="_blank"
-        rel="noopener"
-        [attr.title]="collapsed() ? text('marketplace') : null"
-        [attr.aria-label]="text('marketplace')"
-        [attr.data-label]="collapsed() ? text('marketplace') : null"
-      >
-        <span class="nav-ico" aria-hidden="true">
-          <app-portal-nav-icon name="launch" />
-        </span>
-        <span class="nav-label">{{ text("marketplace") }}</span>
-      </a>
     </nav>
 
     <div class="sidebar-foot">

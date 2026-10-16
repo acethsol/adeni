@@ -42,6 +42,8 @@ export type PortalNavItem = {
   path: string;
   label: string;
   icon: PortalNavIconName;
+  /** Opens the public Discover app in a new tab (browse as a customer). */
+  openDiscover?: boolean;
   exact?: boolean;
   capability?: Capability;
   /** Subscription plan — hide route when not entitled (API enforces the same). */
@@ -91,6 +93,12 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
           { id: "upcoming", label: "Upcoming" },
           { id: "past", label: "Past" },
         ],
+      },
+      {
+        path: "/customers",
+        label: "Customers",
+        icon: "customers",
+        permission: ["portal.bookings", "portal.bookings.self"],
       },
       {
         path: "/queue",
@@ -145,9 +153,16 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
   },
   {
     id: "listing",
-    label: "Your business",
+    label: "Setup",
     items: [
       { path: "/services", label: "Services", icon: "services", permission: "portal.services" },
+      {
+        path: "/availability",
+        label: "Hours",
+        icon: "availability",
+        capability: "calendar",
+        permission: "portal.hours",
+      },
       {
         path: "/staff",
         label: "Staff",
@@ -156,26 +171,7 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         entitlement: "staffManagement",
         permission: "portal.staff",
       },
-      {
-        path: "/customers",
-        label: "Customers",
-        icon: "customers",
-        permission: ["portal.bookings", "portal.bookings.self"],
-      },
-      {
-        path: "/availability",
-        label: "Hours",
-        icon: "availability",
-        capability: "calendar",
-        permission: "portal.hours",
-      },
       { path: "/locations", label: "Locations", icon: "locations", permission: "portal.locations" },
-      {
-        path: "/public-page",
-        label: "Public page",
-        icon: "public",
-        permission: "portal.public_page",
-      },
     ],
   },
   {
@@ -195,15 +191,10 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         ],
       },
       {
-        path: "/payments",
-        label: "Payments",
-        icon: "payments",
-        capability: "deposits",
-        permission: "portal.payments",
-        tabs: [
-          { id: "links", label: "Links" },
-          { id: "ledger", label: "Ledger" },
-        ],
+        path: "/public-page",
+        label: "Public page",
+        icon: "public",
+        permission: "portal.public_page",
       },
       {
         path: "/settings",
@@ -217,7 +208,25 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
           { id: "messaging", label: "Messaging", entitlement: "messaging" },
         ],
       },
+      {
+        path: "/payments",
+        label: "Payments",
+        icon: "payments",
+        capability: "deposits",
+        permission: "portal.payments",
+        tabs: [
+          { id: "links", label: "Links" },
+          { id: "ledger", label: "Ledger" },
+        ],
+      },
       { path: "/plan", label: "Plan", icon: "plan", permission: "portal.plan" },
+      {
+        path: "/__discover",
+        label: "Discover",
+        icon: "launch",
+        openDiscover: true,
+        permission: "portal.overview",
+      },
     ],
   },
 ];

@@ -51,6 +51,7 @@ type ChromeKey =
   | "settings"
   | "jump"
   | "marketplace"
+  | "discoverHint"
   | "groupToday"
   | "groupListing"
   | "groupBusiness"
@@ -83,7 +84,8 @@ type ChromeKey =
   | "/register"
   | "/payments"
   | "/settings"
-  | "/plan";
+  | "/plan"
+  | "/__discover";
 
 const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
   en: {
@@ -96,9 +98,10 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     signOut: "Sign out",
     settings: "Settings",
     jump: "Jump to",
-    marketplace: "Marketplace",
+    marketplace: "Discover",
+    discoverHint: "Browse Adeni as customers see it (opens in a new tab)",
     groupToday: "Operations",
-    groupListing: "Your business",
+    groupListing: "Setup",
     groupBusiness: "Account",
     tabPending: "Pending",
     tabUpcoming: "Upcoming",
@@ -130,6 +133,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     "/payments": "Payments",
     "/settings": "Settings",
     "/plan": "Plan",
+    "/__discover": "Discover",
   },
   fr: {
     search: "Rechercher",
@@ -141,9 +145,10 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     signOut: "Se déconnecter",
     settings: "Paramètres",
     jump: "Aller à",
-    marketplace: "Place de marché",
+    marketplace: "Découvrir",
+    discoverHint: "Parcourir Adeni comme un client (nouvel onglet)",
     groupToday: "Opérations",
-    groupListing: "Votre entreprise",
+    groupListing: "Configuration",
     groupBusiness: "Compte",
     tabPending: "En attente",
     tabUpcoming: "À venir",
@@ -175,6 +180,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     "/payments": "Paiements",
     "/settings": "Paramètres",
     "/plan": "Forfait",
+    "/__discover": "Découvrir",
   },
 };
 
@@ -286,12 +292,12 @@ export class PortalShellComponent {
         path: item.path,
         icon: item.icon,
       }));
-    const marketplaceLabel = this.text("marketplace");
-    const marketplace =
-      !query || marketplaceLabel.toLowerCase().includes(query)
-        ? [{ id: "marketplace", label: marketplaceLabel, path: this.discoverUrl(), icon: "launch" as const, external: true }]
+    const discoverLabel = this.text("/__discover");
+    const discover =
+      !query || discoverLabel.toLowerCase().includes(query) || "discover".includes(query)
+        ? [{ id: "discover", label: discoverLabel, path: this.discoverUrl(), icon: "launch" as const, external: true }]
         : [];
-    return [...pages, ...marketplace].slice(0, 8);
+    return [...pages, ...discover].slice(0, 8);
   });
 
   constructor() {
@@ -424,6 +430,10 @@ export class PortalShellComponent {
 
   discoverUrl(): string {
     return this.config.discoverWebUrl;
+  }
+
+  discoverNavHint(): string {
+    return this.text("discoverHint");
   }
 
   @HostListener("document:click", ["$event"])

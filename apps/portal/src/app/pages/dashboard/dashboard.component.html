@@ -11,23 +11,22 @@
   <app-portal-page title="Dashboard" [description]="pageDescription()">
     <div pageActions class="page-toolbar">
       @if (editMode()) {
-        <button type="button" class="btn" (click)="openPicker()">
-          <adeni-carbon-icon name="add" [size]="16" />
-          Add widget
-        </button>
-        <button type="button" class="btn" (click)="resetLayoutDefault()">Reset layout</button>
-        <button type="button" class="btn btn-primary" (click)="finishCustomize()">Done</button>
+        <adeni-staff-btn icon="add" (pressed)="openPicker()">Add widget</adeni-staff-btn>
+        <adeni-staff-btn icon="restart" (pressed)="resetLayoutDefault()">Reset layout</adeni-staff-btn>
+        <adeni-staff-btn variant="primary" icon="checkmark" (pressed)="finishCustomize()">Done</adeni-staff-btn>
       } @else {
-        <button type="button" class="btn" (click)="toggleCustomize()">
-          <adeni-carbon-icon name="edit" [size]="16" />
-          Customize
-        </button>
-        <div class="range-toolbar">
+        <adeni-staff-btn icon="edit" (pressed)="toggleCustomize()">Customize</adeni-staff-btn>
+        <div
+          class="range-switcher cds-content-switcher"
+          role="tablist"
+          aria-label="Dashboard date range"
+        >
           @for (preset of rangePresets; track preset.id) {
             <button
               type="button"
-              class="btn range-btn"
+              role="tab"
               [class.active]="rangePreset() === preset.id"
+              [attr.aria-selected]="rangePreset() === preset.id"
               (click)="setRange(preset.id)"
             >
               {{ preset.label }}
@@ -44,9 +43,9 @@
         <ul class="picker-list">
           @for (preset of layoutPresets; track preset.id) {
             <li>
-              <button type="button" class="btn" (click)="applyLayoutPreset(preset.id)">
+              <adeni-staff-btn icon="arrow--right" (pressed)="applyLayoutPreset(preset.id)">
                 {{ preset.label }}
-              </button>
+              </adeni-staff-btn>
             </li>
           }
         </ul>
@@ -57,14 +56,14 @@
           <ul class="picker-list">
             @for (widget of addableWidgets(); track widget.id) {
               <li>
-                <button type="button" class="btn" (click)="addWidget(widget.id)">
+                <adeni-staff-btn icon="add" (pressed)="addWidget(widget.id)">
                   {{ widget.title }}
-                </button>
+                </adeni-staff-btn>
               </li>
             }
           </ul>
         }
-        <button type="button" class="btn" (click)="closePicker()">Close</button>
+        <adeni-staff-btn icon="close" (pressed)="closePicker()">Close</adeni-staff-btn>
       </section>
     }
 
@@ -113,7 +112,7 @@
     </section>
 
     <div
-      class="widget-grid"
+      class="widget-grid dashboard-widgets"
       cdkDropList
       [cdkDropListDisabled]="!editMode()"
       (cdkDropListDropped)="onWidgetDrop($event)"
@@ -123,7 +122,7 @@
           @switch (entry.id) {
             @case ("plan_usage") {
               @if (usage(); as plan) {
-                <a class="usage" routerLink="/plan" [class.usage-warn]="isNearBookingLimit(plan)">
+                <a class="widget-card usage" routerLink="/plan" [class.usage-warn]="isNearBookingLimit(plan)">
                   <div>
                     <p class="usage-label">{{ planUsageLabel() }}</p>
                     <p class="usage-value">{{ formatBookingUsage(plan) }}</p>
@@ -145,34 +144,65 @@
               }
             }
             @case ("kpis_row") {
-              <section class="stats">
-                <article>
-                  <p class="stat-label">Pending</p>
-                  <p class="stat-value">{{ pendingCount() }}</p>
-                  <p class="stat-hint">Awaiting a yes or no</p>
+              <section class="widget-card widget-card--kpis">
+                <header class="widget-card__head">
+                  <h3>{{ dashboardWidgetTitle("kpis_row") }}</h3>
+                  <p class="hint">Metrics for the selected period ({{ rangeLabel() }}).</p>
+                </header>
+                <div class="stats">
+                <article class="stat-card stat-card--pending">
+                  <span class="stat-icon stat-icon--pending" aria-hidden="true">
+                    <adeni-carbon-icon name="time" [size]="20" />
+                  </span>
+                  <div class="stat-body">
+                    <p class="stat-label">Pending requests</p>
+                    <p class="stat-value">{{ pendingCount() }}</p>
+                    <p class="stat-hint">Awaiting your confirmation</p>
+                  </div>
                 </article>
-                <article>
-                  <p class="stat-label">Appointments</p>
-                  <p class="stat-value">{{ appointmentsInRange() }}</p>
-                  <p class="stat-hint">In {{ rangeLabel().toLowerCase() }}</p>
+                <article class="stat-card stat-card--appointments">
+                  <span class="stat-icon stat-icon--appointments" aria-hidden="true">
+                    <adeni-carbon-icon name="calendar" [size]="20" />
+                  </span>
+                  <div class="stat-body">
+                    <p class="stat-label">Appointments</p>
+                    <p class="stat-value">{{ appointmentsInRange() }}</p>
+                    <p class="stat-hint">Scheduled in {{ rangeLabel() }}</p>
+                  </div>
                 </article>
-                <article>
-                  <p class="stat-label">On the menu</p>
-                  <p class="stat-value">{{ activeServices() }}</p>
-                  <p class="stat-hint">Active services</p>
+                <article class="stat-card stat-card--services">
+                  <span class="stat-icon stat-icon--services" aria-hidden="true">
+                    <adeni-carbon-icon name="filter" [size]="20" />
+                  </span>
+                  <div class="stat-body">
+                    <p class="stat-label">Active services</p>
+                    <p class="stat-value">{{ activeServices() }}</p>
+                    <p class="stat-hint">Available for online booking</p>
+                  </div>
                 </article>
                 @if (!isPractitionerView()) {
-                  <article>
-                    <p class="stat-label">{{ revenueUsesCollected() ? "Collected" : "Booked value" }}</p>
-                    <p class="stat-value">{{ revenueLabel() }}</p>
-                    <p class="stat-hint">{{ revenueHint() }}</p>
+                  <article class="stat-card stat-card--revenue">
+                    <span class="stat-icon stat-icon--revenue" aria-hidden="true">
+                      <adeni-carbon-icon name="flash--filled" [size]="20" />
+                    </span>
+                    <div class="stat-body">
+                      <p class="stat-label">{{ revenueUsesCollected() ? "Collected revenue" : "Booked value" }}</p>
+                      <p class="stat-value">{{ revenueLabel() }}</p>
+                      <p class="stat-hint">{{ revenueHint() }}</p>
+                    </div>
                   </article>
                 }
-                <article>
-                  <p class="stat-label">Rating</p>
-                  <p class="stat-value">{{ ratingLabel() }}</p>
-                  <p class="stat-hint">{{ ratingHint() }}</p>
+                <article class="stat-card stat-card--rating">
+                  <span class="stat-icon stat-icon--rating" aria-hidden="true">
+                    <adeni-carbon-icon name="user--filled" [size]="20" />
+                  </span>
+                  <div class="stat-body">
+                    <p class="stat-label">Customer rating</p>
+                    <p class="stat-value">{{ ratingLabel() }}</p>
+                    <p class="stat-hint">{{ ratingHint() }}</p>
+                  </div>
                 </article>
+                </div>
               </section>
             }
             @case ("week_appointments") {
@@ -183,7 +213,10 @@
                 (remove)="removeWidget('week_appointments')"
               >
                 @if (appointmentChartData().length === 0) {
-                  <p class="hint">No appointments in this range yet.</p>
+                  <div class="widget-body-empty">
+                    <p class="chart-empty-title">No appointments in this range</p>
+                    <p class="chart-empty-copy">Try a wider range above, or share your booking link to fill the calendar.</p>
+                  </div>
                 } @else {
                   <app-dashboard-carbon-chart
                     kind="bar"
@@ -195,20 +228,23 @@
             }
             @case ("today_schedule") {
               <app-dashboard-widget
+                class="today-chair-widget"
                 [title]="dashboardWidgetTitle('today_schedule')"
+                [hint]="'Remaining appointments for today.'"
                 [editMode]="editMode()"
                 (remove)="removeWidget('today_schedule')"
               >
                 @if (today().length === 0) {
-                  <adeni-portal-empty-state
-                    [compact]="true"
-                    [embedded]="true"
-                    icon="calendar"
-                    title="Clear for today"
-                    description="No appointments left on the book. Your open hours can still accept new bookings."
-                  >
-                    <a class="btn" routerLink="/availability">View hours</a>
-                  </adeni-portal-empty-state>
+                  <div class="today-chair-empty">
+                    <span class="today-chair-icon" aria-hidden="true">
+                      <adeni-carbon-icon name="calendar-32" [size]="32" />
+                    </span>
+                    <p class="today-chair-title">No appointments scheduled</p>
+                    <p class="today-chair-copy">
+                      Your calendar is clear for the rest of today. Clients can still book during open hours.
+                    </p>
+                    <a class="btn btn-ghost" routerLink="/availability">View hours</a>
+                  </div>
                 } @else {
                   <ul class="today-list">
                     @for (booking of today(); track booking.id) {
@@ -218,31 +254,46 @@
                       </li>
                     }
                   </ul>
+                  <a class="text-link" routerLink="/bookings" [queryParams]="{ tab: 'upcoming' }">Full schedule</a>
                 }
               </app-dashboard-widget>
             }
             @case ("booking_mix") {
               <app-dashboard-widget
                 [title]="dashboardWidgetTitle('booking_mix')"
+                [hint]="'All bookings on file, grouped by status (not limited to the date range above).'"
                 [editMode]="editMode()"
                 (remove)="removeWidget('booking_mix')"
               >
-                <div class="mix-bar">
-                  @for (slice of mix(); track slice.status) {
-                    @if (slice.count > 0) {
-                      <span class="slice s{{ slice.status }}" [style.flex-grow]="slice.count"></span>
+                @if (bookingMixChartData().length === 0) {
+                  <div class="chart-empty">
+                    <span class="chart-empty-icon" aria-hidden="true">
+                      <adeni-carbon-icon name="calendar" [size]="28" />
+                    </span>
+                    <p class="chart-empty-title">No bookings yet</p>
+                    <p class="chart-empty-copy">
+                      Pending, confirmed, and cancelled visits will show here as a share of your total.
+                    </p>
+                    <a class="btn btn-ghost" routerLink="/bookings">Booking inbox</a>
+                  </div>
+                } @else {
+                  <app-dashboard-carbon-chart
+                    kind="donut"
+                    [data]="bookingMixChartData()"
+                    ariaLabel="Booking status mix"
+                  />
+                  <ul class="mix-legend">
+                    @for (slice of mix(); track slice.status) {
+                      @if (slice.count > 0) {
+                        <li>
+                          <i class="swatch s{{ slice.status }}"></i>
+                          {{ slice.label }}
+                          <strong>{{ slice.count }}</strong>
+                        </li>
+                      }
                     }
-                  }
-                </div>
-                <ul class="legend">
-                  @for (slice of mix(); track slice.status) {
-                    <li>
-                      <i class="swatch s{{ slice.status }}"></i>
-                      {{ slice.label }}
-                      <strong>{{ slice.count }}</strong>
-                    </li>
-                  }
-                </ul>
+                  </ul>
+                }
               </app-dashboard-widget>
             }
             @case ("collected_revenue") {
@@ -271,7 +322,18 @@
                 (remove)="removeWidget('service_mix')"
               >
                 @if (serviceMixChartData().length === 0) {
-                  <p class="hint">No service breakdown for this range yet.</p>
+                  <div class="chart-empty">
+                    <span class="chart-empty-icon" aria-hidden="true">
+                      <adeni-carbon-icon name="filter" [size]="28" />
+                    </span>
+                    <p class="chart-empty-title">Nothing booked in this range</p>
+                    <p class="chart-empty-copy">
+                      Top services appear once you have confirmed visits in {{ rangeLabel().toLowerCase() }}.
+                    </p>
+                    @if (hasEntitlement("analytics")) {
+                      <a class="btn btn-ghost" routerLink="/services">Manage services</a>
+                    }
+                  </div>
                 } @else {
                   <app-dashboard-carbon-chart
                     kind="donut"
@@ -325,7 +387,7 @@
               >
                 <a class="widget-stat-link" routerLink="/bookings" [queryParams]="{ tab: 'pending' }">
                   <p class="widget-stat-value">{{ pendingCount() }}</p>
-                  <p class="hint">Bookings waiting for a yes or no</p>
+                  <p class="hint">Awaiting confirmation</p>
                 </a>
               </app-dashboard-widget>
             }

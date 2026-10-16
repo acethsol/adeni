@@ -21,6 +21,7 @@ import {
   type DashboardLayoutPresetId,
   type QueueTicketResponse,
   formatBookingUsage,
+  formatSubscriptionPlanLabel,
   formatPrice,
   formatSlotTime,
   formatTenantStatus,
@@ -51,6 +52,7 @@ import {
 import {
   AdeniCarbonIconComponent,
   AdeniPortalEmptyStateComponent,
+  AdeniStaffButtonComponent,
   PortalPageComponent,
 } from "@adeni/ui";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
@@ -76,6 +78,7 @@ type StatusSlice = { status: number; label: string; count: number; percent: numb
     CdkDragHandle,
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
+    AdeniStaffButtonComponent,
     PortalPageComponent,
     DashboardWidgetComponent,
     DashboardCarbonChartComponent,
@@ -112,6 +115,7 @@ export class DashboardComponent implements OnInit {
   readonly openQuotesCount = signal(0);
   readonly queueWaiting = signal<QueueTicketResponse[]>([]);
   readonly mix = signal<StatusSlice[]>([]);
+  readonly bookingMixChartData = signal<ChartTabularData>([]);
   readonly today = signal<BookingResponse[]>([]);
   readonly usage = signal<SubscriptionUsage | null>(null);
   readonly rangePreset = signal<DashboardRangePreset>("7d");
@@ -194,7 +198,7 @@ export class DashboardComponent implements OnInit {
   planUsageLabel(): string {
     const usage = this.usage();
     if (!usage) return "Plan";
-    return `${usage.tier} plan`;
+    return formatSubscriptionPlanLabel(usage);
   }
 
   planPriceHint(): string | null {
@@ -266,7 +270,10 @@ export class DashboardComponent implements OnInit {
     if (profile) {
       clearDashboardLayout(profile.tenantId, this.isPractitionerView());
     }
-    const fallback = cloneDashboardLayout(resolveDashboardLayout(this.isPractitionerView()));
+    let fallback = cloneDashboardLayout(resolveDashboardLayout(this.isPractitionerView()));
+    while (layoutIncludesWidget(fallback, "quick_actions")) {
+      fallback = removeDashboardWidget(fallback, "quick_actions");
+    }
     this.rangePreset.set(fallback.range);
     void this.persistLayout(fallback, true);
   }
@@ -537,7 +544,7 @@ export class DashboardComponent implements OnInit {
 
     this.revenueUsesCollected.set(false);
     this.revenueLabel.set("—");
-    this.revenueHint.set("Upgrade to Professional for revenue analytics in this range.");
+    this.revenueHint.set("Upgrade to Professional for revenue analytics in this period.");
   }
 
   private applyBookings(
@@ -548,16 +555,20 @@ export class DashboardComponent implements OnInit {
     this.activeServices.set(services.filter((item) => item.isActive).length);
 
     const total = bookings.length || 1;
-    this.mix.set(
-      [0, 1, 2, 3].map((status) => {
-        const count = bookings.filter((item) => item.status === status).length;
-        return {
-          status,
-          label: BOOKING_STATUS_LABELS[status] ?? "Unknown",
-          count,
-          percent: Math.round((count / total) * 100),
-        };
-      }),
+    const slices = [0, 1, 2, 3].map((status) => {
+      const count = bookings.filter((item) => item.status === status).length;
+      return {
+        status,
+        label: BOOKING_STATUS_LABELS[status] ?? "Unknown",
+        count,
+        percent: Math.round((count / total) * 100),
+      };
+    });
+    this.mix.set(slices);
+    this.bookingMixChartData.set(
+      slices
+        .filter((slice) => slice.count > 0)
+        .map((slice) => ({ group: slice.label, value: slice.count })),
     );
 
     const todayKey = new Date().toDateString();

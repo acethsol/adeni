@@ -83,7 +83,7 @@
                   <adeni-staff-btn
                     variant="danger"
                     icon="trash-can"
-                    [disabled]="busyId() === c.id || c.erasureRequestedAt"
+                    [disabled]="busyId() === c.id || !!c.erasureRequestedAt"
                     (pressed)="erase(c)"
                   >
                     Erasure
