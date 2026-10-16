@@ -92,8 +92,9 @@
                       Review queue
                     </a>
                   } @else {
-                    <button type="button" class="btn btn-primary" (click)="openSubscriptionWizard(b)">
-                      Manage subscription
+                    <a class="btn btn-primary" [routerLink]="['/businesses', b.id, 'billing']">Billing</a>
+                    <button type="button" class="btn" (click)="openSubscriptionWizard(b)">
+                      Edit subscription
                     </button>
                   }
                 </div>

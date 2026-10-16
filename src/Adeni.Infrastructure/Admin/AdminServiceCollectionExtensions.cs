@@ -10,6 +10,7 @@ public static class AdminServiceCollectionExtensions
         services.AddScoped<IAdminBusinessService, AdminBusinessService>();
         services.AddScoped<IAdminCustomerService, AdminCustomerService>();
         services.AddScoped<IAdminMarketService, AdminMarketService>();
+        services.AddScoped<IAdminRevenueMetricsService, AdminRevenueMetricsService>();
         return services;
     }
 }

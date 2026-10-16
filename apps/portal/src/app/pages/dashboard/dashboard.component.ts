@@ -19,7 +19,11 @@ import {
   type ServiceOffering,
   type SubscriptionUsage,
 } from "@adeni/shared";
-import { AdeniCarbonIconComponent, AdeniPortalEmptyStateComponent } from "@adeni/ui";
+import {
+  AdeniCarbonIconComponent,
+  AdeniPortalEmptyStateComponent,
+  PortalPageComponent,
+} from "@adeni/ui";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { PortalSessionService } from "../../core/services/portal-session.service";
@@ -32,7 +36,12 @@ const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 @Component({
   selector: "app-dashboard",
   standalone: true,
-  imports: [RouterLink, AdeniCarbonIconComponent, AdeniPortalEmptyStateComponent],
+  imports: [
+    RouterLink,
+    AdeniCarbonIconComponent,
+    AdeniPortalEmptyStateComponent,
+    PortalPageComponent,
+  ],
   templateUrl: "./dashboard.component.html",
   styleUrl: "./dashboard.component.scss",
 })
@@ -125,6 +134,16 @@ export class DashboardComponent implements OnInit {
 
   isPractitionerView(): boolean {
     return this.session.can("portal.staff.self") && !this.session.can("portal.staff");
+  }
+
+  pageDescription(): string {
+    if (this.isPractitionerView()) {
+      return "Your schedule and booking inbox at a glance.";
+    }
+    if (this.revenueUsesCollected()) {
+      return "Plan usage, appointments, and collected revenue from your online payment ledger.";
+    }
+    return "Plan usage and appointments — booked value is list price, not cash in bank until you collect payment.";
   }
 
   usagePercent(): number {

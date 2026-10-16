@@ -49,6 +49,7 @@ export const routes: Routes = [
         canActivate: [homeRedirectGuard],
         component: DashboardComponent,
       },
+      { path: "overview", redirectTo: "dashboard", pathMatch: "full" },
       {
         path: "dashboard",
         component: DashboardComponent,

@@ -20,6 +20,8 @@ import {
   completeStubSubscriptionCheckoutRequestSchema,
   tenantSubscriptionChargeSchema,
   adminSubscriptionMetricsSchema,
+  adminBusinessSummarySchema,
+  adminRevenueMetricsSchema,
   availableSlotsResponseSchema,
   bookingResponseSchema,
   billingDocumentResponseSchema,
@@ -159,6 +161,7 @@ import {
   type TenantSubscriptionCharge,
   type CompleteStubSubscriptionCheckoutRequest,
   type AdminSubscriptionMetrics,
+  type AdminRevenueMetrics,
   type AvailableSlot,
   type BillingDocumentResponse,
   type BookingResponse,
@@ -1755,6 +1758,23 @@ export class AdeniApiClient {
   async getAdminSubscriptionMetrics(): Promise<AdminSubscriptionMetrics> {
     const response = await this.request("/api/v1/admin/metrics/subscription");
     return adminSubscriptionMetricsSchema.parse(await response.json());
+  }
+
+  async getAdminRevenueMetrics(
+    granularity: "month" | "year" = "month",
+  ): Promise<AdminRevenueMetrics> {
+    const query = new URLSearchParams({ granularity });
+    const response = await this.request(
+      `/api/v1/admin/metrics/revenue?${query.toString()}`,
+    );
+    return adminRevenueMetricsSchema.parse(await response.json());
+  }
+
+  async getAdminBusiness(tenantId: string): Promise<AdminBusinessSummary> {
+    const response = await this.request(
+      `/api/v1/admin/businesses/${encodeURIComponent(tenantId)}`,
+    );
+    return adminBusinessSummarySchema.parse(await response.json());
   }
 
   async setAdminBusinessSubscriptionTier(

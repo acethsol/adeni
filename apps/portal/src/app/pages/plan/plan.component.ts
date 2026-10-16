@@ -6,9 +6,14 @@ import {
   formatAmountMinor,
   formatBillingChargeStatus,
   formatTenantBillingStatus,
+  getMarketById,
+  getPlanDisplayForCountry,
   isNearBookingLimit,
   PLAN_COMPARISON,
-  PLAN_PRICING,
+  resolveSubscriptionSku,
+  SUBSCRIPTION_SKUS,
+  skuToSubscriptionTier,
+  type SubscriptionSku,
   type SubscriptionTier,
   type SubscriptionUsage,
   type TenantSubscriptionCharge,
@@ -32,13 +37,19 @@ export class PlanComponent implements OnInit {
   readonly checkoutBusy = signal(false);
   readonly error = signal<string | null>(null);
   readonly currentTier = signal<SubscriptionTier>("free");
+  readonly currentSku = signal<SubscriptionSku>("starter");
+  readonly countryCode = signal<string | null>(null);
   readonly usage = signal<SubscriptionUsage | null>(null);
   readonly billingHistory = signal<TenantSubscriptionCharge[]>([]);
   private tenantId = signal<string | null>(null);
 
-  readonly tiers: SubscriptionTier[] = ["free", "pro", "business"];
-  readonly planPricing = PLAN_PRICING;
+  readonly skus = SUBSCRIPTION_SKUS;
   readonly planComparison = PLAN_COMPARISON;
+  readonly skuTierColumn = {
+    starter: "free",
+    professional: "pro",
+    business: "business",
+  };
   readonly formatBookingUsage = formatBookingUsage;
   readonly isNearBookingLimit = isNearBookingLimit;
   readonly formatTenantBillingStatus = formatTenantBillingStatus;
@@ -60,7 +71,17 @@ export class PlanComponent implements OnInit {
           c.getTenantBillingHistory(10).catch(() => []),
         ]);
         this.tenantId.set(context.tenantId);
-        this.currentTier.set(profile.subscriptionTier ?? subscriptionUsage.tier);
+        const tier = profile.subscriptionTier ?? subscriptionUsage.tier;
+        const sku = resolveSubscriptionSku(
+          profile.subscriptionSku ?? subscriptionUsage.subscriptionSku,
+          tier,
+        );
+        this.currentTier.set(tier);
+        this.currentSku.set(sku);
+        const location = profile.locations.find((item) => item.isPrimary) ?? profile.locations[0];
+        this.countryCode.set(
+          location ? (getMarketById(location.marketId)?.countryCode ?? null) : null,
+        );
         this.usage.set(subscriptionUsage);
         this.billingHistory.set(history);
       });
@@ -72,15 +93,34 @@ export class PlanComponent implements OnInit {
     }
   }
 
-  canUpgrade(tier: SubscriptionTier): boolean {
-    return tier !== this.currentTier() && tier !== "free";
+  planDisplay(sku: SubscriptionSku): { name: string; priceLabel: string; description: string } {
+    const country = this.countryCode();
+    if (country) {
+      const localized = getPlanDisplayForCountry(country, sku);
+      if (localized) {
+        return localized;
+      }
+    }
+    const tier = this.skuTierColumn[sku];
+    const fallbackName = sku.charAt(0).toUpperCase() + sku.slice(1);
+    return {
+      name: fallbackName,
+      priceLabel: "Contact us",
+      description: "Pricing for your market is being configured.",
+    };
   }
 
-  async upgrade(tier: SubscriptionTier): Promise<void> {
+  canUpgrade(sku: SubscriptionSku): boolean {
+    const order: SubscriptionSku[] = ["starter", "professional", "business"];
+    return order.indexOf(sku) > order.indexOf(this.currentSku());
+  }
+
+  async upgrade(sku: SubscriptionSku): Promise<void> {
     const tenantId = this.tenantId();
-    if (!tenantId || !this.canUpgrade(tier)) {
+    if (!tenantId || !this.canUpgrade(sku)) {
       return;
     }
+    const targetTier = skuToSubscriptionTier(sku);
 
     this.checkoutBusy.set(true);
     this.error.set(null);
@@ -89,7 +129,7 @@ export class PlanComponent implements OnInit {
         const origin = window.location.origin;
         const checkout = await c.createSubscriptionCheckout({
           tenantId,
-          targetTier: tier,
+          targetTier,
           customerEmail: "billing@adeni.local",
           successUrl: `${origin}/plan?upgraded=1`,
           cancelUrl: `${origin}/plan`,

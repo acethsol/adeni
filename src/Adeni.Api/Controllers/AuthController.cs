@@ -163,6 +163,19 @@ public sealed class AdminBusinessesController(
             });
     }
 
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await adminBusinessService.GetBusinessAsync(id, cancellationToken);
+        return result.Match<IActionResult>(
+            Ok,
+            error => error.Code switch
+            {
+                "not_found" => NotFound(new { title = error.Message }),
+                _ => BadRequest(new { title = error.Message }),
+            });
+    }
+
     [HttpGet("{id:guid}/commercial-terms")]
     public async Task<IActionResult> GetCommercialTerms(Guid id, CancellationToken cancellationToken)
     {

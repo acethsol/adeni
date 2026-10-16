@@ -75,3 +75,68 @@
 .metric-list strong {
   font-weight: 600;
 }
+
+.period-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1.25rem;
+}
+
+.tx-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+}
+
+.tx-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.tx-list li:first-child {
+  border-top: 0;
+}
+
+.tx-list div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.tx-list a {
+  color: var(--adeni-purple, #7f56ff);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.data-table.compact {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.data-table.compact th,
+.data-table.compact td {
+  padding: 0.45rem 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.data-table.compact th {
+  font-weight: 600;
+  color: var(--text-muted);
+}

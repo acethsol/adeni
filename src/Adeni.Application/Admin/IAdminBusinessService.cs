@@ -79,6 +79,10 @@ public interface IAdminBusinessService
         int pageSize,
         CancellationToken cancellationToken = default);
 
+    Task<Result<AdminBusinessSummaryResponse>> GetBusinessAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default);
+
     Task<AdminBusinessDirectoryStats> GetDirectoryStatsAsync(
         CancellationToken cancellationToken = default);
 

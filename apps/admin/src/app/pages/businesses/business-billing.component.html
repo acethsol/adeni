@@ -1,0 +1,125 @@
+<app-portal-page
+  [title]="business()?.name ?? 'Business billing'"
+  description="Adeni SaaS subscription status, commercial terms, and charge history for this tenant."
+>
+  <nav class="breadcrumb">
+    <a routerLink="/businesses">Businesses</a>
+    <span aria-hidden="true">/</span>
+    <span>Billing</span>
+  </nav>
+
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (loading() && !business()) {
+    <p class="muted">Loading billing…</p>
+  } @else if (business(); as b) {
+    <section class="card list-toolbar">
+      <div class="toolbar-pills">
+        @let status = tenantStatusPill(b.status);
+        <admin-pill [label]="status.label" [variant]="status.variant" />
+        @let plan = businessPlanPill(b);
+        <admin-pill [label]="plan.label" [variant]="plan.variant" />
+        @if (b.billingStatus) {
+          @let billing = billingStatusPill(b.billingStatus);
+          <admin-pill [label]="billing.label" [variant]="billing.variant" />
+        }
+      </div>
+      <div class="toolbar-actions">
+        <button type="button" class="btn" [disabled]="loading()" (click)="load(b.id)">
+          <adeni-carbon-icon name="restart" [size]="16" />
+          Refresh
+        </button>
+        <button type="button" class="btn btn-primary" (click)="openSubscriptionWizard()">
+          Edit subscription
+        </button>
+      </div>
+    </section>
+
+    @if (billingOwedHint(); as hint) {
+      <p class="billing-hint">{{ hint }}</p>
+    }
+
+    @if (terms(); as t) {
+      <section class="card summary-grid">
+        <div>
+          <h3>Commercial terms</h3>
+          <dl class="summary-dl">
+            <div>
+              <dt>Plan SKU</dt>
+              <dd>{{ formatSubscriptionSku(t.subscriptionSku) }}</dd>
+            </div>
+            <div>
+              <dt>Billing status</dt>
+              <dd>{{ formatTenantBillingStatus(t.billingStatus) }}</dd>
+            </div>
+            @if (t.trialEndsAt) {
+              <div>
+                <dt>Trial ends</dt>
+                <dd>{{ t.trialEndsAt | date: "mediumDate" }}</dd>
+              </div>
+            }
+            @if (t.customSaasMonthlyAmount != null && t.customSaasCurrency) {
+              <div>
+                <dt>Custom monthly</dt>
+                <dd>{{ t.customSaasMonthlyAmount }} {{ t.customSaasCurrency }}</dd>
+              </div>
+            }
+          </dl>
+        </div>
+        <div>
+          <h3>Slug</h3>
+          <p class="mono">{{ b.slug }}</p>
+        </div>
+      </section>
+    }
+
+    <section class="card">
+      <h3>Billing history</h3>
+      <p class="muted section-lede">Charges synced from checkout or provider webhooks (business → Adeni).</p>
+      @if (charges().length === 0) {
+        <adeni-portal-empty-state
+          icon="calendar"
+          title="No Adeni charges yet"
+          description="Charges appear after stub checkout or live provider billing events."
+        />
+      } @else {
+        <div class="charge-table-wrap">
+          <table class="charge-table">
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Amount</th>
+                <th scope="col">Status</th>
+                <th scope="col">Plan</th>
+                <th scope="col">Reference</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of charges(); track row.id) {
+                <tr>
+                  <td>{{ row.occurredAt | date: "medium" }}</td>
+                  <td>{{ formatChargeAmount(row) }}</td>
+                  <td>{{ formatBillingChargeStatus(row.status) }}</td>
+                  <td>{{ row.subscriptionSku ? formatSubscriptionSku(row.subscriptionSku) : "—" }}</td>
+                  <td class="mono">{{ row.providerReference }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+
+  <app-business-subscription-wizard
+    [open]="subscriptionWizardOpen()"
+    [business]="subscriptionBusiness()"
+    [draft]="subscriptionDraft()"
+    [saving]="subscriptionSaving()"
+    (closed)="closeSubscriptionWizard()"
+    (save)="saveSubscription()"
+    (draftChange)="patchSubscriptionDraft($event)"
+  />
+</app-portal-page>

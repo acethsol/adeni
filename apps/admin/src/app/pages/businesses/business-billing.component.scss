@@ -1,0 +1,106 @@
+@use "../../shared/admin-list-page" as *;
+
+.list-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.breadcrumb a {
+  color: var(--adeni-purple, #7f56ff);
+  text-decoration: none;
+}
+
+.toolbar-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.billing-hint {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.875rem;
+  background: var(--cds-layer-02, #f4f4f4);
+  border-left: 3px solid var(--adeni-purple, #7f56ff);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.summary-grid h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.9375rem;
+}
+
+.section-lede {
+  margin: 0 0 0.75rem;
+}
+
+.summary-dl {
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.summary-dl dt {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.summary-dl dd {
+  margin: 0.1rem 0 0;
+  font-weight: 600;
+}
+
+.mono {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8125rem;
+  word-break: break-all;
+}
+
+.charge-table-wrap {
+  overflow-x: auto;
+}
+
+.charge-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.charge-table th,
+.charge-table td {
+  padding: 0.45rem 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border, #e0e0e0);
+}
+
+.charge-table th {
+  font-weight: 600;
+  color: var(--text-muted);
+}

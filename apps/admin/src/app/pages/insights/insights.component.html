@@ -1,12 +1,30 @@
 <app-portal-page
-  title="Subscription insights"
-  description="Paying tenant counts, billing health, and MRR signals for v1 SaaS tiers."
+  title="Revenue"
+  description="Adeni earnings: SaaS subscription charges and commerce platform fees. Customer-to-business GMV flows through Payments; this view is platform-side."
 >
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
 
   <section class="card list-toolbar">
+    <div class="period-toggle" role="group" aria-label="Earnings period">
+      <button
+        type="button"
+        class="btn"
+        [class.btn-primary]="granularity() === 'month'"
+        (click)="setGranularity('month')"
+      >
+        Monthly
+      </button>
+      <button
+        type="button"
+        class="btn"
+        [class.btn-primary]="granularity() === 'year'"
+        (click)="setGranularity('year')"
+      >
+        Yearly
+      </button>
+    </div>
     <button type="button" class="btn" [disabled]="loading()" (click)="load()">
       <adeni-carbon-icon name="restart" [size]="16" />
       Refresh
@@ -22,7 +40,7 @@
     <adeni-portal-empty-state
       icon="restart"
       title="Metrics unavailable"
-      description="Refresh to load subscription billing data from the API."
+      description="Refresh to load revenue data from the API."
     />
   } @else if (metrics(); as billing) {
     <section class="kpis" aria-label="Subscription summary">
@@ -41,15 +59,90 @@
         </p>
       </div>
       <div class="kpi">
-        <p class="kpi-label">MRR source</p>
-        <p class="kpi-value kpi-value-sm">
-          {{ billing.mrrSource === "synced_charges" ? "Synced" : "Estimated" }}
-        </p>
+        <p class="kpi-label">MRR (current month)</p>
+        <p class="kpi-value kpi-value-sm">{{ mrrHint() }}</p>
       </div>
     </section>
 
+    @if (revenue(); as rev) {
+      <section class="card panel">
+        <h3>{{ periodLabel() }} earnings by period</h3>
+        <p class="muted panel-hint">
+          SaaS = business → Adeni subscriptions. Platform fees = Adeni share on completed checkout volume.
+        </p>
+        @if (rev.buckets.length === 0) {
+          <p class="muted">No synced charges or completed payments in this window yet.</p>
+        } @else {
+          <div class="table-wrap">
+            <table class="data-table compact">
+              <thead>
+                <tr>
+                  <th scope="col">Period</th>
+                  <th scope="col">Currency</th>
+                  <th scope="col">SaaS (Adeni)</th>
+                  <th scope="col">GMV volume</th>
+                  <th scope="col">Platform fees</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of rev.buckets; track row.period + row.currency) {
+                  <tr>
+                    <td>{{ row.period }}</td>
+                    <td>{{ row.currency }}</td>
+                    <td>{{ formatSaasBucket(row) }}</td>
+                    <td>{{ formatCommerceVolume(row) }}</td>
+                    <td>{{ formatCommerceFee(row) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+
+      <section class="card panel two-col">
+        <div>
+          <h3>Recent SaaS charges</h3>
+          @if (rev.recentSaasCharges.length === 0) {
+            <p class="muted">No subscription charges synced yet.</p>
+          } @else {
+            <ul class="tx-list">
+              @for (row of rev.recentSaasCharges; track row.id) {
+                <li>
+                  <div>
+                    <a [routerLink]="['/businesses', row.tenantId, 'billing']">{{ row.tenantName }}</a>
+                    <span class="muted">{{ row.occurredAt | date: "mediumDate" }}</span>
+                  </div>
+                  <strong>{{ formatSaasCharge(row) }}</strong>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+        <div>
+          <h3>Recent commerce payments</h3>
+          <p class="muted panel-hint">Customer → business checkout completed on Adeni.</p>
+          @if (rev.recentCommercePayments.length === 0) {
+            <p class="muted">No completed payment intents yet.</p>
+          } @else {
+            <ul class="tx-list">
+              @for (row of rev.recentCommercePayments; track row.id) {
+                <li>
+                  <div>
+                    <span>{{ row.tenantName }}</span>
+                    <span class="muted">{{ row.occurredAt | date: "mediumDate" }}</span>
+                  </div>
+                  <strong>{{ formatCommercePayment(row) }}</strong>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </section>
+    }
+
     <section class="card panel">
-      <h3>Monthly recurring revenue</h3>
+      <h3>Current MRR snapshot</h3>
       <p class="muted panel-hint">{{ mrrHint() }}</p>
       @if (mrrRows().length === 0) {
         <p class="muted">No MRR rows yet.</p>
@@ -66,19 +159,15 @@
     </section>
 
     <section class="card panel">
-      <h3>Plan mix (paid SKUs)</h3>
-      @if (billing.skuMix.length === 0) {
-        <p class="muted">No paid SKUs reported yet.</p>
-      } @else {
-        <ul class="metric-list">
-          @for (row of billing.skuMix; track row.sku) {
-            <li>
-              <span>{{ skuLabel(row.sku) }}</span>
-              <strong>{{ row.count }}</strong>
-            </li>
-          }
-        </ul>
-      }
+      <h3>Plan mix (all tenants by SKU)</h3>
+      <ul class="metric-list">
+        @for (row of billing.skuMix; track row.sku) {
+          <li>
+            <span>{{ skuLabel(row.sku) }}</span>
+            <strong>{{ row.count }}</strong>
+          </li>
+        }
+      </ul>
     </section>
   }
 </app-portal-page>

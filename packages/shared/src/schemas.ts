@@ -1033,6 +1033,42 @@ export const adminSubscriptionMetricsSchema = z.object({
 
 export type AdminSubscriptionMetrics = z.infer<typeof adminSubscriptionMetricsSchema>;
 
+export const adminRevenuePeriodBucketSchema = z.object({
+  period: z.string(),
+  currency: z.string().length(3),
+  saasAmountMinor: z.number().int().nonnegative(),
+  commerceVolume: z.number().nonnegative(),
+  platformFeeTotal: z.number().nonnegative(),
+});
+
+export const adminSaasChargeSummarySchema = tenantSubscriptionChargeSchema.extend({
+  tenantName: z.string(),
+});
+
+export const adminCommercePaymentSummarySchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  tenantName: z.string(),
+  amount: z.number().nonnegative(),
+  platformFeeAmount: z.number().nonnegative(),
+  currency: z.string().length(3),
+  status: z.string(),
+  occurredAt: z.string(),
+});
+
+export const adminRevenueMetricsSchema = z.object({
+  granularity: z.enum(["month", "year"]),
+  buckets: z.array(adminRevenuePeriodBucketSchema),
+  recentSaasCharges: z.array(adminSaasChargeSummarySchema),
+  recentCommercePayments: z.array(adminCommercePaymentSummarySchema),
+  asOf: z.string(),
+});
+
+export type AdminRevenuePeriodBucket = z.infer<typeof adminRevenuePeriodBucketSchema>;
+export type AdminSaasChargeSummary = z.infer<typeof adminSaasChargeSummarySchema>;
+export type AdminCommercePaymentSummary = z.infer<typeof adminCommercePaymentSummarySchema>;
+export type AdminRevenueMetrics = z.infer<typeof adminRevenueMetricsSchema>;
+
 export const completeStubSubscriptionCheckoutRequestSchema = z.object({
   tenantId: z.string().uuid(),
   providerReference: z.string().min(1),

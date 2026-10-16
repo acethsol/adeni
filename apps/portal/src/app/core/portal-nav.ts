@@ -74,7 +74,7 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
     items: [
       {
         path: "/dashboard",
-        label: "Overview",
+        label: "Dashboard",
         icon: "overview",
         exact: true,
         permission: "portal.overview",

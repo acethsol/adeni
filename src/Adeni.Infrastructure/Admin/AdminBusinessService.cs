@@ -170,6 +170,38 @@ public sealed class AdminBusinessService(
             totalCount));
     }
 
+    public async Task<Result<AdminBusinessSummaryResponse>> GetBusinessAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        var item = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(t => t.Id == tenantId)
+            .Select(t => new AdminBusinessSummaryResponse(
+                t.Id,
+                t.Name,
+                dbContext.BusinessLocations
+                    .Where(location => location.TenantId == t.Id && location.IsActive && location.IsPrimary)
+                    .Select(location => location.Slug)
+                    .FirstOrDefault()
+                    ?? dbContext.BusinessLocations
+                        .Where(location => location.TenantId == t.Id && location.IsActive)
+                        .Select(location => location.Slug)
+                        .FirstOrDefault()
+                    ?? string.Empty,
+                t.Status,
+                SubscriptionTierMapping.ToApiValue(t.SubscriptionTier),
+                SubscriptionSkuMapping.ToApiValue(t.SubscriptionSku),
+                TenantBillingStatusMapping.ToApiValue(t.BillingStatus),
+                t.TrialEndsAt,
+                t.CreatedAt))
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return item is null
+            ? Result.Failure<AdminBusinessSummaryResponse>(Error.NotFound("Business"))
+            : Result.Success(item);
+    }
+
     public async Task<AdminBusinessDirectoryStats> GetDirectoryStatsAsync(
         CancellationToken cancellationToken = default)
     {

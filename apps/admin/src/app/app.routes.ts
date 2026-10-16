@@ -4,6 +4,7 @@ import { AdminDashboardComponent } from "./pages/dashboard/dashboard.component";
 import { AdminPendingComponent } from "./pages/pending/pending.component";
 import { AdminMarketsComponent } from "./pages/markets/markets.component";
 import { AdminBusinessesComponent } from "./pages/businesses/businesses.component";
+import { BusinessBillingComponent } from "./pages/businesses/business-billing.component";
 import { AdminCustomersComponent } from "./pages/customers/customers.component";
 import { AdminTrustBadgesComponent } from "./pages/trust-badges/trust-badges.component";
 import { AdminReviewsComponent } from "./pages/reviews/reviews.component";
@@ -29,6 +30,11 @@ export const routes: Routes = [
       { path: "markets", component: AdminMarketsComponent, title: "Markets" },
       { path: "insights", component: AdminInsightsComponent, title: "Subscription insights" },
       { path: "businesses", component: AdminBusinessesComponent, title: "Businesses" },
+      {
+        path: "businesses/:tenantId/billing",
+        component: BusinessBillingComponent,
+        title: "Business billing",
+      },
       { path: "customers", component: AdminCustomersComponent, title: "Customers" },
     ],
   },

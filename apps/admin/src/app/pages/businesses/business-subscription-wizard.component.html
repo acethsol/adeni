@@ -206,48 +206,6 @@
                 ></textarea>
               </label>
             }
-            @case ("history") {
-              @if (billingOwedHint(); as hint) {
-                <p class="history-hint">{{ hint }}</p>
-              }
-              @if (chargesLoading()) {
-                <p class="muted">Loading billing history…</p>
-              } @else if (chargesError()) {
-                <p class="error-inline">{{ chargesError() }}</p>
-                <button type="button" class="btn" (click)="loadCharges()">Retry</button>
-              } @else if (charges().length === 0) {
-                <adeni-portal-empty-state
-                  icon="calendar"
-                  title="No Adeni charges yet"
-                  description="Charges appear after stub checkout or live provider webhooks sync subscription payments."
-                />
-              } @else {
-                <div class="charge-table-wrap">
-                  <table class="charge-table">
-                    <thead>
-                      <tr>
-                        <th scope="col">Date</th>
-                        <th scope="col">Amount</th>
-                        <th scope="col">Status</th>
-                        <th scope="col">Plan</th>
-                        <th scope="col">Reference</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (row of charges(); track row.id) {
-                        <tr>
-                          <td>{{ row.occurredAt | date: "medium" }}</td>
-                          <td>{{ formatChargeAmount(row) }}</td>
-                          <td>{{ formatBillingChargeStatus(row.status) }}</td>
-                          <td>{{ chargeSkuLabel(row.subscriptionSku) }}</td>
-                          <td class="mono">{{ row.providerReference }}</td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
-              }
-            }
             @case ("review") {
               <ul class="review-list">
                 <li>

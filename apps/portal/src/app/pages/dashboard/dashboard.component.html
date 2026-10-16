@@ -8,6 +8,7 @@
     </a>
   </section>
 } @else if (profile(); as business) {
+  <app-portal-page title="Dashboard" [description]="pageDescription()">
   <section class="hero">
     <div>
       <p class="kicker">{{ categoryLine() }}</p>
@@ -207,6 +208,7 @@
       }
     </div>
   </section>
+  </app-portal-page>
 } @else {
   <section class="panel">
     <p>Loading your studio…</p>

@@ -74,7 +74,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     "/reviews": "Reviews",
     "/markets": "Markets",
     "/businesses": "Businesses",
-    "/insights": "Subscription insights",
+    "/insights": "Revenue",
     "/customers": "Customers",
   },
   fr: {

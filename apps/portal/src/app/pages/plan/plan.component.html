@@ -33,22 +33,23 @@
     }
 
     <div class="tier-grid">
-      @for (tier of tiers; track tier) {
-        <section class="card tier" [class.current]="tier === currentTier()">
-          @if (tier === currentTier()) {
+      @for (sku of skus; track sku) {
+        @let display = planDisplay(sku);
+        <section class="card tier" [class.current]="sku === currentSku()">
+          @if (sku === currentSku()) {
             <span class="pill">Current plan</span>
           }
-          <p class="tier-name">{{ planPricing[tier].name }}</p>
-          <p class="price">{{ planPricing[tier].priceLabel }}</p>
-          <p class="muted">{{ planPricing[tier].description }}</p>
-          @if (canUpgrade(tier)) {
+          <p class="tier-name">{{ display.name }}</p>
+          <p class="price">{{ display.priceLabel }}</p>
+          <p class="muted">{{ display.description }}</p>
+          @if (canUpgrade(sku)) {
             <button
               type="button"
               class="btn btn-primary upgrade-btn"
               [disabled]="checkoutBusy()"
-              (click)="upgrade(tier)"
+              (click)="upgrade(sku)"
             >
-              Upgrade to {{ planPricing[tier].name }}
+              Upgrade to {{ display.name }}
             </button>
           }
         </section>
@@ -89,8 +90,8 @@
         <thead>
           <tr>
             <th>Feature</th>
-            @for (tier of tiers; track tier) {
-              <th>{{ tier }}</th>
+            @for (sku of skus; track sku) {
+              <th>{{ planDisplay(sku).name }}</th>
             }
           </tr>
         </thead>
@@ -98,8 +99,8 @@
           @for (row of planComparison; track row.label) {
             <tr>
               <td>{{ row.label }}</td>
-              @for (tier of tiers; track tier) {
-                <td>{{ featureCell(row[tier]) }}</td>
+              @for (sku of skus; track sku) {
+                <td>{{ featureCell(row[skuTierColumn[sku]]) }}</td>
               }
             </tr>
           }
