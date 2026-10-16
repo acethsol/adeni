@@ -948,8 +948,6 @@ export type SubscriptionTier = z.infer<typeof subscriptionTierSchema>;
 
 export const subscriptionSkuSchema = z.enum(["starter", "professional", "business"]);
 
-export type SubscriptionSku = z.infer<typeof subscriptionSkuSchema>;
-
 export const tenantBillingStatusSchema = z.enum([
   "trialing",
   "active",
