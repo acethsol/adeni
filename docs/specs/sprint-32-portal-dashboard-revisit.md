@@ -57,10 +57,10 @@ Competitor note: [roadmap-modules.md §5](../roadmap-modules.md) — Zenoti wins
 
 ### Phase 32a — Foundation (ship first)
 
-- [ ] Fix misleading **“Confirmed” / revenue** KPI (ledger-backed **Collected** when payments enabled; else honest **Booked value (list price)** label).
-- [ ] **Plan usage** strip with link to `/plan`, near-limit messaging (`@adeni/shared` helpers).
-- [ ] **Entitlement-aware** shortcuts / remove always-on Messages link.
-- [ ] Practitioner vs owner **default view** (existing session permissions).
+- [x] Fix misleading **“Confirmed” / revenue** KPI (ledger-backed **Collected** when payments enabled; else honest **Booked value (list price)** label).
+- [x] **Plan usage** strip with link to `/plan`, near-limit messaging (`@adeni/shared` helpers).
+- [x] **Entitlement-aware** shortcuts / remove always-on Messages link.
+- [x] Practitioner vs owner **default view** (existing session permissions).
 
 ### Phase 32b — Widget platform + default layout
 

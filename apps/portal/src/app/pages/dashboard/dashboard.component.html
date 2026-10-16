@@ -85,11 +85,13 @@
       <p class="stat-value">{{ activeServices() }}</p>
       <p class="stat-hint">Active services</p>
     </article>
-    <article>
-      <p class="stat-label">{{ revenueUsesCollected() ? "Collected" : "Booked value" }}</p>
-      <p class="stat-value">{{ revenueLabel() }}</p>
-      <p class="stat-hint">{{ revenueHint() }}</p>
-    </article>
+    @if (!isPractitionerView()) {
+      <article>
+        <p class="stat-label">{{ revenueUsesCollected() ? "Collected" : "Booked value" }}</p>
+        <p class="stat-value">{{ revenueLabel() }}</p>
+        <p class="stat-hint">{{ revenueHint() }}</p>
+      </article>
+    }
     <article>
       <p class="stat-label">Rating</p>
       <p class="stat-value">{{ ratingLabel() }}</p>
@@ -175,30 +177,34 @@
         </a>
       }
       @if (hasEntitlement("messaging")) {
-        <a routerLink="/messages">
+        <a routerLink="/messages" [queryParams]="{ tab: 'inbox' }">
           <strong>Messages</strong>
           <span>Reply in the thread, or send a WhatsApp note.</span>
         </a>
-      } @else {
-        <a routerLink="/messages">
+      } @else if (session.can('portal.messages')) {
+        <a routerLink="/messages" [queryParams]="{ tab: 'whatsapp' }">
           <strong>WhatsApp</strong>
           <span>Send a quick note outside the inbox.</span>
         </a>
       }
-      <a routerLink="/services">
-        <strong>Services</strong>
-        <span>Prices, duration, and what clients can book.</span>
-      </a>
-      @if (offers("calendar")) {
+      @if (session.can("portal.services")) {
+        <a routerLink="/services">
+          <strong>Services</strong>
+          <span>Prices, duration, and what clients can book.</span>
+        </a>
+      }
+      @if (offers("calendar") && session.can("portal.hours")) {
         <a routerLink="/availability">
           <strong>Hours</strong>
           <span>The week customers are allowed to book.</span>
         </a>
       }
-      <a routerLink="/profile">
-        <strong>Profile</strong>
-        <span>Cover, share link, reviews, and verification.</span>
-      </a>
+      @if (session.can("portal.profile")) {
+        <a routerLink="/profile">
+          <strong>Profile</strong>
+          <span>Cover, share link, reviews, and verification.</span>
+        </a>
+      }
     </div>
   </section>
 } @else {

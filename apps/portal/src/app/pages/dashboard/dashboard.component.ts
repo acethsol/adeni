@@ -39,7 +39,7 @@ const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 export class DashboardComponent implements OnInit {
   private readonly businessApi = inject(BusinessApiService);
   private readonly config = inject(ADENI_PORTAL_CONFIG);
-  private readonly session = inject(PortalSessionService);
+  readonly session = inject(PortalSessionService);
 
   readonly formatTenantStatus = formatTenantStatus;
   readonly formatSlotTime = formatSlotTime;
@@ -48,7 +48,7 @@ export class DashboardComponent implements OnInit {
   readonly pendingCount = signal(0);
   readonly activeServices = signal(0);
   readonly revenueLabel = signal("—");
-  readonly revenueHint = signal("List price on confirmed bookings");
+  readonly revenueHint = signal("List price — scheduled & in-progress visits (not cash in bank)");
   readonly revenueUsesCollected = signal(false);
   readonly ratingLabel = signal("New");
   readonly ratingHint = signal("No reviews yet");
@@ -180,11 +180,12 @@ export class DashboardComponent implements OnInit {
       });
 
       this.profile.set(snapshot.profile);
-      this.applyBookings(snapshot.bookings, snapshot.services);
-      if (snapshot.collectedTotal != null) {
-        this.revenueUsesCollected.set(true);
-        this.revenueLabel.set(formatPrice(snapshot.collectedTotal, snapshot.collectedCurrency));
-        this.revenueHint.set("Completed online payments");
+      const useCollected = snapshot.collectedTotal != null;
+      this.revenueUsesCollected.set(useCollected);
+      this.applyBookings(snapshot.bookings, snapshot.services, useCollected);
+      if (useCollected) {
+        this.revenueLabel.set(formatPrice(snapshot.collectedTotal!, snapshot.collectedCurrency));
+        this.revenueHint.set("Completed online payments (ledger)");
       }
       this.usage.set(snapshot.usage);
       if (snapshot.rating?.avg) {
@@ -201,16 +202,23 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  private applyBookings(bookings: BookingResponse[], services: ServiceOffering[]): void {
+  private applyBookings(
+    bookings: BookingResponse[],
+    services: ServiceOffering[],
+    revenueFromLedger: boolean,
+  ): void {
     this.pendingCount.set(bookings.filter((item) => item.status === 0).length);
     this.activeServices.set(services.filter((item) => item.isActive).length);
 
-    const prices = new Map(services.map((service) => [service.id, service.priceAmount]));
-    const confirmed = bookings
-      .filter((item) => item.status === 1)
-      .reduce((sum, item) => sum + (prices.get(item.serviceOfferingId) ?? 0), 0);
-    const currency = services[0]?.currency ?? "NGN";
-    this.revenueLabel.set(formatPrice(confirmed, currency));
+    if (!revenueFromLedger) {
+      const prices = new Map(services.map((service) => [service.id, service.priceAmount]));
+      const booked = bookings
+        .filter((item) => item.status === 1 || item.status === 4 || item.status === 5)
+        .reduce((sum, item) => sum + (prices.get(item.serviceOfferingId) ?? 0), 0);
+      const currency = services[0]?.currency ?? "NGN";
+      this.revenueLabel.set(formatPrice(booked, currency));
+      this.revenueHint.set("List price — scheduled & in-progress visits (not cash in bank)");
+    }
 
     const weekStart = startOfWeek(new Date());
     const counts = DAY_LABELS.map((label, index) => {
