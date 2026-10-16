@@ -1,28 +1,39 @@
 <app-portal-page
   title="Businesses"
-  description="Per-tenant trials, discounts, and negotiated SaaS pricing (catalog defaults are fallbacks only)."
+  description="Directory of all tenants: verification status, SaaS plan overrides, trials, and commercial terms. Approve or reject new applications under Pending verifications."
 >
+  <aside class="workflow-hint card">
+    <strong>Workflow:</strong>
+    Onboarding (approve/reject) →
+    <a routerLink="/pending">Pending verifications</a>.
+    After a business is verified, manage subscription and commercial terms here. Optional trust badges →
+    <a routerLink="/trust-badges">Trust badges</a>.
+  </aside>
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
   <section class="card list-toolbar">
-    <label class="search-field">
-      <span class="visually-hidden">Filter businesses</span>
-      <adeni-carbon-icon name="search" [size]="16" />
-      <input
-        type="search"
-        [ngModel]="searchText()"
-        (ngModelChange)="searchText.set($event)"
-        placeholder="Filter by name, slug, tier, or billing status"
-        autocomplete="off"
-      />
-    </label>
+    <form class="search-form" (submit)="applySearch(); $event.preventDefault()">
+      <label class="search-field">
+        <span class="visually-hidden">Search businesses</span>
+        <adeni-carbon-icon name="search" [size]="16" />
+        <input
+          type="search"
+          [ngModel]="searchText()"
+          (ngModelChange)="searchText.set($event)"
+          name="q"
+          placeholder="Name or slug"
+          autocomplete="off"
+        />
+      </label>
+      <button type="submit" class="btn btn-primary">Search</button>
+    </form>
     <button type="button" class="btn" [disabled]="loading()" (click)="load()">
       <adeni-carbon-icon name="restart" [size]="16" />
       Refresh
     </button>
-    @if (!loading() && businesses().length > 0) {
-      <p class="toolbar-meta">Showing {{ visible().length }} of {{ businesses().length }}</p>
+    @if (!loading() && totalCount() > 0) {
+      <p class="toolbar-meta">{{ showingRange() }}</p>
     }
   </section>
 
@@ -34,256 +45,90 @@
       title="No businesses yet"
       description="Verified tenants appear here for plan overrides and commercial terms."
     />
-  } @else if (isEmptyFilter()) {
-    <adeni-portal-empty-state
-      icon="search"
-      title="No matches"
-      description="Try another name, slug, or billing status."
-      compact
-    />
   } @else {
     <section class="card data-table-wrap">
       <table class="data-table">
         <thead>
           <tr>
             <th scope="col">Business</th>
+            <th scope="col">Status</th>
             <th scope="col">Plan</th>
             <th scope="col">Billing</th>
             <th scope="col"><span class="visually-hidden">Actions</span></th>
           </tr>
         </thead>
         <tbody>
-          @for (b of visible(); track b.id) {
+          @for (b of businesses(); track b.id) {
             <tr>
               <td>
                 <div class="row-title">{{ b.name }}</div>
                 <p class="row-sub">{{ b.slug }}</p>
               </td>
-              <td class="muted">{{ b.subscriptionTier }}</td>
-              <td class="muted">
-                {{ b.billingStatus ?? "—" }}
-                @if (b.trialEndsAt) {
-                  · trial until {{ b.trialEndsAt | date: "mediumDate" }}
-                }
+              <td>
+                @let status = tenantStatusPill(b.status);
+                <admin-pill [label]="status.label" [variant]="status.variant" />
+              </td>
+              <td>
+                @let plan = businessPlanPill(b);
+                <admin-pill [label]="plan.label" [variant]="plan.variant" />
+              </td>
+              <td>
+                <div class="cell-stack">
+                  @let billing = billingStatusPill(b.billingStatus);
+                  <admin-pill [label]="billing.label" [variant]="billing.variant" />
+                  @if (b.trialEndsAt) {
+                    <admin-pill
+                      [label]="'Trial · ' + (b.trialEndsAt | date: 'mediumDate')"
+                      variant="info"
+                      [compact]="true"
+                    />
+                  }
+                </div>
               </td>
               <td class="actions-cell">
                 <div class="actions-inline">
-                  @for (tier of tiers; track tier) {
-                    <button type="button" class="btn" (click)="setTier(b, tier)">{{ tier }}</button>
+                  @if (b.status === pendingVerificationStatus) {
+                    <a class="btn btn-primary" [routerLink]="['/pending']" [queryParams]="{ q: b.slug || b.name }">
+                      Review queue
+                    </a>
+                  } @else {
+                    <button type="button" class="btn btn-primary" (click)="openSubscriptionWizard(b)">
+                      Manage subscription
+                    </button>
                   }
-                  <button type="button" class="btn btn-primary" (click)="openCommercial(b)">
-                    Commercial
-                  </button>
                 </div>
               </td>
             </tr>
-            @if (editingId() === b.id && commercialDraft(); as draft) {
-              <tr class="detail-row">
-                <td colspan="4">
-                  <form class="commercial-panel" (ngSubmit)="saveCommercial(b)">
-                <h3>Commercial terms — {{ b.name }}</h3>
-                <p class="muted">
-                  Set trial length (days), skip trial, discounts, or a custom monthly price for this tenant.
-                </p>
-
-                <div class="grid">
-                  <label>
-                    Paid SKU
-                    <select
-                      [ngModel]="draft.subscriptionSku"
-                      (ngModelChange)="updateDraft({ subscriptionSku: $event })"
-                      name="subscriptionSku"
-                    >
-                      @for (sku of skus; track sku) {
-                        <option [value]="sku">{{ sku }}</option>
-                      }
-                    </select>
-                  </label>
-                  <label>
-                    Billing status
-                    <select
-                      [ngModel]="draft.billingStatus"
-                      (ngModelChange)="updateDraft({ billingStatus: $event })"
-                      name="billingStatus"
-                    >
-                      @for (status of billingStatuses; track status) {
-                        <option [value]="status">{{ status }}</option>
-                      }
-                    </select>
-                  </label>
-                </div>
-
-                <fieldset>
-                  <legend>Trial</legend>
-                  <label class="check">
-                    <input
-                      type="checkbox"
-                      [ngModel]="draft.endTrial"
-                      (ngModelChange)="updateDraft({ endTrial: $event })"
-                      name="endTrial"
-                    />
-                    No trial (end trial / bill as active)
-                  </label>
-                  @if (!draft.endTrial) {
-                    <div class="grid">
-                      <label>
-                        Trial days (0 = no trial)
-                        <input
-                          type="number"
-                          min="0"
-                          max="730"
-                          [ngModel]="draft.trialDays"
-                          (ngModelChange)="updateDraft({ trialDays: $event === '' ? null : +$event })"
-                          name="trialDays"
-                        />
-                      </label>
-                      <label>
-                        Trial entitlements SKU
-                        <select
-                          [ngModel]="draft.trialSku"
-                          (ngModelChange)="updateDraft({ trialSku: $event })"
-                          name="trialSku"
-                        >
-                          @for (sku of skus; track sku) {
-                            <option [value]="sku">{{ sku }}</option>
-                          }
-                        </select>
-                      </label>
-                    </div>
-                  }
-                </fieldset>
-
-                <fieldset>
-                  <legend>Discounts</legend>
-                  <label class="check">
-                    <input
-                      type="checkbox"
-                      [ngModel]="draft.clearDiscounts"
-                      (ngModelChange)="updateDraft({ clearDiscounts: $event })"
-                      name="clearDiscounts"
-                    />
-                    Clear all discounts
-                  </label>
-                  @if (!draft.clearDiscounts) {
-                    <div class="grid">
-                      <label>
-                        Discount %
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          step="0.01"
-                          [ngModel]="draft.discountPercent"
-                          (ngModelChange)="updateDraft({ discountPercent: $event === '' ? null : +$event })"
-                          name="discountPercent"
-                        />
-                      </label>
-                      <label>
-                        Fixed discount
-                        <input
-                          type="number"
-                          min="0"
-                          [ngModel]="draft.discountFixedAmount"
-                          (ngModelChange)="updateDraft({ discountFixedAmount: $event === '' ? null : +$event })"
-                          name="discountFixedAmount"
-                        />
-                      </label>
-                      <label>
-                        Currency
-                        <input
-                          maxlength="3"
-                          [ngModel]="draft.discountCurrency"
-                          (ngModelChange)="updateDraft({ discountCurrency: $event })"
-                          name="discountCurrency"
-                          placeholder="NGN"
-                        />
-                      </label>
-                      <label>
-                        Cycles remaining
-                        <input
-                          type="number"
-                          min="0"
-                          [ngModel]="draft.discountCyclesRemaining"
-                          (ngModelChange)="updateDraft({ discountCyclesRemaining: $event === '' ? null : +$event })"
-                          name="discountCyclesRemaining"
-                        />
-                      </label>
-                    </div>
-                  }
-                </fieldset>
-
-                <fieldset>
-                  <legend>Custom SaaS price (partner / pilot)</legend>
-                  <label class="check">
-                    <input
-                      type="checkbox"
-                      [ngModel]="draft.clearCustomSaasPrice"
-                      (ngModelChange)="updateDraft({ clearCustomSaasPrice: $event })"
-                      name="clearCustomSaasPrice"
-                    />
-                    Use catalog country pricing only
-                  </label>
-                  @if (!draft.clearCustomSaasPrice) {
-                    <div class="grid">
-                      <label>
-                        Monthly amount
-                        <input
-                          type="number"
-                          min="0"
-                          [ngModel]="draft.customSaasMonthlyAmount"
-                          (ngModelChange)="updateDraft({ customSaasMonthlyAmount: $event === '' ? null : +$event })"
-                          name="customSaasMonthlyAmount"
-                        />
-                      </label>
-                      <label>
-                        Currency
-                        <input
-                          maxlength="3"
-                          [ngModel]="draft.customSaasCurrency"
-                          (ngModelChange)="updateDraft({ customSaasCurrency: $event })"
-                          name="customSaasCurrency"
-                          placeholder="NGN"
-                        />
-                      </label>
-                      <label>
-                        Applies to SKU (optional)
-                        <select
-                          [ngModel]="draft.customSaasSku"
-                          (ngModelChange)="updateDraft({ customSaasSku: $event })"
-                          name="customSaasSku"
-                        >
-                          <option value="">Any / current</option>
-                          @for (sku of skus; track sku) {
-                            <option [value]="sku">{{ sku }}</option>
-                          }
-                        </select>
-                      </label>
-                    </div>
-                  }
-                </fieldset>
-
-                <label>
-                  Comp / audit note
-                  <textarea
-                    rows="2"
-                    maxlength="500"
-                    [ngModel]="draft.billingCompReason"
-                    (ngModelChange)="updateDraft({ billingCompReason: $event })"
-                    name="billingCompReason"
-                  ></textarea>
-                </label>
-
-                <div class="actions">
-                  <button type="submit" class="btn btn-primary">Save commercial terms</button>
-                  <button type="button" class="btn" (click)="closeCommercial()">Cancel</button>
-                </div>
-              </form>
-                </td>
-              </tr>
-            }
           }
         </tbody>
       </table>
     </section>
+
+    @if (totalPages() > 1) {
+      <nav class="pager" aria-label="Business pages">
+        <button type="button" class="btn" [disabled]="page() <= 1 || loading()" (click)="goToPage(page() - 1)">
+          Previous
+        </button>
+        <span class="pager-meta">{{ showingRange() }}</span>
+        <button
+          type="button"
+          class="btn"
+          [disabled]="page() >= totalPages() || loading()"
+          (click)="goToPage(page() + 1)"
+        >
+          Next
+        </button>
+      </nav>
+    }
   }
+
+  <app-business-subscription-wizard
+    [open]="subscriptionWizardOpen()"
+    [business]="subscriptionBusiness()"
+    [draft]="subscriptionDraft()"
+    [saving]="subscriptionSaving()"
+    (closed)="closeSubscriptionWizard()"
+    (save)="saveSubscription()"
+    (draftChange)="patchSubscriptionDraft($event)"
+  />
 </app-portal-page>

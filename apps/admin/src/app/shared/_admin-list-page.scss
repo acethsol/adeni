@@ -1,4 +1,5 @@
 @use "staff-layout" as *;
+@use "admin-pills" as *;
 
 .list-toolbar {
   display: flex;
@@ -8,20 +9,36 @@
   margin-bottom: var(--cds-spacing-05);
 }
 
+.list-toolbar .search-form {
+  flex: 1 1 100%;
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (min-width: 40rem) {
+  .list-toolbar .search-form {
+    flex: 1 1 24rem;
+    width: auto;
+    max-width: 40rem;
+  }
+}
+
 .search-field {
-  flex: 1 1 14rem;
+  flex: 1 1 auto;
   display: flex;
   align-items: center;
   gap: var(--cds-spacing-03);
   min-height: 2.5rem;
+  min-width: 0;
   padding: 0 var(--cds-spacing-04);
   border: 1px solid var(--border);
   background: var(--surface);
 }
 
 .search-field input {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 8rem;
   border: none;
   background: transparent;
   font: inherit;
@@ -97,10 +114,36 @@
 }
 
 .actions-cell .btn,
-.actions-inline .btn {
+.actions-inline .btn,
+.actions-inline a.btn {
   min-height: 2rem;
   padding: 0 var(--cds-spacing-04);
   font-size: 0.8125rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--cds-spacing-04);
+  margin-top: var(--cds-spacing-04);
+}
+
+.pager-meta {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.search-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cds-spacing-03);
 }
 
 .actions-inline {
@@ -110,26 +153,23 @@
   justify-content: flex-end;
 }
 
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  min-height: 1.5rem;
-  padding: 0 0.45rem;
-  border: 1px solid var(--border);
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.status-pill.is-live {
-  color: var(--adeni-teal);
-  border-color: var(--adeni-teal);
-}
-
-.status-pill.is-off {
-  color: var(--text-muted);
-}
-
 .muted {
   color: var(--text-muted);
   font-size: 0.875rem;
+}
+
+.workflow-hint {
+  margin-bottom: var(--cds-spacing-05);
+  padding: var(--cds-spacing-04) var(--cds-spacing-05);
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.workflow-hint strong {
+  color: var(--text);
+}
+
+.workflow-hint a {
+  color: var(--adeni-purple);
 }

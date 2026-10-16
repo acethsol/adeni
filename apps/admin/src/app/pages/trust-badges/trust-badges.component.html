@@ -1,29 +1,38 @@
 <app-portal-page
   title="Trust badges"
-  description="Grant or deny supplemental trust badges businesses requested after verification."
+  description="Post-verification trust signals (phone, CAC, address, license) that businesses request from the portal."
 >
+  <aside class="workflow-hint card">
+    <strong>Not the onboarding queue.</strong>
+    These are optional badges on already-verified businesses. New applications waiting for first approval live under
+    <a routerLink="/pending">Pending verifications</a>.
+  </aside>
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
 
   <section class="card list-toolbar">
-    <label class="search-field">
-      <span class="visually-hidden">Filter queue</span>
-      <adeni-carbon-icon name="search" [size]="16" />
-      <input
-        type="search"
-        [ngModel]="searchText()"
-        (ngModelChange)="searchText.set($event)"
-        placeholder="Filter by business, badge, or reference"
-        autocomplete="off"
-      />
-    </label>
+    <form class="search-form" (submit)="applySearch(); $event.preventDefault()">
+      <label class="search-field">
+        <span class="visually-hidden">Filter queue</span>
+        <adeni-carbon-icon name="search" [size]="16" />
+        <input
+          type="search"
+          [ngModel]="searchText()"
+          (ngModelChange)="searchText.set($event)"
+          name="q"
+          placeholder="Business or reference"
+          autocomplete="off"
+        />
+      </label>
+      <button type="submit" class="btn btn-primary">Search</button>
+    </form>
     <button type="button" class="btn" [disabled]="loading()" (click)="load()">
       <adeni-carbon-icon name="restart" [size]="16" />
       Refresh
     </button>
-    @if (!loading() && items().length > 0) {
-      <p class="toolbar-meta">Showing {{ visible().length }} of {{ items().length }}</p>
+    @if (!loading() && totalCount() > 0) {
+      <p class="toolbar-meta">{{ showingRange() }}</p>
     }
   </section>
 
@@ -34,13 +43,6 @@
       icon="checkmark--filled"
       title="No pending badge requests"
       description="When businesses request phone, CAC, address, or license badges, they will appear here for review."
-    />
-  } @else if (isEmptyFilter()) {
-    <adeni-portal-empty-state
-      icon="search"
-      title="No matches"
-      description="Try a different business name or badge type."
-      compact
     />
   } @else {
     <section class="card data-table-wrap">
@@ -55,12 +57,15 @@
           </tr>
         </thead>
         <tbody>
-          @for (item of visible(); track item.id) {
+          @for (item of items(); track item.id) {
             <tr>
               <td>
                 <div class="row-title">{{ item.businessName }}</div>
               </td>
-              <td>{{ badgeLabel(item.badgeType) }}</td>
+              <td>
+                @let badge = badgeTypePill(item.badgeType);
+                <admin-pill [label]="badge.label" [variant]="badge.variant" />
+              </td>
               <td class="muted">{{ item.referenceNumber || "—" }}</td>
               <td class="muted">{{ item.requestedAt | date: "mediumDate" }}</td>
               <td class="actions-cell">
@@ -88,5 +93,22 @@
         </tbody>
       </table>
     </section>
+
+    @if (totalPages() > 1) {
+      <nav class="pager" aria-label="Trust badge pages">
+        <button type="button" class="btn" [disabled]="page() <= 1 || loading()" (click)="goToPage(page() - 1)">
+          Previous
+        </button>
+        <span class="pager-meta">{{ showingRange() }}</span>
+        <button
+          type="button"
+          class="btn"
+          [disabled]="page() >= totalPages() || loading()"
+          (click)="goToPage(page() + 1)"
+        >
+          Next
+        </button>
+      </nav>
+    }
   }
 </app-portal-page>

@@ -125,9 +125,10 @@ public sealed class BusinessOnboardingServiceTests
             new SubmitVerificationRequest([new(VerificationDocumentType.Cac, "RC123456")]),
             auth0Sub);
 
-        var pending = await admin.GetPendingVerificationsAsync();
-        Assert.Single(pending);
-        Assert.Equal("lekki-cuts", pending[0].Slug);
+        var pending = await admin.ListPendingVerificationsAsync(null, 1, 25);
+        Assert.True(pending.IsSuccess);
+        Assert.Single(pending.Value!.Items);
+        Assert.Equal("lekki-cuts", pending.Value.Items[0].Slug);
 
         var approved = await admin.ApproveAsync(tenantId, "admin-1");
         Assert.True(approved.IsSuccess);

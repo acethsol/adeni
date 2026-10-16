@@ -102,21 +102,54 @@ public sealed class VerificationBadgeService(AdeniDbContext dbContext) : IVerifi
         return Result.Success(Map(badge));
     }
 
-    public async Task<IReadOnlyList<PendingBadgeRequestResponse>> ListPendingRequestsAsync(
-        CancellationToken cancellationToken = default) =>
-        await (
+    public async Task<Result<AdminPagedResult<PendingBadgeRequestResponse>>> ListPendingRequestsAsync(
+        string? search,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        var paging = AdminPaging.Normalize(page, pageSize);
+        if (paging.IsFailure)
+        {
+            return Result.Failure<AdminPagedResult<PendingBadgeRequestResponse>>(paging.Error);
+        }
+
+        var (effectivePage, effectivePageSize) = paging.Value;
+        var needle = search?.Trim().ToLowerInvariant();
+
+        var query =
             from badge in dbContext.TenantVerificationBadges.AsNoTracking()
             join tenant in dbContext.Tenants.AsNoTracking() on badge.TenantId equals tenant.Id
             where badge.Status == VerificationBadgeStatus.Pending
-            orderby badge.RequestedAt
-            select new PendingBadgeRequestResponse(
-                badge.Id,
-                badge.TenantId,
-                tenant.Name,
-                ToApiBadgeType(badge.BadgeType),
-                badge.ReferenceNumber,
-                badge.RequestedAt))
+            select new { badge, tenant };
+
+        if (!string.IsNullOrWhiteSpace(needle))
+        {
+            query = query.Where(x =>
+                x.tenant.Name.ToLower().Contains(needle)
+                || (x.badge.ReferenceNumber != null && x.badge.ReferenceNumber.ToLower().Contains(needle)));
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var rows = await query
+            .OrderBy(x => x.badge.RequestedAt)
+            .Skip((effectivePage - 1) * effectivePageSize)
+            .Take(effectivePageSize)
+            .Select(x => new PendingBadgeRequestResponse(
+                x.badge.Id,
+                x.badge.TenantId,
+                x.tenant.Name,
+                ToApiBadgeType(x.badge.BadgeType),
+                x.badge.ReferenceNumber,
+                x.badge.RequestedAt))
             .ToListAsync(cancellationToken);
+
+        return Result.Success(new AdminPagedResult<PendingBadgeRequestResponse>(
+            rows,
+            effectivePage,
+            effectivePageSize,
+            totalCount));
+    }
 
     public async Task<Result<Unit>> GrantBadgeAsync(
         Guid tenantId,

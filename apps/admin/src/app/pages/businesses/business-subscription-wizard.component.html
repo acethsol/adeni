@@ -1,0 +1,312 @@
+@if (business(); as b) {
+  @if (draft(); as d) {
+    <adeni-modal
+      [open]="open()"
+      [title]="b.name"
+      subtitle="Manage subscription, billing, and commercial overrides for this tenant."
+      size="xl"
+      [hasFooter]="false"
+      (closed)="onClose()"
+    >
+      <div class="wizard-shell">
+        <div class="context-card">
+          @let status = tenantStatusPill(b.status);
+          <admin-pill [label]="status.label" [variant]="status.variant" [compact]="true" />
+          @let plan = businessPlanPill(b);
+          <admin-pill [label]="'Current · ' + plan.label" [variant]="plan.variant" [compact]="true" />
+          <admin-pill [label]="b.slug" variant="neutral" [compact]="true" />
+        </div>
+
+        <adeni-wizard
+        [steps]="steps"
+        [activeId]="wizardStep()"
+        ariaLabel="Subscription setup"
+        [allowJump]="true"
+        (stepSelect)="onStepSelect($event)"
+      >
+        <div class="wizard-form">
+          @switch (wizardStep()) {
+            @case ("plan") {
+              <label>
+                Plan SKU
+                <select
+                  [ngModel]="d.subscriptionSku"
+                  (ngModelChange)="patch({ subscriptionSku: $event })"
+                  name="subscriptionSku"
+                >
+                  @for (sku of skus; track sku) {
+                    <option [value]="sku">{{ formatSubscriptionSku(sku) }}</option>
+                  }
+                </select>
+              </label>
+            }
+            @case ("billing") {
+              <div class="grid">
+                <label>
+                  Billing status
+                  <select
+                    [ngModel]="d.billingStatus"
+                    (ngModelChange)="patch({ billingStatus: $event })"
+                    name="billingStatus"
+                  >
+                    @for (status of billingStatuses; track status) {
+                      <option [value]="status">{{ status }}</option>
+                    }
+                  </select>
+                </label>
+              </div>
+              <label class="check">
+                <input
+                  type="checkbox"
+                  [ngModel]="d.endTrial"
+                  (ngModelChange)="patch({ endTrial: $event })"
+                  name="endTrial"
+                />
+                End trial and bill as active
+              </label>
+              @if (!d.endTrial) {
+                <div class="grid">
+                  <label>
+                    Trial length (days)
+                    <input
+                      type="number"
+                      min="0"
+                      max="730"
+                      [ngModel]="d.trialDays"
+                      (ngModelChange)="patch({ trialDays: $event === '' ? null : +$event })"
+                      name="trialDays"
+                    />
+                  </label>
+                  <label>
+                    Trial entitlements SKU
+                    <select
+                      [ngModel]="d.trialSku"
+                      (ngModelChange)="patch({ trialSku: $event })"
+                      name="trialSku"
+                    >
+                      @for (sku of skus; track sku) {
+                        <option [value]="sku">{{ sku }}</option>
+                      }
+                    </select>
+                  </label>
+                </div>
+              }
+            }
+            @case ("pricing") {
+              <label class="check">
+                <input
+                  type="checkbox"
+                  [ngModel]="d.clearDiscounts"
+                  (ngModelChange)="patch({ clearDiscounts: $event })"
+                  name="clearDiscounts"
+                />
+                Clear all discounts
+              </label>
+              @if (!d.clearDiscounts) {
+                <div class="grid">
+                  <label>
+                    Discount %
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      [ngModel]="d.discountPercent"
+                      (ngModelChange)="patch({ discountPercent: $event === '' ? null : +$event })"
+                      name="discountPercent"
+                    />
+                  </label>
+                  <label>
+                    Fixed discount
+                    <input
+                      type="number"
+                      min="0"
+                      [ngModel]="d.discountFixedAmount"
+                      (ngModelChange)="patch({ discountFixedAmount: $event === '' ? null : +$event })"
+                      name="discountFixedAmount"
+                    />
+                  </label>
+                  <label>
+                    Currency
+                    <input
+                      maxlength="3"
+                      [ngModel]="d.discountCurrency"
+                      (ngModelChange)="patch({ discountCurrency: $event })"
+                      name="discountCurrency"
+                      placeholder="NGN"
+                    />
+                  </label>
+                  <label>
+                    Cycles remaining
+                    <input
+                      type="number"
+                      min="0"
+                      [ngModel]="d.discountCyclesRemaining"
+                      (ngModelChange)="patch({ discountCyclesRemaining: $event === '' ? null : +$event })"
+                      name="discountCyclesRemaining"
+                    />
+                  </label>
+                </div>
+              }
+              <label class="check">
+                <input
+                  type="checkbox"
+                  [ngModel]="d.clearCustomSaasPrice"
+                  (ngModelChange)="patch({ clearCustomSaasPrice: $event })"
+                  name="clearCustomSaasPrice"
+                />
+                Use catalog country pricing only
+              </label>
+              @if (!d.clearCustomSaasPrice) {
+                <div class="grid">
+                  <label>
+                    Custom monthly amount
+                    <input
+                      type="number"
+                      min="0"
+                      [ngModel]="d.customSaasMonthlyAmount"
+                      (ngModelChange)="patch({ customSaasMonthlyAmount: $event === '' ? null : +$event })"
+                      name="customSaasMonthlyAmount"
+                    />
+                  </label>
+                  <label>
+                    Currency
+                    <input
+                      maxlength="3"
+                      [ngModel]="d.customSaasCurrency"
+                      (ngModelChange)="patch({ customSaasCurrency: $event })"
+                      name="customSaasCurrency"
+                      placeholder="NGN"
+                    />
+                  </label>
+                  <label>
+                    Applies to SKU
+                    <select
+                      [ngModel]="d.customSaasSku"
+                      (ngModelChange)="patch({ customSaasSku: $event })"
+                      name="customSaasSku"
+                    >
+                      <option value="">Any / current</option>
+                      @for (sku of skus; track sku) {
+                        <option [value]="sku">{{ sku }}</option>
+                      }
+                    </select>
+                  </label>
+                </div>
+              }
+              <label>
+                Audit note
+                <textarea
+                  rows="2"
+                  maxlength="500"
+                  [ngModel]="d.billingCompReason"
+                  (ngModelChange)="patch({ billingCompReason: $event })"
+                  name="billingCompReason"
+                  placeholder="Why this tenant has non-standard terms"
+                ></textarea>
+              </label>
+            }
+            @case ("history") {
+              @if (billingOwedHint(); as hint) {
+                <p class="history-hint">{{ hint }}</p>
+              }
+              @if (chargesLoading()) {
+                <p class="muted">Loading billing history…</p>
+              } @else if (chargesError()) {
+                <p class="error-inline">{{ chargesError() }}</p>
+                <button type="button" class="btn" (click)="loadCharges()">Retry</button>
+              } @else if (charges().length === 0) {
+                <adeni-portal-empty-state
+                  icon="calendar"
+                  title="No Adeni charges yet"
+                  description="Charges appear after stub checkout or live provider webhooks sync subscription payments."
+                />
+              } @else {
+                <div class="charge-table-wrap">
+                  <table class="charge-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Date</th>
+                        <th scope="col">Amount</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Plan</th>
+                        <th scope="col">Reference</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (row of charges(); track row.id) {
+                        <tr>
+                          <td>{{ row.occurredAt | date: "medium" }}</td>
+                          <td>{{ formatChargeAmount(row) }}</td>
+                          <td>{{ formatBillingChargeStatus(row.status) }}</td>
+                          <td>{{ chargeSkuLabel(row.subscriptionSku) }}</td>
+                          <td class="mono">{{ row.providerReference }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            }
+            @case ("review") {
+              <ul class="review-list">
+                <li>
+                  <span>Plan</span>
+                  <strong
+                    >{{ formatSubscriptionSku(d.subscriptionSku)
+                    }}{{ skuChanged() ? " (changed)" : "" }}</strong
+                  >
+                </li>
+                <li>
+                  <span>Billing status</span>
+                  <strong>{{ d.billingStatus }}</strong>
+                </li>
+                <li>
+                  <span>Trial</span>
+                  <strong>{{
+                    d.endTrial
+                      ? "End trial"
+                      : d.trialDays != null
+                        ? d.trialDays + " days · " + d.trialSku
+                        : "Unchanged"
+                  }}</strong>
+                </li>
+                <li>
+                  <span>Discounts</span>
+                  <strong>{{ d.clearDiscounts ? "Clear all" : "Updated or unchanged" }}</strong>
+                </li>
+                <li>
+                  <span>Custom price</span>
+                  <strong>{{
+                    d.clearCustomSaasPrice
+                      ? "Catalog only"
+                      : d.customSaasMonthlyAmount != null
+                        ? d.customSaasMonthlyAmount + " " + (d.customSaasCurrency || "—")
+                        : "None"
+                  }}</strong>
+                </li>
+              </ul>
+            }
+          }
+        </div>
+
+        <div wizardActions class="wizard-actions">
+          <button type="button" class="btn" (click)="onClose()">Cancel</button>
+          <div class="wizard-actions__end">
+            @if (!isFirstStep()) {
+              <button type="button" class="btn" [disabled]="saving()" (click)="back()">Back</button>
+            }
+            @if (!isLastStep()) {
+              <button type="button" class="btn btn-primary" (click)="next()">Next</button>
+            } @else {
+              <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="save.emit()">
+                {{ saving() ? "Saving…" : "Apply changes" }}
+              </button>
+            }
+          </div>
+        </div>
+        </adeni-wizard>
+      </div>
+    </adeni-modal>
+  }
+}

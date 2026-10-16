@@ -19,7 +19,10 @@ public sealed class TenantMessagesController(
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet("threads")]
-    public async Task<IActionResult> ListThreads(CancellationToken cancellationToken)
+    public async Task<IActionResult> ListThreads(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 25,
+        CancellationToken cancellationToken = default)
     {
         if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
         {
@@ -32,8 +35,17 @@ public sealed class TenantMessagesController(
             return NotFound();
         }
 
-        var result = await messaging.ListForTenantAsync(tenantId, tier.Value, cancellationToken);
-        return ApiResults.FromResult(result, items => Ok(new { items }), HttpContext);
+        var result = await messaging.ListForTenantAsync(tenantId, tier.Value, page, pageSize, cancellationToken);
+        return ApiResults.FromResult(
+            result,
+            payload => Ok(new
+            {
+                items = payload.Items,
+                page = payload.Page,
+                pageSize = payload.PageSize,
+                totalCount = payload.TotalCount,
+            }),
+            HttpContext);
     }
 
     [HttpGet("unread-count")]

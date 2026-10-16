@@ -37,7 +37,10 @@ public interface IVerificationBadgeService
         RequestVerificationBadgeRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<PendingBadgeRequestResponse>> ListPendingRequestsAsync(
+    Task<Result<AdminPagedResult<PendingBadgeRequestResponse>>> ListPendingRequestsAsync(
+        string? search,
+        int page,
+        int pageSize,
         CancellationToken cancellationToken = default);
 
     Task<Result<Unit>> GrantBadgeAsync(

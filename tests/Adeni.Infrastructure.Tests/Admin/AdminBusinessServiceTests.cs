@@ -24,10 +24,11 @@ public sealed class AdminBusinessServiceTests
         await db.SaveChangesAsync();
 
         var service = scope.ServiceProvider.GetRequiredService<AdminBusinessService>();
-        var pending = await service.GetPendingVerificationsAsync();
+        var pending = await service.ListPendingVerificationsAsync(null, 1, 25);
 
-        Assert.Single(pending);
-        Assert.Equal("Pending", pending[0].Name);
+        Assert.True(pending.IsSuccess);
+        Assert.Single(pending.Value!.Items);
+        Assert.Equal("Pending", pending.Value.Items[0].Name);
     }
 
     [Fact]

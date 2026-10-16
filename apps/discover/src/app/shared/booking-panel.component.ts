@@ -7,7 +7,7 @@ import type {
   ServiceMenuGroup,
   ServiceOffering,
 } from "@adeni/shared";
-import { t } from "@adeni/shared";
+import { resolvePaymentCheckoutUrl, t } from "@adeni/shared";
 import { AdeniApiError } from "@adeni/api-client";
 import { AdeniFeedbackService, AdeniLocaleService, AdeniWizardComponent, type AdeniWizardStep } from "@adeni/ui";
 import { CustomerApiService } from "../core/services/customer-api.service";
@@ -491,14 +491,13 @@ export class BookingPanelComponent {
             type: "deposit",
           }),
         );
-        const checkoutUrl = payment.checkoutUrl;
-        if (checkoutUrl.startsWith("http")) {
-          window.location.href = checkoutUrl;
-        } else {
-          window.location.href = checkoutUrl.startsWith("/")
-            ? checkoutUrl
-            : `/checkout/stub/${payment.providerReference}`;
-        }
+        window.location.href = resolvePaymentCheckoutUrl(
+          payment.checkoutUrl.startsWith("/")
+            ? payment.checkoutUrl
+            : `/checkout/stub/${payment.providerReference}`,
+          window.location.origin,
+          { amount: payment.amount, currency: payment.currency },
+        );
         return;
       }
 

@@ -62,3 +62,30 @@ export function slotRange(from: Date, days: number) {
   end.setDate(end.getDate() + days);
   return { from: start.toISOString(), to: end.toISOString() };
 }
+
+/** Hosted checkout URLs may be relative; resolve against discover/public web origin. */
+export function resolvePaymentCheckoutUrl(
+  checkoutUrl: string,
+  publicWebOrigin: string,
+  details?: { amount?: number; currency?: string },
+): string {
+  const origin = publicWebOrigin.replace(/\/$/, "");
+  const absolute = checkoutUrl.startsWith("http")
+    ? checkoutUrl
+    : `${origin}${checkoutUrl.startsWith("/") ? checkoutUrl : `/${checkoutUrl}`}`;
+
+  if (details?.amount == null || !details.currency) {
+    return absolute;
+  }
+
+  try {
+    const url = new URL(absolute);
+    if (url.pathname.includes("/checkout/stub/")) {
+      url.searchParams.set("amount", String(details.amount));
+      url.searchParams.set("currency", details.currency);
+    }
+    return url.toString();
+  } catch {
+    return absolute;
+  }
+}

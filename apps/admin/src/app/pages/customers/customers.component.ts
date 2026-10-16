@@ -1,8 +1,8 @@
-import { Component, inject, signal } from "@angular/core";
+import { Component, computed, inject, signal } from "@angular/core";
 import { JsonPipe } from "@angular/common";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import type { AdminCustomerSummary, CustomerDataExport } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
@@ -12,6 +12,14 @@ import {
   PortalPageComponent,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
+import {
+  ADMIN_LIST_PAGE_SIZE,
+  adminListRangeLabel,
+  adminListTotalPages,
+} from "../../shared/admin-list-paging";
+import { adminLoadErrorMessage } from "../../shared/admin-load-error";
+import { AdminPillComponent } from "../../shared/admin-pill.component";
+import { erasurePill } from "../../shared/admin-pill-maps";
 
 @Component({
   selector: "app-admin-customers",
@@ -22,6 +30,7 @@ import { AdminApiService } from "../../core/services/admin-api.service";
     JsonPipe,
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
+    AdminPillComponent,
   ],
   templateUrl: "./customers.component.html",
   styleUrl: "./customers.component.scss",
@@ -29,6 +38,7 @@ import { AdminApiService } from "../../core/services/admin-api.service";
 export class AdminCustomersComponent {
   private readonly api = inject(AdminApiService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly confirmDialog = inject(AdeniConfirmService);
 
@@ -38,21 +48,49 @@ export class AdminCustomersComponent {
   readonly error = signal<string | null>(null);
   readonly message = signal<string | null>(null);
   readonly customers = signal<AdminCustomerSummary[]>([]);
+  readonly totalCount = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = ADMIN_LIST_PAGE_SIZE;
   readonly exportData = signal<CustomerDataExport | null>(null);
   readonly busyId = signal<string | null>(null);
 
+  readonly totalPages = computed(() => adminListTotalPages(this.totalCount(), this.pageSize));
+  readonly showingRange = computed(() =>
+    adminListRangeLabel(this.page(), this.pageSize, this.totalCount()),
+  );
+
+  readonly erasurePill = erasurePill;
+
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
-      const email = params.get("email")?.trim() ?? "";
-      if (!email || (email === this.searchInput && this.hasSearched())) {
-        return;
+      const q = (params.get("q") ?? params.get("email") ?? "").trim();
+      const page = Number(params.get("page") ?? "1");
+      if (q && q !== this.searchInput) {
+        this.searchInput = q;
       }
-      this.searchInput = email;
-      void this.search();
+      this.page.set(Number.isFinite(page) && page >= 1 ? page : 1);
+      if (q) {
+        void this.runSearch(q);
+      } else {
+        this.hasSearched.set(false);
+        this.customers.set([]);
+        this.totalCount.set(0);
+      }
     });
   }
 
   async search(): Promise<void> {
+    const q = this.searchInput.trim();
+    if (!q) {
+      return;
+    }
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { q, email: null, page: null },
+    });
+  }
+
+  private async runSearch(q: string): Promise<void> {
     this.searching.set(true);
     this.hasSearched.set(true);
     this.error.set(null);
@@ -61,18 +99,30 @@ export class AdminCustomersComponent {
 
     try {
       await this.feedback.runLoading(async () => {
-        const items = await this.api.withAuthorizedClient((c) =>
-          c.searchAdminCustomers(this.searchInput.trim()),
+        const result = await this.api.withAuthorizedClient((c) =>
+          c.searchAdminCustomers(q, { page: this.page(), pageSize: this.pageSize }),
         );
-        this.customers.set(items);
-      }, "Searching customers…", this.searchInput.trim() || "All matches");
-    } catch {
-      this.error.set("Could not search customers.");
-      this.feedback.error("Could not search customers.");
+        this.customers.set(result.items);
+        this.totalCount.set(result.totalCount);
+      }, "Searching customers…", q);
+    } catch (err) {
+      const message = adminLoadErrorMessage("Could not search customers.", err);
+      this.error.set(message);
+      this.feedback.error(message);
       this.customers.set([]);
+      this.totalCount.set(0);
     } finally {
       this.searching.set(false);
     }
+  }
+
+  goToPage(next: number): void {
+    const page = Math.min(Math.max(1, next), this.totalPages());
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: page === 1 ? null : page },
+      queryParamsHandling: "merge",
+    });
   }
 
   async export(customerId: string): Promise<void> {

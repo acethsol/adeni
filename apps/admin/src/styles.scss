@@ -1,6 +1,7 @@
 @use "carbon-adeni-tokens" as *;
 @use "carbon-components";
 @use "styles/admin-theme";
+@use "./app/shared/admin-pills";
 
 *,
 *::before,

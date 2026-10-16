@@ -67,10 +67,19 @@ public sealed record SetTenantCommercialTermsRequest(
 
 public interface IAdminBusinessService
 {
-    Task<IReadOnlyList<PendingBusinessResponse>> GetPendingVerificationsAsync(
+    Task<Result<AdminPagedResult<PendingBusinessResponse>>> ListPendingVerificationsAsync(
+        string? search,
+        int page,
+        int pageSize,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<AdminBusinessSummaryResponse>> ListBusinessesAsync(
+    Task<Result<AdminPagedResult<AdminBusinessSummaryResponse>>> ListBusinessesAsync(
+        string? search,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
+
+    Task<AdminBusinessDirectoryStats> GetDirectoryStatsAsync(
         CancellationToken cancellationToken = default);
 
     Task<Result<Unit>> ApproveAsync(Guid tenantId, string adminId, CancellationToken cancellationToken = default);

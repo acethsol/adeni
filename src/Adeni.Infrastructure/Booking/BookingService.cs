@@ -315,15 +315,26 @@ public sealed class BookingService(
         }
     }
 
-    public async Task<IReadOnlyList<BookingResponse>> ListForTenantAsync(
+    public async Task<PagedResult<BookingResponse>> ListForTenantAsync(
         Guid tenantId,
+        string tab = TenantBookingTabs.Pending,
+        int page = 1,
+        int pageSize = Paging.DefaultPageSize,
         Guid? staffMemberId = null,
         CancellationToken cancellationToken = default)
     {
+        var normalized = Paging.Normalize(page, pageSize);
+        if (normalized.IsFailure)
+        {
+            return new PagedResult<BookingResponse>(Array.Empty<BookingResponse>(), page, pageSize, 0);
+        }
+
+        (page, pageSize) = normalized.Value!;
+        var effectiveTab = TenantBookingTabs.IsValid(tab) ? tab : TenantBookingTabs.Pending;
+        var startOfTodayUtc = DateTimeOffset.UtcNow.Date;
+
         var query = dbContext.Bookings
             .AsNoTracking()
-            .Include(x => x.Lines)
-            .Include(x => x.Guests)
             .Where(x => x.TenantId == tenantId);
 
         if (staffMemberId is Guid scopedStaffId)
@@ -331,13 +342,41 @@ public sealed class BookingService(
             query = query.Where(x => x.StaffMemberId == scopedStaffId);
         }
 
-        var bookings = await query
-            .OrderBy(x => x.StartAt)
+        query = ApplyTenantBookingTabFilter(query, effectiveTab, startOfTodayUtc);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var ordered = effectiveTab switch
+        {
+            TenantBookingTabs.Past => query.OrderByDescending(x => x.StartAt),
+            _ => query.OrderBy(x => x.StartAt),
+        };
+
+        var bookingIds = await ordered
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => x.Id)
             .ToListAsync(cancellationToken);
+
+        if (bookingIds.Count == 0)
+        {
+            return new PagedResult<BookingResponse>(Array.Empty<BookingResponse>(), page, pageSize, totalCount);
+        }
+
+        var bookings = await dbContext.Bookings
+            .AsNoTracking()
+            .Include(x => x.Lines)
+            .Include(x => x.Guests)
+            .Where(x => bookingIds.Contains(x.Id))
+            .ToListAsync(cancellationToken);
+
+        bookings = bookingIds
+            .Select(id => bookings.First(b => b.Id == id))
+            .ToList();
 
         if (bookings.Count == 0)
         {
-            return Array.Empty<BookingResponse>();
+            return new PagedResult<BookingResponse>(Array.Empty<BookingResponse>(), page, pageSize, totalCount);
         }
 
         var serviceIds = bookings.Select(x => x.ServiceOfferingId).Distinct().ToArray();
@@ -360,7 +399,7 @@ public sealed class BookingService(
             .Where(x => customerIds.Contains(x.Id))
             .ToDictionaryAsync(x => x.Id, cancellationToken);
 
-        return bookings
+        var items = bookings
             .Select(booking =>
             {
                 services.TryGetValue(booking.ServiceOfferingId, out var service);
@@ -388,6 +427,42 @@ public sealed class BookingService(
                     customerPhoneMasked: PiiMasker.MaskPhone(customer?.Phone));
             })
             .ToArray();
+
+        return new PagedResult<BookingResponse>(items, page, pageSize, totalCount);
+    }
+
+    private static IQueryable<BookingRecord> ApplyTenantBookingTabFilter(
+        IQueryable<BookingRecord> query,
+        string tab,
+        DateTime startOfTodayUtc)
+    {
+        if (tab == TenantBookingTabs.All)
+        {
+            return query;
+        }
+
+        if (tab == TenantBookingTabs.Pending)
+        {
+            return query.Where(x => x.Status == BookingStatus.Pending);
+        }
+
+        if (tab == TenantBookingTabs.Upcoming)
+        {
+            return query.Where(x =>
+                (x.Status == BookingStatus.Confirmed
+                 || x.Status == BookingStatus.CheckedIn
+                 || x.Status == BookingStatus.Completed)
+                && x.StartAt >= startOfTodayUtc);
+        }
+
+        return query.Where(x =>
+            x.Status == BookingStatus.Rejected
+            || x.Status == BookingStatus.Cancelled
+            || x.Status == BookingStatus.Paid
+            || ((x.Status == BookingStatus.Confirmed
+                 || x.Status == BookingStatus.CheckedIn
+                 || x.Status == BookingStatus.Completed)
+                && x.StartAt < startOfTodayUtc));
     }
 
     public async Task<IReadOnlyList<CustomerBookingResponse>> ListForCustomerAsync(

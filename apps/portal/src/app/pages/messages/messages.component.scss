@@ -121,6 +121,17 @@ textarea {
   color: var(--text-muted);
 }
 
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
 @media (max-width: 800px) {
   .inbox {
     grid-template-columns: 1fr;

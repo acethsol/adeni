@@ -78,12 +78,12 @@ public sealed class PractitionerBookingScopeTests
         Assert.True(bookingA.IsSuccess);
         Assert.True(bookingB.IsSuccess);
 
-        var all = await bookings.ListForTenantAsync(tenantId);
-        Assert.Equal(2, all.Count);
+        var all = await bookings.ListForTenantAsync(tenantId, TenantBookingTabs.All, 1, 500);
+        Assert.Equal(2, all.Items.Count);
 
-        var scoped = await bookings.ListForTenantAsync(tenantId, staffA.Value.Id);
-        Assert.Single(scoped);
-        Assert.Equal(bookingA.Value!.Id, scoped[0].Id);
+        var scoped = await bookings.ListForTenantAsync(tenantId, TenantBookingTabs.All, 1, 500, staffA.Value.Id);
+        Assert.Single(scoped.Items);
+        Assert.Equal(bookingA.Value!.Id, scoped.Items[0].Id);
     }
 
     [Fact]

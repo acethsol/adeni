@@ -6,6 +6,7 @@ import {
   getGmvCollection,
   getSkuMonthlyAmount,
   listPricedCountryCodes,
+  resolveSubscriptionSku,
   skuToSubscriptionTier,
   subscriptionTierToSku,
 } from "./country-pricing";
@@ -37,6 +38,8 @@ describe("country-pricing", () => {
     expect(subscriptionTierToSku("pro")).toBe("professional");
     expect(subscriptionTierToSku("business")).toBe("business");
     expect(skuToSubscriptionTier("professional")).toBe("pro");
+    expect(resolveSubscriptionSku("professional", "free")).toBe("professional");
+    expect(resolveSubscriptionSku(undefined, "free")).toBe("starter");
   });
 
   it("NG gmv is paystack split at 0%", () => {

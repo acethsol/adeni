@@ -152,12 +152,12 @@ export class DashboardComponent implements OnInit {
         let collectedCurrency = services[0]?.currency ?? "NGN";
         if (hasCapability(caps, "deposits")) {
           try {
-            const ledger = await client.listPaymentLedger(profile.tenantId, 1, 100);
-            collectedTotal = ledger
+            const ledgerPage = await client.listPaymentLedger(profile.tenantId, 1, 100);
+            collectedTotal = ledgerPage.items
               .filter((entry) => entry.status === "completed")
               .reduce((sum, entry) => sum + entry.amount, 0);
-            if (ledger[0]?.currency) {
-              collectedCurrency = ledger[0].currency;
+            if (ledgerPage.items[0]?.currency) {
+              collectedCurrency = ledgerPage.items[0].currency;
             }
           } catch {
             collectedTotal = null;

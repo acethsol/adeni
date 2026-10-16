@@ -25,6 +25,11 @@ public interface ISubscriptionBillingOrchestrator
         int limit = 20,
         CancellationToken cancellationToken = default);
 
+    Task<Result<IReadOnlyList<TenantSubscriptionChargeResponse>>> ListChargesForAdminAsync(
+        Guid tenantId,
+        int limit = 20,
+        CancellationToken cancellationToken = default);
+
     /// <summary>Development/stub: complete checkout without provider webhook.</summary>
     Task<Result<TenantSubscriptionChargeResponse>> CompleteStubCheckoutAsync(
         Guid tenantId,

@@ -13,24 +13,42 @@ public sealed class AdminCustomerService(
     IAuditLogWriter auditLogWriter,
     ICorrelationContext correlationContext) : IAdminCustomerService
 {
-    public async Task<IReadOnlyList<AdminCustomerSummary>> SearchAsync(
-        string? email,
+    public async Task<Result<AdminPagedResult<AdminCustomerSummary>>> SearchAsync(
+        string? query,
+        int page,
+        int pageSize,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(email))
+        var paging = AdminPaging.Normalize(page, pageSize);
+        if (paging.IsFailure)
         {
-            return Array.Empty<AdminCustomerSummary>();
+            return Result.Failure<AdminPagedResult<AdminCustomerSummary>>(paging.Error);
         }
 
-        var normalized = email.Trim().ToLowerInvariant();
-        return await dbContext.Customers
+        var (effectivePage, effectivePageSize) = paging.Value;
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return Result.Success(new AdminPagedResult<AdminCustomerSummary>(
+                [],
+                effectivePage,
+                effectivePageSize,
+                0));
+        }
+
+        var normalized = query.Trim().ToLowerInvariant();
+        var baseQuery = dbContext.Customers
             .AsNoTracking()
             .Where(c =>
                 c.Name.ToLower().Contains(normalized)
                 || c.Auth0Sub.ToLower().Contains(normalized)
                 || (c.Email != null && c.Email.ToLower().Contains(normalized))
-                || (c.Phone != null && c.Phone.ToLower().Contains(normalized)))
+                || (c.Phone != null && c.Phone.ToLower().Contains(normalized)));
+
+        var totalCount = await baseQuery.CountAsync(cancellationToken);
+        var items = await baseQuery
             .OrderByDescending(c => c.CreatedAt)
+            .Skip((effectivePage - 1) * effectivePageSize)
+            .Take(effectivePageSize)
             .Select(c => new AdminCustomerSummary(
                 c.Id,
                 c.Auth0Sub,
@@ -38,8 +56,13 @@ public sealed class AdminCustomerService(
                 c.Email,
                 c.CreatedAt,
                 c.ErasureRequestedAt))
-            .Take(20)
             .ToListAsync(cancellationToken);
+
+        return Result.Success(new AdminPagedResult<AdminCustomerSummary>(
+            items,
+            effectivePage,
+            effectivePageSize,
+            totalCount));
     }
 
     public async Task<Result<CustomerDataExportResponse>> ExportAsync(

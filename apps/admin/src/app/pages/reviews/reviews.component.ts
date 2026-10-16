@@ -12,6 +12,14 @@ import {
   PortalPageComponent,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
+import { adminLoadErrorMessage } from "../../shared/admin-load-error";
+import {
+  ADMIN_LIST_PAGE_SIZE,
+  adminListRangeLabel,
+  adminListTotalPages,
+} from "../../shared/admin-list-paging";
+import { AdminPillComponent } from "../../shared/admin-pill.component";
+import { ratingPill, reviewVisibilityPill } from "../../shared/admin-pill-maps";
 
 @Component({
   selector: "app-admin-reviews",
@@ -22,6 +30,7 @@ import { AdminApiService } from "../../core/services/admin-api.service";
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
     DatePipe,
+    AdminPillComponent,
   ],
   templateUrl: "./reviews.component.html",
   styleUrl: "./reviews.component.scss",
@@ -38,23 +47,19 @@ export class AdminReviewsComponent implements OnInit {
   readonly items = signal<AdminReviewListItem[]>([]);
   readonly totalCount = signal(0);
   readonly page = signal(1);
-  readonly pageSize = 25;
+  readonly pageSize = ADMIN_LIST_PAGE_SIZE;
   readonly searchText = signal("");
   readonly includeHidden = signal(false);
   readonly busyId = signal<string | null>(null);
 
-  readonly totalPages = computed(() =>
-    Math.max(1, Math.ceil(this.totalCount() / this.pageSize)),
-  );
+  readonly totalPages = computed(() => adminListTotalPages(this.totalCount(), this.pageSize));
   readonly isEmpty = computed(() => !this.loading() && this.totalCount() === 0);
-  readonly showingRange = computed(() => {
-    if (this.totalCount() === 0) {
-      return "0";
-    }
-    const start = (this.page() - 1) * this.pageSize + 1;
-    const end = Math.min(this.page() * this.pageSize, this.totalCount());
-    return `${start}–${end} of ${this.totalCount()}`;
-  });
+  readonly ratingPill = ratingPill;
+  readonly reviewVisibilityPill = reviewVisibilityPill;
+
+  readonly showingRange = computed(() =>
+    adminListRangeLabel(this.page(), this.pageSize, this.totalCount()),
+  );
 
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
@@ -90,8 +95,8 @@ export class AdminReviewsComponent implements OnInit {
         this.items.set(result.items);
         this.totalCount.set(result.totalCount);
       }, "Loading reviews…", "Moderation queue");
-    } catch {
-      const message = "Could not load reviews.";
+    } catch (err) {
+      const message = adminLoadErrorMessage("Could not load reviews.", err);
       this.error.set(message);
       this.feedback.error(message);
       this.items.set([]);

@@ -40,6 +40,27 @@
               </li>
             }
           </ul>
+          @if (ledgerTotalCount() > ledgerPageSize) {
+            <div class="pagination">
+              <button
+                type="button"
+                class="btn"
+                [disabled]="ledgerPage() <= 1 || loading()"
+                (click)="prevLedgerPage()"
+              >
+                Previous
+              </button>
+              <span class="muted">{{ ledgerPageLabel() }}</span>
+              <button
+                type="button"
+                class="btn"
+                [disabled]="loading() || !canNextLedgerPage()"
+                (click)="nextLedgerPage()"
+              >
+                Next
+              </button>
+            </div>
+          }
         }
       </section>
     } @else if (tab() === "documents") {

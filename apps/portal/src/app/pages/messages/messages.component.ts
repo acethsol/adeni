@@ -6,6 +6,8 @@ import { map } from "rxjs";
 import {
   formatSlotTime,
   hasTenantEntitlement,
+  pageRangeLabel,
+  totalPages as computeTotalPages,
   type BusinessProfile,
   type MessageTemplate,
   type MessageThreadDetail,
@@ -51,6 +53,15 @@ export class MessagesComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly notice = signal<string | null>(null);
   readonly threads = signal<MessageThreadSummary[]>([]);
+  readonly threadTotalCount = signal(0);
+  readonly threadPage = signal(1);
+  readonly threadPageSize = 25;
+  readonly threadTotalPageCount = computed(() =>
+    computeTotalPages(this.threadTotalCount(), this.threadPageSize),
+  );
+  readonly threadPageLabel = computed(() =>
+    pageRangeLabel(this.threadPage(), this.threadPageSize, this.threadTotalCount()),
+  );
   readonly templates = signal<MessageTemplate[]>([]);
   readonly detail = signal<MessageThreadDetail | null>(null);
   readonly sending = signal(false);
@@ -70,15 +81,26 @@ export class MessagesComponent implements OnInit {
         const profile = await client.getTenantProfile();
         let threads: MessageThreadSummary[] = [];
         let templates: MessageTemplate[] = [];
+        let threadTotalCount = 0;
+        let threadPage = 1;
         if (hasTenantEntitlement(profile.entitlements, "messaging")) {
-          [threads, templates] = await Promise.all([
-            client.listTenantMessageThreads(),
+          const [threadPageResult, templateList] = await Promise.all([
+            client.listTenantMessageThreads({
+              page: this.threadPage(),
+              pageSize: this.threadPageSize,
+            }),
             client.getTenantMessageTemplates(),
           ]);
+          threads = threadPageResult.items;
+          threadTotalCount = threadPageResult.totalCount;
+          threadPage = threadPageResult.page;
+          templates = templateList;
         }
-        return { threads, templates, profile };
+        return { threads, templates, profile, threadTotalCount, threadPage };
       });
       this.threads.set(snapshot.threads);
+      this.threadTotalCount.set(snapshot.threadTotalCount);
+      this.threadPage.set(snapshot.threadPage);
       this.templates.set(snapshot.templates);
       this.profile.set(snapshot.profile);
       if (!this.route.snapshot.queryParamMap.get("tab")) {
@@ -96,6 +118,28 @@ export class MessagesComponent implements OnInit {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  canNextThreadPage(): boolean {
+    return this.threadPage() < this.threadTotalPageCount();
+  }
+
+  prevThreadPage(): void {
+    if (this.threadPage() <= 1) {
+      return;
+    }
+    this.threadPage.update((p) => p - 1);
+    this.detail.set(null);
+    void this.load();
+  }
+
+  nextThreadPage(): void {
+    if (!this.canNextThreadPage()) {
+      return;
+    }
+    this.threadPage.update((p) => p + 1);
+    this.detail.set(null);
+    void this.load();
   }
 
   async openThread(thread: MessageThreadSummary): Promise<void> {

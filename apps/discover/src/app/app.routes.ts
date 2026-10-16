@@ -7,9 +7,15 @@ import { MyBookingsComponent } from "./pages/my-bookings/my-bookings.component";
 import { LegalDocumentComponent } from "./pages/legal/legal-document.component";
 import { PublicDocumentComponent } from "./pages/document/document.component";
 import { QueueJoinComponent } from "./pages/queue-join/queue-join.component";
+import { CheckoutStubComponent } from "./pages/checkout-stub/checkout-stub.component";
 import { customerAuthGuard } from "./core/guards/customer-auth.guard";
 
 export const routes: Routes = [
+  {
+    path: "checkout/stub/:reference",
+    component: CheckoutStubComponent,
+    title: "Checkout",
+  },
   {
     path: "",
     component: PublicShellComponent,

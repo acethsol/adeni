@@ -8,6 +8,7 @@ import {
   PortalPageComponent,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
+import { adminLoadErrorMessage } from "../../shared/admin-load-error";
 
 const SKU_LABELS: Record<string, string> = {
   starter: "Starter",
@@ -71,8 +72,12 @@ export class AdminInsightsComponent implements OnInit {
         const data = await this.api.withAuthorizedClient((c) => c.getAdminSubscriptionMetrics());
         this.metrics.set(data);
       }, "Loading subscription metrics…", "SaaS billing");
-    } catch {
-      const message = "Could not load subscription metrics.";
+    } catch (err) {
+      let message = adminLoadErrorMessage("Could not load subscription metrics.", err);
+      if (message.includes("tenant_subscription_charges")) {
+        message +=
+          " Apply db/scripts/tenant-subscription-charges-sprint33.sql (or ./scripts/apply-tenant-subscription-charges.ps1).";
+      }
       this.error.set(message);
       this.feedback.error(message);
       this.metrics.set(null);

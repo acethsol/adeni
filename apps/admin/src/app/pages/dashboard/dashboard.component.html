@@ -11,7 +11,7 @@
     </button>
   </header>
 
-  @if (snapshot.pending === null || snapshot.businesses === null || snapshot.markets === null) {
+  @if (snapshot.pendingPreview === null || snapshot.businessStats === null || snapshot.marketsPreview === null) {
     <p class="warn">Some figures could not be loaded. Refresh to try again.</p>
   }
 
@@ -33,8 +33,8 @@
       <p class="kpi-label">Verified</p>
       <p class="kpi-value">{{ verifiedCount() === null ? "—" : verifiedCount() }}</p>
       <p class="kpi-hint">
-        @if (businesses(); as items) {
-          of {{ items.length }} businesses
+        @if (businessStats(); as stats) {
+          of {{ stats.totalCount }} businesses
         } @else {
           Business list unavailable
         }
@@ -144,9 +144,9 @@
       <div class="panel-head">
         <h3>Business status</h3>
       </div>
-      @if (businesses() === null) {
+      @if (businessStats() === null) {
         <p class="empty">Could not load businesses.</p>
-      } @else if (businesses()!.length === 0) {
+      } @else if (businessStats()!.totalCount === 0) {
         <p class="empty">No businesses yet.</p>
       } @else {
         <div class="stack" aria-hidden="true">
@@ -172,9 +172,9 @@
       <div class="panel-head">
         <h3>Plans</h3>
       </div>
-      @if (businesses() === null) {
+      @if (businessStats() === null) {
         <p class="empty">Could not load plans.</p>
-      } @else if (businesses()!.length === 0) {
+      } @else if (businessStats()!.totalCount === 0) {
         <p class="empty">No businesses yet.</p>
       } @else {
         <div class="stack" aria-hidden="true">
@@ -202,7 +202,7 @@
       <h3>Newest businesses</h3>
       <a routerLink="/businesses">All businesses</a>
     </div>
-    @if (businesses() === null) {
+    @if (data()?.recentBusinesses === null) {
       <p class="empty">Could not load businesses.</p>
     } @else if (recent().length === 0) {
       <p class="empty">No businesses yet.</p>
@@ -213,7 +213,7 @@
             <a [routerLink]="['/businesses']" [queryParams]="{ q: item.slug }">
               <span>
                 <strong>{{ item.name }}</strong>
-                <span class="muted">{{ formatTenantStatus(item.status) }} · {{ tierLabel(item.subscriptionTier) }}</span>
+                <span class="muted">{{ formatTenantStatus(item.status) }} · {{ planLabel(item) }}</span>
               </span>
               <span class="meta">{{ shortDate(item.createdAt) }}</span>
             </a>

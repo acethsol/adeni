@@ -10,7 +10,8 @@ export type AdeniWizardStep = {
 
 /**
  * Shared step chrome for portal and discover wizards.
- * Project the step body as default content, actions with `wizardActions`,
+ * Project the step body as default content, actions with `wizardActions`
+ * (Back / Next / submit — not built in; match portal patterns e.g. staff create flow),
  * and an optional side card with `wizardPreview` when `showPreview` is set.
  */
 @Component({

@@ -4,6 +4,12 @@ import {
   adminMarketsResponseSchema,
   adminMarketSchema,
   adminBusinessesResponseSchema,
+  adminBusinessDirectoryStatsSchema,
+  adminMarketCatalogStatsSchema,
+  type AdminBusinessDirectoryStats,
+  type AdminMarketCatalogStats,
+  type AdminPagedResult,
+  type PagedResult,
   setSubscriptionTierRequestSchema,
   setTenantCommercialTermsRequestSchema,
   adminTenantCommercialTermsSchema,
@@ -536,10 +542,22 @@ export class AdeniApiClient {
     });
   }
 
-  async listAdminPendingBadges(): Promise<PendingBadgeRequest[]> {
-    const response = await this.request("/api/v1/admin/verification/pending-badges");
-    const payload = pendingBadgesResponseSchema.parse(await response.json());
-    return payload.items;
+  async listAdminPendingBadges(
+    options: { q?: string; page?: number; pageSize?: number } = {},
+  ): Promise<AdminPagedResult<PendingBadgeRequest>> {
+    const query = new URLSearchParams();
+    if (options.q?.trim()) {
+      query.set("q", options.q.trim());
+    }
+    if (options.page != null) {
+      query.set("page", String(options.page));
+    }
+    if (options.pageSize != null) {
+      query.set("pageSize", String(options.pageSize));
+    }
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
+    const response = await this.request(`/api/v1/admin/verification/pending-badges${suffix}`);
+    return pendingBadgesResponseSchema.parse(await response.json());
   }
 
   async grantAdminVerificationBadge(tenantId: string, badgeType: string): Promise<void> {
@@ -556,10 +574,29 @@ export class AdeniApiClient {
     );
   }
 
+  async listTenantBookings(options: {
+    tab?: "pending" | "upcoming" | "past";
+    page?: number;
+    pageSize?: number;
+  } = {}): Promise<PagedResult<BookingResponse>> {
+    const query = new URLSearchParams();
+    if (options.tab) {
+      query.set("tab", options.tab);
+    }
+    if (options.page != null) {
+      query.set("page", String(options.page));
+    }
+    if (options.pageSize != null) {
+      query.set("pageSize", String(options.pageSize));
+    }
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
+    const response = await this.request(`/api/v1/tenant/bookings${suffix}`);
+    return tenantBookingsResponseSchema.parse(await response.json());
+  }
+
+  /** @deprecated Use listTenantBookings — returns first page of pending tab only. */
   async getTenantBookings(): Promise<BookingResponse[]> {
-    const response = await this.request("/api/v1/tenant/bookings");
-    const payload = tenantBookingsResponseSchema.parse(await response.json());
-    return payload.items;
+    return (await this.listTenantBookings({ tab: "pending", page: 1, pageSize: 100 })).items;
   }
 
   async acceptTenantBooking(bookingId: string): Promise<BookingResponse> {
@@ -1089,15 +1126,14 @@ export class AdeniApiClient {
     tenantId: string,
     page = 1,
     pageSize = 50,
-  ): Promise<PaymentLedgerEntry[]> {
+  ): Promise<PagedResult<PaymentLedgerEntry>> {
     const query = new URLSearchParams({
       tenantId,
       page: String(page),
       pageSize: String(pageSize),
     });
     const response = await this.request(`/api/v1/payments/ledger?${query.toString()}`);
-    const payload = paymentLedgerResponseSchema.parse(await response.json());
-    return payload.items;
+    return paymentLedgerResponseSchema.parse(await response.json());
   }
 
   async refundPayment(
@@ -1656,10 +1692,22 @@ export class AdeniApiClient {
     return authSessionSchema.parse(await response.json());
   }
 
-  async getPendingBusinesses(): Promise<PendingBusiness[]> {
-    const response = await this.request("/api/v1/admin/businesses/pending");
-    const payload = pendingBusinessesResponseSchema.parse(await response.json());
-    return payload.items;
+  async listPendingBusinesses(
+    options: { q?: string; page?: number; pageSize?: number } = {},
+  ): Promise<AdminPagedResult<PendingBusiness>> {
+    const query = new URLSearchParams();
+    if (options.q?.trim()) {
+      query.set("q", options.q.trim());
+    }
+    if (options.page != null) {
+      query.set("page", String(options.page));
+    }
+    if (options.pageSize != null) {
+      query.set("pageSize", String(options.pageSize));
+    }
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
+    const response = await this.request(`/api/v1/admin/businesses/pending${suffix}`);
+    return pendingBusinessesResponseSchema.parse(await response.json());
   }
 
   async approvePendingBusiness(tenantId: string): Promise<void> {
@@ -1681,10 +1729,27 @@ export class AdeniApiClient {
     );
   }
 
-  async getAdminBusinesses(): Promise<AdminBusinessSummary[]> {
-    const response = await this.request("/api/v1/admin/businesses");
-    const payload = adminBusinessesResponseSchema.parse(await response.json());
-    return payload.items;
+  async listAdminBusinesses(
+    options: { q?: string; page?: number; pageSize?: number } = {},
+  ): Promise<AdminPagedResult<AdminBusinessSummary>> {
+    const query = new URLSearchParams();
+    if (options.q?.trim()) {
+      query.set("q", options.q.trim());
+    }
+    if (options.page != null) {
+      query.set("page", String(options.page));
+    }
+    if (options.pageSize != null) {
+      query.set("pageSize", String(options.pageSize));
+    }
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
+    const response = await this.request(`/api/v1/admin/businesses${suffix}`);
+    return adminBusinessesResponseSchema.parse(await response.json());
+  }
+
+  async getAdminBusinessDirectoryStats(): Promise<AdminBusinessDirectoryStats> {
+    const response = await this.request("/api/v1/admin/businesses/stats");
+    return adminBusinessDirectoryStatsSchema.parse(await response.json());
   }
 
   async getAdminSubscriptionMetrics(): Promise<AdminSubscriptionMetrics> {
@@ -1729,11 +1794,34 @@ export class AdeniApiClient {
     );
   }
 
-  async searchAdminCustomers(email: string): Promise<AdminCustomerSummary[]> {
-    const query = new URLSearchParams({ email });
+  async listAdminTenantSubscriptionCharges(
+    tenantId: string,
+    limit = 20,
+  ): Promise<TenantSubscriptionCharge[]> {
+    const query = new URLSearchParams();
+    if (limit > 0) {
+      query.set("limit", String(limit));
+    }
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
+    const response = await this.request(
+      `/api/v1/admin/businesses/${encodeURIComponent(tenantId)}/subscription-charges${suffix}`,
+    );
+    return tenantBillingHistoryResponseSchema.parse(await response.json()).items;
+  }
+
+  async searchAdminCustomers(
+    queryText: string,
+    options: { page?: number; pageSize?: number } = {},
+  ): Promise<AdminPagedResult<AdminCustomerSummary>> {
+    const query = new URLSearchParams({ q: queryText.trim() });
+    if (options.page != null) {
+      query.set("page", String(options.page));
+    }
+    if (options.pageSize != null) {
+      query.set("pageSize", String(options.pageSize));
+    }
     const response = await this.request(`/api/v1/admin/customers?${query.toString()}`);
-    const payload = adminCustomersResponseSchema.parse(await response.json());
-    return payload.items;
+    return adminCustomersResponseSchema.parse(await response.json());
   }
 
   async exportAdminCustomer(customerId: string): Promise<CustomerDataExport> {
@@ -1750,10 +1838,27 @@ export class AdeniApiClient {
     );
   }
 
-  async getAdminMarkets(): Promise<AdminMarket[]> {
-    const response = await this.request("/api/v1/admin/markets");
-    const payload = adminMarketsResponseSchema.parse(await response.json());
-    return payload.items;
+  async getAdminMarketCatalogStats(): Promise<AdminMarketCatalogStats> {
+    const response = await this.request("/api/v1/admin/markets/stats");
+    return adminMarketCatalogStatsSchema.parse(await response.json());
+  }
+
+  async listAdminMarkets(
+    options: { q?: string; page?: number; pageSize?: number } = {},
+  ): Promise<AdminPagedResult<AdminMarket>> {
+    const query = new URLSearchParams();
+    if (options.q?.trim()) {
+      query.set("q", options.q.trim());
+    }
+    if (options.page != null) {
+      query.set("page", String(options.page));
+    }
+    if (options.pageSize != null) {
+      query.set("pageSize", String(options.pageSize));
+    }
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
+    const response = await this.request(`/api/v1/admin/markets${suffix}`);
+    return adminMarketsResponseSchema.parse(await response.json());
   }
 
   async createAdminMarket(
@@ -1837,10 +1942,20 @@ export class AdeniApiClient {
     });
   }
 
-  async listTenantMessageThreads(): Promise<MessageThreadSummary[]> {
-    const response = await this.request("/api/v1/tenant/messages/threads");
-    const payload = messageThreadsResponseSchema.parse(await response.json());
-    return payload.items;
+  async listTenantMessageThreads(options: {
+    page?: number;
+    pageSize?: number;
+  } = {}): Promise<PagedResult<MessageThreadSummary>> {
+    const query = new URLSearchParams();
+    if (options.page != null) {
+      query.set("page", String(options.page));
+    }
+    if (options.pageSize != null) {
+      query.set("pageSize", String(options.pageSize));
+    }
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
+    const response = await this.request(`/api/v1/tenant/messages/threads${suffix}`);
+    return messageThreadsResponseSchema.parse(await response.json());
   }
 
   async getTenantMessageUnreadCount(): Promise<number> {

@@ -3,12 +3,7 @@ import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
 import type { AuthService } from "@auth0/auth0-angular";
 import type { AdeniBrandSurface } from "@adeni/brand";
-import {
-  type AdminBusinessSummary,
-  type AdminMarket,
-  type LocaleId,
-  type PendingBusiness,
-} from "@adeni/shared";
+import { type LocaleId } from "@adeni/shared";
 import {
   AdeniBrandLogoComponent,
   AdeniConfirmHostComponent,
@@ -197,9 +192,7 @@ export class AdminShellComponent {
   readonly searchOpen = signal(false);
   readonly searchIndex = signal(0);
   private readonly searchField = viewChild<ElementRef<HTMLInputElement>>("searchField");
-  private readonly businesses = signal<AdminBusinessSummary[]>([]);
-  private readonly markets = signal<AdminMarket[]>([]);
-  private readonly pending = signal<PendingBusiness[]>([]);
+  private readonly entityHits = signal<SearchHit[]>([]);
   private readonly customerHits = signal<SearchHit[]>([]);
   private searchTimer: ReturnType<typeof setTimeout> | undefined;
   readonly accountName = signal(this.devMode ? "Local admin" : "Admin");
@@ -242,37 +235,8 @@ export class AdminShellComponent {
       return pages;
     }
 
-    const businesses = this.businesses()
-      .filter((item) => matchesQuery(query, [item.name, item.slug, item.subscriptionTier]))
-      .map((item) => ({
-        id: `business:${item.id}`,
-        label: item.name,
-        hint: item.slug,
-        path: "/businesses",
-        icon: "businesses" as const,
-        query: item.name,
-      }));
-    const pending = this.pending()
-      .filter((item) => matchesQuery(query, [item.name, item.slug, item.marketId, item.status]))
-      .map((item) => ({
-        id: `pending:${item.id}`,
-        label: item.name,
-        hint: item.marketId,
-        path: "/pending",
-        icon: "verifications" as const,
-        query: item.name,
-      }));
-    const markets = this.markets()
-      .filter((item) => matchesQuery(query, [item.name, item.id, item.countryCode, item.currency]))
-      .map((item) => ({
-        id: `market:${item.id}`,
-        label: item.name,
-        hint: item.id,
-        path: "/markets",
-        icon: "markets" as const,
-        query: item.name,
-      }));
     const people = this.customerHits();
+    const entities = this.entityHits();
     const customerSearch =
       query.length >= 2 && people.length === 0
         ? [
@@ -281,12 +245,12 @@ export class AdminShellComponent {
               label: `${this.text("customers")} · ${this.searchQuery().trim()}`,
               path: "/customers",
               icon: "privacy" as const,
-              email: this.searchQuery().trim(),
+              query: this.searchQuery().trim(),
             },
           ]
         : [];
 
-    return [...businesses, ...pending, ...markets, ...people, ...customerSearch, ...pages].slice(0, 8);
+    return [...entities, ...people, ...customerSearch, ...pages].slice(0, 8);
   });
 
   constructor() {
@@ -378,8 +342,9 @@ export class AdminShellComponent {
     this.searchQuery.set(value);
     this.searchIndex.set(0);
     this.customerHits.set([]);
+    this.entityHits.set([]);
     this.openSearch();
-    this.scheduleCustomerSearch(value.trim());
+    this.scheduleRemoteSearch(value.trim());
   }
 
   onSearchKey(event: KeyboardEvent): void {
@@ -409,8 +374,8 @@ export class AdminShellComponent {
     this.searchQuery.set("");
     this.searchIndex.set(0);
     this.customerHits.set([]);
-    if (hit.email) {
-      void this.router.navigate(["/customers"], { queryParams: { email: hit.email } });
+    if (hit.path === "/customers" && hit.query) {
+      void this.router.navigate(["/customers"], { queryParams: { q: hit.query } });
       return;
     }
     if (hit.query) {
@@ -480,7 +445,7 @@ export class AdminShellComponent {
     ];
   }
 
-  private scheduleCustomerSearch(query: string): void {
+  private scheduleRemoteSearch(query: string): void {
     if (this.searchTimer) {
       clearTimeout(this.searchTimer);
     }
@@ -488,52 +453,81 @@ export class AdminShellComponent {
       return;
     }
     this.searchTimer = setTimeout(() => {
-      void this.loadCustomerHits(query);
+      void this.loadRemoteSearchHits(query);
     }, 250);
   }
 
-  private async loadCustomerHits(query: string): Promise<void> {
+  private async loadRemoteSearchHits(query: string): Promise<void> {
     try {
-      const items = await this.api.withAuthorizedClient((client) => client.searchAdminCustomers(query));
+      const [customers, businesses, pending, markets] = await this.api.withAuthorizedClient((client) =>
+        Promise.all([
+          client.searchAdminCustomers(query, { page: 1, pageSize: 5 }),
+          client.listAdminBusinesses({ q: query, page: 1, pageSize: 5 }),
+          client.listPendingBusinesses({ q: query, page: 1, pageSize: 5 }),
+          client.listAdminMarkets({ q: query, page: 1, pageSize: 5 }),
+        ]),
+      );
       if (this.searchQuery().trim() !== query) {
         return;
       }
       this.customerHits.set(
-        items.map((item) => ({
+        customers.items.map((item) => ({
           id: `customer:${item.id}`,
           label: item.name || item.email || item.auth0Sub,
           hint: item.email ?? undefined,
           path: "/customers",
           icon: "privacy" as const,
-          email: item.email ?? query,
+          query: item.email ?? query,
         })),
       );
+      this.entityHits.set([
+        ...businesses.items.map((item) => ({
+          id: `business:${item.id}`,
+          label: item.name,
+          hint: item.slug,
+          path: "/businesses",
+          icon: "businesses" as const,
+          query: item.name,
+        })),
+        ...pending.items.map((item) => ({
+          id: `pending:${item.id}`,
+          label: item.name,
+          hint: item.marketId,
+          path: "/pending",
+          icon: "verifications" as const,
+          query: item.name,
+        })),
+        ...markets.items.map((item) => ({
+          id: `market:${item.id}`,
+          label: item.name,
+          hint: item.id,
+          path: "/markets",
+          icon: "markets" as const,
+          query: item.name,
+        })),
+      ]);
     } catch {
       if (this.searchQuery().trim() === query) {
         this.customerHits.set([]);
+        this.entityHits.set([]);
       }
     }
   }
 
   private async loadSearchCatalog(): Promise<void> {
-    const [businesses, markets, pending, pendingBadges] = await Promise.all([
-      this.api.withAuthorizedClient((client) => client.getAdminBusinesses()).catch(() => null),
-      this.api.withAuthorizedClient((client) => client.getAdminMarkets()).catch(() => null),
-      this.api.withAuthorizedClient((client) => client.getPendingBusinesses()).catch(() => null),
-      this.api.withAuthorizedClient((client) => client.listAdminPendingBadges()).catch(() => null),
+    const [pendingPage, pendingBadges] = await Promise.all([
+      this.api
+        .withAuthorizedClient((client) => client.listPendingBusinesses({ page: 1, pageSize: 1 }))
+        .catch(() => null),
+      this.api
+        .withAuthorizedClient((client) => client.listAdminPendingBadges({ page: 1, pageSize: 1 }))
+        .catch(() => null),
     ]);
-    if (businesses) {
-      this.businesses.set(businesses);
-    }
-    if (markets) {
-      this.markets.set(markets);
-    }
-    if (pending) {
-      this.pending.set(pending);
-      this.queueCount.set(pending.length);
+    if (pendingPage) {
+      this.queueCount.set(pendingPage.totalCount);
     }
     if (pendingBadges) {
-      this.pendingBadgeCount.set(pendingBadges.length);
+      this.pendingBadgeCount.set(pendingBadges.totalCount);
     }
   }
 

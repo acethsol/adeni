@@ -1,10 +1,16 @@
-import { Component, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute } from "@angular/router";
 import { map } from "rxjs";
 import type { BillingDocumentResponse, BusinessProfile, PaymentLedgerEntry } from "@adeni/shared";
-import { formatPrice, hasCapability } from "@adeni/shared";
+import {
+  formatPrice,
+  hasCapability,
+  pageRangeLabel,
+  resolvePaymentCheckoutUrl,
+  totalPages as computeTotalPages,
+} from "@adeni/shared";
 import { AdeniConfirmService, AdeniPortalEmptyStateComponent, PortalPageComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
@@ -36,6 +42,15 @@ export class PaymentsComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly profile = signal<BusinessProfile | null>(null);
   readonly ledger = signal<PaymentLedgerEntry[]>([]);
+  readonly ledgerTotalCount = signal(0);
+  readonly ledgerPage = signal(1);
+  readonly ledgerPageSize = 25;
+  readonly ledgerTotalPageCount = computed(() =>
+    computeTotalPages(this.ledgerTotalCount(), this.ledgerPageSize),
+  );
+  readonly ledgerPageLabel = computed(() =>
+    pageRangeLabel(this.ledgerPage(), this.ledgerPageSize, this.ledgerTotalCount()),
+  );
   readonly documents = signal<BillingDocumentResponse[]>([]);
   readonly lastLink = signal<{ checkoutUrl: string; description: string } | null>(null);
   readonly actionId = signal<string | null>(null);
@@ -66,8 +81,14 @@ export class PaymentsComponent implements OnInit {
       await this.api.withAuthorizedClient(async (c) => {
         const profile = await c.getTenantProfile();
         this.profile.set(profile);
-        const items = await c.listPaymentLedger(profile.tenantId);
-        this.ledger.set(items);
+        const ledgerPage = await c.listPaymentLedger(
+          profile.tenantId,
+          this.ledgerPage(),
+          this.ledgerPageSize,
+        );
+        this.ledger.set(ledgerPage.items);
+        this.ledgerTotalCount.set(ledgerPage.totalCount);
+        this.ledgerPage.set(ledgerPage.page);
         const docs = await c.listBillingDocuments();
         this.documents.set(docs);
       });
@@ -97,9 +118,10 @@ export class PaymentsComponent implements OnInit {
           description: this.description.trim(),
         }),
       );
-      const checkoutUrl = intent.checkoutUrl.startsWith("http")
-        ? intent.checkoutUrl
-        : `${this.config.discoverWebUrl}${intent.checkoutUrl}`;
+      const checkoutUrl = resolvePaymentCheckoutUrl(intent.checkoutUrl, this.config.discoverWebUrl, {
+        amount: intent.amount,
+        currency: intent.currency,
+      });
       this.lastLink.set({ checkoutUrl, description: this.description.trim() });
       this.amount = "";
       this.description = "";
@@ -131,6 +153,26 @@ export class PaymentsComponent implements OnInit {
     } finally {
       this.actionId.set(null);
     }
+  }
+
+  canNextLedgerPage(): boolean {
+    return this.ledgerPage() < this.ledgerTotalPageCount();
+  }
+
+  prevLedgerPage(): void {
+    if (this.ledgerPage() <= 1) {
+      return;
+    }
+    this.ledgerPage.update((p) => p - 1);
+    void this.load();
+  }
+
+  nextLedgerPage(): void {
+    if (!this.canNextLedgerPage()) {
+      return;
+    }
+    this.ledgerPage.update((p) => p + 1);
+    void this.load();
   }
 
   async refund(entry: PaymentLedgerEntry): Promise<void> {

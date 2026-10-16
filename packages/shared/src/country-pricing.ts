@@ -6,6 +6,33 @@ import { z } from "zod";
 export const SUBSCRIPTION_SKUS = ["starter", "professional", "business"] as const;
 export type SubscriptionSku = (typeof SUBSCRIPTION_SKUS)[number];
 
+export const SUBSCRIPTION_SKU_LABELS: Record<SubscriptionSku, string> = {
+  starter: "Starter",
+  professional: "Professional",
+  business: "Business",
+};
+
+export function formatSubscriptionSku(sku: SubscriptionSku | null | undefined): string {
+  if (!sku) {
+    return "—";
+  }
+  return SUBSCRIPTION_SKU_LABELS[sku] ?? sku;
+}
+
+/** Prefer stored SKU; fall back to legacy display tier mapping. */
+export function resolveSubscriptionSku(
+  sku: SubscriptionSku | null | undefined,
+  legacyTier?: SubscriptionTier | null,
+): SubscriptionSku {
+  if (sku) {
+    return sku;
+  }
+  if (legacyTier) {
+    return subscriptionTierToSku(legacyTier);
+  }
+  return "starter";
+}
+
 export const GMV_FEE_BEARERS = ["business"] as const;
 export type GmvFeeBearer = (typeof GMV_FEE_BEARERS)[number];
 

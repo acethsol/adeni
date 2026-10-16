@@ -1,7 +1,7 @@
-import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import type { AdminMarket } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
@@ -10,7 +10,14 @@ import {
   PortalPageComponent,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
-import { filterByQuery } from "../../shared/admin-list-filter";
+import {
+  ADMIN_LIST_PAGE_SIZE,
+  adminListRangeLabel,
+  adminListTotalPages,
+} from "../../shared/admin-list-paging";
+import { adminLoadErrorMessage } from "../../shared/admin-load-error";
+import { AdminPillComponent } from "../../shared/admin-pill.component";
+import { marketLivePill } from "../../shared/admin-pill-maps";
 
 @Component({
   selector: "app-admin-markets",
@@ -20,43 +27,39 @@ import { filterByQuery } from "../../shared/admin-list-filter";
     FormsModule,
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
+    AdminPillComponent,
   ],
   templateUrl: "./markets.component.html",
   styleUrl: "./markets.component.scss",
 })
-export class AdminMarketsComponent implements OnInit {
+export class AdminMarketsComponent {
   private readonly api = inject(AdminApiService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly feedback = inject(AdeniFeedbackService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly markets = signal<AdminMarket[]>([]);
+  readonly totalCount = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = ADMIN_LIST_PAGE_SIZE;
   readonly searchText = signal("");
-  readonly visible = computed(() =>
-    filterByQuery(this.markets(), this.searchText(), (item) => [
-      item.name,
-      item.id,
-      item.countryCode,
-      item.currency,
-    ]),
+  readonly totalPages = computed(() => adminListTotalPages(this.totalCount(), this.pageSize));
+  readonly showingRange = computed(() =>
+    adminListRangeLabel(this.page(), this.pageSize, this.totalCount()),
   );
-  readonly isEmptyCatalog = computed(() => !this.loading() && this.markets().length === 0);
-  readonly isEmptyFilter = computed(
-    () => !this.loading() && this.markets().length > 0 && this.visible().length === 0,
-  );
+  readonly isEmptyCatalog = computed(() => !this.loading() && this.totalCount() === 0);
+
+  readonly marketLivePill = marketLivePill;
 
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
-      const q = params.get("q") ?? "";
-      if (q) {
-        this.searchText.set(q);
-      }
+      this.searchText.set(params.get("q") ?? "");
+      const page = Number(params.get("page") ?? "1");
+      this.page.set(Number.isFinite(page) && page >= 1 ? page : 1);
+      void this.load();
     });
-  }
-
-  ngOnInit(): void {
-    void this.load();
   }
 
   async load(): Promise<void> {
@@ -64,15 +67,42 @@ export class AdminMarketsComponent implements OnInit {
     this.error.set(null);
     try {
       await this.feedback.runLoading(async () => {
-        const items = await this.api.withAuthorizedClient((c) => c.getAdminMarkets());
-        this.markets.set(items);
+        const result = await this.api.withAuthorizedClient((c) =>
+          c.listAdminMarkets({
+            q: this.searchText().trim() || undefined,
+            page: this.page(),
+            pageSize: this.pageSize,
+          }),
+        );
+        this.markets.set(result.items);
+        this.totalCount.set(result.totalCount);
       }, "Loading markets…", "Fetching market catalog");
-    } catch {
-      this.error.set("Could not load markets.");
-      this.feedback.error("Could not load markets.");
+    } catch (err) {
+      const message = adminLoadErrorMessage("Could not load markets.", err);
+      this.error.set(message);
+      this.feedback.error(message);
+      this.markets.set([]);
+      this.totalCount.set(0);
     } finally {
       this.loading.set(false);
     }
+  }
+
+  applySearch(): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { q: this.searchText().trim() || null, page: null },
+      queryParamsHandling: "merge",
+    });
+  }
+
+  goToPage(next: number): void {
+    const page = Math.min(Math.max(1, next), this.totalPages());
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: page === 1 ? null : page },
+      queryParamsHandling: "merge",
+    });
   }
 
   async toggleLive(market: AdminMarket): Promise<void> {

@@ -6,6 +6,7 @@ using Adeni.Api.Errors;
 using Adeni.Api.Middleware;
 using Adeni.Application.Admin;
 using Adeni.Application.Auth;
+using Adeni.Application.Subscriptions;
 using Adeni.Application.Reviews;
 using Adeni.Infrastructure.Auth;
 using Microsoft.AspNetCore.Authorization;
@@ -116,20 +117,50 @@ public sealed class AuthController(
 [Authorize(Policy = AuthServiceCollectionExtensions.AdminMfaPolicy)]
 public sealed class AdminBusinessesController(
     IAdminBusinessService adminBusinessService,
+    ISubscriptionBillingOrchestrator subscriptionBillingOrchestrator,
     Application.Trust.IVerificationBadgeService verificationBadges) : ControllerBase
 {
-    [HttpGet("pending")]
-    public async Task<IActionResult> GetPending(CancellationToken cancellationToken)
+    [HttpGet("stats")]
+    public async Task<IActionResult> GetStats(CancellationToken cancellationToken)
     {
-        var items = await adminBusinessService.GetPendingVerificationsAsync(cancellationToken);
-        return Ok(new { items });
+        var stats = await adminBusinessService.GetDirectoryStatsAsync(cancellationToken);
+        return Ok(stats);
+    }
+
+    [HttpGet("pending")]
+    public async Task<IActionResult> GetPending(
+        [FromQuery] string? q,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await adminBusinessService.ListPendingVerificationsAsync(q, page, pageSize, cancellationToken);
+
+        return result.Match<IActionResult>(
+            payload => Ok(payload),
+            error => error.Code switch
+            {
+                "validation" => BadRequest(new { title = error.Message }),
+                _ => BadRequest(new { title = error.Message })
+            });
     }
 
     [HttpGet]
-    public async Task<IActionResult> List(CancellationToken cancellationToken)
+    public async Task<IActionResult> List(
+        [FromQuery] string? q,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken cancellationToken = default)
     {
-        var items = await adminBusinessService.ListBusinessesAsync(cancellationToken);
-        return Ok(new { items });
+        var result = await adminBusinessService.ListBusinessesAsync(q, page, pageSize, cancellationToken);
+
+        return result.Match<IActionResult>(
+            payload => Ok(payload),
+            error => error.Code switch
+            {
+                "validation" => BadRequest(new { title = error.Message }),
+                _ => BadRequest(new { title = error.Message })
+            });
     }
 
     [HttpGet("{id:guid}/commercial-terms")]
@@ -139,6 +170,26 @@ public sealed class AdminBusinessesController(
         return result.Match<IActionResult>(
             Ok,
             error => NotFound(new { title = error.Message }));
+    }
+
+    [HttpGet("{id:guid}/subscription-charges")]
+    public async Task<IActionResult> ListSubscriptionCharges(
+        Guid id,
+        [FromQuery] int limit = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await subscriptionBillingOrchestrator.ListChargesForAdminAsync(
+            id,
+            limit,
+            cancellationToken);
+
+        return result.Match<IActionResult>(
+            items => Ok(new { items }),
+            error => error.Code switch
+            {
+                "not_found" => NotFound(new { title = error.Message }),
+                _ => BadRequest(new { title = error.Message })
+            });
     }
 
     [HttpPatch("{id:guid}/commercial-terms")]
@@ -231,15 +282,23 @@ public sealed record RejectBusinessRequest(string Reason);
 public sealed class AdminCustomersController(IAdminCustomerService adminCustomerService) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> Search([FromQuery] string? email, CancellationToken cancellationToken)
+    public async Task<IActionResult> Search(
+        [FromQuery] string? q,
+        [FromQuery] string? email,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            return BadRequest(new { title = "Email query parameter is required." });
-        }
+        var query = string.IsNullOrWhiteSpace(q) ? email : q;
+        var result = await adminCustomerService.SearchAsync(query, page, pageSize, cancellationToken);
 
-        var items = await adminCustomerService.SearchAsync(email, cancellationToken);
-        return Ok(new { items });
+        return result.Match<IActionResult>(
+            payload => Ok(payload),
+            error => error.Code switch
+            {
+                "validation" => BadRequest(new { title = error.Message }),
+                _ => BadRequest(new { title = error.Message })
+            });
     }
 
     [HttpGet("{id:guid}/export")]
@@ -281,7 +340,7 @@ public sealed class AdminReviewsController(IReviewService reviewService) : Contr
     public async Task<IActionResult> List(
         [FromQuery] string? q,
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 25,
+        [FromQuery] int pageSize = 10,
         [FromQuery] bool includeHidden = false,
         CancellationToken cancellationToken = default)
     {
@@ -316,11 +375,29 @@ public sealed class AdminReviewsController(IReviewService reviewService) : Contr
 [Authorize(Policy = AuthServiceCollectionExtensions.AdminMfaPolicy)]
 public sealed class AdminMarketsController(IAdminMarketService adminMarketService) : ControllerBase
 {
-    [HttpGet]
-    public async Task<IActionResult> List(CancellationToken cancellationToken)
+    [HttpGet("stats")]
+    public async Task<IActionResult> GetStats(CancellationToken cancellationToken)
     {
-        var items = await adminMarketService.ListAsync(cancellationToken);
-        return Ok(new { items });
+        var stats = await adminMarketService.GetCatalogStatsAsync(cancellationToken);
+        return Ok(new { totalCount = stats.TotalCount, liveCount = stats.LiveCount });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> List(
+        [FromQuery] string? q,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await adminMarketService.ListAsync(q, page, pageSize, cancellationToken);
+
+        return result.Match<IActionResult>(
+            payload => Ok(payload),
+            error => error.Code switch
+            {
+                "validation" => BadRequest(new { title = error.Message }),
+                _ => BadRequest(new { title = error.Message })
+            });
     }
 
     [HttpPost]

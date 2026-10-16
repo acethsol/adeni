@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Messaging;
 
+using Adeni.Application.Common;
 using Adeni.Application.Messaging;
 using Adeni.Application.Security;
 using Adeni.Application.Subscriptions;
@@ -222,21 +223,37 @@ public sealed class MessageThreadService(
         return results;
     }
 
-    public async Task<Result<IReadOnlyList<ThreadSummaryResponse>>> ListForTenantAsync(
+    public async Task<Result<PagedResult<ThreadSummaryResponse>>> ListForTenantAsync(
         Guid tenantId,
         SubscriptionTier tier,
+        int page = 1,
+        int pageSize = Paging.DefaultPageSize,
         CancellationToken cancellationToken = default)
     {
         var entitlement = await EnsureTenantCanUseMessagingAsync(tenantId, cancellationToken);
         if (entitlement.IsFailure)
         {
-            return Result.Failure<IReadOnlyList<ThreadSummaryResponse>>(entitlement.Error);
+            return Result.Failure<PagedResult<ThreadSummaryResponse>>(entitlement.Error);
         }
 
-        var threads = await dbContext.MessageThreads
+        var normalized = Paging.Normalize(page, pageSize);
+        if (normalized.IsFailure)
+        {
+            return Result.Failure<PagedResult<ThreadSummaryResponse>>(normalized.Error);
+        }
+
+        (page, pageSize) = normalized.Value!;
+
+        var query = dbContext.MessageThreads
             .AsNoTracking()
-            .Where(x => x.TenantId == tenantId)
+            .Where(x => x.TenantId == tenantId);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var threads = await query
             .OrderByDescending(x => x.LastMessageAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync(cancellationToken);
 
         var results = new List<ThreadSummaryResponse>(threads.Count);
@@ -245,7 +262,7 @@ public sealed class MessageThreadService(
             results.Add(await MapThreadSummaryAsync(thread, MessageParticipantRole.Business, cancellationToken));
         }
 
-        return Result.Success<IReadOnlyList<ThreadSummaryResponse>>(results);
+        return Result.Success(new PagedResult<ThreadSummaryResponse>(results, page, pageSize, totalCount));
     }
 
     public async Task<Result<ThreadDetailResponse>> GetThreadAsync(

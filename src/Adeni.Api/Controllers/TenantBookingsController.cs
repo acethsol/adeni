@@ -6,6 +6,7 @@ using Adeni.Api.Errors;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
 using Adeni.Application.Booking;
+using TenantBookingTabs = Adeni.Application.Booking.TenantBookingTabs;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Auth;
@@ -20,7 +21,11 @@ public sealed class TenantBookingsController(
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> List(CancellationToken cancellationToken)
+    public async Task<IActionResult> List(
+        [FromQuery] string tab = TenantBookingTabs.Pending,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 25,
+        CancellationToken cancellationToken = default)
     {
         if (ResolveTenantId() is not { } tenantId)
         {
@@ -31,12 +36,29 @@ public sealed class TenantBookingsController(
             PortalAccessHttpContext.Get(HttpContext));
         if (failClosed)
         {
-            // Practitioners without a linked staff member see nothing.
-            return Ok(new { items = Array.Empty<object>() });
+            return Ok(new { items = Array.Empty<object>(), page = 1, pageSize, totalCount = 0 });
         }
 
-        var items = await bookings.ListForTenantAsync(tenantId, staffScope, cancellationToken);
-        return Ok(new { items });
+        if (!TenantBookingTabs.IsValid(tab) || tab == TenantBookingTabs.All)
+        {
+            tab = TenantBookingTabs.Pending;
+        }
+
+        var result = await bookings.ListForTenantAsync(
+            tenantId,
+            tab,
+            page,
+            pageSize,
+            staffScope,
+            cancellationToken);
+
+        return Ok(new
+        {
+            items = result.Items,
+            page = result.Page,
+            pageSize = result.PageSize,
+            totalCount = result.TotalCount,
+        });
     }
 
     [HttpPost("{id:guid}/accept")]

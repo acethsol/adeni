@@ -21,5 +21,6 @@ export * from "./search-intent";
 export * from "./i18n";
 export * from "./api-errors";
 export * from "./format";
+export * from "./paging";
 export * from "./media-limits";
 export * from "./public-page-templates";

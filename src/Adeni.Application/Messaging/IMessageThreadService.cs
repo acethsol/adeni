@@ -1,6 +1,7 @@
 namespace Adeni.Application.Messaging;
 
 using Adeni.Application.Admin;
+using Adeni.Application.Common;
 using Adeni.Domain.Common;
 using Adeni.Domain.Subscriptions;
 
@@ -68,9 +69,11 @@ public interface IMessageThreadService
         string customerAuth0Sub,
         CancellationToken cancellationToken = default);
 
-    Task<Result<IReadOnlyList<ThreadSummaryResponse>>> ListForTenantAsync(
+    Task<Result<PagedResult<ThreadSummaryResponse>>> ListForTenantAsync(
         Guid tenantId,
         SubscriptionTier tier,
+        int page = 1,
+        int pageSize = Paging.DefaultPageSize,
         CancellationToken cancellationToken = default);
 
     Task<Result<ThreadDetailResponse>> GetThreadAsync(

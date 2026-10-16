@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|-------|
 | **Sprint** | Sprint 32 — Business dashboard |
-| **Status** | Draft |
+| **Status** | In progress (32a) |
 | **Created** | 2026-10-15 |
 | **Updated** | 2026-10-15 |
 | **Blocks (minimal)** | [sprint-33-saas-subscription-billing-mrr.md](./sprint-33-saas-subscription-billing-mrr.md) needs only **32a** (plan strip + honest KPIs) |

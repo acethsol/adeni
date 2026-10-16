@@ -68,11 +68,17 @@
                   <p class="row-sub">{{ item.locationSlug }}</p>
                 }
               </td>
-              <td>{{ item.rating }}/5</td>
+              <td>
+                @let rating = ratingPill(item.rating);
+                <admin-pill [label]="rating.label" [variant]="rating.variant" />
+              </td>
               <td class="comment-cell">{{ item.comment }}</td>
               <td class="muted">{{ item.customerDisplayName }}</td>
               <td class="muted">{{ item.createdAt | date: "mediumDate" }}</td>
-              <td class="muted">{{ item.isHidden ? "Hidden" : "Public" }}</td>
+              <td>
+                @let visibility = reviewVisibilityPill(item.isHidden);
+                <admin-pill [label]="visibility.label" [variant]="visibility.variant" />
+              </td>
               <td class="actions-cell">
                 @if (!item.isHidden) {
                   <button
@@ -98,7 +104,7 @@
         <button type="button" class="btn" [disabled]="page() <= 1 || loading()" (click)="goToPage(page() - 1)">
           Previous
         </button>
-        <span class="pager-meta">Page {{ page() }} of {{ totalPages() }}</span>
+        <span class="pager-meta">{{ showingRange() }}</span>
         <button
           type="button"
           class="btn"

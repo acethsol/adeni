@@ -3,32 +3,31 @@ import { RouterLink } from "@angular/router";
 import {
   formatAmountMinor,
   formatTenantStatus,
+  type AdminBusinessDirectoryStats,
   type AdminBusinessSummary,
   type AdminMarket,
   type AdminSubscriptionMetrics,
   type PendingBusiness,
+  formatSubscriptionSku,
+  resolveSubscriptionSku,
   type SubscriptionTier,
 } from "@adeni/shared";
 import { AdeniFeedbackService } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 
 type LoadState = {
-  pending: PendingBusiness[] | null;
-  businesses: AdminBusinessSummary[] | null;
-  markets: AdminMarket[] | null;
+  pendingPreview: PendingBusiness[] | null;
+  pendingTotal: number | null;
+  businessStats: AdminBusinessDirectoryStats | null;
+  recentBusinesses: AdminBusinessSummary[] | null;
+  marketsPreview: AdminMarket[] | null;
+  liveMarketCount: number | null;
   subscriptionMetrics: AdminSubscriptionMetrics | null;
 };
 
-type MixRow = {
-  key: string;
-  label: string;
-  count: number;
-  tone: string;
-};
-
 const TIER_LABELS: Record<SubscriptionTier, string> = {
-  free: "Free",
-  pro: "Pro",
+  free: "Starter",
+  pro: "Professional",
   business: "Business",
 };
 
@@ -46,20 +45,19 @@ export class AdminDashboardComponent implements OnInit {
   readonly loading = signal(true);
   readonly data = signal<LoadState | null>(null);
 
-  readonly pending = computed(() => this.data()?.pending ?? null);
-  readonly businesses = computed(() => this.data()?.businesses ?? null);
-  readonly markets = computed(() => this.data()?.markets ?? null);
+  readonly pending = computed(() => this.data()?.pendingPreview ?? null);
+  readonly pendingTotal = computed(() => this.data()?.pendingTotal ?? null);
+  readonly businessStats = computed(() => this.data()?.businessStats ?? null);
+  readonly markets = computed(() => this.data()?.marketsPreview ?? null);
   readonly subscriptionMetrics = computed(() => this.data()?.subscriptionMetrics ?? null);
 
   readonly queue = computed(() =>
     [...(this.pending() ?? [])].sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
   );
 
-  readonly waitingCount = computed(() => this.pending()?.length ?? null);
+  readonly waitingCount = computed(() => this.pendingTotal());
 
-  readonly verifiedCount = computed(
-    () => this.businesses()?.filter((item) => item.status === 2).length ?? null,
-  );
+  readonly verifiedCount = computed(() => this.businessStats()?.verifiedCount ?? null);
 
   readonly paidCount = computed(
     () => this.subscriptionMetrics()?.paidTenantCount ?? null,
@@ -92,18 +90,18 @@ export class AdminDashboardComponent implements OnInit {
       : "Estimated from list prices";
   });
 
-  readonly liveCount = computed(() => this.markets()?.filter((item) => item.isLive).length ?? null);
+  readonly liveCount = computed(() => this.data()?.liveMarketCount ?? null);
 
   readonly headline = computed(() => {
-    const pending = this.pending();
-    if (pending === null) {
+    const total = this.pendingTotal();
+    if (total === null) {
       return "Verification queue could not be loaded.";
     }
-    if (pending.length === 1) {
+    if (total === 1) {
       return "1 business is waiting for verification.";
     }
-    if (pending.length > 1) {
-      return `${pending.length} businesses are waiting for verification.`;
+    if (total > 1) {
+      return `${total} businesses are waiting for verification.`;
     }
     const offline = (this.markets() ?? []).filter((item) => !item.isLive);
     if (offline.length === 1) {
@@ -115,32 +113,44 @@ export class AdminDashboardComponent implements OnInit {
     return "Verification queue is clear.";
   });
 
-  readonly statusMix = computed(() =>
-    [0, 1, 2, 3, 4].map((status) => ({
+  readonly statusMix = computed(() => {
+    const stats = this.businessStats();
+    if (!stats) {
+      return [0, 1, 2, 3, 4].map((status) => ({
+        key: String(status),
+        label: formatTenantStatus(status),
+        count: 0,
+        tone: `tone-${status}`,
+      }));
+    }
+    const byStatus = new Map(stats.statusMix.map((row) => [row.status, row.count]));
+    return [0, 1, 2, 3, 4].map((status) => ({
       key: String(status),
       label: formatTenantStatus(status),
-      count: this.businesses()?.filter((item) => item.status === status).length ?? 0,
+      count: byStatus.get(status) ?? 0,
       tone: `tone-${status}`,
-    })),
-  );
+    }));
+  });
 
-  readonly tierMix = computed(() =>
-    (["free", "pro", "business"] as const).map((tier) => ({
+  readonly tierMix = computed(() => {
+    const stats = this.businessStats();
+    const byTier = new Map((stats?.tierMix ?? []).map((row) => [row.tier, row.count]));
+    return (["free", "pro", "business"] as const).map((tier) => ({
       key: tier,
       label: TIER_LABELS[tier],
-      count: this.businesses()?.filter((item) => item.subscriptionTier === tier).length ?? 0,
+      count: byTier.get(tier) ?? 0,
       tone: `tier-${tier}`,
-    })),
-  );
+    }));
+  });
 
-  readonly recent = computed(() =>
-    [...(this.businesses() ?? [])]
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .slice(0, 6),
-  );
+  readonly recent = computed(() => this.data()?.recentBusinesses ?? []);
 
   readonly formatTenantStatus = formatTenantStatus;
   readonly tierLabel = (tier: SubscriptionTier) => TIER_LABELS[tier];
+  readonly planLabel = (business: AdminBusinessSummary) =>
+    formatSubscriptionSku(
+      resolveSubscriptionSku(business.subscriptionSku, business.subscriptionTier),
+    );
   readonly ageLabel = ageLabel;
   readonly shortDate = shortDate;
 
@@ -153,30 +163,43 @@ export class AdminDashboardComponent implements OnInit {
     try {
       await this.feedback.runLoading(async () => {
         const next = await this.api.withAuthorizedClient(async (client) => {
-          const [pending, businesses, markets, subscriptionMetrics] = await Promise.all([
-            client.getPendingBusinesses().then(
-              (items) => items,
-              () => null,
-            ),
-            client.getAdminBusinesses().then(
-              (items) => items,
-              () => null,
-            ),
-            client.getAdminMarkets().then(
-              (items) => items,
-              () => null,
-            ),
-            client.getAdminSubscriptionMetrics().then(
-              (items) => items,
-              () => null,
-            ),
+          const [
+            pendingPage,
+            businessStats,
+            recentPage,
+            marketsPage,
+            marketStats,
+            subscriptionMetrics,
+          ] = await Promise.all([
+            client.listPendingBusinesses({ page: 1, pageSize: 6 }).catch(() => null),
+            client.getAdminBusinessDirectoryStats().catch(() => null),
+            client.listAdminBusinesses({ page: 1, pageSize: 6 }).catch(() => null),
+            client.listAdminMarkets({ page: 1, pageSize: 6 }).catch(() => null),
+            client.getAdminMarketCatalogStats().catch(() => null),
+            client.getAdminSubscriptionMetrics().catch(() => null),
           ]);
-          return { pending, businesses, markets, subscriptionMetrics };
+          return {
+            pendingPreview: pendingPage?.items ?? null,
+            pendingTotal: pendingPage?.totalCount ?? null,
+            businessStats,
+            recentBusinesses: recentPage?.items ?? null,
+            marketsPreview: marketsPage?.items ?? null,
+            liveMarketCount: marketStats?.liveCount ?? null,
+            subscriptionMetrics,
+          };
         });
         this.data.set(next);
       }, "Loading dashboard…", "Fetching queue, businesses, and markets");
     } catch {
-      this.data.set({ pending: null, businesses: null, markets: null, subscriptionMetrics: null });
+      this.data.set({
+        pendingPreview: null,
+        pendingTotal: null,
+        businessStats: null,
+        recentBusinesses: null,
+        marketsPreview: null,
+        liveMarketCount: null,
+        subscriptionMetrics: null,
+      });
       this.feedback.error("Could not load admin dashboard.");
     } finally {
       this.loading.set(false);

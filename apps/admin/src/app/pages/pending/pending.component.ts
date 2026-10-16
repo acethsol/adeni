@@ -1,8 +1,8 @@
 import { DatePipe } from "@angular/common";
-import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import type { PendingBusiness } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
@@ -11,7 +11,14 @@ import {
   PortalPageComponent,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
-import { filterByQuery } from "../../shared/admin-list-filter";
+import { adminLoadErrorMessage } from "../../shared/admin-load-error";
+import { AdminPillComponent } from "../../shared/admin-pill.component";
+import { docCountPill, tenantStatusPill } from "../../shared/admin-pill-maps";
+import {
+  ADMIN_LIST_PAGE_SIZE,
+  adminListRangeLabel,
+  adminListTotalPages,
+} from "../../shared/admin-list-paging";
 
 @Component({
   selector: "app-admin-pending",
@@ -22,44 +29,43 @@ import { filterByQuery } from "../../shared/admin-list-filter";
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
     DatePipe,
+    RouterLink,
+    AdminPillComponent,
   ],
   templateUrl: "./pending.component.html",
   styleUrl: "./pending.component.scss",
 })
-export class AdminPendingComponent implements OnInit {
+export class AdminPendingComponent {
   private readonly api = inject(AdminApiService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly feedback = inject(AdeniFeedbackService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly items = signal<PendingBusiness[]>([]);
+  readonly totalCount = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = ADMIN_LIST_PAGE_SIZE;
   readonly searchText = signal("");
-  readonly visible = computed(() =>
-    filterByQuery(this.items(), this.searchText(), (item) => [
-      item.name,
-      item.slug,
-      item.marketId,
-      item.status,
-    ]),
-  );
-  readonly isEmptyQueue = computed(() => !this.loading() && this.items().length === 0);
-  readonly isEmptyFilter = computed(
-    () => !this.loading() && this.items().length > 0 && this.visible().length === 0,
-  );
   readonly busyId = signal<string | null>(null);
+
+  readonly totalPages = computed(() => adminListTotalPages(this.totalCount(), this.pageSize));
+  readonly showingRange = computed(() =>
+    adminListRangeLabel(this.page(), this.pageSize, this.totalCount()),
+  );
+  readonly isEmptyQueue = computed(() => !this.loading() && this.totalCount() === 0);
+
+  readonly tenantStatusPill = tenantStatusPill;
+  readonly docCountPill = docCountPill;
 
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
-      const q = params.get("q") ?? "";
-      if (q) {
-        this.searchText.set(q);
-      }
+      this.searchText.set(params.get("q") ?? "");
+      const page = Number(params.get("page") ?? "1");
+      this.page.set(Number.isFinite(page) && page >= 1 ? page : 1);
+      void this.load();
     });
-  }
-
-  ngOnInit(): void {
-    void this.load();
   }
 
   async load(): Promise<void> {
@@ -67,16 +73,42 @@ export class AdminPendingComponent implements OnInit {
     this.error.set(null);
     try {
       await this.feedback.runLoading(async () => {
-        const pending = await this.api.withAuthorizedClient((c) => c.getPendingBusinesses());
-        this.items.set(pending);
+        const result = await this.api.withAuthorizedClient((c) =>
+          c.listPendingBusinesses({
+            q: this.searchText().trim() || undefined,
+            page: this.page(),
+            pageSize: this.pageSize,
+          }),
+        );
+        this.items.set(result.items);
+        this.totalCount.set(result.totalCount);
       }, "Loading queue…", "Fetching businesses awaiting verification");
-    } catch {
-      const message = "Could not load pending businesses. Use Auth0 admin or dev admin sub.";
+    } catch (err) {
+      const message = adminLoadErrorMessage("Could not load pending businesses.", err);
       this.error.set(message);
       this.feedback.error(message);
+      this.items.set([]);
+      this.totalCount.set(0);
     } finally {
       this.loading.set(false);
     }
+  }
+
+  applySearch(): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { q: this.searchText().trim() || null, page: null },
+      queryParamsHandling: "merge",
+    });
+  }
+
+  goToPage(next: number): void {
+    const page = Math.min(Math.max(1, next), this.totalPages());
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: page === 1 ? null : page },
+      queryParamsHandling: "merge",
+    });
   }
 
   async approve(item: PendingBusiness): Promise<void> {
@@ -87,7 +119,7 @@ export class AdminPendingComponent implements OnInit {
         "Approving…",
         item.name,
       );
-      this.items.update((list) => list.filter((x) => x.id !== item.id));
+      await this.load();
       this.feedback.success(`${item.name} is now verified.`, "Approved");
     } catch {
       this.error.set("Approve failed.");
@@ -108,7 +140,7 @@ export class AdminPendingComponent implements OnInit {
         "Rejecting…",
         item.name,
       );
-      this.items.update((list) => list.filter((x) => x.id !== item.id));
+      await this.load();
       this.feedback.success(`${item.name} was rejected.`, "Rejected");
     } catch {
       this.error.set("Reject failed.");

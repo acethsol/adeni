@@ -10,21 +10,26 @@
   }
 
   <section class="card list-toolbar">
-    <label class="search-field">
-      <span class="visually-hidden">Search customers</span>
-      <adeni-carbon-icon name="search" [size]="16" />
-      <input
-        type="search"
-        [(ngModel)]="searchInput"
-        (keydown.enter)="$event.preventDefault(); search()"
-        placeholder="Email, name, phone, or Auth0 sub"
-        autocomplete="off"
-      />
-    </label>
-    <button type="submit" class="btn btn-primary" [disabled]="searching() || !searchInput.trim()" (click)="search()">
-      <adeni-carbon-icon name="search" [size]="16" />
-      {{ searching() ? "Searching…" : "Search" }}
-    </button>
+    <form class="search-form" (submit)="search(); $event.preventDefault()">
+      <label class="search-field">
+        <span class="visually-hidden">Search customers</span>
+        <adeni-carbon-icon name="search" [size]="16" />
+        <input
+          type="search"
+          [(ngModel)]="searchInput"
+          name="q"
+          placeholder="Email, name, phone, or Auth0 sub"
+          autocomplete="off"
+        />
+      </label>
+      <button type="submit" class="btn btn-primary" [disabled]="searching() || !searchInput.trim()">
+        <adeni-carbon-icon name="search" [size]="16" />
+        {{ searching() ? "Searching…" : "Search" }}
+      </button>
+    </form>
+    @if (hasSearched() && totalCount() > 0) {
+      <p class="toolbar-meta">{{ showingRange() }}</p>
+    }
   </section>
 
   @if (searching() && customers().length === 0) {
@@ -57,10 +62,12 @@
           @for (c of customers(); track c.id) {
             <tr>
               <td>
-                <div class="row-title">{{ c.name }}</div>
-                @if (c.erasureRequestedAt) {
-                  <p class="row-sub warn">Erasure requested {{ c.erasureRequestedAt }}</p>
-                }
+                <div class="cell-stack">
+                  <div class="row-title">{{ c.name }}</div>
+                  @if (erasurePill(!!c.erasureRequestedAt); as erasure) {
+                    <admin-pill [label]="erasure.label" [variant]="erasure.variant" [compact]="true" />
+                  }
+                </div>
               </td>
               <td class="muted">{{ c.email ?? "—" }}</td>
               <td class="muted">{{ c.auth0Sub }}</td>
@@ -84,6 +91,23 @@
         </tbody>
       </table>
     </section>
+
+    @if (totalPages() > 1) {
+      <nav class="pager" aria-label="Customer search pages">
+        <button type="button" class="btn" [disabled]="page() <= 1 || searching()" (click)="goToPage(page() - 1)">
+          Previous
+        </button>
+        <span class="pager-meta">{{ showingRange() }}</span>
+        <button
+          type="button"
+          class="btn"
+          [disabled]="page() >= totalPages() || searching()"
+          (click)="goToPage(page() + 1)"
+        >
+          Next
+        </button>
+      </nav>
+    }
   }
 
   @if (exportData(); as ex) {

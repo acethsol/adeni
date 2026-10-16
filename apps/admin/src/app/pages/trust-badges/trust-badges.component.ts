@@ -1,8 +1,8 @@
 import { DatePipe } from "@angular/common";
-import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { type PendingBadgeRequest, VERIFICATION_BADGE_LABELS } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
@@ -11,7 +11,14 @@ import {
   PortalPageComponent,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
-import { filterByQuery } from "../../shared/admin-list-filter";
+import {
+  ADMIN_LIST_PAGE_SIZE,
+  adminListRangeLabel,
+  adminListTotalPages,
+} from "../../shared/admin-list-paging";
+import { adminLoadErrorMessage } from "../../shared/admin-load-error";
+import { AdminPillComponent } from "../../shared/admin-pill.component";
+import { badgeTypePill } from "../../shared/admin-pill-maps";
 
 @Component({
   selector: "app-admin-trust-badges",
@@ -22,45 +29,43 @@ import { filterByQuery } from "../../shared/admin-list-filter";
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
     DatePipe,
+    RouterLink,
+    AdminPillComponent,
   ],
   templateUrl: "./trust-badges.component.html",
   styleUrl: "./trust-badges.component.scss",
 })
-export class AdminTrustBadgesComponent implements OnInit {
+export class AdminTrustBadgesComponent {
   private readonly api = inject(AdminApiService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly feedback = inject(AdeniFeedbackService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly items = signal<PendingBadgeRequest[]>([]);
+  readonly totalCount = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = ADMIN_LIST_PAGE_SIZE;
   readonly searchText = signal("");
-  readonly visible = computed(() =>
-    filterByQuery(this.items(), this.searchText(), (item) => [
-      item.businessName,
-      item.badgeType,
-      item.referenceNumber,
-    ]),
-  );
-  readonly isEmptyQueue = computed(() => !this.loading() && this.items().length === 0);
-  readonly isEmptyFilter = computed(
-    () => !this.loading() && this.items().length > 0 && this.visible().length === 0,
-  );
   readonly busyKey = signal<string | null>(null);
 
+  readonly totalPages = computed(() => adminListTotalPages(this.totalCount(), this.pageSize));
+  readonly showingRange = computed(() =>
+    adminListRangeLabel(this.page(), this.pageSize, this.totalCount()),
+  );
+  readonly isEmptyQueue = computed(() => !this.loading() && this.totalCount() === 0);
+
   readonly badgeLabel = (type: PendingBadgeRequest["badgeType"]) => VERIFICATION_BADGE_LABELS[type];
+  readonly badgeTypePill = badgeTypePill;
 
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
-      const q = params.get("q") ?? "";
-      if (q) {
-        this.searchText.set(q);
-      }
+      this.searchText.set(params.get("q") ?? "");
+      const page = Number(params.get("page") ?? "1");
+      this.page.set(Number.isFinite(page) && page >= 1 ? page : 1);
+      void this.load();
     });
-  }
-
-  ngOnInit(): void {
-    void this.load();
   }
 
   rowKey(item: PendingBadgeRequest): string {
@@ -72,16 +77,42 @@ export class AdminTrustBadgesComponent implements OnInit {
     this.error.set(null);
     try {
       await this.feedback.runLoading(async () => {
-        const pending = await this.api.withAuthorizedClient((c) => c.listAdminPendingBadges());
-        this.items.set(pending);
+        const result = await this.api.withAuthorizedClient((c) =>
+          c.listAdminPendingBadges({
+            q: this.searchText().trim() || undefined,
+            page: this.page(),
+            pageSize: this.pageSize,
+          }),
+        );
+        this.items.set(result.items);
+        this.totalCount.set(result.totalCount);
       }, "Loading badge queue…", "Trust badge requests");
-    } catch {
-      const message = "Could not load pending trust badges.";
+    } catch (err) {
+      const message = adminLoadErrorMessage("Could not load pending trust badges.", err);
       this.error.set(message);
       this.feedback.error(message);
+      this.items.set([]);
+      this.totalCount.set(0);
     } finally {
       this.loading.set(false);
     }
+  }
+
+  applySearch(): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { q: this.searchText().trim() || null, page: null },
+      queryParamsHandling: "merge",
+    });
+  }
+
+  goToPage(next: number): void {
+    const page = Math.min(Math.max(1, next), this.totalPages());
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: page === 1 ? null : page },
+      queryParamsHandling: "merge",
+    });
   }
 
   async grant(item: PendingBadgeRequest): Promise<void> {
@@ -96,7 +127,7 @@ export class AdminTrustBadgesComponent implements OnInit {
         "Granting…",
         item.businessName,
       );
-      this.items.update((list) => list.filter((x) => this.rowKey(x) !== key));
+      await this.load();
       this.feedback.success(`${this.badgeLabel(item.badgeType)} granted for ${item.businessName}.`, "Granted");
     } catch {
       this.error.set("Grant failed.");
@@ -118,7 +149,7 @@ export class AdminTrustBadgesComponent implements OnInit {
         "Denying…",
         item.businessName,
       );
-      this.items.update((list) => list.filter((x) => this.rowKey(x) !== key));
+      await this.load();
       this.feedback.success(`Request denied for ${item.businessName}.`, "Denied");
     } catch {
       this.error.set("Deny failed.");

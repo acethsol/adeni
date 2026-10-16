@@ -17,13 +17,40 @@ public sealed class AdminBusinessService(
     ICorrelationContext correlationContext,
     ICacheService cache) : IAdminBusinessService
 {
-    public async Task<IReadOnlyList<PendingBusinessResponse>> GetPendingVerificationsAsync(
+    public async Task<Result<AdminPagedResult<PendingBusinessResponse>>> ListPendingVerificationsAsync(
+        string? search,
+        int page,
+        int pageSize,
         CancellationToken cancellationToken = default)
     {
-        var tenants = await dbContext.Tenants
+        var paging = AdminPaging.Normalize(page, pageSize);
+        if (paging.IsFailure)
+        {
+            return Result.Failure<AdminPagedResult<PendingBusinessResponse>>(paging.Error);
+        }
+
+        var (effectivePage, effectivePageSize) = paging.Value;
+        var needle = search?.Trim().ToLowerInvariant();
+
+        var query = dbContext.Tenants
             .AsNoTracking()
-            .Where(t => t.Status == TenantStatus.PendingVerification)
+            .Where(t => t.Status == TenantStatus.PendingVerification);
+
+        if (!string.IsNullOrWhiteSpace(needle))
+        {
+            query = query.Where(t =>
+                t.Name.ToLower().Contains(needle)
+                || dbContext.BusinessLocations.Any(loc =>
+                    loc.TenantId == t.Id
+                    && loc.IsActive
+                    && (loc.Slug.ToLower().Contains(needle) || loc.MarketId.ToLower().Contains(needle))));
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var tenants = await query
             .OrderBy(t => t.CreatedAt)
+            .Skip((effectivePage - 1) * effectivePageSize)
+            .Take(effectivePageSize)
             .Select(t => new
             {
                 t.Id,
@@ -35,7 +62,11 @@ public sealed class AdminBusinessService(
 
         if (tenants.Count == 0)
         {
-            return [];
+            return Result.Success(new AdminPagedResult<PendingBusinessResponse>(
+                [],
+                effectivePage,
+                effectivePageSize,
+                totalCount));
         }
 
         var tenantIds = tenants.Select(x => x.Id).ToList();
@@ -49,7 +80,7 @@ public sealed class AdminBusinessService(
             .Where(x => tenantIds.Contains(x.TenantId))
             .ToListAsync(cancellationToken);
 
-        return tenants.Select(tenant =>
+        var items = tenants.Select(tenant =>
         {
             var primary = locations
                 .Where(x => x.TenantId == tenant.Id)
@@ -73,14 +104,45 @@ public sealed class AdminBusinessService(
                 tenant.CreatedAt,
                 docs);
         }).ToList();
+
+        return Result.Success(new AdminPagedResult<PendingBusinessResponse>(
+            items,
+            effectivePage,
+            effectivePageSize,
+            totalCount));
     }
 
-    public async Task<IReadOnlyList<AdminBusinessSummaryResponse>> ListBusinessesAsync(
-        CancellationToken cancellationToken = default) =>
-        await dbContext.Tenants
-            .AsNoTracking()
+    public async Task<Result<AdminPagedResult<AdminBusinessSummaryResponse>>> ListBusinessesAsync(
+        string? search,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        var paging = AdminPaging.Normalize(page, pageSize);
+        if (paging.IsFailure)
+        {
+            return Result.Failure<AdminPagedResult<AdminBusinessSummaryResponse>>(paging.Error);
+        }
+
+        var (effectivePage, effectivePageSize) = paging.Value;
+        var needle = search?.Trim().ToLowerInvariant();
+
+        var query = dbContext.Tenants.AsNoTracking();
+        if (!string.IsNullOrWhiteSpace(needle))
+        {
+            query = query.Where(t =>
+                t.Name.ToLower().Contains(needle)
+                || dbContext.BusinessLocations.Any(loc =>
+                    loc.TenantId == t.Id
+                    && loc.IsActive
+                    && loc.Slug.ToLower().Contains(needle)));
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var items = await query
             .OrderByDescending(t => t.CreatedAt)
-            .Take(200)
+            .Skip((effectivePage - 1) * effectivePageSize)
+            .Take(effectivePageSize)
             .Select(t => new AdminBusinessSummaryResponse(
                 t.Id,
                 t.Name,
@@ -100,6 +162,46 @@ public sealed class AdminBusinessService(
                 t.TrialEndsAt,
                 t.CreatedAt))
             .ToListAsync(cancellationToken);
+
+        return Result.Success(new AdminPagedResult<AdminBusinessSummaryResponse>(
+            items,
+            effectivePage,
+            effectivePageSize,
+            totalCount));
+    }
+
+    public async Task<AdminBusinessDirectoryStats> GetDirectoryStatsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var statusRows = await dbContext.Tenants
+            .AsNoTracking()
+            .GroupBy(t => t.Status)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+
+        var tierRows = await dbContext.Tenants
+            .AsNoTracking()
+            .GroupBy(t => t.SubscriptionTier)
+            .Select(g => new { Tier = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+
+        var totalCount = statusRows.Sum(x => x.Count);
+        var verifiedCount = statusRows
+            .Where(x => x.Status == TenantStatus.Verified)
+            .Sum(x => x.Count);
+
+        return new AdminBusinessDirectoryStats(
+            totalCount,
+            verifiedCount,
+            statusRows
+                .OrderBy(x => x.Status)
+                .Select(x => new AdminStatusCount((int)x.Status, x.Count))
+                .ToList(),
+            tierRows
+                .OrderBy(x => x.Tier)
+                .Select(x => new AdminTierCount(SubscriptionTierMapping.ToApiValue(x.Tier), x.Count))
+                .ToList());
+    }
 
     public async Task<Result<AdminTenantCommercialTermsResponse>> GetTenantCommercialTermsAsync(
         Guid tenantId,

@@ -1,28 +1,39 @@
-<app-portal-page title="Pending verifications" description="Approve or reject businesses awaiting verification.">
+<app-portal-page
+  title="Pending verifications"
+  description="New business onboarding: review CAC/ID docs and approve or reject before the business appears on discovery."
+>
+  <aside class="workflow-hint card">
+    <strong>Not trust badges.</strong>
+    This queue is for first-time business verification (tenant status
+    <em>Pending verification</em>). Supplemental badges (phone, CAC, address, license) are reviewed under
+    <a routerLink="/trust-badges">Trust badges</a>.
+  </aside>
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
 
   <section class="card list-toolbar">
-    <label class="search-field">
-      <span class="visually-hidden">Filter queue</span>
-      <adeni-carbon-icon name="search" [size]="16" />
-      <input
-        type="search"
-        [ngModel]="searchText()"
-        (ngModelChange)="searchText.set($event)"
-        placeholder="Filter by name, slug, or market"
-        autocomplete="off"
-      />
-    </label>
+    <form class="search-form" (submit)="applySearch(); $event.preventDefault()">
+      <label class="search-field">
+        <span class="visually-hidden">Filter queue</span>
+        <adeni-carbon-icon name="search" [size]="16" />
+        <input
+          type="search"
+          [ngModel]="searchText()"
+          (ngModelChange)="searchText.set($event)"
+          name="q"
+          placeholder="Name, slug, or market"
+          autocomplete="off"
+        />
+      </label>
+      <button type="submit" class="btn btn-primary">Search</button>
+    </form>
     <button type="button" class="btn" [disabled]="loading()" (click)="load()">
       <adeni-carbon-icon name="restart" [size]="16" />
       Refresh
     </button>
-    @if (!loading() && items().length > 0) {
-      <p class="toolbar-meta">
-        Showing {{ visible().length }} of {{ items().length }}
-      </p>
+    @if (!loading() && totalCount() > 0) {
+      <p class="toolbar-meta">{{ showingRange() }}</p>
     }
   </section>
 
@@ -33,13 +44,6 @@
       icon="checkmark--filled"
       title="Verification queue is clear"
       description="New business applications will appear here for review before they go live on discovery."
-    />
-  } @else if (isEmptyFilter()) {
-    <adeni-portal-empty-state
-      icon="search"
-      title="No matches"
-      description="Try a different name, slug, or market id."
-      compact
     />
   } @else {
     <section class="card data-table-wrap">
@@ -54,15 +58,26 @@
           </tr>
         </thead>
         <tbody>
-          @for (item of visible(); track item.id) {
+          @for (item of items(); track item.id) {
             <tr>
               <td>
-                <div class="row-title">{{ item.name }}</div>
-                <p class="row-sub">{{ item.slug }}</p>
+                <div class="cell-stack">
+                  <div class="row-title">{{ item.name }}</div>
+                  <div class="cell-pills">
+                    @let queue = tenantStatusPill(item.status);
+                    <admin-pill [label]="queue.label" [variant]="queue.variant" [compact]="true" />
+                    <admin-pill [label]="item.slug" variant="neutral" [compact]="true" />
+                  </div>
+                </div>
               </td>
-              <td class="muted">{{ item.marketId }}</td>
+              <td>
+                <admin-pill [label]="item.marketId" variant="neutral" [compact]="true" />
+              </td>
               <td class="muted">{{ item.createdAt | date: "mediumDate" }}</td>
-              <td class="muted">{{ item.documents?.length ?? 0 }}</td>
+              <td>
+                @let docs = docCountPill(item.documents?.length ?? 0);
+                <admin-pill [label]="docs.label" [variant]="docs.variant" />
+              </td>
               <td class="actions-cell">
                 <div class="actions-inline">
                   <button
@@ -88,5 +103,22 @@
         </tbody>
       </table>
     </section>
+
+    @if (totalPages() > 1) {
+      <nav class="pager" aria-label="Pending verification pages">
+        <button type="button" class="btn" [disabled]="page() <= 1 || loading()" (click)="goToPage(page() - 1)">
+          Previous
+        </button>
+        <span class="pager-meta">{{ showingRange() }}</span>
+        <button
+          type="button"
+          class="btn"
+          [disabled]="page() >= totalPages() || loading()"
+          (click)="goToPage(page() + 1)"
+        >
+          Next
+        </button>
+      </nav>
+    }
   }
 </app-portal-page>

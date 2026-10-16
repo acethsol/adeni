@@ -147,7 +147,13 @@ public sealed class PaymentsController(
         var result = await paymentOrchestrator.ListLedgerAsync(tenantId, page, pageSize, cancellationToken);
         return ApiResults.FromResult(
             result,
-            items => Ok(new { items }),
+            payload => Ok(new
+            {
+                items = payload.Items,
+                page = payload.Page,
+                pageSize = payload.PageSize,
+                totalCount = payload.TotalCount,
+            }),
             HttpContext);
     }
 

@@ -4,21 +4,28 @@
   }
 
   <section class="card list-toolbar">
-    <label class="search-field">
-      <span class="visually-hidden">Filter markets</span>
-      <adeni-carbon-icon name="search" [size]="16" />
-      <input
-        type="search"
-        [ngModel]="searchText()"
-        (ngModelChange)="searchText.set($event)"
-        placeholder="Filter by name, id, country, or currency"
-        autocomplete="off"
-      />
-    </label>
+    <form class="search-form" (submit)="applySearch(); $event.preventDefault()">
+      <label class="search-field">
+        <span class="visually-hidden">Search markets</span>
+        <adeni-carbon-icon name="search" [size]="16" />
+        <input
+          type="search"
+          [ngModel]="searchText()"
+          (ngModelChange)="searchText.set($event)"
+          name="q"
+          placeholder="Name, id, country, or currency"
+          autocomplete="off"
+        />
+      </label>
+      <button type="submit" class="btn btn-primary">Search</button>
+    </form>
     <button type="button" class="btn" [disabled]="loading()" (click)="load()">
       <adeni-carbon-icon name="restart" [size]="16" />
       Refresh
     </button>
+    @if (!loading() && totalCount() > 0) {
+      <p class="toolbar-meta">{{ showingRange() }}</p>
+    }
   </section>
 
   @if (loading() && markets().length === 0) {
@@ -28,13 +35,6 @@
       icon="location--filled"
       title="No markets configured"
       description="Markets define where discovery and booking are available (Ottawa, Lagos, and future cities)."
-    />
-  } @else if (isEmptyFilter()) {
-    <adeni-portal-empty-state
-      icon="search"
-      title="No matches"
-      description="Try another market name or country code."
-      compact
     />
   } @else {
     <section class="card data-table-wrap">
@@ -49,18 +49,21 @@
           </tr>
         </thead>
         <tbody>
-          @for (market of visible(); track market.id) {
+          @for (market of markets(); track market.id) {
             <tr>
               <td>
                 <div class="row-title">{{ market.name }}</div>
                 <p class="row-sub">{{ market.id }}</p>
               </td>
-              <td class="muted">{{ market.countryCode }}</td>
-              <td class="muted">{{ market.currency }}</td>
               <td>
-                <span class="status-pill" [class.is-live]="market.isLive" [class.is-off]="!market.isLive">
-                  {{ market.isLive ? "Live" : "Offline" }}
-                </span>
+                <admin-pill [label]="market.countryCode" variant="neutral" [compact]="true" />
+              </td>
+              <td>
+                <admin-pill [label]="market.currency" variant="info" [compact]="true" />
+              </td>
+              <td>
+                @let live = marketLivePill(market.isLive);
+                <admin-pill [label]="live.label" [variant]="live.variant" />
               </td>
               <td class="actions-cell">
                 <button type="button" class="btn" (click)="toggleLive(market)">
@@ -72,5 +75,22 @@
         </tbody>
       </table>
     </section>
+
+    @if (totalPages() > 1) {
+      <nav class="pager" aria-label="Market pages">
+        <button type="button" class="btn" [disabled]="page() <= 1 || loading()" (click)="goToPage(page() - 1)">
+          Previous
+        </button>
+        <span class="pager-meta">{{ showingRange() }}</span>
+        <button
+          type="button"
+          class="btn"
+          [disabled]="page() >= totalPages() || loading()"
+          (click)="goToPage(page() + 1)"
+        >
+          Next
+        </button>
+      </nav>
+    }
   }
 </app-portal-page>

@@ -10,6 +10,8 @@ Schema is owned by **`Adeni.Database/`** — a [Microsoft.Build.Sql](https://lea
 | `../scripts/publish-db.ps1` | Build + SqlPackage publish |
 | `scripts/tenant-billing-columns.sql` | Idempotent billing columns on **existing** DBs |
 | `../scripts/apply-tenant-billing-columns.ps1` | Run that script via sqlcmd (dev connection default) |
+| `scripts/tenant-subscription-charges-sprint33.sql` | Sprint 33 SaaS charge snapshots (MRR / billing history) |
+| `../scripts/apply-tenant-subscription-charges.ps1` | Apply charge table on older DBs without full publish |
 
 ## Local publish
 

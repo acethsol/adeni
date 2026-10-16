@@ -1,9 +1,14 @@
-import { Component, inject, OnInit, signal } from "@angular/core";
-import { toSignal } from "@angular/core/rxjs-interop";
+import { Component, computed, inject, signal } from "@angular/core";
+import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
-import type { BookingResponse, KioskStatusResponse } from "@adeni/shared";
-import { formatSlotTime } from "@adeni/shared";
+import type { BookingResponse, KioskStatusResponse, TenantBookingListTab } from "@adeni/shared";
+import {
+  formatSlotTime,
+  pageRangeLabel,
+  resolvePaymentCheckoutUrl,
+  totalPages as computeTotalPages,
+} from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
   AdeniConfirmService,
@@ -12,6 +17,7 @@ import {
   type AdeniCarbonIconName,
 } from "@adeni/ui";
 import { map } from "rxjs";
+import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { PortalSessionService } from "../../core/services/portal-session.service";
 import { PortalTabsComponent } from "../../shared/portal-tabs.component";
@@ -35,8 +41,9 @@ const PAID_STATUS = 6;
   templateUrl: "./bookings.component.html",
   styleUrl: "./bookings.component.scss",
 })
-export class BookingsComponent implements OnInit {
+export class BookingsComponent {
   private readonly api = inject(BusinessApiService);
+  private readonly config = inject(ADENI_PORTAL_CONFIG);
   private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly session = inject(PortalSessionService);
   private readonly route = inject(ActivatedRoute);
@@ -52,6 +59,16 @@ export class BookingsComponent implements OnInit {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly bookings = signal<BookingResponse[]>([]);
+  readonly totalCount = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = 25;
+  readonly totalPageCount = computed(() => computeTotalPages(this.totalCount(), this.pageSize));
+  readonly pageLabel = computed(() =>
+    pageRangeLabel(this.page(), this.pageSize, this.totalCount()),
+  );
+  readonly displayedBookings = computed(() =>
+    prioritizeFocus(this.bookings(), this.focusBookingId()),
+  );
   readonly kioskStatus = signal<KioskStatusResponse | null>(null);
   readonly savingPin = signal(false);
   readonly actionId = signal<string | null>(null);
@@ -100,44 +117,12 @@ export class BookingsComponent implements OnInit {
     return "Accept requests, check clients in, complete visits, and collect or mark payment.";
   }
 
-  ngOnInit(): void {
-    void this.load();
-  }
-
-  visible(): BookingResponse[] {
-    const today = startOfToday();
-    const tab = this.tab();
-    if (tab === "upcoming") {
-      return prioritizeFocus(
-        this.bookings().filter(
-          (booking) =>
-            (booking.status === CONFIRMED_STATUS ||
-              booking.status === CHECKED_IN_STATUS ||
-              booking.status === COMPLETED_STATUS) &&
-            new Date(booking.startAt) >= today,
-        ),
-        this.focusBookingId(),
-      );
-    }
-    if (tab === "past") {
-      return prioritizeFocus(
-        this.bookings().filter(
-          (booking) =>
-            booking.status === 2 ||
-            booking.status === 3 ||
-            booking.status === PAID_STATUS ||
-            ((booking.status === CONFIRMED_STATUS ||
-              booking.status === CHECKED_IN_STATUS ||
-              booking.status === COMPLETED_STATUS) &&
-              new Date(booking.startAt) < today),
-        ),
-        this.focusBookingId(),
-      );
-    }
-    return prioritizeFocus(
-      this.bookings().filter((booking) => booking.status === PENDING_STATUS),
-      this.focusBookingId(),
-    );
+  constructor() {
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const page = Number(params.get("page") ?? "1");
+      this.page.set(Number.isFinite(page) && page >= 1 ? page : 1);
+      void this.load();
+    });
   }
 
   emptyState(): { title: string; description: string; icon: AdeniCarbonIconName } {
@@ -172,21 +157,51 @@ export class BookingsComponent implements OnInit {
   async load(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
+    const tab = (this.tab() ?? "pending") as TenantBookingListTab;
     try {
       await this.api.withAuthorizedClient(async (client) => {
-        const [items, kiosk] = await Promise.all([
-          client.getTenantBookings(),
+        const [bookingsPage, kiosk] = await Promise.all([
+          client.listTenantBookings({ tab, page: this.page(), pageSize: this.pageSize }),
           client.getTenantKioskStatus().catch(() => null),
         ]);
-        this.bookings.set(items);
+        this.bookings.set(bookingsPage.items);
+        this.totalCount.set(bookingsPage.totalCount);
+        this.page.set(bookingsPage.page);
         this.kioskStatus.set(kiosk);
       });
     } catch {
       this.error.set("Could not load bookings. Check API and dev business sub.");
       this.bookings.set([]);
+      this.totalCount.set(0);
     } finally {
       this.loading.set(false);
     }
+  }
+
+  canNextPage(): boolean {
+    return this.page() < this.totalPageCount();
+  }
+
+  prevPage(): void {
+    if (this.page() <= 1) {
+      return;
+    }
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: this.page() - 1 === 1 ? null : this.page() - 1 },
+      queryParamsHandling: "merge",
+    });
+  }
+
+  nextPage(): void {
+    if (!this.canNextPage()) {
+      return;
+    }
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: this.page() + 1 },
+      queryParamsHandling: "merge",
+    });
   }
 
   openKiosk(event: Event): void {
@@ -280,7 +295,8 @@ export class BookingsComponent implements OnInit {
       const updated = await this.api.withAuthorizedClient((client) =>
         client.markTenantBookingPaid(booking.id, {}),
       );
-      this.bookings.update((list) => list.map((item) => (item.id === booking.id ? updated : item)));
+      void updated;
+      await this.load();
     } catch {
       this.error.set("Could not mark this booking paid.");
     } finally {
@@ -295,11 +311,16 @@ export class BookingsComponent implements OnInit {
       const result = await this.api.withAuthorizedClient((client) =>
         client.collectTenantBookingBalance(booking.id),
       );
-      this.bookings.update((list) =>
-        list.map((item) => (item.id === booking.id ? result.booking : item)),
-      );
-      if (result.checkoutUrl) {
-        window.open(result.checkoutUrl, "_blank", "noopener");
+      await this.load();
+      const checkoutUrl = resolvePaymentCheckoutUrl(result.checkoutUrl, this.config.discoverWebUrl, {
+        amount: result.amount,
+        currency: result.currency,
+      });
+      const popup = window.open(checkoutUrl, "_blank", "noopener,noreferrer");
+      if (!popup) {
+        this.error.set(
+          "Payment page blocked. Allow pop-ups for this site, or copy the link from Payments after creating a link.",
+        );
       }
     } catch {
       this.error.set("Could not start balance collection.");
@@ -327,7 +348,8 @@ export class BookingsComponent implements OnInit {
             return client.completeTenantBooking(booking.id);
         }
       });
-      this.bookings.update((list) => list.map((item) => (item.id === booking.id ? updated : item)));
+      void updated;
+      await this.load();
     } catch {
       this.error.set(`Could not ${action} this booking.`);
     } finally {
@@ -348,8 +370,3 @@ function prioritizeFocus<T extends { id: string }>(items: T[], focusId: string |
   return [focused, ...items.slice(0, index), ...items.slice(index + 1)];
 }
 
-function startOfToday(): Date {
-  const date = new Date();
-  date.setHours(0, 0, 0, 0);
-  return date;
-}

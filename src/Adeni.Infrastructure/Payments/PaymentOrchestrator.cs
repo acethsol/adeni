@@ -68,25 +68,37 @@ public sealed class PaymentOrchestrator(
         return Result.Success(Map(entity));
     }
 
-    public async Task<Result<IReadOnlyList<PaymentLedgerEntry>>> ListLedgerAsync(
+    public async Task<Result<PagedResult<PaymentLedgerEntry>>> ListLedgerAsync(
         Guid tenantId,
         int page = 1,
         int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
-        page = Math.Max(1, page);
-        pageSize = Math.Clamp(pageSize, 1, 100);
+        var normalized = Paging.Normalize(page, pageSize);
+        if (normalized.IsFailure)
+        {
+            return Result.Failure<PagedResult<PaymentLedgerEntry>>(normalized.Error);
+        }
 
-        var items = await dbContext.PaymentIntents
+        (page, pageSize) = normalized.Value!;
+
+        var query = dbContext.PaymentIntents
             .AsNoTracking()
-            .Where(x => x.TenantId == tenantId)
+            .Where(x => x.TenantId == tenantId);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var items = await query
             .OrderByDescending(x => x.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
 
-        return Result.Success<IReadOnlyList<PaymentLedgerEntry>>(
-            items.Select(MapLedger).ToArray());
+        return Result.Success(new PagedResult<PaymentLedgerEntry>(
+            items.Select(MapLedger).ToArray(),
+            page,
+            pageSize,
+            totalCount));
     }
 
     public async Task<Result<PaymentWebhookResult>> ProcessWebhookAsync(

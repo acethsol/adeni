@@ -45,6 +45,51 @@ public sealed class SubscriptionBillingOrchestratorTests
     }
 
     [Fact]
+    public async Task ListChargesForAdminAsync_returns_charges_for_existing_tenant()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        var orchestrator = scope.ServiceProvider.GetRequiredService<ISubscriptionBillingOrchestrator>();
+        var (tenantId, _) = await SeedTenantWithUserAsync(db);
+
+        db.TenantSubscriptionCharges.Add(new TenantSubscriptionCharge
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            IdempotencyKey = "subscription.create:admin-list",
+            ProviderReference = "ref-admin",
+            EventType = "subscription.create",
+            SubscriptionSku = SubscriptionSku.Professional,
+            AmountMinor = 70_000,
+            Currency = "NGN",
+            Status = "active",
+            OccurredAt = DateTimeOffset.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+        await db.SaveChangesAsync();
+
+        var result = await orchestrator.ListChargesForAdminAsync(tenantId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Value!);
+        Assert.Equal(70_000, result.Value![0].AmountMinor);
+    }
+
+    [Fact]
+    public async Task ListChargesForAdminAsync_not_found_for_unknown_tenant()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var orchestrator = scope.ServiceProvider.GetRequiredService<ISubscriptionBillingOrchestrator>();
+
+        var result = await orchestrator.ListChargesForAdminAsync(Guid.NewGuid());
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("not_found", result.Error!.Code);
+    }
+
+    [Fact]
     public async Task CompleteStubCheckoutAsync_rejects_cross_tenant_reference()
     {
         await using var provider = BuildProvider();

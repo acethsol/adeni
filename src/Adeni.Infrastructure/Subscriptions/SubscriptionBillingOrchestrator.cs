@@ -146,17 +146,25 @@ public sealed class SubscriptionBillingOrchestrator(
                 Error.Forbidden("You do not have access to this business."));
         }
 
-        limit = Math.Clamp(limit, 1, 50);
+        return Result.Success(await QueryChargesAsync(tenantId, limit, cancellationToken));
+    }
 
-        var rows = await dbContext.TenantSubscriptionCharges
+    public async Task<Result<IReadOnlyList<TenantSubscriptionChargeResponse>>> ListChargesForAdminAsync(
+        Guid tenantId,
+        int limit = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var exists = await dbContext.Tenants
             .AsNoTracking()
-            .Where(x => x.TenantId == tenantId)
-            .OrderByDescending(x => x.OccurredAt)
-            .Take(limit)
-            .ToListAsync(cancellationToken);
+            .AnyAsync(x => x.Id == tenantId, cancellationToken);
 
-        return Result.Success<IReadOnlyList<TenantSubscriptionChargeResponse>>(
-            rows.Select(Map).ToList());
+        if (!exists)
+        {
+            return Result.Failure<IReadOnlyList<TenantSubscriptionChargeResponse>>(
+                Error.NotFound("Business"));
+        }
+
+        return Result.Success(await QueryChargesAsync(tenantId, limit, cancellationToken));
     }
 
     public async Task<Result<TenantSubscriptionChargeResponse>> CompleteStubCheckoutAsync(
@@ -263,6 +271,23 @@ public sealed class SubscriptionBillingOrchestrator(
         var minor = SubscriptionCatalogPrices.ToAmountMinor(country, sku);
         var currency = SubscriptionCatalogPrices.CurrencyForCountry(country);
         return (minor, minor is > 0 ? currency : null);
+    }
+
+    private async Task<IReadOnlyList<TenantSubscriptionChargeResponse>> QueryChargesAsync(
+        Guid tenantId,
+        int limit,
+        CancellationToken cancellationToken)
+    {
+        limit = Math.Clamp(limit, 1, 50);
+
+        var rows = await dbContext.TenantSubscriptionCharges
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId)
+            .OrderByDescending(x => x.OccurredAt)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+
+        return rows.Select(Map).ToList();
     }
 
     private static string BuildIdempotencyKey(string eventType, string providerReference) =>

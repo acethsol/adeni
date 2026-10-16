@@ -392,8 +392,8 @@
 .search-root {
   position: relative;
   flex: 1;
-  max-width: 28rem;
-  min-width: 8rem;
+  max-width: min(36rem, 50vw);
+  min-width: 12rem;
   margin-left: 1.5rem;
 }
 
@@ -401,6 +401,7 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  flex: 1 1 auto;
   height: 2rem;
   padding: 0 0.65rem;
   border: 1px solid var(--border);

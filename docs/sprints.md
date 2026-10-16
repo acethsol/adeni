@@ -35,8 +35,8 @@
 | **29** | **Queue v1** | ✅ Done |
 | **30** | **Front-desk kiosk** | ✅ Done |
 | **31** | **Business closed dates** | ✅ Done |
-| **32** | **Business dashboard (Zenoti-style widgets)** | Planned |
-| **33** | **SaaS billing & MRR** | Planned |
+| **32** | **Business dashboard (Zenoti-style widgets)** | In progress — [32a](./specs/sprint-32-portal-dashboard-revisit.md) |
+| **33** | **SaaS billing & MRR** | In progress — staging for live Paystack/MRR validation |
 | **34** | **Payment settlement (Connect + split)** | Planned |
 | **35** | **Tenant customer records** | ✅ Done — [sprint-35-tenant-customer-records.md](./specs/sprint-35-tenant-customer-records.md) |
 | — | Sprint 11d LLM agent | → Sprint 20 |
@@ -44,7 +44,7 @@
 | — | App Insights (Obs 1) | → Sprint 20 |
 | — | Booking notifications, auto-confirm, payments, waitlist | → Sprint 15 |
 
-**Next up:** Sprint 32 portal dashboard → Sprint 33 SaaS billing & MRR. Sprint 20 parallel. See [roadmap-modules.md](./roadmap-modules.md).
+**Next up:** Sprint **32a** dashboard foundation; Sprint **33** remainder on **staging** (live Paystack + MRR E2E). Sprint 20 parallel. See [roadmap-modules.md](./roadmap-modules.md).
 
 ---
 ## Sprint 0 — Foundation & dev tooling ✅
@@ -483,7 +483,7 @@ Composable **widgets**, **charts**, and **per-user customizable layout** on port
 
 | Task | Status |
 |------|--------|
-| **32a** Foundation — honest KPIs, plan strip, gated shortcuts | Planned |
+| **32a** Foundation — honest KPIs, plan strip, gated shortcuts | In progress |
 | **32b** Widget grid + Carbon charts + default layout + edit mode | Planned |
 | **32c** Layout persistence API + per BusinessUser save | Planned |
 | **32d** Extended widget catalog (queue, staff, quotes, …) | Planned |
@@ -496,8 +496,9 @@ Live business → Adeni recurring billing (Paystack/Stripe), signed webhooks, te
 
 | Task | Status |
 |------|--------|
-| **33a** Provider checkout + Murphy webhooks + tier sync | In progress (Paystack provider + stub; tier sync + audit/cache) |
-| **33b** Portal billing history + admin MRR metrics | In progress (admin `/metrics/subscription`, `/plan` history table) |
+| **33a** Provider checkout + Murphy webhooks + tier sync | Done locally — **validate on staging** |
+| **33b** Portal billing history + admin MRR metrics | Done locally — **validate on staging** |
+| **33c** Staging secrets, live subscription webhooks, integration E2E | Planned (Sprint 20 / staging deploy) |
 
 ## Sprint 34 — Payment settlement (Connect + Paystack split) (planned)
 

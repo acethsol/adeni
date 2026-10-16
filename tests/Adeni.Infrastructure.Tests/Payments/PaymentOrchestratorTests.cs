@@ -91,8 +91,8 @@ public sealed class PaymentOrchestratorTests
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
-        Assert.Single(result.Value!);
-        Assert.Equal("stub_ledger", result.Value![0].ProviderReference);
+        Assert.Single(result.Value!.Items);
+        Assert.Equal("stub_ledger", result.Value!.Items[0].ProviderReference);
     }
 
     private static PaymentOrchestrator CreateOrchestrator(AdeniDbContext db)

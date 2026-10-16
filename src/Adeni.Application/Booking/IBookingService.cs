@@ -1,5 +1,6 @@
 namespace Adeni.Application.Booking;
 
+using Adeni.Application.Common;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
 
@@ -99,8 +100,11 @@ public interface IBookingService
         string? idempotencyKey = null,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<BookingResponse>> ListForTenantAsync(
+    Task<PagedResult<BookingResponse>> ListForTenantAsync(
         Guid tenantId,
+        string tab = TenantBookingTabs.Pending,
+        int page = 1,
+        int pageSize = Paging.DefaultPageSize,
         Guid? staffMemberId = null,
         CancellationToken cancellationToken = default);
 

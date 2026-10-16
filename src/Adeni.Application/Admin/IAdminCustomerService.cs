@@ -32,8 +32,10 @@ public sealed record CustomerBookingExportItem(
 
 public interface IAdminCustomerService
 {
-    Task<IReadOnlyList<AdminCustomerSummary>> SearchAsync(
-        string? email,
+    Task<Result<AdminPagedResult<AdminCustomerSummary>>> SearchAsync(
+        string? query,
+        int page,
+        int pageSize,
         CancellationToken cancellationToken = default);
 
     Task<Result<CustomerDataExportResponse>> ExportAsync(

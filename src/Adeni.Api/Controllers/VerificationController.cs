@@ -101,10 +101,21 @@ public sealed class TenantVerificationController(
 public sealed class AdminVerificationController(IVerificationBadgeService badges) : ControllerBase
 {
     [HttpGet("pending-badges")]
-    public async Task<IActionResult> ListPendingBadges(CancellationToken cancellationToken)
+    public async Task<IActionResult> ListPendingBadges(
+        [FromQuery] string? q,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken cancellationToken = default)
     {
-        var items = await badges.ListPendingRequestsAsync(cancellationToken);
-        return Ok(new { items });
+        var result = await badges.ListPendingRequestsAsync(q, page, pageSize, cancellationToken);
+
+        return result.Match<IActionResult>(
+            payload => Ok(payload),
+            error => error.Code switch
+            {
+                "validation" => BadRequest(new { title = error.Message }),
+                _ => BadRequest(new { title = error.Message })
+            });
     }
 
     [HttpPost("businesses/{tenantId:guid}/badges/{badgeType}/grant")]

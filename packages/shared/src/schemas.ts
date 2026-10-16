@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { type PagedResult, pagedResultSchema } from "./paging";
 
 export const categorySchema = z.object({
   id: z.string(),
@@ -189,14 +190,17 @@ export const pendingBusinessSchema = z.object({
   name: z.string(),
   slug: z.string(),
   marketId: z.string(),
-  status: z.string(),
+  status: z.number().int(),
   createdAt: z.string(),
   documents: z.array(pendingVerificationDocumentSchema).optional(),
 });
 
-export const pendingBusinessesResponseSchema = z.object({
-  items: z.array(pendingBusinessSchema),
-});
+/** @deprecated Use pagedResultSchema from `./paging`. */
+export const adminPagedResultSchema = pagedResultSchema;
+
+export type AdminPagedResult<T> = PagedResult<T>;
+
+export const pendingBusinessesResponseSchema = adminPagedResultSchema(pendingBusinessSchema);
 
 export type PendingBusiness = z.infer<typeof pendingBusinessSchema>;
 
@@ -215,9 +219,7 @@ export const adminCustomerSummarySchema = z.object({
 
 export type AdminCustomerSummary = z.infer<typeof adminCustomerSummarySchema>;
 
-export const adminCustomersResponseSchema = z.object({
-  items: z.array(adminCustomerSummarySchema),
-});
+export const adminCustomersResponseSchema = adminPagedResultSchema(adminCustomerSummarySchema);
 
 export const marketConfigSchema = z.object({
   id: z.string(),
@@ -254,9 +256,7 @@ export const adminMarketSchema = z.object({
   updatedAt: z.string(),
 });
 
-export const adminMarketsResponseSchema = z.object({
-  items: z.array(adminMarketSchema),
-});
+export const adminMarketsResponseSchema = adminPagedResultSchema(adminMarketSchema);
 
 export const createMarketRequestSchema = z.object({
   id: z.string().min(2).max(32),
@@ -669,9 +669,10 @@ export const customerBookingsResponseSchema = z.object({
   items: z.array(customerBookingResponseSchema),
 });
 
-export const tenantBookingsResponseSchema = z.object({
-  items: z.array(bookingResponseSchema),
-});
+export const tenantBookingsResponseSchema = pagedResultSchema(bookingResponseSchema);
+
+export const tenantBookingListTabSchema = z.enum(["pending", "upcoming", "past"]);
+export type TenantBookingListTab = z.infer<typeof tenantBookingListTabSchema>;
 
 export const createBookingLineRequestSchema = z.object({
   serviceOfferingId: z.string().uuid(),
@@ -1055,9 +1056,33 @@ export const adminBusinessSummarySchema = z.object({
 
 export type AdminBusinessSummary = z.infer<typeof adminBusinessSummarySchema>;
 
-export const adminBusinessesResponseSchema = z.object({
-  items: z.array(adminBusinessSummarySchema),
+export const adminBusinessesResponseSchema = adminPagedResultSchema(adminBusinessSummarySchema);
+
+export const adminBusinessDirectoryStatsSchema = z.object({
+  totalCount: z.number().int().nonnegative(),
+  verifiedCount: z.number().int().nonnegative(),
+  statusMix: z.array(
+    z.object({
+      status: z.number().int(),
+      count: z.number().int().nonnegative(),
+    }),
+  ),
+  tierMix: z.array(
+    z.object({
+      tier: subscriptionTierSchema,
+      count: z.number().int().nonnegative(),
+    }),
+  ),
 });
+
+export type AdminBusinessDirectoryStats = z.infer<typeof adminBusinessDirectoryStatsSchema>;
+
+export const adminMarketCatalogStatsSchema = z.object({
+  totalCount: z.number().int().nonnegative(),
+  liveCount: z.number().int().nonnegative(),
+});
+
+export type AdminMarketCatalogStats = z.infer<typeof adminMarketCatalogStatsSchema>;
 
 export const setSubscriptionTierRequestSchema = z.object({
   tier: subscriptionTierSchema,
@@ -1274,9 +1299,7 @@ export const pendingBadgeRequestSchema = z.object({
   requestedAt: z.string(),
 });
 
-export const pendingBadgesResponseSchema = z.object({
-  items: z.array(pendingBadgeRequestSchema),
-});
+export const pendingBadgesResponseSchema = adminPagedResultSchema(pendingBadgeRequestSchema);
 
 export type PendingBadgeRequest = z.infer<typeof pendingBadgeRequestSchema>;
 
@@ -1292,12 +1315,7 @@ export const adminReviewListItemSchema = z.object({
   customerDisplayName: z.string(),
 });
 
-export const adminReviewsListResultSchema = z.object({
-  items: z.array(adminReviewListItemSchema),
-  page: z.number().int().positive(),
-  pageSize: z.number().int().positive(),
-  totalCount: z.number().int().nonnegative(),
-});
+export const adminReviewsListResultSchema = pagedResultSchema(adminReviewListItemSchema);
 
 export type AdminReviewListItem = z.infer<typeof adminReviewListItemSchema>;
 export type AdminReviewsListResult = z.infer<typeof adminReviewsListResultSchema>;
@@ -1361,12 +1379,7 @@ export const tenantCustomerListItemSchema = z.object({
 
 export type TenantCustomerListItem = z.infer<typeof tenantCustomerListItemSchema>;
 
-export const tenantCustomerListResponseSchema = z.object({
-  items: z.array(tenantCustomerListItemSchema),
-  totalCount: z.number().int(),
-  page: z.number().int(),
-  pageSize: z.number().int(),
-});
+export const tenantCustomerListResponseSchema = pagedResultSchema(tenantCustomerListItemSchema);
 
 export type TenantCustomerListResponse = z.infer<typeof tenantCustomerListResponseSchema>;
 
@@ -1514,9 +1527,7 @@ export const paymentLedgerEntrySchema = z.object({
   updatedAt: z.string(),
 });
 
-export const paymentLedgerResponseSchema = z.object({
-  items: z.array(paymentLedgerEntrySchema),
-});
+export const paymentLedgerResponseSchema = pagedResultSchema(paymentLedgerEntrySchema);
 
 export type PaymentLedgerEntry = z.infer<typeof paymentLedgerEntrySchema>;
 
@@ -1578,9 +1589,7 @@ export const messageThreadDetailSchema = z.object({
 
 export type MessageThreadDetail = z.infer<typeof messageThreadDetailSchema>;
 
-export const messageThreadsResponseSchema = z.object({
-  items: z.array(messageThreadSummarySchema),
-});
+export const messageThreadsResponseSchema = pagedResultSchema(messageThreadSummarySchema);
 
 export const unreadCountResponseSchema = z.object({
   count: z.number().int().nonnegative(),

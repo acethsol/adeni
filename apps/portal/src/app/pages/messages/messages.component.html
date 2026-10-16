@@ -61,6 +61,27 @@
                 </li>
               }
             </ul>
+            @if (threadTotalCount() > threadPageSize) {
+              <div class="pagination">
+                <button
+                  type="button"
+                  class="btn"
+                  [disabled]="threadPage() <= 1 || loading()"
+                  (click)="prevThreadPage()"
+                >
+                  Previous
+                </button>
+                <span class="muted">{{ threadPageLabel() }}</span>
+                <button
+                  type="button"
+                  class="btn"
+                  [disabled]="loading() || !canNextThreadPage()"
+                  (click)="nextThreadPage()"
+                >
+                  Next
+                </button>
+              </div>
+            }
           }
         </section>
 

@@ -37,9 +37,17 @@ public sealed record UpdateMarketRequest(
     IReadOnlyList<string> Languages,
     string? LaunchNote);
 
+public sealed record AdminMarketCatalogStats(int TotalCount, int LiveCount);
+
 public interface IAdminMarketService
 {
-    Task<IReadOnlyList<AdminMarketResponse>> ListAsync(CancellationToken cancellationToken = default);
+    Task<AdminMarketCatalogStats> GetCatalogStatsAsync(CancellationToken cancellationToken = default);
+
+    Task<Result<AdminPagedResult<AdminMarketResponse>>> ListAsync(
+        string? search,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
 
     Task<Result<AdminMarketResponse>> CreateAsync(
         CreateMarketRequest request,

@@ -1,16 +1,9 @@
 import { DatePipe } from "@angular/common";
-import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { ActivatedRoute } from "@angular/router";
-import type {
-  AdminBusinessSummary,
-  AdminTenantCommercialTerms,
-  SetTenantCommercialTermsRequest,
-  SubscriptionSku,
-  SubscriptionTier,
-  TenantBillingStatus,
-} from "@adeni/shared";
+import { ActivatedRoute, Router, RouterLink } from "@angular/router";
+import { formatSubscriptionSku, formatTenantStatus, type AdminBusinessSummary } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
   AdeniFeedbackService,
@@ -18,25 +11,24 @@ import {
   PortalPageComponent,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
-import { filterByQuery } from "../../shared/admin-list-filter";
+import {
+  ADMIN_LIST_PAGE_SIZE,
+  adminListRangeLabel,
+  adminListTotalPages,
+} from "../../shared/admin-list-paging";
+import { adminLoadErrorMessage } from "../../shared/admin-load-error";
+import { AdminPillComponent } from "../../shared/admin-pill.component";
+import { billingStatusPill, businessPlanPill, tenantStatusPill } from "../../shared/admin-pill-maps";
+import { BusinessSubscriptionWizardComponent } from "./business-subscription-wizard.component";
+import {
+  buildCommercialTermsRequest,
+  draftFromCommercialTerms,
+  legacyTierForSku,
+  type BusinessSubscriptionDraft,
+} from "./business-subscription.model";
 
-type CommercialDraft = {
-  trialDays: number | null;
-  trialSku: SubscriptionSku;
-  endTrial: boolean;
-  subscriptionSku: SubscriptionSku;
-  billingStatus: TenantBillingStatus;
-  discountPercent: number | null;
-  discountFixedAmount: number | null;
-  discountCurrency: string;
-  discountCyclesRemaining: number | null;
-  customSaasMonthlyAmount: number | null;
-  customSaasCurrency: string;
-  customSaasSku: SubscriptionSku | "";
-  billingCompReason: string;
-  clearDiscounts: boolean;
-  clearCustomSaasPrice: boolean;
-};
+/** TenantStatus.PendingVerification */
+const PENDING_VERIFICATION = 1;
 
 @Component({
   selector: "app-admin-businesses",
@@ -47,55 +39,52 @@ type CommercialDraft = {
     DatePipe,
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
+    RouterLink,
+    AdminPillComponent,
+    BusinessSubscriptionWizardComponent,
   ],
   templateUrl: "./businesses.component.html",
   styleUrl: "./businesses.component.scss",
 })
-export class AdminBusinessesComponent implements OnInit {
+export class AdminBusinessesComponent {
   private readonly api = inject(AdminApiService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly feedback = inject(AdeniFeedbackService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly businesses = signal<AdminBusinessSummary[]>([]);
+  readonly totalCount = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = ADMIN_LIST_PAGE_SIZE;
   readonly searchText = signal("");
-  readonly visible = computed(() =>
-    filterByQuery(this.businesses(), this.searchText(), (item) => [
-      item.name,
-      item.slug,
-      item.subscriptionTier,
-      item.billingStatus,
-    ]),
+  readonly totalPages = computed(() => adminListTotalPages(this.totalCount(), this.pageSize));
+  readonly showingRange = computed(() =>
+    adminListRangeLabel(this.page(), this.pageSize, this.totalCount()),
   );
-  readonly isEmptyCatalog = computed(() => !this.loading() && this.businesses().length === 0);
-  readonly isEmptyFilter = computed(
-    () => !this.loading() && this.businesses().length > 0 && this.visible().length === 0,
-  );
-  readonly tiers: SubscriptionTier[] = ["free", "pro", "business"];
-  readonly skus: SubscriptionSku[] = ["starter", "professional", "business"];
-  readonly billingStatuses: TenantBillingStatus[] = [
-    "trialing",
-    "active",
-    "past_due",
-    "suspended",
-    "canceled",
-  ];
+  readonly isEmptyCatalog = computed(() => !this.loading() && this.totalCount() === 0);
 
-  readonly editingId = signal<string | null>(null);
-  readonly commercialDraft = signal<CommercialDraft | null>(null);
+  readonly subscriptionBusiness = signal<AdminBusinessSummary | null>(null);
+  readonly subscriptionDraft = signal<BusinessSubscriptionDraft | null>(null);
+  readonly subscriptionSaving = signal(false);
+  readonly subscriptionWizardOpen = computed(
+    () => this.subscriptionBusiness() != null && this.subscriptionDraft() != null,
+  );
+
+  readonly formatTenantStatus = formatTenantStatus;
+  readonly pendingVerificationStatus = PENDING_VERIFICATION;
+  readonly tenantStatusPill = tenantStatusPill;
+  readonly businessPlanPill = businessPlanPill;
+  readonly billingStatusPill = billingStatusPill;
 
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
-      const q = params.get("q") ?? "";
-      if (q) {
-        this.searchText.set(q);
-      }
+      this.searchText.set(params.get("q") ?? "");
+      const page = Number(params.get("page") ?? "1");
+      this.page.set(Number.isFinite(page) && page >= 1 ? page : 1);
+      void this.load();
     });
-  }
-
-  ngOnInit(): void {
-    void this.load();
   }
 
   async load(): Promise<void> {
@@ -103,143 +92,107 @@ export class AdminBusinessesComponent implements OnInit {
     this.error.set(null);
     try {
       await this.feedback.runLoading(async () => {
-        const items = await this.api.withAuthorizedClient((c) => c.getAdminBusinesses());
-        this.businesses.set(items);
+        const result = await this.api.withAuthorizedClient((c) =>
+          c.listAdminBusinesses({
+            q: this.searchText().trim() || undefined,
+            page: this.page(),
+            pageSize: this.pageSize,
+          }),
+        );
+        this.businesses.set(result.items);
+        this.totalCount.set(result.totalCount);
       }, "Loading businesses…", "Fetching tenant list");
-    } catch {
-      this.error.set("Could not load businesses.");
-      this.feedback.error("Could not load businesses.");
+    } catch (err) {
+      const message = adminLoadErrorMessage("Could not load businesses.", err);
+      this.error.set(message);
+      this.feedback.error(message);
+      this.businesses.set([]);
+      this.totalCount.set(0);
     } finally {
       this.loading.set(false);
     }
   }
 
-  async setTier(business: AdminBusinessSummary, tier: SubscriptionTier): Promise<void> {
-    try {
-      await this.feedback.runLoading(
-        () =>
-          this.api.withAuthorizedClient((c) =>
-            c.setAdminBusinessSubscriptionTier(business.id, tier),
-          ),
-        "Updating plan…",
-        business.name,
-      );
-      await this.load();
-      this.feedback.success(`${business.name} is now on ${tier}.`, "Subscription updated");
-    } catch {
-      this.error.set("Could not update subscription tier.");
-      this.feedback.error("Could not update subscription tier.");
-    }
+  applySearch(): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { q: this.searchText().trim() || null, page: null },
+      queryParamsHandling: "merge",
+    });
   }
 
-  async openCommercial(business: AdminBusinessSummary): Promise<void> {
+  goToPage(next: number): void {
+    const page = Math.min(Math.max(1, next), this.totalPages());
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: page === 1 ? null : page },
+      queryParamsHandling: "merge",
+    });
+  }
+
+  async openSubscriptionWizard(business: AdminBusinessSummary): Promise<void> {
     try {
       const terms = await this.feedback.runLoading(
         () =>
           this.api.withAuthorizedClient((c) => c.getAdminTenantCommercialTerms(business.id)),
-        "Loading commercial terms…",
+        "Loading subscription…",
         business.name,
       );
-      this.editingId.set(business.id);
-      this.commercialDraft.set(draftFromTerms(terms));
+      this.subscriptionBusiness.set(business);
+      this.subscriptionDraft.set(draftFromCommercialTerms(terms, business));
     } catch {
-      this.feedback.error("Could not load commercial terms.");
+      this.feedback.error("Could not load subscription details.");
     }
   }
 
-  closeCommercial(): void {
-    this.editingId.set(null);
-    this.commercialDraft.set(null);
+  closeSubscriptionWizard(): void {
+    this.subscriptionBusiness.set(null);
+    this.subscriptionDraft.set(null);
+    this.subscriptionSaving.set(false);
   }
 
-  async saveCommercial(business: AdminBusinessSummary): Promise<void> {
-    const draft = this.commercialDraft();
-    if (!draft) {
-      return;
-    }
-
-    const body: SetTenantCommercialTermsRequest = {
-      subscriptionSku: draft.subscriptionSku,
-      billingStatus: draft.billingStatus,
-      billingCompReason: draft.billingCompReason.trim() || null,
-    };
-
-    if (draft.endTrial) {
-      body.endTrial = true;
-    } else if (draft.trialDays != null) {
-      body.trialDays = draft.trialDays;
-      body.trialSku = draft.trialSku;
-    }
-
-    if (draft.clearDiscounts) {
-      body.clearDiscounts = true;
-    } else {
-      if (draft.discountPercent != null) {
-        body.discountPercent = draft.discountPercent;
-      }
-      if (draft.discountFixedAmount != null) {
-        body.discountFixedAmount = draft.discountFixedAmount;
-      }
-      if (draft.discountCurrency.trim()) {
-        body.discountCurrency = draft.discountCurrency.trim().toUpperCase();
-      }
-      if (draft.discountCyclesRemaining != null) {
-        body.discountCyclesRemaining = draft.discountCyclesRemaining;
-      }
-    }
-
-    if (draft.clearCustomSaasPrice) {
-      body.clearCustomSaasPrice = true;
-    } else if (draft.customSaasMonthlyAmount != null && draft.customSaasCurrency.trim()) {
-      body.customSaasMonthlyAmount = draft.customSaasMonthlyAmount;
-      body.customSaasCurrency = draft.customSaasCurrency.trim().toUpperCase();
-      if (draft.customSaasSku) {
-        body.customSaasSku = draft.customSaasSku;
-      }
-    }
-
-    try {
-      await this.feedback.runLoading(
-        () =>
-          this.api.withAuthorizedClient((c) =>
-            c.setAdminTenantCommercialTerms(business.id, body),
-          ),
-        "Saving commercial terms…",
-        business.name,
-      );
-      this.closeCommercial();
-      await this.load();
-      this.feedback.success("Commercial terms saved.", business.name);
-    } catch {
-      this.feedback.error("Could not save commercial terms.");
-    }
-  }
-
-  updateDraft(partial: Partial<CommercialDraft>): void {
-    const current = this.commercialDraft();
+  patchSubscriptionDraft(partial: Partial<BusinessSubscriptionDraft>): void {
+    const current = this.subscriptionDraft();
     if (!current) {
       return;
     }
-    this.commercialDraft.set({ ...current, ...partial });
+    this.subscriptionDraft.set({ ...current, ...partial });
   }
-}
 
-function draftFromTerms(terms: AdminTenantCommercialTerms): CommercialDraft {
-  return {
-    trialDays: 30,
-    trialSku: (terms.trialSku as SubscriptionSku | null) ?? "professional",
-    endTrial: terms.billingStatus === "active" && !terms.trialEndsAt,
-    subscriptionSku: terms.subscriptionSku,
-    billingStatus: terms.billingStatus,
-    discountPercent: terms.discountPercent ?? null,
-    discountFixedAmount: terms.discountFixedAmount ?? null,
-    discountCurrency: terms.discountCurrency ?? "",
-    discountCyclesRemaining: terms.discountCyclesRemaining ?? null,
-    customSaasMonthlyAmount: terms.customSaasMonthlyAmount ?? null,
-    customSaasCurrency: terms.customSaasCurrency ?? "",
-    customSaasSku: (terms.customSaasSku as SubscriptionSku | null) ?? "",
-    billingCompReason: terms.billingCompReason ?? "",
-    clearDiscounts: false,
-    clearCustomSaasPrice: false,
-  };
+  async saveSubscription(): Promise<void> {
+    const business = this.subscriptionBusiness();
+    const draft = this.subscriptionDraft();
+    if (!business || !draft) {
+      return;
+    }
+
+    const body = buildCommercialTermsRequest(draft);
+    const skuChanged = draft.subscriptionSku !== draft.initialSubscriptionSku;
+    const initialTier = legacyTierForSku(draft.initialSubscriptionSku);
+    const nextTier = legacyTierForSku(draft.subscriptionSku);
+    const tierChanged = skuChanged && nextTier !== initialTier;
+
+    this.subscriptionSaving.set(true);
+    try {
+      await this.feedback.runLoading(async () => {
+        const client = await this.api.createAuthorizedClient();
+        await client.setAdminTenantCommercialTerms(business.id, body);
+        if (tierChanged) {
+          await client.setAdminBusinessSubscriptionTier(business.id, nextTier);
+        }
+      }, "Saving subscription…", business.name);
+      this.closeSubscriptionWizard();
+      await this.load();
+      this.feedback.success(
+        skuChanged
+          ? `Subscription updated (${formatSubscriptionSku(draft.subscriptionSku)}).`
+          : "Subscription updated.",
+        business.name,
+      );
+    } catch {
+      this.feedback.error("Could not save subscription.");
+    } finally {
+      this.subscriptionSaving.set(false);
+    }
+  }
 }

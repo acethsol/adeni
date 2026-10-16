@@ -1,5 +1,6 @@
 namespace Adeni.Application.Payments;
 
+using Adeni.Application.Common;
 using Adeni.Domain.Common;
 using Adeni.Domain.Payments;
 
@@ -146,7 +147,7 @@ public interface IPaymentOrchestrator
         Guid paymentIntentId,
         CancellationToken cancellationToken = default);
 
-    Task<Result<IReadOnlyList<PaymentLedgerEntry>>> ListLedgerAsync(
+    Task<Result<PagedResult<PaymentLedgerEntry>>> ListLedgerAsync(
         Guid tenantId,
         int page = 1,
         int pageSize = 50,

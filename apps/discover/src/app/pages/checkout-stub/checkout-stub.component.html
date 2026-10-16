@@ -1,0 +1,29 @@
+<main class="checkout-stub">
+  <div class="card">
+    @if (paid()) {
+      <h1>Payment complete</h1>
+      <p class="muted">Thank you — the business will see this booking as paid.</p>
+      <a routerLink="/my-bookings" class="btn btn-primary">My bookings</a>
+      <a routerLink="/" class="btn">Back to Adeni</a>
+    } @else if (error() && !reference()) {
+      <h1>Checkout unavailable</h1>
+      <p class="error">{{ error() }}</p>
+      <a routerLink="/" class="btn">Back to Adeni</a>
+    } @else {
+      <p class="eyebrow">Secure checkout</p>
+      <h1>Complete payment</h1>
+      @if (amountLabel(); as label) {
+        <p class="amount">{{ label }}</p>
+      } @else {
+        <p class="muted">Confirm to pay through Adeni (development stub).</p>
+      }
+      @if (error()) {
+        <p class="error">{{ error() }}</p>
+      }
+      <button type="button" class="btn btn-primary" [disabled]="loading()" (click)="confirmPayment()">
+        {{ loading() ? "Processing…" : "Pay now" }}
+      </button>
+      <p class="fine-print muted">Development mode — no real card charge.</p>
+    }
+  </div>
+</main>

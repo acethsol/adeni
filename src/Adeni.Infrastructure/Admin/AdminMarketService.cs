@@ -29,15 +29,54 @@ public sealed partial class AdminMarketService(
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };
 
-    public async Task<IReadOnlyList<AdminMarketResponse>> ListAsync(
+    public async Task<AdminMarketCatalogStats> GetCatalogStatsAsync(
         CancellationToken cancellationToken = default)
     {
-        var rows = await dbContext.CatalogMarkets
-            .AsNoTracking()
+        var totalCount = await dbContext.CatalogMarkets.CountAsync(cancellationToken);
+        var liveCount = await dbContext.CatalogMarkets.CountAsync(
+            market => market.IsLive,
+            cancellationToken);
+        return new AdminMarketCatalogStats(totalCount, liveCount);
+    }
+
+    public async Task<Result<AdminPagedResult<AdminMarketResponse>>> ListAsync(
+        string? search,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        var paging = AdminPaging.Normalize(page, pageSize);
+        if (paging.IsFailure)
+        {
+            return Result.Failure<AdminPagedResult<AdminMarketResponse>>(paging.Error);
+        }
+
+        var (effectivePage, effectivePageSize) = paging.Value;
+        var needle = search?.Trim().ToLowerInvariant();
+
+        var query = dbContext.CatalogMarkets.AsNoTracking();
+        if (!string.IsNullOrWhiteSpace(needle))
+        {
+            query = query.Where(market =>
+                market.Name.ToLower().Contains(needle)
+                || market.Id.ToLower().Contains(needle)
+                || market.CountryCode.ToLower().Contains(needle)
+                || market.Currency.ToLower().Contains(needle));
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var rows = await query
             .OrderBy(market => market.Name)
+            .Skip((effectivePage - 1) * effectivePageSize)
+            .Take(effectivePageSize)
             .ToListAsync(cancellationToken);
 
-        return rows.Select(MapResponse).ToArray();
+        var items = rows.Select(MapResponse).ToArray();
+        return Result.Success(new AdminPagedResult<AdminMarketResponse>(
+            items,
+            effectivePage,
+            effectivePageSize,
+            totalCount));
     }
 
     public async Task<Result<AdminMarketResponse>> CreateAsync(
