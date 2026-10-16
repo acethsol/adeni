@@ -3,9 +3,13 @@ namespace Adeni.Infrastructure.Tests.Booking;
 using Adeni.Application.Booking;
 using Adeni.Application.Notifications;
 using Adeni.Domain.Booking;
+using Adeni.Domain.Common;
+using Adeni.Domain.Identity;
 using Adeni.Domain.Tenancy;
+using Adeni.Application.Tenancy;
 using Adeni.Infrastructure.Booking;
 using Adeni.Infrastructure.Persistence;
+using Adeni.Infrastructure.Tenancy;
 using Adeni.Infrastructure.Tests.Catalog;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +33,8 @@ public sealed class QueueServiceTests
         Assert.True(joined.IsSuccess, joined.Error?.Message);
         Assert.Equal("waiting", joined.Value!.Status);
         Assert.Equal(1, joined.Value.Position);
+        Assert.NotNull(joined.Value.TenantCustomerId);
+        Assert.Equal(1, await db.TenantCustomers.CountAsync(x => x.TenantId == tenantId));
 
         var second = await queue.JoinBySlugAsync(
             slug,
@@ -69,6 +75,71 @@ public sealed class QueueServiceTests
 
         Assert.True(joined.IsFailure);
         Assert.Contains("not enabled", joined.Error.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Walk_ins_closed_rejects_join()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        var queue = scope.ServiceProvider.GetRequiredService<IQueueService>();
+        var (tenantId, slug, serviceId) = await SeedBarberAsync(db);
+
+        var profile = await db.BusinessProfiles.SingleAsync(x => x.TenantId == tenantId);
+        profile.WalkInsEnabled = false;
+        await db.SaveChangesAsync();
+
+        var joined = await queue.JoinBySlugAsync(
+            slug,
+            new JoinQueueRequest("Ada", "+2348066666666", serviceId));
+
+        Assert.True(joined.IsFailure);
+        Assert.Equal(ErrorCodes.QueueClosed, joined.Error.Code);
+    }
+
+    [Fact]
+    public async Task Check_in_upsert_adds_appointment_ticket()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        var queue = scope.ServiceProvider.GetRequiredService<IQueueService>();
+        var (tenantId, _, serviceId) = await SeedBarberAsync(db);
+
+        var customerId = Guid.NewGuid();
+        db.Customers.Add(new Customer
+        {
+            Id = customerId,
+            Auth0Sub = "auth0|test",
+            Name = "Booked Guest",
+            Phone = "+2348077777777",
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+
+        var bookingId = Guid.NewGuid();
+        var start = DateTimeOffset.UtcNow.AddHours(1);
+        db.Bookings.Add(new BookingRecord
+        {
+            Id = bookingId,
+            TenantId = tenantId,
+            CustomerId = customerId,
+            ServiceOfferingId = serviceId,
+            StartAt = start,
+            EndAt = start.AddMinutes(30),
+            Status = BookingStatus.CheckedIn,
+            GuestCount = 1,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+        await db.SaveChangesAsync();
+
+        var result = await queue.UpsertTicketFromBookingCheckInAsync(tenantId, bookingId);
+        Assert.True(result.IsSuccess, result.Error?.Message);
+
+        var ticket = await db.QueueTickets.SingleAsync(x => x.BookingId == bookingId);
+        Assert.Equal(QueueTicketSource.Appointment, ticket.Source);
+        Assert.Equal(QueueTicketStatus.Waiting, ticket.Status);
     }
 
     [Fact]
@@ -156,6 +227,7 @@ public sealed class QueueServiceTests
         services.AddSingleton<NotificationSink>();
         services.AddSingleton<INotificationDispatcher>(sp =>
             new SinkDispatcher(sp.GetRequiredService<NotificationSink>()));
+        services.AddScoped<ITenantCustomerService, TenantCustomerService>();
         services.AddScoped<IQueueService, QueueService>();
         return services.BuildServiceProvider();
     }

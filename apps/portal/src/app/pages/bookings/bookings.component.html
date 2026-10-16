@@ -21,7 +21,8 @@
           }
         </p>
       </div>
-      <button type="button" class="btn btn-primary" (click)="openKiosk()">
+      <button type="button" class="btn btn-primary" (click)="openKiosk($event)">
+        <adeni-carbon-icon name="user--follow" [size]="16" />
         Open check-in
       </button>
     </div>
@@ -34,10 +35,12 @@
         autocomplete="off"
       />
       <button type="button" class="btn" [disabled]="savingPin()" (click)="saveKioskPin()">
+        <adeni-carbon-icon name="save" [size]="16" />
         {{ kioskStatus()?.hasPin ? "Update PIN" : "Set PIN" }}
       </button>
       @if (kioskStatus()?.hasPin) {
         <button type="button" class="btn" [disabled]="savingPin()" (click)="clearKioskPin()">
+          <adeni-carbon-icon name="close" [size]="16" />
           Clear PIN
         </button>
       }
@@ -57,10 +60,16 @@
     <section class="card">
       <ul class="booking-list">
         @for (booking of visible(); track booking.id) {
-          <li class="list-row">
-            <div>
-              <strong>{{ booking.serviceName }}</strong>
-              <p class="muted">{{ formatSlotTime(booking.startAt) }}</p>
+          @let statusView = bookingStatusView(booking.status);
+          <li class="booking-row" [class.booking-row--pinned]="isPinned(booking.id)">
+            <div class="booking-row__main">
+              <strong>{{ booking.customerName?.trim() || "Guest" }}</strong>
+              <p class="muted booking-row__service">
+                {{ booking.serviceName }} · {{ formatSlotTime(booking.startAt) }}
+              </p>
+              @if (booking.customerPhoneMasked) {
+                <p class="muted">{{ booking.customerPhoneMasked }}</p>
+              }
               @if (booking.lines && booking.lines.length > 1) {
                 <p class="muted">{{ lineSummary(booking) }}</p>
               }
@@ -81,78 +90,75 @@
                 </p>
               }
             </div>
-            @if (tab() === "pending") {
-              <div class="actions">
-                <button
-                  type="button"
-                  class="btn btn-danger"
-                  [disabled]="actionId() === booking.id"
-                  (click)="reject(booking)"
-                >
-                  <adeni-carbon-icon name="misuse" [size]="16" />
-                  Reject
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-primary"
-                  [disabled]="actionId() === booking.id"
-                  (click)="accept(booking)"
-                >
-                  <adeni-carbon-icon name="checkmark" [size]="16" />
-                  Accept
-                </button>
+
+            <div class="booking-row__aside">
+              <span class="booking-status" [attr.data-tone]="statusView.tone">
+                <adeni-carbon-icon [name]="statusView.icon" [size]="16" />
+                {{ statusView.label }}
+              </span>
+
+              <div class="booking-row__actions">
+                @if (tab() === "pending" && booking.status === 0) {
+                  <button
+                    type="button"
+                    class="btn btn-danger"
+                    [disabled]="actionId() === booking.id"
+                    (click)="reject(booking)"
+                  >
+                    <adeni-carbon-icon name="misuse" [size]="16" />
+                    Decline
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    [disabled]="actionId() === booking.id"
+                    (click)="accept(booking)"
+                  >
+                    <adeni-carbon-icon name="checkmark" [size]="16" />
+                    Accept
+                  </button>
+                } @else if (booking.status === 1) {
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    [disabled]="actionId() === booking.id"
+                    (click)="checkIn(booking)"
+                  >
+                    <adeni-carbon-icon name="user--follow" [size]="16" />
+                    Mark arrived
+                  </button>
+                } @else if (booking.status === 4) {
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    [disabled]="actionId() === booking.id"
+                    (click)="complete(booking)"
+                  >
+                    <adeni-carbon-icon name="checkmark--filled" [size]="16" />
+                    Finish service
+                  </button>
+                } @else if (booking.status === 5) {
+                  <button
+                    type="button"
+                    class="btn"
+                    [disabled]="actionId() === booking.id"
+                    (click)="collectBalance(booking)"
+                  >
+                    <adeni-carbon-icon name="launch" [size]="16" />
+                    Collect balance
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    [disabled]="actionId() === booking.id"
+                    (click)="markPaid(booking)"
+                  >
+                    <adeni-carbon-icon name="checkmark" [size]="16" />
+                    Paid at till
+                  </button>
+                }
               </div>
-            } @else if (booking.status === 1) {
-              <div class="actions">
-                <span class="status">{{ formatBookingStatus(booking.status) }}</span>
-                <button
-                  type="button"
-                  class="btn btn-primary"
-                  [disabled]="actionId() === booking.id"
-                  (click)="checkIn(booking)"
-                >
-                  <adeni-carbon-icon name="user" [size]="16" />
-                  Check in
-                </button>
-              </div>
-            } @else if (booking.status === 4) {
-              <div class="actions">
-                <span class="status">{{ formatBookingStatus(booking.status) }}</span>
-                <button
-                  type="button"
-                  class="btn btn-primary"
-                  [disabled]="actionId() === booking.id"
-                  (click)="complete(booking)"
-                >
-                  <adeni-carbon-icon name="checkmark" [size]="16" />
-                  Complete
-                </button>
-              </div>
-            } @else if (booking.status === 5) {
-              <div class="actions">
-                <span class="status">{{ formatBookingStatus(booking.status) }}</span>
-                <button
-                  type="button"
-                  class="btn"
-                  [disabled]="actionId() === booking.id"
-                  (click)="collectBalance(booking)"
-                >
-                  <adeni-carbon-icon name="launch" [size]="16" />
-                  Collect balance
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-primary"
-                  [disabled]="actionId() === booking.id"
-                  (click)="markPaid(booking)"
-                >
-                  <adeni-carbon-icon name="checkmark" [size]="16" />
-                  Paid at till
-                </button>
-              </div>
-            } @else {
-              <span class="status">{{ formatBookingStatus(booking.status) }}</span>
-            }
+            </div>
           </li>
         }
       </ul>

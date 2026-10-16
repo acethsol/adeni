@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Adeni.Application.Booking;
 using Adeni.Application.Catalog;
 using Adeni.Application.Notifications;
+using Adeni.Application.Tenancy;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
@@ -15,7 +16,8 @@ using Microsoft.EntityFrameworkCore;
 public sealed class QueueService(
     AdeniDbContext dbContext,
     IBusinessCapabilitiesService capabilities,
-    INotificationDispatcher notifications) : IQueueService
+    INotificationDispatcher notifications,
+    ITenantCustomerService tenantCustomers) : IQueueService
 {
     private static readonly Regex PhoneDigits = new(@"[^\d+]", RegexOptions.Compiled);
 
@@ -40,6 +42,7 @@ public sealed class QueueService(
             tenantId.Value,
             request.DisplayName,
             request.Phone,
+            request.Email,
             request.ServiceOfferingId,
             staffMemberId: null,
             request.PartySize,
@@ -133,6 +136,163 @@ public sealed class QueueService(
         return Result.Success<IReadOnlyList<QueueTicketResponse>>(items);
     }
 
+    public async Task<Result<TenantQueueFloorResponse>> GetFloorForTenantAsync(
+        Guid tenantId,
+        Guid? requireStaffMemberId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var list = await ListForTenantAsync(tenantId, requireStaffMemberId, cancellationToken: cancellationToken);
+        if (list.IsFailure)
+        {
+            return Result.Failure<TenantQueueFloorResponse>(list.Error);
+        }
+
+        var profile = await dbContext.BusinessProfiles.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.TenantId == tenantId, cancellationToken);
+        if (profile is null)
+        {
+            return Result.Failure<TenantQueueFloorResponse>(Error.NotFound("Business"));
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var expected = await LoadExpectedArrivalsAsync(tenantId, requireStaffMemberId, now, cancellationToken);
+        var status = MapWalkInStatus(profile, now);
+
+        return Result.Success(new TenantQueueFloorResponse(list.Value!, expected, status));
+    }
+
+    public async Task<Result> UpsertTicketFromBookingCheckInAsync(
+        Guid tenantId,
+        Guid bookingId,
+        CancellationToken cancellationToken = default)
+    {
+        var capability = await EnsureQueueCapabilityAsync(tenantId, cancellationToken);
+        if (capability.IsFailure)
+        {
+            return Result.Success();
+        }
+
+        var booking = await dbContext.Bookings.AsNoTracking()
+            .Include(x => x.Lines)
+            .FirstOrDefaultAsync(x => x.Id == bookingId && x.TenantId == tenantId, cancellationToken);
+        if (booking is null || booking.Status != BookingStatus.CheckedIn)
+        {
+            return Result.Success();
+        }
+
+        var existing = await dbContext.QueueTickets
+            .FirstOrDefaultAsync(
+                x => x.TenantId == tenantId
+                    && x.BookingId == bookingId
+                    && x.Status != QueueTicketStatus.Cancelled,
+                cancellationToken);
+
+        if (existing is not null)
+        {
+            if (existing.Status is QueueTicketStatus.Done or QueueTicketStatus.NoShow)
+            {
+                return Result.Success();
+            }
+
+            return Result.Success();
+        }
+
+        var customer = await dbContext.Customers.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == booking.CustomerId, cancellationToken);
+
+        var name = string.IsNullOrWhiteSpace(customer?.Name) ? "Guest" : customer!.Name;
+        var phone = customer?.Phone ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(NormalizePhone(phone)))
+        {
+            phone = "+0000000000";
+        }
+
+        var customerResult = await tenantCustomers.EnsureFromBookingAsync(tenantId, booking.CustomerId, cancellationToken);
+        Guid? tenantCustomerId = customerResult.IsSuccess ? customerResult.Value!.TenantCustomerId : null;
+
+        var now = DateTimeOffset.UtcNow;
+        var ticket = new QueueTicket
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            ServiceOfferingId = booking.ServiceOfferingId,
+            StaffMemberId = booking.StaffMemberId,
+            CustomerId = booking.CustomerId,
+            TenantCustomerId = tenantCustomerId,
+            GuestName = name,
+            GuestPhone = NormalizePhone(phone),
+            Status = QueueTicketStatus.Waiting,
+            PartySize = Math.Clamp(booking.GuestCount, 1, ErrorCodes.MaxBookingGuests),
+            Notes = "Appointment check-in",
+            PublicToken = CreatePublicToken(),
+            BookingId = booking.Id,
+            Source = QueueTicketSource.Appointment,
+            JoinedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+
+        dbContext.QueueTickets.Add(ticket);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Result.Success();
+    }
+
+    public async Task<Result<WalkInSettingsResponse>> UpdateWalkInSettingsAsync(
+        Guid tenantId,
+        UpdateWalkInSettingsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var capability = await EnsureQueueCapabilityAsync(tenantId, cancellationToken);
+        if (capability.IsFailure)
+        {
+            return Result.Failure<WalkInSettingsResponse>(capability.Error);
+        }
+
+        var profile = await dbContext.BusinessProfiles
+            .FirstOrDefaultAsync(x => x.TenantId == tenantId, cancellationToken);
+        if (profile is null)
+        {
+            return Result.Failure<WalkInSettingsResponse>(Error.NotFound("Business"));
+        }
+
+        profile.WalkInsEnabled = request.WalkInsEnabled;
+        profile.MaxWalkInWaiting = request.MaxWalkInWaiting is > 0 ? request.MaxWalkInWaiting : null;
+        profile.WalkInCalendarPolicy = WalkInQueuePolicy.FromApiPolicy(request.CalendarPolicy);
+        profile.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var now = DateTimeOffset.UtcNow;
+        return Result.Success(ToWalkInSettingsResponse(profile, now));
+    }
+
+    public async Task<Result<WalkInSettingsResponse>> OpenWalkInBlockAsync(
+        Guid tenantId,
+        OpenWalkInBlockRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var capability = await EnsureQueueCapabilityAsync(tenantId, cancellationToken);
+        if (capability.IsFailure)
+        {
+            return Result.Failure<WalkInSettingsResponse>(capability.Error);
+        }
+
+        var minutes = Math.Clamp(request.DurationMinutes, 15, 480);
+        var profile = await dbContext.BusinessProfiles
+            .FirstOrDefaultAsync(x => x.TenantId == tenantId, cancellationToken);
+        if (profile is null)
+        {
+            return Result.Failure<WalkInSettingsResponse>(Error.NotFound("Business"));
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        profile.WalkInsEnabled = true;
+        profile.WalkInAcceptingUntil = now.AddMinutes(minutes);
+        profile.UpdatedAt = now;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return Result.Success(ToWalkInSettingsResponse(profile, now));
+    }
+
     public async Task<Result<QueueTicketResponse>> AddForTenantAsync(
         Guid tenantId,
         StaffAddQueueRequest request,
@@ -157,6 +317,7 @@ public sealed class QueueService(
             tenantId,
             request.DisplayName,
             request.Phone,
+            request.Email,
             request.ServiceOfferingId,
             staffId,
             request.PartySize,
@@ -291,7 +452,6 @@ public sealed class QueueService(
                 await NotifyCalledAsync(ticket, cancellationToken);
                 break;
             case QueueTicketStatus.InService:
-                ticket.StartedAt = now;
                 if (request?.StaffMemberId is Guid startStaff)
                 {
                     if (requireStaffMemberId is Guid rs && startStaff != rs)
@@ -305,6 +465,14 @@ public sealed class QueueService(
                 {
                     ticket.StaffMemberId = autoStaff;
                 }
+
+                var startConflict = await ValidateStartAgainstCalendarAsync(ticket, cancellationToken);
+                if (startConflict.IsFailure)
+                {
+                    return Result.Failure<QueueTicketResponse>(startConflict.Error);
+                }
+
+                ticket.StartedAt = now;
 
                 if (ticket.ServiceOfferingId is not null && ticket.BookingId is null)
                 {
@@ -351,9 +519,10 @@ public sealed class QueueService(
             return;
         }
 
-        var customerId = ticket.CustomerId ?? await EnsureGuestCustomerAsync(
+        var customerId = ticket.CustomerId ?? await EnsureWalkInBookingCustomerAsync(
             ticket.GuestName,
             ticket.GuestPhone,
+            ticket.GuestEmail,
             cancellationToken);
 
         ticket.CustomerId = customerId;
@@ -426,6 +595,7 @@ public sealed class QueueService(
         Guid tenantId,
         string displayName,
         string phone,
+        string? email,
         Guid? serviceOfferingId,
         Guid? staffMemberId,
         int partySize,
@@ -438,6 +608,11 @@ public sealed class QueueService(
         {
             return Result.Failure<QueueTicketResponse>(
                 Error.Validation("Name and phone are required to join the queue."));
+        }
+
+        if (!TryNormalizeEmail(email, out var normalizedEmail, out var emailError))
+        {
+            return Result.Failure<QueueTicketResponse>(emailError!);
         }
 
         if (partySize < 1 || partySize > ErrorCodes.MaxBookingGuests)
@@ -465,7 +640,27 @@ public sealed class QueueService(
             }
         }
 
-        var customerId = await EnsureGuestCustomerAsync(name, normalizedPhone, cancellationToken);
+        var policyCheck = await ValidateWalkInJoinAsync(
+            tenantId,
+            serviceOfferingId,
+            staffMemberId,
+            cancellationToken);
+        if (policyCheck.IsFailure)
+        {
+            return Result.Failure<QueueTicketResponse>(policyCheck.Error);
+        }
+
+        var customerUpsert = await tenantCustomers.UpsertFromWalkInAsync(
+            tenantId,
+            name,
+            normalizedPhone,
+            normalizedEmail,
+            cancellationToken);
+        if (customerUpsert.IsFailure)
+        {
+            return Result.Failure<QueueTicketResponse>(customerUpsert.Error);
+        }
+
         var now = DateTimeOffset.UtcNow;
         var ticket = new QueueTicket
         {
@@ -473,13 +668,16 @@ public sealed class QueueService(
             TenantId = tenantId,
             ServiceOfferingId = serviceOfferingId,
             StaffMemberId = staffMemberId,
-            CustomerId = customerId,
+            CustomerId = customerUpsert.Value!.LinkedPlatformCustomerId,
+            TenantCustomerId = customerUpsert.Value.TenantCustomerId,
             GuestName = name,
             GuestPhone = normalizedPhone,
+            GuestEmail = normalizedEmail,
             Status = QueueTicketStatus.Waiting,
             PartySize = partySize,
             Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim(),
             PublicToken = CreatePublicToken(),
+            Source = QueueTicketSource.WalkIn,
             JoinedAt = now,
             CreatedAt = now,
             UpdatedAt = now,
@@ -497,9 +695,239 @@ public sealed class QueueService(
         return Result.Success(await MapAsync(ticket, cancellationToken));
     }
 
-    private async Task<Guid> EnsureGuestCustomerAsync(
+    private async Task<Result> ValidateWalkInJoinAsync(
+        Guid tenantId,
+        Guid? serviceOfferingId,
+        Guid? staffMemberId,
+        CancellationToken cancellationToken)
+    {
+        var profile = await dbContext.BusinessProfiles.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.TenantId == tenantId, cancellationToken);
+        if (profile is null)
+        {
+            return Result.Failure(Error.NotFound("Business"));
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        if (!WalkInQueuePolicy.IsAcceptingWalkIns(profile, now))
+        {
+            return Result.Failure(ErrorCodes.QueueClosedError());
+        }
+
+        if (profile.MaxWalkInWaiting is int max && max > 0)
+        {
+            var waiting = await dbContext.QueueTickets.AsNoTracking()
+                .CountAsync(
+                    x => x.TenantId == tenantId && x.Status == QueueTicketStatus.Waiting,
+                    cancellationToken);
+            if (waiting >= max)
+            {
+                return Result.Failure(ErrorCodes.QueueFullError());
+            }
+        }
+
+        if (profile.WalkInCalendarPolicy == WalkInCalendarPolicy.Strict)
+        {
+            var duration = await ResolveServiceDurationMinutesAsync(serviceOfferingId, cancellationToken);
+            var waitingAhead = await dbContext.QueueTickets.AsNoTracking()
+                .CountAsync(
+                    x => x.TenantId == tenantId && x.Status == QueueTicketStatus.Waiting,
+                    cancellationToken);
+            var etaMinutes = Math.Max(duration, 15) * Math.Max(1, waitingAhead + 1);
+            var projectedStart = now.AddMinutes(etaMinutes);
+            var projectedEnd = projectedStart.AddMinutes(duration);
+
+            if (await HasCalendarConflictAsync(
+                    tenantId,
+                    staffMemberId,
+                    projectedStart,
+                    projectedEnd,
+                    excludeBookingId: null,
+                    cancellationToken))
+            {
+                return Result.Failure(ErrorCodes.QueueNoCapacityError());
+            }
+        }
+
+        return Result.Success();
+    }
+
+    private async Task<Result> ValidateStartAgainstCalendarAsync(
+        QueueTicket ticket,
+        CancellationToken cancellationToken)
+    {
+        var profile = await dbContext.BusinessProfiles.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.TenantId == ticket.TenantId, cancellationToken);
+        if (profile?.WalkInCalendarPolicy != WalkInCalendarPolicy.Strict)
+        {
+            return Result.Success();
+        }
+
+        var duration = await ResolveServiceDurationMinutesAsync(ticket.ServiceOfferingId, cancellationToken);
+        var start = DateTimeOffset.UtcNow;
+        var end = start.AddMinutes(duration);
+        if (await HasCalendarConflictAsync(
+                ticket.TenantId,
+                ticket.StaffMemberId,
+                start,
+                end,
+                ticket.BookingId,
+                cancellationToken))
+        {
+            return Result.Failure(ErrorCodes.QueueNoCapacityError());
+        }
+
+        return Result.Success();
+    }
+
+    private async Task<bool> HasCalendarConflictAsync(
+        Guid tenantId,
+        Guid? staffMemberId,
+        DateTimeOffset start,
+        DateTimeOffset end,
+        Guid? excludeBookingId,
+        CancellationToken cancellationToken)
+    {
+        var query = dbContext.Bookings.AsNoTracking()
+            .Where(x =>
+                x.TenantId == tenantId
+                && x.Status == BookingStatus.Confirmed
+                && x.StartAt < end
+                && x.EndAt > start);
+
+        if (excludeBookingId is Guid bid)
+        {
+            query = query.Where(x => x.Id != bid);
+        }
+
+        if (staffMemberId is Guid staffId)
+        {
+            query = query.Where(x => x.StaffMemberId == null || x.StaffMemberId == staffId);
+        }
+
+        return await query.AnyAsync(cancellationToken);
+    }
+
+    private async Task<int> ResolveServiceDurationMinutesAsync(
+        Guid? serviceOfferingId,
+        CancellationToken cancellationToken)
+    {
+        if (serviceOfferingId is not Guid sid)
+        {
+            return 30;
+        }
+
+        var duration = await dbContext.ServiceOfferings.AsNoTracking()
+            .Where(x => x.Id == sid)
+            .Select(x => (int?)x.DurationMinutes)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return Math.Max(15, duration ?? 30);
+    }
+
+    private async Task<IReadOnlyList<QueueExpectedArrivalResponse>> LoadExpectedArrivalsAsync(
+        Guid tenantId,
+        Guid? requireStaffMemberId,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
+        var dayStart = now.Date;
+        var dayEnd = dayStart.AddDays(1);
+
+        var activeBookingIds = await dbContext.QueueTickets.AsNoTracking()
+            .Where(x =>
+                x.TenantId == tenantId
+                && x.BookingId != null
+                && x.Status != QueueTicketStatus.Cancelled
+                && x.Status != QueueTicketStatus.NoShow
+                && (x.Status != QueueTicketStatus.Done || x.CompletedAt >= dayStart))
+            .Select(x => x.BookingId!.Value)
+            .ToListAsync(cancellationToken);
+
+        var bookingsQuery = dbContext.Bookings.AsNoTracking()
+            .Where(x =>
+                x.TenantId == tenantId
+                && x.Status == BookingStatus.Confirmed
+                && x.StartAt >= dayStart
+                && x.StartAt < dayEnd
+                && !activeBookingIds.Contains(x.Id));
+
+        if (requireStaffMemberId is Guid staffId)
+        {
+            bookingsQuery = bookingsQuery.Where(x => x.StaffMemberId == null || x.StaffMemberId == staffId);
+        }
+
+        var bookings = await bookingsQuery
+            .OrderBy(x => x.StartAt)
+            .Take(50)
+            .ToListAsync(cancellationToken);
+
+        if (bookings.Count == 0)
+        {
+            return Array.Empty<QueueExpectedArrivalResponse>();
+        }
+
+        var customerIds = bookings.Select(x => x.CustomerId).Distinct().ToArray();
+        var customers = await dbContext.Customers.AsNoTracking()
+            .Where(x => customerIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, cancellationToken);
+
+        var serviceIds = bookings.Select(x => x.ServiceOfferingId).Distinct().ToArray();
+        var services = await dbContext.ServiceOfferings.AsNoTracking()
+            .Where(x => serviceIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, x => x.Name, cancellationToken);
+
+        var staffIds = bookings.Where(x => x.StaffMemberId.HasValue).Select(x => x.StaffMemberId!.Value).Distinct().ToArray();
+        var staff = staffIds.Length == 0
+            ? new Dictionary<Guid, string>()
+            : await dbContext.StaffMembers.AsNoTracking()
+                .Where(x => staffIds.Contains(x.Id))
+                .ToDictionaryAsync(x => x.Id, x => x.DisplayName, cancellationToken);
+
+        return bookings.Select(b =>
+        {
+            customers.TryGetValue(b.CustomerId, out var customer);
+            services.TryGetValue(b.ServiceOfferingId, out var serviceName);
+            string? staffName = null;
+            if (b.StaffMemberId is Guid sid && staff.TryGetValue(sid, out var name))
+            {
+                staffName = name;
+            }
+
+            return new QueueExpectedArrivalResponse(
+                b.Id,
+                b.StartAt,
+                string.IsNullOrWhiteSpace(customer?.Name) ? "Guest" : customer!.Name,
+                customer?.Phone,
+                serviceName,
+                staffName,
+                b.StaffMemberId);
+        }).ToList();
+    }
+
+    private static WalkInStatusResponse MapWalkInStatus(BusinessProfile profile, DateTimeOffset now) =>
+        new(
+            WalkInQueuePolicy.IsAcceptingWalkIns(profile, now),
+            profile.WalkInsEnabled,
+            profile.WalkInAcceptingUntil,
+            profile.MaxWalkInWaiting,
+            WalkInQueuePolicy.ToApiPolicy(profile.WalkInCalendarPolicy));
+
+    private static WalkInSettingsResponse ToWalkInSettingsResponse(BusinessProfile profile, DateTimeOffset now) =>
+        new(
+            profile.WalkInsEnabled,
+            profile.WalkInAcceptingUntil,
+            profile.MaxWalkInWaiting,
+            WalkInQueuePolicy.ToApiPolicy(profile.WalkInCalendarPolicy),
+            WalkInQueuePolicy.IsAcceptingWalkIns(profile, now));
+
+    /// <summary>
+    /// Synthetic platform customer for walk-in queue → booking FK when no Auth0 customer is linked.
+    /// </summary>
+    private async Task<Guid> EnsureWalkInBookingCustomerAsync(
         string name,
         string phone,
+        string? email,
         CancellationToken cancellationToken)
     {
         var existing = await dbContext.Customers
@@ -507,9 +935,21 @@ public sealed class QueueService(
 
         if (existing is not null)
         {
+            var touched = false;
             if (string.IsNullOrWhiteSpace(existing.Name))
             {
                 existing.Name = name;
+                touched = true;
+            }
+
+            if (!string.IsNullOrWhiteSpace(email) && string.IsNullOrWhiteSpace(existing.Email))
+            {
+                existing.Email = email;
+                touched = true;
+            }
+
+            if (touched)
+            {
                 await dbContext.SaveChangesAsync(cancellationToken);
             }
 
@@ -522,6 +962,7 @@ public sealed class QueueService(
             Auth0Sub = $"queue|{phone}",
             Name = name,
             Phone = phone,
+            Email = email,
             CreatedAt = DateTimeOffset.UtcNow,
         };
         dbContext.Customers.Add(customer);
@@ -606,6 +1047,7 @@ public sealed class QueueService(
             eta,
             ticket.GuestName,
             ticket.GuestPhone,
+            ticket.GuestEmail,
             ticket.ServiceOffering?.Name,
             ticket.ServiceOfferingId,
             ticket.StaffMember?.DisplayName,
@@ -614,7 +1056,9 @@ public sealed class QueueService(
             ticket.Notes,
             ticket.JoinedAt,
             ticket.PublicToken,
-            ticket.BookingId);
+            ticket.BookingId,
+            Source: WalkInQueuePolicy.ToApiSource(ticket.Source),
+            TenantCustomerId: ticket.TenantCustomerId);
     }
 
     private static string ToStatus(QueueTicketStatus status) => status switch
@@ -627,6 +1071,44 @@ public sealed class QueueService(
         QueueTicketStatus.Cancelled => "cancelled",
         _ => "waiting",
     };
+
+    private static bool TryNormalizeEmail(
+        string? email,
+        out string? normalized,
+        out Error? error)
+    {
+        normalized = null;
+        error = null;
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return true;
+        }
+
+        var trimmed = email.Trim();
+        if (trimmed.Length > 320)
+        {
+            error = Error.Validation("Enter a valid email address.");
+            return false;
+        }
+
+        try
+        {
+            var parsed = new System.Net.Mail.MailAddress(trimmed);
+            if (!string.Equals(parsed.Address, trimmed, StringComparison.OrdinalIgnoreCase))
+            {
+                error = Error.Validation("Enter a valid email address.");
+                return false;
+            }
+
+            normalized = parsed.Address.ToLowerInvariant();
+            return true;
+        }
+        catch (FormatException)
+        {
+            error = Error.Validation("Enter a valid email address.");
+            return false;
+        }
+    }
 
     private static string NormalizePhone(string? phone)
     {

@@ -7,6 +7,7 @@ using Adeni.Application.Events;
 using Adeni.Application.Payments;
 using Adeni.Application.Security;
 using Adeni.Application.Subscriptions;
+using Adeni.Application.Tenancy;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Booking.Events;
 using Adeni.Domain.Common;
@@ -24,7 +25,8 @@ public sealed class BookingService(
     IDomainEventCollector domainEventCollector,
     IEntitlementsService entitlementsService,
     IPaymentOrchestrator paymentOrchestrator,
-    IBillingDocumentService billingDocuments) : IBookingService
+    IBillingDocumentService billingDocuments,
+    ITenantCustomerService tenantCustomers) : IBookingService
 {
     public async Task<Result<BookingResponse>> CreateAsync(
         string customerAuth0Sub,
@@ -302,6 +304,11 @@ public sealed class BookingService(
 
             dbContext.Bookings.Add(booking);
             await dbContext.SaveChangesAsync(cancellationToken);
+
+            if (booking.Status == BookingStatus.Confirmed)
+            {
+                await tenantCustomers.EnsureFromBookingAsync(request.TenantId, customer.Id, cancellationToken);
+            }
 
             return Result.Success(
                 BookingMapper.ToResponse(booking, primary.Name, staffDisplayName, primary.Currency));
@@ -904,6 +911,11 @@ public sealed class BookingService(
                 .Select(x => x.DisplayName)
                 .FirstOrDefaultAsync(cancellationToken)
             : null;
+
+        if (status == BookingStatus.Confirmed)
+        {
+            await tenantCustomers.EnsureFromBookingAsync(tenantId, booking.CustomerId, cancellationToken);
+        }
 
         await dbContext.SaveChangesAsync(cancellationToken);
         var name = booking.Lines.OrderBy(x => x.SortOrder).FirstOrDefault()?.ServiceName

@@ -29,7 +29,7 @@ public static class SubscriptionEntitlements
                 Analytics: true,
                 Reminders: true,
                 MultiLocation: false,
-                StaffManagement: false,
+                StaffManagement: true,
                 PrioritySupport: false),
             SubscriptionSku.Business => new TenantEntitlements(
                 MonthlyBookingLimit: null,
@@ -47,7 +47,7 @@ public static class SubscriptionEntitlements
                 Analytics: false,
                 Reminders: false,
                 MultiLocation: false,
-                StaffManagement: false,
+                StaffManagement: true,
                 PrioritySupport: false),
         };
 }

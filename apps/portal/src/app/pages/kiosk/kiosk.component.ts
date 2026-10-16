@@ -1,10 +1,27 @@
 import { Component, HostListener, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
-import type { BookingResponse, KioskStatusResponse } from "@adeni/shared";
-import { formatSlotTime, hasCapability } from "@adeni/shared";
-import { AdeniCarbonIconComponent, AdeniPortalEmptyStateComponent } from "@adeni/ui";
+import type { BookingResponse, KioskStatusResponse, ServiceOffering } from "@adeni/shared";
+import {
+  combineGuestName,
+  formatSlotTime,
+  getLocaleOption,
+  hasCapability,
+  optionalEmail,
+  t,
+  type LocaleId,
+} from "@adeni/shared";
+import {
+  AdeniCarbonIconComponent,
+  AdeniDocumentTitleStrategy,
+  AdeniLocaleService,
+  AdeniPortalEmptyStateComponent,
+  type AdeniCarbonIconName,
+} from "@adeni/ui";
+import { PortalThemeService } from "../../core/portal-theme.service";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { PortalIconTooltipDirective } from "../../shared/portal-icon-tooltip.directive";
+import { PortalNavIconComponent } from "../../layout/portal-nav-icon.component";
 
 const CONFIRMED = 1;
 const CHECKED_IN = 4;
@@ -12,13 +29,23 @@ const CHECKED_IN = 4;
 @Component({
   selector: "app-kiosk",
   standalone: true,
-  imports: [FormsModule, AdeniCarbonIconComponent, AdeniPortalEmptyStateComponent],
+  imports: [
+    FormsModule,
+    AdeniCarbonIconComponent,
+    AdeniPortalEmptyStateComponent,
+    PortalNavIconComponent,
+    PortalIconTooltipDirective,
+  ],
   templateUrl: "./kiosk.component.html",
   styleUrl: "./kiosk.component.scss",
 })
 export class KioskComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
   private readonly router = inject(Router);
+  private readonly documentTitle = inject(AdeniDocumentTitleStrategy);
+  private readonly localeService = inject(AdeniLocaleService);
+  readonly portalTheme = inject(PortalThemeService);
+  readonly locale = this.localeService.locale;
 
   readonly loading = signal(true);
   readonly checkingIn = signal<string | null>(null);
@@ -30,14 +57,44 @@ export class KioskComponent implements OnInit {
   readonly exitOpen = signal(false);
   readonly walkInOpen = signal(false);
   readonly businessName = signal("Check in");
+  readonly businessLogoUrl = signal<string | null>(null);
   readonly queueEnabled = signal(false);
+  readonly services = signal<ServiceOffering[]>([]);
 
   search = "";
   exitPin = "";
-  walkInName = "";
+  walkInFirstName = "";
+  walkInLastName = "";
   walkInPhone = "";
+  walkInEmail = "";
+  walkInServiceOfferingId = "";
 
-  readonly formatSlotTime = formatSlotTime;
+  label(key: string, vars?: Record<string, string | number>): string {
+    return t(this.locale(), key, vars);
+  }
+
+  slotTime(iso: string): string {
+    return formatSlotTime(iso, this.locale());
+  }
+
+  localeToggleLabel(): string {
+    return this.label("kiosk.language", {
+      language: getLocaleOption(this.locale()).nativeLabel,
+    });
+  }
+
+  cycleLocale(): void {
+    const options = this.localeService.locales;
+    const index = options.findIndex((option) => option.id === this.locale());
+    const next = options[(index + 1) % options.length]?.id ?? ("en" satisfies LocaleId);
+    this.localeService.setLocale(next);
+  }
+
+  themeAriaLabel(): string {
+    return this.portalTheme.theme() === "dark"
+      ? this.label("kiosk.themeLight")
+      : this.label("kiosk.themeDark");
+  }
 
   ngOnInit(): void {
     void this.bootstrap();
@@ -53,20 +110,25 @@ export class KioskComponent implements OnInit {
     this.error.set(null);
     try {
       await this.api.withAuthorizedClient(async (client) => {
-        const [status, profile, bookings] = await Promise.all([
+        const [status, profile, bookings, services] = await Promise.all([
           client.getTenantKioskStatus(),
           client.getTenantProfile(),
           client.getTenantBookings(),
+          client.getTenantServices(),
         ]);
         this.status.set(status);
-        this.businessName.set(profile.businessName || "Check in");
+        const name = profile.businessName?.trim() || "Check in";
+        this.businessName.set(name);
+        this.documentTitle.setAppTitle(name);
+        this.businessLogoUrl.set(profile.publicPage?.logoImageUrl ?? null);
         this.queueEnabled.set(
           status.queueEnabled || hasCapability(profile.capabilities, "walk_in_queue"),
         );
         this.bookings.set(bookings);
+        this.services.set(services.filter((service) => service.isActive !== false));
       });
     } catch {
-      this.error.set("Could not open check-in.");
+      this.error.set(this.label("kiosk.errorOpen"));
     } finally {
       this.loading.set(false);
     }
@@ -105,8 +167,38 @@ export class KioskComponent implements OnInit {
     return (
       booking.customerName?.trim() ||
       booking.guests?.find((g) => g.displayName?.trim())?.displayName?.trim() ||
-      "Guest"
+      this.label("kiosk.guestFallback")
     );
+  }
+
+  businessInitials(): string {
+    const parts = this.businessName()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2);
+    if (parts.length === 0) {
+      return "?";
+    }
+    return parts.map((part) => part[0]?.toUpperCase() ?? "").join("");
+  }
+
+  arrivalStatusView(status: number): {
+    label: string;
+    icon: AdeniCarbonIconName;
+    tone: "scheduled" | "floor";
+  } {
+    if (status === CHECKED_IN) {
+      return {
+        label: this.label("kiosk.statusFloor"),
+        icon: "user--filled",
+        tone: "floor",
+      };
+    }
+    return {
+      label: this.label("kiosk.statusScheduled"),
+      icon: "calendar",
+      tone: "scheduled",
+    };
   }
 
   async checkIn(booking: BookingResponse): Promise<void> {
@@ -125,7 +217,7 @@ export class KioskComponent implements OnInit {
       );
       this.checkedIn.set(updated);
     } catch {
-      this.error.set("Could not check this client in. Ask the front desk.");
+      this.error.set(this.label("kiosk.errorCheckIn"));
     } finally {
       this.checkingIn.set(null);
     }
@@ -151,7 +243,7 @@ export class KioskComponent implements OnInit {
   async confirmExit(): Promise<void> {
     const hasPin = this.status()?.hasPin === true;
     if (!hasPin) {
-      if (!window.confirm("Leave check-in mode?")) {
+      if (!window.confirm(this.label("kiosk.confirmLeave"))) {
         return;
       }
       await this.router.navigateByUrl("/bookings?tab=upcoming");
@@ -159,7 +251,7 @@ export class KioskComponent implements OnInit {
     }
 
     if (!/^\d{4,8}$/.test(this.exitPin.trim())) {
-      this.error.set("Enter the staff PIN.");
+      this.error.set(this.label("kiosk.errorPin"));
       return;
     }
 
@@ -170,20 +262,21 @@ export class KioskComponent implements OnInit {
         client.verifyTenantKioskPin(this.exitPin.trim()),
       );
       if (!result.ok) {
-        this.error.set("Incorrect PIN.");
+        this.error.set(this.label("kiosk.errorPinWrong"));
         return;
       }
       await this.router.navigateByUrl("/bookings?tab=upcoming");
     } catch {
-      this.error.set("Could not verify PIN.");
+      this.error.set(this.label("kiosk.errorPinVerify"));
     } finally {
       this.exiting.set(false);
     }
   }
 
   async addWalkIn(): Promise<void> {
-    if (!this.walkInName.trim() || !this.walkInPhone.trim()) {
-      this.error.set("Name and phone are required for walk-ins.");
+    const displayName = combineGuestName(this.walkInFirstName, this.walkInLastName);
+    if (!displayName || !this.walkInPhone.trim()) {
+      this.error.set(this.label("kiosk.errorWalkInRequired"));
       return;
     }
     this.checkingIn.set("walk-in");
@@ -191,16 +284,21 @@ export class KioskComponent implements OnInit {
     try {
       await this.api.withAuthorizedClient((client) =>
         client.addTenantQueueTicket({
-          displayName: this.walkInName.trim(),
+          displayName,
           phone: this.walkInPhone.trim(),
+          email: optionalEmail(this.walkInEmail),
+          serviceOfferingId: this.walkInServiceOfferingId || undefined,
           partySize: 1,
         }),
       );
-      this.walkInName = "";
+      this.walkInFirstName = "";
+      this.walkInLastName = "";
       this.walkInPhone = "";
+      this.walkInEmail = "";
+      this.walkInServiceOfferingId = "";
       this.walkInOpen.set(false);
     } catch {
-      this.error.set("Could not add walk-in. Use the Queue page if this continues.");
+      this.error.set(this.label("kiosk.errorWalkIn"));
     } finally {
       this.checkingIn.set(null);
     }

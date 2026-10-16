@@ -12,7 +12,9 @@ using Adeni.Application.Subscriptions;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Payments;
 using Adeni.Domain.Tenancy;
+using Adeni.Application.Tenancy;
 using Adeni.Infrastructure.Booking;
+using Adeni.Infrastructure.Tenancy;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Events;
 using Adeni.Infrastructure.Payments;
@@ -253,6 +255,8 @@ public sealed class PaymentLoopTests
         services.AddScoped<IAvailabilityService, AvailabilityService>();
         services.AddScoped<IReviewService, ReviewService>();
         services.AddScoped<IEntitlementsService, EntitlementsService>();
+        services.AddScoped<ITenantCustomerService, TenantCustomerService>();
+        services.AddScoped<IQueueService, NoOpQueueService>();
         services.AddScoped<IBookingService, BookingService>();
         return services.BuildServiceProvider();
     }

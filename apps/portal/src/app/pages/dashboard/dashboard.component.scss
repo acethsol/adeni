@@ -181,8 +181,8 @@
 }
 
 .panel.error {
-  border-color: #fecaca;
-  background: #fef2f2;
+  border-color: color-mix(in srgb, var(--cds-support-error, #da1e28) 35%, transparent);
+  background: color-mix(in srgb, var(--cds-support-error, #da1e28) 10%, var(--surface));
 }
 
 .hint {

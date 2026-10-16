@@ -10,6 +10,7 @@ public sealed record QueueTicketResponse(
     int? EtaMinutes,
     string DisplayName,
     string Phone,
+    string? Email,
     string? ServiceName,
     Guid? ServiceOfferingId,
     string? StaffDisplayName,
@@ -19,14 +20,17 @@ public sealed record QueueTicketResponse(
     DateTimeOffset JoinedAt,
     string PublicToken,
     Guid? BookingId,
-    string? BusinessName = null);
+    string? BusinessName = null,
+    string Source = "walk_in",
+    Guid? TenantCustomerId = null);
 
 public sealed record JoinQueueRequest(
     string DisplayName,
     string Phone,
     Guid? ServiceOfferingId = null,
     int PartySize = 1,
-    string? Notes = null);
+    string? Notes = null,
+    string? Email = null);
 
 public sealed record StaffAddQueueRequest(
     string DisplayName,
@@ -34,7 +38,8 @@ public sealed record StaffAddQueueRequest(
     Guid? ServiceOfferingId = null,
     Guid? StaffMemberId = null,
     int PartySize = 1,
-    string? Notes = null);
+    string? Notes = null,
+    string? Email = null);
 
 public sealed record StartQueueTicketRequest(Guid? StaffMemberId = null);
 
@@ -53,6 +58,26 @@ public interface IQueueService
         Guid tenantId,
         Guid? requireStaffMemberId = null,
         bool includeFinishedToday = true,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<TenantQueueFloorResponse>> GetFloorForTenantAsync(
+        Guid tenantId,
+        Guid? requireStaffMemberId = null,
+        CancellationToken cancellationToken = default);
+
+    Task<Result> UpsertTicketFromBookingCheckInAsync(
+        Guid tenantId,
+        Guid bookingId,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<WalkInSettingsResponse>> UpdateWalkInSettingsAsync(
+        Guid tenantId,
+        UpdateWalkInSettingsRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<WalkInSettingsResponse>> OpenWalkInBlockAsync(
+        Guid tenantId,
+        OpenWalkInBlockRequest request,
         CancellationToken cancellationToken = default);
 
     Task<Result<QueueTicketResponse>> AddForTenantAsync(

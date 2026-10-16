@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Tenancy;
 
+using Adeni.Application.Booking;
 using Adeni.Application.Caching;
 using Adeni.Application.Catalog;
 using Adeni.Application.Markets;
@@ -652,6 +653,17 @@ public sealed class BusinessOnboardingService(
         }
 
         var capabilities = businessCapabilitiesService.GetCapabilities(profile.BusinessType, profile.CategorySlug);
+        WalkInSettingsResponse? walkInSettings = null;
+        if (capabilities.Contains(BusinessCapability.WalkInQueue))
+        {
+            var now = DateTimeOffset.UtcNow;
+            walkInSettings = new WalkInSettingsResponse(
+                profile.WalkInsEnabled,
+                profile.WalkInAcceptingUntil,
+                profile.MaxWalkInWaiting,
+                WalkInQueuePolicy.ToApiPolicy(profile.WalkInCalendarPolicy),
+                WalkInQueuePolicy.IsAcceptingWalkIns(profile, now));
+        }
         var additionalCategorySlugs = await dbContext.BusinessProfileCategories
             .AsNoTracking()
             .Where(x => x.TenantId == tenant.Id && !x.IsPrimary)
@@ -695,7 +707,8 @@ public sealed class BusinessOnboardingService(
             SubscriptionEntitlements.ForSku(effectiveSku),
             PublicPageConfigMapper.FromProfile(profile, logoImageUrl),
             galleryImages,
-            PublicPageConfigMapper.PoliciesFromProfile(profile));
+            PublicPageConfigMapper.PoliciesFromProfile(profile),
+            walkInSettings);
     }
 
     private async Task InvalidateProfileCachesAsync(Guid tenantId, CancellationToken cancellationToken)

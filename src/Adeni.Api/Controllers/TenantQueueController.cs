@@ -32,8 +32,56 @@ public sealed class TenantQueueController(
             return ApiErrorResponseMapper.ToActionResult(ErrorCodes.PermissionDeniedError(), HttpContext);
         }
 
-        var result = await queue.ListForTenantAsync(tenantId, scoped.StaffScope, cancellationToken: cancellationToken);
-        return ApiResults.FromResult(result, items => Ok(new { items }), HttpContext);
+        var result = await queue.GetFloorForTenantAsync(tenantId, scoped.StaffScope, cancellationToken);
+        return ApiResults.FromResult(
+            result,
+            floor => Ok(new
+            {
+                items = floor.Items,
+                expectedArrivals = floor.ExpectedArrivals,
+                walkInStatus = floor.WalkInStatus,
+            }),
+            HttpContext);
+    }
+
+    [HttpPatch("walk-in-settings")]
+    public async Task<IActionResult> UpdateWalkInSettings(
+        [FromBody] UpdateWalkInSettingsRequest body,
+        CancellationToken cancellationToken)
+    {
+        if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
+        {
+            return Unauthorized();
+        }
+
+        var access = PortalAccessHttpContext.Get(HttpContext);
+        if (access is null || !access.Permissions.Contains(PortalPermissions.Bookings))
+        {
+            return ApiErrorResponseMapper.ToActionResult(ErrorCodes.PermissionDeniedError(), HttpContext);
+        }
+
+        var result = await queue.UpdateWalkInSettingsAsync(tenantId, body, cancellationToken);
+        return ApiResults.FromResult(result, Ok, HttpContext);
+    }
+
+    [HttpPost("walk-in/open")]
+    public async Task<IActionResult> OpenWalkInBlock(
+        [FromBody] OpenWalkInBlockRequest body,
+        CancellationToken cancellationToken)
+    {
+        if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
+        {
+            return Unauthorized();
+        }
+
+        var access = PortalAccessHttpContext.Get(HttpContext);
+        if (access is null || !access.Permissions.Contains(PortalPermissions.Bookings))
+        {
+            return ApiErrorResponseMapper.ToActionResult(ErrorCodes.PermissionDeniedError(), HttpContext);
+        }
+
+        var result = await queue.OpenWalkInBlockAsync(tenantId, body, cancellationToken);
+        return ApiResults.FromResult(result, Ok, HttpContext);
     }
 
     [HttpPost]

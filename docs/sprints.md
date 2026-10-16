@@ -38,6 +38,7 @@
 | **32** | **Business dashboard (Zenoti-style widgets)** | Planned |
 | **33** | **SaaS billing & MRR** | Planned |
 | **34** | **Payment settlement (Connect + split)** | Planned |
+| **35** | **Tenant customer records** | ✅ Done — [sprint-35-tenant-customer-records.md](./specs/sprint-35-tenant-customer-records.md) |
 | — | Sprint 11d LLM agent | → Sprint 20 |
 | — | Staging deploy + Auth0 E2E | → Sprint 20 |
 | — | App Insights (Obs 1) | → Sprint 20 |
@@ -450,7 +451,7 @@ Numbered receipts & invoices with shareable page, PDF, and email — not a repor
 
 ## Sprint 29 — Queue v1 ✅
 
-Walk-in queue on the same floor board as appointments: join → call → start → done / no-show. Spec: [sprint-29-queue-v1.md](./specs/sprint-29-queue-v1.md).
+Walk-in queue on the same floor board as appointments: join → call → start → done / no-show. Spec: [sprint-29-queue-v1.md](./specs/sprint-29-queue-v1.md). **Unified floor board** (check-in → queue, expected today, walk-in policy): [sprint-29-unified-floor-board.md](./specs/sprint-29-unified-floor-board.md).
 
 | Task | Status |
 |------|--------|

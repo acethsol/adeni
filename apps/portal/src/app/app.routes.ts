@@ -2,6 +2,8 @@ import { Routes } from "@angular/router";
 import { PortalShellComponent } from "./layout/portal-shell.component";
 import { DashboardComponent } from "./pages/dashboard/dashboard.component";
 import { BookingsComponent } from "./pages/bookings/bookings.component";
+import { CustomersComponent } from "./pages/customers/customers.component";
+import { CustomerDetailComponent } from "./pages/customers/customer-detail.component";
 import { QueueComponent } from "./pages/queue/queue.component";
 import { KioskComponent } from "./pages/kiosk/kiosk.component";
 import { ServicesComponent } from "./pages/services/services.component";
@@ -33,7 +35,7 @@ export const routes: Routes = [
   {
     path: "kiosk",
     component: KioskComponent,
-    title: "Kiosk",
+    title: "Check-in",
     canActivate: [portalAccessGuard, businessAuthGuard, portalPermissionGuard],
   },
   {
@@ -57,6 +59,18 @@ export const routes: Routes = [
         path: "bookings",
         component: BookingsComponent,
         title: "Bookings",
+        canActivate: [portalPermissionGuard],
+      },
+      {
+        path: "customers",
+        component: CustomersComponent,
+        title: "Customers",
+        canActivate: [portalPermissionGuard],
+      },
+      {
+        path: "customers/:id",
+        component: CustomerDetailComponent,
+        title: "Customer",
         canActivate: [portalPermissionGuard],
       },
       {

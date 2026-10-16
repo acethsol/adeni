@@ -17,6 +17,9 @@ public static class ErrorCodes
     public const string AddonRequiresParent = "booking.addon_requires_parent";
     public const string GuestLimit = "booking.guest_limit";
     public const string CapacityFull = "booking.capacity_full";
+    public const string QueueClosed = "queue.closed";
+    public const string QueueFull = "queue.full";
+    public const string QueueNoCapacity = "queue.no_capacity";
     public const string AuthRequired = "auth.required";
 
     public const int MaxBookingGuests = 6;
@@ -78,6 +81,17 @@ public static class ErrorCodes
 
     public static Error CapacityFullError() =>
         new(CapacityFull, "This session is full for the selected party size.");
+
+    public static Error QueueClosedError() =>
+        new(QueueClosed, "Walk-ins are not accepting new guests right now.");
+
+    public static Error QueueFullError() =>
+        new(QueueFull, "The waiting list is full. Try again later.");
+
+    public static Error QueueNoCapacityError() =>
+        new(
+            QueueNoCapacity,
+            "Walk-ins would conflict with upcoming appointments. Try again later or book an appointment.");
 
     public static Error AuthRequiredError() =>
         new(AuthRequired, "Authentication is required.");

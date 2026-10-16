@@ -1,5 +1,6 @@
 namespace Adeni.Application.Tenancy;
 
+using Adeni.Application.Booking;
 using Adeni.Domain.Common;
 using Adeni.Domain.Tenancy;
 using Adeni.Application.Subscriptions;
@@ -128,7 +129,8 @@ public sealed record BusinessProfileResponse(
     TenantEntitlements? Entitlements = null,
     PublicPageConfigDto? PublicPage = null,
     IReadOnlyList<GalleryImageResponse>? GalleryImages = null,
-    BusinessPoliciesDto? Policies = null);
+    BusinessPoliciesDto? Policies = null,
+    WalkInSettingsResponse? WalkInSettings = null);
 
 public sealed record GalleryImageResponse(string StorageKey, string Url);
 

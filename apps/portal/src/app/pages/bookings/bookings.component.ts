@@ -3,7 +3,7 @@ import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import type { BookingResponse, KioskStatusResponse } from "@adeni/shared";
-import { formatBookingStatus, formatSlotTime } from "@adeni/shared";
+import { formatSlotTime } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
   AdeniConfirmService,
@@ -44,6 +44,10 @@ export class BookingsComponent implements OnInit {
   readonly tab = toSignal(this.route.queryParamMap.pipe(map((params) => params.get("tab") ?? "pending")), {
     initialValue: this.route.snapshot.queryParamMap.get("tab") ?? "pending",
   });
+  readonly focusBookingId = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get("focus"))),
+    { initialValue: this.route.snapshot.queryParamMap.get("focus") },
+  );
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -59,7 +63,35 @@ export class BookingsComponent implements OnInit {
   ];
 
   readonly formatSlotTime = formatSlotTime;
-  readonly formatBookingStatus = formatBookingStatus;
+
+  isPinned(bookingId: string): boolean {
+    return this.focusBookingId() === bookingId;
+  }
+
+  bookingStatusView(status: number): {
+    label: string;
+    icon: AdeniCarbonIconName;
+    tone: "pending" | "scheduled" | "floor" | "complete" | "paid" | "closed";
+  } {
+    switch (status) {
+      case PENDING_STATUS:
+        return { label: "Awaiting approval", icon: "time", tone: "pending" };
+      case CONFIRMED_STATUS:
+        return { label: "Scheduled", icon: "calendar", tone: "scheduled" };
+      case CHECKED_IN_STATUS:
+        return { label: "On the floor", icon: "user--filled", tone: "floor" };
+      case COMPLETED_STATUS:
+        return { label: "Service complete", icon: "checkmark", tone: "complete" };
+      case PAID_STATUS:
+        return { label: "Paid", icon: "checkmark--filled", tone: "paid" };
+      case 2:
+        return { label: "Declined", icon: "misuse", tone: "closed" };
+      case 3:
+        return { label: "Cancelled", icon: "close", tone: "closed" };
+      default:
+        return { label: "Unknown", icon: "time", tone: "closed" };
+    }
+  }
 
   pageDescription(): string {
     if (this.session.can("portal.bookings.self") && !this.session.can("portal.bookings")) {
@@ -76,27 +108,36 @@ export class BookingsComponent implements OnInit {
     const today = startOfToday();
     const tab = this.tab();
     if (tab === "upcoming") {
-      return this.bookings().filter(
-        (booking) =>
-          (booking.status === CONFIRMED_STATUS ||
-            booking.status === CHECKED_IN_STATUS ||
-            booking.status === COMPLETED_STATUS) &&
-          new Date(booking.startAt) >= today,
+      return prioritizeFocus(
+        this.bookings().filter(
+          (booking) =>
+            (booking.status === CONFIRMED_STATUS ||
+              booking.status === CHECKED_IN_STATUS ||
+              booking.status === COMPLETED_STATUS) &&
+            new Date(booking.startAt) >= today,
+        ),
+        this.focusBookingId(),
       );
     }
     if (tab === "past") {
-      return this.bookings().filter(
-        (booking) =>
-          booking.status === 2 ||
-          booking.status === 3 ||
-          booking.status === PAID_STATUS ||
-          ((booking.status === CONFIRMED_STATUS ||
-            booking.status === CHECKED_IN_STATUS ||
-            booking.status === COMPLETED_STATUS) &&
-            new Date(booking.startAt) < today),
+      return prioritizeFocus(
+        this.bookings().filter(
+          (booking) =>
+            booking.status === 2 ||
+            booking.status === 3 ||
+            booking.status === PAID_STATUS ||
+            ((booking.status === CONFIRMED_STATUS ||
+              booking.status === CHECKED_IN_STATUS ||
+              booking.status === COMPLETED_STATUS) &&
+              new Date(booking.startAt) < today),
+        ),
+        this.focusBookingId(),
       );
     }
-    return this.bookings().filter((booking) => booking.status === PENDING_STATUS);
+    return prioritizeFocus(
+      this.bookings().filter((booking) => booking.status === PENDING_STATUS),
+      this.focusBookingId(),
+    );
   }
 
   emptyState(): { title: string; description: string; icon: AdeniCarbonIconName } {
@@ -148,8 +189,19 @@ export class BookingsComponent implements OnInit {
     }
   }
 
-  openKiosk(): void {
-    void this.router.navigateByUrl("/kiosk");
+  openKiosk(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const path = this.router.serializeUrl(this.router.createUrlTree(["/kiosk"]));
+    const url = new URL(path, document.baseURI).href;
+    const popup = window.open(url, "_blank", "noopener,noreferrer");
+    if (!popup) {
+      this.error.set(
+        "Could not open check-in in a new tab. Allow pop-ups for this site, then try again.",
+      );
+      return;
+    }
+    popup.opener = null;
   }
 
   async saveKioskPin(): Promise<void> {
@@ -282,6 +334,18 @@ export class BookingsComponent implements OnInit {
       this.actionId.set(null);
     }
   }
+}
+
+function prioritizeFocus<T extends { id: string }>(items: T[], focusId: string | null | undefined): T[] {
+  if (!focusId) {
+    return items;
+  }
+  const index = items.findIndex((item) => item.id === focusId);
+  if (index <= 0) {
+    return items;
+  }
+  const focused = items[index];
+  return [focused, ...items.slice(0, index), ...items.slice(index + 1)];
 }
 
 function startOfToday(): Date {

@@ -11,7 +11,9 @@ using Adeni.Application.Subscriptions;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
 using Adeni.Domain.Tenancy;
+using Adeni.Application.Tenancy;
 using Adeni.Infrastructure.Booking;
+using Adeni.Infrastructure.Tenancy;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Events;
 using Adeni.Infrastructure.Payments;
@@ -300,7 +302,7 @@ public sealed class BusinessClosedDateServiceTests
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
         services.AddSingleton<Application.Notifications.INotificationDispatcher, ClosedTestNotifications>();
         services.AddScoped<IBillingDocumentService, BillingDocumentService>();
-        services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<ITenantCustomerService, TenantCustomerService>();
         return services.BuildServiceProvider();
     }
 

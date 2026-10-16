@@ -3,7 +3,7 @@ import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import { map } from "rxjs";
-import { hasTenantEntitlement, type BusinessProfile } from "@adeni/shared";
+import { hasCapability, hasTenantEntitlement, type BusinessProfile } from "@adeni/shared";
 import { filterPortalTabs } from "../../core/portal-access";
 import { findPortalNavItem } from "../../core/portal-nav";
 import { AdeniCarbonIconComponent, AdeniFeedbackService, PortalPageComponent } from "@adeni/ui";
@@ -39,9 +39,14 @@ export class SettingsComponent implements OnInit {
     { id: "policies", label: "Policies" },
     { id: "messaging", label: "Messaging", entitlement: "messaging" as const },
   ];
-  readonly tabs = computed(() =>
-    filterPortalTabs(this.allTabs, this.profile()?.entitlements ?? null),
-  );
+  readonly tabs = computed(() => {
+    const entitlements = this.profile()?.entitlements ?? null;
+    const base = filterPortalTabs(this.allTabs, entitlements);
+    if (hasCapability(this.profile()?.capabilities, "walk_in_queue")) {
+      return [...base, { id: "walk-ins", label: "Walk-ins" }];
+    }
+    return base;
+  });
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -62,6 +67,10 @@ export class SettingsComponent implements OnInit {
   requireAcceptance = false;
 
   faqAutoResponderEnabled = false;
+
+  walkInsEnabled = true;
+  maxWalkInWaiting: number | null = null;
+  walkInCalendarPolicy: "relaxed" | "strict" = "relaxed";
 
   ngOnInit(): void {
     void this.load();
@@ -90,6 +99,11 @@ export class SettingsComponent implements OnInit {
           if (hasTenantEntitlement(profile.entitlements, "messaging")) {
             const messaging = await client.getMessagingSettings();
             this.faqAutoResponderEnabled = messaging.faqAutoResponderEnabled;
+          }
+          if (profile.walkInSettings) {
+            this.walkInsEnabled = profile.walkInSettings.walkInsEnabled;
+            this.maxWalkInWaiting = profile.walkInSettings.maxWalkInWaiting ?? null;
+            this.walkInCalendarPolicy = profile.walkInSettings.calendarPolicy;
           }
         });
       });
@@ -158,6 +172,29 @@ export class SettingsComponent implements OnInit {
       });
     } catch {
       this.feedback.error("Could not save policies");
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  async saveWalkIns(): Promise<void> {
+    this.saving.set(true);
+    try {
+      await this.feedback.runLoading(async () => {
+        const settings = await this.api.withAuthorizedClient((c) =>
+          c.updateWalkInSettings({
+            walkInsEnabled: this.walkInsEnabled,
+            maxWalkInWaiting: this.maxWalkInWaiting,
+            calendarPolicy: this.walkInCalendarPolicy,
+          }),
+        );
+        this.walkInsEnabled = settings.walkInsEnabled;
+        this.maxWalkInWaiting = settings.maxWalkInWaiting ?? null;
+        this.walkInCalendarPolicy = settings.calendarPolicy;
+        this.feedback.success("Walk-in settings saved");
+      });
+    } catch {
+      this.feedback.error("Could not save walk-in settings");
     } finally {
       this.saving.set(false);
     }

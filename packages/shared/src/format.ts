@@ -1,5 +1,16 @@
 /** Cross-platform date/currency formatting helpers. */
 
+/** Queue walk-in / guest flows store a single display name on the API. */
+export function combineGuestName(firstName: string, lastName: string): string {
+  return [firstName.trim(), lastName.trim()].filter(Boolean).join(" ");
+}
+
+/** Trim; empty string → undefined for optional API fields. */
+export function optionalEmail(value: string): string | undefined {
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
 export function formatPrice(amount: number, currency: string, locale?: string): string {
   try {
     return new Intl.NumberFormat(locale, {

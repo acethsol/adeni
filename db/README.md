@@ -8,6 +8,8 @@ Schema is owned by **`Adeni.Database/`** — a [Microsoft.Build.Sql](https://lea
 | `Adeni.Database/PreDeployment/` | Runs **before** SqlPackage applies the model |
 | `Adeni.Database/PostDeployment/` | Runs **after** the model (grants, reference SQL) |
 | `../scripts/publish-db.ps1` | Build + SqlPackage publish |
+| `scripts/tenant-billing-columns.sql` | Idempotent billing columns on **existing** DBs |
+| `../scripts/apply-tenant-billing-columns.ps1` | Run that script via sqlcmd (dev connection default) |
 
 ## Local publish
 
@@ -24,6 +26,26 @@ SqlPackage is installed as a local .NET tool (`dotnet-tools.json`).
 1. Edit object scripts under `Adeni.Database/` (or use the SQL Database Projects extension)
 2. `./scripts/publish-db.ps1`
 3. Align EF entity configuration if the contract changed
+
+### Tenant billing columns (PR3)
+
+After pulling billing work, either:
+
+```powershell
+./scripts/publish-db.ps1          # full model (includes tenancy.tenants billing fields)
+# or, billing patch only on an existing DB:
+./scripts/apply-tenant-billing-columns.ps1
+```
+
+Both are safe to re-run; `tenant-billing-columns.sql` uses `COL_LENGTH` guards.
+
+### Unified floor board (queue + walk-in policy)
+
+```powershell
+./scripts/publish-db.ps1
+# or patch only:
+sqlcmd ... -i db/scripts/unified-floor-board.sql
+```
 
 ## Visual Studio: “Target framework not installed”
 

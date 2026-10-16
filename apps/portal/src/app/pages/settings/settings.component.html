@@ -118,6 +118,50 @@
       </section>
     }
 
+    @if (tab() === "walk-ins") {
+      <section class="card settings-card">
+        <h3>Walk-in queue</h3>
+        <p class="lede">
+          Control when guests can join the line and how walk-ins interact with your appointment calendar.
+        </p>
+        <label class="cds-toggle">
+          <input type="checkbox" role="switch" [(ngModel)]="walkInsEnabled" />
+          <span class="cds-toggle__track" aria-hidden="true"></span>
+          <span class="cds-toggle__label">Accept walk-ins</span>
+        </label>
+        <div class="field">
+          <label for="max-waiting">Max guests waiting (leave empty for no limit)</label>
+          <input
+            id="max-waiting"
+            type="number"
+            min="1"
+            max="200"
+            [ngModel]="maxWalkInWaiting"
+            (ngModelChange)="maxWalkInWaiting = $event === '' || $event == null ? null : +$event"
+          />
+        </div>
+        <div class="field">
+          <label for="walk-in-policy">Calendar policy</label>
+          <select id="walk-in-policy" [(ngModel)]="walkInCalendarPolicy">
+            <option value="relaxed">Relaxed — allow join with long wait</option>
+            <option value="strict">Strict — block when appointments would overlap</option>
+          </select>
+        </div>
+        <p class="hint">
+          Use <strong>Open 90 minutes</strong> on the Queue page for a quick temporary window.
+        </p>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="saving()"
+          (click)="saveWalkIns()"
+        >
+          <adeni-carbon-icon name="save" [size]="16" />
+          Save walk-in settings
+        </button>
+      </section>
+    }
+
     @if (tab() === "messaging") {
       <section class="card settings-card">
         <h3>In-app messaging</h3>

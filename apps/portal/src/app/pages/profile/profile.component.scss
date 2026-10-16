@@ -309,7 +309,7 @@ label.btn.disabled {
   position: relative;
   border-radius: var(--cds-radius-none);
   overflow: hidden;
-  background: #f3f4f6;
+  background: var(--cds-layer-02, var(--bg-subtle));
   border: 1px solid var(--border);
 }
 

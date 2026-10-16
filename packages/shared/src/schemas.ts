@@ -1038,6 +1038,32 @@ export type SetTenantCommercialTermsRequest = z.infer<
   typeof setTenantCommercialTermsRequestSchema
 >;
 
+export const walkInSettingsSchema = z.object({
+  walkInsEnabled: z.boolean(),
+  walkInAcceptingUntil: z.string().nullable().optional(),
+  maxWalkInWaiting: z.number().int().positive().nullable().optional(),
+  calendarPolicy: z.enum(["relaxed", "strict"]),
+  acceptingNow: z.boolean(),
+});
+
+export type WalkInSettings = z.infer<typeof walkInSettingsSchema>;
+
+export const updateWalkInSettingsRequestSchema = z.object({
+  walkInsEnabled: z.boolean(),
+  maxWalkInWaiting: z.number().int().positive().nullable().optional(),
+  calendarPolicy: z.enum(["relaxed", "strict"]),
+});
+
+export type UpdateWalkInSettingsRequest = z.infer<
+  typeof updateWalkInSettingsRequestSchema
+>;
+
+export const openWalkInBlockRequestSchema = z.object({
+  durationMinutes: z.number().int().min(15).max(480),
+});
+
+export type OpenWalkInBlockRequest = z.infer<typeof openWalkInBlockRequestSchema>;
+
 export const businessProfileSchema = z.object({
   tenantId: z.string(),
   businessName: z.string(),
@@ -1082,6 +1108,7 @@ export const businessProfileSchema = z.object({
     )
     .optional(),
   policies: businessPoliciesSchema.optional(),
+  walkInSettings: walkInSettingsSchema.optional(),
 });
 
 export type BusinessProfile = z.infer<typeof businessProfileSchema>;
@@ -1197,6 +1224,7 @@ export const queueTicketResponseSchema = z.object({
   etaMinutes: z.number().int().nullable().optional(),
   displayName: z.string(),
   phone: z.string(),
+  email: z.string().email().nullable().optional(),
   serviceName: z.string().nullable().optional(),
   serviceOfferingId: z.string().uuid().nullable().optional(),
   staffDisplayName: z.string().nullable().optional(),
@@ -1207,17 +1235,83 @@ export const queueTicketResponseSchema = z.object({
   publicToken: z.string(),
   bookingId: z.string().uuid().nullable().optional(),
   businessName: z.string().nullable().optional(),
+  source: z.enum(["walk_in", "appointment"]).optional(),
+  tenantCustomerId: z.string().uuid().nullable().optional(),
 });
 
 export type QueueTicketResponse = z.infer<typeof queueTicketResponseSchema>;
 
-export const queueTicketsResponseSchema = z.object({
-  items: z.array(queueTicketResponseSchema),
+export const tenantCustomerListItemSchema = z.object({
+  id: z.string().uuid(),
+  displayName: z.string(),
+  phoneMasked: z.string(),
+  email: z.string().email().nullable().optional(),
+  lastSeenAt: z.string(),
+  platformCustomerId: z.string().uuid().nullable().optional(),
 });
+
+export type TenantCustomerListItem = z.infer<typeof tenantCustomerListItemSchema>;
+
+export const tenantCustomerListResponseSchema = z.object({
+  items: z.array(tenantCustomerListItemSchema),
+  totalCount: z.number().int(),
+  page: z.number().int(),
+  pageSize: z.number().int(),
+});
+
+export type TenantCustomerListResponse = z.infer<typeof tenantCustomerListResponseSchema>;
+
+export const tenantCustomerDetailSchema = z.object({
+  id: z.string().uuid(),
+  displayName: z.string(),
+  phoneMasked: z.string(),
+  email: z.string().email().nullable().optional(),
+  lastSeenAt: z.string(),
+  lastBookingAt: z.string().nullable().optional(),
+  lastQueueJoinAt: z.string().nullable().optional(),
+  platformCustomerId: z.string().uuid().nullable().optional(),
+  recentBookingIds: z.array(z.string().uuid()),
+  recentQueueTicketIds: z.array(z.string().uuid()),
+});
+
+export type TenantCustomerDetail = z.infer<typeof tenantCustomerDetailSchema>;
+
+export const queueExpectedArrivalSchema = z.object({
+  bookingId: z.string().uuid(),
+  startAt: z.string(),
+  displayName: z.string(),
+  phone: z.string().nullable().optional(),
+  serviceName: z.string().nullable().optional(),
+  staffDisplayName: z.string().nullable().optional(),
+  staffMemberId: z.string().uuid().nullable().optional(),
+});
+
+export type QueueExpectedArrival = z.infer<typeof queueExpectedArrivalSchema>;
+
+export const walkInStatusSchema = z.object({
+  acceptingNow: z.boolean(),
+  walkInsEnabled: z.boolean(),
+  acceptingUntil: z.string().nullable().optional(),
+  maxWaiting: z.number().int().positive().nullable().optional(),
+  calendarPolicy: z.enum(["relaxed", "strict"]),
+});
+
+export type WalkInStatus = z.infer<typeof walkInStatusSchema>;
+
+export const tenantQueueFloorResponseSchema = z.object({
+  items: z.array(queueTicketResponseSchema),
+  expectedArrivals: z.array(queueExpectedArrivalSchema),
+  walkInStatus: walkInStatusSchema,
+});
+
+export type TenantQueueFloorResponse = z.infer<typeof tenantQueueFloorResponseSchema>;
+
+export const queueTicketsResponseSchema = tenantQueueFloorResponseSchema;
 
 export const joinQueueRequestSchema = z.object({
   displayName: z.string().min(1).max(200),
   phone: z.string().min(7).max(40),
+  email: z.string().email().max(320).optional(),
   serviceOfferingId: z.string().uuid().nullable().optional(),
   partySize: z.number().int().min(1).max(6).optional(),
   notes: z.string().max(500).optional(),

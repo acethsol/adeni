@@ -34,7 +34,7 @@
 
 .usage.warn {
   border-color: #fcd34d;
-  background: #fffbeb;
+  background: color-mix(in srgb, var(--cds-support-warning, #f1c21b) 14%, var(--surface));
 }
 
 .warn-text {

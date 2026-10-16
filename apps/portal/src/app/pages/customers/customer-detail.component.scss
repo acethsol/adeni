@@ -1,0 +1,59 @@
+@use "staff-layout" as *;
+
+.section-title {
+  margin: 0 0 var(--cds-spacing-04);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--cds-spacing-06);
+  margin-bottom: var(--cds-spacing-05);
+}
+
+.detail-list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--cds-spacing-04);
+}
+
+.detail-list dt {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.detail-list dd {
+  margin: 0.15rem 0 0;
+}
+
+.link-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--cds-spacing-03);
+  align-items: flex-start;
+}
+
+.card + .card {
+  margin-top: var(--cds-spacing-05);
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-muted);
+}
+
+.btn-ghost:hover {
+  color: var(--text);
+  background: var(--cds-layer-hover-01, rgb(0 0 0 / 4%));
+}

@@ -1,5 +1,7 @@
 namespace Adeni.Domain.Tenancy;
 
+using Adeni.Domain.Booking;
+
 /// <summary>Brand-level profile (1:1 with tenant). Branches live in <see cref="BusinessLocation"/>.</summary>
 public sealed class BusinessProfile : ITenantEntity
 {
@@ -65,6 +67,17 @@ public sealed class BusinessProfile : ITenantEntity
 
     /// <summary>SHA-256 hex of <c>{tenantId:N}:{pin}</c> for kiosk exit PIN; null when unset.</summary>
     public string? KioskExitPinHash { get; set; }
+
+    /// <summary>When false, public and staff walk-in join is rejected (appointments still check in).</summary>
+    public bool WalkInsEnabled { get; set; } = true;
+
+    /// <summary>When set and in the past, walk-in join is closed until reopened.</summary>
+    public DateTimeOffset? WalkInAcceptingUntil { get; set; }
+
+    /// <summary>Max waiting tickets; null = unlimited.</summary>
+    public int? MaxWalkInWaiting { get; set; }
+
+    public WalkInCalendarPolicy WalkInCalendarPolicy { get; set; } = WalkInCalendarPolicy.Relaxed;
 
     public DateTimeOffset UpdatedAt { get; set; }
 

@@ -19,8 +19,13 @@ export const portalPermissionGuard: CanActivateFn = async (route) => {
   await session.ensureLoaded();
 
   const path = "/" + (route.routeConfig?.path ?? "").split("/:")[0];
-  const match = findPortalNavItem(path === "/" ? "/dashboard" : path);
-  const required = match?.item.permission as PortalPermission | readonly PortalPermission[] | undefined;
+  const navPath = path === "/" ? "/dashboard" : path;
+  const match = findPortalNavItem(navPath);
+  if (!match) {
+    return router.createUrlTree(["/forbidden"]);
+  }
+
+  const required = match.item.permission as PortalPermission | readonly PortalPermission[] | undefined;
 
   if (!session.can(required)) {
     if (session.can("portal.overview")) {

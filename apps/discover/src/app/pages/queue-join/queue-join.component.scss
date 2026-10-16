@@ -1,15 +1,68 @@
 .queue-page {
+  position: relative;
   min-height: 100vh;
   padding: var(--cds-spacing-08) var(--cds-spacing-06) var(--cds-spacing-09);
-  max-width: 28rem;
+  max-width: min(40rem, 100%);
   margin: 0 auto;
   background: var(--bg-subtle);
   color: var(--text);
   font-family: var(--font-family-sans);
 }
 
+.queue-page__toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--cds-spacing-05);
+}
+
+.locale-btn {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--border, rgb(255 255 255 / 20%));
+  background: var(--surface, rgb(255 255 255 / 8%));
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.locale-btn:hover {
+  color: var(--text);
+}
+
+.queue-header {
+  display: flex;
+  align-items: center;
+  gap: var(--cds-spacing-05);
+}
+
+.business-logo {
+  width: 3.5rem;
+  height: 3.5rem;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--border, rgb(255 255 255 / 20%));
+  background: var(--surface, rgb(255 255 255 / 8%));
+}
+
+.business-logo-fallback {
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--interactive);
+  border: 1px solid var(--border, rgb(255 255 255 / 20%));
+  background: color-mix(in srgb, var(--interactive) 12%, transparent);
+}
+
 .brand {
-  font-size: 1.5rem;
+  font-size: 1.15rem;
   font-weight: 600;
   margin: 0 0 var(--cds-spacing-02);
   color: var(--interactive);
@@ -33,6 +86,10 @@ label {
   font-size: var(--cds-body-compact-01-size);
   font-weight: 600;
   color: var(--text-muted);
+}
+
+.optional {
+  font-weight: 500;
 }
 
 input,

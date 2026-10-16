@@ -2,7 +2,17 @@ import { Component, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import { AdeniApiClient } from "@adeni/api-client";
-import type { PublicBusinessProfile, QueueTicketResponse, ServiceOffering } from "@adeni/shared";
+import {
+  combineGuestName,
+  getLocaleOption,
+  optionalEmail,
+  t,
+  type LocaleId,
+  type PublicBusinessProfile,
+  type QueueTicketResponse,
+  type ServiceOffering,
+} from "@adeni/shared";
+import { AdeniLocaleService } from "@adeni/ui";
 import { ADENI_DISCOVER_CONFIG } from "../../core/adeni-config";
 
 @Component({
@@ -15,6 +25,7 @@ import { ADENI_DISCOVER_CONFIG } from "../../core/adeni-config";
 export class QueueJoinComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly config = inject(ADENI_DISCOVER_CONFIG);
+  private readonly localeService = inject(AdeniLocaleService);
 
   readonly loading = signal(true);
   readonly submitting = signal(false);
@@ -23,9 +34,41 @@ export class QueueJoinComponent implements OnInit {
   readonly services = signal<ServiceOffering[]>([]);
   readonly ticket = signal<QueueTicketResponse | null>(null);
   readonly kioskMode = signal(false);
+  readonly locale = this.localeService.locale;
 
-  displayName = "";
+  logoUrl(): string | null {
+    return this.business()?.publicPage?.logoImageUrl ?? null;
+  }
+
+  initials(name: string): string {
+    const parts = name.split(/\s+/).filter(Boolean).slice(0, 2);
+    if (parts.length === 0) {
+      return "?";
+    }
+    return parts.map((part) => part[0]?.toUpperCase() ?? "").join("");
+  }
+
+  label(key: string, vars?: Record<string, string | number>): string {
+    return t(this.locale(), key, vars);
+  }
+
+  localeToggleLabel(): string {
+    return this.label("kiosk.language", {
+      language: getLocaleOption(this.locale()).nativeLabel,
+    });
+  }
+
+  cycleLocale(): void {
+    const options = this.localeService.locales;
+    const index = options.findIndex((option) => option.id === this.locale());
+    const next = options[(index + 1) % options.length]?.id ?? ("en" satisfies LocaleId);
+    this.localeService.setLocale(next);
+  }
+
+  firstName = "";
+  lastName = "";
   phone = "";
+  email = "";
   serviceOfferingId = "";
 
   ngOnInit(): void {
@@ -36,8 +79,10 @@ export class QueueJoinComponent implements OnInit {
 
   joinAnother(): void {
     this.ticket.set(null);
-    this.displayName = "";
+    this.firstName = "";
+    this.lastName = "";
     this.phone = "";
+    this.email = "";
     this.serviceOfferingId = "";
     this.error.set(null);
   }
@@ -45,7 +90,7 @@ export class QueueJoinComponent implements OnInit {
   async load(): Promise<void> {
     const slug = this.route.snapshot.paramMap.get("slug");
     if (!slug) {
-      this.error.set("Business not found.");
+      this.error.set(this.label("queueJoin.notFound"));
       this.loading.set(false);
       return;
     }
@@ -60,7 +105,7 @@ export class QueueJoinComponent implements OnInit {
       this.business.set(profile);
       this.services.set(services.filter((s) => s.isActive !== false));
     } catch {
-      this.error.set("Could not load this business.");
+      this.error.set(this.label("queueJoin.errorLoad"));
     } finally {
       this.loading.set(false);
     }
@@ -68,8 +113,9 @@ export class QueueJoinComponent implements OnInit {
 
   async join(): Promise<void> {
     const slug = this.route.snapshot.paramMap.get("slug");
-    if (!slug || !this.displayName.trim() || !this.phone.trim()) {
-      this.error.set("Enter your name and phone to join.");
+    const displayName = combineGuestName(this.firstName, this.lastName);
+    if (!slug || !displayName || !this.phone.trim()) {
+      this.error.set(this.label("queueJoin.errorRequired"));
       return;
     }
 
@@ -78,14 +124,15 @@ export class QueueJoinComponent implements OnInit {
     try {
       const client = new AdeniApiClient({ baseUrl: this.config.apiBaseUrl });
       const ticket = await client.joinPublicQueue(slug, {
-        displayName: this.displayName.trim(),
+        displayName,
         phone: this.phone.trim(),
+        email: optionalEmail(this.email),
         serviceOfferingId: this.serviceOfferingId || undefined,
         partySize: 1,
       });
       this.ticket.set(ticket);
     } catch {
-      this.error.set("Could not join the queue. It may not be available here.");
+      this.error.set(this.label("queueJoin.errorJoin"));
     } finally {
       this.submitting.set(false);
     }

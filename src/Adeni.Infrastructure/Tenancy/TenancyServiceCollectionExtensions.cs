@@ -9,6 +9,7 @@ public static class TenancyServiceCollectionExtensions
     {
         services.AddScoped<IBusinessOnboardingService, BusinessOnboardingService>();
         services.AddScoped<IBusinessLocationService, BusinessLocationService>();
+        services.AddScoped<ITenantCustomerService, TenantCustomerService>();
         return services;
     }
 }

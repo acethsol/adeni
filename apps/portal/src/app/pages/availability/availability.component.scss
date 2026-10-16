@@ -1,9 +1,8 @@
 @use "staff-layout" as *;
+@use "../../../styles/portal-theme" as portal;
 
 .card {
   padding: 1rem 1.1rem;
-  border: 1px solid var(--border, #e0e0e0);
-  background: var(--cds-layer-01, #fff);
   margin-bottom: var(--cds-spacing-06, 1.5rem);
 }
 
@@ -11,19 +10,20 @@
   margin: 0 0 0.25rem;
   font-size: 1rem;
   font-weight: 600;
-  color: var(--cds-text-primary, var(--text));
+  color: var(--text);
 }
 
 .card h4 {
   margin: 0 0 0.65rem;
   font-size: 0.9rem;
   font-weight: 600;
+  color: var(--text);
 }
 
 .section-lead {
   margin: 0 0 1rem;
   font-size: 0.875rem;
-  color: var(--cds-text-secondary, var(--text-muted));
+  color: var(--text-muted);
 }
 
 table {
@@ -37,6 +37,7 @@ td {
   padding: 0.5rem;
   text-align: left;
   border-bottom: 1px solid var(--border);
+  color: var(--text);
 }
 
 .save {
@@ -53,8 +54,8 @@ td {
 }
 
 .warn-banner {
-  color: var(--cds-support-warning, #8a6100);
-  background: color-mix(in srgb, var(--cds-support-warning, #f1c21b) 12%, #fff);
+  color: var(--cds-support-warning, #f1c21b);
+  background: color-mix(in srgb, var(--cds-support-warning, #f1c21b) 14%, var(--surface));
   border: 1px solid color-mix(in srgb, var(--cds-support-warning, #f1c21b) 40%, transparent);
   padding: 0.75rem 1rem;
   margin-bottom: 1rem;
@@ -71,77 +72,30 @@ td {
 .nav-btn {
   width: 2.25rem;
   height: 2.25rem;
-  border: 1px solid var(--border, #e0e0e0);
-  background: var(--cds-field-01, #f4f4f4);
-  color: var(--cds-text-primary, var(--text));
+  border: 1px solid var(--border);
+  background: var(--cds-field-01, var(--surface));
+  color: var(--text);
   font-size: 1.25rem;
   line-height: 1;
   cursor: pointer;
 }
 
 .nav-btn:hover {
-  background: var(--cds-layer-hover-01, #e8e8e8);
+  background: color-mix(in srgb, var(--text) 6%, var(--surface));
 }
 
 .month-label {
   min-width: 10rem;
   text-align: center;
   font-size: 1rem;
+  color: var(--text);
 }
 
-.month-dow {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  border: 1px solid var(--border, #e0e0e0);
-  border-bottom: 0;
-  background: var(--cds-layer-02, #f4f4f4);
-}
+@include portal.portal-month-grid;
 
-.month-dow span {
-  padding: 0.5rem 0.25rem;
-  text-align: center;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--cds-text-secondary, var(--text-muted));
-}
-
-.month-grid {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  border: 1px solid var(--border, #e0e0e0);
-  background: #fff;
-}
-
-.month-cell {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.2rem;
-  min-height: 4.25rem;
-  padding: 0.4rem 0.35rem;
-  border: 0;
-  border-right: 1px solid var(--border, #e0e0e0);
-  border-bottom: 1px solid var(--border, #e0e0e0);
-  background: #fff;
-  text-align: left;
-  cursor: pointer;
-  color: inherit;
-}
-
-.month-cell:nth-child(7n) {
-  border-right: 0;
-}
-
-.month-cell:hover:not(:disabled) {
-  background: var(--cds-layer-hover-01, #e8e8e8);
-}
-
-.month-cell.is-outside {
-  background: color-mix(in srgb, var(--cds-layer-02, #f4f4f4) 70%, #fff);
-  color: var(--cds-text-secondary, var(--text-muted));
+.month-cell:disabled {
+  cursor: not-allowed;
+  opacity: 0.85;
 }
 
 .month-cell.is-today .month-dom {
@@ -154,18 +108,6 @@ td {
   background: var(--cds-interactive, #0f62fe);
   color: #fff;
   font-weight: 600;
-}
-
-.month-cell.is-closed {
-  background:
-    repeating-linear-gradient(
-      -55deg,
-      transparent,
-      transparent 6px,
-      color-mix(in srgb, var(--cds-text-primary, #161616) 4%, transparent) 6px,
-      color-mix(in srgb, var(--cds-text-primary, #161616) 4%, transparent) 7px
-    ),
-    color-mix(in srgb, var(--cds-support-error, #da1e28) 6%, #fff);
 }
 
 .month-cell.is-closed.is-outside {
@@ -188,7 +130,7 @@ td {
 .range-form {
   margin-top: 1.25rem;
   padding-top: 1rem;
-  border-top: 1px solid var(--border, #e0e0e0);
+  border-top: 1px solid var(--border);
 }
 
 .row {
@@ -208,13 +150,14 @@ td {
 .field label {
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--cds-text-secondary, var(--text-muted));
+  color: var(--text-muted);
 }
 
 .field input {
   padding: 0.5rem 0.65rem;
-  border: 1px solid var(--border, #e0e0e0);
-  background: var(--cds-field-01, #f4f4f4);
+  border: 1px solid var(--border);
+  background: var(--cds-field-01, var(--surface));
+  color: var(--text);
   font: inherit;
 }
 
@@ -230,8 +173,9 @@ td {
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.65rem 0;
-  border-bottom: 1px solid var(--border, #e0e0e0);
+  border-bottom: 1px solid var(--border);
   font-size: 0.9rem;
+  color: var(--text);
 }
 
 .closed-list li.empty {
@@ -241,7 +185,7 @@ td {
 
 .closed-list em {
   font-style: normal;
-  color: var(--cds-text-secondary, var(--text-muted));
+  color: var(--text-muted);
 }
 
 .danger {

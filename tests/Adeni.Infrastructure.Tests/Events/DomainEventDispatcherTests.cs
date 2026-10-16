@@ -11,7 +11,9 @@ using Adeni.Application.Reviews;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Tenancy;
+using Adeni.Application.Tenancy;
 using Adeni.Infrastructure.Booking;
+using Adeni.Infrastructure.Tenancy;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Events;
 using Adeni.Infrastructure.Notifications;
@@ -19,6 +21,7 @@ using Adeni.Infrastructure.Payments;
 using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Reviews;
 using Adeni.Infrastructure.Subscriptions;
+using Adeni.Infrastructure.Tests.Booking;
 using Adeni.Infrastructure.Tests.Catalog;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -153,6 +156,8 @@ public sealed class DomainEventDispatcherTests
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
         services.AddScoped<IBillingDocumentService, BillingDocumentService>();
+        services.AddScoped<ITenantCustomerService, TenantCustomerService>();
+        services.AddScoped<IQueueService, NoOpQueueService>();
         services.AddScoped<IBookingService, BookingService>();
         return services.BuildServiceProvider();
     }

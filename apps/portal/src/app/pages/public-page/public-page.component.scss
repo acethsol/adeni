@@ -1,25 +1,27 @@
+@use "staff-layout" as *;
+
 .error-banner {
-  color: #b91c1c;
+  color: var(--cds-support-error, #da1e28);
   margin-bottom: 1rem;
 }
 
 .ok-banner {
-  color: #047857;
+  color: var(--cds-support-success, #198038);
   margin-bottom: 1rem;
   font-weight: 600;
 }
 
 .muted {
-  color: var(--text-muted, #667085);
+  color: var(--text-muted);
 }
 
 .policy-link-card a {
-  color: var(--interactive, #7f56ff);
+  color: var(--interactive);
   font-weight: 600;
 }
 
 .policy-status.ok {
-  color: #065f46;
+  color: var(--cds-support-success, #198038);
 }
 
 .tiny {
@@ -39,16 +41,18 @@
   gap: 1rem;
 }
 
-.card {
+.controls .card {
   padding: 1rem 1.1rem;
-  border: 1px solid var(--border, #e4e7ec);
+  border: 1px solid var(--border);
   border-radius: var(--cds-radius-none);
-  background: #fff;
+  background: var(--surface);
+  color: var(--text);
 }
 
-.card h3 {
+.controls .card h3 {
   margin: 0 0 0.75rem;
   font-size: 1rem;
+  color: var(--text);
 }
 
 .template-grid {
@@ -63,19 +67,21 @@
   text-align: left;
   padding: 0.75rem;
   border-radius: var(--cds-radius-none);
-  border: 1px solid var(--border, #e4e7ec);
-  background: #fafafa;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--text) 4%, var(--surface));
+  color: var(--text);
   cursor: pointer;
   font: inherit;
 }
 
 .template strong {
   font-size: 0.92rem;
+  color: var(--text);
 }
 
 .template span:last-child {
   font-size: 0.75rem;
-  color: var(--text-muted, #667085);
+  color: var(--text-muted);
   line-height: 1.35;
 }
 
@@ -99,9 +105,9 @@
 }
 
 .template.active {
-  border-color: #7f56ff;
-  box-shadow: 0 0 0 2px rgb(127 86 255 / 18%);
-  background: #fff;
+  border-color: var(--interactive);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive) 22%, transparent);
+  background: var(--surface);
 }
 
 .check {
@@ -110,18 +116,20 @@
   gap: 0.5rem;
   margin: 0.35rem 0;
   font-size: 0.9rem;
+  color: var(--text);
 }
 
 .booking-callout {
   margin: 0.45rem 0;
   padding: 0.55rem 0.7rem;
-  border-left: 3px solid #0f766e;
-  background: rgb(15 118 110 / 6%);
+  border-left: 3px solid var(--adeni-teal, #13c2a3);
+  background: color-mix(in srgb, var(--adeni-teal, #13c2a3) 10%, var(--surface));
+  color: var(--text);
 }
 
 .booking-callout.off {
-  border-left-color: #98a2b3;
-  background: rgb(152 162 179 / 10%);
+  border-left-color: var(--text-muted);
+  background: color-mix(in srgb, var(--text-muted) 12%, var(--surface));
 }
 
 .booking-callout .cds-toggle {
@@ -134,33 +142,37 @@
 
 .booking-callout .status {
   margin: 0.25rem 0 0 3.15rem;
+  color: var(--text-muted);
 }
 
 .muted-cta {
   opacity: 0.85;
-  border: 1px dashed rgb(255 255 255 / 55%);
+  border: 1px dashed var(--border);
   background: transparent !important;
   color: inherit;
 }
 
-.field {
+.controls .field {
   display: grid;
   gap: 0.35rem;
   margin: 0.75rem 0;
 }
 
-.field label {
+.controls .field label {
   font-size: 0.82rem;
   font-weight: 600;
+  color: var(--text-muted);
 }
 
-.field textarea {
+.controls .field textarea {
   width: 100%;
-  border: 1px solid var(--border, #e4e7ec);
+  border: 1px solid var(--border);
   border-radius: var(--cds-radius-none);
   padding: 0.55rem 0.65rem;
   font: inherit;
   resize: vertical;
+  background: var(--cds-field-01, var(--surface));
+  color: var(--text);
 }
 
 .color-row {
@@ -180,10 +192,12 @@
 
 .hex {
   flex: 1;
-  border: 1px solid var(--border, #e4e7ec);
+  border: 1px solid var(--border);
   border-radius: var(--cds-radius-none);
   padding: 0.45rem 0.6rem;
   font: inherit;
+  background: var(--cds-field-01, var(--surface));
+  color: var(--text);
 }
 
 .actions {
@@ -192,48 +206,29 @@
   gap: 0.55rem;
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--border, #e4e7ec);
-  border-radius: var(--cds-radius-none);
-  background: #fff;
-  color: inherit;
-  font: inherit;
-  font-weight: 700;
-  font-size: 0.88rem;
-  padding: 0.55rem 0.95rem;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.btn.primary {
-  border-color: transparent;
-  background: #7f56ff;
+.actions .btn.primary {
+  background: var(--interactive);
+  border-color: var(--interactive);
   color: #fff;
 }
 
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
+/* Preview pane simulates the customer-facing page (stays light). */
 .preview-label {
   margin: 0 0 0.5rem;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text-muted, #667085);
+  color: var(--text-muted);
 }
 
 .phone {
   border-radius: var(--cds-radius-none);
   overflow: hidden;
-  border: 1px solid var(--border, #e4e7ec);
+  border: 1px solid var(--border);
   background: #fff;
-  box-shadow: 0 16px 36px rgb(16 24 40 / 10%);
+  box-shadow: 0 16px 36px rgb(0 0 0 / 22%);
+  color-scheme: light;
 }
 
 .hero {

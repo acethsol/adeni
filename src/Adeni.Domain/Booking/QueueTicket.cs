@@ -24,9 +24,13 @@ public sealed class QueueTicket : ITenantEntity
 
     public Guid? CustomerId { get; set; }
 
+    public Guid? TenantCustomerId { get; set; }
+
     public string GuestName { get; set; } = string.Empty;
 
     public string GuestPhone { get; set; } = string.Empty;
+
+    public string? GuestEmail { get; set; }
 
     public QueueTicketStatus Status { get; set; } = QueueTicketStatus.Waiting;
 
@@ -37,6 +41,8 @@ public sealed class QueueTicket : ITenantEntity
     public string PublicToken { get; set; } = string.Empty;
 
     public Guid? BookingId { get; set; }
+
+    public QueueTicketSource Source { get; set; } = QueueTicketSource.WalkIn;
 
     public DateTimeOffset JoinedAt { get; set; }
 

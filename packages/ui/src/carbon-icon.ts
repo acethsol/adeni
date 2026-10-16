@@ -25,6 +25,7 @@ import LocationFilled20 from "@carbon/icons/es/location--filled/20";
 import LocationFilled32 from "@carbon/icons/es/location--filled/32";
 import MapCenter32 from "@carbon/icons/es/map--center/32";
 import Misuse16 from "@carbon/icons/es/misuse/16";
+import Restart16 from "@carbon/icons/es/restart/16";
 import Save16 from "@carbon/icons/es/save/16";
 import Search20 from "@carbon/icons/es/search/20";
 import Send16 from "@carbon/icons/es/send/16";
@@ -59,6 +60,7 @@ export type AdeniCarbonIconName =
   | "location--filled-32"
   | "map--center"
   | "misuse"
+  | "restart"
   | "save"
   | "search"
   | "send"
@@ -94,6 +96,7 @@ const ICONS: Record<AdeniCarbonIconName, IconDescriptor> = {
   "map--center": MapCenter32 as IconDescriptor,
   misuse: Misuse16 as IconDescriptor,
   save: Save16 as IconDescriptor,
+  restart: Restart16 as IconDescriptor,
   search: Search20 as IconDescriptor,
   send: Send16 as IconDescriptor,
   time: Time16 as IconDescriptor,

@@ -11,7 +11,9 @@ using Adeni.Application.Subscriptions;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
 using Adeni.Domain.Tenancy;
+using Adeni.Application.Tenancy;
 using Adeni.Infrastructure.Booking;
+using Adeni.Infrastructure.Tenancy;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Events;
 using Adeni.Infrastructure.Payments;
@@ -400,6 +402,8 @@ public sealed class BookingFlowTests
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
         services.AddSingleton<Application.Notifications.INotificationDispatcher, LoopTestNotifications>();
         services.AddScoped<IBillingDocumentService, BillingDocumentService>();
+        services.AddScoped<ITenantCustomerService, TenantCustomerService>();
+        services.AddScoped<IQueueService, NoOpQueueService>();
         services.AddScoped<IBookingService, BookingService>();
         return services.BuildServiceProvider();
     }

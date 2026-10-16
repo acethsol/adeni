@@ -1,23 +1,56 @@
 <main class="queue-page" [class.kiosk]="kioskMode()">
+  <div class="queue-page__toolbar">
+    <button
+      type="button"
+      class="locale-btn"
+      [attr.aria-label]="localeToggleLabel()"
+      [title]="localeToggleLabel()"
+      (click)="cycleLocale()"
+    >
+      {{ locale().toUpperCase() }}
+    </button>
+  </div>
+
   @if (loading()) {
-    <p class="muted">Loading…</p>
+    <p class="muted">{{ label("queueJoin.loading") }}</p>
   } @else if (ticket(); as t) {
-    <header>
-      <p class="brand">{{ t.businessName || business()?.name }}</p>
-      <h1>You're in line</h1>
-      <p class="muted">Position {{ t.position }}@if (t.etaMinutes != null) { · about {{ t.etaMinutes }} min}</p>
+    <header class="queue-header">
+      @if (logoUrl(); as logo) {
+        <img class="business-logo" [src]="logo" [alt]="t.businessName || business()?.name || 'Business'" />
+      } @else if (business()?.name || t.businessName; as name) {
+        <div class="business-logo-fallback" aria-hidden="true">{{ initials(name) }}</div>
+      }
+      <div>
+        <p class="brand">{{ t.businessName || business()?.name }}</p>
+        <h1>{{ label("queueJoin.inLine") }}</h1>
+        <p class="muted">
+          {{ label("queueJoin.position", { position: t.position }) }}
+          @if (t.etaMinutes != null) {
+            {{ label("queueJoin.etaMinutes", { minutes: t.etaMinutes }) }}
+          }
+        </p>
+      </div>
     </header>
-    <p class="status">We'll notify you when you're up. Keep this page or ask the front desk.</p>
+    <p class="status">{{ label("queueJoin.statusHint") }}</p>
     @if (kioskMode()) {
-      <button type="button" class="btn" (click)="joinAnother()">Join another guest</button>
+      <button type="button" class="btn" (click)="joinAnother()">
+        {{ label("queueJoin.joinAnother") }}
+      </button>
     } @else {
-      <a class="btn" routerLink="/">Back home</a>
+      <a class="btn" routerLink="/">{{ label("queueJoin.backHome") }}</a>
     }
   } @else if (business(); as biz) {
-    <header>
-      <p class="brand">{{ biz.name }}</p>
-      <h1>Join the queue</h1>
-      <p class="muted">Walk-ins welcome — leave your name and phone.</p>
+    <header class="queue-header">
+      @if (logoUrl(); as logo) {
+        <img class="business-logo" [src]="logo" [alt]="biz.name" />
+      } @else {
+        <div class="business-logo-fallback" aria-hidden="true">{{ initials(biz.name) }}</div>
+      }
+      <div>
+        <p class="brand">{{ biz.name }}</p>
+        <h1>{{ label("queueJoin.headline") }}</h1>
+        <p class="muted">{{ label("queueJoin.lede") }}</p>
+      </div>
     </header>
 
     @if (error()) {
@@ -26,18 +59,27 @@
 
     <form class="form" (ngSubmit)="join()">
       <label>
-        Name
-        <input [(ngModel)]="displayName" name="displayName" required autocomplete="name" />
+        {{ label("queueJoin.firstName") }}
+        <input [(ngModel)]="firstName" name="firstName" required autocomplete="given-name" />
       </label>
       <label>
-        Phone
-        <input [(ngModel)]="phone" name="phone" required autocomplete="tel" />
+        {{ label("queueJoin.lastName") }}
+        <input [(ngModel)]="lastName" name="lastName" required autocomplete="family-name" />
+      </label>
+      <label>
+        {{ label("queueJoin.phone") }}
+        <input [(ngModel)]="phone" name="phone" required autocomplete="tel" inputmode="tel" />
+      </label>
+      <label>
+        {{ label("queueJoin.email") }}
+        <span class="optional">{{ label("queueJoin.optional") }}</span>
+        <input [(ngModel)]="email" name="email" type="email" autocomplete="email" inputmode="email" />
       </label>
       @if (services().length > 0) {
         <label>
-          Service
+          {{ label("queueJoin.service") }}
           <select [(ngModel)]="serviceOfferingId" name="serviceOfferingId">
-            <option value="">Any available</option>
+            <option value="">{{ label("queueJoin.anyService") }}</option>
             @for (service of services(); track service.id) {
               <option [value]="service.id">{{ service.name }}</option>
             }
@@ -45,10 +87,10 @@
         </label>
       }
       <button type="submit" class="btn" [disabled]="submitting()">
-        {{ submitting() ? "Joining…" : "Join queue" }}
+        {{ submitting() ? label("queueJoin.submitting") : label("queueJoin.submit") }}
       </button>
     </form>
   } @else {
-    <p class="error">{{ error() || "Business not found." }}</p>
+    <p class="error">{{ error() || label("queueJoin.notFound") }}</p>
   }
 </main>

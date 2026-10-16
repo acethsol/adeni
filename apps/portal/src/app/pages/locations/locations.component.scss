@@ -15,8 +15,8 @@
   font-size: 0.7rem;
   padding: 0.15rem 0.4rem;
   border-radius: var(--cds-radius-none);
-  background: #ecfdf5;
-  color: #065f46;
+  background: color-mix(in srgb, var(--cds-support-success, #198038) 14%, var(--surface));
+  color: var(--cds-support-success, #198038);
 }
 
 .check {

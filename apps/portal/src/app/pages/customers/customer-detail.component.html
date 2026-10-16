@@ -1,0 +1,97 @@
+<app-portal-page [title]="customer()?.displayName ?? 'Customer'" description="Profile at your business (bookings + walk-ins).">
+  <p pageActions>
+    <a routerLink="/customers" class="btn">
+      <adeni-carbon-icon name="arrow--left" [size]="16" />
+      All customers
+    </a>
+  </p>
+
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  } @else if (customer(); as c) {
+    <section class="card profile-grid">
+      <div>
+        <h3 class="section-title">Contact</h3>
+        <dl class="detail-list">
+          <div>
+            <dt>Phone</dt>
+            <dd>{{ c.phoneMasked || "—" }}</dd>
+          </div>
+          <div>
+            <dt>Email</dt>
+            <dd>{{ c.email || "—" }}</dd>
+          </div>
+          @if (c.platformCustomerId) {
+            <div>
+              <dt>Online account</dt>
+              <dd class="muted">Linked (Discover sign-in)</dd>
+            </div>
+          }
+        </dl>
+      </div>
+      <div>
+        <h3 class="section-title">Activity</h3>
+        <dl class="detail-list">
+          <div>
+            <dt>Last seen</dt>
+            <dd>{{ formatSlotTime(c.lastSeenAt) }}</dd>
+          </div>
+          @if (c.lastBookingAt) {
+            <div>
+              <dt>Last booking</dt>
+              <dd>{{ formatSlotTime(c.lastBookingAt) }}</dd>
+            </div>
+          }
+          @if (c.lastQueueJoinAt) {
+            <div>
+              <dt>Last walk-in</dt>
+              <dd>{{ formatSlotTime(c.lastQueueJoinAt) }}</dd>
+            </div>
+          }
+        </dl>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3 class="section-title">Recent bookings</h3>
+      @if (c.recentBookingIds.length === 0) {
+        <p class="muted">No linked bookings yet (walk-in only or pending sync).</p>
+      } @else {
+        <ul class="link-list">
+          @for (bookingId of c.recentBookingIds; track bookingId) {
+            <li>
+              <a
+                routerLink="/bookings"
+                [queryParams]="bookingQueryParams(bookingId)"
+                class="btn btn-ghost"
+              >
+                Open booking
+                <adeni-carbon-icon name="launch" [size]="16" />
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <section class="card">
+      <h3 class="section-title">Recent queue visits</h3>
+      @if (c.recentQueueTicketIds.length === 0) {
+        <p class="muted">No queue tickets linked yet.</p>
+      } @else {
+        <p class="muted">{{ c.recentQueueTicketIds.length }} recent visit(s) on your floor board.</p>
+        <a routerLink="/queue" class="btn">Open queue</a>
+      }
+    </section>
+  } @else {
+    <adeni-portal-empty-state
+      icon="user--filled"
+      title="Customer not found"
+      description="They may belong to another business or the link is outdated."
+    />
+  }
+</app-portal-page>

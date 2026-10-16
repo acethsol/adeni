@@ -64,7 +64,15 @@ import {
   joinQueueRequestSchema,
   queueTicketResponseSchema,
   queueTicketsResponseSchema,
+  tenantQueueFloorResponseSchema,
+  walkInSettingsSchema,
+  updateWalkInSettingsRequestSchema,
+  openWalkInBlockRequestSchema,
   staffAddQueueRequestSchema,
+  tenantCustomerListResponseSchema,
+  tenantCustomerDetailSchema,
+  type TenantCustomerListResponse,
+  type TenantCustomerDetail,
   kioskStatusResponseSchema,
   setKioskPinRequestSchema,
   verifyKioskPinRequestSchema,
@@ -188,6 +196,11 @@ import {
   type JoinWaitlistRequest,
   type JoinQueueRequest,
   type QueueTicketResponse,
+  type TenantQueueFloorResponse,
+  type WalkInSettings,
+  type UpdateWalkInSettingsRequest,
+  type QueueExpectedArrival,
+  type WalkInStatus,
   type StaffAddQueueRequest,
   type KioskStatusResponse,
   type VerifyKioskPinResponse,
@@ -837,9 +850,37 @@ export class AdeniApiClient {
     return queueTicketResponseSchema.parse(await response.json());
   }
 
-  async getTenantQueue(): Promise<QueueTicketResponse[]> {
+  async getTenantQueueFloor(): Promise<TenantQueueFloorResponse> {
     const response = await this.request("/api/v1/tenant/queue");
-    return queueTicketsResponseSchema.parse(await response.json()).items;
+    return tenantQueueFloorResponseSchema.parse(await response.json());
+  }
+
+  /** @deprecated Use getTenantQueueFloor */
+  async getTenantQueue(): Promise<QueueTicketResponse[]> {
+    const floor = await this.getTenantQueueFloor();
+    return floor.items;
+  }
+
+  async updateWalkInSettings(
+    request: UpdateWalkInSettingsRequest,
+  ): Promise<WalkInSettings> {
+    const body = updateWalkInSettingsRequestSchema.parse(request);
+    const response = await this.request("/api/v1/tenant/queue/walk-in-settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return walkInSettingsSchema.parse(await response.json());
+  }
+
+  async openWalkInBlock(durationMinutes: number): Promise<WalkInSettings> {
+    const body = openWalkInBlockRequestSchema.parse({ durationMinutes });
+    const response = await this.request("/api/v1/tenant/queue/walk-in/open", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return walkInSettingsSchema.parse(await response.json());
   }
 
   async addTenantQueueTicket(
@@ -899,6 +940,33 @@ export class AdeniApiClient {
       { method: "POST" },
     );
     return queueTicketResponseSchema.parse(await response.json());
+  }
+
+  async listTenantCustomers(params?: {
+    search?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<TenantCustomerListResponse> {
+    const query = new URLSearchParams();
+    if (params?.search) {
+      query.set("search", params.search);
+    }
+    if (params?.page) {
+      query.set("page", String(params.page));
+    }
+    if (params?.pageSize) {
+      query.set("pageSize", String(params.pageSize));
+    }
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
+    const response = await this.request(`/api/v1/tenant/customers${suffix}`);
+    return tenantCustomerListResponseSchema.parse(await response.json());
+  }
+
+  async getTenantCustomer(tenantCustomerId: string): Promise<TenantCustomerDetail> {
+    const response = await this.request(
+      `/api/v1/tenant/customers/${encodeURIComponent(tenantCustomerId)}`,
+    );
+    return tenantCustomerDetailSchema.parse(await response.json());
   }
 
   async getTenantKioskStatus(): Promise<KioskStatusResponse> {

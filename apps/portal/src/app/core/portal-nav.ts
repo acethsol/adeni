@@ -3,6 +3,7 @@ import type { Capability, PortalPermission, TenantEntitlementFlag } from "@adeni
 export type PortalNavIconName =
   | "overview"
   | "bookings"
+  | "customers"
   | "queue"
   | "calendar"
   | "quotes"
@@ -144,7 +145,7 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
   },
   {
     id: "listing",
-    label: "Catalog",
+    label: "Your business",
     items: [
       { path: "/services", label: "Services", icon: "services", permission: "portal.services" },
       {
@@ -154,6 +155,12 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         capability: "calendar",
         entitlement: "staffManagement",
         permission: "portal.staff",
+      },
+      {
+        path: "/customers",
+        label: "Customers",
+        icon: "customers",
+        permission: ["portal.bookings", "portal.bookings.self"],
       },
       {
         path: "/availability",

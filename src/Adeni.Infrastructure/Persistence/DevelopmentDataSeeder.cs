@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Persistence;
 
+using System.Security.Cryptography;
 using Adeni.Application.Catalog;
 using Adeni.Application.Storage;
 using Adeni.Domain.Booking;
@@ -26,6 +27,12 @@ public static class DevelopmentDataSeeder
 
     /// <summary>Raw invite token seeded for Lekki Cuts — accept via /accept-invite?token=…</summary>
     public const string DevStaffInviteToken = "dev-lekki-staff-invite-token";
+
+    private const string DevQueueFloorSeedNote = "dev-unified-floor-v1";
+
+    /// <summary>Square crop for dev logo on kiosk, discover queue, and public page.</summary>
+    private static readonly string DevLekkiLogoImageKey =
+        "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=256&h=256&auto=format&fit=crop&q=80";
     public const string DevCustomerAuth0Sub = "auth0|local-customer";
     public const string DevAdminAuth0Sub = "auth0|local-admin";
 
@@ -167,10 +174,12 @@ public static class DevelopmentDataSeeder
         await SeedSamplesAsync(db, cancellationToken);
         await EnsureServiceMenusAsync(db, environment, cancellationToken);
         await EnsureGalleryPhotosAsync(db, cancellationToken);
+        await EnsureDevBusinessLogoAsync(db, cancellationToken);
         await SeedDevBusinessOwnerAsync(db, cancellationToken);
         await SeedDevStaffInviteAsync(db, cancellationToken);
         await SeedDevDepositSettingsAsync(db, cancellationToken);
         await SeedDevReviewFixtureAsync(db, cancellationToken);
+        await SeedDevQueueFloorAsync(db, cancellationToken);
     }
 
     private static async Task EnsureServiceMenusAsync(
@@ -283,6 +292,36 @@ public static class DevelopmentDataSeeder
         {
             await db.SaveChangesAsync(cancellationToken);
         }
+    }
+
+    private static async Task EnsureDevBusinessLogoAsync(
+        AdeniDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var tenantId = await db.BusinessLocations
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(entry => entry.Slug == SeedMarkerSlug)
+            .Select(entry => entry.TenantId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (tenantId == Guid.Empty)
+        {
+            return;
+        }
+
+        var profile = await db.BusinessProfiles
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(entry => entry.TenantId == tenantId, cancellationToken);
+
+        if (profile is null || !string.IsNullOrWhiteSpace(profile.LogoImageKey))
+        {
+            return;
+        }
+
+        profile.LogoImageKey = DevLekkiLogoImageKey;
+        profile.UpdatedAt = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
     }
 
     private static string[] PickPhotos(string[] pool, Guid tenantId, int count)
@@ -740,6 +779,215 @@ public static class DevelopmentDataSeeder
 
         await db.SaveChangesAsync(cancellationToken);
     }
+
+    private static async Task SeedDevQueueFloorAsync(
+        AdeniDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var location = await db.BusinessLocations
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(entry => entry.Slug == SeedMarkerSlug, cancellationToken);
+
+        if (location is null)
+        {
+            return;
+        }
+
+        var tenantId = location.TenantId;
+        if (await db.QueueTickets
+                .IgnoreQueryFilters()
+                .AnyAsync(
+                    ticket => ticket.TenantId == tenantId && ticket.Notes == DevQueueFloorSeedNote,
+                    cancellationToken))
+        {
+            return;
+        }
+
+        var profile = await db.BusinessProfiles
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(entry => entry.TenantId == tenantId, cancellationToken);
+
+        if (profile is null)
+        {
+            return;
+        }
+
+        var service = await db.ServiceOfferings
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(entry => entry.TenantId == tenantId && entry.IsActive)
+            .OrderBy(entry => entry.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (service is null)
+        {
+            return;
+        }
+
+        var staff = await db.StaffMembers
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(member => member.TenantId == tenantId && member.IsActive)
+            .OrderBy(member => member.SortOrder)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var now = DateTimeOffset.UtcNow;
+        profile.WalkInsEnabled = true;
+        profile.WalkInAcceptingUntil = now.AddHours(8);
+        profile.MaxWalkInWaiting = 15;
+        profile.WalkInCalendarPolicy = WalkInCalendarPolicy.Relaxed;
+        profile.UpdatedAt = now;
+
+        var walkInCustomerA = await EnsureSeedCustomerAsync(
+            db,
+            "dev-queue-walkin-a",
+            "Dev Walk-in Ada",
+            "+2348012300001",
+            cancellationToken);
+        var walkInCustomerB = await EnsureSeedCustomerAsync(
+            db,
+            "dev-queue-walkin-b",
+            "Dev Walk-in Chi",
+            "+2348012300002",
+            cancellationToken);
+        var expectedCustomer = await EnsureSeedCustomerAsync(
+            db,
+            "dev-queue-expected",
+            "Jordan Expected",
+            "+2348012300003",
+            cancellationToken);
+        var checkedInCustomer = await EnsureSeedCustomerAsync(
+            db,
+            "dev-queue-checked-in",
+            "Sam Checked-in",
+            "+2348012300004",
+            cancellationToken);
+
+        db.QueueTickets.Add(new QueueTicket
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            ServiceOfferingId = service.Id,
+            StaffMemberId = staff?.Id,
+            CustomerId = walkInCustomerA,
+            GuestName = "Dev Walk-in Ada",
+            GuestPhone = "2348012300001",
+            Status = QueueTicketStatus.Waiting,
+            PartySize = 1,
+            Notes = DevQueueFloorSeedNote,
+            PublicToken = CreateQueuePublicToken(),
+            Source = QueueTicketSource.WalkIn,
+            JoinedAt = now.AddMinutes(-12),
+            CreatedAt = now.AddMinutes(-12),
+            UpdatedAt = now.AddMinutes(-12),
+        });
+
+        db.QueueTickets.Add(new QueueTicket
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            ServiceOfferingId = service.Id,
+            StaffMemberId = staff?.Id,
+            CustomerId = walkInCustomerB,
+            GuestName = "Dev Walk-in Chi",
+            GuestPhone = "2348012300002",
+            Status = QueueTicketStatus.Called,
+            PartySize = 1,
+            Notes = DevQueueFloorSeedNote,
+            PublicToken = CreateQueuePublicToken(),
+            Source = QueueTicketSource.WalkIn,
+            JoinedAt = now.AddMinutes(-25),
+            CalledAt = now.AddMinutes(-3),
+            CreatedAt = now.AddMinutes(-25),
+            UpdatedAt = now.AddMinutes(-3),
+        });
+
+        var expectedStart = now.AddHours(2);
+        db.Bookings.Add(new BookingRecord
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            ServiceOfferingId = service.Id,
+            CustomerId = expectedCustomer,
+            StaffMemberId = staff?.Id,
+            StartAt = expectedStart,
+            EndAt = expectedStart.AddMinutes(service.DurationMinutes),
+            Status = BookingStatus.Confirmed,
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+
+        var checkedInStart = now.AddMinutes(-10);
+        var checkedInBookingId = Guid.NewGuid();
+        db.Bookings.Add(new BookingRecord
+        {
+            Id = checkedInBookingId,
+            TenantId = tenantId,
+            ServiceOfferingId = service.Id,
+            CustomerId = checkedInCustomer,
+            StaffMemberId = staff?.Id,
+            StartAt = checkedInStart,
+            EndAt = checkedInStart.AddMinutes(service.DurationMinutes),
+            Status = BookingStatus.CheckedIn,
+            CreatedAt = checkedInStart,
+            UpdatedAt = now,
+        });
+
+        db.QueueTickets.Add(new QueueTicket
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            ServiceOfferingId = service.Id,
+            StaffMemberId = staff?.Id,
+            CustomerId = checkedInCustomer,
+            GuestName = "Sam Checked-in",
+            GuestPhone = "2348012300004",
+            Status = QueueTicketStatus.Waiting,
+            PartySize = 1,
+            Notes = $"{DevQueueFloorSeedNote} — appointment check-in",
+            PublicToken = CreateQueuePublicToken(),
+            BookingId = checkedInBookingId,
+            Source = QueueTicketSource.Appointment,
+            JoinedAt = now.AddMinutes(-5),
+            CreatedAt = now.AddMinutes(-5),
+            UpdatedAt = now.AddMinutes(-5),
+        });
+
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task<Guid> EnsureSeedCustomerAsync(
+        AdeniDbContext db,
+        string auth0Sub,
+        string name,
+        string phone,
+        CancellationToken cancellationToken)
+    {
+        var existing = await db.Customers
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(customer => customer.Auth0Sub == auth0Sub, cancellationToken);
+
+        if (existing is not null)
+        {
+            return existing.Id;
+        }
+
+        var customer = new Customer
+        {
+            Id = Guid.NewGuid(),
+            Auth0Sub = auth0Sub,
+            Name = name,
+            Phone = phone,
+            CreatedAt = DateTimeOffset.UtcNow,
+        };
+        db.Customers.Add(customer);
+        await db.SaveChangesAsync(cancellationToken);
+        return customer.Id;
+    }
+
+    private static string CreateQueuePublicToken() =>
+        Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant();
 
     private static async Task SeedDevDepositSettingsAsync(
         AdeniDbContext db,

@@ -77,6 +77,8 @@ public sealed class AdeniDbContext(
 
     public DbSet<QueueTicket> QueueTickets => Set<QueueTicket>();
 
+    public DbSet<TenantCustomer> TenantCustomers => Set<TenantCustomer>();
+
     public DbSet<QuoteRequestRecord> QuoteRequests => Set<QuoteRequestRecord>();
 
     public DbSet<TenantVerificationBadge> TenantVerificationBadges => Set<TenantVerificationBadge>();
@@ -155,6 +157,8 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.PolicyTermsText).HasMaxLength(8000);
             entity.Property(x => x.KioskExitPinHash).HasMaxLength(64);
             entity.Property(x => x.BusinessType).HasConversion<int>();
+            entity.Property(x => x.WalkInsEnabled).HasDefaultValue(true);
+            entity.Property(x => x.WalkInCalendarPolicy).HasConversion<int>().HasDefaultValue(WalkInCalendarPolicy.Relaxed);
             entity.HasOne(x => x.Tenant).WithOne().HasForeignKey<BusinessProfile>(x => x.TenantId);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
@@ -436,19 +440,41 @@ public sealed class AdeniDbContext(
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 
+        modelBuilder.Entity<TenantCustomer>(entity =>
+        {
+            entity.ToTable("tenant_customers", "tenancy");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.NormalizedPhone).HasMaxLength(40);
+            entity.Property(x => x.DisplayName).HasMaxLength(200);
+            entity.Property(x => x.FirstName).HasMaxLength(100);
+            entity.Property(x => x.LastName).HasMaxLength(100);
+            entity.Property(x => x.Email).HasMaxLength(320);
+            entity.HasIndex(x => new { x.TenantId, x.CustomerId })
+                .IsUnique()
+                .HasFilter("[CustomerId] IS NOT NULL");
+            entity.HasIndex(x => new { x.TenantId, x.NormalizedPhone })
+                .IsUnique()
+                .HasFilter("[NormalizedPhone] IS NOT NULL");
+            entity.HasIndex(x => new { x.TenantId, x.LastSeenAt });
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
         modelBuilder.Entity<QueueTicket>(entity =>
         {
             entity.ToTable("queue_tickets", "booking");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.GuestName).HasMaxLength(200);
             entity.Property(x => x.GuestPhone).HasMaxLength(40);
+            entity.Property(x => x.GuestEmail).HasMaxLength(320);
             entity.Property(x => x.Notes).HasMaxLength(500);
             entity.Property(x => x.PublicToken).HasMaxLength(64);
             entity.Property(x => x.PartySize).HasDefaultValue(1);
             entity.Property(x => x.Status).HasConversion<int>();
+            entity.Property(x => x.Source).HasConversion<int>().HasDefaultValue(QueueTicketSource.WalkIn);
             entity.HasIndex(x => x.PublicToken).IsUnique();
             entity.HasIndex(x => new { x.TenantId, x.Status, x.JoinedAt });
             entity.HasIndex(x => new { x.TenantId, x.StaffMemberId, x.Status });
+            entity.HasIndex(x => new { x.TenantId, x.TenantCustomerId });
             entity.HasOne(x => x.ServiceOffering)
                 .WithMany()
                 .HasForeignKey(x => x.ServiceOfferingId)

@@ -1,8 +1,5 @@
-<app-portal-page
-  title="Queue"
-  description="Walk-ins waiting, called, and in service — same floor as appointments."
->
-  @if (error()) {
+<app-portal-page title="Queue" [description]="pageDescription()">
+  @if (error() && !showAddModal()) {
     <p class="error-banner">{{ error() }}</p>
   }
 
@@ -13,156 +10,431 @@
       <p class="muted">Walk-in queue is not enabled for this business category.</p>
     </section>
   } @else {
-    <section class="card add-row">
-      <h3>Add walk-in</h3>
-      <div class="fields">
-        <input [(ngModel)]="guestName" placeholder="Guest name" />
-        <input [(ngModel)]="guestPhone" placeholder="Phone" />
-        <select [(ngModel)]="serviceOfferingId">
-          <option value="">Any service</option>
-          @for (service of services(); track service.id) {
-            <option [value]="service.id">{{ service.name }}</option>
+    <div class="queue-shell">
+      <header class="queue-toolbar card">
+        <div class="queue-toolbar__meta">
+          <p class="queue-toolbar__title">Floor board</p>
+          <p class="muted">
+            @if (lastRefreshedAt(); as at) {
+              Updated {{ at | date: "shortTime" }}
+            }
+            @if (refreshing()) {
+              · Refreshing…
+            }
+          </p>
+        </div>
+        <div class="queue-toolbar__actions">
+          @if (canManageAll() && staff().length > 0) {
+            <label class="toolbar-select">
+              <span class="toolbar-select__label">Start as</span>
+              <select
+                [(ngModel)]="startStaffMemberId"
+                name="startStaffMemberId"
+                aria-label="Staff member when starting service"
+              >
+                <option value="">Auto</option>
+                @for (member of staff(); track member.id) {
+                  <option [value]="member.id">{{ member.displayName }}</option>
+                }
+              </select>
+            </label>
           }
-        </select>
-        <button type="button" class="btn btn-primary" [disabled]="adding()" (click)="addWalkIn()">
-          Add
-        </button>
-      </div>
-    </section>
+          @if (publicJoinUrl()) {
+            <button type="button" class="btn" (click)="copyJoinLink()">
+              <adeni-carbon-icon name="copy" [size]="16" />
+              Copy join link
+            </button>
+          }
+          <button type="button" class="btn" [disabled]="refreshing()" (click)="refreshNow()">
+            <adeni-carbon-icon name="restart" [size]="16" />
+            Refresh
+          </button>
+          <button type="button" class="btn btn-primary" (click)="openAddModal()">
+            <adeni-carbon-icon name="add" [size]="16" />
+            Add walk-in
+          </button>
+        </div>
+      </header>
 
-    <section class="card">
-      <div class="section-head">
-        <h3>Waiting ({{ waiting().length }})</h3>
-        <button
-          type="button"
-          class="btn btn-primary"
-          [disabled]="waiting().length === 0 || actionId()"
-          (click)="callNext()"
-        >
-          <adeni-carbon-icon name="flash--filled" [size]="16" />
-          Call next
-        </button>
-      </div>
-      @if (waiting().length === 0) {
-        <adeni-portal-empty-state
-          [compact]="true"
-          [embedded]="true"
-          icon="time"
-          title="Waiting room is empty"
-          description="Walk-ins will appear here when they join the queue."
-        />
-      } @else {
-        <ul class="ticket-list">
-          @for (ticket of waiting(); track ticket.id) {
-            <li class="list-row">
-              <div>
-                <strong>#{{ ticket.position }} · {{ ticket.displayName }}</strong>
-                <p class="muted">
-                  {{ ticket.serviceName || "Any service" }}
-                  @if (ticket.etaMinutes != null) {
-                    · ~{{ ticket.etaMinutes }} min
-                  }
-                </p>
-              </div>
-              <div class="actions">
-                <button
-                  type="button"
+      @if (walkInStatus(); as walkIn) {
+        @if (!walkIn.acceptingNow && canManageAll()) {
+          <p class="error-banner queue-banner">
+            Walk-ins are closed for new guests.
+            <button type="button" class="btn btn-primary" (click)="openWalkInsFor90Minutes()">
+              <adeni-carbon-icon name="time" [size]="16" />
+              Open 90 minutes
+            </button>
+          </p>
+        }
+      }
+
+      @if (expectedArrivals().length > 0) {
+        <section class="card expected-panel">
+          <div class="expected-panel__head">
+            <h3>Expected today</h3>
+            <p class="muted">Confirmed appointments — check in from Bookings or kiosk to add them to the floor.</p>
+          </div>
+          <ul class="expected-list">
+            @for (row of expectedArrivals(); track row.bookingId) {
+              <li class="expected-row">
+                <div class="expected-row__main">
+                  <strong>{{ row.displayName }}</strong>
+                  <span class="muted">
+                    · {{ row.startAt | date: "shortTime" }}
+                    @if (row.serviceName) {
+                      · {{ row.serviceName }}
+                    }
+                    @if (row.staffDisplayName) {
+                      · {{ row.staffDisplayName }}
+                    }
+                  </span>
+                </div>
+                <a
                   class="btn"
-                  [disabled]="actionId() === ticket.id"
-                  (click)="noShow(ticket)"
+                  [routerLink]="['/bookings']"
+                  [queryParams]="{ tab: 'upcoming', focus: row.bookingId }"
                 >
-                  No-show
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-primary"
-                  [disabled]="actionId() === ticket.id"
-                  (click)="call(ticket)"
-                >
-                  Call
-                </button>
-              </div>
-            </li>
-          }
-        </ul>
+                  <adeni-carbon-icon name="user--follow" [size]="16" />
+                  Check in
+                </a>
+              </li>
+            }
+          </ul>
+        </section>
       }
-    </section>
 
-    <section class="card">
-      <h3>On the floor</h3>
-      @if (active().length === 0) {
-        <adeni-portal-empty-state
-          [compact]="true"
-          [embedded]="true"
-          icon="user--filled"
-          title="Floor is clear"
-          description="Guests you call from the queue will show up here."
-        />
-      } @else {
-        <ul class="ticket-list">
-          @for (ticket of active(); track ticket.id) {
-            <li class="list-row">
-              <div>
-                <strong>{{ ticket.displayName }}</strong>
-                <p class="muted">
-                  {{ statusLabel(ticket.status) }}
-                  @if (ticket.serviceName) {
-                    · {{ ticket.serviceName }}
-                  }
-                </p>
+      <div class="floor-board">
+        <section class="card floor-column">
+          <div class="column-head">
+            <h3>Waiting</h3>
+            <span class="count-badge">{{ waiting().length }}</span>
+          </div>
+          <div class="column-action-bar">
+            <button
+              type="button"
+              class="btn btn-primary btn-block"
+              [disabled]="waiting().length === 0 || actionId()"
+              (click)="callNext()"
+            >
+              <adeni-carbon-icon name="flash--filled" [size]="16" />
+              Call next
+            </button>
+          </div>
+          <div class="column-body">
+            @if (waiting().length === 0) {
+              <div class="column-fill column-fill--empty">
+                <adeni-portal-empty-state
+                  [compact]="true"
+                  [embedded]="true"
+                  icon="time"
+                  title="Waiting room is empty"
+                  description="Guests join via your link or Add walk-in."
+                />
               </div>
-              <div class="actions">
-                @if (ticket.status === "called" || ticket.status === "waiting") {
-                  <button
-                    type="button"
-                    class="btn btn-primary"
-                    [disabled]="actionId() === ticket.id"
-                    (click)="start(ticket)"
-                  >
-                    Start
-                  </button>
+            } @else {
+              <ul class="ticket-list">
+                @for (ticket of waiting(); track ticket.id) {
+                  <li class="ticket-item">
+                    <div class="ticket-item__main">
+                      <p class="ticket-item__name">
+                        <span class="position">#{{ ticket.position }}</span>
+                        {{ ticket.displayName }}
+                        @if (ticket.source === "appointment") {
+                          <span class="source-tag">Appointment</span>
+                        }
+                      </p>
+                      <p class="muted ticket-item__meta">
+                        {{ ticket.serviceName || "Any service" }}
+                        @if (ticket.partySize > 1) {
+                          · Party of {{ ticket.partySize }}
+                        }
+                        @if (ticket.etaMinutes != null) {
+                          · ~{{ ticket.etaMinutes }} min
+                        }
+                      </p>
+                      @if (ticket.staffDisplayName) {
+                        <p class="muted">{{ ticket.staffDisplayName }}</p>
+                      }
+                      @if (ticket.notes) {
+                        <p class="note">“{{ ticket.notes }}”</p>
+                      }
+                    </div>
+                    <div class="ticket-item__actions">
+                      <button
+                        type="button"
+                        class="btn btn-primary"
+                        [disabled]="actionId() === ticket.id"
+                        (click)="call(ticket)"
+                      >
+                        <adeni-carbon-icon name="user--follow" [size]="16" />
+                        Call
+                      </button>
+                      <button
+                        type="button"
+                        class="btn"
+                        [disabled]="actionId() === ticket.id"
+                        (click)="noShow(ticket)"
+                      >
+                        <adeni-carbon-icon name="misuse" [size]="16" />
+                        No-show
+                      </button>
+                      <button
+                        type="button"
+                        class="btn"
+                        [disabled]="actionId() === ticket.id"
+                        (click)="cancel(ticket)"
+                      >
+                        <adeni-carbon-icon name="close" [size]="16" />
+                        Cancel
+                      </button>
+                    </div>
+                  </li>
                 }
-                @if (ticket.status === "in_service") {
-                  <button
-                    type="button"
-                    class="btn btn-primary"
-                    [disabled]="actionId() === ticket.id"
-                    (click)="complete(ticket)"
-                  >
-                    Complete
-                  </button>
-                }
-                @if (ticket.status === "called") {
-                  <button
-                    type="button"
-                    class="btn"
-                    [disabled]="actionId() === ticket.id"
-                    (click)="noShow(ticket)"
-                  >
-                    No-show
-                  </button>
-                }
+              </ul>
+            }
+          </div>
+        </section>
+
+        <section class="card floor-column">
+          <div class="column-head">
+            <h3>Called</h3>
+            <span class="count-badge">{{ called().length }}</span>
+          </div>
+          <div class="column-action-bar" aria-hidden="true">
+            <span class="column-action-bar__spacer"></span>
+          </div>
+          <div class="column-body">
+            @if (called().length === 0) {
+              <div class="column-fill column-fill--empty">
+                <adeni-portal-empty-state
+                  [compact]="true"
+                  [embedded]="true"
+                  icon="user--follow"
+                  title="No one called"
+                  description="Call the next guest from Waiting."
+                />
               </div>
-            </li>
-          }
-        </ul>
+            } @else {
+              <ul class="ticket-list">
+                @for (ticket of called(); track ticket.id) {
+                  <li class="ticket-item">
+                    <div class="ticket-item__main">
+                      <p class="ticket-item__name">{{ ticket.displayName }}</p>
+                      <p class="muted ticket-item__meta">
+                        {{ ticket.serviceName || "Any service" }}
+                      </p>
+                      @if (ticket.staffDisplayName) {
+                        <p class="muted">{{ ticket.staffDisplayName }}</p>
+                      }
+                    </div>
+                    <div class="ticket-item__actions">
+                      <button
+                        type="button"
+                        class="btn btn-primary"
+                        [disabled]="actionId() === ticket.id"
+                        (click)="start(ticket)"
+                      >
+                        <adeni-carbon-icon name="user--filled" [size]="16" />
+                        Start
+                      </button>
+                      <button
+                        type="button"
+                        class="btn"
+                        [disabled]="actionId() === ticket.id"
+                        (click)="noShow(ticket)"
+                      >
+                        <adeni-carbon-icon name="misuse" [size]="16" />
+                        No-show
+                      </button>
+                    </div>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        </section>
+
+        <section class="card floor-column">
+          <div class="column-head">
+            <h3>In service</h3>
+            <span class="count-badge">{{ inService().length }}</span>
+          </div>
+          <div class="column-action-bar" aria-hidden="true">
+            <span class="column-action-bar__spacer"></span>
+          </div>
+          <div class="column-body">
+            @if (inService().length === 0) {
+              <div class="column-fill column-fill--empty">
+                <adeni-portal-empty-state
+                  [compact]="true"
+                  [embedded]="true"
+                  icon="user--filled"
+                  title="Floor is clear"
+                  description="Started guests appear here."
+                />
+              </div>
+            } @else {
+              <ul class="ticket-list">
+                @for (ticket of inService(); track ticket.id) {
+                  <li class="ticket-item">
+                    <div class="ticket-item__main">
+                      <p class="ticket-item__name">{{ ticket.displayName }}</p>
+                      <p class="muted ticket-item__meta">
+                        {{ ticket.serviceName || "Any service" }}
+                      </p>
+                      @if (ticket.staffDisplayName) {
+                        <p class="muted">With {{ ticket.staffDisplayName }}</p>
+                      }
+                    </div>
+                    <div class="ticket-item__actions">
+                      @if (ticket.bookingId) {
+                        <a
+                          class="btn"
+                          [routerLink]="['/bookings']"
+                          [queryParams]="{ tab: 'upcoming', focus: ticket.bookingId }"
+                        >
+                          <adeni-carbon-icon name="calendar" [size]="16" />
+                          Bookings
+                        </a>
+                      }
+                      <button
+                        type="button"
+                        class="btn btn-primary"
+                        [disabled]="actionId() === ticket.id"
+                        (click)="complete(ticket)"
+                      >
+                        <adeni-carbon-icon name="checkmark--filled" [size]="16" />
+                        Complete
+                      </button>
+                    </div>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        </section>
+      </div>
+
+      @if (finished().length > 0) {
+        <details class="card finished-panel">
+          <summary>Earlier today ({{ finished().length }})</summary>
+          <ul class="finished-list">
+            @for (ticket of finished(); track ticket.id) {
+              <li class="finished-row">
+                <div>
+                  <strong>{{ ticket.displayName }}</strong>
+                  <span class="muted"> · {{ statusLabel(ticket.status) }}</span>
+                </div>
+                @if (ticket.bookingId) {
+                  <button type="button" class="btn btn-ghost" (click)="openBooking(ticket)">
+                    <adeni-carbon-icon name="launch" [size]="16" />
+                    Open booking
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        </details>
       }
-    </section>
+    </div>
 
-    @if (finished().length > 0) {
-      <section class="card">
-        <h3>Earlier today</h3>
-        <ul class="ticket-list">
-          @for (ticket of finished(); track ticket.id) {
-            <li class="list-row">
-              <div>
-                <strong>{{ ticket.displayName }}</strong>
-                <p class="muted">{{ statusLabel(ticket.status) }}</p>
-              </div>
-            </li>
+    <adeni-modal
+      [open]="showAddModal()"
+      title="Add walk-in"
+      subtitle="Add a guest to the waiting list from the front desk."
+      size="lg"
+      [hasFooter]="true"
+      (closed)="closeAddModal()"
+    >
+      @if (error()) {
+        <p class="error-banner">{{ error() }}</p>
+      }
+      <div class="modal-form">
+        <label class="field">
+          <span class="field-label">First name</span>
+          <input
+            [(ngModel)]="guestFirstName"
+            name="guestFirstNameModal"
+            autocomplete="given-name"
+            required
+          />
+        </label>
+        <label class="field">
+          <span class="field-label">Last name</span>
+          <input
+            [(ngModel)]="guestLastName"
+            name="guestLastNameModal"
+            autocomplete="family-name"
+            required
+          />
+        </label>
+        <label class="field">
+          <span class="field-label">Phone</span>
+          <input [(ngModel)]="guestPhone" name="guestPhoneModal" autocomplete="tel" inputmode="tel" required />
+        </label>
+        <label class="field">
+          <span class="field-label">Email <span class="muted">(optional)</span></span>
+          <input
+            [(ngModel)]="guestEmail"
+            name="guestEmailModal"
+            type="email"
+            autocomplete="email"
+            inputmode="email"
+          />
+        </label>
+        <label class="field">
+          <span class="field-label">Service</span>
+          <select [(ngModel)]="serviceOfferingId" name="serviceOfferingIdModal">
+            <option value="">Any service</option>
+            @for (service of services(); track service.id) {
+              <option [value]="service.id">{{ service.name }}</option>
+            }
+          </select>
+        </label>
+        <div class="modal-form__row">
+          <label class="field">
+            <span class="field-label">Party size</span>
+            <input
+              type="number"
+              min="1"
+              max="6"
+              [(ngModel)]="partySize"
+              name="partySizeModal"
+            />
+          </label>
+          @if (canManageAll() && staff().length > 0) {
+            <label class="field">
+              <span class="field-label">Assign to</span>
+              <select [(ngModel)]="assignStaffMemberId" name="assignStaffModal">
+                <option value="">Unassigned</option>
+                @for (member of staff(); track member.id) {
+                  <option [value]="member.id">{{ member.displayName }}</option>
+                }
+              </select>
+            </label>
           }
-        </ul>
-      </section>
-    }
+        </div>
+        <label class="field">
+          <span class="field-label">Notes</span>
+          <textarea
+            rows="3"
+            maxlength="500"
+            [(ngModel)]="walkInNotes"
+            name="walkInNotesModal"
+            placeholder="Optional"
+          ></textarea>
+        </label>
+      </div>
+      <div modalFooter class="modal-footer">
+        <button type="button" class="btn" (click)="closeAddModal()">
+          <adeni-carbon-icon name="close" [size]="16" />
+          Cancel
+        </button>
+        <button type="button" class="btn btn-primary" [disabled]="adding()" (click)="addWalkIn()">
+          <adeni-carbon-icon name="add" [size]="16" />
+          {{ adding() ? "Adding…" : "Add to queue" }}
+        </button>
+      </div>
+    </adeni-modal>
   }
 </app-portal-page>

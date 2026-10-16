@@ -1,0 +1,82 @@
+<app-portal-page
+  title="Customers"
+  description="People who booked online or joined your walk-in queue — one profile per person at your business."
+>
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  <section class="card customers-toolbar">
+    <label class="search-field">
+      <span class="visually-hidden">Search customers</span>
+      <adeni-carbon-icon name="search" [size]="16" />
+      <input
+        type="search"
+        [(ngModel)]="searchInput"
+        (ngModelChange)="onSearchInput()"
+        placeholder="Search name, phone, or email"
+        autocomplete="off"
+      />
+    </label>
+    <button type="button" class="btn" [disabled]="loading()" (click)="load()">
+      <adeni-carbon-icon name="restart" [size]="16" />
+      Refresh
+    </button>
+  </section>
+
+  @if (loading() && items().length === 0) {
+    <p class="muted">Loading customers…</p>
+  } @else if (items().length === 0) {
+    <adeni-portal-empty-state
+      icon="user--filled"
+      title="No customers yet"
+      description="Profiles appear when someone books (signed in on Discover) or joins your queue."
+    />
+  } @else {
+    <section class="card customers-table-wrap">
+      <table class="customers-table">
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Phone</th>
+            <th scope="col">Email</th>
+            <th scope="col">Last seen</th>
+            <th scope="col"><span class="visually-hidden">Open</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of items(); track row.id) {
+            <tr>
+              <td>
+                <a [routerLink]="['/customers', row.id]" class="customer-link">{{ row.displayName }}</a>
+              </td>
+              <td class="muted">{{ row.phoneMasked || "—" }}</td>
+              <td class="muted">{{ row.email || "—" }}</td>
+              <td class="muted">{{ formatSlotTime(row.lastSeenAt) }}</td>
+              <td class="actions-cell">
+                <a [routerLink]="['/customers', row.id]" class="btn">View</a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      @if (totalCount() > pageSize) {
+        <div class="pagination">
+          <button type="button" class="btn" [disabled]="page() <= 1 || loading()" (click)="prevPage()">
+            Previous
+          </button>
+          <span class="muted">{{ pageLabel() }} · {{ totalCount() }} total</span>
+          <button
+            type="button"
+            class="btn"
+            [disabled]="loading() || !canNextPage()"
+            (click)="nextPage()"
+          >
+            Next
+          </button>
+        </div>
+      }
+    </section>
+  }
+</app-portal-page>

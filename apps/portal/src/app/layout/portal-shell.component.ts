@@ -1,4 +1,4 @@
-import { Component, computed, DestroyRef, ElementRef, HostListener, inject, Injector, signal, viewChild } from "@angular/core";
+import { Component, computed, ElementRef, HostListener, inject, Injector, signal, viewChild } from "@angular/core";
 import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
 import type { AuthService } from "@auth0/auth0-angular";
@@ -6,6 +6,7 @@ import type { AdeniBrandSurface } from "@adeni/brand";
 import {
   formatTenantStatus,
   hasTenantEntitlement,
+  permissionsForRole,
   type BusinessProfile,
   type LocaleId,
 } from "@adeni/shared";
@@ -32,14 +33,13 @@ import {
 } from "../core/portal-nav";
 import { BusinessApiService } from "../core/services/business-api.service";
 import { PortalSessionService } from "../core/services/portal-session.service";
+import type { ThemePreference } from "../core/portal-theme.service";
+import { PortalThemeService } from "../core/portal-theme.service";
 import { PendingBookingsBellComponent } from "../shared/pending-bookings-bell.component";
+import { PortalIconTooltipDirective } from "../shared/portal-icon-tooltip.directive";
 import { PortalNavIconComponent } from "./portal-nav-icon.component";
 
 const SIDEBAR_STORAGE_KEY = "adeni.portal.sidebar.collapsed";
-const THEME_STORAGE_KEY = "adeni.portal.theme";
-
-type PortalTheme = "light" | "dark";
-type ThemePreference = PortalTheme | "system";
 type ChromeKey =
   | "search"
   | "appearance"
@@ -68,6 +68,7 @@ type ChromeKey =
   | "tabLedger"
   | "/dashboard"
   | "/bookings"
+  | "/customers"
   | "/queue"
   | "/calendar"
   | "/my-calendar"
@@ -97,7 +98,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     jump: "Jump to",
     marketplace: "Marketplace",
     groupToday: "Operations",
-    groupListing: "Catalog",
+    groupListing: "Your business",
     groupBusiness: "Account",
     tabPending: "Pending",
     tabUpcoming: "Upcoming",
@@ -113,6 +114,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     tabLedger: "Ledger",
     "/dashboard": "Overview",
     "/bookings": "Bookings",
+    "/customers": "Customers",
     "/queue": "Queue",
     "/calendar": "Calendar",
     "/my-calendar": "My calendar",
@@ -141,7 +143,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     jump: "Aller à",
     marketplace: "Place de marché",
     groupToday: "Opérations",
-    groupListing: "Catalogue",
+    groupListing: "Votre entreprise",
     groupBusiness: "Compte",
     tabPending: "En attente",
     tabUpcoming: "À venir",
@@ -157,6 +159,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     tabLedger: "Journal",
     "/dashboard": "Aperçu",
     "/bookings": "Réservations",
+    "/customers": "Clients",
     "/queue": "File",
     "/calendar": "Calendrier",
     "/my-calendar": "Mon calendrier",
@@ -182,25 +185,6 @@ type SearchHit = {
   icon: PortalNavItem["icon"];
   external?: boolean;
 };
-
-function readThemePreference(): ThemePreference {
-  try {
-    const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    if (stored === "light" || stored === "dark" || stored === "system") {
-      return stored;
-    }
-  } catch {
-    // Preference is optional.
-  }
-  return "system";
-}
-
-function resolveTheme(preference: ThemePreference): PortalTheme {
-  if (preference === "light" || preference === "dark") {
-    return preference;
-  }
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
 
 function initialsFor(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -241,6 +225,7 @@ function readSidebarCollapsed(): boolean {
     AdeniConfirmHostComponent,
     PendingBookingsBellComponent,
     PortalNavIconComponent,
+    PortalIconTooltipDirective,
   ],
   templateUrl: "./portal-shell.component.html",
   styleUrl: "./portal-shell.component.scss",
@@ -256,7 +241,7 @@ export class PortalShellComponent {
   private readonly businessApi = inject(BusinessApiService);
   private readonly portalSession = inject(PortalSessionService);
   private readonly documentTitleStrategy = inject(AdeniDocumentTitleStrategy);
-  private readonly destroyRef = inject(DestroyRef);
+  private readonly portalTheme = inject(PortalThemeService);
   readonly auth: AuthService | null = isAuth0Configured(this.config)
     ? resolveAuthService(this.injector)
     : null;
@@ -264,8 +249,8 @@ export class PortalShellComponent {
   readonly devMode = isBusinessPortalDevMode(this.config);
   readonly auth0Mode = isAuth0Configured(this.config);
   readonly collapsed = signal(readSidebarCollapsed());
-  readonly themePreference = signal<ThemePreference>(readThemePreference());
-  readonly theme = signal<PortalTheme>(resolveTheme(this.themePreference()));
+  readonly themePreference = this.portalTheme.preference;
+  readonly theme = this.portalTheme.theme;
   readonly logoSurface = computed<AdeniBrandSurface>(() => (this.theme() === "dark" ? "dark" : "light"));
   readonly settingsOpen = signal(false);
   readonly userOpen = signal(false);
@@ -310,16 +295,6 @@ export class PortalShellComponent {
   });
 
   constructor() {
-    this.applyTheme(this.theme());
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const onSystemTheme = (): void => {
-      if (this.themePreference() === "system") {
-        this.applyTheme(resolveTheme("system"));
-      }
-    };
-    media.addEventListener("change", onSystemTheme);
-    this.destroyRef.onDestroy(() => media.removeEventListener("change", onSystemTheme));
-
     this.auth?.user$.pipe(takeUntilDestroyed()).subscribe((user) => {
       const name = user?.name ?? user?.email ?? "Business";
       this.accountName.set(name);
@@ -363,17 +338,11 @@ export class PortalShellComponent {
   }
 
   toggleTheme(): void {
-    this.setTheme(this.theme() === "dark" ? "light" : "dark");
+    this.portalTheme.toggle();
   }
 
   setTheme(preference: ThemePreference): void {
-    this.themePreference.set(preference);
-    this.applyTheme(resolveTheme(preference));
-    try {
-      localStorage.setItem(THEME_STORAGE_KEY, preference);
-    } catch {
-      // Preference is optional.
-    }
+    this.portalTheme.setPreference(preference);
   }
 
   setLocale(locale: LocaleId): void {
@@ -530,7 +499,11 @@ export class PortalShellComponent {
 
   private groupsForProfile(): PortalNavGroup[] {
     const profile = this.profile();
-    const permissions = this.portalSession.permissions();
+    const fromSession = this.portalSession.permissions();
+    const permissions =
+      fromSession.length > 0
+        ? fromSession
+        : permissionsForRole(this.portalSession.permissionRole());
     const ctx = {
       profile,
       profileLoaded: this.profileLoaded(),
@@ -540,11 +513,6 @@ export class PortalShellComponent {
       ...group,
       items: group.items.filter((item) => isPortalNavItemVisible(item, ctx)),
     })).filter((group) => group.items.length > 0);
-  }
-
-  private applyTheme(theme: PortalTheme): void {
-    this.theme.set(theme);
-    document.documentElement.dataset["theme"] = theme;
   }
 
   private async loadProfile(): Promise<void> {
