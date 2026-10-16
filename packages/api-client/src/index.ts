@@ -19,6 +19,12 @@ import {
   tenantBillingHistoryResponseSchema,
   completeStubSubscriptionCheckoutRequestSchema,
   tenantSubscriptionChargeSchema,
+  tenantDashboardSummarySchema,
+  tenantDashboardSeriesSchema,
+  tenantDashboardBreakdownSchema,
+  type TenantDashboardSummary,
+  type TenantDashboardSeries,
+  type TenantDashboardBreakdown,
   adminSubscriptionMetricsSchema,
   adminBusinessSummarySchema,
   adminRevenueMetricsSchema,
@@ -1657,6 +1663,32 @@ export class AdeniApiClient {
   async getTenantSubscriptionUsage(): Promise<SubscriptionUsage> {
     const response = await this.request("/api/v1/tenant/subscription");
     return subscriptionUsageSchema.parse(await response.json());
+  }
+
+  async getTenantDashboardSummary(from: string, to: string): Promise<TenantDashboardSummary> {
+    const query = new URLSearchParams({ from, to });
+    const response = await this.request(`/api/v1/tenant/dashboard/summary?${query.toString()}`);
+    return tenantDashboardSummarySchema.parse(await response.json());
+  }
+
+  async getTenantDashboardSeries(
+    metric: "appointments" | "collected" | "booked_value",
+    from: string,
+    to: string,
+  ): Promise<TenantDashboardSeries> {
+    const query = new URLSearchParams({ metric, from, to });
+    const response = await this.request(`/api/v1/tenant/dashboard/series?${query.toString()}`);
+    return tenantDashboardSeriesSchema.parse(await response.json());
+  }
+
+  async getTenantDashboardBreakdown(
+    dimension: "status" | "service" | "staff",
+    from: string,
+    to: string,
+  ): Promise<TenantDashboardBreakdown> {
+    const query = new URLSearchParams({ dimension, from, to });
+    const response = await this.request(`/api/v1/tenant/dashboard/breakdown?${query.toString()}`);
+    return tenantDashboardBreakdownSchema.parse(await response.json());
   }
 
   async getTenantBillingHistory(limit = 20): Promise<TenantSubscriptionCharge[]> {

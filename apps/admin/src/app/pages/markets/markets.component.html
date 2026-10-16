@@ -1,4 +1,19 @@
-<app-portal-page title="Markets" description="Enable or disable markets for discovery.">
+<app-portal-page
+  title="Markets"
+  description="Discovery cities and regions. Live markets appear in the public catalog; offline markets keep existing businesses but hide from new discovery."
+>
+  <aside class="workflow-hint card">
+    <strong>What changes when you…</strong>
+    <ul>
+      <li>
+        <strong>Take offline</strong> — Market drops from live discovery and market pickers; existing tenants and bookings stay tied to that market id.
+      </li>
+      <li>
+        <strong>Add a market</strong> — Creates catalog metadata (country, currency, map center). Businesses must still choose the market on their location; go live when ready for discovery.
+      </li>
+    </ul>
+  </aside>
+
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
@@ -19,6 +34,7 @@
       </label>
       <button type="submit" class="btn btn-primary">Search</button>
     </form>
+    <button type="button" class="btn btn-primary" (click)="openCreate()">Add market</button>
     <button type="button" class="btn" [disabled]="loading()" (click)="load()">
       <adeni-carbon-icon name="restart" [size]="16" />
       Refresh
@@ -34,7 +50,7 @@
     <adeni-portal-empty-state
       icon="location--filled"
       title="No markets configured"
-      description="Markets define where discovery and booking are available (Ottawa, Lagos, and future cities)."
+      description="Add Ottawa, Lagos, or the next city where discovery should run."
     />
   } @else {
     <section class="card data-table-wrap">
@@ -44,6 +60,7 @@
             <th scope="col">Market</th>
             <th scope="col">Country</th>
             <th scope="col">Currency</th>
+            <th scope="col">Businesses</th>
             <th scope="col">Status</th>
             <th scope="col"><span class="visually-hidden">Actions</span></th>
           </tr>
@@ -62,13 +79,24 @@
                 <admin-pill [label]="market.currency" variant="info" [compact]="true" />
               </td>
               <td>
+                <a
+                  class="count-link"
+                  [routerLink]="['/businesses']"
+                  [queryParams]="{ q: market.id }"
+                  >{{ market.businessCount ?? 0 }}</a
+                >
+              </td>
+              <td>
                 @let live = marketLivePill(market.isLive);
                 <admin-pill [label]="live.label" [variant]="live.variant" />
               </td>
               <td class="actions-cell">
-                <button type="button" class="btn" (click)="toggleLive(market)">
-                  {{ market.isLive ? "Take offline" : "Go live" }}
-                </button>
+                <div class="actions-inline">
+                  <button type="button" class="btn" (click)="openEdit(market)">Edit</button>
+                  <button type="button" class="btn" (click)="toggleLive(market)">
+                    {{ market.isLive ? "Take offline" : "Go live" }}
+                  </button>
+                </div>
               </td>
             </tr>
           }
@@ -93,4 +121,13 @@
       </nav>
     }
   }
+
+  <app-market-form-modal
+    [open]="formOpen()"
+    [mode]="formMode()"
+    [market]="editingMarket()"
+    [saving]="formSaving()"
+    (closed)="closeForm()"
+    (save)="saveForm($event)"
+  />
 </app-portal-page>

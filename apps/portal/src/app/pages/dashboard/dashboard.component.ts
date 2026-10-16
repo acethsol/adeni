@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import {
   BOOKING_STATUS_LABELS,
+  DASHBOARD_RANGE_PRESETS,
   formatBookingUsage,
   formatPrice,
   formatSlotTime,
@@ -13,9 +14,11 @@ import {
   hasTenantEntitlement,
   isNearBookingLimit,
   resolveCapabilities,
+  resolveDashboardRange,
   subscriptionTierToSku,
   type BookingResponse,
   type BusinessProfile,
+  type DashboardRangePreset,
   type ServiceOffering,
   type SubscriptionUsage,
 } from "@adeni/shared";
@@ -30,8 +33,6 @@ import { PortalSessionService } from "../../core/services/portal-session.service
 
 type DayBar = { label: string; count: number; isToday: boolean; height: number };
 type StatusSlice = { status: number; label: string; count: number; percent: number };
-
-const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 @Component({
   selector: "app-dashboard",
@@ -65,6 +66,9 @@ export class DashboardComponent implements OnInit {
   readonly mix = signal<StatusSlice[]>([]);
   readonly today = signal<BookingResponse[]>([]);
   readonly usage = signal<SubscriptionUsage | null>(null);
+  readonly rangePreset = signal<DashboardRangePreset>("7d");
+  readonly appointmentsInRange = signal(0);
+  readonly rangePresets = DASHBOARD_RANGE_PRESETS;
 
   readonly formatBookingUsage = formatBookingUsage;
   readonly isNearBookingLimit = isNearBookingLimit;
@@ -146,6 +150,18 @@ export class DashboardComponent implements OnInit {
     return "Plan usage and appointments — booked value is list price, not cash in bank until you collect payment.";
   }
 
+  rangeLabel(): string {
+    return this.rangePresets.find((entry) => entry.id === this.rangePreset())?.label ?? "Range";
+  }
+
+  setRange(preset: DashboardRangePreset): void {
+    if (preset === this.rangePreset()) {
+      return;
+    }
+    this.rangePreset.set(preset);
+    void this.load();
+  }
+
   usagePercent(): number {
     const usage = this.usage();
     if (!usage?.bookingsLimitThisMonth) return 0;
@@ -155,33 +171,16 @@ export class DashboardComponent implements OnInit {
   async load(): Promise<void> {
     this.loadError.set(false);
     try {
+      const range = resolveDashboardRange(this.rangePreset());
       const snapshot = await this.businessApi.withAuthorizedClient(async (client) => {
         const profile = await client.getTenantProfile();
-        const [bookings, services, usage] = await Promise.all([
+        const [bookings, services, usage, summary, series] = await Promise.all([
           client.getTenantBookings(),
           client.getTenantServices(),
           client.getTenantSubscriptionUsage().catch(() => null),
+          client.getTenantDashboardSummary(range.from, range.to),
+          client.getTenantDashboardSeries("appointments", range.from, range.to).catch(() => null),
         ]);
-        const caps = resolveCapabilities(
-          profile.businessType,
-          profile.categorySlug,
-          profile.capabilities,
-        );
-        let collectedTotal: number | null = null;
-        let collectedCurrency = services[0]?.currency ?? "NGN";
-        if (hasCapability(caps, "deposits")) {
-          try {
-            const ledgerPage = await client.listPaymentLedger(profile.tenantId, 1, 100);
-            collectedTotal = ledgerPage.items
-              .filter((entry) => entry.status === "completed")
-              .reduce((sum, entry) => sum + entry.amount, 0);
-            if (ledgerPage.items[0]?.currency) {
-              collectedCurrency = ledgerPage.items[0].currency;
-            }
-          } catch {
-            collectedTotal = null;
-          }
-        }
         const location = profile.locations.find((item) => item.isPrimary) ?? profile.locations[0];
         let rating: { avg: number | null; count: number } | null = null;
         if (location) {
@@ -195,16 +194,16 @@ export class DashboardComponent implements OnInit {
             rating = null;
           }
         }
-        return { profile, bookings, services, usage, rating, collectedTotal, collectedCurrency };
+        return { profile, bookings, services, usage, rating, summary, series };
       });
 
       this.profile.set(snapshot.profile);
-      const useCollected = snapshot.collectedTotal != null;
-      this.revenueUsesCollected.set(useCollected);
-      this.applyBookings(snapshot.bookings, snapshot.services, useCollected);
-      if (useCollected) {
-        this.revenueLabel.set(formatPrice(snapshot.collectedTotal!, snapshot.collectedCurrency));
-        this.revenueHint.set("Completed online payments (ledger)");
+      this.pendingCount.set(snapshot.summary.pendingCount);
+      this.appointmentsInRange.set(snapshot.summary.appointmentsCount);
+      this.applyRevenueFromSummary(snapshot.summary);
+      this.applyBookings(snapshot.bookings, snapshot.services, this.revenueUsesCollected());
+      if (snapshot.series?.points.length) {
+        this.applySeriesBars(snapshot.series.points);
       }
       this.usage.set(snapshot.usage);
       if (snapshot.rating?.avg) {
@@ -221,45 +220,57 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  private applyRevenueFromSummary(summary: {
+    analyticsIncluded: boolean;
+    collectedAmount?: number | null;
+    bookedValueAmount?: number | null;
+    currency?: string | null;
+  }): void {
+    const currency = summary.currency ?? "NGN";
+    if (summary.analyticsIncluded && summary.collectedAmount != null && summary.collectedAmount > 0) {
+      this.revenueUsesCollected.set(true);
+      this.revenueLabel.set(formatPrice(summary.collectedAmount, currency));
+      this.revenueHint.set(`Collected online in ${this.rangeLabel().toLowerCase()}`);
+      return;
+    }
+
+    if (summary.analyticsIncluded && summary.bookedValueAmount != null) {
+      this.revenueUsesCollected.set(false);
+      this.revenueLabel.set(formatPrice(summary.bookedValueAmount, currency));
+      this.revenueHint.set(`Booked list value in ${this.rangeLabel().toLowerCase()} (not cash in bank)`);
+      return;
+    }
+
+    this.revenueUsesCollected.set(false);
+    this.revenueLabel.set("—");
+    this.revenueHint.set("Upgrade to Professional for revenue analytics in this range.");
+  }
+
+  private applySeriesBars(points: { date: string; value: number }[]): void {
+    const trimmed = points.slice(-14);
+    const max = Math.max(1, ...trimmed.map((point) => point.value));
+    const todayKey = new Date().toISOString().slice(0, 10);
+    this.week.set(
+      trimmed.map((point) => {
+        const date = new Date(`${point.date}T12:00:00Z`);
+        const label = date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+        const count = point.value;
+        return {
+          label,
+          count,
+          isToday: point.date === todayKey,
+          height: count === 0 ? 6 : Math.max(12, Math.round((count / max) * 100)),
+        };
+      }),
+    );
+  }
+
   private applyBookings(
     bookings: BookingResponse[],
     services: ServiceOffering[],
-    revenueFromLedger: boolean,
+    _revenueFromLedger: boolean,
   ): void {
-    this.pendingCount.set(bookings.filter((item) => item.status === 0).length);
     this.activeServices.set(services.filter((item) => item.isActive).length);
-
-    if (!revenueFromLedger) {
-      const prices = new Map(services.map((service) => [service.id, service.priceAmount]));
-      const booked = bookings
-        .filter((item) => item.status === 1 || item.status === 4 || item.status === 5)
-        .reduce((sum, item) => sum + (prices.get(item.serviceOfferingId) ?? 0), 0);
-      const currency = services[0]?.currency ?? "NGN";
-      this.revenueLabel.set(formatPrice(booked, currency));
-      this.revenueHint.set("List price — scheduled & in-progress visits (not cash in bank)");
-    }
-
-    const weekStart = startOfWeek(new Date());
-    const counts = DAY_LABELS.map((label, index) => {
-      const dayDate = new Date(weekStart);
-      dayDate.setDate(weekStart.getDate() + index);
-      const count = bookings.filter((booking) => {
-        if (booking.status === 2 || booking.status === 3) return false;
-        return new Date(booking.startAt).toDateString() === dayDate.toDateString();
-      }).length;
-      return {
-        label,
-        count,
-        isToday: dayDate.toDateString() === new Date().toDateString(),
-      };
-    });
-    const max = Math.max(1, ...counts.map((day) => day.count));
-    this.week.set(
-      counts.map((day) => ({
-        ...day,
-        height: day.count === 0 ? 6 : Math.max(12, Math.round((day.count / max) * 100)),
-      })),
-    );
 
     const total = bookings.length || 1;
     this.mix.set(
@@ -284,13 +295,4 @@ export class DashboardComponent implements OnInit {
         .sort((a, b) => a.startAt.localeCompare(b.startAt)),
     );
   }
-}
-
-function startOfWeek(date: Date): Date {
-  const result = new Date(date);
-  const day = result.getDay();
-  const diff = (day === 0 ? -6 : 1) - day;
-  result.setDate(result.getDate() + diff);
-  result.setHours(0, 0, 0, 0);
-  return result;
 }

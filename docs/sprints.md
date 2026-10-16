@@ -483,8 +483,8 @@ Composable **widgets**, **charts**, and **per-user customizable layout** on port
 
 | Task | Status |
 |------|--------|
-| **32a** Foundation — honest KPIs, plan strip, gated shortcuts | Done (local) |
-| **32b** Widget grid + Carbon charts + default layout + edit mode | Planned |
+| **32a** Foundation — honest KPIs, plan strip, gated shortcuts | Done |
+| **32b** Widget grid + Carbon charts + default layout + edit mode | In progress — aggregates API + range toolbar shipped; charts/edit/layout TBD |
 | **32c** Layout persistence API + per BusinessUser save | Planned |
 | **32d** Extended widget catalog (queue, staff, quotes, …) | Planned |
 

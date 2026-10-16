@@ -7,6 +7,7 @@ using Adeni.Infrastructure.Admin;
 using Adeni.Infrastructure.Auditing;
 using Adeni.Infrastructure.Auth;
 using Adeni.Infrastructure.Booking;
+using Adeni.Infrastructure.Dashboard;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Catalog;
 using Adeni.Infrastructure.Context;
@@ -68,6 +69,7 @@ public static class ServiceCollectionExtensions
         services.AddTenancyModule();
         services.AddCatalogModule();
         services.AddBookingModule();
+        services.AddDashboardModule();
         services.AddReviewsModule();
         services.AddDiscoveryModule();
         services.AddNotificationsModule();

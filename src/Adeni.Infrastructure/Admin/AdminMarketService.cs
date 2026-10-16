@@ -71,7 +71,21 @@ public sealed partial class AdminMarketService(
             .Take(effectivePageSize)
             .ToListAsync(cancellationToken);
 
-        var items = rows.Select(MapResponse).ToArray();
+        var marketIds = rows.Select(row => row.Id).ToList();
+        var businessCounts = await dbContext.BusinessLocations
+            .AsNoTracking()
+            .Where(loc => loc.IsActive && marketIds.Contains(loc.MarketId))
+            .GroupBy(loc => loc.MarketId)
+            .Select(group => new
+            {
+                MarketId = group.Key,
+                Count = group.Select(loc => loc.TenantId).Distinct().Count(),
+            })
+            .ToDictionaryAsync(x => x.MarketId, x => x.Count, cancellationToken);
+
+        var items = rows
+            .Select(row => MapResponse(row, businessCounts.GetValueOrDefault(row.Id)))
+            .ToArray();
         return Result.Success(new AdminPagedResult<AdminMarketResponse>(
             items,
             effectivePage,
@@ -128,7 +142,7 @@ public sealed partial class AdminMarketService(
             null),
             cancellationToken);
 
-        return Result.Success(MapResponse(entity));
+        return Result.Success(MapResponse(entity, 0));
     }
 
     public async Task<Result<AdminMarketResponse>> UpdateAsync(
@@ -177,7 +191,8 @@ public sealed partial class AdminMarketService(
             null),
             cancellationToken);
 
-        return Result.Success(MapResponse(entity));
+        var businessCount = await CountBusinessesInMarketAsync(entity.Id, cancellationToken);
+        return Result.Success(MapResponse(entity, businessCount));
     }
 
     public async Task<Result<Unit>> SetLiveAsync(
@@ -301,7 +316,15 @@ public sealed partial class AdminMarketService(
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
-    private static AdminMarketResponse MapResponse(CatalogMarket market)
+    private async Task<int> CountBusinessesInMarketAsync(string marketId, CancellationToken cancellationToken) =>
+        await dbContext.BusinessLocations
+            .AsNoTracking()
+            .Where(loc => loc.IsActive && loc.MarketId == marketId)
+            .Select(loc => loc.TenantId)
+            .Distinct()
+            .CountAsync(cancellationToken);
+
+    private static AdminMarketResponse MapResponse(CatalogMarket market, int businessCount)
     {
         var languages = JsonSerializer.Deserialize<List<string>>(market.LanguagesJson, SerializerOptions)
             ?? [];
@@ -317,7 +340,8 @@ public sealed partial class AdminMarketService(
             languages,
             market.IsLive,
             market.LaunchNote,
-            market.UpdatedAt);
+            market.UpdatedAt,
+            businessCount);
     }
 
     [GeneratedRegex("^[a-z][a-z0-9-]{0,30}[a-z0-9]$|^[a-z]{2}$")]

@@ -9,7 +9,20 @@
   </section>
 } @else if (profile(); as business) {
   <app-portal-page title="Dashboard" [description]="pageDescription()">
-  <section class="hero">
+    <div pageActions class="range-toolbar">
+      @for (preset of rangePresets; track preset.id) {
+        <button
+          type="button"
+          class="btn range-btn"
+          [class.active]="rangePreset() === preset.id"
+          (click)="setRange(preset.id)"
+        >
+          {{ preset.label }}
+        </button>
+      }
+    </div>
+  <div class="widget-grid">
+  <section class="hero widget-span-12">
     <div>
       <p class="kicker">{{ categoryLine() }}</p>
       <h2>{{ business.businessName }}</h2>
@@ -75,11 +88,16 @@
     </a>
   }
 
-  <section class="stats">
+  <section class="stats widget-span-12">
     <article>
       <p class="stat-label">Pending</p>
       <p class="stat-value">{{ pendingCount() }}</p>
       <p class="stat-hint">Awaiting a yes or no</p>
+    </article>
+    <article>
+      <p class="stat-label">Appointments</p>
+      <p class="stat-value">{{ appointmentsInRange() }}</p>
+      <p class="stat-hint">In {{ rangeLabel().toLowerCase() }}</p>
     </article>
     <article>
       <p class="stat-label">On the menu</p>
@@ -100,10 +118,10 @@
     </article>
   </section>
 
-  <section class="split">
+  <section class="split widget-span-12">
     <article class="panel">
-      <h3>This week</h3>
-      <p class="hint">Appointments still on the book, Monday to Sunday.</p>
+      <h3>Appointments over time</h3>
+      <p class="hint">Daily count for {{ rangeLabel().toLowerCase() }}.</p>
       <div class="bars">
         @for (day of week(); track day.label) {
           <div class="bar" [class.today]="day.isToday">
@@ -142,7 +160,7 @@
     </article>
   </section>
 
-  <section class="panel mix">
+  <section class="panel mix widget-span-12">
     <h3>Booking mix</h3>
     <div class="mix-bar">
       @for (slice of mix(); track slice.status) {
@@ -162,8 +180,9 @@
     </ul>
   </section>
 
-  <section>
-    <h3 class="section-title">Run the floor</h3>
+  <section class="widget-span-12">
+    <h3 class="section-title">Shortcuts</h3>
+    <p class="section-lead muted">Jump to the tools you use most during a shift.</p>
     <div class="actions">
       @if (offers("calendar")) {
         <a routerLink="/bookings" [queryParams]="{ tab: 'pending' }">
@@ -208,6 +227,7 @@
       }
     </div>
   </section>
+  </div>
   </app-portal-page>
 } @else {
   <section class="panel">

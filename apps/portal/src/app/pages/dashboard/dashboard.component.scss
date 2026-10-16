@@ -2,6 +2,38 @@
   display: block;
 }
 
+.widget-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.widget-span-12 {
+  grid-column: 1 / -1;
+}
+
+.range-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.range-btn {
+  min-height: 2rem;
+  padding: 0 0.65rem;
+  font-size: 0.8125rem;
+}
+
+.range-btn.active {
+  border-color: var(--interactive, #7f56ff);
+  color: var(--interactive, #7f56ff);
+}
+
+.section-lead {
+  margin: -0.35rem 0 0.75rem;
+  font-size: 0.875rem;
+}
+
 .hero,
 .panel,
 .usage,

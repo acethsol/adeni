@@ -1,0 +1,156 @@
+<adeni-modal
+  [open]="open()"
+  [title]="isCreate() ? 'Add market' : 'Edit market'"
+  [subtitle]="
+    isCreate()
+      ? 'New markets start offline unless you check Go live. Discovery only lists live markets.'
+      : 'Update catalog metadata. Use Take offline / Go live on the grid for visibility.'
+  "
+  size="lg"
+  [hasFooter]="true"
+  (closed)="onClose()"
+>
+  @if (form(); as f) {
+    <form class="market-form" (ngSubmit)="onSubmit(); $event.preventDefault()">
+      @if (isCreate()) {
+        <label>
+          Market id
+          <input
+            required
+            pattern="[a-z][a-z0-9-]*"
+            [ngModel]="f.id"
+            (ngModelChange)="patch({ id: $event })"
+            name="id"
+            placeholder="lagos"
+            autocomplete="off"
+          />
+          <span class="hint">Lowercase slug used in URLs and location records.</span>
+        </label>
+      } @else {
+        <p class="readonly-id"><strong>Id:</strong> {{ f.id }}</p>
+      }
+
+      <label>
+        Display name
+        <input
+          required
+          [ngModel]="f.name"
+          (ngModelChange)="patch({ name: $event })"
+          name="name"
+          placeholder="Lagos"
+        />
+      </label>
+
+      <div class="grid">
+        <label>
+          Country (ISO)
+          <input
+            required
+            maxlength="2"
+            [ngModel]="f.countryCode"
+            (ngModelChange)="patch({ countryCode: $event })"
+            name="countryCode"
+          />
+        </label>
+        <label>
+          Currency (ISO)
+          <input
+            required
+            maxlength="3"
+            [ngModel]="f.currency"
+            (ngModelChange)="patch({ currency: $event })"
+            name="currency"
+          />
+        </label>
+      </div>
+
+      <label>
+        Time zone (IANA)
+        <input
+          required
+          [ngModel]="f.timeZoneId"
+          (ngModelChange)="patch({ timeZoneId: $event })"
+          name="timeZoneId"
+          placeholder="Africa/Lagos"
+        />
+      </label>
+
+      <div class="grid">
+        <label>
+          Default latitude
+          <input
+            type="number"
+            step="0.0001"
+            required
+            [ngModel]="f.defaultLat"
+            (ngModelChange)="patch({ defaultLat: +$event })"
+            name="defaultLat"
+          />
+        </label>
+        <label>
+          Default longitude
+          <input
+            type="number"
+            step="0.0001"
+            required
+            [ngModel]="f.defaultLng"
+            (ngModelChange)="patch({ defaultLng: +$event })"
+            name="defaultLng"
+          />
+        </label>
+      </div>
+
+      <fieldset>
+        <legend>Languages</legend>
+        <label class="check">
+          <input
+            type="checkbox"
+            [ngModel]="f.languagesEn"
+            (ngModelChange)="patch({ languagesEn: $event })"
+            name="languagesEn"
+          />
+          English
+        </label>
+        <label class="check">
+          <input
+            type="checkbox"
+            [ngModel]="f.languagesFr"
+            (ngModelChange)="patch({ languagesFr: $event })"
+            name="languagesFr"
+          />
+          French
+        </label>
+      </fieldset>
+
+      @if (isCreate()) {
+        <label class="check">
+          <input
+            type="checkbox"
+            [ngModel]="f.isLive"
+            (ngModelChange)="patch({ isLive: $event })"
+            name="isLive"
+          />
+          Go live immediately
+        </label>
+      }
+
+      <label>
+        Launch note (optional)
+        <textarea
+          rows="2"
+          maxlength="500"
+          [ngModel]="f.launchNote"
+          (ngModelChange)="patch({ launchNote: $event })"
+          name="launchNote"
+        ></textarea>
+      </label>
+
+      <div modalFooter class="modal-footer">
+        <button type="button" class="btn" [disabled]="saving()" (click)="onClose()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="saving()">
+          {{ saving() ? "Saving…" : isCreate() ? "Create market" : "Save changes" }}
+        </button>
+      </div>
+    </form>
+  }
+</adeni-modal>

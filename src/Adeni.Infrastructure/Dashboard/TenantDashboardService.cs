@@ -1,0 +1,400 @@
+namespace Adeni.Infrastructure.Dashboard;
+
+using Adeni.Application.Dashboard;
+using Adeni.Application.Subscriptions;
+using Adeni.Domain.Booking;
+using Adeni.Domain.Common;
+using Adeni.Domain.Payments;
+using Adeni.Domain.Tenancy;
+using Adeni.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+public sealed class TenantDashboardService(
+    AdeniDbContext dbContext,
+    IEntitlementsService entitlementsService) : ITenantDashboardService
+{
+    public async Task<Result<TenantDashboardSummaryResponse>> GetSummaryAsync(
+        Guid tenantId,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        Guid? staffMemberId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var tenant = await dbContext.Tenants.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+        if (tenant is null)
+        {
+            return Result.Failure<TenantDashboardSummaryResponse>(Error.NotFound("Tenant"));
+        }
+
+        var entitlements = entitlementsService.GetEntitlementsForTenant(tenant);
+        var bookingQuery = ScopedBookings(tenantId, staffMemberId);
+
+        var pendingCount = await bookingQuery
+            .CountAsync(x => x.Status == BookingStatus.Pending, cancellationToken);
+
+        var inRange = bookingQuery.Where(x =>
+            x.StartAt >= from && x.StartAt < to
+            && x.Status != BookingStatus.Cancelled
+            && x.Status != BookingStatus.Rejected);
+
+        var appointmentsCount = await inRange.CountAsync(cancellationToken);
+
+        string? currency = await dbContext.ServiceOfferings.AsNoTracking()
+            .Where(x => x.TenantId == tenantId && x.IsActive)
+            .Select(x => x.Currency)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        decimal? collected = null;
+        decimal? bookedValue = null;
+
+        if (entitlements.Analytics)
+        {
+            collected = await dbContext.PaymentIntents.AsNoTracking()
+                .Where(x =>
+                    x.TenantId == tenantId
+                    && x.Status == PaymentIntentStatus.Completed
+                    && x.UpdatedAt >= from
+                    && x.UpdatedAt < to)
+                .SumAsync(x => (decimal?)x.Amount, cancellationToken);
+
+            if (collected is > 0)
+            {
+                currency = await dbContext.PaymentIntents.AsNoTracking()
+                    .Where(x =>
+                        x.TenantId == tenantId
+                        && x.Status == PaymentIntentStatus.Completed
+                        && x.UpdatedAt >= from
+                        && x.UpdatedAt < to)
+                    .Select(x => x.Currency)
+                    .FirstOrDefaultAsync(cancellationToken) ?? currency;
+            }
+
+            var bookedIds = await inRange
+                .Where(x =>
+                    x.Status == BookingStatus.Confirmed
+                    || x.Status == BookingStatus.CheckedIn
+                    || x.Status == BookingStatus.Completed
+                    || x.Status == BookingStatus.Paid)
+                .Select(x => x.Id)
+                .ToListAsync(cancellationToken);
+
+            if (bookedIds.Count > 0)
+            {
+                bookedValue = await dbContext.BookingLines.AsNoTracking()
+                    .Where(x => x.TenantId == tenantId && bookedIds.Contains(x.BookingId))
+                    .SumAsync(x => (decimal?)x.PriceAmount, cancellationToken);
+            }
+            else
+            {
+                bookedValue = 0m;
+            }
+        }
+
+        return Result.Success(new TenantDashboardSummaryResponse(
+            from,
+            to,
+            pendingCount,
+            appointmentsCount,
+            collected,
+            bookedValue,
+            currency,
+            entitlements.Analytics));
+    }
+
+    public async Task<Result<TenantDashboardSeriesResponse>> GetSeriesAsync(
+        Guid tenantId,
+        string metric,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        Guid? staffMemberId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var tenant = await dbContext.Tenants.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+        if (tenant is null)
+        {
+            return Result.Failure<TenantDashboardSeriesResponse>(Error.NotFound("Tenant"));
+        }
+
+        var entitlements = entitlementsService.GetEntitlementsForTenant(tenant);
+        if (!entitlements.Analytics)
+        {
+            return Result.Failure<TenantDashboardSeriesResponse>(AnalyticsRequiredError());
+        }
+
+        var normalized = metric.Trim().ToLowerInvariant();
+        IReadOnlyList<TenantDashboardSeriesPoint> points;
+        string? currency = null;
+
+        switch (normalized)
+        {
+            case "appointments":
+                points = await BuildAppointmentSeriesAsync(tenantId, from, to, staffMemberId, cancellationToken);
+                break;
+            case "collected":
+                (points, currency) = await BuildCollectedSeriesAsync(tenantId, from, to, cancellationToken);
+                break;
+            case "booked_value":
+                points = await BuildBookedValueSeriesAsync(tenantId, from, to, staffMemberId, cancellationToken);
+                currency = await dbContext.ServiceOfferings.AsNoTracking()
+                    .Where(x => x.TenantId == tenantId && x.IsActive)
+                    .Select(x => x.Currency)
+                    .FirstOrDefaultAsync(cancellationToken);
+                break;
+            default:
+                return Result.Failure<TenantDashboardSeriesResponse>(
+                    Error.Validation("Invalid metric. Use appointments, collected, or booked_value."));
+        }
+
+        return Result.Success(new TenantDashboardSeriesResponse(
+            normalized,
+            from,
+            to,
+            currency,
+            points));
+    }
+
+    public async Task<Result<TenantDashboardBreakdownResponse>> GetBreakdownAsync(
+        Guid tenantId,
+        string dimension,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        Guid? staffMemberId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var tenant = await dbContext.Tenants.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+        if (tenant is null)
+        {
+            return Result.Failure<TenantDashboardBreakdownResponse>(Error.NotFound("Tenant"));
+        }
+
+        if (!entitlementsService.GetEntitlementsForTenant(tenant).Analytics)
+        {
+            return Result.Failure<TenantDashboardBreakdownResponse>(AnalyticsRequiredError());
+        }
+
+        var normalized = dimension.Trim().ToLowerInvariant();
+        var bookingQuery = ScopedBookings(tenantId, staffMemberId)
+            .Where(x =>
+                x.StartAt >= from
+                && x.StartAt < to
+                && x.Status != BookingStatus.Cancelled
+                && x.Status != BookingStatus.Rejected);
+
+        IReadOnlyList<TenantDashboardBreakdownItem> items = normalized switch
+        {
+            "status" => await bookingQuery
+                .GroupBy(x => x.Status)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .OrderByDescending(x => x.Count)
+                .Select(x => new TenantDashboardBreakdownItem(
+                    ((int)x.Status).ToString(),
+                    x.Status.ToString(),
+                    x.Count))
+                .ToListAsync(cancellationToken),
+            "service" => await BuildServiceBreakdownAsync(bookingQuery, tenantId, cancellationToken),
+            "staff" => await BuildStaffBreakdownAsync(bookingQuery, cancellationToken),
+            _ => Array.Empty<TenantDashboardBreakdownItem>(),
+        };
+
+        if (items.Count == 0 && normalized is not ("status" or "service" or "staff"))
+        {
+            return Result.Failure<TenantDashboardBreakdownResponse>(
+                Error.Validation("Invalid dimension. Use status, service, or staff."));
+        }
+
+        return Result.Success(new TenantDashboardBreakdownResponse(normalized, from, to, items));
+    }
+
+    private IQueryable<BookingRecord> ScopedBookings(Guid tenantId, Guid? staffMemberId)
+    {
+        var query = dbContext.Bookings.AsNoTracking().Where(x => x.TenantId == tenantId);
+        if (staffMemberId is Guid staffId)
+        {
+            query = query.Where(x => x.StaffMemberId == staffId);
+        }
+
+        return query;
+    }
+
+    private async Task<IReadOnlyList<TenantDashboardSeriesPoint>> BuildAppointmentSeriesAsync(
+        Guid tenantId,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        Guid? staffMemberId,
+        CancellationToken cancellationToken)
+    {
+        var rows = await ScopedBookings(tenantId, staffMemberId)
+            .Where(x =>
+                x.StartAt >= from
+                && x.StartAt < to
+                && x.Status != BookingStatus.Cancelled
+                && x.Status != BookingStatus.Rejected)
+            .GroupBy(x => DateOnly.FromDateTime(x.StartAt.UtcDateTime))
+            .Select(g => new { Date = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+
+        return FillDailyPoints(from, to, rows.ToDictionary(x => x.Date, x => (decimal)x.Count));
+    }
+
+    private async Task<(IReadOnlyList<TenantDashboardSeriesPoint> Points, string? Currency)> BuildCollectedSeriesAsync(
+        Guid tenantId,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        CancellationToken cancellationToken)
+    {
+        var rows = await dbContext.PaymentIntents.AsNoTracking()
+            .Where(x =>
+                x.TenantId == tenantId
+                && x.Status == PaymentIntentStatus.Completed
+                && x.UpdatedAt >= from
+                && x.UpdatedAt < to)
+            .GroupBy(x => DateOnly.FromDateTime(x.UpdatedAt.UtcDateTime))
+            .Select(g => new { Date = g.Key, Total = g.Sum(x => x.Amount) })
+            .ToListAsync(cancellationToken);
+
+        var currency = await dbContext.PaymentIntents.AsNoTracking()
+            .Where(x =>
+                x.TenantId == tenantId
+                && x.Status == PaymentIntentStatus.Completed
+                && x.UpdatedAt >= from
+                && x.UpdatedAt < to)
+            .Select(x => x.Currency)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return (
+            FillDailyPoints(from, to, rows.ToDictionary(x => x.Date, x => x.Total)),
+            currency);
+    }
+
+    private async Task<IReadOnlyList<TenantDashboardSeriesPoint>> BuildBookedValueSeriesAsync(
+        Guid tenantId,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        Guid? staffMemberId,
+        CancellationToken cancellationToken)
+    {
+        var bookingIds = await ScopedBookings(tenantId, staffMemberId)
+            .Where(x =>
+                x.StartAt >= from
+                && x.StartAt < to
+                && (x.Status == BookingStatus.Confirmed
+                    || x.Status == BookingStatus.CheckedIn
+                    || x.Status == BookingStatus.Completed
+                    || x.Status == BookingStatus.Paid))
+            .Select(x => new { x.Id, Date = DateOnly.FromDateTime(x.StartAt.UtcDateTime) })
+            .ToListAsync(cancellationToken);
+
+        if (bookingIds.Count == 0)
+        {
+            return FillDailyPoints(from, to, new Dictionary<DateOnly, decimal>());
+        }
+
+        var idSet = bookingIds.Select(x => x.Id).ToHashSet();
+        var lineTotals = await dbContext.BookingLines.AsNoTracking()
+            .Where(x => x.TenantId == tenantId && idSet.Contains(x.BookingId))
+            .GroupBy(x => x.BookingId)
+            .Select(g => new { BookingId = g.Key, Total = g.Sum(x => x.PriceAmount) })
+            .ToListAsync(cancellationToken);
+
+        var dateByBooking = bookingIds.ToDictionary(x => x.Id, x => x.Date);
+        var byDate = new Dictionary<DateOnly, decimal>();
+        foreach (var row in lineTotals)
+        {
+            if (!dateByBooking.TryGetValue(row.BookingId, out var date))
+            {
+                continue;
+            }
+
+            byDate[date] = byDate.GetValueOrDefault(date) + row.Total;
+        }
+
+        return FillDailyPoints(from, to, byDate);
+    }
+
+    private static IReadOnlyList<TenantDashboardSeriesPoint> FillDailyPoints(
+        DateTimeOffset from,
+        DateTimeOffset to,
+        Dictionary<DateOnly, decimal> values)
+    {
+        var start = DateOnly.FromDateTime(from.UtcDateTime);
+        var end = DateOnly.FromDateTime(to.UtcDateTime.AddDays(-1));
+        if (end < start)
+        {
+            end = start;
+        }
+
+        var points = new List<TenantDashboardSeriesPoint>();
+        for (var day = start; day <= end; day = day.AddDays(1))
+        {
+            points.Add(new TenantDashboardSeriesPoint(day, values.GetValueOrDefault(day)));
+        }
+
+        return points;
+    }
+
+    private async Task<IReadOnlyList<TenantDashboardBreakdownItem>> BuildServiceBreakdownAsync(
+        IQueryable<BookingRecord> bookingQuery,
+        Guid tenantId,
+        CancellationToken cancellationToken)
+    {
+        var rows = await bookingQuery
+            .GroupBy(x => x.ServiceOfferingId)
+            .Select(g => new { ServiceId = g.Key, Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .Take(12)
+            .ToListAsync(cancellationToken);
+
+        if (rows.Count == 0)
+        {
+            return Array.Empty<TenantDashboardBreakdownItem>();
+        }
+
+        var serviceIds = rows.Select(x => x.ServiceId).ToArray();
+        var names = await dbContext.ServiceOfferings.AsNoTracking()
+            .Where(x => x.TenantId == tenantId && serviceIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, x => x.Name, cancellationToken);
+
+        return rows
+            .Select(row => new TenantDashboardBreakdownItem(
+                row.ServiceId.ToString(),
+                names.GetValueOrDefault(row.ServiceId, "Service"),
+                row.Count))
+            .ToArray();
+    }
+
+    private async Task<IReadOnlyList<TenantDashboardBreakdownItem>> BuildStaffBreakdownAsync(
+        IQueryable<BookingRecord> bookingQuery,
+        CancellationToken cancellationToken)
+    {
+        var rows = await bookingQuery
+            .Where(x => x.StaffMemberId != null)
+            .GroupBy(x => x.StaffMemberId!.Value)
+            .Select(g => new { StaffId = g.Key, Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .Take(12)
+            .ToListAsync(cancellationToken);
+
+        if (rows.Count == 0)
+        {
+            return Array.Empty<TenantDashboardBreakdownItem>();
+        }
+
+        var staffIds = rows.Select(x => x.StaffId).ToArray();
+        var names = await dbContext.StaffMembers.AsNoTracking()
+            .Where(x => staffIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, x => x.DisplayName, cancellationToken);
+
+        return rows
+            .Select(row => new TenantDashboardBreakdownItem(
+                row.StaffId.ToString(),
+                names.GetValueOrDefault(row.StaffId, "Staff"),
+                row.Count))
+            .ToArray();
+    }
+
+    private static Error AnalyticsRequiredError() =>
+        new("entitlements.analytics_required", "Analytics requires Professional or Business plan.");
+}

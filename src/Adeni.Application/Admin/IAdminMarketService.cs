@@ -13,7 +13,8 @@ public sealed record AdminMarketResponse(
     IReadOnlyList<string> Languages,
     bool IsLive,
     string? LaunchNote,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    int BusinessCount);
 
 public sealed record CreateMarketRequest(
     string Id,

@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { ActivatedRoute, Router } from "@angular/router";
+import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import type { AdminMarket } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
@@ -18,6 +18,11 @@ import {
 import { adminLoadErrorMessage } from "../../shared/admin-load-error";
 import { AdminPillComponent } from "../../shared/admin-pill.component";
 import { marketLivePill } from "../../shared/admin-pill-maps";
+import {
+  MarketFormModalComponent,
+  type MarketFormMode,
+  type MarketFormValue,
+} from "./market-form-modal.component";
 
 @Component({
   selector: "app-admin-markets",
@@ -25,9 +30,11 @@ import { marketLivePill } from "../../shared/admin-pill-maps";
   imports: [
     PortalPageComponent,
     FormsModule,
+    RouterLink,
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
     AdminPillComponent,
+    MarketFormModalComponent,
   ],
   templateUrl: "./markets.component.html",
   styleUrl: "./markets.component.scss",
@@ -50,6 +57,11 @@ export class AdminMarketsComponent {
     adminListRangeLabel(this.page(), this.pageSize, this.totalCount()),
   );
   readonly isEmptyCatalog = computed(() => !this.loading() && this.totalCount() === 0);
+
+  readonly formOpen = signal(false);
+  readonly formMode = signal<MarketFormMode>("create");
+  readonly editingMarket = signal<AdminMarket | null>(null);
+  readonly formSaving = signal(false);
 
   readonly marketLivePill = marketLivePill;
 
@@ -103,6 +115,93 @@ export class AdminMarketsComponent {
       queryParams: { page: page === 1 ? null : page },
       queryParamsHandling: "merge",
     });
+  }
+
+  openCreate(): void {
+    this.formMode.set("create");
+    this.editingMarket.set(null);
+    this.formOpen.set(true);
+  }
+
+  openEdit(market: AdminMarket): void {
+    this.formMode.set("edit");
+    this.editingMarket.set(market);
+    this.formOpen.set(true);
+  }
+
+  closeForm(): void {
+    this.formOpen.set(false);
+    this.editingMarket.set(null);
+    this.formSaving.set(false);
+  }
+
+  async saveForm(value: MarketFormValue): Promise<void> {
+    const languages: string[] = [];
+    if (value.languagesEn) {
+      languages.push("en");
+    }
+    if (value.languagesFr) {
+      languages.push("fr");
+    }
+    if (languages.length === 0) {
+      this.feedback.error("Select at least one language.");
+      return;
+    }
+
+    this.formSaving.set(true);
+    try {
+      if (this.formMode() === "create") {
+        await this.feedback.runLoading(
+          () =>
+            this.api.withAuthorizedClient((c) =>
+              c.createAdminMarket({
+                id: value.id.trim().toLowerCase(),
+                name: value.name.trim(),
+                countryCode: value.countryCode.trim().toUpperCase(),
+                currency: value.currency.trim().toUpperCase(),
+                timeZoneId: value.timeZoneId.trim(),
+                defaultLat: value.defaultLat,
+                defaultLng: value.defaultLng,
+                languages,
+                isLive: value.isLive,
+                launchNote: value.launchNote.trim() || null,
+              }),
+            ),
+          "Creating market…",
+          value.name,
+        );
+        this.feedback.success("Market created.", value.name);
+      } else {
+        const id = this.editingMarket()?.id;
+        if (!id) {
+          return;
+        }
+        await this.feedback.runLoading(
+          () =>
+            this.api.withAuthorizedClient((c) =>
+              c.updateAdminMarket(id, {
+                name: value.name.trim(),
+                countryCode: value.countryCode.trim().toUpperCase(),
+                currency: value.currency.trim().toUpperCase(),
+                timeZoneId: value.timeZoneId.trim(),
+                defaultLat: value.defaultLat,
+                defaultLng: value.defaultLng,
+                languages,
+                launchNote: value.launchNote.trim() || null,
+              }),
+            ),
+          "Saving market…",
+          value.name,
+        );
+        this.feedback.success("Market updated.", value.name);
+      }
+      this.closeForm();
+      await this.load();
+    } catch {
+      this.feedback.error("Could not save market.");
+    } finally {
+      this.formSaving.set(false);
+    }
   }
 
   async toggleLive(market: AdminMarket): Promise<void> {

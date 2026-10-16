@@ -254,6 +254,7 @@ export const adminMarketSchema = z.object({
   isLive: z.boolean(),
   launchNote: z.string().nullable().optional(),
   updatedAt: z.string(),
+  businessCount: z.number().int().nonnegative().optional().default(0),
 });
 
 export const adminMarketsResponseSchema = adminPagedResultSchema(adminMarketSchema);
@@ -971,6 +972,49 @@ export const subscriptionUsageSchema = z.object({
 });
 
 export type SubscriptionUsage = z.infer<typeof subscriptionUsageSchema>;
+
+export const tenantDashboardSummarySchema = z.object({
+  from: z.string(),
+  to: z.string(),
+  pendingCount: z.number().int().nonnegative(),
+  appointmentsCount: z.number().int().nonnegative(),
+  collectedAmount: z.number().nullable().optional(),
+  bookedValueAmount: z.number().nullable().optional(),
+  currency: z.string().nullable().optional(),
+  analyticsIncluded: z.boolean(),
+});
+
+export type TenantDashboardSummary = z.infer<typeof tenantDashboardSummarySchema>;
+
+export const tenantDashboardSeriesPointSchema = z.object({
+  date: z.string(),
+  value: z.number(),
+});
+
+export const tenantDashboardSeriesSchema = z.object({
+  metric: z.string(),
+  from: z.string(),
+  to: z.string(),
+  currency: z.string().nullable().optional(),
+  points: z.array(tenantDashboardSeriesPointSchema),
+});
+
+export type TenantDashboardSeries = z.infer<typeof tenantDashboardSeriesSchema>;
+
+export const tenantDashboardBreakdownItemSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  value: z.number(),
+});
+
+export const tenantDashboardBreakdownSchema = z.object({
+  dimension: z.enum(["status", "service", "staff"]),
+  from: z.string(),
+  to: z.string(),
+  items: z.array(tenantDashboardBreakdownItemSchema),
+});
+
+export type TenantDashboardBreakdown = z.infer<typeof tenantDashboardBreakdownSchema>;
 
 export const subscriptionCheckoutRequestSchema = z.object({
   tenantId: z.string().uuid(),

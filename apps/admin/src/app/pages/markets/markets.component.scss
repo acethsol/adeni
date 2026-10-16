@@ -1,1 +1,18 @@
 @use "../../shared/admin-list-page" as *;
+
+.workflow-hint ul {
+  margin: 0.35rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.count-link {
+  font-weight: 600;
+  color: var(--adeni-purple, #7f56ff);
+  text-decoration: none;
+}
+
+.count-link:hover {
+  text-decoration: underline;
+}
