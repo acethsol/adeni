@@ -15,16 +15,56 @@ export type AdminNavIconName =
   | "portal"
   | "search";
 
+export type AdminNavGroupId = "operations" | "platform" | "compliance";
+
 export type AdminNavItem = {
   path: string;
   label: string;
   icon: AdminNavIconName;
+  exact?: boolean;
+  badge?: "pending";
 };
 
-export const ADMIN_NAV: AdminNavItem[] = [
-  { path: "/dashboard", label: "Dashboard", icon: "dashboard" },
-  { path: "/pending", label: "Pending verifications", icon: "verifications" },
-  { path: "/markets", label: "Markets", icon: "markets" },
-  { path: "/businesses", label: "Businesses", icon: "businesses" },
-  { path: "/customers", label: "Customer privacy", icon: "privacy" },
+export type AdminNavGroup = {
+  id: AdminNavGroupId;
+  label: string;
+  items: AdminNavItem[];
+};
+
+export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
+  {
+    id: "operations",
+    label: "Operations",
+    items: [
+      { path: "/dashboard", label: "Dashboard", icon: "dashboard", exact: true },
+      { path: "/pending", label: "Pending verifications", icon: "verifications", badge: "pending" },
+    ],
+  },
+  {
+    id: "platform",
+    label: "Platform",
+    items: [
+      { path: "/markets", label: "Markets", icon: "markets" },
+      { path: "/businesses", label: "Businesses", icon: "businesses" },
+    ],
+  },
+  {
+    id: "compliance",
+    label: "Compliance",
+    items: [{ path: "/customers", label: "Customer privacy", icon: "privacy" }],
+  },
 ];
+
+export const ADMIN_NAV: AdminNavItem[] = ADMIN_NAV_GROUPS.flatMap((group) => group.items);
+
+export function findAdminNavItem(url: string): { group: AdminNavGroup; item: AdminNavItem } | null {
+  const path = url.split("?")[0] ?? "";
+  for (const group of ADMIN_NAV_GROUPS) {
+    for (const item of group.items) {
+      if (item.exact ? path === item.path : path === item.path || path.startsWith(`${item.path}/`)) {
+        return { group, item };
+      }
+    }
+  }
+  return null;
+}

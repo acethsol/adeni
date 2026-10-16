@@ -11,6 +11,12 @@ export function optionalEmail(value: string): string | undefined {
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
+/** Ledger amounts: NGN stored as whole naira; CAD/USD stored as minor (cents). */
+export function formatAmountMinor(amountMinor: number, currency: string, locale?: string): string {
+  const major = currency.toUpperCase() === "NGN" ? amountMinor : amountMinor / 100;
+  return formatPrice(major, currency, locale);
+}
+
 export function formatPrice(amount: number, currency: string, locale?: string): string {
   try {
     return new Intl.NumberFormat(locale, {

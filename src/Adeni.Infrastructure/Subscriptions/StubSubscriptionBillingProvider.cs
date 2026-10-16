@@ -1,12 +1,19 @@
 namespace Adeni.Infrastructure.Subscriptions;
 
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Common;
 using Adeni.Domain.Subscriptions;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
-public sealed class StubSubscriptionBillingProvider(ILogger<StubSubscriptionBillingProvider> logger)
+public sealed class StubSubscriptionBillingProvider(
+    IOptions<SubscriptionBillingOptions> billingOptions,
+    IHostEnvironment environment,
+    ILogger<StubSubscriptionBillingProvider> logger)
     : ISubscriptionBillingProvider
 {
     public Task<Result<SubscriptionCheckoutResponse>> CreateCheckoutAsync(
@@ -33,6 +40,21 @@ public sealed class StubSubscriptionBillingProvider(ILogger<StubSubscriptionBill
         IReadOnlyDictionary<string, string> headers,
         CancellationToken cancellationToken = default)
     {
+        var secret = billingOptions.Value.WebhookSecret;
+        if (!string.IsNullOrWhiteSpace(secret))
+        {
+            if (!TryValidateWebhookSignature(rawBody, headers, secret))
+            {
+                return Task.FromResult(Result.Failure<SubscriptionWebhookEvent>(
+                    ErrorCodes.PaymentWebhookInvalidError()));
+            }
+        }
+        else if (!environment.IsDevelopment() && environment.EnvironmentName != "Testing")
+        {
+            return Task.FromResult(Result.Failure<SubscriptionWebhookEvent>(
+                ErrorCodes.PaymentWebhookInvalidError()));
+        }
+
         logger.LogInformation("Stub subscription webhook received ({Length} bytes)", rawBody.Length);
 
         try
@@ -76,5 +98,24 @@ public sealed class StubSubscriptionBillingProvider(ILogger<StubSubscriptionBill
             return Task.FromResult(Result.Failure<SubscriptionWebhookEvent>(
                 Error.Validation($"Invalid subscription webhook payload: {ex.Message}")));
         }
+    }
+
+    private static bool TryValidateWebhookSignature(
+        string rawBody,
+        IReadOnlyDictionary<string, string> headers,
+        string webhookSecret)
+    {
+        if (!headers.TryGetValue("x-paystack-signature", out var signature)
+            || string.IsNullOrWhiteSpace(signature))
+        {
+            return false;
+        }
+
+        using var hmac = new HMACSHA512(Encoding.UTF8.GetBytes(webhookSecret));
+        var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(rawBody));
+        var computed = Convert.ToHexString(hash).ToLowerInvariant();
+        return CryptographicOperations.FixedTimeEquals(
+            Encoding.UTF8.GetBytes(computed),
+            Encoding.UTF8.GetBytes(signature));
     }
 }

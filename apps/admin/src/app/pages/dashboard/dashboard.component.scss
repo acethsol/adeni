@@ -37,6 +37,7 @@ h2 {
   height: 2.5rem;
   padding: 0 0.9rem;
   border: 1px solid var(--border);
+  border-radius: var(--cds-radius-none);
   background: var(--surface);
   color: var(--text);
   font: inherit;
@@ -62,7 +63,7 @@ h2 {
 
 .kpis {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
   gap: 1px;
   margin-top: 1.25rem;
   border: 1px solid var(--border);
@@ -75,6 +76,23 @@ h2 {
   background: var(--surface);
   color: inherit;
   text-decoration: none;
+}
+
+.kpi-static {
+  cursor: default;
+}
+
+.kpi-value-sm {
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+.billing-metrics {
+  margin-top: 1rem;
+}
+
+.billing-stats {
+  margin-top: 0.25rem;
 }
 
 .kpi:hover {
@@ -106,6 +124,11 @@ h2 {
   grid-template-columns: 1.35fr 0.65fr;
   gap: 1rem;
   margin-top: 1rem;
+}
+
+.panel,
+.kpi {
+  border-radius: var(--cds-radius-none);
 }
 
 .panel {

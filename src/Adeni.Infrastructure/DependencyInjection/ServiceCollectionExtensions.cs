@@ -72,7 +72,7 @@ public static class ServiceCollectionExtensions
         services.AddDiscoveryModule();
         services.AddNotificationsModule();
         services.AddPaymentsModule(configuration);
-        services.AddSubscriptionsModule();
+        services.AddSubscriptionsModule(configuration);
         services.AddTrustModule();
         services.AddMessagingModule();
 

@@ -971,6 +971,76 @@ export const subscriptionUsageSchema = z.object({
 
 export type SubscriptionUsage = z.infer<typeof subscriptionUsageSchema>;
 
+export const subscriptionCheckoutRequestSchema = z.object({
+  tenantId: z.string().uuid(),
+  targetTier: subscriptionTierSchema,
+  customerEmail: z.string().email(),
+  successUrl: z.string().url(),
+  cancelUrl: z.string().url(),
+});
+
+export type SubscriptionCheckoutRequest = z.infer<typeof subscriptionCheckoutRequestSchema>;
+
+export const subscriptionCheckoutResponseSchema = z.object({
+  checkoutUrl: z.string(),
+  providerReference: z.string(),
+  status: z.string(),
+});
+
+export type SubscriptionCheckoutResponse = z.infer<typeof subscriptionCheckoutResponseSchema>;
+
+export const tenantSubscriptionChargeSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  providerReference: z.string(),
+  eventType: z.string(),
+  subscriptionSku: subscriptionSkuSchema.nullable().optional(),
+  amountMinor: z.number().int().nullable().optional(),
+  currency: z.string().nullable().optional(),
+  status: z.string(),
+  occurredAt: z.string(),
+});
+
+export type TenantSubscriptionCharge = z.infer<typeof tenantSubscriptionChargeSchema>;
+
+export const tenantBillingHistoryResponseSchema = z.object({
+  items: z.array(tenantSubscriptionChargeSchema),
+});
+
+export type TenantBillingHistoryResponse = z.infer<typeof tenantBillingHistoryResponseSchema>;
+
+export const adminSubscriptionMetricsCurrencyTotalSchema = z.object({
+  currency: z.string().length(3),
+  amountMinor: z.number().int().nonnegative(),
+});
+
+export const adminSubscriptionSkuCountSchema = z.object({
+  sku: subscriptionSkuSchema,
+  count: z.number().int().nonnegative(),
+});
+
+export const adminSubscriptionMetricsSchema = z.object({
+  paidTenantCount: z.number().int().nonnegative(),
+  pastDueTenantCount: z.number().int().nonnegative(),
+  trialingTenantCount: z.number().int().nonnegative(),
+  skuMix: z.array(adminSubscriptionSkuCountSchema),
+  syncedMrrByCurrency: z.array(adminSubscriptionMetricsCurrencyTotalSchema),
+  estimatedMrrByCurrency: z.array(adminSubscriptionMetricsCurrencyTotalSchema),
+  mrrSource: z.enum(["synced_charges", "estimated_list_price"]),
+  asOf: z.string(),
+});
+
+export type AdminSubscriptionMetrics = z.infer<typeof adminSubscriptionMetricsSchema>;
+
+export const completeStubSubscriptionCheckoutRequestSchema = z.object({
+  tenantId: z.string().uuid(),
+  providerReference: z.string().min(1),
+});
+
+export type CompleteStubSubscriptionCheckoutRequest = z.infer<
+  typeof completeStubSubscriptionCheckoutRequestSchema
+>;
+
 export const adminBusinessSummarySchema = z.object({
   id: z.string(),
   name: z.string(),

@@ -9,46 +9,58 @@
         @if (collapsed()) {
           <adeni-brand-logo variant="mark" [surface]="logoSurface()" [size]="28" />
         } @else {
-          <adeni-brand-logo variant="horizontal" [surface]="logoSurface()" [size]="34" />
+          <adeni-brand-logo variant="horizontal" [surface]="logoSurface()" [size]="32" />
         }
       </a>
     </div>
 
-    <p class="nav-section">Workspace</p>
     <nav class="nav" aria-label="Admin">
-      @for (item of nav; track item.path) {
-        <a
-          class="nav-link"
-          [routerLink]="item.path"
-          routerLinkActive="active"
-          ariaCurrentWhenActive="page"
-          [attr.data-label]="collapsed() ? navLabel(item) : null"
-        >
-          <span class="nav-ico">
-            <app-admin-nav-icon [name]="item.icon" />
-          </span>
-          <span class="nav-label">{{ navLabel(item) }}</span>
-        </a>
+      @for (group of navGroups; track group.id) {
+        <div class="nav-group">
+          @if (!collapsed()) {
+            <p class="nav-section">{{ groupLabel(group) }}</p>
+          } @else if (!$first) {
+            <div class="nav-divider" aria-hidden="true"></div>
+          }
+          @for (item of group.items; track item.path) {
+            <a
+              class="nav-link"
+              [routerLink]="item.path"
+              routerLinkActive="active"
+              ariaCurrentWhenActive="page"
+              [routerLinkActiveOptions]="{ exact: !!item.exact }"
+              [attr.title]="collapsed() ? navLabel(item) : null"
+              [attr.aria-label]="navLabel(item)"
+              [attr.data-label]="collapsed() ? navLabel(item) : null"
+            >
+              <span class="nav-ico" aria-hidden="true">
+                <app-admin-nav-icon [name]="item.icon" />
+              </span>
+              <span class="nav-label">{{ navLabel(item) }}</span>
+              @if (badgeCount(item); as count) {
+                <span class="nav-count" aria-hidden="true">{{ count > 9 ? "9+" : count }}</span>
+              }
+            </a>
+          }
+        </div>
       }
     </nav>
 
     <div class="sidebar-foot">
-      <p class="foot-item" [attr.data-label]="collapsed() ? 'Admin portal' : null">
-        <span class="nav-ico">
-          <app-admin-nav-icon name="portal" />
-        </span>
-        <span class="nav-label">Admin portal</span>
-      </p>
       <button
         type="button"
         class="rail-toggle"
-        [attr.data-label]="collapsed() ? 'Expand' : 'Collapse'"
+        [attr.title]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+        [attr.data-label]="collapsed() ? 'Expand' : null"
         [attr.aria-expanded]="!collapsed()"
         aria-controls="admin-sidebar"
         [attr.aria-label]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
         (click)="toggleSidebar()"
       >
         <app-admin-nav-icon [name]="collapsed() ? 'expand' : 'collapse'" />
+        @if (!collapsed()) {
+          <span class="rail-toggle-label">Collapse</span>
+        }
       </button>
     </div>
   </aside>
@@ -57,9 +69,16 @@
     <header class="topbar">
       <div class="topbar-lead">
         <nav class="crumb" aria-label="Breadcrumb">
-          <span>Admin</span>
-          <span class="crumb-sep" aria-hidden="true"></span>
-          <span class="crumb-current">{{ pageLabel() }}</span>
+          @for (crumb of crumbs(); track crumb.label; let last = $last) {
+            @if (last || !crumb.path) {
+              <span [class.crumb-current]="last">{{ crumb.label }}</span>
+            } @else {
+              <a [routerLink]="crumb.path">{{ crumb.label }}</a>
+            }
+            @if (!last) {
+              <span class="crumb-sep" aria-hidden="true"></span>
+            }
+          }
         </nav>
       </div>
 
@@ -226,6 +245,7 @@
         </div>
       </div>
     </header>
+
     <main class="content">
       <router-outlet />
     </main>

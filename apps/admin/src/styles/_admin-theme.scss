@@ -1,0 +1,16 @@
+// Admin pages: dark-mode fixes for shared Carbon primitives (matches portal).
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  .cds-content-switcher button.active {
+    background: var(--interactive);
+    color: #fff;
+  }
+
+  .cds-btn--secondary {
+    background: var(--cds-gray-80);
+    border-color: var(--cds-gray-70);
+    color: var(--cds-gray-10);
+  }
+}

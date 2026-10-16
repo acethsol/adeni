@@ -17,18 +17,24 @@ import {
   AdeniToastHostComponent,
 } from "@adeni/ui";
 import { filter, map, startWith } from "rxjs";
-import { ADMIN_NAV, type AdminNavIconName, type AdminNavItem } from "../core/admin-nav";
+import {
+  ADMIN_NAV,
+  ADMIN_NAV_GROUPS,
+  findAdminNavItem,
+  type AdminNavGroup,
+  type AdminNavIconName,
+  type AdminNavItem,
+} from "../core/admin-nav";
 import { signOutAdminDev } from "../core/admin-dev-session";
 import { ADENI_ADMIN_CONFIG, isAdminPortalDevMode, isAuth0Configured } from "../core/adeni-config";
 import { resolveAuthService } from "../core/auth0-rxjs";
+import { AdminThemeService, type ThemePreference } from "../core/admin-theme.service";
 import { AdminApiService } from "../core/services/admin-api.service";
+import { AdminIconTooltipDirective } from "../shared/admin-icon-tooltip.directive";
 import { AdminNavIconComponent } from "./admin-nav-icon.component";
 
 const SIDEBAR_STORAGE_KEY = "adeni.admin.sidebar.collapsed";
-const THEME_STORAGE_KEY = "adeni.admin.theme";
 
-type AdminTheme = "light" | "dark";
-type ThemePreference = AdminTheme | "system";
 type ChromeKey =
   | "search"
   | "appearance"
@@ -40,6 +46,9 @@ type ChromeKey =
   | "settings"
   | "customers"
   | "jump"
+  | "groupOperations"
+  | "groupPlatform"
+  | "groupCompliance"
   | "/dashboard"
   | "/pending"
   | "/markets"
@@ -58,6 +67,9 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     settings: "Settings",
     customers: "Search customers",
     jump: "Jump to",
+    groupOperations: "Operations",
+    groupPlatform: "Platform",
+    groupCompliance: "Compliance",
     "/dashboard": "Dashboard",
     "/pending": "Pending verifications",
     "/markets": "Markets",
@@ -75,6 +87,9 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     settings: "Paramètres",
     customers: "Rechercher des clients",
     jump: "Aller à",
+    groupOperations: "Opérations",
+    groupPlatform: "Plateforme",
+    groupCompliance: "Conformité",
     "/dashboard": "Tableau de bord",
     "/pending": "Vérifications en attente",
     "/markets": "Marchés",
@@ -99,25 +114,6 @@ function matchesQuery(query: string, parts: Array<string | null | undefined>): b
     .join(" ")
     .toLowerCase()
     .includes(query);
-}
-
-function readThemePreference(): ThemePreference {
-  try {
-    const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    if (stored === "light" || stored === "dark" || stored === "system") {
-      return stored;
-    }
-  } catch {
-    // Preference is optional.
-  }
-  return "system";
-}
-
-function resolveTheme(preference: ThemePreference): AdminTheme {
-  if (preference === "light" || preference === "dark") {
-    return preference;
-  }
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
 function initialsFor(name: string): string {
@@ -159,18 +155,21 @@ function readSidebarCollapsed(): boolean {
     AdeniToastHostComponent,
     AdeniConfirmHostComponent,
     AdminNavIconComponent,
+    AdminIconTooltipDirective,
   ],
   templateUrl: "./portal-shell.component.html",
   styleUrl: "./portal-shell.component.scss",
 })
 export class AdminShellComponent {
   readonly nav = ADMIN_NAV;
+  readonly navGroups = ADMIN_NAV_GROUPS;
   readonly config = inject(ADENI_ADMIN_CONFIG);
   private readonly injector = inject(Injector);
   private readonly router = inject(Router);
   private readonly api = inject(AdminApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly localeService = inject(AdeniLocaleService);
+  private readonly adminTheme = inject(AdminThemeService);
   readonly locales = this.localeService.locales;
   readonly locale = this.localeService.locale;
   readonly auth: AuthService | null = isAuth0Configured(this.config)
@@ -180,8 +179,8 @@ export class AdminShellComponent {
   readonly devMode = isAdminPortalDevMode(this.config);
   readonly auth0Mode = isAuth0Configured(this.config);
   readonly collapsed = signal(readSidebarCollapsed());
-  readonly themePreference = signal<ThemePreference>(readThemePreference());
-  readonly theme = signal<AdminTheme>(resolveTheme(this.themePreference()));
+  readonly themePreference = this.adminTheme.preference;
+  readonly theme = this.adminTheme.theme;
   readonly logoSurface = computed<AdeniBrandSurface>(() => (this.theme() === "dark" ? "dark" : "light"));
   readonly settingsOpen = signal(false);
   readonly userOpen = signal(false);
@@ -205,7 +204,7 @@ export class AdminShellComponent {
     ),
     { initialValue: this.router.url },
   );
-  readonly pageLabel = computed(() => this.labelForUrl(this.url()));
+  readonly crumbs = computed(() => this.crumbsForUrl(this.url()));
   readonly queueCount = signal<number | null>(null);
   readonly queueLabel = computed(() => {
     const count = this.queueCount();
@@ -281,16 +280,6 @@ export class AdminShellComponent {
   });
 
   constructor() {
-    this.applyTheme(this.theme());
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const onSystemTheme = (): void => {
-      if (this.themePreference() === "system") {
-        this.applyTheme(resolveTheme("system"));
-      }
-    };
-    media.addEventListener("change", onSystemTheme);
-    this.destroyRef.onDestroy(() => media.removeEventListener("change", onSystemTheme));
-
     this.destroyRef.onDestroy(() => {
       if (this.searchTimer) {
         clearTimeout(this.searchTimer);
@@ -313,6 +302,23 @@ export class AdminShellComponent {
     return this.text(item.path as ChromeKey);
   }
 
+  groupLabel(group: AdminNavGroup): string {
+    if (group.id === "operations") {
+      return this.text("groupOperations");
+    }
+    if (group.id === "platform") {
+      return this.text("groupPlatform");
+    }
+    return this.text("groupCompliance");
+  }
+
+  badgeCount(item: AdminNavItem): number {
+    if (item.badge !== "pending") {
+      return 0;
+    }
+    return this.queueCount() ?? 0;
+  }
+
   toggleSidebar(): void {
     this.setCollapsed(!this.collapsed());
   }
@@ -322,17 +328,11 @@ export class AdminShellComponent {
   }
 
   toggleTheme(): void {
-    this.setTheme(this.theme() === "dark" ? "light" : "dark");
+    this.adminTheme.toggle();
   }
 
   setTheme(preference: ThemePreference): void {
-    this.themePreference.set(preference);
-    this.applyTheme(resolveTheme(preference));
-    try {
-      localStorage.setItem(THEME_STORAGE_KEY, preference);
-    } catch {
-      // Preference is optional.
-    }
+    this.adminTheme.setPreference(preference);
   }
 
   setLocale(locale: LocaleId): void {
@@ -456,15 +456,15 @@ export class AdminShellComponent {
     this.searchOpen.set(false);
   }
 
-  private labelForUrl(url: string): string {
-    const path = url.split("?")[0] ?? "";
-    const item = this.nav.find((entry) => path === entry.path || path.startsWith(`${entry.path}/`));
-    return item ? this.navLabel(item) : this.navLabel(this.nav[0]);
-  }
-
-  private applyTheme(theme: AdminTheme): void {
-    this.theme.set(theme);
-    document.documentElement.dataset["theme"] = theme;
+  private crumbsForUrl(url: string): { label: string; path?: string }[] {
+    const match = findAdminNavItem(url) ?? findAdminNavItem(ADMIN_NAV[0].path);
+    if (!match) {
+      return [{ label: this.text("groupOperations") }, { label: this.text("/dashboard") }];
+    }
+    return [
+      { label: this.groupLabel(match.group) },
+      { label: this.navLabel(match.item), path: match.item.path },
+    ];
   }
 
   private scheduleCustomerSearch(query: string): void {

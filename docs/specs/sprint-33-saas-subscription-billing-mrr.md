@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|-------|
 | **Sprint** | Sprint 33 — SaaS subscription billing & MRR |
-| **Status** | Draft |
+| **Status** | In progress (33a) |
 | **Created** | 2026-10-15 |
 | **Depends on** | [sprint-32-portal-dashboard-revisit.md](./sprint-32-portal-dashboard-revisit.md) **phase 32a** only (plan widget / usage UX); full widget dashboard can ship in parallel |
 

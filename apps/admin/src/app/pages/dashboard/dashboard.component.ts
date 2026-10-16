@@ -1,9 +1,11 @@
 import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import {
+  formatAmountMinor,
   formatTenantStatus,
   type AdminBusinessSummary,
   type AdminMarket,
+  type AdminSubscriptionMetrics,
   type PendingBusiness,
   type SubscriptionTier,
 } from "@adeni/shared";
@@ -14,6 +16,7 @@ type LoadState = {
   pending: PendingBusiness[] | null;
   businesses: AdminBusinessSummary[] | null;
   markets: AdminMarket[] | null;
+  subscriptionMetrics: AdminSubscriptionMetrics | null;
 };
 
 type MixRow = {
@@ -46,6 +49,7 @@ export class AdminDashboardComponent implements OnInit {
   readonly pending = computed(() => this.data()?.pending ?? null);
   readonly businesses = computed(() => this.data()?.businesses ?? null);
   readonly markets = computed(() => this.data()?.markets ?? null);
+  readonly subscriptionMetrics = computed(() => this.data()?.subscriptionMetrics ?? null);
 
   readonly queue = computed(() =>
     [...(this.pending() ?? [])].sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
@@ -58,8 +62,35 @@ export class AdminDashboardComponent implements OnInit {
   );
 
   readonly paidCount = computed(
-    () => this.businesses()?.filter((item) => item.subscriptionTier !== "free").length ?? null,
+    () => this.subscriptionMetrics()?.paidTenantCount ?? null,
   );
+
+  readonly mrrLabel = computed(() => {
+    const metrics = this.subscriptionMetrics();
+    if (!metrics) {
+      return null;
+    }
+    const rows =
+      metrics.mrrSource === "synced_charges"
+        ? metrics.syncedMrrByCurrency
+        : metrics.estimatedMrrByCurrency;
+    if (rows.length === 0) {
+      return "—";
+    }
+    return rows
+      .map((row) => formatAmountMinor(row.amountMinor, row.currency))
+      .join(" · ");
+  });
+
+  readonly mrrHint = computed(() => {
+    const metrics = this.subscriptionMetrics();
+    if (!metrics) {
+      return "MRR unavailable";
+    }
+    return metrics.mrrSource === "synced_charges"
+      ? "From synced charges this month"
+      : "Estimated from list prices";
+  });
 
   readonly liveCount = computed(() => this.markets()?.filter((item) => item.isLive).length ?? null);
 
@@ -122,7 +153,7 @@ export class AdminDashboardComponent implements OnInit {
     try {
       await this.feedback.runLoading(async () => {
         const next = await this.api.withAuthorizedClient(async (client) => {
-          const [pending, businesses, markets] = await Promise.all([
+          const [pending, businesses, markets, subscriptionMetrics] = await Promise.all([
             client.getPendingBusinesses().then(
               (items) => items,
               () => null,
@@ -135,13 +166,17 @@ export class AdminDashboardComponent implements OnInit {
               (items) => items,
               () => null,
             ),
+            client.getAdminSubscriptionMetrics().then(
+              (items) => items,
+              () => null,
+            ),
           ]);
-          return { pending, businesses, markets };
+          return { pending, businesses, markets, subscriptionMetrics };
         });
         this.data.set(next);
       }, "Loading dashboard…", "Fetching queue, businesses, and markets");
     } catch {
-      this.data.set({ pending: null, businesses: null, markets: null });
+      this.data.set({ pending: null, businesses: null, markets: null, subscriptionMetrics: null });
       this.feedback.error("Could not load admin dashboard.");
     } finally {
       this.loading.set(false);

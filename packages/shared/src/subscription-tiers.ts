@@ -1,4 +1,4 @@
-import type { SubscriptionTier, SubscriptionUsage } from "./schemas";
+import type { SubscriptionTier, SubscriptionUsage, TenantBillingStatus } from "./schemas";
 
 export const SUBSCRIPTION_TIERS = ["free", "pro", "business"] as const;
 
@@ -85,6 +85,30 @@ export function isNearBookingLimit(usage: SubscriptionUsage, threshold = 0.8): b
   if (usage.bookingsLimitThisMonth == null) return false;
   if (usage.bookingsLimitThisMonth === 0) return false;
   return usage.bookingsUsedThisMonth / usage.bookingsLimitThisMonth >= threshold;
+}
+
+const BILLING_STATUS_LABELS: Record<TenantBillingStatus, string> = {
+  trialing: "Trial",
+  active: "Active",
+  past_due: "Past due",
+  suspended: "Suspended",
+  canceled: "Canceled",
+};
+
+export function formatTenantBillingStatus(status: TenantBillingStatus | undefined): string {
+  if (!status) return "—";
+  return BILLING_STATUS_LABELS[status] ?? status;
+}
+
+export function formatBillingChargeStatus(status: string): string {
+  const normalized = status.trim().toLowerCase();
+  if (normalized === "active" || normalized === "paid" || normalized === "success") {
+    return "Paid";
+  }
+  if (normalized === "past_due" || normalized === "failed") {
+    return "Failed";
+  }
+  return status;
 }
 
 export function formatBookingUsage(usage: SubscriptionUsage): string {

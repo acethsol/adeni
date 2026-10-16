@@ -43,7 +43,7 @@ Stub implementation: `StubSubscriptionBillingProvider` (returns fake checkout UR
 
 `POST /api/v1/subscriptions/webhook`
 
-**No signature verification in stub** — this is the vulnerability pattern from [@mattmurphyai webhook security guidance](https://www.instagram.com/reel/DcbzcfyioD9/). Future Paystack wiring **must** validate `x-paystack-signature` on the raw body before parsing, with idempotent tier updates — same rules as [payments.md](./payments.md#webhook-security-murphy) and [AGENTS.md](../AGENTS.md#webhook-security-murphy).
+When `Paystack:WebhookSecret` is set (staging/prod), `StubSubscriptionBillingProvider` validates `x-paystack-signature` (HMAC SHA512 on the raw body) before parsing — same Murphy rules as [payments.md](./payments.md#webhook-security-murphy). Dev/Testing without a secret still accepts unsigned JSON for local stub flows. Live Paystack Subscriptions provider replaces the stub in a follow-up slice.
 
 ### Normalized event shape
 
@@ -80,6 +80,15 @@ After parsing, handlers receive:
   "status": "active"
 }
 ```
+
+## Admin MRR (Sprint 33b)
+
+`GET /api/v1/admin/metrics/subscription` (admin MFA) returns paid / trialing / past-due counts, SKU mix, and MRR v1:
+
+- **Authoritative** when charge rows exist this month: sum of `amountMinor` by currency (`mrrSource: synced_charges`).
+- **Estimated** otherwise: paying tenants × catalog list price by primary location market (`mrrSource: estimated_list_price`).
+
+List prices on the server mirror `packages/shared/data/country-pricing.json` via `SubscriptionCatalogPrices`.
 
 ## Entitlements vs billing
 

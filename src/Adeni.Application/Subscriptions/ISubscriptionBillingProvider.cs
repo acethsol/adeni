@@ -27,7 +27,9 @@ public sealed record SubscriptionWebhookEvent(
     Guid? TenantId,
     string? Tier,
     string Status,
-    DateTimeOffset OccurredAt);
+    DateTimeOffset OccurredAt,
+    long? AmountMinor = null,
+    string? Currency = null);
 
 public interface ISubscriptionBillingProvider
 {

@@ -6,6 +6,10 @@
     <p class="error-banner">{{ error() }}</p>
   }
 
+  @if (route.snapshot.queryParamMap.get("upgraded") === "1") {
+    <p class="ok-banner">Plan updated. Entitlements refresh within a few seconds.</p>
+  }
+
   @if (loading()) {
     <p class="muted">Loading…</p>
   } @else {
@@ -13,8 +17,17 @@
       <section class="card usage" [class.warn]="isNearBookingLimit(u)">
         <h3>Usage this month</h3>
         <p>{{ formatBookingUsage(u) }}</p>
+        @if (u.billingStatus) {
+          <p class="muted">Billing: {{ formatTenantBillingStatus(u.billingStatus) }}</p>
+        }
+        @if (u.trialEndsAt) {
+          <p class="muted">Trial ends {{ u.trialEndsAt | date: "mediumDate" }}</p>
+        }
+        @if (u.paidThrough) {
+          <p class="muted">Paid through {{ u.paidThrough | date: "mediumDate" }}</p>
+        }
         @if (isNearBookingLimit(u)) {
-          <p class="warn-text">You're approaching your monthly booking limit on the Free plan.</p>
+          <p class="warn-text">You're approaching your monthly booking limit.</p>
         }
       </section>
     }
@@ -28,9 +41,47 @@
           <p class="tier-name">{{ planPricing[tier].name }}</p>
           <p class="price">{{ planPricing[tier].priceLabel }}</p>
           <p class="muted">{{ planPricing[tier].description }}</p>
+          @if (canUpgrade(tier)) {
+            <button
+              type="button"
+              class="btn btn-primary upgrade-btn"
+              [disabled]="checkoutBusy()"
+              (click)="upgrade(tier)"
+            >
+              Upgrade to {{ planPricing[tier].name }}
+            </button>
+          }
         </section>
       }
     </div>
+
+    <section class="card">
+      <h3>Adeni subscription history</h3>
+      @if (billingHistory().length === 0) {
+        <p class="muted">Charges appear here after your first subscription payment.</p>
+      } @else {
+        <table class="billing-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Event</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of billingHistory(); track row.id) {
+              <tr>
+                <td>{{ row.occurredAt | date: "mediumDate" }}</td>
+                <td>{{ row.eventType }}</td>
+                <td>{{ formatCharge(row) }}</td>
+                <td>{{ formatBillingChargeStatus(row.status) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
 
     <section class="card">
       <h3>Feature comparison</h3>
@@ -54,7 +105,6 @@
           }
         </tbody>
       </table>
-      <p class="muted upgrade-note">Paid upgrades will be available after billing goes live on Azure.</p>
     </section>
   }
 </app-portal-page>

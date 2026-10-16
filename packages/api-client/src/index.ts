@@ -8,6 +8,12 @@ import {
   setTenantCommercialTermsRequestSchema,
   adminTenantCommercialTermsSchema,
   subscriptionUsageSchema,
+  subscriptionCheckoutRequestSchema,
+  subscriptionCheckoutResponseSchema,
+  tenantBillingHistoryResponseSchema,
+  completeStubSubscriptionCheckoutRequestSchema,
+  tenantSubscriptionChargeSchema,
+  adminSubscriptionMetricsSchema,
   availableSlotsResponseSchema,
   bookingResponseSchema,
   billingDocumentResponseSchema,
@@ -137,6 +143,11 @@ import {
   type AdminTenantCommercialTerms,
   type SetTenantCommercialTermsRequest,
   type SubscriptionUsage,
+  type SubscriptionCheckoutRequest,
+  type SubscriptionCheckoutResponse,
+  type TenantSubscriptionCharge,
+  type CompleteStubSubscriptionCheckoutRequest,
+  type AdminSubscriptionMetrics,
   type AvailableSlot,
   type BillingDocumentResponse,
   type BookingResponse,
@@ -1560,6 +1571,37 @@ export class AdeniApiClient {
     return subscriptionUsageSchema.parse(await response.json());
   }
 
+  async getTenantBillingHistory(limit = 20): Promise<TenantSubscriptionCharge[]> {
+    const response = await this.request(
+      `/api/v1/tenant/billing?limit=${encodeURIComponent(String(limit))}`,
+    );
+    return tenantBillingHistoryResponseSchema.parse(await response.json()).items;
+  }
+
+  async createSubscriptionCheckout(
+    body: SubscriptionCheckoutRequest,
+  ): Promise<SubscriptionCheckoutResponse> {
+    const payload = subscriptionCheckoutRequestSchema.parse(body);
+    const response = await this.request("/api/v1/subscriptions/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return subscriptionCheckoutResponseSchema.parse(await response.json());
+  }
+
+  async completeStubSubscriptionCheckout(
+    body: CompleteStubSubscriptionCheckoutRequest,
+  ): Promise<TenantSubscriptionCharge> {
+    const payload = completeStubSubscriptionCheckoutRequestSchema.parse(body);
+    const response = await this.request("/api/v1/subscriptions/checkout/complete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return tenantSubscriptionChargeSchema.parse(await response.json());
+  }
+
   async getMe(): Promise<AuthSession> {
     const response = await this.request("/api/v1/auth/me");
     return authSessionSchema.parse(await response.json());
@@ -1594,6 +1636,11 @@ export class AdeniApiClient {
     const response = await this.request("/api/v1/admin/businesses");
     const payload = adminBusinessesResponseSchema.parse(await response.json());
     return payload.items;
+  }
+
+  async getAdminSubscriptionMetrics(): Promise<AdminSubscriptionMetrics> {
+    const response = await this.request("/api/v1/admin/metrics/subscription");
+    return adminSubscriptionMetricsSchema.parse(await response.json());
   }
 
   async setAdminBusinessSubscriptionTier(

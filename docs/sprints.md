@@ -490,14 +490,14 @@ Composable **widgets**, **charts**, and **per-user customizable layout** on port
 
 **Sprint 33** can start after **32a**; full dashboard program (32b–32d) may overlap 33.
 
-## Sprint 33 — SaaS subscription billing & MRR (planned)
+## Sprint 33 — SaaS subscription billing & MRR (in progress)
 
 Live business → Adeni recurring billing (Paystack/Stripe), signed webhooks, tenant billing history on `/plan`, admin MRR v1. **Not** customer receipts (Sprint 28). Spec: [sprint-33-saas-subscription-billing-mrr.md](./specs/sprint-33-saas-subscription-billing-mrr.md).
 
 | Task | Status |
 |------|--------|
-| **33a** Provider checkout + Murphy webhooks + tier sync | Planned |
-| **33b** Portal billing history + admin MRR metrics | Planned |
+| **33a** Provider checkout + Murphy webhooks + tier sync | In progress (stub checkout, charge ledger, portal `/plan` upgrade) |
+| **33b** Portal billing history + admin MRR metrics | In progress (admin `/metrics/subscription`, `/plan` history table) |
 
 ## Sprint 34 — Payment settlement (Connect + Paystack split) (planned)
 

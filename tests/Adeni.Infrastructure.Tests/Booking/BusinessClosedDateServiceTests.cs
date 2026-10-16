@@ -303,6 +303,8 @@ public sealed class BusinessClosedDateServiceTests
         services.AddSingleton<Application.Notifications.INotificationDispatcher, ClosedTestNotifications>();
         services.AddScoped<IBillingDocumentService, BillingDocumentService>();
         services.AddScoped<ITenantCustomerService, TenantCustomerService>();
+        services.AddScoped<IQueueService, NoOpQueueService>();
+        services.AddScoped<IBookingService, BookingService>();
         return services.BuildServiceProvider();
     }
 

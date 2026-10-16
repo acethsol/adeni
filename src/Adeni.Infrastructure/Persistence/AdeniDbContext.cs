@@ -9,6 +9,7 @@ using Adeni.Domain.Identity;
 using Adeni.Domain.Messaging;
 using Adeni.Domain.Notifications;
 using Adeni.Domain.Payments;
+using Adeni.Domain.Subscriptions;
 using Adeni.Domain.Tenancy;
 using Microsoft.EntityFrameworkCore;
 
@@ -85,6 +86,8 @@ public sealed class AdeniDbContext(
 
     public DbSet<PaymentIntentRecord> PaymentIntents => Set<PaymentIntentRecord>();
 
+    public DbSet<TenantSubscriptionCharge> TenantSubscriptionCharges => Set<TenantSubscriptionCharge>();
+
     public DbSet<BillingDocument> BillingDocuments => Set<BillingDocument>();
 
     public DbSet<BillingDocumentLine> BillingDocumentLines => Set<BillingDocumentLine>();
@@ -131,6 +134,21 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.CustomSaasMonthlyAmount).HasPrecision(18, 2);
             entity.Property(x => x.CustomSaasSku).HasConversion<int>();
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.Id == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<TenantSubscriptionCharge>(entity =>
+        {
+            entity.ToTable("tenant_subscription_charges", "subscriptions");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.IdempotencyKey).HasMaxLength(256);
+            entity.Property(x => x.ProviderReference).HasMaxLength(128);
+            entity.Property(x => x.EventType).HasMaxLength(64);
+            entity.Property(x => x.Currency).HasMaxLength(3);
+            entity.Property(x => x.Status).HasMaxLength(32);
+            entity.Property(x => x.SubscriptionSku).HasConversion<int>();
+            entity.HasIndex(x => x.IdempotencyKey).IsUnique();
+            entity.HasIndex(x => new { x.TenantId, x.OccurredAt });
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 
         modelBuilder.Entity<BusinessProfile>(entity =>

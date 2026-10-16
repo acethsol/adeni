@@ -52,11 +52,38 @@
       </p>
     </a>
     <a class="kpi" routerLink="/businesses">
-      <p class="kpi-label">Paid plans</p>
+      <p class="kpi-label">Paying SaaS</p>
       <p class="kpi-value">{{ paidCount() === null ? "—" : paidCount() }}</p>
-      <p class="kpi-hint">Pro and Business tiers</p>
+      <p class="kpi-hint">Active Pro / Business billing</p>
     </a>
+    <div class="kpi kpi-static">
+      <p class="kpi-label">MRR (v1)</p>
+      <p class="kpi-value kpi-value-sm">{{ mrrLabel() ?? "—" }}</p>
+      <p class="kpi-hint">{{ mrrHint() }}</p>
+    </div>
   </section>
+
+  @if (subscriptionMetrics(); as billing) {
+    <section class="panel billing-metrics" aria-label="Subscription billing">
+      <div class="panel-head">
+        <h3>SaaS billing</h3>
+      </div>
+      <ul class="legend billing-stats">
+        <li>
+          Trialing
+          <strong>{{ billing.trialingTenantCount }}</strong>
+        </li>
+        <li>
+          Past due
+          <strong>{{ billing.pastDueTenantCount }}</strong>
+        </li>
+        <li>
+          MRR source
+          <strong>{{ billing.mrrSource === "synced_charges" ? "Synced" : "Estimated" }}</strong>
+        </li>
+      </ul>
+    </section>
+  }
 
   <div class="grid">
     <section class="panel">

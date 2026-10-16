@@ -1,0 +1,280 @@
+namespace Adeni.Infrastructure.Subscriptions;
+
+using Adeni.Application.Subscriptions;
+using Adeni.Domain.Common;
+using Adeni.Domain.Subscriptions;
+using Adeni.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+
+public sealed class SubscriptionBillingOrchestrator(
+    AdeniDbContext dbContext,
+    ILogger<SubscriptionBillingOrchestrator> logger) : ISubscriptionBillingOrchestrator
+{
+    private static readonly HashSet<string> ActivationEvents = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "subscription.create",
+        "subscription.enable",
+        "invoice.payment_succeeded",
+    };
+
+    private static readonly HashSet<string> DeactivationEvents = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "subscription.disable",
+        "subscription.not_renew",
+        "invoice.payment_failed",
+    };
+
+    public async Task<Result<TenantSubscriptionChargeResponse>> ApplyWebhookEventAsync(
+        SubscriptionWebhookEvent webhookEvent,
+        CancellationToken cancellationToken = default)
+    {
+        if (webhookEvent.TenantId is not { } tenantId)
+        {
+            return Result.Failure<TenantSubscriptionChargeResponse>(
+                Error.Validation("Subscription webhook missing tenant id."));
+        }
+
+        var idempotencyKey = BuildIdempotencyKey(webhookEvent.EventType, webhookEvent.ProviderReference);
+        var existing = await dbContext.TenantSubscriptionCharges
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.IdempotencyKey == idempotencyKey, cancellationToken);
+
+        if (existing is not null)
+        {
+            logger.LogInformation(
+                "Skipping duplicate subscription webhook {Key} for tenant {TenantId}",
+                idempotencyKey,
+                tenantId);
+            return Result.Success(Map(existing));
+        }
+
+        var tenant = await dbContext.Tenants
+            .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+
+        if (tenant is null)
+        {
+            return Result.Failure<TenantSubscriptionChargeResponse>(Error.NotFound("Business"));
+        }
+
+        var targetSku = ResolveSku(webhookEvent.Tier, tenant);
+        ApplyBillingTransition(tenant, webhookEvent, targetSku);
+
+        var (amountMinor, currency) = await ResolveChargeAmountAsync(
+            tenantId,
+            targetSku,
+            webhookEvent,
+            cancellationToken);
+
+        var charge = new TenantSubscriptionCharge
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            IdempotencyKey = idempotencyKey,
+            ProviderReference = webhookEvent.ProviderReference,
+            EventType = webhookEvent.EventType,
+            SubscriptionSku = targetSku,
+            AmountMinor = amountMinor,
+            Currency = currency,
+            Status = NormalizeChargeStatus(webhookEvent.Status),
+            OccurredAt = webhookEvent.OccurredAt,
+            CreatedAt = DateTimeOffset.UtcNow,
+        };
+
+        dbContext.TenantSubscriptionCharges.Add(charge);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation(
+            "Applied subscription webhook {EventType} for tenant {TenantId} → sku {Sku}",
+            webhookEvent.EventType,
+            tenantId,
+            targetSku);
+
+        return Result.Success(Map(charge));
+    }
+
+    public async Task<Result<IReadOnlyList<TenantSubscriptionChargeResponse>>> ListChargesForTenantAsync(
+        Guid tenantId,
+        string auth0Sub,
+        int limit = 20,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(auth0Sub))
+        {
+            return Result.Failure<IReadOnlyList<TenantSubscriptionChargeResponse>>(
+                Error.Forbidden("Authentication is required."));
+        }
+
+        var hasAccess = await dbContext.BusinessUsers
+            .AsNoTracking()
+            .AnyAsync(x => x.TenantId == tenantId && x.Auth0Sub == auth0Sub, cancellationToken);
+
+        if (!hasAccess)
+        {
+            return Result.Failure<IReadOnlyList<TenantSubscriptionChargeResponse>>(
+                Error.Forbidden("You do not have access to this business."));
+        }
+
+        limit = Math.Clamp(limit, 1, 50);
+
+        var rows = await dbContext.TenantSubscriptionCharges
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId)
+            .OrderByDescending(x => x.OccurredAt)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+
+        return Result.Success<IReadOnlyList<TenantSubscriptionChargeResponse>>(
+            rows.Select(Map).ToList());
+    }
+
+    public async Task<Result<TenantSubscriptionChargeResponse>> CompleteStubCheckoutAsync(
+        Guid tenantId,
+        string auth0Sub,
+        string providerReference,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(auth0Sub))
+        {
+            return Result.Failure<TenantSubscriptionChargeResponse>(Error.Forbidden("Authentication is required."));
+        }
+
+        var hasAccess = await dbContext.BusinessUsers
+            .AsNoTracking()
+            .AnyAsync(x => x.TenantId == tenantId && x.Auth0Sub == auth0Sub, cancellationToken);
+
+        if (!hasAccess)
+        {
+            return Result.Failure<TenantSubscriptionChargeResponse>(ErrorCodes.PermissionDeniedError());
+        }
+
+        if (!TryParseStubReference(providerReference, out var refTenantId, out var tierApi))
+        {
+            return Result.Failure<TenantSubscriptionChargeResponse>(
+                Error.Validation("Invalid stub checkout reference."));
+        }
+
+        if (refTenantId != tenantId)
+        {
+            return Result.Failure<TenantSubscriptionChargeResponse>(ErrorCodes.PermissionDeniedError());
+        }
+
+        var webhook = new SubscriptionWebhookEvent(
+            "subscription.create",
+            providerReference,
+            tenantId,
+            tierApi,
+            "active",
+            DateTimeOffset.UtcNow);
+
+        return await ApplyWebhookEventAsync(webhook, cancellationToken);
+    }
+
+    private void ApplyBillingTransition(
+        Domain.Tenancy.Tenant tenant,
+        SubscriptionWebhookEvent webhookEvent,
+        SubscriptionSku targetSku)
+    {
+        if (ActivationEvents.Contains(webhookEvent.EventType)
+            || string.Equals(webhookEvent.Status, "active", StringComparison.OrdinalIgnoreCase))
+        {
+            tenant.SubscriptionSku = targetSku;
+            tenant.BillingStatus = TenantBillingStatus.Active;
+            tenant.TrialEndsAt = null;
+            tenant.TrialSku = null;
+            tenant.PaidThrough = webhookEvent.OccurredAt.AddMonths(1);
+            TenantBillingPolicy.ApplySkuToLegacyTier(tenant);
+            return;
+        }
+
+        if (DeactivationEvents.Contains(webhookEvent.EventType))
+        {
+            tenant.BillingStatus = string.Equals(webhookEvent.EventType, "invoice.payment_failed", StringComparison.OrdinalIgnoreCase)
+                ? TenantBillingStatus.PastDue
+                : TenantBillingStatus.Canceled;
+            TenantBillingPolicy.ApplySkuToLegacyTier(tenant);
+        }
+    }
+
+    private static SubscriptionSku ResolveSku(string? tierApi, Domain.Tenancy.Tenant tenant)
+    {
+        if (!string.IsNullOrWhiteSpace(tierApi))
+        {
+            return SubscriptionSkuMapping.FromApiValue(tierApi);
+        }
+
+        return tenant.SubscriptionSku;
+    }
+
+    private async Task<(long? AmountMinor, string? Currency)> ResolveChargeAmountAsync(
+        Guid tenantId,
+        SubscriptionSku sku,
+        SubscriptionWebhookEvent webhookEvent,
+        CancellationToken cancellationToken)
+    {
+        if (webhookEvent.AmountMinor is > 0 && !string.IsNullOrWhiteSpace(webhookEvent.Currency))
+        {
+            return (webhookEvent.AmountMinor, webhookEvent.Currency);
+        }
+
+        var marketId = await dbContext.BusinessLocations
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId && x.IsPrimary && x.IsActive)
+            .Select(x => x.MarketId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var country = await dbContext.CatalogMarkets
+            .AsNoTracking()
+            .Where(x => x.Id == marketId)
+            .Select(x => x.CountryCode)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var minor = SubscriptionCatalogPrices.ToAmountMinor(country, sku);
+        var currency = SubscriptionCatalogPrices.CurrencyForCountry(country);
+        return (minor, minor is > 0 ? currency : null);
+    }
+
+    private static string BuildIdempotencyKey(string eventType, string providerReference) =>
+        $"{eventType}:{providerReference}".Trim().ToLowerInvariant();
+
+    private static string NormalizeChargeStatus(string status) =>
+        string.IsNullOrWhiteSpace(status) ? "received" : status.Trim().ToLowerInvariant();
+
+    private static TenantSubscriptionChargeResponse Map(TenantSubscriptionCharge row) =>
+        new(
+            row.Id,
+            row.TenantId,
+            row.ProviderReference,
+            row.EventType,
+            row.SubscriptionSku is { } sku ? SubscriptionSkuMapping.ToApiValue(sku) : null,
+            row.AmountMinor,
+            row.Currency,
+            row.Status,
+            row.OccurredAt);
+
+    private static bool TryParseStubReference(string reference, out Guid tenantId, out string tierApi)
+    {
+        tenantId = Guid.Empty;
+        tierApi = "pro";
+        if (string.IsNullOrWhiteSpace(reference))
+        {
+            return false;
+        }
+
+        var parts = reference.Split('_', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length < 4
+            || !parts[0].Equals("stub", StringComparison.OrdinalIgnoreCase)
+            || !parts[1].Equals("sub", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (!Guid.TryParseExact(parts[2], "N", out tenantId))
+        {
+            return false;
+        }
+
+        tierApi = parts[3];
+        return true;
+    }
+}
