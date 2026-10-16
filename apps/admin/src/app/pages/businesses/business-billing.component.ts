@@ -14,9 +14,9 @@ import {
   formatTenantBillingStatus,
 } from "@adeni/shared";
 import {
-  AdeniCarbonIconComponent,
   AdeniFeedbackService,
   AdeniPortalEmptyStateComponent,
+  AdeniStaffButtonComponent,
   PortalPageComponent,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
@@ -38,7 +38,7 @@ import {
     PortalPageComponent,
     RouterLink,
     DatePipe,
-    AdeniCarbonIconComponent,
+    AdeniStaffButtonComponent,
     AdeniPortalEmptyStateComponent,
     AdminPillComponent,
     BusinessSubscriptionWizardComponent,

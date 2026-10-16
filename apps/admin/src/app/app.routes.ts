@@ -9,6 +9,7 @@ import { AdminCustomersComponent } from "./pages/customers/customers.component";
 import { AdminTrustBadgesComponent } from "./pages/trust-badges/trust-badges.component";
 import { AdminReviewsComponent } from "./pages/reviews/reviews.component";
 import { AdminInsightsComponent } from "./pages/insights/insights.component";
+import { AdminTransactionsComponent } from "./pages/transactions/transactions.component";
 import { SetupComponent } from "./pages/setup/setup.component";
 import { ForbiddenComponent } from "./pages/forbidden/forbidden.component";
 import { adminAccessGuard } from "./core/guards/admin-access.guard";
@@ -29,6 +30,7 @@ export const routes: Routes = [
       { path: "reviews", component: AdminReviewsComponent, title: "Reviews" },
       { path: "markets", component: AdminMarketsComponent, title: "Markets" },
       { path: "insights", component: AdminInsightsComponent, title: "Subscription insights" },
+      { path: "transactions", component: AdminTransactionsComponent, title: "Transactions" },
       { path: "businesses", component: AdminBusinessesComponent, title: "Businesses" },
       {
         path: "businesses/:tenantId/billing",

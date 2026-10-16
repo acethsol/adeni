@@ -146,10 +146,10 @@
       </label>
 
       <div modalFooter class="modal-footer">
-        <button type="button" class="btn" [disabled]="saving()" (click)="onClose()">Cancel</button>
-        <button type="submit" class="btn btn-primary" [disabled]="saving()">
+        <adeni-staff-btn icon="close" [disabled]="saving()" (pressed)="onClose()">Cancel</adeni-staff-btn>
+        <adeni-staff-btn type="submit" variant="primary" icon="save" [disabled]="saving()">
           {{ saving() ? "Saving…" : isCreate() ? "Create market" : "Save changes" }}
-        </button>
+        </adeni-staff-btn>
       </div>
     </form>
   }

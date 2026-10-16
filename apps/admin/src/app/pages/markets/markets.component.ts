@@ -7,6 +7,7 @@ import {
   AdeniCarbonIconComponent,
   AdeniFeedbackService,
   AdeniPortalEmptyStateComponent,
+  AdeniStaffButtonComponent,
   PortalPageComponent,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
@@ -32,6 +33,7 @@ import {
     FormsModule,
     RouterLink,
     AdeniCarbonIconComponent,
+    AdeniStaffButtonComponent,
     AdeniPortalEmptyStateComponent,
     AdminPillComponent,
     MarketFormModalComponent,

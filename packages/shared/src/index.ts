@@ -22,6 +22,8 @@ export * from "./i18n";
 export * from "./api-errors";
 export * from "./format";
 export * from "./dashboard-range";
+export * from "./dashboard-layout";
+export * from "./dashboard-layout-presets";
 export * from "./paging";
 export * from "./media-limits";
 export * from "./public-page-templates";

@@ -64,22 +64,22 @@ Competitor note: [roadmap-modules.md §5](../roadmap-modules.md) — Zenoti wins
 
 ### Phase 32b — Widget platform + default layout
 
-- [ ] **Dashboard shell**: responsive grid (12-col), widget chrome (title, optional range, loading/error).
-- [ ] **Edit mode**: toggle “Customize dashboard”; drag-and-drop reorder (CDK or lightweight grid library); add widget picker; reset to default.
-- [ ] **Global date range** control: Today | 7d | 30d | Month to date (persist with layout).
-- [ ] **Charting**: Carbon Charts (align with `@adeni/ui` / Carbon patterns) for line, bar, donut.
-- [ ] **Default owner layout** (widgets below) pre-installed for new tenants.
+- [x] **Dashboard shell**: responsive grid (12-col), widget chrome (title, optional range, loading/error) — grid + `app-dashboard-widget` chrome; edit/picker TBD.
+- [x] **Edit mode**: toggle “Customize dashboard”; drag-and-drop reorder (CDK); add widget picker; reset to default — **localStorage until 32c API**.
+- [x] **Global date range** control: Today | 7d | 30d | Month to date (persist with layout in 32c).
+- [x] **Charting**: Carbon Charts (`@carbon/charts` vanilla) for bar, line, donut widgets.
+- [x] **Default owner layout** (widgets below) pre-installed — `@adeni/shared` + localStorage override per tenant/role.
 
 ### Phase 32c — Persist layout
 
-- [ ] Store layout JSON per **BusinessUser** (preferred) or per tenant role template.
-- [ ] API: `GET/PUT /api/v1/tenant/dashboard/layout` — tenant-scoped, auth required.
-- [ ] Schema version field for widget migrations.
+- [x] Store layout JSON per **BusinessUser** (`identity.business_user_dashboard_layouts`).
+- [x] API: `GET/PUT /api/v1/tenant/dashboard/layout` — tenant-scoped, auth required.
+- [x] Schema version field for widget migrations (`version: 1`).
 
 ### Phase 32d — Widget catalog expansion
 
-- [ ] Additional widgets after core ship (staff leaderboard, queue depth, quote pipeline, messages unread, verification status).
-- [ ] Optional **role templates** (owner / manager / front desk) — pick layout preset.
+- [x] Additional widgets: staff leaderboard, queue, quote pipeline, messages unread, verification, pending inbox, rating, booked value.
+- [x] **Role templates** — Owner / Manager / Front desk / Practitioner presets in Customize picker.
 
 ---
 

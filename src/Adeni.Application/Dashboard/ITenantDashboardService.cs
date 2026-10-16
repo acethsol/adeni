@@ -29,6 +29,13 @@ public sealed record TenantDashboardBreakdownResponse(
     DateTimeOffset To,
     IReadOnlyList<TenantDashboardBreakdownItem> Items);
 
+public sealed record TenantDashboardLayoutWidgetDto(string Id, int W);
+
+public sealed record TenantDashboardLayoutDto(
+    int Version,
+    string Range,
+    IReadOnlyList<TenantDashboardLayoutWidgetDto> Widgets);
+
 public interface ITenantDashboardService
 {
     Task<Result<TenantDashboardSummaryResponse>> GetSummaryAsync(
@@ -52,5 +59,18 @@ public interface ITenantDashboardService
         DateTimeOffset from,
         DateTimeOffset to,
         Guid? staffMemberId = null,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<TenantDashboardLayoutDto>> GetLayoutAsync(
+        Guid tenantId,
+        Guid businessUserId,
+        bool practitionerView,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<TenantDashboardLayoutDto>> SaveLayoutAsync(
+        Guid tenantId,
+        Guid businessUserId,
+        TenantDashboardLayoutDto layout,
+        bool practitionerView,
         CancellationToken cancellationToken = default);
 }

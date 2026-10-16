@@ -1016,6 +1016,38 @@ export const tenantDashboardBreakdownSchema = z.object({
 
 export type TenantDashboardBreakdown = z.infer<typeof tenantDashboardBreakdownSchema>;
 
+export const dashboardWidgetIdSchema = z.enum([
+  "plan_usage",
+  "kpis_row",
+  "today_schedule",
+  "pending_inbox",
+  "week_appointments",
+  "booking_mix",
+  "collected_revenue",
+  "booked_value",
+  "service_mix",
+  "staff_leaderboard",
+  "rating_summary",
+  "queue_now",
+  "messages_unread",
+  "quote_pipeline",
+  "verification_status",
+  "quick_actions",
+]);
+
+export const tenantDashboardLayoutWidgetSchema = z.object({
+  id: dashboardWidgetIdSchema,
+  w: z.number().int().min(4).max(12),
+});
+
+export const tenantDashboardLayoutSchema = z.object({
+  version: z.literal(1),
+  range: z.enum(["today", "7d", "30d", "mtd"]),
+  widgets: z.array(tenantDashboardLayoutWidgetSchema).min(1),
+});
+
+export type TenantDashboardLayout = z.infer<typeof tenantDashboardLayoutSchema>;
+
 export const subscriptionCheckoutRequestSchema = z.object({
   tenantId: z.string().uuid(),
   targetTier: subscriptionTierSchema,
@@ -1112,6 +1144,33 @@ export type AdminRevenuePeriodBucket = z.infer<typeof adminRevenuePeriodBucketSc
 export type AdminSaasChargeSummary = z.infer<typeof adminSaasChargeSummarySchema>;
 export type AdminCommercePaymentSummary = z.infer<typeof adminCommercePaymentSummarySchema>;
 export type AdminRevenueMetrics = z.infer<typeof adminRevenueMetricsSchema>;
+
+export const adminTransactionKindSchema = z.enum(["commerce", "saas"]);
+
+export const adminTransactionSearchItemSchema = z.object({
+  kind: adminTransactionKindSchema,
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  tenantName: z.string(),
+  providerReference: z.string().nullable().optional(),
+  eventType: z.string().nullable().optional(),
+  subscriptionSku: subscriptionSkuSchema.nullable().optional(),
+  amountMinor: z.number().int().nullable().optional(),
+  amount: z.number().nullable().optional(),
+  platformFeeAmount: z.number().nullable().optional(),
+  currency: z.string(),
+  status: z.string(),
+  bookingId: z.string().uuid().nullable().optional(),
+  occurredAt: z.string(),
+});
+
+export type AdminTransactionSearchItem = z.infer<typeof adminTransactionSearchItemSchema>;
+
+export const adminTransactionsSearchResponseSchema = adminPagedResultSchema(
+  adminTransactionSearchItemSchema,
+);
+
+export type AdminTransactionsSearchResponse = z.infer<typeof adminTransactionsSearchResponseSchema>;
 
 export const completeStubSubscriptionCheckoutRequestSchema = z.object({
   tenantId: z.string().uuid(),

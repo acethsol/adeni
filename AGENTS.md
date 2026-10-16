@@ -166,8 +166,8 @@ Register new services in `ServiceCollectionExtensions`. New modules: follow [arc
 
 | Put it in `@adeni/ui` when… | Examples |
 |-----------------------------|----------|
-| Standalone Angular component used by **portal and/or admin** | `PortalPageComponent`, staff layout SCSS, `AdeniBrandLogoComponent` |
-| Presentational pattern duplicated across staff apps | Cards, buttons, fields, status chips (when extracted) |
+| Standalone Angular component used by **portal and/or admin** | `PortalPageComponent`, `AdeniStaffButtonComponent`, staff layout SCSS, `AdeniBrandLogoComponent` |
+| Presentational pattern duplicated across staff apps | Status chips (when extracted); staff actions use `AdeniStaffButtonComponent` + Carbon icon |
 
 | Keep in **one app** (`apps/discover`, `apps/portal`, …) when… | Examples |
 |----------------------------------------------------------------|----------|

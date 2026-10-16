@@ -8,6 +8,7 @@ import {
   AdeniCarbonIconComponent,
   AdeniFeedbackService,
   AdeniPortalEmptyStateComponent,
+  AdeniStaffButtonComponent,
   PortalPageComponent,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
@@ -38,6 +39,7 @@ const PENDING_VERIFICATION = 1;
     FormsModule,
     DatePipe,
     AdeniCarbonIconComponent,
+    AdeniStaffButtonComponent,
     AdeniPortalEmptyStateComponent,
     RouterLink,
     AdminPillComponent,

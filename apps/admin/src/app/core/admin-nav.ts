@@ -4,6 +4,7 @@ export type AdminNavIconName =
   | "badges"
   | "reviews"
   | "insights"
+  | "transactions"
   | "markets"
   | "businesses"
   | "privacy"
@@ -52,6 +53,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
       { path: "/markets", label: "Markets", icon: "markets" },
       { path: "/businesses", label: "Businesses", icon: "businesses" },
       { path: "/insights", label: "Revenue", icon: "insights" },
+      { path: "/transactions", label: "Transactions", icon: "transactions" },
     ],
   },
   {

@@ -7,28 +7,24 @@
   }
 
   <section class="card list-toolbar">
+    <adeni-staff-btn icon="search" routerLink="/transactions">Search transactions</adeni-staff-btn>
     <div class="period-toggle" role="group" aria-label="Earnings period">
-      <button
-        type="button"
-        class="btn"
-        [class.btn-primary]="granularity() === 'month'"
-        (click)="setGranularity('month')"
+      <adeni-staff-btn
+        icon="calendar"
+        [variant]="granularity() === 'month' ? 'primary' : 'default'"
+        (pressed)="setGranularity('month')"
       >
         Monthly
-      </button>
-      <button
-        type="button"
-        class="btn"
-        [class.btn-primary]="granularity() === 'year'"
-        (click)="setGranularity('year')"
+      </adeni-staff-btn>
+      <adeni-staff-btn
+        icon="time"
+        [variant]="granularity() === 'year' ? 'primary' : 'default'"
+        (pressed)="setGranularity('year')"
       >
         Yearly
-      </button>
+      </adeni-staff-btn>
     </div>
-    <button type="button" class="btn" [disabled]="loading()" (click)="load()">
-      <adeni-carbon-icon name="restart" [size]="16" />
-      Refresh
-    </button>
+    <adeni-staff-btn icon="restart" [disabled]="loading()" (pressed)="load()">Refresh</adeni-staff-btn>
     @if (metrics(); as data) {
       <p class="toolbar-meta">As of {{ data.asOf | date: "medium" }}</p>
     }

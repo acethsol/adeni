@@ -17,7 +17,7 @@
           autocomplete="off"
         />
       </label>
-      <button type="submit" class="btn btn-primary">Search</button>
+      <adeni-staff-btn type="submit" variant="primary" icon="search">Search</adeni-staff-btn>
     </form>
     <label class="checkbox-field">
       <input
@@ -28,10 +28,7 @@
       />
       Include hidden
     </label>
-    <button type="button" class="btn" [disabled]="loading()" (click)="load()">
-      <adeni-carbon-icon name="restart" [size]="16" />
-      Refresh
-    </button>
+    <adeni-staff-btn icon="restart" [disabled]="loading()" (pressed)="load()">Refresh</adeni-staff-btn>
     @if (!loading() && totalCount() > 0) {
       <p class="toolbar-meta">{{ showingRange() }}</p>
     }
@@ -81,14 +78,14 @@
               </td>
               <td class="actions-cell">
                 @if (!item.isHidden) {
-                  <button
-                    type="button"
-                    class="btn btn-danger"
+                  <adeni-staff-btn
+                    variant="danger"
+                    icon="misuse"
                     [disabled]="busyId() === item.id"
-                    (click)="hideReview(item)"
+                    (pressed)="hideReview(item)"
                   >
                     Hide
-                  </button>
+                  </adeni-staff-btn>
                 } @else {
                   <span class="muted">—</span>
                 }
@@ -101,18 +98,22 @@
 
     @if (totalPages() > 1) {
       <nav class="pager" aria-label="Review pages">
-        <button type="button" class="btn" [disabled]="page() <= 1 || loading()" (click)="goToPage(page() - 1)">
+        <adeni-staff-btn
+          icon="chevron--left"
+          [disabled]="page() <= 1 || loading()"
+          (pressed)="goToPage(page() - 1)"
+        >
           Previous
-        </button>
+        </adeni-staff-btn>
         <span class="pager-meta">{{ showingRange() }}</span>
-        <button
-          type="button"
-          class="btn"
+        <adeni-staff-btn
+          icon="chevron--right"
+          iconPosition="end"
           [disabled]="page() >= totalPages() || loading()"
-          (click)="goToPage(page() + 1)"
+          (pressed)="goToPage(page() + 1)"
         >
           Next
-        </button>
+        </adeni-staff-btn>
       </nav>
     }
   }

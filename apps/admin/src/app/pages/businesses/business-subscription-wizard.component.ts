@@ -2,7 +2,12 @@ import { Component, computed, input, output, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import type { AdminBusinessSummary, SubscriptionSku, TenantBillingStatus } from "@adeni/shared";
 import { SUBSCRIPTION_SKUS, formatSubscriptionSku } from "@adeni/shared";
-import { AdeniModalComponent, AdeniWizardComponent, type AdeniWizardStep } from "@adeni/ui";
+import {
+  AdeniModalComponent,
+  AdeniStaffButtonComponent,
+  AdeniWizardComponent,
+  type AdeniWizardStep,
+} from "@adeni/ui";
 import { AdminPillComponent } from "../../shared/admin-pill.component";
 import { businessPlanPill, tenantStatusPill } from "../../shared/admin-pill-maps";
 import type { BusinessSubscriptionDraft } from "./business-subscription.model";
@@ -37,7 +42,13 @@ const STEPS: AdeniWizardStep[] = [
 @Component({
   selector: "app-business-subscription-wizard",
   standalone: true,
-  imports: [FormsModule, AdeniModalComponent, AdeniWizardComponent, AdminPillComponent],
+  imports: [
+    FormsModule,
+    AdeniStaffButtonComponent,
+    AdeniModalComponent,
+    AdeniWizardComponent,
+    AdminPillComponent,
+  ],
   templateUrl: "./business-subscription-wizard.component.html",
   styleUrl: "./business-subscription-wizard.component.scss",
 })

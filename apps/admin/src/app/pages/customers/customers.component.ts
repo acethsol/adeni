@@ -7,6 +7,7 @@ import type { AdminCustomerSummary, CustomerDataExport } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
   AdeniConfirmService,
+  AdeniStaffButtonComponent,
   AdeniFeedbackService,
   AdeniPortalEmptyStateComponent,
   PortalPageComponent,
@@ -29,6 +30,7 @@ import { erasurePill } from "../../shared/admin-pill-maps";
     FormsModule,
     JsonPipe,
     AdeniCarbonIconComponent,
+    AdeniStaffButtonComponent,
     AdeniPortalEmptyStateComponent,
     AdminPillComponent,
   ],

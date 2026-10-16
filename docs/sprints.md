@@ -484,9 +484,9 @@ Composable **widgets**, **charts**, and **per-user customizable layout** on port
 | Task | Status |
 |------|--------|
 | **32a** Foundation — honest KPIs, plan strip, gated shortcuts | Done |
-| **32b** Widget grid + Carbon charts + default layout + edit mode | In progress — aggregates API + range toolbar shipped; charts/edit/layout TBD |
-| **32c** Layout persistence API + per BusinessUser save | Planned |
-| **32d** Extended widget catalog (queue, staff, quotes, …) | Planned |
+| **32b** Widget grid + Carbon charts + default layout + edit mode | Done locally |
+| **32c** Layout persistence API + per BusinessUser save | Done locally — `GET/PUT /tenant/dashboard/layout`; portal uses API + localStorage migrate |
+| **32d** Extended widget catalog (queue, staff, quotes, …) | Done locally — widgets + role layout presets |
 
 **Sprint 33** can start after **32a**; full dashboard program (32b–32d) may overlap 33.
 

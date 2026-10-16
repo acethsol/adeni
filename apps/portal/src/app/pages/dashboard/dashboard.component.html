@@ -9,225 +9,472 @@
   </section>
 } @else if (profile(); as business) {
   <app-portal-page title="Dashboard" [description]="pageDescription()">
-    <div pageActions class="range-toolbar">
-      @for (preset of rangePresets; track preset.id) {
-        <button
-          type="button"
-          class="btn range-btn"
-          [class.active]="rangePreset() === preset.id"
-          (click)="setRange(preset.id)"
-        >
-          {{ preset.label }}
+    <div pageActions class="page-toolbar">
+      @if (editMode()) {
+        <button type="button" class="btn" (click)="openPicker()">
+          <adeni-carbon-icon name="add" [size]="16" />
+          Add widget
         </button>
-      }
-    </div>
-  <div class="widget-grid">
-  <section class="hero widget-span-12">
-    <div>
-      <p class="kicker">{{ categoryLine() }}</p>
-      <h2>{{ business.businessName }}</h2>
-      <p class="meta">
-        {{ formatTenantStatus(business.status) }}
-        @if (primaryLocationName(); as place) {
-          · {{ place }}
-        }
-      </p>
-    </div>
-    <div class="hero-actions">
-      @if (isPractitionerView()) {
-        <a class="btn btn-primary" routerLink="/my-calendar">
-          <adeni-carbon-icon name="calendar" [size]="16" />
-          My calendar
-        </a>
-        <a class="btn" routerLink="/bookings">
-          <adeni-carbon-icon name="time" [size]="16" />
-          @if (pendingCount() > 0) {
-            {{ pendingCount() }} waiting
-          } @else {
-            My bookings
-          }
-        </a>
+        <button type="button" class="btn" (click)="resetLayoutDefault()">Reset layout</button>
+        <button type="button" class="btn btn-primary" (click)="finishCustomize()">Done</button>
       } @else {
-        @if (publicProfileUrl(); as url) {
-          <a class="btn btn-primary" [href]="url" target="_blank" rel="noopener">
-            <adeni-carbon-icon name="launch" [size]="16" />
-            View public profile
-          </a>
-        }
-        <a class="btn" routerLink="/bookings">
-          <adeni-carbon-icon name="time" [size]="16" />
-          @if (pendingCount() > 0) {
-            {{ pendingCount() }} waiting
-          } @else {
-            Booking inbox
+        <button type="button" class="btn" (click)="toggleCustomize()">
+          <adeni-carbon-icon name="edit" [size]="16" />
+          Customize
+        </button>
+        <div class="range-toolbar">
+          @for (preset of rangePresets; track preset.id) {
+            <button
+              type="button"
+              class="btn range-btn"
+              [class.active]="rangePreset() === preset.id"
+              (click)="setRange(preset.id)"
+            >
+              {{ preset.label }}
+            </button>
           }
-        </a>
-      }
-    </div>
-  </section>
-
-  @if (usage(); as plan) {
-    <a class="usage" routerLink="/plan" [class.usage-warn]="isNearBookingLimit(plan)">
-      <div>
-        <p class="usage-label">{{ planUsageLabel() }}</p>
-        <p class="usage-value">{{ formatBookingUsage(plan) }}</p>
-        @if (planPriceHint(); as price) {
-          <p class="usage-meta">{{ price }} list · Manage plan</p>
-        } @else {
-          <p class="usage-meta">Manage plan</p>
-        }
-        @if (isNearBookingLimit(plan)) {
-          <p class="usage-warn-text">You're approaching your monthly booking limit.</p>
-        }
-      </div>
-      @if (plan.bookingsLimitThisMonth) {
-        <div class="meter" aria-hidden="true">
-          <span [style.width.%]="usagePercent()"></span>
         </div>
       }
-    </a>
-  }
+    </div>
 
-  <section class="stats widget-span-12">
-    <article>
-      <p class="stat-label">Pending</p>
-      <p class="stat-value">{{ pendingCount() }}</p>
-      <p class="stat-hint">Awaiting a yes or no</p>
-    </article>
-    <article>
-      <p class="stat-label">Appointments</p>
-      <p class="stat-value">{{ appointmentsInRange() }}</p>
-      <p class="stat-hint">In {{ rangeLabel().toLowerCase() }}</p>
-    </article>
-    <article>
-      <p class="stat-label">On the menu</p>
-      <p class="stat-value">{{ activeServices() }}</p>
-      <p class="stat-hint">Active services</p>
-    </article>
-    @if (!isPractitionerView()) {
-      <article>
-        <p class="stat-label">{{ revenueUsesCollected() ? "Collected" : "Booked value" }}</p>
-        <p class="stat-value">{{ revenueLabel() }}</p>
-        <p class="stat-hint">{{ revenueHint() }}</p>
-      </article>
-    }
-    <article>
-      <p class="stat-label">Rating</p>
-      <p class="stat-value">{{ ratingLabel() }}</p>
-      <p class="stat-hint">{{ ratingHint() }}</p>
-    </article>
-  </section>
-
-  <section class="split widget-span-12">
-    <article class="panel">
-      <h3>Appointments over time</h3>
-      <p class="hint">Daily count for {{ rangeLabel().toLowerCase() }}.</p>
-      <div class="bars">
-        @for (day of week(); track day.label) {
-          <div class="bar" [class.today]="day.isToday">
-            <div class="bar-track">
-              <span [style.height.%]="day.height"></span>
-            </div>
-            <p>{{ day.label }}</p>
-            <p class="count">{{ day.count }}</p>
-          </div>
-        }
-      </div>
-    </article>
-
-    <article class="panel">
-      <h3>Today’s chair</h3>
-      @if (today().length === 0) {
-        <adeni-portal-empty-state
-          [compact]="true"
-          [embedded]="true"
-          icon="calendar"
-          title="Clear for today"
-          description="No appointments left on the book. Your open hours can still accept new bookings."
-        >
-          <a class="btn" routerLink="/availability">View hours</a>
-        </adeni-portal-empty-state>
-      } @else {
-        <ul class="today-list">
-          @for (booking of today(); track booking.id) {
+    @if (pickerOpen()) {
+      <section class="panel widget-picker widget-span-12">
+        <h3>Layout presets</h3>
+        <p class="hint">Start from a role template, then drag widgets to taste.</p>
+        <ul class="picker-list">
+          @for (preset of layoutPresets; track preset.id) {
             <li>
-              <strong>{{ formatSlotTime(booking.startAt) }}</strong>
-              <span>{{ booking.serviceName }}</span>
+              <button type="button" class="btn" (click)="applyLayoutPreset(preset.id)">
+                {{ preset.label }}
+              </button>
             </li>
           }
         </ul>
-      }
-    </article>
-  </section>
-
-  <section class="panel mix widget-span-12">
-    <h3>Booking mix</h3>
-    <div class="mix-bar">
-      @for (slice of mix(); track slice.status) {
-        @if (slice.count > 0) {
-          <span class="slice s{{ slice.status }}" [style.flex-grow]="slice.count"></span>
+        <h3>Add a widget</h3>
+        @if (addableWidgets().length === 0) {
+          <p class="hint">Every widget available on your plan is already on the dashboard.</p>
+        } @else {
+          <ul class="picker-list">
+            @for (widget of addableWidgets(); track widget.id) {
+              <li>
+                <button type="button" class="btn" (click)="addWidget(widget.id)">
+                  {{ widget.title }}
+                </button>
+              </li>
+            }
+          </ul>
         }
-      }
-    </div>
-    <ul class="legend">
-      @for (slice of mix(); track slice.status) {
-        <li>
-          <i class="swatch s{{ slice.status }}"></i>
-          {{ slice.label }}
-          <strong>{{ slice.count }}</strong>
-        </li>
-      }
-    </ul>
-  </section>
+        <button type="button" class="btn" (click)="closePicker()">Close</button>
+      </section>
+    }
 
-  <section class="widget-span-12">
-    <h3 class="section-title">Shortcuts</h3>
-    <p class="section-lead muted">Jump to the tools you use most during a shift.</p>
-    <div class="actions">
-      @if (offers("calendar")) {
-        <a routerLink="/bookings" [queryParams]="{ tab: 'pending' }">
-          <strong>Booking inbox</strong>
-          <span>Accept, reject, and see who is coming in.</span>
-        </a>
-      }
-      @if (offers("quotes")) {
-        <a routerLink="/quotes">
-          <strong>Quotes</strong>
-          <span>Price custom work and turn it into a booking.</span>
-        </a>
-      }
-      @if (hasEntitlement("messaging")) {
-        <a routerLink="/messages" [queryParams]="{ tab: 'inbox' }">
-          <strong>Messages</strong>
-          <span>Reply in the thread, or send a WhatsApp note.</span>
-        </a>
-      } @else if (session.can('portal.messages')) {
-        <a routerLink="/messages" [queryParams]="{ tab: 'whatsapp' }">
-          <strong>WhatsApp</strong>
-          <span>Send a quick note outside the inbox.</span>
-        </a>
-      }
-      @if (session.can("portal.services")) {
-        <a routerLink="/services">
-          <strong>Services</strong>
-          <span>Prices, duration, and what clients can book.</span>
-        </a>
-      }
-      @if (offers("calendar") && session.can("portal.hours")) {
-        <a routerLink="/availability">
-          <strong>Hours</strong>
-          <span>The week customers are allowed to book.</span>
-        </a>
-      }
-      @if (session.can("portal.profile")) {
-        <a routerLink="/profile">
-          <strong>Profile</strong>
-          <span>Cover, share link, reviews, and verification.</span>
-        </a>
+    <section class="hero widget-span-12">
+      <div>
+        <p class="kicker">{{ categoryLine() }}</p>
+        <h2>{{ business.businessName }}</h2>
+        <p class="meta">
+          {{ formatTenantStatus(business.status) }}
+          @if (primaryLocationName(); as place) {
+            · {{ place }}
+          }
+        </p>
+      </div>
+      <div class="hero-actions">
+        @if (isPractitionerView()) {
+          <a class="btn btn-primary" routerLink="/my-calendar">
+            <adeni-carbon-icon name="calendar" [size]="16" />
+            My calendar
+          </a>
+          <a class="btn" routerLink="/bookings">
+            <adeni-carbon-icon name="time" [size]="16" />
+            @if (pendingCount() > 0) {
+              {{ pendingCount() }} waiting
+            } @else {
+              My bookings
+            }
+          </a>
+        } @else {
+          @if (publicProfileUrl(); as url) {
+            <a class="btn btn-primary" [href]="url" target="_blank" rel="noopener">
+              <adeni-carbon-icon name="launch" [size]="16" />
+              View public profile
+            </a>
+          }
+          <a class="btn" routerLink="/bookings">
+            <adeni-carbon-icon name="time" [size]="16" />
+            @if (pendingCount() > 0) {
+              {{ pendingCount() }} waiting
+            } @else {
+              Booking inbox
+            }
+          </a>
+        }
+      </div>
+    </section>
+
+    <div
+      class="widget-grid"
+      cdkDropList
+      [cdkDropListDisabled]="!editMode()"
+      (cdkDropListDropped)="onWidgetDrop($event)"
+    >
+      @for (entry of visibleLayoutWidgets(); track entry.id) {
+        <div cdkDrag [cdkDragDisabled]="!editMode()" [class]="widgetSpanClass(entry)">
+          @switch (entry.id) {
+            @case ("plan_usage") {
+              @if (usage(); as plan) {
+                <a class="usage" routerLink="/plan" [class.usage-warn]="isNearBookingLimit(plan)">
+                  <div>
+                    <p class="usage-label">{{ planUsageLabel() }}</p>
+                    <p class="usage-value">{{ formatBookingUsage(plan) }}</p>
+                    @if (planPriceHint(); as price) {
+                      <p class="usage-meta">{{ price }} list · Manage plan</p>
+                    } @else {
+                      <p class="usage-meta">Manage plan</p>
+                    }
+                    @if (isNearBookingLimit(plan)) {
+                      <p class="usage-warn-text">You're approaching your monthly booking limit.</p>
+                    }
+                  </div>
+                  @if (plan.bookingsLimitThisMonth) {
+                    <div class="meter" aria-hidden="true">
+                      <span [style.width.%]="usagePercent()"></span>
+                    </div>
+                  }
+                </a>
+              }
+            }
+            @case ("kpis_row") {
+              <section class="stats">
+                <article>
+                  <p class="stat-label">Pending</p>
+                  <p class="stat-value">{{ pendingCount() }}</p>
+                  <p class="stat-hint">Awaiting a yes or no</p>
+                </article>
+                <article>
+                  <p class="stat-label">Appointments</p>
+                  <p class="stat-value">{{ appointmentsInRange() }}</p>
+                  <p class="stat-hint">In {{ rangeLabel().toLowerCase() }}</p>
+                </article>
+                <article>
+                  <p class="stat-label">On the menu</p>
+                  <p class="stat-value">{{ activeServices() }}</p>
+                  <p class="stat-hint">Active services</p>
+                </article>
+                @if (!isPractitionerView()) {
+                  <article>
+                    <p class="stat-label">{{ revenueUsesCollected() ? "Collected" : "Booked value" }}</p>
+                    <p class="stat-value">{{ revenueLabel() }}</p>
+                    <p class="stat-hint">{{ revenueHint() }}</p>
+                  </article>
+                }
+                <article>
+                  <p class="stat-label">Rating</p>
+                  <p class="stat-value">{{ ratingLabel() }}</p>
+                  <p class="stat-hint">{{ ratingHint() }}</p>
+                </article>
+              </section>
+            }
+            @case ("week_appointments") {
+              <app-dashboard-widget
+                [title]="dashboardWidgetTitle('week_appointments')"
+                [hint]="'Daily count for ' + rangeLabel().toLowerCase() + '.'"
+                [editMode]="editMode()"
+                (remove)="removeWidget('week_appointments')"
+              >
+                @if (appointmentChartData().length === 0) {
+                  <p class="hint">No appointments in this range yet.</p>
+                } @else {
+                  <app-dashboard-carbon-chart
+                    kind="bar"
+                    [data]="appointmentChartData()"
+                    ariaLabel="Appointments over time"
+                  />
+                }
+              </app-dashboard-widget>
+            }
+            @case ("today_schedule") {
+              <app-dashboard-widget
+                [title]="dashboardWidgetTitle('today_schedule')"
+                [editMode]="editMode()"
+                (remove)="removeWidget('today_schedule')"
+              >
+                @if (today().length === 0) {
+                  <adeni-portal-empty-state
+                    [compact]="true"
+                    [embedded]="true"
+                    icon="calendar"
+                    title="Clear for today"
+                    description="No appointments left on the book. Your open hours can still accept new bookings."
+                  >
+                    <a class="btn" routerLink="/availability">View hours</a>
+                  </adeni-portal-empty-state>
+                } @else {
+                  <ul class="today-list">
+                    @for (booking of today(); track booking.id) {
+                      <li>
+                        <strong>{{ formatSlotTime(booking.startAt) }}</strong>
+                        <span>{{ booking.serviceName }}</span>
+                      </li>
+                    }
+                  </ul>
+                }
+              </app-dashboard-widget>
+            }
+            @case ("booking_mix") {
+              <app-dashboard-widget
+                [title]="dashboardWidgetTitle('booking_mix')"
+                [editMode]="editMode()"
+                (remove)="removeWidget('booking_mix')"
+              >
+                <div class="mix-bar">
+                  @for (slice of mix(); track slice.status) {
+                    @if (slice.count > 0) {
+                      <span class="slice s{{ slice.status }}" [style.flex-grow]="slice.count"></span>
+                    }
+                  }
+                </div>
+                <ul class="legend">
+                  @for (slice of mix(); track slice.status) {
+                    <li>
+                      <i class="swatch s{{ slice.status }}"></i>
+                      {{ slice.label }}
+                      <strong>{{ slice.count }}</strong>
+                    </li>
+                  }
+                </ul>
+              </app-dashboard-widget>
+            }
+            @case ("collected_revenue") {
+              <app-dashboard-widget
+                [title]="dashboardWidgetTitle('collected_revenue')"
+                [hint]="'Online payments in ' + rangeLabel().toLowerCase() + '.'"
+                [editMode]="editMode()"
+                (remove)="removeWidget('collected_revenue')"
+              >
+                @if (collectedChartData().length === 0) {
+                  <p class="hint">No collected payments in this range.</p>
+                } @else {
+                  <app-dashboard-carbon-chart
+                    kind="line"
+                    [data]="collectedChartData()"
+                    ariaLabel="Collected revenue over time"
+                  />
+                }
+              </app-dashboard-widget>
+            }
+            @case ("service_mix") {
+              <app-dashboard-widget
+                [title]="dashboardWidgetTitle('service_mix')"
+                [hint]="'Top booked services in ' + rangeLabel().toLowerCase() + '.'"
+                [editMode]="editMode()"
+                (remove)="removeWidget('service_mix')"
+              >
+                @if (serviceMixChartData().length === 0) {
+                  <p class="hint">No service breakdown for this range yet.</p>
+                } @else {
+                  <app-dashboard-carbon-chart
+                    kind="donut"
+                    [data]="serviceMixChartData()"
+                    ariaLabel="Top services"
+                  />
+                }
+              </app-dashboard-widget>
+            }
+            @case ("booked_value") {
+              <app-dashboard-widget
+                [title]="dashboardWidgetTitle('booked_value')"
+                [hint]="'List price in ' + rangeLabel().toLowerCase() + ' (not cash in bank).'"
+                [editMode]="editMode()"
+                (remove)="removeWidget('booked_value')"
+              >
+                @if (bookedValueChartData().length === 0) {
+                  <p class="hint">No booked value in this range.</p>
+                } @else {
+                  <app-dashboard-carbon-chart
+                    kind="line"
+                    [data]="bookedValueChartData()"
+                    ariaLabel="Booked value over time"
+                  />
+                }
+              </app-dashboard-widget>
+            }
+            @case ("staff_leaderboard") {
+              <app-dashboard-widget
+                [title]="dashboardWidgetTitle('staff_leaderboard')"
+                [hint]="'Bookings by team member in ' + rangeLabel().toLowerCase() + '.'"
+                [editMode]="editMode()"
+                (remove)="removeWidget('staff_leaderboard')"
+              >
+                @if (staffLeaderboardChartData().length === 0) {
+                  <p class="hint">No staff-assigned bookings in this range.</p>
+                } @else {
+                  <app-dashboard-carbon-chart
+                    kind="bar"
+                    [data]="staffLeaderboardChartData()"
+                    ariaLabel="Team bookings"
+                  />
+                }
+              </app-dashboard-widget>
+            }
+            @case ("pending_inbox") {
+              <app-dashboard-widget
+                [title]="dashboardWidgetTitle('pending_inbox')"
+                [editMode]="editMode()"
+                (remove)="removeWidget('pending_inbox')"
+              >
+                <a class="widget-stat-link" routerLink="/bookings" [queryParams]="{ tab: 'pending' }">
+                  <p class="widget-stat-value">{{ pendingCount() }}</p>
+                  <p class="hint">Bookings waiting for a yes or no</p>
+                </a>
+              </app-dashboard-widget>
+            }
+            @case ("messages_unread") {
+              <app-dashboard-widget
+                [title]="dashboardWidgetTitle('messages_unread')"
+                [editMode]="editMode()"
+                (remove)="removeWidget('messages_unread')"
+              >
+                <a class="widget-stat-link" routerLink="/messages" [queryParams]="{ tab: 'inbox' }">
+                  <p class="widget-stat-value">{{ unreadMessagesCount() }}</p>
+                  <p class="hint">Unread threads in your inbox</p>
+                </a>
+              </app-dashboard-widget>
+            }
+            @case ("quote_pipeline") {
+              <app-dashboard-widget
+                [title]="dashboardWidgetTitle('quote_pipeline')"
+                [editMode]="editMode()"
+                (remove)="removeWidget('quote_pipeline')"
+              >
+                <a class="widget-stat-link" routerLink="/quotes">
+                  <p class="widget-stat-value">{{ openQuotesCount() }}</p>
+                  <p class="hint">Quotes waiting for an offer or answer</p>
+                </a>
+              </app-dashboard-widget>
+            }
+            @case ("rating_summary") {
+              <app-dashboard-widget
+                [title]="dashboardWidgetTitle('rating_summary')"
+                [editMode]="editMode()"
+                (remove)="removeWidget('rating_summary')"
+              >
+                <p class="widget-stat-value">{{ ratingLabel() }}</p>
+                <p class="hint">{{ ratingHint() }}</p>
+                @if (publicProfileUrl(); as url) {
+                  <a class="btn" [href]="url" target="_blank" rel="noopener">View reviews</a>
+                }
+              </app-dashboard-widget>
+            }
+            @case ("verification_status") {
+              <app-dashboard-widget
+                [title]="dashboardWidgetTitle('verification_status')"
+                [editMode]="editMode()"
+                (remove)="removeWidget('verification_status')"
+              >
+                <p class="widget-stat-value">{{ formatTenantStatus(business.status) }}</p>
+                <p class="hint">{{ verificationHint() }}</p>
+                @if (business.status !== 2) {
+                  <a class="btn" routerLink="/profile">Continue verification</a>
+                }
+              </app-dashboard-widget>
+            }
+            @case ("queue_now") {
+              <app-dashboard-widget
+                [title]="dashboardWidgetTitle('queue_now')"
+                [editMode]="editMode()"
+                (remove)="removeWidget('queue_now')"
+              >
+                @if (queueWaiting().length === 0) {
+                  <adeni-portal-empty-state
+                    [compact]="true"
+                    [embedded]="true"
+                    icon="time"
+                    title="Queue is clear"
+                    description="No walk-ins waiting right now."
+                  >
+                    @if (offersWalkInQueue()) {
+                      <a class="btn" routerLink="/queue">Open queue</a>
+                    }
+                  </adeni-portal-empty-state>
+                } @else {
+                  <ul class="today-list">
+                    @for (ticket of queueWaiting(); track ticket.id) {
+                      <li>
+                        <strong>#{{ ticket.position }} · {{ ticket.displayName }}</strong>
+                        <span>{{ ticket.serviceName ?? "Walk-in" }}</span>
+                      </li>
+                    }
+                  </ul>
+                  <a class="btn" routerLink="/queue">Manage queue</a>
+                }
+              </app-dashboard-widget>
+            }
+            @case ("quick_actions") {
+              <section class="shortcuts-panel">
+                <header class="shortcuts-head">
+                  @if (editMode()) {
+                    <span class="drag-handle" cdkDragHandle aria-hidden="true">⋮⋮</span>
+                  }
+                  <div>
+                    <h3 class="section-title">{{ dashboardWidgetTitle("quick_actions") }}</h3>
+                    <p class="section-lead muted">Jump to the tools you use most during a shift.</p>
+                  </div>
+                  @if (editMode()) {
+                    <button type="button" class="btn icon-btn remove-btn" (click)="removeWidget('quick_actions')">
+                      <adeni-carbon-icon name="close" [size]="16" />
+                    </button>
+                  }
+                </header>
+                <div class="actions">
+                  @if (offers("calendar")) {
+                    <a routerLink="/bookings" [queryParams]="{ tab: 'pending' }">
+                      <strong>Booking inbox</strong>
+                      <span>Accept, reject, and see who is coming in.</span>
+                    </a>
+                  }
+                  @if (offers("quotes")) {
+                    <a routerLink="/quotes">
+                      <strong>Quotes</strong>
+                      <span>Price custom work and turn it into a booking.</span>
+                    </a>
+                  }
+                  @if (hasEntitlement("messaging")) {
+                    <a routerLink="/messages" [queryParams]="{ tab: 'inbox' }">
+                      <strong>Messages</strong>
+                      <span>Reply in the thread, or send a WhatsApp note.</span>
+                    </a>
+                  } @else if (session.can("portal.messages")) {
+                    <a routerLink="/messages" [queryParams]="{ tab: 'whatsapp' }">
+                      <strong>WhatsApp</strong>
+                      <span>Send a quick note outside the inbox.</span>
+                    </a>
+                  }
+                  @if (session.can("portal.services")) {
+                    <a routerLink="/services">
+                      <strong>Services</strong>
+                      <span>Prices, duration, and what clients can book.</span>
+                    </a>
+                  }
+                  @if (offers("calendar") && session.can("portal.hours")) {
+                    <a routerLink="/availability">
+                      <strong>Hours</strong>
+                      <span>The week customers are allowed to book.</span>
+                    </a>
+                  }
+                  @if (session.can("portal.profile")) {
+                    <a routerLink="/profile">
+                      <strong>Profile</strong>
+                      <span>Cover, share link, reviews, and verification.</span>
+                    </a>
+                  }
+                </div>
+              </section>
+            }
+          }
+        </div>
       }
     </div>
-  </section>
-  </div>
   </app-portal-page>
 } @else {
   <section class="panel">

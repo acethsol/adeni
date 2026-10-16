@@ -10,6 +10,7 @@ import {
   getPlanDisplayForCountry,
   isNearBookingLimit,
   PLAN_COMPARISON,
+  type PlanFeature,
   resolveSubscriptionSku,
   SUBSCRIPTION_SKUS,
   skuToSubscriptionTier,
@@ -166,6 +167,11 @@ export class PlanComponent implements OnInit {
     if (value === true) return "Yes";
     if (value === false) return "—";
     return value;
+  }
+
+  comparisonCell(row: PlanFeature, sku: SubscriptionSku): string {
+    const tierKey = this.skuTierColumn[sku] as keyof Omit<PlanFeature, "label">;
+    return this.featureCell(row[tierKey]);
   }
 
   private async maybeCompleteStubCheckout(): Promise<void> {

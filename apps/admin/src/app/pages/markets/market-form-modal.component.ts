@@ -1,7 +1,7 @@
 import { Component, input, output, signal, effect } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import type { AdminMarket } from "@adeni/shared";
-import { AdeniModalComponent } from "@adeni/ui";
+import { AdeniModalComponent, AdeniStaffButtonComponent } from "@adeni/ui";
 
 export type MarketFormMode = "create" | "edit";
 
@@ -36,7 +36,7 @@ const DEFAULT_FORM: MarketFormValue = {
 @Component({
   selector: "app-market-form-modal",
   standalone: true,
-  imports: [FormsModule, AdeniModalComponent],
+  imports: [FormsModule, AdeniModalComponent, AdeniStaffButtonComponent],
   templateUrl: "./market-form-modal.component.html",
   styleUrl: "./market-form-modal.component.scss",
 })

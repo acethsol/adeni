@@ -12,6 +12,73 @@
   grid-column: 1 / -1;
 }
 
+.widget-span-8 {
+  grid-column: span 8;
+}
+
+.widget-span-6 {
+  grid-column: span 6;
+}
+
+.widget-span-4 {
+  grid-column: span 4;
+}
+
+.page-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.widget-stat-value {
+  margin: 0.25rem 0;
+  font-size: 2rem;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+}
+
+.widget-stat-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.widget-picker {
+  margin-bottom: 1rem;
+
+  .picker-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0;
+    margin: 0.75rem 0;
+    list-style: none;
+  }
+}
+
+.widget-grid.cdk-drop-list-dragging .widget-slot:not(.cdk-drag-placeholder) {
+  transition: transform 200ms ease;
+}
+
+.cdk-drag-preview {
+  box-sizing: border-box;
+  opacity: 0.85;
+}
+
+.shortcuts-panel {
+  padding: 1.15rem 1.25rem 1.3rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.shortcuts-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
 .range-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -200,6 +267,10 @@
   grid-template-columns: 1.4fr 0.8fr;
   gap: 0.8rem;
   margin-top: 0.8rem;
+}
+
+.split app-dashboard-widget:only-child {
+  grid-column: 1 / -1;
 }
 
 .panel {

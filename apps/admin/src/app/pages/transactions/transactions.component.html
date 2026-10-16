@@ -1,0 +1,129 @@
+<app-portal-page
+  title="Transactions"
+  description="Find commerce checkouts (customer → business) and SaaS subscription charges (business → Adeni) by Paystack reference, id, or business name."
+>
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  <section class="card list-toolbar">
+    <form class="search-form" (submit)="search(); $event.preventDefault()">
+      <label class="search-field">
+        <span class="visually-hidden">Search transactions</span>
+        <adeni-carbon-icon name="search" [size]="16" />
+        <input
+          type="search"
+          [(ngModel)]="searchInput"
+          name="q"
+          placeholder="Paystack ref, transaction id, or business name"
+          autocomplete="off"
+        />
+      </label>
+      <adeni-staff-btn
+        type="submit"
+        variant="primary"
+        icon="search"
+        [disabled]="searching() || !searchInput.trim()"
+      >
+        {{ searching() ? "Searching…" : "Search" }}
+      </adeni-staff-btn>
+    </form>
+    <div class="kind-toggle" role="group" aria-label="Transaction type">
+      <adeni-staff-btn
+        icon="filter"
+        [variant]="kindFilter() === 'all' ? 'primary' : 'default'"
+        (pressed)="setKind('all')"
+      >
+        All
+      </adeni-staff-btn>
+      <adeni-staff-btn
+        icon="user--filled"
+        [variant]="kindFilter() === 'commerce' ? 'primary' : 'default'"
+        (pressed)="setKind('commerce')"
+      >
+        Commerce
+      </adeni-staff-btn>
+      <adeni-staff-btn
+        icon="flash--filled"
+        [variant]="kindFilter() === 'saas' ? 'primary' : 'default'"
+        (pressed)="setKind('saas')"
+      >
+        SaaS
+      </adeni-staff-btn>
+    </div>
+    @if (hasSearched() && totalCount() > 0) {
+      <p class="toolbar-meta">{{ showingRange() }}</p>
+    }
+  </section>
+
+  @if (searching() && rows().length === 0) {
+    <p class="muted">Searching…</p>
+  } @else if (!hasSearched()) {
+    <section class="card">
+      <p class="muted">
+        Use a Paystack reference, Adeni payment intent id, or business name, then search.
+      </p>
+    </section>
+  } @else if (rows().length === 0 && !error()) {
+    <section class="card">
+      <p class="muted">No transactions found. Try the full Paystack reference or transaction id.</p>
+    </section>
+  } @else if (rows().length > 0) {
+    <section class="card data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col">When</th>
+            <th scope="col">Type</th>
+            <th scope="col">Business</th>
+            <th scope="col">Reference</th>
+            <th scope="col">Amount</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.id) {
+            <tr>
+              <td>{{ row.occurredAt | date: "medium" }}</td>
+              <td>
+                <admin-pill [label]="kindLabel(row)" [variant]="kindVariant(row)" [compact]="true" />
+              </td>
+              <td>
+                <a [routerLink]="['/businesses', row.tenantId, 'billing']">{{ row.tenantName }}</a>
+              </td>
+              <td>
+                <code class="ref">{{ referenceLabel(row) }}</code>
+                @if (row.kind === "saas" && row.subscriptionSku) {
+                  <span class="muted row-sub">{{ formatSubscriptionSku(row.subscriptionSku) }}</span>
+                }
+              </td>
+              <td>{{ formatAmount(row) }}</td>
+              <td>{{ row.status }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+
+    @if (totalPages() > 1) {
+      <nav class="pager" aria-label="Transaction pages">
+        <adeni-staff-btn
+          icon="chevron--left"
+          [disabled]="page() <= 1 || searching()"
+          (pressed)="goToPage(page() - 1)"
+        >
+          Previous
+        </adeni-staff-btn>
+        <span class="pager-meta">{{ showingRange() }}</span>
+        <adeni-staff-btn
+          icon="chevron--right"
+          iconPosition="end"
+          [disabled]="page() >= totalPages() || searching()"
+          (pressed)="goToPage(page() + 1)"
+        >
+          Next
+        </adeni-staff-btn>
+      </nav>
+    }
+  }
+</app-portal-page>

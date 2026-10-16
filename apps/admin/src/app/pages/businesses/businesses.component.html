@@ -26,12 +26,9 @@
           autocomplete="off"
         />
       </label>
-      <button type="submit" class="btn btn-primary">Search</button>
+      <adeni-staff-btn type="submit" variant="primary" icon="search">Search</adeni-staff-btn>
     </form>
-    <button type="button" class="btn" [disabled]="loading()" (click)="load()">
-      <adeni-carbon-icon name="restart" [size]="16" />
-      Refresh
-    </button>
+    <adeni-staff-btn icon="restart" [disabled]="loading()" (pressed)="load()">Refresh</adeni-staff-btn>
     @if (!loading() && totalCount() > 0) {
       <p class="toolbar-meta">{{ showingRange() }}</p>
     }
@@ -88,14 +85,25 @@
               <td class="actions-cell">
                 <div class="actions-inline">
                   @if (b.status === pendingVerificationStatus) {
-                    <a class="btn btn-primary" [routerLink]="['/pending']" [queryParams]="{ q: b.slug || b.name }">
+                    <adeni-staff-btn
+                      variant="primary"
+                      icon="checkmark"
+                      [routerLink]="['/pending']"
+                      [queryParams]="{ q: b.slug || b.name }"
+                    >
                       Review queue
-                    </a>
+                    </adeni-staff-btn>
                   } @else {
-                    <a class="btn btn-primary" [routerLink]="['/businesses', b.id, 'billing']">Billing</a>
-                    <button type="button" class="btn" (click)="openSubscriptionWizard(b)">
+                    <adeni-staff-btn
+                      variant="primary"
+                      icon="calendar"
+                      [routerLink]="['/businesses', b.id, 'billing']"
+                    >
+                      Billing
+                    </adeni-staff-btn>
+                    <adeni-staff-btn icon="edit" (pressed)="openSubscriptionWizard(b)">
                       Edit subscription
-                    </button>
+                    </adeni-staff-btn>
                   }
                 </div>
               </td>
@@ -107,18 +115,22 @@
 
     @if (totalPages() > 1) {
       <nav class="pager" aria-label="Business pages">
-        <button type="button" class="btn" [disabled]="page() <= 1 || loading()" (click)="goToPage(page() - 1)">
+        <adeni-staff-btn
+          icon="chevron--left"
+          [disabled]="page() <= 1 || loading()"
+          (pressed)="goToPage(page() - 1)"
+        >
           Previous
-        </button>
+        </adeni-staff-btn>
         <span class="pager-meta">{{ showingRange() }}</span>
-        <button
-          type="button"
-          class="btn"
+        <adeni-staff-btn
+          icon="chevron--right"
+          iconPosition="end"
           [disabled]="page() >= totalPages() || loading()"
-          (click)="goToPage(page() + 1)"
+          (pressed)="goToPage(page() + 1)"
         >
           Next
-        </button>
+        </adeni-staff-btn>
       </nav>
     }
   }

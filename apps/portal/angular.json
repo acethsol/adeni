@@ -38,6 +38,7 @@
               }
             ],
             "styles": [
+              "../../node_modules/@carbon/charts/styles.css",
               "src/styles.scss"
             ],
             "scripts": []
@@ -117,6 +118,7 @@
               }
             ],
             "styles": [
+              "../../node_modules/@carbon/charts/styles.css",
               "src/styles.scss"
             ],
             "scripts": []

@@ -26,12 +26,9 @@
           autocomplete="off"
         />
       </label>
-      <button type="submit" class="btn btn-primary">Search</button>
+      <adeni-staff-btn type="submit" variant="primary" icon="search">Search</adeni-staff-btn>
     </form>
-    <button type="button" class="btn" [disabled]="loading()" (click)="load()">
-      <adeni-carbon-icon name="restart" [size]="16" />
-      Refresh
-    </button>
+    <adeni-staff-btn icon="restart" [disabled]="loading()" (pressed)="load()">Refresh</adeni-staff-btn>
     @if (!loading() && totalCount() > 0) {
       <p class="toolbar-meta">{{ showingRange() }}</p>
     }
@@ -80,22 +77,22 @@
               </td>
               <td class="actions-cell">
                 <div class="actions-inline">
-                  <button
-                    type="button"
-                    class="btn btn-danger"
+                  <adeni-staff-btn
+                    variant="danger"
+                    icon="misuse"
                     [disabled]="busyId() === item.id"
-                    (click)="reject(item)"
+                    (pressed)="reject(item)"
                   >
                     Reject
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-primary"
+                  </adeni-staff-btn>
+                  <adeni-staff-btn
+                    variant="primary"
+                    icon="checkmark"
                     [disabled]="busyId() === item.id"
-                    (click)="approve(item)"
+                    (pressed)="approve(item)"
                   >
                     Approve
-                  </button>
+                  </adeni-staff-btn>
                 </div>
               </td>
             </tr>
@@ -106,18 +103,22 @@
 
     @if (totalPages() > 1) {
       <nav class="pager" aria-label="Pending verification pages">
-        <button type="button" class="btn" [disabled]="page() <= 1 || loading()" (click)="goToPage(page() - 1)">
+        <adeni-staff-btn
+          icon="chevron--left"
+          [disabled]="page() <= 1 || loading()"
+          (pressed)="goToPage(page() - 1)"
+        >
           Previous
-        </button>
+        </adeni-staff-btn>
         <span class="pager-meta">{{ showingRange() }}</span>
-        <button
-          type="button"
-          class="btn"
+        <adeni-staff-btn
+          icon="chevron--right"
+          iconPosition="end"
           [disabled]="page() >= totalPages() || loading()"
-          (click)="goToPage(page() + 1)"
+          (pressed)="goToPage(page() + 1)"
         >
           Next
-        </button>
+        </adeni-staff-btn>
       </nav>
     }
   }

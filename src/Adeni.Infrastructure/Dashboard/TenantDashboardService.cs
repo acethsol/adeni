@@ -1,9 +1,11 @@
 namespace Adeni.Infrastructure.Dashboard;
 
+using System.Text.Json;
 using Adeni.Application.Dashboard;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
+using Adeni.Domain.Identity;
 using Adeni.Domain.Payments;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
@@ -13,6 +15,12 @@ public sealed class TenantDashboardService(
     AdeniDbContext dbContext,
     IEntitlementsService entitlementsService) : ITenantDashboardService
 {
+    private static readonly JsonSerializerOptions LayoutJsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true,
+    };
+
     public async Task<Result<TenantDashboardSummaryResponse>> GetSummaryAsync(
         Guid tenantId,
         DateTimeOffset from,
@@ -118,12 +126,12 @@ public sealed class TenantDashboardService(
         }
 
         var entitlements = entitlementsService.GetEntitlementsForTenant(tenant);
-        if (!entitlements.Analytics)
+        var normalized = metric.Trim().ToLowerInvariant();
+        if (!entitlements.Analytics && normalized is not "appointments")
         {
             return Result.Failure<TenantDashboardSeriesResponse>(AnalyticsRequiredError());
         }
 
-        var normalized = metric.Trim().ToLowerInvariant();
         IReadOnlyList<TenantDashboardSeriesPoint> points;
         string? currency = null;
 
@@ -393,6 +401,105 @@ public sealed class TenantDashboardService(
                 names.GetValueOrDefault(row.StaffId, "Staff"),
                 row.Count))
             .ToArray();
+    }
+
+    public async Task<Result<TenantDashboardLayoutDto>> GetLayoutAsync(
+        Guid tenantId,
+        Guid businessUserId,
+        bool practitionerView,
+        CancellationToken cancellationToken = default)
+    {
+        var tenant = await dbContext.Tenants.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+        if (tenant is null)
+        {
+            return Result.Failure<TenantDashboardLayoutDto>(Error.NotFound("Tenant"));
+        }
+
+        var membership = await dbContext.BusinessUsers.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == businessUserId && x.TenantId == tenantId, cancellationToken);
+        if (membership is null)
+        {
+            return Result.Failure<TenantDashboardLayoutDto>(Error.NotFound("Business user"));
+        }
+
+        var entitlements = entitlementsService.GetEntitlementsForTenant(tenant);
+        var fallback = DashboardLayoutDefaults.ForPractitionerView(practitionerView);
+
+        var stored = await dbContext.BusinessUserDashboardLayouts.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.BusinessUserId == businessUserId, cancellationToken);
+
+        var parsed = stored is null ? null : ParseLayout(stored.LayoutJson);
+        var normalized = DashboardLayoutNormalizer.Normalize(parsed, fallback, entitlements, practitionerView);
+        return Result.Success(normalized);
+    }
+
+    public async Task<Result<TenantDashboardLayoutDto>> SaveLayoutAsync(
+        Guid tenantId,
+        Guid businessUserId,
+        TenantDashboardLayoutDto layout,
+        bool practitionerView,
+        CancellationToken cancellationToken = default)
+    {
+        if (layout.Version != 1 || layout.Widgets.Count == 0)
+        {
+            return Result.Failure<TenantDashboardLayoutDto>(
+                Error.Validation("Invalid dashboard layout payload."));
+        }
+
+        var tenant = await dbContext.Tenants.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+        if (tenant is null)
+        {
+            return Result.Failure<TenantDashboardLayoutDto>(Error.NotFound("Tenant"));
+        }
+
+        var membership = await dbContext.BusinessUsers
+            .FirstOrDefaultAsync(x => x.Id == businessUserId && x.TenantId == tenantId, cancellationToken);
+        if (membership is null)
+        {
+            return Result.Failure<TenantDashboardLayoutDto>(Error.NotFound("Business user"));
+        }
+
+        var entitlements = entitlementsService.GetEntitlementsForTenant(tenant);
+        var fallback = DashboardLayoutDefaults.ForPractitionerView(practitionerView);
+        var normalized = DashboardLayoutNormalizer.Normalize(layout, fallback, entitlements, practitionerView);
+
+        var json = JsonSerializer.Serialize(normalized, LayoutJsonOptions);
+        var now = DateTimeOffset.UtcNow;
+        var existing = await dbContext.BusinessUserDashboardLayouts
+            .FirstOrDefaultAsync(x => x.BusinessUserId == businessUserId, cancellationToken);
+
+        if (existing is null)
+        {
+            dbContext.BusinessUserDashboardLayouts.Add(new BusinessUserDashboardLayout
+            {
+                BusinessUserId = businessUserId,
+                TenantId = tenantId,
+                LayoutJson = json,
+                UpdatedAt = now,
+            });
+        }
+        else
+        {
+            existing.LayoutJson = json;
+            existing.UpdatedAt = now;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Result.Success(normalized);
+    }
+
+    private static TenantDashboardLayoutDto? ParseLayout(string json)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<TenantDashboardLayoutDto>(json, LayoutJsonOptions);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     private static Error AnalyticsRequiredError() =>

@@ -22,12 +22,15 @@ import {
   tenantDashboardSummarySchema,
   tenantDashboardSeriesSchema,
   tenantDashboardBreakdownSchema,
+  tenantDashboardLayoutSchema,
   type TenantDashboardSummary,
   type TenantDashboardSeries,
   type TenantDashboardBreakdown,
+  type TenantDashboardLayout,
   adminSubscriptionMetricsSchema,
   adminBusinessSummarySchema,
   adminRevenueMetricsSchema,
+  adminTransactionsSearchResponseSchema,
   availableSlotsResponseSchema,
   bookingResponseSchema,
   billingDocumentResponseSchema,
@@ -168,6 +171,7 @@ import {
   type CompleteStubSubscriptionCheckoutRequest,
   type AdminSubscriptionMetrics,
   type AdminRevenueMetrics,
+  type AdminTransactionSearchItem,
   type AvailableSlot,
   type BillingDocumentResponse,
   type BookingResponse,
@@ -1691,6 +1695,21 @@ export class AdeniApiClient {
     return tenantDashboardBreakdownSchema.parse(await response.json());
   }
 
+  async getTenantDashboardLayout(): Promise<TenantDashboardLayout> {
+    const response = await this.request("/api/v1/tenant/dashboard/layout");
+    return tenantDashboardLayoutSchema.parse(await response.json());
+  }
+
+  async putTenantDashboardLayout(layout: TenantDashboardLayout): Promise<TenantDashboardLayout> {
+    const payload = tenantDashboardLayoutSchema.parse(layout);
+    const response = await this.request("/api/v1/tenant/dashboard/layout", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return tenantDashboardLayoutSchema.parse(await response.json());
+  }
+
   async getTenantBillingHistory(limit = 20): Promise<TenantSubscriptionCharge[]> {
     const response = await this.request(
       `/api/v1/tenant/billing?limit=${encodeURIComponent(String(limit))}`,
@@ -1800,6 +1819,22 @@ export class AdeniApiClient {
       `/api/v1/admin/metrics/revenue?${query.toString()}`,
     );
     return adminRevenueMetricsSchema.parse(await response.json());
+  }
+
+  async searchAdminTransactions(
+    queryText: string,
+    options: { kind?: "all" | "commerce" | "saas"; page?: number; pageSize?: number } = {},
+  ): Promise<AdminPagedResult<AdminTransactionSearchItem>> {
+    const query = new URLSearchParams({ q: queryText.trim() });
+    query.set("kind", options.kind ?? "all");
+    if (options.page != null) {
+      query.set("page", String(options.page));
+    }
+    if (options.pageSize != null) {
+      query.set("pageSize", String(options.pageSize));
+    }
+    const response = await this.request(`/api/v1/admin/transactions?${query.toString()}`);
+    return adminTransactionsSearchResponseSchema.parse(await response.json());
   }
 
   async getAdminBusiness(tenantId: string): Promise<AdminBusinessSummary> {

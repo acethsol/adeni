@@ -3,6 +3,7 @@ namespace Adeni.Api.Controllers;
 using Adeni.Api.Auth;
 using Adeni.Api.Errors;
 using Adeni.Api.Middleware;
+using Adeni.Application.Auth;
 using Adeni.Application.Dashboard;
 using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Auth;
@@ -112,7 +113,54 @@ public sealed class TenantDashboardController(ITenantDashboardService dashboard)
         return ApiResults.FromResult(result, Ok, HttpContext);
     }
 
+    [HttpGet("layout")]
+    public async Task<IActionResult> Layout(CancellationToken cancellationToken)
+    {
+        var access = PortalAccessHttpContext.Get(HttpContext);
+        if (access is null)
+        {
+            return Unauthorized();
+        }
+
+        var practitionerView = IsPractitionerDashboardView(access);
+
+        var result = await dashboard.GetLayoutAsync(
+            access.TenantId,
+            access.BusinessUserId,
+            practitionerView,
+            cancellationToken);
+
+        return ApiResults.FromResult(result, Ok, HttpContext);
+    }
+
+    [HttpPut("layout")]
+    public async Task<IActionResult> SaveLayout(
+        [FromBody] TenantDashboardLayoutDto layout,
+        CancellationToken cancellationToken)
+    {
+        var access = PortalAccessHttpContext.Get(HttpContext);
+        if (access is null)
+        {
+            return Unauthorized();
+        }
+
+        var practitionerView = IsPractitionerDashboardView(access);
+
+        var result = await dashboard.SaveLayoutAsync(
+            access.TenantId,
+            access.BusinessUserId,
+            layout,
+            practitionerView,
+            cancellationToken);
+
+        return ApiResults.FromResult(result, Ok, HttpContext);
+    }
+
     private Guid? ResolveTenantId() => PortalAccessHttpContext.Get(HttpContext)?.TenantId;
+
+    private static bool IsPractitionerDashboardView(PortalAccessSnapshot access) =>
+        access.Permissions.Contains(PortalPermissions.StaffSelf)
+        && !access.Permissions.Contains(PortalPermissions.Staff);
 
     private static (DateTimeOffset From, DateTimeOffset To) NormalizeRange(
         DateTimeOffset? from,

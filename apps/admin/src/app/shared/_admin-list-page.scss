@@ -1,6 +1,8 @@
 @use "staff-layout" as *;
 @use "admin-pills" as *;
 
+// Prefer `<adeni-staff-btn icon="…" variant="…">Label</adeni-staff-btn>` from `@adeni/ui` (staff buttons).
+
 .list-toolbar {
   display: flex;
   flex-wrap: wrap;

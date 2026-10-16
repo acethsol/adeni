@@ -32,13 +32,10 @@
           autocomplete="off"
         />
       </label>
-      <button type="submit" class="btn btn-primary">Search</button>
+      <adeni-staff-btn type="submit" variant="primary" icon="search">Search</adeni-staff-btn>
     </form>
-    <button type="button" class="btn btn-primary" (click)="openCreate()">Add market</button>
-    <button type="button" class="btn" [disabled]="loading()" (click)="load()">
-      <adeni-carbon-icon name="restart" [size]="16" />
-      Refresh
-    </button>
+    <adeni-staff-btn variant="primary" icon="add" (pressed)="openCreate()">Add market</adeni-staff-btn>
+    <adeni-staff-btn icon="restart" [disabled]="loading()" (pressed)="load()">Refresh</adeni-staff-btn>
     @if (!loading() && totalCount() > 0) {
       <p class="toolbar-meta">{{ showingRange() }}</p>
     }
@@ -92,10 +89,12 @@
               </td>
               <td class="actions-cell">
                 <div class="actions-inline">
-                  <button type="button" class="btn" (click)="openEdit(market)">Edit</button>
-                  <button type="button" class="btn" (click)="toggleLive(market)">
-                    {{ market.isLive ? "Take offline" : "Go live" }}
-                  </button>
+                  <adeni-staff-btn icon="edit" (pressed)="openEdit(market)">Edit</adeni-staff-btn>
+                  @if (market.isLive) {
+                    <adeni-staff-btn icon="misuse" (pressed)="toggleLive(market)">Take offline</adeni-staff-btn>
+                  } @else {
+                    <adeni-staff-btn icon="flash--filled" (pressed)="toggleLive(market)">Go live</adeni-staff-btn>
+                  }
                 </div>
               </td>
             </tr>
@@ -106,18 +105,22 @@
 
     @if (totalPages() > 1) {
       <nav class="pager" aria-label="Market pages">
-        <button type="button" class="btn" [disabled]="page() <= 1 || loading()" (click)="goToPage(page() - 1)">
+        <adeni-staff-btn
+          icon="chevron--left"
+          [disabled]="page() <= 1 || loading()"
+          (pressed)="goToPage(page() - 1)"
+        >
           Previous
-        </button>
+        </adeni-staff-btn>
         <span class="pager-meta">{{ showingRange() }}</span>
-        <button
-          type="button"
-          class="btn"
+        <adeni-staff-btn
+          icon="chevron--right"
+          iconPosition="end"
           [disabled]="page() >= totalPages() || loading()"
-          (click)="goToPage(page() + 1)"
+          (pressed)="goToPage(page() + 1)"
         >
           Next
-        </button>
+        </adeni-staff-btn>
       </nav>
     }
   }

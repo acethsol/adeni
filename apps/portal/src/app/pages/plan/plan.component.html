@@ -100,7 +100,7 @@
             <tr>
               <td>{{ row.label }}</td>
               @for (sku of skus; track sku) {
-                <td>{{ featureCell(row[skuTierColumn[sku]]) }}</td>
+                <td>{{ comparisonCell(row, sku) }}</td>
               }
             </tr>
           }

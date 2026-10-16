@@ -27,13 +27,12 @@
         }
       </div>
       <div class="toolbar-actions">
-        <button type="button" class="btn" [disabled]="loading()" (click)="load(b.id)">
-          <adeni-carbon-icon name="restart" [size]="16" />
+        <adeni-staff-btn icon="restart" [disabled]="loading()" (pressed)="load(b.id)">
           Refresh
-        </button>
-        <button type="button" class="btn btn-primary" (click)="openSubscriptionWizard()">
+        </adeni-staff-btn>
+        <adeni-staff-btn variant="primary" icon="edit" (pressed)="openSubscriptionWizard()">
           Edit subscription
-        </button>
+        </adeni-staff-btn>
       </div>
     </section>
 

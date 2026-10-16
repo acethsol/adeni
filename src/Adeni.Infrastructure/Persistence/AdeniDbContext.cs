@@ -34,6 +34,8 @@ public sealed class AdeniDbContext(
 
     public DbSet<BusinessUser> BusinessUsers => Set<BusinessUser>();
 
+    public DbSet<BusinessUserDashboardLayout> BusinessUserDashboardLayouts => Set<BusinessUserDashboardLayout>();
+
     public DbSet<StaffPortalInvite> StaffPortalInvites => Set<StaffPortalInvite>();
 
     public DbSet<Tenant> Tenants => Set<Tenant>();
@@ -234,6 +236,16 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.Role).HasMaxLength(32);
             entity.HasIndex(x => new { x.TenantId, x.StaffMemberId });
             entity.HasOne(x => x.Tenant).WithMany().HasForeignKey(x => x.TenantId);
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<BusinessUserDashboardLayout>(entity =>
+        {
+            entity.ToTable("business_user_dashboard_layouts", "identity");
+            entity.HasKey(x => x.BusinessUserId);
+            entity.Property(x => x.LayoutJson).HasColumnType("nvarchar(max)");
+            entity.HasOne(x => x.BusinessUser).WithMany().HasForeignKey(x => x.BusinessUserId);
+            entity.HasOne<Tenant>().WithMany().HasForeignKey(x => x.TenantId);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 

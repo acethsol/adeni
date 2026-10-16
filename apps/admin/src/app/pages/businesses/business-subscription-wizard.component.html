@@ -249,17 +249,19 @@
         </div>
 
         <div wizardActions class="wizard-actions">
-          <button type="button" class="btn" (click)="onClose()">Cancel</button>
+          <adeni-staff-btn icon="close" (pressed)="onClose()">Cancel</adeni-staff-btn>
           <div class="wizard-actions__end">
             @if (!isFirstStep()) {
-              <button type="button" class="btn" [disabled]="saving()" (click)="back()">Back</button>
+              <adeni-staff-btn icon="arrow--left" [disabled]="saving()" (pressed)="back()">Back</adeni-staff-btn>
             }
             @if (!isLastStep()) {
-              <button type="button" class="btn btn-primary" (click)="next()">Next</button>
+              <adeni-staff-btn variant="primary" icon="arrow--right" iconPosition="end" (pressed)="next()">
+                Next
+              </adeni-staff-btn>
             } @else {
-              <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="save.emit()">
+              <adeni-staff-btn variant="primary" icon="save" [disabled]="saving()" (pressed)="save.emit()">
                 {{ saving() ? "Saving…" : "Apply changes" }}
-              </button>
+              </adeni-staff-btn>
             }
           </div>
         </div>

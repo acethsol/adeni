@@ -9,6 +9,7 @@ import {
   AdeniConfirmService,
   AdeniFeedbackService,
   AdeniPortalEmptyStateComponent,
+  AdeniStaffButtonComponent,
   PortalPageComponent,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
@@ -28,6 +29,7 @@ import { ratingPill, reviewVisibilityPill } from "../../shared/admin-pill-maps";
     PortalPageComponent,
     FormsModule,
     AdeniCarbonIconComponent,
+    AdeniStaffButtonComponent,
     AdeniPortalEmptyStateComponent,
     DatePipe,
     AdminPillComponent,

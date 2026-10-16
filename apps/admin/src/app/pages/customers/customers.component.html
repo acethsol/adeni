@@ -22,10 +22,14 @@
           autocomplete="off"
         />
       </label>
-      <button type="submit" class="btn btn-primary" [disabled]="searching() || !searchInput.trim()">
-        <adeni-carbon-icon name="search" [size]="16" />
+      <adeni-staff-btn
+        type="submit"
+        variant="primary"
+        icon="search"
+        [disabled]="searching() || !searchInput.trim()"
+      >
         {{ searching() ? "Searching…" : "Search" }}
-      </button>
+      </adeni-staff-btn>
     </form>
     @if (hasSearched() && totalCount() > 0) {
       <p class="toolbar-meta">{{ showingRange() }}</p>
@@ -73,17 +77,17 @@
               <td class="muted">{{ c.auth0Sub }}</td>
               <td class="actions-cell">
                 <div class="actions-inline">
-                  <button type="button" class="btn" [disabled]="busyId() === c.id" (click)="export(c.id)">
+                  <adeni-staff-btn icon="launch" [disabled]="busyId() === c.id" (pressed)="export(c.id)">
                     Export
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-danger"
+                  </adeni-staff-btn>
+                  <adeni-staff-btn
+                    variant="danger"
+                    icon="trash-can"
                     [disabled]="busyId() === c.id || c.erasureRequestedAt"
-                    (click)="erase(c)"
+                    (pressed)="erase(c)"
                   >
                     Erasure
-                  </button>
+                  </adeni-staff-btn>
                 </div>
               </td>
             </tr>
@@ -94,18 +98,22 @@
 
     @if (totalPages() > 1) {
       <nav class="pager" aria-label="Customer search pages">
-        <button type="button" class="btn" [disabled]="page() <= 1 || searching()" (click)="goToPage(page() - 1)">
+        <adeni-staff-btn
+          icon="chevron--left"
+          [disabled]="page() <= 1 || searching()"
+          (pressed)="goToPage(page() - 1)"
+        >
           Previous
-        </button>
+        </adeni-staff-btn>
         <span class="pager-meta">{{ showingRange() }}</span>
-        <button
-          type="button"
-          class="btn"
+        <adeni-staff-btn
+          icon="chevron--right"
+          iconPosition="end"
           [disabled]="page() >= totalPages() || searching()"
-          (click)="goToPage(page() + 1)"
+          (pressed)="goToPage(page() + 1)"
         >
           Next
-        </button>
+        </adeni-staff-btn>
       </nav>
     }
   }
@@ -114,7 +122,9 @@
     <section class="card">
       <h3>Export preview</h3>
       <pre>{{ ex | json }}</pre>
-      <button type="button" class="btn btn-primary" (click)="downloadExport()">Download JSON</button>
+      <adeni-staff-btn variant="primary" icon="save" (pressed)="downloadExport()">
+        Download JSON
+      </adeni-staff-btn>
     </section>
   }
 </app-portal-page>

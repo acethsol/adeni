@@ -10,9 +10,9 @@ import {
   formatSubscriptionSku,
 } from "@adeni/shared";
 import {
-  AdeniCarbonIconComponent,
   AdeniFeedbackService,
   AdeniPortalEmptyStateComponent,
+  AdeniStaffButtonComponent,
   PortalPageComponent,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
@@ -32,7 +32,7 @@ type RevenueGranularity = "month" | "year";
   imports: [
     PortalPageComponent,
     RouterLink,
-    AdeniCarbonIconComponent,
+    AdeniStaffButtonComponent,
     AdeniPortalEmptyStateComponent,
     DatePipe,
   ],
