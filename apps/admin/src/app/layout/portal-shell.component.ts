@@ -51,8 +51,11 @@ type ChromeKey =
   | "groupCompliance"
   | "/dashboard"
   | "/pending"
+  | "/trust-badges"
+  | "/reviews"
   | "/markets"
   | "/businesses"
+  | "/insights"
   | "/customers";
 
 const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
@@ -72,9 +75,12 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     groupCompliance: "Compliance",
     "/dashboard": "Dashboard",
     "/pending": "Pending verifications",
+    "/trust-badges": "Trust badges",
+    "/reviews": "Reviews",
     "/markets": "Markets",
     "/businesses": "Businesses",
-    "/customers": "Customer privacy",
+    "/insights": "Subscription insights",
+    "/customers": "Customers",
   },
   fr: {
     search: "Rechercher",
@@ -92,9 +98,12 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     groupCompliance: "Conformité",
     "/dashboard": "Tableau de bord",
     "/pending": "Vérifications en attente",
+    "/trust-badges": "Badges de confiance",
+    "/reviews": "Avis",
     "/markets": "Marchés",
     "/businesses": "Établissements",
-    "/customers": "Confidentialité clients",
+    "/insights": "Abonnements",
+    "/customers": "Clients",
   },
 };
 
@@ -206,6 +215,7 @@ export class AdminShellComponent {
   );
   readonly crumbs = computed(() => this.crumbsForUrl(this.url()));
   readonly queueCount = signal<number | null>(null);
+  readonly pendingBadgeCount = signal<number | null>(null);
   readonly queueLabel = computed(() => {
     const count = this.queueCount();
     if (!count) {
@@ -313,10 +323,13 @@ export class AdminShellComponent {
   }
 
   badgeCount(item: AdminNavItem): number {
-    if (item.badge !== "pending") {
-      return 0;
+    if (item.badge === "pending") {
+      return this.queueCount() ?? 0;
     }
-    return this.queueCount() ?? 0;
+    if (item.badge === "pendingBadges") {
+      return this.pendingBadgeCount() ?? 0;
+    }
+    return 0;
   }
 
   toggleSidebar(): void {
@@ -503,10 +516,11 @@ export class AdminShellComponent {
   }
 
   private async loadSearchCatalog(): Promise<void> {
-    const [businesses, markets, pending] = await Promise.all([
+    const [businesses, markets, pending, pendingBadges] = await Promise.all([
       this.api.withAuthorizedClient((client) => client.getAdminBusinesses()).catch(() => null),
       this.api.withAuthorizedClient((client) => client.getAdminMarkets()).catch(() => null),
       this.api.withAuthorizedClient((client) => client.getPendingBusinesses()).catch(() => null),
+      this.api.withAuthorizedClient((client) => client.listAdminPendingBadges()).catch(() => null),
     ]);
     if (businesses) {
       this.businesses.set(businesses);
@@ -517,6 +531,9 @@ export class AdminShellComponent {
     if (pending) {
       this.pending.set(pending);
       this.queueCount.set(pending.length);
+    }
+    if (pendingBadges) {
+      this.pendingBadgeCount.set(pendingBadges.length);
     }
   }
 

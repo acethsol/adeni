@@ -1,6 +1,9 @@
 export type AdminNavIconName =
   | "dashboard"
   | "verifications"
+  | "badges"
+  | "reviews"
+  | "insights"
   | "markets"
   | "businesses"
   | "privacy"
@@ -22,7 +25,7 @@ export type AdminNavItem = {
   label: string;
   icon: AdminNavIconName;
   exact?: boolean;
-  badge?: "pending";
+  badge?: "pending" | "pendingBadges";
 };
 
 export type AdminNavGroup = {
@@ -38,6 +41,8 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     items: [
       { path: "/dashboard", label: "Dashboard", icon: "dashboard", exact: true },
       { path: "/pending", label: "Pending verifications", icon: "verifications", badge: "pending" },
+      { path: "/trust-badges", label: "Trust badges", icon: "badges", badge: "pendingBadges" },
+      { path: "/reviews", label: "Reviews", icon: "reviews" },
     ],
   },
   {
@@ -46,12 +51,13 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     items: [
       { path: "/markets", label: "Markets", icon: "markets" },
       { path: "/businesses", label: "Businesses", icon: "businesses" },
+      { path: "/insights", label: "Subscription insights", icon: "insights" },
     ],
   },
   {
     id: "compliance",
     label: "Compliance",
-    items: [{ path: "/customers", label: "Customer privacy", icon: "privacy" }],
+    items: [{ path: "/customers", label: "Customers", icon: "privacy" }],
   },
 ];
 

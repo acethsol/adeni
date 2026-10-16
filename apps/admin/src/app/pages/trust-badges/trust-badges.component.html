@@ -1,0 +1,92 @@
+<app-portal-page
+  title="Trust badges"
+  description="Grant or deny supplemental trust badges businesses requested after verification."
+>
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  <section class="card list-toolbar">
+    <label class="search-field">
+      <span class="visually-hidden">Filter queue</span>
+      <adeni-carbon-icon name="search" [size]="16" />
+      <input
+        type="search"
+        [ngModel]="searchText()"
+        (ngModelChange)="searchText.set($event)"
+        placeholder="Filter by business, badge, or reference"
+        autocomplete="off"
+      />
+    </label>
+    <button type="button" class="btn" [disabled]="loading()" (click)="load()">
+      <adeni-carbon-icon name="restart" [size]="16" />
+      Refresh
+    </button>
+    @if (!loading() && items().length > 0) {
+      <p class="toolbar-meta">Showing {{ visible().length }} of {{ items().length }}</p>
+    }
+  </section>
+
+  @if (loading() && items().length === 0) {
+    <p class="muted">Loading badge queue…</p>
+  } @else if (isEmptyQueue()) {
+    <adeni-portal-empty-state
+      icon="checkmark--filled"
+      title="No pending badge requests"
+      description="When businesses request phone, CAC, address, or license badges, they will appear here for review."
+    />
+  } @else if (isEmptyFilter()) {
+    <adeni-portal-empty-state
+      icon="search"
+      title="No matches"
+      description="Try a different business name or badge type."
+      compact
+    />
+  } @else {
+    <section class="card data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col">Business</th>
+            <th scope="col">Badge</th>
+            <th scope="col">Reference</th>
+            <th scope="col">Requested</th>
+            <th scope="col"><span class="visually-hidden">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of visible(); track item.id) {
+            <tr>
+              <td>
+                <div class="row-title">{{ item.businessName }}</div>
+              </td>
+              <td>{{ badgeLabel(item.badgeType) }}</td>
+              <td class="muted">{{ item.referenceNumber || "—" }}</td>
+              <td class="muted">{{ item.requestedAt | date: "mediumDate" }}</td>
+              <td class="actions-cell">
+                <div class="actions-inline">
+                  <button
+                    type="button"
+                    class="btn btn-danger"
+                    [disabled]="busyKey() === rowKey(item)"
+                    (click)="deny(item)"
+                  >
+                    Deny
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    [disabled]="busyKey() === rowKey(item)"
+                    (click)="grant(item)"
+                  >
+                    Grant
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+</app-portal-page>

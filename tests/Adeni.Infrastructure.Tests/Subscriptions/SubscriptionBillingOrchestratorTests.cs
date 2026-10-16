@@ -1,6 +1,8 @@
 namespace Adeni.Infrastructure.Tests.Subscriptions;
 
+using Adeni.Application.Abstractions;
 using Adeni.Application.Subscriptions;
+using Adeni.Domain.Auditing;
 using Adeni.Domain.Identity;
 using Adeni.Domain.Subscriptions;
 using Adeni.Domain.Tenancy;
@@ -84,6 +86,40 @@ public sealed class SubscriptionBillingOrchestratorTests
         return (tenantId, auth0Sub);
     }
 
+    private sealed class OrchestratorTestCache : Application.Caching.ICacheService
+    {
+        public Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default)
+            where T : class =>
+            Task.FromResult<T?>(default);
+
+        public Task SetAsync<T>(string key, T value, TimeSpan ttl, CancellationToken cancellationToken = default)
+            where T : class =>
+            Task.CompletedTask;
+
+        public Task RemoveAsync(string key, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
+        public Task<T> GetOrCreateAsync<T>(
+            string key,
+            TimeSpan ttl,
+            Func<CancellationToken, Task<T>> factory,
+            CancellationToken cancellationToken = default)
+            where T : class =>
+            factory(cancellationToken);
+    }
+
+    private sealed class OrchestratorTestAudit : IAuditLogWriter
+    {
+        public Task WriteAsync(AuditEntry entry, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+    }
+
+    private sealed class OrchestratorTestCorrelation : ICorrelationContext
+    {
+        public string CorrelationId { get; } = "subscription-test";
+        public void Set(string correlationId) { }
+    }
+
     private static ServiceProvider BuildProvider()
     {
         var services = new ServiceCollection();
@@ -92,6 +128,9 @@ public sealed class SubscriptionBillingOrchestratorTests
         services.AddScoped<Application.Abstractions.ITenantContext>(sp =>
             sp.GetRequiredService<Adeni.Infrastructure.Context.TenantContext>());
         services.AddScoped<ISubscriptionBillingOrchestrator, SubscriptionBillingOrchestrator>();
+        services.AddSingleton<Application.Caching.ICacheService, OrchestratorTestCache>();
+        services.AddSingleton<IAuditLogWriter, OrchestratorTestAudit>();
+        services.AddSingleton<ICorrelationContext, OrchestratorTestCorrelation>();
         services.AddLogging();
         return services.BuildServiceProvider();
     }

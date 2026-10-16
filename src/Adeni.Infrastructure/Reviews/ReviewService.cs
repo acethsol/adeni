@@ -159,6 +159,72 @@ public sealed class ReviewService(
         return Result.Success(Unit.Value);
     }
 
+    public async Task<Result<AdminReviewsListResult>> ListForAdminAsync(
+        string? search,
+        int page,
+        int pageSize,
+        bool includeHidden,
+        CancellationToken cancellationToken = default)
+    {
+        if (page < 1)
+        {
+            return Result.Failure<AdminReviewsListResult>(Error.Validation("Page must be at least 1."));
+        }
+
+        var effectivePageSize = pageSize <= 0 ? DefaultPageSize : Math.Min(pageSize, MaxPageSize);
+        var needle = search?.Trim().ToLowerInvariant();
+
+        var baseQuery =
+            from review in dbContext.Reviews.AsNoTracking()
+            join tenant in dbContext.Tenants.AsNoTracking() on review.TenantId equals tenant.Id
+            join customer in dbContext.Customers.AsNoTracking() on review.CustomerId equals customer.Id
+            where includeHidden || !review.IsHidden
+            select new { review, tenant, customer };
+
+        if (!string.IsNullOrWhiteSpace(needle))
+        {
+            baseQuery = baseQuery.Where(x =>
+                x.tenant.Name.ToLower().Contains(needle)
+                || x.customer.Name.ToLower().Contains(needle)
+                || x.review.Comment.ToLower().Contains(needle)
+                || dbContext.BusinessLocations.Any(loc =>
+                    loc.TenantId == x.review.TenantId
+                    && loc.IsActive
+                    && loc.Slug.ToLower().Contains(needle)));
+        }
+
+        var totalCount = await baseQuery.CountAsync(cancellationToken);
+        var pageRows = await baseQuery
+            .OrderByDescending(x => x.review.CreatedAt)
+            .Skip((page - 1) * effectivePageSize)
+            .Take(effectivePageSize)
+            .ToListAsync(cancellationToken);
+
+        var tenantIds = pageRows.Select(x => x.review.TenantId).Distinct().ToList();
+        var slugByTenant = await dbContext.BusinessLocations
+            .AsNoTracking()
+            .Where(loc => tenantIds.Contains(loc.TenantId) && loc.IsActive)
+            .OrderByDescending(loc => loc.IsPrimary)
+            .GroupBy(loc => loc.TenantId)
+            .Select(g => new { TenantId = g.Key, Slug = g.Select(x => x.Slug).First() })
+            .ToDictionaryAsync(x => x.TenantId, x => x.Slug, cancellationToken);
+
+        var rows = pageRows
+            .Select(x => new AdminReviewListItem(
+                x.review.Id,
+                x.review.TenantId,
+                x.tenant.Name,
+                slugByTenant.GetValueOrDefault(x.review.TenantId),
+                x.review.Rating,
+                x.review.Comment,
+                x.review.CreatedAt,
+                x.review.IsHidden,
+                string.IsNullOrWhiteSpace(x.customer.Name) ? "Adeni customer" : x.customer.Name.Trim()))
+            .ToList();
+
+        return Result.Success(new AdminReviewsListResult(rows, page, effectivePageSize, totalCount));
+    }
+
     public async Task<IReadOnlyDictionary<Guid, TenantRatingSummary>> GetRatingSummariesAsync(
         IReadOnlyCollection<Guid> tenantIds,
         CancellationToken cancellationToken = default)

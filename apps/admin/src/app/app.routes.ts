@@ -5,6 +5,9 @@ import { AdminPendingComponent } from "./pages/pending/pending.component";
 import { AdminMarketsComponent } from "./pages/markets/markets.component";
 import { AdminBusinessesComponent } from "./pages/businesses/businesses.component";
 import { AdminCustomersComponent } from "./pages/customers/customers.component";
+import { AdminTrustBadgesComponent } from "./pages/trust-badges/trust-badges.component";
+import { AdminReviewsComponent } from "./pages/reviews/reviews.component";
+import { AdminInsightsComponent } from "./pages/insights/insights.component";
 import { SetupComponent } from "./pages/setup/setup.component";
 import { ForbiddenComponent } from "./pages/forbidden/forbidden.component";
 import { adminAccessGuard } from "./core/guards/admin-access.guard";
@@ -21,7 +24,10 @@ export const routes: Routes = [
       { path: "", pathMatch: "full", redirectTo: "dashboard" },
       { path: "dashboard", component: AdminDashboardComponent, title: "Dashboard" },
       { path: "pending", component: AdminPendingComponent, title: "Pending verifications" },
+      { path: "trust-badges", component: AdminTrustBadgesComponent, title: "Trust badges" },
+      { path: "reviews", component: AdminReviewsComponent, title: "Reviews" },
       { path: "markets", component: AdminMarketsComponent, title: "Markets" },
+      { path: "insights", component: AdminInsightsComponent, title: "Subscription insights" },
       { path: "businesses", component: AdminBusinessesComponent, title: "Businesses" },
       { path: "customers", component: AdminCustomersComponent, title: "Customers" },
     ],

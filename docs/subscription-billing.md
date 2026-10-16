@@ -4,7 +4,7 @@ Provider-agnostic design for SaaS subscription billing. **Implementation spec:**
 
 **MRR (ops):** recurring revenue from business → Adeni subscriptions only — not GMV or customer invoices ([product-strategy §4.1](./product-strategy.md#41-saas-subscriptions--foundation-mrrarr)). Admin MRR v1 ships with Sprint 33; broader GMV/MRR dashboards remain Sprint 20e.
 
-Until Sprint 33 lands, this document defines the port, **stub** behavior, and webhook shape.
+Default local config uses **Stub**; enable **Paystack** when keys and (optionally) plan codes are configured — no staging deploy required to develop against Paystack test mode.
 
 ## Application port
 
@@ -15,7 +15,13 @@ Until Sprint 33 lands, this document defines the port, **stub** behavior, and we
 | `CreateCheckoutAsync` | Start upgrade checkout for a target tier |
 | `ParseWebhookAsync` | Normalize provider webhook → `SubscriptionWebhookEvent` |
 
-Stub implementation: `StubSubscriptionBillingProvider` (returns fake checkout URL, logs webhooks).
+| Provider | When |
+|----------|------|
+| `Stub` | Local dev — fake checkout URL + flat JSON webhooks |
+| `Paystack` | Paystack test/live keys; `transaction/initialize` with plan or catalog amount |
+| `MarketDefault` | Lagos → Paystack; unsigned body → stub parser for local tests |
+
+Implementations: `StubSubscriptionBillingProvider`, `PaystackSubscriptionBillingProvider`, `MarketDefaultSubscriptionBillingProvider`.
 
 ## Checkout request
 
@@ -43,7 +49,25 @@ Stub implementation: `StubSubscriptionBillingProvider` (returns fake checkout UR
 
 `POST /api/v1/subscriptions/webhook`
 
-When `Paystack:WebhookSecret` is set (staging/prod), `StubSubscriptionBillingProvider` validates `x-paystack-signature` (HMAC SHA512 on the raw body) before parsing — same Murphy rules as [payments.md](./payments.md#webhook-security-murphy). Dev/Testing without a secret still accepts unsigned JSON for local stub flows. Live Paystack Subscriptions provider replaces the stub in a follow-up slice.
+**Paystack** webhooks require `x-paystack-signature` (HMAC SHA512 on raw body) when `Paystack:WebhookSecret` is set — same Murphy rules as [payments.md](./payments.md#webhook-security-murphy). **Stub** accepts unsigned flat JSON in Development/Testing.
+
+### Configuration (`appsettings` / Key Vault)
+
+```json
+"SubscriptionBilling": {
+  "Provider": "MarketDefault",
+  "Paystack": {
+    "ProfessionalPlanCode": "PLN_xxx",
+    "BusinessPlanCode": "PLN_yyy"
+  }
+},
+"Paystack": {
+  "SecretKey": "sk_test_...",
+  "WebhookSecret": "..."
+}
+```
+
+Plan codes are optional: without them, checkout uses **one-time** `transaction/initialize` with catalog amount (good for Paystack test mode before plans exist). Metadata always includes `tenant_id` and `target_tier` for webhook tier sync.
 
 ### Normalized event shape
 

@@ -2,30 +2,91 @@
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
-  @if (loading()) {
-    <p class="muted">Loading…</p>
-  } @else if (visible().length === 0) {
-    <section class="card"><p class="muted">Queue is empty.</p></section>
+
+  <section class="card list-toolbar">
+    <label class="search-field">
+      <span class="visually-hidden">Filter queue</span>
+      <adeni-carbon-icon name="search" [size]="16" />
+      <input
+        type="search"
+        [ngModel]="searchText()"
+        (ngModelChange)="searchText.set($event)"
+        placeholder="Filter by name, slug, or market"
+        autocomplete="off"
+      />
+    </label>
+    <button type="button" class="btn" [disabled]="loading()" (click)="load()">
+      <adeni-carbon-icon name="restart" [size]="16" />
+      Refresh
+    </button>
+    @if (!loading() && items().length > 0) {
+      <p class="toolbar-meta">
+        Showing {{ visible().length }} of {{ items().length }}
+      </p>
+    }
+  </section>
+
+  @if (loading() && items().length === 0) {
+    <p class="muted">Loading queue…</p>
+  } @else if (isEmptyQueue()) {
+    <adeni-portal-empty-state
+      icon="checkmark--filled"
+      title="Verification queue is clear"
+      description="New business applications will appear here for review before they go live on discovery."
+    />
+  } @else if (isEmptyFilter()) {
+    <adeni-portal-empty-state
+      icon="search"
+      title="No matches"
+      description="Try a different name, slug, or market id."
+      compact
+    />
   } @else {
-    <section class="card">
-      <ul class="plain">
-        @for (item of visible(); track item.id) {
-          <li class="list-row">
-            <div>
-              <strong>{{ item.name }}</strong>
-              <p class="muted">{{ item.slug }} · {{ item.marketId }} · {{ item.status }}</p>
-            </div>
-            <div class="actions">
-              <button type="button" class="btn btn-danger" [disabled]="busyId() === item.id" (click)="reject(item)">
-                Reject
-              </button>
-              <button type="button" class="btn btn-primary" [disabled]="busyId() === item.id" (click)="approve(item)">
-                Approve
-              </button>
-            </div>
-          </li>
-        }
-      </ul>
+    <section class="card data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col">Business</th>
+            <th scope="col">Market</th>
+            <th scope="col">Submitted</th>
+            <th scope="col">Docs</th>
+            <th scope="col"><span class="visually-hidden">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of visible(); track item.id) {
+            <tr>
+              <td>
+                <div class="row-title">{{ item.name }}</div>
+                <p class="row-sub">{{ item.slug }}</p>
+              </td>
+              <td class="muted">{{ item.marketId }}</td>
+              <td class="muted">{{ item.createdAt | date: "mediumDate" }}</td>
+              <td class="muted">{{ item.documents?.length ?? 0 }}</td>
+              <td class="actions-cell">
+                <div class="actions-inline">
+                  <button
+                    type="button"
+                    class="btn btn-danger"
+                    [disabled]="busyId() === item.id"
+                    (click)="reject(item)"
+                  >
+                    Reject
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    [disabled]="busyId() === item.id"
+                    (click)="approve(item)"
+                  >
+                    Approve
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
     </section>
   }
 </app-portal-page>

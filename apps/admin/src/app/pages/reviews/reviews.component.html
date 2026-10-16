@@ -1,0 +1,113 @@
+<app-portal-page title="Reviews" description="Moderate customer reviews tied to completed bookings.">
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  <section class="card list-toolbar">
+    <form class="search-form" (submit)="applyFilters(); $event.preventDefault()">
+      <label class="search-field">
+        <span class="visually-hidden">Search reviews</span>
+        <adeni-carbon-icon name="search" [size]="16" />
+        <input
+          type="search"
+          [ngModel]="searchText()"
+          (ngModelChange)="searchText.set($event)"
+          name="q"
+          placeholder="Business, customer, or comment"
+          autocomplete="off"
+        />
+      </label>
+      <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+    <label class="checkbox-field">
+      <input
+        type="checkbox"
+        [ngModel]="includeHidden()"
+        (ngModelChange)="includeHidden.set($event); applyFilters()"
+        name="includeHidden"
+      />
+      Include hidden
+    </label>
+    <button type="button" class="btn" [disabled]="loading()" (click)="load()">
+      <adeni-carbon-icon name="restart" [size]="16" />
+      Refresh
+    </button>
+    @if (!loading() && totalCount() > 0) {
+      <p class="toolbar-meta">{{ showingRange() }}</p>
+    }
+  </section>
+
+  @if (loading() && items().length === 0) {
+    <p class="muted">Loading reviews…</p>
+  } @else if (isEmpty()) {
+    <adeni-portal-empty-state
+      icon="user--follow"
+      title="No reviews to show"
+      description="Reviews appear here after customers rate completed bookings. Adjust filters to include hidden content."
+    />
+  } @else {
+    <section class="card data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col">Business</th>
+            <th scope="col">Rating</th>
+            <th scope="col">Comment</th>
+            <th scope="col">Customer</th>
+            <th scope="col">Posted</th>
+            <th scope="col">Status</th>
+            <th scope="col"><span class="visually-hidden">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items(); track item.id) {
+            <tr [class.is-muted]="item.isHidden">
+              <td>
+                <div class="row-title">{{ item.businessName }}</div>
+                @if (item.locationSlug) {
+                  <p class="row-sub">{{ item.locationSlug }}</p>
+                }
+              </td>
+              <td>{{ item.rating }}/5</td>
+              <td class="comment-cell">{{ item.comment }}</td>
+              <td class="muted">{{ item.customerDisplayName }}</td>
+              <td class="muted">{{ item.createdAt | date: "mediumDate" }}</td>
+              <td class="muted">{{ item.isHidden ? "Hidden" : "Public" }}</td>
+              <td class="actions-cell">
+                @if (!item.isHidden) {
+                  <button
+                    type="button"
+                    class="btn btn-danger"
+                    [disabled]="busyId() === item.id"
+                    (click)="hideReview(item)"
+                  >
+                    Hide
+                  </button>
+                } @else {
+                  <span class="muted">—</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+
+    @if (totalPages() > 1) {
+      <nav class="pager" aria-label="Review pages">
+        <button type="button" class="btn" [disabled]="page() <= 1 || loading()" (click)="goToPage(page() - 1)">
+          Previous
+        </button>
+        <span class="pager-meta">Page {{ page() }} of {{ totalPages() }}</span>
+        <button
+          type="button"
+          class="btn"
+          [disabled]="page() >= totalPages() || loading()"
+          (click)="goToPage(page() + 1)"
+        >
+          Next
+        </button>
+      </nav>
+    }
+  }
+</app-portal-page>

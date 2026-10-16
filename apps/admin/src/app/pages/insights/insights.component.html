@@ -1,0 +1,84 @@
+<app-portal-page
+  title="Subscription insights"
+  description="Paying tenant counts, billing health, and MRR signals for v1 SaaS tiers."
+>
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  <section class="card list-toolbar">
+    <button type="button" class="btn" [disabled]="loading()" (click)="load()">
+      <adeni-carbon-icon name="restart" [size]="16" />
+      Refresh
+    </button>
+    @if (metrics(); as data) {
+      <p class="toolbar-meta">As of {{ data.asOf | date: "medium" }}</p>
+    }
+  </section>
+
+  @if (loading() && !metrics()) {
+    <p class="muted">Loading metrics…</p>
+  } @else if (!metrics()) {
+    <adeni-portal-empty-state
+      icon="restart"
+      title="Metrics unavailable"
+      description="Refresh to load subscription billing data from the API."
+    />
+  } @else if (metrics(); as billing) {
+    <section class="kpis" aria-label="Subscription summary">
+      <div class="kpi">
+        <p class="kpi-label">Paying tenants</p>
+        <p class="kpi-value">{{ billing.paidTenantCount }}</p>
+      </div>
+      <div class="kpi">
+        <p class="kpi-label">Trialing</p>
+        <p class="kpi-value">{{ billing.trialingTenantCount }}</p>
+      </div>
+      <div class="kpi">
+        <p class="kpi-label">Past due</p>
+        <p class="kpi-value" [class.alert]="billing.pastDueTenantCount > 0">
+          {{ billing.pastDueTenantCount }}
+        </p>
+      </div>
+      <div class="kpi">
+        <p class="kpi-label">MRR source</p>
+        <p class="kpi-value kpi-value-sm">
+          {{ billing.mrrSource === "synced_charges" ? "Synced" : "Estimated" }}
+        </p>
+      </div>
+    </section>
+
+    <section class="card panel">
+      <h3>Monthly recurring revenue</h3>
+      <p class="muted panel-hint">{{ mrrHint() }}</p>
+      @if (mrrRows().length === 0) {
+        <p class="muted">No MRR rows yet.</p>
+      } @else {
+        <ul class="metric-list">
+          @for (row of mrrRows(); track row.currency) {
+            <li>
+              <span>{{ row.currency }}</span>
+              <strong>{{ formatMoney(row.amountMinor, row.currency) }}</strong>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <section class="card panel">
+      <h3>Plan mix (paid SKUs)</h3>
+      @if (billing.skuMix.length === 0) {
+        <p class="muted">No paid SKUs reported yet.</p>
+      } @else {
+        <ul class="metric-list">
+          @for (row of billing.skuMix; track row.sku) {
+            <li>
+              <span>{{ skuLabel(row.sku) }}</span>
+              <strong>{{ row.count }}</strong>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+</app-portal-page>

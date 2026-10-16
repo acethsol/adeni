@@ -1263,6 +1263,45 @@ export const requestVerificationBadgeRequestSchema = z.object({
 export type RequestVerificationBadgeRequest = z.infer<typeof requestVerificationBadgeRequestSchema>;
 export type VerificationBadge = z.infer<typeof verificationBadgeSchema>;
 
+export const verificationBadgeTypeSchema = z.enum(["phone", "cac", "address", "license"]);
+
+export const pendingBadgeRequestSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  businessName: z.string(),
+  badgeType: verificationBadgeTypeSchema,
+  referenceNumber: z.string().nullable().optional(),
+  requestedAt: z.string(),
+});
+
+export const pendingBadgesResponseSchema = z.object({
+  items: z.array(pendingBadgeRequestSchema),
+});
+
+export type PendingBadgeRequest = z.infer<typeof pendingBadgeRequestSchema>;
+
+export const adminReviewListItemSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  businessName: z.string(),
+  locationSlug: z.string().nullable().optional(),
+  rating: z.number().int().min(1).max(5),
+  comment: z.string(),
+  createdAt: z.string(),
+  isHidden: z.boolean(),
+  customerDisplayName: z.string(),
+});
+
+export const adminReviewsListResultSchema = z.object({
+  items: z.array(adminReviewListItemSchema),
+  page: z.number().int().positive(),
+  pageSize: z.number().int().positive(),
+  totalCount: z.number().int().nonnegative(),
+});
+
+export type AdminReviewListItem = z.infer<typeof adminReviewListItemSchema>;
+export type AdminReviewsListResult = z.infer<typeof adminReviewsListResultSchema>;
+
 export const QUOTE_STATUS_LABELS: Record<string, string> = {
   submitted: "Awaiting quote",
   quoted: "Quote received",

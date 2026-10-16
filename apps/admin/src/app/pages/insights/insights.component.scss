@@ -1,0 +1,77 @@
+@use "../../shared/admin-list-page" as *;
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 1px;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+  background: var(--border);
+}
+
+.kpi {
+  padding: 1rem 1.1rem;
+  background: var(--surface);
+}
+
+.kpi-label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.kpi-value {
+  margin: 0.35rem 0 0;
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+.kpi-value-sm {
+  font-size: 1.125rem;
+}
+
+.kpi-value.alert {
+  color: #b54708;
+}
+
+.panel {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem 1.15rem;
+}
+
+.panel h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.panel-hint {
+  margin: 0.35rem 0 0.75rem;
+  font-size: 0.875rem;
+}
+
+.metric-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.metric-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0;
+  border-top: 1px solid var(--border);
+  font-size: 0.875rem;
+}
+
+.metric-list li:first-child {
+  border-top: 0;
+}
+
+.metric-list strong {
+  font-weight: 600;
+}

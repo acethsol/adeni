@@ -43,6 +43,23 @@ public sealed record TenantRatingSummary(
     double? RatingAvg,
     int ReviewCount);
 
+public sealed record AdminReviewListItem(
+    Guid Id,
+    Guid TenantId,
+    string BusinessName,
+    string? LocationSlug,
+    byte Rating,
+    string Comment,
+    DateTimeOffset CreatedAt,
+    bool IsHidden,
+    string CustomerDisplayName);
+
+public sealed record AdminReviewsListResult(
+    IReadOnlyList<AdminReviewListItem> Items,
+    int Page,
+    int PageSize,
+    int TotalCount);
+
 public interface IReviewService
 {
     Task<Result<ReviewResponse>> CreateForBookingAsync(
@@ -60,6 +77,13 @@ public interface IReviewService
     Task<Result<Unit>> HideAsync(
         Guid reviewId,
         string adminId,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<AdminReviewsListResult>> ListForAdminAsync(
+        string? search,
+        int page,
+        int pageSize,
+        bool includeHidden,
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyDictionary<Guid, TenantRatingSummary>> GetRatingSummariesAsync(

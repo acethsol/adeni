@@ -4,13 +4,25 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute } from "@angular/router";
 import type { AdminCustomerSummary, CustomerDataExport } from "@adeni/shared";
-import { AdeniConfirmService, AdeniFeedbackService, PortalPageComponent } from "@adeni/ui";
+import {
+  AdeniCarbonIconComponent,
+  AdeniConfirmService,
+  AdeniFeedbackService,
+  AdeniPortalEmptyStateComponent,
+  PortalPageComponent,
+} from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 
 @Component({
   selector: "app-admin-customers",
   standalone: true,
-  imports: [PortalPageComponent, FormsModule, JsonPipe],
+  imports: [
+    PortalPageComponent,
+    FormsModule,
+    JsonPipe,
+    AdeniCarbonIconComponent,
+    AdeniPortalEmptyStateComponent,
+  ],
   templateUrl: "./customers.component.html",
   styleUrl: "./customers.component.scss",
 })
@@ -20,7 +32,7 @@ export class AdminCustomersComponent {
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly confirmDialog = inject(AdeniConfirmService);
 
-  email = "";
+  searchInput = "";
   readonly searching = signal(false);
   readonly hasSearched = signal(false);
   readonly error = signal<string | null>(null);
@@ -32,10 +44,10 @@ export class AdminCustomersComponent {
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       const email = params.get("email")?.trim() ?? "";
-      if (!email || (email === this.email && this.hasSearched())) {
+      if (!email || (email === this.searchInput && this.hasSearched())) {
         return;
       }
-      this.email = email;
+      this.searchInput = email;
       void this.search();
     });
   }
@@ -50,10 +62,10 @@ export class AdminCustomersComponent {
     try {
       await this.feedback.runLoading(async () => {
         const items = await this.api.withAuthorizedClient((c) =>
-          c.searchAdminCustomers(this.email.trim()),
+          c.searchAdminCustomers(this.searchInput.trim()),
         );
         this.customers.set(items);
-      }, "Searching customers…", this.email.trim() || "All matches");
+      }, "Searching customers…", this.searchInput.trim() || "All matches");
     } catch {
       this.error.set("Could not search customers.");
       this.feedback.error("Could not search customers.");

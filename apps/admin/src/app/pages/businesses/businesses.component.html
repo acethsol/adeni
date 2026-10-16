@@ -5,36 +5,82 @@
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
-  @if (loading()) {
-    <p class="muted">Loading…</p>
+  <section class="card list-toolbar">
+    <label class="search-field">
+      <span class="visually-hidden">Filter businesses</span>
+      <adeni-carbon-icon name="search" [size]="16" />
+      <input
+        type="search"
+        [ngModel]="searchText()"
+        (ngModelChange)="searchText.set($event)"
+        placeholder="Filter by name, slug, tier, or billing status"
+        autocomplete="off"
+      />
+    </label>
+    <button type="button" class="btn" [disabled]="loading()" (click)="load()">
+      <adeni-carbon-icon name="restart" [size]="16" />
+      Refresh
+    </button>
+    @if (!loading() && businesses().length > 0) {
+      <p class="toolbar-meta">Showing {{ visible().length }} of {{ businesses().length }}</p>
+    }
+  </section>
+
+  @if (loading() && businesses().length === 0) {
+    <p class="muted">Loading businesses…</p>
+  } @else if (isEmptyCatalog()) {
+    <adeni-portal-empty-state
+      icon="user--follow"
+      title="No businesses yet"
+      description="Verified tenants appear here for plan overrides and commercial terms."
+    />
+  } @else if (isEmptyFilter()) {
+    <adeni-portal-empty-state
+      icon="search"
+      title="No matches"
+      description="Try another name, slug, or billing status."
+      compact
+    />
   } @else {
-    <section class="card">
-      <ul class="plain">
-        @for (b of visible(); track b.id) {
-          <li class="list-row">
-            <div class="summary">
-              <strong>{{ b.name }}</strong>
-              <p class="muted">
-                {{ b.slug }} · tier {{ b.subscriptionTier }}
-                @if (b.billingStatus) {
-                  · {{ b.billingStatus }}
-                }
+    <section class="card data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col">Business</th>
+            <th scope="col">Plan</th>
+            <th scope="col">Billing</th>
+            <th scope="col"><span class="visually-hidden">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (b of visible(); track b.id) {
+            <tr>
+              <td>
+                <div class="row-title">{{ b.name }}</div>
+                <p class="row-sub">{{ b.slug }}</p>
+              </td>
+              <td class="muted">{{ b.subscriptionTier }}</td>
+              <td class="muted">
+                {{ b.billingStatus ?? "—" }}
                 @if (b.trialEndsAt) {
                   · trial until {{ b.trialEndsAt | date: "mediumDate" }}
                 }
-              </p>
-            </div>
-            <div class="actions">
-              @for (tier of tiers; track tier) {
-                <button type="button" class="btn" (click)="setTier(b, tier)">{{ tier }}</button>
-              }
-              <button type="button" class="btn btn-primary" (click)="openCommercial(b)">
-                Commercial terms
-              </button>
-            </div>
-
+              </td>
+              <td class="actions-cell">
+                <div class="actions-inline">
+                  @for (tier of tiers; track tier) {
+                    <button type="button" class="btn" (click)="setTier(b, tier)">{{ tier }}</button>
+                  }
+                  <button type="button" class="btn btn-primary" (click)="openCommercial(b)">
+                    Commercial
+                  </button>
+                </div>
+              </td>
+            </tr>
             @if (editingId() === b.id && commercialDraft(); as draft) {
-              <form class="commercial-panel" (ngSubmit)="saveCommercial(b)">
+              <tr class="detail-row">
+                <td colspan="4">
+                  <form class="commercial-panel" (ngSubmit)="saveCommercial(b)">
                 <h3>Commercial terms — {{ b.name }}</h3>
                 <p class="muted">
                   Set trial length (days), skip trial, discounts, or a custom monthly price for this tenant.
@@ -232,10 +278,12 @@
                   <button type="button" class="btn" (click)="closeCommercial()">Cancel</button>
                 </div>
               </form>
+                </td>
+              </tr>
             }
-          </li>
-        }
-      </ul>
+          }
+        </tbody>
+      </table>
     </section>
   }
 </app-portal-page>

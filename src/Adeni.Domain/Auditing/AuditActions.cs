@@ -19,4 +19,5 @@ public static class AuditActions
     public const string StaffInviteRevoked = "staff.invite_revoked";
     public const string StaffAccessRoleChanged = "staff.access_role_changed";
     public const string StaffAccessRevoked = "staff.access_revoked";
+    public const string SubscriptionWebhookApplied = "subscription.webhook_applied";
 }

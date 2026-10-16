@@ -1,14 +1,28 @@
+import { DatePipe } from "@angular/common";
 import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { FormsModule } from "@angular/forms";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { ActivatedRoute } from "@angular/router";
 import type { PendingBusiness } from "@adeni/shared";
-import { AdeniFeedbackService, PortalPageComponent } from "@adeni/ui";
+import {
+  AdeniCarbonIconComponent,
+  AdeniFeedbackService,
+  AdeniPortalEmptyStateComponent,
+  PortalPageComponent,
+} from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
+import { filterByQuery } from "../../shared/admin-list-filter";
 
 @Component({
   selector: "app-admin-pending",
   standalone: true,
-  imports: [PortalPageComponent],
+  imports: [
+    PortalPageComponent,
+    FormsModule,
+    AdeniCarbonIconComponent,
+    AdeniPortalEmptyStateComponent,
+    DatePipe,
+  ],
   templateUrl: "./pending.component.html",
   styleUrl: "./pending.component.scss",
 })
@@ -20,23 +34,30 @@ export class AdminPendingComponent implements OnInit {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly items = signal<PendingBusiness[]>([]);
-  readonly query = signal("");
+  readonly searchText = signal("");
   readonly visible = computed(() =>
-    this.items().filter((item) => {
-      const needle = this.query().trim().toLowerCase();
-      if (!needle) {
-        return true;
-      }
-      return `${item.name} ${item.slug} ${item.marketId} ${item.status}`.toLowerCase().includes(needle);
-    }),
+    filterByQuery(this.items(), this.searchText(), (item) => [
+      item.name,
+      item.slug,
+      item.marketId,
+      item.status,
+    ]),
+  );
+  readonly isEmptyQueue = computed(() => !this.loading() && this.items().length === 0);
+  readonly isEmptyFilter = computed(
+    () => !this.loading() && this.items().length > 0 && this.visible().length === 0,
   );
   readonly busyId = signal<string | null>(null);
 
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
-      this.query.set(params.get("q") ?? "");
+      const q = params.get("q") ?? "";
+      if (q) {
+        this.searchText.set(q);
+      }
     });
   }
+
   ngOnInit(): void {
     void this.load();
   }

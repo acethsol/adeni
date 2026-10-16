@@ -496,7 +496,7 @@ Live business → Adeni recurring billing (Paystack/Stripe), signed webhooks, te
 
 | Task | Status |
 |------|--------|
-| **33a** Provider checkout + Murphy webhooks + tier sync | In progress (stub checkout, charge ledger, portal `/plan` upgrade) |
+| **33a** Provider checkout + Murphy webhooks + tier sync | In progress (Paystack provider + stub; tier sync + audit/cache) |
 | **33b** Portal billing history + admin MRR metrics | In progress (admin `/metrics/subscription`, `/plan` history table) |
 
 ## Sprint 34 — Payment settlement (Connect + Paystack split) (planned)

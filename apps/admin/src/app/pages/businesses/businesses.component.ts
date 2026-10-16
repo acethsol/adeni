@@ -11,8 +11,14 @@ import type {
   SubscriptionTier,
   TenantBillingStatus,
 } from "@adeni/shared";
-import { AdeniFeedbackService, PortalPageComponent } from "@adeni/ui";
+import {
+  AdeniCarbonIconComponent,
+  AdeniFeedbackService,
+  AdeniPortalEmptyStateComponent,
+  PortalPageComponent,
+} from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
+import { filterByQuery } from "../../shared/admin-list-filter";
 
 type CommercialDraft = {
   trialDays: number | null;
@@ -35,7 +41,13 @@ type CommercialDraft = {
 @Component({
   selector: "app-admin-businesses",
   standalone: true,
-  imports: [PortalPageComponent, FormsModule, DatePipe],
+  imports: [
+    PortalPageComponent,
+    FormsModule,
+    DatePipe,
+    AdeniCarbonIconComponent,
+    AdeniPortalEmptyStateComponent,
+  ],
   templateUrl: "./businesses.component.html",
   styleUrl: "./businesses.component.scss",
 })
@@ -47,14 +59,18 @@ export class AdminBusinessesComponent implements OnInit {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly businesses = signal<AdminBusinessSummary[]>([]);
-  readonly query = signal("");
+  readonly searchText = signal("");
   readonly visible = computed(() =>
-    filterByQuery(this.businesses(), this.query(), (item) => [
+    filterByQuery(this.businesses(), this.searchText(), (item) => [
       item.name,
       item.slug,
       item.subscriptionTier,
       item.billingStatus,
     ]),
+  );
+  readonly isEmptyCatalog = computed(() => !this.loading() && this.businesses().length === 0);
+  readonly isEmptyFilter = computed(
+    () => !this.loading() && this.businesses().length > 0 && this.visible().length === 0,
   );
   readonly tiers: SubscriptionTier[] = ["free", "pro", "business"];
   readonly skus: SubscriptionSku[] = ["starter", "professional", "business"];
@@ -71,7 +87,10 @@ export class AdminBusinessesComponent implements OnInit {
 
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
-      this.query.set(params.get("q") ?? "");
+      const q = params.get("q") ?? "";
+      if (q) {
+        this.searchText.set(q);
+      }
     });
   }
 
@@ -223,22 +242,4 @@ function draftFromTerms(terms: AdminTenantCommercialTerms): CommercialDraft {
     clearDiscounts: false,
     clearCustomSaasPrice: false,
   };
-}
-
-function filterByQuery<T>(
-  items: T[],
-  query: string,
-  parts: (item: T) => Array<string | null | undefined>,
-): T[] {
-  const needle = query.trim().toLowerCase();
-  if (!needle) {
-    return items;
-  }
-  return items.filter((item) =>
-    parts(item)
-      .filter((part): part is string => Boolean(part))
-      .join(" ")
-      .toLowerCase()
-      .includes(needle),
-  );
 }

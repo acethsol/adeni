@@ -40,7 +40,7 @@ public sealed class StubSubscriptionBillingProvider(
         IReadOnlyDictionary<string, string> headers,
         CancellationToken cancellationToken = default)
     {
-        var secret = billingOptions.Value.WebhookSecret;
+        var secret = billingOptions.Value.Paystack.WebhookSecret;
         if (!string.IsNullOrWhiteSpace(secret))
         {
             if (!TryValidateWebhookSignature(rawBody, headers, secret))

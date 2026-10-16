@@ -65,6 +65,11 @@ import {
   replyToReviewRequestSchema,
   requestVerificationBadgeRequestSchema,
   verificationBadgeSchema,
+  pendingBadgesResponseSchema,
+  adminReviewsListResultSchema,
+  type PendingBadgeRequest,
+  type AdminReviewListItem,
+  type AdminReviewsListResult,
   publicReviewItemSchema,
   joinWaitlistRequestSchema,
   joinQueueRequestSchema,
@@ -501,10 +506,54 @@ export class AdeniApiClient {
     return publicReviewsResponseSchema.parse(await response.json());
   }
 
+  async listAdminReviews(options: {
+    q?: string;
+    page?: number;
+    pageSize?: number;
+    includeHidden?: boolean;
+  } = {}): Promise<AdminReviewsListResult> {
+    const query = new URLSearchParams();
+    if (options.q?.trim()) {
+      query.set("q", options.q.trim());
+    }
+    if (options.page != null) {
+      query.set("page", String(options.page));
+    }
+    if (options.pageSize != null) {
+      query.set("pageSize", String(options.pageSize));
+    }
+    if (options.includeHidden) {
+      query.set("includeHidden", "true");
+    }
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
+    const response = await this.request(`/api/v1/admin/reviews${suffix}`);
+    return adminReviewsListResultSchema.parse(await response.json());
+  }
+
   async hideAdminReview(reviewId: string): Promise<void> {
     await this.request(`/api/v1/admin/reviews/${encodeURIComponent(reviewId)}`, {
       method: "DELETE",
     });
+  }
+
+  async listAdminPendingBadges(): Promise<PendingBadgeRequest[]> {
+    const response = await this.request("/api/v1/admin/verification/pending-badges");
+    const payload = pendingBadgesResponseSchema.parse(await response.json());
+    return payload.items;
+  }
+
+  async grantAdminVerificationBadge(tenantId: string, badgeType: string): Promise<void> {
+    await this.request(
+      `/api/v1/admin/verification/businesses/${encodeURIComponent(tenantId)}/badges/${encodeURIComponent(badgeType)}/grant`,
+      { method: "POST" },
+    );
+  }
+
+  async denyAdminVerificationBadge(tenantId: string, badgeType: string): Promise<void> {
+    await this.request(
+      `/api/v1/admin/verification/businesses/${encodeURIComponent(tenantId)}/badges/${encodeURIComponent(badgeType)}/revoke`,
+      { method: "POST" },
+    );
   }
 
   async getTenantBookings(): Promise<BookingResponse[]> {

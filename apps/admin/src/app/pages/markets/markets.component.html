@@ -2,23 +2,75 @@
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
-  @if (loading()) {
-    <p class="muted">Loading…</p>
+
+  <section class="card list-toolbar">
+    <label class="search-field">
+      <span class="visually-hidden">Filter markets</span>
+      <adeni-carbon-icon name="search" [size]="16" />
+      <input
+        type="search"
+        [ngModel]="searchText()"
+        (ngModelChange)="searchText.set($event)"
+        placeholder="Filter by name, id, country, or currency"
+        autocomplete="off"
+      />
+    </label>
+    <button type="button" class="btn" [disabled]="loading()" (click)="load()">
+      <adeni-carbon-icon name="restart" [size]="16" />
+      Refresh
+    </button>
+  </section>
+
+  @if (loading() && markets().length === 0) {
+    <p class="muted">Loading markets…</p>
+  } @else if (isEmptyCatalog()) {
+    <adeni-portal-empty-state
+      icon="location--filled"
+      title="No markets configured"
+      description="Markets define where discovery and booking are available (Ottawa, Lagos, and future cities)."
+    />
+  } @else if (isEmptyFilter()) {
+    <adeni-portal-empty-state
+      icon="search"
+      title="No matches"
+      description="Try another market name or country code."
+      compact
+    />
   } @else {
-    <section class="card">
-      <ul class="plain">
-        @for (market of visible(); track market.id) {
-          <li class="list-row">
-            <div>
-              <strong>{{ market.name }}</strong>
-              <p class="muted">{{ market.id }} · {{ market.isLive ? "Live" : "Off" }}</p>
-            </div>
-            <button type="button" class="btn" (click)="toggleLive(market)">
-              {{ market.isLive ? "Take offline" : "Go live" }}
-            </button>
-          </li>
-        }
-      </ul>
+    <section class="card data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col">Market</th>
+            <th scope="col">Country</th>
+            <th scope="col">Currency</th>
+            <th scope="col">Status</th>
+            <th scope="col"><span class="visually-hidden">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (market of visible(); track market.id) {
+            <tr>
+              <td>
+                <div class="row-title">{{ market.name }}</div>
+                <p class="row-sub">{{ market.id }}</p>
+              </td>
+              <td class="muted">{{ market.countryCode }}</td>
+              <td class="muted">{{ market.currency }}</td>
+              <td>
+                <span class="status-pill" [class.is-live]="market.isLive" [class.is-off]="!market.isLive">
+                  {{ market.isLive ? "Live" : "Offline" }}
+                </span>
+              </td>
+              <td class="actions-cell">
+                <button type="button" class="btn" (click)="toggleLive(market)">
+                  {{ market.isLive ? "Take offline" : "Go live" }}
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
     </section>
   }
 </app-portal-page>

@@ -277,6 +277,25 @@ public sealed class AdminCustomersController(IAdminCustomerService adminCustomer
 [Authorize(Policy = AuthServiceCollectionExtensions.AdminMfaPolicy)]
 public sealed class AdminReviewsController(IReviewService reviewService) : ControllerBase
 {
+    [HttpGet]
+    public async Task<IActionResult> List(
+        [FromQuery] string? q,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 25,
+        [FromQuery] bool includeHidden = false,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await reviewService.ListForAdminAsync(q, page, pageSize, includeHidden, cancellationToken);
+
+        return result.Match<IActionResult>(
+            payload => Ok(payload),
+            error => error.Code switch
+            {
+                "validation" => BadRequest(new { title = error.Message }),
+                _ => BadRequest(new { title = error.Message })
+            });
+    }
+
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Hide(Guid id, CancellationToken cancellationToken)
     {

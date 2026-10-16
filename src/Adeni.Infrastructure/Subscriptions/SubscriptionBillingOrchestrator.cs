@@ -1,6 +1,9 @@
 namespace Adeni.Infrastructure.Subscriptions;
 
+using Adeni.Application.Abstractions;
+using Adeni.Application.Caching;
 using Adeni.Application.Subscriptions;
+using Adeni.Domain.Auditing;
 using Adeni.Domain.Common;
 using Adeni.Domain.Subscriptions;
 using Adeni.Infrastructure.Persistence;
@@ -9,6 +12,9 @@ using Microsoft.Extensions.Logging;
 
 public sealed class SubscriptionBillingOrchestrator(
     AdeniDbContext dbContext,
+    ICacheService cache,
+    IAuditLogWriter auditLogWriter,
+    ICorrelationContext correlationContext,
     ILogger<SubscriptionBillingOrchestrator> logger) : ISubscriptionBillingOrchestrator
 {
     private static readonly HashSet<string> ActivationEvents = new(StringComparer.OrdinalIgnoreCase)
@@ -83,6 +89,31 @@ public sealed class SubscriptionBillingOrchestrator(
 
         dbContext.TenantSubscriptionCharges.Add(charge);
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        await cache.RemoveAsync(CacheKeys.TenantProfile(tenantId), cancellationToken);
+
+        var slugs = await dbContext.BusinessLocations
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId && x.IsActive)
+            .Select(x => x.Slug)
+            .ToListAsync(cancellationToken);
+
+        foreach (var slug in slugs)
+        {
+            await cache.RemoveAsync(CacheKeys.LocationProfile(slug), cancellationToken);
+        }
+
+        await auditLogWriter.WriteAsync(
+            new AuditEntry(
+                Guid.NewGuid(),
+                "system:subscription-billing",
+                AuditActions.SubscriptionWebhookApplied,
+                "tenant",
+                tenantId.ToString(),
+                correlationContext.CorrelationId,
+                DateTimeOffset.UtcNow,
+                $"{{\"eventType\":\"{webhookEvent.EventType}\",\"sku\":\"{SubscriptionSkuMapping.ToApiValue(targetSku)}\"}}"),
+            cancellationToken);
 
         logger.LogInformation(
             "Applied subscription webhook {EventType} for tenant {TenantId} → sku {Sku}",

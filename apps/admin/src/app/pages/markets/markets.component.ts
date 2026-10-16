@@ -1,14 +1,26 @@
 import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { FormsModule } from "@angular/forms";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { ActivatedRoute } from "@angular/router";
 import type { AdminMarket } from "@adeni/shared";
-import { AdeniFeedbackService, PortalPageComponent } from "@adeni/ui";
+import {
+  AdeniCarbonIconComponent,
+  AdeniFeedbackService,
+  AdeniPortalEmptyStateComponent,
+  PortalPageComponent,
+} from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
+import { filterByQuery } from "../../shared/admin-list-filter";
 
 @Component({
   selector: "app-admin-markets",
   standalone: true,
-  imports: [PortalPageComponent],
+  imports: [
+    PortalPageComponent,
+    FormsModule,
+    AdeniCarbonIconComponent,
+    AdeniPortalEmptyStateComponent,
+  ],
   templateUrl: "./markets.component.html",
   styleUrl: "./markets.component.scss",
 })
@@ -20,20 +32,26 @@ export class AdminMarketsComponent implements OnInit {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly markets = signal<AdminMarket[]>([]);
-  readonly query = signal("");
+  readonly searchText = signal("");
   readonly visible = computed(() =>
-    this.markets().filter((item) => {
-      const needle = this.query().trim().toLowerCase();
-      if (!needle) {
-        return true;
-      }
-      return `${item.name} ${item.id} ${item.countryCode} ${item.currency}`.toLowerCase().includes(needle);
-    }),
+    filterByQuery(this.markets(), this.searchText(), (item) => [
+      item.name,
+      item.id,
+      item.countryCode,
+      item.currency,
+    ]),
+  );
+  readonly isEmptyCatalog = computed(() => !this.loading() && this.markets().length === 0);
+  readonly isEmptyFilter = computed(
+    () => !this.loading() && this.markets().length > 0 && this.visible().length === 0,
   );
 
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
-      this.query.set(params.get("q") ?? "");
+      const q = params.get("q") ?? "";
+      if (q) {
+        this.searchText.set(q);
+      }
     });
   }
 
