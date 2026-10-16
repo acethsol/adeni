@@ -132,6 +132,37 @@ public sealed class AdminBusinessesController(
         return Ok(new { items });
     }
 
+    [HttpGet("{id:guid}/commercial-terms")]
+    public async Task<IActionResult> GetCommercialTerms(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await adminBusinessService.GetTenantCommercialTermsAsync(id, cancellationToken);
+        return result.Match<IActionResult>(
+            Ok,
+            error => NotFound(new { title = error.Message }));
+    }
+
+    [HttpPatch("{id:guid}/commercial-terms")]
+    public async Task<IActionResult> SetCommercialTerms(
+        Guid id,
+        [FromBody] SetTenantCommercialTermsRequest body,
+        CancellationToken cancellationToken)
+    {
+        var adminId = User.FindFirst("sub")?.Value ?? "admin";
+        var result = await adminBusinessService.SetTenantCommercialTermsAsync(
+            id,
+            body,
+            adminId,
+            cancellationToken);
+
+        return result.Match<IActionResult>(
+            _ => NoContent(),
+            error => error.Code switch
+            {
+                "validation" => BadRequest(new { title = error.Message }),
+                _ => NotFound(new { title = error.Message })
+            });
+    }
+
     [HttpPatch("{id:guid}/subscription-tier")]
     public async Task<IActionResult> SetSubscriptionTier(
         Guid id,

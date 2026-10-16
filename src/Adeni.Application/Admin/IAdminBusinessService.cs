@@ -23,9 +23,47 @@ public sealed record AdminBusinessSummaryResponse(
     string Slug,
     TenantStatus Status,
     string SubscriptionTier,
+    string SubscriptionSku,
+    string BillingStatus,
+    DateTimeOffset? TrialEndsAt,
     DateTimeOffset CreatedAt);
 
+public sealed record AdminTenantCommercialTermsResponse(
+    Guid TenantId,
+    string SubscriptionSku,
+    string BillingStatus,
+    string? TrialSku,
+    DateTimeOffset? TrialEndsAt,
+    DateTimeOffset? PaidThrough,
+    decimal? DiscountPercent,
+    decimal? DiscountFixedAmount,
+    string? DiscountCurrency,
+    int? DiscountCyclesRemaining,
+    string? BillingCompReason,
+    decimal? CustomSaasMonthlyAmount,
+    string? CustomSaasCurrency,
+    string? CustomSaasSku);
+
 public sealed record SetSubscriptionTierRequest(string Tier);
+
+public sealed record SetTenantCommercialTermsRequest(
+    string? BillingStatus = null,
+    string? SubscriptionSku = null,
+    string? TrialSku = null,
+    DateTimeOffset? TrialEndsAt = null,
+    int? TrialDays = null,
+    bool? EndTrial = null,
+    DateTimeOffset? PaidThrough = null,
+    decimal? DiscountPercent = null,
+    decimal? DiscountFixedAmount = null,
+    string? DiscountCurrency = null,
+    int? DiscountCyclesRemaining = null,
+    bool? ClearDiscounts = null,
+    string? BillingCompReason = null,
+    decimal? CustomSaasMonthlyAmount = null,
+    string? CustomSaasCurrency = null,
+    string? CustomSaasSku = null,
+    bool? ClearCustomSaasPrice = null);
 
 public interface IAdminBusinessService
 {
@@ -46,6 +84,16 @@ public interface IAdminBusinessService
     Task<Result<Unit>> SetSubscriptionTierAsync(
         Guid tenantId,
         string tier,
+        string adminId,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<AdminTenantCommercialTermsResponse>> GetTenantCommercialTermsAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<Unit>> SetTenantCommercialTermsAsync(
+        Guid tenantId,
+        SetTenantCommercialTermsRequest request,
         string adminId,
         CancellationToken cancellationToken = default);
 }

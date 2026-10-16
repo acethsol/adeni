@@ -4,6 +4,7 @@ using Adeni.Application.Subscriptions;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
 using Adeni.Domain.Subscriptions;
+using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,6 +12,9 @@ public sealed class EntitlementsService(AdeniDbContext dbContext) : IEntitlement
 {
     public TenantEntitlements GetEntitlements(SubscriptionTier tier) =>
         SubscriptionEntitlements.ForTier(tier);
+
+    public TenantEntitlements GetEntitlementsForTenant(Tenant tenant) =>
+        SubscriptionEntitlements.ForSku(TenantBillingPolicy.ResolveEffectiveSku(tenant));
 
     public async Task<int> GetBookingsUsedThisMonthAsync(
         Guid tenantId,
@@ -41,18 +45,15 @@ public sealed class EntitlementsService(AdeniDbContext dbContext) : IEntitlement
         CancellationToken cancellationToken = default)
     {
         var entitlements = GetEntitlements(tier);
-        if (entitlements.MonthlyBookingLimit is null)
-        {
-            return Result.Success();
-        }
+        return await EnsureBookingLimitAsync(tenantId, entitlements, cancellationToken);
+    }
 
-        var used = await GetBookingsUsedThisMonthAsync(tenantId, cancellationToken);
-        if (used >= entitlements.MonthlyBookingLimit.Value)
-        {
-            return Result.Failure(ErrorCodes.BookingLimitReachedError(entitlements.MonthlyBookingLimit.Value));
-        }
-
-        return Result.Success();
+    public Task<Result> EnsureCanCreateBookingForTenantAsync(
+        Tenant tenant,
+        CancellationToken cancellationToken = default)
+    {
+        var entitlements = GetEntitlementsForTenant(tenant);
+        return EnsureBookingLimitAsync(tenant.Id, entitlements, cancellationToken);
     }
 
     public Task<Result> EnsureCanAddLocationAsync(
@@ -76,12 +77,15 @@ public sealed class EntitlementsService(AdeniDbContext dbContext) : IEntitlement
         CancellationToken cancellationToken = default)
     {
         var entitlements = GetEntitlements(tier);
-        if (entitlements.Messaging)
-        {
-            return Task.FromResult(Result.Success());
-        }
+        return Task.FromResult(EnsureMessagingEntitled(entitlements));
+    }
 
-        return Task.FromResult(Result.Failure(ErrorCodes.MessagingNotEntitledError()));
+    public Task<Result> EnsureCanUseMessagingForTenantAsync(
+        Tenant tenant,
+        CancellationToken cancellationToken = default)
+    {
+        var entitlements = GetEntitlementsForTenant(tenant);
+        return Task.FromResult(EnsureMessagingEntitled(entitlements));
     }
 
     public async Task<SubscriptionUsageResponse> GetUsageAsync(
@@ -97,5 +101,48 @@ public sealed class EntitlementsService(AdeniDbContext dbContext) : IEntitlement
             entitlements,
             used,
             entitlements.MonthlyBookingLimit);
+    }
+
+    public async Task<SubscriptionUsageResponse> GetUsageForTenantAsync(
+        Tenant tenant,
+        CancellationToken cancellationToken = default)
+    {
+        var effectiveSku = TenantBillingPolicy.ResolveEffectiveSku(tenant);
+        var entitlements = SubscriptionEntitlements.ForSku(effectiveSku);
+        var used = await GetBookingsUsedThisMonthAsync(tenant.Id, cancellationToken);
+
+        return new SubscriptionUsageResponse(
+            SubscriptionSkuMapping.ToLegacyTierApiValue(effectiveSku),
+            entitlements,
+            used,
+            entitlements.MonthlyBookingLimit,
+            SubscriptionSkuMapping.ToApiValue(tenant.SubscriptionSku),
+            TenantBillingStatusMapping.ToApiValue(tenant.BillingStatus),
+            tenant.TrialEndsAt,
+            tenant.PaidThrough);
+    }
+
+    private static Result EnsureMessagingEntitled(TenantEntitlements entitlements) =>
+        entitlements.Messaging
+            ? Result.Success()
+            : Result.Failure(ErrorCodes.MessagingNotEntitledError());
+
+    private async Task<Result> EnsureBookingLimitAsync(
+        Guid tenantId,
+        TenantEntitlements entitlements,
+        CancellationToken cancellationToken)
+    {
+        if (entitlements.MonthlyBookingLimit is null)
+        {
+            return Result.Success();
+        }
+
+        var used = await GetBookingsUsedThisMonthAsync(tenantId, cancellationToken);
+        if (used >= entitlements.MonthlyBookingLimit.Value)
+        {
+            return Result.Failure(ErrorCodes.BookingLimitReachedError(entitlements.MonthlyBookingLimit.Value));
+        }
+
+        return Result.Success();
     }
 }

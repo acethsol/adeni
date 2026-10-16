@@ -59,8 +59,10 @@ public sealed class BusinessOnboardingService(
                 Id = Guid.NewGuid(),
                 Name = request.BusinessName.Trim(),
                 Status = TenantStatus.Draft,
-                CreatedAt = now
+                CreatedAt = now,
             };
+
+            TenantBillingPolicy.StartDefaultTrial(tenant, now);
 
             businessUser = new BusinessUser
             {
@@ -657,6 +659,8 @@ public sealed class BusinessOnboardingService(
             .Select(x => x.CategorySlug)
             .ToListAsync(cancellationToken);
 
+        var effectiveSku = TenantBillingPolicy.ResolveEffectiveSku(tenant);
+
         return new BusinessProfileResponse(
             tenant.Id,
             tenant.Name,
@@ -674,8 +678,21 @@ public sealed class BusinessOnboardingService(
             capabilities,
             profile.AutoConfirmBookings,
             profile.DepositPercent,
-            SubscriptionTierMapping.ToApiValue(tenant.SubscriptionTier),
-            SubscriptionEntitlements.ForTier(tenant.SubscriptionTier),
+            SubscriptionSkuMapping.ToLegacyTierApiValue(effectiveSku),
+            SubscriptionSkuMapping.ToApiValue(tenant.SubscriptionSku),
+            TenantBillingStatusMapping.ToApiValue(tenant.BillingStatus),
+            tenant.TrialEndsAt,
+            tenant.PaidThrough,
+            tenant.DiscountPercent,
+            tenant.DiscountFixedAmount,
+            tenant.DiscountCurrency,
+            tenant.DiscountCyclesRemaining,
+            tenant.CustomSaasMonthlyAmount,
+            tenant.CustomSaasCurrency,
+            tenant.CustomSaasSku is { } customSku
+                ? SubscriptionSkuMapping.ToApiValue(customSku)
+                : null,
+            SubscriptionEntitlements.ForSku(effectiveSku),
             PublicPageConfigMapper.FromProfile(profile, logoImageUrl),
             galleryImages,
             PublicPageConfigMapper.PoliciesFromProfile(profile));

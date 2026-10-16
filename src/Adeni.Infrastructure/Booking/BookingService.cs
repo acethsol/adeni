@@ -70,9 +70,8 @@ public sealed class BookingService(
             return Result.Failure<BookingResponse>(ErrorCodes.BookingClosedError());
         }
 
-        var entitlementCheck = await entitlementsService.EnsureCanCreateBookingAsync(
-            request.TenantId,
-            tenant.SubscriptionTier,
+        var entitlementCheck = await entitlementsService.EnsureCanCreateBookingForTenantAsync(
+            tenant,
             cancellationToken);
         if (entitlementCheck.IsFailure)
         {

@@ -13,71 +13,31 @@ using Microsoft.Extensions.DependencyInjection;
 public sealed class EntitlementsServiceTests
 {
     [Fact]
-    public async Task Free_tier_blocks_booking_when_monthly_limit_reached()
+    public async Task Starter_tier_allows_unlimited_bookings()
     {
         await using var provider = BuildProvider();
         await using var scope = provider.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
         var entitlements = scope.ServiceProvider.GetRequiredService<IEntitlementsService>();
 
-        var tenantId = Guid.NewGuid();
-        db.Tenants.Add(new Tenant
+        var tenant = new Tenant
         {
-            Id = tenantId,
-            Name = "Limit Test",
+            Id = Guid.NewGuid(),
+            Name = "Starter Test",
             Status = TenantStatus.Verified,
             SubscriptionTier = SubscriptionTier.Free,
+            SubscriptionSku = SubscriptionSku.Starter,
+            BillingStatus = TenantBillingStatus.Active,
             CreatedAt = DateTimeOffset.UtcNow,
-        });
-
-        for (var i = 0; i < SubscriptionEntitlements.FreeMonthlyBookingLimit; i++)
-        {
-            db.Bookings.Add(new BookingRecord
-            {
-                Id = Guid.NewGuid(),
-                TenantId = tenantId,
-                ServiceOfferingId = Guid.NewGuid(),
-                CustomerId = Guid.NewGuid(),
-                StartAt = DateTimeOffset.UtcNow.AddDays(i + 1),
-                EndAt = DateTimeOffset.UtcNow.AddDays(i + 1).AddHours(1),
-                Status = BookingStatus.Pending,
-                CreatedAt = DateTimeOffset.UtcNow,
-                UpdatedAt = DateTimeOffset.UtcNow,
-            });
-        }
-
-        await db.SaveChangesAsync();
-
-        var result = await entitlements.EnsureCanCreateBookingAsync(tenantId, SubscriptionTier.Free);
-        Assert.True(result.IsFailure);
-        Assert.Equal(ErrorCodes.BookingLimitReached, result.Error.Code);
-        Assert.Equal(SubscriptionEntitlements.FreeMonthlyBookingLimit, result.Error.Params!["limit"]);
-    }
-
-    [Fact]
-    public async Task Pro_tier_allows_unlimited_bookings()
-    {
-        await using var provider = BuildProvider();
-        await using var scope = provider.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
-        var entitlements = scope.ServiceProvider.GetRequiredService<IEntitlementsService>();
-
-        var tenantId = Guid.NewGuid();
-        db.Tenants.Add(new Tenant
-        {
-            Id = tenantId,
-            Name = "Pro Test",
-            Status = TenantStatus.Verified,
-            SubscriptionTier = SubscriptionTier.Pro,
-            CreatedAt = DateTimeOffset.UtcNow,
-        });
+        };
+        db.Tenants.Add(tenant);
 
         for (var i = 0; i < SubscriptionEntitlements.FreeMonthlyBookingLimit + 5; i++)
         {
             db.Bookings.Add(new BookingRecord
             {
                 Id = Guid.NewGuid(),
-                TenantId = tenantId,
+                TenantId = tenant.Id,
                 ServiceOfferingId = Guid.NewGuid(),
                 CustomerId = Guid.NewGuid(),
                 StartAt = DateTimeOffset.UtcNow.AddDays(i + 1),
@@ -90,8 +50,53 @@ public sealed class EntitlementsServiceTests
 
         await db.SaveChangesAsync();
 
-        var result = await entitlements.EnsureCanCreateBookingAsync(tenantId, SubscriptionTier.Pro);
+        var result = await entitlements.EnsureCanCreateBookingForTenantAsync(tenant);
         Assert.True(result.IsSuccess);
+    }
+
+    [Fact]
+    public async Task Trialing_professional_entitles_messaging()
+    {
+        await using var provider = BuildProvider();
+        await using var scope = provider.CreateAsyncScope();
+        var entitlements = scope.ServiceProvider.GetRequiredService<IEntitlementsService>();
+
+        var tenant = new Tenant
+        {
+            Id = Guid.NewGuid(),
+            Name = "Trial Pro",
+            Status = TenantStatus.Verified,
+            SubscriptionSku = SubscriptionSku.Starter,
+            BillingStatus = TenantBillingStatus.Trialing,
+            TrialSku = SubscriptionSku.Professional,
+            TrialEndsAt = DateTimeOffset.UtcNow.AddDays(14),
+            CreatedAt = DateTimeOffset.UtcNow,
+        };
+
+        var result = await entitlements.EnsureCanUseMessagingForTenantAsync(tenant);
+        Assert.True(result.IsSuccess);
+    }
+
+    [Fact]
+    public async Task Active_starter_blocks_messaging()
+    {
+        await using var provider = BuildProvider();
+        await using var scope = provider.CreateAsyncScope();
+        var entitlements = scope.ServiceProvider.GetRequiredService<IEntitlementsService>();
+
+        var tenant = new Tenant
+        {
+            Id = Guid.NewGuid(),
+            Name = "Starter Only",
+            Status = TenantStatus.Verified,
+            SubscriptionSku = SubscriptionSku.Starter,
+            BillingStatus = TenantBillingStatus.Active,
+            CreatedAt = DateTimeOffset.UtcNow,
+        };
+
+        var result = await entitlements.EnsureCanUseMessagingForTenantAsync(tenant);
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorCodes.MessagingNotEntitled, result.Error.Code);
     }
 
     [Fact]

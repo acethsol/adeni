@@ -6,6 +6,7 @@ using Adeni.Application.Caching;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Auditing;
 using Adeni.Domain.Common;
+using Adeni.Domain.Subscriptions;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -94,8 +95,24 @@ public sealed class AdminBusinessService(
                     ?? string.Empty,
                 t.Status,
                 SubscriptionTierMapping.ToApiValue(t.SubscriptionTier),
+                SubscriptionSkuMapping.ToApiValue(t.SubscriptionSku),
+                TenantBillingStatusMapping.ToApiValue(t.BillingStatus),
+                t.TrialEndsAt,
                 t.CreatedAt))
             .ToListAsync(cancellationToken);
+
+    public async Task<Result<AdminTenantCommercialTermsResponse>> GetTenantCommercialTermsAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+
+        return tenant is null
+            ? Result.Failure<AdminTenantCommercialTermsResponse>(Error.NotFound("Business"))
+            : Result.Success(AdminCommercialTermsMapper.ToResponse(tenant));
+    }
 
     public async Task<Result<Unit>> SetSubscriptionTierAsync(
         Guid tenantId,
@@ -111,6 +128,8 @@ public sealed class AdminBusinessService(
 
         var normalizedTier = SubscriptionTierMapping.FromApiValue(tier);
         tenant.SubscriptionTier = normalizedTier;
+        tenant.SubscriptionSku = SubscriptionSkuMapping.FromLegacyTier(normalizedTier);
+        TenantBillingPolicy.EndTrial(tenant);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         await auditLogWriter.WriteAsync(new AuditEntry(
@@ -122,6 +141,155 @@ public sealed class AdminBusinessService(
             correlationContext.CorrelationId,
             DateTimeOffset.UtcNow,
             $"{{\"tier\":\"{SubscriptionTierMapping.ToApiValue(normalizedTier)}\"}}"),
+            cancellationToken);
+
+        return Result.Success(Unit.Value);
+    }
+
+    public async Task<Result<Unit>> SetTenantCommercialTermsAsync(
+        Guid tenantId,
+        SetTenantCommercialTermsRequest request,
+        string adminId,
+        CancellationToken cancellationToken = default)
+    {
+        var tenant = await dbContext.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+        if (tenant is null)
+        {
+            return Result.Failure<Unit>(Error.NotFound("Business"));
+        }
+
+        var now = DateTimeOffset.UtcNow;
+
+        if (request.EndTrial == true)
+        {
+            TenantBillingPolicy.EndTrial(tenant);
+        }
+
+        if (request.TrialDays.HasValue)
+        {
+            SubscriptionSku? trialSku = request.TrialSku is not null
+                ? SubscriptionSkuMapping.FromApiValue(request.TrialSku)
+                : tenant.TrialSku;
+            TenantBillingPolicy.GrantTrial(tenant, request.TrialDays.Value, trialSku, now);
+        }
+
+        if (request.BillingStatus is not null)
+        {
+            tenant.BillingStatus = TenantBillingStatusMapping.FromApiValue(request.BillingStatus);
+        }
+
+        if (request.SubscriptionSku is not null)
+        {
+            tenant.SubscriptionSku = SubscriptionSkuMapping.FromApiValue(request.SubscriptionSku);
+            TenantBillingPolicy.ApplySkuToLegacyTier(tenant);
+        }
+
+        if (request.TrialSku is not null && !request.TrialDays.HasValue)
+        {
+            tenant.TrialSku = SubscriptionSkuMapping.FromApiValue(request.TrialSku);
+        }
+
+        if (request.TrialEndsAt.HasValue)
+        {
+            tenant.TrialEndsAt = request.TrialEndsAt;
+            if (request.TrialEndsAt.Value > now)
+            {
+                tenant.BillingStatus = TenantBillingStatus.Trialing;
+            }
+        }
+
+        if (request.PaidThrough.HasValue)
+        {
+            tenant.PaidThrough = request.PaidThrough;
+        }
+
+        if (request.ClearDiscounts == true)
+        {
+            TenantBillingPolicy.ClearDiscounts(tenant);
+        }
+
+        if (request.DiscountPercent.HasValue)
+        {
+            if (request.DiscountPercent is < 0 or > 100)
+            {
+                return Result.Failure<Unit>(Error.Validation("Discount percent must be between 0 and 100."));
+            }
+
+            tenant.DiscountPercent = request.DiscountPercent;
+        }
+
+        if (request.DiscountFixedAmount.HasValue)
+        {
+            if (request.DiscountFixedAmount < 0)
+            {
+                return Result.Failure<Unit>(Error.Validation("Discount fixed amount cannot be negative."));
+            }
+
+            tenant.DiscountFixedAmount = request.DiscountFixedAmount;
+        }
+
+        if (request.DiscountCurrency is not null)
+        {
+            tenant.DiscountCurrency = string.IsNullOrWhiteSpace(request.DiscountCurrency)
+                ? null
+                : request.DiscountCurrency.Trim().ToUpperInvariant();
+        }
+
+        if (request.DiscountCyclesRemaining.HasValue)
+        {
+            if (request.DiscountCyclesRemaining < 0)
+            {
+                return Result.Failure<Unit>(Error.Validation("Discount cycles remaining cannot be negative."));
+            }
+
+            tenant.DiscountCyclesRemaining = request.DiscountCyclesRemaining;
+        }
+
+        if (request.BillingCompReason is not null)
+        {
+            tenant.BillingCompReason = string.IsNullOrWhiteSpace(request.BillingCompReason)
+                ? null
+                : request.BillingCompReason.Trim();
+        }
+
+        if (request.ClearCustomSaasPrice == true)
+        {
+            TenantBillingPolicy.ClearCustomSaasPrice(tenant);
+        }
+
+        if (request.CustomSaasMonthlyAmount.HasValue)
+        {
+            if (request.CustomSaasMonthlyAmount <= 0)
+            {
+                return Result.Failure<Unit>(Error.Validation("Custom SaaS amount must be positive."));
+            }
+
+            tenant.CustomSaasMonthlyAmount = request.CustomSaasMonthlyAmount;
+        }
+
+        if (request.CustomSaasCurrency is not null)
+        {
+            tenant.CustomSaasCurrency = string.IsNullOrWhiteSpace(request.CustomSaasCurrency)
+                ? null
+                : request.CustomSaasCurrency.Trim().ToUpperInvariant();
+        }
+
+        if (request.CustomSaasSku is not null)
+        {
+            tenant.CustomSaasSku = SubscriptionSkuMapping.FromApiValue(request.CustomSaasSku);
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        await auditLogWriter.WriteAsync(new AuditEntry(
+            Guid.NewGuid(),
+            adminId,
+            "tenant.commercial_terms_updated",
+            "tenant",
+            tenantId.ToString(),
+            correlationContext.CorrelationId,
+            DateTimeOffset.UtcNow,
+            null),
             cancellationToken);
 
         return Result.Success(Unit.Value);

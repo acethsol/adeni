@@ -134,9 +134,8 @@ public sealed class MessageThreadService(
                 return Result.Failure<MessageResponse>(Error.NotFound("Business"));
             }
 
-            var entitlement = await entitlementsService.EnsureCanUseMessagingAsync(
-                thread.TenantId,
-                tenant.SubscriptionTier,
+            var entitlement = await entitlementsService.EnsureCanUseMessagingForTenantAsync(
+                tenant,
                 cancellationToken);
 
             if (entitlement.IsFailure)
@@ -228,7 +227,7 @@ public sealed class MessageThreadService(
         SubscriptionTier tier,
         CancellationToken cancellationToken = default)
     {
-        var entitlement = await entitlementsService.EnsureCanUseMessagingAsync(tenantId, tier, cancellationToken);
+        var entitlement = await EnsureTenantCanUseMessagingAsync(tenantId, cancellationToken);
         if (entitlement.IsFailure)
         {
             return Result.Failure<IReadOnlyList<ThreadSummaryResponse>>(entitlement.Error);
@@ -276,9 +275,8 @@ public sealed class MessageThreadService(
                 return Result.Failure<ThreadDetailResponse>(Error.NotFound("Business"));
             }
 
-            var entitlement = await entitlementsService.EnsureCanUseMessagingAsync(
-                thread.TenantId,
-                tenant.SubscriptionTier,
+            var entitlement = await entitlementsService.EnsureCanUseMessagingForTenantAsync(
+                tenant,
                 cancellationToken);
 
             if (entitlement.IsFailure)
@@ -326,8 +324,8 @@ public sealed class MessageThreadService(
         SubscriptionTier tier,
         CancellationToken cancellationToken = default)
     {
-        // Badge poll: not entitled → 0 (avoid 403 noise on every shell load for Free tier).
-        var entitlement = await entitlementsService.EnsureCanUseMessagingAsync(tenantId, tier, cancellationToken);
+        // Badge poll: not entitled → 0 (avoid 403 noise on every shell load for Starter tier).
+        var entitlement = await EnsureTenantCanUseMessagingAsync(tenantId, cancellationToken);
         if (entitlement.IsFailure)
         {
             return Result.Success(new UnreadCountResponse(0));
@@ -366,9 +364,8 @@ public sealed class MessageThreadService(
                 return Result.Failure<Unit>(Error.NotFound("Business"));
             }
 
-            var entitlement = await entitlementsService.EnsureCanUseMessagingAsync(
-                thread.TenantId,
-                tenant.SubscriptionTier,
+            var entitlement = await entitlementsService.EnsureCanUseMessagingForTenantAsync(
+                tenant,
                 cancellationToken);
 
             if (entitlement.IsFailure)
@@ -473,15 +470,20 @@ public sealed class MessageThreadService(
         SubscriptionTier tier,
         CancellationToken cancellationToken = default)
     {
-        var entitlement = await entitlementsService.EnsureCanUseMessagingAsync(tenantId, tier, cancellationToken);
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+
+        if (tenant is null)
+        {
+            return Result.Failure<IReadOnlyList<MessageTemplateResponse>>(Error.NotFound("Business"));
+        }
+
+        var entitlement = await entitlementsService.EnsureCanUseMessagingForTenantAsync(tenant, cancellationToken);
         if (entitlement.IsFailure)
         {
             return Result.Failure<IReadOnlyList<MessageTemplateResponse>>(entitlement.Error);
         }
-
-        var tenant = await dbContext.Tenants
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
 
         var profile = await dbContext.BusinessProfiles
             .AsNoTracking()
@@ -591,9 +593,8 @@ public sealed class MessageThreadService(
             return;
         }
 
-        var entitlement = await entitlementsService.EnsureCanUseMessagingAsync(
-            thread.TenantId,
-            tenant.SubscriptionTier,
+        var entitlement = await entitlementsService.EnsureCanUseMessagingForTenantAsync(
+            tenant,
             cancellationToken);
 
         if (entitlement.IsFailure)
@@ -641,6 +642,22 @@ public sealed class MessageThreadService(
         threadEntity.CustomerUnreadCount += 1;
         dbContext.Messages.Add(autoMessage);
         await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task<Result> EnsureTenantCanUseMessagingAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken)
+    {
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+
+        if (tenant is null)
+        {
+            return Result.Failure(Error.NotFound("Business"));
+        }
+
+        return await entitlementsService.EnsureCanUseMessagingForTenantAsync(tenant, cancellationToken);
     }
 
     private async Task<Result<BusinessProfile>> ResolveBusinessAccessAsync(

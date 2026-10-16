@@ -946,11 +946,29 @@ export const subscriptionTierSchema = z.enum(["free", "pro", "business"]);
 
 export type SubscriptionTier = z.infer<typeof subscriptionTierSchema>;
 
+export const subscriptionSkuSchema = z.enum(["starter", "professional", "business"]);
+
+export type SubscriptionSku = z.infer<typeof subscriptionSkuSchema>;
+
+export const tenantBillingStatusSchema = z.enum([
+  "trialing",
+  "active",
+  "past_due",
+  "suspended",
+  "canceled",
+]);
+
+export type TenantBillingStatus = z.infer<typeof tenantBillingStatusSchema>;
+
 export const subscriptionUsageSchema = z.object({
   tier: subscriptionTierSchema,
   entitlements: tenantEntitlementsSchema,
   bookingsUsedThisMonth: z.number().int().nonnegative(),
   bookingsLimitThisMonth: z.number().int().positive().nullable(),
+  subscriptionSku: subscriptionSkuSchema.optional(),
+  billingStatus: tenantBillingStatusSchema.optional(),
+  trialEndsAt: z.string().nullable().optional(),
+  paidThrough: z.string().nullable().optional(),
 });
 
 export type SubscriptionUsage = z.infer<typeof subscriptionUsageSchema>;
@@ -961,6 +979,9 @@ export const adminBusinessSummarySchema = z.object({
   slug: z.string(),
   status: z.number(),
   subscriptionTier: subscriptionTierSchema,
+  subscriptionSku: subscriptionSkuSchema.optional(),
+  billingStatus: tenantBillingStatusSchema.optional(),
+  trialEndsAt: z.string().nullable().optional(),
   createdAt: z.string(),
 });
 
@@ -975,6 +996,49 @@ export const setSubscriptionTierRequestSchema = z.object({
 });
 
 export type SetSubscriptionTierRequest = z.infer<typeof setSubscriptionTierRequestSchema>;
+
+export const adminTenantCommercialTermsSchema = z.object({
+  tenantId: z.string(),
+  subscriptionSku: subscriptionSkuSchema,
+  billingStatus: tenantBillingStatusSchema,
+  trialSku: subscriptionSkuSchema.nullable().optional(),
+  trialEndsAt: z.string().nullable().optional(),
+  paidThrough: z.string().nullable().optional(),
+  discountPercent: z.number().min(0).max(100).nullable().optional(),
+  discountFixedAmount: z.number().nonnegative().nullable().optional(),
+  discountCurrency: z.string().length(3).nullable().optional(),
+  discountCyclesRemaining: z.number().int().nonnegative().nullable().optional(),
+  billingCompReason: z.string().max(500).nullable().optional(),
+  customSaasMonthlyAmount: z.number().positive().nullable().optional(),
+  customSaasCurrency: z.string().length(3).nullable().optional(),
+  customSaasSku: subscriptionSkuSchema.nullable().optional(),
+});
+
+export type AdminTenantCommercialTerms = z.infer<typeof adminTenantCommercialTermsSchema>;
+
+export const setTenantCommercialTermsRequestSchema = z.object({
+  billingStatus: tenantBillingStatusSchema.optional(),
+  subscriptionSku: subscriptionSkuSchema.optional(),
+  trialSku: subscriptionSkuSchema.optional(),
+  trialDays: z.number().int().min(0).max(730).optional(),
+  endTrial: z.boolean().optional(),
+  trialEndsAt: z.string().nullable().optional(),
+  paidThrough: z.string().nullable().optional(),
+  discountPercent: z.number().min(0).max(100).nullable().optional(),
+  discountFixedAmount: z.number().nonnegative().nullable().optional(),
+  discountCurrency: z.string().length(3).nullable().optional(),
+  discountCyclesRemaining: z.number().int().nonnegative().nullable().optional(),
+  clearDiscounts: z.boolean().optional(),
+  billingCompReason: z.string().max(500).nullable().optional(),
+  customSaasMonthlyAmount: z.number().positive().nullable().optional(),
+  customSaasCurrency: z.string().length(3).nullable().optional(),
+  customSaasSku: subscriptionSkuSchema.optional(),
+  clearCustomSaasPrice: z.boolean().optional(),
+});
+
+export type SetTenantCommercialTermsRequest = z.infer<
+  typeof setTenantCommercialTermsRequestSchema
+>;
 
 export const businessProfileSchema = z.object({
   tenantId: z.string(),
@@ -998,6 +1062,17 @@ export const businessProfileSchema = z.object({
   autoConfirmBookings: z.boolean().optional(),
   depositPercent: z.number().int().min(0).max(100).optional(),
   subscriptionTier: subscriptionTierSchema.optional(),
+  subscriptionSku: subscriptionSkuSchema.optional(),
+  billingStatus: tenantBillingStatusSchema.optional(),
+  trialEndsAt: z.string().nullable().optional(),
+  paidThrough: z.string().nullable().optional(),
+  discountPercent: z.number().min(0).max(100).nullable().optional(),
+  discountFixedAmount: z.number().nonnegative().nullable().optional(),
+  discountCurrency: z.string().length(3).nullable().optional(),
+  discountCyclesRemaining: z.number().int().nonnegative().nullable().optional(),
+  customSaasMonthlyAmount: z.number().positive().nullable().optional(),
+  customSaasCurrency: z.string().length(3).nullable().optional(),
+  customSaasSku: subscriptionSkuSchema.nullable().optional(),
   entitlements: tenantEntitlementsSchema.optional(),
   publicPage: publicPageConfigSchema.optional(),
   galleryImages: z

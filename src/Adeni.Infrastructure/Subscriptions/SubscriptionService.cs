@@ -21,9 +21,8 @@ public sealed class SubscriptionService(
             return Result.Failure<SubscriptionUsageResponse>(access.Error);
         }
 
-        var usage = await entitlementsService.GetUsageAsync(
-            tenantId,
-            access.Value!.SubscriptionTier,
+        var usage = await entitlementsService.GetUsageForTenantAsync(
+            access.Value!,
             cancellationToken);
 
         return Result.Success(usage);

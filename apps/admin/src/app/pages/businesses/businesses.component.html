@@ -1,4 +1,7 @@
-<app-portal-page title="Businesses" description="Subscription tier overrides for support.">
+<app-portal-page
+  title="Businesses"
+  description="Per-tenant trials, discounts, and negotiated SaaS pricing (catalog defaults are fallbacks only)."
+>
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
@@ -9,15 +12,227 @@
       <ul class="plain">
         @for (b of visible(); track b.id) {
           <li class="list-row">
-            <div>
+            <div class="summary">
               <strong>{{ b.name }}</strong>
-              <p class="muted">{{ b.slug }} · current: {{ b.subscriptionTier }}</p>
+              <p class="muted">
+                {{ b.slug }} · tier {{ b.subscriptionTier }}
+                @if (b.billingStatus) {
+                  · {{ b.billingStatus }}
+                }
+                @if (b.trialEndsAt) {
+                  · trial until {{ b.trialEndsAt | date: "mediumDate" }}
+                }
+              </p>
             </div>
             <div class="actions">
               @for (tier of tiers; track tier) {
                 <button type="button" class="btn" (click)="setTier(b, tier)">{{ tier }}</button>
               }
+              <button type="button" class="btn btn-primary" (click)="openCommercial(b)">
+                Commercial terms
+              </button>
             </div>
+
+            @if (editingId() === b.id && commercialDraft(); as draft) {
+              <form class="commercial-panel" (ngSubmit)="saveCommercial(b)">
+                <h3>Commercial terms — {{ b.name }}</h3>
+                <p class="muted">
+                  Set trial length (days), skip trial, discounts, or a custom monthly price for this tenant.
+                </p>
+
+                <div class="grid">
+                  <label>
+                    Paid SKU
+                    <select
+                      [ngModel]="draft.subscriptionSku"
+                      (ngModelChange)="updateDraft({ subscriptionSku: $event })"
+                      name="subscriptionSku"
+                    >
+                      @for (sku of skus; track sku) {
+                        <option [value]="sku">{{ sku }}</option>
+                      }
+                    </select>
+                  </label>
+                  <label>
+                    Billing status
+                    <select
+                      [ngModel]="draft.billingStatus"
+                      (ngModelChange)="updateDraft({ billingStatus: $event })"
+                      name="billingStatus"
+                    >
+                      @for (status of billingStatuses; track status) {
+                        <option [value]="status">{{ status }}</option>
+                      }
+                    </select>
+                  </label>
+                </div>
+
+                <fieldset>
+                  <legend>Trial</legend>
+                  <label class="check">
+                    <input
+                      type="checkbox"
+                      [ngModel]="draft.endTrial"
+                      (ngModelChange)="updateDraft({ endTrial: $event })"
+                      name="endTrial"
+                    />
+                    No trial (end trial / bill as active)
+                  </label>
+                  @if (!draft.endTrial) {
+                    <div class="grid">
+                      <label>
+                        Trial days (0 = no trial)
+                        <input
+                          type="number"
+                          min="0"
+                          max="730"
+                          [ngModel]="draft.trialDays"
+                          (ngModelChange)="updateDraft({ trialDays: $event === '' ? null : +$event })"
+                          name="trialDays"
+                        />
+                      </label>
+                      <label>
+                        Trial entitlements SKU
+                        <select
+                          [ngModel]="draft.trialSku"
+                          (ngModelChange)="updateDraft({ trialSku: $event })"
+                          name="trialSku"
+                        >
+                          @for (sku of skus; track sku) {
+                            <option [value]="sku">{{ sku }}</option>
+                          }
+                        </select>
+                      </label>
+                    </div>
+                  }
+                </fieldset>
+
+                <fieldset>
+                  <legend>Discounts</legend>
+                  <label class="check">
+                    <input
+                      type="checkbox"
+                      [ngModel]="draft.clearDiscounts"
+                      (ngModelChange)="updateDraft({ clearDiscounts: $event })"
+                      name="clearDiscounts"
+                    />
+                    Clear all discounts
+                  </label>
+                  @if (!draft.clearDiscounts) {
+                    <div class="grid">
+                      <label>
+                        Discount %
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.01"
+                          [ngModel]="draft.discountPercent"
+                          (ngModelChange)="updateDraft({ discountPercent: $event === '' ? null : +$event })"
+                          name="discountPercent"
+                        />
+                      </label>
+                      <label>
+                        Fixed discount
+                        <input
+                          type="number"
+                          min="0"
+                          [ngModel]="draft.discountFixedAmount"
+                          (ngModelChange)="updateDraft({ discountFixedAmount: $event === '' ? null : +$event })"
+                          name="discountFixedAmount"
+                        />
+                      </label>
+                      <label>
+                        Currency
+                        <input
+                          maxlength="3"
+                          [ngModel]="draft.discountCurrency"
+                          (ngModelChange)="updateDraft({ discountCurrency: $event })"
+                          name="discountCurrency"
+                          placeholder="NGN"
+                        />
+                      </label>
+                      <label>
+                        Cycles remaining
+                        <input
+                          type="number"
+                          min="0"
+                          [ngModel]="draft.discountCyclesRemaining"
+                          (ngModelChange)="updateDraft({ discountCyclesRemaining: $event === '' ? null : +$event })"
+                          name="discountCyclesRemaining"
+                        />
+                      </label>
+                    </div>
+                  }
+                </fieldset>
+
+                <fieldset>
+                  <legend>Custom SaaS price (partner / pilot)</legend>
+                  <label class="check">
+                    <input
+                      type="checkbox"
+                      [ngModel]="draft.clearCustomSaasPrice"
+                      (ngModelChange)="updateDraft({ clearCustomSaasPrice: $event })"
+                      name="clearCustomSaasPrice"
+                    />
+                    Use catalog country pricing only
+                  </label>
+                  @if (!draft.clearCustomSaasPrice) {
+                    <div class="grid">
+                      <label>
+                        Monthly amount
+                        <input
+                          type="number"
+                          min="0"
+                          [ngModel]="draft.customSaasMonthlyAmount"
+                          (ngModelChange)="updateDraft({ customSaasMonthlyAmount: $event === '' ? null : +$event })"
+                          name="customSaasMonthlyAmount"
+                        />
+                      </label>
+                      <label>
+                        Currency
+                        <input
+                          maxlength="3"
+                          [ngModel]="draft.customSaasCurrency"
+                          (ngModelChange)="updateDraft({ customSaasCurrency: $event })"
+                          name="customSaasCurrency"
+                          placeholder="NGN"
+                        />
+                      </label>
+                      <label>
+                        Applies to SKU (optional)
+                        <select
+                          [ngModel]="draft.customSaasSku"
+                          (ngModelChange)="updateDraft({ customSaasSku: $event })"
+                          name="customSaasSku"
+                        >
+                          <option value="">Any / current</option>
+                          @for (sku of skus; track sku) {
+                            <option [value]="sku">{{ sku }}</option>
+                          }
+                        </select>
+                      </label>
+                    </div>
+                  }
+                </fieldset>
+
+                <label>
+                  Comp / audit note
+                  <textarea
+                    rows="2"
+                    maxlength="500"
+                    [ngModel]="draft.billingCompReason"
+                    (ngModelChange)="updateDraft({ billingCompReason: $event })"
+                    name="billingCompReason"
+                  ></textarea>
+                </label>
+
+                <div class="actions">
+                  <button type="submit" class="btn btn-primary">Save commercial terms</button>
+                  <button type="button" class="btn" (click)="closeCommercial()">Cancel</button>
+                </div>
+              </form>
+            }
           </li>
         }
       </ul>

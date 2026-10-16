@@ -4,6 +4,8 @@ using Adeni.Application.Catalog;
 using Adeni.Application.Storage;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Identity;
+using Adeni.Application.Subscriptions;
+using Adeni.Domain.Subscriptions;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Catalog;
 using Adeni.Infrastructure.Identity;
@@ -63,14 +65,18 @@ public static class DevelopmentDataSeeder
             }
 
             var tenantId = Guid.NewGuid();
-            db.Tenants.Add(new Tenant
+            var tenant = new Tenant
             {
                 Id = tenantId,
                 Name = sample.Name,
                 Status = TenantStatus.Verified,
                 CreatedAt = now,
                 VerifiedAt = now,
-            });
+                SubscriptionSku = SubscriptionSku.Professional,
+                BillingStatus = TenantBillingStatus.Active,
+                SubscriptionTier = SubscriptionTier.Pro,
+            };
+            db.Tenants.Add(tenant);
 
             db.BusinessProfiles.Add(new BusinessProfile
             {

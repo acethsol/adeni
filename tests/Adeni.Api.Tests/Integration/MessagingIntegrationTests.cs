@@ -49,6 +49,8 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
                 Name = "Messaging Pro Shop",
                 Status = TenantStatus.Verified,
                 SubscriptionTier = SubscriptionTier.Pro,
+                SubscriptionSku = SubscriptionSku.Professional,
+                BillingStatus = TenantBillingStatus.Active,
                 CreatedAt = DateTimeOffset.UtcNow,
                 VerifiedAt = DateTimeOffset.UtcNow,
             });
@@ -145,6 +147,8 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
                 Name = "Free Tier Shop",
                 Status = TenantStatus.Verified,
                 SubscriptionTier = SubscriptionTier.Free,
+                SubscriptionSku = SubscriptionSku.Starter,
+                BillingStatus = TenantBillingStatus.Active,
                 CreatedAt = DateTimeOffset.UtcNow,
                 VerifiedAt = DateTimeOffset.UtcNow,
             });
@@ -220,6 +224,8 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
                 Name = "FAQ Shop",
                 Status = TenantStatus.Verified,
                 SubscriptionTier = SubscriptionTier.Pro,
+                SubscriptionSku = SubscriptionSku.Professional,
+                BillingStatus = TenantBillingStatus.Active,
                 CreatedAt = DateTimeOffset.UtcNow,
                 VerifiedAt = DateTimeOffset.UtcNow,
             });

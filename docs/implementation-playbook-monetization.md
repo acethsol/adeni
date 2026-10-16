@@ -43,7 +43,7 @@ flowchart TD
 
 ### Step 0 — Lock product (you, ~30 min)
 
-- [ ] Mark [pricing-and-monetization.md](./pricing-and-monetization.md) **Approved** in repo (or Confluence) — NG **50/70/100**, US **150/200/250**, CA **200/250/300**, GMV **0% NG / 0.75% NA target**, **business-paid**, trials on **Professional** default **90d** (if not changed).
+- [ ] Mark [pricing-and-monetization.md](./pricing-and-monetization.md) **Approved** in repo (or Confluence) — NG **50/70/100**, US **150/200/250**, CA **200/250/300**, GMV **0% NG / 0.75% NA target**, **business-paid**, trials on **Professional** default **30d** (admin can change per tenant).
 - [ ] Confirm trial default SKU + `blockPaymentsUntilOnboarding` for NG (grace **false** in JSON today).
 
 ### Step 1 — Track A, PR 1: `country-pricing` in shared (1–2 days)

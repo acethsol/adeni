@@ -5,6 +5,8 @@ import {
   adminMarketSchema,
   adminBusinessesResponseSchema,
   setSubscriptionTierRequestSchema,
+  setTenantCommercialTermsRequestSchema,
+  adminTenantCommercialTermsSchema,
   subscriptionUsageSchema,
   availableSlotsResponseSchema,
   bookingResponseSchema,
@@ -124,6 +126,8 @@ import {
   type AdminCustomerSummary,
   type AdminMarket,
   type AdminBusinessSummary,
+  type AdminTenantCommercialTerms,
+  type SetTenantCommercialTermsRequest,
   type SubscriptionUsage,
   type AvailableSlot,
   type BillingDocumentResponse,
@@ -1535,6 +1539,28 @@ export class AdeniApiClient {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
+      },
+    );
+  }
+
+  async getAdminTenantCommercialTerms(tenantId: string): Promise<AdminTenantCommercialTerms> {
+    const response = await this.request(
+      `/api/v1/admin/businesses/${encodeURIComponent(tenantId)}/commercial-terms`,
+    );
+    return adminTenantCommercialTermsSchema.parse(await response.json());
+  }
+
+  async setAdminTenantCommercialTerms(
+    tenantId: string,
+    body: SetTenantCommercialTermsRequest,
+  ): Promise<void> {
+    const payload = setTenantCommercialTermsRequestSchema.parse(body);
+    await this.request(
+      `/api/v1/admin/businesses/${encodeURIComponent(tenantId)}/commercial-terms`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       },
     );
   }

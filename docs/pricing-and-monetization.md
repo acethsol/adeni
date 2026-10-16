@@ -61,13 +61,24 @@ Legacy code enum `free | pro | business` maps to **Starter | Professional | Busi
 
 ### 5.1 Trial (default onboarding)
 
-- Admin **country default**: e.g. 90 days on **Professional** for new verified businesses in **NG**.
+- **Onboarding default**: **30 days** on **Professional** (code constant; overridable per tenant in admin).
 - Fields: `subscriptionSku`, `billingStatus: trialing`, `trialEndsAt`.
 - End of trial: charge or **suspend** (no silent free tier).
 
-### 5.2 Admin commercial controls
+### 5.2 Admin commercial controls (per tenant)
 
-Trial length, extend, **% or fixed discount** for N cycles, comp with audit — per tenant or country default. See [sprint-33 spec](./specs/sprint-33-saas-subscription-billing-mrr.md).
+**Country catalog** ([country-pricing.json](../packages/shared/src/data/country-pricing.json)) is the default list price. Until figures are final, ops can override **per tenant**:
+
+| Control | API / admin UI | Storage |
+|---------|----------------|---------|
+| Trial on/off | `endTrial: true` or `trialDays: 0` | `billing_status`, clear `trial_*` |
+| Trial length + entitlements SKU | `trialDays`, `trialSku` | `trial_ends_at`, `trial_sku` |
+| Paid SKU / status | `subscriptionSku`, `billingStatus` | `subscription_sku`, `billing_status` |
+| **Negotiated monthly price** | `customSaasMonthlyAmount`, `customSaasCurrency`, optional `customSaasSku` | tenant columns; checkout uses `resolveTenantSaasListPrice` in `@adeni/shared` |
+| Discount | `%` or **fixed** for N **cycles** | `discount_*` columns |
+| Comp / audit | `billingCompReason` | text + admin audit log |
+
+Admin: **Businesses → Commercial terms** (`GET/PATCH /api/v1/admin/businesses/{id}/commercial-terms`). See [sprint-33 spec](./specs/sprint-33-saas-subscription-billing-mrr.md).
 
 ---
 

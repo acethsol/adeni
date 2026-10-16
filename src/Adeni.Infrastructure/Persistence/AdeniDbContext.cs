@@ -118,6 +118,16 @@ public sealed class AdeniDbContext(
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Name).HasMaxLength(200);
             entity.Property(x => x.SubscriptionTier).HasConversion<int>();
+            entity.Property(x => x.SubscriptionSku).HasConversion<int>();
+            entity.Property(x => x.BillingStatus).HasConversion<int>();
+            entity.Property(x => x.TrialSku).HasConversion<int>();
+            entity.Property(x => x.DiscountCurrency).HasMaxLength(3);
+            entity.Property(x => x.BillingCompReason).HasMaxLength(500);
+            entity.Property(x => x.DiscountPercent).HasPrecision(5, 2);
+            entity.Property(x => x.DiscountFixedAmount).HasPrecision(18, 2);
+            entity.Property(x => x.CustomSaasCurrency).HasMaxLength(3);
+            entity.Property(x => x.CustomSaasMonthlyAmount).HasPrecision(18, 2);
+            entity.Property(x => x.CustomSaasSku).HasConversion<int>();
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.Id == ActiveTenantFilterId);
         });
 

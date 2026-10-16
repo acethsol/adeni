@@ -199,7 +199,7 @@ Businesses pay monthly for operating tools. **No perpetual free tier** — acqui
 
 Details: [pricing-and-monetization.md](./pricing-and-monetization.md).
 
-**Trials:** default e.g. 90 days on Professional for new verified businesses — length and SKU set in **admin market config**; extend/comp per tenant with audit.
+**Trials:** default **30 days** on Professional at registration — length and SKU overridable **per tenant** in admin; extend/comp with audit.
 
 Example scale (illustrative): 10,000 paying × blended **$50–80/mo software ARPU** ≈ **$500k–800k MRR** before GMV fees and add-ons.
 

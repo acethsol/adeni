@@ -17,9 +17,12 @@ public static class SubscriptionEntitlements
     public const int FreeMonthlyBookingLimit = 20;
 
     public static TenantEntitlements ForTier(SubscriptionTier tier) =>
-        tier switch
+        ForSku(SubscriptionSkuMapping.FromLegacyTier(tier));
+
+    public static TenantEntitlements ForSku(SubscriptionSku sku) =>
+        sku switch
         {
-            SubscriptionTier.Pro => new TenantEntitlements(
+            SubscriptionSku.Professional => new TenantEntitlements(
                 MonthlyBookingLimit: null,
                 BasicCalendar: true,
                 Messaging: true,
@@ -28,7 +31,7 @@ public static class SubscriptionEntitlements
                 MultiLocation: false,
                 StaffManagement: false,
                 PrioritySupport: false),
-            SubscriptionTier.Business => new TenantEntitlements(
+            SubscriptionSku.Business => new TenantEntitlements(
                 MonthlyBookingLimit: null,
                 BasicCalendar: true,
                 Messaging: true,
@@ -38,7 +41,7 @@ public static class SubscriptionEntitlements
                 StaffManagement: true,
                 PrioritySupport: true),
             _ => new TenantEntitlements(
-                MonthlyBookingLimit: FreeMonthlyBookingLimit,
+                MonthlyBookingLimit: null,
                 BasicCalendar: true,
                 Messaging: false,
                 Analytics: false,
