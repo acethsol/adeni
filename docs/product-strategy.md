@@ -92,7 +92,7 @@ This is why the **business portal** is strategically as important as the consume
 | Mini website per business | ✅ Public profile + slug | Enhance share/SEO |
 | Online payments / deposits | Not started | Sprint 15 + 17 |
 | Appointment reminders (SMS/WhatsApp/push) | Not started | Sprint 15 |
-| In-app messaging | Not started | Sprint 18 |
+| In-app messaging | ✅ Sprint 36 (conversations + SignalR; replaces Sprint 18) | Offline notify adapters later |
 | Instant quotes (reverse marketplace) | Not started | Sprint 19 (on top of Sprint 15 framework) |
 | **Business-type workflows** | One appointment flow for all categories | **High — Sprint 15 foundation, Sprint 19 depth** |
 | Digital queue | Future | Backlog |
@@ -367,7 +367,7 @@ Keeps payment logic out of Booking and avoids rewrite when fintech layer lands.
 | Customer my-bookings | ✅ | — |
 | Mobile app (Expo) | ✅ | Polish parity with web portal |
 | Ask Adeni search | ✅ Rule-based | LLM agent |
-| Messaging | ❌ | Sprint 18 |
+| Messaging | ✅ Sprint 36 | WABA / staff notes later |
 | Payments | ❌ | Sprint 15 + 17 |
 | SaaS billing | ✅ Sprint 16 (tiers + stub) | Paystack checkout Sprint 17+ |
 | Staff management | ❌ | Backlog |

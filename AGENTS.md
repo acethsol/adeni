@@ -81,7 +81,7 @@ Summarized from [product-strategy.md §2–3, §8](docs/product-strategy.md). Wh
 - Competing with Google/Yelp on directory size
 - All service categories or cities at once
 - Microservices or multi-repo backend before module boundaries are enforced
-- In-app messaging before Sprint 18; LLM agents before Sprint 20
+- LLM agents before Sprint 20 (messaging is Sprint 36 — do not revive Sprint 18 threads)
 - Production deploy / full observability stack before Sprint 20 (staging work is OK)
 
 ## AI calibration (voice correction)

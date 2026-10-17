@@ -306,20 +306,18 @@ Confluence: [Sprint 16 — Business SaaS & monetization](https://aceth.atlassian
 
 Confluence: [Sprint 17 — Commerce orchestration (Paystack)](https://aceth.atlassian.net/wiki/spaces/SD/pages/41287681)
 
-## Sprint 18 — Messaging & WhatsApp bridge (done)
+## Sprint 18 — Messaging & WhatsApp bridge (**superseded by Sprint 36**)
 
-Close the fragmentation gap — businesses live on WhatsApp; Adeni must meet them there. See [product-strategy.md §7.4](./product-strategy.md#74-nigeria-specific-engineering-notes).
+Original client↔business messaging ship. **Implementation removed** in Sprint 36 (greenfield conversations + SignalR; no data migration). Product needs (WhatsApp deep links, FAQ, prefs, Pro gate) live under [sprint-36-messaging-rewrite.md](./specs/sprint-36-messaging-rewrite.md). Historical checklist kept for Confluence parity.
 
 | Task | Status |
 |------|--------|
-| **18a** In-app messaging — **Messaging module**; customer ↔ business threads tied to booking or business profile | ✅ Done |
-| **18b** WhatsApp deep links — “Message on WhatsApp” with pre-filled booking context; “Book on Adeni” link in bio templates | ✅ Done |
-| **18c** Notification preferences — email, push (FCM), SMS/WhatsApp reminder channel per tenant | ✅ Done |
-| **18d** Message templates — business quick-replies (hours, pricing, location) | ✅ Done |
-| **18e** Unread badge + inbox in business portal topbar (extend bookings bell pattern) | ✅ Done |
-| **18f** Basic FAQ auto-responder — rule-based replies for price/hours/availability (precursor to business AI agent) | ✅ Done |
-
-**Revenue unlocked:** Pro tier messaging entitlement (Sprint 16). **Retention:** businesses stay because customers reach them where they already are.
+| **18a** In-app messaging — threads (removed in Sprint 36) | ⚠️ Superseded |
+| **18b** WhatsApp deep links | ✅ Re-homed in Sprint 36 |
+| **18c** Notification preferences | ✅ Kept |
+| **18d** Message templates | ✅ Re-homed in Sprint 36 |
+| **18e** Unread badge + inbox | ✅ Rebuilt in Sprint 36 (`needsAttention`) |
+| **18f** FAQ auto-responder | ✅ Re-homed as Bot participant in Sprint 36 |
 
 Confluence: [Sprint 18 — Messaging & WhatsApp bridge](https://aceth.atlassian.net/wiki/spaces/SD/pages/41320449)
 

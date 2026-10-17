@@ -120,9 +120,10 @@ internal static class ApiErrorResponseMapper
     private static int ResolveMessagingStatusCode(string code) =>
         code switch
         {
-            ErrorCodes.ThreadNotFound => StatusCodes.Status404NotFound,
-            ErrorCodes.ThreadClosed => StatusCodes.Status409Conflict,
+            ErrorCodes.ConversationNotFound => StatusCodes.Status404NotFound,
+            ErrorCodes.ConversationClosed => StatusCodes.Status409Conflict,
             ErrorCodes.MessageBodyInvalid => StatusCodes.Status400BadRequest,
+            ErrorCodes.MessageAttachmentInvalid => StatusCodes.Status400BadRequest,
             _ => StatusCodes.Status400BadRequest,
         };
 

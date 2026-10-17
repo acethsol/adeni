@@ -18,14 +18,14 @@ h3 {
   gap: 0.8rem;
 }
 
-.threads ul,
+.conversations ul,
 .chips {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.threads button {
+.conversations button {
   width: 100%;
   text-align: left;
   border: 0;
@@ -36,7 +36,7 @@ h3 {
   font: inherit;
 }
 
-.threads button.active {
+.conversations button.active {
   background: color-mix(in srgb, var(--interactive) 8%, var(--surface));
 }
 

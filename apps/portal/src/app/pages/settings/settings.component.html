@@ -165,13 +165,13 @@
     @if (tab() === "messaging") {
       <section class="card settings-card">
         <h3>In-app messaging</h3>
-        <p class="lede">Automations for customer threads tied to bookings.</p>
+        <p class="lede">Automations for customer conversations tied to bookings.</p>
         <label class="cds-toggle">
           <input type="checkbox" role="switch" [(ngModel)]="faqAutoResponderEnabled" />
           <span class="cds-toggle__track" aria-hidden="true"></span>
           <span class="cds-toggle__label">FAQ auto-responder</span>
         </label>
-        <p class="hint">Sends a short canned reply when a new customer thread opens.</p>
+        <p class="hint">Sends a short canned reply when a customer starts a conversation.</p>
         <button
           type="button"
           class="btn btn-primary"

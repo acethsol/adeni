@@ -454,3 +454,4 @@ Aligned with AGENTS.md non-negotiables and portal design system:
 | Writes | REST-only; SignalR push-only |
 | Portal UI | Staff-layout tokens (`--interactive`, Carbon icons); no hardcoded purple badge |
 | New-message notifications | `ConversationMessageCreated` after commit + SignalR → prefs-aware stub dispatcher |
+| Sprint 18 table drop | PreDeployment drops `messaging.messages` / `messaging.message_threads` if present |

@@ -221,5 +221,5 @@ Aligned detail: [roadmap-workflows-payments-queue.md §6](./roadmap-workflows-pa
 | [sprints.md](./sprints.md) | Sprint execution |
 | [beauty-wellness-taxonomy.md](./beauty-wellness-taxonomy.md) | Categories |
 | [subscription-billing.md](./subscription-billing.md) | SaaS billing stub |
-| [specs/sprint-18-messaging.md](./specs/sprint-18-messaging.md) | Messaging shipped scope |
+| [specs/sprint-36-messaging-rewrite.md](./specs/sprint-36-messaging-rewrite.md) | Messaging (replaces Sprint 18) |
 | [specs/sprint-25-staff-accounts-permissions.md](./specs/sprint-25-staff-accounts-permissions.md) | Staff roles |

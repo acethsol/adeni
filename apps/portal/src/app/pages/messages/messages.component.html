@@ -31,7 +31,7 @@
       </section>
     } @else {
       <div class="inbox">
-        <section class="card threads">
+        <section class="card conversations">
           <h3>Inbox</h3>
           @if (conversations().length === 0) {
             <adeni-portal-empty-state
@@ -141,7 +141,7 @@
               [embedded]="true"
               icon="send"
               title="Select a conversation"
-              description="Pick a thread from the inbox to read and reply."
+              description="Pick a conversation from the inbox to read and reply."
             />
           }
         </section>
