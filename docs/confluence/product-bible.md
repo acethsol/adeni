@@ -59,14 +59,26 @@ Abuja and other Nigerian cities are Phase 2. Quebec City is out of scope for v1.
 
 ## Documentation index
 
+### Technical documentation (Oct 2026 — publish from repo)
+
+| Page (repo mirror) | Purpose | Status |
+| --- | --- | --- |
+| [Technical Documentation index](./technical-documentation-index.md) | Entry point: all backend modules + frontend apps | **Current** |
+| [Backend Overview](./backend-overview.md) | .NET modular monolith, middleware, testing | **Current** |
+| [Frontend Overview](./frontend-overview.md) | Angular discover/portal/admin + Flutter | **Current** |
+| [System Architecture v1.3](./system-architecture-v1.3.md) | C4, SQL Server, Angular clients (supersedes v1.2 stack facts) | **Current** |
+| [Confluence publishing tree](./README.md) | Page hierarchy for Atlassian paste/import | **Current** |
+| Backend modules | `docs/confluence/backend/*.md` — one page per module | **Current** |
+| Frontend apps | `docs/confluence/frontend/*.md` — discover, portal, admin, mobile, packages | **Current** |
+
 ### Strategy & architecture (Aug 2026)
 
 | Page | Purpose | Status |
 | --- | --- | --- |
 | [Product strategy & revenue model](https://aceth.atlassian.net/wiki/spaces/SD/pages/41091073) | GTM wedge, revenue model, business types, AI | **Current** |
 | [Modular monolith architecture](https://aceth.atlassian.net/wiki/spaces/SD/pages/42139649) | Module map, boundaries, domain events | **Current** |
-| [System Architecture v1](https://aceth.atlassian.net/wiki/spaces/SD/pages/26509314) | C4 diagrams, deployment, ADRs (v1.2) | Current |
-| [Frontend Architecture v1](https://aceth.atlassian.net/wiki/spaces/SD/pages/26968065) | Next.js + Expo monorepo | Current |
+| [System Architecture v1](https://aceth.atlassian.net/wiki/spaces/SD/pages/26509314) | C4 diagrams, deployment, ADRs (v1.2 — see v1.3 for current stack) | Superseded (stack) |
+| [Frontend Architecture v1](https://aceth.atlassian.net/wiki/spaces/SD/pages/26968065) | Update on publish: Angular monorepo (was Next.js + Expo) | Needs sync |
 | [Observability v1](https://aceth.atlassian.net/wiki/spaces/SD/pages/27230210) | Health checks, SLOs, App Insights | Current |
 
 ### Product & compliance
@@ -112,10 +124,10 @@ Abuja and other Nigerian cities are Phase 2. Quebec City is out of scope for v1.
 
 ## Tech stack (summary)
 
-**Next.js** (public + business + admin) · **Expo** (iOS/Android) · **.NET modular monolith** · **PostgreSQL** · **Redis** · **Auth0** · **Azure Blob** · **App Insights**
+**Angular** (discover SSR + portal + admin) · **Flutter** (business mobile skeleton) · **.NET 10 modular monolith** · **SQL Server** · **Redis** · **Auth0** · **Azure Blob** · **App Insights**
 
-See [System Architecture v1](https://aceth.atlassian.net/wiki/spaces/SD/pages/26509314), [Modular monolith architecture](https://aceth.atlassian.net/wiki/spaces/SD/pages/42139649), [Frontend Architecture v1](https://aceth.atlassian.net/wiki/spaces/SD/pages/26968065), [Observability v1](https://aceth.atlassian.net/wiki/spaces/SD/pages/27230210), and [SOC 2 Compliance Framework v1](https://aceth.atlassian.net/wiki/spaces/SD/pages/26247170) for full detail.
+See [Technical Documentation index](./technical-documentation-index.md), [System Architecture v1.3](./system-architecture-v1.3.md), [Modular monolith architecture](https://aceth.atlassian.net/wiki/spaces/SD/pages/42139649), [Observability v1](https://aceth.atlassian.net/wiki/spaces/SD/pages/27230210), and [SOC 2 Compliance Framework v1](https://aceth.atlassian.net/wiki/spaces/SD/pages/26247170) for full detail.
 
 ---
 
-_Last updated: August 2026 — strategy, modular monolith, sprints 14–20_
+_Last updated: October 2026 — full technical docs, Angular/SQL Server stack_
