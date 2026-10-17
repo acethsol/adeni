@@ -1,8 +1,6 @@
 # Adeni — System Architecture (v1.2)
 
-> **Note:** Stack facts (PostgreSQL, Next.js/Expo) are **out of date**. Use **[System Architecture v1.3](./system-architecture-v1.3.md)** and **[Technical Documentation index](./technical-documentation-index.md)** for the current platform (SQL Server, Angular, Flutter skeleton).
-
-> **Status:** Historical blueprint | **Version:** 1.2 | **Parent:** [Adeni Product Bible](https://aceth.atlassian.net/wiki/spaces/SD/pages/26279937) | **Frontend detail:** [Frontend Architecture v1](https://aceth.atlassian.net/wiki/spaces/SD/pages/26968065) | **Module detail:** [Modular monolith architecture](https://aceth.atlassian.net/wiki/spaces/SD/pages/42139649)
+> **Status:** Engineering blueprint | **Version:** 1.2 | **Parent:** [Adeni Product Bible](https://aceth.atlassian.net/wiki/spaces/SD/pages/26279937) | **Frontend detail:** [Frontend Architecture v1](https://aceth.atlassian.net/wiki/spaces/SD/pages/26968065) | **Module detail:** [Modular monolith architecture](https://aceth.atlassian.net/wiki/spaces/SD/pages/42139649)
 
 > **v1.2 change (August 2026):** Backend formalized as a **modular monolith** (ADR-011). Full module map, boundaries, and extraction criteria: [Modular monolith architecture](https://aceth.atlassian.net/wiki/spaces/SD/pages/42139649).
 

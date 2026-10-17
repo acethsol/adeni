@@ -78,16 +78,12 @@ tests/                   Backend unit/integration tests
 
 Details: [docs/sprints.md](docs/sprints.md) · Strategy: [docs/product-strategy.md](docs/product-strategy.md)
 
-## Technical documentation (Confluence mirror)
-
-Full module and app docs live in **`docs/confluence/`** — start at [technical-documentation-index.md](docs/confluence/technical-documentation-index.md). Use [README.md](docs/confluence/README.md) for the recommended Confluence page tree when publishing.
-
 ## Compliance docs (Confluence)
 
 - [Adeni Product Bible](https://aceth.atlassian.net/wiki/spaces/SD/pages/26279937)
 - [Modular monolith architecture](https://aceth.atlassian.net/wiki/spaces/SD/pages/42139649)
 - [Product strategy & revenue model](https://aceth.atlassian.net/wiki/spaces/SD/pages/41091073)
-- [Frontend Architecture v1](https://aceth.atlassian.net/wiki/spaces/SD/pages/26968065) — sync from `docs/confluence/frontend-overview.md` when publishing
+- [Frontend Architecture v1](https://aceth.atlassian.net/wiki/spaces/SD/pages/26968065)
 - [Observability v1](https://aceth.atlassian.net/wiki/spaces/SD/pages/27230210)
 - [SOC 2 Compliance Framework](https://aceth.atlassian.net/wiki/spaces/SD/pages/26247170)
 
