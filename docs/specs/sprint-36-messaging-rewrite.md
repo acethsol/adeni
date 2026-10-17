@@ -6,21 +6,21 @@
 |-------|-------|
 | **Sprint** | Sprint 36 — Messaging rewrite |
 | **Author** | Cloud Agent |
-| **Status** | Draft (awaiting approval) |
+| **Status** | Approved (ready to implement) |
 | **Created** | 2026-10-17 |
-| **Supersedes** | [sprint-18-messaging.md](./sprint-18-messaging.md) persistence + delivery model (WhatsApp links + entitlement keep) |
+| **Replaces** | [sprint-18-messaging.md](./sprint-18-messaging.md) — **full teardown**, no data migration |
 
 ---
 
 ## 1. Goal (one sentence)
 
-Replace Sprint 18’s poll-only `MessageThread` model with **Conversation / Message / ConversationParticipant**, where **SQL Server is the source of truth** and **SignalR delivers realtime**, without forcing Redis onto the hot path.
+**Remove Sprint 18 messaging entirely** and rebuild with **Conversation / Message / ConversationParticipant**, where **SQL Server is the source of truth** and **SignalR delivers realtime**, without forcing Redis onto the hot path.
 
 ---
 
 ## 2. Context
 
-### Today (Sprint 18 on `dev`)
+### Today (Sprint 18 on `dev`) — **to be deleted**
 
 - Tables: `messaging.message_threads`, `messaging.messages`
 - Unread = counters on the thread (`BusinessUnreadCount` / `CustomerUnreadCount`)
@@ -30,7 +30,9 @@ Replace Sprint 18’s poll-only `MessageThread` model with **Conversation / Mess
 - WhatsApp = `wa.me` deep links (no WABA); FAQ auto-responder posts as business-side text
 - Notification prefs exist; delivery is still a logging stub; **no “new message” notification**
 
-### Why rewrite
+**Cutover policy (locked):** no backfill, no dual-run, no shims. Drop Sprint 18 messaging schema/code/tests/UI contracts and ship the new module clean. Existing in-app threads/messages are discarded. WhatsApp deep-link *product need* stays, but is re-implemented under the new module (not left as Sprint 18 leftovers).
+
+### Why rebuild fresh
 
 | Pain | Fix |
 |------|-----|
@@ -39,6 +41,7 @@ Replace Sprint 18’s poll-only `MessageThread` model with **Conversation / Mess
 | Auth0-sub-only sender is hard to display / authorize for staff | Explicit participant rows linked to `Customer` / `BusinessUser` |
 | No attachment / context model room | First-class context + attachment metadata |
 | No idempotent send | Client message id unique per conversation |
+| Migrating lossy unread counters isn’t worth it | Greenfield tables; accept empty inbox at cutover |
 
 ### Design principle (locked)
 
@@ -136,7 +139,7 @@ Do **not** rely only on Auth0 sub on the message row (may keep as denormalized a
 | Role on conversation | How created |
 |----------------------|-------------|
 | Customer | On conversation create (the customer party) |
-| Business users | Lazy: first portal open/reply upserts participant for that `BusinessUser`; or auto-add all users with `portal.messages` (choose **lazy upsert** for v1) |
+| Business users | **Lazy upsert (locked):** first portal open/reply creates participant for that `BusinessUser` |
 | Bot | Upserted when FAQ/LLM posts |
 
 Unread for a user = messages after that participant’s `LastReadMessageId` (or `LastReadAt`), **not** a counter on the conversation.
@@ -279,10 +282,9 @@ Hub: `/hubs/messaging` (Auth0 JWT; tenant claim / header for business).
 |-----------------|-----------------|
 | `JoinConversation(conversationId)` | `MessageCreated(dto)` |
 | `LeaveConversation(conversationId)` | `ReadUpdated(participantId, lastReadMessageId)` |
-| `SendMessage(conversationId, body, clientMessageId)` *(optional thin wrapper over REST)* | `ConversationUpdated(summary)` |
-| `MarkRead(conversationId, messageId)` | |
+| `MarkRead(conversationId, messageId)` *(optional; prefer REST)* | `ConversationUpdated(summary)` |
 
-**v1 recommendation:** keep **REST as the write API** (easier idempotency, attachments, tests); SignalR primarily for **push**. Optional hub `SendMessage` may call the same application service.
+**Locked:** **REST is the only write path** for send (idempotency, attachments, tests). SignalR is **push only** — no hub `SendMessage` in v1.
 
 Groups: `conversation:{id}`, plus user groups `customer:{id}` / `business-user:{id}` for inbox badges.
 
@@ -290,17 +292,17 @@ Groups: `conversation:{id}`, plus user groups `customer:{id}` / `business-user:{
 
 ---
 
-## 7. REST API (v2 under messaging rewrite)
+## 7. REST API (new module — no Sprint 18 shims)
 
-Prefer new routes; keep Sprint 18 routes as deprecated shims or migrate in place with breaking change behind feature flag.
+**Locked:** new `/conversations` routes only. Delete all `/threads` (and related Sprint 18 message) endpoints; do not leave deprecated aliases.
 
 | Audience | Routes |
 |----------|--------|
 | Customer | `POST/GET /api/v1/messages/conversations`, `GET .../{id}`, `POST .../{id}/messages`, `POST .../{id}/read`, `GET .../{id}/messages?afterId=&take=` |
 | Business | `GET /api/v1/tenant/messages/conversations`, `.../{id}`, send, read, unread-count, templates, settings |
-| Public | Keep WhatsApp link endpoints from Sprint 18 |
+| Public / booking | Re-implement WhatsApp link endpoints under the new module (`GET /api/v1/businesses/{slug}/whatsapp-link`, `GET /api/v1/bookings/{id}/whatsapp-link`) |
 
-Unread-count = aggregate over participant cursors for that BusinessUser (or tenant-wide for badge: messages where any business participant is behind).
+Unread-count = aggregate over participant cursors for that BusinessUser (badge: messages where that user’s participant is behind).
 
 Entitlement: unchanged — Free cannot use business inbox/reply.
 
@@ -310,53 +312,86 @@ Entitlement: unchanged — Free cannot use business inbox/reply.
 
 | Client | Work |
 |--------|------|
-| Portal Angular `/messages` | Rewrite inbox to conversations + SignalR; keep WhatsApp tab |
-| Discover / Flutter | Customer conversation UI can follow; WhatsApp CTA remains |
-| Shared + api-client | New schemas; deprecate thread schemas |
+| Portal Angular `/messages` | **Replace** Sprint 18 inbox with conversations + SignalR; WhatsApp tab stays as product surface |
+| Discover / Flutter | Remove any Sprint 18 thread client usage; WhatsApp CTA + later conversation UI |
+| Shared + api-client | **Delete** thread schemas/methods; add conversation schemas/methods |
 
 ---
 
-## 9. Migration from Sprint 18
+## 9. Sprint 18 teardown (no migration)
 
-1. Add new tables alongside `message_threads` / `messages`
-2. Backfill:
-   - Thread → Conversation (`ContextType=Booking|None`, `ContextId=BookingId`)
-   - Create Customer participant + synthetic “legacy business” Bot or first Owner BusinessUser participant
-   - Messages → map `SenderAuth0Sub` → Customer or BusinessUser participant
-   - Approximate `LastReadMessageId` from unread counts (best-effort) or reset cursors to latest
-3. Dual-read feature flag → cut over writes → remove old tables in a follow-up sprint
+**Locked:** greenfield rebuild. Do **not** backfill threads/messages. Inboxes start empty after deploy.
+
+### Remove completely
+
+| Layer | Delete / replace |
+|-------|------------------|
+| SQL | Drop `messaging.message_threads`, `messaging.messages` (and related indexes/FKs) |
+| Domain | `MessageThread`, Sprint 18 `Message`, enums tied only to that model |
+| Application | `IMessageThreadService` and Sprint 18 DTOs (`ThreadSummaryResponse`, etc.) |
+| Infrastructure | `MessageThreadService`, EF configs for old tables |
+| API | Controllers/actions for `/messages/threads`, tenant thread routes; replace WhatsApp link handlers with new-module versions |
+| Shared / api-client | `messageThread*` schemas and client methods |
+| Portal | Polling thread inbox UI |
+| Tests | `MessagingIntegrationTests` (rewrite against new module) |
+| Docs | Mark Sprint 18 **superseded / removed by Sprint 36** |
+
+### Keep / re-home (not Sprint 18 leftovers)
+
+- Messaging **entitlement** (`SubscriptionEntitlements.Messaging`) — still gates business inbox
+- `portal.messages` permission
+- Notification **preferences** table/API (channel toggles) — wire “new message” events from the new module later
+- FAQ auto-responder **behavior** — re-implement posting as a `Bot` participant
+- WhatsApp **product** (`wa.me` links, templates tab) — rebuild against new services
 
 ---
 
-## 10. In scope
+## 10. Decisions locked
 
-- [ ] **36a** Schema: conversations, participants, messages, attachments (+ indexes, soft-delete)
-- [ ] **36b** Application services: create/find conversation, idempotent send, keyset history, mark-read via participant cursor
-- [ ] **36c** Identity resolution: Auth0 → Customer / BusinessUser → Participant (document + enforce)
-- [ ] **36d** SignalR hub + portal subscription (MessageCreated, ReadUpdated, unread badge)
-- [ ] **36e** Portal inbox rewrite (Angular)
-- [ ] **36f** Domain event after commit for notifications (prefs-aware; stub dispatcher OK)
-- [ ] **36g** Attachment upload metadata + blob (reuse media upload patterns); images only in v1
-- [ ] **36h** Migration / backfill from Sprint 18 threads
-- [ ] **36i** Tests: idempotency, tenant isolation, participant authz, keyset paging, hub fan-out (integration)
-- [ ] **36j** Docs: this spec → Implemented; update architecture + Sprint 18 “superseded by 36”
+| Decision | Choice |
+|----------|--------|
+| Business participants | **Lazy upsert** on first open/reply |
+| API shape | **New `/conversations` routes only**; delete `/threads` |
+| Old data | **No migration** — drop Sprint 18 tables/data |
+| Unread at cutover | N/A (empty inbox); new cursors start clean |
+| Writes | **REST-only**; SignalR push-only |
 
 ---
 
-## 11. Out of scope
+## 11. In scope
 
-- WhatsApp Business API / WABA webhooks (keep `wa.me` adapter)
+- [ ] **36a** Teardown: remove Sprint 18 messaging schema, services, APIs, client contracts, portal thread inbox, obsolete tests
+- [ ] **36b** Schema: conversations, participants, messages, attachments (+ indexes, soft-delete)
+- [ ] **36c** Application services: create/find conversation, idempotent send, keyset history, mark-read via participant cursor
+- [ ] **36d** Identity resolution: Auth0 → Customer / BusinessUser → Participant (lazy business upsert)
+- [ ] **36e** SignalR hub + portal subscription (MessageCreated, ReadUpdated, unread badge) — push only
+- [ ] **36f** Portal inbox rewrite (Angular) on `/conversations`
+- [ ] **36g** Domain event after commit for notifications (prefs-aware; stub dispatcher OK)
+- [ ] **36h** Attachment upload metadata + blob (reuse media upload patterns); images only in v1
+- [ ] **36i** Re-home WhatsApp links + templates + FAQ-as-Bot under the new module
+- [ ] **36j** Tests: idempotency, tenant isolation, participant authz, keyset paging, hub fan-out
+- [ ] **36k** Docs: this spec → Implemented; Sprint 18 marked removed
+
+---
+
+## 12. Out of scope
+
+- Migrating or preserving Sprint 18 thread/message rows
+- Deprecated `/threads` compatibility shims
+- WhatsApp Business API / WABA webhooks (`wa.me` adapter only)
 - Redis backplane / presence (until multi-instance)
 - Azure Service Bus workers (until notification adapters are real)
 - Flutter customer inbox (can track as 36+ / mobile sprint)
 - Typing indicators / reactions (optional thin SignalR later)
+- Hub `SendMessage` (v1 REST-only writes)
 - LLM replies as product feature (Sprint 20); when added, post as `Bot` participant
 - Changing subscription entitlement rules
 
 ---
 
-## 12. Acceptance criteria
+## 13. Acceptance criteria
 
+- [ ] No Sprint 18 messaging types, tables, `/threads` routes, or thread client APIs remain
 - [ ] Send persists to SQL before any client receives SignalR `MessageCreated`
 - [ ] Duplicate `ClientMessageId` does not create a second row
 - [ ] Two BusinessUsers in the same conversation can have different unread states
@@ -365,29 +400,22 @@ Entitlement: unchanged — Free cannot use business inbox/reply.
 - [ ] Free tier still blocked on business messaging APIs
 - [ ] History uses keyset pagination (no deep `OFFSET`)
 - [ ] Attachments: blob bytes + SQL metadata; message remains readable if blob missing
-- [ ] Sprint 18 data migrated or explicitly dual-run with flag
+- [ ] WhatsApp link + template surfaces still work after re-home
+- [ ] FAQ replies appear as Bot participant messages
 
 ---
 
-## 13. Sequencing
+## 14. Sequencing
 
 | Step | Depends on |
 |------|------------|
-| Spec approval | — |
-| 36a–c + tests | Approval |
-| 36d–e portal + SignalR | 36b |
-| 36f notifications hook | 36b |
-| 36g attachments | Media upload patterns |
-| 36h migration | 36a–b stable |
+| Spec approval | — **done** |
+| 36a teardown (same change-set as 36b once new schema lands is fine) | Approval |
+| 36b–d + tests | Empty messaging surface after teardown |
+| 36e–f portal + SignalR | 36c |
+| 36g notifications hook | 36c |
+| 36h attachments | Media upload patterns |
+| 36i WhatsApp + FAQ re-home | 36c |
 | Redis / Service Bus | Multi-instance or real push/email adapters |
 
 Fits after monetization track (33/34) or parallel if staffing allows — messaging rewrite does not block Connect/split, but competes for API/portal attention.
-
----
-
-## 14. Open questions (for approval)
-
-1. **Lazy vs eager business participants** — v1 default: lazy upsert on first read/reply. OK?
-2. **Breaking API** — new `/conversations` routes vs in-place replace of `/threads`?
-3. **Migration cursor reset** — acceptable to zero unread on cutover if backfill is lossy?
-4. **Hub send** — REST-only writes in v1, or also hub `SendMessage`?
