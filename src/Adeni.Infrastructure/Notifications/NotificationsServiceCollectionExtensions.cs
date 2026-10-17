@@ -3,6 +3,7 @@ namespace Adeni.Infrastructure.Notifications;
 using Adeni.Application.Events;
 using Adeni.Application.Notifications;
 using Adeni.Domain.Booking.Events;
+using Adeni.Domain.Messaging.Events;
 using Microsoft.Extensions.DependencyInjection;
 
 public static class NotificationsServiceCollectionExtensions
@@ -16,6 +17,7 @@ public static class NotificationsServiceCollectionExtensions
         services.AddScoped<IDomainEventHandler<BookingRejected>, BookingNotificationHandler>();
         services.AddScoped<IDomainEventHandler<BookingCancelled>, BookingNotificationHandler>();
         services.AddScoped<IDomainEventHandler<SlotOpened>, WaitlistNotificationHandler>();
+        services.AddScoped<IDomainEventHandler<ConversationMessageCreated>, MessagingNotificationHandler>();
         return services;
     }
 }

@@ -527,6 +527,7 @@ Business-paid GMV fee via **Stripe Connect** (CA/US) and **Paystack split** (NG)
 | **36h** Integration tests | ✅ Done |
 | **36i** Portal SignalR client subscribe | ✅ Done |
 | **36j** Attachment upload (media purpose + portal attach image) | ✅ Done |
+| **36g** Domain event → prefs-aware notification stub after send | ✅ Done |
 
 **Locked:** lazy participants · shared inbox · team unread badge · no assignment · `/conversations` only · drop old data · REST-only writes.
 

@@ -2,6 +2,7 @@ namespace Adeni.Infrastructure.Messaging;
 
 using Adeni.Application.Admin;
 using Adeni.Application.Common;
+using Adeni.Application.Events;
 using Adeni.Application.Messaging;
 using Adeni.Application.Security;
 using Adeni.Application.Storage;
@@ -9,6 +10,7 @@ using Adeni.Application.Subscriptions;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
 using Adeni.Domain.Messaging;
+using Adeni.Domain.Messaging.Events;
 using Adeni.Domain.Subscriptions;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
@@ -21,6 +23,7 @@ public sealed class ConversationService(
     IFaqAutoResponder faqAutoResponder,
     IMessagingRealtimePublisher realtime,
     IFileStorage fileStorage,
+    IDomainEventDispatcher domainEventDispatcher,
     IConfiguration configuration) : IConversationService
 {
     private const int MaxBodyLength = 4000;
@@ -301,6 +304,20 @@ public sealed class ConversationService(
 
         var summary = await MapSummaryAsync(conversation, forCustomer: false, cancellationToken);
         await realtime.PublishConversationUpdatedAsync(conversation.TenantId, summary, cancellationToken);
+
+        // After commit + SignalR (spec write path §5): prefs-aware notification stub.
+        await domainEventDispatcher.PublishAsync(
+            new ConversationMessageCreated(
+                message.Id,
+                conversation.Id,
+                conversation.TenantId,
+                conversation.CustomerId,
+                sender.Id,
+                sender.ParticipantType,
+                Truncate(message.Body),
+                attachments is { Count: > 0 },
+                message.CreatedAt),
+            cancellationToken);
 
         if (role == MessagingActorRole.Customer && body.Length > 0)
         {
@@ -846,6 +863,19 @@ public sealed class ConversationService(
             conversation.Id,
             conversation.TenantId,
             mapped,
+            cancellationToken);
+
+        await domainEventDispatcher.PublishAsync(
+            new ConversationMessageCreated(
+                message.Id,
+                conversation.Id,
+                conversation.TenantId,
+                conversation.CustomerId,
+                bot.Id,
+                ConversationParticipantType.Bot,
+                Truncate(reply),
+                HasAttachments: false,
+                message.CreatedAt),
             cancellationToken);
     }
 

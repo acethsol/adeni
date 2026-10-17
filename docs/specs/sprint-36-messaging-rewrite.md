@@ -381,7 +381,7 @@ Entitlement: unchanged — Free cannot use business inbox/reply.
 - [x] **36d** Identity resolution: Auth0 → Customer / BusinessUser → Participant (lazy business upsert)
 - [x] **36e** SignalR hub + portal subscription (MessageCreated, ConversationUpdated) — push only
 - [x] **36f** Portal inbox rewrite (Angular) on `/conversations`
-- [ ] **36g** Domain event after commit for notifications (prefs-aware; stub dispatcher OK) — deferred; not blocking wrap-up
+- [x] **36g** Domain event after commit for notifications (prefs-aware; stub dispatcher OK)
 - [x] **36h** Attachment upload metadata + blob (reuse media upload patterns); images only in v1
 - [x] **36i** Re-home WhatsApp links + templates + FAQ-as-Bot under the new module
 - [x] **36j** Tests: idempotency, tenant isolation, participant authz, keyset paging
@@ -453,3 +453,4 @@ Aligned with AGENTS.md non-negotiables and portal design system:
 | PII | WhatsApp phone masked via `PiiMasker`; no message bodies in logs |
 | Writes | REST-only; SignalR push-only |
 | Portal UI | Staff-layout tokens (`--interactive`, Carbon icons); no hardcoded purple badge |
+| New-message notifications | `ConversationMessageCreated` after commit + SignalR → prefs-aware stub dispatcher |
