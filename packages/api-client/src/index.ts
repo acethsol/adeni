@@ -1223,6 +1223,23 @@ export class AdeniApiClient {
     return mediaUploadUrlResponseSchema.parse(await response.json());
   }
 
+  async createMessageAttachmentUploadUrl(
+    contentType: string,
+    contentLength: number,
+  ): Promise<MediaUploadUrlResponse> {
+    const body = mediaUploadUrlRequestSchema.parse({
+      purpose: "message_attachment",
+      contentType,
+      contentLength,
+    });
+    const response = await this.request("/api/v1/tenant/media/upload-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return mediaUploadUrlResponseSchema.parse(await response.json());
+  }
+
   async updateTenantStaffAvatar(
     staffMemberId: string,
     request: UpdateStaffAvatarRequest,

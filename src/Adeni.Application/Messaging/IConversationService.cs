@@ -11,9 +11,16 @@ public sealed record CreateConversationRequest(
     ConversationContextType ContextType = ConversationContextType.None,
     Guid? ContextId = null);
 
+public sealed record SendMessageAttachmentRequest(
+    string StorageKey,
+    string ContentType,
+    string FileName,
+    long FileSize);
+
 public sealed record SendConversationMessageRequest(
-    string Body,
-    string? ClientMessageId = null);
+    string? Body = null,
+    string? ClientMessageId = null,
+    IReadOnlyList<SendMessageAttachmentRequest>? Attachments = null);
 
 public sealed record ConversationSummaryResponse(
     Guid Id,
@@ -27,6 +34,13 @@ public sealed record ConversationSummaryResponse(
     DateTimeOffset LastMessageAt,
     bool NeedsAttention);
 
+public sealed record MessageAttachmentResponse(
+    Guid Id,
+    string FileName,
+    string ContentType,
+    long FileSize,
+    string? Url);
+
 public sealed record ConversationMessageResponse(
     Guid Id,
     Guid ConversationId,
@@ -35,7 +49,8 @@ public sealed record ConversationMessageResponse(
     string? SenderDisplayName,
     string? Body,
     string? ClientMessageId,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    IReadOnlyList<MessageAttachmentResponse> Attachments);
 
 public sealed record ConversationDetailResponse(
     Guid Id,

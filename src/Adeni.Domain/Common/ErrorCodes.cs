@@ -180,7 +180,12 @@ public static class ErrorCodes
         new(ConversationClosed, "This conversation is closed.");
 
     public static Error MessageBodyInvalidError() =>
-        new(MessageBodyInvalid, "Message must be between 1 and 4000 characters.");
+        new(MessageBodyInvalid, "Message must be between 1 and 4000 characters, or include an attachment.");
+
+    public const string MessageAttachmentInvalid = "messaging.message_attachment_invalid";
+
+    public static Error MessageAttachmentInvalidError(string detail) =>
+        new(MessageAttachmentInvalid, detail);
 
     public const string PublicPageInvalidTemplate = "tenancy.public_page.invalid_template";
     public const string PublicPageInvalidAccent = "tenancy.public_page.invalid_accent";

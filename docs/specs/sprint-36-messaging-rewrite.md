@@ -6,7 +6,7 @@
 |-------|-------|
 | **Sprint** | Sprint 36 — Messaging rewrite |
 | **Author** | Cloud Agent |
-| **Status** | Implemented (core) — SignalR client + attachment UI follow-ups |
+| **Status** | Implemented |
 | **Created** | 2026-10-17 |
 | **Replaces** | [sprint-18-messaging.md](./sprint-18-messaging.md) — **full teardown**, no data migration |
 
@@ -375,17 +375,17 @@ Entitlement: unchanged — Free cannot use business inbox/reply.
 
 ## 11. In scope
 
-- [ ] **36a** Teardown: remove Sprint 18 messaging schema, services, APIs, client contracts, portal thread inbox, obsolete tests
-- [ ] **36b** Schema: conversations, participants, messages, attachments (+ indexes, soft-delete)
-- [ ] **36c** Application services: create/find conversation, idempotent send, keyset history, mark-read via participant cursor
-- [ ] **36d** Identity resolution: Auth0 → Customer / BusinessUser → Participant (lazy business upsert)
-- [ ] **36e** SignalR hub + portal subscription (MessageCreated, ReadUpdated, unread badge) — push only
-- [ ] **36f** Portal inbox rewrite (Angular) on `/conversations`
+- [x] **36a** Teardown: remove Sprint 18 messaging schema, services, APIs, client contracts, portal thread inbox, obsolete tests
+- [x] **36b** Schema: conversations, participants, messages, attachments (+ indexes, soft-delete)
+- [x] **36c** Application services: create/find conversation, idempotent send, keyset history, mark-read via participant cursor
+- [x] **36d** Identity resolution: Auth0 → Customer / BusinessUser → Participant (lazy business upsert)
+- [x] **36e** SignalR hub + portal subscription (MessageCreated, ConversationUpdated) — push only
+- [x] **36f** Portal inbox rewrite (Angular) on `/conversations`
 - [ ] **36g** Domain event after commit for notifications (prefs-aware; stub dispatcher OK)
-- [ ] **36h** Attachment upload metadata + blob (reuse media upload patterns); images only in v1
-- [ ] **36i** Re-home WhatsApp links + templates + FAQ-as-Bot under the new module
-- [ ] **36j** Tests: idempotency, tenant isolation, participant authz, keyset paging, hub fan-out
-- [ ] **36k** Docs: this spec → Implemented; Sprint 18 marked removed
+- [x] **36h** Attachment upload metadata + blob (reuse media upload patterns); images only in v1
+- [x] **36i** Re-home WhatsApp links + templates + FAQ-as-Bot under the new module
+- [x] **36j** Tests: idempotency, tenant isolation, participant authz, keyset paging
+- [x] **36k** Docs: this spec → Implemented; Sprint 18 marked removed
 
 ---
 
@@ -414,10 +414,10 @@ Entitlement: unchanged — Free cannot use business inbox/reply.
 - [x] Owner/admin with `portal.messages` can list and open a chat only a receptionist has replied to
 - [x] Team unread badge counts chats with no business read yet (and after latest business read)
 - [x] Message sender is always a Participant; bots use `BotKey`, never a fake Auth0 sub
-- [ ] Portal inbox updates live without refresh when another party sends *(hub ready; Angular SignalR client follow-up)*
+- [x] Portal inbox updates live without refresh when another party sends
 - [x] Free tier still blocked on business messaging APIs
 - [x] History uses keyset pagination (no deep `OFFSET`)
-- [ ] Attachments: blob bytes + SQL metadata; message remains readable if blob missing *(schema ready; upload UI follow-up)*
+- [x] Attachments: blob bytes + SQL metadata; message remains readable if blob missing
 - [x] WhatsApp link + template surfaces still work after re-home
 - [x] FAQ replies appear as Bot participant messages
 

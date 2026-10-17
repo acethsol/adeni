@@ -42,6 +42,23 @@ public static class AuthServiceCollectionExtensions
                     NameClaimType = ClaimTypes.NameIdentifier,
                     RoleClaimType = AdeniClaimTypes.Roles
                 };
+                // SignalR WebSockets cannot send Authorization headers from the browser;
+                // the JS client puts the JWT in ?access_token= for /hubs/* negotiate + WS.
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken)
+                            && path.StartsWithSegments("/hubs"))
+                        {
+                            context.Token = accessToken;
+                        }
+
+                        return Task.CompletedTask;
+                    }
+                };
             });
         }
 

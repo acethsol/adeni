@@ -4,6 +4,7 @@ using Adeni.Application.Admin;
 using Adeni.Application.Common;
 using Adeni.Application.Messaging;
 using Adeni.Application.Security;
+using Adeni.Application.Storage;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
@@ -19,10 +20,20 @@ public sealed class ConversationService(
     IEntitlementsService entitlementsService,
     IFaqAutoResponder faqAutoResponder,
     IMessagingRealtimePublisher realtime,
+    IFileStorage fileStorage,
     IConfiguration configuration) : IConversationService
 {
     private const int MaxBodyLength = 4000;
     private const int PreviewLength = 120;
+    private const int MaxAttachmentsPerMessage = 5;
+    private const long MaxAttachmentBytes = 5 * 1024 * 1024;
+
+    private static readonly HashSet<string> AllowedAttachmentContentTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+    };
 
     public async Task<Result<ConversationSummaryResponse>> CreateOrGetAsync(
         string customerAuth0Sub,
@@ -123,9 +134,17 @@ public sealed class ConversationService(
         }
 
         var body = request.Body?.Trim() ?? string.Empty;
-        if (body.Length is 0 or > MaxBodyLength)
+        var attachmentRequests = request.Attachments ?? [];
+        if (body.Length > MaxBodyLength
+            || (body.Length == 0 && attachmentRequests.Count == 0))
         {
             return Result.Failure<ConversationMessageResponse>(ErrorCodes.MessageBodyInvalidError());
+        }
+
+        if (attachmentRequests.Count > MaxAttachmentsPerMessage)
+        {
+            return Result.Failure<ConversationMessageResponse>(
+                ErrorCodes.MessageAttachmentInvalidError($"At most {MaxAttachmentsPerMessage} attachments are allowed."));
         }
 
         var conversation = await dbContext.Conversations
@@ -208,14 +227,31 @@ public sealed class ConversationService(
             }
         }
 
+        List<MessageAttachment>? attachments = null;
+        if (attachmentRequests.Count > 0)
+        {
+            var prepared = await PrepareAttachmentsAsync(
+                conversation.TenantId,
+                attachmentRequests,
+                cancellationToken);
+            if (prepared.IsFailure)
+            {
+                return Result.Failure<ConversationMessageResponse>(prepared.Error);
+            }
+
+            attachments = prepared.Value;
+        }
+
         var message = new ConversationMessage
         {
             Id = Guid.NewGuid(),
             ConversationId = conversation.Id,
             TenantId = conversation.TenantId,
             SenderParticipantId = sender.Id,
-            Type = ConversationMessageType.Text,
-            Body = body,
+            Type = body.Length == 0
+                ? ConversationMessageType.AttachmentOnly
+                : ConversationMessageType.Text,
+            Body = body.Length == 0 ? null : body,
             ClientMessageId = clientMessageId,
             CreatedAt = DateTimeOffset.UtcNow,
             ModerationStatus = MessageModerationStatus.None,
@@ -226,6 +262,17 @@ public sealed class ConversationService(
         sender.LastReadAt = message.CreatedAt;
 
         dbContext.ConversationMessages.Add(message);
+        if (attachments is { Count: > 0 })
+        {
+            foreach (var attachment in attachments)
+            {
+                attachment.MessageId = message.Id;
+                dbContext.MessageAttachments.Add(attachment);
+            }
+
+            message.Attachments = attachments;
+        }
+
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);
@@ -255,7 +302,7 @@ public sealed class ConversationService(
         var summary = await MapSummaryAsync(conversation, forCustomer: false, cancellationToken);
         await realtime.PublishConversationUpdatedAsync(conversation.TenantId, summary, cancellationToken);
 
-        if (role == MessagingActorRole.Customer)
+        if (role == MessagingActorRole.Customer && body.Length > 0)
         {
             await TrySendFaqAutoReplyAsync(conversation, body, cancellationToken);
         }
@@ -849,6 +896,17 @@ public sealed class ConversationService(
         if (lastMessage is not null)
         {
             preview = Truncate(lastMessage.Body);
+            if (string.IsNullOrWhiteSpace(preview))
+            {
+                var hasAttachment = await dbContext.MessageAttachments
+                    .AsNoTracking()
+                    .AnyAsync(x => x.MessageId == lastMessage.Id, cancellationToken);
+                if (hasAttachment)
+                {
+                    preview = "Attachment";
+                }
+            }
+
             var sender = await dbContext.ConversationParticipants
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == lastMessage.SenderParticipantId, cancellationToken);
@@ -876,6 +934,65 @@ public sealed class ConversationService(
             lastBusinessReplier,
             conversation.LastMessageAt,
             needsAttention);
+    }
+
+    private async Task<Result<List<MessageAttachment>>> PrepareAttachmentsAsync(
+        Guid tenantId,
+        IReadOnlyList<SendMessageAttachmentRequest> requests,
+        CancellationToken cancellationToken)
+    {
+        var expectedPrefix = $"tenants/{tenantId:N}/messages/";
+        var attachments = new List<MessageAttachment>(requests.Count);
+        foreach (var request in requests)
+        {
+            var storageKey = request.StorageKey?.Trim() ?? string.Empty;
+            var contentType = request.ContentType?.Trim() ?? string.Empty;
+            var fileName = request.FileName?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(storageKey)
+                || !storageKey.StartsWith(expectedPrefix, StringComparison.Ordinal)
+                || storageKey.Length > 512)
+            {
+                return Result.Failure<List<MessageAttachment>>(
+                    ErrorCodes.MessageAttachmentInvalidError("Attachment key is not valid for this business."));
+            }
+
+            if (!AllowedAttachmentContentTypes.Contains(contentType))
+            {
+                return Result.Failure<List<MessageAttachment>>(
+                    ErrorCodes.MessageAttachmentInvalidError("Attachment type is not supported."));
+            }
+
+            if (string.IsNullOrWhiteSpace(fileName) || fileName.Length > 256)
+            {
+                return Result.Failure<List<MessageAttachment>>(
+                    ErrorCodes.MessageAttachmentInvalidError("Attachment file name is invalid."));
+            }
+
+            if (request.FileSize <= 0 || request.FileSize > MaxAttachmentBytes)
+            {
+                return Result.Failure<List<MessageAttachment>>(
+                    ErrorCodes.MessageAttachmentInvalidError("Attachment must be between 1 byte and 5 MB."));
+            }
+
+            if (!await fileStorage.ExistsAsync(storageKey, cancellationToken))
+            {
+                return Result.Failure<List<MessageAttachment>>(
+                    ErrorCodes.MessageAttachmentInvalidError(
+                        "Attachment upload was not found. Upload the file before sending."));
+            }
+
+            attachments.Add(new MessageAttachment
+            {
+                Id = Guid.NewGuid(),
+                BlobKey = storageKey,
+                ContentType = contentType,
+                FileName = fileName,
+                FileSize = request.FileSize,
+                CreatedAt = DateTimeOffset.UtcNow,
+            });
+        }
+
+        return Result.Success(attachments);
     }
 
     private async Task<ConversationMessageResponse> MapMessageAsync(
@@ -906,6 +1023,38 @@ public sealed class ConversationService(
             _ => null,
         };
 
+        var attachmentEntities = message.Attachments.Count > 0
+            ? message.Attachments.ToList()
+            : await dbContext.MessageAttachments
+                .AsNoTracking()
+                .Where(x => x.MessageId == message.Id)
+                .OrderBy(x => x.CreatedAt)
+                .ToListAsync(cancellationToken);
+
+        var attachments = new List<MessageAttachmentResponse>(attachmentEntities.Count);
+        foreach (var attachment in attachmentEntities)
+        {
+            string? url = null;
+            try
+            {
+                if (await fileStorage.ExistsAsync(attachment.BlobKey, cancellationToken))
+                {
+                    url = await fileStorage.GetDownloadUrlAsync(attachment.BlobKey, cancellationToken);
+                }
+            }
+            catch
+            {
+                url = null;
+            }
+
+            attachments.Add(new MessageAttachmentResponse(
+                attachment.Id,
+                attachment.FileName,
+                attachment.ContentType,
+                attachment.FileSize,
+                url));
+        }
+
         return new ConversationMessageResponse(
             message.Id,
             message.ConversationId,
@@ -914,7 +1063,8 @@ public sealed class ConversationService(
             displayName,
             message.Body,
             message.ClientMessageId,
-            message.CreatedAt);
+            message.CreatedAt,
+            attachments);
     }
 
     private async Task<ConversationParticipant> UpsertCustomerParticipantAsync(

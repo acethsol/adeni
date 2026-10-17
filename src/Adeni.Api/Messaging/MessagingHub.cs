@@ -1,15 +1,17 @@
 namespace Adeni.Api.Messaging;
 
-using System.Security.Claims;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
 using Adeni.Infrastructure.Auth;
-using Microsoft.AspNetCore.Authorization;
+using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 /// <summary>Push-only messaging hub. Writes go through REST.</summary>
-public sealed class MessagingHub(IOptions<Auth0Options> auth0Options) : Hub
+public sealed class MessagingHub(
+    IOptions<Auth0Options> auth0Options,
+    AdeniDbContext dbContext) : Hub
 {
     public static string ConversationGroup(Guid conversationId) => $"conversation:{conversationId:D}";
 
@@ -17,9 +19,29 @@ public sealed class MessagingHub(IOptions<Auth0Options> auth0Options) : Hub
 
     public async Task JoinConversation(Guid conversationId)
     {
-        if (ResolveAuth0Sub() is null)
+        var auth0Sub = ResolveAuth0Sub();
+        if (auth0Sub is null)
         {
             throw new HubException("Unauthorized");
+        }
+
+        var conversation = await dbContext.Conversations
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == conversationId);
+        if (conversation is null)
+        {
+            throw new HubException("Conversation not found");
+        }
+
+        var isCustomer = await dbContext.Customers
+            .AsNoTracking()
+            .AnyAsync(x => x.Auth0Sub == auth0Sub && x.Id == conversation.CustomerId);
+        var isBusiness = await dbContext.BusinessUsers
+            .AsNoTracking()
+            .AnyAsync(x => x.Auth0Sub == auth0Sub && x.TenantId == conversation.TenantId);
+        if (!isCustomer && !isBusiness)
+        {
+            throw new HubException("Forbidden");
         }
 
         await Groups.AddToGroupAsync(Context.ConnectionId, ConversationGroup(conversationId));
@@ -30,9 +52,18 @@ public sealed class MessagingHub(IOptions<Auth0Options> auth0Options) : Hub
 
     public async Task JoinTenantInbox(Guid tenantId)
     {
-        if (ResolveAuth0Sub() is null)
+        var auth0Sub = ResolveAuth0Sub();
+        if (auth0Sub is null)
         {
             throw new HubException("Unauthorized");
+        }
+
+        var isBusiness = await dbContext.BusinessUsers
+            .AsNoTracking()
+            .AnyAsync(x => x.Auth0Sub == auth0Sub && x.TenantId == tenantId);
+        if (!isBusiness)
+        {
+            throw new HubException("Forbidden");
         }
 
         await Groups.AddToGroupAsync(Context.ConnectionId, TenantGroup(tenantId));
@@ -52,6 +83,14 @@ public sealed class MessagingHub(IOptions<Auth0Options> auth0Options) : Hub
             && !string.IsNullOrWhiteSpace(businessSub))
         {
             return businessSub.ToString();
+        }
+
+        if (http is not null
+            && !auth0Options.Value.Enabled
+            && http.Request.Query.TryGetValue(DevBusinessAuthMiddleware.DevAuth0SubQuery, out var querySub)
+            && !string.IsNullOrWhiteSpace(querySub))
+        {
+            return querySub.ToString();
         }
 
         if (http is not null

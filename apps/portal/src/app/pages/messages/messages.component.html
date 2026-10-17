@@ -90,16 +90,48 @@
             <h3>{{ conversation.customerDisplayName }}</h3>
             <div class="transcript">
               @for (message of conversation.messages; track message.id) {
-                <p [class.mine]="message.senderType === 'business' || message.senderType === 'bot'">
-                  {{ message.body }}
-                </p>
+                <div
+                  class="bubble"
+                  [class.mine]="message.senderType === 'business' || message.senderType === 'bot'"
+                >
+                  @if (message.body) {
+                    <p>{{ message.body }}</p>
+                  }
+                  @for (attachment of message.attachments ?? []; track attachment.id) {
+                    @if (attachment.url) {
+                      <a [href]="attachment.url" target="_blank" rel="noopener" class="attachment">
+                        <img [src]="attachment.url" [alt]="attachment.fileName" />
+                      </a>
+                    } @else {
+                      <span class="attachment-missing">{{ attachment.fileName }} (unavailable)</span>
+                    }
+                  }
+                </div>
               }
             </div>
             <form (submit)="$event.preventDefault(); send()">
               <textarea rows="3" [(ngModel)]="draft" name="draft" placeholder="Write a reply"></textarea>
-              <button type="submit" class="btn btn-primary" [disabled]="sending() || !draft.trim()">
-                {{ sending() ? "Sending…" : "Send" }}
-              </button>
+              @if (pendingAttachmentPreview(); as preview) {
+                <div class="pending-attachment">
+                  <img [src]="preview" alt="Pending attachment" />
+                  <button type="button" class="btn" (click)="clearPendingAttachment()">Remove</button>
+                </div>
+              }
+              <div class="composer-actions">
+                <label class="btn">
+                  {{ attaching() ? "Uploading…" : "Attach image" }}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    hidden
+                    [disabled]="attaching() || sending()"
+                    (change)="onAttachmentSelected($event)"
+                  />
+                </label>
+                <button type="submit" class="btn btn-primary" [disabled]="!canSend()">
+                  {{ sending() ? "Sending…" : "Send" }}
+                </button>
+              </div>
             </form>
           } @else {
             <adeni-portal-empty-state

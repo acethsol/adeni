@@ -1701,10 +1701,26 @@ export const createConversationRequestSchema = z.object({
 
 export type CreateConversationRequest = z.infer<typeof createConversationRequestSchema>;
 
-export const sendMessageRequestSchema = z.object({
-  body: z.string().min(1).max(4000),
-  clientMessageId: z.string().min(1).max(64).optional(),
+export const sendMessageAttachmentSchema = z.object({
+  storageKey: z.string().min(1).max(512),
+  contentType: z.string().min(1).max(128),
+  fileName: z.string().min(1).max(256),
+  fileSize: z.number().int().positive(),
 });
+
+export type SendMessageAttachment = z.infer<typeof sendMessageAttachmentSchema>;
+
+export const sendMessageRequestSchema = z
+  .object({
+    body: z.string().max(4000).optional(),
+    clientMessageId: z.string().min(1).max(64).optional(),
+    attachments: z.array(sendMessageAttachmentSchema).max(5).optional(),
+  })
+  .refine(
+    (value) =>
+      (value.body?.trim().length ?? 0) > 0 || (value.attachments?.length ?? 0) > 0,
+    { message: "Message body or attachment is required." },
+  );
 
 export type SendMessageRequest = z.infer<typeof sendMessageRequestSchema>;
 
@@ -1723,6 +1739,16 @@ export const conversationSummarySchema = z.object({
 
 export type ConversationSummary = z.infer<typeof conversationSummarySchema>;
 
+export const messageAttachmentSchema = z.object({
+  id: z.string().uuid(),
+  fileName: z.string(),
+  contentType: z.string(),
+  fileSize: z.number().int().nonnegative(),
+  url: z.string().url().nullable().optional(),
+});
+
+export type MessageAttachment = z.infer<typeof messageAttachmentSchema>;
+
 export const conversationMessageSchema = z.object({
   id: z.string().uuid(),
   conversationId: z.string().uuid(),
@@ -1732,6 +1758,7 @@ export const conversationMessageSchema = z.object({
   body: z.string().nullable().optional(),
   clientMessageId: z.string().nullable().optional(),
   createdAt: z.string(),
+  attachments: z.array(messageAttachmentSchema).optional().default([]),
 });
 
 export type ConversationMessage = z.infer<typeof conversationMessageSchema>;
@@ -1815,6 +1842,8 @@ export const mediaUploadPurposeSchema = z.enum([
   "staff_avatar",
   "staffAvatar",
   "quote_photo",
+  "message_attachment",
+  "messageAttachment",
 ]);
 
 export const updateStaffAvatarRequestSchema = z.object({
