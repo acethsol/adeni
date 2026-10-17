@@ -139,12 +139,13 @@ import {
   acceptStaffInviteResponseSchema,
   reviewResponseSchema,
   publicReviewsResponseSchema,
-  createMessageThreadRequestSchema,
+  createConversationRequestSchema,
   sendMessageRequestSchema,
-  messageThreadSummarySchema,
-  messageThreadDetailSchema,
-  messageThreadsResponseSchema,
-  messageResponseSchema,
+  conversationSummarySchema,
+  conversationDetailSchema,
+  conversationsResponseSchema,
+  conversationListResponseSchema,
+  conversationMessageSchema,
   unreadCountResponseSchema,
   whatsAppLinkResponseSchema,
   messageTemplatesResponseSchema,
@@ -247,11 +248,11 @@ import {
   type CreateReviewRequest,
   type ReviewResponse,
   type PublicReviewsResponse,
-  type CreateMessageThreadRequest,
+  type CreateConversationRequest,
   type SendMessageRequest,
-  type MessageThreadSummary,
-  type MessageThreadDetail,
-  type MessageResponse,
+  type ConversationSummary,
+  type ConversationDetail,
+  type ConversationMessage,
   type UnreadCountResponse,
   type WhatsAppLinkResponse,
   type MessageTemplate,
@@ -1982,57 +1983,69 @@ export class AdeniApiClient {
     });
   }
 
-  async createMessageThread(
-    request: CreateMessageThreadRequest,
-  ): Promise<MessageThreadSummary> {
-    const body = createMessageThreadRequestSchema.parse(request);
-    const response = await this.request("/api/v1/messages/threads", {
+  async createConversation(
+    request: CreateConversationRequest,
+  ): Promise<ConversationSummary> {
+    const body = createConversationRequestSchema.parse(request);
+    const response = await this.request("/api/v1/messages/conversations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    return messageThreadSummarySchema.parse(await response.json());
+    return conversationSummarySchema.parse(await response.json());
   }
 
-  async listCustomerMessageThreads(): Promise<MessageThreadSummary[]> {
-    const response = await this.request("/api/v1/messages/threads");
-    const payload = messageThreadsResponseSchema.parse(await response.json());
+  async listCustomerConversations(): Promise<ConversationSummary[]> {
+    const response = await this.request("/api/v1/messages/conversations");
+    const payload = conversationListResponseSchema.parse(await response.json());
     return payload.items;
   }
 
-  async getCustomerMessageThread(id: string, limit = 50): Promise<MessageThreadDetail> {
+  async getCustomerConversation(
+    id: string,
+    options: { beforeId?: string; take?: number } = {},
+  ): Promise<ConversationDetail> {
+    const query = new URLSearchParams();
+    if (options.beforeId) query.set("beforeId", options.beforeId);
+    if (options.take != null) query.set("take", String(options.take));
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
     const response = await this.request(
-      `/api/v1/messages/threads/${encodeURIComponent(id)}?limit=${limit}`,
+      `/api/v1/messages/conversations/${encodeURIComponent(id)}${suffix}`,
     );
-    return messageThreadDetailSchema.parse(await response.json());
+    return conversationDetailSchema.parse(await response.json());
   }
 
   async sendCustomerMessage(
-    threadId: string,
+    conversationId: string,
     request: SendMessageRequest,
-  ): Promise<MessageResponse> {
+  ): Promise<ConversationMessage> {
     const body = sendMessageRequestSchema.parse(request);
     const response = await this.request(
-      `/api/v1/messages/threads/${encodeURIComponent(threadId)}/messages`,
+      `/api/v1/messages/conversations/${encodeURIComponent(conversationId)}/messages`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       },
     );
-    return messageResponseSchema.parse(await response.json());
+    return conversationMessageSchema.parse(await response.json());
   }
 
-  async markCustomerThreadRead(threadId: string): Promise<void> {
-    await this.request(`/api/v1/messages/threads/${encodeURIComponent(threadId)}/read`, {
-      method: "POST",
-    });
+  async markCustomerConversationRead(
+    conversationId: string,
+    messageId?: string,
+  ): Promise<void> {
+    const query = messageId ? `?messageId=${encodeURIComponent(messageId)}` : "";
+    await this.request(
+      `/api/v1/messages/conversations/${encodeURIComponent(conversationId)}/read${query}`,
+      { method: "POST" },
+    );
   }
 
-  async listTenantMessageThreads(options: {
+  async listTenantConversations(options: {
     page?: number;
     pageSize?: number;
-  } = {}): Promise<PagedResult<MessageThreadSummary>> {
+  } = {}): Promise<PagedResult<ConversationSummary>> {
     const query = new URLSearchParams();
     if (options.page != null) {
       query.set("page", String(options.page));
@@ -2041,8 +2054,8 @@ export class AdeniApiClient {
       query.set("pageSize", String(options.pageSize));
     }
     const suffix = query.size > 0 ? `?${query.toString()}` : "";
-    const response = await this.request(`/api/v1/tenant/messages/threads${suffix}`);
-    return messageThreadsResponseSchema.parse(await response.json());
+    const response = await this.request(`/api/v1/tenant/messages/conversations${suffix}`);
+    return conversationsResponseSchema.parse(await response.json());
   }
 
   async getTenantMessageUnreadCount(): Promise<number> {
@@ -2051,33 +2064,45 @@ export class AdeniApiClient {
     return payload.count;
   }
 
-  async getTenantMessageThread(id: string, limit = 50): Promise<MessageThreadDetail> {
+  async getTenantConversation(
+    id: string,
+    options: { beforeId?: string; take?: number } = {},
+  ): Promise<ConversationDetail> {
+    const query = new URLSearchParams();
+    if (options.beforeId) query.set("beforeId", options.beforeId);
+    if (options.take != null) query.set("take", String(options.take));
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
     const response = await this.request(
-      `/api/v1/tenant/messages/threads/${encodeURIComponent(id)}?limit=${limit}`,
+      `/api/v1/tenant/messages/conversations/${encodeURIComponent(id)}${suffix}`,
     );
-    return messageThreadDetailSchema.parse(await response.json());
+    return conversationDetailSchema.parse(await response.json());
   }
 
   async sendTenantMessage(
-    threadId: string,
+    conversationId: string,
     request: SendMessageRequest,
-  ): Promise<MessageResponse> {
+  ): Promise<ConversationMessage> {
     const body = sendMessageRequestSchema.parse(request);
     const response = await this.request(
-      `/api/v1/tenant/messages/threads/${encodeURIComponent(threadId)}/messages`,
+      `/api/v1/tenant/messages/conversations/${encodeURIComponent(conversationId)}/messages`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       },
     );
-    return messageResponseSchema.parse(await response.json());
+    return conversationMessageSchema.parse(await response.json());
   }
 
-  async markTenantThreadRead(threadId: string): Promise<void> {
-    await this.request(`/api/v1/tenant/messages/threads/${encodeURIComponent(threadId)}/read`, {
-      method: "POST",
-    });
+  async markTenantConversationRead(
+    conversationId: string,
+    messageId?: string,
+  ): Promise<void> {
+    const query = messageId ? `?messageId=${encodeURIComponent(messageId)}` : "";
+    await this.request(
+      `/api/v1/tenant/messages/conversations/${encodeURIComponent(conversationId)}/read${query}`,
+      { method: "POST" },
+    );
   }
 
   async getTenantMessageTemplates(): Promise<MessageTemplate[]> {

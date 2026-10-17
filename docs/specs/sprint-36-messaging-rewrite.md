@@ -6,7 +6,7 @@
 |-------|-------|
 | **Sprint** | Sprint 36 — Messaging rewrite |
 | **Author** | Cloud Agent |
-| **Status** | Approved (ready to implement) |
+| **Status** | Implemented (core) — SignalR client + attachment UI follow-ups |
 | **Created** | 2026-10-17 |
 | **Replaces** | [sprint-18-messaging.md](./sprint-18-messaging.md) — **full teardown**, no data migration |
 
@@ -407,19 +407,19 @@ Entitlement: unchanged — Free cannot use business inbox/reply.
 
 ## 13. Acceptance criteria
 
-- [ ] No Sprint 18 messaging types, tables, `/threads` routes, or thread client APIs remain
-- [ ] Send persists to SQL before any client receives SignalR `MessageCreated`
-- [ ] Duplicate `ClientMessageId` does not create a second row
-- [ ] Two BusinessUsers can have different personal read cursors after both have opened
-- [ ] Owner/admin with `portal.messages` can list and open a chat only a receptionist has replied to
-- [ ] Team unread badge counts chats with no business read yet (and after latest business read)
-- [ ] Message sender is always a Participant; bots use `BotKey`, never a fake Auth0 sub
-- [ ] Portal inbox updates live without refresh when another party sends
-- [ ] Free tier still blocked on business messaging APIs
-- [ ] History uses keyset pagination (no deep `OFFSET`)
-- [ ] Attachments: blob bytes + SQL metadata; message remains readable if blob missing
-- [ ] WhatsApp link + template surfaces still work after re-home
-- [ ] FAQ replies appear as Bot participant messages
+- [x] No Sprint 18 messaging types, tables, `/threads` routes, or thread client APIs remain
+- [x] Send persists to SQL before any client receives SignalR `MessageCreated`
+- [x] Duplicate `ClientMessageId` does not create a second row
+- [x] Two BusinessUsers can have different personal read cursors after both have opened
+- [x] Owner/admin with `portal.messages` can list and open a chat only a receptionist has replied to
+- [x] Team unread badge counts chats with no business read yet (and after latest business read)
+- [x] Message sender is always a Participant; bots use `BotKey`, never a fake Auth0 sub
+- [ ] Portal inbox updates live without refresh when another party sends *(hub ready; Angular SignalR client follow-up)*
+- [x] Free tier still blocked on business messaging APIs
+- [x] History uses keyset pagination (no deep `OFFSET`)
+- [ ] Attachments: blob bytes + SQL metadata; message remains readable if blob missing *(schema ready; upload UI follow-up)*
+- [x] WhatsApp link + template surfaces still work after re-home
+- [x] FAQ replies appear as Bot participant messages
 
 ---
 

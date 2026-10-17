@@ -3,37 +3,50 @@ namespace Adeni.Application.Messaging;
 using Adeni.Application.Admin;
 using Adeni.Application.Common;
 using Adeni.Domain.Common;
+using Adeni.Domain.Messaging;
 using Adeni.Domain.Subscriptions;
 
-public sealed record CreateThreadRequest(Guid TenantId, Guid? BookingId);
+public sealed record CreateConversationRequest(
+    Guid TenantId,
+    ConversationContextType ContextType = ConversationContextType.None,
+    Guid? ContextId = null);
 
-public sealed record SendMessageRequest(string Body);
+public sealed record SendConversationMessageRequest(
+    string Body,
+    string? ClientMessageId = null);
 
-public sealed record ThreadSummaryResponse(
+public sealed record ConversationSummaryResponse(
     Guid Id,
     Guid TenantId,
-    Guid? BookingId,
+    ConversationContextType ContextType,
+    Guid? ContextId,
     string CustomerDisplayName,
     string? BusinessName,
     string? Preview,
+    string? LastBusinessReplierName,
     DateTimeOffset LastMessageAt,
-    int UnreadCount);
+    bool NeedsAttention);
 
-public sealed record MessageResponse(
+public sealed record ConversationMessageResponse(
     Guid Id,
-    Guid ThreadId,
+    Guid ConversationId,
+    Guid SenderParticipantId,
     string SenderType,
-    string Body,
+    string? SenderDisplayName,
+    string? Body,
+    string? ClientMessageId,
     DateTimeOffset CreatedAt);
 
-public sealed record ThreadDetailResponse(
+public sealed record ConversationDetailResponse(
     Guid Id,
     Guid TenantId,
-    Guid? BookingId,
+    ConversationContextType ContextType,
+    Guid? ContextId,
     string Status,
     string CustomerDisplayName,
     string? BusinessName,
-    IReadOnlyList<MessageResponse> Messages);
+    IReadOnlyList<ConversationMessageResponse> Messages,
+    Guid? NextBeforeId);
 
 public sealed record UnreadCountResponse(int Count);
 
@@ -45,53 +58,55 @@ public sealed record MessagingSettingsResponse(bool FaqAutoResponderEnabled);
 
 public sealed record UpdateMessagingSettingsRequest(bool FaqAutoResponderEnabled);
 
-public enum MessageParticipantRole
+public enum MessagingActorRole
 {
     Customer,
     Business,
 }
 
-public interface IMessageThreadService
+public interface IConversationService
 {
-    Task<Result<ThreadSummaryResponse>> CreateOrGetThreadAsync(
+    Task<Result<ConversationSummaryResponse>> CreateOrGetAsync(
         string customerAuth0Sub,
-        CreateThreadRequest request,
+        CreateConversationRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<Result<MessageResponse>> SendMessageAsync(
+    Task<Result<ConversationMessageResponse>> SendAsync(
         string auth0Sub,
-        MessageParticipantRole role,
-        Guid threadId,
-        SendMessageRequest request,
+        MessagingActorRole role,
+        Guid conversationId,
+        SendConversationMessageRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<ThreadSummaryResponse>> ListForCustomerAsync(
+    Task<IReadOnlyList<ConversationSummaryResponse>> ListForCustomerAsync(
         string customerAuth0Sub,
         CancellationToken cancellationToken = default);
 
-    Task<Result<PagedResult<ThreadSummaryResponse>>> ListForTenantAsync(
+    Task<Result<PagedResult<ConversationSummaryResponse>>> ListForTenantAsync(
         Guid tenantId,
         SubscriptionTier tier,
         int page = 1,
         int pageSize = Paging.DefaultPageSize,
         CancellationToken cancellationToken = default);
 
-    Task<Result<ThreadDetailResponse>> GetThreadAsync(
+    Task<Result<ConversationDetailResponse>> GetAsync(
         string auth0Sub,
-        MessageParticipantRole role,
-        Guid threadId,
-        int limit = 50,
+        MessagingActorRole role,
+        Guid conversationId,
+        Guid? beforeId = null,
+        int take = 50,
         CancellationToken cancellationToken = default);
 
-    Task<Result<UnreadCountResponse>> GetUnreadCountForTenantAsync(
+    Task<Result<UnreadCountResponse>> GetTeamUnreadCountForTenantAsync(
         Guid tenantId,
         SubscriptionTier tier,
         CancellationToken cancellationToken = default);
 
-    Task<Result<Unit>> MarkReadAsync(
+    Task<Result> MarkReadAsync(
         string auth0Sub,
-        MessageParticipantRole role,
-        Guid threadId,
+        MessagingActorRole role,
+        Guid conversationId,
+        Guid? messageId = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<WhatsAppLinkResponse>> BuildBusinessWhatsAppLinkAsync(
@@ -117,5 +132,27 @@ public interface IMessageThreadService
         Guid tenantId,
         UpdateMessagingSettingsRequest request,
         string auth0Sub,
+        CancellationToken cancellationToken = default);
+}
+
+/// <summary>Realtime fan-out after durable commit. No-op implementations are valid for tests.</summary>
+public interface IMessagingRealtimePublisher
+{
+    Task PublishMessageCreatedAsync(
+        Guid conversationId,
+        Guid tenantId,
+        ConversationMessageResponse message,
+        CancellationToken cancellationToken = default);
+
+    Task PublishReadUpdatedAsync(
+        Guid conversationId,
+        Guid tenantId,
+        Guid participantId,
+        Guid lastReadMessageId,
+        CancellationToken cancellationToken = default);
+
+    Task PublishConversationUpdatedAsync(
+        Guid tenantId,
+        ConversationSummaryResponse summary,
         CancellationToken cancellationToken = default);
 }

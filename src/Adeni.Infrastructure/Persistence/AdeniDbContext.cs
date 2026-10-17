@@ -96,9 +96,13 @@ public sealed class AdeniDbContext(
 
     public DbSet<BillingDocumentSequence> BillingDocumentSequences => Set<BillingDocumentSequence>();
 
-    public DbSet<MessageThread> MessageThreads => Set<MessageThread>();
+    public DbSet<Conversation> Conversations => Set<Conversation>();
 
-    public DbSet<Message> Messages => Set<Message>();
+    public DbSet<ConversationParticipant> ConversationParticipants => Set<ConversationParticipant>();
+
+    public DbSet<ConversationMessage> ConversationMessages => Set<ConversationMessage>();
+
+    public DbSet<MessageAttachment> MessageAttachments => Set<MessageAttachment>();
 
     public DbSet<TenantNotificationPreferences> TenantNotificationPreferences =>
         Set<TenantNotificationPreferences>();
@@ -608,29 +612,66 @@ public sealed class AdeniDbContext(
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 
-        modelBuilder.Entity<MessageThread>(entity =>
+        modelBuilder.Entity<Conversation>(entity =>
         {
-            entity.ToTable("message_threads", "messaging");
+            entity.ToTable("conversations", "messaging");
             entity.HasKey(x => x.Id);
-            entity.Property(x => x.Subject).HasMaxLength(200);
             entity.Property(x => x.Status).HasConversion<int>();
+            entity.Property(x => x.ContextType).HasConversion<int>();
             entity.HasIndex(x => new { x.TenantId, x.LastMessageAt });
-            entity.HasIndex(x => new { x.TenantId, x.CustomerId, x.BookingId });
+            entity.HasIndex(x => new { x.TenantId, x.CustomerId, x.ContextType, x.ContextId });
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 
-        modelBuilder.Entity<Message>(entity =>
+        modelBuilder.Entity<ConversationParticipant>(entity =>
         {
-            entity.ToTable("messages", "messaging");
+            entity.ToTable("conversation_participants", "messaging");
             entity.HasKey(x => x.Id);
-            entity.Property(x => x.SenderAuth0Sub).HasMaxLength(128);
-            entity.Property(x => x.Body).HasMaxLength(4000);
-            entity.HasIndex(x => new { x.ThreadId, x.CreatedAt });
-            entity.HasOne(x => x.Thread)
-                .WithMany()
-                .HasForeignKey(x => x.ThreadId)
+            entity.Property(x => x.ParticipantType).HasConversion<int>();
+            entity.Property(x => x.BotKey).HasMaxLength(64);
+            entity.Property(x => x.Auth0Sub).HasMaxLength(128);
+            entity.HasIndex(x => x.ConversationId);
+            entity.HasOne(x => x.Conversation)
+                .WithMany(x => x.Participants)
+                .HasForeignKey(x => x.ConversationId)
                 .OnDelete(DeleteBehavior.Cascade);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<ConversationMessage>(entity =>
+        {
+            entity.ToTable("conversation_messages", "messaging");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Type).HasConversion<int>();
+            entity.Property(x => x.ModerationStatus).HasConversion<int>();
+            entity.Property(x => x.Body).HasMaxLength(4000);
+            entity.Property(x => x.ClientMessageId).HasMaxLength(64);
+            entity.HasIndex(x => new { x.ConversationId, x.CreatedAt, x.Id });
+            entity.HasIndex(x => new { x.TenantId, x.CreatedAt });
+            entity.HasIndex(x => new { x.ConversationId, x.ClientMessageId });
+            entity.HasOne(x => x.Conversation)
+                .WithMany(x => x.Messages)
+                .HasForeignKey(x => x.ConversationId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(x => x.SenderParticipant)
+                .WithMany()
+                .HasForeignKey(x => x.SenderParticipantId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<MessageAttachment>(entity =>
+        {
+            entity.ToTable("message_attachments", "messaging");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.BlobKey).HasMaxLength(512);
+            entity.Property(x => x.ContentType).HasMaxLength(128);
+            entity.Property(x => x.FileName).HasMaxLength(256);
+            entity.HasIndex(x => x.MessageId);
+            entity.HasOne(x => x.Message)
+                .WithMany(x => x.Attachments)
+                .HasForeignKey(x => x.MessageId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<TenantNotificationPreferences>(entity =>

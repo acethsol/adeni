@@ -157,7 +157,9 @@ public static class ErrorCodes
 
     public const string MessagingNotEntitled = "subscription.messaging_required";
     public const string ThreadNotFound = "messaging.thread_not_found";
+    public const string ConversationNotFound = "messaging.conversation_not_found";
     public const string ThreadClosed = "messaging.thread_closed";
+    public const string ConversationClosed = "messaging.conversation_closed";
     public const string MessageBodyInvalid = "messaging.message_body_invalid";
 
     public static Error MessagingNotEntitledError() =>
@@ -166,10 +168,16 @@ public static class ErrorCodes
             "In-app messaging requires the Pro plan or higher. Upgrade to reply to customers.");
 
     public static Error ThreadNotFoundError() =>
-        new(ThreadNotFound, "Message thread was not found.");
+        ConversationNotFoundError();
+
+    public static Error ConversationNotFoundError() =>
+        new(ConversationNotFound, "Conversation was not found.");
 
     public static Error ThreadClosedError() =>
-        new(ThreadClosed, "This conversation is closed.");
+        ConversationClosedError();
+
+    public static Error ConversationClosedError() =>
+        new(ConversationClosed, "This conversation is closed.");
 
     public static Error MessageBodyInvalidError() =>
         new(MessageBodyInvalid, "Message must be between 1 and 4000 characters.");

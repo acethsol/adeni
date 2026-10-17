@@ -39,7 +39,7 @@
 | **33** | **SaaS billing & MRR** | In progress — staging for live Paystack/MRR validation |
 | **34** | **Payment settlement (Connect + split)** | Planned |
 | **35** | **Tenant customer records** | ✅ Done — [sprint-35-tenant-customer-records.md](./specs/sprint-35-tenant-customer-records.md) |
-| **36** | **Messaging rewrite (SignalR + conversations)** | Approved — [sprint-36-messaging-rewrite.md](./specs/sprint-36-messaging-rewrite.md); Sprint 18 teardown |
+| **36** | **Messaging rewrite (SignalR + conversations)** | In progress — [sprint-36-messaging-rewrite.md](./specs/sprint-36-messaging-rewrite.md); Sprint 18 teardown |
 | — | Sprint 11d LLM agent | → Sprint 20 |
 | — | Staging deploy + Auth0 E2E | → Sprint 20 |
 | — | App Insights (Obs 1) | → Sprint 20 |
@@ -511,13 +511,22 @@ Business-paid GMV fee via **Stripe Connect** (CA/US) and **Paystack split** (NG)
 | **34b** Paystack subaccount + split (0% main share) | Planned |
 | **34c** Ledger gross/fee/net + enable NA effective GMV % | Planned |
 
-## Sprint 36 — Messaging rewrite (approved)
+## Sprint 36 — Messaging rewrite (in progress)
 
 **Greenfield rebuild:** delete Sprint 18 messaging (tables, APIs, clients) and ship **Conversation / Participant / Message** with SQL as truth + **SignalR** push. No data migration. Spec: [sprint-36-messaging-rewrite.md](./specs/sprint-36-messaging-rewrite.md).
 
 | Task | Status |
 |------|--------|
-| **36a–k** Teardown Sprint 18 + new schema/services/SignalR/portal/WhatsApp+FAQ re-home | Approved |
+| **36a** Drop Sprint 18 tables/types/services/`/threads` | ✅ Done |
+| **36b** New SQL + domain (`Conversation` / participant / message / attachment) | ✅ Done |
+| **36c** `IConversationService` + REST `/conversations` (idempotent send, team unread) | ✅ Done |
+| **36d** SignalR hub push-only + publisher | ✅ Done |
+| **36e** Shared schemas + api-client | ✅ Done |
+| **36f** Portal inbox (`needsAttention`) | ✅ Done |
+| **36g** WhatsApp links + FAQ-as-Bot re-home | ✅ Done |
+| **36h** Integration tests | ✅ Done |
+| **36i** Portal SignalR client subscribe | Planned |
+| **36j** Attachment upload UI | Planned |
 
 **Locked:** lazy participants · shared inbox · team unread badge · no assignment · `/conversations` only · drop old data · REST-only writes.
 
@@ -529,7 +538,7 @@ Business-paid GMV fee via **Stripe Connect** (CA/US) and **Paystack split** (NG)
 2. **Tenant billing schema** + **Sprint 33** SaaS checkout / trials / admin
 3. **32b–32d** dashboard widgets (parallel)
 4. **Sprint 34** settlement (Connect + split)
-5. **Sprint 36** — messaging rewrite (after approval; can parallel monetization if staffing allows)
+5. **Sprint 36** remainder (SignalR client + attachments) — can parallel monetization
 6. **Sprint 20** — staging deploy, Auth0 E2E, LLM, App Insights (parallel)
 7. POS bridge (later)
 

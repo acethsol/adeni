@@ -9,9 +9,9 @@ import {
   pageRangeLabel,
   totalPages as computeTotalPages,
   type BusinessProfile,
+  type ConversationDetail,
+  type ConversationSummary,
   type MessageTemplate,
-  type MessageThreadDetail,
-  type MessageThreadSummary,
 } from "@adeni/shared";
 import { AdeniPortalEmptyStateComponent, PortalPageComponent } from "@adeni/ui";
 import { filterPortalTabs } from "../../core/portal-access";
@@ -52,18 +52,18 @@ export class MessagesComponent implements OnInit {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly notice = signal<string | null>(null);
-  readonly threads = signal<MessageThreadSummary[]>([]);
-  readonly threadTotalCount = signal(0);
-  readonly threadPage = signal(1);
-  readonly threadPageSize = 25;
-  readonly threadTotalPageCount = computed(() =>
-    computeTotalPages(this.threadTotalCount(), this.threadPageSize),
+  readonly conversations = signal<ConversationSummary[]>([]);
+  readonly conversationTotalCount = signal(0);
+  readonly conversationPage = signal(1);
+  readonly conversationPageSize = 25;
+  readonly conversationTotalPageCount = computed(() =>
+    computeTotalPages(this.conversationTotalCount(), this.conversationPageSize),
   );
-  readonly threadPageLabel = computed(() =>
-    pageRangeLabel(this.threadPage(), this.threadPageSize, this.threadTotalCount()),
+  readonly conversationPageLabel = computed(() =>
+    pageRangeLabel(this.conversationPage(), this.conversationPageSize, this.conversationTotalCount()),
   );
   readonly templates = signal<MessageTemplate[]>([]);
-  readonly detail = signal<MessageThreadDetail | null>(null);
+  readonly detail = signal<ConversationDetail | null>(null);
   readonly sending = signal(false);
   draft = "";
 
@@ -79,28 +79,28 @@ export class MessagesComponent implements OnInit {
     try {
       const snapshot = await this.api.withAuthorizedClient(async (client) => {
         const profile = await client.getTenantProfile();
-        let threads: MessageThreadSummary[] = [];
+        let conversations: ConversationSummary[] = [];
         let templates: MessageTemplate[] = [];
-        let threadTotalCount = 0;
-        let threadPage = 1;
+        let conversationTotalCount = 0;
+        let conversationPage = 1;
         if (hasTenantEntitlement(profile.entitlements, "messaging")) {
-          const [threadPageResult, templateList] = await Promise.all([
-            client.listTenantMessageThreads({
-              page: this.threadPage(),
-              pageSize: this.threadPageSize,
+          const [conversationPageResult, templateList] = await Promise.all([
+            client.listTenantConversations({
+              page: this.conversationPage(),
+              pageSize: this.conversationPageSize,
             }),
             client.getTenantMessageTemplates(),
           ]);
-          threads = threadPageResult.items;
-          threadTotalCount = threadPageResult.totalCount;
-          threadPage = threadPageResult.page;
+          conversations = conversationPageResult.items;
+          conversationTotalCount = conversationPageResult.totalCount;
+          conversationPage = conversationPageResult.page;
           templates = templateList;
         }
-        return { threads, templates, profile, threadTotalCount, threadPage };
+        return { conversations, templates, profile, conversationTotalCount, conversationPage };
       });
-      this.threads.set(snapshot.threads);
-      this.threadTotalCount.set(snapshot.threadTotalCount);
-      this.threadPage.set(snapshot.threadPage);
+      this.conversations.set(snapshot.conversations);
+      this.conversationTotalCount.set(snapshot.conversationTotalCount);
+      this.conversationPage.set(snapshot.conversationPage);
       this.templates.set(snapshot.templates);
       this.profile.set(snapshot.profile);
       if (!this.route.snapshot.queryParamMap.get("tab")) {
@@ -120,39 +120,41 @@ export class MessagesComponent implements OnInit {
     }
   }
 
-  canNextThreadPage(): boolean {
-    return this.threadPage() < this.threadTotalPageCount();
+  canNextConversationPage(): boolean {
+    return this.conversationPage() < this.conversationTotalPageCount();
   }
 
-  prevThreadPage(): void {
-    if (this.threadPage() <= 1) {
+  prevConversationPage(): void {
+    if (this.conversationPage() <= 1) {
       return;
     }
-    this.threadPage.update((p) => p - 1);
+    this.conversationPage.update((p) => p - 1);
     this.detail.set(null);
     void this.load();
   }
 
-  nextThreadPage(): void {
-    if (!this.canNextThreadPage()) {
+  nextConversationPage(): void {
+    if (!this.canNextConversationPage()) {
       return;
     }
-    this.threadPage.update((p) => p + 1);
+    this.conversationPage.update((p) => p + 1);
     this.detail.set(null);
     void this.load();
   }
 
-  async openThread(thread: MessageThreadSummary): Promise<void> {
+  async openConversation(conversation: ConversationSummary): Promise<void> {
     this.error.set(null);
     try {
       const detail = await this.api.withAuthorizedClient(async (client) => {
-        const loaded = await client.getTenantMessageThread(thread.id);
-        await client.markTenantThreadRead(thread.id);
+        const loaded = await client.getTenantConversation(conversation.id);
+        await client.markTenantConversationRead(conversation.id);
         return loaded;
       });
       this.detail.set(detail);
-      this.threads.update((items) =>
-        items.map((item) => (item.id === thread.id ? { ...item, unreadCount: 0 } : item)),
+      this.conversations.update((items) =>
+        items.map((item) =>
+          item.id === conversation.id ? { ...item, needsAttention: false } : item,
+        ),
       );
     } catch {
       this.error.set("Could not open that conversation.");
@@ -160,14 +162,18 @@ export class MessagesComponent implements OnInit {
   }
 
   async send(): Promise<void> {
-    const thread = this.detail();
+    const conversation = this.detail();
     const body = this.draft.trim();
-    if (!thread || !body) return;
+    if (!conversation || !body) return;
     this.sending.set(true);
     this.error.set(null);
     try {
+      const clientMessageId =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `portal-${Date.now()}`;
       const message = await this.api.withAuthorizedClient((client) =>
-        client.sendTenantMessage(thread.id, { body }),
+        client.sendTenantMessage(conversation.id, { body, clientMessageId }),
       );
       this.detail.update((current) =>
         current ? { ...current, messages: [...current.messages, message] } : current,

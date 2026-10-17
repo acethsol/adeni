@@ -76,7 +76,7 @@ Canonical diagram: **[target-client-architecture.md](./target-client-architectur
 |--------|--------|-------------------|-------|
 | **Notifications** | 15 | `INotificationDispatcher` | Email/push/SMS; subscribes to booking events |
 | **Payments** | 17 | `IPaymentProvider`, `IPaymentOrchestrator` | Paystack; no wallet tables |
-| **Messaging** | 18 | `IMessageThreadService` | In-app threads; WhatsApp deep links |
+| **Messaging** | 36 | `IConversationService` | Conversations + SignalR; WhatsApp deep links (replaces Sprint 18) |
 | **Subscriptions** | 16 | `ISubscriptionService`, entitlements | SaaS tiers |
 | **Quotes** | 19 | `IQuoteRequestService` | Full quote workflow on business-type framework |
 | **AI** | 20 | Tool-calling against existing module APIs only | No direct DB from LLM |
