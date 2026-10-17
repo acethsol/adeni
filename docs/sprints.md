@@ -539,6 +539,6 @@ Business-paid GMV fee via **Stripe Connect** (CA/US) and **Paystack split** (NG)
 3. **32b–32d** dashboard widgets (parallel)
 4. **Sprint 34** settlement (Connect + split)
 5. **Sprint 20** — staging deploy, Auth0 E2E, LLM, App Insights (parallel)
-7. POS bridge (later)
+6. POS bridge (later)
 
 Strategy reference: [roadmap-modules.md](./roadmap-modules.md), [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md), [product-strategy.md](./product-strategy.md), [pricing-and-monetization.md](./pricing-and-monetization.md)
