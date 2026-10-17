@@ -97,7 +97,7 @@
                   @if (message.body) {
                     <p>{{ message.body }}</p>
                   }
-                  @for (attachment of message.attachments ?? []; track attachment.id) {
+                  @for (attachment of message.attachments; track attachment.id) {
                     @if (attachment.url) {
                       <a [href]="attachment.url" target="_blank" rel="noopener" class="attachment">
                         <img [src]="attachment.url" [alt]="attachment.fileName" />

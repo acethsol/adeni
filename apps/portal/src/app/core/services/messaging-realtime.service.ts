@@ -1,11 +1,5 @@
 import { Injectable, Injector, inject, OnDestroy } from "@angular/core";
 import {
-  HubConnection,
-  HubConnectionBuilder,
-  HubConnectionState,
-  LogLevel,
-} from "@microsoft/signalr";
-import {
   conversationMessageSchema,
   conversationSummarySchema,
   type ConversationMessage,
@@ -19,12 +13,16 @@ import {
   isBusinessPortalDevMode,
 } from "../adeni-config";
 
+type HubConnection = import("@microsoft/signalr").HubConnection;
+type HubConnectionState = typeof import("@microsoft/signalr").HubConnectionState;
+
 @Injectable({ providedIn: "root" })
 export class MessagingRealtimeService implements OnDestroy {
   private readonly config = inject(ADENI_PORTAL_CONFIG);
   private readonly injector = inject(Injector);
 
   private connection: HubConnection | null = null;
+  private hubStates: HubConnectionState | null = null;
   private tenantId: string | null = null;
   private joinedConversationId: string | null = null;
 
@@ -35,7 +33,10 @@ export class MessagingRealtimeService implements OnDestroy {
   readonly conversationUpdated$ = this.conversationUpdatedSubject.asObservable();
 
   async start(tenantId: string): Promise<void> {
-    if (this.connection?.state === HubConnectionState.Connected && this.tenantId === tenantId) {
+    const signalr = await import("@microsoft/signalr");
+    this.hubStates = signalr.HubConnectionState;
+
+    if (this.connection?.state === signalr.HubConnectionState.Connected && this.tenantId === tenantId) {
       return;
     }
 
@@ -43,12 +44,12 @@ export class MessagingRealtimeService implements OnDestroy {
     this.tenantId = tenantId;
 
     const hubUrl = this.buildHubUrl();
-    const builder = new HubConnectionBuilder()
+    const builder = new signalr.HubConnectionBuilder()
       .withUrl(hubUrl, {
         accessTokenFactory: () => this.resolveAccessToken(),
       })
       .withAutomaticReconnect([0, 2000, 5000, 10000])
-      .configureLogging(LogLevel.Warning);
+      .configureLogging(signalr.LogLevel.Warning);
 
     const connection = builder.build();
     connection.on("MessageCreated", (payload: unknown) => {
@@ -73,7 +74,8 @@ export class MessagingRealtimeService implements OnDestroy {
   }
 
   async joinConversation(conversationId: string): Promise<void> {
-    if (!this.connection || this.connection.state !== HubConnectionState.Connected) {
+    const connected = this.hubStates?.Connected;
+    if (!this.connection || connected == null || this.connection.state !== connected) {
       return;
     }
 
@@ -110,7 +112,8 @@ export class MessagingRealtimeService implements OnDestroy {
   }
 
   private async rejoinGroups(): Promise<void> {
-    if (!this.connection || this.connection.state !== HubConnectionState.Connected) {
+    const connected = this.hubStates?.Connected;
+    if (!this.connection || connected == null || this.connection.state !== connected) {
       return;
     }
 
