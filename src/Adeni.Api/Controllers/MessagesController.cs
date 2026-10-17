@@ -20,7 +20,10 @@ public sealed class MessagesController(
         Guid? ContextId = null,
         Guid? BookingId = null);
 
-    public sealed record SendMessageBody(string Body, string? ClientMessageId = null);
+    public sealed record SendMessageBody(
+        string? Body = null,
+        string? ClientMessageId = null,
+        IReadOnlyList<SendMessageAttachmentRequest>? Attachments = null);
 
     [HttpPost("conversations")]
     public async Task<IActionResult> CreateConversation(
@@ -107,7 +110,7 @@ public sealed class MessagesController(
             auth0Sub,
             MessagingActorRole.Customer,
             id,
-            new SendConversationMessageRequest(body.Body, body.ClientMessageId),
+            new SendConversationMessageRequest(body.Body, body.ClientMessageId, body.Attachments),
             cancellationToken);
 
         return ApiResults.FromResult(

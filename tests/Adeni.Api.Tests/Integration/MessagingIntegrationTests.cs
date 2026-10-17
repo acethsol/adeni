@@ -96,6 +96,56 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
     }
 
     [Fact]
+    public async Task Accountant_without_portal_messages_cannot_list_conversations()
+    {
+        var tenantId = await SeedTenantAsync(
+            SubscriptionTier.Pro,
+            BusinessSub + "-accountant",
+            "Accountant Shop",
+            "messaging-accountant-shop",
+            role: PortalPermissionRoles.Accountant);
+
+        var businessClient = _factory.CreateClient();
+        businessClient.DefaultRequestHeaders.Add("X-Dev-Auth0-Sub", BusinessSub + "-accountant");
+        businessClient.DefaultRequestHeaders.Add("X-Tenant-Id", tenantId.ToString());
+
+        var response = await businessClient.GetAsync("/api/v1/tenant/messages/conversations");
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Free_tier_business_cannot_mark_read_or_update_settings()
+    {
+        var tenantId = await SeedTenantAsync(
+            SubscriptionTier.Free,
+            BusinessSub + "-free-settings",
+            "Free Settings Shop",
+            "messaging-free-settings");
+
+        var customerClient = _factory.CreateClient();
+        customerClient.DefaultRequestHeaders.Add("X-Dev-Auth0-Sub", CustomerSub + "-free-settings");
+        var createResponse = await customerClient.PostAsJsonAsync(
+            "/api/v1/messages/conversations",
+            new { tenantId });
+        var conversation = await createResponse.Content.ReadFromJsonAsync<ConversationPayload>();
+        Assert.NotNull(conversation);
+
+        var businessClient = _factory.CreateClient();
+        businessClient.DefaultRequestHeaders.Add("X-Dev-Auth0-Sub", BusinessSub + "-free-settings");
+        businessClient.DefaultRequestHeaders.Add("X-Tenant-Id", tenantId.ToString());
+
+        var markRead = await businessClient.PostAsync(
+            $"/api/v1/tenant/messages/conversations/{conversation!.Id}/read",
+            null);
+        Assert.Equal(HttpStatusCode.Forbidden, markRead.StatusCode);
+
+        var settings = await businessClient.PatchAsJsonAsync(
+            "/api/v1/tenant/messages/settings",
+            new { faqAutoResponderEnabled = true });
+        Assert.Equal(HttpStatusCode.Forbidden, settings.StatusCode);
+    }
+
+    [Fact]
     public async Task Public_whatsapp_link_returns_url()
     {
         await SeedTenantAsync(SubscriptionTier.Pro, BusinessSub + "-wa", "WA Shop", "messaging-wa-shop");
@@ -166,7 +216,8 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
         string businessSub,
         string name,
         string slug,
-        bool faqEnabled = false)
+        bool faqEnabled = false,
+        string role = PortalPermissionRoles.Owner)
     {
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
@@ -209,7 +260,7 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
             Id = Guid.NewGuid(),
             TenantId = tenantId,
             Auth0Sub = businessSub,
-            Role = "owner",
+            Role = role,
             CreatedAt = DateTimeOffset.UtcNow,
         });
         await db.SaveChangesAsync();

@@ -106,10 +106,11 @@ Each major build still needs a `docs/specs/sprint-XX-*.md` before implementation
 | | |
 |--|--|
 | **Job** | Meet customers where they are; light staff handoff |
-| **Shipped** | Client ↔ business threads, WhatsApp deep links, templates, Pro gate |
-| **Gap** | Staff ↔ staff / front-desk notes on bookings |
-| **Later** | SignalR realtime, WABA |
+| **Shipped** | Sprint 36 conversations + participants + SignalR push; WhatsApp deep links; FAQ-as-Bot; Pro + `portal.messages` gate |
+| **Gap** | Staff ↔ staff / front-desk notes on bookings; notification domain events after send |
+| **Later** | WABA; Redis SignalR backplane when multi-instance |
 | **Owner** | TBD |
+| **Spec** | [sprint-36-messaging-rewrite.md](./specs/sprint-36-messaging-rewrite.md) |
 
 ### 3.7 Floor calendar & staff (reference)
 

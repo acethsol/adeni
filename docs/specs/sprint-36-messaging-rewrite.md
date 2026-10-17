@@ -6,7 +6,7 @@
 |-------|-------|
 | **Sprint** | Sprint 36 — Messaging rewrite |
 | **Author** | Cloud Agent |
-| **Status** | Implemented |
+| **Status** | ✅ Done (wrapped) |
 | **Created** | 2026-10-17 |
 | **Replaces** | [sprint-18-messaging.md](./sprint-18-messaging.md) — **full teardown**, no data migration |
 
@@ -381,7 +381,7 @@ Entitlement: unchanged — Free cannot use business inbox/reply.
 - [x] **36d** Identity resolution: Auth0 → Customer / BusinessUser → Participant (lazy business upsert)
 - [x] **36e** SignalR hub + portal subscription (MessageCreated, ConversationUpdated) — push only
 - [x] **36f** Portal inbox rewrite (Angular) on `/conversations`
-- [ ] **36g** Domain event after commit for notifications (prefs-aware; stub dispatcher OK)
+- [ ] **36g** Domain event after commit for notifications (prefs-aware; stub dispatcher OK) — deferred; not blocking wrap-up
 - [x] **36h** Attachment upload metadata + blob (reuse media upload patterns); images only in v1
 - [x] **36i** Re-home WhatsApp links + templates + FAQ-as-Bot under the new module
 - [x] **36j** Tests: idempotency, tenant isolation, participant authz, keyset paging
@@ -437,3 +437,19 @@ Entitlement: unchanged — Free cannot use business inbox/reply.
 | Redis / Service Bus | Multi-instance or real push/email adapters |
 
 Fits after monetization track (33/34) or parallel if staffing allows — messaging rewrite does not block Connect/split, but competes for API/portal attention.
+
+---
+
+## 15. Security & design wrap-up (done)
+
+Aligned with AGENTS.md non-negotiables and portal design system:
+
+| Control | How |
+|---------|-----|
+| Tenant isolation | `ITenantEntity` + conversation membership checks; hub join validates customer or same-tenant business |
+| Messaging entitlement | REST list/get/send/mark-read/settings + SignalR `JoinTenantInbox` / business `JoinConversation` |
+| `portal.messages` RBAC | `[RequiresPortalPermission]` on tenant messaging controller; hub uses `IPortalPermissionService` |
+| Attachment safety | Tenant-prefixed blob keys, type/size limits, exists-before-send; missing blob → message still readable |
+| PII | WhatsApp phone masked via `PiiMasker`; no message bodies in logs |
+| Writes | REST-only; SignalR push-only |
+| Portal UI | Staff-layout tokens (`--interactive`, Carbon icons); no hardcoded purple badge |

@@ -2,6 +2,8 @@ namespace Adeni.Api.Messaging;
 
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
+using Adeni.Application.Subscriptions;
+using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Auth;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.SignalR;
@@ -11,7 +13,9 @@ using Microsoft.Extensions.Options;
 /// <summary>Push-only messaging hub. Writes go through REST.</summary>
 public sealed class MessagingHub(
     IOptions<Auth0Options> auth0Options,
-    AdeniDbContext dbContext) : Hub
+    AdeniDbContext dbContext,
+    IPortalPermissionService permissionService,
+    IEntitlementsService entitlementsService) : Hub
 {
     public static string ConversationGroup(Guid conversationId) => $"conversation:{conversationId:D}";
 
@@ -36,14 +40,13 @@ public sealed class MessagingHub(
         var isCustomer = await dbContext.Customers
             .AsNoTracking()
             .AnyAsync(x => x.Auth0Sub == auth0Sub && x.Id == conversation.CustomerId);
-        var isBusiness = await dbContext.BusinessUsers
-            .AsNoTracking()
-            .AnyAsync(x => x.Auth0Sub == auth0Sub && x.TenantId == conversation.TenantId);
-        if (!isCustomer && !isBusiness)
+        if (isCustomer)
         {
-            throw new HubException("Forbidden");
+            await Groups.AddToGroupAsync(Context.ConnectionId, ConversationGroup(conversationId));
+            return;
         }
 
+        await EnsureBusinessMessagingAccessAsync(auth0Sub, conversation.TenantId);
         await Groups.AddToGroupAsync(Context.ConnectionId, ConversationGroup(conversationId));
     }
 
@@ -58,15 +61,38 @@ public sealed class MessagingHub(
             throw new HubException("Unauthorized");
         }
 
-        var isBusiness = await dbContext.BusinessUsers
-            .AsNoTracking()
-            .AnyAsync(x => x.Auth0Sub == auth0Sub && x.TenantId == tenantId);
-        if (!isBusiness)
+        await EnsureBusinessMessagingAccessAsync(auth0Sub, tenantId);
+        await Groups.AddToGroupAsync(Context.ConnectionId, TenantGroup(tenantId));
+    }
+
+    private async Task EnsureBusinessMessagingAccessAsync(string auth0Sub, Guid tenantId)
+    {
+        var access = await permissionService.ResolveAsync(auth0Sub, Context.ConnectionAborted);
+        if (access.IsFailure || access.Value is null || access.Value.TenantId != tenantId)
         {
             throw new HubException("Forbidden");
         }
 
-        await Groups.AddToGroupAsync(Context.ConnectionId, TenantGroup(tenantId));
+        if (!PortalPermissionRoles.HasAny(access.Value.PermissionRole, PortalPermissions.Messages))
+        {
+            throw new HubException("Forbidden");
+        }
+
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == tenantId);
+        if (tenant is null)
+        {
+            throw new HubException("Forbidden");
+        }
+
+        var entitlement = await entitlementsService.EnsureCanUseMessagingForTenantAsync(
+            tenant,
+            Context.ConnectionAborted);
+        if (entitlement.IsFailure)
+        {
+            throw new HubException("Forbidden");
+        }
     }
 
     private string? ResolveAuth0Sub()

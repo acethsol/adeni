@@ -37,7 +37,7 @@ h3 {
 }
 
 .threads button.active {
-  background: rgb(127 86 255 / 8%);
+  background: color-mix(in srgb, var(--interactive) 8%, var(--surface));
 }
 
 .who {
@@ -48,8 +48,8 @@ h3 {
 
 .who i {
   font-style: normal;
-  background: #7f56ff;
-  color: #fff;
+  background: var(--interactive);
+  color: var(--text-on-color, #fff);
   border-radius: var(--cds-radius-none);
   min-width: 1.1rem;
   padding: 0 0.3rem;
@@ -81,8 +81,8 @@ h3 {
 
 .transcript .bubble.mine {
   align-self: flex-end;
-  background: #161616;
-  color: #fff;
+  background: var(--text);
+  color: var(--surface);
 }
 
 .transcript .bubble p {

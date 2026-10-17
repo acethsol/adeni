@@ -556,6 +556,22 @@ public sealed class ConversationService(
         ConversationParticipant participant;
         if (role == MessagingActorRole.Business)
         {
+            var tenant = await dbContext.Tenants
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == conversation.TenantId, cancellationToken);
+            if (tenant is null)
+            {
+                return Result.Failure(Error.NotFound("Business"));
+            }
+
+            var entitlement = await entitlementsService.EnsureCanUseMessagingForTenantAsync(
+                tenant,
+                cancellationToken);
+            if (entitlement.IsFailure)
+            {
+                return Result.Failure(entitlement.Error);
+            }
+
             var businessUser = await dbContext.BusinessUsers
                 .FirstOrDefaultAsync(
                     x => x.TenantId == conversation.TenantId && x.Auth0Sub == auth0Sub,
@@ -1211,6 +1227,22 @@ public sealed class ConversationService(
         if (!member)
         {
             return Result.Failure<BusinessProfile>(ErrorCodes.BusinessAccessDeniedError());
+        }
+
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+        if (tenant is null)
+        {
+            return Result.Failure<BusinessProfile>(Error.NotFound("Business"));
+        }
+
+        var entitlement = await entitlementsService.EnsureCanUseMessagingForTenantAsync(
+            tenant,
+            cancellationToken);
+        if (entitlement.IsFailure)
+        {
+            return Result.Failure<BusinessProfile>(entitlement.Error);
         }
 
         var profile = await dbContext.BusinessProfiles

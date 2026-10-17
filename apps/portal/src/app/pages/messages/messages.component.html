@@ -119,6 +119,7 @@
               }
               <div class="composer-actions">
                 <label class="btn">
+                  <adeni-carbon-icon name="upload" [size]="16" />
                   {{ attaching() ? "Uploading…" : "Attach image" }}
                   <input
                     type="file"
@@ -129,6 +130,7 @@
                   />
                 </label>
                 <button type="submit" class="btn btn-primary" [disabled]="!canSend()">
+                  <adeni-carbon-icon name="send" [size]="16" />
                   {{ sending() ? "Sending…" : "Send" }}
                 </button>
               </div>

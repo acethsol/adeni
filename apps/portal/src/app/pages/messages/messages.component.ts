@@ -16,7 +16,11 @@ import {
   type MessageTemplate,
   type SendMessageAttachment,
 } from "@adeni/shared";
-import { AdeniPortalEmptyStateComponent, PortalPageComponent } from "@adeni/ui";
+import {
+  AdeniCarbonIconComponent,
+  AdeniPortalEmptyStateComponent,
+  PortalPageComponent,
+} from "@adeni/ui";
 import { filterPortalTabs } from "../../core/portal-access";
 import { findPortalNavItem } from "../../core/portal-nav";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
@@ -29,7 +33,13 @@ const ALLOWED_ATTACHMENT_TYPES = new Set(["image/jpeg", "image/png", "image/webp
 @Component({
   selector: "app-messages",
   standalone: true,
-  imports: [PortalPageComponent, FormsModule, PortalTabsComponent, AdeniPortalEmptyStateComponent],
+  imports: [
+    PortalPageComponent,
+    FormsModule,
+    PortalTabsComponent,
+    AdeniPortalEmptyStateComponent,
+    AdeniCarbonIconComponent,
+  ],
   templateUrl: "./messages.component.html",
   styleUrl: "./messages.component.scss",
 })

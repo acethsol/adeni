@@ -1,9 +1,11 @@
 namespace Adeni.Api.Controllers;
 
 using System.Security.Claims;
+using Adeni.Api.Auth;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
 using Adeni.Application.Messaging;
+using Adeni.Domain.Identity;
 using Adeni.Domain.Subscriptions;
 using Adeni.Infrastructure.Auth;
 using Adeni.Infrastructure.Persistence;
@@ -13,12 +15,16 @@ using Microsoft.Extensions.Options;
 
 [ApiController]
 [Route("api/v1/tenant/messages")]
+[RequiresPortalPermission(PortalPermissions.Messages)]
 public sealed class TenantMessagesController(
     IConversationService messaging,
     AdeniDbContext dbContext,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
-    public sealed record SendMessageBody(string Body, string? ClientMessageId = null);
+    public sealed record SendMessageBody(
+        string? Body = null,
+        string? ClientMessageId = null,
+        IReadOnlyList<SendMessageAttachmentRequest>? Attachments = null);
 
     [HttpGet("conversations")]
     public async Task<IActionResult> ListConversations(
@@ -126,7 +132,7 @@ public sealed class TenantMessagesController(
             auth0Sub,
             MessagingActorRole.Business,
             id,
-            new SendConversationMessageRequest(body.Body, body.ClientMessageId),
+            new SendConversationMessageRequest(body.Body, body.ClientMessageId, body.Attachments),
             cancellationToken);
 
         return ApiResults.FromResult(
