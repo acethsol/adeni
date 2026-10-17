@@ -142,7 +142,19 @@ Do **not** rely only on Auth0 sub on the message row (may keep as denormalized a
 | Business users | **Lazy upsert (locked):** first portal open/reply creates participant for that `BusinessUser` |
 | Bot | Upserted when FAQ/LLM posts |
 
-Unread for a user = messages after that participant’s `LastReadMessageId` (or `LastReadAt`), **not** a counter on the conversation.
+**No assignment (locked):** there is no `AssignedBusinessUserId`, claim, or “first responder” routing. Whoever opens/replies first is just the first attributed staff participant — not an owner of the thread.
+
+### 3.5.1 Shared inbox vs personal cursor (locked)
+
+| Concern | Rule |
+|---------|------|
+| **Who sees the list** | Every BusinessUser with `portal.messages` sees the **same tenant conversation list** (shared inbox). Lazy does **not** hide chats from owner/admin. |
+| **Who is a participant** | Upserted on first open/reply — used for send attribution and **personal** read cursor |
+| **Portal unread badge (team)** | Count conversations that need attention for the **business**, not only chats you’ve personally opened: customer (or bot-to-customer) activity after the latest **any-business-participant** read; if no business participant exists yet, any customer message counts as needing attention |
+| **After you open** | Upsert your participant; `MarkRead` advances **your** `LastReadMessageId` so “I’ve read this” is personal |
+| **List row hint** | May show last staff replier name when a business participant has sent; still visible to everyone |
+
+So: owner is never blinded; badge stays useful for the whole desk; cursors stay per-person once you’ve engaged.
 
 ### 3.6 Display names
 
@@ -302,7 +314,7 @@ Groups: `conversation:{id}`, plus user groups `customer:{id}` / `business-user:{
 | Business | `GET /api/v1/tenant/messages/conversations`, `.../{id}`, send, read, unread-count, templates, settings |
 | Public / booking | Re-implement WhatsApp link endpoints under the new module (`GET /api/v1/businesses/{slug}/whatsapp-link`, `GET /api/v1/bookings/{id}/whatsapp-link`) |
 
-Unread-count = aggregate over participant cursors for that BusinessUser (badge: messages where that user’s participant is behind).
+**Unread-count (business, locked):** **team** badge — conversations needing attention for the tenant (see §3.5.1), same number for all `portal.messages` users. Personal cursor still drives per-open “caught up” state after mark-read.
 
 Entitlement: unchanged — Free cannot use business inbox/reply.
 
@@ -351,6 +363,9 @@ Entitlement: unchanged — Free cannot use business inbox/reply.
 | Decision | Choice |
 |----------|--------|
 | Business participants | **Lazy upsert** on first open/reply |
+| Inbox visibility | **Shared tenant list** for all `portal.messages` — owner not blinded |
+| Unread badge | **Team unread** (needs attention for the business); personal cursor after open |
+| Assignment / claim | **None** — no assigned owner or first-responder routing |
 | API shape | **New `/conversations` routes only**; delete `/threads` |
 | Old data | **No migration** — drop Sprint 18 tables/data |
 | Unread at cutover | N/A (empty inbox); new cursors start clean |
@@ -384,6 +399,7 @@ Entitlement: unchanged — Free cannot use business inbox/reply.
 - Flutter customer inbox (can track as 36+ / mobile sprint)
 - Typing indicators / reactions (optional thin SignalR later)
 - Hub `SendMessage` (v1 REST-only writes)
+- Conversation **assignment** / claim / round-robin routing
 - LLM replies as product feature (Sprint 20); when added, post as `Bot` participant
 - Changing subscription entitlement rules
 
@@ -394,7 +410,9 @@ Entitlement: unchanged — Free cannot use business inbox/reply.
 - [ ] No Sprint 18 messaging types, tables, `/threads` routes, or thread client APIs remain
 - [ ] Send persists to SQL before any client receives SignalR `MessageCreated`
 - [ ] Duplicate `ClientMessageId` does not create a second row
-- [ ] Two BusinessUsers in the same conversation can have different unread states
+- [ ] Two BusinessUsers can have different personal read cursors after both have opened
+- [ ] Owner/admin with `portal.messages` can list and open a chat only a receptionist has replied to
+- [ ] Team unread badge counts chats with no business read yet (and after latest business read)
 - [ ] Message sender is always a Participant; bots use `BotKey`, never a fake Auth0 sub
 - [ ] Portal inbox updates live without refresh when another party sends
 - [ ] Free tier still blocked on business messaging APIs

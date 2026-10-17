@@ -511,13 +511,15 @@ Business-paid GMV fee via **Stripe Connect** (CA/US) and **Paystack split** (NG)
 | **34b** Paystack subaccount + split (0% main share) | Planned |
 | **34c** Ledger gross/fee/net + enable NA effective GMV % | Planned |
 
-## Sprint 36 — Messaging rewrite (draft)
+## Sprint 36 — Messaging rewrite (approved)
 
-Replace Sprint 18 poll-only threads with **Conversation / Participant / Message**, SQL as source of truth, **SignalR** for realtime. Spec: [sprint-36-messaging-rewrite.md](./specs/sprint-36-messaging-rewrite.md).
+**Greenfield rebuild:** delete Sprint 18 messaging (tables, APIs, clients) and ship **Conversation / Participant / Message** with SQL as truth + **SignalR** push. No data migration. Spec: [sprint-36-messaging-rewrite.md](./specs/sprint-36-messaging-rewrite.md).
 
 | Task | Status |
 |------|--------|
-| **36a–j** Schema, identity participants, SignalR, portal inbox, migration | Draft |
+| **36a–k** Teardown Sprint 18 + new schema/services/SignalR/portal/WhatsApp+FAQ re-home | Approved |
+
+**Locked:** lazy participants · shared inbox · team unread badge · no assignment · `/conversations` only · drop old data · REST-only writes.
 
 ## Next up
 
