@@ -32,7 +32,7 @@ Each major build still needs a `docs/specs/sprint-XX-*.md` before implementation
 | 3 | **Verification / trust** | Partial | Now | Tenancy + Admin | Tiers shipped; deepen CAC/automation |
 | 4 | **Subscriptions & add-ons** | Partial | Next | Subscriptions | Entitlements shipped; live billing stub |
 | 5 | **Dashboards & reporting** | Partial | Next | Portal overview + Admin | Owner “today” first; ops GMV later |
-| 6 | **Messaging** | Partial | Next | Messaging | Client↔business done; staff↔staff gap |
+| 6 | **Messaging** | Shipped (client↔business) | Later (staff notes / WABA) | Messaging | Sprint 36 conversations + SignalR |
 | 7 | **Floor calendar & staff** | Shipped | Now (polish) | Booking + Identity | Team + practitioner boards |
 | 8 | **Onboarding** | Shipped | Now (polish) | Tenancy | Supply-first; category-aware defaults |
 | 9 | **Discovery & public page** | Shipped | Now | Discovery | SEO + shareable book link |
