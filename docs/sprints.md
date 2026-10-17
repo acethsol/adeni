@@ -39,6 +39,7 @@
 | **33** | **SaaS billing & MRR** | In progress — staging for live Paystack/MRR validation |
 | **34** | **Payment settlement (Connect + split)** | Planned |
 | **35** | **Tenant customer records** | ✅ Done — [sprint-35-tenant-customer-records.md](./specs/sprint-35-tenant-customer-records.md) |
+| **36** | **Messaging rewrite (SignalR + conversations)** | Draft — [sprint-36-messaging-rewrite.md](./specs/sprint-36-messaging-rewrite.md) |
 | — | Sprint 11d LLM agent | → Sprint 20 |
 | — | Staging deploy + Auth0 E2E | → Sprint 20 |
 | — | App Insights (Obs 1) | → Sprint 20 |
@@ -510,6 +511,14 @@ Business-paid GMV fee via **Stripe Connect** (CA/US) and **Paystack split** (NG)
 | **34b** Paystack subaccount + split (0% main share) | Planned |
 | **34c** Ledger gross/fee/net + enable NA effective GMV % | Planned |
 
+## Sprint 36 — Messaging rewrite (draft)
+
+Replace Sprint 18 poll-only threads with **Conversation / Participant / Message**, SQL as source of truth, **SignalR** for realtime. Spec: [sprint-36-messaging-rewrite.md](./specs/sprint-36-messaging-rewrite.md).
+
+| Task | Status |
+|------|--------|
+| **36a–j** Schema, identity participants, SignalR, portal inbox, migration | Draft |
+
 ## Next up
 
 **Implementation order:** [implementation-playbook-monetization.md](./implementation-playbook-monetization.md)
@@ -518,7 +527,8 @@ Business-paid GMV fee via **Stripe Connect** (CA/US) and **Paystack split** (NG)
 2. **Tenant billing schema** + **Sprint 33** SaaS checkout / trials / admin
 3. **32b–32d** dashboard widgets (parallel)
 4. **Sprint 34** settlement (Connect + split)
-5. **Sprint 20** — staging deploy, Auth0 E2E, LLM, App Insights (parallel)
-6. POS bridge (later)
+5. **Sprint 36** — messaging rewrite (after approval; can parallel monetization if staffing allows)
+6. **Sprint 20** — staging deploy, Auth0 E2E, LLM, App Insights (parallel)
+7. POS bridge (later)
 
 Strategy reference: [roadmap-modules.md](./roadmap-modules.md), [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md), [product-strategy.md](./product-strategy.md), [pricing-and-monetization.md](./pricing-and-monetization.md)
