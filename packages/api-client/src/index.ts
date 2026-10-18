@@ -10,7 +10,6 @@ import {
   type AdminMarketCatalogStats,
   type AdminPagedResult,
   type PagedResult,
-  setSubscriptionTierRequestSchema,
   setTenantCommercialTermsRequestSchema,
   adminTenantCommercialTermsSchema,
   subscriptionUsageSchema,
@@ -1860,21 +1859,6 @@ export class AdeniApiClient {
       `/api/v1/admin/businesses/${encodeURIComponent(tenantId)}`,
     );
     return adminBusinessSummarySchema.parse(await response.json());
-  }
-
-  async setAdminBusinessSubscriptionTier(
-    tenantId: string,
-    tier: "free" | "pro" | "business",
-  ): Promise<void> {
-    const body = setSubscriptionTierRequestSchema.parse({ tier });
-    await this.request(
-      `/api/v1/admin/businesses/${encodeURIComponent(tenantId)}/subscription-tier`,
-      {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
   }
 
   async getAdminTenantCommercialTerms(tenantId: string): Promise<AdminTenantCommercialTerms> {

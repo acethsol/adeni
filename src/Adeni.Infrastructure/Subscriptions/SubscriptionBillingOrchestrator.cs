@@ -63,7 +63,7 @@ public sealed class SubscriptionBillingOrchestrator(
             return Result.Failure<TenantSubscriptionChargeResponse>(Error.NotFound("Business"));
         }
 
-        var targetSku = ResolveSku(webhookEvent.Tier, tenant);
+        var targetSku = ResolveSku(webhookEvent.Sku, tenant);
         ApplyBillingTransition(tenant, webhookEvent, targetSku);
 
         var (amountMinor, currency) = await ResolveChargeAmountAsync(
@@ -187,7 +187,7 @@ public sealed class SubscriptionBillingOrchestrator(
             return Result.Failure<TenantSubscriptionChargeResponse>(ErrorCodes.PermissionDeniedError());
         }
 
-        if (!TryParseStubReference(providerReference, out var refTenantId, out var tierApi))
+        if (!TryParseStubReference(providerReference, out var refTenantId, out var skuApi))
         {
             return Result.Failure<TenantSubscriptionChargeResponse>(
                 Error.Validation("Invalid stub checkout reference."));
@@ -202,7 +202,7 @@ public sealed class SubscriptionBillingOrchestrator(
             "subscription.create",
             providerReference,
             tenantId,
-            tierApi,
+            skuApi,
             "active",
             DateTimeOffset.UtcNow);
 
@@ -222,7 +222,6 @@ public sealed class SubscriptionBillingOrchestrator(
             tenant.TrialEndsAt = null;
             tenant.TrialSku = null;
             tenant.PaidThrough = webhookEvent.OccurredAt.AddMonths(1);
-            TenantBillingPolicy.ApplySkuToLegacyTier(tenant);
             return;
         }
 
@@ -231,15 +230,14 @@ public sealed class SubscriptionBillingOrchestrator(
             tenant.BillingStatus = string.Equals(webhookEvent.EventType, "invoice.payment_failed", StringComparison.OrdinalIgnoreCase)
                 ? TenantBillingStatus.PastDue
                 : TenantBillingStatus.Canceled;
-            TenantBillingPolicy.ApplySkuToLegacyTier(tenant);
         }
     }
 
-    private static SubscriptionSku ResolveSku(string? tierApi, Domain.Tenancy.Tenant tenant)
+    private static SubscriptionSku ResolveSku(string? skuApi, Domain.Tenancy.Tenant tenant)
     {
-        if (!string.IsNullOrWhiteSpace(tierApi))
+        if (!string.IsNullOrWhiteSpace(skuApi))
         {
-            return SubscriptionSkuMapping.FromApiValue(tierApi);
+            return SubscriptionSkuMapping.FromApiValue(skuApi);
         }
 
         return tenant.SubscriptionSku;
@@ -308,10 +306,10 @@ public sealed class SubscriptionBillingOrchestrator(
             row.Status,
             row.OccurredAt);
 
-    private static bool TryParseStubReference(string reference, out Guid tenantId, out string tierApi)
+    private static bool TryParseStubReference(string reference, out Guid tenantId, out string skuApi)
     {
         tenantId = Guid.Empty;
-        tierApi = "pro";
+        skuApi = "professional";
         if (string.IsNullOrWhiteSpace(reference))
         {
             return false;
@@ -330,7 +328,7 @@ public sealed class SubscriptionBillingOrchestrator(
             return false;
         }
 
-        tierApi = parts[3];
+        skuApi = parts[3];
         return true;
     }
 }

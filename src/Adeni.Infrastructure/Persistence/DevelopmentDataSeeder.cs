@@ -82,7 +82,6 @@ public static class DevelopmentDataSeeder
                 VerifiedAt = now,
                 SubscriptionSku = SubscriptionSku.Professional,
                 BillingStatus = TenantBillingStatus.Active,
-                SubscriptionTier = SubscriptionTier.Pro,
             };
             db.Tenants.Add(tenant);
 
@@ -946,7 +945,6 @@ public static class DevelopmentDataSeeder
             TenantBillingDefaults.DefaultTrialDays,
             SubscriptionSku.Professional,
             now);
-        TenantBillingPolicy.ApplySkuToLegacyTier(tenant);
         await db.SaveChangesAsync(cancellationToken);
     }
 

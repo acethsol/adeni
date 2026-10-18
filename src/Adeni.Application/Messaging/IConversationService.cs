@@ -99,7 +99,6 @@ public interface IConversationService
 
     Task<Result<PagedResult<ConversationSummaryResponse>>> ListForTenantAsync(
         Guid tenantId,
-        SubscriptionTier tier,
         int page = 1,
         int pageSize = Paging.DefaultPageSize,
         CancellationToken cancellationToken = default);
@@ -114,7 +113,6 @@ public interface IConversationService
 
     Task<Result<UnreadCountResponse>> GetTeamUnreadCountForTenantAsync(
         Guid tenantId,
-        SubscriptionTier tier,
         CancellationToken cancellationToken = default);
 
     Task<Result> MarkReadAsync(
@@ -135,7 +133,6 @@ public interface IConversationService
 
     Task<Result<IReadOnlyList<MessageTemplateResponse>>> GetTemplatesForTenantAsync(
         Guid tenantId,
-        SubscriptionTier tier,
         CancellationToken cancellationToken = default);
 
     Task<Result<MessagingSettingsResponse>> GetMessagingSettingsAsync(

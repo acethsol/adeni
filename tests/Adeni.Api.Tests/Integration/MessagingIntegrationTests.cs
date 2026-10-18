@@ -36,7 +36,7 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
     [Fact]
     public async Task Customer_can_create_conversation_and_business_on_pro_can_reply()
     {
-        var tenantId = await SeedTenantAsync(SubscriptionTier.Pro, BusinessSub, "Messaging Pro Shop", "messaging-pro-shop");
+        var tenantId = await SeedTenantAsync(SubscriptionSku.Professional, BusinessSub, "Messaging Pro Shop", "messaging-pro-shop");
 
         var customerClient = _factory.CreateClient();
         customerClient.DefaultRequestHeaders.Add("X-Dev-Auth0-Sub", CustomerSub);
@@ -83,9 +83,9 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
     }
 
     [Fact]
-    public async Task Free_tier_business_cannot_list_conversations()
+    public async Task Starter_tier_business_cannot_list_conversations()
     {
-        var tenantId = await SeedTenantAsync(SubscriptionTier.Free, BusinessSub + "-free", "Free Shop", "messaging-free-shop");
+        var tenantId = await SeedTenantAsync(SubscriptionSku.Starter, BusinessSub + "-free", "Free Shop", "messaging-free-shop");
 
         var businessClient = _factory.CreateClient();
         businessClient.DefaultRequestHeaders.Add("X-Dev-Auth0-Sub", BusinessSub + "-free");
@@ -99,7 +99,7 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
     public async Task Accountant_without_portal_messages_cannot_list_conversations()
     {
         var tenantId = await SeedTenantAsync(
-            SubscriptionTier.Pro,
+            SubscriptionSku.Professional,
             BusinessSub + "-accountant",
             "Accountant Shop",
             "messaging-accountant-shop",
@@ -114,10 +114,10 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
     }
 
     [Fact]
-    public async Task Free_tier_business_cannot_mark_read_or_update_settings()
+    public async Task Starter_tier_business_cannot_mark_read_or_update_settings()
     {
         var tenantId = await SeedTenantAsync(
-            SubscriptionTier.Free,
+            SubscriptionSku.Starter,
             BusinessSub + "-free-settings",
             "Free Settings Shop",
             "messaging-free-settings");
@@ -148,7 +148,7 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
     [Fact]
     public async Task Public_whatsapp_link_returns_url()
     {
-        await SeedTenantAsync(SubscriptionTier.Pro, BusinessSub + "-wa", "WA Shop", "messaging-wa-shop");
+        await SeedTenantAsync(SubscriptionSku.Professional, BusinessSub + "-wa", "WA Shop", "messaging-wa-shop");
 
         var client = _factory.CreateClient();
         var response = await client.GetAsync("/api/v1/businesses/messaging-wa-shop/whatsapp-link");
@@ -162,7 +162,7 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
     public async Task Faq_auto_responder_replies_as_bot_when_enabled()
     {
         var tenantId = await SeedTenantAsync(
-            SubscriptionTier.Pro,
+            SubscriptionSku.Professional,
             BusinessSub + "-faq",
             "FAQ Shop",
             "messaging-faq-shop",
@@ -191,7 +191,7 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
     public async Task Notification_preferences_can_be_updated()
     {
         var tenantId = await SeedTenantAsync(
-            SubscriptionTier.Pro,
+            SubscriptionSku.Professional,
             PrefsBusinessSub,
             "Prefs Shop",
             "messaging-prefs-shop");
@@ -212,7 +212,7 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
     }
 
     private async Task<Guid> SeedTenantAsync(
-        SubscriptionTier tier,
+        SubscriptionSku sku,
         string businessSub,
         string name,
         string slug,
@@ -227,8 +227,7 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
             Id = tenantId,
             Name = name,
             Status = TenantStatus.Verified,
-            SubscriptionTier = tier,
-            SubscriptionSku = tier == SubscriptionTier.Free ? SubscriptionSku.Starter : SubscriptionSku.Professional,
+            SubscriptionSku = sku,
             BillingStatus = TenantBillingStatus.Active,
             CreatedAt = DateTimeOffset.UtcNow,
             VerifiedAt = DateTimeOffset.UtcNow,

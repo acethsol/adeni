@@ -35,8 +35,8 @@
     <div class="tier-grid">
       @for (sku of skus; track sku) {
         @let display = planDisplay(sku);
-        <section class="card tier" [class.current]="sku === currentSku()">
-          @if (sku === currentSku()) {
+        <section class="card tier" [class.current]="isCurrentPlan(sku)">
+          @if (isCurrentPlan(sku)) {
             <span class="pill">Current plan</span>
           }
           <p class="tier-name">{{ display.name }}</p>

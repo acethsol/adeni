@@ -227,28 +227,6 @@ public sealed class AdminBusinessesController(
             });
     }
 
-    [HttpPatch("{id:guid}/subscription-tier")]
-    public async Task<IActionResult> SetSubscriptionTier(
-        Guid id,
-        [FromBody] SetSubscriptionTierRequest body,
-        CancellationToken cancellationToken)
-    {
-        var adminId = User.FindFirst("sub")?.Value ?? "admin";
-        var result = await adminBusinessService.SetSubscriptionTierAsync(
-            id,
-            body.Tier,
-            adminId,
-            cancellationToken);
-
-        return result.Match<IActionResult>(
-            _ => NoContent(),
-            error => error.Code switch
-            {
-                "validation" => BadRequest(new { title = error.Message }),
-                _ => NotFound(new { title = error.Message })
-            });
-    }
-
     [HttpPost("{id:guid}/approve")]
     public async Task<IActionResult> Approve(Guid id, CancellationToken cancellationToken)
     {

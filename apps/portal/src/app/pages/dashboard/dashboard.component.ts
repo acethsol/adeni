@@ -37,7 +37,6 @@ import {
   resolveCapabilities,
   resolveDashboardLayout,
   resolveDashboardRange,
-  subscriptionTierToSku,
   type BookingResponse,
   type BusinessProfile,
   type DashboardLayout,
@@ -207,7 +206,7 @@ export class DashboardComponent implements OnInit {
     if (!profile || !usage) return null;
     const countryCode = this.primaryCountryCode();
     if (!countryCode) return null;
-    const sku = subscriptionTierToSku(usage.tier);
+    const sku = usage.subscriptionSku;
     return getPlanDisplayForCountry(countryCode, sku)?.priceLabel ?? null;
   }
 

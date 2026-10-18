@@ -944,10 +944,6 @@ export const tenantEntitlementsSchema = z.object({
 
 export type TenantEntitlements = z.infer<typeof tenantEntitlementsSchema>;
 
-export const subscriptionTierSchema = z.enum(["free", "pro", "business"]);
-
-export type SubscriptionTier = z.infer<typeof subscriptionTierSchema>;
-
 export const subscriptionSkuSchema = z.enum(["starter", "professional", "business"]);
 
 export const tenantBillingStatusSchema = z.enum([
@@ -961,11 +957,11 @@ export const tenantBillingStatusSchema = z.enum([
 export type TenantBillingStatus = z.infer<typeof tenantBillingStatusSchema>;
 
 export const subscriptionUsageSchema = z.object({
-  tier: subscriptionTierSchema,
+  subscriptionSku: subscriptionSkuSchema,
   entitlements: tenantEntitlementsSchema,
   bookingsUsedThisMonth: z.number().int().nonnegative(),
   bookingsLimitThisMonth: z.number().int().positive().nullable(),
-  subscriptionSku: subscriptionSkuSchema.optional(),
+  contractSubscriptionSku: subscriptionSkuSchema.nullable().optional(),
   billingStatus: tenantBillingStatusSchema.optional(),
   trialEndsAt: z.string().nullable().optional(),
   paidThrough: z.string().nullable().optional(),
@@ -1050,7 +1046,7 @@ export type TenantDashboardLayout = z.infer<typeof tenantDashboardLayoutSchema>;
 
 export const subscriptionCheckoutRequestSchema = z.object({
   tenantId: z.string().uuid(),
-  targetTier: subscriptionTierSchema,
+  targetSku: subscriptionSkuSchema,
   customerEmail: z.string().email(),
   successUrl: z.string().url(),
   cancelUrl: z.string().url(),
@@ -1186,8 +1182,7 @@ export const adminBusinessSummarySchema = z.object({
   name: z.string(),
   slug: z.string(),
   status: z.number(),
-  subscriptionTier: subscriptionTierSchema,
-  subscriptionSku: subscriptionSkuSchema.optional(),
+  subscriptionSku: subscriptionSkuSchema,
   billingStatus: tenantBillingStatusSchema.optional(),
   trialEndsAt: z.string().nullable().optional(),
   createdAt: z.string(),
@@ -1206,9 +1201,9 @@ export const adminBusinessDirectoryStatsSchema = z.object({
       count: z.number().int().nonnegative(),
     }),
   ),
-  tierMix: z.array(
+  skuMix: z.array(
     z.object({
-      tier: subscriptionTierSchema,
+      sku: subscriptionSkuSchema,
       count: z.number().int().nonnegative(),
     }),
   ),
@@ -1222,12 +1217,6 @@ export const adminMarketCatalogStatsSchema = z.object({
 });
 
 export type AdminMarketCatalogStats = z.infer<typeof adminMarketCatalogStatsSchema>;
-
-export const setSubscriptionTierRequestSchema = z.object({
-  tier: subscriptionTierSchema,
-});
-
-export type SetSubscriptionTierRequest = z.infer<typeof setSubscriptionTierRequestSchema>;
 
 export const adminTenantCommercialTermsSchema = z.object({
   tenantId: z.string(),
@@ -1319,8 +1308,8 @@ export const businessProfileSchema = z.object({
   capabilities: z.array(z.string()).optional(),
   autoConfirmBookings: z.boolean().optional(),
   depositPercent: z.number().int().min(0).max(100).optional(),
-  subscriptionTier: subscriptionTierSchema.optional(),
   subscriptionSku: subscriptionSkuSchema.optional(),
+  effectiveSubscriptionSku: subscriptionSkuSchema.optional(),
   billingStatus: tenantBillingStatusSchema.optional(),
   trialEndsAt: z.string().nullable().optional(),
   paidThrough: z.string().nullable().optional(),

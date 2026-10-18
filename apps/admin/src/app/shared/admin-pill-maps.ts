@@ -6,7 +6,6 @@ import {
   type AdminBusinessSummary,
   type PendingBadgeRequest,
   type SubscriptionSku,
-  type SubscriptionTier,
   type TenantBillingStatus,
 } from "@adeni/shared";
 
@@ -45,12 +44,6 @@ export function billingStatusPill(
   return { label, variant };
 }
 
-export function tierPill(tier: SubscriptionTier): { label: string; variant: AdminPillVariant } {
-  const variant: AdminPillVariant =
-    tier === "business" ? "brand" : tier === "pro" ? "accent" : "neutral";
-  return { label: tier, variant };
-}
-
 export function skuPill(sku: SubscriptionSku): { label: string; variant: AdminPillVariant } {
   const variant: AdminPillVariant =
     sku === "business" ? "brand" : sku === "professional" ? "accent" : "neutral";
@@ -58,9 +51,9 @@ export function skuPill(sku: SubscriptionSku): { label: string; variant: AdminPi
 }
 
 export function businessPlanPill(
-  business: Pick<AdminBusinessSummary, "subscriptionSku" | "subscriptionTier">,
+  business: Pick<AdminBusinessSummary, "subscriptionSku">,
 ): { label: string; variant: AdminPillVariant } {
-  return skuPill(resolveSubscriptionSku(business.subscriptionSku, business.subscriptionTier));
+  return skuPill(resolveSubscriptionSku(business.subscriptionSku));
 }
 
 export function badgeTypePill(

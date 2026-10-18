@@ -44,16 +44,10 @@ public sealed class PaystackSubscriptionBillingProvider(
             return Result.Failure<SubscriptionCheckoutResponse>(ErrorCodes.PaymentProviderFailedError());
         }
 
-        if (request.TargetTier is SubscriptionTier.Free)
-        {
-            return Result.Failure<SubscriptionCheckoutResponse>(
-                Error.Validation("Choose a paid plan to upgrade."));
-        }
-
-        var tierApi = SubscriptionTierMapping.ToApiValue(request.TargetTier);
-        var reference = $"adeni_sub_{request.TenantId:N}_{tierApi}_{Guid.NewGuid():N}"[..64];
+        var sku = request.TargetSku;
+        var skuApi = SubscriptionSkuMapping.ToApiValue(sku);
+        var reference = $"adeni_sub_{request.TenantId:N}_{skuApi}_{Guid.NewGuid():N}"[..64];
         var (country, currency) = await ResolveTenantCountryAsync(request.TenantId, cancellationToken);
-        var sku = SubscriptionSkuMapping.FromLegacyTier(request.TargetTier);
         var planCode = ResolvePlanCode(sku, paystack);
 
         var payload = new Dictionary<string, object?>
@@ -64,7 +58,7 @@ public sealed class PaystackSubscriptionBillingProvider(
             ["metadata"] = new Dictionary<string, string>
             {
                 ["tenant_id"] = request.TenantId.ToString(),
-                ["target_tier"] = tierApi,
+                ["target_sku"] = skuApi,
                 ["billing_type"] = "saas_subscription",
             },
         };
@@ -163,8 +157,8 @@ public sealed class PaystackSubscriptionBillingProvider(
             var metadata = PaystackSubscriptionWebhookSupport.GetMetadata(data);
 
             var tenantId = PaystackSubscriptionWebhookSupport.TryGetMetadataTenantId(metadata);
-            var tier = PaystackSubscriptionWebhookSupport.TryGetMetadataTier(metadata)
-                ?? MapPlanCodeToTier(data);
+            var tier = PaystackSubscriptionWebhookSupport.TryGetMetadataSku(metadata)
+                ?? MapPlanCodeToSku(data);
 
             var reference = ResolveProviderReference(data, eventType);
             var status = ResolveStatus(data, eventType);
@@ -240,7 +234,7 @@ public sealed class PaystackSubscriptionBillingProvider(
         return eventType;
     }
 
-    private static string? MapPlanCodeToTier(JsonElement data)
+    private static string? MapPlanCodeToSku(JsonElement data)
     {
         if (data.ValueKind != JsonValueKind.Object)
         {

@@ -14,11 +14,6 @@ public sealed record TenantEntitlements(
 
 public static class SubscriptionEntitlements
 {
-    public const int FreeMonthlyBookingLimit = 20;
-
-    public static TenantEntitlements ForTier(SubscriptionTier tier) =>
-        ForSku(SubscriptionSkuMapping.FromLegacyTier(tier));
-
     public static TenantEntitlements ForSku(SubscriptionSku sku) =>
         sku switch
         {

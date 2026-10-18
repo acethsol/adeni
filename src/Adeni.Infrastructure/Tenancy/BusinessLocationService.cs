@@ -121,9 +121,8 @@ public sealed class BusinessLocationService(
             .AsNoTracking()
             .CountAsync(x => x.TenantId == tenantId && x.IsActive, cancellationToken);
 
-        var locationEntitlement = await entitlementsService.EnsureCanAddLocationAsync(
-            tenantId,
-            tenant.SubscriptionTier,
+        var locationEntitlement = await entitlementsService.EnsureCanAddLocationForTenantAsync(
+            tenant,
             activeLocationCount,
             cancellationToken);
         if (locationEntitlement.IsFailure)

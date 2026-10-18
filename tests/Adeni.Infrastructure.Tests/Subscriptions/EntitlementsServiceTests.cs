@@ -25,14 +25,13 @@ public sealed class EntitlementsServiceTests
             Id = Guid.NewGuid(),
             Name = "Starter Test",
             Status = TenantStatus.Verified,
-            SubscriptionTier = SubscriptionTier.Free,
             SubscriptionSku = SubscriptionSku.Starter,
             BillingStatus = TenantBillingStatus.Active,
             CreatedAt = DateTimeOffset.UtcNow,
         };
         db.Tenants.Add(tenant);
 
-        for (var i = 0; i < SubscriptionEntitlements.FreeMonthlyBookingLimit + 5; i++)
+        for (var i = 0; i < 30; i++)
         {
             db.Bookings.Add(new BookingRecord
             {
@@ -100,16 +99,23 @@ public sealed class EntitlementsServiceTests
     }
 
     [Fact]
-    public async Task Free_tier_blocks_second_location()
+    public async Task Starter_blocks_second_location()
     {
         await using var provider = BuildProvider();
         await using var scope = provider.CreateAsyncScope();
         var entitlements = scope.ServiceProvider.GetRequiredService<IEntitlementsService>();
 
-        var result = await entitlements.EnsureCanAddLocationAsync(
-            Guid.NewGuid(),
-            SubscriptionTier.Free,
-            activeLocationCount: 1);
+        var tenant = new Tenant
+        {
+            Id = Guid.NewGuid(),
+            Name = "Starter One Location",
+            Status = TenantStatus.Verified,
+            SubscriptionSku = SubscriptionSku.Starter,
+            BillingStatus = TenantBillingStatus.Active,
+            CreatedAt = DateTimeOffset.UtcNow,
+        };
+
+        var result = await entitlements.EnsureCanAddLocationForTenantAsync(tenant, activeLocationCount: 1);
 
         Assert.True(result.IsFailure);
         Assert.Equal(ErrorCodes.MultiLocationRequired, result.Error.Code);

@@ -156,7 +156,6 @@ public sealed class AdminBusinessService(
                         .FirstOrDefault()
                     ?? string.Empty,
                 t.Status,
-                SubscriptionTierMapping.ToApiValue(t.SubscriptionTier),
                 SubscriptionSkuMapping.ToApiValue(t.SubscriptionSku),
                 TenantBillingStatusMapping.ToApiValue(t.BillingStatus),
                 t.TrialEndsAt,
@@ -190,7 +189,6 @@ public sealed class AdminBusinessService(
                         .FirstOrDefault()
                     ?? string.Empty,
                 t.Status,
-                SubscriptionTierMapping.ToApiValue(t.SubscriptionTier),
                 SubscriptionSkuMapping.ToApiValue(t.SubscriptionSku),
                 TenantBillingStatusMapping.ToApiValue(t.BillingStatus),
                 t.TrialEndsAt,
@@ -211,10 +209,10 @@ public sealed class AdminBusinessService(
             .Select(g => new { Status = g.Key, Count = g.Count() })
             .ToListAsync(cancellationToken);
 
-        var tierRows = await dbContext.Tenants
+        var skuRows = await dbContext.Tenants
             .AsNoTracking()
-            .GroupBy(t => t.SubscriptionTier)
-            .Select(g => new { Tier = g.Key, Count = g.Count() })
+            .GroupBy(t => t.SubscriptionSku)
+            .Select(g => new { Sku = g.Key, Count = g.Count() })
             .ToListAsync(cancellationToken);
 
         var totalCount = statusRows.Sum(x => x.Count);
@@ -229,9 +227,9 @@ public sealed class AdminBusinessService(
                 .OrderBy(x => x.Status)
                 .Select(x => new AdminStatusCount((int)x.Status, x.Count))
                 .ToList(),
-            tierRows
-                .OrderBy(x => x.Tier)
-                .Select(x => new AdminTierCount(SubscriptionTierMapping.ToApiValue(x.Tier), x.Count))
+            skuRows
+                .OrderBy(x => x.Sku)
+                .Select(x => new AdminSkuCount(SubscriptionSkuMapping.ToApiValue(x.Sku), x.Count))
                 .ToList());
     }
 
@@ -246,38 +244,6 @@ public sealed class AdminBusinessService(
         return tenant is null
             ? Result.Failure<AdminTenantCommercialTermsResponse>(Error.NotFound("Business"))
             : Result.Success(AdminCommercialTermsMapper.ToResponse(tenant));
-    }
-
-    public async Task<Result<Unit>> SetSubscriptionTierAsync(
-        Guid tenantId,
-        string tier,
-        string adminId,
-        CancellationToken cancellationToken = default)
-    {
-        var tenant = await dbContext.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
-        if (tenant is null)
-        {
-            return Result.Failure<Unit>(Error.NotFound("Business"));
-        }
-
-        var normalizedTier = SubscriptionTierMapping.FromApiValue(tier);
-        tenant.SubscriptionTier = normalizedTier;
-        tenant.SubscriptionSku = SubscriptionSkuMapping.FromLegacyTier(normalizedTier);
-        TenantBillingPolicy.EndTrial(tenant);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        await auditLogWriter.WriteAsync(new AuditEntry(
-            Guid.NewGuid(),
-            adminId,
-            "tenant.subscription_tier_updated",
-            "tenant",
-            tenantId.ToString(),
-            correlationContext.CorrelationId,
-            DateTimeOffset.UtcNow,
-            $"{{\"tier\":\"{SubscriptionTierMapping.ToApiValue(normalizedTier)}\"}}"),
-            cancellationToken);
-
-        return Result.Success(Unit.Value);
     }
 
     public async Task<Result<Unit>> SetTenantCommercialTermsAsync(
@@ -315,7 +281,6 @@ public sealed class AdminBusinessService(
         if (request.SubscriptionSku is not null)
         {
             tenant.SubscriptionSku = SubscriptionSkuMapping.FromApiValue(request.SubscriptionSku);
-            TenantBillingPolicy.ApplySkuToLegacyTier(tenant);
         }
 
         if (request.TrialSku is not null && !request.TrialDays.HasValue)

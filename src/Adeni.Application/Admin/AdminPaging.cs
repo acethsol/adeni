@@ -27,10 +27,10 @@ public sealed record AdminPagedResult<T>(
 
 public sealed record AdminStatusCount(int Status, int Count);
 
-public sealed record AdminTierCount(string Tier, int Count);
+public sealed record AdminSkuCount(string Sku, int Count);
 
 public sealed record AdminBusinessDirectoryStats(
     int TotalCount,
     int VerifiedCount,
     IReadOnlyList<AdminStatusCount> StatusMix,
-    IReadOnlyList<AdminTierCount> TierMix);
+    IReadOnlyList<AdminSkuCount> SkuMix);

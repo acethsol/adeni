@@ -24,7 +24,6 @@ import { BusinessSubscriptionWizardComponent } from "./business-subscription-wiz
 import {
   buildCommercialTermsRequest,
   draftFromCommercialTerms,
-  legacyTierForSku,
   type BusinessSubscriptionDraft,
 } from "./business-subscription.model";
 
@@ -170,18 +169,12 @@ export class AdminBusinessesComponent {
 
     const body = buildCommercialTermsRequest(draft);
     const skuChanged = draft.subscriptionSku !== draft.initialSubscriptionSku;
-    const initialTier = legacyTierForSku(draft.initialSubscriptionSku);
-    const nextTier = legacyTierForSku(draft.subscriptionSku);
-    const tierChanged = skuChanged && nextTier !== initialTier;
 
     this.subscriptionSaving.set(true);
     try {
       await this.feedback.runLoading(async () => {
         const client = await this.api.createAuthorizedClient();
         await client.setAdminTenantCommercialTerms(business.id, body);
-        if (tierChanged) {
-          await client.setAdminBusinessSubscriptionTier(business.id, nextTier);
-        }
       }, "Saving subscription…", business.name);
       this.closeSubscriptionWizard();
       await this.load();

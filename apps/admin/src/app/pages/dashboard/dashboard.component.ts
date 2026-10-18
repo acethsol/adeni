@@ -10,7 +10,7 @@ import {
   type PendingBusiness,
   formatSubscriptionSku,
   resolveSubscriptionSku,
-  type SubscriptionTier,
+  type SubscriptionSku,
 } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
@@ -28,12 +28,6 @@ type LoadState = {
   marketsPreview: AdminMarket[] | null;
   liveMarketCount: number | null;
   subscriptionMetrics: AdminSubscriptionMetrics | null;
-};
-
-const TIER_LABELS: Record<SubscriptionTier, string> = {
-  free: "Starter",
-  pro: "Professional",
-  business: "Business",
 };
 
 @Component({
@@ -141,25 +135,22 @@ export class AdminDashboardComponent implements OnInit {
     }));
   });
 
-  readonly tierMix = computed(() => {
+  readonly skuMix = computed(() => {
     const stats = this.businessStats();
-    const byTier = new Map((stats?.tierMix ?? []).map((row) => [row.tier, row.count]));
-    return (["free", "pro", "business"] as const).map((tier) => ({
-      key: tier,
-      label: TIER_LABELS[tier],
-      count: byTier.get(tier) ?? 0,
-      tone: `tier-${tier}`,
+    const bySku = new Map((stats?.skuMix ?? []).map((row) => [row.sku, row.count]));
+    return (["starter", "professional", "business"] as const).map((sku: SubscriptionSku) => ({
+      key: sku,
+      label: formatSubscriptionSku(sku),
+      count: bySku.get(sku) ?? 0,
+      tone: `sku-${sku}`,
     }));
   });
 
   readonly recent = computed(() => this.data()?.recentBusinesses ?? []);
 
   readonly formatTenantStatus = formatTenantStatus;
-  readonly tierLabel = (tier: SubscriptionTier) => TIER_LABELS[tier];
   readonly planLabel = (business: AdminBusinessSummary) =>
-    formatSubscriptionSku(
-      resolveSubscriptionSku(business.subscriptionSku, business.subscriptionTier),
-    );
+    formatSubscriptionSku(resolveSubscriptionSku(business.subscriptionSku));
   readonly ageLabel = ageLabel;
   readonly shortDate = shortDate;
 

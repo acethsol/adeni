@@ -1,11 +1,9 @@
 import {
   resolveSubscriptionSku,
-  skuToSubscriptionTier,
   type AdminBusinessSummary,
   type AdminTenantCommercialTerms,
   type SetTenantCommercialTermsRequest,
   type SubscriptionSku,
-  type SubscriptionTier,
   type TenantBillingStatus,
 } from "@adeni/shared";
 
@@ -32,7 +30,7 @@ export function draftFromCommercialTerms(
   terms: AdminTenantCommercialTerms,
   business: AdminBusinessSummary,
 ): BusinessSubscriptionDraft {
-  const subscriptionSku = resolveSubscriptionSku(terms.subscriptionSku, business.subscriptionTier);
+  const subscriptionSku = resolveSubscriptionSku(terms.subscriptionSku ?? business.subscriptionSku);
   return {
     subscriptionSku,
     initialSubscriptionSku: subscriptionSku,
@@ -51,10 +49,6 @@ export function draftFromCommercialTerms(
     clearDiscounts: false,
     clearCustomSaasPrice: false,
   };
-}
-
-export function legacyTierForSku(sku: SubscriptionSku): SubscriptionTier {
-  return skuToSubscriptionTier(sku);
 }
 
 export function buildCommercialTermsRequest(

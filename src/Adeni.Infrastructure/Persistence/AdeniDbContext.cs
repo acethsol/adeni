@@ -128,7 +128,6 @@ public sealed class AdeniDbContext(
             entity.ToTable("tenants", "tenancy");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Name).HasMaxLength(200);
-            entity.Property(x => x.SubscriptionTier).HasConversion<int>();
             entity.Property(x => x.SubscriptionSku).HasConversion<int>();
             entity.Property(x => x.BillingStatus).HasConversion<int>();
             entity.Property(x => x.TrialSku).HasConversion<int>();

@@ -53,14 +53,24 @@ internal static class PaystackSubscriptionWebhookSupport
         return Guid.TryParse(raw, out var tenantId) ? tenantId : null;
     }
 
-    public static string? TryGetMetadataTier(JsonElement metadata)
+    public static string? TryGetMetadataSku(JsonElement metadata)
     {
-        if (TryGetMetadataString(metadata, "target_tier", out var tier))
+        if (TryGetMetadataString(metadata, "target_sku", out var sku))
         {
-            return tier;
+            return sku;
         }
 
-        return TryGetMetadataString(metadata, "targetTier", out tier) ? tier : null;
+        if (TryGetMetadataString(metadata, "targetSku", out sku))
+        {
+            return sku;
+        }
+
+        if (TryGetMetadataString(metadata, "target_tier", out sku))
+        {
+            return sku;
+        }
+
+        return TryGetMetadataString(metadata, "targetTier", out sku) ? sku : null;
     }
 
     public static JsonElement GetDataObject(JsonElement root) =>

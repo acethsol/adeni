@@ -38,21 +38,6 @@ public sealed class TenantBillingPolicyTests
     }
 
     [Fact]
-    public void ResolveEffectiveSku_maps_legacy_pro_tier_when_sku_still_starter()
-    {
-        var tenant = new Tenant
-        {
-            SubscriptionSku = SubscriptionSku.Starter,
-            SubscriptionTier = SubscriptionTier.Pro,
-            BillingStatus = TenantBillingStatus.Active,
-        };
-
-        var sku = TenantBillingPolicy.ResolveEffectiveSku(tenant);
-
-        Assert.Equal(SubscriptionSku.Professional, sku);
-    }
-
-    [Fact]
     public void GrantTrial_zero_days_ends_trial()
     {
         var tenant = new Tenant

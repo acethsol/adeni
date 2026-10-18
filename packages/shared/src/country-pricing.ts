@@ -1,6 +1,6 @@
 import catalog from "./data/country-pricing.json";
 import { formatPrice } from "./format";
-import type { SubscriptionTier, SubscriptionUsage } from "./schemas";
+import type { SubscriptionUsage } from "./schemas";
 import { z } from "zod";
 
 export const SUBSCRIPTION_SKUS = ["starter", "professional", "business"] as const;
@@ -19,26 +19,21 @@ export function formatSubscriptionSku(sku: SubscriptionSku | null | undefined): 
   return SUBSCRIPTION_SKU_LABELS[sku] ?? sku;
 }
 
-/** Dashboard / plan strip — SKU names (Starter, Professional), not legacy “free”. */
+/** Dashboard / plan strip — SKU names (Starter, Professional). */
 export function formatSubscriptionPlanLabel(usage: SubscriptionUsage): string {
-  const sku = resolveSubscriptionSku(usage.subscriptionSku, usage.tier);
-  const base = SUBSCRIPTION_SKU_LABELS[sku];
+  const base = SUBSCRIPTION_SKU_LABELS[usage.subscriptionSku];
   if (usage.billingStatus === "trialing") {
     return `${base} trial`;
   }
   return base;
 }
 
-/** Prefer stored SKU; fall back to legacy display tier mapping. */
+/** Normalize API SKU string; defaults to starter when missing. */
 export function resolveSubscriptionSku(
   sku: SubscriptionSku | null | undefined,
-  legacyTier?: SubscriptionTier | null,
 ): SubscriptionSku {
-  if (sku) {
+  if (sku && SUBSCRIPTION_SKUS.includes(sku)) {
     return sku;
-  }
-  if (legacyTier) {
-    return subscriptionTierToSku(legacyTier);
   }
   return "starter";
 }
@@ -102,39 +97,12 @@ const SKU_DISPLAY: Record<
   },
 };
 
-/** Maps legacy API tier values to commercial SKUs. */
-export function subscriptionTierToSku(tier: SubscriptionTier): SubscriptionSku {
-  switch (tier) {
-    case "pro":
-      return "professional";
-    case "business":
-      return "business";
-    default:
-      return "starter";
-  }
-}
-
-export function skuToSubscriptionTier(sku: SubscriptionSku): SubscriptionTier {
-  switch (sku) {
-    case "professional":
-      return "pro";
-    case "business":
-      return "business";
-    default:
-      return "free";
-  }
-}
-
-export function normalizeCountryCode(countryCode: string): string {
-  return countryCode.trim().toUpperCase();
-}
-
-export function getCountryPricingCatalog(): CountryPricingCatalog {
-  return parsedCatalog;
+export function listPricedCountryCodes(): string[] {
+  return Object.keys(parsedCatalog.countries).sort();
 }
 
 export function getCountryPricing(countryCode: string): CountryPricing | null {
-  const key = normalizeCountryCode(countryCode);
+  const key = countryCode.trim().toUpperCase();
   return parsedCatalog.countries[key] ?? null;
 }
 
@@ -142,11 +110,10 @@ export function getGmvCollection(countryCode: string): GmvCollectionConfig | nul
   return getCountryPricing(countryCode)?.gmvCollection ?? null;
 }
 
-export function listPricedCountryCodes(): string[] {
-  return Object.keys(parsedCatalog.countries).sort();
-}
-
-export function getSkuMonthlyAmount(countryCode: string, sku: SubscriptionSku): number | null {
+export function getSkuMonthlyAmount(
+  countryCode: string,
+  sku: SubscriptionSku,
+): number | null {
   const country = getCountryPricing(countryCode);
   if (!country) return null;
   const row = country.skus[sku];

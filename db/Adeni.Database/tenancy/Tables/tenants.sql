@@ -2,7 +2,6 @@ CREATE TABLE [tenancy].[tenants] (
     [Id]                       UNIQUEIDENTIFIER   NOT NULL,
     [Name]                     NVARCHAR (200)     NOT NULL,
     [Status]                   INT                NOT NULL,
-    [SubscriptionTier]         INT                NOT NULL,
     [SubscriptionSku]          INT                NOT NULL CONSTRAINT [DF_tenants_SubscriptionSku] DEFAULT ((0)),
     [BillingStatus]            INT                NOT NULL CONSTRAINT [DF_tenants_BillingStatus] DEFAULT ((0)),
     [TrialSku]                 INT                NULL,
