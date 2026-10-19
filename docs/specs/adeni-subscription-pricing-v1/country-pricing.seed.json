@@ -1,0 +1,47 @@
+{
+  "version": "2026-launch-01",
+  "effectiveFrom": "2026-10-19",
+  "countries": {
+    "CA": {
+      "currency": "CAD",
+      "selfServeEnabled": true,
+      "plans": {
+        "starter": {
+          "monthlyAmount": 99.0,
+          "platformFeePercent": 0.0
+        },
+        "professional": {
+          "monthlyAmount": 149.0,
+          "platformFeePercent": 0.0
+        },
+        "business": {
+          "monthlyAmount": 249.0,
+          "platformFeePercent": 0.0
+        }
+      }
+    },
+    "NG": {
+      "currency": "NGN",
+      "selfServeEnabled": true,
+      "plans": {
+        "starter": {
+          "monthlyAmount": 35000,
+          "platformFeePercent": 0.0
+        },
+        "professional": {
+          "monthlyAmount": 55000,
+          "platformFeePercent": 0.0
+        },
+        "business": {
+          "monthlyAmount": 95000,
+          "platformFeePercent": 0.0
+        }
+      }
+    },
+    "US": {
+      "currency": "USD",
+      "selfServeEnabled": false,
+      "plans": {}
+    }
+  }
+}

@@ -12,7 +12,21 @@ public sealed record MarketDefinition(
     IReadOnlyList<string> Languages,
     bool IsLive,
     string? LaunchNote = null,
-    decimal PlatformFeePercent = 0m);
+    decimal PlatformFeePercent = 0m,
+    string DefaultCommerceProvider = "paystack",
+    string DefaultBillingProvider = "paystack");
+
+public static class MarketPaymentProviders
+{
+    public const string Paystack = "paystack";
+    public const string Stripe = "stripe";
+    public const string Stub = "stub";
+
+    public static string Normalize(string? value) =>
+        string.IsNullOrWhiteSpace(value)
+            ? Paystack
+            : value.Trim().ToLowerInvariant();
+}
 
 public interface IMarketCatalog
 {

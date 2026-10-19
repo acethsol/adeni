@@ -1,0 +1,138 @@
+.plan-page {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 0 0 3rem;
+  color: var(--cds-text-primary);
+}
+
+.head {
+  margin-bottom: var(--cds-spacing-06);
+}
+
+.kicker {
+  margin: 0 0 var(--cds-spacing-02);
+  font-size: 0.75rem;
+  letter-spacing: 0.32px;
+  color: var(--cds-text-secondary);
+}
+
+h1 {
+  margin: 0 0 var(--cds-spacing-03);
+  font-family: var(--font-family-display);
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.lede {
+  margin: 0;
+  max-width: 40rem;
+  color: var(--cds-text-secondary);
+  line-height: 1.5;
+}
+
+.muted {
+  color: var(--cds-text-secondary);
+  font-size: var(--cds-body-compact-01-size);
+}
+
+.notice {
+  margin: 0 0 var(--cds-spacing-05);
+  padding: var(--cds-spacing-04) var(--cds-spacing-05);
+  border-left: 3px solid var(--cds-support-warning);
+  background: var(--cds-layer-02);
+  font-size: var(--cds-body-compact-01-size);
+}
+
+.trial-note {
+  margin: 0 0 var(--cds-spacing-05);
+  font-weight: 600;
+}
+
+.tier-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  margin-bottom: var(--cds-spacing-06);
+}
+
+.tier {
+  padding: var(--cds-spacing-05);
+  border: 1px solid var(--cds-border-subtle-01);
+  border-radius: 0.5rem;
+  background: var(--cds-layer-01);
+}
+
+.tier.popular {
+  border-color: var(--accent, #7f56ff);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent, #7f56ff) 35%, transparent);
+}
+
+.pill {
+  display: inline-block;
+  margin-bottom: 0.35rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent, #7f56ff);
+}
+
+.tier-name {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.price {
+  margin: 0.35rem 0 0.15rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.tagline {
+  margin: 0 0 1rem;
+  color: var(--cds-text-secondary);
+  font-size: 0.9rem;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  background: var(--accent, #7f56ff);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.fee-note {
+  margin: 0 0 var(--cds-spacing-06);
+}
+
+.compare h2 {
+  margin: 0 0 var(--cds-spacing-04);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+th,
+td {
+  border-bottom: 1px solid var(--cds-border-subtle-01);
+  padding: 0.5rem 0.35rem;
+  text-align: left;
+}
+
+thead th {
+  font-weight: 600;
+}

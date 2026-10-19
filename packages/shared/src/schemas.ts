@@ -166,6 +166,16 @@ export const publicBusinessProfileSchema = z.object({
   /** Cover + gallery URLs for the public profile page. */
   imageUrls: z.array(z.string().url()).nullish(),
   policies: businessPoliciesSchema.nullish(),
+  /** Weekly business hours for SEO JSON-LD (day name + HH:mm). */
+  openingHours: z
+    .array(
+      z.object({
+        dayOfWeek: z.string(),
+        openTime: z.string(),
+        closeTime: z.string(),
+      }),
+    )
+    .nullish(),
 });
 
 export type PublicBusinessProfile = z.infer<typeof publicBusinessProfileSchema>;
@@ -493,6 +503,8 @@ export type BookingResponse = z.infer<typeof bookingResponseSchema>;
 export const markBookingPaidRequestSchema = z.object({
   externalReference: z.string().max(200).nullable().optional(),
   note: z.string().max(1000).nullable().optional(),
+  tipAmount: z.number().positive().optional(),
+  tipStaffMemberId: z.string().uuid().optional(),
 });
 
 export type MarkBookingPaidRequest = z.infer<typeof markBookingPaidRequestSchema>;
@@ -1233,6 +1245,11 @@ export const adminTenantCommercialTermsSchema = z.object({
   customSaasMonthlyAmount: z.number().positive().nullable().optional(),
   customSaasCurrency: z.string().length(3).nullable().optional(),
   customSaasSku: subscriptionSkuSchema.nullable().optional(),
+  billingCountryCode: z.string().length(2).nullable().optional(),
+  catalogListPrice: z.number().nonnegative().nullable().optional(),
+  effectiveMonthlyAmount: z.number().nonnegative().nullable().optional(),
+  pricingCatalogVersion: z.string().nullable().optional(),
+  currency: z.string().length(3).nullable().optional(),
 });
 
 export type AdminTenantCommercialTerms = z.infer<typeof adminTenantCommercialTermsSchema>;
@@ -1255,11 +1272,74 @@ export const setTenantCommercialTermsRequestSchema = z.object({
   customSaasCurrency: z.string().length(3).nullable().optional(),
   customSaasSku: subscriptionSkuSchema.optional(),
   clearCustomSaasPrice: z.boolean().optional(),
+  changeReason: z.string().max(500).optional(),
 });
 
 export type SetTenantCommercialTermsRequest = z.infer<
   typeof setTenantCommercialTermsRequestSchema
 >;
+
+export const publicSkuPriceSchema = z.object({
+  sku: subscriptionSkuSchema,
+  monthlyAmountMajor: z.number().nonnegative().nullable().optional(),
+});
+
+export const publicCountryPricingSchema = z.object({
+  countryCode: z.string().length(2),
+  currencyCode: z.string().length(3),
+  pricingCatalogVersion: z.string(),
+  selfServeEnabled: z.boolean(),
+  platformFeePercent: z.number().min(0).max(100),
+  skus: z.array(publicSkuPriceSchema),
+});
+
+export type PublicCountryPricing = z.infer<typeof publicCountryPricingSchema>;
+
+export const pricingCatalogVersionSummarySchema = z.object({
+  id: z.string(),
+  code: z.string(),
+  effectiveFrom: z.string(),
+  effectiveTo: z.string().nullable().optional(),
+  status: z.string(),
+  isActive: z.boolean(),
+});
+
+export type PricingCatalogVersionSummary = z.infer<typeof pricingCatalogVersionSummarySchema>;
+
+export const pricingCatalogEntrySchema = z.object({
+  countryCode: z.string().length(2),
+  currencyCode: z.string().length(3),
+  subscriptionSku: subscriptionSkuSchema,
+  monthlyAmountMajor: z.number().nonnegative().nullable().optional(),
+  platformFeePercent: z.number().min(0).max(100),
+  isSelfServeEnabled: z.boolean(),
+});
+
+export type PricingCatalogEntry = z.infer<typeof pricingCatalogEntrySchema>;
+
+export const pricingCatalogEntryDiffSchema = z.object({
+  countryCode: z.string().length(2),
+  subscriptionSku: subscriptionSkuSchema,
+  activeMonthlyAmountMajor: z.number().nonnegative().nullable().optional(),
+  monthlyAmountMajor: z.number().nonnegative().nullable().optional(),
+});
+
+export const pricingCatalogVersionDetailSchema = z.object({
+  id: z.string(),
+  code: z.string(),
+  effectiveFrom: z.string(),
+  effectiveTo: z.string().nullable().optional(),
+  status: z.string(),
+  isActive: z.boolean(),
+  entries: z.array(pricingCatalogEntrySchema),
+  diffFromActive: z.array(pricingCatalogEntryDiffSchema).nullable().optional(),
+});
+
+export type PricingCatalogVersionDetail = z.infer<typeof pricingCatalogVersionDetailSchema>;
+
+export const pricingCatalogVersionListResponseSchema = z.object({
+  items: z.array(pricingCatalogVersionSummarySchema),
+});
 
 export const walkInSettingsSchema = z.object({
   walkInsEnabled: z.boolean(),
@@ -1610,6 +1690,8 @@ export const initializePaymentRequestSchema = z.object({
   description: z.string().max(500).optional(),
   customerEmail: z.string().email().optional(),
   callbackUrl: z.string().url().optional(),
+  tipAmount: z.number().positive().optional(),
+  tipStaffMemberId: z.string().uuid().optional(),
 });
 
 export type InitializePaymentRequest = z.infer<typeof initializePaymentRequestSchema>;

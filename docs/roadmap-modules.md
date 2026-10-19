@@ -27,18 +27,18 @@ Each major build still needs a `docs/specs/sprint-XX-*.md` before implementation
 | # | Module | Status | Horizon | Code / docs | Notes |
 |---|--------|--------|---------|-------------|-------|
 | 1 | **Queue & check-in** | Partial | Now | Booking + `walk_in_queue` | [Sprint 29](./specs/sprint-29-queue-v1.md) ✅; [Sprint 30 check-in kiosk](./specs/sprint-30-kiosk-mode.md) ✅ |
-| 2 | **Payments & finance** | Partial | Now → Next | `Payments`, [payments.md](./payments.md) | Orchestration yes; payroll no |
+| 2 | **Finance** | Partial | Now → Next | `Finance` module (`Payments` code), [finance.md](./finance.md) | Commerce + docs; tips/export Phase 3; no payroll |
 | 2b | **POS bridge** | Planned | Later | Payments adapter | Integrate, don’t build POS |
 | 3 | **Verification / trust** | Partial | Now | Tenancy + Admin | Tiers shipped; deepen CAC/automation |
 | 4 | **Subscriptions & add-ons** | Partial | Next | Subscriptions | Entitlements shipped; live billing stub |
-| 5 | **Dashboards & reporting** | Partial | Next | Portal overview + Admin | Owner “today” first; ops GMV later |
+| 5 | **Reporting** | Partial | Next | `Reporting` + Dashboard queries, [reporting-module-boundaries.md](./specs/reporting-module-boundaries.md) | UI: Angular/Carbon; docs: QuestPDF; exports: CSV/ClosedXML/PDF |
 | 6 | **Messaging** | Shipped (client↔business) | Later (staff notes / WABA) | Messaging | Sprint 36 conversations + SignalR |
 | 7 | **Floor calendar & staff** | Shipped | Now (polish) | Booking + Identity | Team + practitioner boards |
 | 8 | **Onboarding** | Shipped | Now (polish) | Tenancy | Supply-first; category-aware defaults |
 | 9 | **Discovery & public page** | Shipped | Now | Discovery | SEO + shareable book link |
 | 10 | **Quotes** | Shipped | Later (wedge) | Quotes | Outside beauty Explore; keep for trades |
 | 11 | **AI agents** | Planned | Later | Sprint 20 | Customer + business agents |
-| 12 | **Notifications / reminders** | Partial | Next | Notifications | Prefs exist; delivery adapters thin |
+| 12 | **Notifications** | Partial | Next | `Notifications`, [notifications-module-boundaries.md](./specs/notifications-module-boundaries.md) | Resend email + Twilio SMS; prefs + event handlers shipped |
 | — | **Payroll / full POS / inventory** | Out of scope (early) | Much later | — | Phase 4+; see strategy §8 |
 
 ---

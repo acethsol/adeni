@@ -13,4 +13,6 @@ export const environment = {
     clientId: "",
     audience: "https://api.adeni.io",
   },
+  /** Set from Search Console → HTML tag verification (content=…). */
+  googleSiteVerification: "",
 };

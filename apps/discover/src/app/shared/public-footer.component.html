@@ -14,11 +14,7 @@
           <ul>
             @for (city of cityLinks(); track city.id) {
               <li>
-                <a
-                  routerLink="/discover"
-                  [queryParams]="{ market: city.id }"
-                  (click)="selectCity(city.id)"
-                >
+                <a [routerLink]="cityHref(city.id)" (click)="selectCity(city.id)">
                   {{ city.name }}
                 </a>
               </li>

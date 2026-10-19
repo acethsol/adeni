@@ -419,7 +419,9 @@ Do not rewrite large sections without approval.
 | [docs/auth0-setup.md](docs/auth0-setup.md) | Auth0 claims, MFA |
 | [docs/database-setup.md](docs/database-setup.md) | Postgres, migrations |
 | [docs/caching-setup.md](docs/caching-setup.md) | Redis keys, health |
-| [docs/payments.md](docs/payments.md) | Paystack orchestration, webhooks, deposits |
+| [docs/finance.md](docs/finance.md) | Commerce orchestration, webhooks, deposits (`/api/v1/finance/*`) |
+| [docs/reporting.md](docs/reporting.md) | Documents, dashboard queries, exports (Reporting module) |
+| [docs/notifications.md](docs/notifications.md) | Transactional email/SMS (Resend + Twilio) |
 | [docs/legal-launch-checklist.md](docs/legal-launch-checklist.md) | Privacy, Terms, NDPR launch gate (pre-production) |
 | [docs/tenant-isolation.md](docs/tenant-isolation.md) | Tenant middleware and filters |
 

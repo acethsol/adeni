@@ -5,6 +5,7 @@ import {
   formatFooterLanguageLabel,
   getCurrencySymbol,
   listMarkets,
+  seoMarketPath,
   t,
   type LocaleRegionPreset,
   type MarketConfig,
@@ -86,6 +87,10 @@ export class PublicFooterComponent {
     this.localeService.setLocale(preset.locale);
     this.market.applyMarketQueryParam(preset.marketId);
     this.closePicker();
+  }
+
+  cityHref(marketId: string): string {
+    return seoMarketPath(marketId);
   }
 
   selectCity(marketId: string): void {

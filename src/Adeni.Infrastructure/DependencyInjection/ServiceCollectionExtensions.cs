@@ -15,7 +15,7 @@ using Adeni.Infrastructure.Discovery;
 using Adeni.Infrastructure.Events;
 using Adeni.Infrastructure.Identity;
 using Adeni.Infrastructure.Notifications;
-using Adeni.Infrastructure.Payments;
+using Adeni.Infrastructure.Finance;
 using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Reviews;
 using Adeni.Infrastructure.Markets;
@@ -74,7 +74,7 @@ public static class ServiceCollectionExtensions
         services.AddReviewsModule();
         services.AddDiscoveryModule();
         services.AddNotificationsModule();
-        services.AddPaymentsModule(configuration);
+        services.AddFinanceModule(configuration);
         services.AddSubscriptionsModule(configuration);
         services.AddTrustModule();
         services.AddMessagingModule();

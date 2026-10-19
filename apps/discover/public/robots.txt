@@ -1,0 +1,10 @@
+# Adeni Discover — public crawl rules
+User-agent: *
+Allow: /
+Disallow: /my-bookings
+Disallow: /my-messages
+Disallow: /checkout/
+Disallow: /documents/
+Disallow: /q/
+
+Sitemap: https://adeni.com/sitemap.xml

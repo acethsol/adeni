@@ -19,11 +19,21 @@ import {
 import {
   AdeniCarbonIconComponent,
   AdeniConfirmService,
+  AdeniDataTableActionsDirective,
+  AdeniDataTableCellDirective,
+  AdeniDataTableComponent,
   AdeniFeedbackService,
+  AdeniIconBtnComponent,
+  AdeniListToolbarComponent,
   AdeniModalComponent,
+  AdeniPillComponent,
   AdeniPortalEmptyStateComponent,
   AdeniWizardComponent,
   PortalPageComponent,
+  readPersistedListViewMode,
+  type AdeniDataTableColumn,
+  type AdeniListViewMode,
+  type AdeniPillTone,
   type AdeniWizardStep,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
@@ -32,8 +42,10 @@ const AVATAR_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
 
 const DAYS_ORDER = [1, 2, 3, 4, 5, 6, 0];
+const STAFF_VIEW_STORAGE_KEY = "portal.staff";
 
 type StaffFormTab = "profile" | "services" | "hours" | "leave";
+type StaffRosterFilter = "all" | "bookable" | "inactive" | "portal";
 
 /** Create wizard steps (Leave only after save). */
 const CREATE_STEPS: StaffFormTab[] = ["profile", "services", "hours"];
@@ -124,6 +136,12 @@ function rowsToRules(rows: DayRow[]): WeeklyAvailabilityRule[] {
     AdeniModalComponent,
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
+    AdeniListToolbarComponent,
+    AdeniDataTableComponent,
+    AdeniDataTableActionsDirective,
+    AdeniDataTableCellDirective,
+    AdeniIconBtnComponent,
+    AdeniPillComponent,
     NgTemplateOutlet,
     DatePipe,
   ],
@@ -138,6 +156,11 @@ export class StaffComponent implements OnInit, OnDestroy {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly staff = signal<StaffMember[]>([]);
+  readonly rosterSearch = signal("");
+  readonly rosterFilter = signal<StaffRosterFilter>("all");
+  readonly viewMode = signal<AdeniListViewMode>(
+    readPersistedListViewMode(STAFF_VIEW_STORAGE_KEY, "cards"),
+  );
   readonly services = signal<ServiceOffering[]>([]);
   readonly busy = signal<string | null>(null);
   readonly editingId = signal<string | null>(null);
@@ -172,6 +195,52 @@ export class StaffComponent implements OnInit, OnDestroy {
   readonly availableRoles = computed(() =>
     staffRolesForCategories(this.categorySlugs(), this.preserveRoleKey()),
   );
+
+  readonly filteredStaff = computed(() => {
+    let list = this.staff();
+    switch (this.rosterFilter()) {
+      case "bookable":
+        list = list.filter((m) => m.isActive);
+        break;
+      case "inactive":
+        list = list.filter((m) => !m.isActive);
+        break;
+      case "portal":
+        list = list.filter((m) => m.portalAccessStatus !== "none");
+        break;
+      default:
+        break;
+    }
+
+    const query = this.rosterSearch().trim().toLowerCase();
+    if (!query) {
+      return list;
+    }
+    return list.filter((member) => {
+      const haystack = [
+        member.displayName,
+        member.firstName,
+        member.lastName,
+        member.title ?? "",
+        this.roleLabel(member.roleKey),
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+  });
+
+  readonly staffTableColumns: AdeniDataTableColumn<StaffMember>[] = [
+    { id: "name", header: "Team member", cell: (m) => m.displayName.trim() },
+    { id: "title", header: "Title", cell: (m) => m.title?.trim() || "—" },
+    { id: "status", header: "Booking", cell: () => "" },
+    { id: "access", header: "Portal", cell: () => "" },
+  ];
+
+  readonly staffRowClass = (member: StaffMember): string | undefined =>
+    member.isActive ? undefined : "inactive-row";
+
+  readonly trackStaffRow = (member: StaffMember): string => member.id;
 
   /** Create = wizard; edit = free tabs. */
   readonly isCreateWizard = computed(() => this.showForm() && !this.editingId());
@@ -282,6 +351,29 @@ export class StaffComponent implements OnInit, OnDestroy {
       default:
         return "No access";
     }
+  }
+
+  setRosterFilter(filter: StaffRosterFilter): void {
+    this.rosterFilter.set(filter);
+  }
+
+  bookingPillTone(member: StaffMember): AdeniPillTone {
+    return member.isActive ? "success" : "danger";
+  }
+
+  accessPillTone(status: StaffMember["portalAccessStatus"]): AdeniPillTone {
+    switch (status) {
+      case "active":
+        return "accent";
+      case "invite_pending":
+        return "warning";
+      default:
+        return "neutral";
+    }
+  }
+
+  personAvatarStyle(member: StaffMember): string {
+    return this.roleTone(member.roleKey);
   }
 
   openInvite(member: StaffMember): void {

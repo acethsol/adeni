@@ -206,11 +206,11 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         ],
       },
       {
-        path: "/payments",
-        label: "Payments",
+        path: "/finance",
+        label: "Finance",
         icon: "payments",
         capability: "deposits",
-        permission: "portal.payments",
+        permission: "portal.finance",
         tabs: [
           { id: "links", label: "Links" },
           { id: "ledger", label: "Ledger" },

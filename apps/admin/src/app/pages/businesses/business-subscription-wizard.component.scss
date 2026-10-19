@@ -12,6 +12,27 @@
   gap: 0.75rem;
 }
 
+.pricing-summary {
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--cds-spacing-02);
+  background: var(--cds-layer-01, var(--surface-muted));
+  font-size: 0.8125rem;
+
+  p {
+    margin: 0.25rem 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: baseline;
+  }
+}
+
+.validation-hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--cds-support-error, #da1e28);
+}
+
 .wizard-form label {
   display: flex;
   flex-direction: column;

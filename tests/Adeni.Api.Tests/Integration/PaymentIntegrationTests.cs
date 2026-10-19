@@ -4,7 +4,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Adeni.Api.Middleware;
 using Adeni.Domain.Identity;
-using Adeni.Domain.Payments;
+using Adeni.Domain.Finance;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
@@ -40,7 +40,7 @@ public sealed class PaymentIntegrationTests : IClassFixture<WebApplicationFactor
         var tenantId = Guid.NewGuid();
 
         var response = await client.PostAsJsonAsync(
-            "/api/v1/payments/initialize",
+            "/api/v1/finance/initialize",
             new
             {
                 tenantId,
@@ -66,7 +66,7 @@ public sealed class PaymentIntegrationTests : IClassFixture<WebApplicationFactor
 
         var client = factory.CreateClient();
         var response = await client.PostAsJsonAsync(
-            "/api/v1/payments/stub/confirm",
+            "/api/v1/finance/stub/confirm",
             new { reference = "stub_test_ref" });
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -116,7 +116,7 @@ public sealed class PaymentIntegrationTests : IClassFixture<WebApplicationFactor
         client.DefaultRequestHeaders.Add(DevBusinessAuthMiddleware.DevAuth0SubHeader, ownerSub);
         client.DefaultRequestHeaders.Add(TenantAccessMiddleware.TenantHeaderName, tenantA.ToString());
 
-        var response = await client.GetAsync($"/api/v1/payments/ledger?tenantId={tenantB}");
+        var response = await client.GetAsync($"/api/v1/finance/ledger?tenantId={tenantB}");
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
@@ -140,13 +140,13 @@ public sealed class PaymentIntegrationTests : IClassFixture<WebApplicationFactor
             type = "link"
         };
 
-        using var firstRequest = new HttpRequestMessage(HttpMethod.Post, "/api/v1/payments/initialize")
+        using var firstRequest = new HttpRequestMessage(HttpMethod.Post, "/api/v1/finance/initialize")
         {
             Content = JsonContent.Create(body),
         };
         firstRequest.Headers.Add("Idempotency-Key", idempotencyKey);
 
-        using var secondRequest = new HttpRequestMessage(HttpMethod.Post, "/api/v1/payments/initialize")
+        using var secondRequest = new HttpRequestMessage(HttpMethod.Post, "/api/v1/finance/initialize")
         {
             Content = JsonContent.Create(body),
         };

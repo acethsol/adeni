@@ -14,21 +14,23 @@ describe("country-pricing", () => {
     expect(listPricedCountryCodes()).toEqual(["CA", "NG", "US"]);
   });
 
-  it("returns NG starter at 50000 NGN", () => {
-    expect(getSkuMonthlyAmount("NG", "starter")).toBe(50000);
-    expect(getSkuMonthlyAmount("ng", "professional")).toBe(70000);
-    expect(getSkuMonthlyAmount("NG", "business")).toBe(100000);
+  it("returns NG launch ladder", () => {
+    expect(getSkuMonthlyAmount("NG", "starter")).toBe(35000);
+    expect(getSkuMonthlyAmount("ng", "professional")).toBe(55000);
+    expect(getSkuMonthlyAmount("NG", "business")).toBe(95000);
   });
 
-  it("returns US and CA ladder", () => {
-    expect(getSkuMonthlyAmount("US", "starter")).toBe(150);
-    expect(getSkuMonthlyAmount("US", "professional")).toBe(200);
-    expect(getSkuMonthlyAmount("CA", "starter")).toBe(200);
+  it("returns CA launch ladder and US has no self-serve list price", () => {
+    expect(getSkuMonthlyAmount("CA", "starter")).toBe(99);
+    expect(getSkuMonthlyAmount("CA", "professional")).toBe(149);
+    expect(getSkuMonthlyAmount("CA", "business")).toBe(249);
+    expect(getSkuMonthlyAmount("US", "starter")).toBeNull();
+    expect(getSkuMonthlyAmount("US", "professional")).toBeNull();
   });
 
   it("formats monthly price with currency", () => {
-    expect(formatSkuMonthlyPrice("US", "starter")).toMatch(/\$150\.00\/mo/);
-    expect(formatSkuMonthlyPrice("NG", "starter")).toMatch(/50,000/);
+    expect(formatSkuMonthlyPrice("CA", "starter")).toMatch(/\$99\.00\/mo/);
+    expect(formatSkuMonthlyPrice("NG", "starter")).toMatch(/35,000/);
   });
 
   it("resolves subscription SKU with starter default", () => {
@@ -43,13 +45,14 @@ describe("country-pricing", () => {
     expect(gmv?.feeBearer).toBe("business");
   });
 
-  it("NA gmv uses stripe connect draft rate", () => {
-    expect(getCountryPricing("CA")?.gmvCollection.platformFeePercent).toBe(0.75);
+  it("CA and NG gmv catalog rate is 0% at launch", () => {
+    expect(getCountryPricing("CA")?.gmvCollection.platformFeePercent).toBe(0);
+    expect(getCountryPricing("NG")?.gmvCollection.platformFeePercent).toBe(0);
   });
 
   it("effective platform fee is 0 until collection ready", () => {
     expect(getEffectivePlatformFeePercent("CA", false)).toBe(0);
-    expect(getEffectivePlatformFeePercent("CA", true)).toBe(0.75);
+    expect(getEffectivePlatformFeePercent("CA", true)).toBe(0);
     expect(getEffectivePlatformFeePercent("NG", true)).toBe(0);
   });
 });

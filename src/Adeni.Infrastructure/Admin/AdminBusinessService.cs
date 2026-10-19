@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Admin;
 
+using System.Text.Json;
 using Adeni.Application.Abstractions;
 using Adeni.Application.Admin;
 using Adeni.Application.Caching;
@@ -15,7 +16,8 @@ public sealed class AdminBusinessService(
     AdeniDbContext dbContext,
     IAuditLogWriter auditLogWriter,
     ICorrelationContext correlationContext,
-    ICacheService cache) : IAdminBusinessService
+    ICacheService cache,
+    ITenantPricingResolver tenantPricingResolver) : IAdminBusinessService
 {
     public async Task<Result<AdminPagedResult<PendingBusinessResponse>>> ListPendingVerificationsAsync(
         string? search,
@@ -241,9 +243,14 @@ public sealed class AdminBusinessService(
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
 
-        return tenant is null
-            ? Result.Failure<AdminTenantCommercialTermsResponse>(Error.NotFound("Business"))
-            : Result.Success(AdminCommercialTermsMapper.ToResponse(tenant));
+        if (tenant is null)
+        {
+            return Result.Failure<AdminTenantCommercialTermsResponse>(Error.NotFound("Business"));
+        }
+
+        var country = await tenantPricingResolver.ResolvePrimaryBillingCountryAsync(tenantId, cancellationToken);
+        var pricing = tenantPricingResolver.ResolveForTenant(tenant, country);
+        return Result.Success(AdminCommercialTermsMapper.ToResponse(tenant, pricing));
     }
 
     public async Task<Result<Unit>> SetTenantCommercialTermsAsync(
@@ -258,6 +265,7 @@ public sealed class AdminBusinessService(
             return Result.Failure<Unit>(Error.NotFound("Business"));
         }
 
+        var beforeSnapshot = AdminCommercialTermsSnapshot.FromTenant(tenant);
         var now = DateTimeOffset.UtcNow;
 
         if (request.EndTrial == true)
@@ -378,7 +386,30 @@ public sealed class AdminBusinessService(
             tenant.CustomSaasSku = SubscriptionSkuMapping.FromApiValue(request.CustomSaasSku);
         }
 
+        var afterSnapshot = AdminCommercialTermsSnapshot.FromTenant(tenant);
+        var commercialChanged = !beforeSnapshot.EqualsCommercialTerms(afterSnapshot)
+            || request.EndTrial == true
+            || request.TrialDays.HasValue
+            || request.ClearDiscounts == true
+            || request.ClearCustomSaasPrice == true;
+
+        var changeReason = ResolveChangeReason(request);
+        if (commercialChanged && string.IsNullOrWhiteSpace(changeReason))
+        {
+            return Result.Failure<Unit>(
+                Error.Validation("A change reason is required when updating commercial terms."));
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        var auditMetadata = commercialChanged
+            ? JsonSerializer.Serialize(new
+            {
+                changeReason,
+                before = beforeSnapshot,
+                after = afterSnapshot,
+            })
+            : null;
 
         await auditLogWriter.WriteAsync(new AuditEntry(
             Guid.NewGuid(),
@@ -388,10 +419,25 @@ public sealed class AdminBusinessService(
             tenantId.ToString(),
             correlationContext.CorrelationId,
             DateTimeOffset.UtcNow,
-            null),
+            auditMetadata),
             cancellationToken);
 
         return Result.Success(Unit.Value);
+    }
+
+    private static string? ResolveChangeReason(SetTenantCommercialTermsRequest request)
+    {
+        if (!string.IsNullOrWhiteSpace(request.ChangeReason))
+        {
+            return request.ChangeReason.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.BillingCompReason))
+        {
+            return request.BillingCompReason.Trim();
+        }
+
+        return null;
     }
 
     public async Task<Result<Unit>> ApproveAsync(

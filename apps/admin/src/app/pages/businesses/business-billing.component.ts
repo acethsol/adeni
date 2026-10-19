@@ -27,6 +27,8 @@ import { BusinessSubscriptionWizardComponent } from "./business-subscription-wiz
 import {
   buildCommercialTermsRequest,
   draftFromCommercialTerms,
+  hasCommercialTermsDelta,
+  resolveCommercialChangeReason,
   type BusinessSubscriptionDraft,
 } from "./business-subscription.model";
 
@@ -160,6 +162,11 @@ export class BusinessBillingComponent {
     const business = this.subscriptionBusiness();
     const draft = this.subscriptionDraft();
     if (!business || !draft) {
+      return;
+    }
+
+    if (hasCommercialTermsDelta(draft) && !resolveCommercialChangeReason(draft)) {
+      this.feedback.error("Add an audit note or change reason before saving commercial updates.");
       return;
     }
 

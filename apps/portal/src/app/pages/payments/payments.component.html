@@ -108,6 +108,36 @@
           </ul>
         }
       </section>
+    } @else if (tab() === "export") {
+      <section class="card">
+        <h3>Staff payouts export</h3>
+        <p class="muted">
+          Download tips and commissions for payroll import (CSV or JSON). Adeni does not run payroll.
+        </p>
+        <div class="field">
+          <label>From</label>
+          <input type="date" [(ngModel)]="exportFrom" />
+        </div>
+        <div class="field">
+          <label>To</label>
+          <input type="date" [(ngModel)]="exportTo" />
+        </div>
+        <div class="field">
+          <label>Format</label>
+          <select [(ngModel)]="exportFormat">
+            <option value="csv">CSV</option>
+            <option value="json">JSON</option>
+          </select>
+        </div>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="exporting"
+          (click)="downloadCompensationExport()"
+        >
+          {{ exporting ? "Preparing…" : "Download export" }}
+        </button>
+      </section>
     } @else {
       <section class="card">
         <h3>Create payment link</h3>

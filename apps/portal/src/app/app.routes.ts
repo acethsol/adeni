@@ -149,9 +149,9 @@ export const routes: Routes = [
       },
       { path: "register", component: RegisterComponent, title: "Register" },
       {
-        path: "payments",
+        path: "finance",
         component: PaymentsComponent,
-        title: "Payments",
+        title: "Finance",
         canActivate: [portalPermissionGuard],
       },
       {

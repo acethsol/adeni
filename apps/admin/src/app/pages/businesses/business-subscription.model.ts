@@ -22,8 +22,10 @@ export type BusinessSubscriptionDraft = {
   customSaasCurrency: string;
   customSaasSku: SubscriptionSku | "";
   billingCompReason: string;
+  changeReason: string;
   clearDiscounts: boolean;
   clearCustomSaasPrice: boolean;
+  initialTerms: AdminTenantCommercialTerms;
 };
 
 export function draftFromCommercialTerms(
@@ -46,18 +48,78 @@ export function draftFromCommercialTerms(
     customSaasCurrency: terms.customSaasCurrency ?? "",
     customSaasSku: terms.customSaasSku ?? "",
     billingCompReason: terms.billingCompReason ?? "",
+    changeReason: "",
     clearDiscounts: false,
     clearCustomSaasPrice: false,
+    initialTerms: terms,
   };
+}
+
+export function hasCommercialTermsDelta(draft: BusinessSubscriptionDraft): boolean {
+  const initial = draft.initialTerms;
+  if (draft.subscriptionSku !== initial.subscriptionSku) {
+    return true;
+  }
+  if (draft.billingStatus !== initial.billingStatus) {
+    return true;
+  }
+  if (draft.endTrial) {
+    return true;
+  }
+  if (draft.trialDays != null) {
+    return true;
+  }
+  if (draft.clearDiscounts) {
+    return true;
+  }
+  if (draft.clearCustomSaasPrice) {
+    return true;
+  }
+  if (draft.discountPercent !== (initial.discountPercent ?? null)) {
+    return true;
+  }
+  if (draft.discountFixedAmount !== (initial.discountFixedAmount ?? null)) {
+    return true;
+  }
+  const initialDiscountCurrency = initial.discountCurrency ?? "";
+  if (draft.discountCurrency.trim().toUpperCase() !== initialDiscountCurrency.toUpperCase()) {
+    return true;
+  }
+  if (draft.discountCyclesRemaining !== (initial.discountCyclesRemaining ?? null)) {
+    return true;
+  }
+  if (draft.customSaasMonthlyAmount !== (initial.customSaasMonthlyAmount ?? null)) {
+    return true;
+  }
+  const initialCustomCurrency = initial.customSaasCurrency ?? "";
+  if (draft.customSaasCurrency.trim().toUpperCase() !== initialCustomCurrency.toUpperCase()) {
+    return true;
+  }
+  const initialCustomSku = initial.customSaasSku ?? "";
+  if ((draft.customSaasSku || "") !== initialCustomSku) {
+    return true;
+  }
+  return false;
+}
+
+export function resolveCommercialChangeReason(draft: BusinessSubscriptionDraft): string | null {
+  const changeReason = draft.changeReason.trim();
+  if (changeReason) {
+    return changeReason;
+  }
+  const billingCompReason = draft.billingCompReason.trim();
+  return billingCompReason || null;
 }
 
 export function buildCommercialTermsRequest(
   draft: BusinessSubscriptionDraft,
 ): SetTenantCommercialTermsRequest {
+  const changeReason = resolveCommercialChangeReason(draft);
   const body: SetTenantCommercialTermsRequest = {
     subscriptionSku: draft.subscriptionSku,
     billingStatus: draft.billingStatus,
     billingCompReason: draft.billingCompReason.trim() || null,
+    changeReason: changeReason ?? undefined,
   };
 
   if (draft.endTrial) {

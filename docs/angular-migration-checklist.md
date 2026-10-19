@@ -163,7 +163,7 @@ Every handler that existed under archived Next `app/api/**` must end as **A**, *
 | Check | Done |
 |-------|------|
 | E2E smoke: book, cancel, business accept, admin approve, payment stub path | ☐ |
-| SSR crawl spot-check (discover slug pages, sitemap if applicable) | ☐ |
+| SSR crawl spot-check (discover slug pages, sitemap if applicable) | ☑ — hubs `/lagos` `/ottawa`, category landings, `robots.txt` + dynamic `sitemap.xml` ([spec](./specs/discover-seo-landings.md)) |
 | Auth0 production callbacks updated for all three apps | ☐ |
 | No remaining **C** routes on Next | ☐ |
 | Delete or archive `apps/web`; update [frontend.md](./frontend.md) | ☑ (see [legacy-clients-archive.md](./legacy-clients-archive.md)) |

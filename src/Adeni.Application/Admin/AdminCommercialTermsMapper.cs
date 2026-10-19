@@ -5,7 +5,9 @@ using Adeni.Domain.Tenancy;
 
 public static class AdminCommercialTermsMapper
 {
-    public static AdminTenantCommercialTermsResponse ToResponse(Tenant tenant) =>
+    public static AdminTenantCommercialTermsResponse ToResponse(
+        Tenant tenant,
+        TenantPricingResolution? pricing = null) =>
         new(
             tenant.Id,
             SubscriptionSkuMapping.ToApiValue(tenant.SubscriptionSku),
@@ -24,5 +26,10 @@ public static class AdminCommercialTermsMapper
             tenant.CustomSaasCurrency,
             tenant.CustomSaasSku is { } customSku
                 ? SubscriptionSkuMapping.ToApiValue(customSku)
-                : null);
+                : null,
+            pricing?.BillingCountryCode,
+            pricing?.CatalogListPriceMajor,
+            pricing?.EffectiveMonthlyAmountMajor,
+            pricing?.PricingCatalogVersion,
+            pricing?.Currency);
 }

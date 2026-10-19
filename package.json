@@ -10,7 +10,7 @@
   "scripts": {
     "sync:brand": "node scripts/sync-brand-assets.mjs",
     "generate:brand-favicons": "node scripts/generate-brand-favicons.mjs",
-    "postinstall": "node scripts/sync-brand-assets.mjs",
+    "postinstall": "node scripts/sync-brand-assets.mjs && node scripts/strip-nested-ui-angular.mjs",
     "dev:portal": "npm run dev --workspace @adeni/portal",
     "dev:admin": "npm run dev --workspace @adeni/admin",
     "dev:discover": "npm run dev --workspace @adeni/discover",

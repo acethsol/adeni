@@ -13,4 +13,5 @@ export const environment = {
     clientId: "",
     audience: "https://api.adeni.io",
   },
+  googleSiteVerification: "",
 };

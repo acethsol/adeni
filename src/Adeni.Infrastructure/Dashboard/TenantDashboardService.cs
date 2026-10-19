@@ -6,7 +6,7 @@ using Adeni.Application.Subscriptions;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
-using Adeni.Domain.Payments;
+using Adeni.Domain.Finance;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;

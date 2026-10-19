@@ -500,6 +500,7 @@ export class BusinessProfileComponent implements OnInit {
           profile,
           `${this.config.publicAppUrl}${path}`,
           cover,
+          this.services(),
         ),
       },
       this.config.publicAppUrl,

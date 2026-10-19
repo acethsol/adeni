@@ -47,6 +47,9 @@ public sealed class BusinessProfile : ITenantEntity
     /// <summary>Deposit percentage (0–100) charged at booking confirm when deposits capability is enabled.</summary>
     public int DepositPercent { get; set; }
 
+    /// <summary>Default commission % on service total when a booking is marked paid (0 = disabled).</summary>
+    public int StaffCommissionPercent { get; set; }
+
     /// <summary>Business booking policy shown on the public page (plain text).</summary>
     public string? PolicyBookingText { get; set; }
 

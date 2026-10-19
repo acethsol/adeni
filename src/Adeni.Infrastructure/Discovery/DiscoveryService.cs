@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Discovery;
 
+using System.Globalization;
 using Adeni.Application.Caching;
 using Adeni.Application.Catalog;
 using Adeni.Application.Discovery;
@@ -567,6 +568,7 @@ public sealed class DiscoveryService(
             business.profile.GalleryImageKeysJson,
             coverUrl,
             cancellationToken);
+        var openingHours = await LoadPublicOpeningHoursAsync(business.tenant.Id, cancellationToken);
 
         return new PublicBusinessProfile(
             business.location.Id,
@@ -594,6 +596,26 @@ public sealed class DiscoveryService(
             completionRate,
             Adeni.Application.Tenancy.PublicPageConfigMapper.FromProfile(business.profile, logoImageUrl),
             imageUrls,
-            Adeni.Application.Tenancy.PublicPageConfigMapper.PoliciesFromProfileOrNull(business.profile));
+            Adeni.Application.Tenancy.PublicPageConfigMapper.PoliciesFromProfileOrNull(business.profile),
+            openingHours);
+    }
+
+    private async Task<IReadOnlyList<PublicOpeningHours>> LoadPublicOpeningHoursAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken)
+    {
+        var rules = await dbContext.WeeklyAvailabilities
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId)
+            .OrderBy(x => x.DayOfWeek)
+            .ThenBy(x => x.OpenTime)
+            .ToListAsync(cancellationToken);
+
+        return rules
+            .Select(x => new PublicOpeningHours(
+                x.DayOfWeek.ToString(),
+                x.OpenTime.ToString("HH:mm", CultureInfo.InvariantCulture),
+                x.CloseTime.ToString("HH:mm", CultureInfo.InvariantCulture)))
+            .ToArray();
     }
 }

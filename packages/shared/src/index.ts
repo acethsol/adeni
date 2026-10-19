@@ -17,6 +17,8 @@ export * from "./entitlements";
 export * from "./design-tokens";
 export * from "./category-visuals";
 export * from "./wellness-taxonomy";
+export * from "./seo-paths";
+export * from "./seo-neighborhoods";
 export * from "./search-intent";
 export * from "./i18n";
 export * from "./api-errors";

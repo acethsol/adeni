@@ -19,6 +19,7 @@ import {
   isAuth0Configured,
 } from "./core/adeni-config";
 import { MarketContextService } from "./core/services/market-context.service";
+import { SeoService } from "./core/services/seo.service";
 import { provideDiscoverRealtimeAuth } from "./core/adeni-realtime-auth.provider";
 
 function auth0Providers() {
@@ -27,15 +28,17 @@ function auth0Providers() {
     return [];
   }
 
+  const browser = typeof window !== "undefined";
   return [
     provideAuth0({
       domain: config.auth0.domain,
       clientId: config.auth0.clientId,
       authorizationParams: {
-        redirect_uri: typeof window !== "undefined" ? window.location.origin : config.publicAppUrl,
+        redirect_uri: browser ? window.location.origin : config.publicAppUrl,
         audience: config.auth0.audience,
       },
-      cacheLocation: "localstorage",
+      // Avoid localStorage on SSR (NG0203 / Auth0 browser APIs).
+      cacheLocation: browser ? "localstorage" : "memory",
     }),
   ];
 }
@@ -60,6 +63,10 @@ export const appConfig: ApplicationConfig = {
     },
     ...auth0Providers(),
     provideDiscoverRealtimeAuth(),
-    provideAppInitializer(() => inject(MarketContextService).bootstrap()),
+    provideAppInitializer(() => {
+      const config = inject(ADENI_DISCOVER_CONFIG);
+      inject(SeoService).setGoogleSiteVerification(config.googleSiteVerification);
+      return inject(MarketContextService).bootstrap();
+    }),
   ],
 };

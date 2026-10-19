@@ -14,19 +14,21 @@
 5. **GMV platform fee is business-paid.** The customer pays **only** the amount the business set (service, deposit, or pay link). Adeni’s platform % is deducted from **business settlement**, not added to the customer checkout total ([§6.4](#64-gmv-platform-fee-business-paid-policy)).
 6. **Published list prices** on `/plan` (self-serve), unlike Zenoti quote-only.
 
-**Catalog (draft):** [packages/shared/src/data/country-pricing.json](../packages/shared/src/data/country-pricing.json) — SaaS `skus` + `gmvCollection` (Connect / Paystack split). Settlement detail: [payment-provider-settlement.md](./payment-provider-settlement.md).
+**Catalog (launch):** [packages/shared/src/data/country-pricing.json](../packages/shared/src/data/country-pricing.json) (`version: 2026-launch-01`) — SaaS `skus` + `gmvCollection` (Connect / Paystack split). Commercial authority: [docs/specs/adeni-subscription-pricing-v1/](./specs/adeni-subscription-pricing-v1/00_READ_ME_FIRST.md). Settlement detail: [payment-provider-settlement.md](./payment-provider-settlement.md).
 
 ---
 
 ## 2. Country list prices (stakeholder anchors)
 
-| Country | Currency | Starter | Professional | Business | GMV platform fee |
-|---------|----------|---------|--------------|----------|------------------|
-| **NG** (Africa) | NGN | **₦50,000** | **₦70,000** | **₦100,000** | **0%** (pilot / supply growth) |
-| **CA** | CAD | **$200** | **$250** | **$300** | **0.75%** (draft — enable with Connect collection) |
-| **US** | USD | **$150** | **$200** | **$250** | **0.75%** (draft — enable with Connect collection) |
+| Country | Currency | Starter | Professional | Business | GMV platform fee | Self-serve |
+|---------|----------|---------|--------------|----------|------------------|------------|
+| **NG** | NGN | **₦35,000** | **₦55,000** | **₦95,000** | **0%** (launch) | Yes |
+| **CA** | CAD | **$99** | **$149** | **$249** | **0%** (launch) | Yes |
+| **US** | USD | — | — | — | **0%** (launch architecture) | **No** (pricing TBD) |
 
-**Tier step rule:** **+$50** per step for **US and CA**. **NG:** **+₦20k** per step (**₦50k → ₦70k → ₦100k**).
+**Authority:** [adeni-subscription-pricing-v1](./specs/adeni-subscription-pricing-v1/01_CONFIRMED_COMMERCIAL_RULES.md) + `country-pricing.json` (`effectiveFrom: 2026-10-19`). Implementation tracker: [sprint-33a-pricing-launch.md](./specs/sprint-33a-pricing-launch.md).
+
+**Tier step rule (launch):** **CA** steps **+$50** then **+$100** (99 → 149 → 249). **NG** steps **+₦20k** then **+₦40k** (35k → 55k → 95k).
 
 **Implementation:** resolve price with `tenant.primaryLocation.countryCode` → `country-pricing.json`. Do **not** duplicate prices per `market_id`.
 

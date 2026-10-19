@@ -20,6 +20,8 @@ export type AdeniDiscoverConfig = {
     clientId: string;
     audience: string;
   };
+  /** Google Search Console HTML-tag verification token (content value only). */
+  googleSiteVerification: string;
 };
 
 export const ADENI_DISCOVER_CONFIG = new InjectionToken<AdeniDiscoverConfig>(
@@ -42,6 +44,7 @@ export function adeniDiscoverConfigFactory(): AdeniDiscoverConfig {
       clientId: environment.auth0.clientId.trim(),
       audience: environment.auth0.audience.trim(),
     },
+    googleSiteVerification: (environment.googleSiteVerification ?? "").trim(),
   };
 }
 

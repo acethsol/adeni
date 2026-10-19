@@ -45,7 +45,13 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     { id: "links", label: "Links" },
     { id: "ledger", label: "Ledger" },
     { id: "documents", label: "Documents" },
+    { id: "export", label: "Staff export" },
   ];
+
+  exportFrom = "";
+  exportTo = "";
+  exportFormat: "csv" | "json" = "csv";
+  exporting = false;
 
   readonly loading = signal(true);
   readonly creating = signal(false);
@@ -70,6 +76,11 @@ export class PaymentsComponent implements OnInit, OnDestroy {
   readonly formatPrice = formatPrice;
 
   ngOnInit(): void {
+    const today = new Date();
+    const monthAgo = new Date(today);
+    monthAgo.setDate(today.getDate() - 30);
+    this.exportTo = today.toISOString().slice(0, 10);
+    this.exportFrom = monthAgo.toISOString().slice(0, 10);
     void this.load();
     this.opsSub = this.operationsRealtime.paymentCompleted$.subscribe(() => {
       this.feedback.info("Payment completed — refreshing ledger.", "Payment");
@@ -191,6 +202,39 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     }
     this.ledgerPage.update((p) => p + 1);
     void this.load();
+  }
+
+  async downloadCompensationExport(): Promise<void> {
+    const profile = this.profile();
+    if (!profile || !this.exportFrom || !this.exportTo) {
+      this.error.set("Choose a date range for the export.");
+      return;
+    }
+
+    this.exporting = true;
+    this.error.set(null);
+    try {
+      const from = new Date(`${this.exportFrom}T00:00:00.000Z`).toISOString();
+      const to = new Date(`${this.exportTo}T23:59:59.999Z`).toISOString();
+      const blob = await this.api.withAuthorizedClient((c) =>
+        c.downloadCompensationExport({
+          tenantId: profile.tenantId,
+          from,
+          to,
+          format: this.exportFormat,
+        }),
+      );
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `compensation-${this.exportFrom}-${this.exportTo}.${this.exportFormat}`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      this.error.set("Could not download compensation export.");
+    } finally {
+      this.exporting = false;
+    }
   }
 
   async refund(entry: PaymentLedgerEntry): Promise<void> {

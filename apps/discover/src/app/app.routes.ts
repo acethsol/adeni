@@ -9,7 +9,10 @@ import { LegalDocumentComponent } from "./pages/legal/legal-document.component";
 import { PublicDocumentComponent } from "./pages/document/document.component";
 import { QueueJoinComponent } from "./pages/queue-join/queue-join.component";
 import { CheckoutStubComponent } from "./pages/checkout-stub/checkout-stub.component";
+import { PlanPageComponent } from "./pages/plan/plan.component";
+import { SeoMarketPageComponent } from "./pages/seo-market/seo-market.component";
 import { customerAuthGuard } from "./core/guards/customer-auth.guard";
+import { seoMarketCanMatch } from "./core/seo-market.guard";
 
 export const routes: Routes = [
   {
@@ -57,6 +60,26 @@ export const routes: Routes = [
         component: LegalDocumentComponent,
         data: { doc: "terms" },
         title: "Terms",
+      },
+      {
+        path: "plan",
+        component: PlanPageComponent,
+        title: "Plans",
+      },
+      {
+        path: ":marketId",
+        canMatch: [seoMarketCanMatch],
+        component: SeoMarketPageComponent,
+      },
+      {
+        path: ":marketId/:segment",
+        canMatch: [seoMarketCanMatch],
+        component: SeoMarketPageComponent,
+      },
+      {
+        path: ":marketId/:areaSlug/:categorySlug",
+        canMatch: [seoMarketCanMatch],
+        component: SeoMarketPageComponent,
       },
     ],
   },

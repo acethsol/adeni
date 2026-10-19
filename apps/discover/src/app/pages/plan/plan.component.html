@@ -1,0 +1,69 @@
+<article class="plan-page">
+  <header class="head">
+    <p class="kicker">For businesses</p>
+    <h1>Plans &amp; pricing</h1>
+    <p class="lede">
+      Transparent monthly plans for salons, barbers, and wellness studios. Prices shown for your
+      region ({{ countryCode() }}).
+    </p>
+  </header>
+
+  @if (loading()) {
+    <p class="muted">Loading prices…</p>
+  } @else {
+    @if (!selfServeEnabled()) {
+      <p class="notice" role="note">
+        Self-serve signup is not available in this region yet. Contact us for a tailored quote.
+      </p>
+    } @else {
+      <p class="trial-note">Start with a 30-day Professional trial — no permanent free tier.</p>
+    }
+
+    <div class="tier-grid">
+      @for (sku of skus; track sku) {
+        @let display = planDisplay(sku);
+        <section class="tier" [class.popular]="isPopular(sku)">
+          @if (isPopular(sku)) {
+            <span class="pill">Most popular</span>
+          }
+          <p class="tier-name">{{ display.name }}</p>
+          <p class="price">{{ display.priceLabel }}</p>
+          <p class="tagline">{{ display.tagline }}</p>
+          @if (registerUrl(); as url) {
+            <a class="cta" [href]="url" target="_blank" rel="noopener noreferrer">Get started</a>
+          }
+        </section>
+      }
+    </div>
+
+    @if (platformFeePercent(); as fee) {
+      <p class="muted fee-note">
+        Online booking payments: {{ fee }}% platform fee at launch (subject to your market catalog).
+      </p>
+    }
+
+    <section class="compare">
+      <h2>Compare plans</h2>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Feature</th>
+            @for (sku of skus; track sku) {
+              <th scope="col">{{ planDisplay(sku).name }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of planComparison; track row.label) {
+            <tr>
+              <th scope="row">{{ row.label }}</th>
+              @for (sku of skus; track sku) {
+                <td>{{ comparisonCell(row, sku) }}</td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+</article>

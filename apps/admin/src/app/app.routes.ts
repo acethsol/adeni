@@ -10,6 +10,7 @@ import { AdminTrustBadgesComponent } from "./pages/trust-badges/trust-badges.com
 import { AdminReviewsComponent } from "./pages/reviews/reviews.component";
 import { AdminInsightsComponent } from "./pages/insights/insights.component";
 import { AdminTransactionsComponent } from "./pages/transactions/transactions.component";
+import { AdminPricingCatalogComponent } from "./pages/pricing/pricing-catalog.component";
 import { SetupComponent } from "./pages/setup/setup.component";
 import { ForbiddenComponent } from "./pages/forbidden/forbidden.component";
 import { adminAccessGuard } from "./core/guards/admin-access.guard";
@@ -29,6 +30,11 @@ export const routes: Routes = [
       { path: "trust-badges", component: AdminTrustBadgesComponent, title: "Trust badges" },
       { path: "reviews", component: AdminReviewsComponent, title: "Reviews" },
       { path: "markets", component: AdminMarketsComponent, title: "Markets" },
+      {
+        path: "pricing/catalog",
+        component: AdminPricingCatalogComponent,
+        title: "Pricing catalog",
+      },
       { path: "insights", component: AdminInsightsComponent, title: "Subscription insights" },
       { path: "transactions", component: AdminTransactionsComponent, title: "Transactions" },
       { path: "businesses", component: AdminBusinessesComponent, title: "Businesses" },

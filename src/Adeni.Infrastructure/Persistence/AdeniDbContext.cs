@@ -8,7 +8,7 @@ using Adeni.Domain.Catalog;
 using Adeni.Domain.Identity;
 using Adeni.Domain.Messaging;
 using Adeni.Domain.Notifications;
-using Adeni.Domain.Payments;
+using Adeni.Domain.Finance;
 using Adeni.Domain.Subscriptions;
 using Adeni.Domain.Tenancy;
 using Microsoft.EntityFrameworkCore;
@@ -90,11 +90,17 @@ public sealed class AdeniDbContext(
 
     public DbSet<TenantSubscriptionCharge> TenantSubscriptionCharges => Set<TenantSubscriptionCharge>();
 
+    public DbSet<PricingCatalogVersion> PricingCatalogVersions => Set<PricingCatalogVersion>();
+
+    public DbSet<PricingCatalogEntry> PricingCatalogEntries => Set<PricingCatalogEntry>();
+
     public DbSet<BillingDocument> BillingDocuments => Set<BillingDocument>();
 
     public DbSet<BillingDocumentLine> BillingDocumentLines => Set<BillingDocumentLine>();
 
     public DbSet<BillingDocumentSequence> BillingDocumentSequences => Set<BillingDocumentSequence>();
+
+    public DbSet<StaffCompensationAllocation> StaffCompensationAllocations => Set<StaffCompensationAllocation>();
 
     public DbSet<Conversation> Conversations => Set<Conversation>();
 
@@ -139,6 +145,32 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.CustomSaasMonthlyAmount).HasPrecision(18, 2);
             entity.Property(x => x.CustomSaasSku).HasConversion<int>();
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.Id == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<PricingCatalogVersion>(entity =>
+        {
+            entity.ToTable("pricing_catalog_versions", "subscriptions");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Code).HasMaxLength(64);
+            entity.Property(x => x.Status).HasConversion<int>();
+            entity.HasIndex(x => x.Code).IsUnique();
+            entity.HasIndex(x => x.Status);
+        });
+
+        modelBuilder.Entity<PricingCatalogEntry>(entity =>
+        {
+            entity.ToTable("pricing_catalog_entries", "subscriptions");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CountryCode).HasMaxLength(2);
+            entity.Property(x => x.CurrencyCode).HasMaxLength(3);
+            entity.Property(x => x.SubscriptionSku).HasConversion<int>();
+            entity.Property(x => x.MonthlyAmountMajor).HasPrecision(18, 2);
+            entity.Property(x => x.PlatformFeePercent).HasPrecision(5, 2);
+            entity.HasIndex(x => new { x.PricingCatalogVersionId, x.CountryCode, x.SubscriptionSku }).IsUnique();
+            entity.HasOne(x => x.Version)
+                .WithMany(x => x.Entries)
+                .HasForeignKey(x => x.PricingCatalogVersionId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<TenantSubscriptionCharge>(entity =>
@@ -462,6 +494,8 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.TimeZoneId).HasMaxLength(64);
             entity.Property(x => x.LanguagesJson).HasMaxLength(64);
             entity.Property(x => x.LaunchNote).HasMaxLength(500);
+            entity.Property(x => x.DefaultCommerceProvider).HasMaxLength(16);
+            entity.Property(x => x.DefaultBillingProvider).HasMaxLength(16);
             entity.HasIndex(x => x.IsLive);
         });
 
@@ -562,6 +596,19 @@ public sealed class AdeniDbContext(
             entity.HasIndex(x => new { x.TenantId, x.Status, x.CreatedAt });
             entity.HasIndex(x => x.ProviderReference).IsUnique();
             entity.HasIndex(x => x.IdempotencyKey).IsUnique().HasFilter("[IdempotencyKey] IS NOT NULL");
+            entity.Property(x => x.TipAmount).HasPrecision(12, 2);
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<StaffCompensationAllocation>(entity =>
+        {
+            entity.ToTable("staff_compensation_allocations", "payments");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Amount).HasPrecision(12, 2);
+            entity.Property(x => x.Currency).HasMaxLength(3);
+            entity.Property(x => x.Type).HasConversion<int>();
+            entity.HasIndex(x => new { x.TenantId, x.CreatedAt });
+            entity.HasIndex(x => new { x.TenantId, x.StaffMemberId, x.CreatedAt });
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 

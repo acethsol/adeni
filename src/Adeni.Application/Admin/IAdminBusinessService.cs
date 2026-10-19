@@ -41,7 +41,12 @@ public sealed record AdminTenantCommercialTermsResponse(
     string? BillingCompReason,
     decimal? CustomSaasMonthlyAmount,
     string? CustomSaasCurrency,
-    string? CustomSaasSku);
+    string? CustomSaasSku,
+    string? BillingCountryCode,
+    decimal? CatalogListPrice,
+    decimal? EffectiveMonthlyAmount,
+    string? PricingCatalogVersion,
+    string? Currency);
 
 public sealed record SetTenantCommercialTermsRequest(
     string? BillingStatus = null,
@@ -60,7 +65,8 @@ public sealed record SetTenantCommercialTermsRequest(
     decimal? CustomSaasMonthlyAmount = null,
     string? CustomSaasCurrency = null,
     string? CustomSaasSku = null,
-    bool? ClearCustomSaasPrice = null);
+    bool? ClearCustomSaasPrice = null,
+    string? ChangeReason = null);
 
 public interface IAdminBusinessService
 {

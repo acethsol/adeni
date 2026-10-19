@@ -145,8 +145,15 @@ Request/response shapes to be added in `packages/shared` before merge.
 
 ---
 
+## Launch pricing catalog (Oct 2026)
+
+Country list prices, GMV **0%** at launch for **CA/NG**, and **US self-serve off** are locked in [adeni-subscription-pricing-v1/](./adeni-subscription-pricing-v1/00_READ_ME_FIRST.md) and synced to [country-pricing.json](../../packages/shared/src/data/country-pricing.json). Engineering phases for billing + entitlements + `/plan` are tracked in **[sprint-33a-pricing-launch.md](./sprint-33a-pricing-launch.md)** — this sprint spec remains the source for provider checkout, webhooks, MRR, and portal billing UX.
+
+---
+
 ## Related
 
+- [sprint-33a-pricing-launch.md](./sprint-33a-pricing-launch.md)
 - [sprint-32-portal-dashboard-revisit.md](./sprint-32-portal-dashboard-revisit.md)
 - [payments.md](../payments.md) — customer payment Murphy rules (same pattern for subscription webhooks)
 - [AGENTS.md](../../AGENTS.md) — webhook + API contract hardening

@@ -67,6 +67,9 @@ public sealed class MarketCatalogLoader(
             new MarketLocation(row.DefaultLat, row.DefaultLng),
             languages,
             row.IsLive,
-            row.LaunchNote);
+            row.LaunchNote,
+            PlatformFeePercent: 0m,
+            MarketPaymentProviders.Normalize(row.DefaultCommerceProvider),
+            MarketPaymentProviders.Normalize(row.DefaultBillingProvider));
     }
 }

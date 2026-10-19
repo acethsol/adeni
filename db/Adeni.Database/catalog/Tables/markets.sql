@@ -7,8 +7,10 @@ CREATE TABLE [catalog].[markets] (
     [DefaultLat]    FLOAT (53)         NOT NULL,
     [DefaultLng]    FLOAT (53)         NOT NULL,
     [LanguagesJson] NVARCHAR (64)      NOT NULL,
-    [IsLive]        BIT                NOT NULL,
-    [LaunchNote]    NVARCHAR (500)     NULL,
+    [IsLive]                   BIT                NOT NULL,
+    [DefaultCommerceProvider]  NVARCHAR (16)      CONSTRAINT [DF_markets_DefaultCommerceProvider] DEFAULT (N'paystack') NOT NULL,
+    [DefaultBillingProvider]   NVARCHAR (16)      CONSTRAINT [DF_markets_DefaultBillingProvider] DEFAULT (N'paystack') NOT NULL,
+    [LaunchNote]               NVARCHAR (500)     NULL,
     [CreatedAt]     DATETIMEOFFSET (7) NOT NULL,
     [UpdatedAt]     DATETIMEOFFSET (7) NOT NULL,
     CONSTRAINT [PK_markets] PRIMARY KEY CLUSTERED ([Id] ASC)

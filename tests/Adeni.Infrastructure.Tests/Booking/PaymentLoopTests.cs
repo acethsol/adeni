@@ -6,18 +6,18 @@ using Adeni.Application.Caching;
 using Adeni.Application.Events;
 using Adeni.Application.Markets;
 using Adeni.Application.Notifications;
-using Adeni.Application.Payments;
+using Adeni.Application.Finance;
 using Adeni.Application.Reviews;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Booking;
-using Adeni.Domain.Payments;
+using Adeni.Domain.Finance;
 using Adeni.Domain.Tenancy;
 using Adeni.Application.Tenancy;
 using Adeni.Infrastructure.Booking;
 using Adeni.Infrastructure.Tenancy;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Events;
-using Adeni.Infrastructure.Payments;
+using Adeni.Infrastructure.Finance;
 using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Reviews;
 using Adeni.Infrastructure.Subscriptions;
@@ -230,7 +230,7 @@ public sealed class PaymentLoopTests
         services.AddSingleton<ICacheService, DistributedCacheService>();
         services.AddSingleton<IDistributedLockProvider, NoOpLockProvider>();
         services.Configure<MarketOptions>(options => options.DefaultTimeZoneId = "UTC");
-        services.Configure<PaymentsOptions>(options =>
+        services.Configure<FinanceOptions>(options =>
         {
             options.Provider = "Stub";
             options.StubCheckoutBaseUrl = "/checkout/stub";
@@ -248,6 +248,7 @@ public sealed class PaymentLoopTests
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();
         services.AddBookingTestRealtime();
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
+        services.AddScoped<IStaffCompensationService, StaffCompensationService>();
         services.AddSingleton<INotificationDispatcher, LoopNotificationDispatcher>();
         services.AddScoped<IBillingDocumentService, BillingDocumentService>();
         services.AddScoped<IServiceCatalogService, ServiceCatalogService>();

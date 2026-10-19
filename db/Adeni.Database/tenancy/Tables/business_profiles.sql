@@ -17,6 +17,7 @@ CREATE TABLE [tenancy].[business_profiles] (
     [BusinessType]            INT                NOT NULL,
     [AutoConfirmBookings]     BIT                NOT NULL,
     [DepositPercent]          INT                NOT NULL,
+    [StaffCommissionPercent]  INT                CONSTRAINT [DF_business_profiles_StaffCommissionPercent] DEFAULT ((0)) NOT NULL,
     [PolicyBookingText]       NVARCHAR (MAX)     NULL,
     [PolicyPaymentText]       NVARCHAR (MAX)     NULL,
     [PolicyCancellationText]  NVARCHAR (MAX)     NULL,

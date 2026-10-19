@@ -15,6 +15,9 @@ import ChevronLeft16 from "@carbon/icons/es/chevron--left/16";
 import ChevronRight16 from "@carbon/icons/es/chevron--right/16";
 import Close16 from "@carbon/icons/es/close/16";
 import Copy16 from "@carbon/icons/es/copy/16";
+import Download16 from "@carbon/icons/es/download/16";
+import Grid16 from "@carbon/icons/es/grid/16";
+import Table16 from "@carbon/icons/es/table/16";
 import Edit16 from "@carbon/icons/es/edit/16";
 import Email16 from "@carbon/icons/es/email/16";
 import Filter32 from "@carbon/icons/es/filter/32";
@@ -50,7 +53,9 @@ export type AdeniCarbonIconName =
   | "chevron--right"
   | "close"
   | "copy"
+  | "download"
   | "edit"
+  | "grid"
   | "email"
   | "filter"
   | "flash--filled"
@@ -64,6 +69,7 @@ export type AdeniCarbonIconName =
   | "save"
   | "search"
   | "send"
+  | "table"
   | "time"
   | "trash-can"
   | "upload"
@@ -85,7 +91,9 @@ const ICONS: Record<AdeniCarbonIconName, IconDescriptor> = {
   "chevron--right": ChevronRight16 as IconDescriptor,
   close: Close16 as IconDescriptor,
   copy: Copy16 as IconDescriptor,
+  download: Download16 as IconDescriptor,
   edit: Edit16 as IconDescriptor,
+  grid: Grid16 as IconDescriptor,
   email: Email16 as IconDescriptor,
   filter: Filter32 as IconDescriptor,
   "flash--filled": FlashFilled16 as IconDescriptor,
@@ -99,6 +107,7 @@ const ICONS: Record<AdeniCarbonIconName, IconDescriptor> = {
   restart: Restart16 as IconDescriptor,
   search: Search20 as IconDescriptor,
   send: Send16 as IconDescriptor,
+  table: Table16 as IconDescriptor,
   time: Time16 as IconDescriptor,
   "trash-can": TrashCan16 as IconDescriptor,
   upload: Upload16 as IconDescriptor,

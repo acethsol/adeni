@@ -89,7 +89,7 @@ type ChromeKey =
   | "/profile"
   | "/public-page"
   | "/register"
-  | "/payments"
+  | "/finance"
   | "/settings"
   | "/plan"
   | "/__discover";
@@ -137,7 +137,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     "/profile": "Profile",
     "/public-page": "Public page",
     "/register": "Register",
-    "/payments": "Payments",
+    "/finance": "Finance",
     "/settings": "Settings",
     "/plan": "Plan",
     "/__discover": "Discover",
@@ -184,7 +184,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     "/profile": "Profil",
     "/public-page": "Page publique",
     "/register": "Inscription",
-    "/payments": "Paiements",
+    "/finance": "Finance",
     "/settings": "Paramètres",
     "/plan": "Forfait",
     "/__discover": "Découvrir",

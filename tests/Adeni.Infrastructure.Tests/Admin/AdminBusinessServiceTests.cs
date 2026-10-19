@@ -1,7 +1,11 @@
 namespace Adeni.Infrastructure.Tests.Admin;
 
+using Adeni.Application.Admin;
+using Adeni.Application.Subscriptions;
+using Adeni.Domain.Subscriptions;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Admin;
+using Adeni.Infrastructure.Subscriptions;
 using Adeni.Infrastructure.Auditing;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Context;
@@ -73,6 +77,35 @@ public sealed class AdminBusinessServiceTests
         Assert.Equal("validation", result.Error.Code);
     }
 
+    [Fact]
+    public async Task SetCommercialTerms_requires_change_reason_when_commercial_fields_change()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        var service = scope.ServiceProvider.GetRequiredService<AdminBusinessService>();
+        var tenantId = Guid.NewGuid();
+
+        db.Tenants.Add(new Tenant
+        {
+            Id = tenantId,
+            Name = "Salon",
+            Status = TenantStatus.Verified,
+            SubscriptionSku = SubscriptionSku.Starter,
+            BillingStatus = TenantBillingStatus.Active,
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+        await db.SaveChangesAsync();
+
+        var result = await service.SetTenantCommercialTermsAsync(
+            tenantId,
+            new SetTenantCommercialTermsRequest(SubscriptionSku: "professional"),
+            "admin-1");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("validation", result.Error!.Code);
+    }
+
     private static ServiceProvider BuildProvider()
     {
         var services = new ServiceCollection();
@@ -83,6 +116,8 @@ public sealed class AdminBusinessServiceTests
         services.AddScoped<Application.Abstractions.ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
         services.AddSingleton<Application.Abstractions.IAuditLogWriter, InMemoryAuditLogWriter>();
         services.AddDbContext<AdeniDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));
+        services.AddScoped<IPricingCatalogService, PricingCatalogService>();
+        services.AddScoped<ITenantPricingResolver, TenantPricingResolver>();
         services.AddScoped<AdminBusinessService>();
         return services.BuildServiceProvider();
     }

@@ -172,6 +172,8 @@ public sealed class SubscriptionBillingOrchestratorTests
         services.AddScoped<Adeni.Infrastructure.Context.TenantContext>();
         services.AddScoped<Application.Abstractions.ITenantContext>(sp =>
             sp.GetRequiredService<Adeni.Infrastructure.Context.TenantContext>());
+        services.AddScoped<IPricingCatalogService, PricingCatalogService>();
+        services.AddScoped<ITenantPricingResolver, TenantPricingResolver>();
         services.AddScoped<ISubscriptionBillingOrchestrator, SubscriptionBillingOrchestrator>();
         services.AddSingleton<Application.Caching.ICacheService, OrchestratorTestCache>();
         services.AddSingleton<IAuditLogWriter, OrchestratorTestAudit>();
