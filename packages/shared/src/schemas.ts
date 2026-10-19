@@ -1680,55 +1680,108 @@ export type RefundPaymentRequest = z.infer<typeof refundPaymentRequestSchema>;
 
 export type PaymentIntentResponse = z.infer<typeof paymentIntentResponseSchema>;
 
-export const createMessageThreadRequestSchema = z.object({
+export const conversationContextTypeSchema = z.enum([
+  "None",
+  "Booking",
+  "Quote",
+  "Profile",
+  "none",
+  "booking",
+  "quote",
+  "profile",
+]);
+
+export const createConversationRequestSchema = z.object({
   tenantId: z.string().uuid(),
+  contextType: conversationContextTypeSchema.optional(),
+  contextId: z.string().uuid().optional(),
+  /** @deprecated Prefer contextType=Booking + contextId */
   bookingId: z.string().uuid().optional(),
 });
 
-export type CreateMessageThreadRequest = z.infer<typeof createMessageThreadRequestSchema>;
+export type CreateConversationRequest = z.infer<typeof createConversationRequestSchema>;
 
-export const sendMessageRequestSchema = z.object({
-  body: z.string().min(1).max(4000),
+export const sendMessageAttachmentSchema = z.object({
+  storageKey: z.string().min(1).max(512),
+  contentType: z.string().min(1).max(128),
+  fileName: z.string().min(1).max(256),
+  fileSize: z.number().int().positive(),
 });
+
+export type SendMessageAttachment = z.infer<typeof sendMessageAttachmentSchema>;
+
+export const sendMessageRequestSchema = z
+  .object({
+    body: z.string().max(4000).optional(),
+    clientMessageId: z.string().min(1).max(64).optional(),
+    attachments: z.array(sendMessageAttachmentSchema).max(5).optional(),
+  })
+  .refine(
+    (value) =>
+      (value.body?.trim().length ?? 0) > 0 || (value.attachments?.length ?? 0) > 0,
+    { message: "Message body or attachment is required." },
+  );
 
 export type SendMessageRequest = z.infer<typeof sendMessageRequestSchema>;
 
-export const messageThreadSummarySchema = z.object({
+export const conversationSummarySchema = z.object({
   id: z.string().uuid(),
   tenantId: z.string().uuid(),
-  bookingId: z.string().uuid().nullable().optional(),
+  contextType: z.union([z.number().int(), z.string()]),
+  contextId: z.string().uuid().nullable().optional(),
   customerDisplayName: z.string(),
   businessName: z.string().nullable().optional(),
   preview: z.string().nullable().optional(),
+  lastBusinessReplierName: z.string().nullable().optional(),
   lastMessageAt: z.string(),
-  unreadCount: z.number().int().nonnegative(),
+  needsAttention: z.boolean(),
 });
 
-export type MessageThreadSummary = z.infer<typeof messageThreadSummarySchema>;
+export type ConversationSummary = z.infer<typeof conversationSummarySchema>;
 
-export const messageResponseSchema = z.object({
+export const messageAttachmentSchema = z.object({
   id: z.string().uuid(),
-  threadId: z.string().uuid(),
-  senderType: z.enum(["customer", "business"]),
-  body: z.string(),
-  createdAt: z.string(),
+  fileName: z.string(),
+  contentType: z.string(),
+  fileSize: z.number().int().nonnegative(),
+  url: z.string().url().nullable().optional(),
 });
 
-export type MessageResponse = z.infer<typeof messageResponseSchema>;
+export type MessageAttachment = z.infer<typeof messageAttachmentSchema>;
 
-export const messageThreadDetailSchema = z.object({
+export const conversationMessageSchema = z.object({
+  id: z.string().uuid(),
+  conversationId: z.string().uuid(),
+  senderParticipantId: z.string().uuid(),
+  senderType: z.enum(["customer", "business", "bot", "unknown"]),
+  senderDisplayName: z.string().nullable().optional(),
+  body: z.string().nullable().optional(),
+  clientMessageId: z.string().nullable().optional(),
+  createdAt: z.string(),
+  attachments: z.array(messageAttachmentSchema).optional().default([]),
+});
+
+export type ConversationMessage = z.infer<typeof conversationMessageSchema>;
+
+export const conversationDetailSchema = z.object({
   id: z.string().uuid(),
   tenantId: z.string().uuid(),
-  bookingId: z.string().uuid().nullable().optional(),
+  contextType: z.union([z.number().int(), z.string()]),
+  contextId: z.string().uuid().nullable().optional(),
   status: z.string(),
   customerDisplayName: z.string(),
   businessName: z.string().nullable().optional(),
-  messages: z.array(messageResponseSchema),
+  messages: z.array(conversationMessageSchema),
+  nextBeforeId: z.string().uuid().nullable().optional(),
 });
 
-export type MessageThreadDetail = z.infer<typeof messageThreadDetailSchema>;
+export type ConversationDetail = z.infer<typeof conversationDetailSchema>;
 
-export const messageThreadsResponseSchema = pagedResultSchema(messageThreadSummarySchema);
+export const conversationsResponseSchema = pagedResultSchema(conversationSummarySchema);
+
+export const conversationListResponseSchema = z.object({
+  items: z.array(conversationSummarySchema),
+});
 
 export const unreadCountResponseSchema = z.object({
   count: z.number().int().nonnegative(),
@@ -1789,6 +1842,8 @@ export const mediaUploadPurposeSchema = z.enum([
   "staff_avatar",
   "staffAvatar",
   "quote_photo",
+  "message_attachment",
+  "messageAttachment",
 ]);
 
 export const updateStaffAvatarRequestSchema = z.object({

@@ -4,7 +4,7 @@
 |-------|-------|
 | **Sprint** | Sprint 18 — Messaging & WhatsApp bridge |
 | **Author** | Cloud Agent |
-| **Status** | Implemented |
+| **Status** | **Superseded / removed by [Sprint 36](./sprint-36-messaging-rewrite.md)** — full teardown, no data migration |
 | **Created** | 2026-09-07 |
 
 ---

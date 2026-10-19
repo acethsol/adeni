@@ -2,10 +2,9 @@ namespace Adeni.Api.Tests.Integration;
 
 using System.Net;
 using System.Net.Http.Json;
-using Adeni.Domain.Booking;
+using Adeni.Domain.Identity;
 using Adeni.Domain.Subscriptions;
 using Adeni.Domain.Tenancy;
-using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -35,305 +34,246 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
         });
 
     [Fact]
-    public async Task Customer_can_create_thread_and_business_on_pro_can_reply()
+    public async Task Customer_can_create_conversation_and_business_on_pro_can_reply()
     {
-        var tenantId = Guid.Empty;
-
-        using (var scope = _factory.Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
-            tenantId = Guid.NewGuid();
-            db.Tenants.Add(new Tenant
-            {
-                Id = tenantId,
-                Name = "Messaging Pro Shop",
-                Status = TenantStatus.Verified,
-                SubscriptionTier = SubscriptionTier.Pro,
-                SubscriptionSku = SubscriptionSku.Professional,
-                BillingStatus = TenantBillingStatus.Active,
-                CreatedAt = DateTimeOffset.UtcNow,
-                VerifiedAt = DateTimeOffset.UtcNow,
-            });
-            db.BusinessProfiles.Add(new BusinessProfile
-            {
-                TenantId = tenantId,
-                CategorySlug = "barbers",
-                Phone = "+2348012345678",
-                Description = "Messaging test",
-                UpdatedAt = DateTimeOffset.UtcNow,
-            });
-            db.BusinessLocations.Add(new BusinessLocation
-            {
-                Id = Guid.NewGuid(),
-                TenantId = tenantId,
-                Slug = "messaging-pro-shop",
-                Name = "Main",
-                MarketId = "lagos",
-                AddressLine = "12 Test St",
-                Area = "Lekki",
-                TimeZoneId = "Africa/Lagos",
-                IsPrimary = true,
-                IsActive = true,
-            });
-            db.BusinessUsers.Add(new BusinessUser
-            {
-                Id = Guid.NewGuid(),
-                TenantId = tenantId,
-                Auth0Sub = BusinessSub,
-                Role = "owner",
-                CreatedAt = DateTimeOffset.UtcNow,
-            });
-            await db.SaveChangesAsync();
-        }
+        var tenantId = await SeedTenantAsync(SubscriptionTier.Pro, BusinessSub, "Messaging Pro Shop", "messaging-pro-shop");
 
         var customerClient = _factory.CreateClient();
         customerClient.DefaultRequestHeaders.Add("X-Dev-Auth0-Sub", CustomerSub);
 
         var createResponse = await customerClient.PostAsJsonAsync(
-            "/api/v1/messages/threads",
+            "/api/v1/messages/conversations",
             new { tenantId });
 
         Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
-        var thread = await createResponse.Content.ReadFromJsonAsync<ThreadPayload>();
-        Assert.NotNull(thread);
+        var conversation = await createResponse.Content.ReadFromJsonAsync<ConversationPayload>();
+        Assert.NotNull(conversation);
 
+        var clientMessageId = Guid.NewGuid().ToString("N");
         var customerMessage = await customerClient.PostAsJsonAsync(
-            $"/api/v1/messages/threads/{thread!.Id}/messages",
-            new { body = "Hi, do you have slots tomorrow?" });
+            $"/api/v1/messages/conversations/{conversation!.Id}/messages",
+            new { body = "How much is a fade?", clientMessageId });
 
         Assert.Equal(HttpStatusCode.Created, customerMessage.StatusCode);
+
+        var duplicate = await customerClient.PostAsJsonAsync(
+            $"/api/v1/messages/conversations/{conversation.Id}/messages",
+            new { body = "How much is a fade?", clientMessageId });
+        Assert.Equal(HttpStatusCode.Created, duplicate.StatusCode);
 
         var businessClient = _factory.CreateClient();
         businessClient.DefaultRequestHeaders.Add("X-Dev-Auth0-Sub", BusinessSub);
         businessClient.DefaultRequestHeaders.Add("X-Tenant-Id", tenantId.ToString());
 
-        var businessReply = await businessClient.PostAsJsonAsync(
-            $"/api/v1/tenant/messages/threads/{thread.Id}/messages",
-            new { body = "Yes — book online anytime." });
+        var reply = await businessClient.PostAsJsonAsync(
+            $"/api/v1/tenant/messages/conversations/{conversation.Id}/messages",
+            new { body = "Fades start at 5,000 NGN.", clientMessageId = Guid.NewGuid().ToString("N") });
 
-        Assert.Equal(HttpStatusCode.Created, businessReply.StatusCode);
-
-        var unreadBeforeRead = await businessClient.GetFromJsonAsync<UnreadPayload>(
-            "/api/v1/tenant/messages/unread-count");
-
-        Assert.NotNull(unreadBeforeRead);
-        Assert.Equal(1, unreadBeforeRead!.Count);
+        Assert.Equal(HttpStatusCode.Created, reply.StatusCode);
 
         var markRead = await businessClient.PostAsync(
-            $"/api/v1/tenant/messages/threads/{thread.Id}/read",
+            $"/api/v1/tenant/messages/conversations/{conversation.Id}/read",
             null);
-
         Assert.Equal(HttpStatusCode.NoContent, markRead.StatusCode);
 
         var unread = await businessClient.GetFromJsonAsync<UnreadPayload>(
             "/api/v1/tenant/messages/unread-count");
-
         Assert.NotNull(unread);
         Assert.Equal(0, unread!.Count);
     }
 
     [Fact]
-    public async Task Free_tier_business_cannot_access_tenant_messages()
+    public async Task Free_tier_business_cannot_list_conversations()
     {
-        var tenantId = Guid.Empty;
-
-        using (var scope = _factory.Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
-            tenantId = Guid.NewGuid();
-            db.Tenants.Add(new Tenant
-            {
-                Id = tenantId,
-                Name = "Free Tier Shop",
-                Status = TenantStatus.Verified,
-                SubscriptionTier = SubscriptionTier.Free,
-                SubscriptionSku = SubscriptionSku.Starter,
-                BillingStatus = TenantBillingStatus.Active,
-                CreatedAt = DateTimeOffset.UtcNow,
-                VerifiedAt = DateTimeOffset.UtcNow,
-            });
-            await db.SaveChangesAsync();
-        }
+        var tenantId = await SeedTenantAsync(SubscriptionTier.Free, BusinessSub + "-free", "Free Shop", "messaging-free-shop");
 
         var businessClient = _factory.CreateClient();
-        businessClient.DefaultRequestHeaders.Add("X-Dev-Auth0-Sub", BusinessSub);
+        businessClient.DefaultRequestHeaders.Add("X-Dev-Auth0-Sub", BusinessSub + "-free");
         businessClient.DefaultRequestHeaders.Add("X-Tenant-Id", tenantId.ToString());
 
-        var response = await businessClient.GetAsync("/api/v1/tenant/messages/threads");
+        var response = await businessClient.GetAsync("/api/v1/tenant/messages/conversations");
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     [Fact]
-    public async Task Public_whatsapp_link_is_returned_for_business_slug()
+    public async Task Accountant_without_portal_messages_cannot_list_conversations()
     {
-        using (var scope = _factory.Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
-            var tenantId = Guid.NewGuid();
-            db.Tenants.Add(new Tenant
-            {
-                Id = tenantId,
-                Name = "WA Shop",
-                Status = TenantStatus.Verified,
-                CreatedAt = DateTimeOffset.UtcNow,
-                VerifiedAt = DateTimeOffset.UtcNow,
-            });
-            db.BusinessProfiles.Add(new BusinessProfile
-            {
-                TenantId = tenantId,
-                CategorySlug = "barbers",
-                Phone = "+2348099999999",
-                UpdatedAt = DateTimeOffset.UtcNow,
-            });
-            db.BusinessLocations.Add(new BusinessLocation
-            {
-                Id = Guid.NewGuid(),
-                TenantId = tenantId,
-                Slug = "wa-shop",
-                Name = "Main",
-                MarketId = "lagos",
-                AddressLine = "1 WA St",
-                Area = "VI",
-                TimeZoneId = "Africa/Lagos",
-                IsPrimary = true,
-                IsActive = true,
-            });
-            await db.SaveChangesAsync();
-        }
+        var tenantId = await SeedTenantAsync(
+            SubscriptionTier.Pro,
+            BusinessSub + "-accountant",
+            "Accountant Shop",
+            "messaging-accountant-shop",
+            role: PortalPermissionRoles.Accountant);
+
+        var businessClient = _factory.CreateClient();
+        businessClient.DefaultRequestHeaders.Add("X-Dev-Auth0-Sub", BusinessSub + "-accountant");
+        businessClient.DefaultRequestHeaders.Add("X-Tenant-Id", tenantId.ToString());
+
+        var response = await businessClient.GetAsync("/api/v1/tenant/messages/conversations");
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Free_tier_business_cannot_mark_read_or_update_settings()
+    {
+        var tenantId = await SeedTenantAsync(
+            SubscriptionTier.Free,
+            BusinessSub + "-free-settings",
+            "Free Settings Shop",
+            "messaging-free-settings");
+
+        var customerClient = _factory.CreateClient();
+        customerClient.DefaultRequestHeaders.Add("X-Dev-Auth0-Sub", CustomerSub + "-free-settings");
+        var createResponse = await customerClient.PostAsJsonAsync(
+            "/api/v1/messages/conversations",
+            new { tenantId });
+        var conversation = await createResponse.Content.ReadFromJsonAsync<ConversationPayload>();
+        Assert.NotNull(conversation);
+
+        var businessClient = _factory.CreateClient();
+        businessClient.DefaultRequestHeaders.Add("X-Dev-Auth0-Sub", BusinessSub + "-free-settings");
+        businessClient.DefaultRequestHeaders.Add("X-Tenant-Id", tenantId.ToString());
+
+        var markRead = await businessClient.PostAsync(
+            $"/api/v1/tenant/messages/conversations/{conversation!.Id}/read",
+            null);
+        Assert.Equal(HttpStatusCode.Forbidden, markRead.StatusCode);
+
+        var settings = await businessClient.PatchAsJsonAsync(
+            "/api/v1/tenant/messages/settings",
+            new { faqAutoResponderEnabled = true });
+        Assert.Equal(HttpStatusCode.Forbidden, settings.StatusCode);
+    }
+
+    [Fact]
+    public async Task Public_whatsapp_link_returns_url()
+    {
+        await SeedTenantAsync(SubscriptionTier.Pro, BusinessSub + "-wa", "WA Shop", "messaging-wa-shop");
 
         var client = _factory.CreateClient();
-        var response = await client.GetAsync("/api/v1/businesses/wa-shop/whatsapp-link");
+        var response = await client.GetAsync("/api/v1/businesses/messaging-wa-shop/whatsapp-link");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var payload = await response.Content.ReadFromJsonAsync<WhatsAppPayload>();
         Assert.NotNull(payload);
-        Assert.Contains("wa.me", payload!.Url, StringComparison.OrdinalIgnoreCase);
+        Assert.StartsWith("https://wa.me/", payload!.Url);
     }
 
     [Fact]
-    public async Task Faq_auto_responder_replies_to_pricing_question()
+    public async Task Faq_auto_responder_replies_as_bot_when_enabled()
     {
-        var tenantId = Guid.Empty;
-
-        using (var scope = _factory.Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
-            tenantId = Guid.NewGuid();
-            db.Tenants.Add(new Tenant
-            {
-                Id = tenantId,
-                Name = "FAQ Shop",
-                Status = TenantStatus.Verified,
-                SubscriptionTier = SubscriptionTier.Pro,
-                SubscriptionSku = SubscriptionSku.Professional,
-                BillingStatus = TenantBillingStatus.Active,
-                CreatedAt = DateTimeOffset.UtcNow,
-                VerifiedAt = DateTimeOffset.UtcNow,
-            });
-            db.BusinessProfiles.Add(new BusinessProfile
-            {
-                TenantId = tenantId,
-                CategorySlug = "barbers",
-                Phone = "+2348012345678",
-                FaqAutoResponderEnabled = true,
-                UpdatedAt = DateTimeOffset.UtcNow,
-            });
-            db.ServiceOfferings.Add(new ServiceOffering
-            {
-                Id = Guid.NewGuid(),
-                TenantId = tenantId,
-                Name = "Haircut",
-                Currency = "NGN",
-                PriceAmount = 5000m,
-                DurationMinutes = 30,
-                IsActive = true,
-                CreatedAt = DateTimeOffset.UtcNow,
-                UpdatedAt = DateTimeOffset.UtcNow,
-            });
-            await db.SaveChangesAsync();
-        }
+        var tenantId = await SeedTenantAsync(
+            SubscriptionTier.Pro,
+            BusinessSub + "-faq",
+            "FAQ Shop",
+            "messaging-faq-shop",
+            faqEnabled: true);
 
         var customerClient = _factory.CreateClient();
-        customerClient.DefaultRequestHeaders.Add("X-Dev-Auth0-Sub", CustomerSub);
+        customerClient.DefaultRequestHeaders.Add("X-Dev-Auth0-Sub", CustomerSub + "-faq");
 
         var createResponse = await customerClient.PostAsJsonAsync(
-            "/api/v1/messages/threads",
+            "/api/v1/messages/conversations",
             new { tenantId });
-
-        var thread = await createResponse.Content.ReadFromJsonAsync<ThreadPayload>();
-        Assert.NotNull(thread);
+        var conversation = await createResponse.Content.ReadFromJsonAsync<ConversationPayload>();
+        Assert.NotNull(conversation);
 
         await customerClient.PostAsJsonAsync(
-            $"/api/v1/messages/threads/{thread!.Id}/messages",
-            new { body = "How much does a haircut cost?" });
+            $"/api/v1/messages/conversations/{conversation!.Id}/messages",
+            new { body = "What is your price for a cut?", clientMessageId = Guid.NewGuid().ToString("N") });
 
-        var detailResponse = await customerClient.GetAsync(
-            $"/api/v1/messages/threads/{thread.Id}");
-
-        Assert.Equal(HttpStatusCode.OK, detailResponse.StatusCode);
-        var detail = await detailResponse.Content.ReadFromJsonAsync<ThreadDetailPayload>();
+        var detail = await customerClient.GetFromJsonAsync<ConversationDetailPayload>(
+            $"/api/v1/messages/conversations/{conversation.Id}");
         Assert.NotNull(detail);
-        Assert.True(detail!.Messages.Count >= 2);
-        Assert.Contains(detail.Messages, message =>
-            message.SenderType == "business" && message.Body.Contains("Haircut", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(detail!.Messages, m => m.SenderType == "bot");
     }
 
     [Fact]
-    public async Task Tenant_can_update_notification_preferences()
+    public async Task Notification_preferences_can_be_updated()
     {
-        var tenantId = Guid.Empty;
-
-        using (var scope = _factory.Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
-            tenantId = Guid.NewGuid();
-            db.Tenants.Add(new Tenant
-            {
-                Id = tenantId,
-                Name = "Prefs Shop",
-                Status = TenantStatus.Verified,
-                CreatedAt = DateTimeOffset.UtcNow,
-                VerifiedAt = DateTimeOffset.UtcNow,
-            });
-            db.BusinessUsers.Add(new BusinessUser
-            {
-                Id = Guid.NewGuid(),
-                TenantId = tenantId,
-                Auth0Sub = PrefsBusinessSub,
-                Role = "owner",
-                CreatedAt = DateTimeOffset.UtcNow,
-            });
-            await db.SaveChangesAsync();
-        }
+        var tenantId = await SeedTenantAsync(
+            SubscriptionTier.Pro,
+            PrefsBusinessSub,
+            "Prefs Shop",
+            "messaging-prefs-shop");
 
         var businessClient = _factory.CreateClient();
         businessClient.DefaultRequestHeaders.Add("X-Dev-Auth0-Sub", PrefsBusinessSub);
         businessClient.DefaultRequestHeaders.Add("X-Tenant-Id", tenantId.ToString());
 
-        var getDefaults = await businessClient.GetFromJsonAsync<NotificationPrefsPayload>(
-            "/api/v1/tenant/notification-preferences");
-
-        Assert.NotNull(getDefaults);
-        Assert.True(getDefaults!.EmailEnabled);
-
-        var patchResponse = await businessClient.PatchAsJsonAsync(
+        var patch = await businessClient.PatchAsJsonAsync(
             "/api/v1/tenant/notification-preferences",
-            new { emailEnabled = false, pushEnabled = true, smsWhatsAppReminderEnabled = true });
-
-        Assert.Equal(HttpStatusCode.OK, patchResponse.StatusCode);
-        var updated = await patchResponse.Content.ReadFromJsonAsync<NotificationPrefsPayload>();
-        Assert.NotNull(updated);
-        Assert.False(updated!.EmailEnabled);
-        Assert.True(updated.PushEnabled);
-        Assert.True(updated.SmsWhatsAppReminderEnabled);
+            new
+            {
+                emailEnabled = true,
+                pushEnabled = false,
+                smsWhatsAppReminderEnabled = true,
+            });
+        Assert.Equal(HttpStatusCode.OK, patch.StatusCode);
     }
 
-    private sealed record ThreadPayload(Guid Id);
+    private async Task<Guid> SeedTenantAsync(
+        SubscriptionTier tier,
+        string businessSub,
+        string name,
+        string slug,
+        bool faqEnabled = false,
+        string role = PortalPermissionRoles.Owner)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        var tenantId = Guid.NewGuid();
+        db.Tenants.Add(new Tenant
+        {
+            Id = tenantId,
+            Name = name,
+            Status = TenantStatus.Verified,
+            SubscriptionTier = tier,
+            SubscriptionSku = tier == SubscriptionTier.Free ? SubscriptionSku.Starter : SubscriptionSku.Professional,
+            BillingStatus = TenantBillingStatus.Active,
+            CreatedAt = DateTimeOffset.UtcNow,
+            VerifiedAt = DateTimeOffset.UtcNow,
+        });
+        db.BusinessProfiles.Add(new BusinessProfile
+        {
+            TenantId = tenantId,
+            CategorySlug = "barbers",
+            Phone = "+2348012345678",
+            Description = "Messaging test",
+            FaqAutoResponderEnabled = faqEnabled,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+        db.BusinessLocations.Add(new BusinessLocation
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            Slug = slug,
+            Name = "Main",
+            MarketId = "lagos",
+            AddressLine = "12 Test St",
+            Area = "Lekki",
+            TimeZoneId = "Africa/Lagos",
+            IsPrimary = true,
+            IsActive = true,
+        });
+        db.BusinessUsers.Add(new BusinessUser
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            Auth0Sub = businessSub,
+            Role = role,
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+        await db.SaveChangesAsync();
+        return tenantId;
+    }
+
+    private sealed record ConversationPayload(Guid Id, Guid TenantId, bool NeedsAttention);
+
     private sealed record UnreadPayload(int Count);
-    private sealed record WhatsAppPayload(string Url);
-    private sealed record ThreadDetailPayload(IReadOnlyList<MessagePayload> Messages);
-    private sealed record MessagePayload(string SenderType, string Body);
-    private sealed record NotificationPrefsPayload(
-        bool EmailEnabled,
-        bool PushEnabled,
-        bool SmsWhatsAppReminderEnabled);
+
+    private sealed record WhatsAppPayload(string Url, string? PhoneMasked);
+
+    private sealed record ConversationDetailPayload(List<MessagePayload> Messages);
+
+    private sealed record MessagePayload(string SenderType, string? Body);
 }

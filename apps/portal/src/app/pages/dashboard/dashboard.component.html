@@ -399,7 +399,7 @@
               >
                 <a class="widget-stat-link" routerLink="/messages" [queryParams]="{ tab: 'inbox' }">
                   <p class="widget-stat-value">{{ unreadMessagesCount() }}</p>
-                  <p class="hint">Unread threads in your inbox</p>
+                  <p class="hint">Conversations needing attention</p>
                 </a>
               </app-dashboard-widget>
             }
@@ -504,7 +504,7 @@
                   @if (hasEntitlement("messaging")) {
                     <a routerLink="/messages" [queryParams]="{ tab: 'inbox' }">
                       <strong>Messages</strong>
-                      <span>Reply in the thread, or send a WhatsApp note.</span>
+                      <span>Reply in the conversation, or send a WhatsApp note.</span>
                     </a>
                   } @else if (session.can("portal.messages")) {
                     <a routerLink="/messages" [queryParams]="{ tab: 'whatsapp' }">

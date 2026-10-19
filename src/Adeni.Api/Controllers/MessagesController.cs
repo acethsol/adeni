@@ -1,9 +1,9 @@
 namespace Adeni.Api.Controllers;
 
-using System.Security.Claims;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
 using Adeni.Application.Messaging;
+using Adeni.Domain.Messaging;
 using Adeni.Infrastructure.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -11,12 +11,23 @@ using Microsoft.Extensions.Options;
 [ApiController]
 [Route("api/v1/messages")]
 public sealed class MessagesController(
-    IMessageThreadService messaging,
+    IConversationService messaging,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
-    [HttpPost("threads")]
-    public async Task<IActionResult> CreateThread(
-        [FromBody] CreateThreadRequest request,
+    public sealed record CreateConversationBody(
+        Guid TenantId,
+        string? ContextType = null,
+        Guid? ContextId = null,
+        Guid? BookingId = null);
+
+    public sealed record SendMessageBody(
+        string? Body = null,
+        string? ClientMessageId = null,
+        IReadOnlyList<SendMessageAttachmentRequest>? Attachments = null);
+
+    [HttpPost("conversations")]
+    public async Task<IActionResult> CreateConversation(
+        [FromBody] CreateConversationBody body,
         CancellationToken cancellationToken)
     {
         var auth0Sub = ResolveCustomerAuth0Sub();
@@ -25,15 +36,21 @@ public sealed class MessagesController(
             return Unauthorized();
         }
 
-        var result = await messaging.CreateOrGetThreadAsync(auth0Sub, request, cancellationToken);
+        var contextType = ParseContextType(body.ContextType, body.ContextId ?? body.BookingId);
+        var contextId = body.ContextId ?? body.BookingId;
+        var result = await messaging.CreateOrGetAsync(
+            auth0Sub,
+            new CreateConversationRequest(body.TenantId, contextType, contextId),
+            cancellationToken);
+
         return ApiResults.FromResult(
             result,
-            payload => Created($"/api/v1/messages/threads/{payload.Id}", payload),
+            payload => Created($"/api/v1/messages/conversations/{payload.Id}", payload),
             HttpContext);
     }
 
-    [HttpGet("threads")]
-    public async Task<IActionResult> ListThreads(CancellationToken cancellationToken)
+    [HttpGet("conversations")]
+    public async Task<IActionResult> ListConversations(CancellationToken cancellationToken)
     {
         var auth0Sub = ResolveCustomerAuth0Sub();
         if (auth0Sub is null)
@@ -45,10 +62,11 @@ public sealed class MessagesController(
         return Ok(new { items });
     }
 
-    [HttpGet("threads/{id:guid}")]
-    public async Task<IActionResult> GetThread(
+    [HttpGet("conversations/{id:guid}")]
+    public async Task<IActionResult> GetConversation(
         Guid id,
-        [FromQuery] int limit = 50,
+        [FromQuery] Guid? beforeId = null,
+        [FromQuery] int take = 50,
         CancellationToken cancellationToken = default)
     {
         var auth0Sub = ResolveCustomerAuth0Sub();
@@ -57,20 +75,29 @@ public sealed class MessagesController(
             return Unauthorized();
         }
 
-        var result = await messaging.GetThreadAsync(
+        var result = await messaging.GetAsync(
             auth0Sub,
-            MessageParticipantRole.Customer,
+            MessagingActorRole.Customer,
             id,
-            limit,
+            beforeId,
+            take,
             cancellationToken);
 
         return ApiResults.FromResult(result, Ok, HttpContext);
     }
 
-    [HttpPost("threads/{id:guid}/messages")]
+    [HttpGet("conversations/{id:guid}/messages")]
+    public async Task<IActionResult> ListMessages(
+        Guid id,
+        [FromQuery] Guid? beforeId = null,
+        [FromQuery] int take = 50,
+        CancellationToken cancellationToken = default) =>
+        await GetConversation(id, beforeId, take, cancellationToken);
+
+    [HttpPost("conversations/{id:guid}/messages")]
     public async Task<IActionResult> SendMessage(
         Guid id,
-        [FromBody] SendMessageRequest request,
+        [FromBody] SendMessageBody body,
         CancellationToken cancellationToken)
     {
         var auth0Sub = ResolveCustomerAuth0Sub();
@@ -79,21 +106,24 @@ public sealed class MessagesController(
             return Unauthorized();
         }
 
-        var result = await messaging.SendMessageAsync(
+        var result = await messaging.SendAsync(
             auth0Sub,
-            MessageParticipantRole.Customer,
+            MessagingActorRole.Customer,
             id,
-            request,
+            new SendConversationMessageRequest(body.Body, body.ClientMessageId, body.Attachments),
             cancellationToken);
 
         return ApiResults.FromResult(
             result,
-            payload => Created($"/api/v1/messages/threads/{id}/messages/{payload.Id}", payload),
+            payload => Created($"/api/v1/messages/conversations/{id}/messages/{payload.Id}", payload),
             HttpContext);
     }
 
-    [HttpPost("threads/{id:guid}/read")]
-    public async Task<IActionResult> MarkRead(Guid id, CancellationToken cancellationToken)
+    [HttpPost("conversations/{id:guid}/read")]
+    public async Task<IActionResult> MarkRead(
+        Guid id,
+        [FromQuery] Guid? messageId = null,
+        CancellationToken cancellationToken = default)
     {
         var auth0Sub = ResolveCustomerAuth0Sub();
         if (auth0Sub is null)
@@ -103,11 +133,24 @@ public sealed class MessagesController(
 
         var result = await messaging.MarkReadAsync(
             auth0Sub,
-            MessageParticipantRole.Customer,
+            MessagingActorRole.Customer,
             id,
+            messageId,
             cancellationToken);
 
-        return ApiResults.FromResult(result, _ => NoContent(), HttpContext);
+        return ApiResults.FromResult(result, () => NoContent(), HttpContext);
+    }
+
+    private static ConversationContextType ParseContextType(string? raw, Guid? contextId)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return contextId is null ? ConversationContextType.Profile : ConversationContextType.Booking;
+        }
+
+        return Enum.TryParse<ConversationContextType>(raw, ignoreCase: true, out var parsed)
+            ? parsed
+            : ConversationContextType.Profile;
     }
 
     private string? ResolveCustomerAuth0Sub()

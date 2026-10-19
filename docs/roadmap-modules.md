@@ -32,7 +32,7 @@ Each major build still needs a `docs/specs/sprint-XX-*.md` before implementation
 | 3 | **Verification / trust** | Partial | Now | Tenancy + Admin | Tiers shipped; deepen CAC/automation |
 | 4 | **Subscriptions & add-ons** | Partial | Next | Subscriptions | Entitlements shipped; live billing stub |
 | 5 | **Dashboards & reporting** | Partial | Next | Portal overview + Admin | Owner “today” first; ops GMV later |
-| 6 | **Messaging** | Partial | Next | Messaging | Client↔business done; staff↔staff gap |
+| 6 | **Messaging** | Shipped (client↔business) | Later (staff notes / WABA) | Messaging | Sprint 36 conversations + SignalR |
 | 7 | **Floor calendar & staff** | Shipped | Now (polish) | Booking + Identity | Team + practitioner boards |
 | 8 | **Onboarding** | Shipped | Now (polish) | Tenancy | Supply-first; category-aware defaults |
 | 9 | **Discovery & public page** | Shipped | Now | Discovery | SEO + shareable book link |
@@ -106,10 +106,11 @@ Each major build still needs a `docs/specs/sprint-XX-*.md` before implementation
 | | |
 |--|--|
 | **Job** | Meet customers where they are; light staff handoff |
-| **Shipped** | Client ↔ business threads, WhatsApp deep links, templates, Pro gate |
-| **Gap** | Staff ↔ staff / front-desk notes on bookings |
-| **Later** | SignalR realtime, WABA |
+| **Shipped** | Sprint 36 conversations + participants + SignalR push; WhatsApp deep links; FAQ-as-Bot; Pro + `portal.messages` gate |
+| **Gap** | Staff ↔ staff / front-desk notes on bookings; real email/push adapters (hook exists) |
+| **Later** | WABA; Redis SignalR backplane when multi-instance |
 | **Owner** | TBD |
+| **Spec** | [sprint-36-messaging-rewrite.md](./specs/sprint-36-messaging-rewrite.md) |
 
 ### 3.7 Floor calendar & staff (reference)
 
@@ -220,5 +221,5 @@ Aligned detail: [roadmap-workflows-payments-queue.md §6](./roadmap-workflows-pa
 | [sprints.md](./sprints.md) | Sprint execution |
 | [beauty-wellness-taxonomy.md](./beauty-wellness-taxonomy.md) | Categories |
 | [subscription-billing.md](./subscription-billing.md) | SaaS billing stub |
-| [specs/sprint-18-messaging.md](./specs/sprint-18-messaging.md) | Messaging shipped scope |
+| [specs/sprint-36-messaging-rewrite.md](./specs/sprint-36-messaging-rewrite.md) | Messaging (replaces Sprint 18) |
 | [specs/sprint-25-staff-accounts-permissions.md](./specs/sprint-25-staff-accounts-permissions.md) | Staff roles |

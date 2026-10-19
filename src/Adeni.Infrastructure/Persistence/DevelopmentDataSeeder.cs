@@ -5,6 +5,7 @@ using Adeni.Application.Catalog;
 using Adeni.Application.Storage;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Identity;
+using Adeni.Domain.Messaging;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Subscriptions;
 using Adeni.Domain.Tenancy;
@@ -181,6 +182,273 @@ public static class DevelopmentDataSeeder
         await SeedDevDepositSettingsAsync(db, cancellationToken);
         await SeedDevReviewFixtureAsync(db, cancellationToken);
         await SeedDevQueueFloorAsync(db, cancellationToken);
+        await SeedDevMessagingAsync(db, cancellationToken);
+    }
+
+    /// <summary>
+    /// Sample conversations for Lekki Cuts so the portal Messages inbox is non-empty in local dev.
+    /// Idempotent: skips when the tenant already has any conversation.
+    /// </summary>
+    private static async Task SeedDevMessagingAsync(
+        AdeniDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var location = await db.BusinessLocations
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(entry => entry.Slug == SeedMarkerSlug, cancellationToken);
+        if (location is null)
+        {
+            return;
+        }
+
+        if (await db.Conversations
+                .IgnoreQueryFilters()
+                .AnyAsync(x => x.TenantId == location.TenantId, cancellationToken))
+        {
+            return;
+        }
+
+        var owner = await db.BusinessUsers
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                x => x.TenantId == location.TenantId && x.Auth0Sub == DevBusinessAuth0Sub,
+                cancellationToken);
+        if (owner is null)
+        {
+            return;
+        }
+
+        var localCustomer = await db.Customers
+            .FirstOrDefaultAsync(entry => entry.Auth0Sub == DevCustomerAuth0Sub, cancellationToken);
+        if (localCustomer is null)
+        {
+            localCustomer = new Customer
+            {
+                Id = Guid.NewGuid(),
+                Auth0Sub = DevCustomerAuth0Sub,
+                Name = "Local Customer",
+                CreatedAt = DateTimeOffset.UtcNow,
+            };
+            db.Customers.Add(localCustomer);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
+        var walkInCustomer = await EnsureSeedCustomerAsync(
+            db,
+            "auth0|dev-messaging-walkin",
+            "Amaka Okoro",
+            "2348012399001",
+            cancellationToken);
+        var bookingCustomer = await EnsureSeedCustomerAsync(
+            db,
+            "auth0|dev-messaging-booking",
+            "Tunde Bakare",
+            "2348012399002",
+            cancellationToken);
+
+        var now = DateTimeOffset.UtcNow;
+
+        // 1) Needs attention — customer asked about hours; FAQ bot replied; no business read yet.
+        SeedConversationExchange(
+            db,
+            location.TenantId,
+            walkInCustomer,
+            owner,
+            ConversationContextType.Profile,
+            contextId: null,
+            now.AddHours(-5),
+            includeBusinessReply: false,
+            includeFaqBot: true,
+            businessHasRead: false,
+            customerBody: "Hi — what time do you open on Saturday?",
+            botBody: "Thanks for asking! Check our live availability and book online on Adeni — we confirm slots in real time.",
+            businessBody: null);
+
+        // 2) Active chat — local customer + owner already replied (caught up for team badge).
+        SeedConversationExchange(
+            db,
+            location.TenantId,
+            localCustomer.Id,
+            owner,
+            ConversationContextType.Profile,
+            contextId: null,
+            now.AddHours(-2),
+            includeBusinessReply: true,
+            includeFaqBot: false,
+            businessHasRead: true,
+            customerBody: "Can I book a fade for tomorrow afternoon?",
+            botBody: null,
+            businessBody: "Yes — we have openings after 2pm. Book on Adeni or tell me a time that works.");
+
+        // 3) Needs attention again — newer customer question after last business read.
+        var booking = await db.Bookings
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(x => x.TenantId == location.TenantId && x.CustomerId == bookingCustomer)
+            .OrderByDescending(x => x.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        SeedConversationExchange(
+            db,
+            location.TenantId,
+            bookingCustomer,
+            owner,
+            booking is null ? ConversationContextType.Profile : ConversationContextType.Booking,
+            booking?.Id,
+            now.AddMinutes(-40),
+            includeBusinessReply: false,
+            includeFaqBot: false,
+            businessHasRead: false,
+            customerBody: "Running 15 minutes late — can you still take me?",
+            botBody: null,
+            businessBody: null);
+
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private static void SeedConversationExchange(
+        AdeniDbContext db,
+        Guid tenantId,
+        Guid customerId,
+        BusinessUser owner,
+        ConversationContextType contextType,
+        Guid? contextId,
+        DateTimeOffset startedAt,
+        bool includeBusinessReply,
+        bool includeFaqBot,
+        bool businessHasRead,
+        string customerBody,
+        string? botBody,
+        string? businessBody)
+    {
+        var conversationId = Guid.NewGuid();
+        var customerParticipantId = Guid.NewGuid();
+        var businessParticipantId = Guid.NewGuid();
+        var botParticipantId = Guid.NewGuid();
+        var customerMessageId = Guid.NewGuid();
+        var botMessageId = Guid.NewGuid();
+        var businessMessageId = Guid.NewGuid();
+
+        var lastMessageAt = startedAt;
+        var conversation = new Conversation
+        {
+            Id = conversationId,
+            TenantId = tenantId,
+            CustomerId = customerId,
+            ContextType = contextType,
+            ContextId = contextId,
+            Status = ConversationStatus.Open,
+            CreatedAt = startedAt,
+            LastMessageAt = startedAt,
+            CreatedByParticipantId = customerParticipantId,
+        };
+
+        var customerParticipant = new ConversationParticipant
+        {
+            Id = customerParticipantId,
+            ConversationId = conversationId,
+            TenantId = tenantId,
+            ParticipantType = ConversationParticipantType.Customer,
+            CustomerId = customerId,
+            Auth0Sub = null,
+            JoinedAt = startedAt,
+            LastReadMessageId = customerMessageId,
+            LastReadAt = startedAt,
+        };
+
+        db.Conversations.Add(conversation);
+        db.ConversationParticipants.Add(customerParticipant);
+        db.ConversationMessages.Add(new ConversationMessage
+        {
+            Id = customerMessageId,
+            ConversationId = conversationId,
+            TenantId = tenantId,
+            SenderParticipantId = customerParticipantId,
+            Type = ConversationMessageType.Text,
+            Body = customerBody,
+            ClientMessageId = $"seed-customer-{conversationId:N}",
+            CreatedAt = startedAt,
+            ModerationStatus = MessageModerationStatus.None,
+        });
+
+        if (includeFaqBot && !string.IsNullOrWhiteSpace(botBody))
+        {
+            var botAt = startedAt.AddMinutes(1);
+            lastMessageAt = botAt;
+            db.ConversationParticipants.Add(new ConversationParticipant
+            {
+                Id = botParticipantId,
+                ConversationId = conversationId,
+                TenantId = tenantId,
+                ParticipantType = ConversationParticipantType.Bot,
+                BotKey = MessagingBotKeys.Faq,
+                JoinedAt = botAt,
+            });
+            db.ConversationMessages.Add(new ConversationMessage
+            {
+                Id = botMessageId,
+                ConversationId = conversationId,
+                TenantId = tenantId,
+                SenderParticipantId = botParticipantId,
+                Type = ConversationMessageType.Text,
+                Body = botBody,
+                ClientMessageId = $"seed-bot-{conversationId:N}",
+                CreatedAt = botAt,
+                ModerationStatus = MessageModerationStatus.None,
+            });
+        }
+
+        if (includeBusinessReply && !string.IsNullOrWhiteSpace(businessBody))
+        {
+            var businessAt = startedAt.AddMinutes(12);
+            lastMessageAt = businessAt;
+            var businessParticipant = new ConversationParticipant
+            {
+                Id = businessParticipantId,
+                ConversationId = conversationId,
+                TenantId = tenantId,
+                ParticipantType = ConversationParticipantType.BusinessUser,
+                BusinessUserId = owner.Id,
+                Auth0Sub = owner.Auth0Sub,
+                JoinedAt = businessAt,
+                LastReadMessageId = businessHasRead ? businessMessageId : null,
+                LastReadAt = businessHasRead ? businessAt : null,
+            };
+            db.ConversationParticipants.Add(businessParticipant);
+            db.ConversationMessages.Add(new ConversationMessage
+            {
+                Id = businessMessageId,
+                ConversationId = conversationId,
+                TenantId = tenantId,
+                SenderParticipantId = businessParticipantId,
+                Type = ConversationMessageType.Text,
+                Body = businessBody,
+                ClientMessageId = $"seed-business-{conversationId:N}",
+                CreatedAt = businessAt,
+                ModerationStatus = MessageModerationStatus.None,
+            });
+        }
+        else if (businessHasRead)
+        {
+            // Owner opened but did not reply — still a participant with a read cursor.
+            db.ConversationParticipants.Add(new ConversationParticipant
+            {
+                Id = businessParticipantId,
+                ConversationId = conversationId,
+                TenantId = tenantId,
+                ParticipantType = ConversationParticipantType.BusinessUser,
+                BusinessUserId = owner.Id,
+                Auth0Sub = owner.Auth0Sub,
+                JoinedAt = startedAt.AddMinutes(5),
+                LastReadMessageId = includeFaqBot ? botMessageId : customerMessageId,
+                LastReadAt = startedAt.AddMinutes(5),
+            });
+        }
+
+        conversation.LastMessageAt = lastMessageAt;
+        conversation.CreatedByParticipantId = customerParticipantId;
     }
 
     private static async Task EnsureServiceMenusAsync(

@@ -29,6 +29,7 @@
     "@carbon/charts": "^1.27.21",
     "@carbon/icon-helpers": "^10.84.0",
     "@carbon/icons": "^11.90.0",
+    "@microsoft/signalr": "^10.0.11",
     "rxjs": "7.8.2",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"

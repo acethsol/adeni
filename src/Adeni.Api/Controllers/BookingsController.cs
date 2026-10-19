@@ -17,7 +17,7 @@ public sealed class BookingsController(
     IBookingService bookings,
     IReviewService reviews,
     IWaitlistService waitlist,
-    IMessageThreadService messaging,
+    IConversationService messaging,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpPost]

@@ -55,6 +55,7 @@ public sealed class TenantMediaService(
         {
             MediaUploadPurpose.Gallery => "gallery",
             MediaUploadPurpose.StaffAvatar => "staff",
+            MediaUploadPurpose.MessageAttachment => "messages",
             _ => "covers",
         };
         var storageKey = $"tenants/{tenantId:N}/{folder}/{Guid.NewGuid():N}{extension}";
@@ -275,6 +276,13 @@ public sealed class TenantMediaService(
             || value.Trim().Equals("staffAvatar", StringComparison.OrdinalIgnoreCase))
         {
             purpose = MediaUploadPurpose.StaffAvatar;
+            return true;
+        }
+
+        if (value.Trim().Equals("message_attachment", StringComparison.OrdinalIgnoreCase)
+            || value.Trim().Equals("messageAttachment", StringComparison.OrdinalIgnoreCase))
+        {
+            purpose = MediaUploadPurpose.MessageAttachment;
             return true;
         }
 

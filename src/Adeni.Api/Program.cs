@@ -40,6 +40,8 @@ builder.Services.AddAdeniCors(builder.Configuration, builder.Environment);
 builder.Services.AddAdeniObservability(builder.Configuration);
 builder.Services.AddAdeniRateLimiting(builder.Environment);
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<Adeni.Application.Messaging.IMessagingRealtimePublisher, Adeni.Api.Messaging.SignalRMessagingRealtimePublisher>();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddHealthChecks();
@@ -102,6 +104,7 @@ app.UseAdeniRateLimiting();
 app.UseAdeniSecurityPipeline();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<Adeni.Api.Messaging.MessagingHub>("/hubs/messaging");
 
 app.Run();
 

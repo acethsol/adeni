@@ -31,52 +31,52 @@
       </section>
     } @else {
       <div class="inbox">
-        <section class="card threads">
+        <section class="card conversations">
           <h3>Inbox</h3>
-          @if (threads().length === 0) {
+          @if (conversations().length === 0) {
             <adeni-portal-empty-state
               [compact]="true"
               icon="send"
               title="Inbox is quiet"
-              description="Threads appear when a customer messages you about a booking."
+              description="Conversations appear when a customer messages you about a booking."
             />
           } @else {
             <ul>
-              @for (thread of threads(); track thread.id) {
+              @for (conversation of conversations(); track conversation.id) {
                 <li>
                   <button
                     type="button"
-                    [class.active]="detail()?.id === thread.id"
-                    (click)="openThread(thread)"
+                    [class.active]="detail()?.id === conversation.id"
+                    (click)="openConversation(conversation)"
                   >
                     <span class="who">
-                      {{ thread.customerDisplayName }}
-                      @if (thread.unreadCount > 0) {
-                        <i>{{ thread.unreadCount }}</i>
+                      {{ conversation.customerDisplayName }}
+                      @if (conversation.needsAttention) {
+                        <i>New</i>
                       }
                     </span>
-                    <span class="preview">{{ thread.preview || "No preview" }}</span>
-                    <span class="when">{{ formatSlotTime(thread.lastMessageAt) }}</span>
+                    <span class="preview">{{ conversation.preview || "No preview" }}</span>
+                    <span class="when">{{ formatSlotTime(conversation.lastMessageAt) }}</span>
                   </button>
                 </li>
               }
             </ul>
-            @if (threadTotalCount() > threadPageSize) {
+            @if (conversationTotalCount() > conversationPageSize) {
               <div class="pagination">
                 <button
                   type="button"
                   class="btn"
-                  [disabled]="threadPage() <= 1 || loading()"
-                  (click)="prevThreadPage()"
+                  [disabled]="conversationPage() <= 1 || loading()"
+                  (click)="prevConversationPage()"
                 >
                   Previous
                 </button>
-                <span class="muted">{{ threadPageLabel() }}</span>
+                <span class="muted">{{ conversationPageLabel() }}</span>
                 <button
                   type="button"
                   class="btn"
-                  [disabled]="loading() || !canNextThreadPage()"
-                  (click)="nextThreadPage()"
+                  [disabled]="loading() || !canNextConversationPage()"
+                  (click)="nextConversationPage()"
                 >
                   Next
                 </button>
@@ -86,20 +86,54 @@
         </section>
 
         <section class="card conversation">
-          @if (detail(); as thread) {
-            <h3>{{ thread.customerDisplayName }}</h3>
+          @if (detail(); as conversation) {
+            <h3>{{ conversation.customerDisplayName }}</h3>
             <div class="transcript">
-              @for (message of thread.messages; track message.id) {
-                <p [class.mine]="message.senderType === 'business'">
-                  {{ message.body }}
-                </p>
+              @for (message of conversation.messages; track message.id) {
+                <div
+                  class="bubble"
+                  [class.mine]="message.senderType === 'business' || message.senderType === 'bot'"
+                >
+                  @if (message.body) {
+                    <p>{{ message.body }}</p>
+                  }
+                  @for (attachment of message.attachments; track attachment.id) {
+                    @if (attachment.url) {
+                      <a [href]="attachment.url" target="_blank" rel="noopener" class="attachment">
+                        <img [src]="attachment.url" [alt]="attachment.fileName" />
+                      </a>
+                    } @else {
+                      <span class="attachment-missing">{{ attachment.fileName }} (unavailable)</span>
+                    }
+                  }
+                </div>
               }
             </div>
             <form (submit)="$event.preventDefault(); send()">
               <textarea rows="3" [(ngModel)]="draft" name="draft" placeholder="Write a reply"></textarea>
-              <button type="submit" class="btn btn-primary" [disabled]="sending() || !draft.trim()">
-                {{ sending() ? "Sending…" : "Send" }}
-              </button>
+              @if (pendingAttachmentPreview(); as preview) {
+                <div class="pending-attachment">
+                  <img [src]="preview" alt="Pending attachment" />
+                  <button type="button" class="btn" (click)="clearPendingAttachment()">Remove</button>
+                </div>
+              }
+              <div class="composer-actions">
+                <label class="btn">
+                  <adeni-carbon-icon name="upload" [size]="16" />
+                  {{ attaching() ? "Uploading…" : "Attach image" }}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    hidden
+                    [disabled]="attaching() || sending()"
+                    (change)="onAttachmentSelected($event)"
+                  />
+                </label>
+                <button type="submit" class="btn btn-primary" [disabled]="!canSend()">
+                  <adeni-carbon-icon name="send" [size]="16" />
+                  {{ sending() ? "Sending…" : "Send" }}
+                </button>
+              </div>
             </form>
           } @else {
             <adeni-portal-empty-state
@@ -107,7 +141,7 @@
               [embedded]="true"
               icon="send"
               title="Select a conversation"
-              description="Pick a thread from the inbox to read and reply."
+              description="Pick a conversation from the inbox to read and reply."
             />
           }
         </section>

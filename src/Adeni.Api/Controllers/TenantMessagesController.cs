@@ -1,9 +1,11 @@
 namespace Adeni.Api.Controllers;
 
 using System.Security.Claims;
+using Adeni.Api.Auth;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
 using Adeni.Application.Messaging;
+using Adeni.Domain.Identity;
 using Adeni.Domain.Subscriptions;
 using Adeni.Infrastructure.Auth;
 using Adeni.Infrastructure.Persistence;
@@ -13,13 +15,19 @@ using Microsoft.Extensions.Options;
 
 [ApiController]
 [Route("api/v1/tenant/messages")]
+[RequiresPortalPermission(PortalPermissions.Messages)]
 public sealed class TenantMessagesController(
-    IMessageThreadService messaging,
+    IConversationService messaging,
     AdeniDbContext dbContext,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
-    [HttpGet("threads")]
-    public async Task<IActionResult> ListThreads(
+    public sealed record SendMessageBody(
+        string? Body = null,
+        string? ClientMessageId = null,
+        IReadOnlyList<SendMessageAttachmentRequest>? Attachments = null);
+
+    [HttpGet("conversations")]
+    public async Task<IActionResult> ListConversations(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 25,
         CancellationToken cancellationToken = default)
@@ -62,7 +70,7 @@ public sealed class TenantMessagesController(
             return NotFound();
         }
 
-        var result = await messaging.GetUnreadCountForTenantAsync(tenantId, tier.Value, cancellationToken);
+        var result = await messaging.GetTeamUnreadCountForTenantAsync(tenantId, tier.Value, cancellationToken);
         return ApiResults.FromResult(result, Ok, HttpContext);
     }
 
@@ -84,31 +92,34 @@ public sealed class TenantMessagesController(
         return ApiResults.FromResult(result, items => Ok(new { items }), HttpContext);
     }
 
-    [HttpGet("threads/{id:guid}")]
-    public async Task<IActionResult> GetThread(
+    [HttpGet("conversations/{id:guid}")]
+    public async Task<IActionResult> GetConversation(
         Guid id,
-        [FromQuery] int limit = 50,
+        [FromQuery] Guid? beforeId = null,
+        [FromQuery] int take = 50,
         CancellationToken cancellationToken = default)
     {
-        if (ResolveAuth0Sub() is null || ResolveTenantId() is null)
+        var auth0Sub = ResolveAuth0Sub();
+        if (auth0Sub is null || ResolveTenantId() is null)
         {
             return Unauthorized();
         }
 
-        var result = await messaging.GetThreadAsync(
-            ResolveAuth0Sub()!,
-            MessageParticipantRole.Business,
+        var result = await messaging.GetAsync(
+            auth0Sub,
+            MessagingActorRole.Business,
             id,
-            limit,
+            beforeId,
+            take,
             cancellationToken);
 
         return ApiResults.FromResult(result, Ok, HttpContext);
     }
 
-    [HttpPost("threads/{id:guid}/messages")]
+    [HttpPost("conversations/{id:guid}/messages")]
     public async Task<IActionResult> SendMessage(
         Guid id,
-        [FromBody] SendMessageRequest request,
+        [FromBody] SendMessageBody body,
         CancellationToken cancellationToken)
     {
         var auth0Sub = ResolveAuth0Sub();
@@ -117,21 +128,24 @@ public sealed class TenantMessagesController(
             return Unauthorized();
         }
 
-        var result = await messaging.SendMessageAsync(
+        var result = await messaging.SendAsync(
             auth0Sub,
-            MessageParticipantRole.Business,
+            MessagingActorRole.Business,
             id,
-            request,
+            new SendConversationMessageRequest(body.Body, body.ClientMessageId, body.Attachments),
             cancellationToken);
 
         return ApiResults.FromResult(
             result,
-            payload => Created($"/api/v1/tenant/messages/threads/{id}/messages/{payload.Id}", payload),
+            payload => Created($"/api/v1/tenant/messages/conversations/{id}/messages/{payload.Id}", payload),
             HttpContext);
     }
 
-    [HttpPost("threads/{id:guid}/read")]
-    public async Task<IActionResult> MarkRead(Guid id, CancellationToken cancellationToken)
+    [HttpPost("conversations/{id:guid}/read")]
+    public async Task<IActionResult> MarkRead(
+        Guid id,
+        [FromQuery] Guid? messageId = null,
+        CancellationToken cancellationToken = default)
     {
         var auth0Sub = ResolveAuth0Sub();
         if (auth0Sub is null || ResolveTenantId() is null)
@@ -141,11 +155,12 @@ public sealed class TenantMessagesController(
 
         var result = await messaging.MarkReadAsync(
             auth0Sub,
-            MessageParticipantRole.Business,
+            MessagingActorRole.Business,
             id,
+            messageId,
             cancellationToken);
 
-        return ApiResults.FromResult(result, _ => NoContent(), HttpContext);
+        return ApiResults.FromResult(result, () => NoContent(), HttpContext);
     }
 
     [HttpGet("settings")]

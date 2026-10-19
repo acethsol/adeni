@@ -119,7 +119,7 @@ Every handler that existed under archived Next `app/api/**` must end as **A**, *
 | Reviews panel | | ☐ |
 | Payments / subscription / verification | | ☑ payments + plan; verification on profile |
 | Settings + share kit / plan (if present) | | ☑ share kit on profile; booking settings on profile |
-| Messaging (Sprint 18) | | ☑ WhatsApp templates + nav; in-app threads when API lands |
+| Messaging (Sprint 36) | | ☑ Conversations + SignalR inbox; WhatsApp templates + nav |
 | Pending bookings bell (topbar) | `business-portal-bell.tsx` | ☑ |
 
 **Cutover:** proxy `/business/*` to `apps/portal` in staging → production.

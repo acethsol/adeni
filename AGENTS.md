@@ -52,9 +52,9 @@ Check [docs/sprints.md](docs/sprints.md) for live status. As of last playbook up
 
 | | |
 |---|---|
-| **Done through** | Sprint 18 — Messaging & WhatsApp bridge |
-| **Next up** | Sprint 19 — Trust depth & quote workflows |
-| **Then** | Sprint 19 trust/quote depth, Sprint 20 deploy + AI + observability |
+| **Done through** | Sprint 36 — Messaging rewrite (conversations + SignalR; replaces Sprint 18) |
+| **Next up** | Sprint 32a dashboard / Sprint 33 SaaS billing remainder — see sprints.md |
+| **Then** | Sprint 34 settlement; Sprint 20 deploy + AI + observability |
 
 Do not start work from a later sprint unless the user or sprint doc explicitly expands scope.
 
@@ -81,7 +81,7 @@ Summarized from [product-strategy.md §2–3, §8](docs/product-strategy.md). Wh
 - Competing with Google/Yelp on directory size
 - All service categories or cities at once
 - Microservices or multi-repo backend before module boundaries are enforced
-- In-app messaging before Sprint 18; LLM agents before Sprint 20
+- LLM agents before Sprint 20 (messaging is Sprint 36 — do not revive Sprint 18 threads)
 - Production deploy / full observability stack before Sprint 20 (staging work is OK)
 
 ## AI calibration (voice correction)

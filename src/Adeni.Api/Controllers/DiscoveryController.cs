@@ -70,7 +70,7 @@ public sealed class BusinessesController(
     IAvailabilityService availability,
     IReviewService reviews,
     IQuoteRequestService quoteRequests,
-    IMessageThreadService messaging,
+    IConversationService messaging,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet("{slug}")]
