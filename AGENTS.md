@@ -420,6 +420,8 @@ Do not rewrite large sections without approval.
 | [docs/database-setup.md](docs/database-setup.md) | Postgres, migrations |
 | [docs/caching-setup.md](docs/caching-setup.md) | Redis keys, health |
 | [docs/finance.md](docs/finance.md) | Commerce orchestration, webhooks, deposits (`/api/v1/finance/*`) |
+| [docs/reporting.md](docs/reporting.md) | Documents, dashboard queries, exports (Reporting module) |
+| [docs/notifications.md](docs/notifications.md) | Transactional email/SMS (Resend + Twilio) |
 | [docs/legal-launch-checklist.md](docs/legal-launch-checklist.md) | Privacy, Terms, NDPR launch gate (pre-production) |
 | [docs/tenant-isolation.md](docs/tenant-isolation.md) | Tenant middleware and filters |
 
