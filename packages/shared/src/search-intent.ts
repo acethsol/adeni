@@ -1,3 +1,5 @@
+import { SEO_NEIGHBORHOODS } from "./seo-neighborhoods";
+
 /** Rule-based search intent parser — MVP bridge until LLM agent (Sprint 20). */
 export type SearchIntent = {
   query: string | null;
@@ -80,16 +82,10 @@ const STOP_WORDS = new Set([
 
 /** Area phrase → Adeni market id (V1: Lagos + Ottawa only). */
 const AREA_TO_MARKET: Record<string, string> = {
-  lekki: "lagos",
-  ikeja: "lagos",
-  "victoria island": "lagos",
+  ...Object.fromEntries(SEO_NEIGHBORHOODS.map((n) => [n.query, n.marketId])),
+  // Short aliases (no dedicated SEO hub URLs).
   vi: "lagos",
-  yaba: "lagos",
-  surulere: "lagos",
-  ajah: "lagos",
-  centretown: "ottawa",
-  glebe: "ottawa",
-  kanata: "ottawa",
+  "byward market": "ottawa",
 };
 
 const AREA_HINTS = Object.keys(AREA_TO_MARKET);

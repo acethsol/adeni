@@ -1,6 +1,7 @@
 namespace Adeni.Infrastructure.Booking;
 
 using Adeni.Application.Booking;
+using Adeni.Application.Caching;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
 using Adeni.Domain.Tenancy;
@@ -10,7 +11,8 @@ using Microsoft.EntityFrameworkCore;
 public sealed class AvailabilityService(
     AdeniDbContext dbContext,
     ITenantSchedulingTimeZone tenantSchedulingTimeZone,
-    IBusinessClosedDateService closedDates) : IAvailabilityService
+    IBusinessClosedDateService closedDates,
+    ICacheService cache) : IAvailabilityService
 {
     public async Task<IReadOnlyList<WeeklyAvailabilityRule>> GetWeeklyRulesAsync(
         Guid tenantId,
@@ -63,6 +65,7 @@ public sealed class AvailabilityService(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await InvalidatePublicProfileCacheAsync(tenantId, cancellationToken);
         return Result.Success(rules);
     }
 
@@ -440,6 +443,26 @@ public sealed class AvailabilityService(
                 || x.ServiceLinks.Any(link => link.ServiceOfferingId == serviceId))
             .Select(x => x.Id)
             .ToArray();
+    }
+
+    private async Task InvalidatePublicProfileCacheAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken)
+    {
+        var slugs = await dbContext.BusinessLocations
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId && x.IsActive && x.Slug != "")
+            .Select(x => x.Slug)
+            .ToListAsync(cancellationToken);
+
+        foreach (var slug in slugs)
+        {
+            await cache.RemoveAsync(
+                CacheKeys.LocationProfile(slug.ToLowerInvariant()),
+                cancellationToken);
+        }
+
+        await cache.RemoveAsync(CacheKeys.TenantProfile(tenantId), cancellationToken);
     }
 
     private static Result ValidateRules(IReadOnlyList<WeeklyAvailabilityRule> rules)

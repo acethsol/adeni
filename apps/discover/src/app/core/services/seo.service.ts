@@ -17,6 +17,16 @@ export class SeoService {
 
   private jsonLdElementId = "adeni-json-ld";
 
+  /** Google Search Console HTML-tag verification (`content` value). */
+  setGoogleSiteVerification(token: string | null | undefined): void {
+    const value = token?.trim();
+    if (!value) {
+      this.meta.removeTag("name='google-site-verification'");
+      return;
+    }
+    this.meta.updateTag({ name: "google-site-verification", content: value });
+  }
+
   update(tags: SeoTags, publicOrigin: string): void {
     this.title.setTitle(tags.title);
 

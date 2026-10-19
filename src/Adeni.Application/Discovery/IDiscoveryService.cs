@@ -30,6 +30,12 @@ public sealed record DiscoveryResult(
     int PageSize,
     int TotalCount);
 
+/// <summary>Public weekly hours for SEO / schema.org (day name + HH:mm).</summary>
+public sealed record PublicOpeningHours(
+    string DayOfWeek,
+    string OpenTime,
+    string CloseTime);
+
 public sealed record PublicBusinessProfile(
     Guid LocationId,
     Guid TenantId,
@@ -56,7 +62,8 @@ public sealed record PublicBusinessProfile(
     double? CompletionRate = null,
     Adeni.Application.Tenancy.PublicPageConfigDto? PublicPage = null,
     IReadOnlyList<string>? ImageUrls = null,
-    Adeni.Application.Tenancy.BusinessPoliciesDto? Policies = null);
+    Adeni.Application.Tenancy.BusinessPoliciesDto? Policies = null,
+    IReadOnlyList<PublicOpeningHours>? OpeningHours = null);
 
 public interface IDiscoveryService
 {

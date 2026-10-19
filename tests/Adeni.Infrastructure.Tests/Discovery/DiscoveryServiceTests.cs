@@ -180,7 +180,15 @@ public sealed class DiscoveryServiceTests
         var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
         var cache = scope.ServiceProvider.GetRequiredService<ICacheService>();
 
-        BusinessTestSeed.SeedVerifiedBusiness(db, "lekki-cuts", "Lekki Cuts", "barbers", "Lekki", 6.4474, 3.4700);
+        var tenantId = BusinessTestSeed.SeedVerifiedBusiness(db, "lekki-cuts", "Lekki Cuts", "barbers", "Lekki", 6.4474, 3.4700);
+        db.WeeklyAvailabilities.Add(new Domain.Booking.WeeklyAvailability
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            DayOfWeek = DayOfWeek.Monday,
+            OpenTime = new TimeOnly(9, 0),
+            CloseTime = new TimeOnly(18, 0),
+        });
         await db.SaveChangesAsync();
 
         var service = scope.ServiceProvider.GetRequiredService<DiscoveryService>();
@@ -191,6 +199,8 @@ public sealed class DiscoveryServiceTests
         Assert.True(second.IsSuccess);
         Assert.Contains("[REDACTED]", first.Value!.PhoneMasked);
         Assert.NotNull(first.Value.ImageUrls);
+        Assert.NotNull(first.Value.OpeningHours);
+        Assert.Contains(first.Value.OpeningHours!, h => h.DayOfWeek == "Monday" && h.OpenTime == "09:00");
         Assert.NotNull(await cache.GetAsync<Application.Discovery.PublicBusinessProfile>(
             CacheKeys.LocationProfile("lekki-cuts")));
     }

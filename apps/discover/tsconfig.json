@@ -19,7 +19,8 @@
       "@adeni/api-client": ["../../packages/api-client/src/index.ts"],
       "@adeni/shared": ["../../packages/shared/src/index.ts"],
       "@adeni/ui": ["../../packages/ui/src/index.ts"],
-      "@adeni/brand": ["../../packages/brand/src/index.ts"]
+      "@adeni/brand": ["../../packages/brand/src/index.ts"],
+      "@angular/*": ["./node_modules/@angular/*"]
     }
   },
   "angularCompilerOptions": {

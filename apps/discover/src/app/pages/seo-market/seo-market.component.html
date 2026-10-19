@@ -1,0 +1,100 @@
+<section class="page">
+  <header class="hero">
+    <span class="wash" aria-hidden="true"></span>
+    <div class="hero-copy">
+      <p class="kicker">
+        @if (areaLabel(); as area) {
+          {{ area }} · {{ marketName() }}
+        } @else {
+          {{ marketName() }}
+        }
+      </p>
+      <h1>{{ heading() }}</h1>
+      <p class="lede">{{ lede() }}</p>
+      <div class="hero-actions">
+        <a class="cds-btn cds-btn--primary" routerLink="/discover" [queryParams]="exploreQuery()">
+          Explore map
+        </a>
+        @if (categorySlug() && areaHubHref(); as areaHref) {
+          <a class="cds-btn cds-btn--secondary" [routerLink]="areaHref">All {{ areaLabel() }}</a>
+        } @else if (categorySlug() || areaSlug()) {
+          <a class="cds-btn cds-btn--secondary" [routerLink]="marketHubHref()">All {{ marketName() }}</a>
+        }
+      </div>
+    </div>
+  </header>
+
+  @if (!categorySlug()) {
+    <section class="categories" aria-label="Categories">
+      <header class="section-head">
+        <h2>Browse by category</h2>
+        <p class="muted">
+          Popular beauty & wellness services
+          @if (areaLabel(); as area) {
+            in {{ area }}
+          } @else {
+            in {{ marketName() }}
+          }
+          .
+        </p>
+      </header>
+      <ul class="cat-grid">
+        @for (cat of categoryLinks(); track cat.slug) {
+          <li>
+            <a [routerLink]="cat.path">{{ cat.label }}</a>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  @if (!areaSlug() && !categorySlug() && neighborhoodLinks().length > 0) {
+    <section class="categories" aria-label="Neighborhoods">
+      <header class="section-head">
+        <h2>Browse by area</h2>
+        <p class="muted">Neighborhood hubs in {{ marketName() }}.</p>
+      </header>
+      <ul class="cat-grid">
+        @for (n of neighborhoodLinks(); track n.slug) {
+          <li>
+            <a [routerLink]="n.path">{{ n.label }}</a>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  <section class="listings" aria-label="Businesses">
+    <header class="section-head">
+      <h2>
+        @if (categoryLabel(); as label) {
+          Top {{ label.toLowerCase() }}
+        } @else if (areaLabel(); as area) {
+          Featured in {{ area }}
+        } @else {
+          Featured near you
+        }
+      </h2>
+      <a routerLink="/discover" [queryParams]="exploreQuery()">See all</a>
+    </header>
+
+    @if (loading()) {
+      <p class="muted">Loading…</p>
+    } @else if (items().length === 0) {
+      <div class="empty">
+        <p>No verified businesses in this view yet. Explore the full map or try another category.</p>
+        <a class="cds-btn cds-btn--primary" routerLink="/discover" [queryParams]="exploreQuery()">
+          Open Explore
+        </a>
+      </div>
+    } @else {
+      <ul class="grid">
+        @for (item of items(); track item.locationId) {
+          <li>
+            <app-discovery-business-card [item]="item" />
+          </li>
+        }
+      </ul>
+    }
+  </section>
+</section>
