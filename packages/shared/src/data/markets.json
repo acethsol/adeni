@@ -10,7 +10,8 @@
       "languages": ["en"],
       "isLive": true,
       "platformFeePercent": 0,
-      "paymentProvider": "paystack"
+      "paymentProvider": "paystack",
+      "defaultBillingProvider": "paystack"
     },
     {
       "id": "ottawa",
@@ -22,7 +23,8 @@
       "languages": ["en", "fr"],
       "isLive": false,
       "platformFeePercent": 0,
-      "paymentProvider": "stripe"
+      "paymentProvider": "stripe",
+      "defaultBillingProvider": "paystack"
     }
   ]
 }

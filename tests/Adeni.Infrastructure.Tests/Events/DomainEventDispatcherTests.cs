@@ -6,7 +6,7 @@ using Adeni.Application.Caching;
 using Adeni.Application.Events;
 using Adeni.Application.Markets;
 using Adeni.Application.Notifications;
-using Adeni.Application.Payments;
+using Adeni.Application.Finance;
 using Adeni.Application.Reviews;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Booking;
@@ -17,7 +17,7 @@ using Adeni.Infrastructure.Tenancy;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Events;
 using Adeni.Infrastructure.Notifications;
-using Adeni.Infrastructure.Payments;
+using Adeni.Infrastructure.Finance;
 using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Reviews;
 using Adeni.Infrastructure.Subscriptions;
@@ -144,7 +144,7 @@ public sealed class DomainEventDispatcherTests
         services.AddScoped<IAvailabilityService, AvailabilityService>();
         services.AddScoped<IReviewService, ReviewService>();
         services.AddScoped<IEntitlementsService, EntitlementsService>();
-        services.Configure<PaymentsOptions>(options =>
+        services.Configure<FinanceOptions>(options =>
         {
             options.Provider = "Stub";
             options.StubCheckoutBaseUrl = "/checkout/stub";
@@ -156,6 +156,7 @@ public sealed class DomainEventDispatcherTests
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();
         services.AddBookingTestRealtime();
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
+        services.AddScoped<IStaffCompensationService, StaffCompensationService>();
         services.AddScoped<IBillingDocumentService, BillingDocumentService>();
         services.AddScoped<ITenantCustomerService, TenantCustomerService>();
         services.AddScoped<IQueueService, NoOpQueueService>();

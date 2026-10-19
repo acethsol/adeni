@@ -17,7 +17,7 @@ export const PORTAL_PERMISSIONS = [
   "portal.locations",
   "portal.public_page",
   "portal.profile",
-  "portal.payments",
+  "portal.finance",
   "portal.plan",
 ] as const;
 
@@ -56,7 +56,7 @@ const PRACTITIONER: readonly PortalPermission[] = [
 
 const ACCOUNTANT: readonly PortalPermission[] = [
   "portal.overview",
-  "portal.payments",
+  "portal.finance",
 ];
 
 const OPS: readonly PortalPermission[] = [

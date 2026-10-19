@@ -8,7 +8,7 @@ using Adeni.Domain.Catalog;
 using Adeni.Domain.Identity;
 using Adeni.Domain.Messaging;
 using Adeni.Domain.Notifications;
-using Adeni.Domain.Payments;
+using Adeni.Domain.Finance;
 using Adeni.Domain.Subscriptions;
 using Adeni.Domain.Tenancy;
 using Microsoft.EntityFrameworkCore;
@@ -95,6 +95,8 @@ public sealed class AdeniDbContext(
     public DbSet<BillingDocumentLine> BillingDocumentLines => Set<BillingDocumentLine>();
 
     public DbSet<BillingDocumentSequence> BillingDocumentSequences => Set<BillingDocumentSequence>();
+
+    public DbSet<StaffCompensationAllocation> StaffCompensationAllocations => Set<StaffCompensationAllocation>();
 
     public DbSet<Conversation> Conversations => Set<Conversation>();
 
@@ -462,6 +464,8 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.TimeZoneId).HasMaxLength(64);
             entity.Property(x => x.LanguagesJson).HasMaxLength(64);
             entity.Property(x => x.LaunchNote).HasMaxLength(500);
+            entity.Property(x => x.DefaultCommerceProvider).HasMaxLength(16);
+            entity.Property(x => x.DefaultBillingProvider).HasMaxLength(16);
             entity.HasIndex(x => x.IsLive);
         });
 
@@ -562,6 +566,19 @@ public sealed class AdeniDbContext(
             entity.HasIndex(x => new { x.TenantId, x.Status, x.CreatedAt });
             entity.HasIndex(x => x.ProviderReference).IsUnique();
             entity.HasIndex(x => x.IdempotencyKey).IsUnique().HasFilter("[IdempotencyKey] IS NOT NULL");
+            entity.Property(x => x.TipAmount).HasPrecision(12, 2);
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<StaffCompensationAllocation>(entity =>
+        {
+            entity.ToTable("staff_compensation_allocations", "payments");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Amount).HasPrecision(12, 2);
+            entity.Property(x => x.Currency).HasMaxLength(3);
+            entity.Property(x => x.Type).HasConversion<int>();
+            entity.HasIndex(x => new { x.TenantId, x.CreatedAt });
+            entity.HasIndex(x => new { x.TenantId, x.StaffMemberId, x.CreatedAt });
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 

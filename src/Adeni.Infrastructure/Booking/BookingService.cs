@@ -4,7 +4,7 @@ using Adeni.Application.Booking;
 using Adeni.Application.Caching;
 using Adeni.Application.Common;
 using Adeni.Application.Events;
-using Adeni.Application.Payments;
+using Adeni.Application.Finance;
 using Adeni.Application.Security;
 using Adeni.Application.Subscriptions;
 using Adeni.Application.Realtime;
@@ -14,7 +14,7 @@ using Adeni.Domain.Booking;
 using Adeni.Domain.Booking.Events;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
-using Adeni.Domain.Payments;
+using Adeni.Domain.Finance;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +28,7 @@ public sealed class BookingService(
     IEntitlementsService entitlementsService,
     IPaymentOrchestrator paymentOrchestrator,
     IBillingDocumentService billingDocuments,
+    IStaffCompensationService staffCompensation,
     ITenantCustomerService tenantCustomers,
     ITenantRealtimePublisher tenantRealtime) : IBookingService
 {
@@ -859,6 +860,23 @@ public sealed class BookingService(
                 booking.Id,
                 booking.ExternalPaymentReference,
                 cancellationToken);
+        }
+
+        if (booking.Status == BookingStatus.Paid)
+        {
+            var currency = service?.Currency ?? "NGN";
+            if (markPaidRequest?.TipAmount is > 0)
+            {
+                await staffCompensation.RecordTipForTillPaymentAsync(
+                    tenantId,
+                    booking.Id,
+                    markPaidRequest.TipAmount.Value,
+                    markPaidRequest.TipStaffMemberId,
+                    currency,
+                    cancellationToken);
+            }
+
+            await staffCompensation.AccrueCommissionForPaidBookingAsync(tenantId, booking.Id, cancellationToken);
         }
 
         remaining = await CalculateRemainingBalanceAsync(booking, cancellationToken);

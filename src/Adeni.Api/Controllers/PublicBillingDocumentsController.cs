@@ -1,7 +1,7 @@
 namespace Adeni.Api.Controllers;
 
 using Adeni.Api.Extensions;
-using Adeni.Application.Payments;
+using Adeni.Application.Finance;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 

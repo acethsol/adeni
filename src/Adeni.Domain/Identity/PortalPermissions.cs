@@ -19,7 +19,7 @@ public static class PortalPermissions
     public const string Locations = "portal.locations";
     public const string PublicPage = "portal.public_page";
     public const string Profile = "portal.profile";
-    public const string Payments = "portal.payments";
+    public const string Finance = "portal.finance";
     public const string Plan = "portal.plan";
 
     public static readonly IReadOnlyList<string> All =
@@ -36,7 +36,7 @@ public static class PortalPermissions
         Locations,
         PublicPage,
         Profile,
-        Payments,
+        Finance,
         Plan,
     ];
 }
@@ -95,7 +95,7 @@ public static class PortalPermissionRoles
             Accountant =>
             [
                 PortalPermissions.Overview,
-                PortalPermissions.Payments,
+                PortalPermissions.Finance,
             ],
             Ops =>
             [

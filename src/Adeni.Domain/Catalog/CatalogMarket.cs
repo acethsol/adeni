@@ -20,6 +20,10 @@ public sealed class CatalogMarket
 
     public bool IsLive { get; set; }
 
+    public string DefaultCommerceProvider { get; set; } = "paystack";
+
+    public string DefaultBillingProvider { get; set; } = "paystack";
+
     public string? LaunchNote { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }

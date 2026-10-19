@@ -12,6 +12,8 @@ CREATE TABLE [payments].[payment_intents] (
     [CustomerEmail]     NVARCHAR (320)     NULL,
     [CallbackUrl]       NVARCHAR (2048)    NULL,
     [IdempotencyKey]    NVARCHAR (128)     NULL,
+    [TipAmount]         DECIMAL (12, 2)    NULL,
+    [TipStaffMemberId]  UNIQUEIDENTIFIER   NULL,
     [CreatedAt]         DATETIMEOFFSET (7) NOT NULL,
     [UpdatedAt]         DATETIMEOFFSET (7) NOT NULL,
     CONSTRAINT [PK_payment_intents] PRIMARY KEY CLUSTERED ([Id] ASC)

@@ -40,6 +40,8 @@ public static class MarketCatalogSeeder
                 DefaultLng = market.DefaultLocation.Lng,
                 LanguagesJson = JsonSerializer.Serialize(market.Languages, SerializerOptions),
                 IsLive = market.IsLive,
+                DefaultCommerceProvider = market.DefaultCommerceProvider,
+                DefaultBillingProvider = market.DefaultBillingProvider,
                 LaunchNote = market.LaunchNote,
                 CreatedAt = now,
                 UpdatedAt = now,

@@ -2,7 +2,7 @@ namespace Adeni.Infrastructure.Admin;
 
 using Adeni.Application.Admin;
 using Adeni.Application.Subscriptions;
-using Adeni.Domain.Payments;
+using Adeni.Domain.Finance;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 

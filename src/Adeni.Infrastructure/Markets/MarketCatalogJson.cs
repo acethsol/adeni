@@ -36,7 +36,10 @@ internal static class MarketCatalogJson
                 new MarketLocation(market.DefaultLocation.Lat, market.DefaultLocation.Lng),
                 market.Languages,
                 market.IsLive,
-                market.LaunchNote))
+                market.LaunchNote,
+                PlatformFeePercent: 0m,
+                MarketPaymentProviders.Normalize(market.PaymentProvider),
+                MarketPaymentProviders.Normalize(market.DefaultBillingProvider ?? market.PaymentProvider)))
             .ToArray();
     }
 
@@ -73,6 +76,10 @@ internal static class MarketCatalogJson
         public required IReadOnlyList<string> Languages { get; init; }
         public required bool IsLive { get; init; }
         public string? LaunchNote { get; init; }
+
+        public string PaymentProvider { get; init; } = MarketPaymentProviders.Paystack;
+
+        public string? DefaultBillingProvider { get; init; }
     }
 
     private sealed record MarketCatalogLocation(

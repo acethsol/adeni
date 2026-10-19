@@ -679,7 +679,7 @@ export class AdeniApiClient {
 
   async getPaymentReceipt(paymentIntentId: string): Promise<PaymentReceiptResponse> {
     const response = await this.request(
-      `/api/v1/payments/${encodeURIComponent(paymentIntentId)}/receipt`,
+      `/api/v1/finance/${encodeURIComponent(paymentIntentId)}/receipt`,
     );
     return paymentReceiptResponseSchema.parse(await response.json());
   }
@@ -697,20 +697,20 @@ export class AdeniApiClient {
     if (options?.pageSize) params.set("pageSize", String(options.pageSize));
     const query = params.toString();
     const response = await this.request(
-      `/api/v1/payments/documents${query ? `?${query}` : ""}`,
+      `/api/v1/finance/documents${query ? `?${query}` : ""}`,
     );
     return billingDocumentsResponseSchema.parse(await response.json()).items;
   }
 
   async getBillingDocument(documentId: string): Promise<BillingDocumentResponse> {
     const response = await this.request(
-      `/api/v1/payments/documents/${encodeURIComponent(documentId)}`,
+      `/api/v1/finance/documents/${encodeURIComponent(documentId)}`,
     );
     return billingDocumentResponseSchema.parse(await response.json());
   }
 
   async getBillingDocumentPdfUrl(documentId: string): Promise<string> {
-    return `${this.baseUrl}/api/v1/payments/documents/${encodeURIComponent(documentId)}/pdf`;
+    return `${this.baseUrl}/api/v1/finance/documents/${encodeURIComponent(documentId)}/pdf`;
   }
 
   async emailBillingDocument(
@@ -718,7 +718,7 @@ export class AdeniApiClient {
     toEmail?: string,
   ): Promise<BillingDocumentResponse> {
     const response = await this.request(
-      `/api/v1/payments/documents/${encodeURIComponent(documentId)}/email`,
+      `/api/v1/finance/documents/${encodeURIComponent(documentId)}/email`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -730,7 +730,7 @@ export class AdeniApiClient {
 
   async createInvoice(request: CreateInvoiceRequest): Promise<BillingDocumentResponse> {
     const body = createInvoiceRequestSchema.parse(request);
-    const response = await this.request("/api/v1/payments/documents/invoices", {
+    const response = await this.request("/api/v1/finance/documents/invoices", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -1109,7 +1109,7 @@ export class AdeniApiClient {
     idempotencyKey?: string,
   ): Promise<PaymentIntentResponse> {
     const body = initializePaymentRequestSchema.parse(request);
-    const response = await this.request("/api/v1/payments/initialize", {
+    const response = await this.request("/api/v1/finance/initialize", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -1119,7 +1119,7 @@ export class AdeniApiClient {
   }
 
   async getPayment(id: string): Promise<PaymentIntentResponse> {
-    const response = await this.request(`/api/v1/payments/${id}`);
+    const response = await this.request(`/api/v1/finance/${id}`);
     return paymentIntentResponseSchema.parse(await response.json());
   }
 
@@ -1127,7 +1127,7 @@ export class AdeniApiClient {
     request: CreatePaymentLinkRequest,
   ): Promise<PaymentIntentResponse> {
     const body = createPaymentLinkRequestSchema.parse(request);
-    const response = await this.request("/api/v1/payments/links", {
+    const response = await this.request("/api/v1/finance/links", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -1145,7 +1145,7 @@ export class AdeniApiClient {
       page: String(page),
       pageSize: String(pageSize),
     });
-    const response = await this.request(`/api/v1/payments/ledger?${query.toString()}`);
+    const response = await this.request(`/api/v1/finance/ledger?${query.toString()}`);
     return paymentLedgerResponseSchema.parse(await response.json());
   }
 
@@ -1154,7 +1154,7 @@ export class AdeniApiClient {
     request: RefundPaymentRequest,
   ): Promise<PaymentIntentResponse> {
     const body = refundPaymentRequestSchema.parse(request);
-    const response = await this.request(`/api/v1/payments/${paymentIntentId}/refund`, {
+    const response = await this.request(`/api/v1/finance/${paymentIntentId}/refund`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -1162,8 +1162,24 @@ export class AdeniApiClient {
     return paymentIntentResponseSchema.parse(await response.json());
   }
 
+  async downloadCompensationExport(options: {
+    tenantId: string;
+    from: string;
+    to: string;
+    format?: "csv" | "json";
+  }): Promise<Blob> {
+    const query = new URLSearchParams({
+      tenantId: options.tenantId,
+      from: options.from,
+      to: options.to,
+      format: options.format ?? "csv",
+    });
+    const response = await this.request(`/api/v1/finance/compensation-export?${query.toString()}`);
+    return response.blob();
+  }
+
   async confirmStubPayment(reference: string): Promise<PaymentIntentResponse> {
-    const response = await this.request("/api/v1/payments/stub/confirm", {
+    const response = await this.request("/api/v1/finance/stub/confirm", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ reference }),

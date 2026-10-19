@@ -493,6 +493,8 @@ export type BookingResponse = z.infer<typeof bookingResponseSchema>;
 export const markBookingPaidRequestSchema = z.object({
   externalReference: z.string().max(200).nullable().optional(),
   note: z.string().max(1000).nullable().optional(),
+  tipAmount: z.number().positive().optional(),
+  tipStaffMemberId: z.string().uuid().optional(),
 });
 
 export type MarkBookingPaidRequest = z.infer<typeof markBookingPaidRequestSchema>;
@@ -1610,6 +1612,8 @@ export const initializePaymentRequestSchema = z.object({
   description: z.string().max(500).optional(),
   customerEmail: z.string().email().optional(),
   callbackUrl: z.string().url().optional(),
+  tipAmount: z.number().positive().optional(),
+  tipStaffMemberId: z.string().uuid().optional(),
 });
 
 export type InitializePaymentRequest = z.infer<typeof initializePaymentRequestSchema>;

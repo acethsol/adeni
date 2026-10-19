@@ -39,7 +39,9 @@ public sealed class MarketCatalog : IMarketCatalog
                 market.Languages,
                 market.IsLive,
                 market.LaunchNote,
-                market.PlatformFeePercent))
+                market.PlatformFeePercent,
+                MarketPaymentProviders.Normalize(market.PaymentProvider),
+                MarketPaymentProviders.Normalize(market.DefaultBillingProvider ?? market.PaymentProvider)))
             .ToArray();
 
         _ids = new HashSet<string>(_markets.Select(market => market.Id), StringComparer.OrdinalIgnoreCase);
@@ -100,6 +102,10 @@ public sealed class MarketCatalog : IMarketCatalog
         public required bool IsLive { get; init; }
         public string? LaunchNote { get; init; }
         public decimal PlatformFeePercent { get; init; }
+
+        public string PaymentProvider { get; init; } = MarketPaymentProviders.Paystack;
+
+        public string? DefaultBillingProvider { get; init; }
     }
 
     private sealed record MarketCatalogLocation(

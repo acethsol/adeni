@@ -75,7 +75,7 @@ Canonical diagram: **[target-client-architecture.md](./target-client-architectur
 | Module | Sprint | Application port | Notes |
 |--------|--------|-------------------|-------|
 | **Notifications** | 15 | `INotificationDispatcher` | Email/push/SMS; subscribes to booking events |
-| **Payments** | 17 | `IPaymentProvider`, `IPaymentOrchestrator` | Paystack; no wallet tables |
+| **Finance** | 17+ / 39 | `IPaymentProvider`, `IPaymentOrchestrator`, `IPaymentProviderRegistry`, `IStaffCompensationService` | Commerce + compensation export; [finance-module-boundaries.md](./specs/finance-module-boundaries.md) |
 | **Messaging** | 36 | `IConversationService` | Conversations + SignalR; WhatsApp deep links (replaces Sprint 18) |
 | **Subscriptions** | 16 | `ISubscriptionService`, entitlements | SaaS tiers |
 | **Quotes** | 19 | `IQuoteRequestService` | Full quote workflow on business-type framework |

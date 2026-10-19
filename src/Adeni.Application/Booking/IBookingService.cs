@@ -42,7 +42,9 @@ public sealed record BookingResponse(
 
 public sealed record MarkBookingPaidRequest(
     string? ExternalReference = null,
-    string? Note = null);
+    string? Note = null,
+    decimal? TipAmount = null,
+    Guid? TipStaffMemberId = null);
 
 public sealed record CollectBalanceResponse(
     Guid BookingId,

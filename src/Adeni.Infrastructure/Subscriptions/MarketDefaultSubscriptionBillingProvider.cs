@@ -1,16 +1,17 @@
 namespace Adeni.Infrastructure.Subscriptions;
 
+using Adeni.Application.Markets;
+using Adeni.Application.Finance;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Common;
-using Adeni.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 /// <summary>
-/// Routes SaaS subscription billing by tenant market (Lagos → Paystack). Ottawa/Stripe Billing is not wired yet.
+/// Routes SaaS subscription billing by tenant market via <see cref="IPaymentProviderRegistry"/>.
+/// Stripe Billing for Ottawa is not wired yet.
 /// </summary>
 public sealed class MarketDefaultSubscriptionBillingProvider(
-    AdeniDbContext dbContext,
+    IPaymentProviderRegistry registry,
     PaystackSubscriptionBillingProvider paystack,
     StubSubscriptionBillingProvider stub,
     ILogger<MarketDefaultSubscriptionBillingProvider> logger) : ISubscriptionBillingProvider
@@ -19,11 +20,11 @@ public sealed class MarketDefaultSubscriptionBillingProvider(
         CreateSubscriptionCheckoutRequest request,
         CancellationToken cancellationToken = default)
     {
-        var marketId = await ResolvePrimaryMarketIdAsync(request.TenantId, cancellationToken);
-        if (string.Equals(marketId, "ottawa", StringComparison.OrdinalIgnoreCase))
+        var billingKey = await registry.ResolveBillingProviderKeyForTenantAsync(request.TenantId, cancellationToken);
+        if (string.Equals(billingKey, MarketPaymentProviders.Stripe, StringComparison.OrdinalIgnoreCase))
         {
             return Result.Failure<SubscriptionCheckoutResponse>(
-                Error.Validation("Stripe subscription billing for Ottawa is not available yet."));
+                Error.Validation("Stripe subscription billing is not available yet for this market."));
         }
 
         return await paystack.CreateCheckoutAsync(request, cancellationToken);
@@ -41,15 +42,6 @@ public sealed class MarketDefaultSubscriptionBillingProvider(
 
         logger.LogInformation("Subscription webhook without Paystack signature — using stub parser (local/dev).");
         return stub.ParseWebhookAsync(rawBody, headers, cancellationToken);
-    }
-
-    private async Task<string?> ResolvePrimaryMarketIdAsync(Guid tenantId, CancellationToken cancellationToken)
-    {
-        return await dbContext.BusinessLocations
-            .AsNoTracking()
-            .Where(x => x.TenantId == tenantId && x.IsPrimary && x.IsActive)
-            .Select(x => x.MarketId)
-            .FirstOrDefaultAsync(cancellationToken);
     }
 
     private static bool HasHeader(IReadOnlyDictionary<string, string> headers, string name) =>

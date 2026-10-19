@@ -1,7 +1,7 @@
 namespace Adeni.Api.Extensions;
 
 using Adeni.Application.Auth;
-using Adeni.Infrastructure.Payments;
+using Adeni.Infrastructure.Finance;
 
 public static class ProductionConfigurationExtensions
 {
@@ -27,7 +27,9 @@ public static class ProductionConfigurationExtensions
             errors.Add("Cors:AllowedOrigins must contain at least one origin in Staging/Production.");
         }
 
-        var paymentsProvider = configuration.GetSection(PaymentsOptions.SectionName)["Provider"] ?? "Stub";
+        var paymentsProvider = configuration.GetSection(FinanceOptions.SectionName)["Provider"]
+            ?? configuration.GetSection(PaymentsOptions.SectionName)["Provider"]
+            ?? "Stub";
         var paystackWebhookSecret = configuration.GetSection(PaystackOptions.SectionName)["WebhookSecret"];
         var stripeWebhookSecret = configuration.GetSection(StripeOptions.SectionName)["WebhookSecret"];
 
