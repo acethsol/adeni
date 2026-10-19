@@ -57,7 +57,7 @@ export class AdminPricingCatalogComponent implements OnInit {
         this.selectedCode.set(null);
       }
     } catch (err) {
-      this.error.set(adminLoadErrorMessage(err, "Could not load pricing catalog."));
+      this.error.set(adminLoadErrorMessage("Could not load pricing catalog.", err));
     } finally {
       this.loading.set(false);
     }
@@ -73,7 +73,7 @@ export class AdminPricingCatalogComponent implements OnInit {
       this.detail.set(version);
     } catch (err) {
       this.detail.set(null);
-      this.error.set(adminLoadErrorMessage(err, "Could not load catalog version."));
+      this.error.set(adminLoadErrorMessage("Could not load catalog version.", err));
     }
   }
 

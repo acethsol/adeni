@@ -2,6 +2,7 @@ namespace Adeni.Infrastructure.Tests.Tenancy;
 
 using Adeni.Application.Catalog;
 using Adeni.Application.Markets;
+using Adeni.Application.Subscriptions;
 using Adeni.Application.Tenancy;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Admin;
@@ -13,6 +14,7 @@ using Adeni.Infrastructure.Catalog;
 using Adeni.Infrastructure.Context;
 using Adeni.Infrastructure.Markets;
 using Adeni.Infrastructure.Persistence;
+using Adeni.Infrastructure.Subscriptions;
 using Adeni.Infrastructure.Tenancy;
 using Adeni.Application.Storage;
 using Adeni.Infrastructure.Tests.Storage;
@@ -249,6 +251,8 @@ public sealed class BusinessOnboardingServiceTests
         services.AddDbContext<AdeniDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));
         services.AddSingleton<IFileStorage, FakeFileStorage>();
         services.AddBookingTestRealtime();
+        services.AddScoped<IPricingCatalogService, PricingCatalogService>();
+        services.AddScoped<ITenantPricingResolver, TenantPricingResolver>();
         services.AddScoped<BusinessOnboardingService>();
         services.AddScoped<AdminBusinessService>();
         var provider = services.BuildServiceProvider();
