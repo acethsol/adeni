@@ -9,6 +9,7 @@ import {
   adeniAdminConfigFactory,
   isAuth0Configured,
 } from "./core/adeni-config";
+import { provideAdminRealtimeAuth } from "./core/adeni-realtime-auth.provider";
 
 function auth0Providers() {
   const config = adeniAdminConfigFactory();
@@ -52,6 +53,7 @@ export const appConfig: ApplicationConfig = {
       provide: ADENI_ADMIN_CONFIG,
       useFactory: adeniAdminConfigFactory,
     },
+    provideAdminRealtimeAuth(),
     ...auth0Providers(),
   ],
 };

@@ -1,4 +1,5 @@
-import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, OnDestroy, OnInit, signal } from "@angular/core";
+import { Subscription } from "rxjs";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute } from "@angular/router";
@@ -11,8 +12,14 @@ import {
   resolvePaymentCheckoutUrl,
   totalPages as computeTotalPages,
 } from "@adeni/shared";
-import { AdeniConfirmService, AdeniPortalEmptyStateComponent, PortalPageComponent } from "@adeni/ui";
+import {
+  AdeniConfirmService,
+  AdeniFeedbackService,
+  AdeniPortalEmptyStateComponent,
+  PortalPageComponent,
+} from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { TenantOperationsRealtimeService } from "@adeni/ui";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { PortalTabsComponent } from "../../shared/portal-tabs.component";
 
@@ -23,9 +30,12 @@ import { PortalTabsComponent } from "../../shared/portal-tabs.component";
   templateUrl: "./payments.component.html",
   styleUrl: "./payments.component.scss",
 })
-export class PaymentsComponent implements OnInit {
+export class PaymentsComponent implements OnInit, OnDestroy {
   private readonly api = inject(BusinessApiService);
   private readonly confirmDialog = inject(AdeniConfirmService);
+  private readonly feedback = inject(AdeniFeedbackService);
+  private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
+  private opsSub: Subscription | null = null;
   private readonly config = inject(ADENI_PORTAL_CONFIG);
   private readonly route = inject(ActivatedRoute);
   readonly tab = toSignal(this.route.queryParamMap.pipe(map((params) => params.get("tab") ?? "links")), {
@@ -61,6 +71,14 @@ export class PaymentsComponent implements OnInit {
 
   ngOnInit(): void {
     void this.load();
+    this.opsSub = this.operationsRealtime.paymentCompleted$.subscribe(() => {
+      this.feedback.info("Payment completed — refreshing ledger.", "Payment");
+      void this.load();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.opsSub?.unsubscribe();
   }
 
   supportsPayments(): boolean {

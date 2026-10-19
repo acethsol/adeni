@@ -6,7 +6,9 @@ using Adeni.Application.Catalog;
 using Adeni.Application.Markets;
 using Adeni.Application.Storage;
 using Adeni.Application.Subscriptions;
+using Adeni.Application.Realtime;
 using Adeni.Application.Tenancy;
+using Adeni.Infrastructure.Realtime;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
 using Adeni.Domain.Tenancy;
@@ -20,7 +22,8 @@ public sealed class BusinessOnboardingService(
     IBusinessCapabilitiesService businessCapabilitiesService,
     IFileStorage fileStorage,
     IMarketCatalog marketCatalog,
-    ICacheService cache) : IBusinessOnboardingService
+    ICacheService cache,
+    ITenantRealtimePublisher tenantRealtime) : IBusinessOnboardingService
 {
     public async Task<Result<RegisterBusinessResponse>> RegisterAsync(
         RegisterBusinessRequest request,
@@ -458,6 +461,10 @@ public sealed class BusinessOnboardingService(
 
         tenant.Status = TenantStatus.PendingVerification;
         await dbContext.SaveChangesAsync(cancellationToken);
+        await TenantRealtimeNotifications.PublishAdminVerificationAsync(
+            tenantRealtime,
+            dbContext,
+            cancellationToken);
 
         return Result.Success();
     }

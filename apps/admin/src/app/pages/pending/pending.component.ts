@@ -12,6 +12,7 @@ import {
   PortalPageComponent,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
+import { AdminOperationsRealtimeService } from "@adeni/ui";
 import { adminLoadErrorMessage } from "../../shared/admin-load-error";
 import { AdminPillComponent } from "../../shared/admin-pill.component";
 import { docCountPill, tenantStatusPill } from "../../shared/admin-pill-maps";
@@ -42,6 +43,7 @@ export class AdminPendingComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly feedback = inject(AdeniFeedbackService);
+  private readonly operationsRealtime = inject(AdminOperationsRealtimeService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -68,6 +70,11 @@ export class AdminPendingComponent {
       this.page.set(Number.isFinite(page) && page >= 1 ? page : 1);
       void this.load();
     });
+    this.operationsRealtime.adminVerificationChanged$
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => {
+        void this.load();
+      });
   }
 
   async load(): Promise<void> {

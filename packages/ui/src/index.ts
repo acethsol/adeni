@@ -59,3 +59,15 @@ export {
 export { AdeniGlobalLoadingPanelComponent } from "./feedback/adeni-global-loading-panel.component";
 export { AdeniToastHostComponent } from "./feedback/adeni-toast-host.component";
 export { AdeniConfirmHostComponent } from "./feedback/adeni-confirm-host.component";
+export {
+  ADENI_REALTIME_AUTH,
+  AdeniMessagingRealtimeService,
+  AdeniOperationsRealtimeService,
+  AdeniPortalRealtimeBootstrapService,
+  type AdeniRealtimeAuth,
+  type AdeniRealtimeHub,
+  AdeniMessagingRealtimeService as MessagingRealtimeService,
+  AdeniOperationsRealtimeService as TenantOperationsRealtimeService,
+  AdeniOperationsRealtimeService as AdminOperationsRealtimeService,
+  AdeniPortalRealtimeBootstrapService as PortalRealtimeBootstrapService,
+} from "./realtime";

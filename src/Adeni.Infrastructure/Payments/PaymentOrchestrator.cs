@@ -4,6 +4,7 @@ using Adeni.Application.Abstractions;
 using Adeni.Application.Common;
 using Adeni.Application.Events;
 using Adeni.Application.Payments;
+using Adeni.Application.Realtime;
 using Adeni.Domain.Auditing;
 using Adeni.Domain.Common;
 using Adeni.Domain.Payments;
@@ -19,7 +20,8 @@ public sealed class PaymentOrchestrator(
     IAuditLogWriter auditLogWriter,
     ICorrelationContext correlationContext,
     IDomainEventCollector domainEventCollector,
-    IOptions<PaymentsOptions> paymentsOptions) : IPaymentOrchestrator
+    IOptions<PaymentsOptions> paymentsOptions,
+    ITenantRealtimePublisher tenantRealtime) : IPaymentOrchestrator
 {
     public Task<Result<PaymentIntentResponse>> InitializeAsync(
         InitializePaymentRequest request,
@@ -481,6 +483,13 @@ public sealed class PaymentOrchestrator(
             DateTimeOffset.UtcNow));
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        await tenantRealtime.PublishPaymentCompletedAsync(
+            entity.TenantId,
+            entity.Id,
+            entity.BookingId,
+            entity.ProviderReference,
+            cancellationToken);
 
         await WriteAuditAsync(
             entity.Id,

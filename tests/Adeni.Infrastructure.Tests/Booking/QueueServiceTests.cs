@@ -228,6 +228,7 @@ public sealed class QueueServiceTests
         services.AddSingleton<INotificationDispatcher>(sp =>
             new SinkDispatcher(sp.GetRequiredService<NotificationSink>()));
         services.AddScoped<ITenantCustomerService, TenantCustomerService>();
+        services.AddBookingTestRealtime();
         services.AddScoped<IQueueService, QueueService>();
         return services.BuildServiceProvider();
     }

@@ -1,0 +1,184 @@
+<section class="page" [class.page--thread-open]="detail() && mobileThreadOpen()">
+  <header class="page-head">
+    <span class="wash" aria-hidden="true"></span>
+    <div class="head-copy">
+      <p class="kicker">Inbox</p>
+      <h1>Messages</h1>
+      <p class="lede">
+        Message the businesses you’ve booked — ask questions, share updates, and get replies here.
+      </p>
+    </div>
+    <div class="head-actions">
+      <a class="cds-btn cds-btn--secondary" routerLink="/my-bookings">My bookings</a>
+      <a class="cds-btn cds-btn--primary" routerLink="/discover">Explore</a>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="messages-layout messages-layout--skeleton" aria-hidden="true">
+      <div class="pane sk-pane"></div>
+      <div class="pane sk-pane"></div>
+    </div>
+  } @else if (error()) {
+    <div class="empty empty--error" role="alert">
+      <div class="empty-icon" aria-hidden="true">
+        <adeni-carbon-icon name="send" [size]="40" />
+      </div>
+      <h2>Couldn’t load messages</h2>
+      <p>{{ error() }}</p>
+      <button type="button" class="cds-btn cds-btn--primary" (click)="loadConversations()">Try again</button>
+    </div>
+  } @else if (conversations().length === 0) {
+    <div class="empty">
+      <div class="empty-icon" aria-hidden="true">
+        <adeni-carbon-icon name="send" [size]="40" />
+      </div>
+      <h2>Inbox is quiet</h2>
+      <p>Start a booking, then message the business from that booking when you need a hand.</p>
+      <div class="empty-actions">
+        <a class="cds-btn cds-btn--primary" routerLink="/discover">Explore businesses</a>
+        <a class="cds-btn cds-btn--ghost" routerLink="/my-bookings">View bookings</a>
+      </div>
+    </div>
+  } @else {
+    <div class="messages-layout">
+      <section class="pane inbox" aria-label="Conversations" [class.inbox--hidden]="mobileThreadOpen()">
+        <header class="pane-head">
+          <h2>Conversations</h2>
+          <span class="count">{{ conversations().length }}</span>
+        </header>
+        <ul class="threads">
+          @for (item of conversations(); track item.id) {
+            <li>
+              <button
+                type="button"
+                class="thread-row"
+                [class.thread-row--active]="selectedId() === item.id"
+                [class.thread-row--attention]="item.needsAttention"
+                (click)="openConversation(item.id)"
+              >
+                <span class="thread-row__avatar" aria-hidden="true">{{ initials(item.businessName) }}</span>
+                <span class="thread-row__copy">
+                  <span class="thread-row__who">
+                    <span class="thread-row__name">{{ item.businessName ?? "Business" }}</span>
+                    @if (item.needsAttention) {
+                      <span class="badge" aria-label="Unread">New</span>
+                    }
+                  </span>
+                  <span class="thread-row__preview">{{ item.preview || "No messages yet" }}</span>
+                  <time class="thread-row__when">{{ formatListTime(item.lastMessageAt) }}</time>
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      </section>
+
+      <section class="pane conversation" aria-label="Conversation" [class.conversation--empty]="!detail()">
+        @if (detail(); as thread) {
+          <header class="pane-head conversation-head">
+            <button type="button" class="back" (click)="closeMobileThread()" aria-label="Back to conversations">
+              <adeni-carbon-icon name="arrow--left" [size]="18" />
+              Inbox
+            </button>
+            <div class="conversation-head__copy">
+              <h2>{{ thread.businessName ?? "Business" }}</h2>
+              @if (thread.contextId) {
+                <a class="booking-link" routerLink="/my-bookings">View related booking</a>
+              }
+            </div>
+          </header>
+
+          <div #transcriptEl class="transcript" role="log" aria-live="polite">
+            @for (msg of thread.messages; track msg.id) {
+              <article
+                class="bubble-row"
+                [class.bubble-row--mine]="isOutgoing(msg)"
+                [class.bubble-row--bot]="isBot(msg)"
+              >
+                <header class="bubble-meta">
+                  <span class="bubble-meta__who">{{ senderLabel(msg, thread) }}</span>
+                  <span class="bubble-meta__dot" aria-hidden="true">·</span>
+                  <time class="bubble-meta__when" [attr.dateTime]="msg.createdAt">
+                    {{ formatMessageTime(msg.createdAt) }}
+                  </time>
+                  @if (isBot(msg)) {
+                    <span class="bubble-meta__faq">FAQ</span>
+                  }
+                </header>
+                <div class="bubble">
+                  @if (msg.body) {
+                    <p>{{ msg.body }}</p>
+                  }
+                  @for (attachment of msg.attachments; track attachment.id) {
+                    @if (attachment.url) {
+                      <button
+                        type="button"
+                        class="attachment"
+                        (click)="openImagePreview(attachment.url!, attachment.fileName)"
+                      >
+                        <img [src]="attachment.url" [alt]="attachment.fileName" />
+                      </button>
+                    } @else {
+                      <span class="attachment-missing">{{ attachment.fileName }}</span>
+                    }
+                  }
+                </div>
+              </article>
+            }
+          </div>
+
+          <form class="compose" (ngSubmit)="send()">
+            <label class="compose__field">
+              <span class="visually-hidden">Message</span>
+              <textarea
+                rows="2"
+                [(ngModel)]="draft"
+                name="draft"
+                placeholder="Write a message…"
+                [disabled]="sending()"
+                (keydown.enter)="onComposerEnter($event)"
+              ></textarea>
+            </label>
+            <button
+              type="submit"
+              class="cds-btn cds-btn--primary compose__send"
+              [disabled]="!canSend()"
+            >
+              <adeni-carbon-icon name="send" [size]="16" />
+              {{ sending() ? "Sending…" : "Send" }}
+            </button>
+          </form>
+        } @else {
+          <div class="select-prompt">
+            <div class="empty-icon" aria-hidden="true">
+              <adeni-carbon-icon name="send" [size]="36" />
+            </div>
+            <h2>Select a conversation</h2>
+            <p>Pick a business on the left to read the thread and reply.</p>
+          </div>
+        }
+      </section>
+    </div>
+  }
+
+  @if (imagePreview(); as preview) {
+    <adeni-modal
+      [open]="true"
+      [title]="preview.fileName"
+      size="xl"
+      [hasFooter]="true"
+      (closed)="closeImagePreview()"
+    >
+      <figure class="image-preview">
+        <img [src]="preview.url" [alt]="preview.fileName" />
+      </figure>
+      <div modalFooter class="image-preview-footer">
+        <a class="cds-btn cds-btn--ghost" [href]="preview.url" target="_blank" rel="noopener noreferrer">
+          Open in new tab
+        </a>
+        <button type="button" class="cds-btn cds-btn--primary" (click)="closeImagePreview()">Close</button>
+      </div>
+    </adeni-modal>
+  }
+</section>

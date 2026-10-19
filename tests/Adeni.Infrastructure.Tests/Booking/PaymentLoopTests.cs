@@ -246,6 +246,7 @@ public sealed class PaymentLoopTests
         services.AddSingleton<IMarketCatalog, LagosMarketCatalog>();
         services.AddScoped<IPlatformFeeCalculator, PlatformFeeCalculator>();
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();
+        services.AddBookingTestRealtime();
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
         services.AddSingleton<INotificationDispatcher, LoopNotificationDispatcher>();
         services.AddScoped<IBillingDocumentService, BillingDocumentService>();

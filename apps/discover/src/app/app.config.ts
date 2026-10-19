@@ -19,6 +19,7 @@ import {
   isAuth0Configured,
 } from "./core/adeni-config";
 import { MarketContextService } from "./core/services/market-context.service";
+import { provideDiscoverRealtimeAuth } from "./core/adeni-realtime-auth.provider";
 
 function auth0Providers() {
   const config = adeniDiscoverConfigFactory();
@@ -58,6 +59,7 @@ export const appConfig: ApplicationConfig = {
       useFactory: adeniDiscoverConfigFactory,
     },
     ...auth0Providers(),
+    provideDiscoverRealtimeAuth(),
     provideAppInitializer(() => inject(MarketContextService).bootstrap()),
   ],
 };

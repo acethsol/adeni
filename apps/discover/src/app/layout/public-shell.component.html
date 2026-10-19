@@ -16,6 +16,7 @@
     <nav class="nav" aria-label="Primary" [class.hidden-when-pinned]="headerCompact()">
       <a routerLink="/discover" routerLinkActive="active">Explore</a>
       <a routerLink="/my-bookings" routerLinkActive="active">My bookings</a>
+      <a routerLink="/my-messages" routerLinkActive="active">Messages</a>
       @if (portalUrl; as businessUrl) {
         <a [href]="businessUrl" target="_blank" rel="noopener noreferrer">For businesses</a>
       }

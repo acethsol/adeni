@@ -12,6 +12,7 @@ import {
   adeniPortalConfigFactory,
   isAuth0Configured,
 } from "./core/adeni-config";
+import { providePortalRealtimeAuth } from "./core/adeni-realtime-auth.provider";
 
 function auth0Providers() {
   const config = adeniPortalConfigFactory();
@@ -55,6 +56,7 @@ export const appConfig: ApplicationConfig = {
       provide: ADENI_PORTAL_CONFIG,
       useFactory: adeniPortalConfigFactory,
     },
+    providePortalRealtimeAuth(),
     ...auth0Providers(),
   ],
 };

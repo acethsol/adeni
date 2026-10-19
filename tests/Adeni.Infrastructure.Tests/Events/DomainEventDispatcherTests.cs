@@ -154,6 +154,7 @@ public sealed class DomainEventDispatcherTests
         services.AddSingleton<IMarketCatalog, EventTestMarketCatalog>();
         services.AddScoped<IPlatformFeeCalculator, PlatformFeeCalculator>();
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();
+        services.AddBookingTestRealtime();
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
         services.AddScoped<IBillingDocumentService, BillingDocumentService>();
         services.AddScoped<ITenantCustomerService, TenantCustomerService>();

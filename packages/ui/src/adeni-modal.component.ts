@@ -1,4 +1,4 @@
-import { Component, HostListener, input, output } from "@angular/core";
+import { Component, HostBinding, HostListener, input, output } from "@angular/core";
 
 export type AdeniModalSize = "md" | "lg" | "xl";
 
@@ -175,6 +175,8 @@ export type AdeniModalSize = "md" | "lg" | "xl";
   `,
 })
 export class AdeniModalComponent {
+  @HostBinding("attr.title") protected readonly nativeTitle: null = null;
+
   readonly open = input(false);
   readonly title = input.required<string>();
   readonly subtitle = input<string | null>(null);

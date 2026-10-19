@@ -1,4 +1,4 @@
-import { Component, input } from "@angular/core";
+import { Component, HostBinding, input } from "@angular/core";
 
 /**
  * Standard page chrome for portal and admin (title, description, body slot).
@@ -63,6 +63,9 @@ import { Component, input } from "@angular/core";
   `,
 })
 export class PortalPageComponent {
+  /** Prevent `title` input from becoming a native hover tooltip on the host. */
+  @HostBinding("attr.title") protected readonly nativeTitle: null = null;
+
   readonly title = input.required<string>();
   readonly description = input<string>("");
 }

@@ -221,6 +221,7 @@ public sealed class PractitionerBookingScopeTests
         services.AddSingleton<IMarketCatalog, ScopeTestMarketCatalog>();
         services.AddScoped<IPlatformFeeCalculator, PlatformFeeCalculator>();
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();
+        services.AddBookingTestRealtime();
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
         services.AddSingleton<Application.Notifications.INotificationDispatcher, ScopeTestNotifications>();
         services.AddScoped<IBillingDocumentService, BillingDocumentService>();

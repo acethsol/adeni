@@ -4,6 +4,7 @@ import { HomeComponent } from "./pages/home/home.component";
 import { DiscoverComponent } from "./pages/discover/discover.component";
 import { BusinessProfileComponent } from "./pages/business/business.component";
 import { MyBookingsComponent } from "./pages/my-bookings/my-bookings.component";
+import { MyMessagesComponent } from "./pages/my-messages/my-messages.component";
 import { LegalDocumentComponent } from "./pages/legal/legal-document.component";
 import { PublicDocumentComponent } from "./pages/document/document.component";
 import { QueueJoinComponent } from "./pages/queue-join/queue-join.component";
@@ -28,6 +29,12 @@ export const routes: Routes = [
         canActivate: [customerAuthGuard],
         component: MyBookingsComponent,
         title: "My bookings",
+      },
+      {
+        path: "my-messages",
+        canActivate: [customerAuthGuard],
+        component: MyMessagesComponent,
+        title: "Messages",
       },
       {
         path: "documents/:token",

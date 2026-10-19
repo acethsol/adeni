@@ -299,6 +299,7 @@ public sealed class BusinessClosedDateServiceTests
         services.AddSingleton<IMarketCatalog, ClosedTestMarketCatalog>();
         services.AddScoped<IPlatformFeeCalculator, PlatformFeeCalculator>();
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();
+        services.AddBookingTestRealtime();
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
         services.AddSingleton<Application.Notifications.INotificationDispatcher, ClosedTestNotifications>();
         services.AddScoped<IBillingDocumentService, BillingDocumentService>();

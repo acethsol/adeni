@@ -6,7 +6,8 @@ import {
   moveItemInArray,
 } from "@angular/cdk/drag-drop";
 import type { ChartTabularData } from "@carbon/charts/interfaces";
-import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, DestroyRef, inject, OnInit, signal } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { RouterLink } from "@angular/router";
 import {
   addDashboardWidget,
@@ -39,6 +40,7 @@ import {
   resolveDashboardRange,
   type BookingResponse,
   type BusinessProfile,
+  type ConversationSummary,
   type DashboardLayout,
   type DashboardLayoutWidget,
   type DashboardRangePreset,
@@ -56,6 +58,7 @@ import {
 } from "@adeni/ui";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { MessagingRealtimeService, TenantOperationsRealtimeService } from "@adeni/ui";
 import { PortalSessionService } from "../../core/services/portal-session.service";
 import { DashboardCarbonChartComponent } from "./dashboard-carbon-chart.component";
 import { clearDashboardLayout } from "./dashboard-layout-store";
@@ -88,6 +91,9 @@ type StatusSlice = { status: number; label: string; count: number; percent: numb
 export class DashboardComponent implements OnInit {
   private readonly businessApi = inject(BusinessApiService);
   private readonly config = inject(ADENI_PORTAL_CONFIG);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly messagingRealtime = inject(MessagingRealtimeService);
+  private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
   readonly session = inject(PortalSessionService);
 
   readonly formatTenantStatus = formatTenantStatus;
@@ -111,6 +117,7 @@ export class DashboardComponent implements OnInit {
   readonly bookedValueChartData = signal<ChartTabularData>([]);
   readonly staffLeaderboardChartData = signal<ChartTabularData>([]);
   readonly unreadMessagesCount = signal(0);
+  readonly messageInboxPreview = signal<ConversationSummary[]>([]);
   readonly openQuotesCount = signal(0);
   readonly queueWaiting = signal<QueueTicketResponse[]>([]);
   readonly mix = signal<StatusSlice[]>([]);
@@ -141,7 +148,43 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.rangePreset.set(resolveDashboardLayout(this.isPractitionerView()).range);
+    this.messagingRealtime.conversationUpdated$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((summary) => {
+        this.messageInboxPreview.update((items) => {
+          const index = items.findIndex((item) => item.id === summary.id);
+          if (index < 0) {
+            return [summary, ...items].slice(0, 4);
+          }
+          const copy = [...items];
+          copy[index] = summary;
+          copy.sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt));
+          return copy.slice(0, 4);
+        });
+        void this.refreshUnreadMessagesCount();
+      });
+    this.operationsRealtime.pendingBookingsChanged$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((event) => {
+        this.pendingCount.set(event.pendingCount);
+      });
+    this.operationsRealtime.quotePipelineChanged$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((event) => {
+        this.openQuotesCount.set(event.openCount);
+      });
     void this.load();
+  }
+
+  private async refreshUnreadMessagesCount(): Promise<void> {
+    try {
+      const count = await this.businessApi.withAuthorizedClient((client) =>
+        client.getTenantMessageUnreadCount(),
+      );
+      this.unreadMessagesCount.set(count);
+    } catch {
+      // keep prior count
+    }
   }
 
   widgetVisibilityContext() {
@@ -332,6 +375,17 @@ export class DashboardComponent implements OnInit {
     this.persistLayout({ ...this.layout(), widgets: [...visible, ...hidden] });
   }
 
+  customerInitials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) {
+      return "?";
+    }
+    if (parts.length === 1) {
+      return parts[0]!.slice(0, 2).toUpperCase();
+    }
+    return `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase();
+  }
+
   usagePercent(): number {
     const usage = this.usage();
     if (!usage?.bookingsLimitThisMonth) return 0;
@@ -372,6 +426,7 @@ export class DashboardComponent implements OnInit {
           bookedSeries,
           staffBreakdown,
           unreadCount,
+          messageInbox,
           queueFloor,
           quotes,
         ] = await Promise.all([
@@ -395,6 +450,11 @@ export class DashboardComponent implements OnInit {
           wantsUnread && messaging
             ? client.getTenantMessageUnreadCount().catch(() => 0)
             : Promise.resolve(0),
+          wantsUnread && messaging
+            ? client
+                .listTenantConversations({ page: 1, pageSize: 4 })
+                .catch(() => ({ items: [] as ConversationSummary[], totalCount: 0, page: 1, pageSize: 4 }))
+            : Promise.resolve({ items: [] as ConversationSummary[], totalCount: 0, page: 1, pageSize: 4 }),
           wantsQueue && caps.includes("walk_in_queue")
             ? client.getTenantQueueFloor().catch(() => null)
             : Promise.resolve(null),
@@ -430,6 +490,7 @@ export class DashboardComponent implements OnInit {
           bookedSeries,
           staffBreakdown,
           unreadCount,
+          messageInbox,
           queueFloor,
           quotes,
         };
@@ -461,6 +522,7 @@ export class DashboardComponent implements OnInit {
         })),
       );
       this.unreadMessagesCount.set(snapshot.unreadCount ?? 0);
+      this.messageInboxPreview.set(snapshot.messageInbox?.items ?? []);
       this.openQuotesCount.set(
         snapshot.quotes.filter(
           (quote: QuoteRequestResponse) => quote.status === "submitted" || quote.status === "quoted",

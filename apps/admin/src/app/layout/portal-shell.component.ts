@@ -25,6 +25,7 @@ import { ADENI_ADMIN_CONFIG, isAdminPortalDevMode, isAuth0Configured } from "../
 import { resolveAuthService } from "../core/auth0-rxjs";
 import { AdminThemeService, type ThemePreference } from "../core/admin-theme.service";
 import { AdminApiService } from "../core/services/admin-api.service";
+import { AdminOperationsRealtimeService } from "@adeni/ui";
 import { AdminIconTooltipDirective } from "../shared/admin-icon-tooltip.directive";
 import { AdminNavIconComponent } from "./admin-nav-icon.component";
 
@@ -174,6 +175,7 @@ export class AdminShellComponent {
   private readonly injector = inject(Injector);
   private readonly router = inject(Router);
   private readonly api = inject(AdminApiService);
+  private readonly operationsRealtime = inject(AdminOperationsRealtimeService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly localeService = inject(AdeniLocaleService);
   private readonly adminTheme = inject(AdminThemeService);
@@ -269,6 +271,14 @@ export class AdminShellComponent {
       this.accountDetail.set(user?.email ?? "");
     });
     void this.loadSearchCatalog();
+    void this.operationsRealtime.start().catch(() => {
+      // REST badge counts remain the fallback when the hub is unavailable.
+    });
+    this.operationsRealtime.adminVerificationChanged$
+      .pipe(takeUntilDestroyed())
+      .subscribe((event) => {
+        this.queueCount.set(event.pendingCount);
+      });
   }
 
   text(key: ChromeKey): string {

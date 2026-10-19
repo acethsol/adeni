@@ -1,4 +1,4 @@
-import { booleanAttribute, Component, input } from "@angular/core";
+import { booleanAttribute, Component, HostBinding, input } from "@angular/core";
 import { AdeniCarbonIconComponent } from "./adeni-carbon-icon.component";
 import type { AdeniCarbonIconName } from "./carbon-icon";
 
@@ -110,6 +110,8 @@ import type { AdeniCarbonIconName } from "./carbon-icon";
   `,
 })
 export class AdeniPortalEmptyStateComponent {
+  @HostBinding("attr.title") protected readonly nativeTitle: null = null;
+
   readonly title = input.required<string>();
   readonly description = input<string>("");
   readonly icon = input<AdeniCarbonIconName>("search");

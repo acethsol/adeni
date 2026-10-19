@@ -20,6 +20,7 @@ using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Reviews;
 using Adeni.Infrastructure.Markets;
 using Adeni.Infrastructure.Messaging;
+using Adeni.Infrastructure.Realtime;
 using Adeni.Infrastructure.Subscriptions;
 using Adeni.Infrastructure.Tenancy;
 using Adeni.Infrastructure.Translation;
@@ -77,6 +78,7 @@ public static class ServiceCollectionExtensions
         services.AddSubscriptionsModule(configuration);
         services.AddTrustModule();
         services.AddMessagingModule();
+        services.AddRealtimeModule();
 
         return services;
     }

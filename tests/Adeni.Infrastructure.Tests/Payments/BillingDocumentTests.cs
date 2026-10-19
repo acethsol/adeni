@@ -11,6 +11,7 @@ using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Events;
 using Adeni.Infrastructure.Payments;
 using Adeni.Infrastructure.Persistence;
+using Adeni.Infrastructure.Tests.Booking;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -191,6 +192,7 @@ public sealed class BillingDocumentTests
             new SinkNotificationDispatcher(sp.GetRequiredService<NotificationSink>()));
         services.AddScoped<IPlatformFeeCalculator, PlatformFeeCalculator>();
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();
+        services.AddBookingTestRealtime();
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
         services.AddScoped<IBillingDocumentService, BillingDocumentService>();
         services.AddSingleton(NullLogger<PaymentBookingHandler>.Instance);

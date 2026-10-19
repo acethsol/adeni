@@ -35,6 +35,13 @@ import { BusinessApiService } from "../core/services/business-api.service";
 import { PortalSessionService } from "../core/services/portal-session.service";
 import type { ThemePreference } from "../core/portal-theme.service";
 import { PortalThemeService } from "../core/portal-theme.service";
+import {
+  MessagingRealtimeService,
+  PortalRealtimeBootstrapService,
+  TenantOperationsRealtimeService,
+} from "@adeni/ui";
+import { PortalNavBadgesService } from "../core/services/portal-nav-badges.service";
+import { MessagesShortcutComponent } from "../shared/messages-shortcut.component";
 import { PendingBookingsBellComponent } from "../shared/pending-bookings-bell.component";
 import { PortalIconTooltipDirective } from "../shared/portal-icon-tooltip.directive";
 import { PortalNavIconComponent } from "./portal-nav-icon.component";
@@ -229,6 +236,7 @@ function readSidebarCollapsed(): boolean {
     AdeniGlobalLoadingPanelComponent,
     AdeniToastHostComponent,
     AdeniConfirmHostComponent,
+    MessagesShortcutComponent,
     PendingBookingsBellComponent,
     PortalNavIconComponent,
     PortalIconTooltipDirective,
@@ -245,6 +253,10 @@ export class PortalShellComponent {
   private readonly injector = inject(Injector);
   private readonly router = inject(Router);
   private readonly businessApi = inject(BusinessApiService);
+  private readonly navBadges = inject(PortalNavBadgesService);
+  private readonly portalRealtime = inject(PortalRealtimeBootstrapService);
+  private readonly messagingRealtime = inject(MessagingRealtimeService);
+  private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
   private readonly portalSession = inject(PortalSessionService);
   private readonly documentTitleStrategy = inject(AdeniDocumentTitleStrategy);
   private readonly portalTheme = inject(PortalThemeService);
@@ -305,6 +317,17 @@ export class PortalShellComponent {
       const name = user?.name ?? user?.email ?? "Business";
       this.accountName.set(name);
       this.accountDetail.set(user?.email ?? "");
+    });
+    this.navBadges.refreshRequested$.pipe(takeUntilDestroyed()).subscribe(() => {
+      void this.loadBadges();
+    });
+    this.messagingRealtime.conversationUpdated$.pipe(takeUntilDestroyed()).subscribe(() => {
+      void this.loadBadges();
+    });
+    this.operationsRealtime.pendingBookingsChanged$.pipe(takeUntilDestroyed()).subscribe((event) => {
+      if (event.tenantId === this.profile()?.tenantId) {
+        this.pendingBookings.set(event.pendingCount);
+      }
     });
     void this.loadProfile();
   }
@@ -530,6 +553,7 @@ export class PortalShellComponent {
       await this.portalSession.refresh();
       const profile = await this.businessApi.getTenantProfile();
       this.profile.set(profile);
+      await this.portalRealtime.syncForProfile(profile);
       if (profile?.businessName) {
         this.documentTitleStrategy.setAppTitle(profile.businessName);
         if (this.devMode) {
@@ -539,6 +563,7 @@ export class PortalShellComponent {
       await this.loadBadges();
     } catch {
       this.profile.set(null);
+      await this.portalRealtime.stop();
     } finally {
       this.profileLoaded.set(true);
     }

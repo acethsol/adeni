@@ -8,6 +8,7 @@ import {
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Router, RouterLink } from "@angular/router";
+import { Subscription } from "rxjs";
 import type { AdeniApiClient } from "@adeni/api-client";
 import type {
   BusinessProfile,
@@ -27,6 +28,7 @@ import {
 } from "@adeni/ui";
 import { environment } from "../../../environments/environment";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { TenantOperationsRealtimeService } from "@adeni/ui";
 import { PortalSessionService } from "../../core/services/portal-session.service";
 
 const REFRESH_MS = 15_000;
@@ -51,8 +53,10 @@ export class QueueComponent implements OnInit, OnDestroy {
   private readonly session = inject(PortalSessionService);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly router = inject(Router);
+  private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
 
   private refreshTimer: ReturnType<typeof setInterval> | null = null;
+  private opsSub: { unsubscribe(): void } | null = null;
 
   readonly loading = signal(true);
   readonly refreshing = signal(false);
@@ -82,12 +86,16 @@ export class QueueComponent implements OnInit, OnDestroy {
     void this.session.ensureLoaded();
     void this.load(true);
     this.refreshTimer = setInterval(() => void this.load(false), REFRESH_MS);
+    this.opsSub = this.operationsRealtime.queueFloorChanged$.subscribe(() => {
+      void this.load(false);
+    });
   }
 
   ngOnDestroy(): void {
     if (this.refreshTimer) {
       clearInterval(this.refreshTimer);
     }
+    this.opsSub?.unsubscribe();
   }
 
   pageDescription(): string {

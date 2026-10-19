@@ -143,10 +143,7 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         icon: "messages",
         permission: "portal.messages",
         badge: "messages",
-        tabs: [
-          { id: "inbox", label: "Inbox", entitlement: "messaging" },
-          { id: "whatsapp", label: "WhatsApp" },
-        ],
+        tabs: [{ id: "inbox", label: "Inbox", entitlement: "messaging" }],
       },
       { path: "/register", label: "Register", icon: "register", unregisteredOnly: true },
     ],

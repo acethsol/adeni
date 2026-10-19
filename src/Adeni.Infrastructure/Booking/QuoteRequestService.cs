@@ -2,7 +2,9 @@ namespace Adeni.Infrastructure.Booking;
 
 using System.Text.Json;
 using Adeni.Application.Booking;
+using Adeni.Application.Realtime;
 using Adeni.Application.Storage;
+using Adeni.Infrastructure.Realtime;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
@@ -10,7 +12,10 @@ using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-public sealed class QuoteRequestService(AdeniDbContext dbContext, IFileStorage fileStorage) : IQuoteRequestService
+public sealed class QuoteRequestService(
+    AdeniDbContext dbContext,
+    IFileStorage fileStorage,
+    ITenantRealtimePublisher tenantRealtime) : IQuoteRequestService
 {
     private const int MaxPhotoKeys = 5;
 
@@ -76,6 +81,11 @@ public sealed class QuoteRequestService(AdeniDbContext dbContext, IFileStorage f
 
         dbContext.QuoteRequests.Add(record);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await TenantRealtimeNotifications.PublishQuotePipelineAsync(
+            tenantRealtime,
+            dbContext,
+            tenantId,
+            cancellationToken);
 
         return Result.Success(await MapAsync(record, cancellationToken));
     }
@@ -195,6 +205,11 @@ public sealed class QuoteRequestService(AdeniDbContext dbContext, IFileStorage f
         record.ExpiresAt = request.ExpiresAt ?? DateTimeOffset.UtcNow.AddDays(7);
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await TenantRealtimeNotifications.PublishQuotePipelineAsync(
+            tenantRealtime,
+            dbContext,
+            record.TenantId,
+            cancellationToken);
         return Result.Success(await MapAsync(record, cancellationToken));
     }
 
@@ -256,6 +271,16 @@ public sealed class QuoteRequestService(AdeniDbContext dbContext, IFileStorage f
         record.Status = QuoteRequestStatus.Accepted;
         record.BookingId = booking.Id;
         await dbContext.SaveChangesAsync(cancellationToken);
+        await TenantRealtimeNotifications.PublishQuotePipelineAsync(
+            tenantRealtime,
+            dbContext,
+            record.TenantId,
+            cancellationToken);
+        await TenantRealtimeNotifications.PublishPendingBookingsAsync(
+            tenantRealtime,
+            dbContext,
+            record.TenantId,
+            cancellationToken);
 
         return Result.Success(await MapAsync(record, cancellationToken));
     }
@@ -289,6 +314,11 @@ public sealed class QuoteRequestService(AdeniDbContext dbContext, IFileStorage f
 
         record.Status = QuoteRequestStatus.Declined;
         await dbContext.SaveChangesAsync(cancellationToken);
+        await TenantRealtimeNotifications.PublishQuotePipelineAsync(
+            tenantRealtime,
+            dbContext,
+            record.TenantId,
+            cancellationToken);
         return Result.Success(await MapAsync(record, cancellationToken));
     }
 

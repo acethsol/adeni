@@ -29,8 +29,7 @@
                 [href]="discoverUrl()"
                 target="_blank"
                 rel="noopener"
-                [attr.title]="collapsed() ? discoverNavHint() : discoverNavHint()"
-                [attr.aria-label]="navLabel(item)"
+                [attr.aria-label]="collapsed() ? navLabel(item) : null"
                 [attr.data-label]="collapsed() ? navLabel(item) : null"
               >
                 <span class="nav-ico" aria-hidden="true">
@@ -45,8 +44,7 @@
                 routerLinkActive="active"
                 ariaCurrentWhenActive="page"
                 [routerLinkActiveOptions]="{ exact: !!item.exact }"
-                [attr.title]="collapsed() ? navLabel(item) : null"
-                [attr.aria-label]="navLabel(item)"
+                [attr.aria-label]="collapsed() ? navLabel(item) : null"
                 [attr.data-label]="collapsed() ? navLabel(item) : null"
               >
                 <span class="nav-ico" aria-hidden="true">
@@ -146,6 +144,7 @@
       </div>
 
       <div class="topbar-actions">
+        <app-messages-shortcut />
         <app-pending-bookings-bell />
 
         <button

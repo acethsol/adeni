@@ -1,0 +1,192 @@
+import { Injectable, inject, OnDestroy } from "@angular/core";
+import {
+  adminVerificationChangedSchema,
+  paymentCompletedRealtimeSchema,
+  pendingBookingsChangedSchema,
+  queueFloorChangedSchema,
+  quotePipelineChangedSchema,
+  type AdminVerificationChangedEvent,
+  type PaymentCompletedRealtimeEvent,
+  type PendingBookingsChangedEvent,
+  type QueueFloorChangedEvent,
+  type QuotePipelineChangedEvent,
+} from "@adeni/shared";
+import { Subject } from "rxjs";
+import { ADENI_REALTIME_AUTH } from "./adeni-realtime-auth.token";
+import { SignalRHubSession } from "./signalr-hub-session";
+
+type OperationsMode = "tenant" | "admin" | "checkout";
+
+@Injectable({ providedIn: "root" })
+export class AdeniOperationsRealtimeService implements OnDestroy {
+  private readonly auth = inject(ADENI_REALTIME_AUTH);
+  private readonly session = new SignalRHubSession();
+
+  private mode: OperationsMode | null = null;
+  private tenantId: string | null = null;
+  private checkoutReference: string | null = null;
+
+  private readonly pendingBookingsSubject = new Subject<PendingBookingsChangedEvent>();
+  private readonly queueFloorSubject = new Subject<QueueFloorChangedEvent>();
+  private readonly quotePipelineSubject = new Subject<QuotePipelineChangedEvent>();
+  private readonly paymentCompletedSubject = new Subject<PaymentCompletedRealtimeEvent>();
+  private readonly adminVerificationSubject = new Subject<AdminVerificationChangedEvent>();
+
+  readonly pendingBookingsChanged$ = this.pendingBookingsSubject.asObservable();
+  readonly queueFloorChanged$ = this.queueFloorSubject.asObservable();
+  readonly quotePipelineChanged$ = this.quotePipelineSubject.asObservable();
+  readonly paymentCompleted$ = this.paymentCompletedSubject.asObservable();
+  readonly adminVerificationChanged$ = this.adminVerificationSubject.asObservable();
+
+  isConnected(): boolean {
+    return this.session.isConnected();
+  }
+
+  /** Portal: pass tenant id. Admin: omit to join verification queue. */
+  async start(tenantId?: string): Promise<void> {
+    if (tenantId) {
+      return this.startTenant(tenantId);
+    }
+    return this.startAdminVerification();
+  }
+
+  async startTenant(tenantId: string): Promise<void> {
+    if (this.session.isConnected() && this.mode === "tenant" && this.tenantId === tenantId) {
+      return;
+    }
+
+    await this.stopInternal();
+    this.mode = "tenant";
+    this.tenantId = tenantId;
+
+    await this.session.connect({
+      hubUrl: this.auth.getHubUrl("operations"),
+      accessTokenFactory: () => this.auth.getAccessToken(),
+      handlers: this.tenantHandlers(),
+      onReconnected: () => this.rejoinTenant(),
+    });
+    await this.session.invoke("JoinTenant", tenantId);
+  }
+
+  async startAdminVerification(): Promise<void> {
+    if (this.session.isConnected() && this.mode === "admin") {
+      return;
+    }
+
+    await this.stopInternal();
+    this.mode = "admin";
+
+    await this.session.connect({
+      hubUrl: this.auth.getHubUrl("operations"),
+      accessTokenFactory: () => this.auth.getAccessToken(),
+      handlers: {
+        AdminVerificationChanged: (payload) => {
+          const parsed = adminVerificationChangedSchema.safeParse(payload);
+          if (parsed.success) {
+            this.adminVerificationSubject.next(parsed.data);
+          }
+        },
+      },
+      onReconnected: () => this.session.invoke("JoinAdminVerification"),
+    });
+    await this.session.invoke("JoinAdminVerification");
+  }
+
+  /** Public checkout: anonymous hub join by Paystack reference. */
+  async watchCheckout(providerReference: string): Promise<void> {
+    return this.watchPaymentCheckout(providerReference);
+  }
+
+  async watchPaymentCheckout(providerReference: string): Promise<void> {
+    const reference = providerReference.trim();
+    if (!reference) {
+      return;
+    }
+
+    if (this.session.isConnected() && this.mode === "checkout" && this.checkoutReference === reference) {
+      return;
+    }
+
+    await this.stopInternal();
+    this.mode = "checkout";
+    this.checkoutReference = reference;
+
+    await this.session.connect({
+      hubUrl: this.auth.getHubUrl("operations"),
+      handlers: {
+        PaymentCompleted: (payload) => {
+          const parsed = paymentCompletedRealtimeSchema.safeParse(payload);
+          if (parsed.success) {
+            this.paymentCompletedSubject.next(parsed.data);
+          }
+        },
+      },
+      onReconnected: () => this.session.invoke("JoinPaymentCheckout", reference),
+    });
+    await this.session.invoke("JoinPaymentCheckout", reference);
+  }
+
+  async stop(): Promise<void> {
+    await this.stopInternal();
+  }
+
+  ngOnDestroy(): void {
+    void this.stop();
+  }
+
+  private tenantHandlers(): Record<string, (payload: unknown) => void> {
+    return {
+      PendingBookingsChanged: (payload) => {
+        const parsed = pendingBookingsChangedSchema.safeParse(payload);
+        if (parsed.success) {
+          this.pendingBookingsSubject.next(parsed.data);
+        }
+      },
+      QueueFloorChanged: (payload) => {
+        const parsed = queueFloorChangedSchema.safeParse(payload);
+        if (parsed.success) {
+          this.queueFloorSubject.next(parsed.data);
+        }
+      },
+      QuotePipelineChanged: (payload) => {
+        const parsed = quotePipelineChangedSchema.safeParse(payload);
+        if (parsed.success) {
+          this.quotePipelineSubject.next(parsed.data);
+        }
+      },
+      PaymentCompleted: (payload) => {
+        const parsed = paymentCompletedRealtimeSchema.safeParse(payload);
+        if (parsed.success) {
+          this.paymentCompletedSubject.next(parsed.data);
+        }
+      },
+    };
+  }
+
+  private async rejoinTenant(): Promise<void> {
+    if (this.tenantId) {
+      try {
+        await this.session.invoke("JoinTenant", this.tenantId);
+      } catch {
+        // retry on reconnect
+      }
+    }
+  }
+
+  private async stopInternal(): Promise<void> {
+    const reference = this.checkoutReference;
+    this.mode = null;
+    this.tenantId = null;
+    this.checkoutReference = null;
+
+    if (reference && this.session.isConnected()) {
+      try {
+        await this.session.invoke("LeavePaymentCheckout", reference);
+      } catch {
+        // ignore
+      }
+    }
+
+    await this.session.disconnect();
+  }
+}

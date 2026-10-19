@@ -1,8 +1,10 @@
-import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, OnDestroy, OnInit, signal } from "@angular/core";
+import { Subscription } from "rxjs";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import { AdeniApiClient } from "@adeni/api-client";
 import { formatPrice } from "@adeni/shared";
 import { ADENI_DISCOVER_CONFIG } from "../../core/adeni-config";
+import { AdeniOperationsRealtimeService } from "@adeni/ui";
 
 @Component({
   selector: "app-checkout-stub",
@@ -11,9 +13,11 @@ import { ADENI_DISCOVER_CONFIG } from "../../core/adeni-config";
   templateUrl: "./checkout-stub.component.html",
   styleUrl: "./checkout-stub.component.scss",
 })
-export class CheckoutStubComponent implements OnInit {
+export class CheckoutStubComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly config = inject(ADENI_DISCOVER_CONFIG);
+  private readonly checkoutRealtime = inject(AdeniOperationsRealtimeService);
+  private realtimeSub: Subscription | null = null;
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -45,7 +49,21 @@ export class CheckoutStubComponent implements OnInit {
     }
     if (!reference) {
       this.error.set("Payment link is invalid.");
+      return;
     }
+
+    void this.checkoutRealtime.watchCheckout(reference);
+    this.realtimeSub = this.checkoutRealtime.paymentCompleted$.subscribe((event) => {
+      const ref = event.providerReference?.trim();
+      if (!ref || ref === reference) {
+        this.paid.set(true);
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.realtimeSub?.unsubscribe();
+    void this.checkoutRealtime.stop();
   }
 
   async confirmPayment(): Promise<void> {

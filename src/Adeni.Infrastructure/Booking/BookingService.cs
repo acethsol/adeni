@@ -7,7 +7,9 @@ using Adeni.Application.Events;
 using Adeni.Application.Payments;
 using Adeni.Application.Security;
 using Adeni.Application.Subscriptions;
+using Adeni.Application.Realtime;
 using Adeni.Application.Tenancy;
+using Adeni.Infrastructure.Realtime;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Booking.Events;
 using Adeni.Domain.Common;
@@ -26,7 +28,8 @@ public sealed class BookingService(
     IEntitlementsService entitlementsService,
     IPaymentOrchestrator paymentOrchestrator,
     IBillingDocumentService billingDocuments,
-    ITenantCustomerService tenantCustomers) : IBookingService
+    ITenantCustomerService tenantCustomers,
+    ITenantRealtimePublisher tenantRealtime) : IBookingService
 {
     public async Task<Result<BookingResponse>> CreateAsync(
         string customerAuth0Sub,
@@ -304,6 +307,11 @@ public sealed class BookingService(
 
             dbContext.Bookings.Add(booking);
             await dbContext.SaveChangesAsync(cancellationToken);
+            await TenantRealtimeNotifications.PublishPendingBookingsAsync(
+                tenantRealtime,
+                dbContext,
+                request.TenantId,
+                cancellationToken);
 
             if (booking.Status == BookingStatus.Confirmed)
             {
@@ -742,6 +750,11 @@ public sealed class BookingService(
             booking.StartAt,
             DateTimeOffset.UtcNow));
         await dbContext.SaveChangesAsync(cancellationToken);
+        await TenantRealtimeNotifications.PublishPendingBookingsAsync(
+            tenantRealtime,
+            dbContext,
+            booking.TenantId,
+            cancellationToken);
 
         var service = await dbContext.ServiceOfferings.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == booking.ServiceOfferingId, cancellationToken);
@@ -993,6 +1006,11 @@ public sealed class BookingService(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await TenantRealtimeNotifications.PublishPendingBookingsAsync(
+            tenantRealtime,
+            dbContext,
+            tenantId,
+            cancellationToken);
         var name = booking.Lines.OrderBy(x => x.SortOrder).FirstOrDefault()?.ServiceName
             ?? service?.Name
             ?? "Service";

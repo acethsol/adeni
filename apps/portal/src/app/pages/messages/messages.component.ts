@@ -1,8 +1,7 @@
 import { Component, computed, inject, OnDestroy, OnInit, signal } from "@angular/core";
-import { toSignal } from "@angular/core/rxjs-interop";
-import { ActivatedRoute, Router } from "@angular/router";
 import { FormsModule } from "@angular/forms";
-import { map, Subscription } from "rxjs";
+import { RouterLink } from "@angular/router";
+import { Subscription } from "rxjs";
 import {
   formatSlotTime,
   hasTenantEntitlement,
@@ -18,15 +17,14 @@ import {
 } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
+  AdeniFeedbackService,
+  AdeniModalComponent,
   AdeniPortalEmptyStateComponent,
   PortalPageComponent,
 } from "@adeni/ui";
-import { filterPortalTabs } from "../../core/portal-access";
-import { findPortalNavItem } from "../../core/portal-nav";
-import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { MessagingRealtimeService } from "../../core/services/messaging-realtime.service";
-import { PortalTabsComponent } from "../../shared/portal-tabs.component";
+import { MessagingRealtimeService } from "@adeni/ui";
+import { PortalNavBadgesService } from "../../core/services/portal-nav-badges.service";
 
 const ALLOWED_ATTACHMENT_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
@@ -36,34 +34,23 @@ const ALLOWED_ATTACHMENT_TYPES = new Set(["image/jpeg", "image/png", "image/webp
   imports: [
     PortalPageComponent,
     FormsModule,
-    PortalTabsComponent,
+    RouterLink,
     AdeniPortalEmptyStateComponent,
     AdeniCarbonIconComponent,
+    AdeniModalComponent,
   ],
   templateUrl: "./messages.component.html",
   styleUrl: "./messages.component.scss",
 })
 export class MessagesComponent implements OnInit, OnDestroy {
   private readonly api = inject(BusinessApiService);
+  private readonly feedback = inject(AdeniFeedbackService);
   private readonly realtime = inject(MessagingRealtimeService);
-  private readonly config = inject(ADENI_PORTAL_CONFIG);
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
+  private readonly navBadges = inject(PortalNavBadgesService);
   private readonly subscriptions = new Subscription();
 
-  readonly tab = toSignal(this.route.queryParamMap.pipe(map((params) => params.get("tab") ?? "whatsapp")), {
-    initialValue: this.route.snapshot.queryParamMap.get("tab") ?? "whatsapp",
-  });
-
-  private readonly navTabs = findPortalNavItem("/messages")?.item.tabs ?? [
-    { id: "inbox", label: "Inbox", entitlement: "messaging" as const },
-    { id: "whatsapp", label: "WhatsApp" },
-  ];
-
   readonly profile = signal<BusinessProfile | null>(null);
-  readonly visibleTabs = computed(() =>
-    filterPortalTabs(this.navTabs, this.profile()?.entitlements ?? null),
-  );
+  readonly whatsAppBusinessUrl = signal<string | null>(null);
   readonly messagingEntitled = computed(() =>
     hasTenantEntitlement(this.profile()?.entitlements, "messaging"),
   );
@@ -87,12 +74,13 @@ export class MessagesComponent implements OnInit, OnDestroy {
   readonly attaching = signal(false);
   readonly pendingAttachment = signal<SendMessageAttachment | null>(null);
   readonly pendingAttachmentPreview = signal<string | null>(null);
+  readonly imagePreview = signal<{ url: string; fileName: string } | null>(null);
+  /** Customer read cursor — when set, outgoing messages at or before this id show as read. */
+  readonly customerLastReadMessageId = signal<string | null>(null);
   draft = "";
 
   readonly formatSlotTime = formatSlotTime;
-  readonly canSend = computed(
-    () => Boolean(this.draft.trim() || this.pendingAttachment()) && !this.sending() && !this.attaching(),
-  );
+  readonly formatMessageTime = formatMessageTime;
 
   ngOnInit(): void {
     this.subscriptions.add(
@@ -100,6 +88,9 @@ export class MessagesComponent implements OnInit, OnDestroy {
     );
     this.subscriptions.add(
       this.realtime.conversationUpdated$.subscribe((summary) => this.onRealtimeConversation(summary)),
+    );
+    this.subscriptions.add(
+      this.realtime.readUpdated$.subscribe((event) => this.onReadUpdated(event)),
     );
     void this.load();
   }
@@ -110,16 +101,31 @@ export class MessagesComponent implements OnInit, OnDestroy {
     void this.realtime.stop();
   }
 
+  canSend(): boolean {
+    return Boolean(this.draft.trim() || this.pendingAttachment()) && !this.sending() && !this.attaching();
+  }
+
   async load(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
     try {
+      await this.feedback.runLoading(async () => {
       const snapshot = await this.api.withAuthorizedClient(async (client) => {
         const profile = await client.getTenantProfile();
         let conversations: ConversationSummary[] = [];
         let templates: MessageTemplate[] = [];
         let conversationTotalCount = 0;
         let conversationPage = 1;
+        let whatsAppBusinessUrl: string | null = null;
+        const slug = primaryLocationSlug(profile);
+        if (slug) {
+          try {
+            const link = await client.getBusinessWhatsAppLink(slug);
+            whatsAppBusinessUrl = link.url;
+          } catch {
+            whatsAppBusinessUrl = null;
+          }
+        }
         if (hasTenantEntitlement(profile.entitlements, "messaging")) {
           const [conversationPageResult, templateList] = await Promise.all([
             client.listTenantConversations({
@@ -133,23 +139,21 @@ export class MessagesComponent implements OnInit, OnDestroy {
           conversationPage = conversationPageResult.page;
           templates = templateList;
         }
-        return { conversations, templates, profile, conversationTotalCount, conversationPage };
+        return {
+          conversations,
+          templates,
+          profile,
+          conversationTotalCount,
+          conversationPage,
+          whatsAppBusinessUrl,
+        };
       });
       this.conversations.set(snapshot.conversations);
       this.conversationTotalCount.set(snapshot.conversationTotalCount);
       this.conversationPage.set(snapshot.conversationPage);
       this.templates.set(snapshot.templates);
       this.profile.set(snapshot.profile);
-      if (!this.route.snapshot.queryParamMap.get("tab")) {
-        const defaultTab = hasTenantEntitlement(snapshot.profile.entitlements, "messaging")
-          ? "inbox"
-          : "whatsapp";
-        await this.router.navigate([], {
-          relativeTo: this.route,
-          queryParams: { tab: defaultTab },
-          replaceUrl: true,
-        });
-      }
+      this.whatsAppBusinessUrl.set(snapshot.whatsAppBusinessUrl);
 
       if (hasTenantEntitlement(snapshot.profile.entitlements, "messaging") && snapshot.profile.tenantId) {
         try {
@@ -158,6 +162,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
           // REST inbox still works if realtime is unavailable.
         }
       }
+      }, "Loading messages", "Fetching your inbox…");
     } catch {
       this.error.set("Could not load messages.");
     } finally {
@@ -190,12 +195,18 @@ export class MessagesComponent implements OnInit, OnDestroy {
   async openConversation(conversation: ConversationSummary): Promise<void> {
     this.error.set(null);
     this.clearPendingAttachment();
+    this.customerLastReadMessageId.set(null);
     try {
-      const detail = await this.api.withAuthorizedClient(async (client) => {
-        const loaded = await client.getTenantConversation(conversation.id);
-        await client.markTenantConversationRead(conversation.id);
-        return loaded;
-      });
+      const detail = await this.feedback.runLoading(
+        () =>
+          this.api.withAuthorizedClient(async (client) => {
+            const loaded = await client.getTenantConversation(conversation.id);
+            await client.markTenantConversationRead(conversation.id);
+            return loaded;
+          }),
+        "Opening conversation",
+        "Loading messages…",
+      );
       this.detail.set(detail);
       this.conversations.update((items) =>
         items.map((item) =>
@@ -207,6 +218,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
       } catch {
         // Opened via REST; live updates may be delayed until reconnect.
       }
+      this.navBadges.requestRefresh();
     } catch {
       this.error.set("Could not open that conversation.");
     }
@@ -233,23 +245,28 @@ export class MessagesComponent implements OnInit, OnDestroy {
     this.attaching.set(true);
     this.error.set(null);
     try {
-      const attachment = await this.api.withAuthorizedClient(async (client) => {
-        const slot = await client.createMessageAttachmentUploadUrl(file.type, file.size);
-        const upload = await fetch(slot.uploadUrl, {
-          method: "PUT",
-          headers: { "Content-Type": file.type },
-          body: file,
-        });
-        if (!upload.ok) {
-          throw new Error("upload failed");
-        }
-        return {
-          storageKey: slot.storageKey,
-          contentType: file.type,
-          fileName: file.name,
-          fileSize: file.size,
-        } satisfies SendMessageAttachment;
-      });
+      const attachment = await this.feedback.runLoading(
+        () =>
+          this.api.withAuthorizedClient(async (client) => {
+            const slot = await client.createMessageAttachmentUploadUrl(file.type, file.size);
+            const upload = await fetch(slot.uploadUrl, {
+              method: "PUT",
+              headers: { "Content-Type": file.type },
+              body: file,
+            });
+            if (!upload.ok) {
+              throw new Error("upload failed");
+            }
+            return {
+              storageKey: slot.storageKey,
+              contentType: file.type,
+              fileName: file.name,
+              fileSize: file.size,
+            } satisfies SendMessageAttachment;
+          }),
+        "Uploading image",
+        "Preparing attachment…",
+      );
       this.clearPendingAttachment();
       this.pendingAttachment.set(attachment);
       this.pendingAttachmentPreview.set(URL.createObjectURL(file));
@@ -282,12 +299,17 @@ export class MessagesComponent implements OnInit, OnDestroy {
         typeof crypto !== "undefined" && "randomUUID" in crypto
           ? crypto.randomUUID()
           : `portal-${Date.now()}`;
-      const message = await this.api.withAuthorizedClient((client) =>
-        client.sendTenantMessage(conversation.id, {
-          body: body || undefined,
-          clientMessageId,
-          attachments: attachment ? [attachment] : undefined,
-        }),
+      const message = await this.feedback.runLoading(
+        () =>
+          this.api.withAuthorizedClient((client) =>
+            client.sendTenantMessage(conversation.id, {
+              body: body || undefined,
+              clientMessageId,
+              attachments: attachment ? [attachment] : undefined,
+            }),
+          ),
+        "Sending message",
+        "Delivering to the customer…",
       );
       this.appendMessage(message);
       this.draft = "";
@@ -315,36 +337,41 @@ export class MessagesComponent implements OnInit, OnDestroy {
     this.draft = template.body;
   }
 
-  primarySlug(): string | null {
-    const profile = this.profile();
-    if (!profile) return null;
-    const primary = profile.locations.find((location) => location.isPrimary) ?? profile.locations[0];
-    return primary?.slug ?? null;
+  openImagePreview(url: string, fileName: string): void {
+    this.imagePreview.set({ url, fileName });
   }
 
-  whatsAppUrl(message: string): string {
-    return `https://wa.me/?text=${encodeURIComponent(message)}`;
+  closeImagePreview(): void {
+    this.imagePreview.set(null);
   }
 
-  whatsAppNotes(): { title: string; body: string }[] {
-    const name = this.profile()?.businessName ?? "us";
-    const link = this.primarySlug()
-      ? `${this.config.discoverWebUrl}/businesses/${this.primarySlug()}`
-      : this.config.discoverWebUrl;
-    return [
-      { title: "Booking confirmed", body: `Hi! Your booking with ${name} is confirmed. ${link}` },
-      { title: "Reminder", body: `Reminder from ${name}: we look forward to seeing you. ${link}` },
-      { title: "Thank you", body: `Thanks for visiting ${name}. Book again anytime: ${link}` },
-    ];
-  }
-
-  async copy(text: string): Promise<void> {
-    try {
-      await navigator.clipboard.writeText(text);
-      this.notice.set("Copied.");
-    } catch {
-      this.error.set("Could not copy.");
+  isMessageReadByCustomer(message: ConversationMessage): boolean {
+    const cursor = this.customerLastReadMessageId();
+    if (!cursor) {
+      return false;
     }
+    return message.id.localeCompare(cursor) <= 0;
+  }
+
+  private onReadUpdated(event: {
+    conversationId: string;
+    participantId: string;
+    lastReadMessageId: string;
+  }): void {
+    if (this.detail()?.id !== event.conversationId) {
+      return;
+    }
+    this.customerLastReadMessageId.set(event.lastReadMessageId);
+  }
+
+  senderLabel(message: ConversationMessage, conversation: ConversationDetail): string {
+    if (message.senderDisplayName?.trim()) {
+      return message.senderDisplayName.trim();
+    }
+    if (message.senderType === "business" || message.senderType === "bot") {
+      return conversation.businessName?.trim() || "You";
+    }
+    return conversation.customerDisplayName;
   }
 
   private onRealtimeMessage(message: ConversationMessage): void {
@@ -387,4 +414,34 @@ export class MessagesComponent implements OnInit, OnDestroy {
       return { ...current, messages: [...current.messages, message] };
     });
   }
+}
+
+function formatMessageTime(iso: string): string {
+  try {
+    const date = new Date(iso);
+    const now = new Date();
+    const sameDay =
+      date.getFullYear() === now.getFullYear()
+      && date.getMonth() === now.getMonth()
+      && date.getDate() === now.getDate();
+    if (sameDay) {
+      return new Intl.DateTimeFormat(undefined, {
+        hour: "numeric",
+        minute: "2-digit",
+      }).format(date);
+    }
+    return new Intl.DateTimeFormat(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(date);
+  } catch {
+    return iso;
+  }
+}
+
+function primaryLocationSlug(profile: BusinessProfile): string | null {
+  const primary = profile.locations.find((location) => location.isPrimary) ?? profile.locations[0];
+  return primary?.slug ?? null;
 }

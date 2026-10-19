@@ -1,6 +1,7 @@
 namespace Adeni.Infrastructure.Tests.Payments;
 
 using Adeni.Application.Abstractions;
+using Adeni.Application.Realtime;
 using Adeni.Application.Events;
 using Adeni.Application.Payments;
 using Adeni.Domain.Payments;
@@ -110,7 +111,8 @@ public sealed class PaymentOrchestratorTests
             new NoOpAuditLogWriter(),
             new TestCorrelationContext(),
             new DomainEventCollector(),
-            paymentsOptions);
+            paymentsOptions,
+            new NoOpTenantRealtimePublisher());
     }
 
     private static AdeniDbContext CreateDb()

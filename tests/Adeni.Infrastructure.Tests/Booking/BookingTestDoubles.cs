@@ -1,7 +1,18 @@
 namespace Adeni.Infrastructure.Tests.Booking;
 
 using Adeni.Application.Booking;
+using Adeni.Application.Realtime;
 using Adeni.Domain.Common;
+using Microsoft.Extensions.DependencyInjection;
+
+internal static class BookingTestServiceCollectionExtensions
+{
+    internal static IServiceCollection AddBookingTestRealtime(this IServiceCollection services)
+    {
+        services.AddSingleton<ITenantRealtimePublisher, NoOpTenantRealtimePublisher>();
+        return services;
+    }
+}
 
 internal sealed class NoOpQueueService : IQueueService
 {

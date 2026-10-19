@@ -399,6 +399,7 @@ public sealed class BookingFlowTests
         services.AddSingleton<IMarketCatalog, LoopTestMarketCatalog>();
         services.AddScoped<IPlatformFeeCalculator, PlatformFeeCalculator>();
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();
+        services.AddBookingTestRealtime();
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
         services.AddSingleton<Application.Notifications.INotificationDispatcher, LoopTestNotifications>();
         services.AddScoped<IBillingDocumentService, BillingDocumentService>();

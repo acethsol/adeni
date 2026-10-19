@@ -27,3 +27,4 @@ export * from "./dashboard-layout-presets";
 export * from "./paging";
 export * from "./media-limits";
 export * from "./public-page-templates";
+export * from "./realtime-events";

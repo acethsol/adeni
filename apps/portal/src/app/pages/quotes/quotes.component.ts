@@ -1,4 +1,5 @@
-import { Component, inject, OnInit, signal } from "@angular/core";
+import { Component, inject, OnDestroy, OnInit, signal } from "@angular/core";
+import { Subscription } from "rxjs";
 import { FormsModule } from "@angular/forms";
 import {
   QUOTE_STATUS_LABELS,
@@ -9,6 +10,7 @@ import {
 } from "@adeni/shared";
 import { AdeniPortalEmptyStateComponent, PortalPageComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { TenantOperationsRealtimeService } from "@adeni/ui";
 
 @Component({
   selector: "app-quotes",
@@ -17,8 +19,10 @@ import { BusinessApiService } from "../../core/services/business-api.service";
   templateUrl: "./quotes.component.html",
   styleUrl: "./quotes.component.scss",
 })
-export class QuotesComponent implements OnInit {
+export class QuotesComponent implements OnInit, OnDestroy {
   private readonly api = inject(BusinessApiService);
+  private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
+  private opsSub: Subscription | null = null;
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -40,6 +44,13 @@ export class QuotesComponent implements OnInit {
 
   ngOnInit(): void {
     void this.load();
+    this.opsSub = this.operationsRealtime.quotePipelineChanged$.subscribe(() => {
+      void this.load();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.opsSub?.unsubscribe();
   }
 
   openQuotes(): QuoteRequestResponse[] {

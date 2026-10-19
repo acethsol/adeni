@@ -2,6 +2,7 @@ import { Component, inject, OnDestroy, OnInit, signal } from "@angular/core";
 import { NavigationEnd, Router, RouterLink } from "@angular/router";
 import { filter, Subscription } from "rxjs";
 import { BusinessApiService } from "../core/services/business-api.service";
+import { TenantOperationsRealtimeService } from "@adeni/ui";
 
 const PENDING_STATUS = 0;
 
@@ -66,21 +67,29 @@ const PENDING_STATUS = 0;
 export class PendingBookingsBellComponent implements OnInit, OnDestroy {
   private readonly api = inject(BusinessApiService);
   private readonly router = inject(Router);
+  private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
 
   readonly pendingCount = signal(0);
-  private navSub: Subscription | null = null;
+  private subs = new Subscription();
 
   ngOnInit(): void {
     void this.refresh();
-    this.navSub = this.router.events
-      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
-      .subscribe(() => {
-        void this.refresh();
-      });
+    this.subs.add(
+      this.router.events
+        .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+        .subscribe(() => {
+          void this.refresh();
+        }),
+    );
+    this.subs.add(
+      this.operationsRealtime.pendingBookingsChanged$.subscribe((event) => {
+        this.pendingCount.set(event.pendingCount);
+      }),
+    );
   }
 
   ngOnDestroy(): void {
-    this.navSub?.unsubscribe();
+    this.subs.unsubscribe();
   }
 
   private async refresh(): Promise<void> {

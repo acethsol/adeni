@@ -7,6 +7,7 @@ using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Admin;
 using Adeni.Infrastructure.Auditing;
 using Adeni.Infrastructure.Caching;
+using Adeni.Infrastructure.Tests.Booking;
 using Adeni.Infrastructure.Tests.Catalog;
 using Adeni.Infrastructure.Catalog;
 using Adeni.Infrastructure.Context;
@@ -247,6 +248,7 @@ public sealed class BusinessOnboardingServiceTests
         services.AddSingleton<Application.Abstractions.IAuditLogWriter, InMemoryAuditLogWriter>();
         services.AddDbContext<AdeniDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));
         services.AddSingleton<IFileStorage, FakeFileStorage>();
+        services.AddBookingTestRealtime();
         services.AddScoped<BusinessOnboardingService>();
         services.AddScoped<AdminBusinessService>();
         var provider = services.BuildServiceProvider();

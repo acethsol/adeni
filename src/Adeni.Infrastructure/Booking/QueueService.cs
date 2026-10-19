@@ -5,7 +5,9 @@ using System.Text.RegularExpressions;
 using Adeni.Application.Booking;
 using Adeni.Application.Catalog;
 using Adeni.Application.Notifications;
+using Adeni.Application.Realtime;
 using Adeni.Application.Tenancy;
+using Adeni.Infrastructure.Realtime;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
@@ -17,7 +19,8 @@ public sealed class QueueService(
     AdeniDbContext dbContext,
     IBusinessCapabilitiesService capabilities,
     INotificationDispatcher notifications,
-    ITenantCustomerService tenantCustomers) : IQueueService
+    ITenantCustomerService tenantCustomers,
+    ITenantRealtimePublisher tenantRealtime) : IQueueService
 {
     private static readonly Regex PhoneDigits = new(@"[^\d+]", RegexOptions.Compiled);
 
@@ -234,6 +237,7 @@ public sealed class QueueService(
 
         dbContext.QueueTickets.Add(ticket);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await TenantRealtimeNotifications.PublishQueueFloorAsync(tenantId, tenantRealtime, cancellationToken);
         return Result.Success();
     }
 
@@ -501,6 +505,7 @@ public sealed class QueueService(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await TenantRealtimeNotifications.PublishQueueFloorAsync(ticket.TenantId, tenantRealtime, cancellationToken);
 
         // reload navs
         await dbContext.Entry(ticket).Reference(x => x.ServiceOffering).LoadAsync(cancellationToken);
@@ -685,6 +690,7 @@ public sealed class QueueService(
 
         dbContext.QueueTickets.Add(ticket);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await TenantRealtimeNotifications.PublishQueueFloorAsync(tenantId, tenantRealtime, cancellationToken);
 
         ticket = await dbContext.QueueTickets
             .AsNoTracking()

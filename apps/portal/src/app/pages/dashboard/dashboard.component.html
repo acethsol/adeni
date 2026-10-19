@@ -397,10 +397,55 @@
                 [editMode]="editMode()"
                 (remove)="removeWidget('messages_unread')"
               >
-                <a class="widget-stat-link" routerLink="/messages" [queryParams]="{ tab: 'inbox' }">
-                  <p class="widget-stat-value">{{ unreadMessagesCount() }}</p>
-                  <p class="hint">Conversations needing attention</p>
-                </a>
+                <div class="messages-widget">
+                  <div class="messages-widget__hero">
+                    @if (unreadMessagesCount() > 0) {
+                      <div class="messages-widget__pulse" aria-hidden="true">
+                        <span class="messages-widget__count">{{ unreadMessagesCount() > 9 ? "9+" : unreadMessagesCount() }}</span>
+                      </div>
+                      <p class="messages-widget__headline">
+                        {{ unreadMessagesCount() === 1 ? "Conversation needs you" : "Conversations need you" }}
+                      </p>
+                      <p class="hint">Reply while context is still fresh.</p>
+                    } @else {
+                      <div class="messages-widget__bubble-art" aria-hidden="true">
+                        <span class="bubble bubble--them"></span>
+                        <span class="bubble bubble--you"></span>
+                      </div>
+                      <p class="messages-widget__headline">Inbox is quiet</p>
+                      <p class="hint">You're caught up — nice work.</p>
+                    }
+                  </div>
+
+                  @if (messageInboxPreview().length > 0) {
+                    <ul class="messages-widget__threads">
+                      @for (conversation of messageInboxPreview(); track conversation.id) {
+                        <li>
+                          <a class="messages-widget__thread" routerLink="/messages">
+                            <span class="messages-widget__avatar">{{ customerInitials(conversation.customerDisplayName) }}</span>
+                            <span class="messages-widget__copy">
+                              <span class="messages-widget__row">
+                                <strong>{{ conversation.customerDisplayName }}</strong>
+                                <time>{{ formatSlotTime(conversation.lastMessageAt) }}</time>
+                              </span>
+                              <span class="messages-widget__preview">
+                                {{ conversation.preview || "New conversation" }}
+                              </span>
+                            </span>
+                            @if (conversation.needsAttention) {
+                              <span class="messages-widget__dot" aria-label="Unread"></span>
+                            }
+                          </a>
+                        </li>
+                      }
+                    </ul>
+                  }
+
+                  <a class="btn messages-widget__cta" routerLink="/messages">
+                    Open inbox
+                    <adeni-carbon-icon name="arrow--right" [size]="16" />
+                  </a>
+                </div>
               </app-dashboard-widget>
             }
             @case ("quote_pipeline") {
@@ -502,13 +547,13 @@
                     </a>
                   }
                   @if (hasEntitlement("messaging")) {
-                    <a routerLink="/messages" [queryParams]="{ tab: 'inbox' }">
+                    <a routerLink="/messages">
                       <strong>Messages</strong>
-                      <span>Reply in the conversation, or send a WhatsApp note.</span>
+                      <span>Reply in booking conversations or reach out on WhatsApp.</span>
                     </a>
                   } @else if (session.can("portal.messages")) {
-                    <a routerLink="/messages" [queryParams]="{ tab: 'whatsapp' }">
-                      <strong>WhatsApp</strong>
+                    <a routerLink="/messages">
+                      <strong>Messages</strong>
                       <span>Send a quick note outside the inbox.</span>
                     </a>
                   }

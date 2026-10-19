@@ -1,7 +1,14 @@
 <app-portal-page
   title="Messages"
-  description="WhatsApp note templates and, on Pro+, in-app booking conversations."
+  description="Booking conversations with customers — same threads they start from Discover."
 >
+  @if (whatsAppBusinessUrl(); as wa) {
+    <a pageActions class="btn messages-whatsapp-link" [href]="wa" target="_blank" rel="noopener noreferrer">
+      <adeni-carbon-icon name="launch" [size]="16" />
+      Message on WhatsApp
+    </a>
+  }
+
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
@@ -10,53 +17,52 @@
   }
 
   @if (loading()) {
-    <p class="muted">Loading…</p>
+    <p class="muted loading-line">Loading…</p>
+  } @else if (!messagingEntitled()) {
+    <section class="card lock">
+      <h3>In-app conversations are on Pro</h3>
+      <p class="muted">
+        Upgrade when you want booking messages inside Adeni. You can still reach customers on WhatsApp using the button
+        above when your business phone is set.
+      </p>
+      <a class="btn btn-primary" routerLink="/plan">See plans</a>
+    </section>
   } @else {
-    @if (visibleTabs().length > 1) {
-      <app-portal-tabs [tabs]="visibleTabs()" />
-    }
-
-    @if (tab() === "whatsapp" || !messagingEntitled()) {
-      <section class="card">
-        <h3>WhatsApp</h3>
-        <p class="muted">Copy or open a pre-filled message when the client is on WhatsApp.</p>
-        @for (item of whatsAppNotes(); track item.title) {
-          <div class="wa">
-            <strong>{{ item.title }}</strong>
-            <p>{{ item.body }}</p>
-            <a class="btn btn-primary" [href]="whatsAppUrl(item.body)" target="_blank" rel="noopener">Open WhatsApp</a>
-            <button type="button" class="btn" (click)="copy(item.body)">Copy</button>
-          </div>
-        }
-      </section>
-    } @else {
-      <div class="inbox">
-        <section class="card conversations">
+    <div class="messages-layout">
+      <section class="card messages-pane thread-list" aria-label="Inbox">
+        <header class="messages-pane__head">
           <h3>Inbox</h3>
+          @if (conversationTotalCount() > 0) {
+            <span class="muted count">{{ conversationTotalCount() }} conversations</span>
+          }
+        </header>
+        <div class="messages-pane__body" [class.messages-pane__body--empty]="conversations().length === 0">
           @if (conversations().length === 0) {
             <adeni-portal-empty-state
               [compact]="true"
+              [embedded]="true"
               icon="send"
               title="Inbox is quiet"
               description="Conversations appear when a customer messages you about a booking."
             />
           } @else {
-            <ul>
+            <ul class="threads">
               @for (conversation of conversations(); track conversation.id) {
                 <li>
                   <button
                     type="button"
-                    [class.active]="detail()?.id === conversation.id"
+                    class="thread-row"
+                    [class.thread-row--active]="detail()?.id === conversation.id"
                     (click)="openConversation(conversation)"
                   >
-                    <span class="who">
+                    <span class="thread-row__who">
                       {{ conversation.customerDisplayName }}
                       @if (conversation.needsAttention) {
-                        <i>New</i>
+                        <span class="badge" aria-label="Unread">1</span>
                       }
                     </span>
-                    <span class="preview">{{ conversation.preview || "No preview" }}</span>
-                    <span class="when">{{ formatSlotTime(conversation.lastMessageAt) }}</span>
+                    <span class="thread-row__preview">{{ conversation.preview || "No preview yet" }}</span>
+                    <span class="thread-row__when">{{ formatSlotTime(conversation.lastMessageAt) }}</span>
                   </button>
                 </li>
               }
@@ -83,34 +89,78 @@
               </div>
             }
           }
-        </section>
+        </div>
+      </section>
 
-        <section class="card conversation">
-          @if (detail(); as conversation) {
+      <section class="card messages-pane conversation" aria-label="Conversation">
+        @if (detail(); as conversation) {
+          <header class="messages-pane__head">
             <h3>{{ conversation.customerDisplayName }}</h3>
+          </header>
+          <div class="messages-pane__body messages-pane__body--conversation">
             <div class="transcript">
               @for (message of conversation.messages; track message.id) {
-                <div
-                  class="bubble"
-                  [class.mine]="message.senderType === 'business' || message.senderType === 'bot'"
+                <article
+                  class="bubble-row"
+                  [class.bubble-row--mine]="message.senderType === 'business' || message.senderType === 'bot'"
                 >
-                  @if (message.body) {
-                    <p>{{ message.body }}</p>
-                  }
-                  @for (attachment of message.attachments; track attachment.id) {
-                    @if (attachment.url) {
-                      <a [href]="attachment.url" target="_blank" rel="noopener" class="attachment">
-                        <img [src]="attachment.url" [alt]="attachment.fileName" />
-                      </a>
-                    } @else {
-                      <span class="attachment-missing">{{ attachment.fileName }} (unavailable)</span>
+                  <header class="bubble-meta">
+                    <span class="bubble-meta__who">{{ senderLabel(message, conversation) }}</span>
+                    <span class="bubble-meta__dot" aria-hidden="true">·</span>
+                    <time class="bubble-meta__when" [dateTime]="message.createdAt">
+                      {{ formatMessageTime(message.createdAt) }}
+                    </time>
+                    @if (
+                      (message.senderType === "business" || message.senderType === "bot")
+                      && isMessageReadByCustomer(message)
+                    ) {
+                      <span class="bubble-meta__read">Read</span>
                     }
-                  }
-                </div>
+                  </header>
+                  <div class="bubble">
+                    @if (message.body) {
+                      <p>{{ message.body }}</p>
+                    }
+                    @for (attachment of message.attachments; track attachment.id) {
+                      @if (attachment.url) {
+                        <button
+                          type="button"
+                          class="attachment attachment-btn"
+                          (click)="openImagePreview(attachment.url!, attachment.fileName)"
+                        >
+                          <img [src]="attachment.url" [alt]="attachment.fileName" />
+                        </button>
+                      } @else {
+                        <span class="attachment-missing">{{ attachment.fileName }} (unavailable)</span>
+                      }
+                    }
+                  </div>
+                </article>
               }
             </div>
-            <form (submit)="$event.preventDefault(); send()">
-              <textarea rows="3" [(ngModel)]="draft" name="draft" placeholder="Write a reply"></textarea>
+            @if (templates().length > 0) {
+              <div class="saved-replies">
+                <span class="saved-replies__label">Saved replies</span>
+                <ul class="chips">
+                  @for (template of templates(); track template.key) {
+                    <li>
+                      <button type="button" class="chip" (click)="useTemplate(template)">{{ template.label }}</button>
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+            <form class="compose" (submit)="$event.preventDefault(); send()">
+              <label class="compose__field">
+                <span class="visually-hidden">Reply</span>
+                <textarea
+                  rows="3"
+                  [(ngModel)]="draft"
+                  name="draft"
+                  placeholder="Write a reply…"
+                  [disabled]="sending()"
+                ></textarea>
+              </label>
               @if (pendingAttachmentPreview(); as preview) {
                 <div class="pending-attachment">
                   <img [src]="preview" alt="Pending attachment" />
@@ -135,7 +185,9 @@
                 </button>
               </div>
             </form>
-          } @else {
+          </div>
+        } @else {
+          <div class="messages-pane__body messages-pane__body--empty">
             <adeni-portal-empty-state
               [compact]="true"
               [embedded]="true"
@@ -143,22 +195,27 @@
               title="Select a conversation"
               description="Pick a conversation from the inbox to read and reply."
             />
-          }
-        </section>
-      </div>
+          </div>
+        }
+      </section>
+    </div>
+  }
 
-      @if (templates().length > 0) {
-        <section class="card templates">
-          <h3>Saved replies</h3>
-          <ul class="chips">
-            @for (template of templates(); track template.key) {
-              <li>
-                <button type="button" class="btn" (click)="useTemplate(template)">{{ template.label }}</button>
-              </li>
-            }
-          </ul>
-        </section>
-      }
-    }
+  @if (imagePreview(); as preview) {
+    <adeni-modal
+      [open]="true"
+      [title]="preview.fileName"
+      size="xl"
+      [hasFooter]="true"
+      (closed)="closeImagePreview()"
+    >
+      <figure class="image-preview">
+        <img [src]="preview.url" [alt]="preview.fileName" />
+      </figure>
+      <div modalFooter class="image-preview-footer">
+        <a class="btn" [href]="preview.url" target="_blank" rel="noopener noreferrer">Open in new tab</a>
+        <button type="button" class="btn btn-primary" (click)="closeImagePreview()">Close</button>
+      </div>
+    </adeni-modal>
   }
 </app-portal-page>
