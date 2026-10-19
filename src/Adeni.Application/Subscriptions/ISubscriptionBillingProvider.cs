@@ -8,7 +8,7 @@ using Adeni.Domain.Subscriptions;
 /// </summary>
 public sealed record CreateSubscriptionCheckoutRequest(
     Guid TenantId,
-    SubscriptionTier TargetTier,
+    SubscriptionSku TargetSku,
     string CustomerEmail,
     string SuccessUrl,
     string CancelUrl);
@@ -25,7 +25,7 @@ public sealed record SubscriptionWebhookEvent(
     string EventType,
     string ProviderReference,
     Guid? TenantId,
-    string? Tier,
+    string? Sku,
     string Status,
     DateTimeOffset OccurredAt,
     long? AmountMinor = null,

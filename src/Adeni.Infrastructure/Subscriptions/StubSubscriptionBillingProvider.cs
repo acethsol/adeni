@@ -5,7 +5,6 @@ using System.Text;
 using System.Text.Json;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Common;
-using Adeni.Domain.Subscriptions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -20,14 +19,15 @@ public sealed class StubSubscriptionBillingProvider(
         CreateSubscriptionCheckoutRequest request,
         CancellationToken cancellationToken = default)
     {
+        var skuApi = SubscriptionSkuMapping.ToApiValue(request.TargetSku);
         logger.LogInformation(
-            "Stub subscription checkout for tenant {TenantId} → tier {Tier}",
+            "Stub subscription checkout for tenant {TenantId} → sku {Sku}",
             request.TenantId,
-            request.TargetTier);
+            skuApi);
 
-        var reference = $"stub_sub_{request.TenantId:N}_{SubscriptionTierMapping.ToApiValue(request.TargetTier)}";
+        var reference = $"stub_sub_{request.TenantId:N}_{skuApi}";
         var checkoutUrl =
-            $"{request.SuccessUrl}?stub_checkout=1&reference={Uri.EscapeDataString(reference)}&tier={SubscriptionTierMapping.ToApiValue(request.TargetTier)}";
+            $"{request.SuccessUrl}?stub_checkout=1&reference={Uri.EscapeDataString(reference)}&sku={Uri.EscapeDataString(skuApi)}";
 
         return Task.FromResult(Result.Success(new SubscriptionCheckoutResponse(
             checkoutUrl,
@@ -70,9 +70,15 @@ public sealed class StubSubscriptionBillingProvider(
                 ? refProp.GetString() ?? string.Empty
                 : string.Empty;
 
-            var tier = root.TryGetProperty("tier", out var tierProp)
-                ? tierProp.GetString()
-                : null;
+            string? sku = null;
+            if (root.TryGetProperty("sku", out var skuProp))
+            {
+                sku = skuProp.GetString();
+            }
+            else if (root.TryGetProperty("tier", out var tierProp))
+            {
+                sku = tierProp.GetString();
+            }
 
             Guid? tenantId = null;
             if (root.TryGetProperty("tenantId", out var tenantProp)
@@ -89,7 +95,7 @@ public sealed class StubSubscriptionBillingProvider(
                 eventType,
                 reference,
                 tenantId,
-                tier,
+                sku,
                 status,
                 DateTimeOffset.UtcNow)));
         }

@@ -222,14 +222,14 @@
           <p class="dashboard-empty">No businesses yet.</p>
         } @else {
           <div class="stack" aria-hidden="true">
-            @for (row of tierMix(); track row.key) {
+            @for (row of skuMix(); track row.key) {
               @if (row.count > 0) {
                 <span [class]="row.tone" [style.flex-grow]="row.count"></span>
               }
             }
           </div>
           <ul class="legend">
-            @for (row of tierMix(); track row.key) {
+            @for (row of skuMix(); track row.key) {
               <li>
                 <i [class]="row.tone"></i>
                 {{ row.label }}

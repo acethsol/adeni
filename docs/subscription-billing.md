@@ -28,7 +28,7 @@ Implementations: `StubSubscriptionBillingProvider`, `PaystackSubscriptionBilling
 ```json
 {
   "tenantId": "uuid",
-  "targetTier": "pro",
+  "targetSku": "professional",
   "customerEmail": "owner@example.com",
   "successUrl": "https://app.adeni.com/business/plan?upgraded=1",
   "cancelUrl": "https://app.adeni.com/business/plan"

@@ -7,8 +7,6 @@ import {
   getSkuMonthlyAmount,
   listPricedCountryCodes,
   resolveSubscriptionSku,
-  skuToSubscriptionTier,
-  subscriptionTierToSku,
 } from "./country-pricing";
 
 describe("country-pricing", () => {
@@ -33,13 +31,9 @@ describe("country-pricing", () => {
     expect(formatSkuMonthlyPrice("NG", "starter")).toMatch(/50,000/);
   });
 
-  it("maps legacy subscription tiers to SKUs", () => {
-    expect(subscriptionTierToSku("free")).toBe("starter");
-    expect(subscriptionTierToSku("pro")).toBe("professional");
-    expect(subscriptionTierToSku("business")).toBe("business");
-    expect(skuToSubscriptionTier("professional")).toBe("pro");
-    expect(resolveSubscriptionSku("professional", "free")).toBe("professional");
-    expect(resolveSubscriptionSku(undefined, "free")).toBe("starter");
+  it("resolves subscription SKU with starter default", () => {
+    expect(resolveSubscriptionSku("professional")).toBe("professional");
+    expect(resolveSubscriptionSku(undefined)).toBe("starter");
   });
 
   it("NG gmv is paystack split at 0%", () => {

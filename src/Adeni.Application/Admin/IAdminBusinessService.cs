@@ -22,7 +22,6 @@ public sealed record AdminBusinessSummaryResponse(
     string Name,
     string Slug,
     TenantStatus Status,
-    string SubscriptionTier,
     string SubscriptionSku,
     string BillingStatus,
     DateTimeOffset? TrialEndsAt,
@@ -43,8 +42,6 @@ public sealed record AdminTenantCommercialTermsResponse(
     decimal? CustomSaasMonthlyAmount,
     string? CustomSaasCurrency,
     string? CustomSaasSku);
-
-public sealed record SetSubscriptionTierRequest(string Tier);
 
 public sealed record SetTenantCommercialTermsRequest(
     string? BillingStatus = null,
@@ -92,12 +89,6 @@ public interface IAdminBusinessService
         Guid tenantId,
         string adminId,
         string reason,
-        CancellationToken cancellationToken = default);
-
-    Task<Result<Unit>> SetSubscriptionTierAsync(
-        Guid tenantId,
-        string tier,
-        string adminId,
         CancellationToken cancellationToken = default);
 
     Task<Result<AdminTenantCommercialTermsResponse>> GetTenantCommercialTermsAsync(

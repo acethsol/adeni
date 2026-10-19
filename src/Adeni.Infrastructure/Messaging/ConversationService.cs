@@ -362,7 +362,6 @@ public sealed class ConversationService(
 
     public async Task<Result<PagedResult<ConversationSummaryResponse>>> ListForTenantAsync(
         Guid tenantId,
-        SubscriptionTier tier,
         int page = 1,
         int pageSize = Paging.DefaultPageSize,
         CancellationToken cancellationToken = default)
@@ -521,7 +520,6 @@ public sealed class ConversationService(
 
     public async Task<Result<UnreadCountResponse>> GetTeamUnreadCountForTenantAsync(
         Guid tenantId,
-        SubscriptionTier tier,
         CancellationToken cancellationToken = default)
     {
         var tenant = await dbContext.Tenants
@@ -707,7 +705,6 @@ public sealed class ConversationService(
 
     public async Task<Result<IReadOnlyList<MessageTemplateResponse>>> GetTemplatesForTenantAsync(
         Guid tenantId,
-        SubscriptionTier tier,
         CancellationToken cancellationToken = default)
     {
         var tenant = await dbContext.Tenants

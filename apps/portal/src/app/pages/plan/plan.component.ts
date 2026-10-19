@@ -9,13 +9,12 @@ import {
   getMarketById,
   getPlanDisplayForCountry,
   isNearBookingLimit,
+  planComparisonCell,
   PLAN_COMPARISON,
   type PlanFeature,
   resolveSubscriptionSku,
   SUBSCRIPTION_SKUS,
-  skuToSubscriptionTier,
   type SubscriptionSku,
-  type SubscriptionTier,
   type SubscriptionUsage,
   type TenantSubscriptionCharge,
 } from "@adeni/shared";
@@ -37,8 +36,8 @@ export class PlanComponent implements OnInit {
   readonly loading = signal(true);
   readonly checkoutBusy = signal(false);
   readonly error = signal<string | null>(null);
-  readonly currentTier = signal<SubscriptionTier>("free");
-  readonly currentSku = signal<SubscriptionSku>("starter");
+  readonly effectiveSku = signal<SubscriptionSku>("starter");
+  readonly contractSku = signal<SubscriptionSku>("starter");
   readonly countryCode = signal<string | null>(null);
   readonly usage = signal<SubscriptionUsage | null>(null);
   readonly billingHistory = signal<TenantSubscriptionCharge[]>([]);
@@ -46,15 +45,11 @@ export class PlanComponent implements OnInit {
 
   readonly skus = SUBSCRIPTION_SKUS;
   readonly planComparison = PLAN_COMPARISON;
-  readonly skuTierColumn = {
-    starter: "free",
-    professional: "pro",
-    business: "business",
-  };
   readonly formatBookingUsage = formatBookingUsage;
   readonly isNearBookingLimit = isNearBookingLimit;
   readonly formatTenantBillingStatus = formatTenantBillingStatus;
   readonly formatBillingChargeStatus = formatBillingChargeStatus;
+  readonly comparisonCell = planComparisonCell;
 
   ngOnInit(): void {
     void this.load();
@@ -72,13 +67,14 @@ export class PlanComponent implements OnInit {
           c.getTenantBillingHistory(10).catch(() => []),
         ]);
         this.tenantId.set(context.tenantId);
-        const tier = profile.subscriptionTier ?? subscriptionUsage.tier;
-        const sku = resolveSubscriptionSku(
-          profile.subscriptionSku ?? subscriptionUsage.subscriptionSku,
-          tier,
+        this.effectiveSku.set(resolveSubscriptionSku(subscriptionUsage.subscriptionSku));
+        this.contractSku.set(
+          resolveSubscriptionSku(
+            profile.subscriptionSku ??
+              subscriptionUsage.contractSubscriptionSku ??
+              subscriptionUsage.subscriptionSku,
+          ),
         );
-        this.currentTier.set(tier);
-        this.currentSku.set(sku);
         const location = profile.locations.find((item) => item.isPrimary) ?? profile.locations[0];
         this.countryCode.set(
           location ? (getMarketById(location.marketId)?.countryCode ?? null) : null,
@@ -102,7 +98,6 @@ export class PlanComponent implements OnInit {
         return localized;
       }
     }
-    const tier = this.skuTierColumn[sku];
     const fallbackName = sku.charAt(0).toUpperCase() + sku.slice(1);
     return {
       name: fallbackName,
@@ -111,9 +106,13 @@ export class PlanComponent implements OnInit {
     };
   }
 
+  isCurrentPlan(sku: SubscriptionSku): boolean {
+    return sku === this.effectiveSku();
+  }
+
   canUpgrade(sku: SubscriptionSku): boolean {
     const order: SubscriptionSku[] = ["starter", "professional", "business"];
-    return order.indexOf(sku) > order.indexOf(this.currentSku());
+    return order.indexOf(sku) > order.indexOf(this.contractSku());
   }
 
   async upgrade(sku: SubscriptionSku): Promise<void> {
@@ -121,7 +120,6 @@ export class PlanComponent implements OnInit {
     if (!tenantId || !this.canUpgrade(sku)) {
       return;
     }
-    const targetTier = skuToSubscriptionTier(sku);
 
     this.checkoutBusy.set(true);
     this.error.set(null);
@@ -130,7 +128,7 @@ export class PlanComponent implements OnInit {
         const origin = window.location.origin;
         const checkout = await c.createSubscriptionCheckout({
           tenantId,
-          targetTier,
+          targetSku: sku,
           customerEmail: "billing@adeni.local",
           successUrl: `${origin}/plan?upgraded=1`,
           cancelUrl: `${origin}/plan`,
@@ -167,11 +165,6 @@ export class PlanComponent implements OnInit {
     if (value === true) return "Yes";
     if (value === false) return "—";
     return value;
-  }
-
-  comparisonCell(row: PlanFeature, sku: SubscriptionSku): string {
-    const tierKey = this.skuTierColumn[sku] as keyof Omit<PlanFeature, "label">;
-    return this.featureCell(row[tierKey]);
   }
 
   private async maybeCompleteStubCheckout(): Promise<void> {

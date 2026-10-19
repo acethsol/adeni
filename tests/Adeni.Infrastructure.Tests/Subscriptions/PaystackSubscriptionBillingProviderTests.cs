@@ -53,7 +53,7 @@ public sealed class PaystackSubscriptionBillingProviderTests
         Assert.Equal("subscription.create", result.Value!.EventType);
         Assert.Equal("SUB_test123", result.Value.ProviderReference);
         Assert.Equal(tenantId, result.Value.TenantId);
-        Assert.Equal("pro", result.Value.Tier);
+        Assert.Equal("pro", result.Value.Sku);
         Assert.Equal(70_000, result.Value.AmountMinor);
     }
 

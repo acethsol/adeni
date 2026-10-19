@@ -42,7 +42,7 @@
 
 Same SKU names and feature bundle **worldwide**; only **amount and currency** change by country.
 
-Legacy code enum `free | pro | business` maps to **Starter | Professional | Business** at migration ([§8](#8-migration-from-current-free-tier)).
+Product and API use **`subscriptionSku`** only (`starter | professional | business`). Legacy `free | pro | business` tier fields were removed ([§8](#8-migration-from-current-free-tier)).
 
 ---
 
@@ -292,7 +292,7 @@ sequenceDiagram
 
 ## 8. Migration from current `Free` tier
 
-Map `free` → **Starter** + trial or active; pricing from **country**, not market; remove monthly booking cap tied to free.
+**Done in code:** drop `SubscriptionTier` / API `tier`; store and expose **`subscriptionSku`** only; onboarding default = **Starter** contract + **Professional** trial; list prices from **country** (`country-pricing.json`).
 
 ---
 

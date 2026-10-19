@@ -6,11 +6,8 @@ using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
 using Adeni.Application.Messaging;
 using Adeni.Domain.Identity;
-using Adeni.Domain.Subscriptions;
 using Adeni.Infrastructure.Auth;
-using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 [ApiController]
@@ -18,7 +15,6 @@ using Microsoft.Extensions.Options;
 [RequiresPortalPermission(PortalPermissions.Messages)]
 public sealed class TenantMessagesController(
     IConversationService messaging,
-    AdeniDbContext dbContext,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     public sealed record SendMessageBody(
@@ -37,13 +33,7 @@ public sealed class TenantMessagesController(
             return Unauthorized();
         }
 
-        var tier = await ResolveTierAsync(tenantId, cancellationToken);
-        if (tier is null)
-        {
-            return NotFound();
-        }
-
-        var result = await messaging.ListForTenantAsync(tenantId, tier.Value, page, pageSize, cancellationToken);
+        var result = await messaging.ListForTenantAsync(tenantId, page, pageSize, cancellationToken);
         return ApiResults.FromResult(
             result,
             payload => Ok(new
@@ -64,13 +54,7 @@ public sealed class TenantMessagesController(
             return Unauthorized();
         }
 
-        var tier = await ResolveTierAsync(tenantId, cancellationToken);
-        if (tier is null)
-        {
-            return NotFound();
-        }
-
-        var result = await messaging.GetTeamUnreadCountForTenantAsync(tenantId, tier.Value, cancellationToken);
+        var result = await messaging.GetTeamUnreadCountForTenantAsync(tenantId, cancellationToken);
         return ApiResults.FromResult(result, Ok, HttpContext);
     }
 
@@ -82,13 +66,7 @@ public sealed class TenantMessagesController(
             return Unauthorized();
         }
 
-        var tier = await ResolveTierAsync(tenantId, cancellationToken);
-        if (tier is null)
-        {
-            return NotFound();
-        }
-
-        var result = await messaging.GetTemplatesForTenantAsync(tenantId, tier.Value, cancellationToken);
+        var result = await messaging.GetTemplatesForTenantAsync(tenantId, cancellationToken);
         return ApiResults.FromResult(result, items => Ok(new { items }), HttpContext);
     }
 
@@ -189,15 +167,6 @@ public sealed class TenantMessagesController(
 
         var result = await messaging.UpdateMessagingSettingsAsync(tenantId, request, auth0Sub, cancellationToken);
         return ApiResults.FromResult(result, Ok, HttpContext);
-    }
-
-    private async Task<SubscriptionTier?> ResolveTierAsync(Guid tenantId, CancellationToken cancellationToken)
-    {
-        var tenant = await dbContext.Tenants
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
-
-        return tenant?.SubscriptionTier;
     }
 
     private string? ResolveAuth0Sub()

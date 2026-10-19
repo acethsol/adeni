@@ -10,8 +10,6 @@ public sealed class Tenant
 
     public TenantStatus Status { get; set; } = TenantStatus.Draft;
 
-    public SubscriptionTier SubscriptionTier { get; set; } = SubscriptionTier.Free;
-
     public SubscriptionSku SubscriptionSku { get; set; } = SubscriptionSku.Starter;
 
     public TenantBillingStatus BillingStatus { get; set; } = TenantBillingStatus.Trialing;

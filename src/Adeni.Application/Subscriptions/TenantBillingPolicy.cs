@@ -28,26 +28,13 @@ public static class TenantBillingPolicy
             return SubscriptionSku.Starter;
         }
 
-        var sku = tenant.SubscriptionSku;
-        if (sku == SubscriptionSku.Starter
-            && tenant.SubscriptionTier is not SubscriptionTier.Free)
-        {
-            sku = SubscriptionSkuMapping.FromLegacyTier(tenant.SubscriptionTier);
-        }
-
-        return sku;
-    }
-
-    public static void ApplySkuToLegacyTier(Tenant tenant)
-    {
-        tenant.SubscriptionTier = SubscriptionSkuMapping.ToLegacyTier(tenant.SubscriptionSku);
+        return tenant.SubscriptionSku;
     }
 
     public static void StartDefaultTrial(Tenant tenant, DateTimeOffset now)
     {
         tenant.SubscriptionSku = SubscriptionSku.Starter;
         GrantTrial(tenant, TenantBillingDefaults.DefaultTrialDays, TenantBillingDefaults.DefaultTrialSku, now);
-        ApplySkuToLegacyTier(tenant);
     }
 
     public static void GrantTrial(

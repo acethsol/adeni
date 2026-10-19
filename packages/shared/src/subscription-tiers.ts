@@ -1,85 +1,63 @@
-import type { SubscriptionTier, SubscriptionUsage, TenantBillingStatus } from "./schemas";
-
-export const SUBSCRIPTION_TIERS = ["free", "pro", "business"] as const;
+import type { SubscriptionSku } from "./country-pricing";
+import type { SubscriptionUsage, TenantBillingStatus } from "./schemas";
 
 export type PlanFeature = {
   label: string;
-  free: string | boolean;
-  pro: string | boolean;
+  starter: string | boolean;
+  professional: string | boolean;
   business: string | boolean;
 };
 
 export const PLAN_COMPARISON: PlanFeature[] = [
   {
     label: "Bookings per month",
-    free: "20",
-    pro: "Unlimited",
+    starter: "Unlimited",
+    professional: "Unlimited",
     business: "Unlimited",
   },
   {
     label: "Booking calendar",
-    free: true,
-    pro: true,
+    starter: true,
+    professional: true,
     business: true,
   },
   {
     label: "Customer messaging",
-    free: false,
-    pro: true,
+    starter: false,
+    professional: true,
     business: true,
   },
   {
     label: "Reminders",
-    free: false,
-    pro: true,
+    starter: false,
+    professional: true,
     business: true,
   },
   {
     label: "Analytics",
-    free: false,
-    pro: true,
+    starter: false,
+    professional: true,
     business: true,
   },
   {
     label: "Multiple locations",
-    free: false,
-    pro: false,
+    starter: false,
+    professional: false,
     business: true,
   },
   {
     label: "Staff management",
-    free: false,
-    pro: false,
-    business: "Coming soon",
+    starter: true,
+    professional: true,
+    business: true,
   },
   {
     label: "Priority support",
-    free: false,
-    pro: false,
+    starter: false,
+    professional: false,
     business: true,
   },
 ];
-
-export const PLAN_PRICING: Record<
-  SubscriptionTier,
-  { name: string; priceLabel: string; description: string }
-> = {
-  free: {
-    name: "Free",
-    priceLabel: "₦0",
-    description: "Profile, services, and basic calendar for getting started.",
-  },
-  pro: {
-    name: "Pro",
-    priceLabel: "₦5k–15k/mo",
-    description: "Unlimited bookings, messaging, reminders, and analytics.",
-  },
-  business: {
-    name: "Business",
-    priceLabel: "₦25k+/mo",
-    description: "Multi-location, staff tools, and priority support.",
-  },
-};
 
 export function isNearBookingLimit(usage: SubscriptionUsage, threshold = 0.8): boolean {
   if (usage.bookingsLimitThisMonth == null) return false;
@@ -116,4 +94,11 @@ export function formatBookingUsage(usage: SubscriptionUsage): string {
     return `${usage.bookingsUsedThisMonth} bookings this month`;
   }
   return `${usage.bookingsUsedThisMonth} / ${usage.bookingsLimitThisMonth} bookings this month`;
+}
+
+export function planComparisonCell(row: PlanFeature, sku: SubscriptionSku): string {
+  const value = row[sku];
+  if (value === true) return "Yes";
+  if (value === false) return "—";
+  return value;
 }
