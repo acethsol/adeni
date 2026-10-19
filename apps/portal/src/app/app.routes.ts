@@ -83,7 +83,7 @@ export const routes: Routes = [
       {
         path: "calendar",
         component: StaffCalendarComponent,
-        title: "Team calendar",
+        title: "Appointments",
         canActivate: [portalPermissionGuard],
         data: { teamCalendar: true },
       },
@@ -132,7 +132,7 @@ export const routes: Routes = [
       {
         path: "availability",
         component: AvailabilityComponent,
-        title: "Availability",
+        title: "Hours",
         canActivate: [portalPermissionGuard],
       },
       {

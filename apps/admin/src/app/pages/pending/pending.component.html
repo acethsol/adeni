@@ -12,28 +12,6 @@
     <p class="error-banner">{{ error() }}</p>
   }
 
-  <section class="card list-toolbar">
-    <form class="search-form" (submit)="applySearch(); $event.preventDefault()">
-      <label class="search-field">
-        <span class="visually-hidden">Filter queue</span>
-        <adeni-carbon-icon name="search" [size]="16" />
-        <input
-          type="search"
-          [ngModel]="searchText()"
-          (ngModelChange)="searchText.set($event)"
-          name="q"
-          placeholder="Name, slug, or market"
-          autocomplete="off"
-        />
-      </label>
-      <adeni-staff-btn type="submit" variant="primary" icon="search">Search</adeni-staff-btn>
-    </form>
-    <adeni-staff-btn icon="restart" [disabled]="loading()" (pressed)="load()">Refresh</adeni-staff-btn>
-    @if (!loading() && totalCount() > 0) {
-      <p class="toolbar-meta">{{ showingRange() }}</p>
-    }
-  </section>
-
   @if (loading() && items().length === 0) {
     <p class="muted">Loading queue…</p>
   } @else if (isEmptyQueue()) {
@@ -43,83 +21,68 @@
       description="New business applications will appear here for review before they go live on discovery."
     />
   } @else {
-    <section class="card data-table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th scope="col">Business</th>
-            <th scope="col">Market</th>
-            <th scope="col">Submitted</th>
-            <th scope="col">Docs</th>
-            <th scope="col"><span class="visually-hidden">Actions</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (item of items(); track item.id) {
-            <tr>
-              <td>
-                <div class="cell-stack">
-                  <div class="row-title">{{ item.name }}</div>
-                  <div class="cell-pills">
-                    @let queue = tenantStatusPill(item.status);
-                    <admin-pill [label]="queue.label" [variant]="queue.variant" [compact]="true" />
-                    <admin-pill [label]="item.slug" variant="neutral" [compact]="true" />
-                  </div>
-                </div>
-              </td>
-              <td>
-                <admin-pill [label]="item.marketId" variant="neutral" [compact]="true" />
-              </td>
-              <td class="muted">{{ item.createdAt | date: "mediumDate" }}</td>
-              <td>
-                @let docs = docCountPill(item.documents?.length ?? 0);
-                <admin-pill [label]="docs.label" [variant]="docs.variant" />
-              </td>
-              <td class="actions-cell">
-                <div class="actions-inline">
-                  <adeni-staff-btn
-                    variant="danger"
-                    icon="misuse"
-                    [disabled]="busyId() === item.id"
-                    (pressed)="reject(item)"
-                  >
-                    Reject
-                  </adeni-staff-btn>
-                  <adeni-staff-btn
-                    variant="primary"
-                    icon="checkmark"
-                    [disabled]="busyId() === item.id"
-                    (pressed)="approve(item)"
-                  >
-                    Approve
-                  </adeni-staff-btn>
-                </div>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </section>
+    <adeni-list-toolbar
+      [showViewSwitcher]="false"
+      [count]="totalCount()"
+      singularCountLabel="application"
+      pluralCountLabel="applications"
+      searchPlaceholder="Name, slug, or market"
+      [searchQuery]="searchText()"
+      (searchQueryChange)="onToolbarSearch($event)"
+    >
+      <adeni-export-menu listExports label="Export" [items]="exportItems" />
+    </adeni-list-toolbar>
 
-    @if (totalPages() > 1) {
-      <nav class="pager" aria-label="Pending verification pages">
-        <adeni-staff-btn
-          icon="chevron--left"
-          [disabled]="page() <= 1 || loading()"
-          (pressed)="goToPage(page() - 1)"
-        >
-          Previous
-        </adeni-staff-btn>
-        <span class="pager-meta">{{ showingRange() }}</span>
-        <adeni-staff-btn
-          icon="chevron--right"
-          iconPosition="end"
-          [disabled]="page() >= totalPages() || loading()"
-          (pressed)="goToPage(page() + 1)"
-        >
-          Next
-        </adeni-staff-btn>
-      </nav>
-    }
+    <adeni-data-table [rows]="items()" [columns]="columns" [trackRow]="trackRow">
+      <ng-template adeniDataTableCell="business" let-item>
+        <div class="cell-stack">
+          <div class="row-title">{{ item.name }}</div>
+          <div class="cell-pills">
+            @let queue = tenantStatusPill(item.status);
+            <admin-pill [label]="queue.label" [variant]="queue.variant" [compact]="true" />
+            <admin-pill [label]="item.slug" variant="neutral" [compact]="true" />
+          </div>
+        </div>
+      </ng-template>
+      <ng-template adeniDataTableCell="market" let-item>
+        <admin-pill [label]="item.marketId" variant="neutral" [compact]="true" />
+      </ng-template>
+      <ng-template adeniDataTableCell="submitted" let-item>
+        <span class="muted">{{ item.createdAt | date: "mediumDate" }}</span>
+      </ng-template>
+      <ng-template adeniDataTableCell="docs" let-item>
+        @let docs = docCountPill(item.documents?.length ?? 0);
+        <admin-pill [label]="docs.label" [variant]="docs.variant" />
+      </ng-template>
+      <ng-template adeniDataTableActions let-item>
+        <div class="actions-inline">
+          <adeni-staff-btn
+            variant="danger"
+            icon="misuse"
+            [disabled]="busyId() === item.id"
+            (pressed)="reject(item)"
+          >
+            Reject
+          </adeni-staff-btn>
+          <adeni-staff-btn
+            variant="primary"
+            icon="checkmark"
+            [disabled]="busyId() === item.id"
+            (pressed)="approve(item)"
+          >
+            Approve
+          </adeni-staff-btn>
+        </div>
+      </ng-template>
+    </adeni-data-table>
+
+    <adeni-list-pagination
+      [page]="page()"
+      [pageSize]="pageSize"
+      [totalCount]="totalCount()"
+      [loading]="loading()"
+      ariaLabel="Pending verification pages"
+      (pageChange)="goToPage($event)"
+    />
   }
 </app-portal-page>

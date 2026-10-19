@@ -40,8 +40,10 @@ Give **portal and admin** a reusable **list shell** (search, filters slot, card/
 
 ### Phase 2 — Admin + more portal lists
 
-- [ ] Migrate one admin page (e.g. customers) to shared table + toolbar
-- [ ] Portal **Customers**, **Bookings** list modes
+- [x] Admin **Businesses**, **Pending verifications** — shared toolbar + table + pagination
+- [x] Portal **Customers** (server paging), **Services**, **Locations**, **Bookings** (cards + list table)
+- [ ] Admin privacy **Customers** search table
+- [x] Admin **Transactions** (search + kind filter + shared table/pagination)
 - [ ] Wire CSV/Xlsx/PDF to Reporting export API when `reportKey` defined per screen
 
 ### Phase 3 — Server-backed grid features

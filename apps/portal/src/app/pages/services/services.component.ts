@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import type {
   BookingDeliveryType,
@@ -10,9 +10,26 @@ import { getCategoryLabel } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
   AdeniConfirmService,
+  AdeniDataTableActionsDirective,
+  AdeniDataTableCellDirective,
+  AdeniDataTableComponent,
+  AdeniExportMenuComponent,
   AdeniFeedbackService,
+  AdeniFilterSelectComponent,
+  AdeniIconBtnComponent,
+  AdeniListFilterRowComponent,
+  AdeniListToolbarComponent,
+  AdeniModalComponent,
+  AdeniPillComponent,
   AdeniPortalEmptyStateComponent,
+  AdeniRowActionBarComponent,
+  AdeniTablePersonCellComponent,
   PortalPageComponent,
+  readPersistedListViewMode,
+  type AdeniDataTableColumn,
+  type AdeniExportMenuItem,
+  type AdeniFilterSelectOption,
+  type AdeniListViewMode,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { formatPrice } from "@adeni/shared";
@@ -34,7 +51,24 @@ type ServiceDraft = {
 @Component({
   selector: "app-services",
   standalone: true,
-  imports: [PortalPageComponent, FormsModule, AdeniCarbonIconComponent, AdeniPortalEmptyStateComponent],
+  imports: [
+    PortalPageComponent,
+    FormsModule,
+    AdeniCarbonIconComponent,
+    AdeniPortalEmptyStateComponent,
+    AdeniListToolbarComponent,
+    AdeniListFilterRowComponent,
+    AdeniFilterSelectComponent,
+    AdeniExportMenuComponent,
+    AdeniDataTableComponent,
+    AdeniDataTableCellDirective,
+    AdeniDataTableActionsDirective,
+    AdeniRowActionBarComponent,
+    AdeniIconBtnComponent,
+    AdeniPillComponent,
+    AdeniModalComponent,
+    AdeniTablePersonCellComponent,
+  ],
   templateUrl: "./services.component.html",
   styleUrl: "./services.component.scss",
 })
@@ -50,10 +84,84 @@ export class ServicesComponent implements OnInit {
   readonly busy = signal<string | null>(null);
   readonly editingId = signal<string | null>(null);
   readonly showForm = signal(false);
+  readonly showCollectionsManager = signal(false);
   readonly catalogLoading = signal(false);
   readonly catalogTemplates = signal<ServiceTemplate[]>([]);
   readonly primaryCategorySlug = signal("");
   readonly newGroupName = signal("");
+  readonly menuSearch = signal("");
+  readonly groupFilter = signal("all");
+  readonly viewMode = signal<AdeniListViewMode>(
+    readPersistedListViewMode("portal.services", "cards"),
+  );
+
+  readonly exportItems: AdeniExportMenuItem[] = [
+    {
+      format: "csv",
+      label: "CSV (.csv)",
+      disabled: true,
+      hint: "Reporting export — coming soon",
+    },
+    {
+      format: "xlsx",
+      label: "Excel (.xlsx)",
+      disabled: true,
+      hint: "Reporting export — coming soon",
+    },
+    {
+      format: "pdf",
+      label: "PDF (.pdf)",
+      disabled: true,
+      hint: "Reporting export — coming soon",
+    },
+  ];
+
+  readonly groupFilterOptions = computed((): AdeniFilterSelectOption[] => [
+    { value: "all", label: "All sections" },
+    { value: "none", label: "No section" },
+    ...this.groups().map((g) => ({ value: g.id, label: g.name })),
+  ]);
+
+  readonly filteredServices = computed(() => {
+    let list = this.services();
+    switch (this.groupFilter()) {
+      case "none":
+        list = list.filter((s) => !s.menuGroupId);
+        break;
+      case "all":
+        break;
+      default:
+        list = list.filter((s) => s.menuGroupId === this.groupFilter());
+        break;
+    }
+    const query = this.menuSearch().trim().toLowerCase();
+    if (!query) {
+      return list;
+    }
+    return list.filter((service) => {
+      const haystack = [
+        service.name,
+        service.description ?? "",
+        this.groupName(service.menuGroupId),
+        service.categorySlug ? getCategoryLabel("en", service.categorySlug) : "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+  });
+
+  readonly serviceTableColumns: AdeniDataTableColumn<ServiceOffering>[] = [
+    { id: "name", header: "Service", cell: (s) => s.name },
+    {
+      id: "collection",
+      header: "Section",
+      cell: (s) => this.groupName(s.menuGroupId),
+    },
+    { id: "tags", header: "Details", cell: () => "" },
+  ];
+
+  readonly trackServiceRow = (service: ServiceOffering): string => service.id;
 
   defaultCurrency = "NGN";
   draft: ServiceDraft = this.emptyDraft();
@@ -83,9 +191,18 @@ export class ServicesComponent implements OnInit {
 
   groupName(groupId: string | null | undefined): string {
     if (!groupId) {
-      return "Ungrouped";
+      return "No section";
     }
-    return this.groups().find((g) => g.id === groupId)?.name ?? "Ungrouped";
+    return this.groups().find((g) => g.id === groupId)?.name ?? "No section";
+  }
+
+  serviceInitials(service: ServiceOffering): string {
+    const parts = service.name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0]!.charAt(0) + parts[1]!.charAt(0)).toUpperCase();
+    }
+    const word = parts[0] ?? "?";
+    return word.slice(0, 2).toUpperCase();
   }
 
   async load(): Promise<void> {

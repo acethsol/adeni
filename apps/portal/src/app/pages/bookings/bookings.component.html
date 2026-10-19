@@ -57,56 +57,79 @@
       [icon]="empty.icon"
     />
   } @else {
-    <section class="card">
-      <ul class="booking-list">
-        @for (booking of displayedBookings(); track booking.id) {
-          @let statusView = bookingStatusView(booking.status);
-          <li class="booking-row" [class.booking-row--pinned]="isPinned(booking.id)">
-            <div class="booking-row__main">
-              <div class="booking-row__head">
-                <strong>{{ booking.customerName?.trim() || "Guest" }}</strong>
-                <span class="booking-status booking-status--compact" [attr.data-tone]="statusView.tone">
-                  <adeni-carbon-icon [name]="statusView.icon" [size]="14" />
-                  {{ statusView.label }}
-                </span>
-              </div>
-              <p class="muted booking-row__service">
-                <span class="booking-row__time">{{ formatSlotTime(booking.startAt) }}</span>
-                <span class="booking-row__dot" aria-hidden="true">·</span>
-                {{ booking.serviceName }}
-              </p>
-              @if (booking.customerPhoneMasked) {
-                <p class="muted">{{ booking.customerPhoneMasked }}</p>
-              }
-              @if (booking.lines && booking.lines.length > 1) {
-                <p class="muted">{{ lineSummary(booking) }}</p>
-              }
-              @if (booking.guestCount && booking.guestCount > 1) {
-                <p class="muted">Party of {{ booking.guestCount }}</p>
-              }
-              @if (booking.staffDisplayName) {
-                <p class="muted">With {{ booking.staffDisplayName }}</p>
-              }
-              @if (booking.customerNotes) {
-                <p class="note">“{{ booking.customerNotes }}”</p>
-              }
-              @if (booking.remainingBalanceAmount != null && booking.remainingBalanceAmount > 0) {
-                <p class="muted">
-                  Balance due:
-                  {{ booking.remainingBalanceAmount }}
-                  {{ booking.currency || "" }}
-                </p>
-              }
-            </div>
+    <div class="roster">
+      <adeni-list-toolbar
+        storageKey="portal.bookings"
+        [viewMode]="viewMode()"
+        (viewModeChange)="viewMode.set($event)"
+        [count]="filteredBookings().length"
+        singularCountLabel="booking"
+        pluralCountLabel="bookings"
+        searchPlaceholder="Search this page"
+        [searchQuery]="bookingSearch()"
+        (searchQueryChange)="bookingSearch.set($event)"
+      >
+        <adeni-export-menu listExports label="Export" [items]="exportItems" />
+      </adeni-list-toolbar>
 
-            @if (
-              (tab() === "pending" && booking.status === 0) ||
-              booking.status === 1 ||
-              booking.status === 4 ||
-              booking.status === 5
-            ) {
-              <div class="booking-row__toolbar" role="group" [attr.aria-label]="'Actions for ' + (booking.customerName?.trim() || 'Guest')">
-                <div class="booking-row__actions">
+      @if (filteredBookings().length === 0) {
+        <adeni-portal-empty-state
+          icon="search"
+          title="No matches on this page"
+          description="Try another name, service, or phone."
+          [compact]="true"
+        />
+      } @else if (viewMode() === "cards") {
+        <ul class="plain booking-grid">
+          @for (booking of filteredBookings(); track booking.id) {
+            @let statusView = bookingStatusView(booking.status);
+            <li class="booking-card" [class.booking-card--pinned]="isPinned(booking.id)">
+              <div class="booking-card__body">
+                <div class="booking-card__head">
+                  <strong class="booking-card__name">{{
+                    booking.customerName?.trim() || "Guest"
+                  }}</strong>
+                  <span
+                    class="booking-status booking-status--compact"
+                    [attr.data-tone]="statusView.tone"
+                  >
+                    <adeni-carbon-icon [name]="statusView.icon" [size]="14" />
+                    {{ statusView.label }}
+                  </span>
+                </div>
+                <p class="booking-card__when">
+                  {{ formatSlotTime(booking.startAt) }}
+                </p>
+                <p class="booking-card__service">{{ booking.serviceName }}</p>
+                @if (booking.customerPhoneMasked) {
+                  <p class="booking-card__meta">{{ booking.customerPhoneMasked }}</p>
+                }
+                @if (booking.staffDisplayName) {
+                  <p class="booking-card__meta">With {{ booking.staffDisplayName }}</p>
+                }
+                @if (booking.lines && booking.lines.length > 1) {
+                  <p class="booking-card__meta">{{ lineSummary(booking) }}</p>
+                }
+                @if (booking.guestCount && booking.guestCount > 1) {
+                  <p class="booking-card__meta">Party of {{ booking.guestCount }}</p>
+                }
+                @if (booking.remainingBalanceAmount != null && booking.remainingBalanceAmount > 0) {
+                  <p class="booking-card__meta">
+                    Balance due: {{ booking.remainingBalanceAmount }}
+                    {{ booking.currency || "" }}
+                  </p>
+                }
+                @if (booking.customerNotes) {
+                  <p class="booking-card__note">“{{ booking.customerNotes }}”</p>
+                }
+              </div>
+
+              @if (showBookingActions(booking)) {
+                <div
+                  class="booking-card__actions"
+                  role="group"
+                  [attr.aria-label]="'Actions for ' + (booking.customerName?.trim() || 'Guest')"
+                >
                   @if (tab() === "pending" && booking.status === 0) {
                     <button
                       type="button"
@@ -167,22 +190,114 @@
                     </button>
                   }
                 </div>
-              </div>
+              }
+            </li>
+          }
+        </ul>
+      } @else {
+        <div class="adeni-list-results">
+        <adeni-data-table
+          [rows]="filteredBookings()"
+          [columns]="bookingTableColumns"
+          [trackRow]="trackBookingRow"
+        >
+          <ng-template adeniDataTableCell="customer" let-booking>
+            <adeni-table-person-cell
+              [displayName]="booking.customerName?.trim() || 'Guest'"
+              [subtitle]="booking.customerPhoneMasked ?? booking.staffDisplayName ?? null"
+              [initials]="(booking.customerName?.trim() || 'G').slice(0, 2).toUpperCase()"
+              avatarTone="neutral"
+            />
+          </ng-template>
+          <ng-template adeniDataTableCell="status" let-booking>
+            @let statusView = bookingStatusView(booking.status);
+            <adeni-pill [tone]="bookingPillTone(booking.status)" [compact]="true">
+              {{ statusView.label }}
+            </adeni-pill>
+          </ng-template>
+          <ng-template adeniDataTableActions let-booking>
+            @if (showBookingActions(booking)) {
+              <adeni-row-action-bar>
+                @if (tab() === "pending" && booking.status === 0) {
+                  <adeni-icon-btn
+                    icon="misuse"
+                    label="Decline"
+                    variant="danger-soft"
+                    [dense]="true"
+                    [disabled]="actionId() === booking.id"
+                    (pressed)="reject(booking)"
+                  />
+                  <adeni-icon-btn
+                    icon="checkmark"
+                    label="Accept"
+                    variant="table"
+                    [dense]="true"
+                    [disabled]="actionId() === booking.id"
+                    (pressed)="accept(booking)"
+                  />
+                } @else if (booking.status === 1) {
+                  <adeni-icon-btn
+                    icon="user--follow"
+                    label="Mark arrived"
+                    variant="table"
+                    [dense]="true"
+                    [disabled]="actionId() === booking.id"
+                    (pressed)="checkIn(booking)"
+                  />
+                } @else if (booking.status === 4) {
+                  <adeni-icon-btn
+                    icon="checkmark--filled"
+                    label="Finish service"
+                    variant="table"
+                    [dense]="true"
+                    [disabled]="actionId() === booking.id"
+                    (pressed)="complete(booking)"
+                  />
+                } @else if (booking.status === 5) {
+                  <adeni-icon-btn
+                    icon="launch"
+                    label="Collect balance"
+                    variant="table"
+                    [dense]="true"
+                    [disabled]="actionId() === booking.id"
+                    (pressed)="collectBalance(booking)"
+                  />
+                  <adeni-icon-btn
+                    icon="checkmark"
+                    label="Paid at till"
+                    variant="table"
+                    [dense]="true"
+                    [disabled]="actionId() === booking.id"
+                    (pressed)="markPaid(booking)"
+                  />
+                }
+              </adeni-row-action-bar>
             }
-          </li>
-        }
-      </ul>
-      @if (totalCount() > pageSize) {
-        <div class="pagination">
-          <button type="button" class="btn" [disabled]="page() <= 1 || loading()" (click)="prevPage()">
-            Previous
-          </button>
-          <span class="muted">{{ pageLabel() }}</span>
-          <button type="button" class="btn" [disabled]="loading() || !canNextPage()" (click)="nextPage()">
-            Next
-          </button>
+          </ng-template>
+        </adeni-data-table>
+        <adeni-list-pagination
+          [page]="page()"
+          [pageSize]="pageSize"
+          [totalCount]="totalCount()"
+          [loading]="loading()"
+          ariaLabel="Booking pages"
+          (pageChange)="goToPage($event)"
+        />
         </div>
       }
-    </section>
+
+      @if (viewMode() === "cards") {
+        <div class="adeni-list-results adeni-list-results--pagination-only">
+          <adeni-list-pagination
+            [page]="page()"
+            [pageSize]="pageSize"
+            [totalCount]="totalCount()"
+            [loading]="loading()"
+            ariaLabel="Booking pages"
+            (pageChange)="goToPage($event)"
+          />
+        </div>
+      }
+    </div>
   }
 </app-portal-page>

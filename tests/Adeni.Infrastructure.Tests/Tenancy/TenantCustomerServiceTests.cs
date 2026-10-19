@@ -1,6 +1,7 @@
 namespace Adeni.Infrastructure.Tests.Tenancy;
 
 using Adeni.Application.Tenancy;
+using Adeni.Domain.Booking;
 using Adeni.Domain.Identity;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
@@ -101,6 +102,86 @@ public sealed class TenantCustomerServiceTests
         Assert.Equal(1, await db.TenantCustomers.CountAsync(x => x.TenantId == tenantId));
         var row = await db.TenantCustomers.SingleAsync(x => x.TenantId == tenantId);
         Assert.Equal(platformCustomerId, row.CustomerId);
+    }
+
+    [Fact]
+    public async Task GetById_includes_recent_booking_and_queue_summaries()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        var customers = scope.ServiceProvider.GetRequiredService<ITenantCustomerService>();
+        var tenantId = await SeedTenantAsync(db);
+
+        var platformCustomerId = Guid.NewGuid();
+        db.Customers.Add(new Customer
+        {
+            Id = platformCustomerId,
+            Auth0Sub = "auth0|detail",
+            Name = "Detail Guest",
+            Phone = "+2348055555555",
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+
+        var serviceId = Guid.NewGuid();
+        db.ServiceOfferings.Add(new ServiceOffering
+        {
+            Id = serviceId,
+            TenantId = tenantId,
+            Name = "Fade & lineup",
+            PriceAmount = 5000m,
+            Currency = "NGN",
+            DurationMinutes = 45,
+            IsActive = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+        await db.SaveChangesAsync();
+
+        var upsert = await customers.EnsureFromBookingAsync(tenantId, platformCustomerId);
+        Assert.True(upsert.IsSuccess);
+        var tenantCustomer = await db.TenantCustomers.SingleAsync(x => x.TenantId == tenantId);
+
+        var bookingId = Guid.NewGuid();
+        var start = DateTimeOffset.UtcNow.AddDays(-1);
+        db.Bookings.Add(new BookingRecord
+        {
+            Id = bookingId,
+            TenantId = tenantId,
+            CustomerId = platformCustomerId,
+            ServiceOfferingId = serviceId,
+            StartAt = start,
+            EndAt = start.AddMinutes(45),
+            Status = BookingStatus.Completed,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+
+        var ticketId = Guid.NewGuid();
+        db.QueueTickets.Add(new QueueTicket
+        {
+            Id = ticketId,
+            TenantId = tenantId,
+            TenantCustomerId = tenantCustomer.Id,
+            ServiceOfferingId = serviceId,
+            GuestName = tenantCustomer.DisplayName,
+            GuestPhone = "+2348055555555",
+            Status = QueueTicketStatus.Done,
+            JoinedAt = DateTimeOffset.UtcNow.AddHours(-2),
+            PublicToken = "tok-detail-test",
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+        await db.SaveChangesAsync();
+
+        var detail = await customers.GetByIdAsync(tenantId, tenantCustomer.Id);
+        Assert.True(detail.IsSuccess);
+        Assert.Single(detail.Value!.RecentBookings);
+        Assert.Equal(bookingId, detail.Value.RecentBookings[0].Id);
+        Assert.Equal("Fade & lineup", detail.Value.RecentBookings[0].ServiceName);
+        Assert.Single(detail.Value.RecentQueueVisits);
+        Assert.Equal(ticketId, detail.Value.RecentQueueVisits[0].Id);
+        Assert.Equal("Fade & lineup", detail.Value.RecentQueueVisits[0].ServiceName);
     }
 
     [Fact]

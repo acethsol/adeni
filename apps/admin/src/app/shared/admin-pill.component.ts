@@ -1,13 +1,8 @@
 import { Component, computed, input } from "@angular/core";
+import type { AdeniPillTone } from "@adeni/ui";
 
-export type AdminPillVariant =
-  | "neutral"
-  | "success"
-  | "warning"
-  | "danger"
-  | "info"
-  | "brand"
-  | "accent";
+/** Same tones as portal `adeni-pill` — shared with admin pill maps. */
+export type AdminPillVariant = AdeniPillTone;
 
 @Component({
   selector: "admin-pill",

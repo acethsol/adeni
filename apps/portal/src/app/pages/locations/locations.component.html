@@ -1,85 +1,175 @@
 <app-portal-page title="Locations" description="Manage branches and public profile URLs.">
-  @if (error()) {
-    <p class="error-banner">{{ error() }}</p>
-  }
-
   <button pageActions type="button" class="btn btn-primary" (click)="openCreate()">
     <adeni-carbon-icon name="add" [size]="16" />
     Add location
   </button>
 
-  @if (showForm()) {
-    <section class="card">
-      <h3>{{ editingId() ? "Edit location" : "New location" }}</h3>
-      <div class="field">
-        <label>Slug</label>
-        <input [(ngModel)]="draft.slug" />
-      </div>
-      <div class="field">
-        <label>Display name</label>
-        <input [(ngModel)]="draft.name" />
-      </div>
-      <div class="field">
-        <label>Address</label>
-        <input [(ngModel)]="draft.addressLine" />
-      </div>
-      <div class="field">
-        <label>Area</label>
-        <input [(ngModel)]="draft.area" />
-      </div>
-      <div class="field">
-        <label>Market</label>
-        <select [(ngModel)]="draft.marketId">
-          @for (m of markets(); track m.id) {
-            <option [value]="m.id">{{ m.name }}</option>
-          }
-        </select>
-      </div>
-      <label class="cds-toggle">
-        <input type="checkbox" role="switch" [(ngModel)]="draft.isPrimary" />
-        <span class="cds-toggle__track" aria-hidden="true"></span>
-        <span class="cds-toggle__label">Primary location</span>
-      </label>
-      <div class="actions">
-        <button type="button" class="btn" (click)="cancelForm()">
-          <adeni-carbon-icon name="close" [size]="16" />
-          Cancel
-        </button>
-        <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="save()">
-          <adeni-carbon-icon name="save" [size]="16" />
-          Save
-        </button>
-      </div>
-    </section>
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
   }
+
+  <adeni-modal
+    [open]="showForm()"
+    [title]="editingId() ? 'Edit location' : 'New location'"
+    subtitle="Slug appears in your public URL: /businesses/{slug}"
+    size="lg"
+    [hasFooter]="false"
+    (closed)="cancelForm()"
+  >
+    <div class="field">
+      <label>Slug</label>
+      <input [(ngModel)]="draft.slug" />
+    </div>
+    <div class="field">
+      <label>Display name</label>
+      <input [(ngModel)]="draft.name" />
+    </div>
+    <div class="field">
+      <label>Address</label>
+      <input [(ngModel)]="draft.addressLine" />
+    </div>
+    <div class="field">
+      <label>Area</label>
+      <input [(ngModel)]="draft.area" />
+    </div>
+    <div class="field">
+      <label>Market</label>
+      <select [(ngModel)]="draft.marketId">
+        @for (m of markets(); track m.id) {
+          <option [value]="m.id">{{ m.name }}</option>
+        }
+      </select>
+    </div>
+    <label class="cds-toggle">
+      <input type="checkbox" role="switch" [(ngModel)]="draft.isPrimary" />
+      <span class="cds-toggle__track" aria-hidden="true"></span>
+      <span class="cds-toggle__label">Primary location</span>
+    </label>
+    <div class="actions">
+      <button type="button" class="btn" (click)="cancelForm()">
+        <adeni-carbon-icon name="close" [size]="16" />
+        Cancel
+      </button>
+      <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="save()">
+        <adeni-carbon-icon name="save" [size]="16" />
+        Save
+      </button>
+    </div>
+  </adeni-modal>
 
   @if (loading()) {
     <p class="muted">Loading…</p>
+  } @else if (locations().length === 0) {
+    <adeni-portal-empty-state
+      icon="location--filled"
+      title="No locations yet"
+      description="Add your first branch so customers can find you on Discover."
+    />
   } @else {
-    <section class="card">
-      <ul class="plain">
-        @for (loc of locations(); track loc.id) {
-          <li class="list-row">
-            <div>
-              <strong>{{ loc.name || loc.slug }}</strong>
-              @if (loc.isPrimary) {
-                <span class="pill">Primary</span>
-              }
-              <p class="muted">{{ loc.addressLine }}, {{ loc.area }} · /businesses/{{ loc.slug }}</p>
-            </div>
-            <div class="actions">
-              <button type="button" class="btn" (click)="openEdit(loc)">
-                <adeni-carbon-icon name="edit" [size]="16" />
-                Edit
-              </button>
-              <button type="button" class="btn btn-danger" [disabled]="busy() === loc.id" (click)="remove(loc)">
-                <adeni-carbon-icon name="trash-can" [size]="16" />
-                Delete
-              </button>
-            </div>
-          </li>
-        }
-      </ul>
-    </section>
+    <div class="roster">
+      <adeni-list-toolbar
+        storageKey="portal.locations"
+        [viewMode]="viewMode()"
+        (viewModeChange)="viewMode.set($event)"
+        [count]="filteredLocations().length"
+        singularCountLabel="location"
+        pluralCountLabel="locations"
+        searchPlaceholder="Search locations"
+        [searchQuery]="locationSearch()"
+        (searchQueryChange)="locationSearch.set($event)"
+      >
+        <adeni-export-menu listExports label="Export" [items]="exportItems" />
+      </adeni-list-toolbar>
+
+      @if (filteredLocations().length === 0) {
+        <adeni-portal-empty-state
+          icon="search"
+          title="No matches"
+          description="Try a different name, area, or slug."
+          [compact]="true"
+        />
+      } @else if (viewMode() === "cards") {
+        <ul class="plain staff-grid">
+          @for (loc of filteredLocations(); track loc.id) {
+            <li class="org-card">
+              <div class="org-avatar" data-tone="neutral" aria-hidden="true">
+                <span>{{ locationInitials(loc) }}</span>
+              </div>
+              <strong class="org-name">{{ loc.name || loc.slug }}</strong>
+              <span class="org-role">{{ loc.area }}</span>
+              <span class="org-title">{{ loc.addressLine }}</span>
+              <div class="org-meta adeni-cell-pills">
+                @if (loc.isPrimary) {
+                  <adeni-pill tone="brand" [compact]="true">Primary</adeni-pill>
+                }
+                <adeni-pill tone="neutral" [compact]="true">{{ loc.marketId }}</adeni-pill>
+              </div>
+              <p class="loc-slug muted">/businesses/{{ loc.slug }}</p>
+              <div class="org-actions">
+                <button type="button" [disabled]="busy() === loc.id" (click)="openEdit(loc)">
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  class="danger"
+                  [disabled]="busy() === loc.id"
+                  (click)="remove(loc)"
+                >
+                  Delete
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+      } @else {
+        <adeni-data-table
+          [rows]="filteredLocations()"
+          [columns]="locationColumns"
+          [trackRow]="trackLocationRow"
+        >
+          <ng-template adeniDataTableCell="name" let-loc>
+            <adeni-table-person-cell
+              [displayName]="loc.name || loc.slug"
+              [subtitle]="loc.area"
+              [initials]="locationInitials(loc)"
+              avatarTone="neutral"
+            />
+          </ng-template>
+          <ng-template adeniDataTableCell="address" let-loc>
+            <span class="adeni-data-table-text">{{ loc.addressLine }}</span>
+          </ng-template>
+          <ng-template adeniDataTableCell="market" let-loc>
+            <adeni-pill tone="neutral" [compact]="true">{{ loc.marketId }}</adeni-pill>
+          </ng-template>
+          <ng-template adeniDataTableCell="primary" let-loc>
+            @if (loc.isPrimary) {
+              <adeni-pill tone="brand" [compact]="true">Primary</adeni-pill>
+            } @else {
+              <span class="adeni-data-table-text">—</span>
+            }
+          </ng-template>
+          <ng-template adeniDataTableActions let-loc>
+            <adeni-row-action-bar>
+              <adeni-icon-btn
+                icon="edit"
+                label="Edit location"
+                variant="table"
+                [dense]="true"
+                [disabled]="busy() === loc.id"
+                (pressed)="openEdit(loc)"
+              />
+              <adeni-icon-btn
+                icon="trash-can"
+                label="Delete location"
+                variant="danger-soft"
+                [dense]="true"
+                [disabled]="busy() === loc.id"
+                (pressed)="remove(loc)"
+              />
+            </adeni-row-action-bar>
+          </ng-template>
+        </adeni-data-table>
+      }
+    </div>
   }
 </app-portal-page>

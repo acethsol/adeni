@@ -35,6 +35,19 @@ export {
   type AdeniListViewMode,
 } from "./adeni-list-view.types";
 export { AdeniListToolbarComponent } from "./adeni-list-toolbar.component";
+export { AdeniListFilterRowComponent } from "./adeni-list-filter-row.component";
+export {
+  AdeniFilterSelectComponent,
+  type AdeniFilterSelectOption,
+} from "./adeni-filter-select.component";
+export {
+  AdeniExportMenuComponent,
+  type AdeniExportFormat,
+  type AdeniExportMenuItem,
+} from "./adeni-export-menu.component";
+export { AdeniTablePersonCellComponent } from "./adeni-table-person-cell.component";
+export { AdeniRowActionBarComponent } from "./adeni-row-action-bar.component";
+export { AdeniListPaginationComponent } from "./adeni-list-pagination.component";
 export { AdeniDataTableComponent } from "./adeni-data-table.component";
 export { AdeniDataTableActionsDirective } from "./adeni-data-table-actions.directive";
 export { AdeniDataTableCellDirective } from "./adeni-data-table-cell.directive";

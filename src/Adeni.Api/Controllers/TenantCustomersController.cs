@@ -20,6 +20,7 @@ public sealed class TenantCustomersController(ITenantCustomerService customers) 
         [FromQuery] string? search,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 25,
+        [FromQuery] string? discover = null,
         CancellationToken cancellationToken = default)
     {
         if (ResolveTenantId() is not { } tenantId)
@@ -27,7 +28,13 @@ public sealed class TenantCustomersController(ITenantCustomerService customers) 
             return Unauthorized();
         }
 
-        var result = await customers.ListForTenantAsync(tenantId, search, page, pageSize, cancellationToken);
+        var result = await customers.ListForTenantAsync(
+            tenantId,
+            search,
+            page,
+            pageSize,
+            discover,
+            cancellationToken);
         return ApiResults.FromResult(result, Ok, HttpContext);
     }
 

@@ -182,7 +182,99 @@ public static class DevelopmentDataSeeder
         await SeedDevReviewFixtureAsync(db, cancellationToken);
         await SeedDevQueueFloorAsync(db, cancellationToken);
         await SeedDevMessagingAsync(db, cancellationToken);
+        await SeedDevTenantCustomersAsync(db, cancellationToken);
     }
+
+    /// <summary>
+    /// CRM-style tenant customers for Lekki Cuts (portal Customers list). Idempotent via seed email domain.
+    /// </summary>
+    private static async Task SeedDevTenantCustomersAsync(
+        AdeniDbContext db,
+        CancellationToken cancellationToken)
+    {
+        const string seedEmailSuffix = "@seed.lekki.local";
+
+        var location = await db.BusinessLocations
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(entry => entry.Slug == SeedMarkerSlug, cancellationToken);
+        if (location is null)
+        {
+            return;
+        }
+
+        var tenantId = location.TenantId;
+        if (await db.TenantCustomers
+                .IgnoreQueryFilters()
+                .AnyAsync(
+                    x => x.TenantId == tenantId && x.Email != null && x.Email.EndsWith(seedEmailSuffix),
+                    cancellationToken))
+        {
+            return;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var seeds = new TenantCustomerSeed[]
+        {
+            new("Amaka Okoro", "Amaka", "Okoro", "2348012399001", $"amaka{seedEmailSuffix}", "auth0|dev-messaging-walkin", 1),
+            new("Tunde Bakare", "Tunde", "Bakare", "2348012399002", $"tunde{seedEmailSuffix}", "auth0|dev-messaging-booking", 3),
+            new("Chioma Nwosu", "Chioma", "Nwosu", "2348015550101", $"chioma{seedEmailSuffix}", null, 5),
+            new("Emeka Adeyemi", "Emeka", "Adeyemi", "2348015550102", $"emeka{seedEmailSuffix}", null, 8),
+            new("Fatima Bello", "Fatima", "Bello", "2348015550103", $"fatima{seedEmailSuffix}", null, 12),
+            new("Jordan Expected", "Jordan", "Expected", "2348012300003", $"jordan{seedEmailSuffix}", "dev-queue-expected", 2),
+            new("Sam Checked-in", "Sam", "Checked-in", "2348012300004", $"sam{seedEmailSuffix}", "dev-queue-checked-in", 4),
+            new("Local Customer", "Local", "Customer", "2348015550199", $"local{seedEmailSuffix}", DevCustomerAuth0Sub, 0),
+        };
+
+        foreach (var seed in seeds)
+        {
+            Guid? platformCustomerId = null;
+            if (!string.IsNullOrWhiteSpace(seed.Auth0Sub))
+            {
+                platformCustomerId = await EnsureSeedCustomerAsync(
+                    db,
+                    seed.Auth0Sub,
+                    seed.DisplayName,
+                    seed.Phone,
+                    cancellationToken);
+            }
+
+            var phone = NormalizeSeedPhone(seed.Phone);
+            db.TenantCustomers.Add(new TenantCustomer
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                CustomerId = platformCustomerId,
+                DisplayName = seed.DisplayName,
+                FirstName = seed.FirstName,
+                LastName = seed.LastName,
+                Email = seed.Email,
+                NormalizedPhone = string.IsNullOrEmpty(phone) ? null : phone,
+                CreatedAt = now.AddDays(-seed.LastSeenDaysAgo - 30),
+                UpdatedAt = now.AddDays(-seed.LastSeenDaysAgo),
+                LastSeenAt = now.AddDays(-seed.LastSeenDaysAgo),
+                LastBookingAt = seed.LastSeenDaysAgo <= 7 ? now.AddDays(-seed.LastSeenDaysAgo) : null,
+                LastQueueJoinAt = seed.LastSeenDaysAgo <= 4 ? now.AddDays(-seed.LastSeenDaysAgo) : null,
+            });
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private static string NormalizeSeedPhone(string phone)
+    {
+        var digits = new string(phone.Where(char.IsDigit).ToArray());
+        return digits.Length >= 7 ? digits : string.Empty;
+    }
+
+    private sealed record TenantCustomerSeed(
+        string DisplayName,
+        string FirstName,
+        string LastName,
+        string Phone,
+        string Email,
+        string? Auth0Sub,
+        int LastSeenDaysAgo);
 
     /// <summary>
     /// Sample conversations for Lekki Cuts so the portal Messages inbox is non-empty in local dev.

@@ -34,7 +34,7 @@ import { AdeniFeedbackService } from "./adeni-feedback.service";
       position: fixed;
       right: 1rem;
       bottom: 1rem;
-      z-index: 1300;
+      z-index: 2100;
       display: grid;
       gap: 0.55rem;
       width: min(22rem, calc(100vw - 2rem));

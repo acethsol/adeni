@@ -1,14 +1,23 @@
 import { Component, computed, inject, signal } from "@angular/core";
-import { FormsModule } from "@angular/forms";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import type { AdminMarket } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
+  AdeniDataTableActionsDirective,
+  AdeniDataTableCellDirective,
+  AdeniDataTableComponent,
   AdeniFeedbackService,
+  AdeniIconBtnComponent,
+  AdeniListPaginationComponent,
+  AdeniListToolbarComponent,
+  AdeniPillComponent,
   AdeniPortalEmptyStateComponent,
+  AdeniRowActionBarComponent,
   AdeniStaffButtonComponent,
+  AdeniTablePersonCellComponent,
   PortalPageComponent,
+  type AdeniDataTableColumn,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 import {
@@ -17,7 +26,6 @@ import {
   adminListTotalPages,
 } from "../../shared/admin-list-paging";
 import { adminLoadErrorMessage } from "../../shared/admin-load-error";
-import { AdminPillComponent } from "../../shared/admin-pill.component";
 import { marketLivePill } from "../../shared/admin-pill-maps";
 import {
   MarketFormModalComponent,
@@ -30,12 +38,19 @@ import {
   standalone: true,
   imports: [
     PortalPageComponent,
-    FormsModule,
     RouterLink,
     AdeniCarbonIconComponent,
     AdeniStaffButtonComponent,
     AdeniPortalEmptyStateComponent,
-    AdminPillComponent,
+    AdeniListToolbarComponent,
+    AdeniDataTableComponent,
+    AdeniDataTableCellDirective,
+    AdeniDataTableActionsDirective,
+    AdeniListPaginationComponent,
+    AdeniPillComponent,
+    AdeniTablePersonCellComponent,
+    AdeniRowActionBarComponent,
+    AdeniIconBtnComponent,
     MarketFormModalComponent,
   ],
   templateUrl: "./markets.component.html",
@@ -67,6 +82,22 @@ export class AdminMarketsComponent {
 
   readonly marketLivePill = marketLivePill;
 
+  readonly columns: AdeniDataTableColumn<AdminMarket>[] = [
+    { id: "market", header: "Market", cell: (m) => m.name },
+    { id: "country", header: "Country", cell: (m) => m.countryCode },
+    { id: "currency", header: "Currency", cell: (m) => m.currency },
+    {
+      id: "businesses",
+      header: "Businesses",
+      cell: (m) => String(m.businessCount ?? 0),
+    },
+    { id: "status", header: "Status", cell: () => "" },
+  ];
+
+  readonly trackMarketRow = (market: AdminMarket): string => market.id;
+
+  private searchDebounce: ReturnType<typeof setTimeout> | null = null;
+
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       this.searchText.set(params.get("q") ?? "");
@@ -74,6 +105,15 @@ export class AdminMarketsComponent {
       this.page.set(Number.isFinite(page) && page >= 1 ? page : 1);
       void this.load();
     });
+  }
+
+  marketInitials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0]!.charAt(0) + parts[1]!.charAt(0)).toUpperCase();
+    }
+    const word = parts[0] ?? "?";
+    return word.slice(0, 2).toUpperCase();
   }
 
   async load(): Promise<void> {
@@ -102,12 +142,18 @@ export class AdminMarketsComponent {
     }
   }
 
-  applySearch(): void {
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { q: this.searchText().trim() || null, page: null },
-      queryParamsHandling: "merge",
-    });
+  onToolbarSearch(value: string): void {
+    this.searchText.set(value);
+    if (this.searchDebounce) {
+      clearTimeout(this.searchDebounce);
+    }
+    this.searchDebounce = setTimeout(() => {
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { q: value.trim() || null, page: null },
+        queryParamsHandling: "merge",
+      });
+    }, 350);
   }
 
   goToPage(next: number): void {

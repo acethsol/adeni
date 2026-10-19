@@ -12,27 +12,6 @@
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
-  <section class="card list-toolbar">
-    <form class="search-form" (submit)="applySearch(); $event.preventDefault()">
-      <label class="search-field">
-        <span class="visually-hidden">Search businesses</span>
-        <adeni-carbon-icon name="search" [size]="16" />
-        <input
-          type="search"
-          [ngModel]="searchText()"
-          (ngModelChange)="searchText.set($event)"
-          name="q"
-          placeholder="Name or slug"
-          autocomplete="off"
-        />
-      </label>
-      <adeni-staff-btn type="submit" variant="primary" icon="search">Search</adeni-staff-btn>
-    </form>
-    <adeni-staff-btn icon="restart" [disabled]="loading()" (pressed)="load()">Refresh</adeni-staff-btn>
-    @if (!loading() && totalCount() > 0) {
-      <p class="toolbar-meta">{{ showingRange() }}</p>
-    }
-  </section>
 
   @if (loading() && businesses().length === 0) {
     <p class="muted">Loading businesses…</p>
@@ -43,96 +22,94 @@
       description="Verified tenants appear here for plan overrides and commercial terms."
     />
   } @else {
-    <section class="card data-table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th scope="col">Business</th>
-            <th scope="col">Status</th>
-            <th scope="col">Plan</th>
-            <th scope="col">Billing</th>
-            <th scope="col"><span class="visually-hidden">Actions</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (b of businesses(); track b.id) {
-            <tr>
-              <td>
-                <div class="row-title">{{ b.name }}</div>
-                <p class="row-sub">{{ b.slug }}</p>
-              </td>
-              <td>
-                @let status = tenantStatusPill(b.status);
-                <admin-pill [label]="status.label" [variant]="status.variant" />
-              </td>
-              <td>
-                @let plan = businessPlanPill(b);
-                <admin-pill [label]="plan.label" [variant]="plan.variant" />
-              </td>
-              <td>
-                <div class="cell-stack">
-                  @let billing = billingStatusPill(b.billingStatus);
-                  <admin-pill [label]="billing.label" [variant]="billing.variant" />
-                  @if (b.trialEndsAt) {
-                    <admin-pill
-                      [label]="'Trial · ' + (b.trialEndsAt | date: 'mediumDate')"
-                      variant="info"
-                      [compact]="true"
-                    />
-                  }
-                </div>
-              </td>
-              <td class="actions-cell">
-                <div class="actions-inline">
-                  @if (b.status === pendingVerificationStatus) {
-                    <adeni-staff-btn
-                      variant="primary"
-                      icon="checkmark"
-                      [routerLink]="['/pending']"
-                      [queryParams]="{ q: b.slug || b.name }"
-                    >
-                      Review queue
-                    </adeni-staff-btn>
-                  } @else {
-                    <adeni-staff-btn
-                      variant="primary"
-                      icon="calendar"
-                      [routerLink]="['/businesses', b.id, 'billing']"
-                    >
-                      Billing
-                    </adeni-staff-btn>
-                    <adeni-staff-btn icon="edit" (pressed)="openSubscriptionWizard(b)">
-                      Edit subscription
-                    </adeni-staff-btn>
-                  }
-                </div>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </section>
+    <div class="roster">
+      <adeni-list-toolbar
+        storageKey="admin.businesses"
+        [showViewSwitcher]="false"
+        [count]="totalCount()"
+        singularCountLabel="business"
+        pluralCountLabel="businesses"
+        searchPlaceholder="Name or slug"
+        [searchQuery]="searchText()"
+        (searchQueryChange)="onToolbarSearch($event)"
+      >
+        <adeni-export-menu listExports label="Export" [items]="exportItems" />
+      </adeni-list-toolbar>
 
-    @if (totalPages() > 1) {
-      <nav class="pager" aria-label="Business pages">
-        <adeni-staff-btn
-          icon="chevron--left"
-          [disabled]="page() <= 1 || loading()"
-          (pressed)="goToPage(page() - 1)"
+      <div class="adeni-list-results">
+        <adeni-data-table
+          [rows]="businesses()"
+          [columns]="columns"
+          [trackRow]="trackBusinessRow"
         >
-          Previous
-        </adeni-staff-btn>
-        <span class="pager-meta">{{ showingRange() }}</span>
-        <adeni-staff-btn
-          icon="chevron--right"
-          iconPosition="end"
-          [disabled]="page() >= totalPages() || loading()"
-          (pressed)="goToPage(page() + 1)"
-        >
-          Next
-        </adeni-staff-btn>
-      </nav>
-    }
+          <ng-template adeniDataTableCell="business" let-b>
+            <adeni-table-person-cell
+              [displayName]="b.name"
+              [subtitle]="b.slug || 'No slug'"
+              [initials]="businessInitials(b.name)"
+              avatarTone="brand"
+            />
+          </ng-template>
+          <ng-template adeniDataTableCell="status" let-b>
+            @let status = tenantStatusPill(b.status);
+            <adeni-pill [tone]="status.variant" [compact]="true">{{ status.label }}</adeni-pill>
+          </ng-template>
+          <ng-template adeniDataTableCell="plan" let-b>
+            @let plan = businessPlanPill(b);
+            <adeni-pill [tone]="plan.variant" [compact]="true">{{ plan.label }}</adeni-pill>
+          </ng-template>
+          <ng-template adeniDataTableCell="billing" let-b>
+            <div class="adeni-cell-pills">
+              @let billing = billingStatusPill(b.billingStatus);
+              <adeni-pill [tone]="billing.variant" [compact]="true">{{ billing.label }}</adeni-pill>
+              @if (b.trialEndsAt) {
+                <adeni-pill tone="info" [compact]="true">
+                  Trial · {{ b.trialEndsAt | date: "mediumDate" }}
+                </adeni-pill>
+              }
+            </div>
+          </ng-template>
+          <ng-template adeniDataTableActions let-b>
+            <adeni-row-action-bar>
+              @if (b.status === pendingVerificationStatus) {
+                <adeni-icon-btn
+                  icon="checkmark"
+                  label="Review queue"
+                  variant="table"
+                  [dense]="true"
+                  [routerLink]="['/pending']"
+                  [queryParams]="{ q: b.slug || b.name }"
+                />
+              } @else {
+                <adeni-icon-btn
+                  icon="calendar"
+                  label="Billing"
+                  variant="table"
+                  [dense]="true"
+                  [routerLink]="['/businesses', b.id, 'billing']"
+                />
+                <adeni-icon-btn
+                  icon="edit"
+                  label="Edit subscription"
+                  variant="table"
+                  [dense]="true"
+                  (pressed)="openSubscriptionWizard(b)"
+                />
+              }
+            </adeni-row-action-bar>
+          </ng-template>
+        </adeni-data-table>
+
+        <adeni-list-pagination
+          [page]="page()"
+          [pageSize]="pageSize"
+          [totalCount]="totalCount()"
+          [loading]="loading()"
+          ariaLabel="Business pages"
+          (pageChange)="goToPage($event)"
+        />
+      </div>
+    </div>
   }
 
   <app-business-subscription-wizard

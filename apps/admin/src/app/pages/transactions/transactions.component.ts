@@ -1,22 +1,31 @@
-import { Component, computed, inject, signal } from "@angular/core";
 import { DatePipe } from "@angular/common";
+import { Component, inject, signal } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import type { AdminTransactionSearchItem } from "@adeni/shared";
 import {
   formatAmountMinor,
-  formatBillingChargeStatus,
   formatPrice,
   formatSubscriptionSku,
+  formatBillingChargeStatus,
 } from "@adeni/shared";
-import { AdeniCarbonIconComponent, AdeniStaffButtonComponent, PortalPageComponent } from "@adeni/ui";
-import { AdminApiService } from "../../core/services/admin-api.service";
 import {
-  ADMIN_LIST_PAGE_SIZE,
-  adminListRangeLabel,
-  adminListTotalPages,
-} from "../../shared/admin-list-paging";
+  AdeniDataTableCellDirective,
+  AdeniDataTableComponent,
+  AdeniExportMenuComponent,
+  AdeniFeedbackService,
+  AdeniFilterSelectComponent,
+  AdeniListFilterRowComponent,
+  AdeniListPaginationComponent,
+  AdeniListToolbarComponent,
+  AdeniPortalEmptyStateComponent,
+  PortalPageComponent,
+  type AdeniDataTableColumn,
+  type AdeniExportMenuItem,
+  type AdeniFilterSelectOption,
+} from "@adeni/ui";
+import { AdminApiService } from "../../core/services/admin-api.service";
+import { ADMIN_LIST_PAGE_SIZE } from "../../shared/admin-list-paging";
 import { adminLoadErrorMessage } from "../../shared/admin-load-error";
 import { AdminPillComponent } from "../../shared/admin-pill.component";
 
@@ -27,11 +36,16 @@ type KindFilter = "all" | "commerce" | "saas";
   standalone: true,
   imports: [
     PortalPageComponent,
-    FormsModule,
     RouterLink,
     DatePipe,
-    AdeniCarbonIconComponent,
-    AdeniStaffButtonComponent,
+    AdeniListToolbarComponent,
+    AdeniListFilterRowComponent,
+    AdeniFilterSelectComponent,
+    AdeniExportMenuComponent,
+    AdeniDataTableComponent,
+    AdeniDataTableCellDirective,
+    AdeniListPaginationComponent,
+    AdeniPortalEmptyStateComponent,
     AdminPillComponent,
   ],
   templateUrl: "./transactions.component.html",
@@ -41,8 +55,9 @@ export class AdminTransactionsComponent {
   private readonly api = inject(AdminApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly feedback = inject(AdeniFeedbackService);
 
-  searchInput = "";
+  readonly searchQuery = signal("");
   readonly kindFilter = signal<KindFilter>("all");
   readonly searching = signal(false);
   readonly hasSearched = signal(false);
@@ -52,10 +67,45 @@ export class AdminTransactionsComponent {
   readonly page = signal(1);
   readonly pageSize = ADMIN_LIST_PAGE_SIZE;
 
-  readonly totalPages = computed(() => adminListTotalPages(this.totalCount(), this.pageSize));
-  readonly showingRange = computed(() =>
-    adminListRangeLabel(this.page(), this.pageSize, this.totalCount()),
-  );
+  private searchDebounce: ReturnType<typeof setTimeout> | null = null;
+
+  readonly kindFilterOptions: AdeniFilterSelectOption[] = [
+    { value: "all", label: "All types" },
+    { value: "commerce", label: "Commerce" },
+    { value: "saas", label: "SaaS" },
+  ];
+
+  readonly exportItems: AdeniExportMenuItem[] = [
+    {
+      format: "csv",
+      label: "CSV (.csv)",
+      disabled: true,
+      hint: "Reporting export — coming soon",
+    },
+    {
+      format: "xlsx",
+      label: "Excel (.xlsx)",
+      disabled: true,
+      hint: "Reporting export — coming soon",
+    },
+    {
+      format: "pdf",
+      label: "PDF (.pdf)",
+      disabled: true,
+      hint: "Reporting export — coming soon",
+    },
+  ];
+
+  readonly columns: AdeniDataTableColumn<AdminTransactionSearchItem>[] = [
+    { id: "when", header: "When", cell: () => "" },
+    { id: "type", header: "Type", cell: () => "" },
+    { id: "business", header: "Business", cell: (row) => row.tenantName },
+    { id: "reference", header: "Reference", cell: (row) => row.providerReference ?? row.id },
+    { id: "amount", header: "Amount", cell: () => "" },
+    { id: "status", header: "Status", cell: (row) => row.status },
+  ];
+
+  readonly trackRow = (row: AdminTransactionSearchItem): string => row.id;
 
   readonly formatSubscriptionSku = formatSubscriptionSku;
 
@@ -64,9 +114,7 @@ export class AdminTransactionsComponent {
       const q = (params.get("q") ?? "").trim();
       const kind = params.get("kind");
       const page = Number(params.get("page") ?? "1");
-      if (q && q !== this.searchInput) {
-        this.searchInput = q;
-      }
+      this.searchQuery.set(q);
       this.kindFilter.set(kind === "commerce" || kind === "saas" ? kind : "all");
       this.page.set(Number.isFinite(page) && page >= 1 ? page : 1);
       if (q) {
@@ -79,30 +127,44 @@ export class AdminTransactionsComponent {
     });
   }
 
-  setKind(kind: KindFilter): void {
-    this.kindFilter.set(kind);
-    const q = this.searchInput.trim();
-    if (!q) {
-      return;
+  onSearchInput(value: string): void {
+    this.searchQuery.set(value);
+    if (this.searchDebounce) {
+      clearTimeout(this.searchDebounce);
     }
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { q, kind: kind === "all" ? null : kind, page: null },
-    });
+    this.searchDebounce = setTimeout(() => {
+      const q = value.trim();
+      if (!q) {
+        void this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { q: null, page: null },
+          queryParamsHandling: "merge",
+        });
+        return;
+      }
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: {
+          q,
+          kind: this.kindFilter() === "all" ? null : this.kindFilter(),
+          page: null,
+        },
+        queryParamsHandling: "merge",
+      });
+    }, 400);
   }
 
-  search(): void {
-    const q = this.searchInput.trim();
+  onKindChange(value: string): void {
+    const kind = value === "commerce" || value === "saas" ? value : "all";
+    this.kindFilter.set(kind);
+    const q = this.searchQuery().trim();
     if (!q) {
       return;
     }
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: {
-        q,
-        kind: this.kindFilter() === "all" ? null : this.kindFilter(),
-        page: null,
-      },
+      queryParams: { kind: kind === "all" ? null : kind, page: null },
+      queryParamsHandling: "merge",
     });
   }
 
@@ -149,17 +211,20 @@ export class AdminTransactionsComponent {
     this.error.set(null);
 
     try {
-      const result = await this.api.withAuthorizedClient((client) =>
-        client.searchAdminTransactions(q, {
-          kind: this.kindFilter(),
-          page: this.page(),
-          pageSize: this.pageSize,
-        }),
-      );
-      this.rows.set(result.items);
-      this.totalCount.set(result.totalCount);
+      await this.feedback.runLoading(async () => {
+        const result = await this.api.withAuthorizedClient((client) =>
+          client.searchAdminTransactions(q, {
+            kind: this.kindFilter(),
+            page: this.page(),
+            pageSize: this.pageSize,
+          }),
+        );
+        this.rows.set(result.items);
+        this.totalCount.set(result.totalCount);
+      }, "Searching transactions", "Matching Paystack and business records");
     } catch (err) {
       this.error.set(adminLoadErrorMessage("Could not search transactions.", err));
+      this.feedback.error(this.error() ?? "Could not search transactions.");
       this.rows.set([]);
       this.totalCount.set(0);
     } finally {

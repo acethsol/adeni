@@ -12,9 +12,24 @@ import {
 import {
   AdeniCarbonIconComponent,
   AdeniConfirmService,
+  AdeniDataTableActionsDirective,
+  AdeniDataTableCellDirective,
+  AdeniDataTableComponent,
+  AdeniExportMenuComponent,
+  AdeniIconBtnComponent,
+  AdeniListPaginationComponent,
+  AdeniListToolbarComponent,
+  AdeniPillComponent,
   AdeniPortalEmptyStateComponent,
+  AdeniRowActionBarComponent,
+  AdeniTablePersonCellComponent,
   PortalPageComponent,
+  readPersistedListViewMode,
   type AdeniCarbonIconName,
+  type AdeniDataTableColumn,
+  type AdeniExportMenuItem,
+  type AdeniListViewMode,
+  type AdeniPillTone,
 } from "@adeni/ui";
 import { map } from "rxjs";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
@@ -36,6 +51,16 @@ const PAID_STATUS = 6;
     PortalTabsComponent,
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
+    AdeniListToolbarComponent,
+    AdeniExportMenuComponent,
+    AdeniDataTableComponent,
+    AdeniDataTableCellDirective,
+    AdeniDataTableActionsDirective,
+    AdeniRowActionBarComponent,
+    AdeniIconBtnComponent,
+    AdeniPillComponent,
+    AdeniTablePersonCellComponent,
+    AdeniListPaginationComponent,
     FormsModule,
   ],
   templateUrl: "./bookings.component.html",
@@ -69,6 +94,59 @@ export class BookingsComponent {
   readonly displayedBookings = computed(() =>
     prioritizeFocus(this.bookings(), this.focusBookingId()),
   );
+  readonly bookingSearch = signal("");
+  readonly viewMode = signal<AdeniListViewMode>(
+    readPersistedListViewMode("portal.bookings", "cards"),
+  );
+
+  readonly exportItems: AdeniExportMenuItem[] = [
+    {
+      format: "csv",
+      label: "CSV (.csv)",
+      disabled: true,
+      hint: "Reporting export — coming soon",
+    },
+    {
+      format: "xlsx",
+      label: "Excel (.xlsx)",
+      disabled: true,
+      hint: "Reporting export — coming soon",
+    },
+    {
+      format: "pdf",
+      label: "PDF (.pdf)",
+      disabled: true,
+      hint: "Reporting export — coming soon",
+    },
+  ];
+
+  readonly filteredBookings = computed(() => {
+    const query = this.bookingSearch().trim().toLowerCase();
+    let list = this.displayedBookings();
+    if (!query) {
+      return list;
+    }
+    return list.filter((booking) => {
+      const haystack = [
+        booking.customerName ?? "",
+        booking.serviceName,
+        booking.customerPhoneMasked ?? "",
+        booking.staffDisplayName ?? "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+  });
+
+  readonly bookingTableColumns: AdeniDataTableColumn<BookingResponse>[] = [
+    { id: "customer", header: "Customer", cell: (b) => b.customerName?.trim() || "Guest" },
+    { id: "when", header: "When", cell: (b) => formatSlotTime(b.startAt) },
+    { id: "service", header: "Service", cell: (b) => b.serviceName },
+    { id: "status", header: "Status", cell: () => "" },
+  ];
+
+  readonly trackBookingRow = (booking: BookingResponse): string => booking.id;
   readonly kioskStatus = signal<KioskStatusResponse | null>(null);
   readonly savingPin = signal(false);
   readonly actionId = signal<string | null>(null);
@@ -83,6 +161,25 @@ export class BookingsComponent {
 
   isPinned(bookingId: string): boolean {
     return this.focusBookingId() === bookingId;
+  }
+
+  bookingPillTone(status: number): AdeniPillTone {
+    switch (status) {
+      case PENDING_STATUS:
+        return "warning";
+      case CONFIRMED_STATUS:
+        return "info";
+      case CHECKED_IN_STATUS:
+        return "brand";
+      case COMPLETED_STATUS:
+      case PAID_STATUS:
+        return "success";
+      case 2:
+      case 3:
+        return "danger";
+      default:
+        return "neutral";
+    }
   }
 
   bookingStatusView(status: number): {
@@ -197,11 +294,25 @@ export class BookingsComponent {
     if (!this.canNextPage()) {
       return;
     }
+    void this.goToPage(this.page() + 1);
+  }
+
+  goToPage(next: number): void {
+    const page = Math.min(Math.max(1, next), this.totalPageCount());
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { page: this.page() + 1 },
+      queryParams: { page: page === 1 ? null : page },
       queryParamsHandling: "merge",
     });
+  }
+
+  showBookingActions(booking: BookingResponse): boolean {
+    return (
+      (this.tab() === "pending" && booking.status === 0) ||
+      booking.status === 1 ||
+      booking.status === 4 ||
+      booking.status === 5
+    );
   }
 
   openKiosk(event: Event): void {

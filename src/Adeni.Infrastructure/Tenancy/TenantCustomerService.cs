@@ -150,23 +150,16 @@ public sealed class TenantCustomerService(AdeniDbContext dbContext) : ITenantCus
             return Result.Failure<TenantCustomerDetailResponse>(Error.NotFound("Customer"));
         }
 
-        var recentBookings = row.CustomerId is Guid platformCustomerId
-            ? await dbContext.Bookings.AsNoTracking()
-                .Where(x => x.TenantId == tenantId && x.CustomerId == platformCustomerId)
-                .OrderByDescending(x => x.StartAt)
-                .Select(x => x.Id)
-                .Take(5)
-                .ToListAsync(cancellationToken)
+        var recentBookingRows = row.CustomerId is Guid platformCustomerId
+            ? await LoadRecentBookingsAsync(tenantId, platformCustomerId, cancellationToken)
             : [];
 
-        var recentTickets = await dbContext.QueueTickets.AsNoTracking()
-            .Where(x => x.TenantId == tenantId && x.TenantCustomerId == tenantCustomerId)
-            .OrderByDescending(x => x.JoinedAt)
-            .Select(x => x.Id)
-            .Take(5)
-            .ToListAsync(cancellationToken);
+        var recentQueueRows = await LoadRecentQueueVisitsAsync(
+            tenantId,
+            tenantCustomerId,
+            cancellationToken);
 
-        return Result.Success(MapDetail(row, recentBookings, recentTickets));
+        return Result.Success(MapDetail(row, recentBookingRows, recentQueueRows));
     }
 
     public async Task<Result<TenantCustomerListResponse>> ListForTenantAsync(
@@ -174,6 +167,7 @@ public sealed class TenantCustomerService(AdeniDbContext dbContext) : ITenantCus
         string? search,
         int page,
         int pageSize,
+        string? discoverFilter = null,
         CancellationToken cancellationToken = default)
     {
         page = Math.Max(1, page);
@@ -181,6 +175,15 @@ public sealed class TenantCustomerService(AdeniDbContext dbContext) : ITenantCus
 
         var query = dbContext.TenantCustomers.AsNoTracking()
             .Where(x => x.TenantId == tenantId);
+
+        if (string.Equals(discoverFilter, "discover", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(x => x.CustomerId != null);
+        }
+        else if (string.Equals(discoverFilter, "walk_in", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(x => x.CustomerId == null);
+        }
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -283,10 +286,63 @@ public sealed class TenantCustomerService(AdeniDbContext dbContext) : ITenantCus
             row.LastSeenAt,
             row.CustomerId);
 
+    private async Task<IReadOnlyList<TenantCustomerRecentBookingResponse>> LoadRecentBookingsAsync(
+        Guid tenantId,
+        Guid platformCustomerId,
+        CancellationToken cancellationToken)
+    {
+        var bookings = await dbContext.Bookings.AsNoTracking()
+            .Include(x => x.Lines)
+            .Include(x => x.ServiceOffering)
+            .Include(x => x.StaffMember)
+            .Where(x => x.TenantId == tenantId && x.CustomerId == platformCustomerId)
+            .OrderByDescending(x => x.StartAt)
+            .Take(5)
+            .ToListAsync(cancellationToken);
+
+        return bookings
+            .Select(booking =>
+            {
+                var serviceName = booking.Lines.OrderBy(x => x.SortOrder).FirstOrDefault()?.ServiceName
+                    ?? booking.ServiceOffering?.Name
+                    ?? "Service";
+                return new TenantCustomerRecentBookingResponse(
+                    booking.Id,
+                    serviceName,
+                    booking.StartAt,
+                    (int)booking.Status,
+                    booking.StaffMember?.DisplayName);
+            })
+            .ToList();
+    }
+
+    private async Task<IReadOnlyList<TenantCustomerRecentQueueVisitResponse>> LoadRecentQueueVisitsAsync(
+        Guid tenantId,
+        Guid tenantCustomerId,
+        CancellationToken cancellationToken)
+    {
+        var tickets = await dbContext.QueueTickets.AsNoTracking()
+            .Include(x => x.ServiceOffering)
+            .Include(x => x.StaffMember)
+            .Where(x => x.TenantId == tenantId && x.TenantCustomerId == tenantCustomerId)
+            .OrderByDescending(x => x.JoinedAt)
+            .Take(5)
+            .ToListAsync(cancellationToken);
+
+        return tickets
+            .Select(ticket => new TenantCustomerRecentQueueVisitResponse(
+                ticket.Id,
+                ticket.JoinedAt,
+                (int)ticket.Status,
+                ticket.ServiceOffering?.Name,
+                ticket.StaffMember?.DisplayName))
+            .ToList();
+    }
+
     private static TenantCustomerDetailResponse MapDetail(
         TenantCustomer row,
-        IReadOnlyList<Guid> recentBookings,
-        IReadOnlyList<Guid> recentTickets) =>
+        IReadOnlyList<TenantCustomerRecentBookingResponse> recentBookings,
+        IReadOnlyList<TenantCustomerRecentQueueVisitResponse> recentQueueVisits) =>
         new(
             row.Id,
             row.DisplayName,
@@ -296,8 +352,10 @@ public sealed class TenantCustomerService(AdeniDbContext dbContext) : ITenantCus
             row.LastBookingAt,
             row.LastQueueJoinAt,
             row.CustomerId,
+            recentBookings.Select(x => x.Id).ToList(),
+            recentQueueVisits.Select(x => x.Id).ToList(),
             recentBookings,
-            recentTickets);
+            recentQueueVisits);
 
     private static (string? First, string? Last) SplitDisplayName(string? displayName)
     {

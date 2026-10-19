@@ -5,11 +5,21 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { formatSubscriptionSku, formatTenantStatus, type AdminBusinessSummary } from "@adeni/shared";
 import {
-  AdeniCarbonIconComponent,
+  AdeniDataTableActionsDirective,
+  AdeniDataTableCellDirective,
+  AdeniDataTableComponent,
+  AdeniExportMenuComponent,
   AdeniFeedbackService,
+  AdeniIconBtnComponent,
+  AdeniListPaginationComponent,
+  AdeniListToolbarComponent,
+  AdeniPillComponent,
   AdeniPortalEmptyStateComponent,
-  AdeniStaffButtonComponent,
+  AdeniRowActionBarComponent,
+  AdeniTablePersonCellComponent,
   PortalPageComponent,
+  type AdeniDataTableColumn,
+  type AdeniExportMenuItem,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 import {
@@ -18,7 +28,6 @@ import {
   adminListTotalPages,
 } from "../../shared/admin-list-paging";
 import { adminLoadErrorMessage } from "../../shared/admin-load-error";
-import { AdminPillComponent } from "../../shared/admin-pill.component";
 import { billingStatusPill, businessPlanPill, tenantStatusPill } from "../../shared/admin-pill-maps";
 import { BusinessSubscriptionWizardComponent } from "./business-subscription-wizard.component";
 import {
@@ -37,11 +46,18 @@ const PENDING_VERIFICATION = 1;
     PortalPageComponent,
     FormsModule,
     DatePipe,
-    AdeniCarbonIconComponent,
-    AdeniStaffButtonComponent,
+    AdeniListToolbarComponent,
+    AdeniExportMenuComponent,
+    AdeniDataTableComponent,
+    AdeniDataTableCellDirective,
+    AdeniDataTableActionsDirective,
+    AdeniListPaginationComponent,
+    AdeniPillComponent,
     AdeniPortalEmptyStateComponent,
+    AdeniTablePersonCellComponent,
+    AdeniRowActionBarComponent,
+    AdeniIconBtnComponent,
     RouterLink,
-    AdminPillComponent,
     BusinessSubscriptionWizardComponent,
   ],
   templateUrl: "./businesses.component.html",
@@ -65,6 +81,47 @@ export class AdminBusinessesComponent {
     adminListRangeLabel(this.page(), this.pageSize, this.totalCount()),
   );
   readonly isEmptyCatalog = computed(() => !this.loading() && this.totalCount() === 0);
+
+  readonly exportItems: AdeniExportMenuItem[] = [
+    {
+      format: "csv",
+      label: "CSV (.csv)",
+      disabled: true,
+      hint: "Reporting export — coming soon",
+    },
+    {
+      format: "xlsx",
+      label: "Excel (.xlsx)",
+      disabled: true,
+      hint: "Reporting export — coming soon",
+    },
+    {
+      format: "pdf",
+      label: "PDF (.pdf)",
+      disabled: true,
+      hint: "Reporting export — coming soon",
+    },
+  ];
+
+  readonly columns: AdeniDataTableColumn<AdminBusinessSummary>[] = [
+    { id: "business", header: "Business", cell: (b) => b.name },
+    { id: "status", header: "Status", cell: () => "" },
+    { id: "plan", header: "Plan", cell: () => "" },
+    { id: "billing", header: "Billing", cell: () => "" },
+  ];
+
+  readonly trackBusinessRow = (b: AdminBusinessSummary): string => b.id;
+
+  businessInitials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0]!.charAt(0) + parts[1]!.charAt(0)).toUpperCase();
+    }
+    const word = parts[0] ?? "?";
+    return word.slice(0, 2).toUpperCase();
+  }
+
+  private searchDebounce: ReturnType<typeof setTimeout> | null = null;
 
   readonly subscriptionBusiness = signal<AdminBusinessSummary | null>(null);
   readonly subscriptionDraft = signal<BusinessSubscriptionDraft | null>(null);
@@ -114,12 +171,18 @@ export class AdminBusinessesComponent {
     }
   }
 
-  applySearch(): void {
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { q: this.searchText().trim() || null, page: null },
-      queryParamsHandling: "merge",
-    });
+  onToolbarSearch(value: string): void {
+    this.searchText.set(value);
+    if (this.searchDebounce) {
+      clearTimeout(this.searchDebounce);
+    }
+    this.searchDebounce = setTimeout(() => {
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { q: value.trim() || null, page: null },
+        queryParamsHandling: "merge",
+      });
+    }, 350);
   }
 
   goToPage(next: number): void {

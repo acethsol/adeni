@@ -2,138 +2,109 @@
   title="Services"
   description="What customers book — organize into collections, or create your own."
 >
+  <button pageActions type="button" class="btn" (click)="showCollectionsManager.set(true)">
+    Menu sections
+  </button>
+  <button pageActions type="button" class="btn btn-primary" (click)="openCreate()">
+    <adeni-carbon-icon name="add" [size]="16" />
+    Add service
+  </button>
+
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
 
-  <section class="card groups-card">
-    <h3>Collections</h3>
-    <p class="muted">
-      Group services under headings on your public menu (e.g. Hair, Nails, Spa).
-    </p>
-    <div class="group-add">
-      <input
-        type="text"
-        placeholder="New collection name"
-        [ngModel]="newGroupName()"
-        (ngModelChange)="newGroupName.set($event)"
-        maxlength="120"
-      />
-      <button type="button" class="btn" [disabled]="busy() === 'group'" (click)="addGroup()">
-        <adeni-carbon-icon name="add" [size]="16" />
-        Add collection
-      </button>
-    </div>
-    @if (groups().length > 0) {
-      <ul class="plain group-list">
-        @for (group of groups(); track group.id) {
-          <li class="list-row">
-            <strong>{{ group.name }}</strong>
-            <button
-              type="button"
-              class="btn btn-danger"
-              [disabled]="busy() === group.id"
-              (click)="removeGroup(group)"
-            >
-              Remove
-            </button>
-          </li>
-        }
-      </ul>
+  <adeni-modal
+    [open]="showForm()"
+    [title]="editingId() ? 'Edit service' : 'New service'"
+    [subtitle]="
+      editingId()
+        ? 'Update pricing, duration, and collection.'
+        : 'Add a bookable service to your public menu.'
+    "
+    size="lg"
+    [hasFooter]="false"
+    (closed)="cancelForm()"
+  >
+    @if (catalogTemplates().length > 0) {
+      <div class="catalog">
+        <p class="muted">Quick add from catalog ({{ categoryLabel("en", draft.categorySlug) }})</p>
+        <ul class="template-chips">
+          @for (t of catalogTemplates(); track t.id) {
+            <li>
+              <button type="button" class="chip" (click)="applyTemplate(t)">{{ t.name }}</button>
+            </li>
+          }
+        </ul>
+      </div>
+    } @else if (catalogLoading()) {
+      <p class="muted">Loading templates…</p>
     }
-  </section>
 
-  <div class="toolbar">
-    <button type="button" class="btn btn-primary" (click)="openCreate()">
-      <adeni-carbon-icon name="add" [size]="16" />
-      Add service
-    </button>
-  </div>
-
-  @if (showForm()) {
-    <section class="card form">
-      <h3>{{ editingId() ? "Edit service" : "New service" }}</h3>
-
-      @if (catalogTemplates().length > 0) {
-        <div class="catalog">
-          <p class="muted">Quick add from catalog ({{ categoryLabel("en", draft.categorySlug) }})</p>
-          <ul class="template-chips">
-            @for (t of catalogTemplates(); track t.id) {
-              <li>
-                <button type="button" class="chip" (click)="applyTemplate(t)">{{ t.name }}</button>
-              </li>
-            }
-          </ul>
-        </div>
-      } @else if (catalogLoading()) {
-        <p class="muted">Loading templates…</p>
-      }
-
+    <div class="field">
+      <label>Name</label>
+      <input [(ngModel)]="draft.name" />
+    </div>
+    <div class="field">
+      <label>Description</label>
+      <textarea rows="2" [(ngModel)]="draft.description"></textarea>
+    </div>
+    <div class="row">
       <div class="field">
-        <label>Name</label>
-        <input [(ngModel)]="draft.name" />
+        <label>Price</label>
+        <input type="number" min="0" step="0.01" [(ngModel)]="draft.priceAmount" />
       </div>
       <div class="field">
-        <label>Description</label>
-        <textarea rows="2" [(ngModel)]="draft.description"></textarea>
-      </div>
-      <div class="row">
-        <div class="field">
-          <label>Price</label>
-          <input type="number" min="0" step="0.01" [(ngModel)]="draft.priceAmount" />
-        </div>
-        <div class="field">
-          <label>Currency</label>
-          <input maxlength="3" [(ngModel)]="draft.currency" />
-        </div>
-        <div class="field">
-          <label>Duration (min)</label>
-          <input type="number" min="1" [(ngModel)]="draft.durationMinutes" />
-        </div>
-      </div>
-      <div class="row">
-        <div class="field">
-          <label>Collection</label>
-          <select [(ngModel)]="draft.menuGroupId">
-            <option value="">Ungrouped</option>
-            @for (group of groups(); track group.id) {
-              <option [value]="group.id">{{ group.name }}</option>
-            }
-          </select>
-        </div>
-        <div class="field">
-          <label>Sort order</label>
-          <input type="number" [(ngModel)]="draft.sortOrder" />
-        </div>
+        <label>Currency</label>
+        <input maxlength="3" [(ngModel)]="draft.currency" />
       </div>
       <div class="field">
-        <label>Booking type</label>
-        <select [(ngModel)]="draft.bookingDeliveryType">
-          <option value="appointment">Appointment (1:1 slot)</option>
-          <option value="class">Class (fixed start, capacity)</option>
-          <option value="session">Session (e.g. personal training)</option>
-          <option value="experience">Experience (e.g. spa block)</option>
-          <option value="mobile_appointment">Mobile appointment</option>
+        <label>Duration (min)</label>
+        <input type="number" min="1" [(ngModel)]="draft.durationMinutes" />
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Menu section</label>
+        <select [(ngModel)]="draft.menuGroupId">
+          <option value="">No section</option>
+          @for (group of groups(); track group.id) {
+            <option [value]="group.id">{{ group.name }}</option>
+          }
         </select>
       </div>
-      <div class="field checkbox-field">
-        <label>
-          <input type="checkbox" [(ngModel)]="draft.isAddOn" />
-          Add-on (cannot be booked alone)
-        </label>
+      <div class="field">
+        <label>Sort order</label>
+        <input type="number" [(ngModel)]="draft.sortOrder" />
       </div>
-      <div class="actions">
-        <button type="button" class="btn" (click)="cancelForm()">
-          <adeni-carbon-icon name="close" [size]="16" />
-          Cancel
-        </button>
-        <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="save()">
-          <adeni-carbon-icon name="save" [size]="16" />
-          Save
-        </button>
-      </div>
-    </section>
-  }
+    </div>
+    <div class="field">
+      <label>Booking type</label>
+      <select [(ngModel)]="draft.bookingDeliveryType">
+        <option value="appointment">Appointment (1:1 slot)</option>
+        <option value="class">Class (fixed start, capacity)</option>
+        <option value="session">Session (e.g. personal training)</option>
+        <option value="experience">Experience (e.g. spa block)</option>
+        <option value="mobile_appointment">Mobile appointment</option>
+      </select>
+    </div>
+    <div class="field checkbox-field">
+      <label>
+        <input type="checkbox" [(ngModel)]="draft.isAddOn" />
+        Add-on (cannot be booked alone)
+      </label>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn" (click)="cancelForm()">
+        <adeni-carbon-icon name="close" [size]="16" />
+        Cancel
+      </button>
+      <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="save()">
+        <adeni-carbon-icon name="save" [size]="16" />
+        Save
+      </button>
+    </div>
+  </adeni-modal>
 
   @if (loading()) {
     <p class="muted">Loading…</p>
@@ -144,37 +115,198 @@
       description="Add at least one service so customers can book online from your public page."
     />
   } @else {
-    <section class="card">
-      <ul class="plain">
-        @for (service of services(); track service.id) {
-          <li class="list-row">
-            <div>
-              <strong>{{ service.name }}</strong>
-              <p class="muted">
-                {{ formatPrice(service.priceAmount, service.currency) }} ·
-                {{ service.durationMinutes }} min ·
+    <div class="roster">
+      <adeni-list-toolbar
+        storageKey="portal.services"
+        [viewMode]="viewMode()"
+        (viewModeChange)="viewMode.set($event)"
+        [count]="filteredServices().length"
+        singularCountLabel="service"
+        pluralCountLabel="services"
+        searchPlaceholder="Search services"
+        [searchQuery]="menuSearch()"
+        (searchQueryChange)="menuSearch.set($event)"
+      >
+        <adeni-list-filter-row listFilters>
+          <adeni-filter-select
+            layout="toolbar"
+            label="Menu section"
+            [options]="groupFilterOptions()"
+            [value]="groupFilter()"
+            (valueChange)="groupFilter.set($any($event))"
+          />
+        </adeni-list-filter-row>
+        <adeni-export-menu listExports label="Export" [items]="exportItems" />
+      </adeni-list-toolbar>
+
+      @if (filteredServices().length === 0) {
+        <adeni-portal-empty-state
+          icon="search"
+          title="No matching services"
+          description="Adjust search or collection filter."
+          [compact]="true"
+        />
+      } @else if (viewMode() === "cards") {
+        <ul class="plain staff-grid">
+          @for (service of filteredServices(); track service.id) {
+            <li class="org-card">
+              <div class="org-avatar" data-tone="neutral" aria-hidden="true">
+                <span>{{ serviceInitials(service) }}</span>
+              </div>
+              <strong class="org-name">{{ service.name }}</strong>
+              <span class="org-role">{{
+                formatPrice(service.priceAmount, service.currency)
+              }}
+                · {{ service.durationMinutes }} min</span>
+              <adeni-pill
+                class="org-section-pill"
+                [tone]="service.menuGroupId ? 'brand' : 'neutral'"
+                [compact]="true"
+              >
                 {{ groupName(service.menuGroupId) }}
+              </adeni-pill>
+              <div class="org-meta adeni-cell-pills">
                 @if (service.isAddOn) {
-                  · Add-on
+                  <adeni-pill tone="neutral" [compact]="true">Add-on</adeni-pill>
                 }
                 @if (service.categorySlug) {
-                  · {{ categoryLabel("en", service.categorySlug) }}
+                  <adeni-pill tone="info" [compact]="true">{{
+                    categoryLabel("en", service.categorySlug)
+                  }}</adeni-pill>
                 }
-              </p>
+              </div>
+              <div class="org-actions">
+                <button
+                  type="button"
+                  [disabled]="busy() === service.id"
+                  (click)="openEdit(service)"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  class="danger"
+                  [disabled]="busy() === service.id"
+                  (click)="deactivate(service)"
+                >
+                  Deactivate
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+      } @else {
+        <adeni-data-table
+          [rows]="filteredServices()"
+          [columns]="serviceTableColumns"
+          [trackRow]="trackServiceRow"
+        >
+          <ng-template adeniDataTableCell="name" let-service>
+            <adeni-table-person-cell
+              [displayName]="service.name"
+              [subtitle]="
+                formatPrice(service.priceAmount, service.currency) +
+                ' · ' +
+                service.durationMinutes +
+                ' min'
+              "
+              [initials]="serviceInitials(service)"
+              avatarTone="neutral"
+            />
+          </ng-template>
+          <ng-template adeniDataTableCell="collection" let-service>
+            <adeni-pill
+              [tone]="service.menuGroupId ? 'brand' : 'neutral'"
+              [compact]="true"
+            >
+              {{ groupName(service.menuGroupId) }}
+            </adeni-pill>
+          </ng-template>
+          <ng-template adeniDataTableCell="tags" let-service>
+            <div class="adeni-cell-pills">
+              @if (service.isAddOn) {
+                <adeni-pill tone="neutral" [compact]="true">Add-on</adeni-pill>
+              }
+              @if (service.categorySlug) {
+                <adeni-pill tone="info" [compact]="true">{{
+                  categoryLabel("en", service.categorySlug)
+                }}</adeni-pill>
+              }
             </div>
-            <div class="actions">
-              <button type="button" class="btn" [disabled]="busy() === service.id" (click)="openEdit(service)">
-                <adeni-carbon-icon name="edit" [size]="16" />
-                Edit
-              </button>
-              <button type="button" class="btn btn-danger" [disabled]="busy() === service.id" (click)="deactivate(service)">
-                <adeni-carbon-icon name="misuse" [size]="16" />
-                Deactivate
-              </button>
-            </div>
+          </ng-template>
+          <ng-template adeniDataTableActions let-service>
+            <adeni-row-action-bar>
+              <adeni-icon-btn
+                icon="edit"
+                label="Edit service"
+                variant="table"
+                [dense]="true"
+                [disabled]="busy() === service.id"
+                (pressed)="openEdit(service)"
+              />
+              <adeni-icon-btn
+                icon="misuse"
+                label="Deactivate service"
+                variant="danger-soft"
+                [dense]="true"
+                [disabled]="busy() === service.id"
+                (pressed)="deactivate(service)"
+              />
+            </adeni-row-action-bar>
+          </ng-template>
+        </adeni-data-table>
+      }
+    </div>
+  }
+
+  <adeni-modal
+    [open]="showCollectionsManager()"
+    title="Menu sections"
+    subtitle="Headings on your public booking menu — assign each service to a section when you edit it."
+    size="md"
+    [hasFooter]="true"
+    (closed)="showCollectionsManager.set(false)"
+  >
+    <div class="menu-section-add">
+      <input
+        type="text"
+        placeholder="Section name (e.g. Hair, Nails)"
+        [ngModel]="newGroupName()"
+        (ngModelChange)="newGroupName.set($event)"
+        maxlength="120"
+        (keyup.enter)="addGroup()"
+      />
+      <button type="button" class="btn btn-primary" [disabled]="busy() === 'group'" (click)="addGroup()">
+        <adeni-carbon-icon name="add" [size]="16" />
+        Add section
+      </button>
+    </div>
+    @if (groups().length === 0) {
+      <p class="muted menu-section-empty">
+        No sections yet. Services show as one list on your public page until you add headings.
+      </p>
+    } @else {
+      <ul class="menu-section-list plain">
+        @for (group of groups(); track group.id) {
+          <li class="menu-section-item">
+            <span class="menu-section-name">{{ group.name }}</span>
+            <button
+              type="button"
+              class="btn btn-ghost-danger"
+              [disabled]="busy() === group.id"
+              (click)="removeGroup(group)"
+            >
+              Remove
+            </button>
           </li>
         }
       </ul>
-    </section>
-  }
+    }
+
+    <div modalFooter class="modal-footer-actions">
+      <button type="button" class="btn" (click)="showCollectionsManager.set(false)">
+        Done
+      </button>
+    </div>
+  </adeni-modal>
 </app-portal-page>

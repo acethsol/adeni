@@ -20,7 +20,7 @@ import { AdeniFeedbackService } from "./adeni-feedback.service";
       position: fixed;
       left: 50%;
       bottom: 1.25rem;
-      z-index: 1200;
+      z-index: 2000;
       display: flex;
       align-items: center;
       gap: 0.85rem;

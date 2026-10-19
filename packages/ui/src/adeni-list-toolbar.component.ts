@@ -1,5 +1,6 @@
 import { Component, input, model, signal } from "@angular/core";
 import { AdeniCarbonIconComponent } from "./adeni-carbon-icon.component";
+import type { AdeniCarbonIconName } from "./carbon-icon";
 import { persistListViewMode, type AdeniListViewMode } from "./adeni-list-view.types";
 
 @Component({
@@ -65,22 +66,22 @@ import { persistListViewMode, type AdeniListViewMode } from "./adeni-list-view.t
                   class="adeni-view-switcher-btn"
                   [class.active]="viewMode() === 'cards'"
                   [attr.aria-pressed]="viewMode() === 'cards'"
-                  title="Card view"
+                  [title]="viewModeCardsLabel() + ' view'"
                   (click)="setViewMode('cards')"
                 >
-                  <adeni-carbon-icon name="grid" [size]="16" aria-hidden="true" />
-                  <span>Cards</span>
+                  <adeni-carbon-icon [name]="viewModeCardsIcon()" [size]="16" aria-hidden="true" />
+                  <span>{{ viewModeCardsLabel() }}</span>
                 </button>
                 <button
                   type="button"
                   class="adeni-view-switcher-btn"
                   [class.active]="viewMode() === 'table'"
                   [attr.aria-pressed]="viewMode() === 'table'"
-                  title="List view"
+                  [title]="viewModeTableLabel() + ' view'"
                   (click)="setViewMode('table')"
                 >
-                  <adeni-carbon-icon name="table" [size]="16" aria-hidden="true" />
-                  <span>List</span>
+                  <adeni-carbon-icon [name]="viewModeTableIcon()" [size]="16" aria-hidden="true" />
+                  <span>{{ viewModeTableLabel() }}</span>
                 </button>
               </div>
             }
@@ -104,6 +105,10 @@ export class AdeniListToolbarComponent {
   readonly searchQuery = model("");
 
   readonly showViewSwitcher = input(true);
+  readonly viewModeCardsLabel = input("Cards");
+  readonly viewModeTableLabel = input("List");
+  readonly viewModeCardsIcon = input<AdeniCarbonIconName>("grid");
+  readonly viewModeTableIcon = input<AdeniCarbonIconName>("table");
 
   readonly searchFocused = signal(false);
 

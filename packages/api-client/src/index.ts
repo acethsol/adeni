@@ -1063,6 +1063,7 @@ export class AdeniApiClient {
     search?: string;
     page?: number;
     pageSize?: number;
+    discover?: "discover" | "walk_in";
   }): Promise<TenantCustomerListResponse> {
     const query = new URLSearchParams();
     if (params?.search) {
@@ -1074,6 +1075,9 @@ export class AdeniApiClient {
     if (params?.pageSize) {
       query.set("pageSize", String(params.pageSize));
     }
+    if (params?.discover) {
+      query.set("discover", params.discover);
+    }
     const suffix = query.size > 0 ? `?${query.toString()}` : "";
     const response = await this.request(`/api/v1/tenant/customers${suffix}`);
     return tenantCustomerListResponseSchema.parse(await response.json());
@@ -1083,7 +1087,14 @@ export class AdeniApiClient {
     const response = await this.request(
       `/api/v1/tenant/customers/${encodeURIComponent(tenantCustomerId)}`,
     );
-    return tenantCustomerDetailSchema.parse(await response.json());
+    const json = (await response.json()) as Record<string, unknown>;
+    return tenantCustomerDetailSchema.parse({
+      ...json,
+      recentBookingIds: json["recentBookingIds"] ?? [],
+      recentQueueTicketIds: json["recentQueueTicketIds"] ?? [],
+      recentBookings: json["recentBookings"] ?? [],
+      recentQueueVisits: json["recentQueueVisits"] ?? [],
+    });
   }
 
   async getTenantKioskStatus(): Promise<KioskStatusResponse> {

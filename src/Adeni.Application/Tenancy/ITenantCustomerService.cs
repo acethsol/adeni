@@ -12,6 +12,20 @@ public sealed record TenantCustomerListItemResponse(
     DateTimeOffset LastSeenAt,
     Guid? PlatformCustomerId);
 
+public sealed record TenantCustomerRecentBookingResponse(
+    Guid Id,
+    string ServiceName,
+    DateTimeOffset StartAt,
+    int Status,
+    string? StaffDisplayName);
+
+public sealed record TenantCustomerRecentQueueVisitResponse(
+    Guid Id,
+    DateTimeOffset JoinedAt,
+    int Status,
+    string? ServiceName,
+    string? StaffDisplayName);
+
 public sealed record TenantCustomerDetailResponse(
     Guid Id,
     string DisplayName,
@@ -22,7 +36,9 @@ public sealed record TenantCustomerDetailResponse(
     DateTimeOffset? LastQueueJoinAt,
     Guid? PlatformCustomerId,
     IReadOnlyList<Guid> RecentBookingIds,
-    IReadOnlyList<Guid> RecentQueueTicketIds);
+    IReadOnlyList<Guid> RecentQueueTicketIds,
+    IReadOnlyList<TenantCustomerRecentBookingResponse> RecentBookings,
+    IReadOnlyList<TenantCustomerRecentQueueVisitResponse> RecentQueueVisits);
 
 public sealed record TenantCustomerListResponse(
     IReadOnlyList<TenantCustomerListItemResponse> Items,
@@ -54,5 +70,6 @@ public interface ITenantCustomerService
         string? search,
         int page,
         int pageSize,
+        string? discoverFilter = null,
         CancellationToken cancellationToken = default);
 }

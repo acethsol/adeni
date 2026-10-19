@@ -1591,6 +1591,26 @@ export const tenantCustomerListResponseSchema = pagedResultSchema(tenantCustomer
 
 export type TenantCustomerListResponse = z.infer<typeof tenantCustomerListResponseSchema>;
 
+export const tenantCustomerRecentBookingSchema = z.object({
+  id: z.string().uuid(),
+  serviceName: z.string(),
+  startAt: z.string(),
+  status: z.number().int(),
+  staffDisplayName: z.string().nullable().optional(),
+});
+
+export type TenantCustomerRecentBooking = z.infer<typeof tenantCustomerRecentBookingSchema>;
+
+export const tenantCustomerRecentQueueVisitSchema = z.object({
+  id: z.string().uuid(),
+  joinedAt: z.string(),
+  status: z.number().int(),
+  serviceName: z.string().nullable().optional(),
+  staffDisplayName: z.string().nullable().optional(),
+});
+
+export type TenantCustomerRecentQueueVisit = z.infer<typeof tenantCustomerRecentQueueVisitSchema>;
+
 export const tenantCustomerDetailSchema = z.object({
   id: z.string().uuid(),
   displayName: z.string(),
@@ -1600,8 +1620,10 @@ export const tenantCustomerDetailSchema = z.object({
   lastBookingAt: z.string().nullable().optional(),
   lastQueueJoinAt: z.string().nullable().optional(),
   platformCustomerId: z.string().uuid().nullable().optional(),
-  recentBookingIds: z.array(z.string().uuid()),
-  recentQueueTicketIds: z.array(z.string().uuid()),
+  recentBookingIds: z.array(z.string().uuid()).default([]),
+  recentQueueTicketIds: z.array(z.string().uuid()).default([]),
+  recentBookings: z.array(tenantCustomerRecentBookingSchema).default([]),
+  recentQueueVisits: z.array(tenantCustomerRecentQueueVisitSchema).default([]),
 });
 
 export type TenantCustomerDetail = z.infer<typeof tenantCustomerDetailSchema>;
@@ -2116,6 +2138,19 @@ export const TENANT_STATUS_LABELS: Record<number, string> = {
 
 export function formatBookingStatus(status: number): string {
   return BOOKING_STATUS_LABELS[status] ?? "Unknown";
+}
+
+export const QUEUE_TICKET_STATUS_LABELS: Record<number, string> = {
+  0: "Waiting",
+  1: "Called",
+  2: "In service",
+  3: "Done",
+  4: "No-show",
+  5: "Cancelled",
+};
+
+export function formatQueueTicketStatus(status: number): string {
+  return QUEUE_TICKET_STATUS_LABELS[status] ?? "Unknown";
 }
 
 export function formatTenantStatus(status: number): string {

@@ -18,9 +18,17 @@ import type {
 } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
+  AdeniDataTableCellDirective,
+  AdeniDataTableComponent,
   AdeniFeedbackService,
+  AdeniFilterSelectComponent,
+  AdeniListFilterRowComponent,
+  AdeniListToolbarComponent,
+  AdeniPillComponent,
+  AdeniPortalEmptyStateComponent,
   CALENDAR_DAYS_ORDER,
   PortalPageComponent,
+  readPersistedListViewMode,
   addDays,
   addMonths,
   clipToDay,
@@ -35,6 +43,10 @@ import {
   startOfDay,
   startOfMonth,
   startOfWeek,
+  type AdeniDataTableColumn,
+  type AdeniFilterSelectOption,
+  type AdeniListViewMode,
+  type AdeniPillTone,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { PortalSessionService } from "../../core/services/portal-session.service";
@@ -43,8 +55,18 @@ const PX_PER_HOUR = 64;
 const DEFAULT_START_HOUR = 8;
 const DEFAULT_END_HOUR = 20;
 const DAYS_ORDER = CALENDAR_DAYS_ORDER;
+const STAFF_EVENT_PALETTE = ["#6929c4", "#1192e8", "#9f1853", "#198038", "#b28600", "#697077"];
 
 type CalendarView = "month" | "week" | "day";
+type CalendarColorBy = "staff" | "status";
+type CalendarKindFilter = "all" | "bookings" | "leave";
+type CalendarStatusFilter =
+  | "all"
+  | "pending"
+  | "confirmed"
+  | "rejected"
+  | "cancelled"
+  | "leave";
 
 type DayColumn = {
   date: Date;
@@ -77,6 +99,7 @@ type PlacedBlock = {
   statusLabel: string | null;
   customerSelectedStaff: boolean;
   staffDisplayName: string | null;
+  staffMemberId: string | null;
   booking: StaffCalendarBookingItem | null;
   leave: StaffCalendarLeaveItem | null;
 };
@@ -88,7 +111,18 @@ type MonthCell = DayColumn & {
 @Component({
   selector: "app-staff-calendar",
   standalone: true,
-  imports: [PortalPageComponent, RouterLink, AdeniCarbonIconComponent],
+  imports: [
+    PortalPageComponent,
+    RouterLink,
+    AdeniCarbonIconComponent,
+    AdeniListToolbarComponent,
+    AdeniListFilterRowComponent,
+    AdeniFilterSelectComponent,
+    AdeniDataTableComponent,
+    AdeniDataTableCellDirective,
+    AdeniPillComponent,
+    AdeniPortalEmptyStateComponent,
+  ],
   templateUrl: "./staff-calendar.component.html",
   styleUrl: "./staff-calendar.component.scss",
 })
@@ -106,8 +140,16 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
   readonly team = signal<StaffTeamCalendarResponse | null>(null);
   /** Team board for owners/managers; member/self for a single practitioner. */
   readonly teamMode = signal(false);
-  /** null = all staff on the team board. */
-  readonly filterStaffId = signal<string | null>(null);
+  /** Hidden practitioners on the team board (empty = everyone visible). */
+  readonly hiddenStaffIds = signal<Set<string>>(new Set());
+  readonly listViewMode = signal<AdeniListViewMode>(
+    readPersistedListViewMode("portal.calendar", "cards"),
+  );
+  readonly calendarSearch = signal("");
+  readonly kindFilter = signal<CalendarKindFilter>("all");
+  readonly statusFilter = signal<CalendarStatusFilter>("all");
+  readonly colorBy = signal<CalendarColorBy>("staff");
+  readonly sidebarMonth = signal(startOfMonth(new Date()));
   readonly weekStart = signal(startOfWeek(new Date()));
   readonly monthStart = signal(startOfMonth(new Date()));
   readonly view = signal<CalendarView>("week");
@@ -120,27 +162,24 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
 
   readonly activeHours = computed((): WeeklyAvailabilityRule[] => {
     if (this.teamMode()) {
-      const team = this.team();
-      const filter = this.filterStaffId();
-      if (!team || !filter) {
-        return [];
-      }
-      return team.staff.find((s) => s.staffMemberId === filter)?.hours ?? [];
+      return [];
     }
     return this.calendar()?.hours ?? [];
   });
 
   readonly inheritsBusinessHours = computed(() => {
     if (this.teamMode()) {
-      const team = this.team();
-      const filter = this.filterStaffId();
-      if (!team || !filter) {
-        return true;
-      }
-      return team.staff.find((s) => s.staffMemberId === filter)?.inheritsBusinessHours ?? true;
+      return true;
     }
     return this.calendar()?.inheritsBusinessHours ?? false;
   });
+
+  private visibleForStaff(staffMemberId: string | null | undefined): boolean {
+    if (!staffMemberId) {
+      return true;
+    }
+    return !this.hiddenStaffIds().has(staffMemberId);
+  }
 
   readonly sourceBookings = computed((): StaffCalendarBookingItem[] => {
     if (this.teamMode()) {
@@ -148,11 +187,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
       if (!team) {
         return [];
       }
-      const filter = this.filterStaffId();
-      if (!filter) {
-        return team.bookings;
-      }
-      return team.bookings.filter((b) => b.staffMemberId === filter);
+      return team.bookings.filter((b) => this.visibleForStaff(b.staffMemberId));
     }
     return this.calendar()?.bookings ?? [];
   });
@@ -163,33 +198,137 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
       if (!team) {
         return [];
       }
-      const filter = this.filterStaffId();
-      if (!filter) {
-        return team.leave;
-      }
-      return team.leave.filter((l) => l.staffMemberId === filter);
+      return team.leave.filter((l) => this.visibleForStaff(l.staffMemberId));
     }
     return this.calendar()?.leave ?? [];
   });
 
   readonly boardTitle = computed(() => {
     if (this.teamMode()) {
-      const filter = this.filterStaffId();
-      if (!filter) {
-        return "Team calendar";
-      }
-      return (
-        this.team()?.staff.find((s) => s.staffMemberId === filter)?.displayName ?? "Staff calendar"
-      );
+      return "Appointments";
     }
-    return this.calendar()?.displayName ? `${this.calendar()!.displayName} · Floor` : "Staff calendar";
+    return this.calendar()?.displayName
+      ? `${this.calendar()!.displayName} · Calendar`
+      : "My calendar";
   });
 
-  readonly boardSubtitle = computed(() => {
-    if (this.teamMode()) {
-      return "All practitioners — filter by person, track booked hours, spot customer-requested bookings.";
+  readonly boardSubtitle = computed(() => this.appointmentSummary());
+
+  readonly appointmentSummary = computed(() => {
+    const count = this.stats().bookings;
+    const label = count === 1 ? "appointment" : "appointments";
+    return `${count} ${label} · ${this.periodLabel()}`;
+  });
+
+  readonly focusDayKey = computed(() => dayKey(this.focusDay()));
+
+  readonly kindFilterOptions: AdeniFilterSelectOption[] = [
+    { value: "all", label: "All items" },
+    { value: "bookings", label: "Appointments" },
+    { value: "leave", label: "Leave" },
+  ];
+
+  readonly statusFilterOptions: AdeniFilterSelectOption[] = [
+    { value: "all", label: "All statuses" },
+    { value: "pending", label: "Pending" },
+    { value: "confirmed", label: "Confirmed" },
+    { value: "rejected", label: "Rejected" },
+    { value: "cancelled", label: "Cancelled" },
+    { value: "leave", label: "Leave" },
+  ];
+
+  readonly displayBlocks = computed((): PlacedBlock[] => {
+    let list = this.blocks().filter(
+      (b) =>
+        this.view() !== "month" || this.days().find((d) => d.key === b.dayKey)?.inMonth,
+    );
+
+    const kind = this.kindFilter();
+    if (kind === "bookings") {
+      list = list.filter((b) => b.kind === "booking");
+    } else if (kind === "leave") {
+      list = list.filter((b) => b.kind === "leave");
     }
-    return "Month, week, and day board — bookings, leave, and hours on one calendar.";
+
+    const status = this.statusFilter();
+    if (status === "leave") {
+      list = list.filter((b) => b.kind === "leave");
+    } else if (status !== "all") {
+      list = list.filter((b) => b.kind === "booking" && this.statusMatchesFilter(b.status, status));
+    }
+
+    const query = this.calendarSearch().trim().toLowerCase();
+    if (query) {
+      list = list.filter((b) => {
+        const haystack = [
+          b.title,
+          b.staffDisplayName ?? "",
+          b.statusLabel ?? "",
+          b.dayKey,
+          this.formatAgendaDay(b.dayKey),
+        ]
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(query);
+      });
+    }
+
+    return list.sort((a, b) => {
+      const dayCmp = a.dayKey.localeCompare(b.dayKey);
+      if (dayCmp !== 0) {
+        return dayCmp;
+      }
+      return a.top - b.top;
+    });
+  });
+
+  readonly agendaTableColumns: AdeniDataTableColumn<PlacedBlock>[] = [
+    {
+      id: "when",
+      header: "When",
+      cell: (b) => `${this.formatAgendaDay(b.dayKey)} · ${b.startLabel} – ${b.endLabel}`,
+    },
+    { id: "service", header: "Service", cell: (b) => b.title },
+    {
+      id: "staff",
+      header: "Staff",
+      cell: (b) => b.staffDisplayName ?? "—",
+    },
+    {
+      id: "status",
+      header: "Status",
+      cell: (b) => (b.kind === "leave" ? "Leave" : (b.statusLabel ?? "—")),
+    },
+  ];
+
+  readonly trackAgendaRow = (block: PlacedBlock): string => block.id;
+
+  readonly sidebarMiniCells = computed((): DayColumn[] => {
+    const month = this.sidebarMonth();
+    const gridStart = startOfWeek(month);
+    const monthEnd = endOfMonth(month);
+    const gridEnd = addDays(startOfWeek(monthEnd), 6);
+    const today = startOfDay(new Date());
+    const out: DayColumn[] = [];
+    for (let d = new Date(gridStart); d <= gridEnd; d = addDays(d, 1)) {
+      out.push({
+        date: d,
+        key: dayKey(d),
+        dayOfWeek: d.getDay(),
+        label: d.toLocaleDateString(undefined, { weekday: "short" }),
+        shortLabel: d.toLocaleDateString(undefined, { weekday: "narrow" }),
+        dateNum: d.getDate(),
+        isToday: sameDay(d, today),
+        isPast: d < today,
+        openMinutes: null,
+        closeMinutes: null,
+        isClosed: false,
+        bookingCount: 0,
+        leaveCount: 0,
+        inMonth: d.getMonth() === month.getMonth(),
+      });
+    }
+    return out;
   });
 
 
@@ -229,9 +368,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
     const month = this.monthStart();
     const bookingsSrc = this.sourceBookings();
     const leaveSrc = this.sourceLeave();
-    const hasSchedule = this.teamMode()
-      ? this.filterStaffId() != null
-      : this.calendar() != null;
+    const hasSchedule = !this.teamMode() && this.calendar() != null;
     const inherits = this.inheritsBusinessHours();
 
     const buildDay = (date: Date, inMonth: boolean): DayColumn => {
@@ -314,7 +451,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
     }
     return this.days().map((day) => ({
       ...day,
-      items: this.blocks()
+      items: this.displayBlocks()
         .filter((b) => b.dayKey === day.key)
         .sort((a, b) => a.top - b.top),
     }));
@@ -364,6 +501,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
           statusLabel: null,
           customerSelectedStaff: false,
           staffDisplayName: leave.staffDisplayName ?? null,
+          staffMemberId: leave.staffMemberId ?? null,
           booking: null,
           leave,
         });
@@ -393,6 +531,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
           statusLabel: statusLabel(booking.status),
           customerSelectedStaff: selected,
           staffDisplayName: booking.staffDisplayName ?? null,
+          staffMemberId: booking.staffMemberId ?? null,
           booking,
           leave: null,
         });
@@ -407,7 +546,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
     if (!id) {
       return null;
     }
-    return this.blocks().find((b) => b.id === id || b.booking?.id === id) ?? null;
+    return this.displayBlocks().find((b) => b.id === id || b.booking?.id === id) ?? null;
   });
 
   readonly nowLine = computed(() => {
@@ -488,6 +627,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
     const path = this.route.snapshot.routeConfig?.path ?? "";
     const isTeamRoute = path === "calendar" || this.route.snapshot.data["teamCalendar"] === true;
     this.teamMode.set(isTeamRoute && this.session.can("portal.staff"));
+    this.colorBy.set(isTeamRoute && this.session.can("portal.staff") ? "staff" : "status");
     this.staffId = routeId ?? this.session.staffMemberId() ?? "";
     if (typeof window !== "undefined" && window.matchMedia("(max-width: 820px)").matches) {
       this.view.set("day");
@@ -497,13 +637,92 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
     await this.load();
   }
 
-  setStaffFilter(staffMemberId: string | null): void {
-    this.filterStaffId.set(staffMemberId);
+  onListViewChange(mode: AdeniListViewMode): void {
+    this.listViewMode.set(mode);
     this.clearSelection();
+  }
+
+  setColorBy(mode: CalendarColorBy): void {
+    this.colorBy.set(mode);
+  }
+
+  isStaffVisible(staffMemberId: string): boolean {
+    return this.visibleForStaff(staffMemberId);
+  }
+
+  toggleStaffVisibility(staffMemberId: string): void {
+    const next = new Set(this.hiddenStaffIds());
+    if (next.has(staffMemberId)) {
+      next.delete(staffMemberId);
+    } else {
+      next.add(staffMemberId);
+    }
+    this.hiddenStaffIds.set(next);
+    this.clearSelection();
+  }
+
+  staffAccentColor(staffMemberId: string | null): string {
+    if (!staffMemberId) {
+      return STAFF_EVENT_PALETTE[STAFF_EVENT_PALETTE.length - 1]!;
+    }
+    const team = this.team()?.staff ?? [];
+    const idx = team.findIndex((s) => s.staffMemberId === staffMemberId);
+    if (idx < 0) {
+      return STAFF_EVENT_PALETTE[0]!;
+    }
+    return STAFF_EVENT_PALETTE[idx % STAFF_EVENT_PALETTE.length]!;
+  }
+
+  staffInitials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0]!.charAt(0) + parts[1]!.charAt(0)).toUpperCase();
+    }
+    return (parts[0] ?? "?").slice(0, 2).toUpperCase();
+  }
+
+  eventUsesStaffColor(block: PlacedBlock): boolean {
+    return this.teamMode() && this.colorBy() === "staff" && block.kind === "booking";
+  }
+
+  sidebarMonthLabel(): string {
+    return this.sidebarMonth().toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  }
+
+  shiftSidebarMonth(delta: number): void {
+    this.sidebarMonth.set(addMonths(this.sidebarMonth(), delta));
+  }
+
+  pickSidebarDay(cell: DayColumn): void {
+    this.focusDay.set(cell.date);
+    this.weekStart.set(startOfWeek(cell.date));
+    this.monthStart.set(startOfMonth(cell.date));
+    this.sidebarMonth.set(startOfMonth(cell.date));
+    if (this.view() === "month") {
+      this.view.set("week");
+    }
+    void this.load();
   }
 
   hoursLabel(minutes: number): string {
     return formatBookedHours(minutes);
+  }
+
+  /** Sidebar copy — spelled-out hours for the current calendar range. */
+  staffBookedHoursSummary(minutes: number): string {
+    if (minutes <= 0) {
+      return "No hours booked in this range";
+    }
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    const parts: string[] = [];
+    if (hours > 0) {
+      parts.push(`${hours} ${hours === 1 ? "hour" : "hours"}`);
+    }
+    if (mins > 0) {
+      parts.push(`${mins} min`);
+    }
+    return `Total: ${parts.join(" ")}`;
   }
 
   /** Roster admins see a back link; practitioners viewing their own calendar do not. */
@@ -556,6 +775,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
     this.focusDay.set(today);
     this.weekStart.set(startOfWeek(today));
     this.monthStart.set(startOfMonth(today));
+    this.sidebarMonth.set(startOfMonth(today));
     void this.load();
   }
 
@@ -606,7 +826,56 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
   }
 
   blocksForDay(dayKeyValue: string): PlacedBlock[] {
-    return this.blocks().filter((b) => b.dayKey === dayKeyValue);
+    return this.displayBlocks().filter((b) => b.dayKey === dayKeyValue);
+  }
+
+  formatAgendaDay(dayKeyValue: string): string {
+    const parts = dayKeyValue.split("-").map((p) => Number.parseInt(p, 10));
+    if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) {
+      return dayKeyValue;
+    }
+    const date = new Date(parts[0]!, parts[1]! - 1, parts[2]!);
+    return date.toLocaleDateString(undefined, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+  }
+
+  blockPillTone(block: PlacedBlock): AdeniPillTone {
+    if (block.kind === "leave") {
+      return "neutral";
+    }
+    switch (block.status) {
+      case 0:
+        return "warning";
+      case 1:
+        return "success";
+      case 2:
+        return "danger";
+      case 3:
+        return "neutral";
+      default:
+        return "info";
+    }
+  }
+
+  private statusMatchesFilter(
+    status: number | null,
+    filter: CalendarStatusFilter,
+  ): boolean {
+    switch (filter) {
+      case "pending":
+        return status === 0;
+      case "confirmed":
+        return status === 1;
+      case "rejected":
+        return status === 2;
+      case "cancelled":
+        return status === 3;
+      default:
+        return true;
+    }
   }
 
   offBandStyle(day: DayColumn): { top: string; height: string }[] {

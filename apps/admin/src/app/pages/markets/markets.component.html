@@ -2,6 +2,10 @@
   title="Markets"
   description="Discovery cities and regions. Live markets appear in the public catalog; offline markets keep existing businesses but hide from new discovery."
 >
+  <p pageActions>
+    <adeni-staff-btn variant="primary" icon="add" (pressed)="openCreate()">Add market</adeni-staff-btn>
+  </p>
+
   <section class="workflow-hints" aria-label="Market actions">
     <article class="workflow-hint-item">
       <adeni-carbon-icon name="misuse" [size]="18" />
@@ -29,29 +33,6 @@
     <p class="error-banner">{{ error() }}</p>
   }
 
-  <section class="card list-toolbar">
-    <form class="search-form" (submit)="applySearch(); $event.preventDefault()">
-      <label class="search-field">
-        <span class="visually-hidden">Search markets</span>
-        <adeni-carbon-icon name="search" [size]="16" />
-        <input
-          type="search"
-          [ngModel]="searchText()"
-          (ngModelChange)="searchText.set($event)"
-          name="q"
-          placeholder="Name, id, country, or currency"
-          autocomplete="off"
-        />
-      </label>
-      <adeni-staff-btn type="submit" variant="primary" icon="search">Search</adeni-staff-btn>
-    </form>
-    <adeni-staff-btn variant="primary" icon="add" (pressed)="openCreate()">Add market</adeni-staff-btn>
-    <adeni-staff-btn icon="restart" [disabled]="loading()" (pressed)="load()">Refresh</adeni-staff-btn>
-    @if (!loading() && totalCount() > 0) {
-      <p class="toolbar-meta">{{ showingRange() }}</p>
-    }
-  </section>
-
   @if (loading() && markets().length === 0) {
     <p class="muted">Loading markets…</p>
   } @else if (isEmptyCatalog()) {
@@ -61,79 +42,86 @@
       description="Add Ottawa, Lagos, or the next city where discovery should run."
     />
   } @else {
-    <section class="card data-table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th scope="col">Market</th>
-            <th scope="col">Country</th>
-            <th scope="col">Currency</th>
-            <th scope="col">Businesses</th>
-            <th scope="col">Status</th>
-            <th scope="col"><span class="visually-hidden">Actions</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (market of markets(); track market.id) {
-            <tr>
-              <td>
-                <div class="row-title">{{ market.name }}</div>
-                <p class="row-sub">{{ market.id }}</p>
-              </td>
-              <td>
-                <admin-pill [label]="market.countryCode" variant="neutral" [compact]="true" />
-              </td>
-              <td>
-                <admin-pill [label]="market.currency" variant="info" [compact]="true" />
-              </td>
-              <td>
-                <a
-                  class="count-link"
-                  [routerLink]="['/businesses']"
-                  [queryParams]="{ q: market.id }"
-                  >{{ market.businessCount ?? 0 }}</a
-                >
-              </td>
-              <td>
-                @let live = marketLivePill(market.isLive);
-                <admin-pill [label]="live.label" [variant]="live.variant" />
-              </td>
-              <td class="actions-cell">
-                <div class="actions-inline">
-                  <adeni-staff-btn icon="edit" (pressed)="openEdit(market)">Edit</adeni-staff-btn>
-                  @if (market.isLive) {
-                    <adeni-staff-btn icon="misuse" (pressed)="toggleLive(market)">Take offline</adeni-staff-btn>
-                  } @else {
-                    <adeni-staff-btn icon="flash--filled" (pressed)="toggleLive(market)">Go live</adeni-staff-btn>
-                  }
-                </div>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </section>
+    <div class="roster">
+      <adeni-list-toolbar
+        storageKey="admin.markets"
+        [showViewSwitcher]="false"
+        [count]="totalCount()"
+        singularCountLabel="market"
+        pluralCountLabel="markets"
+        searchPlaceholder="Name, id, country, or currency"
+        [searchQuery]="searchText()"
+        (searchQueryChange)="onToolbarSearch($event)"
+      />
 
-    @if (totalPages() > 1) {
-      <nav class="pager" aria-label="Market pages">
-        <adeni-staff-btn
-          icon="chevron--left"
-          [disabled]="page() <= 1 || loading()"
-          (pressed)="goToPage(page() - 1)"
-        >
-          Previous
-        </adeni-staff-btn>
-        <span class="pager-meta">{{ showingRange() }}</span>
-        <adeni-staff-btn
-          icon="chevron--right"
-          iconPosition="end"
-          [disabled]="page() >= totalPages() || loading()"
-          (pressed)="goToPage(page() + 1)"
-        >
-          Next
-        </adeni-staff-btn>
-      </nav>
-    }
+      <div class="adeni-list-results">
+        <adeni-data-table [rows]="markets()" [columns]="columns" [trackRow]="trackMarketRow">
+          <ng-template adeniDataTableCell="market" let-market>
+            <adeni-table-person-cell
+              [displayName]="market.name"
+              [subtitle]="market.id"
+              [initials]="marketInitials(market.name)"
+              avatarTone="neutral"
+            />
+          </ng-template>
+          <ng-template adeniDataTableCell="country" let-market>
+            <adeni-pill tone="neutral" [compact]="true">{{ market.countryCode }}</adeni-pill>
+          </ng-template>
+          <ng-template adeniDataTableCell="currency" let-market>
+            <adeni-pill tone="info" [compact]="true">{{ market.currency }}</adeni-pill>
+          </ng-template>
+          <ng-template adeniDataTableCell="businesses" let-market>
+            <a
+              class="count-link"
+              [routerLink]="['/businesses']"
+              [queryParams]="{ q: market.id }"
+              >{{ market.businessCount ?? 0 }}</a
+            >
+          </ng-template>
+          <ng-template adeniDataTableCell="status" let-market>
+            @let live = marketLivePill(market.isLive);
+            <adeni-pill [tone]="live.variant" [compact]="true">{{ live.label }}</adeni-pill>
+          </ng-template>
+          <ng-template adeniDataTableActions let-market>
+            <adeni-row-action-bar>
+              <adeni-icon-btn
+                icon="edit"
+                label="Edit market"
+                variant="table"
+                [dense]="true"
+                (pressed)="openEdit(market)"
+              />
+              @if (market.isLive) {
+                <adeni-icon-btn
+                  icon="misuse"
+                  label="Take offline"
+                  variant="danger-soft"
+                  [dense]="true"
+                  (pressed)="toggleLive(market)"
+                />
+              } @else {
+                <adeni-icon-btn
+                  icon="flash--filled"
+                  label="Go live"
+                  variant="table"
+                  [dense]="true"
+                  (pressed)="toggleLive(market)"
+                />
+              }
+            </adeni-row-action-bar>
+          </ng-template>
+        </adeni-data-table>
+
+        <adeni-list-pagination
+          [page]="page()"
+          [pageSize]="pageSize"
+          [totalCount]="totalCount()"
+          [loading]="loading()"
+          ariaLabel="Market pages"
+          (pageChange)="goToPage($event)"
+        />
+      </div>
+    </div>
   }
 
   <app-market-form-modal

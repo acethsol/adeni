@@ -6,124 +6,77 @@
     <p class="error-banner">{{ error() }}</p>
   }
 
-  <section class="card list-toolbar">
-    <form class="search-form" (submit)="search(); $event.preventDefault()">
-      <label class="search-field">
-        <span class="visually-hidden">Search transactions</span>
-        <adeni-carbon-icon name="search" [size]="16" />
-        <input
-          type="search"
-          [(ngModel)]="searchInput"
-          name="q"
-          placeholder="Paystack ref, transaction id, or business name"
-          autocomplete="off"
-        />
-      </label>
-      <adeni-staff-btn
-        type="submit"
-        variant="primary"
-        icon="search"
-        [disabled]="searching() || !searchInput.trim()"
-      >
-        {{ searching() ? "Searching…" : "Search" }}
-      </adeni-staff-btn>
-    </form>
-    <div class="kind-toggle" role="group" aria-label="Transaction type">
-      <adeni-staff-btn
-        icon="filter"
-        [variant]="kindFilter() === 'all' ? 'primary' : 'default'"
-        (pressed)="setKind('all')"
-      >
-        All
-      </adeni-staff-btn>
-      <adeni-staff-btn
-        icon="user--filled"
-        [variant]="kindFilter() === 'commerce' ? 'primary' : 'default'"
-        (pressed)="setKind('commerce')"
-      >
-        Commerce
-      </adeni-staff-btn>
-      <adeni-staff-btn
-        icon="flash--filled"
-        [variant]="kindFilter() === 'saas' ? 'primary' : 'default'"
-        (pressed)="setKind('saas')"
-      >
-        SaaS
-      </adeni-staff-btn>
-    </div>
-    @if (hasSearched() && totalCount() > 0) {
-      <p class="toolbar-meta">{{ showingRange() }}</p>
-    }
-  </section>
+  <adeni-list-toolbar
+    [showViewSwitcher]="false"
+    [showSearch]="true"
+    [count]="totalCount()"
+    singularCountLabel="result"
+    pluralCountLabel="results"
+    searchPlaceholder="Paystack ref, transaction id, or business name"
+    [searchQuery]="searchQuery()"
+    (searchQueryChange)="onSearchInput($event)"
+  >
+    <adeni-list-filter-row listFilters>
+      <adeni-filter-select
+        layout="toolbar"
+        label="Transaction type"
+        [options]="kindFilterOptions"
+        [value]="kindFilter()"
+        (valueChange)="onKindChange($any($event))"
+      />
+    </adeni-list-filter-row>
+    <adeni-export-menu listExports label="Export" [items]="exportItems" />
+  </adeni-list-toolbar>
 
   @if (searching() && rows().length === 0) {
     <p class="muted">Searching…</p>
   } @else if (!hasSearched()) {
-    <section class="card">
-      <p class="muted">
-        Use a Paystack reference, Adeni payment intent id, or business name, then search.
-      </p>
-    </section>
+    <adeni-portal-empty-state
+      icon="search"
+      title="Search transactions"
+      description="Enter a Paystack reference, payment intent id, or business name — results update as you type."
+    />
   } @else if (rows().length === 0 && !error()) {
-    <section class="card">
-      <p class="muted">No transactions found. Try the full Paystack reference or transaction id.</p>
-    </section>
-  } @else if (rows().length > 0) {
-    <section class="card data-table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th scope="col">When</th>
-            <th scope="col">Type</th>
-            <th scope="col">Business</th>
-            <th scope="col">Reference</th>
-            <th scope="col">Amount</th>
-            <th scope="col">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of rows(); track row.id) {
-            <tr>
-              <td>{{ row.occurredAt | date: "medium" }}</td>
-              <td>
-                <admin-pill [label]="kindLabel(row)" [variant]="kindVariant(row)" [compact]="true" />
-              </td>
-              <td>
-                <a [routerLink]="['/businesses', row.tenantId, 'billing']">{{ row.tenantName }}</a>
-              </td>
-              <td>
-                <code class="ref">{{ referenceLabel(row) }}</code>
-                @if (row.kind === "saas" && row.subscriptionSku) {
-                  <span class="muted row-sub">{{ formatSubscriptionSku(row.subscriptionSku) }}</span>
-                }
-              </td>
-              <td>{{ formatAmount(row) }}</td>
-              <td>{{ row.status }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </section>
+    <adeni-portal-empty-state
+      icon="search"
+      title="No transactions found"
+      description="Try the full Paystack reference or transaction id."
+      [compact]="true"
+    />
+  } @else {
+    <adeni-data-table [rows]="rows()" [columns]="columns" [trackRow]="trackRow">
+      <ng-template adeniDataTableCell="when" let-row>
+        <span class="adeni-data-table-text">{{ row.occurredAt | date: "medium" }}</span>
+      </ng-template>
+      <ng-template adeniDataTableCell="type" let-row>
+        <admin-pill [label]="kindLabel(row)" [variant]="kindVariant(row)" [compact]="true" />
+      </ng-template>
+      <ng-template adeniDataTableCell="business" let-row>
+        <a class="adeni-data-table-link" [routerLink]="['/businesses', row.tenantId, 'billing']">{{
+          row.tenantName
+        }}</a>
+      </ng-template>
+      <ng-template adeniDataTableCell="reference" let-row>
+        <code class="ref">{{ referenceLabel(row) }}</code>
+        @if (row.kind === "saas" && row.subscriptionSku) {
+          <span class="muted row-sub">{{ formatSubscriptionSku(row.subscriptionSku) }}</span>
+        }
+      </ng-template>
+      <ng-template adeniDataTableCell="amount" let-row>
+        <span class="adeni-data-table-text">{{ formatAmount(row) }}</span>
+      </ng-template>
+      <ng-template adeniDataTableCell="status" let-row>
+        <span class="adeni-data-table-text">{{ row.status }}</span>
+      </ng-template>
+    </adeni-data-table>
 
-    @if (totalPages() > 1) {
-      <nav class="pager" aria-label="Transaction pages">
-        <adeni-staff-btn
-          icon="chevron--left"
-          [disabled]="page() <= 1 || searching()"
-          (pressed)="goToPage(page() - 1)"
-        >
-          Previous
-        </adeni-staff-btn>
-        <span class="pager-meta">{{ showingRange() }}</span>
-        <adeni-staff-btn
-          icon="chevron--right"
-          iconPosition="end"
-          [disabled]="page() >= totalPages() || searching()"
-          (pressed)="goToPage(page() + 1)"
-        >
-          Next
-        </adeni-staff-btn>
-      </nav>
-    }
+    <adeni-list-pagination
+      [page]="page()"
+      [pageSize]="pageSize"
+      [totalCount]="totalCount()"
+      [loading]="searching()"
+      ariaLabel="Transaction pages"
+      (pageChange)="goToPage($event)"
+    />
   }
 </app-portal-page>

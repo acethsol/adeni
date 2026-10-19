@@ -22,9 +22,14 @@ import {
   AdeniDataTableActionsDirective,
   AdeniDataTableCellDirective,
   AdeniDataTableComponent,
+  AdeniExportMenuComponent,
   AdeniFeedbackService,
+  AdeniFilterSelectComponent,
   AdeniIconBtnComponent,
+  AdeniListFilterRowComponent,
   AdeniListToolbarComponent,
+  AdeniRowActionBarComponent,
+  AdeniTablePersonCellComponent,
   AdeniModalComponent,
   AdeniPillComponent,
   AdeniPortalEmptyStateComponent,
@@ -32,6 +37,8 @@ import {
   PortalPageComponent,
   readPersistedListViewMode,
   type AdeniDataTableColumn,
+  type AdeniExportMenuItem,
+  type AdeniFilterSelectOption,
   type AdeniListViewMode,
   type AdeniPillTone,
   type AdeniWizardStep,
@@ -45,7 +52,8 @@ const DAYS_ORDER = [1, 2, 3, 4, 5, 6, 0];
 const STAFF_VIEW_STORAGE_KEY = "portal.staff";
 
 type StaffFormTab = "profile" | "services" | "hours" | "leave";
-type StaffRosterFilter = "all" | "bookable" | "inactive" | "portal";
+type StaffBookingFilter = "all" | "bookable" | "inactive";
+type StaffPortalFilter = "all" | "has_portal" | "none";
 
 /** Create wizard steps (Leave only after save). */
 const CREATE_STEPS: StaffFormTab[] = ["profile", "services", "hours"];
@@ -137,6 +145,11 @@ function rowsToRules(rows: DayRow[]): WeeklyAvailabilityRule[] {
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
     AdeniListToolbarComponent,
+    AdeniListFilterRowComponent,
+    AdeniFilterSelectComponent,
+    AdeniExportMenuComponent,
+    AdeniTablePersonCellComponent,
+    AdeniRowActionBarComponent,
     AdeniDataTableComponent,
     AdeniDataTableActionsDirective,
     AdeniDataTableCellDirective,
@@ -157,7 +170,41 @@ export class StaffComponent implements OnInit, OnDestroy {
   readonly error = signal<string | null>(null);
   readonly staff = signal<StaffMember[]>([]);
   readonly rosterSearch = signal("");
-  readonly rosterFilter = signal<StaffRosterFilter>("all");
+  readonly bookingFilter = signal<StaffBookingFilter>("all");
+  readonly portalFilter = signal<StaffPortalFilter>("all");
+
+  readonly bookingFilterOptions: AdeniFilterSelectOption[] = [
+    { value: "all", label: "All booking states" },
+    { value: "bookable", label: "Bookable" },
+    { value: "inactive", label: "Inactive" },
+  ];
+
+  readonly portalFilterOptions: AdeniFilterSelectOption[] = [
+    { value: "all", label: "All portal access" },
+    { value: "has_portal", label: "Has portal access" },
+    { value: "none", label: "No portal access" },
+  ];
+
+  readonly staffExportItems: AdeniExportMenuItem[] = [
+    {
+      format: "csv",
+      label: "CSV (.csv)",
+      disabled: true,
+      hint: "Reporting export — coming soon",
+    },
+    {
+      format: "xlsx",
+      label: "Excel (.xlsx)",
+      disabled: true,
+      hint: "Reporting export — coming soon",
+    },
+    {
+      format: "pdf",
+      label: "PDF (.pdf)",
+      disabled: true,
+      hint: "Reporting export — coming soon",
+    },
+  ];
   readonly viewMode = signal<AdeniListViewMode>(
     readPersistedListViewMode(STAFF_VIEW_STORAGE_KEY, "cards"),
   );
@@ -198,15 +245,22 @@ export class StaffComponent implements OnInit, OnDestroy {
 
   readonly filteredStaff = computed(() => {
     let list = this.staff();
-    switch (this.rosterFilter()) {
+    switch (this.bookingFilter()) {
       case "bookable":
         list = list.filter((m) => m.isActive);
         break;
       case "inactive":
         list = list.filter((m) => !m.isActive);
         break;
-      case "portal":
+      default:
+        break;
+    }
+    switch (this.portalFilter()) {
+      case "has_portal":
         list = list.filter((m) => m.portalAccessStatus !== "none");
+        break;
+      case "none":
+        list = list.filter((m) => m.portalAccessStatus === "none");
         break;
       default:
         break;
@@ -351,10 +405,6 @@ export class StaffComponent implements OnInit, OnDestroy {
       default:
         return "No access";
     }
-  }
-
-  setRosterFilter(filter: StaffRosterFilter): void {
-    this.rosterFilter.set(filter);
   }
 
   bookingPillTone(member: StaffMember): AdeniPillTone {
@@ -688,26 +738,40 @@ export class StaffComponent implements OnInit, OnDestroy {
     this.error.set(null);
     try {
       await this.feedback.runLoading(async () => {
-        await this.api.withAuthorizedClient(async (c) => {
-          const [staff, catalog, profile] = await Promise.all([
-            c.listTenantStaff(),
-            c.getTenantServiceCatalog(),
-            c.getTenantProfile().catch(() => null),
-          ]);
-          this.staff.set(staff);
-          this.services.set(catalog.items.filter((s) => s.isActive !== false));
-          const slugs = [
-            profile?.categorySlug,
-            ...(profile?.additionalCategorySlugs ?? []),
-          ].filter((s): s is string => !!s?.trim());
-          this.categorySlugs.set(slugs);
-        });
-      }, "Loading team…");
+        await this.fetchStaffPageData();
+      }, "Loading staff", "Fetching roster and services");
     } catch {
       this.error.set("Could not load staff. Try again.");
     } finally {
       this.loading.set(false);
     }
+  }
+
+  private async refreshStaff(): Promise<void> {
+    try {
+      await this.api.withAuthorizedClient(async (c) => {
+        this.staff.set(await c.listTenantStaff());
+      });
+    } catch {
+      this.feedback.error("Could not refresh the roster.");
+    }
+  }
+
+  private async fetchStaffPageData(): Promise<void> {
+    await this.api.withAuthorizedClient(async (c) => {
+      const [staff, catalog, profile] = await Promise.all([
+        c.listTenantStaff(),
+        c.getTenantServiceCatalog(),
+        c.getTenantProfile().catch(() => null),
+      ]);
+      this.staff.set(staff);
+      this.services.set(catalog.items.filter((s) => s.isActive !== false));
+      const slugs = [
+        profile?.categorySlug,
+        ...(profile?.additionalCategorySlugs ?? []),
+      ].filter((s): s is string => !!s?.trim());
+      this.categorySlugs.set(slugs);
+    });
   }
 
   openCreate(): void {
@@ -846,11 +910,14 @@ export class StaffComponent implements OnInit, OnDestroy {
             await this.uploadAvatarIfNeeded(created.id);
           }
         });
-      }, editingId ? "Saving…" : "Adding…");
+      }, editingId ? "Saving changes" : "Adding team member", "Please wait");
 
-      this.feedback.success(editingId ? "Team member updated." : "Team member added.");
       this.cancelForm();
-      await this.load();
+      this.feedback.success(
+        editingId ? "Changes saved successfully." : "Team member added successfully.",
+        editingId ? "Updated" : "Added",
+      );
+      await this.refreshStaff();
     } catch {
       this.feedback.error("Could not save team member.");
     } finally {

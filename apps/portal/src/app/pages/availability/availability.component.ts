@@ -9,6 +9,7 @@ import {
   AdeniCarbonIconComponent,
   AdeniConfirmService,
   AdeniFeedbackService,
+  AdeniModalComponent,
   AdeniPortalEmptyStateComponent,
   PortalPageComponent,
 } from "@adeni/ui";
@@ -103,7 +104,13 @@ function findRangeCovering(date: string, ranges: BusinessClosedDate[]): Business
 @Component({
   selector: "app-availability",
   standalone: true,
-  imports: [PortalPageComponent, FormsModule, AdeniCarbonIconComponent, AdeniPortalEmptyStateComponent],
+  imports: [
+    PortalPageComponent,
+    FormsModule,
+    AdeniCarbonIconComponent,
+    AdeniPortalEmptyStateComponent,
+    AdeniModalComponent,
+  ],
   templateUrl: "./availability.component.html",
   styleUrl: "./availability.component.scss",
 })
@@ -127,6 +134,11 @@ export class AvailabilityComponent implements OnInit {
   rangeEnd = "";
   rangeReason = "";
   conflictWarning = signal<string | null>(null);
+  readonly showClosedDatesModal = signal(false);
+
+  setDayOpen(row: DayRow, open: boolean): void {
+    row.closed = !open;
+  }
 
   readonly monthLabel = computed(() => {
     return `${MONTH_LABELS[this.viewMonth()]} ${this.viewYear()}`;

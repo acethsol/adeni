@@ -1,7 +1,15 @@
 <app-portal-page
-  title="Availability"
-  description="Weekly hours and business closed dates — closed days cannot be booked."
+  title="Hours"
+  description="Weekly opening times and days when customers cannot book online."
 >
+  <button pageActions type="button" class="btn" (click)="showClosedDatesModal.set(true)">
+    <adeni-carbon-icon name="calendar" [size]="16" />
+    Closed dates
+    @if (closedRanges().length > 0) {
+      <span class="action-badge">{{ closedRanges().length }}</span>
+    }
+  </button>
+
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
@@ -13,142 +21,172 @@
   @if (loading()) {
     <p class="muted">Loading…</p>
   } @else {
-    <section class="card">
-      <h3>Weekly hours</h3>
-      <p class="section-lead">Recurring open times customers can book.</p>
-      <table>
-        <thead>
-          <tr>
-            <th>Day</th>
-            <th>Closed</th>
-            <th>Open</th>
-            <th>Close</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of rows; track row.dayOfWeek) {
-            <tr>
-              <td>{{ dayLabels[row.dayOfWeek] }}</td>
-              <td><input type="checkbox" [(ngModel)]="row.closed" /></td>
-              <td><input type="time" [(ngModel)]="row.openTime" [disabled]="row.closed" /></td>
-              <td><input type="time" [(ngModel)]="row.closeTime" [disabled]="row.closed" /></td>
-            </tr>
-          }
-        </tbody>
-      </table>
-      <button type="button" class="btn btn-primary save" [disabled]="saving()" (click)="save()">
-        <adeni-carbon-icon name="save" [size]="16" />
-        {{ saving() ? "Saving…" : "Save hours" }}
-      </button>
-    </section>
+    <section class="hours-shell">
+      <header class="hours-shell-head">
+        <div>
+          <h2 class="hours-shell-title">Weekly schedule</h2>
+          <p class="section-lead">Set when your business accepts online bookings each week.</p>
+        </div>
+      </header>
 
-    <section class="card closed-section">
-      <h3>Closed dates</h3>
-      <p class="section-lead">
-        Block specific days or ranges (holidays, renovations). Tap a day to close or reopen a single-day block.
-      </p>
-
-      <div class="cal-toolbar">
-        <button type="button" class="nav-btn" (click)="prevMonth()" aria-label="Previous month">‹</button>
-        <strong class="month-label">{{ monthLabel() }}</strong>
-        <button type="button" class="nav-btn" (click)="nextMonth()" aria-label="Next month">›</button>
-      </div>
-
-      <div class="month-dow" aria-hidden="true">
-        @for (d of dowHeaders; track d) {
-          <span>{{ d }}</span>
-        }
-      </div>
-      <div class="month-grid" role="grid" [attr.aria-label]="monthLabel()">
-        @for (cell of calendarCells(); track cell.key) {
-          <button
-            type="button"
-            class="month-cell"
-            [class.is-outside]="cell.outside"
-            [class.is-today]="cell.today"
-            [class.is-closed]="cell.closed"
-            [disabled]="closedBusy()"
-            [attr.aria-pressed]="cell.closed"
-            [attr.aria-label]="
-              (cell.closed ? 'Closed ' : 'Open ') + cell.date + '. Activate to toggle.'
-            "
-            (click)="toggleDay(cell)"
-          >
-            <span class="month-dom">{{ cell.day }}</span>
-            @if (cell.closed) {
-              <span class="closed-tag">Closed</span>
+      <div class="hours-grid">
+        @for (row of rows; track row.dayOfWeek) {
+          <div class="hours-row" [class.is-closed]="row.closed">
+            <span class="hours-day">{{ dayLabels[row.dayOfWeek] }}</span>
+            <label class="cds-toggle hours-toggle">
+              <input
+                type="checkbox"
+                role="switch"
+                [ngModel]="!row.closed"
+                (ngModelChange)="setDayOpen(row, $event)"
+              />
+              <span class="cds-toggle__track" aria-hidden="true"></span>
+              <span class="cds-toggle__label">{{ row.closed ? "Closed" : "Open" }}</span>
+            </label>
+            @if (!row.closed) {
+              <input type="time" class="hours-time" [(ngModel)]="row.openTime" aria-label="Open time" />
+              <span class="hours-to" aria-hidden="true">to</span>
+              <input type="time" class="hours-time" [(ngModel)]="row.closeTime" aria-label="Close time" />
+            } @else {
+              <span class="hours-off muted">Not accepting bookings</span>
             }
-          </button>
+          </div>
         }
       </div>
 
-      <div class="range-form">
-        <h4>Add closed range</h4>
-        <div class="row">
-          <div class="field">
-            <label for="closed-start">From</label>
-            <input id="closed-start" type="date" [(ngModel)]="rangeStart" />
-          </div>
-          <div class="field">
-            <label for="closed-end">To</label>
-            <input id="closed-end" type="date" [(ngModel)]="rangeEnd" />
-          </div>
-        </div>
-        <div class="field">
-          <label for="closed-reason">Reason (optional, owner-only)</label>
-          <input
-            id="closed-reason"
-            type="text"
-            maxlength="200"
-            [(ngModel)]="rangeReason"
-            placeholder="e.g. Holiday break"
-          />
-        </div>
-        <button
-          type="button"
-          class="btn btn-primary"
-          [disabled]="closedBusy()"
-          (click)="addClosedRange()"
-        >
-          <adeni-carbon-icon name="add" [size]="16" />
-          Close dates
+      <div class="hours-shell-actions">
+        <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="save()">
+          <adeni-carbon-icon name="save" [size]="16" />
+          {{ saving() ? "Saving…" : "Save weekly hours" }}
         </button>
       </div>
-
-      @if (closedRanges().length === 0) {
-        <adeni-portal-empty-state
-          [compact]="true"
-          [embedded]="true"
-          icon="calendar"
-          title="No closed dates"
-          description="Add holidays or maintenance days when customers should not book online."
-        />
-      } @else {
-        <ul class="plain closed-list">
-          @for (item of closedRanges(); track item.id) {
-            <li>
-              <span>
-                @if (item.startDate === item.endDate) {
-                  {{ item.startDate }}
-                } @else {
-                  {{ item.startDate }} – {{ item.endDate }}
-                }
-                @if (item.reason) {
-                  <em>· {{ item.reason }}</em>
-                }
-              </span>
-              <button
-                type="button"
-                class="danger"
-                [disabled]="closedBusy()"
-                (click)="removeClosed(item)"
-              >
-                Remove
-              </button>
-            </li>
-          }
-        </ul>
-      }
     </section>
+
+    @if (closedRanges().length > 0) {
+      <p class="closed-summary muted">
+        {{ closedRanges().length }} closed date
+        {{ closedRanges().length === 1 ? "block" : "blocks" }} — holidays and one-off closures.
+        <button type="button" class="link-btn" (click)="showClosedDatesModal.set(true)">
+          Manage
+        </button>
+      </p>
+    }
   }
+
+  <adeni-modal
+    [open]="showClosedDatesModal()"
+    title="Closed dates"
+    subtitle="Block specific days or ranges. Customers cannot book online on these dates."
+    size="lg"
+    [hasFooter]="true"
+    (closed)="showClosedDatesModal.set(false)"
+  >
+    <div class="cal-toolbar">
+      <button type="button" class="nav-btn" (click)="prevMonth()" aria-label="Previous month">‹</button>
+      <strong class="month-label">{{ monthLabel() }}</strong>
+      <button type="button" class="nav-btn" (click)="nextMonth()" aria-label="Next month">›</button>
+    </div>
+
+    <div class="month-dow" aria-hidden="true">
+      @for (d of dowHeaders; track d) {
+        <span>{{ d }}</span>
+      }
+    </div>
+    <div class="month-grid" role="grid" [attr.aria-label]="monthLabel()">
+      @for (cell of calendarCells(); track cell.key) {
+        <button
+          type="button"
+          class="month-cell"
+          [class.is-outside]="cell.outside"
+          [class.is-today]="cell.today"
+          [class.is-closed]="cell.closed"
+          [disabled]="closedBusy()"
+          [attr.aria-pressed]="cell.closed"
+          [attr.aria-label]="
+            (cell.closed ? 'Closed ' : 'Open ') + cell.date + '. Activate to toggle.'
+          "
+          (click)="toggleDay(cell)"
+        >
+          <span class="month-dom">{{ cell.day }}</span>
+          @if (cell.closed) {
+            <span class="closed-tag">Closed</span>
+          }
+        </button>
+      }
+    </div>
+
+    <div class="range-form">
+      <h4 class="range-form-title">Add closed range</h4>
+      <div class="row">
+        <div class="field">
+          <label for="closed-start">From</label>
+          <input id="closed-start" type="date" [(ngModel)]="rangeStart" />
+        </div>
+        <div class="field">
+          <label for="closed-end">To</label>
+          <input id="closed-end" type="date" [(ngModel)]="rangeEnd" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="closed-reason">Reason (optional, staff only)</label>
+        <input
+          id="closed-reason"
+          type="text"
+          maxlength="200"
+          [(ngModel)]="rangeReason"
+          placeholder="e.g. Public holiday"
+        />
+      </div>
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="closedBusy()"
+        (click)="addClosedRange()"
+      >
+        <adeni-carbon-icon name="add" [size]="16" />
+        Add closed range
+      </button>
+    </div>
+
+    @if (closedRanges().length === 0) {
+      <adeni-portal-empty-state
+        [compact]="true"
+        [embedded]="true"
+        icon="calendar"
+        title="No closed dates"
+        description="Tap days on the calendar or add a date range above."
+      />
+    } @else {
+      <ul class="plain closed-list">
+        @for (item of closedRanges(); track item.id) {
+          <li class="closed-list-item">
+            <span class="closed-list-copy">
+              @if (item.startDate === item.endDate) {
+                {{ item.startDate }}
+              } @else {
+                {{ item.startDate }} – {{ item.endDate }}
+              }
+              @if (item.reason) {
+                <span class="closed-reason">· {{ item.reason }}</span>
+              }
+            </span>
+            <button
+              type="button"
+              class="btn btn-ghost-danger"
+              [disabled]="closedBusy()"
+              (click)="removeClosed(item)"
+            >
+              Remove
+            </button>
+          </li>
+        }
+      </ul>
+    }
+
+    <div modalFooter class="modal-footer-actions">
+      <button type="button" class="btn" (click)="showClosedDatesModal.set(false)">
+        Done
+      </button>
+    </div>
+  </adeni-modal>
 </app-portal-page>

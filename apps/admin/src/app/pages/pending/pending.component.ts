@@ -5,11 +5,18 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import type { PendingBusiness } from "@adeni/shared";
 import {
-  AdeniCarbonIconComponent,
+  AdeniDataTableActionsDirective,
+  AdeniDataTableCellDirective,
+  AdeniDataTableComponent,
+  AdeniExportMenuComponent,
   AdeniFeedbackService,
+  AdeniListPaginationComponent,
+  AdeniListToolbarComponent,
   AdeniPortalEmptyStateComponent,
   AdeniStaffButtonComponent,
   PortalPageComponent,
+  type AdeniDataTableColumn,
+  type AdeniExportMenuItem,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 import { AdminOperationsRealtimeService } from "@adeni/ui";
@@ -28,7 +35,12 @@ import {
   imports: [
     PortalPageComponent,
     FormsModule,
-    AdeniCarbonIconComponent,
+    AdeniListToolbarComponent,
+    AdeniExportMenuComponent,
+    AdeniDataTableComponent,
+    AdeniDataTableCellDirective,
+    AdeniDataTableActionsDirective,
+    AdeniListPaginationComponent,
     AdeniStaffButtonComponent,
     AdeniPortalEmptyStateComponent,
     DatePipe,
@@ -59,6 +71,42 @@ export class AdminPendingComponent {
     adminListRangeLabel(this.page(), this.pageSize, this.totalCount()),
   );
   readonly isEmptyQueue = computed(() => !this.loading() && this.totalCount() === 0);
+
+  readonly exportItems: AdeniExportMenuItem[] = [
+    {
+      format: "csv",
+      label: "CSV (.csv)",
+      disabled: true,
+      hint: "Reporting export — coming soon",
+    },
+    {
+      format: "xlsx",
+      label: "Excel (.xlsx)",
+      disabled: true,
+      hint: "Reporting export — coming soon",
+    },
+    {
+      format: "pdf",
+      label: "PDF (.pdf)",
+      disabled: true,
+      hint: "Reporting export — coming soon",
+    },
+  ];
+
+  readonly columns: AdeniDataTableColumn<PendingBusiness>[] = [
+    { id: "business", header: "Business", cell: (item) => item.name },
+    { id: "market", header: "Market", cell: (item) => item.marketId },
+    {
+      id: "submitted",
+      header: "Submitted",
+      cell: () => "",
+    },
+    { id: "docs", header: "Docs", cell: () => "" },
+  ];
+
+  readonly trackRow = (item: PendingBusiness): string => item.id;
+
+  private searchDebounce: ReturnType<typeof setTimeout> | null = null;
 
   readonly tenantStatusPill = tenantStatusPill;
   readonly docCountPill = docCountPill;
@@ -103,12 +151,18 @@ export class AdminPendingComponent {
     }
   }
 
-  applySearch(): void {
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { q: this.searchText().trim() || null, page: null },
-      queryParamsHandling: "merge",
-    });
+  onToolbarSearch(value: string): void {
+    this.searchText.set(value);
+    if (this.searchDebounce) {
+      clearTimeout(this.searchDebounce);
+    }
+    this.searchDebounce = setTimeout(() => {
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { q: value.trim() || null, page: null },
+        queryParamsHandling: "merge",
+      });
+    }, 350);
   }
 
   goToPage(next: number): void {

@@ -35,56 +35,29 @@
         [viewMode]="viewMode()"
         (viewModeChange)="viewMode.set($event)"
         [count]="filteredStaff().length"
-        singularCountLabel="teammate"
-        pluralCountLabel="teammates"
+        singularCountLabel="member"
+        pluralCountLabel="members"
         searchPlaceholder="Search team"
         [searchQuery]="rosterSearch()"
         (searchQueryChange)="rosterSearch.set($event)"
       >
-        <div listFilters class="adeni-filter-chips">
-          <button
-            type="button"
-            class="adeni-filter-chip"
-            [class.active]="rosterFilter() === 'all'"
-            (click)="setRosterFilter('all')"
-          >
-            All
-          </button>
-          <button
-            type="button"
-            class="adeni-filter-chip"
-            [class.active]="rosterFilter() === 'bookable'"
-            (click)="setRosterFilter('bookable')"
-          >
-            Bookable
-          </button>
-          <button
-            type="button"
-            class="adeni-filter-chip"
-            [class.active]="rosterFilter() === 'inactive'"
-            (click)="setRosterFilter('inactive')"
-          >
-            Inactive
-          </button>
-          <button
-            type="button"
-            class="adeni-filter-chip"
-            [class.active]="rosterFilter() === 'portal'"
-            (click)="setRosterFilter('portal')"
-          >
-            Portal access
-          </button>
-        </div>
-        <button
-          listExports
-          type="button"
-          class="adeni-list-export-btn"
-          disabled
-          title="Reporting export — coming soon"
-        >
-          <adeni-carbon-icon name="download" [size]="16" aria-hidden="true" />
-          CSV
-        </button>
+        <adeni-list-filter-row listFilters>
+          <adeni-filter-select
+            layout="toolbar"
+            label="Booking status"
+            [options]="bookingFilterOptions"
+            [value]="bookingFilter()"
+            (valueChange)="bookingFilter.set($any($event))"
+          />
+          <adeni-filter-select
+            layout="toolbar"
+            label="Portal access"
+            [options]="portalFilterOptions"
+            [value]="portalFilter()"
+            (valueChange)="portalFilter.set($any($event))"
+          />
+        </adeni-list-filter-row>
+        <adeni-export-menu listExports label="Export" [items]="staffExportItems" />
       </adeni-list-toolbar>
 
       @if (viewMode() === "cards") {
@@ -105,7 +78,7 @@
               }
               <div class="org-meta adeni-cell-pills">
                 <adeni-pill [tone]="bookingPillTone(member)" [dot]="member.isActive" [compact]="true">
-                  {{ member.isActive ? "Bookable" : "Inactive" }}
+                  {{ member.isActive ? "Active for booking" : "Inactive" }}
                 </adeni-pill>
                 <adeni-pill [tone]="accessPillTone(member.portalAccessStatus)" [compact]="true">
                   {{ accessLabel(member.portalAccessStatus) }}
@@ -167,26 +140,17 @@
           [rowClass]="staffRowClass"
         >
           <ng-template adeniDataTableCell="name" let-member>
-            <div class="adeni-cell-person">
-              <div
-                class="adeni-cell-person-avatar"
-                [attr.data-tone]="personAvatarStyle(member)"
-              >
-                @if (member.avatarImageUrl) {
-                  <img [src]="member.avatarImageUrl" alt="" />
-                } @else {
-                  {{ initials(member) }}
-                }
-              </div>
-              <div class="adeni-cell-person-copy">
-                <span class="adeni-cell-person-name">{{ member.displayName }}</span>
-                <span class="adeni-cell-person-sub">{{ roleLabel(member.roleKey) }}</span>
-              </div>
-            </div>
+            <adeni-table-person-cell
+              [displayName]="member.displayName"
+              [subtitle]="roleLabel(member.roleKey)"
+              [avatarUrl]="member.avatarImageUrl"
+              [initials]="initials(member)"
+              [avatarTone]="personAvatarStyle(member)"
+            />
           </ng-template>
           <ng-template adeniDataTableCell="status" let-member>
             <adeni-pill [tone]="bookingPillTone(member)" [dot]="member.isActive" [compact]="true">
-              {{ member.isActive ? "Bookable" : "Inactive" }}
+              {{ member.isActive ? "Active for booking" : "Inactive" }}
             </adeni-pill>
           </ng-template>
           <ng-template adeniDataTableCell="access" let-member>
@@ -195,26 +159,27 @@
             </adeni-pill>
           </ng-template>
           <ng-template adeniDataTableActions let-member>
-            <div class="adeni-row-action-bar">
-              <a
-                class="adeni-icon-btn adeni-icon-btn--soft"
+            <adeni-row-action-bar>
+              <adeni-icon-btn
+                icon="calendar"
+                label="Calendar"
+                variant="table"
+                [dense]="true"
                 [routerLink]="['/staff', member.id, 'calendar']"
-                title="Calendar"
-                aria-label="Calendar"
-              >
-                <adeni-carbon-icon name="calendar" [size]="16" aria-hidden="true" />
-              </a>
+              />
               <adeni-icon-btn
                 icon="edit"
                 label="Edit"
-                variant="ghost"
+                variant="table"
+                [dense]="true"
                 (pressed)="openEdit(member)"
               />
               @if (member.portalAccessStatus === "none") {
                 <adeni-icon-btn
                   icon="email"
                   label="Invite to portal"
-                  variant="outline"
+                  variant="table"
+                  [dense]="true"
                   (pressed)="openInvite(member)"
                 />
               }
@@ -222,7 +187,8 @@
                 <adeni-icon-btn
                   icon="restart"
                   label="Resend invite"
-                  variant="soft"
+                  variant="table"
+                  [dense]="true"
                   [disabled]="busy() === member.id"
                   (pressed)="resendInvite(member)"
                 />
@@ -230,6 +196,7 @@
                   icon="misuse"
                   label="Revoke invite"
                   variant="danger-soft"
+                  [dense]="true"
                   [disabled]="busy() === member.id"
                   (pressed)="revokeAccess(member)"
                 />
@@ -238,13 +205,15 @@
                 <adeni-icon-btn
                   icon="user"
                   label="Change role"
-                  variant="ghost"
+                  variant="table"
+                  [dense]="true"
                   (pressed)="openChangeRole(member)"
                 />
                 <adeni-icon-btn
                   icon="misuse"
                   label="Revoke login"
                   variant="danger-soft"
+                  [dense]="true"
                   [disabled]="busy() === member.id"
                   (pressed)="revokeAccess(member)"
                 />
@@ -254,11 +223,12 @@
                   icon="trash-can"
                   label="Deactivate"
                   variant="danger-soft"
+                  [dense]="true"
                   [disabled]="busy() === member.id"
                   (pressed)="deactivate(member)"
                 />
               }
-            </div>
+            </adeni-row-action-bar>
           </ng-template>
         </adeni-data-table>
       }
@@ -281,7 +251,7 @@
       <adeni-wizard
         [steps]="createWizardSteps"
         [activeId]="formTab()"
-        ariaLabel="Add a teammate"
+        ariaLabel="Add a team member"
         [allowJump]="true"
         (stepSelect)="wizardGo($event)"
       >
@@ -313,7 +283,7 @@
               (click)="save()"
             >
               <adeni-carbon-icon name="checkmark" [size]="16" />
-              Add teammate
+              Add team member
             </button>
           }
         </div>

@@ -13,6 +13,19 @@
   @if (loading()) {
     <p class="muted">Loading…</p>
   } @else if (customer(); as c) {
+    <section class="card profile-hero">
+      <adeni-table-person-cell
+        [displayName]="c.displayName"
+        [subtitle]="c.phoneMasked || 'No phone on file'"
+        [initials]="customerInitials(c.displayName)"
+        avatarTone="neutral"
+      />
+      <div class="profile-hero__meta adeni-cell-pills">
+        <adeni-pill [tone]="accountPillTone(c)" [compact]="true">{{ accountLabel(c) }}</adeni-pill>
+        <adeni-pill tone="neutral" [compact]="true">Last seen {{ formatSlotTime(c.lastSeenAt) }}</adeni-pill>
+      </div>
+    </section>
+
     <section class="card profile-grid">
       <div>
         <h3 class="section-title">Contact</h3>
@@ -28,7 +41,7 @@
           @if (c.platformCustomerId) {
             <div>
               <dt>Online account</dt>
-              <dd class="muted">Linked (Discover sign-in)</dd>
+              <dd>Linked — Discover sign-in</dd>
             </div>
           }
         </dl>
@@ -40,54 +53,104 @@
             <dt>Last seen</dt>
             <dd>{{ formatSlotTime(c.lastSeenAt) }}</dd>
           </div>
-          @if (c.lastBookingAt) {
-            <div>
-              <dt>Last booking</dt>
-              <dd>{{ formatSlotTime(c.lastBookingAt) }}</dd>
-            </div>
-          }
-          @if (c.lastQueueJoinAt) {
-            <div>
-              <dt>Last walk-in</dt>
-              <dd>{{ formatSlotTime(c.lastQueueJoinAt) }}</dd>
-            </div>
-          }
+          <div>
+            <dt>Last booking</dt>
+            <dd>{{ c.lastBookingAt ? formatSlotTime(c.lastBookingAt) : "—" }}</dd>
+          </div>
+          <div>
+            <dt>Last walk-in</dt>
+            <dd>{{ c.lastQueueJoinAt ? formatSlotTime(c.lastQueueJoinAt) : "—" }}</dd>
+          </div>
         </dl>
       </div>
     </section>
 
     <section class="card">
-      <h3 class="section-title">Recent bookings</h3>
-      @if (c.recentBookingIds.length === 0) {
-        <p class="muted">No linked bookings yet (walk-in only or pending sync).</p>
+      <div class="section-head">
+        <div>
+          <h3 class="section-title">Recent bookings</h3>
+          <p class="muted section-lede">Latest appointments linked to this profile.</p>
+        </div>
+        <a routerLink="/bookings" class="btn btn-ghost">All bookings</a>
+      </div>
+      @if (c.recentBookings.length === 0) {
+        <adeni-portal-empty-state
+          icon="calendar"
+          title="No bookings yet"
+          [description]="
+            c.platformCustomerId
+              ? 'Appointments appear here after they book on Discover or you accept a request.'
+              : 'Walk-in profiles show bookings once the guest books online with the same phone.'
+          "
+          [compact]="true"
+        />
       } @else {
-        <ul class="link-list">
-          @for (bookingId of c.recentBookingIds; track bookingId) {
-            <li>
-              <a
-                routerLink="/bookings"
-                [queryParams]="bookingQueryParams(bookingId)"
-                class="btn btn-ghost"
-              >
-                Open booking
-                <adeni-carbon-icon name="launch" [size]="16" />
-              </a>
-            </li>
-          }
-        </ul>
+        <adeni-data-table
+          [rows]="c.recentBookings"
+          [columns]="bookingColumns"
+          [trackRow]="trackBookingRow"
+        >
+          <ng-template adeniDataTableCell="service" let-row>
+            <span class="cell-primary">{{ row.serviceName }}</span>
+            @if (row.staffDisplayName) {
+              <span class="cell-sub muted">with {{ row.staffDisplayName }}</span>
+            }
+          </ng-template>
+          <ng-template adeniDataTableCell="status" let-row>
+            <adeni-pill [tone]="bookingPillTone(row.status)" [compact]="true">
+              {{ bookingStatusLabel(row.status) }}
+            </adeni-pill>
+          </ng-template>
+          <ng-template adeniDataTableActions let-row>
+            <a
+              class="btn btn-ghost btn-dense"
+              routerLink="/bookings"
+              [queryParams]="bookingQueryParams(row)"
+            >
+              Open
+              <adeni-carbon-icon name="launch" [size]="16" />
+            </a>
+          </ng-template>
+        </adeni-data-table>
       }
     </section>
 
     <section class="card">
-      <h3 class="section-title">Recent queue visits</h3>
-      @if (c.recentQueueTicketIds.length === 0) {
-        <p class="muted">No queue tickets linked yet.</p>
+      <div class="section-head">
+        <div>
+          <h3 class="section-title">Recent queue visits</h3>
+          <p class="muted section-lede">Walk-in tickets on your floor board.</p>
+        </div>
+        <a routerLink="/queue" class="btn btn-ghost">Open queue</a>
+      </div>
+      @if (c.recentQueueVisits.length === 0) {
+        <adeni-portal-empty-state
+          icon="user--follow"
+          title="No queue visits yet"
+          description="When they join your walk-in queue, visits show here with service and status."
+          [compact]="true"
+        />
       } @else {
-        <p class="muted">{{ c.recentQueueTicketIds.length }} recent visit(s) on your floor board.</p>
-        <a routerLink="/queue" class="btn">Open queue</a>
+        <adeni-data-table
+          [rows]="c.recentQueueVisits"
+          [columns]="queueColumns"
+          [trackRow]="trackQueueRow"
+        >
+          <ng-template adeniDataTableCell="service" let-row>
+            <span class="cell-primary">{{ row.serviceName || "Walk-in" }}</span>
+            @if (row.staffDisplayName) {
+              <span class="cell-sub muted">with {{ row.staffDisplayName }}</span>
+            }
+          </ng-template>
+          <ng-template adeniDataTableCell="status" let-row>
+            <adeni-pill [tone]="queuePillTone(row.status)" [compact]="true">
+              {{ queueStatusLabel(row.status) }}
+            </adeni-pill>
+          </ng-template>
+        </adeni-data-table>
       }
     </section>
-  } @else {
+  } @else if (!error()) {
     <adeni-portal-empty-state
       icon="user--filled"
       title="Customer not found"

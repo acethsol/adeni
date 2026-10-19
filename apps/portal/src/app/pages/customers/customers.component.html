@@ -6,77 +6,132 @@
     <p class="error-banner">{{ error() }}</p>
   }
 
-  <section class="card customers-toolbar">
-    <label class="search-field">
-      <span class="visually-hidden">Search customers</span>
-      <adeni-carbon-icon name="search" [size]="16" />
-      <input
-        type="search"
-        [(ngModel)]="searchInput"
-        (ngModelChange)="onSearchInput()"
-        placeholder="Search name, phone, or email"
-        autocomplete="off"
-      />
-    </label>
-    <button type="button" class="btn" [disabled]="loading()" (click)="load()">
-      <adeni-carbon-icon name="restart" [size]="16" />
-      Refresh
-    </button>
-  </section>
-
   @if (loading() && items().length === 0) {
     <p class="muted">Loading customers…</p>
-  } @else if (items().length === 0) {
+  } @else if (totalCount() === 0 && !searchQuery().trim() && accountFilter() === "all" && !loading()) {
     <adeni-portal-empty-state
       icon="user--filled"
       title="No customers yet"
       description="Profiles appear when someone books (signed in on Discover) or joins your queue."
     />
   } @else {
-    <section class="card customers-table-wrap">
-      <table class="customers-table">
-        <thead>
-          <tr>
-            <th scope="col">Name</th>
-            <th scope="col">Phone</th>
-            <th scope="col">Email</th>
-            <th scope="col">Last seen</th>
-            <th scope="col"><span class="visually-hidden">Open</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of items(); track row.id) {
-            <tr>
-              <td>
-                <a [routerLink]="['/customers', row.id]" class="customer-link">{{ row.displayName }}</a>
-              </td>
-              <td class="muted">{{ row.phoneMasked || "—" }}</td>
-              <td class="muted">{{ row.email || "—" }}</td>
-              <td class="muted">{{ formatSlotTime(row.lastSeenAt) }}</td>
-              <td class="actions-cell">
-                <a [routerLink]="['/customers', row.id]" class="btn">View</a>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
+    <div class="roster">
+      <adeni-list-toolbar
+        storageKey="portal.customers"
+        [viewMode]="viewMode()"
+        (viewModeChange)="viewMode.set($event)"
+        [count]="totalCount()"
+        singularCountLabel="customer"
+        pluralCountLabel="customers"
+        searchPlaceholder="Search name, phone, or email"
+        [searchQuery]="searchQuery()"
+        (searchQueryChange)="onSearchChange($event)"
+      >
+        <adeni-list-filter-row listFilters>
+          <adeni-filter-select
+            layout="toolbar"
+            label="Profile type"
+            [options]="accountFilterOptions"
+            [value]="accountFilter()"
+            (valueChange)="onAccountFilterChange($any($event))"
+          />
+        </adeni-list-filter-row>
+        <adeni-export-menu listExports label="Export" [items]="exportItems" />
+      </adeni-list-toolbar>
 
-      @if (totalCount() > pageSize) {
-        <div class="pagination">
-          <button type="button" class="btn" [disabled]="page() <= 1 || loading()" (click)="prevPage()">
-            Previous
-          </button>
-          <span class="muted">{{ pageLabel() }} · {{ totalCount() }} total</span>
-          <button
-            type="button"
-            class="btn"
-            [disabled]="loading() || !canNextPage()"
-            (click)="nextPage()"
+      @if (items().length === 0) {
+        <adeni-portal-empty-state
+          icon="search"
+          title="No matches"
+          description="Try a different search or profile type filter."
+          [compact]="true"
+        />
+      } @else if (viewMode() === "cards") {
+        <ul class="plain staff-grid">
+          @for (row of items(); track row.id) {
+            <li class="org-card">
+              <div class="org-avatar" data-tone="neutral" aria-hidden="true">
+                <span>{{ customerInitials(row) }}</span>
+              </div>
+              <strong class="org-name">{{ row.displayName }}</strong>
+              <span class="org-role">{{ row.phoneMasked || "No phone on file" }}</span>
+              @if (row.email) {
+                <span class="org-title">{{ row.email }}</span>
+              }
+              <div class="org-meta adeni-cell-pills">
+                <adeni-pill [tone]="accountPillTone(row)" [compact]="true">
+                  {{ accountLabel(row) }}
+                </adeni-pill>
+                <adeni-pill tone="neutral" [compact]="true">
+                  Last seen {{ formatSlotTime(row.lastSeenAt) }}
+                </adeni-pill>
+              </div>
+              <div class="org-actions">
+                <a [routerLink]="['/customers', row.id]">View profile</a>
+              </div>
+            </li>
+          }
+        </ul>
+
+        <div class="adeni-list-results adeni-list-results--pagination-only">
+          <adeni-list-pagination
+            [page]="page()"
+            [pageSize]="pageSize"
+            [totalCount]="totalCount()"
+            [loading]="loading()"
+            ariaLabel="Customer pages"
+            (pageChange)="goToPage($event)"
+          />
+        </div>
+      } @else {
+        <div class="adeni-list-results">
+          <adeni-data-table
+            [rows]="items()"
+            [columns]="columns"
+            [trackRow]="trackRow"
           >
-            Next
-          </button>
+            <ng-template adeniDataTableCell="name" let-row>
+              <adeni-table-person-cell
+                [displayName]="row.displayName"
+                [subtitle]="row.phoneMasked || 'No phone on file'"
+                [initials]="customerInitials(row)"
+                avatarTone="neutral"
+              />
+            </ng-template>
+            <ng-template adeniDataTableCell="email" let-row>
+              <span class="adeni-data-table-text">{{ row.email || "—" }}</span>
+            </ng-template>
+            <ng-template adeniDataTableCell="account" let-row>
+              <adeni-pill [tone]="accountPillTone(row)" [compact]="true">
+                {{ accountLabel(row) }}
+              </adeni-pill>
+            </ng-template>
+            <ng-template adeniDataTableCell="lastSeen" let-row>
+              <span class="adeni-data-table-text">{{ formatSlotTime(row.lastSeenAt) }}</span>
+            </ng-template>
+            <ng-template adeniDataTableActions let-row>
+              <adeni-row-action-bar>
+                <adeni-icon-btn
+                  icon="arrow--right"
+                  label="View customer"
+                  variant="table"
+                  [dense]="true"
+                  [routerLink]="['/customers', row.id]"
+                />
+              </adeni-row-action-bar>
+            </ng-template>
+          </adeni-data-table>
+
+          <adeni-list-pagination
+            [page]="page()"
+            [pageSize]="pageSize"
+            [totalCount]="totalCount()"
+            [loading]="loading()"
+            ariaLabel="Customer pages"
+            (pageChange)="goToPage($event)"
+          />
         </div>
       }
-    </section>
+    </div>
   }
 </app-portal-page>
