@@ -1,14 +1,17 @@
 {
-  "_comment": "SaaS list prices + GMV platform fee by ISO country. feeBearer business = platform % deducted from business settlement; customer pays business price only. gmvCollection.mode must be wired even when platformFeePercent is 0.",
+  "_comment": "SaaS list prices + GMV platform fee by ISO country. Authority: docs/specs/adeni-subscription-pricing-v1/ + version below. feeBearer business = platform % deducted from business settlement; customer pays business price only. gmvCollection.mode must be wired even when platformFeePercent is 0.",
+  "version": "2026-launch-01",
+  "effectiveFrom": "2026-10-19",
   "gmvFeeBearer": "business",
   "countries": {
     "NG": {
       "currency": "NGN",
       "paymentProvider": "paystack",
+      "selfServeEnabled": true,
       "skus": {
-        "starter": { "monthlyAmount": 50000 },
-        "professional": { "monthlyAmount": 70000 },
-        "business": { "monthlyAmount": 100000 }
+        "starter": { "monthlyAmount": 35000 },
+        "professional": { "monthlyAmount": 55000 },
+        "business": { "monthlyAmount": 95000 }
       },
       "gmvCollection": {
         "feeBearer": "business",
@@ -17,40 +20,43 @@
         "requireMerchantOnboarding": true,
         "blockPaymentsUntilOnboarding": false,
         "splitCode": null,
-        "_note": "0% to Adeni main today; subaccount still receives 100%. Raise platformFeePercent when policy changes."
+        "_note": "Launch 0% GMV per adeni-subscription-pricing-v1/01_CONFIRMED_COMMERCIAL_RULES.md"
       }
     },
     "CA": {
       "currency": "CAD",
       "paymentProvider": "stripe",
+      "selfServeEnabled": true,
       "skus": {
-        "starter": { "monthlyAmount": 200 },
-        "professional": { "monthlyAmount": 250 },
-        "business": { "monthlyAmount": 300 }
+        "starter": { "monthlyAmount": 99 },
+        "professional": { "monthlyAmount": 149 },
+        "business": { "monthlyAmount": 249 }
       },
       "gmvCollection": {
         "feeBearer": "business",
         "mode": "stripe_connect",
-        "platformFeePercent": 0.75,
+        "platformFeePercent": 0,
         "requireMerchantOnboarding": true,
         "blockPaymentsUntilOnboarding": true,
-        "_note": "Do not collect 0.75% until Connect + application_fee shipped; until then effective fee 0 or block per code gate."
+        "_note": "Launch 0% GMV; raise platformFeePercent when Connect collection ships."
       }
     },
     "US": {
       "currency": "USD",
       "paymentProvider": "stripe",
+      "selfServeEnabled": false,
       "skus": {
-        "starter": { "monthlyAmount": 150 },
-        "professional": { "monthlyAmount": 200 },
-        "business": { "monthlyAmount": 250 }
+        "starter": { "monthlyAmount": null },
+        "professional": { "monthlyAmount": null },
+        "business": { "monthlyAmount": null }
       },
       "gmvCollection": {
         "feeBearer": "business",
         "mode": "stripe_connect",
-        "platformFeePercent": 0.75,
+        "platformFeePercent": 0,
         "requireMerchantOnboarding": true,
-        "blockPaymentsUntilOnboarding": true
+        "blockPaymentsUntilOnboarding": true,
+        "_note": "Self-serve disabled at launch; list prices TBD when US goes live."
       }
     }
   }

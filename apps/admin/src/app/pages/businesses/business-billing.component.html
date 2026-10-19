@@ -59,10 +59,34 @@
                 <dd>{{ t.trialEndsAt | date: "mediumDate" }}</dd>
               </div>
             }
+            @if (t.billingCountryCode) {
+              <div>
+                <dt>Billing country</dt>
+                <dd>{{ t.billingCountryCode }}</dd>
+              </div>
+            }
+            @if (t.catalogListPrice != null && t.currency) {
+              <div>
+                <dt>Catalog list</dt>
+                <dd>{{ t.catalogListPrice }} {{ t.currency }}/mo</dd>
+              </div>
+            }
+            @if (t.effectiveMonthlyAmount != null && t.currency) {
+              <div>
+                <dt>Effective monthly</dt>
+                <dd>{{ t.effectiveMonthlyAmount }} {{ t.currency }}/mo</dd>
+              </div>
+            }
             @if (t.customSaasMonthlyAmount != null && t.customSaasCurrency) {
               <div>
                 <dt>Custom monthly</dt>
                 <dd>{{ t.customSaasMonthlyAmount }} {{ t.customSaasCurrency }}</dd>
+              </div>
+            }
+            @if (t.pricingCatalogVersion) {
+              <div>
+                <dt>Pricing catalog</dt>
+                <dd>{{ t.pricingCatalogVersion }}</dd>
               </div>
             }
           </dl>

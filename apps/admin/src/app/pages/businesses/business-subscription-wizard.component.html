@@ -93,6 +93,29 @@
               }
             }
             @case ("pricing") {
+              @if (pricingPreview(); as preview) {
+                <div class="pricing-summary">
+                  <p>
+                    <span class="muted">Billing country</span>
+                    <strong>{{ preview.country }}</strong>
+                    @if (d.initialTerms.pricingCatalogVersion) {
+                      <span class="muted"> · {{ d.initialTerms.pricingCatalogVersion }}</span>
+                    }
+                  </p>
+                  @if (preview.catalogAmount != null) {
+                    <p>
+                      <span class="muted">Catalog list</span>
+                      <strong>{{ formatPrice(preview.catalogAmount, preview.currency) }}/mo</strong>
+                    </p>
+                  }
+                  @if (preview.effectiveAmount != null) {
+                    <p>
+                      <span class="muted">Effective monthly</span>
+                      <strong>{{ formatPrice(preview.effectiveAmount, preview.currency) }}/mo</strong>
+                    </p>
+                  }
+                </div>
+              }
               <label class="check">
                 <input
                   type="checkbox"
@@ -195,7 +218,7 @@
                 </div>
               }
               <label>
-                Audit note
+                Audit note (stored on tenant)
                 <textarea
                   rows="2"
                   maxlength="500"
@@ -205,6 +228,20 @@
                   placeholder="Why this tenant has non-standard terms"
                 ></textarea>
               </label>
+              <label>
+                Reason for this change
+                <textarea
+                  rows="2"
+                  maxlength="500"
+                  [ngModel]="d.changeReason"
+                  (ngModelChange)="patch({ changeReason: $event })"
+                  name="changeReason"
+                  placeholder="Required when saving commercial updates (can match audit note)"
+                ></textarea>
+              </label>
+              @if (requiresChangeReason()) {
+                <p class="validation-hint">Add an audit note or change reason before saving.</p>
+              }
             }
             @case ("review") {
               <ul class="review-list">
@@ -259,7 +296,12 @@
                 Next
               </adeni-staff-btn>
             } @else {
-              <adeni-staff-btn variant="primary" icon="save" [disabled]="saving()" (pressed)="save.emit()">
+              <adeni-staff-btn
+                variant="primary"
+                icon="save"
+                [disabled]="saving() || requiresChangeReason()"
+                (pressed)="save.emit()"
+              >
                 {{ saving() ? "Saving…" : "Apply changes" }}
               </adeni-staff-btn>
             }

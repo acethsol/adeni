@@ -41,6 +41,9 @@
 | **35** | **Tenant customer records** | ✅ Done — [sprint-35-tenant-customer-records.md](./specs/sprint-35-tenant-customer-records.md) |
 | **36** | **Messaging rewrite (SignalR + conversations)** | ✅ Done — [sprint-36-messaging-rewrite.md](./specs/sprint-36-messaging-rewrite.md); Sprint 18 teardown |
 | **39** | **Finance module boundaries (Phase 1)** | ✅ Done — [finance-module-boundaries.md](./specs/finance-module-boundaries.md); `/api/v1/finance/*`, portal `/finance` |
+| — | **Reporting module boundaries** | Spec — [reporting-module-boundaries.md](./specs/reporting-module-boundaries.md); runbook [reporting.md](./reporting.md) |
+| — | **Notifications module boundaries** | Spec — [notifications-module-boundaries.md](./specs/notifications-module-boundaries.md); runbook [notifications.md](./notifications.md) |
+| — | **Shared staff list / data grid** | Spec — [shared-staff-data-grid.md](./specs/shared-staff-data-grid.md); Phase 1 pilot: portal Staff cards ↔ list |
 | — | Sprint 11d LLM agent | → Sprint 20 |
 | — | Staging deploy + Auth0 E2E | → Sprint 20 |
 | — | App Insights (Obs 1) | → Sprint 20 |
@@ -492,12 +495,13 @@ Composable **widgets**, **charts**, and **per-user customizable layout** on port
 
 ## Sprint 33 — SaaS subscription billing & MRR (in progress)
 
-Live business → Adeni recurring billing (Paystack/Stripe), signed webhooks, tenant billing history on `/plan`, admin MRR v1. **Not** customer receipts (Sprint 28). Spec: [sprint-33-saas-subscription-billing-mrr.md](./specs/sprint-33-saas-subscription-billing-mrr.md).
+Live business → Adeni recurring billing (Paystack/Stripe), signed webhooks, tenant billing history on `/plan`, admin MRR v1. **Not** customer receipts (Sprint 28). Spec: [sprint-33-saas-subscription-billing-mrr.md](./specs/sprint-33-saas-subscription-billing-mrr.md). **Launch list prices (2026-launch-01):** [sprint-33a-pricing-launch.md](./specs/sprint-33a-pricing-launch.md) + [adeni-subscription-pricing-v1/](./specs/adeni-subscription-pricing-v1/00_READ_ME_FIRST.md).
 
 | Task | Status |
 |------|--------|
 | **33a** Provider checkout + Murphy webhooks + tier sync | Done locally — **validate on staging** |
 | **33b** Portal billing history + admin MRR metrics | Done locally — **validate on staging** |
+| **33b-admin** Admin pricing & commercial config (catalog, resolver, billing UI) | **33b-MVP** done locally (C# `TenantPricingResolver`, extended GET commercial-terms, PATCH change reason + audit before/after, admin billing/wizard UX) — **close:** `@adeni/shared`/`api-client` schemas for resolved pricing + `changeReason`; optional `GET /api/v1/pricing` deferred. Spec: [sprint-33b-admin-commercial-config.md](./specs/sprint-33b-admin-commercial-config.md). **33b-1+** still planned. |
 | **33c** Staging secrets, live subscription webhooks, integration E2E | Planned (Sprint 20 / staging deploy) |
 
 ## Sprint 34 — Payment settlement (Connect + Paystack split) (planned)
@@ -529,6 +533,11 @@ Business-paid GMV fee via **Stripe Connect** (CA/US) and **Paystack split** (NG)
 | **36g** Domain event → prefs-aware notification stub after send | ✅ Done |
 
 **Locked:** lazy participants · shared inbox · team unread badge · no assignment · `/conversations` only · drop old data · REST-only writes.
+
+## Cross-cutting (not sprint-gated)
+
+- [x] Discover SEO landings + sitemap — [discover-seo-landings.md](./specs/discover-seo-landings.md) (`/lagos`, `/ottawa`, category hubs, `robots.txt`, dynamic `sitemap.xml`, richer LocalBusiness JSON-LD)
+- [x] Discover SEO follow-ups — [discover-seo-followups.md](./specs/discover-seo-followups.md) (neighborhoods, opening hours + Offers JSON-LD, GSC runbook, production SSR host/Angular dedupe)
 
 ## Next up
 

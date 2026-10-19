@@ -36,6 +36,7 @@ public static class SubscriptionsServiceCollectionExtensions
         services.AddScoped<ISubscriptionService, SubscriptionService>();
         services.AddScoped<ISubscriptionBillingOrchestrator, SubscriptionBillingOrchestrator>();
         services.AddScoped<ISubscriptionMetricsService, SubscriptionMetricsService>();
+        services.AddScoped<ITenantPricingResolver, TenantPricingResolver>();
 
         var provider = configuration.GetSection(SubscriptionBillingOptions.SectionName)["Provider"] ?? "Stub";
 

@@ -11,21 +11,15 @@ public static class SubscriptionCatalogPrices
     {
         ["NG"] = new()
         {
-            [SubscriptionSku.Starter] = 50_000m,
-            [SubscriptionSku.Professional] = 70_000m,
-            [SubscriptionSku.Business] = 100_000m,
+            [SubscriptionSku.Starter] = 35_000m,
+            [SubscriptionSku.Professional] = 55_000m,
+            [SubscriptionSku.Business] = 95_000m,
         },
         ["CA"] = new()
         {
-            [SubscriptionSku.Starter] = 200m,
-            [SubscriptionSku.Professional] = 250m,
-            [SubscriptionSku.Business] = 300m,
-        },
-        ["US"] = new()
-        {
-            [SubscriptionSku.Starter] = 200m,
-            [SubscriptionSku.Professional] = 250m,
-            [SubscriptionSku.Business] = 300m,
+            [SubscriptionSku.Starter] = 99m,
+            [SubscriptionSku.Professional] = 149m,
+            [SubscriptionSku.Business] = 249m,
         },
     };
 
@@ -47,6 +41,11 @@ public static class SubscriptionCatalogPrices
     public static decimal? GetMonthlyMajor(string? countryCode, SubscriptionSku sku)
     {
         var key = NormalizeCountry(countryCode);
+        if (string.Equals(key, "US", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
         if (!ByCountry.TryGetValue(key, out var skus))
         {
             return ByCountry[DefaultCountryCode].TryGetValue(sku, out var fallback) ? fallback : null;
@@ -65,9 +64,19 @@ public static class SubscriptionCatalogPrices
         }
 
         var currency = CurrencyForCountry(countryCode);
-        return currency is "NGN"
-            ? (long)major.Value
-            : (long)(major.Value * 100m);
+        return ToAmountMinorFromMajor(major.Value, currency);
+    }
+
+    public static long? ToAmountMinorFromMajor(decimal amountMajor, string currency)
+    {
+        if (amountMajor <= 0)
+        {
+            return null;
+        }
+
+        return string.Equals(currency, "NGN", StringComparison.OrdinalIgnoreCase)
+            ? (long)amountMajor
+            : (long)(amountMajor * 100m);
     }
 
     private static string NormalizeCountry(string? countryCode) =>

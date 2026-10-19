@@ -60,6 +60,7 @@ const gmvCollectionSchema = z.object({
 const countryPricingSchema = z.object({
   currency: z.string().length(3),
   paymentProvider: z.enum(["paystack", "stripe"]),
+  selfServeEnabled: z.boolean().optional().default(true),
   skus: z.object({
     starter: skuPriceSchema,
     professional: skuPriceSchema,
@@ -69,6 +70,8 @@ const countryPricingSchema = z.object({
 });
 
 const countryPricingCatalogSchema = z.object({
+  version: z.string().optional(),
+  effectiveFrom: z.string().optional(),
   gmvFeeBearer: z.enum(GMV_FEE_BEARERS).default("business"),
   countries: z.record(z.string().length(2), countryPricingSchema),
 });
@@ -108,6 +111,12 @@ export function getCountryPricing(countryCode: string): CountryPricing | null {
 
 export function getGmvCollection(countryCode: string): GmvCollectionConfig | null {
   return getCountryPricing(countryCode)?.gmvCollection ?? null;
+}
+
+export function isSelfServePricingEnabled(countryCode: string): boolean {
+  const country = getCountryPricing(countryCode);
+  if (!country) return false;
+  return country.selfServeEnabled !== false;
 }
 
 export function getSkuMonthlyAmount(

@@ -1,7 +1,14 @@
 import { Component, computed, input, output, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import type { AdminBusinessSummary, SubscriptionSku, TenantBillingStatus } from "@adeni/shared";
-import { SUBSCRIPTION_SKUS, formatSubscriptionSku } from "@adeni/shared";
+import {
+  SUBSCRIPTION_SKUS,
+  applyTenantSaasDiscount,
+  formatPrice,
+  formatSubscriptionSku,
+  getSkuMonthlyAmount,
+  resolveTenantSaasListPrice,
+} from "@adeni/shared";
 import {
   AdeniModalComponent,
   AdeniStaffButtonComponent,
@@ -10,7 +17,11 @@ import {
 } from "@adeni/ui";
 import { AdminPillComponent } from "../../shared/admin-pill.component";
 import { businessPlanPill, tenantStatusPill } from "../../shared/admin-pill-maps";
-import type { BusinessSubscriptionDraft } from "./business-subscription.model";
+import {
+  hasCommercialTermsDelta,
+  resolveCommercialChangeReason,
+  type BusinessSubscriptionDraft,
+} from "./business-subscription.model";
 
 const STEPS: AdeniWizardStep[] = [
   {
@@ -89,6 +100,51 @@ export class BusinessSubscriptionWizardComponent {
   readonly skuChanged = computed(() => {
     const d = this.draft();
     return d != null && d.subscriptionSku !== d.initialSubscriptionSku;
+  });
+
+  readonly pricingPreview = computed(() => {
+    const d = this.draft();
+    if (!d) {
+      return null;
+    }
+    const country = d.initialTerms.billingCountryCode ?? "NG";
+    const currency = d.initialTerms.currency ?? "NGN";
+    const catalogAmount = getSkuMonthlyAmount(country, d.subscriptionSku);
+    const override =
+      !d.clearCustomSaasPrice && d.customSaasMonthlyAmount != null && d.customSaasCurrency.trim()
+        ? {
+            customSaasMonthlyAmount: d.customSaasMonthlyAmount,
+            customSaasCurrency: d.customSaasCurrency.trim(),
+            customSaasSku: d.customSaasSku || null,
+          }
+        : null;
+    const list = resolveTenantSaasListPrice(country, d.subscriptionSku, override);
+    if (!list) {
+      return { country, currency, catalogAmount, listAmount: null, effectiveAmount: null };
+    }
+    const discount =
+      !d.clearDiscounts
+        ? {
+            discountPercent: d.discountPercent,
+            discountFixedAmount: d.discountFixedAmount,
+            discountCurrency: d.discountCurrency.trim() || null,
+          }
+        : null;
+    const effective = applyTenantSaasDiscount(list.amount, discount);
+    return {
+      country,
+      currency: list.currency,
+      catalogAmount,
+      listAmount: list.amount,
+      effectiveAmount: effective,
+    };
+  });
+
+  readonly formatPrice = formatPrice;
+
+  readonly requiresChangeReason = computed(() => {
+    const d = this.draft();
+    return d != null && hasCommercialTermsDelta(d) && !resolveCommercialChangeReason(d);
   });
 
   patch(partial: Partial<BusinessSubscriptionDraft>): void {

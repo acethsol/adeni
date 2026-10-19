@@ -103,8 +103,36 @@ public sealed class SubscriptionMetricsServiceTests
 
         Assert.Equal("estimated_list_price", result.MrrSource);
         Assert.Single(result.EstimatedMrrByCurrency);
-        Assert.Equal(100_000, result.EstimatedMrrByCurrency[0].AmountMinor);
+        Assert.Equal(95_000, result.EstimatedMrrByCurrency[0].AmountMinor);
         Assert.Equal("NGN", result.EstimatedMrrByCurrency[0].Currency);
+    }
+
+    [Fact]
+    public async Task GetAdminMetricsAsync_estimates_effective_price_with_discount()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        var metrics = scope.ServiceProvider.GetRequiredService<ISubscriptionMetricsService>();
+
+        var tenantId = Guid.NewGuid();
+        db.Tenants.Add(new Tenant
+        {
+            Id = tenantId,
+            Name = "Discounted",
+            Status = TenantStatus.Verified,
+            SubscriptionSku = SubscriptionSku.Professional,
+            BillingStatus = TenantBillingStatus.Active,
+            CustomSaasMonthlyAmount = 50_000m,
+            CustomSaasCurrency = "NGN",
+            DiscountPercent = 10m,
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+        await db.SaveChangesAsync();
+
+        var result = await metrics.GetAdminMetricsAsync();
+
+        Assert.Equal(45_000, result.EstimatedMrrByCurrency[0].AmountMinor);
     }
 
     private static ServiceProvider BuildProvider()
@@ -114,6 +142,7 @@ public sealed class SubscriptionMetricsServiceTests
         services.AddScoped<Adeni.Infrastructure.Context.TenantContext>();
         services.AddScoped<Application.Abstractions.ITenantContext>(sp =>
             sp.GetRequiredService<Adeni.Infrastructure.Context.TenantContext>());
+        services.AddScoped<ITenantPricingResolver, TenantPricingResolver>();
         services.AddScoped<ISubscriptionMetricsService, SubscriptionMetricsService>();
         return services.BuildServiceProvider();
     }

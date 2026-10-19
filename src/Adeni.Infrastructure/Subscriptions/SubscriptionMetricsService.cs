@@ -5,7 +5,9 @@ using Adeni.Domain.Subscriptions;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-public sealed class SubscriptionMetricsService(AdeniDbContext dbContext) : ISubscriptionMetricsService
+public sealed class SubscriptionMetricsService(
+    AdeniDbContext dbContext,
+    ITenantPricingResolver tenantPricingResolver) : ISubscriptionMetricsService
 {
     private static readonly HashSet<string> PaidChargeStatuses = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -43,17 +45,19 @@ public sealed class SubscriptionMetricsService(AdeniDbContext dbContext) : ISubs
                 g.Sum(x => x.AmountMinor!.Value)))
             .ToListAsync(cancellationToken);
 
-        var countryByTenant = await ResolvePrimaryCountryByTenantAsync(cancellationToken);
+        var countryByTenant = await tenantPricingResolver.ResolvePrimaryBillingCountryByTenantAsync(cancellationToken);
 
         var estimatedByCurrency = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
         foreach (var tenant in tenants.Where(IsPayingTenant))
         {
             countryByTenant.TryGetValue(tenant.Id, out var country);
-            var currency = SubscriptionCatalogPrices.CurrencyForCountry(country);
-            var minor = SubscriptionCatalogPrices.ToAmountMinor(country, tenant.SubscriptionSku);
+            country ??= SubscriptionCatalogPrices.DefaultCountryCode;
+            var pricing = tenantPricingResolver.ResolveForTenant(tenant, country);
+            var minor = tenantPricingResolver.ToAmountMinor(pricing.EffectiveMonthlyAmountMajor, pricing.Currency);
             if (minor is > 0)
             {
-                estimatedByCurrency[currency] = estimatedByCurrency.GetValueOrDefault(currency) + minor.Value;
+                estimatedByCurrency[pricing.Currency] =
+                    estimatedByCurrency.GetValueOrDefault(pricing.Currency) + minor.Value;
             }
         }
 
@@ -74,26 +78,6 @@ public sealed class SubscriptionMetricsService(AdeniDbContext dbContext) : ISubs
             estimated,
             mrrSource,
             asOf);
-    }
-
-    private async Task<IReadOnlyDictionary<Guid, string>> ResolvePrimaryCountryByTenantAsync(
-        CancellationToken cancellationToken)
-    {
-        var primaryMarkets = await dbContext.BusinessLocations
-            .AsNoTracking()
-            .Where(x => x.IsPrimary && x.IsActive)
-            .Select(x => new { x.TenantId, x.MarketId })
-            .ToListAsync(cancellationToken);
-
-        var marketCountries = await dbContext.CatalogMarkets
-            .AsNoTracking()
-            .Select(m => new { m.Id, m.CountryCode })
-            .ToListAsync(cancellationToken);
-
-        return primaryMarkets.ToDictionary(
-            x => x.TenantId,
-            x => marketCountries.FirstOrDefault(m => m.Id == x.MarketId)?.CountryCode
-                ?? SubscriptionCatalogPrices.DefaultCountryCode);
     }
 
     private static bool IsPayingTenant(Domain.Tenancy.Tenant tenant) =>

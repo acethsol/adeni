@@ -166,6 +166,16 @@ export const publicBusinessProfileSchema = z.object({
   /** Cover + gallery URLs for the public profile page. */
   imageUrls: z.array(z.string().url()).nullish(),
   policies: businessPoliciesSchema.nullish(),
+  /** Weekly business hours for SEO JSON-LD (day name + HH:mm). */
+  openingHours: z
+    .array(
+      z.object({
+        dayOfWeek: z.string(),
+        openTime: z.string(),
+        closeTime: z.string(),
+      }),
+    )
+    .nullish(),
 });
 
 export type PublicBusinessProfile = z.infer<typeof publicBusinessProfileSchema>;
@@ -1235,6 +1245,11 @@ export const adminTenantCommercialTermsSchema = z.object({
   customSaasMonthlyAmount: z.number().positive().nullable().optional(),
   customSaasCurrency: z.string().length(3).nullable().optional(),
   customSaasSku: subscriptionSkuSchema.nullable().optional(),
+  billingCountryCode: z.string().length(2).nullable().optional(),
+  catalogListPrice: z.number().nonnegative().nullable().optional(),
+  effectiveMonthlyAmount: z.number().nonnegative().nullable().optional(),
+  pricingCatalogVersion: z.string().nullable().optional(),
+  currency: z.string().length(3).nullable().optional(),
 });
 
 export type AdminTenantCommercialTerms = z.infer<typeof adminTenantCommercialTermsSchema>;
@@ -1257,6 +1272,7 @@ export const setTenantCommercialTermsRequestSchema = z.object({
   customSaasCurrency: z.string().length(3).nullable().optional(),
   customSaasSku: subscriptionSkuSchema.optional(),
   clearCustomSaasPrice: z.boolean().optional(),
+  changeReason: z.string().max(500).optional(),
 });
 
 export type SetTenantCommercialTermsRequest = z.infer<

@@ -15,6 +15,7 @@ public sealed class SubscriptionBillingOrchestrator(
     ICacheService cache,
     IAuditLogWriter auditLogWriter,
     ICorrelationContext correlationContext,
+    ITenantPricingResolver tenantPricingResolver,
     ILogger<SubscriptionBillingOrchestrator> logger) : ISubscriptionBillingOrchestrator
 {
     private static readonly HashSet<string> ActivationEvents = new(StringComparer.OrdinalIgnoreCase)
@@ -67,7 +68,7 @@ public sealed class SubscriptionBillingOrchestrator(
         ApplyBillingTransition(tenant, webhookEvent, targetSku);
 
         var (amountMinor, currency) = await ResolveChargeAmountAsync(
-            tenantId,
+            tenant,
             targetSku,
             webhookEvent,
             cancellationToken);
@@ -244,7 +245,7 @@ public sealed class SubscriptionBillingOrchestrator(
     }
 
     private async Task<(long? AmountMinor, string? Currency)> ResolveChargeAmountAsync(
-        Guid tenantId,
+        Domain.Tenancy.Tenant tenant,
         SubscriptionSku sku,
         SubscriptionWebhookEvent webhookEvent,
         CancellationToken cancellationToken)
@@ -254,21 +255,10 @@ public sealed class SubscriptionBillingOrchestrator(
             return (webhookEvent.AmountMinor, webhookEvent.Currency);
         }
 
-        var marketId = await dbContext.BusinessLocations
-            .AsNoTracking()
-            .Where(x => x.TenantId == tenantId && x.IsPrimary && x.IsActive)
-            .Select(x => x.MarketId)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        var country = await dbContext.CatalogMarkets
-            .AsNoTracking()
-            .Where(x => x.Id == marketId)
-            .Select(x => x.CountryCode)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        var minor = SubscriptionCatalogPrices.ToAmountMinor(country, sku);
-        var currency = SubscriptionCatalogPrices.CurrencyForCountry(country);
-        return (minor, minor is > 0 ? currency : null);
+        var country = await tenantPricingResolver.ResolvePrimaryBillingCountryAsync(tenant.Id, cancellationToken);
+        var pricing = tenantPricingResolver.ResolveForTenant(tenant, country, sku);
+        var minor = tenantPricingResolver.ToAmountMinor(pricing.EffectiveMonthlyAmountMajor, pricing.Currency);
+        return (minor, minor is > 0 ? pricing.Currency : null);
     }
 
     private async Task<IReadOnlyList<TenantSubscriptionChargeResponse>> QueryChargesAsync(
