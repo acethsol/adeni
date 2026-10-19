@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|-------|
 | **Sprint** | 33b — Admin configurability (Phases 4–5 of pricing package) |
-| **Status** | **33b-MVP** implemented locally (see [sprints.md](../sprints.md)); shared TS contract + public pricing API still open |
+| **Status** | **33b-MVP** committed; **33b-1** (versioned DB catalog + admin read-only + `GET /api/v1/pricing`) implemented locally |
 | **Created** | 2026-10-19 |
 | **Depends on** | [sprint-33a-pricing-launch.md](./sprint-33a-pricing-launch.md), [adeni-subscription-pricing-v1/](./adeni-subscription-pricing-v1/00_READ_ME_FIRST.md) |
 | **Implementation plan** | See parent agent deliverable + § below |

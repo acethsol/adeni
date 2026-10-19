@@ -1279,6 +1279,68 @@ export type SetTenantCommercialTermsRequest = z.infer<
   typeof setTenantCommercialTermsRequestSchema
 >;
 
+export const publicSkuPriceSchema = z.object({
+  sku: subscriptionSkuSchema,
+  monthlyAmountMajor: z.number().nonnegative().nullable().optional(),
+});
+
+export const publicCountryPricingSchema = z.object({
+  countryCode: z.string().length(2),
+  currencyCode: z.string().length(3),
+  pricingCatalogVersion: z.string(),
+  selfServeEnabled: z.boolean(),
+  platformFeePercent: z.number().min(0).max(100),
+  skus: z.array(publicSkuPriceSchema),
+});
+
+export type PublicCountryPricing = z.infer<typeof publicCountryPricingSchema>;
+
+export const pricingCatalogVersionSummarySchema = z.object({
+  id: z.string(),
+  code: z.string(),
+  effectiveFrom: z.string(),
+  effectiveTo: z.string().nullable().optional(),
+  status: z.string(),
+  isActive: z.boolean(),
+});
+
+export type PricingCatalogVersionSummary = z.infer<typeof pricingCatalogVersionSummarySchema>;
+
+export const pricingCatalogEntrySchema = z.object({
+  countryCode: z.string().length(2),
+  currencyCode: z.string().length(3),
+  subscriptionSku: subscriptionSkuSchema,
+  monthlyAmountMajor: z.number().nonnegative().nullable().optional(),
+  platformFeePercent: z.number().min(0).max(100),
+  isSelfServeEnabled: z.boolean(),
+});
+
+export type PricingCatalogEntry = z.infer<typeof pricingCatalogEntrySchema>;
+
+export const pricingCatalogEntryDiffSchema = z.object({
+  countryCode: z.string().length(2),
+  subscriptionSku: subscriptionSkuSchema,
+  activeMonthlyAmountMajor: z.number().nonnegative().nullable().optional(),
+  monthlyAmountMajor: z.number().nonnegative().nullable().optional(),
+});
+
+export const pricingCatalogVersionDetailSchema = z.object({
+  id: z.string(),
+  code: z.string(),
+  effectiveFrom: z.string(),
+  effectiveTo: z.string().nullable().optional(),
+  status: z.string(),
+  isActive: z.boolean(),
+  entries: z.array(pricingCatalogEntrySchema),
+  diffFromActive: z.array(pricingCatalogEntryDiffSchema).nullable().optional(),
+});
+
+export type PricingCatalogVersionDetail = z.infer<typeof pricingCatalogVersionDetailSchema>;
+
+export const pricingCatalogVersionListResponseSchema = z.object({
+  items: z.array(pricingCatalogVersionSummarySchema),
+});
+
 export const walkInSettingsSchema = z.object({
   walkInsEnabled: z.boolean(),
   walkInAcceptingUntil: z.string().nullable().optional(),

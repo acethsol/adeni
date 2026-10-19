@@ -23,7 +23,7 @@ public sealed class TenantPricingResolverTests
             CustomSaasCurrency = "NGN",
         };
 
-        var resolver = new TenantPricingResolver(BuildDb());
+        var resolver = CreateResolver(BuildDb());
         var result = resolver.ResolveForTenant(tenant, "NG");
 
         Assert.Equal(55_000m, result.CatalogListPriceMajor);
@@ -47,7 +47,7 @@ public sealed class TenantPricingResolverTests
             DiscountCyclesRemaining = 3,
         };
 
-        var resolver = new TenantPricingResolver(BuildDb());
+        var resolver = CreateResolver(BuildDb());
         var result = resolver.ResolveForTenant(tenant, "NG");
 
         Assert.Equal(50_000m, result.ListPriceMajor);
@@ -65,7 +65,7 @@ public sealed class TenantPricingResolverTests
             SubscriptionSku = SubscriptionSku.Business,
         };
 
-        var resolver = new TenantPricingResolver(BuildDb());
+        var resolver = CreateResolver(BuildDb());
         var result = resolver.ResolveForTenant(tenant, "NG");
 
         Assert.Equal(95_000m, result.CatalogListPriceMajor);
@@ -137,7 +137,14 @@ public sealed class TenantPricingResolverTests
         services.AddScoped<Adeni.Infrastructure.Context.TenantContext>();
         services.AddScoped<Application.Abstractions.ITenantContext>(sp =>
             sp.GetRequiredService<Adeni.Infrastructure.Context.TenantContext>());
+        services.AddScoped<IPricingCatalogService, PricingCatalogService>();
         services.AddScoped<ITenantPricingResolver, TenantPricingResolver>();
         return services.BuildServiceProvider();
+    }
+
+    private static TenantPricingResolver CreateResolver(AdeniDbContext db)
+    {
+        var catalog = new PricingCatalogService(db);
+        return new TenantPricingResolver(db, catalog);
     }
 }

@@ -6,7 +6,9 @@ using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-public sealed class TenantPricingResolver(AdeniDbContext dbContext) : ITenantPricingResolver
+public sealed class TenantPricingResolver(
+    AdeniDbContext dbContext,
+    IPricingCatalogService pricingCatalog) : ITenantPricingResolver
 {
     public async Task<string> ResolvePrimaryBillingCountryAsync(
         Guid tenantId,
@@ -46,7 +48,7 @@ public sealed class TenantPricingResolver(AdeniDbContext dbContext) : ITenantPri
         var sku = skuOverride ?? tenant.SubscriptionSku;
         var country = NormalizeCountry(billingCountryCode);
         var currency = SubscriptionCatalogPrices.CurrencyForCountry(country);
-        var catalogMajor = SubscriptionCatalogPrices.GetMonthlyMajor(country, sku);
+        var catalogMajor = pricingCatalog.GetMonthlyMajor(country, sku);
 
         var listMajor = ResolveListPriceMajor(tenant, country, sku, catalogMajor);
         decimal? effectiveMajor = listMajor is null
@@ -59,7 +61,7 @@ public sealed class TenantPricingResolver(AdeniDbContext dbContext) : ITenantPri
             catalogMajor,
             listMajor,
             effectiveMajor,
-            PricingCatalogMetadata.ActiveVersionCode);
+            pricingCatalog.GetActiveVersionCode());
     }
 
     public long? ToAmountMinor(decimal? amountMajor, string currency) =>

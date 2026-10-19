@@ -116,6 +116,7 @@ public sealed class AdminBusinessServiceTests
         services.AddScoped<Application.Abstractions.ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
         services.AddSingleton<Application.Abstractions.IAuditLogWriter, InMemoryAuditLogWriter>();
         services.AddDbContext<AdeniDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));
+        services.AddScoped<IPricingCatalogService, PricingCatalogService>();
         services.AddScoped<ITenantPricingResolver, TenantPricingResolver>();
         services.AddScoped<AdminBusinessService>();
         return services.BuildServiceProvider();

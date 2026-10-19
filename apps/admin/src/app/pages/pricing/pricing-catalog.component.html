@@ -1,0 +1,115 @@
+<app-portal-page
+  title="Pricing catalog"
+  description="Read-only view of versioned SaaS list prices seeded from the launch catalog. Publish workflow lands in Sprint 33b-4."
+>
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  <section class="card list-toolbar">
+    <adeni-staff-btn icon="restart" [disabled]="loading()" (pressed)="load()">Refresh</adeni-staff-btn>
+    @if (activeVersion(); as active) {
+      <p class="toolbar-meta">
+        Active: <strong>{{ active.code }}</strong> · effective {{ active.effectiveFrom | date: "mediumDate" }}
+      </p>
+    }
+  </section>
+
+  @if (loading() && versions().length === 0) {
+    <p class="muted">Loading catalog…</p>
+  } @else if (versions().length === 0) {
+    <adeni-portal-empty-state
+      icon="restart"
+      title="No catalog versions"
+      description="Publish the database and run the pricing catalog seed script."
+    />
+  } @else {
+    <section class="card layout">
+      <div class="version-list">
+        <h2>Versions</h2>
+        <ul>
+          @for (version of versions(); track version.id) {
+            <li>
+              <button
+                type="button"
+                class="version-btn"
+                [class.is-selected]="selectedCode() === version.code"
+                (click)="selectVersion(version.code)"
+              >
+                <span>{{ version.code }}</span>
+                @if (version.isActive) {
+                  <app-admin-pill tone="success" label="Active" />
+                } @else {
+                  <app-admin-pill tone="neutral" [label]="version.status" />
+                }
+              </button>
+            </li>
+          }
+        </ul>
+      </div>
+
+      @if (detail(); as data) {
+        <div class="detail">
+          <header class="detail-header">
+            <h2>{{ data.code }}</h2>
+            <p class="muted">
+              {{ data.effectiveFrom | date: "mediumDate" }}
+              @if (data.effectiveTo) {
+                — {{ data.effectiveTo | date: "mediumDate" }}
+              }
+            </p>
+          </header>
+
+          @if (data.diffFromActive?.length) {
+            <section class="diff-panel">
+              <h3>Diff vs active</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Country</th>
+                    <th>SKU</th>
+                    <th>Active</th>
+                    <th>This version</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of data.diffFromActive; track row.countryCode + row.subscriptionSku) {
+                    <tr>
+                      <td>{{ row.countryCode }}</td>
+                      <td>{{ formatSku(row.subscriptionSku) }}</td>
+                      <td>{{ row.activeMonthlyAmountMajor ?? "—" }}</td>
+                      <td>{{ row.monthlyAmountMajor ?? "—" }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </section>
+          }
+
+          <table class="entries-table">
+            <thead>
+              <tr>
+                <th>Country</th>
+                <th>SKU</th>
+                <th>List price</th>
+                <th>GMV %</th>
+                <th>Self-serve</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of data.entries; track entry.countryCode + entry.subscriptionSku) {
+                <tr>
+                  <td>{{ entry.countryCode }}</td>
+                  <td>{{ formatSku(entry.subscriptionSku) }}</td>
+                  <td>{{ formatAmount(entry.currencyCode, entry.monthlyAmountMajor) }}</td>
+                  <td>{{ entry.platformFeePercent }}%</td>
+                  <td>{{ entry.isSelfServeEnabled ? "Yes" : "No" }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+</app-portal-page>

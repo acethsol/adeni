@@ -12,6 +12,10 @@ import {
   type PagedResult,
   setTenantCommercialTermsRequestSchema,
   adminTenantCommercialTermsSchema,
+  publicCountryPricingSchema,
+  pricingCatalogVersionSummarySchema,
+  pricingCatalogVersionDetailSchema,
+  pricingCatalogVersionListResponseSchema,
   subscriptionUsageSchema,
   subscriptionCheckoutRequestSchema,
   subscriptionCheckoutResponseSchema,
@@ -164,6 +168,9 @@ import {
   type AdminBusinessSummary,
   type AdminTenantCommercialTerms,
   type SetTenantCommercialTermsRequest,
+  type PublicCountryPricing,
+  type PricingCatalogVersionSummary,
+  type PricingCatalogVersionDetail,
   type SubscriptionUsage,
   type SubscriptionCheckoutRequest,
   type SubscriptionCheckoutResponse,
@@ -1897,6 +1904,24 @@ export class AdeniApiClient {
         body: JSON.stringify(payload),
       },
     );
+  }
+
+  async getPublicPricing(countryCode: string): Promise<PublicCountryPricing> {
+    const query = new URLSearchParams({ countryCode });
+    const response = await this.request(`/api/v1/pricing?${query.toString()}`);
+    return publicCountryPricingSchema.parse(await response.json());
+  }
+
+  async listAdminPricingCatalogVersions(): Promise<PricingCatalogVersionSummary[]> {
+    const response = await this.request("/api/v1/admin/pricing-catalog/versions");
+    return pricingCatalogVersionListResponseSchema.parse(await response.json()).items;
+  }
+
+  async getAdminPricingCatalogVersion(code: string): Promise<PricingCatalogVersionDetail> {
+    const response = await this.request(
+      `/api/v1/admin/pricing-catalog/versions/${encodeURIComponent(code)}`,
+    );
+    return pricingCatalogVersionDetailSchema.parse(await response.json());
   }
 
   async listAdminTenantSubscriptionCharges(

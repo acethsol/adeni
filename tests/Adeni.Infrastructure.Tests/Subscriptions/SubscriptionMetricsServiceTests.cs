@@ -142,6 +142,7 @@ public sealed class SubscriptionMetricsServiceTests
         services.AddScoped<Adeni.Infrastructure.Context.TenantContext>();
         services.AddScoped<Application.Abstractions.ITenantContext>(sp =>
             sp.GetRequiredService<Adeni.Infrastructure.Context.TenantContext>());
+        services.AddScoped<IPricingCatalogService, PricingCatalogService>();
         services.AddScoped<ITenantPricingResolver, TenantPricingResolver>();
         services.AddScoped<ISubscriptionMetricsService, SubscriptionMetricsService>();
         return services.BuildServiceProvider();

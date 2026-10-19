@@ -51,6 +51,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     label: "Platform",
     items: [
       { path: "/markets", label: "Markets", icon: "markets" },
+      { path: "/pricing/catalog", label: "Pricing catalog", icon: "insights" },
       { path: "/businesses", label: "Businesses", icon: "businesses" },
       { path: "/insights", label: "Revenue", icon: "insights" },
       { path: "/transactions", label: "Transactions", icon: "transactions" },

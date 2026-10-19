@@ -90,6 +90,10 @@ public sealed class AdeniDbContext(
 
     public DbSet<TenantSubscriptionCharge> TenantSubscriptionCharges => Set<TenantSubscriptionCharge>();
 
+    public DbSet<PricingCatalogVersion> PricingCatalogVersions => Set<PricingCatalogVersion>();
+
+    public DbSet<PricingCatalogEntry> PricingCatalogEntries => Set<PricingCatalogEntry>();
+
     public DbSet<BillingDocument> BillingDocuments => Set<BillingDocument>();
 
     public DbSet<BillingDocumentLine> BillingDocumentLines => Set<BillingDocumentLine>();
@@ -141,6 +145,32 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.CustomSaasMonthlyAmount).HasPrecision(18, 2);
             entity.Property(x => x.CustomSaasSku).HasConversion<int>();
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.Id == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<PricingCatalogVersion>(entity =>
+        {
+            entity.ToTable("pricing_catalog_versions", "subscriptions");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Code).HasMaxLength(64);
+            entity.Property(x => x.Status).HasConversion<int>();
+            entity.HasIndex(x => x.Code).IsUnique();
+            entity.HasIndex(x => x.Status);
+        });
+
+        modelBuilder.Entity<PricingCatalogEntry>(entity =>
+        {
+            entity.ToTable("pricing_catalog_entries", "subscriptions");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CountryCode).HasMaxLength(2);
+            entity.Property(x => x.CurrencyCode).HasMaxLength(3);
+            entity.Property(x => x.SubscriptionSku).HasConversion<int>();
+            entity.Property(x => x.MonthlyAmountMajor).HasPrecision(18, 2);
+            entity.Property(x => x.PlatformFeePercent).HasPrecision(5, 2);
+            entity.HasIndex(x => new { x.PricingCatalogVersionId, x.CountryCode, x.SubscriptionSku }).IsUnique();
+            entity.HasOne(x => x.Version)
+                .WithMany(x => x.Entries)
+                .HasForeignKey(x => x.PricingCatalogVersionId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<TenantSubscriptionCharge>(entity =>
