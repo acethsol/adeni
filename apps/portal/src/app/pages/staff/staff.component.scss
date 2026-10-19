@@ -31,31 +31,38 @@
   width: 100%;
 }
 
-.adeni-cell-person-avatar[data-tone="hair"] {
+.adeni-cell-person-avatar[data-tone="hair"],
+.org-avatar[data-tone="hair"] {
   background: #3d5a80;
 }
 
-.adeni-cell-person-avatar[data-tone="nails"] {
+.adeni-cell-person-avatar[data-tone="nails"],
+.org-avatar[data-tone="nails"] {
   background: #b85a7a;
 }
 
-.adeni-cell-person-avatar[data-tone="spa"] {
+.adeni-cell-person-avatar[data-tone="spa"],
+.org-avatar[data-tone="spa"] {
   background: #2a9d8f;
 }
 
-.adeni-cell-person-avatar[data-tone="fit"] {
+.adeni-cell-person-avatar[data-tone="fit"],
+.org-avatar[data-tone="fit"] {
   background: #3a7ca5;
 }
 
-.adeni-cell-person-avatar[data-tone="lead"] {
+.adeni-cell-person-avatar[data-tone="lead"],
+.org-avatar[data-tone="lead"] {
   background: #2a3038;
 }
 
-.adeni-cell-person-avatar[data-tone="ops"] {
+.adeni-cell-person-avatar[data-tone="ops"],
+.org-avatar[data-tone="ops"] {
   background: #6b737b;
 }
 
-.adeni-cell-person-avatar[data-tone="neutral"] {
+.adeni-cell-person-avatar[data-tone="neutral"],
+.org-avatar[data-tone="neutral"] {
   background: #7a828a;
 }
 
@@ -114,38 +121,15 @@
 }
 
 .org-avatar.preview {
-  width: 7.25rem;
-  height: 7.25rem;
-  font-size: 1.55rem;
   margin-bottom: 0;
 }
 
-.org-avatar[data-tone="hair"] {
-  background: #3d5a80;
-}
-
-.org-avatar[data-tone="nails"] {
-  background: #b85a7a;
-}
-
-.org-avatar[data-tone="spa"] {
-  background: #2a9d8f;
-}
-
-.org-avatar[data-tone="fit"] {
-  background: #3a7ca5;
-}
-
-.org-avatar[data-tone="lead"] {
-  background: #2a3038;
-}
-
-.org-avatar[data-tone="ops"] {
-  background: #6b737b;
-}
-
-.org-avatar[data-tone="neutral"] {
-  background: #7a828a;
+.org-name,
+.org-title {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .org-name {
@@ -153,10 +137,6 @@
   font-weight: 650;
   letter-spacing: -0.01em;
   line-height: 1.25;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .org-role {
@@ -168,10 +148,6 @@
 .org-title {
   font-size: 0.75rem;
   color: var(--text-muted);
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .org-meta {
