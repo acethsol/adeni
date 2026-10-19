@@ -38,9 +38,9 @@
               >
                 <span>{{ version.code }}</span>
                 @if (version.isActive) {
-                  <app-admin-pill tone="success" label="Active" />
+                  <admin-pill variant="success" label="Active" />
                 } @else {
-                  <app-admin-pill tone="neutral" [label]="version.status" />
+                  <admin-pill variant="neutral" [label]="version.status" />
                 }
               </button>
             </li>

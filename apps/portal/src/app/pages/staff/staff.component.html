@@ -104,10 +104,10 @@
                 <span class="org-title">{{ member.title }}</span>
               }
               <div class="org-meta adeni-cell-pills">
-                <adeni-pill [tone]="bookingPillTone(member)" [dot]="member.isActive" compact>
+                <adeni-pill [tone]="bookingPillTone(member)" [dot]="member.isActive" [compact]="true">
                   {{ member.isActive ? "Bookable" : "Inactive" }}
                 </adeni-pill>
-                <adeni-pill [tone]="accessPillTone(member.portalAccessStatus)" compact>
+                <adeni-pill [tone]="accessPillTone(member.portalAccessStatus)" [compact]="true">
                   {{ accessLabel(member.portalAccessStatus) }}
                 </adeni-pill>
               </div>
@@ -185,12 +185,12 @@
             </div>
           </ng-template>
           <ng-template adeniDataTableCell="status" let-member>
-            <adeni-pill [tone]="bookingPillTone(member)" [dot]="member.isActive" compact>
+            <adeni-pill [tone]="bookingPillTone(member)" [dot]="member.isActive" [compact]="true">
               {{ member.isActive ? "Bookable" : "Inactive" }}
             </adeni-pill>
           </ng-template>
           <ng-template adeniDataTableCell="access" let-member>
-            <adeni-pill [tone]="accessPillTone(member.portalAccessStatus)" compact>
+            <adeni-pill [tone]="accessPillTone(member.portalAccessStatus)" [compact]="true">
               {{ accessLabel(member.portalAccessStatus) }}
             </adeni-pill>
           </ng-template>
