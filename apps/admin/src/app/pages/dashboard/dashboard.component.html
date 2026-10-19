@@ -213,9 +213,11 @@
       </section>
 
       <section class="widget-card widget-span-6">
-        <header class="widget-card__head">
-          <h3>Plans</h3>
+        <header class="widget-card__head widget-card__head--row">
+          <h3>Plan mix</h3>
+          <a routerLink="/pricing/catalog">List prices</a>
         </header>
+        <p class="hint widget-card__hint">Tenants by subscription SKU — not catalog list prices.</p>
         @if (businessStats() === null) {
           <p class="dashboard-empty">Could not load plans.</p>
         } @else if (businessStats()!.totalCount === 0) {
