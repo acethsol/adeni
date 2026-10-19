@@ -30,10 +30,11 @@ export const routes: Routes = [
       { path: "trust-badges", component: AdminTrustBadgesComponent, title: "Trust badges" },
       { path: "reviews", component: AdminReviewsComponent, title: "Reviews" },
       { path: "markets", component: AdminMarketsComponent, title: "Markets" },
+      { path: "pricing/plans", pathMatch: "full", redirectTo: "pricing/catalog" },
       {
         path: "pricing/catalog",
         component: AdminPricingCatalogComponent,
-        title: "Pricing catalog",
+        title: "Plans & pricing",
       },
       { path: "insights", component: AdminInsightsComponent, title: "Subscription insights" },
       { path: "transactions", component: AdminTransactionsComponent, title: "Transactions" },

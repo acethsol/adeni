@@ -50,6 +50,7 @@ type ChromeKey =
   | "/trust-badges"
   | "/reviews"
   | "/markets"
+  | "/pricing/catalog"
   | "/businesses"
   | "/insights"
   | "/transactions"
@@ -75,6 +76,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     "/trust-badges": "Trust badges",
     "/reviews": "Reviews",
     "/markets": "Markets",
+    "/pricing/catalog": "Plans & pricing",
     "/businesses": "Businesses",
     "/insights": "Revenue",
     "/transactions": "Transactions",
@@ -99,6 +101,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     "/trust-badges": "Badges de confiance",
     "/reviews": "Avis",
     "/markets": "Marchés",
+    "/pricing/catalog": "Forfaits et tarifs",
     "/businesses": "Établissements",
     "/insights": "Abonnements",
     "/transactions": "Transactions",
