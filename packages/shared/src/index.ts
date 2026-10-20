@@ -26,6 +26,7 @@ export * from "./api-errors";
 export * from "./format";
 export * from "./dashboard-range";
 export * from "./dashboard-layout";
+export * from "./dashboard-widget-width";
 export * from "./dashboard-layout-presets";
 export * from "./paging";
 export * from "./media-limits";

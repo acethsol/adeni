@@ -1,6 +1,7 @@
 import {
   cloneDashboardLayout,
   coerceDashboardLayout,
+  normalizeDashboardWidgetWidth,
   resolveDashboardLayout,
   type DashboardLayout,
   type TenantDashboardLayout,
@@ -22,7 +23,10 @@ export function dashboardLayoutToApi(layout: DashboardLayout): TenantDashboardLa
   return {
     version: 1,
     range: layout.range,
-    widgets: layout.widgets.map((widget) => ({ id: widget.id, w: widget.w })),
+    widgets: layout.widgets.map((widget) => ({
+      id: widget.id,
+      w: normalizeDashboardWidgetWidth(widget.w),
+    })),
   };
 }
 
