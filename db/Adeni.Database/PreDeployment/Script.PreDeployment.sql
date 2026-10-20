@@ -25,9 +25,11 @@ GO
 IF COL_LENGTH(N'tenancy.tenants', N'SubscriptionTier') IS NOT NULL
 BEGIN
     PRINT N'Aligning tenancy.tenants.SubscriptionSku from legacy SubscriptionTier...';
-    UPDATE [tenancy].[tenants]
-    SET [SubscriptionSku] = [SubscriptionTier]
-    WHERE [SubscriptionSku] <> [SubscriptionTier];
+    EXEC(N'
+        UPDATE [tenancy].[tenants]
+        SET [SubscriptionSku] = [SubscriptionTier]
+        WHERE [SubscriptionSku] <> [SubscriptionTier];
+    ');
 
     PRINT N'Dropping tenancy.tenants.SubscriptionTier...';
     ALTER TABLE [tenancy].[tenants] DROP COLUMN [SubscriptionTier];
