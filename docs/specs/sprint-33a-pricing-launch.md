@@ -105,7 +105,7 @@ From [10_TESTS_AND_ACCEPTANCE_CRITERIA.md](./adeni-subscription-pricing-v1/10_TE
 |------|-----------|
 | **Pricing** | CA → CAD launch ladder; NG → NGN launch ladder; city ≠ price; disabled country (US) no self-serve; bound price survives new catalog version |
 | **Trial** | 30-day Pro trial on activation; no permanent free tier after expiry |
-| **Entitlements** | Starter/Pro/Business limits enforced server-side (when Phase 1 resolver ships) |
+| **Entitlements** | Starter/Pro/Business limits enforced server-side — implementation spec: [sprint-33-entitlements-v2.md](./sprint-33-entitlements-v2.md) |
 | **Overrides** | Admin negotiated price + audit; catalog bump does not overwrite agreed price |
 | **GMV** | Launch 0% CA/NG; customer total = business-defined total |
 | **Billing country** | Primary location change does not silently reprice |

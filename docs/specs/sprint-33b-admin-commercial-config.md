@@ -80,3 +80,4 @@ Make **global pricing catalog**, **per-tenant commercial terms**, and **GMV plat
 - [08_ANGULAR_PLAN_AND_PORTAL_UX.md](./adeni-subscription-pricing-v1/08_ANGULAR_PLAN_AND_PORTAL_UX.md)
 - [06_SUBSCRIPTION_SERVICE_AND_APIS.md](./adeni-subscription-pricing-v1/06_SUBSCRIPTION_SERVICE_AND_APIS.md)
 - [05_DATA_MODEL_SQL_SERVER.md](./adeni-subscription-pricing-v1/05_DATA_MODEL_SQL_SERVER.md)
+- Plan capability matrix enforcement (SKU entitlements, not catalog): [sprint-33-entitlements-v2.md](./sprint-33-entitlements-v2.md)
