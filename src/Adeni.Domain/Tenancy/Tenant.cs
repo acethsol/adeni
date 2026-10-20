@@ -37,6 +37,15 @@ public sealed class Tenant
 
     public SubscriptionSku? CustomSaasSku { get; set; }
 
+    /// <summary>List price frozen at first paid subscription activation (before discounts).</summary>
+    public decimal? AgreedMonthlyAmount { get; set; }
+
+    public string? AgreedCurrencyCode { get; set; }
+
+    public string? PricingCatalogVersionCode { get; set; }
+
+    public DateTimeOffset? PriceLockEndsAt { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
 
     public DateTimeOffset? VerifiedAt { get; set; }

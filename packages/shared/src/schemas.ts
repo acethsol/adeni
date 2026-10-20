@@ -984,6 +984,12 @@ export const subscriptionUsageSchema = z.object({
   billingStatus: tenantBillingStatusSchema.optional(),
   trialEndsAt: z.string().nullable().optional(),
   paidThrough: z.string().nullable().optional(),
+  catalogListPriceMajor: z.number().nonnegative().nullable().optional(),
+  agreedMonthlyAmountMajor: z.number().nonnegative().nullable().optional(),
+  effectiveMonthlyAmountMajor: z.number().nonnegative().nullable().optional(),
+  currencyCode: z.string().length(3).nullable().optional(),
+  pricingCatalogVersion: z.string().nullable().optional(),
+  boundPricingCatalogVersion: z.string().nullable().optional(),
 });
 
 export type SubscriptionUsage = z.infer<typeof subscriptionUsageSchema>;
@@ -1257,6 +1263,9 @@ export const adminTenantCommercialTermsSchema = z.object({
   effectiveMonthlyAmount: z.number().nonnegative().nullable().optional(),
   pricingCatalogVersion: z.string().nullable().optional(),
   currency: z.string().length(3).nullable().optional(),
+  agreedMonthlyAmount: z.number().nonnegative().nullable().optional(),
+  boundPricingCatalogVersion: z.string().nullable().optional(),
+  priceLockEndsAt: z.string().nullable().optional(),
 });
 
 export type AdminTenantCommercialTerms = z.infer<typeof adminTenantCommercialTermsSchema>;

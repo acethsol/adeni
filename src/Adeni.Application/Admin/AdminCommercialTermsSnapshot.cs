@@ -17,7 +17,11 @@ public sealed record AdminCommercialTermsSnapshot(
     string? BillingCompReason,
     decimal? CustomSaasMonthlyAmount,
     string? CustomSaasCurrency,
-    string? CustomSaasSku)
+    string? CustomSaasSku,
+    decimal? AgreedMonthlyAmount,
+    string? AgreedCurrencyCode,
+    string? PricingCatalogVersionCode,
+    DateTimeOffset? PriceLockEndsAt)
 {
     public static AdminCommercialTermsSnapshot FromTenant(Tenant tenant) =>
         new(
@@ -37,7 +41,11 @@ public sealed record AdminCommercialTermsSnapshot(
             tenant.CustomSaasCurrency,
             tenant.CustomSaasSku is { } customSku
                 ? SubscriptionSkuMapping.ToApiValue(customSku)
-                : null);
+                : null,
+            tenant.AgreedMonthlyAmount,
+            tenant.AgreedCurrencyCode,
+            tenant.PricingCatalogVersionCode,
+            tenant.PriceLockEndsAt);
 
     public bool EqualsCommercialTerms(AdminCommercialTermsSnapshot other) =>
         SubscriptionSku == other.SubscriptionSku
@@ -51,5 +59,9 @@ public sealed record AdminCommercialTermsSnapshot(
         && DiscountCyclesRemaining == other.DiscountCyclesRemaining
         && CustomSaasMonthlyAmount == other.CustomSaasMonthlyAmount
         && CustomSaasCurrency == other.CustomSaasCurrency
-        && CustomSaasSku == other.CustomSaasSku;
+        && CustomSaasSku == other.CustomSaasSku
+        && AgreedMonthlyAmount == other.AgreedMonthlyAmount
+        && AgreedCurrencyCode == other.AgreedCurrencyCode
+        && PricingCatalogVersionCode == other.PricingCatalogVersionCode
+        && PriceLockEndsAt == other.PriceLockEndsAt;
 }

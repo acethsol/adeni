@@ -1,14 +1,18 @@
 namespace Adeni.Infrastructure.Tenancy;
 
 using Adeni.Application.Security;
+using Adeni.Application.Subscriptions;
 using Adeni.Application.Tenancy;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
+using Adeni.Domain.Subscriptions;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-public sealed class TenantCustomerService(AdeniDbContext dbContext) : ITenantCustomerService
+public sealed class TenantCustomerService(
+    AdeniDbContext dbContext,
+    IEntitlementsService entitlementsService) : ITenantCustomerService
 {
     public async Task<Result<TenantCustomerUpsertResult>> EnsureFromBookingAsync(
         Guid tenantId,
@@ -150,8 +154,15 @@ public sealed class TenantCustomerService(AdeniDbContext dbContext) : ITenantCus
             return Result.Failure<TenantCustomerDetailResponse>(Error.NotFound("Customer"));
         }
 
+        var tenant = await dbContext.Tenants.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+        var entitlements = tenant is null
+            ? SubscriptionEntitlements.ForSku(SubscriptionSku.Starter)
+            : entitlementsService.GetEntitlementsForTenant(tenant);
+        var historyLimit = entitlements.CustomerRetentionAnalytics ? 25 : 3;
+
         var recentBookingRows = row.CustomerId is Guid platformCustomerId
-            ? await LoadRecentBookingsAsync(tenantId, platformCustomerId, cancellationToken)
+            ? await LoadRecentBookingsAsync(tenantId, platformCustomerId, historyLimit, cancellationToken)
             : [];
 
         var recentQueueRows = await LoadRecentQueueVisitsAsync(
@@ -172,6 +183,21 @@ public sealed class TenantCustomerService(AdeniDbContext dbContext) : ITenantCus
     {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 100);
+
+        if (!string.IsNullOrWhiteSpace(discoverFilter))
+        {
+            var tenant = await dbContext.Tenants.AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+            if (tenant is not null)
+            {
+                var entitlements = entitlementsService.GetEntitlementsForTenant(tenant);
+                if (!entitlements.CustomerRetentionAnalytics)
+                {
+                    return Result.Failure<TenantCustomerListResponse>(
+                        ErrorCodes.CustomerSegmentationNotEntitledError());
+                }
+            }
+        }
 
         var query = dbContext.TenantCustomers.AsNoTracking()
             .Where(x => x.TenantId == tenantId);
@@ -289,6 +315,7 @@ public sealed class TenantCustomerService(AdeniDbContext dbContext) : ITenantCus
     private async Task<IReadOnlyList<TenantCustomerRecentBookingResponse>> LoadRecentBookingsAsync(
         Guid tenantId,
         Guid platformCustomerId,
+        int limit,
         CancellationToken cancellationToken)
     {
         var bookings = await dbContext.Bookings.AsNoTracking()
@@ -297,7 +324,7 @@ public sealed class TenantCustomerService(AdeniDbContext dbContext) : ITenantCus
             .Include(x => x.StaffMember)
             .Where(x => x.TenantId == tenantId && x.CustomerId == platformCustomerId)
             .OrderByDescending(x => x.StartAt)
-            .Take(5)
+            .Take(limit)
             .ToListAsync(cancellationToken);
 
         return bookings

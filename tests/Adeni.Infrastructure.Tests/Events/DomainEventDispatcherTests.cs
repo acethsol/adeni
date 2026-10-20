@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Tests.Events;
 
+using Adeni.Infrastructure.Tests.Subscriptions;
 using Adeni.Application.Abstractions;
 using Adeni.Application.Booking;
 using Adeni.Application.Caching;
@@ -143,7 +144,7 @@ public sealed class DomainEventDispatcherTests
         services.AddScoped<IBusinessClosedDateService, BusinessClosedDateService>();
         services.AddScoped<IAvailabilityService, AvailabilityService>();
         services.AddScoped<IReviewService, ReviewService>();
-        services.AddScoped<IEntitlementsService, EntitlementsService>();
+        services.AddEntitlementsModule();
         services.Configure<FinanceOptions>(options =>
         {
             options.Provider = "Stub";

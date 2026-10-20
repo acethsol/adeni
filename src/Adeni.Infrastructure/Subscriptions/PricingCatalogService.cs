@@ -94,6 +94,28 @@ public sealed class PricingCatalogService(
         return SubscriptionCatalogPrices.GetMonthlyMajor(key, sku);
     }
 
+    public decimal GetPlatformFeePercent(string? countryCode)
+    {
+        var sample = GetSampleCountryEntry(countryCode);
+        return sample?.PlatformFeePercent ?? 0m;
+    }
+
+    public bool GetSelfServeEnabled(string? countryCode)
+    {
+        var sample = GetSampleCountryEntry(countryCode);
+        return sample?.IsSelfServeEnabled ?? true;
+    }
+
+    private PricingCatalogEntry? GetSampleCountryEntry(string? countryCode)
+    {
+        var key = NormalizeCountry(countryCode);
+        lock (_cacheLock)
+        {
+            return _cache?.Entries.Values.FirstOrDefault(e =>
+                string.Equals(e.CountryCode, key, StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
     public async Task<Result<PublicCountryPricingDto>> GetPublicCountryPricingAsync(
         string? countryCode,
         CancellationToken cancellationToken = default)

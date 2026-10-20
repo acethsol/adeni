@@ -129,7 +129,7 @@ public sealed class TenantDashboardService(
         var normalized = metric.Trim().ToLowerInvariant();
         if (!entitlements.AdvancedAnalytics && normalized is not "appointments")
         {
-            return Result.Failure<TenantDashboardSeriesResponse>(AnalyticsRequiredError());
+            return Result.Failure<TenantDashboardSeriesResponse>(ErrorCodes.AnalyticsNotEntitledError());
         }
 
         IReadOnlyList<TenantDashboardSeriesPoint> points;
@@ -178,12 +178,23 @@ public sealed class TenantDashboardService(
             return Result.Failure<TenantDashboardBreakdownResponse>(Error.NotFound("Tenant"));
         }
 
-        if (!entitlementsService.GetEntitlementsForTenant(tenant).AdvancedAnalytics)
+        var entitlements = entitlementsService.GetEntitlementsForTenant(tenant);
+        var normalized = dimension.Trim().ToLowerInvariant();
+
+        if (!entitlements.AdvancedAnalytics)
         {
-            return Result.Failure<TenantDashboardBreakdownResponse>(AnalyticsRequiredError());
+            return Result.Failure<TenantDashboardBreakdownResponse>(ErrorCodes.AnalyticsNotEntitledError());
         }
 
-        var normalized = dimension.Trim().ToLowerInvariant();
+        if (normalized == "staff" && !entitlements.StaffPerformanceAnalytics)
+        {
+            return Result.Failure<TenantDashboardBreakdownResponse>(ErrorCodes.AnalyticsNotEntitledError());
+        }
+
+        if (normalized == "service" && !entitlements.CustomerRetentionAnalytics)
+        {
+            return Result.Failure<TenantDashboardBreakdownResponse>(ErrorCodes.AnalyticsNotEntitledError());
+        }
         var bookingQuery = ScopedBookings(tenantId, staffMemberId)
             .Where(x =>
                 x.StartAt >= from
@@ -513,6 +524,4 @@ public sealed class TenantDashboardService(
         }
     }
 
-    private static Error AnalyticsRequiredError() =>
-        new("entitlements.analytics_required", "Analytics requires Professional or Business plan.");
 }

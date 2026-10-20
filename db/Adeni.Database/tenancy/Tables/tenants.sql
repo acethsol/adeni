@@ -15,6 +15,10 @@ CREATE TABLE [tenancy].[tenants] (
     [CustomSaasMonthlyAmount]  DECIMAL (18, 2)    NULL,
     [CustomSaasCurrency]       NVARCHAR (3)       NULL,
     [CustomSaasSku]            INT                NULL,
+    [AgreedMonthlyAmount]      DECIMAL (18, 2)    NULL,
+    [AgreedCurrencyCode]       NVARCHAR (3)       NULL,
+    [PricingCatalogVersionCode] NVARCHAR (64)     NULL,
+    [PriceLockEndsAt]          DATETIMEOFFSET (7) NULL,
     [CreatedAt]                DATETIMEOFFSET (7) NOT NULL,
     [VerifiedAt]               DATETIMEOFFSET (7) NULL,
     CONSTRAINT [PK_tenants] PRIMARY KEY CLUSTERED ([Id] ASC)

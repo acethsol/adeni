@@ -6,6 +6,9 @@ using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
+/// <summary>
+/// Resolves tenant SaaS list price: admin override → bound agreed price → active catalog.
+/// </summary>
 public sealed class TenantPricingResolver(
     AdeniDbContext dbContext,
     IPricingCatalogService pricingCatalog) : ITenantPricingResolver
@@ -43,14 +46,28 @@ public sealed class TenantPricingResolver(
     public TenantPricingResolution ResolveForTenant(
         Tenant tenant,
         string billingCountryCode,
-        SubscriptionSku? skuOverride = null)
+        SubscriptionSku? skuOverride = null,
+        DateTimeOffset? utcNow = null)
     {
+        var now = utcNow ?? DateTimeOffset.UtcNow;
         var sku = skuOverride ?? tenant.SubscriptionSku;
         var country = NormalizeCountry(billingCountryCode);
         var currency = SubscriptionCatalogPrices.CurrencyForCountry(country);
-        var catalogMajor = pricingCatalog.GetMonthlyMajor(country, sku);
+        var activeCatalogMajor = pricingCatalog.GetMonthlyMajor(country, sku);
+        var catalogVersionForDisplay = pricingCatalog.GetActiveVersionCode();
 
-        var listMajor = ResolveListPriceMajor(tenant, country, sku, catalogMajor);
+        var listMajor = ResolveListPriceMajor(tenant, sku, activeCatalogMajor, currency, now);
+        if (listMajor is not null)
+        {
+            currency = ResolveCurrency(tenant, currency);
+        }
+
+        var boundVersion = tenant.PricingCatalogVersionCode;
+        var resolutionVersion = TenantCommercialBinding.IsBoundListPriceActive(tenant, sku, now)
+            && !string.IsNullOrWhiteSpace(boundVersion)
+            ? boundVersion
+            : catalogVersionForDisplay;
+
         decimal? effectiveMajor = listMajor is null
             ? null
             : ApplyTenantDiscount(listMajor.Value, tenant);
@@ -58,10 +75,12 @@ public sealed class TenantPricingResolver(
         return new TenantPricingResolution(
             country,
             currency,
-            catalogMajor,
+            activeCatalogMajor,
             listMajor,
             effectiveMajor,
-            pricingCatalog.GetActiveVersionCode());
+            resolutionVersion,
+            tenant.AgreedMonthlyAmount,
+            boundVersion);
     }
 
     public long? ToAmountMinor(decimal? amountMajor, string currency) =>
@@ -76,9 +95,10 @@ public sealed class TenantPricingResolver(
 
     private static decimal? ResolveListPriceMajor(
         Tenant tenant,
-        string countryCode,
         SubscriptionSku sku,
-        decimal? catalogMajor)
+        decimal? activeCatalogMajor,
+        string defaultCurrency,
+        DateTimeOffset utcNow)
     {
         var customAmount = tenant.CustomSaasMonthlyAmount;
         var customSku = tenant.CustomSaasSku;
@@ -89,12 +109,27 @@ public sealed class TenantPricingResolver(
             return customAmount;
         }
 
-        if (catalogMajor is null)
+        if (TenantCommercialBinding.IsBoundListPriceActive(tenant, sku, utcNow))
         {
-            return null;
+            return tenant.AgreedMonthlyAmount;
         }
 
-        return catalogMajor;
+        return activeCatalogMajor;
+    }
+
+    private static string ResolveCurrency(Tenant tenant, string defaultCurrency)
+    {
+        if (tenant.CustomSaasMonthlyAmount is > 0 && !string.IsNullOrWhiteSpace(tenant.CustomSaasCurrency))
+        {
+            return tenant.CustomSaasCurrency.Trim().ToUpperInvariant();
+        }
+
+        if (tenant.AgreedMonthlyAmount is > 0 && !string.IsNullOrWhiteSpace(tenant.AgreedCurrencyCode))
+        {
+            return tenant.AgreedCurrencyCode.Trim().ToUpperInvariant();
+        }
+
+        return defaultCurrency;
     }
 
     private static decimal ApplyTenantDiscount(decimal listPrice, Tenant tenant)

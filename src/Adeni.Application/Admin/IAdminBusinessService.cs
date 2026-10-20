@@ -46,7 +46,17 @@ public sealed record AdminTenantCommercialTermsResponse(
     decimal? CatalogListPrice,
     decimal? EffectiveMonthlyAmount,
     string? PricingCatalogVersion,
-    string? Currency);
+    string? Currency,
+    decimal? AgreedMonthlyAmount = null,
+    string? BoundPricingCatalogVersion = null,
+    DateTimeOffset? PriceLockEndsAt = null);
+
+public sealed record AdminTenantCommercialAuditEntry(
+    Guid Id,
+    string ActorId,
+    string Action,
+    DateTimeOffset OccurredAt,
+    string? MetadataJson);
 
 public sealed record SetTenantCommercialTermsRequest(
     string? BillingStatus = null,
@@ -105,6 +115,11 @@ public interface IAdminBusinessService
         Guid tenantId,
         SetTenantCommercialTermsRequest request,
         string adminId,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<IReadOnlyList<AdminTenantCommercialAuditEntry>>> ListTenantCommercialAuditAsync(
+        Guid tenantId,
+        int limit = 30,
         CancellationToken cancellationToken = default);
 }
 

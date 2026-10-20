@@ -205,6 +205,18 @@ public sealed class AdminBusinessesController(
             });
     }
 
+    [HttpGet("{id:guid}/commercial-audit")]
+    public async Task<IActionResult> ListCommercialAudit(
+        Guid id,
+        [FromQuery] int limit = 30,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await adminBusinessService.ListTenantCommercialAuditAsync(id, limit, cancellationToken);
+        return result.Match<IActionResult>(
+            items => Ok(new { items }),
+            error => NotFound(new { title = error.Message }));
+    }
+
     [HttpPatch("{id:guid}/commercial-terms")]
     public async Task<IActionResult> SetCommercialTerms(
         Guid id,

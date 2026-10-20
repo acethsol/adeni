@@ -9,7 +9,9 @@ public sealed record TenantPricingResolution(
     decimal? CatalogListPriceMajor,
     decimal? ListPriceMajor,
     decimal? EffectiveMonthlyAmountMajor,
-    string PricingCatalogVersion);
+    string PricingCatalogVersion,
+    decimal? AgreedMonthlyAmountMajor = null,
+    string? BoundPricingCatalogVersion = null);
 
 public interface ITenantPricingResolver
 {
@@ -23,7 +25,8 @@ public interface ITenantPricingResolver
     TenantPricingResolution ResolveForTenant(
         Tenant tenant,
         string billingCountryCode,
-        SubscriptionSku? skuOverride = null);
+        SubscriptionSku? skuOverride = null,
+        DateTimeOffset? utcNow = null);
 
     long? ToAmountMinor(decimal? amountMajor, string currency);
 }

@@ -5,6 +5,8 @@ using Adeni.Application.Events;
 using Adeni.Application.Markets;
 using Adeni.Application.Notifications;
 using Adeni.Application.Finance;
+using Adeni.Application.Subscriptions;
+using Adeni.Infrastructure.Subscriptions;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Finance;
 using Adeni.Domain.Tenancy;
@@ -187,6 +189,7 @@ public sealed class BillingDocumentTests
         services.AddSingleton<ICorrelationContext, TestCorrelationContext>();
         services.AddSingleton<IAuditLogWriter, NoOpAudit>();
         services.AddSingleton<IMarketCatalog, LagosCatalog>();
+        services.AddScoped<IPricingCatalogService, PricingCatalogService>();
         services.AddSingleton<NotificationSink>();
         services.AddSingleton<INotificationDispatcher>(sp =>
             new SinkNotificationDispatcher(sp.GetRequiredService<NotificationSink>()));

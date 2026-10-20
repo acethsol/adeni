@@ -4,6 +4,8 @@ using Adeni.Application.Abstractions;
 using Adeni.Application.Realtime;
 using Adeni.Application.Events;
 using Adeni.Application.Finance;
+using Adeni.Application.Subscriptions;
+using Adeni.Domain.Subscriptions;
 using Adeni.Domain.Finance;
 using Adeni.Infrastructure.Events;
 using Adeni.Infrastructure.Finance;
@@ -107,7 +109,7 @@ public sealed class PaymentOrchestratorTests
         return new PaymentOrchestrator(
             db,
             new StubPaymentProvider(db, paymentsOptions),
-            new PlatformFeeCalculator(new TestMarketCatalog()),
+            new PlatformFeeCalculator(new TestMarketCatalog(), new TestPricingCatalog()),
             new NoOpAuditLogWriter(),
             new TestCorrelationContext(),
             new DomainEventCollector(),
@@ -124,10 +126,70 @@ public sealed class PaymentOrchestratorTests
         return new AdeniDbContext(options, new TestTenantContext());
     }
 
+    private sealed class TestPricingCatalog : IPricingCatalogService
+    {
+        public Task EnsureSeededAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+        public Task RefreshCacheAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+        public string GetActiveVersionCode() => "test";
+
+        public decimal? GetMonthlyMajor(string? countryCode, SubscriptionSku sku) => null;
+
+        public decimal GetPlatformFeePercent(string? countryCode) =>
+            string.Equals(countryCode, "NG", StringComparison.OrdinalIgnoreCase) ? 2.5m : 0m;
+
+        public bool GetSelfServeEnabled(string? countryCode) => true;
+
+        public Task<Domain.Common.Result<PublicCountryPricingDto>> GetPublicCountryPricingAsync(
+            string? countryCode,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public Task<Domain.Common.Result<IReadOnlyList<PricingCatalogVersionSummaryDto>>> ListVersionsAsync(
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public Task<Domain.Common.Result<PricingCatalogVersionDetailDto>> GetVersionAsync(
+            string code,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public Task<Domain.Common.Result<PricingCatalogVersionDetailDto>> CreateDraftVersionAsync(
+            CreatePricingCatalogVersionRequest request,
+            string adminId,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public Task<Domain.Common.Result<PricingCatalogVersionDetailDto>> UpsertEntriesAsync(
+            string code,
+            UpsertPricingCatalogEntriesRequest request,
+            string adminId,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public Task<Domain.Common.Result<PricingCatalogVersionDetailDto>> ActivateVersionAsync(
+            string code,
+            string adminId,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+    }
+
+    [Fact]
+    public void PlatformFeeCalculator_reads_catalog_percent_by_market_country()
+    {
+        var calculator = new PlatformFeeCalculator(new TestMarketCatalog(), new TestPricingCatalog());
+        Assert.Equal(2.5m, calculator.GetFeePercent("lagos"));
+        Assert.Equal(0m, calculator.GetFeePercent("ottawa"));
+    }
+
     private sealed class TestMarketCatalog : Application.Markets.IMarketCatalog
     {
         public IReadOnlyList<Application.Markets.MarketDefinition> List() =>
-            [new("lagos", "Lagos", "NG", "NGN", "Africa/Lagos", new(0, 0), ["en"], true, null, 0m)];
+            [
+                new("lagos", "Lagos", "NG", "NGN", "Africa/Lagos", new(0, 0), ["en"], true, null, 0m),
+                new("ottawa", "Ottawa", "CA", "CAD", "America/Toronto", new(0, 0), ["en"], true, null, 0m),
+            ];
 
         public IReadOnlyList<Application.Markets.MarketDefinition> ListLive() => List();
 

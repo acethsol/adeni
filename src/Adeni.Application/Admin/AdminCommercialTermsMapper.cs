@@ -31,5 +31,8 @@ public static class AdminCommercialTermsMapper
             pricing?.CatalogListPriceMajor,
             pricing?.EffectiveMonthlyAmountMajor,
             pricing?.PricingCatalogVersion,
-            pricing?.Currency);
+            pricing?.Currency,
+            pricing?.AgreedMonthlyAmountMajor ?? tenant.AgreedMonthlyAmount,
+            pricing?.BoundPricingCatalogVersion ?? tenant.PricingCatalogVersionCode,
+            tenant.PriceLockEndsAt);
 }

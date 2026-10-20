@@ -170,7 +170,7 @@ public sealed class EntitlementsServiceTests
         services.AddScoped<Adeni.Infrastructure.Context.TenantContext>();
         services.AddScoped<Adeni.Application.Abstractions.ITenantContext>(sp =>
             sp.GetRequiredService<Adeni.Infrastructure.Context.TenantContext>());
-        services.AddScoped<IEntitlementsService, EntitlementsService>();
+        services.AddEntitlementsModule();
         return services.BuildServiceProvider();
     }
 }

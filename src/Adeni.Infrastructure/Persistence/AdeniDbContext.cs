@@ -144,6 +144,9 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.CustomSaasCurrency).HasMaxLength(3);
             entity.Property(x => x.CustomSaasMonthlyAmount).HasPrecision(18, 2);
             entity.Property(x => x.CustomSaasSku).HasConversion<int>();
+            entity.Property(x => x.AgreedMonthlyAmount).HasPrecision(18, 2);
+            entity.Property(x => x.AgreedCurrencyCode).HasMaxLength(3);
+            entity.Property(x => x.PricingCatalogVersionCode).HasMaxLength(64);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.Id == ActiveTenantFilterId);
         });
 

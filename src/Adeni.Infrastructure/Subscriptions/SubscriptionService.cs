@@ -15,27 +15,9 @@ public sealed class SubscriptionService(
         string auth0Sub,
         CancellationToken cancellationToken = default)
     {
-        var access = await ResolveTenantAccessAsync(tenantId, auth0Sub, cancellationToken);
-        if (access.IsFailure)
-        {
-            return Result.Failure<SubscriptionUsageResponse>(access.Error);
-        }
-
-        var usage = await entitlementsService.GetUsageForTenantAsync(
-            access.Value!,
-            cancellationToken);
-
-        return Result.Success(usage);
-    }
-
-    private async Task<Result<Domain.Tenancy.Tenant>> ResolveTenantAccessAsync(
-        Guid tenantId,
-        string auth0Sub,
-        CancellationToken cancellationToken)
-    {
         if (string.IsNullOrWhiteSpace(auth0Sub))
         {
-            return Result.Failure<Domain.Tenancy.Tenant>(Error.Forbidden("Authentication is required."));
+            return Result.Failure<SubscriptionUsageResponse>(Error.Forbidden("Authentication is required."));
         }
 
         var hasAccess = await dbContext.BusinessUsers
@@ -44,15 +26,24 @@ public sealed class SubscriptionService(
 
         if (!hasAccess)
         {
-            return Result.Failure<Domain.Tenancy.Tenant>(Error.Forbidden("You do not have access to this business."));
+            return Result.Failure<SubscriptionUsageResponse>(Error.Forbidden("You do not have access to this business."));
         }
 
         var tenant = await dbContext.Tenants
-            .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
 
-        return tenant is null
-            ? Result.Failure<Domain.Tenancy.Tenant>(Error.NotFound("Business"))
-            : Result.Success(tenant);
+        if (tenant is null)
+        {
+            return Result.Failure<SubscriptionUsageResponse>(Error.NotFound("Business"));
+        }
+
+        if (TenantBillingLifecycle.ApplyPendingTransitions(tenant, DateTimeOffset.UtcNow))
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var usage = await entitlementsService.GetUsageForTenantAsync(tenant, cancellationToken);
+
+        return Result.Success(usage);
     }
 }

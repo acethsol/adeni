@@ -13,7 +13,13 @@ public sealed record SubscriptionUsageResponse(
     string? ContractSubscriptionSku = null,
     string BillingStatus = "trialing",
     DateTimeOffset? TrialEndsAt = null,
-    DateTimeOffset? PaidThrough = null);
+    DateTimeOffset? PaidThrough = null,
+    decimal? CatalogListPriceMajor = null,
+    decimal? AgreedMonthlyAmountMajor = null,
+    decimal? EffectiveMonthlyAmountMajor = null,
+    string? CurrencyCode = null,
+    string? PricingCatalogVersion = null,
+    string? BoundPricingCatalogVersion = null);
 
 public interface IEntitlementsService
 {

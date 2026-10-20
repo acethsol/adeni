@@ -5,7 +5,7 @@ export const enErrorMessages: MessageTree = {
     booking_limit_reached:
       "This business reached its {limit} booking limit for this month. Upgrade to Pro for unlimited bookings.",
     multi_location_required:
-      "Multi-location requires the Business plan. Upgrade to add more branches.",
+      "Your plan does not include multiple locations.",
   },
   booking: {
     slot_expired: "That time slot has passed. Please choose a new time.",
@@ -52,6 +52,15 @@ export const enErrorMessages: MessageTree = {
       invalid_accent: "Accent color must be a hex value like #0F766E.",
       sections_required: "Keep at least one of About, Services, or Visit visible.",
     },
+  },
+  entitlements: {
+    analytics_required: "Advanced analytics is not included on your current plan.",
+    customer_segmentation: "Customer segmentation is not included on your current plan.",
+    customer_history: "Full customer history is not included on your current plan.",
+    location_limit: "Your plan location limit has been reached.",
+    practitioner_limit: "Your plan team member limit has been reached.",
+    waitlist: "Waitlist is not included on your current plan.",
+    whatsapp: "WhatsApp integration is not included on your current plan.",
   },
   validation: "Please check your input and try again.",
   forbidden: "You do not have permission to perform this action.",

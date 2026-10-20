@@ -1,0 +1,86 @@
+<app-portal-page
+  title="GMV platform fees"
+  description="Per-country platform fee % and self-serve flags on the pricing catalog (draft edits; publish from Catalog)."
+>
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  } @else {
+    <section class="card toolbar">
+      <label>
+        Catalog version
+        <select
+          [value]="selectedCode() ?? ''"
+          (change)="selectVersion(($any($event.target)).value)"
+        >
+          @for (v of versions(); track v.code) {
+            <option [value]="v.code">
+              {{ v.code }} ({{ v.status }}{{ v.isActive ? ", active" : "" }})
+            </option>
+          }
+        </select>
+      </label>
+      @if (canEdit()) {
+        <adeni-staff-btn
+          variant="primary"
+          icon="save"
+          [disabled]="saving()"
+          (pressed)="saveDraft()"
+        >
+          Save draft GMV
+        </adeni-staff-btn>
+      } @else {
+        <p class="muted">Select a draft version to edit GMV settings.</p>
+      }
+    </section>
+
+    @if (rows().length === 0) {
+      <adeni-portal-empty-state
+        icon="calendar"
+        title="No country rows"
+        description="Seed or create catalog entries first."
+      />
+    } @else {
+      <section class="card">
+        <table class="gmv-table">
+          <thead>
+            <tr>
+              <th>Country</th>
+              <th>Platform fee %</th>
+              <th>Self-serve</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.countryCode) {
+              <tr>
+                <td>{{ row.countryCode }}</td>
+                <td>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    [disabled]="!canEdit()"
+                    [ngModel]="row.platformFeePercent"
+                    (ngModelChange)="patchRow(row.countryCode, { platformFeePercent: $event })"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="checkbox"
+                    [disabled]="!canEdit()"
+                    [ngModel]="row.isSelfServeEnabled"
+                    (ngModelChange)="patchRow(row.countryCode, { isSelfServeEnabled: $event })"
+                  />
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+    }
+  }
+</app-portal-page>

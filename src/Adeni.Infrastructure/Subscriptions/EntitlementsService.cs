@@ -7,7 +7,9 @@ using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-public sealed class EntitlementsService(AdeniDbContext dbContext) : IEntitlementsService
+public sealed class EntitlementsService(
+    AdeniDbContext dbContext,
+    ITenantPricingResolver tenantPricingResolver) : IEntitlementsService
 {
     public TenantEntitlements GetEntitlementsForTenant(Tenant tenant) =>
         SubscriptionEntitlements.ForSku(TenantBillingPolicy.ResolveEffectiveSku(tenant));
@@ -127,6 +129,11 @@ public sealed class EntitlementsService(AdeniDbContext dbContext) : IEntitlement
         var contractSku = tenant.SubscriptionSku;
         var contractApi = SubscriptionSkuMapping.ToApiValue(contractSku);
 
+        var country = await tenantPricingResolver.ResolvePrimaryBillingCountryAsync(
+            tenant.Id,
+            cancellationToken);
+        var pricing = tenantPricingResolver.ResolveForTenant(tenant, country);
+
         return new SubscriptionUsageResponse(
             SubscriptionSkuMapping.ToApiValue(effectiveSku),
             entitlements,
@@ -137,7 +144,13 @@ public sealed class EntitlementsService(AdeniDbContext dbContext) : IEntitlement
             contractApi != SubscriptionSkuMapping.ToApiValue(effectiveSku) ? contractApi : null,
             TenantBillingStatusMapping.ToApiValue(tenant.BillingStatus),
             tenant.TrialEndsAt,
-            tenant.PaidThrough);
+            tenant.PaidThrough,
+            pricing.CatalogListPriceMajor,
+            pricing.AgreedMonthlyAmountMajor ?? tenant.AgreedMonthlyAmount,
+            pricing.EffectiveMonthlyAmountMajor,
+            pricing.Currency,
+            pricing.PricingCatalogVersion,
+            pricing.BoundPricingCatalogVersion);
     }
 
     private static Result EnsureMessagingEntitled(TenantEntitlements entitlements) =>

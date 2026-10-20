@@ -1897,6 +1897,31 @@ export class AdeniApiClient {
     return adminBusinessSummarySchema.parse(await response.json());
   }
 
+  async listAdminTenantCommercialAudit(
+    tenantId: string,
+    limit = 30,
+  ): Promise<
+    Array<{
+      id: string;
+      actorId: string;
+      action: string;
+      occurredAt: string;
+      metadataJson?: string | null;
+    }>
+  > {
+    const response = await this.request(
+      `/api/v1/admin/businesses/${encodeURIComponent(tenantId)}/commercial-audit?limit=${limit}`,
+    );
+    const body = (await response.json()) as { items: unknown[] };
+    return body.items as Array<{
+      id: string;
+      actorId: string;
+      action: string;
+      occurredAt: string;
+      metadataJson?: string | null;
+    }>;
+  }
+
   async getAdminTenantCommercialTerms(tenantId: string): Promise<AdminTenantCommercialTerms> {
     const response = await this.request(
       `/api/v1/admin/businesses/${encodeURIComponent(tenantId)}/commercial-terms`,

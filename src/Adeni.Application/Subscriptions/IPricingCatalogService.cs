@@ -72,6 +72,10 @@ public interface IPricingCatalogService
 
     decimal? GetMonthlyMajor(string? countryCode, SubscriptionSku sku);
 
+    decimal GetPlatformFeePercent(string? countryCode);
+
+    bool GetSelfServeEnabled(string? countryCode);
+
     Task<Result<PublicCountryPricingDto>> GetPublicCountryPricingAsync(
         string? countryCode,
         CancellationToken cancellationToken = default);

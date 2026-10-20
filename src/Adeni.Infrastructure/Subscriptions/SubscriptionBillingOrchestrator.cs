@@ -64,8 +64,20 @@ public sealed class SubscriptionBillingOrchestrator(
             return Result.Failure<TenantSubscriptionChargeResponse>(Error.NotFound("Business"));
         }
 
+        TenantBillingLifecycle.ApplyPendingTransitions(tenant, webhookEvent.OccurredAt);
+
         var targetSku = ResolveSku(webhookEvent.Sku, tenant);
-        ApplyBillingTransition(tenant, webhookEvent, targetSku);
+        var country = await tenantPricingResolver.ResolvePrimaryBillingCountryAsync(
+            tenantId,
+            cancellationToken);
+        var pricingBeforeBind = tenantPricingResolver.ResolveForTenant(
+            tenant,
+            country,
+            targetSku,
+            webhookEvent.OccurredAt);
+        var hadAgreedPrice = tenant.AgreedMonthlyAmount is > 0;
+
+        ApplyBillingTransition(tenant, webhookEvent, targetSku, pricingBeforeBind);
 
         var (amountMinor, currency) = await ResolveChargeAmountAsync(
             tenant,
@@ -89,7 +101,25 @@ public sealed class SubscriptionBillingOrchestrator(
         };
 
         dbContext.TenantSubscriptionCharges.Add(charge);
+
+        var boundThisEvent = !hadAgreedPrice && tenant.AgreedMonthlyAmount is > 0;
+
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (boundThisEvent)
+        {
+            await auditLogWriter.WriteAsync(
+                new AuditEntry(
+                    Guid.NewGuid(),
+                    "system:subscription-billing",
+                    AuditActions.TenantCommercialBound,
+                    "tenant",
+                    tenantId.ToString(),
+                    correlationContext.CorrelationId,
+                    DateTimeOffset.UtcNow,
+                    $"{{\"pricingCatalogVersion\":\"{tenant.PricingCatalogVersionCode}\",\"agreedMonthlyAmount\":{tenant.AgreedMonthlyAmount},\"currency\":\"{tenant.AgreedCurrencyCode}\"}}"),
+                cancellationToken);
+        }
 
         await cache.RemoveAsync(CacheKeys.TenantProfile(tenantId), cancellationToken);
 
@@ -213,24 +243,35 @@ public sealed class SubscriptionBillingOrchestrator(
     private void ApplyBillingTransition(
         Domain.Tenancy.Tenant tenant,
         SubscriptionWebhookEvent webhookEvent,
-        SubscriptionSku targetSku)
+        SubscriptionSku targetSku,
+        TenantPricingResolution pricingBeforeBind)
     {
         if (ActivationEvents.Contains(webhookEvent.EventType)
             || string.Equals(webhookEvent.Status, "active", StringComparison.OrdinalIgnoreCase))
         {
             tenant.SubscriptionSku = targetSku;
-            tenant.BillingStatus = TenantBillingStatus.Active;
-            tenant.TrialEndsAt = null;
-            tenant.TrialSku = null;
-            tenant.PaidThrough = webhookEvent.OccurredAt.AddMonths(1);
+            TenantBillingLifecycle.MarkPaymentSucceeded(tenant, webhookEvent.OccurredAt);
+            TenantCommercialBinding.BindOnFirstPaidActivation(
+                tenant,
+                pricingBeforeBind,
+                webhookEvent.OccurredAt);
             return;
         }
 
         if (DeactivationEvents.Contains(webhookEvent.EventType))
         {
-            tenant.BillingStatus = string.Equals(webhookEvent.EventType, "invoice.payment_failed", StringComparison.OrdinalIgnoreCase)
-                ? TenantBillingStatus.PastDue
-                : TenantBillingStatus.Canceled;
+            if (string.Equals(webhookEvent.EventType, "invoice.payment_failed", StringComparison.OrdinalIgnoreCase))
+            {
+                TenantBillingLifecycle.MarkPaymentFailed(tenant, webhookEvent.OccurredAt);
+            }
+            else if (string.Equals(webhookEvent.EventType, "subscription.disable", StringComparison.OrdinalIgnoreCase))
+            {
+                tenant.BillingStatus = TenantBillingStatus.Suspended;
+            }
+            else
+            {
+                tenant.BillingStatus = TenantBillingStatus.Canceled;
+            }
         }
     }
 

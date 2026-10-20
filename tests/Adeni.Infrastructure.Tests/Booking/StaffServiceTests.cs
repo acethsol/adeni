@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Tests.Booking;
 
+using Adeni.Infrastructure.Tests.Subscriptions;
 using Adeni.Application.Booking;
 using Adeni.Application.Caching;
 using Adeni.Application.Storage;
@@ -291,7 +292,7 @@ public sealed class StaffServiceTests
         services.AddScoped<Application.Abstractions.ITenantContext>(sp =>
             sp.GetRequiredService<Adeni.Infrastructure.Context.TenantContext>());
         services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
-        services.AddScoped<IEntitlementsService, EntitlementsService>();
+        services.AddEntitlementsModule();
         services.AddScoped<IStaffService, StaffService>();
         return services.BuildServiceProvider();
     }

@@ -57,6 +57,15 @@ export class BusinessBillingComponent {
   readonly business = signal<AdminBusinessSummary | null>(null);
   readonly terms = signal<AdminTenantCommercialTerms | null>(null);
   readonly charges = signal<TenantSubscriptionCharge[]>([]);
+  readonly commercialAudit = signal<
+    Array<{
+      id: string;
+      actorId: string;
+      action: string;
+      occurredAt: string;
+      metadataJson?: string | null;
+    }>
+  >([]);
 
   readonly subscriptionDraft = signal<BusinessSubscriptionDraft | null>(null);
   readonly subscriptionSaving = signal(false);
@@ -104,16 +113,18 @@ export class BusinessBillingComponent {
     try {
       await this.feedback.runLoading(async () => {
         const data = await this.api.withAuthorizedClient(async (c) => {
-          const [business, terms, chargeItems] = await Promise.all([
+          const [business, terms, chargeItems, auditItems] = await Promise.all([
             c.getAdminBusiness(tenantId),
             c.getAdminTenantCommercialTerms(tenantId),
             c.listAdminTenantSubscriptionCharges(tenantId, 50),
+            c.listAdminTenantCommercialAudit(tenantId, 30),
           ]);
-          return { business, terms, chargeItems };
+          return { business, terms, chargeItems, auditItems };
         });
         this.business.set(data.business);
         this.terms.set(data.terms);
         this.charges.set(data.chargeItems);
+        this.commercialAudit.set(data.auditItems);
       }, "Loading billing…");
     } catch (err) {
       const message = adminLoadErrorMessage("Could not load billing for this business.", err);

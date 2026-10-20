@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Tests.Tenancy;
 
+using Adeni.Infrastructure.Tests.Subscriptions;
 using Adeni.Application.Tenancy;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Identity;
@@ -222,6 +223,7 @@ public sealed class TenantCustomerServiceTests
         services.AddScoped<Adeni.Infrastructure.Context.TenantContext>();
         services.AddScoped<Application.Abstractions.ITenantContext>(sp =>
             sp.GetRequiredService<Adeni.Infrastructure.Context.TenantContext>());
+        services.AddEntitlementsModule();
         services.AddScoped<ITenantCustomerService, TenantCustomerService>();
         return services.BuildServiceProvider();
     }

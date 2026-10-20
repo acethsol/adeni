@@ -38,7 +38,20 @@ public static class ErrorCodes
     public static Error MultiLocationRequiredError() =>
         new(
             MultiLocationRequired,
-            "Multi-location requires the Business plan. Upgrade to add more branches.");
+            "Your plan does not include multiple locations.");
+
+    public const string AnalyticsNotEntitled = "entitlements.analytics_required";
+    public const string CustomerSegmentationNotEntitled = "entitlements.customer_segmentation";
+    public const string CustomerHistoryLimited = "entitlements.customer_history";
+
+    public static Error AnalyticsNotEntitledError() =>
+        new(AnalyticsNotEntitled, "Advanced analytics is not included on your current plan.");
+
+    public static Error CustomerSegmentationNotEntitledError() =>
+        new(CustomerSegmentationNotEntitled, "Customer segmentation is not included on your current plan.");
+
+    public static Error CustomerHistoryLimitedError() =>
+        new(CustomerHistoryLimited, "Full customer history is not included on your current plan.");
 
     public const string LocationLimitReached = "entitlements.location_limit";
     public const string PractitionerLimitReached = "entitlements.practitioner_limit";
@@ -187,7 +200,7 @@ public static class ErrorCodes
     public static Error MessagingNotEntitledError() =>
         new(
             MessagingNotEntitled,
-            "In-app messaging requires the Pro plan or higher. Upgrade to reply to customers.");
+            "In-app messaging is not included on your current plan.");
 
     public static Error ConversationNotFoundError() =>
         new(ConversationNotFound, "Conversation was not found.");

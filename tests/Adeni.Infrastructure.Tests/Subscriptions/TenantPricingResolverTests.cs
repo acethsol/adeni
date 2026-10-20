@@ -57,6 +57,48 @@ public sealed class TenantPricingResolverTests
     }
 
     [Fact]
+    public void ResolveForTenant_prefers_agreed_price_over_catalog_when_bound()
+    {
+        var tenant = new Tenant
+        {
+            Id = Guid.NewGuid(),
+            Name = "Bound",
+            SubscriptionSku = SubscriptionSku.Professional,
+            AgreedMonthlyAmount = 50_000m,
+            AgreedCurrencyCode = "NGN",
+            PricingCatalogVersionCode = "2026-launch-01",
+        };
+
+        var resolver = CreateResolver(BuildDb());
+        var result = resolver.ResolveForTenant(tenant, "NG");
+
+        Assert.Equal(55_000m, result.CatalogListPriceMajor);
+        Assert.Equal(50_000m, result.ListPriceMajor);
+        Assert.Equal(50_000m, result.EffectiveMonthlyAmountMajor);
+        Assert.Equal("2026-launch-01", result.PricingCatalogVersion);
+    }
+
+    [Fact]
+    public void ResolveForTenant_prefers_custom_override_over_agreed_price()
+    {
+        var tenant = new Tenant
+        {
+            Id = Guid.NewGuid(),
+            Name = "Override",
+            SubscriptionSku = SubscriptionSku.Professional,
+            AgreedMonthlyAmount = 50_000m,
+            AgreedCurrencyCode = "NGN",
+            CustomSaasMonthlyAmount = 42_000m,
+            CustomSaasCurrency = "NGN",
+        };
+
+        var resolver = CreateResolver(BuildDb());
+        var result = resolver.ResolveForTenant(tenant, "NG");
+
+        Assert.Equal(42_000m, result.ListPriceMajor);
+    }
+
+    [Fact]
     public void ResolveForTenant_falls_back_to_catalog_when_no_custom()
     {
         var tenant = new Tenant

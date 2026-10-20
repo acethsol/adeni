@@ -42,6 +42,31 @@ public sealed class SubscriptionBillingOrchestratorTests
         Assert.Equal(SubscriptionSku.Professional, tenant.SubscriptionSku);
         Assert.Equal(TenantBillingStatus.Active, tenant.BillingStatus);
         Assert.Equal(1, await db.TenantSubscriptionCharges.CountAsync(x => x.TenantId == tenantId));
+        Assert.Equal(55_000m, tenant.AgreedMonthlyAmount);
+        Assert.Equal("NGN", tenant.AgreedCurrencyCode);
+        Assert.False(string.IsNullOrWhiteSpace(tenant.PricingCatalogVersionCode));
+    }
+
+    [Fact]
+    public async Task ApplyWebhookEventAsync_trial_expiry_moves_to_past_due_on_usage_sync_path()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        var subscriptionService = scope.ServiceProvider.GetRequiredService<ISubscriptionService>();
+        var (tenantId, auth0Sub) = await SeedTenantWithUserAsync(db);
+
+        var tenant = await db.Tenants.SingleAsync(x => x.Id == tenantId);
+        tenant.BillingStatus = TenantBillingStatus.Trialing;
+        tenant.TrialEndsAt = DateTimeOffset.UtcNow.AddDays(-1);
+        tenant.TrialSku = SubscriptionSku.Professional;
+        await db.SaveChangesAsync();
+
+        var usage = await subscriptionService.GetTenantUsageAsync(tenantId, auth0Sub);
+
+        Assert.True(usage.IsSuccess);
+        var refreshed = await db.Tenants.AsNoTracking().SingleAsync(x => x.Id == tenantId);
+        Assert.Equal(TenantBillingStatus.PastDue, refreshed.BillingStatus);
     }
 
     [Fact]
@@ -175,6 +200,8 @@ public sealed class SubscriptionBillingOrchestratorTests
         services.AddScoped<IPricingCatalogService, PricingCatalogService>();
         services.AddScoped<ITenantPricingResolver, TenantPricingResolver>();
         services.AddScoped<ISubscriptionBillingOrchestrator, SubscriptionBillingOrchestrator>();
+        services.AddEntitlementsModule();
+        services.AddScoped<ISubscriptionService, SubscriptionService>();
         services.AddSingleton<Application.Caching.ICacheService, OrchestratorTestCache>();
         services.AddSingleton<IAuditLogWriter, OrchestratorTestAudit>();
         services.AddSingleton<ICorrelationContext, OrchestratorTestCorrelation>();

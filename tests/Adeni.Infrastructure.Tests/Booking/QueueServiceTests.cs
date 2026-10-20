@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Tests.Booking;
 
+using Adeni.Infrastructure.Tests.Subscriptions;
 using Adeni.Application.Booking;
 using Adeni.Application.Notifications;
 using Adeni.Domain.Booking;
@@ -227,6 +228,7 @@ public sealed class QueueServiceTests
         services.AddSingleton<NotificationSink>();
         services.AddSingleton<INotificationDispatcher>(sp =>
             new SinkDispatcher(sp.GetRequiredService<NotificationSink>()));
+        services.AddEntitlementsModule();
         services.AddScoped<ITenantCustomerService, TenantCustomerService>();
         services.AddBookingTestRealtime();
         services.AddScoped<IQueueService, QueueService>();

@@ -89,6 +89,24 @@
                 <dd>{{ t.pricingCatalogVersion }}</dd>
               </div>
             }
+            @if (t.agreedMonthlyAmount != null && t.currency) {
+              <div>
+                <dt>Agreed monthly (bound)</dt>
+                <dd>{{ t.agreedMonthlyAmount }} {{ t.currency }}/mo</dd>
+              </div>
+            }
+            @if (t.boundPricingCatalogVersion) {
+              <div>
+                <dt>Bound catalog version</dt>
+                <dd>{{ t.boundPricingCatalogVersion }}</dd>
+              </div>
+            }
+            @if (t.priceLockEndsAt) {
+              <div>
+                <dt>Price lock ends</dt>
+                <dd>{{ t.priceLockEndsAt | date: "mediumDate" }}</dd>
+              </div>
+            }
           </dl>
         </div>
         <div>
@@ -97,6 +115,24 @@
         </div>
       </section>
     }
+
+    <section class="card">
+      <h3>Commercial audit</h3>
+      <p class="muted section-lede">Admin commercial edits, price binds, and subscription billing events.</p>
+      @if (commercialAudit().length === 0) {
+        <p class="muted">No commercial audit entries yet.</p>
+      } @else {
+        <ul class="audit-list">
+          @for (entry of commercialAudit(); track entry.id) {
+            <li>
+              <span class="mono">{{ entry.action }}</span>
+              · {{ entry.occurredAt | date: "medium" }}
+              · {{ entry.actorId }}
+            </li>
+          }
+        </ul>
+      }
+    </section>
 
     <section class="card">
       <h3>Billing history</h3>

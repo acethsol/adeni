@@ -2,8 +2,11 @@ namespace Adeni.Infrastructure.Finance;
 
 using Adeni.Application.Markets;
 using Adeni.Application.Finance;
+using Adeni.Application.Subscriptions;
 
-public sealed class PlatformFeeCalculator(IMarketCatalog marketCatalog) : IPlatformFeeCalculator
+public sealed class PlatformFeeCalculator(
+    IMarketCatalog marketCatalog,
+    IPricingCatalogService pricingCatalog) : IPlatformFeeCalculator
 {
     public decimal CalculateFee(decimal amount, string marketId)
     {
@@ -14,6 +17,11 @@ public sealed class PlatformFeeCalculator(IMarketCatalog marketCatalog) : IPlatf
     public decimal GetFeePercent(string marketId)
     {
         var market = marketCatalog.GetById(marketId);
-        return market?.PlatformFeePercent ?? 0m;
+        if (market is null)
+        {
+            return 0m;
+        }
+
+        return pricingCatalog.GetPlatformFeePercent(market.CountryCode);
     }
 }

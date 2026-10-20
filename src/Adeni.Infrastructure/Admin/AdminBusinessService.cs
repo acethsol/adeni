@@ -253,6 +253,48 @@ public sealed class AdminBusinessService(
         return Result.Success(AdminCommercialTermsMapper.ToResponse(tenant, pricing));
     }
 
+    public async Task<Result<IReadOnlyList<AdminTenantCommercialAuditEntry>>> ListTenantCommercialAuditAsync(
+        Guid tenantId,
+        int limit = 30,
+        CancellationToken cancellationToken = default)
+    {
+        var exists = await dbContext.Tenants
+            .AsNoTracking()
+            .AnyAsync(t => t.Id == tenantId, cancellationToken);
+
+        if (!exists)
+        {
+            return Result.Failure<IReadOnlyList<AdminTenantCommercialAuditEntry>>(Error.NotFound("Business"));
+        }
+
+        limit = Math.Clamp(limit, 1, 100);
+        var tenantKey = tenantId.ToString();
+        var commercialActions = new[]
+        {
+            "tenant.commercial_terms_updated",
+            AuditActions.TenantCommercialBound,
+            AuditActions.SubscriptionWebhookApplied,
+        };
+
+        var rows = await dbContext.AuditLogs
+            .AsNoTracking()
+            .Where(x =>
+                x.EntityType == "tenant"
+                && x.EntityId == tenantKey
+                && commercialActions.Contains(x.Action))
+            .OrderByDescending(x => x.OccurredAt)
+            .Take(limit)
+            .Select(x => new AdminTenantCommercialAuditEntry(
+                x.Id,
+                x.ActorId,
+                x.Action,
+                x.OccurredAt,
+                x.MetadataJson))
+            .ToListAsync(cancellationToken);
+
+        return Result.Success<IReadOnlyList<AdminTenantCommercialAuditEntry>>(rows);
+    }
+
     public async Task<Result<Unit>> SetTenantCommercialTermsAsync(
         Guid tenantId,
         SetTenantCommercialTermsRequest request,
@@ -492,6 +534,10 @@ public sealed class AdminBusinessService(
         if (setVerifiedAt)
         {
             tenant.VerifiedAt = DateTimeOffset.UtcNow;
+            if (tenant.TrialEndsAt is null && tenant.BillingStatus != TenantBillingStatus.Active)
+            {
+                TenantBillingPolicy.StartDefaultTrial(tenant, DateTimeOffset.UtcNow);
+            }
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
