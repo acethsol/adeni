@@ -1,115 +1,85 @@
 <app-portal-page
   title="Plans & pricing"
-  description="Read-only SaaS list prices by country and SKU (active catalog version). Per-tenant overrides and effective price are on each business billing page."
+  description="Commercial catalog editor view. List prices live in subscriptions.pricing_catalog_versions and subscriptions.pricing_catalog_entries; the business portal Plans & billing page reads the active version via GET /api/v1/pricing."
 >
+  <p pageActions>
+    <adeni-staff-btn icon="restart" [disabled]="loading()" (pressed)="load()">Refresh</adeni-staff-btn>
+  </p>
+
+  <section class="workflow-hints" aria-label="Catalog data model">
+    <article class="workflow-hint-item">
+      <strong>Admin vs portal</strong>
+      <p>
+        This grid is the read-only SaaS price book for operators. Tenant-facing plan cards, usage, and
+        checkout on the business portal use the same active catalog through the public pricing API.
+      </p>
+    </article>
+    @if (activeVersion(); as active) {
+      <article class="workflow-hint-item">
+        <strong>Active catalog version</strong>
+        <p>
+          <code>{{ active.code }}</code> · effective {{ active.effectiveFrom | date: "mediumDate" }}
+          @if (active.effectiveTo) {
+            — {{ active.effectiveTo | date: "mediumDate" }}
+          }
+          · status {{ active.status }}
+        </p>
+      </article>
+    }
+  </section>
+
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
 
-  <section class="card list-toolbar">
-    <adeni-staff-btn icon="restart" [disabled]="loading()" (pressed)="load()">Refresh</adeni-staff-btn>
-    @if (activeVersion(); as active) {
-      <p class="toolbar-meta">
-        Active: <strong>{{ active.code }}</strong> · effective {{ active.effectiveFrom | date: "mediumDate" }}
-      </p>
-    }
-  </section>
-
-  @if (loading() && versions().length === 0) {
+  @if (loading() && rows().length === 0) {
     <p class="muted">Loading catalog…</p>
-  } @else if (versions().length === 0) {
+  } @else if (isEmptyCatalog()) {
     <adeni-portal-empty-state
       icon="restart"
-      title="No catalog versions"
-      description="Publish the database and run the pricing catalog seed script."
+      title="No active catalog"
+      description="Publish the database and run the pricing catalog seed script, then mark a version active."
     />
   } @else {
-    <section class="card layout">
-      <div class="version-list">
-        <h2>Versions</h2>
-        <ul>
-          @for (version of versions(); track version.id) {
-            <li>
-              <button
-                type="button"
-                class="version-btn"
-                [class.is-selected]="selectedCode() === version.code"
-                (click)="selectVersion(version.code)"
-              >
-                <span>{{ version.code }}</span>
-                @if (version.isActive) {
-                  <admin-pill variant="success" label="Active" />
-                } @else {
-                  <admin-pill variant="neutral" [label]="version.status" />
-                }
-              </button>
-            </li>
-          }
-        </ul>
+    <div class="roster">
+      <adeni-list-toolbar
+        storageKey="admin.pricing-catalog"
+        [showViewSwitcher]="false"
+        [count]="filteredRows().length"
+        singularCountLabel="price row"
+        pluralCountLabel="price rows"
+        searchPlaceholder="Country, SKU, currency, or catalog version"
+        [searchQuery]="searchText()"
+        (searchQueryChange)="onToolbarSearch($event)"
+      />
+
+      <div class="adeni-list-results">
+        <adeni-data-table
+          [rows]="filteredRows()"
+          [columns]="columns"
+          [trackRow]="trackRow"
+        >
+          <ng-template adeniDataTableCell="version" let-row>
+            <adeni-pill tone="info" [compact]="true">{{ row.catalogVersionCode }}</adeni-pill>
+          </ng-template>
+          <ng-template adeniDataTableCell="country" let-row>
+            <adeni-pill tone="neutral" [compact]="true">{{ row.countryCode }}</adeni-pill>
+          </ng-template>
+          <ng-template adeniDataTableCell="sku" let-row>
+            {{ formatSku(row.subscriptionSku) }}
+          </ng-template>
+          <ng-template adeniDataTableCell="price" let-row>
+            {{ formatAmount(row.currencyCode, row.monthlyAmountMajor) }}
+          </ng-template>
+          <ng-template adeniDataTableCell="selfServe" let-row>
+            @if (row.isSelfServeEnabled) {
+              <adeni-pill tone="success" [compact]="true">Yes</adeni-pill>
+            } @else {
+              <adeni-pill tone="neutral" [compact]="true">No</adeni-pill>
+            }
+          </ng-template>
+        </adeni-data-table>
       </div>
-
-      @if (detail(); as data) {
-        <div class="detail">
-          <header class="detail-header">
-            <h2>{{ data.code }}</h2>
-            <p class="muted">
-              {{ data.effectiveFrom | date: "mediumDate" }}
-              @if (data.effectiveTo) {
-                — {{ data.effectiveTo | date: "mediumDate" }}
-              }
-            </p>
-          </header>
-
-          @if (data.diffFromActive?.length) {
-            <section class="diff-panel">
-              <h3>Diff vs active</h3>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Country</th>
-                    <th>SKU</th>
-                    <th>Active</th>
-                    <th>This version</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (row of data.diffFromActive; track row.countryCode + row.subscriptionSku) {
-                    <tr>
-                      <td>{{ row.countryCode }}</td>
-                      <td>{{ formatSku(row.subscriptionSku) }}</td>
-                      <td>{{ row.activeMonthlyAmountMajor ?? "—" }}</td>
-                      <td>{{ row.monthlyAmountMajor ?? "—" }}</td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </section>
-          }
-
-          <table class="entries-table">
-            <thead>
-              <tr>
-                <th>Country</th>
-                <th>SKU</th>
-                <th>List price</th>
-                <th>GMV %</th>
-                <th>Self-serve</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (entry of data.entries; track entry.countryCode + entry.subscriptionSku) {
-                <tr>
-                  <td>{{ entry.countryCode }}</td>
-                  <td>{{ formatSku(entry.subscriptionSku) }}</td>
-                  <td>{{ formatAmount(entry.currencyCode, entry.monthlyAmountMajor) }}</td>
-                  <td>{{ entry.platformFeePercent }}%</td>
-                  <td>{{ entry.isSelfServeEnabled ? "Yes" : "No" }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      }
-    </section>
+    </div>
   }
 </app-portal-page>

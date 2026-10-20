@@ -5,15 +5,17 @@ import {
   formatBookingUsage,
   formatAmountMinor,
   formatBillingChargeStatus,
+  formatPrice,
   formatTenantBillingStatus,
   getMarketById,
   getPlanDisplayForCountry,
   isNearBookingLimit,
   planComparisonCell,
   PLAN_COMPARISON,
-  type PlanFeature,
   resolveSubscriptionSku,
   SUBSCRIPTION_SKUS,
+  SUBSCRIPTION_SKU_LABELS,
+  type PublicCountryPricing,
   type SubscriptionSku,
   type SubscriptionUsage,
   type TenantSubscriptionCharge,
@@ -41,6 +43,7 @@ export class PlanComponent implements OnInit {
   readonly countryCode = signal<string | null>(null);
   readonly usage = signal<SubscriptionUsage | null>(null);
   readonly billingHistory = signal<TenantSubscriptionCharge[]>([]);
+  readonly apiPricing = signal<PublicCountryPricing | null>(null);
   private tenantId = signal<string | null>(null);
 
   readonly skus = SUBSCRIPTION_SKUS;
@@ -76,11 +79,22 @@ export class PlanComponent implements OnInit {
           ),
         );
         const location = profile.locations.find((item) => item.isPrimary) ?? profile.locations[0];
-        this.countryCode.set(
-          location ? (getMarketById(location.marketId)?.countryCode ?? null) : null,
-        );
+        const country =
+          location ? (getMarketById(location.marketId)?.countryCode ?? null) : null;
+        this.countryCode.set(country);
         this.usage.set(subscriptionUsage);
         this.billingHistory.set(history);
+
+        if (country) {
+          try {
+            const pricing = await this.api.createPublicClient().getPublicPricing(country);
+            this.apiPricing.set(pricing);
+          } catch {
+            this.apiPricing.set(null);
+          }
+        } else {
+          this.apiPricing.set(null);
+        }
       });
       await this.maybeCompleteStubCheckout();
     } catch {
@@ -92,17 +106,42 @@ export class PlanComponent implements OnInit {
 
   planDisplay(sku: SubscriptionSku): { name: string; priceLabel: string; description: string } {
     const country = this.countryCode();
+    const pricing = this.apiPricing();
+    const fallbackDescription =
+      getPlanDisplayForCountry(country ?? "", sku)?.description ??
+      "Pricing for your market is being configured.";
+
+    if (pricing) {
+      if (!pricing.selfServeEnabled) {
+        return {
+          name: SUBSCRIPTION_SKU_LABELS[sku],
+          priceLabel: "Contact us",
+          description: fallbackDescription,
+        };
+      }
+
+      const row = pricing.skus.find((item) => item.sku === sku);
+      const amount = row?.monthlyAmountMajor;
+      if (typeof amount === "number" && amount > 0) {
+        return {
+          name: SUBSCRIPTION_SKU_LABELS[sku],
+          priceLabel: `${formatPrice(amount, pricing.currencyCode)}/mo`,
+          description: fallbackDescription,
+        };
+      }
+    }
+
     if (country) {
       const localized = getPlanDisplayForCountry(country, sku);
       if (localized) {
         return localized;
       }
     }
-    const fallbackName = sku.charAt(0).toUpperCase() + sku.slice(1);
+
     return {
-      name: fallbackName,
+      name: SUBSCRIPTION_SKU_LABELS[sku],
       priceLabel: "Contact us",
-      description: "Pricing for your market is being configured.",
+      description: fallbackDescription,
     };
   }
 

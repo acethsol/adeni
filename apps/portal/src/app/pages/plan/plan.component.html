@@ -26,6 +26,12 @@
         @if (u.paidThrough) {
           <p class="muted">Paid through {{ u.paidThrough | date: "mediumDate" }}</p>
         }
+        @if (apiPricing(); as pricing) {
+          <p class="muted">
+            List prices: catalog {{ pricing.pricingCatalogVersion }} · platform fee
+            {{ pricing.platformFeePercent }}%
+          </p>
+        }
         @if (isNearBookingLimit(u)) {
           <p class="warn-text">You're approaching your monthly booking limit.</p>
         }
