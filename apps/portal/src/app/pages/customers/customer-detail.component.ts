@@ -90,7 +90,7 @@ export class CustomerDetailComponent implements OnInit {
       );
       this.customer.set(detail);
     } catch (err) {
-      if (err instanceof AdeniApiError && err.status === 404) {
+      if (err instanceof AdeniApiError && err.statusCode === 404) {
         this.error.set(null);
       } else {
         this.error.set("Could not load this customer.");

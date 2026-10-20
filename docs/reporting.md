@@ -3,7 +3,7 @@
 Read-only and render responsibilities: **PDF documents**, **tenant/admin analytics data**, and **multi-format exports**. Money and booking **state** stay in Finance and Booking; Reporting **queries and renders**.
 
 **Boundaries:** [specs/reporting-module-boundaries.md](./specs/reporting-module-boundaries.md)  
-**Shared list UI:** [specs/shared-staff-data-grid.md](./specs/shared-staff-data-grid.md)  
+**Shared list UI:** [specs/shared-data-grid.md](./specs/shared-data-grid.md)  
 **Roadmap:** [roadmap-modules.md](./roadmap-modules.md) §3.5
 
 ---
@@ -88,7 +88,7 @@ Issued documents use **snapshots** on the entity; PDF regeneration must not sile
 ## Frontend
 
 - **Dashboard:** portal widgets consume dashboard JSON; charts stay client-side (not PDF).
-- **List pages:** shared **`AdeniListToolbarComponent`** + **`AdeniDataTableComponent`** in `@adeni/ui` — filters, card/table switcher, export slot → Reporting API ([shared grid spec](./specs/shared-staff-data-grid.md)).
+- **List pages:** shared **`AdeniListToolbarComponent`** + **`AdeniDataTableComponent`** in `@adeni/ui` — filters, card/table switcher, export slot → Reporting API ([shared grid spec](./specs/shared-data-grid.md)).
 - **Downloads:** use `@adeni/api-client` when export endpoints land; until then Finance compensation export remains on `/api/v1/finance/compensation-export`.
 
 ---

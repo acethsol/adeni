@@ -43,7 +43,7 @@
 | **39** | **Finance module boundaries (Phase 1)** | ✅ Done — [finance-module-boundaries.md](./specs/finance-module-boundaries.md); `/api/v1/finance/*`, portal `/finance` |
 | — | **Reporting module boundaries** | Spec — [reporting-module-boundaries.md](./specs/reporting-module-boundaries.md); runbook [reporting.md](./reporting.md) |
 | — | **Notifications module boundaries** | Spec — [notifications-module-boundaries.md](./specs/notifications-module-boundaries.md); runbook [notifications.md](./notifications.md) |
-| — | **Shared staff list / data grid** | Spec — [shared-staff-data-grid.md](./specs/shared-staff-data-grid.md); Phase 1 pilot: portal Staff cards ↔ list |
+| — | **Shared data grid (`@adeni/ui`)** | Spec — [shared-data-grid.md](./specs/shared-data-grid.md); Staff = reference impl |
 | — | Sprint 11d LLM agent | → Sprint 20 |
 | — | Staging deploy + Auth0 E2E | → Sprint 20 |
 | — | App Insights (Obs 1) | → Sprint 20 |

@@ -31,7 +31,7 @@ Establish **Reporting** as the extractable bounded context for **print-quality d
 |---|----------|
 | 1 | **Reporting** is the peel-off module for **render + query + export**; not for posting payments or mutating bookings. |
 | 2 | **Documents** (invoice, receipt, quote PDF, statement) use **QuestPDF** only — one renderer port, multiple templates. |
-| 3 | **Interactive reporting UI** = **Angular + Carbon** → read-only **.NET query endpoints** → **SQL Server** (tenant-scoped). Shared list/grid shell: [shared-staff-data-grid.md](./shared-staff-data-grid.md). |
+| 3 | **Interactive reporting UI** = **Angular + Carbon** → read-only **.NET query endpoints** → **SQL Server** (tenant-scoped). Shared list/grid shell: [shared-data-grid.md](./shared-data-grid.md). |
 | 4 | **Exports:** **CSV** (native .NET), **Excel** (ClosedXML), **PDF** (QuestPDF) from the **same report definition** where possible. |
 | 5 | **Finance** keeps **BillingDocument** entities, sequences, public tokens, void/audit; Reporting **renders** PDFs (migrate from inline `BillingDocumentService.BuildPdf` over time). |
 | 6 | **Quote PDF** renders from **Booking/Quotes** data via Application port — Reporting does not own quote workflow state. |
