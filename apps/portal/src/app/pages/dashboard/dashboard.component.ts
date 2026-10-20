@@ -1,7 +1,6 @@
 import {
   CdkDrag,
   CdkDragDrop,
-  CdkDragHandle,
   CdkDropList,
   moveItemInArray,
 } from "@angular/cdk/drag-drop";
@@ -34,7 +33,9 @@ import {
   isDashboardWidgetVisible,
   isNearBookingLimit,
   layoutIncludesWidget,
+  normalizeDashboardWidgetWidth,
   removeDashboardWidget,
+  updateDashboardWidgetWidth,
   resolveCapabilities,
   resolveDashboardLayout,
   resolveDashboardRange,
@@ -45,6 +46,7 @@ import {
   type DashboardLayoutWidget,
   type DashboardRangePreset,
   type DashboardWidgetId,
+  type DashboardWidgetWidth,
   type QuoteRequestResponse,
   type ServiceOffering,
   type SubscriptionUsage,
@@ -66,6 +68,7 @@ import {
   dashboardLayoutToApi,
   resolveDashboardLayoutFromApi,
 } from "./dashboard-layout-sync";
+import { DashboardWidgetEditChromeComponent } from "./dashboard-widget-edit-chrome.component";
 import { DashboardWidgetComponent } from "./dashboard-widget.component";
 
 type StatusSlice = { status: number; label: string; count: number; percent: number };
@@ -77,11 +80,11 @@ type StatusSlice = { status: number; label: string; count: number; percent: numb
     RouterLink,
     CdkDropList,
     CdkDrag,
-    CdkDragHandle,
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
     AdeniStaffButtonComponent,
     PortalPageComponent,
+    DashboardWidgetEditChromeComponent,
     DashboardWidgetComponent,
     DashboardCarbonChartComponent,
   ],
@@ -206,8 +209,23 @@ export class DashboardComponent implements OnInit {
   }
 
   widgetSpanClass(entry: DashboardLayoutWidget): string {
-    const width = entry.w === 4 || entry.w === 6 || entry.w === 8 ? entry.w : 12;
-    return `widget-span-${width}`;
+    return `widget-span-${normalizeDashboardWidgetWidth(entry.w)}`;
+  }
+
+  widgetLayoutWidth(entry: DashboardLayoutWidget): DashboardWidgetWidth {
+    return normalizeDashboardWidgetWidth(entry.w);
+  }
+
+  widgetRemovable(_widgetId: DashboardWidgetId): boolean {
+    return true;
+  }
+
+  setWidgetWidth(widgetId: DashboardWidgetId, width: DashboardWidgetWidth): void {
+    const current = this.layout().widgets.find((entry) => entry.id === widgetId)?.w;
+    if (current === width) {
+      return;
+    }
+    this.persistLayout(updateDashboardWidgetWidth(this.layout(), widgetId, width));
   }
 
   categoryLine(): string {
@@ -331,9 +349,9 @@ export class DashboardComponent implements OnInit {
   addWidget(widgetId: DashboardWidgetId): void {
     const width =
       widgetId === "today_schedule" || widgetId === "pending_inbox" || widgetId === "messages_unread"
-        ? 4
+        ? 3
         : widgetId === "week_appointments" || widgetId === "queue_now"
-          ? 8
+          ? 9
           : 12;
     this.persistLayout(addDashboardWidget(this.layout(), widgetId, width));
     this.pickerOpen.set(false);

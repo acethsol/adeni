@@ -3,7 +3,16 @@ import { hasCapability, resolveCapabilities } from "./capabilities";
 import type { DashboardRangePreset } from "./dashboard-range";
 import { hasTenantEntitlement, type TenantEntitlementFlag } from "./entitlements";
 import type { PortalPermission } from "./portal-permissions";
+import type { DashboardWidgetWidth } from "./dashboard-widget-width";
+import { normalizeDashboardWidgetWidth } from "./dashboard-widget-width";
 import type { BusinessProfile, TenantEntitlements } from "./schemas";
+
+export {
+  DASHBOARD_WIDGET_WIDTH_OPTIONS,
+  DASHBOARD_WIDGET_WIDTHS,
+  normalizeDashboardWidgetWidth,
+  type DashboardWidgetWidth,
+} from "./dashboard-widget-width";
 
 /** Stable widget ids for portal dashboard layout (Sprint 32). */
 export type DashboardWidgetId =
@@ -170,7 +179,7 @@ export function coerceDashboardLayout(raw: unknown, fallback: DashboardLayout): 
     const w = (entry as DashboardLayoutWidget).w;
     widgets.push({
       id,
-      w: w === 4 || w === 6 || w === 8 ? w : 12,
+      w: normalizeDashboardWidgetWidth(typeof w === "number" ? w : 12),
     });
     seen.add(id);
   }
@@ -215,6 +224,20 @@ export function addDashboardWidget(
   return {
     ...layout,
     widgets: [...layout.widgets, { id: widgetId, w: width }],
+  };
+}
+
+export function updateDashboardWidgetWidth(
+  layout: DashboardLayout,
+  widgetId: DashboardWidgetId,
+  width: DashboardWidgetWidth | number,
+): DashboardLayout {
+  const normalized = normalizeDashboardWidgetWidth(width);
+  return {
+    ...layout,
+    widgets: layout.widgets.map((entry) =>
+      entry.id === widgetId ? { ...entry, w: normalized } : entry,
+    ),
   };
 }
 
