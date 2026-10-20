@@ -45,6 +45,23 @@ public sealed record PricingCatalogVersionDetailDto(
     IReadOnlyList<PricingCatalogEntryDto> Entries,
     IReadOnlyList<PricingCatalogEntryDiffDto>? DiffFromActive);
 
+public sealed record CreatePricingCatalogVersionRequest(
+    string Code,
+    DateTimeOffset EffectiveFrom,
+    DateTimeOffset? EffectiveTo,
+    bool CloneFromActive);
+
+public sealed record PricingCatalogEntryInputDto(
+    string CountryCode,
+    string CurrencyCode,
+    string SubscriptionSku,
+    decimal? MonthlyAmountMajor,
+    decimal PlatformFeePercent,
+    bool IsSelfServeEnabled);
+
+public sealed record UpsertPricingCatalogEntriesRequest(
+    IReadOnlyList<PricingCatalogEntryInputDto> Entries);
+
 public interface IPricingCatalogService
 {
     Task EnsureSeededAsync(CancellationToken cancellationToken = default);
@@ -64,5 +81,21 @@ public interface IPricingCatalogService
 
     Task<Result<PricingCatalogVersionDetailDto>> GetVersionAsync(
         string code,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<PricingCatalogVersionDetailDto>> CreateDraftVersionAsync(
+        CreatePricingCatalogVersionRequest request,
+        string adminId,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<PricingCatalogVersionDetailDto>> UpsertEntriesAsync(
+        string code,
+        UpsertPricingCatalogEntriesRequest request,
+        string adminId,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<PricingCatalogVersionDetailDto>> ActivateVersionAsync(
+        string code,
+        string adminId,
         CancellationToken cancellationToken = default);
 }

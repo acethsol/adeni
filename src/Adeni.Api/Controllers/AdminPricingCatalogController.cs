@@ -31,4 +31,56 @@ public sealed class AdminPricingCatalogController(IPricingCatalogService pricing
                 _ => BadRequest(new { title = error.Message, code = error.Code }),
             });
     }
+
+    [HttpPost("versions")]
+    public async Task<IActionResult> CreateVersion(
+        [FromBody] CreatePricingCatalogVersionRequest body,
+        CancellationToken cancellationToken)
+    {
+        var adminId = User.FindFirst("sub")?.Value ?? "admin";
+        var result = await pricingCatalog.CreateDraftVersionAsync(body, adminId, cancellationToken);
+        return result.Match<IActionResult>(
+            detail => CreatedAtAction(nameof(GetVersion), new { code = detail.Code }, detail),
+            error => error.Code switch
+            {
+                "validation" => BadRequest(new { title = error.Message, code = error.Code }),
+                "conflict" => Conflict(new { title = error.Message, code = error.Code }),
+                _ => BadRequest(new { title = error.Message, code = error.Code }),
+            });
+    }
+
+    [HttpPatch("versions/{code}/entries")]
+    public async Task<IActionResult> UpsertEntries(
+        string code,
+        [FromBody] UpsertPricingCatalogEntriesRequest body,
+        CancellationToken cancellationToken)
+    {
+        var adminId = User.FindFirst("sub")?.Value ?? "admin";
+        var result = await pricingCatalog.UpsertEntriesAsync(code, body, adminId, cancellationToken);
+        return result.Match<IActionResult>(
+            Ok,
+            error => error.Code switch
+            {
+                "not_found" => NotFound(new { title = error.Message, code = error.Code }),
+                "validation" => BadRequest(new { title = error.Message, code = error.Code }),
+                "conflict" => Conflict(new { title = error.Message, code = error.Code }),
+                _ => BadRequest(new { title = error.Message, code = error.Code }),
+            });
+    }
+
+    [HttpPost("versions/{code}/activate")]
+    public async Task<IActionResult> ActivateVersion(string code, CancellationToken cancellationToken)
+    {
+        var adminId = User.FindFirst("sub")?.Value ?? "admin";
+        var result = await pricingCatalog.ActivateVersionAsync(code, adminId, cancellationToken);
+        return result.Match<IActionResult>(
+            Ok,
+            error => error.Code switch
+            {
+                "not_found" => NotFound(new { title = error.Message, code = error.Code }),
+                "validation" => BadRequest(new { title = error.Message, code = error.Code }),
+                "conflict" => Conflict(new { title = error.Message, code = error.Code }),
+                _ => BadRequest(new { title = error.Message, code = error.Code }),
+            });
+    }
 }

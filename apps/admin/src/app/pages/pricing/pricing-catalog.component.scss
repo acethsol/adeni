@@ -1,1 +1,87 @@
 @use "../../shared/admin-list-page" as *;
+
+.catalog-section {
+  margin-block-end: 2rem;
+}
+
+.section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+}
+
+.section-lead {
+  margin: 0 0 1rem;
+}
+
+.entries-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.linkish {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--cds-link-primary, #0f62fe);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 40%);
+  z-index: 9000;
+}
+
+.create-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9001;
+  margin: 0;
+  padding: 1.5rem;
+  border: 1px solid var(--cds-border-subtle, #e0e0e0);
+  border-radius: 4px;
+  background: var(--cds-layer-01, #fff);
+  min-width: min(24rem, 92vw);
+  max-width: 28rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-block: 1rem;
+
+  input {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--cds-border-strong, #8d8d8d);
+    border-radius: 4px;
+  }
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-block: 1rem;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}

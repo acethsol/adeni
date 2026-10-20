@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Tests.Subscriptions;
 
+using Adeni.Application.Abstractions;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Catalog;
 using Adeni.Domain.Subscriptions;
@@ -144,7 +145,17 @@ public sealed class TenantPricingResolverTests
 
     private static TenantPricingResolver CreateResolver(AdeniDbContext db)
     {
-        var catalog = new PricingCatalogService(db);
+        var catalog = new PricingCatalogService(
+            db,
+            new Adeni.Infrastructure.Auditing.InMemoryAuditLogWriter(),
+            new ResolverTestCorrelation());
         return new TenantPricingResolver(db, catalog);
+    }
+
+    private sealed class ResolverTestCorrelation : ICorrelationContext
+    {
+        public string CorrelationId { get; } = "test";
+
+        public void Set(string correlationId) { }
     }
 }

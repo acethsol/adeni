@@ -1341,6 +1341,25 @@ export const pricingCatalogVersionListResponseSchema = z.object({
   items: z.array(pricingCatalogVersionSummarySchema),
 });
 
+export const createPricingCatalogVersionRequestSchema = z.object({
+  code: z.string().min(1).max(64),
+  effectiveFrom: z.string(),
+  effectiveTo: z.string().nullable().optional(),
+  cloneFromActive: z.boolean().optional().default(true),
+});
+
+export type CreatePricingCatalogVersionRequest = z.infer<
+  typeof createPricingCatalogVersionRequestSchema
+>;
+
+export const upsertPricingCatalogEntriesRequestSchema = z.object({
+  entries: z.array(pricingCatalogEntrySchema).min(1),
+});
+
+export type UpsertPricingCatalogEntriesRequest = z.infer<
+  typeof upsertPricingCatalogEntriesRequestSchema
+>;
+
 export const walkInSettingsSchema = z.object({
   walkInsEnabled: z.boolean(),
   walkInAcceptingUntil: z.string().nullable().optional(),

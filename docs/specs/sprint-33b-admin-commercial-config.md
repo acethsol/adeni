@@ -51,7 +51,7 @@ Make **global pricing catalog**, **per-tenant commercial terms**, and **GMV plat
 | **33b-1** | Versioned catalog | Read-only **Pricing → Catalog** (active version + diff preview) | `PricingCatalogVersion` + `PricingCatalogEntry`; seed migration; admin list/get |
 | **33b-2** | Full tenant commercial | Price lock, effective dates, audit timeline panel | `BillingAuditLog` or enriched audit; `POST` override lifecycle |
 | **33b-3** | GMV admin | **Pricing → GMV** per country (%, mode, self-serve) — no provider secrets | Read/write catalog entries; `PaymentOrchestrator` reads country GMV from resolver |
-| **33b-4** | Catalog publish | Draft → publish new version (ops workflow) | `POST /api/v1/admin/pricing-catalog/versions` + activate |
+| **33b-4** | Catalog publish | Draft → publish new version (ops workflow) | See [sprint-33b-4-catalog-publish.md](./sprint-33b-4-catalog-publish.md) |
 
 ---
 

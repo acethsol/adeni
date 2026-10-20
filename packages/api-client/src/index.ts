@@ -171,6 +171,8 @@ import {
   type PublicCountryPricing,
   type PricingCatalogVersionSummary,
   type PricingCatalogVersionDetail,
+  type CreatePricingCatalogVersionRequest,
+  type UpsertPricingCatalogEntriesRequest,
   type SubscriptionUsage,
   type SubscriptionCheckoutRequest,
   type SubscriptionCheckoutResponse,
@@ -1931,6 +1933,40 @@ export class AdeniApiClient {
   async getAdminPricingCatalogVersion(code: string): Promise<PricingCatalogVersionDetail> {
     const response = await this.request(
       `/api/v1/admin/pricing-catalog/versions/${encodeURIComponent(code)}`,
+    );
+    return pricingCatalogVersionDetailSchema.parse(await response.json());
+  }
+
+  async createAdminPricingCatalogVersion(
+    payload: CreatePricingCatalogVersionRequest,
+  ): Promise<PricingCatalogVersionDetail> {
+    const response = await this.request("/api/v1/admin/pricing-catalog/versions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return pricingCatalogVersionDetailSchema.parse(await response.json());
+  }
+
+  async upsertAdminPricingCatalogEntries(
+    code: string,
+    payload: UpsertPricingCatalogEntriesRequest,
+  ): Promise<PricingCatalogVersionDetail> {
+    const response = await this.request(
+      `/api/v1/admin/pricing-catalog/versions/${encodeURIComponent(code)}/entries`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      },
+    );
+    return pricingCatalogVersionDetailSchema.parse(await response.json());
+  }
+
+  async activateAdminPricingCatalogVersion(code: string): Promise<PricingCatalogVersionDetail> {
+    const response = await this.request(
+      `/api/v1/admin/pricing-catalog/versions/${encodeURIComponent(code)}/activate`,
+      { method: "POST" },
     );
     return pricingCatalogVersionDetailSchema.parse(await response.json());
   }

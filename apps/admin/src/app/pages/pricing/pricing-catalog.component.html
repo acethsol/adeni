@@ -1,85 +1,197 @@
 <app-portal-page
   title="Plans & pricing"
-  description="Commercial catalog editor view. List prices live in subscriptions.pricing_catalog_versions and subscriptions.pricing_catalog_entries; the business portal Plans & billing page reads the active version via GET /api/v1/pricing."
+  description="Versioned SaaS price book. Draft a new catalog, edit entries, then activate — only one version is live for GET /api/v1/pricing."
 >
   <p pageActions>
-    <adeni-staff-btn icon="restart" [disabled]="loading()" (pressed)="load()">Refresh</adeni-staff-btn>
+    <adeni-staff-btn variant="primary" icon="add" (pressed)="openCreate()">New version</adeni-staff-btn>
+    <adeni-staff-btn icon="restart" [disabled]="loading()" (pressed)="loadVersions()">Refresh</adeni-staff-btn>
   </p>
-
-  <section class="workflow-hints" aria-label="Catalog data model">
-    <article class="workflow-hint-item">
-      <strong>Admin vs portal</strong>
-      <p>
-        This grid is the read-only SaaS price book for operators. Tenant-facing plan cards, usage, and
-        checkout on the business portal use the same active catalog through the public pricing API.
-      </p>
-    </article>
-    @if (activeVersion(); as active) {
-      <article class="workflow-hint-item">
-        <strong>Active catalog version</strong>
-        <p>
-          <code>{{ active.code }}</code> · effective {{ active.effectiveFrom | date: "mediumDate" }}
-          @if (active.effectiveTo) {
-            — {{ active.effectiveTo | date: "mediumDate" }}
-          }
-          · status {{ active.status }}
-        </p>
-      </article>
-    }
-  </section>
 
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
 
-  @if (loading() && rows().length === 0) {
-    <p class="muted">Loading catalog…</p>
-  } @else if (isEmptyCatalog()) {
+  @if (loading() && versions().length === 0) {
+    <p class="muted">Loading catalog versions…</p>
+  } @else if (isEmptyVersions()) {
     <adeni-portal-empty-state
       icon="restart"
-      title="No active catalog"
-      description="Publish the database and run the pricing catalog seed script, then mark a version active."
+      title="No catalog versions"
+      description="Seed the database or create a draft version to begin."
     />
   } @else {
-    <div class="roster">
+    <section class="catalog-section" aria-label="Catalog versions">
+      <h2 class="section-title">Catalog versions</h2>
+      @if (activeVersion(); as active) {
+        <p class="muted section-lead">
+          Live catalog: <code>{{ active.code }}</code> · effective
+          {{ active.effectiveFrom | date: "mediumDate" }}
+        </p>
+      }
+
       <adeni-list-toolbar
-        storageKey="admin.pricing-catalog"
+        storageKey="admin.pricing-catalog.versions"
         [showViewSwitcher]="false"
-        [count]="filteredRows().length"
-        singularCountLabel="price row"
-        pluralCountLabel="price rows"
-        searchPlaceholder="Country, SKU, currency, or catalog version"
-        [searchQuery]="searchText()"
-        (searchQueryChange)="onToolbarSearch($event)"
+        [count]="filteredVersions().length"
+        singularCountLabel="version"
+        pluralCountLabel="versions"
+        searchPlaceholder="Version code or status"
+        [searchQuery]="versionSearchText()"
+        (searchQueryChange)="onVersionSearch($event)"
       />
 
       <div class="adeni-list-results">
         <adeni-data-table
-          [rows]="filteredRows()"
-          [columns]="columns"
-          [trackRow]="trackRow"
+          [rows]="filteredVersions()"
+          [columns]="versionColumns"
+          [trackRow]="trackVersion"
         >
-          <ng-template adeniDataTableCell="version" let-row>
-            <adeni-pill tone="info" [compact]="true">{{ row.catalogVersionCode }}</adeni-pill>
+          <ng-template adeniDataTableCell="code" let-version>
+            <button type="button" class="linkish" (click)="selectVersion(version.code)">
+              {{ version.code }}
+            </button>
           </ng-template>
-          <ng-template adeniDataTableCell="country" let-row>
-            <adeni-pill tone="neutral" [compact]="true">{{ row.countryCode }}</adeni-pill>
-          </ng-template>
-          <ng-template adeniDataTableCell="sku" let-row>
-            {{ formatSku(row.subscriptionSku) }}
-          </ng-template>
-          <ng-template adeniDataTableCell="price" let-row>
-            {{ formatAmount(row.currencyCode, row.monthlyAmountMajor) }}
-          </ng-template>
-          <ng-template adeniDataTableCell="selfServe" let-row>
-            @if (row.isSelfServeEnabled) {
-              <adeni-pill tone="success" [compact]="true">Yes</adeni-pill>
-            } @else {
-              <adeni-pill tone="neutral" [compact]="true">No</adeni-pill>
+          <ng-template adeniDataTableCell="effective" let-version>
+            {{ version.effectiveFrom | date: "mediumDate" }}
+            @if (version.effectiveTo) {
+              — {{ version.effectiveTo | date: "mediumDate" }}
             }
+          </ng-template>
+          <ng-template adeniDataTableCell="status" let-version>
+            <adeni-pill [tone]="statusPillTone(version.status)" [compact]="true">{{
+              version.status
+            }}</adeni-pill>
+          </ng-template>
+          <ng-template adeniDataTableCell="active" let-version>
+            @if (version.isActive) {
+              <adeni-pill tone="success" [compact]="true">Active</adeni-pill>
+            } @else {
+              <span class="muted">—</span>
+            }
+          </ng-template>
+          <ng-template adeniDataTableActions let-version>
+            <adeni-row-action-bar>
+              <adeni-icon-btn
+                icon="arrow--right"
+                label="View entries"
+                variant="table"
+                [dense]="true"
+                (pressed)="selectVersion(version.code)"
+              />
+            </adeni-row-action-bar>
           </ng-template>
         </adeni-data-table>
       </div>
-    </div>
+    </section>
+
+    @if (selectedCode(); as code) {
+      <section class="catalog-section entries-section" aria-label="Catalog entries">
+        <div class="entries-header">
+          <div>
+            <h2 class="section-title">Entries · {{ code }}</h2>
+            <p class="muted section-lead">
+              @if (selectedIsActive()) {
+                This version is live for new signups and public pricing.
+              } @else if (selectedStatus() === "draft") {
+                Draft — activate when ready to publish.
+              } @else {
+                Retired historical version.
+              }
+            </p>
+          </div>
+          @if (selectedStatus() === "draft") {
+            <adeni-staff-btn variant="primary" icon="checkmark" (pressed)="activateSelected()">
+              Activate version
+            </adeni-staff-btn>
+          }
+        </div>
+
+        @if (entriesLoading()) {
+          <p class="muted">Loading entries…</p>
+        } @else {
+          <adeni-list-toolbar
+            storageKey="admin.pricing-catalog.entries"
+            [showViewSwitcher]="false"
+            [count]="filteredEntryRows().length"
+            singularCountLabel="price row"
+            pluralCountLabel="price rows"
+            searchPlaceholder="Country, SKU, or currency"
+            [searchQuery]="searchText()"
+            (searchQueryChange)="onEntrySearch($event)"
+          />
+
+          <div class="adeni-list-results">
+            <adeni-data-table
+              [rows]="filteredEntryRows()"
+              [columns]="entryColumns"
+              [trackRow]="trackEntryRow"
+            >
+              <ng-template adeniDataTableCell="country" let-row>
+                <adeni-pill tone="neutral" [compact]="true">{{ row.countryCode }}</adeni-pill>
+              </ng-template>
+              <ng-template adeniDataTableCell="sku" let-row>
+                {{ formatSku(row.subscriptionSku) }}
+              </ng-template>
+              <ng-template adeniDataTableCell="price" let-row>
+                {{ formatAmount(row.currencyCode, row.monthlyAmountMajor) }}
+              </ng-template>
+              <ng-template adeniDataTableCell="selfServe" let-row>
+                @if (row.isSelfServeEnabled) {
+                  <adeni-pill tone="success" [compact]="true">Yes</adeni-pill>
+                } @else {
+                  <adeni-pill tone="neutral" [compact]="true">No</adeni-pill>
+                }
+              </ng-template>
+            </adeni-data-table>
+          </div>
+        }
+      </section>
+    }
+  }
+
+  @if (createOpen()) {
+    <div class="modal-backdrop" role="presentation" (click)="closeCreate()"></div>
+    <dialog class="create-dialog" open aria-labelledby="create-catalog-title">
+      <h2 id="create-catalog-title">New catalog version</h2>
+      <p class="muted">Creates a draft. Optionally copy rows from the active catalog.</p>
+      <label class="field">
+        <span>Version code</span>
+        <input
+          type="text"
+          [ngModel]="createCode()"
+          (ngModelChange)="createCode.set($event)"
+          placeholder="2026-q2-01"
+          maxlength="64"
+        />
+      </label>
+      <label class="field">
+        <span>Effective from (UTC)</span>
+        <input
+          type="datetime-local"
+          [ngModel]="createEffectiveFrom()"
+          (ngModelChange)="createEffectiveFrom.set($event)"
+        />
+      </label>
+      <label class="checkbox-field">
+        <input
+          type="checkbox"
+          [ngModel]="createCloneFromActive()"
+          (ngModelChange)="createCloneFromActive.set($event)"
+        />
+        Clone entries from active catalog
+      </label>
+      <div class="dialog-actions">
+        <adeni-staff-btn icon="close" (pressed)="closeCreate()" [disabled]="createSaving()"
+          >Cancel</adeni-staff-btn
+        >
+        <adeni-staff-btn
+          variant="primary"
+          icon="add"
+          [disabled]="createSaving()"
+          (pressed)="submitCreate()"
+          >Create draft</adeni-staff-btn
+        >
+      </div>
+    </dialog>
   }
 </app-portal-page>
