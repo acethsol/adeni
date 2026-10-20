@@ -67,6 +67,24 @@
   background: var(--cds-layer-01, #fff);
   min-width: min(24rem, 92vw);
   max-width: 28rem;
+
+  &.edit-dialog {
+    max-width: 32rem;
+  }
+}
+
+.dialog-hint {
+  margin: 0.75rem 0 0;
+  font-size: 0.875rem;
+
+  a {
+    color: var(--cds-link-primary, #0f62fe);
+  }
+}
+
+.field input[readonly] {
+  background: var(--cds-field-01, #f4f4f4);
+  color: var(--cds-text-secondary, #525252);
 }
 
 .field {

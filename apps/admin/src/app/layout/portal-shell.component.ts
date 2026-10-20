@@ -51,6 +51,7 @@ type ChromeKey =
   | "/reviews"
   | "/markets"
   | "/pricing/catalog"
+  | "/pricing/entitlements"
   | "/businesses"
   | "/insights"
   | "/transactions"
@@ -77,6 +78,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     "/reviews": "Reviews",
     "/markets": "Markets",
     "/pricing/catalog": "Plans & pricing",
+    "/pricing/entitlements": "Plan entitlements",
     "/businesses": "Businesses",
     "/insights": "Revenue",
     "/transactions": "Transactions",
@@ -102,6 +104,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     "/reviews": "Avis",
     "/markets": "Marchés",
     "/pricing/catalog": "Forfaits et tarifs",
+    "/pricing/entitlements": "Droits par forfait",
     "/businesses": "Établissements",
     "/insights": "Abonnements",
     "/transactions": "Transactions",

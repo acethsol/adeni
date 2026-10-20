@@ -1,0 +1,15 @@
+@use "../../shared/admin-list-page" as *;
+
+.feature-label {
+  font-weight: 500;
+}
+
+.limit-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.footnote {
+  margin-top: 1.5rem;
+  max-width: 42rem;
+  font-size: 0.875rem;
+}

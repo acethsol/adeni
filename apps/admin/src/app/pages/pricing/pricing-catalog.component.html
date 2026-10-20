@@ -95,7 +95,8 @@
               @if (selectedIsActive()) {
                 This version is live for new signups and public pricing.
               } @else if (selectedStatus() === "draft") {
-                Draft — activate when ready to publish.
+                Draft — edit list prices below, then activate. Per-country GMV:
+                <a routerLink="/pricing/gmv">GMV fees</a>.
               } @else {
                 Retired historical version.
               }
@@ -141,9 +142,19 @@
                 <adeni-pill [tone]="plan.variant" [compact]="true">{{ plan.label }}</adeni-pill>
               </ng-template>
               <ng-template adeniDataTableCell="price" let-row>
-                <span class="adeni-data-table-text catalog-list-price">{{
-                  formatAmount(row.currencyCode, row.monthlyAmountMajor)
-                }}</span>
+                @if (canEditEntries()) {
+                  <button
+                    type="button"
+                    class="linkish catalog-list-price"
+                    (click)="openEditEntry(row)"
+                  >
+                    {{ formatAmount(row.currencyCode, row.monthlyAmountMajor) }}
+                  </button>
+                } @else {
+                  <span class="adeni-data-table-text catalog-list-price">{{
+                    formatAmount(row.currencyCode, row.monthlyAmountMajor)
+                  }}</span>
+                }
               </ng-template>
               <ng-template adeniDataTableCell="selfServe" let-row>
                 @if (row.isSelfServeEnabled) {
@@ -152,11 +163,99 @@
                   <adeni-pill tone="neutral" [compact]="true">No</adeni-pill>
                 }
               </ng-template>
+              @if (canEditEntries()) {
+                <ng-template adeniDataTableActions let-row>
+                  <adeni-row-action-bar>
+                    <adeni-icon-btn
+                      icon="edit"
+                      label="Edit price"
+                      variant="table"
+                      [dense]="true"
+                      (pressed)="openEditEntry(row)"
+                    />
+                  </adeni-row-action-bar>
+                </ng-template>
+              }
             </adeni-data-table>
           </div>
         }
       </section>
     }
+  }
+
+  @if (editOpen()) {
+    <div class="modal-backdrop" role="presentation" (click)="closeEditEntry()"></div>
+    <dialog class="create-dialog edit-dialog" open aria-labelledby="edit-entry-title">
+      <h2 id="edit-entry-title">Edit catalog entry</h2>
+      <p class="muted">
+        {{ editCountry() }} · {{ formatSku(editSku()) }} — saved to draft only until you activate.
+      </p>
+      <label class="field">
+        <span>Country</span>
+        <input type="text" [value]="editCountry()" readonly />
+      </label>
+      <label class="field">
+        <span>Plan (SKU)</span>
+        <input type="text" [value]="formatSku(editSku())" readonly />
+      </label>
+      <label class="field">
+        <span>Currency (ISO 4217)</span>
+        <input
+          type="text"
+          maxlength="3"
+          [ngModel]="editCurrency()"
+          (ngModelChange)="editCurrency.set($event)"
+        />
+      </label>
+      <label class="field">
+        <span>Monthly list price (major units)</span>
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="Leave empty if not listed"
+          [ngModel]="editMonthlyAmount()"
+          (ngModelChange)="editMonthlyAmount.set($event)"
+        />
+      </label>
+      <label class="field">
+        <span>Platform fee %</span>
+        <input
+          type="number"
+          min="0"
+          max="100"
+          step="0.01"
+          [ngModel]="editPlatformFee()"
+          (ngModelChange)="editPlatformFee.set($event)"
+        />
+      </label>
+      <label class="checkbox-field">
+        <input
+          type="checkbox"
+          [ngModel]="editSelfServe()"
+          (ngModelChange)="editSelfServe.set($event)"
+        />
+        Self-serve signup enabled
+      </label>
+      <p class="muted dialog-hint">
+        Bulk GMV by country:
+        <a routerLink="/pricing/gmv" (click)="closeEditEntry()">GMV fees</a>.
+        Feature caps are in
+        <a routerLink="/pricing/entitlements" (click)="closeEditEntry()">Plan entitlements</a>.
+      </p>
+      <div class="dialog-actions">
+        <adeni-staff-btn icon="close" (pressed)="closeEditEntry()" [disabled]="editSaving()"
+          >Cancel</adeni-staff-btn
+        >
+        <adeni-staff-btn
+          variant="primary"
+          icon="save"
+          [disabled]="editSaving()"
+          (pressed)="submitEditEntry()"
+          >Save entry</adeni-staff-btn
+        >
+      </div>
+    </dialog>
   }
 
   @if (createOpen()) {

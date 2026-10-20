@@ -12,6 +12,7 @@ import { AdminInsightsComponent } from "./pages/insights/insights.component";
 import { AdminTransactionsComponent } from "./pages/transactions/transactions.component";
 import { AdminPricingCatalogComponent } from "./pages/pricing/pricing-catalog.component";
 import { AdminPricingGmvComponent } from "./pages/pricing/pricing-gmv.component";
+import { AdminPricingEntitlementsComponent } from "./pages/pricing/pricing-entitlements.component";
 import { SetupComponent } from "./pages/setup/setup.component";
 import { ForbiddenComponent } from "./pages/forbidden/forbidden.component";
 import { adminAccessGuard } from "./core/guards/admin-access.guard";
@@ -41,6 +42,11 @@ export const routes: Routes = [
         path: "pricing/gmv",
         component: AdminPricingGmvComponent,
         title: "GMV fees",
+      },
+      {
+        path: "pricing/entitlements",
+        component: AdminPricingEntitlementsComponent,
+        title: "Plan entitlements",
       },
       { path: "insights", component: AdminInsightsComponent, title: "Subscription insights" },
       { path: "transactions", component: AdminTransactionsComponent, title: "Transactions" },

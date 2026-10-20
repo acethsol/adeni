@@ -1,0 +1,63 @@
+<app-portal-page
+  title="Plan entitlements"
+  description="Read-only feature matrix from plan-entitlements.json — enforced on the API and reflected in portal nav. List prices live separately under Plans &amp; pricing."
+>
+  <adeni-list-toolbar
+    storageKey="admin.pricing-entitlements"
+    [showViewSwitcher]="false"
+    [count]="filteredRows().length"
+    singularCountLabel="capability row"
+    pluralCountLabel="capability rows"
+    searchPlaceholder="Capability name"
+    [searchQuery]="searchText()"
+    (searchQueryChange)="onSearch($event)"
+  />
+
+  @if (filteredRows().length === 0) {
+    <adeni-portal-empty-state
+      icon="calendar"
+      title="No matching capabilities"
+      description="Try a different search term."
+    />
+  } @else {
+    <div class="adeni-list-results">
+      <adeni-data-table [rows]="filteredRows()" [columns]="columns" [trackRow]="trackRow">
+        <ng-template adeniDataTableCell="feature" let-row>
+          <span class="feature-label">{{ row.label }}</span>
+        </ng-template>
+        <ng-template adeniDataTableCell="starter" let-row>
+          @if (row.kind === "flag") {
+            <adeni-pill [tone]="cellTone(row.starter, row.kind)" [compact]="true">{{
+              row.starter
+            }}</adeni-pill>
+          } @else {
+            <span class="limit-value">{{ row.starter }}</span>
+          }
+        </ng-template>
+        <ng-template adeniDataTableCell="professional" let-row>
+          @if (row.kind === "flag") {
+            <adeni-pill [tone]="cellTone(row.professional, row.kind)" [compact]="true">{{
+              row.professional
+            }}</adeni-pill>
+          } @else {
+            <span class="limit-value">{{ row.professional }}</span>
+          }
+        </ng-template>
+        <ng-template adeniDataTableCell="business" let-row>
+          @if (row.kind === "flag") {
+            <adeni-pill [tone]="cellTone(row.business, row.kind)" [compact]="true">{{
+              row.business
+            }}</adeni-pill>
+          } @else {
+            <span class="limit-value">{{ row.business }}</span>
+          }
+        </ng-template>
+      </adeni-data-table>
+    </div>
+  }
+
+  <p class="muted footnote">
+    Ops cannot edit this matrix in admin — change the seed in
+    <code>@adeni/shared</code> and redeploy. Per-tenant overrides are price/trial only (Sprint 33b).
+  </p>
+</app-portal-page>

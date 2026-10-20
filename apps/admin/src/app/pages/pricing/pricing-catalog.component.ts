@@ -2,7 +2,7 @@ import { DatePipe } from "@angular/common";
 import { Component, computed, inject, signal } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
-import { ActivatedRoute, Router } from "@angular/router";
+import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import type { PricingCatalogVersionSummary } from "@adeni/shared";
 import { formatPrice, formatSubscriptionSku, type SubscriptionSku } from "@adeni/shared";
 import {
@@ -42,6 +42,7 @@ type PricingCatalogEntryRow = {
   standalone: true,
   imports: [
     PortalPageComponent,
+    RouterLink,
     DatePipe,
     FormsModule,
     AdeniStaffButtonComponent,
@@ -81,6 +82,17 @@ export class AdminPricingCatalogComponent {
   readonly createCode = signal("");
   readonly createEffectiveFrom = signal("");
   readonly createCloneFromActive = signal(true);
+
+  readonly editOpen = signal(false);
+  readonly editSaving = signal(false);
+  readonly editCountry = signal("");
+  readonly editSku = signal<SubscriptionSku>("starter");
+  readonly editCurrency = signal("");
+  readonly editMonthlyAmount = signal("");
+  readonly editPlatformFee = signal(0);
+  readonly editSelfServe = signal(false);
+
+  readonly canEditEntries = computed(() => this.selectedStatus() === "draft");
 
   readonly exportItems: AdeniExportMenuItem[] = [
     {
@@ -357,5 +369,95 @@ export class AdminPricingCatalogComponent {
       return "warning";
     }
     return "neutral";
+  }
+
+  openEditEntry(row: PricingCatalogEntryRow): void {
+    if (!this.canEditEntries()) {
+      return;
+    }
+    this.editCountry.set(row.countryCode);
+    this.editSku.set(row.subscriptionSku);
+    this.editCurrency.set(row.currencyCode);
+    this.editMonthlyAmount.set(
+      row.monthlyAmountMajor == null ? "" : String(row.monthlyAmountMajor),
+    );
+    this.editPlatformFee.set(row.platformFeePercent);
+    this.editSelfServe.set(row.isSelfServeEnabled);
+    this.editOpen.set(true);
+  }
+
+  closeEditEntry(): void {
+    this.editOpen.set(false);
+    this.editSaving.set(false);
+  }
+
+  async submitEditEntry(): Promise<void> {
+    const code = this.selectedCode();
+    if (!code || !this.canEditEntries()) {
+      return;
+    }
+    const currency = this.editCurrency().trim().toUpperCase();
+    if (currency.length !== 3) {
+      this.feedback.error("Currency must be a 3-letter ISO code.");
+      return;
+    }
+    const amountRaw = this.editMonthlyAmount().trim();
+    let monthlyAmountMajor: number | undefined;
+    if (amountRaw !== "") {
+      const parsed = Number(amountRaw);
+      if (Number.isNaN(parsed) || parsed < 0) {
+        this.feedback.error("List price must be a non-negative number.");
+        return;
+      }
+      monthlyAmountMajor = parsed;
+    }
+    const platformFee = this.editPlatformFee();
+    if (platformFee < 0 || platformFee > 100) {
+      this.feedback.error("Platform fee must be between 0 and 100.");
+      return;
+    }
+
+    const countryCode = this.editCountry();
+    const subscriptionSku = this.editSku();
+
+    this.editSaving.set(true);
+    try {
+      await this.api.withAuthorizedClient(async (client) => {
+        const detail = await client.getAdminPricingCatalogVersion(code);
+        const entries = detail.entries.map((entry) => {
+          if (
+            entry.countryCode !== countryCode ||
+            entry.subscriptionSku !== subscriptionSku
+          ) {
+            return {
+              countryCode: entry.countryCode,
+              subscriptionSku: entry.subscriptionSku,
+              currencyCode: entry.currencyCode,
+              monthlyAmountMajor: entry.monthlyAmountMajor ?? undefined,
+              platformFeePercent: entry.platformFeePercent,
+              isSelfServeEnabled: entry.isSelfServeEnabled,
+            };
+          }
+          return {
+            countryCode: entry.countryCode,
+            subscriptionSku: entry.subscriptionSku,
+            currencyCode: currency,
+            monthlyAmountMajor,
+            platformFeePercent: platformFee,
+            isSelfServeEnabled: this.editSelfServe(),
+          };
+        });
+        await client.upsertAdminPricingCatalogEntries(code, { entries });
+      });
+      this.feedback.success("Catalog entry updated.", `${countryCode} · ${subscriptionSku}`);
+      this.closeEditEntry();
+      await this.loadEntries(code);
+    } catch (err) {
+      this.feedback.error(
+        adminLoadErrorMessage("Could not save catalog entry.", err),
+      );
+    } finally {
+      this.editSaving.set(false);
+    }
   }
 }
