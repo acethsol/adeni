@@ -12,7 +12,8 @@ export function hasTenantEntitlement(
   if (!entitlements) {
     return false;
   }
-  return entitlements[key] === true;
+  const value = entitlements[key as keyof TenantEntitlements];
+  return value === true;
 }
 
 export function canAddLocationAtCount(

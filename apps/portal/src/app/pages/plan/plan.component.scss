@@ -11,11 +11,33 @@
   outline: 2px solid #10b981;
 }
 
+.tier.popular:not(.current) {
+  outline: 2px solid color-mix(in srgb, var(--cds-interactive, #0f62fe) 55%, transparent);
+}
+
 .pill {
   font-size: 0.65rem;
   text-transform: uppercase;
   font-weight: 700;
+}
+
+.current-pill {
   color: #065f46;
+}
+
+.popular-pill {
+  color: var(--cds-interactive, #0f62fe);
+}
+
+.tagline {
+  margin: 0.15rem 0 0.35rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.self-serve-note,
+.compare-lede {
+  margin-bottom: 0.75rem;
 }
 
 .tier-name {

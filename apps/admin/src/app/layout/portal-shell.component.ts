@@ -44,6 +44,7 @@ type ChromeKey =
   | "jump"
   | "groupOperations"
   | "groupPlatform"
+  | "groupFinance"
   | "groupCompliance"
   | "/dashboard"
   | "/pending"
@@ -71,6 +72,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     jump: "Jump to",
     groupOperations: "Operations",
     groupPlatform: "Platform",
+    groupFinance: "Finance",
     groupCompliance: "Compliance",
     "/dashboard": "Dashboard",
     "/pending": "Pending verifications",
@@ -97,6 +99,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     jump: "Aller à",
     groupOperations: "Opérations",
     groupPlatform: "Plateforme",
+    groupFinance: "Finances",
     groupCompliance: "Conformité",
     "/dashboard": "Tableau de bord",
     "/pending": "Vérifications en attente",
@@ -301,6 +304,9 @@ export class AdminShellComponent {
     }
     if (group.id === "platform") {
       return this.text("groupPlatform");
+    }
+    if (group.id === "finance") {
+      return this.text("groupFinance");
     }
     return this.text("groupCompliance");
   }

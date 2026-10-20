@@ -56,17 +56,30 @@
       </section>
     }
 
+    @if (!selfServeEnabled()) {
+      <p class="muted self-serve-note" role="note">
+        Self-serve checkout is not available in your market yet. Contact support to change plans.
+      </p>
+    }
+
     <div class="tier-grid">
       @for (sku of skus; track sku) {
         @let display = planDisplay(sku);
-        <section class="card tier" [class.current]="isCurrentPlan(sku)">
+        <section
+          class="card tier"
+          [class.current]="isCurrentPlan(sku)"
+          [class.popular]="isPopular(sku)"
+        >
           @if (isCurrentPlan(sku)) {
-            <span class="pill">Current plan</span>
+            <span class="pill current-pill">Current plan</span>
+          } @else if (isPopular(sku)) {
+            <span class="pill popular-pill">Most popular</span>
           }
           <p class="tier-name">{{ display.name }}</p>
           <p class="price">{{ display.priceLabel }}</p>
+          <p class="tagline">{{ display.tagline }}</p>
           <p class="muted">{{ display.description }}</p>
-          @if (canUpgrade(sku)) {
+          @if (canUpgrade(sku) && selfServeEnabled()) {
             <button
               type="button"
               class="btn btn-primary upgrade-btn"
@@ -108,21 +121,24 @@
       }
     </section>
 
-    <section class="card">
-      <h3>Feature comparison</h3>
+    <section class="card compare">
+      <h3>Compare plans</h3>
+      <p class="muted compare-lede">
+        Feature rows match the live entitlements catalog for your market pricing above.
+      </p>
       <table>
         <thead>
           <tr>
-            <th>Feature</th>
+            <th scope="col">Feature</th>
             @for (sku of skus; track sku) {
-              <th>{{ planDisplay(sku).name }}</th>
+              <th scope="col">{{ planDisplay(sku).name }}</th>
             }
           </tr>
         </thead>
         <tbody>
           @for (row of planComparison; track row.label) {
             <tr>
-              <td>{{ row.label }}</td>
+              <th scope="row">{{ row.label }}</th>
               @for (sku of skus; track sku) {
                 <td>{{ comparisonCell(row, sku) }}</td>
               }

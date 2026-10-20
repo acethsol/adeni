@@ -1,12 +1,10 @@
 import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import {
-  formatAmountMinor,
   formatTenantStatus,
   type AdminBusinessDirectoryStats,
   type AdminBusinessSummary,
   type AdminMarket,
-  type AdminSubscriptionMetrics,
   type PendingBusiness,
   formatSubscriptionSku,
   resolveSubscriptionSku,
@@ -27,7 +25,15 @@ type LoadState = {
   recentBusinesses: AdminBusinessSummary[] | null;
   marketsPreview: AdminMarket[] | null;
   liveMarketCount: number | null;
-  subscriptionMetrics: AdminSubscriptionMetrics | null;
+};
+
+const EMPTY_LOAD_STATE: LoadState = {
+  pendingPreview: null,
+  pendingTotal: null,
+  businessStats: null,
+  recentBusinesses: null,
+  marketsPreview: null,
+  liveMarketCount: null,
 };
 
 @Component({
@@ -41,14 +47,14 @@ export class AdminDashboardComponent implements OnInit {
   private readonly api = inject(AdminApiService);
   private readonly feedback = inject(AdeniFeedbackService);
 
-  readonly loading = signal(true);
-  readonly data = signal<LoadState | null>(null);
+  readonly loading = signal(false);
+  readonly initialLoad = signal(true);
+  readonly data = signal<LoadState>(EMPTY_LOAD_STATE);
 
-  readonly pending = computed(() => this.data()?.pendingPreview ?? null);
-  readonly pendingTotal = computed(() => this.data()?.pendingTotal ?? null);
-  readonly businessStats = computed(() => this.data()?.businessStats ?? null);
-  readonly markets = computed(() => this.data()?.marketsPreview ?? null);
-  readonly subscriptionMetrics = computed(() => this.data()?.subscriptionMetrics ?? null);
+  readonly pending = computed(() => this.data().pendingPreview);
+  readonly pendingTotal = computed(() => this.data().pendingTotal);
+  readonly businessStats = computed(() => this.data().businessStats);
+  readonly markets = computed(() => this.data().marketsPreview);
 
   readonly queue = computed(() =>
     [...(this.pending() ?? [])].sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
@@ -58,41 +64,12 @@ export class AdminDashboardComponent implements OnInit {
 
   readonly verifiedCount = computed(() => this.businessStats()?.verifiedCount ?? null);
 
-  readonly paidCount = computed(
-    () => this.subscriptionMetrics()?.paidTenantCount ?? null,
-  );
+  readonly totalBusinessCount = computed(() => this.businessStats()?.totalCount ?? null);
 
-  readonly mrrLabel = computed(() => {
-    const metrics = this.subscriptionMetrics();
-    if (!metrics) {
-      return null;
-    }
-    const rows =
-      metrics.mrrSource === "synced_charges"
-        ? metrics.syncedMrrByCurrency
-        : metrics.estimatedMrrByCurrency;
-    if (rows.length === 0) {
-      return "—";
-    }
-    return rows
-      .map((row) => formatAmountMinor(row.amountMinor, row.currency))
-      .join(" · ");
-  });
-
-  readonly mrrHint = computed(() => {
-    const metrics = this.subscriptionMetrics();
-    if (!metrics) {
-      return "MRR unavailable";
-    }
-    return metrics.mrrSource === "synced_charges"
-      ? "From synced charges this month"
-      : "Estimated from list prices";
-  });
-
-  readonly liveCount = computed(() => this.data()?.liveMarketCount ?? null);
+  readonly liveCount = computed(() => this.data().liveMarketCount);
 
   readonly pageDescription = computed(
-    () => "Verification queue, markets, tenant directory, and SaaS billing at a glance.",
+    () => "Verification queue, markets, and tenant directory at a glance.",
   );
 
   readonly headline = computed(() => {
@@ -146,7 +123,7 @@ export class AdminDashboardComponent implements OnInit {
     }));
   });
 
-  readonly recent = computed(() => this.data()?.recentBusinesses ?? []);
+  readonly recent = computed(() => this.data().recentBusinesses ?? []);
 
   readonly formatTenantStatus = formatTenantStatus;
   readonly planLabel = (business: AdminBusinessSummary) =>
@@ -159,49 +136,44 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   async load(): Promise<void> {
-    this.loading.set(true);
+    const isRefresh = !this.initialLoad();
+    this.loading.set(isRefresh);
     try {
-      await this.feedback.runLoading(async () => {
-        const next = await this.api.withAuthorizedClient(async (client) => {
-          const [
-            pendingPage,
-            businessStats,
-            recentPage,
-            marketsPage,
-            marketStats,
-            subscriptionMetrics,
-          ] = await Promise.all([
-            client.listPendingBusinesses({ page: 1, pageSize: 6 }).catch(() => null),
-            client.getAdminBusinessDirectoryStats().catch(() => null),
-            client.listAdminBusinesses({ page: 1, pageSize: 6 }).catch(() => null),
-            client.listAdminMarkets({ page: 1, pageSize: 6 }).catch(() => null),
-            client.getAdminMarketCatalogStats().catch(() => null),
-            client.getAdminSubscriptionMetrics().catch(() => null),
-          ]);
-          return {
-            pendingPreview: pendingPage?.items ?? null,
-            pendingTotal: pendingPage?.totalCount ?? null,
-            businessStats,
-            recentBusinesses: recentPage?.items ?? null,
-            marketsPreview: marketsPage?.items ?? null,
-            liveMarketCount: marketStats?.liveCount ?? null,
-            subscriptionMetrics,
-          };
-        });
-        this.data.set(next);
-      }, "Loading dashboard…", "Fetching queue, businesses, and markets");
-    } catch {
-      this.data.set({
-        pendingPreview: null,
-        pendingTotal: null,
-        businessStats: null,
-        recentBusinesses: null,
-        marketsPreview: null,
-        liveMarketCount: null,
-        subscriptionMetrics: null,
+      const core = await this.api.withAuthorizedClient(async (client) => {
+        const [pendingPage, businessStats, marketsPage, marketStats] = await Promise.all([
+          client.listPendingBusinesses({ page: 1, pageSize: 6 }).catch(() => null),
+          client.getAdminBusinessDirectoryStats().catch(() => null),
+          client.listAdminMarkets({ page: 1, pageSize: 6 }).catch(() => null),
+          client.getAdminMarketCatalogStats().catch(() => null),
+        ]);
+        return {
+          pendingPreview: pendingPage?.items ?? null,
+          pendingTotal: pendingPage?.totalCount ?? null,
+          businessStats,
+          marketsPreview: marketsPage?.items ?? null,
+          liveMarketCount: marketStats?.liveCount ?? null,
+        };
       });
+
+      this.data.update((prev) => ({
+        ...prev,
+        ...core,
+      }));
+
+      void this.api.withAuthorizedClient(async (client) => {
+        const recentPage = await client
+          .listAdminBusinesses({ page: 1, pageSize: 6 })
+          .catch(() => null);
+        this.data.update((prev) => ({
+          ...prev,
+          recentBusinesses: recentPage?.items ?? null,
+        }));
+      });
+    } catch {
+      this.data.set(EMPTY_LOAD_STATE);
       this.feedback.error("Could not load admin dashboard.");
     } finally {
+      this.initialLoad.set(false);
       this.loading.set(false);
     }
   }

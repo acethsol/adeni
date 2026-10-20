@@ -1,6 +1,6 @@
 <app-portal-page
   title="Transactions"
-  description="Find commerce checkouts (customer → business) and SaaS subscription charges (business → Adeni) by Paystack reference, id, or business name."
+  description="Recent commerce checkouts and SaaS charges, or search by Paystack reference, transaction id, or business name."
 >
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
@@ -28,22 +28,26 @@
     <adeni-export-menu listExports label="Export" [items]="exportItems" />
   </adeni-list-toolbar>
 
-  @if (searching() && rows().length === 0) {
-    <p class="muted">Searching…</p>
-  } @else if (!hasSearched()) {
+  @if (searching() && !loaded()) {
+    <p class="muted">Loading transactions…</p>
+  } @else if (loaded() && totalCount() === 0 && !error()) {
     <adeni-portal-empty-state
       icon="search"
-      title="Search transactions"
-      description="Enter a Paystack reference, payment intent id, or business name — results update as you type."
+      title="No transactions yet"
+      description="Seed dev data with db/scripts/admin-transactions-dev-seed.sql (search “devseed” after), or complete a checkout / sync a SaaS charge."
     />
-  } @else if (rows().length === 0 && !error()) {
+  } @else if (loaded() && rows().length === 0 && searchQuery().trim() && !error()) {
     <adeni-portal-empty-state
       icon="search"
       title="No transactions found"
       description="Try the full Paystack reference or transaction id."
       [compact]="true"
     />
-  } @else {
+  } @else if (rows().length > 0) {
+    @if (browseMode()) {
+      <p class="list-lead muted">Showing the most recent matches. Use search to narrow by reference or business name.</p>
+    }
+
     <adeni-data-table [rows]="rows()" [columns]="columns" [trackRow]="trackRow">
       <ng-template adeniDataTableCell="when" let-row>
         <span class="adeni-data-table-text">{{ row.occurredAt | date: "medium" }}</span>

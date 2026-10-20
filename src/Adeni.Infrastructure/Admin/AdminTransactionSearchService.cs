@@ -20,13 +20,6 @@ public sealed class AdminTransactionSearchService(AdeniDbContext dbContext) : IA
         int pageSize,
         CancellationToken cancellationToken = default)
     {
-        var trimmed = query?.Trim();
-        if (string.IsNullOrWhiteSpace(trimmed) || trimmed.Length < 2)
-        {
-            return Result.Failure<AdminPagedResult<AdminTransactionSearchItem>>(
-                Error.Validation("Enter at least 2 characters (Paystack reference, transaction id, or business name)."));
-        }
-
         var paging = AdminPaging.Normalize(page, pageSize);
         if (paging.IsFailure)
         {
@@ -34,6 +27,19 @@ public sealed class AdminTransactionSearchService(AdeniDbContext dbContext) : IA
         }
 
         var (effectivePage, effectivePageSize) = paging.Value;
+
+        var trimmed = query?.Trim();
+        if (string.IsNullOrWhiteSpace(trimmed))
+        {
+            return await ListRecentAsync(kind, effectivePage, effectivePageSize, cancellationToken);
+        }
+
+        if (trimmed.Length < 2)
+        {
+            return Result.Failure<AdminPagedResult<AdminTransactionSearchItem>>(
+                Error.Validation("Enter at least 2 characters (Paystack reference, transaction id, or business name)."));
+        }
+
         var needle = trimmed.ToLowerInvariant();
         _ = Guid.TryParse(trimmed, out var exactGuid);
 
@@ -89,10 +95,59 @@ public sealed class AdminTransactionSearchService(AdeniDbContext dbContext) : IA
             .ThenBy(x => x.Kind, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
+        return await BuildPageAsync(ordered, effectivePage, effectivePageSize, cancellationToken);
+    }
+
+    private async Task<Result<AdminPagedResult<AdminTransactionSearchItem>>> ListRecentAsync(
+        string? kind,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken)
+    {
+        var includeCommerce = MatchesKindFilter(kind, "commerce");
+        var includeSaas = MatchesKindFilter(kind, "saas");
+        var hits = new List<Hit>();
+
+        if (includeCommerce)
+        {
+            var commerceHits = await dbContext.PaymentIntents
+                .AsNoTracking()
+                .OrderByDescending(x => x.UpdatedAt)
+                .Take(MaxMergedHits)
+                .Select(x => new Hit("commerce", x.Id, x.UpdatedAt))
+                .ToListAsync(cancellationToken);
+            hits.AddRange(commerceHits);
+        }
+
+        if (includeSaas)
+        {
+            var saasHits = await dbContext.TenantSubscriptionCharges
+                .AsNoTracking()
+                .OrderByDescending(x => x.OccurredAt)
+                .Take(MaxMergedHits)
+                .Select(x => new Hit("saas", x.Id, x.OccurredAt))
+                .ToListAsync(cancellationToken);
+            hits.AddRange(saasHits);
+        }
+
+        return await BuildPageAsync(hits, page, pageSize, cancellationToken);
+    }
+
+    private async Task<Result<AdminPagedResult<AdminTransactionSearchItem>>> BuildPageAsync(
+        List<Hit> hits,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken)
+    {
+        var ordered = hits
+            .OrderByDescending(x => x.OccurredAt)
+            .ThenBy(x => x.Kind, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
         var totalCount = ordered.Count;
         var pageHits = ordered
-            .Skip((effectivePage - 1) * effectivePageSize)
-            .Take(effectivePageSize)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToList();
 
         var tenantNames = await dbContext.Tenants
@@ -123,8 +178,8 @@ public sealed class AdminTransactionSearchService(AdeniDbContext dbContext) : IA
 
         return Result.Success(new AdminPagedResult<AdminTransactionSearchItem>(
             items,
-            effectivePage,
-            effectivePageSize,
+            page,
+            pageSize,
             totalCount));
     }
 

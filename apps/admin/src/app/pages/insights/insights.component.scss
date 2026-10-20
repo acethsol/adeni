@@ -1,56 +1,29 @@
-@use "../../shared/admin-list-page" as *;
+@use "staff-layout" as *;
+@use "dashboard-shell" as *;
 
-.kpis {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  gap: 1px;
-  margin-bottom: 1rem;
-  border: 1px solid var(--border);
-  background: var(--border);
+:host {
+  display: block;
 }
 
-.kpi {
-  padding: 1rem 1.1rem;
-  background: var(--surface);
-}
-
-.kpi-label {
-  margin: 0;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+.loading-copy {
+  padding: 0.5rem 0;
   color: var(--text-muted);
 }
 
-.kpi-value {
-  margin: 0.35rem 0 0;
-  font-size: 1.75rem;
-  font-weight: 600;
-}
-
-.kpi-value-sm {
-  font-size: 1.125rem;
-}
-
-.kpi-value.alert {
+.stat-card--alert .stat-value {
   color: #b54708;
 }
 
-.panel {
+.widget-card__head--inner {
   margin-top: 1rem;
-  padding: 1rem 1.1rem 1.15rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border);
 }
 
-.panel h3 {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.panel-hint {
-  margin: 0.35rem 0 0.75rem;
-  font-size: 0.875rem;
+.widget-card__hint {
+  margin: -0.35rem 0 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
 }
 
 .metric-list {
@@ -74,49 +47,7 @@
 
 .metric-list strong {
   font-weight: 600;
-}
-
-.period-toggle {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
-.two-col {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-  gap: 1.25rem;
-}
-
-.tx-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  font-size: 0.8125rem;
-}
-
-.tx-list li {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.5rem 0;
-  border-top: 1px solid var(--border);
-}
-
-.tx-list li:first-child {
-  border-top: 0;
-}
-
-.tx-list div {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.tx-list a {
-  color: var(--adeni-purple, #7f56ff);
-  text-decoration: none;
-  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .table-wrap {
@@ -139,4 +70,15 @@
 .data-table.compact th {
   font-weight: 600;
   color: var(--text-muted);
+}
+
+.data-table.compact td {
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-rows .meta {
+  flex-shrink: 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
 }

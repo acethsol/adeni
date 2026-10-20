@@ -19,7 +19,7 @@ export type AdminNavIconName =
   | "portal"
   | "search";
 
-export type AdminNavGroupId = "operations" | "platform" | "compliance";
+export type AdminNavGroupId = "operations" | "platform" | "finance" | "compliance";
 
 export type AdminNavItem = {
   path: string;
@@ -54,6 +54,12 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
       { path: "/pricing/catalog", label: "Plans & pricing", icon: "insights" },
       { path: "/pricing/entitlements", label: "Plan entitlements", icon: "insights" },
       { path: "/businesses", label: "Businesses", icon: "businesses" },
+    ],
+  },
+  {
+    id: "finance",
+    label: "Finance",
+    items: [
       { path: "/insights", label: "Revenue", icon: "insights" },
       { path: "/transactions", label: "Transactions", icon: "transactions" },
     ],

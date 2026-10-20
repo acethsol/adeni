@@ -12,7 +12,7 @@ public sealed class AdminTransactionsController(IAdminTransactionSearchService t
 {
     [HttpGet]
     public async Task<IActionResult> Search(
-        [FromQuery] string q,
+        [FromQuery] string? q,
         [FromQuery] string? kind = "all",
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,

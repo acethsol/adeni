@@ -1875,10 +1875,14 @@ export class AdeniApiClient {
   }
 
   async searchAdminTransactions(
-    queryText: string,
+    queryText: string | null | undefined,
     options: { kind?: "all" | "commerce" | "saas"; page?: number; pageSize?: number } = {},
   ): Promise<AdminPagedResult<AdminTransactionSearchItem>> {
-    const query = new URLSearchParams({ q: queryText.trim() });
+    const query = new URLSearchParams();
+    const trimmed = queryText?.trim();
+    if (trimmed) {
+      query.set("q", trimmed);
+    }
     query.set("kind", options.kind ?? "all");
     if (options.page != null) {
       query.set("page", String(options.page));

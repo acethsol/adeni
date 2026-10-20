@@ -10,6 +10,7 @@ import {
   getMarketById,
   getPlanDisplayForCountry,
   isNearBookingLimit,
+  isSelfServePricingEnabled,
   planComparisonCell,
   PLAN_COMPARISON,
   resolveSubscriptionSku,
@@ -20,6 +21,12 @@ import {
   type SubscriptionUsage,
   type TenantSubscriptionCharge,
 } from "@adeni/shared";
+
+const OUTCOME_TAGLINES: Record<SubscriptionSku, string> = {
+  starter: "Get bookable",
+  professional: "Run & grow",
+  business: "Scale operations",
+};
 import { PortalPageComponent } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 
@@ -104,9 +111,24 @@ export class PlanComponent implements OnInit {
     }
   }
 
-  planDisplay(sku: SubscriptionSku): { name: string; priceLabel: string; description: string } {
+  selfServeEnabled(): boolean {
+    const pricing = this.apiPricing();
+    if (pricing) {
+      return pricing.selfServeEnabled;
+    }
+    const country = this.countryCode();
+    return country ? isSelfServePricingEnabled(country) : false;
+  }
+
+  planDisplay(sku: SubscriptionSku): {
+    name: string;
+    priceLabel: string;
+    description: string;
+    tagline: string;
+  } {
     const country = this.countryCode();
     const pricing = this.apiPricing();
+    const tagline = OUTCOME_TAGLINES[sku];
     const fallbackDescription =
       getPlanDisplayForCountry(country ?? "", sku)?.description ??
       "Pricing for your market is being configured.";
@@ -117,6 +139,7 @@ export class PlanComponent implements OnInit {
           name: SUBSCRIPTION_SKU_LABELS[sku],
           priceLabel: "Contact us",
           description: fallbackDescription,
+          tagline,
         };
       }
 
@@ -127,6 +150,7 @@ export class PlanComponent implements OnInit {
           name: SUBSCRIPTION_SKU_LABELS[sku],
           priceLabel: `${formatPrice(amount, pricing.currencyCode)}/mo`,
           description: fallbackDescription,
+          tagline,
         };
       }
     }
@@ -134,7 +158,7 @@ export class PlanComponent implements OnInit {
     if (country) {
       const localized = getPlanDisplayForCountry(country, sku);
       if (localized) {
-        return localized;
+        return { ...localized, tagline };
       }
     }
 
@@ -142,7 +166,12 @@ export class PlanComponent implements OnInit {
       name: SUBSCRIPTION_SKU_LABELS[sku],
       priceLabel: "Contact us",
       description: fallbackDescription,
+      tagline,
     };
+  }
+
+  isPopular(sku: SubscriptionSku): boolean {
+    return sku === "professional";
   }
 
   isCurrentPlan(sku: SubscriptionSku): boolean {

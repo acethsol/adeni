@@ -128,6 +128,44 @@ public sealed class EntitlementsServiceTests
     }
 
     [Fact]
+    public async Task Business_blocks_fourth_location()
+    {
+        await using var provider = BuildProvider();
+        await using var scope = provider.CreateAsyncScope();
+        var entitlements = scope.ServiceProvider.GetRequiredService<IEntitlementsService>();
+
+        var tenant = CreateTenant(SubscriptionSku.Business, TenantBillingStatus.Active);
+        var result = await entitlements.EnsureCanAddLocationForTenantAsync(tenant, activeLocationCount: 3);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorCodes.LocationLimitReached, result.Error.Code);
+    }
+
+    [Fact]
+    public async Task Business_blocks_26th_practitioner()
+    {
+        await using var provider = BuildProvider();
+        await using var scope = provider.CreateAsyncScope();
+        var entitlements = scope.ServiceProvider.GetRequiredService<IEntitlementsService>();
+
+        var tenant = CreateTenant(SubscriptionSku.Business, TenantBillingStatus.Active);
+        var result = await entitlements.EnsureCanAddPractitionerForTenantAsync(tenant, activePractitionerCount: 25);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorCodes.PractitionerLimitReached, result.Error.Code);
+    }
+
+    [Fact]
+    public void Business_seed_caps_locations_and_practitioners()
+    {
+        var business = SubscriptionEntitlements.ForSku(SubscriptionSku.Business);
+        Assert.Equal(3, business.MaxLocations);
+        Assert.Equal(25, business.MaxPractitioners);
+        Assert.True(business.AdditionalLocationsAllowed);
+        Assert.True(business.AdditionalPractitionersAllowed);
+    }
+
+    [Fact]
     public async Task Starter_blocks_waitlist()
     {
         await using var provider = BuildProvider();

@@ -1,8 +1,9 @@
-import { DatePipe } from "@angular/common";
+import { DatePipe, LowerCasePipe } from "@angular/common";
 import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import {
   type AdminRevenueMetrics,
+  type AdminRevenuePeriodBucket,
   type AdminSubscriptionMetrics,
   formatAmountMinor,
   formatBillingChargeStatus,
@@ -10,6 +11,7 @@ import {
   formatSubscriptionSku,
 } from "@adeni/shared";
 import {
+  AdeniCarbonIconComponent,
   AdeniFeedbackService,
   AdeniPortalEmptyStateComponent,
   AdeniStaffButtonComponent,
@@ -18,13 +20,14 @@ import {
 import { AdminApiService } from "../../core/services/admin-api.service";
 import { adminLoadErrorMessage } from "../../shared/admin-load-error";
 
-const SKU_LABELS: Record<string, string> = {
-  starter: "Starter",
-  professional: "Professional",
-  business: "Business",
-};
-
 type RevenueGranularity = "month" | "year";
+
+type CurrencyWindowTotals = {
+  currency: string;
+  saasAmountMinor: number;
+  commerceVolume: number;
+  platformFeeTotal: number;
+};
 
 @Component({
   selector: "app-admin-insights",
@@ -34,7 +37,9 @@ type RevenueGranularity = "month" | "year";
     RouterLink,
     AdeniStaffButtonComponent,
     AdeniPortalEmptyStateComponent,
+    AdeniCarbonIconComponent,
     DatePipe,
+    LowerCasePipe,
   ],
   templateUrl: "./insights.component.html",
   styleUrl: "./insights.component.scss",
@@ -48,6 +53,10 @@ export class AdminInsightsComponent implements OnInit {
   readonly metrics = signal<AdminSubscriptionMetrics | null>(null);
   readonly revenue = signal<AdminRevenueMetrics | null>(null);
   readonly granularity = signal<RevenueGranularity>("month");
+
+  readonly windowLabel = computed(() =>
+    this.granularity() === "year" ? "Last 5 years" : "Last 12 months",
+  );
 
   readonly mrrRows = computed(() => {
     const data = this.metrics();
@@ -69,13 +78,71 @@ export class AdminInsightsComponent implements OnInit {
       : "Estimated from configured list prices";
   });
 
-  readonly skuLabel = (sku: string) => SKU_LABELS[sku] ?? sku;
+  readonly windowTotals = computed((): CurrencyWindowTotals[] => {
+    const rev = this.revenue();
+    if (!rev) {
+      return [];
+    }
+    const byCurrency = new Map<string, CurrencyWindowTotals>();
+    for (const row of rev.buckets) {
+      const existing = byCurrency.get(row.currency) ?? {
+        currency: row.currency,
+        saasAmountMinor: 0,
+        commerceVolume: 0,
+        platformFeeTotal: 0,
+      };
+      existing.saasAmountMinor += row.saasAmountMinor;
+      existing.commerceVolume += row.commerceVolume;
+      existing.platformFeeTotal += row.platformFeeTotal;
+      byCurrency.set(row.currency, existing);
+    }
+    return [...byCurrency.values()].sort((a, b) => a.currency.localeCompare(b.currency));
+  });
+
+  readonly saasWindowLabel = computed(() => formatTotalsMinor(this.windowTotals(), (row) => row.saasAmountMinor));
+
+  readonly feesWindowLabel = computed(() =>
+    formatTotalsMajor(this.windowTotals(), (row) => row.platformFeeTotal),
+  );
+
+  readonly gmvWindowLabel = computed(() =>
+    formatTotalsMajor(this.windowTotals(), (row) => row.commerceVolume),
+  );
+
+  readonly earningsHeadline = computed(() => {
+    const saas = this.saasWindowLabel();
+    const fees = this.feesWindowLabel();
+    if (!saas && !fees) {
+      return `No synced SaaS or commerce earnings in the ${this.windowLabel().toLowerCase()} yet.`;
+    }
+    const parts: string[] = [];
+    if (saas) {
+      parts.push(`${saas} SaaS`);
+    }
+    if (fees) {
+      parts.push(`${fees} platform fees`);
+    }
+    return `${parts.join(" · ")} (${this.windowLabel().toLowerCase()}).`;
+  });
+
+  readonly pageDescription = computed(
+    () =>
+      "Adeni earnings: subscription charges from businesses and platform fees on completed checkout. Customer GMV is shown for context.",
+  );
 
   readonly formatMoney = formatAmountMinor;
 
   readonly periodLabel = computed(() =>
     this.granularity() === "year" ? "Yearly" : "Monthly",
   );
+
+  readonly skuLabel = (sku: string) => {
+    try {
+      return formatSubscriptionSku(sku as "starter" | "professional" | "business");
+    } catch {
+      return sku;
+    }
+  };
 
   ngOnInit(): void {
     void this.load();
@@ -129,15 +196,15 @@ export class AdminInsightsComponent implements OnInit {
     }
   }
 
-  formatSaasBucket(row: { saasAmountMinor: number; currency: string }): string {
+  formatSaasBucket(row: AdminRevenuePeriodBucket): string {
     return formatAmountMinor(row.saasAmountMinor, row.currency);
   }
 
-  formatCommerceFee(row: { platformFeeTotal: number; currency: string }): string {
+  formatCommerceFee(row: AdminRevenuePeriodBucket): string {
     return formatPrice(row.platformFeeTotal, row.currency);
   }
 
-  formatCommerceVolume(row: { commerceVolume: number; currency: string }): string {
+  formatCommerceVolume(row: AdminRevenuePeriodBucket): string {
     return formatPrice(row.commerceVolume, row.currency);
   }
 
@@ -159,6 +226,36 @@ export class AdminInsightsComponent implements OnInit {
   }): string {
     return `${formatPrice(row.amount, row.currency)} · fee ${formatPrice(row.platformFeeAmount, row.currency)}`;
   }
+}
 
-  readonly formatSubscriptionSku = formatSubscriptionSku;
+function formatTotalsMinor(
+  rows: CurrencyWindowTotals[],
+  pick: (row: CurrencyWindowTotals) => number,
+): string | null {
+  const parts = rows
+    .map((row) => {
+      const amount = pick(row);
+      if (amount <= 0) {
+        return null;
+      }
+      return formatAmountMinor(amount, row.currency);
+    })
+    .filter((part): part is string => Boolean(part));
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+function formatTotalsMajor(
+  rows: CurrencyWindowTotals[],
+  pick: (row: CurrencyWindowTotals) => number,
+): string | null {
+  const parts = rows
+    .map((row) => {
+      const amount = pick(row);
+      if (amount <= 0) {
+        return null;
+      }
+      return formatPrice(amount, row.currency);
+    })
+    .filter((part): part is string => Boolean(part));
+  return parts.length > 0 ? parts.join(" · ") : null;
 }

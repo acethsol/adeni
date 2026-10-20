@@ -5,17 +5,18 @@
   display: block;
 }
 
-.loading-copy {
-  padding: 1rem;
-  color: var(--text-muted);
+.dashboard-inline-status {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
 }
 
-.page-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--cds-spacing-03, 0.5rem);
+.widget-card__body {
+  flex: 1 1 auto;
+  min-height: 2.5rem;
+}
+
+.dashboard-empty {
+  color: var(--text-muted);
 }
 
 .stat-card--alert .stat-value {
@@ -101,4 +102,22 @@
 
 .tier-business {
   background: var(--adeni-teal, #13c2a3);
+}
+
+.sku-starter {
+  background: #8d8d8d;
+}
+
+.sku-professional {
+  background: var(--adeni-purple, #7f56ff);
+}
+
+.sku-business {
+  background: var(--adeni-teal, #13c2a3);
+}
+
+.widget-card__hint {
+  margin: -0.35rem 0 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
 }

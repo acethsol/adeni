@@ -60,7 +60,8 @@ export class AdminTransactionsComponent {
   readonly searchQuery = signal("");
   readonly kindFilter = signal<KindFilter>("all");
   readonly searching = signal(false);
-  readonly hasSearched = signal(false);
+  readonly loaded = signal(false);
+  readonly browseMode = signal(true);
   readonly error = signal<string | null>(null);
   readonly rows = signal<AdminTransactionSearchItem[]>([]);
   readonly totalCount = signal(0);
@@ -117,13 +118,8 @@ export class AdminTransactionsComponent {
       this.searchQuery.set(q);
       this.kindFilter.set(kind === "commerce" || kind === "saas" ? kind : "all");
       this.page.set(Number.isFinite(page) && page >= 1 ? page : 1);
-      if (q) {
-        void this.runSearch(q);
-      } else {
-        this.hasSearched.set(false);
-        this.rows.set([]);
-        this.totalCount.set(0);
-      }
+      this.browseMode.set(q.length === 0);
+      void this.loadTransactions(q.length > 0 ? q : null);
     });
   }
 
@@ -134,18 +130,10 @@ export class AdminTransactionsComponent {
     }
     this.searchDebounce = setTimeout(() => {
       const q = value.trim();
-      if (!q) {
-        void this.router.navigate([], {
-          relativeTo: this.route,
-          queryParams: { q: null, page: null },
-          queryParamsHandling: "merge",
-        });
-        return;
-      }
       void this.router.navigate([], {
         relativeTo: this.route,
         queryParams: {
-          q,
+          q: q || null,
           kind: this.kindFilter() === "all" ? null : this.kindFilter(),
           page: null,
         },
@@ -157,13 +145,13 @@ export class AdminTransactionsComponent {
   onKindChange(value: string): void {
     const kind = value === "commerce" || value === "saas" ? value : "all";
     this.kindFilter.set(kind);
-    const q = this.searchQuery().trim();
-    if (!q) {
-      return;
-    }
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { kind: kind === "all" ? null : kind, page: null },
+      queryParams: {
+        q: this.searchQuery().trim() || null,
+        kind: kind === "all" ? null : kind,
+        page: null,
+      },
       queryParamsHandling: "merge",
     });
   }
@@ -205,30 +193,28 @@ export class AdminTransactionsComponent {
     return row.providerReference?.trim() || row.id;
   }
 
-  private async runSearch(q: string): Promise<void> {
+  private async loadTransactions(queryText: string | null): Promise<void> {
     this.searching.set(true);
-    this.hasSearched.set(true);
     this.error.set(null);
 
     try {
-      await this.feedback.runLoading(async () => {
-        const result = await this.api.withAuthorizedClient((client) =>
-          client.searchAdminTransactions(q, {
-            kind: this.kindFilter(),
-            page: this.page(),
-            pageSize: this.pageSize,
-          }),
-        );
-        this.rows.set(result.items);
-        this.totalCount.set(result.totalCount);
-      }, "Searching transactions", "Matching Paystack and business records");
+      const result = await this.api.withAuthorizedClient((client) =>
+        client.searchAdminTransactions(queryText, {
+          kind: this.kindFilter(),
+          page: this.page(),
+          pageSize: this.pageSize,
+        }),
+      );
+      this.rows.set(result.items);
+      this.totalCount.set(result.totalCount);
     } catch (err) {
-      this.error.set(adminLoadErrorMessage("Could not search transactions.", err));
-      this.feedback.error(this.error() ?? "Could not search transactions.");
+      this.error.set(adminLoadErrorMessage("Could not load transactions.", err));
+      this.feedback.error(this.error() ?? "Could not load transactions.");
       this.rows.set([]);
       this.totalCount.set(0);
     } finally {
       this.searching.set(false);
+      this.loaded.set(true);
     }
   }
 }
