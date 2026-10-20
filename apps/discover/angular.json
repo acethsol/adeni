@@ -90,7 +90,10 @@
         "serve": {
           "builder": "@angular/build:dev-server",
           "options": {
-            "port": 5190
+            "port": 5190,
+            "prebundle": {
+              "exclude": ["@angular/ssr"]
+            }
           },
           "configurations": {
             "production": {
