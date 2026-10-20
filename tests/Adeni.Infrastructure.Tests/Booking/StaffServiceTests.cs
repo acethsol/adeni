@@ -3,12 +3,14 @@ namespace Adeni.Infrastructure.Tests.Booking;
 using Adeni.Application.Booking;
 using Adeni.Application.Caching;
 using Adeni.Application.Storage;
+using Adeni.Application.Subscriptions;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Identity;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Booking;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Persistence;
+using Adeni.Infrastructure.Subscriptions;
 using Adeni.Infrastructure.Tests.Catalog;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -289,6 +291,7 @@ public sealed class StaffServiceTests
         services.AddScoped<Application.Abstractions.ITenantContext>(sp =>
             sp.GetRequiredService<Adeni.Infrastructure.Context.TenantContext>());
         services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
+        services.AddScoped<IEntitlementsService, EntitlementsService>();
         services.AddScoped<IStaffService, StaffService>();
         return services.BuildServiceProvider();
     }

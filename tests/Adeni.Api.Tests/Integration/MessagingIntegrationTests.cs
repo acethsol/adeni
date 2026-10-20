@@ -83,7 +83,7 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
     }
 
     [Fact]
-    public async Task Starter_tier_business_cannot_list_conversations()
+    public async Task Starter_tier_business_can_list_conversations()
     {
         var tenantId = await SeedTenantAsync(SubscriptionSku.Starter, BusinessSub + "-free", "Free Shop", "messaging-free-shop");
 
@@ -92,7 +92,7 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
         businessClient.DefaultRequestHeaders.Add("X-Tenant-Id", tenantId.ToString());
 
         var response = await businessClient.GetAsync("/api/v1/tenant/messages/conversations");
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]
@@ -114,7 +114,7 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
     }
 
     [Fact]
-    public async Task Starter_tier_business_cannot_mark_read_or_update_settings()
+    public async Task Starter_tier_business_can_mark_read_and_update_settings()
     {
         var tenantId = await SeedTenantAsync(
             SubscriptionSku.Starter,
@@ -137,12 +137,12 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
         var markRead = await businessClient.PostAsync(
             $"/api/v1/tenant/messages/conversations/{conversation!.Id}/read",
             null);
-        Assert.Equal(HttpStatusCode.Forbidden, markRead.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, markRead.StatusCode);
 
         var settings = await businessClient.PatchAsJsonAsync(
             "/api/v1/tenant/messages/settings",
             new { faqAutoResponderEnabled = true });
-        Assert.Equal(HttpStatusCode.Forbidden, settings.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, settings.StatusCode);
     }
 
     [Fact]
