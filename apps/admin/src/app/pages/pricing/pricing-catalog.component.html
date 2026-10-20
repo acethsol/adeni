@@ -38,7 +38,9 @@
         searchPlaceholder="Version code or status"
         [searchQuery]="versionSearchText()"
         (searchQueryChange)="onVersionSearch($event)"
-      />
+      >
+        <adeni-export-menu listExports label="Export" [items]="exportItems" />
+      </adeni-list-toolbar>
 
       <div class="adeni-list-results">
         <adeni-data-table
@@ -47,7 +49,7 @@
           [trackRow]="trackVersion"
         >
           <ng-template adeniDataTableCell="code" let-version>
-            <button type="button" class="linkish" (click)="selectVersion(version.code)">
+            <button type="button" class="linkish version-code" (click)="selectVersion(version.code)">
               {{ version.code }}
             </button>
           </ng-template>
@@ -115,10 +117,12 @@
             [count]="filteredEntryRows().length"
             singularCountLabel="price row"
             pluralCountLabel="price rows"
-            searchPlaceholder="Country, SKU, or currency"
+            searchPlaceholder="Country, SKU, currency, or catalog version"
             [searchQuery]="searchText()"
             (searchQueryChange)="onEntrySearch($event)"
-          />
+          >
+            <adeni-export-menu listExports label="Export" [items]="exportItems" />
+          </adeni-list-toolbar>
 
           <div class="adeni-list-results">
             <adeni-data-table
@@ -126,14 +130,20 @@
               [columns]="entryColumns"
               [trackRow]="trackEntryRow"
             >
+              <ng-template adeniDataTableCell="version" let-row>
+                <adeni-pill tone="info" [compact]="true">{{ row.catalogVersionCode }}</adeni-pill>
+              </ng-template>
               <ng-template adeniDataTableCell="country" let-row>
                 <adeni-pill tone="neutral" [compact]="true">{{ row.countryCode }}</adeni-pill>
               </ng-template>
               <ng-template adeniDataTableCell="sku" let-row>
-                {{ formatSku(row.subscriptionSku) }}
+                @let plan = skuPill(row.subscriptionSku);
+                <adeni-pill [tone]="plan.variant" [compact]="true">{{ plan.label }}</adeni-pill>
               </ng-template>
               <ng-template adeniDataTableCell="price" let-row>
-                {{ formatAmount(row.currencyCode, row.monthlyAmountMajor) }}
+                <span class="adeni-data-table-text catalog-list-price">{{
+                  formatAmount(row.currencyCode, row.monthlyAmountMajor)
+                }}</span>
               </ng-template>
               <ng-template adeniDataTableCell="selfServe" let-row>
                 @if (row.isSelfServeEnabled) {

@@ -37,6 +37,16 @@
   }
 }
 
+.version-code {
+  font-weight: 600;
+  color: var(--text, inherit);
+}
+
+.catalog-list-price {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;

@@ -224,6 +224,12 @@ public sealed class PricingCatalogService(
         string adminId,
         CancellationToken cancellationToken = default)
     {
+        if (request.EffectiveFrom == default)
+        {
+            return Result.Failure<PricingCatalogVersionDetailDto>(
+                Error.Validation("Effective from date is required."));
+        }
+
         var validation = ValidateVersionDates(request.EffectiveFrom, request.EffectiveTo);
         if (validation.IsFailure)
         {

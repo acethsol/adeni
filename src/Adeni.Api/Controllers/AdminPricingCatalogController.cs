@@ -34,9 +34,14 @@ public sealed class AdminPricingCatalogController(IPricingCatalogService pricing
 
     [HttpPost("versions")]
     public async Task<IActionResult> CreateVersion(
-        [FromBody] CreatePricingCatalogVersionRequest body,
+        [FromBody] CreatePricingCatalogVersionRequest? body,
         CancellationToken cancellationToken)
     {
+        if (body is null)
+        {
+            return BadRequest(new { title = "Request body is required.", code = "validation" });
+        }
+
         var adminId = User.FindFirst("sub")?.Value ?? "admin";
         var result = await pricingCatalog.CreateDraftVersionAsync(body, adminId, cancellationToken);
         return result.Match<IActionResult>(

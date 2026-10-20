@@ -81,6 +81,25 @@ public sealed class PricingCatalogServiceTests
     }
 
     [Fact]
+    public async Task CreateDraftVersionAsync_rejects_missing_effective_from()
+    {
+        await using var db = BuildDb();
+        var service = CreateService(db);
+        await service.EnsureSeededAsync();
+
+        var result = await service.CreateDraftVersionAsync(
+            new CreatePricingCatalogVersionRequest(
+                "2026-missing-effective",
+                default,
+                null,
+                CloneFromActive: false),
+            "admin-test");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("validation", result.Error.Code);
+    }
+
+    [Fact]
     public async Task UpsertEntriesAsync_rejects_non_draft_version()
     {
         await using var db = BuildDb();

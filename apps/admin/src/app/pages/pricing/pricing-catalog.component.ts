@@ -10,6 +10,7 @@ import {
   AdeniDataTableActionsDirective,
   AdeniDataTableCellDirective,
   AdeniDataTableComponent,
+  AdeniExportMenuComponent,
   AdeniFeedbackService,
   AdeniIconBtnComponent,
   AdeniListToolbarComponent,
@@ -19,12 +20,15 @@ import {
   AdeniStaffButtonComponent,
   PortalPageComponent,
   type AdeniDataTableColumn,
+  type AdeniExportMenuItem,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 import { adminLoadErrorMessage } from "../../shared/admin-load-error";
+import { skuPill } from "../../shared/admin-pill-maps";
 
 type PricingCatalogEntryRow = {
   rowKey: string;
+  catalogVersionCode: string;
   countryCode: string;
   subscriptionSku: SubscriptionSku;
   currencyCode: string;
@@ -43,6 +47,7 @@ type PricingCatalogEntryRow = {
     AdeniStaffButtonComponent,
     AdeniPortalEmptyStateComponent,
     AdeniListToolbarComponent,
+    AdeniExportMenuComponent,
     AdeniDataTableComponent,
     AdeniDataTableCellDirective,
     AdeniDataTableActionsDirective,
@@ -77,6 +82,29 @@ export class AdminPricingCatalogComponent {
   readonly createEffectiveFrom = signal("");
   readonly createCloneFromActive = signal(true);
 
+  readonly exportItems: AdeniExportMenuItem[] = [
+    {
+      format: "csv",
+      label: "CSV (.csv)",
+      disabled: true,
+      hint: "Reporting export — coming soon",
+    },
+    {
+      format: "xlsx",
+      label: "Excel (.xlsx)",
+      disabled: true,
+      hint: "Reporting export — coming soon",
+    },
+    {
+      format: "pdf",
+      label: "PDF (.pdf)",
+      disabled: true,
+      hint: "Reporting export — coming soon",
+    },
+  ];
+
+  readonly skuPill = skuPill;
+
   readonly activeVersion = computed(
     () => this.versions().find((v) => v.isActive) ?? null,
   );
@@ -103,6 +131,7 @@ export class AdminPricingCatalogComponent {
     return items.filter((row) => {
       const skuLabel = formatSubscriptionSku(row.subscriptionSku).toLowerCase();
       return (
+        row.catalogVersionCode.toLowerCase().includes(query) ||
         row.countryCode.toLowerCase().includes(query) ||
         row.subscriptionSku.toLowerCase().includes(query) ||
         skuLabel.includes(query) ||
@@ -123,9 +152,10 @@ export class AdminPricingCatalogComponent {
   ];
 
   readonly entryColumns: AdeniDataTableColumn<PricingCatalogEntryRow>[] = [
+    { id: "version", header: "Catalog version", cell: (row) => row.catalogVersionCode },
     { id: "country", header: "Country", cell: (row) => row.countryCode },
     { id: "sku", header: "Plan (SKU)", cell: (row) => formatSubscriptionSku(row.subscriptionSku) },
-    { id: "price", header: "List price", cell: () => "" },
+    { id: "price", header: "List price", align: "right", cell: () => "" },
     { id: "gmv", header: "Platform fee", cell: (row) => `${row.platformFeePercent}%` },
     { id: "selfServe", header: "Self-serve", cell: () => "" },
   ];
@@ -181,6 +211,7 @@ export class AdminPricingCatalogComponent {
       this.entryRows.set(
         detail.entries.map((entry) => ({
           rowKey: `${code}:${entry.countryCode}:${entry.subscriptionSku}`,
+          catalogVersionCode: code,
           countryCode: entry.countryCode,
           subscriptionSku: entry.subscriptionSku,
           currencyCode: entry.currencyCode,
@@ -238,7 +269,12 @@ export class AdminPricingCatalogComponent {
       this.feedback.error("Effective from date is required.");
       return;
     }
-    const effectiveFrom = new Date(effectiveRaw).toISOString();
+    const effectiveDate = new Date(effectiveRaw);
+    if (Number.isNaN(effectiveDate.getTime())) {
+      this.feedback.error("Effective from date is not valid.");
+      return;
+    }
+    const effectiveFrom = effectiveDate.toISOString();
 
     this.createSaving.set(true);
     try {
@@ -259,8 +295,10 @@ export class AdminPricingCatalogComponent {
       this.closeCreate();
       await this.loadVersions();
       this.selectVersion(code);
-    } catch {
-      this.feedback.error("Could not create catalog version.");
+    } catch (err) {
+      this.feedback.error(
+        adminLoadErrorMessage("Could not create catalog version.", err),
+      );
     } finally {
       this.createSaving.set(false);
     }
@@ -293,8 +331,10 @@ export class AdminPricingCatalogComponent {
       this.feedback.success(`${code} is now the active catalog.`, "Catalog published");
       await this.loadVersions();
       await this.loadEntries(code);
-    } catch {
-      this.feedback.error("Could not activate catalog version.");
+    } catch (err) {
+      this.feedback.error(
+        adminLoadErrorMessage("Could not activate catalog version.", err),
+      );
     }
   }
 
