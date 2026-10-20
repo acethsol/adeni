@@ -56,7 +56,7 @@ public sealed class TenantDashboardService(
         decimal? collected = null;
         decimal? bookedValue = null;
 
-        if (entitlements.Analytics)
+        if (entitlements.AdvancedAnalytics)
         {
             collected = await dbContext.PaymentIntents.AsNoTracking()
                 .Where(x =>
@@ -107,7 +107,7 @@ public sealed class TenantDashboardService(
             collected,
             bookedValue,
             currency,
-            entitlements.Analytics));
+            entitlements.AdvancedAnalytics));
     }
 
     public async Task<Result<TenantDashboardSeriesResponse>> GetSeriesAsync(
@@ -127,7 +127,7 @@ public sealed class TenantDashboardService(
 
         var entitlements = entitlementsService.GetEntitlementsForTenant(tenant);
         var normalized = metric.Trim().ToLowerInvariant();
-        if (!entitlements.Analytics && normalized is not "appointments")
+        if (!entitlements.AdvancedAnalytics && normalized is not "appointments")
         {
             return Result.Failure<TenantDashboardSeriesResponse>(AnalyticsRequiredError());
         }
@@ -178,7 +178,7 @@ public sealed class TenantDashboardService(
             return Result.Failure<TenantDashboardBreakdownResponse>(Error.NotFound("Tenant"));
         }
 
-        if (!entitlementsService.GetEntitlementsForTenant(tenant).Analytics)
+        if (!entitlementsService.GetEntitlementsForTenant(tenant).AdvancedAnalytics)
         {
             return Result.Failure<TenantDashboardBreakdownResponse>(AnalyticsRequiredError());
         }

@@ -81,7 +81,7 @@ public static class DashboardLayoutNormalizer
 
     public static bool IsWidgetAllowed(string widgetId, TenantEntitlements entitlements, bool practitionerView)
     {
-        if (AnalyticsWidgets.Contains(widgetId) && !entitlements.Analytics)
+        if (AnalyticsWidgets.Contains(widgetId) && !entitlements.AdvancedAnalytics)
         {
             return false;
         }
@@ -108,6 +108,12 @@ public static class DashboardLayoutNormalizer
     private static string NormalizeRange(string? range, string fallback) =>
         range is "today" or "7d" or "30d" or "mtd" ? range : fallback;
 
-    private static int NormalizeWidth(int width) =>
-        width is 4 or 6 or 8 ? width : 12;
+    private static int NormalizeWidth(int width) => width switch
+    {
+        3 or 4 => 3,
+        6 => 6,
+        8 or 9 => 9,
+        12 => 12,
+        _ => 12,
+    };
 }

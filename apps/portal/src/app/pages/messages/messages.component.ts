@@ -1,6 +1,5 @@
 import { Component, computed, inject, OnDestroy, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { RouterLink } from "@angular/router";
 import { Subscription } from "rxjs";
 import {
   formatSlotTime,
@@ -34,7 +33,6 @@ const ALLOWED_ATTACHMENT_TYPES = new Set(["image/jpeg", "image/png", "image/webp
   imports: [
     PortalPageComponent,
     FormsModule,
-    RouterLink,
     AdeniPortalEmptyStateComponent,
     AdeniCarbonIconComponent,
     AdeniModalComponent,
@@ -51,10 +49,6 @@ export class MessagesComponent implements OnInit, OnDestroy {
 
   readonly profile = signal<BusinessProfile | null>(null);
   readonly whatsAppBusinessUrl = signal<string | null>(null);
-  readonly messagingEntitled = computed(() =>
-    hasTenantEntitlement(this.profile()?.entitlements, "messaging"),
-  );
-
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly notice = signal<string | null>(null);
@@ -118,7 +112,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
         let conversationPage = 1;
         let whatsAppBusinessUrl: string | null = null;
         const slug = primaryLocationSlug(profile);
-        if (slug) {
+        if (slug && hasTenantEntitlement(profile.entitlements, "whatsappIntegration")) {
           try {
             const link = await client.getBusinessWhatsAppLink(slug);
             whatsAppBusinessUrl = link.url;
@@ -126,19 +120,17 @@ export class MessagesComponent implements OnInit, OnDestroy {
             whatsAppBusinessUrl = null;
           }
         }
-        if (hasTenantEntitlement(profile.entitlements, "messaging")) {
-          const [conversationPageResult, templateList] = await Promise.all([
-            client.listTenantConversations({
-              page: this.conversationPage(),
-              pageSize: this.conversationPageSize,
-            }),
-            client.getTenantMessageTemplates(),
-          ]);
-          conversations = conversationPageResult.items;
-          conversationTotalCount = conversationPageResult.totalCount;
-          conversationPage = conversationPageResult.page;
-          templates = templateList;
-        }
+        const [conversationPageResult, templateList] = await Promise.all([
+          client.listTenantConversations({
+            page: this.conversationPage(),
+            pageSize: this.conversationPageSize,
+          }),
+          client.getTenantMessageTemplates(),
+        ]);
+        conversations = conversationPageResult.items;
+        conversationTotalCount = conversationPageResult.totalCount;
+        conversationPage = conversationPageResult.page;
+        templates = templateList;
         return {
           conversations,
           templates,
@@ -155,7 +147,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
       this.profile.set(snapshot.profile);
       this.whatsAppBusinessUrl.set(snapshot.whatsAppBusinessUrl);
 
-      if (hasTenantEntitlement(snapshot.profile.entitlements, "messaging") && snapshot.profile.tenantId) {
+      if (snapshot.profile.tenantId) {
         try {
           await this.realtime.start(snapshot.profile.tenantId);
         } catch {

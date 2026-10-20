@@ -1,6 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import type { BusinessLocation, MarketConfig } from "@adeni/shared";
+import { AdeniApiError } from "@adeni/api-client";
+import { canAddLocationAtCount, type BusinessLocation, type MarketConfig, type TenantEntitlements } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
   AdeniConfirmService,
@@ -25,6 +26,21 @@ import {
 import { BusinessApiService } from "../../core/services/business-api.service";
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/** Apply upsert response; when primary moves, clear stale primary flags on other rows. */
+function mergeSavedLocation(
+  list: BusinessLocation[],
+  saved: BusinessLocation,
+  editedId: string | null,
+): BusinessLocation[] {
+  const merged = editedId
+    ? list.map((l) => (l.id === editedId ? saved : l))
+    : [...list, saved];
+  if (!saved.isPrimary) {
+    return merged;
+  }
+  return merged.map((l) => (l.id === saved.id ? l : { ...l, isPrimary: false }));
+}
 
 type LocationDraft = {
   slug: string;
@@ -65,6 +81,7 @@ export class LocationsComponent implements OnInit {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly locations = signal<BusinessLocation[]>([]);
+  readonly entitlements = signal<TenantEntitlements | null>(null);
   readonly markets = signal<MarketConfig[]>([]);
   readonly busy = signal<string | null>(null);
   readonly editingId = signal<string | null>(null);
@@ -94,6 +111,10 @@ export class LocationsComponent implements OnInit {
       hint: "Reporting export — coming soon",
     },
   ];
+
+  readonly canAddLocation = computed(() =>
+    canAddLocationAtCount(this.entitlements(), this.locations().length),
+  );
 
   readonly filteredLocations = computed(() => {
     const query = this.locationSearch().trim().toLowerCase();
@@ -154,6 +175,8 @@ export class LocationsComponent implements OnInit {
         const markets = await publicClient.getMarkets();
         this.markets.set(markets);
         this.defaultMarketId = markets[0]?.id ?? "lagos";
+        const profile = await this.api.getTenantProfile();
+        this.entitlements.set(profile?.entitlements ?? null);
         const items = await this.api.withAuthorizedClient((c) => c.getTenantLocations());
         this.locations.set(items);
       }, "Loading locations", "Fetching branches");
@@ -166,6 +189,13 @@ export class LocationsComponent implements OnInit {
   }
 
   openCreate(): void {
+    if (!this.canAddLocation()) {
+      const message =
+        "Your plan includes one location. Upgrade to Business to add more branches.";
+      this.error.set(message);
+      this.feedback.error(message);
+      return;
+    }
     this.editingId.set(null);
     this.draft = this.emptyDraft();
     this.showForm.set(true);
@@ -213,17 +243,21 @@ export class LocationsComponent implements OnInit {
         const id = this.editingId();
         if (id) {
           const updated = await this.api.withAuthorizedClient((c) => c.updateTenantLocation(id, body));
-          this.locations.update((list) => list.map((l) => (l.id === id ? updated : l)));
+          this.locations.update((list) => mergeSavedLocation(list, updated, id));
         } else {
           const created = await this.api.withAuthorizedClient((c) => c.addTenantLocation(body));
-          this.locations.update((list) => [...list, created]);
+          this.locations.update((list) => mergeSavedLocation(list, created, null));
         }
       }, "Saving location", body.name ?? slug);
       this.cancelForm();
       this.feedback.success("Location saved.");
-    } catch {
-      this.error.set("Could not save location.");
-      this.feedback.error("Could not save location.");
+    } catch (err) {
+      const message =
+        err instanceof AdeniApiError && err.message
+          ? err.message
+          : "Could not save location.";
+      this.error.set(message);
+      this.feedback.error(message);
     } finally {
       this.busy.set(null);
     }
@@ -246,7 +280,12 @@ export class LocationsComponent implements OnInit {
         "Deleting location",
         loc.name || loc.slug,
       );
-      this.locations.update((list) => list.filter((l) => l.id !== loc.id));
+      if (loc.isPrimary) {
+        const items = await this.api.withAuthorizedClient((c) => c.getTenantLocations());
+        this.locations.set(items);
+      } else {
+        this.locations.update((list) => list.filter((l) => l.id !== loc.id));
+      }
       this.feedback.success("Location removed.");
     } catch {
       this.error.set("Could not delete location.");

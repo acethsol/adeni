@@ -232,7 +232,7 @@ export class DashboardComponent implements OnInit {
     );
   }
 
-  hasEntitlement(key: "messaging" | "staffManagement" | "analytics"): boolean {
+  hasEntitlement(key: "messaging" | "advancedAnalytics" | "staffPerformanceAnalytics"): boolean {
     const profile = this.profile();
     return hasTenantEntitlement(profile?.entitlements ?? null, key);
   }
@@ -411,8 +411,9 @@ export class DashboardComponent implements OnInit {
         const wantsQueue = layoutIncludesWidget(storedLayout, "queue_now");
         const wantsQuotes = layoutIncludesWidget(storedLayout, "quote_pipeline");
         const wantsUnread = layoutIncludesWidget(storedLayout, "messages_unread");
-        const analytics = hasTenantEntitlement(profile.entitlements ?? null, "analytics");
+        const analytics = hasTenantEntitlement(profile.entitlements ?? null, "advancedAnalytics");
         const messaging = hasTenantEntitlement(profile.entitlements ?? null, "messaging");
+        const staffBoard = hasTenantEntitlement(profile.entitlements ?? null, "staffPerformanceAnalytics");
         const caps = resolveDashboardCapabilities(profile);
 
         const [
@@ -444,7 +445,7 @@ export class DashboardComponent implements OnInit {
           analytics && wantsBookedValue
             ? client.getTenantDashboardSeries("booked_value", range.from, range.to).catch(() => null)
             : Promise.resolve(null),
-          analytics && wantsStaffBoard
+          staffBoard && wantsStaffBoard
             ? client.getTenantDashboardBreakdown("staff", range.from, range.to).catch(() => null)
             : Promise.resolve(null),
           wantsUnread && messaging
@@ -605,7 +606,7 @@ export class DashboardComponent implements OnInit {
 
     this.revenueUsesCollected.set(false);
     this.revenueLabel.set("—");
-    this.revenueHint.set("Upgrade to Professional for revenue analytics in this period.");
+    this.revenueHint.set("Revenue metrics are not shown for this period.");
   }
 
   private applyBookings(

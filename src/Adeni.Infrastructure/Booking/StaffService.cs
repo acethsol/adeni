@@ -3,6 +3,7 @@ namespace Adeni.Infrastructure.Booking;
 using Adeni.Application.Booking;
 using Adeni.Application.Caching;
 using Adeni.Application.Storage;
+using Adeni.Application.Subscriptions;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
@@ -12,7 +13,8 @@ using Microsoft.EntityFrameworkCore;
 public sealed class StaffService(
     AdeniDbContext dbContext,
     IFileStorage fileStorage,
-    ICacheService cache) : IStaffService
+    ICacheService cache,
+    IEntitlementsService entitlementsService) : IStaffService
 {
     public async Task<IReadOnlyList<StaffMemberResponse>> ListForTenantAsync(
         Guid tenantId,
@@ -163,9 +165,24 @@ public sealed class StaffService(
             return Result.Failure<StaffMemberResponse>(identity.Error);
         }
 
-        if (!await dbContext.Tenants.AsNoTracking().AnyAsync(t => t.Id == tenantId, cancellationToken))
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+        if (tenant is null)
         {
             return Result.Failure<StaffMemberResponse>(Error.NotFound("Tenant"));
+        }
+
+        var activeCount = await dbContext.StaffMembers
+            .AsNoTracking()
+            .CountAsync(x => x.TenantId == tenantId && x.IsActive, cancellationToken);
+        var practitionerCheck = await entitlementsService.EnsureCanAddPractitionerForTenantAsync(
+            tenant,
+            activeCount,
+            cancellationToken);
+        if (practitionerCheck.IsFailure)
+        {
+            return Result.Failure<StaffMemberResponse>(practitionerCheck.Error);
         }
 
         var serviceIds = request.ServiceOfferingIds ?? Array.Empty<Guid>();
@@ -235,6 +252,29 @@ public sealed class StaffService(
         if (entity is null)
         {
             return Result.Failure<StaffMemberResponse>(Error.NotFound("Staff member"));
+        }
+
+        if (!entity.IsActive && request.IsActive)
+        {
+            var tenant = await dbContext.Tenants
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+            if (tenant is null)
+            {
+                return Result.Failure<StaffMemberResponse>(Error.NotFound("Tenant"));
+            }
+
+            var activeCount = await dbContext.StaffMembers
+                .AsNoTracking()
+                .CountAsync(x => x.TenantId == tenantId && x.IsActive, cancellationToken);
+            var practitionerCheck = await entitlementsService.EnsureCanAddPractitionerForTenantAsync(
+                tenant,
+                activeCount,
+                cancellationToken);
+            if (practitionerCheck.IsFailure)
+            {
+                return Result.Failure<StaffMemberResponse>(practitionerCheck.Error);
+            }
         }
 
         var (firstName, lastName, displayName, roleKey, title, bio) = identity.Value!;

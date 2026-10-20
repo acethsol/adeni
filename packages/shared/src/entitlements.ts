@@ -14,3 +14,29 @@ export function hasTenantEntitlement(
   }
   return entitlements[key] === true;
 }
+
+export function canAddLocationAtCount(
+  entitlements: TenantEntitlements | null | undefined,
+  activeLocationCount: number,
+): boolean {
+  if (!entitlements) {
+    return false;
+  }
+  if (entitlements.maxLocations == null) {
+    return true;
+  }
+  return activeLocationCount < entitlements.maxLocations;
+}
+
+export function canAddPractitionerAtCount(
+  entitlements: TenantEntitlements | null | undefined,
+  activePractitionerCount: number,
+): boolean {
+  if (!entitlements) {
+    return false;
+  }
+  if (entitlements.maxPractitioners == null) {
+    return true;
+  }
+  return activePractitionerCount < entitlements.maxPractitioners;
+}

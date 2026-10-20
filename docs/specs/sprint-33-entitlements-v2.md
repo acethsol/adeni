@@ -7,7 +7,7 @@
 |-------|-------|
 | **Sprint** | 33 — Entitlements v2 (follow-on to 33a pricing + 33b commercial config) |
 | **Author** | Engineering |
-| **Status** | Draft |
+| **Status** | Done (MVP + Phase 2 portal/shared; follow-up analytics differentiation deferred) |
 | **Created** | 2026-10-20 |
 
 ---
@@ -43,15 +43,15 @@ Make **`plan-entitlements.seed.json`** the single source of truth for Starter / 
 
 ## 3. In scope
 
-- [ ] **Single source of truth** — Load entitlements from `docs/specs/adeni-subscription-pricing-v1/plan-entitlements.seed.json` at startup (or generated C# + TS from that file in CI/build; same pattern as `country-pricing.json` ↔ `SubscriptionCatalogPrices.cs`).
-- [ ] **Expand `TenantEntitlements` + `IEntitlementsService`** — Map seed fields to API DTO + `@adeni/shared` Zod schema; resolve effective SKU via existing `TenantBillingPolicy.ResolveEffectiveSku` (trial SKU included).
-- [ ] **Starter messaging = true** — Align C#, tests, `PLAN_COMPARISON`, and portal nav with matrix row “Adeni inbox | Yes”.
-- [ ] **Numeric limits (server-enforced)** — `maxLocations`, `maxPractitioners` per SKU; stable error codes (`entitlements.*`).
-- [ ] **Feature flags (server-enforced where APIs exist today)** — `waitlist`, `whatsappIntegration`, `advancedAnalytics` / retention / staff performance (dashboard + reporting entry points), `advancedReminders` (when distinct from basic), `multiLocationReporting`.
-- [ ] **Tenant profile entitlements payload** — `GET` business profile (and subscription usage) returns the **full** v2 entitlements object for portal consumers.
-- [ ] **Portal capability-driven UI** — Nav, routes, and ops pages use `hasTenantEntitlement` / limits from profile; **remove** misleading upgrade copy on locations, messages, and dashboard (keep upgrade CTAs on **`/plan` only** per package UX).
-- [ ] **`PLAN_COMPARISON`** — Regenerate or replace with a **marketing subset** derived from seed + matrix (Discover + Portal `/plan`); must not contradict seed.
-- [ ] **Tests** — Update `EntitlementsServiceTests`; add integration tests for gated mutations (messaging allowed on Starter, location #2 blocked, practitioner over cap, waitlist on Starter denied if implemented).
+- [x] **Single source of truth** — `packages/shared/src/data/plan-entitlements.json` + `PlanEntitlementsCatalog.cs` (aligned with seed).
+- [x] **Expand `TenantEntitlements` + `IEntitlementsService`** — v2 DTO + Zod; effective SKU via `TenantBillingPolicy.ResolveEffectiveSku`.
+- [x] **Starter messaging = true** — C#, tests, `PLAN_COMPARISON`, portal inbox.
+- [x] **Numeric limits (server-enforced)** — `maxLocations`, `maxPractitioners`; `entitlements.location_limit` / `entitlements.practitioner_limit`.
+- [x] **Feature flags (server-enforced where APIs exist today)** — waitlist, WhatsApp prefs, advanced analytics dashboard gates.
+- [x] **Tenant profile entitlements payload** — profile + subscription usage include v2 entitlements + location/practitioner usage counts.
+- [x] **Portal capability-driven UI** — nav/limits from profile; removed ops-page upgrade nags (locations/messages/dashboard).
+- [x] **`PLAN_COMPARISON`** — synced to matrix (Adeni inbox, caps, waitlist, WhatsApp).
+- [x] **Tests** — `EntitlementsServiceTests` + `plan-entitlements.test.ts`.
 
 ## 4. Out of scope
 

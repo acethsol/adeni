@@ -1,5 +1,12 @@
 <app-portal-page title="Locations" description="Manage branches and public profile URLs.">
-  <button pageActions type="button" class="btn btn-primary" (click)="openCreate()">
+  <button
+    pageActions
+    type="button"
+    class="btn btn-primary"
+    [disabled]="!canAddLocation()"
+    [title]="canAddLocation() ? 'Add a branch' : 'Location limit reached on your plan'"
+    (click)="openCreate()"
+  >
     <adeni-carbon-icon name="add" [size]="16" />
     Add location
   </button>

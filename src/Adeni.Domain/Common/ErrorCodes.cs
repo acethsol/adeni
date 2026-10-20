@@ -40,6 +40,29 @@ public static class ErrorCodes
             MultiLocationRequired,
             "Multi-location requires the Business plan. Upgrade to add more branches.");
 
+    public const string LocationLimitReached = "entitlements.location_limit";
+    public const string PractitionerLimitReached = "entitlements.practitioner_limit";
+    public const string WaitlistNotEntitled = "entitlements.waitlist";
+    public const string WhatsappNotEntitled = "entitlements.whatsapp";
+
+    public static Error LocationLimitReachedError(int maxLocations) =>
+        new(
+            LocationLimitReached,
+            $"Your plan allows up to {maxLocations} active location(s).",
+            new Dictionary<string, object?> { ["maxLocations"] = maxLocations });
+
+    public static Error PractitionerLimitReachedError(int maxPractitioners) =>
+        new(
+            PractitionerLimitReached,
+            $"Your plan allows up to {maxPractitioners} active team members.",
+            new Dictionary<string, object?> { ["maxPractitioners"] = maxPractitioners });
+
+    public static Error WaitlistNotEntitledError() =>
+        new(WaitlistNotEntitled, "Waitlist is not included on your current plan.");
+
+    public static Error WhatsappNotEntitledError() =>
+        new(WhatsappNotEntitled, "WhatsApp integration is not included on your current plan.");
+
     public static Error SlotExpiredError() =>
         new(SlotExpired, "That time slot has passed. Please choose a new time.");
 

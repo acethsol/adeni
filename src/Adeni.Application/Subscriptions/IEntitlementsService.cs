@@ -8,6 +8,8 @@ public sealed record SubscriptionUsageResponse(
     TenantEntitlements Entitlements,
     int BookingsUsedThisMonth,
     int? BookingsLimitThisMonth,
+    int LocationsActive,
+    int PractitionersActive,
     string? ContractSubscriptionSku = null,
     string BillingStatus = "trialing",
     DateTimeOffset? TrialEndsAt = null,
@@ -21,6 +23,14 @@ public interface IEntitlementsService
         Guid tenantId,
         CancellationToken cancellationToken = default);
 
+    Task<int> GetActiveLocationCountAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default);
+
+    Task<int> GetActivePractitionerCountAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default);
+
     Task<Result> EnsureCanCreateBookingForTenantAsync(
         Tenant tenant,
         CancellationToken cancellationToken = default);
@@ -30,7 +40,20 @@ public interface IEntitlementsService
         int activeLocationCount,
         CancellationToken cancellationToken = default);
 
+    Task<Result> EnsureCanAddPractitionerForTenantAsync(
+        Tenant tenant,
+        int activePractitionerCount,
+        CancellationToken cancellationToken = default);
+
     Task<Result> EnsureCanUseMessagingForTenantAsync(
+        Tenant tenant,
+        CancellationToken cancellationToken = default);
+
+    Task<Result> EnsureCanUseWaitlistForTenantAsync(
+        Tenant tenant,
+        CancellationToken cancellationToken = default);
+
+    Task<Result> EnsureCanUseWhatsappIntegrationForTenantAsync(
         Tenant tenant,
         CancellationToken cancellationToken = default);
 

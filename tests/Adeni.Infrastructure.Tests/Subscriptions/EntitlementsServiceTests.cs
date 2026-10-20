@@ -20,15 +20,7 @@ public sealed class EntitlementsServiceTests
         var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
         var entitlements = scope.ServiceProvider.GetRequiredService<IEntitlementsService>();
 
-        var tenant = new Tenant
-        {
-            Id = Guid.NewGuid(),
-            Name = "Starter Test",
-            Status = TenantStatus.Verified,
-            SubscriptionSku = SubscriptionSku.Starter,
-            BillingStatus = TenantBillingStatus.Active,
-            CreatedAt = DateTimeOffset.UtcNow,
-        };
+        var tenant = CreateTenant(SubscriptionSku.Starter, TenantBillingStatus.Active);
         db.Tenants.Add(tenant);
 
         for (var i = 0; i < 30; i++)
@@ -51,6 +43,13 @@ public sealed class EntitlementsServiceTests
 
         var result = await entitlements.EnsureCanCreateBookingForTenantAsync(tenant);
         Assert.True(result.IsSuccess);
+    }
+
+    [Fact]
+    public void Starter_seed_includes_messaging()
+    {
+        var starter = SubscriptionEntitlements.ForSku(SubscriptionSku.Starter);
+        Assert.True(starter.Messaging);
     }
 
     [Fact]
@@ -77,25 +76,15 @@ public sealed class EntitlementsServiceTests
     }
 
     [Fact]
-    public async Task Active_starter_blocks_messaging()
+    public async Task Active_starter_allows_messaging()
     {
         await using var provider = BuildProvider();
         await using var scope = provider.CreateAsyncScope();
         var entitlements = scope.ServiceProvider.GetRequiredService<IEntitlementsService>();
 
-        var tenant = new Tenant
-        {
-            Id = Guid.NewGuid(),
-            Name = "Starter Only",
-            Status = TenantStatus.Verified,
-            SubscriptionSku = SubscriptionSku.Starter,
-            BillingStatus = TenantBillingStatus.Active,
-            CreatedAt = DateTimeOffset.UtcNow,
-        };
-
+        var tenant = CreateTenant(SubscriptionSku.Starter, TenantBillingStatus.Active);
         var result = await entitlements.EnsureCanUseMessagingForTenantAsync(tenant);
-        Assert.True(result.IsFailure);
-        Assert.Equal(ErrorCodes.MessagingNotEntitled, result.Error.Code);
+        Assert.True(result.IsSuccess);
     }
 
     [Fact]
@@ -105,21 +94,74 @@ public sealed class EntitlementsServiceTests
         await using var scope = provider.CreateAsyncScope();
         var entitlements = scope.ServiceProvider.GetRequiredService<IEntitlementsService>();
 
-        var tenant = new Tenant
-        {
-            Id = Guid.NewGuid(),
-            Name = "Starter One Location",
-            Status = TenantStatus.Verified,
-            SubscriptionSku = SubscriptionSku.Starter,
-            BillingStatus = TenantBillingStatus.Active,
-            CreatedAt = DateTimeOffset.UtcNow,
-        };
-
+        var tenant = CreateTenant(SubscriptionSku.Starter, TenantBillingStatus.Active);
         var result = await entitlements.EnsureCanAddLocationForTenantAsync(tenant, activeLocationCount: 1);
 
         Assert.True(result.IsFailure);
-        Assert.Equal(ErrorCodes.MultiLocationRequired, result.Error.Code);
+        Assert.Equal(ErrorCodes.LocationLimitReached, result.Error.Code);
     }
+
+    [Fact]
+    public async Task Starter_blocks_fourth_practitioner()
+    {
+        await using var provider = BuildProvider();
+        await using var scope = provider.CreateAsyncScope();
+        var entitlements = scope.ServiceProvider.GetRequiredService<IEntitlementsService>();
+
+        var tenant = CreateTenant(SubscriptionSku.Starter, TenantBillingStatus.Active);
+        var result = await entitlements.EnsureCanAddPractitionerForTenantAsync(tenant, activePractitionerCount: 3);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorCodes.PractitionerLimitReached, result.Error.Code);
+    }
+
+    [Fact]
+    public async Task Business_allows_tenth_practitioner()
+    {
+        await using var provider = BuildProvider();
+        await using var scope = provider.CreateAsyncScope();
+        var entitlements = scope.ServiceProvider.GetRequiredService<IEntitlementsService>();
+
+        var tenant = CreateTenant(SubscriptionSku.Business, TenantBillingStatus.Active);
+        var result = await entitlements.EnsureCanAddPractitionerForTenantAsync(tenant, activePractitionerCount: 10);
+        Assert.True(result.IsSuccess);
+    }
+
+    [Fact]
+    public async Task Starter_blocks_waitlist()
+    {
+        await using var provider = BuildProvider();
+        await using var scope = provider.CreateAsyncScope();
+        var entitlements = scope.ServiceProvider.GetRequiredService<IEntitlementsService>();
+
+        var tenant = CreateTenant(SubscriptionSku.Starter, TenantBillingStatus.Active);
+        var result = await entitlements.EnsureCanUseWaitlistForTenantAsync(tenant);
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorCodes.WaitlistNotEntitled, result.Error.Code);
+    }
+
+    [Fact]
+    public async Task Professional_allows_waitlist()
+    {
+        await using var provider = BuildProvider();
+        await using var scope = provider.CreateAsyncScope();
+        var entitlements = scope.ServiceProvider.GetRequiredService<IEntitlementsService>();
+
+        var tenant = CreateTenant(SubscriptionSku.Professional, TenantBillingStatus.Active);
+        var result = await entitlements.EnsureCanUseWaitlistForTenantAsync(tenant);
+        Assert.True(result.IsSuccess);
+    }
+
+    private static Tenant CreateTenant(SubscriptionSku sku, TenantBillingStatus billingStatus) =>
+        new()
+        {
+            Id = Guid.NewGuid(),
+            Name = "Entitlements Test",
+            Status = TenantStatus.Verified,
+            SubscriptionSku = sku,
+            BillingStatus = billingStatus,
+            CreatedAt = DateTimeOffset.UtcNow,
+        };
 
     private static ServiceProvider BuildProvider()
     {

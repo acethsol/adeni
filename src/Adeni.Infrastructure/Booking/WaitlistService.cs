@@ -1,6 +1,7 @@
 namespace Adeni.Infrastructure.Booking;
 
 using Adeni.Application.Booking;
+using Adeni.Application.Subscriptions;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
@@ -8,7 +9,9 @@ using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-public sealed class WaitlistService(AdeniDbContext dbContext) : IWaitlistService
+public sealed class WaitlistService(
+    AdeniDbContext dbContext,
+    IEntitlementsService entitlementsService) : IWaitlistService
 {
     public async Task<Result<WaitlistEntryResponse>> JoinAsync(
         string customerAuth0Sub,
@@ -29,6 +32,12 @@ public sealed class WaitlistService(AdeniDbContext dbContext) : IWaitlistService
         if (tenant is null)
         {
             return Result.Failure<WaitlistEntryResponse>(Error.NotFound("Business"));
+        }
+
+        var waitlistCheck = await entitlementsService.EnsureCanUseWaitlistForTenantAsync(tenant, cancellationToken);
+        if (waitlistCheck.IsFailure)
+        {
+            return Result.Failure<WaitlistEntryResponse>(waitlistCheck.Error);
         }
 
         var service = await dbContext.ServiceOfferings

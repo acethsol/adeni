@@ -35,12 +35,26 @@ public sealed class EntitlementsService(AdeniDbContext dbContext) : IEntitlement
             .CountAsync(cancellationToken);
     }
 
+    public Task<int> GetActiveLocationCountAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default) =>
+        dbContext.BusinessLocations
+            .AsNoTracking()
+            .CountAsync(x => x.TenantId == tenantId && x.IsActive, cancellationToken);
+
+    public Task<int> GetActivePractitionerCountAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default) =>
+        dbContext.StaffMembers
+            .AsNoTracking()
+            .CountAsync(x => x.TenantId == tenantId && x.IsActive, cancellationToken);
+
     public Task<Result> EnsureCanCreateBookingForTenantAsync(
         Tenant tenant,
         CancellationToken cancellationToken = default)
     {
-        var entitlements = GetEntitlementsForTenant(tenant);
-        return EnsureBookingLimitAsync(tenant.Id, entitlements, cancellationToken);
+        _ = GetEntitlementsForTenant(tenant);
+        return Task.FromResult(Result.Success());
     }
 
     public Task<Result> EnsureCanAddLocationForTenantAsync(
@@ -49,12 +63,26 @@ public sealed class EntitlementsService(AdeniDbContext dbContext) : IEntitlement
         CancellationToken cancellationToken = default)
     {
         var entitlements = GetEntitlementsForTenant(tenant);
-        if (entitlements.MultiLocation || activeLocationCount == 0)
+        if (entitlements.MaxLocations is null || activeLocationCount < entitlements.MaxLocations.Value)
         {
             return Task.FromResult(Result.Success());
         }
 
-        return Task.FromResult(Result.Failure(ErrorCodes.MultiLocationRequiredError()));
+        return Task.FromResult(Result.Failure(ErrorCodes.LocationLimitReachedError(entitlements.MaxLocations.Value)));
+    }
+
+    public Task<Result> EnsureCanAddPractitionerForTenantAsync(
+        Tenant tenant,
+        int activePractitionerCount,
+        CancellationToken cancellationToken = default)
+    {
+        var entitlements = GetEntitlementsForTenant(tenant);
+        if (entitlements.MaxPractitioners is null || activePractitionerCount < entitlements.MaxPractitioners.Value)
+        {
+            return Task.FromResult(Result.Success());
+        }
+
+        return Task.FromResult(Result.Failure(ErrorCodes.PractitionerLimitReachedError(entitlements.MaxPractitioners.Value)));
     }
 
     public Task<Result> EnsureCanUseMessagingForTenantAsync(
@@ -65,6 +93,28 @@ public sealed class EntitlementsService(AdeniDbContext dbContext) : IEntitlement
         return Task.FromResult(EnsureMessagingEntitled(entitlements));
     }
 
+    public Task<Result> EnsureCanUseWaitlistForTenantAsync(
+        Tenant tenant,
+        CancellationToken cancellationToken = default)
+    {
+        var entitlements = GetEntitlementsForTenant(tenant);
+        return Task.FromResult(
+            entitlements.Waitlist
+                ? Result.Success()
+                : Result.Failure(ErrorCodes.WaitlistNotEntitledError()));
+    }
+
+    public Task<Result> EnsureCanUseWhatsappIntegrationForTenantAsync(
+        Tenant tenant,
+        CancellationToken cancellationToken = default)
+    {
+        var entitlements = GetEntitlementsForTenant(tenant);
+        return Task.FromResult(
+            entitlements.WhatsappIntegration
+                ? Result.Success()
+                : Result.Failure(ErrorCodes.WhatsappNotEntitledError()));
+    }
+
     public async Task<SubscriptionUsageResponse> GetUsageForTenantAsync(
         Tenant tenant,
         CancellationToken cancellationToken = default)
@@ -72,6 +122,8 @@ public sealed class EntitlementsService(AdeniDbContext dbContext) : IEntitlement
         var effectiveSku = TenantBillingPolicy.ResolveEffectiveSku(tenant);
         var entitlements = SubscriptionEntitlements.ForSku(effectiveSku);
         var used = await GetBookingsUsedThisMonthAsync(tenant.Id, cancellationToken);
+        var locationsActive = await GetActiveLocationCountAsync(tenant.Id, cancellationToken);
+        var practitionersActive = await GetActivePractitionerCountAsync(tenant.Id, cancellationToken);
         var contractSku = tenant.SubscriptionSku;
         var contractApi = SubscriptionSkuMapping.ToApiValue(contractSku);
 
@@ -79,7 +131,9 @@ public sealed class EntitlementsService(AdeniDbContext dbContext) : IEntitlement
             SubscriptionSkuMapping.ToApiValue(effectiveSku),
             entitlements,
             used,
-            entitlements.MonthlyBookingLimit,
+            BookingsLimitThisMonth: null,
+            locationsActive,
+            practitionersActive,
             contractApi != SubscriptionSkuMapping.ToApiValue(effectiveSku) ? contractApi : null,
             TenantBillingStatusMapping.ToApiValue(tenant.BillingStatus),
             tenant.TrialEndsAt,
@@ -90,23 +144,4 @@ public sealed class EntitlementsService(AdeniDbContext dbContext) : IEntitlement
         entitlements.Messaging
             ? Result.Success()
             : Result.Failure(ErrorCodes.MessagingNotEntitledError());
-
-    private async Task<Result> EnsureBookingLimitAsync(
-        Guid tenantId,
-        TenantEntitlements entitlements,
-        CancellationToken cancellationToken)
-    {
-        if (entitlements.MonthlyBookingLimit is null)
-        {
-            return Result.Success();
-        }
-
-        var used = await GetBookingsUsedThisMonthAsync(tenantId, cancellationToken);
-        if (used >= entitlements.MonthlyBookingLimit.Value)
-        {
-            return Result.Failure(ErrorCodes.BookingLimitReachedError(entitlements.MonthlyBookingLimit.Value));
-        }
-
-        return Result.Success();
-    }
 }

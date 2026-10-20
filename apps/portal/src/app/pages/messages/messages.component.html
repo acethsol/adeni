@@ -18,15 +18,6 @@
 
   @if (loading()) {
     <p class="muted loading-line">Loading…</p>
-  } @else if (!messagingEntitled()) {
-    <section class="card lock">
-      <h3>In-app conversations are on Pro</h3>
-      <p class="muted">
-        Upgrade when you want booking messages inside Adeni. You can still reach customers on WhatsApp using the button
-        above when your business phone is set.
-      </p>
-      <a class="btn btn-primary" routerLink="/plan">See plans</a>
-    </section>
   } @else {
     <div class="messages-layout">
       <section class="card messages-pane thread-list" aria-label="Inbox">

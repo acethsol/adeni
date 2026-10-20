@@ -1,13 +1,16 @@
 namespace Adeni.Infrastructure.Notifications;
 
 using Adeni.Application.Notifications;
+using Adeni.Application.Subscriptions;
 using Adeni.Domain.Common;
 using Adeni.Domain.Notifications;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-public sealed class NotificationPreferencesService(AdeniDbContext dbContext) : INotificationPreferencesService
+public sealed class NotificationPreferencesService(
+    AdeniDbContext dbContext,
+    IEntitlementsService entitlementsService) : INotificationPreferencesService
 {
     public async Task<Result<NotificationPreferencesResponse>> GetAsync(
         Guid tenantId,
@@ -46,6 +49,25 @@ public sealed class NotificationPreferencesService(AdeniDbContext dbContext) : I
                 UpdatedAt = DateTimeOffset.UtcNow,
             };
             dbContext.TenantNotificationPreferences.Add(prefs);
+        }
+
+        if (request.SmsWhatsAppReminderEnabled)
+        {
+            var tenant = await dbContext.Tenants
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+            if (tenant is null)
+            {
+                return Result.Failure<NotificationPreferencesResponse>(Error.NotFound("Business"));
+            }
+
+            var whatsappCheck = await entitlementsService.EnsureCanUseWhatsappIntegrationForTenantAsync(
+                tenant,
+                cancellationToken);
+            if (whatsappCheck.IsFailure)
+            {
+                return Result.Failure<NotificationPreferencesResponse>(whatsappCheck.Error);
+            }
         }
 
         prefs.EmailEnabled = request.EmailEnabled;

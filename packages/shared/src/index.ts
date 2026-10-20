@@ -14,6 +14,7 @@ export * from "./subscription-tiers";
 export * from "./country-pricing";
 export * from "./tenant-commercial";
 export * from "./entitlements";
+export * from "./plan-entitlements";
 export * from "./design-tokens";
 export * from "./category-visuals";
 export * from "./wellness-taxonomy";

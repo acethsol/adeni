@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeDashboardWidgetWidth } from "./dashboard-widget-width";
 import { type PagedResult, pagedResultSchema } from "./paging";
 
 export const categorySchema = z.object({
@@ -944,14 +945,18 @@ export const verificationDocumentSchema = z.object({
 });
 
 export const tenantEntitlementsSchema = z.object({
-  monthlyBookingLimit: z.number().nullable(),
-  basicCalendar: z.boolean(),
+  maxLocations: z.number().int().positive().nullable(),
+  maxPractitioners: z.number().int().positive().nullable(),
   messaging: z.boolean(),
-  analytics: z.boolean(),
-  reminders: z.boolean(),
-  multiLocation: z.boolean(),
-  staffManagement: z.boolean(),
+  waitlist: z.boolean(),
+  whatsappIntegration: z.boolean(),
+  advancedAnalytics: z.boolean(),
+  customerRetentionAnalytics: z.boolean(),
+  staffPerformanceAnalytics: z.boolean(),
+  advancedReminders: z.boolean(),
+  multiLocationReporting: z.boolean(),
   prioritySupport: z.boolean(),
+  multiLocation: z.boolean(),
 });
 
 export type TenantEntitlements = z.infer<typeof tenantEntitlementsSchema>;
@@ -973,6 +978,8 @@ export const subscriptionUsageSchema = z.object({
   entitlements: tenantEntitlementsSchema,
   bookingsUsedThisMonth: z.number().int().nonnegative(),
   bookingsLimitThisMonth: z.number().int().positive().nullable(),
+  locationsActive: z.number().int().nonnegative(),
+  practitionersActive: z.number().int().nonnegative(),
   contractSubscriptionSku: subscriptionSkuSchema.nullable().optional(),
   billingStatus: tenantBillingStatusSchema.optional(),
   trialEndsAt: z.string().nullable().optional(),
@@ -1045,7 +1052,7 @@ export const dashboardWidgetIdSchema = z.enum([
 
 export const tenantDashboardLayoutWidgetSchema = z.object({
   id: dashboardWidgetIdSchema,
-  w: z.number().int().min(4).max(12),
+  w: z.number().int().transform((value) => normalizeDashboardWidgetWidth(value)),
 });
 
 export const tenantDashboardLayoutSchema = z.object({

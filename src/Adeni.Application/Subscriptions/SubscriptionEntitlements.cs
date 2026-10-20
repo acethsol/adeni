@@ -3,46 +3,21 @@ namespace Adeni.Application.Subscriptions;
 using Adeni.Domain.Subscriptions;
 
 public sealed record TenantEntitlements(
-    int? MonthlyBookingLimit,
-    bool BasicCalendar,
+    int? MaxLocations,
+    int? MaxPractitioners,
     bool Messaging,
-    bool Analytics,
-    bool Reminders,
-    bool MultiLocation,
-    bool StaffManagement,
-    bool PrioritySupport);
+    bool Waitlist,
+    bool WhatsappIntegration,
+    bool AdvancedAnalytics,
+    bool CustomerRetentionAnalytics,
+    bool StaffPerformanceAnalytics,
+    bool AdvancedReminders,
+    bool MultiLocationReporting,
+    bool PrioritySupport,
+    bool MultiLocation);
 
 public static class SubscriptionEntitlements
 {
     public static TenantEntitlements ForSku(SubscriptionSku sku) =>
-        sku switch
-        {
-            SubscriptionSku.Professional => new TenantEntitlements(
-                MonthlyBookingLimit: null,
-                BasicCalendar: true,
-                Messaging: true,
-                Analytics: true,
-                Reminders: true,
-                MultiLocation: false,
-                StaffManagement: true,
-                PrioritySupport: false),
-            SubscriptionSku.Business => new TenantEntitlements(
-                MonthlyBookingLimit: null,
-                BasicCalendar: true,
-                Messaging: true,
-                Analytics: true,
-                Reminders: true,
-                MultiLocation: true,
-                StaffManagement: true,
-                PrioritySupport: true),
-            _ => new TenantEntitlements(
-                MonthlyBookingLimit: null,
-                BasicCalendar: true,
-                Messaging: false,
-                Analytics: false,
-                Reminders: false,
-                MultiLocation: false,
-                StaffManagement: true,
-                PrioritySupport: false),
-        };
+        PlanEntitlementsCatalog.ForSku(sku);
 }

@@ -119,7 +119,6 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         label: "Calendar",
         icon: "calendar",
         capability: "calendar",
-        entitlement: "staffManagement",
         permission: "portal.staff",
       },
       {
@@ -143,7 +142,7 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         icon: "messages",
         permission: "portal.messages",
         badge: "messages",
-        tabs: [{ id: "inbox", label: "Inbox", entitlement: "messaging" }],
+        tabs: [{ id: "inbox", label: "Inbox" }],
       },
       { path: "/register", label: "Register", icon: "register", unregisteredOnly: true },
     ],
@@ -165,7 +164,6 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         label: "Staff",
         icon: "staff",
         capability: "calendar",
-        entitlement: "staffManagement",
         permission: "portal.staff",
       },
       { path: "/locations", label: "Locations", icon: "locations", permission: "portal.locations" },
@@ -202,7 +200,7 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
           { id: "bookings", label: "Bookings" },
           { id: "notifications", label: "Notifications" },
           { id: "policies", label: "Policies" },
-          { id: "messaging", label: "Messaging", entitlement: "messaging" },
+          { id: "messaging", label: "Messaging" },
         ],
       },
       {
