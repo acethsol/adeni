@@ -138,6 +138,8 @@ public sealed class TenantPricingResolverTests
         services.AddScoped<Adeni.Infrastructure.Context.TenantContext>();
         services.AddScoped<Application.Abstractions.ITenantContext>(sp =>
             sp.GetRequiredService<Adeni.Infrastructure.Context.TenantContext>());
+        services.AddSingleton<Application.Abstractions.ICorrelationContext, ResolverTestCorrelation>();
+        services.AddSingleton<Application.Abstractions.IAuditLogWriter, Adeni.Infrastructure.Auditing.InMemoryAuditLogWriter>();
         services.AddScoped<IPricingCatalogService, PricingCatalogService>();
         services.AddScoped<ITenantPricingResolver, TenantPricingResolver>();
         return services.BuildServiceProvider();

@@ -30,46 +30,55 @@ public sealed class AdminPricingCatalogIntegrationTests : IClassFixture<WebAppli
     [Fact]
     public async Task ActivatePricingCatalogVersion_swaps_active_via_admin_api()
     {
+        await PricingCatalogIntegrationTestState.EnsureLaunchCatalogActiveAsync(_factory.Services);
+
         var client = _factory.CreateClient();
         client.DefaultRequestHeaders.Add(
             DevBusinessAuthMiddleware.DevAuth0SubHeader,
             DevelopmentDataSeeder.DevAdminAuth0Sub);
 
         const string draftCode = "2026-integration-draft";
-        var createPayload = JsonSerializer.Serialize(new
+        try
         {
-            code = draftCode,
-            effectiveFrom = "2026-11-01T00:00:00Z",
-            effectiveTo = (string?)null,
-            cloneFromActive = true,
-        });
-        var createResponse = await client.PostAsync(
-            "/api/v1/admin/pricing-catalog/versions",
-            new StringContent(createPayload, Encoding.UTF8, "application/json"));
-        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+            var createPayload = JsonSerializer.Serialize(new
+            {
+                code = draftCode,
+                effectiveFrom = "2026-11-01T00:00:00Z",
+                effectiveTo = (string?)null,
+                cloneFromActive = true,
+            });
+            var createResponse = await client.PostAsync(
+                "/api/v1/admin/pricing-catalog/versions",
+                new StringContent(createPayload, Encoding.UTF8, "application/json"));
+            Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
 
-        var activateResponse = await client.PostAsync(
-            $"/api/v1/admin/pricing-catalog/versions/{draftCode}/activate",
-            null);
-        Assert.Equal(HttpStatusCode.OK, activateResponse.StatusCode);
+            var activateResponse = await client.PostAsync(
+                $"/api/v1/admin/pricing-catalog/versions/{draftCode}/activate",
+                null);
+            Assert.Equal(HttpStatusCode.OK, activateResponse.StatusCode);
 
-        var listResponse = await client.GetAsync("/api/v1/admin/pricing-catalog/versions");
-        Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
-        var listJson = await listResponse.Content.ReadAsStringAsync();
-        using var doc = JsonDocument.Parse(listJson);
-        var activeCodes = doc.RootElement
-            .GetProperty("items")
-            .EnumerateArray()
-            .Where(item => item.GetProperty("isActive").GetBoolean())
-            .Select(item => item.GetProperty("code").GetString())
-            .ToList();
-        Assert.Single(activeCodes);
-        Assert.Equal(draftCode, activeCodes[0]);
+            var listResponse = await client.GetAsync("/api/v1/admin/pricing-catalog/versions");
+            Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
+            var listJson = await listResponse.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(listJson);
+            var activeCodes = doc.RootElement
+                .GetProperty("items")
+                .EnumerateArray()
+                .Where(item => item.GetProperty("isActive").GetBoolean())
+                .Select(item => item.GetProperty("code").GetString())
+                .ToList();
+            Assert.Single(activeCodes);
+            Assert.Equal(draftCode, activeCodes[0]);
 
-        var publicResponse = await client.GetAsync("/api/v1/pricing?countryCode=NG");
-        var publicBody = await publicResponse.Content.ReadFromJsonAsync<PublicPricingResponse>();
-        Assert.NotNull(publicBody);
-        Assert.Equal(draftCode, publicBody.PricingCatalogVersion);
+            var publicResponse = await client.GetAsync("/api/v1/pricing?countryCode=NG");
+            var publicBody = await publicResponse.Content.ReadFromJsonAsync<PublicPricingResponse>();
+            Assert.NotNull(publicBody);
+            Assert.Equal(draftCode, publicBody.PricingCatalogVersion);
+        }
+        finally
+        {
+            await PricingCatalogIntegrationTestState.EnsureLaunchCatalogActiveAsync(_factory.Services);
+        }
     }
 
     private sealed record PublicPricingResponse(

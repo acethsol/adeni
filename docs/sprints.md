@@ -501,7 +501,7 @@ Live business → Adeni recurring billing (Paystack/Stripe), signed webhooks, te
 |------|--------|
 | **33a** Provider checkout + Murphy webhooks + tier sync | Done locally — **validate on staging** |
 | **33b** Portal billing history + admin MRR metrics | Done locally — **validate on staging** |
-| **33b-admin** Admin pricing & commercial config (catalog, resolver, billing UI) | **33b-MVP** committed (`f07f921`). **33b-1** done locally: versioned `pricing_catalog_*` tables + post-deploy seed, `IPricingCatalogService`, `GET /api/v1/pricing` + admin catalog APIs, admin **Pricing → Catalog** read-only UI, `@adeni/shared` / `@adeni/api-client` pricing schemas. Spec: [sprint-33b-admin-commercial-config.md](./specs/sprint-33b-admin-commercial-config.md). **33b-2+** still planned. |
+| **33b-admin** Admin pricing & commercial config (catalog, resolver, billing UI) | **33b-MVP** committed (`f07f921`). **33b-1** done locally: versioned `pricing_catalog_*` tables + post-deploy seed, `IPricingCatalogService`, `GET /api/v1/pricing` + admin catalog APIs, admin **Pricing → Catalog** read-only UI, `@adeni/shared` / `@adeni/api-client` pricing schemas. **33b-4** done (`e7424a5`): catalog publish workflow. Spec: [sprint-33b-admin-commercial-config.md](./specs/sprint-33b-admin-commercial-config.md). **33b-2/3+** still planned. |
 | **33c** Staging secrets, live subscription webhooks, integration E2E | Planned (Sprint 20 / staging deploy) |
 
 ## Sprint 34 — Payment settlement (Connect + Paystack split) (planned)

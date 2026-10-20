@@ -27,6 +27,8 @@ public sealed class PricingIntegrationTests : IClassFixture<WebApplicationFactor
     [Fact]
     public async Task GetPublicPricing_ng_returns_launch_catalog()
     {
+        await PricingCatalogIntegrationTestState.EnsureLaunchCatalogActiveAsync(_factory.Services);
+
         var client = _factory.CreateClient();
         var response = await client.GetAsync("/api/v1/pricing?countryCode=NG");
 

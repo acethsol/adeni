@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Tests.Subscriptions;
 
+using Adeni.Application.Abstractions;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Catalog;
 using Adeni.Domain.Subscriptions;
@@ -142,9 +143,18 @@ public sealed class SubscriptionMetricsServiceTests
         services.AddScoped<Adeni.Infrastructure.Context.TenantContext>();
         services.AddScoped<Application.Abstractions.ITenantContext>(sp =>
             sp.GetRequiredService<Adeni.Infrastructure.Context.TenantContext>());
+        services.AddSingleton<ICorrelationContext, MetricsTestCorrelation>();
+        services.AddSingleton<IAuditLogWriter, Adeni.Infrastructure.Auditing.InMemoryAuditLogWriter>();
         services.AddScoped<IPricingCatalogService, PricingCatalogService>();
         services.AddScoped<ITenantPricingResolver, TenantPricingResolver>();
         services.AddScoped<ISubscriptionMetricsService, SubscriptionMetricsService>();
         return services.BuildServiceProvider();
+    }
+
+    private sealed class MetricsTestCorrelation : ICorrelationContext
+    {
+        public string CorrelationId { get; } = "test";
+
+        public void Set(string correlationId) { }
     }
 }
