@@ -29,6 +29,13 @@ type CurrencyWindowTotals = {
   platformFeeTotal: number;
 };
 
+type SkuMixRow = {
+  key: string;
+  label: string;
+  count: number;
+  tone: string;
+};
+
 @Component({
   selector: "app-admin-insights",
   standalone: true,
@@ -58,6 +65,10 @@ export class AdminInsightsComponent implements OnInit {
     this.granularity() === "year" ? "Last 5 years" : "Last 12 months",
   );
 
+  readonly granularityLabel = computed(() =>
+    this.granularity() === "year" ? "Yearly" : "Monthly",
+  );
+
   readonly mrrRows = computed(() => {
     const data = this.metrics();
     if (!data) {
@@ -66,6 +77,14 @@ export class AdminInsightsComponent implements OnInit {
     return data.mrrSource === "synced_charges"
       ? data.syncedMrrByCurrency
       : data.estimatedMrrByCurrency;
+  });
+
+  readonly mrrPrimaryLabel = computed(() => {
+    const rows = this.mrrRows();
+    if (rows.length === 0) {
+      return "—";
+    }
+    return rows.map((row) => formatAmountMinor(row.amountMinor, row.currency)).join(" · ");
   });
 
   readonly mrrHint = computed(() => {
@@ -99,7 +118,9 @@ export class AdminInsightsComponent implements OnInit {
     return [...byCurrency.values()].sort((a, b) => a.currency.localeCompare(b.currency));
   });
 
-  readonly saasWindowLabel = computed(() => formatTotalsMinor(this.windowTotals(), (row) => row.saasAmountMinor));
+  readonly saasWindowLabel = computed(() =>
+    formatTotalsMinor(this.windowTotals(), (row) => row.saasAmountMinor),
+  );
 
   readonly feesWindowLabel = computed(() =>
     formatTotalsMajor(this.windowTotals(), (row) => row.platformFeeTotal),
@@ -109,25 +130,62 @@ export class AdminInsightsComponent implements OnInit {
     formatTotalsMajor(this.windowTotals(), (row) => row.commerceVolume),
   );
 
+  readonly hasCommerceActivity = computed(() => {
+    const rev = this.revenue();
+    if (!rev) {
+      return false;
+    }
+    return rev.recentCommercePayments.length > 0 || rev.buckets.some((row) => row.commerceVolume > 0);
+  });
+
   readonly earningsHeadline = computed(() => {
     const saas = this.saasWindowLabel();
     const fees = this.feesWindowLabel();
     if (!saas && !fees) {
-      return `No synced SaaS or commerce earnings in the ${this.windowLabel().toLowerCase()} yet.`;
+      return `No platform earnings in the ${this.windowLabel().toLowerCase()} yet.`;
     }
-    const parts: string[] = [];
+    if (saas && fees) {
+      return `${saas} subscription revenue · ${fees} in platform fees.`;
+    }
     if (saas) {
-      parts.push(`${saas} SaaS`);
+      return `${saas} in subscription revenue (${this.windowLabel().toLowerCase()}).`;
     }
-    if (fees) {
-      parts.push(`${fees} platform fees`);
-    }
-    return `${parts.join(" · ")} (${this.windowLabel().toLowerCase()}).`;
+    return `${fees} in platform fees (${this.windowLabel().toLowerCase()}).`;
   });
+
+  readonly revenueInsight = computed(() => {
+    const billing = this.metrics();
+    if (!billing) {
+      return "";
+    }
+    if (billing.pastDueTenantCount > 0) {
+      return `${billing.pastDueTenantCount} tenant(s) past due — follow up in billing.`;
+    }
+    if (billing.paidTenantCount === 0 && billing.trialingTenantCount > 0) {
+      return `${billing.trialingTenantCount} on trial; no paying Pro/Business tenants yet.`;
+    }
+    if (!this.hasCommerceActivity()) {
+      return "Commerce GMV is quiet — SaaS subscription sync is carrying platform revenue.";
+    }
+    return `${billing.paidTenantCount} paying tenant(s) · commerce checkouts included below.`;
+  });
+
+  readonly skuMix = computed((): SkuMixRow[] => {
+    const billing = this.metrics();
+    const bySku = new Map((billing?.skuMix ?? []).map((row) => [row.sku, row.count]));
+    return (["starter", "professional", "business"] as const).map((sku) => ({
+      key: sku,
+      label: formatSubscriptionSku(sku),
+      count: bySku.get(sku) ?? 0,
+      tone: `sku-${sku}`,
+    }));
+  });
+
+  readonly skuTotal = computed(() => this.skuMix().reduce((sum, row) => sum + row.count, 0));
 
   readonly pageDescription = computed(
     () =>
-      "Adeni earnings: subscription charges from businesses and platform fees on completed checkout. Customer GMV is shown for context.",
+      "Platform-side subscription revenue and commerce fees — not customer wallet balances.",
   );
 
   readonly formatMoney = formatAmountMinor;
@@ -136,13 +194,7 @@ export class AdminInsightsComponent implements OnInit {
     this.granularity() === "year" ? "Yearly" : "Monthly",
   );
 
-  readonly skuLabel = (sku: string) => {
-    try {
-      return formatSubscriptionSku(sku as "starter" | "professional" | "business");
-    } catch {
-      return sku;
-    }
-  };
+  readonly formatPeriod = (period: string) => formatRevenuePeriod(period, this.granularity());
 
   ngOnInit(): void {
     void this.load();
@@ -160,16 +212,14 @@ export class AdminInsightsComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     try {
-      await this.feedback.runLoading(async () => {
-        const [subscription, revenueData] = await this.api.withAuthorizedClient((c) =>
-          Promise.all([
-            c.getAdminSubscriptionMetrics(),
-            c.getAdminRevenueMetrics(this.granularity()),
-          ]),
-        );
-        this.metrics.set(subscription);
-        this.revenue.set(revenueData);
-      }, "Loading revenue…", "Platform billing");
+      const [subscription, revenueData] = await this.api.withAuthorizedClient((c) =>
+        Promise.all([
+          c.getAdminSubscriptionMetrics(),
+          c.getAdminRevenueMetrics(this.granularity()),
+        ]),
+      );
+      this.metrics.set(subscription);
+      this.revenue.set(revenueData);
     } catch (err) {
       let message = adminLoadErrorMessage("Could not load revenue metrics.", err);
       if (message.includes("tenant_subscription_charges")) {
@@ -186,6 +236,7 @@ export class AdminInsightsComponent implements OnInit {
   }
 
   async loadRevenue(): Promise<void> {
+    this.loading.set(true);
     try {
       const revenueData = await this.api.withAuthorizedClient((c) =>
         c.getAdminRevenueMetrics(this.granularity()),
@@ -193,6 +244,8 @@ export class AdminInsightsComponent implements OnInit {
       this.revenue.set(revenueData);
     } catch {
       this.feedback.error("Could not load period totals.");
+    } finally {
+      this.loading.set(false);
     }
   }
 
@@ -258,4 +311,22 @@ function formatTotalsMajor(
     })
     .filter((part): part is string => Boolean(part));
   return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+function formatRevenuePeriod(period: string, granularity: RevenueGranularity): string {
+  if (granularity === "year") {
+    return period;
+  }
+  const match = /^(\d{4})-(\d{2})$/.exec(period.trim());
+  if (!match) {
+    return period;
+  }
+  const year = Number(match[1]);
+  const month = Number(match[2]) - 1;
+  if (Number.isNaN(year) || Number.isNaN(month) || month < 0 || month > 11) {
+    return period;
+  }
+  return new Intl.DateTimeFormat("en", { month: "short", year: "numeric", timeZone: "UTC" }).format(
+    new Date(Date.UTC(year, month, 1)),
+  );
 }

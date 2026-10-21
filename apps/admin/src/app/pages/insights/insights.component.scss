@@ -10,70 +10,219 @@
   color: var(--text-muted);
 }
 
-.stat-card--alert .stat-value {
-  color: #b54708;
+.revenue-insight {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgb(255 255 255 / 88%);
 }
 
-.widget-card__head--inner {
-  margin-top: 1rem;
-  padding-top: 0.85rem;
-  border-top: 1px solid var(--border);
+.revenue-grid {
+  gap: 1.1rem;
 }
 
-.widget-card__hint {
-  margin: -0.35rem 0 0.25rem;
-  font-size: 0.8125rem;
+.widget-card--overview.revenue-health {
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--interactive, #7f56ff) 6%, var(--surface)) 0%,
+      var(--surface) 50%
+    );
+}
+
+.revenue-tenant-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+  .revenue-tenant-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+.revenue-earnings-strip {
+  padding-bottom: var(--cds-spacing-06);
+}
+
+.earnings-highlights {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+@media (max-width: 980px) {
+  .earnings-highlights {
+    grid-template-columns: 1fr;
+  }
+}
+
+.earnings-tile {
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  background: var(--bg-subtle);
+}
+
+.earnings-tile__label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--text-muted);
 }
 
-.metric-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.metric-list li {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.55rem 0;
-  border-top: 1px solid var(--border);
-  font-size: 0.875rem;
-}
-
-.metric-list li:first-child {
-  border-top: 0;
-}
-
-.metric-list strong {
-  font-weight: 600;
+.earnings-tile__value {
+  margin: 0.4rem 0 0.2rem;
+  font-size: 1.35rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
+  line-height: 1.3;
 }
 
-.table-wrap {
-  overflow-x: auto;
+.earnings-tile__hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
 }
 
-.data-table.compact {
+.earnings-tile--saas {
+  border-color: color-mix(in srgb, #7f56ff 35%, var(--border));
+  background: color-mix(in srgb, #7f56ff 8%, var(--surface));
+}
+
+.earnings-tile--fees {
+  border-color: color-mix(in srgb, #13c2a3 35%, var(--border));
+  background: color-mix(in srgb, #13c2a3 8%, var(--surface));
+}
+
+.earnings-tile--mrr {
+  border-color: color-mix(in srgb, #4589ff 35%, var(--border));
+  background: color-mix(in srgb, #4589ff 8%, var(--surface));
+}
+
+.widget-card--table {
+  min-height: 18rem;
+}
+
+.table-scroll {
+  overflow: auto;
+  max-height: 22rem;
+  margin: 0 -0.15rem;
+}
+
+.revenue-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.8125rem;
 }
 
-.data-table.compact th,
-.data-table.compact td {
-  padding: 0.45rem 0.5rem;
-  text-align: left;
+.revenue-table th,
+.revenue-table td {
+  padding: 0.55rem 0.65rem;
   border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
 }
 
-.data-table.compact th {
+.revenue-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   font-weight: 600;
+  color: var(--text-muted);
+  background: var(--surface);
+  box-shadow: 0 1px 0 var(--border);
+}
+
+.revenue-table tbody tr:hover {
+  background: color-mix(in srgb, var(--interactive, #7f56ff) 4%, var(--surface));
+}
+
+.revenue-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.revenue-table .muted-cell {
   color: var(--text-muted);
 }
 
-.data-table.compact td {
+.revenue-aside {
+  display: flex;
+  flex-direction: column;
+}
+
+.stack {
+  display: flex;
+  height: 0.55rem;
+  margin-top: 0.35rem;
+  background: var(--bg-subtle);
+}
+
+.stack span,
+.legend i {
+  display: block;
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  list-style: none;
+  margin: 0.85rem 0 0;
+  padding: 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.legend i {
+  width: 0.55rem;
+  height: 0.55rem;
+  flex-shrink: 0;
+}
+
+.legend strong {
+  margin-left: auto;
+  color: var(--text);
   font-variant-numeric: tabular-nums;
+}
+
+.sku-starter {
+  background: #8d8d8d;
+}
+
+.sku-professional {
+  background: var(--adeni-purple, #7f56ff);
+}
+
+.sku-business {
+  background: var(--adeni-teal, #13c2a3);
+}
+
+.activity-panel {
+  min-height: 16rem;
+}
+
+.activity-panel .widget-card__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 11rem;
+}
+
+.activity-panel adeni-portal-empty-state {
+  margin: auto 0;
+}
+
+.stat-card--alert .stat-value {
+  color: #b54708;
 }
 
 .dashboard-rows .meta {
@@ -81,4 +230,32 @@
   font-size: 0.8125rem;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
+}
+
+.overview-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+}
+
+.overview-head-copy {
+  min-width: 0;
+  flex: 1 1 12rem;
+}
+
+.overview-period-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--interactive, #7f56ff);
+  background: color-mix(in srgb, var(--interactive, #7f56ff) 10%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--interactive, #7f56ff) 26%, var(--border));
 }

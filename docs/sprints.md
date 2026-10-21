@@ -40,7 +40,11 @@
 | **34** | **Payment settlement (Connect + split)** | Planned |
 | **35** | **Tenant customer records** | ✅ Done — [sprint-35-tenant-customer-records.md](./specs/sprint-35-tenant-customer-records.md) |
 | **36** | **Messaging rewrite (SignalR + conversations)** | ✅ Done — [sprint-36-messaging-rewrite.md](./specs/sprint-36-messaging-rewrite.md); Sprint 18 teardown |
-| **39** | **Finance module boundaries (Phase 1)** | ✅ Done — [finance-module-boundaries.md](./specs/finance-module-boundaries.md); `/api/v1/finance/*`, portal `/finance` |
+| **33-closeout** | **Entitlements v2 closeout** | Planned — [sprint-33-entitlements-closeout.md](./specs/sprint-33-entitlements-closeout.md); matrix hygiene + portal parity before module sprints |
+| **38** | **Notifications module (Resend + Twilio)** | Planned — [sprint-38-notifications-module.md](./specs/sprint-38-notifications-module.md) |
+| **39** | **Reporting module (exports + PDF extract)** | Planned — [sprint-39-reporting-module.md](./specs/sprint-39-reporting-module.md) |
+| **37** | **Retention (packages, loyalty, memberships)** | Draft — [sprint-37-retention-module.md](./specs/sprint-37-retention-module.md); after 33-closeout → 38A → 39A → 38B → 39B → 37.1–37.5 |
+| **39-finance** | **Finance module boundaries (Phase 1)** | ✅ Done — [finance-module-boundaries.md](./specs/finance-module-boundaries.md); `/api/v1/finance/*`, portal `/finance` |
 | — | **Reporting module boundaries** | Spec — [reporting-module-boundaries.md](./specs/reporting-module-boundaries.md); runbook [reporting.md](./reporting.md) |
 | — | **Notifications module boundaries** | Spec — [notifications-module-boundaries.md](./specs/notifications-module-boundaries.md); runbook [notifications.md](./notifications.md) |
 | — | **Shared data grid (`@adeni/ui`)** | Spec — [shared-data-grid.md](./specs/shared-data-grid.md); Staff = reference impl |
@@ -49,7 +53,7 @@
 | — | App Insights (Obs 1) | → Sprint 20 |
 | — | Booking notifications, auto-confirm, payments, waitlist | → Sprint 15 |
 
-**Next up:** Sprint **32a** dashboard foundation; Sprint **33** remainder on **staging** (live Paystack + MRR E2E). Sprint 20 parallel. See [roadmap-modules.md](./roadmap-modules.md).
+**Next up:** Sprint **32a** dashboard foundation; Sprint **33** remainder on **staging** (live Paystack + platform subscription MRR E2E). **Module order:** **33-closeout** → **38A** notifications foundation → **39A** reporting foundation (`IReportRenderer`) → **38B** notifications completion → **39B** reporting completion → **37.1–37.5** retention. Sprint 20 parallel. See [roadmap-modules.md](./roadmap-modules.md).
 
 ---
 ## Sprint 0 — Foundation & dev tooling ✅
@@ -502,7 +506,8 @@ Live business → Adeni recurring billing (Paystack/Stripe), signed webhooks, te
 | **33a** Provider checkout + Murphy webhooks + tier sync | Done locally — **validate on staging** |
 | **33b** Portal billing history + admin MRR metrics | Done locally — **validate on staging** |
 | **33b-admin** Admin pricing & commercial config (catalog, resolver, billing UI) | **33b-2** done: tenant commercial bind on first paid checkout, resolver order override→agreed→catalog, admin commercial audit timeline, portal agreed vs catalog on `/plan` — [sprint-33b-2-commercial-binding.md](./specs/sprint-33b-2-commercial-binding.md). **33b-3** done: admin **Pricing → GMV**, `PlatformFeeCalculator` reads catalog by country. **33b-1/4** as before. **33c/staging** deferred. |
-| **33-entitlements-v2** Seed-driven plan matrix, API enforcement, portal capability UI (Starter inbox ✓) | Planned — spec: [sprint-33-entitlements-v2.md](./specs/sprint-33-entitlements-v2.md) |
+| **33-entitlements-v2** Seed-driven plan matrix, API enforcement, portal capability UI (Starter inbox ✓) | Done — spec: [sprint-33-entitlements-v2.md](./specs/sprint-33-entitlements-v2.md) |
+| **33-closeout** Matrix cleanup, JSON↔C# parity, waitlist/SMS/staff cap UX | Planned — [sprint-33-entitlements-closeout.md](./specs/sprint-33-entitlements-closeout.md) |
 | **33c** Staging secrets, live subscription webhooks, integration E2E | Planned (Sprint 20 / staging deploy) |
 
 ## Sprint 34 — Payment settlement (Connect + Paystack split) (planned)
