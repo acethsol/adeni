@@ -1,7 +1,14 @@
 import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { AdeniApiError } from "@adeni/api-client";
-import { canAddLocationAtCount, type BusinessLocation, type MarketConfig, type TenantEntitlements } from "@adeni/shared";
+import {
+  canAddLocationAtCount,
+  DEFAULT_PAGE_SIZE,
+  sliceListPage,
+  type BusinessLocation,
+  type MarketConfig,
+  type TenantEntitlements,
+} from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
   AdeniConfirmService,
@@ -11,6 +18,7 @@ import {
   AdeniExportMenuComponent,
   AdeniFeedbackService,
   AdeniIconBtnComponent,
+  AdeniListPaginationComponent,
   AdeniListToolbarComponent,
   AdeniModalComponent,
   AdeniPillComponent,
@@ -63,6 +71,7 @@ type LocationDraft = {
     AdeniPortalEmptyStateComponent,
     AdeniModalComponent,
     AdeniListToolbarComponent,
+    AdeniListPaginationComponent,
     AdeniExportMenuComponent,
     AdeniDataTableComponent,
     AdeniDataTableCellDirective,
@@ -89,6 +98,9 @@ export class LocationsComponent implements OnInit {
   readonly editingId = signal<string | null>(null);
   readonly showForm = signal(false);
   readonly locationSearch = signal("");
+  readonly page = signal(1);
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+  readonly listPageSizeOptions: number[] = [10, DEFAULT_PAGE_SIZE, 50];
   readonly sortColumnId = signal<string | null>(null);
   readonly sortDirection = signal<AdeniDataTableSortDirection>("asc");
   readonly viewMode = signal<AdeniListViewMode>(
@@ -143,6 +155,12 @@ export class LocationsComponent implements OnInit {
     ),
   );
 
+  readonly filteredLocationsCount = computed(() => this.filteredLocations().length);
+
+  readonly paginatedLocations = computed(() =>
+    sliceListPage(this.sortedFilteredLocations(), this.page(), this.pageSize()),
+  );
+
   readonly locationColumns: AdeniDataTableColumn<BusinessLocation>[] = [
     {
       id: "name",
@@ -172,6 +190,30 @@ export class LocationsComponent implements OnInit {
 
   ngOnInit(): void {
     void this.load();
+  }
+
+  onLocationSearchChange(value: string): void {
+    this.locationSearch.set(value);
+    this.page.set(1);
+  }
+
+  goToLocationsPage(next: number): void {
+    this.page.set(next);
+  }
+
+  onLocationsPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.page.set(1);
+  }
+
+  onLocationSortColumnChange(columnId: string | null): void {
+    this.sortColumnId.set(columnId);
+    this.page.set(1);
+  }
+
+  onLocationSortDirectionChange(direction: AdeniDataTableSortDirection): void {
+    this.sortDirection.set(direction);
+    this.page.set(1);
   }
 
   emptyDraft(): LocationDraft {

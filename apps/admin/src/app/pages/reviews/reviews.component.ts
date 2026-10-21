@@ -9,6 +9,7 @@ import {
   AdeniConfirmService,
   AdeniFeedbackService,
   AdeniPortalEmptyStateComponent,
+  AdeniListPaginationComponent,
   AdeniStaffButtonComponent,
   PortalPageComponent,
 } from "@adeni/ui";
@@ -30,6 +31,7 @@ import { ratingPill, reviewVisibilityPill } from "../../shared/admin-pill-maps";
     FormsModule,
     AdeniCarbonIconComponent,
     AdeniStaffButtonComponent,
+    AdeniListPaginationComponent,
     AdeniPortalEmptyStateComponent,
     DatePipe,
     AdminPillComponent,

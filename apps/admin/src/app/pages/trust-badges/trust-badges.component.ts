@@ -8,6 +8,7 @@ import {
   AdeniCarbonIconComponent,
   AdeniFeedbackService,
   AdeniPortalEmptyStateComponent,
+  AdeniListPaginationComponent,
   AdeniStaffButtonComponent,
   PortalPageComponent,
 } from "@adeni/ui";
@@ -29,6 +30,7 @@ import { badgeTypePill } from "../../shared/admin-pill-maps";
     FormsModule,
     AdeniCarbonIconComponent,
     AdeniStaffButtonComponent,
+    AdeniListPaginationComponent,
     AdeniPortalEmptyStateComponent,
     DatePipe,
     RouterLink,

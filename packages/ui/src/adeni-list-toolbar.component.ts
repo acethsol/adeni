@@ -51,6 +51,9 @@ import { persistListViewMode, type AdeniListViewMode } from "./adeni-list-view.t
         <div class="adeni-list-toolbar-secondary">
           <span class="adeni-list-count-pill" aria-live="polite">
             <span class="adeni-list-count-value">{{ count() }}</span>
+            @if (countTotal() !== null && countTotal()! > count()) {
+              <span class="adeni-list-count-of">of {{ countTotal() }}</span>
+            }
             <span class="adeni-list-count-label">
               {{ count() === 1 ? singularCountLabel() : pluralCountLabel() }}
             </span>
@@ -97,6 +100,8 @@ export class AdeniListToolbarComponent {
   readonly viewMode = model<AdeniListViewMode>("cards");
 
   readonly count = input(0);
+  /** When set and greater than `count`, shows “N of total” (paginated client lists). */
+  readonly countTotal = input<number | null>(null);
   readonly singularCountLabel = input("item");
   readonly pluralCountLabel = input("items");
 

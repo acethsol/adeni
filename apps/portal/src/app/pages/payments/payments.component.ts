@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnDestroy, OnInit, signal } from "@angular/core";
+import { Component, inject, OnDestroy, OnInit, signal } from "@angular/core";
 import { Subscription } from "rxjs";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
@@ -8,13 +8,12 @@ import type { BillingDocumentResponse, BusinessProfile, PaymentLedgerEntry } fro
 import {
   formatPrice,
   hasCapability,
-  pageRangeLabel,
   resolvePaymentCheckoutUrl,
-  totalPages as computeTotalPages,
 } from "@adeni/shared";
 import {
   AdeniConfirmService,
   AdeniFeedbackService,
+  AdeniListPaginationComponent,
   AdeniPortalEmptyStateComponent,
   PortalPageComponent,
 } from "@adeni/ui";
@@ -26,7 +25,13 @@ import { PortalTabsComponent } from "../../shared/portal-tabs.component";
 @Component({
   selector: "app-payments",
   standalone: true,
-  imports: [PortalPageComponent, FormsModule, PortalTabsComponent, AdeniPortalEmptyStateComponent],
+  imports: [
+    PortalPageComponent,
+    FormsModule,
+    PortalTabsComponent,
+    AdeniPortalEmptyStateComponent,
+    AdeniListPaginationComponent,
+  ],
   templateUrl: "./payments.component.html",
   styleUrl: "./payments.component.scss",
 })
@@ -61,12 +66,6 @@ export class PaymentsComponent implements OnInit, OnDestroy {
   readonly ledgerTotalCount = signal(0);
   readonly ledgerPage = signal(1);
   readonly ledgerPageSize = 25;
-  readonly ledgerTotalPageCount = computed(() =>
-    computeTotalPages(this.ledgerTotalCount(), this.ledgerPageSize),
-  );
-  readonly ledgerPageLabel = computed(() =>
-    pageRangeLabel(this.ledgerPage(), this.ledgerPageSize, this.ledgerTotalCount()),
-  );
   readonly documents = signal<BillingDocumentResponse[]>([]);
   readonly lastLink = signal<{ checkoutUrl: string; description: string } | null>(null);
   readonly actionId = signal<string | null>(null);
@@ -184,23 +183,11 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     }
   }
 
-  canNextLedgerPage(): boolean {
-    return this.ledgerPage() < this.ledgerTotalPageCount();
-  }
-
-  prevLedgerPage(): void {
-    if (this.ledgerPage() <= 1) {
+  goToLedgerPage(next: number): void {
+    if (next === this.ledgerPage()) {
       return;
     }
-    this.ledgerPage.update((p) => p - 1);
-    void this.load();
-  }
-
-  nextLedgerPage(): void {
-    if (!this.canNextLedgerPage()) {
-      return;
-    }
-    this.ledgerPage.update((p) => p + 1);
+    this.ledgerPage.set(next);
     void this.load();
   }
 

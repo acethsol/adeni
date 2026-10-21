@@ -91,25 +91,13 @@
       </table>
     </section>
 
-    @if (totalPages() > 1) {
-      <nav class="pager" aria-label="Trust badge pages">
-        <adeni-staff-btn
-          icon="chevron--left"
-          [disabled]="page() <= 1 || loading()"
-          (pressed)="goToPage(page() - 1)"
-        >
-          Previous
-        </adeni-staff-btn>
-        <span class="pager-meta">{{ showingRange() }}</span>
-        <adeni-staff-btn
-          icon="chevron--right"
-          iconPosition="end"
-          [disabled]="page() >= totalPages() || loading()"
-          (pressed)="goToPage(page() + 1)"
-        >
-          Next
-        </adeni-staff-btn>
-      </nav>
-    }
+    <adeni-list-pagination
+      [page]="page()"
+      [pageSize]="pageSize"
+      [totalCount]="totalCount()"
+      [loading]="loading()"
+      ariaLabel="Trust badge pages"
+      (pageChange)="goToPage($event)"
+    />
   }
 </app-portal-page>

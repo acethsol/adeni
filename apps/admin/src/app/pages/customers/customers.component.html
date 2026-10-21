@@ -96,26 +96,14 @@
       </table>
     </section>
 
-    @if (totalPages() > 1) {
-      <nav class="pager" aria-label="Customer search pages">
-        <adeni-staff-btn
-          icon="chevron--left"
-          [disabled]="page() <= 1 || searching()"
-          (pressed)="goToPage(page() - 1)"
-        >
-          Previous
-        </adeni-staff-btn>
-        <span class="pager-meta">{{ showingRange() }}</span>
-        <adeni-staff-btn
-          icon="chevron--right"
-          iconPosition="end"
-          [disabled]="page() >= totalPages() || searching()"
-          (pressed)="goToPage(page() + 1)"
-        >
-          Next
-        </adeni-staff-btn>
-      </nav>
-    }
+    <adeni-list-pagination
+      [page]="page()"
+      [pageSize]="pageSize"
+      [totalCount]="totalCount()"
+      [loading]="searching()"
+      ariaLabel="Customer search pages"
+      (pageChange)="goToPage($event)"
+    />
   }
 
   @if (exportData(); as ex) {

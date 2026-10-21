@@ -13,6 +13,82 @@
   @if (loading()) {
     <p class="muted">Loading…</p>
   } @else {
+    <app-portal-tabs [tabs]="planTabs" />
+
+    @if (planTab() === "compare") {
+      <section class="card compare">
+        <div class="compare-head">
+          <h3>Compare plans</h3>
+          <p class="muted compare-lede">
+            Feature rows match the live entitlements catalog for your market.
+          </p>
+        </div>
+        <div class="compare-table-shell">
+          <div class="compare-table-wrap" role="region" aria-label="Plan feature comparison" tabindex="0">
+            <table class="compare-table">
+              <colgroup>
+                <col class="compare-feature-col" />
+                @for (sku of skus; track sku) {
+                  <col class="compare-plan-col" />
+                }
+              </colgroup>
+              <thead>
+                <tr class="compare-header-row">
+                  <th scope="col" class="compare-feature-col compare-th-feature">
+                    <span class="compare-section-label">What's included</span>
+                  </th>
+                  @for (sku of skus; track sku) {
+                    @let display = planDisplay(sku);
+                    <th
+                      scope="col"
+                      class="compare-plan-col compare-th-plan"
+                      [class.is-current]="isCurrentPlan(sku)"
+                      [class.is-popular]="isPopular(sku)"
+                    >
+                      <div class="compare-plan-head">
+                        <span class="compare-plan-tier">{{ display.name }}</span>
+                        <span class="compare-plan-price">{{ display.priceLabel }}</span>
+                        @if (isCurrentPlan(sku)) {
+                          <span class="compare-plan-badge compare-plan-badge--current">Your plan</span>
+                        } @else if (isPopular(sku)) {
+                          <span class="compare-plan-badge compare-plan-badge--popular">Most popular</span>
+                        }
+                      </div>
+                    </th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of planComparison; track row.label; let alt = $even) {
+                  <tr [class.compare-row-alt]="alt">
+                    <th scope="row" class="compare-feature-col compare-feature-label">{{ row.label }}</th>
+                    @for (sku of skus; track sku) {
+                      @let kind = comparisonCellKind(row, sku);
+                      <td
+                        class="compare-plan-col compare-value-col"
+                        [class.is-current]="isCurrentPlan(sku)"
+                        [class.cell-yes]="kind === 'yes'"
+                        [class.cell-dash]="kind === 'dash'"
+                      >
+                        @if (kind === "yes") {
+                          <span class="compare-yes" aria-hidden="true">✓</span>
+                          <span class="sr-only">Included</span>
+                        } @else if (kind === "dash") {
+                          <span aria-hidden="true">—</span>
+                          <span class="sr-only">Not included</span>
+                        } @else {
+                          {{ comparisonCell(row, sku) }}
+                        }
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    } @else {
     @if (usage(); as u) {
       <section class="card usage" [class.warn]="isPlanUsageNearLimit(u)">
         <div class="usage-head">
@@ -171,111 +247,52 @@
           [compact]="true"
         />
       } @else {
-        <div class="billing-grid">
+        <div class="roster billing-roster">
           <adeni-list-toolbar
             storageKey="portal.plan.billing"
-            [showSearch]="false"
             [showViewSwitcher]="false"
-            [count]="billingHistory().length"
+            [count]="filteredBillingHistory().length"
             singularCountLabel="charge"
             pluralCountLabel="charges"
+            searchPlaceholder="Search event, status, or reference"
+            [searchQuery]="billingSearchQuery()"
+            (searchQueryChange)="billingSearchQuery.set($event)"
           />
-          <adeni-data-table
-            [rows]="billingHistory()"
-            [columns]="billingColumns"
-            [trackRow]="trackBillingRow"
-            [sortColumnId]="billingSortColumn()"
-            (sortColumnIdChange)="billingSortColumn.set($event)"
-            [sortDirection]="billingSortDirection()"
-            (sortDirectionChange)="billingSortDirection.set($event)"
-          >
-            <ng-template adeniDataTableCell="occurredAt" let-row>
-              {{ row.occurredAt | date: "mediumDate" }}
-            </ng-template>
-            <ng-template adeniDataTableCell="amount" let-row>
-              <span class="billing-amount">{{ formatChargeAmount(row) }}</span>
-            </ng-template>
-            <ng-template adeniDataTableCell="status" let-row>
-              <adeni-pill [tone]="billingStatusPillTone(row.status)" [compact]="true">
-                {{ formatBillingChargeStatus(row.status) }}
-              </adeni-pill>
-            </ng-template>
-          </adeni-data-table>
+          @if (filteredBillingHistory().length === 0) {
+            <adeni-portal-empty-state
+              icon="search"
+              title="No matches"
+              description="Try a different search term."
+              [compact]="true"
+            />
+          } @else {
+            <div class="adeni-list-results">
+              <adeni-data-table
+                [rows]="filteredBillingHistory()"
+                [columns]="billingColumns"
+                [trackRow]="trackBillingRow"
+                [sortColumnId]="billingSortColumn()"
+                (sortColumnIdChange)="billingSortColumn.set($event)"
+                [sortDirection]="billingSortDirection()"
+                (sortDirectionChange)="billingSortDirection.set($event)"
+              >
+                <ng-template adeniDataTableCell="occurredAt" let-row>
+                  {{ row.occurredAt | date: "mediumDate" }}
+                </ng-template>
+                <ng-template adeniDataTableCell="amount" let-row>
+                  <span class="billing-amount">{{ formatChargeAmount(row) }}</span>
+                </ng-template>
+                <ng-template adeniDataTableCell="status" let-row>
+                  <adeni-pill [tone]="billingStatusPillTone(row.status)" [compact]="true">
+                    {{ formatBillingChargeStatus(row.status) }}
+                  </adeni-pill>
+                </ng-template>
+              </adeni-data-table>
+            </div>
+          }
         </div>
       }
     </section>
-
-    <section class="card compare">
-      <div class="compare-head">
-        <h3>Compare plans</h3>
-        <p class="muted compare-lede">
-          Feature rows match the live entitlements catalog for your market pricing above.
-        </p>
-      </div>
-      <div class="compare-table-shell">
-        <div class="compare-table-wrap" role="region" aria-label="Plan feature comparison" tabindex="0">
-          <table class="compare-table">
-            <colgroup>
-              <col class="compare-feature-col" />
-              @for (sku of skus; track sku) {
-                <col class="compare-plan-col" />
-              }
-            </colgroup>
-            <thead>
-              <tr class="compare-header-row">
-                <th scope="col" class="compare-feature-col compare-th-feature">
-                  <span class="compare-section-label">What's included</span>
-                </th>
-                @for (sku of skus; track sku) {
-                  @let display = planDisplay(sku);
-                  <th
-                    scope="col"
-                    class="compare-plan-col compare-th-plan"
-                    [class.is-current]="isCurrentPlan(sku)"
-                    [class.is-popular]="isPopular(sku)"
-                  >
-                    <div class="compare-plan-head">
-                      <span class="compare-plan-tier">{{ display.name }}</span>
-                      <span class="compare-plan-price">{{ display.priceLabel }}</span>
-                      @if (isCurrentPlan(sku)) {
-                        <span class="compare-plan-badge compare-plan-badge--current">Your plan</span>
-                      } @else if (isPopular(sku)) {
-                        <span class="compare-plan-badge compare-plan-badge--popular">Most popular</span>
-                      }
-                    </div>
-                  </th>
-                }
-              </tr>
-            </thead>
-            <tbody>
-              @for (row of planComparison; track row.label; let alt = $even) {
-                <tr [class.compare-row-alt]="alt">
-                  <th scope="row" class="compare-feature-col compare-feature-label">{{ row.label }}</th>
-                @for (sku of skus; track sku) {
-                  @let kind = comparisonCellKind(row, sku);
-                  <td
-                    class="compare-plan-col compare-value-col"
-                    [class.is-current]="isCurrentPlan(sku)"
-                    [class.cell-yes]="kind === 'yes'"
-                    [class.cell-dash]="kind === 'dash'"
-                  >
-                    @if (kind === "yes") {
-                      <span class="compare-yes" aria-hidden="true">✓</span>
-                      <span class="sr-only">Included</span>
-                    } @else if (kind === "dash") {
-                      <span aria-hidden="true">—</span>
-                      <span class="sr-only">Not included</span>
-                    } @else {
-                      {{ comparisonCell(row, sku) }}
-                    }
-                  </td>
-                }
-              </tr>
-            }
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
+    }
   }
 </app-portal-page>

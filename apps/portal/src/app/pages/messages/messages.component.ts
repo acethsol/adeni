@@ -1,11 +1,9 @@
-import { Component, computed, inject, OnDestroy, OnInit, signal } from "@angular/core";
+import { Component, inject, OnDestroy, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Subscription } from "rxjs";
 import {
   formatSlotTime,
   MAX_UPLOAD_BYTES,
-  pageRangeLabel,
-  totalPages as computeTotalPages,
   type BusinessProfile,
   type ConversationDetail,
   type ConversationMessage,
@@ -16,6 +14,7 @@ import {
 import {
   AdeniCarbonIconComponent,
   AdeniFeedbackService,
+  AdeniListPaginationComponent,
   AdeniModalComponent,
   AdeniPortalEmptyStateComponent,
   PortalPageComponent,
@@ -35,6 +34,7 @@ const ALLOWED_ATTACHMENT_TYPES = new Set(["image/jpeg", "image/png", "image/webp
     AdeniPortalEmptyStateComponent,
     AdeniCarbonIconComponent,
     AdeniModalComponent,
+    AdeniListPaginationComponent,
   ],
   templateUrl: "./messages.component.html",
   styleUrl: "./messages.component.scss",
@@ -55,12 +55,6 @@ export class MessagesComponent implements OnInit, OnDestroy {
   readonly conversationTotalCount = signal(0);
   readonly conversationPage = signal(1);
   readonly conversationPageSize = 25;
-  readonly conversationTotalPageCount = computed(() =>
-    computeTotalPages(this.conversationTotalCount(), this.conversationPageSize),
-  );
-  readonly conversationPageLabel = computed(() =>
-    pageRangeLabel(this.conversationPage(), this.conversationPageSize, this.conversationTotalCount()),
-  );
   readonly templates = signal<MessageTemplate[]>([]);
   readonly detail = signal<ConversationDetail | null>(null);
   readonly sending = signal(false);
@@ -161,24 +155,11 @@ export class MessagesComponent implements OnInit, OnDestroy {
     }
   }
 
-  canNextConversationPage(): boolean {
-    return this.conversationPage() < this.conversationTotalPageCount();
-  }
-
-  prevConversationPage(): void {
-    if (this.conversationPage() <= 1) {
+  goToConversationPage(next: number): void {
+    if (next === this.conversationPage()) {
       return;
     }
-    this.conversationPage.update((p) => p - 1);
-    this.detail.set(null);
-    void this.load();
-  }
-
-  nextConversationPage(): void {
-    if (!this.canNextConversationPage()) {
-      return;
-    }
-    this.conversationPage.update((p) => p + 1);
+    this.conversationPage.set(next);
     this.detail.set(null);
     void this.load();
   }

@@ -1,6 +1,8 @@
 import { DatePipe } from "@angular/common";
-import { Component, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Router } from "@angular/router";
+import { map } from "rxjs";
 import {
   bookingsUsagePercent,
   formatAmountMinor,
@@ -44,6 +46,8 @@ import {
   type AdeniPillTone,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import type { PortalTab } from "../../core/portal-nav";
+import { PortalTabsComponent } from "../../shared/portal-tabs.component";
 
 const BILLING_EVENT_LABELS: Record<string, string> = {
   "subscription.create": "Plan activated",
@@ -57,6 +61,7 @@ const BILLING_EVENT_LABELS: Record<string, string> = {
   standalone: true,
   imports: [
     PortalPageComponent,
+    PortalTabsComponent,
     DatePipe,
     AdeniListToolbarComponent,
     AdeniDataTableComponent,
@@ -133,6 +138,31 @@ export class PlanComponent implements OnInit {
 
   readonly billingSortColumn = signal<string | null>("occurredAt");
   readonly billingSortDirection = signal<AdeniDataTableSortDirection>("desc");
+  readonly billingSearchQuery = signal("");
+
+  readonly planTabs: PortalTab[] = [
+    { id: "plan", label: "Plan & billing" },
+    { id: "compare", label: "Compare plans" },
+  ];
+
+  readonly planTab = toSignal(
+    this.route.queryParamMap.pipe(
+      map((params) => (params.get("tab") === "compare" ? "compare" : "plan")),
+    ),
+    {
+      initialValue:
+        this.route.snapshot.queryParamMap.get("tab") === "compare" ? "compare" : "plan",
+    },
+  );
+
+  readonly filteredBillingHistory = computed(() => {
+    const term = this.billingSearchQuery().trim().toLowerCase();
+    const rows = this.billingHistory();
+    if (!term) {
+      return rows;
+    }
+    return rows.filter((row) => this.billingRowMatchesSearch(row, term));
+  });
 
   comparisonCellKind(
     row: (typeof PLAN_COMPARISON)[number],
@@ -311,6 +341,20 @@ export class PlanComponent implements OnInit {
 
   formatBillingEvent(eventType: string): string {
     return BILLING_EVENT_LABELS[eventType] ?? eventType;
+  }
+
+  private billingRowMatchesSearch(row: TenantSubscriptionCharge, term: string): boolean {
+    const haystack = [
+      this.formatBillingEvent(row.eventType),
+      row.eventType,
+      formatBillingChargeStatus(row.status),
+      row.status,
+      row.providerReference,
+      this.formatChargeAmount(row),
+    ]
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(term);
   }
 
   formatChargeAmount(row: TenantSubscriptionCharge): string {

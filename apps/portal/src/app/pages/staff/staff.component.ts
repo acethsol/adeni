@@ -15,6 +15,8 @@ import {
   type StaffMember,
   type StaffRoleKey,
   type WeeklyAvailabilityRule,
+  DEFAULT_PAGE_SIZE,
+  sliceListPage,
 } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
@@ -27,6 +29,7 @@ import {
   AdeniFilterSelectComponent,
   AdeniIconBtnComponent,
   AdeniListFilterRowComponent,
+  AdeniListPaginationComponent,
   AdeniListToolbarComponent,
   AdeniRowActionBarComponent,
   AdeniTablePersonCellComponent,
@@ -147,6 +150,7 @@ function rowsToRules(rows: DayRow[]): WeeklyAvailabilityRule[] {
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
     AdeniListToolbarComponent,
+    AdeniListPaginationComponent,
     AdeniListFilterRowComponent,
     AdeniFilterSelectComponent,
     AdeniExportMenuComponent,
@@ -174,6 +178,9 @@ export class StaffComponent implements OnInit, OnDestroy {
   readonly rosterSearch = signal("");
   readonly bookingFilter = signal<StaffBookingFilter>("all");
   readonly portalFilter = signal<StaffPortalFilter>("all");
+  readonly page = signal(1);
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+  readonly listPageSizeOptions: number[] = [10, DEFAULT_PAGE_SIZE, 50];
 
   readonly bookingFilterOptions: AdeniFilterSelectOption[] = [
     { value: "all", label: "All booking states" },
@@ -298,6 +305,12 @@ export class StaffComponent implements OnInit, OnDestroy {
     ),
   );
 
+  readonly filteredStaffCount = computed(() => this.filteredStaff().length);
+
+  readonly paginatedStaff = computed(() =>
+    sliceListPage(this.sortedFilteredStaff(), this.page(), this.pageSize()),
+  );
+
   readonly staffTableColumns: AdeniDataTableColumn<StaffMember>[] = [
     {
       id: "name",
@@ -359,6 +372,40 @@ export class StaffComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     void this.load();
+  }
+
+  onRosterSearchChange(value: string): void {
+    this.rosterSearch.set(value);
+    this.page.set(1);
+  }
+
+  onBookingFilterChange(value: StaffBookingFilter): void {
+    this.bookingFilter.set(value);
+    this.page.set(1);
+  }
+
+  onPortalFilterChange(value: StaffPortalFilter): void {
+    this.portalFilter.set(value);
+    this.page.set(1);
+  }
+
+  goToStaffPage(next: number): void {
+    this.page.set(next);
+  }
+
+  onStaffPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.page.set(1);
+  }
+
+  onStaffSortColumnChange(columnId: string | null): void {
+    this.sortColumnId.set(columnId);
+    this.page.set(1);
+  }
+
+  onStaffSortDirectionChange(direction: AdeniDataTableSortDirection): void {
+    this.sortDirection.set(direction);
+    this.page.set(1);
   }
 
   ngOnDestroy(): void {

@@ -34,12 +34,13 @@
         storageKey="portal.staff"
         [viewMode]="viewMode()"
         (viewModeChange)="viewMode.set($event)"
-        [count]="filteredStaff().length"
+        [count]="paginatedStaff().length"
+        [countTotal]="filteredStaffCount()"
         singularCountLabel="member"
         pluralCountLabel="members"
         searchPlaceholder="Search team"
         [searchQuery]="rosterSearch()"
-        (searchQueryChange)="rosterSearch.set($event)"
+        (searchQueryChange)="onRosterSearchChange($event)"
       >
         <adeni-list-filter-row listFilters>
           <adeni-filter-select
@@ -47,14 +48,14 @@
             label="Booking status"
             [options]="bookingFilterOptions"
             [value]="bookingFilter()"
-            (valueChange)="bookingFilter.set($any($event))"
+            (valueChange)="onBookingFilterChange($any($event))"
           />
           <adeni-filter-select
             layout="toolbar"
             label="Portal access"
             [options]="portalFilterOptions"
             [value]="portalFilter()"
-            (valueChange)="portalFilter.set($any($event))"
+            (valueChange)="onPortalFilterChange($any($event))"
           />
         </adeni-list-filter-row>
         <adeni-export-menu listExports label="Export" [items]="staffExportItems" />
@@ -62,7 +63,7 @@
 
       @if (viewMode() === "cards") {
         <ul class="plain staff-grid">
-          @for (member of sortedFilteredStaff(); track member.id) {
+          @for (member of paginatedStaff(); track member.id) {
             <li class="org-card" [class.inactive]="!member.isActive">
               <div class="org-avatar" [attr.data-tone]="roleTone(member.roleKey)" aria-hidden="true">
                 @if (member.avatarImageUrl) {
@@ -132,16 +133,29 @@
             </li>
           }
         </ul>
+
+        <div class="adeni-list-results adeni-list-results--pagination-only">
+          <adeni-list-pagination
+            [page]="page()"
+            [pageSize]="pageSize()"
+            [totalCount]="filteredStaffCount()"
+            [pageSizeOptions]="listPageSizeOptions"
+            ariaLabel="Staff pages"
+            (pageChange)="goToStaffPage($event)"
+            (pageSizeChange)="onStaffPageSizeChange($event)"
+          />
+        </div>
       } @else {
+        <div class="adeni-list-results">
         <adeni-data-table
-          [rows]="sortedFilteredStaff()"
+          [rows]="paginatedStaff()"
           [columns]="staffTableColumns"
           [trackRow]="trackStaffRow"
           [rowClass]="staffRowClass"
           [sortColumnId]="sortColumnId()"
-          (sortColumnIdChange)="sortColumnId.set($event)"
+          (sortColumnIdChange)="onStaffSortColumnChange($event)"
           [sortDirection]="sortDirection()"
-          (sortDirectionChange)="sortDirection.set($event)"
+          (sortDirectionChange)="onStaffSortDirectionChange($event)"
         >
           <ng-template adeniDataTableCell="name" let-member>
             <adeni-table-person-cell
@@ -235,6 +249,17 @@
             </adeni-row-action-bar>
           </ng-template>
         </adeni-data-table>
+
+          <adeni-list-pagination
+            [page]="page()"
+            [pageSize]="pageSize()"
+            [totalCount]="filteredStaffCount()"
+            [pageSizeOptions]="listPageSizeOptions"
+            ariaLabel="Staff pages"
+            (pageChange)="goToStaffPage($event)"
+            (pageSizeChange)="onStaffPageSizeChange($event)"
+          />
+        </div>
       }
     </div>
   }

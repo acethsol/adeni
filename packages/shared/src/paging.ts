@@ -39,3 +39,17 @@ export function pageRangeLabel(page: number, pageSize: number, totalCount: numbe
   const end = Math.min(page * pageSize, totalCount);
   return `${start}–${end} of ${totalCount}`;
 }
+
+export function clampListPage(page: number, totalCount: number, pageSize: number): number {
+  return Math.min(Math.max(1, page), totalPages(totalCount, pageSize));
+}
+
+/** Client-side list pages: slice after filter/sort. */
+export function sliceListPage<T>(items: readonly T[], page: number, pageSize: number): T[] {
+  if (items.length === 0) {
+    return [];
+  }
+  const safePage = clampListPage(page, items.length, pageSize);
+  const start = (safePage - 1) * pageSize;
+  return items.slice(start, start + pageSize);
+}

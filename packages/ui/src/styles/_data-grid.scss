@@ -154,6 +154,12 @@
   color: var(--text);
 }
 
+.adeni-list-count-of {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
 .adeni-list-count-label {
   font-size: 0.6875rem;
   font-weight: 650;
@@ -802,18 +808,151 @@ a.adeni-icon-btn {
 
 .adeni-list-pagination {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
   gap: var(--cds-spacing-04);
   margin-top: var(--cds-spacing-04);
-  padding-top: var(--cds-spacing-04);
-  border-top: 1px solid var(--border);
+  padding: var(--cds-spacing-04) var(--cds-spacing-05);
+  border: 1px solid var(--border);
+  border-radius: var(--cds-radius-none, 0);
+  background: color-mix(in srgb, var(--text) 2%, var(--surface));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface) 80%, transparent);
+}
+
+@media (min-width: 48rem) {
+  .adeni-list-pagination {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.adeni-list-pagination--embedded {
+  margin-top: 0;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.adeni-list-pagination--solo {
+  @media (min-width: 48rem) {
+    justify-content: flex-start;
+  }
+}
+
+.adeni-list-pagination__lead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cds-spacing-03) var(--cds-spacing-05);
+  min-width: 0;
+}
+
+.adeni-list-pagination__summary {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.adeni-list-pagination__summary strong {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.adeni-list-pagination__page-size {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cds-spacing-03);
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.adeni-list-pagination__page-size-select {
+  min-height: 2rem;
+  padding: 0 var(--cds-spacing-04);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.8125rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.adeni-list-pagination__page-size-select:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.adeni-list-pagination__nav {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--cds-spacing-02);
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.adeni-list-pagination__pages {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 var(--cds-spacing-02);
+}
+
+.adeni-list-pagination__page {
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 var(--cds-spacing-02);
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.adeni-list-pagination__page:hover:not(:disabled):not(.adeni-list-pagination__page--current) {
+  background: color-mix(in srgb, var(--text) 6%, var(--surface));
+  border-color: var(--border);
+}
+
+.adeni-list-pagination__page--current {
+  font-weight: 600;
+  color: var(--surface);
+  background: var(--interactive, #7f56ff);
+  border-color: var(--interactive, #7f56ff);
+}
+
+.adeni-list-pagination__page:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.adeni-list-pagination__gap {
+  min-width: 1.25rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  user-select: none;
 }
 
 .adeni-list-pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cds-spacing-02);
   min-height: 2rem;
-  padding: 0 var(--cds-spacing-04);
+  padding: 0 var(--cds-spacing-03);
   border: 1px solid var(--border);
   border-radius: 0;
   background: var(--surface);
@@ -822,6 +961,11 @@ a.adeni-icon-btn {
   font-weight: 600;
   color: var(--text);
   cursor: pointer;
+  white-space: nowrap;
+}
+
+.adeni-list-pagination-btn--nav {
+  flex-shrink: 0;
 }
 
 .adeni-list-pagination-btn:hover:not(:disabled) {
@@ -833,14 +977,21 @@ a.adeni-icon-btn {
   cursor: not-allowed;
 }
 
-.adeni-list-pagination-meta {
-  font-size: 0.8125rem;
-  color: var(--text-muted);
-}
+@media (max-width: 47.99rem) {
+  .adeni-list-pagination-btn__text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
 
-.adeni-list-pagination--solo {
-  justify-content: flex-end;
-  margin-top: var(--cds-spacing-04);
-  padding-top: var(--cds-spacing-04);
-  border-top: 1px solid var(--border);
+  .adeni-list-pagination-btn--nav {
+    min-width: 2rem;
+    padding: 0;
+  }
 }

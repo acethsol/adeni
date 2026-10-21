@@ -1,5 +1,7 @@
-import { Component, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, RouterLink } from "@angular/router";
+import { map } from "rxjs";
 import type {
   TenantCustomerDetail,
   TenantCustomerRecentBooking,
@@ -12,15 +14,27 @@ import {
   AdeniDataTableActionsDirective,
   AdeniDataTableCellDirective,
   AdeniDataTableComponent,
+  AdeniIconBtnComponent,
+  AdeniListToolbarComponent,
   AdeniPillComponent,
   AdeniPortalEmptyStateComponent,
+  AdeniRowActionBarComponent,
   AdeniTablePersonCellComponent,
   PortalPageComponent,
   type AdeniDataTableColumn,
+  type AdeniDataTableSortDirection,
   type AdeniPillTone,
 } from "@adeni/ui";
 import { AdeniApiError } from "@adeni/api-client";
+import type { PortalTab } from "../../core/portal-nav";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { PortalTabsComponent } from "../../shared/portal-tabs.component";
+
+const CUSTOMER_DETAIL_TABS = new Set(["overview", "bookings", "queue"]);
+
+function normalizeCustomerDetailTab(raw: string | null): string {
+  return raw && CUSTOMER_DETAIL_TABS.has(raw) ? raw : "overview";
+}
 
 const PENDING_STATUS = 0;
 const CONFIRMED_STATUS = 1;
@@ -33,6 +47,7 @@ const PAID_STATUS = 6;
   standalone: true,
   imports: [
     PortalPageComponent,
+    PortalTabsComponent,
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
     AdeniTablePersonCellComponent,
@@ -40,6 +55,9 @@ const PAID_STATUS = 6;
     AdeniDataTableComponent,
     AdeniDataTableCellDirective,
     AdeniDataTableActionsDirective,
+    AdeniListToolbarComponent,
+    AdeniRowActionBarComponent,
+    AdeniIconBtnComponent,
     RouterLink,
   ],
   templateUrl: "./customer-detail.component.html",
@@ -49,29 +67,81 @@ export class CustomerDetailComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
   private readonly route = inject(ActivatedRoute);
 
+  readonly tab = toSignal(
+    this.route.queryParamMap.pipe(map((params) => normalizeCustomerDetailTab(params.get("tab")))),
+    {
+      initialValue: normalizeCustomerDetailTab(this.route.snapshot.queryParamMap.get("tab")),
+    },
+  );
+
+  readonly tabs = computed((): PortalTab[] => {
+    const c = this.customer();
+    const bookingCount = c?.recentBookings.length ?? 0;
+    const queueCount = c?.recentQueueVisits.length ?? 0;
+    return [
+      { id: "overview", label: "Overview" },
+      {
+        id: "bookings",
+        label: bookingCount > 0 ? `Bookings (${bookingCount})` : "Bookings",
+      },
+      {
+        id: "queue",
+        label: queueCount > 0 ? `Queue (${queueCount})` : "Queue",
+      },
+    ];
+  });
+
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly customer = signal<TenantCustomerDetail | null>(null);
 
   readonly formatSlotTime = formatSlotTime;
 
+  readonly bookingSearchQuery = signal("");
+  readonly queueSearchQuery = signal("");
+  readonly bookingSortColumn = signal<string | null>("when");
+  readonly bookingSortDirection = signal<AdeniDataTableSortDirection>("desc");
+  readonly queueSortColumn = signal<string | null>("when");
+  readonly queueSortDirection = signal<AdeniDataTableSortDirection>("desc");
+
+  readonly filteredRecentBookings = computed(() => {
+    const rows = this.customer()?.recentBookings ?? [];
+    const term = this.bookingSearchQuery().trim().toLowerCase();
+    if (!term) {
+      return rows;
+    }
+    return rows.filter((row) => this.bookingRowMatchesSearch(row, term));
+  });
+
+  readonly filteredRecentQueueVisits = computed(() => {
+    const rows = this.customer()?.recentQueueVisits ?? [];
+    const term = this.queueSearchQuery().trim().toLowerCase();
+    if (!term) {
+      return rows;
+    }
+    return rows.filter((row) => this.queueRowMatchesSearch(row, term));
+  });
+
   readonly bookingColumns: AdeniDataTableColumn<TenantCustomerRecentBooking>[] = [
     {
       id: "when",
       header: "When",
       cell: (row) => formatSlotTime(row.startAt),
+      sortable: true,
       sortValue: (row) => row.startAt,
     },
     {
       id: "service",
       header: "Service",
       cell: (row) => row.serviceName,
+      sortable: true,
       sortValue: (row) => row.serviceName.toLowerCase(),
     },
     {
       id: "status",
       header: "Status",
       cell: () => "",
+      sortable: true,
       sortValue: (row) => row.status,
     },
   ];
@@ -81,18 +151,21 @@ export class CustomerDetailComponent implements OnInit {
       id: "when",
       header: "Joined",
       cell: (row) => formatSlotTime(row.joinedAt),
+      sortable: true,
       sortValue: (row) => row.joinedAt,
     },
     {
       id: "service",
       header: "Service",
       cell: (row) => row.serviceName ?? "Walk-in",
+      sortable: true,
       sortValue: (row) => (row.serviceName ?? "Walk-in").toLowerCase(),
     },
     {
       id: "status",
       header: "Status",
       cell: () => "",
+      sortable: true,
       sortValue: (row) => row.status,
     },
   ];
@@ -209,6 +282,31 @@ export class CustomerDetailComponent implements OnInit {
     }
   }
 
+  private bookingRowMatchesSearch(row: TenantCustomerRecentBooking, term: string): boolean {
+    const haystack = [
+      row.serviceName,
+      row.staffDisplayName ?? "",
+      this.bookingStatusLabel(row.status),
+      formatSlotTime(row.startAt),
+    ]
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(term);
+  }
+
+  private queueRowMatchesSearch(row: TenantCustomerRecentQueueVisit, term: string): boolean {
+    const serviceLabel = row.serviceName ?? "Walk-in";
+    const haystack = [
+      serviceLabel,
+      row.staffDisplayName ?? "",
+      this.queueStatusLabel(row.status),
+      formatSlotTime(row.joinedAt),
+    ]
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(term);
+  }
+
   bookingQueryParams(row: TenantCustomerRecentBooking): { tab: TenantBookingListTab; focus: string } {
     const startMs = Date.parse(row.startAt);
     const isPast =
@@ -218,6 +316,12 @@ export class CustomerDetailComponent implements OnInit {
       tab: isPast ? "past" : row.status === PENDING_STATUS ? "pending" : "upcoming",
       focus: row.id,
     };
+  }
+
+  bookingOpenRouterLink(row: TenantCustomerRecentBooking): string {
+    const { tab, focus } = this.bookingQueryParams(row);
+    const qs = new URLSearchParams({ tab, focus });
+    return `/bookings?${qs.toString()}`;
   }
 }
 

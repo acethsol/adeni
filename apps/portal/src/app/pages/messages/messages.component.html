@@ -58,27 +58,16 @@
                 </li>
               }
             </ul>
-            @if (conversationTotalCount() > conversationPageSize) {
-              <div class="pagination">
-                <button
-                  type="button"
-                  class="btn"
-                  [disabled]="conversationPage() <= 1 || loading()"
-                  (click)="prevConversationPage()"
-                >
-                  Previous
-                </button>
-                <span class="muted">{{ conversationPageLabel() }}</span>
-                <button
-                  type="button"
-                  class="btn"
-                  [disabled]="loading() || !canNextConversationPage()"
-                  (click)="nextConversationPage()"
-                >
-                  Next
-                </button>
-              </div>
-            }
+            <adeni-list-pagination
+              [embedded]="true"
+              [page]="conversationPage()"
+              [pageSize]="conversationPageSize"
+              [totalCount]="conversationTotalCount()"
+              [loading]="loading()"
+              [showEdgeJumpers]="false"
+              ariaLabel="Conversation pages"
+              (pageChange)="goToConversationPage($event)"
+            />
           }
         </div>
       </section>

@@ -78,12 +78,13 @@
         storageKey="portal.locations"
         [viewMode]="viewMode()"
         (viewModeChange)="viewMode.set($event)"
-        [count]="filteredLocations().length"
+        [count]="paginatedLocations().length"
+        [countTotal]="filteredLocationsCount()"
         singularCountLabel="location"
         pluralCountLabel="locations"
         searchPlaceholder="Search locations"
         [searchQuery]="locationSearch()"
-        (searchQueryChange)="locationSearch.set($event)"
+        (searchQueryChange)="onLocationSearchChange($event)"
       >
         <adeni-export-menu listExports label="Export" [items]="exportItems" />
       </adeni-list-toolbar>
@@ -97,7 +98,7 @@
         />
       } @else if (viewMode() === "cards") {
         <ul class="plain staff-grid">
-          @for (loc of sortedFilteredLocations(); track loc.id) {
+          @for (loc of paginatedLocations(); track loc.id) {
             <li class="org-card">
               <div class="org-avatar" data-tone="neutral" aria-hidden="true">
                 <span>{{ locationInitials(loc) }}</span>
@@ -128,15 +129,28 @@
             </li>
           }
         </ul>
+
+        <div class="adeni-list-results adeni-list-results--pagination-only">
+          <adeni-list-pagination
+            [page]="page()"
+            [pageSize]="pageSize()"
+            [totalCount]="filteredLocationsCount()"
+            [pageSizeOptions]="listPageSizeOptions"
+            ariaLabel="Location pages"
+            (pageChange)="goToLocationsPage($event)"
+            (pageSizeChange)="onLocationsPageSizeChange($event)"
+          />
+        </div>
       } @else {
+        <div class="adeni-list-results">
         <adeni-data-table
-          [rows]="sortedFilteredLocations()"
+          [rows]="paginatedLocations()"
           [columns]="locationColumns"
           [trackRow]="trackLocationRow"
           [sortColumnId]="sortColumnId()"
-          (sortColumnIdChange)="sortColumnId.set($event)"
+          (sortColumnIdChange)="onLocationSortColumnChange($event)"
           [sortDirection]="sortDirection()"
-          (sortDirectionChange)="sortDirection.set($event)"
+          (sortDirectionChange)="onLocationSortDirectionChange($event)"
         >
           <ng-template adeniDataTableCell="name" let-loc>
             <adeni-table-person-cell
@@ -180,6 +194,17 @@
             </adeni-row-action-bar>
           </ng-template>
         </adeni-data-table>
+
+          <adeni-list-pagination
+            [page]="page()"
+            [pageSize]="pageSize()"
+            [totalCount]="filteredLocationsCount()"
+            [pageSizeOptions]="listPageSizeOptions"
+            ariaLabel="Location pages"
+            (pageChange)="goToLocationsPage($event)"
+            (pageSizeChange)="onLocationsPageSizeChange($event)"
+          />
+        </div>
       }
     </div>
   }

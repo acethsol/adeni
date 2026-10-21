@@ -1,4 +1,19 @@
 @use "staff-layout" as *;
+@use "data-grid" as *;
+
+.roster {
+  width: 100%;
+}
+
+.adeni-list-results {
+  border: 1px solid var(--border);
+  background: var(--surface);
+
+  adeni-data-table ::ng-deep .adeni-data-table-shell {
+    border: none;
+    padding: 0;
+  }
+}
 
 .section-title {
   margin: 0;
@@ -20,12 +35,23 @@
 }
 
 .profile-hero {
+  margin-bottom: var(--cds-spacing-03);
+  padding: var(--cds-spacing-06);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--adeni-purple, #7f56ff) 8%, var(--surface)) 0%,
+    var(--surface) 55%
+  );
+  border-color: color-mix(in srgb, var(--adeni-purple, #7f56ff) 18%, var(--border));
+}
+
+.profile-hero__identity {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--cds-spacing-05);
-  margin-bottom: var(--cds-spacing-05);
+  width: 100%;
 }
 
 .profile-hero__meta {
@@ -34,10 +60,126 @@
   gap: var(--cds-spacing-03);
 }
 
+.tab-panel {
+  margin-top: var(--cds-spacing-03);
+}
+
+.stat-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--cds-spacing-05);
+  margin-bottom: var(--cds-spacing-05);
+}
+
+.stat-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  min-height: 5.5rem;
+  padding: 1rem 1.05rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--cds-radius-none);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--text) 4%, transparent);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+a.stat-card:hover {
+  border-color: color-mix(in srgb, var(--adeni-purple, #7f56ff) 35%, var(--border));
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+.stat-card--bookings {
+  background: color-mix(in srgb, #7f56ff 12%, var(--surface));
+  border-color: color-mix(in srgb, #7f56ff 28%, var(--border));
+}
+
+.stat-card--queue {
+  background: color-mix(in srgb, #13c2a3 12%, var(--surface));
+  border-color: color-mix(in srgb, #13c2a3 28%, var(--border));
+}
+
+.stat-card--account {
+  background: color-mix(in srgb, #4589ff 10%, var(--surface));
+  border-color: color-mix(in srgb, #4589ff 26%, var(--border));
+}
+
+.stat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.35rem;
+  height: 2.35rem;
+  border: 1px solid var(--border);
+}
+
+.stat-icon--bookings {
+  color: #7f56ff;
+  background: color-mix(in srgb, #7f56ff 18%, var(--surface));
+  border-color: color-mix(in srgb, #7f56ff 32%, var(--border));
+}
+
+.stat-icon--queue {
+  color: #13c2a3;
+  background: color-mix(in srgb, #13c2a3 18%, var(--surface));
+  border-color: color-mix(in srgb, #13c2a3 32%, var(--border));
+}
+
+.stat-icon--account {
+  color: #4589ff;
+  background: color-mix(in srgb, #4589ff 14%, var(--surface));
+  border-color: color-mix(in srgb, #4589ff 28%, var(--border));
+}
+
+.stat-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.stat-label {
+  display: block;
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stat-value {
+  display: block;
+  margin: 0.35rem 0 0.15rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-value--text {
+  font-size: 1.25rem;
+}
+
+.stat-hint {
+  display: block;
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
 .profile-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
   gap: var(--cds-spacing-06);
+}
+
+.profile-panel .section-title {
+  margin-bottom: 0;
+}
+
+.profile-panel .section-lede {
   margin-bottom: var(--cds-spacing-05);
 }
 
@@ -61,10 +203,6 @@
   margin: 0.15rem 0 0;
 }
 
-.card + .card {
-  margin-top: var(--cds-spacing-05);
-}
-
 .btn-ghost {
   background: transparent;
   border-color: transparent;
@@ -74,12 +212,6 @@
 .btn-ghost:hover {
   color: var(--text);
   background: var(--cds-layer-hover-01, rgb(0 0 0 / 4%));
-}
-
-.btn-dense {
-  min-height: 2rem;
-  padding: 0 var(--cds-spacing-04);
-  font-size: 0.875rem;
 }
 
 .cell-primary {
@@ -92,7 +224,3 @@
   margin-top: 0.15rem;
 }
 
-adeni-data-table ::ng-deep .adeni-data-table-shell {
-  border: none;
-  padding: 0;
-}

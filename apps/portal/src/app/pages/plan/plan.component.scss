@@ -1,4 +1,9 @@
 @use "staff-layout" as *;
+@use "data-grid" as *;
+
+.roster.billing-roster {
+  width: 100%;
+}
 
 .tier-grid {
   display: grid;
@@ -196,10 +201,6 @@
   margin: 0.75rem 0 0;
   color: #92400e;
   font-size: 0.85rem;
-}
-
-.billing-grid {
-  margin-top: var(--cds-spacing-03);
 }
 
 .billing-amount {
