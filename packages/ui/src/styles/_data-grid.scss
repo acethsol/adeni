@@ -687,6 +687,57 @@ a.adeni-icon-btn {
   border-bottom: 1px solid var(--border);
 }
 
+.adeni-data-table-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.adeni-data-table-sort-btn:hover .adeni-data-table-sort-label {
+  color: var(--text);
+}
+
+.adeni-data-table-sort-label {
+  text-align: left;
+}
+
+.adeni-data-table th.align-right .adeni-data-table-sort-btn {
+  margin-left: auto;
+}
+
+.adeni-data-table th.align-right .adeni-data-table-sort-label {
+  text-align: right;
+}
+
+.adeni-data-table-sort-icon {
+  flex-shrink: 0;
+  width: 0.875rem;
+  height: 0.875rem;
+  opacity: 0.45;
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 4L6 14h6v14h8V14h6L16 4z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+
+.adeni-data-table-sorted .adeni-data-table-sort-icon {
+  opacity: 1;
+  color: var(--adeni-purple, #6f4ff2);
+}
+
+.adeni-data-table-sorted[aria-sort="descending"] .adeni-data-table-sort-icon {
+  transform: rotate(180deg);
+}
+
 .adeni-data-table th.align-right,
 .adeni-data-table td.align-right {
   text-align: right;

@@ -97,7 +97,7 @@
         />
       } @else if (viewMode() === "cards") {
         <ul class="plain staff-grid">
-          @for (loc of filteredLocations(); track loc.id) {
+          @for (loc of sortedFilteredLocations(); track loc.id) {
             <li class="org-card">
               <div class="org-avatar" data-tone="neutral" aria-hidden="true">
                 <span>{{ locationInitials(loc) }}</span>
@@ -130,9 +130,13 @@
         </ul>
       } @else {
         <adeni-data-table
-          [rows]="filteredLocations()"
+          [rows]="sortedFilteredLocations()"
           [columns]="locationColumns"
           [trackRow]="trackLocationRow"
+          [sortColumnId]="sortColumnId()"
+          (sortColumnIdChange)="sortColumnId.set($event)"
+          [sortDirection]="sortDirection()"
+          (sortDirectionChange)="sortDirection.set($event)"
         >
           <ng-template adeniDataTableCell="name" let-loc>
             <adeni-table-person-cell

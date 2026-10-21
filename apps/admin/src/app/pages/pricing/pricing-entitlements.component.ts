@@ -35,13 +35,12 @@ const ENTITLEMENT_ROW_DEFS: { key: keyof PlanEntitlementSeed; label: string; kin
     { key: "unlimitedServices", label: "Unlimited services", kind: "flag" },
     { key: "publicProfile", label: "Public profile", kind: "flag" },
     { key: "discoverListing", label: "Discover listing", kind: "flag" },
-    { key: "messaging", label: "Adeni inbox", kind: "flag" },
+    { key: "messaging", label: "Adeni messaging", kind: "flag" },
     { key: "basicReminders", label: "Basic reminders", kind: "flag" },
     { key: "configurableReminders", label: "Configurable reminders", kind: "flag" },
     { key: "followUpAutomation", label: "Follow-up automation", kind: "flag" },
     { key: "smsEnabled", label: "SMS notifications", kind: "flag" },
     { key: "smsUsageBilling", label: "SMS usage billing", kind: "flag" },
-    { key: "whatsappIntegration", label: "WhatsApp integration", kind: "flag" },
     { key: "basicAnalytics", label: "Basic analytics", kind: "flag" },
     { key: "advancedAnalytics", label: "Advanced analytics", kind: "flag" },
     { key: "customerRetentionAnalytics", label: "Customer retention analytics", kind: "flag" },
@@ -117,11 +116,17 @@ export class AdminPricingEntitlementsComponent {
   });
 
   readonly columns: AdeniDataTableColumn<EntitlementMatrixRow>[] = [
-    { id: "feature", header: "Capability", cell: (row) => row.label },
+    {
+      id: "feature",
+      header: "Capability",
+      cell: (row) => row.label,
+      sortValue: (row) => row.label.toLowerCase(),
+    },
     ...SUBSCRIPTION_SKUS.map((sku) => ({
       id: sku,
       header: formatSubscriptionSku(sku),
       cell: (row: EntitlementMatrixRow) => row[sku],
+      sortValue: (row: EntitlementMatrixRow) => row[sku],
     })),
   ];
 

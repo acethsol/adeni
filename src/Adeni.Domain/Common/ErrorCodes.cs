@@ -56,7 +56,7 @@ public static class ErrorCodes
     public const string LocationLimitReached = "entitlements.location_limit";
     public const string PractitionerLimitReached = "entitlements.practitioner_limit";
     public const string WaitlistNotEntitled = "entitlements.waitlist";
-    public const string WhatsappNotEntitled = "entitlements.whatsapp";
+    public const string SmsNotEntitled = "entitlements.sms";
 
     public static Error LocationLimitReachedError(int maxLocations) =>
         new(
@@ -73,8 +73,8 @@ public static class ErrorCodes
     public static Error WaitlistNotEntitledError() =>
         new(WaitlistNotEntitled, "Waitlist is not included on your current plan.");
 
-    public static Error WhatsappNotEntitledError() =>
-        new(WhatsappNotEntitled, "WhatsApp integration is not included on your current plan.");
+    public static Error SmsNotEntitledError() =>
+        new(SmsNotEntitled, "SMS notifications are not included on your current plan.");
 
     public static Error SlotExpiredError() =>
         new(SlotExpired, "That time slot has passed. Please choose a new time.");
@@ -228,4 +228,13 @@ public static class ErrorCodes
         new(
             PublicPageSectionsRequired,
             "Keep at least one of About, Services, or Visit visible.");
+
+    public const string ListSortInvalid = "list.sort_invalid";
+
+    public static Error ListSortInvalidError(string? sortBy) =>
+        new(
+            ListSortInvalid,
+            string.IsNullOrWhiteSpace(sortBy)
+                ? "Sort direction must be asc or desc."
+                : $"Sort field \"{sortBy}\" is not allowed for this list.");
 }

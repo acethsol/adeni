@@ -177,6 +177,7 @@ public static class DevelopmentDataSeeder
         await EnsureDevBusinessLogoAsync(db, cancellationToken);
         await SeedDevBusinessOwnerAsync(db, cancellationToken);
         await EnsureDevPortalTenantBillingAsync(db, cancellationToken);
+        await SeedDevPortalSubscriptionChargesAsync(db, cancellationToken);
         await SeedDevStaffInviteAsync(db, cancellationToken);
         await SeedDevDepositSettingsAsync(db, cancellationToken);
         await SeedDevReviewFixtureAsync(db, cancellationToken);
@@ -1037,6 +1038,71 @@ public static class DevelopmentDataSeeder
             TenantBillingDefaults.DefaultTrialDays,
             SubscriptionSku.Professional,
             now);
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Sample Adeni SaaS charges for portal <c>/plan</c> (Lekki Cuts / auth0|local-business).
+    /// Idempotent via <c>devseed-portal-billing-*</c> keys. Restart API in Development to apply.
+    /// Admin Finance seed: <c>db/scripts/admin-transactions-dev-seed.sql</c>.
+    /// </summary>
+    private static async Task SeedDevPortalSubscriptionChargesAsync(
+        AdeniDbContext db,
+        CancellationToken cancellationToken)
+    {
+        const string idempotencyPrefix = "devseed-portal-billing-";
+
+        var location = await db.BusinessLocations
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(entry => entry.Slug == SeedMarkerSlug, cancellationToken);
+
+        if (location is null)
+        {
+            return;
+        }
+
+        var tenantId = location.TenantId;
+        if (await db.TenantSubscriptionCharges
+                .IgnoreQueryFilters()
+                .AnyAsync(
+                    x => x.TenantId == tenantId && x.IdempotencyKey.StartsWith(idempotencyPrefix),
+                    cancellationToken))
+        {
+            return;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        (int DayOffset, string EventType, string Status, long AmountMinor)[] seeds =
+        [
+            (88, "subscription.create", "success", 55_000),
+            (59, "subscription.charge.success", "success", 55_000),
+            (31, "subscription.charge.success", "success", 55_000),
+            (14, "invoice.payment_failed", "failed", 55_000),
+            (2, "subscription.charge.success", "success", 55_000),
+        ];
+
+        var index = 1;
+        foreach (var seed in seeds)
+        {
+            var occurred = now.AddDays(-seed.DayOffset);
+            db.TenantSubscriptionCharges.Add(new TenantSubscriptionCharge
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                IdempotencyKey = $"{idempotencyPrefix}{index}",
+                ProviderReference = $"devseed_portal_billing_{index:D3}",
+                EventType = seed.EventType,
+                SubscriptionSku = SubscriptionSku.Professional,
+                AmountMinor = seed.AmountMinor,
+                Currency = "NGN",
+                Status = seed.Status,
+                OccurredAt = occurred,
+                CreatedAt = occurred,
+            });
+            index++;
+        }
+
         await db.SaveChangesAsync(cancellationToken);
     }
 

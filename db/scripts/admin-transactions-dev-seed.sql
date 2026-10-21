@@ -1,4 +1,5 @@
 -- Dev-only: sample commerce + SaaS rows for admin Finance → Transactions (browse + search "devseed").
+-- Portal /plan billing for Lekki Cuts: seeded on API start via DevelopmentDataSeeder (devseed-portal-billing-*).
 -- Idempotent on ProviderReference / IdempotencyKey prefixes.
 
 SET NOCOUNT ON;

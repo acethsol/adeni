@@ -3,7 +3,6 @@ import { FormsModule } from "@angular/forms";
 import { Subscription } from "rxjs";
 import {
   formatSlotTime,
-  hasTenantEntitlement,
   MAX_UPLOAD_BYTES,
   pageRangeLabel,
   totalPages as computeTotalPages,
@@ -112,7 +111,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
         let conversationPage = 1;
         let whatsAppBusinessUrl: string | null = null;
         const slug = primaryLocationSlug(profile);
-        if (slug && hasTenantEntitlement(profile.entitlements, "whatsappIntegration")) {
+        if (slug) {
           try {
             const link = await client.getBusinessWhatsAppLink(slug);
             whatsAppBusinessUrl = link.url;

@@ -106,17 +106,6 @@ public sealed class EntitlementsService(
                 : Result.Failure(ErrorCodes.WaitlistNotEntitledError()));
     }
 
-    public Task<Result> EnsureCanUseWhatsappIntegrationForTenantAsync(
-        Tenant tenant,
-        CancellationToken cancellationToken = default)
-    {
-        var entitlements = GetEntitlementsForTenant(tenant);
-        return Task.FromResult(
-            entitlements.WhatsappIntegration
-                ? Result.Success()
-                : Result.Failure(ErrorCodes.WhatsappNotEntitledError()));
-    }
-
     public async Task<SubscriptionUsageResponse> GetUsageForTenantAsync(
         Tenant tenant,
         CancellationToken cancellationToken = default)

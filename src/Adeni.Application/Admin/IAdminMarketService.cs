@@ -1,5 +1,6 @@
 namespace Adeni.Application.Admin;
 
+using Adeni.Application.Common;
 using Adeni.Domain.Common;
 
 public sealed record AdminMarketResponse(
@@ -48,6 +49,8 @@ public interface IAdminMarketService
         string? search,
         int page,
         int pageSize,
+        string? sortBy = null,
+        ListSortDirection? sortDirection = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<AdminMarketResponse>> CreateAsync(

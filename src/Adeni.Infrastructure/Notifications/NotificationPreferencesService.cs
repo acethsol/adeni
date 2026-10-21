@@ -61,12 +61,10 @@ public sealed class NotificationPreferencesService(
                 return Result.Failure<NotificationPreferencesResponse>(Error.NotFound("Business"));
             }
 
-            var whatsappCheck = await entitlementsService.EnsureCanUseWhatsappIntegrationForTenantAsync(
-                tenant,
-                cancellationToken);
-            if (whatsappCheck.IsFailure)
+            var entitlements = entitlementsService.GetEntitlementsForTenant(tenant);
+            if (!entitlements.SmsEnabled)
             {
-                return Result.Failure<NotificationPreferencesResponse>(whatsappCheck.Error);
+                return Result.Failure<NotificationPreferencesResponse>(ErrorCodes.SmsNotEntitledError());
             }
         }
 

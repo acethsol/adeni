@@ -41,6 +41,11 @@
           [rows]="businesses()"
           [columns]="columns"
           [trackRow]="trackBusinessRow"
+          [sortRows]="false"
+          [sortColumnId]="sortColumnId()"
+          (sortColumnIdChange)="onSortColumnChange($event)"
+          [sortDirection]="sortDirection()"
+          (sortDirectionChange)="onSortDirectionChange($event)"
         >
           <ng-template adeniDataTableCell="business" let-b>
             <adeni-table-person-cell

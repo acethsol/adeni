@@ -19,7 +19,9 @@ import {
   AdeniTablePersonCellComponent,
   PortalPageComponent,
   readPersistedListViewMode,
+  sortDataRows,
   type AdeniDataTableColumn,
+  type AdeniDataTableSortDirection,
   type AdeniExportMenuItem,
   type AdeniListViewMode,
 } from "@adeni/ui";
@@ -87,6 +89,8 @@ export class LocationsComponent implements OnInit {
   readonly editingId = signal<string | null>(null);
   readonly showForm = signal(false);
   readonly locationSearch = signal("");
+  readonly sortColumnId = signal<string | null>(null);
+  readonly sortDirection = signal<AdeniDataTableSortDirection>("asc");
   readonly viewMode = signal<AdeniListViewMode>(
     readPersistedListViewMode("portal.locations", "cards"),
   );
@@ -130,11 +134,35 @@ export class LocationsComponent implements OnInit {
     });
   });
 
+  readonly sortedFilteredLocations = computed(() =>
+    sortDataRows(
+      this.filteredLocations(),
+      this.sortColumnId(),
+      this.sortDirection(),
+      this.locationColumns,
+    ),
+  );
+
   readonly locationColumns: AdeniDataTableColumn<BusinessLocation>[] = [
-    { id: "name", header: "Location", cell: (l) => l.name || l.slug },
-    { id: "address", header: "Address", cell: (l) => l.addressLine },
+    {
+      id: "name",
+      header: "Location",
+      cell: (l) => l.name || l.slug,
+      sortValue: (l) => (l.name || l.slug).toLowerCase(),
+    },
+    {
+      id: "address",
+      header: "Address",
+      cell: (l) => l.addressLine,
+      sortValue: (l) => l.addressLine.toLowerCase(),
+    },
     { id: "market", header: "Market", cell: (l) => l.marketId },
-    { id: "primary", header: "Primary", cell: () => "" },
+    {
+      id: "primary",
+      header: "Primary",
+      cell: () => "",
+      sortValue: (l) => (l.isPrimary ? 1 : 0),
+    },
   ];
 
   readonly trackLocationRow = (loc: BusinessLocation): string => loc.id;

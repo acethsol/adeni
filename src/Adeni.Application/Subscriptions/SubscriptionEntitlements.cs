@@ -20,7 +20,6 @@ public sealed record TenantEntitlements(
     bool FollowUpAutomation,
     bool AdvancedReminders,
     bool Waitlist,
-    bool WhatsappIntegration,
     bool SmsEnabled,
     bool SmsUsageBilling,
     bool BasicAnalytics,

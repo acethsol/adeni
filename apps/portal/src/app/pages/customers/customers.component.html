@@ -89,6 +89,11 @@
             [rows]="items()"
             [columns]="columns"
             [trackRow]="trackRow"
+            [sortRows]="false"
+            [sortColumnId]="sortColumnId()"
+            (sortColumnIdChange)="onSortColumnChange($event)"
+            [sortDirection]="sortDirection()"
+            (sortDirectionChange)="onSortDirectionChange($event)"
           >
             <ng-template adeniDataTableCell="name" let-row>
               <adeni-table-person-cell

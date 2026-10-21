@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Adeni.Application.Abstractions;
 using Adeni.Application.Admin;
+using Adeni.Application.Common;
 using Adeni.Application.Caching;
 using Adeni.Application.Markets;
 using Adeni.Domain.Auditing;
@@ -43,6 +44,8 @@ public sealed partial class AdminMarketService(
         string? search,
         int page,
         int pageSize,
+        string? sortBy = null,
+        ListSortDirection? sortDirection = null,
         CancellationToken cancellationToken = default)
     {
         var paging = AdminPaging.Normalize(page, pageSize);
@@ -65,8 +68,10 @@ public sealed partial class AdminMarketService(
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
-        var rows = await query
-            .OrderBy(market => market.Name)
+        var field = sortBy ?? AdminMarketListSort.DefaultField;
+        var direction = sortDirection ?? AdminMarketListSort.DefaultDirection;
+        var sorted = ApplyMarketSort(query, field, direction);
+        var rows = await sorted
             .Skip((effectivePage - 1) * effectivePageSize)
             .Take(effectivePageSize)
             .ToListAsync(cancellationToken);
@@ -342,6 +347,34 @@ public sealed partial class AdminMarketService(
             market.LaunchNote,
             market.UpdatedAt,
             businessCount);
+    }
+
+    private IOrderedQueryable<CatalogMarket> ApplyMarketSort(
+        IQueryable<CatalogMarket> query,
+        string field,
+        ListSortDirection direction)
+    {
+        var desc = ListSort.IsDescending(direction);
+        return field switch
+        {
+            "country" => desc
+                ? query.OrderByDescending(market => market.CountryCode)
+                : query.OrderBy(market => market.CountryCode),
+            "currency" => desc
+                ? query.OrderByDescending(market => market.Currency)
+                : query.OrderBy(market => market.Currency),
+            "businesses" => desc
+                ? query.OrderByDescending(market =>
+                    dbContext.BusinessLocations.Count(loc => loc.IsActive && loc.MarketId == market.Id))
+                : query.OrderBy(market =>
+                    dbContext.BusinessLocations.Count(loc => loc.IsActive && loc.MarketId == market.Id)),
+            "status" => desc
+                ? query.OrderByDescending(market => market.IsLive)
+                : query.OrderBy(market => market.IsLive),
+            _ => desc
+                ? query.OrderByDescending(market => market.Name)
+                : query.OrderBy(market => market.Name),
+        };
     }
 
     [GeneratedRegex("^[a-z][a-z0-9-]{0,30}[a-z0-9]$|^[a-z]{2}$")]

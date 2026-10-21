@@ -8,6 +8,7 @@ import {
   formatPrice,
   formatSubscriptionSku,
   formatBillingChargeStatus,
+  listSortParamsFromColumn,
 } from "@adeni/shared";
 import {
   AdeniDataTableCellDirective,
@@ -21,6 +22,7 @@ import {
   AdeniPortalEmptyStateComponent,
   PortalPageComponent,
   type AdeniDataTableColumn,
+  type AdeniDataTableSortDirection,
   type AdeniExportMenuItem,
   type AdeniFilterSelectOption,
 } from "@adeni/ui";
@@ -67,6 +69,8 @@ export class AdminTransactionsComponent {
   readonly totalCount = signal(0);
   readonly page = signal(1);
   readonly pageSize = ADMIN_LIST_PAGE_SIZE;
+  readonly sortColumnId = signal<string | null>("when");
+  readonly sortDirection = signal<AdeniDataTableSortDirection>("desc");
 
   private searchDebounce: ReturnType<typeof setTimeout> | null = null;
 
@@ -98,12 +102,43 @@ export class AdminTransactionsComponent {
   ];
 
   readonly columns: AdeniDataTableColumn<AdminTransactionSearchItem>[] = [
-    { id: "when", header: "When", cell: () => "" },
-    { id: "type", header: "Type", cell: () => "" },
-    { id: "business", header: "Business", cell: (row) => row.tenantName },
-    { id: "reference", header: "Reference", cell: (row) => row.providerReference ?? row.id },
-    { id: "amount", header: "Amount", cell: () => "" },
-    { id: "status", header: "Status", cell: (row) => row.status },
+    {
+      id: "when",
+      header: "When",
+      cell: () => "",
+      sortValue: (row) => row.occurredAt,
+    },
+    {
+      id: "type",
+      header: "Type",
+      cell: () => "",
+      sortValue: (row) => row.kind,
+    },
+    {
+      id: "business",
+      header: "Business",
+      cell: (row) => row.tenantName,
+      sortValue: (row) => row.tenantName.toLowerCase(),
+    },
+    {
+      id: "reference",
+      header: "Reference",
+      cell: (row) => row.providerReference ?? row.id,
+      sortValue: (row) => (row.providerReference ?? row.id).toLowerCase(),
+    },
+    {
+      id: "amount",
+      header: "Amount",
+      align: "right",
+      cell: () => "",
+      sortValue: (row) => row.amountMinor ?? 0,
+    },
+    {
+      id: "status",
+      header: "Status",
+      cell: (row) => row.status,
+      sortValue: (row) => row.status,
+    },
   ];
 
   readonly trackRow = (row: AdminTransactionSearchItem): string => row.id;
@@ -164,6 +199,24 @@ export class AdminTransactionsComponent {
     });
   }
 
+  onSortColumnChange(columnId: string | null): void {
+    this.sortColumnId.set(columnId);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: null },
+      queryParamsHandling: "merge",
+    });
+  }
+
+  onSortDirectionChange(direction: AdeniDataTableSortDirection): void {
+    this.sortDirection.set(direction);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: null },
+      queryParamsHandling: "merge",
+    });
+  }
+
   kindLabel(row: AdminTransactionSearchItem): string {
     return row.kind === "commerce" ? "Commerce" : "SaaS";
   }
@@ -203,6 +256,7 @@ export class AdminTransactionsComponent {
           kind: this.kindFilter(),
           page: this.page(),
           pageSize: this.pageSize,
+          sort: listSortParamsFromColumn(this.sortColumnId(), this.sortDirection()),
         }),
       );
       this.rows.set(result.items);

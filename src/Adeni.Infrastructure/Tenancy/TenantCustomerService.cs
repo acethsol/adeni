@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Tenancy;
 
+using Adeni.Application.Common;
 using Adeni.Application.Security;
 using Adeni.Application.Subscriptions;
 using Adeni.Application.Tenancy;
@@ -179,6 +180,8 @@ public sealed class TenantCustomerService(
         int page,
         int pageSize,
         string? discoverFilter = null,
+        string? sortBy = null,
+        ListSortDirection? sortDirection = null,
         CancellationToken cancellationToken = default)
     {
         page = Math.Max(1, page);
@@ -222,8 +225,10 @@ public sealed class TenantCustomerService(
         }
 
         var total = await query.CountAsync(cancellationToken);
-        var items = await query
-            .OrderByDescending(x => x.LastSeenAt)
+        var field = sortBy ?? TenantCustomerListSort.DefaultField;
+        var direction = sortDirection ?? TenantCustomerListSort.DefaultDirection;
+        var sorted = ApplyListSort(query, field, direction);
+        var items = await sorted
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
@@ -420,5 +425,28 @@ public sealed class TenantCustomerService(
 
         var trimmed = email.Trim();
         return trimmed.Length > 320 ? trimmed[..320] : trimmed.ToLowerInvariant();
+    }
+
+    private static IOrderedQueryable<TenantCustomer> ApplyListSort(
+        IQueryable<TenantCustomer> query,
+        string field,
+        ListSortDirection direction)
+    {
+        var desc = ListSort.IsDescending(direction);
+        return field switch
+        {
+            "name" => desc
+                ? query.OrderByDescending(x => x.DisplayName)
+                : query.OrderBy(x => x.DisplayName),
+            "email" => desc
+                ? query.OrderByDescending(x => x.Email ?? string.Empty)
+                : query.OrderBy(x => x.Email ?? string.Empty),
+            "account" => desc
+                ? query.OrderByDescending(x => x.CustomerId != null)
+                : query.OrderBy(x => x.CustomerId != null),
+            _ => desc
+                ? query.OrderByDescending(x => x.LastSeenAt)
+                : query.OrderBy(x => x.LastSeenAt),
+        };
     }
 }

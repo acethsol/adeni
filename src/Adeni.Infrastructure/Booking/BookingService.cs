@@ -330,6 +330,8 @@ public sealed class BookingService(
         int page = 1,
         int pageSize = Paging.DefaultPageSize,
         Guid? staffMemberId = null,
+        string? sortBy = null,
+        ListSortDirection? sortDirection = null,
         CancellationToken cancellationToken = default)
     {
         var normalized = Paging.Normalize(page, pageSize);
@@ -355,11 +357,21 @@ public sealed class BookingService(
 
         var totalCount = await query.CountAsync(cancellationToken);
 
-        var ordered = effectiveTab switch
+        IOrderedQueryable<BookingRecord> ordered;
+        if (string.IsNullOrWhiteSpace(sortBy))
         {
-            TenantBookingTabs.Past => query.OrderByDescending(x => x.StartAt),
-            _ => query.OrderBy(x => x.StartAt),
-        };
+            ordered = effectiveTab switch
+            {
+                TenantBookingTabs.Past => query.OrderByDescending(x => x.StartAt),
+                _ => query.OrderBy(x => x.StartAt),
+            };
+        }
+        else
+        {
+            var field = sortBy;
+            var direction = sortDirection ?? TenantBookingListSort.DefaultDirection;
+            ordered = ApplyTenantBookingSort(query, field, direction);
+        }
 
         var bookingIds = await ordered
             .Skip((page - 1) * pageSize)
@@ -1048,5 +1060,36 @@ public sealed class BookingService(
         }
 
         return [new CreateBookingLineRequest(request.ServiceOfferingId, request.StaffMemberId)];
+    }
+
+    private IOrderedQueryable<BookingRecord> ApplyTenantBookingSort(
+        IQueryable<BookingRecord> query,
+        string field,
+        ListSortDirection direction)
+    {
+        var desc = ListSort.IsDescending(direction);
+        return field switch
+        {
+            "customer" => desc
+                ? query.OrderByDescending(x =>
+                    dbContext.Customers.Where(c => c.Id == x.CustomerId).Select(c => c.Name).FirstOrDefault()
+                    ?? string.Empty)
+                : query.OrderBy(x =>
+                    dbContext.Customers.Where(c => c.Id == x.CustomerId).Select(c => c.Name).FirstOrDefault()
+                    ?? string.Empty),
+            "service" => desc
+                ? query.OrderByDescending(x =>
+                    dbContext.ServiceOfferings.Where(s => s.Id == x.ServiceOfferingId).Select(s => s.Name).FirstOrDefault()
+                    ?? string.Empty)
+                : query.OrderBy(x =>
+                    dbContext.ServiceOfferings.Where(s => s.Id == x.ServiceOfferingId).Select(s => s.Name).FirstOrDefault()
+                    ?? string.Empty),
+            "status" => desc
+                ? query.OrderByDescending(x => x.Status)
+                : query.OrderBy(x => x.Status),
+            _ => desc
+                ? query.OrderByDescending(x => x.StartAt)
+                : query.OrderBy(x => x.StartAt),
+        };
     }
 }

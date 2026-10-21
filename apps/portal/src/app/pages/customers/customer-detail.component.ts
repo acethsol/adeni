@@ -56,15 +56,45 @@ export class CustomerDetailComponent implements OnInit {
   readonly formatSlotTime = formatSlotTime;
 
   readonly bookingColumns: AdeniDataTableColumn<TenantCustomerRecentBooking>[] = [
-    { id: "when", header: "When", cell: (row) => formatSlotTime(row.startAt) },
-    { id: "service", header: "Service", cell: (row) => row.serviceName },
-    { id: "status", header: "Status", cell: () => "" },
+    {
+      id: "when",
+      header: "When",
+      cell: (row) => formatSlotTime(row.startAt),
+      sortValue: (row) => row.startAt,
+    },
+    {
+      id: "service",
+      header: "Service",
+      cell: (row) => row.serviceName,
+      sortValue: (row) => row.serviceName.toLowerCase(),
+    },
+    {
+      id: "status",
+      header: "Status",
+      cell: () => "",
+      sortValue: (row) => row.status,
+    },
   ];
 
   readonly queueColumns: AdeniDataTableColumn<TenantCustomerRecentQueueVisit>[] = [
-    { id: "when", header: "Joined", cell: (row) => formatSlotTime(row.joinedAt) },
-    { id: "service", header: "Service", cell: (row) => row.serviceName ?? "Walk-in" },
-    { id: "status", header: "Status", cell: () => "" },
+    {
+      id: "when",
+      header: "Joined",
+      cell: (row) => formatSlotTime(row.joinedAt),
+      sortValue: (row) => row.joinedAt,
+    },
+    {
+      id: "service",
+      header: "Service",
+      cell: (row) => row.serviceName ?? "Walk-in",
+      sortValue: (row) => (row.serviceName ?? "Walk-in").toLowerCase(),
+    },
+    {
+      id: "status",
+      header: "Status",
+      cell: () => "",
+      sortValue: (row) => row.status,
+    },
   ];
 
   readonly trackBookingRow = (row: TenantCustomerRecentBooking): string => row.id;

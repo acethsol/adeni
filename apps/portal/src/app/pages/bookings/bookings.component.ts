@@ -8,6 +8,7 @@ import {
   pageRangeLabel,
   resolvePaymentCheckoutUrl,
   totalPages as computeTotalPages,
+  listSortParamsFromColumn,
 } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
@@ -27,6 +28,7 @@ import {
   readPersistedListViewMode,
   type AdeniCarbonIconName,
   type AdeniDataTableColumn,
+  type AdeniDataTableSortDirection,
   type AdeniExportMenuItem,
   type AdeniListViewMode,
   type AdeniPillTone,
@@ -120,6 +122,9 @@ export class BookingsComponent {
     },
   ];
 
+  readonly sortColumnId = signal<string | null>(null);
+  readonly sortDirection = signal<AdeniDataTableSortDirection>("asc");
+
   readonly filteredBookings = computed(() => {
     const query = this.bookingSearch().trim().toLowerCase();
     let list = this.displayedBookings();
@@ -140,10 +145,30 @@ export class BookingsComponent {
   });
 
   readonly bookingTableColumns: AdeniDataTableColumn<BookingResponse>[] = [
-    { id: "customer", header: "Customer", cell: (b) => b.customerName?.trim() || "Guest" },
-    { id: "when", header: "When", cell: (b) => formatSlotTime(b.startAt) },
-    { id: "service", header: "Service", cell: (b) => b.serviceName },
-    { id: "status", header: "Status", cell: () => "" },
+    {
+      id: "customer",
+      header: "Customer",
+      cell: (b) => b.customerName?.trim() || "Guest",
+      sortValue: (b) => (b.customerName?.trim() || "Guest").toLowerCase(),
+    },
+    {
+      id: "when",
+      header: "When",
+      cell: (b) => formatSlotTime(b.startAt),
+      sortValue: (b) => b.startAt,
+    },
+    {
+      id: "service",
+      header: "Service",
+      cell: (b) => b.serviceName,
+      sortValue: (b) => b.serviceName.toLowerCase(),
+    },
+    {
+      id: "status",
+      header: "Status",
+      cell: () => "",
+      sortValue: (b) => b.status,
+    },
   ];
 
   readonly trackBookingRow = (booking: BookingResponse): string => booking.id;
@@ -251,6 +276,28 @@ export class BookingsComponent {
     return booking.lines.map((line) => line.serviceName).join(" · ");
   }
 
+  onSortColumnChange(columnId: string | null): void {
+    this.sortColumnId.set(columnId);
+    this.page.set(1);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: null },
+      queryParamsHandling: "merge",
+    });
+    void this.load();
+  }
+
+  onSortDirectionChange(direction: AdeniDataTableSortDirection): void {
+    this.sortDirection.set(direction);
+    this.page.set(1);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: null },
+      queryParamsHandling: "merge",
+    });
+    void this.load();
+  }
+
   async load(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
@@ -258,7 +305,12 @@ export class BookingsComponent {
     try {
       await this.api.withAuthorizedClient(async (client) => {
         const [bookingsPage, kiosk] = await Promise.all([
-          client.listTenantBookings({ tab, page: this.page(), pageSize: this.pageSize }),
+          client.listTenantBookings({
+            tab,
+            page: this.page(),
+            pageSize: this.pageSize,
+            sort: listSortParamsFromColumn(this.sortColumnId(), this.sortDirection()),
+          }),
           client.getTenantKioskStatus().catch(() => null),
         ]);
         this.bookings.set(bookingsPage.items);

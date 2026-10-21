@@ -963,7 +963,6 @@ export const tenantEntitlementsSchema = z.object({
   /** @deprecated Use configurableReminders / followUpAutomation; kept for one release of API compat. */
   advancedReminders: z.boolean().optional(),
   waitlist: z.boolean(),
-  whatsappIntegration: z.boolean(),
   smsEnabled: z.boolean().optional(),
   smsUsageBilling: z.boolean().optional(),
   basicAnalytics: z.boolean().optional(),

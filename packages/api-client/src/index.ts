@@ -278,6 +278,8 @@ import {
   type UpsertBusinessLocationRequest,
   localizeErrorResponse,
   type ApiErrorResponse,
+  appendListSortParams,
+  type ListSortParams,
 } from "@adeni/shared";
 
 export class AdeniApiError extends Error {
@@ -600,6 +602,7 @@ export class AdeniApiClient {
     tab?: "pending" | "upcoming" | "past";
     page?: number;
     pageSize?: number;
+    sort?: ListSortParams;
   } = {}): Promise<PagedResult<BookingResponse>> {
     const query = new URLSearchParams();
     if (options.tab) {
@@ -611,6 +614,7 @@ export class AdeniApiClient {
     if (options.pageSize != null) {
       query.set("pageSize", String(options.pageSize));
     }
+    appendListSortParams(query, options.sort);
     const suffix = query.size > 0 ? `?${query.toString()}` : "";
     const response = await this.request(`/api/v1/tenant/bookings${suffix}`);
     return tenantBookingsResponseSchema.parse(await response.json());
@@ -1066,6 +1070,7 @@ export class AdeniApiClient {
     page?: number;
     pageSize?: number;
     discover?: "discover" | "walk_in";
+    sort?: ListSortParams;
   }): Promise<TenantCustomerListResponse> {
     const query = new URLSearchParams();
     if (params?.search) {
@@ -1080,6 +1085,7 @@ export class AdeniApiClient {
     if (params?.discover) {
       query.set("discover", params.discover);
     }
+    appendListSortParams(query, params?.sort);
     const suffix = query.size > 0 ? `?${query.toString()}` : "";
     const response = await this.request(`/api/v1/tenant/customers${suffix}`);
     return tenantCustomerListResponseSchema.parse(await response.json());
@@ -1800,7 +1806,7 @@ export class AdeniApiClient {
   }
 
   async listPendingBusinesses(
-    options: { q?: string; page?: number; pageSize?: number } = {},
+    options: { q?: string; page?: number; pageSize?: number; sort?: ListSortParams } = {},
   ): Promise<AdminPagedResult<PendingBusiness>> {
     const query = new URLSearchParams();
     if (options.q?.trim()) {
@@ -1812,6 +1818,7 @@ export class AdeniApiClient {
     if (options.pageSize != null) {
       query.set("pageSize", String(options.pageSize));
     }
+    appendListSortParams(query, options.sort);
     const suffix = query.size > 0 ? `?${query.toString()}` : "";
     const response = await this.request(`/api/v1/admin/businesses/pending${suffix}`);
     return pendingBusinessesResponseSchema.parse(await response.json());
@@ -1837,7 +1844,7 @@ export class AdeniApiClient {
   }
 
   async listAdminBusinesses(
-    options: { q?: string; page?: number; pageSize?: number } = {},
+    options: { q?: string; page?: number; pageSize?: number; sort?: ListSortParams } = {},
   ): Promise<AdminPagedResult<AdminBusinessSummary>> {
     const query = new URLSearchParams();
     if (options.q?.trim()) {
@@ -1849,6 +1856,7 @@ export class AdeniApiClient {
     if (options.pageSize != null) {
       query.set("pageSize", String(options.pageSize));
     }
+    appendListSortParams(query, options.sort);
     const suffix = query.size > 0 ? `?${query.toString()}` : "";
     const response = await this.request(`/api/v1/admin/businesses${suffix}`);
     return adminBusinessesResponseSchema.parse(await response.json());
@@ -1876,7 +1884,12 @@ export class AdeniApiClient {
 
   async searchAdminTransactions(
     queryText: string | null | undefined,
-    options: { kind?: "all" | "commerce" | "saas"; page?: number; pageSize?: number } = {},
+    options: {
+      kind?: "all" | "commerce" | "saas";
+      page?: number;
+      pageSize?: number;
+      sort?: ListSortParams;
+    } = {},
   ): Promise<AdminPagedResult<AdminTransactionSearchItem>> {
     const query = new URLSearchParams();
     const trimmed = queryText?.trim();
@@ -1890,6 +1903,7 @@ export class AdeniApiClient {
     if (options.pageSize != null) {
       query.set("pageSize", String(options.pageSize));
     }
+    appendListSortParams(query, options.sort);
     const response = await this.request(`/api/v1/admin/transactions?${query.toString()}`);
     return adminTransactionsSearchResponseSchema.parse(await response.json());
   }
@@ -2050,7 +2064,7 @@ export class AdeniApiClient {
   }
 
   async listAdminMarkets(
-    options: { q?: string; page?: number; pageSize?: number } = {},
+    options: { q?: string; page?: number; pageSize?: number; sort?: ListSortParams } = {},
   ): Promise<AdminPagedResult<AdminMarket>> {
     const query = new URLSearchParams();
     if (options.q?.trim()) {
@@ -2062,6 +2076,7 @@ export class AdeniApiClient {
     if (options.pageSize != null) {
       query.set("pageSize", String(options.pageSize));
     }
+    appendListSortParams(query, options.sort);
     const suffix = query.size > 0 ? `?${query.toString()}` : "";
     const response = await this.request(`/api/v1/admin/markets${suffix}`);
     return adminMarketsResponseSchema.parse(await response.json());

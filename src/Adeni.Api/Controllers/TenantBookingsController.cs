@@ -2,6 +2,7 @@ namespace Adeni.Api.Controllers;
 
 using System.Security.Claims;
 using Adeni.Api.Auth;
+using Adeni.Api.Common;
 using Adeni.Api.Errors;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
@@ -25,11 +26,24 @@ public sealed class TenantBookingsController(
         [FromQuery] string tab = TenantBookingTabs.Pending,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 25,
+        [FromQuery] string? sortBy = null,
+        [FromQuery] string? sortDir = null,
         CancellationToken cancellationToken = default)
     {
         if (ResolveTenantId() is not { } tenantId)
         {
             return Unauthorized();
+        }
+
+        var sort = ListSortQuery.ResolveOptional(
+            sortBy,
+            sortDir,
+            TenantBookingListSort.Allowed,
+            TenantBookingListSort.DefaultField,
+            TenantBookingListSort.DefaultDirection);
+        if (sort.IsFailure)
+        {
+            return BadRequest(new { title = sort.Error!.Message, code = sort.Error.Code });
         }
 
         var (failClosed, staffScope) = PortalAccessHttpContext.ResolveBookingsStaffScope(
@@ -50,6 +64,8 @@ public sealed class TenantBookingsController(
             page,
             pageSize,
             staffScope,
+            sort.Value!.SortBy,
+            sort.Value.SortDirection,
             cancellationToken);
 
         return Ok(new

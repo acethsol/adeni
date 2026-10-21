@@ -200,6 +200,11 @@
           [rows]="filteredBookings()"
           [columns]="bookingTableColumns"
           [trackRow]="trackBookingRow"
+          [sortRows]="false"
+          [sortColumnId]="sortColumnId()"
+          (sortColumnIdChange)="onSortColumnChange($event)"
+          [sortDirection]="sortDirection()"
+          (sortDirectionChange)="onSortDirectionChange($event)"
         >
           <ng-template adeniDataTableCell="customer" let-booking>
             <adeni-table-person-cell

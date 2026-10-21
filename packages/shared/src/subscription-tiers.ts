@@ -40,3 +40,77 @@ export function formatBookingUsage(usage: SubscriptionUsage): string {
   }
   return `${usage.bookingsUsedThisMonth} / ${usage.bookingsLimitThisMonth} bookings this month`;
 }
+
+/** Compact metric line for plan usage rows (bookings omit "this month" — heading provides context). */
+export function formatBookingUsageMetric(usage: SubscriptionUsage): string {
+  if (usage.bookingsLimitThisMonth == null) {
+    return String(usage.bookingsUsedThisMonth);
+  }
+  return `${usage.bookingsUsedThisMonth} / ${usage.bookingsLimitThisMonth}`;
+}
+
+export function formatResourceUsageMetric(
+  active: number,
+  max: number | null | undefined,
+  labelPlural: string,
+  labelSingular?: string,
+): string {
+  const singular = labelSingular ?? labelPlural.replace(/s$/, "");
+  const unit = active === 1 ? singular : labelPlural;
+  if (max == null) {
+    return `${active} ${unit}`;
+  }
+  return `${active} / ${max} ${labelPlural}`;
+}
+
+export function formatLocationUsageMetric(usage: SubscriptionUsage): string {
+  return formatResourceUsageMetric(
+    usage.locationsActive,
+    usage.entitlements.maxLocations,
+    "locations",
+    "location",
+  );
+}
+
+export function formatTeamUsageMetric(usage: SubscriptionUsage): string {
+  return formatResourceUsageMetric(
+    usage.practitionersActive,
+    usage.entitlements.maxPractitioners,
+    "team members",
+    "team member",
+  );
+}
+
+export function usagePercentForLimit(active: number, max: number | null | undefined): number {
+  if (max == null || max <= 0) {
+    return 0;
+  }
+  return Math.min(100, Math.round((active / max) * 100));
+}
+
+export function bookingsUsagePercent(usage: SubscriptionUsage): number {
+  return usagePercentForLimit(usage.bookingsUsedThisMonth, usage.bookingsLimitThisMonth);
+}
+
+export function isNearEntitlementLimit(
+  active: number,
+  max: number | null | undefined,
+  threshold = 0.8,
+): boolean {
+  if (max == null || max <= 0) {
+    return false;
+  }
+  return active / max >= threshold;
+}
+
+export function isPlanUsageNearLimit(usage: SubscriptionUsage, threshold = 0.8): boolean {
+  return (
+    isNearBookingLimit(usage, threshold) ||
+    isNearEntitlementLimit(usage.locationsActive, usage.entitlements.maxLocations, threshold) ||
+    isNearEntitlementLimit(
+      usage.practitionersActive,
+      usage.entitlements.maxPractitioners,
+      threshold,
+    )
+  );
+}

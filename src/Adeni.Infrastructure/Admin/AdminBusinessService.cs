@@ -3,6 +3,7 @@ namespace Adeni.Infrastructure.Admin;
 using System.Text.Json;
 using Adeni.Application.Abstractions;
 using Adeni.Application.Admin;
+using Adeni.Application.Common;
 using Adeni.Application.Caching;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Auditing;
@@ -23,6 +24,8 @@ public sealed class AdminBusinessService(
         string? search,
         int page,
         int pageSize,
+        string? sortBy = null,
+        ListSortDirection? sortDirection = null,
         CancellationToken cancellationToken = default)
     {
         var paging = AdminPaging.Normalize(page, pageSize);
@@ -49,8 +52,10 @@ public sealed class AdminBusinessService(
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
-        var tenants = await query
-            .OrderBy(t => t.CreatedAt)
+        var field = sortBy ?? AdminPendingVerificationListSort.DefaultField;
+        var direction = sortDirection ?? AdminPendingVerificationListSort.DefaultDirection;
+        var sorted = ApplyPendingSort(query, field, direction);
+        var tenants = await sorted
             .Skip((effectivePage - 1) * effectivePageSize)
             .Take(effectivePageSize)
             .Select(t => new
@@ -118,6 +123,8 @@ public sealed class AdminBusinessService(
         string? search,
         int page,
         int pageSize,
+        string? sortBy = null,
+        ListSortDirection? sortDirection = null,
         CancellationToken cancellationToken = default)
     {
         var paging = AdminPaging.Normalize(page, pageSize);
@@ -141,8 +148,10 @@ public sealed class AdminBusinessService(
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
-        var items = await query
-            .OrderByDescending(t => t.CreatedAt)
+        var field = sortBy ?? AdminBusinessListSort.DefaultField;
+        var direction = sortDirection ?? AdminBusinessListSort.DefaultDirection;
+        var sorted = ApplyBusinessSort(query, field, direction);
+        var items = await sorted
             .Skip((effectivePage - 1) * effectivePageSize)
             .Take(effectivePageSize)
             .Select(t => new AdminBusinessSummaryResponse(
@@ -565,5 +574,63 @@ public sealed class AdminBusinessService(
             cancellationToken);
 
         return Result.Success(Unit.Value);
+    }
+
+    private IOrderedQueryable<Tenant> ApplyPendingSort(
+        IQueryable<Tenant> query,
+        string field,
+        ListSortDirection direction)
+    {
+        var desc = ListSort.IsDescending(direction);
+        return field switch
+        {
+            "business" => desc
+                ? query.OrderByDescending(t => t.Name)
+                : query.OrderBy(t => t.Name),
+            "market" => desc
+                ? query.OrderByDescending(t =>
+                    dbContext.BusinessLocations
+                        .Where(loc => loc.TenantId == t.Id && loc.IsActive)
+                        .OrderByDescending(loc => loc.IsPrimary)
+                        .Select(loc => loc.MarketId)
+                        .FirstOrDefault() ?? string.Empty)
+                : query.OrderBy(t =>
+                    dbContext.BusinessLocations
+                        .Where(loc => loc.TenantId == t.Id && loc.IsActive)
+                        .OrderByDescending(loc => loc.IsPrimary)
+                        .Select(loc => loc.MarketId)
+                        .FirstOrDefault() ?? string.Empty),
+            "docs" => desc
+                ? query.OrderByDescending(t =>
+                    dbContext.VerificationDocuments.Count(doc => doc.TenantId == t.Id))
+                : query.OrderBy(t =>
+                    dbContext.VerificationDocuments.Count(doc => doc.TenantId == t.Id)),
+            _ => desc
+                ? query.OrderByDescending(t => t.CreatedAt)
+                : query.OrderBy(t => t.CreatedAt),
+        };
+    }
+
+    private static IOrderedQueryable<Tenant> ApplyBusinessSort(
+        IQueryable<Tenant> query,
+        string field,
+        ListSortDirection direction)
+    {
+        var desc = ListSort.IsDescending(direction);
+        return field switch
+        {
+            "status" => desc
+                ? query.OrderByDescending(t => t.Status)
+                : query.OrderBy(t => t.Status),
+            "plan" => desc
+                ? query.OrderByDescending(t => t.SubscriptionSku)
+                : query.OrderBy(t => t.SubscriptionSku),
+            "billing" => desc
+                ? query.OrderByDescending(t => t.BillingStatus)
+                : query.OrderBy(t => t.BillingStatus),
+            _ => desc
+                ? query.OrderByDescending(t => t.Name)
+                : query.OrderBy(t => t.Name),
+        };
     }
 }

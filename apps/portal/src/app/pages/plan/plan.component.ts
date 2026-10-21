@@ -2,20 +2,25 @@ import { DatePipe } from "@angular/common";
 import { Component, inject, OnInit, signal } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import {
-  formatBookingUsage,
+  bookingsUsagePercent,
   formatAmountMinor,
   formatBillingChargeStatus,
+  formatBookingUsageMetric,
+  formatLocationUsageMetric,
   formatPrice,
+  formatSubscriptionPlanLabel,
+  formatTeamUsageMetric,
   formatTenantBillingStatus,
   getMarketById,
   getPlanDisplayForCountry,
-  isNearBookingLimit,
+  isPlanUsageNearLimit,
   isSelfServePricingEnabled,
   planComparisonCell,
   PLAN_COMPARISON,
   resolveSubscriptionSku,
   SUBSCRIPTION_SKUS,
   SUBSCRIPTION_SKU_LABELS,
+  usagePercentForLimit,
   type PublicCountryPricing,
   type SubscriptionSku,
   type SubscriptionUsage,
@@ -27,13 +32,38 @@ const OUTCOME_TAGLINES: Record<SubscriptionSku, string> = {
   professional: "Run & grow",
   business: "Scale operations",
 };
-import { PortalPageComponent } from "@adeni/ui";
+import {
+  AdeniDataTableCellDirective,
+  AdeniDataTableComponent,
+  AdeniListToolbarComponent,
+  AdeniPillComponent,
+  AdeniPortalEmptyStateComponent,
+  PortalPageComponent,
+  type AdeniDataTableColumn,
+  type AdeniDataTableSortDirection,
+  type AdeniPillTone,
+} from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
+
+const BILLING_EVENT_LABELS: Record<string, string> = {
+  "subscription.create": "Plan activated",
+  "subscription.charge.success": "Monthly subscription",
+  "invoice.payment_failed": "Payment failed",
+  "subscription.disable": "Subscription canceled",
+};
 
 @Component({
   selector: "app-plan",
   standalone: true,
-  imports: [PortalPageComponent, DatePipe],
+  imports: [
+    PortalPageComponent,
+    DatePipe,
+    AdeniListToolbarComponent,
+    AdeniDataTableComponent,
+    AdeniDataTableCellDirective,
+    AdeniPortalEmptyStateComponent,
+    AdeniPillComponent,
+  ],
   templateUrl: "./plan.component.html",
   styleUrl: "./plan.component.scss",
 })
@@ -55,11 +85,68 @@ export class PlanComponent implements OnInit {
 
   readonly skus = SUBSCRIPTION_SKUS;
   readonly planComparison = PLAN_COMPARISON;
-  readonly formatBookingUsage = formatBookingUsage;
-  readonly isNearBookingLimit = isNearBookingLimit;
+  readonly formatSubscriptionPlanLabel = formatSubscriptionPlanLabel;
+  readonly formatBookingUsageMetric = formatBookingUsageMetric;
+  readonly formatLocationUsageMetric = formatLocationUsageMetric;
+  readonly formatTeamUsageMetric = formatTeamUsageMetric;
+  readonly bookingsUsagePercent = bookingsUsagePercent;
+  readonly usagePercentForLimit = usagePercentForLimit;
+  readonly isPlanUsageNearLimit = isPlanUsageNearLimit;
   readonly formatTenantBillingStatus = formatTenantBillingStatus;
+  readonly formatPrice = formatPrice;
   readonly formatBillingChargeStatus = formatBillingChargeStatus;
   readonly comparisonCell = planComparisonCell;
+
+  readonly billingColumns: AdeniDataTableColumn<TenantSubscriptionCharge>[] = [
+    {
+      id: "occurredAt",
+      header: "Date",
+      cell: (row) => row.occurredAt,
+      sortable: true,
+      sortValue: (row) => row.occurredAt,
+    },
+    {
+      id: "event",
+      header: "Event",
+      cell: (row) => this.formatBillingEvent(row.eventType),
+      sortable: true,
+      sortValue: (row) => this.formatBillingEvent(row.eventType),
+    },
+    {
+      id: "amount",
+      header: "Amount",
+      align: "right",
+      cell: (row) => this.formatChargeAmount(row),
+      sortable: true,
+      sortValue: (row) => row.amountMinor ?? 0,
+    },
+    {
+      id: "status",
+      header: "Status",
+      cell: (row) => formatBillingChargeStatus(row.status),
+      sortable: true,
+      sortValue: (row) => row.status,
+    },
+  ];
+
+  readonly trackBillingRow = (row: TenantSubscriptionCharge): string => row.id;
+
+  readonly billingSortColumn = signal<string | null>("occurredAt");
+  readonly billingSortDirection = signal<AdeniDataTableSortDirection>("desc");
+
+  comparisonCellKind(
+    row: (typeof PLAN_COMPARISON)[number],
+    sku: SubscriptionSku,
+  ): "yes" | "dash" | "text" {
+    const value = row[sku];
+    if (value === true) {
+      return "yes";
+    }
+    if (value === false) {
+      return "dash";
+    }
+    return "text";
+  }
 
   ngOnInit(): void {
     void this.load();
@@ -222,11 +309,26 @@ export class PlanComponent implements OnInit {
     }
   }
 
-  formatCharge(row: TenantSubscriptionCharge): string {
+  formatBillingEvent(eventType: string): string {
+    return BILLING_EVENT_LABELS[eventType] ?? eventType;
+  }
+
+  formatChargeAmount(row: TenantSubscriptionCharge): string {
     if (row.amountMinor != null && row.currency) {
       return formatAmountMinor(row.amountMinor, row.currency);
     }
-    return formatBillingChargeStatus(row.status);
+    return "—";
+  }
+
+  billingStatusPillTone(status: string): AdeniPillTone {
+    const normalized = status.trim().toLowerCase();
+    if (normalized === "active" || normalized === "paid" || normalized === "success") {
+      return "success";
+    }
+    if (normalized === "past_due" || normalized === "failed") {
+      return "danger";
+    }
+    return "neutral";
   }
 
   featureCell(value: string | boolean): string {

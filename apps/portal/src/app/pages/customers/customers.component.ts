@@ -1,7 +1,7 @@
-import { Component, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import type { TenantCustomerListItem } from "@adeni/shared";
-import { formatSlotTime } from "@adeni/shared";
+import { formatSlotTime, listSortParamsFromColumn } from "@adeni/shared";
 import {
   AdeniDataTableActionsDirective,
   AdeniDataTableCellDirective,
@@ -19,6 +19,7 @@ import {
   AdeniTablePersonCellComponent,
   PortalPageComponent,
   type AdeniDataTableColumn,
+  type AdeniDataTableSortDirection,
   type AdeniExportMenuItem,
   type AdeniFilterSelectOption,
   type AdeniListViewMode,
@@ -64,6 +65,8 @@ export class CustomersComponent implements OnInit {
   readonly searchQuery = signal("");
   readonly viewMode = signal<AdeniListViewMode>("table");
   readonly accountFilter = signal<CustomerAccountFilter>("all");
+  readonly sortColumnId = signal<string | null>(null);
+  readonly sortDirection = signal<AdeniDataTableSortDirection>("asc");
   private searchDebounce: ReturnType<typeof setTimeout> | null = null;
 
   readonly accountFilterOptions: AdeniFilterSelectOption[] = [
@@ -94,17 +97,29 @@ export class CustomersComponent implements OnInit {
   ];
 
   readonly columns: AdeniDataTableColumn<TenantCustomerListItem>[] = [
-    { id: "name", header: "Customer", cell: (row) => row.displayName },
-    { id: "email", header: "Email", cell: (row) => row.email || "—" },
+    {
+      id: "name",
+      header: "Customer",
+      cell: (row) => row.displayName,
+      sortValue: (row) => row.displayName.toLowerCase(),
+    },
+    {
+      id: "email",
+      header: "Email",
+      cell: (row) => row.email || "—",
+      sortValue: (row) => (row.email || "").toLowerCase(),
+    },
     {
       id: "account",
       header: "Profile type",
       cell: (row) => this.accountLabel(row),
+      sortValue: (row) => (row.platformCustomerId ? 1 : 0),
     },
     {
       id: "lastSeen",
       header: "Last seen",
       cell: (row) => formatSlotTime(row.lastSeenAt),
+      sortValue: (row) => row.lastSeenAt,
     },
   ];
 
@@ -140,6 +155,18 @@ export class CustomersComponent implements OnInit {
     void this.load();
   }
 
+  onSortColumnChange(columnId: string | null): void {
+    this.sortColumnId.set(columnId);
+    this.page.set(1);
+    void this.load();
+  }
+
+  onSortDirectionChange(direction: AdeniDataTableSortDirection): void {
+    this.sortDirection.set(direction);
+    this.page.set(1);
+    void this.load();
+  }
+
   customerInitials(row: TenantCustomerListItem): string {
     const parts = row.displayName.trim().split(/\s+/).filter(Boolean);
     if (parts.length >= 2) {
@@ -170,6 +197,7 @@ export class CustomersComponent implements OnInit {
             page: this.page(),
             pageSize: this.pageSize,
             discover: filter === "all" ? undefined : filter,
+            sort: listSortParamsFromColumn(this.sortColumnId(), this.sortDirection()),
           }),
         );
         this.items.set(result.items);

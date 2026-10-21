@@ -60,7 +60,10 @@ export const enErrorMessages: MessageTree = {
     location_limit: "Your plan location limit has been reached.",
     practitioner_limit: "Your plan team member limit has been reached.",
     waitlist: "Waitlist is not included on your current plan.",
-    whatsapp: "WhatsApp integration is not included on your current plan.",
+    sms: "SMS notifications are not included on your current plan.",
+  },
+  list: {
+    sort_invalid: "That column cannot be used to sort this list.",
   },
   validation: "Please check your input and try again.",
   forbidden: "You do not have permission to perform this action.",
@@ -116,6 +119,9 @@ export const frErrorMessages: MessageTree = {
   },
   permission: {
     denied: "Vous n'avez pas l'autorisation d'effectuer cette action.",
+  },
+  list: {
+    sort_invalid: "Cette colonne ne peut pas servir à trier cette liste.",
   },
   tenancy: {
     public_page: {

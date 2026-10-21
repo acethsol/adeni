@@ -48,7 +48,16 @@
       <p class="list-lead muted">Showing the most recent matches. Use search to narrow by reference or business name.</p>
     }
 
-    <adeni-data-table [rows]="rows()" [columns]="columns" [trackRow]="trackRow">
+    <adeni-data-table
+      [rows]="rows()"
+      [columns]="columns"
+      [trackRow]="trackRow"
+      [sortRows]="false"
+      [sortColumnId]="sortColumnId()"
+      (sortColumnIdChange)="onSortColumnChange($event)"
+      [sortDirection]="sortDirection()"
+      (sortDirectionChange)="onSortDirectionChange($event)"
+    >
       <ng-template adeniDataTableCell="when" let-row>
         <span class="adeni-data-table-text">{{ row.occurredAt | date: "medium" }}</span>
       </ng-template>

@@ -157,19 +157,70 @@ export class AdminPricingCatalogComponent {
   );
 
   readonly versionColumns: AdeniDataTableColumn<PricingCatalogVersionSummary>[] = [
-    { id: "code", header: "Version", cell: (v) => v.code },
-    { id: "effective", header: "Effective", cell: () => "" },
-    { id: "status", header: "Status", cell: () => "" },
-    { id: "active", header: "Live", cell: () => "" },
+    {
+      id: "code",
+      header: "Version",
+      cell: (v) => v.code,
+      sortValue: (v) => v.code.toLowerCase(),
+    },
+    {
+      id: "effective",
+      header: "Effective",
+      cell: () => "",
+      sortValue: (v) => v.effectiveFrom,
+    },
+    {
+      id: "status",
+      header: "Status",
+      cell: () => "",
+      sortValue: (v) => v.status,
+    },
+    {
+      id: "active",
+      header: "Live",
+      cell: () => "",
+      sortValue: (v) => (v.isActive ? 1 : 0),
+    },
   ];
 
   readonly entryColumns: AdeniDataTableColumn<PricingCatalogEntryRow>[] = [
-    { id: "version", header: "Catalog version", cell: (row) => row.catalogVersionCode },
-    { id: "country", header: "Country", cell: (row) => row.countryCode },
-    { id: "sku", header: "Plan (SKU)", cell: (row) => formatSubscriptionSku(row.subscriptionSku) },
-    { id: "price", header: "List price", align: "right", cell: () => "" },
-    { id: "gmv", header: "Platform fee", cell: (row) => `${row.platformFeePercent}%` },
-    { id: "selfServe", header: "Self-serve", cell: () => "" },
+    {
+      id: "version",
+      header: "Catalog version",
+      cell: (row) => row.catalogVersionCode,
+      sortValue: (row) => row.catalogVersionCode.toLowerCase(),
+    },
+    {
+      id: "country",
+      header: "Country",
+      cell: (row) => row.countryCode,
+      sortValue: (row) => row.countryCode,
+    },
+    {
+      id: "sku",
+      header: "Plan (SKU)",
+      cell: (row) => formatSubscriptionSku(row.subscriptionSku),
+      sortValue: (row) => row.subscriptionSku,
+    },
+    {
+      id: "price",
+      header: "List price",
+      align: "right",
+      cell: () => "",
+      sortValue: (row) => row.monthlyAmountMajor ?? 0,
+    },
+    {
+      id: "gmv",
+      header: "Platform fee",
+      cell: (row) => `${row.platformFeePercent}%`,
+      sortValue: (row) => row.platformFeePercent,
+    },
+    {
+      id: "selfServe",
+      header: "Self-serve",
+      cell: () => "",
+      sortValue: (row) => (row.isSelfServeEnabled ? 1 : 0),
+    },
   ];
 
   readonly trackVersion = (v: PricingCatalogVersionSummary): string => v.code;

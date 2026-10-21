@@ -17,7 +17,7 @@ Gate scale, automation, analytics sophistication, and multi-location complexity.
 | Reschedule/cancel | Yes | Yes | Yes |
 | Customer profiles | Yes | Yes | Yes |
 | Customer history | Basic | Full | Full |
-| Adeni inbox | Yes | Yes | Yes |
+| Adeni messaging | Yes | Yes | Yes |
 | Email notifications | Yes | Yes | Yes |
 | Automated reminders | Basic | Advanced | Advanced |
 | WhatsApp integration | No / add-on later | Yes | Yes |

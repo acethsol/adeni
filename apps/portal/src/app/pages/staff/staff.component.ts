@@ -36,7 +36,9 @@ import {
   AdeniWizardComponent,
   PortalPageComponent,
   readPersistedListViewMode,
+  sortDataRows,
   type AdeniDataTableColumn,
+  type AdeniDataTableSortDirection,
   type AdeniExportMenuItem,
   type AdeniFilterSelectOption,
   type AdeniListViewMode,
@@ -243,6 +245,9 @@ export class StaffComponent implements OnInit, OnDestroy {
     staffRolesForCategories(this.categorySlugs(), this.preserveRoleKey()),
   );
 
+  readonly sortColumnId = signal<string | null>(null);
+  readonly sortDirection = signal<AdeniDataTableSortDirection>("asc");
+
   readonly filteredStaff = computed(() => {
     let list = this.staff();
     switch (this.bookingFilter()) {
@@ -284,11 +289,40 @@ export class StaffComponent implements OnInit, OnDestroy {
     });
   });
 
+  readonly sortedFilteredStaff = computed(() =>
+    sortDataRows(
+      this.filteredStaff(),
+      this.sortColumnId(),
+      this.sortDirection(),
+      this.staffTableColumns,
+    ),
+  );
+
   readonly staffTableColumns: AdeniDataTableColumn<StaffMember>[] = [
-    { id: "name", header: "Team member", cell: (m) => m.displayName.trim() },
-    { id: "title", header: "Title", cell: (m) => m.title?.trim() || "—" },
-    { id: "status", header: "Booking", cell: () => "" },
-    { id: "access", header: "Portal", cell: () => "" },
+    {
+      id: "name",
+      header: "Team member",
+      cell: (m) => m.displayName.trim(),
+      sortValue: (m) => m.displayName.trim().toLowerCase(),
+    },
+    {
+      id: "title",
+      header: "Title",
+      cell: (m) => m.title?.trim() || "—",
+      sortValue: (m) => (m.title?.trim() || "").toLowerCase(),
+    },
+    {
+      id: "status",
+      header: "Booking",
+      cell: () => "",
+      sortValue: (m) => (m.isActive ? 1 : 0),
+    },
+    {
+      id: "access",
+      header: "Portal",
+      cell: () => "",
+      sortValue: (m) => m.portalAccessStatus,
+    },
   ];
 
   readonly staffRowClass = (member: StaffMember): string | undefined =>

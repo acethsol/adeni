@@ -287,17 +287,25 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
       id: "when",
       header: "When",
       cell: (b) => `${this.formatAgendaDay(b.dayKey)} · ${b.startLabel} – ${b.endLabel}`,
+      sortValue: (b) => `${b.dayKey}${b.top.toString().padStart(5, "0")}`,
     },
-    { id: "service", header: "Service", cell: (b) => b.title },
+    {
+      id: "service",
+      header: "Service",
+      cell: (b) => b.title,
+      sortValue: (b) => b.title.toLowerCase(),
+    },
     {
       id: "staff",
       header: "Staff",
       cell: (b) => b.staffDisplayName ?? "—",
+      sortValue: (b) => (b.staffDisplayName ?? "").toLowerCase(),
     },
     {
       id: "status",
       header: "Status",
       cell: (b) => (b.kind === "leave" ? "Leave" : (b.statusLabel ?? "—")),
+      sortValue: (b) => (b.kind === "leave" ? "leave" : (b.statusLabel ?? "")),
     },
   ];
 

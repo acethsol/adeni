@@ -1,5 +1,6 @@
 namespace Adeni.Api.Controllers;
 
+using Adeni.Api.Common;
 using Adeni.Api.Extensions;
 using Adeni.Api.Auth;
 using Adeni.Api.Errors;
@@ -8,6 +9,7 @@ using Adeni.Application.Admin;
 using Adeni.Application.Auth;
 using Adeni.Application.Subscriptions;
 using Adeni.Application.Reviews;
+using Adeni.Domain.Common;
 using Adeni.Infrastructure.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -132,9 +134,28 @@ public sealed class AdminBusinessesController(
         [FromQuery] string? q,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
+        [FromQuery] string? sortBy = null,
+        [FromQuery] string? sortDir = null,
         CancellationToken cancellationToken = default)
     {
-        var result = await adminBusinessService.ListPendingVerificationsAsync(q, page, pageSize, cancellationToken);
+        var sort = ListSortQuery.ResolveOptional(
+            sortBy,
+            sortDir,
+            AdminPendingVerificationListSort.Allowed,
+            AdminPendingVerificationListSort.DefaultField,
+            AdminPendingVerificationListSort.DefaultDirection);
+        if (sort.IsFailure)
+        {
+            return ApiErrorResponseMapper.ToActionResult(sort.Error!, HttpContext);
+        }
+
+        var result = await adminBusinessService.ListPendingVerificationsAsync(
+            q,
+            page,
+            pageSize,
+            sort.Value!.SortBy,
+            sort.Value.SortDirection,
+            cancellationToken);
 
         return result.Match<IActionResult>(
             payload => Ok(payload),
@@ -150,9 +171,28 @@ public sealed class AdminBusinessesController(
         [FromQuery] string? q,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
+        [FromQuery] string? sortBy = null,
+        [FromQuery] string? sortDir = null,
         CancellationToken cancellationToken = default)
     {
-        var result = await adminBusinessService.ListBusinessesAsync(q, page, pageSize, cancellationToken);
+        var sort = ListSortQuery.ResolveOptional(
+            sortBy,
+            sortDir,
+            AdminBusinessListSort.Allowed,
+            AdminBusinessListSort.DefaultField,
+            AdminBusinessListSort.DefaultDirection);
+        if (sort.IsFailure)
+        {
+            return ApiErrorResponseMapper.ToActionResult(sort.Error!, HttpContext);
+        }
+
+        var result = await adminBusinessService.ListBusinessesAsync(
+            q,
+            page,
+            pageSize,
+            sort.Value!.SortBy,
+            sort.Value.SortDirection,
+            cancellationToken);
 
         return result.Match<IActionResult>(
             payload => Ok(payload),
@@ -390,9 +430,28 @@ public sealed class AdminMarketsController(IAdminMarketService adminMarketServic
         [FromQuery] string? q,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
+        [FromQuery] string? sortBy = null,
+        [FromQuery] string? sortDir = null,
         CancellationToken cancellationToken = default)
     {
-        var result = await adminMarketService.ListAsync(q, page, pageSize, cancellationToken);
+        var sort = ListSortQuery.ResolveOptional(
+            sortBy,
+            sortDir,
+            AdminMarketListSort.Allowed,
+            AdminMarketListSort.DefaultField,
+            AdminMarketListSort.DefaultDirection);
+        if (sort.IsFailure)
+        {
+            return ApiErrorResponseMapper.ToActionResult(sort.Error!, HttpContext);
+        }
+
+        var result = await adminMarketService.ListAsync(
+            q,
+            page,
+            pageSize,
+            sort.Value!.SortBy,
+            sort.Value.SortDirection,
+            cancellationToken);
 
         return result.Match<IActionResult>(
             payload => Ok(payload),

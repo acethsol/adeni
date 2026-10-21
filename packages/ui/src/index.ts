@@ -32,8 +32,13 @@ export {
   readPersistedListViewMode,
   persistListViewMode,
   type AdeniDataTableColumn,
+  type AdeniDataTableSortDirection,
   type AdeniListViewMode,
 } from "./adeni-list-view.types";
+export {
+  isAdeniDataTableColumnSortable,
+  sortDataRows,
+} from "./sort-data-rows";
 export { AdeniListToolbarComponent } from "./adeni-list-toolbar.component";
 export { AdeniListFilterRowComponent } from "./adeni-list-filter-row.component";
 export {

@@ -14,44 +14,103 @@
     <p class="muted">Loading…</p>
   } @else {
     @if (usage(); as u) {
-      <section class="card usage" [class.warn]="isNearBookingLimit(u)">
-        <h3>Usage this month</h3>
-        <p>{{ formatBookingUsage(u) }}</p>
-        @if (u.billingStatus) {
-          <p class="muted">Billing: {{ formatTenantBillingStatus(u.billingStatus) }}</p>
-        }
-        @if (u.trialEndsAt) {
-          <p class="muted">Trial ends {{ u.trialEndsAt | date: "mediumDate" }}</p>
-        }
-        @if (u.paidThrough) {
-          <p class="muted">Paid through {{ u.paidThrough | date: "mediumDate" }}</p>
-        }
-        @if (u.agreedMonthlyAmountMajor != null && u.currencyCode) {
-          <p class="muted">
-            Your agreed price: {{ u.agreedMonthlyAmountMajor }} {{ u.currencyCode }}/mo
-            @if (u.boundPricingCatalogVersion) {
-              (catalog {{ u.boundPricingCatalogVersion }})
+      <section class="card usage" [class.warn]="isPlanUsageNearLimit(u)">
+        <div class="usage-head">
+          <h3>Usage this month</h3>
+          <p class="usage-plan">{{ formatSubscriptionPlanLabel(u) }}</p>
+        </div>
+
+        <ul class="usage-metrics">
+          <li class="usage-metric">
+            <span class="usage-metric-label">Bookings</span>
+            <span class="usage-metric-value">{{ formatBookingUsageMetric(u) }}</span>
+            @if (u.bookingsLimitThisMonth) {
+              <div class="meter" role="progressbar" [attr.aria-valuenow]="bookingsUsagePercent(u)" aria-valuemin="0" aria-valuemax="100">
+                <span [style.width.%]="bookingsUsagePercent(u)"></span>
+              </div>
+            } @else {
+              <p class="usage-metric-hint muted">Unlimited on your plan</p>
             }
-          </p>
-        }
-        @if (u.catalogListPriceMajor != null && u.currencyCode) {
-          <p class="muted">
-            Current catalog list: {{ u.catalogListPriceMajor }} {{ u.currencyCode }}/mo
-            @if (u.pricingCatalogVersion) {
-              ({{ u.pricingCatalogVersion }})
+          </li>
+          <li class="usage-metric">
+            <span class="usage-metric-label">Locations</span>
+            <span class="usage-metric-value">{{ formatLocationUsageMetric(u) }}</span>
+            @if (u.entitlements.maxLocations) {
+              <div
+                class="meter"
+                role="progressbar"
+                [attr.aria-valuenow]="usagePercentForLimit(u.locationsActive, u.entitlements.maxLocations)"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              >
+                <span [style.width.%]="usagePercentForLimit(u.locationsActive, u.entitlements.maxLocations)"></span>
+              </div>
+            } @else {
+              <p class="usage-metric-hint muted">Multiple locations allowed</p>
             }
-          </p>
-        }
-        @if (u.effectiveMonthlyAmountMajor != null && u.currencyCode) {
-          <p class="muted">
-            Effective charge: {{ u.effectiveMonthlyAmountMajor }} {{ u.currencyCode }}/mo
-          </p>
-        }
-        @if (apiPricing(); as pricing) {
-          <p class="muted">Market GMV platform fee: {{ pricing.platformFeePercent }}%</p>
-        }
-        @if (isNearBookingLimit(u)) {
-          <p class="warn-text">You're approaching your monthly booking limit.</p>
+          </li>
+          <li class="usage-metric">
+            <span class="usage-metric-label">Team members</span>
+            <span class="usage-metric-value">{{ formatTeamUsageMetric(u) }}</span>
+            @if (u.entitlements.maxPractitioners) {
+              <div
+                class="meter"
+                role="progressbar"
+                [attr.aria-valuenow]="usagePercentForLimit(u.practitionersActive, u.entitlements.maxPractitioners)"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              >
+                <span [style.width.%]="usagePercentForLimit(u.practitionersActive, u.entitlements.maxPractitioners)"></span>
+              </div>
+            } @else {
+              <p class="usage-metric-hint muted">Unlimited team members</p>
+            }
+          </li>
+        </ul>
+
+        <div class="usage-billing">
+          @if (u.billingStatus) {
+            <p class="muted">Billing status: {{ formatTenantBillingStatus(u.billingStatus) }}</p>
+          }
+          @if (u.trialEndsAt) {
+            <p class="muted">Trial ends {{ u.trialEndsAt | date: "mediumDate" }}</p>
+          }
+          @if (u.paidThrough) {
+            <p class="muted">Paid through {{ u.paidThrough | date: "mediumDate" }}</p>
+          }
+          @if (u.agreedMonthlyAmountMajor != null && u.currencyCode) {
+            <p class="muted">
+              Your plan price: {{ formatPrice(u.agreedMonthlyAmountMajor, u.currencyCode) }}/mo
+            </p>
+          }
+          @if (
+            u.catalogListPriceMajor != null &&
+            u.currencyCode &&
+            u.agreedMonthlyAmountMajor != null &&
+            u.catalogListPriceMajor !== u.agreedMonthlyAmountMajor
+          ) {
+            <p class="muted">
+              Current list price for new sign-ups:
+              {{ formatPrice(u.catalogListPriceMajor, u.currencyCode) }}/mo
+            </p>
+          }
+          @if (
+            u.effectiveMonthlyAmountMajor != null &&
+            u.currencyCode &&
+            u.agreedMonthlyAmountMajor != null &&
+            u.effectiveMonthlyAmountMajor !== u.agreedMonthlyAmountMajor
+          ) {
+            <p class="muted">
+              Next charge: {{ formatPrice(u.effectiveMonthlyAmountMajor, u.currencyCode) }}/mo
+            </p>
+          }
+          @if (apiPricing(); as pricing) {
+            <p class="muted">Online payment platform fee: {{ pricing.platformFeePercent }}%</p>
+          }
+        </div>
+
+        @if (isPlanUsageNearLimit(u)) {
+          <p class="warn-text">You're approaching a plan limit. Upgrade or adjust usage to avoid interruptions.</p>
         }
       </section>
     }
@@ -70,82 +129,153 @@
           [class.current]="isCurrentPlan(sku)"
           [class.popular]="isPopular(sku)"
         >
-          @if (isCurrentPlan(sku)) {
-            <span class="pill current-pill">Current plan</span>
-          } @else if (isPopular(sku)) {
-            <span class="pill popular-pill">Most popular</span>
-          }
+          <div class="tier-badge-slot">
+            @if (isCurrentPlan(sku)) {
+              <span class="pill current-pill">Current plan</span>
+            } @else if (isPopular(sku)) {
+              <span class="pill popular-pill">Most popular</span>
+            }
+          </div>
           <p class="tier-name">{{ display.name }}</p>
           <p class="price">{{ display.priceLabel }}</p>
           <p class="tagline">{{ display.tagline }}</p>
-          <p class="muted">{{ display.description }}</p>
-          @if (canUpgrade(sku) && selfServeEnabled()) {
-            <button
-              type="button"
-              class="btn btn-primary upgrade-btn"
-              [disabled]="checkoutBusy()"
-              (click)="upgrade(sku)"
-            >
-              Upgrade to {{ display.name }}
-            </button>
-          }
+          <p class="muted tier-desc">{{ display.description }}</p>
+          <div class="tier-actions">
+            @if (canUpgrade(sku) && selfServeEnabled()) {
+              <button
+                type="button"
+                class="btn btn-primary upgrade-btn"
+                [disabled]="checkoutBusy()"
+                (click)="upgrade(sku)"
+              >
+                Upgrade to {{ display.name }}
+              </button>
+            }
+          </div>
         </section>
       }
     </div>
 
-    <section class="card">
-      <h3>Adeni subscription history</h3>
+    <section class="card billing-history">
+      <div class="billing-history-head">
+        <h3>Recent billing activity</h3>
+        <p class="muted billing-history-lede">
+          Your latest Adeni subscription charges. New businesses usually see their first entry after checkout.
+        </p>
+      </div>
       @if (billingHistory().length === 0) {
-        <p class="muted">Charges appear here after your first subscription payment.</p>
+        <adeni-portal-empty-state
+          icon="time"
+          title="No charges yet"
+          description="Your Adeni subscription charges appear here after checkout or when billing syncs."
+          [compact]="true"
+        />
       } @else {
-        <table class="billing-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Event</th>
-              <th>Amount</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of billingHistory(); track row.id) {
-              <tr>
-                <td>{{ row.occurredAt | date: "mediumDate" }}</td>
-                <td>{{ row.eventType }}</td>
-                <td>{{ formatCharge(row) }}</td>
-                <td>{{ formatBillingChargeStatus(row.status) }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
+        <div class="billing-grid">
+          <adeni-list-toolbar
+            storageKey="portal.plan.billing"
+            [showSearch]="false"
+            [showViewSwitcher]="false"
+            [count]="billingHistory().length"
+            singularCountLabel="charge"
+            pluralCountLabel="charges"
+          />
+          <adeni-data-table
+            [rows]="billingHistory()"
+            [columns]="billingColumns"
+            [trackRow]="trackBillingRow"
+            [sortColumnId]="billingSortColumn()"
+            (sortColumnIdChange)="billingSortColumn.set($event)"
+            [sortDirection]="billingSortDirection()"
+            (sortDirectionChange)="billingSortDirection.set($event)"
+          >
+            <ng-template adeniDataTableCell="occurredAt" let-row>
+              {{ row.occurredAt | date: "mediumDate" }}
+            </ng-template>
+            <ng-template adeniDataTableCell="amount" let-row>
+              <span class="billing-amount">{{ formatChargeAmount(row) }}</span>
+            </ng-template>
+            <ng-template adeniDataTableCell="status" let-row>
+              <adeni-pill [tone]="billingStatusPillTone(row.status)" [compact]="true">
+                {{ formatBillingChargeStatus(row.status) }}
+              </adeni-pill>
+            </ng-template>
+          </adeni-data-table>
+        </div>
       }
     </section>
 
     <section class="card compare">
-      <h3>Compare plans</h3>
-      <p class="muted compare-lede">
-        Feature rows match the live entitlements catalog for your market pricing above.
-      </p>
-      <table>
-        <thead>
-          <tr>
-            <th scope="col">Feature</th>
-            @for (sku of skus; track sku) {
-              <th scope="col">{{ planDisplay(sku).name }}</th>
-            }
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of planComparison; track row.label) {
-            <tr>
-              <th scope="row">{{ row.label }}</th>
+      <div class="compare-head">
+        <h3>Compare plans</h3>
+        <p class="muted compare-lede">
+          Feature rows match the live entitlements catalog for your market pricing above.
+        </p>
+      </div>
+      <div class="compare-table-shell">
+        <div class="compare-table-wrap" role="region" aria-label="Plan feature comparison" tabindex="0">
+          <table class="compare-table">
+            <colgroup>
+              <col class="compare-feature-col" />
               @for (sku of skus; track sku) {
-                <td>{{ comparisonCell(row, sku) }}</td>
+                <col class="compare-plan-col" />
               }
-            </tr>
-          }
-        </tbody>
-      </table>
+            </colgroup>
+            <thead>
+              <tr class="compare-header-row">
+                <th scope="col" class="compare-feature-col compare-th-feature">
+                  <span class="compare-section-label">What's included</span>
+                </th>
+                @for (sku of skus; track sku) {
+                  @let display = planDisplay(sku);
+                  <th
+                    scope="col"
+                    class="compare-plan-col compare-th-plan"
+                    [class.is-current]="isCurrentPlan(sku)"
+                    [class.is-popular]="isPopular(sku)"
+                  >
+                    <div class="compare-plan-head">
+                      <span class="compare-plan-tier">{{ display.name }}</span>
+                      <span class="compare-plan-price">{{ display.priceLabel }}</span>
+                      @if (isCurrentPlan(sku)) {
+                        <span class="compare-plan-badge compare-plan-badge--current">Your plan</span>
+                      } @else if (isPopular(sku)) {
+                        <span class="compare-plan-badge compare-plan-badge--popular">Most popular</span>
+                      }
+                    </div>
+                  </th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of planComparison; track row.label; let alt = $even) {
+                <tr [class.compare-row-alt]="alt">
+                  <th scope="row" class="compare-feature-col compare-feature-label">{{ row.label }}</th>
+                @for (sku of skus; track sku) {
+                  @let kind = comparisonCellKind(row, sku);
+                  <td
+                    class="compare-plan-col compare-value-col"
+                    [class.is-current]="isCurrentPlan(sku)"
+                    [class.cell-yes]="kind === 'yes'"
+                    [class.cell-dash]="kind === 'dash'"
+                  >
+                    @if (kind === "yes") {
+                      <span class="compare-yes" aria-hidden="true">✓</span>
+                      <span class="sr-only">Included</span>
+                    } @else if (kind === "dash") {
+                      <span aria-hidden="true">—</span>
+                      <span class="sr-only">Not included</span>
+                    } @else {
+                      {{ comparisonCell(row, sku) }}
+                    }
+                  </td>
+                }
+              </tr>
+            }
+            </tbody>
+          </table>
+        </div>
+      </div>
     </section>
   }
 </app-portal-page>

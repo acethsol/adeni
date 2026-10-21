@@ -186,6 +186,51 @@ public sealed class TenantCustomerServiceTests
     }
 
     [Fact]
+    public async Task ListForTenant_sortBy_name_orders_before_paging()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        var customers = scope.ServiceProvider.GetRequiredService<ITenantCustomerService>();
+        var tenantId = await SeedTenantAsync(db);
+        var now = DateTimeOffset.UtcNow;
+
+        db.TenantCustomers.AddRange(
+            new TenantCustomer
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                DisplayName = "Zed",
+                NormalizedPhone = "+15550101",
+                LastSeenAt = now,
+                CreatedAt = now,
+            },
+            new TenantCustomer
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                DisplayName = "Amy",
+                NormalizedPhone = "+15550102",
+                LastSeenAt = now.AddDays(-2),
+                CreatedAt = now,
+            });
+        await db.SaveChangesAsync();
+
+        var result = await customers.ListForTenantAsync(
+            tenantId,
+            null,
+            1,
+            10,
+            discoverFilter: null,
+            sortBy: "name",
+            sortDirection: Application.Common.ListSortDirection.Asc);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Amy", result.Value!.Items[0].DisplayName);
+        Assert.Equal("Zed", result.Value.Items[1].DisplayName);
+    }
+
+    [Fact]
     public async Task Same_phone_two_tenants_two_customer_rows()
     {
         await using var provider = BuildProvider();

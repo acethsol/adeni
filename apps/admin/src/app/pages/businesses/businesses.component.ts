@@ -3,7 +3,12 @@ import { Component, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
-import { formatSubscriptionSku, formatTenantStatus, type AdminBusinessSummary } from "@adeni/shared";
+import {
+  formatSubscriptionSku,
+  formatTenantStatus,
+  listSortParamsFromColumn,
+  type AdminBusinessSummary,
+} from "@adeni/shared";
 import {
   AdeniDataTableActionsDirective,
   AdeniDataTableCellDirective,
@@ -19,6 +24,7 @@ import {
   AdeniTablePersonCellComponent,
   PortalPageComponent,
   type AdeniDataTableColumn,
+  type AdeniDataTableSortDirection,
   type AdeniExportMenuItem,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
@@ -76,6 +82,8 @@ export class AdminBusinessesComponent {
   readonly page = signal(1);
   readonly pageSize = ADMIN_LIST_PAGE_SIZE;
   readonly searchText = signal("");
+  readonly sortColumnId = signal<string | null>(null);
+  readonly sortDirection = signal<AdeniDataTableSortDirection>("asc");
   readonly totalPages = computed(() => adminListTotalPages(this.totalCount(), this.pageSize));
   readonly showingRange = computed(() =>
     adminListRangeLabel(this.page(), this.pageSize, this.totalCount()),
@@ -104,10 +112,30 @@ export class AdminBusinessesComponent {
   ];
 
   readonly columns: AdeniDataTableColumn<AdminBusinessSummary>[] = [
-    { id: "business", header: "Business", cell: (b) => b.name },
-    { id: "status", header: "Status", cell: () => "" },
-    { id: "plan", header: "Plan", cell: () => "" },
-    { id: "billing", header: "Billing", cell: () => "" },
+    {
+      id: "business",
+      header: "Business",
+      cell: (b) => b.name,
+      sortValue: (b) => b.name.toLowerCase(),
+    },
+    {
+      id: "status",
+      header: "Status",
+      cell: () => "",
+      sortValue: (b) => b.status,
+    },
+    {
+      id: "plan",
+      header: "Plan",
+      cell: () => "",
+      sortValue: (b) => b.subscriptionSku,
+    },
+    {
+      id: "billing",
+      header: "Billing",
+      cell: () => "",
+      sortValue: (b) => b.billingStatus ?? "",
+    },
   ];
 
   readonly trackBusinessRow = (b: AdminBusinessSummary): string => b.id;
@@ -155,6 +183,7 @@ export class AdminBusinessesComponent {
             q: this.searchText().trim() || undefined,
             page: this.page(),
             pageSize: this.pageSize,
+            sort: listSortParamsFromColumn(this.sortColumnId(), this.sortDirection()),
           }),
         );
         this.businesses.set(result.items);
@@ -190,6 +219,24 @@ export class AdminBusinessesComponent {
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { page: page === 1 ? null : page },
+      queryParamsHandling: "merge",
+    });
+  }
+
+  onSortColumnChange(columnId: string | null): void {
+    this.sortColumnId.set(columnId);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: null },
+      queryParamsHandling: "merge",
+    });
+  }
+
+  onSortDirectionChange(direction: AdeniDataTableSortDirection): void {
+    this.sortDirection.set(direction);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: null },
       queryParamsHandling: "merge",
     });
   }

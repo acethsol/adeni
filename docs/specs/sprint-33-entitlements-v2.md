@@ -14,7 +14,7 @@
 
 ## 1. Goal (one sentence)
 
-Make **`plan-entitlements.seed.json`** the single source of truth for Starter / Professional / Business capabilities, enforce limits and flags on the API, and drive portal navigation and ops UI from the tenant profile entitlements payload—without legacy “cripple core behavior” gates (Starter **Adeni inbox stays enabled**).
+Make **`plan-entitlements.seed.json`** the single source of truth for Starter / Professional / Business capabilities, enforce limits and flags on the API, and drive portal navigation and ops UI from the tenant profile entitlements payload—without legacy “cripple core behavior” gates (Starter **Adeni messaging stays enabled**).
 
 ---
 
@@ -50,7 +50,7 @@ Make **`plan-entitlements.seed.json`** the single source of truth for Starter / 
 - [x] **Feature flags (server-enforced where APIs exist today)** — waitlist, WhatsApp prefs, advanced analytics dashboard gates.
 - [x] **Tenant profile entitlements payload** — profile + subscription usage include v2 entitlements + location/practitioner usage counts.
 - [x] **Portal capability-driven UI** — nav/limits from profile; removed ops-page upgrade nags (locations/messages/dashboard).
-- [x] **`PLAN_COMPARISON`** — synced to matrix (Adeni inbox, caps, waitlist, WhatsApp).
+- [x] **`PLAN_COMPARISON`** — synced to matrix (Adeni messaging, caps, waitlist, WhatsApp).
 - [x] **Tests** — `EntitlementsServiceTests` + `plan-entitlements.test.ts`.
 
 ## 4. Out of scope
@@ -76,7 +76,7 @@ Explicitly **not** in this spec (per matrix “Future” and product guardrails)
 | `maxLocations` | Business locations | `EnsureCanAddLocationForTenantAsync` (count vs max; Business `null` = unlimited) | Locations: hide “add second location” affordance when at cap; no “Business plan required” banner on ops view |
 | `maxPractitioners` | Staff/practitioners | **New** `EnsureCanAddPractitionerForTenantAsync` on staff create/activate | Staff page: disable add at cap; optional usage line on `/plan` |
 | `unlimitedBookings` | Online bookings | Keep **no** monthly cap (remove dead `MonthlyBookingLimit` usage or set always null from seed) | — |
-| `messaging` | Adeni inbox | `EnsureCanUseMessagingForTenantAsync` + SignalR hub | Messages nav visible for Starter; inbox tab not entitlement-gated incorrectly |
+| `messaging` | Adeni messaging | `EnsureCanUseMessagingForTenantAsync` + SignalR hub | Messages nav visible for Starter; inbox tab not entitlement-gated incorrectly |
 | `advancedReminders` | Automated reminders | **Follow-up** if reminder templates differ by tier; MVP: document parity “basic” on Starter | — |
 | `whatsappIntegration` | WhatsApp integration | Gate tenant WhatsApp link / notification prefs APIs that expose WhatsApp channel | Hide WhatsApp toggles when false |
 | `waitlist` | Waitlist | Gate `POST /api/v1/bookings/waitlist` (and portal queue/waitlist UI if present) | Hide waitlist entry points |
@@ -190,7 +190,7 @@ Mapped to [02_PLAN_ENTITLEMENTS.md](./adeni-subscription-pricing-v1/02_PLAN_ENTI
 - [ ] **Professional — 1 location, ≤10 practitioners** — Same enforcement at Pro caps
 - [ ] **Business — multiple locations, high/unlimited practitioners** — Second location allowed; practitioner cap not hit at 10
 - [ ] **Unlimited bookings / services** — No artificial monthly booking cap in entitlements layer
-- [ ] **Adeni inbox (all tiers)** — Starter messaging **enabled** in seed, C#, tests, portal nav, and `PLAN_COMPARISON`
+- [ ] **Adeni messaging (all tiers)** — Starter messaging **enabled** in seed, C#, tests, portal nav, and `PLAN_COMPARISON`
 - [ ] **Waitlist** — Disabled for Starter; enabled Pro/Business on waitlist API
 - [ ] **WhatsApp integration** — Disabled Starter; enabled Pro/Business on WhatsApp-capable endpoints/settings
 - [ ] **Analytics (basic vs advanced)** — Starter does not receive advanced analytics widgets/API aggregates; Pro/Business do (per `advancedAnalytics` seed)

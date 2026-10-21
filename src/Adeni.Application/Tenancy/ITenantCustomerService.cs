@@ -1,5 +1,6 @@
 namespace Adeni.Application.Tenancy;
 
+using Adeni.Application.Common;
 using Adeni.Domain.Common;
 
 public sealed record TenantCustomerUpsertResult(Guid TenantCustomerId, Guid? LinkedPlatformCustomerId);
@@ -71,5 +72,7 @@ public interface ITenantCustomerService
         int page,
         int pageSize,
         string? discoverFilter = null,
+        string? sortBy = null,
+        ListSortDirection? sortDirection = null,
         CancellationToken cancellationToken = default);
 }

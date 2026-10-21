@@ -65,6 +65,43 @@ public sealed class AdminBusinessServiceTests
     }
 
     [Fact]
+    public async Task ListBusinesses_sortBy_status_orders_before_paging()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+
+        db.Tenants.AddRange(
+            new Tenant
+            {
+                Id = Guid.NewGuid(),
+                Name = "Verified Co",
+                Status = TenantStatus.Verified,
+                CreatedAt = DateTimeOffset.UtcNow,
+            },
+            new Tenant
+            {
+                Id = Guid.NewGuid(),
+                Name = "Pending Co",
+                Status = TenantStatus.PendingVerification,
+                CreatedAt = DateTimeOffset.UtcNow,
+            });
+        await db.SaveChangesAsync();
+
+        var service = scope.ServiceProvider.GetRequiredService<AdminBusinessService>();
+        var result = await service.ListBusinessesAsync(
+            null,
+            1,
+            25,
+            sortBy: "status",
+            sortDirection: Application.Common.ListSortDirection.Asc);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(TenantStatus.PendingVerification, result.Value!.Items[0].Status);
+        Assert.Equal(TenantStatus.Verified, result.Value.Items[1].Status);
+    }
+
+    [Fact]
     public async Task Reject_requires_reason_min_length()
     {
         await using var provider = BuildProvider();

@@ -1,6 +1,7 @@
 namespace Adeni.Infrastructure.Admin;
 
 using Adeni.Application.Admin;
+using Adeni.Application.Common;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Common;
 using Adeni.Domain.Finance;
@@ -11,13 +12,23 @@ public sealed class AdminTransactionSearchService(AdeniDbContext dbContext) : IA
 {
     private const int MaxMergedHits = 1000;
 
-    private sealed record Hit(string Kind, Guid Id, DateTimeOffset OccurredAt);
+    private sealed record Hit(
+        string Kind,
+        Guid Id,
+        DateTimeOffset OccurredAt,
+        Guid TenantId,
+        string? ProviderReference,
+        long? AmountMinor,
+        decimal? Amount,
+        string Status);
 
     public async Task<Result<AdminPagedResult<AdminTransactionSearchItem>>> SearchAsync(
         string? query,
         string? kind,
         int page,
         int pageSize,
+        string? sortBy = null,
+        ListSortDirection? sortDirection = null,
         CancellationToken cancellationToken = default)
     {
         var paging = AdminPaging.Normalize(page, pageSize);
@@ -31,7 +42,13 @@ public sealed class AdminTransactionSearchService(AdeniDbContext dbContext) : IA
         var trimmed = query?.Trim();
         if (string.IsNullOrWhiteSpace(trimmed))
         {
-            return await ListRecentAsync(kind, effectivePage, effectivePageSize, cancellationToken);
+            return await ListRecentAsync(
+                kind,
+                effectivePage,
+                effectivePageSize,
+                sortBy,
+                sortDirection,
+                cancellationToken);
         }
 
         if (trimmed.Length < 2)
@@ -65,7 +82,15 @@ public sealed class AdminTransactionSearchService(AdeniDbContext dbContext) : IA
                     || x.ProviderReference.ToLower().Contains(needle)
                     || (x.IdempotencyKey != null && x.IdempotencyKey.ToLower().Contains(needle))
                     || tenantIdsByName.Contains(x.TenantId))
-                .Select(x => new Hit("commerce", x.Id, x.UpdatedAt))
+                .Select(x => new Hit(
+                    "commerce",
+                    x.Id,
+                    x.UpdatedAt,
+                    x.TenantId,
+                    x.ProviderReference,
+                    null,
+                    x.Amount,
+                    x.Status.ToString()))
                 .ToListAsync(cancellationToken);
             hits.AddRange(commerceHits);
         }
@@ -79,7 +104,15 @@ public sealed class AdminTransactionSearchService(AdeniDbContext dbContext) : IA
                     || x.ProviderReference.ToLower().Contains(needle)
                     || x.IdempotencyKey.ToLower().Contains(needle)
                     || tenantIdsByName.Contains(x.TenantId))
-                .Select(x => new Hit("saas", x.Id, x.OccurredAt))
+                .Select(x => new Hit(
+                    "saas",
+                    x.Id,
+                    x.OccurredAt,
+                    x.TenantId,
+                    x.ProviderReference,
+                    x.AmountMinor,
+                    null,
+                    x.Status))
                 .ToListAsync(cancellationToken);
             hits.AddRange(saasHits);
         }
@@ -90,18 +123,21 @@ public sealed class AdminTransactionSearchService(AdeniDbContext dbContext) : IA
                 Error.Validation("Too many matches. Use a Paystack reference or full transaction id."));
         }
 
-        var ordered = hits
-            .OrderByDescending(x => x.OccurredAt)
-            .ThenBy(x => x.Kind, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        return await BuildPageAsync(ordered, effectivePage, effectivePageSize, cancellationToken);
+        return await BuildPageAsync(
+            hits,
+            effectivePage,
+            effectivePageSize,
+            sortBy,
+            sortDirection,
+            cancellationToken);
     }
 
     private async Task<Result<AdminPagedResult<AdminTransactionSearchItem>>> ListRecentAsync(
         string? kind,
         int page,
         int pageSize,
+        string? sortBy,
+        ListSortDirection? sortDirection,
         CancellationToken cancellationToken)
     {
         var includeCommerce = MatchesKindFilter(kind, "commerce");
@@ -114,7 +150,15 @@ public sealed class AdminTransactionSearchService(AdeniDbContext dbContext) : IA
                 .AsNoTracking()
                 .OrderByDescending(x => x.UpdatedAt)
                 .Take(MaxMergedHits)
-                .Select(x => new Hit("commerce", x.Id, x.UpdatedAt))
+                .Select(x => new Hit(
+                    "commerce",
+                    x.Id,
+                    x.UpdatedAt,
+                    x.TenantId,
+                    x.ProviderReference,
+                    null,
+                    x.Amount,
+                    x.Status.ToString()))
                 .ToListAsync(cancellationToken);
             hits.AddRange(commerceHits);
         }
@@ -125,24 +169,33 @@ public sealed class AdminTransactionSearchService(AdeniDbContext dbContext) : IA
                 .AsNoTracking()
                 .OrderByDescending(x => x.OccurredAt)
                 .Take(MaxMergedHits)
-                .Select(x => new Hit("saas", x.Id, x.OccurredAt))
+                .Select(x => new Hit(
+                    "saas",
+                    x.Id,
+                    x.OccurredAt,
+                    x.TenantId,
+                    x.ProviderReference,
+                    x.AmountMinor,
+                    null,
+                    x.Status))
                 .ToListAsync(cancellationToken);
             hits.AddRange(saasHits);
         }
 
-        return await BuildPageAsync(hits, page, pageSize, cancellationToken);
+        return await BuildPageAsync(hits, page, pageSize, sortBy, sortDirection, cancellationToken);
     }
 
     private async Task<Result<AdminPagedResult<AdminTransactionSearchItem>>> BuildPageAsync(
         List<Hit> hits,
         int page,
         int pageSize,
+        string? sortBy,
+        ListSortDirection? sortDirection,
         CancellationToken cancellationToken)
     {
-        var ordered = hits
-            .OrderByDescending(x => x.OccurredAt)
-            .ThenBy(x => x.Kind, StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        var field = sortBy ?? AdminTransactionListSort.DefaultField;
+        var direction = sortDirection ?? AdminTransactionListSort.DefaultDirection;
+        var ordered = await OrderHitsAsync(hits, field, direction, cancellationToken);
 
         var totalCount = ordered.Count;
         var pageHits = ordered
@@ -181,6 +234,49 @@ public sealed class AdminTransactionSearchService(AdeniDbContext dbContext) : IA
             page,
             pageSize,
             totalCount));
+    }
+
+    private async Task<List<Hit>> OrderHitsAsync(
+        List<Hit> hits,
+        string field,
+        ListSortDirection direction,
+        CancellationToken cancellationToken)
+    {
+        var desc = ListSort.IsDescending(direction);
+        var tenantIds = hits.Select(x => x.TenantId).Where(x => x != Guid.Empty).Distinct().ToList();
+        var tenantNames = tenantIds.Count == 0
+            ? new Dictionary<Guid, string>()
+            : await dbContext.Tenants
+                .AsNoTracking()
+                .Where(t => tenantIds.Contains(t.Id))
+                .ToDictionaryAsync(t => t.Id, t => t.Name, cancellationToken);
+
+        IOrderedEnumerable<Hit> ordered = field switch
+        {
+            "type" => desc
+                ? hits.OrderByDescending(x => x.Kind, StringComparer.OrdinalIgnoreCase)
+                : hits.OrderBy(x => x.Kind, StringComparer.OrdinalIgnoreCase),
+            "business" => desc
+                ? hits.OrderByDescending(x => tenantNames.GetValueOrDefault(x.TenantId) ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+                : hits.OrderBy(x => tenantNames.GetValueOrDefault(x.TenantId) ?? string.Empty, StringComparer.OrdinalIgnoreCase),
+            "reference" => desc
+                ? hits.OrderByDescending(x => x.ProviderReference ?? x.Id.ToString(), StringComparer.OrdinalIgnoreCase)
+                : hits.OrderBy(x => x.ProviderReference ?? x.Id.ToString(), StringComparer.OrdinalIgnoreCase),
+            "amount" => desc
+                ? hits.OrderByDescending(x => x.AmountMinor ?? (long)((x.Amount ?? 0m) * 100m))
+                : hits.OrderBy(x => x.AmountMinor ?? (long)((x.Amount ?? 0m) * 100m)),
+            "status" => desc
+                ? hits.OrderByDescending(x => x.Status, StringComparer.OrdinalIgnoreCase)
+                : hits.OrderBy(x => x.Status, StringComparer.OrdinalIgnoreCase),
+            _ => desc
+                ? hits.OrderByDescending(x => x.OccurredAt)
+                : hits.OrderBy(x => x.OccurredAt),
+        };
+
+        return ordered
+            .ThenBy(x => x.Kind, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(x => x.Id)
+            .ToList();
     }
 
     private static bool MatchesKindFilter(string? kind, string target)

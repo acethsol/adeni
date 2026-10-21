@@ -10,7 +10,7 @@ import {
 describe("plan-entitlements", () => {
   it("Starter inbox is enabled", () => {
     expect(PLAN_ENTITLEMENTS.starter.messaging).toBe(true);
-    const inboxRow = PLAN_COMPARISON.find((row) => row.label === "Adeni inbox");
+    const inboxRow = PLAN_COMPARISON.find((row) => row.label === "Adeni messaging");
     expect(inboxRow?.starter).toBe(true);
   });
 

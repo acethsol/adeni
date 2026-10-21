@@ -148,7 +148,7 @@
         />
       } @else if (viewMode() === "cards") {
         <ul class="plain staff-grid">
-          @for (service of filteredServices(); track service.id) {
+          @for (service of sortedFilteredServices(); track service.id) {
             <li class="org-card">
               <div class="org-avatar" data-tone="neutral" aria-hidden="true">
                 <span>{{ serviceInitials(service) }}</span>
@@ -197,9 +197,13 @@
         </ul>
       } @else {
         <adeni-data-table
-          [rows]="filteredServices()"
+          [rows]="sortedFilteredServices()"
           [columns]="serviceTableColumns"
           [trackRow]="trackServiceRow"
+          [sortColumnId]="sortColumnId()"
+          (sortColumnIdChange)="sortColumnId.set($event)"
+          [sortDirection]="sortDirection()"
+          (sortDirectionChange)="sortDirection.set($event)"
         >
           <ng-template adeniDataTableCell="name" let-service>
             <adeni-table-person-cell

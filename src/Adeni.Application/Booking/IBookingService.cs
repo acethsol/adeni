@@ -108,6 +108,8 @@ public interface IBookingService
         int page = 1,
         int pageSize = Paging.DefaultPageSize,
         Guid? staffMemberId = null,
+        string? sortBy = null,
+        ListSortDirection? sortDirection = null,
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<CustomerBookingResponse>> ListForCustomerAsync(

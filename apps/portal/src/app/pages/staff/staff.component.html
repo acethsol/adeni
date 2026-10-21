@@ -62,7 +62,7 @@
 
       @if (viewMode() === "cards") {
         <ul class="plain staff-grid">
-          @for (member of filteredStaff(); track member.id) {
+          @for (member of sortedFilteredStaff(); track member.id) {
             <li class="org-card" [class.inactive]="!member.isActive">
               <div class="org-avatar" [attr.data-tone]="roleTone(member.roleKey)" aria-hidden="true">
                 @if (member.avatarImageUrl) {
@@ -134,10 +134,14 @@
         </ul>
       } @else {
         <adeni-data-table
-          [rows]="filteredStaff()"
+          [rows]="sortedFilteredStaff()"
           [columns]="staffTableColumns"
           [trackRow]="trackStaffRow"
           [rowClass]="staffRowClass"
+          [sortColumnId]="sortColumnId()"
+          (sortColumnIdChange)="sortColumnId.set($event)"
+          [sortDirection]="sortDirection()"
+          (sortDirectionChange)="sortDirection.set($event)"
         >
           <ng-template adeniDataTableCell="name" let-member>
             <adeni-table-person-cell

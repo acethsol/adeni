@@ -33,7 +33,16 @@
       <adeni-export-menu listExports label="Export" [items]="exportItems" />
     </adeni-list-toolbar>
 
-    <adeni-data-table [rows]="items()" [columns]="columns" [trackRow]="trackRow">
+    <adeni-data-table
+      [rows]="items()"
+      [columns]="columns"
+      [trackRow]="trackRow"
+      [sortRows]="false"
+      [sortColumnId]="sortColumnId()"
+      (sortColumnIdChange)="onSortColumnChange($event)"
+      [sortDirection]="sortDirection()"
+      (sortDirectionChange)="onSortDirectionChange($event)"
+    >
       <ng-template adeniDataTableCell="business" let-item>
         <div class="cell-stack">
           <div class="row-title">{{ item.name }}</div>

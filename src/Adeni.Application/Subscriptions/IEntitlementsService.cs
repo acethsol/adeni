@@ -59,10 +59,6 @@ public interface IEntitlementsService
         Tenant tenant,
         CancellationToken cancellationToken = default);
 
-    Task<Result> EnsureCanUseWhatsappIntegrationForTenantAsync(
-        Tenant tenant,
-        CancellationToken cancellationToken = default);
-
     Task<SubscriptionUsageResponse> GetUsageForTenantAsync(
         Tenant tenant,
         CancellationToken cancellationToken = default);

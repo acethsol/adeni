@@ -17,7 +17,6 @@ export type PlanEntitlementSeed = {
   basicReminders: boolean;
   configurableReminders: boolean;
   followUpAutomation: boolean;
-  whatsappIntegration: boolean;
   smsEnabled: boolean;
   smsUsageBilling: boolean;
   basicAnalytics: boolean;
@@ -66,14 +65,13 @@ export const PLAN_COMPARISON_ROW_DEFS: PlanComparisonRowDef[] = [
   { label: "Services", kind: "flag", key: "unlimitedServices" },
   { label: "Public profile", kind: "flag", key: "publicProfile" },
   { label: "Discover listing", kind: "flag", key: "discoverListing" },
-  { label: "Adeni inbox", kind: "flag", key: "messaging" },
+  { label: "Adeni messaging", kind: "flag", key: "messaging" },
   { label: "Team members", kind: "limit", key: "maxPractitioners" },
   { label: "Business locations", kind: "limit", key: "maxLocations" },
   { label: "Basic reminders", kind: "flag", key: "basicReminders" },
   { label: "Configurable reminders", kind: "flag", key: "configurableReminders" },
   { label: "Follow-up automation", kind: "flag", key: "followUpAutomation" },
   { label: "SMS notifications", kind: "flag", key: "smsEnabled" },
-  { label: "WhatsApp integration", kind: "flag", key: "whatsappIntegration" },
   { label: "Basic analytics", kind: "flag", key: "basicAnalytics" },
   { label: "Advanced analytics", kind: "flag", key: "advancedAnalytics" },
   { label: "Customer retention analytics", kind: "flag", key: "customerRetentionAnalytics" },

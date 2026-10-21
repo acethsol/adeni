@@ -3,7 +3,7 @@ import { Component, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
-import type { PendingBusiness } from "@adeni/shared";
+import { listSortParamsFromColumn, type PendingBusiness } from "@adeni/shared";
 import {
   AdeniDataTableActionsDirective,
   AdeniDataTableCellDirective,
@@ -16,6 +16,7 @@ import {
   AdeniStaffButtonComponent,
   PortalPageComponent,
   type AdeniDataTableColumn,
+  type AdeniDataTableSortDirection,
   type AdeniExportMenuItem,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
@@ -64,6 +65,8 @@ export class AdminPendingComponent {
   readonly page = signal(1);
   readonly pageSize = ADMIN_LIST_PAGE_SIZE;
   readonly searchText = signal("");
+  readonly sortColumnId = signal<string | null>(null);
+  readonly sortDirection = signal<AdeniDataTableSortDirection>("asc");
   readonly busyId = signal<string | null>(null);
 
   readonly totalPages = computed(() => adminListTotalPages(this.totalCount(), this.pageSize));
@@ -94,14 +97,30 @@ export class AdminPendingComponent {
   ];
 
   readonly columns: AdeniDataTableColumn<PendingBusiness>[] = [
-    { id: "business", header: "Business", cell: (item) => item.name },
-    { id: "market", header: "Market", cell: (item) => item.marketId },
+    {
+      id: "business",
+      header: "Business",
+      cell: (item) => item.name,
+      sortValue: (item) => item.name.toLowerCase(),
+    },
+    {
+      id: "market",
+      header: "Market",
+      cell: (item) => item.marketId,
+      sortValue: (item) => item.marketId,
+    },
     {
       id: "submitted",
       header: "Submitted",
       cell: () => "",
+      sortValue: (item) => item.createdAt,
     },
-    { id: "docs", header: "Docs", cell: () => "" },
+    {
+      id: "docs",
+      header: "Docs",
+      cell: () => "",
+      sortValue: (item) => item.documents?.length ?? 0,
+    },
   ];
 
   readonly trackRow = (item: PendingBusiness): string => item.id;
@@ -135,6 +154,7 @@ export class AdminPendingComponent {
             q: this.searchText().trim() || undefined,
             page: this.page(),
             pageSize: this.pageSize,
+            sort: listSortParamsFromColumn(this.sortColumnId(), this.sortDirection()),
           }),
         );
         this.items.set(result.items);
@@ -170,6 +190,24 @@ export class AdminPendingComponent {
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { page: page === 1 ? null : page },
+      queryParamsHandling: "merge",
+    });
+  }
+
+  onSortColumnChange(columnId: string | null): void {
+    this.sortColumnId.set(columnId);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: null },
+      queryParamsHandling: "merge",
+    });
+  }
+
+  onSortDirectionChange(direction: AdeniDataTableSortDirection): void {
+    this.sortDirection.set(direction);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: null },
       queryParamsHandling: "merge",
     });
   }

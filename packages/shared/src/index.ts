@@ -29,6 +29,7 @@ export * from "./dashboard-layout";
 export * from "./dashboard-widget-width";
 export * from "./dashboard-layout-presets";
 export * from "./paging";
+export * from "./list-sort";
 export * from "./media-limits";
 export * from "./public-page-templates";
 export * from "./realtime-events";

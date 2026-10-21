@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
-import type { AdminMarket } from "@adeni/shared";
+import { listSortParamsFromColumn, type AdminMarket } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
   AdeniDataTableActionsDirective,
@@ -18,6 +18,7 @@ import {
   AdeniTablePersonCellComponent,
   PortalPageComponent,
   type AdeniDataTableColumn,
+  type AdeniDataTableSortDirection,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 import {
@@ -69,6 +70,8 @@ export class AdminMarketsComponent {
   readonly page = signal(1);
   readonly pageSize = ADMIN_LIST_PAGE_SIZE;
   readonly searchText = signal("");
+  readonly sortColumnId = signal<string | null>(null);
+  readonly sortDirection = signal<AdeniDataTableSortDirection>("asc");
   readonly totalPages = computed(() => adminListTotalPages(this.totalCount(), this.pageSize));
   readonly showingRange = computed(() =>
     adminListRangeLabel(this.page(), this.pageSize, this.totalCount()),
@@ -83,15 +86,37 @@ export class AdminMarketsComponent {
   readonly marketLivePill = marketLivePill;
 
   readonly columns: AdeniDataTableColumn<AdminMarket>[] = [
-    { id: "market", header: "Market", cell: (m) => m.name },
-    { id: "country", header: "Country", cell: (m) => m.countryCode },
-    { id: "currency", header: "Currency", cell: (m) => m.currency },
+    {
+      id: "market",
+      header: "Market",
+      cell: (m) => m.name,
+      sortValue: (m) => m.name.toLowerCase(),
+    },
+    {
+      id: "country",
+      header: "Country",
+      cell: (m) => m.countryCode,
+      sortValue: (m) => m.countryCode,
+    },
+    {
+      id: "currency",
+      header: "Currency",
+      cell: (m) => m.currency,
+      sortValue: (m) => m.currency,
+    },
     {
       id: "businesses",
       header: "Businesses",
+      align: "right",
       cell: (m) => String(m.businessCount ?? 0),
+      sortValue: (m) => m.businessCount ?? 0,
     },
-    { id: "status", header: "Status", cell: () => "" },
+    {
+      id: "status",
+      header: "Status",
+      cell: () => "",
+      sortValue: (m) => (m.isLive ? 1 : 0),
+    },
   ];
 
   readonly trackMarketRow = (market: AdminMarket): string => market.id;
@@ -126,6 +151,7 @@ export class AdminMarketsComponent {
             q: this.searchText().trim() || undefined,
             page: this.page(),
             pageSize: this.pageSize,
+            sort: listSortParamsFromColumn(this.sortColumnId(), this.sortDirection()),
           }),
         );
         this.markets.set(result.items);
@@ -161,6 +187,24 @@ export class AdminMarketsComponent {
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { page: page === 1 ? null : page },
+      queryParamsHandling: "merge",
+    });
+  }
+
+  onSortColumnChange(columnId: string | null): void {
+    this.sortColumnId.set(columnId);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: null },
+      queryParamsHandling: "merge",
+    });
+  }
+
+  onSortDirectionChange(direction: AdeniDataTableSortDirection): void {
+    this.sortDirection.set(direction);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: null },
       queryParamsHandling: "merge",
     });
   }

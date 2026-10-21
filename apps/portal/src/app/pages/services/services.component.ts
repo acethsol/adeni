@@ -26,7 +26,9 @@ import {
   AdeniTablePersonCellComponent,
   PortalPageComponent,
   readPersistedListViewMode,
+  sortDataRows,
   type AdeniDataTableColumn,
+  type AdeniDataTableSortDirection,
   type AdeniExportMenuItem,
   type AdeniFilterSelectOption,
   type AdeniListViewMode,
@@ -122,6 +124,9 @@ export class ServicesComponent implements OnInit {
     ...this.groups().map((g) => ({ value: g.id, label: g.name })),
   ]);
 
+  readonly sortColumnId = signal<string | null>(null);
+  readonly sortDirection = signal<AdeniDataTableSortDirection>("asc");
+
   readonly filteredServices = computed(() => {
     let list = this.services();
     switch (this.groupFilter()) {
@@ -151,14 +156,34 @@ export class ServicesComponent implements OnInit {
     });
   });
 
+  readonly sortedFilteredServices = computed(() =>
+    sortDataRows(
+      this.filteredServices(),
+      this.sortColumnId(),
+      this.sortDirection(),
+      this.serviceTableColumns,
+    ),
+  );
+
   readonly serviceTableColumns: AdeniDataTableColumn<ServiceOffering>[] = [
-    { id: "name", header: "Service", cell: (s) => s.name },
+    {
+      id: "name",
+      header: "Service",
+      cell: (s) => s.name,
+      sortValue: (s) => s.name.toLowerCase(),
+    },
     {
       id: "collection",
       header: "Section",
       cell: (s) => this.groupName(s.menuGroupId),
+      sortValue: (s) => this.groupName(s.menuGroupId).toLowerCase(),
     },
-    { id: "tags", header: "Details", cell: () => "" },
+    {
+      id: "tags",
+      header: "Details",
+      cell: () => "",
+      sortValue: (s) => s.priceAmount,
+    },
   ];
 
   readonly trackServiceRow = (service: ServiceOffering): string => service.id;

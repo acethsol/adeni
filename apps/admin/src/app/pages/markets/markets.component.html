@@ -55,7 +55,16 @@
       />
 
       <div class="adeni-list-results">
-        <adeni-data-table [rows]="markets()" [columns]="columns" [trackRow]="trackMarketRow">
+        <adeni-data-table
+          [rows]="markets()"
+          [columns]="columns"
+          [trackRow]="trackMarketRow"
+          [sortRows]="false"
+          [sortColumnId]="sortColumnId()"
+          (sortColumnIdChange)="onSortColumnChange($event)"
+          [sortDirection]="sortDirection()"
+          (sortDirectionChange)="onSortDirectionChange($event)"
+        >
           <ng-template adeniDataTableCell="market" let-market>
             <adeni-table-person-cell
               [displayName]="market.name"
