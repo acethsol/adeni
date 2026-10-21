@@ -123,7 +123,7 @@ export class AdeniListPaginationComponent {
   readonly embedded = input(false);
   /** First / last page icon jumpers when page count is large. */
   readonly showEdgeJumpers = input(true);
-  readonly pageSizeOptions = input<number[]>([]);
+  readonly pageSizeOptions = input<readonly number[]>([]);
 
   readonly pageChange = output<number>();
   readonly pageSizeChange = output<number>();

@@ -93,11 +93,13 @@
 
     <adeni-list-pagination
       [page]="page()"
-      [pageSize]="pageSize"
+      [pageSize]="pageSize()"
       [totalCount]="totalCount()"
+      [pageSizeOptions]="listPageSizeOptions"
       [loading]="loading()"
       ariaLabel="Trust badge pages"
       (pageChange)="goToPage($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
     />
   }
 </app-portal-page>

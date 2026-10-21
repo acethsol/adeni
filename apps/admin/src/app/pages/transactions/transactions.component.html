@@ -9,7 +9,8 @@
   <adeni-list-toolbar
     [showViewSwitcher]="false"
     [showSearch]="true"
-    [count]="totalCount()"
+    [count]="rows().length"
+    [countTotal]="totalCount()"
     singularCountLabel="result"
     pluralCountLabel="results"
     searchPlaceholder="Paystack ref, transaction id, or business name"
@@ -85,11 +86,13 @@
 
     <adeni-list-pagination
       [page]="page()"
-      [pageSize]="pageSize"
+      [pageSize]="pageSize()"
       [totalCount]="totalCount()"
+      [pageSizeOptions]="listPageSizeOptions"
       [loading]="searching()"
       ariaLabel="Transaction pages"
       (pageChange)="goToPage($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
     />
   }
 </app-portal-page>

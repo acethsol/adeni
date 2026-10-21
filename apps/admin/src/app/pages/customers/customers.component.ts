@@ -18,6 +18,7 @@ import {
   ADMIN_LIST_PAGE_SIZE,
   adminListRangeLabel,
   adminListTotalPages,
+  LIST_PAGE_SIZE_OPTIONS,
 } from "../../shared/admin-list-paging";
 import { adminLoadErrorMessage } from "../../shared/admin-load-error";
 import { AdminPillComponent } from "../../shared/admin-pill.component";
@@ -54,13 +55,14 @@ export class AdminCustomersComponent {
   readonly customers = signal<AdminCustomerSummary[]>([]);
   readonly totalCount = signal(0);
   readonly page = signal(1);
-  readonly pageSize = ADMIN_LIST_PAGE_SIZE;
+  readonly pageSize = signal(ADMIN_LIST_PAGE_SIZE);
+  readonly listPageSizeOptions = LIST_PAGE_SIZE_OPTIONS;
   readonly exportData = signal<CustomerDataExport | null>(null);
   readonly busyId = signal<string | null>(null);
 
-  readonly totalPages = computed(() => adminListTotalPages(this.totalCount(), this.pageSize));
+  readonly totalPages = computed(() => adminListTotalPages(this.totalCount(), this.pageSize()));
   readonly showingRange = computed(() =>
-    adminListRangeLabel(this.page(), this.pageSize, this.totalCount()),
+    adminListRangeLabel(this.page(), this.pageSize(), this.totalCount()),
   );
 
   readonly erasurePill = erasurePill;
@@ -104,7 +106,7 @@ export class AdminCustomersComponent {
     try {
       await this.feedback.runLoading(async () => {
         const result = await this.api.withAuthorizedClient((c) =>
-          c.searchAdminCustomers(q, { page: this.page(), pageSize: this.pageSize }),
+          c.searchAdminCustomers(q, { page: this.page(), pageSize: this.pageSize() }),
         );
         this.customers.set(result.items);
         this.totalCount.set(result.totalCount);
@@ -125,6 +127,15 @@ export class AdminCustomersComponent {
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { page: page === 1 ? null : page },
+      queryParamsHandling: "merge",
+    });
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: null },
       queryParamsHandling: "merge",
     });
   }

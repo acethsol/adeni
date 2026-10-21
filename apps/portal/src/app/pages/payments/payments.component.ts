@@ -6,8 +6,10 @@ import { ActivatedRoute } from "@angular/router";
 import { map } from "rxjs";
 import type { BillingDocumentResponse, BusinessProfile, PaymentLedgerEntry } from "@adeni/shared";
 import {
+  DEFAULT_PAGE_SIZE,
   formatPrice,
   hasCapability,
+  LIST_PAGE_SIZE_OPTIONS,
   resolvePaymentCheckoutUrl,
 } from "@adeni/shared";
 import {
@@ -65,7 +67,8 @@ export class PaymentsComponent implements OnInit, OnDestroy {
   readonly ledger = signal<PaymentLedgerEntry[]>([]);
   readonly ledgerTotalCount = signal(0);
   readonly ledgerPage = signal(1);
-  readonly ledgerPageSize = 25;
+  readonly ledgerPageSize = signal(DEFAULT_PAGE_SIZE);
+  readonly listPageSizeOptions = LIST_PAGE_SIZE_OPTIONS;
   readonly documents = signal<BillingDocumentResponse[]>([]);
   readonly lastLink = signal<{ checkoutUrl: string; description: string } | null>(null);
   readonly actionId = signal<string | null>(null);
@@ -112,7 +115,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
         const ledgerPage = await c.listPaymentLedger(
           profile.tenantId,
           this.ledgerPage(),
-          this.ledgerPageSize,
+          this.ledgerPageSize(),
         );
         this.ledger.set(ledgerPage.items);
         this.ledgerTotalCount.set(ledgerPage.totalCount);
@@ -188,6 +191,12 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       return;
     }
     this.ledgerPage.set(next);
+    void this.load();
+  }
+
+  onLedgerPageSizeChange(size: number): void {
+    this.ledgerPageSize.set(size);
+    this.ledgerPage.set(1);
     void this.load();
   }
 

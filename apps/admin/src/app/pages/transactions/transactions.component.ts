@@ -27,7 +27,7 @@ import {
   type AdeniFilterSelectOption,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
-import { ADMIN_LIST_PAGE_SIZE } from "../../shared/admin-list-paging";
+import { ADMIN_LIST_PAGE_SIZE, LIST_PAGE_SIZE_OPTIONS } from "../../shared/admin-list-paging";
 import { adminLoadErrorMessage } from "../../shared/admin-load-error";
 import { AdminPillComponent } from "../../shared/admin-pill.component";
 
@@ -68,7 +68,8 @@ export class AdminTransactionsComponent {
   readonly rows = signal<AdminTransactionSearchItem[]>([]);
   readonly totalCount = signal(0);
   readonly page = signal(1);
-  readonly pageSize = ADMIN_LIST_PAGE_SIZE;
+  readonly pageSize = signal(ADMIN_LIST_PAGE_SIZE);
+  readonly listPageSizeOptions = LIST_PAGE_SIZE_OPTIONS;
   readonly sortColumnId = signal<string | null>("when");
   readonly sortDirection = signal<AdeniDataTableSortDirection>("desc");
 
@@ -199,6 +200,15 @@ export class AdminTransactionsComponent {
     });
   }
 
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: null },
+      queryParamsHandling: "merge",
+    });
+  }
+
   onSortColumnChange(columnId: string | null): void {
     this.sortColumnId.set(columnId);
     void this.router.navigate([], {
@@ -255,7 +265,7 @@ export class AdminTransactionsComponent {
         client.searchAdminTransactions(queryText, {
           kind: this.kindFilter(),
           page: this.page(),
-          pageSize: this.pageSize,
+          pageSize: this.pageSize(),
           sort: listSortParamsFromColumn(this.sortColumnId(), this.sortDirection()),
         }),
       );

@@ -43,12 +43,14 @@
           <adeni-list-pagination
             [embedded]="true"
             [page]="ledgerPage()"
-            [pageSize]="ledgerPageSize"
+            [pageSize]="ledgerPageSize()"
             [totalCount]="ledgerTotalCount()"
+            [pageSizeOptions]="listPageSizeOptions"
             [loading]="loading()"
             [showEdgeJumpers]="false"
             ariaLabel="Ledger pages"
             (pageChange)="goToLedgerPage($event)"
+            (pageSizeChange)="onLedgerPageSizeChange($event)"
           />
         }
       </section>

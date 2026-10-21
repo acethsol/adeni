@@ -20,7 +20,8 @@
         storageKey="portal.customers"
         [viewMode]="viewMode()"
         (viewModeChange)="viewMode.set($event)"
-        [count]="totalCount()"
+        [count]="items().length"
+        [countTotal]="totalCount()"
         singularCountLabel="customer"
         pluralCountLabel="customers"
         searchPlaceholder="Search name, phone, or email"
@@ -76,11 +77,13 @@
         <div class="adeni-list-results adeni-list-results--pagination-only">
           <adeni-list-pagination
             [page]="page()"
-            [pageSize]="pageSize"
+            [pageSize]="pageSize()"
             [totalCount]="totalCount()"
+            [pageSizeOptions]="listPageSizeOptions"
             [loading]="loading()"
             ariaLabel="Customer pages"
             (pageChange)="goToPage($event)"
+            (pageSizeChange)="onPageSizeChange($event)"
           />
         </div>
       } @else {
@@ -129,11 +132,13 @@
 
           <adeni-list-pagination
             [page]="page()"
-            [pageSize]="pageSize"
+            [pageSize]="pageSize()"
             [totalCount]="totalCount()"
+            [pageSizeOptions]="listPageSizeOptions"
             [loading]="loading()"
             ariaLabel="Customer pages"
             (pageChange)="goToPage($event)"
+            (pageSizeChange)="onPageSizeChange($event)"
           />
         </div>
       }

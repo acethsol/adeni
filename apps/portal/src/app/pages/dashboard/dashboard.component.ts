@@ -39,6 +39,8 @@ import {
   resolveCapabilities,
   resolveDashboardLayout,
   resolveDashboardRange,
+  formatDashboardRangeOverviewHint,
+  formatDashboardRangeStatHint,
   type BookingResponse,
   type BusinessProfile,
   type ConversationSummary,
@@ -130,6 +132,26 @@ export class DashboardComponent implements OnInit {
   readonly rangePreset = signal<DashboardRangePreset>("7d");
   readonly appointmentsInRange = signal(0);
   readonly rangePresets = DASHBOARD_RANGE_PRESETS;
+
+  readonly rangeOverviewHint = computed(() =>
+    formatDashboardRangeOverviewHint(this.rangePreset()),
+  );
+
+  readonly overviewInsight = computed(() => {
+    const pending = this.pendingCount();
+    const appointments = this.appointmentsInRange();
+    if (pending > 0) {
+      return pending === 1
+        ? "One booking request is waiting on you."
+        : `${pending} booking requests are waiting on you.`;
+    }
+    if (appointments > 0) {
+      return appointments === 1
+        ? "One visit scheduled in this window."
+        : `${appointments} visits scheduled in this window.`;
+    }
+    return "No visits in this window yet — share your booking link.";
+  });
 
   readonly formatBookingUsage = formatBookingUsage;
   readonly isNearBookingLimit = isNearBookingLimit;
@@ -303,6 +325,10 @@ export class DashboardComponent implements OnInit {
 
   rangeLabel(): string {
     return this.rangePresets.find((entry) => entry.id === this.rangePreset())?.label ?? "Range";
+  }
+
+  rangeStatHint(): string {
+    return formatDashboardRangeStatHint(this.rangePreset());
   }
 
   setRange(preset: DashboardRangePreset): void {

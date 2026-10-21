@@ -35,3 +35,84 @@ export function resolveDashboardRange(
 
   return { from: start.toISOString(), to: end.toISOString() };
 }
+
+/** Inclusive calendar span for the active preset (UTC-aligned with resolveDashboardRange). */
+export function formatDashboardRangeDateSpan(
+  preset: DashboardRangePreset,
+  now = new Date(),
+  locale = "en-CA",
+): string {
+  const { from, to } = resolveDashboardRange(preset, now);
+  const fromDate = new Date(from);
+  const exclusiveEnd = new Date(to);
+  const inclusiveEnd = new Date(exclusiveEnd);
+  inclusiveEnd.setUTCDate(inclusiveEnd.getUTCDate() - 1);
+
+  const utc: Intl.DateTimeFormatOptions = { timeZone: "UTC" };
+
+  if (preset === "today") {
+    return new Intl.DateTimeFormat(locale, {
+      ...utc,
+      weekday: "long",
+      month: "short",
+      day: "numeric",
+    }).format(fromDate);
+  }
+
+  const monthDay = new Intl.DateTimeFormat(locale, { ...utc, month: "short", day: "numeric" });
+  const monthDayYear = new Intl.DateTimeFormat(locale, {
+    ...utc,
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  const dayOnly = new Intl.DateTimeFormat(locale, { ...utc, day: "numeric" });
+
+  const fromLabel = monthDay.format(fromDate);
+  const sameMonth =
+    fromDate.getUTCFullYear() === inclusiveEnd.getUTCFullYear()
+    && fromDate.getUTCMonth() === inclusiveEnd.getUTCMonth();
+  const toLabel = sameMonth
+    ? dayOnly.format(inclusiveEnd)
+    : fromDate.getUTCFullYear() === inclusiveEnd.getUTCFullYear()
+      ? monthDay.format(inclusiveEnd)
+      : monthDayYear.format(inclusiveEnd);
+
+  if (fromLabel === toLabel || (sameMonth && fromDate.getUTCDate() === inclusiveEnd.getUTCDate())) {
+    return fromLabel;
+  }
+
+  return sameMonth ? `${fromLabel}–${toLabel}` : `${fromLabel}–${toLabel}`;
+}
+
+/** Overview widget + chart hints — names the preset and the concrete dates. */
+export function formatDashboardRangeOverviewHint(
+  preset: DashboardRangePreset,
+  now = new Date(),
+  locale = "en-CA",
+): string {
+  const span = formatDashboardRangeDateSpan(preset, now, locale);
+  const presetLabel =
+    DASHBOARD_RANGE_PRESETS.find((entry) => entry.id === preset)?.label ?? "Range";
+
+  switch (preset) {
+    case "today":
+      return `${presetLabel} · ${span}`;
+    case "mtd":
+      return `${presetLabel} · ${span}`;
+    default:
+      return `${presetLabel} · ${span}`;
+  }
+}
+
+/** Short phrase for stat subtitles, e.g. "Oct 14–21". */
+export function formatDashboardRangeStatHint(
+  preset: DashboardRangePreset,
+  now = new Date(),
+  locale = "en-CA",
+): string {
+  if (preset === "today") {
+    return "Today";
+  }
+  return formatDashboardRangeDateSpan(preset, now, locale);
+}

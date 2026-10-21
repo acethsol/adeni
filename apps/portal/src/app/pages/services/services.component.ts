@@ -6,7 +6,13 @@ import type {
   ServiceOffering,
   ServiceTemplate,
 } from "@adeni/shared";
-import { getCategoryLabel } from "@adeni/shared";
+import {
+  DEFAULT_PAGE_SIZE,
+  formatPrice,
+  getCategoryLabel,
+  LIST_PAGE_SIZE_OPTIONS,
+  sliceListPage,
+} from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
   AdeniConfirmService,
@@ -18,6 +24,7 @@ import {
   AdeniFilterSelectComponent,
   AdeniIconBtnComponent,
   AdeniListFilterRowComponent,
+  AdeniListPaginationComponent,
   AdeniListToolbarComponent,
   AdeniModalComponent,
   AdeniPillComponent,
@@ -34,7 +41,6 @@ import {
   type AdeniListViewMode,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { formatPrice } from "@adeni/shared";
 
 type ServiceDraft = {
   name: string;
@@ -59,6 +65,7 @@ type ServiceDraft = {
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
     AdeniListToolbarComponent,
+    AdeniListPaginationComponent,
     AdeniListFilterRowComponent,
     AdeniFilterSelectComponent,
     AdeniExportMenuComponent,
@@ -93,6 +100,9 @@ export class ServicesComponent implements OnInit {
   readonly newGroupName = signal("");
   readonly menuSearch = signal("");
   readonly groupFilter = signal("all");
+  readonly page = signal(1);
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+  readonly listPageSizeOptions = LIST_PAGE_SIZE_OPTIONS;
   readonly viewMode = signal<AdeniListViewMode>(
     readPersistedListViewMode("portal.services", "cards"),
   );
@@ -165,6 +175,12 @@ export class ServicesComponent implements OnInit {
     ),
   );
 
+  readonly filteredServicesCount = computed(() => this.filteredServices().length);
+
+  readonly paginatedServices = computed(() =>
+    sliceListPage(this.sortedFilteredServices(), this.page(), this.pageSize()),
+  );
+
   readonly serviceTableColumns: AdeniDataTableColumn<ServiceOffering>[] = [
     {
       id: "name",
@@ -196,6 +212,35 @@ export class ServicesComponent implements OnInit {
 
   ngOnInit(): void {
     void this.load();
+  }
+
+  onMenuSearchChange(value: string): void {
+    this.menuSearch.set(value);
+    this.page.set(1);
+  }
+
+  onGroupFilterChange(value: string): void {
+    this.groupFilter.set(value);
+    this.page.set(1);
+  }
+
+  goToServicesPage(next: number): void {
+    this.page.set(next);
+  }
+
+  onServicesPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.page.set(1);
+  }
+
+  onServiceSortColumnChange(columnId: string | null): void {
+    this.sortColumnId.set(columnId);
+    this.page.set(1);
+  }
+
+  onServiceSortDirectionChange(direction: AdeniDataTableSortDirection): void {
+    this.sortDirection.set(direction);
+    this.page.set(1);
   }
 
   emptyDraft(): ServiceDraft {

@@ -46,7 +46,8 @@
       <adeni-list-toolbar
         storageKey="admin.markets"
         [showViewSwitcher]="false"
-        [count]="totalCount()"
+        [count]="markets().length"
+        [countTotal]="totalCount()"
         singularCountLabel="market"
         pluralCountLabel="markets"
         searchPlaceholder="Name, id, country, or currency"
@@ -123,11 +124,13 @@
 
         <adeni-list-pagination
           [page]="page()"
-          [pageSize]="pageSize"
+          [pageSize]="pageSize()"
           [totalCount]="totalCount()"
+          [pageSizeOptions]="listPageSizeOptions"
           [loading]="loading()"
           ariaLabel="Market pages"
           (pageChange)="goToPage($event)"
+          (pageSizeChange)="onPageSizeChange($event)"
         />
       </div>
     </div>

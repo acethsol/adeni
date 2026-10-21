@@ -120,12 +120,13 @@
         storageKey="portal.services"
         [viewMode]="viewMode()"
         (viewModeChange)="viewMode.set($event)"
-        [count]="filteredServices().length"
+        [count]="paginatedServices().length"
+        [countTotal]="filteredServicesCount()"
         singularCountLabel="service"
         pluralCountLabel="services"
         searchPlaceholder="Search services"
         [searchQuery]="menuSearch()"
-        (searchQueryChange)="menuSearch.set($event)"
+        (searchQueryChange)="onMenuSearchChange($event)"
       >
         <adeni-list-filter-row listFilters>
           <adeni-filter-select
@@ -133,7 +134,7 @@
             label="Menu section"
             [options]="groupFilterOptions()"
             [value]="groupFilter()"
-            (valueChange)="groupFilter.set($any($event))"
+            (valueChange)="onGroupFilterChange($any($event))"
           />
         </adeni-list-filter-row>
         <adeni-export-menu listExports label="Export" [items]="exportItems" />
@@ -148,7 +149,7 @@
         />
       } @else if (viewMode() === "cards") {
         <ul class="plain staff-grid">
-          @for (service of sortedFilteredServices(); track service.id) {
+          @for (service of paginatedServices(); track service.id) {
             <li class="org-card">
               <div class="org-avatar" data-tone="neutral" aria-hidden="true">
                 <span>{{ serviceInitials(service) }}</span>
@@ -195,15 +196,28 @@
             </li>
           }
         </ul>
+
+        <div class="adeni-list-results adeni-list-results--pagination-only">
+          <adeni-list-pagination
+            [page]="page()"
+            [pageSize]="pageSize()"
+            [totalCount]="filteredServicesCount()"
+            [pageSizeOptions]="listPageSizeOptions"
+            ariaLabel="Service pages"
+            (pageChange)="goToServicesPage($event)"
+            (pageSizeChange)="onServicesPageSizeChange($event)"
+          />
+        </div>
       } @else {
+        <div class="adeni-list-results">
         <adeni-data-table
-          [rows]="sortedFilteredServices()"
+          [rows]="paginatedServices()"
           [columns]="serviceTableColumns"
           [trackRow]="trackServiceRow"
           [sortColumnId]="sortColumnId()"
-          (sortColumnIdChange)="sortColumnId.set($event)"
+          (sortColumnIdChange)="onServiceSortColumnChange($event)"
           [sortDirection]="sortDirection()"
-          (sortDirectionChange)="sortDirection.set($event)"
+          (sortDirectionChange)="onServiceSortDirectionChange($event)"
         >
           <ng-template adeniDataTableCell="name" let-service>
             <adeni-table-person-cell
@@ -259,6 +273,17 @@
             </adeni-row-action-bar>
           </ng-template>
         </adeni-data-table>
+
+          <adeni-list-pagination
+            [page]="page()"
+            [pageSize]="pageSize()"
+            [totalCount]="filteredServicesCount()"
+            [pageSizeOptions]="listPageSizeOptions"
+            ariaLabel="Service pages"
+            (pageChange)="goToServicesPage($event)"
+            (pageSizeChange)="onServicesPageSizeChange($event)"
+          />
+        </div>
       }
     </div>
   }

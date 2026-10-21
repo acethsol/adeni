@@ -1,7 +1,12 @@
 import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import type { TenantCustomerListItem } from "@adeni/shared";
-import { formatSlotTime, listSortParamsFromColumn } from "@adeni/shared";
+import {
+  DEFAULT_PAGE_SIZE,
+  formatSlotTime,
+  LIST_PAGE_SIZE_OPTIONS,
+  listSortParamsFromColumn,
+} from "@adeni/shared";
 import {
   AdeniDataTableActionsDirective,
   AdeniDataTableCellDirective,
@@ -61,7 +66,8 @@ export class CustomersComponent implements OnInit {
   readonly items = signal<TenantCustomerListItem[]>([]);
   readonly totalCount = signal(0);
   readonly page = signal(1);
-  readonly pageSize = 25;
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+  readonly listPageSizeOptions = LIST_PAGE_SIZE_OPTIONS;
   readonly searchQuery = signal("");
   readonly viewMode = signal<AdeniListViewMode>("table");
   readonly accountFilter = signal<CustomerAccountFilter>("all");
@@ -155,6 +161,12 @@ export class CustomersComponent implements OnInit {
     void this.load();
   }
 
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.page.set(1);
+    void this.load();
+  }
+
   onSortColumnChange(columnId: string | null): void {
     this.sortColumnId.set(columnId);
     this.page.set(1);
@@ -195,7 +207,7 @@ export class CustomersComponent implements OnInit {
           client.listTenantCustomers({
             search: term.length > 0 ? term : undefined,
             page: this.page(),
-            pageSize: this.pageSize,
+            pageSize: this.pageSize(),
             discover: filter === "all" ? undefined : filter,
             sort: listSortParamsFromColumn(this.sortColumnId(), this.sortDirection()),
           }),

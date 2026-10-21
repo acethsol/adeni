@@ -61,12 +61,14 @@
             <adeni-list-pagination
               [embedded]="true"
               [page]="conversationPage()"
-              [pageSize]="conversationPageSize"
+              [pageSize]="conversationPageSize()"
               [totalCount]="conversationTotalCount()"
+              [pageSizeOptions]="listPageSizeOptions"
               [loading]="loading()"
               [showEdgeJumpers]="false"
               ariaLabel="Conversation pages"
               (pageChange)="goToConversationPage($event)"
+              (pageSizeChange)="onConversationPageSizeChange($event)"
             />
           }
         </div>

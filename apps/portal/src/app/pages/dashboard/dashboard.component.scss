@@ -129,6 +129,63 @@ html[data-theme="dark"] .dashboard-native-tile--edit {
   border: 0;
 }
 
+.widget-card--overview {
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--interactive, #7f56ff) 7%, var(--surface)) 0%,
+      var(--surface) 42%
+    );
+  border-color: color-mix(in srgb, var(--interactive, #7f56ff) 22%, var(--border));
+}
+
+.overview-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+  padding-bottom: 0.85rem;
+}
+
+.overview-head-copy {
+  min-width: 0;
+  flex: 1 1 14rem;
+}
+
+.overview-insight {
+  margin: 0.45rem 0 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.overview-period-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--interactive, #7f56ff);
+  background: color-mix(in srgb, var(--interactive, #7f56ff) 12%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--interactive, #7f56ff) 28%, var(--border));
+}
+
+.overview-stats .stat-card--action {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.overview-stats .stat-card--action:hover {
+  border-color: color-mix(in srgb, var(--interactive, #7f56ff) 45%, var(--border));
+}
+
 .widget-card.usage {
   margin-top: 0;
   text-decoration: none;

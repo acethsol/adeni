@@ -16,6 +16,7 @@ import {
   type StaffRoleKey,
   type WeeklyAvailabilityRule,
   DEFAULT_PAGE_SIZE,
+  LIST_PAGE_SIZE_OPTIONS,
   sliceListPage,
 } from "@adeni/shared";
 import {
@@ -180,7 +181,7 @@ export class StaffComponent implements OnInit, OnDestroy {
   readonly portalFilter = signal<StaffPortalFilter>("all");
   readonly page = signal(1);
   readonly pageSize = signal(DEFAULT_PAGE_SIZE);
-  readonly listPageSizeOptions: number[] = [10, DEFAULT_PAGE_SIZE, 50];
+  readonly listPageSizeOptions = LIST_PAGE_SIZE_OPTIONS;
 
   readonly bookingFilterOptions: AdeniFilterSelectOption[] = [
     { value: "all", label: "All booking states" },

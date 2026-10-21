@@ -28,6 +28,7 @@ import {
   ADMIN_LIST_PAGE_SIZE,
   adminListRangeLabel,
   adminListTotalPages,
+  LIST_PAGE_SIZE_OPTIONS,
 } from "../../shared/admin-list-paging";
 
 @Component({
@@ -63,15 +64,16 @@ export class AdminPendingComponent {
   readonly items = signal<PendingBusiness[]>([]);
   readonly totalCount = signal(0);
   readonly page = signal(1);
-  readonly pageSize = ADMIN_LIST_PAGE_SIZE;
+  readonly pageSize = signal(ADMIN_LIST_PAGE_SIZE);
+  readonly listPageSizeOptions = LIST_PAGE_SIZE_OPTIONS;
   readonly searchText = signal("");
   readonly sortColumnId = signal<string | null>(null);
   readonly sortDirection = signal<AdeniDataTableSortDirection>("asc");
   readonly busyId = signal<string | null>(null);
 
-  readonly totalPages = computed(() => adminListTotalPages(this.totalCount(), this.pageSize));
+  readonly totalPages = computed(() => adminListTotalPages(this.totalCount(), this.pageSize()));
   readonly showingRange = computed(() =>
-    adminListRangeLabel(this.page(), this.pageSize, this.totalCount()),
+    adminListRangeLabel(this.page(), this.pageSize(), this.totalCount()),
   );
   readonly isEmptyQueue = computed(() => !this.loading() && this.totalCount() === 0);
 
@@ -153,7 +155,7 @@ export class AdminPendingComponent {
           c.listPendingBusinesses({
             q: this.searchText().trim() || undefined,
             page: this.page(),
-            pageSize: this.pageSize,
+            pageSize: this.pageSize(),
             sort: listSortParamsFromColumn(this.sortColumnId(), this.sortDirection()),
           }),
         );
@@ -190,6 +192,15 @@ export class AdminPendingComponent {
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { page: page === 1 ? null : page },
+      queryParamsHandling: "merge",
+    });
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: null },
       queryParamsHandling: "merge",
     });
   }

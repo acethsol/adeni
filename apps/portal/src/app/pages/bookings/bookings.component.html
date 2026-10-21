@@ -63,6 +63,7 @@
         [viewMode]="viewMode()"
         (viewModeChange)="viewMode.set($event)"
         [count]="filteredBookings().length"
+        [countTotal]="bookingCountTotal()"
         singularCountLabel="booking"
         pluralCountLabel="bookings"
         searchPlaceholder="Search this page"
@@ -282,11 +283,13 @@
         </adeni-data-table>
         <adeni-list-pagination
           [page]="page()"
-          [pageSize]="pageSize"
+          [pageSize]="pageSize()"
           [totalCount]="totalCount()"
+          [pageSizeOptions]="listPageSizeOptions"
           [loading]="loading()"
           ariaLabel="Booking pages"
           (pageChange)="goToPage($event)"
+          (pageSizeChange)="onPageSizeChange($event)"
         />
         </div>
       }
@@ -295,11 +298,13 @@
         <div class="adeni-list-results adeni-list-results--pagination-only">
           <adeni-list-pagination
             [page]="page()"
-            [pageSize]="pageSize"
+            [pageSize]="pageSize()"
             [totalCount]="totalCount()"
+            [pageSizeOptions]="listPageSizeOptions"
             [loading]="loading()"
             ariaLabel="Booking pages"
             (pageChange)="goToPage($event)"
+            (pageSizeChange)="onPageSizeChange($event)"
           />
         </div>
       }

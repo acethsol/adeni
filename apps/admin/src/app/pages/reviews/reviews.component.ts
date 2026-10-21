@@ -19,6 +19,7 @@ import {
   ADMIN_LIST_PAGE_SIZE,
   adminListRangeLabel,
   adminListTotalPages,
+  LIST_PAGE_SIZE_OPTIONS,
 } from "../../shared/admin-list-paging";
 import { AdminPillComponent } from "../../shared/admin-pill.component";
 import { ratingPill, reviewVisibilityPill } from "../../shared/admin-pill-maps";
@@ -51,18 +52,19 @@ export class AdminReviewsComponent implements OnInit {
   readonly items = signal<AdminReviewListItem[]>([]);
   readonly totalCount = signal(0);
   readonly page = signal(1);
-  readonly pageSize = ADMIN_LIST_PAGE_SIZE;
+  readonly pageSize = signal(ADMIN_LIST_PAGE_SIZE);
+  readonly listPageSizeOptions = LIST_PAGE_SIZE_OPTIONS;
   readonly searchText = signal("");
   readonly includeHidden = signal(false);
   readonly busyId = signal<string | null>(null);
 
-  readonly totalPages = computed(() => adminListTotalPages(this.totalCount(), this.pageSize));
+  readonly totalPages = computed(() => adminListTotalPages(this.totalCount(), this.pageSize()));
   readonly isEmpty = computed(() => !this.loading() && this.totalCount() === 0);
   readonly ratingPill = ratingPill;
   readonly reviewVisibilityPill = reviewVisibilityPill;
 
   readonly showingRange = computed(() =>
-    adminListRangeLabel(this.page(), this.pageSize, this.totalCount()),
+    adminListRangeLabel(this.page(), this.pageSize(), this.totalCount()),
   );
 
   constructor() {
@@ -92,7 +94,7 @@ export class AdminReviewsComponent implements OnInit {
           c.listAdminReviews({
             q: this.searchText().trim() || undefined,
             page: this.page(),
-            pageSize: this.pageSize,
+            pageSize: this.pageSize(),
             includeHidden: this.includeHidden(),
           }),
         );
@@ -127,6 +129,15 @@ export class AdminReviewsComponent implements OnInit {
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { page: page === 1 ? null : page },
+      queryParamsHandling: "merge",
+    });
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: null },
       queryParamsHandling: "merge",
     });
   }

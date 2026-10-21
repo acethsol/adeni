@@ -2,7 +2,9 @@ import { Component, inject, OnDestroy, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Subscription } from "rxjs";
 import {
+  DEFAULT_PAGE_SIZE,
   formatSlotTime,
+  LIST_PAGE_SIZE_OPTIONS,
   MAX_UPLOAD_BYTES,
   type BusinessProfile,
   type ConversationDetail,
@@ -54,7 +56,8 @@ export class MessagesComponent implements OnInit, OnDestroy {
   readonly conversations = signal<ConversationSummary[]>([]);
   readonly conversationTotalCount = signal(0);
   readonly conversationPage = signal(1);
-  readonly conversationPageSize = 25;
+  readonly conversationPageSize = signal(DEFAULT_PAGE_SIZE);
+  readonly listPageSizeOptions = LIST_PAGE_SIZE_OPTIONS;
   readonly templates = signal<MessageTemplate[]>([]);
   readonly detail = signal<ConversationDetail | null>(null);
   readonly sending = signal(false);
@@ -116,7 +119,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
         const [conversationPageResult, templateList] = await Promise.all([
           client.listTenantConversations({
             page: this.conversationPage(),
-            pageSize: this.conversationPageSize,
+            pageSize: this.conversationPageSize(),
           }),
           client.getTenantMessageTemplates(),
         ]);
@@ -160,6 +163,13 @@ export class MessagesComponent implements OnInit, OnDestroy {
       return;
     }
     this.conversationPage.set(next);
+    this.detail.set(null);
+    void this.load();
+  }
+
+  onConversationPageSizeChange(size: number): void {
+    this.conversationPageSize.set(size);
+    this.conversationPage.set(1);
     this.detail.set(null);
     void this.load();
   }
@@ -360,7 +370,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
     this.conversations.update((items) => {
       const index = items.findIndex((item) => item.id === next.id);
       if (index < 0) {
-        return [next, ...items].slice(0, this.conversationPageSize);
+        return [next, ...items].slice(0, this.conversationPageSize());
       }
       const copy = [...items];
       copy[index] = next;

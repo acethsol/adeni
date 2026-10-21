@@ -1,5 +1,9 @@
+import { LIST_PAGE_SIZE_OPTIONS } from "@adeni/shared";
+
 /** Admin ops grids: small pages keep action-heavy rows scannable. */
 export const ADMIN_LIST_PAGE_SIZE = 10;
+
+export { LIST_PAGE_SIZE_OPTIONS };
 
 export function adminListTotalPages(totalCount: number, pageSize: number): number {
   return Math.max(1, Math.ceil(totalCount / pageSize));

@@ -26,7 +26,8 @@
       <adeni-list-toolbar
         storageKey="admin.businesses"
         [showViewSwitcher]="false"
-        [count]="totalCount()"
+        [count]="businesses().length"
+        [countTotal]="totalCount()"
         singularCountLabel="business"
         pluralCountLabel="businesses"
         searchPlaceholder="Name or slug"
@@ -107,11 +108,13 @@
 
         <adeni-list-pagination
           [page]="page()"
-          [pageSize]="pageSize"
+          [pageSize]="pageSize()"
           [totalCount]="totalCount()"
+          [pageSizeOptions]="listPageSizeOptions"
           [loading]="loading()"
           ariaLabel="Business pages"
           (pageChange)="goToPage($event)"
+          (pageSizeChange)="onPageSizeChange($event)"
         />
       </div>
     </div>

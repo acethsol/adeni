@@ -23,7 +23,8 @@
   } @else {
     <adeni-list-toolbar
       [showViewSwitcher]="false"
-      [count]="totalCount()"
+      [count]="items().length"
+      [countTotal]="totalCount()"
       singularCountLabel="application"
       pluralCountLabel="applications"
       searchPlaceholder="Name, slug, or market"
@@ -87,11 +88,13 @@
 
     <adeni-list-pagination
       [page]="page()"
-      [pageSize]="pageSize"
+      [pageSize]="pageSize()"
       [totalCount]="totalCount()"
+      [pageSizeOptions]="listPageSizeOptions"
       [loading]="loading()"
       ariaLabel="Pending verification pages"
       (pageChange)="goToPage($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
     />
   }
 </app-portal-page>

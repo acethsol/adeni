@@ -4,6 +4,7 @@ import { AdeniApiError } from "@adeni/api-client";
 import {
   canAddLocationAtCount,
   DEFAULT_PAGE_SIZE,
+  LIST_PAGE_SIZE_OPTIONS,
   sliceListPage,
   type BusinessLocation,
   type MarketConfig,
@@ -100,7 +101,7 @@ export class LocationsComponent implements OnInit {
   readonly locationSearch = signal("");
   readonly page = signal(1);
   readonly pageSize = signal(DEFAULT_PAGE_SIZE);
-  readonly listPageSizeOptions: number[] = [10, DEFAULT_PAGE_SIZE, 50];
+  readonly listPageSizeOptions = LIST_PAGE_SIZE_OPTIONS;
   readonly sortColumnId = signal<string | null>(null);
   readonly sortDirection = signal<AdeniDataTableSortDirection>("asc");
   readonly viewMode = signal<AdeniListViewMode>(

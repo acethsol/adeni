@@ -4,11 +4,13 @@ import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import type { BookingResponse, KioskStatusResponse, TenantBookingListTab } from "@adeni/shared";
 import {
+  DEFAULT_PAGE_SIZE,
   formatSlotTime,
+  LIST_PAGE_SIZE_OPTIONS,
+  listSortParamsFromColumn,
   pageRangeLabel,
   resolvePaymentCheckoutUrl,
   totalPages as computeTotalPages,
-  listSortParamsFromColumn,
 } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
@@ -88,10 +90,14 @@ export class BookingsComponent {
   readonly bookings = signal<BookingResponse[]>([]);
   readonly totalCount = signal(0);
   readonly page = signal(1);
-  readonly pageSize = 25;
-  readonly totalPageCount = computed(() => computeTotalPages(this.totalCount(), this.pageSize));
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+  readonly listPageSizeOptions = LIST_PAGE_SIZE_OPTIONS;
+  readonly totalPageCount = computed(() => computeTotalPages(this.totalCount(), this.pageSize()));
   readonly pageLabel = computed(() =>
-    pageRangeLabel(this.page(), this.pageSize, this.totalCount()),
+    pageRangeLabel(this.page(), this.pageSize(), this.totalCount()),
+  );
+  readonly bookingCountTotal = computed(() =>
+    this.bookingSearch().trim() ? null : this.totalCount(),
   );
   readonly displayedBookings = computed(() =>
     prioritizeFocus(this.bookings(), this.focusBookingId()),
@@ -308,7 +314,7 @@ export class BookingsComponent {
           client.listTenantBookings({
             tab,
             page: this.page(),
-            pageSize: this.pageSize,
+            pageSize: this.pageSize(),
             sort: listSortParamsFromColumn(this.sortColumnId(), this.sortDirection()),
           }),
           client.getTenantKioskStatus().catch(() => null),
@@ -356,6 +362,17 @@ export class BookingsComponent {
       queryParams: { page: page === 1 ? null : page },
       queryParamsHandling: "merge",
     });
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.page.set(1);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: null },
+      queryParamsHandling: "merge",
+    });
+    void this.load();
   }
 
   showBookingActions(booking: BookingResponse): boolean {

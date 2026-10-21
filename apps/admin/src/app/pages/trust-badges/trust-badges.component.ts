@@ -17,6 +17,7 @@ import {
   ADMIN_LIST_PAGE_SIZE,
   adminListRangeLabel,
   adminListTotalPages,
+  LIST_PAGE_SIZE_OPTIONS,
 } from "../../shared/admin-list-paging";
 import { adminLoadErrorMessage } from "../../shared/admin-load-error";
 import { AdminPillComponent } from "../../shared/admin-pill.component";
@@ -50,13 +51,14 @@ export class AdminTrustBadgesComponent {
   readonly items = signal<PendingBadgeRequest[]>([]);
   readonly totalCount = signal(0);
   readonly page = signal(1);
-  readonly pageSize = ADMIN_LIST_PAGE_SIZE;
+  readonly pageSize = signal(ADMIN_LIST_PAGE_SIZE);
+  readonly listPageSizeOptions = LIST_PAGE_SIZE_OPTIONS;
   readonly searchText = signal("");
   readonly busyKey = signal<string | null>(null);
 
-  readonly totalPages = computed(() => adminListTotalPages(this.totalCount(), this.pageSize));
+  readonly totalPages = computed(() => adminListTotalPages(this.totalCount(), this.pageSize()));
   readonly showingRange = computed(() =>
-    adminListRangeLabel(this.page(), this.pageSize, this.totalCount()),
+    adminListRangeLabel(this.page(), this.pageSize(), this.totalCount()),
   );
   readonly isEmptyQueue = computed(() => !this.loading() && this.totalCount() === 0);
 
@@ -85,7 +87,7 @@ export class AdminTrustBadgesComponent {
           c.listAdminPendingBadges({
             q: this.searchText().trim() || undefined,
             page: this.page(),
-            pageSize: this.pageSize,
+            pageSize: this.pageSize(),
           }),
         );
         this.items.set(result.items);
@@ -115,6 +117,15 @@ export class AdminTrustBadgesComponent {
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { page: page === 1 ? null : page },
+      queryParamsHandling: "merge",
+    });
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: null },
       queryParamsHandling: "merge",
     });
   }

@@ -156,7 +156,7 @@
             }
             @case ("kpis_row") {
               <section
-                class="widget-card widget-card--kpis dashboard-native-tile"
+                class="widget-card widget-card--kpis widget-card--overview dashboard-native-tile"
                 [class.dashboard-native-tile--edit]="editMode()"
               >
                 @if (editMode()) {
@@ -169,32 +169,52 @@
                   />
                 }
                 @if (!editMode()) {
-                <header class="widget-card__head">
-                  <h3>{{ dashboardWidgetTitle("kpis_row") }}</h3>
-                  <p class="hint">Metrics for the selected period ({{ rangeLabel() }}).</p>
+                <header class="widget-card__head overview-head">
+                  <div class="overview-head-copy">
+                    <h3>{{ dashboardWidgetTitle("kpis_row") }}</h3>
+                    <p class="hint">{{ rangeOverviewHint() }}</p>
+                    <p class="overview-insight">{{ overviewInsight() }}</p>
+                  </div>
+                  <span class="overview-period-pill" aria-live="polite">
+                    <adeni-carbon-icon name="calendar" [size]="16" />
+                    {{ rangeLabel() }}
+                  </span>
                 </header>
                 }
-                <div class="stats">
-                <article class="stat-card stat-card--pending">
-                  <span class="stat-icon stat-icon--pending" aria-hidden="true">
-                    <adeni-carbon-icon name="time" [size]="20" />
-                  </span>
-                  <div class="stat-body">
-                    <p class="stat-label">Pending requests</p>
-                    <p class="stat-value">{{ pendingCount() }}</p>
-                    <p class="stat-hint">Awaiting your confirmation</p>
-                  </div>
-                </article>
-                <article class="stat-card stat-card--appointments">
+                <div class="stats overview-stats">
+                @if (pendingCount() > 0) {
+                  <a class="stat-card stat-card--pending stat-card--action" routerLink="/bookings">
+                    <span class="stat-icon stat-icon--pending" aria-hidden="true">
+                      <adeni-carbon-icon name="time" [size]="20" />
+                    </span>
+                    <div class="stat-body">
+                      <p class="stat-label">Pending requests</p>
+                      <p class="stat-value">{{ pendingCount() }}</p>
+                      <p class="stat-hint">Tap to open your inbox</p>
+                    </div>
+                  </a>
+                } @else {
+                  <article class="stat-card stat-card--pending">
+                    <span class="stat-icon stat-icon--pending" aria-hidden="true">
+                      <adeni-carbon-icon name="time" [size]="20" />
+                    </span>
+                    <div class="stat-body">
+                      <p class="stat-label">Pending requests</p>
+                      <p class="stat-value">{{ pendingCount() }}</p>
+                      <p class="stat-hint">Inbox clear</p>
+                    </div>
+                  </article>
+                }
+                <a class="stat-card stat-card--appointments stat-card--action" [routerLink]="isPractitionerView() ? '/my-calendar' : '/bookings'">
                   <span class="stat-icon stat-icon--appointments" aria-hidden="true">
                     <adeni-carbon-icon name="calendar" [size]="20" />
                   </span>
                   <div class="stat-body">
                     <p class="stat-label">Appointments</p>
                     <p class="stat-value">{{ appointmentsInRange() }}</p>
-                    <p class="stat-hint">Scheduled in {{ rangeLabel() }}</p>
+                    <p class="stat-hint">{{ rangeStatHint() }}</p>
                   </div>
-                </article>
+                </a>
                 <article class="stat-card stat-card--services">
                   <span class="stat-icon stat-icon--services" aria-hidden="true">
                     <adeni-carbon-icon name="filter" [size]="20" />
@@ -238,7 +258,7 @@
                 (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
                 (layoutRemove)="removeWidget(entry.id)"
                 [title]="dashboardWidgetTitle('week_appointments')"
-                [hint]="'Daily count for ' + rangeLabel().toLowerCase() + '.'"
+                [hint]="'Daily count · ' + rangeOverviewHint() + '.'"
               >
                 @if (appointmentChartData().length === 0) {
                   <div class="widget-body-empty">
@@ -338,7 +358,7 @@
                 (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
                 (layoutRemove)="removeWidget(entry.id)"
                 [title]="dashboardWidgetTitle('collected_revenue')"
-                [hint]="'Online payments in ' + rangeLabel().toLowerCase() + '.'"
+                [hint]="'Online payments · ' + rangeOverviewHint() + '.'"
               >
                 @if (collectedChartData().length === 0) {
                   <p class="hint">No collected payments in this range.</p>
@@ -359,7 +379,7 @@
                 (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
                 (layoutRemove)="removeWidget(entry.id)"
                 [title]="dashboardWidgetTitle('service_mix')"
-                [hint]="'Top booked services in ' + rangeLabel().toLowerCase() + '.'"
+                [hint]="'Top booked services · ' + rangeOverviewHint() + '.'"
               >
                 @if (serviceMixChartData().length === 0) {
                   <div class="chart-empty">
@@ -368,7 +388,7 @@
                     </span>
                     <p class="chart-empty-title">Nothing booked in this range</p>
                     <p class="chart-empty-copy">
-                      Top services appear once you have confirmed visits in {{ rangeLabel().toLowerCase() }}.
+                      Top services appear once you have confirmed visits ({{ rangeStatHint() }}).
                     </p>
                     @if (hasEntitlement("advancedAnalytics")) {
                       <a class="btn btn-ghost" routerLink="/services">Manage services</a>
@@ -391,7 +411,7 @@
                 (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
                 (layoutRemove)="removeWidget(entry.id)"
                 [title]="dashboardWidgetTitle('booked_value')"
-                [hint]="'List price in ' + rangeLabel().toLowerCase() + ' (not cash in bank).'"
+                [hint]="'List price · ' + rangeOverviewHint() + ' (not cash in bank).'"
               >
                 @if (bookedValueChartData().length === 0) {
                   <p class="hint">No booked value in this range.</p>
@@ -412,7 +432,7 @@
                 (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
                 (layoutRemove)="removeWidget(entry.id)"
                 [title]="dashboardWidgetTitle('staff_leaderboard')"
-                [hint]="'Bookings by team member in ' + rangeLabel().toLowerCase() + '.'"
+                [hint]="'Bookings by team member · ' + rangeOverviewHint() + '.'"
               >
                 @if (staffLeaderboardChartData().length === 0) {
                   <p class="hint">No staff-assigned bookings in this range.</p>

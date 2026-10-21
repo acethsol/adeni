@@ -30,6 +30,7 @@ import {
 import { AdminApiService } from "../../core/services/admin-api.service";
 import {
   ADMIN_LIST_PAGE_SIZE,
+  LIST_PAGE_SIZE_OPTIONS,
   adminListRangeLabel,
   adminListTotalPages,
 } from "../../shared/admin-list-paging";
@@ -80,13 +81,14 @@ export class AdminBusinessesComponent {
   readonly businesses = signal<AdminBusinessSummary[]>([]);
   readonly totalCount = signal(0);
   readonly page = signal(1);
-  readonly pageSize = ADMIN_LIST_PAGE_SIZE;
+  readonly pageSize = signal(ADMIN_LIST_PAGE_SIZE);
+  readonly listPageSizeOptions = LIST_PAGE_SIZE_OPTIONS;
   readonly searchText = signal("");
   readonly sortColumnId = signal<string | null>(null);
   readonly sortDirection = signal<AdeniDataTableSortDirection>("asc");
-  readonly totalPages = computed(() => adminListTotalPages(this.totalCount(), this.pageSize));
+  readonly totalPages = computed(() => adminListTotalPages(this.totalCount(), this.pageSize()));
   readonly showingRange = computed(() =>
-    adminListRangeLabel(this.page(), this.pageSize, this.totalCount()),
+    adminListRangeLabel(this.page(), this.pageSize(), this.totalCount()),
   );
   readonly isEmptyCatalog = computed(() => !this.loading() && this.totalCount() === 0);
 
@@ -182,7 +184,7 @@ export class AdminBusinessesComponent {
           c.listAdminBusinesses({
             q: this.searchText().trim() || undefined,
             page: this.page(),
-            pageSize: this.pageSize,
+            pageSize: this.pageSize(),
             sort: listSortParamsFromColumn(this.sortColumnId(), this.sortDirection()),
           }),
         );
@@ -219,6 +221,15 @@ export class AdminBusinessesComponent {
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { page: page === 1 ? null : page },
+      queryParamsHandling: "merge",
+    });
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: null },
       queryParamsHandling: "merge",
     });
   }
