@@ -32,6 +32,7 @@ export * from "./dashboard-range";
 export * from "./dashboard-layout";
 export * from "./dashboard-widget-width";
 export * from "./dashboard-layout-presets";
+export * from "./dashboard-layout-preset-copy";
 export * from "./paging";
 export * from "./list-sort";
 export * from "./media-limits";

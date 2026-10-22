@@ -259,3 +259,25 @@ export function reorderDashboardWidgets(
   widgets.splice(currentIndex, 0, moved);
   return { ...layout, widgets };
 }
+
+export function filterDashboardLayoutByVisibility(
+  layout: DashboardLayout,
+  opts: DashboardWidgetVisibilityContext,
+): DashboardLayout {
+  return {
+    ...layout,
+    widgets: layout.widgets.filter((entry) => isDashboardWidgetVisible(entry.id, opts)),
+  };
+}
+
+export function dashboardLayoutFingerprint(layout: DashboardLayout): string {
+  const widgets = layout.widgets.map((entry) => `${entry.id}:${entry.w}`).join("|");
+  return `${layout.range}|${widgets}`;
+}
+
+export function visibleDashboardLayoutFingerprint(
+  layout: DashboardLayout,
+  opts: DashboardWidgetVisibilityContext,
+): string {
+  return dashboardLayoutFingerprint(filterDashboardLayoutByVisibility(layout, opts));
+}

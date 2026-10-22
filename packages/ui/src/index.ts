@@ -33,6 +33,8 @@ export {
   type AdeniTabsLinkMode,
 } from "./adeni-tabs.component";
 export { AdeniPortalEmptyStateComponent } from "./adeni-portal-empty-state.component";
+export { AdeniDashboardLayoutPresetCardComponent } from "./dashboard/adeni-dashboard-layout-preset-card.component";
+export { AdeniDashboardLayoutWireframeComponent } from "./dashboard/adeni-dashboard-layout-wireframe.component";
 export {
   readPersistedListViewMode,
   persistListViewMode,
