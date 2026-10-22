@@ -5,6 +5,7 @@ using Adeni.Api.Middleware;
 using Adeni.Domain.Identity;
 using Adeni.Domain.Subscriptions;
 using Adeni.Domain.Tenancy;
+using Adeni.Domain.Booking;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -83,11 +84,119 @@ public sealed class TenantReportingExportIntegrationTests : IClassFixture<WebApp
         Assert.Contains("entitlements.excel_export", body, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task Compensation_csv_returns_forbidden_without_finance_permission()
+    {
+        var tenantId = Guid.NewGuid();
+        const string staffSub = "auth0|report-export-finance-deny";
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+            SeedTenant(db, tenantId, staffSub, SubscriptionSku.Professional, role: "receptionist");
+            await db.SaveChangesAsync();
+        }
+
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add(DevBusinessAuthMiddleware.DevAuth0SubHeader, staffSub);
+        client.DefaultRequestHeaders.Add(TenantAccessMiddleware.TenantHeaderName, tenantId.ToString());
+
+        var from = Uri.EscapeDataString(DateTimeOffset.UtcNow.AddDays(-7).ToString("O"));
+        var to = Uri.EscapeDataString(DateTimeOffset.UtcNow.ToString("O"));
+        var response = await client.GetAsync(
+            $"/api/v1/tenant/reporting/exports/compensation?from={from}&to={to}&format=csv");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task BookingsRegister_csv_returns_forbidden_when_multi_location_gate_blocks()
+    {
+        var tenantId = Guid.NewGuid();
+        const string ownerSub = "auth0|report-export-multi-loc";
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+            SeedTenant(db, tenantId, ownerSub, SubscriptionSku.Professional);
+            var now = DateTimeOffset.UtcNow;
+            db.BusinessLocations.Add(new BusinessLocation
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                Name = "Branch A",
+                Slug = "branch-a",
+                MarketId = "lagos",
+                AddressLine = "1 Test St",
+                Area = "Lekki",
+                IsPrimary = true,
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+            db.BusinessLocations.Add(new BusinessLocation
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                Name = "Branch B",
+                Slug = "branch-b",
+                MarketId = "lagos",
+                AddressLine = "2 Test St",
+                Area = "VI",
+                IsPrimary = false,
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add(DevBusinessAuthMiddleware.DevAuth0SubHeader, ownerSub);
+        client.DefaultRequestHeaders.Add(TenantAccessMiddleware.TenantHeaderName, tenantId.ToString());
+
+        var from = Uri.EscapeDataString(DateTimeOffset.UtcNow.AddDays(-7).ToString("O"));
+        var to = Uri.EscapeDataString(DateTimeOffset.UtcNow.ToString("O"));
+        var response = await client.GetAsync(
+            $"/api/v1/tenant/reporting/exports/bookings-register?from={from}&to={to}&format=csv");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("entitlements.multi_location_reporting", body, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task StaffRoster_csv_returns_ok_for_professional()
+    {
+        var tenantId = Guid.NewGuid();
+        const string ownerSub = "auth0|report-export-staff-roster";
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+            SeedTenant(db, tenantId, ownerSub, SubscriptionSku.Professional);
+            await db.SaveChangesAsync();
+        }
+
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add(DevBusinessAuthMiddleware.DevAuth0SubHeader, ownerSub);
+        client.DefaultRequestHeaders.Add(TenantAccessMiddleware.TenantHeaderName, tenantId.ToString());
+
+        var from = Uri.EscapeDataString(DateTimeOffset.UtcNow.AddDays(-7).ToString("O"));
+        var to = Uri.EscapeDataString(DateTimeOffset.UtcNow.ToString("O"));
+        var response = await client.GetAsync(
+            $"/api/v1/tenant/reporting/exports/staff-roster?from={from}&to={to}&format=csv");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("text/csv", response.Content.Headers.ContentType?.MediaType);
+    }
+
     private static void SeedTenant(
         AdeniDbContext db,
         Guid tenantId,
         string auth0Sub,
-        SubscriptionSku sku)
+        SubscriptionSku sku,
+        string role = "owner")
     {
         var now = DateTimeOffset.UtcNow;
         db.Tenants.Add(new Tenant
@@ -104,7 +213,7 @@ public sealed class TenantReportingExportIntegrationTests : IClassFixture<WebApp
             Id = Guid.NewGuid(),
             TenantId = tenantId,
             Auth0Sub = auth0Sub,
-            Role = "owner",
+            Role = role,
             CreatedAt = now,
         });
         db.BusinessProfiles.Add(new BusinessProfile

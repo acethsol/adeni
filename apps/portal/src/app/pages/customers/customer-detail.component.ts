@@ -94,6 +94,7 @@ export class CustomerDetailComponent implements OnInit {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly customer = signal<TenantCustomerDetail | null>(null);
+  readonly statementDownloading = signal(false);
 
   readonly formatSlotTime = formatSlotTime;
 
@@ -322,6 +323,37 @@ export class CustomerDetailComponent implements OnInit {
     const { tab, focus } = this.bookingQueryParams(row);
     const qs = new URLSearchParams({ tab, focus });
     return `/bookings?${qs.toString()}`;
+  }
+
+  async downloadStatement(): Promise<void> {
+    const id = this.route.snapshot.paramMap.get("id");
+    if (!id) {
+      return;
+    }
+    const to = new Date();
+    const from = new Date(to);
+    from.setDate(from.getDate() - 90);
+    this.statementDownloading.set(true);
+    this.error.set(null);
+    try {
+      const blob = await this.api.withAuthorizedClient((client) =>
+        client.downloadTenantCustomerStatementPdf({
+          tenantCustomerId: id,
+          from: from.toISOString(),
+          to: to.toISOString(),
+        }),
+      );
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `statement-${id.slice(0, 8)}.pdf`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      this.error.set("Could not download customer statement.");
+    } finally {
+      this.statementDownloading.set(false);
+    }
   }
 }
 

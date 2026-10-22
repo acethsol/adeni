@@ -220,7 +220,7 @@
               <ul class="dashboard-rows">
                 @for (row of rev.recentSaasCharges.slice(0, 6); track row.id) {
                   <li>
-                    <a [routerLink]="['/businesses', row.tenantId, 'billing']">
+                    <a [routerLink]="['/businesses', row.tenantId, 'overview']">
                       <span>
                         <strong>{{ row.tenantName }}</strong>
                         <span class="muted">{{ row.occurredAt | date: "mediumDate" }}</span>

@@ -32,6 +32,16 @@
 
     @if (tab() === "overview") {
       <div class="tab-panel">
+        <p class="overview-actions">
+          <button
+            type="button"
+            class="btn"
+            [disabled]="statementDownloading()"
+            (click)="downloadStatement()"
+          >
+            {{ statementDownloading() ? "Preparing PDF…" : "Download statement (90 days)" }}
+          </button>
+        </p>
         <div class="stat-strip">
           <a class="stat-card stat-card--bookings" routerLink="." [queryParams]="{ tab: 'bookings' }">
             <span class="stat-icon stat-icon--bookings" aria-hidden="true">

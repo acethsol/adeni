@@ -63,7 +63,12 @@
             (valueChange)="onPortalFilterChange($any($event))"
           />
         </adeni-list-filter-row>
-        <adeni-export-menu listExports label="Export" [items]="staffExportItems" />
+        <adeni-export-menu
+          listExports
+          label="Export"
+          [items]="staffExportItems()"
+          (exportSelect)="downloadStaffRosterExport($event)"
+        />
       </adeni-list-toolbar>
 
       @if (viewMode() === "cards") {

@@ -1,0 +1,67 @@
+@use "staff-layout" as *;
+@use "dashboard-shell" as *;
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+
+  a {
+    color: var(--interactive, #7f56ff);
+    text-decoration: none;
+    font-weight: 600;
+  }
+}
+
+.business-hero {
+  margin-bottom: 1rem;
+
+  .slug {
+    font-size: 0.85em;
+    font-weight: 600;
+    color: rgb(255 255 255 / 85%);
+    background: rgb(0 0 0 / 18%);
+    padding: 0.1rem 0.35rem;
+  }
+}
+
+.hero-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+
+.detail-tabs {
+  width: 100%;
+  max-width: 36rem;
+  margin-bottom: 1.25rem;
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 auto;
+    min-height: 2.5rem;
+    padding: 0 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--text);
+    border: 1px solid transparent;
+  }
+
+  a.active {
+    background: var(--surface);
+    border-color: var(--border);
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--text) 6%, transparent);
+  }
+}
+
+.detail-tab-body {
+  min-height: 12rem;
+}

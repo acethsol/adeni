@@ -1,0 +1,96 @@
+@if (facade.business(); as b) {
+  @if (overviewInsight()) {
+    <p class="overview-lead">{{ overviewInsight() }}</p>
+  }
+
+  <div class="widget-grid dashboard-widgets">
+    <section class="widget-card widget-span-8">
+      <header class="widget-card__head widget-card__head--row">
+        <h3>At a glance</h3>
+        <a (click)="openBillingTab()" class="tab-link">Full billing</a>
+      </header>
+      @if (facade.terms(); as t) {
+        <dl class="fact-grid">
+          <div>
+            <dt>Plan SKU</dt>
+            <dd>{{ formatSubscriptionSku(t.subscriptionSku) }}</dd>
+          </div>
+          <div>
+            <dt>Billing status</dt>
+            <dd>{{ formatTenantBillingStatus(t.billingStatus) }}</dd>
+          </div>
+          @if (t.effectiveMonthlyAmount != null && t.currency) {
+            <div>
+              <dt>Effective monthly</dt>
+              <dd>{{ t.effectiveMonthlyAmount }} {{ t.currency }}</dd>
+            </div>
+          }
+          @if (t.agreedMonthlyAmount != null && t.currency) {
+            <div>
+              <dt>Agreed (bound)</dt>
+              <dd>{{ t.agreedMonthlyAmount }} {{ t.currency }}/mo</dd>
+            </div>
+          }
+          @if (t.priceLockEndsAt) {
+            <div>
+              <dt>Price lock</dt>
+              <dd>{{ t.priceLockEndsAt | date: "mediumDate" }}</dd>
+            </div>
+          }
+          @if (t.pricingCatalogVersion) {
+            <div>
+              <dt>Catalog version</dt>
+              <dd>{{ t.pricingCatalogVersion }}</dd>
+            </div>
+          }
+        </dl>
+      } @else {
+        <p class="dashboard-empty">Commercial terms could not be loaded.</p>
+      }
+    </section>
+
+    <section class="widget-card widget-span-4">
+      <header class="widget-card__head">
+        <h3>Quick actions</h3>
+      </header>
+      <div class="action-stack">
+        <adeni-staff-btn icon="edit" variant="primary" (pressed)="wizard.open()">
+          Edit subscription
+        </adeni-staff-btn>
+        <adeni-staff-btn icon="calendar" (pressed)="openBillingTab()">
+          Subscription &amp; billing
+        </adeni-staff-btn>
+        <a class="btn" routerLink="/transactions" [queryParams]="{ q: b.name, kind: 'saas' }">
+          <adeni-carbon-icon name="search" [size]="16" />
+          SaaS transactions
+        </a>
+      </div>
+    </section>
+
+    <section class="widget-card widget-span-12">
+      <header class="widget-card__head widget-card__head--row">
+        <h3>Recent Adeni charges</h3>
+        <a (click)="openBillingTab()" class="tab-link">All charges</a>
+      </header>
+      @if (recentCharges().length === 0) {
+        <p class="dashboard-empty">No subscription charges synced for this tenant yet.</p>
+      } @else {
+        <ul class="dashboard-rows">
+          @for (row of recentCharges(); track row.id) {
+            <li>
+              <a (click)="openBillingTab()" class="row-link">
+                <span>
+                  <strong>{{ formatChargeAmount(row) }}</strong>
+                  <span class="muted">{{ row.occurredAt | date: "mediumDate" }}</span>
+                </span>
+                <span class="meta">{{ formatBillingChargeStatus(row.status) }}</span>
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  </div>
+
+  <app-business-subscription-wizard-host #wizard />
+}

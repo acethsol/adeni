@@ -2,6 +2,8 @@ import { DatePipe, LowerCasePipe } from "@angular/common";
 import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import {
+  type AdminGmvSummary,
+  type AdminPlatformSubscriptionMrr,
   type AdminRevenueMetrics,
   type AdminRevenuePeriodBucket,
   type AdminSubscriptionMetrics,
@@ -212,14 +214,15 @@ export class AdminInsightsComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const [subscription, revenueData] = await this.api.withAuthorizedClient((c) =>
+      const [platformMrr, gmv, skuMixSource] = await this.api.withAuthorizedClient((c) =>
         Promise.all([
-          c.getAdminSubscriptionMetrics(),
-          c.getAdminRevenueMetrics(this.granularity()),
+          c.getAdminPlatformSubscriptionMrr(),
+          c.getAdminReportingGmv(this.granularity()),
+          c.getAdminSubscriptionMetrics().catch(() => null),
         ]),
       );
-      this.metrics.set(subscription);
-      this.revenue.set(revenueData);
+      this.metrics.set(mapPlatformMrrToMetrics(platformMrr, skuMixSource));
+      this.revenue.set(mapGmvToRevenueMetrics(gmv));
     } catch (err) {
       let message = adminLoadErrorMessage("Could not load revenue metrics.", err);
       if (message.includes("tenant_subscription_charges")) {
@@ -238,10 +241,10 @@ export class AdminInsightsComponent implements OnInit {
   async loadRevenue(): Promise<void> {
     this.loading.set(true);
     try {
-      const revenueData = await this.api.withAuthorizedClient((c) =>
-        c.getAdminRevenueMetrics(this.granularity()),
+      const gmv = await this.api.withAuthorizedClient((c) =>
+        c.getAdminReportingGmv(this.granularity()),
       );
-      this.revenue.set(revenueData);
+      this.revenue.set(mapGmvToRevenueMetrics(gmv));
     } catch {
       this.feedback.error("Could not load period totals.");
     } finally {
@@ -311,6 +314,38 @@ function formatTotalsMajor(
     })
     .filter((part): part is string => Boolean(part));
   return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+function mapPlatformMrrToMetrics(
+  mrr: AdminPlatformSubscriptionMrr,
+  skuMixSource: AdminSubscriptionMetrics | null,
+): AdminSubscriptionMetrics {
+  return {
+    paidTenantCount: mrr.paidTenantCount,
+    pastDueTenantCount: mrr.pastDueTenantCount,
+    trialingTenantCount: mrr.trialingTenantCount,
+    skuMix: skuMixSource?.skuMix ?? [],
+    syncedMrrByCurrency: mrr.syncedMrrByCurrency,
+    estimatedMrrByCurrency: mrr.estimatedMrrByCurrency,
+    mrrSource: mrr.mrrSource,
+    asOf: mrr.asOf,
+  };
+}
+
+function mapGmvToRevenueMetrics(gmv: AdminGmvSummary): AdminRevenueMetrics {
+  return {
+    granularity: gmv.granularity,
+    asOf: gmv.asOf,
+    buckets: gmv.buckets.map((row) => ({
+      period: row.period,
+      currency: row.currency,
+      saasAmountMinor: 0,
+      commerceVolume: row.commerceVolume,
+      platformFeeTotal: row.platformFeeTotal,
+    })),
+    recentSaasCharges: [],
+    recentCommercePayments: [],
+  };
 }
 
 function formatRevenuePeriod(period: string, granularity: RevenueGranularity): string {

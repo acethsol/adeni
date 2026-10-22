@@ -5,6 +5,8 @@ import { AdminPendingComponent } from "./pages/pending/pending.component";
 import { AdminMarketsComponent } from "./pages/markets/markets.component";
 import { AdminBusinessesComponent } from "./pages/businesses/businesses.component";
 import { BusinessBillingComponent } from "./pages/businesses/business-billing.component";
+import { BusinessDetailShellComponent } from "./pages/businesses/business-detail-shell.component";
+import { BusinessOverviewComponent } from "./pages/businesses/business-overview.component";
 import { AdminCustomersComponent } from "./pages/customers/customers.component";
 import { AdminTrustBadgesComponent } from "./pages/trust-badges/trust-badges.component";
 import { AdminReviewsComponent } from "./pages/reviews/reviews.component";
@@ -52,9 +54,21 @@ export const routes: Routes = [
       { path: "transactions", component: AdminTransactionsComponent, title: "Transactions" },
       { path: "businesses", component: AdminBusinessesComponent, title: "Businesses" },
       {
-        path: "businesses/:tenantId/billing",
-        component: BusinessBillingComponent,
-        title: "Business billing",
+        path: "businesses/:tenantId",
+        component: BusinessDetailShellComponent,
+        children: [
+          { path: "", pathMatch: "full", redirectTo: "overview" },
+          {
+            path: "overview",
+            component: BusinessOverviewComponent,
+            title: "Business overview",
+          },
+          {
+            path: "billing",
+            component: BusinessBillingComponent,
+            title: "Business billing",
+          },
+        ],
       },
       { path: "customers", component: AdminCustomersComponent, title: "Customers" },
     ],

@@ -36,15 +36,38 @@ export function hasExcelExportEntitlement(
   return entitlements.excelExport === true;
 }
 
+/** Merge entitlement flags from API profile, usage, and `/tenant/entitlements` (OR for tier gates). */
+export function mergeTenantEntitlements(
+  ...sources: Array<TenantEntitlements | null | undefined>
+): TenantEntitlements | null {
+  const present = sources.filter((source): source is TenantEntitlements => source != null);
+  if (present.length === 0) {
+    return null;
+  }
+  if (present.length === 1) {
+    return present[0]!;
+  }
+
+  const merged = { ...present[0]! };
+  for (const source of present.slice(1)) {
+    Object.assign(merged, source);
+  }
+
+  merged.basicExports = !present.every((source) => source.basicExports === false);
+  merged.excelExport = present.some((source) => source.excelExport === true);
+  merged.advancedReports = present.some((source) => source.advancedReports === true);
+  merged.multiLocationReporting = present.some(
+    (source) => source.multiLocationReporting === true,
+  );
+
+  return merged;
+}
+
+/** @deprecated Prefer {@link mergeTenantEntitlements} — same behavior (merged, not first-wins). */
 export function resolveTenantEntitlements(
   ...sources: Array<TenantEntitlements | null | undefined>
 ): TenantEntitlements | null {
-  for (const source of sources) {
-    if (source) {
-      return source;
-    }
-  }
-  return null;
+  return mergeTenantEntitlements(...sources);
 }
 
 export function canAddLocationAtCount(

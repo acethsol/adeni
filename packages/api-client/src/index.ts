@@ -33,6 +33,10 @@ import {
   type TenantDashboardBreakdown,
   type TenantDashboardLayout,
   adminSubscriptionMetricsSchema,
+  adminPlatformSubscriptionMrrSchema,
+  adminGmvSummarySchema,
+  type AdminPlatformSubscriptionMrr,
+  type AdminGmvSummary,
   adminBusinessSummarySchema,
   adminRevenueMetricsSchema,
   adminTransactionsSearchResponseSchema,
@@ -898,6 +902,28 @@ export class AdeniApiClient {
     const response = await this.request("/api/v1/tenant/quotes");
     const payload = quoteRequestsResponseSchema.parse(await response.json());
     return payload.items;
+  }
+
+  async downloadTenantQuotePdf(quoteId: string): Promise<Blob> {
+    const response = await this.request(
+      `/api/v1/tenant/quotes/${encodeURIComponent(quoteId)}/pdf`,
+    );
+    return response.blob();
+  }
+
+  async downloadTenantCustomerStatementPdf(options: {
+    tenantCustomerId: string;
+    from: string;
+    to: string;
+  }): Promise<Blob> {
+    const query = new URLSearchParams({
+      from: options.from,
+      to: options.to,
+    });
+    const response = await this.request(
+      `/api/v1/tenant/customers/${encodeURIComponent(options.tenantCustomerId)}/statement?${query.toString()}`,
+    );
+    return response.blob();
   }
 
   async submitQuoteOffer(
@@ -1898,6 +1924,21 @@ export class AdeniApiClient {
   async getAdminSubscriptionMetrics(): Promise<AdminSubscriptionMetrics> {
     const response = await this.request("/api/v1/admin/metrics/subscription");
     return adminSubscriptionMetricsSchema.parse(await response.json());
+  }
+
+  async getAdminPlatformSubscriptionMrr(): Promise<AdminPlatformSubscriptionMrr> {
+    const response = await this.request("/api/v1/admin/reporting/platform-subscription-mrr");
+    return adminPlatformSubscriptionMrrSchema.parse(await response.json());
+  }
+
+  async getAdminReportingGmv(
+    granularity: "month" | "year" = "month",
+  ): Promise<AdminGmvSummary> {
+    const query = new URLSearchParams({ granularity });
+    const response = await this.request(
+      `/api/v1/admin/reporting/gmv?${query.toString()}`,
+    );
+    return adminGmvSummarySchema.parse(await response.json());
   }
 
   async getAdminRevenueMetrics(

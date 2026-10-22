@@ -21,8 +21,9 @@ internal static class BillingDocumentQuestPdfTemplate
 
                 page.Header().Column(col =>
                 {
-                    col.Item().Text(data.BusinessNameSnapshot).FontSize(20).SemiBold();
-                    col.Item().Text(kindLabel).FontSize(14).FontColor(Colors.Grey.Darken2);
+                    col.Item().Text(data.BusinessNameSnapshot).FontSize(20).SemiBold()
+                        .FontColor(QuestPdfBrandColors.Charcoal);
+                    col.Item().Text(kindLabel).FontSize(14).FontColor(QuestPdfBrandColors.Purple);
                     col.Item().Text(data.DocumentNumber).FontSize(12);
                 });
 

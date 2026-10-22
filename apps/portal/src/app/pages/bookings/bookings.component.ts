@@ -16,9 +16,8 @@ import {
   pageRangeLabel,
   resolvePaymentCheckoutUrl,
   REPORT_KEYS,
-  hasBasicExportsEntitlement,
-  hasExcelExportEntitlement,
-  resolveTenantEntitlements,
+  buildReportExportMenuItems,
+  mergeTenantEntitlements,
   totalPages as computeTotalPages,
   type ReportExportFormat,
 } from "@adeni/shared";
@@ -120,31 +119,13 @@ export class BookingsComponent {
   readonly exporting = signal(false);
   readonly planEntitlements = signal<TenantEntitlements | null>(null);
 
-  readonly exportItems = computed((): AdeniExportMenuItem[] => {
-    const entitlements = this.planEntitlements();
-    const basic = hasBasicExportsEntitlement(entitlements);
-    const excel = hasExcelExportEntitlement(entitlements);
-    return [
-      {
-        format: "csv",
-        label: "CSV (.csv)",
-        disabled: !basic,
-        hint: basic ? undefined : "Upgrade for exports",
-      },
-      {
-        format: "xlsx",
-        label: "Excel (.xlsx)",
-        disabled: !basic || !excel,
-        hint: excel ? undefined : "Pro plan required for Excel",
-      },
-      {
-        format: "pdf",
-        label: "PDF (.pdf)",
-        disabled: true,
-        hint: "Not available for bookings register",
-      },
-    ];
-  });
+  readonly exportItems = computed((): AdeniExportMenuItem[] =>
+    buildReportExportMenuItems({
+      entitlements: this.planEntitlements(),
+      xlsx: true,
+      pdf: { disabled: true, hint: "Not available for bookings register" },
+    }),
+  );
 
   readonly sortColumnId = signal<string | null>(null);
   readonly sortDirection = signal<AdeniDataTableSortDirection>("asc");
@@ -328,7 +309,7 @@ export class BookingsComponent {
     const tab = (this.tab() ?? "pending") as TenantBookingListTab;
     try {
       await this.api.withAuthorizedClient(async (client) => {
-        const [bookingsPage, kiosk, usage, profile] = await Promise.all([
+        const [bookingsPage, kiosk, usage, profile, entitlements] = await Promise.all([
           client.listTenantBookings({
             tab,
             page: this.page(),
@@ -338,9 +319,10 @@ export class BookingsComponent {
           client.getTenantKioskStatus().catch(() => null),
           client.getTenantSubscriptionUsage().catch(() => null),
           client.getTenantProfile().catch(() => null),
+          client.getTenantEntitlements().catch(() => null),
         ]);
         this.planEntitlements.set(
-          resolveTenantEntitlements(usage?.entitlements, profile?.entitlements),
+          mergeTenantEntitlements(entitlements, usage?.entitlements, profile?.entitlements),
         );
         this.bookings.set(bookingsPage.items);
         this.totalCount.set(bookingsPage.totalCount);

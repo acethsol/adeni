@@ -17,9 +17,13 @@ import {
   type WeeklyAvailabilityRule,
   DEFAULT_PAGE_SIZE,
   LIST_PAGE_SIZE_OPTIONS,
+  buildReportExportMenuItems,
   canAddPractitionerAtCount,
   formatTeamUsageMetric,
+  mergeTenantEntitlements,
+  REPORT_KEYS,
   sliceListPage,
+  type ReportExportFormat,
   type SubscriptionUsage,
   type TenantEntitlements,
 } from "@adeni/shared";
@@ -201,26 +205,13 @@ export class StaffComponent implements OnInit, OnDestroy {
     { value: "none", label: "No portal access" },
   ];
 
-  readonly staffExportItems: AdeniExportMenuItem[] = [
-    {
-      format: "csv",
-      label: "CSV (.csv)",
-      disabled: true,
-      hint: "Reporting export — coming soon",
-    },
-    {
-      format: "xlsx",
-      label: "Excel (.xlsx)",
-      disabled: true,
-      hint: "Reporting export — coming soon",
-    },
-    {
-      format: "pdf",
-      label: "PDF (.pdf)",
-      disabled: true,
-      hint: "Reporting export — coming soon",
-    },
-  ];
+  readonly staffExportItems = computed((): AdeniExportMenuItem[] =>
+    buildReportExportMenuItems({
+      entitlements: this.entitlements(),
+      pdf: { disabled: true, hint: "Staff roster is CSV only" },
+    }),
+  );
+  readonly staffExporting = signal(false);
   readonly viewMode = signal<AdeniListViewMode>(
     readPersistedListViewMode(STAFF_VIEW_STORAGE_KEY, "cards"),
   );
@@ -855,6 +846,37 @@ export class StaffComponent implements OnInit, OnDestroy {
     }
   }
 
+  async downloadStaffRosterExport(format: ReportExportFormat): Promise<void> {
+    if (format !== "csv") {
+      return;
+    }
+    this.staffExporting.set(true);
+    try {
+      const to = new Date();
+      const from = new Date(to);
+      from.setFullYear(from.getFullYear() - 1);
+      const blob = await this.api.withAuthorizedClient((client) =>
+        client.downloadTenantReportExport({
+          reportKey: REPORT_KEYS.staffRoster,
+          from: from.toISOString(),
+          to: to.toISOString(),
+          format: "csv",
+        }),
+      );
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `staff-roster-${to.toISOString().slice(0, 10)}.csv`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      this.feedback.success("Staff roster downloaded.");
+    } catch {
+      this.feedback.error("Could not download staff roster.");
+    } finally {
+      this.staffExporting.set(false);
+    }
+  }
+
   private async refreshStaff(): Promise<void> {
     try {
       await this.api.withAuthorizedClient(async (c) => {
@@ -867,15 +889,18 @@ export class StaffComponent implements OnInit, OnDestroy {
 
   private async fetchStaffPageData(): Promise<void> {
     await this.api.withAuthorizedClient(async (c) => {
-      const [staff, catalog, profile, usage] = await Promise.all([
+      const [staff, catalog, profile, usage, entitlements] = await Promise.all([
         c.listTenantStaff(),
         c.getTenantServiceCatalog(),
         c.getTenantProfile().catch(() => null),
         c.getTenantSubscriptionUsage().catch(() => null),
+        c.getTenantEntitlements().catch(() => null),
       ]);
       this.staff.set(staff);
       this.services.set(catalog.items.filter((s) => s.isActive !== false));
-      this.entitlements.set(usage?.entitlements ?? profile?.entitlements ?? null);
+      this.entitlements.set(
+        mergeTenantEntitlements(entitlements, usage?.entitlements, profile?.entitlements),
+      );
       this.subscriptionUsage.set(usage);
       const slugs = [
         profile?.categorySlug,

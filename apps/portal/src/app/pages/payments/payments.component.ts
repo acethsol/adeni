@@ -12,7 +12,7 @@ import {
   hasCapability,
   LIST_PAGE_SIZE_OPTIONS,
   resolvePaymentCheckoutUrl,
-  resolveTenantEntitlements,
+  mergeTenantEntitlements,
 } from "@adeni/shared";
 import {
   AdeniConfirmService,
@@ -113,14 +113,15 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     this.error.set(null);
     try {
       await this.api.withAuthorizedClient(async (c) => {
-        const [profile, usage] = await Promise.all([
+        const [profile, usage, entitlements] = await Promise.all([
           c.getTenantProfile(),
           c.getTenantSubscriptionUsage().catch(() => null),
+          c.getTenantEntitlements().catch(() => null),
         ]);
         this.profile.set(profile);
         this.exportEntitled.set(
           hasBasicExportsEntitlement(
-            resolveTenantEntitlements(usage?.entitlements, profile.entitlements),
+            mergeTenantEntitlements(entitlements, usage?.entitlements, profile.entitlements),
           ),
         );
         const ledgerPage = await c.listPaymentLedger(

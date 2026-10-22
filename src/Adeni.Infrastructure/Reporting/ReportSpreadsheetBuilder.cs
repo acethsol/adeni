@@ -128,6 +128,28 @@ internal static class ReportSpreadsheetBuilder
         return Encoding.UTF8.GetBytes(builder.ToString());
     }
 
+    public static string BuildStaffRosterCsv(IReadOnlyList<StaffRosterExportRow> rows)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine("DisplayName,RoleKey,IsActive,PortalAccess,ServiceCount,SortOrder");
+        foreach (var row in rows)
+        {
+            builder.Append(Csv(row.DisplayName));
+            builder.Append(',');
+            builder.Append(Csv(row.RoleKey));
+            builder.Append(',');
+            builder.Append(row.IsActive ? "true" : "false");
+            builder.Append(',');
+            builder.Append(Csv(row.PortalAccessStatus));
+            builder.Append(',');
+            builder.Append(row.ServiceCount.ToString(CultureInfo.InvariantCulture));
+            builder.Append(',');
+            builder.AppendLine(row.SortOrder.ToString(CultureInfo.InvariantCulture));
+        }
+
+        return builder.ToString();
+    }
+
     public static byte[] BuildSalesSummaryCsv(SalesSummaryExportRow[] rows)
     {
         var builder = new StringBuilder();

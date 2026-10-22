@@ -1192,6 +1192,36 @@ export type AdminSaasChargeSummary = z.infer<typeof adminSaasChargeSummarySchema
 export type AdminCommercePaymentSummary = z.infer<typeof adminCommercePaymentSummarySchema>;
 export type AdminRevenueMetrics = z.infer<typeof adminRevenueMetricsSchema>;
 
+export const adminPlatformSubscriptionMrrSchema = z.object({
+  syncedMrrByCurrency: z.array(adminSubscriptionMetricsCurrencyTotalSchema),
+  estimatedMrrByCurrency: z.array(adminSubscriptionMetricsCurrencyTotalSchema),
+  mrrSource: z.enum(["synced_charges", "estimated_list_price"]),
+  paidTenantCount: z.number().int().nonnegative(),
+  pastDueTenantCount: z.number().int().nonnegative(),
+  trialingTenantCount: z.number().int().nonnegative(),
+  asOf: z.string(),
+});
+
+export type AdminPlatformSubscriptionMrr = z.infer<typeof adminPlatformSubscriptionMrrSchema>;
+
+export const adminGmvPeriodBucketSchema = z.object({
+  period: z.string(),
+  currency: z.string().length(3),
+  commerceVolume: z.number().nonnegative(),
+  platformFeeTotal: z.number().nonnegative(),
+});
+
+export const adminGmvSummarySchema = z.object({
+  granularity: z.enum(["month", "year"]),
+  buckets: z.array(adminGmvPeriodBucketSchema),
+  totalCommerceVolume: z.number().nonnegative(),
+  totalPlatformFees: z.number().nonnegative(),
+  asOf: z.string(),
+});
+
+export type AdminGmvPeriodBucket = z.infer<typeof adminGmvPeriodBucketSchema>;
+export type AdminGmvSummary = z.infer<typeof adminGmvSummarySchema>;
+
 export const adminTransactionKindSchema = z.enum(["commerce", "saas"]);
 
 export const adminTransactionSearchItemSchema = z.object({

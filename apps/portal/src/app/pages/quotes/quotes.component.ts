@@ -30,6 +30,7 @@ export class QuotesComponent implements OnInit, OnDestroy {
   readonly services = signal<ServiceOffering[]>([]);
   readonly selectedId = signal<string | null>(null);
   readonly busy = signal(false);
+  readonly pdfBusyId = signal<string | null>(null);
 
   amount = "";
   currency = "NGN";
@@ -126,6 +127,30 @@ export class QuotesComponent implements OnInit, OnDestroy {
       this.error.set("Could not send that quote.");
     } finally {
       this.busy.set(false);
+    }
+  }
+
+  canDownloadPdf(quote: QuoteRequestResponse): boolean {
+    return quote.status === "quoted" || quote.status === "accepted" || quote.status === "declined";
+  }
+
+  async downloadQuotePdf(quote: QuoteRequestResponse): Promise<void> {
+    this.pdfBusyId.set(quote.id);
+    this.error.set(null);
+    try {
+      const blob = await this.api.withAuthorizedClient((client) =>
+        client.downloadTenantQuotePdf(quote.id),
+      );
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `quote-${quote.id}.pdf`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      this.error.set("Could not download quote PDF.");
+    } finally {
+      this.pdfBusyId.set(null);
     }
   }
 }

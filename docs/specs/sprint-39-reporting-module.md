@@ -248,9 +248,9 @@ All routes under `/api/v1/`; mutating document issue flows authenticated.
 
 - [x] Unit: QuestPDF receipt fixture (39A)
 - [x] Integration: export 403 when `excelExport` false and format=xlsx
-- [ ] Export 403 when user lacks `RequiredPermission` for `reportKey`
-- [ ] Multi-location report denied when `multiLocationReporting` false and `locationId` omitted
-- [ ] Architecture: Reporting does not reference Finance or Retention Infrastructure EF entities
+- [x] Export 403 when user lacks `RequiredPermission` for `reportKey`
+- [x] Multi-location report denied when `multiLocationReporting` false and `locationId` omitted
+- [x] Architecture: Reporting does not reference Finance or Retention Infrastructure EF entities
 
 Run: `dotnet test Adeni.slnx -c Release`
 

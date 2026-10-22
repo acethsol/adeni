@@ -8,6 +8,7 @@ using Adeni.Api.Errors;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
 using Adeni.Application.Finance;
+using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Auth;
 using Adeni.Infrastructure.Persistence;
@@ -146,11 +147,25 @@ public sealed class FinanceController(
             return CrossTenantDenied();
         }
 
-        var exportFormat = string.Equals(format, "json", StringComparison.OrdinalIgnoreCase)
-            ? CompensationExportFormat.Json
-            : CompensationExportFormat.Csv;
+        if (string.Equals(format, "json", StringComparison.OrdinalIgnoreCase))
+        {
+            Response.Headers.Append("Deprecation", "true");
+            Response.Headers.Append(
+                "Link",
+                "</api/v1/tenant/reporting/exports/compensation>; rel=\"successor-version\"");
+            return BadRequest(new
+            {
+                title = "JSON compensation export is deprecated. Use GET /api/v1/tenant/reporting/exports/compensation?format=csv.",
+                code = ErrorCodes.ReportFormatNotSupported,
+            });
+        }
 
-        var result = await staffCompensation.ExportAsync(tenantId, from, to, exportFormat, cancellationToken);
+        var result = await staffCompensation.ExportAsync(
+            tenantId,
+            from,
+            to,
+            CompensationExportFormat.Csv,
+            cancellationToken);
         return result.Match<IActionResult>(
             payload => File(payload.Body, payload.ContentType, payload.FileName),
             error => ApiErrorResponseMapper.ToActionResult(error, HttpContext));

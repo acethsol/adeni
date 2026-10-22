@@ -32,6 +32,14 @@ public sealed record CustomerStatementData(
     DateTimeOffset To,
     IReadOnlyList<CustomerStatementLine> Lines);
 
+public sealed record StaffRosterExportRow(
+    string DisplayName,
+    string RoleKey,
+    bool IsActive,
+    string PortalAccessStatus,
+    int ServiceCount,
+    int SortOrder);
+
 public interface ITenantReportExportQueryService
 {
     Task<Result<IReadOnlyList<BookingsRegisterExportRow>>> GetBookingsRegisterAsync(
@@ -57,6 +65,10 @@ public interface ITenantReportExportQueryService
         CancellationToken cancellationToken = default);
 
     Task<int> GetActiveLocationCountAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<IReadOnlyList<StaffRosterExportRow>>> GetStaffRosterAsync(
         Guid tenantId,
         CancellationToken cancellationToken = default);
 }

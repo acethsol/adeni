@@ -227,4 +227,61 @@ public sealed class TenantReportExportQueryService(
         dbContext.BusinessLocations
             .AsNoTracking()
             .CountAsync(x => x.TenantId == tenantId && x.IsActive, cancellationToken);
+
+    public async Task<Result<IReadOnlyList<StaffRosterExportRow>>> GetStaffRosterAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        var staff = await dbContext.StaffMembers
+            .AsNoTracking()
+            .Include(x => x.ServiceLinks)
+            .Where(x => x.TenantId == tenantId)
+            .OrderBy(x => x.SortOrder)
+            .ThenBy(x => x.DisplayName)
+            .ToListAsync(cancellationToken);
+
+        var staffIds = staff.Select(x => x.Id).ToArray();
+        var now = DateTimeOffset.UtcNow;
+
+        var linkedUsers = await dbContext.BusinessUsers
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId && x.StaffMemberId != null && staffIds.Contains(x.StaffMemberId.Value))
+            .Select(x => x.StaffMemberId)
+            .ToListAsync(cancellationToken);
+
+        var pendingInvites = await dbContext.StaffPortalInvites
+            .AsNoTracking()
+            .Where(x =>
+                x.TenantId == tenantId
+                && x.StaffMemberId != null
+                && staffIds.Contains(x.StaffMemberId.Value)
+                && x.Status == StaffPortalInviteStatuses.Pending
+                && x.ExpiresAt >= now)
+            .Select(x => x.StaffMemberId)
+            .ToListAsync(cancellationToken);
+
+        var linkedStaffIds = linkedUsers.Where(x => x is not null).Select(x => x!.Value).ToHashSet();
+        var invitedStaffIds = pendingInvites.Where(x => x is not null).Select(x => x!.Value).ToHashSet();
+
+        IReadOnlyList<StaffRosterExportRow> rows = staff
+            .Select(member =>
+            {
+                var accessStatus = linkedStaffIds.Contains(member.Id)
+                    ? PortalAccessStatuses.Active
+                    : invitedStaffIds.Contains(member.Id)
+                        ? PortalAccessStatuses.InvitePending
+                        : PortalAccessStatuses.None;
+
+                return new StaffRosterExportRow(
+                    member.DisplayName,
+                    member.RoleKey,
+                    member.IsActive,
+                    accessStatus,
+                    member.ServiceLinks?.Count ?? 0,
+                    member.SortOrder);
+            })
+            .ToArray();
+
+        return Result.Success(rows);
+    }
 }

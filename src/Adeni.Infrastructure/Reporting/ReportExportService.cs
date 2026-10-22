@@ -76,6 +76,7 @@ public sealed class ReportExportService(
             ReportKeys.BookingsRegister => await ExportBookingsRegisterAsync(request, cancellationToken),
             ReportKeys.Compensation => await ExportCompensationAsync(request, cancellationToken),
             ReportKeys.SalesSummary => await ExportSalesSummaryAsync(request, cancellationToken),
+            ReportKeys.StaffRoster => await ExportStaffRosterAsync(request, cancellationToken),
             _ => Result.Failure<ReportExportPayload>(ErrorCodes.ReportNotFoundError(request.ReportKey)),
         };
     }
@@ -108,6 +109,30 @@ public sealed class ReportExportService(
         }
 
         return null;
+    }
+
+    private async Task<Result<ReportExportPayload>> ExportStaffRosterAsync(
+        ReportExportRequest request,
+        CancellationToken cancellationToken)
+    {
+        var rowsResult = await exportQueries.GetStaffRosterAsync(request.TenantId, cancellationToken);
+        if (rowsResult.IsFailure)
+        {
+            return Result.Failure<ReportExportPayload>(rowsResult.Error!);
+        }
+
+        var rows = rowsResult.Value!;
+        var stamp = DateTimeOffset.UtcNow.ToString("yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture);
+
+        return request.Format switch
+        {
+            ReportExportFormat.Csv => Result.Success(new ReportExportPayload(
+                "text/csv",
+                $"staff-roster-{stamp}.csv",
+                Encoding.UTF8.GetBytes(ReportSpreadsheetBuilder.BuildStaffRosterCsv(rows)))),
+            _ => Result.Failure<ReportExportPayload>(
+                ErrorCodes.ReportFormatNotSupportedError(request.ReportKey, request.Format.ToString())),
+        };
     }
 
     private async Task<Result<ReportExportPayload>> ExportBookingsRegisterAsync(

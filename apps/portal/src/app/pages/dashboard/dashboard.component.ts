@@ -29,10 +29,9 @@ import {
   getMarketById,
   getPlanDisplayForCountry,
   hasCapability,
-  hasBasicExportsEntitlement,
-  hasExcelExportEntitlement,
+  buildReportExportMenuItems,
+  mergeTenantEntitlements,
   hasTenantEntitlement,
-  resolveTenantEntitlements,
   isDashboardWidgetVisible,
   isNearBookingLimit,
   layoutIncludesWidget,
@@ -57,6 +56,7 @@ import {
   type QuoteRequestResponse,
   type ServiceOffering,
   type SubscriptionUsage,
+  type TenantEntitlements,
   type TenantDashboardBreakdown,
 } from "@adeni/shared";
 import {
@@ -137,6 +137,7 @@ export class DashboardComponent implements OnInit {
   readonly bookingMixChartData = signal<ChartTabularData>([]);
   readonly today = signal<BookingResponse[]>([]);
   readonly usage = signal<SubscriptionUsage | null>(null);
+  readonly exportEntitlementsDirect = signal<TenantEntitlements | null>(null);
   readonly rangePreset = signal<DashboardRangePreset>("7d");
   readonly appointmentsInRange = signal(0);
   readonly rangePresets = DASHBOARD_RANGE_PRESETS;
@@ -286,17 +287,11 @@ export class DashboardComponent implements OnInit {
   }
 
   exportEntitlements() {
-    return resolveTenantEntitlements(
+    return mergeTenantEntitlements(
+      this.exportEntitlementsDirect(),
       this.usage()?.entitlements,
       this.profile()?.entitlements,
     );
-  }
-
-  hasExportEntitlement(key: "basicExports" | "excelExport"): boolean {
-    const entitlements = this.exportEntitlements();
-    return key === "basicExports"
-      ? hasBasicExportsEntitlement(entitlements)
-      : hasExcelExportEntitlement(entitlements);
   }
 
   planUsageLabel(): string {
@@ -458,14 +453,13 @@ export class DashboardComponent implements OnInit {
     return Math.min(100, Math.round((usage.bookingsUsedThisMonth / usage.bookingsLimitThisMonth) * 100));
   }
 
-  readonly appointmentsExportItems = computed((): AdeniExportMenuItem[] => {
-    const basic = this.hasExportEntitlement("basicExports");
-    const excel = this.hasExportEntitlement("excelExport");
-    return [
-      { format: "csv", label: "Bookings CSV", disabled: !basic },
-      { format: "xlsx", label: "Bookings Excel", disabled: !basic || !excel },
-    ];
-  });
+  readonly appointmentsExportItems = computed((): AdeniExportMenuItem[] =>
+    buildReportExportMenuItems({
+      entitlements: this.exportEntitlements(),
+      xlsx: true,
+      labels: { csv: "Bookings CSV", xlsx: "Bookings Excel" },
+    }),
+  );
 
   async downloadAppointmentsExport(format: ReportExportFormat): Promise<void> {
     const range = resolveDashboardRange(this.rangePreset());
@@ -494,7 +488,10 @@ export class DashboardComponent implements OnInit {
     try {
       const range = resolveDashboardRange(this.rangePreset());
       const snapshot = await this.businessApi.withAuthorizedClient(async (client) => {
-        const profile = await client.getTenantProfile();
+        const [profile, exportEntitlements] = await Promise.all([
+          client.getTenantProfile(),
+          client.getTenantEntitlements().catch(() => null),
+        ]);
         const storedLayout = await resolveDashboardLayoutFromApi(
           () => client.getTenantDashboardLayout(),
           (layout) => client.putTenantDashboardLayout(layout),
@@ -576,6 +573,7 @@ export class DashboardComponent implements OnInit {
         }
         return {
           profile,
+          exportEntitlements,
           storedLayout,
           bookings,
           services,
@@ -595,6 +593,7 @@ export class DashboardComponent implements OnInit {
       });
 
       this.profile.set(snapshot.profile);
+      this.exportEntitlementsDirect.set(snapshot.exportEntitlements);
       this.layout.set(snapshot.storedLayout);
       if (!this.editMode()) {
         this.rangePreset.set(snapshot.storedLayout.range);

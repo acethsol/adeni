@@ -1,0 +1,66 @@
+<app-portal-page
+  [title]="facade.business()?.name ?? 'Business'"
+  [description]="pageDescription()"
+>
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a routerLink="/businesses">Businesses</a>
+    <span aria-hidden="true">/</span>
+    <span>{{ facade.business()?.name ?? "…" }}</span>
+  </nav>
+
+  @if (facade.error()) {
+    <p class="error-banner">{{ facade.error() }}</p>
+  }
+
+  @if (facade.loading() && !facade.business()) {
+    <p class="muted">Loading business…</p>
+  } @else if (facade.business(); as b) {
+    <section class="hero business-hero">
+      <div>
+        <p class="kicker">Tenant</p>
+        <h2>{{ b.name }}</h2>
+        <p class="meta">
+          <code class="slug">{{ b.slug || "no-slug" }}</code>
+          · Joined {{ b.createdAt | date: "mediumDate" }}
+        </p>
+        <div class="hero-pills">
+          @let status = tenantStatusPill(b.status);
+          <admin-pill [label]="status.label" [variant]="status.variant" />
+          @let plan = businessPlanPill(b);
+          <admin-pill [label]="plan.label" [variant]="plan.variant" />
+          @if (b.billingStatus) {
+            @let billing = billingStatusPill(b.billingStatus);
+            <admin-pill [label]="billing.label" [variant]="billing.variant" />
+          }
+          @if (b.trialEndsAt) {
+            <admin-pill
+              [label]="'Trial · ' + (b.trialEndsAt | date: 'mediumDate')"
+              variant="info"
+              [compact]="true"
+            />
+          }
+        </div>
+      </div>
+      <div class="hero-actions">
+        <adeni-staff-btn icon="restart" [disabled]="facade.loading()" (pressed)="facade.refresh()">
+          Refresh
+        </adeni-staff-btn>
+        <a class="btn" routerLink="/transactions" [queryParams]="{ q: b.name }">
+          <adeni-carbon-icon name="search" [size]="16" />
+          Transactions
+        </a>
+      </div>
+    </section>
+
+    <nav class="detail-tabs cds-content-switcher" aria-label="Business sections">
+      <a routerLink="overview" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        Overview
+      </a>
+      <a routerLink="billing" routerLinkActive="active">Subscription &amp; billing</a>
+    </nav>
+
+    <div class="detail-tab-body">
+      <router-outlet />
+    </div>
+  }
+</app-portal-page>
