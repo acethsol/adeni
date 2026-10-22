@@ -3,7 +3,7 @@
 Async **email**, **SMS**, and (later) **push** driven by **domain events** and **tenant preferences**. In-app chat and live UI updates stay in **Messaging** and **Operations** (SignalR).
 
 **Boundaries:** [specs/notifications-module-boundaries.md](./specs/notifications-module-boundaries.md)  
-**Implementation:** [specs/sprint-38-notifications-module.md](./specs/sprint-38-notifications-module.md) (38A / 38B)  
+**Implementation:** [sprint-38-notifications-module.md](./specs/sprint-38-notifications-module.md) (38A / 38B), [sprint-38c-notification-templates-i18n.md](./specs/sprint-38c-notification-templates-i18n.md) (templates + locale)  
 **Roadmap:** [roadmap-modules.md](./roadmap-modules.md) #12  
 **Vendors:** [tooling-policy.md](./tooling-policy.md) — **Resend** (email), **Twilio** (SMS), **FCM** (push backlog). **`wa.me` links are client-only** — no Twilio WhatsApp API in V1.
 
@@ -20,6 +20,7 @@ Async **email**, **SMS**, and (later) **push** driven by **domain events** and *
 | **Appointment reminder scheduler (38B)** | **Hangfire** recurring job → `AppointmentReminderProcessor` — 24h/2h email/SMS; entitlement-gated follow-up email |
 | **Event-driven sends (38B+)** | App code → **`INotificationDispatcher.SendAsync`** only → after-commit → Hangfire `NotificationSendHangfireJob` (automatic retry); inline worker in **Testing** |
 | **Receipt email (38B)** | `PaymentCompleted` → same dispatcher with `PaymentReceipt` metadata → worker issues receipt + PDF via **`IReportRenderer`**, then **`INotificationDeliveryDispatcher`** |
+| **Templates + i18n (38c)** | **`INotificationTemplateRenderer`** in worker; catalog in `@adeni/shared`; tenant **`defaultNotificationLocale`** + Pro+ overrides; portal **Settings → Notifications** |
 
 ---
 
@@ -32,7 +33,7 @@ Domain events (Booking, Waitlist, Messaging, Finance, Queue, Identity, …)
         ↓
   INotificationDispatcher (DeferredNotificationDispatcher) — after-commit enqueue (Hangfire) or inline worker (Testing)
         ↓
-  NotificationSendHangfireJob → NotificationSendWorker → INotificationDeliveryDispatcher
+  NotificationSendHangfireJob → NotificationSendWorker → INotificationTemplateRenderer (locale + overrides) → INotificationDeliveryDispatcher
         ↓
   PreferenceAwareNotificationDispatcher
         ↓
@@ -119,9 +120,11 @@ Keys in Key Vault for staging/production — never commit.
 | `Reminders:Enabled` | `true` | Job no-ops when `false`; Hangfire **not registered** in **Testing** |
 | `Reminders:RecurringCron` | `*/5 * * * *` | Hangfire cron for reminder scan (every 5 minutes) |
 | `Reminders:NoShowGraceAfterEnd` | `2:00:00` | Follow-up window after appointment end |
+| `MaxWaitlistNotificationsPerSlot` | `25` | Burst cap per opened slot |
 
 **Hangfire:** Uses SQL Server storage on `ConnectionStrings:AdeniDb` (schema `HangFire`). Tables are created on first API start when Hangfire is enabled. Dashboard: **Development only** at `/admin/hangfire` (not exposed in Staging/Production). Requires a real SQL connection string — in-memory EF (empty `AdeniDb`) skips Hangfire registration.
-| `MaxWaitlistNotificationsPerSlot` | `25` | Burst cap per opened slot |
+
+**Templates (38c):** Deploy `db/scripts/notifications-sprint38c-templates.sql` (or publish dacpac) for `DefaultNotificationLocale`, override table, and `identity.customers.PreferredLocale`. Catalog: `packages/shared/src/data/notification-templates.json`.
 
 **Murphy / security:** Payment webhooks remain on Finance — not Notifications. Outbound sends: mask PII in logs (`PiiMasker`), idempotency per event + channel + recipient.
 

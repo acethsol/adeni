@@ -4,7 +4,7 @@
 |-------|-------|
 | **Sprint** | Sprint 38c — Notification templates + i18n |
 | **Author** | Agent |
-| **Status** | Approved |
+| **Status** | Done (2026-10-22) |
 | **Created** | 2026-10-22 |
 | **Depends on** | 38A/38B notifications pipeline; 33-closeout entitlements |
 | **Pauses** | 39B reporting completion (exports/admin) |

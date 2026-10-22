@@ -42,8 +42,8 @@
 | **36** | **Messaging rewrite (SignalR + conversations)** | ✅ Done — [sprint-36-messaging-rewrite.md](./specs/sprint-36-messaging-rewrite.md); Sprint 18 teardown |
 | **33-closeout** | **Entitlements v2 closeout** | ✅ Done — [sprint-33-entitlements-closeout.md](./specs/sprint-33-entitlements-closeout.md); matrix hygiene + portal parity before module sprints |
 | **38** | **Notifications module (Resend + Twilio)** | **38A ✅ / 38B ✅** — [sprint-38-notifications-module.md](./specs/sprint-38-notifications-module.md) |
-| **38c** | **Notification templates + i18n + portal** | **Active** — [sprint-38c-notification-templates-i18n.md](./specs/sprint-38c-notification-templates-i18n.md) |
-| **39** | **Reporting module (exports + PDF extract)** | **39A ✅** — [sprint-39-reporting-module.md](./specs/sprint-39-reporting-module.md); **39B ⏸ paused** (38c) exports/admin |
+| **38c** | **Notification templates + i18n + portal** | ✅ Done — [sprint-38c-notification-templates-i18n.md](./specs/sprint-38c-notification-templates-i18n.md) |
+| **39** | **Reporting module (exports + PDF extract)** | **39A ✅** — [sprint-39-reporting-module.md](./specs/sprint-39-reporting-module.md); **39B** next (exports/admin) |
 | **37** | **Retention (packages, loyalty, memberships)** | Draft — [sprint-37-retention-module.md](./specs/sprint-37-retention-module.md); after 33-closeout → 38A → 39A → 38B → 39B → 37.1–37.5 |
 | **39-finance** | **Finance module boundaries (Phase 1)** | ✅ Done — [finance-module-boundaries.md](./specs/finance-module-boundaries.md); `/api/v1/finance/*`, portal `/finance` |
 | — | **Reporting module boundaries** | Spec — [reporting-module-boundaries.md](./specs/reporting-module-boundaries.md); runbook [reporting.md](./reporting.md) |
@@ -54,7 +54,7 @@
 | — | App Insights (Obs 1) | → Sprint 20 |
 | — | Booking notifications, auto-confirm, payments, waitlist | → Sprint 15 |
 
-**Next up:** Sprint **38c** notification templates + i18n (pauses **39B**). Then **39B** reporting completion. Parallel: **32a** dashboard; **33** staging Paystack + platform subscription MRR E2E. **Module order:** ~~33-closeout~~ → ~~38A~~ → ~~39A~~ → ~~38B~~ → **38c** → **39B** → **37.1–37.5** retention. Sprint 20 parallel. See [roadmap-modules.md](./roadmap-modules.md).
+**Next up:** Sprint **39B** reporting completion (exports, ClosedXML, admin metrics). Parallel: **32a** dashboard; **33** staging Paystack + platform subscription MRR E2E. **Module order:** ~~33-closeout~~ → ~~38A~~ → ~~39A~~ → ~~38B~~ → ~~38c~~ → **39B** → **37.1–37.5** retention. Sprint 20 parallel. See [roadmap-modules.md](./roadmap-modules.md).
 
 ---
 ## Sprint 0 — Foundation & dev tooling ✅
