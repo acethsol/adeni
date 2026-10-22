@@ -17,6 +17,7 @@ using Adeni.Infrastructure.Booking;
 using Adeni.Infrastructure.Tenancy;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Events;
+using Adeni.Infrastructure.Tests.Notifications;
 using Adeni.Infrastructure.Notifications;
 using Adeni.Infrastructure.Finance;
 using Adeni.Infrastructure.Reporting;
@@ -138,7 +139,7 @@ public sealed class DomainEventDispatcherTests
         services.AddSingleton<NotificationTestSink>();
         services.AddScoped<INotificationDispatcher, TestNotificationDispatcher>();
         services.Configure<MarketOptions>(options => options.DefaultTimeZoneId = "UTC");
-        services.AddAdeniDomainEvents();
+        services.AddInlineNotificationJobScheduling();
         services.AddScoped<INotificationRecipientResolver, NotificationRecipientResolver>();
         services.AddScoped<IDomainEventHandler<Domain.Booking.Events.BookingConfirmed>, BookingNotificationHandler>();
         services.AddScoped<IDomainEventHandler<Domain.Booking.Events.BookingRejected>, BookingNotificationHandler>();

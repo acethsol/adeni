@@ -18,7 +18,8 @@ Async **email**, **SMS**, and (later) **push** driven by **domain events** and *
 | `PreferenceAwareNotificationDispatcher` | Gates by channel + prefs |
 | **Delivery (38A/38B)** | Resend + Twilio when configured; log fallback in Development/Testing without keys |
 | **Appointment reminder scheduler (38B)** | **Hangfire** recurring job → `AppointmentReminderProcessor` — 24h/2h email/SMS; entitlement-gated follow-up email |
-| **Receipt email (38B)** | `PaymentCompleted` → PDF via Application **`IReportRenderer`** attachment |
+| **Event-driven sends (38B+)** | Domain handlers → **`INotificationJobScheduler`** → Hangfire `NotificationSendHangfireJob` (automatic retry); inline fallback in **Testing** |
+| **Receipt email (38B)** | `PaymentCompleted` → Hangfire job issues receipt + PDF via **`IReportRenderer`**, then sends |
 
 ---
 
@@ -27,18 +28,22 @@ Async **email**, **SMS**, and (later) **push** driven by **domain events** and *
 ```
 Domain events (Booking, Waitlist, Messaging, Finance, Queue, Identity, …)
         ↓
-  IDomainEventHandler<*>  (Notifications.Infrastructure)
+  IDomainEventHandler<*>  (Notifications.Infrastructure) — resolve recipients, build message
         ↓
-  INotificationDispatcher
+  INotificationJobScheduler — after-commit enqueue (Hangfire) or inline (Testing)
+        ↓
+  NotificationSendHangfireJob → INotificationDispatcher (same idempotency stack)
         ↓
   PreferenceAwareNotificationDispatcher
         ↓
-  ChannelNotificationDispatcher (Phase 1 target)
+  ChannelNotificationDispatcher
      ├─ email  → IEmailNotificationProvider → Resend
      ├─ sms    → ISmsNotificationProvider   → Twilio
      ├─ push   → IPushNotificationProvider  → FCM (Phase 4)
      └─ (dev)  → Logging when API keys absent
 ```
+
+**After-commit:** `AdeniDbContext.SaveChangesAsync` dispatches collected domain events only after the database write succeeds. Handlers call `INotificationJobScheduler`, which queues Hangfire work via scoped `IAfterCommitWorkQueue` (nested `SaveChanges` depth tracking) so jobs are not enqueued until the outer save completes. **Testing** environment has no Hangfire — `InlineNotificationJobScheduler` runs the same worker on the request thread after commit.
 
 | Layer | Location |
 |-------|----------|

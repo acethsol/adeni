@@ -15,7 +15,7 @@ using Microsoft.EntityFrameworkCore;
 public sealed class BillingDocumentService(
     AdeniDbContext dbContext,
     IPaymentOrchestrator paymentOrchestrator,
-    INotificationDispatcher notificationDispatcher,
+    INotificationJobScheduler notificationJobs,
     IReportRenderer reportRenderer,
     IAuditLogWriter auditLogWriter,
     ICorrelationContext correlationContext) : IBillingDocumentService
@@ -366,7 +366,7 @@ public sealed class BillingDocumentService(
         }
 
         var mapped = Map(entity);
-        await notificationDispatcher.SendAsync(
+        await notificationJobs.ScheduleSendAsync(
             new NotificationMessage(
                 "email",
                 to,

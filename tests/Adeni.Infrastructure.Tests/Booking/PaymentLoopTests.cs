@@ -24,6 +24,7 @@ using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Reviews;
 using Adeni.Infrastructure.Subscriptions;
 using Adeni.Infrastructure.Tests.Catalog;
+using Adeni.Infrastructure.Tests.Notifications;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -237,7 +238,7 @@ public sealed class PaymentLoopTests
             options.Provider = "Stub";
             options.StubCheckoutBaseUrl = "/checkout/stub";
         });
-        services.AddAdeniDomainEvents();
+        services.AddInlineNotificationJobScheduling();
         services.AddDbContext<AdeniDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));
         services.AddCategoryWorkflowCatalog();
         services.AddScoped<Adeni.Infrastructure.Context.TenantContext>();

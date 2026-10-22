@@ -11,6 +11,7 @@ using Adeni.Domain.Booking;
 using Adeni.Domain.Finance;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Events;
+using Adeni.Infrastructure.Tests.Notifications;
 using Adeni.Infrastructure.Finance;
 using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Reporting;
@@ -177,7 +178,6 @@ public sealed class BillingDocumentTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddAdeniDomainEvents();
         services.AddDbContext<AdeniDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));
         services.AddScoped<Adeni.Infrastructure.Context.TenantContext>();
         services.AddScoped<ITenantContext>(sp =>
@@ -194,6 +194,7 @@ public sealed class BillingDocumentTests
         services.AddSingleton<NotificationSink>();
         services.AddSingleton<INotificationDispatcher>(sp =>
             new SinkNotificationDispatcher(sp.GetRequiredService<NotificationSink>()));
+        services.AddInlineNotificationJobScheduling();
         services.AddScoped<IPlatformFeeCalculator, PlatformFeeCalculator>();
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();
         services.AddBookingTestRealtime();

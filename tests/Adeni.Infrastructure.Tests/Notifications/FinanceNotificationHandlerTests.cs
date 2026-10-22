@@ -1,10 +1,12 @@
 namespace Adeni.Infrastructure.Tests.Notifications;
 
+using Adeni.Application.Events;
 using Adeni.Application.Finance;
 using Adeni.Application.Notifications;
 using Adeni.Application.Reporting;
 using Adeni.Domain.Common;
 using Adeni.Domain.Finance.Events;
+using Adeni.Infrastructure.Events;
 using Adeni.Infrastructure.Notifications;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -16,23 +18,19 @@ public sealed class FinanceNotificationHandlerTests
     [Fact]
     public async Task PaymentCompleted_uses_IReportRenderer_and_attaches_pdf()
     {
-        await using var provider = NotificationDispatcherTests.BuildProvider();
-        using var scope = provider.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
         var tenantId = Guid.NewGuid();
-        db.Tenants.Add(new Domain.Tenancy.Tenant { Id = tenantId, Name = "Pay", CreatedAt = DateTimeOffset.UtcNow });
-        await db.SaveChangesAsync();
-
         var paymentIntentId = Guid.NewGuid();
         var renderer = new CapturingReportRenderer();
         var billing = new StubBillingDocuments(paymentIntentId, tenantId);
-        var handler = new FinanceNotificationHandler(
-            scope.ServiceProvider.GetRequiredService<INotificationDispatcher>(),
-            scope.ServiceProvider.GetRequiredService<INotificationRecipientResolver>(),
-            billing,
-            renderer,
-            db,
-            NullLogger<FinanceNotificationHandler>.Instance);
+        await using var provider = NotificationDispatcherTests.BuildProvider(services =>
+        {
+            services.AddSingleton<IReportRenderer>(renderer);
+            services.AddSingleton<IBillingDocumentService>(billing);
+            services.AddScoped<INotificationRecipientResolver, NotificationRecipientResolver>();
+            services.AddScoped<FinanceNotificationHandler>();
+        });
+        using var handlerScope = provider.CreateScope();
+        var handler = handlerScope.ServiceProvider.GetRequiredService<FinanceNotificationHandler>();
 
         await handler.HandleAsync(
             new PaymentCompleted(
@@ -45,7 +43,7 @@ public sealed class FinanceNotificationHandlerTests
                 "ref",
                 DateTimeOffset.UtcNow));
 
-        var sink = scope.ServiceProvider.GetRequiredService<NotificationDispatcherTests.CapturingEmailProvider>();
+        var sink = handlerScope.ServiceProvider.GetRequiredService<NotificationDispatcherTests.CapturingEmailProvider>();
         Assert.Single(sink.Sent);
         Assert.NotNull(sink.Sent[0].Attachments);
         Assert.Single(sink.Sent[0].Attachments!);

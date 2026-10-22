@@ -1,0 +1,23 @@
+namespace Adeni.Application.Notifications;
+
+/// <summary>Serializable notification send payload for background jobs.</summary>
+public sealed record NotificationJobPayload(
+    string Channel,
+    string RecipientKey,
+    string Subject,
+    string Body,
+    Guid? TenantId,
+    string? DedupeEventId)
+{
+    public static NotificationJobPayload FromMessage(NotificationMessage message) =>
+        new(
+            message.Channel,
+            message.RecipientKey,
+            message.Subject,
+            message.Body,
+            message.TenantId,
+            message.DedupeEventId);
+
+    public NotificationMessage ToMessage() =>
+        new(Channel, RecipientKey, Subject, Body, TenantId, DedupeEventId);
+}

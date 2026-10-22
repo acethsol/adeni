@@ -103,7 +103,9 @@ Domain events (Booking, Waitlist, Messaging, Finance, Retention, Queue, …)
         ↓
   IDomainEventHandler<*>  (Notifications.Infrastructure)
         ↓
-  INotificationDispatcher
+  INotificationJobScheduler  (after-commit; Hangfire enqueue in Staging/Prod)
+        ↓
+  NotificationSendHangfireJob  →  INotificationDispatcher
         ↓
   PreferenceAwareNotificationDispatcher  (tenant prefs; SmsRemindersEnabled)
         ↓
@@ -114,6 +116,17 @@ Domain events (Booking, Waitlist, Messaging, Finance, Retention, Queue, …)
      ├─ sms    → ISmsNotificationProvider   → Twilio (sender resolved per country/market)
      └─ (dev)  → LoggingNotificationProvider
 ```
+
+### 5.0 Event-driven delivery (Hangfire)
+
+| Piece | Role |
+|-------|------|
+| `IAfterCommitWorkQueue` | Defers Hangfire enqueue until EF `SaveChanges` completes (nested save depth) |
+| `INotificationJobScheduler` | Application port — `ScheduleSendAsync` / `SchedulePaymentReceiptAsync` |
+| `NotificationSendHangfireJob` | Resolves scoped `NotificationSendWorker` → `INotificationDispatcher`; `[AutomaticRetry]` on provider failures; idempotency unchanged |
+| `InlineNotificationJobScheduler` | **Testing** (and dev without SQL): same worker inline after commit |
+
+Recurring **appointment reminders** stay on the existing Hangfire recurring job (`notifications:appointment-reminders`).
 
 ### 5.1 `NotificationSenderConfig` (country-aware)
 

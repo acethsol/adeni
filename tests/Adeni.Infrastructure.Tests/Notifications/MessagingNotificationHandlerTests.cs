@@ -12,8 +12,9 @@ public sealed class MessagingNotificationHandlerTests
     public async Task Customer_message_enqueues_business_stub_without_resolved_inbox_email()
     {
         var dispatcher = new CapturingDispatcher();
+        var jobs = new CapturingNotificationJobScheduler(dispatcher);
         var handler = new MessagingNotificationHandler(
-            dispatcher,
+            jobs,
             new FixedRecipientResolver(Result.Success(new NotificationContact(null, null))),
             Microsoft.Extensions.Logging.Abstractions.NullLogger<MessagingNotificationHandler>.Instance);
         var tenantId = Guid.NewGuid();
@@ -42,9 +43,10 @@ public sealed class MessagingNotificationHandlerTests
     public async Task Business_message_notifies_customer_email_when_resolved()
     {
         var dispatcher = new CapturingDispatcher();
+        var jobs = new CapturingNotificationJobScheduler(dispatcher);
         var customerEmail = "guest@example.com";
         var handler = new MessagingNotificationHandler(
-            dispatcher,
+            jobs,
             new FixedRecipientResolver(Result.Success(new NotificationContact(customerEmail, null))),
             Microsoft.Extensions.Logging.Abstractions.NullLogger<MessagingNotificationHandler>.Instance);
         var customerId = Guid.NewGuid();

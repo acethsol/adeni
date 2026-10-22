@@ -7,6 +7,7 @@ using Adeni.Application.Subscriptions;
 using Adeni.Domain.Notifications;
 using Adeni.Domain.Subscriptions;
 using Adeni.Domain.Tenancy;
+using Adeni.Infrastructure.Events;
 using Adeni.Infrastructure.Notifications;
 using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Subscriptions;
@@ -126,7 +127,9 @@ public sealed class NotificationDispatcherTests
         Assert.Contains("/emails", requests[0].RequestUri!.AbsoluteUri);
     }
 
-    internal static ServiceProvider BuildProvider(SubscriptionSku subscriptionSku = SubscriptionSku.Professional)
+    internal static ServiceProvider BuildProvider(
+        Action<IServiceCollection>? configure = null,
+        SubscriptionSku subscriptionSku = SubscriptionSku.Professional)
     {
         var services = new ServiceCollection();
         services.AddLogging();
@@ -157,6 +160,8 @@ public sealed class NotificationDispatcherTests
         services.AddScoped<IdempotentNotificationDispatcher>();
         services.AddScoped<EntitlementAwareNotificationDispatcher>();
         services.AddScoped<INotificationDispatcher, PreferenceAwareNotificationDispatcher>();
+        services.AddInlineNotificationJobScheduling();
+        configure?.Invoke(services);
         return services.BuildServiceProvider();
     }
 

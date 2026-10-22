@@ -25,6 +25,7 @@ using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Reviews;
 using Adeni.Infrastructure.Subscriptions;
 using Adeni.Infrastructure.Tests.Catalog;
+using Adeni.Infrastructure.Tests.Notifications;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -200,7 +201,7 @@ public sealed class PractitionerBookingScopeTests
         services.AddSingleton<IDistributedLockProvider, NoOpLockProvider>();
         services.AddSingleton<IFileStorage, NoopFileStorage>();
         services.Configure<MarketOptions>(options => options.DefaultTimeZoneId = "UTC");
-        services.AddAdeniDomainEvents();
+        services.AddInlineNotificationJobScheduling();
         services.AddDbContext<AdeniDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));
         services.AddCategoryWorkflowCatalog();
         services.AddScoped<Adeni.Infrastructure.Context.TenantContext>();

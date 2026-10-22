@@ -67,6 +67,7 @@
     </PackageReference>
 
     <PackageReference Include="Serilog" Version="4.3.0" />
+    <PackageReference Include="Hangfire.Core" Version="1.8.25" />
 
   </ItemGroup>
 

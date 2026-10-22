@@ -6,7 +6,7 @@ using Adeni.Domain.Booking.Events;
 using Microsoft.Extensions.Logging;
 
 public sealed class BookingNotificationHandler(
-    INotificationDispatcher notificationDispatcher,
+    INotificationJobScheduler notificationJobs,
     INotificationRecipientResolver recipientResolver,
     ILogger<BookingNotificationHandler> logger)
     : IDomainEventHandler<BookingConfirmed>,
@@ -68,7 +68,7 @@ public sealed class BookingNotificationHandler(
             return;
         }
 
-        await notificationDispatcher.SendAsync(
+        await notificationJobs.ScheduleSendAsync(
             new NotificationMessage(
                 "email",
                 contact.Value.Email.Trim(),

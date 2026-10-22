@@ -73,15 +73,8 @@ public static class HangfireExtensions
         return app;
     }
 
-    internal static bool ShouldRegisterHangfire(IHostEnvironment environment, IConfiguration configuration)
-    {
-        if (environment.EnvironmentName == "Testing")
-        {
-            return false;
-        }
-
-        return !string.IsNullOrWhiteSpace(configuration.GetConnectionString("AdeniDb"));
-    }
+    internal static bool ShouldRegisterHangfire(IHostEnvironment environment, IConfiguration configuration) =>
+        HangfireNotificationsBootstrap.ShouldUseHangfire(environment, configuration);
 
     private sealed class HangfireDevelopmentDashboardAuthorizationFilter : Hangfire.Dashboard.IDashboardAuthorizationFilter
     {

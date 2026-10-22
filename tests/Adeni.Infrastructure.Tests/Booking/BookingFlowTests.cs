@@ -23,6 +23,7 @@ using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Reviews;
 using Adeni.Infrastructure.Subscriptions;
 using Adeni.Infrastructure.Tests.Catalog;
+using Adeni.Infrastructure.Tests.Notifications;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -379,7 +380,7 @@ public sealed class BookingFlowTests
         services.AddSingleton<ICacheService, DistributedCacheService>();
         services.AddSingleton<IDistributedLockProvider, NoOpLockProvider>();
         services.Configure<MarketOptions>(options => options.DefaultTimeZoneId = defaultTimeZoneId);
-        services.AddAdeniDomainEvents();
+        services.AddInlineNotificationJobScheduling();
         services.AddDbContext<AdeniDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));
         services.AddCategoryWorkflowCatalog();
         services.AddScoped<Adeni.Infrastructure.Context.TenantContext>();

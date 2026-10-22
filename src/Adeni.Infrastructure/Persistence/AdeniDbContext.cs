@@ -17,7 +17,8 @@ public sealed class AdeniDbContext(
     DbContextOptions<AdeniDbContext> options,
     ITenantContext tenantContext,
     IDomainEventCollector? domainEventCollector = null,
-    IDomainEventDispatcher? domainEventDispatcher = null) : DbContext(options)
+    IDomainEventDispatcher? domainEventDispatcher = null,
+    IAfterCommitWorkQueue? afterCommitWorkQueue = null) : DbContext(options)
 {
     /// <summary>
     /// When set, global query filters restrict rows to this tenant. Null means no filter.
@@ -746,17 +747,28 @@ public sealed class AdeniDbContext(
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        var result = await base.SaveChangesAsync(cancellationToken);
-
-        if (domainEventCollector is not null && domainEventDispatcher is not null)
+        afterCommitWorkQueue?.EnterSave();
+        try
         {
-            var events = domainEventCollector.TakeAll();
-            foreach (var domainEvent in events)
+            var result = await base.SaveChangesAsync(cancellationToken);
+
+            if (domainEventCollector is not null && domainEventDispatcher is not null)
             {
-                await domainEventDispatcher.PublishAsync(domainEvent, cancellationToken);
+                var events = domainEventCollector.TakeAll();
+                foreach (var domainEvent in events)
+                {
+                    await domainEventDispatcher.PublishAsync(domainEvent, cancellationToken);
+                }
+            }
+
+            return result;
+        }
+        finally
+        {
+            if (afterCommitWorkQueue is not null)
+            {
+                await afterCommitWorkQueue.ExitSaveAsync(cancellationToken);
             }
         }
-
-        return result;
     }
 }

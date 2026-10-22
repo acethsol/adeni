@@ -10,6 +10,7 @@ using Adeni.Domain.Identity;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Auditing;
 using Adeni.Infrastructure.Context;
+using Adeni.Infrastructure.Tests.Notifications;
 using Adeni.Infrastructure.Identity;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -251,6 +252,7 @@ public sealed class StaffAccessServiceTests
             }).Build());
         services.AddLogging();
         services.AddSingleton<INotificationDispatcher, NoopNotifications>();
+        services.AddInlineNotificationJobScheduling();
         services.AddScoped<StaffAccessService>();
         return services.BuildServiceProvider();
     }
