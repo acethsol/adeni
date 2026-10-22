@@ -62,4 +62,9 @@ public interface IEntitlementsService
     Task<SubscriptionUsageResponse> GetUsageForTenantAsync(
         Tenant tenant,
         CancellationToken cancellationToken = default);
+
+    Task<Result<TenantEntitlements>> GetEntitlementsForMemberAsync(
+        Guid tenantId,
+        string auth0Sub,
+        CancellationToken cancellationToken = default);
 }

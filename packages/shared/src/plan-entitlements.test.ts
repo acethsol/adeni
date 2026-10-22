@@ -66,4 +66,15 @@ describe("plan-entitlements", () => {
     expect(labels).not.toContain("Invoices & receipts");
     expect(labels).not.toContain("Basic analytics");
   });
+
+  it("PLAN_COMPARISON omits deferred module rows until enforced", () => {
+    const labels = PLAN_COMPARISON.map((row) => row.label);
+    expect(labels).not.toContain("Basic reminders");
+    expect(labels).not.toContain("Configurable reminders");
+    expect(labels).not.toContain("Follow-up automation");
+    expect(labels).not.toContain("Basic exports");
+    expect(labels).not.toContain("Advanced reports");
+    expect(labels).not.toContain("Excel export");
+    expect(labels).not.toContain("Multi-location reporting");
+  });
 });

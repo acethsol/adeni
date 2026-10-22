@@ -17,6 +17,8 @@ import {
   pricingCatalogVersionDetailSchema,
   pricingCatalogVersionListResponseSchema,
   subscriptionUsageSchema,
+  tenantEntitlementsSchema,
+  type TenantEntitlements,
   subscriptionCheckoutRequestSchema,
   subscriptionCheckoutResponseSchema,
   tenantBillingHistoryResponseSchema,
@@ -761,6 +763,11 @@ export class AdeniApiClient {
   async getTenantProfile(): Promise<BusinessProfile> {
     const response = await this.request("/api/v1/tenant/profile");
     return businessProfileSchema.parse(await response.json());
+  }
+
+  async getTenantEntitlements(): Promise<TenantEntitlements> {
+    const response = await this.request("/api/v1/tenant/entitlements");
+    return tenantEntitlementsSchema.parse(await response.json());
   }
 
   async getBusinessContext(): Promise<BusinessContextResponse> {

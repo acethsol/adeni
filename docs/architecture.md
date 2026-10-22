@@ -78,9 +78,11 @@ Canonical diagram: **[target-client-architecture.md](./target-client-architectur
 | **Reporting** | 32+ | `ITenantDashboardService`, `IReportRenderer` (target) | QuestPDF documents + SQL analytics — [reporting-module-boundaries.md](./specs/reporting-module-boundaries.md) |
 | **Finance** | 17+ / 39 | `IPaymentProvider`, `IPaymentOrchestrator`, `IPaymentProviderRegistry`, `IStaffCompensationService` | Commerce + compensation export; [finance-module-boundaries.md](./specs/finance-module-boundaries.md) |
 | **Messaging** | 36 | `IConversationService` | Conversations + SignalR; WhatsApp deep links (replaces Sprint 18) |
-| **Subscriptions** | 16 | `ISubscriptionService`, entitlements | SaaS tiers |
+| **Subscriptions** | 16 | `ISubscriptionService`, `IEntitlementsService`, `IPlanEntitlementsMatrix` | SaaS tiers |
 | **Quotes** | 19 | `IQuoteRequestService` | Full quote workflow on business-type framework |
 | **AI** | 20 | Tool-calling against existing module APIs only | No direct DB from LLM |
+
+**Plan catalog vs effective entitlements:** `packages/shared/src/data/plan-entitlements.json` (and `PLAN_COMPARISON` on `/plan`) describe SKU marketing matrices and admin pricing views. At runtime, `JsonPlanEntitlementsMatrix` loads that JSON once and maps it to `TenantEntitlements` per effective SKU (`TenantBillingPolicy.ResolveEffectiveSku`). **Enforcement** always goes through `IEntitlementsService` on mutations and dashboard/widget filters — never through static TS seed or comparison rows alone.
 
 Product-facing module roadmap (queue, POS bridge, dashboards, etc.): [roadmap-modules.md](./roadmap-modules.md).
 

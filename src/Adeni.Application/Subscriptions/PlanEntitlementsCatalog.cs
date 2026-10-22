@@ -3,160 +3,18 @@ namespace Adeni.Application.Subscriptions;
 using Adeni.Domain.Subscriptions;
 
 /// <summary>
-/// Plan capability matrix. Keep aligned with packages/shared/src/data/plan-entitlements.json
-/// and docs/specs/adeni-subscription-pricing-v1/plan-entitlements.seed.json.
+/// Plan capability matrix facade. Values load from packages/shared/src/data/plan-entitlements.json
+/// via <see cref="IPlanEntitlementsMatrix"/> (registered at startup in Infrastructure).
 /// </summary>
 public static class PlanEntitlementsCatalog
 {
-    public static TenantEntitlements ForSku(SubscriptionSku sku)
-    {
-        var seed = GetSeed(sku);
-        return new TenantEntitlements(
-            MaxLocations: seed.MaxLocations,
-            MaxPractitioners: seed.MaxPractitioners,
-            AdditionalLocationsAllowed: seed.AdditionalLocationsAllowed,
-            AdditionalPractitionersAllowed: seed.AdditionalPractitionersAllowed,
-            UnlimitedServices: seed.UnlimitedServices,
-            UnlimitedBookings: seed.UnlimitedBookings,
-            PublicProfile: seed.PublicProfile,
-            DiscoverListing: seed.DiscoverListing,
-            Messaging: seed.Messaging,
-            InvoicesReceipts: true,
-            OnlinePayments: true,
-            Deposits: true,
-            BasicReminders: seed.BasicReminders,
-            ConfigurableReminders: seed.ConfigurableReminders,
-            FollowUpAutomation: seed.FollowUpAutomation,
-            AdvancedReminders: seed.ConfigurableReminders || seed.FollowUpAutomation,
-            Waitlist: seed.Waitlist,
-            SmsEnabled: seed.SmsEnabled,
-            SmsUsageBilling: seed.SmsUsageBilling,
-            BasicAnalytics: seed.BasicAnalytics,
-            AdvancedAnalytics: seed.AdvancedAnalytics,
-            CustomerRetentionAnalytics: seed.CustomerRetentionAnalytics,
-            StaffPerformanceAnalytics: seed.StaffPerformanceAnalytics,
-            BasicExports: seed.BasicExports,
-            AdvancedReports: seed.AdvancedReports,
-            ExcelExport: seed.ExcelExport,
-            MultiLocationReporting: seed.MultiLocationReporting,
-            AdvancedPermissions: seed.AdvancedPermissions,
-            PrioritySupport: seed.PrioritySupport,
-            MultiLocation: seed.MaxLocations is null || seed.MaxLocations > 1);
-    }
+    private static IPlanEntitlementsMatrix? Matrix { get; set; }
 
-    private static PlanEntitlementSeed GetSeed(SubscriptionSku sku) =>
-        sku switch
-        {
-            SubscriptionSku.Professional => Professional,
-            SubscriptionSku.Business => Business,
-            _ => Starter,
-        };
+    public static void Initialize(IPlanEntitlementsMatrix matrix) =>
+        Matrix = matrix ?? throw new ArgumentNullException(nameof(matrix));
 
-    private static readonly PlanEntitlementSeed Starter = new(
-        MaxLocations: 1,
-        MaxPractitioners: 3,
-        AdditionalLocationsAllowed: false,
-        AdditionalPractitionersAllowed: false,
-        UnlimitedServices: true,
-        UnlimitedBookings: true,
-        PublicProfile: true,
-        DiscoverListing: true,
-        Messaging: true,
-        BasicReminders: true,
-        ConfigurableReminders: false,
-        FollowUpAutomation: false,
-        SmsEnabled: false,
-        SmsUsageBilling: false,
-        BasicAnalytics: true,
-        AdvancedAnalytics: false,
-        CustomerRetentionAnalytics: false,
-        StaffPerformanceAnalytics: false,
-        BasicExports: true,
-        AdvancedReports: false,
-        ExcelExport: false,
-        Waitlist: false,
-        MultiLocationReporting: false,
-        AdvancedPermissions: false,
-        PrioritySupport: false);
-
-    private static readonly PlanEntitlementSeed Professional = new(
-        MaxLocations: 1,
-        MaxPractitioners: 10,
-        AdditionalLocationsAllowed: false,
-        AdditionalPractitionersAllowed: false,
-        UnlimitedServices: true,
-        UnlimitedBookings: true,
-        PublicProfile: true,
-        DiscoverListing: true,
-        Messaging: true,
-        BasicReminders: true,
-        ConfigurableReminders: true,
-        FollowUpAutomation: true,
-        SmsEnabled: true,
-        SmsUsageBilling: true,
-        BasicAnalytics: true,
-        AdvancedAnalytics: true,
-        CustomerRetentionAnalytics: true,
-        StaffPerformanceAnalytics: true,
-        BasicExports: true,
-        AdvancedReports: true,
-        ExcelExport: true,
-        Waitlist: true,
-        MultiLocationReporting: false,
-        AdvancedPermissions: false,
-        PrioritySupport: false);
-
-    private static readonly PlanEntitlementSeed Business = new(
-        MaxLocations: 3,
-        MaxPractitioners: 25,
-        AdditionalLocationsAllowed: true,
-        AdditionalPractitionersAllowed: true,
-        UnlimitedServices: true,
-        UnlimitedBookings: true,
-        PublicProfile: true,
-        DiscoverListing: true,
-        Messaging: true,
-        BasicReminders: true,
-        ConfigurableReminders: true,
-        FollowUpAutomation: true,
-        SmsEnabled: true,
-        SmsUsageBilling: true,
-        BasicAnalytics: true,
-        AdvancedAnalytics: true,
-        CustomerRetentionAnalytics: true,
-        StaffPerformanceAnalytics: true,
-        BasicExports: true,
-        AdvancedReports: true,
-        ExcelExport: true,
-        Waitlist: true,
-        MultiLocationReporting: true,
-        AdvancedPermissions: true,
-        PrioritySupport: true);
-
-    private sealed record PlanEntitlementSeed(
-        int? MaxLocations,
-        int? MaxPractitioners,
-        bool AdditionalLocationsAllowed,
-        bool AdditionalPractitionersAllowed,
-        bool UnlimitedServices,
-        bool UnlimitedBookings,
-        bool PublicProfile,
-        bool DiscoverListing,
-        bool Messaging,
-        bool BasicReminders,
-        bool ConfigurableReminders,
-        bool FollowUpAutomation,
-        bool SmsEnabled,
-        bool SmsUsageBilling,
-        bool BasicAnalytics,
-        bool AdvancedAnalytics,
-        bool CustomerRetentionAnalytics,
-        bool StaffPerformanceAnalytics,
-        bool BasicExports,
-        bool AdvancedReports,
-        bool ExcelExport,
-        bool Waitlist,
-        bool MultiLocationReporting,
-        bool AdvancedPermissions,
-        bool PrioritySupport);
+    public static TenantEntitlements ForSku(SubscriptionSku sku) =>
+        (Matrix ?? throw new InvalidOperationException(
+            "Plan entitlements matrix is not initialized. Register IPlanEntitlementsMatrix at startup."))
+        .ForSku(sku);
 }

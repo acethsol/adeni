@@ -22,6 +22,10 @@
 
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="..\..\packages\shared\src\data\plan-entitlements.json" Link="Catalog\plan-entitlements.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 
 
   <ItemGroup>

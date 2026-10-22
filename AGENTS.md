@@ -103,6 +103,7 @@ When the user or spec says these terms, interpret **Adeni's way** — not generi
 | **Cache** | Follow existing key patterns; invalidate on write; see [caching-setup.md](docs/caching-setup.md) |
 | **Spec / feature** | Write `docs/specs/sprint-XX-name.md` from [template](docs/specs/_template.md) before coding |
 | **AI agent / Ask Adeni** | Tool-calling against Adeni APIs only — never direct DB access; Sprint 20 |
+| **Entitlements** | `plan-entitlements.json` + `PLAN_COMPARISON` are marketing/catalog; **`IEntitlementsService` + mutation gates** are authoritative. Ship a tier-gated feature in the same PR as its API enforcement; do not gate authenticated portal flows on `PLAN_ENTITLEMENTS` seed — use profile/API `entitlements`. |
 | **Quick fix** | Minimal diff; match surrounding code; run tests — no drive-by refactors |
 | **Brand / logo** | Corrected Option 3 PNGs from `@adeni/brand`; use `AdeniBrandLockupComponent` / shipped logo PNGs — never CSS/HTML fake wordmark |
 | **V1 scope** | Beauty & Wellness, Ottawa + Lagos only — see [product-direction.md](docs/product-direction.md) |

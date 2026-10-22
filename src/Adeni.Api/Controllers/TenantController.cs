@@ -4,6 +4,7 @@ using System.Security.Claims;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
 using Adeni.Application.Notifications;
+using Adeni.Application.Subscriptions;
 using Adeni.Application.Tenancy;
 using Adeni.Infrastructure.Auth;
 using Microsoft.AspNetCore.Authorization;
@@ -16,6 +17,7 @@ public sealed class TenantController(
     IBusinessOnboardingService onboardingService,
     IBusinessLocationService locationService,
     INotificationPreferencesService notificationPreferences,
+    IEntitlementsService entitlementsService,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpPost("register")]
@@ -43,6 +45,23 @@ public sealed class TenantController(
         }
 
         var result = await onboardingService.GetBusinessContextAsync(auth0Sub, cancellationToken);
+        return MapResult(result, Ok);
+    }
+
+    [HttpGet("entitlements")]
+    public async Task<IActionResult> GetEntitlements(CancellationToken cancellationToken)
+    {
+        var auth0Sub = ResolveAuth0Sub();
+        var tenantId = ResolveTenantId();
+        if (auth0Sub is null || tenantId is null)
+        {
+            return Unauthorized();
+        }
+
+        var result = await entitlementsService.GetEntitlementsForMemberAsync(
+            tenantId.Value,
+            auth0Sub,
+            cancellationToken);
         return MapResult(result, Ok);
     }
 

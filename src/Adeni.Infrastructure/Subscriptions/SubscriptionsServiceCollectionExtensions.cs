@@ -3,7 +3,6 @@ namespace Adeni.Infrastructure.Subscriptions;
 using Adeni.Application.Subscriptions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-
 public static class SubscriptionsServiceCollectionExtensions
 {
     public static IServiceCollection AddSubscriptionsModule(
@@ -32,6 +31,8 @@ public static class SubscriptionsServiceCollectionExtensions
             }
         });
 
+        services.AddSingleton<IPlanEntitlementsMatrix, JsonPlanEntitlementsMatrix>();
+        services.AddHostedService<PlanEntitlementsMatrixStartupService>();
         services.AddScoped<IEntitlementsService, EntitlementsService>();
         services.AddScoped<ISubscriptionService, SubscriptionService>();
         services.AddScoped<ISubscriptionBillingOrchestrator, SubscriptionBillingOrchestrator>();

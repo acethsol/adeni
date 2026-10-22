@@ -9,10 +9,42 @@ using Microsoft.EntityFrameworkCore;
 
 public sealed class EntitlementsService(
     AdeniDbContext dbContext,
-    ITenantPricingResolver tenantPricingResolver) : IEntitlementsService
+    ITenantPricingResolver tenantPricingResolver,
+    IPlanEntitlementsMatrix planEntitlementsMatrix) : IEntitlementsService
 {
     public TenantEntitlements GetEntitlementsForTenant(Tenant tenant) =>
-        SubscriptionEntitlements.ForSku(TenantBillingPolicy.ResolveEffectiveSku(tenant));
+        planEntitlementsMatrix.ForSku(TenantBillingPolicy.ResolveEffectiveSku(tenant));
+
+    public async Task<Result<TenantEntitlements>> GetEntitlementsForMemberAsync(
+        Guid tenantId,
+        string auth0Sub,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(auth0Sub))
+        {
+            return Result.Failure<TenantEntitlements>(Error.Forbidden("Authentication is required."));
+        }
+
+        var hasAccess = await dbContext.BusinessUsers
+            .AsNoTracking()
+            .AnyAsync(x => x.TenantId == tenantId && x.Auth0Sub == auth0Sub, cancellationToken);
+
+        if (!hasAccess)
+        {
+            return Result.Failure<TenantEntitlements>(Error.Forbidden("You do not have access to this business."));
+        }
+
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+
+        if (tenant is null)
+        {
+            return Result.Failure<TenantEntitlements>(Error.NotFound("Business"));
+        }
+
+        return Result.Success(GetEntitlementsForTenant(tenant));
+    }
 
     public async Task<int> GetBookingsUsedThisMonthAsync(
         Guid tenantId,
@@ -111,7 +143,7 @@ public sealed class EntitlementsService(
         CancellationToken cancellationToken = default)
     {
         var effectiveSku = TenantBillingPolicy.ResolveEffectiveSku(tenant);
-        var entitlements = SubscriptionEntitlements.ForSku(effectiveSku);
+        var entitlements = planEntitlementsMatrix.ForSku(effectiveSku);
         var used = await GetBookingsUsedThisMonthAsync(tenant.Id, cancellationToken);
         var locationsActive = await GetActiveLocationCountAsync(tenant.Id, cancellationToken);
         var practitionersActive = await GetActivePractitionerCountAsync(tenant.Id, cancellationToken);

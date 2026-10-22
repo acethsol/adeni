@@ -4,9 +4,25 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Subscriptions;
+using Adeni.Infrastructure.Subscriptions;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
 
 public sealed class PlanEntitlementsParityTests
 {
+    static PlanEntitlementsParityTests()
+    {
+        _ = new JsonPlanEntitlementsMatrix(new ParityTestHostEnvironment());
+    }
+
+    private sealed class ParityTestHostEnvironment : IHostEnvironment
+    {
+        public string EnvironmentName { get; set; } = "Testing";
+        public string ApplicationName { get; set; } = "Adeni.Infrastructure.Tests";
+        public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
+        public IFileProvider ContentRootFileProvider { get; set; } = null!;
+    }
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,

@@ -507,7 +507,7 @@ Live business → Adeni recurring billing (Paystack/Stripe), signed webhooks, te
 | **33b** Portal billing history + admin MRR metrics | Done locally — **validate on staging** |
 | **33b-admin** Admin pricing & commercial config (catalog, resolver, billing UI) | **33b-2** done: tenant commercial bind on first paid checkout, resolver order override→agreed→catalog, admin commercial audit timeline, portal agreed vs catalog on `/plan` — [sprint-33b-2-commercial-binding.md](./specs/sprint-33b-2-commercial-binding.md). **33b-3** done: admin **Pricing → GMV**, `PlatformFeeCalculator` reads catalog by country. **33b-1/4** as before. **33c/staging** deferred. |
 | **33-entitlements-v2** Seed-driven plan matrix, API enforcement, portal capability UI (Starter inbox ✓) | Done — spec: [sprint-33-entitlements-v2.md](./specs/sprint-33-entitlements-v2.md) |
-| **33-closeout** Matrix cleanup, JSON↔C# parity, waitlist/SMS/staff cap UX | Planned — [sprint-33-entitlements-closeout.md](./specs/sprint-33-entitlements-closeout.md) |
+| **33-closeout** Matrix cleanup, JSON↔C# parity, waitlist/SMS/staff cap UX, `GET /tenant/entitlements` | Done — [sprint-33-entitlements-closeout.md](./specs/sprint-33-entitlements-closeout.md) |
 | **33c** Staging secrets, live subscription webhooks, integration E2E | Planned (Sprint 20 / staging deploy) |
 
 ## Sprint 34 — Payment settlement (Connect + Paystack split) (planned)
