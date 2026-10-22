@@ -53,7 +53,7 @@
 | — | App Insights (Obs 1) | → Sprint 20 |
 | — | Booking notifications, auto-confirm, payments, waitlist | → Sprint 15 |
 
-**Next up:** Sprint **38B** notifications completion (receipt PDF email via **`IReportRenderer`**). Parallel: **32a** dashboard; **33** staging Paystack + platform subscription MRR E2E; **39B** reporting exports. **Module order:** ~~33-closeout~~ → ~~38A~~ → ~~39A~~ → **38B** → **39B** → **37.1–37.5** retention. Sprint 20 parallel. See [roadmap-modules.md](./roadmap-modules.md).
+**Next up:** Sprint **39B** reporting completion (exports, ClosedXML, admin metrics). Parallel: **32a** dashboard; **33** staging Paystack + platform subscription MRR E2E. **Module order:** ~~33-closeout~~ → ~~38A~~ → ~~39A~~ → ~~38B~~ → **39B** → **37.1–37.5** retention. Sprint 20 parallel. See [roadmap-modules.md](./roadmap-modules.md).
 
 ---
 ## Sprint 0 — Foundation & dev tooling ✅

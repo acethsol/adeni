@@ -94,14 +94,26 @@ Keys in Key Vault for staging/production — never commit.
 
 ---
 
-## Reminders (product backlog)
+## Reminders & transactional (38A/38B)
 
 | Capability | Status |
 |------------|--------|
-| Booking confirmation email | Handler exists; needs Resend + recipient resolution |
-| Cancellation / rejection email | Same |
-| **Scheduled appointment reminder** (email/SMS) | Spec Phase 2–3; requires job + idempotent `notification_deliveries` |
-| Waitlist slot opened | Event exists; recipient resolution incomplete |
+| Booking confirmed / rejected / cancelled email | Shipped (Resend + recipient resolution) |
+| Staff invite, conversation customer email | Shipped |
+| **Payment receipt email + PDF** | Shipped — PDF via Application **`IReportRenderer`** (38B) |
+| **Scheduled appointment reminders** (24h / 2h email + SMS) | Shipped — `AppointmentReminderBackgroundService`; idempotent `notification_deliveries`; entitlement tiers (`basicReminders`, `followUpAutomation`) |
+| **Waitlist slot opened** | Shipped — email + SMS; burst cap `MaxWaitlistNotificationsPerSlot` |
+| No-show follow-up email | Shipped when `followUpAutomation` entitlement |
+| Retention-triggered notifications | Deferred until Sprint 37 domain events |
+
+**Config (`Notifications` section):**
+
+| Key | Default | Notes |
+|-----|---------|--------|
+| `Reminders:Enabled` | `true` | Worker no-ops in **Testing** |
+| `Reminders:PollIntervalMinutes` | `5` | Reminder scan interval |
+| `Reminders:NoShowGraceAfterEnd` | `2:00:00` | Follow-up window after appointment end |
+| `MaxWaitlistNotificationsPerSlot` | `25` | Burst cap per opened slot |
 
 **Murphy / security:** Payment webhooks remain on Finance — not Notifications. Outbound sends: mask PII in logs (`PiiMasker`), idempotency per event + channel + recipient.
 
@@ -123,8 +135,8 @@ No public Resend/Twilio inbound webhooks in V1 unless product adds SMS reply han
 |-------|-------------|
 | **38A** | Resend + Twilio; `NotificationSenderConfig` (CA/NG); idempotency; email-first flows; **no Reporting** |
 | **39A** | Reporting extract + **`IReportRenderer`** (prerequisite for receipt PDF) |
-| **38B** | Receipt PDF email; scheduled reminders (entitlement tiers); waitlist SMS; Retention event handlers — see [sprint-38 §7](./specs/sprint-38-notifications-module.md#7-event--notification-matrix) |
-| **Backlog** | FCM push registration + fan-out |
+| **38B** | ✅ Receipt PDF email; scheduled reminders; waitlist SMS; no-show follow-up — Retention handlers when Sprint 37 events exist |
+| **Backlog** | FCM push; owner delivery status UI |
 
 ---
 
