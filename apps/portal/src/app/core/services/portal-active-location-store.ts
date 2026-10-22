@@ -1,10 +1,17 @@
-/** Persisted portal branch scope; empty string = all locations (Business reporting). */
-export const PORTAL_ALL_LOCATIONS_SCOPE = "";
+/** Persisted portal branch scope; sentinel = all locations (Business reporting). */
+export const PORTAL_ALL_LOCATIONS_SCOPE = "__all_locations__";
 
 const STORAGE_PREFIX = "adeni.portal.activeLocation.v1";
 
 function storageKey(tenantId: string): string {
   return `${STORAGE_PREFIX}.${tenantId}`;
+}
+
+function normalizePersistedScope(raw: string): string {
+  if (raw === "" || raw === PORTAL_ALL_LOCATIONS_SCOPE) {
+    return PORTAL_ALL_LOCATIONS_SCOPE;
+  }
+  return raw;
 }
 
 export function readPersistedPortalActiveLocation(tenantId: string): string | null {
@@ -16,7 +23,7 @@ export function readPersistedPortalActiveLocation(tenantId: string): string | nu
     if (raw === null) {
       return null;
     }
-    return raw;
+    return normalizePersistedScope(raw);
   } catch {
     return null;
   }

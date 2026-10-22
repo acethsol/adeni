@@ -14,7 +14,6 @@ import {
   AdeniBrandLogoComponent,
   AdeniConfirmHostComponent,
   AdeniDocumentTitleStrategy,
-  AdeniFilterSelectComponent,
   AdeniGlobalLoadingPanelComponent,
   AdeniLocaleService,
   AdeniToastHostComponent,
@@ -51,6 +50,7 @@ import { MessagesShortcutComponent } from "../shared/messages-shortcut.component
 import { PendingBookingsBellComponent } from "../shared/pending-bookings-bell.component";
 import { PortalIconTooltipDirective } from "../shared/portal-icon-tooltip.directive";
 import { PortalNavIconComponent } from "./portal-nav-icon.component";
+import { PortalBranchSwitchComponent } from "./portal-branch-switch.component";
 
 const SIDEBAR_STORAGE_KEY = "adeni.portal.sidebar.collapsed";
 type ChromeKey =
@@ -89,6 +89,7 @@ type ChromeKey =
   | "notificationSettings"
   | "chromePreferences"
   | "locationSwitch"
+  | "allLocations"
   | "/dashboard"
   | "/bookings"
   | "/customers"
@@ -146,6 +147,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     notificationSettings: "Notification preferences",
     chromePreferences: "Appearance & language",
     locationSwitch: "Location",
+    allLocations: "All locations",
     "/dashboard": "Dashboard",
     "/bookings": "Bookings",
     "/customers": "Customers",
@@ -202,6 +204,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     notificationSettings: "Préférences de notification",
     chromePreferences: "Apparence et langue",
     locationSwitch: "Emplacement",
+    allLocations: "Tous les emplacements",
     "/dashboard": "Tableau de bord",
     "/bookings": "Réservations",
     "/customers": "Clients",
@@ -266,7 +269,6 @@ function readSidebarCollapsed(): boolean {
     RouterLink,
     RouterLinkActive,
     AdeniBrandLogoComponent,
-    AdeniFilterSelectComponent,
     AdeniGlobalLoadingPanelComponent,
     AdeniToastHostComponent,
     AdeniConfirmHostComponent,
@@ -274,6 +276,7 @@ function readSidebarCollapsed(): boolean {
     PendingBookingsBellComponent,
     PortalNavIconComponent,
     PortalIconTooltipDirective,
+    PortalBranchSwitchComponent,
   ],
   templateUrl: "./portal-shell.component.html",
   styleUrl: "./portal-shell.component.scss",
@@ -312,7 +315,7 @@ export class PortalShellComponent {
   readonly searchIndex = signal(0);
   private readonly searchField = viewChild<ElementRef<HTMLInputElement>>("searchField");
   readonly profile = signal<BusinessProfile | null>(null);
-  locationSwitchValue = "";
+  readonly portalEntitlements = portalEntitlements;
   readonly profileLoaded = signal(false);
   readonly pendingBookings = signal(0);
   readonly unreadMessages = signal(0);
@@ -331,9 +334,6 @@ export class PortalShellComponent {
   readonly visibleGroups = computed(() => this.groupsForProfile());
   readonly businessSettingsVisible = computed(() =>
     this.visibleGroups().some((group) => group.items.some((item) => item.path === "/settings")),
-  );
-  readonly locationSwitchOptions = computed(() =>
-    this.activeLocation.locationSwitchOptions(portalEntitlements(this.profile())),
   );
   readonly searchResults = computed<SearchHit[]>(() => {
     const query = this.searchQuery().trim().toLowerCase();
@@ -461,11 +461,6 @@ export class PortalShellComponent {
   navigateSettings(path: string): void {
     this.closeSettingsMenu();
     void this.router.navigateByUrl(path);
-  }
-
-  onLocationSwitchChange(locationId: string): void {
-    this.locationSwitchValue = locationId;
-    this.activeLocation.setSelectedLocationId(locationId);
   }
 
   toggleUser(event: MouseEvent): void {
@@ -641,7 +636,6 @@ export class PortalShellComponent {
       const profile = await this.businessApi.getTenantProfile();
       this.profile.set(profile);
       this.activeLocation.syncFromProfile(profile);
-      this.locationSwitchValue = this.activeLocation.selectedLocationId();
       await this.portalRealtime.syncForProfile(profile);
       if (profile?.businessName) {
         this.documentTitleStrategy.setAppTitle(profile.businessName);

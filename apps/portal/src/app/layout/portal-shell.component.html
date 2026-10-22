@@ -146,12 +146,10 @@
       <div class="topbar-actions">
         @if (activeLocation.showLocationSwitch()) {
           <div class="topbar-location">
-            <adeni-filter-select
-              layout="toolbar"
-              [label]="text('locationSwitch')"
-              [options]="locationSwitchOptions()"
-              [value]="locationSwitchValue"
-              (valueChange)="onLocationSwitchChange($event)"
+            <app-portal-branch-switch
+              [ariaLabel]="text('locationSwitch')"
+              [entitlements]="portalEntitlements(profile())"
+              [allLocationsLabel]="text('allLocations')"
             />
           </div>
           <span class="topbar-rule" aria-hidden="true"></span>

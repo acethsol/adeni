@@ -1,0 +1,82 @@
+<div class="branch-root" data-menu-root="branch">
+  <button
+    type="button"
+    class="branch-trigger"
+    aria-haspopup="menu"
+    [attr.aria-expanded]="open()"
+    [attr.aria-label]="ariaLabel()"
+    (click)="toggle($event)"
+  >
+    <adeni-carbon-icon class="branch-icon" name="location--filled" [size]="16" aria-hidden="true" />
+    <span class="branch-copy">
+      <span class="branch-title-row">
+        <span class="branch-title">{{ display().title }}</span>
+        @if (display().isPrimary && !display().allLocationsScope) {
+          <adeni-pill tone="brand" class="branch-primary-pill">Primary</adeni-pill>
+        }
+      </span>
+      @if (display().hint) {
+        <span class="branch-hint">{{ display().hint }}</span>
+      }
+    </span>
+    <adeni-carbon-icon
+      class="branch-chev"
+      name="chevron--down"
+      [size]="16"
+      aria-hidden="true"
+      [class.is-open]="open()"
+    />
+  </button>
+
+  @if (open()) {
+    <div class="branch-menu" role="menu" [attr.aria-label]="ariaLabel()">
+      <p class="branch-menu-label">{{ ariaLabel() }}</p>
+      @if (showAllOption()) {
+        <button
+          type="button"
+          class="branch-item"
+          role="menuitemradio"
+          [attr.aria-checked]="isSelected(allScopeValue)"
+          [class.is-active]="isSelected(allScopeValue)"
+          (click)="select(allScopeValue, $event)"
+        >
+          <adeni-carbon-icon name="map--center" [size]="16" aria-hidden="true" />
+          <span class="branch-item-copy">
+            <span class="branch-item-title">{{ allLocationsLabel() }}</span>
+            <span class="branch-item-hint">{{ branches().length }} branches</span>
+          </span>
+          @if (isSelected(allScopeValue)) {
+            <adeni-carbon-icon class="branch-check" name="checkmark" [size]="16" aria-hidden="true" />
+          }
+        </button>
+        <div class="branch-menu-rule" role="separator"></div>
+      }
+      @for (branch of branches(); track branch.id) {
+        <button
+          type="button"
+          class="branch-item"
+          role="menuitemradio"
+          [attr.aria-checked]="isSelected(branch.id)"
+          [class.is-active]="isSelected(branch.id)"
+          (click)="select(branch.id, $event)"
+        >
+          <adeni-carbon-icon name="location--filled" [size]="16" aria-hidden="true" />
+          <span class="branch-item-copy">
+            <span class="branch-item-title-row">
+              <span class="branch-item-title">{{ activeLocation.branchRowLabel(branch) }}</span>
+              @if (branch.isPrimary) {
+                <adeni-pill tone="brand" class="branch-primary-pill">Primary</adeni-pill>
+              }
+            </span>
+            @if (activeLocation.branchRowHint(branch); as hint) {
+              <span class="branch-item-hint">{{ hint }}</span>
+            }
+          </span>
+          @if (isSelected(branch.id)) {
+            <adeni-carbon-icon class="branch-check" name="checkmark" [size]="16" aria-hidden="true" />
+          }
+        </button>
+      }
+    </div>
+  }
+</div>

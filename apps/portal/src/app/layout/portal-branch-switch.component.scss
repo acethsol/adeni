@@ -1,0 +1,151 @@
+.branch-root {
+  position: relative;
+}
+
+.branch-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  max-width: 14.5rem;
+  min-height: 2.35rem;
+  padding: 0.2rem 0.55rem 0.2rem 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--bg-subtle);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover,
+  &[aria-expanded="true"] {
+    border-color: rgb(127 86 255 / 45%);
+    background: rgb(127 86 255 / 6%);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--adeni-purple);
+    outline-offset: 2px;
+  }
+}
+
+.branch-icon {
+  flex-shrink: 0;
+  color: var(--adeni-purple);
+}
+
+.branch-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  min-width: 0;
+}
+
+.branch-title-row,
+.branch-item-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.branch-title,
+.branch-item-title {
+  overflow: hidden;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.branch-hint,
+.branch-item-hint {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.branch-primary-pill {
+  flex-shrink: 0;
+  font-size: 0.5625rem;
+}
+
+.branch-chev {
+  flex-shrink: 0;
+  margin-left: 0.1rem;
+  color: var(--text-muted);
+  transition: transform 0.15s ease;
+
+  &.is-open {
+    transform: rotate(180deg);
+  }
+}
+
+.branch-menu {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  right: 0;
+  z-index: 25;
+  width: min(18rem, calc(100vw - 2rem));
+  max-height: min(22rem, 70vh);
+  padding: 0.25rem 0;
+  overflow: auto;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+}
+
+.branch-menu-label {
+  margin: 0;
+  padding: 0.45rem 0.85rem 0.35rem;
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.branch-menu-rule {
+  height: 1px;
+  margin: 0.25rem 0;
+  background: var(--border);
+}
+
+.branch-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover,
+  &.is-active {
+    background: rgb(127 86 255 / 8%);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--adeni-purple);
+    outline-offset: -2px;
+  }
+}
+
+.branch-item-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.branch-check {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+  color: var(--adeni-purple);
+}

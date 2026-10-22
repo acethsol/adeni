@@ -253,6 +253,15 @@ export class BookingsComponent {
       this.page.set(Number.isFinite(page) && page >= 1 ? page : 1);
       void this.load();
     });
+    this.activeLocation.selectionChanged$.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.page.set(1);
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { page: null },
+        queryParamsHandling: "merge",
+      });
+      void this.load();
+    });
   }
 
   emptyState(): { title: string; description: string; icon: AdeniCarbonIconName } {
@@ -327,9 +336,6 @@ export class BookingsComponent {
         this.planEntitlements.set(
           mergeTenantEntitlements(entitlements, usage?.entitlements, profile?.entitlements),
         );
-        if (profile) {
-          this.activeLocation.syncFromProfile(profile);
-        }
         this.bookings.set(bookingsPage.items);
         this.totalCount.set(bookingsPage.totalCount);
         this.page.set(bookingsPage.page);

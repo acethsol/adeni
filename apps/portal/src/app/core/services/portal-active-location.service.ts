@@ -1,11 +1,11 @@
 import { Injectable, computed, signal } from "@angular/core";
+import { Subject } from "rxjs";
 import type { BusinessLocation, BusinessProfile, TenantEntitlements } from "@adeni/shared";
 import {
   activeBusinessLocations,
   hasMultiLocationReportingEntitlement,
   resolveReportExportLocationId,
 } from "@adeni/shared";
-import type { AdeniFilterSelectOption } from "@adeni/ui";
 import {
   PORTAL_ALL_LOCATIONS_SCOPE,
   readPersistedPortalActiveLocation,
@@ -20,10 +20,21 @@ function defaultBranchLocationId(active: BusinessLocation[]): string | undefined
   return (primary ?? active[0])!.id;
 }
 
+export type PortalBranchSwitchDisplay = {
+  title: string;
+  hint: string | null;
+  allLocationsScope: boolean;
+  isPrimary: boolean;
+};
+
 @Injectable({ providedIn: "root" })
 export class PortalActiveLocationService {
   private readonly tenantId = signal<string | null>(null);
   private readonly locations = signal<readonly BusinessLocation[]>([]);
+  private readonly selectionChangedSubject = new Subject<string>();
+
+  /** Fires when the user picks a branch in the shell (not on profile hydration). */
+  readonly selectionChanged$ = this.selectionChangedSubject.asObservable();
 
   /** Selected branch id, or `PORTAL_ALL_LOCATIONS_SCOPE` when cross-branch scope is allowed. */
   readonly selectedLocationId = signal<string>(PORTAL_ALL_LOCATIONS_SCOPE);
@@ -40,6 +51,35 @@ export class PortalActiveLocationService {
     return this.activeLocations().find((location) => location.id === id) ?? null;
   });
 
+  readonly switchDisplay = computed((): PortalBranchSwitchDisplay => {
+    const allScope = this.selectedLocationId() === PORTAL_ALL_LOCATIONS_SCOPE;
+    if (allScope) {
+      return {
+        title: "All locations",
+        hint: `${this.activeLocations().length} branches`,
+        allLocationsScope: true,
+        isPrimary: false,
+      };
+    }
+    const branch = this.selectedLocation();
+    if (!branch) {
+      return {
+        title: "Location",
+        hint: null,
+        allLocationsScope: false,
+        isPrimary: false,
+      };
+    }
+    const name = branch.name?.trim() || branch.slug || "Branch";
+    const hint = branch.area?.trim() || branch.slug || null;
+    return {
+      title: name,
+      hint,
+      allLocationsScope: false,
+      isPrimary: branch.isPrimary,
+    };
+  });
+
   syncFromProfile(profile: BusinessProfile | null | undefined): void {
     if (!profile?.tenantId) {
       this.tenantId.set(null);
@@ -48,13 +88,23 @@ export class PortalActiveLocationService {
       return;
     }
 
-    const active = activeBusinessLocations(profile.locations);
     const entitlements = profile.entitlements;
-    const persisted = readPersistedPortalActiveLocation(profile.tenantId);
-    const resolved = this.resolveInitialSelection(active, entitlements, persisted);
+    const active = activeBusinessLocations(profile.locations);
+    const tenantChanged = this.tenantId() !== profile.tenantId;
+    const previousSelection = this.selectedLocationId();
 
     this.tenantId.set(profile.tenantId);
     this.locations.set(profile.locations ?? []);
+
+    if (
+      !tenantChanged
+      && this.isSelectionValid(previousSelection, active, entitlements)
+    ) {
+      return;
+    }
+
+    const persisted = readPersistedPortalActiveLocation(profile.tenantId);
+    const resolved = this.resolveInitialSelection(active, entitlements, persisted);
     this.selectedLocationId.set(resolved);
   }
 
@@ -63,29 +113,30 @@ export class PortalActiveLocationService {
     const active = this.activeLocations();
     const normalized = locationId.trim();
 
+    let next = normalized;
     if (normalized === PORTAL_ALL_LOCATIONS_SCOPE) {
-      this.selectedLocationId.set(PORTAL_ALL_LOCATIONS_SCOPE);
-      if (tenantId) {
-        writePersistedPortalActiveLocation(tenantId, PORTAL_ALL_LOCATIONS_SCOPE);
-      }
+      next = PORTAL_ALL_LOCATIONS_SCOPE;
+    } else if (!active.some((location) => location.id === normalized)) {
       return;
     }
 
-    if (!active.some((location) => location.id === normalized)) {
+    if (this.selectedLocationId() === next) {
       return;
     }
 
-    this.selectedLocationId.set(normalized);
+    this.selectedLocationId.set(next);
     if (tenantId) {
-      writePersistedPortalActiveLocation(tenantId, normalized);
+      writePersistedPortalActiveLocation(tenantId, next);
     }
+    this.selectionChangedSubject.next(next);
   }
 
+  /** @deprecated Use switch UI labels from `switchDisplay` or branch rows directly. */
   locationSwitchOptions(
     entitlements: TenantEntitlements | null | undefined,
-  ): AdeniFilterSelectOption[] {
+  ): { value: string; label: string }[] {
     const active = this.activeLocations();
-    const branchOptions: AdeniFilterSelectOption[] = active.map((location) => ({
+    const branchOptions = active.map((location) => ({
       value: location.id,
       label: location.name?.trim() || location.slug || location.area || "Branch",
     }));
@@ -97,6 +148,22 @@ export class PortalActiveLocationService {
     return branchOptions;
   }
 
+  allowsAllLocationsScope(entitlements: TenantEntitlements | null | undefined): boolean {
+    return hasMultiLocationReportingEntitlement(entitlements);
+  }
+
+  branchRowLabel(location: BusinessLocation): string {
+    return location.name?.trim() || location.slug || location.area || "Branch";
+  }
+
+  branchRowHint(location: BusinessLocation): string | null {
+    const area = location.area?.trim();
+    if (area && area !== this.branchRowLabel(location)) {
+      return area;
+    }
+    return location.slug?.trim() || null;
+  }
+
   /** Resolves `locationId` for tenant report export API calls (global branch scope). */
   reportExportLocationId(entitlements: TenantEntitlements | null | undefined): string | undefined {
     const selected = this.selectedLocationId();
@@ -106,6 +173,41 @@ export class PortalActiveLocationService {
       selectedLocationId:
         selected === PORTAL_ALL_LOCATIONS_SCOPE ? null : selected || null,
     });
+  }
+
+  /** Prefer active shell branch; fall back to primary / first location on profile. */
+  resolveContextLocation(
+    profile: BusinessProfile | null | undefined,
+  ): BusinessLocation | null {
+    const selected = this.selectedLocation();
+    if (selected) {
+      return selected;
+    }
+    if (!profile?.locations?.length) {
+      return null;
+    }
+    if (this.selectedLocationId() === PORTAL_ALL_LOCATIONS_SCOPE) {
+      return null;
+    }
+    const active = activeBusinessLocations(profile.locations);
+    const primary = active.find((item) => item.isPrimary) ?? active[0];
+    return primary ?? null;
+  }
+
+  private isSelectionValid(
+    selection: string,
+    active: BusinessLocation[],
+    entitlements: TenantEntitlements | null | undefined,
+  ): boolean {
+    if (active.length <= 1) {
+      return active.length === 0
+        ? selection === PORTAL_ALL_LOCATIONS_SCOPE
+        : selection === active[0]!.id;
+    }
+    if (selection === PORTAL_ALL_LOCATIONS_SCOPE) {
+      return hasMultiLocationReportingEntitlement(entitlements);
+    }
+    return active.some((location) => location.id === selection);
   }
 
   private resolveInitialSelection(

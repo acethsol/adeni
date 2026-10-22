@@ -1,4 +1,5 @@
-import { Component, computed, inject, OnDestroy, OnInit, signal } from "@angular/core";
+import { Component, computed, DestroyRef, inject, OnDestroy, OnInit, signal } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { AdeniApiError } from "@adeni/api-client";
 import { Subscription } from "rxjs";
 import { toSignal } from "@angular/core/rxjs-interop";
@@ -61,6 +62,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
   private opsSub: Subscription | null = null;
   private readonly config = inject(ADENI_PORTAL_CONFIG);
   private readonly activeLocation = inject(PortalActiveLocationService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
   readonly tab = toSignal(this.route.queryParamMap.pipe(map((params) => params.get("tab") ?? "links")), {
     initialValue: this.route.snapshot.queryParamMap.get("tab") ?? "links",
@@ -121,6 +123,11 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     this.exportTo = today.toISOString().slice(0, 10);
     this.exportFrom = monthAgo.toISOString().slice(0, 10);
     void this.load();
+    this.activeLocation.selectionChanged$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        void this.load();
+      });
     this.opsSub = this.operationsRealtime.paymentCompleted$.subscribe(() => {
       this.feedback.info("Payment completed — refreshing ledger.", "Payment");
       void this.load();
@@ -159,7 +166,6 @@ export class PaymentsComponent implements OnInit, OnDestroy {
           profile.entitlements,
         );
         this.planEntitlements.set(mergedEntitlements);
-        this.activeLocation.syncFromProfile(profile);
         const ledgerPage = await c.listPaymentLedger(
           profile.tenantId,
           this.ledgerPage(),

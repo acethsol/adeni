@@ -77,6 +77,8 @@ import {
 } from "@adeni/ui";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
+import { PORTAL_ALL_LOCATIONS_SCOPE } from "../../core/services/portal-active-location-store";
 import { MessagingRealtimeService, TenantOperationsRealtimeService } from "@adeni/ui";
 import { PortalSessionService } from "../../core/services/portal-session.service";
 import { DashboardCarbonChartComponent } from "./dashboard-carbon-chart.component";
@@ -117,6 +119,7 @@ export class DashboardComponent implements OnInit {
   private readonly messagingRealtime = inject(MessagingRealtimeService);
   private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
   readonly session = inject(PortalSessionService);
+  private readonly activeLocation = inject(PortalActiveLocationService);
 
   readonly formatTenantStatus = formatTenantStatus;
   readonly formatSlotTime = formatSlotTime;
@@ -236,6 +239,11 @@ export class DashboardComponent implements OnInit {
       });
     void this.session.ensureLoaded();
     void this.load();
+    this.activeLocation.selectionChanged$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        void this.load();
+      });
   }
 
   private async refreshUnreadMessagesCount(): Promise<void> {
@@ -265,7 +273,11 @@ export class DashboardComponent implements OnInit {
     if (!profile) {
       return null;
     }
-    const location = profile.locations.find((item) => item.isPrimary) ?? profile.locations[0];
+    const location = this.activeLocation.resolveContextLocation(profile);
+    if (!location && this.activeLocation.selectedLocationId() === PORTAL_ALL_LOCATIONS_SCOPE) {
+      const fallback = profile.locations.find((item) => item.isPrimary) ?? profile.locations[0];
+      return fallback?.marketId ?? null;
+    }
     return location?.marketId ?? null;
   }
 
@@ -408,7 +420,10 @@ export class DashboardComponent implements OnInit {
   primaryLocationName(): string | null {
     const profile = this.profile();
     if (!profile) return null;
-    const location = profile.locations.find((item) => item.isPrimary) ?? profile.locations[0];
+    if (this.activeLocation.selectedLocationId() === PORTAL_ALL_LOCATIONS_SCOPE) {
+      return this.activeLocation.switchDisplay().title;
+    }
+    const location = this.activeLocation.resolveContextLocation(profile);
     return location ? `${location.name} · ${location.area}` : null;
   }
 
@@ -453,7 +468,7 @@ export class DashboardComponent implements OnInit {
   primaryCountryCode(): string | null {
     const profile = this.profile();
     if (!profile) return null;
-    const location = profile.locations.find((item) => item.isPrimary) ?? profile.locations[0];
+    const location = this.activeLocation.resolveContextLocation(profile);
     if (!location) return null;
     return getMarketById(location.marketId)?.countryCode ?? null;
   }
@@ -461,7 +476,7 @@ export class DashboardComponent implements OnInit {
   publicProfileUrl(): string | null {
     const profile = this.profile();
     if (!profile) return null;
-    const location = profile.locations.find((item) => item.isPrimary) ?? profile.locations[0];
+    const location = this.activeLocation.resolveContextLocation(profile);
     if (!location) return null;
     return `${this.config.discoverWebUrl}/businesses/${location.slug}`;
   }
@@ -703,7 +718,11 @@ export class DashboardComponent implements OnInit {
             : Promise.resolve([] as QuoteRequestResponse[]),
         ]);
 
-        const location = profile.locations.find((item) => item.isPrimary) ?? profile.locations[0];
+        const allBranches =
+          this.activeLocation.selectedLocationId() === PORTAL_ALL_LOCATIONS_SCOPE;
+        const location = allBranches
+          ? null
+          : this.activeLocation.resolveContextLocation(profile);
         let rating: { avg: number | null; count: number } | null = null;
         if (location) {
           try {
