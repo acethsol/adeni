@@ -1,4 +1,4 @@
-import { Injectable, computed, signal } from "@angular/core";
+import { Injectable, computed, inject, signal } from "@angular/core";
 import { Subject } from "rxjs";
 import type { BusinessLocation, BusinessProfile, TenantEntitlements } from "@adeni/shared";
 import {
@@ -6,6 +6,7 @@ import {
   hasMultiLocationReportingEntitlement,
   resolveReportExportLocationId,
 } from "@adeni/shared";
+import { AdeniFeedbackService } from "@adeni/ui";
 import {
   PORTAL_ALL_LOCATIONS_SCOPE,
   readPersistedPortalActiveLocation,
@@ -29,6 +30,7 @@ export type PortalBranchSwitchDisplay = {
 
 @Injectable({ providedIn: "root" })
 export class PortalActiveLocationService {
+  private readonly feedback = inject(AdeniFeedbackService);
   private readonly tenantId = signal<string | null>(null);
   private readonly locations = signal<readonly BusinessLocation[]>([]);
   private readonly selectionChangedSubject = new Subject<string>();
@@ -129,6 +131,20 @@ export class PortalActiveLocationService {
       writePersistedPortalActiveLocation(tenantId, next);
     }
     this.selectionChangedSubject.next(next);
+  }
+
+  beginBranchSwitchTransaction(): void {
+    this.feedback.showLoading("Switching branch…", "Updating dashboard, bookings, and calendar");
+  }
+
+  endBranchSwitchTransaction(): void {
+    this.feedback.hideLoading();
+  }
+
+  /** Wrap branch-switch refetches so the global loading panel stays up until work finishes. */
+  runOnBranchSwitch<T>(work: () => Promise<T>): Promise<T> {
+    this.beginBranchSwitchTransaction();
+    return work().finally(() => this.endBranchSwitchTransaction());
   }
 
   /** @deprecated Use switch UI labels from `switchDisplay` or branch rows directly. */

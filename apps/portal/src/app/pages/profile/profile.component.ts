@@ -1,4 +1,5 @@
-import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, OnDestroy, OnInit, signal } from "@angular/core";
+import { Subscription } from "rxjs";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { KeyValuePipe } from "@angular/common";
 import { FormsModule } from "@angular/forms";
@@ -21,6 +22,7 @@ import {
   AdeniTabsComponent,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 
 const PHONE_PATTERN = /^\+?[0-9\s-]{7,20}$/;
@@ -42,11 +44,13 @@ const MAX_BYTES = MAX_UPLOAD_BYTES;
   templateUrl: "./profile.component.html",
   styleUrl: "./profile.component.scss",
 })
-export class ProfileComponent implements OnInit {
+export class ProfileComponent implements OnInit, OnDestroy {
   private readonly api = inject(BusinessApiService);
   private readonly config = inject(ADENI_PORTAL_CONFIG);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly route = inject(ActivatedRoute);
+  private readonly activeLocation = inject(PortalActiveLocationService);
+  private branchSub: Subscription | null = null;
   readonly tab = toSignal(
     this.route.queryParamMap.pipe(
       map((params) => {
@@ -102,6 +106,17 @@ export class ProfileComponent implements OnInit {
 
   ngOnInit(): void {
     void this.load();
+    this.branchSub = this.activeLocation.selectionChanged$.subscribe(() => {
+      const profile = this.profile();
+      if (!profile) {
+        return;
+      }
+      void this.activeLocation.runOnBranchSwitch(() => this.loadReviews(profile));
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.branchSub?.unsubscribe();
   }
 
   canEdit(): boolean {
@@ -264,7 +279,11 @@ export class ProfileComponent implements OnInit {
   }
 
   async loadReviews(profile: BusinessProfile): Promise<void> {
-    const slug = profile.locations.find((l) => l.isPrimary)?.slug ?? profile.locations[0]?.slug;
+    const branch =
+      this.activeLocation.resolveContextLocation(profile)
+      ?? profile.locations.find((l) => l.isPrimary)
+      ?? profile.locations[0];
+    const slug = branch?.slug;
     if (!slug) {
       this.reviews.set([]);
       return;

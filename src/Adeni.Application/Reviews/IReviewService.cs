@@ -103,5 +103,6 @@ public interface IReviewService
 
     Task<IReadOnlyList<TenantReviewItem>> ListForTenantAsync(
         Guid tenantId,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default);
 }

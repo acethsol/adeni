@@ -382,6 +382,10 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.Bio).HasMaxLength(500);
             entity.Property(x => x.AvatarImageKey).HasMaxLength(512);
             entity.HasIndex(x => new { x.TenantId, x.IsActive, x.SortOrder });
+            entity.HasOne<BusinessLocation>()
+                .WithMany()
+                .HasForeignKey(x => x.BusinessLocationId)
+                .OnDelete(DeleteBehavior.SetNull);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 

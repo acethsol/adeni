@@ -208,6 +208,78 @@ public sealed class StaffServiceTests
     }
 
     [Fact]
+    public async Task ListForTenant_FiltersByBusinessLocationAssignment()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var tenantId = await SeedVerifiedTenantAsync(scope.ServiceProvider);
+        var staff = scope.ServiceProvider.GetRequiredService<IStaffService>();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        var locA = Guid.NewGuid();
+        var locB = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+        db.BusinessLocations.AddRange(
+            new BusinessLocation
+            {
+                Id = locA,
+                TenantId = tenantId,
+                Name = "A",
+                Slug = "loc-a-staff",
+                MarketId = "lagos",
+                AddressLine = "1",
+                Area = "A",
+                IsPrimary = true,
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now,
+            },
+            new BusinessLocation
+            {
+                Id = locB,
+                TenantId = tenantId,
+                Name = "B",
+                Slug = "loc-b-staff",
+                MarketId = "lagos",
+                AddressLine = "2",
+                Area = "B",
+                IsPrimary = false,
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+        await db.SaveChangesAsync();
+
+        var allBranches = await staff.CreateAsync(tenantId, new CreateStaffMemberRequest("All", "Branches"));
+        var branchOnly = await staff.CreateAsync(
+            tenantId,
+            new CreateStaffMemberRequest("Branch", "A", BusinessLocationId: locA));
+        Assert.True(allBranches.IsSuccess && branchOnly.IsSuccess);
+
+        await staff.UpdateAsync(
+            tenantId,
+            branchOnly.Value!.Id,
+            new UpdateStaffMemberRequest(
+                "Branch",
+                "A",
+                "Branch A",
+                StaffRoleKeys.Other,
+                null,
+                null,
+                0,
+                true,
+                locA));
+
+        var scoped = await staff.ListForTenantAsync(tenantId, locA);
+        Assert.Equal(2, scoped.Count);
+        Assert.Contains(scoped, x => x.Id == allBranches.Value!.Id);
+        Assert.Contains(scoped, x => x.Id == branchOnly.Value!.Id);
+
+        var otherBranch = await staff.ListForTenantAsync(tenantId, locB);
+        Assert.Single(otherBranch);
+        Assert.Equal(allBranches.Value!.Id, otherBranch[0].Id);
+    }
+
+    [Fact]
     public async Task ListForTenant_IncludesPortalAccessStatus()
     {
         await using var provider = BuildProvider();

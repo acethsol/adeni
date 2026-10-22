@@ -768,6 +768,7 @@ export const staffMemberSchema = z.object({
   portalInviteId: z.string().uuid().nullable().optional(),
   businessUserId: z.string().uuid().nullable().optional(),
   permissionRole: portalPermissionRoleSchema.nullable().optional(),
+  businessLocationId: z.string().uuid().nullable().optional(),
 });
 
 export type StaffMember = z.infer<typeof staffMemberSchema>;
@@ -802,6 +803,7 @@ export const createStaffMemberRequestSchema = z.object({
   bio: z.string().max(500).nullable().optional(),
   sortOrder: z.number().int().optional(),
   serviceOfferingIds: z.array(z.string().uuid()).optional(),
+  businessLocationId: z.string().uuid().nullable().optional(),
 });
 
 export type CreateStaffMemberRequest = z.infer<typeof createStaffMemberRequestSchema>;
@@ -815,6 +817,7 @@ export const updateStaffMemberRequestSchema = z.object({
   bio: z.string().max(500).nullable().optional(),
   sortOrder: z.number().int(),
   isActive: z.boolean(),
+  businessLocationId: z.string().uuid().nullable().optional(),
 });
 
 export type UpdateStaffMemberRequest = z.infer<typeof updateStaffMemberRequestSchema>;

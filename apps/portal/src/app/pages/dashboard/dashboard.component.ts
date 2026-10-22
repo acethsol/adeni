@@ -242,7 +242,7 @@ export class DashboardComponent implements OnInit {
     this.activeLocation.selectionChanged$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        void this.load();
+        void this.activeLocation.runOnBranchSwitch(() => this.load());
       });
   }
 

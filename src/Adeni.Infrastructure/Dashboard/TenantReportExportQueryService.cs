@@ -292,11 +292,38 @@ public sealed class TenantReportExportQueryService(
 
     public async Task<Result<IReadOnlyList<TenantCustomerExportRow>>> GetTenantCustomersAsync(
         Guid tenantId,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
-        var rows = await dbContext.TenantCustomers
+        var scoped = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+            dbContext,
+            tenantId,
+            locationId,
+            cancellationToken);
+        if (scoped.IsFailure)
+        {
+            return Result.Failure<IReadOnlyList<TenantCustomerExportRow>>(scoped.Error);
+        }
+
+        var query = dbContext.TenantCustomers
             .AsNoTracking()
-            .Where(x => x.TenantId == tenantId)
+            .Where(x => x.TenantId == tenantId);
+
+        if (scoped.Value is Guid branchId)
+        {
+            query = query.Where(tc =>
+                dbContext.Bookings.Any(b =>
+                    b.TenantId == tenantId
+                    && b.BusinessLocationId == branchId
+                    && tc.CustomerId != null
+                    && b.CustomerId == tc.CustomerId)
+                || dbContext.QueueTickets.Any(q =>
+                    q.TenantId == tenantId
+                    && q.BusinessLocationId == branchId
+                    && q.TenantCustomerId == tc.Id));
+        }
+
+        var rows = await query
             .OrderBy(x => x.DisplayName)
             .Select(x => new TenantCustomerExportRow(
                 x.Id,

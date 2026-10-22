@@ -11,6 +11,7 @@ using Adeni.Application.Tenancy;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Auth;
+using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
@@ -20,7 +21,8 @@ public sealed class TenantCustomersController(
     ITenantCustomerService customers,
     ITenantReportExportQueryService reportQueries,
     IReportRenderer reportRenderer,
-    IReportPdfBrandingLoader pdfBrandingLoader) : ControllerBase
+    IReportPdfBrandingLoader pdfBrandingLoader,
+    AdeniDbContext dbContext) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> List(
@@ -30,6 +32,7 @@ public sealed class TenantCustomersController(
         [FromQuery] string? discover = null,
         [FromQuery] string? sortBy = null,
         [FromQuery] string? sortDir = null,
+        [FromQuery] Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
         if (ResolveTenantId() is not { } tenantId)
@@ -51,6 +54,19 @@ public sealed class TenantCustomersController(
                 HttpContext);
         }
 
+        var scoped = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+            dbContext,
+            tenantId,
+            locationId,
+            cancellationToken);
+        if (scoped.IsFailure)
+        {
+            return ApiResults.FromResult(
+                Result.Failure<TenantCustomerListResponse>(scoped.Error),
+                Ok,
+                HttpContext);
+        }
+
         var result = await customers.ListForTenantAsync(
             tenantId,
             search,
@@ -59,6 +75,7 @@ public sealed class TenantCustomersController(
             discover,
             sort.Value!.SortBy,
             sort.Value.SortDirection,
+            scoped.Value,
             cancellationToken);
         return ApiResults.FromResult(result, Ok, HttpContext);
     }

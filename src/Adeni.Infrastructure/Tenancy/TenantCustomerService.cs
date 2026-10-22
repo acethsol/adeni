@@ -182,10 +182,23 @@ public sealed class TenantCustomerService(
         string? discoverFilter = null,
         string? sortBy = null,
         ListSortDirection? sortDirection = null,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 100);
+
+        var scoped = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+            dbContext,
+            tenantId,
+            locationId,
+            cancellationToken);
+        if (scoped.IsFailure)
+        {
+            return Result.Failure<TenantCustomerListResponse>(scoped.Error);
+        }
+
+        locationId = scoped.Value;
 
         if (!string.IsNullOrWhiteSpace(discoverFilter))
         {
@@ -204,6 +217,20 @@ public sealed class TenantCustomerService(
 
         var query = dbContext.TenantCustomers.AsNoTracking()
             .Where(x => x.TenantId == tenantId);
+
+        if (locationId is Guid branchId)
+        {
+            query = query.Where(tc =>
+                dbContext.Bookings.Any(b =>
+                    b.TenantId == tenantId
+                    && b.BusinessLocationId == branchId
+                    && tc.CustomerId != null
+                    && b.CustomerId == tc.CustomerId)
+                || dbContext.QueueTickets.Any(q =>
+                    q.TenantId == tenantId
+                    && q.BusinessLocationId == branchId
+                    && q.TenantCustomerId == tc.Id));
+        }
 
         if (string.Equals(discoverFilter, "discover", StringComparison.OrdinalIgnoreCase))
         {

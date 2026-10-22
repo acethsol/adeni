@@ -10,7 +10,7 @@
     <adeni-carbon-icon class="branch-icon" name="location--filled" [size]="16" aria-hidden="true" />
     <span class="branch-copy">
       <span class="branch-title-row">
-        <span class="branch-title">{{ display().title }}</span>
+        <span class="branch-title" [title]="display().title">{{ display().title }}</span>
         @if (display().isPrimary && !display().allLocationsScope) {
           <adeni-pill tone="brand" class="branch-primary-pill">Primary</adeni-pill>
         }
@@ -63,7 +63,9 @@
           <adeni-carbon-icon name="location--filled" [size]="16" aria-hidden="true" />
           <span class="branch-item-copy">
             <span class="branch-item-title-row">
-              <span class="branch-item-title">{{ activeLocation.branchRowLabel(branch) }}</span>
+              <span class="branch-item-title" [title]="activeLocation.branchRowLabel(branch)">{{
+                activeLocation.branchRowLabel(branch)
+              }}</span>
               @if (branch.isPrimary) {
                 <adeni-pill tone="brand" class="branch-primary-pill">Primary</adeni-pill>
               }

@@ -430,6 +430,18 @@
               <label>Short bio (optional)</label>
               <textarea rows="2" [(ngModel)]="draft.bio" maxlength="500"></textarea>
             </div>
+            @if (activeLocation.showLocationSwitch()) {
+              <div class="field">
+                <label>Primary branch (optional)</label>
+                <select [(ngModel)]="draft.businessLocationId">
+                  <option value="">All branches</option>
+                  @for (branch of activeLocation.activeLocations(); track branch.id) {
+                    <option [value]="branch.id">{{ activeLocation.branchRowLabel(branch) }}</option>
+                  }
+                </select>
+                <p class="field-hint">Leave as all branches unless this person only works at one location.</p>
+              </div>
+            }
           }
           @if (editingId()) {
             <div class="row">

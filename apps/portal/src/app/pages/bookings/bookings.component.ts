@@ -266,7 +266,7 @@ export class BookingsComponent {
         queryParams: { page: null },
         queryParamsHandling: "merge",
       });
-      void this.load();
+      void this.activeLocation.runOnBranchSwitch(() => this.load());
     });
   }
 

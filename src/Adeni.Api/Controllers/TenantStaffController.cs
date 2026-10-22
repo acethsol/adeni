@@ -9,6 +9,7 @@ using Adeni.Application.Booking;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Auth;
+using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -17,11 +18,14 @@ using Microsoft.Extensions.Options;
 public sealed class TenantStaffController(
     IStaffService staff,
     IStaffAccessService staffAccess,
+    AdeniDbContext dbContext,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet]
     [RequiresPortalPermission(PortalPermissions.Staff)]
-    public async Task<IActionResult> List(CancellationToken cancellationToken)
+    public async Task<IActionResult> List(
+        [FromQuery] Guid? locationId = null,
+        CancellationToken cancellationToken = default)
     {
         var tenantId = ResolveTenantId();
         if (tenantId is null)
@@ -29,7 +33,20 @@ public sealed class TenantStaffController(
             return Unauthorized();
         }
 
-        var items = await staff.ListForTenantAsync(tenantId.Value, cancellationToken);
+        var scoped = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+            dbContext,
+            tenantId.Value,
+            locationId,
+            cancellationToken);
+        if (scoped.IsFailure)
+        {
+            return ApiResults.FromResult(
+                Result.Failure<IReadOnlyList<StaffMemberResponse>>(scoped.Error),
+                Ok,
+                HttpContext);
+        }
+
+        var items = await staff.ListForTenantAsync(tenantId.Value, scoped.Value, cancellationToken);
         return Ok(new { items });
     }
 
@@ -230,14 +247,28 @@ public sealed class TenantStaffController(
     public async Task<IActionResult> GetTeamCalendar(
         [FromQuery] DateTimeOffset from,
         [FromQuery] DateTimeOffset to,
-        CancellationToken cancellationToken)
+        [FromQuery] Guid? locationId = null,
+        CancellationToken cancellationToken = default)
     {
         if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
         {
             return Unauthorized();
         }
 
-        var result = await staff.GetTeamCalendarAsync(tenantId, from, to, cancellationToken);
+        var scoped = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+            dbContext,
+            tenantId,
+            locationId,
+            cancellationToken);
+        if (scoped.IsFailure)
+        {
+            return ApiResults.FromResult(
+                Result.Failure<StaffTeamCalendarResponse>(scoped.Error),
+                Ok,
+                HttpContext);
+        }
+
+        var result = await staff.GetTeamCalendarAsync(tenantId, from, to, scoped.Value, cancellationToken);
         return ApiResults.FromResult(result, Ok, HttpContext);
     }
 
@@ -247,7 +278,8 @@ public sealed class TenantStaffController(
         Guid id,
         [FromQuery] DateTimeOffset from,
         [FromQuery] DateTimeOffset to,
-        CancellationToken cancellationToken)
+        [FromQuery] Guid? locationId = null,
+        CancellationToken cancellationToken = default)
     {
         if (DenyUnlessStaffAccess(id) is { } denied)
         {
@@ -259,7 +291,20 @@ public sealed class TenantStaffController(
             return Unauthorized();
         }
 
-        var result = await staff.GetCalendarAsync(tenantId, id, from, to, cancellationToken);
+        var scoped = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+            dbContext,
+            tenantId,
+            locationId,
+            cancellationToken);
+        if (scoped.IsFailure)
+        {
+            return ApiResults.FromResult(
+                Result.Failure<StaffCalendarResponse>(scoped.Error),
+                Ok,
+                HttpContext);
+        }
+
+        var result = await staff.GetCalendarAsync(tenantId, id, from, to, scoped.Value, cancellationToken);
         return ApiResults.FromResult(result, Ok, HttpContext);
     }
 

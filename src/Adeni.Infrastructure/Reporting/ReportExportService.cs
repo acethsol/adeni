@@ -278,7 +278,10 @@ public sealed class ReportExportService(
         ReportExportRequest request,
         CancellationToken cancellationToken)
     {
-        var rowsResult = await exportQueries.GetTenantCustomersAsync(request.TenantId, cancellationToken);
+        var rowsResult = await exportQueries.GetTenantCustomersAsync(
+            request.TenantId,
+            request.LocationId,
+            cancellationToken);
         if (rowsResult.IsFailure)
         {
             return Result.Failure<ReportExportPayload>(rowsResult.Error!);

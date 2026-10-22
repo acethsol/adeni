@@ -6,7 +6,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  max-width: 14.5rem;
+  min-width: 11.5rem;
+  max-width: 22rem;
   min-height: 2.35rem;
   padding: 0.2rem 0.55rem 0.2rem 0.45rem;
   border: 1px solid var(--border);

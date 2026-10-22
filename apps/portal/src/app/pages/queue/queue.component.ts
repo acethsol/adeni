@@ -94,7 +94,7 @@ export class QueueComponent implements OnInit, OnDestroy {
       void this.load(false);
     });
     this.branchSub = this.activeLocation.selectionChanged$.subscribe(() => {
-      void this.load(false);
+      void this.activeLocation.runOnBranchSwitch(() => this.load(false));
     });
   }
 

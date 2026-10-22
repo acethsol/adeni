@@ -74,5 +74,6 @@ public interface ITenantCustomerService
         string? discoverFilter = null,
         string? sortBy = null,
         ListSortDirection? sortDirection = null,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default);
 }

@@ -5,6 +5,7 @@ using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
 using Adeni.Application.Reviews;
 using Adeni.Infrastructure.Auth;
+using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -12,17 +13,30 @@ using Microsoft.Extensions.Options;
 [Route("api/v1/tenant/reviews")]
 public sealed class TenantReviewsController(
     IReviewService reviews,
+    AdeniDbContext dbContext,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> List(CancellationToken cancellationToken)
+    public async Task<IActionResult> List(
+        [FromQuery] Guid? locationId = null,
+        CancellationToken cancellationToken = default)
     {
         if (ResolveTenantId() is not { } tenantId)
         {
             return Unauthorized();
         }
 
-        var items = await reviews.ListForTenantAsync(tenantId, cancellationToken);
+        var scoped = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+            dbContext,
+            tenantId,
+            locationId,
+            cancellationToken);
+        if (scoped.IsFailure)
+        {
+            return BadRequest(new { title = scoped.Error!.Message });
+        }
+
+        var items = await reviews.ListForTenantAsync(tenantId, scoped.Value, cancellationToken);
         return Ok(new { items });
     }
 

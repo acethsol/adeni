@@ -1117,10 +1117,14 @@ export class AdeniApiClient {
     pageSize?: number;
     discover?: "discover" | "walk_in";
     sort?: ListSortParams;
+    locationId?: string;
   }): Promise<TenantCustomerListResponse> {
     const query = new URLSearchParams();
     if (params?.search) {
       query.set("search", params.search);
+    }
+    if (params?.locationId) {
+      query.set("locationId", params.locationId);
     }
     if (params?.page) {
       query.set("page", String(params.page));
@@ -1509,8 +1513,13 @@ export class AdeniApiClient {
     );
   }
 
-  async listTenantStaff(): Promise<StaffMember[]> {
-    const response = await this.request("/api/v1/tenant/staff");
+  async listTenantStaff(params?: { locationId?: string }): Promise<StaffMember[]> {
+    const query = new URLSearchParams();
+    if (params?.locationId) {
+      query.set("locationId", params.locationId);
+    }
+    const qs = query.toString();
+    const response = await this.request(`/api/v1/tenant/staff${qs ? `?${qs}` : ""}`);
     return staffMembersResponseSchema.parse(await response.json()).items;
   }
 
@@ -1708,9 +1717,12 @@ export class AdeniApiClient {
 
   async getTenantStaffCalendar(
     staffMemberId: string,
-    params: { from: string; to: string },
+    params: { from: string; to: string; locationId?: string },
   ): Promise<StaffCalendarResponse> {
     const query = new URLSearchParams({ from: params.from, to: params.to });
+    if (params.locationId) {
+      query.set("locationId", params.locationId);
+    }
     const response = await this.request(
       `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/calendar?${query}`,
     );
@@ -1720,8 +1732,12 @@ export class AdeniApiClient {
   async getTenantTeamCalendar(params: {
     from: string;
     to: string;
+    locationId?: string;
   }): Promise<StaffTeamCalendarResponse> {
     const query = new URLSearchParams({ from: params.from, to: params.to });
+    if (params.locationId) {
+      query.set("locationId", params.locationId);
+    }
     const response = await this.request(`/api/v1/tenant/staff/team-calendar?${query}`);
     return staffTeamCalendarResponseSchema.parse(await response.json());
   }

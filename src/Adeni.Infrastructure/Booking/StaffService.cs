@@ -18,12 +18,14 @@ public sealed class StaffService(
 {
     public async Task<IReadOnlyList<StaffMemberResponse>> ListForTenantAsync(
         Guid tenantId,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
         var staff = await dbContext.StaffMembers
             .AsNoTracking()
             .Include(x => x.ServiceLinks)
             .Where(x => x.TenantId == tenantId)
+            .FilterStaffByLocation(locationId)
             .OrderBy(x => x.SortOrder)
             .ThenBy(x => x.DisplayName)
             .ToListAsync(cancellationToken);
@@ -192,6 +194,16 @@ public sealed class StaffService(
             return Result.Failure<StaffMemberResponse>(serviceCheck.Error);
         }
 
+        var locationCheck = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+            dbContext,
+            tenantId,
+            request.BusinessLocationId,
+            cancellationToken);
+        if (locationCheck.IsFailure)
+        {
+            return Result.Failure<StaffMemberResponse>(locationCheck.Error);
+        }
+
         var (firstName, lastName, displayName, roleKey, title, bio) = identity.Value!;
         var now = DateTimeOffset.UtcNow;
         var entity = new StaffMember
@@ -206,6 +218,7 @@ public sealed class StaffService(
             Bio = bio,
             IsActive = true,
             SortOrder = request.SortOrder,
+            BusinessLocationId = locationCheck.Value,
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -277,6 +290,16 @@ public sealed class StaffService(
             }
         }
 
+        var locationCheck = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+            dbContext,
+            tenantId,
+            request.BusinessLocationId,
+            cancellationToken);
+        if (locationCheck.IsFailure)
+        {
+            return Result.Failure<StaffMemberResponse>(locationCheck.Error);
+        }
+
         var (firstName, lastName, displayName, roleKey, title, bio) = identity.Value!;
         entity.FirstName = firstName;
         entity.LastName = lastName;
@@ -286,6 +309,7 @@ public sealed class StaffService(
         entity.Bio = bio;
         entity.SortOrder = request.SortOrder;
         entity.IsActive = request.IsActive;
+        entity.BusinessLocationId = locationCheck.Value;
         entity.UpdatedAt = DateTimeOffset.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -578,6 +602,7 @@ public sealed class StaffService(
         Guid staffMemberId,
         DateTimeOffset from,
         DateTimeOffset to,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
         if (to <= from)
@@ -590,6 +615,16 @@ public sealed class StaffService(
         {
             return Result.Failure<StaffCalendarResponse>(
                 Error.Validation("Calendar range cannot exceed 45 days."));
+        }
+
+        var scopedLocation = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+            dbContext,
+            tenantId,
+            locationId,
+            cancellationToken);
+        if (scopedLocation.IsFailure)
+        {
+            return Result.Failure<StaffCalendarResponse>(scopedLocation.Error);
         }
 
         var member = await dbContext.StaffMembers
@@ -619,6 +654,7 @@ public sealed class StaffService(
                 && x.StartAt < toUtc
                 && x.EndAt > fromUtc
                 && (x.Status == BookingStatus.Pending || x.Status == BookingStatus.Confirmed))
+            .FilterBookingsByLocation(scopedLocation.Value)
             .OrderBy(x => x.StartAt)
             .ToListAsync(cancellationToken);
 
@@ -667,6 +703,7 @@ public sealed class StaffService(
         Guid tenantId,
         DateTimeOffset from,
         DateTimeOffset to,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
         if (to <= from)
@@ -681,12 +718,23 @@ public sealed class StaffService(
                 Error.Validation("Calendar range cannot exceed 45 days."));
         }
 
+        var scopedLocation = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+            dbContext,
+            tenantId,
+            locationId,
+            cancellationToken);
+        if (scopedLocation.IsFailure)
+        {
+            return Result.Failure<StaffTeamCalendarResponse>(scopedLocation.Error);
+        }
+
         var fromUtc = from.ToUniversalTime();
         var toUtc = to.ToUniversalTime();
 
         var members = await dbContext.StaffMembers
             .AsNoTracking()
             .Where(x => x.TenantId == tenantId && x.IsActive)
+            .FilterStaffByLocation(scopedLocation.Value)
             .OrderBy(x => x.SortOrder)
             .ThenBy(x => x.DisplayName)
             .ToListAsync(cancellationToken);
@@ -703,6 +751,7 @@ public sealed class StaffService(
                 && x.EndAt > fromUtc
                 && (x.Status == BookingStatus.Pending || x.Status == BookingStatus.Confirmed)
                 && (x.StaffMemberId == null || memberIds.Contains(x.StaffMemberId.Value)))
+            .FilterBookingsByLocation(scopedLocation.Value)
             .OrderBy(x => x.StartAt)
             .ToListAsync(cancellationToken);
 
@@ -898,7 +947,8 @@ public sealed class StaffService(
             portalAccessStatus,
             portalInviteId,
             businessUserId,
-            permissionRole);
+            permissionRole,
+            entity.BusinessLocationId);
     }
 
     private async Task<PublicStaffMemberResponse> ToPublicResponseAsync(

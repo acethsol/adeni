@@ -126,7 +126,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     this.activeLocation.selectionChanged$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        void this.load();
+        void this.activeLocation.runOnBranchSwitch(() => this.load());
       });
     this.opsSub = this.operationsRealtime.paymentCompleted$.subscribe(() => {
       this.feedback.info("Payment completed — refreshing ledger.", "Payment");

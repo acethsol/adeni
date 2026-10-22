@@ -20,6 +20,13 @@ public static class TenantLocationScope
             ? query.Where(x => x.BusinessLocationId == id)
             : query;
 
+    public static IQueryable<StaffMember> FilterStaffByLocation(
+        this IQueryable<StaffMember> query,
+        Guid? locationId) =>
+        locationId is Guid id
+            ? query.Where(x => x.BusinessLocationId == null || x.BusinessLocationId == id)
+            : query;
+
     public static async Task<Result<Guid?>> ValidateOptionalLocationIdAsync(
         AdeniDbContext dbContext,
         Guid tenantId,

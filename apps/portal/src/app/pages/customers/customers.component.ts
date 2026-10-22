@@ -1,4 +1,5 @@
-import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, OnDestroy, OnInit, signal } from "@angular/core";
+import { Subscription } from "rxjs";
 import { RouterLink } from "@angular/router";
 import type { TenantCustomerListItem, TenantEntitlements } from "@adeni/shared";
 import {
@@ -35,6 +36,7 @@ import {
   type AdeniPillTone,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
 
 export type CustomerAccountFilter = "all" | "discover" | "walk_in";
 
@@ -61,9 +63,11 @@ export type CustomerAccountFilter = "all" | "discover" | "walk_in";
   templateUrl: "./customers.component.html",
   styleUrl: "./customers.component.scss",
 })
-export class CustomersComponent implements OnInit {
+export class CustomersComponent implements OnInit, OnDestroy {
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
+  private readonly activeLocation = inject(PortalActiveLocationService);
+  private branchSub: Subscription | null = null;
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -128,6 +132,14 @@ export class CustomersComponent implements OnInit {
 
   ngOnInit(): void {
     void this.load();
+    this.branchSub = this.activeLocation.selectionChanged$.subscribe(() => {
+      this.page.set(1);
+      void this.activeLocation.runOnBranchSwitch(() => this.load());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.branchSub?.unsubscribe();
   }
 
   onSearchChange(value: string): void {
@@ -198,23 +210,27 @@ export class CustomersComponent implements OnInit {
         const term = this.searchQuery().trim();
         const filter = this.accountFilter();
         await this.api.withAuthorizedClient(async (client) => {
-          const [result, profile, usage, planEntitlements] = await Promise.all([
-            client.listTenantCustomers({
-              search: term.length > 0 ? term : undefined,
-              page: this.page(),
-              pageSize: this.pageSize(),
-              discover: filter === "all" ? undefined : filter,
-              sort: listSortParamsFromColumn(this.sortColumnId(), this.sortDirection()),
-            }),
+          const [profile, usage, planEntitlements] = await Promise.all([
             client.getTenantProfile().catch(() => null),
             client.getTenantSubscriptionUsage().catch(() => null),
             client.getTenantEntitlements().catch(() => null),
           ]);
+          const entitlements = mergeTenantEntitlements(
+            planEntitlements,
+            usage?.entitlements,
+            profile?.entitlements,
+          );
+          const result = await client.listTenantCustomers({
+            search: term.length > 0 ? term : undefined,
+            page: this.page(),
+            pageSize: this.pageSize(),
+            discover: filter === "all" ? undefined : filter,
+            sort: listSortParamsFromColumn(this.sortColumnId(), this.sortDirection()),
+            locationId: this.activeLocation.tenantApiLocationId(entitlements),
+          });
           this.items.set(result.items);
           this.totalCount.set(result.totalCount);
-          this.entitlements.set(
-            mergeTenantEntitlements(planEntitlements, usage?.entitlements, profile?.entitlements),
-          );
+          this.entitlements.set(entitlements);
         });
       }, "Loading customers", "Fetching profiles");
     } catch {
@@ -233,14 +249,16 @@ export class CustomersComponent implements OnInit {
       const to = new Date();
       const from = new Date(to);
       from.setFullYear(from.getFullYear() - 1);
-      const blob = await this.api.withAuthorizedClient((client) =>
-        client.downloadTenantReportExport({
+      const blob = await this.api.withAuthorizedClient(async (client) => {
+        const profile = await client.getTenantProfile().catch(() => null);
+        return client.downloadTenantReportExport({
           reportKey: REPORT_KEYS.tenantCustomers,
           from: from.toISOString(),
           to: to.toISOString(),
           format,
-        }),
-      );
+          locationId: this.activeLocation.tenantApiLocationId(profile?.entitlements ?? null),
+        });
+      });
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;

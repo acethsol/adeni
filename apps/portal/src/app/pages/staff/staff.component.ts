@@ -60,6 +60,8 @@ import {
   type AdeniWizardStep,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
+import { Subscription } from "rxjs";
 
 const AVATAR_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
@@ -98,6 +100,7 @@ type StaffDraft = {
   sortOrder: string;
   isActive: boolean;
   serviceOfferingIds: string[];
+  businessLocationId: string;
 };
 
 function toInputTime(value: string): string {
@@ -190,6 +193,8 @@ export class StaffComponent implements OnInit, OnDestroy {
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly confirmDialog = inject(AdeniConfirmService);
+  readonly activeLocation = inject(PortalActiveLocationService);
+  private branchSub: Subscription | null = null;
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -401,6 +406,9 @@ export class StaffComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     void this.load();
+    this.branchSub = this.activeLocation.selectionChanged$.subscribe(() => {
+      void this.activeLocation.runOnBranchSwitch(() => this.load());
+    });
   }
 
   onRosterSearchChange(value: string): void {
@@ -438,6 +446,7 @@ export class StaffComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.branchSub?.unsubscribe();
     this.clearAvatarSelection();
   }
 
@@ -687,6 +696,7 @@ export class StaffComponent implements OnInit, OnDestroy {
       sortOrder: "0",
       isActive: true,
       serviceOfferingIds: [],
+      businessLocationId: "",
     };
   }
 
@@ -895,7 +905,12 @@ export class StaffComponent implements OnInit, OnDestroy {
   private async refreshStaff(): Promise<void> {
     try {
       await this.api.withAuthorizedClient(async (c) => {
-        this.staff.set(await c.listTenantStaff());
+        const profile = await c.getTenantProfile().catch(() => null);
+        this.staff.set(
+          await c.listTenantStaff({
+            locationId: this.activeLocation.tenantApiLocationId(profile?.entitlements ?? null),
+          }),
+        );
       });
     } catch {
       this.feedback.error("Could not refresh the roster.");
@@ -904,18 +919,23 @@ export class StaffComponent implements OnInit, OnDestroy {
 
   private async fetchStaffPageData(): Promise<void> {
     await this.api.withAuthorizedClient(async (c) => {
-      const [staff, catalog, profile, usage, entitlements] = await Promise.all([
-        c.listTenantStaff(),
+      const [catalog, profile, usage, entitlements] = await Promise.all([
         c.getTenantServiceCatalog(),
         c.getTenantProfile().catch(() => null),
         c.getTenantSubscriptionUsage().catch(() => null),
         c.getTenantEntitlements().catch(() => null),
       ]);
+      const mergedEntitlements = mergeTenantEntitlements(
+        entitlements,
+        usage?.entitlements,
+        profile?.entitlements,
+      );
+      const staff = await c.listTenantStaff({
+        locationId: this.activeLocation.tenantApiLocationId(mergedEntitlements),
+      });
       this.staff.set(staff);
       this.services.set(catalog.items.filter((s) => s.isActive !== false));
-      this.entitlements.set(
-        mergeTenantEntitlements(entitlements, usage?.entitlements, profile?.entitlements),
-      );
+      this.entitlements.set(mergedEntitlements);
       this.subscriptionUsage.set(usage);
       const slugs = [
         profile?.categorySlug,
@@ -959,6 +979,7 @@ export class StaffComponent implements OnInit, OnDestroy {
       sortOrder: String(member.sortOrder ?? 0),
       isActive: member.isActive,
       serviceOfferingIds: [...member.serviceOfferingIds],
+      businessLocationId: member.businessLocationId ?? "",
     };
     this.clearAvatarSelection();
     this.avatarPreviewUrl.set(member.avatarImageUrl ?? null);
@@ -1027,6 +1048,7 @@ export class StaffComponent implements OnInit, OnDestroy {
       this.draft.displayName.trim() || `${firstName} ${lastName}`.trim();
 
     const sortOrder = Number.parseInt(this.draft.sortOrder, 10) || 0;
+    const businessLocationId = this.draft.businessLocationId.trim() || null;
     const editingId = this.editingId();
     this.busy.set(editingId ?? "create");
 
@@ -1043,6 +1065,7 @@ export class StaffComponent implements OnInit, OnDestroy {
               bio: this.draft.bio.trim() || null,
               sortOrder,
               isActive: this.draft.isActive,
+              businessLocationId,
             });
             await c.replaceTenantStaffServices(editingId, {
               serviceOfferingIds: this.draft.serviceOfferingIds,
@@ -1059,6 +1082,7 @@ export class StaffComponent implements OnInit, OnDestroy {
               bio: this.draft.bio.trim() || null,
               sortOrder,
               serviceOfferingIds: this.draft.serviceOfferingIds,
+              businessLocationId,
             });
             const hours = rowsToRules(this.hourRows);
             if (hours.length > 0) {

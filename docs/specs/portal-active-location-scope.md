@@ -41,12 +41,15 @@ Make the portal **branch switch** drive tenant APIs and exports honestly — fil
 - [x] `BusinessLocationId` on `QueueTicket`; list/floor filter; join-by-slug sets branch.
 - [x] `@adeni/api-client` + portal: active location query param; bookings list; queue/calendar reload on `selectionChanged$`; shell pending badge scoped when filter applies.
 
-### Phase 3 (P2) — backlog
+### Phase 3 (P2) — ship
 
-- [ ] Staff↔branch assignment (portal + domain).
-- [ ] Reviews attributed via booking branch (discovery aggregates per location already slug-scoped).
-- [ ] Tenant customer export `locationId` (visit history per branch).
-- [ ] Per-branch weekly hours (today: tenant-level hours on profile).
+- [x] Staff↔branch assignment (`StaffMember.BusinessLocationId`; portal roster filter + form field; `GET /api/v1/tenant/staff?locationId=`).
+- [x] Reviews attributed via booking branch (public profile reviews use active branch slug; tenant list supports `locationId` via booking FK).
+- [x] Tenant customer export + list `locationId` (customers with bookings or queue visits at branch).
+- [x] Per-branch weekly hours — **not in V1** (tenant-level `GET /api/v1/tenant/availability` only; branch `TimeZoneId` on location is display/scheduling hint, not separate hour rows).
+- [x] Calendar APIs: optional `locationId` on `GET .../staff/{id}/calendar` and `GET .../staff/team-calendar`; portal calendars pass active branch.
+- [x] Branch switch loading panel via `PortalActiveLocationService.runOnBranchSwitch` + `AdeniGlobalLoadingPanelComponent`.
+- [x] Wider branch switch trigger (min/max width + `title` on truncated labels).
 
 ---
 
@@ -55,6 +58,7 @@ Make the portal **branch switch** drive tenant APIs and exports honestly — fil
 - Per-branch entitlements or billing SKUs.
 - Elasticsearch / discovery index changes.
 - Kiosk PIN flow redesign (slug on kiosk URL remains follow-up).
+- Per-location weekly hour rows (would need `business_location_weekly_availability` or equivalent).
 
 ---
 
@@ -67,6 +71,11 @@ Make the portal **branch switch** drive tenant APIs and exports honestly — fil
 | GET | `/api/v1/tenant/dashboard/breakdown` | Portal overview | `dimension`, `from`, `to`, **`locationId?`** | Breakdown scoped by branch when set. |
 | GET | `/api/v1/tenant/bookings` | Bookings / self | `tab`, `page`, …, **`locationId?`** | Paginated list filtered by branch. |
 | GET | `/api/v1/tenant/queue` | Bookings / self | **`locationId?`** | Floor board for branch. |
+| GET | `/api/v1/tenant/staff` | Staff | **`locationId?`** | Roster: assigned branch or unassigned (all branches). |
+| GET | `/api/v1/tenant/staff/team-calendar` | Staff | `from`, `to`, **`locationId?`** | Team calendar bookings/staff scoped by branch. |
+| GET | `/api/v1/tenant/staff/{id}/calendar` | Staff / self | `from`, `to`, **`locationId?`** | Practitioner calendar bookings scoped by branch. |
+| GET | `/api/v1/tenant/customers` | Bookings | …, **`locationId?`** | Customers with activity at branch. |
+| GET | `/api/v1/tenant/reviews` | Portal | **`locationId?`** | Reviews whose booking is at branch. |
 | GET | `/api/v1/tenant/reporting/exports/{key}` | Per report | `from`, `to`, **`locationId?`** | Existing gate: multi-branch tenants without entitlement must send `locationId`. |
 | POST | `/api/v1/bookings` | Customer JWT | body **`businessLocationId?`** | Persist branch on create (must belong to tenant). |
 
@@ -82,13 +91,17 @@ Make the portal **branch switch** drive tenant APIs and exports honestly — fil
 
 ## 6. Portal route matrix
 
-| Route | Uses active `locationId` query | Scope subtitle |
-|-------|-------------------------------|----------------|
+| Route | Uses active `locationId` query | Scope subtitle / reload on switch |
+|-------|-------------------------------|-----------------------------------|
 | `/dashboard` | summary, series, breakdown | Yes (multi-branch) |
 | `/bookings` | list | Yes (multi-branch) |
-| `/queue` | floor | Reload on switch (filter when API param sent) |
-| `/payments` (exports) | export (existing) | — |
-| Other list pages | export only (P2: customers) | — |
+| `/queue` | floor | Yes |
+| `/calendar`, `/my-calendar`, `/staff/:id/calendar` | team/staff calendar | Yes |
+| `/staff` | roster list | Yes |
+| `/customers` | list + export | Yes |
+| `/profile?tab=reviews` | public reviews by active branch slug | Yes |
+| `/payments` (exports) | export (existing) | Yes |
+| Shell pending bookings badge | pending list | Yes |
 
 ---
 
@@ -96,13 +109,13 @@ Make the portal **branch switch** drive tenant APIs and exports honestly — fil
 
 | Layer | Files |
 |-------|-------|
-| Domain | `BookingRecord`, `QueueTicket` |
-| Application | `ITenantDashboardService`, `IBookingService`, `IQueueService`, `ITenantReportExportQueryService`, `IStaffCompensationService`, `CreateBookingRequest` |
-| Infrastructure | `TenantDashboardService`, `TenantReportExportQueryService`, `BookingService`, `QueueService`, `StaffCompensationService`, `AdeniDbContext`, `TenantLocationScope` |
-| Api | `TenantDashboardController`, `TenantBookingsController`, `TenantQueueController` |
-| DB | `db/Adeni.Database/booking/Tables/bookings.sql`, `queue_tickets.sql`, `db/scripts/booking-location-scope.sql` |
-| Tests | `TenantReportingExportIntegrationTests`, `TenantDashboardIntegrationTests` |
-| Shared / client / portal | `createBookingRequestSchema`, `report-export-location`, `api-client`, dashboard/bookings/queue/shell |
+| Domain | `BookingRecord`, `QueueTicket`, `StaffMember` |
+| Application | `IStaffService`, `IReviewService`, `ITenantCustomerService`, `ITenantReportExportQueryService`, … |
+| Infrastructure | `StaffService`, `ReviewService`, `TenantCustomerService`, `TenantReportExportQueryService`, `TenantLocationScope` |
+| Api | `TenantStaffController`, `TenantCustomersController`, `TenantReviewsController` |
+| DB | `staff_members.sql`, `db/scripts/staff-location-scope.sql` |
+| Tests | `StaffServiceTests`, export integration tests |
+| Shared / client / portal | `schemas.ts`, `api-client`, branch switch + `PortalActiveLocationService`, page reload subscribers |
 
 ---
 
@@ -122,7 +135,7 @@ Make the portal **branch switch** drive tenant APIs and exports honestly — fil
 
 - [x] Export bookings-register with `locationId` returns subset.
 - [x] Dashboard summary respects `locationId`.
-- [ ] Booking create persists location (unit — optional).
+- [x] Staff roster list respects branch assignment + `locationId` query.
 - Run: `dotnet test Adeni.slnx -c Release`, shared vitest, portal typecheck.
 
 ---
@@ -140,9 +153,11 @@ Make the portal **branch switch** drive tenant APIs and exports honestly — fil
 - [x] Tenant bookings list filters by `locationId`.
 - [x] Queue join via location slug stores branch on ticket.
 
-### P2 (deferred)
+### P2
 
-- Documented in § Phase 3 backlog.
+- [x] Staff branch assignment and roster filter.
+- [x] Calendar + customers + reviews honor active branch.
+- [x] Global loading panel during branch-switch refetch.
 
 ---
 
@@ -152,3 +167,4 @@ Make the portal **branch switch** drive tenant APIs and exports honestly — fil
 |----------|----------|
 | Payments without `BookingId` in collected series when scoped? | Exclude from branch-scoped collected totals. |
 | Legacy rows with null `BusinessLocationId`? | Backfill to primary; branch filter matches only explicit FK. |
+| Per-branch business hours? | Deferred — single tenant availability table until product requires branch rows. |

@@ -398,7 +398,7 @@ export class PortalShellComponent {
       }
     });
     this.activeLocation.selectionChanged$.pipe(takeUntilDestroyed()).subscribe(() => {
-      void this.loadBadges();
+      void this.activeLocation.runOnBranchSwitch(() => this.loadBadges());
     });
     void this.loadProfile();
   }

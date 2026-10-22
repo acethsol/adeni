@@ -270,11 +270,23 @@ public sealed class ReviewService(
 
     public async Task<IReadOnlyList<TenantReviewItem>> ListForTenantAsync(
         Guid tenantId,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
-        var items = await dbContext.Reviews
+        var reviewQuery = dbContext.Reviews
             .AsNoTracking()
-            .Where(x => x.TenantId == tenantId && !x.IsHidden)
+            .Where(x => x.TenantId == tenantId && !x.IsHidden);
+
+        if (locationId is Guid branchId)
+        {
+            reviewQuery = reviewQuery.Where(review =>
+                dbContext.Bookings.Any(booking =>
+                    booking.Id == review.BookingId
+                    && booking.TenantId == tenantId
+                    && booking.BusinessLocationId == branchId));
+        }
+
+        var items = await reviewQuery
             .Join(
                 dbContext.Customers.AsNoTracking(),
                 review => review.CustomerId,

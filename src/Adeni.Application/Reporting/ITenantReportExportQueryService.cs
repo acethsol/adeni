@@ -104,6 +104,7 @@ public interface ITenantReportExportQueryService
 
     Task<Result<IReadOnlyList<TenantCustomerExportRow>>> GetTenantCustomersAsync(
         Guid tenantId,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<IReadOnlyList<TenantLocationExportRow>>> GetTenantLocationsAsync(

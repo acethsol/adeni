@@ -14,8 +14,10 @@ import type {
   StaffCalendarLeaveItem,
   StaffCalendarResponse,
   StaffTeamCalendarResponse,
+  TenantEntitlements,
   WeeklyAvailabilityRule,
 } from "@adeni/shared";
+import { Subscription } from "rxjs";
 import {
   AdeniCarbonIconComponent,
   AdeniDataTableCellDirective,
@@ -49,6 +51,7 @@ import {
   type AdeniPillTone,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
 import { PortalSessionService } from "../../core/services/portal-session.service";
 
 const PX_PER_HOUR = 64;
@@ -131,6 +134,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly session = inject(PortalSessionService);
+  private readonly activeLocation = inject(PortalActiveLocationService);
 
   private readonly detailRail = viewChild<ElementRef<HTMLElement>>("detailRail");
 
@@ -159,6 +163,8 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
 
   staffId = "";
   private tickTimer: ReturnType<typeof setInterval> | null = null;
+  private branchSub: Subscription | null = null;
+  private tenantEntitlements = signal<TenantEntitlements | null>(null);
 
   readonly activeHours = computed((): WeeklyAvailabilityRule[] => {
     if (this.teamMode()) {
@@ -627,10 +633,17 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     void this.bootstrap();
+    this.branchSub = this.activeLocation.selectionChanged$.subscribe(() => {
+      void this.activeLocation.runOnBranchSwitch(() => this.load());
+    });
   }
 
   private async bootstrap(): Promise<void> {
     await this.session.ensureLoaded();
+    await this.api.withAuthorizedClient(async (c) => {
+      const profile = await c.getTenantProfile().catch(() => null);
+      this.tenantEntitlements.set(profile?.entitlements ?? null);
+    });
     const routeId = this.route.snapshot.paramMap.get("id");
     const path = this.route.snapshot.routeConfig?.path ?? "";
     const isTeamRoute = path === "calendar" || this.route.snapshot.data["teamCalendar"] === true;
@@ -742,6 +755,11 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
     if (this.tickTimer) {
       clearInterval(this.tickTimer);
     }
+    this.branchSub?.unsubscribe();
+  }
+
+  private branchLocationQuery(): string | undefined {
+    return this.activeLocation.tenantApiLocationId(this.tenantEntitlements());
   }
 
   prev(): void {
@@ -963,6 +981,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
     this.loading.set(true);
     this.error.set(null);
     const { from, to } = this.loadRange();
+    const locationId = this.branchLocationQuery();
     try {
       await this.feedback.runLoading(async () => {
         if (this.teamMode()) {
@@ -970,6 +989,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
             c.getTenantTeamCalendar({
               from: from.toISOString(),
               to: to.toISOString(),
+              locationId,
             }),
           );
           this.team.set(data);
@@ -979,6 +999,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
             c.getTenantStaffCalendar(this.staffId, {
               from: from.toISOString(),
               to: to.toISOString(),
+              locationId,
             }),
           );
           this.calendar.set(data);

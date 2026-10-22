@@ -8,8 +8,9 @@ CREATE TABLE [booking].[staff_members] (
     [Title]          NVARCHAR (120)     NULL,
     [Bio]            NVARCHAR (500)     NULL,
     [IsActive]       BIT                NOT NULL,
-    [SortOrder]      INT                NOT NULL,
-    [AvatarImageKey] NVARCHAR (512)     NULL,
+    [SortOrder]            INT                NOT NULL,
+    [BusinessLocationId]   UNIQUEIDENTIFIER   NULL,
+    [AvatarImageKey]       NVARCHAR (512)     NULL,
     [CreatedAt]      DATETIMEOFFSET (7) NOT NULL,
     [UpdatedAt]      DATETIMEOFFSET (7) NOT NULL,
     CONSTRAINT [PK_staff_members] PRIMARY KEY CLUSTERED ([Id] ASC)

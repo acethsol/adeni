@@ -27,6 +27,9 @@ public sealed class StaffMember : ITenantEntity
 
     public int SortOrder { get; set; }
 
+    /// <summary>When set, roster/calendar scope to this branch; null = all active branches.</summary>
+    public Guid? BusinessLocationId { get; set; }
+
     public string? AvatarImageKey { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }

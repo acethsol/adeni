@@ -17,7 +17,8 @@ public sealed record StaffMemberResponse(
     string PortalAccessStatus = "none",
     Guid? PortalInviteId = null,
     Guid? BusinessUserId = null,
-    string? PermissionRole = null);
+    string? PermissionRole = null,
+    Guid? BusinessLocationId = null);
 
 /// <summary>Public discovery shape — no first/last name.</summary>
 public sealed record PublicStaffMemberResponse(
@@ -38,7 +39,8 @@ public sealed record CreateStaffMemberRequest(
     string? Title = null,
     string? Bio = null,
     int SortOrder = 0,
-    IReadOnlyList<Guid>? ServiceOfferingIds = null);
+    IReadOnlyList<Guid>? ServiceOfferingIds = null,
+    Guid? BusinessLocationId = null);
 
 public sealed record UpdateStaffMemberRequest(
     string FirstName,
@@ -48,7 +50,8 @@ public sealed record UpdateStaffMemberRequest(
     string? Title,
     string? Bio,
     int SortOrder,
-    bool IsActive);
+    bool IsActive,
+    Guid? BusinessLocationId = null);
 
 public sealed record StaffLeaveResponse(
     Guid Id,
@@ -110,6 +113,7 @@ public interface IStaffService
 {
     Task<IReadOnlyList<StaffMemberResponse>> ListForTenantAsync(
         Guid tenantId,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<IReadOnlyList<PublicStaffMemberResponse>>> ListPublicBySlugAsync(
@@ -180,11 +184,13 @@ public interface IStaffService
         Guid staffMemberId,
         DateTimeOffset from,
         DateTimeOffset to,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<StaffTeamCalendarResponse>> GetTeamCalendarAsync(
         Guid tenantId,
         DateTimeOffset from,
         DateTimeOffset to,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default);
 }
