@@ -66,7 +66,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     { id: "links", label: "Links" },
     { id: "ledger", label: "Ledger" },
     { id: "documents", label: "Documents" },
-    { id: "export", label: "Staff export" },
+    { id: "export", label: "Exports" },
   ];
 
   exportFrom = "";
