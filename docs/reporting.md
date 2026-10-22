@@ -38,7 +38,7 @@ Peers
 |-------|-------------------|
 | Application | `IReportRenderer`, `IReportExportService`, `ITenantReportingQueryService` |
 | Infrastructure | `AddReportingModule()` — QuestPDF templates, ClosedXML exports, dashboard queries |
-| API | Dashboard routes today; `/api/v1/tenant/reporting/exports/*` Phase 3 |
+| API | `/api/v1/tenant/dashboard/*`, `/api/v1/tenant/reporting/exports/{reportKey}`, quote/statement PDF routes; `/api/v1/admin/reporting/*` |
 
 **Stack (canonical):** Angular + Carbon → .NET read APIs → SQL Server. **No DevExpress** in V1. **ClosedXML** when Excel ships ([tooling-policy.md](./tooling-policy.md)).
 
