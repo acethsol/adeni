@@ -56,13 +56,13 @@ Do **not** use unqualified **`MRR`** in new routes, DTOs, or admin UI where both
 
 ### 3.1 Reporting Foundation — **39A** (unblocks Notifications 38B)
 
-- [ ] `AddReportingModule()` in composition root
-- [ ] Application port: **`IReportRenderer`** — `RenderDocumentAsync(kind, data)` → PDF bytes (QuestPDF in Reporting.Infrastructure only)
-- [ ] Application port: `ITenantReportingQueryService` (alias/wrap `ITenantDashboardService` initially)
-- [ ] Move QuestPDF layout from `BillingDocumentService` → `Reporting.Infrastructure` behind `IReportRenderer`
-- [ ] Finance calls **`IReportRenderer`** for `GetPdfAsync` / HTTP PDF routes — Finance keeps persistence, sequences, tokens
-- [ ] Tests: PDF smoke + tenant denial unchanged behavior for receipt/invoice
-- [ ] **No** export orchestrator, ClosedXML, or admin GMV in 39A
+- [x] `AddReportingModule()` in composition root
+- [x] Application port: **`IReportRenderer`** — `RenderDocumentAsync(kind, data)` → PDF bytes (QuestPDF in Reporting.Infrastructure only)
+- [x] Application port: `ITenantReportingQueryService` (alias/wrap `ITenantDashboardService` initially)
+- [x] Move QuestPDF layout from `BillingDocumentService` → `Reporting.Infrastructure` behind `IReportRenderer`
+- [x] Finance calls **`IReportRenderer`** for `GetPdfAsync` / HTTP PDF routes — Finance keeps persistence, sequences, tokens
+- [x] Tests: PDF smoke + tenant denial unchanged behavior for receipt/invoice
+- [x] **No** export orchestrator, ClosedXML, or admin GMV in 39A
 
 ### 3.2 Reporting Completion — **39B**
 
@@ -246,7 +246,7 @@ All routes under `/api/v1/`; mutating document issue flows authenticated.
 
 ## 10. Tests
 
-- [ ] Unit: QuestPDF receipt fixture (39A)
+- [x] Unit: QuestPDF receipt fixture (39A)
 - [ ] Integration: PDF `application/pdf`; export 403 when `excelExport` false and format=xlsx
 - [ ] Export 403 when user lacks `RequiredPermission` for `reportKey`
 - [ ] Multi-location report denied when `multiLocationReporting` false and `locationId` omitted
@@ -260,9 +260,9 @@ Run: `dotnet test Adeni.slnx -c Release`
 
 ### 39A
 
-- [ ] QuestPDF under Reporting Infrastructure; Finance has no direct QuestPDF reference
-- [ ] Receipt/invoice PDF behavior unchanged for tenants
-- [ ] `IReportRenderer` callable from Notifications integration test (mock)
+- [x] QuestPDF under Reporting Infrastructure; Finance has no direct QuestPDF reference
+- [x] Receipt/invoice PDF behavior unchanged for tenants
+- [x] `IReportRenderer` callable from Notifications integration test (mock)
 
 ### 39B
 

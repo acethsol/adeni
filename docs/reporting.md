@@ -12,7 +12,7 @@ Read-only and render responsibilities: **PDF documents**, **tenant/admin analyti
 
 | Area | V1 status | Notes |
 |------|-----------|--------|
-| **Receipt / invoice PDF** | Implemented in Finance infra (QuestPDF inline) | Phase 1: extract to `IReportRenderer` |
+| **Receipt / invoice PDF** | **39A** — `IReportRenderer` + QuestPDF in `Adeni.Infrastructure.Reporting` | Finance delegates `GetPdfAsync` |
 | **Quote / statement PDF** | Planned | Phase 2 |
 | **Portal dashboard KPIs** | Shipped | `ITenantDashboardService` → `/api/v1/tenant/dashboard/*` |
 | **CSV / Excel / PDF exports** | Partial | Compensation CSV on Finance; unified export orchestrator Phase 3 |

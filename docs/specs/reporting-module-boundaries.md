@@ -47,11 +47,11 @@ Establish **Reporting** as the extractable bounded context for **print-quality d
 ### Phase 1 — Boundaries + extract PDF from Finance
 
 - [x] This spec approved
-- [ ] `AddReportingModule()` in composition root (may wrap existing `Dashboard` + QuestPDF helpers initially)
-- [ ] Application ports: `IReportRenderer`, `ITenantReportingQueryService` (or retain `ITenantDashboardService` as alias)
-- [ ] Move QuestPDF layout code from `BillingDocumentService` → `Reporting.Infrastructure` behind `IReportRenderer`
-- [ ] Finance calls Reporting for `GetPdfAsync` / email attachment bytes
-- [ ] Docs: [reporting.md](../reporting.md) runbook (create when Phase 1 starts)
+- [x] `AddReportingModule()` in composition root (may wrap existing `Dashboard` + QuestPDF helpers initially)
+- [x] Application ports: `IReportRenderer`, `ITenantReportingQueryService` (or retain `ITenantDashboardService` as alias)
+- [x] Move QuestPDF layout code from `BillingDocumentService` → `Reporting.Infrastructure` behind `IReportRenderer`
+- [x] Finance calls Reporting for `GetPdfAsync` / email attachment bytes
+- [x] Docs: [reporting.md](../reporting.md) runbook (create when Phase 1 starts)
 
 ### Phase 2 — Documents expansion
 

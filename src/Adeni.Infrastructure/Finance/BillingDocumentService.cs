@@ -4,76 +4,22 @@ using System.Security.Cryptography;
 using Adeni.Application.Abstractions;
 using Adeni.Application.Notifications;
 using Adeni.Application.Finance;
+using Adeni.Application.Reporting;
 using Adeni.Domain.Auditing;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
 using Adeni.Domain.Finance;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using QuestPDF.Fluent;
-using QuestPDF.Helpers;
-using QuestPDF.Infrastructure;
 
 public sealed class BillingDocumentService(
     AdeniDbContext dbContext,
     IPaymentOrchestrator paymentOrchestrator,
     INotificationDispatcher notificationDispatcher,
+    IReportRenderer reportRenderer,
     IAuditLogWriter auditLogWriter,
     ICorrelationContext correlationContext) : IBillingDocumentService
 {
-    private static readonly object QuestInitLock = new();
-    private static bool _questInitialized;
-    private static Exception? _questInitError;
-
-    private static void EnsureQuestPdfReady()
-    {
-        if (_questInitialized)
-        {
-            if (_questInitError is not null)
-            {
-                throw new InvalidOperationException(
-                    "PDF generation is unavailable on this runtime.",
-                    _questInitError);
-            }
-
-            return;
-        }
-
-        lock (QuestInitLock)
-        {
-            if (_questInitialized)
-            {
-                if (_questInitError is not null)
-                {
-                    throw new InvalidOperationException(
-                        "PDF generation is unavailable on this runtime.",
-                        _questInitError);
-                }
-
-                return;
-            }
-
-            try
-            {
-                QuestPDF.Settings.License = LicenseType.Community;
-            }
-            catch (Exception ex)
-            {
-                _questInitError = ex;
-            }
-            finally
-            {
-                _questInitialized = true;
-            }
-
-            if (_questInitError is not null)
-            {
-                throw new InvalidOperationException(
-                    "PDF generation is unavailable on this runtime.",
-                    _questInitError);
-            }
-        }
-    }
 
     public async Task<Result<BillingDocumentResponse>> GetAsync(
         Guid documentId,
@@ -381,8 +327,10 @@ public sealed class BillingDocumentService(
             return Result.Failure<byte[]>(Error.Conflict("Voided documents cannot be downloaded."));
         }
 
-        var pdf = BuildPdf(entity);
-        return Result.Success(pdf);
+        return await reportRenderer.RenderDocumentAsync(
+            ToReportKind(entity.Kind),
+            ToReportData(entity),
+            cancellationToken);
     }
 
     public async Task<Result<BillingDocumentResponse>> EmailAsync(
@@ -771,79 +719,28 @@ public sealed class BillingDocumentService(
         return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 
-    private static byte[] BuildPdf(BillingDocument entity)
-    {
-        EnsureQuestPdfReady();
-        var kindLabel = entity.Kind == BillingDocumentKind.Receipt ? "Receipt" : "Invoice";
-        return Document.Create(container =>
-        {
-            container.Page(page =>
-            {
-                page.Margin(40);
-                page.Size(PageSizes.A4);
-                page.DefaultTextStyle(x => x.FontSize(11));
+    private static ReportKind ToReportKind(BillingDocumentKind kind) =>
+        kind == BillingDocumentKind.Receipt ? ReportKind.BillingReceipt : ReportKind.BillingInvoice;
 
-                page.Header().Column(col =>
-                {
-                    col.Item().Text(entity.BusinessNameSnapshot).FontSize(20).SemiBold();
-                    col.Item().Text(kindLabel).FontSize(14).FontColor(Colors.Grey.Darken2);
-                    col.Item().Text(entity.DocumentNumber).FontSize(12);
-                });
-
-                page.Content().PaddingVertical(20).Column(col =>
-                {
-                    if (!string.IsNullOrWhiteSpace(entity.CustomerNameSnapshot))
-                    {
-                        col.Item().Text($"Customer: {entity.CustomerNameSnapshot}");
-                    }
-
-                    if (entity.IssuedAt is DateTimeOffset issued)
-                    {
-                        col.Item().Text($"Date: {issued:yyyy-MM-dd HH:mm} UTC");
-                    }
-
-                    if (!string.IsNullOrWhiteSpace(entity.MethodLabel))
-                    {
-                        col.Item().Text($"Method: {entity.MethodLabel}");
-                    }
-
-                    col.Item().PaddingTop(16).Table(table =>
-                    {
-                        table.ColumnsDefinition(columns =>
-                        {
-                            columns.RelativeColumn(4);
-                            columns.RelativeColumn(1);
-                            columns.RelativeColumn(2);
-                            columns.RelativeColumn(2);
-                        });
-
-                        table.Header(header =>
-                        {
-                            header.Cell().Text("Description").SemiBold();
-                            header.Cell().AlignRight().Text("Qty").SemiBold();
-                            header.Cell().AlignRight().Text("Unit").SemiBold();
-                            header.Cell().AlignRight().Text("Total").SemiBold();
-                        });
-
-                        foreach (var line in entity.Lines.OrderBy(x => x.SortOrder))
-                        {
-                            table.Cell().Text(line.Description);
-                            table.Cell().AlignRight().Text(line.Quantity.ToString("0.##"));
-                            table.Cell().AlignRight().Text($"{line.UnitAmount:0.00} {entity.Currency}");
-                            table.Cell().AlignRight().Text($"{line.LineTotal:0.00} {entity.Currency}");
-                        }
-                    });
-
-                    col.Item().AlignRight().PaddingTop(12)
-                        .Text($"Total: {entity.Total:0.00} {entity.Currency}")
-                        .FontSize(14)
-                        .SemiBold();
-                });
-
-                page.Footer().AlignCenter().Text("Issued via Adeni").FontSize(9).FontColor(Colors.Grey.Medium);
-            });
-        }).GeneratePdf();
-    }
+    private static BillingDocumentReportData ToReportData(BillingDocument entity) =>
+        new(
+            ToReportKind(entity.Kind),
+            entity.DocumentNumber,
+            entity.BusinessNameSnapshot,
+            entity.CustomerNameSnapshot,
+            entity.Currency,
+            entity.Total,
+            entity.MethodLabel,
+            entity.IssuedAt,
+            entity.Lines
+                .OrderBy(x => x.SortOrder)
+                .Select(x => new BillingDocumentLineReportData(
+                    x.Description,
+                    x.Quantity,
+                    x.UnitAmount,
+                    x.LineTotal,
+                    x.SortOrder))
+                .ToArray());
 
     private async Task WriteAuditAsync(
         Guid documentId,

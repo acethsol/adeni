@@ -2,6 +2,7 @@ namespace Adeni.Infrastructure.Dashboard;
 
 using System.Text.Json;
 using Adeni.Application.Dashboard;
+using Adeni.Application.Reporting;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
@@ -13,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 public sealed class TenantDashboardService(
     AdeniDbContext dbContext,
-    IEntitlementsService entitlementsService) : ITenantDashboardService
+    IEntitlementsService entitlementsService) : ITenantDashboardService, ITenantReportingQueryService
 {
     private static readonly JsonSerializerOptions LayoutJsonOptions = new()
     {

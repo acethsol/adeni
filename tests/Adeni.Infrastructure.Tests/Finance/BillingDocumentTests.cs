@@ -13,6 +13,7 @@ using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Events;
 using Adeni.Infrastructure.Finance;
 using Adeni.Infrastructure.Persistence;
+using Adeni.Infrastructure.Reporting;
 using Adeni.Infrastructure.Tests.Booking;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -197,6 +198,7 @@ public sealed class BillingDocumentTests
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();
         services.AddBookingTestRealtime();
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
+        services.AddReportingModule();
         services.AddScoped<IBillingDocumentService, BillingDocumentService>();
         services.AddSingleton(NullLogger<PaymentBookingHandler>.Instance);
         return services.BuildServiceProvider();

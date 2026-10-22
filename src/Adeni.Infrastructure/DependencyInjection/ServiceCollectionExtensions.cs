@@ -21,6 +21,7 @@ using Adeni.Infrastructure.Reviews;
 using Adeni.Infrastructure.Markets;
 using Adeni.Infrastructure.Messaging;
 using Adeni.Infrastructure.Realtime;
+using Adeni.Infrastructure.Reporting;
 using Adeni.Infrastructure.Subscriptions;
 using Adeni.Infrastructure.Tenancy;
 using Adeni.Infrastructure.Translation;
@@ -71,6 +72,7 @@ public static class ServiceCollectionExtensions
         services.AddCatalogModule();
         services.AddBookingModule();
         services.AddDashboardModule();
+        services.AddReportingModule();
         services.AddReviewsModule();
         services.AddDiscoveryModule();
         services.AddNotificationsModule(configuration);

@@ -41,8 +41,8 @@
 | **35** | **Tenant customer records** | ✅ Done — [sprint-35-tenant-customer-records.md](./specs/sprint-35-tenant-customer-records.md) |
 | **36** | **Messaging rewrite (SignalR + conversations)** | ✅ Done — [sprint-36-messaging-rewrite.md](./specs/sprint-36-messaging-rewrite.md); Sprint 18 teardown |
 | **33-closeout** | **Entitlements v2 closeout** | ✅ Done — [sprint-33-entitlements-closeout.md](./specs/sprint-33-entitlements-closeout.md); matrix hygiene + portal parity before module sprints |
-| **38** | **Notifications module (Resend + Twilio)** | Planned — [sprint-38-notifications-module.md](./specs/sprint-38-notifications-module.md) |
-| **39** | **Reporting module (exports + PDF extract)** | Planned — [sprint-39-reporting-module.md](./specs/sprint-39-reporting-module.md) |
+| **38** | **Notifications module (Resend + Twilio)** | **38A ✅** (local `cc35842`) — [sprint-38-notifications-module.md](./specs/sprint-38-notifications-module.md); **38B** after **39A** |
+| **39** | **Reporting module (exports + PDF extract)** | **39A ✅** — [sprint-39-reporting-module.md](./specs/sprint-39-reporting-module.md); **39B** exports/admin |
 | **37** | **Retention (packages, loyalty, memberships)** | Draft — [sprint-37-retention-module.md](./specs/sprint-37-retention-module.md); after 33-closeout → 38A → 39A → 38B → 39B → 37.1–37.5 |
 | **39-finance** | **Finance module boundaries (Phase 1)** | ✅ Done — [finance-module-boundaries.md](./specs/finance-module-boundaries.md); `/api/v1/finance/*`, portal `/finance` |
 | — | **Reporting module boundaries** | Spec — [reporting-module-boundaries.md](./specs/reporting-module-boundaries.md); runbook [reporting.md](./reporting.md) |
@@ -53,7 +53,7 @@
 | — | App Insights (Obs 1) | → Sprint 20 |
 | — | Booking notifications, auto-confirm, payments, waitlist | → Sprint 15 |
 
-**Next up:** Sprint **32a** dashboard foundation; Sprint **33** remainder on **staging** (live Paystack + platform subscription MRR E2E). **Module order:** **33-closeout** → **38A** notifications foundation → **39A** reporting foundation (`IReportRenderer`) → **38B** notifications completion → **39B** reporting completion → **37.1–37.5** retention. Sprint 20 parallel. See [roadmap-modules.md](./roadmap-modules.md).
+**Next up:** Sprint **38B** notifications completion (receipt PDF email via **`IReportRenderer`**). Parallel: **32a** dashboard; **33** staging Paystack + platform subscription MRR E2E; **39B** reporting exports. **Module order:** ~~33-closeout~~ → ~~38A~~ → ~~39A~~ → **38B** → **39B** → **37.1–37.5** retention. Sprint 20 parallel. See [roadmap-modules.md](./roadmap-modules.md).
 
 ---
 ## Sprint 0 — Foundation & dev tooling ✅
