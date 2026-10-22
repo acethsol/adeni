@@ -41,7 +41,6 @@
           listExports
           label="Export"
           [items]="exportItems()"
-          [busy]="exporting()"
           (exportSelect)="downloadCustomersExport($event)"
         />
       </adeni-list-toolbar>
