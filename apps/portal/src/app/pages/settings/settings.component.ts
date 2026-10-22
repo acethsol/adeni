@@ -4,12 +4,16 @@ import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { map } from "rxjs";
 import {
+  getDefaultNotificationTemplate,
   hasCapability,
   hasTenantEntitlement,
+  NOTIFICATION_LOCALES,
   notificationTemplateLabel,
+  notificationLocaleDisplayName,
   PORTAL_EDITABLE_NOTIFICATION_TEMPLATE_IDS,
-  supportedLocales,
   type BusinessProfile,
+  type NotificationLanguageMode,
+  type NotificationLocale,
   type NotificationTemplateId,
   type NotificationTemplateOverride,
 } from "@adeni/shared";
@@ -68,13 +72,13 @@ export class SettingsComponent implements OnInit {
   readonly templateOverridesEntitled = computed(
     () => this.profile()?.entitlements?.configurableReminders === true,
   );
-  readonly localeOptions = supportedLocales;
+  readonly localeOptions = NOTIFICATION_LOCALES;
   readonly editableTemplateIds = PORTAL_EDITABLE_NOTIFICATION_TEMPLATE_IDS;
 
-  defaultNotificationLocale: "en" | "fr" = "en";
-  notificationLanguageMode: "single" | "bilingual" = "single";
-  /** Portal UI: English | French | Bilingual EN+FR */
-  notificationLanguageChoice: "en" | "fr" | "bilingual" = "en";
+  defaultNotificationLocale: NotificationLocale = "en";
+  secondaryNotificationLocale: NotificationLocale = "fr";
+  notificationLanguageMode: NotificationLanguageMode = "single";
+  templateOverrideEditLocale: NotificationLocale = "en";
   templateOverrides: NotificationTemplateOverride[] = [];
 
   autoConfirm = false;
@@ -133,8 +137,11 @@ export class SettingsComponent implements OnInit {
             this.pushEnabled = prefs.pushEnabled;
             this.smsRemindersEnabled = prefs.smsRemindersEnabled;
             this.defaultNotificationLocale = prefs.defaultNotificationLocale ?? "en";
+            this.secondaryNotificationLocale =
+              prefs.secondaryNotificationLocale ??
+              (this.defaultNotificationLocale === "en" ? "fr" : "en");
             this.notificationLanguageMode = prefs.notificationLanguageMode ?? "single";
-            this.applyLanguageChoiceFromPrefs();
+            this.syncTemplateOverrideEditLocale();
             this.templateOverrides = [...(prefs.templateOverrides ?? [])];
             this.ensureEditableTemplateRows();
             this.notificationsError.set(null);
@@ -191,13 +198,9 @@ export class SettingsComponent implements OnInit {
             smsRemindersEnabled: this.smsEntitled()
               ? this.smsRemindersEnabled
               : false,
-            ...this.prefsFromLanguageChoice(),
+            ...this.notificationLocalePrefsPayload(),
             templateOverrides: this.templateOverridesEntitled()
-              ? this.templateOverrides.filter(
-                  (row) =>
-                    (row.subject?.trim()?.length ?? 0) > 0 ||
-                    (row.body?.trim()?.length ?? 0) > 0,
-                )
+              ? this.templateOverrides.filter((row) => this.isPersistedOverride(row))
               : [],
           }),
         );
@@ -261,22 +264,65 @@ export class SettingsComponent implements OnInit {
   }
 
   overrideFor(templateId: NotificationTemplateId): NotificationTemplateOverride {
+    const locale = this.templateOverrideEditLocale;
     const existing = this.templateOverrides.find(
-      (row) =>
-        row.templateId === templateId && row.locale === this.defaultNotificationLocale,
+      (row) => row.templateId === templateId && row.locale === locale,
     );
     if (existing) {
+      this.prefillOverrideFromCatalogIfEmpty(existing);
       return existing;
     }
 
-    const created: NotificationTemplateOverride = {
-      templateId,
-      locale: this.defaultNotificationLocale,
-      subject: "",
-      body: "",
-    };
+    const created = this.createOverrideRow(templateId, locale);
     this.templateOverrides = [...this.templateOverrides, created];
     return created;
+  }
+
+  localeLabel(locale: NotificationLocale): string {
+    return notificationLocaleDisplayName(locale, "label");
+  }
+
+  onNotificationLanguageModeChange(): void {
+    if (this.notificationLanguageMode === "single") {
+      this.syncTemplateOverrideEditLocale();
+      return;
+    }
+
+    if (this.secondaryNotificationLocale === this.defaultNotificationLocale) {
+      this.secondaryNotificationLocale = this.pickDistinctLocale(this.defaultNotificationLocale);
+    }
+    this.syncTemplateOverrideEditLocale();
+    this.ensureEditableTemplateRows();
+  }
+
+  onPrimaryNotificationLocaleChange(): void {
+    if (
+      this.notificationLanguageMode === "bilingual" &&
+      this.secondaryNotificationLocale === this.defaultNotificationLocale
+    ) {
+      this.secondaryNotificationLocale = this.pickDistinctLocale(this.defaultNotificationLocale);
+    }
+    this.syncTemplateOverrideEditLocale();
+    this.ensureEditableTemplateRows();
+  }
+
+  onSecondaryNotificationLocaleChange(): void {
+    if (this.secondaryNotificationLocale === this.defaultNotificationLocale) {
+      this.secondaryNotificationLocale = this.pickDistinctLocale(this.defaultNotificationLocale);
+    }
+    this.ensureEditableTemplateRows();
+  }
+
+  onTemplateOverrideEditLocaleChange(): void {
+    this.ensureEditableTemplateRows();
+  }
+
+  templateOverrideLocaleOptions(): NotificationLocale[] {
+    if (this.notificationLanguageMode === "bilingual") {
+      return [this.defaultNotificationLocale, this.secondaryNotificationLocale];
+    }
+
+    return [this.defaultNotificationLocale];
   }
 
   private ensureEditableTemplateRows(): void {
@@ -285,36 +331,77 @@ export class SettingsComponent implements OnInit {
     }
   }
 
-  onNotificationLanguageChoiceChange(): void {
-    const choice = this.notificationLanguageChoice;
-    if (choice === "bilingual") {
-      this.notificationLanguageMode = "bilingual";
-      this.defaultNotificationLocale = "en";
-      return;
+  private syncTemplateOverrideEditLocale(): void {
+    const options = this.templateOverrideLocaleOptions();
+    if (!options.includes(this.templateOverrideEditLocale)) {
+      this.templateOverrideEditLocale = options[0] ?? this.defaultNotificationLocale;
     }
-    this.notificationLanguageMode = "single";
-    this.defaultNotificationLocale = choice;
   }
 
-  private applyLanguageChoiceFromPrefs(): void {
-    if (this.notificationLanguageMode === "bilingual") {
-      this.notificationLanguageChoice = "bilingual";
-      return;
-    }
-    this.notificationLanguageChoice = this.defaultNotificationLocale;
-  }
-
-  private prefsFromLanguageChoice(): {
-    defaultNotificationLocale: "en" | "fr";
-    notificationLanguageMode: "single" | "bilingual";
+  private notificationLocalePrefsPayload(): {
+    defaultNotificationLocale: NotificationLocale;
+    secondaryNotificationLocale?: NotificationLocale;
+    notificationLanguageMode: NotificationLanguageMode;
   } {
-    if (this.notificationLanguageChoice === "bilingual") {
-      return { defaultNotificationLocale: "en", notificationLanguageMode: "bilingual" };
+    if (this.notificationLanguageMode === "bilingual") {
+      return {
+        defaultNotificationLocale: this.defaultNotificationLocale,
+        secondaryNotificationLocale: this.secondaryNotificationLocale,
+        notificationLanguageMode: "bilingual",
+      };
     }
+
     return {
-      defaultNotificationLocale: this.notificationLanguageChoice,
+      defaultNotificationLocale: this.defaultNotificationLocale,
       notificationLanguageMode: "single",
     };
+  }
+
+  private pickDistinctLocale(exclude: NotificationLocale): NotificationLocale {
+    const alternate = this.localeOptions.find((entry) => entry.id !== exclude);
+    return alternate?.id ?? (exclude === "en" ? "fr" : "en");
+  }
+
+  private createOverrideRow(
+    templateId: NotificationTemplateId,
+    locale: NotificationLocale,
+  ): NotificationTemplateOverride {
+    const defaults = getDefaultNotificationTemplate(templateId, locale);
+    return {
+      templateId,
+      locale,
+      subject: defaults?.subject ?? "",
+      body: defaults?.body ?? "",
+    };
+  }
+
+  private prefillOverrideFromCatalogIfEmpty(row: NotificationTemplateOverride): void {
+    const defaults = getDefaultNotificationTemplate(row.templateId, row.locale);
+    if (!defaults) {
+      return;
+    }
+
+    if (!row.subject?.trim()) {
+      row.subject = defaults.subject;
+    }
+    if (!row.body?.trim()) {
+      row.body = defaults.body;
+    }
+  }
+
+  private isPersistedOverride(row: NotificationTemplateOverride): boolean {
+    const subject = row.subject?.trim() ?? "";
+    const body = row.body?.trim() ?? "";
+    if (!subject && !body) {
+      return false;
+    }
+
+    const defaults = getDefaultNotificationTemplate(row.templateId, row.locale);
+    if (!defaults) {
+      return Boolean(subject || body);
+    }
+
+    return subject !== defaults.subject.trim() || body !== defaults.body.trim();
   }
 
   async saveMessaging(): Promise<void> {

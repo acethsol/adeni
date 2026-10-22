@@ -59,9 +59,27 @@ public sealed class NotificationPreferencesService(
 
         var locale = NotificationTemplateText.NormalizeLocale(request.DefaultNotificationLocale);
         var languageMode = NotificationTemplateText.NormalizeLanguageMode(request.NotificationLanguageMode);
-        if (languageMode == "bilingual" && locale != "en")
+        string? secondaryLocale = null;
+        if (languageMode == "bilingual")
         {
-            locale = "en";
+            if (string.IsNullOrWhiteSpace(request.SecondaryNotificationLocale))
+            {
+                return Result.Failure<NotificationPreferencesResponse>(
+                    Error.Validation("Bilingual mode requires a secondary notification locale."));
+            }
+
+            secondaryLocale = NotificationTemplateText.NormalizeLocale(request.SecondaryNotificationLocale);
+            if (string.Equals(secondaryLocale, locale, StringComparison.OrdinalIgnoreCase))
+            {
+                return Result.Failure<NotificationPreferencesResponse>(
+                    Error.Validation("Secondary locale must differ from the primary locale."));
+            }
+
+            if (!NotificationLocaleCodes.IsSupported(secondaryLocale))
+            {
+                return Result.Failure<NotificationPreferencesResponse>(
+                    Error.Validation("Secondary notification locale is not supported."));
+            }
         }
 
         var overrides = request.TemplateOverrides ?? [];
@@ -121,6 +139,7 @@ public sealed class NotificationPreferencesService(
         prefs.PushEnabled = request.PushEnabled;
         prefs.SmsRemindersEnabled = request.SmsRemindersEnabled;
         prefs.DefaultNotificationLocale = locale;
+        prefs.SecondaryNotificationLocale = secondaryLocale;
         prefs.NotificationLanguageMode = languageMode;
         prefs.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -194,17 +213,32 @@ public sealed class NotificationPreferencesService(
             PushEnabled: false,
             SmsRemindersEnabled: false,
             DefaultNotificationLocale: "en",
+            SecondaryNotificationLocale: null,
             NotificationLanguageMode: "single",
             TemplateOverrides: overrides);
 
     private static NotificationPreferencesResponse Map(
         TenantNotificationPreferences prefs,
-        IReadOnlyList<NotificationTemplateOverrideDto> overrides) =>
-        new(
+        IReadOnlyList<NotificationTemplateOverrideDto> overrides)
+    {
+        var primary = NotificationTemplateText.NormalizeLocale(prefs.DefaultNotificationLocale);
+        var mode = NotificationTemplateText.NormalizeLanguageMode(prefs.NotificationLanguageMode);
+        string? secondary = string.IsNullOrWhiteSpace(prefs.SecondaryNotificationLocale)
+            ? null
+            : NotificationTemplateText.NormalizeLocale(prefs.SecondaryNotificationLocale);
+
+        if (mode == "bilingual" && (secondary is null || string.Equals(secondary, primary, StringComparison.OrdinalIgnoreCase)))
+        {
+            secondary = primary == "en" ? "fr" : "en";
+        }
+
+        return new NotificationPreferencesResponse(
             prefs.EmailEnabled,
             prefs.PushEnabled,
             prefs.SmsRemindersEnabled,
-            NotificationTemplateText.NormalizeLocale(prefs.DefaultNotificationLocale),
-            NotificationTemplateText.NormalizeLanguageMode(prefs.NotificationLanguageMode),
+            primary,
+            mode == "bilingual" ? secondary : null,
+            mode,
             overrides);
+    }
 }

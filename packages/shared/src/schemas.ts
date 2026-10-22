@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { normalizeDashboardWidgetWidth } from "./dashboard-widget-width";
 import { type PagedResult, pagedResultSchema } from "./paging";
+import { collectNotificationCatalogLocaleIds, isNotificationLocaleId } from "./notification-templates";
 
 export const categorySchema = z.object({
   id: z.string(),
@@ -1979,9 +1980,19 @@ export const notificationTemplateIdSchema = z.enum([
 
 export type NotificationTemplateId = z.infer<typeof notificationTemplateIdSchema>;
 
+const notificationCatalogLocaleIds = collectNotificationCatalogLocaleIds();
+const notificationLocaleEnum =
+  notificationCatalogLocaleIds.length > 0
+    ? (notificationCatalogLocaleIds as [string, ...string[]])
+    : (["en", "fr"] as [string, ...string[]]);
+
+export const notificationLocaleSchema = z.enum(notificationLocaleEnum);
+
+export type NotificationLocale = z.infer<typeof notificationLocaleSchema>;
+
 export const notificationTemplateOverrideSchema = z.object({
   templateId: notificationTemplateIdSchema,
-  locale: z.enum(["en", "fr"]),
+  locale: notificationLocaleSchema,
   subject: z.string().trim().max(200).optional(),
   body: z.string().trim().max(2000).optional(),
 });
@@ -1992,18 +2003,54 @@ export const notificationLanguageModeSchema = z.enum(["single", "bilingual"]);
 
 export type NotificationLanguageMode = z.infer<typeof notificationLanguageModeSchema>;
 
-export const notificationPreferencesSchema = z.object({
+const notificationPreferencesBaseSchema = z.object({
   emailEnabled: z.boolean(),
   pushEnabled: z.boolean(),
   smsRemindersEnabled: z.boolean(),
-  defaultNotificationLocale: z.enum(["en", "fr"]).default("en"),
+  defaultNotificationLocale: notificationLocaleSchema.default("en"),
+  secondaryNotificationLocale: notificationLocaleSchema.optional(),
   notificationLanguageMode: notificationLanguageModeSchema.default("single"),
   templateOverrides: z.array(notificationTemplateOverrideSchema).max(32).default([]),
 });
 
+function refineNotificationLanguageLocales<
+  T extends {
+    notificationLanguageMode: NotificationLanguageMode;
+    defaultNotificationLocale: string;
+    secondaryNotificationLocale?: string;
+  },
+>(data: T, ctx: z.RefinementCtx): void {
+  if (data.notificationLanguageMode !== "bilingual") {
+    return;
+  }
+
+  const secondary = data.secondaryNotificationLocale;
+  if (!secondary || !isNotificationLocaleId(secondary)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["secondaryNotificationLocale"],
+      message: "Bilingual mode requires a secondary notification locale.",
+    });
+    return;
+  }
+
+  if (secondary === data.defaultNotificationLocale) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["secondaryNotificationLocale"],
+      message: "Secondary locale must differ from the primary locale.",
+    });
+  }
+}
+
+export const notificationPreferencesSchema = notificationPreferencesBaseSchema.superRefine(
+  refineNotificationLanguageLocales,
+);
+
 export type NotificationPreferences = z.infer<typeof notificationPreferencesSchema>;
 
-export const updateNotificationPreferencesRequestSchema = notificationPreferencesSchema;
+export const updateNotificationPreferencesRequestSchema =
+  notificationPreferencesBaseSchema.superRefine(refineNotificationLanguageLocales);
 
 export type UpdateNotificationPreferencesRequest = z.infer<
   typeof updateNotificationPreferencesRequestSchema

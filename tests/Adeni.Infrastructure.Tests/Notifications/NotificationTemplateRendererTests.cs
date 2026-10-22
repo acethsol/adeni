@@ -38,17 +38,33 @@ public sealed class NotificationTemplateRendererTests
     }
 
     [Fact]
-    public void MergeBilingualEmail_combines_english_and_french_sections()
+    public void MergeBilingualEmail_combines_primary_and_secondary_sections_en_fr()
     {
         var merged = NotificationTemplateText.MergeBilingualEmail(
             new RenderedNotificationTemplate("Confirmed", "Hello"),
-            new RenderedNotificationTemplate("Confirmé", "Bonjour"));
+            new RenderedNotificationTemplate("Confirmé", "Bonjour"),
+            "en",
+            "fr");
 
         Assert.Equal("Confirmed / Confirmé", merged.Subject);
-        Assert.Contains(NotificationTemplateText.BilingualEmailEnglishHeading, merged.Body, StringComparison.Ordinal);
+        Assert.Contains("--- English ---", merged.Body, StringComparison.Ordinal);
         Assert.Contains("Hello", merged.Body, StringComparison.Ordinal);
-        Assert.Contains(NotificationTemplateText.BilingualEmailFrenchHeading, merged.Body, StringComparison.Ordinal);
+        Assert.Contains("--- Français ---", merged.Body, StringComparison.Ordinal);
         Assert.Contains("Bonjour", merged.Body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MergeBilingualEmail_orders_sections_by_primary_locale_fr_en()
+    {
+        var merged = NotificationTemplateText.MergeBilingualEmail(
+            new RenderedNotificationTemplate("Confirmé", "Bonjour"),
+            new RenderedNotificationTemplate("Confirmed", "Hello"),
+            "fr",
+            "en");
+
+        var frenchIndex = merged.Body.IndexOf("--- Français ---", StringComparison.Ordinal);
+        var englishIndex = merged.Body.IndexOf("--- English ---", StringComparison.Ordinal);
+        Assert.True(frenchIndex >= 0 && englishIndex > frenchIndex);
     }
 
     [Fact]

@@ -3,15 +3,17 @@
 | Field | Value |
 |-------|-------|
 | **Parent** | [sprint-38c-notification-templates-i18n.md](./sprint-38c-notification-templates-i18n.md) |
-| **Status** | Done (2026-10-22) |
+| **Status** | Done (2026-10-22); bilingual locale pair extensibility (2026-10-22) |
 
 ## Bilingual customer email
 
 - Tenant `notificationLanguageMode`: `single` (default) \| `bilingual`
-- `defaultNotificationLocale`: primary locale for **single** mode and for **SMS** when bilingual (`en` when bilingual EN+FR)
-- **Email + bilingual:** one message — render catalog `en` + `fr`, merge with `--- English ---` / `--- Français ---` section headings; subject `en / fr` when they differ
+- `defaultNotificationLocale`: **primary** locale — single mode default; bilingual email first section + **SMS** body
+- `secondaryNotificationLocale`: required when `bilingual`; must differ from primary; options from notification template catalog locales (`NOTIFICATION_LOCALES` in `@adeni/shared`, today `en` + `fr`)
+- **Email + bilingual:** one message — render catalog for primary + secondary locales; section headings use native locale labels (e.g. `--- English ---`, `--- Français ---`); subject `primary / secondary` when they differ
 - **SMS + bilingual:** primary locale only (ignores customer `PreferredLocale` for SMS body)
 - **Email + single:** unchanged locale resolution (customer → tenant default → market → `en`)
+- Portal template override editors pre-fill from catalog defaults per selected template locale; only diffs persist as overrides
 
 ## Portal discoverability
 
@@ -22,4 +24,4 @@
 
 ## API
 
-`notificationPreferencesSchema` adds `notificationLanguageMode`.
+`notificationPreferencesSchema` adds `notificationLanguageMode`, optional `secondaryNotificationLocale` (required + distinct when bilingual). DB: `notifications.tenant_notification_preferences.SecondaryNotificationLocale` (nullable).

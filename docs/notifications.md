@@ -78,7 +78,8 @@ Realtime **SignalR** events are **not** part of this module.
 
 Stored on `TenantNotificationPreferences`:
 
-- `NotificationLanguageMode`: `single` \| `bilingual` — bilingual merges en+fr in **one email**; SMS uses `DefaultNotificationLocale` only.
+- `NotificationLanguageMode`: `single` \| `bilingual` — bilingual merges **primary + secondary** locales in **one email** (`DefaultNotificationLocale` + `SecondaryNotificationLocale`); SMS uses primary (`DefaultNotificationLocale`) only.
+- Supported notification locales: keys in `packages/shared/src/data/notification-templates.json` (exposed as `NOTIFICATION_LOCALES` in `@adeni/shared`).
 
 - `EmailEnabled`
 - `PushEnabled`

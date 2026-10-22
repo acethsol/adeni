@@ -736,6 +736,7 @@ public sealed class AdeniDbContext(
             entity.HasKey(x => x.TenantId);
             entity.Property(x => x.SmsRemindersEnabled).HasColumnName("SmsRemindersEnabled");
             entity.Property(x => x.DefaultNotificationLocale).HasMaxLength(8).HasDefaultValue("en");
+            entity.Property(x => x.SecondaryNotificationLocale).HasMaxLength(8);
             entity.Property(x => x.NotificationLanguageMode).HasMaxLength(16).HasDefaultValue("single");
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });

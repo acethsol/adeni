@@ -1,6 +1,6 @@
 import notificationTemplatesJson from "./data/notification-templates.json";
 import type { LocaleId } from "./i18n";
-import { defaultLocale, isLocaleId } from "./i18n";
+import { defaultLocale, getLocaleOption, isLocaleId, supportedLocales } from "./i18n";
 import {
   notificationTemplateIdSchema,
   type NotificationTemplateId,
@@ -25,6 +25,43 @@ type Catalog = {
 };
 
 const catalog = notificationTemplatesJson as Catalog;
+
+/** Locales present in the notification template catalog (extensible as JSON gains keys). */
+export function collectNotificationCatalogLocaleIds(): string[] {
+  const ids = new Set<string>();
+  for (const template of Object.values(catalog.templates)) {
+    for (const locale of Object.keys(template)) {
+      ids.add(locale);
+    }
+  }
+  return [...ids].sort();
+}
+
+const catalogLocaleIds = collectNotificationCatalogLocaleIds();
+
+export type NotificationLocaleId = (typeof catalogLocaleIds)[number];
+
+export const NOTIFICATION_LOCALES = catalogLocaleIds.map((id) => {
+  const known = supportedLocales.find((entry) => entry.id === id);
+  return known ?? { id: id as LocaleId, label: id, nativeLabel: id };
+});
+
+export function isNotificationLocaleId(value: string): value is NotificationLocaleId {
+  return catalogLocaleIds.includes(value);
+}
+
+export function notificationLocaleDisplayName(locale: string, style: "native" | "label" = "native"): string {
+  if (isLocaleId(locale)) {
+    const option = getLocaleOption(locale);
+    return style === "native" ? option.nativeLabel : option.label;
+  }
+
+  return locale;
+}
+
+export function bilingualEmailSectionHeading(locale: string): string {
+  return `--- ${notificationLocaleDisplayName(locale, "native")} ---`;
+}
 
 export function getDefaultNotificationTemplate(
   templateId: NotificationTemplateId,

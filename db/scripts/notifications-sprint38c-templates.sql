@@ -16,6 +16,13 @@ BEGIN
 END
 GO
 
+IF COL_LENGTH('notifications.tenant_notification_preferences', 'SecondaryNotificationLocale') IS NULL
+BEGIN
+    ALTER TABLE [notifications].[tenant_notification_preferences]
+        ADD [SecondaryNotificationLocale] NVARCHAR(8) NULL;
+END
+GO
+
 IF COL_LENGTH('identity.customers', 'PreferredLocale') IS NULL
 BEGIN
     ALTER TABLE [identity].[customers]

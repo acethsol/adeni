@@ -5,6 +5,7 @@ CREATE TABLE [notifications].[tenant_notification_preferences] (
     [SmsRemindersEnabled]        BIT                NOT NULL,
     [DefaultNotificationLocale]  NVARCHAR (8)       NOT NULL CONSTRAINT [DF_tenant_notification_preferences_DefaultNotificationLocale] DEFAULT ('en'),
     [NotificationLanguageMode]   NVARCHAR (16)      NOT NULL CONSTRAINT [DF_tenant_notification_preferences_NotificationLanguageMode] DEFAULT ('single'),
+    [SecondaryNotificationLocale] NVARCHAR (8)      NULL,
     [UpdatedAt]                  DATETIMEOFFSET (7) NOT NULL,
     CONSTRAINT [PK_tenant_notification_preferences] PRIMARY KEY CLUSTERED ([TenantId] ASC)
 );

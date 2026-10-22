@@ -41,30 +41,37 @@ public sealed class NotificationTemplateDeliveryComposer(
 
         if (mode == "bilingual" && normalizedChannel == "email")
         {
-            var english = await templateRenderer.RenderAsync(
+            var primaryLocale = NotificationTemplateText.NormalizeLocale(prefs.DefaultNotificationLocale);
+            var secondaryLocale = ResolveSecondaryLocale(prefs, primaryLocale);
+
+            var primary = await templateRenderer.RenderAsync(
                 templateId,
                 tenantId,
-                "en",
+                primaryLocale,
                 data,
                 cancellationToken);
-            if (english.IsFailure)
+            if (primary.IsFailure)
             {
-                return english;
+                return primary;
             }
 
-            var french = await templateRenderer.RenderAsync(
+            var secondary = await templateRenderer.RenderAsync(
                 templateId,
                 tenantId,
-                "fr",
+                secondaryLocale,
                 data,
                 cancellationToken);
-            if (french.IsFailure)
+            if (secondary.IsFailure)
             {
-                return french;
+                return secondary;
             }
 
             return Result.Success(
-                NotificationTemplateText.MergeBilingualEmail(english.Value!, french.Value!));
+                NotificationTemplateText.MergeBilingualEmail(
+                    primary.Value!,
+                    secondary.Value!,
+                    primaryLocale,
+                    secondaryLocale));
         }
 
         return await templateRenderer.RenderAsync(
@@ -73,5 +80,29 @@ public sealed class NotificationTemplateDeliveryComposer(
             resolvedLocale,
             data,
             cancellationToken);
+    }
+
+    private static string ResolveSecondaryLocale(
+        NotificationPreferencesResponse prefs,
+        string primaryLocale)
+    {
+        if (!string.IsNullOrWhiteSpace(prefs.SecondaryNotificationLocale))
+        {
+            var normalized = NotificationTemplateText.NormalizeLocale(prefs.SecondaryNotificationLocale);
+            if (!string.Equals(normalized, primaryLocale, StringComparison.OrdinalIgnoreCase))
+            {
+                return normalized;
+            }
+        }
+
+        foreach (var candidate in new[] { "en", "fr" })
+        {
+            if (!string.Equals(candidate, primaryLocale, StringComparison.OrdinalIgnoreCase))
+            {
+                return candidate;
+            }
+        }
+
+        return primaryLocale == "en" ? "fr" : "en";
     }
 }

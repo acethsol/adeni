@@ -13,6 +13,7 @@ public sealed record NotificationPreferencesResponse(
     bool PushEnabled,
     bool SmsRemindersEnabled,
     string DefaultNotificationLocale,
+    string? SecondaryNotificationLocale,
     string NotificationLanguageMode,
     IReadOnlyList<NotificationTemplateOverrideDto> TemplateOverrides);
 
@@ -21,6 +22,7 @@ public sealed record UpdateNotificationPreferencesRequest(
     bool PushEnabled,
     bool SmsRemindersEnabled,
     string DefaultNotificationLocale,
+    string? SecondaryNotificationLocale,
     string NotificationLanguageMode,
     IReadOnlyList<NotificationTemplateOverrideDto>? TemplateOverrides);
 

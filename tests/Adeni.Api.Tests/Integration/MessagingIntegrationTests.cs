@@ -16,6 +16,7 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
     private const string CustomerSub = "auth0|messaging-customer";
     private const string BusinessSub = "auth0|messaging-business";
     private const string PrefsBusinessSub = "auth0|messaging-prefs-business";
+    private const string PrefsBilingualBusinessSub = "auth0|messaging-prefs-bilingual-business";
 
     private readonly WebApplicationFactory<Program> _factory;
 
@@ -212,6 +213,61 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
                 templateOverrides = Array.Empty<object>(),
             });
         Assert.Equal(HttpStatusCode.OK, patch.StatusCode);
+    }
+
+    [Fact]
+    public async Task Notification_preferences_bilingual_requires_distinct_secondary_locale()
+    {
+        var tenantId = await SeedTenantAsync(
+            SubscriptionSku.Professional,
+            PrefsBilingualBusinessSub,
+            "Prefs Shop Bilingual",
+            "messaging-prefs-bilingual");
+
+        var businessClient = _factory.CreateClient();
+        businessClient.DefaultRequestHeaders.Add("X-Dev-Auth0-Sub", PrefsBilingualBusinessSub);
+        businessClient.DefaultRequestHeaders.Add("X-Tenant-Id", tenantId.ToString());
+
+        var missingSecondary = await businessClient.PatchAsJsonAsync(
+            "/api/v1/tenant/notification-preferences",
+            new
+            {
+                emailEnabled = true,
+                pushEnabled = false,
+                smsRemindersEnabled = false,
+                defaultNotificationLocale = "en",
+                notificationLanguageMode = "bilingual",
+                templateOverrides = Array.Empty<object>(),
+            });
+        Assert.Equal(HttpStatusCode.BadRequest, missingSecondary.StatusCode);
+
+        var sameLocale = await businessClient.PatchAsJsonAsync(
+            "/api/v1/tenant/notification-preferences",
+            new
+            {
+                emailEnabled = true,
+                pushEnabled = false,
+                smsRemindersEnabled = false,
+                defaultNotificationLocale = "en",
+                secondaryNotificationLocale = "en",
+                notificationLanguageMode = "bilingual",
+                templateOverrides = Array.Empty<object>(),
+            });
+        Assert.Equal(HttpStatusCode.BadRequest, sameLocale.StatusCode);
+
+        var valid = await businessClient.PatchAsJsonAsync(
+            "/api/v1/tenant/notification-preferences",
+            new
+            {
+                emailEnabled = true,
+                pushEnabled = false,
+                smsRemindersEnabled = false,
+                defaultNotificationLocale = "fr",
+                secondaryNotificationLocale = "en",
+                notificationLanguageMode = "bilingual",
+                templateOverrides = Array.Empty<object>(),
+            });
+        Assert.Equal(HttpStatusCode.OK, valid.StatusCode);
     }
 
     private async Task<Guid> SeedTenantAsync(

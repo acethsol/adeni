@@ -13,230 +13,364 @@
   } @else {
     @if (tab() === "bookings") {
       <section class="card settings-card">
-        <h3>Booking behaviour</h3>
-        <p class="lede">
-          Control how new appointments are accepted and whether deposits are required online.
-        </p>
-        <label class="cds-toggle">
-          <input type="checkbox" role="switch" [(ngModel)]="autoConfirm" />
-          <span class="cds-toggle__track" aria-hidden="true"></span>
-          <span class="cds-toggle__label">Auto-confirm new bookings</span>
-        </label>
-        <p class="hint">When off, new bookings stay pending until you accept them.</p>
-        <div class="field">
-          <label for="deposit">Deposit percent (0–100)</label>
-          <input
-            id="deposit"
-            type="number"
-            min="0"
-            max="100"
-            [(ngModel)]="depositPercent"
-          />
+        <header class="settings-card__head">
+          <h3>Booking behaviour</h3>
+          <p class="lede">
+            Control how new appointments are accepted and whether deposits are required online.
+          </p>
+        </header>
+        <div class="settings-panel-grid settings-panel-grid--2">
+          <div class="settings-panel">
+            <h4 class="settings-panel__title">Confirmation</h4>
+            <label class="cds-toggle">
+              <input type="checkbox" role="switch" [(ngModel)]="autoConfirm" />
+              <span class="cds-toggle__track" aria-hidden="true"></span>
+              <span class="cds-toggle__label">Auto-confirm new bookings</span>
+            </label>
+            <p class="hint">When off, new bookings stay pending until you accept them.</p>
+          </div>
+          <div class="settings-panel">
+            <h4 class="settings-panel__title">Deposits</h4>
+            <div class="field field--compact">
+              <label for="deposit">Deposit percent (0–100)</label>
+              <input
+                id="deposit"
+                type="number"
+                min="0"
+                max="100"
+                [(ngModel)]="depositPercent"
+              />
+              <p class="hint">0 means no deposit. Applies when online payments are enabled for your plan.</p>
+            </div>
+          </div>
         </div>
-        <p class="hint">0 means no deposit. Only applies when online payments are enabled for your plan.</p>
-        <button
-          type="button"
-          class="btn btn-primary"
-          [disabled]="saving()"
-          (click)="saveBookings()"
-        >
-          <adeni-carbon-icon name="save" [size]="16" />
-          Save booking settings
-        </button>
+        <footer class="settings-actions">
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="saving()"
+            (click)="saveBookings()"
+          >
+            <adeni-carbon-icon name="save" [size]="16" />
+            Save booking settings
+          </button>
+        </footer>
       </section>
     }
 
     @if (tab() === "notifications") {
       <section class="card settings-card">
-        <h3>Customer &amp; staff alerts</h3>
-        <p class="lede">Choose which channels Adeni may use for reminders and business alerts.</p>
+        <header class="settings-card__head">
+          <h3>Customer &amp; staff alerts</h3>
+          <p class="lede">Choose channels, language, and optional custom message text.</p>
+        </header>
         @if (notificationsError()) {
           <p class="error-banner">{{ notificationsError() }}</p>
         }
-        <label class="cds-toggle">
-          <input type="checkbox" role="switch" [(ngModel)]="emailEnabled" />
-          <span class="cds-toggle__track" aria-hidden="true"></span>
-          <span class="cds-toggle__label">Email notifications</span>
-        </label>
-        <label class="cds-toggle">
-          <input type="checkbox" role="switch" [(ngModel)]="pushEnabled" />
-          <span class="cds-toggle__track" aria-hidden="true"></span>
-          <span class="cds-toggle__label">Push notifications</span>
-        </label>
-        @if (smsEntitled()) {
-          <label class="cds-toggle">
-            <input type="checkbox" role="switch" [(ngModel)]="smsRemindersEnabled" />
-            <span class="cds-toggle__track" aria-hidden="true"></span>
-            <span class="cds-toggle__label">SMS reminders</span>
-          </label>
-        } @else {
-          <p class="hint muted">
-            SMS reminders are on Professional and Business.
-            <a routerLink="/plan">Compare plans</a>
-          </p>
-        }
-        <div class="field">
-          <label for="notification-locale">Customer notification language</label>
-          <select
-            id="notification-locale"
-            [(ngModel)]="notificationLanguageChoice"
-            (ngModelChange)="onNotificationLanguageChoiceChange()"
-          >
-            <option value="en">English</option>
-            <option value="fr">French</option>
-            <option value="bilingual">Bilingual (English + French in one email)</option>
-          </select>
-          <p class="hint">
-            @if (notificationLanguageChoice === "bilingual") {
-              Email includes English and French sections in a single message. SMS uses English only.
-            } @else {
-              Each message is sent in one language. Adeni uses this when the customer's preference is unknown.
-            }
-          </p>
-        </div>
-        @if (templateOverridesEntitled()) {
-          <h4 class="subsection-title">Message text overrides</h4>
-          <p class="hint">
-            Optional custom subject and body for key templates in
-            {{ defaultNotificationLocale === "fr" ? "French" : "English" }}.
-          </p>
-          @for (templateId of editableTemplateIds; track templateId) {
-            <div class="field template-override-block">
-              <label>{{ templateLabel(templateId) }}</label>
-              <input
-                type="text"
-                placeholder="Custom subject (optional)"
-                [(ngModel)]="overrideFor(templateId).subject"
-              />
-              <textarea
-                rows="3"
-                placeholder="Custom body (optional)"
-                [(ngModel)]="overrideFor(templateId).body"
-              ></textarea>
+
+        <div class="settings-notifications-layout">
+          <div class="settings-notifications-side">
+            <div class="settings-panel">
+              <h4 class="settings-panel__title">Delivery channels</h4>
+              <ul class="settings-toggle-stack">
+                <li>
+                  <label class="cds-toggle">
+                    <input type="checkbox" role="switch" [(ngModel)]="emailEnabled" />
+                    <span class="cds-toggle__track" aria-hidden="true"></span>
+                    <span class="cds-toggle__label">Email notifications</span>
+                  </label>
+                </li>
+                <li>
+                  <label class="cds-toggle">
+                    <input type="checkbox" role="switch" [(ngModel)]="pushEnabled" />
+                    <span class="cds-toggle__track" aria-hidden="true"></span>
+                    <span class="cds-toggle__label">Push notifications</span>
+                  </label>
+                </li>
+                @if (smsEntitled()) {
+                  <li>
+                    <label class="cds-toggle">
+                      <input type="checkbox" role="switch" [(ngModel)]="smsRemindersEnabled" />
+                      <span class="cds-toggle__track" aria-hidden="true"></span>
+                      <span class="cds-toggle__label">SMS reminders</span>
+                    </label>
+                  </li>
+                }
+              </ul>
+              @if (!smsEntitled()) {
+                <p class="hint muted">
+                  SMS reminders are on Professional and Business.
+                  <a routerLink="/plan">Compare plans</a>
+                </p>
+              }
+            </div>
+
+            <div class="settings-panel settings-panel--language">
+              <h4 class="settings-panel__title" id="notification-language-heading">Customer notification language</h4>
+              <div class="field field--compact">
+                <label class="field__label" for="notification-language-mode">Language mode</label>
+                <select
+                  id="notification-language-mode"
+                  aria-labelledby="notification-language-heading"
+                  [(ngModel)]="notificationLanguageMode"
+                  (ngModelChange)="onNotificationLanguageModeChange()"
+                >
+                  <option value="single">Single language</option>
+                  <option value="bilingual">Bilingual (two languages in one email)</option>
+                </select>
+              </div>
+              @if (notificationLanguageMode === "single") {
+                <div class="field field--compact">
+                  <label class="field__label" for="notification-locale">Locale</label>
+                  <select
+                    id="notification-locale"
+                    [(ngModel)]="defaultNotificationLocale"
+                    (ngModelChange)="onPrimaryNotificationLocaleChange()"
+                  >
+                    @for (option of localeOptions; track option.id) {
+                      <option [value]="option.id">{{ option.label }} ({{ option.nativeLabel }})</option>
+                    }
+                  </select>
+                  <p class="hint">
+                    Each message is sent in one language when the customer's preference is unknown.
+                  </p>
+                </div>
+              } @else {
+                <div class="field field--compact">
+                  <label class="field__label" for="notification-locale-primary">Primary locale (email first section + SMS)</label>
+                  <select
+                    id="notification-locale-primary"
+                    [(ngModel)]="defaultNotificationLocale"
+                    (ngModelChange)="onPrimaryNotificationLocaleChange()"
+                  >
+                    @for (option of localeOptions; track option.id) {
+                      <option [value]="option.id">{{ option.label }} ({{ option.nativeLabel }})</option>
+                    }
+                  </select>
+                </div>
+                <div class="field field--compact">
+                  <label class="field__label" for="notification-locale-secondary">Secondary locale (email second section)</label>
+                  <select
+                    id="notification-locale-secondary"
+                    [(ngModel)]="secondaryNotificationLocale"
+                    (ngModelChange)="onSecondaryNotificationLocaleChange()"
+                  >
+                    @for (option of localeOptions; track option.id) {
+                      @if (option.id !== defaultNotificationLocale) {
+                        <option [value]="option.id">{{ option.label }} ({{ option.nativeLabel }})</option>
+                      }
+                    }
+                  </select>
+                  <p class="hint">
+                    Email includes {{ localeLabel(defaultNotificationLocale) }} and
+                    {{ localeLabel(secondaryNotificationLocale) }} sections in one message. SMS uses the primary locale only.
+                  </p>
+                </div>
+              }
+            </div>
+          </div>
+
+          @if (templateOverridesEntitled()) {
+            <div class="settings-panel settings-panel--editor">
+              <h4 class="settings-panel__title">Message text overrides</h4>
+              <div class="field field--compact">
+                <label class="field__label" for="template-override-locale">Template locale</label>
+                <select
+                  id="template-override-locale"
+                  [(ngModel)]="templateOverrideEditLocale"
+                  (ngModelChange)="onTemplateOverrideEditLocaleChange()"
+                >
+                  @for (locale of templateOverrideLocaleOptions(); track locale) {
+                    <option [value]="locale">{{ localeLabel(locale) }}</option>
+                  }
+                </select>
+              </div>
+              <p class="hint hint--tight">
+                Edit catalog defaults for {{ localeLabel(templateOverrideEditLocale) }}. Save to persist overrides.
+              </p>
+              <div class="template-override-list">
+                @for (templateId of editableTemplateIds; track templateId) {
+                  <article class="template-override-card">
+                    <h5 class="template-override-card__title">{{ templateLabel(templateId) }}</h5>
+                    <div class="field field--compact">
+                      <label class="sr-only" [for]="'tpl-subject-' + templateId">Subject</label>
+                      <input
+                        [id]="'tpl-subject-' + templateId"
+                        type="text"
+                        placeholder="Subject"
+                        [(ngModel)]="overrideFor(templateId).subject"
+                      />
+                    </div>
+                    <div class="field field--compact">
+                      <label class="sr-only" [for]="'tpl-body-' + templateId">Body</label>
+                      <textarea
+                        [id]="'tpl-body-' + templateId"
+                        rows="6"
+                        placeholder="Body"
+                        [(ngModel)]="overrideFor(templateId).body"
+                      ></textarea>
+                    </div>
+                  </article>
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="settings-panel settings-panel--muted">
+              <h4 class="settings-panel__title">Message text overrides</h4>
+              <p class="hint muted">
+                Custom reminder and booking message text is on Professional and Business.
+                <a routerLink="/plan">Compare plans</a>
+              </p>
             </div>
           }
-        } @else {
-          <p class="hint muted">
-            Custom reminder and booking message text is on Professional and Business.
-            <a routerLink="/plan">Compare plans</a>
-          </p>
-        }
-        <button
-          type="button"
-          class="btn btn-primary"
-          [disabled]="saving()"
-          (click)="saveNotifications()"
-        >
-          <adeni-carbon-icon name="save" [size]="16" />
-          Save notification preferences
-        </button>
+        </div>
+
+        <footer class="settings-actions">
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="saving()"
+            (click)="saveNotifications()"
+          >
+            <adeni-carbon-icon name="save" [size]="16" />
+            Save notification preferences
+          </button>
+        </footer>
       </section>
     }
 
     @if (tab() === "policies") {
       <section class="card settings-card">
-        <h3>Customer-facing policies</h3>
-        <p class="lede">
-          This is the single place to edit policy text and acceptance rules. On
-          <a routerLink="/public-page">Public page</a>, you only choose whether the Policies section is
-          visible — not the wording.
-        </p>
-        <div class="field">
-          <label for="policy-booking">Booking policy</label>
-          <textarea id="policy-booking" rows="4" [(ngModel)]="policyBooking"></textarea>
+        <header class="settings-card__head">
+          <h3>Customer-facing policies</h3>
+          <p class="lede">
+            Edit policy text here. On
+            <a routerLink="/public-page">Public page</a>, you only choose whether the Policies section is
+            visible — not the wording.
+          </p>
+        </header>
+        <div class="settings-panel">
+          <div class="settings-policy-grid">
+            <div class="field field--compact">
+              <label for="policy-booking">Booking policy</label>
+              <textarea id="policy-booking" rows="5" [(ngModel)]="policyBooking"></textarea>
+            </div>
+            <div class="field field--compact">
+              <label for="policy-payment">Payment policy</label>
+              <textarea id="policy-payment" rows="5" [(ngModel)]="policyPayment"></textarea>
+            </div>
+            <div class="field field--compact">
+              <label for="policy-cancellation">Cancellation policy</label>
+              <textarea id="policy-cancellation" rows="5" [(ngModel)]="policyCancellation"></textarea>
+            </div>
+            <div class="field field--compact">
+              <label for="policy-terms">Terms</label>
+              <textarea id="policy-terms" rows="5" [(ngModel)]="policyTerms"></textarea>
+            </div>
+          </div>
         </div>
-        <div class="field">
-          <label for="policy-payment">Payment policy</label>
-          <textarea id="policy-payment" rows="4" [(ngModel)]="policyPayment"></textarea>
+        <div class="settings-panel settings-panel--inline">
+          <label class="cds-toggle">
+            <input type="checkbox" role="switch" [(ngModel)]="requireAcceptance" />
+            <span class="cds-toggle__track" aria-hidden="true"></span>
+            <span class="cds-toggle__label">Require acceptance before booking</span>
+          </label>
         </div>
-        <div class="field">
-          <label for="policy-cancellation">Cancellation policy</label>
-          <textarea id="policy-cancellation" rows="4" [(ngModel)]="policyCancellation"></textarea>
-        </div>
-        <div class="field">
-          <label for="policy-terms">Terms</label>
-          <textarea id="policy-terms" rows="4" [(ngModel)]="policyTerms"></textarea>
-        </div>
-        <label class="cds-toggle">
-          <input type="checkbox" role="switch" [(ngModel)]="requireAcceptance" />
-          <span class="cds-toggle__track" aria-hidden="true"></span>
-          <span class="cds-toggle__label">Require acceptance before booking</span>
-        </label>
-        <button
-          type="button"
-          class="btn btn-primary"
-          [disabled]="saving()"
-          (click)="savePolicies()"
-        >
-          <adeni-carbon-icon name="save" [size]="16" />
-          Save policies
-        </button>
+        <footer class="settings-actions">
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="saving()"
+            (click)="savePolicies()"
+          >
+            <adeni-carbon-icon name="save" [size]="16" />
+            Save policies
+          </button>
+        </footer>
       </section>
     }
 
     @if (tab() === "walk-ins") {
       <section class="card settings-card">
-        <h3>Walk-in queue</h3>
-        <p class="lede">
-          Control when guests can join the line and how walk-ins interact with your appointment calendar.
-        </p>
-        <label class="cds-toggle">
-          <input type="checkbox" role="switch" [(ngModel)]="walkInsEnabled" />
-          <span class="cds-toggle__track" aria-hidden="true"></span>
-          <span class="cds-toggle__label">Accept walk-ins</span>
-        </label>
-        <div class="field">
-          <label for="max-waiting">Max guests waiting (leave empty for no limit)</label>
-          <input
-            id="max-waiting"
-            type="number"
-            min="1"
-            max="200"
-            [ngModel]="maxWalkInWaiting"
-            (ngModelChange)="maxWalkInWaiting = $event === '' || $event == null ? null : +$event"
-          />
+        <header class="settings-card__head">
+          <h3>Walk-in queue</h3>
+          <p class="lede">
+            Control when guests can join the line and how walk-ins interact with your appointment calendar.
+          </p>
+        </header>
+        <div class="settings-panel-grid settings-panel-grid--2">
+          <div class="settings-panel">
+            <h4 class="settings-panel__title">Acceptance</h4>
+            <label class="cds-toggle">
+              <input type="checkbox" role="switch" [(ngModel)]="walkInsEnabled" />
+              <span class="cds-toggle__track" aria-hidden="true"></span>
+              <span class="cds-toggle__label">Accept walk-ins</span>
+            </label>
+            <p class="hint">
+              Use <strong>Open 90 minutes</strong> on the Queue page for a quick temporary window.
+            </p>
+          </div>
+          <div class="settings-panel">
+            <h4 class="settings-panel__title">Capacity &amp; calendar</h4>
+            <div class="field field--compact">
+              <label for="max-waiting">Max guests waiting (empty = no limit)</label>
+              <input
+                id="max-waiting"
+                type="number"
+                min="1"
+                max="200"
+                [ngModel]="maxWalkInWaiting"
+                (ngModelChange)="maxWalkInWaiting = $event === '' || $event == null ? null : +$event"
+              />
+            </div>
+            <div class="field field--compact">
+              <label for="walk-in-policy">Calendar policy</label>
+              <select id="walk-in-policy" [(ngModel)]="walkInCalendarPolicy">
+                <option value="relaxed">Relaxed — allow join with long wait</option>
+                <option value="strict">Strict — block when appointments would overlap</option>
+              </select>
+            </div>
+          </div>
         </div>
-        <div class="field">
-          <label for="walk-in-policy">Calendar policy</label>
-          <select id="walk-in-policy" [(ngModel)]="walkInCalendarPolicy">
-            <option value="relaxed">Relaxed — allow join with long wait</option>
-            <option value="strict">Strict — block when appointments would overlap</option>
-          </select>
-        </div>
-        <p class="hint">
-          Use <strong>Open 90 minutes</strong> on the Queue page for a quick temporary window.
-        </p>
-        <button
-          type="button"
-          class="btn btn-primary"
-          [disabled]="saving()"
-          (click)="saveWalkIns()"
-        >
-          <adeni-carbon-icon name="save" [size]="16" />
-          Save walk-in settings
-        </button>
+        <footer class="settings-actions">
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="saving()"
+            (click)="saveWalkIns()"
+          >
+            <adeni-carbon-icon name="save" [size]="16" />
+            Save walk-in settings
+          </button>
+        </footer>
       </section>
     }
 
     @if (tab() === "messaging") {
       <section class="card settings-card">
-        <h3>In-app messaging</h3>
-        <p class="lede">Automations for customer conversations tied to bookings.</p>
-        <label class="cds-toggle">
-          <input type="checkbox" role="switch" [(ngModel)]="faqAutoResponderEnabled" />
-          <span class="cds-toggle__track" aria-hidden="true"></span>
-          <span class="cds-toggle__label">FAQ auto-responder</span>
-        </label>
-        <p class="hint">Sends a short canned reply when a customer starts a conversation.</p>
-        <button
-          type="button"
-          class="btn btn-primary"
-          [disabled]="saving()"
-          (click)="saveMessaging()"
-        >
-          <adeni-carbon-icon name="save" [size]="16" />
-          Save messaging settings
-        </button>
+        <header class="settings-card__head">
+          <h3>In-app messaging</h3>
+          <p class="lede">Automations for customer conversations tied to bookings.</p>
+        </header>
+        <div class="settings-panel settings-panel--inline">
+          <label class="cds-toggle">
+            <input type="checkbox" role="switch" [(ngModel)]="faqAutoResponderEnabled" />
+            <span class="cds-toggle__track" aria-hidden="true"></span>
+            <span class="cds-toggle__label">FAQ auto-responder</span>
+          </label>
+          <p class="hint">Sends a short canned reply when a customer starts a conversation.</p>
+        </div>
+        <footer class="settings-actions">
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="saving()"
+            (click)="saveMessaging()"
+          >
+            <adeni-carbon-icon name="save" [size]="16" />
+            Save messaging settings
+          </button>
+        </footer>
       </section>
     }
   }
