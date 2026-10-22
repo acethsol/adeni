@@ -40,7 +40,7 @@
 | **34** | **Payment settlement (Connect + split)** | Planned |
 | **35** | **Tenant customer records** | ✅ Done — [sprint-35-tenant-customer-records.md](./specs/sprint-35-tenant-customer-records.md) |
 | **36** | **Messaging rewrite (SignalR + conversations)** | ✅ Done — [sprint-36-messaging-rewrite.md](./specs/sprint-36-messaging-rewrite.md); Sprint 18 teardown |
-| **33-closeout** | **Entitlements v2 closeout** | Planned — [sprint-33-entitlements-closeout.md](./specs/sprint-33-entitlements-closeout.md); matrix hygiene + portal parity before module sprints |
+| **33-closeout** | **Entitlements v2 closeout** | ✅ Done — [sprint-33-entitlements-closeout.md](./specs/sprint-33-entitlements-closeout.md); matrix hygiene + portal parity before module sprints |
 | **38** | **Notifications module (Resend + Twilio)** | Planned — [sprint-38-notifications-module.md](./specs/sprint-38-notifications-module.md) |
 | **39** | **Reporting module (exports + PDF extract)** | Planned — [sprint-39-reporting-module.md](./specs/sprint-39-reporting-module.md) |
 | **37** | **Retention (packages, loyalty, memberships)** | Draft — [sprint-37-retention-module.md](./specs/sprint-37-retention-module.md); after 33-closeout → 38A → 39A → 38B → 39B → 37.1–37.5 |

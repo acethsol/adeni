@@ -17,7 +17,11 @@ import {
   type WeeklyAvailabilityRule,
   DEFAULT_PAGE_SIZE,
   LIST_PAGE_SIZE_OPTIONS,
+  canAddPractitionerAtCount,
+  formatTeamUsageMetric,
   sliceListPage,
+  type SubscriptionUsage,
+  type TenantEntitlements,
 } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
@@ -176,6 +180,8 @@ export class StaffComponent implements OnInit, OnDestroy {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly staff = signal<StaffMember[]>([]);
+  readonly entitlements = signal<TenantEntitlements | null>(null);
+  readonly subscriptionUsage = signal<SubscriptionUsage | null>(null);
   readonly rosterSearch = signal("");
   readonly bookingFilter = signal<StaffBookingFilter>("all");
   readonly portalFilter = signal<StaffPortalFilter>("all");
@@ -252,6 +258,26 @@ export class StaffComponent implements OnInit, OnDestroy {
   readonly availableRoles = computed(() =>
     staffRolesForCategories(this.categorySlugs(), this.preserveRoleKey()),
   );
+
+  readonly practitionersActive = computed(() => {
+    const usage = this.subscriptionUsage();
+    if (usage) {
+      return usage.practitionersActive;
+    }
+    return this.staff().filter((m) => m.isActive).length;
+  });
+
+  readonly canAddPractitioner = computed(() =>
+    canAddPractitionerAtCount(this.entitlements(), this.practitionersActive()),
+  );
+
+  readonly teamUsageLabel = computed(() => {
+    const usage = this.subscriptionUsage();
+    if (!usage?.entitlements.maxPractitioners) {
+      return null;
+    }
+    return `${formatTeamUsageMetric(usage)} on your plan`;
+  });
 
   readonly sortColumnId = signal<string | null>(null);
   readonly sortDirection = signal<AdeniDataTableSortDirection>("asc");
@@ -841,13 +867,16 @@ export class StaffComponent implements OnInit, OnDestroy {
 
   private async fetchStaffPageData(): Promise<void> {
     await this.api.withAuthorizedClient(async (c) => {
-      const [staff, catalog, profile] = await Promise.all([
+      const [staff, catalog, profile, usage] = await Promise.all([
         c.listTenantStaff(),
         c.getTenantServiceCatalog(),
         c.getTenantProfile().catch(() => null),
+        c.getTenantSubscriptionUsage().catch(() => null),
       ]);
       this.staff.set(staff);
       this.services.set(catalog.items.filter((s) => s.isActive !== false));
+      this.entitlements.set(usage?.entitlements ?? profile?.entitlements ?? null);
+      this.subscriptionUsage.set(usage);
       const slugs = [
         profile?.categorySlug,
         ...(profile?.additionalCategorySlugs ?? []),
@@ -857,6 +886,12 @@ export class StaffComponent implements OnInit, OnDestroy {
   }
 
   openCreate(): void {
+    if (!this.canAddPractitioner()) {
+      const message = "Your plan team limit is reached. Upgrade on Plan to add more members.";
+      this.error.set(message);
+      this.feedback.error(message);
+      return;
+    }
     this.editingId.set(null);
     this.preserveRoleKey.set(null);
     this.formTab.set("profile");

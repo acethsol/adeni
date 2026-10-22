@@ -177,6 +177,8 @@ export const publicBusinessProfileSchema = z.object({
       }),
     )
     .nullish(),
+  /** When false, Discover hides join-waitlist (Starter tier). */
+  waitlistEnabled: z.boolean().optional(),
 });
 
 export type PublicBusinessProfile = z.infer<typeof publicBusinessProfileSchema>;
@@ -954,8 +956,11 @@ export const tenantEntitlementsSchema = z.object({
   publicProfile: z.boolean().optional(),
   discoverListing: z.boolean().optional(),
   messaging: z.boolean(),
+  /** @deprecated Removed from plan matrix; always true in API for compat. Use capabilities.deposits for booking deposits. */
   invoicesReceipts: z.boolean().optional(),
+  /** @deprecated Removed from plan matrix; table stakes. */
   onlinePayments: z.boolean().optional(),
+  /** @deprecated Removed from plan matrix; use Finance capabilities.deposits. */
   deposits: z.boolean().optional(),
   basicReminders: z.boolean().optional(),
   configurableReminders: z.boolean().optional(),

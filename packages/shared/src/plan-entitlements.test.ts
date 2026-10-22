@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   buildPlanComparison,
@@ -6,6 +9,11 @@ import {
   PLAN_COMPARISON_ROW_DEFS,
   PLAN_ENTITLEMENTS,
 } from "./plan-entitlements";
+
+const repoSeedPath = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "../../../docs/specs/adeni-subscription-pricing-v1/plan-entitlements.seed.json",
+);
 
 describe("plan-entitlements", () => {
   it("Starter inbox is enabled", () => {
@@ -44,5 +52,18 @@ describe("plan-entitlements", () => {
   it("PLAN_COMPARISON stays aligned with seed matrix", () => {
     expect(PLAN_COMPARISON).toEqual(buildPlanComparison());
     expect(PLAN_COMPARISON.length).toBe(PLAN_COMPARISON_ROW_DEFS.length);
+  });
+
+  it("shared catalog matches docs seed file", () => {
+    const seed = JSON.parse(readFileSync(repoSeedPath, "utf8"));
+    expect(PLAN_ENTITLEMENTS).toEqual(seed);
+  });
+
+  it("PLAN_COMPARISON omits table-stakes finance rows", () => {
+    const labels = PLAN_COMPARISON.map((row) => row.label);
+    expect(labels).not.toContain("Deposits");
+    expect(labels).not.toContain("Online payments");
+    expect(labels).not.toContain("Invoices & receipts");
+    expect(labels).not.toContain("Basic analytics");
   });
 });

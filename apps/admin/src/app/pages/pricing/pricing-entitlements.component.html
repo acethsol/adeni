@@ -24,6 +24,9 @@
       <adeni-data-table [rows]="filteredRows()" [columns]="columns" [trackRow]="trackRow">
         <ng-template adeniDataTableCell="feature" let-row>
           <span class="feature-label">{{ row.label }}</span>
+          @if (row.adminNote) {
+            <span class="muted admin-note">{{ row.adminNote }}</span>
+          }
         </ng-template>
         <ng-template adeniDataTableCell="starter" let-row>
           @if (row.kind === "flag") {

@@ -7,6 +7,7 @@ using Adeni.Application.Discovery;
 using Adeni.Application.Markets;
 using Adeni.Application.Security;
 using Adeni.Application.Storage;
+using Adeni.Application.Subscriptions;
 using Adeni.Domain.Common;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
@@ -20,7 +21,8 @@ public sealed class DiscoveryService(
     Application.Reviews.IReviewService reviewService,
     IMarketCatalog marketCatalog,
     IBusinessCapabilitiesService businessCapabilitiesService,
-    ICategoryService categoryService) : IDiscoveryService
+    ICategoryService categoryService,
+    IEntitlementsService entitlementsService) : IDiscoveryService
 {
     private const int DefaultPageSize = 20;
     private const int MaxPageSize = 50;
@@ -597,7 +599,8 @@ public sealed class DiscoveryService(
             Adeni.Application.Tenancy.PublicPageConfigMapper.FromProfile(business.profile, logoImageUrl),
             imageUrls,
             Adeni.Application.Tenancy.PublicPageConfigMapper.PoliciesFromProfileOrNull(business.profile),
-            openingHours);
+            openingHours,
+            WaitlistEnabled: entitlementsService.GetEntitlementsForTenant(business.tenant).Waitlist);
     }
 
     private async Task<IReadOnlyList<PublicOpeningHours>> LoadPublicOpeningHoursAsync(

@@ -4,30 +4,32 @@
 |-------|-------|
 | **Sprint** | Cross-cutting — Notifications (transactional delivery) |
 | **Author** | Team |
-| **Status** | Approved — Phase 1+ backlog (Resend + Twilio) |
+| **Status** | Approved — boundaries; **implementation authority:** [sprint-38-notifications-module.md](./sprint-38-notifications-module.md) |
 | **Created** | 2026-10-19 |
 
 ---
 
 ## 1. Goal (one sentence)
 
-Establish **Notifications** as the extractable bounded context for **transactional outbound messages** (email, SMS, later push/WhatsApp API) — driven by domain events and tenant preferences — without coupling controllers to vendors.
+Establish **Notifications** as the extractable bounded context for **transactional outbound messages** (email, SMS, later push) — driven by domain events and tenant preferences — without coupling controllers to vendors.
 
 ---
 
 ## 2. Context
 
-- [tooling-policy.md](../tooling-policy.md) — **Resend** (email), **Twilio** (SMS / WhatsApp API later), **FCM+APNs** (push)
+- [tooling-policy.md](../tooling-policy.md) — **Resend** (email), **Twilio** (SMS), **FCM+APNs** (push)
 - [architecture.md](../architecture.md) — Notifications module; domain events → handlers
 - [roadmap-modules.md](../roadmap-modules.md) #12 Notifications / reminders — **Partial**
 - **Messaging** (Sprint 36) — in-app SignalR conversations; **not** replaced by Notifications
-- **Reporting/Finance** — email **attachments** (PDF) supplied as bytes; Notifications sends, does not render PDF
+- **Reporting/Finance** — receipt PDF bytes via Application **`IReportRenderer`** (38B only); Notifications sends, does not render PDF
+- **Implementation:** [sprint-38-notifications-module.md](./sprint-38-notifications-module.md) — **38A** (no Reporting dependency), **38B** (receipt PDF after Reporting 39A)
 
 **Shipped today:**
 
 - `INotificationDispatcher`, `INotificationPreferencesService`
 - `PreferenceAwareNotificationDispatcher` → **`LoggingNotificationDispatcher`** (stub)
 - Handlers: booking confirmed/rejected/cancelled, waitlist slot opened, new conversation message
+- Preference field **`SmsWhatsAppReminderEnabled`** — rename target **`SmsRemindersEnabled`** (SMS-only; see Sprint 38)
 
 ---
 
@@ -39,43 +41,42 @@ Establish **Notifications** as the extractable bounded context for **transaction
 | 2 | **Transactional email** → **Resend** adapter behind `IEmailNotificationProvider`. |
 | 3 | **SMS** (reminders, opt-in) → **Twilio** adapter behind `ISmsNotificationProvider`. |
 | 4 | Keep **`INotificationDispatcher`** as the single Application entry; **no** Resend/Twilio calls from controllers. |
-| 5 | **Tenant preferences** gate channels (`EmailEnabled`, `SmsWhatsAppReminderEnabled`, `PushEnabled`) — already on `TenantNotificationPreferences`. |
-| 6 | **WhatsApp deep links** (`wa.me`) remain client-side for “message business” — **not** Cloud API unless user/tenant opted in (Twilio WhatsApp Phase 3+). |
-| 7 | **Push (FCM/APNs)** is a separate channel and provider — Phase 4; not a Twilio substitute. |
-| 8 | **Idempotency:** store outbound `notification_deliveries` (or equivalent) with dedupe key per event + channel + recipient to survive event replay. |
+| 5 | **Tenant preferences** gate channels (`EmailEnabled`, **`SmsRemindersEnabled`** after rename, `PushEnabled`) on `TenantNotificationPreferences`. |
+| 6 | **`wa.me` / client contact buttons** remain **client-side only** — **Twilio WhatsApp Cloud/API is not V1** (no WhatsApp templates or automated WhatsApp in this module). |
+| 7 | **Push (FCM/APNs)** is a separate channel and provider — backlog after 38B; not a Twilio substitute. |
+| 8 | **Idempotency:** store outbound `notification_deliveries` with dedupe key per event + channel + recipient to survive event replay. |
 | 9 | **PII:** never log full email/phone/body; use `PiiMasker` in audit metadata only. |
 | 10 | **Marketing drips / CRM** — out of scope V1. |
+| 11 | **Country-aware senders:** `NotificationSenderConfig` per market (e.g. **CA**, **NG**) — do not assume one global Twilio number for all tenants. |
+| 12 | **Entitlements:** reminder tiers and `smsEnabled` per [sprint-38-notifications-module.md §6](./sprint-38-notifications-module.md#6-reminder--sms-entitlement-semantics); [entitlements closeout](./sprint-33-entitlements-closeout.md). |
 
 ---
 
-## 4. In scope (by phase)
+## 4. In scope (by sprint phase)
 
-### Phase 1 — Vendor adapters (staging)
+> Detail, checklists, and acceptance criteria: **[sprint-38-notifications-module.md](./sprint-38-notifications-module.md)**.
 
-- [x] This spec approved
-- [ ] `AddNotificationsModule()` registers Resend + Twilio when configured (stub/logging when keys missing in Development)
-- [ ] `IEmailNotificationProvider` + `ResendEmailNotificationProvider`
-- [ ] `ISmsNotificationProvider` + `TwilioSmsNotificationProvider`
-- [ ] Replace inner `LoggingNotificationDispatcher` with **`ChannelNotificationDispatcher`** (routes by `message.Channel`)
-- [ ] Config: `Resend:ApiKey`, `Resend:From`, `Twilio:AccountSid`, `Twilio:AuthToken`, `Twilio:FromNumber`
-- [ ] Integration test with mock HTTP handler (no live send in CI)
+### 38A — Notifications Foundation (no Reporting dependency)
 
-### Phase 2 — Templates + high-value flows
+- Resend + Twilio adapters, `ChannelNotificationDispatcher`, `notification_deliveries` idempotency
+- Recipient resolution via Booking/Customer **Application ports**
+- **`NotificationSenderConfig`** — country-aware email/SMS sender resolution
+- Preference rename: **`SmsRemindersEnabled`**
+- High-value **email-only** flows (booking confirmed/rejected/cancelled, staff invite, conversation stub)
 
-- [ ] Typed templates (booking confirmed, rejected, cancelled, receipt emailed, staff invite)
-- [ ] Wire **Finance/Reporting** receipt email to Resend with PDF attachment
-- [ ] Queue/waitlist SMS when `SmsWhatsAppReminderEnabled` (Twilio)
-- [ ] Rate limits on public-adjacent triggers (align Sprint 20 infra)
+**Not in 38A:** receipt PDF attachment, scheduled reminder worker, Reporting Infrastructure references.
 
-### Phase 3 — WhatsApp API (optional, opt-in)
+### 38B — Notifications Completion (after Reporting **39A**)
 
-- [ ] Twilio WhatsApp templates for appointment reminders (market/legal review)
-- [ ] Separate preference flag if needed beyond `SmsWhatsAppReminderEnabled`
+- **Receipt email** with PDF — handler calls **`IReportRenderer`** (Application port only; never QuestPDF or Reporting Infrastructure from Notifications)
+- Scheduled appointment reminders (entitlement-gated: `basicReminders`, `configurableReminders`, `followUpAutomation`)
+- Waitlist SMS polish, follow-up automation, **Retention** domain event handlers (Retention raises; Notifications delivers)
 
-### Phase 4 — Push
+**Retention events (38B+):** full matrix in [sprint-38-notifications-module.md §7](./sprint-38-notifications-module.md#7-event--notification-matrix) — e.g. `MembershipActivated`, `MembershipRenewed`, `MembershipPaymentFailed`, `MembershipExpiring`, `MembershipCancelled`, `BenefitExpiring`, `PackageExpiring`, loyalty/referral events.
 
-- [ ] Device registration table + FCM sender
-- [ ] Fan-out from same domain events as email/SMS
+### Push (backlog)
+
+- Device registration + FCM sender; fan-out from same events as email/SMS
 
 ---
 
@@ -83,27 +84,32 @@ Establish **Notifications** as the extractable bounded context for **transaction
 
 - In-app chat delivery (Messaging module)
 - SignalR realtime badges (Operations/Messaging hubs)
+- **Twilio WhatsApp API**, WhatsApp templates, automated WhatsApp reminders — **`wa.me` stays client-only**
 - Marketing newsletters, drip campaigns, Intercom-style CRM
 - Replacing Auth0 email (password reset) — Auth0 owns auth emails unless product decides otherwise
-- Sending payment webhooks or provider callbacks
+- Inbound Resend/Twilio webhooks / SMS reply handling (V1)
+- Payment provider webhooks (Finance — **Murphy** signature + idempotency unchanged on Finance routes)
+- Metered **SMS usage billing** (`smsUsageBilling` reserved; not implemented in Sprint 38)
 
 ---
 
 ## 6. Architecture stack (canonical)
 
 ```
-Domain events (Booking, Waitlist, Messaging, Finance, …)
+Domain events (Booking, Waitlist, Messaging, Finance, Retention, …)
         ↓
   IDomainEventHandler<*>  (Notifications.Infrastructure)
         ↓
   INotificationDispatcher
         ↓
-  PreferenceAwareNotificationDispatcher
+  PreferenceAwareNotificationDispatcher  (SmsRemindersEnabled)
+        ↓
+  EntitlementAwareDecorator — smsEnabled, basicReminders / configurableReminders / followUpAutomation
         ↓
   ChannelNotificationDispatcher
-     ├─ email  → IEmailNotificationProvider → Resend
-     ├─ sms    → ISmsNotificationProvider   → Twilio
-     ├─ push   → IPushNotificationProvider  → FCM (Phase 4)
+     ├─ email  → IEmailNotificationProvider → Resend (From via NotificationSenderConfig)
+     ├─ sms    → ISmsNotificationProvider   → Twilio (sender per country/market)
+     ├─ push   → IPushNotificationProvider  → FCM (backlog)
      └─ (dev)  → LoggingNotificationProvider when keys absent
 ```
 
@@ -111,13 +117,13 @@ Domain events (Booking, Waitlist, Messaging, Finance, …)
 
 | Field | Usage |
 |-------|--------|
-| `Channel` | `email` \| `sms` \| `push` \| `whatsapp` (future) |
+| `Channel` | `email` \| `sms` \| `push` |
 | `RecipientKey` | Email address, E.164 phone, or device token reference — **never log raw** |
 | `Subject` | Email subject; SMS preview ignored or truncated |
 | `Body` | Plain/HTML email body or SMS text |
 | `TenantId` | Preference gating + audit |
 
-Phase 2+: optional `TemplateId`, `TemplateData`, `Attachment[]` on a new `SendNotificationRequest` if `NotificationMessage` is too narrow.
+38B+: optional `TemplateId`, `TemplateData`, `Attachment[]` on a new `SendNotificationRequest` if `NotificationMessage` is too narrow.
 
 ---
 
@@ -125,14 +131,15 @@ Phase 2+: optional `TemplateId`, `TemplateData`, `Attachment[]` on a new `SendNo
 
 ```
 Notifications (extractable)
-├── Dispatcher     — INotificationDispatcher, preferences
+├── Dispatcher     — INotificationDispatcher, preferences, entitlement decorator
 ├── Providers      — Resend, Twilio, (FCM later)
-├── Handlers       — subscribe to domain events
-└── Deliveries     — idempotency + audit trail (Phase 1 table)
+├── Handlers       — subscribe to domain events (incl. Retention in 38B)
+└── Deliveries     — idempotency + audit trail
 
 Messaging (peer)     — conversations, SignalR
-Reporting (peer)     — PDF bytes for attachment
+Reporting (peer)     — IReportRenderer → PDF bytes (38B only)
 Finance (peer)       — payment completed → optional receipt email trigger
+Retention (peer)     — raises transactional events; never calls Resend/Twilio
 ```
 
 **Application ports:**
@@ -143,21 +150,25 @@ Finance (peer)       — payment completed → optional receipt email trigger
 | `INotificationPreferencesService` | Tenant toggles (existing) |
 | `IEmailNotificationProvider` | Resend send |
 | `ISmsNotificationProvider` | Twilio SMS send |
+| `IReportRenderer` | PDF bytes for receipt email (**38B**; implemented in Reporting.Infrastructure) |
 
 ---
 
 ## 8. Event → notification matrix (initial)
 
-| Event | Channels (default) | Preference gates |
-|-------|-------------------|-------------------|
-| `BookingConfirmed` | email (+ SMS later) | Email / SMS prefs |
-| `BookingRejected` | email | Email |
-| `BookingCancelled` | email | Email |
-| `SlotOpened` (waitlist) | email, SMS | Email / SMS |
-| `ConversationMessageCreated` | email (digest/stub today) | Email; respect messaging entitlement |
-| `PaymentCompleted` | email (receipt) | Email + Finance triggers Reporting PDF |
+| Event | Channels (default) | Preference gates | Entitlements |
+|-------|-------------------|------------------|--------------|
+| `BookingConfirmed` | email (+ SMS 38B) | Email / **SmsRemindersEnabled** | Reminder tiers (38B) |
+| `BookingRejected` | email | Email | — |
+| `BookingCancelled` | email | Email | — |
+| `SlotOpened` (waitlist) | email, SMS | Email / SMS prefs | `waitlist`, `smsEnabled` for SMS |
+| `ConversationMessageCreated` | email (digest/stub) | Email | `messaging` |
+| `PaymentCompleted` | email + PDF (38B) | Email | — (receipt via **IReportRenderer**) |
+| Scheduled reminder job | email, SMS (38B) | prefs | §6 in [sprint-38 spec](./sprint-38-notifications-module.md#6-reminder--sms-entitlement-semantics) |
 
-Handlers stay in **Notifications.Infrastructure**; they call other modules only via **Application ports** (e.g. `IBillingDocumentService` / Reporting for attachment).
+**Retention → Notifications:** see [sprint-38-notifications-module.md §7](./sprint-38-notifications-module.md#7-event--notification-matrix).
+
+Handlers stay in **Notifications.Infrastructure**; cross-module calls only via **Application ports** (never Reporting Infrastructure from Notifications).
 
 ---
 
@@ -167,11 +178,11 @@ Notifications is **mostly internal**. Tenant-facing surface today:
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
-| `GET/PATCH` | `/api/v1/tenant/settings/notifications` | Business | Preferences (existing or settings page) |
+| `GET/PATCH` | `/api/v1/tenant/settings/notifications` | Business | Preferences; reject SMS enable when `smsEnabled` false |
 
 **No public webhook** for Resend/Twilio inbound in V1 unless product adds SMS reply handling (out of scope).
 
-Admin: delivery failure visibility → **admin audit / ops dashboard** (Phase 2), not customer API.
+Admin: delivery failure visibility → **admin audit / ops dashboard** (38B), not customer API.
 
 ---
 
@@ -182,8 +193,8 @@ Admin: delivery failure visibility → **admin audit / ops dashboard** (Phase 2)
 | **Tenant isolation** | Preferences per tenant; recipients must belong to booking/customer context |
 | **Secrets** | Resend/Twilio keys in Key Vault staging/prod — never committed |
 | **Audit** | Log `notification.sent` / `notification.failed` with masked recipient + template id |
-| **Compliance** | SMS/WhatsApp opt-in; NDPR/privacy launch gate [legal-launch-checklist.md](../legal-launch-checklist.md) |
-| **Murphy** | Not applicable to inbound webhooks for Notifications V1; Finance payment webhooks unchanged |
+| **Compliance** | SMS opt-in; NDPR/privacy launch gate [legal-launch-checklist.md](../legal-launch-checklist.md) |
+| **Murphy** | Not applicable to inbound webhooks for Notifications V1; **Finance payment webhooks unchanged** (signature verify on raw body, idempotent processing). Future inbound provider callbacks follow same discipline per [AGENTS.md](../../AGENTS.md). |
 
 ---
 
@@ -193,18 +204,15 @@ Admin: delivery failure visibility → **admin audit / ops dashboard** (Phase 2)
 - [ ] Unit: dispatcher routes `email` → mock Resend provider
 - [ ] Integration: handler on `BookingConfirmed` enqueues send (mock provider)
 - [ ] Idempotency: duplicate event does not double-send
+- [ ] 38B: receipt handler uses mock **`IReportRenderer`** — no Reporting.Infrastructure reference
 
 Run: `dotnet test Adeni.slnx -c Release`
 
 ---
 
-## 12. Acceptance criteria (Phase 1)
+## 12. Acceptance criteria
 
-- [ ] Staging can send real email via Resend for one template (booking confirmed)
-- [ ] Staging can send SMS via Twilio when preference enabled
-- [ ] Development without keys still logs (no throw on startup)
-- [ ] No Resend/Twilio references in `Adeni.Api` controllers
-- [ ] [tooling-policy.md](../tooling-policy.md) unchanged on channel vendors (already Resend + Twilio)
+See **[sprint-38-notifications-module.md §12](./sprint-38-notifications-module.md#12-acceptance-criteria)** (38A / 38B).
 
 ---
 
@@ -213,5 +221,6 @@ Run: `dotnet test Adeni.slnx -c Release`
 | Question | Decision |
 |----------|----------|
 | ACS Email instead of Resend? | Resend preferred per tooling policy; ACS optional alt |
-| Single Twilio number per env vs per market | Start one; split NG/CA numbers when volume requires |
+| Per-market Twilio/Resend senders | **`NotificationSenderConfig`** rows for CA + NG; env fallback — see Sprint 38 §5.1 |
 | Auth0 transactional emails | Out of Notifications V1 unless unified later |
+| `SmsRemindersEnabled` naming | **Default** — align with closeout + 38A migration |

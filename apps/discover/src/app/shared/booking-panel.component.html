@@ -247,7 +247,7 @@
         <p class="muted loading-line">{{ label("business.booking.loadingSlots") }}</p>
       } @else if (slots().length === 0) {
         <p class="muted">{{ label("business.booking.noSlots") }}</p>
-        @if (bookingEnabled()) {
+        @if (bookingEnabled() && waitlistEnabled()) {
           <button type="button" class="link" (click)="joinWaitlist()">{{
             label("business.booking.joinWaitlist")
           }}</button>

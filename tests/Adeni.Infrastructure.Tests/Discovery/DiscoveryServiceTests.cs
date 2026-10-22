@@ -10,6 +10,7 @@ using Adeni.Domain.Booking;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Tests.Catalog;
 using Adeni.Infrastructure.Catalog;
+using Adeni.Infrastructure.Tests.Subscriptions;
 using Adeni.Infrastructure.Context;
 using Adeni.Infrastructure.Discovery;
 using Adeni.Infrastructure.Markets;
@@ -230,6 +231,7 @@ public sealed class DiscoveryServiceTests
         services.AddSingleton<MarketCatalogState>();
         services.AddSingleton<IMarketCatalog, SyncMarketCatalog>();
         services.AddCategoryWorkflowCatalog();
+        services.AddEntitlementsModule();
         services.AddScoped<TenantContext>();
         services.AddScoped<Application.Abstractions.ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
         services.AddDbContext<AdeniDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));

@@ -383,6 +383,7 @@
               [depositPercent]="p.depositPercent ?? 0"
               [requirePolicyAcceptance]="p.policies?.requireAcceptance ?? false"
               [hasPolicies]="showPolicies()"
+              [waitlistEnabled]="p.waitlistEnabled !== false"
             />
           }
         } @else {

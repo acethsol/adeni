@@ -1,6 +1,7 @@
 import { Component, computed, signal } from "@angular/core";
 import {
   formatSubscriptionSku,
+  PLAN_ADMIN_MATRIX_ROW_DEFS,
   PLAN_ENTITLEMENTS,
   SUBSCRIPTION_SKUS,
   type PlanEntitlementSeed,
@@ -23,39 +24,8 @@ type EntitlementMatrixRow = {
   professional: string;
   business: string;
   kind: "limit" | "flag";
+  adminNote?: string;
 };
-
-const ENTITLEMENT_ROW_DEFS: { key: keyof PlanEntitlementSeed; label: string; kind: "limit" | "flag" }[] =
-  [
-    { key: "maxLocations", label: "Business locations", kind: "limit" },
-    { key: "maxPractitioners", label: "Team / practitioners", kind: "limit" },
-    { key: "additionalLocationsAllowed", label: "Additional locations (sales)", kind: "flag" },
-    { key: "additionalPractitionersAllowed", label: "Additional practitioners (sales)", kind: "flag" },
-    { key: "unlimitedBookings", label: "Unlimited bookings", kind: "flag" },
-    { key: "unlimitedServices", label: "Unlimited services", kind: "flag" },
-    { key: "publicProfile", label: "Public profile", kind: "flag" },
-    { key: "discoverListing", label: "Discover listing", kind: "flag" },
-    { key: "messaging", label: "Adeni messaging", kind: "flag" },
-    { key: "basicReminders", label: "Basic reminders", kind: "flag" },
-    { key: "configurableReminders", label: "Configurable reminders", kind: "flag" },
-    { key: "followUpAutomation", label: "Follow-up automation", kind: "flag" },
-    { key: "smsEnabled", label: "SMS notifications", kind: "flag" },
-    { key: "smsUsageBilling", label: "SMS usage billing", kind: "flag" },
-    { key: "basicAnalytics", label: "Basic analytics", kind: "flag" },
-    { key: "advancedAnalytics", label: "Advanced analytics", kind: "flag" },
-    { key: "customerRetentionAnalytics", label: "Customer retention analytics", kind: "flag" },
-    { key: "staffPerformanceAnalytics", label: "Staff performance analytics", kind: "flag" },
-    { key: "basicExports", label: "Basic exports", kind: "flag" },
-    { key: "advancedReports", label: "Advanced reports", kind: "flag" },
-    { key: "excelExport", label: "Excel export", kind: "flag" },
-    { key: "waitlist", label: "Waitlist", kind: "flag" },
-    { key: "multiLocationReporting", label: "Multi-location reporting", kind: "flag" },
-    { key: "advancedPermissions", label: "Advanced permissions", kind: "flag" },
-    { key: "prioritySupport", label: "Priority support", kind: "flag" },
-    { key: "onlinePayments", label: "Online payments", kind: "flag" },
-    { key: "deposits", label: "Deposits", kind: "flag" },
-    { key: "invoicesReceipts", label: "Invoices & receipts", kind: "flag" },
-  ];
 
 function formatLimitValue(key: keyof PlanEntitlementSeed, value: number | null): string {
   if (value == null) {
@@ -78,10 +48,11 @@ function formatEntitlementCell(
 }
 
 function buildMatrixRows(): EntitlementMatrixRow[] {
-  return ENTITLEMENT_ROW_DEFS.map((def) => ({
+  return PLAN_ADMIN_MATRIX_ROW_DEFS.map((def) => ({
     rowKey: def.key,
     label: def.label,
     kind: def.kind,
+    adminNote: def.adminNote,
     starter: formatEntitlementCell("starter", def.key, def.kind),
     professional: formatEntitlementCell("professional", def.key, def.kind),
     business: formatEntitlementCell("business", def.key, def.kind),

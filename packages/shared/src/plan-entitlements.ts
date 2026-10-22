@@ -11,9 +11,6 @@ export type PlanEntitlementSeed = {
   publicProfile: boolean;
   discoverListing: boolean;
   messaging: boolean;
-  invoicesReceipts: boolean;
-  onlinePayments: boolean;
-  deposits: boolean;
   basicReminders: boolean;
   configurableReminders: boolean;
   followUpAutomation: boolean;
@@ -72,7 +69,6 @@ export const PLAN_COMPARISON_ROW_DEFS: PlanComparisonRowDef[] = [
   { label: "Configurable reminders", kind: "flag", key: "configurableReminders" },
   { label: "Follow-up automation", kind: "flag", key: "followUpAutomation" },
   { label: "SMS notifications", kind: "flag", key: "smsEnabled" },
-  { label: "Basic analytics", kind: "flag", key: "basicAnalytics" },
   { label: "Advanced analytics", kind: "flag", key: "advancedAnalytics" },
   { label: "Customer retention analytics", kind: "flag", key: "customerRetentionAnalytics" },
   { label: "Staff performance analytics", kind: "flag", key: "staffPerformanceAnalytics" },
@@ -83,9 +79,82 @@ export const PLAN_COMPARISON_ROW_DEFS: PlanComparisonRowDef[] = [
   { label: "Multi-location reporting", kind: "flag", key: "multiLocationReporting" },
   { label: "Advanced permissions", kind: "flag", key: "advancedPermissions" },
   { label: "Priority support", kind: "flag", key: "prioritySupport" },
-  { label: "Online payments", kind: "flag", key: "onlinePayments" },
-  { label: "Deposits", kind: "flag", key: "deposits" },
-  { label: "Invoices & receipts", kind: "flag", key: "invoicesReceipts" },
+];
+
+/** Full seed matrix for admin ops (includes deferred module keys). */
+export type PlanAdminMatrixRowDef = {
+  key: keyof PlanEntitlementSeed;
+  label: string;
+  kind: "limit" | "flag";
+  adminNote?: string;
+};
+
+export const PLAN_ADMIN_MATRIX_ROW_DEFS: PlanAdminMatrixRowDef[] = [
+  { key: "maxLocations", label: "Business locations", kind: "limit" },
+  { key: "maxPractitioners", label: "Team / practitioners", kind: "limit" },
+  { key: "additionalLocationsAllowed", label: "Additional locations (sales)", kind: "flag" },
+  { key: "additionalPractitionersAllowed", label: "Additional practitioners (sales)", kind: "flag" },
+  { key: "unlimitedBookings", label: "Unlimited bookings", kind: "flag" },
+  { key: "unlimitedServices", label: "Unlimited services", kind: "flag" },
+  { key: "publicProfile", label: "Public profile", kind: "flag" },
+  { key: "discoverListing", label: "Discover listing", kind: "flag" },
+  { key: "messaging", label: "Adeni messaging", kind: "flag" },
+  {
+    key: "basicReminders",
+    label: "Basic reminders",
+    kind: "flag",
+    adminNote: "Deferred — Sprint 38 Notifications",
+  },
+  {
+    key: "configurableReminders",
+    label: "Configurable reminders",
+    kind: "flag",
+    adminNote: "Deferred — Sprint 38 Notifications",
+  },
+  {
+    key: "followUpAutomation",
+    label: "Follow-up automation",
+    kind: "flag",
+    adminNote: "Deferred — Sprint 38 Notifications",
+  },
+  { key: "smsEnabled", label: "SMS notifications", kind: "flag" },
+  {
+    key: "smsUsageBilling",
+    label: "SMS usage billing",
+    kind: "flag",
+    adminNote: "Deferred — no metered SMS billing",
+  },
+  { key: "basicAnalytics", label: "Basic analytics", kind: "flag" },
+  { key: "advancedAnalytics", label: "Advanced analytics", kind: "flag" },
+  { key: "customerRetentionAnalytics", label: "Customer retention analytics", kind: "flag" },
+  { key: "staffPerformanceAnalytics", label: "Staff performance analytics", kind: "flag" },
+  {
+    key: "basicExports",
+    label: "Basic exports",
+    kind: "flag",
+    adminNote: "Deferred — Sprint 39 Reporting",
+  },
+  {
+    key: "advancedReports",
+    label: "Advanced reports",
+    kind: "flag",
+    adminNote: "Deferred — Sprint 39 Reporting",
+  },
+  {
+    key: "excelExport",
+    label: "Excel export",
+    kind: "flag",
+    adminNote: "Deferred — Sprint 39 Reporting",
+  },
+  { key: "waitlist", label: "Waitlist", kind: "flag" },
+  {
+    key: "multiLocationReporting",
+    label: "Multi-location reporting",
+    kind: "flag",
+    adminNote: "Deferred — Sprint 39 Reporting",
+  },
+  { key: "advancedPermissions", label: "Advanced permissions", kind: "flag" },
+  { key: "prioritySupport", label: "Priority support", kind: "flag" },
 ];
 
 function formatPlanLimit(key: "maxLocations" | "maxPractitioners", value: number | null): string {

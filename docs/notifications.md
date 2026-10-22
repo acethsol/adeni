@@ -3,8 +3,9 @@
 Async **email**, **SMS**, and (later) **push** driven by **domain events** and **tenant preferences**. In-app chat and live UI updates stay in **Messaging** and **Operations** (SignalR).
 
 **Boundaries:** [specs/notifications-module-boundaries.md](./specs/notifications-module-boundaries.md)  
+**Implementation:** [specs/sprint-38-notifications-module.md](./specs/sprint-38-notifications-module.md) (38A / 38B)  
 **Roadmap:** [roadmap-modules.md](./roadmap-modules.md) #12  
-**Vendors:** [tooling-policy.md](./tooling-policy.md) — **Resend** (email), **Twilio** (SMS / WhatsApp API later), **FCM** (push, Phase 4)
+**Vendors:** [tooling-policy.md](./tooling-policy.md) — **Resend** (email), **Twilio** (SMS), **FCM** (push backlog). **`wa.me` links are client-only** — no Twilio WhatsApp API in V1.
 
 ---
 
@@ -13,7 +14,7 @@ Async **email**, **SMS**, and (later) **push** driven by **domain events** and *
 | Piece | Status |
 |-------|--------|
 | `INotificationDispatcher` | Application port |
-| `INotificationPreferencesService` | Tenant toggles: email, push, SMS/WhatsApp reminders |
+| `INotificationPreferencesService` | Tenant toggles: email, push, SMS reminders (`SmsWhatsAppReminderEnabled` today → **`SmsRemindersEnabled`** in 38A) |
 | `PreferenceAwareNotificationDispatcher` | Gates by channel + prefs |
 | **Delivery** | **`LoggingNotificationDispatcher`** — logs only; no Resend/Twilio send |
 | **Appointment reminder scheduler** | **Not built** — no cron/background job for “24h before” |
@@ -46,7 +47,7 @@ Domain events (Booking, Waitlist, Messaging, Finance, Queue, Identity, …)
 | Infrastructure | Handlers, `AddNotificationsModule()`, Resend/Twilio adapters |
 | API | `GET/PATCH` tenant notification preferences (settings) |
 
-**Reporting / Finance:** Notifications **sends** messages; **Reporting** (or Finance) supplies **PDF attachment bytes** for receipt/invoice email — do not embed QuestPDF in the dispatcher.
+**Reporting / Finance (38B):** Notifications **sends** messages; receipt PDF bytes come from Application **`IReportRenderer`** (Reporting.Infrastructure implements the port). **38A has no Reporting dependency.** Do not embed QuestPDF in the dispatcher.
 
 ---
 
@@ -74,7 +75,7 @@ Stored on `TenantNotificationPreferences`:
 
 - `EmailEnabled`
 - `PushEnabled`
-- `SmsWhatsAppReminderEnabled` — gates `sms` / `whatsapp` channels when adapters exist
+- `SmsWhatsAppReminderEnabled` (rename → **`SmsRemindersEnabled`**) — gates SMS channel when Twilio + `smsEnabled` entitlement
 
 Portal **Settings** persists prefs via tenant settings API; prefs apply even though delivery is still log-only in Development.
 
@@ -121,10 +122,10 @@ No public Resend/Twilio inbound webhooks in V1 unless product adds SMS reply han
 
 | Phase | Deliverable |
 |-------|-------------|
-| **1** | Resend + Twilio adapters; `ChannelNotificationDispatcher`; fix recipient keys; delivery idempotency table |
-| **2** | HTML templates; receipt email with PDF attachment; queue/waitlist SMS |
-| **3** | Twilio WhatsApp templates for reminders (legal/opt-in) |
-| **4** | FCM push registration + fan-out |
+| **38A** | Resend + Twilio; `NotificationSenderConfig` (CA/NG); idempotency; email-first flows; **no Reporting** |
+| **39A** | Reporting extract + **`IReportRenderer`** (prerequisite for receipt PDF) |
+| **38B** | Receipt PDF email; scheduled reminders (entitlement tiers); waitlist SMS; Retention event handlers — see [sprint-38 §7](./specs/sprint-38-notifications-module.md#7-event--notification-matrix) |
+| **Backlog** | FCM push registration + fan-out |
 
 ---
 

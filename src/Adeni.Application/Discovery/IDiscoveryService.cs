@@ -63,7 +63,8 @@ public sealed record PublicBusinessProfile(
     Adeni.Application.Tenancy.PublicPageConfigDto? PublicPage = null,
     IReadOnlyList<string>? ImageUrls = null,
     Adeni.Application.Tenancy.BusinessPoliciesDto? Policies = null,
-    IReadOnlyList<PublicOpeningHours>? OpeningHours = null);
+    IReadOnlyList<PublicOpeningHours>? OpeningHours = null,
+    bool WaitlistEnabled = false);
 
 public interface IDiscoveryService
 {

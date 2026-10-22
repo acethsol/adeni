@@ -49,6 +49,7 @@ export class BookingPanelComponent {
   readonly depositPercent = input(0);
   readonly requirePolicyAcceptance = input(false);
   readonly hasPolicies = input(false);
+  readonly waitlistEnabled = input(true);
 
   readonly locale = this.localeService.locale;
   readonly step = signal<Step>("service");

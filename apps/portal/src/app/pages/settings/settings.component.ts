@@ -53,6 +53,8 @@ export class SettingsComponent implements OnInit {
   readonly saving = signal(false);
   readonly profile = signal<BusinessProfile | null>(null);
 
+  readonly smsEntitled = computed(() => this.profile()?.entitlements?.smsEnabled === true);
+
   autoConfirm = false;
   depositPercent = 0;
 
@@ -142,7 +144,9 @@ export class SettingsComponent implements OnInit {
           c.updateNotificationPreferences({
             emailEnabled: this.emailEnabled,
             pushEnabled: this.pushEnabled,
-            smsWhatsAppReminderEnabled: this.smsWhatsAppReminderEnabled,
+            smsWhatsAppReminderEnabled: this.smsEntitled()
+              ? this.smsWhatsAppReminderEnabled
+              : false,
           }),
         );
         this.feedback.success("Notification preferences saved");

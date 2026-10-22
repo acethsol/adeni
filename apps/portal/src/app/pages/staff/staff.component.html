@@ -10,6 +10,8 @@
     pageActions
     type="button"
     class="btn btn-primary"
+    [disabled]="!canAddPractitioner()"
+    [title]="canAddPractitioner() ? 'Add a team member' : 'Team limit reached on your plan'"
     (click)="openCreate()"
   >
     <adeni-carbon-icon name="add" [size]="16" />
@@ -30,6 +32,9 @@
     />
   } @else {
     <div class="roster">
+      @if (teamUsageLabel(); as usageLabel) {
+        <p class="hint muted roster-usage">{{ usageLabel }}</p>
+      }
       <adeni-list-toolbar
         storageKey="portal.staff"
         [viewMode]="viewMode()"

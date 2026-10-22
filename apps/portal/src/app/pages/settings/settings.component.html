@@ -60,11 +60,18 @@
           <span class="cds-toggle__track" aria-hidden="true"></span>
           <span class="cds-toggle__label">Push notifications</span>
         </label>
-        <label class="cds-toggle">
-          <input type="checkbox" role="switch" [(ngModel)]="smsWhatsAppReminderEnabled" />
-          <span class="cds-toggle__track" aria-hidden="true"></span>
-          <span class="cds-toggle__label">SMS / WhatsApp reminders</span>
-        </label>
+        @if (smsEntitled()) {
+          <label class="cds-toggle">
+            <input type="checkbox" role="switch" [(ngModel)]="smsWhatsAppReminderEnabled" />
+            <span class="cds-toggle__track" aria-hidden="true"></span>
+            <span class="cds-toggle__label">SMS reminders</span>
+          </label>
+        } @else {
+          <p class="hint muted">
+            SMS reminders are on Professional and Business.
+            <a routerLink="/plan">Compare plans</a>
+          </p>
+        }
         <button
           type="button"
           class="btn btn-primary"
