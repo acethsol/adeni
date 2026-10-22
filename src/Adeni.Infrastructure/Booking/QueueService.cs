@@ -18,7 +18,7 @@ using Microsoft.EntityFrameworkCore;
 public sealed class QueueService(
     AdeniDbContext dbContext,
     IBusinessCapabilitiesService capabilities,
-    INotificationDispatcher notifications,
+    INotificationJobScheduler notificationJobs,
     ITenantCustomerService tenantCustomers,
     ITenantRealtimePublisher tenantRealtime) : IQueueService
 {
@@ -586,13 +586,14 @@ public sealed class QueueService(
             ? ticket.TenantId.ToString()
             : ticket.GuestPhone;
 
-        await notifications.SendAsync(
+        await notificationJobs.ScheduleSendAsync(
             new NotificationMessage(
                 "email",
                 recipient,
                 $"You're up at {businessName}",
                 $"Hi {ticket.GuestName}, you're next at {businessName}. Please head to the front desk.",
-                ticket.TenantId),
+                ticket.TenantId,
+                $"queue-called:{ticket.Id:D}"),
             cancellationToken);
     }
 

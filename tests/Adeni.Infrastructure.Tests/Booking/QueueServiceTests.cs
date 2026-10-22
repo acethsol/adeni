@@ -12,6 +12,7 @@ using Adeni.Infrastructure.Booking;
 using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Tenancy;
 using Adeni.Infrastructure.Tests.Catalog;
+using Adeni.Infrastructure.Tests.Notifications;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -47,6 +48,9 @@ public sealed class QueueServiceTests
         Assert.True(called.IsSuccess, called.Error?.Message);
         Assert.Equal("called", called.Value!.Status);
         Assert.Contains(sink.Messages, m => m.Subject.Contains("You're up", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(
+            sink.Messages,
+            m => string.Equals(m.DedupeEventId, $"queue-called:{joined.Value.Id:D}", StringComparison.Ordinal));
 
         var started = await queue.StartAsync(tenantId, joined.Value.Id);
         Assert.True(started.IsSuccess, started.Error?.Message);
@@ -228,6 +232,7 @@ public sealed class QueueServiceTests
         services.AddSingleton<NotificationSink>();
         services.AddSingleton<INotificationDispatcher>(sp =>
             new SinkDispatcher(sp.GetRequiredService<NotificationSink>()));
+        services.AddInlineNotificationJobScheduling();
         services.AddEntitlementsModule();
         services.AddScoped<ITenantCustomerService, TenantCustomerService>();
         services.AddBookingTestRealtime();
