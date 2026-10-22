@@ -25,6 +25,8 @@ import {
   AdeniModalComponent,
   AdeniPortalEmptyStateComponent,
   PortalPageComponent,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { environment } from "../../../environments/environment";
 import { BusinessApiService } from "../../core/services/business-api.service";
@@ -51,6 +53,8 @@ const REFRESH_MS = 15_000;
   styleUrl: "./queue.component.scss",
 })
 export class QueueComponent implements OnInit, OnDestroy {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   private readonly session = inject(PortalSessionService);
   private readonly feedback = inject(AdeniFeedbackService);
@@ -199,9 +203,9 @@ export class QueueComponent implements OnInit, OnDestroy {
         this.staff.set(staff.filter((m) => m.isActive !== false));
       });
       this.lastRefreshedAt.set(new Date());
-    } catch {
+    } catch (caught) {
       if (initial) {
-        this.error.set("Could not load the queue.");
+        this.error.set(this.apiErr(caught, "portal.queue.couldNotLoadQueue"));
         this.tickets.set([]);
       }
     } finally {
@@ -226,9 +230,9 @@ export class QueueComponent implements OnInit, OnDestroy {
         maxWaiting: settings.maxWalkInWaiting ?? null,
         calendarPolicy: settings.calendarPolicy,
       });
-      this.feedback.success("Walk-ins open for the next 90 minutes.", "Queue");
-    } catch {
-      this.feedback.error("Could not open walk-ins.");
+      this.feedback.success(this.tr("portal.queue.walkInsOpenNext90"), this.tr("common.queue"));
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "portal.queue.couldNotOpenWalkIns"));
     }
   }
 
@@ -252,16 +256,16 @@ export class QueueComponent implements OnInit, OnDestroy {
     }
     try {
       await navigator.clipboard.writeText(url);
-      this.feedback.success("Join link copied.", "Queue");
-    } catch {
-      this.feedback.error("Could not copy link.");
+      this.feedback.success(this.tr("portal.queue.joinLinkCopied"), this.tr("common.queue"));
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "common.couldNotCopyLink"));
     }
   }
 
   async addWalkIn(): Promise<void> {
     const displayName = combineGuestName(this.guestFirstName, this.guestLastName);
     if (!displayName || !this.guestPhone.trim()) {
-      this.error.set("First name, last name, and phone are required.");
+      this.error.set(this.tr("portal.queue.firstNameLastNamePhone"));
       return;
     }
     this.adding.set(true);
@@ -288,9 +292,9 @@ export class QueueComponent implements OnInit, OnDestroy {
       this.assignStaffMemberId = "";
       await this.load(false);
       this.closeAddModal();
-      this.feedback.success("Walk-in added to the queue.", "Queue");
-    } catch {
-      this.error.set("Could not add walk-in.");
+      this.feedback.success(this.tr("portal.queue.walkAddedQueue"), this.tr("common.queue"));
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.queue.couldNotAddWalk"));
     } finally {
       this.adding.set(false);
     }
@@ -317,8 +321,8 @@ export class QueueComponent implements OnInit, OnDestroy {
         client.startTenantQueueTicket(ticket.id, staffId),
       );
       await this.load(false);
-    } catch {
-      this.error.set("Could not update this ticket.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.queue.couldNotUpdateTicket"));
     } finally {
       this.actionId.set(null);
     }
@@ -333,10 +337,10 @@ export class QueueComponent implements OnInit, OnDestroy {
       );
       await this.load(false);
       if (updated.bookingId) {
-        this.feedback.success("Service complete — open Bookings to collect payment.", "Queue");
+        this.feedback.success(this.tr("portal.queue.serviceCompleteOpenBookingsCollect"), this.tr("common.queue"));
       }
-    } catch {
-      this.error.set("Could not update this ticket.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.queue.couldNotUpdateTicket"));
     } finally {
       this.actionId.set(null);
     }
@@ -377,8 +381,8 @@ export class QueueComponent implements OnInit, OnDestroy {
     try {
       await this.api.withAuthorizedClient((client) => action(client));
       await this.load(false);
-    } catch {
-      this.error.set("Could not update this ticket.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.queue.couldNotUpdateTicket"));
     } finally {
       this.actionId.set(null);
     }

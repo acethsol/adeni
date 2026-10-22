@@ -37,6 +37,8 @@ import {
   type AdeniDataTableSortDirection,
   type AdeniExportMenuItem,
   type AdeniListViewMode,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 
@@ -90,6 +92,8 @@ type LocationDraft = {
   styleUrl: "./locations.component.scss",
 })
 export class LocationsComponent implements OnInit {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly feedback = inject(AdeniFeedbackService);
@@ -250,9 +254,9 @@ export class LocationsComponent implements OnInit {
           this.locations.set(items);
         });
       }, "Loading locations", "Fetching branches");
-    } catch {
-      this.error.set("Could not load locations.");
-      this.feedback.error("Could not load locations.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.locations.couldNotLoadLocations"));
+      this.feedback.error(this.apiErr(caught, "portal.locations.couldNotLoadLocations"));
     } finally {
       this.loading.set(false);
     }
@@ -292,8 +296,8 @@ export class LocationsComponent implements OnInit {
   async save(): Promise<void> {
     const slug = this.draft.slug.trim().toLowerCase();
     if (!slug || !SLUG_PATTERN.test(slug) || !this.draft.addressLine.trim() || !this.draft.area.trim()) {
-      this.error.set("Check slug, address, and area.");
-      this.feedback.error("Check slug, address, and area.");
+      this.error.set(this.tr("portal.locations.checkSlugAddressArea"));
+      this.feedback.error(this.tr("portal.locations.checkSlugAddressArea"));
       return;
     }
 
@@ -320,7 +324,7 @@ export class LocationsComponent implements OnInit {
         }
       }, "Saving location", body.name ?? slug);
       this.cancelForm();
-      this.feedback.success("Location saved.");
+      this.feedback.success(this.tr("portal.locations.locationSaved"));
     } catch (err) {
       const message =
         err instanceof AdeniApiError && err.message
@@ -356,10 +360,10 @@ export class LocationsComponent implements OnInit {
       } else {
         this.locations.update((list) => list.filter((l) => l.id !== loc.id));
       }
-      this.feedback.success("Location removed.");
-    } catch {
-      this.error.set("Could not delete location.");
-      this.feedback.error("Could not delete location.");
+      this.feedback.success(this.tr("portal.locations.locationRemoved"));
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.locations.couldNotDeleteLocation"));
+      this.feedback.error(this.apiErr(caught, "portal.locations.couldNotDeleteLocation"));
     } finally {
       this.busy.set(null);
     }
@@ -388,9 +392,9 @@ export class LocationsComponent implements OnInit {
       anchor.download = `tenant-locations-${to.toISOString().slice(0, 10)}.csv`;
       anchor.click();
       URL.revokeObjectURL(url);
-      this.feedback.success("Locations downloaded.");
-    } catch {
-      this.feedback.error("Could not download locations.");
+      this.feedback.success(this.tr("portal.locations.locationsDownloaded"));
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "portal.locations.couldNotDownloadLocations"));
     } finally {
       this.exporting.set(false);
     }

@@ -17,6 +17,7 @@ import {
   AdeniGlobalLoadingPanelComponent,
   AdeniLocaleService,
   AdeniToastHostComponent,
+  injectAdeniTranslate,
 } from "@adeni/ui";
 import { filter, map, startWith } from "rxjs";
 import { ADENI_PORTAL_CONFIG, isAuth0Configured, isBusinessPortalDevMode } from "../core/adeni-config";
@@ -282,6 +283,7 @@ function readSidebarCollapsed(): boolean {
   styleUrl: "./portal-shell.component.scss",
 })
 export class PortalShellComponent {
+  protected readonly tr = injectAdeniTranslate();
   private readonly localeService = inject(AdeniLocaleService);
   readonly locales = this.localeService.locales;
   readonly locale = this.localeService.locale;

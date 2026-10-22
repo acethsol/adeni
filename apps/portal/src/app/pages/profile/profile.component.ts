@@ -20,6 +20,8 @@ import {
   AdeniPortalEmptyStateComponent,
   PortalPageComponent,
   AdeniTabsComponent,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
@@ -45,6 +47,8 @@ const MAX_BYTES = MAX_UPLOAD_BYTES;
   styleUrl: "./profile.component.scss",
 })
 export class ProfileComponent implements OnInit, OnDestroy {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   private readonly config = inject(ADENI_PORTAL_CONFIG);
   private readonly feedback = inject(AdeniFeedbackService);
@@ -154,9 +158,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.galleryImages.set(p.galleryImages ?? []);
         await Promise.all([this.loadCategories(p), this.loadReviews(p)]);
       }, "Loading profile…", "Fetching business details");
-    } catch {
-      this.error.set("Could not load profile.");
-      this.feedback.error("Could not load profile.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.profile.couldNotLoadProfile"));
+      this.feedback.error(this.apiErr(caught, "portal.profile.couldNotLoadProfile"));
       this.profile.set(null);
     } finally {
       this.loading.set(false);
@@ -166,8 +170,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
   async saveProfile(): Promise<void> {
     if (!this.canEdit()) return;
     if (!this.businessName.trim() || !this.categorySlug.trim() || !PHONE_PATTERN.test(this.phone.trim())) {
-      this.error.set("Fix required fields before saving.");
-      this.feedback.error("Fix required fields before saving.");
+      this.error.set(this.tr("portal.profile.fixRequiredFieldsBeforeSaving"));
+      this.feedback.error(this.tr("portal.profile.fixRequiredFieldsBeforeSaving"));
       return;
     }
     this.saving.set(true);
@@ -188,10 +192,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
         "Updating business details",
       );
       this.profile.set(updated);
-      this.feedback.success("Business details updated.", "Profile saved");
-    } catch {
-      this.error.set("Could not save profile.");
-      this.feedback.error("Could not save profile.");
+      this.feedback.success(this.tr("portal.profile.businessDetailsUpdated"), this.tr("portal.profile.profileSaved"));
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.profile.couldNotSaveProfile"));
+      this.feedback.error(this.apiErr(caught, "portal.profile.couldNotSaveProfile"));
     } finally {
       this.saving.set(false);
     }
@@ -258,10 +262,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
   async copyPublicLink(): Promise<void> {
     try {
       await navigator.clipboard.writeText(this.publicBookingUrl());
-      this.shareNotice.set("Booking link copied.");
-      this.feedback.success("Booking link copied.");
-    } catch {
-      this.error.set("Could not copy link.");
+      this.shareNotice.set(this.tr("portal.profile.bookingLinkCopied"));
+      this.feedback.success(this.tr("portal.profile.bookingLinkCopied"));
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "common.couldNotCopyLink"));
     }
   }
 
@@ -317,8 +321,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
       this.reviews.update((items) => items.map((item) => (item.id === updated.id ? updated : item)));
       this.replyingId.set(null);
       this.replyDraft = "";
-    } catch {
-      this.error.set("Could not post that reply.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.profile.couldNotPostReply"));
     } finally {
       this.saving.set(false);
     }
@@ -327,7 +331,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   async submitVerification(): Promise<void> {
     if (!this.canSubmitVerification()) return;
     if (this.verificationReference.trim().length < 4) {
-      this.error.set("Reference number must be at least 4 characters.");
+      this.error.set(this.tr("portal.profile.referenceNumberMustBeAt"));
       return;
     }
     this.saving.set(true);
@@ -343,11 +347,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
           ],
         }),
       );
-      this.verificationMessage.set("Verification submitted. An admin will review your business.");
+      this.verificationMessage.set(this.tr("portal.profile.verificationSubmittedAdminWillReview"));
       this.verificationReference = "";
       await this.load();
-    } catch {
-      this.error.set("Could not submit verification.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.profile.couldNotSubmitVerification"));
     } finally {
       this.saving.set(false);
     }
@@ -359,11 +363,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
     if (!file || !this.profile()) return;
 
     if (!ALLOWED_TYPES.has(file.type)) {
-      this.error.set("Use JPEG, PNG, or WebP.");
+      this.error.set(this.tr("common.useJpegPngWebp"));
       return;
     }
     if (file.size > MAX_BYTES) {
-      this.error.set("Cover must be 5 MB or smaller.");
+      this.error.set(this.tr("portal.profile.coverMustBe5Mb"));
       return;
     }
 
@@ -382,8 +386,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
       });
       this.coverPreview.set(url);
       await this.load();
-    } catch {
-      this.error.set("Cover upload failed.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.profile.coverUploadFailed"));
     } finally {
       this.uploading.set(false);
       input.value = "";
@@ -401,11 +405,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
       return;
     }
     if (!ALLOWED_TYPES.has(file.type)) {
-      this.error.set("Use JPEG, PNG, or WebP.");
+      this.error.set(this.tr("common.useJpegPngWebp"));
       return;
     }
     if (file.size > MAX_BYTES) {
-      this.error.set("Photo must be 5 MB or smaller.");
+      this.error.set(this.tr("common.photoMustBe5Mb"));
       return;
     }
 
@@ -423,8 +427,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
         return c.addTenantGalleryImage({ galleryImageKey: slot.storageKey });
       });
       this.galleryImages.set(items);
-    } catch {
-      this.error.set("Gallery upload failed.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.profile.galleryUploadFailed"));
     } finally {
       this.galleryUploading.set(false);
       input.value = "";
@@ -438,8 +442,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
         c.removeTenantGalleryImage({ galleryImageKey: storageKey }),
       );
       this.galleryImages.set(items);
-    } catch {
-      this.error.set("Could not remove gallery photo.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.profile.couldNotRemoveGalleryPhoto"));
     }
   }
 }

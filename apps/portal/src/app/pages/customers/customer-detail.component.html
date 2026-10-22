@@ -1,8 +1,8 @@
-<app-portal-page [title]="customer()?.displayName ?? 'Customer'" description="Profile at your business (bookings + walk-ins).">
+<app-portal-page [title]="customer()?.displayName ?? tr('common.customer')" [description]="tr('portal.customers.profileAtBusinessBookingsWalk')">
   <p pageActions>
     <a routerLink="/customers" class="btn">
       <adeni-carbon-icon name="arrow--left" [size]="16" />
-      All customers
+      {{ tr('portal.customers.allCustomers') }}
     </a>
   </p>
 
@@ -11,13 +11,13 @@
   }
 
   @if (loading()) {
-    <p class="muted">Loading…</p>
+    <p class="muted">{{ tr('common.loading') }}</p>
   } @else if (customer(); as c) {
     <section class="card profile-hero">
       <div class="profile-hero__identity">
         <adeni-table-person-cell
           [displayName]="c.displayName"
-          [subtitle]="c.phoneMasked || 'No phone on file'"
+          [subtitle]="c.phoneMasked || tr('common.noPhoneFile')"
           [initials]="customerInitials(c.displayName)"
           avatarTone="neutral"
         />
@@ -39,7 +39,7 @@
             [disabled]="statementDownloading()"
             (click)="downloadStatement()"
           >
-            {{ statementDownloading() ? "Preparing PDF…" : "Download statement (90 days)" }}
+            {{ statementDownloading() ? tr('portal.customers.preparingPdf') : tr('portal.customers.downloadStatement90Days') }}
           </button>
         </p>
         <div class="stat-strip">
@@ -48,10 +48,10 @@
               <adeni-carbon-icon name="calendar" [size]="20" />
             </span>
             <span class="stat-body">
-              <span class="stat-label">Recent bookings</span>
+              <span class="stat-label">{{ tr('portal.customers.recentBookings') }}</span>
               <span class="stat-value">{{ c.recentBookings.length }}</span>
               <span class="stat-hint muted">
-                {{ c.lastBookingAt ? "Last " + formatSlotTime(c.lastBookingAt) : "None on file" }}
+                {{ c.lastBookingAt ? "Last " + formatSlotTime(c.lastBookingAt) : tr('portal.customers.noneFile') }}
               </span>
             </span>
           </a>
@@ -60,10 +60,10 @@
               <adeni-carbon-icon name="user--follow" [size]="20" />
             </span>
             <span class="stat-body">
-              <span class="stat-label">Queue visits</span>
+              <span class="stat-label">{{ tr('portal.customers.queueVisits') }}</span>
               <span class="stat-value">{{ c.recentQueueVisits.length }}</span>
               <span class="stat-hint muted">
-                {{ c.lastQueueJoinAt ? "Last " + formatSlotTime(c.lastQueueJoinAt) : "No walk-ins yet" }}
+                {{ c.lastQueueJoinAt ? "Last " + formatSlotTime(c.lastQueueJoinAt) : tr('portal.customers.noWalkInsYet') }}
               </span>
             </span>
           </a>
@@ -72,10 +72,10 @@
               <adeni-carbon-icon name="user--filled" [size]="20" />
             </span>
             <span class="stat-body">
-              <span class="stat-label">Account</span>
-              <span class="stat-value stat-value--text">{{ c.platformCustomerId ? "Discover" : "Local" }}</span>
+              <span class="stat-label">{{ tr('common.account') }}</span>
+              <span class="stat-value stat-value--text">{{ c.platformCustomerId ? tr('portal.customers.discover') : tr('portal.customers.local') }}</span>
               <span class="stat-hint muted">
-                {{ c.platformCustomerId ? "Signed in on Discover" : "Walk-in or queue profile" }}
+                {{ c.platformCustomerId ? tr('portal.customers.signedDiscover') : tr('portal.customers.walkQueueProfile') }}
               </span>
             </span>
           </article>
@@ -83,39 +83,39 @@
 
         <section class="card profile-grid">
           <div class="profile-panel">
-            <h3 class="section-title">Contact</h3>
-            <p class="muted section-lede">What staff see when scheduling or messaging.</p>
+            <h3 class="section-title">{{ tr('portal.customers.contact') }}</h3>
+            <p class="muted section-lede">{{ tr('portal.customers.whatStaffSeeWhenScheduling') }}</p>
             <dl class="detail-list">
               <div>
-                <dt>Phone</dt>
+                <dt>{{ tr('common.phone') }}</dt>
                 <dd>{{ c.phoneMasked || "—" }}</dd>
               </div>
               <div>
-                <dt>Email</dt>
+                <dt>{{ tr('common.email') }}</dt>
                 <dd>{{ c.email || "—" }}</dd>
               </div>
               @if (c.platformCustomerId) {
                 <div>
-                  <dt>Online account</dt>
-                  <dd>Linked — Discover sign-in</dd>
+                  <dt>{{ tr('portal.customers.onlineAccount') }}</dt>
+                  <dd>{{ tr('portal.customers.linkedDiscoverSign') }}</dd>
                 </div>
               }
             </dl>
           </div>
           <div class="profile-panel">
-            <h3 class="section-title">Engagement</h3>
-            <p class="muted section-lede">How often they interact with your business.</p>
+            <h3 class="section-title">{{ tr('portal.customers.engagement') }}</h3>
+            <p class="muted section-lede">{{ tr('portal.customers.howOftenTheyInteractWith') }}</p>
             <dl class="detail-list">
               <div>
-                <dt>Last seen</dt>
+                <dt>{{ tr('portal.customers.lastSeen') }}</dt>
                 <dd>{{ formatSlotTime(c.lastSeenAt) }}</dd>
               </div>
               <div>
-                <dt>Last booking</dt>
+                <dt>{{ tr('portal.customers.lastBooking') }}</dt>
                 <dd>{{ c.lastBookingAt ? formatSlotTime(c.lastBookingAt) : "—" }}</dd>
               </div>
               <div>
-                <dt>Last walk-in</dt>
+                <dt>{{ tr('portal.customers.lastWalk') }}</dt>
                 <dd>{{ c.lastQueueJoinAt ? formatSlotTime(c.lastQueueJoinAt) : "—" }}</dd>
               </div>
             </dl>
@@ -126,19 +126,19 @@
       <section class="card tab-panel">
         <div class="section-head">
           <div>
-            <h3 class="section-title">Recent bookings</h3>
-            <p class="muted section-lede">Latest appointments linked to this profile.</p>
+            <h3 class="section-title">{{ tr('portal.customers.recentBookings') }}</h3>
+            <p class="muted section-lede">{{ tr('portal.customers.latestAppointmentsLinkedProfile') }}</p>
           </div>
-          <a routerLink="/bookings" class="btn btn-ghost">All bookings</a>
+          <a routerLink="/bookings" class="btn btn-ghost">{{ tr('portal.customers.allBookings') }}</a>
         </div>
         @if (c.recentBookings.length === 0) {
           <adeni-portal-empty-state
             icon="calendar"
-            title="No bookings yet"
+            [title]="tr('common.noBookingsYet')"
             [description]="
               c.platformCustomerId
-                ? 'Appointments appear here after they book on Discover or you accept a request.'
-                : 'Walk-in profiles show bookings once the guest books online with the same phone.'
+                ? tr('portal.customers.appointmentsAppearHereAfterThey')
+                : tr('portal.customers.walkProfilesShowBookingsOnce')
             "
             [compact]="true"
           />
@@ -148,17 +148,17 @@
               storageKey="portal.customer-detail.bookings"
               [showViewSwitcher]="false"
               [count]="filteredRecentBookings().length"
-              singularCountLabel="booking"
-              pluralCountLabel="bookings"
-              searchPlaceholder="Search service, staff, or status"
+              [singularCountLabel]="tr('common.booking')"
+              [pluralCountLabel]="tr('common.bookings2')"
+              [searchPlaceholder]="tr('portal.customers.searchServiceStaffStatus')"
               [searchQuery]="bookingSearchQuery()"
               (searchQueryChange)="bookingSearchQuery.set($event)"
             />
             @if (filteredRecentBookings().length === 0) {
               <adeni-portal-empty-state
                 icon="search"
-                title="No matches"
-                description="Try a different search term."
+                [title]="tr('common.noMatches')"
+                [description]="tr('common.tryDifferentSearchTerm')"
                 [compact]="true"
               />
             } @else {
@@ -190,7 +190,7 @@
                     <adeni-row-action-bar>
                       <adeni-icon-btn
                         icon="launch"
-                        label="Open in bookings"
+                        [label]="tr('portal.customers.openBookings')"
                         variant="table"
                         [dense]="true"
                         [routerLink]="bookingOpenRouterLink(row)"
@@ -207,16 +207,16 @@
       <section class="card tab-panel">
         <div class="section-head">
           <div>
-            <h3 class="section-title">Recent queue visits</h3>
-            <p class="muted section-lede">Walk-in tickets on your floor board.</p>
+            <h3 class="section-title">{{ tr('portal.customers.recentQueueVisits') }}</h3>
+            <p class="muted section-lede">{{ tr('portal.customers.walkTicketsFloorBoard') }}</p>
           </div>
-          <a routerLink="/queue" class="btn btn-ghost">Open queue</a>
+          <a routerLink="/queue" class="btn btn-ghost">{{ tr('common.openQueue') }}</a>
         </div>
         @if (c.recentQueueVisits.length === 0) {
           <adeni-portal-empty-state
             icon="user--follow"
-            title="No queue visits yet"
-            description="When they join your walk-in queue, visits show here with service and status."
+            [title]="tr('portal.customers.noQueueVisitsYet')"
+            [description]="tr('portal.customers.whenTheyJoinWalkQueue')"
             [compact]="true"
           />
         } @else {
@@ -225,17 +225,17 @@
               storageKey="portal.customer-detail.queue"
               [showViewSwitcher]="false"
               [count]="filteredRecentQueueVisits().length"
-              singularCountLabel="visit"
-              pluralCountLabel="visits"
-              searchPlaceholder="Search service, staff, or status"
+              [singularCountLabel]="tr('portal.customers.visit')"
+              [pluralCountLabel]="tr('portal.customers.visits')"
+              [searchPlaceholder]="tr('portal.customers.searchServiceStaffStatus')"
               [searchQuery]="queueSearchQuery()"
               (searchQueryChange)="queueSearchQuery.set($event)"
             />
             @if (filteredRecentQueueVisits().length === 0) {
               <adeni-portal-empty-state
                 icon="search"
-                title="No matches"
-                description="Try a different search term."
+                [title]="tr('common.noMatches')"
+                [description]="tr('common.tryDifferentSearchTerm')"
                 [compact]="true"
               />
             } @else {
@@ -253,7 +253,7 @@
                     <span class="adeni-data-table-text">{{ formatSlotTime(row.joinedAt) }}</span>
                   </ng-template>
                   <ng-template adeniDataTableCell="service" let-row>
-                    <span class="cell-primary">{{ row.serviceName || "Walk-in" }}</span>
+                    <span class="cell-primary">{{ row.serviceName || tr('common.walk') }}</span>
                     @if (row.staffDisplayName) {
                       <span class="cell-sub muted">with {{ row.staffDisplayName }}</span>
                     }
@@ -273,8 +273,8 @@
   } @else if (!error()) {
     <adeni-portal-empty-state
       icon="user--filled"
-      title="Customer not found"
-      description="They may belong to another business or the link is outdated."
+      [title]="tr('portal.customers.customerNotFound')"
+      [description]="tr('portal.customers.theyMayBelongAnotherBusiness')"
     />
   }
 </app-portal-page>

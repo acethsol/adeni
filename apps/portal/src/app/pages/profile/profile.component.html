@@ -1,13 +1,13 @@
 <app-portal-page
-  title="Profile"
-  description="Your business identity on Discover — photos, listing category, and verification."
+  [title]="tr('common.profile')"
+  [description]="tr('portal.profile.yourBusinessIdentityDiscoverPhotos')"
 >
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
 
   @if (loading()) {
-    <p class="muted">Loading…</p>
+    <p class="muted">{{ tr('common.loading') }}</p>
   } @else if (profile(); as p) {
     <adeni-tabs [tabs]="tabs" />
 
@@ -15,13 +15,13 @@
       @if (reviews().length === 0) {
         <adeni-portal-empty-state
           icon="user--filled"
-          title="No reviews yet"
-          description="Reviews are published after customers complete a booked visit. You can reply here once they arrive."
+          [title]="tr('common.noReviewsYet')"
+          [description]="tr('portal.profile.reviewsPublishedAfterCustomersComplete')"
         />
       } @else {
       <section class="card reviews-card">
         <div class="section-head">
-          <h3>Customer reviews</h3>
+          <h3>{{ tr('portal.profile.customerReviews') }}</h3>
           @if (reviewSummary().count > 0) {
             <p class="review-stats">
               <strong>{{ reviewSummary().avg?.toFixed(1) }}</strong> average ·
@@ -36,12 +36,12 @@
                   <strong>{{ review.customerDisplayName }}</strong>
                   <span class="rating">{{ review.rating }}/5</span>
                 </div>
-                <p class="review-body">{{ review.comment || "No comment" }}</p>
+                <p class="review-body">{{ review.comment || tr('portal.profile.noComment') }}</p>
                 @if (review.ownerReply) {
-                  <p class="owner-reply"><span>Your reply</span> {{ review.ownerReply }}</p>
+                  <p class="owner-reply"><span>{{ tr('portal.profile.yourReply') }}</span> {{ review.ownerReply }}</p>
                 } @else if (replyingId() === review.id) {
                   <div class="field reply-field">
-                    <label [for]="'reply-' + review.id">Reply</label>
+                    <label [for]="'reply-' + review.id">{{ tr('common.reply') }}</label>
                     <textarea [id]="'reply-' + review.id" rows="2" [(ngModel)]="replyDraft"></textarea>
                   </div>
                   <div class="inline-actions">
@@ -51,15 +51,15 @@
                       [disabled]="saving()"
                       (click)="sendReviewReply(review.id)"
                     >
-                      Post reply
+                      {{ tr('portal.profile.postReply') }}
                     </button>
                     <button type="button" class="btn" (click)="replyingId.set(null); replyDraft = ''">
-                      Cancel
+                      {{ tr('common.cancel') }}
                     </button>
                   </div>
                 } @else {
                   <button type="button" class="btn btn-ghost" (click)="replyingId.set(review.id); replyDraft = ''">
-                    Reply
+                    {{ tr('common.reply') }}
                   </button>
                 }
               </li>
@@ -69,17 +69,17 @@
       }
     } @else if (tab() === "business") {
       <section class="card edit-card">
-        <h3>Business details</h3>
-        <p class="lede">Shown on your public profile and used for Discover categorization.</p>
+        <h3>{{ tr('portal.profile.businessDetails') }}</h3>
+        <p class="lede">{{ tr('portal.profile.shownPublicProfileUsedDiscover') }}</p>
         @if (profileEditLockReason(); as lockReason) {
           <p class="muted lock-hint">{{ lockReason }}</p>
         }
         <div class="field">
-          <label for="businessName">Business name</label>
+          <label for="businessName">{{ tr('common.businessName') }}</label>
           <input id="businessName" [(ngModel)]="businessName" [disabled]="!canEdit()" />
         </div>
         <div class="field">
-          <label for="categorySlug">Primary category</label>
+          <label for="categorySlug">{{ tr('common.primaryCategory') }}</label>
           @if (categories().length > 0) {
             <select
               id="categorySlug"
@@ -94,11 +94,11 @@
           } @else {
             <input id="categorySlug" [(ngModel)]="categorySlug" [disabled]="!canEdit()" />
           }
-          <p class="hint">Main listing type — drives default service templates and Explore filters.</p>
+          <p class="hint">{{ tr('portal.profile.mainListingTypeDrivesDefault') }}</p>
         </div>
         @if (canEdit() && additionalOptions().length > 0) {
           <fieldset class="field additional">
-            <legend>Also list under (optional)</legend>
+            <legend>{{ tr('common.alsoListUnderOptional') }}</legend>
             <ul class="checkbox-list">
               @for (cat of additionalOptions(); track cat.slug) {
                 <li>
@@ -116,39 +116,38 @@
           </fieldset>
         } @else if (additionalCategorySlugs.length > 0) {
           <p class="muted">
-            Also listed under:
+            {{ tr('portal.profile.alsoListedUnder') }}
             @for (slug of additionalCategorySlugs; track slug; let last = $last) {
               {{ categoryLabel("en", slug) }}@if (!last) {, }
             }
           </p>
         }
         <div class="field">
-          <label for="phone">Phone</label>
+          <label for="phone">{{ tr('common.phone') }}</label>
           <input id="phone" [(ngModel)]="phone" [disabled]="!canEdit()" />
-          <p class="hint">Include country code. Masked on public profiles.</p>
+          <p class="hint">{{ tr('portal.profile.includeCountryCodeMaskedPublic') }}</p>
         </div>
         <div class="field">
-          <label for="description">Description</label>
+          <label for="description">{{ tr('common.description') }}</label>
           <textarea id="description" rows="4" [(ngModel)]="description" [disabled]="!canEdit()"></textarea>
         </div>
         <button type="button" class="btn btn-primary" [disabled]="!canEdit() || saving()" (click)="saveProfile()">
           <adeni-carbon-icon name="save" [size]="16" />
-          Save profile
+          {{ tr('portal.profile.saveProfile') }}
         </button>
       </section>
     } @else if (tab() === "verification") {
       <section class="card verification-card">
-        <h3>Verification</h3>
+        <h3>{{ tr('portal.profile.verification') }}</h3>
         <p class="lede">
-          Verified businesses appear in Discover search. Submit documents when your profile is in draft or
-          was rejected.
+          {{ tr('portal.profile.verifiedBusinessesAppearDiscoverSearch') }}
         </p>
         <p class="status-row">
           <span class="status-pill" [attr.data-status]="p.status">{{ formatTenantStatus(p.status) }}</span>
         </p>
         @if (canSubmitVerification()) {
           <div class="field">
-            <label for="verification-doc">Document type</label>
+            <label for="verification-doc">{{ tr('portal.profile.documentType') }}</label>
             <select id="verification-doc" [(ngModel)]="verificationDocType">
               @for (label of verificationLabels | keyvalue; track label.key) {
                 <option [ngValue]="+label.key">{{ label.value }}</option>
@@ -156,14 +155,14 @@
             </select>
           </div>
           <div class="field">
-            <label for="verification-ref">Reference number</label>
+            <label for="verification-ref">{{ tr('portal.profile.referenceNumber') }}</label>
             <input id="verification-ref" [(ngModel)]="verificationReference" />
           </div>
           <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="submitVerification()">
-            Submit for review
+            {{ tr('portal.profile.submitReview') }}
           </button>
         } @else {
-          <p class="muted">No new submission is needed right now. Check back if an admin asks for updates.</p>
+          <p class="muted">{{ tr('portal.profile.noNewSubmissionNeededRight') }}</p>
         }
         @if (verificationMessage()) {
           <p class="ok">{{ verificationMessage() }}</p>
@@ -185,15 +184,15 @@
           @if (primarySlug()) {
             <a class="btn" [href]="publicBookingUrl()" target="_blank" rel="noopener">
               <adeni-carbon-icon name="launch" [size]="16" />
-              Public page
+              {{ tr('common.publicPage') }}
             </a>
           }
-          <a class="btn" routerLink="/public-page">Page design</a>
-          <a class="btn" routerLink="/locations">Locations</a>
-          <a class="btn" routerLink="/settings">Settings</a>
+          <a class="btn" routerLink="/public-page">{{ tr('portal.profile.pageDesign') }}</a>
+          <a class="btn" routerLink="/locations">{{ tr('common.locations') }}</a>
+          <a class="btn" routerLink="/settings">{{ tr('common.settings') }}</a>
           @if (canSubmitVerification()) {
             <a class="btn btn-primary" routerLink="/profile" [queryParams]="{ tab: 'verification' }">
-              Verify business
+              {{ tr('portal.profile.verifyBusiness') }}
             </a>
           }
         </div>
@@ -201,17 +200,17 @@
 
       @if (primarySlug()) {
         <section class="card share">
-          <h3>Share kit</h3>
-          <p class="muted">Booking link for WhatsApp, Instagram bio, and SMS.</p>
+          <h3>{{ tr('portal.profile.shareKit') }}</h3>
+          <p class="muted">{{ tr('portal.profile.bookingLinkWhatsappInstagramBio') }}</p>
           <code class="link">{{ publicBookingUrl() }}</code>
           <div class="inline-actions">
             <button type="button" class="btn" (click)="copyPublicLink()">
               <adeni-carbon-icon name="copy" [size]="16" />
-              Copy link
+              {{ tr('portal.profile.copyLink') }}
             </button>
             <a class="btn btn-primary" [href]="whatsAppShareUrl()" target="_blank" rel="noopener">
               <adeni-carbon-icon name="launch" [size]="16" />
-              Share on WhatsApp
+              {{ tr('portal.profile.shareWhatsapp') }}
             </a>
           </div>
           @if (shareNotice()) {
@@ -222,23 +221,23 @@
 
       <div class="media-grid">
         <section class="card media-card">
-          <h3>Cover photo</h3>
-          <p class="media-lede">Main image on Discover cards and your public booking page.</p>
+          <h3>{{ tr('portal.profile.coverPhoto') }}</h3>
+          <p class="media-lede">{{ tr('portal.profile.mainImageDiscoverCardsPublic') }}</p>
           <div class="media-stage media-stage--cover">
             <img class="cover" [src]="coverPreview()" alt="" />
           </div>
           <div class="media-footer">
             <label class="btn">
               <adeni-carbon-icon name="upload" [size]="16" />
-              {{ uploading() ? "Uploading…" : "Upload cover" }}
+              {{ uploading() ? tr('common.uploading') : tr('portal.profile.uploadCover') }}
               <input type="file" accept="image/jpeg,image/png,image/webp" hidden (change)="onCoverSelected($event)" />
             </label>
-            <p class="hint">JPEG, PNG, or WebP up to 5 MB.</p>
+            <p class="hint">{{ tr('portal.profile.jpegPngWebpUp5') }}</p>
           </div>
         </section>
 
         <section class="card media-card">
-          <h3>Gallery</h3>
+          <h3>{{ tr('portal.profile.gallery') }}</h3>
           <p class="media-lede">Up to {{ maxGalleryPhotos }} extra photos for Explore and map previews.</p>
           <div class="media-stage media-stage--scroll">
             @if (galleryImages().length === 0) {
@@ -246,8 +245,8 @@
                 [embedded]="true"
                 [compact]="true"
                 icon="image"
-                title="No gallery photos"
-                description="Add photos customers can browse on Discover and your public page."
+                [title]="tr('portal.profile.noGalleryPhotos')"
+                [description]="tr('portal.profile.addPhotosCustomersCanBrowse')"
               />
             } @else {
               <div class="gallery-grid">
@@ -255,7 +254,7 @@
                   <div class="gallery-item">
                     <img [src]="photo.url" alt="" />
                     <button type="button" class="remove" (click)="removeGalleryImage(photo.storageKey)">
-                      Remove
+                      {{ tr('common.remove') }}
                     </button>
                   </div>
                 }
@@ -265,7 +264,7 @@
           <div class="media-footer">
             <label class="btn" [class.disabled]="galleryImages().length >= maxGalleryPhotos">
               <adeni-carbon-icon name="image" [size]="16" />
-              {{ galleryUploading() ? "Uploading…" : "Add photo" }}
+              {{ galleryUploading() ? tr('common.uploading') : tr('portal.profile.addPhoto') }}
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp"

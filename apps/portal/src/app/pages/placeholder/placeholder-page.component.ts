@@ -1,6 +1,7 @@
 import { Component, inject } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 
+import { injectAdeniTranslate } from "@adeni/ui";
 @Component({
   selector: "app-placeholder-page",
   standalone: true,
@@ -8,8 +9,7 @@ import { ActivatedRoute } from "@angular/router";
     <section class="card">
       <h2>{{ title }}</h2>
       <p>
-        Screen parity with Next.js <code>/business/{{ slug }}</code> is planned in the Angular
-        strangler migration.
+        {{ tr('portal.placeholder.screenParityWithNextJs') }} <code>/business/{{ slug }}</code> {{ tr('portal.placeholder.isPlannedAngularStranglerMigration') }}
       </p>
     </section>
   `,
@@ -30,6 +30,7 @@ import { ActivatedRoute } from "@angular/router";
   `,
 })
 export class PlaceholderPageComponent {
+  protected readonly tr = injectAdeniTranslate();
   private readonly route = inject(ActivatedRoute);
   readonly title = this.route.snapshot.data["title"] as string;
   readonly slug = this.route.snapshot.data["slug"] as string;

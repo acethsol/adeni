@@ -1,14 +1,14 @@
-<app-portal-page title="Locations" description="Manage branches and public profile URLs.">
+<app-portal-page [title]="tr('common.locations')" [description]="tr('portal.locations.manageBranchesPublicProfileUrls')">
   <button
     pageActions
     type="button"
     class="btn btn-primary"
     [disabled]="!canAddLocation()"
-    [title]="canAddLocation() ? 'Add a branch' : 'Location limit reached on your plan'"
+    [title]="canAddLocation() ? tr('portal.locations.addBranch') : tr('portal.locations.locationLimitReachedPlan')"
     (click)="openCreate()"
   >
     <adeni-carbon-icon name="add" [size]="16" />
-    Add location
+    {{ tr('portal.locations.addLocation') }}
   </button>
 
   @if (error()) {
@@ -17,30 +17,30 @@
 
   <adeni-modal
     [open]="showForm()"
-    [title]="editingId() ? 'Edit location' : 'New location'"
-    subtitle="Slug appears in your public URL: /businesses/{slug}"
+    [title]="editingId() ? tr('portal.locations.editLocation') : tr('portal.locations.newLocation')"
+    [subtitle]="tr('portal.locations.slugAppearsPublicUrlBusinesses')"
     size="lg"
     [hasFooter]="false"
     (closed)="cancelForm()"
   >
     <div class="field">
-      <label>Slug</label>
+      <label>{{ tr('portal.locations.slug') }}</label>
       <input [(ngModel)]="draft.slug" />
     </div>
     <div class="field">
-      <label>Display name</label>
+      <label>{{ tr('common.displayName') }}</label>
       <input [(ngModel)]="draft.name" />
     </div>
     <div class="field">
-      <label>Address</label>
+      <label>{{ tr('common.address') }}</label>
       <input [(ngModel)]="draft.addressLine" />
     </div>
     <div class="field">
-      <label>Area</label>
+      <label>{{ tr('common.area') }}</label>
       <input [(ngModel)]="draft.area" />
     </div>
     <div class="field">
-      <label>Market</label>
+      <label>{{ tr('common.market') }}</label>
       <select [(ngModel)]="draft.marketId">
         @for (m of markets(); track m.id) {
           <option [value]="m.id">{{ m.name }}</option>
@@ -50,27 +50,27 @@
     <label class="cds-toggle">
       <input type="checkbox" role="switch" [(ngModel)]="draft.isPrimary" />
       <span class="cds-toggle__track" aria-hidden="true"></span>
-      <span class="cds-toggle__label">Primary location</span>
+      <span class="cds-toggle__label">{{ tr('portal.locations.primaryLocation') }}</span>
     </label>
     <div class="actions">
       <button type="button" class="btn" (click)="cancelForm()">
         <adeni-carbon-icon name="close" [size]="16" />
-        Cancel
+        {{ tr('common.cancel') }}
       </button>
       <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="save()">
         <adeni-carbon-icon name="save" [size]="16" />
-        Save
+        {{ tr('common.save') }}
       </button>
     </div>
   </adeni-modal>
 
   @if (loading()) {
-    <p class="muted">Loading…</p>
+    <p class="muted">{{ tr('common.loading') }}</p>
   } @else if (locations().length === 0) {
     <adeni-portal-empty-state
       icon="location--filled"
-      title="No locations yet"
-      description="Add your first branch so customers can find you on Discover."
+      [title]="tr('portal.locations.noLocationsYet')"
+      [description]="tr('portal.locations.addFirstBranchSoCustomers')"
     />
   } @else {
     <div class="roster">
@@ -80,15 +80,15 @@
         (viewModeChange)="viewMode.set($event)"
         [count]="paginatedLocations().length"
         [countTotal]="filteredLocationsCount()"
-        singularCountLabel="location"
-        pluralCountLabel="locations"
-        searchPlaceholder="Search locations"
+        [singularCountLabel]="tr('portal.locations.location')"
+        [pluralCountLabel]="tr('portal.locations.locations')"
+        [searchPlaceholder]="tr('portal.locations.searchLocations')"
         [searchQuery]="locationSearch()"
         (searchQueryChange)="onLocationSearchChange($event)"
       >
         <adeni-export-menu
           listExports
-          label="Export"
+          [label]="tr('common.export')"
           [items]="exportItems()"
           (exportSelect)="downloadLocationsExport($event)"
         />
@@ -97,8 +97,8 @@
       @if (filteredLocations().length === 0) {
         <adeni-portal-empty-state
           icon="search"
-          title="No matches"
-          description="Try a different name, area, or slug."
+          [title]="tr('common.noMatches')"
+          [description]="tr('portal.locations.tryDifferentNameAreaSlug')"
           [compact]="true"
         />
       } @else if (viewMode() === "cards") {
@@ -113,14 +113,14 @@
               <span class="org-title">{{ loc.addressLine }}</span>
               <div class="org-meta adeni-cell-pills">
                 @if (loc.isPrimary) {
-                  <adeni-pill tone="brand" [compact]="true">Primary</adeni-pill>
+                  <adeni-pill tone="brand" [compact]="true">{{ tr('common.primary') }}</adeni-pill>
                 }
                 <adeni-pill tone="neutral" [compact]="true">{{ loc.marketId }}</adeni-pill>
               </div>
               <p class="loc-slug muted">/businesses/{{ loc.slug }}</p>
               <div class="org-actions">
                 <button type="button" [disabled]="busy() === loc.id" (click)="openEdit(loc)">
-                  Edit
+                  {{ tr('common.edit') }}
                 </button>
                 <button
                   type="button"
@@ -128,7 +128,7 @@
                   [disabled]="busy() === loc.id"
                   (click)="remove(loc)"
                 >
-                  Delete
+                  {{ tr('portal.locations.delete') }}
                 </button>
               </div>
             </li>
@@ -141,7 +141,7 @@
             [pageSize]="pageSize()"
             [totalCount]="filteredLocationsCount()"
             [pageSizeOptions]="listPageSizeOptions"
-            ariaLabel="Location pages"
+            [ariaLabel]="tr('portal.locations.locationPages')"
             (pageChange)="goToLocationsPage($event)"
             (pageSizeChange)="onLocationsPageSizeChange($event)"
           />
@@ -173,7 +173,7 @@
           </ng-template>
           <ng-template adeniDataTableCell="primary" let-loc>
             @if (loc.isPrimary) {
-              <adeni-pill tone="brand" [compact]="true">Primary</adeni-pill>
+              <adeni-pill tone="brand" [compact]="true">{{ tr('common.primary') }}</adeni-pill>
             } @else {
               <span class="adeni-data-table-text">—</span>
             }
@@ -182,7 +182,7 @@
             <adeni-row-action-bar>
               <adeni-icon-btn
                 icon="edit"
-                label="Edit location"
+                [label]="tr('portal.locations.editLocation')"
                 variant="table"
                 [dense]="true"
                 [disabled]="busy() === loc.id"
@@ -190,7 +190,7 @@
               />
               <adeni-icon-btn
                 icon="trash-can"
-                label="Delete location"
+                [label]="tr('portal.locations.deleteLocation')"
                 variant="danger-soft"
                 [dense]="true"
                 [disabled]="busy() === loc.id"
@@ -205,7 +205,7 @@
             [pageSize]="pageSize()"
             [totalCount]="filteredLocationsCount()"
             [pageSizeOptions]="listPageSizeOptions"
-            ariaLabel="Location pages"
+            [ariaLabel]="tr('portal.locations.locationPages')"
             (pageChange)="goToLocationsPage($event)"
             (pageSizeChange)="onLocationsPageSizeChange($event)"
           />

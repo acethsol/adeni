@@ -74,6 +74,7 @@ import {
   AdeniModalComponent,
   PortalPageComponent,
   type AdeniCarbonIconName,
+  injectAdeniTranslate,
 } from "@adeni/ui";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { BusinessApiService } from "../../core/services/business-api.service";
@@ -113,6 +114,7 @@ type StatusSlice = { status: number; label: string; count: number; percent: numb
   styleUrl: "./dashboard.component.scss",
 })
 export class DashboardComponent implements OnInit {
+  protected readonly tr = injectAdeniTranslate();
   private readonly businessApi = inject(BusinessApiService);
   private readonly config = inject(ADENI_PORTAL_CONFIG);
   private readonly destroyRef = inject(DestroyRef);
@@ -840,8 +842,8 @@ export class DashboardComponent implements OnInit {
         const count = snapshot.rating.count;
         this.ratingHint.set(count === 1 ? "1 review" : `${count} reviews`);
       } else {
-        this.ratingLabel.set("New");
-        this.ratingHint.set("No reviews yet");
+        this.ratingLabel.set(this.tr("common.new"));
+        this.ratingHint.set(this.tr("common.noReviewsYet"));
       }
     } catch {
       this.loadError.set(true);
@@ -908,7 +910,7 @@ export class DashboardComponent implements OnInit {
 
     this.revenueUsesCollected.set(false);
     this.revenueLabel.set("—");
-    this.revenueHint.set("Revenue metrics are not shown for this period.");
+    this.revenueHint.set(this.tr("portal.dashboard.revenueMetricsNotShownPeriod"));
   }
 
   private applyBookings(

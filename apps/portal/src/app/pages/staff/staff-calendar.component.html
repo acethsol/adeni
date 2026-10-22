@@ -2,39 +2,39 @@
   @if (teamMode() && showRosterBackLink()) {
     <a pageActions class="btn" routerLink="/staff">
       <adeni-carbon-icon name="user--follow" [size]="16" />
-      Staff
+      {{ tr('common.staff') }}
     </a>
   }
   @if (teamMode()) {
     <a pageActions class="btn btn-primary" routerLink="/bookings">
       <adeni-carbon-icon name="add" [size]="16" />
-      Bookings
+      {{ tr('common.bookings') }}
     </a>
   }
 
   <div class="cal-shell">
     @if (!teamMode() && showRosterBackLink()) {
-      <a class="back-link" routerLink="/staff">← Staff roster</a>
+      <a class="back-link" routerLink="/staff">{{ tr('portal.staff.staffRoster') }}</a>
     }
 
     <div class="cal-toolbar">
-      <div class="cal-nav" role="group" aria-label="Navigate calendar">
-        <button type="button" class="btn btn-ghost" (click)="goToday()">Today</button>
-        <button type="button" class="nav-btn" (click)="prev()" aria-label="Previous">‹</button>
-        <button type="button" class="nav-btn" (click)="next()" aria-label="Next">›</button>
+      <div class="cal-nav" role="group" [attr.aria-label]="tr('portal.staff.navigateCalendar')">
+        <button type="button" class="btn btn-ghost" (click)="goToday()">{{ tr('portal.staff.today') }}</button>
+        <button type="button" class="nav-btn" (click)="prev()" [attr.aria-label]="tr('common.previous')">‹</button>
+        <button type="button" class="nav-btn" (click)="next()" [attr.aria-label]="tr('common.next')">›</button>
       </div>
 
       <strong class="period-label">{{ periodLabel() }}</strong>
 
-      <div class="view-toggle" role="group" aria-label="Calendar range">
+      <div class="view-toggle" role="group" [attr.aria-label]="tr('portal.staff.calendarRange')">
         <button type="button" [class.active]="view() === 'month'" (click)="setView('month')">
-          Month
+          {{ tr('portal.staff.month') }}
         </button>
         <button type="button" [class.active]="view() === 'week'" (click)="setView('week')">
-          Week
+          {{ tr('portal.staff.week') }}
         </button>
         <button type="button" [class.active]="view() === 'day'" (click)="setView('day')">
-          Day
+          {{ tr('portal.staff.day') }}
         </button>
       </div>
     </div>
@@ -48,27 +48,27 @@
         storageKey="portal.calendar"
         [viewMode]="listViewMode()"
         (viewModeChange)="onListViewChange($event)"
-        viewModeCardsLabel="Calendar"
-        viewModeTableLabel="List"
+        [viewModeCardsLabel]="tr('common.calendar')"
+        [viewModeTableLabel]="tr('portal.staff.list')"
         viewModeCardsIcon="calendar"
         [count]="displayBlocks().length"
-        singularCountLabel="item"
-        pluralCountLabel="items"
-        searchPlaceholder="Search service, staff, or date"
+        [singularCountLabel]="tr('portal.staff.item')"
+        [pluralCountLabel]="tr('portal.staff.items')"
+        [searchPlaceholder]="tr('portal.staff.searchServiceStaffDate')"
         [searchQuery]="calendarSearch()"
         (searchQueryChange)="calendarSearch.set($event)"
       >
         <adeni-list-filter-row listFilters>
           <adeni-filter-select
             layout="toolbar"
-            label="Show"
+            [label]="tr('portal.staff.show')"
             [options]="kindFilterOptions"
             [value]="kindFilter()"
             (valueChange)="kindFilter.set($any($event))"
           />
           <adeni-filter-select
             layout="toolbar"
-            label="Status"
+            [label]="tr('common.status')"
             [options]="statusFilterOptions"
             [value]="statusFilter()"
             (valueChange)="statusFilter.set($any($event))"
@@ -91,8 +91,8 @@
             @if (displayBlocks().length === 0) {
               <adeni-portal-empty-state
                 icon="calendar"
-                title="No appointments in this range"
-                description="Adjust filters or choose another week or month."
+                [title]="tr('common.noAppointmentsRange')"
+                [description]="tr('portal.staff.adjustFiltersChooseAnotherWeek')"
                 [compact]="true"
               />
             } @else {
@@ -135,7 +135,7 @@
                   </ng-template>
                   <ng-template adeniDataTableCell="status" let-block>
                     <adeni-pill [tone]="blockPillTone(block)" [compact]="true">
-                      {{ block.kind === "leave" ? "Leave" : (block.statusLabel ?? "—") }}
+                      {{ block.kind === "leave" ? tr('common.leave') : (block.statusLabel ?? "—") }}
                     </adeni-pill>
                   </ng-template>
                 </adeni-data-table>
@@ -319,15 +319,15 @@
         @if (selectedBlock(); as sel) {
           <div class="sidebar-panel">
             <button type="button" class="sidebar-back" (click)="clearSelection()">
-              ← Back
+              {{ tr('portal.staff.back') }}
             </button>
-            <p class="rail-kicker">{{ sel.kind === "leave" ? "Leave" : "Appointment" }}</p>
+            <p class="rail-kicker">{{ sel.kind === "leave" ? tr('common.leave') : tr('common.appointment') }}</p>
             <h3 class="sidebar-title">{{ sel.title }}</h3>
             <p class="rail-when">{{ sel.startLabel }} – {{ sel.endLabel }}</p>
             @if (sel.customerSelectedStaff) {
               <p class="rail-requested">
                 <adeni-carbon-icon name="user--filled" [size]="16" />
-                Customer requested this practitioner
+                {{ tr('portal.staff.customerRequestedPractitioner') }}
               </p>
             }
             @if (sel.staffDisplayName && teamMode()) {
@@ -350,39 +350,39 @@
               <p class="rail-notes">{{ sel.booking!.customerNotes }}</p>
             }
             <p class="rail-hint muted">
-              Manage status and payment from
-              <a routerLink="/bookings">Bookings</a>.
+              {{ tr('portal.staff.manageStatusPaymentFrom') }}
+              <a routerLink="/bookings">{{ tr('common.bookings') }}</a>.
             </p>
           </div>
         } @else {
           @if (teamMode()) {
             <div class="sidebar-section">
-              <p class="sidebar-label">Calendar colors</p>
-              <p class="sidebar-hint">Group events on the grid by staff member or booking status.</p>
-              <div class="color-by-toggle" role="group" aria-label="Calendar color grouping">
+              <p class="sidebar-label">{{ tr('portal.staff.calendarColors') }}</p>
+              <p class="sidebar-hint">{{ tr('portal.staff.groupEventsGridByStaff') }}</p>
+              <div class="color-by-toggle" role="group" [attr.aria-label]="tr('portal.staff.calendarColorGrouping')">
                 <button
                   type="button"
                   [class.active]="colorBy() === 'staff'"
                   (click)="setColorBy('staff')"
                 >
-                  Staff
+                  {{ tr('common.staff') }}
                 </button>
                 <button
                   type="button"
                   [class.active]="colorBy() === 'status'"
                   (click)="setColorBy('status')"
                 >
-                  Status
+                  {{ tr('common.status') }}
                 </button>
               </div>
             </div>
           } @else {
             <div class="sidebar-section">
-              <p class="sidebar-label">Legend</p>
+              <p class="sidebar-label">{{ tr('portal.staff.legend') }}</p>
               <div class="legend compact">
-                <span class="leg is-confirmed">Confirmed</span>
-                <span class="leg is-pending">Pending</span>
-                <span class="leg is-leave">Leave</span>
+                <span class="leg is-confirmed">{{ tr('portal.staff.confirmed') }}</span>
+                <span class="leg is-pending">{{ tr('portal.staff.pending') }}</span>
+                <span class="leg is-leave">{{ tr('common.leave') }}</span>
               </div>
             </div>
           }
@@ -393,7 +393,7 @@
                 type="button"
                 class="nav-btn mini"
                 (click)="shiftSidebarMonth(-1)"
-                aria-label="Previous month"
+                [attr.aria-label]="tr('common.previousMonth')"
               >
                 ‹
               </button>
@@ -402,7 +402,7 @@
                 type="button"
                 class="nav-btn mini"
                 (click)="shiftSidebarMonth(1)"
-                aria-label="Next month"
+                [attr.aria-label]="tr('common.nextMonth')"
               >
                 ›
               </button>
@@ -430,7 +430,7 @@
 
           @if (teamMode() && team(); as teamData) {
             <div class="sidebar-section">
-              <p class="sidebar-label">Staff on calendar</p>
+              <p class="sidebar-label">{{ tr('portal.staff.staffCalendar') }}</p>
               <div class="staff-filter-list" role="list">
                 @for (member of teamData.staff; track member.staffMemberId) {
                   <button

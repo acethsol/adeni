@@ -8,7 +8,7 @@ import {
   type QuoteRequestResponse,
   type ServiceOffering,
 } from "@adeni/shared";
-import { AdeniPortalEmptyStateComponent, PortalPageComponent } from "@adeni/ui";
+import { AdeniPortalEmptyStateComponent, PortalPageComponent, injectAdeniTranslate, injectAdeniApiError } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { TenantOperationsRealtimeService } from "@adeni/ui";
 
@@ -20,6 +20,8 @@ import { TenantOperationsRealtimeService } from "@adeni/ui";
   styleUrl: "./quotes.component.scss",
 })
 export class QuotesComponent implements OnInit, OnDestroy {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
   private opsSub: Subscription | null = null;
@@ -76,8 +78,8 @@ export class QuotesComponent implements OnInit, OnDestroy {
       this.quotes.set(quotes);
       this.services.set(services.filter((service) => service.isActive));
       if (services[0]?.currency) this.currency = services[0].currency;
-    } catch {
-      this.error.set("Could not load quote requests.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.quotes.couldNotLoadQuoteRequests"));
     } finally {
       this.loading.set(false);
     }
@@ -105,7 +107,7 @@ export class QuotesComponent implements OnInit, OnDestroy {
     const quote = this.selected();
     const amount = Number(this.amount);
     if (!quote || !this.serviceOfferingId || !Number.isFinite(amount) || amount <= 0) {
-      this.error.set("Add an amount, a service, and a time window.");
+      this.error.set(this.tr("portal.quotes.addAmountServiceTimeWindow"));
       return;
     }
     this.busy.set(true);
@@ -123,8 +125,8 @@ export class QuotesComponent implements OnInit, OnDestroy {
       );
       this.quotes.update((items) => items.map((item) => (item.id === updated.id ? updated : item)));
       this.selectedId.set(null);
-    } catch {
-      this.error.set("Could not send that quote.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.quotes.couldNotSendQuote"));
     } finally {
       this.busy.set(false);
     }
@@ -147,8 +149,8 @@ export class QuotesComponent implements OnInit, OnDestroy {
       anchor.download = `quote-${quote.id}.pdf`;
       anchor.click();
       URL.revokeObjectURL(url);
-    } catch {
-      this.error.set("Could not download quote PDF.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.quotes.couldNotDownloadQuotePdf"));
     } finally {
       this.pdfBusyId.set(null);
     }

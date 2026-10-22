@@ -44,6 +44,8 @@ import {
   type AdeniExportMenuItem,
   type AdeniFilterSelectOption,
   type AdeniListViewMode,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 
@@ -87,6 +89,8 @@ type ServiceDraft = {
   styleUrl: "./services.component.scss",
 })
 export class ServicesComponent implements OnInit {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly confirmDialog = inject(AdeniConfirmService);
@@ -295,9 +299,9 @@ export class ServicesComponent implements OnInit {
           else if (catalog.items[0]?.currency) this.defaultCurrency = catalog.items[0].currency;
         });
       }, "Loading services…", "Fetching menu and collections");
-    } catch {
-      this.error.set("Could not load services.");
-      this.feedback.error("Could not load services.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.services.couldNotLoadServices"));
+      this.feedback.error(this.apiErr(caught, "portal.services.couldNotLoadServices"));
     } finally {
       this.loading.set(false);
     }
@@ -361,7 +365,7 @@ export class ServicesComponent implements OnInit {
   async addGroup(): Promise<void> {
     const name = this.newGroupName().trim();
     if (name.length < 2) {
-      this.error.set("Collection name needs at least 2 characters.");
+      this.error.set(this.tr("portal.services.collectionNameNeedsAtLeast"));
       return;
     }
     this.busy.set("group");
@@ -380,10 +384,10 @@ export class ServicesComponent implements OnInit {
       );
       this.groups.update((list) => [...list, created].sort((a, b) => a.sortOrder - b.sortOrder));
       this.newGroupName.set("");
-      this.feedback.success(`“${created.name}” is ready to assign.`, "Collection added");
-    } catch {
-      this.error.set("Could not create collection.");
-      this.feedback.error("Could not create collection.");
+      this.feedback.success(`“${created.name}” is ready to assign.`, this.tr("portal.services.collectionAdded"));
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.services.couldNotCreateCollection"));
+      this.feedback.error(this.apiErr(caught, "portal.services.couldNotCreateCollection"));
     } finally {
       this.busy.set(null);
     }
@@ -411,10 +415,10 @@ export class ServicesComponent implements OnInit {
       this.services.update((list) =>
         list.map((s) => (s.menuGroupId === group.id ? { ...s, menuGroupId: null } : s)),
       );
-      this.feedback.success(`“${group.name}” removed. Services are ungrouped.`, "Collection removed");
-    } catch {
-      this.error.set("Could not remove collection.");
-      this.feedback.error("Could not remove collection.");
+      this.feedback.success(`“${group.name}” removed. Services are ungrouped.`, this.tr("portal.services.collectionRemoved"));
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.services.couldNotRemoveCollection"));
+      this.feedback.error(this.apiErr(caught, "portal.services.couldNotRemoveCollection"));
     } finally {
       this.busy.set(null);
     }
@@ -425,7 +429,7 @@ export class ServicesComponent implements OnInit {
     const duration = Number(this.draft.durationMinutes);
     const sortOrder = Number(this.draft.sortOrder);
     if (!this.draft.name.trim() || Number.isNaN(price) || Number.isNaN(duration)) {
-      this.error.set("Fill in name, price, and duration.");
+      this.error.set(this.tr("portal.services.fillNamePriceDuration"));
       return;
     }
 
@@ -459,10 +463,10 @@ export class ServicesComponent implements OnInit {
         }
       }, "Saving service…", createBody.name);
       this.cancelForm();
-      this.feedback.success(`“${createBody.name}” is on your menu.`, "Service saved");
-    } catch {
-      this.error.set("Could not save service.");
-      this.feedback.error("Could not save service.");
+      this.feedback.success(`“${createBody.name}” is on your menu.`, this.tr("portal.services.serviceSaved"));
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.services.couldNotSaveService"));
+      this.feedback.error(this.apiErr(caught, "portal.services.couldNotSaveService"));
     } finally {
       this.busy.set(null);
     }
@@ -486,10 +490,10 @@ export class ServicesComponent implements OnInit {
         service.name,
       );
       this.services.update((list) => list.filter((s) => s.id !== service.id));
-      this.feedback.success(`“${service.name}” is no longer bookable.`, "Service deactivated");
-    } catch {
-      this.error.set("Could not deactivate service.");
-      this.feedback.error("Could not deactivate service.");
+      this.feedback.success(`“${service.name}” is no longer bookable.`, this.tr("portal.services.serviceDeactivated"));
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.services.couldNotDeactivateService"));
+      this.feedback.error(this.apiErr(caught, "portal.services.couldNotDeactivateService"));
     } finally {
       this.busy.set(null);
     }
@@ -515,9 +519,9 @@ export class ServicesComponent implements OnInit {
       anchor.download = `tenant-services-${to.toISOString().slice(0, 10)}.${format === "xlsx" ? "xlsx" : "csv"}`;
       anchor.click();
       URL.revokeObjectURL(url);
-      this.feedback.success("Service menu downloaded.");
-    } catch {
-      this.feedback.error("Could not download service menu.");
+      this.feedback.success(this.tr("portal.services.serviceMenuDownloaded"));
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "portal.services.couldNotDownloadServiceMenu"));
     } finally {
       this.exporting.set(false);
     }

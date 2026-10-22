@@ -1,6 +1,6 @@
 import { Component, computed, HostListener, inject, input, signal } from "@angular/core";
 import type { TenantEntitlements } from "@adeni/shared";
-import { AdeniCarbonIconComponent, AdeniPillComponent } from "@adeni/ui";
+import { AdeniCarbonIconComponent, AdeniPillComponent, injectAdeniTranslate } from "@adeni/ui";
 import { PortalActiveLocationService } from "../core/services/portal-active-location.service";
 import { PORTAL_ALL_LOCATIONS_SCOPE } from "../core/services/portal-active-location-store";
 
@@ -12,6 +12,7 @@ import { PORTAL_ALL_LOCATIONS_SCOPE } from "../core/services/portal-active-locat
   styleUrl: "./portal-branch-switch.component.scss",
 })
 export class PortalBranchSwitchComponent {
+  protected readonly tr = injectAdeniTranslate();
   readonly activeLocation = inject(PortalActiveLocationService);
 
   readonly entitlements = input<TenantEntitlements | null>(null);

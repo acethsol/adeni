@@ -49,6 +49,8 @@ import {
   type AdeniFilterSelectOption,
   type AdeniListViewMode,
   type AdeniPillTone,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
@@ -130,6 +132,8 @@ type MonthCell = DayColumn & {
   styleUrl: "./staff-calendar.component.scss",
 })
 export class StaffCalendarComponent implements OnInit, OnDestroy {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
@@ -973,7 +977,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
 
   async load(): Promise<void> {
     if (!this.teamMode() && !this.staffId) {
-      this.error.set("Staff member not found.");
+      this.error.set(this.tr("portal.staff.staffMemberNotFound"));
       this.loading.set(false);
       return;
     }
@@ -1006,8 +1010,8 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
           this.team.set(null);
         }
       }, "Loading calendar…");
-    } catch {
-      this.error.set("Could not load calendar.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.staff.couldNotLoadCalendar"));
       this.calendar.set(null);
       this.team.set(null);
     } finally {

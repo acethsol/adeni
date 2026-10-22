@@ -2,7 +2,6 @@ import { Component, computed, inject, signal } from "@angular/core";
 import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
-import { AdeniApiError } from "@adeni/api-client";
 import type {
   BookingResponse,
   KioskStatusResponse,
@@ -19,7 +18,6 @@ import {
   REPORT_KEYS,
   buildReportExportMenuItems,
   mergeTenantEntitlements,
-  tenantReportExportErrorMessage,
   totalPages as computeTotalPages,
   type ReportExportFormat,
 } from "@adeni/shared";
@@ -46,6 +44,8 @@ import {
   type AdeniExportMenuItem,
   type AdeniListViewMode,
   type AdeniPillTone,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { map } from "rxjs";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
@@ -83,6 +83,8 @@ const PAID_STATUS = 6;
   styleUrl: "./bookings.component.scss",
 })
 export class BookingsComponent {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   private readonly config = inject(ADENI_PORTAL_CONFIG);
   private readonly confirmDialog = inject(AdeniConfirmService);
@@ -352,8 +354,8 @@ export class BookingsComponent {
         this.page.set(bookingsPage.page);
         this.kioskStatus.set(kiosk);
       });
-    } catch {
-      this.error.set("Could not load bookings. Check API and dev business sub.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.bookings.couldNotLoadBookingsCheck"));
       this.bookings.set([]);
       this.totalCount.set(0);
     } finally {
@@ -429,7 +431,7 @@ export class BookingsComponent {
 
   async saveKioskPin(): Promise<void> {
     if (!/^\d{4,8}$/.test(this.kioskPin.trim())) {
-      this.error.set("Exit PIN must be 4–8 digits.");
+      this.error.set(this.tr("portal.bookings.exitPinMustBe4"));
       return;
     }
     this.savingPin.set(true);
@@ -440,8 +442,8 @@ export class BookingsComponent {
       );
       this.kioskStatus.set(status);
       this.kioskPin = "";
-    } catch {
-      this.error.set("Could not save exit PIN.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.bookings.couldNotSaveExitPin"));
     } finally {
       this.savingPin.set(false);
     }
@@ -456,8 +458,8 @@ export class BookingsComponent {
       );
       this.kioskStatus.set(status);
       this.kioskPin = "";
-    } catch {
-      this.error.set("Could not clear exit PIN.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.bookings.couldNotClearExitPin"));
     } finally {
       this.savingPin.set(false);
     }
@@ -505,8 +507,8 @@ export class BookingsComponent {
       );
       void updated;
       await this.load();
-    } catch {
-      this.error.set("Could not mark this booking paid.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.bookings.couldNotMarkBookingPaid"));
     } finally {
       this.actionId.set(null);
     }
@@ -530,8 +532,8 @@ export class BookingsComponent {
           "Payment page blocked. Allow pop-ups for this site, or copy the link from Payments after creating a link.",
         );
       }
-    } catch {
-      this.error.set("Could not start balance collection.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.bookings.couldNotStartBalanceCollection"));
     } finally {
       this.actionId.set(null);
     }
@@ -593,11 +595,7 @@ export class BookingsComponent {
       URL.revokeObjectURL(url);
     } catch (err) {
       this.error.set(
-        tenantReportExportErrorMessage("en", {
-          code: err instanceof AdeniApiError ? err.code : undefined,
-          message: err instanceof AdeniApiError ? err.message : undefined,
-          fallback: "Could not download the bookings export.",
-        }),
+        this.apiErr(err, "portal.bookings.couldNotDownloadExport"),
       );
     } finally {
       this.exporting.set(false);

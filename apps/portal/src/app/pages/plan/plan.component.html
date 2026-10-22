@@ -1,30 +1,30 @@
 <app-portal-page
-  title="Plans & billing"
-  description="Compare Adeni plans, track usage, and upgrade when you're ready."
+  [title]="tr('portal.plan.plansBilling')"
+  [description]="tr('portal.plan.compareAdeniPlansTrackUsage')"
 >
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
 
   @if (route.snapshot.queryParamMap.get("upgraded") === "1") {
-    <p class="ok-banner">Plan updated. Entitlements refresh within a few seconds.</p>
+    <p class="ok-banner">{{ tr('portal.plan.planUpdatedEntitlementsRefreshWithin') }}</p>
   }
 
   @if (loading()) {
-    <p class="muted">Loading…</p>
+    <p class="muted">{{ tr('common.loading') }}</p>
   } @else {
     <adeni-tabs [tabs]="planTabs" />
 
     @if (planTab() === "compare") {
       <section class="card compare">
         <div class="compare-head">
-          <h3>Compare plans</h3>
+          <h3>{{ tr('common.comparePlans') }}</h3>
           <p class="muted compare-lede">
-            Feature rows match the live entitlements catalog for your market.
+            {{ tr('portal.plan.featureRowsMatchLiveEntitlements') }}
           </p>
         </div>
         <div class="compare-table-shell">
-          <div class="compare-table-wrap" role="region" aria-label="Plan feature comparison" tabindex="0">
+          <div class="compare-table-wrap" role="region" [attr.aria-label]="tr('portal.plan.planFeatureComparison')" tabindex="0">
             <table class="compare-table">
               <colgroup>
                 <col class="compare-feature-col" />
@@ -35,7 +35,7 @@
               <thead>
                 <tr class="compare-header-row">
                   <th scope="col" class="compare-feature-col compare-th-feature">
-                    <span class="compare-section-label">What's included</span>
+                    <span class="compare-section-label">{{ tr('portal.plan.whatSIncluded') }}</span>
                   </th>
                   @for (sku of skus; track sku) {
                     @let display = planDisplay(sku);
@@ -49,9 +49,9 @@
                         <span class="compare-plan-tier">{{ display.name }}</span>
                         <span class="compare-plan-price">{{ display.priceLabel }}</span>
                         @if (isCurrentPlan(sku)) {
-                          <span class="compare-plan-badge compare-plan-badge--current">Your plan</span>
+                          <span class="compare-plan-badge compare-plan-badge--current">{{ tr('portal.plan.yourPlan') }}</span>
                         } @else if (isPopular(sku)) {
-                          <span class="compare-plan-badge compare-plan-badge--popular">Most popular</span>
+                          <span class="compare-plan-badge compare-plan-badge--popular">{{ tr('common.mostPopular') }}</span>
                         }
                       </div>
                     </th>
@@ -72,10 +72,10 @@
                       >
                         @if (kind === "yes") {
                           <span class="compare-yes" aria-hidden="true">✓</span>
-                          <span class="sr-only">Included</span>
+                          <span class="sr-only">{{ tr('portal.plan.included') }}</span>
                         } @else if (kind === "dash") {
                           <span aria-hidden="true">—</span>
-                          <span class="sr-only">Not included</span>
+                          <span class="sr-only">{{ tr('portal.plan.notIncluded') }}</span>
                         } @else {
                           {{ comparisonCell(row, sku) }}
                         }
@@ -92,24 +92,24 @@
     @if (usage(); as u) {
       <section class="card usage" [class.warn]="isPlanUsageNearLimit(u)">
         <div class="usage-head">
-          <h3>Usage this month</h3>
+          <h3>{{ tr('portal.plan.usageMonth') }}</h3>
           <p class="usage-plan">{{ formatSubscriptionPlanLabel(u) }}</p>
         </div>
 
         <ul class="usage-metrics">
           <li class="usage-metric">
-            <span class="usage-metric-label">Bookings</span>
+            <span class="usage-metric-label">{{ tr('common.bookings') }}</span>
             <span class="usage-metric-value">{{ formatBookingUsageMetric(u) }}</span>
             @if (u.bookingsLimitThisMonth) {
               <div class="meter" role="progressbar" [attr.aria-valuenow]="bookingsUsagePercent(u)" aria-valuemin="0" aria-valuemax="100">
                 <span [style.width.%]="bookingsUsagePercent(u)"></span>
               </div>
             } @else {
-              <p class="usage-metric-hint muted">Unlimited on your plan</p>
+              <p class="usage-metric-hint muted">{{ tr('portal.plan.unlimitedPlan') }}</p>
             }
           </li>
           <li class="usage-metric">
-            <span class="usage-metric-label">Locations</span>
+            <span class="usage-metric-label">{{ tr('common.locations') }}</span>
             <span class="usage-metric-value">{{ formatLocationUsageMetric(u) }}</span>
             @if (u.entitlements.maxLocations) {
               <div
@@ -122,11 +122,11 @@
                 <span [style.width.%]="usagePercentForLimit(u.locationsActive, u.entitlements.maxLocations)"></span>
               </div>
             } @else {
-              <p class="usage-metric-hint muted">Multiple locations allowed</p>
+              <p class="usage-metric-hint muted">{{ tr('portal.plan.multipleLocationsAllowed') }}</p>
             }
           </li>
           <li class="usage-metric">
-            <span class="usage-metric-label">Team members</span>
+            <span class="usage-metric-label">{{ tr('portal.plan.teamMembers') }}</span>
             <span class="usage-metric-value">{{ formatTeamUsageMetric(u) }}</span>
             @if (u.entitlements.maxPractitioners) {
               <div
@@ -139,7 +139,7 @@
                 <span [style.width.%]="usagePercentForLimit(u.practitionersActive, u.entitlements.maxPractitioners)"></span>
               </div>
             } @else {
-              <p class="usage-metric-hint muted">Unlimited team members</p>
+              <p class="usage-metric-hint muted">{{ tr('portal.plan.unlimitedTeamMembers') }}</p>
             }
           </li>
         </ul>
@@ -186,14 +186,14 @@
         </div>
 
         @if (isPlanUsageNearLimit(u)) {
-          <p class="warn-text">You're approaching a plan limit. Upgrade or adjust usage to avoid interruptions.</p>
+          <p class="warn-text">{{ tr('portal.plan.youReApproachingPlanLimit') }}</p>
         }
       </section>
     }
 
     @if (!selfServeEnabled()) {
       <p class="muted self-serve-note" role="note">
-        Self-serve checkout is not available in your market yet. Contact support to change plans.
+        {{ tr('portal.plan.selfServeCheckoutNotAvailable') }}
       </p>
     }
 
@@ -207,9 +207,9 @@
         >
           <div class="tier-badge-slot">
             @if (isCurrentPlan(sku)) {
-              <span class="pill current-pill">Current plan</span>
+              <span class="pill current-pill">{{ tr('portal.plan.currentPlan') }}</span>
             } @else if (isPopular(sku)) {
-              <span class="pill popular-pill">Most popular</span>
+              <span class="pill popular-pill">{{ tr('common.mostPopular') }}</span>
             }
           </div>
           <p class="tier-name">{{ display.name }}</p>
@@ -234,16 +234,16 @@
 
     <section class="card billing-history">
       <div class="billing-history-head">
-        <h3>Recent billing activity</h3>
+        <h3>{{ tr('portal.plan.recentBillingActivity') }}</h3>
         <p class="muted billing-history-lede">
-          Your latest Adeni subscription charges. New businesses usually see their first entry after checkout.
+          {{ tr('portal.plan.yourLatestAdeniSubscriptionCharges') }}
         </p>
       </div>
       @if (billingHistory().length === 0) {
         <adeni-portal-empty-state
           icon="time"
-          title="No charges yet"
-          description="Your Adeni subscription charges appear here after checkout or when billing syncs."
+          [title]="tr('portal.plan.noChargesYet')"
+          [description]="tr('portal.plan.yourAdeniSubscriptionChargesAppear')"
           [compact]="true"
         />
       } @else {
@@ -252,17 +252,17 @@
             storageKey="portal.plan.billing"
             [showViewSwitcher]="false"
             [count]="filteredBillingHistory().length"
-            singularCountLabel="charge"
-            pluralCountLabel="charges"
-            searchPlaceholder="Search event, status, or reference"
+            [singularCountLabel]="tr('common.charge')"
+            [pluralCountLabel]="tr('common.charges')"
+            [searchPlaceholder]="tr('portal.plan.searchEventStatusReference')"
             [searchQuery]="billingSearchQuery()"
             (searchQueryChange)="billingSearchQuery.set($event)"
           />
           @if (filteredBillingHistory().length === 0) {
             <adeni-portal-empty-state
               icon="search"
-              title="No matches"
-              description="Try a different search term."
+              [title]="tr('common.noMatches')"
+              [description]="tr('common.tryDifferentSearchTerm')"
               [compact]="true"
             />
           } @else {

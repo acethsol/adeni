@@ -2,7 +2,7 @@ import { Component, inject, OnDestroy, OnInit, signal } from "@angular/core";
 import { NavigationEnd, Router, RouterLink } from "@angular/router";
 import { filter, Subscription } from "rxjs";
 import { BusinessApiService } from "../core/services/business-api.service";
-import { TenantOperationsRealtimeService } from "@adeni/ui";
+import { TenantOperationsRealtimeService, injectAdeniTranslate } from "@adeni/ui";
 
 const PENDING_STATUS = 0;
 
@@ -16,7 +16,7 @@ const PENDING_STATUS = 0;
       routerLink="/bookings"
       [queryParams]="{ tab: 'pending' }"
       [attr.aria-label]="
-        pendingCount() ? pendingCount() + ' pending bookings' : 'Bookings'
+        pendingCount() ? pendingCount() + ' pending bookings' : tr('common.bookings')
       "
     >
       <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
@@ -65,6 +65,7 @@ const PENDING_STATUS = 0;
   `,
 })
 export class PendingBookingsBellComponent implements OnInit, OnDestroy {
+  protected readonly tr = injectAdeniTranslate();
   private readonly api = inject(BusinessApiService);
   private readonly router = inject(Router);
   private readonly operationsRealtime = inject(TenantOperationsRealtimeService);

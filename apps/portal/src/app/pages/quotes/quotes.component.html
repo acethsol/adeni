@@ -1,29 +1,29 @@
 <app-portal-page
-  title="Quotes"
-  description="Custom work that does not fit a fixed menu price. Send a number, a time, and turn it into a booking."
+  [title]="tr('common.quotes')"
+  [description]="tr('portal.quotes.customWorkDoesNotFit')"
 >
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
 
   @if (loading()) {
-    <p class="muted">Loading quotes…</p>
+    <p class="muted">{{ tr('portal.quotes.loadingQuotes') }}</p>
   } @else if (quotes().length === 0) {
     <adeni-portal-empty-state
       icon="edit"
-      title="No quote requests yet"
-      description="Clients send these from your public profile when a service is priced on request."
+      [title]="tr('portal.quotes.noQuoteRequestsYet')"
+      [description]="tr('portal.quotes.clientsSendTheseFromPublic')"
     />
   } @else {
     <section class="card">
-      <h3>Open</h3>
+      <h3>{{ tr('common.open') }}</h3>
       @if (openQuotes().length === 0) {
         <adeni-portal-empty-state
           [compact]="true"
           [embedded]="true"
           icon="checkmark--filled"
-          title="All caught up"
-          description="Nothing is waiting on a price right now."
+          [title]="tr('portal.quotes.allCaughtUp')"
+          [description]="tr('portal.quotes.nothingWaitingPriceRightNow')"
         />
       } @else {
         <ul class="plain">
@@ -44,7 +44,7 @@
               </div>
               <div class="row-actions">
                 @if (quote.status === "submitted") {
-                  <button type="button" class="btn btn-primary" (click)="startOffer(quote)">Price it</button>
+                  <button type="button" class="btn btn-primary" (click)="startOffer(quote)">{{ tr('portal.quotes.price') }}</button>
                 }
                 @if (canDownloadPdf(quote)) {
                   <button
@@ -53,7 +53,7 @@
                     [disabled]="pdfBusyId() === quote.id"
                     (click)="downloadQuotePdf(quote)"
                   >
-                    {{ pdfBusyId() === quote.id ? "Downloading…" : "Download PDF" }}
+                    {{ pdfBusyId() === quote.id ? tr('common.downloading') : tr('common.downloadPdf') }}
                   </button>
                 }
               </div>
@@ -65,20 +65,20 @@
 
     @if (selected(); as quote) {
       <section class="card form">
-        <h3>Send a quote</h3>
+        <h3>{{ tr('portal.quotes.sendQuote') }}</h3>
         <p class="muted">{{ quote.description }}</p>
         <div class="row">
           <div class="field">
-            <label>Amount</label>
+            <label>{{ tr('portal.quotes.amount') }}</label>
             <input type="number" min="0" step="0.01" [(ngModel)]="amount" />
           </div>
           <div class="field">
-            <label>Currency</label>
+            <label>{{ tr('common.currency') }}</label>
             <input maxlength="3" [(ngModel)]="currency" />
           </div>
         </div>
         <div class="field">
-          <label>Service</label>
+          <label>{{ tr('common.service') }}</label>
           <select [(ngModel)]="serviceOfferingId">
             @for (service of services(); track service.id) {
               <option [value]="service.id">{{ service.name }}</option>
@@ -87,22 +87,22 @@
         </div>
         <div class="row">
           <div class="field">
-            <label>Start</label>
+            <label>{{ tr('common.start') }}</label>
             <input type="datetime-local" [(ngModel)]="proposedStart" />
           </div>
           <div class="field">
-            <label>End</label>
+            <label>{{ tr('common.end') }}</label>
             <input type="datetime-local" [(ngModel)]="proposedEnd" />
           </div>
         </div>
         <div class="field">
-          <label>Notes</label>
+          <label>{{ tr('common.notes') }}</label>
           <textarea rows="3" [(ngModel)]="notes"></textarea>
         </div>
         <div class="actions">
-          <button type="button" class="btn" (click)="cancelOffer()">Cancel</button>
+          <button type="button" class="btn" (click)="cancelOffer()">{{ tr('common.cancel') }}</button>
           <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="sendOffer()">
-            {{ busy() ? "Sending…" : "Send quote" }}
+            {{ busy() ? tr('common.sending') : tr('portal.quotes.sendQuote2') }}
           </button>
         </div>
       </section>
@@ -110,7 +110,7 @@
 
     @if (closedQuotes().length > 0) {
       <section class="card">
-        <h3>Closed</h3>
+        <h3>{{ tr('common.closed') }}</h3>
         <ul class="plain">
           @for (quote of closedQuotes(); track quote.id) {
             <li class="list-row">
@@ -125,7 +125,7 @@
                   [disabled]="pdfBusyId() === quote.id"
                   (click)="downloadQuotePdf(quote)"
                 >
-                  PDF
+                  {{ tr('portal.quotes.pdf') }}
                 </button>
               }
             </li>

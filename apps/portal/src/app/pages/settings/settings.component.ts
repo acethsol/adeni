@@ -24,6 +24,8 @@ import {
   AdeniFeedbackService,
   AdeniTabsComponent,
   PortalPageComponent,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 
@@ -41,6 +43,8 @@ import { BusinessApiService } from "../../core/services/business-api.service";
   styleUrl: "./settings.component.scss",
 })
 export class SettingsComponent implements OnInit {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly route = inject(ActivatedRoute);
@@ -148,7 +152,7 @@ export class SettingsComponent implements OnInit {
             this.ensureEditableTemplateRows();
             this.notificationsError.set(null);
           } catch {
-            this.notificationsError.set("Could not load notification preferences.");
+            this.notificationsError.set(this.tr("portal.settings.couldNotLoadNotificationPreferences"));
           }
 
           if (hasTenantEntitlement(profile.entitlements, "messaging")) {
@@ -162,8 +166,8 @@ export class SettingsComponent implements OnInit {
           }
         });
       });
-    } catch {
-      this.error.set("Could not load settings.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.settings.couldNotLoadSettings"));
     } finally {
       this.loading.set(false);
     }
@@ -180,10 +184,10 @@ export class SettingsComponent implements OnInit {
           }),
         );
         this.profile.set(profile);
-        this.feedback.success("Booking settings saved");
+        this.feedback.success(this.tr("portal.settings.bookingSettingsSaved"));
       });
-    } catch {
-      this.feedback.error("Could not save booking settings");
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "portal.settings.couldNotSaveBookingSettings"));
     } finally {
       this.saving.set(false);
     }
@@ -206,10 +210,10 @@ export class SettingsComponent implements OnInit {
               : [],
           }),
         );
-        this.feedback.success("Notification preferences saved");
+        this.feedback.success(this.tr("portal.settings.notificationPreferencesSaved"));
       });
-    } catch {
-      this.feedback.error("Could not save notification preferences");
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "portal.settings.couldNotSaveNotificationPreferences"));
     } finally {
       this.saving.set(false);
     }
@@ -229,10 +233,10 @@ export class SettingsComponent implements OnInit {
           }),
         );
         this.profile.set(profile);
-        this.feedback.success("Policies saved");
+        this.feedback.success(this.tr("portal.settings.policiesSaved"));
       });
-    } catch {
-      this.feedback.error("Could not save policies");
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "portal.settings.couldNotSavePolicies"));
     } finally {
       this.saving.set(false);
     }
@@ -252,10 +256,10 @@ export class SettingsComponent implements OnInit {
         this.walkInsEnabled = settings.walkInsEnabled;
         this.maxWalkInWaiting = settings.maxWalkInWaiting ?? null;
         this.walkInCalendarPolicy = settings.calendarPolicy;
-        this.feedback.success("Walk-in settings saved");
+        this.feedback.success(this.tr("portal.settings.walkSettingsSaved"));
       });
-    } catch {
-      this.feedback.error("Could not save walk-in settings");
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "portal.settings.couldNotSaveWalkSettings"));
     } finally {
       this.saving.set(false);
     }
@@ -418,10 +422,10 @@ export class SettingsComponent implements OnInit {
             faqAutoResponderEnabled: this.faqAutoResponderEnabled,
           }),
         );
-        this.feedback.success("Messaging settings saved");
+        this.feedback.success(this.tr("portal.settings.messagingSettingsSaved"));
       });
-    } catch {
-      this.feedback.error("Could not save messaging settings");
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "portal.settings.couldNotSaveMessagingSettings"));
     } finally {
       this.saving.set(false);
     }

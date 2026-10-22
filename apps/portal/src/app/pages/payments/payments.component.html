@@ -1,28 +1,28 @@
 <app-portal-page
-  title="Payments"
-  description="Create payment links, track transactions, and share receipts."
+  [title]="tr('portal.payments.payments')"
+  [description]="tr('portal.payments.createPaymentLinksTrackTransactions')"
 >
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
 
   @if (loading()) {
-    <p class="muted">Loading…</p>
+    <p class="muted">{{ tr('common.loading') }}</p>
   } @else if (!supportsPayments()) {
     <section class="card">
-      <p class="muted">Payments are not enabled for your business category yet.</p>
+      <p class="muted">{{ tr('portal.payments.paymentsNotEnabledBusinessCategory') }}</p>
     </section>
   } @else {
     <adeni-tabs [tabs]="tabs" />
     @if (tab() === "ledger") {
       <section class="card">
-        <h3>Ledger</h3>
+        <h3>{{ tr('portal.payments.ledger') }}</h3>
         @if (ledger().length === 0) {
           <adeni-portal-empty-state
             [compact]="true"
             icon="checkmark--filled"
-            title="No payment activity"
-            description="Deposits and checkout payments will show here once customers pay online."
+            [title]="tr('portal.payments.noPaymentActivity')"
+            [description]="tr('portal.payments.depositsCheckoutPaymentsWillShow')"
           />
         } @else {
           <ul class="plain">
@@ -35,7 +35,7 @@
                   </p>
                 </div>
                 @if (entry.status === "completed") {
-                  <button type="button" class="btn btn-danger" (click)="refund(entry)">Refund</button>
+                  <button type="button" class="btn btn-danger" (click)="refund(entry)">{{ tr('portal.payments.refund') }}</button>
                 }
               </li>
             }
@@ -48,7 +48,7 @@
             [pageSizeOptions]="listPageSizeOptions"
             [loading]="loading()"
             [showEdgeJumpers]="false"
-            ariaLabel="Ledger pages"
+            [ariaLabel]="tr('portal.payments.ledgerPages')"
             (pageChange)="goToLedgerPage($event)"
             (pageSizeChange)="onLedgerPageSizeChange($event)"
           />
@@ -56,13 +56,13 @@
       </section>
     } @else if (tab() === "documents") {
       <section class="card">
-        <h3>Receipts & invoices</h3>
+        <h3>{{ tr('portal.payments.receiptsInvoices') }}</h3>
         @if (documents().length === 0) {
           <adeni-portal-empty-state
             [compact]="true"
             icon="save"
-            title="No receipts yet"
-            description="Completed payments automatically generate receipts you can download or resend."
+            [title]="tr('portal.payments.noReceiptsYet')"
+            [description]="tr('portal.payments.completedPaymentsAutomaticallyGenerateReceipts')"
           />
         } @else {
           <ul class="plain">
@@ -81,7 +81,7 @@
                     target="_blank"
                     rel="noopener"
                   >
-                    View
+                    {{ tr('portal.payments.view') }}
                   </a>
                   <button
                     type="button"
@@ -89,7 +89,7 @@
                     [disabled]="pdfBusyId() === doc.id"
                     (click)="downloadDocumentPdf(doc)"
                   >
-                    {{ pdfBusyId() === doc.id ? "Downloading…" : "Download PDF" }}
+                    {{ pdfBusyId() === doc.id ? tr('common.downloading') : tr('common.downloadPdf') }}
                   </button>
                   @if (doc.status === "issued") {
                     <button
@@ -98,7 +98,7 @@
                       [disabled]="actionId() === doc.id"
                       (click)="emailDocument(doc)"
                     >
-                      Email
+                      {{ tr('common.email') }}
                     </button>
                   }
                 </div>
@@ -109,23 +109,23 @@
       </section>
     } @else if (tab() === "export") {
       <section class="card">
-        <h3>Finance exports</h3>
-        <p class="muted">Choose a date range, then download sales or payout reports.</p>
+        <h3>{{ tr('portal.payments.financeExports') }}</h3>
+        <p class="muted">{{ tr('portal.payments.chooseDateRangeThenDownload') }}</p>
         <div class="field">
-          <label>From</label>
+          <label>{{ tr('common.from') }}</label>
           <input type="date" [(ngModel)]="exportFrom" />
         </div>
         <div class="field">
-          <label>To</label>
+          <label>{{ tr('common.to') }}</label>
           <input type="date" [(ngModel)]="exportTo" />
         </div>
         <div class="export-block list-row">
           <div>
-            <h4 class="export-block-title">Sales summary</h4>
-            <p class="muted">Collected revenue breakdown for accounting (CSV; PDF on Pro+).</p>
+            <h4 class="export-block-title">{{ tr('portal.payments.salesSummary') }}</h4>
+            <p class="muted">{{ tr('portal.payments.collectedRevenueBreakdownAccountingCsv') }}</p>
           </div>
           <adeni-export-menu
-            label="Export"
+            [label]="tr('common.export')"
             [items]="salesSummaryExportItems()"
             (exportSelect)="downloadSalesSummaryExport($event)"
           />
@@ -133,14 +133,13 @@
 
         <div class="export-block export-block--divider list-row">
           <div>
-            <h4 class="export-block-title">Staff payouts</h4>
+            <h4 class="export-block-title">{{ tr('portal.payments.staffPayouts') }}</h4>
             <p class="muted">
-              Download tips and commissions for payroll import (CSV; Excel on Pro+). Adeni does not run
-              payroll.
+              {{ tr('portal.payments.downloadTipsCommissionsPayrollImport') }}
             </p>
           </div>
           <adeni-export-menu
-            label="Export"
+            [label]="tr('common.export')"
             [items]="compensationExportItems()"
             (exportSelect)="downloadCompensationExport($event)"
           />
@@ -148,24 +147,24 @@
       </section>
     } @else {
       <section class="card">
-        <h3>Create payment link</h3>
+        <h3>{{ tr('portal.payments.createPaymentLink') }}</h3>
         <div class="field">
           <label>Amount ({{ defaultCurrency() }})</label>
           <input type="number" min="0" step="0.01" [(ngModel)]="amount" />
         </div>
         <div class="field">
-          <label>Description</label>
+          <label>{{ tr('common.description') }}</label>
           <input [(ngModel)]="description" />
         </div>
         <button type="button" class="btn btn-primary" [disabled]="creating()" (click)="createLink()">
-          {{ creating() ? "Creating…" : "Create link" }}
+          {{ creating() ? tr('portal.payments.creating') : tr('portal.payments.createLink') }}
         </button>
 
         @if (lastLink(); as link) {
           <div class="link-box">
-            <p class="muted">Share checkout URL:</p>
+            <p class="muted">{{ tr('portal.payments.shareCheckoutUrl') }}</p>
             <code>{{ link.checkoutUrl }}</code>
-            <a class="btn" [href]="whatsAppUrl(link)" target="_blank" rel="noopener">WhatsApp</a>
+            <a class="btn" [href]="whatsAppUrl(link)" target="_blank" rel="noopener">{{ tr('portal.payments.whatsapp') }}</a>
           </div>
         }
       </section>

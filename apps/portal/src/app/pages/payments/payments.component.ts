@@ -1,6 +1,5 @@
 import { Component, computed, DestroyRef, inject, OnDestroy, OnInit, signal } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { AdeniApiError } from "@adeni/api-client";
 import { Subscription } from "rxjs";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
@@ -22,7 +21,6 @@ import {
   resolvePaymentCheckoutUrl,
   mergeTenantEntitlements,
   salesSummaryPdfMenuOption,
-  tenantReportExportErrorMessage,
   type ReportExportFormat,
 } from "@adeni/shared";
 import {
@@ -35,6 +33,8 @@ import {
   AdeniTabsComponent,
   TenantOperationsRealtimeService,
   type AdeniExportMenuItem,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
@@ -55,6 +55,8 @@ import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
   styleUrl: "./payments.component.scss",
 })
 export class PaymentsComponent implements OnInit, OnDestroy {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly feedback = inject(AdeniFeedbackService);
@@ -129,7 +131,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
         void this.activeLocation.runOnBranchSwitch(() => this.load());
       });
     this.opsSub = this.operationsRealtime.paymentCompleted$.subscribe(() => {
-      this.feedback.info("Payment completed — refreshing ledger.", "Payment");
+      this.feedback.info(this.tr("portal.payments.paymentCompletedRefreshingLedger"), this.tr("portal.payments.payment"));
       void this.load();
     });
   }
@@ -177,8 +179,8 @@ export class PaymentsComponent implements OnInit, OnDestroy {
         const docs = await c.listBillingDocuments();
         this.documents.set(docs);
       });
-    } catch {
-      this.error.set("Could not load payments.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.payments.couldNotLoadPayments"));
     } finally {
       this.loading.set(false);
     }
@@ -188,7 +190,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     const profile = this.profile();
     const parsed = Number(this.amount);
     if (!profile || !Number.isFinite(parsed) || parsed <= 0 || !this.description.trim()) {
-      this.error.set("Enter a valid amount and description.");
+      this.error.set(this.tr("portal.payments.enterValidAmountDescription"));
       return;
     }
 
@@ -211,8 +213,8 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       this.amount = "";
       this.description = "";
       await this.load();
-    } catch {
-      this.error.set("Could not create payment link.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.payments.couldNotCreatePaymentLink"));
     } finally {
       this.creating.set(false);
     }
@@ -233,8 +235,8 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     this.error.set(null);
     try {
       await this.api.withAuthorizedClient((c) => c.emailBillingDocument(doc.id));
-    } catch {
-      this.error.set("Could not email this document. Add a customer email and try again.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.payments.couldNotEmailDocumentAdd"));
     } finally {
       this.actionId.set(null);
     }
@@ -251,8 +253,8 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       anchor.download = `${doc.documentNumber || doc.kind}.pdf`;
       anchor.click();
       URL.revokeObjectURL(url);
-    } catch {
-      this.error.set("Could not download this document PDF.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.payments.couldNotDownloadDocumentPdf"));
     } finally {
       this.pdfBusyId.set(null);
     }
@@ -274,7 +276,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
 
   async downloadSalesSummaryExport(format: ReportExportFormat): Promise<void> {
     if (!this.exportFrom || !this.exportTo) {
-      this.error.set("Choose a date range for the export.");
+      this.error.set(this.tr("portal.payments.chooseDateRangeExport"));
       return;
     }
 
@@ -300,11 +302,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       URL.revokeObjectURL(url);
     } catch (err) {
       this.error.set(
-        tenantReportExportErrorMessage("en", {
-          code: err instanceof AdeniApiError ? err.code : undefined,
-          message: err instanceof AdeniApiError ? err.message : undefined,
-          fallback: "Could not download sales summary export.",
-        }),
+        this.apiErr(err, "portal.payments.couldNotDownloadSalesSummary"),
       );
     } finally {
       this.salesSummaryExporting = false;
@@ -316,7 +314,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       return;
     }
     if (!this.profile() || !this.exportFrom || !this.exportTo) {
-      this.error.set("Choose a date range for the export.");
+      this.error.set(this.tr("portal.payments.chooseDateRangeExport"));
       return;
     }
 
@@ -342,11 +340,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       URL.revokeObjectURL(url);
     } catch (err) {
       this.error.set(
-        tenantReportExportErrorMessage("en", {
-          code: err instanceof AdeniApiError ? err.code : undefined,
-          message: err instanceof AdeniApiError ? err.message : undefined,
-          fallback: "Could not download compensation export.",
-        }),
+        this.apiErr(err, "portal.payments.couldNotDownloadCompensation"),
       );
     } finally {
       this.compensationExporting = false;
@@ -372,8 +366,8 @@ export class PaymentsComponent implements OnInit, OnDestroy {
         c.refundPayment(entry.id, { tenantId: profile.tenantId }),
       );
       await this.load();
-    } catch {
-      this.error.set("Refund failed.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.payments.refundFailed"));
     }
   }
 }

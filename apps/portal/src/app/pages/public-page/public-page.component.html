@@ -1,14 +1,14 @@
 <app-portal-page
-  title="Public page"
-  description="Choose how your Adeni booking page looks to customers."
+  [title]="tr('common.publicPage')"
+  [description]="tr('portal.publicPage.chooseHowAdeniBookingPage')"
 >
   @if (loading()) {
-    <p class="muted">Loading…</p>
+    <p class="muted">{{ tr('common.loading') }}</p>
   } @else if (profile(); as p) {
     <div class="layout">
       <div class="controls">
         <section class="card">
-          <h3>Template</h3>
+          <h3>{{ tr('portal.publicPage.template') }}</h3>
           <div class="template-grid">
             @for (tpl of templates; track tpl.id) {
               <button
@@ -27,7 +27,7 @@
         </section>
 
         <section class="card">
-          <h3>Brand accent</h3>
+          <h3>{{ tr('portal.publicPage.brandAccent') }}</h3>
           <label class="cds-toggle">
             <input
               type="checkbox"
@@ -36,7 +36,7 @@
               (ngModelChange)="markDirty()"
             />
             <span class="cds-toggle__track" aria-hidden="true"></span>
-            <span class="cds-toggle__label">Use a custom accent color</span>
+            <span class="cds-toggle__label">{{ tr('portal.publicPage.useCustomAccentColor') }}</span>
           </label>
           @if (useAccent) {
             <div class="color-row">
@@ -53,10 +53,9 @@
         </section>
 
         <section class="card">
-          <h3>Sections</h3>
+          <h3>{{ tr('portal.publicPage.sections') }}</h3>
           <p class="muted tiny">
-            Compose what visitors see. You can leave Booking closed until the chair is ready — the page
-            still shows up.
+            {{ tr('portal.publicPage.composeWhatVisitorsSeeYou') }}
           </p>
           <label class="cds-toggle">
             <input
@@ -66,7 +65,7 @@
               (ngModelChange)="markDirty()"
             />
             <span class="cds-toggle__track" aria-hidden="true"></span>
-            <span class="cds-toggle__label">About</span>
+            <span class="cds-toggle__label">{{ tr('portal.publicPage.about') }}</span>
           </label>
           <label class="cds-toggle">
             <input
@@ -76,7 +75,7 @@
               (ngModelChange)="markDirty()"
             />
             <span class="cds-toggle__track" aria-hidden="true"></span>
-            <span class="cds-toggle__label">Services</span>
+            <span class="cds-toggle__label">{{ tr('common.services') }}</span>
           </label>
           <label class="cds-toggle">
             <input
@@ -86,7 +85,7 @@
               (ngModelChange)="markDirty()"
             />
             <span class="cds-toggle__track" aria-hidden="true"></span>
-            <span class="cds-toggle__label">Reviews</span>
+            <span class="cds-toggle__label">{{ tr('common.reviews') }}</span>
           </label>
           <label class="cds-toggle">
             <input
@@ -96,7 +95,7 @@
               (ngModelChange)="markDirty()"
             />
             <span class="cds-toggle__track" aria-hidden="true"></span>
-            <span class="cds-toggle__label">Visit</span>
+            <span class="cds-toggle__label">{{ tr('portal.publicPage.visit') }}</span>
           </label>
           <div class="booking-callout" [class.off]="!showBook">
             <label class="cds-toggle">
@@ -107,13 +106,13 @@
                 (ngModelChange)="markDirty()"
               />
               <span class="cds-toggle__track" aria-hidden="true"></span>
-              <span class="cds-toggle__label">Booking</span>
+              <span class="cds-toggle__label">{{ tr('portal.publicPage.booking') }}</span>
             </label>
             <p class="status muted tiny">
               @if (showBook) {
-                Live — customers can book or request a quote.
+                {{ tr('portal.publicPage.liveCustomersCanBookRequest') }}
               } @else {
-                Quiet mode — profile stays public; no online bookings.
+                {{ tr('portal.publicPage.quietModeProfileStaysPublic') }}
               }
             </p>
           </div>
@@ -125,67 +124,66 @@
               (ngModelChange)="markDirty()"
             />
             <span class="cds-toggle__track" aria-hidden="true"></span>
-            <span class="cds-toggle__label">Policies</span>
+            <span class="cds-toggle__label">{{ tr('portal.publicPage.policies') }}</span>
           </label>
         </section>
 
         <section class="card policy-link-card">
-          <h3>Policy content</h3>
+          <h3>{{ tr('portal.publicPage.policyContent') }}</h3>
           <p class="muted tiny">
-            Booking, payment, cancellation, and terms are edited under
-            <a routerLink="/settings" [queryParams]="{ tab: 'policies' }">Settings → Policies</a>.
-            Use the <strong>Policies</strong> toggle above to show or hide that block on this page.
+            {{ tr('portal.publicPage.bookingPaymentCancellationTermsEdited') }}
+            <a routerLink="/settings" [queryParams]="{ tab: 'policies' }">{{ tr('portal.publicPage.settingsPolicies') }}</a>{{ tr('portal.publicPage.use') }} <strong>{{ tr('portal.publicPage.policies') }}</strong> {{ tr('portal.publicPage.toggleAboveShowHideBlock') }}
           </p>
           @if (hasPolicyContent()) {
-            <p class="policy-status ok tiny">Policy text is on file — preview shows the section when enabled.</p>
+            <p class="policy-status ok tiny">{{ tr('portal.publicPage.policyTextFilePreviewShows') }}</p>
           } @else {
-            <p class="policy-status muted tiny">No policy text yet. Add it in Settings before turning the section on.</p>
+            <p class="policy-status muted tiny">{{ tr('portal.publicPage.noPolicyTextYetAdd') }}</p>
           }
         </section>
 
         <div class="actions">
           <button type="button" class="btn primary" [disabled]="!canSave()" (click)="save()">
-            {{ saving() ? "Saving…" : dirty() ? "Save" : "Saved" }}
+            {{ saving() ? tr('common.saving') : dirty() ? tr('common.save') : tr('portal.publicPage.saved') }}
           </button>
           @if (liveUrl(); as url) {
-            <a class="btn" [href]="url" target="_blank" rel="noopener">Open live page</a>
+            <a class="btn" [href]="url" target="_blank" rel="noopener">{{ tr('portal.publicPage.openLivePage') }}</a>
           }
         </div>
       </div>
 
       <aside class="preview" [attr.data-template]="templateId" [style.--accent]="useAccent ? accentColor : '#0F766E'">
-        <p class="preview-label">Preview</p>
+        <p class="preview-label">{{ tr('portal.publicPage.preview') }}</p>
         <div class="phone">
           <div class="hero">
-            <p class="eyebrow">{{ p.categorySlug }} · {{ p.locations[0]?.area ?? "Your area" }}</p>
+            <p class="eyebrow">{{ p.categorySlug }} · {{ p.locations[0]?.area ?? tr('portal.publicPage.yourArea') }}</p>
             <h2>{{ p.businessName }}</h2>
-            <p class="lead">{{ p.description || "Your public booking page on Adeni." }}</p>
+            <p class="lead">{{ p.description || tr('portal.publicPage.yourPublicBookingPageAdeni') }}</p>
             @if (showBook) {
-              <span class="cta">Book now</span>
+              <span class="cta">{{ tr('portal.publicPage.bookNow') }}</span>
             } @else {
-              <span class="cta muted-cta">Booking paused</span>
+              <span class="cta muted-cta">{{ tr('portal.publicPage.bookingPaused') }}</span>
             }
           </div>
           <div class="body">
             @if (showAbout) {
-              <p><strong>About</strong> — short story about your business.</p>
+              <p><strong>{{ tr('portal.publicPage.about') }}</strong> {{ tr('portal.publicPage.shortStoryAboutBusiness') }}</p>
             }
             @if (showServices) {
-              <p><strong>Services</strong> — menu and prices.</p>
+              <p><strong>{{ tr('common.services') }}</strong> {{ tr('portal.publicPage.menuPrices') }}</p>
             }
             @if (showReviews) {
-              <p><strong>Reviews</strong> — from completed bookings.</p>
+              <p><strong>{{ tr('common.reviews') }}</strong> {{ tr('portal.publicPage.fromCompletedBookings') }}</p>
             }
             @if (showVisit) {
-              <p><strong>Visit</strong> — address and contact.</p>
+              <p><strong>{{ tr('portal.publicPage.visit') }}</strong> {{ tr('portal.publicPage.addressContact') }}</p>
             }
             @if (showPolicies) {
-              <p><strong>Policies</strong> — booking, payment, cancellation, terms.</p>
+              <p><strong>{{ tr('portal.publicPage.policies') }}</strong> {{ tr('portal.publicPage.bookingPaymentCancellationTerms') }}</p>
             }
             @if (showBook) {
-              <p class="book"><strong>Book</strong> — customers can book online.</p>
+              <p class="book"><strong>{{ tr('portal.publicPage.book') }}</strong> {{ tr('portal.publicPage.customersCanBookOnline') }}</p>
             } @else {
-              <p><strong>Booking</strong> — offline for now.</p>
+              <p><strong>{{ tr('portal.publicPage.booking') }}</strong> {{ tr('portal.publicPage.offlineNow') }}</p>
             }
           </div>
         </div>

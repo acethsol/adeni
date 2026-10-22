@@ -3,7 +3,7 @@ import { NavigationEnd, Router, RouterLink } from "@angular/router";
 import { filter, Subscription } from "rxjs";
 import { hasTenantEntitlement } from "@adeni/shared";
 import { BusinessApiService } from "../core/services/business-api.service";
-import { MessagingRealtimeService } from "@adeni/ui";
+import { MessagingRealtimeService, injectAdeniTranslate } from "@adeni/ui";
 import { PortalNavBadgesService } from "../core/services/portal-nav-badges.service";
 
 @Component({
@@ -16,7 +16,7 @@ import { PortalNavBadgesService } from "../core/services/portal-nav-badges.servi
         class="bell"
         routerLink="/messages"
         [attr.aria-label]="
-          unreadCount() ? unreadCount() + ' unread messages' : 'Messages'
+          unreadCount() ? unreadCount() + ' unread messages' : tr('common.messages')
         "
       >
         <svg viewBox="0 0 32 32" width="20" height="20" aria-hidden="true">
@@ -66,6 +66,7 @@ import { PortalNavBadgesService } from "../core/services/portal-nav-badges.servi
   `,
 })
 export class MessagesShortcutComponent implements OnInit, OnDestroy {
+  protected readonly tr = injectAdeniTranslate();
   private readonly api = inject(BusinessApiService);
   private readonly router = inject(Router);
   private readonly navBadges = inject(PortalNavBadgesService);

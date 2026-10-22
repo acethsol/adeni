@@ -1,9 +1,9 @@
 <app-portal-page
-  title="Register your business"
-  description="Choose how customers find you on Discover — primary category, optional extras, then services."
+  [title]="tr('common.registerBusiness')"
+  [description]="tr('portal.register.chooseHowCustomersFindYou')"
 >
   <p class="help-link">
-    <a routerLink="/setup">How this works for customers →</a>
+    <a routerLink="/setup">{{ tr('portal.register.howWorksCustomers') }}</a>
   </p>
 
   @if (error()) {
@@ -11,53 +11,53 @@
   }
 
   @if (loading()) {
-    <p class="muted">Loading…</p>
+    <p class="muted">{{ tr('common.loading') }}</p>
   } @else if (profile(); as p) {
     <section class="card">
-      <h3>Already registered</h3>
+      <h3>{{ tr('portal.register.alreadyRegistered') }}</h3>
       <p>
-        <strong>{{ p.businessName }}</strong> is linked to this account.
+        <strong>{{ p.businessName }}</strong> {{ tr('portal.register.isLinkedAccount') }}
       </p>
       <p class="muted">
         Primary: {{ categoryLabel("en", p.categorySlug) }}
         @if (p.additionalCategorySlugs?.length) {
-          · Also listed under:
+          {{ tr('portal.register.alsoListedUnder') }}
           @for (slug of p.additionalCategorySlugs; track slug; let last = $last) {
             {{ categoryLabel("en", slug) }}@if (!last) {, }
           }
         }
       </p>
-      <a routerLink="/dashboard" class="btn btn-primary">Go to dashboard</a>
-      <a routerLink="/services" class="btn btn-secondary">Add services</a>
+      <a routerLink="/dashboard" class="btn btn-primary">{{ tr('portal.register.goDashboard') }}</a>
+      <a routerLink="/services" class="btn btn-secondary">{{ tr('portal.register.addServices') }}</a>
     </section>
   } @else {
     <section class="card">
       <div class="field">
-        <label>Business name</label>
+        <label>{{ tr('common.businessName') }}</label>
         <input [(ngModel)]="businessName" (blur)="suggestSlug()" />
       </div>
       <div class="field">
-        <label>Market</label>
+        <label>{{ tr('common.market') }}</label>
         <select [(ngModel)]="marketId" (ngModelChange)="onMarketChange()">
           @for (m of markets(); track m.id) {
             <option [value]="m.id">{{ m.name }}</option>
           }
         </select>
-        <p class="hint">Explore categories on Discover are ordered for this market.</p>
+        <p class="hint">{{ tr('portal.register.exploreCategoriesDiscoverOrderedMarket') }}</p>
       </div>
       <div class="field">
-        <label>Primary category</label>
+        <label>{{ tr('common.primaryCategory') }}</label>
         <select [(ngModel)]="categorySlug" (ngModelChange)="onPrimaryCategoryChange()">
           @for (cat of categories(); track cat.slug) {
             <option [value]="cat.slug">{{ cat.name }}</option>
           }
         </select>
-        <p class="hint">Main type of business — used for your default listing label.</p>
+        <p class="hint">{{ tr('portal.register.mainTypeBusinessUsedDefault') }}</p>
       </div>
       @if (additionalOptions().length > 0) {
         <fieldset class="field additional">
-          <legend>Also list under (optional)</legend>
-          <p class="hint">Customers filtering these categories will still find you.</p>
+          <legend>{{ tr('common.alsoListUnderOptional') }}</legend>
+          <p class="hint">{{ tr('portal.register.customersFilteringTheseCategoriesWill') }}</p>
           <ul class="checkbox-list">
             @for (cat of additionalOptions(); track cat.slug) {
               <li>
@@ -75,27 +75,27 @@
         </fieldset>
       }
       <div class="field">
-        <label>Phone</label>
+        <label>{{ tr('common.phone') }}</label>
         <input [(ngModel)]="phone" />
       </div>
       <div class="field">
-        <label>Description</label>
+        <label>{{ tr('common.description') }}</label>
         <textarea rows="2" [(ngModel)]="description"></textarea>
       </div>
       <div class="field">
-        <label>Public slug</label>
+        <label>{{ tr('portal.register.publicSlug') }}</label>
         <input [(ngModel)]="slug" />
       </div>
       <div class="field">
-        <label>Address</label>
+        <label>{{ tr('common.address') }}</label>
         <input [(ngModel)]="addressLine" />
       </div>
       <div class="field">
-        <label>Area</label>
+        <label>{{ tr('common.area') }}</label>
         <input [(ngModel)]="area" />
       </div>
       <button type="button" class="btn btn-primary" [disabled]="submitting()" (click)="submit()">
-        {{ submitting() ? "Submitting…" : "Register business" }}
+        {{ submitting() ? tr('portal.register.submitting') : tr('portal.register.registerBusiness') }}
       </button>
     </section>
   }

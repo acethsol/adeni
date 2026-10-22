@@ -1,18 +1,18 @@
 <app-portal-page
-  title="Customers"
-  description="People who booked online or joined your walk-in queue — one profile per person at your business."
+  [title]="tr('portal.customers.customers')"
+  [description]="tr('portal.customers.peopleWhoBookedOnlineJoined')"
 >
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
 
   @if (loading() && items().length === 0) {
-    <p class="muted">Loading customers…</p>
+    <p class="muted">{{ tr('portal.customers.loadingCustomers') }}</p>
   } @else if (totalCount() === 0 && !searchQuery().trim() && accountFilter() === "all" && !loading()) {
     <adeni-portal-empty-state
       icon="user--filled"
-      title="No customers yet"
-      description="Profiles appear when someone books (signed in on Discover) or joins your queue."
+      [title]="tr('portal.customers.noCustomersYet')"
+      [description]="tr('portal.customers.profilesAppearWhenSomeoneBooks')"
     />
   } @else {
     <div class="roster">
@@ -22,16 +22,16 @@
         (viewModeChange)="viewMode.set($event)"
         [count]="items().length"
         [countTotal]="totalCount()"
-        singularCountLabel="customer"
-        pluralCountLabel="customers"
-        searchPlaceholder="Search name, phone, or email"
+        [singularCountLabel]="tr('portal.customers.customer')"
+        [pluralCountLabel]="tr('portal.customers.customers2')"
+        [searchPlaceholder]="tr('portal.customers.searchNamePhoneEmail')"
         [searchQuery]="searchQuery()"
         (searchQueryChange)="onSearchChange($event)"
       >
         <adeni-list-filter-row listFilters>
           <adeni-filter-select
             layout="toolbar"
-            label="Profile type"
+            [label]="tr('portal.customers.profileType')"
             [options]="accountFilterOptions"
             [value]="accountFilter()"
             (valueChange)="onAccountFilterChange($any($event))"
@@ -39,7 +39,7 @@
         </adeni-list-filter-row>
         <adeni-export-menu
           listExports
-          label="Export"
+          [label]="tr('common.export')"
           [items]="exportItems()"
           (exportSelect)="downloadCustomersExport($event)"
         />
@@ -48,8 +48,8 @@
       @if (items().length === 0) {
         <adeni-portal-empty-state
           icon="search"
-          title="No matches"
-          description="Try a different search or profile type filter."
+          [title]="tr('common.noMatches')"
+          [description]="tr('portal.customers.tryDifferentSearchProfileType')"
           [compact]="true"
         />
       } @else if (viewMode() === "cards") {
@@ -60,7 +60,7 @@
                 <span>{{ customerInitials(row) }}</span>
               </div>
               <strong class="org-name">{{ row.displayName }}</strong>
-              <span class="org-role">{{ row.phoneMasked || "No phone on file" }}</span>
+              <span class="org-role">{{ row.phoneMasked || tr('common.noPhoneFile') }}</span>
               @if (row.email) {
                 <span class="org-title">{{ row.email }}</span>
               }
@@ -73,7 +73,7 @@
                 </adeni-pill>
               </div>
               <div class="org-actions">
-                <a [routerLink]="['/customers', row.id]">View profile</a>
+                <a [routerLink]="['/customers', row.id]">{{ tr('portal.customers.viewProfile') }}</a>
               </div>
             </li>
           }
@@ -86,7 +86,7 @@
             [totalCount]="totalCount()"
             [pageSizeOptions]="listPageSizeOptions"
             [loading]="loading()"
-            ariaLabel="Customer pages"
+            [ariaLabel]="tr('portal.customers.customerPages')"
             (pageChange)="goToPage($event)"
             (pageSizeChange)="onPageSizeChange($event)"
           />
@@ -106,7 +106,7 @@
             <ng-template adeniDataTableCell="name" let-row>
               <adeni-table-person-cell
                 [displayName]="row.displayName"
-                [subtitle]="row.phoneMasked || 'No phone on file'"
+                [subtitle]="row.phoneMasked || tr('common.noPhoneFile')"
                 [initials]="customerInitials(row)"
                 avatarTone="neutral"
               />
@@ -126,7 +126,7 @@
               <adeni-row-action-bar>
                 <adeni-icon-btn
                   icon="arrow--right"
-                  label="View customer"
+                  [label]="tr('portal.customers.viewCustomer')"
                   variant="table"
                   [dense]="true"
                   [routerLink]="['/customers', row.id]"
@@ -141,7 +141,7 @@
             [totalCount]="totalCount()"
             [pageSizeOptions]="listPageSizeOptions"
             [loading]="loading()"
-            ariaLabel="Customer pages"
+            [ariaLabel]="tr('portal.customers.customerPages')"
             (pageChange)="goToPage($event)"
             (pageSizeChange)="onPageSizeChange($event)"
           />

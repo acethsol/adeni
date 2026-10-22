@@ -14,6 +14,8 @@ import {
   AdeniModalComponent,
   AdeniPortalEmptyStateComponent,
   PortalPageComponent,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
@@ -120,6 +122,8 @@ function findRangeCovering(date: string, ranges: BusinessClosedDate[]): Business
   styleUrl: "./availability.component.scss",
 })
 export class AvailabilityComponent implements OnInit, OnDestroy {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly confirmDialog = inject(AdeniConfirmService);
@@ -292,8 +296,8 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
       });
       this.rows = rulesToRows(rules);
       this.closedRanges.set(closed);
-    } catch {
-      this.error.set("Could not load availability.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.availability.couldNotLoadAvailability"));
     } finally {
       this.loading.set(false);
     }
@@ -307,9 +311,9 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
         c.replaceTenantAvailability(rowsToRules(this.rows), this.locationIdForApi()),
       );
       this.rows = rulesToRows(saved);
-      this.feedback.success("Weekly hours saved.");
-    } catch {
-      this.error.set("Could not save availability.");
+      this.feedback.success(this.tr("portal.availability.weeklyHoursSaved"));
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.availability.couldNotSaveAvailability"));
     } finally {
       this.saving.set(false);
     }
@@ -357,11 +361,11 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
 
   async addClosedRange(): Promise<void> {
     if (!this.rangeStart || !this.rangeEnd) {
-      this.feedback.error("Choose a start and end date.");
+      this.feedback.error(this.tr("portal.availability.chooseStartEndDate"));
       return;
     }
     if (this.rangeEnd < this.rangeStart) {
-      this.feedback.error("End date must be on or after start date.");
+      this.feedback.error(this.tr("portal.availability.endDateMustBeAfter"));
       return;
     }
     await this.createClosed(this.rangeStart, this.rangeEnd, this.rangeReason.trim() || null);
@@ -388,9 +392,9 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
     try {
       await this.api.withAuthorizedClient((c) => c.deleteTenantClosedDate(item.id));
       this.closedRanges.update((items) => items.filter((x) => x.id !== item.id));
-      this.feedback.success("Dates reopened.");
-    } catch {
-      this.feedback.error("Could not remove closed range.");
+      this.feedback.success(this.tr("portal.availability.datesReopened"));
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "portal.availability.couldNotRemoveClosedRange"));
     } finally {
       this.closedBusy.set(false);
     }
@@ -425,9 +429,9 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
         this.conflictWarning.set(
           `Closed dates saved. ${conflicts} existing booking${conflicts === 1 ? "" : "s"} fall in this range — not cancelled. Review Bookings.`,
         );
-        this.feedback.success("Closed dates saved (existing bookings warned).");
+        this.feedback.success(this.tr("portal.availability.closedDatesSavedExistingBookings"));
       } else {
-        this.feedback.success("Closed dates saved.");
+        this.feedback.success(this.tr("portal.availability.closedDatesSaved"));
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not close dates.";

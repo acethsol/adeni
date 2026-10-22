@@ -26,6 +26,8 @@ import {
   type AdeniDataTableSortDirection,
   type AdeniPillTone,
   type AdeniTab,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { AdeniApiError } from "@adeni/api-client";
 import { BusinessApiService } from "../../core/services/business-api.service";
@@ -64,6 +66,8 @@ const PAID_STATUS = 6;
   styleUrl: "./customer-detail.component.scss",
 })
 export class CustomerDetailComponent implements OnInit {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   private readonly route = inject(ActivatedRoute);
 
@@ -181,7 +185,7 @@ export class CustomerDetailComponent implements OnInit {
   async load(): Promise<void> {
     const id = this.route.snapshot.paramMap.get("id");
     if (!id) {
-      this.error.set("Customer not found.");
+      this.error.set(this.tr("portal.customers.customerNotFound2"));
       this.loading.set(false);
       return;
     }
@@ -197,7 +201,7 @@ export class CustomerDetailComponent implements OnInit {
       if (err instanceof AdeniApiError && err.statusCode === 404) {
         this.error.set(null);
       } else {
-        this.error.set("Could not load this customer.");
+        this.error.set(this.apiErr(err, "portal.customers.couldNotLoadCustomer"));
       }
       this.customer.set(null);
     } finally {
@@ -349,8 +353,8 @@ export class CustomerDetailComponent implements OnInit {
       anchor.download = `statement-${id.slice(0, 8)}.pdf`;
       anchor.click();
       URL.revokeObjectURL(url);
-    } catch {
-      this.error.set("Could not download customer statement.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.customers.couldNotDownloadCustomerStatement"));
     } finally {
       this.statementDownloading.set(false);
     }

@@ -12,7 +12,7 @@
       <span class="branch-title-row">
         <span class="branch-title" [title]="display().title">{{ display().title }}</span>
         @if (display().isPrimary && !display().allLocationsScope) {
-          <adeni-pill tone="brand" class="branch-primary-pill">Primary</adeni-pill>
+          <adeni-pill tone="brand" class="branch-primary-pill">{{ tr('common.primary') }}</adeni-pill>
         }
       </span>
       @if (display().hint) {
@@ -67,7 +67,7 @@
                 activeLocation.branchRowLabel(branch)
               }}</span>
               @if (branch.isPrimary) {
-                <adeni-pill tone="brand" class="branch-primary-pill">Primary</adeni-pill>
+                <adeni-pill tone="brand" class="branch-primary-pill">{{ tr('common.primary') }}</adeni-pill>
               }
             </span>
             @if (activeLocation.branchRowHint(branch); as hint) {

@@ -1,59 +1,54 @@
 <main class="setup-page">
   @if (signedOut) {
-    <p class="lead">You are signed out of the local business session.</p>
-    <button type="button" class="sign-in" (click)="signIn()">Sign in</button>
+    <p class="lead">{{ tr('portal.setup.youSignedOutLocalBusiness') }}</p>
+    <button type="button" class="sign-in" (click)="signIn()">{{ tr('common.sign') }}</button>
   }
   <header>
-    <h1>How Adeni works for your customers</h1>
+    <h1>{{ tr('portal.setup.howAdeniWorksCustomers') }}</h1>
     <p class="lead">
-      When you register, you are building the listing customers see on Discover — categories first, then
-      bookable services.
+      {{ tr('portal.setup.whenYouRegisterYouBuilding') }}
     </p>
   </header>
 
   <section class="flow">
-    <h2>Customer journey</h2>
+    <h2>{{ tr('portal.setup.customerJourney') }}</h2>
     <ol class="steps">
       <li>
-        <strong>Pick a market</strong> — Lagos, Ottawa, or another city. Discovery and search use this
-        context.
+        <strong>{{ tr('portal.setup.pickMarket') }}</strong> {{ tr('portal.setup.lagosOttawaAnotherCityDiscovery') }}
       </li>
       <li>
-        <strong>Explore a category</strong> — e.g. Massage, Hair &amp; Grooming, Nails. Same taxonomy in
-        every market; featured order can differ.
+        <strong>{{ tr('portal.setup.exploreCategory') }}</strong> {{ tr('portal.setup.eGMassageHairGrooming') }}
       </li>
       <li>
-        <strong>Find your business</strong> — You appear when your <em>primary</em> or any
-        <em>additional</em> category matches the filter.
+        <strong>{{ tr('portal.setup.findBusiness') }}</strong> {{ tr('portal.setup.youAppearWhen') }} <em>{{ tr('portal.setup.primary') }}</em> {{ tr('portal.setup.orAny') }}
+        <em>{{ tr('portal.setup.additional') }}</em> {{ tr('portal.setup.categoryMatchesFilter') }}
       </li>
       <li>
-        <strong>Book a service</strong> — Customer picks a service you added (from the catalog or custom),
-        chooses a slot, and confirms.
+        <strong>{{ tr('portal.setup.bookService') }}</strong> {{ tr('portal.setup.customerPicksServiceYouAdded') }}
       </li>
     </ol>
   </section>
 
   <section class="flow">
-    <h2>Your setup (business portal)</h2>
+    <h2>{{ tr('portal.setup.yourSetupBusinessPortal') }}</h2>
     <ol class="steps">
       <li>
-        <strong>Primary category</strong> — Main type of business (used for SEO and default sorting).
+        <strong>{{ tr('common.primaryCategory') }}</strong> {{ tr('portal.setup.mainTypeBusinessUsedSeo') }}
       </li>
       <li>
-        <strong>Additional categories</strong> — Optional tags (spa also offering massage + nails).
+        <strong>{{ tr('portal.setup.additionalCategories') }}</strong> {{ tr('portal.setup.optionalTagsSpaAlsoOffering') }}
       </li>
       <li>
-        <strong>Services</strong> — Add from Adeni templates or create your own; each ties to a category and
-        booking type (appointment, class, session, …).
+        <strong>{{ tr('common.services') }}</strong> {{ tr('portal.setup.addFromAdeniTemplatesCreate') }}
       </li>
       <li>
-        <strong>Availability</strong> — Weekly hours so customers can book online.
+        <strong>{{ tr('portal.setup.availability') }}</strong> {{ tr('portal.setup.weeklyHoursSoCustomersCan') }}
       </li>
     </ol>
   </section>
 
   <div class="actions">
-    <a routerLink="/register" class="btn btn-primary">Register your business</a>
-    <a routerLink="/services" class="btn btn-secondary">Manage services</a>
+    <a routerLink="/register" class="btn btn-primary">{{ tr('common.registerBusiness') }}</a>
+    <a routerLink="/services" class="btn btn-secondary">{{ tr('common.manageServices') }}</a>
   </div>
 </main>

@@ -1,17 +1,17 @@
 <main class="accept">
   <p class="brand">Adeni</p>
-  <h1>Accept staff invite</h1>
+  <h1>{{ tr('portal.acceptInvite.acceptStaffInvite') }}</h1>
   <p class="lede">{{ message() }}</p>
 
   @if (devMode && status() === "ready") {
     <label class="field">
-      <span>Dev Auth0 sub (invitee)</span>
+      <span>{{ tr('portal.acceptInvite.devAuth0SubInvitee') }}</span>
       <input [(ngModel)]="devAuth0Sub" autocomplete="off" />
     </label>
   }
 
   @if (auth0Mode && status() === "ready") {
-    <p class="hint">Use the Auth0 account that matches the invited email, then accept.</p>
+    <p class="hint">{{ tr('portal.acceptInvite.useAuth0AccountMatchesInvited') }}</p>
   }
 
   <div class="actions">
@@ -22,12 +22,12 @@
         [disabled]="!tokenReady()"
         (click)="accept()"
       >
-        Accept invite
+        {{ tr('portal.acceptInvite.acceptInvite') }}
       </button>
     }
     @if (status() === "working") {
-      <p class="muted">Accepting…</p>
+      <p class="muted">{{ tr('portal.acceptInvite.accepting') }}</p>
     }
-    <a routerLink="/dashboard">Back to portal</a>
+    <a routerLink="/dashboard">{{ tr('portal.acceptInvite.backPortal') }}</a>
   </div>
 </main>

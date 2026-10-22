@@ -7,7 +7,7 @@ import {
   PUBLIC_PAGE_TEMPLATES,
   resolvePublicPageTemplateId,
 } from "@adeni/shared";
-import { AdeniFeedbackService, PortalPageComponent } from "@adeni/ui";
+import { AdeniFeedbackService, PortalPageComponent, injectAdeniTranslate, injectAdeniApiError } from "@adeni/ui";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { BusinessApiService } from "../../core/services/business-api.service";
 
@@ -31,6 +31,8 @@ type PublicPageDraft = {
   styleUrl: "./public-page.component.scss",
 })
 export class PublicPageSettingsComponent implements OnInit {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   private readonly config = inject(ADENI_PORTAL_CONFIG);
   private readonly feedback = inject(AdeniFeedbackService);
@@ -96,9 +98,9 @@ export class PublicPageSettingsComponent implements OnInit {
         this.showPolicies = page.sections.policies ?? false;
         this.captureSnapshot();
       }, "Loading public page…", "Fetching template and layout");
-    } catch {
+    } catch (caught) {
       this.profile.set(null);
-      this.feedback.error("Could not load public page settings.");
+      this.feedback.error(this.apiErr(caught, "portal.publicPage.couldNotLoadPublicPage"));
     } finally {
       this.loading.set(false);
     }
@@ -114,12 +116,12 @@ export class PublicPageSettingsComponent implements OnInit {
 
   async save(): Promise<void> {
     if (!this.dirty()) {
-      this.feedback.info("Nothing to save — no changes yet.");
+      this.feedback.info(this.tr("portal.publicPage.nothingSaveNoChangesYet"));
       return;
     }
 
     if (!this.showAbout && !this.showServices && !this.showVisit) {
-      this.feedback.error("Keep at least one of About, Services, or Visit visible.");
+      this.feedback.error(this.tr("portal.publicPage.keepAtLeastOneAbout"));
       return;
     }
 

@@ -1,11 +1,11 @@
 <app-portal-page
-  title="Messages"
-  description="Booking conversations with customers — same threads they start from Discover."
+  [title]="tr('common.messages')"
+  [description]="tr('portal.messages.bookingConversationsWithCustomersSame')"
 >
   @if (whatsAppBusinessUrl(); as wa) {
     <a pageActions class="btn messages-whatsapp-link" [href]="wa" target="_blank" rel="noopener noreferrer">
       <adeni-carbon-icon name="launch" [size]="16" />
-      Message on WhatsApp
+      {{ tr('portal.messages.messageWhatsapp') }}
     </a>
   }
 
@@ -17,12 +17,12 @@
   }
 
   @if (loading()) {
-    <p class="muted loading-line">Loading…</p>
+    <p class="muted loading-line">{{ tr('common.loading') }}</p>
   } @else {
     <div class="messages-layout">
-      <section class="card messages-pane thread-list" aria-label="Inbox">
+      <section class="card messages-pane thread-list" [attr.aria-label]="tr('common.inbox')">
         <header class="messages-pane__head">
-          <h3>Inbox</h3>
+          <h3>{{ tr('common.inbox') }}</h3>
           @if (conversationTotalCount() > 0) {
             <span class="muted count">{{ conversationTotalCount() }} conversations</span>
           }
@@ -33,8 +33,8 @@
               [compact]="true"
               [embedded]="true"
               icon="send"
-              title="Inbox is quiet"
-              description="Conversations appear when a customer messages you about a booking."
+              [title]="tr('common.inboxQuiet')"
+              [description]="tr('portal.messages.conversationsAppearWhenCustomerMessages')"
             />
           } @else {
             <ul class="threads">
@@ -49,10 +49,10 @@
                     <span class="thread-row__who">
                       {{ conversation.customerDisplayName }}
                       @if (conversation.needsAttention) {
-                        <span class="badge" aria-label="Unread">1</span>
+                        <span class="badge" [attr.aria-label]="tr('common.unread')">1</span>
                       }
                     </span>
-                    <span class="thread-row__preview">{{ conversation.preview || "No preview yet" }}</span>
+                    <span class="thread-row__preview">{{ conversation.preview || tr('portal.messages.noPreviewYet') }}</span>
                     <span class="thread-row__when">{{ formatSlotTime(conversation.lastMessageAt) }}</span>
                   </button>
                 </li>
@@ -66,7 +66,7 @@
               [pageSizeOptions]="listPageSizeOptions"
               [loading]="loading()"
               [showEdgeJumpers]="false"
-              ariaLabel="Conversation pages"
+              [ariaLabel]="tr('portal.messages.conversationPages')"
               (pageChange)="goToConversationPage($event)"
               (pageSizeChange)="onConversationPageSizeChange($event)"
             />
@@ -74,7 +74,7 @@
         </div>
       </section>
 
-      <section class="card messages-pane conversation" aria-label="Conversation">
+      <section class="card messages-pane conversation" [attr.aria-label]="tr('common.conversation')">
         @if (detail(); as conversation) {
           <header class="messages-pane__head">
             <h3>{{ conversation.customerDisplayName }}</h3>
@@ -96,7 +96,7 @@
                       (message.senderType === "business" || message.senderType === "bot")
                       && isMessageReadByCustomer(message)
                     ) {
-                      <span class="bubble-meta__read">Read</span>
+                      <span class="bubble-meta__read">{{ tr('portal.messages.read') }}</span>
                     }
                   </header>
                   <div class="bubble">
@@ -122,7 +122,7 @@
             </div>
             @if (templates().length > 0) {
               <div class="saved-replies">
-                <span class="saved-replies__label">Saved replies</span>
+                <span class="saved-replies__label">{{ tr('portal.messages.savedReplies') }}</span>
                 <ul class="chips">
                   @for (template of templates(); track template.key) {
                     <li>
@@ -134,25 +134,25 @@
             }
             <form class="compose" (submit)="$event.preventDefault(); send()">
               <label class="compose__field">
-                <span class="visually-hidden">Reply</span>
+                <span class="visually-hidden">{{ tr('common.reply') }}</span>
                 <textarea
                   rows="3"
                   [(ngModel)]="draft"
                   name="draft"
-                  placeholder="Write a reply…"
+                  [placeholder]="tr('portal.messages.writeReply')"
                   [disabled]="sending()"
                 ></textarea>
               </label>
               @if (pendingAttachmentPreview(); as preview) {
                 <div class="pending-attachment">
-                  <img [src]="preview" alt="Pending attachment" />
-                  <button type="button" class="btn" (click)="clearPendingAttachment()">Remove</button>
+                  <img [src]="preview" [alt]="tr('portal.messages.pendingAttachment')" />
+                  <button type="button" class="btn" (click)="clearPendingAttachment()">{{ tr('common.remove') }}</button>
                 </div>
               }
               <div class="composer-actions">
                 <label class="btn">
                   <adeni-carbon-icon name="upload" [size]="16" />
-                  {{ attaching() ? "Uploading…" : "Attach image" }}
+                  {{ attaching() ? tr('common.uploading') : tr('portal.messages.attachImage') }}
                   <input
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
@@ -163,7 +163,7 @@
                 </label>
                 <button type="submit" class="btn btn-primary" [disabled]="!canSend()">
                   <adeni-carbon-icon name="send" [size]="16" />
-                  {{ sending() ? "Sending…" : "Send" }}
+                  {{ sending() ? tr('common.sending') : tr('common.send') }}
                 </button>
               </div>
             </form>
@@ -174,8 +174,8 @@
               [compact]="true"
               [embedded]="true"
               icon="send"
-              title="Select a conversation"
-              description="Pick a conversation from the inbox to read and reply."
+              [title]="tr('common.selectConversation')"
+              [description]="tr('portal.messages.pickConversationFromInboxRead')"
             />
           </div>
         }
@@ -195,8 +195,8 @@
         <img [src]="preview.url" [alt]="preview.fileName" />
       </figure>
       <div modalFooter class="image-preview-footer">
-        <a class="btn" [href]="preview.url" target="_blank" rel="noopener noreferrer">Open in new tab</a>
-        <button type="button" class="btn btn-primary" (click)="closeImagePreview()">Close</button>
+        <a class="btn" [href]="preview.url" target="_blank" rel="noopener noreferrer">{{ tr('common.openNewTab') }}</a>
+        <button type="button" class="btn btn-primary" (click)="closeImagePreview()">{{ tr('common.close') }}</button>
       </div>
     </adeni-modal>
   }

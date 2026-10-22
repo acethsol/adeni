@@ -3,7 +3,7 @@ import { FormsModule } from "@angular/forms";
 import { RouterLink } from "@angular/router";
 import type { BusinessProfile, Category, MarketConfig } from "@adeni/shared";
 import { getCategoryLabel } from "@adeni/shared";
-import { PortalPageComponent } from "@adeni/ui";
+import { PortalPageComponent, injectAdeniTranslate, injectAdeniApiError } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 
 const PHONE_PATTERN = /^\+?[0-9\s-]{7,20}$/;
@@ -17,6 +17,8 @@ const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
   styleUrl: "./register.component.scss",
 })
 export class RegisterComponent implements OnInit {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
 
   readonly loading = signal(true);
@@ -75,8 +77,8 @@ export class RegisterComponent implements OnInit {
       } catch {
         this.profile.set(null);
       }
-    } catch {
-      this.error.set("Could not load registration form.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.register.couldNotLoadRegistrationForm"));
     } finally {
       this.loading.set(false);
     }
@@ -85,8 +87,8 @@ export class RegisterComponent implements OnInit {
   async onMarketChange(): Promise<void> {
     try {
       await this.loadCategoriesForMarket();
-    } catch {
-      this.error.set("Could not reload categories for this market.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.register.couldNotReloadCategoriesMarket"));
     }
   }
 
@@ -126,7 +128,7 @@ export class RegisterComponent implements OnInit {
       !this.addressLine.trim() ||
       !this.area.trim()
     ) {
-      this.error.set("Fill in all required fields with valid formats.");
+      this.error.set(this.tr("portal.register.fillAllRequiredFieldsWith"));
       return;
     }
 
@@ -150,8 +152,8 @@ export class RegisterComponent implements OnInit {
         }),
       );
       await this.load();
-    } catch {
-      this.error.set("Registration failed. Slug may already be taken.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.register.registrationFailedSlugMayAlready"));
     } finally {
       this.submitting.set(false);
     }

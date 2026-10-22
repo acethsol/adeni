@@ -34,6 +34,8 @@ import {
   type AdeniFilterSelectOption,
   type AdeniListViewMode,
   type AdeniPillTone,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
@@ -64,6 +66,8 @@ export type CustomerAccountFilter = "all" | "discover" | "walk_in";
   styleUrl: "./customers.component.scss",
 })
 export class CustomersComponent implements OnInit, OnDestroy {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly activeLocation = inject(PortalActiveLocationService);
@@ -233,9 +237,9 @@ export class CustomersComponent implements OnInit, OnDestroy {
           this.entitlements.set(entitlements);
         });
       }, "Loading customers", "Fetching profiles");
-    } catch {
-      this.error.set("Could not load customers. Try again.");
-      this.feedback.error("Could not load customers.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.customers.couldNotLoadCustomersTry"));
+      this.feedback.error(this.apiErr(caught, "portal.customers.couldNotLoadCustomers"));
       this.items.set([]);
       this.totalCount.set(0);
     } finally {
@@ -265,9 +269,9 @@ export class CustomersComponent implements OnInit, OnDestroy {
       anchor.download = `tenant-customers-${to.toISOString().slice(0, 10)}.${format === "xlsx" ? "xlsx" : "csv"}`;
       anchor.click();
       URL.revokeObjectURL(url);
-      this.feedback.success("Customer list downloaded.");
-    } catch {
-      this.feedback.error("Could not download customer list.");
+      this.feedback.success(this.tr("portal.customers.customerListDownloaded"));
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "portal.customers.couldNotDownloadCustomerList"));
     } finally {
       this.exporting.set(false);
     }

@@ -20,6 +20,8 @@ import {
   AdeniModalComponent,
   AdeniPortalEmptyStateComponent,
   PortalPageComponent,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { MessagingRealtimeService } from "@adeni/ui";
@@ -42,6 +44,8 @@ const ALLOWED_ATTACHMENT_TYPES = new Set(["image/jpeg", "image/png", "image/webp
   styleUrl: "./messages.component.scss",
 })
 export class MessagesComponent implements OnInit, OnDestroy {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly realtime = inject(MessagingRealtimeService);
@@ -151,8 +155,8 @@ export class MessagesComponent implements OnInit, OnDestroy {
         }
       }
       }, "Loading messages", "Fetching your inbox…");
-    } catch {
-      this.error.set("Could not load messages.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.messages.couldNotLoadMessages"));
     } finally {
       this.loading.set(false);
     }
@@ -201,8 +205,8 @@ export class MessagesComponent implements OnInit, OnDestroy {
         // Opened via REST; live updates may be delayed until reconnect.
       }
       this.navBadges.requestRefresh();
-    } catch {
-      this.error.set("Could not open that conversation.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.messages.couldNotOpenConversation"));
     }
   }
 
@@ -214,12 +218,12 @@ export class MessagesComponent implements OnInit, OnDestroy {
     }
 
     if (!ALLOWED_ATTACHMENT_TYPES.has(file.type)) {
-      this.error.set("Use JPEG, PNG, or WebP.");
+      this.error.set(this.tr("common.useJpegPngWebp"));
       input.value = "";
       return;
     }
     if (file.size > MAX_UPLOAD_BYTES) {
-      this.error.set("Attachment must be 5 MB or smaller.");
+      this.error.set(this.tr("portal.messages.attachmentMustBe5Mb"));
       input.value = "";
       return;
     }
@@ -252,8 +256,8 @@ export class MessagesComponent implements OnInit, OnDestroy {
       this.clearPendingAttachment();
       this.pendingAttachment.set(attachment);
       this.pendingAttachmentPreview.set(URL.createObjectURL(file));
-    } catch {
-      this.error.set("Could not upload that image.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.messages.couldNotUploadImage"));
     } finally {
       this.attaching.set(false);
       input.value = "";
@@ -308,8 +312,8 @@ export class MessagesComponent implements OnInit, OnDestroy {
             : item,
         ),
       );
-    } catch {
-      this.error.set("Could not send that message.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.messages.couldNotSendMessage"));
     } finally {
       this.sending.set(false);
     }

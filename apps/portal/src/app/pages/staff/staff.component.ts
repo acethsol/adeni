@@ -58,6 +58,8 @@ import {
   type AdeniListViewMode,
   type AdeniPillTone,
   type AdeniWizardStep,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
@@ -190,6 +192,8 @@ function rowsToRules(rows: DayRow[]): WeeklyAvailabilityRule[] {
   styleUrl: "./staff.component.scss",
 })
 export class StaffComponent implements OnInit, OnDestroy {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly confirmDialog = inject(AdeniConfirmService);
@@ -466,12 +470,12 @@ export class StaffComponent implements OnInit, OnDestroy {
       return;
     }
     if (!AVATAR_TYPES.has(file.type)) {
-      this.feedback.error("Use JPEG, PNG, or WebP.");
+      this.feedback.error(this.tr("common.useJpegPngWebp"));
       input.value = "";
       return;
     }
     if (file.size > AVATAR_MAX_BYTES) {
-      this.feedback.error("Photo must be 5 MB or smaller.");
+      this.feedback.error(this.tr("common.photoMustBe5Mb"));
       input.value = "";
       return;
     }
@@ -587,11 +591,11 @@ export class StaffComponent implements OnInit, OnDestroy {
           });
         });
       });
-      this.feedback.success("Invite sent — check API logs for the accept link in Development.");
+      this.feedback.success(this.tr("portal.staff.inviteSentCheckApiLogs"));
       this.closeInvite();
       await this.load();
-    } catch {
-      this.feedback.error("Could not send invite.");
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "portal.staff.couldNotSendInvite"));
     } finally {
       this.busy.set(null);
     }
@@ -608,10 +612,10 @@ export class StaffComponent implements OnInit, OnDestroy {
           await c.resendTenantAccessInvite(member.portalInviteId!);
         });
       });
-      this.feedback.success("Invite resent.");
+      this.feedback.success(this.tr("portal.staff.inviteResent"));
       await this.load();
-    } catch {
-      this.feedback.error("Could not resend invite.");
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "portal.staff.couldNotResendInvite"));
     } finally {
       this.busy.set(null);
     }
@@ -675,11 +679,11 @@ export class StaffComponent implements OnInit, OnDestroy {
           });
         });
       });
-      this.feedback.success("Permission role updated.");
+      this.feedback.success(this.tr("portal.staff.permissionRoleUpdated"));
       this.closeChangeRole();
       await this.load();
-    } catch {
-      this.feedback.error("Could not change role. The last owner cannot be demoted.");
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "portal.staff.couldNotChangeRoleLast"));
     } finally {
       this.busy.set(null);
     }
@@ -786,13 +790,13 @@ export class StaffComponent implements OnInit, OnDestroy {
     const first = this.draft.firstName.trim();
     const last = this.draft.lastName.trim();
     if (!first || !last) {
-      this.feedback.error("First and last name are required.");
+      this.feedback.error(this.tr("portal.staff.firstLastNameRequired"));
       return false;
     }
     const display =
       this.draft.displayName.trim() || `${first} ${last}`.trim();
     if (display.length < 2) {
-      this.feedback.error("Display name needs at least 2 characters.");
+      this.feedback.error(this.tr("portal.staff.displayNameNeedsAtLeast"));
       return false;
     }
     return true;
@@ -864,8 +868,8 @@ export class StaffComponent implements OnInit, OnDestroy {
       await this.feedback.runLoading(async () => {
         await this.fetchStaffPageData();
       }, "Loading staff", "Fetching roster and services");
-    } catch {
-      this.error.set("Could not load staff. Try again.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.staff.couldNotLoadStaffTry"));
     } finally {
       this.loading.set(false);
     }
@@ -894,9 +898,9 @@ export class StaffComponent implements OnInit, OnDestroy {
       anchor.download = `staff-roster-${to.toISOString().slice(0, 10)}.csv`;
       anchor.click();
       URL.revokeObjectURL(url);
-      this.feedback.success("Staff roster downloaded.");
-    } catch {
-      this.feedback.error("Could not download staff roster.");
+      this.feedback.success(this.tr("portal.staff.staffRosterDownloaded"));
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "portal.staff.couldNotDownloadStaffRoster"));
     } finally {
       this.staffExporting.set(false);
     }
@@ -912,8 +916,8 @@ export class StaffComponent implements OnInit, OnDestroy {
           }),
         );
       });
-    } catch {
-      this.feedback.error("Could not refresh the roster.");
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "portal.staff.couldNotRefreshRoster"));
     }
   }
 
@@ -1003,9 +1007,9 @@ export class StaffComponent implements OnInit, OnDestroy {
     try {
       const rules = await this.api.withAuthorizedClient((c) => c.getTenantAvailability());
       this.hourRows = rulesToRows(rules);
-      this.feedback.success("Copied business hours. Save to apply.");
-    } catch {
-      this.feedback.error("Could not load business hours.");
+      this.feedback.success(this.tr("portal.staff.copiedBusinessHoursSaveApply"));
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "portal.staff.couldNotLoadBusinessHours"));
     }
   }
 
@@ -1099,8 +1103,8 @@ export class StaffComponent implements OnInit, OnDestroy {
         editingId ? "Updated" : "Added",
       );
       await this.refreshStaff();
-    } catch {
-      this.feedback.error("Could not save team member.");
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "portal.staff.couldNotSaveTeamMember"));
     } finally {
       this.busy.set(null);
     }
@@ -1109,7 +1113,7 @@ export class StaffComponent implements OnInit, OnDestroy {
   async addLeave(): Promise<void> {
     const editingId = this.editingId();
     if (!editingId || !this.leaveStart || !this.leaveEnd) {
-      this.feedback.error("Choose leave start and end.");
+      this.feedback.error(this.tr("portal.staff.chooseLeaveStartEnd"));
       return;
     }
 
@@ -1132,10 +1136,10 @@ export class StaffComponent implements OnInit, OnDestroy {
           `Leave saved. Warning: ${created.conflictingBookingIds.length} existing booking(s) overlap.`,
         );
       } else {
-        this.feedback.success("Leave saved.");
+        this.feedback.success(this.tr("portal.staff.leaveSaved"));
       }
-    } catch {
-      this.feedback.error("Could not save leave.");
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "portal.staff.couldNotSaveLeave"));
     }
   }
 
@@ -1158,9 +1162,9 @@ export class StaffComponent implements OnInit, OnDestroy {
         c.deleteTenantStaffLeave(editingId, leave.id),
       );
       this.leaveItems.update((items) => items.filter((x) => x.id !== leave.id));
-      this.feedback.success("Leave removed.");
-    } catch {
-      this.feedback.error("Could not remove leave.");
+      this.feedback.success(this.tr("portal.staff.leaveRemoved"));
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "portal.staff.couldNotRemoveLeave"));
     }
   }
 
@@ -1180,8 +1184,8 @@ export class StaffComponent implements OnInit, OnDestroy {
       await this.api.withAuthorizedClient((c) => c.deactivateTenantStaff(member.id));
       this.feedback.success(`${member.displayName} is no longer bookable online.`);
       await this.load();
-    } catch {
-      this.feedback.error("Could not deactivate.");
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "portal.staff.couldNotDeactivate"));
     } finally {
       this.busy.set(null);
     }

@@ -46,6 +46,8 @@ import {
   type AdeniDataTableSortDirection,
   type AdeniPillTone,
   type AdeniTab,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 
@@ -73,6 +75,8 @@ const BILLING_EVENT_LABELS: Record<string, string> = {
   styleUrl: "./plan.component.scss",
 })
 export class PlanComponent implements OnInit {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -221,8 +225,8 @@ export class PlanComponent implements OnInit {
         }
       });
       await this.maybeCompleteStubCheckout();
-    } catch {
-      this.error.set("Could not load plan details.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.plan.couldNotLoadPlanDetails"));
     } finally {
       this.loading.set(false);
     }
@@ -332,8 +336,8 @@ export class PlanComponent implements OnInit {
 
         window.location.href = checkout.checkoutUrl;
       });
-    } catch {
-      this.error.set("Checkout could not start. Try again.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.plan.checkoutCouldNotStartTry"));
     } finally {
       this.checkoutBusy.set(false);
     }

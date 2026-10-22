@@ -4,7 +4,7 @@ import {
   DASHBOARD_WIDGET_WIDTH_OPTIONS,
   type DashboardWidgetWidth,
 } from "@adeni/shared";
-import { AdeniCarbonIconComponent } from "@adeni/ui";
+import { AdeniCarbonIconComponent, injectAdeniTranslate } from "@adeni/ui";
 
 @Component({
   selector: "app-dashboard-widget-edit-chrome",
@@ -14,7 +14,7 @@ import { AdeniCarbonIconComponent } from "@adeni/ui";
     <div class="widget-edit-chrome">
       <button type="button" class="widget-edit-chrome__drag" cdkDragHandle>
         <span aria-hidden="true">⋮⋮</span>
-        <span class="sr-only">Drag to reorder</span>
+        <span class="sr-only">{{ tr('portal.dashboard.dragReorder') }}</span>
       </button>
 
       @if (title()) {
@@ -42,7 +42,7 @@ import { AdeniCarbonIconComponent } from "@adeni/ui";
       @if (removable()) {
         <button type="button" class="widget-edit-chrome__remove" (click)="remove.emit()">
           <adeni-carbon-icon name="close" [size]="16" />
-          <span class="sr-only">Remove widget</span>
+          <span class="sr-only">{{ tr('portal.dashboard.removeWidget') }}</span>
         </button>
       }
     </div>
@@ -50,6 +50,7 @@ import { AdeniCarbonIconComponent } from "@adeni/ui";
   styleUrl: "./dashboard-widget-edit-chrome.component.scss",
 })
 export class DashboardWidgetEditChromeComponent {
+  protected readonly tr = injectAdeniTranslate();
   readonly title = input("");
   readonly width = input.required<DashboardWidgetWidth>();
   readonly removable = input(true);

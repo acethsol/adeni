@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
-import { AdeniFeedbackService } from "@adeni/ui";
+import { AdeniFeedbackService, injectAdeniTranslate, injectAdeniApiError } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import {
   ADENI_PORTAL_CONFIG,
@@ -16,6 +16,8 @@ import {
   styleUrl: "./accept-invite.component.scss",
 })
 export class AcceptInviteComponent implements OnInit {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly api = inject(BusinessApiService);
@@ -42,7 +44,7 @@ export class AcceptInviteComponent implements OnInit {
 
     if (!this.token) {
       this.status.set("error");
-      this.message.set("This invite link is missing a token. Ask the owner to resend the invite.");
+      this.message.set(this.tr("portal.acceptInvite.thisInviteLinkMissingToken"));
     }
   }
 
@@ -63,14 +65,14 @@ export class AcceptInviteComponent implements OnInit {
       );
       this.status.set("done");
       this.message.set(`You're in as ${result.permissionRole}. Opening the portal…`);
-      this.feedback.success("Invite accepted");
+      this.feedback.success(this.tr("portal.acceptInvite.inviteAccepted"));
       await this.router.navigateByUrl("/dashboard");
-    } catch {
+    } catch (caught) {
       this.status.set("error");
       this.message.set(
         "Could not accept this invite. It may be expired, revoked, or meant for a different email.",
       );
-      this.feedback.error("Invite not accepted");
+      this.feedback.error(this.apiErr(caught, "portal.acceptInvite.inviteNotAccepted"));
     }
   }
 }

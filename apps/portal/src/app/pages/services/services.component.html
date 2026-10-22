@@ -1,13 +1,13 @@
 <app-portal-page
-  title="Services"
-  description="What customers book — organize into collections, or create your own."
+  [title]="tr('common.services')"
+  [description]="tr('portal.services.whatCustomersBookOrganizeInto')"
 >
   <button pageActions type="button" class="btn" (click)="showCollectionsManager.set(true)">
-    Menu sections
+    {{ tr('portal.services.menuSections') }}
   </button>
   <button pageActions type="button" class="btn btn-primary" (click)="openCreate()">
     <adeni-carbon-icon name="add" [size]="16" />
-    Add service
+    {{ tr('portal.services.addService') }}
   </button>
 
   @if (error()) {
@@ -16,11 +16,11 @@
 
   <adeni-modal
     [open]="showForm()"
-    [title]="editingId() ? 'Edit service' : 'New service'"
+    [title]="editingId() ? tr('portal.services.editService') : tr('portal.services.newService')"
     [subtitle]="
       editingId()
-        ? 'Update pricing, duration, and collection.'
-        : 'Add a bookable service to your public menu.'
+        ? tr('portal.services.updatePricingDurationCollection')
+        : tr('portal.services.addBookableServicePublicMenu')
     "
     size="lg"
     [hasFooter]="false"
@@ -38,81 +38,81 @@
         </ul>
       </div>
     } @else if (catalogLoading()) {
-      <p class="muted">Loading templates…</p>
+      <p class="muted">{{ tr('portal.services.loadingTemplates') }}</p>
     }
 
     <div class="field">
-      <label>Name</label>
+      <label>{{ tr('portal.services.name') }}</label>
       <input [(ngModel)]="draft.name" />
     </div>
     <div class="field">
-      <label>Description</label>
+      <label>{{ tr('common.description') }}</label>
       <textarea rows="2" [(ngModel)]="draft.description"></textarea>
     </div>
     <div class="row">
       <div class="field">
-        <label>Price</label>
+        <label>{{ tr('portal.services.price') }}</label>
         <input type="number" min="0" step="0.01" [(ngModel)]="draft.priceAmount" />
       </div>
       <div class="field">
-        <label>Currency</label>
+        <label>{{ tr('common.currency') }}</label>
         <input maxlength="3" [(ngModel)]="draft.currency" />
       </div>
       <div class="field">
-        <label>Duration (min)</label>
+        <label>{{ tr('portal.services.durationMin') }}</label>
         <input type="number" min="1" [(ngModel)]="draft.durationMinutes" />
       </div>
     </div>
     <div class="row">
       <div class="field">
-        <label>Menu section</label>
+        <label>{{ tr('portal.services.menuSection') }}</label>
         <select [(ngModel)]="draft.menuGroupId">
-          <option value="">No section</option>
+          <option value="">{{ tr('portal.services.noSection') }}</option>
           @for (group of groups(); track group.id) {
             <option [value]="group.id">{{ group.name }}</option>
           }
         </select>
       </div>
       <div class="field">
-        <label>Sort order</label>
+        <label>{{ tr('common.sortOrder') }}</label>
         <input type="number" [(ngModel)]="draft.sortOrder" />
       </div>
     </div>
     <div class="field">
-      <label>Booking type</label>
+      <label>{{ tr('portal.services.bookingType') }}</label>
       <select [(ngModel)]="draft.bookingDeliveryType">
-        <option value="appointment">Appointment (1:1 slot)</option>
-        <option value="class">Class (fixed start, capacity)</option>
-        <option value="session">Session (e.g. personal training)</option>
-        <option value="experience">Experience (e.g. spa block)</option>
-        <option value="mobile_appointment">Mobile appointment</option>
+        <option value="appointment">{{ tr('portal.services.appointment11Slot') }}</option>
+        <option value="class">{{ tr('portal.services.classFixedStartCapacity') }}</option>
+        <option value="session">{{ tr('portal.services.sessionEGPersonalTraining') }}</option>
+        <option value="experience">{{ tr('portal.services.experienceEGSpaBlock') }}</option>
+        <option value="mobile_appointment">{{ tr('portal.services.mobileAppointment') }}</option>
       </select>
     </div>
     <div class="field checkbox-field">
       <label>
         <input type="checkbox" [(ngModel)]="draft.isAddOn" />
-        Add-on (cannot be booked alone)
+        {{ tr('portal.services.addCannotBeBookedAlone') }}
       </label>
     </div>
     <div class="actions">
       <button type="button" class="btn" (click)="cancelForm()">
         <adeni-carbon-icon name="close" [size]="16" />
-        Cancel
+        {{ tr('common.cancel') }}
       </button>
       <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="save()">
         <adeni-carbon-icon name="save" [size]="16" />
-        Save
+        {{ tr('common.save') }}
       </button>
     </div>
   </adeni-modal>
 
   @if (loading()) {
-    <p class="muted">Loading…</p>
+    <p class="muted">{{ tr('common.loading') }}</p>
   } @else if (services().length === 0) {
     <adeni-portal-empty-state
       icon="add"
-      title="No services yet"
-      description="Add at least one service so customers can book online from your public page."
+      [title]="tr('portal.services.noServicesYet')"
+      [description]="tr('portal.services.addAtLeastOneService')"
     />
   } @else {
     <div class="roster">
@@ -122,16 +122,16 @@
         (viewModeChange)="viewMode.set($event)"
         [count]="paginatedServices().length"
         [countTotal]="filteredServicesCount()"
-        singularCountLabel="service"
-        pluralCountLabel="services"
-        searchPlaceholder="Search services"
+        [singularCountLabel]="tr('portal.services.service')"
+        [pluralCountLabel]="tr('portal.services.services')"
+        [searchPlaceholder]="tr('portal.services.searchServices')"
         [searchQuery]="menuSearch()"
         (searchQueryChange)="onMenuSearchChange($event)"
       >
         <adeni-list-filter-row listFilters>
           <adeni-filter-select
             layout="toolbar"
-            label="Menu section"
+            [label]="tr('portal.services.menuSection')"
             [options]="groupFilterOptions()"
             [value]="groupFilter()"
             (valueChange)="onGroupFilterChange($any($event))"
@@ -139,7 +139,7 @@
         </adeni-list-filter-row>
         <adeni-export-menu
           listExports
-          label="Export"
+          [label]="tr('common.export')"
           [items]="exportItems()"
           (exportSelect)="downloadServicesExport($event)"
         />
@@ -148,8 +148,8 @@
       @if (filteredServices().length === 0) {
         <adeni-portal-empty-state
           icon="search"
-          title="No matching services"
-          description="Adjust search or collection filter."
+          [title]="tr('portal.services.noMatchingServices')"
+          [description]="tr('portal.services.adjustSearchCollectionFilter')"
           [compact]="true"
         />
       } @else if (viewMode() === "cards") {
@@ -173,7 +173,7 @@
               </adeni-pill>
               <div class="org-meta adeni-cell-pills">
                 @if (service.isAddOn) {
-                  <adeni-pill tone="neutral" [compact]="true">Add-on</adeni-pill>
+                  <adeni-pill tone="neutral" [compact]="true">{{ tr('portal.services.add') }}</adeni-pill>
                 }
                 @if (service.categorySlug) {
                   <adeni-pill tone="info" [compact]="true">{{
@@ -187,7 +187,7 @@
                   [disabled]="busy() === service.id"
                   (click)="openEdit(service)"
                 >
-                  Edit
+                  {{ tr('common.edit') }}
                 </button>
                 <button
                   type="button"
@@ -195,7 +195,7 @@
                   [disabled]="busy() === service.id"
                   (click)="deactivate(service)"
                 >
-                  Deactivate
+                  {{ tr('common.deactivate') }}
                 </button>
               </div>
             </li>
@@ -208,7 +208,7 @@
             [pageSize]="pageSize()"
             [totalCount]="filteredServicesCount()"
             [pageSizeOptions]="listPageSizeOptions"
-            ariaLabel="Service pages"
+            [ariaLabel]="tr('portal.services.servicePages')"
             (pageChange)="goToServicesPage($event)"
             (pageSizeChange)="onServicesPageSizeChange($event)"
           />
@@ -248,7 +248,7 @@
           <ng-template adeniDataTableCell="tags" let-service>
             <div class="adeni-cell-pills">
               @if (service.isAddOn) {
-                <adeni-pill tone="neutral" [compact]="true">Add-on</adeni-pill>
+                <adeni-pill tone="neutral" [compact]="true">{{ tr('portal.services.add') }}</adeni-pill>
               }
               @if (service.categorySlug) {
                 <adeni-pill tone="info" [compact]="true">{{
@@ -261,7 +261,7 @@
             <adeni-row-action-bar>
               <adeni-icon-btn
                 icon="edit"
-                label="Edit service"
+                [label]="tr('portal.services.editService')"
                 variant="table"
                 [dense]="true"
                 [disabled]="busy() === service.id"
@@ -269,7 +269,7 @@
               />
               <adeni-icon-btn
                 icon="misuse"
-                label="Deactivate service"
+                [label]="tr('portal.services.deactivateService')"
                 variant="danger-soft"
                 [dense]="true"
                 [disabled]="busy() === service.id"
@@ -284,7 +284,7 @@
             [pageSize]="pageSize()"
             [totalCount]="filteredServicesCount()"
             [pageSizeOptions]="listPageSizeOptions"
-            ariaLabel="Service pages"
+            [ariaLabel]="tr('portal.services.servicePages')"
             (pageChange)="goToServicesPage($event)"
             (pageSizeChange)="onServicesPageSizeChange($event)"
           />
@@ -295,8 +295,8 @@
 
   <adeni-modal
     [open]="showCollectionsManager()"
-    title="Menu sections"
-    subtitle="Headings on your public booking menu — assign each service to a section when you edit it."
+    [title]="tr('portal.services.menuSections')"
+    [subtitle]="tr('portal.services.headingsPublicBookingMenuAssign')"
     size="md"
     [hasFooter]="true"
     (closed)="showCollectionsManager.set(false)"
@@ -304,7 +304,7 @@
     <div class="menu-section-add">
       <input
         type="text"
-        placeholder="Section name (e.g. Hair, Nails)"
+        [placeholder]="tr('portal.services.sectionNameEGHair')"
         [ngModel]="newGroupName()"
         (ngModelChange)="newGroupName.set($event)"
         maxlength="120"
@@ -312,12 +312,12 @@
       />
       <button type="button" class="btn btn-primary" [disabled]="busy() === 'group'" (click)="addGroup()">
         <adeni-carbon-icon name="add" [size]="16" />
-        Add section
+        {{ tr('portal.services.addSection') }}
       </button>
     </div>
     @if (groups().length === 0) {
       <p class="muted menu-section-empty">
-        No sections yet. Services show as one list on your public page until you add headings.
+        {{ tr('portal.services.noSectionsYetServicesShow') }}
       </p>
     } @else {
       <ul class="menu-section-list plain">
@@ -330,7 +330,7 @@
               [disabled]="busy() === group.id"
               (click)="removeGroup(group)"
             >
-              Remove
+              {{ tr('common.remove') }}
             </button>
           </li>
         }
@@ -339,7 +339,7 @@
 
     <div modalFooter class="modal-footer-actions">
       <button type="button" class="btn" (click)="showCollectionsManager.set(false)">
-        Done
+        {{ tr('common.done') }}
       </button>
     </div>
   </adeni-modal>

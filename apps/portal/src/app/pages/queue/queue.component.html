@@ -1,38 +1,38 @@
-<app-portal-page title="Queue" [description]="pageDescription()">
+<app-portal-page [title]="tr('common.queue')" [description]="pageDescription()">
   @if (error() && !showAddModal()) {
     <p class="error-banner">{{ error() }}</p>
   }
 
   @if (loading()) {
-    <p class="muted">Loading queue…</p>
+    <p class="muted">{{ tr('common.loadingQueue') }}</p>
   } @else if (!supportsQueue()) {
     <section class="card">
-      <p class="muted">Walk-in queue is not enabled for this business category.</p>
+      <p class="muted">{{ tr('portal.queue.walkQueueNotEnabledBusiness') }}</p>
     </section>
   } @else {
     <div class="queue-shell">
       <header class="queue-toolbar card">
         <div class="queue-toolbar__meta">
-          <p class="queue-toolbar__title">Floor board</p>
+          <p class="queue-toolbar__title">{{ tr('portal.queue.floorBoard') }}</p>
           <p class="muted">
             @if (lastRefreshedAt(); as at) {
               Updated {{ at | date: "shortTime" }}
             }
             @if (refreshing()) {
-              · Refreshing…
+              {{ tr('portal.queue.refreshing') }}
             }
           </p>
         </div>
         <div class="queue-toolbar__actions">
           @if (canManageAll() && staff().length > 0) {
             <label class="toolbar-select">
-              <span class="toolbar-select__label">Start as</span>
+              <span class="toolbar-select__label">{{ tr('portal.queue.startAs') }}</span>
               <select
                 [(ngModel)]="startStaffMemberId"
                 name="startStaffMemberId"
-                aria-label="Staff member when starting service"
+                [attr.aria-label]="tr('portal.queue.staffMemberWhenStartingService')"
               >
-                <option value="">Auto</option>
+                <option value="">{{ tr('portal.queue.auto') }}</option>
                 @for (member of staff(); track member.id) {
                   <option [value]="member.id">{{ member.displayName }}</option>
                 }
@@ -42,16 +42,16 @@
           @if (publicJoinUrl()) {
             <button type="button" class="btn" (click)="copyJoinLink()">
               <adeni-carbon-icon name="copy" [size]="16" />
-              Copy join link
+              {{ tr('portal.queue.copyJoinLink') }}
             </button>
           }
           <button type="button" class="btn" [disabled]="refreshing()" (click)="refreshNow()">
             <adeni-carbon-icon name="restart" [size]="16" />
-            Refresh
+            {{ tr('common.refresh') }}
           </button>
           <button type="button" class="btn btn-primary" (click)="openAddModal()">
             <adeni-carbon-icon name="add" [size]="16" />
-            Add walk-in
+            {{ tr('portal.queue.addWalk') }}
           </button>
         </div>
       </header>
@@ -59,10 +59,10 @@
       @if (walkInStatus(); as walkIn) {
         @if (!walkIn.acceptingNow && canManageAll()) {
           <p class="error-banner queue-banner">
-            Walk-ins are closed for new guests.
+            {{ tr('portal.queue.walkInsClosedNewGuests') }}
             <button type="button" class="btn btn-primary" (click)="openWalkInsFor90Minutes()">
               <adeni-carbon-icon name="time" [size]="16" />
-              Open 90 minutes
+              {{ tr('common.open90Minutes') }}
             </button>
           </p>
         }
@@ -71,8 +71,8 @@
       @if (expectedArrivals().length > 0) {
         <section class="card expected-panel">
           <div class="expected-panel__head">
-            <h3>Expected today</h3>
-            <p class="muted">Confirmed appointments — check in from Bookings or kiosk to add them to the floor.</p>
+            <h3>{{ tr('portal.queue.expectedToday') }}</h3>
+            <p class="muted">{{ tr('portal.queue.confirmedAppointmentsCheckFromBookings') }}</p>
           </div>
           <ul class="expected-list">
             @for (row of expectedArrivals(); track row.bookingId) {
@@ -95,7 +95,7 @@
                   [queryParams]="{ tab: 'upcoming', focus: row.bookingId }"
                 >
                   <adeni-carbon-icon name="user--follow" [size]="16" />
-                  Check in
+                  {{ tr('portal.queue.check') }}
                 </a>
               </li>
             }
@@ -106,7 +106,7 @@
       <div class="floor-board">
         <section class="card floor-column">
           <div class="column-head">
-            <h3>Waiting</h3>
+            <h3>{{ tr('common.waiting') }}</h3>
             <span class="count-badge">{{ waiting().length }}</span>
           </div>
           <div class="column-action-bar">
@@ -117,7 +117,7 @@
               (click)="callNext()"
             >
               <adeni-carbon-icon name="flash--filled" [size]="16" />
-              Call next
+              {{ tr('portal.queue.callNext') }}
             </button>
           </div>
           <div class="column-body">
@@ -127,8 +127,8 @@
                   [compact]="true"
                   [embedded]="true"
                   icon="time"
-                  title="Waiting room is empty"
-                  description="Guests join via your link or Add walk-in."
+                  [title]="tr('portal.queue.waitingRoomEmpty')"
+                  [description]="tr('portal.queue.guestsJoinViaLinkAdd')"
                 />
               </div>
             } @else {
@@ -140,11 +140,11 @@
                         <span class="position">#{{ ticket.position }}</span>
                         {{ ticket.displayName }}
                         @if (ticket.source === "appointment") {
-                          <span class="source-tag">Appointment</span>
+                          <span class="source-tag">{{ tr('common.appointment') }}</span>
                         }
                       </p>
                       <p class="muted ticket-item__meta">
-                        {{ ticket.serviceName || "Any service" }}
+                        {{ ticket.serviceName || tr('portal.queue.anyService') }}
                         @if (ticket.partySize > 1) {
                           · Party of {{ ticket.partySize }}
                         }
@@ -167,7 +167,7 @@
                         (click)="call(ticket)"
                       >
                         <adeni-carbon-icon name="user--follow" [size]="16" />
-                        Call
+                        {{ tr('portal.queue.call') }}
                       </button>
                       <button
                         type="button"
@@ -176,7 +176,7 @@
                         (click)="noShow(ticket)"
                       >
                         <adeni-carbon-icon name="misuse" [size]="16" />
-                        No-show
+                        {{ tr('portal.queue.noShow') }}
                       </button>
                       <button
                         type="button"
@@ -185,7 +185,7 @@
                         (click)="cancel(ticket)"
                       >
                         <adeni-carbon-icon name="close" [size]="16" />
-                        Cancel
+                        {{ tr('common.cancel') }}
                       </button>
                     </div>
                   </li>
@@ -197,7 +197,7 @@
 
         <section class="card floor-column">
           <div class="column-head">
-            <h3>Called</h3>
+            <h3>{{ tr('portal.queue.called') }}</h3>
             <span class="count-badge">{{ called().length }}</span>
           </div>
           <div class="column-action-bar" aria-hidden="true">
@@ -210,8 +210,8 @@
                   [compact]="true"
                   [embedded]="true"
                   icon="user--follow"
-                  title="No one called"
-                  description="Call the next guest from Waiting."
+                  [title]="tr('portal.queue.noOneCalled')"
+                  [description]="tr('portal.queue.callNextGuestFromWaiting')"
                 />
               </div>
             } @else {
@@ -221,7 +221,7 @@
                     <div class="ticket-item__main">
                       <p class="ticket-item__name">{{ ticket.displayName }}</p>
                       <p class="muted ticket-item__meta">
-                        {{ ticket.serviceName || "Any service" }}
+                        {{ ticket.serviceName || tr('portal.queue.anyService') }}
                       </p>
                       @if (ticket.staffDisplayName) {
                         <p class="muted">{{ ticket.staffDisplayName }}</p>
@@ -235,7 +235,7 @@
                         (click)="start(ticket)"
                       >
                         <adeni-carbon-icon name="user--filled" [size]="16" />
-                        Start
+                        {{ tr('common.start') }}
                       </button>
                       <button
                         type="button"
@@ -244,7 +244,7 @@
                         (click)="noShow(ticket)"
                       >
                         <adeni-carbon-icon name="misuse" [size]="16" />
-                        No-show
+                        {{ tr('portal.queue.noShow') }}
                       </button>
                     </div>
                   </li>
@@ -256,7 +256,7 @@
 
         <section class="card floor-column">
           <div class="column-head">
-            <h3>In service</h3>
+            <h3>{{ tr('portal.queue.inService') }}</h3>
             <span class="count-badge">{{ inService().length }}</span>
           </div>
           <div class="column-action-bar" aria-hidden="true">
@@ -269,8 +269,8 @@
                   [compact]="true"
                   [embedded]="true"
                   icon="user--filled"
-                  title="Floor is clear"
-                  description="Started guests appear here."
+                  [title]="tr('portal.queue.floorClear')"
+                  [description]="tr('portal.queue.startedGuestsAppearHere')"
                 />
               </div>
             } @else {
@@ -280,7 +280,7 @@
                     <div class="ticket-item__main">
                       <p class="ticket-item__name">{{ ticket.displayName }}</p>
                       <p class="muted ticket-item__meta">
-                        {{ ticket.serviceName || "Any service" }}
+                        {{ ticket.serviceName || tr('portal.queue.anyService') }}
                       </p>
                       @if (ticket.staffDisplayName) {
                         <p class="muted">With {{ ticket.staffDisplayName }}</p>
@@ -294,7 +294,7 @@
                           [queryParams]="{ tab: 'upcoming', focus: ticket.bookingId }"
                         >
                           <adeni-carbon-icon name="calendar" [size]="16" />
-                          Bookings
+                          {{ tr('common.bookings') }}
                         </a>
                       }
                       <button
@@ -304,7 +304,7 @@
                         (click)="complete(ticket)"
                       >
                         <adeni-carbon-icon name="checkmark--filled" [size]="16" />
-                        Complete
+                        {{ tr('portal.queue.complete') }}
                       </button>
                     </div>
                   </li>
@@ -328,7 +328,7 @@
                 @if (ticket.bookingId) {
                   <button type="button" class="btn btn-ghost" (click)="openBooking(ticket)">
                     <adeni-carbon-icon name="launch" [size]="16" />
-                    Open booking
+                    {{ tr('portal.queue.openBooking') }}
                   </button>
                 }
               </li>
@@ -340,8 +340,8 @@
 
     <adeni-modal
       [open]="showAddModal()"
-      title="Add walk-in"
-      subtitle="Add a guest to the waiting list from the front desk."
+      [title]="tr('portal.queue.addWalk')"
+      [subtitle]="tr('portal.queue.addGuestWaitingListFrom')"
       size="lg"
       [hasFooter]="true"
       (closed)="closeAddModal()"
@@ -351,7 +351,7 @@
       }
       <div class="modal-form">
         <label class="field">
-          <span class="field-label">First name</span>
+          <span class="field-label">{{ tr('common.firstName') }}</span>
           <input
             [(ngModel)]="guestFirstName"
             name="guestFirstNameModal"
@@ -360,7 +360,7 @@
           />
         </label>
         <label class="field">
-          <span class="field-label">Last name</span>
+          <span class="field-label">{{ tr('common.lastName') }}</span>
           <input
             [(ngModel)]="guestLastName"
             name="guestLastNameModal"
@@ -369,11 +369,11 @@
           />
         </label>
         <label class="field">
-          <span class="field-label">Phone</span>
+          <span class="field-label">{{ tr('common.phone') }}</span>
           <input [(ngModel)]="guestPhone" name="guestPhoneModal" autocomplete="tel" inputmode="tel" required />
         </label>
         <label class="field">
-          <span class="field-label">Email <span class="muted">(optional)</span></span>
+          <span class="field-label">{{ tr('common.email') }} <span class="muted">{{ tr('portal.queue.optional') }}</span></span>
           <input
             [(ngModel)]="guestEmail"
             name="guestEmailModal"
@@ -383,9 +383,9 @@
           />
         </label>
         <label class="field">
-          <span class="field-label">Service</span>
+          <span class="field-label">{{ tr('common.service') }}</span>
           <select [(ngModel)]="serviceOfferingId" name="serviceOfferingIdModal">
-            <option value="">Any service</option>
+            <option value="">{{ tr('portal.queue.anyService') }}</option>
             @for (service of services(); track service.id) {
               <option [value]="service.id">{{ service.name }}</option>
             }
@@ -393,7 +393,7 @@
         </label>
         <div class="modal-form__row">
           <label class="field">
-            <span class="field-label">Party size</span>
+            <span class="field-label">{{ tr('portal.queue.partySize') }}</span>
             <input
               type="number"
               min="1"
@@ -404,9 +404,9 @@
           </label>
           @if (canManageAll() && staff().length > 0) {
             <label class="field">
-              <span class="field-label">Assign to</span>
+              <span class="field-label">{{ tr('portal.queue.assign') }}</span>
               <select [(ngModel)]="assignStaffMemberId" name="assignStaffModal">
-                <option value="">Unassigned</option>
+                <option value="">{{ tr('portal.queue.unassigned') }}</option>
                 @for (member of staff(); track member.id) {
                   <option [value]="member.id">{{ member.displayName }}</option>
                 }
@@ -415,24 +415,24 @@
           }
         </div>
         <label class="field">
-          <span class="field-label">Notes</span>
+          <span class="field-label">{{ tr('common.notes') }}</span>
           <textarea
             rows="3"
             maxlength="500"
             [(ngModel)]="walkInNotes"
             name="walkInNotesModal"
-            placeholder="Optional"
+            [placeholder]="tr('portal.queue.optional2')"
           ></textarea>
         </label>
       </div>
       <div modalFooter class="modal-footer">
         <button type="button" class="btn" (click)="closeAddModal()">
           <adeni-carbon-icon name="close" [size]="16" />
-          Cancel
+          {{ tr('common.cancel') }}
         </button>
         <button type="button" class="btn btn-primary" [disabled]="adding()" (click)="addWalkIn()">
           <adeni-carbon-icon name="add" [size]="16" />
-          {{ adding() ? "Adding…" : "Add to queue" }}
+          {{ adding() ? tr('portal.queue.adding') : tr('portal.queue.addQueue') }}
         </button>
       </div>
     </adeni-modal>

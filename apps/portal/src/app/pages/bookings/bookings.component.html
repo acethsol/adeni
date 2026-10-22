@@ -1,5 +1,5 @@
 <app-portal-page
-  title="Bookings"
+  [title]="tr('common.bookings')"
   [description]="pageDescription()"
 >
   <adeni-tabs [tabs]="tabs" />
@@ -11,44 +11,44 @@
   <section class="card kiosk-row">
     <div class="section-head">
       <div>
-        <h3>Front-desk check-in</h3>
+        <h3>{{ tr('portal.bookings.frontDeskCheck') }}</h3>
         <p class="muted">
-          Fullscreen tablet for clients to check in when they arrive.
+          {{ tr('portal.bookings.fullscreenTabletClientsCheckWhen') }}
           @if (kioskStatus()?.hasPin) {
-            Staff exit PIN is set.
+            {{ tr('portal.bookings.staffExitPinSet') }}
           } @else {
-            Optional staff exit PIN not set.
+            {{ tr('portal.bookings.optionalStaffExitPinNot') }}
           }
         </p>
       </div>
       <button type="button" class="btn btn-primary" (click)="openKiosk($event)">
         <adeni-carbon-icon name="user--follow" [size]="16" />
-        Open check-in
+        {{ tr('portal.bookings.openCheck') }}
       </button>
     </div>
     <div class="pin-fields">
       <input
         [(ngModel)]="kioskPin"
-        placeholder="Exit PIN (4–8 digits)"
+        [placeholder]="tr('portal.bookings.exitPin48Digits')"
         inputmode="numeric"
         maxlength="8"
         autocomplete="off"
       />
       <button type="button" class="btn" [disabled]="savingPin()" (click)="saveKioskPin()">
         <adeni-carbon-icon name="save" [size]="16" />
-        {{ kioskStatus()?.hasPin ? "Update PIN" : "Set PIN" }}
+        {{ kioskStatus()?.hasPin ? tr('portal.bookings.updatePin') : tr('portal.bookings.setPin') }}
       </button>
       @if (kioskStatus()?.hasPin) {
         <button type="button" class="btn" [disabled]="savingPin()" (click)="clearKioskPin()">
           <adeni-carbon-icon name="close" [size]="16" />
-          Clear PIN
+          {{ tr('portal.bookings.clearPin') }}
         </button>
       }
     </div>
   </section>
 
   @if (loading()) {
-    <p class="muted">Loading bookings…</p>
+    <p class="muted">{{ tr('portal.bookings.loadingBookings') }}</p>
   } @else if (displayedBookings().length === 0) {
     @let empty = emptyState();
     <adeni-portal-empty-state
@@ -64,15 +64,15 @@
         (viewModeChange)="viewMode.set($event)"
         [count]="filteredBookings().length"
         [countTotal]="bookingCountTotal()"
-        singularCountLabel="booking"
-        pluralCountLabel="bookings"
-        searchPlaceholder="Search this page"
+        [singularCountLabel]="tr('common.booking')"
+        [pluralCountLabel]="tr('common.bookings2')"
+        [searchPlaceholder]="tr('portal.bookings.searchPage')"
         [searchQuery]="bookingSearch()"
         (searchQueryChange)="bookingSearch.set($event)"
       >
         <adeni-export-menu
           listExports
-          label="Export"
+          [label]="tr('common.export')"
           [items]="exportItems()"
           (exportSelect)="downloadRegisterExport($event)"
         />
@@ -81,8 +81,8 @@
       @if (filteredBookings().length === 0) {
         <adeni-portal-empty-state
           icon="search"
-          title="No matches on this page"
-          description="Try another name, service, or phone."
+          [title]="tr('portal.bookings.noMatchesPage')"
+          [description]="tr('portal.bookings.tryAnotherNameServicePhone')"
           [compact]="true"
         />
       } @else if (viewMode() === "cards") {
@@ -93,7 +93,7 @@
               <div class="booking-card__body">
                 <div class="booking-card__head">
                   <strong class="booking-card__name">{{
-                    booking.customerName?.trim() || "Guest"
+                    booking.customerName?.trim() || tr('portal.bookings.guest')
                   }}</strong>
                   <span
                     class="booking-status booking-status--compact"
@@ -134,7 +134,7 @@
                 <div
                   class="booking-card__actions"
                   role="group"
-                  [attr.aria-label]="'Actions for ' + (booking.customerName?.trim() || 'Guest')"
+                  [attr.aria-label]="'Actions for ' + (booking.customerName?.trim() || tr('portal.bookings.guest'))"
                 >
                   @if (tab() === "pending" && booking.status === 0) {
                     <button
@@ -144,7 +144,7 @@
                       (click)="reject(booking)"
                     >
                       <adeni-carbon-icon name="misuse" [size]="16" />
-                      Decline
+                      {{ tr('portal.bookings.decline') }}
                     </button>
                     <button
                       type="button"
@@ -153,7 +153,7 @@
                       (click)="accept(booking)"
                     >
                       <adeni-carbon-icon name="checkmark" [size]="16" />
-                      Accept
+                      {{ tr('portal.bookings.accept') }}
                     </button>
                   } @else if (booking.status === 1) {
                     <button
@@ -163,7 +163,7 @@
                       (click)="checkIn(booking)"
                     >
                       <adeni-carbon-icon name="user--follow" [size]="16" />
-                      Mark arrived
+                      {{ tr('portal.bookings.markArrived') }}
                     </button>
                   } @else if (booking.status === 4) {
                     <button
@@ -173,7 +173,7 @@
                       (click)="complete(booking)"
                     >
                       <adeni-carbon-icon name="checkmark--filled" [size]="16" />
-                      Finish service
+                      {{ tr('portal.bookings.finishService') }}
                     </button>
                   } @else if (booking.status === 5) {
                     <button
@@ -183,7 +183,7 @@
                       (click)="collectBalance(booking)"
                     >
                       <adeni-carbon-icon name="launch" [size]="16" />
-                      Collect balance
+                      {{ tr('portal.bookings.collectBalance') }}
                     </button>
                     <button
                       type="button"
@@ -192,7 +192,7 @@
                       (click)="markPaid(booking)"
                     >
                       <adeni-carbon-icon name="checkmark" [size]="16" />
-                      Paid at till
+                      {{ tr('portal.bookings.paidAtTill') }}
                     </button>
                   }
                 </div>
@@ -214,7 +214,7 @@
         >
           <ng-template adeniDataTableCell="customer" let-booking>
             <adeni-table-person-cell
-              [displayName]="booking.customerName?.trim() || 'Guest'"
+              [displayName]="booking.customerName?.trim() || tr('portal.bookings.guest')"
               [subtitle]="booking.customerPhoneMasked ?? booking.staffDisplayName ?? null"
               [initials]="(booking.customerName?.trim() || 'G').slice(0, 2).toUpperCase()"
               avatarTone="neutral"
@@ -232,7 +232,7 @@
                 @if (tab() === "pending" && booking.status === 0) {
                   <adeni-icon-btn
                     icon="misuse"
-                    label="Decline"
+                    [label]="tr('portal.bookings.decline')"
                     variant="danger-soft"
                     [dense]="true"
                     [disabled]="actionId() === booking.id"
@@ -240,7 +240,7 @@
                   />
                   <adeni-icon-btn
                     icon="checkmark"
-                    label="Accept"
+                    [label]="tr('portal.bookings.accept')"
                     variant="table"
                     [dense]="true"
                     [disabled]="actionId() === booking.id"
@@ -249,7 +249,7 @@
                 } @else if (booking.status === 1) {
                   <adeni-icon-btn
                     icon="user--follow"
-                    label="Mark arrived"
+                    [label]="tr('portal.bookings.markArrived')"
                     variant="table"
                     [dense]="true"
                     [disabled]="actionId() === booking.id"
@@ -258,7 +258,7 @@
                 } @else if (booking.status === 4) {
                   <adeni-icon-btn
                     icon="checkmark--filled"
-                    label="Finish service"
+                    [label]="tr('portal.bookings.finishService')"
                     variant="table"
                     [dense]="true"
                     [disabled]="actionId() === booking.id"
@@ -267,7 +267,7 @@
                 } @else if (booking.status === 5) {
                   <adeni-icon-btn
                     icon="launch"
-                    label="Collect balance"
+                    [label]="tr('portal.bookings.collectBalance')"
                     variant="table"
                     [dense]="true"
                     [disabled]="actionId() === booking.id"
@@ -275,7 +275,7 @@
                   />
                   <adeni-icon-btn
                     icon="checkmark"
-                    label="Paid at till"
+                    [label]="tr('portal.bookings.paidAtTill')"
                     variant="table"
                     [dense]="true"
                     [disabled]="actionId() === booking.id"
@@ -292,7 +292,7 @@
           [totalCount]="totalCount()"
           [pageSizeOptions]="listPageSizeOptions"
           [loading]="loading()"
-          ariaLabel="Booking pages"
+          [ariaLabel]="tr('portal.bookings.bookingPages')"
           (pageChange)="goToPage($event)"
           (pageSizeChange)="onPageSizeChange($event)"
         />
@@ -307,7 +307,7 @@
             [totalCount]="totalCount()"
             [pageSizeOptions]="listPageSizeOptions"
             [loading]="loading()"
-            ariaLabel="Booking pages"
+            [ariaLabel]="tr('portal.bookings.bookingPages')"
             (pageChange)="goToPage($event)"
             (pageSizeChange)="onPageSizeChange($event)"
           />
