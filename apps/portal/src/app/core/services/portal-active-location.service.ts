@@ -34,6 +34,8 @@ export class PortalActiveLocationService {
   private readonly tenantId = signal<string | null>(null);
   private readonly locations = signal<readonly BusinessLocation[]>([]);
   private readonly selectionChangedSubject = new Subject<string>();
+  private branchSwitchActive = false;
+  private branchSwitchPending = 0;
 
   /** Fires when the user picks a branch in the shell (not on profile hydration). */
   readonly selectionChanged$ = this.selectionChangedSubject.asObservable();
@@ -130,7 +132,12 @@ export class PortalActiveLocationService {
     if (tenantId) {
       writePersistedPortalActiveLocation(tenantId, next);
     }
+
+    this.branchSwitchActive = true;
+    this.branchSwitchPending = 0;
+    this.beginBranchSwitchTransaction();
     this.selectionChangedSubject.next(next);
+    queueMicrotask(() => this.tryFinishBranchSwitch());
   }
 
   beginBranchSwitchTransaction(): void {
@@ -142,9 +149,28 @@ export class PortalActiveLocationService {
   }
 
   /** Wrap branch-switch refetches so the global loading panel stays up until work finishes. */
-  runOnBranchSwitch<T>(work: () => Promise<T>): Promise<T> {
-    this.beginBranchSwitchTransaction();
-    return work().finally(() => this.endBranchSwitchTransaction());
+  runOnBranchSwitch<T>(work: () => Promise<T> | T): Promise<T> {
+    if (!this.branchSwitchActive) {
+      return this.feedback.runLoading(
+        () => Promise.resolve(work()),
+        "Switching branch…",
+        "Updating dashboard, bookings, and calendar",
+      );
+    }
+
+    this.branchSwitchPending += 1;
+    return Promise.resolve(work()).finally(() => {
+      this.branchSwitchPending -= 1;
+      this.tryFinishBranchSwitch();
+    });
+  }
+
+  private tryFinishBranchSwitch(): void {
+    if (!this.branchSwitchActive || this.branchSwitchPending > 0) {
+      return;
+    }
+    this.branchSwitchActive = false;
+    this.endBranchSwitchTransaction();
   }
 
   /** @deprecated Use switch UI labels from `switchDisplay` or branch rows directly. */
