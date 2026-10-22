@@ -2,7 +2,7 @@ import { Component, computed, inject, input, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { discoveryCtaLabel } from "@adeni/shared";
 import { AdeniApiError } from "@adeni/api-client";
-import { AdeniLocaleService } from "@adeni/ui";
+import { AdeniLocaleService, injectAdeniTranslate } from "@adeni/ui";
 import { CustomerApiService } from "../core/services/customer-api.service";
 
 @Component({
@@ -13,6 +13,7 @@ import { CustomerApiService } from "../core/services/customer-api.service";
   styleUrl: "./quote-request-panel.component.scss",
 })
 export class QuoteRequestPanelComponent {
+  protected readonly tr = injectAdeniTranslate();
   private readonly api = inject(CustomerApiService);
   private readonly localeService = inject(AdeniLocaleService);
 

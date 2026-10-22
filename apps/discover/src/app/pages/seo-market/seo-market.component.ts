@@ -24,7 +24,7 @@ import {
   seoNeighborhoodPath,
   t,
 } from "@adeni/shared";
-import { AdeniLocaleService } from "@adeni/ui";
+import { AdeniLocaleService, injectAdeniTranslate } from "@adeni/ui";
 import { ADENI_DISCOVER_CONFIG } from "../../core/adeni-config";
 import { CustomerApiService } from "../../core/services/customer-api.service";
 import { MarketContextService } from "../../core/services/market-context.service";
@@ -47,6 +47,7 @@ const SEO_MARKET_STATE_KEY = makeStateKey<{
   styleUrl: "./seo-market.component.scss",
 })
 export class SeoMarketPageComponent implements OnInit {
+  protected readonly tr = injectAdeniTranslate();
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly api = inject(CustomerApiService);

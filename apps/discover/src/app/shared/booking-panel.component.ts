@@ -9,7 +9,7 @@ import type {
 } from "@adeni/shared";
 import { resolvePaymentCheckoutUrl, t } from "@adeni/shared";
 import { AdeniApiError } from "@adeni/api-client";
-import { AdeniFeedbackService, AdeniLocaleService, AdeniWizardComponent, type AdeniWizardStep } from "@adeni/ui";
+import { AdeniFeedbackService, AdeniLocaleService, AdeniWizardComponent, type AdeniWizardStep, injectAdeniTranslate, injectAdeniApiError } from "@adeni/ui";
 import { CustomerApiService } from "../core/services/customer-api.service";
 
 type Step = "service" | "staff" | "slot" | "guests" | "confirm" | "done";
@@ -36,6 +36,8 @@ const MAX_GUESTS = 6;
   styleUrl: "./booking-panel.component.scss",
 })
 export class BookingPanelComponent {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(CustomerApiService);
   private readonly localeService = inject(AdeniLocaleService);
   private readonly feedback = inject(AdeniFeedbackService);
@@ -383,8 +385,8 @@ export class BookingPanelComponent {
       const fresh = items.filter((slot) => new Date(slot.startAt).getTime() > Date.now());
       this.slots.set(fresh);
       this.step.set("slot");
-    } catch {
-      this.error.set("Could not load available times. Try again in a moment.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "discover.shared.couldNotLoadAvailableTimes"));
     } finally {
       this.loadingSlots.set(false);
     }

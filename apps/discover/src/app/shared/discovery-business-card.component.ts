@@ -9,7 +9,7 @@ import {
   resolveBusinessImageUrls,
   t,
 } from "@adeni/shared";
-import { AdeniCarbonIconComponent, AdeniLocaleService } from "@adeni/ui";
+import { AdeniCarbonIconComponent, AdeniLocaleService, injectAdeniTranslate } from "@adeni/ui";
 
 @Component({
   selector: "app-discovery-business-card",
@@ -19,6 +19,7 @@ import { AdeniCarbonIconComponent, AdeniLocaleService } from "@adeni/ui";
   styleUrl: "./discovery-business-card.component.scss",
 })
 export class DiscoveryBusinessCardComponent {
+  protected readonly tr = injectAdeniTranslate();
   private readonly localeService = inject(AdeniLocaleService);
 
   readonly item = input.required<DiscoveryBusinessItem>();

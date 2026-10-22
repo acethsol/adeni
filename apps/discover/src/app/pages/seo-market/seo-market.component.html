@@ -13,7 +13,7 @@
       <p class="lede">{{ lede() }}</p>
       <div class="hero-actions">
         <a class="cds-btn cds-btn--primary" routerLink="/discover" [queryParams]="exploreQuery()">
-          Explore map
+          {{ tr('discover.seoMarket.exploreMap') }}
         </a>
         @if (categorySlug() && areaHubHref(); as areaHref) {
           <a class="cds-btn cds-btn--secondary" [routerLink]="areaHref">All {{ areaLabel() }}</a>
@@ -25,11 +25,11 @@
   </header>
 
   @if (!categorySlug()) {
-    <section class="categories" aria-label="Categories">
+    <section class="categories" [attr.aria-label]="tr('common.categories')">
       <header class="section-head">
-        <h2>Browse by category</h2>
+        <h2>{{ tr('discover.seoMarket.browseByCategory') }}</h2>
         <p class="muted">
-          Popular beauty & wellness services
+          {{ tr('discover.seoMarket.popularBeautyWellnessServices') }}
           @if (areaLabel(); as area) {
             in {{ area }}
           } @else {
@@ -49,9 +49,9 @@
   }
 
   @if (!areaSlug() && !categorySlug() && neighborhoodLinks().length > 0) {
-    <section class="categories" aria-label="Neighborhoods">
+    <section class="categories" [attr.aria-label]="tr('discover.seoMarket.neighborhoods')">
       <header class="section-head">
-        <h2>Browse by area</h2>
+        <h2>{{ tr('discover.seoMarket.browseByArea') }}</h2>
         <p class="muted">Neighborhood hubs in {{ marketName() }}.</p>
       </header>
       <ul class="cat-grid">
@@ -64,7 +64,7 @@
     </section>
   }
 
-  <section class="listings" aria-label="Businesses">
+  <section class="listings" [attr.aria-label]="tr('common.businesses')">
     <header class="section-head">
       <h2>
         @if (categoryLabel(); as label) {
@@ -72,19 +72,19 @@
         } @else if (areaLabel(); as area) {
           Featured in {{ area }}
         } @else {
-          Featured near you
+          {{ tr('discover.seoMarket.featuredNearYou') }}
         }
       </h2>
-      <a routerLink="/discover" [queryParams]="exploreQuery()">See all</a>
+      <a routerLink="/discover" [queryParams]="exploreQuery()">{{ tr('discover.seoMarket.seeAll') }}</a>
     </header>
 
     @if (loading()) {
-      <p class="muted">Loading…</p>
+      <p class="muted">{{ tr('common.loading') }}</p>
     } @else if (items().length === 0) {
       <div class="empty">
-        <p>No verified businesses in this view yet. Explore the full map or try another category.</p>
+        <p>{{ tr('discover.seoMarket.noVerifiedBusinessesViewYet') }}</p>
         <a class="cds-btn cds-btn--primary" routerLink="/discover" [queryParams]="exploreQuery()">
-          Open Explore
+          {{ tr('discover.seoMarket.openExplore') }}
         </a>
       </div>
     } @else {

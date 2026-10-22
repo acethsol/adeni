@@ -11,7 +11,7 @@ import {
   type PublicCountryPricing,
   type SubscriptionSku,
 } from "@adeni/shared";
-import { AdeniLocaleService } from "@adeni/ui";
+import { AdeniLocaleService, injectAdeniTranslate } from "@adeni/ui";
 import {
   ADENI_DISCOVER_CONFIG,
 } from "../../core/adeni-config";
@@ -32,6 +32,7 @@ const OUTCOME_TAGLINES: Record<SubscriptionSku, string> = {
   styleUrl: "./plan.component.scss",
 })
 export class PlanPageComponent implements OnInit {
+  protected readonly tr = injectAdeniTranslate();
   private readonly api = inject(CustomerApiService);
   private readonly marketContext = inject(MarketContextService);
   private readonly config = inject(ADENI_DISCOVER_CONFIG);

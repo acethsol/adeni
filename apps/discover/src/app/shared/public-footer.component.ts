@@ -10,7 +10,7 @@ import {
   type LocaleRegionPreset,
   type MarketConfig,
 } from "@adeni/shared";
-import { AdeniBrandLockupComponent, AdeniLocaleService } from "@adeni/ui";
+import { AdeniBrandLockupComponent, AdeniLocaleService, injectAdeniTranslate } from "@adeni/ui";
 import { ADENI_DISCOVER_CONFIG } from "../core/adeni-config";
 import { MarketContextService } from "../core/services/market-context.service";
 
@@ -22,6 +22,7 @@ import { MarketContextService } from "../core/services/market-context.service";
   styleUrl: "./public-footer.component.scss",
 })
 export class PublicFooterComponent {
+  protected readonly tr = injectAdeniTranslate();
   private readonly market = inject(MarketContextService);
   private readonly localeService = inject(AdeniLocaleService);
   private readonly config = inject(ADENI_DISCOVER_CONFIG);

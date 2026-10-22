@@ -17,7 +17,7 @@
       <button
         type="button"
         class="nav prev"
-        aria-label="Previous photo"
+        [attr.aria-label]="tr('common.previousPhoto')"
         (click)="prevImage($event)"
       >
         ‹
@@ -25,7 +25,7 @@
       <button
         type="button"
         class="nav next"
-        aria-label="Next photo"
+        [attr.aria-label]="tr('common.nextPhoto')"
         (click)="nextImage($event)"
       >
         ›
@@ -37,7 +37,7 @@
       </div>
     }
 
-    <div class="badges trust" aria-label="Trust signals">
+    <div class="badges trust" [attr.aria-label]="tr('discover.shared.trustSignals')">
       @if (isVerified()) {
         <span class="badge verified">
           <adeni-carbon-icon class="icon" name="checkmark--filled" [size]="14" />
@@ -61,7 +61,7 @@
         <h3>{{ item().name }}</h3>
       }
       @if (hasReviews()) {
-        <span class="inline-rating" aria-label="Reviews">
+        <span class="inline-rating" [attr.aria-label]="tr('common.reviews')">
           <span aria-hidden="true">★</span>
           {{ item().ratingAvg | number: "1.1-1" }}
         </span>

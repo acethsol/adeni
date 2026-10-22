@@ -17,6 +17,8 @@ import {
   AdeniFeedbackService,
   AdeniMessagingRealtimeService,
   AdeniModalComponent,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { CustomerApiService } from "../../core/services/customer-api.service";
 
@@ -28,6 +30,8 @@ import { CustomerApiService } from "../../core/services/customer-api.service";
   styleUrl: "./my-messages.component.scss",
 })
 export class MyMessagesComponent implements OnInit, OnDestroy {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(CustomerApiService);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly realtime = inject(AdeniMessagingRealtimeService);
@@ -74,8 +78,8 @@ export class MyMessagesComponent implements OnInit, OnDestroy {
       if (!this.selectedId() && items.length > 0 && !this.isNarrow()) {
         await this.openConversation(items[0]!.id);
       }
-    } catch {
-      this.error.set("Could not load your messages. Try again after signing in.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "discover.myMessages.couldNotLoadMessagesTry"));
       this.conversations.set([]);
     } finally {
       this.loading.set(false);
@@ -97,8 +101,8 @@ export class MyMessagesComponent implements OnInit, OnDestroy {
         c.markCustomerConversationRead(id, detail.messages.at(-1)?.id),
       );
       queueMicrotask(() => this.scrollTranscriptToEnd());
-    } catch {
-      this.error.set("Could not open this conversation.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "discover.myMessages.couldNotOpenConversation"));
       this.detail.set(null);
     }
   }
@@ -123,8 +127,8 @@ export class MyMessagesComponent implements OnInit, OnDestroy {
       this.appendMessage(message);
       this.bumpConversationPreview(message);
       queueMicrotask(() => this.scrollTranscriptToEnd());
-    } catch {
-      this.feedback.error("Message could not be sent.");
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "discover.myMessages.messageCouldNotBeSent"));
     } finally {
       this.sending.set(false);
     }

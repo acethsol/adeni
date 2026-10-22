@@ -17,6 +17,7 @@ import {
   AdeniConfirmHostComponent,
   AdeniGlobalLoadingPanelComponent,
   AdeniToastHostComponent,
+  injectAdeniTranslate,
 } from "@adeni/ui";
 
 /** Header accent tones — Adeni brand purple/teal (Carbon UI chrome). */
@@ -44,6 +45,7 @@ const MARKET_HEADER_TONES: Record<string, { h1: string; h2: string; h3: string }
   styleUrl: "./public-shell.component.scss",
 })
 export class PublicShellComponent implements OnInit {
+  protected readonly tr = injectAdeniTranslate();
   readonly market = inject(MarketContextService);
   private readonly router = inject(Router);
   readonly config = inject(ADENI_DISCOVER_CONFIG);

@@ -1,6 +1,6 @@
 <main class="doc-page">
   @if (loading()) {
-    <p class="muted">Loading…</p>
+    <p class="muted">{{ tr('common.loading') }}</p>
   } @else if (error()) {
     <p class="error">{{ error() }}</p>
   } @else if (document(); as doc) {
@@ -31,17 +31,17 @@
       </ul>
 
       <p class="total">
-        Total
+        {{ tr('discover.document.total') }}
         <strong>{{ formatPrice(doc.total, doc.currency) }}</strong>
       </p>
 
       <a class="btn" [href]="pdfUrl(doc.publicToken)" target="_blank" rel="noopener">
-        Download PDF
+        {{ tr('common.downloadPdf') }}
       </a>
     </section>
 
     <footer class="doc-footer">
-      <p class="muted">Issued via Adeni</p>
+      <p class="muted">{{ tr('discover.document.issuedViaAdeni') }}</p>
     </footer>
   }
 </main>

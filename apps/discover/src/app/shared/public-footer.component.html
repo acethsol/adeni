@@ -1,7 +1,7 @@
 <footer class="footer">
   <div class="inner">
     <div class="brand">
-      <a routerLink="/" class="brand-mark" aria-label="Adeni home">
+      <a routerLink="/" class="brand-mark" [attr.aria-label]="tr('discover.shared.adeniHome')">
         <adeni-brand-lockup [height]="36" surface="light" />
       </a>
       <p class="tagline">{{ tagline() }}</p>
@@ -100,14 +100,14 @@
       (click)="$event.stopPropagation()"
       role="dialog"
       aria-modal="true"
-      aria-label="Language and region"
+      [attr.aria-label]="tr('discover.shared.languageRegion')"
     >
       <header>
         <div>
           <h3>{{ label("locale.pickerTitle") }}</h3>
           <p>{{ label("locale.pickerSubtitle") }}</p>
         </div>
-        <button type="button" class="close" (click)="closePicker()" aria-label="Close">×</button>
+        <button type="button" class="close" (click)="closePicker()" [attr.aria-label]="tr('common.close')">×</button>
       </header>
       <ul>
         @for (preset of presets(); track preset.id) {

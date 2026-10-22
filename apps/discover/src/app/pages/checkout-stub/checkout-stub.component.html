@@ -1,29 +1,29 @@
 <main class="checkout-stub">
   <div class="card">
     @if (paid()) {
-      <h1>Payment complete</h1>
-      <p class="muted">Thank you — the business will see this booking as paid.</p>
-      <a routerLink="/my-bookings" class="btn btn-primary">My bookings</a>
-      <a routerLink="/" class="btn">Back to Adeni</a>
+      <h1>{{ tr('discover.checkoutStub.paymentComplete') }}</h1>
+      <p class="muted">{{ tr('discover.checkoutStub.thankYouBusinessWillSee') }}</p>
+      <a routerLink="/my-bookings" class="btn btn-primary">{{ tr('common.myBookings') }}</a>
+      <a routerLink="/" class="btn">{{ tr('discover.checkoutStub.backAdeni') }}</a>
     } @else if (error() && !reference()) {
-      <h1>Checkout unavailable</h1>
+      <h1>{{ tr('discover.checkoutStub.checkoutUnavailable') }}</h1>
       <p class="error">{{ error() }}</p>
-      <a routerLink="/" class="btn">Back to Adeni</a>
+      <a routerLink="/" class="btn">{{ tr('discover.checkoutStub.backAdeni') }}</a>
     } @else {
-      <p class="eyebrow">Secure checkout</p>
-      <h1>Complete payment</h1>
+      <p class="eyebrow">{{ tr('discover.checkoutStub.secureCheckout') }}</p>
+      <h1>{{ tr('discover.checkoutStub.completePayment') }}</h1>
       @if (amountLabel(); as label) {
         <p class="amount">{{ label }}</p>
       } @else {
-        <p class="muted">Confirm to pay through Adeni (development stub).</p>
+        <p class="muted">{{ tr('discover.checkoutStub.confirmPayThroughAdeniDevelopment') }}</p>
       }
       @if (error()) {
         <p class="error">{{ error() }}</p>
       }
       <button type="button" class="btn btn-primary" [disabled]="loading()" (click)="confirmPayment()">
-        {{ loading() ? "Processing…" : "Pay now" }}
+        {{ loading() ? tr('discover.checkoutStub.processing') : tr('discover.checkoutStub.payNow') }}
       </button>
-      <p class="fine-print muted">Development mode — no real card charge.</p>
+      <p class="fine-print muted">{{ tr('discover.checkoutStub.developmentModeNoRealCard') }}</p>
     }
   </div>
 </main>

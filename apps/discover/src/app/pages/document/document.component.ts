@@ -6,6 +6,7 @@ import { formatPrice } from "@adeni/shared";
 import { AdeniApiClient } from "@adeni/api-client";
 import { ADENI_DISCOVER_CONFIG } from "../../core/adeni-config";
 
+import { injectAdeniTranslate, injectAdeniApiError } from "@adeni/ui";
 @Component({
   selector: "app-public-document",
   standalone: true,
@@ -14,6 +15,8 @@ import { ADENI_DISCOVER_CONFIG } from "../../core/adeni-config";
   styleUrl: "./document.component.scss",
 })
 export class PublicDocumentComponent implements OnInit {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly route = inject(ActivatedRoute);
   private readonly config = inject(ADENI_DISCOVER_CONFIG);
 
@@ -29,7 +32,7 @@ export class PublicDocumentComponent implements OnInit {
   async load(): Promise<void> {
     const token = this.route.snapshot.paramMap.get("token");
     if (!token) {
-      this.error.set("Document not found.");
+      this.error.set(this.tr("discover.document.documentNotFound"));
       this.loading.set(false);
       return;
     }
@@ -40,8 +43,8 @@ export class PublicDocumentComponent implements OnInit {
       const client = new AdeniApiClient({ baseUrl: this.config.apiBaseUrl });
       const doc = await client.getPublicBillingDocument(token);
       this.document.set(doc);
-    } catch {
-      this.error.set("This document is unavailable or has been voided.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "discover.document.thisDocumentUnavailableHasBeen"));
       this.document.set(null);
     } finally {
       this.loading.set(false);

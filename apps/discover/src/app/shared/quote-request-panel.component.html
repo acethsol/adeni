@@ -1,46 +1,46 @@
 @if (!enabled()) {
   <section class="panel">
     <h2>{{ title() }}</h2>
-    <p class="muted">Sign in to describe your job and request a quote from this business.</p>
-    <button type="button" class="primary" (click)="signIn()">Sign in to continue</button>
+    <p class="muted">{{ tr('discover.shared.signDescribeJobRequestQuote') }}</p>
+    <button type="button" class="primary" (click)="signIn()">{{ tr('discover.shared.signContinue') }}</button>
   </section>
 } @else if (submitted()) {
   <section class="panel success">
-    <p class="eyebrow">Quote request sent</p>
-    <h2>We received your job details</h2>
-    <p class="muted">The business will review your request and follow up with a quote.</p>
+    <p class="eyebrow">{{ tr('discover.shared.quoteRequestSent') }}</p>
+    <h2>{{ tr('discover.shared.weReceivedJobDetails') }}</h2>
+    <p class="muted">{{ tr('discover.shared.theBusinessWillReviewRequest') }}</p>
   </section>
 } @else {
   <section class="panel">
     <h2>{{ title() }}</h2>
-    <p class="muted">Describe the job and where service is needed.</p>
+    <p class="muted">{{ tr('discover.shared.describeJobWhereServiceNeeded') }}</p>
 
     @if (error()) {
       <p class="error">{{ error() }}</p>
     }
 
     <label class="field">
-      <span>Describe the job</span>
+      <span>{{ tr('discover.shared.describeJob') }}</span>
       <textarea
         [ngModel]="description()"
         (ngModelChange)="description.set($event)"
         rows="5"
-        placeholder="Example: Kitchen sink is leaking under the cabinet."
+        [placeholder]="tr('discover.shared.exampleKitchenSinkLeakingUnder')"
       ></textarea>
     </label>
 
     <label class="field">
-      <span>Service address (optional)</span>
+      <span>{{ tr('discover.shared.serviceAddressOptional') }}</span>
       <input
         type="text"
         [ngModel]="serviceAddress()"
         (ngModelChange)="serviceAddress.set($event)"
-        placeholder="Street, area, city"
+        [placeholder]="tr('discover.shared.streetAreaCity')"
       />
     </label>
 
     <button type="button" class="primary" [disabled]="submitting()" (click)="submit()">
-      {{ submitting() ? "Sending…" : "Send quote request" }}
+      {{ submitting() ? tr('common.sending') : tr('discover.shared.sendQuoteRequest') }}
     </button>
   </section>
 }

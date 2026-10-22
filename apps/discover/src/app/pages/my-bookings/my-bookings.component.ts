@@ -11,6 +11,7 @@ import {
   AdeniConfirmService,
   AdeniFeedbackService,
   AdeniLocaleService,
+  injectAdeniTranslate,
 } from "@adeni/ui";
 import { CustomerApiService } from "../../core/services/customer-api.service";
 import {
@@ -29,6 +30,7 @@ type BookingsTab = "upcoming" | "past";
   styleUrl: "./my-bookings.component.scss",
 })
 export class MyBookingsComponent implements OnInit {
+  protected readonly tr = injectAdeniTranslate();
   private readonly api = inject(CustomerApiService);
   private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly feedback = inject(AdeniFeedbackService);

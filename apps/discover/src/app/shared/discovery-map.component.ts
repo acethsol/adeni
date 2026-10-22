@@ -16,7 +16,7 @@ import {
   getCategoryVisual,
   resolveBusinessImageUrls,
 } from "@adeni/shared";
-import { AdeniLocaleService, createCarbonIconElement } from "@adeni/ui";
+import { AdeniLocaleService, createCarbonIconElement, injectAdeniTranslate } from "@adeni/ui";
 import { ADENI_DISCOVER_CONFIG } from "../core/adeni-config";
 
 type MapboxNS = typeof import("mapbox-gl");
@@ -45,6 +45,7 @@ type MapboxPopup = import("mapbox-gl").Popup;
   styleUrl: "./discovery-map.component.scss",
 })
 export class DiscoveryMapComponent implements OnDestroy {
+  protected readonly tr = injectAdeniTranslate();
   private readonly config = inject(ADENI_DISCOVER_CONFIG);
   private readonly localeService = inject(AdeniLocaleService);
 
@@ -170,7 +171,7 @@ export class DiscoveryMapComponent implements OnDestroy {
       this.bumpSize();
     } catch (reason) {
       console.error("Discovery map failed to initialize", reason);
-      this.errorMessage.set("Map couldn’t load. Check the Mapbox token and refresh.");
+      this.errorMessage.set(this.tr("discover.shared.mapCouldnTLoadCheck"));
       this.failed.set(true);
     }
   }

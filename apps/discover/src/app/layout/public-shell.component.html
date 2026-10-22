@@ -13,12 +13,12 @@
       <adeni-brand-lockup class="mark" [height]="headerBrandHeight()" surface="light" />
     </a>
 
-    <nav class="nav" aria-label="Primary" [class.hidden-when-pinned]="headerCompact()">
-      <a routerLink="/discover" routerLinkActive="active">Explore</a>
-      <a routerLink="/my-bookings" routerLinkActive="active">My bookings</a>
-      <a routerLink="/my-messages" routerLinkActive="active">Messages</a>
+    <nav class="nav" [attr.aria-label]="tr('common.primary')" [class.hidden-when-pinned]="headerCompact()">
+      <a routerLink="/discover" routerLinkActive="active">{{ tr('common.explore') }}</a>
+      <a routerLink="/my-bookings" routerLinkActive="active">{{ tr('common.myBookings') }}</a>
+      <a routerLink="/my-messages" routerLinkActive="active">{{ tr('common.messages') }}</a>
       @if (portalUrl; as businessUrl) {
-        <a [href]="businessUrl" target="_blank" rel="noopener noreferrer">For businesses</a>
+        <a [href]="businessUrl" target="_blank" rel="noopener noreferrer">{{ tr('common.forBusinesses') }}</a>
       }
     </nav>
 
@@ -31,13 +31,13 @@
     <div class="header-right">
       @if (auth0Mode) {
         @if (signedIn()) {
-          <button type="button" class="cds-btn cds-btn--ghost" (click)="logout()">Log out</button>
+          <button type="button" class="cds-btn cds-btn--ghost" (click)="logout()">{{ tr('discover.layout.logOut') }}</button>
         } @else {
-          <button type="button" class="cds-btn cds-btn--ghost" (click)="login()">Sign in</button>
-          <button type="button" class="cds-btn cds-btn--primary" (click)="login()">Get started</button>
+          <button type="button" class="cds-btn cds-btn--ghost" (click)="login()">{{ tr('common.sign') }}</button>
+          <button type="button" class="cds-btn cds-btn--primary" (click)="login()">{{ tr('common.getStarted') }}</button>
         }
       } @else if (devCustomerMode) {
-        <span class="dev">Dev customer</span>
+        <span class="dev">{{ tr('discover.layout.devCustomer') }}</span>
       }
     </div>
     <span class="header-accent" aria-hidden="true"></span>

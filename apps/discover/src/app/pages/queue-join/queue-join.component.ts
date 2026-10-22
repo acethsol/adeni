@@ -12,7 +12,7 @@ import {
   type QueueTicketResponse,
   type ServiceOffering,
 } from "@adeni/shared";
-import { AdeniLocaleService } from "@adeni/ui";
+import { AdeniLocaleService, injectAdeniTranslate } from "@adeni/ui";
 import { ADENI_DISCOVER_CONFIG } from "../../core/adeni-config";
 
 @Component({
@@ -23,6 +23,7 @@ import { ADENI_DISCOVER_CONFIG } from "../../core/adeni-config";
   styleUrl: "./queue-join.component.scss",
 })
 export class QueueJoinComponent implements OnInit {
+  protected readonly tr = injectAdeniTranslate();
   private readonly route = inject(ActivatedRoute);
   private readonly config = inject(ADENI_DISCOVER_CONFIG);
   private readonly localeService = inject(AdeniLocaleService);

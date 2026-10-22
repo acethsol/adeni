@@ -31,7 +31,7 @@ import {
   shouldShowQuoteFlow,
   t,
 } from "@adeni/shared";
-import { AdeniCarbonIconComponent, AdeniLocaleService } from "@adeni/ui";
+import { AdeniCarbonIconComponent, AdeniLocaleService, injectAdeniTranslate, injectAdeniApiError } from "@adeni/ui";
 import {
   ADENI_DISCOVER_CONFIG,
   isDiscoverCustomerDevMode,
@@ -72,6 +72,8 @@ type ServiceCollection = {
   styleUrl: "./business.component.scss",
 })
 export class BusinessProfileComponent implements OnInit {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(CustomerApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly seo = inject(SeoService);
@@ -445,8 +447,8 @@ export class BusinessProfileComponent implements OnInit {
       this.applySeo(profile, slug);
       void this.hydrateExtras(slug);
       this.scrollToRouteFragment();
-    } catch {
-      this.error.set("Business not found or API unavailable.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "discover.business.businessNotFoundApiUnavailable"));
       this.profile.set(null);
       this.services.set([]);
       this.menuGroups.set([]);

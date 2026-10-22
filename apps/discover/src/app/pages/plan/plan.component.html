@@ -1,7 +1,7 @@
 <article class="plan-page">
   <header class="head">
-    <p class="kicker">For businesses</p>
-    <h1>Plans &amp; pricing</h1>
+    <p class="kicker">{{ tr('common.forBusinesses') }}</p>
+    <h1>{{ tr('common.plansPricing') }}</h1>
     <p class="lede">
       Transparent monthly plans for salons, barbers, and wellness studios. Prices shown for your
       region ({{ countryCode() }}).
@@ -9,14 +9,14 @@
   </header>
 
   @if (loading()) {
-    <p class="muted">Loading prices…</p>
+    <p class="muted">{{ tr('discover.plan.loadingPrices') }}</p>
   } @else {
     @if (!selfServeEnabled()) {
       <p class="notice" role="note">
-        Self-serve signup is not available in this region yet. Contact us for a tailored quote.
+        {{ tr('discover.plan.selfServeSignupNotAvailable') }}
       </p>
     } @else {
-      <p class="trial-note">Start with a 30-day Professional trial — no permanent free tier.</p>
+      <p class="trial-note">{{ tr('discover.plan.startWith30DayProfessional') }}</p>
     }
 
     <div class="tier-grid">
@@ -24,13 +24,13 @@
         @let display = planDisplay(sku);
         <section class="tier" [class.popular]="isPopular(sku)">
           @if (isPopular(sku)) {
-            <span class="pill">Most popular</span>
+            <span class="pill">{{ tr('common.mostPopular') }}</span>
           }
           <p class="tier-name">{{ display.name }}</p>
           <p class="price">{{ display.priceLabel }}</p>
           <p class="tagline">{{ display.tagline }}</p>
           @if (registerUrl(); as url) {
-            <a class="cta" [href]="url" target="_blank" rel="noopener noreferrer">Get started</a>
+            <a class="cta" [href]="url" target="_blank" rel="noopener noreferrer">{{ tr('common.getStarted') }}</a>
           }
         </section>
       }
@@ -43,11 +43,11 @@
     }
 
     <section class="compare">
-      <h2>Compare plans</h2>
+      <h2>{{ tr('common.comparePlans') }}</h2>
       <table>
         <thead>
           <tr>
-            <th scope="col">Feature</th>
+            <th scope="col">{{ tr('discover.plan.feature') }}</th>
             @for (sku of skus; track sku) {
               <th scope="col">{{ planDisplay(sku).name }}</th>
             }

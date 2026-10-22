@@ -16,7 +16,7 @@
   } @else if (ticket(); as t) {
     <header class="queue-header">
       @if (logoUrl(); as logo) {
-        <img class="business-logo" [src]="logo" [alt]="t.businessName || business()?.name || 'Business'" />
+        <img class="business-logo" [src]="logo" [alt]="t.businessName || business()?.name || tr('common.business')" />
       } @else if (business()?.name || t.businessName; as name) {
         <div class="business-logo-fallback" aria-hidden="true">{{ initials(name) }}</div>
       }

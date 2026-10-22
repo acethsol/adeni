@@ -18,7 +18,7 @@ import {
   resolveBusinessCoverImage,
   t,
 } from "@adeni/shared";
-import { AdeniBrandLockupComponent, AdeniLocaleService } from "@adeni/ui";
+import { AdeniBrandLockupComponent, AdeniLocaleService, injectAdeniTranslate } from "@adeni/ui";
 import { interval } from "rxjs";
 import { ADENI_DISCOVER_CONFIG } from "../core/adeni-config";
 import { HERO_SEARCH_ANCHOR_ID } from "../core/services/hero-search-pin.service";
@@ -72,6 +72,7 @@ type HeroCategoryChip = {
   styleUrl: "./hero-category-stage.component.scss",
 })
 export class HeroCategoryStageComponent implements OnInit {
+  protected readonly tr = injectAdeniTranslate();
   private readonly localeService = inject(AdeniLocaleService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly config = inject(ADENI_DISCOVER_CONFIG);

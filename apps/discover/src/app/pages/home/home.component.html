@@ -2,7 +2,7 @@
 
 <div class="page">
   @if (loading()) {
-    <p class="muted">Loading…</p>
+    <p class="muted">{{ tr('common.loading') }}</p>
   } @else {
     @if (featured().length > 0) {
       <section>

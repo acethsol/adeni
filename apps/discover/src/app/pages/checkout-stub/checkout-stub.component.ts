@@ -4,7 +4,7 @@ import { ActivatedRoute, RouterLink } from "@angular/router";
 import { AdeniApiClient } from "@adeni/api-client";
 import { formatPrice } from "@adeni/shared";
 import { ADENI_DISCOVER_CONFIG } from "../../core/adeni-config";
-import { AdeniOperationsRealtimeService } from "@adeni/ui";
+import { AdeniOperationsRealtimeService, injectAdeniTranslate, injectAdeniApiError } from "@adeni/ui";
 
 @Component({
   selector: "app-checkout-stub",
@@ -14,6 +14,8 @@ import { AdeniOperationsRealtimeService } from "@adeni/ui";
   styleUrl: "./checkout-stub.component.scss",
 })
 export class CheckoutStubComponent implements OnInit, OnDestroy {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly route = inject(ActivatedRoute);
   private readonly config = inject(ADENI_DISCOVER_CONFIG);
   private readonly checkoutRealtime = inject(AdeniOperationsRealtimeService);
@@ -48,7 +50,7 @@ export class CheckoutStubComponent implements OnInit, OnDestroy {
       this.currency.set(currency);
     }
     if (!reference) {
-      this.error.set("Payment link is invalid.");
+      this.error.set(this.tr("discover.checkoutStub.paymentLinkInvalid"));
       return;
     }
 
@@ -78,8 +80,8 @@ export class CheckoutStubComponent implements OnInit, OnDestroy {
       const client = new AdeniApiClient({ baseUrl: this.config.apiBaseUrl });
       await client.confirmStubPayment(reference);
       this.paid.set(true);
-    } catch {
-      this.error.set("Could not complete this payment. Try again or ask the business to resend the link.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "discover.checkoutStub.couldNotCompletePaymentTry"));
     } finally {
       this.loading.set(false);
     }

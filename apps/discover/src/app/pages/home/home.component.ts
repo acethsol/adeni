@@ -22,7 +22,7 @@ import {
 } from "@adeni/shared";
 import { ADENI_DISCOVER_CONFIG } from "../../core/adeni-config";
 import { CustomerApiService } from "../../core/services/customer-api.service";
-import { AdeniLocaleService } from "@adeni/ui";
+import { AdeniLocaleService, injectAdeniTranslate } from "@adeni/ui";
 import { MarketContextService } from "../../core/services/market-context.service";
 import { SeoService } from "../../core/services/seo.service";
 import { DiscoveryBusinessCardComponent } from "../../shared/discovery-business-card.component";
@@ -49,6 +49,7 @@ type CategoryGroup = {
   styleUrl: "./home.component.scss",
 })
 export class HomeComponent implements OnInit {
+  protected readonly tr = injectAdeniTranslate();
   private readonly seo = inject(SeoService);
   private readonly config = inject(ADENI_DISCOVER_CONFIG);
   private readonly api = inject(CustomerApiService);

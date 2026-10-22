@@ -43,7 +43,7 @@
         <app-discovery-search variant="hero" />
       </div>
 
-      <div class="chips" aria-label="Categories">
+      <div class="chips" [attr.aria-label]="tr('common.categories')">
         @for (chip of chips(); track chip.slug; let i = $index) {
           <a
             class="chip"
@@ -61,7 +61,7 @@
       </div>
     </div>
 
-    <aside class="stage" aria-label="Featured">
+    <aside class="stage" [attr.aria-label]="tr('discover.shared.featured')">
       <div class="stage-media">
         <img
           class="stage-image"
@@ -101,7 +101,7 @@
             </span>
             <strong>{{ chip.label }} near you</strong>
             <p>Browse verified {{ chip.label.toLowerCase() }} pros</p>
-            <span class="caption-cta">Explore →</span>
+            <span class="caption-cta">{{ tr('discover.shared.explore') }}</span>
           </a>
         }
       </div>

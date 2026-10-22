@@ -13,7 +13,7 @@
     [style.--g2]="visual()?.gradient[1] ?? '#40916c'"
     [style.--accent]="accentColor()"
   >
-    <section class="hero" aria-label="Business">
+    <section class="hero" [attr.aria-label]="tr('common.business')">
       <div
         class="hero-media"
         [style.background-image]="'url(' + coverUrl() + ')'"
@@ -24,7 +24,7 @@
 
       @if (gallery().length > 1) {
         <div class="hero-gallery-controls">
-          <button type="button" class="gallery-nav" aria-label="Previous photo" (click)="prevGalleryImage($event)">
+          <button type="button" class="gallery-nav" [attr.aria-label]="tr('common.previousPhoto')" (click)="prevGalleryImage($event)">
             ‹
           </button>
           <div class="gallery-dots" aria-hidden="true">
@@ -32,7 +32,7 @@
               <span class="dot" [class.on]="i === galleryIndex()"></span>
             }
           </div>
-          <button type="button" class="gallery-nav" aria-label="Next photo" (click)="nextGalleryImage($event)">
+          <button type="button" class="gallery-nav" [attr.aria-label]="tr('common.nextPhoto')" (click)="nextGalleryImage($event)">
             ›
           </button>
         </div>
