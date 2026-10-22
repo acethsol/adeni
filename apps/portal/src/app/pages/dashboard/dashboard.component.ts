@@ -24,6 +24,7 @@ import {
   defaultLocale,
   DASHBOARD_WIDGET_DEFINITIONS,
   dashboardWidgetTitle,
+  dashboardWidgetSummary,
   resolveDashboardCapabilities,
   resolveDashboardLayoutPreset,
   type DashboardLayoutPreset,
@@ -120,6 +121,7 @@ export class DashboardComponent implements OnInit {
   readonly formatTenantStatus = formatTenantStatus;
   readonly formatSlotTime = formatSlotTime;
   readonly dashboardWidgetTitle = dashboardWidgetTitle;
+  readonly dashboardWidgetSummary = dashboardWidgetSummary;
   readonly profile = signal<BusinessProfile | null>(null);
   readonly layout = signal<DashboardLayout>(resolveDashboardLayout(false));
   readonly editMode = signal(false);
@@ -279,7 +281,23 @@ export class DashboardComponent implements OnInit {
 
   presetUiCopy(key: "recommended" | "currentLayout" | "emptyPlan" | "useLayout", vars?: Record<string, string>): string {
     const base = `portalDashboard.presets.${key}`;
-    return t(this.portalLocale(), base, vars);
+    const fallbacks: Record<typeof key, string> = {
+      recommended: "Recommended for you",
+      currentLayout: "Current layout",
+      emptyPlan: "No widgets on your plan for this template.",
+      useLayout: "Use {label} layout",
+    };
+    const translated = t(this.portalLocale(), base, vars);
+    if (translated !== base) {
+      return translated;
+    }
+    let fallback = fallbacks[key];
+    if (vars) {
+      for (const [name, value] of Object.entries(vars)) {
+        fallback = fallback.replaceAll(`{${name}}`, String(value));
+      }
+    }
+    return fallback;
   }
 
   layoutVisibleForTenant(layout: DashboardLayout): DashboardLayout {
@@ -316,13 +334,17 @@ export class DashboardComponent implements OnInit {
 
   presetMetaLine(preset: DashboardLayoutPreset): string {
     const count = this.presetPreviewWidgetTitles(preset).length;
+    const rangeLabel = this.presetRangeLabel(preset);
     const widgetsKey =
       count === 1 ? "portalDashboard.presets.widgetsOnPlan" : "portalDashboard.presets.widgetsOnPlan_plural";
+    const widgetsFallback =
+      count === 1 ? `${count} widget on your plan` : `${count} widgets on your plan`;
     const widgetsPart = t(this.portalLocale(), widgetsKey, { count });
-    const rangePart = t(this.portalLocale(), "portalDashboard.presets.rangeMeta", {
-      range: this.presetRangeLabel(preset),
-    });
-    return `${rangePart} · ${widgetsPart}`;
+    const rangePart = t(this.portalLocale(), "portalDashboard.presets.rangeMeta", { range: rangeLabel });
+    const resolvedWidgets = widgetsPart === widgetsKey ? widgetsFallback : widgetsPart;
+    const resolvedRange =
+      rangePart === "portalDashboard.presets.rangeMeta" ? `${rangeLabel} range` : rangePart;
+    return `${resolvedRange} · ${resolvedWidgets}`;
   }
 
   isPresetActive(preset: DashboardLayoutPreset): boolean {

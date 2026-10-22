@@ -649,7 +649,7 @@
       size="2xl"
       [hasFooter]="false"
       title="Customize dashboard"
-      subtitle="Pick a layout template or add individual widgets (filtered to your plan). Then drag tiles and set S / M / L / Full."
+      subtitle="Pick a layout template or add individual widgets, then drag tiles and set S / M / L / Full."
       (closed)="closePicker()"
     >
       <div class="widget-picker">
@@ -688,7 +688,13 @@
           <ul class="picker-list picker-list--widgets">
             @for (widget of addableWidgets(); track widget.id) {
               <li>
-                <button type="button" class="picker-widget-btn" (click)="addWidget(widget.id)">
+                <button
+                  type="button"
+                  class="picker-widget-btn"
+                  [attr.title]="dashboardWidgetSummary(widget.id)"
+                  [attr.aria-label]="widget.title + '. ' + dashboardWidgetSummary(widget.id)"
+                  (click)="addWidget(widget.id)"
+                >
                   <adeni-carbon-icon name="add" [size]="16" />
                   {{ widget.title }}
                 </button>

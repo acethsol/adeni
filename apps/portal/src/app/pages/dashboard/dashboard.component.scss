@@ -281,13 +281,20 @@ html[data-theme="dark"] .dashboard-native-tile--edit {
     font-size: 0.8125rem;
     font-weight: 600;
     color: var(--text);
-    cursor: pointer;
+    cursor: help;
     background: var(--surface);
     border: 1px solid var(--border);
-    transition: border-color 0.15s ease;
+    transition:
+      border-color 0.15s ease,
+      background 0.15s ease;
 
     &:hover {
       border-color: color-mix(in srgb, var(--interactive, #7f56ff) 45%, var(--border));
+      background: color-mix(in srgb, var(--interactive, #7f56ff) 4%, var(--surface));
+    }
+
+    &:active {
+      cursor: pointer;
     }
   }
 }
