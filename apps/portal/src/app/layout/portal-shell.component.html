@@ -144,6 +144,18 @@
       </div>
 
       <div class="topbar-actions">
+        @if (activeLocation.showLocationSwitch()) {
+          <div class="topbar-location">
+            <adeni-filter-select
+              layout="toolbar"
+              [label]="text('locationSwitch')"
+              [options]="locationSwitchOptions()"
+              [value]="locationSwitchValue"
+              (valueChange)="onLocationSwitchChange($event)"
+            />
+          </div>
+          <span class="topbar-rule" aria-hidden="true"></span>
+        }
         <app-messages-shortcut />
         <app-pending-bookings-bell />
 

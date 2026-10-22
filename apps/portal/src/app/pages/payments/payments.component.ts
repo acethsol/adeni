@@ -18,10 +18,8 @@ import {
   LIST_PAGE_SIZE_OPTIONS,
   REPORT_KEYS,
   buildReportExportMenuItems,
-  needsReportExportLocationPicker,
   resolvePaymentCheckoutUrl,
   mergeTenantEntitlements,
-  resolveReportExportLocationId,
   salesSummaryPdfMenuOption,
   tenantReportExportErrorMessage,
   type ReportExportFormat,
@@ -38,6 +36,7 @@ import {
   type AdeniExportMenuItem,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 
 @Component({
@@ -61,6 +60,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
   private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
   private opsSub: Subscription | null = null;
   private readonly config = inject(ADENI_PORTAL_CONFIG);
+  private readonly activeLocation = inject(PortalActiveLocationService);
   private readonly route = inject(ActivatedRoute);
   readonly tab = toSignal(this.route.queryParamMap.pipe(map((params) => params.get("tab") ?? "links")), {
     initialValue: this.route.snapshot.queryParamMap.get("tab") ?? "links",
@@ -74,7 +74,6 @@ export class PaymentsComponent implements OnInit, OnDestroy {
 
   exportFrom = "";
   exportTo = "";
-  exportLocationId = "";
   compensationExporting = false;
   salesSummaryExporting = false;
 
@@ -95,10 +94,6 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       csvRequiresAdvancedReports: true,
       labels: { csv: "Staff payouts CSV", xlsx: "Staff payouts Excel" },
     }),
-  );
-
-  readonly showExportLocationPicker = computed(() =>
-    needsReportExportLocationPicker(this.profile()?.locations, this.planEntitlements()),
   );
 
   readonly loading = signal(true);
@@ -164,7 +159,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
           profile.entitlements,
         );
         this.planEntitlements.set(mergedEntitlements);
-        this.syncDefaultExportLocation();
+        this.activeLocation.syncFromProfile(profile);
         const ledgerPage = await c.listPaymentLedger(
           profile.tenantId,
           this.ledgerPage(),
@@ -271,25 +266,6 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     void this.load();
   }
 
-  syncDefaultExportLocation(): void {
-    const resolved = resolveReportExportLocationId({
-      locations: this.profile()?.locations,
-      entitlements: this.planEntitlements(),
-      selectedLocationId: this.exportLocationId || null,
-    });
-    if (resolved) {
-      this.exportLocationId = resolved;
-    }
-  }
-
-  private reportExportLocationId(): string | undefined {
-    return resolveReportExportLocationId({
-      locations: this.profile()?.locations,
-      entitlements: this.planEntitlements(),
-      selectedLocationId: this.exportLocationId,
-    });
-  }
-
   async downloadSalesSummaryExport(format: ReportExportFormat): Promise<void> {
     if (!this.exportFrom || !this.exportTo) {
       this.error.set("Choose a date range for the export.");
@@ -307,7 +283,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
           from,
           to,
           format,
-          locationId: this.reportExportLocationId(),
+          locationId: this.activeLocation.reportExportLocationId(this.planEntitlements()),
         }),
       );
       const url = URL.createObjectURL(blob);
@@ -349,7 +325,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
           from,
           to,
           format,
-          locationId: this.reportExportLocationId(),
+          locationId: this.activeLocation.reportExportLocationId(this.planEntitlements()),
         }),
       );
       const url = URL.createObjectURL(blob);

@@ -58,21 +58,6 @@
     />
   } @else {
     <div class="roster">
-      @if (showExportLocationPicker()) {
-        <div class="export-location-field">
-          <label for="bookings-export-location">Export location</label>
-          <select id="bookings-export-location" [(ngModel)]="exportLocationId">
-            @for (loc of exportLocations(); track loc.id) {
-              @if (loc.isActive) {
-                <option [value]="loc.id">{{ loc.name || loc.slug }}</option>
-              }
-            }
-          </select>
-          <p class="muted">
-            Register export uses this branch. Upgrade to Business for cross-location reporting.
-          </p>
-        </div>
-      }
       <adeni-list-toolbar
         storageKey="portal.bookings"
         [viewMode]="viewMode()"

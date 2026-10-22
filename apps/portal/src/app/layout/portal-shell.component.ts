@@ -14,6 +14,7 @@ import {
   AdeniBrandLogoComponent,
   AdeniConfirmHostComponent,
   AdeniDocumentTitleStrategy,
+  AdeniFilterSelectComponent,
   AdeniGlobalLoadingPanelComponent,
   AdeniLocaleService,
   AdeniToastHostComponent,
@@ -36,6 +37,7 @@ import {
   type PortalNavItem,
 } from "../core/portal-nav";
 import { BusinessApiService } from "../core/services/business-api.service";
+import { PortalActiveLocationService } from "../core/services/portal-active-location.service";
 import { PortalSessionService } from "../core/services/portal-session.service";
 import type { ThemePreference } from "../core/portal-theme.service";
 import { PortalThemeService } from "../core/portal-theme.service";
@@ -86,6 +88,7 @@ type ChromeKey =
   | "businessSettings"
   | "notificationSettings"
   | "chromePreferences"
+  | "locationSwitch"
   | "/dashboard"
   | "/bookings"
   | "/customers"
@@ -142,6 +145,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     businessSettings: "Business settings",
     notificationSettings: "Notification preferences",
     chromePreferences: "Appearance & language",
+    locationSwitch: "Location",
     "/dashboard": "Dashboard",
     "/bookings": "Bookings",
     "/customers": "Customers",
@@ -197,6 +201,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     businessSettings: "Paramètres de l'entreprise",
     notificationSettings: "Préférences de notification",
     chromePreferences: "Apparence et langue",
+    locationSwitch: "Emplacement",
     "/dashboard": "Tableau de bord",
     "/bookings": "Réservations",
     "/customers": "Clients",
@@ -261,6 +266,7 @@ function readSidebarCollapsed(): boolean {
     RouterLink,
     RouterLinkActive,
     AdeniBrandLogoComponent,
+    AdeniFilterSelectComponent,
     AdeniGlobalLoadingPanelComponent,
     AdeniToastHostComponent,
     AdeniConfirmHostComponent,
@@ -286,6 +292,7 @@ export class PortalShellComponent {
   private readonly messagingRealtime = inject(MessagingRealtimeService);
   private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
   private readonly portalSession = inject(PortalSessionService);
+  readonly activeLocation = inject(PortalActiveLocationService);
   private readonly documentTitleStrategy = inject(AdeniDocumentTitleStrategy);
   private readonly portalTheme = inject(PortalThemeService);
   readonly auth: AuthService | null = isAuth0Configured(this.config)
@@ -305,6 +312,7 @@ export class PortalShellComponent {
   readonly searchIndex = signal(0);
   private readonly searchField = viewChild<ElementRef<HTMLInputElement>>("searchField");
   readonly profile = signal<BusinessProfile | null>(null);
+  locationSwitchValue = "";
   readonly profileLoaded = signal(false);
   readonly pendingBookings = signal(0);
   readonly unreadMessages = signal(0);
@@ -323,6 +331,9 @@ export class PortalShellComponent {
   readonly visibleGroups = computed(() => this.groupsForProfile());
   readonly businessSettingsVisible = computed(() =>
     this.visibleGroups().some((group) => group.items.some((item) => item.path === "/settings")),
+  );
+  readonly locationSwitchOptions = computed(() =>
+    this.activeLocation.locationSwitchOptions(portalEntitlements(this.profile())),
   );
   readonly searchResults = computed<SearchHit[]>(() => {
     const query = this.searchQuery().trim().toLowerCase();
@@ -450,6 +461,11 @@ export class PortalShellComponent {
   navigateSettings(path: string): void {
     this.closeSettingsMenu();
     void this.router.navigateByUrl(path);
+  }
+
+  onLocationSwitchChange(locationId: string): void {
+    this.locationSwitchValue = locationId;
+    this.activeLocation.setSelectedLocationId(locationId);
   }
 
   toggleUser(event: MouseEvent): void {
@@ -624,6 +640,8 @@ export class PortalShellComponent {
       await this.portalSession.refresh();
       const profile = await this.businessApi.getTenantProfile();
       this.profile.set(profile);
+      this.activeLocation.syncFromProfile(profile);
+      this.locationSwitchValue = this.activeLocation.selectedLocationId();
       await this.portalRealtime.syncForProfile(profile);
       if (profile?.businessName) {
         this.documentTitleStrategy.setAppTitle(profile.businessName);

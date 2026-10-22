@@ -5,7 +5,6 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { AdeniApiError } from "@adeni/api-client";
 import type {
   BookingResponse,
-  BusinessLocation,
   KioskStatusResponse,
   TenantBookingListTab,
   TenantEntitlements,
@@ -20,8 +19,6 @@ import {
   REPORT_KEYS,
   buildReportExportMenuItems,
   mergeTenantEntitlements,
-  needsReportExportLocationPicker,
-  resolveReportExportLocationId,
   tenantReportExportErrorMessage,
   totalPages as computeTotalPages,
   type ReportExportFormat,
@@ -53,6 +50,7 @@ import {
 import { map } from "rxjs";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
 import { PortalSessionService } from "../../core/services/portal-session.service";
 
 const PENDING_STATUS = 0;
@@ -89,6 +87,7 @@ export class BookingsComponent {
   private readonly config = inject(ADENI_PORTAL_CONFIG);
   private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly session = inject(PortalSessionService);
+  private readonly activeLocation = inject(PortalActiveLocationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   readonly tab = toSignal(this.route.queryParamMap.pipe(map((params) => params.get("tab") ?? "pending")), {
@@ -123,13 +122,6 @@ export class BookingsComponent {
 
   readonly exporting = signal(false);
   readonly planEntitlements = signal<TenantEntitlements | null>(null);
-  readonly exportLocations = signal<BusinessLocation[]>([]);
-  exportLocationId = "";
-
-  readonly showExportLocationPicker = computed(() =>
-    needsReportExportLocationPicker(this.exportLocations(), this.planEntitlements()),
-  );
-
   readonly exportItems = computed((): AdeniExportMenuItem[] =>
     buildReportExportMenuItems({
       entitlements: this.planEntitlements(),
@@ -335,14 +327,8 @@ export class BookingsComponent {
         this.planEntitlements.set(
           mergeTenantEntitlements(entitlements, usage?.entitlements, profile?.entitlements),
         );
-        this.exportLocations.set(profile?.locations ?? []);
-        const resolvedLocationId = resolveReportExportLocationId({
-          locations: profile?.locations,
-          entitlements: this.planEntitlements(),
-          selectedLocationId: this.exportLocationId || null,
-        });
-        if (resolvedLocationId) {
-          this.exportLocationId = resolvedLocationId;
+        if (profile) {
+          this.activeLocation.syncFromProfile(profile);
         }
         this.bookings.set(bookingsPage.items);
         this.totalCount.set(bookingsPage.totalCount);
@@ -579,11 +565,7 @@ export class BookingsComponent {
           from: from.toISOString(),
           to: to.toISOString(),
           format,
-          locationId: resolveReportExportLocationId({
-            locations: this.exportLocations(),
-            entitlements: this.planEntitlements(),
-            selectedLocationId: this.exportLocationId,
-          }),
+          locationId: this.activeLocation.reportExportLocationId(this.planEntitlements()),
         }),
       );
       const url = URL.createObjectURL(blob);

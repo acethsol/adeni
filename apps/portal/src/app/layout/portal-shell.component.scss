@@ -432,6 +432,15 @@
   gap: 0.2rem;
 }
 
+.topbar-location {
+  min-width: 8.5rem;
+  max-width: 12rem;
+
+  .adeni-filter-select--toolbar {
+    margin: 0;
+  }
+}
+
 .topbar-rule {
   width: 1px;
   height: 1.5rem;

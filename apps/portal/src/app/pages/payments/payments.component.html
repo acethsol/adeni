@@ -119,22 +119,6 @@
           <label>To</label>
           <input type="date" [(ngModel)]="exportTo" />
         </div>
-        @if (showExportLocationPicker()) {
-          <div class="field">
-            <label>Location</label>
-            <select [(ngModel)]="exportLocationId">
-              @for (loc of profile()?.locations ?? []; track loc.id) {
-                @if (loc.isActive) {
-                  <option [value]="loc.id">{{ loc.name || loc.slug }}</option>
-                }
-              }
-            </select>
-            <p class="muted">
-              Exports below use this branch. Upgrade to Business for cross-location reporting.
-            </p>
-          </div>
-        }
-
         <div class="export-block list-row">
           <div>
             <h4 class="export-block-title">Sales summary</h4>
