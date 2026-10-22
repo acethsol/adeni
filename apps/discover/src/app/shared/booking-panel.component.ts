@@ -219,7 +219,7 @@ export class BookingPanelComponent {
     if (ungrouped.length > 0) {
       collections.push({
         id: "__other",
-        name: groups.length > 0 ? "Other" : "Services",
+        name: groups.length > 0 ? this.tr("discover.shared.other") : this.tr("common.services"),
         services: ungrouped,
       });
     }

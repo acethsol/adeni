@@ -6,7 +6,7 @@ import { formatPrice } from "@adeni/shared";
 import { AdeniApiClient } from "@adeni/api-client";
 import { ADENI_DISCOVER_CONFIG } from "../../core/adeni-config";
 
-import { injectAdeniTranslate, injectAdeniApiError } from "@adeni/ui";
+import { AdeniLocaleService, injectAdeniTranslate, injectAdeniApiError } from "@adeni/ui";
 @Component({
   selector: "app-public-document",
   standalone: true,
@@ -17,6 +17,7 @@ import { injectAdeniTranslate, injectAdeniApiError } from "@adeni/ui";
 export class PublicDocumentComponent implements OnInit {
   protected readonly tr = injectAdeniTranslate();
   protected readonly apiErr = injectAdeniApiError();
+  private readonly localeService = inject(AdeniLocaleService);
   private readonly route = inject(ActivatedRoute);
   private readonly config = inject(ADENI_DISCOVER_CONFIG);
 
@@ -40,7 +41,7 @@ export class PublicDocumentComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const client = new AdeniApiClient({ baseUrl: this.config.apiBaseUrl });
+      const client = new AdeniApiClient({ baseUrl: this.config.apiBaseUrl, locale: () => this.localeService.locale() });
       const doc = await client.getPublicBillingDocument(token);
       this.document.set(doc);
     } catch (caught) {
@@ -52,7 +53,7 @@ export class PublicDocumentComponent implements OnInit {
   }
 
   kindLabel(kind: string): string {
-    return kind === "invoice" ? "Invoice" : "Receipt";
+    return kind === "invoice" ? this.tr("discover.document.invoice") : this.tr("discover.document.receipt");
   }
 
   pdfUrl(token: string): string {

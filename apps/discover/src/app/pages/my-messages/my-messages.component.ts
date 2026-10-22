@@ -153,15 +153,15 @@ export class MyMessagesComponent implements OnInit, OnDestroy {
 
   senderLabel(message: ConversationMessage, conversation: ConversationDetail): string {
     if (this.isOutgoing(message)) {
-      return "You";
+      return this.tr("portal.messages.you");
     }
     if (message.senderDisplayName?.trim()) {
       return message.senderDisplayName.trim();
     }
     if (message.senderType === "bot") {
-      return "Adeni FAQ";
+      return this.tr("discover.myMessages.adeniFaq");
     }
-    return conversation.businessName?.trim() || "Business";
+    return conversation.businessName?.trim() || this.tr("common.business");
   }
 
   initials(name: string | null | undefined): string {
@@ -214,7 +214,7 @@ export class MyMessagesComponent implements OnInit, OnDestroy {
   }
 
   private bumpConversationPreview(message: ConversationMessage): void {
-    const preview = message.body?.trim() || "Attachment";
+    const preview = message.body?.trim() || this.tr("portal.messages.attachment");
     this.conversations.update((rows) => {
       const next = rows.map((row) =>
         row.id === message.conversationId

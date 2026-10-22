@@ -98,7 +98,7 @@ export class QueueJoinComponent implements OnInit {
 
     this.loading.set(true);
     try {
-      const client = new AdeniApiClient({ baseUrl: this.config.apiBaseUrl });
+      const client = new AdeniApiClient({ baseUrl: this.config.apiBaseUrl, locale: () => this.localeService.locale() });
       const [profile, services] = await Promise.all([
         client.getBusinessProfile(slug),
         client.getBusinessServices(slug),
@@ -123,7 +123,7 @@ export class QueueJoinComponent implements OnInit {
     this.submitting.set(true);
     this.error.set(null);
     try {
-      const client = new AdeniApiClient({ baseUrl: this.config.apiBaseUrl });
+      const client = new AdeniApiClient({ baseUrl: this.config.apiBaseUrl, locale: () => this.localeService.locale() });
       const ticket = await client.joinPublicQueue(slug, {
         displayName,
         phone: this.phone.trim(),

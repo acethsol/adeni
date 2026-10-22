@@ -49,7 +49,7 @@ export class QuoteRequestPanelComponent {
       this.submitted.set(true);
     } catch (err) {
       this.error.set(
-        err instanceof AdeniApiError ? err.message : "Could not send quote request.",
+        err instanceof AdeniApiError ? err.message : this.tr("discover.shared.couldNotSendQuoteRequest"),
       );
     } finally {
       this.submitting.set(false);

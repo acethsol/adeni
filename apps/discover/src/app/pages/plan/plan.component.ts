@@ -104,7 +104,7 @@ export class PlanPageComponent implements OnInit {
       if (!pricing.selfServeEnabled) {
         return {
           name: SUBSCRIPTION_SKU_LABELS[sku],
-          priceLabel: "Contact us",
+          priceLabel: this.tr("portal.plan.contactUs"),
           tagline,
         };
       }
@@ -131,7 +131,7 @@ export class PlanPageComponent implements OnInit {
 
     return {
       name: SUBSCRIPTION_SKU_LABELS[sku],
-      priceLabel: "Contact us",
+      priceLabel: this.tr("portal.plan.contactUs"),
       tagline,
     };
   }

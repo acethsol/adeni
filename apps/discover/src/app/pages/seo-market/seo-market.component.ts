@@ -90,9 +90,9 @@ export class SeoMarketPageComponent implements OnInit {
       return `${category} in ${city}`;
     }
     if (area) {
-      return `Beauty & wellness in ${area}`;
+      return this.tr("discover.seoMarket.beautyWellness", { area: area });
     }
-    return `Beauty & wellness in ${city}`;
+    return this.tr("discover.seoMarket.beautyWellness2", { city: city });
   });
   readonly lede = computed(() => {
     const category = this.categoryLabel();
@@ -100,12 +100,12 @@ export class SeoMarketPageComponent implements OnInit {
     const city = this.marketName();
     const place = area ?? city;
     if (category) {
-      return `Verified ${category.toLowerCase()} professionals in ${place} — compare services, see real availability, and book on Adeni.`;
+      return this.tr("discover.seoMarket.verifiedProfessionalsCompareServicesSee", { toLowerCase: category.toLowerCase(), place: place });
     }
     if (area) {
-      return `Discover verified salons, spas, and wellness studios in ${area}, ${city}. Browse by category or explore the full map.`;
+      return this.tr("discover.seoMarket.discoverVerifiedSalonsSpasWellness", { area: area, city: city });
     }
-    return `Discover verified salons, spas, and wellness studios in ${city}. Browse by category or explore the full map.`;
+    return this.tr("discover.seoMarket.discoverVerifiedSalonsSpasWellness2", { city: city });
   });
   readonly categoryLinks = computed(() => {
     const marketId = this.marketId();
@@ -273,12 +273,12 @@ export class SeoMarketPageComponent implements OnInit {
     const title = category
       ? `${category} in ${place} — Adeni`
       : area
-        ? `Beauty & wellness in ${area} — Adeni`
-        : `Beauty & wellness in ${city} — Adeni`;
+        ? this.tr("discover.seoMarket.beautyWellnessAdeni", { area: area })
+        : this.tr("discover.seoMarket.beautyWellnessAdeni2", { city: city });
     const description = category
-      ? `Book verified ${category.toLowerCase()} in ${place}. Real availability, reviews, and online booking on Adeni.`
+      ? this.tr("discover.seoMarket.bookVerifiedRealAvailabilityReviews", { toLowerCase: category.toLowerCase(), place: place })
       : area
-        ? `Book verified beauty and wellness in ${area}, ${city}. Real availability and online booking on Adeni.`
+        ? this.tr("discover.seoMarket.bookVerifiedBeautyWellnessReal", { area: area, city: city })
         : t(this.locale(), "discover.metaDescription", { market: city });
 
     this.seo.update(

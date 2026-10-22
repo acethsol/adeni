@@ -206,7 +206,7 @@ export class BusinessProfileComponent implements OnInit {
     if (ungrouped.length > 0) {
       collections.push({
         id: "__other",
-        name: groups.length > 0 ? "Other services" : "Services",
+        name: groups.length > 0 ? this.tr("discover.business.otherServices") : this.tr("common.services"),
         services: ungrouped,
       });
     }
@@ -420,7 +420,7 @@ export class BusinessProfileComponent implements OnInit {
     this.error.set(null);
     this.linkCopied.set(false);
     this.whatsappUrl.set(null);
-    this.pageLoading.show("Loading business…", "Fetching profile, services, and reviews");
+    this.pageLoading.show(this.tr("admin.businesses.loadingBusiness"), this.tr("discover.business.fetchingProfileServicesReviews"));
 
     const client = this.api.createPublicClient();
 

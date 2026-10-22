@@ -105,7 +105,7 @@ export class DiscoveryMapComponent implements OnDestroy {
     const token = this.config.mapboxAccessToken.trim();
     if (!token) {
       this.errorMessage.set(
-        "Add a Mapbox public token (mapboxAccessToken) in the discover environment to show the map.",
+        this.tr("discover.shared.addMapboxPublicTokenMapboxaccesstoken"),
       );
       this.failed.set(true);
       return;
