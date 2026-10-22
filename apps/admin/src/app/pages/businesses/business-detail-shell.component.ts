@@ -46,7 +46,7 @@ export class BusinessDetailShellComponent {
   readonly pageDescription = computed(() => {
     const b = this.facade.business();
     if (!b) {
-      return "Tenant profile, subscription, and billing history.";
+      return this.tr("admin.businesses.tenantProfileSubscriptionBillingHistory");
     }
     return `${formatTenantStatus(b.status)} · ${formatSubscriptionSku(b.subscriptionSku)} · Adeni SaaS and commercial terms.`;
   });
@@ -54,11 +54,11 @@ export class BusinessDetailShellComponent {
   readonly detailTabs = computed((): AdeniTab[] => {
     const charges = this.facade.charges().length;
     const audit = this.facade.commercialAudit().length;
-    const billingLabel = charges > 0 ? `Billing (${charges})` : "Billing";
-    const auditLabel = audit > 0 ? `Commercial audit (${audit})` : "Commercial audit";
+    const billingLabel = charges > 0 ? this.tr("admin.businesses.billing", { charges: charges }) : this.tr("admin.businesses.billing2");
+    const auditLabel = audit > 0 ? this.tr("admin.businesses.commercialAudit", { audit: audit }) : this.tr("common.commercialAudit");
     return [
-      { id: "overview", label: "Overview" },
-      { id: "terms", label: "Commercial terms" },
+      { id: "overview", label: this.tr("portal.customers.overview") },
+      { id: "terms", label: this.tr("admin.businesses.commercialTerms") },
       { id: "billing", label: billingLabel },
       { id: "audit", label: auditLabel },
     ];

@@ -1,5 +1,5 @@
 import { DatePipe } from "@angular/common";
-import { Component, inject, signal } from "@angular/core";
+import { Component, inject, signal, computed } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import type { AdminTransactionSearchItem } from "@adeni/shared";
@@ -87,56 +87,56 @@ export class AdminTransactionsComponent {
 
   private searchDebounce: ReturnType<typeof setTimeout> | null = null;
 
-  readonly kindFilterOptions: AdeniFilterSelectOption[] = [
-    { value: "all", label: "All types" },
-    { value: "commerce", label: "Commerce" },
-    { value: "saas", label: "SaaS" },
-  ];
+  readonly kindFilterOptions = computed<AdeniFilterSelectOption[]>(() => [
+    { value: "all", label: this.tr("admin.transactions.allTypes") },
+    { value: "commerce", label: this.tr("admin.transactions.commerce") },
+    { value: "saas", label: this.tr("admin.insights.saas") },
+  ]);
 
   readonly exportItems: AdeniExportMenuItem[] = buildAdminReportExportMenuItems({
     xlsx: true,
   });
   readonly exporting = signal(false);
 
-  readonly columns: AdeniDataTableColumn<AdminTransactionSearchItem>[] = [
+  readonly columns = computed<AdeniDataTableColumn<AdminTransactionSearchItem>[]>(() => [
     {
       id: "when",
-      header: "When",
+      header: this.tr("portal.bookings.when"),
       cell: () => "",
       sortValue: (row) => row.occurredAt,
     },
     {
       id: "type",
-      header: "Type",
+      header: this.tr("admin.transactions.type"),
       cell: () => "",
       sortValue: (row) => row.kind,
     },
     {
       id: "business",
-      header: "Business",
+      header: this.tr("common.business"),
       cell: (row) => row.tenantName,
       sortValue: (row) => row.tenantName.toLowerCase(),
     },
     {
       id: "reference",
-      header: "Reference",
+      header: this.tr("admin.trustBadges.reference"),
       cell: (row) => row.providerReference ?? row.id,
       sortValue: (row) => (row.providerReference ?? row.id).toLowerCase(),
     },
     {
       id: "amount",
-      header: "Amount",
+      header: this.tr("portal.quotes.amount"),
       align: "right",
       cell: () => "",
       sortValue: (row) => row.amountMinor ?? 0,
     },
     {
       id: "status",
-      header: "Status",
+      header: this.tr("common.status"),
       cell: (row) => row.status,
       sortValue: (row) => row.status,
     },
-  ];
+  ]);
 
   readonly trackRow = (row: AdminTransactionSearchItem): string => row.id;
 
@@ -224,7 +224,7 @@ export class AdminTransactionsComponent {
   }
 
   kindLabel(row: AdminTransactionSearchItem): string {
-    return row.kind === "commerce" ? "Commerce" : "SaaS";
+    return row.kind === "commerce" ? this.tr("admin.transactions.commerce") : this.tr("admin.insights.saas");
   }
 
   kindVariant(row: AdminTransactionSearchItem): "info" | "neutral" {
@@ -291,8 +291,8 @@ export class AdminTransactionsComponent {
       this.rows.set(result.items);
       this.totalCount.set(result.totalCount);
     } catch (err) {
-      this.error.set(adminLoadErrorMessage("Could not load transactions.", err));
-      this.feedback.error(this.error() ?? "Could not load transactions.");
+      this.error.set(adminLoadErrorMessage(this.tr("admin.transactions.couldNotLoadTransactions"), err));
+      this.feedback.error(this.error() ?? this.tr("admin.transactions.couldNotLoadTransactions"));
       this.rows.set([]);
       this.totalCount.set(0);
     } finally {

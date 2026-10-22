@@ -60,7 +60,7 @@ export class AdminPricingGmvComponent {
         await this.selectVersion(draft.code);
       }
     } catch (err) {
-      this.error.set(adminLoadErrorMessage("Could not load pricing versions.", err));
+      this.error.set(adminLoadErrorMessage(this.tr("admin.pricing.couldNotLoadPricingVersions"), err));
     } finally {
       this.loading.set(false);
     }

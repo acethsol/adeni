@@ -87,13 +87,13 @@ export class BusinessSubscriptionWizardHostComponent {
       await this.feedback.runLoading(async () => {
         const client = await this.api.createAuthorizedClient();
         await client.setAdminTenantCommercialTerms(business.id, body);
-      }, "Saving subscription…", business.name);
+      }, this.tr("admin.businesses.savingSubscription"), business.name);
       this.close();
       await this.facade.refresh();
       this.feedback.success(
         skuChanged
           ? `Subscription updated (${formatSubscriptionSku(draft.subscriptionSku)}).`
-          : "Subscription updated.",
+          : this.tr("admin.businesses.subscriptionUpdated"),
         business.name,
       );
     } catch (caught) {

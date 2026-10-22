@@ -97,32 +97,32 @@ export class AdminPendingComponent {
   });
   readonly exporting = signal(false);
 
-  readonly columns: AdeniDataTableColumn<PendingBusiness>[] = [
+  readonly columns = computed<AdeniDataTableColumn<PendingBusiness>[]>(() => [
     {
       id: "business",
-      header: "Business",
+      header: this.tr("common.business"),
       cell: (item) => item.name,
       sortValue: (item) => item.name.toLowerCase(),
     },
     {
       id: "market",
-      header: "Market",
+      header: this.tr("common.market"),
       cell: (item) => item.marketId,
       sortValue: (item) => item.marketId,
     },
     {
       id: "submitted",
-      header: "Submitted",
+      header: this.tr("admin.pending.submitted"),
       cell: () => "",
       sortValue: (item) => item.createdAt,
     },
     {
       id: "docs",
-      header: "Docs",
+      header: this.tr("admin.pending.docs"),
       cell: () => "",
       sortValue: (item) => item.documents?.length ?? 0,
     },
-  ];
+  ]);
 
   readonly trackRow = (item: PendingBusiness): string => item.id;
 
@@ -182,9 +182,9 @@ export class AdminPendingComponent {
         );
         this.items.set(result.items);
         this.totalCount.set(result.totalCount);
-      }, "Loading queue…", "Fetching businesses awaiting verification");
+      }, this.tr("common.loadingQueue"), this.tr("admin.pending.fetchingBusinessesAwaitingVerification"));
     } catch (err) {
-      const message = adminLoadErrorMessage("Could not load pending businesses.", err);
+      const message = adminLoadErrorMessage(this.tr("admin.pending.couldNotLoadPendingBusinesses"), err);
       this.error.set(message);
       this.feedback.error(message);
       this.items.set([]);
@@ -249,7 +249,7 @@ export class AdminPendingComponent {
     try {
       await this.feedback.runLoading(
         () => this.api.withAuthorizedClient((c) => c.approvePendingBusiness(item.id)),
-        "Approving…",
+        this.tr("admin.pending.approving"),
         item.name,
       );
       await this.load();
@@ -270,7 +270,7 @@ export class AdminPendingComponent {
       await this.feedback.runLoading(
         () =>
           this.api.withAuthorizedClient((c) => c.rejectPendingBusiness(item.id, reason.trim())),
-        "Rejecting…",
+        this.tr("admin.pending.rejecting"),
         item.name,
       );
       await this.load();

@@ -96,9 +96,9 @@ export class AdminTrustBadgesComponent {
         );
         this.items.set(result.items);
         this.totalCount.set(result.totalCount);
-      }, "Loading badge queue…", "Trust badge requests");
+      }, this.tr("admin.trustBadges.loadingBadgeQueue"), this.tr("admin.trustBadges.trustBadgeRequests"));
     } catch (err) {
-      const message = adminLoadErrorMessage("Could not load pending trust badges.", err);
+      const message = adminLoadErrorMessage(this.tr("admin.trustBadges.couldNotLoadPendingTrust"), err);
       this.error.set(message);
       this.feedback.error(message);
       this.items.set([]);
@@ -143,11 +143,11 @@ export class AdminTrustBadgesComponent {
           this.api.withAuthorizedClient((c) =>
             c.grantAdminVerificationBadge(item.tenantId, item.badgeType),
           ),
-        "Granting…",
+        this.tr("admin.trustBadges.granting"),
         item.businessName,
       );
       await this.load();
-      this.feedback.success(`${this.badgeLabel(item.badgeType)} granted for ${item.businessName}.`, "Granted");
+      this.feedback.success(`${this.badgeLabel(item.badgeType)} granted for ${item.businessName}.`, this.tr("admin.trustBadges.granted"));
     } catch (caught) {
       this.error.set(this.apiErr(caught, "admin.trustBadges.grantFailed"));
       this.feedback.error(this.apiErr(caught, "admin.trustBadges.grantFailed"));
@@ -165,11 +165,11 @@ export class AdminTrustBadgesComponent {
           this.api.withAuthorizedClient((c) =>
             c.denyAdminVerificationBadge(item.tenantId, item.badgeType),
           ),
-        "Denying…",
+        this.tr("admin.trustBadges.denying"),
         item.businessName,
       );
       await this.load();
-      this.feedback.success(`Request denied for ${item.businessName}.`, this.tr("admin.trustBadges.denied"));
+      this.feedback.success(this.tr("admin.trustBadges.requestDenied", { businessName: item.businessName }), this.tr("admin.trustBadges.denied"));
     } catch (caught) {
       this.error.set(this.apiErr(caught, "admin.trustBadges.denyFailed"));
       this.feedback.error(this.apiErr(caught, "admin.trustBadges.denyFailed"));

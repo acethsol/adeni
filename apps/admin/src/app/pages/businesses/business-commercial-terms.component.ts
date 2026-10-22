@@ -42,15 +42,15 @@ export class BusinessCommercialTermsComponent {
   readonly heroSubline = computed(() => {
     const t = this.facade.terms();
     if (!t) {
-      return "Effective monthly revenue to Adeni";
+      return this.tr("admin.businesses.effectiveMonthlyRevenueAdeni");
     }
     if (t.customSaasMonthlyAmount != null) {
-      return "Includes custom SaaS override on catalog pricing";
+      return this.tr("admin.businesses.includesCustomSaasOverrideCatalog");
     }
     if (t.agreedMonthlyAmount != null) {
-      return "Price-bound agreement in effect";
+      return this.tr("admin.businesses.priceBoundAgreementEffect");
     }
-    return "Catalog list price unless overridden";
+    return this.tr("admin.businesses.catalogListPriceUnlessOverridden");
   });
 
   readonly billingOwedHint = computed(() => {
@@ -59,13 +59,13 @@ export class BusinessCommercialTermsComponent {
       return null;
     }
     if (b.billingStatus === "past_due") {
-      return "Past due — collect through the payment provider or update billing status after payment.";
+      return this.tr("admin.businesses.pastDueCollectThroughPayment");
     }
     if (b.billingStatus === "trialing") {
-      return "On trial — recurring Adeni charges start when trial ends unless you change terms.";
+      return this.tr("admin.businesses.onTrialRecurringAdeniCharges");
     }
     if (b.billingStatus === "suspended" || b.billingStatus === "canceled") {
-      return "Not in good standing — restore active billing after payment or agreement.";
+      return this.tr("admin.businesses.notGoodStandingRestoreActive");
     }
     return null;
   });

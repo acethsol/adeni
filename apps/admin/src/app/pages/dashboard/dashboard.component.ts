@@ -79,7 +79,7 @@ export class AdminDashboardComponent implements OnInit {
   readonly headline = computed(() => {
     const total = this.pendingTotal();
     if (total === null) {
-      return "Verification queue could not be loaded.";
+      return this.tr("admin.dashboard.verificationQueueCouldNotBe");
     }
     if (total === 1) {
       return "1 business is waiting for verification.";
@@ -94,7 +94,7 @@ export class AdminDashboardComponent implements OnInit {
     if (offline.length > 1) {
       return `${offline.map((item) => item.name).join(" and ")} are offline.`;
     }
-    return "Verification queue is clear.";
+    return this.tr("admin.dashboard.verificationQueueClear");
   });
 
   readonly statusMix = computed(() => {

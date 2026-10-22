@@ -91,39 +91,39 @@ export class AdminMarketsComponent {
 
   readonly marketLivePill = marketLivePill;
 
-  readonly columns: AdeniDataTableColumn<AdminMarket>[] = [
+  readonly columns = computed<AdeniDataTableColumn<AdminMarket>[]>(() => [
     {
       id: "market",
-      header: "Market",
+      header: this.tr("common.market"),
       cell: (m) => m.name,
       sortValue: (m) => m.name.toLowerCase(),
     },
     {
       id: "country",
-      header: "Country",
+      header: this.tr("common.country"),
       cell: (m) => m.countryCode,
       sortValue: (m) => m.countryCode,
     },
     {
       id: "currency",
-      header: "Currency",
+      header: this.tr("common.currency"),
       cell: (m) => m.currency,
       sortValue: (m) => m.currency,
     },
     {
       id: "businesses",
-      header: "Businesses",
+      header: this.tr("common.businesses"),
       align: "right",
       cell: (m) => String(m.businessCount ?? 0),
       sortValue: (m) => m.businessCount ?? 0,
     },
     {
       id: "status",
-      header: "Status",
+      header: this.tr("common.status"),
       cell: () => "",
       sortValue: (m) => (m.isLive ? 1 : 0),
     },
-  ];
+  ]);
 
   readonly trackMarketRow = (market: AdminMarket): string => market.id;
 
@@ -162,9 +162,9 @@ export class AdminMarketsComponent {
         );
         this.markets.set(result.items);
         this.totalCount.set(result.totalCount);
-      }, "Loading markets…", "Fetching market catalog");
+      }, this.tr("admin.markets.loadingMarkets"), this.tr("admin.markets.fetchingMarketCatalog"));
     } catch (err) {
-      const message = adminLoadErrorMessage("Could not load markets.", err);
+      const message = adminLoadErrorMessage(this.tr("admin.dashboard.couldNotLoadMarkets"), err);
       this.error.set(message);
       this.feedback.error(message);
       this.markets.set([]);
@@ -274,7 +274,7 @@ export class AdminMarketsComponent {
                 launchNote: value.launchNote.trim() || null,
               }),
             ),
-          "Creating market…",
+          this.tr("admin.markets.creatingMarket"),
           value.name,
         );
         this.feedback.success(this.tr("admin.markets.marketCreated"), value.name);
@@ -297,7 +297,7 @@ export class AdminMarketsComponent {
                 launchNote: value.launchNote.trim() || null,
               }),
             ),
-          "Saving market…",
+          this.tr("admin.markets.savingMarket"),
           value.name,
         );
         this.feedback.success(this.tr("admin.markets.marketUpdated"), value.name);
@@ -316,13 +316,13 @@ export class AdminMarketsComponent {
     try {
       await this.feedback.runLoading(
         () => this.api.withAuthorizedClient((c) => c.setAdminMarketLive(market.id, nextLive)),
-        nextLive ? "Going live…" : "Taking offline…",
+        nextLive ? this.tr("admin.markets.goingLive") : this.tr("admin.markets.takingOffline"),
         market.name,
       );
       await this.load();
       this.feedback.success(
         `${market.name} is now ${nextLive ? "live" : "offline"}.`,
-        "Market updated",
+        this.tr("admin.markets.marketUpdated2"),
       );
     } catch (caught) {
       this.error.set(this.apiErr(caught, "admin.markets.couldNotUpdateMarket"));

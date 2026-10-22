@@ -109,32 +109,32 @@ export class AdminBusinessesComponent {
   });
   readonly exporting = signal(false);
 
-  readonly columns: AdeniDataTableColumn<AdminBusinessSummary>[] = [
+  readonly columns = computed<AdeniDataTableColumn<AdminBusinessSummary>[]>(() => [
     {
       id: "business",
-      header: "Business",
+      header: this.tr("common.business"),
       cell: (b) => b.name,
       sortValue: (b) => b.name.toLowerCase(),
     },
     {
       id: "status",
-      header: "Status",
+      header: this.tr("common.status"),
       cell: () => "",
       sortValue: (b) => b.status,
     },
     {
       id: "plan",
-      header: "Plan",
+      header: this.tr("admin.businesses.plan"),
       cell: () => "",
       sortValue: (b) => b.subscriptionSku,
     },
     {
       id: "billing",
-      header: "Billing",
+      header: this.tr("admin.businesses.billing2"),
       cell: () => "",
       sortValue: (b) => b.billingStatus ?? "",
     },
-  ];
+  ]);
 
   readonly trackBusinessRow = (b: AdminBusinessSummary): string => b.id;
 
@@ -208,9 +208,9 @@ export class AdminBusinessesComponent {
         );
         this.businesses.set(result.items);
         this.totalCount.set(result.totalCount);
-      }, "Loading businesses…", "Fetching tenant list");
+      }, this.tr("admin.businesses.loadingBusinesses"), this.tr("admin.businesses.fetchingTenantList"));
     } catch (err) {
-      const message = adminLoadErrorMessage("Could not load businesses.", err);
+      const message = adminLoadErrorMessage(this.tr("admin.dashboard.couldNotLoadBusinesses"), err);
       this.error.set(message);
       this.feedback.error(message);
       this.businesses.set([]);
@@ -275,7 +275,7 @@ export class AdminBusinessesComponent {
       const terms = await this.feedback.runLoading(
         () =>
           this.api.withAuthorizedClient((c) => c.getAdminTenantCommercialTerms(business.id)),
-        "Loading subscription…",
+        this.tr("admin.businesses.loadingSubscription"),
         business.name,
       );
       this.subscriptionBusiness.set(business);
@@ -314,13 +314,13 @@ export class AdminBusinessesComponent {
       await this.feedback.runLoading(async () => {
         const client = await this.api.createAuthorizedClient();
         await client.setAdminTenantCommercialTerms(business.id, body);
-      }, "Saving subscription…", business.name);
+      }, this.tr("admin.businesses.savingSubscription"), business.name);
       this.closeSubscriptionWizard();
       await this.load();
       this.feedback.success(
         skuChanged
           ? `Subscription updated (${formatSubscriptionSku(draft.subscriptionSku)}).`
-          : "Subscription updated.",
+          : this.tr("admin.businesses.subscriptionUpdated"),
         business.name,
       );
     } catch (caught) {

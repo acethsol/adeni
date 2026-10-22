@@ -88,10 +88,10 @@ export class AdminPricingEntitlementsComponent {
     return items.filter((row) => row.label.toLowerCase().includes(query));
   });
 
-  readonly columns: AdeniDataTableColumn<EntitlementMatrixRow>[] = [
+  readonly columns = computed<AdeniDataTableColumn<EntitlementMatrixRow>[]>(() => [
     {
       id: "feature",
-      header: "Capability",
+      header: this.tr("admin.pricing.capability"),
       cell: (row) => row.label,
       sortValue: (row) => row.label.toLowerCase(),
     },
@@ -101,7 +101,7 @@ export class AdminPricingEntitlementsComponent {
       cell: (row: EntitlementMatrixRow) => row[sku],
       sortValue: (row: EntitlementMatrixRow) => row[sku],
     })),
-  ];
+  ]);
 
   readonly trackRow = (row: EntitlementMatrixRow): string => row.rowKey;
 

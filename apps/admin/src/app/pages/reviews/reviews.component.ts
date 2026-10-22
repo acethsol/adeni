@@ -104,9 +104,9 @@ export class AdminReviewsComponent implements OnInit {
         );
         this.items.set(result.items);
         this.totalCount.set(result.totalCount);
-      }, "Loading reviews…", "Moderation queue");
+      }, this.tr("admin.reviews.loadingReviews"), this.tr("admin.reviews.moderationQueue"));
     } catch (err) {
-      const message = adminLoadErrorMessage("Could not load reviews.", err);
+      const message = adminLoadErrorMessage(this.tr("admin.reviews.couldNotLoadReviews"), err);
       this.error.set(message);
       this.feedback.error(message);
       this.items.set([]);
@@ -151,9 +151,9 @@ export class AdminReviewsComponent implements OnInit {
       return;
     }
     const ok = await this.confirmDialog.confirm({
-      title: "Hide review?",
-      message: `Remove this review from public profiles for ${item.businessName}?`,
-      confirmLabel: "Hide",
+      title: this.tr("admin.reviews.hideReview"),
+      message: this.tr("admin.reviews.removeReviewFromPublicProfiles", { businessName: item.businessName }),
+      confirmLabel: this.tr("admin.reviews.hide"),
       danger: true,
     });
     if (!ok) {
@@ -164,7 +164,7 @@ export class AdminReviewsComponent implements OnInit {
     try {
       await this.feedback.runLoading(
         () => this.api.withAuthorizedClient((c) => c.hideAdminReview(item.id)),
-        "Hiding review…",
+        this.tr("admin.reviews.hidingReview"),
         item.businessName,
       );
       if (this.includeHidden()) {

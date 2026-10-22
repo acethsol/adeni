@@ -121,7 +121,7 @@ export class AdminPricingCatalogComponent {
     return base.map((item) => ({
       ...item,
       disabled: true,
-      hint: "Select a catalog version",
+      hint: this.tr("admin.pricing.selectCatalogVersion"),
     }));
   });
 
@@ -166,72 +166,72 @@ export class AdminPricingCatalogComponent {
     () => !this.loading() && this.versions().length === 0 && !this.error(),
   );
 
-  readonly versionColumns: AdeniDataTableColumn<PricingCatalogVersionSummary>[] = [
+  readonly versionColumns = computed<AdeniDataTableColumn<PricingCatalogVersionSummary>[]>(() => [
     {
       id: "code",
-      header: "Version",
+      header: this.tr("admin.pricing.version2"),
       cell: (v) => v.code,
       sortValue: (v) => v.code.toLowerCase(),
     },
     {
       id: "effective",
-      header: "Effective",
+      header: this.tr("admin.pricing.effective"),
       cell: () => "",
       sortValue: (v) => v.effectiveFrom,
     },
     {
       id: "status",
-      header: "Status",
+      header: this.tr("common.status"),
       cell: () => "",
       sortValue: (v) => v.status,
     },
     {
       id: "active",
-      header: "Live",
+      header: this.tr("admin.dashboard.live"),
       cell: () => "",
       sortValue: (v) => (v.isActive ? 1 : 0),
     },
-  ];
+  ]);
 
-  readonly entryColumns: AdeniDataTableColumn<PricingCatalogEntryRow>[] = [
+  readonly entryColumns = computed<AdeniDataTableColumn<PricingCatalogEntryRow>[]>(() => [
     {
       id: "version",
-      header: "Catalog version",
+      header: this.tr("admin.pricing.catalogVersion"),
       cell: (row) => row.catalogVersionCode,
       sortValue: (row) => row.catalogVersionCode.toLowerCase(),
     },
     {
       id: "country",
-      header: "Country",
+      header: this.tr("common.country"),
       cell: (row) => row.countryCode,
       sortValue: (row) => row.countryCode,
     },
     {
       id: "sku",
-      header: "Plan (SKU)",
+      header: this.tr("admin.pricing.planSku"),
       cell: (row) => formatSubscriptionSku(row.subscriptionSku),
       sortValue: (row) => row.subscriptionSku,
     },
     {
       id: "price",
-      header: "List price",
+      header: this.tr("admin.pricing.listPrice"),
       align: "right",
       cell: () => "",
       sortValue: (row) => row.monthlyAmountMajor ?? 0,
     },
     {
       id: "gmv",
-      header: "Platform fee",
+      header: this.tr("admin.pricing.platformFee"),
       cell: (row) => `${row.platformFeePercent}%`,
       sortValue: (row) => row.platformFeePercent,
     },
     {
       id: "selfServe",
-      header: "Self-serve",
+      header: this.tr("admin.pricing.selfServe"),
       cell: () => "",
       sortValue: (row) => (row.isSelfServeEnabled ? 1 : 0),
     },
-  ];
+  ]);
 
   readonly trackVersion = (v: PricingCatalogVersionSummary): string => v.code;
   readonly trackEntryRow = (row: PricingCatalogEntryRow): string => row.rowKey;
@@ -295,7 +295,7 @@ export class AdminPricingCatalogComponent {
       }
     } catch (err) {
       this.versions.set([]);
-      this.error.set(adminLoadErrorMessage("Could not load catalog versions.", err));
+      this.error.set(adminLoadErrorMessage(this.tr("admin.pricing.couldNotLoadCatalogVersions"), err));
     } finally {
       this.loading.set(false);
     }
@@ -323,7 +323,7 @@ export class AdminPricingCatalogComponent {
       );
     } catch (err) {
       this.entryRows.set([]);
-      this.feedback.error(adminLoadErrorMessage("Could not load catalog entries.", err));
+      this.feedback.error(adminLoadErrorMessage(this.tr("admin.pricing.couldNotLoadCatalogEntries"), err));
     } finally {
       this.entriesLoading.set(false);
     }
@@ -389,7 +389,7 @@ export class AdminPricingCatalogComponent {
               cloneFromActive: this.createCloneFromActive(),
             }),
           ),
-        "Creating draft…",
+        this.tr("admin.pricing.creatingDraft"),
         code,
       );
       this.feedback.success(this.tr("admin.pricing.draftCatalogVersionCreated"), code);
@@ -398,7 +398,7 @@ export class AdminPricingCatalogComponent {
       this.selectVersion(code);
     } catch (err) {
       this.feedback.error(
-        adminLoadErrorMessage("Could not create catalog version.", err),
+        adminLoadErrorMessage(this.tr("admin.pricing.couldNotCreateCatalogVersion"), err),
       );
     } finally {
       this.createSaving.set(false);
@@ -411,9 +411,9 @@ export class AdminPricingCatalogComponent {
       return;
     }
     const ok = await this.confirmDialog.confirm({
-      title: "Activate catalog version?",
-      message: `Publish ${code} as the live price book? The current active version will be retired.`,
-      confirmLabel: "Activate",
+      title: this.tr("admin.pricing.activateCatalogVersion"),
+      message: this.tr("admin.pricing.publishAsLivePriceBook", { code: code }),
+      confirmLabel: this.tr("admin.pricing.activate"),
       danger: false,
     });
     if (!ok) {
@@ -426,7 +426,7 @@ export class AdminPricingCatalogComponent {
           this.api.withAuthorizedClient((client) =>
             client.activateAdminPricingCatalogVersion(code),
           ),
-        "Activating…",
+        this.tr("admin.pricing.activating"),
         code,
       );
       this.feedback.success(`${code} is now the active catalog.`, this.tr("admin.pricing.catalogPublished"));
@@ -434,7 +434,7 @@ export class AdminPricingCatalogComponent {
       await this.loadEntries(code);
     } catch (err) {
       this.feedback.error(
-        adminLoadErrorMessage("Could not activate catalog version.", err),
+        adminLoadErrorMessage(this.tr("admin.pricing.couldNotActivateCatalogVersion"), err),
       );
     }
   }
@@ -543,7 +543,7 @@ export class AdminPricingCatalogComponent {
       await this.loadEntries(code);
     } catch (err) {
       this.feedback.error(
-        adminLoadErrorMessage("Could not save catalog entry.", err),
+        adminLoadErrorMessage(this.tr("admin.pricing.couldNotSaveCatalogEntry"), err),
       );
     } finally {
       this.editSaving.set(false);

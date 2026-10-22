@@ -35,7 +35,7 @@
         <div class="adeni-list-results">
           <adeni-data-table
             [rows]="filteredCharges()"
-            [columns]="chargeColumns"
+            [columns]="chargeColumns()"
             [trackRow]="trackChargeRow"
             [sortColumnId]="chargeSortColumnId()"
             (sortColumnIdChange)="chargeSortColumnId.set($event)"

@@ -46,40 +46,40 @@ export class BusinessBillingComponent {
   readonly chargeSortColumnId = signal<string | null>("when");
   readonly chargeSortDirection = signal<AdeniDataTableSortDirection>("desc");
 
-  readonly chargeColumns: AdeniDataTableColumn<TenantSubscriptionCharge>[] = [
+  readonly chargeColumns = computed<AdeniDataTableColumn<TenantSubscriptionCharge>[]>(() => [
     {
       id: "when",
-      header: "Date",
+      header: this.tr("portal.plan.date"),
       cell: (row) => row.occurredAt,
       sortValue: (row) => row.occurredAt,
     },
     {
       id: "amount",
-      header: "Amount",
+      header: this.tr("portal.quotes.amount"),
       align: "right",
       cell: (row) => formatChargeAmount(row),
       sortValue: (row) => row.amountMinor ?? 0,
     },
     {
       id: "status",
-      header: "Status",
+      header: this.tr("common.status"),
       cell: () => "",
       sortValue: (row) => row.status,
     },
     {
       id: "plan",
-      header: "Plan",
+      header: this.tr("admin.businesses.plan"),
       cell: (row) =>
         row.subscriptionSku ? formatSubscriptionSku(row.subscriptionSku) : "—",
       sortValue: (row) => row.subscriptionSku ?? "",
     },
     {
       id: "reference",
-      header: "Reference",
+      header: this.tr("admin.trustBadges.reference"),
       cell: (row) => row.providerReference ?? "—",
       sortValue: (row) => row.providerReference ?? "",
     },
-  ];
+  ]);
 
   readonly trackChargeRow = (row: TenantSubscriptionCharge): string => row.id;
 

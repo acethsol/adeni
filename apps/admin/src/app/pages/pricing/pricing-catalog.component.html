@@ -50,7 +50,7 @@
       <div class="adeni-list-results">
         <adeni-data-table
           [rows]="filteredVersions()"
-          [columns]="versionColumns"
+          [columns]="versionColumns()"
           [trackRow]="trackVersion"
         >
           <ng-template adeniDataTableCell="code" let-version>
@@ -138,7 +138,7 @@
           <div class="adeni-list-results">
             <adeni-data-table
               [rows]="filteredEntryRows()"
-              [columns]="entryColumns"
+              [columns]="entryColumns()"
               [trackRow]="trackEntryRow"
             >
               <ng-template adeniDataTableCell="version" let-row>

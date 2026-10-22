@@ -46,27 +46,27 @@ export class BusinessOverviewComponent {
 
   readonly recentCharges = computed(() => this.facade.charges().slice(0, 5));
 
-  readonly previewColumns: AdeniDataTableColumn<TenantSubscriptionCharge>[] = [
+  readonly previewColumns = computed<AdeniDataTableColumn<TenantSubscriptionCharge>[]>(() => [
     {
       id: "when",
-      header: "Date",
+      header: this.tr("portal.plan.date"),
       cell: (row) => row.occurredAt,
       sortable: false,
     },
     {
       id: "amount",
-      header: "Amount",
+      header: this.tr("portal.quotes.amount"),
       align: "right",
       cell: (row) => formatChargeAmount(row),
       sortable: false,
     },
     {
       id: "status",
-      header: "Status",
+      header: this.tr("common.status"),
       cell: () => "",
       sortable: false,
     },
-  ];
+  ]);
 
   readonly trackChargeRow = (row: TenantSubscriptionCharge): string => row.id;
 
@@ -82,10 +82,10 @@ export class BusinessOverviewComponent {
   readonly effectiveMonthlyHint = computed(() => {
     const t = this.facade.terms();
     if (!t) {
-      return "Per commercial terms";
+      return this.tr("admin.businesses.perCommercialTerms");
     }
     if (t.customSaasMonthlyAmount != null) {
-      return "Custom SaaS override";
+      return this.tr("admin.businesses.customSaasOverride");
     }
     if (
       t.agreedMonthlyAmount != null &&
@@ -93,25 +93,25 @@ export class BusinessOverviewComponent {
       t.effectiveMonthlyAmount != null &&
       t.agreedMonthlyAmount !== t.effectiveMonthlyAmount
     ) {
-      return `Bound ${t.agreedMonthlyAmount} ${t.currency}/mo`;
+      return this.tr("admin.businesses.boundMo", { agreedMonthlyAmount: t.agreedMonthlyAmount, currency: t.currency });
     }
     if (
       t.catalogListPrice != null &&
       t.effectiveMonthlyAmount != null &&
       t.catalogListPrice === t.effectiveMonthlyAmount
     ) {
-      return "Matches catalog list";
+      return this.tr("admin.businesses.matchesCatalogList");
     }
     if (t.pricingCatalogVersion) {
       return t.pricingCatalogVersion;
     }
-    return "View commercial terms";
+    return this.tr("admin.businesses.viewCommercialTerms");
   });
 
   readonly lastChargeHint = computed(() => {
     const latest = this.facade.charges()[0];
     if (!latest) {
-      return "No charges synced";
+      return this.tr("admin.insights.noChargesSynced");
     }
     const when = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
       new Date(latest.occurredAt),
@@ -121,25 +121,25 @@ export class BusinessOverviewComponent {
 
   readonly auditHint = computed(() => {
     const n = this.facade.commercialAudit().length;
-    return n > 0 ? `${n} event${n === 1 ? "" : "s"} on record` : "Open audit tab for history";
+    return n > 0 ? `${n} event${n === 1 ? "" : "s"} on record` : this.tr("admin.businesses.openAuditTabHistory");
   });
 
   readonly overviewInsight = computed(() => {
     const b = this.facade.business();
     const t = this.facade.terms();
     if (!b || !t) {
-      return "Loading tenant SaaS snapshot…";
+      return this.tr("admin.businesses.loadingTenantSaasSnapshot");
     }
     if (b.billingStatus === "past_due") {
-      return "Past due — align payment provider status with commercial terms before the next billing cycle.";
+      return this.tr("admin.businesses.pastDueAlignPaymentProvider");
     }
     if (b.billingStatus === "trialing" && b.trialEndsAt) {
-      return "Trial in progress — confirm effective pricing before trial converts to paid.";
+      return this.tr("admin.businesses.trialProgressConfirmEffectivePricing");
     }
     if (this.facade.charges().length === 0) {
-      return "Healthy to monitor — no Adeni charges yet; stub checkout or live billing will populate Billing.";
+      return this.tr("admin.businesses.healthyMonitorNoAdeniCharges");
     }
-    return "SaaS health at a glance — use the cards below or open Billing / Commercial audit for full grids.";
+    return this.tr("admin.businesses.saasHealthAtGlanceUse");
   });
 
   navigateTab(segment: "terms" | "billing" | "audit"): void {

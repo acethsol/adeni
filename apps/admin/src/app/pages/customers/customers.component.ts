@@ -114,9 +114,9 @@ export class AdminCustomersComponent {
         );
         this.customers.set(result.items);
         this.totalCount.set(result.totalCount);
-      }, "Searching customers…", q);
+      }, this.tr("admin.customers.searchingCustomers"), q);
     } catch (err) {
-      const message = adminLoadErrorMessage("Could not search customers.", err);
+      const message = adminLoadErrorMessage(this.tr("admin.customers.couldNotSearchCustomers"), err);
       this.error.set(message);
       this.feedback.error(message);
       this.customers.set([]);
@@ -150,8 +150,8 @@ export class AdminCustomersComponent {
     try {
       const data = await this.feedback.runLoading(
         () => this.api.withAuthorizedClient((c) => c.exportAdminCustomer(customerId)),
-        "Exporting…",
-        "Building customer data package",
+        this.tr("admin.customers.exporting"),
+        this.tr("admin.customers.buildingCustomerDataPackage"),
       );
       this.exportData.set(data);
       this.message.set(this.tr("admin.customers.exportLoadedBelowSaveJson"));
@@ -180,9 +180,9 @@ export class AdminCustomersComponent {
   async erase(customer: AdminCustomerSummary): Promise<void> {
     const label = customer.name || customer.email || "this customer";
     const ok = await this.confirmDialog.confirm({
-      title: "Initiate erasure?",
-      message: `Erase PII for ${label}? This cannot be recovered.`,
-      confirmLabel: "Erase",
+      title: this.tr("admin.customers.initiateErasure"),
+      message: this.tr("admin.customers.erasePiiCannotBeRecovered", { label: label }),
+      confirmLabel: this.tr("admin.customers.erase"),
       danger: true,
     });
     if (!ok) {
@@ -194,7 +194,7 @@ export class AdminCustomersComponent {
     try {
       await this.feedback.runLoading(
         () => this.api.withAuthorizedClient((c) => c.initiateAdminCustomerDelete(customer.id)),
-        "Initiating erasure…",
+        this.tr("admin.customers.initiatingErasure"),
         customer.email ?? customer.name ?? customer.id,
       );
       this.customers.update((list) =>

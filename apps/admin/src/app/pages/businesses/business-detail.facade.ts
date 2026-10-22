@@ -4,7 +4,7 @@ import type {
   AdminTenantCommercialTerms,
   TenantSubscriptionCharge,
 } from "@adeni/shared";
-import { AdeniFeedbackService } from "@adeni/ui";
+import { AdeniFeedbackService, injectAdeniTranslate } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 import { adminLoadErrorMessage } from "../../shared/admin-load-error";
 
@@ -18,6 +18,7 @@ export type CommercialAuditEntry = {
 
 @Injectable()
 export class BusinessDetailFacade {
+  protected readonly tr = injectAdeniTranslate();
   private readonly api = inject(AdminApiService);
   private readonly feedback = inject(AdeniFeedbackService);
 
@@ -51,7 +52,7 @@ export class BusinessDetailFacade {
       this.charges.set(data.chargeItems);
       this.commercialAudit.set(data.auditItems);
     } catch (err) {
-      const message = adminLoadErrorMessage("Could not load this business.", err);
+      const message = adminLoadErrorMessage(this.tr("admin.businesses.couldNotLoadBusiness"), err);
       this.error.set(message);
       if (!options?.silent) {
         this.feedback.error(message);

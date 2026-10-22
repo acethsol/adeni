@@ -43,26 +43,26 @@ export class BusinessCommercialAuditComponent {
   readonly sortColumnId = signal<string | null>("when");
   readonly sortDirection = signal<AdeniDataTableSortDirection>("desc");
 
-  readonly auditColumns: AdeniDataTableColumn<CommercialAuditEntry>[] = [
+  readonly auditColumns = computed<AdeniDataTableColumn<CommercialAuditEntry>[]>(() => [
     {
       id: "when",
-      header: "Date",
+      header: this.tr("portal.plan.date"),
       cell: (row) => row.occurredAt,
       sortValue: (row) => row.occurredAt,
     },
     {
       id: "action",
-      header: "Action",
+      header: this.tr("admin.businesses.action"),
       cell: (row) => row.action,
       sortValue: (row) => row.action,
     },
     {
       id: "actor",
-      header: "Actor",
+      header: this.tr("admin.businesses.actor"),
       cell: (row) => row.actorId,
       sortValue: (row) => row.actorId,
     },
-  ];
+  ]);
 
   readonly trackAuditRow = (row: CommercialAuditEntry): string => row.id;
 
@@ -84,13 +84,13 @@ export class BusinessCommercialAuditComponent {
 
   formatActionLabel(action: string): string {
     if (action === "tenant.commercial_terms_updated") {
-      return "Commercial terms updated";
+      return this.tr("admin.businesses.commercialTermsUpdated");
     }
     if (action === "tenant.commercial_bound") {
-      return "Commercial terms bound";
+      return this.tr("admin.businesses.commercialTermsBound");
     }
     if (action === "subscription.webhook_applied") {
-      return "Subscription webhook applied";
+      return this.tr("admin.businesses.subscriptionWebhookApplied");
     }
     return action.replace(/_/g, " ");
   }

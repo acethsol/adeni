@@ -21,7 +21,7 @@
       <adeni-filter-select
         layout="toolbar"
         [label]="tr('admin.transactions.transactionType')"
-        [options]="kindFilterOptions"
+        [options]="kindFilterOptions()"
         [value]="kindFilter()"
         (valueChange)="onKindChange($any($event))"
       />
@@ -56,7 +56,7 @@
 
     <adeni-data-table
       [rows]="rows()"
-      [columns]="columns"
+      [columns]="columns()"
       [trackRow]="trackRow"
       [sortRows]="false"
       [sortColumnId]="sortColumnId()"

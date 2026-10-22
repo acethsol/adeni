@@ -99,8 +99,8 @@ export class AdminInsightsComponent implements OnInit {
       return "";
     }
     return data.mrrSource === "synced_charges"
-      ? "From synced subscription charges this month"
-      : "Estimated from configured list prices";
+      ? this.tr("admin.insights.fromSyncedSubscriptionChargesMonth")
+      : this.tr("admin.insights.estimatedFromConfiguredListPrices");
   });
 
   readonly windowTotals = computed((): CurrencyWindowTotals[] => {
@@ -171,7 +171,7 @@ export class AdminInsightsComponent implements OnInit {
       return `${billing.trialingTenantCount} on trial; no paying Pro/Business tenants yet.`;
     }
     if (!this.hasCommerceActivity()) {
-      return "Commerce GMV is quiet — SaaS subscription sync is carrying platform revenue.";
+      return this.tr("admin.insights.commerceGmvQuietSaasSubscription");
     }
     return `${billing.paidTenantCount} paying tenant(s) · commerce checkouts included below.`;
   });
@@ -228,7 +228,7 @@ export class AdminInsightsComponent implements OnInit {
       this.metrics.set(mapPlatformMrrToMetrics(platformMrr, skuMixSource));
       this.revenue.set(mapGmvToRevenueMetrics(gmv));
     } catch (err) {
-      let message = adminLoadErrorMessage("Could not load revenue metrics.", err);
+      let message = adminLoadErrorMessage(this.tr("admin.insights.couldNotLoadRevenueMetrics"), err);
       if (message.includes("tenant_subscription_charges")) {
         message +=
           " Apply db/scripts/tenant-subscription-charges-sprint33.sql (or ./scripts/apply-tenant-subscription-charges.ps1).";
