@@ -5,6 +5,7 @@ import { AdeniDataTableActionsDirective } from "./adeni-data-table-actions.direc
 import { AdeniDataTableCellDirective } from "./adeni-data-table-cell.directive";
 import { isAdeniDataTableColumnSortable, sortDataRows } from "./sort-data-rows";
 
+import { injectAdeniTranslate } from "./locale/adeni-i18n";
 @Component({
   selector: "adeni-data-table",
   standalone: true,
@@ -39,7 +40,7 @@ import { isAdeniDataTableColumnSortable, sortDataRows } from "./sort-data-rows";
               }
               @if (actions()) {
                 <th class="align-right adeni-data-table-actions-head" scope="col">
-                  Actions
+                  {{ tr('common.actions') }}
                 </th>
               }
             </tr>
@@ -75,6 +76,7 @@ import { isAdeniDataTableColumnSortable, sortDataRows } from "./sort-data-rows";
   styleUrl: "./styles/_data-grid.scss",
 })
 export class AdeniDataTableComponent<T> {
+  protected readonly tr = injectAdeniTranslate();
   readonly rows = input.required<T[]>();
   readonly columns = input.required<AdeniDataTableColumn<T>[]>();
   readonly trackRow = input.required<(row: T) => string>();

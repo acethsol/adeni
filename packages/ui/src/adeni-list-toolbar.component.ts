@@ -3,6 +3,7 @@ import { AdeniCarbonIconComponent } from "./adeni-carbon-icon.component";
 import type { AdeniCarbonIconName } from "./carbon-icon";
 import { persistListViewMode, type AdeniListViewMode } from "./adeni-list-view.types";
 
+import { injectAdeniTranslate } from "./locale/adeni-i18n";
 @Component({
   selector: "adeni-list-toolbar",
   standalone: true,
@@ -35,8 +36,8 @@ import { persistListViewMode, type AdeniListViewMode } from "./adeni-list-view.t
                 <button
                   type="button"
                   class="adeni-list-search-clear"
-                  title="Clear search"
-                  aria-label="Clear search"
+                  [title]="tr('ui.ui.clearSearch')"
+                  [attr.aria-label]="tr('ui.ui.clearSearch')"
                   (click)="clearSearch()"
                 >
                   <adeni-carbon-icon name="close" [size]="16" />
@@ -63,7 +64,7 @@ import { persistListViewMode, type AdeniListViewMode } from "./adeni-list-view.t
             <ng-content select="[listExports]" />
 
             @if (showViewSwitcher()) {
-              <div class="adeni-view-switcher" role="group" aria-label="View mode">
+              <div class="adeni-view-switcher" role="group" [attr.aria-label]="tr('ui.ui.viewMode')">
                 <button
                   type="button"
                   class="adeni-view-switcher-btn"
@@ -96,6 +97,7 @@ import { persistListViewMode, type AdeniListViewMode } from "./adeni-list-view.t
   styleUrl: "./styles/_data-grid.scss",
 })
 export class AdeniListToolbarComponent {
+  protected readonly tr = injectAdeniTranslate();
   readonly storageKey = input<string | null>(null);
   readonly viewMode = model<AdeniListViewMode>("cards");
 

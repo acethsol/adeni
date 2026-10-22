@@ -1,5 +1,6 @@
 import { Component, HostBinding, HostListener, input, output } from "@angular/core";
 
+import { injectAdeniTranslate } from "./locale/adeni-i18n";
 export type AdeniModalSize = "md" | "lg" | "xl" | "2xl";
 
 /**
@@ -28,7 +29,7 @@ export type AdeniModalSize = "md" | "lg" | "xl" | "2xl";
             <button
               type="button"
               class="close"
-              aria-label="Close"
+              [attr.aria-label]="tr('common.close')"
               (click)="closed.emit()"
             >
               ×
@@ -180,6 +181,7 @@ export type AdeniModalSize = "md" | "lg" | "xl" | "2xl";
   `,
 })
 export class AdeniModalComponent {
+  protected readonly tr = injectAdeniTranslate();
   @HostBinding("attr.title") protected readonly nativeTitle: null = null;
 
   readonly open = input(false);

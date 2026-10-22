@@ -3,6 +3,7 @@ import { AdeniCarbonIconComponent } from "./adeni-carbon-icon.component";
 import { AdeniIconBtnComponent } from "./adeni-icon-btn.component";
 import { buildListPaginationWindow } from "./list-pagination-window";
 
+import { injectAdeniTranslate } from "./locale/adeni-i18n";
 @Component({
   selector: "adeni-list-pagination",
   standalone: true,
@@ -17,19 +18,19 @@ import { buildListPaginationWindow } from "./list-pagination-window";
         <div class="adeni-list-pagination__lead">
           <p class="adeni-list-pagination__summary">
             @if (totalCount() <= 0) {
-              <span>Showing <strong>0</strong> results</span>
+              <span>{{ tr('ui.ui.showing') }} <strong>0</strong> {{ tr('common.results') }}</span>
             } @else {
               <span>
-                Showing
+                {{ tr('ui.ui.showing') }}
                 <strong>{{ rangeStart() }}–{{ rangeEnd() }}</strong>
-                of
+                {{ tr('ui.ui.of') }}
                 <strong>{{ totalCount() }}</strong>
               </span>
             }
           </p>
           @if (pageSizeOptions().length > 1) {
             <label class="adeni-list-pagination__page-size">
-              <span class="adeni-list-pagination__page-size-label">Rows</span>
+              <span class="adeni-list-pagination__page-size-label">{{ tr('ui.ui.rows') }}</span>
               <select
                 class="adeni-list-pagination__page-size-select"
                 [disabled]="loading()"
@@ -49,7 +50,7 @@ import { buildListPaginationWindow } from "./list-pagination-window";
             @if (showEdgeJumpersEffective()) {
               <adeni-icon-btn
                 icon="arrow--left"
-                label="First page"
+                [label]="tr('ui.ui.firstPage')"
                 variant="outline"
                 [dense]="true"
                 [disabled]="page() <= 1 || loading()"
@@ -63,10 +64,10 @@ import { buildListPaginationWindow } from "./list-pagination-window";
               (click)="goTo(page() - 1)"
             >
               <adeni-carbon-icon name="chevron--left" [size]="16" aria-hidden="true" />
-              <span class="adeni-list-pagination-btn__text">Previous</span>
+              <span class="adeni-list-pagination-btn__text">{{ tr('common.previous') }}</span>
             </button>
 
-            <div class="adeni-list-pagination__pages" role="group" aria-label="Page numbers">
+            <div class="adeni-list-pagination__pages" role="group" [attr.aria-label]="tr('ui.ui.pageNumbers')">
               @for (item of pageWindow(); track trackWindowItem($index, item)) {
                 @if (item.kind === "gap") {
                   <span class="adeni-list-pagination__gap" aria-hidden="true">…</span>
@@ -92,13 +93,13 @@ import { buildListPaginationWindow } from "./list-pagination-window";
               [disabled]="page() >= totalPages() || loading()"
               (click)="goTo(page() + 1)"
             >
-              <span class="adeni-list-pagination-btn__text">Next</span>
+              <span class="adeni-list-pagination-btn__text">{{ tr('common.next') }}</span>
               <adeni-carbon-icon name="chevron--right" [size]="16" aria-hidden="true" />
             </button>
             @if (showEdgeJumpersEffective()) {
               <adeni-icon-btn
                 icon="arrow--right"
-                label="Last page"
+                [label]="tr('ui.ui.lastPage')"
                 variant="outline"
                 [dense]="true"
                 [disabled]="page() >= totalPages() || loading()"
@@ -113,6 +114,7 @@ import { buildListPaginationWindow } from "./list-pagination-window";
   styleUrl: "./styles/_data-grid.scss",
 })
 export class AdeniListPaginationComponent {
+  protected readonly tr = injectAdeniTranslate();
   readonly page = input.required<number>();
   readonly pageSize = input.required<number>();
   readonly totalCount = input.required<number>();
