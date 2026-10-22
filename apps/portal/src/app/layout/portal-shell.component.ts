@@ -397,6 +397,9 @@ export class PortalShellComponent {
         this.pendingBookings.set(event.pendingCount);
       }
     });
+    this.activeLocation.selectionChanged$.pipe(takeUntilDestroyed()).subscribe(() => {
+      void this.loadBadges();
+    });
     void this.loadProfile();
   }
 
@@ -656,13 +659,22 @@ export class PortalShellComponent {
     try {
       const profile = this.profile();
       const messaging = hasTenantEntitlement(portalEntitlements(profile), "messaging");
-      const [bookings, unread] = await this.businessApi.withAuthorizedClient((client) =>
+      const entitlements = portalEntitlements(profile);
+      const locationQueryId = this.activeLocation.tenantApiLocationId(entitlements);
+      const [bookingsPage, unread] = await this.businessApi.withAuthorizedClient((client) =>
         Promise.all([
-          client.getTenantBookings().catch(() => []),
+          client
+            .listTenantBookings({
+              tab: "pending",
+              page: 1,
+              pageSize: 100,
+              locationId: locationQueryId,
+            })
+            .catch(() => ({ items: [], totalCount: 0, page: 1, pageSize: 100 })),
           messaging ? client.getTenantMessageUnreadCount().catch(() => 0) : Promise.resolve(0),
         ]),
       );
-      this.pendingBookings.set(bookings.filter((booking) => booking.status === 0).length);
+      this.pendingBookings.set(bookingsPage.items.filter((booking) => booking.status === 0).length);
       this.unreadMessages.set(unread);
     } catch {
       this.pendingBookings.set(0);

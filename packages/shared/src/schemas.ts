@@ -711,6 +711,7 @@ export const createBookingRequestSchema = z
     lines: z.array(createBookingLineRequestSchema).min(1).max(10).optional(),
     guestCount: z.number().int().min(1).max(6).optional(),
     guests: z.array(createBookingGuestRequestSchema).max(6).optional(),
+    businessLocationId: z.string().uuid().optional(),
   })
   .refine((data) => (data.lines?.length ?? 0) > 0 || !!data.serviceOfferingId, {
     message: "serviceOfferingId or lines is required",

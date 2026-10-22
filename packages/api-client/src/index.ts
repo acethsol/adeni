@@ -610,8 +610,12 @@ export class AdeniApiClient {
     page?: number;
     pageSize?: number;
     sort?: ListSortParams;
+    locationId?: string;
   } = {}): Promise<PagedResult<BookingResponse>> {
     const query = new URLSearchParams();
+    if (options.locationId) {
+      query.set("locationId", options.locationId);
+    }
     if (options.tab) {
       query.set("tab", options.tab);
     }
@@ -1014,8 +1018,9 @@ export class AdeniApiClient {
     return queueTicketResponseSchema.parse(await response.json());
   }
 
-  async getTenantQueueFloor(): Promise<TenantQueueFloorResponse> {
-    const response = await this.request("/api/v1/tenant/queue");
+  async getTenantQueueFloor(locationId?: string): Promise<TenantQueueFloorResponse> {
+    const query = locationId ? `?locationId=${encodeURIComponent(locationId)}` : "";
+    const response = await this.request(`/api/v1/tenant/queue${query}`);
     return tenantQueueFloorResponseSchema.parse(await response.json());
   }
 
@@ -1819,8 +1824,15 @@ export class AdeniApiClient {
     return subscriptionUsageSchema.parse(await response.json());
   }
 
-  async getTenantDashboardSummary(from: string, to: string): Promise<TenantDashboardSummary> {
+  async getTenantDashboardSummary(
+    from: string,
+    to: string,
+    locationId?: string,
+  ): Promise<TenantDashboardSummary> {
     const query = new URLSearchParams({ from, to });
+    if (locationId) {
+      query.set("locationId", locationId);
+    }
     const response = await this.request(`/api/v1/tenant/dashboard/summary?${query.toString()}`);
     return tenantDashboardSummarySchema.parse(await response.json());
   }
@@ -1829,8 +1841,12 @@ export class AdeniApiClient {
     metric: "appointments" | "collected" | "booked_value",
     from: string,
     to: string,
+    locationId?: string,
   ): Promise<TenantDashboardSeries> {
     const query = new URLSearchParams({ metric, from, to });
+    if (locationId) {
+      query.set("locationId", locationId);
+    }
     const response = await this.request(`/api/v1/tenant/dashboard/series?${query.toString()}`);
     return tenantDashboardSeriesSchema.parse(await response.json());
   }
@@ -1839,8 +1855,12 @@ export class AdeniApiClient {
     dimension: "status" | "service" | "staff",
     from: string,
     to: string,
+    locationId?: string,
   ): Promise<TenantDashboardBreakdown> {
     const query = new URLSearchParams({ dimension, from, to });
+    if (locationId) {
+      query.set("locationId", locationId);
+    }
     const response = await this.request(`/api/v1/tenant/dashboard/breakdown?${query.toString()}`);
     return tenantDashboardBreakdownSchema.parse(await response.json());
   }

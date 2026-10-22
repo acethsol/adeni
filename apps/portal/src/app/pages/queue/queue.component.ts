@@ -28,8 +28,10 @@ import {
 } from "@adeni/ui";
 import { environment } from "../../../environments/environment";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
 import { TenantOperationsRealtimeService } from "@adeni/ui";
 import { PortalSessionService } from "../../core/services/portal-session.service";
+import { mergeTenantEntitlements } from "@adeni/shared";
 
 const REFRESH_MS = 15_000;
 
@@ -54,8 +56,10 @@ export class QueueComponent implements OnInit, OnDestroy {
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly router = inject(Router);
   private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
+  private readonly activeLocation = inject(PortalActiveLocationService);
 
   private refreshTimer: ReturnType<typeof setInterval> | null = null;
+  private branchSub: Subscription | null = null;
   private opsSub: { unsubscribe(): void } | null = null;
 
   readonly loading = signal(true);
@@ -89,6 +93,9 @@ export class QueueComponent implements OnInit, OnDestroy {
     this.opsSub = this.operationsRealtime.queueFloorChanged$.subscribe(() => {
       void this.load(false);
     });
+    this.branchSub = this.activeLocation.selectionChanged$.subscribe(() => {
+      void this.load(false);
+    });
   }
 
   ngOnDestroy(): void {
@@ -96,6 +103,7 @@ export class QueueComponent implements OnInit, OnDestroy {
       clearInterval(this.refreshTimer);
     }
     this.opsSub?.unsubscribe();
+    this.branchSub?.unsubscribe();
   }
 
   pageDescription(): string {
@@ -168,8 +176,16 @@ export class QueueComponent implements OnInit, OnDestroy {
     this.error.set(null);
     try {
       await this.api.withAuthorizedClient(async (client) => {
-        const profile = await client.getTenantProfile();
-        const floor = await client.getTenantQueueFloor();
+        const [profile, entitlements, usage] = await Promise.all([
+          client.getTenantProfile(),
+          client.getTenantEntitlements().catch(() => null),
+          client.getTenantSubscriptionUsage().catch(() => null),
+        ]);
+        this.activeLocation.syncFromProfile(profile);
+        const locationQueryId = this.activeLocation.tenantApiLocationId(
+          mergeTenantEntitlements(entitlements, usage?.entitlements, profile.entitlements),
+        );
+        const floor = await client.getTenantQueueFloor(locationQueryId);
         const services = await client.getTenantServices();
         let staff: StaffMember[] = [];
         if (this.session.can("portal.bookings")) {

@@ -42,6 +42,7 @@ export class BookingPanelComponent {
 
   readonly slug = input.required<string>();
   readonly tenantId = input.required<string>();
+  readonly locationId = input.required<string>();
   readonly services = input.required<ServiceOffering[]>();
   readonly menuGroups = input<ServiceMenuGroup[]>([]);
   readonly bookingEnabled = input.required<boolean>();
@@ -464,6 +465,7 @@ export class BookingPanelComponent {
           this.api.withAuthorizedClient((c) =>
             c.createBooking({
               tenantId: this.tenantId(),
+              businessLocationId: this.locationId(),
               serviceOfferingId: primary.id,
               startAt: slot,
               customerNotes: this.notes().trim() || undefined,

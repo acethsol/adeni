@@ -241,10 +241,16 @@ export class BookingsComponent {
   }
 
   pageDescription(): string {
+    let base: string;
     if (this.session.can("portal.bookings.self") && !this.session.can("portal.bookings")) {
-      return "Your assigned appointments — accept, check in, complete, and close payment.";
+      base = "Your assigned appointments — accept, check in, complete, and close payment.";
+    } else {
+      base = "Accept requests, check clients in, complete visits, and collect or mark payment.";
     }
-    return "Accept requests, check clients in, complete visits, and collect or mark payment.";
+    if (!this.activeLocation.showLocationSwitch()) {
+      return base;
+    }
+    return `${base} (Scope: ${this.activeLocation.switchDisplay().title})`;
   }
 
   constructor() {
@@ -321,21 +327,26 @@ export class BookingsComponent {
     const tab = (this.tab() ?? "pending") as TenantBookingListTab;
     try {
       await this.api.withAuthorizedClient(async (client) => {
-        const [bookingsPage, kiosk, usage, profile, entitlements] = await Promise.all([
-          client.listTenantBookings({
-            tab,
-            page: this.page(),
-            pageSize: this.pageSize(),
-            sort: listSortParamsFromColumn(this.sortColumnId(), this.sortDirection()),
-          }),
+        const [kiosk, usage, profile, entitlements] = await Promise.all([
           client.getTenantKioskStatus().catch(() => null),
           client.getTenantSubscriptionUsage().catch(() => null),
           client.getTenantProfile().catch(() => null),
           client.getTenantEntitlements().catch(() => null),
         ]);
+        if (profile) {
+          this.activeLocation.syncFromProfile(profile);
+        }
         this.planEntitlements.set(
           mergeTenantEntitlements(entitlements, usage?.entitlements, profile?.entitlements),
         );
+        const locationQueryId = this.activeLocation.tenantApiLocationId(this.planEntitlements());
+        const bookingsPage = await client.listTenantBookings({
+          tab,
+          page: this.page(),
+          pageSize: this.pageSize(),
+          sort: listSortParamsFromColumn(this.sortColumnId(), this.sortDirection()),
+          locationId: locationQueryId,
+        });
         this.bookings.set(bookingsPage.items);
         this.totalCount.set(bookingsPage.totalCount);
         this.page.set(bookingsPage.page);

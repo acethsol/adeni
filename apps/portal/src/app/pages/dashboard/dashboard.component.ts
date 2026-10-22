@@ -486,13 +486,24 @@ export class DashboardComponent implements OnInit {
   }
 
   pageDescription(): string {
+    const scope = this.branchScopeSubtitle();
+    let base: string;
     if (this.isPractitionerView()) {
-      return "Your schedule and booking inbox at a glance.";
+      base = "Your schedule and booking inbox at a glance.";
+    } else if (this.revenueUsesCollected()) {
+      base = "Plan usage, appointments, and collected revenue from your online payment ledger.";
+    } else {
+      base =
+        "Plan usage and appointments — booked value is list price, not cash in bank until you collect payment.";
     }
-    if (this.revenueUsesCollected()) {
-      return "Plan usage, appointments, and collected revenue from your online payment ledger.";
+    return scope ? `${base} ${scope}` : base;
+  }
+
+  branchScopeSubtitle(): string | null {
+    if (!this.activeLocation.showLocationSwitch()) {
+      return null;
     }
-    return "Plan usage and appointments — booked value is list price, not cash in bank until you collect payment.";
+    return `(Scope: ${this.activeLocation.switchDisplay().title})`;
   }
 
   rangeLabel(): string {
@@ -652,6 +663,10 @@ export class DashboardComponent implements OnInit {
           client.getTenantProfile(),
           client.getTenantEntitlements().catch(() => null),
         ]);
+        this.activeLocation.syncFromProfile(profile);
+        const locationQueryId = this.activeLocation.tenantApiLocationId(
+          mergeTenantEntitlements(exportEntitlements, null, profile.entitlements),
+        );
         const storedLayout = await resolveDashboardLayoutFromApi(
           () => client.getTenantDashboardLayout(),
           (layout) => client.putTenantDashboardLayout(layout),
@@ -685,22 +700,24 @@ export class DashboardComponent implements OnInit {
           queueFloor,
           quotes,
         ] = await Promise.all([
-          client.getTenantBookings(),
+          client.listTenantBookings({ tab: "pending", page: 1, pageSize: 100, locationId: locationQueryId }).then(
+            (page) => page.items,
+          ),
           client.getTenantServices(),
           client.getTenantSubscriptionUsage().catch(() => null),
-          client.getTenantDashboardSummary(range.from, range.to),
-          client.getTenantDashboardSeries("appointments", range.from, range.to),
+          client.getTenantDashboardSummary(range.from, range.to, locationQueryId),
+          client.getTenantDashboardSeries("appointments", range.from, range.to, locationQueryId),
           analytics && wantsCollected
-            ? client.getTenantDashboardSeries("collected", range.from, range.to).catch(() => null)
+            ? client.getTenantDashboardSeries("collected", range.from, range.to, locationQueryId).catch(() => null)
             : Promise.resolve(null),
           analytics && wantsServiceMix
-            ? client.getTenantDashboardBreakdown("service", range.from, range.to).catch(() => null)
+            ? client.getTenantDashboardBreakdown("service", range.from, range.to, locationQueryId).catch(() => null)
             : Promise.resolve(null),
           analytics && wantsBookedValue
-            ? client.getTenantDashboardSeries("booked_value", range.from, range.to).catch(() => null)
+            ? client.getTenantDashboardSeries("booked_value", range.from, range.to, locationQueryId).catch(() => null)
             : Promise.resolve(null),
           staffBoard && wantsStaffBoard
-            ? client.getTenantDashboardBreakdown("staff", range.from, range.to).catch(() => null)
+            ? client.getTenantDashboardBreakdown("staff", range.from, range.to, locationQueryId).catch(() => null)
             : Promise.resolve(null),
           wantsUnread && messaging
             ? client.getTenantMessageUnreadCount().catch(() => 0)
@@ -711,7 +728,7 @@ export class DashboardComponent implements OnInit {
                 .catch(() => ({ items: [] as ConversationSummary[], totalCount: 0, page: 1, pageSize: 4 }))
             : Promise.resolve({ items: [] as ConversationSummary[], totalCount: 0, page: 1, pageSize: 4 }),
           wantsQueue && caps.includes("walk_in_queue")
-            ? client.getTenantQueueFloor().catch(() => null)
+            ? client.getTenantQueueFloor(locationQueryId).catch(() => null)
             : Promise.resolve(null),
           wantsQuotes && caps.includes("quotes")
             ? client.listTenantQuotes().catch(() => [] as QuoteRequestResponse[])

@@ -53,3 +53,6 @@ export function resolveReportExportLocationId(options: {
   }
   return defaultBranchLocationId(active);
 }
+
+/** Same resolution as report exports — optional `locationId` for tenant list/dashboard APIs. */
+export const resolveTenantApiLocationId = resolveReportExportLocationId;

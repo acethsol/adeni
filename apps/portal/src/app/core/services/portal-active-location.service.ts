@@ -176,6 +176,11 @@ export class PortalActiveLocationService {
   }
 
   /** Prefer active shell branch; fall back to primary / first location on profile. */
+  /** Optional `locationId` query for tenant list/dashboard APIs (same rules as exports). */
+  tenantApiLocationId(entitlements: TenantEntitlements | null | undefined): string | undefined {
+    return this.reportExportLocationId(entitlements);
+  }
+
   resolveContextLocation(
     profile: BusinessProfile | null | undefined,
   ): BusinessLocation | null {
