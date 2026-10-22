@@ -1,0 +1,166 @@
+import type { MessageTree } from "../types";
+
+/** Hand-written keys for copy built from TS expressions (confirm dialogs, plurals, status maps, module constants). */
+export const enExtras2: MessageTree = {
+  common: {
+    monthNames: {
+      january: "January",
+      february: "February",
+      march: "March",
+      april: "April",
+      may: "May",
+      june: "June",
+      july: "July",
+      august: "August",
+      september: "September",
+      october: "October",
+      november: "November",
+      december: "December",
+    },
+  },
+  portal: {
+    availability: {
+      closedDatesSavedConflictsOne: "Closed dates saved. {count} existing booking falls in this range — not cancelled. Review Bookings.",
+      closedDatesSavedConflictsMany: "Closed dates saved. {count} existing bookings fall in this range — not cancelled. Review Bookings.",
+    },
+    bookings: {
+      rejectConfirm: "Reject {service} on {time}? The customer will be notified.",
+      exportPdfUnavailable: "Not available for bookings register",
+    },
+    locations: {
+      deleteConfirm: "Delete “{name}”? It will no longer appear on your public page.",
+    },
+    payments: {
+      refundConfirm: "Refund {amount}? This cannot be undone from Adeni.",
+      exportSalesSummaryCsv: "Sales summary CSV",
+      exportSalesSummaryPdf: "Sales summary PDF",
+      exportStaffPayoutsCsv: "Staff payouts CSV",
+      exportStaffPayoutsExcel: "Staff payouts Excel",
+    },
+    profile: {
+      whatsAppShareText: "Book {name} on Adeni:\n{url}",
+      whatsAppShareFallbackName: "us",
+    },
+    staff: {
+      hourCountOne: "{count} hour",
+      hourCountMany: "{count} hours",
+      minuteCount: "{count} min",
+      totalDuration: "Total: {duration}",
+      rosterCsvOnly: "Staff roster is CSV only",
+      statusRejected: "Rejected",
+      statusCancelled: "Cancelled",
+      statusUnknown: "Unknown",
+    },
+    dashboard: {
+      revenueHintListPrice: "List price — scheduled & in-progress visits (not cash in bank)",
+      ratingNew: "New",
+      ratingNoReviews: "No reviews yet",
+      collectedOnlineIn: "Collected online in {range}",
+      bookedListValueIn: "Booked list value in {range} (not cash in bank)",
+    },
+    kiosk: {
+      checkInTitle: "Check in",
+    },
+    acceptInvite: {
+      signInThenAccept: "Sign in, then accept to join this business without creating a new one.",
+      signInThenAcceptDev: "Sign in (or use the staff Dev sub), then accept to join this business without creating a new one.",
+    },
+    services: {
+      allSections: "All sections",
+    },
+    plan: {
+      taglineStarter: "Get bookable",
+      taglineProfessional: "Run & grow",
+      taglineBusiness: "Scale operations",
+      billingEventPlanActivated: "Plan activated",
+      billingEventMonthlySubscription: "Monthly subscription",
+      billingEventPaymentFailed: "Payment failed",
+      billingEventSubscriptionCanceled: "Subscription canceled",
+    },
+  },
+  admin: {
+    dashboard: {
+      pageDescription: "Verification queue, markets, and tenant directory at a glance.",
+      ageJustNow: "Just now",
+      ageMinutes: "{count}m ago",
+      ageHours: "{count}h ago",
+      ageOneDay: "1 day ago",
+      ageDays: "{count} days ago",
+    },
+    insights: {
+      window5Years: "Last 5 years",
+      window12Months: "Last 12 months",
+      pageDescription: "Platform-side subscription revenue and commerce fees — not customer wallet balances.",
+      noEarningsInWindow: "No platform earnings in the {window} yet.",
+      earningsBoth: "{saas} subscription revenue · {fees} in platform fees.",
+      earningsSaasOnly: "{saas} in subscription revenue ({window}).",
+      earningsFeesOnly: "{fees} in platform fees ({window}).",
+      tenantsPastDue: "{count} tenant(s) past due — follow up in billing.",
+      tenantsOnTrial: "{count} on trial; no paying Pro/Business tenants yet.",
+      payingTenants: "{count} paying tenant(s) · commerce checkouts included below.",
+    },
+    pricing: {
+      entitlementYes: "Yes",
+      entitlementNo: "No",
+      entitlementUnlimited: "Unlimited",
+      entitlementMultiple: "Multiple",
+    },
+    subscriptionWizard: {
+      planLabel: "Plan",
+      planTitle: "Product SKU",
+      planLede: "Starter, Professional, or Business — entitlements and country list pricing. No perpetual free plan; use trial or suspend instead.",
+      billingLabel: "Billing",
+      billingTitle: "Billing & trial",
+      billingLede: "Subscription billing state and optional trial before the tenant is charged.",
+      pricingLabel: "Pricing",
+      pricingTitle: "Overrides",
+      pricingLede: "Discounts, negotiated monthly price, and an audit note for compliance.",
+      reviewLabel: "Review",
+      reviewTitle: "Review changes",
+      reviewLede: "Confirm everything before updating this tenant.",
+    },
+    businesses: {
+      subscriptionUpdatedSku: "Subscription updated ({sku}).",
+    },
+  },
+  discover: {
+    plan: {
+      taglineStarter: "Get bookable",
+      taglineProfessional: "Run & grow",
+      taglineBusiness: "Scale operations",
+    },
+    business: {
+      seoBookDescription: "Book {category} in {area}.",
+      seoVerifiedDescription: "Verified {category} in {area}.",
+    },
+    map: {
+      loadFailed: "Map couldn’t load. Check your connection and refresh.",
+    },
+    heroStage: {
+      shortMassage: "Massage",
+      shortSpa: "Spa",
+      shortHair: "Hair",
+      shortNails: "Nails",
+      shortSkincare: "Skincare",
+      shortFitness: "Fitness",
+      shortYoga: "Yoga",
+      shortPilates: "Pilates",
+    },
+  },
+  ui: {
+    ui: {
+      exportLabel: "Export",
+      wizardSteps: "Steps",
+      listPages: "List pages",
+      itemSingular: "item",
+      itemPlural: "items",
+      searchPlaceholder: "Search",
+      viewCards: "Cards",
+      viewList: "List",
+      viewModeTitle: "{mode} view",
+      presetRecommended: "Recommended for you",
+      presetCurrentLayout: "Current layout",
+      presetIncludedWidgets: "Included widgets",
+    },
+  },
+};

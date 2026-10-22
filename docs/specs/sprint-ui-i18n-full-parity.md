@@ -6,7 +6,7 @@
 |-------|-------|
 | **Sprint** | UI i18n — full parity (cross-cutting, no new sprint number) |
 | **Author** | Cursor agent |
-| **Status** | In progress (Phase 0 + mechanical sweep done; manual tail tracked in §9) |
+| **Status** | In progress (Phase 0, two mechanical sweeps, and manual constants/expressions done; residual tail in §9) |
 | **Created** | 2026-10-22 |
 
 ---
@@ -93,8 +93,16 @@ No HTTP contract change. Client-side contract:
 
 - [x] API client uses the active locale (reactive getter).
 - [x] fr parity for all `ErrorCodes.cs` codes and for every new key (enforced by test).
-- [ ] No user-facing English hardcoded in TS/HTML except dev-gated diagnostics — **see status report in the PR/commit notes for the remaining manual tail**; run
+- [ ] No user-facing English hardcoded in TS/HTML except dev-gated diagnostics — ~1,600 strings migrated; residual tail listed below. Re-check with
   `rg -n "error\.set\(\s*[\"'\`]|feedback\.(success|error|info)\(\s*[\"'\`]"` and the template scanners used in this PR to re-check.
+
+**Residual tail (not yet migrated):**
+
+- Shared product catalog copy in `@adeni/shared` that is English-only: `PLAN_COMPARISON`, `PLAN_ADMIN_MATRIX_ROW_DEFS` labels/notes, `getPlanDisplayForCountry().description`, `SUBSCRIPTION_SKU_LABELS` (plan names kept as proper nouns).
+- Template fragments where text sits next to `{{ }}` (e.g. "Oldest {{ age }}"); `signal("...")` defaults are snapshotted at construction (not live on mid-page locale switch).
+- Route `title` strings in `app.routes.ts`, SEO JSON-LD strings, `new Error("...")` messages never shown to users, `confirm-service` defaults, realtime service status strings.
+- Wizard `lede`/step copy in portal/discover booking flows outside the files listed in the commits; remaining `validation.*` keys (no `validation.*` namespace was added; validation messages reuse `errors.*`/page keys).
+- Not UI: SignalR hub method names, `Africa/Lagos`-style timezone ids, brand name "Adeni".
 
 Dev-only English (intentional): portal staff-invite dev hint, `accept-invite` dev Auth0-sub field label, admin `setup` page (Auth0 configuration instructions for engineers), `Local dev session` labels.
 

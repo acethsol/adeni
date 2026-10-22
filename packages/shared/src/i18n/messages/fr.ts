@@ -1,6 +1,7 @@
 import { mergeMessageTrees, type Messages } from "../types";
 import { frCatalog } from "./catalog-fr";
 import { frExtras } from "./extras-fr";
+import { frExtras2 } from "./extras2-fr";
 import { frErrorMessages } from "../errors";
 
 const frBase: Messages = {
@@ -587,4 +588,4 @@ const frBase: Messages = {
 };
 
 /** Base hand-written copy + generated catalog + extras; keys must not collide (merge throws). */
-export const frMessages: Messages = mergeMessageTrees(frBase, frCatalog, frExtras);
+export const frMessages: Messages = mergeMessageTrees(frBase, frCatalog, frExtras, frExtras2);

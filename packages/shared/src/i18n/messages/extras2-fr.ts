@@ -1,0 +1,166 @@
+import type { MessageTree } from "../types";
+
+/** French mirror of `extras2-en.ts` — keep key structure identical. */
+export const frExtras2: MessageTree = {
+  common: {
+    monthNames: {
+      january: "janvier",
+      february: "février",
+      march: "mars",
+      april: "avril",
+      may: "mai",
+      june: "juin",
+      july: "juillet",
+      august: "août",
+      september: "septembre",
+      october: "octobre",
+      november: "novembre",
+      december: "décembre",
+    },
+  },
+  portal: {
+    availability: {
+      closedDatesSavedConflictsOne: "Dates de fermeture enregistrées. {count} réservation existante tombe dans cette période — non annulée. Consultez les réservations.",
+      closedDatesSavedConflictsMany: "Dates de fermeture enregistrées. {count} réservations existantes tombent dans cette période — non annulées. Consultez les réservations.",
+    },
+    bookings: {
+      rejectConfirm: "Refuser {service} le {time} ? Le client sera averti.",
+      exportPdfUnavailable: "Non disponible pour le registre des réservations",
+    },
+    locations: {
+      deleteConfirm: "Supprimer « {name} » ? Cet emplacement n’apparaîtra plus sur votre page publique.",
+    },
+    payments: {
+      refundConfirm: "Rembourser {amount} ? Cette action ne peut pas être annulée depuis Adeni.",
+      exportSalesSummaryCsv: "Résumé des ventes (CSV)",
+      exportSalesSummaryPdf: "Résumé des ventes (PDF)",
+      exportStaffPayoutsCsv: "Paiements du personnel (CSV)",
+      exportStaffPayoutsExcel: "Paiements du personnel (Excel)",
+    },
+    profile: {
+      whatsAppShareText: "Réservez chez {name} sur Adeni :\n{url}",
+      whatsAppShareFallbackName: "nous",
+    },
+    staff: {
+      hourCountOne: "{count} heure",
+      hourCountMany: "{count} heures",
+      minuteCount: "{count} min",
+      totalDuration: "Total : {duration}",
+      rosterCsvOnly: "La liste du personnel est disponible en CSV uniquement",
+      statusRejected: "Refusée",
+      statusCancelled: "Annulée",
+      statusUnknown: "Inconnu",
+    },
+    dashboard: {
+      revenueHintListPrice: "Prix catalogue — visites planifiées et en cours (pas de l’argent en banque)",
+      ratingNew: "Nouveau",
+      ratingNoReviews: "Aucun avis pour l’instant",
+      collectedOnlineIn: "Encaissé en ligne ({range})",
+      bookedListValueIn: "Valeur catalogue réservée ({range}, pas de l’argent en banque)",
+    },
+    kiosk: {
+      checkInTitle: "Enregistrement",
+    },
+    acceptInvite: {
+      signInThenAccept: "Connectez-vous, puis acceptez pour rejoindre cette entreprise sans en créer une nouvelle.",
+      signInThenAcceptDev: "Connectez-vous (ou utilisez le sub Dev du personnel), puis acceptez pour rejoindre cette entreprise sans en créer une nouvelle.",
+    },
+    services: {
+      allSections: "Toutes les sections",
+    },
+    plan: {
+      taglineStarter: "Soyez réservable",
+      taglineProfessional: "Gérez et développez",
+      taglineBusiness: "Passez à l’échelle",
+      billingEventPlanActivated: "Forfait activé",
+      billingEventMonthlySubscription: "Abonnement mensuel",
+      billingEventPaymentFailed: "Paiement échoué",
+      billingEventSubscriptionCanceled: "Abonnement annulé",
+    },
+  },
+  admin: {
+    dashboard: {
+      pageDescription: "File de vérification, marchés et annuaire des entreprises en un coup d’œil.",
+      ageJustNow: "À l’instant",
+      ageMinutes: "il y a {count} min",
+      ageHours: "il y a {count} h",
+      ageOneDay: "il y a 1 jour",
+      ageDays: "il y a {count} jours",
+    },
+    insights: {
+      window5Years: "5 dernières années",
+      window12Months: "12 derniers mois",
+      pageDescription: "Revenus d’abonnement et frais de commerce côté plateforme — pas les soldes de portefeuille des clients.",
+      noEarningsInWindow: "Aucun revenu de plateforme pour la période : {window}.",
+      earningsBoth: "{saas} de revenus d’abonnement · {fees} de frais de plateforme.",
+      earningsSaasOnly: "{saas} de revenus d’abonnement ({window}).",
+      earningsFeesOnly: "{fees} de frais de plateforme ({window}).",
+      tenantsPastDue: "{count} entreprise(s) en retard de paiement — relancez dans la facturation.",
+      tenantsOnTrial: "{count} en essai ; aucune entreprise payante Pro/Business pour l’instant.",
+      payingTenants: "{count} entreprise(s) payante(s) · les paiements commerce sont inclus ci-dessous.",
+    },
+    pricing: {
+      entitlementYes: "Oui",
+      entitlementNo: "Non",
+      entitlementUnlimited: "Illimité",
+      entitlementMultiple: "Plusieurs",
+    },
+    subscriptionWizard: {
+      planLabel: "Forfait",
+      planTitle: "Référence produit",
+      planLede: "Starter, Professional ou Business — droits et tarifs par pays. Aucun forfait gratuit permanent ; utilisez l’essai ou la suspension.",
+      billingLabel: "Facturation",
+      billingTitle: "Facturation et essai",
+      billingLede: "État de facturation de l’abonnement et essai facultatif avant que l’entreprise ne soit facturée.",
+      pricingLabel: "Tarifs",
+      pricingTitle: "Remplacements",
+      pricingLede: "Remises, prix mensuel négocié et note d’audit pour la conformité.",
+      reviewLabel: "Révision",
+      reviewTitle: "Réviser les modifications",
+      reviewLede: "Confirmez tout avant de mettre à jour cette entreprise.",
+    },
+    businesses: {
+      subscriptionUpdatedSku: "Abonnement mis à jour ({sku}).",
+    },
+  },
+  discover: {
+    plan: {
+      taglineStarter: "Soyez réservable",
+      taglineProfessional: "Gérez et développez",
+      taglineBusiness: "Passez à l’échelle",
+    },
+    business: {
+      seoBookDescription: "Réservez {category} à {area}.",
+      seoVerifiedDescription: "{category} vérifié à {area}.",
+    },
+    map: {
+      loadFailed: "La carte n’a pas pu se charger. Vérifiez votre connexion et actualisez.",
+    },
+    heroStage: {
+      shortMassage: "Massage",
+      shortSpa: "Spa",
+      shortHair: "Coiffure",
+      shortNails: "Ongles",
+      shortSkincare: "Soins de la peau",
+      shortFitness: "Fitness",
+      shortYoga: "Yoga",
+      shortPilates: "Pilates",
+    },
+  },
+  ui: {
+    ui: {
+      exportLabel: "Exporter",
+      wizardSteps: "Étapes",
+      listPages: "Pages de la liste",
+      itemSingular: "élément",
+      itemPlural: "éléments",
+      searchPlaceholder: "Rechercher",
+      viewCards: "Cartes",
+      viewList: "Liste",
+      viewModeTitle: "Vue {mode}",
+      presetRecommended: "Recommandé pour vous",
+      presetCurrentLayout: "Disposition actuelle",
+      presetIncludedWidgets: "Widgets inclus",
+    },
+  },
+};
