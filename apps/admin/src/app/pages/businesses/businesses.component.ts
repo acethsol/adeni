@@ -319,7 +319,7 @@ export class AdminBusinessesComponent {
       await this.load();
       this.feedback.success(
         skuChanged
-          ? `Subscription updated (${formatSubscriptionSku(draft.subscriptionSku)}).`
+          ? this.tr("admin.businesses.subscriptionUpdatedSku", { sku: formatSubscriptionSku(draft.subscriptionSku) })
           : this.tr("admin.businesses.subscriptionUpdated"),
         business.name,
       );

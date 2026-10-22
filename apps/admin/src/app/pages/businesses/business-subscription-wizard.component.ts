@@ -24,32 +24,7 @@ import {
   type BusinessSubscriptionDraft,
 } from "./business-subscription.model";
 
-const STEPS: AdeniWizardStep[] = [
-  {
-    id: "plan",
-    label: "Plan",
-    title: "Product SKU",
-    lede: "Starter, Professional, or Business — entitlements and country list pricing. No perpetual free plan; use trial or suspend instead.",
-  },
-  {
-    id: "billing",
-    label: "Billing",
-    title: "Billing & trial",
-    lede: "Subscription billing state and optional trial before the tenant is charged.",
-  },
-  {
-    id: "pricing",
-    label: "Pricing",
-    title: "Overrides",
-    lede: "Discounts, negotiated monthly price, and an audit note for compliance.",
-  },
-  {
-    id: "review",
-    label: "Review",
-    title: "Review changes",
-    lede: "Confirm everything before updating this tenant.",
-  },
-];
+const STEP_IDS = ["plan", "billing", "pricing", "review"] as const;
 
 @Component({
   selector: "app-business-subscription-wizard",
@@ -75,9 +50,16 @@ export class BusinessSubscriptionWizardComponent {
   readonly save = output<void>();
   readonly draftChange = output<Partial<BusinessSubscriptionDraft>>();
 
-  readonly wizardStep = signal(STEPS[0].id);
+  readonly wizardStep = signal<string>(STEP_IDS[0]);
 
-  readonly steps = STEPS;
+  readonly steps = computed<AdeniWizardStep[]>(() =>
+    STEP_IDS.map((id) => ({
+      id,
+      label: this.tr(`admin.subscriptionWizard.${id}Label`),
+      title: this.tr(`admin.subscriptionWizard.${id}Title`),
+      lede: this.tr(`admin.subscriptionWizard.${id}Lede`),
+    })),
+  );
   readonly skus = SUBSCRIPTION_SKUS;
   readonly formatSubscriptionSku = formatSubscriptionSku;
   readonly billingStatuses: TenantBillingStatus[] = [
@@ -89,12 +71,12 @@ export class BusinessSubscriptionWizardComponent {
   ];
 
   readonly stepIndex = computed(() => {
-    const idx = STEPS.findIndex((s) => s.id === this.wizardStep());
+    const idx = STEP_IDS.findIndex((id) => id === this.wizardStep());
     return idx >= 0 ? idx : 0;
   });
 
   readonly isFirstStep = computed(() => this.stepIndex() === 0);
-  readonly isLastStep = computed(() => this.stepIndex() === STEPS.length - 1);
+  readonly isLastStep = computed(() => this.stepIndex() === STEP_IDS.length - 1);
 
   readonly tenantStatusPill = tenantStatusPill;
   readonly businessPlanPill = businessPlanPill;
@@ -160,19 +142,19 @@ export class BusinessSubscriptionWizardComponent {
   back(): void {
     const idx = this.stepIndex();
     if (idx > 0) {
-      this.wizardStep.set(STEPS[idx - 1].id);
+      this.wizardStep.set(STEP_IDS[idx - 1]);
     }
   }
 
   next(): void {
     const idx = this.stepIndex();
-    if (idx < STEPS.length - 1) {
-      this.wizardStep.set(STEPS[idx + 1].id);
+    if (idx < STEP_IDS.length - 1) {
+      this.wizardStep.set(STEP_IDS[idx + 1]);
     }
   }
 
   onClose(): void {
-    this.wizardStep.set(STEPS[0].id);
+    this.wizardStep.set(STEP_IDS[0]);
     this.closed.emit();
   }
 }

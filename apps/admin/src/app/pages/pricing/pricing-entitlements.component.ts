@@ -28,14 +28,17 @@ type EntitlementMatrixRow = {
   adminNote?: string;
 };
 
-function formatLimitValue(key: keyof PlanEntitlementSeed, value: number | null): string {
+type Tr = (key: string) => string;
+
+function formatLimitValue(tr: Tr, key: keyof PlanEntitlementSeed, value: number | null): string {
   if (value == null) {
-    return key === "maxLocations" ? "Multiple" : "Unlimited";
+    return tr(key === "maxLocations" ? "admin.pricing.entitlementMultiple" : "admin.pricing.entitlementUnlimited");
   }
   return String(value);
 }
 
 function formatEntitlementCell(
+  tr: Tr,
   sku: SubscriptionSku,
   key: keyof PlanEntitlementSeed,
   kind: "limit" | "flag",
@@ -43,20 +46,20 @@ function formatEntitlementCell(
   const seed = PLAN_ENTITLEMENTS[sku];
   const raw = seed[key];
   if (kind === "limit") {
-    return formatLimitValue(key, raw as number | null);
+    return formatLimitValue(tr, key, raw as number | null);
   }
-  return raw ? "Yes" : "No";
+  return tr(raw ? "admin.pricing.entitlementYes" : "admin.pricing.entitlementNo");
 }
 
-function buildMatrixRows(): EntitlementMatrixRow[] {
+function buildMatrixRows(tr: Tr): EntitlementMatrixRow[] {
   return PLAN_ADMIN_MATRIX_ROW_DEFS.map((def) => ({
     rowKey: def.key,
     label: def.label,
     kind: def.kind,
     adminNote: def.adminNote,
-    starter: formatEntitlementCell("starter", def.key, def.kind),
-    professional: formatEntitlementCell("professional", def.key, def.kind),
-    business: formatEntitlementCell("business", def.key, def.kind),
+    starter: formatEntitlementCell(tr, "starter", def.key, def.kind),
+    professional: formatEntitlementCell(tr, "professional", def.key, def.kind),
+    business: formatEntitlementCell(tr, "business", def.key, def.kind),
   }));
 }
 
@@ -77,7 +80,7 @@ function buildMatrixRows(): EntitlementMatrixRow[] {
 export class AdminPricingEntitlementsComponent {
   protected readonly tr = injectAdeniTranslate();
   readonly searchText = signal("");
-  readonly matrixRows = signal<EntitlementMatrixRow[]>(buildMatrixRows());
+  readonly matrixRows = computed<EntitlementMatrixRow[]>(() => buildMatrixRows(this.tr));
 
   readonly filteredRows = computed(() => {
     const query = this.searchText().trim().toLowerCase();
@@ -109,7 +112,7 @@ export class AdminPricingEntitlementsComponent {
     if (kind === "limit") {
       return "neutral";
     }
-    if (value === "Yes") {
+    if (value === this.tr("admin.pricing.entitlementYes")) {
       return "success";
     }
     return "neutral";

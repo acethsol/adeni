@@ -18,7 +18,7 @@
         </div>
 
         <adeni-wizard
-        [steps]="steps"
+        [steps]="steps()"
         [activeId]="wizardStep()"
         [ariaLabel]="tr('admin.businesses.subscriptionSetup')"
         [allowJump]="true"

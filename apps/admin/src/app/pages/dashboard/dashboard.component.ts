@@ -73,7 +73,7 @@ export class AdminDashboardComponent implements OnInit {
   readonly liveCount = computed(() => this.data().liveMarketCount);
 
   readonly pageDescription = computed(
-    () => "Verification queue, markets, and tenant directory at a glance.",
+    () => this.tr("admin.dashboard.pageDescription"),
   );
 
   readonly headline = computed(() => {
@@ -132,8 +132,7 @@ export class AdminDashboardComponent implements OnInit {
   readonly formatTenantStatus = formatTenantStatus;
   readonly planLabel = (business: AdminBusinessSummary) =>
     formatSubscriptionSku(resolveSubscriptionSku(business.subscriptionSku));
-  readonly ageLabel = ageLabel;
-  readonly shortDate = shortDate;
+    readonly shortDate = shortDate;
 
   ngOnInit(): void {
     void this.load();
@@ -181,26 +180,26 @@ export class AdminDashboardComponent implements OnInit {
       this.loading.set(false);
     }
   }
-}
 
-function ageLabel(iso: string): string {
-  const then = new Date(iso).getTime();
-  if (Number.isNaN(then)) {
-    return "";
+  ageLabel(iso: string): string {
+    const then = new Date(iso).getTime();
+    if (Number.isNaN(then)) {
+      return "";
+    }
+    const minutes = Math.max(0, Math.floor((Date.now() - then) / 60000));
+    if (minutes < 1) {
+      return this.tr("admin.dashboard.ageJustNow");
+    }
+    if (minutes < 60) {
+      return this.tr("admin.dashboard.ageMinutes", { count: minutes });
+    }
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) {
+      return this.tr("admin.dashboard.ageHours", { count: hours });
+    }
+    const days = Math.floor(hours / 24);
+    return days === 1 ? this.tr("admin.dashboard.ageOneDay") : this.tr("admin.dashboard.ageDays", { count: days });
   }
-  const minutes = Math.max(0, Math.floor((Date.now() - then) / 60000));
-  if (minutes < 1) {
-    return "Just now";
-  }
-  if (minutes < 60) {
-    return `${minutes}m ago`;
-  }
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) {
-    return `${hours}h ago`;
-  }
-  const days = Math.floor(hours / 24);
-  return days === 1 ? "1 day ago" : `${days} days ago`;
 }
 
 function shortDate(iso: string): string {

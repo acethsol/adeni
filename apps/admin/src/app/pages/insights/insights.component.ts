@@ -68,11 +68,11 @@ export class AdminInsightsComponent implements OnInit {
   readonly granularity = signal<RevenueGranularity>("month");
 
   readonly windowLabel = computed(() =>
-    this.granularity() === "year" ? "Last 5 years" : "Last 12 months",
+    this.tr(this.granularity() === "year" ? "admin.insights.window5Years" : "admin.insights.window12Months"),
   );
 
   readonly granularityLabel = computed(() =>
-    this.granularity() === "year" ? "Yearly" : "Monthly",
+    this.tr(this.granularity() === "year" ? "admin.insights.yearly" : "admin.insights.monthly"),
   );
 
   readonly mrrRows = computed(() => {
@@ -148,15 +148,15 @@ export class AdminInsightsComponent implements OnInit {
     const saas = this.saasWindowLabel();
     const fees = this.feesWindowLabel();
     if (!saas && !fees) {
-      return `No platform earnings in the ${this.windowLabel().toLowerCase()} yet.`;
+      return this.tr("admin.insights.noEarningsInWindow", { window: this.windowLabel().toLowerCase() });
     }
     if (saas && fees) {
-      return `${saas} subscription revenue · ${fees} in platform fees.`;
+      return this.tr("admin.insights.earningsBoth", { saas, fees });
     }
     if (saas) {
-      return `${saas} in subscription revenue (${this.windowLabel().toLowerCase()}).`;
+      return this.tr("admin.insights.earningsSaasOnly", { saas: saas ?? "", window: this.windowLabel().toLowerCase() });
     }
-    return `${fees} in platform fees (${this.windowLabel().toLowerCase()}).`;
+    return this.tr("admin.insights.earningsFeesOnly", { fees: fees ?? "", window: this.windowLabel().toLowerCase() });
   });
 
   readonly revenueInsight = computed(() => {
@@ -165,15 +165,15 @@ export class AdminInsightsComponent implements OnInit {
       return "";
     }
     if (billing.pastDueTenantCount > 0) {
-      return `${billing.pastDueTenantCount} tenant(s) past due — follow up in billing.`;
+      return this.tr("admin.insights.tenantsPastDue", { count: billing.pastDueTenantCount });
     }
     if (billing.paidTenantCount === 0 && billing.trialingTenantCount > 0) {
-      return `${billing.trialingTenantCount} on trial; no paying Pro/Business tenants yet.`;
+      return this.tr("admin.insights.tenantsOnTrial", { count: billing.trialingTenantCount });
     }
     if (!this.hasCommerceActivity()) {
       return this.tr("admin.insights.commerceGmvQuietSaasSubscription");
     }
-    return `${billing.paidTenantCount} paying tenant(s) · commerce checkouts included below.`;
+    return this.tr("admin.insights.payingTenants", { count: billing.paidTenantCount });
   });
 
   readonly skuMix = computed((): SkuMixRow[] => {
@@ -191,13 +191,13 @@ export class AdminInsightsComponent implements OnInit {
 
   readonly pageDescription = computed(
     () =>
-      "Platform-side subscription revenue and commerce fees — not customer wallet balances.",
+      this.tr("admin.insights.pageDescription"),
   );
 
   readonly formatMoney = formatAmountMinor;
 
   readonly periodLabel = computed(() =>
-    this.granularity() === "year" ? "Yearly" : "Monthly",
+    this.tr(this.granularity() === "year" ? "admin.insights.yearly" : "admin.insights.monthly"),
   );
 
   readonly formatPeriod = (period: string) => formatRevenuePeriod(period, this.granularity());
