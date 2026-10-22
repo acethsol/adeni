@@ -46,6 +46,24 @@ describe("salesSummaryPdfMenuOption", () => {
   });
 });
 
+describe("compensation-style export menu", () => {
+  it("requires Pro for CSV when csvRequiresAdvancedReports is set", () => {
+    const starterItems = buildReportExportMenuItems({
+      entitlements: PLAN_ENTITLEMENTS.starter,
+      xlsx: true,
+      csvRequiresAdvancedReports: true,
+    });
+    expect(starterItems.find((i) => i.format === "csv")?.disabled).toBe(true);
+    const proItems = buildReportExportMenuItems({
+      entitlements: PLAN_ENTITLEMENTS.professional,
+      xlsx: true,
+      csvRequiresAdvancedReports: true,
+    });
+    expect(proItems.find((i) => i.format === "csv")?.disabled).toBe(false);
+    expect(proItems.find((i) => i.format === "xlsx")?.disabled).toBe(false);
+  });
+});
+
 describe("buildAdminReportExportMenuItems", () => {
   it("enables CSV and Excel without PDF", () => {
     const items = buildAdminReportExportMenuItems({ xlsx: true });

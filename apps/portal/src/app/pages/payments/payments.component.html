@@ -119,6 +119,21 @@
           <label>To</label>
           <input type="date" [(ngModel)]="exportTo" />
         </div>
+        @if (showExportLocationPicker()) {
+          <div class="field">
+            <label>Location</label>
+            <select [(ngModel)]="exportLocationId">
+              @for (loc of profile()?.locations ?? []; track loc.id) {
+                @if (loc.isActive) {
+                  <option [value]="loc.id">{{ loc.name || loc.slug }}</option>
+                }
+              }
+            </select>
+            <p class="muted">
+              Exports below use this branch. Upgrade to Business for cross-location reporting.
+            </p>
+          </div>
+        }
 
         <div class="export-block list-row">
           <div>
@@ -132,27 +147,19 @@
           />
         </div>
 
-        <div class="export-block export-block--divider">
-          <h4 class="export-block-title">Staff payouts</h4>
-          <p class="muted">
-            Download tips and commissions for payroll import (CSV or JSON). Adeni does not run payroll.
-          </p>
-          <div class="field">
-            <label>Format</label>
-            <select [(ngModel)]="exportFormat">
-              <option value="csv">CSV</option>
-              <option value="json">JSON</option>
-            </select>
+        <div class="export-block export-block--divider list-row">
+          <div>
+            <h4 class="export-block-title">Staff payouts</h4>
+            <p class="muted">
+              Download tips and commissions for payroll import (CSV; Excel on Pro+). Adeni does not run
+              payroll.
+            </p>
           </div>
-          <button
-            type="button"
-            class="btn btn-primary"
-            [disabled]="exporting || !exportEntitled() || !exportFrom || !exportTo"
-            [title]="exportEntitled() ? '' : 'Upgrade for exports'"
-            (click)="downloadCompensationExport()"
-          >
-            {{ exporting ? "Preparing…" : "Download export" }}
-          </button>
+          <adeni-export-menu
+            label="Export"
+            [items]="compensationExportItems()"
+            (exportSelect)="downloadCompensationExport($event)"
+          />
         </div>
       </section>
     } @else {

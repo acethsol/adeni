@@ -90,8 +90,8 @@ Close the gap between **shipped Notifications and Reporting code** and **staging
 
 - [x] **R-U1** — Wire **sales-summary** export (`csv` / `pdf`) via `adeni-export-menu` on **Finance → Staff export** (not dashboard); shared from/to date range on that tab
 - [x] **R-U2** — Authenticated PDF: `downloadBillingDocumentPdf()` in `@adeni/api-client` + **Download PDF** on Finance Documents (not public View only)
-- [ ] **R-U3** — Multi-location: location filter on export flows or single-location auto-pass; map 403 to upgrade copy
-- [ ] **R-U4** — Finance Staff export tab → shared export menu + xlsx when `excelExport` (drop fake json)
+- [x] **R-U3** — Multi-location: location filter on export flows or single-location auto-pass; map 403 to upgrade copy
+- [x] **R-U4** — Finance Staff export tab → shared export menu + xlsx when `excelExport` (drop fake json)
 - [x] **R-U5** — `advancedReports` helper + PDF disabled hints on export menus
 
 ### 4.3 Staging audit (R-O1–O2)

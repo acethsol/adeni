@@ -2,8 +2,10 @@ import { Component, computed, inject, signal } from "@angular/core";
 import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
+import { AdeniApiError } from "@adeni/api-client";
 import type {
   BookingResponse,
+  BusinessLocation,
   KioskStatusResponse,
   TenantBookingListTab,
   TenantEntitlements,
@@ -18,6 +20,9 @@ import {
   REPORT_KEYS,
   buildReportExportMenuItems,
   mergeTenantEntitlements,
+  needsReportExportLocationPicker,
+  resolveReportExportLocationId,
+  tenantReportExportErrorMessage,
   totalPages as computeTotalPages,
   type ReportExportFormat,
 } from "@adeni/shared";
@@ -118,6 +123,12 @@ export class BookingsComponent {
 
   readonly exporting = signal(false);
   readonly planEntitlements = signal<TenantEntitlements | null>(null);
+  readonly exportLocations = signal<BusinessLocation[]>([]);
+  exportLocationId = "";
+
+  readonly showExportLocationPicker = computed(() =>
+    needsReportExportLocationPicker(this.exportLocations(), this.planEntitlements()),
+  );
 
   readonly exportItems = computed((): AdeniExportMenuItem[] =>
     buildReportExportMenuItems({
@@ -324,6 +335,15 @@ export class BookingsComponent {
         this.planEntitlements.set(
           mergeTenantEntitlements(entitlements, usage?.entitlements, profile?.entitlements),
         );
+        this.exportLocations.set(profile?.locations ?? []);
+        const resolvedLocationId = resolveReportExportLocationId({
+          locations: profile?.locations,
+          entitlements: this.planEntitlements(),
+          selectedLocationId: this.exportLocationId || null,
+        });
+        if (resolvedLocationId) {
+          this.exportLocationId = resolvedLocationId;
+        }
         this.bookings.set(bookingsPage.items);
         this.totalCount.set(bookingsPage.totalCount);
         this.page.set(bookingsPage.page);
@@ -559,6 +579,11 @@ export class BookingsComponent {
           from: from.toISOString(),
           to: to.toISOString(),
           format,
+          locationId: resolveReportExportLocationId({
+            locations: this.exportLocations(),
+            entitlements: this.planEntitlements(),
+            selectedLocationId: this.exportLocationId,
+          }),
         }),
       );
       const url = URL.createObjectURL(blob);
@@ -567,8 +592,14 @@ export class BookingsComponent {
       anchor.download = `bookings-register.${format === "xlsx" ? "xlsx" : "csv"}`;
       anchor.click();
       URL.revokeObjectURL(url);
-    } catch {
-      this.error.set("Could not download the bookings export.");
+    } catch (err) {
+      this.error.set(
+        tenantReportExportErrorMessage("en", {
+          code: err instanceof AdeniApiError ? err.code : undefined,
+          message: err instanceof AdeniApiError ? err.message : undefined,
+          fallback: "Could not download the bookings export.",
+        }),
+      );
     } finally {
       this.exporting.set(false);
     }

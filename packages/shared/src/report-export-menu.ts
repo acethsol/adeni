@@ -18,19 +18,27 @@ export function buildReportExportMenuItems(options: {
   csv?: boolean;
   xlsx?: boolean;
   pdf?: boolean | { disabled: boolean; hint?: string };
+  /** When true, CSV/XLSX require `advancedReports` (e.g. compensation export). */
+  csvRequiresAdvancedReports?: boolean;
   labels?: Partial<Record<ReportExportFormat, string>>;
 }): ReportExportMenuItemConfig[] {
   const entitlements = options.entitlements ?? null;
   const basic = hasBasicExportsEntitlement(entitlements);
+  const advanced = hasAdvancedReportsEntitlement(entitlements);
   const excel = hasExcelExportEntitlement(entitlements);
+  const csvTierOk = options.csvRequiresAdvancedReports ? advanced : basic;
   const items: ReportExportMenuItemConfig[] = [];
 
   if (options.csv !== false) {
     items.push({
       format: "csv",
       label: options.labels?.csv ?? "CSV (.csv)",
-      disabled: !basic,
-      hint: basic ? undefined : "Upgrade for exports",
+      disabled: !csvTierOk,
+      hint: csvTierOk
+        ? undefined
+        : options.csvRequiresAdvancedReports
+          ? "Pro plan required for this export"
+          : "Upgrade for exports",
     });
   }
 
@@ -38,9 +46,11 @@ export function buildReportExportMenuItems(options: {
     items.push({
       format: "xlsx",
       label: options.labels?.xlsx ?? "Excel (.xlsx)",
-      disabled: !basic || !excel,
-      hint: !basic
-        ? "Upgrade for exports"
+      disabled: !csvTierOk || !excel,
+      hint: !csvTierOk
+        ? options.csvRequiresAdvancedReports
+          ? "Pro plan required for this export"
+          : "Upgrade for exports"
         : excel
           ? undefined
           : "Pro plan required for Excel",

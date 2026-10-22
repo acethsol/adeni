@@ -63,7 +63,8 @@ export const enErrorMessages: MessageTree = {
     sms: "SMS notifications are not included on your current plan.",
     exports: "Exports are not included on your current plan.",
     excel_export: "Excel export is not included on your current plan.",
-    multi_location_reporting: "Cross-location reporting is not included on your current plan.",
+    multi_location_reporting:
+      "Cross-location reporting requires the Business plan. Choose a location to export one branch, or upgrade for all locations.",
   },
   reporting: {
     report_not_found: "That report is not available.",
@@ -126,6 +127,10 @@ export const frErrorMessages: MessageTree = {
   },
   permission: {
     denied: "Vous n'avez pas l'autorisation d'effectuer cette action.",
+  },
+  entitlements: {
+    multi_location_reporting:
+      "Les rapports multi-succursales nécessitent le forfait Business. Choisissez un emplacement pour une succursale, ou passez à un forfait supérieur pour tous les emplacements.",
   },
   list: {
     sort_invalid: "Cette colonne ne peut pas servir à trier cette liste.",

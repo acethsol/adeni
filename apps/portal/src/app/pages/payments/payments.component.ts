@@ -1,4 +1,5 @@
 import { Component, computed, inject, OnDestroy, OnInit, signal } from "@angular/core";
+import { AdeniApiError } from "@adeni/api-client";
 import { Subscription } from "rxjs";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
@@ -13,14 +14,16 @@ import type {
 import {
   DEFAULT_PAGE_SIZE,
   formatPrice,
-  hasBasicExportsEntitlement,
   hasCapability,
   LIST_PAGE_SIZE_OPTIONS,
   REPORT_KEYS,
   buildReportExportMenuItems,
+  needsReportExportLocationPicker,
   resolvePaymentCheckoutUrl,
   mergeTenantEntitlements,
+  resolveReportExportLocationId,
   salesSummaryPdfMenuOption,
+  tenantReportExportErrorMessage,
   type ReportExportFormat,
 } from "@adeni/shared";
 import {
@@ -71,8 +74,8 @@ export class PaymentsComponent implements OnInit, OnDestroy {
 
   exportFrom = "";
   exportTo = "";
-  exportFormat: "csv" | "json" = "csv";
-  exporting = false;
+  exportLocationId = "";
+  compensationExporting = false;
   salesSummaryExporting = false;
 
   readonly planEntitlements = signal<TenantEntitlements | null>(null);
@@ -85,11 +88,23 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     }),
   );
 
+  readonly compensationExportItems = computed((): AdeniExportMenuItem[] =>
+    buildReportExportMenuItems({
+      entitlements: this.planEntitlements(),
+      xlsx: true,
+      csvRequiresAdvancedReports: true,
+      labels: { csv: "Staff payouts CSV", xlsx: "Staff payouts Excel" },
+    }),
+  );
+
+  readonly showExportLocationPicker = computed(() =>
+    needsReportExportLocationPicker(this.profile()?.locations, this.planEntitlements()),
+  );
+
   readonly loading = signal(true);
   readonly creating = signal(false);
   readonly error = signal<string | null>(null);
   readonly profile = signal<BusinessProfile | null>(null);
-  readonly exportEntitled = signal(true);
   readonly ledger = signal<PaymentLedgerEntry[]>([]);
   readonly ledgerTotalCount = signal(0);
   readonly ledgerPage = signal(1);
@@ -149,7 +164,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
           profile.entitlements,
         );
         this.planEntitlements.set(mergedEntitlements);
-        this.exportEntitled.set(hasBasicExportsEntitlement(mergedEntitlements));
+        this.syncDefaultExportLocation();
         const ledgerPage = await c.listPaymentLedger(
           profile.tenantId,
           this.ledgerPage(),
@@ -256,6 +271,25 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     void this.load();
   }
 
+  syncDefaultExportLocation(): void {
+    const resolved = resolveReportExportLocationId({
+      locations: this.profile()?.locations,
+      entitlements: this.planEntitlements(),
+      selectedLocationId: this.exportLocationId || null,
+    });
+    if (resolved) {
+      this.exportLocationId = resolved;
+    }
+  }
+
+  private reportExportLocationId(): string | undefined {
+    return resolveReportExportLocationId({
+      locations: this.profile()?.locations,
+      entitlements: this.planEntitlements(),
+      selectedLocationId: this.exportLocationId,
+    });
+  }
+
   async downloadSalesSummaryExport(format: ReportExportFormat): Promise<void> {
     if (!this.exportFrom || !this.exportTo) {
       this.error.set("Choose a date range for the export.");
@@ -273,6 +307,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
           from,
           to,
           format,
+          locationId: this.reportExportLocationId(),
         }),
       );
       const url = URL.createObjectURL(blob);
@@ -281,43 +316,58 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       anchor.download = `sales-summary-${this.exportFrom}-${this.exportTo}.${format === "pdf" ? "pdf" : "csv"}`;
       anchor.click();
       URL.revokeObjectURL(url);
-    } catch {
-      this.error.set("Could not download sales summary export.");
+    } catch (err) {
+      this.error.set(
+        tenantReportExportErrorMessage("en", {
+          code: err instanceof AdeniApiError ? err.code : undefined,
+          message: err instanceof AdeniApiError ? err.message : undefined,
+          fallback: "Could not download sales summary export.",
+        }),
+      );
     } finally {
       this.salesSummaryExporting = false;
     }
   }
 
-  async downloadCompensationExport(): Promise<void> {
-    const profile = this.profile();
-    if (!profile || !this.exportFrom || !this.exportTo) {
+  async downloadCompensationExport(format: ReportExportFormat): Promise<void> {
+    if (format === "pdf") {
+      return;
+    }
+    if (!this.profile() || !this.exportFrom || !this.exportTo) {
       this.error.set("Choose a date range for the export.");
       return;
     }
 
-    this.exporting = true;
+    this.compensationExporting = true;
     this.error.set(null);
     try {
       const from = new Date(`${this.exportFrom}T00:00:00.000Z`).toISOString();
       const to = new Date(`${this.exportTo}T23:59:59.999Z`).toISOString();
       const blob = await this.api.withAuthorizedClient((c) =>
         c.downloadTenantReportExport({
-          reportKey: "compensation",
+          reportKey: REPORT_KEYS.compensation,
           from,
           to,
-          format: this.exportFormat === "json" ? "csv" : this.exportFormat,
+          format,
+          locationId: this.reportExportLocationId(),
         }),
       );
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = `compensation-${this.exportFrom}-${this.exportTo}.${this.exportFormat}`;
+      anchor.download = `compensation-${this.exportFrom}-${this.exportTo}.${format === "xlsx" ? "xlsx" : "csv"}`;
       anchor.click();
       URL.revokeObjectURL(url);
-    } catch {
-      this.error.set("Could not download compensation export.");
+    } catch (err) {
+      this.error.set(
+        tenantReportExportErrorMessage("en", {
+          code: err instanceof AdeniApiError ? err.code : undefined,
+          message: err instanceof AdeniApiError ? err.message : undefined,
+          fallback: "Could not download compensation export.",
+        }),
+      );
     } finally {
-      this.exporting = false;
+      this.compensationExporting = false;
     }
   }
 

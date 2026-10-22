@@ -292,6 +292,7 @@ export class AdeniApiError extends Error {
   constructor(
     message: string,
     readonly statusCode?: number,
+    readonly code?: string,
   ) {
     super(message);
     this.name = "AdeniApiError";
@@ -2427,7 +2428,11 @@ export class AdeniApiClient {
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => ({}))) as ApiErrorResponse;
-      throw new AdeniApiError(localizeErrorResponse(this.locale, payload), response.status);
+      throw new AdeniApiError(
+        localizeErrorResponse(this.locale, payload),
+        response.status,
+        payload.code,
+      );
     }
 
     return response;
