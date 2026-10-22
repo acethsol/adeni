@@ -55,12 +55,17 @@ public sealed class ReportExportService(
             return Result.Failure<ReportExportPayload>(entitlementError);
         }
 
-        var locationCount = await exportQueries.GetActiveLocationCountAsync(request.TenantId, cancellationToken);
-        if (locationCount > 1
-            && request.LocationId is null
-            && !request.Entitlements.MultiLocationReporting)
+        if (definition.RequiresMultiLocationReportingGate)
         {
-            return Result.Failure<ReportExportPayload>(ErrorCodes.MultiLocationReportingNotEntitledError());
+            var locationCount = await exportQueries.GetActiveLocationCountAsync(
+                request.TenantId,
+                cancellationToken);
+            if (locationCount > 1
+                && request.LocationId is null
+                && !request.Entitlements.MultiLocationReporting)
+            {
+                return Result.Failure<ReportExportPayload>(ErrorCodes.MultiLocationReportingNotEntitledError());
+            }
         }
 
         using var _ = logger.BeginScope(new Dictionary<string, object>

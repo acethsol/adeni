@@ -166,6 +166,61 @@ public sealed class TenantReportingExportIntegrationTests : IClassFixture<WebApp
     }
 
     [Fact]
+    public async Task TenantCustomers_csv_returns_ok_with_multiple_locations_without_multi_location_entitlement()
+    {
+        var tenantId = Guid.NewGuid();
+        const string ownerSub = "auth0|report-export-tenant-customers-multi-loc";
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+            SeedTenant(db, tenantId, ownerSub, SubscriptionSku.Professional);
+            var now = DateTimeOffset.UtcNow;
+            db.BusinessLocations.Add(new BusinessLocation
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                Name = "Branch A",
+                Slug = "branch-a-customers",
+                MarketId = "lagos",
+                AddressLine = "1 Test St",
+                Area = "Lekki",
+                IsPrimary = true,
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+            db.BusinessLocations.Add(new BusinessLocation
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                Name = "Branch B",
+                Slug = "branch-b-customers",
+                MarketId = "lagos",
+                AddressLine = "2 Test St",
+                Area = "VI",
+                IsPrimary = false,
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add(DevBusinessAuthMiddleware.DevAuth0SubHeader, ownerSub);
+        client.DefaultRequestHeaders.Add(TenantAccessMiddleware.TenantHeaderName, tenantId.ToString());
+
+        var from = Uri.EscapeDataString(DateTimeOffset.UtcNow.AddDays(-7).ToString("O"));
+        var to = Uri.EscapeDataString(DateTimeOffset.UtcNow.ToString("O"));
+        var response = await client.GetAsync(
+            $"/api/v1/tenant/reporting/exports/tenant-customers?from={from}&to={to}&format=csv");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("text/csv", response.Content.Headers.ContentType?.MediaType);
+    }
+
+    [Fact]
     public async Task TenantCustomers_csv_returns_ok_for_starter()
     {
         var tenantId = Guid.NewGuid();

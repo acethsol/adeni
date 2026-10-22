@@ -11,17 +11,20 @@ public static class ReportDefinitionRegistry
                 ReportKeys.BookingsRegister,
                 PortalPermissions.Bookings,
                 ReportBaseEntitlement.BasicExports,
-                new HashSet<ReportExportFormat> { ReportExportFormat.Csv, ReportExportFormat.Xlsx }),
+                new HashSet<ReportExportFormat> { ReportExportFormat.Csv, ReportExportFormat.Xlsx },
+                RequiresMultiLocationReportingGate: true),
             [ReportKeys.Compensation] = new(
                 ReportKeys.Compensation,
                 PortalPermissions.Finance,
                 ReportBaseEntitlement.AdvancedReports,
-                new HashSet<ReportExportFormat> { ReportExportFormat.Csv, ReportExportFormat.Xlsx }),
+                new HashSet<ReportExportFormat> { ReportExportFormat.Csv, ReportExportFormat.Xlsx },
+                RequiresMultiLocationReportingGate: true),
             [ReportKeys.SalesSummary] = new(
                 ReportKeys.SalesSummary,
                 PortalPermissions.Finance,
                 ReportBaseEntitlement.BasicExports,
-                new HashSet<ReportExportFormat> { ReportExportFormat.Csv, ReportExportFormat.Pdf }),
+                new HashSet<ReportExportFormat> { ReportExportFormat.Csv, ReportExportFormat.Pdf },
+                RequiresMultiLocationReportingGate: true),
             [ReportKeys.StaffRoster] = new(
                 ReportKeys.StaffRoster,
                 PortalPermissions.Staff,

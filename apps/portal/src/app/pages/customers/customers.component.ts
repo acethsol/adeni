@@ -88,6 +88,7 @@ export class CustomersComponent implements OnInit {
   readonly entitlements = signal<TenantEntitlements | null>(null);
   readonly exporting = signal(false);
 
+  /** Registry supports csv/xlsx only for tenant-customers (no PDF builder). */
   readonly exportItems = computed((): AdeniExportMenuItem[] =>
     buildReportExportMenuItems({
       entitlements: this.entitlements(),

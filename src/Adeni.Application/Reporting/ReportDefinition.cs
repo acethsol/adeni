@@ -10,4 +10,5 @@ public sealed record ReportDefinition(
     string ReportKey,
     string RequiredPermission,
     ReportBaseEntitlement BaseEntitlement,
-    IReadOnlySet<ReportExportFormat> SupportedFormats);
+    IReadOnlySet<ReportExportFormat> SupportedFormats,
+    bool RequiresMultiLocationReportingGate = false);
