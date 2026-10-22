@@ -13,7 +13,7 @@ Read-only and render responsibilities: **PDF documents**, **tenant/admin analyti
 | Area | V1 status | Notes |
 |------|-----------|--------|
 | **Receipt / invoice PDF** | **39A** — `IReportRenderer` + QuestPDF in `Adeni.Infrastructure.Reporting` | Finance delegates `GetPdfAsync` |
-| **Quote / statement PDF** | **39B** — QuestPDF minimal templates | Branding polish later |
+| **Quote / statement PDF** | **39B** — QuestPDF + tenant logo / business name header | Footer: Option 3 wordmark (`Brand/adeni-wordmark.png`, mirrors `@adeni/brand`) |
 | **Portal dashboard KPIs** | Shipped | `ITenantDashboardService` → `/api/v1/tenant/dashboard/*` |
 | **CSV / Excel / PDF exports** | **39B** | `IReportExportService` + ClosedXML; `/api/v1/tenant/reporting/exports/{reportKey}` |
 | **Admin GMV / MRR** | **39B** | `/api/v1/admin/reporting/platform-subscription-mrr`, `/gmv` (MFA + audit) |
@@ -81,7 +81,7 @@ Issued documents use **snapshots** on the entity; PDF regeneration must not sile
 |--------|-------|-------|
 | `GET` | `/api/v1/tenant/reporting/exports/{reportKey}` | `from`, `to`, `format=csv\|xlsx\|pdf` |
 
-`reportKey` examples: `sales-summary`, `bookings-register`, `compensation`, `staff-roster`.
+`reportKey` examples: `sales-summary`, `bookings-register`, `compensation`, `staff-roster`, `tenant-customers`, `tenant-locations`, `tenant-services`.
 
 ---
 
@@ -98,7 +98,7 @@ Issued documents use **snapshots** on the entity; PDF regeneration must not sile
 | Phase | Deliverable |
 |-------|-------------|
 | **1** | Module boundaries; QuestPDF extracted from `BillingDocumentService`; `reporting.md` + tests |
-| **2** | Quote + statement PDF; tenant branding from `@adeni/brand` paths |
+| **2** | Quote + statement PDF; tenant logo from profile media + Powered by Adeni footer (`adeni-wordmark.png`) |
 | **3** | **39B** — `IReportExportService` + ClosedXML; portal export on bookings + dashboard widget |
 | **4** | **39B** — Admin `/admin/reporting/*` (platform subscription MRR + GMV) |
 
@@ -109,3 +109,9 @@ Issued documents use **snapshots** on the entity; PDF regeneration must not sile
 - Unit smoke on PDF renderer fixtures; integration tests for PDF content-type and tenant denial on exports.
 - Log `reportKey` + duration — not row-level PII.
 - Run: `dotnet test Adeni.slnx -c Release`
+
+### Admin reporting audit (staging verification)
+
+`GET /api/v1/admin/reporting/*` (platform subscription MRR, GMV) is **audit-logged** with action `admin.reporting.read` via `AdminAuditRules` + `AuditMiddleware` (same pipeline as admin mutations). Automated coverage: `AdminReportingAuditIntegrationTests.PlatformSubscriptionMrr_get_writes_admin_reporting_audit`.
+
+**Staging check:** sign in as admin (MFA), call `GET /api/v1/admin/reporting/platform-subscription-mrr` and `GET /api/v1/admin/reporting/gmv?granularity=month`, then confirm `admin.audit_logs` rows with action `admin.reporting.read` and your admin `actor_id`.

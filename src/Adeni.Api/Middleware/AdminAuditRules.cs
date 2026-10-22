@@ -4,12 +4,24 @@ using Microsoft.AspNetCore.Http;
 
 public static class AdminAuditRules
 {
-    public static bool IsAuditableAdminMutation(HttpContext context) =>
-        context.Request.Path.StartsWithSegments("/api/v1/admin", StringComparison.OrdinalIgnoreCase)
-        && (HttpMethods.IsPost(context.Request.Method)
+    public static bool IsAuditableAdminMutation(HttpContext context)
+    {
+        if (!context.Request.Path.StartsWithSegments("/api/v1/admin", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (HttpMethods.IsGet(context.Request.Method)
+            && context.Request.Path.StartsWithSegments("/api/v1/admin/reporting", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return HttpMethods.IsPost(context.Request.Method)
             || HttpMethods.IsPut(context.Request.Method)
             || HttpMethods.IsPatch(context.Request.Method)
-            || HttpMethods.IsDelete(context.Request.Method));
+            || HttpMethods.IsDelete(context.Request.Method);
+    }
 
     public static string MapAction(HttpContext context)
     {
@@ -44,6 +56,12 @@ public static class AdminAuditRules
         if (path.EndsWith("/delete", StringComparison.OrdinalIgnoreCase))
         {
             return Domain.Auditing.AuditActions.CustomerDeleted;
+        }
+
+        if (path.Contains("/admin/reporting", StringComparison.OrdinalIgnoreCase)
+            && HttpMethods.IsGet(context.Request.Method))
+        {
+            return Domain.Auditing.AuditActions.AdminReportingRead;
         }
 
         if (path.Contains("/admin/markets", StringComparison.OrdinalIgnoreCase))

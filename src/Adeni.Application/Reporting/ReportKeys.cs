@@ -6,6 +6,9 @@ public static class ReportKeys
     public const string Compensation = "compensation";
     public const string SalesSummary = "sales-summary";
     public const string StaffRoster = "staff-roster";
+    public const string TenantCustomers = "tenant-customers";
+    public const string TenantLocations = "tenant-locations";
+    public const string TenantServices = "tenant-services";
     public const string RetentionMembershipMrr = "retention-membership-mrr";
 
     public static readonly IReadOnlySet<string> All = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -14,6 +17,9 @@ public static class ReportKeys
         Compensation,
         SalesSummary,
         StaffRoster,
+        TenantCustomers,
+        TenantLocations,
+        TenantServices,
         RetentionMembershipMrr,
     };
 

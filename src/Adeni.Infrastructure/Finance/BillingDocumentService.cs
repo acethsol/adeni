@@ -17,6 +17,7 @@ public sealed class BillingDocumentService(
     IPaymentOrchestrator paymentOrchestrator,
     INotificationDispatcher notificationDispatcher,
     IReportRenderer reportRenderer,
+    IReportPdfBrandingLoader pdfBrandingLoader,
     IAuditLogWriter auditLogWriter,
     ICorrelationContext correlationContext) : IBillingDocumentService
 {
@@ -327,9 +328,14 @@ public sealed class BillingDocumentService(
             return Result.Failure<byte[]>(Error.Conflict("Voided documents cannot be downloaded."));
         }
 
+        var branding = await pdfBrandingLoader.LoadForTenantAsync(
+            entity.TenantId,
+            entity.BusinessNameSnapshot,
+            cancellationToken);
+
         return await reportRenderer.RenderDocumentAsync(
             ToReportKind(entity.Kind),
-            ToReportData(entity),
+            ToReportData(entity, branding.BusinessLogoBytes),
             cancellationToken);
     }
 
@@ -734,7 +740,7 @@ public sealed class BillingDocumentService(
     private static ReportKind ToReportKind(BillingDocumentKind kind) =>
         kind == BillingDocumentKind.Receipt ? ReportKind.BillingReceipt : ReportKind.BillingInvoice;
 
-    private static BillingDocumentReportData ToReportData(BillingDocument entity) =>
+    private static BillingDocumentReportData ToReportData(BillingDocument entity, byte[]? businessLogoBytes = null) =>
         new(
             ToReportKind(entity.Kind),
             entity.DocumentNumber,
@@ -752,7 +758,8 @@ public sealed class BillingDocumentService(
                     x.UnitAmount,
                     x.LineTotal,
                     x.SortOrder))
-                .ToArray());
+                .ToArray(),
+            businessLogoBytes);
 
     private async Task WriteAuditAsync(
         Guid documentId,

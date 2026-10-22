@@ -1,11 +1,15 @@
 import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { RouterLink } from "@angular/router";
-import type { TenantCustomerListItem } from "@adeni/shared";
+import type { TenantCustomerListItem, TenantEntitlements } from "@adeni/shared";
 import {
+  buildReportExportMenuItems,
   DEFAULT_PAGE_SIZE,
   formatSlotTime,
   LIST_PAGE_SIZE_OPTIONS,
   listSortParamsFromColumn,
+  mergeTenantEntitlements,
+  REPORT_KEYS,
+  type ReportExportFormat,
 } from "@adeni/shared";
 import {
   AdeniDataTableActionsDirective,
@@ -81,26 +85,16 @@ export class CustomersComponent implements OnInit {
     { value: "walk_in", label: "Walk-in / queue" },
   ];
 
-  readonly exportItems: AdeniExportMenuItem[] = [
-    {
-      format: "csv",
-      label: "CSV (.csv)",
-      disabled: true,
-      hint: "Reporting export — coming soon",
-    },
-    {
-      format: "xlsx",
-      label: "Excel (.xlsx)",
-      disabled: true,
-      hint: "Reporting export — coming soon",
-    },
-    {
-      format: "pdf",
-      label: "PDF (.pdf)",
-      disabled: true,
-      hint: "Reporting export — coming soon",
-    },
-  ];
+  readonly entitlements = signal<TenantEntitlements | null>(null);
+  readonly exporting = signal(false);
+
+  readonly exportItems = computed((): AdeniExportMenuItem[] =>
+    buildReportExportMenuItems({
+      entitlements: this.entitlements(),
+      xlsx: true,
+      pdf: { disabled: true, hint: "Customer list is CSV or Excel only" },
+    }),
+  );
 
   readonly columns: AdeniDataTableColumn<TenantCustomerListItem>[] = [
     {
@@ -203,17 +197,25 @@ export class CustomersComponent implements OnInit {
       await this.feedback.runLoading(async () => {
         const term = this.searchQuery().trim();
         const filter = this.accountFilter();
-        const result = await this.api.withAuthorizedClient((client) =>
-          client.listTenantCustomers({
-            search: term.length > 0 ? term : undefined,
-            page: this.page(),
-            pageSize: this.pageSize(),
-            discover: filter === "all" ? undefined : filter,
-            sort: listSortParamsFromColumn(this.sortColumnId(), this.sortDirection()),
-          }),
-        );
-        this.items.set(result.items);
-        this.totalCount.set(result.totalCount);
+        await this.api.withAuthorizedClient(async (client) => {
+          const [result, profile, usage, planEntitlements] = await Promise.all([
+            client.listTenantCustomers({
+              search: term.length > 0 ? term : undefined,
+              page: this.page(),
+              pageSize: this.pageSize(),
+              discover: filter === "all" ? undefined : filter,
+              sort: listSortParamsFromColumn(this.sortColumnId(), this.sortDirection()),
+            }),
+            client.getTenantProfile().catch(() => null),
+            client.getTenantSubscriptionUsage().catch(() => null),
+            client.getTenantEntitlements().catch(() => null),
+          ]);
+          this.items.set(result.items);
+          this.totalCount.set(result.totalCount);
+          this.entitlements.set(
+            mergeTenantEntitlements(planEntitlements, usage?.entitlements, profile?.entitlements),
+          );
+        });
       }, "Loading customers", "Fetching profiles");
     } catch {
       this.error.set("Could not load customers. Try again.");
@@ -222,6 +224,34 @@ export class CustomersComponent implements OnInit {
       this.totalCount.set(0);
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  async downloadCustomersExport(format: ReportExportFormat): Promise<void> {
+    this.exporting.set(true);
+    try {
+      const to = new Date();
+      const from = new Date(to);
+      from.setFullYear(from.getFullYear() - 1);
+      const blob = await this.api.withAuthorizedClient((client) =>
+        client.downloadTenantReportExport({
+          reportKey: REPORT_KEYS.tenantCustomers,
+          from: from.toISOString(),
+          to: to.toISOString(),
+          format,
+        }),
+      );
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `tenant-customers-${to.toISOString().slice(0, 10)}.${format === "xlsx" ? "xlsx" : "csv"}`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      this.feedback.success("Customer list downloaded.");
+    } catch {
+      this.feedback.error("Could not download customer list.");
+    } finally {
+      this.exporting.set(false);
     }
   }
 }

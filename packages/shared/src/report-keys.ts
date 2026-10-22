@@ -3,6 +3,9 @@ export const REPORT_KEYS = {
   compensation: "compensation",
   salesSummary: "sales-summary",
   staffRoster: "staff-roster",
+  tenantCustomers: "tenant-customers",
+  tenantLocations: "tenant-locations",
+  tenantServices: "tenant-services",
   retentionMembershipMrr: "retention-membership-mrr",
 } as const;
 

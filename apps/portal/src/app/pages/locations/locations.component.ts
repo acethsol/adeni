@@ -2,12 +2,16 @@ import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { AdeniApiError } from "@adeni/api-client";
 import {
+  buildReportExportMenuItems,
   canAddLocationAtCount,
   DEFAULT_PAGE_SIZE,
   LIST_PAGE_SIZE_OPTIONS,
+  mergeTenantEntitlements,
+  REPORT_KEYS,
   sliceListPage,
   type BusinessLocation,
   type MarketConfig,
+  type ReportExportFormat,
   type TenantEntitlements,
 } from "@adeni/shared";
 import {
@@ -108,26 +112,14 @@ export class LocationsComponent implements OnInit {
     readPersistedListViewMode("portal.locations", "cards"),
   );
 
-  readonly exportItems: AdeniExportMenuItem[] = [
-    {
-      format: "csv",
-      label: "CSV (.csv)",
-      disabled: true,
-      hint: "Reporting export — coming soon",
-    },
-    {
-      format: "xlsx",
-      label: "Excel (.xlsx)",
-      disabled: true,
-      hint: "Reporting export — coming soon",
-    },
-    {
-      format: "pdf",
-      label: "PDF (.pdf)",
-      disabled: true,
-      hint: "Reporting export — coming soon",
-    },
-  ];
+  readonly exporting = signal(false);
+
+  readonly exportItems = computed((): AdeniExportMenuItem[] =>
+    buildReportExportMenuItems({
+      entitlements: this.entitlements(),
+      pdf: { disabled: true, hint: "Locations export is CSV only" },
+    }),
+  );
 
   readonly canAddLocation = computed(() =>
     canAddLocationAtCount(this.entitlements(), this.locations().length),
@@ -246,10 +238,18 @@ export class LocationsComponent implements OnInit {
         const markets = await publicClient.getMarkets();
         this.markets.set(markets);
         this.defaultMarketId = markets[0]?.id ?? "lagos";
-        const profile = await this.api.getTenantProfile();
-        this.entitlements.set(profile?.entitlements ?? null);
-        const items = await this.api.withAuthorizedClient((c) => c.getTenantLocations());
-        this.locations.set(items);
+        await this.api.withAuthorizedClient(async (c) => {
+          const [profile, usage, planEntitlements, items] = await Promise.all([
+            c.getTenantProfile().catch(() => null),
+            c.getTenantSubscriptionUsage().catch(() => null),
+            c.getTenantEntitlements().catch(() => null),
+            c.getTenantLocations(),
+          ]);
+          this.entitlements.set(
+            mergeTenantEntitlements(planEntitlements, usage?.entitlements, profile?.entitlements),
+          );
+          this.locations.set(items);
+        });
       }, "Loading locations", "Fetching branches");
     } catch {
       this.error.set("Could not load locations.");
@@ -363,6 +363,37 @@ export class LocationsComponent implements OnInit {
       this.feedback.error("Could not delete location.");
     } finally {
       this.busy.set(null);
+    }
+  }
+
+  async downloadLocationsExport(format: ReportExportFormat): Promise<void> {
+    if (format !== "csv") {
+      return;
+    }
+    this.exporting.set(true);
+    try {
+      const to = new Date();
+      const from = new Date(to);
+      from.setFullYear(from.getFullYear() - 1);
+      const blob = await this.api.withAuthorizedClient((client) =>
+        client.downloadTenantReportExport({
+          reportKey: REPORT_KEYS.tenantLocations,
+          from: from.toISOString(),
+          to: to.toISOString(),
+          format: "csv",
+        }),
+      );
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `tenant-locations-${to.toISOString().slice(0, 10)}.csv`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      this.feedback.success("Locations downloaded.");
+    } catch {
+      this.feedback.error("Could not download locations.");
+    } finally {
+      this.exporting.set(false);
     }
   }
 }

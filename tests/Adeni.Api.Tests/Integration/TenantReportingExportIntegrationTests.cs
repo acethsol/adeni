@@ -166,6 +166,32 @@ public sealed class TenantReportingExportIntegrationTests : IClassFixture<WebApp
     }
 
     [Fact]
+    public async Task TenantCustomers_csv_returns_ok_for_starter()
+    {
+        var tenantId = Guid.NewGuid();
+        const string ownerSub = "auth0|report-export-tenant-customers";
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+            SeedTenant(db, tenantId, ownerSub, SubscriptionSku.Starter);
+            await db.SaveChangesAsync();
+        }
+
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add(DevBusinessAuthMiddleware.DevAuth0SubHeader, ownerSub);
+        client.DefaultRequestHeaders.Add(TenantAccessMiddleware.TenantHeaderName, tenantId.ToString());
+
+        var from = Uri.EscapeDataString(DateTimeOffset.UtcNow.AddDays(-7).ToString("O"));
+        var to = Uri.EscapeDataString(DateTimeOffset.UtcNow.ToString("O"));
+        var response = await client.GetAsync(
+            $"/api/v1/tenant/reporting/exports/tenant-customers?from={from}&to={to}&format=csv");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("text/csv", response.Content.Headers.ContentType?.MediaType);
+    }
+
+    [Fact]
     public async Task StaffRoster_csv_returns_ok_for_professional()
     {
         var tenantId = Guid.NewGuid();

@@ -7,11 +7,16 @@ import type {
   ServiceTemplate,
 } from "@adeni/shared";
 import {
+  buildReportExportMenuItems,
   DEFAULT_PAGE_SIZE,
   formatPrice,
   getCategoryLabel,
   LIST_PAGE_SIZE_OPTIONS,
+  mergeTenantEntitlements,
+  REPORT_KEYS,
   sliceListPage,
+  type ReportExportFormat,
+  type TenantEntitlements,
 } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
@@ -107,26 +112,16 @@ export class ServicesComponent implements OnInit {
     readPersistedListViewMode("portal.services", "cards"),
   );
 
-  readonly exportItems: AdeniExportMenuItem[] = [
-    {
-      format: "csv",
-      label: "CSV (.csv)",
-      disabled: true,
-      hint: "Reporting export — coming soon",
-    },
-    {
-      format: "xlsx",
-      label: "Excel (.xlsx)",
-      disabled: true,
-      hint: "Reporting export — coming soon",
-    },
-    {
-      format: "pdf",
-      label: "PDF (.pdf)",
-      disabled: true,
-      hint: "Reporting export — coming soon",
-    },
-  ];
+  readonly entitlements = signal<TenantEntitlements | null>(null);
+  readonly exporting = signal(false);
+
+  readonly exportItems = computed((): AdeniExportMenuItem[] =>
+    buildReportExportMenuItems({
+      entitlements: this.entitlements(),
+      xlsx: true,
+      pdf: { disabled: true, hint: "Service menu export is CSV or Excel only" },
+    }),
+  );
 
   readonly groupFilterOptions = computed((): AdeniFilterSelectOption[] => [
     { value: "all", label: "All sections" },
@@ -281,12 +276,17 @@ export class ServicesComponent implements OnInit {
     try {
       await this.feedback.runLoading(async () => {
         await this.api.withAuthorizedClient(async (c) => {
-          const [catalog, profile] = await Promise.all([
+          const [catalog, profile, usage, planEntitlements] = await Promise.all([
             c.getTenantServiceCatalog(),
             c.getTenantProfile().catch(() => null),
+            c.getTenantSubscriptionUsage().catch(() => null),
+            c.getTenantEntitlements().catch(() => null),
           ]);
           this.services.set(catalog.items);
           this.groups.set(catalog.groups);
+          this.entitlements.set(
+            mergeTenantEntitlements(planEntitlements, usage?.entitlements, profile?.entitlements),
+          );
           if (profile?.categorySlug) {
             this.primaryCategorySlug.set(profile.categorySlug);
           }
@@ -493,6 +493,34 @@ export class ServicesComponent implements OnInit {
       this.feedback.error("Could not deactivate service.");
     } finally {
       this.busy.set(null);
+    }
+  }
+
+  async downloadServicesExport(format: ReportExportFormat): Promise<void> {
+    this.exporting.set(true);
+    try {
+      const to = new Date();
+      const from = new Date(to);
+      from.setFullYear(from.getFullYear() - 1);
+      const blob = await this.api.withAuthorizedClient((client) =>
+        client.downloadTenantReportExport({
+          reportKey: REPORT_KEYS.tenantServices,
+          from: from.toISOString(),
+          to: to.toISOString(),
+          format,
+        }),
+      );
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `tenant-services-${to.toISOString().slice(0, 10)}.${format === "xlsx" ? "xlsx" : "csv"}`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      this.feedback.success("Service menu downloaded.");
+    } catch {
+      this.feedback.error("Could not download service menu.");
+    } finally {
+      this.exporting.set(false);
     }
   }
 }

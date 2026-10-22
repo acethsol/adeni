@@ -9,9 +9,7 @@ using Adeni.Application.Booking;
 using Adeni.Application.Reporting;
 using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Auth;
-using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 [ApiController]
@@ -19,7 +17,7 @@ using Microsoft.Extensions.Options;
 public sealed class TenantQuotesController(
     IQuoteRequestService quotes,
     IReportRenderer reportRenderer,
-    AdeniDbContext dbContext,
+    IReportPdfBrandingLoader pdfBrandingLoader,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet]
@@ -52,13 +50,10 @@ public sealed class TenantQuotesController(
         }
 
         var quote = quoteResult.Value!;
-        var businessName = await dbContext.Tenants.AsNoTracking()
-            .Where(x => x.Id == tenantId)
-            .Select(x => x.Name)
-            .FirstOrDefaultAsync(cancellationToken) ?? "Business";
+        var branding = await pdfBrandingLoader.LoadForTenantAsync(tenantId, cancellationToken);
 
         var data = new QuoteDocumentReportData(
-            businessName,
+            branding.BusinessName,
             quote.Id.ToString(),
             quote.Description,
             quote.ServiceAddress,
@@ -68,7 +63,8 @@ public sealed class TenantQuotesController(
             quote.ProposedStartAt,
             quote.ProposedEndAt,
             quote.ExpiresAt,
-            quote.Status);
+            quote.Status,
+            branding.BusinessLogoBytes);
 
         var pdf = await reportRenderer.RenderDocumentAsync(ReportKind.Quote, data, cancellationToken);
         return pdf.Match<IActionResult>(

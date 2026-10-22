@@ -27,6 +27,21 @@ public static class ReportDefinitionRegistry
                 PortalPermissions.Staff,
                 ReportBaseEntitlement.BasicExports,
                 new HashSet<ReportExportFormat> { ReportExportFormat.Csv }),
+            [ReportKeys.TenantCustomers] = new(
+                ReportKeys.TenantCustomers,
+                PortalPermissions.Bookings,
+                ReportBaseEntitlement.BasicExports,
+                new HashSet<ReportExportFormat> { ReportExportFormat.Csv, ReportExportFormat.Xlsx }),
+            [ReportKeys.TenantLocations] = new(
+                ReportKeys.TenantLocations,
+                PortalPermissions.Locations,
+                ReportBaseEntitlement.BasicExports,
+                new HashSet<ReportExportFormat> { ReportExportFormat.Csv }),
+            [ReportKeys.TenantServices] = new(
+                ReportKeys.TenantServices,
+                PortalPermissions.Services,
+                ReportBaseEntitlement.BasicExports,
+                new HashSet<ReportExportFormat> { ReportExportFormat.Csv, ReportExportFormat.Xlsx }),
         };
 
     public static bool TryGet(string reportKey, out ReportDefinition definition) =>

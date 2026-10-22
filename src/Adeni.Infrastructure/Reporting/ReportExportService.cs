@@ -12,6 +12,7 @@ public sealed class ReportExportService(
     ITenantReportExportQueryService exportQueries,
     IStaffCompensationService staffCompensation,
     IReportRenderer reportRenderer,
+    IReportPdfBrandingLoader pdfBrandingLoader,
     ILogger<ReportExportService> logger) : IReportExportService
 {
     public async Task<Result<ReportExportPayload>> ExportAsync(
@@ -77,6 +78,9 @@ public sealed class ReportExportService(
             ReportKeys.Compensation => await ExportCompensationAsync(request, cancellationToken),
             ReportKeys.SalesSummary => await ExportSalesSummaryAsync(request, cancellationToken),
             ReportKeys.StaffRoster => await ExportStaffRosterAsync(request, cancellationToken),
+            ReportKeys.TenantCustomers => await ExportTenantCustomersAsync(request, cancellationToken),
+            ReportKeys.TenantLocations => await ExportTenantLocationsAsync(request, cancellationToken),
+            ReportKeys.TenantServices => await ExportTenantServicesAsync(request, cancellationToken),
             _ => Result.Failure<ReportExportPayload>(ErrorCodes.ReportNotFoundError(request.ReportKey)),
         };
     }
@@ -233,8 +237,9 @@ public sealed class ReportExportService(
 
         if (request.Format == ReportExportFormat.Pdf)
         {
+            var branding = await pdfBrandingLoader.LoadForTenantAsync(request.TenantId, cancellationToken);
             var statement = new StatementDocumentReportData(
-                "Summary",
+                branding.BusinessName,
                 "All customers",
                 "—",
                 request.From,
@@ -243,7 +248,8 @@ public sealed class ReportExportService(
                     request.From,
                     $"{r.Metric}: {r.Value}",
                     null,
-                    r.Currency)).ToArray());
+                    r.Currency)).ToArray(),
+                branding.BusinessLogoBytes);
 
             var pdf = await reportRenderer.RenderDocumentAsync(ReportKind.CustomerStatement, statement, cancellationToken);
             if (pdf.IsFailure)
@@ -259,6 +265,86 @@ public sealed class ReportExportService(
 
         return Result.Failure<ReportExportPayload>(
             ErrorCodes.ReportFormatNotSupportedError(request.ReportKey, request.Format.ToString()));
+    }
+
+    private async Task<Result<ReportExportPayload>> ExportTenantCustomersAsync(
+        ReportExportRequest request,
+        CancellationToken cancellationToken)
+    {
+        var rowsResult = await exportQueries.GetTenantCustomersAsync(request.TenantId, cancellationToken);
+        if (rowsResult.IsFailure)
+        {
+            return Result.Failure<ReportExportPayload>(rowsResult.Error!);
+        }
+
+        var rows = rowsResult.Value!;
+        var stamp = DateTimeOffset.UtcNow.ToString("yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture);
+
+        return request.Format switch
+        {
+            ReportExportFormat.Csv => Result.Success(new ReportExportPayload(
+                "text/csv",
+                $"tenant-customers-{stamp}.csv",
+                Encoding.UTF8.GetBytes(ReportSpreadsheetBuilder.BuildTenantCustomersCsv(rows)))),
+            ReportExportFormat.Xlsx => Result.Success(new ReportExportPayload(
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"tenant-customers-{stamp}.xlsx",
+                ReportSpreadsheetBuilder.BuildTenantCustomersXlsx(rows))),
+            _ => Result.Failure<ReportExportPayload>(
+                ErrorCodes.ReportFormatNotSupportedError(request.ReportKey, request.Format.ToString())),
+        };
+    }
+
+    private async Task<Result<ReportExportPayload>> ExportTenantLocationsAsync(
+        ReportExportRequest request,
+        CancellationToken cancellationToken)
+    {
+        var rowsResult = await exportQueries.GetTenantLocationsAsync(request.TenantId, cancellationToken);
+        if (rowsResult.IsFailure)
+        {
+            return Result.Failure<ReportExportPayload>(rowsResult.Error!);
+        }
+
+        var rows = rowsResult.Value!;
+        var stamp = DateTimeOffset.UtcNow.ToString("yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture);
+
+        return request.Format switch
+        {
+            ReportExportFormat.Csv => Result.Success(new ReportExportPayload(
+                "text/csv",
+                $"tenant-locations-{stamp}.csv",
+                Encoding.UTF8.GetBytes(ReportSpreadsheetBuilder.BuildTenantLocationsCsv(rows)))),
+            _ => Result.Failure<ReportExportPayload>(
+                ErrorCodes.ReportFormatNotSupportedError(request.ReportKey, request.Format.ToString())),
+        };
+    }
+
+    private async Task<Result<ReportExportPayload>> ExportTenantServicesAsync(
+        ReportExportRequest request,
+        CancellationToken cancellationToken)
+    {
+        var rowsResult = await exportQueries.GetTenantServicesAsync(request.TenantId, cancellationToken);
+        if (rowsResult.IsFailure)
+        {
+            return Result.Failure<ReportExportPayload>(rowsResult.Error!);
+        }
+
+        var rows = rowsResult.Value!;
+        var stamp = DateTimeOffset.UtcNow.ToString("yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture);
+
+        return request.Format switch
+        {
+            ReportExportFormat.Csv => Result.Success(new ReportExportPayload(
+                "text/csv",
+                $"tenant-services-{stamp}.csv",
+                Encoding.UTF8.GetBytes(ReportSpreadsheetBuilder.BuildTenantServicesCsv(rows)))),
+            ReportExportFormat.Xlsx => Result.Success(new ReportExportPayload(
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"tenant-services-{stamp}.xlsx",
+                ReportSpreadsheetBuilder.BuildTenantServicesXlsx(rows))),
+            _ => Result.Failure<ReportExportPayload>(
+                ErrorCodes.ReportFormatNotSupportedError(request.ReportKey, request.Format.ToString())),
+        };
     }
 
     private static string BuildCompensationCsv(IReadOnlyList<StaffCompensationExportRow> rows)

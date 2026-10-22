@@ -19,13 +19,16 @@ internal static class BillingDocumentQuestPdfTemplate
                 page.Size(PageSizes.A4);
                 page.DefaultTextStyle(x => x.FontSize(11));
 
-                page.Header().Column(col =>
-                {
-                    col.Item().Text(data.BusinessNameSnapshot).FontSize(20).SemiBold()
-                        .FontColor(QuestPdfBrandColors.Charcoal);
-                    col.Item().Text(kindLabel).FontSize(14).FontColor(QuestPdfBrandColors.Purple);
-                    col.Item().Text(data.DocumentNumber).FontSize(12);
-                });
+                page.Header().Element(header =>
+                    QuestPdfBrandingLayout.ComposeBusinessHeader(
+                        header,
+                        data.BusinessNameSnapshot,
+                        data.BusinessLogoBytes,
+                        column =>
+                        {
+                            column.Item().Text(kindLabel).FontSize(14).FontColor(QuestPdfBrandColors.Purple);
+                            column.Item().Text(data.DocumentNumber).FontSize(12);
+                        }));
 
                 page.Content().PaddingVertical(20).Column(col =>
                 {
@@ -77,7 +80,7 @@ internal static class BillingDocumentQuestPdfTemplate
                         .SemiBold();
                 });
 
-                page.Footer().AlignCenter().Text("Issued via Adeni").FontSize(9).FontColor(Colors.Grey.Medium);
+                page.Footer().Element(QuestPdfBrandingLayout.ComposePoweredByFooter);
             });
         }).GeneratePdf();
     }

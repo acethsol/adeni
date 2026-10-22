@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <Content Include="..\..\packages\shared\src\data\plan-entitlements.json" Link="Catalog\plan-entitlements.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\packages\brand\assets\brand\adeni-wordmark.png" Link="Brand\adeni-wordmark.png" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 

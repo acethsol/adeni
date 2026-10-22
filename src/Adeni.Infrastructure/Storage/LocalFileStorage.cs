@@ -59,6 +59,22 @@ public sealed class LocalFileStorage(
     public Task<bool> ExistsAsync(string storageKey, CancellationToken cancellationToken = default) =>
         Task.FromResult(File.Exists(GetFullPath(storageKey)));
 
+    public Task<byte[]?> ReadBytesAsync(string storageKey, CancellationToken cancellationToken = default)
+    {
+        if (IsAbsoluteUrl(storageKey))
+        {
+            return Task.FromResult<byte[]?>(null);
+        }
+
+        var fullPath = GetFullPath(storageKey);
+        if (!File.Exists(fullPath))
+        {
+            return Task.FromResult<byte[]?>(null);
+        }
+
+        return Task.FromResult<byte[]?>(File.ReadAllBytes(fullPath));
+    }
+
     public Task DeleteAsync(string storageKey, CancellationToken cancellationToken = default)
     {
         var fullPath = GetFullPath(storageKey);

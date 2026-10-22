@@ -284,4 +284,71 @@ public sealed class TenantReportExportQueryService(
 
         return Result.Success(rows);
     }
+
+    public async Task<Result<IReadOnlyList<TenantCustomerExportRow>>> GetTenantCustomersAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        var rows = await dbContext.TenantCustomers
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId)
+            .OrderBy(x => x.DisplayName)
+            .Select(x => new TenantCustomerExportRow(
+                x.Id,
+                x.DisplayName,
+                PiiMasker.MaskPhone(x.NormalizedPhone),
+                x.Email,
+                x.CustomerId != null ? "Discover account" : "Walk-in / queue",
+                x.LastSeenAt,
+                x.CreatedAt))
+            .ToListAsync(cancellationToken);
+
+        return Result.Success<IReadOnlyList<TenantCustomerExportRow>>(rows);
+    }
+
+    public async Task<Result<IReadOnlyList<TenantLocationExportRow>>> GetTenantLocationsAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        var rows = await dbContext.BusinessLocations
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId)
+            .OrderByDescending(x => x.IsPrimary)
+            .ThenBy(x => x.Name)
+            .Select(x => new TenantLocationExportRow(
+                x.Slug,
+                x.Name,
+                x.MarketId,
+                x.AddressLine,
+                x.Area,
+                x.IsPrimary,
+                x.IsActive))
+            .ToListAsync(cancellationToken);
+
+        return Result.Success<IReadOnlyList<TenantLocationExportRow>>(rows);
+    }
+
+    public async Task<Result<IReadOnlyList<TenantServiceExportRow>>> GetTenantServicesAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        var rows = await dbContext.ServiceOfferings
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId)
+            .OrderBy(x => x.SortOrder)
+            .ThenBy(x => x.Name)
+            .Select(x => new TenantServiceExportRow(
+                x.Name,
+                x.Description,
+                x.PriceAmount,
+                x.Currency,
+                x.DurationMinutes,
+                x.CategorySlug,
+                x.IsActive,
+                x.IsAddOn,
+                x.SortOrder))
+            .ToListAsync(cancellationToken);
+
+        return Result.Success<IReadOnlyList<TenantServiceExportRow>>(rows);
+    }
 }

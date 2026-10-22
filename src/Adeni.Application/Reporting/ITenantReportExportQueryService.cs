@@ -40,6 +40,35 @@ public sealed record StaffRosterExportRow(
     int ServiceCount,
     int SortOrder);
 
+public sealed record TenantCustomerExportRow(
+    Guid Id,
+    string DisplayName,
+    string PhoneMasked,
+    string? Email,
+    string ProfileType,
+    DateTimeOffset LastSeenAt,
+    DateTimeOffset CreatedAt);
+
+public sealed record TenantLocationExportRow(
+    string Slug,
+    string Name,
+    string MarketId,
+    string AddressLine,
+    string Area,
+    bool IsPrimary,
+    bool IsActive);
+
+public sealed record TenantServiceExportRow(
+    string Name,
+    string? Description,
+    decimal PriceAmount,
+    string Currency,
+    int DurationMinutes,
+    string? CategorySlug,
+    bool IsActive,
+    bool IsAddOn,
+    int SortOrder);
+
 public interface ITenantReportExportQueryService
 {
     Task<Result<IReadOnlyList<BookingsRegisterExportRow>>> GetBookingsRegisterAsync(
@@ -69,6 +98,18 @@ public interface ITenantReportExportQueryService
         CancellationToken cancellationToken = default);
 
     Task<Result<IReadOnlyList<StaffRosterExportRow>>> GetStaffRosterAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<IReadOnlyList<TenantCustomerExportRow>>> GetTenantCustomersAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<IReadOnlyList<TenantLocationExportRow>>> GetTenantLocationsAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<IReadOnlyList<TenantServiceExportRow>>> GetTenantServicesAsync(
         Guid tenantId,
         CancellationToken cancellationToken = default);
 }

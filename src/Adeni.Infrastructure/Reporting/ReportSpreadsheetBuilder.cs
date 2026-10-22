@@ -150,6 +150,168 @@ internal static class ReportSpreadsheetBuilder
         return builder.ToString();
     }
 
+    public static string BuildTenantCustomersCsv(IReadOnlyList<TenantCustomerExportRow> rows)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine("Id,DisplayName,PhoneMasked,Email,ProfileType,LastSeenAt,CreatedAt");
+        foreach (var row in rows)
+        {
+            builder.Append(row.Id);
+            builder.Append(',');
+            builder.Append(Csv(row.DisplayName));
+            builder.Append(',');
+            builder.Append(Csv(row.PhoneMasked));
+            builder.Append(',');
+            builder.Append(Csv(row.Email));
+            builder.Append(',');
+            builder.Append(Csv(row.ProfileType));
+            builder.Append(',');
+            builder.Append(row.LastSeenAt.ToString("O", CultureInfo.InvariantCulture));
+            builder.Append(',');
+            builder.AppendLine(row.CreatedAt.ToString("O", CultureInfo.InvariantCulture));
+        }
+
+        return builder.ToString();
+    }
+
+    public static byte[] BuildTenantCustomersXlsx(IReadOnlyList<TenantCustomerExportRow> rows)
+    {
+        using var workbook = new XLWorkbook();
+        var sheet = workbook.Worksheets.Add("Customers");
+        var headers = new[]
+        {
+            "Id",
+            "DisplayName",
+            "PhoneMasked",
+            "Email",
+            "ProfileType",
+            "LastSeenAt",
+            "CreatedAt",
+        };
+
+        for (var col = 0; col < headers.Length; col++)
+        {
+            sheet.Cell(1, col + 1).Value = headers[col];
+        }
+
+        for (var i = 0; i < rows.Count; i++)
+        {
+            var row = rows[i];
+            var line = i + 2;
+            sheet.Cell(line, 1).Value = row.Id.ToString();
+            sheet.Cell(line, 2).Value = row.DisplayName;
+            sheet.Cell(line, 3).Value = row.PhoneMasked;
+            sheet.Cell(line, 4).Value = row.Email ?? string.Empty;
+            sheet.Cell(line, 5).Value = row.ProfileType;
+            sheet.Cell(line, 6).Value = row.LastSeenAt.ToString("O", CultureInfo.InvariantCulture);
+            sheet.Cell(line, 7).Value = row.CreatedAt.ToString("O", CultureInfo.InvariantCulture);
+        }
+
+        sheet.Row(1).Style.Font.Bold = true;
+        sheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
+    }
+
+    public static string BuildTenantLocationsCsv(IReadOnlyList<TenantLocationExportRow> rows)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine("Slug,Name,MarketId,AddressLine,Area,IsPrimary,IsActive");
+        foreach (var row in rows)
+        {
+            builder.Append(Csv(row.Slug));
+            builder.Append(',');
+            builder.Append(Csv(row.Name));
+            builder.Append(',');
+            builder.Append(Csv(row.MarketId));
+            builder.Append(',');
+            builder.Append(Csv(row.AddressLine));
+            builder.Append(',');
+            builder.Append(Csv(row.Area));
+            builder.Append(',');
+            builder.Append(row.IsPrimary ? "true" : "false");
+            builder.Append(',');
+            builder.AppendLine(row.IsActive ? "true" : "false");
+        }
+
+        return builder.ToString();
+    }
+
+    public static string BuildTenantServicesCsv(IReadOnlyList<TenantServiceExportRow> rows)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine("Name,Description,PriceAmount,Currency,DurationMinutes,CategorySlug,IsActive,IsAddOn,SortOrder");
+        foreach (var row in rows)
+        {
+            builder.Append(Csv(row.Name));
+            builder.Append(',');
+            builder.Append(Csv(row.Description));
+            builder.Append(',');
+            builder.Append(row.PriceAmount.ToString(CultureInfo.InvariantCulture));
+            builder.Append(',');
+            builder.Append(Csv(row.Currency));
+            builder.Append(',');
+            builder.Append(row.DurationMinutes.ToString(CultureInfo.InvariantCulture));
+            builder.Append(',');
+            builder.Append(Csv(row.CategorySlug));
+            builder.Append(',');
+            builder.Append(row.IsActive ? "true" : "false");
+            builder.Append(',');
+            builder.Append(row.IsAddOn ? "true" : "false");
+            builder.Append(',');
+            builder.AppendLine(row.SortOrder.ToString(CultureInfo.InvariantCulture));
+        }
+
+        return builder.ToString();
+    }
+
+    public static byte[] BuildTenantServicesXlsx(IReadOnlyList<TenantServiceExportRow> rows)
+    {
+        using var workbook = new XLWorkbook();
+        var sheet = workbook.Worksheets.Add("Services");
+        var headers = new[]
+        {
+            "Name",
+            "Description",
+            "PriceAmount",
+            "Currency",
+            "DurationMinutes",
+            "CategorySlug",
+            "IsActive",
+            "IsAddOn",
+            "SortOrder",
+        };
+
+        for (var col = 0; col < headers.Length; col++)
+        {
+            sheet.Cell(1, col + 1).Value = headers[col];
+        }
+
+        for (var i = 0; i < rows.Count; i++)
+        {
+            var row = rows[i];
+            var line = i + 2;
+            sheet.Cell(line, 1).Value = row.Name;
+            sheet.Cell(line, 2).Value = row.Description ?? string.Empty;
+            sheet.Cell(line, 3).Value = row.PriceAmount;
+            sheet.Cell(line, 4).Value = row.Currency;
+            sheet.Cell(line, 5).Value = row.DurationMinutes;
+            sheet.Cell(line, 6).Value = row.CategorySlug ?? string.Empty;
+            sheet.Cell(line, 7).Value = row.IsActive;
+            sheet.Cell(line, 8).Value = row.IsAddOn;
+            sheet.Cell(line, 9).Value = row.SortOrder;
+        }
+
+        sheet.Row(1).Style.Font.Bold = true;
+        sheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
+    }
+
     public static byte[] BuildSalesSummaryCsv(SalesSummaryExportRow[] rows)
     {
         var builder = new StringBuilder();

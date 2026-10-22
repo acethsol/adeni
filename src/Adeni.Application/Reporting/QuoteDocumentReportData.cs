@@ -11,7 +11,8 @@ public sealed record QuoteDocumentReportData(
     DateTimeOffset? ProposedStartAt,
     DateTimeOffset? ProposedEndAt,
     DateTimeOffset? ExpiresAt,
-    string Status) : IReportDocumentData
+    string Status,
+    byte[]? BusinessLogoBytes = null) : IReportDocumentData
 {
     public ReportKind Kind => ReportKind.Quote;
 }

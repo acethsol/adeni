@@ -66,6 +66,29 @@ public sealed class AzureBlobFileStorage(IOptions<StorageOptions> options) : IFi
         return response.Value;
     }
 
+    public async Task<byte[]?> ReadBytesAsync(string storageKey, CancellationToken cancellationToken = default)
+    {
+        if (storageKey.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+            || storageKey.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(_options.ConnectionString))
+        {
+            return null;
+        }
+
+        var client = GetBlobClient(storageKey);
+        if (!await client.ExistsAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        var download = await client.DownloadContentAsync(cancellationToken);
+        return download.Value.Content.ToArray();
+    }
+
     public async Task DeleteAsync(string storageKey, CancellationToken cancellationToken = default)
     {
         await GetBlobClient(storageKey).DeleteIfExistsAsync(cancellationToken: cancellationToken);

@@ -151,6 +151,7 @@ public sealed class AuditMiddlewareTests
     [Theory]
     [InlineData("/api/v1/admin/businesses/123/approve", "POST", true)]
     [InlineData("/api/v1/admin/businesses/123/approve", "GET", false)]
+    [InlineData("/api/v1/admin/reporting/gmv", "GET", true)]
     [InlineData("/api/v1/customers/me", "POST", false)]
     public void IsAuditableAdminMutation_detects_mutations(string path, string method, bool expected)
     {
@@ -168,11 +169,15 @@ public sealed class AuditMiddlewareTests
     [InlineData("/api/v1/admin/reviews/123", AuditActions.ReviewHidden)]
     [InlineData("/api/v1/admin/customers/123/export", AuditActions.CustomerExported)]
     [InlineData("/api/v1/admin/customers/123/delete", AuditActions.CustomerDeleted)]
+    [InlineData("/api/v1/admin/reporting/platform-subscription-mrr", AuditActions.AdminReportingRead)]
     public void MapAction_maps_known_routes(string path, string expected)
     {
         var context = new DefaultHttpContext();
         context.Request.Path = path;
-        context.Request.Method = path.Contains("/reviews/", StringComparison.Ordinal) ? "DELETE" : "POST";
+        context.Request.Method =
+            path.Contains("/admin/reporting", StringComparison.Ordinal) ? "GET"
+            : path.Contains("/reviews/", StringComparison.Ordinal) ? "DELETE"
+            : "POST";
 
         Assert.Equal(expected, AdminAuditRules.MapAction(context));
     }

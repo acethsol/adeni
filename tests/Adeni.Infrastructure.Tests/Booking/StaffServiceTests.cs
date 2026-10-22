@@ -321,6 +321,9 @@ public sealed class StaffServiceTests
         public Task<bool> ExistsAsync(string storageKey, CancellationToken cancellationToken = default) =>
             Task.FromResult(false);
 
+        public Task<byte[]?> ReadBytesAsync(string storageKey, CancellationToken cancellationToken = default) =>
+            Task.FromResult<byte[]?>(null);
+
         public Task DeleteAsync(string storageKey, CancellationToken cancellationToken = default) =>
             Task.CompletedTask;
     }

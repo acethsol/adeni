@@ -19,7 +19,8 @@ using Microsoft.AspNetCore.Mvc;
 public sealed class TenantCustomersController(
     ITenantCustomerService customers,
     ITenantReportExportQueryService reportQueries,
-    IReportRenderer reportRenderer) : ControllerBase
+    IReportRenderer reportRenderer,
+    IReportPdfBrandingLoader pdfBrandingLoader) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> List(
@@ -99,13 +100,18 @@ public sealed class TenantCustomersController(
         }
 
         var statement = statementResult.Value!;
-        var data = new StatementDocumentReportData(
+        var branding = await pdfBrandingLoader.LoadForTenantAsync(
+            tenantId,
             statement.BusinessName,
+            cancellationToken);
+        var data = new StatementDocumentReportData(
+            branding.BusinessName,
             statement.CustomerDisplayName,
             statement.CustomerPhoneMasked,
             statement.From,
             statement.To,
-            statement.Lines);
+            statement.Lines,
+            branding.BusinessLogoBytes);
 
         var pdf = await reportRenderer.RenderDocumentAsync(ReportKind.CustomerStatement, data, cancellationToken);
         return pdf.Match<IActionResult>(

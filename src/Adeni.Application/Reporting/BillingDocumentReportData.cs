@@ -17,4 +17,5 @@ public sealed record BillingDocumentReportData(
     decimal Total,
     string? MethodLabel,
     DateTimeOffset? IssuedAt,
-    IReadOnlyList<BillingDocumentLineReportData> Lines) : IReportDocumentData;
+    IReadOnlyList<BillingDocumentLineReportData> Lines,
+    byte[]? BusinessLogoBytes = null) : IReportDocumentData;

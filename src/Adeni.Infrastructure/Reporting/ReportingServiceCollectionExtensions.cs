@@ -9,6 +9,7 @@ public static class ReportingServiceCollectionExtensions
     {
         services.AddScoped<IReportRenderer, QuestPdfReportRenderer>();
         services.AddScoped<IReportExportService, ReportExportService>();
+        services.AddScoped<IReportPdfBrandingLoader, FallbackReportPdfBrandingLoader>();
         return services;
     }
 }

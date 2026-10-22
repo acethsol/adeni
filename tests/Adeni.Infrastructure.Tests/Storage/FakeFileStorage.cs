@@ -29,6 +29,9 @@ public sealed class FakeFileStorage : IFileStorage
     public Task<bool> ExistsAsync(string storageKey, CancellationToken cancellationToken = default) =>
         Task.FromResult(_existingKeys.Contains(storageKey));
 
+    public Task<byte[]?> ReadBytesAsync(string storageKey, CancellationToken cancellationToken = default) =>
+        Task.FromResult<byte[]?>(null);
+
     public void SeedKey(string storageKey) => _existingKeys.Add(storageKey);
 
     public Task DeleteAsync(string storageKey, CancellationToken cancellationToken = default)
