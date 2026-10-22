@@ -16,6 +16,9 @@ import {
   pageRangeLabel,
   resolvePaymentCheckoutUrl,
   REPORT_KEYS,
+  hasBasicExportsEntitlement,
+  hasExcelExportEntitlement,
+  resolveTenantEntitlements,
   totalPages as computeTotalPages,
   type ReportExportFormat,
 } from "@adeni/shared";
@@ -119,8 +122,8 @@ export class BookingsComponent {
 
   readonly exportItems = computed((): AdeniExportMenuItem[] => {
     const entitlements = this.planEntitlements();
-    const basic = entitlements?.basicExports ?? true;
-    const excel = entitlements?.excelExport ?? false;
+    const basic = hasBasicExportsEntitlement(entitlements);
+    const excel = hasExcelExportEntitlement(entitlements);
     return [
       {
         format: "csv",
@@ -325,7 +328,7 @@ export class BookingsComponent {
     const tab = (this.tab() ?? "pending") as TenantBookingListTab;
     try {
       await this.api.withAuthorizedClient(async (client) => {
-        const [bookingsPage, kiosk, usage] = await Promise.all([
+        const [bookingsPage, kiosk, usage, profile] = await Promise.all([
           client.listTenantBookings({
             tab,
             page: this.page(),
@@ -334,8 +337,11 @@ export class BookingsComponent {
           }),
           client.getTenantKioskStatus().catch(() => null),
           client.getTenantSubscriptionUsage().catch(() => null),
+          client.getTenantProfile().catch(() => null),
         ]);
-        this.planEntitlements.set(usage?.entitlements ?? null);
+        this.planEntitlements.set(
+          resolveTenantEntitlements(usage?.entitlements, profile?.entitlements),
+        );
         this.bookings.set(bookingsPage.items);
         this.totalCount.set(bookingsPage.totalCount);
         this.page.set(bookingsPage.page);

@@ -29,7 +29,10 @@ import {
   getMarketById,
   getPlanDisplayForCountry,
   hasCapability,
+  hasBasicExportsEntitlement,
+  hasExcelExportEntitlement,
   hasTenantEntitlement,
+  resolveTenantEntitlements,
   isDashboardWidgetVisible,
   isNearBookingLimit,
   layoutIncludesWidget,
@@ -282,12 +285,18 @@ export class DashboardComponent implements OnInit {
     return hasTenantEntitlement(profile?.entitlements ?? null, key);
   }
 
+  exportEntitlements() {
+    return resolveTenantEntitlements(
+      this.usage()?.entitlements,
+      this.profile()?.entitlements,
+    );
+  }
+
   hasExportEntitlement(key: "basicExports" | "excelExport"): boolean {
-    const entitlements = this.profile()?.entitlements;
-    if (!entitlements) {
-      return false;
-    }
-    return entitlements[key] === true;
+    const entitlements = this.exportEntitlements();
+    return key === "basicExports"
+      ? hasBasicExportsEntitlement(entitlements)
+      : hasExcelExportEntitlement(entitlements);
   }
 
   planUsageLabel(): string {

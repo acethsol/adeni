@@ -16,6 +16,37 @@ export function hasTenantEntitlement(
   return value === true;
 }
 
+/** CSV/register exports — all paid plans; API is authoritative when absent client-side. */
+export function hasBasicExportsEntitlement(
+  entitlements: TenantEntitlements | null | undefined,
+): boolean {
+  if (!entitlements) {
+    return true;
+  }
+  return entitlements.basicExports !== false;
+}
+
+/** Excel exports — Pro/Business only; strict match to API gates. */
+export function hasExcelExportEntitlement(
+  entitlements: TenantEntitlements | null | undefined,
+): boolean {
+  if (!entitlements) {
+    return false;
+  }
+  return entitlements.excelExport === true;
+}
+
+export function resolveTenantEntitlements(
+  ...sources: Array<TenantEntitlements | null | undefined>
+): TenantEntitlements | null {
+  for (const source of sources) {
+    if (source) {
+      return source;
+    }
+  }
+  return null;
+}
+
 export function canAddLocationAtCount(
   entitlements: TenantEntitlements | null | undefined,
   activeLocationCount: number,

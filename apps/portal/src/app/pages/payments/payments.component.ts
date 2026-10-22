@@ -8,9 +8,11 @@ import type { BillingDocumentResponse, BusinessProfile, PaymentLedgerEntry } fro
 import {
   DEFAULT_PAGE_SIZE,
   formatPrice,
+  hasBasicExportsEntitlement,
   hasCapability,
   LIST_PAGE_SIZE_OPTIONS,
   resolvePaymentCheckoutUrl,
+  resolveTenantEntitlements,
 } from "@adeni/shared";
 import {
   AdeniConfirmService,
@@ -64,6 +66,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
   readonly creating = signal(false);
   readonly error = signal<string | null>(null);
   readonly profile = signal<BusinessProfile | null>(null);
+  readonly exportEntitled = signal(true);
   readonly ledger = signal<PaymentLedgerEntry[]>([]);
   readonly ledgerTotalCount = signal(0);
   readonly ledgerPage = signal(1);
@@ -110,8 +113,16 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     this.error.set(null);
     try {
       await this.api.withAuthorizedClient(async (c) => {
-        const profile = await c.getTenantProfile();
+        const [profile, usage] = await Promise.all([
+          c.getTenantProfile(),
+          c.getTenantSubscriptionUsage().catch(() => null),
+        ]);
         this.profile.set(profile);
+        this.exportEntitled.set(
+          hasBasicExportsEntitlement(
+            resolveTenantEntitlements(usage?.entitlements, profile.entitlements),
+          ),
+        );
         const ledgerPage = await c.listPaymentLedger(
           profile.tenantId,
           this.ledgerPage(),
