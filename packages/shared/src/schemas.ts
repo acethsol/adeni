@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { normalizeDashboardWidgetWidth } from "./dashboard-widget-width";
 import { type PagedResult, pagedResultSchema } from "./paging";
+import { NOTIFICATION_TEMPLATE_IDS } from "./notification-template-ids";
 import { collectNotificationCatalogLocaleIds, isNotificationLocaleId } from "./notification-templates";
 
 export const categorySchema = z.object({
@@ -1961,24 +1962,9 @@ export const messageTemplatesResponseSchema = z.object({
   items: z.array(messageTemplateSchema),
 });
 
-export const notificationTemplateIdSchema = z.enum([
-  "booking_confirmed",
-  "booking_rejected",
-  "booking_cancelled",
-  "appointment_reminder_24h",
-  "appointment_reminder_2h",
-  "appointment_followup_no_show",
-  "waitlist_slot_opened",
-  "payment_failed",
-  "payment_receipt",
-  "conversation_customer",
-  "conversation_business",
-  "staff_invite",
-  "queue_called",
-  "billing_document_emailed",
-]);
+export const notificationTemplateIdSchema = z.enum(NOTIFICATION_TEMPLATE_IDS);
 
-export type NotificationTemplateId = z.infer<typeof notificationTemplateIdSchema>;
+export type { NotificationTemplateId } from "./notification-template-ids";
 
 const notificationCatalogLocaleIds = collectNotificationCatalogLocaleIds();
 const notificationLocaleEnum =

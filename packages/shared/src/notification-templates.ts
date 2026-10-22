@@ -2,13 +2,11 @@ import notificationTemplatesJson from "./data/notification-templates.json";
 import type { LocaleId } from "./i18n";
 import { defaultLocale, getLocaleOption, isLocaleId, supportedLocales } from "./i18n";
 import {
-  notificationTemplateIdSchema,
+  NOTIFICATION_TEMPLATE_IDS,
   type NotificationTemplateId,
-} from "./schemas";
+} from "./notification-template-ids";
 
-export const NOTIFICATION_TEMPLATE_IDS = notificationTemplateIdSchema.options;
-
-export type { NotificationTemplateId };
+export { NOTIFICATION_TEMPLATE_IDS, type NotificationTemplateId };
 
 /** Templates editable in portal (Pro+ overrides). */
 export const PORTAL_EDITABLE_NOTIFICATION_TEMPLATE_IDS = [
