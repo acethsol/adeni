@@ -63,7 +63,7 @@ Replace log-only notification delivery with **production Resend email and Twilio
 ### 3.2 Notifications Completion — **38B** (after Reporting **39A**)
 
 - [x] **Receipt email** with PDF attachment — handler calls **`IReportRenderer`** (Application) for bytes; **never** QuestPDF or Reporting Infrastructure from Notifications
-- [x] **Scheduled appointment reminders** — `AppointmentReminderBackgroundService`: 24h/2h windows (Starter fixed schedule); idempotent delivery rows
+- [x] **Scheduled appointment reminders** — Hangfire recurring job → `AppointmentReminderProcessor`: 24h/2h windows (Starter fixed schedule); idempotent delivery rows
 - [x] **Entitlement-gated reminder behavior** (§6): Starter `basicReminders` only; Pro/Business add `configurableReminders` + `followUpAutomation` (not Business-only)
 - [x] **SMS gating:** `SmsRemindersEnabled` tenant pref **and** `smsEnabled` entitlement before Twilio send; **`smsUsageBilling`** not implemented (reserved)
 - [x] Waitlist `SlotOpened` — email + SMS when entitled + prefs on (`MaxWaitlistNotificationsPerSlot` burst cap)
@@ -276,7 +276,7 @@ Run: `dotnet test Adeni.slnx -c Release`
 
 | Question | Decision |
 |----------|----------|
-| Reminder scheduler: Hangfire vs hosted `BackgroundService` | **`BackgroundService`** (`AppointmentReminderBackgroundService`) — matches existing hosted startup pattern; disabled in Testing |
+| Reminder scheduler: Hangfire vs hosted `BackgroundService` | **Hangfire** — `AppointmentReminderHangfireJob` recurring cron → `AppointmentReminderProcessor`; SQL Server storage; server + dashboard skipped in **Testing**; dashboard Development-only at `/admin/hangfire` |
 | `SmsRemindersEnabled` vs `SmsNotificationsEnabled` | **Default `SmsRemindersEnabled`** — align with reminder-centric SMS; confirm in closeout PR |
 | Entitlement decorator vs checks in each handler | Central decorator recommended |
 | When to migrate DB column from `SmsWhatsAppReminderEnabled` | Same PR as 38A pref rename or additive column + deprecate |

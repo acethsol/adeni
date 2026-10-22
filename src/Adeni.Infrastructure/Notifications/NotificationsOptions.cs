@@ -21,7 +21,8 @@ public sealed class ReminderNotificationOptions
 {
     public bool Enabled { get; set; } = true;
 
-    public int PollIntervalMinutes { get; set; } = 5;
+    /// <summary>Hangfire cron for appointment reminder scans (default: every 5 minutes).</summary>
+    public string RecurringCron { get; set; } = "*/5 * * * *";
 
     public TimeSpan NoShowGraceAfterEnd { get; set; } = TimeSpan.FromHours(2);
 }

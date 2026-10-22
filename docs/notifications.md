@@ -17,7 +17,7 @@ Async **email**, **SMS**, and (later) **push** driven by **domain events** and *
 | `INotificationPreferencesService` | Tenant toggles: email, push, SMS reminders (`SmsRemindersEnabled`) |
 | `PreferenceAwareNotificationDispatcher` | Gates by channel + prefs |
 | **Delivery (38A/38B)** | Resend + Twilio when configured; log fallback in Development/Testing without keys |
-| **Appointment reminder scheduler (38B)** | `AppointmentReminderBackgroundService` — 24h/2h email/SMS; entitlement-gated follow-up email |
+| **Appointment reminder scheduler (38B)** | **Hangfire** recurring job → `AppointmentReminderProcessor` — 24h/2h email/SMS; entitlement-gated follow-up email |
 | **Receipt email (38B)** | `PaymentCompleted` → PDF via Application **`IReportRenderer`** attachment |
 
 ---
@@ -101,7 +101,7 @@ Keys in Key Vault for staging/production — never commit.
 | Booking confirmed / rejected / cancelled email | Shipped (Resend + recipient resolution) |
 | Staff invite, conversation customer email | Shipped |
 | **Payment receipt email + PDF** | Shipped — PDF via Application **`IReportRenderer`** (38B) |
-| **Scheduled appointment reminders** (24h / 2h email + SMS) | Shipped — `AppointmentReminderBackgroundService`; idempotent `notification_deliveries`; entitlement tiers (`basicReminders`, `followUpAutomation`) |
+| **Scheduled appointment reminders** (24h / 2h email + SMS) | Shipped — Hangfire recurring job (`notifications:appointment-reminders`); idempotent `notification_deliveries`; entitlement tiers (`basicReminders`, `followUpAutomation`) |
 | **Waitlist slot opened** | Shipped — email + SMS; burst cap `MaxWaitlistNotificationsPerSlot` |
 | No-show follow-up email | Shipped when `followUpAutomation` entitlement |
 | Retention-triggered notifications | Deferred until Sprint 37 domain events |
@@ -110,9 +110,11 @@ Keys in Key Vault for staging/production — never commit.
 
 | Key | Default | Notes |
 |-----|---------|--------|
-| `Reminders:Enabled` | `true` | Worker no-ops in **Testing** |
-| `Reminders:PollIntervalMinutes` | `5` | Reminder scan interval |
+| `Reminders:Enabled` | `true` | Job no-ops when `false`; Hangfire **not registered** in **Testing** |
+| `Reminders:RecurringCron` | `*/5 * * * *` | Hangfire cron for reminder scan (every 5 minutes) |
 | `Reminders:NoShowGraceAfterEnd` | `2:00:00` | Follow-up window after appointment end |
+
+**Hangfire:** Uses SQL Server storage on `ConnectionStrings:AdeniDb` (schema `HangFire`). Tables are created on first API start when Hangfire is enabled. Dashboard: **Development only** at `/admin/hangfire` (not exposed in Staging/Production). Requires a real SQL connection string — in-memory EF (empty `AdeniDb`) skips Hangfire registration.
 | `MaxWaitlistNotificationsPerSlot` | `25` | Burst cap per opened slot |
 
 **Murphy / security:** Payment webhooks remain on Finance — not Notifications. Outbound sends: mask PII in logs (`PiiMasker`), idempotency per event + channel + recipient.

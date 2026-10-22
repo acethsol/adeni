@@ -35,6 +35,7 @@ builder.Services.AddScoped<ICurrentUser>(sp =>
     ?? new HttpCurrentUser(null, [], null, false));
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
+builder.Services.AddAdeniHangfire(builder.Configuration, builder.Environment);
 builder.Services.AddAdeniStorage(builder.Configuration, builder.Environment);
 builder.Services.AddAdeniCors(builder.Configuration, builder.Environment);
 builder.Services.AddAdeniObservability(builder.Configuration);
@@ -99,6 +100,8 @@ if (string.Equals(storageProvider, "Local", StringComparison.OrdinalIgnoreCase)
         RequestPath = "/media"
     });
 }
+
+app.UseAdeniHangfire();
 
 app.UseAdeniCors();
 app.UseAdeniRateLimiting();

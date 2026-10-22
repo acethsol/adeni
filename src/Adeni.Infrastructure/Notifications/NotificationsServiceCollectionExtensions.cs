@@ -44,7 +44,7 @@ public static class NotificationsServiceCollectionExtensions
         services.AddScoped<IDomainEventHandler<PaymentFailed>, FinanceNotificationHandler>();
 
         services.AddScoped<AppointmentReminderProcessor>();
-        services.AddHostedService<AppointmentReminderBackgroundService>();
+        services.AddScoped<AppointmentReminderHangfireJob>();
 
         return services;
     }
