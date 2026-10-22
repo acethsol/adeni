@@ -39,7 +39,11 @@ import Upload16 from "@carbon/icons/es/upload/16";
 import User16 from "@carbon/icons/es/user/16";
 import UserFilled16 from "@carbon/icons/es/user--filled/16";
 import UserFollow16 from "@carbon/icons/es/user--follow/16";
+import UserAvatar16 from "@carbon/icons/es/user--avatar/16";
 import Wallet16 from "@carbon/icons/es/wallet/16";
+import Task16 from "@carbon/icons/es/task/16";
+import Template16 from "@carbon/icons/es/template/16";
+import Screen16 from "@carbon/icons/es/screen/16";
 
 export type AdeniCarbonIconName =
   | "add"
@@ -79,6 +83,10 @@ export type AdeniCarbonIconName =
   | "user"
   | "user--filled"
   | "user--follow"
+  | "user--avatar"
+  | "task"
+  | "template"
+  | "screen"
   | "wallet";
 
 const ICONS: Record<AdeniCarbonIconName, IconDescriptor> = {
@@ -119,6 +127,10 @@ const ICONS: Record<AdeniCarbonIconName, IconDescriptor> = {
   user: User16 as IconDescriptor,
   "user--filled": UserFilled16 as IconDescriptor,
   "user--follow": UserFollow16 as IconDescriptor,
+  "user--avatar": UserAvatar16 as IconDescriptor,
+  task: Task16 as IconDescriptor,
+  template: Template16 as IconDescriptor,
+  screen: Screen16 as IconDescriptor,
   wallet: Wallet16 as IconDescriptor,
 };
 
@@ -162,7 +174,7 @@ function stringAttrs(attrs: Record<string, unknown>): Record<string, string> {
 }
 
 export function getAdeniCarbonIcon(name: AdeniCarbonIconName): IconDescriptor {
-  return ICONS[name];
+  return ICONS[name] ?? Misuse16;
 }
 
 /** SVG markup string for templates (aria-hidden by default). */

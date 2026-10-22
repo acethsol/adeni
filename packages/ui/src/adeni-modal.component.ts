@@ -1,6 +1,6 @@
 import { Component, HostBinding, HostListener, input, output } from "@angular/core";
 
-export type AdeniModalSize = "md" | "lg" | "xl";
+export type AdeniModalSize = "md" | "lg" | "xl" | "2xl";
 
 /**
  * Shared modal shell for portal + admin forms (create/edit wizards, confirm-style dialogs).
@@ -76,6 +76,11 @@ export type AdeniModalSize = "md" | "lg" | "xl";
 
     .panel[data-size="xl"] {
       width: min(48rem, 100%);
+    }
+
+    .panel[data-size="2xl"] {
+      width: min(56rem, 100%);
+      max-height: min(92vh, 56rem);
     }
 
     :host-context([data-theme="dark"]) .panel {
