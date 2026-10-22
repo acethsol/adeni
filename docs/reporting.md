@@ -75,7 +75,7 @@ Issued documents use **snapshots** on the entity; PDF regeneration must not sile
 | `GET` | `/api/v1/finance/documents/{id}/pdf` |
 | `GET` | `/api/v1/public/documents/{token}/pdf` |
 
-### Exports (planned)
+### Exports (39B — shipped)
 
 | Method | Route | Query |
 |--------|-------|-------|
@@ -89,7 +89,7 @@ Issued documents use **snapshots** on the entity; PDF regeneration must not sile
 
 - **Dashboard:** portal widgets consume dashboard JSON; charts stay client-side (not PDF).
 - **List pages:** shared **`AdeniListToolbarComponent`** + **`AdeniDataTableComponent`** in `@adeni/ui` — filters, card/table switcher, export slot → Reporting API ([shared grid spec](./specs/shared-data-grid.md)).
-- **Downloads:** use `@adeni/api-client` when export endpoints land; until then Finance compensation export remains on `/api/v1/finance/compensation-export`.
+- **Downloads:** portal/admin list toolbars call `@adeni/api-client` `downloadTenantReportExport` / `downloadAdminReportExport`; compensation uses the same orchestrator via `reportKey=compensation`.
 
 ---
 
