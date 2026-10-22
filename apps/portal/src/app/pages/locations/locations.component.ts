@@ -117,7 +117,6 @@ export class LocationsComponent implements OnInit {
   readonly exportItems = computed((): AdeniExportMenuItem[] =>
     buildReportExportMenuItems({
       entitlements: this.entitlements(),
-      pdf: { disabled: true, hint: "Locations export is CSV only" },
     }),
   );
 

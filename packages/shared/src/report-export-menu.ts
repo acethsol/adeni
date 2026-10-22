@@ -38,7 +38,11 @@ export function buildReportExportMenuItems(options: {
       format: "xlsx",
       label: options.labels?.xlsx ?? "Excel (.xlsx)",
       disabled: !basic || !excel,
-      hint: excel ? undefined : "Pro plan required for Excel",
+      hint: !basic
+        ? "Upgrade for exports"
+        : excel
+          ? undefined
+          : "Pro plan required for Excel",
     });
   }
 

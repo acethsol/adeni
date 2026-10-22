@@ -92,7 +92,6 @@ export class CustomersComponent implements OnInit {
     buildReportExportMenuItems({
       entitlements: this.entitlements(),
       xlsx: true,
-      pdf: { disabled: true, hint: "Customer list is CSV or Excel only" },
     }),
   );
 
