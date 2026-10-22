@@ -122,9 +122,21 @@ export type AdeniDataTableColumn<T> = {
 |--------|-------------|---------|
 | Staff roster | `staff-roster` | csv, xlsx, pdf |
 | Customers | `tenant-customers` | csv, xlsx |
-| Bookings | `bookings-register` | csv, xlsx, pdf |
+| Bookings | `bookings-register` | csv, xlsx |
+| Locations | `tenant-locations` | csv |
+| Services | `tenant-services` | csv, xlsx |
+| Staff roster | `staff-roster` | csv |
 
-`AdeniExportMenuItem`: `{ format, label, disabled?, hint? }` → `GET /api/v1/tenant/reporting/exports/{reportKey}?format=…`
+**Admin list exports** (MFA + audit `admin.reporting.read`; menu via `buildAdminReportExportMenuItems` — CSV + Excel only):
+
+| Screen | `reportKey` | Formats | Query notes |
+|--------|-------------|---------|-------------|
+| Businesses | `admin-business-directory` | csv, xlsx | `q` matches list search |
+| Pending verifications | `admin-pending-verifications` | csv, xlsx | `q` |
+| Transactions | `admin-transactions` | csv, xlsx | `q`, `kind`, `from`, `to` |
+| Pricing catalog entries | `admin-pricing-catalog-entries` | csv, xlsx | `catalogVersionCode` required |
+
+`AdeniExportMenuItem`: `{ format, label, disabled?, hint? }` → tenant: `GET /api/v1/tenant/reporting/exports/{reportKey}?format=…`; admin: `GET /api/v1/admin/reporting/exports/{reportKey}?format=…`
 
 ---
 

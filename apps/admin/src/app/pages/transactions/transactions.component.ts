@@ -4,11 +4,14 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import type { AdminTransactionSearchItem } from "@adeni/shared";
 import {
+  buildAdminReportExportMenuItems,
   formatAmountMinor,
   formatPrice,
   formatSubscriptionSku,
   formatBillingChargeStatus,
   listSortParamsFromColumn,
+  REPORT_KEYS,
+  type ReportExportFormat,
 } from "@adeni/shared";
 import {
   AdeniDataTableCellDirective,
@@ -29,6 +32,11 @@ import {
 import { AdminApiService } from "../../core/services/admin-api.service";
 import { ADMIN_LIST_PAGE_SIZE, LIST_PAGE_SIZE_OPTIONS } from "../../shared/admin-list-paging";
 import { adminLoadErrorMessage } from "../../shared/admin-load-error";
+import {
+  adminListExportFileName,
+  downloadAdminListExport,
+  triggerBrowserDownload,
+} from "../../shared/admin-report-export";
 import { AdminPillComponent } from "../../shared/admin-pill.component";
 
 type KindFilter = "all" | "commerce" | "saas";
@@ -81,26 +89,10 @@ export class AdminTransactionsComponent {
     { value: "saas", label: "SaaS" },
   ];
 
-  readonly exportItems: AdeniExportMenuItem[] = [
-    {
-      format: "csv",
-      label: "CSV (.csv)",
-      disabled: true,
-      hint: "Reporting export — coming soon",
-    },
-    {
-      format: "xlsx",
-      label: "Excel (.xlsx)",
-      disabled: true,
-      hint: "Reporting export — coming soon",
-    },
-    {
-      format: "pdf",
-      label: "PDF (.pdf)",
-      disabled: true,
-      hint: "Reporting export — coming soon",
-    },
-  ];
+  readonly exportItems: AdeniExportMenuItem[] = buildAdminReportExportMenuItems({
+    xlsx: true,
+  });
+  readonly exporting = signal(false);
 
   readonly columns: AdeniDataTableColumn<AdminTransactionSearchItem>[] = [
     {
@@ -254,6 +246,29 @@ export class AdminTransactionsComponent {
 
   referenceLabel(row: AdminTransactionSearchItem): string {
     return row.providerReference?.trim() || row.id;
+  }
+
+  async onExport(format: ReportExportFormat): Promise<void> {
+    this.exporting.set(true);
+    try {
+      const blob = await this.api.withAuthorizedClient((client) =>
+        downloadAdminListExport(client, {
+          reportKey: REPORT_KEYS.adminTransactions,
+          format,
+          q: this.searchQuery().trim() || undefined,
+          kind: this.kindFilter(),
+        }),
+      );
+      triggerBrowserDownload(
+        blob,
+        adminListExportFileName(REPORT_KEYS.adminTransactions, format),
+      );
+      this.feedback.success("Transactions downloaded.");
+    } catch {
+      this.feedback.error("Export failed.");
+    } finally {
+      this.exporting.set(false);
+    }
   }
 
   private async loadTransactions(queryText: string | null): Promise<void> {

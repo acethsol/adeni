@@ -34,7 +34,12 @@
         [searchQuery]="searchText()"
         (searchQueryChange)="onToolbarSearch($event)"
       >
-        <adeni-export-menu listExports label="Export" [items]="exportItems" />
+        <adeni-export-menu
+          listExports
+          label="Export"
+          [items]="exportItems"
+          (exportSelect)="onExport($event)"
+        />
       </adeni-list-toolbar>
 
       <div class="adeni-list-results">

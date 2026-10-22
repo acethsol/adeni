@@ -4,7 +4,14 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import type { PricingCatalogVersionSummary } from "@adeni/shared";
-import { formatPrice, formatSubscriptionSku, type SubscriptionSku } from "@adeni/shared";
+import {
+  buildAdminReportExportMenuItems,
+  formatPrice,
+  formatSubscriptionSku,
+  REPORT_KEYS,
+  type ReportExportFormat,
+  type SubscriptionSku,
+} from "@adeni/shared";
 import {
   AdeniConfirmService,
   AdeniDataTableActionsDirective,
@@ -24,6 +31,11 @@ import {
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 import { adminLoadErrorMessage } from "../../shared/admin-load-error";
+import {
+  adminListExportFileName,
+  downloadAdminListExport,
+  triggerBrowserDownload,
+} from "../../shared/admin-report-export";
 import { skuPill } from "../../shared/admin-pill-maps";
 
 type PricingCatalogEntryRow = {
@@ -94,26 +106,20 @@ export class AdminPricingCatalogComponent {
 
   readonly canEditEntries = computed(() => this.selectedStatus() === "draft");
 
-  readonly exportItems: AdeniExportMenuItem[] = [
-    {
-      format: "csv",
-      label: "CSV (.csv)",
+  readonly exporting = signal(false);
+
+  readonly exportItems = computed((): AdeniExportMenuItem[] => {
+    const base = buildAdminReportExportMenuItems({ xlsx: true });
+    const code = this.selectedCode();
+    if (code) {
+      return base;
+    }
+    return base.map((item) => ({
+      ...item,
       disabled: true,
-      hint: "Reporting export — coming soon",
-    },
-    {
-      format: "xlsx",
-      label: "Excel (.xlsx)",
-      disabled: true,
-      hint: "Reporting export — coming soon",
-    },
-    {
-      format: "pdf",
-      label: "PDF (.pdf)",
-      disabled: true,
-      hint: "Reporting export — coming soon",
-    },
-  ];
+      hint: "Select a catalog version",
+    }));
+  });
 
   readonly skuPill = skuPill;
 
@@ -239,6 +245,34 @@ export class AdminPricingCatalogComponent {
       }
       void this.loadVersions();
     });
+  }
+
+  async onExport(format: ReportExportFormat): Promise<void> {
+    const code = this.selectedCode();
+    if (!code) {
+      this.feedback.error("Select a catalog version first.");
+      return;
+    }
+
+    this.exporting.set(true);
+    try {
+      const blob = await this.api.withAuthorizedClient((client) =>
+        downloadAdminListExport(client, {
+          reportKey: REPORT_KEYS.adminPricingCatalogEntries,
+          format,
+          catalogVersionCode: code,
+        }),
+      );
+      triggerBrowserDownload(
+        blob,
+        adminListExportFileName(`${REPORT_KEYS.adminPricingCatalogEntries}-${code}`, format),
+      );
+      this.feedback.success("Catalog entries downloaded.");
+    } catch {
+      this.feedback.error("Export failed.");
+    } finally {
+      this.exporting.set(false);
+    }
   }
 
   async loadVersions(): Promise<void> {

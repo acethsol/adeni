@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { mergeTenantEntitlements } from "./entitlements";
 import { PLAN_ENTITLEMENTS } from "./plan-entitlements";
-import { buildReportExportMenuItems } from "./report-export-menu";
+import { buildAdminReportExportMenuItems, buildReportExportMenuItems } from "./report-export-menu";
 
 describe("buildReportExportMenuItems", () => {
   it("enables CSV for starter entitlements and omits PDF when not requested", () => {
@@ -26,6 +26,14 @@ describe("buildReportExportMenuItems", () => {
       entitlements: PLAN_ENTITLEMENTS.professional,
       xlsx: true,
     });
+    expect(items.every((i) => !i.disabled)).toBe(true);
+  });
+});
+
+describe("buildAdminReportExportMenuItems", () => {
+  it("enables CSV and Excel without PDF", () => {
+    const items = buildAdminReportExportMenuItems({ xlsx: true });
+    expect(items.map((i) => i.format)).toEqual(["csv", "xlsx"]);
     expect(items.every((i) => !i.disabled)).toBe(true);
   });
 });

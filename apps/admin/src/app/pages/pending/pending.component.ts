@@ -3,7 +3,13 @@ import { Component, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
-import { listSortParamsFromColumn, type PendingBusiness } from "@adeni/shared";
+import {
+  buildAdminReportExportMenuItems,
+  listSortParamsFromColumn,
+  REPORT_KEYS,
+  type PendingBusiness,
+  type ReportExportFormat,
+} from "@adeni/shared";
 import {
   AdeniDataTableActionsDirective,
   AdeniDataTableCellDirective,
@@ -22,6 +28,11 @@ import {
 import { AdminApiService } from "../../core/services/admin-api.service";
 import { AdminOperationsRealtimeService } from "@adeni/ui";
 import { adminLoadErrorMessage } from "../../shared/admin-load-error";
+import {
+  adminListExportFileName,
+  downloadAdminListExport,
+  triggerBrowserDownload,
+} from "../../shared/admin-report-export";
 import { AdminPillComponent } from "../../shared/admin-pill.component";
 import { docCountPill, tenantStatusPill } from "../../shared/admin-pill-maps";
 import {
@@ -77,26 +88,10 @@ export class AdminPendingComponent {
   );
   readonly isEmptyQueue = computed(() => !this.loading() && this.totalCount() === 0);
 
-  readonly exportItems: AdeniExportMenuItem[] = [
-    {
-      format: "csv",
-      label: "CSV (.csv)",
-      disabled: true,
-      hint: "Reporting export — coming soon",
-    },
-    {
-      format: "xlsx",
-      label: "Excel (.xlsx)",
-      disabled: true,
-      hint: "Reporting export — coming soon",
-    },
-    {
-      format: "pdf",
-      label: "PDF (.pdf)",
-      disabled: true,
-      hint: "Reporting export — coming soon",
-    },
-  ];
+  readonly exportItems: AdeniExportMenuItem[] = buildAdminReportExportMenuItems({
+    xlsx: true,
+  });
+  readonly exporting = signal(false);
 
   readonly columns: AdeniDataTableColumn<PendingBusiness>[] = [
     {
@@ -144,6 +139,28 @@ export class AdminPendingComponent {
       .subscribe(() => {
         void this.load();
       });
+  }
+
+  async onExport(format: ReportExportFormat): Promise<void> {
+    this.exporting.set(true);
+    try {
+      const blob = await this.api.withAuthorizedClient((client) =>
+        downloadAdminListExport(client, {
+          reportKey: REPORT_KEYS.adminPendingVerifications,
+          format,
+          q: this.searchText().trim() || undefined,
+        }),
+      );
+      triggerBrowserDownload(
+        blob,
+        adminListExportFileName(REPORT_KEYS.adminPendingVerifications, format),
+      );
+      this.feedback.success("Pending queue downloaded.");
+    } catch {
+      this.feedback.error("Export failed.");
+    } finally {
+      this.exporting.set(false);
+    }
   }
 
   async load(): Promise<void> {

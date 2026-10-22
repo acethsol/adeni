@@ -61,3 +61,20 @@ export function buildReportExportMenuItems(options: {
 
   return items;
 }
+
+const adminPlatformExportEntitlements = {
+  basicExports: true,
+  excelExport: true,
+} as TenantEntitlements;
+
+/** Admin list exports — platform operators get CSV + Excel (no tenant SKU gate). */
+export function buildAdminReportExportMenuItems(
+  options: Omit<Parameters<typeof buildReportExportMenuItems>[0], "entitlements"> & {
+    entitlements?: TenantEntitlements | null;
+  },
+): ReportExportMenuItemConfig[] {
+  return buildReportExportMenuItems({
+    ...options,
+    entitlements: options.entitlements ?? adminPlatformExportEntitlements,
+  });
+}

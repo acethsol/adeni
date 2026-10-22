@@ -48,6 +48,12 @@ public static class AdminAuditRules
             return Domain.Auditing.AuditActions.ReviewHidden;
         }
 
+        if (path.Contains("/admin/reporting", StringComparison.OrdinalIgnoreCase)
+            && HttpMethods.IsGet(context.Request.Method))
+        {
+            return Domain.Auditing.AuditActions.AdminReportingRead;
+        }
+
         if (path.Contains("/export", StringComparison.OrdinalIgnoreCase))
         {
             return Domain.Auditing.AuditActions.CustomerExported;
@@ -56,12 +62,6 @@ public static class AdminAuditRules
         if (path.EndsWith("/delete", StringComparison.OrdinalIgnoreCase))
         {
             return Domain.Auditing.AuditActions.CustomerDeleted;
-        }
-
-        if (path.Contains("/admin/reporting", StringComparison.OrdinalIgnoreCase)
-            && HttpMethods.IsGet(context.Request.Method))
-        {
-            return Domain.Auditing.AuditActions.AdminReportingRead;
         }
 
         if (path.Contains("/admin/markets", StringComparison.OrdinalIgnoreCase))

@@ -1237,6 +1237,35 @@ export class AdeniApiClient {
     return response.blob();
   }
 
+  async downloadAdminReportExport(options: {
+    reportKey: string;
+    from: string;
+    to: string;
+    format?: "csv" | "xlsx";
+    q?: string;
+    kind?: string;
+    catalogVersionCode?: string;
+  }): Promise<Blob> {
+    const query = new URLSearchParams({
+      from: options.from,
+      to: options.to,
+      format: options.format ?? "csv",
+    });
+    if (options.q?.trim()) {
+      query.set("q", options.q.trim());
+    }
+    if (options.kind?.trim()) {
+      query.set("kind", options.kind.trim());
+    }
+    if (options.catalogVersionCode?.trim()) {
+      query.set("catalogVersionCode", options.catalogVersionCode.trim());
+    }
+    const response = await this.request(
+      `/api/v1/admin/reporting/exports/${encodeURIComponent(options.reportKey)}?${query.toString()}`,
+    );
+    return response.blob();
+  }
+
   async downloadTenantReportExport(options: {
     reportKey: string;
     from: string;

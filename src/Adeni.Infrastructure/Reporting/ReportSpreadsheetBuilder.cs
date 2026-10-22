@@ -312,6 +312,232 @@ internal static class ReportSpreadsheetBuilder
         return stream.ToArray();
     }
 
+    public static string BuildAdminBusinessDirectoryCsv(IReadOnlyList<AdminBusinessDirectoryExportRow> rows)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine("TenantId,Name,Slug,Status,SubscriptionSku,BillingStatus,TrialEndsAt,CreatedAt");
+        foreach (var row in rows)
+        {
+            builder.Append(row.TenantId);
+            builder.Append(',');
+            builder.Append(Csv(row.Name));
+            builder.Append(',');
+            builder.Append(Csv(row.Slug));
+            builder.Append(',');
+            builder.Append(Csv(row.Status));
+            builder.Append(',');
+            builder.Append(Csv(row.SubscriptionSku));
+            builder.Append(',');
+            builder.Append(Csv(row.BillingStatus));
+            builder.Append(',');
+            builder.Append(row.TrialEndsAt?.ToString("O", CultureInfo.InvariantCulture) ?? string.Empty);
+            builder.Append(',');
+            builder.AppendLine(row.CreatedAt.ToString("O", CultureInfo.InvariantCulture));
+        }
+
+        return builder.ToString();
+    }
+
+    public static byte[] BuildAdminBusinessDirectoryXlsx(IReadOnlyList<AdminBusinessDirectoryExportRow> rows) =>
+        BuildSimpleSheet(
+            "Businesses",
+            ["TenantId", "Name", "Slug", "Status", "SubscriptionSku", "BillingStatus", "TrialEndsAt", "CreatedAt"],
+            rows,
+            (sheet, row, line) =>
+            {
+                sheet.Cell(line, 1).Value = row.TenantId.ToString();
+                sheet.Cell(line, 2).Value = row.Name;
+                sheet.Cell(line, 3).Value = row.Slug;
+                sheet.Cell(line, 4).Value = row.Status;
+                sheet.Cell(line, 5).Value = row.SubscriptionSku;
+                sheet.Cell(line, 6).Value = row.BillingStatus;
+                sheet.Cell(line, 7).Value = row.TrialEndsAt?.ToString("O", CultureInfo.InvariantCulture) ?? string.Empty;
+                sheet.Cell(line, 8).Value = row.CreatedAt.ToString("O", CultureInfo.InvariantCulture);
+            });
+
+    public static string BuildAdminPendingVerificationsCsv(IReadOnlyList<AdminPendingVerificationExportRow> rows)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine("TenantId,Name,Slug,MarketId,SubmittedAt,DocumentCount");
+        foreach (var row in rows)
+        {
+            builder.Append(row.TenantId);
+            builder.Append(',');
+            builder.Append(Csv(row.Name));
+            builder.Append(',');
+            builder.Append(Csv(row.Slug));
+            builder.Append(',');
+            builder.Append(Csv(row.MarketId));
+            builder.Append(',');
+            builder.Append(row.SubmittedAt.ToString("O", CultureInfo.InvariantCulture));
+            builder.Append(',');
+            builder.AppendLine(row.DocumentCount.ToString(CultureInfo.InvariantCulture));
+        }
+
+        return builder.ToString();
+    }
+
+    public static byte[] BuildAdminPendingVerificationsXlsx(IReadOnlyList<AdminPendingVerificationExportRow> rows) =>
+        BuildSimpleSheet(
+            "Pending",
+            ["TenantId", "Name", "Slug", "MarketId", "SubmittedAt", "DocumentCount"],
+            rows,
+            (sheet, row, line) =>
+            {
+                sheet.Cell(line, 1).Value = row.TenantId.ToString();
+                sheet.Cell(line, 2).Value = row.Name;
+                sheet.Cell(line, 3).Value = row.Slug;
+                sheet.Cell(line, 4).Value = row.MarketId;
+                sheet.Cell(line, 5).Value = row.SubmittedAt.ToString("O", CultureInfo.InvariantCulture);
+                sheet.Cell(line, 6).Value = row.DocumentCount;
+            });
+
+    public static string BuildAdminTransactionsCsv(IReadOnlyList<AdminTransactionExportRow> rows)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine("Kind,Id,TenantId,TenantName,ProviderReference,EventType,SubscriptionSku,AmountMinor,Currency,Status,OccurredAt");
+        foreach (var row in rows)
+        {
+            builder.Append(Csv(row.Kind));
+            builder.Append(',');
+            builder.Append(row.Id);
+            builder.Append(',');
+            builder.Append(row.TenantId);
+            builder.Append(',');
+            builder.Append(Csv(row.TenantName));
+            builder.Append(',');
+            builder.Append(Csv(row.ProviderReference));
+            builder.Append(',');
+            builder.Append(Csv(row.EventType));
+            builder.Append(',');
+            builder.Append(Csv(row.SubscriptionSku));
+            builder.Append(',');
+            builder.Append(row.AmountMinor?.ToString(CultureInfo.InvariantCulture) ?? string.Empty);
+            builder.Append(',');
+            builder.Append(Csv(row.Currency));
+            builder.Append(',');
+            builder.Append(Csv(row.Status));
+            builder.Append(',');
+            builder.AppendLine(row.OccurredAt.ToString("O", CultureInfo.InvariantCulture));
+        }
+
+        return builder.ToString();
+    }
+
+    public static byte[] BuildAdminTransactionsXlsx(IReadOnlyList<AdminTransactionExportRow> rows) =>
+        BuildSimpleSheet(
+            "Transactions",
+            [
+                "Kind",
+                "Id",
+                "TenantId",
+                "TenantName",
+                "ProviderReference",
+                "EventType",
+                "SubscriptionSku",
+                "AmountMinor",
+                "Currency",
+                "Status",
+                "OccurredAt",
+            ],
+            rows,
+            (sheet, row, line) =>
+            {
+                sheet.Cell(line, 1).Value = row.Kind;
+                sheet.Cell(line, 2).Value = row.Id.ToString();
+                sheet.Cell(line, 3).Value = row.TenantId.ToString();
+                sheet.Cell(line, 4).Value = row.TenantName;
+                sheet.Cell(line, 5).Value = row.ProviderReference ?? string.Empty;
+                sheet.Cell(line, 6).Value = row.EventType ?? string.Empty;
+                sheet.Cell(line, 7).Value = row.SubscriptionSku ?? string.Empty;
+                if (row.AmountMinor is { } minor)
+                {
+                    sheet.Cell(line, 8).Value = minor;
+                }
+
+                sheet.Cell(line, 9).Value = row.Currency;
+                sheet.Cell(line, 10).Value = row.Status;
+                sheet.Cell(line, 11).Value = row.OccurredAt.ToString("O", CultureInfo.InvariantCulture);
+            });
+
+    public static string BuildAdminPricingCatalogEntriesCsv(IReadOnlyList<AdminPricingCatalogEntryExportRow> rows)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine("CatalogVersionCode,CountryCode,SubscriptionSku,CurrencyCode,MonthlyAmountMajor,PlatformFeePercent,IsSelfServeEnabled");
+        foreach (var row in rows)
+        {
+            builder.Append(Csv(row.CatalogVersionCode));
+            builder.Append(',');
+            builder.Append(Csv(row.CountryCode));
+            builder.Append(',');
+            builder.Append(Csv(row.SubscriptionSku));
+            builder.Append(',');
+            builder.Append(Csv(row.CurrencyCode));
+            builder.Append(',');
+            builder.Append(row.MonthlyAmountMajor?.ToString(CultureInfo.InvariantCulture) ?? string.Empty);
+            builder.Append(',');
+            builder.Append(row.PlatformFeePercent.ToString(CultureInfo.InvariantCulture));
+            builder.Append(',');
+            builder.AppendLine(row.IsSelfServeEnabled ? "true" : "false");
+        }
+
+        return builder.ToString();
+    }
+
+    public static byte[] BuildAdminPricingCatalogEntriesXlsx(IReadOnlyList<AdminPricingCatalogEntryExportRow> rows) =>
+        BuildSimpleSheet(
+            "Catalog",
+            [
+                "CatalogVersionCode",
+                "CountryCode",
+                "SubscriptionSku",
+                "CurrencyCode",
+                "MonthlyAmountMajor",
+                "PlatformFeePercent",
+                "IsSelfServeEnabled",
+            ],
+            rows,
+            (sheet, row, line) =>
+            {
+                sheet.Cell(line, 1).Value = row.CatalogVersionCode;
+                sheet.Cell(line, 2).Value = row.CountryCode;
+                sheet.Cell(line, 3).Value = row.SubscriptionSku;
+                sheet.Cell(line, 4).Value = row.CurrencyCode;
+                if (row.MonthlyAmountMajor is { } amount)
+                {
+                    sheet.Cell(line, 5).Value = amount;
+                }
+
+                sheet.Cell(line, 6).Value = row.PlatformFeePercent;
+                sheet.Cell(line, 7).Value = row.IsSelfServeEnabled;
+            });
+
+    private static byte[] BuildSimpleSheet<T>(
+        string sheetName,
+        string[] headers,
+        IReadOnlyList<T> rows,
+        Action<IXLWorksheet, T, int> writeRow)
+    {
+        using var workbook = new XLWorkbook();
+        var sheet = workbook.Worksheets.Add(sheetName);
+        for (var col = 0; col < headers.Length; col++)
+        {
+            sheet.Cell(1, col + 1).Value = headers[col];
+        }
+
+        for (var i = 0; i < rows.Count; i++)
+        {
+            writeRow(sheet, rows[i]!, i + 2);
+        }
+
+        sheet.Row(1).Style.Font.Bold = true;
+        sheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
+    }
+
     public static byte[] BuildSalesSummaryCsv(SalesSummaryExportRow[] rows)
     {
         var builder = new StringBuilder();
