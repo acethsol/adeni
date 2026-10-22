@@ -119,7 +119,7 @@ export class AdeniListPaginationComponent {
   readonly pageSize = input.required<number>();
   readonly totalCount = input.required<number>();
   readonly loading = input(false);
-  readonly ariaLabel = input("List pages");
+  readonly ariaLabel = input(this.tr("ui.ui.listPages"));
   readonly showMetaWhenSinglePage = input(true);
   /** Drop outer chrome when nested inside cards or panes. */
   readonly embedded = input(false);

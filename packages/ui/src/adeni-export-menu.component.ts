@@ -7,6 +7,7 @@ import {
   signal,
 } from "@angular/core";
 import { AdeniCarbonIconComponent } from "./adeni-carbon-icon.component";
+import { injectAdeniTranslate } from "./locale/adeni-i18n";
 
 export type AdeniExportFormat = "csv" | "xlsx" | "pdf";
 
@@ -61,8 +62,9 @@ export type AdeniExportMenuItem = {
 })
 export class AdeniExportMenuComponent {
   private readonly host = inject(ElementRef<HTMLElement>);
+  private readonly tr = injectAdeniTranslate();
 
-  readonly label = input("Export");
+  readonly label = input(this.tr("ui.ui.exportLabel"));
   readonly items = input<AdeniExportMenuItem[]>([
     { format: "csv", label: "CSV (.csv)", disabled: true },
     { format: "xlsx", label: "Excel (.xlsx)", disabled: true },

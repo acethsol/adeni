@@ -1,4 +1,5 @@
 import { Component, computed, input, output } from "@angular/core";
+import { injectAdeniTranslate } from "./locale/adeni-i18n";
 
 /** One beat in a multi-step flow. `label` is the rail; `title` and `lede` are the stage. */
 export type AdeniWizardStep = {
@@ -148,9 +149,10 @@ export type AdeniWizardStep = {
   `,
 })
 export class AdeniWizardComponent {
+  private readonly tr = injectAdeniTranslate();
   readonly steps = input.required<readonly AdeniWizardStep[]>();
   readonly activeId = input.required<string>();
-  readonly ariaLabel = input("Steps");
+  readonly ariaLabel = input(this.tr("ui.ui.wizardSteps"));
   /** Completed steps become buttons that emit `stepSelect`. */
   readonly allowJump = input(false);
   readonly showPreview = input(false);

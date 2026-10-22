@@ -70,7 +70,7 @@ import { injectAdeniTranslate } from "./locale/adeni-i18n";
                   class="adeni-view-switcher-btn"
                   [class.active]="viewMode() === 'cards'"
                   [attr.aria-pressed]="viewMode() === 'cards'"
-                  [title]="viewModeCardsLabel() + ' view'"
+                  [title]="tr('ui.ui.viewModeTitle', { mode: viewModeCardsLabel() })"
                   (click)="setViewMode('cards')"
                 >
                   <adeni-carbon-icon [name]="viewModeCardsIcon()" [size]="16" aria-hidden="true" />
@@ -81,7 +81,7 @@ import { injectAdeniTranslate } from "./locale/adeni-i18n";
                   class="adeni-view-switcher-btn"
                   [class.active]="viewMode() === 'table'"
                   [attr.aria-pressed]="viewMode() === 'table'"
-                  [title]="viewModeTableLabel() + ' view'"
+                  [title]="tr('ui.ui.viewModeTitle', { mode: viewModeTableLabel() })"
                   (click)="setViewMode('table')"
                 >
                   <adeni-carbon-icon [name]="viewModeTableIcon()" [size]="16" aria-hidden="true" />
@@ -104,16 +104,16 @@ export class AdeniListToolbarComponent {
   readonly count = input(0);
   /** When set and greater than `count`, shows “N of total” (paginated client lists). */
   readonly countTotal = input<number | null>(null);
-  readonly singularCountLabel = input("item");
-  readonly pluralCountLabel = input("items");
+  readonly singularCountLabel = input(this.tr("ui.ui.itemSingular"));
+  readonly pluralCountLabel = input(this.tr("ui.ui.itemPlural"));
 
   readonly showSearch = input(true);
-  readonly searchPlaceholder = input("Search");
+  readonly searchPlaceholder = input(this.tr("ui.ui.searchPlaceholder"));
   readonly searchQuery = model("");
 
   readonly showViewSwitcher = input(true);
-  readonly viewModeCardsLabel = input("Cards");
-  readonly viewModeTableLabel = input("List");
+  readonly viewModeCardsLabel = input(this.tr("ui.ui.viewCards"));
+  readonly viewModeTableLabel = input(this.tr("ui.ui.viewList"));
   readonly viewModeCardsIcon = input<AdeniCarbonIconName>("grid");
   readonly viewModeTableIcon = input<AdeniCarbonIconName>("table");
 

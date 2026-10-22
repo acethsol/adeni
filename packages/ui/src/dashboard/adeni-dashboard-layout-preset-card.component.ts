@@ -3,6 +3,7 @@ import type { DashboardLayoutPresetId } from "@adeni/shared";
 import { AdeniCarbonIconComponent } from "../adeni-carbon-icon.component";
 import type { AdeniCarbonIconName } from "../carbon-icon";
 import { AdeniPillComponent } from "../adeni-pill.component";
+import { injectAdeniTranslate } from "../locale/adeni-i18n";
 import {
   AdeniDashboardLayoutWireframeComponent,
   type AdeniDashboardLayoutWireframeBlock,
@@ -67,6 +68,7 @@ import {
   styleUrl: "../styles/_dashboard-layout-presets.scss",
 })
 export class AdeniDashboardLayoutPresetCardComponent {
+  private readonly tr = injectAdeniTranslate();
   readonly presetId = input.required<DashboardLayoutPresetId>();
   readonly icon = input.required<AdeniCarbonIconName>();
   readonly focus = input.required<string>();
@@ -79,11 +81,11 @@ export class AdeniDashboardLayoutPresetCardComponent {
   readonly recommended = input(false);
   readonly active = input(false);
   readonly disabled = input(false);
-  readonly recommendedLabel = input("Recommended for you");
-  readonly activeLabel = input("Current layout");
+  readonly recommendedLabel = input(this.tr("ui.ui.presetRecommended"));
+  readonly activeLabel = input(this.tr("ui.ui.presetCurrentLayout"));
   readonly emptyPlanHint = input<string | null>(null);
   readonly ctaLabel = input.required<string>();
-  readonly chipsAriaLabel = input("Included widgets");
+  readonly chipsAriaLabel = input(this.tr("ui.ui.presetIncludedWidgets"));
 
   readonly selected = output<void>();
 
