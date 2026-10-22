@@ -73,7 +73,7 @@ public sealed class DomainEventDispatcherTests
 
         var sink = scope.ServiceProvider.GetRequiredService<NotificationTestSink>();
         Assert.Single(sink.Messages);
-        Assert.Equal("Booking confirmed", sink.Messages[0].Subject);
+        Assert.Equal(NotificationTemplateIds.BookingConfirmed, sink.Messages[0].TemplateId);
         Assert.Equal("customer1@example.com", sink.Messages[0].RecipientKey);
     }
 

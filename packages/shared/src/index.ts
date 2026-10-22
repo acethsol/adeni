@@ -22,6 +22,8 @@ export * from "./seo-paths";
 export * from "./seo-neighborhoods";
 export * from "./search-intent";
 export * from "./i18n";
+export * from "./i18n/notifications";
+export * from "./notification-templates";
 export * from "./api-errors";
 export * from "./format";
 export * from "./dashboard-range";

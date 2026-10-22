@@ -1,0 +1,144 @@
+{
+  "templates": {
+    "booking_confirmed": {
+      "en": {
+        "subject": "Booking confirmed",
+        "body": "Your booking {bookingId} at {startAt} has been confirmed."
+      },
+      "fr": {
+        "subject": "Réservation confirmée",
+        "body": "Votre réservation {bookingId} le {startAt} est confirmée."
+      }
+    },
+    "booking_rejected": {
+      "en": {
+        "subject": "Booking declined",
+        "body": "Your booking {bookingId} was declined.{reasonSuffix}"
+      },
+      "fr": {
+        "subject": "Réservation refusée",
+        "body": "Votre réservation {bookingId} a été refusée.{reasonSuffix}"
+      }
+    },
+    "booking_cancelled": {
+      "en": {
+        "subject": "Booking cancelled",
+        "body": "Your booking {bookingId} scheduled for {startAt} was cancelled."
+      },
+      "fr": {
+        "subject": "Réservation annulée",
+        "body": "Votre réservation {bookingId} prévue le {startAt} a été annulée."
+      }
+    },
+    "appointment_reminder_24h": {
+      "en": {
+        "subject": "Appointment reminder (24 hours)",
+        "body": "Reminder: your appointment is scheduled for {startAt}."
+      },
+      "fr": {
+        "subject": "Rappel de rendez-vous (24 h)",
+        "body": "Rappel : votre rendez-vous est prévu le {startAt}."
+      }
+    },
+    "appointment_reminder_2h": {
+      "en": {
+        "subject": "Appointment reminder (2 hours)",
+        "body": "Reminder: your appointment is scheduled for {startAt}."
+      },
+      "fr": {
+        "subject": "Rappel de rendez-vous (2 h)",
+        "body": "Rappel : votre rendez-vous est prévu le {startAt}."
+      }
+    },
+    "appointment_followup_no_show": {
+      "en": {
+        "subject": "We missed you — book again",
+        "body": "We noticed you may have missed your appointment on {startAt}. Reply or visit the business profile to pick a new time."
+      },
+      "fr": {
+        "subject": "Vous nous avez manqué — reprenez rendez-vous",
+        "body": "Il semble que vous ayez manqué votre rendez-vous le {startAt}. Répondez ou visitez le profil de l'établissement pour choisir un nouveau créneau."
+      }
+    },
+    "waitlist_slot_opened": {
+      "en": {
+        "subject": "A slot opened up",
+        "body": "Good news — a slot is available at {startAt}. Book soon before it is taken."
+      },
+      "fr": {
+        "subject": "Un créneau s'est libéré",
+        "body": "Bonne nouvelle — un créneau est disponible le {startAt}. Réservez vite avant qu'il ne parte."
+      }
+    },
+    "payment_failed": {
+      "en": {
+        "subject": "Payment failed",
+        "body": "Payment {paymentIntentId} failed.{reasonSuffix}"
+      },
+      "fr": {
+        "subject": "Paiement échoué",
+        "body": "Le paiement {paymentIntentId} a échoué.{reasonSuffix}"
+      }
+    },
+    "payment_receipt": {
+      "en": {
+        "subject": "Payment receipt",
+        "body": "<p>Thank you — your payment of {amount} {currency} was received.</p><p>Your receipt ({documentNumber}) is attached.</p>"
+      },
+      "fr": {
+        "subject": "Reçu de paiement",
+        "body": "<p>Merci — votre paiement de {amount} {currency} a été reçu.</p><p>Votre reçu ({documentNumber}) est en pièce jointe.</p>"
+      }
+    },
+    "conversation_customer": {
+      "en": {
+        "subject": "New message from business",
+        "body": "You have a new message about your Adeni conversation: {preview}"
+      },
+      "fr": {
+        "subject": "Nouveau message de l'établissement",
+        "body": "Vous avez un nouveau message concernant votre conversation Adeni : {preview}"
+      }
+    },
+    "conversation_business": {
+      "en": {
+        "subject": "New customer message",
+        "body": "New message in conversation {conversationId}: {preview}"
+      },
+      "fr": {
+        "subject": "Nouveau message client",
+        "body": "Nouveau message dans la conversation {conversationId} : {preview}"
+      }
+    },
+    "staff_invite": {
+      "en": {
+        "subject": "You're invited to {tenantName} on Adeni",
+        "body": "You've been invited to the Adeni business portal for {tenantName} as {role}. Open this link to accept (expires {expiresAt}): {acceptUrl}"
+      },
+      "fr": {
+        "subject": "Invitation à {tenantName} sur Adeni",
+        "body": "Vous êtes invité au portail Adeni pour {tenantName} en tant que {role}. Ouvrez ce lien pour accepter (expire le {expiresAt}) : {acceptUrl}"
+      }
+    },
+    "queue_called": {
+      "en": {
+        "subject": "You're up at {businessName}",
+        "body": "Hi {guestName}, you're next at {businessName}. Please head to the front desk."
+      },
+      "fr": {
+        "subject": "C'est votre tour chez {businessName}",
+        "body": "Bonjour {guestName}, c'est votre tour chez {businessName}. Présentez-vous à l'accueil."
+      }
+    },
+    "billing_document_emailed": {
+      "en": {
+        "subject": "{kind} {documentNumber} from {businessName}",
+        "body": "Your {kindLower} {documentNumber} for {total} {currency} is ready.\n\nView: {publicUrl}"
+      },
+      "fr": {
+        "subject": "{kind} {documentNumber} de {businessName}",
+        "body": "Votre {kindLower} {documentNumber} de {total} {currency} est prêt.\n\nVoir : {publicUrl}"
+      }
+    }
+  }
+}

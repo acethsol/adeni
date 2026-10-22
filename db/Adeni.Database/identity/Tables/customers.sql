@@ -4,6 +4,7 @@ CREATE TABLE [identity].[customers] (
     [Name]               NVARCHAR (200)     NOT NULL,
     [Email]              NVARCHAR (320)     NULL,
     [Phone]              NVARCHAR (32)      NULL,
+    [PreferredLocale]    NVARCHAR (8)       NULL,
     [CreatedAt]          DATETIMEOFFSET (7) NOT NULL,
     [ErasureRequestedAt] DATETIMEOFFSET (7) NULL,
     CONSTRAINT [PK_customers] PRIMARY KEY CLUSTERED ([Id] ASC)

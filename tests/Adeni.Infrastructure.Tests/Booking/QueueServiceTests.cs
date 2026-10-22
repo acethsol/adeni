@@ -47,7 +47,9 @@ public sealed class QueueServiceTests
         var called = await queue.CallAsync(tenantId, joined.Value.Id);
         Assert.True(called.IsSuccess, called.Error?.Message);
         Assert.Equal("called", called.Value!.Status);
-        Assert.Contains(sink.Messages, m => m.Subject.Contains("You're up", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(
+            sink.Messages,
+            m => m.TemplateId == NotificationTemplateIds.QueueCalled);
         Assert.Contains(
             sink.Messages,
             m => string.Equals(m.DedupeEventId, $"queue-called:{joined.Value.Id:D}", StringComparison.Ordinal));

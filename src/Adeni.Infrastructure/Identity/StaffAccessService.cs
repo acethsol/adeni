@@ -510,16 +510,22 @@ public sealed class StaffAccessService(
             .Select(t => t.Name)
             .FirstOrDefaultAsync(cancellationToken) ?? "your business";
 
+        var data = new Dictionary<string, string>
+        {
+            ["tenantName"] = tenantName,
+            ["role"] = invite.PermissionRole ?? "staff",
+            ["expiresAt"] = invite.ExpiresAt.ToString("u"),
+            ["acceptUrl"] = acceptUrl,
+        };
+
         await notificationDispatcher.SendAsync(
-            new NotificationMessage(
-                Channel: "email",
-                RecipientKey: invite.Email.Trim(),
-                Subject: $"You're invited to {tenantName} on Adeni",
-                Body:
-                $"You've been invited to the Adeni business portal for {tenantName} "
-                + $"as {invite.PermissionRole}. Open this link to accept (expires {invite.ExpiresAt:u}): {acceptUrl}",
-                TenantId: invite.TenantId,
-                DedupeEventId: $"staff-invite:{invite.Id:D}"),
+            NotificationMessage.FromTemplate(
+                "email",
+                invite.Email.Trim(),
+                NotificationTemplateIds.StaffInvite,
+                data,
+                invite.TenantId,
+                $"staff-invite:{invite.Id:D}"),
             cancellationToken);
     }
 

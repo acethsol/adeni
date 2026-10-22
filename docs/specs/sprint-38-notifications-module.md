@@ -53,7 +53,7 @@ Replace log-only notification delivery with **production Resend email and Twilio
 - [x] Fix **recipient resolution** — email/SMS to customer contact from Booking/Customer **Application ports**, not raw customer id stubs
 - [x] **Country-aware sender resolution** — `NotificationSenderConfig` (§5); avoid single global Twilio number assumption for CA + NG
 - [x] Config secrets: `Resend:ApiKey`, `Resend:From`, Twilio credentials, per-market sender rows — Key Vault staging/prod
-- [ ] Typed template **foundation** (IDs, data bags; full flows in 38B)
+- [x] Typed template **foundation** (IDs, data bags; **38c** rendering + i18n)
 - [x] Integration tests with mock HTTP handlers (no live send in CI)
 - [x] **Preference rename (spec + migration):** `SmsWhatsAppReminderEnabled` → **`SmsRemindersEnabled`** on API/DTOs/entity when implemented (SMS-only; no WhatsApp in pref name)
 - [x] High-value **email-only** paths where Reporting not required: booking confirmed/rejected/cancelled, staff invite, conversation email stub

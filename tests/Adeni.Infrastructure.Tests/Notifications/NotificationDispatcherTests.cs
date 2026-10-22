@@ -154,6 +154,8 @@ public sealed class NotificationDispatcherTests
             sp.GetRequiredService<Adeni.Infrastructure.Context.TenantContext>());
         services.AddEntitlementsModule();
         services.AddScoped<INotificationPreferencesService, NotificationPreferencesService>();
+        services.AddScoped<INotificationTemplateRenderer, NotificationTemplateRenderer>();
+        services.AddScoped<INotificationLocaleResolver, NotificationLocaleResolver>();
         services.AddScoped<INotificationRecipientResolver, NotificationRecipientResolver>();
         services.AddScoped<INotificationSenderConfigResolver, NotificationSenderConfigResolver>();
         services.AddScoped<ChannelNotificationDispatcher>();

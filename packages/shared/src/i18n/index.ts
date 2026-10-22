@@ -38,3 +38,4 @@ export {
   shouldTranslateContent,
 } from "./content-translation";
 export { enMessages, frMessages };
+export { getNotificationSettingsCopy } from "./notifications";

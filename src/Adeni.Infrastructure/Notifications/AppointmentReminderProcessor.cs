@@ -78,33 +78,40 @@ public sealed class AppointmentReminderProcessor(
             }
 
             var dedupe = $"appointment-reminder:{booking.Id:D}:{windowKey}";
-            var subject = windowKey == "24h" ? "Appointment reminder (24 hours)" : "Appointment reminder (2 hours)";
-            var body =
-                $"Reminder: your appointment is scheduled for {booking.StartAt:u}.";
+            var templateId = windowKey == "24h"
+                ? NotificationTemplateIds.AppointmentReminder24h
+                : NotificationTemplateIds.AppointmentReminder2h;
+
+            var data = new Dictionary<string, string>
+            {
+                ["startAtUtc"] = booking.StartAt.ToString("o"),
+            };
 
             if (!string.IsNullOrWhiteSpace(contact.Value!.Email))
             {
                 await notificationDispatcher.SendAsync(
-                    new NotificationMessage(
+                    NotificationMessage.FromTemplate(
                         "email",
                         contact.Value.Email.Trim(),
-                        subject,
-                        body,
+                        templateId,
+                        data,
                         booking.TenantId,
-                        dedupe),
+                        dedupe,
+                        booking.CustomerId),
                     cancellationToken);
             }
 
             if (!string.IsNullOrWhiteSpace(contact.Value.PhoneE164))
             {
                 await notificationDispatcher.SendAsync(
-                    new NotificationMessage(
+                    NotificationMessage.FromTemplate(
                         "sms",
                         contact.Value.PhoneE164.Trim(),
-                        subject,
-                        body,
+                        templateId,
+                        data,
                         booking.TenantId,
-                        dedupe + ":sms"),
+                        dedupe + ":sms",
+                        booking.CustomerId),
                     cancellationToken);
             }
         }
@@ -149,15 +156,20 @@ public sealed class AppointmentReminderProcessor(
             }
 
             var dedupe = $"appointment-followup:{booking.Id:D}:no-show";
+            var data = new Dictionary<string, string>
+            {
+                ["startAtUtc"] = booking.StartAt.ToString("o"),
+            };
+
             await notificationDispatcher.SendAsync(
-                new NotificationMessage(
+                NotificationMessage.FromTemplate(
                     "email",
                     contact.Value.Email.Trim(),
-                    "We missed you — book again",
-                    $"We noticed you may have missed your appointment on {booking.StartAt:u}. " +
-                    "Reply or visit the business profile to pick a new time.",
+                    NotificationTemplateIds.AppointmentFollowupNoShow,
+                    data,
                     booking.TenantId,
-                    dedupe),
+                    dedupe,
+                    booking.CustomerId),
                 cancellationToken);
         }
     }

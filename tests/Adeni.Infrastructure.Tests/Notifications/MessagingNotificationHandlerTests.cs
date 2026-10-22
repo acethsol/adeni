@@ -35,7 +35,8 @@ public sealed class MessagingNotificationHandlerTests
         Assert.Equal("email", dispatcher.Messages[0].Channel);
         Assert.Equal(string.Empty, dispatcher.Messages[0].RecipientKey);
         Assert.Equal(tenantId, dispatcher.Messages[0].TenantId);
-        Assert.Contains("Hello there", dispatcher.Messages[0].Body);
+        Assert.Equal(NotificationTemplateIds.ConversationBusiness, dispatcher.Messages[0].TemplateId);
+        Assert.Equal("Hello there", dispatcher.Messages[0].TemplateData!["preview"]);
     }
 
     [Fact]
@@ -64,7 +65,8 @@ public sealed class MessagingNotificationHandlerTests
 
         Assert.Single(dispatcher.Messages);
         Assert.Equal(customerEmail, dispatcher.Messages[0].RecipientKey);
-        Assert.Contains("Attachment", dispatcher.Messages[0].Body);
+        Assert.Equal(NotificationTemplateIds.ConversationCustomer, dispatcher.Messages[0].TemplateId);
+        Assert.Equal("Attachment", dispatcher.Messages[0].TemplateData!["preview"]);
     }
 
     private sealed class CapturingDispatcher : INotificationDispatcher

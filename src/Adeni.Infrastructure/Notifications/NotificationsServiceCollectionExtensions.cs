@@ -39,6 +39,8 @@ public static class NotificationsServiceCollectionExtensions
         services.AddScoped<INotificationDispatcher>(sp =>
             sp.GetRequiredService<DeferredNotificationDispatcher>());
         services.AddScoped<INotificationPreferencesService, NotificationPreferencesService>();
+        services.AddScoped<INotificationTemplateRenderer, NotificationTemplateRenderer>();
+        services.AddScoped<INotificationLocaleResolver, NotificationLocaleResolver>();
 
         services.AddScoped<PaymentReceiptNotificationSender>();
         services.AddScoped<NotificationSendWorker>();

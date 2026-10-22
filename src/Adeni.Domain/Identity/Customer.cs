@@ -12,6 +12,9 @@ public sealed class Customer
 
     public string? Phone { get; set; }
 
+    /// <summary>Optional platform locale (en, fr) for notification rendering.</summary>
+    public string? PreferredLocale { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
 
     public DateTimeOffset? ErasureRequestedAt { get; set; }

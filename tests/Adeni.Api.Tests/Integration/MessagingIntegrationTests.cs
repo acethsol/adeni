@@ -207,6 +207,8 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
                 emailEnabled = true,
                 pushEnabled = false,
                 smsRemindersEnabled = true,
+                defaultNotificationLocale = "en",
+                templateOverrides = Array.Empty<object>(),
             });
         Assert.Equal(HttpStatusCode.OK, patch.StatusCode);
     }

@@ -20,6 +20,7 @@
     <Content Include="..\..\packages\shared\src\data\wellness-categories.json" Link="Catalog\wellness-categories.json" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\packages\shared\src\data\wellness-service-templates.json" Link="Catalog\wellness-service-templates.json" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\packages\shared\src\data\plan-entitlements.json" Link="Catalog\plan-entitlements.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\packages\shared\src\data\notification-templates.json" Link="Catalog\notification-templates.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

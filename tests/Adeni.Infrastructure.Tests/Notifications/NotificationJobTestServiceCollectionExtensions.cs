@@ -26,6 +26,8 @@ internal static class NotificationJobTestServiceCollectionExtensions
         }
 
         services.AddAdeniDomainEvents();
+        services.AddScoped<INotificationTemplateRenderer, NotificationTemplateRenderer>();
+        services.AddScoped<INotificationLocaleResolver, NotificationLocaleResolver>();
         services.AddScoped<PaymentReceiptNotificationSender>();
         services.AddScoped<NotificationSendWorker>();
         services.AddScoped<DeferredNotificationDispatcher>();

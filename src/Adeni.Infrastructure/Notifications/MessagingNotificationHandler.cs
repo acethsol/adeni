@@ -20,15 +20,20 @@ public sealed class MessagingNotificationHandler(
         CancellationToken cancellationToken = default)
     {
         var preview = BuildPreview(domainEvent.BodyPreview, domainEvent.HasAttachments);
+        var data = new Dictionary<string, string>
+        {
+            ["preview"] = preview,
+            ["conversationId"] = domainEvent.ConversationId.ToString("D"),
+        };
 
         if (domainEvent.SenderType == ConversationParticipantType.Customer)
         {
             await notificationDispatcher.SendAsync(
-                new NotificationMessage(
+                NotificationMessage.FromTemplate(
                     "email",
                     string.Empty,
-                    "New customer message",
-                    $"New message in conversation {domainEvent.ConversationId:D}: {preview}",
+                    NotificationTemplateIds.ConversationBusiness,
+                    data,
                     domainEvent.TenantId,
                     $"conversation-business:{domainEvent.MessageId:D}"),
                 cancellationToken);
@@ -48,13 +53,14 @@ public sealed class MessagingNotificationHandler(
         }
 
         await notificationDispatcher.SendAsync(
-            new NotificationMessage(
+            NotificationMessage.FromTemplate(
                 "email",
                 contact.Value.Email.Trim(),
-                "New message from business",
-                $"You have a new message about your Adeni conversation: {preview}",
+                NotificationTemplateIds.ConversationCustomer,
+                data,
                 domainEvent.TenantId,
-                $"conversation-customer:{domainEvent.MessageId:D}"),
+                $"conversation-customer:{domainEvent.MessageId:D}",
+                domainEvent.CustomerId),
             cancellationToken);
     }
 

@@ -55,7 +55,7 @@ public sealed class BookingNotificationHandlerTests
 
         Assert.Single(dispatcher.Messages);
         Assert.Equal("guest@example.com", dispatcher.Messages[0].RecipientKey);
-        Assert.Equal("Booking confirmed", dispatcher.Messages[0].Subject);
+        Assert.Equal(NotificationTemplateIds.BookingConfirmed, dispatcher.Messages[0].TemplateId);
         Assert.Equal($"booking-confirmed:{bookingId:D}", dispatcher.Messages[0].DedupeEventId);
     }
 

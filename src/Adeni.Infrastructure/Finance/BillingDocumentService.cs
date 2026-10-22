@@ -366,13 +366,25 @@ public sealed class BillingDocumentService(
         }
 
         var mapped = Map(entity);
+        var data = new Dictionary<string, string>
+        {
+            ["kind"] = entity.Kind.ToString(),
+            ["kindLower"] = entity.Kind.ToString().ToLowerInvariant(),
+            ["documentNumber"] = entity.DocumentNumber,
+            ["businessName"] = entity.BusinessNameSnapshot,
+            ["total"] = entity.Total.ToString("0.00"),
+            ["currency"] = entity.Currency,
+            ["publicUrl"] = mapped.PublicUrl ?? string.Empty,
+        };
+
         await notificationDispatcher.SendAsync(
-            new NotificationMessage(
+            NotificationMessage.FromTemplate(
                 "email",
                 to,
-                $"{entity.Kind} {entity.DocumentNumber} from {entity.BusinessNameSnapshot}",
-                $"Your {entity.Kind.ToString().ToLowerInvariant()} {entity.DocumentNumber} for {entity.Total:0.00} {entity.Currency} is ready.\n\nView: {mapped.PublicUrl}",
-                entity.TenantId),
+                NotificationTemplateIds.BillingDocumentEmailed,
+                data,
+                entity.TenantId,
+                $"billing-document-emailed:{entity.Id:D}"),
             cancellationToken);
 
         await WriteAuditAsync(entity.Id, entity.TenantId, "document.emailed", cancellationToken);

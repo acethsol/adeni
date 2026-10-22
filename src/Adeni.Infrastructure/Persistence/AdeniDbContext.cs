@@ -114,6 +114,9 @@ public sealed class AdeniDbContext(
     public DbSet<TenantNotificationPreferences> TenantNotificationPreferences =>
         Set<TenantNotificationPreferences>();
 
+    public DbSet<TenantNotificationTemplateOverride> TenantNotificationTemplateOverrides =>
+        Set<TenantNotificationTemplateOverride>();
+
     public DbSet<NotificationDelivery> NotificationDeliveries => Set<NotificationDelivery>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -129,6 +132,7 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.Name).HasMaxLength(200);
             entity.Property(x => x.Email).HasMaxLength(320);
             entity.Property(x => x.Phone).HasMaxLength(32);
+            entity.Property(x => x.PreferredLocale).HasMaxLength(8);
             entity.Property(x => x.ErasureRequestedAt);
         });
 
@@ -731,6 +735,19 @@ public sealed class AdeniDbContext(
             entity.ToTable("tenant_notification_preferences", "notifications");
             entity.HasKey(x => x.TenantId);
             entity.Property(x => x.SmsRemindersEnabled).HasColumnName("SmsRemindersEnabled");
+            entity.Property(x => x.DefaultNotificationLocale).HasMaxLength(8).HasDefaultValue("en");
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<TenantNotificationTemplateOverride>(entity =>
+        {
+            entity.ToTable("tenant_notification_template_overrides", "notifications");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.TemplateId).HasMaxLength(64);
+            entity.Property(x => x.Locale).HasMaxLength(8);
+            entity.Property(x => x.SubjectOverride).HasMaxLength(200);
+            entity.Property(x => x.BodyOverride).HasMaxLength(2000);
+            entity.HasIndex(x => new { x.TenantId, x.TemplateId, x.Locale }).IsUnique();
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 

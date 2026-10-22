@@ -13,5 +13,8 @@ public sealed class TenantNotificationPreferences : ITenantEntity
 
     public bool SmsRemindersEnabled { get; set; }
 
+    /// <summary>BCP-47-style short code (en, fr) for default outbound copy when recipient locale unknown.</summary>
+    public string DefaultNotificationLocale { get; set; } = "en";
+
     public DateTimeOffset UpdatedAt { get; set; }
 }

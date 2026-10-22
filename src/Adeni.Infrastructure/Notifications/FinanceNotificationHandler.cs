@@ -25,14 +25,26 @@ public sealed class FinanceNotificationHandler(INotificationDispatcher notificat
                     domainEvent.Currency)),
             cancellationToken);
 
-    public Task HandleAsync(PaymentFailed domainEvent, CancellationToken cancellationToken = default) =>
-        notificationDispatcher.SendAsync(
-            new NotificationMessage(
+    public Task HandleAsync(PaymentFailed domainEvent, CancellationToken cancellationToken = default)
+    {
+        var data = new Dictionary<string, string>
+        {
+            ["paymentIntentId"] = domainEvent.PaymentIntentId.ToString("D"),
+        };
+
+        if (!string.IsNullOrWhiteSpace(domainEvent.Reason))
+        {
+            data["reason"] = domainEvent.Reason.Trim();
+        }
+
+        return notificationDispatcher.SendAsync(
+            NotificationMessage.FromTemplate(
                 "email",
                 domainEvent.TenantId.ToString(),
-                "Payment failed",
-                $"Payment {domainEvent.PaymentIntentId} failed.{(string.IsNullOrWhiteSpace(domainEvent.Reason) ? "" : $" Reason: {domainEvent.Reason}")}",
+                NotificationTemplateIds.PaymentFailed,
+                data,
                 domainEvent.TenantId,
                 $"payment-failed:{domainEvent.PaymentIntentId:D}"),
             cancellationToken);
+    }
 }

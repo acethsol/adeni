@@ -72,6 +72,44 @@
             <a routerLink="/plan">Compare plans</a>
           </p>
         }
+        <div class="field">
+          <label for="notification-locale">Default customer notification language</label>
+          <select id="notification-locale" [(ngModel)]="defaultNotificationLocale">
+            @for (loc of localeOptions; track loc.id) {
+              <option [value]="loc.id">{{ loc.nativeLabel }}</option>
+            }
+          </select>
+          <p class="hint">
+            Each message is sent in one language. Adeni uses this when the customer's preference is unknown.
+          </p>
+        </div>
+        @if (templateOverridesEntitled()) {
+          <h4 class="subsection-title">Message text overrides</h4>
+          <p class="hint">
+            Optional custom subject and body for key templates in
+            {{ defaultNotificationLocale === "fr" ? "French" : "English" }}.
+          </p>
+          @for (templateId of editableTemplateIds; track templateId) {
+            <div class="field template-override-block">
+              <label>{{ templateLabel(templateId) }}</label>
+              <input
+                type="text"
+                placeholder="Custom subject (optional)"
+                [(ngModel)]="overrideFor(templateId).subject"
+              />
+              <textarea
+                rows="3"
+                placeholder="Custom body (optional)"
+                [(ngModel)]="overrideFor(templateId).body"
+              ></textarea>
+            </div>
+          }
+        } @else {
+          <p class="hint muted">
+            Custom reminder and booking message text is on Professional and Business.
+            <a routerLink="/plan">Compare plans</a>
+          </p>
+        }
         <button
           type="button"
           class="btn btn-primary"

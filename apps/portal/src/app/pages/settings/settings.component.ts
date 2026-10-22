@@ -3,7 +3,16 @@ import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import { map } from "rxjs";
-import { hasCapability, hasTenantEntitlement, type BusinessProfile } from "@adeni/shared";
+import {
+  hasCapability,
+  hasTenantEntitlement,
+  notificationTemplateLabel,
+  PORTAL_EDITABLE_NOTIFICATION_TEMPLATE_IDS,
+  supportedLocales,
+  type BusinessProfile,
+  type NotificationTemplateId,
+  type NotificationTemplateOverride,
+} from "@adeni/shared";
 import { filterPortalTabs } from "../../core/portal-access";
 import { findPortalNavItem } from "../../core/portal-nav";
 import { AdeniCarbonIconComponent, AdeniFeedbackService, PortalPageComponent } from "@adeni/ui";
@@ -54,6 +63,14 @@ export class SettingsComponent implements OnInit {
   readonly profile = signal<BusinessProfile | null>(null);
 
   readonly smsEntitled = computed(() => this.profile()?.entitlements?.smsEnabled === true);
+  readonly templateOverridesEntitled = computed(
+    () => this.profile()?.entitlements?.configurableReminders === true,
+  );
+  readonly localeOptions = supportedLocales;
+  readonly editableTemplateIds = PORTAL_EDITABLE_NOTIFICATION_TEMPLATE_IDS;
+
+  defaultNotificationLocale: "en" | "fr" = "en";
+  templateOverrides: NotificationTemplateOverride[] = [];
 
   autoConfirm = false;
   depositPercent = 0;
@@ -97,6 +114,9 @@ export class SettingsComponent implements OnInit {
           this.emailEnabled = prefs.emailEnabled;
           this.pushEnabled = prefs.pushEnabled;
           this.smsRemindersEnabled = prefs.smsRemindersEnabled;
+          this.defaultNotificationLocale = prefs.defaultNotificationLocale ?? "en";
+          this.templateOverrides = [...(prefs.templateOverrides ?? [])];
+          this.ensureEditableTemplateRows();
 
           if (hasTenantEntitlement(profile.entitlements, "messaging")) {
             const messaging = await client.getMessagingSettings();
@@ -147,6 +167,14 @@ export class SettingsComponent implements OnInit {
             smsRemindersEnabled: this.smsEntitled()
               ? this.smsRemindersEnabled
               : false,
+            defaultNotificationLocale: this.defaultNotificationLocale,
+            templateOverrides: this.templateOverridesEntitled()
+              ? this.templateOverrides.filter(
+                  (row) =>
+                    (row.subject?.trim()?.length ?? 0) > 0 ||
+                    (row.body?.trim()?.length ?? 0) > 0,
+                )
+              : [],
           }),
         );
         this.feedback.success("Notification preferences saved");
@@ -201,6 +229,35 @@ export class SettingsComponent implements OnInit {
       this.feedback.error("Could not save walk-in settings");
     } finally {
       this.saving.set(false);
+    }
+  }
+
+  templateLabel(id: NotificationTemplateId): string {
+    return notificationTemplateLabel(id, this.defaultNotificationLocale);
+  }
+
+  overrideFor(templateId: NotificationTemplateId): NotificationTemplateOverride {
+    const existing = this.templateOverrides.find(
+      (row) =>
+        row.templateId === templateId && row.locale === this.defaultNotificationLocale,
+    );
+    if (existing) {
+      return existing;
+    }
+
+    const created: NotificationTemplateOverride = {
+      templateId,
+      locale: this.defaultNotificationLocale,
+      subject: "",
+      body: "",
+    };
+    this.templateOverrides = [...this.templateOverrides, created];
+    return created;
+  }
+
+  private ensureEditableTemplateRows(): void {
+    for (const templateId of this.editableTemplateIds) {
+      this.overrideFor(templateId);
     }
   }
 

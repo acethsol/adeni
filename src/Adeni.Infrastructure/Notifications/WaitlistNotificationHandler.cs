@@ -60,9 +60,10 @@ public sealed class WaitlistNotificationHandler(
             return;
         }
 
-        var subject = "A slot opened up";
-        var body =
-            $"Good news — a slot is available at {domainEvent.StartAt:u}. Book soon before it is taken.";
+        var data = new Dictionary<string, string>
+        {
+            ["startAtUtc"] = slotStart.ToString("o"),
+        };
 
         foreach (var entry in entries)
         {
@@ -77,26 +78,28 @@ public sealed class WaitlistNotificationHandler(
             if (!string.IsNullOrWhiteSpace(contact.Value!.Email))
             {
                 await notificationDispatcher.SendAsync(
-                    new NotificationMessage(
+                    NotificationMessage.FromTemplate(
                         "email",
                         contact.Value.Email.Trim(),
-                        subject,
-                        body,
+                        NotificationTemplateIds.WaitlistSlotOpened,
+                        data,
                         domainEvent.TenantId,
-                        dedupeBase + ":email"),
+                        dedupeBase + ":email",
+                        entry.CustomerId),
                     cancellationToken);
             }
 
             if (!string.IsNullOrWhiteSpace(contact.Value.PhoneE164))
             {
                 await notificationDispatcher.SendAsync(
-                    new NotificationMessage(
+                    NotificationMessage.FromTemplate(
                         "sms",
                         contact.Value.PhoneE164.Trim(),
-                        subject,
-                        body,
+                        NotificationTemplateIds.WaitlistSlotOpened,
+                        data,
                         domainEvent.TenantId,
-                        dedupeBase + ":sms"),
+                        dedupeBase + ":sms",
+                        entry.CustomerId),
                     cancellationToken);
             }
 

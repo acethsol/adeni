@@ -10,6 +10,8 @@ using Microsoft.Extensions.Logging;
 public sealed class PaymentReceiptNotificationSender(
     INotificationDeliveryDispatcher deliveryDispatcher,
     INotificationRecipientResolver recipientResolver,
+    INotificationTemplateRenderer templateRenderer,
+    INotificationLocaleResolver localeResolver,
     IBillingDocumentService billingDocuments,
     IReportRenderer reportRenderer,
     AdeniDbContext dbContext,
@@ -79,16 +81,47 @@ public sealed class PaymentReceiptNotificationSender(
         }
 
         var fileName = $"receipt-{receipt.Value.DocumentNumber}.pdf";
-        var body =
-            $"<p>Thank you — your payment of {args.Amount} {args.Currency} was received.</p>" +
-            $"<p>Your receipt ({receipt.Value.DocumentNumber}) is attached.</p>";
+
+        Guid? customerId = null;
+        if (args.BookingId is { } bookingIdForCustomer)
+        {
+            customerId = await dbContext.Bookings
+                .AsNoTracking()
+                .Where(x => x.Id == bookingIdForCustomer)
+                .Select(x => (Guid?)x.CustomerId)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        var locale = await localeResolver.ResolveAsync(args.TenantId, customerId, null, cancellationToken);
+        var templateData = new Dictionary<string, string>
+        {
+            ["amount"] = args.Amount.ToString("0.00"),
+            ["currency"] = args.Currency,
+            ["documentNumber"] = receipt.Value.DocumentNumber,
+        };
+
+        var rendered = await templateRenderer.RenderAsync(
+            NotificationTemplateIds.PaymentReceipt,
+            args.TenantId,
+            locale,
+            templateData,
+            cancellationToken);
+
+        if (rendered.IsFailure)
+        {
+            logger.LogWarning(
+                "Skipping payment receipt email for {PaymentIntentId}: {Error}",
+                args.PaymentIntentId,
+                rendered.Error.Message);
+            return;
+        }
 
         await deliveryDispatcher.SendAsync(
             new NotificationMessage(
                 "email",
                 toEmail.Trim(),
-                "Payment receipt",
-                body,
+                rendered.Value!.Subject,
+                rendered.Value.Body,
                 args.TenantId,
                 $"payment-receipt:{args.PaymentIntentId:D}",
                 [new EmailAttachment(fileName, "application/pdf", pdf.Value!)]),

@@ -18,9 +18,10 @@ public sealed class BookingNotificationHandler(
             domainEvent.TenantId,
             domainEvent.BookingId,
             domainEvent.CustomerId,
+            domainEvent.StartAt,
             $"booking-confirmed:{domainEvent.BookingId:D}",
-            "Booking confirmed",
-            $"Your booking {domainEvent.BookingId} at {domainEvent.StartAt:u} has been confirmed.",
+            NotificationTemplateIds.BookingConfirmed,
+            reason: null,
             cancellationToken);
 
     public Task HandleAsync(BookingRejected domainEvent, CancellationToken cancellationToken = default) =>
@@ -28,11 +29,10 @@ public sealed class BookingNotificationHandler(
             domainEvent.TenantId,
             domainEvent.BookingId,
             domainEvent.CustomerId,
+            startAt: null,
             $"booking-rejected:{domainEvent.BookingId:D}",
-            "Booking declined",
-            string.IsNullOrWhiteSpace(domainEvent.Reason)
-                ? $"Your booking {domainEvent.BookingId} was declined."
-                : $"Your booking {domainEvent.BookingId} was declined: {domainEvent.Reason}",
+            NotificationTemplateIds.BookingRejected,
+            domainEvent.Reason,
             cancellationToken);
 
     public Task HandleAsync(BookingCancelled domainEvent, CancellationToken cancellationToken = default) =>
@@ -40,18 +40,20 @@ public sealed class BookingNotificationHandler(
             domainEvent.TenantId,
             domainEvent.BookingId,
             domainEvent.CustomerId,
+            domainEvent.StartAt,
             $"booking-cancelled:{domainEvent.BookingId:D}",
-            "Booking cancelled",
-            $"Your booking {domainEvent.BookingId} scheduled for {domainEvent.StartAt:u} was cancelled.",
+            NotificationTemplateIds.BookingCancelled,
+            reason: null,
             cancellationToken);
 
     private async Task SendBookingEmailAsync(
         Guid tenantId,
         Guid bookingId,
         Guid customerId,
+        DateTimeOffset? startAt,
         string dedupeEventId,
-        string subject,
-        string body,
+        string templateId,
+        string? reason,
         CancellationToken cancellationToken)
     {
         var contact = await recipientResolver.ResolveBookingCustomerAsync(tenantId, bookingId, cancellationToken);
@@ -68,14 +70,30 @@ public sealed class BookingNotificationHandler(
             return;
         }
 
+        var data = new Dictionary<string, string>
+        {
+            ["bookingId"] = bookingId.ToString("D"),
+        };
+
+        if (startAt is not null)
+        {
+            data["startAtUtc"] = startAt.Value.ToString("o");
+        }
+
+        if (templateId == NotificationTemplateIds.BookingRejected && !string.IsNullOrWhiteSpace(reason))
+        {
+            data["reason"] = reason.Trim();
+        }
+
         await notificationDispatcher.SendAsync(
-            new NotificationMessage(
+            NotificationMessage.FromTemplate(
                 "email",
                 contact.Value.Email.Trim(),
-                subject,
-                body,
+                templateId,
+                data,
                 tenantId,
-                dedupeEventId),
+                dedupeEventId,
+                customerId),
             cancellationToken);
     }
 }

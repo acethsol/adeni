@@ -7,6 +7,8 @@ using Microsoft.Extensions.Logging;
 public sealed class NotificationSendWorker(
     INotificationDeliveryDispatcher deliveryDispatcher,
     PaymentReceiptNotificationSender paymentReceiptSender,
+    INotificationTemplateRenderer templateRenderer,
+    INotificationLocaleResolver localeResolver,
     ILogger<NotificationSendWorker> logger)
 {
     public async Task SendAsync(NotificationJobPayload payload, CancellationToken cancellationToken = default)
@@ -27,7 +29,40 @@ public sealed class NotificationSendWorker(
             payload.DedupeEventId,
             MaskRecipient(payload.Channel, payload.RecipientKey));
 
-        await deliveryDispatcher.SendAsync(payload.ToMessage(), cancellationToken);
+        var message = payload.ToMessage();
+        if (!string.IsNullOrWhiteSpace(payload.TemplateId))
+        {
+            var locale = await localeResolver.ResolveAsync(
+                payload.TenantId,
+                payload.RecipientCustomerId,
+                payload.LocaleHint,
+                cancellationToken);
+
+            var data = payload.TemplateData ?? new Dictionary<string, string>();
+            var rendered = await templateRenderer.RenderAsync(
+                payload.TemplateId,
+                payload.TenantId,
+                locale,
+                data,
+                cancellationToken);
+
+            if (rendered.IsFailure)
+            {
+                logger.LogWarning(
+                    "Skipping notification job template={TemplateId}: {Error}",
+                    payload.TemplateId,
+                    rendered.Error.Message);
+                return;
+            }
+
+            message = message with
+            {
+                Subject = rendered.Value!.Subject,
+                Body = rendered.Value.Body,
+            };
+        }
+
+        await deliveryDispatcher.SendAsync(message, cancellationToken);
     }
 
     private static string MaskRecipient(string channel, string recipientKey) =>

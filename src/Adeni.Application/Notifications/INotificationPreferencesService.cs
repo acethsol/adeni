@@ -2,15 +2,25 @@ namespace Adeni.Application.Notifications;
 
 using Adeni.Domain.Common;
 
+public sealed record NotificationTemplateOverrideDto(
+    string TemplateId,
+    string Locale,
+    string? Subject,
+    string? Body);
+
 public sealed record NotificationPreferencesResponse(
     bool EmailEnabled,
     bool PushEnabled,
-    bool SmsRemindersEnabled);
+    bool SmsRemindersEnabled,
+    string DefaultNotificationLocale,
+    IReadOnlyList<NotificationTemplateOverrideDto> TemplateOverrides);
 
 public sealed record UpdateNotificationPreferencesRequest(
     bool EmailEnabled,
     bool PushEnabled,
-    bool SmsRemindersEnabled);
+    bool SmsRemindersEnabled,
+    string DefaultNotificationLocale,
+    IReadOnlyList<NotificationTemplateOverrideDto>? TemplateOverrides);
 
 public interface INotificationPreferencesService
 {

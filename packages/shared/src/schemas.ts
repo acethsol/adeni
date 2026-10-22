@@ -1960,10 +1960,40 @@ export const messageTemplatesResponseSchema = z.object({
   items: z.array(messageTemplateSchema),
 });
 
+export const notificationTemplateIdSchema = z.enum([
+  "booking_confirmed",
+  "booking_rejected",
+  "booking_cancelled",
+  "appointment_reminder_24h",
+  "appointment_reminder_2h",
+  "appointment_followup_no_show",
+  "waitlist_slot_opened",
+  "payment_failed",
+  "payment_receipt",
+  "conversation_customer",
+  "conversation_business",
+  "staff_invite",
+  "queue_called",
+  "billing_document_emailed",
+]);
+
+export type NotificationTemplateId = z.infer<typeof notificationTemplateIdSchema>;
+
+export const notificationTemplateOverrideSchema = z.object({
+  templateId: notificationTemplateIdSchema,
+  locale: z.enum(["en", "fr"]),
+  subject: z.string().trim().max(200).optional(),
+  body: z.string().trim().max(2000).optional(),
+});
+
+export type NotificationTemplateOverride = z.infer<typeof notificationTemplateOverrideSchema>;
+
 export const notificationPreferencesSchema = z.object({
   emailEnabled: z.boolean(),
   pushEnabled: z.boolean(),
   smsRemindersEnabled: z.boolean(),
+  defaultNotificationLocale: z.enum(["en", "fr"]).default("en"),
+  templateOverrides: z.array(notificationTemplateOverrideSchema).max(32).default([]),
 });
 
 export type NotificationPreferences = z.infer<typeof notificationPreferencesSchema>;
