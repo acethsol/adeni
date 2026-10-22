@@ -129,7 +129,7 @@ public interface IDomainEventDispatcher
 // Handlers live in the module that reacts (Notifications, Reviews, Analytics)
 ```
 
-Start **in-process** (scoped dispatcher after `SaveChanges`). Swap to Azure Service Bus / RabbitMQ when Notifications or Analytics extracts.
+Domain events dispatch after **`SaveChanges`** succeeds. **Notifications** event handlers enqueue **`INotificationJobScheduler`** work via **`IAfterCommitWorkQueue`** (Hangfire in Staging/Prod; inline in Testing). Reminder sweeps use Hangfire recurring jobs. Swap to Azure Service Bus / RabbitMQ only if Analytics or cross-service fan-out requires it — see [notifications.md](./notifications.md).
 
 ### 4.4 New feature checklist
 
@@ -189,7 +189,7 @@ Extraction steps (when justified): copy module folders → new service → repla
 | PostgreSQL schema separation | ✅ `payments.*` schema extended (Sprint 17) | — |
 | Payments as isolated module | ✅ Paystack + stub providers, orchestrator, webhooks | — |
 | Messaging as isolated module | ❌ | **18** |
-| Notifications decoupled from Booking | ✅ Domain events (logging stub) | **15b** |
+| Notifications decoupled from Booking | ✅ Domain events → after-commit Hangfire send (Resend/Twilio) | **38** |
 | Subscriptions / entitlements module | ✅ Tiers + gating; billing stub (Paystack patterns aligned) | **17+** |
 
 ---
