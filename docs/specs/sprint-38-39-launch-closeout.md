@@ -88,7 +88,7 @@ Close the gap between **shipped Notifications and Reporting code** and **staging
 
 ### 4.2 Portal (R-U1–U5)
 
-- [x] **R-U1** — Wire **sales-summary** export (`csv` / `pdf`) via `adeni-export-menu` on dashboard revenue and/or Finance; reuse dashboard date range
+- [x] **R-U1** — Wire **sales-summary** export (`csv` / `pdf`) via `adeni-export-menu` on **Finance → Staff export** (not dashboard); shared from/to date range on that tab
 - [x] **R-U2** — Authenticated PDF: `downloadBillingDocumentPdf()` in `@adeni/api-client` + **Download PDF** on Finance Documents (not public View only)
 - [ ] **R-U3** — Multi-location: location filter on export flows or single-location auto-pass; map 403 to upgrade copy
 - [ ] **R-U4** — Finance Staff export tab → shared export menu + xlsx when `excelExport` (drop fake json)

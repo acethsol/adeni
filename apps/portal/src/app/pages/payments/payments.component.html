@@ -109,10 +109,8 @@
       </section>
     } @else if (tab() === "export") {
       <section class="card">
-        <h3>Staff payouts export</h3>
-        <p class="muted">
-          Download tips and commissions for payroll import (CSV or JSON). Adeni does not run payroll.
-        </p>
+        <h3>Finance exports</h3>
+        <p class="muted">Choose a date range, then download sales or payout reports.</p>
         <div class="field">
           <label>From</label>
           <input type="date" [(ngModel)]="exportFrom" />
@@ -121,22 +119,41 @@
           <label>To</label>
           <input type="date" [(ngModel)]="exportTo" />
         </div>
-        <div class="field">
-          <label>Format</label>
-          <select [(ngModel)]="exportFormat">
-            <option value="csv">CSV</option>
-            <option value="json">JSON</option>
-          </select>
+
+        <div class="export-block list-row">
+          <div>
+            <h4 class="export-block-title">Sales summary</h4>
+            <p class="muted">Collected revenue breakdown for accounting (CSV; PDF on Pro+).</p>
+          </div>
+          <adeni-export-menu
+            label="Export"
+            [items]="salesSummaryExportItems()"
+            (exportSelect)="downloadSalesSummaryExport($event)"
+          />
         </div>
-        <button
-          type="button"
-          class="btn btn-primary"
-          [disabled]="exporting || !exportEntitled()"
-          [title]="exportEntitled() ? '' : 'Upgrade for exports'"
-          (click)="downloadCompensationExport()"
-        >
-          {{ exporting ? "Preparing…" : "Download export" }}
-        </button>
+
+        <div class="export-block export-block--divider">
+          <h4 class="export-block-title">Staff payouts</h4>
+          <p class="muted">
+            Download tips and commissions for payroll import (CSV or JSON). Adeni does not run payroll.
+          </p>
+          <div class="field">
+            <label>Format</label>
+            <select [(ngModel)]="exportFormat">
+              <option value="csv">CSV</option>
+              <option value="json">JSON</option>
+            </select>
+          </div>
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="exporting || !exportEntitled() || !exportFrom || !exportTo"
+            [title]="exportEntitled() ? '' : 'Upgrade for exports'"
+            (click)="downloadCompensationExport()"
+          >
+            {{ exporting ? "Preparing…" : "Download export" }}
+          </button>
+        </div>
       </section>
     } @else {
       <section class="card">

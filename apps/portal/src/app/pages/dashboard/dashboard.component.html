@@ -36,37 +36,6 @@
       }
     </div>
 
-    @if (pickerOpen()) {
-      <section class="panel widget-picker widget-span-12">
-        <h3>Layout presets</h3>
-        <p class="hint">Start from a role template, then drag widgets and set each tile to S, M, L, or Full width.</p>
-        <ul class="picker-list">
-          @for (preset of layoutPresets; track preset.id) {
-            <li>
-              <adeni-staff-btn icon="arrow--right" (pressed)="applyLayoutPreset(preset.id)">
-                {{ preset.label }}
-              </adeni-staff-btn>
-            </li>
-          }
-        </ul>
-        <h3>Add a widget</h3>
-        @if (addableWidgets().length === 0) {
-          <p class="hint">Every widget available on your plan is already on the dashboard.</p>
-        } @else {
-          <ul class="picker-list">
-            @for (widget of addableWidgets(); track widget.id) {
-              <li>
-                <adeni-staff-btn icon="add" (pressed)="addWidget(widget.id)">
-                  {{ widget.title }}
-                </adeni-staff-btn>
-              </li>
-            }
-          </ul>
-        }
-        <adeni-staff-btn icon="close" (pressed)="closePicker()">Close</adeni-staff-btn>
-      </section>
-    }
-
     <section class="hero widget-span-12">
       <div>
         <p class="kicker">{{ categoryLine() }}</p>
@@ -112,7 +81,9 @@
     </section>
 
     <div
-      class="widget-grid dashboard-widgets" [class.is-customizing]="editMode()"
+      class="widget-grid dashboard-widgets"
+      [class.is-customizing]="editMode()"
+      [class.layout-preset-applied]="layoutPresetPulse()"
       cdkDropList
       [cdkDropListDisabled]="!editMode()"
       (cdkDropListDropped)="onWidgetDrop($event)"
@@ -234,14 +205,6 @@
                       <p class="stat-label">{{ revenueUsesCollected() ? "Collected revenue" : "Booked value" }}</p>
                       <p class="stat-value">{{ revenueLabel() }}</p>
                       <p class="stat-hint">{{ revenueHint() }}</p>
-                      @if (session.can("portal.finance")) {
-                        <adeni-export-menu
-                          class="stat-export"
-                          label="Export sales"
-                          [items]="revenueExportItems()"
-                          (exportSelect)="downloadSalesSummaryExport($event)"
-                        />
-                      }
                     </div>
                   </article>
                 }
@@ -268,13 +231,6 @@
                 [title]="dashboardWidgetTitle('week_appointments')"
                 [hint]="'Daily count · ' + rangeOverviewHint() + '.'"
               >
-                <div class="widget-export-row">
-                  <adeni-export-menu
-                    label="Download"
-                    [items]="appointmentsExportItems()"
-                    (exportSelect)="downloadAppointmentsExport($event)"
-                  />
-                </div>
                 @if (appointmentChartData().length === 0) {
                   <div class="widget-body-empty">
                     <p class="chart-empty-title">No appointments in this range</p>
@@ -687,6 +643,61 @@
         </div>
       }
     </div>
+
+    <adeni-modal
+      [open]="pickerOpen()"
+      size="2xl"
+      [hasFooter]="false"
+      title="Customize dashboard"
+      subtitle="Pick a layout template or add individual widgets (filtered to your plan). Then drag tiles and set S / M / L / Full."
+      (closed)="closePicker()"
+    >
+      <div class="widget-picker">
+        <h4 class="widget-picker__section-title">Layout presets</h4>
+        <div class="layout-preset-grid" role="list">
+          @for (preset of layoutPresetsForPicker(); track preset.id) {
+            @if (presetDisplayCopy(preset); as copy) {
+              <adeni-dashboard-layout-preset-card
+                role="listitem"
+                [presetId]="preset.id"
+                [icon]="presetCardIcon(preset.id)"
+                [focus]="copy.focus"
+                [label]="preset.label"
+                [description]="copy.description"
+                [marketLine]="copy.marketLine"
+                [metaLine]="presetMetaLine(preset)"
+                [widgetTitles]="presetPreviewWidgetTitles(preset)"
+                [wireframeBlocks]="presetWireframeBlocks(preset)"
+                [recommended]="isPresetRecommended(preset)"
+                [active]="isPresetActive(preset)"
+                [disabled]="presetCardDisabled(preset)"
+                [recommendedLabel]="presetUiCopy('recommended')"
+                [activeLabel]="presetUiCopy('currentLayout')"
+                [emptyPlanHint]="presetUiCopy('emptyPlan')"
+                [ctaLabel]="presetCtaLabel(preset)"
+                (selected)="applyLayoutPreset(preset.id)"
+              />
+            }
+          }
+        </div>
+
+        <h4 class="widget-picker__section-title">Add a widget</h4>
+        @if (addableWidgets().length === 0) {
+          <p class="hint">Every widget available on your plan is already on the dashboard.</p>
+        } @else {
+          <ul class="picker-list picker-list--widgets">
+            @for (widget of addableWidgets(); track widget.id) {
+              <li>
+                <button type="button" class="picker-widget-btn" (click)="addWidget(widget.id)">
+                  <adeni-carbon-icon name="add" [size]="16" />
+                  {{ widget.title }}
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </adeni-modal>
   </app-portal-page>
 } @else {
   <section class="panel">

@@ -1,27 +1,38 @@
-import { Component, inject, OnDestroy, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, OnDestroy, OnInit, signal } from "@angular/core";
 import { Subscription } from "rxjs";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute } from "@angular/router";
 import { map } from "rxjs";
-import type { BillingDocumentResponse, BusinessProfile, PaymentLedgerEntry } from "@adeni/shared";
+import type {
+  BillingDocumentResponse,
+  BusinessProfile,
+  PaymentLedgerEntry,
+  TenantEntitlements,
+} from "@adeni/shared";
 import {
   DEFAULT_PAGE_SIZE,
   formatPrice,
   hasBasicExportsEntitlement,
   hasCapability,
   LIST_PAGE_SIZE_OPTIONS,
+  REPORT_KEYS,
+  buildReportExportMenuItems,
   resolvePaymentCheckoutUrl,
   mergeTenantEntitlements,
+  salesSummaryPdfMenuOption,
+  type ReportExportFormat,
 } from "@adeni/shared";
 import {
   AdeniConfirmService,
+  AdeniExportMenuComponent,
   AdeniFeedbackService,
   AdeniListPaginationComponent,
   AdeniPortalEmptyStateComponent,
   PortalPageComponent,
   AdeniTabsComponent,
   TenantOperationsRealtimeService,
+  type AdeniExportMenuItem,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
@@ -35,6 +46,7 @@ import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
     AdeniTabsComponent,
     AdeniPortalEmptyStateComponent,
     AdeniListPaginationComponent,
+    AdeniExportMenuComponent,
   ],
   templateUrl: "./payments.component.html",
   styleUrl: "./payments.component.scss",
@@ -61,6 +73,17 @@ export class PaymentsComponent implements OnInit, OnDestroy {
   exportTo = "";
   exportFormat: "csv" | "json" = "csv";
   exporting = false;
+  salesSummaryExporting = false;
+
+  readonly planEntitlements = signal<TenantEntitlements | null>(null);
+  readonly salesSummaryExportItems = computed((): AdeniExportMenuItem[] =>
+    buildReportExportMenuItems({
+      entitlements: this.planEntitlements(),
+      xlsx: false,
+      pdf: salesSummaryPdfMenuOption(this.planEntitlements()),
+      labels: { csv: "Sales summary CSV", pdf: "Sales summary PDF" },
+    }),
+  );
 
   readonly loading = signal(true);
   readonly creating = signal(false);
@@ -120,11 +143,13 @@ export class PaymentsComponent implements OnInit, OnDestroy {
           c.getTenantEntitlements().catch(() => null),
         ]);
         this.profile.set(profile);
-        this.exportEntitled.set(
-          hasBasicExportsEntitlement(
-            mergeTenantEntitlements(entitlements, usage?.entitlements, profile.entitlements),
-          ),
+        const mergedEntitlements = mergeTenantEntitlements(
+          entitlements,
+          usage?.entitlements,
+          profile.entitlements,
         );
+        this.planEntitlements.set(mergedEntitlements);
+        this.exportEntitled.set(hasBasicExportsEntitlement(mergedEntitlements));
         const ledgerPage = await c.listPaymentLedger(
           profile.tenantId,
           this.ledgerPage(),
@@ -229,6 +254,38 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     this.ledgerPageSize.set(size);
     this.ledgerPage.set(1);
     void this.load();
+  }
+
+  async downloadSalesSummaryExport(format: ReportExportFormat): Promise<void> {
+    if (!this.exportFrom || !this.exportTo) {
+      this.error.set("Choose a date range for the export.");
+      return;
+    }
+
+    this.salesSummaryExporting = true;
+    this.error.set(null);
+    try {
+      const from = new Date(`${this.exportFrom}T00:00:00.000Z`).toISOString();
+      const to = new Date(`${this.exportTo}T23:59:59.999Z`).toISOString();
+      const blob = await this.api.withAuthorizedClient((c) =>
+        c.downloadTenantReportExport({
+          reportKey: REPORT_KEYS.salesSummary,
+          from,
+          to,
+          format,
+        }),
+      );
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `sales-summary-${this.exportFrom}-${this.exportTo}.${format === "pdf" ? "pdf" : "csv"}`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      this.error.set("Could not download sales summary export.");
+    } finally {
+      this.salesSummaryExporting = false;
+    }
   }
 
   async downloadCompensationExport(): Promise<void> {

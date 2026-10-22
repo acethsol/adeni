@@ -151,7 +151,7 @@ export type AdeniDataTableColumn<T> = {
 
 - [x] Admin list pages (businesses, pending, transactions, pricing catalog) use toolkit + `buildAdminReportExportMenuItems`
 - [x] Portal Customers, Bookings, Staff, Services, Locations use **same recipe** (toolbar export slot + Reporting API)
-- [x] Dashboard appointments widget + revenue stat export via Reporting API (`bookings-register`, `sales-summary`)
+- [x] List toolbars + Finance Staff export tab via Reporting API (`bookings-register` on Bookings; `sales-summary` on Finance)
 - [ ] Remaining admin sub-views on legacy table markup (business detail tabs) — polish only
 
 ### Phase 3 — Server-backed

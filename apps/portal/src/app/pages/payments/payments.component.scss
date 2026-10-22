@@ -4,6 +4,21 @@ h3 {
   margin: 0 0 0.75rem;
 }
 
+h4.export-block-title {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+
+.export-block {
+  margin-top: 1.25rem;
+}
+
+.export-block--divider {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
 .muted {
   color: var(--text-muted);
   font-size: 0.9rem;
