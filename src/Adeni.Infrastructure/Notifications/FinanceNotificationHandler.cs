@@ -4,22 +4,29 @@ using Adeni.Application.Events;
 using Adeni.Application.Notifications;
 using Adeni.Domain.Finance.Events;
 
-public sealed class FinanceNotificationHandler(INotificationJobScheduler notificationJobs) :
+public sealed class FinanceNotificationHandler(INotificationDispatcher notificationDispatcher) :
     IDomainEventHandler<PaymentCompleted>,
     IDomainEventHandler<PaymentFailed>
 {
     public Task HandleAsync(PaymentCompleted domainEvent, CancellationToken cancellationToken = default) =>
-        notificationJobs.SchedulePaymentReceiptAsync(
-            new PaymentReceiptNotificationJobArgs(
-                domainEvent.PaymentIntentId,
-                domainEvent.TenantId,
-                domainEvent.BookingId,
-                domainEvent.Amount,
-                domainEvent.Currency),
+        notificationDispatcher.SendAsync(
+            new NotificationMessage(
+                Channel: "email",
+                RecipientKey: string.Empty,
+                Subject: string.Empty,
+                Body: string.Empty,
+                TenantId: domainEvent.TenantId,
+                DedupeEventId: $"payment-receipt:{domainEvent.PaymentIntentId:D}",
+                PaymentReceipt: new PaymentReceiptNotificationJobArgs(
+                    domainEvent.PaymentIntentId,
+                    domainEvent.TenantId,
+                    domainEvent.BookingId,
+                    domainEvent.Amount,
+                    domainEvent.Currency)),
             cancellationToken);
 
     public Task HandleAsync(PaymentFailed domainEvent, CancellationToken cancellationToken = default) =>
-        notificationJobs.ScheduleSendAsync(
+        notificationDispatcher.SendAsync(
             new NotificationMessage(
                 "email",
                 domainEvent.TenantId.ToString(),

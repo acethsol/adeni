@@ -18,8 +18,8 @@ Async **email**, **SMS**, and (later) **push** driven by **domain events** and *
 | `PreferenceAwareNotificationDispatcher` | Gates by channel + prefs |
 | **Delivery (38A/38B)** | Resend + Twilio when configured; log fallback in Development/Testing without keys |
 | **Appointment reminder scheduler (38B)** | **Hangfire** recurring job → `AppointmentReminderProcessor` — 24h/2h email/SMS; entitlement-gated follow-up email |
-| **Event-driven sends (38B+)** | Domain handlers → **`INotificationJobScheduler`** → Hangfire `NotificationSendHangfireJob` (automatic retry); inline fallback in **Testing** |
-| **Receipt email (38B)** | `PaymentCompleted` → Hangfire job issues receipt + PDF via **`IReportRenderer`**, then sends |
+| **Event-driven sends (38B+)** | App code → **`INotificationDispatcher.SendAsync`** only → after-commit → Hangfire `NotificationSendHangfireJob` (automatic retry); inline worker in **Testing** |
+| **Receipt email (38B)** | `PaymentCompleted` → same dispatcher with `PaymentReceipt` metadata → worker issues receipt + PDF via **`IReportRenderer`**, then **`INotificationDeliveryDispatcher`** |
 
 ---
 
@@ -28,11 +28,11 @@ Async **email**, **SMS**, and (later) **push** driven by **domain events** and *
 ```
 Domain events (Booking, Waitlist, Messaging, Finance, Queue, Identity, …)
         ↓
-  IDomainEventHandler<*>  (Notifications.Infrastructure) — resolve recipients, build message
+  IDomainEventHandler<*> / QueueService / StaffAccess / BillingDocument — resolve recipients, build message
         ↓
-  INotificationJobScheduler — after-commit enqueue (Hangfire) or inline (Testing)
+  INotificationDispatcher (DeferredNotificationDispatcher) — after-commit enqueue (Hangfire) or inline worker (Testing)
         ↓
-  NotificationSendHangfireJob → INotificationDispatcher (same idempotency stack)
+  NotificationSendHangfireJob → NotificationSendWorker → INotificationDeliveryDispatcher
         ↓
   PreferenceAwareNotificationDispatcher
         ↓
@@ -43,11 +43,11 @@ Domain events (Booking, Waitlist, Messaging, Finance, Queue, Identity, …)
      └─ (dev)  → Logging when API keys absent
 ```
 
-**After-commit:** `AdeniDbContext.SaveChangesAsync` dispatches collected domain events only after the database write succeeds. Handlers and **`QueueService`** (walk-in **Call** → “you’re up”) call `INotificationJobScheduler`, which queues Hangfire work via scoped `IAfterCommitWorkQueue` (nested `SaveChanges` depth tracking) so jobs are not enqueued until the outer save completes. **Testing** environment has no Hangfire — `InlineNotificationJobScheduler` runs the same worker on the request thread after commit.
+**After-commit:** `AdeniDbContext.SaveChangesAsync` dispatches collected domain events only after the database write succeeds. All outbound sends call **`INotificationDispatcher.SendAsync`**, which queues Hangfire work (or runs **`NotificationSendWorker`** inline) via scoped **`IAfterCommitWorkQueue`** (nested `SaveChanges` depth tracking) so jobs are not enqueued until the outer save completes. **Testing** has no Hangfire — the outer dispatcher invokes the worker on the request thread after commit. Hangfire workers resolve **`INotificationDeliveryDispatcher`** only (no double enqueue).
 
 | Layer | Location |
 |-------|----------|
-| Application | `INotificationDispatcher`, `INotificationPreferencesService`, provider ports |
+| Application | `INotificationDispatcher`, `INotificationDeliveryDispatcher`, `INotificationPreferencesService`, provider ports |
 | Infrastructure | Handlers, `AddNotificationsModule()`, Resend/Twilio adapters |
 | API | `GET/PATCH` tenant notification preferences (settings) |
 
@@ -108,7 +108,7 @@ Keys in Key Vault for staging/production — never commit.
 | **Payment receipt email + PDF** | Shipped — PDF via Application **`IReportRenderer`** (38B) |
 | **Scheduled appointment reminders** (24h / 2h email + SMS) | Shipped — Hangfire recurring job (`notifications:appointment-reminders`); idempotent `notification_deliveries`; entitlement tiers (`basicReminders`, `followUpAutomation`) |
 | **Waitlist slot opened** | Shipped — email + SMS; burst cap `MaxWaitlistNotificationsPerSlot` |
-| **Walk-in queue “you’re up”** (`QueueService` Call) | Shipped — `INotificationJobScheduler` + after-commit worker (same stack as domain handlers) |
+| **Walk-in queue “you’re up”** (`QueueService` Call) | Shipped — `INotificationDispatcher` + after-commit worker (same stack as domain handlers) |
 | No-show follow-up email | Shipped when `followUpAutomation` entitlement |
 | Retention-triggered notifications | Deferred until Sprint 37 domain events |
 

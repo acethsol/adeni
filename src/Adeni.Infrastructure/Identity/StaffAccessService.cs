@@ -17,7 +17,7 @@ using Microsoft.Extensions.Logging;
 
 public sealed class StaffAccessService(
     AdeniDbContext dbContext,
-    INotificationJobScheduler notificationJobs,
+    INotificationDispatcher notificationDispatcher,
     IConfiguration configuration,
     IAuditLogWriter auditLogWriter,
     ICorrelationContext correlationContext,
@@ -510,7 +510,7 @@ public sealed class StaffAccessService(
             .Select(t => t.Name)
             .FirstOrDefaultAsync(cancellationToken) ?? "your business";
 
-        await notificationJobs.ScheduleSendAsync(
+        await notificationDispatcher.SendAsync(
             new NotificationMessage(
                 Channel: "email",
                 RecipientKey: invite.Email.Trim(),

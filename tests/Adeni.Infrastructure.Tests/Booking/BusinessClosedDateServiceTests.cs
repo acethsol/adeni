@@ -280,7 +280,6 @@ public sealed class BusinessClosedDateServiceTests
         services.AddSingleton<ICacheService, DistributedCacheService>();
         services.AddSingleton<IDistributedLockProvider, NoOpLockProvider>();
         services.Configure<MarketOptions>(options => options.DefaultTimeZoneId = TestTimeZoneId);
-        services.AddInlineNotificationJobScheduling();
         services.AddDbContext<AdeniDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));
         services.AddCategoryWorkflowCatalog();
         services.AddScoped<Adeni.Infrastructure.Context.TenantContext>();
@@ -308,6 +307,7 @@ public sealed class BusinessClosedDateServiceTests
         services.AddSingleton<Application.Notifications.INotificationDispatcher, ClosedTestNotifications>();
         services.AddReportingModule();
         services.AddScoped<IBillingDocumentService, BillingDocumentService>();
+        services.AddAdeniDomainEvents();
         services.AddScoped<ITenantCustomerService, TenantCustomerService>();
         services.AddScoped<IQueueService, NoOpQueueService>();
         services.AddScoped<IBookingService, BookingService>();

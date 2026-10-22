@@ -194,7 +194,7 @@ public sealed class BillingDocumentTests
         services.AddSingleton<NotificationSink>();
         services.AddSingleton<INotificationDispatcher>(sp =>
             new SinkNotificationDispatcher(sp.GetRequiredService<NotificationSink>()));
-        services.AddInlineNotificationJobScheduling();
+        services.AddAdeniDomainEvents();
         services.AddScoped<IPlatformFeeCalculator, PlatformFeeCalculator>();
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();
         services.AddBookingTestRealtime();

@@ -40,7 +40,7 @@ public sealed class NotificationDispatcherTests
         await db.SaveChangesAsync();
 
         var sink = scope.ServiceProvider.GetRequiredService<CapturingEmailProvider>();
-        var dispatcher = scope.ServiceProvider.GetRequiredService<INotificationDispatcher>();
+        var dispatcher = scope.ServiceProvider.GetRequiredService<INotificationDeliveryDispatcher>();
 
         await dispatcher.SendAsync(
             new NotificationMessage("email", "a@b.com", "Hi", "Body", tenantId, "evt-1"));
@@ -65,7 +65,7 @@ public sealed class NotificationDispatcherTests
         await db.SaveChangesAsync();
 
         var smsSink = scope.ServiceProvider.GetRequiredService<CapturingSmsProvider>();
-        var dispatcher = scope.ServiceProvider.GetRequiredService<INotificationDispatcher>();
+        var dispatcher = scope.ServiceProvider.GetRequiredService<INotificationDeliveryDispatcher>();
 
         await dispatcher.SendAsync(
             new NotificationMessage("sms", "+15551234567", "Reminder", "Body", tenantId, "evt-sms-1"));
@@ -84,7 +84,7 @@ public sealed class NotificationDispatcherTests
         await db.SaveChangesAsync();
 
         var sink = scope.ServiceProvider.GetRequiredService<CapturingEmailProvider>();
-        var dispatcher = scope.ServiceProvider.GetRequiredService<INotificationDispatcher>();
+        var dispatcher = scope.ServiceProvider.GetRequiredService<INotificationDeliveryDispatcher>();
         var message = new NotificationMessage(
             "email",
             "guest@example.com",
@@ -159,8 +159,10 @@ public sealed class NotificationDispatcherTests
         services.AddScoped<ChannelNotificationDispatcher>();
         services.AddScoped<IdempotentNotificationDispatcher>();
         services.AddScoped<EntitlementAwareNotificationDispatcher>();
-        services.AddScoped<INotificationDispatcher, PreferenceAwareNotificationDispatcher>();
-        services.AddInlineNotificationJobScheduling();
+        services.AddScoped<PreferenceAwareNotificationDispatcher>();
+        services.AddScoped<INotificationDeliveryDispatcher>(sp =>
+            sp.GetRequiredService<PreferenceAwareNotificationDispatcher>());
+        services.AddDeferredNotificationDispatching();
         configure?.Invoke(services);
         return services.BuildServiceProvider();
     }

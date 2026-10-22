@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 /// Prefs-aware “new message” notifications.
 /// </summary>
 public sealed class MessagingNotificationHandler(
-    INotificationJobScheduler notificationJobs,
+    INotificationDispatcher notificationDispatcher,
     INotificationRecipientResolver recipientResolver,
     ILogger<MessagingNotificationHandler> logger)
     : IDomainEventHandler<ConversationMessageCreated>
@@ -23,7 +23,7 @@ public sealed class MessagingNotificationHandler(
 
         if (domainEvent.SenderType == ConversationParticipantType.Customer)
         {
-            await notificationJobs.ScheduleSendAsync(
+            await notificationDispatcher.SendAsync(
                 new NotificationMessage(
                     "email",
                     string.Empty,
@@ -47,7 +47,7 @@ public sealed class MessagingNotificationHandler(
             return;
         }
 
-        await notificationJobs.ScheduleSendAsync(
+        await notificationDispatcher.SendAsync(
             new NotificationMessage(
                 "email",
                 contact.Value.Email.Trim(),

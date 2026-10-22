@@ -129,7 +129,7 @@ public interface IDomainEventDispatcher
 // Handlers live in the module that reacts (Notifications, Reviews, Analytics)
 ```
 
-Domain events dispatch after **`SaveChanges`** succeeds. **Notifications** event handlers enqueue **`INotificationJobScheduler`** work via **`IAfterCommitWorkQueue`** (Hangfire in Staging/Prod; inline in Testing). Reminder sweeps use Hangfire recurring jobs. Swap to Azure Service Bus / RabbitMQ only if Analytics or cross-service fan-out requires it — see [notifications.md](./notifications.md).
+Domain events dispatch after **`SaveChanges`** succeeds. **Notifications** call **`INotificationDispatcher.SendAsync`** (after-commit via **`IAfterCommitWorkQueue`**; Hangfire in Staging/Prod; inline worker in Testing). Workers deliver via **`INotificationDeliveryDispatcher`**. Reminder sweeps use Hangfire recurring jobs. Swap to Azure Service Bus / RabbitMQ only if Analytics or cross-service fan-out requires it — see [notifications.md](./notifications.md).
 
 ### 4.4 New feature checklist
 

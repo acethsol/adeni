@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 public sealed class PaymentReceiptNotificationSender(
-    INotificationDispatcher notificationDispatcher,
+    INotificationDeliveryDispatcher deliveryDispatcher,
     INotificationRecipientResolver recipientResolver,
     IBillingDocumentService billingDocuments,
     IReportRenderer reportRenderer,
@@ -83,7 +83,7 @@ public sealed class PaymentReceiptNotificationSender(
             $"<p>Thank you — your payment of {args.Amount} {args.Currency} was received.</p>" +
             $"<p>Your receipt ({receipt.Value.DocumentNumber}) is attached.</p>";
 
-        await notificationDispatcher.SendAsync(
+        await deliveryDispatcher.SendAsync(
             new NotificationMessage(
                 "email",
                 toEmail.Trim(),

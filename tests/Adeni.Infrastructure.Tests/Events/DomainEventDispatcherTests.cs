@@ -139,7 +139,6 @@ public sealed class DomainEventDispatcherTests
         services.AddSingleton<NotificationTestSink>();
         services.AddScoped<INotificationDispatcher, TestNotificationDispatcher>();
         services.Configure<MarketOptions>(options => options.DefaultTimeZoneId = "UTC");
-        services.AddInlineNotificationJobScheduling();
         services.AddScoped<INotificationRecipientResolver, NotificationRecipientResolver>();
         services.AddScoped<IDomainEventHandler<Domain.Booking.Events.BookingConfirmed>, BookingNotificationHandler>();
         services.AddScoped<IDomainEventHandler<Domain.Booking.Events.BookingRejected>, BookingNotificationHandler>();
@@ -170,6 +169,7 @@ public sealed class DomainEventDispatcherTests
         services.AddScoped<IStaffCompensationService, StaffCompensationService>();
         services.AddReportingModule();
         services.AddScoped<IBillingDocumentService, BillingDocumentService>();
+        services.AddAdeniDomainEvents();
         services.AddScoped<ITenantCustomerService, TenantCustomerService>();
         services.AddScoped<IQueueService, NoOpQueueService>();
         services.AddScoped<IBookingService, BookingService>();

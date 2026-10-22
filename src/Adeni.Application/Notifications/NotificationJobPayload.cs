@@ -7,7 +7,8 @@ public sealed record NotificationJobPayload(
     string Subject,
     string Body,
     Guid? TenantId,
-    string? DedupeEventId)
+    string? DedupeEventId,
+    PaymentReceiptNotificationJobArgs? PaymentReceipt = null)
 {
     public static NotificationJobPayload FromMessage(NotificationMessage message) =>
         new(
@@ -16,8 +17,9 @@ public sealed record NotificationJobPayload(
             message.Subject,
             message.Body,
             message.TenantId,
-            message.DedupeEventId);
+            message.DedupeEventId,
+            message.PaymentReceipt);
 
     public NotificationMessage ToMessage() =>
-        new(Channel, RecipientKey, Subject, Body, TenantId, DedupeEventId);
+        new(Channel, RecipientKey, Subject, Body, TenantId, DedupeEventId, PaymentReceipt: PaymentReceipt);
 }

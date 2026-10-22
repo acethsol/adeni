@@ -12,4 +12,5 @@ public sealed record NotificationMessage(
     string Body,
     Guid? TenantId = null,
     string? DedupeEventId = null,
-    IReadOnlyList<EmailAttachment>? EmailAttachments = null);
+    IReadOnlyList<EmailAttachment>? EmailAttachments = null,
+    PaymentReceiptNotificationJobArgs? PaymentReceipt = null);

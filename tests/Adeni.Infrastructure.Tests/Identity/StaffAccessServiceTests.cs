@@ -252,7 +252,6 @@ public sealed class StaffAccessServiceTests
             }).Build());
         services.AddLogging();
         services.AddSingleton<INotificationDispatcher, NoopNotifications>();
-        services.AddInlineNotificationJobScheduling();
         services.AddScoped<StaffAccessService>();
         return services.BuildServiceProvider();
     }

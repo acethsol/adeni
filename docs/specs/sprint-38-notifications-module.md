@@ -103,9 +103,9 @@ Domain events (Booking, Waitlist, Messaging, Finance, Retention, Queue, …)
         ↓
   IDomainEventHandler<*>  (Notifications.Infrastructure)
         ↓
-  INotificationJobScheduler  (after-commit; Hangfire enqueue in Staging/Prod)
+  INotificationDispatcher (DeferredNotificationDispatcher)  (after-commit; Hangfire enqueue in Staging/Prod)
         ↓
-  NotificationSendHangfireJob  →  INotificationDispatcher
+  NotificationSendHangfireJob  →  NotificationSendWorker  →  INotificationDeliveryDispatcher
         ↓
   PreferenceAwareNotificationDispatcher  (tenant prefs; SmsRemindersEnabled)
         ↓
@@ -122,9 +122,10 @@ Domain events (Booking, Waitlist, Messaging, Finance, Retention, Queue, …)
 | Piece | Role |
 |-------|------|
 | `IAfterCommitWorkQueue` | Defers Hangfire enqueue until EF `SaveChanges` completes (nested save depth) |
-| `INotificationJobScheduler` | Application port — `ScheduleSendAsync` / `SchedulePaymentReceiptAsync` |
-| `NotificationSendHangfireJob` | Resolves scoped `NotificationSendWorker` → `INotificationDispatcher`; `[AutomaticRetry]` on provider failures; idempotency unchanged |
-| `InlineNotificationJobScheduler` | **Testing** (and dev without SQL): same worker inline after commit |
+| `INotificationDispatcher` | Single app entry — `SendAsync`; implemented by `DeferredNotificationDispatcher` (enqueue decorator) |
+| `INotificationDeliveryDispatcher` | Inner pipeline only — resolved by `NotificationSendWorker` / receipt sender (avoids double enqueue) |
+| `NotificationSendHangfireJob` | Resolves scoped `NotificationSendWorker` → delivery dispatcher; `[AutomaticRetry]`; payment receipts via `NotificationMessage.PaymentReceipt` payload |
+| **Testing / no SQL** | Outer dispatcher runs `NotificationSendWorker` inline after commit (same semantics as former inline scheduler) |
 
 Recurring **appointment reminders** stay on the existing Hangfire recurring job (`notifications:appointment-reminders`).
 

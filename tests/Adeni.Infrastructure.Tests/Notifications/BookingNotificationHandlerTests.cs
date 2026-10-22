@@ -19,7 +19,6 @@ public sealed class BookingNotificationHandlerTests
     public async Task BookingConfirmed_sends_email_to_resolved_customer_address()
     {
         var dispatcher = new CapturingDispatcher();
-        var jobs = new CapturingNotificationJobScheduler(dispatcher);
         await using var db = CreateDb();
         var tenantId = Guid.NewGuid();
         var customerId = Guid.NewGuid();
@@ -47,7 +46,7 @@ public sealed class BookingNotificationHandlerTests
         await db.SaveChangesAsync();
 
         var handler = new BookingNotificationHandler(
-            jobs,
+            dispatcher,
             new NotificationRecipientResolver(db),
             NullLogger<BookingNotificationHandler>.Instance);
 

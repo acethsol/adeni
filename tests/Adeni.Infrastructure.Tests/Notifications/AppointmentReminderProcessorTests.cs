@@ -52,7 +52,7 @@ public sealed class AppointmentReminderProcessorTests
 
         var processor = new AppointmentReminderProcessor(
             db,
-            scope.ServiceProvider.GetRequiredService<Application.Notifications.INotificationDispatcher>(),
+            scope.ServiceProvider.GetRequiredService<Application.Notifications.INotificationDeliveryDispatcher>(),
             scope.ServiceProvider.GetRequiredService<Application.Notifications.INotificationRecipientResolver>(),
             scope.ServiceProvider.GetRequiredService<Application.Subscriptions.IEntitlementsService>(),
             Options.Create(new NotificationsOptions()));

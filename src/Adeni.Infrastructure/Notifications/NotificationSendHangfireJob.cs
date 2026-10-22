@@ -29,24 +29,4 @@ public sealed class NotificationSendHangfireJob(
         }
     }
 
-    [AutomaticRetry(Attempts = 5, DelaysInSeconds = [60, 120, 300, 600, 900])]
-    public async Task SendPaymentReceiptAsync(
-        PaymentReceiptNotificationJobArgs args,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            await using var scope = scopeFactory.CreateAsyncScope();
-            var sender = scope.ServiceProvider.GetRequiredService<PaymentReceiptNotificationSender>();
-            await sender.SendAsync(args, cancellationToken);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            logger.LogWarning(
-                ex,
-                "Payment receipt Hangfire job failed paymentIntent={PaymentIntentId}",
-                args.PaymentIntentId);
-            throw;
-        }
-    }
 }

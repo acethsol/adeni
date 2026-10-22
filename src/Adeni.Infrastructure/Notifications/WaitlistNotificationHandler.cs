@@ -11,7 +11,7 @@ using Microsoft.Extensions.Options;
 
 public sealed class WaitlistNotificationHandler(
     AdeniDbContext dbContext,
-    INotificationJobScheduler notificationJobs,
+    INotificationDispatcher notificationDispatcher,
     INotificationRecipientResolver recipientResolver,
     IEntitlementsService entitlementsService,
     IOptions<NotificationsOptions> options,
@@ -76,7 +76,7 @@ public sealed class WaitlistNotificationHandler(
 
             if (!string.IsNullOrWhiteSpace(contact.Value!.Email))
             {
-                await notificationJobs.ScheduleSendAsync(
+                await notificationDispatcher.SendAsync(
                     new NotificationMessage(
                         "email",
                         contact.Value.Email.Trim(),
@@ -89,7 +89,7 @@ public sealed class WaitlistNotificationHandler(
 
             if (!string.IsNullOrWhiteSpace(contact.Value.PhoneE164))
             {
-                await notificationJobs.ScheduleSendAsync(
+                await notificationDispatcher.SendAsync(
                     new NotificationMessage(
                         "sms",
                         contact.Value.PhoneE164.Trim(),

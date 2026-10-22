@@ -380,7 +380,6 @@ public sealed class BookingFlowTests
         services.AddSingleton<ICacheService, DistributedCacheService>();
         services.AddSingleton<IDistributedLockProvider, NoOpLockProvider>();
         services.Configure<MarketOptions>(options => options.DefaultTimeZoneId = defaultTimeZoneId);
-        services.AddInlineNotificationJobScheduling();
         services.AddDbContext<AdeniDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));
         services.AddCategoryWorkflowCatalog();
         services.AddScoped<Adeni.Infrastructure.Context.TenantContext>();
@@ -408,6 +407,7 @@ public sealed class BookingFlowTests
         services.AddSingleton<Application.Notifications.INotificationDispatcher, LoopTestNotifications>();
         services.AddReportingModule();
         services.AddScoped<IBillingDocumentService, BillingDocumentService>();
+        services.AddAdeniDomainEvents();
         services.AddScoped<ITenantCustomerService, TenantCustomerService>();
         services.AddScoped<IQueueService, NoOpQueueService>();
         services.AddScoped<IBookingService, BookingService>();

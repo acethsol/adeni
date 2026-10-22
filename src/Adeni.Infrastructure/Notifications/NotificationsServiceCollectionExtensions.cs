@@ -32,22 +32,17 @@ public static class NotificationsServiceCollectionExtensions
         services.AddScoped<ChannelNotificationDispatcher>();
         services.AddScoped<IdempotentNotificationDispatcher>();
         services.AddScoped<EntitlementAwareNotificationDispatcher>();
-        services.AddScoped<INotificationDispatcher, PreferenceAwareNotificationDispatcher>();
+        services.AddScoped<PreferenceAwareNotificationDispatcher>();
+        services.AddScoped<INotificationDeliveryDispatcher>(sp =>
+            sp.GetRequiredService<PreferenceAwareNotificationDispatcher>());
+        services.AddScoped<DeferredNotificationDispatcher>();
+        services.AddScoped<INotificationDispatcher>(sp =>
+            sp.GetRequiredService<DeferredNotificationDispatcher>());
         services.AddScoped<INotificationPreferencesService, NotificationPreferencesService>();
 
         services.AddScoped<PaymentReceiptNotificationSender>();
         services.AddScoped<NotificationSendWorker>();
         services.AddScoped<NotificationSendHangfireJob>();
-        services.AddScoped<InlineNotificationJobScheduler>();
-        services.AddScoped<HangfireNotificationJobScheduler>();
-        services.AddScoped<INotificationJobScheduler>(sp =>
-        {
-            var environment = sp.GetRequiredService<IHostEnvironment>();
-            var config = sp.GetRequiredService<IConfiguration>();
-            return HangfireNotificationsBootstrap.ShouldUseHangfire(environment, config)
-                ? sp.GetRequiredService<HangfireNotificationJobScheduler>()
-                : sp.GetRequiredService<InlineNotificationJobScheduler>();
-        });
 
         services.AddScoped<IDomainEventHandler<BookingConfirmed>, BookingNotificationHandler>();
         services.AddScoped<IDomainEventHandler<BookingRejected>, BookingNotificationHandler>();

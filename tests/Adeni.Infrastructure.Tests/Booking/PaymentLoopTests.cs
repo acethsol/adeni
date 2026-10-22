@@ -238,7 +238,6 @@ public sealed class PaymentLoopTests
             options.Provider = "Stub";
             options.StubCheckoutBaseUrl = "/checkout/stub";
         });
-        services.AddInlineNotificationJobScheduling();
         services.AddDbContext<AdeniDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));
         services.AddCategoryWorkflowCatalog();
         services.AddScoped<Adeni.Infrastructure.Context.TenantContext>();
@@ -261,6 +260,7 @@ public sealed class PaymentLoopTests
         services.AddScoped<IAvailabilityService, AvailabilityService>();
         services.AddScoped<IReviewService, ReviewService>();
         services.AddEntitlementsModule();
+        services.AddAdeniDomainEvents();
         services.AddScoped<ITenantCustomerService, TenantCustomerService>();
         services.AddScoped<IQueueService, NoOpQueueService>();
         services.AddScoped<IBookingService, BookingService>();

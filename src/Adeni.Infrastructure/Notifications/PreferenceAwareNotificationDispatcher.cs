@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 public sealed class PreferenceAwareNotificationDispatcher(
     INotificationPreferencesService preferencesService,
     EntitlementAwareNotificationDispatcher inner,
-    ILogger<PreferenceAwareNotificationDispatcher> logger) : INotificationDispatcher
+    ILogger<PreferenceAwareNotificationDispatcher> logger) : INotificationDeliveryDispatcher
 {
     public async Task SendAsync(NotificationMessage message, CancellationToken cancellationToken = default)
     {

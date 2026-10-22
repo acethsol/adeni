@@ -232,7 +232,6 @@ public sealed class QueueServiceTests
         services.AddSingleton<NotificationSink>();
         services.AddSingleton<INotificationDispatcher>(sp =>
             new SinkDispatcher(sp.GetRequiredService<NotificationSink>()));
-        services.AddInlineNotificationJobScheduling();
         services.AddEntitlementsModule();
         services.AddScoped<ITenantCustomerService, TenantCustomerService>();
         services.AddBookingTestRealtime();
