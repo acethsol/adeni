@@ -13,11 +13,23 @@ public sealed class BusinessClosedDateService(AdeniDbContext dbContext) : IBusin
 
     public async Task<Result<IReadOnlyList<BusinessClosedDateResponse>>> ListAsync(
         Guid tenantId,
+        Guid? businessLocationId = null,
         CancellationToken cancellationToken = default)
     {
+        var locationResult = await TenantLocationScope.ResolveAvailabilityLocationAsync(
+            dbContext,
+            tenantId,
+            businessLocationId,
+            cancellationToken);
+        if (locationResult.IsFailure)
+        {
+            return Result.Failure<IReadOnlyList<BusinessClosedDateResponse>>(locationResult.Error!);
+        }
+
+        var locationId = locationResult.Value;
         var items = await dbContext.BusinessClosedDates
             .AsNoTracking()
-            .Where(x => x.TenantId == tenantId)
+            .Where(x => x.TenantId == tenantId && x.BusinessLocationId == locationId)
             .OrderBy(x => x.StartDate)
             .ThenBy(x => x.EndDate)
             .Select(x => new BusinessClosedDateResponse(
@@ -34,12 +46,25 @@ public sealed class BusinessClosedDateService(AdeniDbContext dbContext) : IBusin
     public async Task<Result<BusinessClosedDateResponse>> CreateAsync(
         Guid tenantId,
         CreateBusinessClosedDateRequest request,
+        Guid? businessLocationId = null,
         CancellationToken cancellationToken = default)
     {
         if (!await dbContext.Tenants.AsNoTracking().AnyAsync(t => t.Id == tenantId, cancellationToken))
         {
             return Result.Failure<BusinessClosedDateResponse>(Error.NotFound("Tenant"));
         }
+
+        var locationResult = await TenantLocationScope.ResolveAvailabilityLocationAsync(
+            dbContext,
+            tenantId,
+            businessLocationId,
+            cancellationToken);
+        if (locationResult.IsFailure)
+        {
+            return Result.Failure<BusinessClosedDateResponse>(locationResult.Error!);
+        }
+
+        var locationId = locationResult.Value;
 
         if (request.EndDate < request.StartDate)
         {
@@ -55,7 +80,7 @@ public sealed class BusinessClosedDateService(AdeniDbContext dbContext) : IBusin
         }
 
         var activeCount = await dbContext.BusinessClosedDates
-            .CountAsync(x => x.TenantId == tenantId, cancellationToken);
+            .CountAsync(x => x.TenantId == tenantId && x.BusinessLocationId == locationId, cancellationToken);
         if (activeCount >= MaxActiveRanges)
         {
             return Result.Failure<BusinessClosedDateResponse>(
@@ -66,6 +91,7 @@ public sealed class BusinessClosedDateService(AdeniDbContext dbContext) : IBusin
             .AsNoTracking()
             .AnyAsync(
                 x => x.TenantId == tenantId
+                    && x.BusinessLocationId == locationId
                     && x.StartDate <= request.EndDate
                     && x.EndDate >= request.StartDate,
                 cancellationToken);
@@ -88,6 +114,7 @@ public sealed class BusinessClosedDateService(AdeniDbContext dbContext) : IBusin
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
+            BusinessLocationId = locationId,
             StartDate = request.StartDate,
             EndDate = request.EndDate,
             Reason = reason,
@@ -101,6 +128,7 @@ public sealed class BusinessClosedDateService(AdeniDbContext dbContext) : IBusin
             .AsNoTracking()
             .Where(x =>
                 x.TenantId == tenantId
+                && x.BusinessLocationId == locationId
                 && (x.Status == BookingStatus.Pending || x.Status == BookingStatus.Confirmed)
                 && x.StartAt < request.EndDate.ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc)
                 && x.EndAt > request.StartDate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc))
@@ -137,28 +165,55 @@ public sealed class BusinessClosedDateService(AdeniDbContext dbContext) : IBusin
         return Result.Success();
     }
 
-    public Task<bool> IsClosedAsync(
+    public async Task<bool> IsClosedAsync(
         Guid tenantId,
         DateOnly localDate,
-        CancellationToken cancellationToken = default) =>
-        dbContext.BusinessClosedDates
+        Guid? businessLocationId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var locationResult = await TenantLocationScope.ResolveAvailabilityLocationAsync(
+            dbContext,
+            tenantId,
+            businessLocationId,
+            cancellationToken);
+        if (locationResult.IsFailure)
+        {
+            return false;
+        }
+
+        return await dbContext.BusinessClosedDates
             .AsNoTracking()
             .AnyAsync(
                 x => x.TenantId == tenantId
+                    && x.BusinessLocationId == locationResult.Value
                     && x.StartDate <= localDate
                     && x.EndDate >= localDate,
                 cancellationToken);
+    }
 
     public async Task<IReadOnlyList<(DateOnly StartDate, DateOnly EndDate)>> ListRangesAsync(
         Guid tenantId,
         DateOnly fromInclusive,
         DateOnly toInclusive,
+        Guid? businessLocationId = null,
         CancellationToken cancellationToken = default)
     {
+        var locationResult = await TenantLocationScope.ResolveAvailabilityLocationAsync(
+            dbContext,
+            tenantId,
+            businessLocationId,
+            cancellationToken);
+        if (locationResult.IsFailure)
+        {
+            return Array.Empty<(DateOnly StartDate, DateOnly EndDate)>();
+        }
+
+        var locationId = locationResult.Value;
         var rows = await dbContext.BusinessClosedDates
             .AsNoTracking()
             .Where(x =>
                 x.TenantId == tenantId
+                && x.BusinessLocationId == locationId
                 && x.StartDate <= toInclusive
                 && x.EndDate >= fromInclusive)
             .Select(x => new { x.StartDate, x.EndDate })

@@ -1,12 +1,15 @@
 namespace Adeni.Api.Controllers;
 
+using System.Collections.Generic;
 using System.Security.Claims;
 using Adeni.Api.Auth;
 using Adeni.Api.Middleware;
 using Adeni.Application.Booking;
 using Adeni.Application.Auth;
 using Adeni.Domain.Identity;
+using Adeni.Domain.Common;
 using Adeni.Infrastructure.Auth;
+using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -15,31 +18,52 @@ using Microsoft.Extensions.Options;
 [RequiresPortalPermission(PortalPermissions.Hours)]
 public sealed class TenantAvailabilityController(
     IAvailabilityService availability,
+    AdeniDbContext dbContext,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> Get(CancellationToken cancellationToken)
+    public async Task<IActionResult> Get(
+        [FromQuery] Guid? locationId = null,
+        CancellationToken cancellationToken = default)
     {
         if (ResolveTenantId() is not { } tenantId)
         {
             return Unauthorized();
         }
 
-        var rules = await availability.GetWeeklyRulesAsync(tenantId, cancellationToken);
+        var scoped = await TenantLocationScope.ResolveAvailabilityLocationAsync(
+            dbContext,
+            tenantId,
+            locationId,
+            cancellationToken);
+        if (scoped.IsFailure)
+        {
+            return ApiResults.FromResult(
+                Result.Failure<IReadOnlyList<WeeklyAvailabilityRule>>(scoped.Error),
+                Ok,
+                HttpContext);
+        }
+
+        var rules = await availability.GetWeeklyRulesAsync(tenantId, scoped.Value, cancellationToken);
         return Ok(new { items = rules });
     }
 
     [HttpPut]
     public async Task<IActionResult> Replace(
         [FromBody] ReplaceAvailabilityRequest body,
-        CancellationToken cancellationToken)
+        [FromQuery] Guid? locationId = null,
+        CancellationToken cancellationToken = default)
     {
         if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
         {
             return Unauthorized();
         }
 
-        var result = await availability.ReplaceWeeklyRulesAsync(tenantId, body.Items, cancellationToken);
+        var result = await availability.ReplaceWeeklyRulesAsync(
+            tenantId,
+            body.Items,
+            locationId,
+            cancellationToken);
         return ApiResults.FromResult(result, rules => Ok(new { items = rules }), HttpContext);
     }
 

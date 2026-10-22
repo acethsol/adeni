@@ -46,7 +46,7 @@ Make the portal **branch switch** drive tenant APIs and exports honestly — fil
 - [x] Staff↔branch assignment (`StaffMember.BusinessLocationId`; portal roster filter + form field; `GET /api/v1/tenant/staff?locationId=`).
 - [x] Reviews attributed via booking branch (public profile reviews use active branch slug; tenant list supports `locationId` via booking FK).
 - [x] Tenant customer export + list `locationId` (customers with bookings or queue visits at branch).
-- [x] Per-branch weekly hours — **not in V1** (tenant-level `GET /api/v1/tenant/availability` only; branch `TimeZoneId` on location is display/scheduling hint, not separate hour rows).
+- [x] Per-branch weekly hours + closed dates (`BusinessLocationId` on `weekly_availability` / `business_closed_dates`; `GET`/`PUT` `/api/v1/tenant/availability?locationId=`; portal Hours reloads on branch switch).
 - [x] Calendar APIs: optional `locationId` on `GET .../staff/{id}/calendar` and `GET .../staff/team-calendar`; portal calendars pass active branch.
 - [x] Branch switch loading panel via `PortalActiveLocationService.runOnBranchSwitch` + `AdeniGlobalLoadingPanelComponent`.
 - [x] Wider branch switch trigger (min/max width + `title` on truncated labels).
@@ -58,7 +58,6 @@ Make the portal **branch switch** drive tenant APIs and exports honestly — fil
 - Per-branch entitlements or billing SKUs.
 - Elasticsearch / discovery index changes.
 - Kiosk PIN flow redesign (slug on kiosk URL remains follow-up).
-- Per-location weekly hour rows (would need `business_location_weekly_availability` or equivalent).
 
 ---
 
@@ -76,6 +75,10 @@ Make the portal **branch switch** drive tenant APIs and exports honestly — fil
 | GET | `/api/v1/tenant/staff/{id}/calendar` | Staff / self | `from`, `to`, **`locationId?`** | Practitioner calendar bookings scoped by branch. |
 | GET | `/api/v1/tenant/customers` | Bookings | …, **`locationId?`** | Customers with activity at branch. |
 | GET | `/api/v1/tenant/reviews` | Portal | **`locationId?`** | Reviews whose booking is at branch. |
+| GET | `/api/v1/tenant/availability` | Hours | **`locationId?`** | Weekly rules for branch (defaults to primary when omitted). |
+| PUT | `/api/v1/tenant/availability` | Hours | **`locationId?`** | Replace weekly rules for branch. |
+| GET | `/api/v1/tenant/closed-dates` | Hours | **`locationId?`** | Closed ranges for branch. |
+| POST | `/api/v1/tenant/closed-dates` | Hours | **`locationId?`** | Add closed range for branch. |
 | GET | `/api/v1/tenant/reporting/exports/{key}` | Per report | `from`, `to`, **`locationId?`** | Existing gate: multi-branch tenants without entitlement must send `locationId`. |
 | POST | `/api/v1/bookings` | Customer JWT | body **`businessLocationId?`** | Persist branch on create (must belong to tenant). |
 
@@ -102,6 +105,7 @@ Make the portal **branch switch** drive tenant APIs and exports honestly — fil
 | `/profile?tab=reviews` | public reviews by active branch slug | Yes |
 | `/payments` (exports) | export (existing) | Yes |
 | Shell pending bookings badge | pending list | Yes |
+| `/availability` | hours + closed dates | Yes (branch picker when “All locations”) |
 
 ---
 
@@ -167,4 +171,4 @@ Make the portal **branch switch** drive tenant APIs and exports honestly — fil
 |----------|----------|
 | Payments without `BookingId` in collected series when scoped? | Exclude from branch-scoped collected totals. |
 | Legacy rows with null `BusinessLocationId`? | Backfill to primary; branch filter matches only explicit FK. |
-| Per-branch business hours? | Deferred — single tenant availability table until product requires branch rows. |
+| Per-branch business hours? | Shipped — `BusinessLocationId` on weekly + closed date rows; migration duplicates legacy rows per active branch. |

@@ -242,6 +242,7 @@ public sealed class BookingService(
                 totalDuration,
                 request.StaffMemberId,
                 additionalIds,
+                businessLocationId,
                 cancellationToken);
 
             if (!isAvailable)

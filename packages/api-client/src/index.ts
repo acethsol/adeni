@@ -1742,16 +1742,23 @@ export class AdeniApiClient {
     return staffTeamCalendarResponseSchema.parse(await response.json());
   }
 
-  async getTenantAvailability(): Promise<WeeklyAvailabilityRule[]> {
-    const response = await this.request("/api/v1/tenant/availability");
+  async getTenantAvailability(locationId?: string): Promise<WeeklyAvailabilityRule[]> {
+    const query = locationId
+      ? `?locationId=${encodeURIComponent(locationId)}`
+      : "";
+    const response = await this.request(`/api/v1/tenant/availability${query}`);
     const payload = weeklyAvailabilityResponseSchema.parse(await response.json());
     return payload.items;
   }
 
   async replaceTenantAvailability(
     rules: WeeklyAvailabilityRule[],
+    locationId?: string,
   ): Promise<WeeklyAvailabilityRule[]> {
-    const response = await this.request("/api/v1/tenant/availability", {
+    const query = locationId
+      ? `?locationId=${encodeURIComponent(locationId)}`
+      : "";
+    const response = await this.request(`/api/v1/tenant/availability${query}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ items: rules }),
@@ -1760,16 +1767,23 @@ export class AdeniApiClient {
     return payload.items;
   }
 
-  async getTenantClosedDates(): Promise<BusinessClosedDate[]> {
-    const response = await this.request("/api/v1/tenant/closed-dates");
+  async getTenantClosedDates(locationId?: string): Promise<BusinessClosedDate[]> {
+    const query = locationId
+      ? `?locationId=${encodeURIComponent(locationId)}`
+      : "";
+    const response = await this.request(`/api/v1/tenant/closed-dates${query}`);
     return businessClosedDatesResponseSchema.parse(await response.json()).items;
   }
 
   async createTenantClosedDate(
     request: CreateBusinessClosedDateRequest,
+    locationId?: string,
   ): Promise<BusinessClosedDate> {
     const body = createBusinessClosedDateRequestSchema.parse(request);
-    const response = await this.request("/api/v1/tenant/closed-dates", {
+    const query = locationId
+      ? `?locationId=${encodeURIComponent(locationId)}`
+      : "";
+    const response = await this.request(`/api/v1/tenant/closed-dates${query}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

@@ -24,6 +24,24 @@
   color: var(--text-muted);
 }
 
+.branch-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: var(--cds-spacing-04);
+  max-width: 20rem;
+}
+
+.branch-picker-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.branch-picker-select {
+  width: 100%;
+}
+
 .hours-grid {
   display: grid;
   gap: 0;

@@ -1,6 +1,10 @@
 <app-portal-page
   title="Hours"
-  description="Weekly opening times and days when customers cannot book online."
+  [description]="
+    scopeLabel()
+      ? 'Weekly opening times for ' + scopeLabel() + '. Closed dates apply to this branch only.'
+      : 'Weekly opening times and days when customers cannot book online.'
+  "
 >
   <button pageActions type="button" class="btn" (click)="showClosedDatesModal.set(true)">
     <adeni-carbon-icon name="calendar" [size]="16" />
@@ -25,7 +29,23 @@
       <header class="hours-shell-head">
         <div>
           <h2 class="hours-shell-title">Weekly schedule</h2>
-          <p class="section-lead">Set when your business accepts online bookings each week.</p>
+          <p class="section-lead">Set when this branch accepts online bookings each week.</p>
+          @if (showHoursBranchPicker()) {
+            <label class="branch-picker">
+              <span class="branch-picker-label">Branch</span>
+              <select
+                class="branch-picker-select"
+                [ngModel]="hoursBranchPickerId()"
+                (ngModelChange)="onHoursBranchPickerChange($event)"
+              >
+                @for (branch of activeLocation.activeLocations(); track branch.id) {
+                  <option [ngValue]="branch.id">
+                    {{ activeLocation.branchRowLabel(branch) }}
+                  </option>
+                }
+              </select>
+            </label>
+          }
         </div>
       </header>
 

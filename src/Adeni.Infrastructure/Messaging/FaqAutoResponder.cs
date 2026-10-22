@@ -74,9 +74,21 @@ public sealed class FaqAutoResponder(
         Guid tenantId,
         CancellationToken cancellationToken)
     {
+        var locationId = await dbContext.BusinessLocations.AsNoTracking()
+            .Where(x => x.TenantId == tenantId && x.IsActive)
+            .OrderByDescending(x => x.IsPrimary)
+            .ThenBy(x => x.CreatedAt)
+            .Select(x => (Guid?)x.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (locationId is not Guid resolvedLocationId)
+        {
+            return null;
+        }
+
         var hours = await dbContext.WeeklyAvailabilities
             .AsNoTracking()
-            .Where(x => x.TenantId == tenantId)
+            .Where(x => x.TenantId == tenantId && x.BusinessLocationId == resolvedLocationId)
             .OrderBy(x => x.DayOfWeek)
             .ToListAsync(cancellationToken);
 

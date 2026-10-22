@@ -570,7 +570,10 @@ public sealed class DiscoveryService(
             business.profile.GalleryImageKeysJson,
             coverUrl,
             cancellationToken);
-        var openingHours = await LoadPublicOpeningHoursAsync(business.tenant.Id, cancellationToken);
+        var openingHours = await LoadPublicOpeningHoursAsync(
+            business.tenant.Id,
+            business.location.Id,
+            cancellationToken);
 
         return new PublicBusinessProfile(
             business.location.Id,
@@ -605,11 +608,12 @@ public sealed class DiscoveryService(
 
     private async Task<IReadOnlyList<PublicOpeningHours>> LoadPublicOpeningHoursAsync(
         Guid tenantId,
+        Guid businessLocationId,
         CancellationToken cancellationToken)
     {
         var rules = await dbContext.WeeklyAvailabilities
             .AsNoTracking()
-            .Where(x => x.TenantId == tenantId)
+            .Where(x => x.TenantId == tenantId && x.BusinessLocationId == businessLocationId)
             .OrderBy(x => x.DayOfWeek)
             .ThenBy(x => x.OpenTime)
             .ToListAsync(cancellationToken);

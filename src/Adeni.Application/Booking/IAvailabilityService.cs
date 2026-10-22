@@ -15,11 +15,13 @@ public interface IAvailabilityService
 {
     Task<IReadOnlyList<WeeklyAvailabilityRule>> GetWeeklyRulesAsync(
         Guid tenantId,
+        Guid? businessLocationId = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<IReadOnlyList<WeeklyAvailabilityRule>>> ReplaceWeeklyRulesAsync(
         Guid tenantId,
         IReadOnlyList<WeeklyAvailabilityRule> rules,
+        Guid? businessLocationId = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<IReadOnlyList<AvailableSlotResponse>>> GetAvailableSlotsAsync(
@@ -49,5 +51,6 @@ public interface IAvailabilityService
         int durationMinutes,
         Guid? staffMemberId = null,
         IReadOnlyList<Guid>? additionalServiceIds = null,
+        Guid? businessLocationId = null,
         CancellationToken cancellationToken = default);
 }

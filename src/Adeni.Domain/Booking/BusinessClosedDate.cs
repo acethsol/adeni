@@ -9,6 +9,8 @@ public sealed class BusinessClosedDate : ITenantEntity
 
     public Guid TenantId { get; set; }
 
+    public Guid BusinessLocationId { get; set; }
+
     public DateOnly StartDate { get; set; }
 
     public DateOnly EndDate { get; set; }

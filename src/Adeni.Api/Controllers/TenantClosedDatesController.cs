@@ -7,6 +7,7 @@ using Adeni.Application.Auth;
 using Adeni.Application.Booking;
 using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Auth;
+using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -18,28 +19,31 @@ public sealed class TenantClosedDatesController(
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> List(CancellationToken cancellationToken)
+    public async Task<IActionResult> List(
+        [FromQuery] Guid? locationId = null,
+        CancellationToken cancellationToken = default)
     {
         if (ResolveTenantId() is not { } tenantId)
         {
             return Unauthorized();
         }
 
-        var result = await closedDates.ListAsync(tenantId, cancellationToken);
+        var result = await closedDates.ListAsync(tenantId, locationId, cancellationToken);
         return ApiResults.FromResult(result, items => Ok(new { items }), HttpContext);
     }
 
     [HttpPost]
     public async Task<IActionResult> Create(
         [FromBody] CreateBusinessClosedDateRequest body,
-        CancellationToken cancellationToken)
+        [FromQuery] Guid? locationId = null,
+        CancellationToken cancellationToken = default)
     {
         if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
         {
             return Unauthorized();
         }
 
-        var result = await closedDates.CreateAsync(tenantId, body, cancellationToken);
+        var result = await closedDates.CreateAsync(tenantId, body, locationId, cancellationToken);
         return ApiResults.FromResult(result, Ok, HttpContext);
     }
 

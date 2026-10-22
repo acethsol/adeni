@@ -182,10 +182,16 @@ public sealed class DiscoveryServiceTests
         var cache = scope.ServiceProvider.GetRequiredService<ICacheService>();
 
         var tenantId = BusinessTestSeed.SeedVerifiedBusiness(db, "lekki-cuts", "Lekki Cuts", "barbers", "Lekki", 6.4474, 3.4700);
+        await db.SaveChangesAsync();
+        var locationId = db.BusinessLocations
+            .Where(x => x.TenantId == tenantId)
+            .Select(x => x.Id)
+            .First();
         db.WeeklyAvailabilities.Add(new Domain.Booking.WeeklyAvailability
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
+            BusinessLocationId = locationId,
             DayOfWeek = DayOfWeek.Monday,
             OpenTime = new TimeOnly(9, 0),
             CloseTime = new TimeOnly(18, 0),

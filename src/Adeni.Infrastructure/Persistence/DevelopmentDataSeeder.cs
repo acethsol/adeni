@@ -103,9 +103,10 @@ public static class DevelopmentDataSeeder
                 ],
             });
 
+            var locationId = Guid.NewGuid();
             db.BusinessLocations.Add(new BusinessLocation
             {
-                Id = Guid.NewGuid(),
+                Id = locationId,
                 TenantId = tenantId,
                 Slug = sample.Slug,
                 Name = sample.LocationName,
@@ -146,6 +147,7 @@ public static class DevelopmentDataSeeder
                 {
                     Id = Guid.NewGuid(),
                     TenantId = tenantId,
+                    BusinessLocationId = locationId,
                     DayOfWeek = day,
                     OpenTime = new TimeOnly(9, 0),
                     CloseTime = new TimeOnly(17, 0),

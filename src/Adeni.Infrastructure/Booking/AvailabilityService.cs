@@ -16,11 +16,22 @@ public sealed class AvailabilityService(
 {
     public async Task<IReadOnlyList<WeeklyAvailabilityRule>> GetWeeklyRulesAsync(
         Guid tenantId,
+        Guid? businessLocationId = null,
         CancellationToken cancellationToken = default)
     {
+        var locationResult = await TenantLocationScope.ResolveAvailabilityLocationAsync(
+            dbContext,
+            tenantId,
+            businessLocationId,
+            cancellationToken);
+        if (locationResult.IsFailure)
+        {
+            return Array.Empty<WeeklyAvailabilityRule>();
+        }
+
         var rules = await dbContext.WeeklyAvailabilities
             .AsNoTracking()
-            .Where(x => x.TenantId == tenantId)
+            .Where(x => x.TenantId == tenantId && x.BusinessLocationId == locationResult.Value)
             .OrderBy(x => x.DayOfWeek)
             .ThenBy(x => x.OpenTime)
             .ToListAsync(cancellationToken);
@@ -33,6 +44,7 @@ public sealed class AvailabilityService(
     public async Task<Result<IReadOnlyList<WeeklyAvailabilityRule>>> ReplaceWeeklyRulesAsync(
         Guid tenantId,
         IReadOnlyList<WeeklyAvailabilityRule> rules,
+        Guid? businessLocationId = null,
         CancellationToken cancellationToken = default)
     {
         var validation = ValidateRules(rules);
@@ -46,8 +58,19 @@ public sealed class AvailabilityService(
             return Result.Failure<IReadOnlyList<WeeklyAvailabilityRule>>(Error.NotFound("Tenant"));
         }
 
+        var locationResult = await TenantLocationScope.ResolveAvailabilityLocationAsync(
+            dbContext,
+            tenantId,
+            businessLocationId,
+            cancellationToken);
+        if (locationResult.IsFailure)
+        {
+            return Result.Failure<IReadOnlyList<WeeklyAvailabilityRule>>(locationResult.Error!);
+        }
+
+        var locationId = locationResult.Value;
         var existing = await dbContext.WeeklyAvailabilities
-            .Where(x => x.TenantId == tenantId)
+            .Where(x => x.TenantId == tenantId && x.BusinessLocationId == locationId)
             .ToListAsync(cancellationToken);
 
         dbContext.WeeklyAvailabilities.RemoveRange(existing);
@@ -58,6 +81,7 @@ public sealed class AvailabilityService(
             {
                 Id = Guid.NewGuid(),
                 TenantId = tenantId,
+                BusinessLocationId = locationId,
                 DayOfWeek = rule.DayOfWeek,
                 OpenTime = rule.OpenTime,
                 CloseTime = rule.CloseTime
@@ -134,6 +158,7 @@ public sealed class AvailabilityService(
         int durationMinutes,
         Guid? staffMemberId = null,
         IReadOnlyList<Guid>? additionalServiceIds = null,
+        Guid? businessLocationId = null,
         CancellationToken cancellationToken = default)
     {
         var service = await dbContext.ServiceOfferings
@@ -147,10 +172,21 @@ public sealed class AvailabilityService(
             return false;
         }
 
-        var businessRules = await GetWeeklyRulesAsync(tenantId, cancellationToken);
-        var schedulingTimeZone = await tenantSchedulingTimeZone.ForTenantAsync(tenantId, cancellationToken);
+        var resolvedLocation = await TenantLocationScope.ResolveAvailabilityLocationAsync(
+            dbContext,
+            tenantId,
+            businessLocationId,
+            cancellationToken);
+        if (resolvedLocation.IsFailure)
+        {
+            return false;
+        }
+
+        var locationId = resolvedLocation.Value;
+        var businessRules = await GetWeeklyRulesAsync(tenantId, locationId, cancellationToken);
+        var schedulingTimeZone = await tenantSchedulingTimeZone.ForLocationAsync(locationId, cancellationToken);
         var localDate = DateOnly.FromDateTime(schedulingTimeZone.ToLocal(startAt).Date);
-        if (await closedDates.IsClosedAsync(tenantId, localDate, cancellationToken))
+        if (await closedDates.IsClosedAsync(tenantId, localDate, locationId, cancellationToken))
         {
             return false;
         }
@@ -292,10 +328,23 @@ public sealed class AvailabilityService(
             }
         }
 
-        var businessRules = await GetWeeklyRulesAsync(tenantId, cancellationToken);
-        var schedulingTimeZone = locationId is Guid resolvedLocationId
-            ? await tenantSchedulingTimeZone.ForLocationAsync(resolvedLocationId, cancellationToken)
-            : await tenantSchedulingTimeZone.ForTenantAsync(tenantId, cancellationToken);
+        var resolvedLocation = locationId is Guid slugLocationId
+            ? Result.Success(slugLocationId)
+            : await TenantLocationScope.ResolveAvailabilityLocationAsync(
+                dbContext,
+                tenantId,
+                null,
+                cancellationToken);
+        if (resolvedLocation.IsFailure)
+        {
+            return Result.Failure<IReadOnlyList<AvailableSlotResponse>>(resolvedLocation.Error!);
+        }
+
+        var availabilityLocationId = resolvedLocation.Value;
+        var businessRules = await GetWeeklyRulesAsync(tenantId, availabilityLocationId, cancellationToken);
+        var schedulingTimeZone = await tenantSchedulingTimeZone.ForLocationAsync(
+            availabilityLocationId,
+            cancellationToken);
         var existing = await dbContext.Bookings
             .AsNoTracking()
             .Where(x => x.TenantId == tenantId)
@@ -314,6 +363,7 @@ public sealed class AvailabilityService(
             tenantId,
             rangeLocalStart,
             rangeLocalEnd,
+            availabilityLocationId,
             cancellationToken);
 
         IReadOnlyList<WeeklyAvailabilityRule> generationRules = businessRules;

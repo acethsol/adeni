@@ -357,7 +357,11 @@ public sealed class AdeniDbContext(
         {
             entity.ToTable("weekly_availability", "booking");
             entity.HasKey(x => x.Id);
-            entity.HasIndex(x => new { x.TenantId, x.DayOfWeek });
+            entity.HasIndex(x => new { x.TenantId, x.BusinessLocationId, x.DayOfWeek });
+            entity.HasOne<BusinessLocation>()
+                .WithMany()
+                .HasForeignKey(x => x.BusinessLocationId)
+                .OnDelete(DeleteBehavior.Restrict);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 
@@ -366,7 +370,11 @@ public sealed class AdeniDbContext(
             entity.ToTable("business_closed_dates", "booking");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Reason).HasMaxLength(200);
-            entity.HasIndex(x => new { x.TenantId, x.StartDate, x.EndDate });
+            entity.HasIndex(x => new { x.TenantId, x.BusinessLocationId, x.StartDate, x.EndDate });
+            entity.HasOne<BusinessLocation>()
+                .WithMany()
+                .HasForeignKey(x => x.BusinessLocationId)
+                .OnDelete(DeleteBehavior.Restrict);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 

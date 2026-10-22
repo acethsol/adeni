@@ -1,8 +1,10 @@
-import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, OnDestroy, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { Subscription } from "rxjs";
 import {
   DAY_OF_WEEK_LABELS,
   type BusinessClosedDate,
+  type BusinessProfile,
   type WeeklyAvailabilityRule,
 } from "@adeni/shared";
 import {
@@ -14,6 +16,9 @@ import {
   PortalPageComponent,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
+import { PortalSessionService } from "../../core/services/portal-session.service";
+import { PORTAL_ALL_LOCATIONS_SCOPE } from "../../core/services/portal-active-location-store";
 
 const DAYS_ORDER = [1, 2, 3, 4, 5, 6, 0];
 const MONTH_LABELS = [
@@ -114,10 +119,13 @@ function findRangeCovering(date: string, ranges: BusinessClosedDate[]): Business
   templateUrl: "./availability.component.html",
   styleUrl: "./availability.component.scss",
 })
-export class AvailabilityComponent implements OnInit {
+export class AvailabilityComponent implements OnInit, OnDestroy {
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly confirmDialog = inject(AdeniConfirmService);
+  readonly activeLocation = inject(PortalActiveLocationService);
+  private readonly session = inject(PortalSessionService);
+  private branchSub: Subscription | null = null;
 
   readonly loading = signal(true);
   readonly saving = signal(false);
@@ -135,6 +143,28 @@ export class AvailabilityComponent implements OnInit {
   rangeReason = "";
   conflictWarning = signal<string | null>(null);
   readonly showClosedDatesModal = signal(false);
+  readonly profile = signal<BusinessProfile | null>(null);
+  /** When shell scope is “All locations”, pick which branch to edit. */
+  readonly hoursBranchPickerId = signal("");
+
+  readonly scopeLabel = computed(() => {
+    if (!this.activeLocation.showLocationSwitch()) {
+      return null;
+    }
+    const scoped = this.activeLocation.tenantApiLocationId(this.profile()?.entitlements ?? null);
+    if (scoped) {
+      return this.activeLocation.switchDisplay().title;
+    }
+    const picked = this.hoursBranchPickerId();
+    const branch = this.activeLocation.activeLocations().find((l) => l.id === picked);
+    return branch?.name?.trim() || branch?.slug || "Branch";
+  });
+
+  readonly showHoursBranchPicker = computed(
+    () =>
+      this.activeLocation.showLocationSwitch()
+      && this.activeLocation.selectedLocationId() === PORTAL_ALL_LOCATIONS_SCOPE,
+  );
 
   setDayOpen(row: DayRow, open: boolean): void {
     row.closed = !open;
@@ -199,17 +229,67 @@ export class AvailabilityComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    void this.session.ensureLoaded();
     void this.load();
+    this.branchSub = this.activeLocation.selectionChanged$.subscribe(() => {
+      this.syncHoursBranchPicker();
+      void this.activeLocation.runOnBranchSwitch(() => this.load());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.branchSub?.unsubscribe();
+  }
+
+  onHoursBranchPickerChange(locationId: string): void {
+    this.hoursBranchPickerId.set(locationId);
+    void this.load();
+  }
+
+  private syncHoursBranchPicker(): void {
+    const scoped = this.activeLocation.tenantApiLocationId(this.profile()?.entitlements ?? null);
+    if (scoped) {
+      this.hoursBranchPickerId.set(scoped);
+      return;
+    }
+    const active = this.activeLocation.activeLocations();
+    if (active.length === 0) {
+      this.hoursBranchPickerId.set("");
+      return;
+    }
+    const current = this.hoursBranchPickerId();
+    if (current && active.some((l) => l.id === current)) {
+      return;
+    }
+    const primary = active.find((l) => l.isPrimary) ?? active[0];
+    this.hoursBranchPickerId.set(primary!.id);
+  }
+
+  private locationIdForApi(): string | undefined {
+    const fromShell = this.activeLocation.tenantApiLocationId(this.profile()?.entitlements ?? null);
+    if (fromShell) {
+      return fromShell;
+    }
+    const picked = this.hoursBranchPickerId().trim();
+    return picked || undefined;
   }
 
   async load(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const [rules, closed] = await Promise.all([
-        this.api.withAuthorizedClient((c) => c.getTenantAvailability()),
-        this.api.withAuthorizedClient((c) => c.getTenantClosedDates()),
-      ]);
+      const [, rules, closed] = await this.api.withAuthorizedClient(async (c) => {
+        const tenantProfile = await c.getTenantProfile();
+        this.profile.set(tenantProfile);
+        this.activeLocation.syncFromProfile(tenantProfile);
+        this.syncHoursBranchPicker();
+        const locationId = this.locationIdForApi();
+        const [hours, closedDates] = await Promise.all([
+          c.getTenantAvailability(locationId),
+          c.getTenantClosedDates(locationId),
+        ]);
+        return [tenantProfile, hours, closedDates] as const;
+      });
       this.rows = rulesToRows(rules);
       this.closedRanges.set(closed);
     } catch {
@@ -224,7 +304,7 @@ export class AvailabilityComponent implements OnInit {
     this.error.set(null);
     try {
       const saved = await this.api.withAuthorizedClient((c) =>
-        c.replaceTenantAvailability(rowsToRules(this.rows)),
+        c.replaceTenantAvailability(rowsToRules(this.rows), this.locationIdForApi()),
       );
       this.rows = rulesToRows(saved);
       this.feedback.success("Weekly hours saved.");
@@ -325,7 +405,10 @@ export class AvailabilityComponent implements OnInit {
     this.conflictWarning.set(null);
     try {
       const created = await this.api.withAuthorizedClient((c) =>
-        c.createTenantClosedDate({ startDate, endDate, reason }),
+        c.createTenantClosedDate(
+          { startDate, endDate, reason },
+          this.locationIdForApi(),
+        ),
       );
       this.closedRanges.update((items) =>
         [...items, created].sort((a, b) =>

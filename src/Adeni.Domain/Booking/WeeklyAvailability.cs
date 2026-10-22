@@ -8,6 +8,8 @@ public sealed class WeeklyAvailability : ITenantEntity
 
     public Guid TenantId { get; set; }
 
+    public Guid BusinessLocationId { get; set; }
+
     public DayOfWeek DayOfWeek { get; set; }
 
     public TimeOnly OpenTime { get; set; }

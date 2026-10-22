@@ -43,12 +43,12 @@ public sealed class BusinessClosedDateServiceTests
         var first = await closed.CreateAsync(
             tenantId,
             new CreateBusinessClosedDateRequest(new DateOnly(2026, 12, 24), new DateOnly(2026, 12, 26), "Holiday"),
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         var overlap = await closed.CreateAsync(
             tenantId,
             new CreateBusinessClosedDateRequest(new DateOnly(2026, 12, 26), new DateOnly(2026, 12, 28), null),
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         Assert.True(first.IsSuccess);
         Assert.True(overlap.IsFailure);
@@ -66,11 +66,11 @@ public sealed class BusinessClosedDateServiceTests
         await closed.CreateAsync(
             tenantId,
             new CreateBusinessClosedDateRequest(new DateOnly(2026, 12, 24), new DateOnly(2026, 12, 26), null),
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
-        Assert.True(await closed.IsClosedAsync(tenantId, new DateOnly(2026, 12, 24), CancellationToken.None));
-        Assert.True(await closed.IsClosedAsync(tenantId, new DateOnly(2026, 12, 26), CancellationToken.None));
-        Assert.False(await closed.IsClosedAsync(tenantId, new DateOnly(2026, 12, 27), CancellationToken.None));
+        Assert.True(await closed.IsClosedAsync(tenantId, new DateOnly(2026, 12, 24), cancellationToken: CancellationToken.None));
+        Assert.True(await closed.IsClosedAsync(tenantId, new DateOnly(2026, 12, 26), cancellationToken: CancellationToken.None));
+        Assert.False(await closed.IsClosedAsync(tenantId, new DateOnly(2026, 12, 27), cancellationToken: CancellationToken.None));
     }
 
     [Fact]
@@ -101,7 +101,7 @@ public sealed class BusinessClosedDateServiceTests
         await closed.CreateAsync(
             tenantId,
             new CreateBusinessClosedDateRequest(closedDay, closedDay, "Staff day"),
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         var slots = await availability.GetAvailableSlotsAsync(
             tenantId,
@@ -156,7 +156,7 @@ public sealed class BusinessClosedDateServiceTests
         var result = await closed.CreateAsync(
             tenantId,
             new CreateBusinessClosedDateRequest(closedDay, closedDay, "Renovations"),
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value!.ConflictingBookingIds);
@@ -197,7 +197,7 @@ public sealed class BusinessClosedDateServiceTests
         var created = await closed.CreateAsync(
             tenantId,
             new CreateBusinessClosedDateRequest(closedDay, closedDay, null),
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
         Assert.True(created.IsSuccess);
 
         var before = await availability.GetAvailableSlotsAsync(

@@ -55,9 +55,10 @@ public sealed class BookingIntegrationTests : IClassFixture<WebApplicationFactor
                 Description = "Integration booking",
                 UpdatedAt = DateTimeOffset.UtcNow
             });
+            var locationId = Guid.NewGuid();
             db.BusinessLocations.Add(new BusinessLocation
             {
-                Id = Guid.NewGuid(),
+                Id = locationId,
                 TenantId = tenantId,
                 Slug = slug,
                 Name = "Lekki",
@@ -86,6 +87,7 @@ public sealed class BookingIntegrationTests : IClassFixture<WebApplicationFactor
             {
                 Id = Guid.NewGuid(),
                 TenantId = tenantId,
+                BusinessLocationId = locationId,
                 DayOfWeek = DayOfWeek.Monday,
                 OpenTime = new TimeOnly(9, 0),
                 CloseTime = new TimeOnly(17, 0)
@@ -161,9 +163,10 @@ public sealed class BookingIntegrationTests : IClassFixture<WebApplicationFactor
                 Phone = "+2348011111111",
                 UpdatedAt = DateTimeOffset.UtcNow
             });
+            var locationId = Guid.NewGuid();
             db.BusinessLocations.Add(new BusinessLocation
             {
-                Id = Guid.NewGuid(),
+                Id = locationId,
                 TenantId = tenantId,
                 Slug = slug,
                 Name = "Lekki",
@@ -192,6 +195,7 @@ public sealed class BookingIntegrationTests : IClassFixture<WebApplicationFactor
             {
                 Id = Guid.NewGuid(),
                 TenantId = tenantId,
+                BusinessLocationId = locationId,
                 DayOfWeek = DayOfWeek.Monday,
                 OpenTime = new TimeOnly(9, 0),
                 CloseTime = new TimeOnly(17, 0)
