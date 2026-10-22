@@ -1211,6 +1211,27 @@ export class AdeniApiClient {
     return response.blob();
   }
 
+  async downloadTenantReportExport(options: {
+    reportKey: string;
+    from: string;
+    to: string;
+    format?: "csv" | "xlsx" | "pdf";
+    locationId?: string;
+  }): Promise<Blob> {
+    const query = new URLSearchParams({
+      from: options.from,
+      to: options.to,
+      format: options.format ?? "csv",
+    });
+    if (options.locationId) {
+      query.set("locationId", options.locationId);
+    }
+    const response = await this.request(
+      `/api/v1/tenant/reporting/exports/${encodeURIComponent(options.reportKey)}?${query.toString()}`,
+    );
+    return response.blob();
+  }
+
   async confirmStubPayment(reference: string): Promise<PaymentIntentResponse> {
     const response = await this.request("/api/v1/finance/stub/confirm", {
       method: "POST",

@@ -61,6 +61,12 @@ public interface IQuoteRequestService
         string auth0Sub,
         CancellationToken cancellationToken = default);
 
+    Task<Result<QuoteRequestResponse>> GetForTenantByIdAsync(
+        Guid tenantId,
+        string auth0Sub,
+        Guid quoteRequestId,
+        CancellationToken cancellationToken = default);
+
     Task<Result<QuoteRequestResponse>> SubmitOfferAsync(
         Guid tenantId,
         string auth0Sub,

@@ -61,6 +61,13 @@ export const enErrorMessages: MessageTree = {
     practitioner_limit: "Your plan team member limit has been reached.",
     waitlist: "Waitlist is not included on your current plan.",
     sms: "SMS notifications are not included on your current plan.",
+    exports: "Exports are not included on your current plan.",
+    excel_export: "Excel export is not included on your current plan.",
+    multi_location_reporting: "Cross-location reporting is not included on your current plan.",
+  },
+  reporting: {
+    report_not_found: "That report is not available.",
+    format_not_supported: "That export format is not supported for this report.",
   },
   list: {
     sort_invalid: "That column cannot be used to sort this list.",

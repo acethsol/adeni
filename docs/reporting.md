@@ -13,10 +13,10 @@ Read-only and render responsibilities: **PDF documents**, **tenant/admin analyti
 | Area | V1 status | Notes |
 |------|-----------|--------|
 | **Receipt / invoice PDF** | **39A** — `IReportRenderer` + QuestPDF in `Adeni.Infrastructure.Reporting` | Finance delegates `GetPdfAsync` |
-| **Quote / statement PDF** | Planned | Phase 2 |
+| **Quote / statement PDF** | **39B** — QuestPDF minimal templates | Branding polish later |
 | **Portal dashboard KPIs** | Shipped | `ITenantDashboardService` → `/api/v1/tenant/dashboard/*` |
-| **CSV / Excel / PDF exports** | Partial | Compensation CSV on Finance; unified export orchestrator Phase 3 |
-| **Admin GMV / MRR** | Backlog | Phase 4, Sprint 20e alignment |
+| **CSV / Excel / PDF exports** | **39B** | `IReportExportService` + ClosedXML; `/api/v1/tenant/reporting/exports/{reportKey}` |
+| **Admin GMV / MRR** | **39B** | `/api/v1/admin/reporting/platform-subscription-mrr`, `/gmv` (MFA + audit) |
 
 ---
 
@@ -99,8 +99,8 @@ Issued documents use **snapshots** on the entity; PDF regeneration must not sile
 |-------|-------------|
 | **1** | Module boundaries; QuestPDF extracted from `BillingDocumentService`; `reporting.md` + tests |
 | **2** | Quote + statement PDF; tenant branding from `@adeni/brand` paths |
-| **3** | `IReportExportService` + ClosedXML; portal export buttons on grid toolbars |
-| **4** | Admin cross-tenant reporting under `/admin/reporting/*` |
+| **3** | **39B** — `IReportExportService` + ClosedXML; portal export on bookings + dashboard widget |
+| **4** | **39B** — Admin `/admin/reporting/*` (platform subscription MRR + GMV) |
 
 ---
 

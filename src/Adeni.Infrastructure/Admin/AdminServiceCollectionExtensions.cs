@@ -1,6 +1,7 @@
 namespace Adeni.Infrastructure.Admin;
 
 using Adeni.Application.Admin;
+using Adeni.Application.Reporting;
 using Microsoft.Extensions.DependencyInjection;
 
 public static class AdminServiceCollectionExtensions
@@ -12,6 +13,7 @@ public static class AdminServiceCollectionExtensions
         services.AddScoped<IAdminMarketService, AdminMarketService>();
         services.AddScoped<IAdminRevenueMetricsService, AdminRevenueMetricsService>();
         services.AddScoped<IAdminTransactionSearchService, AdminTransactionSearchService>();
+        services.AddScoped<IAdminReportingQueryService, AdminReportingQueryService>();
         return services;
     }
 }

@@ -56,7 +56,7 @@ public sealed class FinanceNotificationHandlerTests
 
         public Task<Result<byte[]>> RenderDocumentAsync(
             ReportKind kind,
-            BillingDocumentReportData data,
+            IReportDocumentData data,
             CancellationToken cancellationToken = default)
         {
             RenderCalls++;

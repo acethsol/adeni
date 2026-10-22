@@ -18,7 +18,7 @@
 |-------|-------|
 | **Sprint** | Sprint 39 — Reporting module |
 | **Author** | |
-| **Status** | Draft |
+| **Status** | 39A ✅ / 39B ✅ (retention export deferred 37.5) |
 | **Created** | 2026-10-21 |
 | **Depends on** | [sprint-33-entitlements-closeout.md](./sprint-33-entitlements-closeout.md) (export/report entitlement keys), Finance boundaries (39-finance), Sprint 32 dashboard |
 
@@ -68,34 +68,34 @@ Do **not** use unqualified **`MRR`** in new routes, DTOs, or admin UI where both
 
 #### Documents expansion
 
-- [ ] Quote PDF template (Booking/Quotes data via port)
-- [ ] Statement template + issue flow (tenant customer period summary — not wallet/custody)
-- [ ] Branding paths from `@adeni/brand` where applicable
+- [x] Quote PDF template (Booking/Quotes data via port)
+- [x] Statement template + issue flow (tenant customer period summary — not wallet/custody)
+- [ ] Branding paths from `@adeni/brand` where applicable (minimal text PDF in 39B)
 
 #### Export orchestrator
 
-- [ ] `IReportExportService` — `reportKey`, `from`, `to`, `format=csv|xlsx|pdf`
-- [ ] **`ReportDefinition`** registry (code/config — not necessarily DB) per reportKey:
+- [x] `IReportExportService` — `reportKey`, `from`, `to`, `format=csv|xlsx|pdf`
+- [x] **`ReportDefinition`** registry (code/config — not necessarily DB) per reportKey:
   - `ReportKey`
   - `RequiredPermission` (portal RBAC)
   - `RequiredEntitlement` (SKU)
   - `SupportedFormats`
-- [ ] **Entitlement gates:**
+- [x] **Entitlement gates:**
   - `basicExports` — CSV operational exports (Starter+)
   - `advancedReports` — richer report definitions / breakdown exports (Pro+)
   - `excelExport` — `xlsx` branch via ClosedXML (Pro+)
   - `multiLocationReporting` — queries spanning locations when tenant has multiple (Business)
-- [ ] Portal: download on dashboard widgets + `@adeni/ui` list toolbar export slot
-- [ ] Optional: delegate existing Finance compensation CSV through orchestrator (single entry point)
+- [x] Portal: download on dashboard widgets + `@adeni/ui` list toolbar export slot (bookings + dashboard appointments widget)
+- [x] Optional: delegate existing Finance compensation CSV through orchestrator (single entry point)
 
 #### Admin reporting
 
-- [ ] `IAdminReportingQueryService` — **`AdeniMrr`** / **`PlatformSubscriptionMrr`**, GMV, active tenants under `/admin/reporting/*` (MFA + audit)
+- [x] `IAdminReportingQueryService` — **`AdeniMrr`** / **`PlatformSubscriptionMrr`**, GMV, active tenants under `/admin/reporting/*` (MFA + audit)
 - [ ] Cross-tenant reads audited; no tenant PII bulk export without existing SOC2 patterns
 
 #### Retention analytics presentation (after Retention **37.5** or parallel late 39B)
 
-- [ ] Export/widget paths consume **`IRetentionAnalyticsService`** (Application) for **`TenantMembershipMrr`**, churn, utilization — **no Retention EF in Reporting**
+- [ ] Export/widget paths consume **`IRetentionAnalyticsService`** (Application) for **`TenantMembershipMrr`**, churn, utilization — **deferred to Retention 37.5** (`retention-membership-mrr` not in registry)
 
 ### Portal vs admin surfaces
 
@@ -247,7 +247,7 @@ All routes under `/api/v1/`; mutating document issue flows authenticated.
 ## 10. Tests
 
 - [x] Unit: QuestPDF receipt fixture (39A)
-- [ ] Integration: PDF `application/pdf`; export 403 when `excelExport` false and format=xlsx
+- [x] Integration: export 403 when `excelExport` false and format=xlsx
 - [ ] Export 403 when user lacks `RequiredPermission` for `reportKey`
 - [ ] Multi-location report denied when `multiLocationReporting` false and `locationId` omitted
 - [ ] Architecture: Reporting does not reference Finance or Retention Infrastructure EF entities
@@ -266,10 +266,10 @@ Run: `dotnet test Adeni.slnx -c Release`
 
 ### 39B
 
-- [ ] Portal can download CSV with `basicExports`; xlsx requires `excelExport`
-- [ ] `ReportDefinition` enforces permission + entitlement per `reportKey`
-- [ ] Admin API exposes **`PlatformSubscriptionMrr`** (labeled, not ambiguous “MRR”)
-- [ ] Compensation export reachable via orchestrator or documented Finance delegate
+- [x] Portal can download CSV with `basicExports`; xlsx requires `excelExport`
+- [x] `ReportDefinition` enforces permission + entitlement per `reportKey`
+- [x] Admin API exposes **`PlatformSubscriptionMrr`** (labeled, not ambiguous “MRR”)
+- [x] Compensation export reachable via orchestrator or documented Finance delegate
 
 ---
 

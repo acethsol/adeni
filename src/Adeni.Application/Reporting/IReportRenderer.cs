@@ -6,6 +6,6 @@ public interface IReportRenderer
 {
     Task<Result<byte[]>> RenderDocumentAsync(
         ReportKind kind,
-        BillingDocumentReportData data,
+        IReportDocumentData data,
         CancellationToken cancellationToken = default);
 }

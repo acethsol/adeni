@@ -2,7 +2,12 @@ import { Component, computed, inject, signal } from "@angular/core";
 import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
-import type { BookingResponse, KioskStatusResponse, TenantBookingListTab } from "@adeni/shared";
+import type {
+  BookingResponse,
+  KioskStatusResponse,
+  TenantBookingListTab,
+  TenantEntitlements,
+} from "@adeni/shared";
 import {
   DEFAULT_PAGE_SIZE,
   formatSlotTime,
@@ -10,7 +15,9 @@ import {
   listSortParamsFromColumn,
   pageRangeLabel,
   resolvePaymentCheckoutUrl,
+  REPORT_KEYS,
   totalPages as computeTotalPages,
+  type ReportExportFormat,
 } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
@@ -107,26 +114,34 @@ export class BookingsComponent {
     readPersistedListViewMode("portal.bookings", "cards"),
   );
 
-  readonly exportItems: AdeniExportMenuItem[] = [
-    {
-      format: "csv",
-      label: "CSV (.csv)",
-      disabled: true,
-      hint: "Reporting export — coming soon",
-    },
-    {
-      format: "xlsx",
-      label: "Excel (.xlsx)",
-      disabled: true,
-      hint: "Reporting export — coming soon",
-    },
-    {
-      format: "pdf",
-      label: "PDF (.pdf)",
-      disabled: true,
-      hint: "Reporting export — coming soon",
-    },
-  ];
+  readonly exporting = signal(false);
+  readonly planEntitlements = signal<TenantEntitlements | null>(null);
+
+  readonly exportItems = computed((): AdeniExportMenuItem[] => {
+    const entitlements = this.planEntitlements();
+    const basic = entitlements?.basicExports ?? true;
+    const excel = entitlements?.excelExport ?? false;
+    return [
+      {
+        format: "csv",
+        label: "CSV (.csv)",
+        disabled: !basic,
+        hint: basic ? undefined : "Upgrade for exports",
+      },
+      {
+        format: "xlsx",
+        label: "Excel (.xlsx)",
+        disabled: !basic || !excel,
+        hint: excel ? undefined : "Pro plan required for Excel",
+      },
+      {
+        format: "pdf",
+        label: "PDF (.pdf)",
+        disabled: true,
+        hint: "Not available for bookings register",
+      },
+    ];
+  });
 
   readonly sortColumnId = signal<string | null>(null);
   readonly sortDirection = signal<AdeniDataTableSortDirection>("asc");
@@ -310,7 +325,7 @@ export class BookingsComponent {
     const tab = (this.tab() ?? "pending") as TenantBookingListTab;
     try {
       await this.api.withAuthorizedClient(async (client) => {
-        const [bookingsPage, kiosk] = await Promise.all([
+        const [bookingsPage, kiosk, usage] = await Promise.all([
           client.listTenantBookings({
             tab,
             page: this.page(),
@@ -318,7 +333,9 @@ export class BookingsComponent {
             sort: listSortParamsFromColumn(this.sortColumnId(), this.sortDirection()),
           }),
           client.getTenantKioskStatus().catch(() => null),
+          client.getTenantSubscriptionUsage().catch(() => null),
         ]);
+        this.planEntitlements.set(usage?.entitlements ?? null);
         this.bookings.set(bookingsPage.items);
         this.totalCount.set(bookingsPage.totalCount);
         this.page.set(bookingsPage.page);
@@ -534,6 +551,38 @@ export class BookingsComponent {
       this.error.set(`Could not ${action} this booking.`);
     } finally {
       this.actionId.set(null);
+    }
+  }
+
+  async downloadRegisterExport(format: ReportExportFormat): Promise<void> {
+    if (format === "pdf") {
+      return;
+    }
+
+    this.exporting.set(true);
+    this.error.set(null);
+    try {
+      const to = new Date();
+      const from = new Date(to);
+      from.setDate(from.getDate() - 90);
+      const blob = await this.api.withAuthorizedClient((client) =>
+        client.downloadTenantReportExport({
+          reportKey: REPORT_KEYS.bookingsRegister,
+          from: from.toISOString(),
+          to: to.toISOString(),
+          format,
+        }),
+      );
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `bookings-register.${format === "xlsx" ? "xlsx" : "csv"}`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      this.error.set("Could not download the bookings export.");
+    } finally {
+      this.exporting.set(false);
     }
   }
 }

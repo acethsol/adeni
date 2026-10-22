@@ -47,6 +47,32 @@ public static class ErrorCodes
     public static Error AnalyticsNotEntitledError() =>
         new(AnalyticsNotEntitled, "Advanced analytics is not included on your current plan.");
 
+    public const string ExportsNotEntitled = "entitlements.exports";
+    public const string ExcelExportNotEntitled = "entitlements.excel_export";
+    public const string MultiLocationReportingNotEntitled = "entitlements.multi_location_reporting";
+    public const string ReportNotFound = "reporting.report_not_found";
+    public const string ReportFormatNotSupported = "reporting.format_not_supported";
+
+    public static Error ExportsNotEntitledError() =>
+        new(ExportsNotEntitled, "Exports are not included on your current plan.");
+
+    public static Error ExcelExportNotEntitledError() =>
+        new(ExcelExportNotEntitled, "Excel export is not included on your current plan.");
+
+    public static Error MultiLocationReportingNotEntitledError() =>
+        new(
+            MultiLocationReportingNotEntitled,
+            "Cross-location reporting is not included on your current plan.");
+
+    public static Error ReportNotFoundError(string reportKey) =>
+        new(ReportNotFound, $"Report \"{reportKey}\" is not available.", new Dictionary<string, object?> { ["reportKey"] = reportKey });
+
+    public static Error ReportFormatNotSupportedError(string reportKey, string format) =>
+        new(
+            ReportFormatNotSupported,
+            $"Format \"{format}\" is not supported for report \"{reportKey}\".",
+            new Dictionary<string, object?> { ["reportKey"] = reportKey, ["format"] = format });
+
     public static Error CustomerSegmentationNotEntitledError() =>
         new(CustomerSegmentationNotEntitled, "Customer segmentation is not included on your current plan.");
 

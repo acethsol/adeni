@@ -213,11 +213,11 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       const from = new Date(`${this.exportFrom}T00:00:00.000Z`).toISOString();
       const to = new Date(`${this.exportTo}T23:59:59.999Z`).toISOString();
       const blob = await this.api.withAuthorizedClient((c) =>
-        c.downloadCompensationExport({
-          tenantId: profile.tenantId,
+        c.downloadTenantReportExport({
+          reportKey: "compensation",
           from,
           to,
-          format: this.exportFormat,
+          format: this.exportFormat === "json" ? "csv" : this.exportFormat,
         }),
       );
       const url = URL.createObjectURL(blob);

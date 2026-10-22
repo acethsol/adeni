@@ -17,4 +17,4 @@ public sealed record BillingDocumentReportData(
     decimal Total,
     string? MethodLabel,
     DateTimeOffset? IssuedAt,
-    IReadOnlyList<BillingDocumentLineReportData> Lines);
+    IReadOnlyList<BillingDocumentLineReportData> Lines) : IReportDocumentData;

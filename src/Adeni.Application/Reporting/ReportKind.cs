@@ -5,4 +5,6 @@ public enum ReportKind
 {
     BillingReceipt = 0,
     BillingInvoice = 1,
+    Quote = 2,
+    CustomerStatement = 3,
 }

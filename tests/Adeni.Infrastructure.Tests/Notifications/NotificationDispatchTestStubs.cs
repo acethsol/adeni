@@ -65,7 +65,7 @@ internal sealed class NotificationDispatchTestReportRenderer : IReportRenderer
 {
     public Task<Result<byte[]>> RenderDocumentAsync(
         ReportKind kind,
-        BillingDocumentReportData data,
+        IReportDocumentData data,
         CancellationToken cancellationToken = default) =>
         Task.FromResult(Result.Success(Array.Empty<byte>()));
 }

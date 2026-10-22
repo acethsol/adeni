@@ -43,6 +43,12 @@ public interface IStaffCompensationService
         DateTimeOffset to,
         CompensationExportFormat format,
         CancellationToken cancellationToken = default);
+
+    Task<Result<IReadOnlyList<StaffCompensationExportRow>>> ListExportRowsAsync(
+        Guid tenantId,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record StaffCompensationExportPayload(

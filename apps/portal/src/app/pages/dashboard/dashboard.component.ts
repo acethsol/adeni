@@ -39,6 +39,8 @@ import {
   resolveCapabilities,
   resolveDashboardLayout,
   resolveDashboardRange,
+  REPORT_KEYS,
+  type ReportExportFormat,
   formatDashboardRangeOverviewHint,
   formatDashboardRangeStatHint,
   type BookingResponse,
@@ -57,8 +59,10 @@ import {
 import {
   AdeniCarbonIconComponent,
   AdeniPortalEmptyStateComponent,
+  AdeniExportMenuComponent,
   AdeniStaffButtonComponent,
   PortalPageComponent,
+  type AdeniExportMenuItem,
 } from "@adeni/ui";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { BusinessApiService } from "../../core/services/business-api.service";
@@ -84,6 +88,7 @@ type StatusSlice = { status: number; label: string; count: number; percent: numb
     CdkDrag,
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
+    AdeniExportMenuComponent,
     AdeniStaffButtonComponent,
     PortalPageComponent,
     DashboardWidgetEditChromeComponent,
@@ -277,6 +282,14 @@ export class DashboardComponent implements OnInit {
     return hasTenantEntitlement(profile?.entitlements ?? null, key);
   }
 
+  hasExportEntitlement(key: "basicExports" | "excelExport"): boolean {
+    const entitlements = this.profile()?.entitlements;
+    if (!entitlements) {
+      return false;
+    }
+    return entitlements[key] === true;
+  }
+
   planUsageLabel(): string {
     const usage = this.usage();
     if (!usage) return "Plan";
@@ -434,6 +447,37 @@ export class DashboardComponent implements OnInit {
     const usage = this.usage();
     if (!usage?.bookingsLimitThisMonth) return 0;
     return Math.min(100, Math.round((usage.bookingsUsedThisMonth / usage.bookingsLimitThisMonth) * 100));
+  }
+
+  readonly appointmentsExportItems = computed((): AdeniExportMenuItem[] => {
+    const basic = this.hasExportEntitlement("basicExports");
+    const excel = this.hasExportEntitlement("excelExport");
+    return [
+      { format: "csv", label: "Bookings CSV", disabled: !basic },
+      { format: "xlsx", label: "Bookings Excel", disabled: !basic || !excel },
+    ];
+  });
+
+  async downloadAppointmentsExport(format: ReportExportFormat): Promise<void> {
+    const range = resolveDashboardRange(this.rangePreset());
+    try {
+      const blob = await this.businessApi.withAuthorizedClient((client) =>
+        client.downloadTenantReportExport({
+          reportKey: REPORT_KEYS.bookingsRegister,
+          from: range.from,
+          to: range.to,
+          format,
+        }),
+      );
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `bookings-register.${format === "xlsx" ? "xlsx" : "csv"}`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      this.loadError.set(true);
+    }
   }
 
   async load(): Promise<void> {

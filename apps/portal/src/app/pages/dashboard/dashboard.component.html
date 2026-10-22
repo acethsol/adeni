@@ -260,6 +260,13 @@
                 [title]="dashboardWidgetTitle('week_appointments')"
                 [hint]="'Daily count · ' + rangeOverviewHint() + '.'"
               >
+                <div class="widget-export-row">
+                  <adeni-export-menu
+                    label="Download"
+                    [items]="appointmentsExportItems()"
+                    (exportSelect)="downloadAppointmentsExport($event)"
+                  />
+                </div>
                 @if (appointmentChartData().length === 0) {
                   <div class="widget-body-empty">
                     <p class="chart-empty-title">No appointments in this range</p>

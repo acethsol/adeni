@@ -1,17 +1,25 @@
 namespace Adeni.Api.Controllers;
 
 using System.Security.Claims;
+using Adeni.Api.Auth;
+using Adeni.Api.Errors;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
 using Adeni.Application.Booking;
+using Adeni.Application.Reporting;
+using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Auth;
+using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 [ApiController]
 [Route("api/v1/tenant/quotes")]
 public sealed class TenantQuotesController(
     IQuoteRequestService quotes,
+    IReportRenderer reportRenderer,
+    AdeniDbContext dbContext,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet]
@@ -25,6 +33,47 @@ public sealed class TenantQuotesController(
 
         var items = await quotes.ListForTenantAsync(tenantId, auth0Sub, cancellationToken);
         return Ok(new { items });
+    }
+
+    [HttpGet("{id:guid}/pdf")]
+    [RequiresPortalPermission(PortalPermissions.Quotes)]
+    public async Task<IActionResult> Pdf(Guid id, CancellationToken cancellationToken)
+    {
+        var auth0Sub = ResolveAuth0Sub();
+        if (auth0Sub is null || ResolveTenantId() is not { } tenantId)
+        {
+            return Unauthorized();
+        }
+
+        var quoteResult = await quotes.GetForTenantByIdAsync(tenantId, auth0Sub, id, cancellationToken);
+        if (quoteResult.IsFailure)
+        {
+            return ApiErrorResponseMapper.ToActionResult(quoteResult.Error!, HttpContext);
+        }
+
+        var quote = quoteResult.Value!;
+        var businessName = await dbContext.Tenants.AsNoTracking()
+            .Where(x => x.Id == tenantId)
+            .Select(x => x.Name)
+            .FirstOrDefaultAsync(cancellationToken) ?? "Business";
+
+        var data = new QuoteDocumentReportData(
+            businessName,
+            quote.Id.ToString(),
+            quote.Description,
+            quote.ServiceAddress,
+            quote.QuotedAmount,
+            quote.QuotedCurrency,
+            quote.QuoteNotes,
+            quote.ProposedStartAt,
+            quote.ProposedEndAt,
+            quote.ExpiresAt,
+            quote.Status);
+
+        var pdf = await reportRenderer.RenderDocumentAsync(ReportKind.Quote, data, cancellationToken);
+        return pdf.Match<IActionResult>(
+            bytes => File(bytes, "application/pdf", $"quote-{id}.pdf"),
+            error => ApiErrorResponseMapper.ToActionResult(error, HttpContext));
     }
 
     [HttpPost("{id:guid}/offer")]

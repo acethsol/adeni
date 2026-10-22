@@ -7,7 +7,7 @@ public sealed class QuestPdfReportRenderer : IReportRenderer
 {
     public Task<Result<byte[]>> RenderDocumentAsync(
         ReportKind kind,
-        BillingDocumentReportData data,
+        IReportDocumentData data,
         CancellationToken cancellationToken = default)
     {
         if (data.Kind != kind)
@@ -18,8 +18,12 @@ public sealed class QuestPdfReportRenderer : IReportRenderer
 
         return kind switch
         {
-            ReportKind.BillingReceipt or ReportKind.BillingInvoice =>
-                Task.FromResult(Result.Success(BillingDocumentQuestPdfTemplate.Render(data))),
+            ReportKind.BillingReceipt or ReportKind.BillingInvoice when data is BillingDocumentReportData billing =>
+                Task.FromResult(Result.Success(BillingDocumentQuestPdfTemplate.Render(billing))),
+            ReportKind.Quote when data is QuoteDocumentReportData quote =>
+                Task.FromResult(Result.Success(QuoteStatementQuestPdfTemplate.RenderQuote(quote))),
+            ReportKind.CustomerStatement when data is StatementDocumentReportData statement =>
+                Task.FromResult(Result.Success(QuoteStatementQuestPdfTemplate.RenderStatement(statement))),
             _ => Task.FromResult(Result.Failure<byte[]>(Error.Validation("Unsupported report kind."))),
         };
     }

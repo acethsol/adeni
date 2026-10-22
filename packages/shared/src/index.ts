@@ -25,6 +25,7 @@ export * from "./i18n";
 export * from "./i18n/notifications";
 export * from "./notification-templates";
 export * from "./api-errors";
+export * from "./report-keys";
 export * from "./format";
 export * from "./dashboard-range";
 export * from "./dashboard-layout";

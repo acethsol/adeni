@@ -148,6 +148,29 @@ public sealed class QuoteRequestService(
         return results;
     }
 
+    public async Task<Result<QuoteRequestResponse>> GetForTenantByIdAsync(
+        Guid tenantId,
+        string auth0Sub,
+        Guid quoteRequestId,
+        CancellationToken cancellationToken = default)
+    {
+        if (!await HasBusinessAccessAsync(tenantId, auth0Sub, cancellationToken))
+        {
+            return Result.Failure<QuoteRequestResponse>(Error.Forbidden("You do not have access to this business."));
+        }
+
+        var record = await dbContext.QuoteRequests
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == quoteRequestId && x.TenantId == tenantId, cancellationToken);
+
+        if (record is null)
+        {
+            return Result.Failure<QuoteRequestResponse>(Error.NotFound("Quote request"));
+        }
+
+        return Result.Success(await MapAsync(record, cancellationToken));
+    }
+
     public async Task<Result<QuoteRequestResponse>> SubmitOfferAsync(
         Guid tenantId,
         string auth0Sub,

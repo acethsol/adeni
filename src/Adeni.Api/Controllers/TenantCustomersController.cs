@@ -6,6 +6,7 @@ using Adeni.Api.Common;
 using Adeni.Api.Errors;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
+using Adeni.Application.Reporting;
 using Adeni.Application.Tenancy;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
@@ -15,7 +16,10 @@ using Microsoft.AspNetCore.Mvc;
 [ApiController]
 [Route("api/v1/tenant/customers")]
 [RequiresPortalPermission(PortalPermissions.Bookings, PortalPermissions.BookingsSelf)]
-public sealed class TenantCustomersController(ITenantCustomerService customers) : ControllerBase
+public sealed class TenantCustomersController(
+    ITenantCustomerService customers,
+    ITenantReportExportQueryService reportQueries,
+    IReportRenderer reportRenderer) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> List(
@@ -68,6 +72,45 @@ public sealed class TenantCustomersController(ITenantCustomerService customers) 
 
         var result = await customers.GetByIdAsync(tenantId, id, cancellationToken);
         return ApiResults.FromResult(result, Ok, HttpContext);
+    }
+
+    [HttpGet("{id:guid}/statement")]
+    public async Task<IActionResult> Statement(
+        Guid id,
+        [FromQuery] DateTimeOffset from,
+        [FromQuery] DateTimeOffset to,
+        CancellationToken cancellationToken = default)
+    {
+        if (ResolveTenantId() is not { } tenantId)
+        {
+            return Unauthorized();
+        }
+
+        var statementResult = await reportQueries.GetCustomerStatementAsync(
+            tenantId,
+            id,
+            from,
+            to,
+            cancellationToken);
+
+        if (statementResult.IsFailure)
+        {
+            return ApiErrorResponseMapper.ToActionResult(statementResult.Error!, HttpContext);
+        }
+
+        var statement = statementResult.Value!;
+        var data = new StatementDocumentReportData(
+            statement.BusinessName,
+            statement.CustomerDisplayName,
+            statement.CustomerPhoneMasked,
+            statement.From,
+            statement.To,
+            statement.Lines);
+
+        var pdf = await reportRenderer.RenderDocumentAsync(ReportKind.CustomerStatement, data, cancellationToken);
+        return pdf.Match<IActionResult>(
+            bytes => File(bytes, "application/pdf", $"statement-{id}-{from:yyyyMMdd}.pdf"),
+            error => ApiErrorResponseMapper.ToActionResult(error, HttpContext));
     }
 
     private Guid? ResolveTenantId()

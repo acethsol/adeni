@@ -186,6 +186,13 @@ public sealed class StaffCompensationService(AdeniDbContext dbContext) : IStaffC
         return Result.Success();
     }
 
+    public Task<Result<IReadOnlyList<StaffCompensationExportRow>>> ListExportRowsAsync(
+        Guid tenantId,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        CancellationToken cancellationToken = default) =>
+        LoadExportRowsAsync(tenantId, from, to, cancellationToken);
+
     public async Task<Result<StaffCompensationExportPayload>> ExportAsync(
         Guid tenantId,
         DateTimeOffset from,
@@ -193,33 +200,13 @@ public sealed class StaffCompensationService(AdeniDbContext dbContext) : IStaffC
         CompensationExportFormat format,
         CancellationToken cancellationToken = default)
     {
-        if (to < from)
+        var rowsResult = await LoadExportRowsAsync(tenantId, from, to, cancellationToken);
+        if (rowsResult.IsFailure)
         {
-            return Result.Failure<StaffCompensationExportPayload>(
-                Error.Validation("'to' must be on or after 'from'."));
+            return Result.Failure<StaffCompensationExportPayload>(rowsResult.Error!);
         }
 
-        var rows = await dbContext.StaffCompensationAllocations
-            .AsNoTracking()
-            .Where(x => x.TenantId == tenantId && x.CreatedAt >= from && x.CreatedAt <= to)
-            .OrderBy(x => x.CreatedAt)
-            .ToListAsync(cancellationToken);
-
-        var staffIds = rows.Select(x => x.StaffMemberId).Distinct().ToArray();
-        var staffNames = await dbContext.StaffMembers
-            .AsNoTracking()
-            .Where(x => x.TenantId == tenantId && staffIds.Contains(x.Id))
-            .ToDictionaryAsync(x => x.Id, x => x.DisplayName, cancellationToken);
-
-        var mapped = rows.Select(row => new StaffCompensationExportRow(
-            row.CreatedAt,
-            row.StaffMemberId,
-            staffNames.TryGetValue(row.StaffMemberId, out var name) ? name : row.StaffMemberId.ToString(),
-            row.Type == StaffCompensationType.Tip ? "tip" : "commission",
-            row.Amount,
-            row.Currency,
-            row.BookingId,
-            row.PaymentIntentId)).ToArray();
+        var mapped = rowsResult.Value!;
 
         if (format == CompensationExportFormat.Json)
         {
@@ -235,6 +222,43 @@ public sealed class StaffCompensationService(AdeniDbContext dbContext) : IStaffC
             "text/csv",
             $"compensation-{from:yyyyMMdd}-{to:yyyyMMdd}.csv",
             Encoding.UTF8.GetBytes(csv)));
+    }
+
+    private async Task<Result<IReadOnlyList<StaffCompensationExportRow>>> LoadExportRowsAsync(
+        Guid tenantId,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        CancellationToken cancellationToken)
+    {
+        if (to < from)
+        {
+            return Result.Failure<IReadOnlyList<StaffCompensationExportRow>>(
+                Error.Validation("'to' must be on or after 'from'."));
+        }
+
+        var rows = await dbContext.StaffCompensationAllocations
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId && x.CreatedAt >= from && x.CreatedAt <= to)
+            .OrderBy(x => x.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        var staffIds = rows.Select(x => x.StaffMemberId).Distinct().ToArray();
+        var staffNames = await dbContext.StaffMembers
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId && staffIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, x => x.DisplayName, cancellationToken);
+
+        IReadOnlyList<StaffCompensationExportRow> mapped = rows.Select(row => new StaffCompensationExportRow(
+            row.CreatedAt,
+            row.StaffMemberId,
+            staffNames.TryGetValue(row.StaffMemberId, out var name) ? name : row.StaffMemberId.ToString(),
+            row.Type == StaffCompensationType.Tip ? "tip" : "commission",
+            row.Amount,
+            row.Currency,
+            row.BookingId,
+            row.PaymentIntentId)).ToArray();
+
+        return Result.Success(mapped);
     }
 
     private async Task AddAllocationAsync(

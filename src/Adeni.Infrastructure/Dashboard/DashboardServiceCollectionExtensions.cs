@@ -11,6 +11,7 @@ public static class DashboardServiceCollectionExtensions
         services.AddScoped<TenantDashboardService>();
         services.AddScoped<ITenantDashboardService>(sp => sp.GetRequiredService<TenantDashboardService>());
         services.AddScoped<ITenantReportingQueryService>(sp => sp.GetRequiredService<TenantDashboardService>());
+        services.AddScoped<ITenantReportExportQueryService, TenantReportExportQueryService>();
         return services;
     }
 }
