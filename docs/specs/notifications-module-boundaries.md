@@ -24,12 +24,13 @@ Establish **Notifications** as the extractable bounded context for **transaction
 - **Reporting/Finance** — receipt PDF bytes via Application **`IReportRenderer`** (38B only); Notifications sends, does not render PDF
 - **Implementation:** [sprint-38-notifications-module.md](./sprint-38-notifications-module.md) — **38A** (no Reporting dependency), **38B** (receipt PDF after Reporting 39A)
 
-**Shipped today:**
+**Shipped (Sprint 38A):**
 
-- `INotificationDispatcher`, `INotificationPreferencesService`
-- `PreferenceAwareNotificationDispatcher` → **`LoggingNotificationDispatcher`** (stub)
-- Handlers: booking confirmed/rejected/cancelled, waitlist slot opened, new conversation message
-- Preference field **`SmsWhatsAppReminderEnabled`** — rename target **`SmsRemindersEnabled`** (SMS-only; see Sprint 38)
+- `INotificationDispatcher` stack: preferences → entitlements (`smsEnabled`) → idempotency → **`ChannelNotificationDispatcher`**
+- **`IEmailNotificationProvider`** (Resend) + **`ISmsNotificationProvider`** (Twilio); logging fallback when keys absent (Dev/Testing)
+- **`notification_deliveries`** dedupe; **`INotificationRecipientResolver`** (booking/customer ports)
+- Handlers: booking confirmed/rejected/cancelled, staff invite, conversation customer email (waitlist/reminders → **38B**)
+- Tenant pref **`SmsRemindersEnabled`** (SMS-only; no WhatsApp API)
 
 ---
 

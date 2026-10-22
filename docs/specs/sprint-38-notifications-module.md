@@ -17,7 +17,7 @@
 |-------|-------|
 | **Sprint** | Sprint 38 — Notifications module |
 | **Author** | |
-| **Status** | Draft |
+| **Status** | **38A done** (2026-10-22); **38B** next (**39A** unblocks receipt PDF) |
 | **Created** | 2026-10-21 |
 | **Depends on** | Entitlements closeout (reminder/SMS keys), Sprint 36 messaging (events). **38B** depends on **39A** (`IReportRenderer`). |
 
@@ -37,7 +37,7 @@ Replace log-only notification delivery with **production Resend email and Twilio
 - **Messaging (36):** In-app conversations + SignalR; Notifications handles **async outbound** only
 - **Reporting (39A/39B):** Owns QuestPDF rendering; Notifications **requests PDF bytes** via **`IReportRenderer`** (Application port) in **38B only**
 - **Entitlements:** Reminder and SMS keys from [plan-entitlements.json](../../packages/shared/src/data/plan-entitlements.json) — see §6
-- **Shipped today:** `INotificationDispatcher`, `PreferenceAwareNotificationDispatcher`, `LoggingNotificationDispatcher`, event handlers (booking, waitlist, conversation, payment stubs); preference field **`SmsWhatsAppReminderEnabled`** (rename target: **`SmsRemindersEnabled`** — §5)
+- **Shipped (38A):** Resend/Twilio adapters + log fallback; `ChannelNotificationDispatcher`; idempotent **`notification_deliveries`**; entitlement + preference stack; **`SmsRemindersEnabled`**; booking/staff/conversation email paths; `NotificationSenderConfig` (CA/NG). **38B:** reminders, receipt PDF via `IReportRenderer`, waitlist SMS polish.
 
 ---
 

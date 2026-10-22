@@ -41,7 +41,7 @@
 | **35** | **Tenant customer records** | ✅ Done — [sprint-35-tenant-customer-records.md](./specs/sprint-35-tenant-customer-records.md) |
 | **36** | **Messaging rewrite (SignalR + conversations)** | ✅ Done — [sprint-36-messaging-rewrite.md](./specs/sprint-36-messaging-rewrite.md); Sprint 18 teardown |
 | **33-closeout** | **Entitlements v2 closeout** | ✅ Done — [sprint-33-entitlements-closeout.md](./specs/sprint-33-entitlements-closeout.md); matrix hygiene + portal parity before module sprints |
-| **38** | **Notifications module (Resend + Twilio)** | **38A ✅** (local `cc35842`) — [sprint-38-notifications-module.md](./specs/sprint-38-notifications-module.md); **38B** after **39A** |
+| **38** | **Notifications module (Resend + Twilio)** | **38A ✅** — [sprint-38-notifications-module.md](./specs/sprint-38-notifications-module.md); **38B** ready |
 | **39** | **Reporting module (exports + PDF extract)** | **39A ✅** — [sprint-39-reporting-module.md](./specs/sprint-39-reporting-module.md); **39B** exports/admin |
 | **37** | **Retention (packages, loyalty, memberships)** | Draft — [sprint-37-retention-module.md](./specs/sprint-37-retention-module.md); after 33-closeout → 38A → 39A → 38B → 39B → 37.1–37.5 |
 | **39-finance** | **Finance module boundaries (Phase 1)** | ✅ Done — [finance-module-boundaries.md](./specs/finance-module-boundaries.md); `/api/v1/finance/*`, portal `/finance` |
