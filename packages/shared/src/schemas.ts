@@ -1988,11 +1988,16 @@ export const notificationTemplateOverrideSchema = z.object({
 
 export type NotificationTemplateOverride = z.infer<typeof notificationTemplateOverrideSchema>;
 
+export const notificationLanguageModeSchema = z.enum(["single", "bilingual"]);
+
+export type NotificationLanguageMode = z.infer<typeof notificationLanguageModeSchema>;
+
 export const notificationPreferencesSchema = z.object({
   emailEnabled: z.boolean(),
   pushEnabled: z.boolean(),
   smsRemindersEnabled: z.boolean(),
   defaultNotificationLocale: z.enum(["en", "fr"]).default("en"),
+  notificationLanguageMode: notificationLanguageModeSchema.default("single"),
   templateOverrides: z.array(notificationTemplateOverrideSchema).max(32).default([]),
 });
 

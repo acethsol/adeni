@@ -58,6 +58,11 @@ public sealed class NotificationPreferencesService(
         }
 
         var locale = NotificationTemplateText.NormalizeLocale(request.DefaultNotificationLocale);
+        var languageMode = NotificationTemplateText.NormalizeLanguageMode(request.NotificationLanguageMode);
+        if (languageMode == "bilingual" && locale != "en")
+        {
+            locale = "en";
+        }
 
         var overrides = request.TemplateOverrides ?? [];
         if (overrides.Count > MaxOverrides)
@@ -116,6 +121,7 @@ public sealed class NotificationPreferencesService(
         prefs.PushEnabled = request.PushEnabled;
         prefs.SmsRemindersEnabled = request.SmsRemindersEnabled;
         prefs.DefaultNotificationLocale = locale;
+        prefs.NotificationLanguageMode = languageMode;
         prefs.UpdatedAt = DateTimeOffset.UtcNow;
 
         var existingOverrides = await dbContext.TenantNotificationTemplateOverrides
@@ -188,6 +194,7 @@ public sealed class NotificationPreferencesService(
             PushEnabled: false,
             SmsRemindersEnabled: false,
             DefaultNotificationLocale: "en",
+            NotificationLanguageMode: "single",
             TemplateOverrides: overrides);
 
     private static NotificationPreferencesResponse Map(
@@ -198,5 +205,6 @@ public sealed class NotificationPreferencesService(
             prefs.PushEnabled,
             prefs.SmsRemindersEnabled,
             NotificationTemplateText.NormalizeLocale(prefs.DefaultNotificationLocale),
+            NotificationTemplateText.NormalizeLanguageMode(prefs.NotificationLanguageMode),
             overrides);
 }

@@ -1,7 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
-import { ActivatedRoute, RouterLink } from "@angular/router";
+import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { map } from "rxjs";
 import {
   hasCapability,
@@ -36,10 +36,11 @@ export class SettingsComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly tab = toSignal(
-    this.route.queryParamMap.pipe(map((params) => params.get("tab") ?? "bookings")),
-    { initialValue: this.route.snapshot.queryParamMap.get("tab") ?? "bookings" },
+    this.route.queryParamMap.pipe(map((params) => params.get("tab") ?? this.defaultTabId())),
+    { initialValue: this.route.snapshot.queryParamMap.get("tab") ?? this.defaultTabId() },
   );
 
   private readonly allTabs = findPortalNavItem("/settings")?.item.tabs ?? [
@@ -59,6 +60,7 @@ export class SettingsComponent implements OnInit {
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
+  readonly notificationsError = signal<string | null>(null);
   readonly saving = signal(false);
   readonly profile = signal<BusinessProfile | null>(null);
 
@@ -70,6 +72,9 @@ export class SettingsComponent implements OnInit {
   readonly editableTemplateIds = PORTAL_EDITABLE_NOTIFICATION_TEMPLATE_IDS;
 
   defaultNotificationLocale: "en" | "fr" = "en";
+  notificationLanguageMode: "single" | "bilingual" = "single";
+  /** Portal UI: English | French | Bilingual EN+FR */
+  notificationLanguageChoice: "en" | "fr" | "bilingual" = "en";
   templateOverrides: NotificationTemplateOverride[] = [];
 
   autoConfirm = false;
@@ -92,7 +97,19 @@ export class SettingsComponent implements OnInit {
   walkInCalendarPolicy: "relaxed" | "strict" = "relaxed";
 
   ngOnInit(): void {
+    const routeTab = this.route.snapshot.data["settingsTab"] as string | undefined;
+    if (routeTab && !this.route.snapshot.queryParamMap.get("tab")) {
+      void this.router.navigate(["/settings"], {
+        queryParams: { tab: routeTab },
+        replaceUrl: true,
+      });
+    }
     void this.load();
+  }
+
+  private defaultTabId(): string {
+    const fromData = this.route.snapshot.data["settingsTab"];
+    return typeof fromData === "string" ? fromData : "bookings";
   }
 
   async load(): Promise<void> {
@@ -110,13 +127,20 @@ export class SettingsComponent implements OnInit {
           this.policyCancellation = profile.policies?.cancellation ?? "";
           this.policyTerms = profile.policies?.terms ?? "";
           this.requireAcceptance = profile.policies?.requireAcceptance ?? false;
-          const prefs = await client.getNotificationPreferences();
-          this.emailEnabled = prefs.emailEnabled;
-          this.pushEnabled = prefs.pushEnabled;
-          this.smsRemindersEnabled = prefs.smsRemindersEnabled;
-          this.defaultNotificationLocale = prefs.defaultNotificationLocale ?? "en";
-          this.templateOverrides = [...(prefs.templateOverrides ?? [])];
-          this.ensureEditableTemplateRows();
+          try {
+            const prefs = await client.getNotificationPreferences();
+            this.emailEnabled = prefs.emailEnabled;
+            this.pushEnabled = prefs.pushEnabled;
+            this.smsRemindersEnabled = prefs.smsRemindersEnabled;
+            this.defaultNotificationLocale = prefs.defaultNotificationLocale ?? "en";
+            this.notificationLanguageMode = prefs.notificationLanguageMode ?? "single";
+            this.applyLanguageChoiceFromPrefs();
+            this.templateOverrides = [...(prefs.templateOverrides ?? [])];
+            this.ensureEditableTemplateRows();
+            this.notificationsError.set(null);
+          } catch {
+            this.notificationsError.set("Could not load notification preferences.");
+          }
 
           if (hasTenantEntitlement(profile.entitlements, "messaging")) {
             const messaging = await client.getMessagingSettings();
@@ -167,7 +191,7 @@ export class SettingsComponent implements OnInit {
             smsRemindersEnabled: this.smsEntitled()
               ? this.smsRemindersEnabled
               : false,
-            defaultNotificationLocale: this.defaultNotificationLocale,
+            ...this.prefsFromLanguageChoice(),
             templateOverrides: this.templateOverridesEntitled()
               ? this.templateOverrides.filter(
                   (row) =>
@@ -259,6 +283,38 @@ export class SettingsComponent implements OnInit {
     for (const templateId of this.editableTemplateIds) {
       this.overrideFor(templateId);
     }
+  }
+
+  onNotificationLanguageChoiceChange(): void {
+    const choice = this.notificationLanguageChoice;
+    if (choice === "bilingual") {
+      this.notificationLanguageMode = "bilingual";
+      this.defaultNotificationLocale = "en";
+      return;
+    }
+    this.notificationLanguageMode = "single";
+    this.defaultNotificationLocale = choice;
+  }
+
+  private applyLanguageChoiceFromPrefs(): void {
+    if (this.notificationLanguageMode === "bilingual") {
+      this.notificationLanguageChoice = "bilingual";
+      return;
+    }
+    this.notificationLanguageChoice = this.defaultNotificationLocale;
+  }
+
+  private prefsFromLanguageChoice(): {
+    defaultNotificationLocale: "en" | "fr";
+    notificationLanguageMode: "single" | "bilingual";
+  } {
+    if (this.notificationLanguageChoice === "bilingual") {
+      return { defaultNotificationLocale: "en", notificationLanguageMode: "bilingual" };
+    }
+    return {
+      defaultNotificationLocale: this.notificationLanguageChoice,
+      notificationLanguageMode: "single",
+    };
   }
 
   async saveMessaging(): Promise<void> {

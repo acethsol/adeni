@@ -200,7 +200,7 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
           { id: "bookings", label: "Bookings" },
           { id: "notifications", label: "Notifications" },
           { id: "policies", label: "Policies" },
-          { id: "messaging", label: "Messaging" },
+          { id: "messaging", label: "Messaging", entitlement: "messaging" },
         ],
       },
       {

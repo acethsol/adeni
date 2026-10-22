@@ -50,6 +50,9 @@
       <section class="card settings-card">
         <h3>Customer &amp; staff alerts</h3>
         <p class="lede">Choose which channels Adeni may use for reminders and business alerts.</p>
+        @if (notificationsError()) {
+          <p class="error-banner">{{ notificationsError() }}</p>
+        }
         <label class="cds-toggle">
           <input type="checkbox" role="switch" [(ngModel)]="emailEnabled" />
           <span class="cds-toggle__track" aria-hidden="true"></span>
@@ -73,14 +76,22 @@
           </p>
         }
         <div class="field">
-          <label for="notification-locale">Default customer notification language</label>
-          <select id="notification-locale" [(ngModel)]="defaultNotificationLocale">
-            @for (loc of localeOptions; track loc.id) {
-              <option [value]="loc.id">{{ loc.nativeLabel }}</option>
-            }
+          <label for="notification-locale">Customer notification language</label>
+          <select
+            id="notification-locale"
+            [(ngModel)]="notificationLanguageChoice"
+            (ngModelChange)="onNotificationLanguageChoiceChange()"
+          >
+            <option value="en">English</option>
+            <option value="fr">French</option>
+            <option value="bilingual">Bilingual (English + French in one email)</option>
           </select>
           <p class="hint">
-            Each message is sent in one language. Adeni uses this when the customer's preference is unknown.
+            @if (notificationLanguageChoice === "bilingual") {
+              Email includes English and French sections in a single message. SMS uses English only.
+            } @else {
+              Each message is sent in one language. Adeni uses this when the customer's preference is unknown.
+            }
           </p>
         </div>
         @if (templateOverridesEntitled()) {

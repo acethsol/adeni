@@ -162,14 +162,29 @@
             type="button"
             class="header-btn"
             aria-haspopup="menu"
-            [attr.aria-label]="text('settings')"
+            [attr.aria-label]="text('chromePreferences')"
             [attr.aria-expanded]="settingsOpen()"
             (click)="toggleSettings($event)"
           >
             <app-portal-nav-icon name="settings" />
           </button>
           @if (settingsOpen()) {
-            <div class="menu" role="menu" [attr.aria-label]="text('settings')">
+            <div class="menu" role="menu" [attr.aria-label]="text('chromePreferences')">
+              @if (businessSettingsVisible()) {
+                <p class="menu-label">{{ text("businessSettings") }}</p>
+                <button type="button" class="menu-item" role="menuitem" (click)="navigateSettings('/settings')">
+                  {{ text("businessSettings") }}
+                </button>
+                <button
+                  type="button"
+                  class="menu-item"
+                  role="menuitem"
+                  (click)="navigateSettings('/settings?tab=notifications')"
+                >
+                  {{ text("notificationSettings") }}
+                </button>
+                <div class="menu-rule" role="separator"></div>
+              }
               <p class="menu-label">{{ text("appearance") }}</p>
               <button type="button" class="menu-item" role="menuitemradio" [attr.aria-checked]="themePreference() === 'light'" (click)="setTheme('light')">
                 <app-portal-nav-icon name="light" />

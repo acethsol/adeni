@@ -8,6 +8,14 @@ BEGIN
 END
 GO
 
+IF COL_LENGTH('notifications.tenant_notification_preferences', 'NotificationLanguageMode') IS NULL
+BEGIN
+    ALTER TABLE [notifications].[tenant_notification_preferences]
+        ADD [NotificationLanguageMode] NVARCHAR(16) NOT NULL
+            CONSTRAINT [DF_tenant_notification_preferences_NotificationLanguageMode_38c] DEFAULT ('single');
+END
+GO
+
 IF COL_LENGTH('identity.customers', 'PreferredLocale') IS NULL
 BEGIN
     ALTER TABLE [identity].[customers]

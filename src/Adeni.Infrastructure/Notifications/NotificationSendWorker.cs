@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 public sealed class NotificationSendWorker(
     INotificationDeliveryDispatcher deliveryDispatcher,
     PaymentReceiptNotificationSender paymentReceiptSender,
-    INotificationTemplateRenderer templateRenderer,
+    NotificationTemplateDeliveryComposer templateComposer,
     INotificationLocaleResolver localeResolver,
     ILogger<NotificationSendWorker> logger)
 {
@@ -39,7 +39,8 @@ public sealed class NotificationSendWorker(
                 cancellationToken);
 
             var data = payload.TemplateData ?? new Dictionary<string, string>();
-            var rendered = await templateRenderer.RenderAsync(
+            var rendered = await templateComposer.RenderForDeliveryAsync(
+                payload.Channel,
                 payload.TemplateId,
                 payload.TenantId,
                 locale,

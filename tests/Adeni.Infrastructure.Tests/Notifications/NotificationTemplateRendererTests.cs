@@ -38,6 +38,20 @@ public sealed class NotificationTemplateRendererTests
     }
 
     [Fact]
+    public void MergeBilingualEmail_combines_english_and_french_sections()
+    {
+        var merged = NotificationTemplateText.MergeBilingualEmail(
+            new RenderedNotificationTemplate("Confirmed", "Hello"),
+            new RenderedNotificationTemplate("Confirmé", "Bonjour"));
+
+        Assert.Equal("Confirmed / Confirmé", merged.Subject);
+        Assert.Contains(NotificationTemplateText.BilingualEmailEnglishHeading, merged.Body, StringComparison.Ordinal);
+        Assert.Contains("Hello", merged.Body, StringComparison.Ordinal);
+        Assert.Contains(NotificationTemplateText.BilingualEmailFrenchHeading, merged.Body, StringComparison.Ordinal);
+        Assert.Contains("Bonjour", merged.Body, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task RenderAsync_merges_tenant_override_when_configurableReminders()
     {
         await using var db = CreateDb();

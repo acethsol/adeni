@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 public sealed class PaymentReceiptNotificationSender(
     INotificationDeliveryDispatcher deliveryDispatcher,
     INotificationRecipientResolver recipientResolver,
-    INotificationTemplateRenderer templateRenderer,
+    NotificationTemplateDeliveryComposer templateComposer,
     INotificationLocaleResolver localeResolver,
     IBillingDocumentService billingDocuments,
     IReportRenderer reportRenderer,
@@ -100,7 +100,8 @@ public sealed class PaymentReceiptNotificationSender(
             ["documentNumber"] = receipt.Value.DocumentNumber,
         };
 
-        var rendered = await templateRenderer.RenderAsync(
+        var rendered = await templateComposer.RenderForDeliveryAsync(
+            "email",
             NotificationTemplateIds.PaymentReceipt,
             args.TenantId,
             locale,

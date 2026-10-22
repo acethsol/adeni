@@ -16,5 +16,8 @@ public sealed class TenantNotificationPreferences : ITenantEntity
     /// <summary>BCP-47-style short code (en, fr) for default outbound copy when recipient locale unknown.</summary>
     public string DefaultNotificationLocale { get; set; } = "en";
 
+    /// <summary>single = one locale per message; bilingual = one email with en + fr sections (SMS uses primary locale only).</summary>
+    public string NotificationLanguageMode { get; set; } = "single";
+
     public DateTimeOffset UpdatedAt { get; set; }
 }

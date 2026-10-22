@@ -22,7 +22,11 @@ import { filter, map, startWith } from "rxjs";
 import { ADENI_PORTAL_CONFIG, isAuth0Configured, isBusinessPortalDevMode } from "../core/adeni-config";
 import { resolveAuthService } from "../core/auth0-rxjs";
 import { signOutPortalDev } from "../core/portal-dev-session";
-import { isPortalNavItemVisible, portalEntitlements } from "../core/portal-access";
+import {
+  filterPortalTabs,
+  isPortalNavItemVisible,
+  portalEntitlements,
+} from "../core/portal-access";
 import {
   PORTAL_NAV,
   PORTAL_NAV_GROUPS,
@@ -74,6 +78,14 @@ type ChromeKey =
   | "tabWhatsapp"
   | "tabLinks"
   | "tabLedger"
+  | "tabBookings"
+  | "tabNotifications"
+  | "tabPolicies"
+  | "tabMessaging"
+  | "tabWalkIns"
+  | "businessSettings"
+  | "notificationSettings"
+  | "chromePreferences"
   | "/dashboard"
   | "/bookings"
   | "/customers"
@@ -122,6 +134,14 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     tabWhatsapp: "WhatsApp",
     tabLinks: "Links",
     tabLedger: "Ledger",
+    tabBookings: "Bookings",
+    tabNotifications: "Notifications",
+    tabPolicies: "Policies",
+    tabMessaging: "Messaging",
+    tabWalkIns: "Walk-ins",
+    businessSettings: "Business settings",
+    notificationSettings: "Notification preferences",
+    chromePreferences: "Appearance & language",
     "/dashboard": "Dashboard",
     "/bookings": "Bookings",
     "/customers": "Customers",
@@ -169,6 +189,14 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     tabWhatsapp: "WhatsApp",
     tabLinks: "Liens",
     tabLedger: "Journal",
+    tabBookings: "Réservations",
+    tabNotifications: "Notifications",
+    tabPolicies: "Politiques",
+    tabMessaging: "Messagerie",
+    tabWalkIns: "Sans rendez-vous",
+    businessSettings: "Paramètres de l'entreprise",
+    notificationSettings: "Préférences de notification",
+    chromePreferences: "Apparence et langue",
     "/dashboard": "Tableau de bord",
     "/bookings": "Réservations",
     "/customers": "Clients",
@@ -293,10 +321,14 @@ export class PortalShellComponent {
   );
   readonly crumbs = computed(() => this.crumbsForUrl(this.url()));
   readonly visibleGroups = computed(() => this.groupsForProfile());
+  readonly businessSettingsVisible = computed(() =>
+    this.visibleGroups().some((group) => group.items.some((item) => item.path === "/settings")),
+  );
   readonly searchResults = computed<SearchHit[]>(() => {
     const query = this.searchQuery().trim().toLowerCase();
-    const pages = this.visibleGroups()
-      .flatMap((group) => group.items)
+    const entitlements = portalEntitlements(this.profile());
+    const navItems = this.visibleGroups().flatMap((group) => group.items);
+    const pages = navItems
       .filter((item) => !query || this.navLabel(item).toLowerCase().includes(query) || item.label.toLowerCase().includes(query))
       .map((item) => ({
         id: item.path,
@@ -304,12 +336,37 @@ export class PortalShellComponent {
         path: item.path,
         icon: item.icon,
       }));
+    const tabPages = navItems.flatMap((item) => {
+      const tabs = filterPortalTabs(item.tabs, entitlements);
+      return tabs
+        .filter(
+          (tab) =>
+            !query
+            || tab.label.toLowerCase().includes(query)
+            || this.tabLabel(tab.id).toLowerCase().includes(query)
+            || this.navLabel(item).toLowerCase().includes(query),
+        )
+        .map((tab) => ({
+          id: `${item.path}?tab=${tab.id}`,
+          label: `${this.navLabel(item)} — ${this.tabLabel(tab.id)}`,
+          path: `${item.path}?tab=${tab.id}`,
+          icon: item.icon,
+        }));
+    });
     const discoverLabel = this.text("/__discover");
     const discover =
       !query || discoverLabel.toLowerCase().includes(query) || "discover".includes(query)
         ? [{ id: "discover", label: discoverLabel, path: this.discoverUrl(), icon: "launch" as const, external: true }]
         : [];
-    return [...pages, ...discover].slice(0, 8);
+    const merged = [...tabPages, ...pages, ...discover];
+    const seen = new Set<string>();
+    return merged.filter((hit) => {
+      if (seen.has(hit.path)) {
+        return false;
+      }
+      seen.add(hit.path);
+      return true;
+    }).slice(0, 10);
   });
 
   constructor() {
@@ -384,6 +441,15 @@ export class PortalShellComponent {
     this.userOpen.set(false);
     this.searchOpen.set(false);
     this.settingsOpen.update((open) => !open);
+  }
+
+  closeSettingsMenu(): void {
+    this.settingsOpen.set(false);
+  }
+
+  navigateSettings(path: string): void {
+    this.closeSettingsMenu();
+    void this.router.navigateByUrl(path);
   }
 
   toggleUser(event: MouseEvent): void {
@@ -526,6 +592,11 @@ export class PortalShellComponent {
       : id === "whatsapp" ? "tabWhatsapp"
       : id === "links" ? "tabLinks"
       : id === "ledger" ? "tabLedger"
+      : id === "bookings" ? "tabBookings"
+      : id === "notifications" ? "tabNotifications"
+      : id === "policies" ? "tabPolicies"
+      : id === "messaging" ? "tabMessaging"
+      : id === "walk-ins" ? "tabWalkIns"
       : null;
     return key ? this.text(key) : id;
   }

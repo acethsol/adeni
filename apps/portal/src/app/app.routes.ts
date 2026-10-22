@@ -161,6 +161,13 @@ export const routes: Routes = [
         canActivate: [portalPermissionGuard],
       },
       {
+        path: "settings/notifications",
+        component: SettingsComponent,
+        title: "Notification settings",
+        canActivate: [portalPermissionGuard],
+        data: { settingsTab: "notifications" },
+      },
+      {
         path: "plan",
         component: PlanComponent,
         title: "Plan",

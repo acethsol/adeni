@@ -78,6 +78,8 @@ Realtime **SignalR** events are **not** part of this module.
 
 Stored on `TenantNotificationPreferences`:
 
+- `NotificationLanguageMode`: `single` \| `bilingual` — bilingual merges en+fr in **one email**; SMS uses `DefaultNotificationLocale` only.
+
 - `EmailEnabled`
 - `PushEnabled`
 - `SmsRemindersEnabled` — gates SMS channel when Twilio + `smsEnabled` entitlement
