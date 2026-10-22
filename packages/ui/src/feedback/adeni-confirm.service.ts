@@ -1,4 +1,5 @@
 import { Injectable, signal } from "@angular/core";
+import { injectAdeniTranslate } from "../locale/adeni-i18n";
 
 export type AdeniConfirmRequest = {
   title: string;
@@ -17,6 +18,7 @@ export type AdeniConfirmDialog = AdeniConfirmRequest & {
 
 @Injectable({ providedIn: "root" })
 export class AdeniConfirmService {
+  protected readonly tr = injectAdeniTranslate();
   private readonly dialogSignal = signal<AdeniConfirmDialog | null>(null);
   private resolver: ((value: boolean) => void) | null = null;
 
@@ -31,8 +33,8 @@ export class AdeniConfirmService {
     this.dialogSignal.set({
       title: request.title,
       message: request.message,
-      confirmLabel: request.confirmLabel ?? "Confirm",
-      cancelLabel: request.cancelLabel ?? "Cancel",
+      confirmLabel: request.confirmLabel ?? this.tr("ui.ui.confirm"),
+      cancelLabel: request.cancelLabel ?? this.tr("common.cancel"),
       danger: request.danger ?? false,
     });
 
