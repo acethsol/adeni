@@ -236,59 +236,15 @@ html[data-theme="dark"] .dashboard-native-tile--edit {
 }
 
 .widget-picker {
-  .layout-preset-grid {
-    display: grid;
-    gap: 1rem 1.15rem;
-    grid-template-columns: repeat(auto-fill, minmax(15.25rem, 1fr));
-    align-items: stretch;
-    margin-bottom: 1.25rem;
-
-    adeni-dashboard-layout-preset-card {
-      display: block;
-      min-width: 0;
-      height: auto;
-    }
-  }
-
-  &__section-title {
-    margin: 0 0 0.65rem;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-  }
+  margin-bottom: 1rem;
 
   .picker-list {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
     padding: 0;
-    margin: 0.75rem 0 0;
+    margin: 0.75rem 0;
     list-style: none;
-  }
-
-  .picker-list--widgets {
-    margin-bottom: 0.25rem;
-  }
-
-  .picker-widget-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.45rem 0.75rem;
-    font: inherit;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--text);
-    cursor: pointer;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    transition: border-color 0.15s ease;
-
-    &:hover {
-      border-color: color-mix(in srgb, var(--interactive, #7f56ff) 45%, var(--border));
-    }
   }
 }
 
