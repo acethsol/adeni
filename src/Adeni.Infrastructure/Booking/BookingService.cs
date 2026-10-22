@@ -762,6 +762,11 @@ public sealed class BookingService(
             booking.CustomerId,
             booking.StartAt,
             DateTimeOffset.UtcNow));
+        domainEventCollector.Add(new SlotOpened(
+            booking.TenantId,
+            booking.ServiceOfferingId,
+            booking.StartAt,
+            DateTimeOffset.UtcNow));
         await dbContext.SaveChangesAsync(cancellationToken);
         await TenantRealtimeNotifications.PublishPendingBookingsAsync(
             tenantRealtime,

@@ -5,7 +5,8 @@ public sealed record EmailNotificationRequest(
     string Subject,
     string Body,
     string FromEmail,
-    Guid? TenantId = null);
+    Guid? TenantId = null,
+    IReadOnlyList<EmailAttachment>? Attachments = null);
 
 public interface IEmailNotificationProvider
 {

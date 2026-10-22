@@ -11,6 +11,19 @@ public sealed class NotificationsOptions
     public TwilioNotificationOptions Twilio { get; set; } = new();
 
     public List<NotificationSenderMarketOptions> Senders { get; set; } = [];
+
+    public ReminderNotificationOptions Reminders { get; set; } = new();
+
+    public int MaxWaitlistNotificationsPerSlot { get; set; } = 25;
+}
+
+public sealed class ReminderNotificationOptions
+{
+    public bool Enabled { get; set; } = true;
+
+    public int PollIntervalMinutes { get; set; } = 5;
+
+    public TimeSpan NoShowGraceAfterEnd { get; set; } = TimeSpan.FromHours(2);
 }
 
 public sealed class ResendNotificationOptions

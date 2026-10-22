@@ -16,10 +16,9 @@ Async **email**, **SMS**, and (later) **push** driven by **domain events** and *
 | `INotificationDispatcher` | Application port |
 | `INotificationPreferencesService` | Tenant toggles: email, push, SMS reminders (`SmsRemindersEnabled`) |
 | `PreferenceAwareNotificationDispatcher` | Gates by channel + prefs |
-| **Delivery** | **`LoggingNotificationDispatcher`** — logs only; no Resend/Twilio send |
-| **Appointment reminder scheduler** | **Not built** — no cron/background job for “24h before” |
-
-Pro/Business tiers expose a **`Reminders`** entitlement flag; it is not yet wired to scheduled sends.
+| **Delivery (38A/38B)** | Resend + Twilio when configured; log fallback in Development/Testing without keys |
+| **Appointment reminder scheduler (38B)** | `AppointmentReminderBackgroundService` — 24h/2h email/SMS; entitlement-gated follow-up email |
+| **Receipt email (38B)** | `PaymentCompleted` → PDF via Application **`IReportRenderer`** attachment |
 
 ---
 

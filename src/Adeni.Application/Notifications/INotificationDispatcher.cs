@@ -11,4 +11,5 @@ public sealed record NotificationMessage(
     string Subject,
     string Body,
     Guid? TenantId = null,
-    string? DedupeEventId = null);
+    string? DedupeEventId = null,
+    IReadOnlyList<EmailAttachment>? EmailAttachments = null);

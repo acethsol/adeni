@@ -1,7 +1,6 @@
 namespace Adeni.Infrastructure.Finance;
 
 using Adeni.Application.Events;
-using Adeni.Application.Notifications;
 using Adeni.Application.Finance;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Booking.Events;
@@ -148,27 +147,3 @@ public sealed class PaymentBookingHandler(
     }
 }
 
-public sealed class PaymentNotificationHandler(INotificationDispatcher notificationDispatcher) :
-    IDomainEventHandler<PaymentCompleted>,
-    IDomainEventHandler<PaymentFailed>
-{
-    public Task HandleAsync(PaymentCompleted domainEvent, CancellationToken cancellationToken = default) =>
-        notificationDispatcher.SendAsync(
-            new NotificationMessage(
-                "email",
-                domainEvent.TenantId.ToString(),
-                "Payment received",
-                $"Payment {domainEvent.PaymentIntentId} of {domainEvent.Amount} {domainEvent.Currency} was confirmed.",
-                domainEvent.TenantId),
-            cancellationToken);
-
-    public Task HandleAsync(PaymentFailed domainEvent, CancellationToken cancellationToken = default) =>
-        notificationDispatcher.SendAsync(
-            new NotificationMessage(
-                "email",
-                domainEvent.TenantId.ToString(),
-                "Payment failed",
-                $"Payment {domainEvent.PaymentIntentId} failed.{(string.IsNullOrWhiteSpace(domainEvent.Reason) ? "" : $" Reason: {domainEvent.Reason}")}",
-                domainEvent.TenantId),
-            cancellationToken);
-}

@@ -39,7 +39,8 @@ public sealed class ChannelNotificationDispatcher(
                         message.Subject,
                         message.Body,
                         fromEmail,
-                        message.TenantId),
+                        message.TenantId,
+                        message.EmailAttachments),
                     cancellationToken);
                 return;
 

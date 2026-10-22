@@ -17,7 +17,7 @@
 |-------|-------|
 | **Sprint** | Sprint 38 — Notifications module |
 | **Author** | |
-| **Status** | **38A done** (2026-10-22); **38B** next (**39A** unblocks receipt PDF) |
+| **Status** | **38A ✅** (2026-10-22); **38B ✅** (2026-10-22) |
 | **Created** | 2026-10-21 |
 | **Depends on** | Entitlements closeout (reminder/SMS keys), Sprint 36 messaging (events). **38B** depends on **39A** (`IReportRenderer`). |
 
@@ -62,14 +62,14 @@ Replace log-only notification delivery with **production Resend email and Twilio
 
 ### 3.2 Notifications Completion — **38B** (after Reporting **39A**)
 
-- [ ] **Receipt email** with PDF attachment — handler calls **`IReportRenderer`** (Application) for bytes; **never** QuestPDF or Reporting Infrastructure from Notifications
-- [ ] **Scheduled appointment reminders** — background job: 24h/2h windows (Starter fixed schedule); idempotent delivery rows
-- [ ] **Entitlement-gated reminder behavior** (§6): Starter `basicReminders` only; Pro/Business add `configurableReminders` + `followUpAutomation` (not Business-only)
-- [ ] **SMS gating:** `SmsRemindersEnabled` tenant pref **and** `smsEnabled` entitlement before Twilio send; **`smsUsageBilling`** not implemented (reserved)
-- [ ] Waitlist `SlotOpened` — email + SMS when entitled + prefs on
-- [ ] **Follow-up automation** (minimal v1): e.g. second-chance no-show email when `followUpAutomation` true
-- [ ] Rate limits on burst-prone triggers (align Sprint 20 infra baseline)
-- [ ] **Retention domain events** (§7) — handlers subscribe; Retention never calls Resend/Twilio
+- [x] **Receipt email** with PDF attachment — handler calls **`IReportRenderer`** (Application) for bytes; **never** QuestPDF or Reporting Infrastructure from Notifications
+- [x] **Scheduled appointment reminders** — `AppointmentReminderBackgroundService`: 24h/2h windows (Starter fixed schedule); idempotent delivery rows
+- [x] **Entitlement-gated reminder behavior** (§6): Starter `basicReminders` only; Pro/Business add `configurableReminders` + `followUpAutomation` (not Business-only)
+- [x] **SMS gating:** `SmsRemindersEnabled` tenant pref **and** `smsEnabled` entitlement before Twilio send; **`smsUsageBilling`** not implemented (reserved)
+- [x] Waitlist `SlotOpened` — email + SMS when entitled + prefs on (`MaxWaitlistNotificationsPerSlot` burst cap)
+- [x] **Follow-up automation** (minimal v1): second-chance email after grace period when `followUpAutomation` true (confirmed booking past end)
+- [x] Rate limits on burst-prone triggers — waitlist per-slot recipient cap (API rate limits unchanged)
+- [ ] **Retention domain events** (§7) — deferred until Sprint 37 events exist in Domain
 
 ### 3.3 Push (backlog — after 38B or parallel Sprint 20)
 
@@ -77,7 +77,7 @@ Replace log-only notification delivery with **production Resend email and Twilio
 
 ### Portal surfaces
 
-- [ ] Settings: existing `GET/PATCH` notification preferences — SMS toggle disabled/hidden when `smsEnabled` false ([closeout](./sprint-33-entitlements-closeout.md))
+- [x] Settings: existing `GET/PATCH` notification preferences — SMS toggle disabled/hidden when `smsEnabled` false ([closeout](./sprint-33-entitlements-closeout.md))
 - [ ] Optional: delivery status read-only for owners (38B backlog)
 
 ---
@@ -245,8 +245,8 @@ Admin delivery visibility: 38B via audit/ops, not customer API.
 - [x] `smsEnabled` false → PATCH SMS pref rejected; dispatcher skips SMS
 - [x] Duplicate domain event → single delivery row
 - [x] Mock Resend on `BookingConfirmed` integration test (38A)
-- [ ] Reminder job idempotency for same booking window (38B)
-- [ ] Receipt handler uses `IReportRenderer` mock — no Reporting.Infrastructure reference (architecture test)
+- [x] Reminder job idempotency for same booking window (38B)
+- [x] Receipt handler uses `IReportRenderer` mock — no Reporting.Infrastructure reference (architecture test)
 
 Run: `dotnet test Adeni.slnx -c Release`
 
@@ -265,10 +265,10 @@ Run: `dotnet test Adeni.slnx -c Release`
 
 ### 38B
 
-- [ ] Scheduled reminder respects tier keys (Starter vs Pro/Business)
-- [ ] Receipt email includes PDF from **`IReportRenderer`** port
-- [ ] Waitlist slot opened reaches resolved phone/email
-- [ ] At least one Retention event wired end-to-end (mock)
+- [x] Scheduled reminder respects tier keys (Starter vs Pro/Business)
+- [x] Receipt email includes PDF from **`IReportRenderer`** port
+- [x] Waitlist slot opened reaches resolved phone/email
+- [ ] At least one Retention event wired end-to-end (mock) — blocked on Sprint 37 domain events
 
 ---
 
@@ -276,7 +276,7 @@ Run: `dotnet test Adeni.slnx -c Release`
 
 | Question | Decision |
 |----------|----------|
-| Reminder scheduler: Hangfire vs hosted `BackgroundService` | TBD — prefer existing infra pattern in repo |
+| Reminder scheduler: Hangfire vs hosted `BackgroundService` | **`BackgroundService`** (`AppointmentReminderBackgroundService`) — matches existing hosted startup pattern; disabled in Testing |
 | `SmsRemindersEnabled` vs `SmsNotificationsEnabled` | **Default `SmsRemindersEnabled`** — align with reminder-centric SMS; confirm in closeout PR |
 | Entitlement decorator vs checks in each handler | Central decorator recommended |
 | When to migrate DB column from `SmsWhatsAppReminderEnabled` | Same PR as 38A pref rename or additive column + deprecate |

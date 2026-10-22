@@ -51,12 +51,9 @@ public static class FinanceServiceCollectionExtensions
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
         services.AddScoped<IBillingDocumentService, BillingDocumentService>();
         services.AddScoped<PaymentBookingHandler>();
-        services.AddScoped<PaymentNotificationHandler>();
         services.AddScoped<IDomainEventHandler<PaymentCompleted>, PaymentBookingHandler>();
         services.AddScoped<IDomainEventHandler<PaymentFailed>, PaymentBookingHandler>();
         services.AddScoped<IDomainEventHandler<RefundInitiated>, PaymentBookingHandler>();
-        services.AddScoped<IDomainEventHandler<PaymentCompleted>, PaymentNotificationHandler>();
-        services.AddScoped<IDomainEventHandler<PaymentFailed>, PaymentNotificationHandler>();
 
         return services;
     }

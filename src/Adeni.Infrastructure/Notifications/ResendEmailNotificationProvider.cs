@@ -28,15 +28,28 @@ public sealed class ResendEmailNotificationProvider(
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "https://api.resend.com/emails");
         httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
-        httpRequest.Content = JsonContent.Create(
-            new
+        object payload = request.Attachments is { Count: > 0 } attachments
+            ? new
             {
                 from = request.FromEmail,
                 to = new[] { request.ToEmail },
                 subject = request.Subject,
                 html = request.Body,
-            },
-            options: JsonOptions);
+                attachments = attachments.Select(a => new
+                {
+                    filename = a.FileName,
+                    content = Convert.ToBase64String(a.Content),
+                }).ToArray(),
+            }
+            : new
+            {
+                from = request.FromEmail,
+                to = new[] { request.ToEmail },
+                subject = request.Subject,
+                html = request.Body,
+            };
+
+        httpRequest.Content = JsonContent.Create(payload, options: JsonOptions);
 
         var response = await httpClient.SendAsync(httpRequest, cancellationToken);
         if (!response.IsSuccessStatusCode)

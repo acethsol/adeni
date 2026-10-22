@@ -126,7 +126,7 @@ public sealed class NotificationDispatcherTests
         Assert.Contains("/emails", requests[0].RequestUri!.AbsoluteUri);
     }
 
-    private static ServiceProvider BuildProvider(SubscriptionSku subscriptionSku = SubscriptionSku.Professional)
+    internal static ServiceProvider BuildProvider(SubscriptionSku subscriptionSku = SubscriptionSku.Professional)
     {
         var services = new ServiceCollection();
         services.AddLogging();
@@ -151,6 +151,7 @@ public sealed class NotificationDispatcherTests
             sp.GetRequiredService<Adeni.Infrastructure.Context.TenantContext>());
         services.AddEntitlementsModule();
         services.AddScoped<INotificationPreferencesService, NotificationPreferencesService>();
+        services.AddScoped<INotificationRecipientResolver, NotificationRecipientResolver>();
         services.AddScoped<INotificationSenderConfigResolver, NotificationSenderConfigResolver>();
         services.AddScoped<ChannelNotificationDispatcher>();
         services.AddScoped<IdempotentNotificationDispatcher>();
@@ -182,7 +183,8 @@ public sealed class NotificationDispatcherTests
         public string Normalize(string marketId) => marketId.ToLowerInvariant();
     }
 
-    private sealed class CapturingEmailProvider : IEmailNotificationProvider
+
+    internal sealed class CapturingEmailProvider : IEmailNotificationProvider
     {
         public List<EmailNotificationRequest> Sent { get; } = [];
 
@@ -193,7 +195,7 @@ public sealed class NotificationDispatcherTests
         }
     }
 
-    private sealed class CapturingSmsProvider : ISmsNotificationProvider
+    internal sealed class CapturingSmsProvider : ISmsNotificationProvider
     {
         public List<SmsNotificationRequest> Sent { get; } = [];
 
