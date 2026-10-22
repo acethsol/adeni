@@ -253,7 +253,7 @@ export class BusinessProfileComponent implements OnInit {
     if (desc) {
       return `${desc.slice(0, 130).trimEnd()}…`;
     }
-    return `Book ${this.categoryName().toLowerCase()} in ${p.area}.`;
+    return this.tr("discover.business.seoBookDescription", { category: this.categoryName().toLowerCase(), area: p.area });
   });
 
   readonly publicPage = computed(() => {
@@ -490,7 +490,7 @@ export class BusinessProfileComponent implements OnInit {
     const cover = this.coverFor(profile.categorySlug, profile.coverImageUrl);
     const description =
       profile.description ||
-      `Verified ${getCategoryLabel(this.locale(), profile.categorySlug)} in ${profile.area}.`;
+      this.tr("discover.business.seoVerifiedDescription", { category: getCategoryLabel(this.locale(), profile.categorySlug), area: profile.area });
 
     this.seo.update(
       {

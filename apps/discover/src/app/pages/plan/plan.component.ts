@@ -18,10 +18,10 @@ import {
 import { CustomerApiService } from "../../core/services/customer-api.service";
 import { MarketContextService } from "../../core/services/market-context.service";
 
-const OUTCOME_TAGLINES: Record<SubscriptionSku, string> = {
-  starter: "Get bookable",
-  professional: "Run & grow",
-  business: "Scale operations",
+const TAGLINE_KEYS: Record<SubscriptionSku, string> = {
+  starter: "discover.plan.taglineStarter",
+  professional: "discover.plan.taglineProfessional",
+  business: "discover.plan.taglineBusiness",
 };
 
 @Component({
@@ -98,7 +98,7 @@ export class PlanPageComponent implements OnInit {
   } {
     const country = this.countryCode();
     const pricing = this.apiPricing();
-    const tagline = OUTCOME_TAGLINES[sku];
+    const tagline = this.tr(TAGLINE_KEYS[sku]);
 
     if (pricing) {
       if (!pricing.selfServeEnabled) {

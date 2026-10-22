@@ -36,15 +36,15 @@ const HERO_CHIP_ORDER = [
   "pilates",
 ] as const;
 
-const SHORT_LABELS: Record<string, string> = {
-  "massage-bodywork": "Massage",
-  "spa-relaxation": "Spa",
-  "hair-grooming": "Hair",
-  nails: "Nails",
-  "skincare-aesthetics": "Skincare",
-  fitness: "Fitness",
-  yoga: "Yoga",
-  pilates: "Pilates",
+const SHORT_LABEL_KEYS: Record<string, string> = {
+  "massage-bodywork": "discover.heroStage.shortMassage",
+  "spa-relaxation": "discover.heroStage.shortSpa",
+  "hair-grooming": "discover.heroStage.shortHair",
+  nails: "discover.heroStage.shortNails",
+  "skincare-aesthetics": "discover.heroStage.shortSkincare",
+  fitness: "discover.heroStage.shortFitness",
+  yoga: "discover.heroStage.shortYoga",
+  pilates: "discover.heroStage.shortPilates",
 };
 
 const ROTATE_MS = 3200;
@@ -121,7 +121,7 @@ export class HeroCategoryStageComponent implements OnInit {
       const full = getCategoryLabel(locale, slug, visual.label);
       return {
         slug,
-        label: SHORT_LABELS[slug] ?? full.split(" ")[0] ?? full,
+        label: (SHORT_LABEL_KEYS[slug] ? this.tr(SHORT_LABEL_KEYS[slug]) : undefined) ?? full.split(" ")[0] ?? full,
         icon: visual.icon,
         tone: `tone-${(index % 7) + 1}`,
         imageUrl: visual.imageUrl,

@@ -57,7 +57,7 @@ export class DiscoveryMapComponent implements OnDestroy {
   private readonly mapHost = viewChild.required<ElementRef<HTMLDivElement>>("mapHost");
   readonly ready = signal(false);
   readonly failed = signal(false);
-  readonly errorMessage = signal("Map couldn’t load. Check your connection and refresh.");
+  readonly errorMessage = signal(this.tr("discover.map.loadFailed"));
 
   private mapbox: MapboxNS | null = null;
   private map: MapboxMap | null = null;
