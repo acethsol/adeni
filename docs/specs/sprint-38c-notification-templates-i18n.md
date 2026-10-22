@@ -27,17 +27,17 @@ Ship a **single-locale, template-driven** notification loop: central template ID
 
 ## 3. In scope
 
-- [ ] Stable `NotificationTemplateId` in `@adeni/shared` + `notification-templates.json` (en/fr defaults)
-- [ ] `INotificationTemplateRenderer` + `INotificationLocaleResolver` (Application)
-- [ ] Locale order: customer `PreferredLocale` (when set) → tenant `defaultNotificationLocale` → market default → `en`
-- [ ] One locale per send (no dual-language unless future opt-in)
-- [ ] Extend `NotificationMessage` / `NotificationJobPayload` with `templateId` + data; render in `NotificationSendWorker`
-- [ ] Migrate send sites: booking, waitlist, reminders, finance, messaging, queue, staff invite, billing document email, payment receipt wrapper
-- [ ] DB: `DefaultNotificationLocale` on preferences; `tenant_notification_template_overrides` table
-- [ ] `GET/PATCH /api/v1/tenant/notification-preferences` extended contract in `packages/shared`
-- [ ] Portal Settings → Notifications: language dropdown + override editors (booking confirmed, 24h/2h reminders, waitlist opened)
-- [ ] Unit tests (renderer merge); integration test (French booking confirmed via mock email capture)
-- [ ] Update sprint-38 foundation checkbox ✅
+- [x] Stable `NotificationTemplateId` in `@adeni/shared` + `notification-templates.json` (en/fr defaults)
+- [x] `INotificationTemplateRenderer` + `INotificationLocaleResolver` (Application)
+- [x] Locale order: customer `PreferredLocale` (when set) → tenant `defaultNotificationLocale` → market default → `en`
+- [x] One locale per send (no dual-language unless future opt-in; bilingual mode → [addendum](./sprint-38c-bilingual-notifications-addendum.md))
+- [x] Extend `NotificationMessage` / `NotificationJobPayload` with `templateId` + data; render in `NotificationSendWorker`
+- [x] Migrate send sites: booking, waitlist, reminders, finance, messaging, queue, staff invite, billing document email, payment receipt wrapper
+- [x] DB: `DefaultNotificationLocale` on preferences; `tenant_notification_template_overrides` table
+- [x] `GET/PATCH /api/v1/tenant/notification-preferences` extended contract in `packages/shared`
+- [x] Portal Settings → Notifications: language dropdown + override editors (booking confirmed, 24h/2h reminders, waitlist opened)
+- [x] Unit tests (renderer merge); integration test (French booking confirmed via mock email capture)
+- [x] Update sprint-38 foundation checkbox ✅
 
 ## 4. Out of scope
 

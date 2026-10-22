@@ -234,6 +234,14 @@
                       <p class="stat-label">{{ revenueUsesCollected() ? "Collected revenue" : "Booked value" }}</p>
                       <p class="stat-value">{{ revenueLabel() }}</p>
                       <p class="stat-hint">{{ revenueHint() }}</p>
+                      @if (session.can("portal.finance")) {
+                        <adeni-export-menu
+                          class="stat-export"
+                          label="Export sales"
+                          [items]="revenueExportItems()"
+                          (exportSelect)="downloadSalesSummaryExport($event)"
+                        />
+                      }
                     </div>
                   </article>
                 }

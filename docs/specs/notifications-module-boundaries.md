@@ -19,7 +19,7 @@ Establish **Notifications** as the extractable bounded context for **transaction
 
 - [tooling-policy.md](../tooling-policy.md) — **Resend** (email), **Twilio** (SMS), **FCM+APNs** (push)
 - [architecture.md](../architecture.md) — Notifications module; domain events → handlers
-- [roadmap-modules.md](../roadmap-modules.md) #12 Notifications / reminders — **Partial**
+- [roadmap-modules.md](../roadmap-modules.md) #12 Notifications / reminders — **Partial** (code complete; staging send verification = launch gate)
 - **Messaging** (Sprint 36) — in-app SignalR conversations; **not** replaced by Notifications
 - **Reporting/Finance** — receipt PDF bytes via Application **`IReportRenderer`** (38B only); Notifications sends, does not render PDF
 - **Implementation:** [sprint-38-notifications-module.md](./sprint-38-notifications-module.md) — **38A** (no Reporting dependency), **38B** (receipt PDF after Reporting 39A)
@@ -29,7 +29,7 @@ Establish **Notifications** as the extractable bounded context for **transaction
 - `INotificationDispatcher` stack: preferences → entitlements (`smsEnabled`) → idempotency → **`ChannelNotificationDispatcher`**
 - **`IEmailNotificationProvider`** (Resend) + **`ISmsNotificationProvider`** (Twilio); logging fallback when keys absent (Dev/Testing)
 - **`notification_deliveries`** dedupe; **`INotificationRecipientResolver`** (booking/customer ports)
-- Handlers: booking confirmed/rejected/cancelled, staff invite, conversation customer email (waitlist/reminders → **38B**)
+- Handlers: booking confirmed/rejected/cancelled, waitlist slot opened, reminders, payment receipt, staff invite, conversation customer email, queue called, billing document email (**38B**)
 - Tenant pref **`SmsRemindersEnabled`** (SMS-only; no WhatsApp API)
 
 ---
@@ -179,7 +179,7 @@ Notifications is **mostly internal**. Tenant-facing surface today:
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
-| `GET/PATCH` | `/api/v1/tenant/settings/notifications` | Business | Preferences; reject SMS enable when `smsEnabled` false |
+| `GET/PATCH` | `/api/v1/tenant/notification-preferences` | Business JWT + `X-Tenant-Id` | Channel toggles, locales, Pro+ template overrides; reject SMS enable when `smsEnabled` false |
 
 **No public webhook** for Resend/Twilio inbound in V1 unless product adds SMS reply handling (out of scope).
 

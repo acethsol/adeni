@@ -36,6 +36,16 @@ export function hasExcelExportEntitlement(
   return entitlements.excelExport === true;
 }
 
+/** Sales-summary PDF and compensation exports — Pro/Business; matches API `AdvancedReports` gate. */
+export function hasAdvancedReportsEntitlement(
+  entitlements: TenantEntitlements | null | undefined,
+): boolean {
+  if (!entitlements) {
+    return false;
+  }
+  return entitlements.advancedReports === true;
+}
+
 /** Merge entitlement flags from API profile, usage, and `/tenant/entitlements` (OR for tier gates). */
 export function mergeTenantEntitlements(
   ...sources: Array<TenantEntitlements | null | undefined>

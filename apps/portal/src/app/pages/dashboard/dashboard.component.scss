@@ -509,6 +509,11 @@ html[data-theme="dark"] .dashboard-native-tile--edit {
   overflow-wrap: anywhere;
 }
 
+.stat-export {
+  display: block;
+  margin-top: 0.5rem;
+}
+
 .stat-label,
 .hint,
 .stat-hint {

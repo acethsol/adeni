@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { mergeTenantEntitlements } from "./entitlements";
 import { PLAN_ENTITLEMENTS } from "./plan-entitlements";
-import { buildAdminReportExportMenuItems, buildReportExportMenuItems } from "./report-export-menu";
+import {
+  buildAdminReportExportMenuItems,
+  buildReportExportMenuItems,
+  salesSummaryPdfMenuOption,
+} from "./report-export-menu";
 
 describe("buildReportExportMenuItems", () => {
   it("enables CSV for starter entitlements and omits PDF when not requested", () => {
@@ -27,6 +31,18 @@ describe("buildReportExportMenuItems", () => {
       xlsx: true,
     });
     expect(items.every((i) => !i.disabled)).toBe(true);
+  });
+});
+
+describe("salesSummaryPdfMenuOption", () => {
+  it("requires Pro for PDF when CSV tier is entitled", () => {
+    expect(salesSummaryPdfMenuOption(PLAN_ENTITLEMENTS.starter)).toEqual({
+      disabled: true,
+      hint: "Pro plan required for sales PDF",
+    });
+    expect(salesSummaryPdfMenuOption(PLAN_ENTITLEMENTS.professional)).toEqual({
+      disabled: false,
+    });
   });
 });
 

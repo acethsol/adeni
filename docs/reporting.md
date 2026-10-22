@@ -87,9 +87,10 @@ Issued documents use **snapshots** on the entity; PDF regeneration must not sile
 
 ## Frontend
 
-- **Dashboard:** portal widgets consume dashboard JSON; charts stay client-side (not PDF).
+- **Dashboard:** portal widgets consume dashboard JSON; charts stay client-side (not PDF). **Sales summary** export (`reportKey=sales-summary`, csv/pdf) is on the dashboard revenue stat card when the user has `portal.finance` — reuses the dashboard date range; PDF requires `advancedReports` (Pro+).
 - **List pages:** shared **`AdeniListToolbarComponent`** + **`AdeniDataTableComponent`** in `@adeni/ui` — filters, card/table switcher, export slot → Reporting API ([shared grid spec](./specs/shared-data-grid.md)).
 - **Downloads:** portal/admin list toolbars call `@adeni/api-client` `downloadTenantReportExport` / `downloadAdminReportExport`; compensation uses the same orchestrator via `reportKey=compensation`.
+- **Finance documents:** portal **Payments → Documents** uses **`downloadBillingDocumentPdf()`** (JWT + tenant) for staff download; **View** opens the public discover URL (`/api/v1/public/documents/{token}/pdf`) for customer sharing — do not rely on public token for authenticated staff workflows.
 
 ---
 

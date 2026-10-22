@@ -83,6 +83,14 @@
                   >
                     View
                   </a>
+                  <button
+                    type="button"
+                    class="btn"
+                    [disabled]="pdfBusyId() === doc.id"
+                    (click)="downloadDocumentPdf(doc)"
+                  >
+                    {{ pdfBusyId() === doc.id ? "Downloading…" : "Download PDF" }}
+                  </button>
                   @if (doc.status === "issued") {
                     <button
                       type="button"

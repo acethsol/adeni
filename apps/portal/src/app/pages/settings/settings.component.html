@@ -81,11 +81,12 @@
                   </label>
                 </li>
                 <li>
-                  <label class="cds-toggle">
-                    <input type="checkbox" role="switch" [(ngModel)]="pushEnabled" />
+                  <label class="cds-toggle cds-toggle--disabled">
+                    <input type="checkbox" role="switch" disabled aria-disabled="true" />
                     <span class="cds-toggle__track" aria-hidden="true"></span>
                     <span class="cds-toggle__label">Push notifications</span>
                   </label>
+                  <p class="hint muted">Coming soon — mobile push is not available yet.</p>
                 </li>
                 @if (smsEntitled()) {
                   <li>

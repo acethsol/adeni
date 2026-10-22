@@ -732,6 +732,13 @@ export class AdeniApiClient {
     return `${this.baseUrl}/api/v1/finance/documents/${encodeURIComponent(documentId)}/pdf`;
   }
 
+  async downloadBillingDocumentPdf(documentId: string): Promise<Blob> {
+    const response = await this.request(
+      `/api/v1/finance/documents/${encodeURIComponent(documentId)}/pdf`,
+    );
+    return response.blob();
+  }
+
   async emailBillingDocument(
     documentId: string,
     toEmail?: string,

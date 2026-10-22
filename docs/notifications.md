@@ -16,7 +16,7 @@ Async **email**, **SMS**, and (later) **push** driven by **domain events** and *
 | `INotificationDispatcher` | Application port |
 | `INotificationPreferencesService` | Tenant toggles: email, push, SMS reminders (`SmsRemindersEnabled`) |
 | `PreferenceAwareNotificationDispatcher` | Gates by channel + prefs |
-| **Delivery (38A/38B)** | Resend + Twilio when configured; log fallback in Development/Testing without keys |
+| **Delivery (38A/38B)** | Resend + Twilio when `Resend:ApiKey` / Twilio credentials are set; **Development/Testing** without keys → logging providers; **Staging/Prod** should configure keys (otherwise sends still log-only) |
 | **Appointment reminder scheduler (38B)** | **Hangfire** recurring job → `AppointmentReminderProcessor` — 24h/2h email/SMS; entitlement-gated follow-up email |
 | **Event-driven sends (38B+)** | App code → **`INotificationDispatcher.SendAsync`** only → after-commit → Hangfire `NotificationSendHangfireJob` (automatic retry); inline worker in **Testing** |
 | **Receipt email (38B)** | `PaymentCompleted` → same dispatcher with `PaymentReceipt` metadata → worker issues receipt + PDF via **`IReportRenderer`**, then **`INotificationDeliveryDispatcher`** |
@@ -58,17 +58,20 @@ Domain events (Booking, Waitlist, Messaging, Finance, Queue, Identity, …)
 
 ## Event → notification matrix (current handlers)
 
-| Event | Default channel | Notes |
-|-------|-----------------|--------|
-| `BookingConfirmed` | email | Recipient key still **customer id** — fix in Phase 1 |
-| `BookingRejected` | email | Same |
-| `BookingCancelled` | email | Same |
-| `SlotOpened` (waitlist) | email | Stub recipient; SMS when prefs + Twilio land |
+Recipients resolve via **`INotificationRecipientResolver`** (booking customer contact, platform customer email/phone, staff invite target). Skips send when contact missing.
+
+| Event / trigger | Channel(s) | Notes |
+|-----------------|------------|--------|
+| `BookingConfirmed` / `Rejected` / `Cancelled` | email | `BookingNotificationHandler`; booking customer then platform customer fallback |
+| `SlotOpened` (waitlist) | email + SMS | `WaitlistNotificationHandler`; entitled `waitlist`; burst cap; marks `NotifiedAt` |
+| Scheduled reminders (24h / 2h) | email + SMS | Hangfire `AppointmentReminderProcessor`; idempotent `notification_deliveries` |
+| No-show follow-up | email | When `followUpAutomation` entitlement |
 | `ConversationMessageCreated` | email | Customer ↔ business alerts |
-| `PaymentCompleted` / `PaymentFailed` | email | Tenant-scoped copy |
-| Billing document email | email | Real customer email when snapshot present |
+| `PaymentCompleted` | email + PDF | Receipt via `PaymentReceiptNotificationSender` + `IReportRenderer` |
+| `PaymentFailed` | email | Tenant-scoped copy |
+| Billing document emailed | email | Customer email from document snapshot |
 | Staff portal invite | email | Accept link in body |
-| Queue ticket called (`QueueService`) | email | Same scheduler + worker path; dedupe `queue-called:{ticketId}`; SMS when product switches channel |
+| Queue ticket called (`QueueService`) | email | Dedupe `queue-called:{ticketId}`; SMS when channel enabled in handler |
 
 Realtime **SignalR** events are **not** part of this module.
 
@@ -85,11 +88,11 @@ Stored on `TenantNotificationPreferences`:
 - `PushEnabled`
 - `SmsRemindersEnabled` — gates SMS channel when Twilio + `smsEnabled` entitlement
 
-Portal **Settings** persists prefs via tenant settings API; prefs apply even though delivery is still log-only in Development.
+Portal **Settings → Notifications** (`/settings/notifications`) persists prefs via **`GET/PATCH /api/v1/tenant/notification-preferences`**. Push toggle is **coming soon** (prefs may store `PushEnabled` but no FCM provider). In **Development/Testing** without vendor keys, channel toggles still apply but delivery goes to log providers.
 
 ---
 
-## Configuration (Phase 1 target)
+## Configuration (staging / production)
 
 | Key | Purpose |
 |-----|---------|
@@ -98,8 +101,10 @@ Portal **Settings** persists prefs via tenant settings API; prefs apply even tho
 | `Twilio:AccountSid` | Twilio |
 | `Twilio:AuthToken` | Twilio |
 | `Twilio:FromNumber` | SMS sender |
+| `Notifications:Reminders:*` | Reminder job (see below) |
+| `NotificationSenderConfig` | Per-market from/reply (CA/NG) via `INotificationSenderConfigResolver` |
 
-Keys in Key Vault for staging/production — never commit.
+Keys in Key Vault for **Staging/Production** — never commit. **Development/Testing** may omit keys (log fallback).
 
 ---
 
@@ -137,7 +142,7 @@ Keys in Key Vault for staging/production — never commit.
 
 | Method | Route | Auth |
 |--------|-------|------|
-| `GET/PATCH` | `/api/v1/tenant/settings/notifications` (or settings aggregate) | Business |
+| `GET/PATCH` | `/api/v1/tenant/notification-preferences` | Business JWT + `X-Tenant-Id` |
 
 No public Resend/Twilio inbound webhooks in V1 unless product adds SMS reply handling.
 

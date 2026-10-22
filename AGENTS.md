@@ -234,7 +234,7 @@ Source: [@mattmurphyai — payment webhook reel](https://www.instagram.com/reel/
 
 **Reference implementation:** `src/Adeni.Infrastructure/Payments/PaystackPaymentProvider.cs`, `PaymentOrchestrator.ProcessWebhookAsync`, [docs/payments.md](docs/payments.md).
 
-**Known gap:** `POST /api/v1/subscriptions/webhook` is still a **stub without signature verification**. When wiring Paystack Subscriptions, reuse the same Murphy rules — do not copy the stub pattern.
+**Subscription billing (33c):** `PaystackSubscriptionBillingProvider` enforces **`x-paystack-signature`** (HMAC SHA512 on raw body) when `SubscriptionBilling:Paystack:WebhookSecret` is set; **Development/Testing** may use unsigned stub JSON. **Staging/production** must configure the webhook secret and run checkout → webhook E2E before treating SaaS self-serve as launch-ready.
 
 **Security audit (play 4) must include:** Any new webhook endpoint checked against this table.
 
@@ -289,7 +289,7 @@ Murphy’s “signing” is **not** duplicate HMAC on every browser call when Au
 - No `Deprecation` / `Sunset` response headers yet  
 - ~~`Idempotency-Key` not universal on booking/payment POSTs~~ ✅ booking create + payment initialize (Sprint 17 hardening)  
 - ~~Anonymous mutating routes need rate limiting (Sprint 20 / infra)~~ ✅ baseline rate limits on webhooks, auth/sync, translate (Staging/Prod)  
-- `POST /api/v1/subscriptions/webhook` unsigned (see webhook section)  
+- `POST /api/v1/subscriptions/webhook` — HMAC when secret set; **33c staging secret + live E2E** still required for launch  
 
 **Reference:** [docs/api-errors.md](docs/api-errors.md), `ApiErrorResponseMapper`, `CorrelationIdMiddleware`.
 

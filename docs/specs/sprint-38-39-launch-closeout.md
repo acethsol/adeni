@@ -39,12 +39,12 @@ Close the gap between **shipped Notifications and Reporting code** and **staging
 
 ### 3.1 Doc fixes (N-D1–D6)
 
-- [ ] **N-D1** — [notifications.md](../notifications.md) event matrix: remove stale “customer id recipient / Phase 1 fix” and waitlist stub; align with `NotificationRecipientResolver` + `WaitlistNotificationHandler`
-- [ ] **N-D2** — Runbook routes: `/tenant/settings/notifications` → `GET/PATCH /api/v1/tenant/notification-preferences`; “Phase 1 target” → production config
-- [ ] **N-D3** — Clarify Dev/Testing log fallback vs Staging/Prod when Resend/Twilio keys present
-- [ ] **N-D4** — [sprint-38c-notification-templates-i18n.md](./sprint-38c-notification-templates-i18n.md): sync §3 checkboxes with Done status / addendum
-- [ ] **N-D5** — [notifications-module-boundaries.md](./notifications-module-boundaries.md) + [roadmap-modules.md](../roadmap-modules.md): code complete; launch = staging sends verified
-- [ ] **N-D6** — [AGENTS.md](../../AGENTS.md) / sprint-33: subscription webhook HMAC implemented when secret set; reword “unsigned stub” → staging secret + E2E (**33c**)
+- [x] **N-D1** — [notifications.md](../notifications.md) event matrix: remove stale “customer id recipient / Phase 1 fix” and waitlist stub; align with `NotificationRecipientResolver` + `WaitlistNotificationHandler`
+- [x] **N-D2** — Runbook routes: `/tenant/settings/notifications` → `GET/PATCH /api/v1/tenant/notification-preferences`; “Phase 1 target” → production config
+- [x] **N-D3** — Clarify Dev/Testing log fallback vs Staging/Prod when Resend/Twilio keys present
+- [x] **N-D4** — [sprint-38c-notification-templates-i18n.md](./sprint-38c-notification-templates-i18n.md): sync §3 checkboxes with Done status / addendum
+- [x] **N-D5** — [notifications-module-boundaries.md](./notifications-module-boundaries.md) + [roadmap-modules.md](../roadmap-modules.md): code complete; launch = staging sends verified
+- [x] **N-D6** — [AGENTS.md](../../AGENTS.md) / sprint-33: subscription webhook HMAC implemented when secret set; reword “unsigned stub” → staging secret + E2E (**33c**)
 
 ### 3.2 Staging / ops (N-O1–O6)
 
@@ -57,7 +57,7 @@ Close the gap between **shipped Notifications and Reporting code** and **staging
 
 ### 3.3 Portal (N-U1–U4)
 
-- [ ] **N-U1** — Push toggle: hide or “Coming soon”; no false promise until FCM (`PushEnabled` prefs-only today)
+- [x] **N-U1** — Push toggle: hide or “Coming soon”; no false promise until FCM (`PushEnabled` prefs-only today)
 - [ ] **N-U2** — 38c discoverability QA: `/settings/notifications`, gear menu, search
 - [ ] **N-U3** — Template overrides (Pro+): editors + 403 when not entitled — QA verify
 - [ ] **N-U4** — Owner delivery log — **defer** unless support needs at launch
@@ -81,18 +81,18 @@ Close the gap between **shipped Notifications and Reporting code** and **staging
 
 ### 4.1 Doc alignment (R-D1–D4)
 
-- [ ] **R-D1** — [shared-data-grid.md](./shared-data-grid.md) §7 Phase 2: update checkboxes for portal/admin list exports
-- [ ] **R-D2** — [reporting.md](../reporting.md) Frontend: `sales-summary` API exists; note missing portal entry; document PDF auth vs public token
+- [x] **R-D1** — [shared-data-grid.md](./shared-data-grid.md) §7 Phase 2: update checkboxes for portal/admin list exports
+- [x] **R-D2** — [reporting.md](../reporting.md) Frontend: `sales-summary` API exists; note missing portal entry; document PDF auth vs public token
 - [ ] **R-D3** — [sprint-39-reporting-module.md](./sprint-39-reporting-module.md): `@adeni/brand` on PDFs — post-39B polish unless launch requires branded sales PDF
-- [ ] **R-D4** — [roadmap-modules.md](../roadmap-modules.md) #5 Reporting: shipped pending portal export UX + staging audit
+- [x] **R-D4** — [roadmap-modules.md](../roadmap-modules.md) #5 Reporting: shipped pending portal export UX + staging audit
 
 ### 4.2 Portal (R-U1–U5)
 
-- [ ] **R-U1** — Wire **sales-summary** export (`csv` / `pdf`) via `adeni-export-menu` on dashboard revenue and/or Finance; reuse dashboard date range
-- [ ] **R-U2** — Authenticated PDF: `downloadBillingDocumentPdf()` in `@adeni/api-client` + **Download PDF** on Finance Documents (not public View only)
+- [x] **R-U1** — Wire **sales-summary** export (`csv` / `pdf`) via `adeni-export-menu` on dashboard revenue and/or Finance; reuse dashboard date range
+- [x] **R-U2** — Authenticated PDF: `downloadBillingDocumentPdf()` in `@adeni/api-client` + **Download PDF** on Finance Documents (not public View only)
 - [ ] **R-U3** — Multi-location: location filter on export flows or single-location auto-pass; map 403 to upgrade copy
 - [ ] **R-U4** — Finance Staff export tab → shared export menu + xlsx when `excelExport` (drop fake json)
-- [ ] **R-U5** — `advancedReports` helper + PDF disabled hints on export menus
+- [x] **R-U5** — `advancedReports` helper + PDF disabled hints on export menus
 
 ### 4.3 Staging audit (R-O1–O2)
 
@@ -169,9 +169,9 @@ List exports, dashboard appointments widget, quote/statement PDFs, admin Insight
 
 ## 9. Acceptance criteria (closeout complete)
 
-- [ ] Runbooks and module specs reflect shipped behavior (N-D*, R-D*)
+- [x] Runbooks and module specs reflect shipped behavior (N-D*, R-D* — R-D3 deferred)
 - [ ] Staging transactional email/SMS + reminders verified (N-O5)
-- [ ] Portal: sales-summary export + authenticated finance PDF (R-U1, R-U2); honest push UX (N-U1)
+- [x] Portal: sales-summary export + authenticated finance PDF (R-U1, R-U2); honest push UX (N-U1)
 - [ ] Admin reporting read paths audited on staging (R-O1)
 - [ ] No retention, WhatsApp API, FCM, or marketing work in this track
 

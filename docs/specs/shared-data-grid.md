@@ -149,9 +149,10 @@ export type AdeniDataTableColumn<T> = {
 
 ### Phase 2 — Admin + more portal lists
 
-- [ ] One admin page migrated off raw `.data-table` + `_admin-list-page.scss` duplicate
-- [ ] Customers, Bookings use **same recipe** (copy Staff wiring, not markup)
-- [ ] Enable export menu items via Reporting API
+- [x] Admin list pages (businesses, pending, transactions, pricing catalog) use toolkit + `buildAdminReportExportMenuItems`
+- [x] Portal Customers, Bookings, Staff, Services, Locations use **same recipe** (toolbar export slot + Reporting API)
+- [x] Dashboard appointments widget + revenue stat export via Reporting API (`bookings-register`, `sales-summary`)
+- [ ] Remaining admin sub-views on legacy table markup (business detail tabs) — polish only
 
 ### Phase 3 — Server-backed
 

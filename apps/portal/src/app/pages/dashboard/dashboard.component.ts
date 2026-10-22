@@ -30,6 +30,7 @@ import {
   getPlanDisplayForCountry,
   hasCapability,
   buildReportExportMenuItems,
+  salesSummaryPdfMenuOption,
   mergeTenantEntitlements,
   hasTenantEntitlement,
   isDashboardWidgetVisible,
@@ -460,6 +461,37 @@ export class DashboardComponent implements OnInit {
       labels: { csv: "Bookings CSV", xlsx: "Bookings Excel" },
     }),
   );
+
+  readonly revenueExportItems = computed((): AdeniExportMenuItem[] =>
+    buildReportExportMenuItems({
+      entitlements: this.exportEntitlements(),
+      xlsx: false,
+      pdf: salesSummaryPdfMenuOption(this.exportEntitlements()),
+      labels: { csv: "Sales summary CSV", pdf: "Sales summary PDF" },
+    }),
+  );
+
+  async downloadSalesSummaryExport(format: ReportExportFormat): Promise<void> {
+    const range = resolveDashboardRange(this.rangePreset());
+    try {
+      const blob = await this.businessApi.withAuthorizedClient((client) =>
+        client.downloadTenantReportExport({
+          reportKey: REPORT_KEYS.salesSummary,
+          from: range.from,
+          to: range.to,
+          format,
+        }),
+      );
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `sales-summary.${format === "pdf" ? "pdf" : "csv"}`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      this.loadError.set(true);
+    }
+  }
 
   async downloadAppointmentsExport(format: ReportExportFormat): Promise<void> {
     const range = resolveDashboardRange(this.rangePreset());

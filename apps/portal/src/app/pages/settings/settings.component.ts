@@ -89,7 +89,6 @@ export class SettingsComponent implements OnInit {
   depositPercent = 0;
 
   emailEnabled = true;
-  pushEnabled = true;
   smsRemindersEnabled = false;
 
   policyBooking = "";
@@ -138,7 +137,6 @@ export class SettingsComponent implements OnInit {
           try {
             const prefs = await client.getNotificationPreferences();
             this.emailEnabled = prefs.emailEnabled;
-            this.pushEnabled = prefs.pushEnabled;
             this.smsRemindersEnabled = prefs.smsRemindersEnabled;
             this.defaultNotificationLocale = prefs.defaultNotificationLocale ?? "en";
             this.secondaryNotificationLocale =
@@ -198,7 +196,7 @@ export class SettingsComponent implements OnInit {
         await this.api.withAuthorizedClient((c) =>
           c.updateNotificationPreferences({
             emailEnabled: this.emailEnabled,
-            pushEnabled: this.pushEnabled,
+            pushEnabled: false,
             smsRemindersEnabled: this.smsEntitled()
               ? this.smsRemindersEnabled
               : false,

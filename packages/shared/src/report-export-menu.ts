@@ -1,5 +1,6 @@
 import type { TenantEntitlements } from "./schemas";
 import {
+  hasAdvancedReportsEntitlement,
   hasBasicExportsEntitlement,
   hasExcelExportEntitlement,
 } from "./entitlements";
@@ -60,6 +61,20 @@ export function buildReportExportMenuItems(options: {
   }
 
   return items;
+}
+
+/** PDF row for `sales-summary` — CSV uses `basicExports`; PDF requires `advancedReports`. */
+export function salesSummaryPdfMenuOption(
+  entitlements: TenantEntitlements | null | undefined,
+): { disabled: boolean; hint?: string } {
+  const basic = hasBasicExportsEntitlement(entitlements);
+  if (!basic) {
+    return { disabled: true, hint: "Upgrade for exports" };
+  }
+  if (!hasAdvancedReportsEntitlement(entitlements)) {
+    return { disabled: true, hint: "Pro plan required for sales PDF" };
+  }
+  return { disabled: false };
 }
 
 const adminPlatformExportEntitlements = {

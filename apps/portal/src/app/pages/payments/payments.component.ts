@@ -75,6 +75,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
   readonly documents = signal<BillingDocumentResponse[]>([]);
   readonly lastLink = signal<{ checkoutUrl: string; description: string } | null>(null);
   readonly actionId = signal<string | null>(null);
+  readonly pdfBusyId = signal<string | null>(null);
 
   amount = "";
   description = "";
@@ -195,6 +196,24 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       this.error.set("Could not email this document. Add a customer email and try again.");
     } finally {
       this.actionId.set(null);
+    }
+  }
+
+  async downloadDocumentPdf(doc: BillingDocumentResponse): Promise<void> {
+    this.pdfBusyId.set(doc.id);
+    this.error.set(null);
+    try {
+      const blob = await this.api.withAuthorizedClient((c) => c.downloadBillingDocumentPdf(doc.id));
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${doc.documentNumber || doc.kind}.pdf`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      this.error.set("Could not download this document PDF.");
+    } finally {
+      this.pdfBusyId.set(null);
     }
   }
 

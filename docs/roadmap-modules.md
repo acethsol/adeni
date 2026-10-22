@@ -31,14 +31,14 @@ Each major build still needs a `docs/specs/sprint-XX-*.md` before implementation
 | 2b | **POS bridge** | Planned | Later | Payments adapter | Integrate, don’t build POS |
 | 3 | **Verification / trust** | Partial | Now | Tenancy + Admin | Tiers shipped; deepen CAC/automation |
 | 4 | **Subscriptions & add-ons** | Partial | Next | Subscriptions | Entitlements shipped; live billing stub |
-| 5 | **Reporting** | Partial | Next | `Reporting` + Dashboard queries, [reporting-module-boundaries.md](./specs/reporting-module-boundaries.md) | UI: Angular/Carbon; docs: QuestPDF; exports: CSV/ClosedXML/PDF |
+| 5 | **Reporting** | Partial | Next | `Reporting` + Dashboard queries, [reporting.md](./reporting.md) | **39A/39B shipped** — exports + admin MRR/GMV; portal sales-summary + JWT billing PDF wired; staging export audit pending |
 | 6 | **Messaging** | Shipped (client↔business) | Later (staff notes / WABA) | Messaging | Sprint 36 conversations + SignalR |
 | 7 | **Floor calendar & staff** | Shipped | Now (polish) | Booking + Identity | Team + practitioner boards |
 | 8 | **Onboarding** | Shipped | Now (polish) | Tenancy | Supply-first; category-aware defaults |
 | 9 | **Discovery & public page** | Shipped | Now | Discovery | SEO + shareable book link |
 | 10 | **Quotes** | Shipped | Later (wedge) | Quotes | Outside beauty Explore; keep for trades |
 | 11 | **AI agents** | Planned | Later | Sprint 20 | Customer + business agents |
-| 12 | **Notifications** | Partial | Next | `Notifications`, [notifications-module-boundaries.md](./specs/notifications-module-boundaries.md) | Resend email + Twilio SMS; prefs + event handlers shipped |
+| 12 | **Notifications** | Partial | Next | `Notifications`, [notifications.md](./notifications.md) | **38A–38c code complete** — Resend/Twilio, templates, portal prefs; **launch = staging sends verified** (N-O5) |
 | — | **Payroll / full POS / inventory** | Out of scope (early) | Much later | — | Phase 4+; see strategy §8 |
 
 ---
