@@ -54,7 +54,7 @@
 | — | App Insights (Obs 1) | → Sprint 20 |
 | — | Booking notifications, auto-confirm, payments, waitlist | → Sprint 15 |
 
-**Next up:** **37.1–37.5** retention (includes `IRetentionAnalyticsService` + `retention-membership-mrr` export). Parallel: **32a** dashboard; **33** staging Paystack + platform subscription MRR E2E. **Module order:** ~~33-closeout~~ → ~~38A~~ → ~~39A~~ → ~~38B~~ → ~~38c~~ → ~~39B~~ → **37.1–37.5**. Sprint 20 parallel. See [roadmap-modules.md](./roadmap-modules.md).
+**Next up:** **38–39 launch closeout** (Sprint A/B) — [sprint-38-39-launch-closeout.md](./specs/sprint-38-39-launch-closeout.md); then **37.1–37.5** retention. Parallel: **32a** dashboard; **33** staging Paystack + platform subscription MRR E2E. **Module order:** ~~33-closeout~~ → ~~38A~~ → ~~39A~~ → ~~38B~~ → ~~38c~~ → ~~39B~~ → **closeout** → **37.1–37.5**. Sprint 20 parallel. See [roadmap-modules.md](./roadmap-modules.md).
 
 ---
 ## Sprint 0 — Foundation & dev tooling ✅
