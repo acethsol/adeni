@@ -340,7 +340,7 @@ export class LocationsComponent implements OnInit {
   async remove(loc: BusinessLocation): Promise<void> {
     const ok = await this.confirmDialog.confirm({
       title: this.tr("portal.locations.deleteLocation2"),
-      message: `Delete “${loc.name || loc.slug}”? It will no longer appear on your public page.`,
+      message: this.tr("portal.locations.deleteConfirm", { name: loc.name || loc.slug }),
       confirmLabel: this.tr("portal.locations.delete"),
       danger: true,
     });

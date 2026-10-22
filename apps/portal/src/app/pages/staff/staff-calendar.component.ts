@@ -546,7 +546,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
             booking.customerNotes?.trim()
             || (this.teamMode() ? booking.staffDisplayName?.trim() || this.tr("portal.staff.anyAvailable") : null),
           status: booking.status,
-          statusLabel: statusLabel(booking.status),
+          statusLabel: this.bookingStatusLabel(booking.status),
           customerSelectedStaff: selected,
           staffDisplayName: booking.staffDisplayName ?? null,
           staffMemberId: booking.staffMemberId ?? null,
@@ -729,6 +729,21 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
     void this.load();
   }
 
+  private bookingStatusLabel(status: number): string {
+    switch (status) {
+      case 0:
+        return this.tr("portal.staff.pending");
+      case 1:
+        return this.tr("portal.staff.confirmed");
+      case 2:
+        return this.tr("portal.staff.statusRejected");
+      case 3:
+        return this.tr("portal.staff.statusCancelled");
+      default:
+        return this.tr("portal.staff.statusUnknown");
+    }
+  }
+
   hoursLabel(minutes: number): string {
     return formatBookedHours(minutes);
   }
@@ -742,12 +757,12 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
     const mins = minutes % 60;
     const parts: string[] = [];
     if (hours > 0) {
-      parts.push(`${hours} ${hours === 1 ? "hour" : "hours"}`);
+      parts.push(this.tr(hours === 1 ? "portal.staff.hourCountOne" : "portal.staff.hourCountMany", { count: hours }));
     }
     if (mins > 0) {
-      parts.push(`${mins} min`);
+      parts.push(this.tr("portal.staff.minuteCount", { count: mins }));
     }
-    return `Total: ${parts.join(" ")}`;
+    return this.tr("portal.staff.totalDuration", { duration: parts.join(" ") });
   }
 
   /** Roster admins see a back link; practitioners viewing their own calendar do not. */
@@ -1019,22 +1034,6 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
     }
   }
 }
-
-function statusLabel(status: number): string {
-  switch (status) {
-    case 0:
-      return "Pending";
-    case 1:
-      return "Confirmed";
-    case 2:
-      return "Rejected";
-    case 3:
-      return "Cancelled";
-    default:
-      return "Unknown";
-  }
-}
-
 
 function minutesToPx(minutes: number): number {
   return (minutes / 60) * PX_PER_HOUR;

@@ -128,7 +128,7 @@ export class BookingsComponent {
     buildReportExportMenuItems({
       entitlements: this.planEntitlements(),
       xlsx: true,
-      pdf: { disabled: true, hint: "Not available for bookings register" },
+      pdf: { disabled: true, hint: this.tr("portal.bookings.exportPdfUnavailable") },
     }),
   );
 
@@ -472,7 +472,7 @@ export class BookingsComponent {
   async reject(booking: BookingResponse): Promise<void> {
     const ok = await this.confirmDialog.confirm({
       title: this.tr("portal.bookings.rejectBooking"),
-      message: `Reject ${booking.serviceName} on ${formatSlotTime(booking.startAt)}? The customer will be notified.`,
+      message: this.tr("portal.bookings.rejectConfirm", { service: booking.serviceName, time: formatSlotTime(booking.startAt) }),
       confirmLabel: this.tr("admin.pending.reject"),
       danger: true,
     });

@@ -329,7 +329,7 @@
       </adeni-wizard>
     } @else {
       <adeni-tabs
-        [tabs]="staffFormTabs"
+        [tabs]="staffFormTabs()"
         linkMode="button"
         [activeId]="formTab()"
         (activeIdChange)="onStaffFormTabChange($event)"

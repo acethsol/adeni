@@ -78,13 +78,6 @@ type StaffPortalFilter = "all" | "has_portal" | "none";
 /** Create wizard steps (Leave only after save). */
 const CREATE_STEPS: StaffFormTab[] = ["profile", "services", "hours"];
 
-const STAFF_FORM_TABS: AdeniTab[] = [
-  { id: "profile", label: "Profile" },
-  { id: "services", label: "Services" },
-  { id: "hours", label: "Hours" },
-  { id: "leave", label: "Leave" },
-];
-
 type DayRow = {
   dayOfWeek: number;
   openTime: string;
@@ -227,7 +220,7 @@ export class StaffComponent implements OnInit, OnDestroy {
   readonly staffExportItems = computed((): AdeniExportMenuItem[] =>
     buildReportExportMenuItems({
       entitlements: this.entitlements(),
-      pdf: { disabled: true, hint: "Staff roster is CSV only" },
+      pdf: { disabled: true, hint: this.tr("portal.staff.rosterCsvOnly") },
     }),
   );
   readonly staffExporting = signal(false);
@@ -239,7 +232,12 @@ export class StaffComponent implements OnInit, OnDestroy {
   readonly editingId = signal<string | null>(null);
   readonly showForm = signal(false);
   readonly formTab = signal<StaffFormTab>("profile");
-  readonly staffFormTabs = STAFF_FORM_TABS;
+  readonly staffFormTabs = computed<AdeniTab[]>(() => [
+    { id: "profile", label: this.tr("common.profile") },
+    { id: "services", label: this.tr("common.services") },
+    { id: "hours", label: this.tr("common.hours") },
+    { id: "leave", label: this.tr("common.leave") },
+  ]);
   readonly categorySlugs = signal<string[]>([]);
   /** Keep an existing role in the dropdown even if category filters would hide it. */
   readonly preserveRoleKey = signal<string | null>(null);

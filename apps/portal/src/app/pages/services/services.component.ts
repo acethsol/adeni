@@ -127,8 +127,8 @@ export class ServicesComponent implements OnInit {
   );
 
   readonly groupFilterOptions = computed((): AdeniFilterSelectOption[] => [
-    { value: "all", label: "All sections" },
-    { value: "none", label: "No section" },
+    { value: "all", label: this.tr("portal.services.allSections") },
+    { value: "none", label: this.tr("portal.services.noSection") },
     ...this.groups().map((g) => ({ value: g.id, label: g.name })),
   ]);
 

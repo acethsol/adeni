@@ -87,7 +87,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       entitlements: this.planEntitlements(),
       xlsx: false,
       pdf: salesSummaryPdfMenuOption(this.planEntitlements()),
-      labels: { csv: "Sales summary CSV", pdf: "Sales summary PDF" },
+      labels: { csv: this.tr("portal.payments.exportSalesSummaryCsv"), pdf: this.tr("portal.payments.exportSalesSummaryPdf") },
     }),
   );
 
@@ -96,7 +96,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       entitlements: this.planEntitlements(),
       xlsx: true,
       csvRequiresAdvancedReports: true,
-      labels: { csv: "Staff payouts CSV", xlsx: "Staff payouts Excel" },
+      labels: { csv: this.tr("portal.payments.exportStaffPayoutsCsv"), xlsx: this.tr("portal.payments.exportStaffPayoutsExcel") },
     }),
   );
 
@@ -352,7 +352,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     if (!profile || entry.status !== "completed") return;
     const ok = await this.confirmDialog.confirm({
       title: this.tr("portal.payments.refundPayment"),
-      message: `Refund ${formatPrice(entry.amount, entry.currency)}? This cannot be undone from Adeni.`,
+      message: this.tr("portal.payments.refundConfirm", { amount: formatPrice(entry.amount, entry.currency) }),
       confirmLabel: this.tr("portal.payments.refund"),
       danger: true,
     });

@@ -58,7 +58,7 @@ export class KioskComponent implements OnInit {
   readonly checkedIn = signal<BookingResponse | null>(null);
   readonly exitOpen = signal(false);
   readonly walkInOpen = signal(false);
-  readonly businessName = signal("Check in");
+  readonly businessName = signal(this.tr("portal.kiosk.checkInTitle"));
   readonly businessLogoUrl = signal<string | null>(null);
   readonly queueEnabled = signal(false);
   readonly services = signal<ServiceOffering[]>([]);

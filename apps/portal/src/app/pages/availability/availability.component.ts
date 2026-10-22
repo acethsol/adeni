@@ -23,20 +23,20 @@ import { PortalSessionService } from "../../core/services/portal-session.service
 import { PORTAL_ALL_LOCATIONS_SCOPE } from "../../core/services/portal-active-location-store";
 
 const DAYS_ORDER = [1, 2, 3, 4, 5, 6, 0];
-const MONTH_LABELS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
+const MONTH_KEYS = [
+  "january",
+  "february",
+  "march",
+  "april",
+  "may",
+  "june",
+  "july",
+  "august",
+  "september",
+  "october",
+  "november",
+  "december",
+] as const;
 
 type DayRow = {
   dayOfWeek: number;
@@ -175,7 +175,7 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
   }
 
   readonly monthLabel = computed(() => {
-    return `${MONTH_LABELS[this.viewMonth()]} ${this.viewYear()}`;
+    return `${this.tr(`common.monthNames.${MONTH_KEYS[this.viewMonth()]}`)} ${this.viewYear()}`;
   });
 
   readonly calendarCells = computed((): CalendarCell[] => {
@@ -427,7 +427,7 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
       const conflicts = created.conflictingBookingIds?.length ?? 0;
       if (conflicts > 0) {
         this.conflictWarning.set(
-          `Closed dates saved. ${conflicts} existing booking${conflicts === 1 ? "" : "s"} fall in this range — not cancelled. Review Bookings.`,
+          this.tr(conflicts === 1 ? "portal.availability.closedDatesSavedConflictsOne" : "portal.availability.closedDatesSavedConflictsMany", { count: conflicts }),
         );
         this.feedback.success(this.tr("portal.availability.closedDatesSavedExistingBookings"));
       } else {

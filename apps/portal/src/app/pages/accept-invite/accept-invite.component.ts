@@ -26,7 +26,11 @@ export class AcceptInviteComponent implements OnInit {
 
   readonly status = signal<"ready" | "working" | "done" | "error">("ready");
   readonly message = signal(
-    "Sign in (or use the staff Dev sub), then accept to join this business without creating a new one.",
+    this.tr(
+      isBusinessPortalDevMode(this.config)
+        ? "portal.acceptInvite.signInThenAcceptDev"
+        : "portal.acceptInvite.signInThenAccept",
+    ),
   );
   readonly devMode = isBusinessPortalDevMode(this.config);
   readonly auth0Mode = isAuth0Configured(this.config);

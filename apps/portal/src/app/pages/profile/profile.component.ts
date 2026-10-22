@@ -272,7 +272,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
   whatsAppShareUrl(): string {
     const p = this.profile();
     const text = encodeURIComponent(
-      `Book ${p?.businessName ?? "us"} on Adeni:\n${this.publicBookingUrl()}`,
+      this.tr("portal.profile.whatsAppShareText", {
+        name: p?.businessName ?? this.tr("portal.profile.whatsAppShareFallbackName"),
+        url: this.publicBookingUrl(),
+      }),
     );
     return `https://wa.me/?text=${text}`;
   }

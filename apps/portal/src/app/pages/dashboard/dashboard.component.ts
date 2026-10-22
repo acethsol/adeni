@@ -136,10 +136,10 @@ export class DashboardComponent implements OnInit {
   readonly pendingCount = signal(0);
   readonly activeServices = signal(0);
   readonly revenueLabel = signal("—");
-  readonly revenueHint = signal("List price — scheduled & in-progress visits (not cash in bank)");
+  readonly revenueHint = signal(this.tr("portal.dashboard.revenueHintListPrice"));
   readonly revenueUsesCollected = signal(false);
-  readonly ratingLabel = signal("New");
-  readonly ratingHint = signal("No reviews yet");
+  readonly ratingLabel = signal(this.tr("portal.dashboard.ratingNew"));
+  readonly ratingHint = signal(this.tr("portal.dashboard.ratingNoReviews"));
   readonly appointmentChartData = signal<ChartTabularData>([]);
   readonly collectedChartData = signal<ChartTabularData>([]);
   readonly serviceMixChartData = signal<ChartTabularData>([]);
@@ -897,14 +897,14 @@ export class DashboardComponent implements OnInit {
     if (summary.analyticsIncluded && summary.collectedAmount != null && summary.collectedAmount > 0) {
       this.revenueUsesCollected.set(true);
       this.revenueLabel.set(formatPrice(summary.collectedAmount, currency));
-      this.revenueHint.set(`Collected online in ${this.rangeLabel().toLowerCase()}`);
+      this.revenueHint.set(this.tr("portal.dashboard.collectedOnlineIn", { range: this.rangeLabel().toLowerCase() }));
       return;
     }
 
     if (summary.analyticsIncluded && summary.bookedValueAmount != null) {
       this.revenueUsesCollected.set(false);
       this.revenueLabel.set(formatPrice(summary.bookedValueAmount, currency));
-      this.revenueHint.set(`Booked list value in ${this.rangeLabel().toLowerCase()} (not cash in bank)`);
+      this.revenueHint.set(this.tr("portal.dashboard.bookedListValueIn", { range: this.rangeLabel().toLowerCase() }));
       return;
     }
 

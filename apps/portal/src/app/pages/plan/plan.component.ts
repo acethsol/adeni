@@ -29,10 +29,10 @@ import {
   type TenantSubscriptionCharge,
 } from "@adeni/shared";
 
-const OUTCOME_TAGLINES: Record<SubscriptionSku, string> = {
-  starter: "Get bookable",
-  professional: "Run & grow",
-  business: "Scale operations",
+const TAGLINE_KEYS: Record<SubscriptionSku, string> = {
+  starter: "portal.plan.taglineStarter",
+  professional: "portal.plan.taglineProfessional",
+  business: "portal.plan.taglineBusiness",
 };
 import {
   AdeniDataTableCellDirective,
@@ -51,11 +51,11 @@ import {
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 
-const BILLING_EVENT_LABELS: Record<string, string> = {
-  "subscription.create": "Plan activated",
-  "subscription.charge.success": "Monthly subscription",
-  "invoice.payment_failed": "Payment failed",
-  "subscription.disable": "Subscription canceled",
+const BILLING_EVENT_KEYS: Record<string, string> = {
+  "subscription.create": "portal.plan.billingEventPlanActivated",
+  "subscription.charge.success": "portal.plan.billingEventMonthlySubscription",
+  "invoice.payment_failed": "portal.plan.billingEventPaymentFailed",
+  "subscription.disable": "portal.plan.billingEventSubscriptionCanceled",
 };
 
 @Component({
@@ -249,7 +249,7 @@ export class PlanComponent implements OnInit {
   } {
     const country = this.countryCode();
     const pricing = this.apiPricing();
-    const tagline = OUTCOME_TAGLINES[sku];
+    const tagline = this.tr(TAGLINE_KEYS[sku]);
     const fallbackDescription =
       getPlanDisplayForCountry(country ?? "", sku)?.description ??
       this.tr("portal.plan.pricingMarketBeingConfigured");
@@ -344,7 +344,8 @@ export class PlanComponent implements OnInit {
   }
 
   formatBillingEvent(eventType: string): string {
-    return BILLING_EVENT_LABELS[eventType] ?? eventType;
+    const key = BILLING_EVENT_KEYS[eventType];
+    return key ? this.tr(key) : eventType;
   }
 
   private billingRowMatchesSearch(row: TenantSubscriptionCharge, term: string): boolean {
