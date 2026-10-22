@@ -1,6 +1,7 @@
 import { inject, Injectable, Injector } from "@angular/core";
 import { AdeniApiClient } from "@adeni/api-client";
 import type { BusinessProfile } from "@adeni/shared";
+import { AdeniLocaleService } from "@adeni/ui";
 import { auth0FirstValueFrom, resolveAuthService } from "../auth0-rxjs";
 import {
   ADENI_PORTAL_CONFIG,
@@ -12,9 +13,13 @@ import {
 export class BusinessApiService {
   private readonly config = inject(ADENI_PORTAL_CONFIG);
   private readonly injector = inject(Injector);
+  private readonly localeService = inject(AdeniLocaleService);
 
   createPublicClient(): AdeniApiClient {
-    return new AdeniApiClient({ baseUrl: this.config.apiBaseUrl });
+    return new AdeniApiClient({
+      baseUrl: this.config.apiBaseUrl,
+      locale: () => this.localeService.locale(),
+    });
   }
 
   private createClient(): AdeniApiClient {

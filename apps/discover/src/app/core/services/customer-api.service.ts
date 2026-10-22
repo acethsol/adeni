@@ -1,5 +1,6 @@
 import { inject, Injectable, Injector } from "@angular/core";
 import { AdeniApiClient } from "@adeni/api-client";
+import { AdeniLocaleService } from "@adeni/ui";
 import { auth0FirstValueFrom, resolveAuthService } from "../auth0-rxjs";
 import {
   ADENI_DISCOVER_CONFIG,
@@ -11,9 +12,13 @@ import {
 export class CustomerApiService {
   private readonly config = inject(ADENI_DISCOVER_CONFIG);
   private readonly injector = inject(Injector);
+  private readonly localeService = inject(AdeniLocaleService);
 
   createPublicClient(): AdeniApiClient {
-    return new AdeniApiClient({ baseUrl: this.config.apiBaseUrl });
+    return new AdeniApiClient({
+      baseUrl: this.config.apiBaseUrl,
+      locale: () => this.localeService.locale(),
+    });
   }
 
   /** @deprecated use createPublicClient */

@@ -34,24 +34,32 @@ export function isApiErrorResponse(value: unknown): value is ApiErrorResponse {
   return typeof value === "object" && value !== null;
 }
 
+function translateErrorCode(
+  locale: string,
+  code: string,
+  params?: ApiErrorResponse["params"],
+): string | null {
+  const key = `errors.${code}`;
+  const translated = t(locale, key, normalizeParams(params));
+  if (translated !== key) {
+    return translated;
+  }
+
+  const categoryKey = `errors.${code.split(".")[0]}`;
+  const categoryMessage = t(locale, categoryKey);
+  return categoryMessage !== categoryKey ? categoryMessage : null;
+}
+
 /** Resolve a localized user-facing message from an API error response body. */
 export function localizeErrorResponse(locale: string, response: ApiErrorResponse | unknown): string {
   if (!isApiErrorResponse(response)) {
-    return "Something went wrong.";
+    return t(locale, "toast.somethingWrongShort");
   }
 
   if (response.code) {
-    const key = `errors.${response.code}`;
-    const translated = t(locale, key, normalizeParams(response.params));
-    if (translated !== key) {
+    const translated = translateErrorCode(locale, response.code, response.params);
+    if (translated) {
       return translated;
-    }
-
-    const category = response.code.split(".")[0];
-    const categoryKey = `errors.${category}`;
-    const categoryMessage = t(locale, categoryKey);
-    if (categoryMessage !== categoryKey) {
-      return categoryMessage;
     }
   }
 
@@ -67,7 +75,7 @@ export function localizeErrorResponse(locale: string, response: ApiErrorResponse
     return response.code;
   }
 
-  return "Something went wrong.";
+  return t(locale, "toast.somethingWrongShort");
 }
 
 export async function localizeErrorFromResponse(
@@ -77,9 +85,43 @@ export async function localizeErrorFromResponse(
 ): Promise<string> {
   const payload = await response.json().catch(() => ({}));
   const message = localizeErrorResponse(locale, payload);
-  if (message === "Something went wrong." && fallback) {
+  if (message === t(locale, "toast.somethingWrongShort") && fallback) {
     return fallback;
   }
 
   return message;
+}
+
+/** Shape of `AdeniApiError` (api-client) without importing it into `@adeni/shared`. */
+export type ApiErrorLike = {
+  message?: string;
+  statusCode?: number;
+  code?: string;
+  params?: ApiErrorResponse["params"];
+};
+
+/**
+ * User-facing message for a caught error in a catch block.
+ * 1. API `code` (+ `params`) -> `errors.*` in the active locale
+ * 2. anything else (unknown code, network, thrown English `Error`) -> `fallbackKey` in the active locale
+ *    (server English text is never shown; add the `errors.*` key instead)
+ */
+export function resolveApiErrorMessage(
+  locale: string,
+  error: unknown,
+  fallbackKey = "toast.somethingWrong",
+  vars?: Record<string, string | number>,
+): string {
+  if (typeof error === "object" && error !== null) {
+    const like = error as ApiErrorLike;
+    if (typeof like.code === "string" && like.code.length > 0) {
+      const translated = translateErrorCode(locale, like.code, like.params);
+      if (translated) {
+        return translated;
+      }
+    }
+
+  }
+
+  return t(locale, fallbackKey, vars);
 }

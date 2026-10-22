@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { localizeErrorResponse } from "./api-errors";
+import { localizeErrorResponse, resolveApiErrorMessage } from "./api-errors";
 
 describe("localizeErrorResponse", () => {
   it("translates dotted error codes with params", () => {
@@ -34,6 +34,31 @@ describe("localizeErrorResponse", () => {
     expect(localizeErrorResponse("en", { detail: "Detail text" })).toBe("Detail text");
     expect(localizeErrorResponse("en", { code: "some.code.without.translation" })).toBe(
       "some.code.without.translation",
+    );
+  });
+});
+
+describe("resolveApiErrorMessage", () => {
+  it("translates API error codes with params in the active locale", () => {
+    const error = { code: "subscription.booking_limit_reached", params: { limit: 25 } };
+
+    expect(resolveApiErrorMessage("en", error, "toast.somethingWrong")).toContain("25");
+    expect(resolveApiErrorMessage("fr", error, "toast.somethingWrong")).toContain("réservations");
+  });
+
+  it("falls back to the localized key for unknown codes, network and plain errors", () => {
+    expect(resolveApiErrorMessage("en", { code: "custom.unknown" }, "toast.somethingWrong")).toBe(
+      "Something went wrong",
+    );
+    expect(resolveApiErrorMessage("fr", new Error("Failed to fetch"), "toast.somethingWrong")).toBe(
+      "Une erreur s'est produite",
+    );
+    expect(resolveApiErrorMessage("fr", undefined)).toBe("Une erreur s'est produite");
+  });
+
+  it("uses the generic category message for legacy validation codes", () => {
+    expect(resolveApiErrorMessage("fr", { code: "validation" }, "toast.somethingWrong")).toContain(
+      "Vérifiez vos informations",
     );
   });
 });

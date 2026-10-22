@@ -87,6 +87,12 @@ export {
   type AdeniLocaleStorageMode,
 } from "./locale/adeni-locale.service";
 export {
+  injectAdeniApiError,
+  injectAdeniTranslate,
+  type AdeniApiErrorMessage,
+  type AdeniTranslate,
+} from "./locale/adeni-i18n";
+export {
   AdeniFeedbackService,
   type AdeniToast,
   type AdeniToastTone,

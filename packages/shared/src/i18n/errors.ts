@@ -6,6 +6,19 @@ export const enErrorMessages: MessageTree = {
       "This business reached its {limit} booking limit for this month. Upgrade to Pro for unlimited bookings.",
     multi_location_required:
       "Your plan does not include multiple locations.",
+    messaging_required: "In-app messaging is not included on your current plan.",
+  },
+  queue: {
+    closed: "Walk-ins are not accepting new guests right now.",
+    full: "The waiting list is full. Try again later.",
+    no_capacity:
+      "Walk-ins would conflict with upcoming appointments. Try again later or book an appointment.",
+  },
+  messaging: {
+    conversation_not_found: "Conversation was not found.",
+    conversation_closed: "This conversation is closed.",
+    message_body_invalid: "Message must be between 1 and 4000 characters, or include an attachment.",
+    message_attachment_invalid: "That attachment cannot be sent.",
   },
   booking: {
     slot_expired: "That time slot has passed. Please choose a new time.",
@@ -57,8 +70,8 @@ export const enErrorMessages: MessageTree = {
     analytics_required: "Advanced analytics is not included on your current plan.",
     customer_segmentation: "Customer segmentation is not included on your current plan.",
     customer_history: "Full customer history is not included on your current plan.",
-    location_limit: "Your plan location limit has been reached.",
-    practitioner_limit: "Your plan team member limit has been reached.",
+    location_limit: "Your plan allows up to {maxLocations} active location(s).",
+    practitioner_limit: "Your plan allows up to {maxPractitioners} active team members.",
     waitlist: "Waitlist is not included on your current plan.",
     sms: "SMS notifications are not included on your current plan.",
     exports: "Exports are not included on your current plan.",
@@ -88,6 +101,7 @@ export const frErrorMessages: MessageTree = {
       "Cette entreprise a atteint sa limite de {limit} réservations ce mois-ci. Passez à Pro pour des réservations illimitées.",
     multi_location_required:
       "Les emplacements multiples nécessitent le forfait Business. Passez à un forfait supérieur pour ajouter des succursales.",
+    messaging_required: "La messagerie intégrée n'est pas incluse dans votre forfait actuel.",
   },
   booking: {
     slot_expired: "Ce créneau horaire est passé. Veuillez en choisir un autre.",
@@ -129,8 +143,34 @@ export const frErrorMessages: MessageTree = {
     denied: "Vous n'avez pas l'autorisation d'effectuer cette action.",
   },
   entitlements: {
+    analytics_required: "Les analyses avancées ne sont pas incluses dans votre forfait actuel.",
+    customer_segmentation: "La segmentation de la clientèle n'est pas incluse dans votre forfait actuel.",
+    customer_history: "L'historique complet des clients n'est pas inclus dans votre forfait actuel.",
+    location_limit: "Votre forfait permet jusqu'à {maxLocations} emplacement(s) actif(s).",
+    practitioner_limit: "Votre forfait permet jusqu'à {maxPractitioners} membres d'équipe actifs.",
+    waitlist: "La liste d'attente n'est pas incluse dans votre forfait actuel.",
+    sms: "Les notifications par SMS ne sont pas incluses dans votre forfait actuel.",
+    exports: "Les exportations ne sont pas incluses dans votre forfait actuel.",
+    excel_export: "L'exportation Excel n'est pas incluse dans votre forfait actuel.",
     multi_location_reporting:
       "Les rapports multi-succursales nécessitent le forfait Business. Choisissez un emplacement pour une succursale, ou passez à un forfait supérieur pour tous les emplacements.",
+  },
+  reporting: {
+    report_not_found: "Ce rapport n'est pas disponible.",
+    format_not_supported: "Ce format d'exportation n'est pas pris en charge pour ce rapport.",
+  },
+  queue: {
+    closed: "La file d'attente n'accepte pas de nouveaux clients pour le moment.",
+    full: "La liste d'attente est pleine. Réessayez plus tard.",
+    no_capacity:
+      "Les clients sans rendez-vous entreraient en conflit avec les rendez-vous à venir. Réessayez plus tard ou prenez rendez-vous.",
+  },
+  messaging: {
+    conversation_not_found: "Conversation introuvable.",
+    conversation_closed: "Cette conversation est fermée.",
+    message_body_invalid:
+      "Le message doit contenir entre 1 et 4 000 caractères, ou inclure une pièce jointe.",
+    message_attachment_invalid: "Cette pièce jointe ne peut pas être envoyée.",
   },
   list: {
     sort_invalid: "Cette colonne ne peut pas servir à trier cette liste.",

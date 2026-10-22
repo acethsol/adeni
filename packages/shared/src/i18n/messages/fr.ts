@@ -1,7 +1,9 @@
-import type { Messages } from "../types";
+import { mergeMessageTrees, type Messages } from "../types";
+import { frCatalog } from "./catalog-fr";
+import { frExtras } from "./extras-fr";
 import { frErrorMessages } from "../errors";
 
-export const frMessages: Messages = {
+const frBase: Messages = {
   nav: {
     discover: "Découvrir",
     bookings: "Réservations",
@@ -583,3 +585,6 @@ export const frMessages: Messages = {
   },
   errors: frErrorMessages,
 };
+
+/** Base hand-written copy + generated catalog + extras; keys must not collide (merge throws). */
+export const frMessages: Messages = mergeMessageTrees(frBase, frCatalog, frExtras);

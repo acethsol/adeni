@@ -25,6 +25,35 @@ function isMessageTree(value: string | MessageTree): value is MessageTree {
   return typeof value === "object";
 }
 
+/** Deep-merge message trees; throws if two trees define the same leaf key. */
+export function mergeMessageTrees(...trees: MessageTree[]): MessageTree {
+  const out: MessageTree = {};
+  for (const tree of trees) {
+    mergeInto(out, tree, "");
+  }
+  return out;
+}
+
+function mergeInto(target: MessageTree, source: MessageTree, path: string): void {
+  for (const [key, value] of Object.entries(source)) {
+    const keyPath = path ? `${path}.${key}` : key;
+    const existing = target[key];
+    if (isMessageTree(value)) {
+      if (existing === undefined) {
+        target[key] = {};
+      } else if (!isMessageTree(existing)) {
+        throw new Error(`i18n key conflict (leaf vs tree): ${keyPath}`);
+      }
+      mergeInto(target[key] as MessageTree, value, keyPath);
+    } else {
+      if (existing !== undefined) {
+        throw new Error(`i18n duplicate key: ${keyPath}`);
+      }
+      target[key] = value;
+    }
+  }
+}
+
 export function translate(
   messages: Messages,
   key: string,

@@ -293,6 +293,7 @@ export class AdeniApiError extends Error {
     message: string,
     readonly statusCode?: number,
     readonly code?: string,
+    readonly params?: ApiErrorResponse["params"],
   ) {
     super(message);
     this.name = "AdeniApiError";
@@ -305,8 +306,8 @@ export type AdeniApiClientOptions = {
   tenantId?: string | null;
   /** Development only — maps to X-Dev-Auth0-Sub when Auth0 is disabled on the API. */
   devAuth0Sub?: string | null;
-  /** Locale for translating API error codes (defaults to en). */
-  locale?: string;
+  /** Locale for translating API error codes (defaults to en). Pass a getter to follow runtime locale changes. */
+  locale?: string | (() => string);
   fetchImpl?: typeof fetch;
 };
 
@@ -326,7 +327,7 @@ export class AdeniApiClient {
   private accessToken: string | null;
   private tenantId: string | null;
   private devAuth0Sub: string | null;
-  private readonly locale: string;
+  private readonly locale: string | (() => string);
   private readonly baseUrl: string;
   private readonly fetchImpl: typeof fetch;
 
@@ -2484,9 +2485,10 @@ export class AdeniApiClient {
     if (!response.ok) {
       const payload = (await response.json().catch(() => ({}))) as ApiErrorResponse;
       throw new AdeniApiError(
-        localizeErrorResponse(this.locale, payload),
+        localizeErrorResponse(typeof this.locale === "function" ? this.locale() : this.locale, payload),
         response.status,
         payload.code,
+        payload.params,
       );
     }
 

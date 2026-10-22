@@ -20,7 +20,7 @@ import { AdeniFeedbackService } from "./adeni-feedback.service";
           <button
             type="button"
             class="toast-close"
-            aria-label="Dismiss"
+            [attr.aria-label]="feedback.text('toast.dismiss')"
             (click)="feedback.dismiss(toast.id)"
           >
             ×

@@ -1,5 +1,6 @@
 import { inject, Injectable, Injector } from "@angular/core";
 import { AdeniApiClient } from "@adeni/api-client";
+import { AdeniLocaleService } from "@adeni/ui";
 import { auth0FirstValueFrom, resolveAuthService } from "../auth0-rxjs";
 import {
   ADENI_ADMIN_CONFIG,
@@ -11,6 +12,7 @@ import {
 export class AdminApiService {
   private readonly config = inject(ADENI_ADMIN_CONFIG);
   private readonly injector = inject(Injector);
+  private readonly localeService = inject(AdeniLocaleService);
 
   async withAuthorizedClient<T>(
     fn: (client: AdeniApiClient) => Promise<T>,
@@ -20,7 +22,10 @@ export class AdminApiService {
   }
 
   async createAuthorizedClient(): Promise<AdeniApiClient> {
-    const client = new AdeniApiClient({ baseUrl: this.config.apiBaseUrl });
+    const client = new AdeniApiClient({
+      baseUrl: this.config.apiBaseUrl,
+      locale: () => this.localeService.locale(),
+    });
 
     const auth = isAuth0Configured(this.config) ? resolveAuthService(this.injector) : null;
     if (auth) {
