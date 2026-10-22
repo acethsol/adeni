@@ -12,6 +12,8 @@ import {
   AdeniFeedbackService,
   AdeniPortalEmptyStateComponent,
   PortalPageComponent,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 import {
@@ -41,6 +43,8 @@ import { erasurePill } from "../../shared/admin-pill-maps";
   styleUrl: "./customers.component.scss",
 })
 export class AdminCustomersComponent {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(AdminApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -150,11 +154,11 @@ export class AdminCustomersComponent {
         "Building customer data package",
       );
       this.exportData.set(data);
-      this.message.set("Export loaded below — save JSON for your records.");
-      this.feedback.success("Customer export is ready below.", "Export ready");
-    } catch {
-      this.error.set("Export failed.");
-      this.feedback.error("Export failed.");
+      this.message.set(this.tr("admin.customers.exportLoadedBelowSaveJson"));
+      this.feedback.success(this.tr("admin.customers.customerExportReadyBelow"), this.tr("admin.customers.exportReady"));
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "common.exportFailed"));
+      this.feedback.error(this.apiErr(caught, "common.exportFailed"));
     } finally {
       this.busyId.set(null);
     }
@@ -170,7 +174,7 @@ export class AdminCustomersComponent {
     a.download = `adeni-customer-${data.customerId}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    this.feedback.info("JSON download started.", "Download");
+    this.feedback.info("JSON download started.", this.tr("admin.customers.download"));
   }
 
   async erase(customer: AdminCustomerSummary): Promise<void> {
@@ -205,11 +209,11 @@ export class AdminCustomersComponent {
             : item,
         ),
       );
-      this.message.set("Erasure initiated.");
-      this.feedback.success("Customer PII erasure was initiated.", "Erasure started");
-    } catch {
-      this.error.set("Could not initiate erasure.");
-      this.feedback.error("Could not initiate erasure.");
+      this.message.set(this.tr("admin.customers.erasureInitiated"));
+      this.feedback.success(this.tr("admin.customers.customerPiiErasureWasInitiated"), this.tr("admin.customers.erasureStarted"));
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "admin.customers.couldNotInitiateErasure"));
+      this.feedback.error(this.apiErr(caught, "admin.customers.couldNotInitiateErasure"));
     } finally {
       this.busyId.set(null);
     }

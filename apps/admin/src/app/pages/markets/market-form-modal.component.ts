@@ -1,7 +1,7 @@
 import { Component, input, output, signal, effect } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import type { AdminMarket } from "@adeni/shared";
-import { AdeniModalComponent, AdeniStaffButtonComponent } from "@adeni/ui";
+import { AdeniModalComponent, AdeniStaffButtonComponent, injectAdeniTranslate } from "@adeni/ui";
 
 export type MarketFormMode = "create" | "edit";
 
@@ -41,6 +41,7 @@ const DEFAULT_FORM: MarketFormValue = {
   styleUrl: "./market-form-modal.component.scss",
 })
 export class MarketFormModalComponent {
+  protected readonly tr = injectAdeniTranslate();
   readonly open = input(false);
   readonly mode = input<MarketFormMode>("create");
   readonly market = input<AdminMarket | null>(null);

@@ -10,6 +10,7 @@ import {
   AdeniPortalEmptyStateComponent,
   type AdeniDataTableColumn,
   type AdeniDataTableSortDirection,
+  injectAdeniTranslate,
 } from "@adeni/ui";
 import {
   chargeMatchesSearch,
@@ -33,6 +34,7 @@ import { BusinessDetailFacade } from "./business-detail.facade";
   styleUrl: "./business-billing.component.scss",
 })
 export class BusinessBillingComponent {
+  protected readonly tr = injectAdeniTranslate();
   readonly facade = inject(BusinessDetailFacade);
 
   readonly formatSubscriptionSku = formatSubscriptionSku;

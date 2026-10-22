@@ -14,6 +14,7 @@ import {
   AdeniStaffButtonComponent,
   AdeniWizardComponent,
   type AdeniWizardStep,
+  injectAdeniTranslate,
 } from "@adeni/ui";
 import { AdminPillComponent } from "../../shared/admin-pill.component";
 import { businessPlanPill, tenantStatusPill } from "../../shared/admin-pill-maps";
@@ -64,6 +65,7 @@ const STEPS: AdeniWizardStep[] = [
   styleUrl: "./business-subscription-wizard.component.scss",
 })
 export class BusinessSubscriptionWizardComponent {
+  protected readonly tr = injectAdeniTranslate();
   readonly open = input(false);
   readonly business = input<AdminBusinessSummary | null>(null);
   readonly draft = input<BusinessSubscriptionDraft | null>(null);

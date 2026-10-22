@@ -1,7 +1,7 @@
 import { Component, inject, signal } from "@angular/core";
 import type { AdminBusinessSummary } from "@adeni/shared";
 import { formatSubscriptionSku } from "@adeni/shared";
-import { AdeniFeedbackService } from "@adeni/ui";
+import { AdeniFeedbackService, injectAdeniTranslate, injectAdeniApiError } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 import { BusinessDetailFacade } from "./business-detail.facade";
 import { BusinessSubscriptionWizardComponent } from "./business-subscription-wizard.component";
@@ -30,6 +30,8 @@ import {
   `,
 })
 export class BusinessSubscriptionWizardHostComponent {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly facade = inject(BusinessDetailFacade);
   private readonly api = inject(AdminApiService);
   private readonly feedback = inject(AdeniFeedbackService);
@@ -73,7 +75,7 @@ export class BusinessSubscriptionWizardHostComponent {
     }
 
     if (hasCommercialTermsDelta(draft) && !resolveCommercialChangeReason(draft)) {
-      this.feedback.error("Add an audit note or change reason before saving commercial updates.");
+      this.feedback.error(this.tr("admin.businesses.addAuditNoteChangeReason"));
       return;
     }
 
@@ -94,8 +96,8 @@ export class BusinessSubscriptionWizardHostComponent {
           : "Subscription updated.",
         business.name,
       );
-    } catch {
-      this.feedback.error("Could not save subscription.");
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "common.couldNotSaveSubscription"));
     } finally {
       this.subscriptionSaving.set(false);
     }

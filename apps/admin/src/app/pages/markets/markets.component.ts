@@ -19,6 +19,8 @@ import {
   PortalPageComponent,
   type AdeniDataTableColumn,
   type AdeniDataTableSortDirection,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 import {
@@ -59,6 +61,8 @@ import {
   styleUrl: "./markets.component.scss",
 })
 export class AdminMarketsComponent {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(AdminApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -247,7 +251,7 @@ export class AdminMarketsComponent {
       languages.push("fr");
     }
     if (languages.length === 0) {
-      this.feedback.error("Select at least one language.");
+      this.feedback.error(this.tr("admin.markets.selectAtLeastOneLanguage"));
       return;
     }
 
@@ -273,7 +277,7 @@ export class AdminMarketsComponent {
           "Creating market…",
           value.name,
         );
-        this.feedback.success("Market created.", value.name);
+        this.feedback.success(this.tr("admin.markets.marketCreated"), value.name);
       } else {
         const id = this.editingMarket()?.id;
         if (!id) {
@@ -296,12 +300,12 @@ export class AdminMarketsComponent {
           "Saving market…",
           value.name,
         );
-        this.feedback.success("Market updated.", value.name);
+        this.feedback.success(this.tr("admin.markets.marketUpdated"), value.name);
       }
       this.closeForm();
       await this.load();
-    } catch {
-      this.feedback.error("Could not save market.");
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "admin.markets.couldNotSaveMarket"));
     } finally {
       this.formSaving.set(false);
     }
@@ -320,9 +324,9 @@ export class AdminMarketsComponent {
         `${market.name} is now ${nextLive ? "live" : "offline"}.`,
         "Market updated",
       );
-    } catch {
-      this.error.set("Could not update market.");
-      this.feedback.error("Could not update market.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "admin.markets.couldNotUpdateMarket"));
+      this.feedback.error(this.apiErr(caught, "admin.markets.couldNotUpdateMarket"));
     }
   }
 }

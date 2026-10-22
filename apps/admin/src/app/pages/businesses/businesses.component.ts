@@ -29,6 +29,8 @@ import {
   type AdeniDataTableColumn,
   type AdeniDataTableSortDirection,
   type AdeniExportMenuItem,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 import {
@@ -79,6 +81,8 @@ const PENDING_VERIFICATION = 1;
   styleUrl: "./businesses.component.scss",
 })
 export class AdminBusinessesComponent {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(AdminApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -181,9 +185,9 @@ export class AdminBusinessesComponent {
         blob,
         adminListExportFileName(REPORT_KEYS.adminBusinessDirectory, format),
       );
-      this.feedback.success("Business directory downloaded.");
-    } catch {
-      this.feedback.error("Export failed.");
+      this.feedback.success(this.tr("admin.businesses.businessDirectoryDownloaded"));
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "common.exportFailed"));
     } finally {
       this.exporting.set(false);
     }
@@ -276,8 +280,8 @@ export class AdminBusinessesComponent {
       );
       this.subscriptionBusiness.set(business);
       this.subscriptionDraft.set(draftFromCommercialTerms(terms, business));
-    } catch {
-      this.feedback.error("Could not load subscription details.");
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "admin.businesses.couldNotLoadSubscriptionDetails"));
     }
   }
 
@@ -319,8 +323,8 @@ export class AdminBusinessesComponent {
           : "Subscription updated.",
         business.name,
       );
-    } catch {
-      this.feedback.error("Could not save subscription.");
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "common.couldNotSaveSubscription"));
     } finally {
       this.subscriptionSaving.set(false);
     }

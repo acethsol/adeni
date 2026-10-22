@@ -18,6 +18,8 @@ import {
   AdeniPortalEmptyStateComponent,
   AdeniStaffButtonComponent,
   PortalPageComponent,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 import { adminLoadErrorMessage } from "../../shared/admin-load-error";
@@ -54,6 +56,8 @@ type SkuMixRow = {
   styleUrl: "./insights.component.scss",
 })
 export class AdminInsightsComponent implements OnInit {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(AdminApiService);
   private readonly feedback = inject(AdeniFeedbackService);
 
@@ -245,8 +249,8 @@ export class AdminInsightsComponent implements OnInit {
         c.getAdminReportingGmv(this.granularity()),
       );
       this.revenue.set(mapGmvToRevenueMetrics(gmv));
-    } catch {
-      this.feedback.error("Could not load period totals.");
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "admin.insights.couldNotLoadPeriodTotals"));
     } finally {
       this.loading.set(false);
     }

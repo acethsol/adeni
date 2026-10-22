@@ -1,6 +1,6 @@
 <app-portal-page
-  title="Customer privacy"
-  description="Search consumers for DSAR export or erasure. Matches email, name, phone, or Auth0 sub."
+  [title]="tr('admin.customers.customerPrivacy')"
+  [description]="tr('admin.customers.searchConsumersDsarExportErasure')"
 >
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
@@ -12,13 +12,13 @@
   <section class="card list-toolbar">
     <form class="search-form" (submit)="search(); $event.preventDefault()">
       <label class="search-field">
-        <span class="visually-hidden">Search customers</span>
+        <span class="visually-hidden">{{ tr('admin.customers.searchCustomers') }}</span>
         <adeni-carbon-icon name="search" [size]="16" />
         <input
           type="search"
           [(ngModel)]="searchInput"
           name="q"
-          placeholder="Email, name, phone, or Auth0 sub"
+          [placeholder]="tr('admin.customers.emailNamePhoneAuth0Sub')"
           autocomplete="off"
         />
       </label>
@@ -28,7 +28,7 @@
         icon="search"
         [disabled]="searching() || !searchInput.trim()"
       >
-        {{ searching() ? "Searching…" : "Search" }}
+        {{ searching() ? tr('admin.customers.searching') : tr('common.search') }}
       </adeni-staff-btn>
     </form>
     @if (hasSearched() && totalCount() > 0) {
@@ -37,18 +37,18 @@
   </section>
 
   @if (searching() && customers().length === 0) {
-    <p class="muted">Searching…</p>
+    <p class="muted">{{ tr('admin.customers.searching') }}</p>
   } @else if (!hasSearched()) {
     <adeni-portal-empty-state
       icon="user--filled"
-      title="Find a customer record"
-      description="Enter an email, name, phone number, or Auth0 subject id to load export and erasure actions."
+      [title]="tr('admin.customers.findCustomerRecord')"
+      [description]="tr('admin.customers.enterEmailNamePhoneNumber')"
     />
   } @else if (customers().length === 0 && !error()) {
     <adeni-portal-empty-state
       icon="search"
-      title="No customers found"
-      description="Nothing matched that query. Try a partial email or phone number."
+      [title]="tr('admin.customers.noCustomersFound')"
+      [description]="tr('admin.customers.nothingMatchedQueryTryPartial')"
       compact
     />
   } @else if (customers().length > 0) {
@@ -56,10 +56,10 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th scope="col">Customer</th>
-            <th scope="col">Email</th>
-            <th scope="col">Auth0 sub</th>
-            <th scope="col"><span class="visually-hidden">Actions</span></th>
+            <th scope="col">{{ tr('common.customer') }}</th>
+            <th scope="col">{{ tr('common.email') }}</th>
+            <th scope="col">{{ tr('admin.customers.auth0Sub') }}</th>
+            <th scope="col"><span class="visually-hidden">{{ tr('common.actions') }}</span></th>
           </tr>
         </thead>
         <tbody>
@@ -78,7 +78,7 @@
               <td class="actions-cell">
                 <div class="actions-inline">
                   <adeni-staff-btn icon="launch" [disabled]="busyId() === c.id" (pressed)="export(c.id)">
-                    Export
+                    {{ tr('common.export') }}
                   </adeni-staff-btn>
                   <adeni-staff-btn
                     variant="danger"
@@ -86,7 +86,7 @@
                     [disabled]="busyId() === c.id || !!c.erasureRequestedAt"
                     (pressed)="erase(c)"
                   >
-                    Erasure
+                    {{ tr('admin.customers.erasure') }}
                   </adeni-staff-btn>
                 </div>
               </td>
@@ -102,7 +102,7 @@
       [totalCount]="totalCount()"
       [pageSizeOptions]="listPageSizeOptions"
       [loading]="searching()"
-      ariaLabel="Customer search pages"
+      [ariaLabel]="tr('admin.customers.customerSearchPages')"
       (pageChange)="goToPage($event)"
       (pageSizeChange)="onPageSizeChange($event)"
     />
@@ -110,10 +110,10 @@
 
   @if (exportData(); as ex) {
     <section class="card">
-      <h3>Export preview</h3>
+      <h3>{{ tr('admin.customers.exportPreview') }}</h3>
       <pre>{{ ex | json }}</pre>
       <adeni-staff-btn variant="primary" icon="save" (pressed)="downloadExport()">
-        Download JSON
+        {{ tr('admin.customers.downloadJson') }}
       </adeni-staff-btn>
     </section>
   }

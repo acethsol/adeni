@@ -13,6 +13,7 @@ import {
   AdeniDataTableComponent,
   AdeniPillComponent,
   type AdeniDataTableColumn,
+  injectAdeniTranslate,
 } from "@adeni/ui";
 import { billingStatusPill, businessPlanPill } from "../../shared/admin-pill-maps";
 import { chargeStatusTone, formatChargeAmount } from "./business-charge-grid";
@@ -32,6 +33,7 @@ import { BusinessDetailFacade } from "./business-detail.facade";
   styleUrl: "./business-overview.component.scss",
 })
 export class BusinessOverviewComponent {
+  protected readonly tr = injectAdeniTranslate();
   private readonly router = inject(Router);
   readonly facade = inject(BusinessDetailFacade);
 

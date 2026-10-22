@@ -28,6 +28,8 @@ import {
   type AdeniDataTableSortDirection,
   type AdeniExportMenuItem,
   type AdeniFilterSelectOption,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 import { ADMIN_LIST_PAGE_SIZE, LIST_PAGE_SIZE_OPTIONS } from "../../shared/admin-list-paging";
@@ -62,6 +64,8 @@ type KindFilter = "all" | "commerce" | "saas";
   styleUrl: "./transactions.component.scss",
 })
 export class AdminTransactionsComponent {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(AdminApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -263,9 +267,9 @@ export class AdminTransactionsComponent {
         blob,
         adminListExportFileName(REPORT_KEYS.adminTransactions, format),
       );
-      this.feedback.success("Transactions downloaded.");
-    } catch {
-      this.feedback.error("Export failed.");
+      this.feedback.success(this.tr("admin.transactions.transactionsDownloaded"));
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "common.exportFailed"));
     } finally {
       this.exporting.set(false);
     }

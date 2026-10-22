@@ -24,6 +24,8 @@ import {
   type AdeniDataTableColumn,
   type AdeniDataTableSortDirection,
   type AdeniExportMenuItem,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 import { AdminOperationsRealtimeService } from "@adeni/ui";
@@ -64,6 +66,8 @@ import {
   styleUrl: "./pending.component.scss",
 })
 export class AdminPendingComponent {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(AdminApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -155,9 +159,9 @@ export class AdminPendingComponent {
         blob,
         adminListExportFileName(REPORT_KEYS.adminPendingVerifications, format),
       );
-      this.feedback.success("Pending queue downloaded.");
-    } catch {
-      this.feedback.error("Export failed.");
+      this.feedback.success(this.tr("admin.pending.pendingQueueDownloaded"));
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "common.exportFailed"));
     } finally {
       this.exporting.set(false);
     }
@@ -249,10 +253,10 @@ export class AdminPendingComponent {
         item.name,
       );
       await this.load();
-      this.feedback.success(`${item.name} is now verified.`, "Approved");
-    } catch {
-      this.error.set("Approve failed.");
-      this.feedback.error("Approve failed.");
+      this.feedback.success(`${item.name} is now verified.`, this.tr("admin.pending.approved"));
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "admin.pending.approveFailed"));
+      this.feedback.error(this.apiErr(caught, "admin.pending.approveFailed"));
     } finally {
       this.busyId.set(null);
     }
@@ -270,10 +274,10 @@ export class AdminPendingComponent {
         item.name,
       );
       await this.load();
-      this.feedback.success(`${item.name} was rejected.`, "Rejected");
-    } catch {
-      this.error.set("Reject failed.");
-      this.feedback.error("Reject failed.");
+      this.feedback.success(`${item.name} was rejected.`, this.tr("admin.pending.rejected"));
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "admin.pending.rejectFailed"));
+      this.feedback.error(this.apiErr(caught, "admin.pending.rejectFailed"));
     } finally {
       this.busyId.set(null);
     }

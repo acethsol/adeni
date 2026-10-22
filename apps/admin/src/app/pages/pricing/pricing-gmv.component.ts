@@ -6,6 +6,8 @@ import {
   AdeniPortalEmptyStateComponent,
   AdeniStaffButtonComponent,
   PortalPageComponent,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 import { adminLoadErrorMessage } from "../../shared/admin-load-error";
@@ -29,6 +31,8 @@ type GmvCountryRow = {
   styleUrl: "./pricing-gmv.component.scss",
 })
 export class AdminPricingGmvComponent {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(AdminApiService);
   private readonly feedback = inject(AdeniFeedbackService);
 
@@ -81,8 +85,8 @@ export class AdminPricingGmvComponent {
         }
       }
       this.rows.set([...byCountry.values()].sort((a, b) => a.countryCode.localeCompare(b.countryCode)));
-    } catch {
-      this.feedback.error("Could not load GMV settings for this version.");
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "admin.pricing.couldNotLoadGmvSettings"));
       this.rows.set([]);
     }
   }
@@ -127,8 +131,8 @@ export class AdminPricingGmvComponent {
       });
       this.feedback.success("GMV settings saved on draft catalog.");
       await this.selectVersion(code);
-    } catch {
-      this.feedback.error("Could not save GMV settings.");
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "admin.pricing.couldNotSaveGmvSettings"));
     } finally {
       this.saving.set(false);
     }

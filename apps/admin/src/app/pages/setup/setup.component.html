@@ -1,18 +1,18 @@
 <section class="setup">
   @if (signedOut) {
-    <h1>Signed out</h1>
-    <p>The local admin session has ended.</p>
-    <button type="button" class="sign-in" (click)="signIn()">Sign in</button>
+    <h1>{{ tr('admin.setup.signedOut') }}</h1>
+    <p>{{ tr('admin.setup.theLocalAdminSessionHas') }}</p>
+    <button type="button" class="sign-in" (click)="signIn()">{{ tr('common.sign') }}</button>
   } @else {
-  <h1>Configure business portal access</h1>
+  <h1>{{ tr('admin.setup.configureBusinessPortalAccess') }}</h1>
   <p>
-    Set Auth0 SPA credentials in <code>src/environments/environment.development.ts</code>, or keep
-    <code>devBusinessAuth0Sub</code> for local API dev (Auth0 disabled on the API).
+    {{ tr('admin.setup.setAuth0SpaCredentials') }} <code>src/environments/environment.development.ts</code>{{ tr('admin.setup.orKeep') }}
+    <code>devBusinessAuth0Sub</code> {{ tr('admin.setup.forLocalApiDevAuth0') }}
   </p>
   <ul>
-    <li>Copy fields from <code>apps/portal/.env.example.md</code> into your environment file.</li>
-    <li>Create an Auth0 <strong>Single Page Application</strong> (PKCE) for the portal — not the Next confidential client.</li>
-    <li>Callback URL: <code>http://localhost:5173</code></li>
+    <li>{{ tr('admin.setup.copyFieldsFrom') }} <code>apps/portal/.env.example.md</code> {{ tr('admin.setup.intoEnvironmentFile') }}</li>
+    <li>{{ tr('admin.setup.createAuth0') }} <strong>{{ tr('admin.setup.singlePageApplication') }}</strong> {{ tr('admin.setup.pkcePortalNotNextConfidential') }}</li>
+    <li>{{ tr('admin.setup.callbackUrl') }} <code>http://localhost:5173</code></li>
   </ul>
   }
 </section>

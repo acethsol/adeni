@@ -1,17 +1,17 @@
 <app-portal-page
-  title="GMV platform fees"
-  description="Per-country platform fee % and self-serve flags on the pricing catalog (draft edits; publish from Catalog)."
+  [title]="tr('admin.pricing.gmvPlatformFees')"
+  [description]="tr('admin.pricing.perCountryPlatformFeeSelf')"
 >
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
 
   @if (loading()) {
-    <p class="muted">Loading…</p>
+    <p class="muted">{{ tr('common.loading') }}</p>
   } @else {
     <section class="card toolbar">
       <label>
-        Catalog version
+        {{ tr('admin.pricing.catalogVersion') }}
         <select
           [value]="selectedCode() ?? ''"
           (change)="selectVersion(($any($event.target)).value)"
@@ -30,27 +30,27 @@
           [disabled]="saving()"
           (pressed)="saveDraft()"
         >
-          Save draft GMV
+          {{ tr('admin.pricing.saveDraftGmv') }}
         </adeni-staff-btn>
       } @else {
-        <p class="muted">Select a draft version to edit GMV settings.</p>
+        <p class="muted">{{ tr('admin.pricing.selectDraftVersionEditGmv') }}</p>
       }
     </section>
 
     @if (rows().length === 0) {
       <adeni-portal-empty-state
         icon="calendar"
-        title="No country rows"
-        description="Seed or create catalog entries first."
+        [title]="tr('admin.pricing.noCountryRows')"
+        [description]="tr('admin.pricing.seedCreateCatalogEntriesFirst')"
       />
     } @else {
       <section class="card">
         <table class="gmv-table">
           <thead>
             <tr>
-              <th>Country</th>
-              <th>Platform fee %</th>
-              <th>Self-serve</th>
+              <th>{{ tr('common.country') }}</th>
+              <th>{{ tr('common.platformFee') }}</th>
+              <th>{{ tr('admin.pricing.selfServe') }}</th>
             </tr>
           </thead>
           <tbody>

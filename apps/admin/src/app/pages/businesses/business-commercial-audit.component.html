@@ -1,15 +1,15 @@
 @if (facade.business()) {
   <section class="widget-card billing-grid-section">
     <header class="widget-card__head">
-      <h3>Commercial audit</h3>
-      <p class="hint">Admin commercial edits, price binds, and subscription billing events.</p>
+      <h3>{{ tr('common.commercialAudit') }}</h3>
+      <p class="hint">{{ tr('admin.businesses.adminCommercialEditsPriceBinds') }}</p>
     </header>
 
     @if (isEmptyCatalog()) {
       <adeni-portal-empty-state
         icon="edit"
-        title="No commercial audit entries"
-        description="Run db/scripts/admin-commercial-audit-dev-seed.sql for dev samples, or edit commercial terms to append audit rows."
+        [title]="tr('admin.businesses.noCommercialAuditEntries')"
+        [description]="tr('admin.businesses.runDbScriptsAdminCommercial')"
         [compact]="true"
       />
     } @else {
@@ -17,9 +17,9 @@
         [showViewSwitcher]="false"
         [count]="filteredRows().length"
         [countTotal]="facade.commercialAudit().length"
-        singularCountLabel="entry"
-        pluralCountLabel="entries"
-        searchPlaceholder="Action, actor, or metadata"
+        [singularCountLabel]="tr('admin.businesses.entry')"
+        [pluralCountLabel]="tr('admin.businesses.entries')"
+        [searchPlaceholder]="tr('admin.businesses.actionActorMetadata')"
         [searchQuery]="searchQuery()"
         (searchQueryChange)="searchQuery.set($event)"
       />
@@ -27,8 +27,8 @@
       @if (isEmptySearch()) {
         <adeni-portal-empty-state
           icon="search"
-          title="No matching audit entries"
-          description="Try a different action name or actor id."
+          [title]="tr('admin.businesses.noMatchingAuditEntries')"
+          [description]="tr('admin.businesses.tryDifferentActionNameActor')"
           [compact]="true"
         />
       } @else {

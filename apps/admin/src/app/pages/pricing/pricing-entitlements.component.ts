@@ -15,6 +15,7 @@ import {
   AdeniPortalEmptyStateComponent,
   PortalPageComponent,
   type AdeniDataTableColumn,
+  injectAdeniTranslate,
 } from "@adeni/ui";
 
 type EntitlementMatrixRow = {
@@ -74,6 +75,7 @@ function buildMatrixRows(): EntitlementMatrixRow[] {
   styleUrl: "./pricing-entitlements.component.scss",
 })
 export class AdminPricingEntitlementsComponent {
+  protected readonly tr = injectAdeniTranslate();
   readonly searchText = signal("");
   readonly matrixRows = signal<EntitlementMatrixRow[]>(buildMatrixRows());
 

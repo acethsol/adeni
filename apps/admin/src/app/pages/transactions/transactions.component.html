@@ -1,6 +1,6 @@
 <app-portal-page
-  title="Transactions"
-  description="Recent commerce checkouts and SaaS charges, or search by Paystack reference, transaction id, or business name."
+  [title]="tr('common.transactions')"
+  [description]="tr('admin.transactions.recentCommerceCheckoutsSaasCharges')"
 >
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
@@ -11,16 +11,16 @@
     [showSearch]="true"
     [count]="rows().length"
     [countTotal]="totalCount()"
-    singularCountLabel="result"
-    pluralCountLabel="results"
-    searchPlaceholder="Paystack ref, transaction id, or business name"
+    [singularCountLabel]="tr('admin.transactions.result')"
+    [pluralCountLabel]="tr('common.results')"
+    [searchPlaceholder]="tr('admin.transactions.paystackRefTransactionIdBusiness')"
     [searchQuery]="searchQuery()"
     (searchQueryChange)="onSearchInput($event)"
   >
     <adeni-list-filter-row listFilters>
       <adeni-filter-select
         layout="toolbar"
-        label="Transaction type"
+        [label]="tr('admin.transactions.transactionType')"
         [options]="kindFilterOptions"
         [value]="kindFilter()"
         (valueChange)="onKindChange($any($event))"
@@ -28,30 +28,30 @@
     </adeni-list-filter-row>
     <adeni-export-menu
       listExports
-      label="Export"
+      [label]="tr('common.export')"
       [items]="exportItems"
       (exportSelect)="onExport($event)"
     />
   </adeni-list-toolbar>
 
   @if (searching() && !loaded()) {
-    <p class="muted">Loading transactions…</p>
+    <p class="muted">{{ tr('admin.transactions.loadingTransactions') }}</p>
   } @else if (loaded() && totalCount() === 0 && !error()) {
     <adeni-portal-empty-state
       icon="search"
-      title="No transactions yet"
-      description="Seed dev data with db/scripts/admin-transactions-dev-seed.sql (search “devseed” after), or complete a checkout / sync a SaaS charge."
+      [title]="tr('admin.transactions.noTransactionsYet')"
+      [description]="tr('admin.transactions.seedDevDataWithDb')"
     />
   } @else if (loaded() && rows().length === 0 && searchQuery().trim() && !error()) {
     <adeni-portal-empty-state
       icon="search"
-      title="No transactions found"
-      description="Try the full Paystack reference or transaction id."
+      [title]="tr('admin.transactions.noTransactionsFound')"
+      [description]="tr('admin.transactions.tryFullPaystackReferenceTransaction')"
       [compact]="true"
     />
   } @else if (rows().length > 0) {
     @if (browseMode()) {
-      <p class="list-lead muted">Showing the most recent matches. Use search to narrow by reference or business name.</p>
+      <p class="list-lead muted">{{ tr('admin.transactions.showingMostRecentMatchesUse') }}</p>
     }
 
     <adeni-data-table
@@ -95,7 +95,7 @@
       [totalCount]="totalCount()"
       [pageSizeOptions]="listPageSizeOptions"
       [loading]="searching()"
-      ariaLabel="Transaction pages"
+      [ariaLabel]="tr('admin.transactions.transactionPages')"
       (pageChange)="goToPage($event)"
       (pageSizeChange)="onPageSizeChange($event)"
     />

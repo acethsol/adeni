@@ -28,6 +28,8 @@ import {
   PortalPageComponent,
   type AdeniDataTableColumn,
   type AdeniExportMenuItem,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 import { adminLoadErrorMessage } from "../../shared/admin-load-error";
@@ -72,6 +74,8 @@ type PricingCatalogEntryRow = {
   styleUrl: "./pricing-catalog.component.scss",
 })
 export class AdminPricingCatalogComponent {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(AdminApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -250,7 +254,7 @@ export class AdminPricingCatalogComponent {
   async onExport(format: ReportExportFormat): Promise<void> {
     const code = this.selectedCode();
     if (!code) {
-      this.feedback.error("Select a catalog version first.");
+      this.feedback.error(this.tr("admin.pricing.selectCatalogVersionFirst"));
       return;
     }
 
@@ -267,9 +271,9 @@ export class AdminPricingCatalogComponent {
         blob,
         adminListExportFileName(`${REPORT_KEYS.adminPricingCatalogEntries}-${code}`, format),
       );
-      this.feedback.success("Catalog entries downloaded.");
-    } catch {
-      this.feedback.error("Export failed.");
+      this.feedback.success(this.tr("admin.pricing.catalogEntriesDownloaded"));
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "common.exportFailed"));
     } finally {
       this.exporting.set(false);
     }
@@ -358,17 +362,17 @@ export class AdminPricingCatalogComponent {
   async submitCreate(): Promise<void> {
     const code = this.createCode().trim();
     if (!code) {
-      this.feedback.error("Version code is required.");
+      this.feedback.error(this.tr("admin.pricing.versionCodeRequired"));
       return;
     }
     const effectiveRaw = this.createEffectiveFrom().trim();
     if (!effectiveRaw) {
-      this.feedback.error("Effective from date is required.");
+      this.feedback.error(this.tr("admin.pricing.effectiveFromDateRequired"));
       return;
     }
     const effectiveDate = new Date(effectiveRaw);
     if (Number.isNaN(effectiveDate.getTime())) {
-      this.feedback.error("Effective from date is not valid.");
+      this.feedback.error(this.tr("admin.pricing.effectiveFromDateNotValid"));
       return;
     }
     const effectiveFrom = effectiveDate.toISOString();
@@ -388,7 +392,7 @@ export class AdminPricingCatalogComponent {
         "Creating draft…",
         code,
       );
-      this.feedback.success("Draft catalog version created.", code);
+      this.feedback.success(this.tr("admin.pricing.draftCatalogVersionCreated"), code);
       this.closeCreate();
       await this.loadVersions();
       this.selectVersion(code);
@@ -425,7 +429,7 @@ export class AdminPricingCatalogComponent {
         "Activating…",
         code,
       );
-      this.feedback.success(`${code} is now the active catalog.`, "Catalog published");
+      this.feedback.success(`${code} is now the active catalog.`, this.tr("admin.pricing.catalogPublished"));
       await this.loadVersions();
       await this.loadEntries(code);
     } catch (err) {
@@ -483,7 +487,7 @@ export class AdminPricingCatalogComponent {
     }
     const currency = this.editCurrency().trim().toUpperCase();
     if (currency.length !== 3) {
-      this.feedback.error("Currency must be a 3-letter ISO code.");
+      this.feedback.error(this.tr("admin.pricing.currencyMustBe3Letter"));
       return;
     }
     const amountRaw = this.editMonthlyAmount().trim();
@@ -491,14 +495,14 @@ export class AdminPricingCatalogComponent {
     if (amountRaw !== "") {
       const parsed = Number(amountRaw);
       if (Number.isNaN(parsed) || parsed < 0) {
-        this.feedback.error("List price must be a non-negative number.");
+        this.feedback.error(this.tr("admin.pricing.listPriceMustBeNon"));
         return;
       }
       monthlyAmountMajor = parsed;
     }
     const platformFee = this.editPlatformFee();
     if (platformFee < 0 || platformFee > 100) {
-      this.feedback.error("Platform fee must be between 0 and 100.");
+      this.feedback.error(this.tr("admin.pricing.platformFeeMustBeBetween"));
       return;
     }
 
@@ -534,7 +538,7 @@ export class AdminPricingCatalogComponent {
         });
         await client.upsertAdminPricingCatalogEntries(code, { entries });
       });
-      this.feedback.success("Catalog entry updated.", `${countryCode} · ${subscriptionSku}`);
+      this.feedback.success(this.tr("admin.pricing.catalogEntryUpdated"), `${countryCode} · ${subscriptionSku}`);
       this.closeEditEntry();
       await this.loadEntries(code);
     } catch (err) {

@@ -1,29 +1,27 @@
 <app-portal-page
-  title="Markets"
-  description="Discovery cities and regions. Live markets appear in the public catalog; offline markets keep existing businesses but hide from new discovery."
+  [title]="tr('common.markets')"
+  [description]="tr('admin.markets.discoveryCitiesRegionsLiveMarkets')"
 >
   <p pageActions>
-    <adeni-staff-btn variant="primary" icon="add" (pressed)="openCreate()">Add market</adeni-staff-btn>
+    <adeni-staff-btn variant="primary" icon="add" (pressed)="openCreate()">{{ tr('common.addMarket') }}</adeni-staff-btn>
   </p>
 
-  <section class="workflow-hints" aria-label="Market actions">
+  <section class="workflow-hints" [attr.aria-label]="tr('admin.markets.marketActions')">
     <article class="workflow-hint-item">
       <adeni-carbon-icon name="misuse" [size]="18" />
       <div>
-        <strong>Take offline</strong>
+        <strong>{{ tr('admin.markets.takeOffline') }}</strong>
         <p>
-          Removes the market from discovery and pickers. Existing tenants and bookings keep the same
-          market id.
+          {{ tr('admin.markets.removesMarketFromDiscoveryPickers') }}
         </p>
       </div>
     </article>
     <article class="workflow-hint-item">
       <adeni-carbon-icon name="add" [size]="18" />
       <div>
-        <strong>Add a market</strong>
+        <strong>{{ tr('admin.markets.addMarket') }}</strong>
         <p>
-          Creates catalog metadata (country, currency, map center). Businesses choose the market on
-          each location; go live when ready for discovery.
+          {{ tr('admin.markets.createsCatalogMetadataCountryCurrency') }}
         </p>
       </div>
     </article>
@@ -34,12 +32,12 @@
   }
 
   @if (loading() && markets().length === 0) {
-    <p class="muted">Loading markets…</p>
+    <p class="muted">{{ tr('admin.markets.loadingMarkets') }}</p>
   } @else if (isEmptyCatalog()) {
     <adeni-portal-empty-state
       icon="location--filled"
-      title="No markets configured"
-      description="Add Ottawa, Lagos, or the next city where discovery should run."
+      [title]="tr('admin.markets.noMarketsConfigured')"
+      [description]="tr('admin.markets.addOttawaLagosNextCity')"
     />
   } @else {
     <div class="roster">
@@ -48,9 +46,9 @@
         [showViewSwitcher]="false"
         [count]="markets().length"
         [countTotal]="totalCount()"
-        singularCountLabel="market"
-        pluralCountLabel="markets"
-        searchPlaceholder="Name, id, country, or currency"
+        [singularCountLabel]="tr('admin.markets.market')"
+        [pluralCountLabel]="tr('admin.markets.markets')"
+        [searchPlaceholder]="tr('admin.markets.nameIdCountryCurrency')"
         [searchQuery]="searchText()"
         (searchQueryChange)="onToolbarSearch($event)"
       />
@@ -96,7 +94,7 @@
             <adeni-row-action-bar>
               <adeni-icon-btn
                 icon="edit"
-                label="Edit market"
+                [label]="tr('common.editMarket')"
                 variant="table"
                 [dense]="true"
                 (pressed)="openEdit(market)"
@@ -104,7 +102,7 @@
               @if (market.isLive) {
                 <adeni-icon-btn
                   icon="misuse"
-                  label="Take offline"
+                  [label]="tr('admin.markets.takeOffline')"
                   variant="danger-soft"
                   [dense]="true"
                   (pressed)="toggleLive(market)"
@@ -112,7 +110,7 @@
               } @else {
                 <adeni-icon-btn
                   icon="flash--filled"
-                  label="Go live"
+                  [label]="tr('admin.markets.goLive')"
                   variant="table"
                   [dense]="true"
                   (pressed)="toggleLive(market)"
@@ -128,7 +126,7 @@
           [totalCount]="totalCount()"
           [pageSizeOptions]="listPageSizeOptions"
           [loading]="loading()"
-          ariaLabel="Market pages"
+          [ariaLabel]="tr('admin.markets.marketPages')"
           (pageChange)="goToPage($event)"
           (pageSizeChange)="onPageSizeChange($event)"
         />

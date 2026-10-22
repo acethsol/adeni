@@ -7,6 +7,7 @@ import {
   AdeniPortalEmptyStateComponent,
   type AdeniDataTableColumn,
   type AdeniDataTableSortDirection,
+  injectAdeniTranslate,
 } from "@adeni/ui";
 import { BusinessDetailFacade, type CommercialAuditEntry } from "./business-detail.facade";
 
@@ -35,6 +36,7 @@ function auditMatchesSearch(row: CommercialAuditEntry, query: string): boolean {
   styleUrl: "./business-commercial-audit.component.scss",
 })
 export class BusinessCommercialAuditComponent {
+  protected readonly tr = injectAdeniTranslate();
   readonly facade = inject(BusinessDetailFacade);
 
   readonly searchQuery = signal("");

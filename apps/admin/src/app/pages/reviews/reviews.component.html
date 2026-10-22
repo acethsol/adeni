@@ -1,4 +1,4 @@
-<app-portal-page title="Reviews" description="Moderate customer reviews tied to completed bookings.">
+<app-portal-page [title]="tr('common.reviews')" [description]="tr('admin.reviews.moderateCustomerReviewsTiedCompleted')">
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
@@ -6,18 +6,18 @@
   <section class="card list-toolbar">
     <form class="search-form" (submit)="applyFilters(); $event.preventDefault()">
       <label class="search-field">
-        <span class="visually-hidden">Search reviews</span>
+        <span class="visually-hidden">{{ tr('admin.reviews.searchReviews') }}</span>
         <adeni-carbon-icon name="search" [size]="16" />
         <input
           type="search"
           [ngModel]="searchText()"
           (ngModelChange)="searchText.set($event)"
           name="q"
-          placeholder="Business, customer, or comment"
+          [placeholder]="tr('admin.reviews.businessCustomerComment')"
           autocomplete="off"
         />
       </label>
-      <adeni-staff-btn type="submit" variant="primary" icon="search">Search</adeni-staff-btn>
+      <adeni-staff-btn type="submit" variant="primary" icon="search">{{ tr('common.search') }}</adeni-staff-btn>
     </form>
     <label class="checkbox-field">
       <input
@@ -26,34 +26,34 @@
         (ngModelChange)="includeHidden.set($event); applyFilters()"
         name="includeHidden"
       />
-      Include hidden
+      {{ tr('admin.reviews.includeHidden') }}
     </label>
-    <adeni-staff-btn icon="restart" [disabled]="loading()" (pressed)="load()">Refresh</adeni-staff-btn>
+    <adeni-staff-btn icon="restart" [disabled]="loading()" (pressed)="load()">{{ tr('common.refresh') }}</adeni-staff-btn>
     @if (!loading() && totalCount() > 0) {
       <p class="toolbar-meta">{{ showingRange() }}</p>
     }
   </section>
 
   @if (loading() && items().length === 0) {
-    <p class="muted">Loading reviews…</p>
+    <p class="muted">{{ tr('admin.reviews.loadingReviews') }}</p>
   } @else if (isEmpty()) {
     <adeni-portal-empty-state
       icon="user--follow"
-      title="No reviews to show"
-      description="Reviews appear here after customers rate completed bookings. Adjust filters to include hidden content."
+      [title]="tr('admin.reviews.noReviewsShow')"
+      [description]="tr('admin.reviews.reviewsAppearHereAfterCustomers')"
     />
   } @else {
     <section class="card data-table-wrap">
       <table class="data-table">
         <thead>
           <tr>
-            <th scope="col">Business</th>
-            <th scope="col">Rating</th>
-            <th scope="col">Comment</th>
-            <th scope="col">Customer</th>
-            <th scope="col">Posted</th>
-            <th scope="col">Status</th>
-            <th scope="col"><span class="visually-hidden">Actions</span></th>
+            <th scope="col">{{ tr('common.business') }}</th>
+            <th scope="col">{{ tr('admin.reviews.rating') }}</th>
+            <th scope="col">{{ tr('admin.reviews.comment') }}</th>
+            <th scope="col">{{ tr('common.customer') }}</th>
+            <th scope="col">{{ tr('admin.reviews.posted') }}</th>
+            <th scope="col">{{ tr('common.status') }}</th>
+            <th scope="col"><span class="visually-hidden">{{ tr('common.actions') }}</span></th>
           </tr>
         </thead>
         <tbody>
@@ -84,7 +84,7 @@
                     [disabled]="busyId() === item.id"
                     (pressed)="hideReview(item)"
                   >
-                    Hide
+                    {{ tr('admin.reviews.hide') }}
                   </adeni-staff-btn>
                 } @else {
                   <span class="muted">—</span>
@@ -102,7 +102,7 @@
       [totalCount]="totalCount()"
       [pageSizeOptions]="listPageSizeOptions"
       [loading]="loading()"
-      ariaLabel="Review pages"
+      [ariaLabel]="tr('admin.reviews.reviewPages')"
       (pageChange)="goToPage($event)"
       (pageSizeChange)="onPageSizeChange($event)"
     />

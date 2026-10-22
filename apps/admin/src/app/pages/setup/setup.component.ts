@@ -3,6 +3,7 @@ import { Router } from "@angular/router";
 import { isAdminDevSignedOut, signInAdminDev } from "../../core/admin-dev-session";
 import { ADENI_ADMIN_CONFIG, isAdminPortalDevMode } from "../../core/adeni-config";
 
+import { injectAdeniTranslate } from "@adeni/ui";
 @Component({
   selector: "app-setup",
   standalone: true,
@@ -10,6 +11,7 @@ import { ADENI_ADMIN_CONFIG, isAdminPortalDevMode } from "../../core/adeni-confi
   styleUrl: "./setup.component.scss",
 })
 export class SetupComponent {
+  protected readonly tr = injectAdeniTranslate();
   private readonly router = inject(Router);
   private readonly config = inject(ADENI_ADMIN_CONFIG);
   readonly signedOut = isAdminPortalDevMode(this.config) && isAdminDevSignedOut();

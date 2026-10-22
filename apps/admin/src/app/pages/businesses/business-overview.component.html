@@ -19,7 +19,7 @@
         <adeni-carbon-icon name="wallet" [size]="20" />
       </span>
       <span class="stat-body">
-        <span class="stat-label">Effective monthly</span>
+        <span class="stat-label">{{ tr('common.effectiveMonthly') }}</span>
         <span class="stat-value stat-value-sm">{{ effectiveMonthlyLabel() }}</span>
         <span class="stat-hint">{{ effectiveMonthlyHint() }}</span>
       </span>
@@ -30,7 +30,7 @@
         <adeni-carbon-icon name="calendar" [size]="20" />
       </span>
       <span class="stat-body">
-        <span class="stat-label">Adeni charges</span>
+        <span class="stat-label">{{ tr('admin.businesses.adeniCharges') }}</span>
         <span class="stat-value">{{ facade.charges().length }}</span>
         <span class="stat-hint">{{ lastChargeHint() }}</span>
       </span>
@@ -41,7 +41,7 @@
         <adeni-carbon-icon name="time" [size]="20" />
       </span>
       <span class="stat-body">
-        <span class="stat-label">Commercial audit</span>
+        <span class="stat-label">{{ tr('common.commercialAudit') }}</span>
         <span class="stat-value">{{ facade.commercialAudit().length }}</span>
         <span class="stat-hint">{{ auditHint() }}</span>
       </span>
@@ -51,13 +51,13 @@
   <section class="widget-card">
     <header class="widget-card__head widget-card__head--row">
       <div>
-        <h3>Recent charges</h3>
-        <p class="hint">Preview of the latest subscription charges — search and export on Billing.</p>
+        <h3>{{ tr('admin.businesses.recentCharges') }}</h3>
+        <p class="hint">{{ tr('admin.businesses.previewLatestSubscriptionChargesSearch') }}</p>
       </div>
-      <button type="button" class="tab-link" (click)="navigateTab('billing')">Open billing</button>
+      <button type="button" class="tab-link" (click)="navigateTab('billing')">{{ tr('admin.businesses.openBilling') }}</button>
     </header>
     @if (recentCharges().length === 0) {
-      <p class="dashboard-empty">No subscription charges synced yet.</p>
+      <p class="dashboard-empty">{{ tr('admin.businesses.noSubscriptionChargesSyncedYet') }}</p>
     } @else {
       <div class="adeni-list-results overview-charges-preview">
         <adeni-data-table

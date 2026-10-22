@@ -3,7 +3,7 @@
     <adeni-modal
       [open]="open()"
       [title]="b.name"
-      subtitle="Manage subscription, billing, and commercial overrides for this tenant."
+      [subtitle]="tr('admin.businesses.manageSubscriptionBillingCommercialOverrides')"
       size="xl"
       [hasFooter]="false"
       (closed)="onClose()"
@@ -20,7 +20,7 @@
         <adeni-wizard
         [steps]="steps"
         [activeId]="wizardStep()"
-        ariaLabel="Subscription setup"
+        [ariaLabel]="tr('admin.businesses.subscriptionSetup')"
         [allowJump]="true"
         (stepSelect)="onStepSelect($event)"
       >
@@ -28,7 +28,7 @@
           @switch (wizardStep()) {
             @case ("plan") {
               <label>
-                Plan SKU
+                {{ tr('common.planSku') }}
                 <select
                   [ngModel]="d.subscriptionSku"
                   (ngModelChange)="patch({ subscriptionSku: $event })"
@@ -43,7 +43,7 @@
             @case ("billing") {
               <div class="grid">
                 <label>
-                  Billing status
+                  {{ tr('common.billingStatus') }}
                   <select
                     [ngModel]="d.billingStatus"
                     (ngModelChange)="patch({ billingStatus: $event })"
@@ -62,12 +62,12 @@
                   (ngModelChange)="patch({ endTrial: $event })"
                   name="endTrial"
                 />
-                End trial and bill as active
+                {{ tr('admin.businesses.endTrialBillAsActive') }}
               </label>
               @if (!d.endTrial) {
                 <div class="grid">
                   <label>
-                    Trial length (days)
+                    {{ tr('admin.businesses.trialLengthDays') }}
                     <input
                       type="number"
                       min="0"
@@ -78,7 +78,7 @@
                     />
                   </label>
                   <label>
-                    Trial entitlements SKU
+                    {{ tr('admin.businesses.trialEntitlementsSku') }}
                     <select
                       [ngModel]="d.trialSku"
                       (ngModelChange)="patch({ trialSku: $event })"
@@ -96,7 +96,7 @@
               @if (pricingPreview(); as preview) {
                 <div class="pricing-summary">
                   <p>
-                    <span class="muted">Billing country</span>
+                    <span class="muted">{{ tr('common.billingCountry') }}</span>
                     <strong>{{ preview.country }}</strong>
                     @if (d.initialTerms.pricingCatalogVersion) {
                       <span class="muted"> · {{ d.initialTerms.pricingCatalogVersion }}</span>
@@ -104,13 +104,13 @@
                   </p>
                   @if (preview.catalogAmount != null) {
                     <p>
-                      <span class="muted">Catalog list</span>
+                      <span class="muted">{{ tr('common.catalogList') }}</span>
                       <strong>{{ formatPrice(preview.catalogAmount, preview.currency) }}/mo</strong>
                     </p>
                   }
                   @if (preview.effectiveAmount != null) {
                     <p>
-                      <span class="muted">Effective monthly</span>
+                      <span class="muted">{{ tr('common.effectiveMonthly') }}</span>
                       <strong>{{ formatPrice(preview.effectiveAmount, preview.currency) }}/mo</strong>
                     </p>
                   }
@@ -123,12 +123,12 @@
                   (ngModelChange)="patch({ clearDiscounts: $event })"
                   name="clearDiscounts"
                 />
-                Clear all discounts
+                {{ tr('admin.businesses.clearAllDiscounts') }}
               </label>
               @if (!d.clearDiscounts) {
                 <div class="grid">
                   <label>
-                    Discount %
+                    {{ tr('admin.businesses.discount') }}
                     <input
                       type="number"
                       min="0"
@@ -140,7 +140,7 @@
                     />
                   </label>
                   <label>
-                    Fixed discount
+                    {{ tr('admin.businesses.fixedDiscount') }}
                     <input
                       type="number"
                       min="0"
@@ -150,7 +150,7 @@
                     />
                   </label>
                   <label>
-                    Currency
+                    {{ tr('common.currency') }}
                     <input
                       maxlength="3"
                       [ngModel]="d.discountCurrency"
@@ -160,7 +160,7 @@
                     />
                   </label>
                   <label>
-                    Cycles remaining
+                    {{ tr('admin.businesses.cyclesRemaining') }}
                     <input
                       type="number"
                       min="0"
@@ -178,12 +178,12 @@
                   (ngModelChange)="patch({ clearCustomSaasPrice: $event })"
                   name="clearCustomSaasPrice"
                 />
-                Use catalog country pricing only
+                {{ tr('admin.businesses.useCatalogCountryPricingOnly') }}
               </label>
               @if (!d.clearCustomSaasPrice) {
                 <div class="grid">
                   <label>
-                    Custom monthly amount
+                    {{ tr('admin.businesses.customMonthlyAmount') }}
                     <input
                       type="number"
                       min="0"
@@ -193,7 +193,7 @@
                     />
                   </label>
                   <label>
-                    Currency
+                    {{ tr('common.currency') }}
                     <input
                       maxlength="3"
                       [ngModel]="d.customSaasCurrency"
@@ -203,13 +203,13 @@
                     />
                   </label>
                   <label>
-                    Applies to SKU
+                    {{ tr('admin.businesses.appliesSku') }}
                     <select
                       [ngModel]="d.customSaasSku"
                       (ngModelChange)="patch({ customSaasSku: $event })"
                       name="customSaasSku"
                     >
-                      <option value="">Any / current</option>
+                      <option value="">{{ tr('admin.businesses.anyCurrent') }}</option>
                       @for (sku of skus; track sku) {
                         <option [value]="sku">{{ sku }}</option>
                       }
@@ -218,66 +218,66 @@
                 </div>
               }
               <label>
-                Audit note (stored on tenant)
+                {{ tr('admin.businesses.auditNoteStoredTenant') }}
                 <textarea
                   rows="2"
                   maxlength="500"
                   [ngModel]="d.billingCompReason"
                   (ngModelChange)="patch({ billingCompReason: $event })"
                   name="billingCompReason"
-                  placeholder="Why this tenant has non-standard terms"
+                  [placeholder]="tr('admin.businesses.whyTenantHasNonStandard')"
                 ></textarea>
               </label>
               <label>
-                Reason for this change
+                {{ tr('admin.businesses.reasonChange') }}
                 <textarea
                   rows="2"
                   maxlength="500"
                   [ngModel]="d.changeReason"
                   (ngModelChange)="patch({ changeReason: $event })"
                   name="changeReason"
-                  placeholder="Required when saving commercial updates (can match audit note)"
+                  [placeholder]="tr('admin.businesses.requiredWhenSavingCommercialUpdates')"
                 ></textarea>
               </label>
               @if (requiresChangeReason()) {
-                <p class="validation-hint">Add an audit note or change reason before saving.</p>
+                <p class="validation-hint">{{ tr('admin.businesses.addAuditNoteChangeReason2') }}</p>
               }
             }
             @case ("review") {
               <ul class="review-list">
                 <li>
-                  <span>Plan</span>
+                  <span>{{ tr('admin.businesses.plan') }}</span>
                   <strong
                     >{{ formatSubscriptionSku(d.subscriptionSku)
                     }}{{ skuChanged() ? " (changed)" : "" }}</strong
                   >
                 </li>
                 <li>
-                  <span>Billing status</span>
+                  <span>{{ tr('common.billingStatus') }}</span>
                   <strong>{{ d.billingStatus }}</strong>
                 </li>
                 <li>
-                  <span>Trial</span>
+                  <span>{{ tr('admin.businesses.trial') }}</span>
                   <strong>{{
                     d.endTrial
-                      ? "End trial"
+                      ? tr('admin.businesses.endTrial')
                       : d.trialDays != null
                         ? d.trialDays + " days · " + d.trialSku
-                        : "Unchanged"
+                        : tr('admin.businesses.unchanged')
                   }}</strong>
                 </li>
                 <li>
-                  <span>Discounts</span>
-                  <strong>{{ d.clearDiscounts ? "Clear all" : "Updated or unchanged" }}</strong>
+                  <span>{{ tr('admin.businesses.discounts') }}</span>
+                  <strong>{{ d.clearDiscounts ? tr('admin.businesses.clearAll') : tr('admin.businesses.updatedUnchanged') }}</strong>
                 </li>
                 <li>
-                  <span>Custom price</span>
+                  <span>{{ tr('admin.businesses.customPrice') }}</span>
                   <strong>{{
                     d.clearCustomSaasPrice
-                      ? "Catalog only"
+                      ? tr('admin.businesses.catalogOnly')
                       : d.customSaasMonthlyAmount != null
                         ? d.customSaasMonthlyAmount + " " + (d.customSaasCurrency || "—")
-                        : "None"
+                        : tr('admin.businesses.none')
                   }}</strong>
                 </li>
               </ul>
@@ -286,14 +286,14 @@
         </div>
 
         <div wizardActions class="wizard-actions">
-          <adeni-staff-btn icon="close" (pressed)="onClose()">Cancel</adeni-staff-btn>
+          <adeni-staff-btn icon="close" (pressed)="onClose()">{{ tr('common.cancel') }}</adeni-staff-btn>
           <div class="wizard-actions__end">
             @if (!isFirstStep()) {
-              <adeni-staff-btn icon="arrow--left" [disabled]="saving()" (pressed)="back()">Back</adeni-staff-btn>
+              <adeni-staff-btn icon="arrow--left" [disabled]="saving()" (pressed)="back()">{{ tr('common.back') }}</adeni-staff-btn>
             }
             @if (!isLastStep()) {
               <adeni-staff-btn variant="primary" icon="arrow--right" iconPosition="end" (pressed)="next()">
-                Next
+                {{ tr('common.next') }}
               </adeni-staff-btn>
             } @else {
               <adeni-staff-btn
@@ -302,7 +302,7 @@
                 [disabled]="saving() || requiresChangeReason()"
                 (pressed)="save.emit()"
               >
-                {{ saving() ? "Saving…" : "Apply changes" }}
+                {{ saving() ? tr('common.saving') : tr('admin.businesses.applyChanges') }}
               </adeni-staff-btn>
             }
           </div>

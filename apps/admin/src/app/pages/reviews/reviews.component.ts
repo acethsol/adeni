@@ -12,6 +12,8 @@ import {
   AdeniListPaginationComponent,
   AdeniStaffButtonComponent,
   PortalPageComponent,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 import { adminLoadErrorMessage } from "../../shared/admin-load-error";
@@ -41,6 +43,8 @@ import { ratingPill, reviewVisibilityPill } from "../../shared/admin-pill-maps";
   styleUrl: "./reviews.component.scss",
 })
 export class AdminReviewsComponent implements OnInit {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(AdminApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -171,10 +175,10 @@ export class AdminReviewsComponent implements OnInit {
         this.items.update((list) => list.filter((row) => row.id !== item.id));
         this.totalCount.update((count) => Math.max(0, count - 1));
       }
-      this.feedback.success("Review hidden from discovery.", "Hidden");
-    } catch {
-      this.error.set("Hide failed.");
-      this.feedback.error("Hide failed.");
+      this.feedback.success(this.tr("admin.reviews.reviewHiddenFromDiscovery"), this.tr("admin.reviews.hidden"));
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "admin.reviews.hideFailed"));
+      this.feedback.error(this.apiErr(caught, "admin.reviews.hideFailed"));
     } finally {
       this.busyId.set(null);
     }

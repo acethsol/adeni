@@ -10,6 +10,7 @@ import {
   AdeniGlobalLoadingPanelComponent,
   AdeniLocaleService,
   AdeniToastHostComponent,
+  injectAdeniTranslate,
 } from "@adeni/ui";
 import { filter, map, startWith } from "rxjs";
 import {
@@ -178,6 +179,7 @@ function readSidebarCollapsed(): boolean {
   styleUrl: "./portal-shell.component.scss",
 })
 export class AdminShellComponent {
+  protected readonly tr = injectAdeniTranslate();
   readonly nav = ADMIN_NAV;
   readonly navGroups = ADMIN_NAV_GROUPS;
   readonly config = inject(ADENI_ADMIN_CONFIG);

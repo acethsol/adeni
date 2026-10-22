@@ -1,7 +1,7 @@
 import { DatePipe } from "@angular/common";
 import { Component, computed, inject } from "@angular/core";
 import { formatSubscriptionSku, formatTenantBillingStatus } from "@adeni/shared";
-import { AdeniPillComponent, AdeniStaffButtonComponent } from "@adeni/ui";
+import { AdeniPillComponent, AdeniStaffButtonComponent, injectAdeniTranslate } from "@adeni/ui";
 import { billingStatusPill, businessPlanPill } from "../../shared/admin-pill-maps";
 import { BusinessDetailFacade } from "./business-detail.facade";
 import { BusinessSubscriptionWizardHostComponent } from "./business-subscription-wizard-host.component";
@@ -19,6 +19,7 @@ import { BusinessSubscriptionWizardHostComponent } from "./business-subscription
   styleUrl: "./business-commercial-terms.component.scss",
 })
 export class BusinessCommercialTermsComponent {
+  protected readonly tr = injectAdeniTranslate();
   readonly facade = inject(BusinessDetailFacade);
 
   readonly businessPlanPill = businessPlanPill;

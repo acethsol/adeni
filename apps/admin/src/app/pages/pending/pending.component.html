@@ -1,39 +1,39 @@
 <app-portal-page
-  title="Pending verifications"
-  description="New business onboarding: review CAC/ID docs and approve or reject before the business appears on discovery."
+  [title]="tr('common.pendingVerifications')"
+  [description]="tr('admin.pending.newBusinessOnboardingReviewCac')"
 >
   <aside class="workflow-hint card">
-    <strong>Not trust badges.</strong>
-    This queue is for first-time business verification (tenant status
-    <em>Pending verification</em>). Supplemental badges (phone, CAC, address, license) are reviewed under
-    <a routerLink="/trust-badges">Trust badges</a>.
+    <strong>{{ tr('admin.pending.notTrustBadges') }}</strong>
+    {{ tr('admin.pending.thisQueueFirstTimeBusiness') }}
+    <em>{{ tr('admin.pending.pendingVerification') }}</em>{{ tr('admin.pending.supplementalBadgesPhoneCacAddress') }}
+    <a routerLink="/trust-badges">{{ tr('common.trustBadges') }}</a>.
   </aside>
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
 
   @if (loading() && items().length === 0) {
-    <p class="muted">Loading queue…</p>
+    <p class="muted">{{ tr('common.loadingQueue') }}</p>
   } @else if (isEmptyQueue()) {
     <adeni-portal-empty-state
       icon="checkmark--filled"
-      title="Verification queue is clear"
-      description="New business applications will appear here for review before they go live on discovery."
+      [title]="tr('admin.pending.verificationQueueClear')"
+      [description]="tr('admin.pending.newBusinessApplicationsWillAppear')"
     />
   } @else {
     <adeni-list-toolbar
       [showViewSwitcher]="false"
       [count]="items().length"
       [countTotal]="totalCount()"
-      singularCountLabel="application"
-      pluralCountLabel="applications"
-      searchPlaceholder="Name, slug, or market"
+      [singularCountLabel]="tr('admin.pending.application')"
+      [pluralCountLabel]="tr('admin.pending.applications')"
+      [searchPlaceholder]="tr('admin.pending.nameSlugMarket')"
       [searchQuery]="searchText()"
       (searchQueryChange)="onToolbarSearch($event)"
     >
       <adeni-export-menu
         listExports
-        label="Export"
+        [label]="tr('common.export')"
         [items]="exportItems"
         (exportSelect)="onExport($event)"
       />
@@ -77,7 +77,7 @@
             [disabled]="busyId() === item.id"
             (pressed)="reject(item)"
           >
-            Reject
+            {{ tr('admin.pending.reject') }}
           </adeni-staff-btn>
           <adeni-staff-btn
             variant="primary"
@@ -85,7 +85,7 @@
             [disabled]="busyId() === item.id"
             (pressed)="approve(item)"
           >
-            Approve
+            {{ tr('admin.pending.approve') }}
           </adeni-staff-btn>
         </div>
       </ng-template>
@@ -97,7 +97,7 @@
       [totalCount]="totalCount()"
       [pageSizeOptions]="listPageSizeOptions"
       [loading]="loading()"
-      ariaLabel="Pending verification pages"
+      [ariaLabel]="tr('admin.pending.pendingVerificationPages')"
       (pageChange)="goToPage($event)"
       (pageSizeChange)="onPageSizeChange($event)"
     />

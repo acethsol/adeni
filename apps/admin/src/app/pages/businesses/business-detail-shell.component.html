@@ -1,9 +1,9 @@
 <app-portal-page
-  [title]="facade.business()?.name ?? 'Business'"
+  [title]="facade.business()?.name ?? tr('common.business')"
   [description]="pageDescription()"
 >
-  <nav class="breadcrumb" aria-label="Breadcrumb">
-    <a routerLink="/businesses">Businesses</a>
+  <nav class="breadcrumb" [attr.aria-label]="tr('common.breadcrumb')">
+    <a routerLink="/businesses">{{ tr('common.businesses') }}</a>
     <span aria-hidden="true">/</span>
     <span>{{ facade.business()?.name ?? "…" }}</span>
   </nav>
@@ -13,11 +13,11 @@
   }
 
   @if (facade.loading() && !facade.business()) {
-    <p class="muted">Loading business…</p>
+    <p class="muted">{{ tr('admin.businesses.loadingBusiness') }}</p>
   } @else if (facade.business(); as b) {
     <section class="hero business-hero">
       <div>
-        <p class="kicker">Tenant</p>
+        <p class="kicker">{{ tr('admin.businesses.tenant') }}</p>
         <h2>{{ b.name }}</h2>
         <p class="meta">
           <code class="slug">{{ b.slug || "no-slug" }}</code>
@@ -43,11 +43,11 @@
       </div>
       <div class="hero-actions">
         <adeni-staff-btn icon="restart" [disabled]="facade.loading()" (pressed)="facade.refresh()">
-          Refresh
+          {{ tr('common.refresh') }}
         </adeni-staff-btn>
         <a class="btn" routerLink="/transactions" [queryParams]="{ q: b.name }">
           <adeni-carbon-icon name="search" [size]="16" />
-          Transactions
+          {{ tr('common.transactions') }}
         </a>
       </div>
     </section>

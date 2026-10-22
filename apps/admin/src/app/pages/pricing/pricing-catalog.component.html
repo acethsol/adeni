@@ -1,10 +1,10 @@
 <app-portal-page
-  title="Plans & pricing"
-  description="Versioned SaaS price book. Draft a new catalog, edit entries, then activate — only one version is live for GET /api/v1/pricing."
+  [title]="tr('common.plansPricing')"
+  [description]="tr('admin.pricing.versionedSaasPriceBookDraft')"
 >
   <p pageActions>
-    <adeni-staff-btn variant="primary" icon="add" (pressed)="openCreate()">New version</adeni-staff-btn>
-    <adeni-staff-btn icon="restart" [disabled]="loading()" (pressed)="loadVersions()">Refresh</adeni-staff-btn>
+    <adeni-staff-btn variant="primary" icon="add" (pressed)="openCreate()">{{ tr('admin.pricing.newVersion') }}</adeni-staff-btn>
+    <adeni-staff-btn icon="restart" [disabled]="loading()" (pressed)="loadVersions()">{{ tr('common.refresh') }}</adeni-staff-btn>
   </p>
 
   @if (error()) {
@@ -12,19 +12,19 @@
   }
 
   @if (loading() && versions().length === 0) {
-    <p class="muted">Loading catalog versions…</p>
+    <p class="muted">{{ tr('admin.pricing.loadingCatalogVersions') }}</p>
   } @else if (isEmptyVersions()) {
     <adeni-portal-empty-state
       icon="restart"
-      title="No catalog versions"
-      description="Seed the database or create a draft version to begin."
+      [title]="tr('admin.pricing.noCatalogVersions')"
+      [description]="tr('admin.pricing.seedDatabaseCreateDraftVersion')"
     />
   } @else {
-    <section class="catalog-section" aria-label="Catalog versions">
-      <h2 class="section-title">Catalog versions</h2>
+    <section class="catalog-section" [attr.aria-label]="tr('admin.pricing.catalogVersions')">
+      <h2 class="section-title">{{ tr('admin.pricing.catalogVersions') }}</h2>
       @if (activeVersion(); as active) {
         <p class="muted section-lead">
-          Live catalog: <code>{{ active.code }}</code> · effective
+          {{ tr('admin.pricing.liveCatalog') }} <code>{{ active.code }}</code> · effective
           {{ active.effectiveFrom | date: "mediumDate" }}
         </p>
       }
@@ -33,15 +33,15 @@
         storageKey="admin.pricing-catalog.versions"
         [showViewSwitcher]="false"
         [count]="filteredVersions().length"
-        singularCountLabel="version"
-        pluralCountLabel="versions"
-        searchPlaceholder="Version code or status"
+        [singularCountLabel]="tr('admin.pricing.version')"
+        [pluralCountLabel]="tr('admin.pricing.versions')"
+        [searchPlaceholder]="tr('admin.pricing.versionCodeStatus')"
         [searchQuery]="versionSearchText()"
         (searchQueryChange)="onVersionSearch($event)"
       >
         <adeni-export-menu
           listExports
-          label="Export"
+          [label]="tr('common.export')"
           [items]="exportItems()"
           (exportSelect)="onExport($event)"
         />
@@ -71,7 +71,7 @@
           </ng-template>
           <ng-template adeniDataTableCell="active" let-version>
             @if (version.isActive) {
-              <adeni-pill tone="success" [compact]="true">Active</adeni-pill>
+              <adeni-pill tone="success" [compact]="true">{{ tr('admin.pricing.active') }}</adeni-pill>
             } @else {
               <span class="muted">—</span>
             }
@@ -80,7 +80,7 @@
             <adeni-row-action-bar>
               <adeni-icon-btn
                 icon="arrow--right"
-                label="View entries"
+                [label]="tr('admin.pricing.viewEntries')"
                 variant="table"
                 [dense]="true"
                 (pressed)="selectVersion(version.code)"
@@ -92,44 +92,44 @@
     </section>
 
     @if (selectedCode(); as code) {
-      <section class="catalog-section entries-section" aria-label="Catalog entries">
+      <section class="catalog-section entries-section" [attr.aria-label]="tr('admin.pricing.catalogEntries')">
         <div class="entries-header">
           <div>
             <h2 class="section-title">Entries · {{ code }}</h2>
             <p class="muted section-lead">
               @if (selectedIsActive()) {
-                This version is live for new signups and public pricing.
+                {{ tr('admin.pricing.thisVersionLiveNewSignups') }}
               } @else if (selectedStatus() === "draft") {
-                Draft — edit list prices below, then activate. Per-country GMV:
-                <a routerLink="/pricing/gmv">GMV fees</a>.
+                {{ tr('admin.pricing.draftEditListPricesBelow') }}
+                <a routerLink="/pricing/gmv">{{ tr('admin.pricing.gmvFees') }}</a>.
               } @else {
-                Retired historical version.
+                {{ tr('admin.pricing.retiredHistoricalVersion') }}
               }
             </p>
           </div>
           @if (selectedStatus() === "draft") {
             <adeni-staff-btn variant="primary" icon="checkmark" (pressed)="activateSelected()">
-              Activate version
+              {{ tr('admin.pricing.activateVersion') }}
             </adeni-staff-btn>
           }
         </div>
 
         @if (entriesLoading()) {
-          <p class="muted">Loading entries…</p>
+          <p class="muted">{{ tr('admin.pricing.loadingEntries') }}</p>
         } @else {
           <adeni-list-toolbar
             storageKey="admin.pricing-catalog.entries"
             [showViewSwitcher]="false"
             [count]="filteredEntryRows().length"
-            singularCountLabel="price row"
-            pluralCountLabel="price rows"
-            searchPlaceholder="Country, SKU, currency, or catalog version"
+            [singularCountLabel]="tr('admin.pricing.priceRow')"
+            [pluralCountLabel]="tr('admin.pricing.priceRows')"
+            [searchPlaceholder]="tr('admin.pricing.countrySkuCurrencyCatalogVersion')"
             [searchQuery]="searchText()"
             (searchQueryChange)="onEntrySearch($event)"
           >
             <adeni-export-menu
           listExports
-          label="Export"
+          [label]="tr('common.export')"
           [items]="exportItems()"
           (exportSelect)="onExport($event)"
         />
@@ -168,9 +168,9 @@
               </ng-template>
               <ng-template adeniDataTableCell="selfServe" let-row>
                 @if (row.isSelfServeEnabled) {
-                  <adeni-pill tone="success" [compact]="true">Yes</adeni-pill>
+                  <adeni-pill tone="success" [compact]="true">{{ tr('admin.pricing.yes') }}</adeni-pill>
                 } @else {
-                  <adeni-pill tone="neutral" [compact]="true">No</adeni-pill>
+                  <adeni-pill tone="neutral" [compact]="true">{{ tr('admin.pricing.no') }}</adeni-pill>
                 }
               </ng-template>
               @if (canEditEntries()) {
@@ -178,7 +178,7 @@
                   <adeni-row-action-bar>
                     <adeni-icon-btn
                       icon="edit"
-                      label="Edit price"
+                      [label]="tr('admin.pricing.editPrice')"
                       variant="table"
                       [dense]="true"
                       (pressed)="openEditEntry(row)"
@@ -196,20 +196,20 @@
   @if (editOpen()) {
     <div class="modal-backdrop" role="presentation" (click)="closeEditEntry()"></div>
     <dialog class="create-dialog edit-dialog" open aria-labelledby="edit-entry-title">
-      <h2 id="edit-entry-title">Edit catalog entry</h2>
+      <h2 id="edit-entry-title">{{ tr('admin.pricing.editCatalogEntry') }}</h2>
       <p class="muted">
         {{ editCountry() }} · {{ formatSku(editSku()) }} — saved to draft only until you activate.
       </p>
       <label class="field">
-        <span>Country</span>
+        <span>{{ tr('common.country') }}</span>
         <input type="text" [value]="editCountry()" readonly />
       </label>
       <label class="field">
-        <span>Plan (SKU)</span>
+        <span>{{ tr('admin.pricing.planSku') }}</span>
         <input type="text" [value]="formatSku(editSku())" readonly />
       </label>
       <label class="field">
-        <span>Currency (ISO 4217)</span>
+        <span>{{ tr('admin.pricing.currencyIso4217') }}</span>
         <input
           type="text"
           maxlength="3"
@@ -218,18 +218,18 @@
         />
       </label>
       <label class="field">
-        <span>Monthly list price (major units)</span>
+        <span>{{ tr('admin.pricing.monthlyListPriceMajorUnits') }}</span>
         <input
           type="number"
           min="0"
           step="0.01"
-          placeholder="Leave empty if not listed"
+          [placeholder]="tr('admin.pricing.leaveEmptyIfNotListed')"
           [ngModel]="editMonthlyAmount()"
           (ngModelChange)="editMonthlyAmount.set($event)"
         />
       </label>
       <label class="field">
-        <span>Platform fee %</span>
+        <span>{{ tr('common.platformFee') }}</span>
         <input
           type="number"
           min="0"
@@ -245,24 +245,23 @@
           [ngModel]="editSelfServe()"
           (ngModelChange)="editSelfServe.set($event)"
         />
-        Self-serve signup enabled
+        {{ tr('admin.pricing.selfServeSignupEnabled') }}
       </label>
       <p class="muted dialog-hint">
-        Bulk GMV by country:
-        <a routerLink="/pricing/gmv" (click)="closeEditEntry()">GMV fees</a>.
-        Feature caps are in
-        <a routerLink="/pricing/entitlements" (click)="closeEditEntry()">Plan entitlements</a>.
+        {{ tr('admin.pricing.bulkGmvByCountry') }}
+        <a routerLink="/pricing/gmv" (click)="closeEditEntry()">{{ tr('admin.pricing.gmvFees') }}</a>{{ tr('admin.pricing.featureCaps') }}
+        <a routerLink="/pricing/entitlements" (click)="closeEditEntry()">{{ tr('common.planEntitlements') }}</a>.
       </p>
       <div class="dialog-actions">
         <adeni-staff-btn icon="close" (pressed)="closeEditEntry()" [disabled]="editSaving()"
-          >Cancel</adeni-staff-btn
+          >{{ tr('common.cancel') }}</adeni-staff-btn
         >
         <adeni-staff-btn
           variant="primary"
           icon="save"
           [disabled]="editSaving()"
           (pressed)="submitEditEntry()"
-          >Save entry</adeni-staff-btn
+          >{{ tr('admin.pricing.saveEntry') }}</adeni-staff-btn
         >
       </div>
     </dialog>
@@ -271,10 +270,10 @@
   @if (createOpen()) {
     <div class="modal-backdrop" role="presentation" (click)="closeCreate()"></div>
     <dialog class="create-dialog" open aria-labelledby="create-catalog-title">
-      <h2 id="create-catalog-title">New catalog version</h2>
-      <p class="muted">Creates a draft. Optionally copy rows from the active catalog.</p>
+      <h2 id="create-catalog-title">{{ tr('admin.pricing.newCatalogVersion') }}</h2>
+      <p class="muted">{{ tr('admin.pricing.createsDraftOptionallyCopyRows') }}</p>
       <label class="field">
-        <span>Version code</span>
+        <span>{{ tr('admin.pricing.versionCode') }}</span>
         <input
           type="text"
           [ngModel]="createCode()"
@@ -284,7 +283,7 @@
         />
       </label>
       <label class="field">
-        <span>Effective from (UTC)</span>
+        <span>{{ tr('admin.pricing.effectiveFromUtc') }}</span>
         <input
           type="datetime-local"
           [ngModel]="createEffectiveFrom()"
@@ -297,18 +296,18 @@
           [ngModel]="createCloneFromActive()"
           (ngModelChange)="createCloneFromActive.set($event)"
         />
-        Clone entries from active catalog
+        {{ tr('admin.pricing.cloneEntriesFromActiveCatalog') }}
       </label>
       <div class="dialog-actions">
         <adeni-staff-btn icon="close" (pressed)="closeCreate()" [disabled]="createSaving()"
-          >Cancel</adeni-staff-btn
+          >{{ tr('common.cancel') }}</adeni-staff-btn
         >
         <adeni-staff-btn
           variant="primary"
           icon="add"
           [disabled]="createSaving()"
           (pressed)="submitCreate()"
-          >Create draft</adeni-staff-btn
+          >{{ tr('admin.pricing.createDraft') }}</adeni-staff-btn
         >
       </div>
     </dialog>

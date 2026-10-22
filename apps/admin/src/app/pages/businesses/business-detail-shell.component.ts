@@ -9,6 +9,7 @@ import {
   AdeniTabsComponent,
   type AdeniTab,
   PortalPageComponent,
+  injectAdeniTranslate,
 } from "@adeni/ui";
 import { AdminPillComponent } from "../../shared/admin-pill.component";
 import { billingStatusPill, businessPlanPill, tenantStatusPill } from "../../shared/admin-pill-maps";
@@ -32,6 +33,7 @@ import { BusinessDetailFacade } from "./business-detail.facade";
   styleUrl: "./business-detail-shell.component.scss",
 })
 export class BusinessDetailShellComponent {
+  protected readonly tr = injectAdeniTranslate();
   private readonly route = inject(ActivatedRoute);
   readonly facade = inject(BusinessDetailFacade);
 

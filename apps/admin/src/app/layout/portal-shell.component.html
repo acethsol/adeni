@@ -1,11 +1,11 @@
 <div class="shell" [class.is-collapsed]="collapsed()">
   @if (!collapsed()) {
-    <button type="button" class="sidebar-scrim" aria-label="Collapse sidebar" (click)="collapseSidebar()"></button>
+    <button type="button" class="sidebar-scrim" [attr.aria-label]="tr('common.collapseSidebar')" (click)="collapseSidebar()"></button>
   }
 
   <aside id="admin-sidebar" class="sidebar">
     <div class="sidebar-head">
-      <a class="brand" routerLink="/dashboard" aria-label="Adeni admin home">
+      <a class="brand" routerLink="/dashboard" [attr.aria-label]="tr('admin.layout.adeniAdminHome')">
         @if (collapsed()) {
           <adeni-brand-logo variant="mark" [surface]="logoSurface()" [size]="28" />
         } @else {
@@ -14,7 +14,7 @@
       </a>
     </div>
 
-    <nav class="nav" aria-label="Admin">
+    <nav class="nav" [attr.aria-label]="tr('admin.layout.admin')">
       @for (group of navGroups; track group.id) {
         <div class="nav-group">
           @if (!collapsed()) {
@@ -50,16 +50,16 @@
       <button
         type="button"
         class="rail-toggle"
-        [attr.title]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
-        [attr.data-label]="collapsed() ? 'Expand' : null"
+        [attr.title]="collapsed() ? tr('common.expandSidebar') : tr('common.collapseSidebar')"
+        [attr.data-label]="collapsed() ? tr('common.expand') : null"
         [attr.aria-expanded]="!collapsed()"
         aria-controls="admin-sidebar"
-        [attr.aria-label]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+        [attr.aria-label]="collapsed() ? tr('common.expandSidebar') : tr('common.collapseSidebar')"
         (click)="toggleSidebar()"
       >
         <app-admin-nav-icon [name]="collapsed() ? 'expand' : 'collapse'" />
         @if (!collapsed()) {
-          <span class="rail-toggle-label">Collapse</span>
+          <span class="rail-toggle-label">{{ tr('common.collapse') }}</span>
         }
       </button>
     </div>
@@ -68,7 +68,7 @@
   <div class="main">
     <header class="topbar">
       <div class="topbar-lead">
-        <nav class="crumb" aria-label="Breadcrumb">
+        <nav class="crumb" [attr.aria-label]="tr('common.breadcrumb')">
           @for (crumb of crumbs(); track crumb.label; let last = $last) {
             @if (last || !crumb.path) {
               <span [class.crumb-current]="last">{{ crumb.label }}</span>
@@ -145,7 +145,7 @@
           type="button"
           class="header-btn"
           [attr.aria-pressed]="theme() === 'dark'"
-          [attr.aria-label]="theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+          [attr.aria-label]="theme() === 'dark' ? tr('common.switchLightTheme') : tr('common.switchDarkTheme')"
           (click)="toggleTheme()"
         >
           <app-admin-nav-icon [name]="theme() === 'dark' ? 'light' : 'asleep'" />
@@ -225,17 +225,17 @@
             <span class="avatar" aria-hidden="true">{{ accountInitials() }}</span>
             <span class="user-copy">
               <span class="user-name">{{ accountName() }}</span>
-              <span class="user-role">{{ devMode ? "Local dev" : "Platform admin" }}</span>
+              <span class="user-role">{{ devMode ? "Local dev" : tr('admin.layout.platformAdmin') }}</span>
             </span>
             <span class="chev chev-sm" [class.is-open]="userOpen()" aria-hidden="true"></span>
           </button>
           @if (userOpen()) {
-            <div class="menu menu-account" role="menu" aria-label="Account">
+            <div class="menu menu-account" role="menu" [attr.aria-label]="tr('common.account')">
               <p class="menu-identity">{{ accountName() }}</p>
               @if (accountDetail()) {
                 <p class="menu-meta">{{ accountDetail() }}</p>
               }
-              <p class="menu-meta">{{ devMode ? "Local dev session" : "Platform admin" }}</p>
+              <p class="menu-meta">{{ devMode ? tr('admin.layout.localDevSession') : tr('admin.layout.platformAdmin') }}</p>
               <button type="button" class="menu-item menu-item-danger" role="menuitem" (click)="logout()">
                 <app-admin-nav-icon name="logout" />
                 {{ text("signOut") }}

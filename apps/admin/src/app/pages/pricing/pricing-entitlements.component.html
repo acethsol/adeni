@@ -1,14 +1,14 @@
 <app-portal-page
-  title="Plan entitlements"
-  description="Read-only feature matrix from plan-entitlements.json — enforced on the API and reflected in portal nav. List prices live separately under Plans &amp; pricing."
+  [title]="tr('common.planEntitlements')"
+  [description]="tr('admin.pricing.readOnlyFeatureMatrixFrom')"
 >
   <adeni-list-toolbar
     storageKey="admin.pricing-entitlements"
     [showViewSwitcher]="false"
     [count]="filteredRows().length"
-    singularCountLabel="capability row"
-    pluralCountLabel="capability rows"
-    searchPlaceholder="Capability name"
+    [singularCountLabel]="tr('admin.pricing.capabilityRow')"
+    [pluralCountLabel]="tr('admin.pricing.capabilityRows')"
+    [searchPlaceholder]="tr('admin.pricing.capabilityName')"
     [searchQuery]="searchText()"
     (searchQueryChange)="onSearch($event)"
   />
@@ -16,8 +16,8 @@
   @if (filteredRows().length === 0) {
     <adeni-portal-empty-state
       icon="calendar"
-      title="No matching capabilities"
-      description="Try a different search term."
+      [title]="tr('admin.pricing.noMatchingCapabilities')"
+      [description]="tr('common.tryDifferentSearchTerm')"
     />
   } @else {
     <div class="adeni-list-results">
@@ -60,7 +60,7 @@
   }
 
   <p class="muted footnote">
-    Ops cannot edit this matrix in admin — change the seed in
-    <code>@adeni/shared</code> and redeploy. Per-tenant overrides are price/trial only (Sprint 33b).
+    {{ tr('admin.pricing.opsCannotEditMatrixAdmin') }}
+    <code>@adeni/shared</code> {{ tr('admin.pricing.andRedeployPerTenantOverrides') }}
   </p>
 </app-portal-page>

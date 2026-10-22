@@ -15,6 +15,8 @@ import {
   AdeniFeedbackService,
   AdeniStaffButtonComponent,
   PortalPageComponent,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 
@@ -44,6 +46,8 @@ const EMPTY_LOAD_STATE: LoadState = {
   styleUrl: "./dashboard.component.scss",
 })
 export class AdminDashboardComponent implements OnInit {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(AdminApiService);
   private readonly feedback = inject(AdeniFeedbackService);
 
@@ -169,9 +173,9 @@ export class AdminDashboardComponent implements OnInit {
           recentBusinesses: recentPage?.items ?? null,
         }));
       });
-    } catch {
+    } catch (caught) {
       this.data.set(EMPTY_LOAD_STATE);
-      this.feedback.error("Could not load admin dashboard.");
+      this.feedback.error(this.apiErr(caught, "admin.dashboard.couldNotLoadAdminDashboard"));
     } finally {
       this.initialLoad.set(false);
       this.loading.set(false);

@@ -1,25 +1,24 @@
 <app-portal-page
-  title="Businesses"
-  description="Directory of all tenants: verification status, SaaS plan overrides, trials, and commercial terms. Approve or reject new applications under Pending verifications."
+  [title]="tr('common.businesses')"
+  [description]="tr('admin.businesses.directoryAllTenantsVerificationStatus')"
 >
   <aside class="workflow-hint card">
-    <strong>Workflow:</strong>
-    Onboarding (approve/reject) →
-    <a routerLink="/pending">Pending verifications</a>.
-    After a business is verified, manage subscription and commercial terms here. Optional trust badges →
-    <a routerLink="/trust-badges">Trust badges</a>.
+    <strong>{{ tr('admin.businesses.workflow') }}</strong>
+    {{ tr('admin.businesses.onboardingApproveReject') }}
+    <a routerLink="/pending">{{ tr('common.pendingVerifications') }}</a>{{ tr('admin.businesses.afterBusinessVerifiedManageSubscription') }}
+    <a routerLink="/trust-badges">{{ tr('common.trustBadges') }}</a>.
   </aside>
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
 
   @if (loading() && businesses().length === 0) {
-    <p class="muted">Loading businesses…</p>
+    <p class="muted">{{ tr('admin.businesses.loadingBusinesses') }}</p>
   } @else if (isEmptyCatalog()) {
     <adeni-portal-empty-state
       icon="user--follow"
-      title="No businesses yet"
-      description="Verified tenants appear here for plan overrides and commercial terms."
+      [title]="tr('admin.businesses.noBusinessesYet')"
+      [description]="tr('admin.businesses.verifiedTenantsAppearHerePlan')"
     />
   } @else {
     <div class="roster">
@@ -28,15 +27,15 @@
         [showViewSwitcher]="false"
         [count]="businesses().length"
         [countTotal]="totalCount()"
-        singularCountLabel="business"
-        pluralCountLabel="businesses"
-        searchPlaceholder="Name or slug"
+        [singularCountLabel]="tr('admin.businesses.business')"
+        [pluralCountLabel]="tr('admin.businesses.businesses')"
+        [searchPlaceholder]="tr('admin.businesses.nameSlug')"
         [searchQuery]="searchText()"
         (searchQueryChange)="onToolbarSearch($event)"
       >
         <adeni-export-menu
           listExports
-          label="Export"
+          [label]="tr('common.export')"
           [items]="exportItems"
           (exportSelect)="onExport($event)"
         />
@@ -56,7 +55,7 @@
           <ng-template adeniDataTableCell="business" let-b>
             <adeni-table-person-cell
               [displayName]="b.name"
-              [subtitle]="b.slug || 'No slug'"
+              [subtitle]="b.slug || tr('admin.businesses.noSlug')"
               [initials]="businessInitials(b.name)"
               avatarTone="brand"
             />
@@ -85,7 +84,7 @@
               @if (b.status === pendingVerificationStatus) {
                 <adeni-icon-btn
                   icon="checkmark"
-                  label="Review queue"
+                  [label]="tr('admin.businesses.reviewQueue')"
                   variant="table"
                   [dense]="true"
                   [routerLink]="['/pending']"
@@ -94,14 +93,14 @@
               } @else {
                 <adeni-icon-btn
                   icon="launch"
-                  label="Open overview"
+                  [label]="tr('admin.businesses.openOverview')"
                   variant="table"
                   [dense]="true"
                   [routerLink]="['/businesses', b.id, 'overview']"
                 />
                 <adeni-icon-btn
                   icon="edit"
-                  label="Edit subscription"
+                  [label]="tr('common.editSubscription')"
                   variant="table"
                   [dense]="true"
                   (pressed)="openSubscriptionWizard(b)"
@@ -117,7 +116,7 @@
           [totalCount]="totalCount()"
           [pageSizeOptions]="listPageSizeOptions"
           [loading]="loading()"
-          ariaLabel="Business pages"
+          [ariaLabel]="tr('admin.businesses.businessPages')"
           (pageChange)="goToPage($event)"
           (pageSizeChange)="onPageSizeChange($event)"
         />

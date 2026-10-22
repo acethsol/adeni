@@ -1,11 +1,11 @@
 <app-portal-page
-  title="Trust badges"
-  description="Post-verification trust signals (phone, CAC, address, license) that businesses request from the portal."
+  [title]="tr('common.trustBadges')"
+  [description]="tr('admin.trustBadges.postVerificationTrustSignalsPhone')"
 >
   <aside class="workflow-hint card">
-    <strong>Not the onboarding queue.</strong>
-    These are optional badges on already-verified businesses. New applications waiting for first approval live under
-    <a routerLink="/pending">Pending verifications</a>.
+    <strong>{{ tr('admin.trustBadges.notOnboardingQueue') }}</strong>
+    {{ tr('admin.trustBadges.theseOptionalBadgesAlreadyVerified') }}
+    <a routerLink="/pending">{{ tr('common.pendingVerifications') }}</a>.
   </aside>
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
@@ -14,43 +14,43 @@
   <section class="card list-toolbar">
     <form class="search-form" (submit)="applySearch(); $event.preventDefault()">
       <label class="search-field">
-        <span class="visually-hidden">Filter queue</span>
+        <span class="visually-hidden">{{ tr('admin.trustBadges.filterQueue') }}</span>
         <adeni-carbon-icon name="search" [size]="16" />
         <input
           type="search"
           [ngModel]="searchText()"
           (ngModelChange)="searchText.set($event)"
           name="q"
-          placeholder="Business or reference"
+          [placeholder]="tr('admin.trustBadges.businessReference')"
           autocomplete="off"
         />
       </label>
-      <adeni-staff-btn type="submit" variant="primary" icon="search">Search</adeni-staff-btn>
+      <adeni-staff-btn type="submit" variant="primary" icon="search">{{ tr('common.search') }}</adeni-staff-btn>
     </form>
-    <adeni-staff-btn icon="restart" [disabled]="loading()" (pressed)="load()">Refresh</adeni-staff-btn>
+    <adeni-staff-btn icon="restart" [disabled]="loading()" (pressed)="load()">{{ tr('common.refresh') }}</adeni-staff-btn>
     @if (!loading() && totalCount() > 0) {
       <p class="toolbar-meta">{{ showingRange() }}</p>
     }
   </section>
 
   @if (loading() && items().length === 0) {
-    <p class="muted">Loading badge queue…</p>
+    <p class="muted">{{ tr('admin.trustBadges.loadingBadgeQueue') }}</p>
   } @else if (isEmptyQueue()) {
     <adeni-portal-empty-state
       icon="checkmark--filled"
-      title="No pending badge requests"
-      description="When businesses request phone, CAC, address, or license badges, they will appear here for review."
+      [title]="tr('admin.trustBadges.noPendingBadgeRequests')"
+      [description]="tr('admin.trustBadges.whenBusinessesRequestPhoneCac')"
     />
   } @else {
     <section class="card data-table-wrap">
       <table class="data-table">
         <thead>
           <tr>
-            <th scope="col">Business</th>
-            <th scope="col">Badge</th>
-            <th scope="col">Reference</th>
-            <th scope="col">Requested</th>
-            <th scope="col"><span class="visually-hidden">Actions</span></th>
+            <th scope="col">{{ tr('common.business') }}</th>
+            <th scope="col">{{ tr('admin.trustBadges.badge') }}</th>
+            <th scope="col">{{ tr('admin.trustBadges.reference') }}</th>
+            <th scope="col">{{ tr('admin.trustBadges.requested') }}</th>
+            <th scope="col"><span class="visually-hidden">{{ tr('common.actions') }}</span></th>
           </tr>
         </thead>
         <tbody>
@@ -73,7 +73,7 @@
                     [disabled]="busyKey() === rowKey(item)"
                     (pressed)="deny(item)"
                   >
-                    Deny
+                    {{ tr('admin.trustBadges.deny') }}
                   </adeni-staff-btn>
                   <adeni-staff-btn
                     variant="primary"
@@ -81,7 +81,7 @@
                     [disabled]="busyKey() === rowKey(item)"
                     (pressed)="grant(item)"
                   >
-                    Grant
+                    {{ tr('admin.trustBadges.grant') }}
                   </adeni-staff-btn>
                 </div>
               </td>
@@ -97,7 +97,7 @@
       [totalCount]="totalCount()"
       [pageSizeOptions]="listPageSizeOptions"
       [loading]="loading()"
-      ariaLabel="Trust badge pages"
+      [ariaLabel]="tr('admin.trustBadges.trustBadgePages')"
       (pageChange)="goToPage($event)"
       (pageSizeChange)="onPageSizeChange($event)"
     />

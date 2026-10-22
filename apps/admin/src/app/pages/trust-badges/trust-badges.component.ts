@@ -11,6 +11,8 @@ import {
   AdeniListPaginationComponent,
   AdeniStaffButtonComponent,
   PortalPageComponent,
+  injectAdeniTranslate,
+  injectAdeniApiError,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 import {
@@ -41,6 +43,8 @@ import { badgeTypePill } from "../../shared/admin-pill-maps";
   styleUrl: "./trust-badges.component.scss",
 })
 export class AdminTrustBadgesComponent {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(AdminApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -144,9 +148,9 @@ export class AdminTrustBadgesComponent {
       );
       await this.load();
       this.feedback.success(`${this.badgeLabel(item.badgeType)} granted for ${item.businessName}.`, "Granted");
-    } catch {
-      this.error.set("Grant failed.");
-      this.feedback.error("Grant failed.");
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "admin.trustBadges.grantFailed"));
+      this.feedback.error(this.apiErr(caught, "admin.trustBadges.grantFailed"));
     } finally {
       this.busyKey.set(null);
     }
@@ -165,10 +169,10 @@ export class AdminTrustBadgesComponent {
         item.businessName,
       );
       await this.load();
-      this.feedback.success(`Request denied for ${item.businessName}.`, "Denied");
-    } catch {
-      this.error.set("Deny failed.");
-      this.feedback.error("Deny failed.");
+      this.feedback.success(`Request denied for ${item.businessName}.`, this.tr("admin.trustBadges.denied"));
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "admin.trustBadges.denyFailed"));
+      this.feedback.error(this.apiErr(caught, "admin.trustBadges.denyFailed"));
     } finally {
       this.busyKey.set(null);
     }

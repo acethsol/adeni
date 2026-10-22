@@ -1,15 +1,15 @@
 @if (facade.business()) {
   <section class="widget-card billing-grid-section">
     <header class="widget-card__head">
-      <h3>Billing history</h3>
-      <p class="hint">Charges synced from checkout or provider webhooks (business → Adeni).</p>
+      <h3>{{ tr('admin.businesses.billingHistory') }}</h3>
+      <p class="hint">{{ tr('admin.businesses.chargesSyncedFromCheckoutProvider') }}</p>
     </header>
 
     @if (isEmptyCatalog()) {
       <adeni-portal-empty-state
         icon="calendar"
-        title="No Adeni charges yet"
-        description="Charges appear after stub checkout or live provider billing events."
+        [title]="tr('admin.businesses.noAdeniChargesYet')"
+        [description]="tr('admin.businesses.chargesAppearAfterStubCheckout')"
         [compact]="true"
       />
     } @else {
@@ -17,9 +17,9 @@
         [showViewSwitcher]="false"
         [count]="filteredCharges().length"
         [countTotal]="facade.charges().length"
-        singularCountLabel="charge"
-        pluralCountLabel="charges"
-        searchPlaceholder="Reference, plan, status, or amount"
+        [singularCountLabel]="tr('common.charge')"
+        [pluralCountLabel]="tr('common.charges')"
+        [searchPlaceholder]="tr('admin.businesses.referencePlanStatusAmount')"
         [searchQuery]="searchQuery()"
         (searchQueryChange)="searchQuery.set($event)"
       />
@@ -27,8 +27,8 @@
       @if (isEmptySearch()) {
         <adeni-portal-empty-state
           icon="search"
-          title="No matching charges"
-          description="Try the full provider reference or plan SKU."
+          [title]="tr('admin.businesses.noMatchingCharges')"
+          [description]="tr('admin.businesses.tryFullProviderReferencePlan')"
           [compact]="true"
         />
       } @else {
