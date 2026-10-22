@@ -113,17 +113,6 @@ BEGIN
 END
 GO
 
-IF NOT EXISTS (
-    SELECT 1
-    FROM sys.indexes
-    WHERE name = N'IX_weekly_availability_TenantId_BusinessLocationId_DayOfWeek'
-      AND object_id = OBJECT_ID(N'booking.weekly_availability'))
-BEGIN
-    CREATE NONCLUSTERED INDEX [IX_weekly_availability_TenantId_BusinessLocationId_DayOfWeek]
-        ON [booking].[weekly_availability]([TenantId] ASC, [BusinessLocationId] ASC, [DayOfWeek] ASC);
-END
-GO
-
 IF EXISTS (
     SELECT 1
     FROM sys.indexes
@@ -134,14 +123,23 @@ BEGIN
 END
 GO
 
-IF NOT EXISTS (
+IF EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = N'IX_weekly_availability_TenantId_BusinessLocationId_DayOfWeek'
+      AND object_id = OBJECT_ID(N'booking.weekly_availability'))
+BEGIN
+    DROP INDEX [IX_weekly_availability_TenantId_BusinessLocationId_DayOfWeek] ON [booking].[weekly_availability];
+END
+GO
+
+IF EXISTS (
     SELECT 1
     FROM sys.indexes
     WHERE name = N'IX_business_closed_dates_TenantId_BusinessLocationId_StartDate_EndDate'
       AND object_id = OBJECT_ID(N'booking.business_closed_dates'))
 BEGIN
-    CREATE NONCLUSTERED INDEX [IX_business_closed_dates_TenantId_BusinessLocationId_StartDate_EndDate]
-        ON [booking].[business_closed_dates]([TenantId] ASC, [BusinessLocationId] ASC, [StartDate] ASC, [EndDate] ASC);
+    DROP INDEX [IX_business_closed_dates_TenantId_BusinessLocationId_StartDate_EndDate] ON [booking].[business_closed_dates];
 END
 GO
 
@@ -156,6 +154,28 @@ IF COL_LENGTH('booking.business_closed_dates', 'BusinessLocationId') IS NOT NULL
 BEGIN
     ALTER TABLE [booking].[business_closed_dates]
         ALTER COLUMN [BusinessLocationId] UNIQUEIDENTIFIER NOT NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = N'IX_weekly_availability_TenantId_BusinessLocationId_DayOfWeek'
+      AND object_id = OBJECT_ID(N'booking.weekly_availability'))
+BEGIN
+    CREATE NONCLUSTERED INDEX [IX_weekly_availability_TenantId_BusinessLocationId_DayOfWeek]
+        ON [booking].[weekly_availability]([TenantId] ASC, [BusinessLocationId] ASC, [DayOfWeek] ASC);
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = N'IX_business_closed_dates_TenantId_BusinessLocationId_StartDate_EndDate'
+      AND object_id = OBJECT_ID(N'booking.business_closed_dates'))
+BEGIN
+    CREATE NONCLUSTERED INDEX [IX_business_closed_dates_TenantId_BusinessLocationId_StartDate_EndDate]
+        ON [booking].[business_closed_dates]([TenantId] ASC, [BusinessLocationId] ASC, [StartDate] ASC, [EndDate] ASC);
 END
 GO
 
