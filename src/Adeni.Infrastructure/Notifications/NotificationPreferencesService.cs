@@ -51,7 +51,7 @@ public sealed class NotificationPreferencesService(
             dbContext.TenantNotificationPreferences.Add(prefs);
         }
 
-        if (request.SmsWhatsAppReminderEnabled)
+        if (request.SmsRemindersEnabled)
         {
             var tenant = await dbContext.Tenants
                 .AsNoTracking()
@@ -70,7 +70,7 @@ public sealed class NotificationPreferencesService(
 
         prefs.EmailEnabled = request.EmailEnabled;
         prefs.PushEnabled = request.PushEnabled;
-        prefs.SmsWhatsAppReminderEnabled = request.SmsWhatsAppReminderEnabled;
+        prefs.SmsRemindersEnabled = request.SmsRemindersEnabled;
         prefs.UpdatedAt = DateTimeOffset.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -103,8 +103,8 @@ public sealed class NotificationPreferencesService(
     }
 
     private static NotificationPreferencesResponse DefaultPreferences() =>
-        new(EmailEnabled: true, PushEnabled: false, SmsWhatsAppReminderEnabled: false);
+        new(EmailEnabled: true, PushEnabled: false, SmsRemindersEnabled: false);
 
     private static NotificationPreferencesResponse Map(TenantNotificationPreferences prefs) =>
-        new(prefs.EmailEnabled, prefs.PushEnabled, prefs.SmsWhatsAppReminderEnabled);
+        new(prefs.EmailEnabled, prefs.PushEnabled, prefs.SmsRemindersEnabled);
 }

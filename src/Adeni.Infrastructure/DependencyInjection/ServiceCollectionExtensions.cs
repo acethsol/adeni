@@ -73,7 +73,7 @@ public static class ServiceCollectionExtensions
         services.AddDashboardModule();
         services.AddReviewsModule();
         services.AddDiscoveryModule();
-        services.AddNotificationsModule();
+        services.AddNotificationsModule(configuration);
         services.AddFinanceModule(configuration);
         services.AddSubscriptionsModule(configuration);
         services.AddTrustModule();

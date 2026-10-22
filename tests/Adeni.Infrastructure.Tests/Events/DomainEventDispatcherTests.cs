@@ -58,6 +58,12 @@ public sealed class DomainEventDispatcherTests
             new CreateBookingRequest(tenantId, service.Value!.Id, slotStart, null),
             cancellationToken: CancellationToken.None);
 
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        var bookingRow = await db.Bookings.AsNoTracking().FirstAsync(x => x.Id == created.Value!.Id);
+        var customerRow = await db.Customers.FirstAsync(x => x.Id == bookingRow.CustomerId);
+        customerRow.Email = "customer1@example.com";
+        await db.SaveChangesAsync(CancellationToken.None);
+
         var accepted = await bookings.AcceptAsync(tenantId, created.Value!.Id, cancellationToken: CancellationToken.None);
 
         Assert.True(accepted.IsSuccess);
@@ -66,6 +72,7 @@ public sealed class DomainEventDispatcherTests
         var sink = scope.ServiceProvider.GetRequiredService<NotificationTestSink>();
         Assert.Single(sink.Messages);
         Assert.Equal("Booking confirmed", sink.Messages[0].Subject);
+        Assert.Equal("customer1@example.com", sink.Messages[0].RecipientKey);
     }
 
     private static DateTimeOffset NextMondayAt(TimeOnly time)
@@ -131,6 +138,7 @@ public sealed class DomainEventDispatcherTests
         services.AddScoped<INotificationDispatcher, TestNotificationDispatcher>();
         services.Configure<MarketOptions>(options => options.DefaultTimeZoneId = "UTC");
         services.AddAdeniDomainEvents();
+        services.AddScoped<INotificationRecipientResolver, NotificationRecipientResolver>();
         services.AddScoped<IDomainEventHandler<Domain.Booking.Events.BookingConfirmed>, BookingNotificationHandler>();
         services.AddScoped<IDomainEventHandler<Domain.Booking.Events.BookingRejected>, BookingNotificationHandler>();
         services.AddScoped<IDomainEventHandler<Domain.Booking.Events.BookingCancelled>, BookingNotificationHandler>();

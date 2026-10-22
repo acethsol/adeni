@@ -206,7 +206,7 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
             {
                 emailEnabled = true,
                 pushEnabled = false,
-                smsWhatsAppReminderEnabled = true,
+                smsRemindersEnabled = true,
             });
         Assert.Equal(HttpStatusCode.OK, patch.StatusCode);
     }

@@ -11,7 +11,7 @@ public sealed class TenantNotificationPreferences : ITenantEntity
 
     public bool PushEnabled { get; set; }
 
-    public bool SmsWhatsAppReminderEnabled { get; set; }
+    public bool SmsRemindersEnabled { get; set; }
 
     public DateTimeOffset UpdatedAt { get; set; }
 }

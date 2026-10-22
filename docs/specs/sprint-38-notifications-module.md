@@ -45,18 +45,18 @@ Replace log-only notification delivery with **production Resend email and Twilio
 
 ### 3.1 Notifications Foundation — **38A** (no Reporting dependency)
 
-- [ ] `AddNotificationsModule()` registers Resend + Twilio when configured; Development/Testing falls back to logging when keys absent (no startup throw)
-- [ ] `IEmailNotificationProvider` + `ResendEmailNotificationProvider`
-- [ ] `ISmsNotificationProvider` + `TwilioSmsNotificationProvider`
-- [ ] `ChannelNotificationDispatcher` routes by `NotificationMessage.Channel` (`email` \| `sms` \| `push` future)
-- [ ] **`notification_deliveries`** table: dedupe key = `eventId + channel + recipientKey`; survive domain event replay
-- [ ] Fix **recipient resolution** — email/SMS to customer contact from Booking/Customer **Application ports**, not raw customer id stubs
-- [ ] **Country-aware sender resolution** — `NotificationSenderConfig` (§5); avoid single global Twilio number assumption for CA + NG
-- [ ] Config secrets: `Resend:ApiKey`, `Resend:From`, Twilio credentials, per-market sender rows — Key Vault staging/prod
+- [x] `AddNotificationsModule()` registers Resend + Twilio when configured; Development/Testing falls back to logging when keys absent (no startup throw)
+- [x] `IEmailNotificationProvider` + `ResendEmailNotificationProvider`
+- [x] `ISmsNotificationProvider` + `TwilioSmsNotificationProvider`
+- [x] `ChannelNotificationDispatcher` routes by `NotificationMessage.Channel` (`email` \| `sms` \| `push` future)
+- [x] **`notification_deliveries`** table: dedupe key = `eventId + channel + recipientKey`; survive domain event replay
+- [x] Fix **recipient resolution** — email/SMS to customer contact from Booking/Customer **Application ports**, not raw customer id stubs
+- [x] **Country-aware sender resolution** — `NotificationSenderConfig` (§5); avoid single global Twilio number assumption for CA + NG
+- [x] Config secrets: `Resend:ApiKey`, `Resend:From`, Twilio credentials, per-market sender rows — Key Vault staging/prod
 - [ ] Typed template **foundation** (IDs, data bags; full flows in 38B)
-- [ ] Integration tests with mock HTTP handlers (no live send in CI)
-- [ ] **Preference rename (spec + migration):** `SmsWhatsAppReminderEnabled` → **`SmsRemindersEnabled`** on API/DTOs/entity when implemented (SMS-only; no WhatsApp in pref name)
-- [ ] High-value **email-only** paths where Reporting not required: booking confirmed/rejected/cancelled, staff invite, conversation email stub
+- [x] Integration tests with mock HTTP handlers (no live send in CI)
+- [x] **Preference rename (spec + migration):** `SmsWhatsAppReminderEnabled` → **`SmsRemindersEnabled`** on API/DTOs/entity when implemented (SMS-only; no WhatsApp in pref name)
+- [x] High-value **email-only** paths where Reporting not required: booking confirmed/rejected/cancelled, staff invite, conversation email stub
 
 **Explicitly not in 38A:** Receipt PDF attachment, scheduled reminder worker, waitlist SMS polish, follow-up automation.
 
@@ -241,10 +241,10 @@ Admin delivery visibility: 38B via audit/ops, not customer API.
 
 ## 11. Tests
 
-- [ ] Preference gating skips disabled channel
-- [ ] `smsEnabled` false → PATCH SMS pref rejected; dispatcher skips SMS
-- [ ] Duplicate domain event → single delivery row
-- [ ] Mock Resend on `BookingConfirmed` integration test (38A)
+- [x] Preference gating skips disabled channel
+- [x] `smsEnabled` false → PATCH SMS pref rejected; dispatcher skips SMS
+- [x] Duplicate domain event → single delivery row
+- [x] Mock Resend on `BookingConfirmed` integration test (38A)
 - [ ] Reminder job idempotency for same booking window (38B)
 - [ ] Receipt handler uses `IReportRenderer` mock — no Reporting.Infrastructure reference (architecture test)
 
@@ -258,10 +258,10 @@ Run: `dotnet test Adeni.slnx -c Release`
 
 - [ ] Staging sends real booking confirmed **email** via Resend
 - [ ] Staging sends SMS via Twilio when pref + `smsEnabled` (where 38A includes SMS paths)
-- [ ] Development without keys logs only
-- [ ] No Resend/Twilio in Api controllers
-- [ ] Idempotency table prevents double-send on replay
-- [ ] Sender resolution documented and testable per country config
+- [x] Development without keys logs only
+- [x] No Resend/Twilio in Api controllers
+- [x] Idempotency table prevents double-send on replay
+- [x] Sender resolution documented and testable per country config
 
 ### 38B
 

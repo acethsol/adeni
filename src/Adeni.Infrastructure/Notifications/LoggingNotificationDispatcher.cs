@@ -1,6 +1,7 @@
 namespace Adeni.Infrastructure.Notifications;
 
 using Adeni.Application.Notifications;
+using Adeni.Application.Security;
 using Microsoft.Extensions.Logging;
 
 public sealed class LoggingNotificationDispatcher(ILogger<LoggingNotificationDispatcher> logger)
@@ -8,12 +9,18 @@ public sealed class LoggingNotificationDispatcher(ILogger<LoggingNotificationDis
 {
     public Task SendAsync(NotificationMessage message, CancellationToken cancellationToken = default)
     {
+        var maskedRecipient = message.Channel.Trim().ToLowerInvariant() switch
+        {
+            "email" => PiiMasker.MaskEmail(message.RecipientKey),
+            "sms" or "whatsapp" => PiiMasker.MaskPhone(message.RecipientKey),
+            _ => message.RecipientKey,
+        };
+
         logger.LogInformation(
-            "Notification [{Channel}] to {Recipient}: {Subject} — {Body}",
+            "Notification [{Channel}] to {Recipient}: {Subject}",
             message.Channel,
-            message.RecipientKey,
-            message.Subject,
-            message.Body);
+            maskedRecipient,
+            message.Subject);
         return Task.CompletedTask;
     }
 }

@@ -113,6 +113,8 @@ public sealed class AdeniDbContext(
     public DbSet<TenantNotificationPreferences> TenantNotificationPreferences =>
         Set<TenantNotificationPreferences>();
 
+    public DbSet<NotificationDelivery> NotificationDeliveries => Set<NotificationDelivery>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("public");
@@ -727,7 +729,18 @@ public sealed class AdeniDbContext(
         {
             entity.ToTable("tenant_notification_preferences", "notifications");
             entity.HasKey(x => x.TenantId);
+            entity.Property(x => x.SmsRemindersEnabled).HasColumnName("SmsRemindersEnabled");
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<NotificationDelivery>(entity =>
+        {
+            entity.ToTable("notification_deliveries", "notifications");
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => x.DedupeKey).IsUnique();
+            entity.Property(x => x.DedupeKey).HasMaxLength(512);
+            entity.Property(x => x.Channel).HasMaxLength(32);
+            entity.Property(x => x.RecipientKey).HasMaxLength(512);
         });
     }
 

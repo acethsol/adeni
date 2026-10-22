@@ -4,40 +4,57 @@ using Adeni.Application.Events;
 using Adeni.Application.Notifications;
 using Adeni.Domain.Messaging;
 using Adeni.Domain.Messaging.Events;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
-/// Prefs-aware “new message” notifications. Delivery is still the logging stub until adapters land.
+/// Prefs-aware “new message” notifications.
 /// </summary>
-public sealed class MessagingNotificationHandler(INotificationDispatcher notificationDispatcher)
+public sealed class MessagingNotificationHandler(
+    INotificationDispatcher notificationDispatcher,
+    INotificationRecipientResolver recipientResolver,
+    ILogger<MessagingNotificationHandler> logger)
     : IDomainEventHandler<ConversationMessageCreated>
 {
-    public Task HandleAsync(
+    public async Task HandleAsync(
         ConversationMessageCreated domainEvent,
         CancellationToken cancellationToken = default)
     {
         var preview = BuildPreview(domainEvent.BodyPreview, domainEvent.HasAttachments);
 
-        // Customer → business inbox alert (tenant prefs gate email/push).
         if (domainEvent.SenderType == ConversationParticipantType.Customer)
         {
-            return notificationDispatcher.SendAsync(
+            await notificationDispatcher.SendAsync(
                 new NotificationMessage(
                     "email",
-                    $"tenant:{domainEvent.TenantId:D}",
+                    string.Empty,
                     "New customer message",
                     $"New message in conversation {domainEvent.ConversationId:D}: {preview}",
-                    domainEvent.TenantId),
+                    domainEvent.TenantId,
+                    $"conversation-business:{domainEvent.MessageId:D}"),
                 cancellationToken);
+            return;
         }
 
-        // Business / bot → customer alert (same tenant prefs gate as booking emails).
-        return notificationDispatcher.SendAsync(
+        var contact = await recipientResolver.ResolvePlatformCustomerAsync(
+            domainEvent.CustomerId,
+            cancellationToken);
+
+        if (contact.IsFailure || string.IsNullOrWhiteSpace(contact.Value!.Email))
+        {
+            logger.LogDebug(
+                "Skipping customer message email for conversation {ConversationId} — no email on file.",
+                domainEvent.ConversationId);
+            return;
+        }
+
+        await notificationDispatcher.SendAsync(
             new NotificationMessage(
                 "email",
-                domainEvent.CustomerId.ToString("D"),
+                contact.Value.Email.Trim(),
                 "New message from business",
                 $"You have a new message about your Adeni conversation: {preview}",
-                domainEvent.TenantId),
+                domainEvent.TenantId,
+                $"conversation-customer:{domainEvent.MessageId:D}"),
             cancellationToken);
     }
 

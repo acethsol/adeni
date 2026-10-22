@@ -60,7 +60,7 @@ export class SettingsComponent implements OnInit {
 
   emailEnabled = true;
   pushEnabled = true;
-  smsWhatsAppReminderEnabled = false;
+  smsRemindersEnabled = false;
 
   policyBooking = "";
   policyPayment = "";
@@ -96,7 +96,7 @@ export class SettingsComponent implements OnInit {
           const prefs = await client.getNotificationPreferences();
           this.emailEnabled = prefs.emailEnabled;
           this.pushEnabled = prefs.pushEnabled;
-          this.smsWhatsAppReminderEnabled = prefs.smsWhatsAppReminderEnabled;
+          this.smsRemindersEnabled = prefs.smsRemindersEnabled;
 
           if (hasTenantEntitlement(profile.entitlements, "messaging")) {
             const messaging = await client.getMessagingSettings();
@@ -144,8 +144,8 @@ export class SettingsComponent implements OnInit {
           c.updateNotificationPreferences({
             emailEnabled: this.emailEnabled,
             pushEnabled: this.pushEnabled,
-            smsWhatsAppReminderEnabled: this.smsEntitled()
-              ? this.smsWhatsAppReminderEnabled
+            smsRemindersEnabled: this.smsEntitled()
+              ? this.smsRemindersEnabled
               : false,
           }),
         );

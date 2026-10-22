@@ -5,12 +5,12 @@ using Adeni.Domain.Common;
 public sealed record NotificationPreferencesResponse(
     bool EmailEnabled,
     bool PushEnabled,
-    bool SmsWhatsAppReminderEnabled);
+    bool SmsRemindersEnabled);
 
 public sealed record UpdateNotificationPreferencesRequest(
     bool EmailEnabled,
     bool PushEnabled,
-    bool SmsWhatsAppReminderEnabled);
+    bool SmsRemindersEnabled);
 
 public interface INotificationPreferencesService
 {

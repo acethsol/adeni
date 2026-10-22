@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 public sealed class PreferenceAwareNotificationDispatcher(
     INotificationPreferencesService preferencesService,
-    LoggingNotificationDispatcher inner,
+    EntitlementAwareNotificationDispatcher inner,
     ILogger<PreferenceAwareNotificationDispatcher> logger) : INotificationDispatcher
 {
     public async Task SendAsync(NotificationMessage message, CancellationToken cancellationToken = default)
@@ -31,7 +31,7 @@ public sealed class PreferenceAwareNotificationDispatcher(
         {
             "email" => prefs.EmailEnabled,
             "push" or "fcm" => prefs.PushEnabled,
-            "sms" or "whatsapp" => prefs.SmsWhatsAppReminderEnabled,
+            "sms" or "whatsapp" => prefs.SmsRemindersEnabled,
             _ => true,
         };
 }

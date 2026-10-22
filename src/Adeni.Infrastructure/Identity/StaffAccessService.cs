@@ -513,13 +513,13 @@ public sealed class StaffAccessService(
         await notifications.SendAsync(
             new NotificationMessage(
                 Channel: "email",
-                RecipientKey: PiiMasker.MaskEmail(invite.Email),
+                RecipientKey: invite.Email.Trim(),
                 Subject: $"You're invited to {tenantName} on Adeni",
                 Body:
                 $"You've been invited to the Adeni business portal for {tenantName} "
-                + $"as {invite.PermissionRole}. Open this link to accept (expires {invite.ExpiresAt:u}): {acceptUrl}"
-                + $" | To: {invite.Email}",
-                TenantId: invite.TenantId),
+                + $"as {invite.PermissionRole}. Open this link to accept (expires {invite.ExpiresAt:u}): {acceptUrl}",
+                TenantId: invite.TenantId,
+                DedupeEventId: $"staff-invite:{invite.Id:D}"),
             cancellationToken);
     }
 

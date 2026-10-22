@@ -10,4 +10,5 @@ public sealed record NotificationMessage(
     string RecipientKey,
     string Subject,
     string Body,
-    Guid? TenantId = null);
+    Guid? TenantId = null,
+    string? DedupeEventId = null);

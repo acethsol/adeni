@@ -14,7 +14,7 @@ Async **email**, **SMS**, and (later) **push** driven by **domain events** and *
 | Piece | Status |
 |-------|--------|
 | `INotificationDispatcher` | Application port |
-| `INotificationPreferencesService` | Tenant toggles: email, push, SMS reminders (`SmsWhatsAppReminderEnabled` today → **`SmsRemindersEnabled`** in 38A) |
+| `INotificationPreferencesService` | Tenant toggles: email, push, SMS reminders (`SmsRemindersEnabled`) |
 | `PreferenceAwareNotificationDispatcher` | Gates by channel + prefs |
 | **Delivery** | **`LoggingNotificationDispatcher`** — logs only; no Resend/Twilio send |
 | **Appointment reminder scheduler** | **Not built** — no cron/background job for “24h before” |
@@ -75,7 +75,7 @@ Stored on `TenantNotificationPreferences`:
 
 - `EmailEnabled`
 - `PushEnabled`
-- `SmsWhatsAppReminderEnabled` (rename → **`SmsRemindersEnabled`**) — gates SMS channel when Twilio + `smsEnabled` entitlement
+- `SmsRemindersEnabled` — gates SMS channel when Twilio + `smsEnabled` entitlement
 
 Portal **Settings** persists prefs via tenant settings API; prefs apply even though delivery is still log-only in Development.
 

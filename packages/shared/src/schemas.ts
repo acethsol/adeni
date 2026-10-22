@@ -1963,7 +1963,7 @@ export const messageTemplatesResponseSchema = z.object({
 export const notificationPreferencesSchema = z.object({
   emailEnabled: z.boolean(),
   pushEnabled: z.boolean(),
-  smsWhatsAppReminderEnabled: z.boolean(),
+  smsRemindersEnabled: z.boolean(),
 });
 
 export type NotificationPreferences = z.infer<typeof notificationPreferencesSchema>;

@@ -1,6 +1,7 @@
 namespace Adeni.Infrastructure.Tests.Notifications;
 
 using Adeni.Application.Notifications;
+using Adeni.Domain.Common;
 using Adeni.Domain.Messaging;
 using Adeni.Domain.Messaging.Events;
 using Adeni.Infrastructure.Notifications;
@@ -8,10 +9,13 @@ using Adeni.Infrastructure.Notifications;
 public sealed class MessagingNotificationHandlerTests
 {
     [Fact]
-    public async Task Customer_message_notifies_tenant_inbox()
+    public async Task Customer_message_enqueues_business_stub_without_resolved_inbox_email()
     {
         var dispatcher = new CapturingDispatcher();
-        var handler = new MessagingNotificationHandler(dispatcher);
+        var handler = new MessagingNotificationHandler(
+            dispatcher,
+            new FixedRecipientResolver(Result.Success(new NotificationContact(null, null))),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<MessagingNotificationHandler>.Instance);
         var tenantId = Guid.NewGuid();
         var conversationId = Guid.NewGuid();
 
@@ -29,16 +33,20 @@ public sealed class MessagingNotificationHandlerTests
 
         Assert.Single(dispatcher.Messages);
         Assert.Equal("email", dispatcher.Messages[0].Channel);
-        Assert.Equal($"tenant:{tenantId:D}", dispatcher.Messages[0].RecipientKey);
+        Assert.Equal(string.Empty, dispatcher.Messages[0].RecipientKey);
         Assert.Equal(tenantId, dispatcher.Messages[0].TenantId);
         Assert.Contains("Hello there", dispatcher.Messages[0].Body);
     }
 
     [Fact]
-    public async Task Business_message_notifies_customer()
+    public async Task Business_message_notifies_customer_email_when_resolved()
     {
         var dispatcher = new CapturingDispatcher();
-        var handler = new MessagingNotificationHandler(dispatcher);
+        var customerEmail = "guest@example.com";
+        var handler = new MessagingNotificationHandler(
+            dispatcher,
+            new FixedRecipientResolver(Result.Success(new NotificationContact(customerEmail, null))),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<MessagingNotificationHandler>.Instance);
         var customerId = Guid.NewGuid();
         var tenantId = Guid.NewGuid();
 
@@ -55,7 +63,7 @@ public sealed class MessagingNotificationHandlerTests
                 DateTimeOffset.UtcNow));
 
         Assert.Single(dispatcher.Messages);
-        Assert.Equal(customerId.ToString("D"), dispatcher.Messages[0].RecipientKey);
+        Assert.Equal(customerEmail, dispatcher.Messages[0].RecipientKey);
         Assert.Contains("Attachment", dispatcher.Messages[0].Body);
     }
 
@@ -68,5 +76,19 @@ public sealed class MessagingNotificationHandlerTests
             Messages.Add(message);
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class FixedRecipientResolver(Result<NotificationContact> contact) : INotificationRecipientResolver
+    {
+        public Task<Result<NotificationContact>> ResolvePlatformCustomerAsync(
+            Guid customerId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(contact);
+
+        public Task<Result<NotificationContact>> ResolveBookingCustomerAsync(
+            Guid tenantId,
+            Guid bookingId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(contact);
     }
 }
