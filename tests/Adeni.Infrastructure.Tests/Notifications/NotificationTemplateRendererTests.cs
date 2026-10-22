@@ -116,7 +116,10 @@ public sealed class NotificationTemplateRendererTests
 
         public TenantEntitlements GetEntitlementsForTenant(Tenant tenant) => Pro;
 
-        public Task<int> GetBookingsUsedThisMonthAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+        public Task<int> GetBookingsUsedThisMonthAsync(
+            Guid tenantId,
+            Guid? locationId = null,
+            CancellationToken cancellationToken = default) =>
             Task.FromResult(0);
 
         public Task<int> GetActiveLocationCountAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
@@ -146,7 +149,10 @@ public sealed class NotificationTemplateRendererTests
         public Task<Result> EnsureCanUseWaitlistForTenantAsync(Tenant tenant, CancellationToken cancellationToken = default) =>
             Task.FromResult(Result.Success());
 
-        public Task<SubscriptionUsageResponse> GetUsageForTenantAsync(Tenant tenant, CancellationToken cancellationToken = default) =>
+        public Task<SubscriptionUsageResponse> GetUsageForTenantAsync(
+            Tenant tenant,
+            Guid? bookingsLocationId = null,
+            CancellationToken cancellationToken = default) =>
             throw new NotImplementedException();
 
         public Task<Result<TenantEntitlements>> GetEntitlementsForMemberAsync(

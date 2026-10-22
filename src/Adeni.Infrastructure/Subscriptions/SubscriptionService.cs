@@ -13,6 +13,7 @@ public sealed class SubscriptionService(
     public async Task<Result<SubscriptionUsageResponse>> GetTenantUsageAsync(
         Guid tenantId,
         string auth0Sub,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(auth0Sub))
@@ -37,12 +38,25 @@ public sealed class SubscriptionService(
             return Result.Failure<SubscriptionUsageResponse>(Error.NotFound("Business"));
         }
 
+        var locationCheck = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+            dbContext,
+            tenantId,
+            locationId,
+            cancellationToken);
+        if (locationCheck.IsFailure)
+        {
+            return Result.Failure<SubscriptionUsageResponse>(locationCheck.Error!);
+        }
+
         if (TenantBillingLifecycle.ApplyPendingTransitions(tenant, DateTimeOffset.UtcNow))
         {
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        var usage = await entitlementsService.GetUsageForTenantAsync(tenant, cancellationToken);
+        var usage = await entitlementsService.GetUsageForTenantAsync(
+            tenant,
+            locationCheck.Value,
+            cancellationToken);
 
         return Result.Success(usage);
     }

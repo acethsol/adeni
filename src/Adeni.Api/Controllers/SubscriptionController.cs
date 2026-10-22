@@ -22,7 +22,9 @@ public sealed class TenantSubscriptionController(
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetUsage(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetUsage(
+        [FromQuery] Guid? locationId,
+        CancellationToken cancellationToken)
     {
         var auth0Sub = ResolveAuth0Sub();
         var tenantId = ResolveTenantId();
@@ -31,7 +33,11 @@ public sealed class TenantSubscriptionController(
             return Unauthorized();
         }
 
-        var result = await subscriptionService.GetTenantUsageAsync(tenantId.Value, auth0Sub, cancellationToken);
+        var result = await subscriptionService.GetTenantUsageAsync(
+            tenantId.Value,
+            auth0Sub,
+            locationId,
+            cancellationToken);
         return MapResult(result, Ok);
     }
 

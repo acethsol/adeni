@@ -198,6 +198,105 @@ public sealed class TenantDashboardIntegrationTests : IClassFixture<WebApplicati
     }
 
     [Fact]
+    public async Task Subscription_usage_filters_by_locationId()
+    {
+        var tenantId = Guid.NewGuid();
+        const string ownerSub = "auth0|dashboard-sub-loc";
+        var locA = Guid.NewGuid();
+        var locB = Guid.NewGuid();
+        var serviceId = Guid.NewGuid();
+        var createdAt = DateTimeOffset.UtcNow;
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+            SeedTenant(db, tenantId, ownerSub);
+            db.ServiceOfferings.Add(new ServiceOffering
+            {
+                Id = serviceId,
+                TenantId = tenantId,
+                Name = "Cut",
+                PriceAmount = 3000m,
+                Currency = "NGN",
+                DurationMinutes = 30,
+                IsActive = true,
+                CreatedAt = createdAt,
+                UpdatedAt = createdAt,
+            });
+            db.BusinessLocations.Add(new BusinessLocation
+            {
+                Id = locA,
+                TenantId = tenantId,
+                Name = "A",
+                Slug = "sub-loc-a",
+                MarketId = "lagos",
+                AddressLine = "1",
+                Area = "A",
+                IsPrimary = true,
+                IsActive = true,
+                CreatedAt = createdAt,
+                UpdatedAt = createdAt,
+            });
+            db.BusinessLocations.Add(new BusinessLocation
+            {
+                Id = locB,
+                TenantId = tenantId,
+                Name = "B",
+                Slug = "sub-loc-b",
+                MarketId = "lagos",
+                AddressLine = "2",
+                Area = "B",
+                IsPrimary = false,
+                IsActive = true,
+                CreatedAt = createdAt,
+                UpdatedAt = createdAt,
+            });
+            db.Bookings.Add(new BookingRecord
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                ServiceOfferingId = serviceId,
+                BusinessLocationId = locA,
+                StartAt = createdAt.AddHours(1),
+                EndAt = createdAt.AddHours(1).AddMinutes(30),
+                Status = BookingStatus.Confirmed,
+                CreatedAt = createdAt,
+                UpdatedAt = createdAt,
+            });
+            db.Bookings.Add(new BookingRecord
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                ServiceOfferingId = serviceId,
+                BusinessLocationId = locB,
+                StartAt = createdAt.AddHours(2),
+                EndAt = createdAt.AddHours(2).AddMinutes(30),
+                Status = BookingStatus.Confirmed,
+                CreatedAt = createdAt,
+                UpdatedAt = createdAt,
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add(DevBusinessAuthMiddleware.DevAuth0SubHeader, ownerSub);
+        client.DefaultRequestHeaders.Add(TenantAccessMiddleware.TenantHeaderName, tenantId.ToString());
+
+        var allResponse = await client.GetAsync("/api/v1/tenant/subscription");
+        var scopedResponse = await client.GetAsync(
+            $"/api/v1/tenant/subscription?locationId={locA:D}");
+
+        Assert.Equal(HttpStatusCode.OK, allResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, scopedResponse.StatusCode);
+        var allPayload = await allResponse.Content.ReadFromJsonAsync<SubscriptionUsagePayload>();
+        var scopedPayload = await scopedResponse.Content.ReadFromJsonAsync<SubscriptionUsagePayload>();
+        Assert.NotNull(allPayload);
+        Assert.NotNull(scopedPayload);
+        Assert.Equal(2, allPayload!.BookingsUsedThisMonth);
+        Assert.Equal(1, scopedPayload!.BookingsUsedThisMonth);
+    }
+
+    [Fact]
     public async Task Series_appointments_allowed_without_analytics()
     {
         var tenantId = Guid.NewGuid();
@@ -322,6 +421,8 @@ public sealed class TenantDashboardIntegrationTests : IClassFixture<WebApplicati
         int PendingCount,
         int AppointmentsCount,
         bool AnalyticsIncluded);
+
+    private sealed record SubscriptionUsagePayload(int BookingsUsedThisMonth);
 
     private sealed record LayoutWidgetPayload(string Id, int W);
 

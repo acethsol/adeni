@@ -48,6 +48,7 @@ public sealed class EntitlementsService(
 
     public async Task<int> GetBookingsUsedThisMonthAsync(
         Guid tenantId,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
         var monthStart = new DateTimeOffset(
@@ -59,13 +60,16 @@ public sealed class EntitlementsService(
             0,
             TimeSpan.Zero);
 
-        return await dbContext.Bookings
+        var query = dbContext.Bookings
             .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(x =>
                 x.TenantId == tenantId
                 && x.CreatedAt >= monthStart
-                && x.Status != BookingStatus.Cancelled)
+                && x.Status != BookingStatus.Cancelled);
+
+        return await query
+            .FilterBookingsByLocation(locationId)
             .CountAsync(cancellationToken);
     }
 
@@ -140,11 +144,12 @@ public sealed class EntitlementsService(
 
     public async Task<SubscriptionUsageResponse> GetUsageForTenantAsync(
         Tenant tenant,
+        Guid? bookingsLocationId = null,
         CancellationToken cancellationToken = default)
     {
         var effectiveSku = TenantBillingPolicy.ResolveEffectiveSku(tenant);
         var entitlements = planEntitlementsMatrix.ForSku(effectiveSku);
-        var used = await GetBookingsUsedThisMonthAsync(tenant.Id, cancellationToken);
+        var used = await GetBookingsUsedThisMonthAsync(tenant.Id, bookingsLocationId, cancellationToken);
         var locationsActive = await GetActiveLocationCountAsync(tenant.Id, cancellationToken);
         var practitionersActive = await GetActivePractitionerCountAsync(tenant.Id, cancellationToken);
         var contractSku = tenant.SubscriptionSku;

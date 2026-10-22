@@ -1849,8 +1849,13 @@ export class AdeniApiClient {
     );
   }
 
-  async getTenantSubscriptionUsage(): Promise<SubscriptionUsage> {
-    const response = await this.request("/api/v1/tenant/subscription");
+  async getTenantSubscriptionUsage(locationId?: string): Promise<SubscriptionUsage> {
+    const query = new URLSearchParams();
+    if (locationId) {
+      query.set("locationId", locationId);
+    }
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
+    const response = await this.request(`/api/v1/tenant/subscription${suffix}`);
     return subscriptionUsageSchema.parse(await response.json());
   }
 

@@ -704,7 +704,7 @@ export class DashboardComponent implements OnInit {
             (page) => page.items,
           ),
           client.getTenantServices(),
-          client.getTenantSubscriptionUsage().catch(() => null),
+          client.getTenantSubscriptionUsage(locationQueryId).catch(() => null),
           client.getTenantDashboardSummary(range.from, range.to, locationQueryId),
           client.getTenantDashboardSeries("appointments", range.from, range.to, locationQueryId),
           analytics && wantsCollected

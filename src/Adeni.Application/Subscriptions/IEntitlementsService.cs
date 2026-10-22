@@ -27,6 +27,7 @@ public interface IEntitlementsService
 
     Task<int> GetBookingsUsedThisMonthAsync(
         Guid tenantId,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default);
 
     Task<int> GetActiveLocationCountAsync(
@@ -61,6 +62,7 @@ public interface IEntitlementsService
 
     Task<SubscriptionUsageResponse> GetUsageForTenantAsync(
         Tenant tenant,
+        Guid? bookingsLocationId = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<TenantEntitlements>> GetEntitlementsForMemberAsync(
