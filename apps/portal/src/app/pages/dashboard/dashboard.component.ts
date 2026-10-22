@@ -12,12 +12,21 @@ import {
   addDashboardWidget,
   BOOKING_STATUS_LABELS,
   cloneDashboardLayout,
+  DASHBOARD_LAYOUT_PRESET_ICONS,
   DASHBOARD_LAYOUT_PRESETS,
   DASHBOARD_RANGE_PRESETS,
+  filterDashboardLayoutByVisibility,
+  dashboardLayoutFingerprint,
+  getDashboardLayoutPresetDisplayCopy,
+  resolveRecommendedDashboardLayoutPresetId,
+  visibleDashboardLayoutFingerprint,
+  t,
+  defaultLocale,
   DASHBOARD_WIDGET_DEFINITIONS,
   dashboardWidgetTitle,
   resolveDashboardCapabilities,
   resolveDashboardLayoutPreset,
+  type DashboardLayoutPreset,
   type DashboardLayoutPresetId,
   type QueueTicketResponse,
   formatBookingUsage,
@@ -29,6 +38,7 @@ import {
   getMarketById,
   getPlanDisplayForCountry,
   hasCapability,
+  mergeTenantEntitlements,
   hasTenantEntitlement,
   isDashboardWidgetVisible,
   isNearBookingLimit,
@@ -52,13 +62,17 @@ import {
   type QuoteRequestResponse,
   type ServiceOffering,
   type SubscriptionUsage,
+  type TenantEntitlements,
   type TenantDashboardBreakdown,
 } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
   AdeniPortalEmptyStateComponent,
   AdeniStaffButtonComponent,
+  AdeniDashboardLayoutPresetCardComponent,
+  AdeniModalComponent,
   PortalPageComponent,
+  type AdeniCarbonIconName,
 } from "@adeni/ui";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { BusinessApiService } from "../../core/services/business-api.service";
@@ -85,6 +99,8 @@ type StatusSlice = { status: number; label: string; count: number; percent: numb
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
     AdeniStaffButtonComponent,
+    AdeniDashboardLayoutPresetCardComponent,
+    AdeniModalComponent,
     PortalPageComponent,
     DashboardWidgetEditChromeComponent,
     DashboardWidgetComponent,
@@ -108,6 +124,7 @@ export class DashboardComponent implements OnInit {
   readonly layout = signal<DashboardLayout>(resolveDashboardLayout(false));
   readonly editMode = signal(false);
   readonly pickerOpen = signal(false);
+  readonly layoutPresetPulse = signal(false);
   readonly loadError = signal(false);
   readonly pendingCount = signal(0);
   readonly activeServices = signal(0);
@@ -129,6 +146,7 @@ export class DashboardComponent implements OnInit {
   readonly bookingMixChartData = signal<ChartTabularData>([]);
   readonly today = signal<BookingResponse[]>([]);
   readonly usage = signal<SubscriptionUsage | null>(null);
+  readonly exportEntitlementsDirect = signal<TenantEntitlements | null>(null);
   readonly rangePreset = signal<DashboardRangePreset>("7d");
   readonly appointmentsInRange = signal(0);
   readonly rangePresets = DASHBOARD_RANGE_PRESETS;
@@ -160,14 +178,30 @@ export class DashboardComponent implements OnInit {
     this.layout().widgets.filter((entry) => this.widgetShown(entry.id)),
   );
 
-  readonly layoutPresets = DASHBOARD_LAYOUT_PRESETS;
+  readonly layoutPresetsForPicker = computed(() =>
+    this.isPractitionerView()
+      ? DASHBOARD_LAYOUT_PRESETS.filter((preset) => preset.id === "practitioner")
+      : DASHBOARD_LAYOUT_PRESETS.filter((preset) => preset.id !== "practitioner"),
+  );
+
+  readonly recommendedLayoutPresetId = computed(() =>
+    resolveRecommendedDashboardLayoutPresetId({
+      isPractitionerView: this.isPractitionerView(),
+      permissionRole: this.session.permissionRole(),
+    }),
+  );
+
+  readonly currentLayoutFingerprint = computed(() =>
+    visibleDashboardLayoutFingerprint(this.layout(), this.widgetVisibilityContext()),
+  );
 
   readonly addableWidgets = computed(() => {
     const layout = this.layout();
+    const ctx = this.widgetVisibilityContext();
     return DASHBOARD_WIDGET_DEFINITIONS.filter(
       (definition) =>
-        !layoutIncludesWidget(layout, definition.id)
-        && isDashboardWidgetVisible(definition.id, this.widgetVisibilityContext()),
+        isDashboardWidgetVisible(definition.id, ctx)
+        && !this.layoutOccupiesVisibleWidget(layout, definition.id),
     );
   });
 
@@ -198,6 +232,7 @@ export class DashboardComponent implements OnInit {
       .subscribe((event) => {
         this.openQuotesCount.set(event.openCount);
       });
+    void this.session.ensureLoaded();
     void this.load();
   }
 
@@ -215,12 +250,104 @@ export class DashboardComponent implements OnInit {
   widgetVisibilityContext() {
     return {
       isPractitionerView: this.isPractitionerView(),
-      entitlements: this.profile()?.entitlements ?? null,
+      entitlements: this.exportEntitlements(),
       capabilities: resolveDashboardCapabilities(this.profile()),
       canPortal: (permission: Parameters<PortalSessionService["can"]>[0]) =>
         this.session.can(permission)
         || (permission === "portal.bookings" && this.session.can("portal.bookings.self")),
     };
+  }
+
+  tenantMarketId(): string | null {
+    const profile = this.profile();
+    if (!profile) {
+      return null;
+    }
+    const location = profile.locations.find((item) => item.isPrimary) ?? profile.locations[0];
+    return location?.marketId ?? null;
+  }
+
+  portalLocale(): string {
+    const profile = this.profile();
+    if (!profile) {
+      return defaultLocale;
+    }
+    const languages = getMarketById(this.tenantMarketId() ?? "")?.languages;
+    const primary = languages?.[0];
+    return primary === "fr" ? "fr" : defaultLocale;
+  }
+
+  presetUiCopy(key: "recommended" | "currentLayout" | "emptyPlan" | "useLayout", vars?: Record<string, string>): string {
+    const base = `portalDashboard.presets.${key}`;
+    return t(this.portalLocale(), base, vars);
+  }
+
+  layoutVisibleForTenant(layout: DashboardLayout): DashboardLayout {
+    return filterDashboardLayoutByVisibility(cloneDashboardLayout(layout), this.widgetVisibilityContext());
+  }
+
+  presetPreviewLayout(preset: DashboardLayoutPreset): DashboardLayout {
+    return this.layoutVisibleForTenant(preset.layout);
+  }
+
+  presetRangeLabel(preset: DashboardLayoutPreset): string {
+    return (
+      DASHBOARD_RANGE_PRESETS.find((entry) => entry.id === preset.layout.range)?.label
+      ?? preset.layout.range
+    );
+  }
+
+  presetPreviewWidgetTitles(preset: DashboardLayoutPreset): string[] {
+    return this.presetPreviewLayout(preset).widgets.map((entry) => dashboardWidgetTitle(entry.id));
+  }
+
+  presetWireframeBlocks(preset: DashboardLayoutPreset): { w: number }[] {
+    return this.presetPreviewLayout(preset).widgets.map((entry) => ({ w: entry.w }));
+  }
+
+  presetDisplayCopy(preset: DashboardLayoutPreset) {
+    return getDashboardLayoutPresetDisplayCopy(
+      this.portalLocale(),
+      preset.id,
+      this.tenantMarketId(),
+      { focus: preset.focus, description: preset.description },
+    );
+  }
+
+  presetMetaLine(preset: DashboardLayoutPreset): string {
+    const count = this.presetPreviewWidgetTitles(preset).length;
+    const widgetsKey =
+      count === 1 ? "portalDashboard.presets.widgetsOnPlan" : "portalDashboard.presets.widgetsOnPlan_plural";
+    const widgetsPart = t(this.portalLocale(), widgetsKey, { count });
+    const rangePart = t(this.portalLocale(), "portalDashboard.presets.rangeMeta", {
+      range: this.presetRangeLabel(preset),
+    });
+    return `${rangePart} · ${widgetsPart}`;
+  }
+
+  isPresetActive(preset: DashboardLayoutPreset): boolean {
+    const preview = this.presetPreviewLayout(preset);
+    return visibleDashboardLayoutFingerprint(preview, this.widgetVisibilityContext())
+      === this.currentLayoutFingerprint();
+  }
+
+  isPresetRecommended(preset: DashboardLayoutPreset): boolean {
+    return preset.id === this.recommendedLayoutPresetId() && !this.isPresetActive(preset);
+  }
+
+  presetCardDisabled(preset: DashboardLayoutPreset): boolean {
+    return this.presetPreviewWidgetTitles(preset).length === 0;
+  }
+
+  presetCardIcon(presetId: DashboardLayoutPresetId): AdeniCarbonIconName {
+    return DASHBOARD_LAYOUT_PRESET_ICONS[presetId] as AdeniCarbonIconName;
+  }
+
+  presetCtaLabel(preset: DashboardLayoutPreset): string {
+    const label = this.presetUiCopy("useLayout", { label: preset.label });
+    return label === "portalDashboard.presets.useLayout"
+      ? `Use ${preset.label} layout`
+      : label;
   }
 
   widgetShown(id: DashboardWidgetId): boolean {
@@ -275,6 +402,14 @@ export class DashboardComponent implements OnInit {
   hasEntitlement(key: "messaging" | "advancedAnalytics" | "staffPerformanceAnalytics"): boolean {
     const profile = this.profile();
     return hasTenantEntitlement(profile?.entitlements ?? null, key);
+  }
+
+  exportEntitlements() {
+    return mergeTenantEntitlements(
+      this.exportEntitlementsDirect(),
+      this.usage()?.entitlements,
+      this.profile()?.entitlements,
+    );
   }
 
   planUsageLabel(): string {
@@ -343,7 +478,11 @@ export class DashboardComponent implements OnInit {
   toggleCustomize(): void {
     const next = !this.editMode();
     this.editMode.set(next);
-    this.pickerOpen.set(false);
+    if (next) {
+      this.openPicker();
+    } else {
+      this.pickerOpen.set(false);
+    }
   }
 
   finishCustomize(): void {
@@ -365,7 +504,33 @@ export class DashboardComponent implements OnInit {
   }
 
   openPicker(): void {
+    this.syncLayoutHiddenWidgets();
     this.pickerOpen.set(true);
+  }
+
+  /** Drop plan/capability-blocked widgets so add list matches what is on the grid. */
+  private syncLayoutHiddenWidgets(): void {
+    const pruned = filterDashboardLayoutByVisibility(
+      this.layout(),
+      this.widgetVisibilityContext(),
+    );
+    if (
+      dashboardLayoutFingerprint(pruned)
+      !== dashboardLayoutFingerprint(this.layout())
+    ) {
+      this.layout.set(pruned);
+      void this.persistLayout(pruned);
+    }
+  }
+
+  private layoutOccupiesVisibleWidget(
+    layout: DashboardLayout,
+    widgetId: DashboardWidgetId,
+  ): boolean {
+    return (
+      layoutIncludesWidget(layout, widgetId)
+      && isDashboardWidgetVisible(widgetId, this.widgetVisibilityContext())
+    );
   }
 
   closePicker(): void {
@@ -379,18 +544,23 @@ export class DashboardComponent implements OnInit {
         : widgetId === "week_appointments" || widgetId === "queue_now"
           ? 9
           : 12;
-    this.persistLayout(addDashboardWidget(this.layout(), widgetId, width));
     this.pickerOpen.set(false);
-    void this.load();
+    void this.persistLayout(addDashboardWidget(this.layout(), widgetId, width), true);
   }
 
   applyLayoutPreset(presetId: DashboardLayoutPresetId): void {
-    const layout = resolveDashboardLayoutPreset(
-      presetId === "practitioner" || this.isPractitionerView() ? "practitioner" : presetId,
-    );
+    const resolvedId =
+      presetId === "practitioner" || this.isPractitionerView() ? "practitioner" : presetId;
+    const layout = this.layoutVisibleForTenant(resolveDashboardLayoutPreset(resolvedId));
     this.rangePreset.set(layout.range);
     this.persistLayout(layout, true);
     this.pickerOpen.set(false);
+    this.triggerLayoutPresetPulse();
+  }
+
+  private triggerLayoutPresetPulse(): void {
+    this.layoutPresetPulse.set(true);
+    window.setTimeout(() => this.layoutPresetPulse.set(false), 1200);
   }
 
   offersWalkInQueue(): boolean {
@@ -441,7 +611,10 @@ export class DashboardComponent implements OnInit {
     try {
       const range = resolveDashboardRange(this.rangePreset());
       const snapshot = await this.businessApi.withAuthorizedClient(async (client) => {
-        const profile = await client.getTenantProfile();
+        const [profile, exportEntitlements] = await Promise.all([
+          client.getTenantProfile(),
+          client.getTenantEntitlements().catch(() => null),
+        ]);
         const storedLayout = await resolveDashboardLayoutFromApi(
           () => client.getTenantDashboardLayout(),
           (layout) => client.putTenantDashboardLayout(layout),
@@ -523,6 +696,7 @@ export class DashboardComponent implements OnInit {
         }
         return {
           profile,
+          exportEntitlements,
           storedLayout,
           bookings,
           services,
@@ -542,7 +716,31 @@ export class DashboardComponent implements OnInit {
       });
 
       this.profile.set(snapshot.profile);
-      this.layout.set(snapshot.storedLayout);
+      this.exportEntitlementsDirect.set(snapshot.exportEntitlements);
+      const visibility = {
+        isPractitionerView: this.isPractitionerView(),
+        entitlements: mergeTenantEntitlements(
+          snapshot.exportEntitlements,
+          snapshot.usage?.entitlements,
+          snapshot.profile.entitlements,
+        ),
+        capabilities: resolveDashboardCapabilities(snapshot.profile),
+        canPortal: (permission: Parameters<PortalSessionService["can"]>[0]) =>
+          this.session.can(permission)
+          || (permission === "portal.bookings" && this.session.can("portal.bookings.self")),
+      };
+      const normalizedLayout = filterDashboardLayoutByVisibility(snapshot.storedLayout, visibility);
+      this.layout.set(normalizedLayout);
+      if (
+        visibleDashboardLayoutFingerprint(normalizedLayout, visibility)
+        !== visibleDashboardLayoutFingerprint(snapshot.storedLayout, visibility)
+      ) {
+        void this.businessApi
+          .withAuthorizedClient((client) =>
+            client.putTenantDashboardLayout(dashboardLayoutToApi(normalizedLayout)),
+          )
+          .catch(() => undefined);
+      }
       if (!this.editMode()) {
         this.rangePreset.set(snapshot.storedLayout.range);
       }
@@ -593,22 +791,24 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  private persistLayout(layout: DashboardLayout, reload = false): void {
-    this.layout.set(layout);
+  private persistLayout(layout: DashboardLayout, reload = false): Promise<void> {
+    const normalized = filterDashboardLayoutByVisibility(layout, this.widgetVisibilityContext());
+    this.layout.set(normalized);
     const tenantId = this.profile()?.tenantId;
     if (!tenantId) {
-      return;
+      return Promise.resolve();
     }
-    void this.businessApi
+    return this.businessApi
       .withAuthorizedClient((client) =>
-        client.putTenantDashboardLayout(dashboardLayoutToApi(layout)),
+        client.putTenantDashboardLayout(dashboardLayoutToApi(normalized)),
       )
       .catch(() => undefined)
       .finally(() => {
         if (reload) {
           void this.load();
         }
-      });
+      })
+      .then(() => undefined);
   }
 
   private toSeriesChartData(
