@@ -1,0 +1,11 @@
+@use "../../shared/admin-list-page" as *;
+
+.billing-grid-section adeni-list-toolbar {
+  margin-bottom: 0;
+}
+
+.ref {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8125rem;
+  word-break: break-all;
+}

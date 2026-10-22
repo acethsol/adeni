@@ -20,11 +20,11 @@ import {
   AdeniListPaginationComponent,
   AdeniPortalEmptyStateComponent,
   PortalPageComponent,
+  AdeniTabsComponent,
+  TenantOperationsRealtimeService,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { TenantOperationsRealtimeService } from "@adeni/ui";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
-import { PortalTabsComponent } from "../../shared/portal-tabs.component";
 
 @Component({
   selector: "app-payments",
@@ -32,7 +32,7 @@ import { PortalTabsComponent } from "../../shared/portal-tabs.component";
   imports: [
     PortalPageComponent,
     FormsModule,
-    PortalTabsComponent,
+    AdeniTabsComponent,
     AdeniPortalEmptyStateComponent,
     AdeniListPaginationComponent,
   ],

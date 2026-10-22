@@ -7,6 +7,7 @@ import ArrowLeft16 from "@carbon/icons/es/arrow--left/16";
 import ArrowRight16 from "@carbon/icons/es/arrow--right/16";
 import ArrowRight20 from "@carbon/icons/es/arrow--right/20";
 import Calendar16 from "@carbon/icons/es/calendar/16";
+import ChartLine16 from "@carbon/icons/es/chart--line/16";
 import Calendar32 from "@carbon/icons/es/calendar/32";
 import Checkmark16 from "@carbon/icons/es/checkmark/16";
 import CheckmarkFilled16 from "@carbon/icons/es/checkmark--filled/16";
@@ -38,6 +39,7 @@ import Upload16 from "@carbon/icons/es/upload/16";
 import User16 from "@carbon/icons/es/user/16";
 import UserFilled16 from "@carbon/icons/es/user--filled/16";
 import UserFollow16 from "@carbon/icons/es/user--follow/16";
+import Wallet16 from "@carbon/icons/es/wallet/16";
 
 export type AdeniCarbonIconName =
   | "add"
@@ -46,6 +48,7 @@ export type AdeniCarbonIconName =
   | "arrow--right-20"
   | "calendar"
   | "calendar-32"
+  | "chart--line"
   | "checkmark"
   | "checkmark--filled"
   | "chevron--down"
@@ -75,7 +78,8 @@ export type AdeniCarbonIconName =
   | "upload"
   | "user"
   | "user--filled"
-  | "user--follow";
+  | "user--follow"
+  | "wallet";
 
 const ICONS: Record<AdeniCarbonIconName, IconDescriptor> = {
   add: Add16 as IconDescriptor,
@@ -84,6 +88,7 @@ const ICONS: Record<AdeniCarbonIconName, IconDescriptor> = {
   "arrow--right-20": ArrowRight20 as IconDescriptor,
   calendar: Calendar16 as IconDescriptor,
   "calendar-32": Calendar32 as IconDescriptor,
+  "chart--line": ChartLine16 as IconDescriptor,
   checkmark: Checkmark16 as IconDescriptor,
   "checkmark--filled": CheckmarkFilled16 as IconDescriptor,
   "chevron--down": ChevronDown16 as IconDescriptor,
@@ -114,6 +119,7 @@ const ICONS: Record<AdeniCarbonIconName, IconDescriptor> = {
   user: User16 as IconDescriptor,
   "user--filled": UserFilled16 as IconDescriptor,
   "user--follow": UserFollow16 as IconDescriptor,
+  wallet: Wallet16 as IconDescriptor,
 };
 
 function iconSize(icon: IconDescriptor, override?: number): number {

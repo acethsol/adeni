@@ -41,13 +41,13 @@ import {
   AdeniPillComponent,
   AdeniPortalEmptyStateComponent,
   PortalPageComponent,
+  AdeniTabsComponent,
   type AdeniDataTableColumn,
   type AdeniDataTableSortDirection,
   type AdeniPillTone,
+  type AdeniTab,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import type { PortalTab } from "../../core/portal-nav";
-import { PortalTabsComponent } from "../../shared/portal-tabs.component";
 
 const BILLING_EVENT_LABELS: Record<string, string> = {
   "subscription.create": "Plan activated",
@@ -61,7 +61,7 @@ const BILLING_EVENT_LABELS: Record<string, string> = {
   standalone: true,
   imports: [
     PortalPageComponent,
-    PortalTabsComponent,
+    AdeniTabsComponent,
     DatePipe,
     AdeniListToolbarComponent,
     AdeniDataTableComponent,
@@ -140,7 +140,7 @@ export class PlanComponent implements OnInit {
   readonly billingSortDirection = signal<AdeniDataTableSortDirection>("desc");
   readonly billingSearchQuery = signal("");
 
-  readonly planTabs: PortalTab[] = [
+  readonly planTabs: AdeniTab[] = [
     { id: "plan", label: "Plan & billing" },
     { id: "compare", label: "Compare plans" },
   ];

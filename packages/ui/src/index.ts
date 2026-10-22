@@ -27,6 +27,11 @@ export {
   type AdeniStaffButtonIconPosition,
   type AdeniStaffButtonVariant,
 } from "./adeni-staff-button.component";
+export {
+  AdeniTabsComponent,
+  type AdeniTab,
+  type AdeniTabsLinkMode,
+} from "./adeni-tabs.component";
 export { AdeniPortalEmptyStateComponent } from "./adeni-portal-empty-state.component";
 export {
   readPersistedListViewMode,

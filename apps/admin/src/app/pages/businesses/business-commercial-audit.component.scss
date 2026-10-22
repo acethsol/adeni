@@ -1,0 +1,9 @@
+@use "dashboard-shell" as *;
+@use "business-detail-grids" as *;
+
+.action-label {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}

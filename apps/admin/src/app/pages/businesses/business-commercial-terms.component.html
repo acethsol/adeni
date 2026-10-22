@@ -1,0 +1,145 @@
+@if (facade.business(); as b) {
+  @if (billingOwedHint(); as hint) {
+    <p class="terms-hint">{{ hint }}</p>
+  }
+
+  @if (facade.terms(); as t) {
+    <section class="terms-hero">
+      <div>
+        <p class="terms-hero__kicker">Effective to Adeni</p>
+        <p class="terms-hero__amount">{{ heroAmount() }}<span class="terms-hero__period">/mo</span></p>
+        <p class="terms-hero__sub">{{ heroSubline() }}</p>
+        <div class="terms-hero__pills">
+          @let plan = businessPlanPill(b);
+          <adeni-pill [tone]="plan.variant" [compact]="true">{{ plan.label }}</adeni-pill>
+          @let billing = billingStatusPill(b.billingStatus);
+          <adeni-pill [tone]="billing.variant" [compact]="true">{{ billing.label }}</adeni-pill>
+          @if (t.trialEndsAt) {
+            <adeni-pill tone="info" [compact]="true">Trial · {{ t.trialEndsAt | date: "mediumDate" }}</adeni-pill>
+          }
+        </div>
+      </div>
+      <adeni-staff-btn variant="primary" icon="edit" (pressed)="wizard.open()">
+        Edit subscription
+      </adeni-staff-btn>
+    </section>
+
+    <div class="pricing-ladder" aria-label="Pricing ladder">
+      @if (t.catalogListPrice != null && t.currency) {
+        <article class="pricing-step">
+          <p class="pricing-step__label">Catalog list</p>
+          <p class="pricing-step__value">{{ t.catalogListPrice }} {{ t.currency }}</p>
+          <p class="pricing-step__hint">{{ t.pricingCatalogVersion || "Current catalog" }}</p>
+        </article>
+      }
+      @if (t.effectiveMonthlyAmount != null && t.currency) {
+        <article class="pricing-step">
+          <p class="pricing-step__label">Effective monthly</p>
+          <p class="pricing-step__value">{{ t.effectiveMonthlyAmount }} {{ t.currency }}</p>
+          <p class="pricing-step__hint">After overrides &amp; discounts</p>
+        </article>
+      }
+      @if (t.agreedMonthlyAmount != null && t.currency) {
+        <article class="pricing-step pricing-step--bound">
+          <p class="pricing-step__label">Agreed (bound)</p>
+          <p class="pricing-step__value">{{ t.agreedMonthlyAmount }} {{ t.currency }}</p>
+          <p class="pricing-step__hint">
+            @if (t.priceLockEndsAt) {
+              Lock until {{ t.priceLockEndsAt | date: "mediumDate" }}
+            } @else {
+              {{ t.boundPricingCatalogVersion || "Bound catalog" }}
+            }
+          </p>
+        </article>
+      }
+    </div>
+
+    <div class="profile-grid">
+      <section class="profile-panel">
+        <h3 class="section-title">Subscription</h3>
+        <p class="section-lede">Plan SKU and billing lifecycle for this tenant.</p>
+        <dl class="detail-list">
+          <div>
+            <dt>Plan SKU</dt>
+            <dd>{{ formatSubscriptionSku(t.subscriptionSku) }}</dd>
+          </div>
+          <div>
+            <dt>Billing status</dt>
+            <dd>{{ formatTenantBillingStatus(t.billingStatus) }}</dd>
+          </div>
+          @if (t.trialEndsAt) {
+            <div>
+              <dt>Trial ends</dt>
+              <dd>{{ t.trialEndsAt | date: "mediumDate" }}</dd>
+            </div>
+          }
+          @if (t.billingCountryCode) {
+            <div>
+              <dt>Billing country</dt>
+              <dd>{{ t.billingCountryCode }}</dd>
+            </div>
+          }
+        </dl>
+      </section>
+
+      <section class="profile-panel">
+        <h3 class="section-title">Overrides</h3>
+        <p class="section-lede">Custom amounts outside the public catalog.</p>
+        <dl class="detail-list">
+          @if (t.customSaasMonthlyAmount != null && t.customSaasCurrency) {
+            <div>
+              <dt>Custom monthly</dt>
+              <dd>{{ t.customSaasMonthlyAmount }} {{ t.customSaasCurrency }}</dd>
+            </div>
+          } @else {
+            <div>
+              <dt>Custom monthly</dt>
+              <dd class="muted-value">None — catalog pricing applies</dd>
+            </div>
+          }
+          @if (t.effectiveMonthlyAmount != null && t.currency) {
+            <div>
+              <dt>Effective monthly</dt>
+              <dd>{{ t.effectiveMonthlyAmount }} {{ t.currency }}</dd>
+            </div>
+          }
+        </dl>
+      </section>
+
+      <section class="profile-panel">
+        <h3 class="section-title">Catalog &amp; binding</h3>
+        <p class="section-lede">Versioned pricing and locked commercial agreement.</p>
+        <dl class="detail-list">
+          @if (t.pricingCatalogVersion) {
+            <div>
+              <dt>Pricing catalog</dt>
+              <dd>{{ t.pricingCatalogVersion }}</dd>
+            </div>
+          }
+          @if (t.boundPricingCatalogVersion) {
+            <div>
+              <dt>Bound catalog version</dt>
+              <dd>{{ t.boundPricingCatalogVersion }}</dd>
+            </div>
+          }
+          @if (t.agreedMonthlyAmount != null && t.currency) {
+            <div>
+              <dt>Agreed monthly</dt>
+              <dd>{{ t.agreedMonthlyAmount }} {{ t.currency }}</dd>
+            </div>
+          }
+          @if (t.priceLockEndsAt) {
+            <div>
+              <dt>Price lock ends</dt>
+              <dd>{{ t.priceLockEndsAt | date: "mediumDate" }}</dd>
+            </div>
+          }
+        </dl>
+      </section>
+    </div>
+  } @else {
+    <p class="muted">Commercial terms could not be loaded.</p>
+  }
+
+  <app-business-subscription-wizard-host #wizard />
+}

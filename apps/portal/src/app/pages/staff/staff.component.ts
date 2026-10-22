@@ -46,6 +46,8 @@ import {
   AdeniPillComponent,
   AdeniPortalEmptyStateComponent,
   AdeniWizardComponent,
+  AdeniTabsComponent,
+  type AdeniTab,
   PortalPageComponent,
   readPersistedListViewMode,
   sortDataRows,
@@ -71,6 +73,13 @@ type StaffPortalFilter = "all" | "has_portal" | "none";
 
 /** Create wizard steps (Leave only after save). */
 const CREATE_STEPS: StaffFormTab[] = ["profile", "services", "hours"];
+
+const STAFF_FORM_TABS: AdeniTab[] = [
+  { id: "profile", label: "Profile" },
+  { id: "services", label: "Services" },
+  { id: "hours", label: "Hours" },
+  { id: "leave", label: "Leave" },
+];
 
 type DayRow = {
   dayOfWeek: number;
@@ -155,6 +164,7 @@ function rowsToRules(rows: DayRow[]): WeeklyAvailabilityRule[] {
     FormsModule,
     RouterLink,
     AdeniWizardComponent,
+    AdeniTabsComponent,
     AdeniModalComponent,
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
@@ -220,6 +230,7 @@ export class StaffComponent implements OnInit, OnDestroy {
   readonly editingId = signal<string | null>(null);
   readonly showForm = signal(false);
   readonly formTab = signal<StaffFormTab>("profile");
+  readonly staffFormTabs = STAFF_FORM_TABS;
   readonly categorySlugs = signal<string[]>([]);
   /** Keep an existing role in the dropdown even if category filters would hide it. */
   readonly preserveRoleKey = signal<string | null>(null);
@@ -745,6 +756,10 @@ export class StaffComponent implements OnInit, OnDestroy {
 
   serviceOverflow(member: StaffMember): number {
     return Math.max(0, member.serviceOfferingIds.length - 3);
+  }
+
+  onStaffFormTabChange(tabId: string): void {
+    this.setFormTab(tabId as StaffFormTab);
   }
 
   setFormTab(tab: StaffFormTab): void {

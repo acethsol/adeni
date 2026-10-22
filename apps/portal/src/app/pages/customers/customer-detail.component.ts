@@ -21,14 +21,14 @@ import {
   AdeniRowActionBarComponent,
   AdeniTablePersonCellComponent,
   PortalPageComponent,
+  AdeniTabsComponent,
   type AdeniDataTableColumn,
   type AdeniDataTableSortDirection,
   type AdeniPillTone,
+  type AdeniTab,
 } from "@adeni/ui";
 import { AdeniApiError } from "@adeni/api-client";
-import type { PortalTab } from "../../core/portal-nav";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalTabsComponent } from "../../shared/portal-tabs.component";
 
 const CUSTOMER_DETAIL_TABS = new Set(["overview", "bookings", "queue"]);
 
@@ -47,7 +47,7 @@ const PAID_STATUS = 6;
   standalone: true,
   imports: [
     PortalPageComponent,
-    PortalTabsComponent,
+    AdeniTabsComponent,
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
     AdeniTablePersonCellComponent,
@@ -74,7 +74,7 @@ export class CustomerDetailComponent implements OnInit {
     },
   );
 
-  readonly tabs = computed((): PortalTab[] => {
+  readonly tabs = computed((): AdeniTab[] => {
     const c = this.customer();
     const bookingCount = c?.recentBookings.length ?? 0;
     const queueCount = c?.recentQueueVisits.length ?? 0;

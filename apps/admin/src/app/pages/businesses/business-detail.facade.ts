@@ -41,7 +41,7 @@ export class BusinessDetailFacade {
           c.getAdminBusiness(tenantId),
           c.getAdminTenantCommercialTerms(tenantId),
           c.listAdminTenantSubscriptionCharges(tenantId, 50),
-          c.listAdminTenantCommercialAudit(tenantId, 30),
+          c.listAdminTenantCommercialAudit(tenantId, 100),
         ]);
         return { business, terms, chargeItems, auditItems };
       });

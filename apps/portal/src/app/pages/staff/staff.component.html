@@ -328,44 +328,12 @@
         </div>
       </adeni-wizard>
     } @else {
-      <div class="form-tabs" role="tablist" aria-label="Staff sections">
-        <button
-          type="button"
-          role="tab"
-          [attr.aria-selected]="formTab() === 'profile'"
-          [class.active]="formTab() === 'profile'"
-          (click)="setFormTab('profile')"
-        >
-          Profile
-        </button>
-        <button
-          type="button"
-          role="tab"
-          [attr.aria-selected]="formTab() === 'services'"
-          [class.active]="formTab() === 'services'"
-          (click)="setFormTab('services')"
-        >
-          Services
-        </button>
-        <button
-          type="button"
-          role="tab"
-          [attr.aria-selected]="formTab() === 'hours'"
-          [class.active]="formTab() === 'hours'"
-          (click)="setFormTab('hours')"
-        >
-          Hours
-        </button>
-        <button
-          type="button"
-          role="tab"
-          [attr.aria-selected]="formTab() === 'leave'"
-          [class.active]="formTab() === 'leave'"
-          (click)="setFormTab('leave')"
-        >
-          Leave
-        </button>
-      </div>
+      <adeni-tabs
+        [tabs]="staffFormTabs"
+        linkMode="button"
+        [activeId]="formTab()"
+        (activeIdChange)="onStaffFormTabChange($event)"
+      />
       <ng-container [ngTemplateOutlet]="staffPanels" />
       <div class="actions">
         <button type="button" class="btn" (click)="cancelForm()">

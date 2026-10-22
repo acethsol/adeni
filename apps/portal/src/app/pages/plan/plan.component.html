@@ -13,7 +13,7 @@
   @if (loading()) {
     <p class="muted">Loading…</p>
   } @else {
-    <app-portal-tabs [tabs]="planTabs" />
+    <adeni-tabs [tabs]="planTabs" />
 
     @if (planTab() === "compare") {
       <section class="card compare">

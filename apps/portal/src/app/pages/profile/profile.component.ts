@@ -18,10 +18,10 @@ import {
   AdeniFeedbackService,
   AdeniPortalEmptyStateComponent,
   PortalPageComponent,
+  AdeniTabsComponent,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
-import { PortalTabsComponent } from "../../shared/portal-tabs.component";
 
 const PHONE_PATTERN = /^\+?[0-9\s-]{7,20}$/;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -34,7 +34,7 @@ const MAX_BYTES = MAX_UPLOAD_BYTES;
     PortalPageComponent,
     FormsModule,
     KeyValuePipe,
-    PortalTabsComponent,
+    AdeniTabsComponent,
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
     RouterLink,

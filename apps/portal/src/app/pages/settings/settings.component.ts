@@ -19,9 +19,13 @@ import {
 } from "@adeni/shared";
 import { filterPortalTabs } from "../../core/portal-access";
 import { findPortalNavItem } from "../../core/portal-nav";
-import { AdeniCarbonIconComponent, AdeniFeedbackService, PortalPageComponent } from "@adeni/ui";
+import {
+  AdeniCarbonIconComponent,
+  AdeniFeedbackService,
+  AdeniTabsComponent,
+  PortalPageComponent,
+} from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalTabsComponent } from "../../shared/portal-tabs.component";
 
 @Component({
   selector: "app-settings",
@@ -29,7 +33,7 @@ import { PortalTabsComponent } from "../../shared/portal-tabs.component";
   imports: [
     PortalPageComponent,
     FormsModule,
-    PortalTabsComponent,
+    AdeniTabsComponent,
     AdeniCarbonIconComponent,
     RouterLink,
   ],

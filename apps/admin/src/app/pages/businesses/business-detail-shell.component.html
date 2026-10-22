@@ -52,14 +52,9 @@
       </div>
     </section>
 
-    <nav class="detail-tabs cds-content-switcher" aria-label="Business sections">
-      <a routerLink="overview" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-        Overview
-      </a>
-      <a routerLink="billing" routerLinkActive="active">Subscription &amp; billing</a>
-    </nav>
+    <adeni-tabs [tabs]="detailTabs()" linkMode="path" />
 
-    <div class="detail-tab-body">
+    <div class="tab-panel">
       <router-outlet />
     </div>
   }

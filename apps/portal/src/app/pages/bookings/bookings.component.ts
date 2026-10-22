@@ -36,6 +36,7 @@ import {
   AdeniRowActionBarComponent,
   AdeniTablePersonCellComponent,
   PortalPageComponent,
+  AdeniTabsComponent,
   readPersistedListViewMode,
   type AdeniCarbonIconName,
   type AdeniDataTableColumn,
@@ -48,7 +49,6 @@ import { map } from "rxjs";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { PortalSessionService } from "../../core/services/portal-session.service";
-import { PortalTabsComponent } from "../../shared/portal-tabs.component";
 
 const PENDING_STATUS = 0;
 const CONFIRMED_STATUS = 1;
@@ -61,7 +61,7 @@ const PAID_STATUS = 6;
   standalone: true,
   imports: [
     PortalPageComponent,
-    PortalTabsComponent,
+    AdeniTabsComponent,
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
     AdeniListToolbarComponent,

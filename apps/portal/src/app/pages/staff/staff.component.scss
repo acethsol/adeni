@@ -364,40 +364,6 @@ h4 {
   font-size: 1rem;
 }
 
-.form-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-  margin: 0 0 1rem;
-  border-bottom: 1px solid var(--border, #e0e0e0);
-}
-
-.form-tabs button {
-  margin-bottom: -1px;
-  padding: 0.55rem 0.85rem;
-  border: none;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 0.875rem;
-  font-weight: 650;
-  cursor: pointer;
-}
-
-.form-tabs button:hover:not(:disabled) {
-  color: var(--text);
-}
-
-.form-tabs button.active {
-  border-bottom-color: var(--interactive, #0f62fe);
-  color: var(--text);
-}
-
-.form-tabs button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
 .tab-panel {
   min-height: 8rem;
 }

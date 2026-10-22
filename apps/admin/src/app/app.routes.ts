@@ -5,6 +5,8 @@ import { AdminPendingComponent } from "./pages/pending/pending.component";
 import { AdminMarketsComponent } from "./pages/markets/markets.component";
 import { AdminBusinessesComponent } from "./pages/businesses/businesses.component";
 import { BusinessBillingComponent } from "./pages/businesses/business-billing.component";
+import { BusinessCommercialAuditComponent } from "./pages/businesses/business-commercial-audit.component";
+import { BusinessCommercialTermsComponent } from "./pages/businesses/business-commercial-terms.component";
 import { BusinessDetailShellComponent } from "./pages/businesses/business-detail-shell.component";
 import { BusinessOverviewComponent } from "./pages/businesses/business-overview.component";
 import { AdminCustomersComponent } from "./pages/customers/customers.component";
@@ -64,9 +66,19 @@ export const routes: Routes = [
             title: "Business overview",
           },
           {
+            path: "terms",
+            component: BusinessCommercialTermsComponent,
+            title: "Commercial terms",
+          },
+          {
             path: "billing",
             component: BusinessBillingComponent,
-            title: "Business billing",
+            title: "Billing history",
+          },
+          {
+            path: "audit",
+            component: BusinessCommercialAuditComponent,
+            title: "Commercial audit",
           },
         ],
       },

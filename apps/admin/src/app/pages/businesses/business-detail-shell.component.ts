@@ -1,11 +1,13 @@
 import { DatePipe } from "@angular/common";
 import { Component, computed, inject } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { ActivatedRoute, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
+import { ActivatedRoute, RouterLink, RouterOutlet } from "@angular/router";
 import { formatSubscriptionSku, formatTenantStatus } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
   AdeniStaffButtonComponent,
+  AdeniTabsComponent,
+  type AdeniTab,
   PortalPageComponent,
 } from "@adeni/ui";
 import { AdminPillComponent } from "../../shared/admin-pill.component";
@@ -19,11 +21,11 @@ import { BusinessDetailFacade } from "./business-detail.facade";
   imports: [
     PortalPageComponent,
     RouterLink,
-    RouterLinkActive,
     RouterOutlet,
     DatePipe,
     AdeniStaffButtonComponent,
     AdeniCarbonIconComponent,
+    AdeniTabsComponent,
     AdminPillComponent,
   ],
   templateUrl: "./business-detail-shell.component.html",
@@ -45,6 +47,19 @@ export class BusinessDetailShellComponent {
       return "Tenant profile, subscription, and billing history.";
     }
     return `${formatTenantStatus(b.status)} · ${formatSubscriptionSku(b.subscriptionSku)} · Adeni SaaS and commercial terms.`;
+  });
+
+  readonly detailTabs = computed((): AdeniTab[] => {
+    const charges = this.facade.charges().length;
+    const audit = this.facade.commercialAudit().length;
+    const billingLabel = charges > 0 ? `Billing (${charges})` : "Billing";
+    const auditLabel = audit > 0 ? `Commercial audit (${audit})` : "Commercial audit";
+    return [
+      { id: "overview", label: "Overview" },
+      { id: "terms", label: "Commercial terms" },
+      { id: "billing", label: billingLabel },
+      { id: "audit", label: auditLabel },
+    ];
   });
 
   constructor() {

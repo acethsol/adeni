@@ -2,6 +2,7 @@ import type { AdminPillVariant } from "./admin-pill.component";
 import { formatTenantStatus, VERIFICATION_BADGE_LABELS } from "@adeni/shared";
 import {
   formatSubscriptionSku,
+  formatTenantBillingStatus,
   resolveSubscriptionSku,
   type AdminBusinessSummary,
   type PendingBadgeRequest,
@@ -30,7 +31,7 @@ export function billingStatusPill(
   if (!status) {
     return { label: "—", variant: "neutral" };
   }
-  const label = status.replace(/_/g, " ");
+  const label = formatTenantBillingStatus(status);
   const variant: AdminPillVariant =
     status === "active"
       ? "success"

@@ -1,0 +1,38 @@
+.adeni-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0 0 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.adeni-tabs a,
+.adeni-tabs button {
+  margin-bottom: -1px;
+  padding: 0.55rem 0.85rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 650;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.adeni-tabs a:hover,
+.adeni-tabs button:hover:not(:disabled) {
+  color: var(--text);
+}
+
+.adeni-tabs a.active,
+.adeni-tabs button.active {
+  border-bottom-color: var(--adeni-purple, #7f56ff);
+  color: var(--text);
+}
+
+.adeni-tabs button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
