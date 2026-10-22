@@ -147,7 +147,7 @@ export class LocationsComponent implements OnInit {
       this.filteredLocations(),
       this.sortColumnId(),
       this.sortDirection(),
-      this.locationColumns,
+      this.locationColumns(),
     ),
   );
 
@@ -157,27 +157,27 @@ export class LocationsComponent implements OnInit {
     sliceListPage(this.sortedFilteredLocations(), this.page(), this.pageSize()),
   );
 
-  readonly locationColumns: AdeniDataTableColumn<BusinessLocation>[] = [
+  readonly locationColumns = computed<AdeniDataTableColumn<BusinessLocation>[]>(() => [
     {
       id: "name",
-      header: "Location",
+      header: this.tr("portal.core.location"),
       cell: (l) => l.name || l.slug,
       sortValue: (l) => (l.name || l.slug).toLowerCase(),
     },
     {
       id: "address",
-      header: "Address",
+      header: this.tr("common.address"),
       cell: (l) => l.addressLine,
       sortValue: (l) => l.addressLine.toLowerCase(),
     },
-    { id: "market", header: "Market", cell: (l) => l.marketId },
+    { id: "market", header: this.tr("common.market"), cell: (l) => l.marketId },
     {
       id: "primary",
-      header: "Primary",
+      header: this.tr("common.primary"),
       cell: () => "",
       sortValue: (l) => (l.isPrimary ? 1 : 0),
     },
-  ];
+  ]);
 
   readonly trackLocationRow = (loc: BusinessLocation): string => loc.id;
 
@@ -253,7 +253,7 @@ export class LocationsComponent implements OnInit {
           );
           this.locations.set(items);
         });
-      }, "Loading locations", "Fetching branches");
+      }, this.tr("portal.locations.loadingLocations"), this.tr("portal.locations.fetchingBranches"));
     } catch (caught) {
       this.error.set(this.apiErr(caught, "portal.locations.couldNotLoadLocations"));
       this.feedback.error(this.apiErr(caught, "portal.locations.couldNotLoadLocations"));
@@ -265,7 +265,7 @@ export class LocationsComponent implements OnInit {
   openCreate(): void {
     if (!this.canAddLocation()) {
       const message =
-        "Your plan includes one location. Upgrade to Business to add more branches.";
+        this.tr("portal.locations.yourPlanIncludesOneLocation");
       this.error.set(message);
       this.feedback.error(message);
       return;
@@ -322,14 +322,14 @@ export class LocationsComponent implements OnInit {
           const created = await this.api.withAuthorizedClient((c) => c.addTenantLocation(body));
           this.locations.update((list) => mergeSavedLocation(list, created, null));
         }
-      }, "Saving location", body.name ?? slug);
+      }, this.tr("portal.locations.savingLocation"), body.name ?? slug);
       this.cancelForm();
       this.feedback.success(this.tr("portal.locations.locationSaved"));
     } catch (err) {
       const message =
         err instanceof AdeniApiError && err.message
           ? err.message
-          : "Could not save location.";
+          : this.tr("portal.locations.couldNotSaveLocation");
       this.error.set(message);
       this.feedback.error(message);
     } finally {
@@ -339,9 +339,9 @@ export class LocationsComponent implements OnInit {
 
   async remove(loc: BusinessLocation): Promise<void> {
     const ok = await this.confirmDialog.confirm({
-      title: "Delete location?",
+      title: this.tr("portal.locations.deleteLocation2"),
       message: `Delete “${loc.name || loc.slug}”? It will no longer appear on your public page.`,
-      confirmLabel: "Delete",
+      confirmLabel: this.tr("portal.locations.delete"),
       danger: true,
     });
     if (!ok) {
@@ -351,7 +351,7 @@ export class LocationsComponent implements OnInit {
     try {
       await this.feedback.runLoading(
         () => this.api.withAuthorizedClient((c) => c.deactivateTenantLocation(loc.id)),
-        "Deleting location",
+        this.tr("portal.locations.deletingLocation"),
         loc.name || loc.slug,
       );
       if (loc.isPrimary) {

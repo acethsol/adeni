@@ -97,7 +97,7 @@ export class PublicPageSettingsComponent implements OnInit {
         this.showBook = page.sections.book ?? true;
         this.showPolicies = page.sections.policies ?? false;
         this.captureSnapshot();
-      }, "Loading public page…", "Fetching template and layout");
+      }, this.tr("portal.publicPage.loadingPublicPage"), this.tr("portal.publicPage.fetchingTemplateLayout"));
     } catch (caught) {
       this.profile.set(null);
       this.feedback.error(this.apiErr(caught, "portal.publicPage.couldNotLoadPublicPage"));
@@ -143,17 +143,17 @@ export class PublicPageSettingsComponent implements OnInit {
           });
           this.profile.set(updated);
         });
-      }, "Saving…", "Updating template and sections");
+      }, this.tr("common.saving"), this.tr("portal.publicPage.updatingTemplateSections"));
 
       this.captureSnapshot();
       this.feedback.success(
         this.showBook
-          ? "Template and sections are live on your booking page."
-          : "Saved. Online booking is off — customers can still view your page.",
-        "Public page saved",
+          ? this.tr("portal.publicPage.templateSectionsLiveBookingPage")
+          : this.tr("portal.publicPage.savedOnlineBookingOffCustomers"),
+        this.tr("portal.publicPage.publicPageSaved"),
       );
     } catch (err) {
-      this.feedback.error(err instanceof Error ? err.message : "Could not save public page settings.");
+      this.feedback.error(err instanceof Error ? err.message : this.tr("portal.publicPage.couldNotSavePublicPage"));
     } finally {
       this.saving.set(false);
     }

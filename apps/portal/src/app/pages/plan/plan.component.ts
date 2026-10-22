@@ -106,24 +106,24 @@ export class PlanComponent implements OnInit {
   readonly formatBillingChargeStatus = formatBillingChargeStatus;
   readonly comparisonCell = planComparisonCell;
 
-  readonly billingColumns: AdeniDataTableColumn<TenantSubscriptionCharge>[] = [
+  readonly billingColumns = computed<AdeniDataTableColumn<TenantSubscriptionCharge>[]>(() => [
     {
       id: "occurredAt",
-      header: "Date",
+      header: this.tr("portal.plan.date"),
       cell: (row) => row.occurredAt,
       sortable: true,
       sortValue: (row) => row.occurredAt,
     },
     {
       id: "event",
-      header: "Event",
+      header: this.tr("portal.plan.event"),
       cell: (row) => this.formatBillingEvent(row.eventType),
       sortable: true,
       sortValue: (row) => this.formatBillingEvent(row.eventType),
     },
     {
       id: "amount",
-      header: "Amount",
+      header: this.tr("portal.quotes.amount"),
       align: "right",
       cell: (row) => this.formatChargeAmount(row),
       sortable: true,
@@ -131,12 +131,12 @@ export class PlanComponent implements OnInit {
     },
     {
       id: "status",
-      header: "Status",
+      header: this.tr("common.status"),
       cell: (row) => formatBillingChargeStatus(row.status),
       sortable: true,
       sortValue: (row) => row.status,
     },
-  ];
+  ]);
 
   readonly trackBillingRow = (row: TenantSubscriptionCharge): string => row.id;
 
@@ -144,10 +144,10 @@ export class PlanComponent implements OnInit {
   readonly billingSortDirection = signal<AdeniDataTableSortDirection>("desc");
   readonly billingSearchQuery = signal("");
 
-  readonly planTabs: AdeniTab[] = [
-    { id: "plan", label: "Plan & billing" },
-    { id: "compare", label: "Compare plans" },
-  ];
+  readonly planTabs = computed<AdeniTab[]>(() => [
+    { id: "plan", label: this.tr("portal.plan.planBilling") },
+    { id: "compare", label: this.tr("common.comparePlans") },
+  ]);
 
   readonly planTab = toSignal(
     this.route.queryParamMap.pipe(
@@ -252,13 +252,13 @@ export class PlanComponent implements OnInit {
     const tagline = OUTCOME_TAGLINES[sku];
     const fallbackDescription =
       getPlanDisplayForCountry(country ?? "", sku)?.description ??
-      "Pricing for your market is being configured.";
+      this.tr("portal.plan.pricingMarketBeingConfigured");
 
     if (pricing) {
       if (!pricing.selfServeEnabled) {
         return {
           name: SUBSCRIPTION_SKU_LABELS[sku],
-          priceLabel: "Contact us",
+          priceLabel: this.tr("portal.plan.contactUs"),
           description: fallbackDescription,
           tagline,
         };
@@ -285,7 +285,7 @@ export class PlanComponent implements OnInit {
 
     return {
       name: SUBSCRIPTION_SKU_LABELS[sku],
-      priceLabel: "Contact us",
+      priceLabel: this.tr("portal.plan.contactUs"),
       description: fallbackDescription,
       tagline,
     };
@@ -380,7 +380,7 @@ export class PlanComponent implements OnInit {
   }
 
   featureCell(value: string | boolean): string {
-    if (value === true) return "Yes";
+    if (value === true) return this.tr("admin.pricing.yes");
     if (value === false) return "—";
     return value;
   }

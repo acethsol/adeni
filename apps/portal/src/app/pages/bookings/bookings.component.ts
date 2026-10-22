@@ -154,43 +154,43 @@ export class BookingsComponent {
     });
   });
 
-  readonly bookingTableColumns: AdeniDataTableColumn<BookingResponse>[] = [
+  readonly bookingTableColumns = computed<AdeniDataTableColumn<BookingResponse>[]>(() => [
     {
       id: "customer",
-      header: "Customer",
-      cell: (b) => b.customerName?.trim() || "Guest",
-      sortValue: (b) => (b.customerName?.trim() || "Guest").toLowerCase(),
+      header: this.tr("common.customer"),
+      cell: (b) => b.customerName?.trim() || this.tr("portal.bookings.guest"),
+      sortValue: (b) => (b.customerName?.trim() || this.tr("portal.bookings.guest")).toLowerCase(),
     },
     {
       id: "when",
-      header: "When",
+      header: this.tr("portal.bookings.when"),
       cell: (b) => formatSlotTime(b.startAt),
       sortValue: (b) => b.startAt,
     },
     {
       id: "service",
-      header: "Service",
+      header: this.tr("common.service"),
       cell: (b) => b.serviceName,
       sortValue: (b) => b.serviceName.toLowerCase(),
     },
     {
       id: "status",
-      header: "Status",
+      header: this.tr("common.status"),
       cell: () => "",
       sortValue: (b) => b.status,
     },
-  ];
+  ]);
 
   readonly trackBookingRow = (booking: BookingResponse): string => booking.id;
   readonly kioskStatus = signal<KioskStatusResponse | null>(null);
   readonly savingPin = signal(false);
   readonly actionId = signal<string | null>(null);
   kioskPin = "";
-  readonly tabs = [
-    { id: "pending", label: "Pending" },
-    { id: "upcoming", label: "Upcoming" },
-    { id: "past", label: "Past" },
-  ];
+  readonly tabs = computed(() => [
+    { id: "pending", label: this.tr("portal.staff.pending") },
+    { id: "upcoming", label: this.tr("portal.bookings.upcoming") },
+    { id: "past", label: this.tr("portal.bookings.past") },
+  ]);
 
   readonly formatSlotTime = formatSlotTime;
 
@@ -224,30 +224,30 @@ export class BookingsComponent {
   } {
     switch (status) {
       case PENDING_STATUS:
-        return { label: "Awaiting approval", icon: "time", tone: "pending" };
+        return { label: this.tr("portal.bookings.awaitingApproval"), icon: "time", tone: "pending" };
       case CONFIRMED_STATUS:
-        return { label: "Scheduled", icon: "calendar", tone: "scheduled" };
+        return { label: this.tr("portal.bookings.scheduled"), icon: "calendar", tone: "scheduled" };
       case CHECKED_IN_STATUS:
-        return { label: "On the floor", icon: "user--filled", tone: "floor" };
+        return { label: this.tr("portal.bookings.onFloor"), icon: "user--filled", tone: "floor" };
       case COMPLETED_STATUS:
-        return { label: "Service complete", icon: "checkmark", tone: "complete" };
+        return { label: this.tr("portal.bookings.serviceComplete"), icon: "checkmark", tone: "complete" };
       case PAID_STATUS:
-        return { label: "Paid", icon: "checkmark--filled", tone: "paid" };
+        return { label: this.tr("portal.bookings.paid"), icon: "checkmark--filled", tone: "paid" };
       case 2:
-        return { label: "Declined", icon: "misuse", tone: "closed" };
+        return { label: this.tr("portal.bookings.declined"), icon: "misuse", tone: "closed" };
       case 3:
-        return { label: "Cancelled", icon: "close", tone: "closed" };
+        return { label: this.tr("portal.bookings.cancelled"), icon: "close", tone: "closed" };
       default:
-        return { label: "Unknown", icon: "time", tone: "closed" };
+        return { label: this.tr("portal.bookings.unknown"), icon: "time", tone: "closed" };
     }
   }
 
   pageDescription(): string {
     let base: string;
     if (this.session.can("portal.bookings.self") && !this.session.can("portal.bookings")) {
-      base = "Your assigned appointments — accept, check in, complete, and close payment.";
+      base = this.tr("portal.bookings.yourAssignedAppointmentsAcceptCheck");
     } else {
-      base = "Accept requests, check clients in, complete visits, and collect or mark payment.";
+      base = this.tr("portal.bookings.acceptRequestsCheckClientsComplete");
     }
     if (!this.activeLocation.showLocationSwitch()) {
       return base;
@@ -275,21 +275,21 @@ export class BookingsComponent {
   emptyState(): { title: string; description: string; icon: AdeniCarbonIconName } {
     if (this.tab() === "upcoming") {
       return {
-        title: "Nothing scheduled ahead",
-        description: "Confirmed appointments will show here as your calendar fills up.",
+        title: this.tr("portal.bookings.nothingScheduledAhead"),
+        description: this.tr("portal.bookings.confirmedAppointmentsWillShowHere"),
         icon: "calendar-32",
       };
     }
     if (this.tab() === "past") {
       return {
-        title: "No past bookings",
-        description: "Completed and cancelled visits will appear here for your records.",
+        title: this.tr("portal.bookings.noPastBookings"),
+        description: this.tr("portal.bookings.completedCancelledVisitsWillAppear"),
         icon: "time",
       };
     }
     return {
-      title: "Inbox is clear",
-      description: "New booking requests that need your response will land here first.",
+      title: this.tr("portal.bookings.inboxClear"),
+      description: this.tr("portal.bookings.newBookingRequestsNeedResponse"),
       icon: "calendar-32",
     };
   }
@@ -422,7 +422,7 @@ export class BookingsComponent {
     const popup = window.open(url, "_blank", "noopener,noreferrer");
     if (!popup) {
       this.error.set(
-        "Could not open check-in in a new tab. Allow pop-ups for this site, then try again.",
+        this.tr("portal.bookings.couldNotOpenCheckNew"),
       );
       return;
     }
@@ -471,9 +471,9 @@ export class BookingsComponent {
 
   async reject(booking: BookingResponse): Promise<void> {
     const ok = await this.confirmDialog.confirm({
-      title: "Reject booking?",
+      title: this.tr("portal.bookings.rejectBooking"),
       message: `Reject ${booking.serviceName} on ${formatSlotTime(booking.startAt)}? The customer will be notified.`,
-      confirmLabel: "Reject",
+      confirmLabel: this.tr("admin.pending.reject"),
       danger: true,
     });
     if (!ok) {
@@ -492,9 +492,9 @@ export class BookingsComponent {
 
   async markPaid(booking: BookingResponse): Promise<void> {
     const ok = await this.confirmDialog.confirm({
-      title: "Mark paid at till?",
-      message: `Mark ${booking.serviceName} as paid outside Adeni (cash/transfer)?`,
-      confirmLabel: "Mark paid",
+      title: this.tr("portal.bookings.markPaidAtTill"),
+      message: this.tr("portal.bookings.markAsPaidOutsideAdeni", { serviceName: booking.serviceName }),
+      confirmLabel: this.tr("portal.bookings.markPaid"),
     });
     if (!ok) {
       return;
@@ -529,7 +529,7 @@ export class BookingsComponent {
       const popup = window.open(checkoutUrl, "_blank", "noopener,noreferrer");
       if (!popup) {
         this.error.set(
-          "Payment page blocked. Allow pop-ups for this site, or copy the link from Payments after creating a link.",
+          this.tr("portal.bookings.paymentPageBlockedAllowPop"),
         );
       }
     } catch (caught) {
@@ -561,7 +561,7 @@ export class BookingsComponent {
       void updated;
       await this.load();
     } catch {
-      this.error.set(`Could not ${action} this booking.`);
+      this.error.set(this.tr("portal.bookings.couldNotBooking", { action: action }));
     } finally {
       this.actionId.set(null);
     }

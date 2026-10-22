@@ -32,7 +32,7 @@
           <adeni-filter-select
             layout="toolbar"
             [label]="tr('portal.customers.profileType')"
-            [options]="accountFilterOptions"
+            [options]="accountFilterOptions()"
             [value]="accountFilter()"
             (valueChange)="onAccountFilterChange($any($event))"
           />
@@ -95,7 +95,7 @@
         <div class="adeni-list-results">
           <adeni-data-table
             [rows]="items()"
-            [columns]="columns"
+            [columns]="columns()"
             [trackRow]="trackRow"
             [sortRows]="false"
             [sortColumnId]="sortColumnId()"

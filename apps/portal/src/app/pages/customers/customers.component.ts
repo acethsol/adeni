@@ -87,11 +87,11 @@ export class CustomersComponent implements OnInit, OnDestroy {
   readonly sortDirection = signal<AdeniDataTableSortDirection>("asc");
   private searchDebounce: ReturnType<typeof setTimeout> | null = null;
 
-  readonly accountFilterOptions: AdeniFilterSelectOption[] = [
-    { value: "all", label: "All profiles" },
-    { value: "discover", label: "Discover account" },
-    { value: "walk_in", label: "Walk-in / queue" },
-  ];
+  readonly accountFilterOptions = computed<AdeniFilterSelectOption[]>(() => [
+    { value: "all", label: this.tr("portal.customers.allProfiles") },
+    { value: "discover", label: this.tr("portal.customers.discoverAccount") },
+    { value: "walk_in", label: this.tr("portal.customers.walkQueue") },
+  ]);
 
   readonly entitlements = signal<TenantEntitlements | null>(null);
   readonly exporting = signal(false);
@@ -104,32 +104,32 @@ export class CustomersComponent implements OnInit, OnDestroy {
     }),
   );
 
-  readonly columns: AdeniDataTableColumn<TenantCustomerListItem>[] = [
+  readonly columns = computed<AdeniDataTableColumn<TenantCustomerListItem>[]>(() => [
     {
       id: "name",
-      header: "Customer",
+      header: this.tr("common.customer"),
       cell: (row) => row.displayName,
       sortValue: (row) => row.displayName.toLowerCase(),
     },
     {
       id: "email",
-      header: "Email",
+      header: this.tr("common.email"),
       cell: (row) => row.email || "—",
       sortValue: (row) => (row.email || "").toLowerCase(),
     },
     {
       id: "account",
-      header: "Profile type",
+      header: this.tr("portal.customers.profileType"),
       cell: (row) => this.accountLabel(row),
       sortValue: (row) => (row.platformCustomerId ? 1 : 0),
     },
     {
       id: "lastSeen",
-      header: "Last seen",
+      header: this.tr("portal.customers.lastSeen"),
       cell: (row) => formatSlotTime(row.lastSeenAt),
       sortValue: (row) => row.lastSeenAt,
     },
-  ];
+  ]);
 
   readonly trackRow = (row: TenantCustomerListItem): string => row.id;
   readonly formatSlotTime = formatSlotTime;
@@ -199,7 +199,7 @@ export class CustomersComponent implements OnInit, OnDestroy {
   }
 
   accountLabel(row: TenantCustomerListItem): string {
-    return row.platformCustomerId ? "Discover account" : "Walk-in / queue";
+    return row.platformCustomerId ? this.tr("portal.customers.discoverAccount") : this.tr("portal.customers.walkQueue");
   }
 
   accountPillTone(row: TenantCustomerListItem): AdeniPillTone {
@@ -236,7 +236,7 @@ export class CustomersComponent implements OnInit, OnDestroy {
           this.totalCount.set(result.totalCount);
           this.entitlements.set(entitlements);
         });
-      }, "Loading customers", "Fetching profiles");
+      }, this.tr("portal.customers.loadingCustomers2"), this.tr("portal.customers.fetchingProfiles"));
     } catch (caught) {
       this.error.set(this.apiErr(caught, "portal.customers.couldNotLoadCustomersTry"));
       this.feedback.error(this.apiErr(caught, "portal.customers.couldNotLoadCustomers"));

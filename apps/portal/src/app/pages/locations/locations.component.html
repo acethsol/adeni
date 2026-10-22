@@ -150,7 +150,7 @@
         <div class="adeni-list-results">
         <adeni-data-table
           [rows]="paginatedLocations()"
-          [columns]="locationColumns"
+          [columns]="locationColumns()"
           [trackRow]="trackLocationRow"
           [sortColumnId]="sortColumnId()"
           (sortColumnIdChange)="onLocationSortColumnChange($event)"

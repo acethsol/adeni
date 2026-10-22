@@ -154,7 +154,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
           // REST inbox still works if realtime is unavailable.
         }
       }
-      }, "Loading messages", "Fetching your inbox…");
+      }, this.tr("portal.messages.loadingMessages"), this.tr("portal.messages.fetchingInbox"));
     } catch (caught) {
       this.error.set(this.apiErr(caught, "portal.messages.couldNotLoadMessages"));
     } finally {
@@ -190,8 +190,8 @@ export class MessagesComponent implements OnInit, OnDestroy {
             await client.markTenantConversationRead(conversation.id);
             return loaded;
           }),
-        "Opening conversation",
-        "Loading messages…",
+        this.tr("portal.messages.openingConversation"),
+        this.tr("portal.messages.loadingMessages2"),
       );
       this.detail.set(detail);
       this.conversations.update((items) =>
@@ -250,8 +250,8 @@ export class MessagesComponent implements OnInit, OnDestroy {
               fileSize: file.size,
             } satisfies SendMessageAttachment;
           }),
-        "Uploading image",
-        "Preparing attachment…",
+        this.tr("portal.messages.uploadingImage"),
+        this.tr("portal.messages.preparingAttachment"),
       );
       this.clearPendingAttachment();
       this.pendingAttachment.set(attachment);
@@ -294,8 +294,8 @@ export class MessagesComponent implements OnInit, OnDestroy {
               attachments: attachment ? [attachment] : undefined,
             }),
           ),
-        "Sending message",
-        "Delivering to the customer…",
+        this.tr("portal.messages.sendingMessage"),
+        this.tr("portal.messages.deliveringCustomer"),
       );
       this.appendMessage(message);
       this.draft = "";
@@ -305,7 +305,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
           item.id === conversation.id
             ? {
                 ...item,
-                preview: message.body?.trim() || (message.attachments?.length ? "Attachment" : item.preview),
+                preview: message.body?.trim() || (message.attachments?.length ? this.tr("portal.messages.attachment") : item.preview),
                 lastMessageAt: message.createdAt,
                 needsAttention: false,
               }
@@ -355,7 +355,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
       return message.senderDisplayName.trim();
     }
     if (message.senderType === "business" || message.senderType === "bot") {
-      return conversation.businessName?.trim() || "You";
+      return conversation.businessName?.trim() || this.tr("portal.messages.you");
     }
     return conversation.customerDisplayName;
   }

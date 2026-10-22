@@ -17,6 +17,7 @@ import {
   AdeniLocaleService,
   AdeniPortalEmptyStateComponent,
   type AdeniCarbonIconName,
+  injectAdeniTranslate,
 } from "@adeni/ui";
 import { PortalThemeService } from "../../core/portal-theme.service";
 import { BusinessApiService } from "../../core/services/business-api.service";
@@ -40,6 +41,7 @@ const CHECKED_IN = 4;
   styleUrl: "./kiosk.component.scss",
 })
 export class KioskComponent implements OnInit {
+  protected readonly tr = injectAdeniTranslate();
   private readonly api = inject(BusinessApiService);
   private readonly router = inject(Router);
   private readonly documentTitle = inject(AdeniDocumentTitleStrategy);
@@ -117,7 +119,7 @@ export class KioskComponent implements OnInit {
           client.getTenantServices(),
         ]);
         this.status.set(status);
-        const name = profile.businessName?.trim() || "Check in";
+        const name = profile.businessName?.trim() || this.tr("portal.queue.check");
         this.businessName.set(name);
         this.documentTitle.setAppTitle(name);
         this.businessLogoUrl.set(profile.publicPage?.logoImageUrl ?? null);

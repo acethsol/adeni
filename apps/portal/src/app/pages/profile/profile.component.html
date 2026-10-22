@@ -9,7 +9,7 @@
   @if (loading()) {
     <p class="muted">{{ tr('common.loading') }}</p>
   } @else if (profile(); as p) {
-    <adeni-tabs [tabs]="tabs" />
+    <adeni-tabs [tabs]="tabs()" />
 
     @if (tab() === "reviews") {
       @if (reviews().length === 0) {

@@ -1,4 +1,5 @@
 import { DestroyRef, Injectable, inject, signal } from "@angular/core";
+import { injectAdeniTranslate } from "@adeni/ui";
 
 const THEME_STORAGE_KEY = "adeni.portal.theme";
 
@@ -26,6 +27,7 @@ function resolveTheme(preference: ThemePreference): PortalTheme {
 
 @Injectable({ providedIn: "root" })
 export class PortalThemeService {
+  protected readonly tr = injectAdeniTranslate();
   private readonly destroyRef = inject(DestroyRef);
 
   readonly preference = signal<ThemePreference>(readThemePreference());
@@ -58,7 +60,7 @@ export class PortalThemeService {
   }
 
   themeToggleLabel(): string {
-    return this.theme() === "dark" ? "Switch to light theme" : "Switch to dark theme";
+    return this.theme() === "dark" ? this.tr("common.switchLightTheme") : this.tr("common.switchDarkTheme");
   }
 
   private applyResolved(theme: PortalTheme): void {

@@ -215,11 +215,11 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
 
   readonly boardTitle = computed(() => {
     if (this.teamMode()) {
-      return "Appointments";
+      return this.tr("portal.dashboard.appointments");
     }
     return this.calendar()?.displayName
       ? `${this.calendar()!.displayName} · Calendar`
-      : "My calendar";
+      : this.tr("portal.dashboard.myCalendar");
   });
 
   readonly boardSubtitle = computed(() => this.appointmentSummary());
@@ -232,20 +232,20 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
 
   readonly focusDayKey = computed(() => dayKey(this.focusDay()));
 
-  readonly kindFilterOptions: AdeniFilterSelectOption[] = [
-    { value: "all", label: "All items" },
-    { value: "bookings", label: "Appointments" },
-    { value: "leave", label: "Leave" },
-  ];
+  readonly kindFilterOptions = computed<AdeniFilterSelectOption[]>(() => [
+    { value: "all", label: this.tr("portal.staff.allItems") },
+    { value: "bookings", label: this.tr("portal.dashboard.appointments") },
+    { value: "leave", label: this.tr("common.leave") },
+  ]);
 
-  readonly statusFilterOptions: AdeniFilterSelectOption[] = [
-    { value: "all", label: "All statuses" },
-    { value: "pending", label: "Pending" },
-    { value: "confirmed", label: "Confirmed" },
-    { value: "rejected", label: "Rejected" },
-    { value: "cancelled", label: "Cancelled" },
-    { value: "leave", label: "Leave" },
-  ];
+  readonly statusFilterOptions = computed<AdeniFilterSelectOption[]>(() => [
+    { value: "all", label: this.tr("portal.staff.allStatuses") },
+    { value: "pending", label: this.tr("portal.staff.pending") },
+    { value: "confirmed", label: this.tr("portal.staff.confirmed") },
+    { value: "rejected", label: this.tr("admin.pending.rejected") },
+    { value: "cancelled", label: this.tr("portal.bookings.cancelled") },
+    { value: "leave", label: this.tr("common.leave") },
+  ]);
 
   readonly displayBlocks = computed((): PlacedBlock[] => {
     let list = this.blocks().filter(
@@ -292,32 +292,32 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
     });
   });
 
-  readonly agendaTableColumns: AdeniDataTableColumn<PlacedBlock>[] = [
+  readonly agendaTableColumns = computed<AdeniDataTableColumn<PlacedBlock>[]>(() => [
     {
       id: "when",
-      header: "When",
+      header: this.tr("portal.bookings.when"),
       cell: (b) => `${this.formatAgendaDay(b.dayKey)} · ${b.startLabel} – ${b.endLabel}`,
       sortValue: (b) => `${b.dayKey}${b.top.toString().padStart(5, "0")}`,
     },
     {
       id: "service",
-      header: "Service",
+      header: this.tr("common.service"),
       cell: (b) => b.title,
       sortValue: (b) => b.title.toLowerCase(),
     },
     {
       id: "staff",
-      header: "Staff",
+      header: this.tr("common.staff"),
       cell: (b) => b.staffDisplayName ?? "—",
       sortValue: (b) => (b.staffDisplayName ?? "").toLowerCase(),
     },
     {
       id: "status",
-      header: "Status",
-      cell: (b) => (b.kind === "leave" ? "Leave" : (b.statusLabel ?? "—")),
+      header: this.tr("common.status"),
+      cell: (b) => (b.kind === "leave" ? this.tr("common.leave") : (b.statusLabel ?? "—")),
       sortValue: (b) => (b.kind === "leave" ? "leave" : (b.statusLabel ?? "")),
     },
-  ];
+  ]);
 
   readonly trackAgendaRow = (block: PlacedBlock): string => block.id;
 
@@ -512,8 +512,8 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
           startLabel: formatClock(clip.startMin),
           endLabel: formatClock(clip.endMin),
           title: leave.staffDisplayName
-            ? `Time off · ${leave.staffDisplayName}`
-            : "Time off",
+            ? this.tr("portal.staff.timeOff", { staffDisplayName: leave.staffDisplayName })
+            : this.tr("portal.staff.timeOff2"),
           subtitle: leave.reason ?? null,
           status: null,
           statusLabel: null,
@@ -544,7 +544,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
           title: booking.serviceName,
           subtitle:
             booking.customerNotes?.trim()
-            || (this.teamMode() ? booking.staffDisplayName?.trim() || "Any available" : null),
+            || (this.teamMode() ? booking.staffDisplayName?.trim() || this.tr("portal.staff.anyAvailable") : null),
           status: booking.status,
           statusLabel: statusLabel(booking.status),
           customerSelectedStaff: selected,
@@ -736,7 +736,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
   /** Sidebar copy — spelled-out hours for the current calendar range. */
   staffBookedHoursSummary(minutes: number): string {
     if (minutes <= 0) {
-      return "No hours booked in this range";
+      return this.tr("portal.staff.noHoursBookedRange");
     }
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
@@ -1009,7 +1009,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
           this.calendar.set(data);
           this.team.set(null);
         }
-      }, "Loading calendar…");
+      }, this.tr("portal.staff.loadingCalendar"));
     } catch (caught) {
       this.error.set(this.apiErr(caught, "portal.staff.couldNotLoadCalendar"));
       this.calendar.set(null);

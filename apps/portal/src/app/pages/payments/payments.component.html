@@ -13,7 +13,7 @@
       <p class="muted">{{ tr('portal.payments.paymentsNotEnabledBusinessCategory') }}</p>
     </section>
   } @else {
-    <adeni-tabs [tabs]="tabs" />
+    <adeni-tabs [tabs]="tabs()" />
     @if (tab() === "ledger") {
       <section class="card">
         <h3>{{ tr('portal.payments.ledger') }}</h3>

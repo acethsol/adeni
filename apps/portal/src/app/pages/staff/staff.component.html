@@ -51,14 +51,14 @@
           <adeni-filter-select
             layout="toolbar"
             [label]="tr('portal.staff.bookingStatus')"
-            [options]="bookingFilterOptions"
+            [options]="bookingFilterOptions()"
             [value]="bookingFilter()"
             (valueChange)="onBookingFilterChange($any($event))"
           />
           <adeni-filter-select
             layout="toolbar"
             [label]="tr('portal.staff.portalAccess')"
-            [options]="portalFilterOptions"
+            [options]="portalFilterOptions()"
             [value]="portalFilter()"
             (valueChange)="onPortalFilterChange($any($event))"
           />
@@ -159,7 +159,7 @@
         <div class="adeni-list-results">
         <adeni-data-table
           [rows]="paginatedStaff()"
-          [columns]="staffTableColumns"
+          [columns]="staffTableColumns()"
           [trackRow]="trackStaffRow"
           [rowClass]="staffRowClass"
           [sortColumnId]="sortColumnId()"
@@ -288,7 +288,7 @@
   >
     @if (isCreateWizard()) {
       <adeni-wizard
-        [steps]="createWizardSteps"
+        [steps]="createWizardSteps()"
         [activeId]="formTab()"
         [ariaLabel]="tr('portal.staff.addTeamMember')"
         [allowJump]="true"

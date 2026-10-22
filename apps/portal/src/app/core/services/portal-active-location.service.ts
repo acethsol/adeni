@@ -6,7 +6,7 @@ import {
   hasMultiLocationReportingEntitlement,
   resolveReportExportLocationId,
 } from "@adeni/shared";
-import { AdeniFeedbackService } from "@adeni/ui";
+import { AdeniFeedbackService, injectAdeniTranslate } from "@adeni/ui";
 import {
   PORTAL_ALL_LOCATIONS_SCOPE,
   readPersistedPortalActiveLocation,
@@ -30,6 +30,7 @@ export type PortalBranchSwitchDisplay = {
 
 @Injectable({ providedIn: "root" })
 export class PortalActiveLocationService {
+  protected readonly tr = injectAdeniTranslate();
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly tenantId = signal<string | null>(null);
   private readonly locations = signal<readonly BusinessLocation[]>([]);
@@ -59,7 +60,7 @@ export class PortalActiveLocationService {
     const allScope = this.selectedLocationId() === PORTAL_ALL_LOCATIONS_SCOPE;
     if (allScope) {
       return {
-        title: "All locations",
+        title: this.tr("portal.core.allLocations"),
         hint: `${this.activeLocations().length} branches`,
         allLocationsScope: true,
         isPrimary: false,
@@ -68,13 +69,13 @@ export class PortalActiveLocationService {
     const branch = this.selectedLocation();
     if (!branch) {
       return {
-        title: "Location",
+        title: this.tr("portal.core.location"),
         hint: null,
         allLocationsScope: false,
         isPrimary: false,
       };
     }
-    const name = branch.name?.trim() || branch.slug || "Branch";
+    const name = branch.name?.trim() || branch.slug || this.tr("portal.availability.branch");
     const hint = branch.area?.trim() || branch.slug || null;
     return {
       title: name,
@@ -141,7 +142,7 @@ export class PortalActiveLocationService {
   }
 
   beginBranchSwitchTransaction(): void {
-    this.feedback.showLoading("Switching branch…", "Updating dashboard, bookings, and calendar");
+    this.feedback.showLoading(this.tr("portal.core.switchingBranch"), this.tr("portal.core.updatingDashboardBookingsCalendar"));
   }
 
   endBranchSwitchTransaction(): void {
@@ -153,8 +154,8 @@ export class PortalActiveLocationService {
     if (!this.branchSwitchActive) {
       return this.feedback.runLoading(
         () => Promise.resolve(work()),
-        "Switching branch…",
-        "Updating dashboard, bookings, and calendar",
+        this.tr("portal.core.switchingBranch"),
+        this.tr("portal.core.updatingDashboardBookingsCalendar"),
       );
     }
 
@@ -180,11 +181,11 @@ export class PortalActiveLocationService {
     const active = this.activeLocations();
     const branchOptions = active.map((location) => ({
       value: location.id,
-      label: location.name?.trim() || location.slug || location.area || "Branch",
+      label: location.name?.trim() || location.slug || location.area || this.tr("portal.availability.branch"),
     }));
 
     if (hasMultiLocationReportingEntitlement(entitlements)) {
-      return [{ value: PORTAL_ALL_LOCATIONS_SCOPE, label: "All locations" }, ...branchOptions];
+      return [{ value: PORTAL_ALL_LOCATIONS_SCOPE, label: this.tr("portal.core.allLocations") }, ...branchOptions];
     }
 
     return branchOptions;
@@ -195,7 +196,7 @@ export class PortalActiveLocationService {
   }
 
   branchRowLabel(location: BusinessLocation): string {
-    return location.name?.trim() || location.slug || location.area || "Branch";
+    return location.name?.trim() || location.slug || location.area || this.tr("portal.availability.branch");
   }
 
   branchRowHint(location: BusinessLocation): string | null {

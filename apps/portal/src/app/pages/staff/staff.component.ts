@@ -212,17 +212,17 @@ export class StaffComponent implements OnInit, OnDestroy {
   readonly pageSize = signal(DEFAULT_PAGE_SIZE);
   readonly listPageSizeOptions = LIST_PAGE_SIZE_OPTIONS;
 
-  readonly bookingFilterOptions: AdeniFilterSelectOption[] = [
-    { value: "all", label: "All booking states" },
-    { value: "bookable", label: "Bookable" },
-    { value: "inactive", label: "Inactive" },
-  ];
+  readonly bookingFilterOptions = computed<AdeniFilterSelectOption[]>(() => [
+    { value: "all", label: this.tr("portal.staff.allBookingStates") },
+    { value: "bookable", label: this.tr("portal.staff.bookable") },
+    { value: "inactive", label: this.tr("portal.staff.inactive") },
+  ]);
 
-  readonly portalFilterOptions: AdeniFilterSelectOption[] = [
-    { value: "all", label: "All portal access" },
-    { value: "has_portal", label: "Has portal access" },
-    { value: "none", label: "No portal access" },
-  ];
+  readonly portalFilterOptions = computed<AdeniFilterSelectOption[]>(() => [
+    { value: "all", label: this.tr("portal.staff.allPortalAccess") },
+    { value: "has_portal", label: this.tr("portal.staff.hasPortalAccess") },
+    { value: "none", label: this.tr("portal.staff.noPortalAccess") },
+  ]);
 
   readonly staffExportItems = computed((): AdeniExportMenuItem[] =>
     buildReportExportMenuItems({
@@ -245,26 +245,26 @@ export class StaffComponent implements OnInit, OnDestroy {
   readonly preserveRoleKey = signal<string | null>(null);
   readonly roleLabels = STAFF_ROLE_LABELS;
   readonly dayLabels = DAY_OF_WEEK_LABELS;
-  readonly createWizardSteps: readonly AdeniWizardStep[] = [
+  readonly createWizardSteps = computed<readonly AdeniWizardStep[]>(() => [
     {
       id: "profile",
-      label: "Profile",
-      title: "Profile",
-      lede: "Photo and name as customers will see them.",
+      label: this.tr("common.profile"),
+      title: this.tr("common.profile"),
+      lede: this.tr("portal.staff.photoNameAsCustomersWill"),
     },
     {
       id: "services",
-      label: "Services",
-      title: "Services",
-      lede: "Leave blank to allow every active service.",
+      label: this.tr("common.services"),
+      title: this.tr("common.services"),
+      lede: this.tr("portal.staff.leaveBlankAllowEveryActive"),
     },
     {
       id: "hours",
-      label: "Hours",
-      title: "Hours",
-      lede: "Skip to follow the business calendar.",
+      label: this.tr("common.hours"),
+      title: this.tr("common.hours"),
+      lede: this.tr("portal.staff.skipFollowBusinessCalendar"),
     },
-  ];
+  ]);
 
   readonly availableRoles = computed(() =>
     staffRolesForCategories(this.categorySlugs(), this.preserveRoleKey()),
@@ -339,7 +339,7 @@ export class StaffComponent implements OnInit, OnDestroy {
       this.filteredStaff(),
       this.sortColumnId(),
       this.sortDirection(),
-      this.staffTableColumns,
+      this.staffTableColumns(),
     ),
   );
 
@@ -349,32 +349,32 @@ export class StaffComponent implements OnInit, OnDestroy {
     sliceListPage(this.sortedFilteredStaff(), this.page(), this.pageSize()),
   );
 
-  readonly staffTableColumns: AdeniDataTableColumn<StaffMember>[] = [
+  readonly staffTableColumns = computed<AdeniDataTableColumn<StaffMember>[]>(() => [
     {
       id: "name",
-      header: "Team member",
+      header: this.tr("portal.staff.teamMember"),
       cell: (m) => m.displayName.trim(),
       sortValue: (m) => m.displayName.trim().toLowerCase(),
     },
     {
       id: "title",
-      header: "Title",
+      header: this.tr("portal.staff.title"),
       cell: (m) => m.title?.trim() || "—",
       sortValue: (m) => (m.title?.trim() || "").toLowerCase(),
     },
     {
       id: "status",
-      header: "Booking",
+      header: this.tr("portal.publicPage.booking"),
       cell: () => "",
       sortValue: (m) => (m.isActive ? 1 : 0),
     },
     {
       id: "access",
-      header: "Portal",
+      header: this.tr("portal.staff.portal"),
       cell: () => "",
       sortValue: (m) => m.portalAccessStatus,
     },
-  ];
+  ]);
 
   readonly staffRowClass = (member: StaffMember): string | undefined =>
     member.isActive ? undefined : "inactive-row";
@@ -522,11 +522,11 @@ export class StaffComponent implements OnInit, OnDestroy {
   accessLabel(status: StaffMember["portalAccessStatus"]): string {
     switch (status) {
       case "active":
-        return "Active";
+        return this.tr("admin.pricing.active");
       case "invite_pending":
-        return "Invite pending";
+        return this.tr("portal.staff.invitePending");
       default:
-        return "No access";
+        return this.tr("portal.staff.noAccess");
     }
   }
 
@@ -629,11 +629,11 @@ export class StaffComponent implements OnInit, OnDestroy {
     }
 
     const ok = await this.confirmDialog.confirm({
-      title: pending ? "Revoke invite?" : "Revoke portal access?",
+      title: pending ? this.tr("portal.staff.revokeInvite2") : this.tr("portal.staff.revokePortalAccess"),
       message: pending
         ? `${member.displayName} will no longer be able to accept this invite.`
         : `${member.displayName} will lose portal login immediately. You can invite them again later.`,
-      confirmLabel: "Revoke",
+      confirmLabel: this.tr("portal.staff.revoke"),
       danger: true,
     });
     if (!ok) {
@@ -651,13 +651,13 @@ export class StaffComponent implements OnInit, OnDestroy {
           }
         });
       });
-      this.feedback.success(pending ? "Invite revoked." : "Portal access revoked.");
+      this.feedback.success(pending ? this.tr("portal.staff.inviteRevoked") : this.tr("portal.staff.portalAccessRevoked"));
       await this.load();
     } catch {
       this.feedback.error(
         pending
-          ? "Could not revoke invite."
-          : "Could not revoke access. The last owner cannot be removed.",
+          ? this.tr("portal.staff.couldNotRevokeInvite")
+          : this.tr("portal.staff.couldNotRevokeAccessLast"),
       );
     } finally {
       this.busy.set(null);
@@ -843,7 +843,7 @@ export class StaffComponent implements OnInit, OnDestroy {
   }
 
   serviceName(id: string): string {
-    return this.services().find((s) => s.id === id)?.name ?? "Service";
+    return this.services().find((s) => s.id === id)?.name ?? this.tr("common.service");
   }
 
   serviceNames(ids: string[]): string {
@@ -867,7 +867,7 @@ export class StaffComponent implements OnInit, OnDestroy {
     try {
       await this.feedback.runLoading(async () => {
         await this.fetchStaffPageData();
-      }, "Loading staff", "Fetching roster and services");
+      }, this.tr("portal.staff.loadingStaff"), this.tr("portal.staff.fetchingRosterServices"));
     } catch (caught) {
       this.error.set(this.apiErr(caught, "portal.staff.couldNotLoadStaffTry"));
     } finally {
@@ -951,7 +951,7 @@ export class StaffComponent implements OnInit, OnDestroy {
 
   openCreate(): void {
     if (!this.canAddPractitioner()) {
-      const message = "Your plan team limit is reached. Upgrade on Plan to add more members.";
+      const message = this.tr("portal.staff.yourPlanTeamLimitReached");
       this.error.set(message);
       this.feedback.error(message);
       return;
@@ -1095,12 +1095,12 @@ export class StaffComponent implements OnInit, OnDestroy {
             await this.uploadAvatarIfNeeded(created.id);
           }
         });
-      }, editingId ? "Saving changes" : "Adding team member", "Please wait");
+      }, editingId ? this.tr("portal.staff.savingChanges") : this.tr("portal.staff.addingTeamMember"), this.tr("portal.staff.pleaseWait"));
 
       this.cancelForm();
       this.feedback.success(
-        editingId ? "Changes saved successfully." : "Team member added successfully.",
-        editingId ? "Updated" : "Added",
+        editingId ? this.tr("portal.staff.changesSavedSuccessfully") : this.tr("portal.staff.teamMemberAddedSuccessfully"),
+        editingId ? this.tr("portal.staff.updated") : this.tr("portal.staff.added"),
       );
       await this.refreshStaff();
     } catch (caught) {
@@ -1133,7 +1133,7 @@ export class StaffComponent implements OnInit, OnDestroy {
       this.leaveReason = "";
       if (created.conflictingBookingIds.length > 0) {
         this.feedback.success(
-          `Leave saved. Warning: ${created.conflictingBookingIds.length} existing booking(s) overlap.`,
+          this.tr("portal.staff.leaveSavedWarningExistingBooking", { length: created.conflictingBookingIds.length }),
         );
       } else {
         this.feedback.success(this.tr("portal.staff.leaveSaved"));
@@ -1149,9 +1149,9 @@ export class StaffComponent implements OnInit, OnDestroy {
       return;
     }
     const ok = await this.confirmDialog.confirm({
-      title: "Remove leave",
-      message: "Delete this leave block?",
-      confirmLabel: "Remove",
+      title: this.tr("portal.staff.removeLeave"),
+      message: this.tr("portal.staff.deleteLeaveBlock"),
+      confirmLabel: this.tr("common.remove"),
       danger: true,
     });
     if (!ok) {
@@ -1170,9 +1170,9 @@ export class StaffComponent implements OnInit, OnDestroy {
 
   async deactivate(member: StaffMember): Promise<void> {
     const ok = await this.confirmDialog.confirm({
-      title: "Deactivate team member",
-      message: `Hide ${member.displayName} from online booking? Existing bookings stay assigned.`,
-      confirmLabel: "Deactivate",
+      title: this.tr("portal.staff.deactivateTeamMember"),
+      message: this.tr("portal.staff.hideFromOnlineBookingExisting", { displayName: member.displayName }),
+      confirmLabel: this.tr("common.deactivate"),
       danger: true,
     });
     if (!ok) {

@@ -112,9 +112,9 @@ export class QueueComponent implements OnInit, OnDestroy {
 
   pageDescription(): string {
     if (this.session.can("portal.bookings.self") && !this.session.can("portal.bookings")) {
-      return "Your assigned walk-ins — call, start service, and hand off to payment.";
+      return this.tr("portal.queue.yourAssignedWalkInsCall");
     }
-    return "Live floor board for walk-ins — refresh every 15s or use Refresh now.";
+    return this.tr("portal.queue.liveFloorBoardWalkIns");
   }
 
   supportsQueue(): boolean {
@@ -155,17 +155,17 @@ export class QueueComponent implements OnInit, OnDestroy {
   statusLabel(status: string): string {
     switch (status) {
       case "waiting":
-        return "Waiting";
+        return this.tr("common.waiting");
       case "called":
-        return "Called";
+        return this.tr("portal.queue.called");
       case "in_service":
-        return "In service";
+        return this.tr("portal.queue.inService");
       case "done":
-        return "Done";
+        return this.tr("common.done");
       case "no_show":
-        return "No-show";
+        return this.tr("portal.queue.noShow");
       case "cancelled":
-        return "Cancelled";
+        return this.tr("portal.bookings.cancelled");
       default:
         return status;
     }

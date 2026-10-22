@@ -65,7 +65,7 @@ export class SettingsComponent implements OnInit {
     const entitlements = this.profile()?.entitlements ?? null;
     const base = filterPortalTabs(this.allTabs, entitlements);
     if (hasCapability(this.profile()?.capabilities, "walk_in_queue")) {
-      return [...base, { id: "walk-ins", label: "Walk-ins" }];
+      return [...base, { id: "walk-ins", label: this.tr("portal.settings.walkIns") }];
     }
     return base;
   });

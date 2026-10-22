@@ -165,7 +165,7 @@
               <div class="adeni-list-results">
                 <adeni-data-table
                   [rows]="filteredRecentBookings()"
-                  [columns]="bookingColumns"
+                  [columns]="bookingColumns()"
                   [trackRow]="trackBookingRow"
                   [sortColumnId]="bookingSortColumn()"
                   (sortColumnIdChange)="bookingSortColumn.set($event)"
@@ -242,7 +242,7 @@
               <div class="adeni-list-results">
                 <adeni-data-table
                   [rows]="filteredRecentQueueVisits()"
-                  [columns]="queueColumns"
+                  [columns]="queueColumns()"
                   [trackRow]="trackQueueRow"
                   [sortColumnId]="queueSortColumn()"
                   (sortColumnIdChange)="queueSortColumn.set($event)"

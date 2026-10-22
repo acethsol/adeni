@@ -62,14 +62,14 @@
           <adeni-filter-select
             layout="toolbar"
             [label]="tr('portal.staff.show')"
-            [options]="kindFilterOptions"
+            [options]="kindFilterOptions()"
             [value]="kindFilter()"
             (valueChange)="kindFilter.set($any($event))"
           />
           <adeni-filter-select
             layout="toolbar"
             [label]="tr('common.status')"
-            [options]="statusFilterOptions"
+            [options]="statusFilterOptions()"
             [value]="statusFilter()"
             (valueChange)="statusFilter.set($any($event))"
           />
@@ -99,7 +99,7 @@
               <div class="adeni-list-results">
                 <adeni-data-table
                   [rows]="displayBlocks()"
-                  [columns]="agendaTableColumns"
+                  [columns]="agendaTableColumns()"
                   [trackRow]="trackAgendaRow"
                 >
                   <ng-template adeniDataTableCell="when" let-block>

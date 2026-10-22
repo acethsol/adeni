@@ -69,12 +69,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
       })(),
     },
   );
-  readonly tabs = [
-    { id: "overview", label: "Overview" },
-    { id: "business", label: "Business details" },
-    { id: "reviews", label: "Reviews" },
-    { id: "verification", label: "Verification" },
-  ];
+  readonly tabs = computed(() => [
+    { id: "overview", label: this.tr("portal.customers.overview") },
+    { id: "business", label: this.tr("portal.profile.businessDetails") },
+    { id: "reviews", label: this.tr("common.reviews") },
+    { id: "verification", label: this.tr("portal.profile.verification") },
+  ]);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -134,12 +134,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
     const p = this.profile();
     if (!p || this.canEdit()) return null;
     if (p.status === 1) {
-      return "Your profile is with admin review — editing is paused until verification finishes.";
+      return this.tr("portal.profile.yourProfileWithAdminReview");
     }
     if (p.status === 4) {
-      return "This business is suspended. Contact support to update profile details.";
+      return this.tr("portal.profile.thisBusinessSuspendedContactSupport");
     }
-    return "Profile editing is not available for this status.";
+    return this.tr("portal.profile.profileEditingNotAvailableStatus");
   }
 
   async load(): Promise<void> {
@@ -157,7 +157,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.coverPreview.set(resolveBusinessCoverImage(p.categorySlug, p.coverImageUrl));
         this.galleryImages.set(p.galleryImages ?? []);
         await Promise.all([this.loadCategories(p), this.loadReviews(p)]);
-      }, "Loading profile…", "Fetching business details");
+      }, this.tr("portal.profile.loadingProfile"), this.tr("portal.profile.fetchingBusinessDetails"));
     } catch (caught) {
       this.error.set(this.apiErr(caught, "portal.profile.couldNotLoadProfile"));
       this.feedback.error(this.apiErr(caught, "portal.profile.couldNotLoadProfile"));
@@ -188,8 +188,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
               description: this.description.trim(),
             }),
           ),
-        "Saving profile…",
-        "Updating business details",
+        this.tr("portal.profile.savingProfile"),
+        this.tr("portal.profile.updatingBusinessDetails"),
       );
       this.profile.set(updated);
       this.feedback.success(this.tr("portal.profile.businessDetailsUpdated"), this.tr("portal.profile.profileSaved"));
@@ -400,7 +400,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     if (!file || !this.profile()) return;
 
     if (this.galleryImages().length >= MAX_GALLERY_PHOTOS) {
-      this.error.set(`You can add up to ${MAX_GALLERY_PHOTOS} gallery photos.`);
+      this.error.set(this.tr("portal.profile.youCanAddUpGallery", { MAX_GALLERY_PHOTOS: MAX_GALLERY_PHOTOS }));
       input.value = "";
       return;
     }

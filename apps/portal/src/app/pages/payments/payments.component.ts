@@ -69,12 +69,12 @@ export class PaymentsComponent implements OnInit, OnDestroy {
   readonly tab = toSignal(this.route.queryParamMap.pipe(map((params) => params.get("tab") ?? "links")), {
     initialValue: this.route.snapshot.queryParamMap.get("tab") ?? "links",
   });
-  readonly tabs = [
-    { id: "links", label: "Links" },
-    { id: "ledger", label: "Ledger" },
-    { id: "documents", label: "Documents" },
-    { id: "export", label: "Exports" },
-  ];
+  readonly tabs = computed(() => [
+    { id: "links", label: this.tr("portal.payments.links") },
+    { id: "ledger", label: this.tr("portal.payments.ledger") },
+    { id: "documents", label: this.tr("portal.payments.documents") },
+    { id: "export", label: this.tr("portal.payments.exports") },
+  ]);
 
   exportFrom = "";
   exportTo = "";
@@ -221,7 +221,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
   }
 
   whatsAppUrl(link: { checkoutUrl: string; description: string }): string {
-    const text = encodeURIComponent(`Pay ${link.description} via Adeni: ${link.checkoutUrl}`);
+    const text = encodeURIComponent(this.tr("portal.payments.payViaAdeni", { description: link.description, checkoutUrl: link.checkoutUrl }));
     return `https://wa.me/?text=${text}`;
   }
 
@@ -351,9 +351,9 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     const profile = this.profile();
     if (!profile || entry.status !== "completed") return;
     const ok = await this.confirmDialog.confirm({
-      title: "Refund payment?",
+      title: this.tr("portal.payments.refundPayment"),
       message: `Refund ${formatPrice(entry.amount, entry.currency)}? This cannot be undone from Adeni.`,
-      confirmLabel: "Refund",
+      confirmLabel: this.tr("portal.payments.refund"),
       danger: true,
     });
     if (!ok) {

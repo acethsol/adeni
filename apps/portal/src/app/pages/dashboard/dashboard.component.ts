@@ -167,15 +167,15 @@ export class DashboardComponent implements OnInit {
     const appointments = this.appointmentsInRange();
     if (pending > 0) {
       return pending === 1
-        ? "One booking request is waiting on you."
+        ? this.tr("portal.dashboard.oneBookingRequestWaitingYou")
         : `${pending} booking requests are waiting on you.`;
     }
     if (appointments > 0) {
       return appointments === 1
-        ? "One visit scheduled in this window."
+        ? this.tr("portal.dashboard.oneVisitScheduledWindow")
         : `${appointments} visits scheduled in this window.`;
     }
-    return "No visits in this window yet — share your booking link.";
+    return this.tr("portal.dashboard.noVisitsWindowYetShare");
   });
 
   readonly formatBookingUsage = formatBookingUsage;
@@ -296,10 +296,10 @@ export class DashboardComponent implements OnInit {
   presetUiCopy(key: "recommended" | "currentLayout" | "emptyPlan" | "useLayout", vars?: Record<string, string>): string {
     const base = `portalDashboard.presets.${key}`;
     const fallbacks: Record<typeof key, string> = {
-      recommended: "Recommended for you",
-      currentLayout: "Current layout",
-      emptyPlan: "No widgets on your plan for this template.",
-      useLayout: "Use {label} layout",
+      recommended: this.tr("portal.dashboard.recommendedYou"),
+      currentLayout: this.tr("portal.dashboard.currentLayout"),
+      emptyPlan: this.tr("portal.dashboard.noWidgetsPlanTemplate"),
+      useLayout: this.tr("portal.dashboard.useLayout"),
     };
     const translated = t(this.portalLocale(), base, vars);
     if (translated !== base) {
@@ -382,7 +382,7 @@ export class DashboardComponent implements OnInit {
   presetCtaLabel(preset: DashboardLayoutPreset): string {
     const label = this.presetUiCopy("useLayout", { label: preset.label });
     return label === "portalDashboard.presets.useLayout"
-      ? `Use ${preset.label} layout`
+      ? this.tr("portal.dashboard.useLayout", { label: preset.label })
       : label;
   }
 
@@ -453,7 +453,7 @@ export class DashboardComponent implements OnInit {
 
   planUsageLabel(): string {
     const usage = this.usage();
-    if (!usage) return "Plan";
+    if (!usage) return this.tr("admin.businesses.plan");
     return formatSubscriptionPlanLabel(usage);
   }
 
@@ -491,12 +491,12 @@ export class DashboardComponent implements OnInit {
     const scope = this.branchScopeSubtitle();
     let base: string;
     if (this.isPractitionerView()) {
-      base = "Your schedule and booking inbox at a glance.";
+      base = this.tr("portal.dashboard.yourScheduleBookingInboxAt");
     } else if (this.revenueUsesCollected()) {
-      base = "Plan usage, appointments, and collected revenue from your online payment ledger.";
+      base = this.tr("portal.dashboard.planUsageAppointmentsCollectedRevenue");
     } else {
       base =
-        "Plan usage and appointments — booked value is list price, not cash in bank until you collect payment.";
+        this.tr("portal.dashboard.planUsageAppointmentsBookedValue");
     }
     return scope ? `${base} ${scope}` : base;
   }
@@ -509,7 +509,7 @@ export class DashboardComponent implements OnInit {
   }
 
   rangeLabel(): string {
-    return this.rangePresets.find((entry) => entry.id === this.rangePreset())?.label ?? "Range";
+    return this.rangePresets.find((entry) => entry.id === this.rangePreset())?.label ?? this.tr("portal.dashboard.range");
   }
 
   rangeStatHint(): string {
@@ -620,9 +620,9 @@ export class DashboardComponent implements OnInit {
   verificationHint(): string {
     const profile = this.profile();
     if (!profile) return "";
-    if (profile.status === 2) return "Verified — customers see you in discovery.";
-    if (profile.status === 1) return "Pending review — we’ll email you when you’re live.";
-    return "Complete verification to appear in discovery.";
+    if (profile.status === 2) return this.tr("portal.dashboard.verifiedCustomersSeeYouDiscovery");
+    if (profile.status === 1) return this.tr("portal.dashboard.pendingReviewWeLlEmail");
+    return this.tr("portal.dashboard.completeVerificationAppearDiscovery");
   }
 
   removeWidget(widgetId: DashboardWidgetId): void {
@@ -809,17 +809,17 @@ export class DashboardComponent implements OnInit {
       this.applyRevenueFromSummary(snapshot.summary);
       this.applyBookings(snapshot.bookings, snapshot.services, this.revenueUsesCollected());
       this.appointmentChartData.set(this.toSeriesChartData(snapshot.series?.points ?? []));
-      this.collectedChartData.set(this.toSeriesChartData(snapshot.collectedSeries?.points ?? [], "Collected"));
+      this.collectedChartData.set(this.toSeriesChartData(snapshot.collectedSeries?.points ?? [], this.tr("portal.dashboard.collected")));
       this.serviceMixChartData.set(
         (snapshot.serviceBreakdown?.items ?? []).map((item: TenantDashboardBreakdown["items"][number]) => ({
           group: item.label,
           value: item.value,
         })),
       );
-      this.bookedValueChartData.set(this.toSeriesChartData(snapshot.bookedSeries?.points ?? [], "Booked"));
+      this.bookedValueChartData.set(this.toSeriesChartData(snapshot.bookedSeries?.points ?? [], this.tr("portal.dashboard.booked")));
       this.staffLeaderboardChartData.set(
         (snapshot.staffBreakdown?.items ?? []).map((item: TenantDashboardBreakdown["items"][number]) => ({
-          group: "Bookings",
+          group: this.tr("common.bookings"),
           key: item.label,
           value: item.value,
         })),
@@ -873,7 +873,7 @@ export class DashboardComponent implements OnInit {
 
   private toSeriesChartData(
     points: { date: string; value: number }[],
-    group = "Appointments",
+    group = this.tr("portal.dashboard.appointments"),
   ): ChartTabularData {
     return points.slice(-21).map((point) => ({
       group,
@@ -925,7 +925,7 @@ export class DashboardComponent implements OnInit {
       const count = bookings.filter((item) => item.status === status).length;
       return {
         status,
-        label: BOOKING_STATUS_LABELS[status] ?? "Unknown",
+        label: BOOKING_STATUS_LABELS[status] ?? this.tr("portal.bookings.unknown"),
         count,
         percent: Math.round((count / total) * 100),
       };

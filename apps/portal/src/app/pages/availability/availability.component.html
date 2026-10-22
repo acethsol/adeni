@@ -108,7 +108,7 @@
     </div>
 
     <div class="month-dow" aria-hidden="true">
-      @for (d of dowHeaders; track d) {
+      @for (d of dowHeaders(); track d) {
         <span>{{ d }}</span>
       }
     </div>

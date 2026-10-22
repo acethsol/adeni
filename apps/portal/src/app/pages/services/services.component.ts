@@ -169,7 +169,7 @@ export class ServicesComponent implements OnInit {
       this.filteredServices(),
       this.sortColumnId(),
       this.sortDirection(),
-      this.serviceTableColumns,
+      this.serviceTableColumns(),
     ),
   );
 
@@ -179,26 +179,26 @@ export class ServicesComponent implements OnInit {
     sliceListPage(this.sortedFilteredServices(), this.page(), this.pageSize()),
   );
 
-  readonly serviceTableColumns: AdeniDataTableColumn<ServiceOffering>[] = [
+  readonly serviceTableColumns = computed<AdeniDataTableColumn<ServiceOffering>[]>(() => [
     {
       id: "name",
-      header: "Service",
+      header: this.tr("common.service"),
       cell: (s) => s.name,
       sortValue: (s) => s.name.toLowerCase(),
     },
     {
       id: "collection",
-      header: "Section",
+      header: this.tr("portal.services.section"),
       cell: (s) => this.groupName(s.menuGroupId),
       sortValue: (s) => this.groupName(s.menuGroupId).toLowerCase(),
     },
     {
       id: "tags",
-      header: "Details",
+      header: this.tr("portal.services.details"),
       cell: () => "",
       sortValue: (s) => s.priceAmount,
     },
-  ];
+  ]);
 
   readonly trackServiceRow = (service: ServiceOffering): string => service.id;
 
@@ -259,9 +259,9 @@ export class ServicesComponent implements OnInit {
 
   groupName(groupId: string | null | undefined): string {
     if (!groupId) {
-      return "No section";
+      return this.tr("portal.services.noSection");
     }
-    return this.groups().find((g) => g.id === groupId)?.name ?? "No section";
+    return this.groups().find((g) => g.id === groupId)?.name ?? this.tr("portal.services.noSection");
   }
 
   serviceInitials(service: ServiceOffering): string {
@@ -298,7 +298,7 @@ export class ServicesComponent implements OnInit {
           else if (marketId === "ottawa" || marketId === "toronto") this.defaultCurrency = "CAD";
           else if (catalog.items[0]?.currency) this.defaultCurrency = catalog.items[0].currency;
         });
-      }, "Loading services…", "Fetching menu and collections");
+      }, this.tr("portal.services.loadingServices"), this.tr("portal.services.fetchingMenuCollections"));
     } catch (caught) {
       this.error.set(this.apiErr(caught, "portal.services.couldNotLoadServices"));
       this.feedback.error(this.apiErr(caught, "portal.services.couldNotLoadServices"));
@@ -379,7 +379,7 @@ export class ServicesComponent implements OnInit {
               sortOrder: this.groups().length,
             }),
           ),
-        "Adding collection…",
+        this.tr("portal.services.addingCollection"),
         name,
       );
       this.groups.update((list) => [...list, created].sort((a, b) => a.sortOrder - b.sortOrder));
@@ -395,9 +395,9 @@ export class ServicesComponent implements OnInit {
 
   async removeGroup(group: ServiceMenuGroup): Promise<void> {
     const ok = await this.confirmDialog.confirm({
-      title: "Remove collection?",
-      message: `Remove “${group.name}”? Services stay on the menu, ungrouped.`,
-      confirmLabel: "Remove",
+      title: this.tr("portal.services.removeCollection"),
+      message: this.tr("portal.services.removeServicesStayMenuUngrouped", { name: group.name }),
+      confirmLabel: this.tr("common.remove"),
       danger: true,
     });
     if (!ok) {
@@ -408,7 +408,7 @@ export class ServicesComponent implements OnInit {
     try {
       await this.feedback.runLoading(
         () => this.api.withAuthorizedClient((c) => c.deleteTenantServiceMenuGroup(group.id)),
-        "Removing collection…",
+        this.tr("portal.services.removingCollection"),
         group.name,
       );
       this.groups.update((list) => list.filter((g) => g.id !== group.id));
@@ -461,7 +461,7 @@ export class ServicesComponent implements OnInit {
           const created = await this.api.withAuthorizedClient((c) => c.createTenantService(createBody));
           this.services.update((list) => [...list, created]);
         }
-      }, "Saving service…", createBody.name);
+      }, this.tr("portal.services.savingService"), createBody.name);
       this.cancelForm();
       this.feedback.success(`“${createBody.name}” is on your menu.`, this.tr("portal.services.serviceSaved"));
     } catch (caught) {
@@ -474,9 +474,9 @@ export class ServicesComponent implements OnInit {
 
   async deactivate(service: ServiceOffering): Promise<void> {
     const ok = await this.confirmDialog.confirm({
-      title: "Deactivate service?",
-      message: `Deactivate “${service.name}”? Customers won’t be able to book it.`,
-      confirmLabel: "Deactivate",
+      title: this.tr("portal.services.deactivateService2"),
+      message: this.tr("portal.services.deactivateCustomersWonTBe", { name: service.name }),
+      confirmLabel: this.tr("common.deactivate"),
       danger: true,
     });
     if (!ok) {
@@ -486,7 +486,7 @@ export class ServicesComponent implements OnInit {
     try {
       await this.feedback.runLoading(
         () => this.api.withAuthorizedClient((c) => c.deactivateTenantService(service.id)),
-        "Deactivating service…",
+        this.tr("portal.services.deactivatingService"),
         service.name,
       );
       this.services.update((list) => list.filter((s) => s.id !== service.id));

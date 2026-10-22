@@ -83,14 +83,14 @@ export class CustomerDetailComponent implements OnInit {
     const bookingCount = c?.recentBookings.length ?? 0;
     const queueCount = c?.recentQueueVisits.length ?? 0;
     return [
-      { id: "overview", label: "Overview" },
+      { id: "overview", label: this.tr("portal.customers.overview") },
       {
         id: "bookings",
-        label: bookingCount > 0 ? `Bookings (${bookingCount})` : "Bookings",
+        label: bookingCount > 0 ? this.tr("portal.customers.bookings", { bookingCount: bookingCount }) : this.tr("common.bookings"),
       },
       {
         id: "queue",
-        label: queueCount > 0 ? `Queue (${queueCount})` : "Queue",
+        label: queueCount > 0 ? this.tr("portal.customers.queue", { queueCount: queueCount }) : this.tr("common.queue"),
       },
     ];
   });
@@ -127,53 +127,53 @@ export class CustomerDetailComponent implements OnInit {
     return rows.filter((row) => this.queueRowMatchesSearch(row, term));
   });
 
-  readonly bookingColumns: AdeniDataTableColumn<TenantCustomerRecentBooking>[] = [
+  readonly bookingColumns = computed<AdeniDataTableColumn<TenantCustomerRecentBooking>[]>(() => [
     {
       id: "when",
-      header: "When",
+      header: this.tr("portal.bookings.when"),
       cell: (row) => formatSlotTime(row.startAt),
       sortable: true,
       sortValue: (row) => row.startAt,
     },
     {
       id: "service",
-      header: "Service",
+      header: this.tr("common.service"),
       cell: (row) => row.serviceName,
       sortable: true,
       sortValue: (row) => row.serviceName.toLowerCase(),
     },
     {
       id: "status",
-      header: "Status",
+      header: this.tr("common.status"),
       cell: () => "",
       sortable: true,
       sortValue: (row) => row.status,
     },
-  ];
+  ]);
 
-  readonly queueColumns: AdeniDataTableColumn<TenantCustomerRecentQueueVisit>[] = [
+  readonly queueColumns = computed<AdeniDataTableColumn<TenantCustomerRecentQueueVisit>[]>(() => [
     {
       id: "when",
-      header: "Joined",
+      header: this.tr("portal.customers.joined"),
       cell: (row) => formatSlotTime(row.joinedAt),
       sortable: true,
       sortValue: (row) => row.joinedAt,
     },
     {
       id: "service",
-      header: "Service",
-      cell: (row) => row.serviceName ?? "Walk-in",
+      header: this.tr("common.service"),
+      cell: (row) => row.serviceName ?? this.tr("common.walk"),
       sortable: true,
-      sortValue: (row) => (row.serviceName ?? "Walk-in").toLowerCase(),
+      sortValue: (row) => (row.serviceName ?? this.tr("common.walk")).toLowerCase(),
     },
     {
       id: "status",
-      header: "Status",
+      header: this.tr("common.status"),
       cell: () => "",
       sortable: true,
       sortValue: (row) => row.status,
     },
-  ];
+  ]);
 
   readonly trackBookingRow = (row: TenantCustomerRecentBooking): string => row.id;
   readonly trackQueueRow = (row: TenantCustomerRecentQueueVisit): string => row.id;
@@ -219,7 +219,7 @@ export class CustomerDetailComponent implements OnInit {
   }
 
   accountLabel(c: TenantCustomerDetail): string {
-    return c.platformCustomerId ? "Discover account" : "Walk-in / queue";
+    return c.platformCustomerId ? this.tr("portal.customers.discoverAccount") : this.tr("portal.customers.walkQueue");
   }
 
   accountPillTone(c: TenantCustomerDetail): AdeniPillTone {
@@ -229,21 +229,21 @@ export class CustomerDetailComponent implements OnInit {
   bookingStatusLabel(status: number): string {
     switch (status) {
       case PENDING_STATUS:
-        return "Awaiting approval";
+        return this.tr("portal.bookings.awaitingApproval");
       case CONFIRMED_STATUS:
-        return "Scheduled";
+        return this.tr("portal.bookings.scheduled");
       case CHECKED_IN_STATUS:
-        return "On the floor";
+        return this.tr("portal.bookings.onFloor");
       case COMPLETED_STATUS:
-        return "Service complete";
+        return this.tr("portal.bookings.serviceComplete");
       case PAID_STATUS:
-        return "Paid";
+        return this.tr("portal.bookings.paid");
       case 2:
-        return "Declined";
+        return this.tr("portal.bookings.declined");
       case 3:
-        return "Cancelled";
+        return this.tr("portal.bookings.cancelled");
       default:
-        return "Unknown";
+        return this.tr("portal.bookings.unknown");
     }
   }
 
@@ -300,7 +300,7 @@ export class CustomerDetailComponent implements OnInit {
   }
 
   private queueRowMatchesSearch(row: TenantCustomerRecentQueueVisit, term: string): boolean {
-    const serviceLabel = row.serviceName ?? "Walk-in";
+    const serviceLabel = row.serviceName ?? this.tr("common.walk");
     const haystack = [
       serviceLabel,
       row.staffDisplayName ?? "",

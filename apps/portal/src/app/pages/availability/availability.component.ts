@@ -136,7 +136,7 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
   readonly closedBusy = signal(false);
   readonly error = signal<string | null>(null);
   readonly dayLabels = DAY_OF_WEEK_LABELS;
-  readonly dowHeaders = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  readonly dowHeaders = computed(() => [this.tr("portal.availability.mon"), this.tr("portal.availability.tue"), this.tr("portal.availability.wed"), this.tr("portal.availability.thu"), this.tr("portal.availability.fri"), this.tr("portal.availability.sat"), "Sun"]);
 
   rows: DayRow[] = [];
   closedRanges = signal<BusinessClosedDate[]>([]);
@@ -161,7 +161,7 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
     }
     const picked = this.hoursBranchPickerId();
     const branch = this.activeLocation.activeLocations().find((l) => l.id === picked);
-    return branch?.name?.trim() || branch?.slug || "Branch";
+    return branch?.name?.trim() || branch?.slug || this.tr("portal.availability.branch");
   });
 
   readonly showHoursBranchPicker = computed(
@@ -351,7 +351,7 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
         return;
       }
       this.feedback.error(
-        "That day is part of a multi-day range. Remove the range from the list, or add a single-day block.",
+        this.tr("portal.availability.thatDayPartMultiDay"),
       );
       return;
     }
@@ -377,10 +377,10 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
         ? item.startDate
         : `${item.startDate} – ${item.endDate}`;
     const ok = await this.confirmDialog.confirm({
-      title: "Open these dates?",
-      message: `Remove closed range ${label}? Customers will be able to book again subject to weekly hours.`,
-      confirmLabel: "Remove",
-      cancelLabel: "Keep closed",
+      title: this.tr("portal.availability.openTheseDates"),
+      message: this.tr("portal.availability.removeClosedRangeCustomersWill", { label: label }),
+      confirmLabel: this.tr("common.remove"),
+      cancelLabel: this.tr("portal.availability.keepClosed"),
       danger: true,
     });
     if (!ok) {
@@ -434,7 +434,7 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
         this.feedback.success(this.tr("portal.availability.closedDatesSaved"));
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Could not close dates.";
+      const message = err instanceof Error ? err.message : this.tr("portal.availability.couldNotCloseDates");
       this.feedback.error(message);
     } finally {
       this.closedBusy.set(false);

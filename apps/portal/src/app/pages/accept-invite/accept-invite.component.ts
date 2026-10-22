@@ -64,13 +64,13 @@ export class AcceptInviteComponent implements OnInit {
         this.devMode ? this.devAuth0Sub : undefined,
       );
       this.status.set("done");
-      this.message.set(`You're in as ${result.permissionRole}. Opening the portal…`);
+      this.message.set(this.tr("portal.acceptInvite.youReAsOpeningPortal", { permissionRole: result.permissionRole }));
       this.feedback.success(this.tr("portal.acceptInvite.inviteAccepted"));
       await this.router.navigateByUrl("/dashboard");
     } catch (caught) {
       this.status.set("error");
       this.message.set(
-        "Could not accept this invite. It may be expired, revoked, or meant for a different email.",
+        this.tr("portal.acceptInvite.couldNotAcceptInviteMay"),
       );
       this.feedback.error(this.apiErr(caught, "portal.acceptInvite.inviteNotAccepted"));
     }

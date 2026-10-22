@@ -217,7 +217,7 @@
         <div class="adeni-list-results">
         <adeni-data-table
           [rows]="paginatedServices()"
-          [columns]="serviceTableColumns"
+          [columns]="serviceTableColumns()"
           [trackRow]="trackServiceRow"
           [sortColumnId]="sortColumnId()"
           (sortColumnIdChange)="onServiceSortColumnChange($event)"

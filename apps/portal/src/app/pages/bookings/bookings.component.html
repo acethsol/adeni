@@ -2,7 +2,7 @@
   [title]="tr('common.bookings')"
   [description]="pageDescription()"
 >
-  <adeni-tabs [tabs]="tabs" />
+  <adeni-tabs [tabs]="tabs()" />
 
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
@@ -204,7 +204,7 @@
         <div class="adeni-list-results">
         <adeni-data-table
           [rows]="filteredBookings()"
-          [columns]="bookingTableColumns"
+          [columns]="bookingTableColumns()"
           [trackRow]="trackBookingRow"
           [sortRows]="false"
           [sortColumnId]="sortColumnId()"
