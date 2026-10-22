@@ -43,6 +43,7 @@ public interface ITenantDashboardService
         DateTimeOffset from,
         DateTimeOffset to,
         Guid? staffMemberId = null,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<TenantDashboardSeriesResponse>> GetSeriesAsync(
@@ -51,6 +52,7 @@ public interface ITenantDashboardService
         DateTimeOffset from,
         DateTimeOffset to,
         Guid? staffMemberId = null,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<TenantDashboardBreakdownResponse>> GetBreakdownAsync(
@@ -59,6 +61,7 @@ public interface ITenantDashboardService
         DateTimeOffset from,
         DateTimeOffset to,
         Guid? staffMemberId = null,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<TenantDashboardLayoutDto>> GetLayoutAsync(

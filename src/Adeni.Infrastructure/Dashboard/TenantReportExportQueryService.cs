@@ -40,7 +40,10 @@ public sealed class TenantReportExportQueryService(
             query = query.Where(x => x.StaffMemberId == staffId);
         }
 
-        _ = locationId;
+        if (locationId is Guid branchId)
+        {
+            query = query.Where(x => x.BusinessLocationId == branchId);
+        }
 
         var bookings = await query
             .Include(x => x.Lines)
@@ -93,6 +96,7 @@ public sealed class TenantReportExportQueryService(
         DateTimeOffset from,
         DateTimeOffset to,
         Guid? staffMemberId,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
         var summary = await dashboardService.GetSummaryAsync(
@@ -100,6 +104,7 @@ public sealed class TenantReportExportQueryService(
             from,
             to,
             staffMemberId,
+            locationId,
             cancellationToken);
 
         if (summary.IsFailure)

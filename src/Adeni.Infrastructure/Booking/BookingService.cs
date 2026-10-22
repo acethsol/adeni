@@ -76,6 +76,27 @@ public sealed class BookingService(
             return Result.Failure<BookingResponse>(ErrorCodes.BookingClosedError());
         }
 
+        var locationCheck = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+            dbContext,
+            request.TenantId,
+            request.BusinessLocationId,
+            cancellationToken);
+        if (locationCheck.IsFailure)
+        {
+            return Result.Failure<BookingResponse>(locationCheck.Error!);
+        }
+
+        var businessLocationId = locationCheck.Value;
+        if (businessLocationId is null)
+        {
+            businessLocationId = await dbContext.BusinessLocations.AsNoTracking()
+                .Where(x => x.TenantId == request.TenantId && x.IsActive)
+                .OrderByDescending(x => x.IsPrimary)
+                .ThenBy(x => x.CreatedAt)
+                .Select(x => (Guid?)x.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
         var entitlementCheck = await entitlementsService.EnsureCanCreateBookingForTenantAsync(
             tenant,
             cancellationToken);
@@ -248,6 +269,7 @@ public sealed class BookingService(
                 ServiceOfferingId = primary.Id,
                 CustomerId = customer.Id,
                 StaffMemberId = request.StaffMemberId,
+                BusinessLocationId = businessLocationId,
                 GuestCount = guestCount,
                 StartAt = startAtUtc,
                 EndAt = startAtUtc.AddMinutes(totalDuration),
@@ -330,6 +352,7 @@ public sealed class BookingService(
         int page = 1,
         int pageSize = Paging.DefaultPageSize,
         Guid? staffMemberId = null,
+        Guid? locationId = null,
         string? sortBy = null,
         ListSortDirection? sortDirection = null,
         CancellationToken cancellationToken = default)
@@ -344,6 +367,18 @@ public sealed class BookingService(
         var effectiveTab = TenantBookingTabs.IsValid(tab) ? tab : TenantBookingTabs.Pending;
         var startOfTodayUtc = DateTimeOffset.UtcNow.Date;
 
+        var locationCheck = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+            dbContext,
+            tenantId,
+            locationId,
+            cancellationToken);
+        if (locationCheck.IsFailure)
+        {
+            return new PagedResult<BookingResponse>(Array.Empty<BookingResponse>(), page, pageSize, 0);
+        }
+
+        locationId = locationCheck.Value;
+
         var query = dbContext.Bookings
             .AsNoTracking()
             .Where(x => x.TenantId == tenantId);
@@ -352,6 +387,8 @@ public sealed class BookingService(
         {
             query = query.Where(x => x.StaffMemberId == scopedStaffId);
         }
+
+        query = query.FilterBookingsByLocation(locationId);
 
         query = ApplyTenantBookingTabFilter(query, effectiveTab, startOfTodayUtc);
 

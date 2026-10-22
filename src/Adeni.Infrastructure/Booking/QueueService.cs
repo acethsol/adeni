@@ -29,20 +29,21 @@ public sealed class QueueService(
         JoinQueueRequest request,
         CancellationToken cancellationToken = default)
     {
-        var tenantId = await ResolveTenantIdBySlugAsync(tenantSlug, cancellationToken);
-        if (tenantId is null)
+        var resolved = await ResolveTenantAndLocationBySlugAsync(tenantSlug, cancellationToken);
+        if (resolved is null)
         {
             return Result.Failure<QueueTicketResponse>(Error.NotFound("Business"));
         }
 
-        var capability = await EnsureQueueCapabilityAsync(tenantId.Value, cancellationToken);
+        var (tenantId, locationId) = resolved.Value;
+        var capability = await EnsureQueueCapabilityAsync(tenantId, cancellationToken);
         if (capability.IsFailure)
         {
             return Result.Failure<QueueTicketResponse>(capability.Error);
         }
 
         return await CreateTicketAsync(
-            tenantId.Value,
+            tenantId,
             request.DisplayName,
             request.Phone,
             request.Email,
@@ -50,6 +51,7 @@ public sealed class QueueService(
             staffMemberId: null,
             request.PartySize,
             request.Notes,
+            locationId,
             cancellationToken);
     }
 
@@ -86,6 +88,7 @@ public sealed class QueueService(
         Guid tenantId,
         Guid? requireStaffMemberId = null,
         bool includeFinishedToday = true,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
         var capability = await EnsureQueueCapabilityAsync(tenantId, cancellationToken);
@@ -94,12 +97,25 @@ public sealed class QueueService(
             return Result.Failure<IReadOnlyList<QueueTicketResponse>>(capability.Error);
         }
 
+        var locationCheck = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+            dbContext,
+            tenantId,
+            locationId,
+            cancellationToken);
+        if (locationCheck.IsFailure)
+        {
+            return Result.Failure<IReadOnlyList<QueueTicketResponse>>(locationCheck.Error!);
+        }
+
+        locationId = locationCheck.Value;
+
         var today = DateTimeOffset.UtcNow.Date;
         var query = dbContext.QueueTickets
             .AsNoTracking()
             .Include(x => x.ServiceOffering)
             .Include(x => x.StaffMember)
-            .Where(x => x.TenantId == tenantId);
+            .Where(x => x.TenantId == tenantId)
+            .FilterQueueByLocation(locationId);
 
         if (requireStaffMemberId is Guid staffId)
         {
@@ -142,9 +158,14 @@ public sealed class QueueService(
     public async Task<Result<TenantQueueFloorResponse>> GetFloorForTenantAsync(
         Guid tenantId,
         Guid? requireStaffMemberId = null,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
-        var list = await ListForTenantAsync(tenantId, requireStaffMemberId, cancellationToken: cancellationToken);
+        var list = await ListForTenantAsync(
+            tenantId,
+            requireStaffMemberId,
+            locationId: locationId,
+            cancellationToken: cancellationToken);
         if (list.IsFailure)
         {
             return Result.Failure<TenantQueueFloorResponse>(list.Error);
@@ -158,7 +179,7 @@ public sealed class QueueService(
         }
 
         var now = DateTimeOffset.UtcNow;
-        var expected = await LoadExpectedArrivalsAsync(tenantId, requireStaffMemberId, now, cancellationToken);
+        var expected = await LoadExpectedArrivalsAsync(tenantId, requireStaffMemberId, locationId, now, cancellationToken);
         var status = MapWalkInStatus(profile, now);
 
         return Result.Success(new TenantQueueFloorResponse(list.Value!, expected, status));
@@ -218,6 +239,7 @@ public sealed class QueueService(
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
+            BusinessLocationId = booking.BusinessLocationId,
             ServiceOfferingId = booking.ServiceOfferingId,
             StaffMemberId = booking.StaffMemberId,
             CustomerId = booking.CustomerId,
@@ -317,6 +339,22 @@ public sealed class QueueService(
             return Result.Failure<QueueTicketResponse>(ErrorCodes.PermissionDeniedError());
         }
 
+        Guid? locationId = request.BusinessLocationId;
+        if (locationId is Guid requested)
+        {
+            var locationCheck = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+                dbContext,
+                tenantId,
+                requested,
+                cancellationToken);
+            if (locationCheck.IsFailure)
+            {
+                return Result.Failure<QueueTicketResponse>(locationCheck.Error!);
+            }
+
+            locationId = locationCheck.Value;
+        }
+
         return await CreateTicketAsync(
             tenantId,
             request.DisplayName,
@@ -326,6 +364,7 @@ public sealed class QueueService(
             staffId,
             request.PartySize,
             request.Notes,
+            locationId,
             cancellationToken);
     }
 
@@ -540,6 +579,7 @@ public sealed class QueueService(
             ServiceOfferingId = service.Id,
             CustomerId = customerId,
             StaffMemberId = ticket.StaffMemberId,
+            BusinessLocationId = ticket.BusinessLocationId,
             GuestCount = Math.Clamp(ticket.PartySize, 1, ErrorCodes.MaxBookingGuests),
             StartAt = start,
             EndAt = start.AddMinutes(duration),
@@ -612,6 +652,7 @@ public sealed class QueueService(
         Guid? staffMemberId,
         int partySize,
         string? notes,
+        Guid? businessLocationId,
         CancellationToken cancellationToken)
     {
         var name = displayName?.Trim() ?? string.Empty;
@@ -678,6 +719,7 @@ public sealed class QueueService(
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
+            BusinessLocationId = businessLocationId,
             ServiceOfferingId = serviceOfferingId,
             StaffMemberId = staffMemberId,
             CustomerId = customerUpsert.Value!.LinkedPlatformCustomerId,
@@ -841,6 +883,7 @@ public sealed class QueueService(
     private async Task<IReadOnlyList<QueueExpectedArrivalResponse>> LoadExpectedArrivalsAsync(
         Guid tenantId,
         Guid? requireStaffMemberId,
+        Guid? locationId,
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
@@ -848,9 +891,10 @@ public sealed class QueueService(
         var dayEnd = dayStart.AddDays(1);
 
         var activeBookingIds = await dbContext.QueueTickets.AsNoTracking()
+            .Where(x => x.TenantId == tenantId)
+            .FilterQueueByLocation(locationId)
             .Where(x =>
-                x.TenantId == tenantId
-                && x.BookingId != null
+                x.BookingId != null
                 && x.Status != QueueTicketStatus.Cancelled
                 && x.Status != QueueTicketStatus.NoShow
                 && (x.Status != QueueTicketStatus.Done || x.CompletedAt >= dayStart))
@@ -863,7 +907,8 @@ public sealed class QueueService(
                 && x.Status == BookingStatus.Confirmed
                 && x.StartAt >= dayStart
                 && x.StartAt < dayEnd
-                && !activeBookingIds.Contains(x.Id));
+                && !activeBookingIds.Contains(x.Id))
+            .FilterBookingsByLocation(locationId);
 
         if (requireStaffMemberId is Guid staffId)
         {
@@ -1001,7 +1046,9 @@ public sealed class QueueService(
         return Result.Success(true);
     }
 
-    private async Task<Guid?> ResolveTenantIdBySlugAsync(string slug, CancellationToken cancellationToken)
+    private async Task<(Guid TenantId, Guid LocationId)?> ResolveTenantAndLocationBySlugAsync(
+        string slug,
+        CancellationToken cancellationToken)
     {
         var normalized = slug?.Trim().ToLowerInvariant();
         if (string.IsNullOrWhiteSpace(normalized))
@@ -1009,12 +1056,14 @@ public sealed class QueueService(
             return null;
         }
 
-        return await (
+        var row = await (
             from loc in dbContext.BusinessLocations.AsNoTracking()
             join tenant in dbContext.Tenants.AsNoTracking() on loc.TenantId equals tenant.Id
             where loc.IsActive && loc.Slug == normalized && tenant.Status == TenantStatus.Verified
-            select (Guid?)loc.TenantId)
+            select new { loc.TenantId, loc.Id })
             .FirstOrDefaultAsync(cancellationToken);
+
+        return row is null ? null : (row.TenantId, row.Id);
     }
 
     private async Task<QueueTicketResponse> MapAsync(QueueTicket ticket, CancellationToken cancellationToken)

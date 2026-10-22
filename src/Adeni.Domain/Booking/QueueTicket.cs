@@ -18,6 +18,8 @@ public sealed class QueueTicket : ITenantEntity
 
     public Guid TenantId { get; set; }
 
+    public Guid? BusinessLocationId { get; set; }
+
     public Guid? ServiceOfferingId { get; set; }
 
     public Guid? StaffMemberId { get; set; }

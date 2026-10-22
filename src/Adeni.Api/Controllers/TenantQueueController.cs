@@ -20,7 +20,9 @@ public sealed class TenantQueueController(
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> List(CancellationToken cancellationToken)
+    public async Task<IActionResult> List(
+        [FromQuery] Guid? locationId = null,
+        CancellationToken cancellationToken = default)
     {
         if (ResolveTenantId() is not { } tenantId)
         {
@@ -32,7 +34,7 @@ public sealed class TenantQueueController(
             return ApiErrorResponseMapper.ToActionResult(ErrorCodes.PermissionDeniedError(), HttpContext);
         }
 
-        var result = await queue.GetFloorForTenantAsync(tenantId, scoped.StaffScope, cancellationToken);
+        var result = await queue.GetFloorForTenantAsync(tenantId, scoped.StaffScope, locationId, cancellationToken);
         return ApiResults.FromResult(
             result,
             floor => Ok(new

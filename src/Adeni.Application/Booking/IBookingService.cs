@@ -92,7 +92,8 @@ public sealed record CreateBookingRequest(
     Guid? StaffMemberId = null,
     IReadOnlyList<CreateBookingLineRequest>? Lines = null,
     int GuestCount = 1,
-    IReadOnlyList<CreateBookingGuestRequest>? Guests = null);
+    IReadOnlyList<CreateBookingGuestRequest>? Guests = null,
+    Guid? BusinessLocationId = null);
 
 public interface IBookingService
 {
@@ -108,6 +109,7 @@ public interface IBookingService
         int page = 1,
         int pageSize = Paging.DefaultPageSize,
         Guid? staffMemberId = null,
+        Guid? locationId = null,
         string? sortBy = null,
         ListSortDirection? sortDirection = null,
         CancellationToken cancellationToken = default);

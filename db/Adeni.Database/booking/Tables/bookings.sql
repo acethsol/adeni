@@ -4,6 +4,7 @@ CREATE TABLE [booking].[bookings] (
     [ServiceOfferingId] UNIQUEIDENTIFIER   NOT NULL,
     [CustomerId]        UNIQUEIDENTIFIER   NOT NULL,
     [StaffMemberId]     UNIQUEIDENTIFIER   NULL,
+    [BusinessLocationId] UNIQUEIDENTIFIER  NULL,
     [GuestCount]        INT                DEFAULT ((1)) NOT NULL,
     [StartAt]           DATETIMEOFFSET (7) NOT NULL,
     [EndAt]             DATETIMEOFFSET (7) NOT NULL,
@@ -18,7 +19,8 @@ CREATE TABLE [booking].[bookings] (
     [UpdatedAt]         DATETIMEOFFSET (7) NOT NULL,
     CONSTRAINT [PK_bookings] PRIMARY KEY CLUSTERED ([Id] ASC),
     CONSTRAINT [FK_bookings_service_offerings_ServiceOfferingId] FOREIGN KEY ([ServiceOfferingId]) REFERENCES [booking].[service_offerings] ([Id]),
-    CONSTRAINT [FK_bookings_staff_members_StaffMemberId] FOREIGN KEY ([StaffMemberId]) REFERENCES [booking].[staff_members] ([Id]) ON DELETE SET NULL
+    CONSTRAINT [FK_bookings_staff_members_StaffMemberId] FOREIGN KEY ([StaffMemberId]) REFERENCES [booking].[staff_members] ([Id]) ON DELETE SET NULL,
+    CONSTRAINT [FK_bookings_business_locations_BusinessLocationId] FOREIGN KEY ([BusinessLocationId]) REFERENCES [tenancy].[business_locations] ([Id])
 );
 
 
@@ -56,6 +58,12 @@ GO
 
 CREATE NONCLUSTERED INDEX [IX_bookings_TenantId_StartAt]
     ON [booking].[bookings]([TenantId] ASC, [StartAt] ASC);
+
+
+GO
+
+CREATE NONCLUSTERED INDEX [IX_bookings_TenantId_BusinessLocationId_StartAt]
+    ON [booking].[bookings]([TenantId] ASC, [BusinessLocationId] ASC, [StartAt] ASC);
 
 
 GO

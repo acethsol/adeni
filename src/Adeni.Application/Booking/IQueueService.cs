@@ -39,7 +39,8 @@ public sealed record StaffAddQueueRequest(
     Guid? StaffMemberId = null,
     int PartySize = 1,
     string? Notes = null,
-    string? Email = null);
+    string? Email = null,
+    Guid? BusinessLocationId = null);
 
 public sealed record StartQueueTicketRequest(Guid? StaffMemberId = null);
 
@@ -58,11 +59,13 @@ public interface IQueueService
         Guid tenantId,
         Guid? requireStaffMemberId = null,
         bool includeFinishedToday = true,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<TenantQueueFloorResponse>> GetFloorForTenantAsync(
         Guid tenantId,
         Guid? requireStaffMemberId = null,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default);
 
     Task<Result> UpsertTicketFromBookingCheckInAsync(

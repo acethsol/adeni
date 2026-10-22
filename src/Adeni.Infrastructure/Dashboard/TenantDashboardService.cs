@@ -27,6 +27,7 @@ public sealed class TenantDashboardService(
         DateTimeOffset from,
         DateTimeOffset to,
         Guid? staffMemberId = null,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
         var tenant = await dbContext.Tenants.AsNoTracking()
@@ -36,8 +37,19 @@ public sealed class TenantDashboardService(
             return Result.Failure<TenantDashboardSummaryResponse>(Error.NotFound("Tenant"));
         }
 
+        var locationCheck = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+            dbContext,
+            tenantId,
+            locationId,
+            cancellationToken);
+        if (locationCheck.IsFailure)
+        {
+            return Result.Failure<TenantDashboardSummaryResponse>(locationCheck.Error!);
+        }
+
+        locationId = locationCheck.Value;
         var entitlements = entitlementsService.GetEntitlementsForTenant(tenant);
-        var bookingQuery = ScopedBookings(tenantId, staffMemberId);
+        var bookingQuery = ScopedBookings(tenantId, staffMemberId, locationId);
 
         var pendingCount = await bookingQuery
             .CountAsync(x => x.Status == BookingStatus.Pending, cancellationToken);
@@ -59,22 +71,28 @@ public sealed class TenantDashboardService(
 
         if (entitlements.AdvancedAnalytics)
         {
-            collected = await dbContext.PaymentIntents.AsNoTracking()
+            var paymentQuery = dbContext.PaymentIntents.AsNoTracking()
                 .Where(x =>
                     x.TenantId == tenantId
                     && x.Status == PaymentIntentStatus.Completed
                     && x.UpdatedAt >= from
-                    && x.UpdatedAt < to)
-                .SumAsync(x => (decimal?)x.Amount, cancellationToken);
+                    && x.UpdatedAt < to);
+
+            if (locationId is Guid branchId)
+            {
+                paymentQuery = paymentQuery.Where(x =>
+                    x.BookingId != null
+                    && dbContext.Bookings.Any(b =>
+                        b.Id == x.BookingId
+                        && b.TenantId == tenantId
+                        && b.BusinessLocationId == branchId));
+            }
+
+            collected = await paymentQuery.SumAsync(x => (decimal?)x.Amount, cancellationToken);
 
             if (collected is > 0)
             {
-                currency = await dbContext.PaymentIntents.AsNoTracking()
-                    .Where(x =>
-                        x.TenantId == tenantId
-                        && x.Status == PaymentIntentStatus.Completed
-                        && x.UpdatedAt >= from
-                        && x.UpdatedAt < to)
+                currency = await paymentQuery
                     .Select(x => x.Currency)
                     .FirstOrDefaultAsync(cancellationToken) ?? currency;
             }
@@ -117,6 +135,7 @@ public sealed class TenantDashboardService(
         DateTimeOffset from,
         DateTimeOffset to,
         Guid? staffMemberId = null,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
         var tenant = await dbContext.Tenants.AsNoTracking()
@@ -126,6 +145,17 @@ public sealed class TenantDashboardService(
             return Result.Failure<TenantDashboardSeriesResponse>(Error.NotFound("Tenant"));
         }
 
+        var locationCheck = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+            dbContext,
+            tenantId,
+            locationId,
+            cancellationToken);
+        if (locationCheck.IsFailure)
+        {
+            return Result.Failure<TenantDashboardSeriesResponse>(locationCheck.Error!);
+        }
+
+        locationId = locationCheck.Value;
         var entitlements = entitlementsService.GetEntitlementsForTenant(tenant);
         var normalized = metric.Trim().ToLowerInvariant();
         if (!entitlements.AdvancedAnalytics && normalized is not "appointments")
@@ -139,13 +169,13 @@ public sealed class TenantDashboardService(
         switch (normalized)
         {
             case "appointments":
-                points = await BuildAppointmentSeriesAsync(tenantId, from, to, staffMemberId, cancellationToken);
+                points = await BuildAppointmentSeriesAsync(tenantId, from, to, staffMemberId, locationId, cancellationToken);
                 break;
             case "collected":
-                (points, currency) = await BuildCollectedSeriesAsync(tenantId, from, to, cancellationToken);
+                (points, currency) = await BuildCollectedSeriesAsync(tenantId, from, to, locationId, cancellationToken);
                 break;
             case "booked_value":
-                points = await BuildBookedValueSeriesAsync(tenantId, from, to, staffMemberId, cancellationToken);
+                points = await BuildBookedValueSeriesAsync(tenantId, from, to, staffMemberId, locationId, cancellationToken);
                 currency = await dbContext.ServiceOfferings.AsNoTracking()
                     .Where(x => x.TenantId == tenantId && x.IsActive)
                     .Select(x => x.Currency)
@@ -170,6 +200,7 @@ public sealed class TenantDashboardService(
         DateTimeOffset from,
         DateTimeOffset to,
         Guid? staffMemberId = null,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
         var tenant = await dbContext.Tenants.AsNoTracking()
@@ -179,6 +210,17 @@ public sealed class TenantDashboardService(
             return Result.Failure<TenantDashboardBreakdownResponse>(Error.NotFound("Tenant"));
         }
 
+        var locationCheck = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+            dbContext,
+            tenantId,
+            locationId,
+            cancellationToken);
+        if (locationCheck.IsFailure)
+        {
+            return Result.Failure<TenantDashboardBreakdownResponse>(locationCheck.Error!);
+        }
+
+        locationId = locationCheck.Value;
         var entitlements = entitlementsService.GetEntitlementsForTenant(tenant);
         var normalized = dimension.Trim().ToLowerInvariant();
 
@@ -196,7 +238,7 @@ public sealed class TenantDashboardService(
         {
             return Result.Failure<TenantDashboardBreakdownResponse>(ErrorCodes.AnalyticsNotEntitledError());
         }
-        var bookingQuery = ScopedBookings(tenantId, staffMemberId)
+        var bookingQuery = ScopedBookings(tenantId, staffMemberId, locationId)
             .Where(x =>
                 x.StartAt >= from
                 && x.StartAt < to
@@ -228,7 +270,7 @@ public sealed class TenantDashboardService(
         return Result.Success(new TenantDashboardBreakdownResponse(normalized, from, to, items));
     }
 
-    private IQueryable<BookingRecord> ScopedBookings(Guid tenantId, Guid? staffMemberId)
+    private IQueryable<BookingRecord> ScopedBookings(Guid tenantId, Guid? staffMemberId, Guid? locationId = null)
     {
         var query = dbContext.Bookings.AsNoTracking().Where(x => x.TenantId == tenantId);
         if (staffMemberId is Guid staffId)
@@ -236,7 +278,7 @@ public sealed class TenantDashboardService(
             query = query.Where(x => x.StaffMemberId == staffId);
         }
 
-        return query;
+        return query.FilterBookingsByLocation(locationId);
     }
 
     private async Task<IReadOnlyList<TenantDashboardSeriesPoint>> BuildAppointmentSeriesAsync(
@@ -244,9 +286,10 @@ public sealed class TenantDashboardService(
         DateTimeOffset from,
         DateTimeOffset to,
         Guid? staffMemberId,
+        Guid? locationId,
         CancellationToken cancellationToken)
     {
-        var startTimes = await ScopedBookings(tenantId, staffMemberId)
+        var startTimes = await ScopedBookings(tenantId, staffMemberId, locationId)
             .Where(x =>
                 x.StartAt >= from
                 && x.StartAt < to
@@ -266,14 +309,27 @@ public sealed class TenantDashboardService(
         Guid tenantId,
         DateTimeOffset from,
         DateTimeOffset to,
+        Guid? locationId,
         CancellationToken cancellationToken)
     {
-        var payments = await dbContext.PaymentIntents.AsNoTracking()
+        var paymentQuery = dbContext.PaymentIntents.AsNoTracking()
             .Where(x =>
                 x.TenantId == tenantId
                 && x.Status == PaymentIntentStatus.Completed
                 && x.UpdatedAt >= from
-                && x.UpdatedAt < to)
+                && x.UpdatedAt < to);
+
+        if (locationId is Guid branchId)
+        {
+            paymentQuery = paymentQuery.Where(x =>
+                x.BookingId != null
+                && dbContext.Bookings.Any(b =>
+                    b.Id == x.BookingId
+                    && b.TenantId == tenantId
+                    && b.BusinessLocationId == branchId));
+        }
+
+        var payments = await paymentQuery
             .Select(x => new { x.UpdatedAt, x.Amount })
             .ToListAsync(cancellationToken);
 
@@ -282,12 +338,7 @@ public sealed class TenantDashboardService(
             .Select(g => new { Date = g.Key, Total = g.Sum(x => x.Amount) })
             .ToList();
 
-        var currency = await dbContext.PaymentIntents.AsNoTracking()
-            .Where(x =>
-                x.TenantId == tenantId
-                && x.Status == PaymentIntentStatus.Completed
-                && x.UpdatedAt >= from
-                && x.UpdatedAt < to)
+        var currency = await paymentQuery
             .Select(x => x.Currency)
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -301,9 +352,10 @@ public sealed class TenantDashboardService(
         DateTimeOffset from,
         DateTimeOffset to,
         Guid? staffMemberId,
+        Guid? locationId,
         CancellationToken cancellationToken)
     {
-        var bookingsInRange = await ScopedBookings(tenantId, staffMemberId)
+        var bookingsInRange = await ScopedBookings(tenantId, staffMemberId, locationId)
             .Where(x =>
                 x.StartAt >= from
                 && x.StartAt < to

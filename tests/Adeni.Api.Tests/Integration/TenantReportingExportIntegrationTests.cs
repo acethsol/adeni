@@ -247,6 +247,113 @@ public sealed class TenantReportingExportIntegrationTests : IClassFixture<WebApp
     }
 
     [Fact]
+    public async Task BookingsRegister_csv_filters_by_locationId()
+    {
+        var tenantId = Guid.NewGuid();
+        const string ownerSub = "auth0|report-export-loc-filter";
+        var locA = Guid.NewGuid();
+        var locB = Guid.NewGuid();
+        var serviceId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+            SeedTenant(db, tenantId, ownerSub, SubscriptionSku.Professional);
+            db.Customers.Add(new Customer
+            {
+                Id = customerId,
+                Auth0Sub = "auth0|cust",
+                Name = "Test Customer",
+                Phone = "+2348011111111",
+                CreatedAt = now,
+            });
+            db.ServiceOfferings.Add(new ServiceOffering
+            {
+                Id = serviceId,
+                TenantId = tenantId,
+                Name = "Cut",
+                PriceAmount = 1000m,
+                Currency = "NGN",
+                DurationMinutes = 30,
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+            db.BusinessLocations.Add(new BusinessLocation
+            {
+                Id = locA,
+                TenantId = tenantId,
+                Name = "Branch A",
+                Slug = "branch-a-filter",
+                MarketId = "lagos",
+                AddressLine = "1 Test St",
+                Area = "Lekki",
+                IsPrimary = true,
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+            db.BusinessLocations.Add(new BusinessLocation
+            {
+                Id = locB,
+                TenantId = tenantId,
+                Name = "Branch B",
+                Slug = "branch-b-filter",
+                MarketId = "lagos",
+                AddressLine = "2 Test St",
+                Area = "VI",
+                IsPrimary = false,
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+            db.Bookings.Add(new BookingRecord
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                ServiceOfferingId = serviceId,
+                CustomerId = customerId,
+                BusinessLocationId = locA,
+                StartAt = now.AddHours(1),
+                EndAt = now.AddHours(2),
+                Status = BookingStatus.Confirmed,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+            db.Bookings.Add(new BookingRecord
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                ServiceOfferingId = serviceId,
+                CustomerId = customerId,
+                BusinessLocationId = locB,
+                StartAt = now.AddHours(3),
+                EndAt = now.AddHours(4),
+                Status = BookingStatus.Confirmed,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add(DevBusinessAuthMiddleware.DevAuth0SubHeader, ownerSub);
+        client.DefaultRequestHeaders.Add(TenantAccessMiddleware.TenantHeaderName, tenantId.ToString());
+
+        var from = Uri.EscapeDataString(now.AddDays(-1).ToString("O"));
+        var to = Uri.EscapeDataString(now.AddDays(1).ToString("O"));
+        var response = await client.GetAsync(
+            $"/api/v1/tenant/reporting/exports/bookings-register?from={from}&to={to}&format=csv&locationId={locA:D}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var csv = await response.Content.ReadAsStringAsync();
+        var dataLines = csv.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        Assert.Equal(2, dataLines.Length);
+    }
+
+    [Fact]
     public async Task StaffRoster_csv_returns_ok_for_professional()
     {
         var tenantId = Guid.NewGuid();

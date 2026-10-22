@@ -448,6 +448,11 @@ public sealed class AdeniDbContext(
                 .WithMany()
                 .HasForeignKey(x => x.StaffMemberId)
                 .OnDelete(DeleteBehavior.SetNull);
+            entity.HasIndex(x => new { x.TenantId, x.BusinessLocationId, x.StartAt });
+            entity.HasOne<BusinessLocation>()
+                .WithMany()
+                .HasForeignKey(x => x.BusinessLocationId)
+                .OnDelete(DeleteBehavior.NoAction);
             entity.HasMany(x => x.Lines)
                 .WithOne(x => x.Booking)
                 .HasForeignKey(x => x.BookingId)
@@ -560,6 +565,10 @@ public sealed class AdeniDbContext(
                 .WithMany()
                 .HasForeignKey(x => x.StaffMemberId)
                 .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne<BusinessLocation>()
+                .WithMany()
+                .HasForeignKey(x => x.BusinessLocationId)
+                .OnDelete(DeleteBehavior.NoAction);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });
 

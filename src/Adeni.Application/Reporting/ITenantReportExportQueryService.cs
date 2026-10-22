@@ -84,6 +84,7 @@ public interface ITenantReportExportQueryService
         DateTimeOffset from,
         DateTimeOffset to,
         Guid? staffMemberId,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<CustomerStatementData>> GetCustomerStatementAsync(

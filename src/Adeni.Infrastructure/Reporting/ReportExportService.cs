@@ -187,6 +187,7 @@ public sealed class ReportExportService(
             request.TenantId,
             request.From,
             request.To,
+            request.LocationId,
             cancellationToken);
 
         if (rowsResult.IsFailure)
@@ -222,6 +223,7 @@ public sealed class ReportExportService(
             request.From,
             request.To,
             request.StaffMemberId,
+            request.LocationId,
             cancellationToken);
 
         if (rowsResult.IsFailure)

@@ -190,8 +190,9 @@ public sealed class StaffCompensationService(AdeniDbContext dbContext) : IStaffC
         Guid tenantId,
         DateTimeOffset from,
         DateTimeOffset to,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default) =>
-        LoadExportRowsAsync(tenantId, from, to, cancellationToken);
+        LoadExportRowsAsync(tenantId, from, to, locationId, cancellationToken);
 
     public async Task<Result<StaffCompensationExportPayload>> ExportAsync(
         Guid tenantId,
@@ -200,7 +201,7 @@ public sealed class StaffCompensationService(AdeniDbContext dbContext) : IStaffC
         CompensationExportFormat format,
         CancellationToken cancellationToken = default)
     {
-        var rowsResult = await LoadExportRowsAsync(tenantId, from, to, cancellationToken);
+        var rowsResult = await LoadExportRowsAsync(tenantId, from, to, locationId: null, cancellationToken);
         if (rowsResult.IsFailure)
         {
             return Result.Failure<StaffCompensationExportPayload>(rowsResult.Error!);
@@ -228,6 +229,7 @@ public sealed class StaffCompensationService(AdeniDbContext dbContext) : IStaffC
         Guid tenantId,
         DateTimeOffset from,
         DateTimeOffset to,
+        Guid? locationId,
         CancellationToken cancellationToken)
     {
         if (to < from)
@@ -236,9 +238,21 @@ public sealed class StaffCompensationService(AdeniDbContext dbContext) : IStaffC
                 Error.Validation("'to' must be on or after 'from'."));
         }
 
-        var rows = await dbContext.StaffCompensationAllocations
+        var allocationQuery = dbContext.StaffCompensationAllocations
             .AsNoTracking()
-            .Where(x => x.TenantId == tenantId && x.CreatedAt >= from && x.CreatedAt <= to)
+            .Where(x => x.TenantId == tenantId && x.CreatedAt >= from && x.CreatedAt <= to);
+
+        if (locationId is Guid branchId)
+        {
+            allocationQuery = allocationQuery.Where(x =>
+                x.BookingId != null
+                && dbContext.Bookings.Any(b =>
+                    b.Id == x.BookingId
+                    && b.TenantId == tenantId
+                    && b.BusinessLocationId == branchId));
+        }
+
+        var rows = await allocationQuery
             .OrderBy(x => x.CreatedAt)
             .ToListAsync(cancellationToken);
 

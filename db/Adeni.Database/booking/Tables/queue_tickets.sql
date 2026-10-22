@@ -1,6 +1,7 @@
 CREATE TABLE [booking].[queue_tickets] (
     [Id]                 UNIQUEIDENTIFIER   NOT NULL,
     [TenantId]           UNIQUEIDENTIFIER   NOT NULL,
+    [BusinessLocationId] UNIQUEIDENTIFIER   NULL,
     [ServiceOfferingId]  UNIQUEIDENTIFIER   NULL,
     [StaffMemberId]      UNIQUEIDENTIFIER   NULL,
     [CustomerId]         UNIQUEIDENTIFIER   NULL,
@@ -21,7 +22,8 @@ CREATE TABLE [booking].[queue_tickets] (
     [NoShowAt]           DATETIMEOFFSET (7) NULL,
     [CreatedAt]          DATETIMEOFFSET (7) NOT NULL,
     [UpdatedAt]          DATETIMEOFFSET (7) NOT NULL,
-    CONSTRAINT [PK_queue_tickets] PRIMARY KEY CLUSTERED ([Id] ASC)
+    CONSTRAINT [PK_queue_tickets] PRIMARY KEY CLUSTERED ([Id] ASC),
+    CONSTRAINT [FK_queue_tickets_business_locations_BusinessLocationId] FOREIGN KEY ([BusinessLocationId]) REFERENCES [tenancy].[business_locations] ([Id])
 );
 
 

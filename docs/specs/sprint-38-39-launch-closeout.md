@@ -90,7 +90,7 @@ Close the gap between **shipped Notifications and Reporting code** and **staging
 
 - [x] **R-U1** — Wire **sales-summary** export (`csv` / `pdf`) via `adeni-export-menu` on **Finance → Staff export** (not dashboard); shared from/to date range on that tab
 - [x] **R-U2** — Authenticated PDF: `downloadBillingDocumentPdf()` in `@adeni/api-client` + **Download PDF** on Finance Documents (not public View only)
-- [x] **R-U3** — Multi-location: **app-wide branch switch** in portal shell (persisted per tenant); exports use global scope via `resolveReportExportLocationId`; map 403 to upgrade copy
+- [x] **R-U3** — Multi-location: **app-wide branch switch** in portal shell (persisted per tenant); exports + dashboard/bookings/queue honor active branch via optional `locationId` ([portal-active-location-scope.md](./portal-active-location-scope.md)); map 403 to upgrade copy
 - [x] **R-U4** — Finance Staff export tab → shared export menu + xlsx when `excelExport` (drop fake json)
 - [x] **R-U5** — `advancedReports` helper + PDF disabled hints on export menus
 

@@ -18,7 +18,8 @@ public sealed class TenantDashboardController(ITenantDashboardService dashboard)
     public async Task<IActionResult> Summary(
         [FromQuery] DateTimeOffset? from,
         [FromQuery] DateTimeOffset? to,
-        CancellationToken cancellationToken)
+        [FromQuery] Guid? locationId = null,
+        CancellationToken cancellationToken = default)
     {
         if (ResolveTenantId() is not { } tenantId)
         {
@@ -46,6 +47,7 @@ public sealed class TenantDashboardController(ITenantDashboardService dashboard)
             rangeFrom,
             rangeTo,
             staffScope,
+            locationId,
             cancellationToken);
 
         return ApiResults.FromResult(result, Ok, HttpContext);
@@ -56,7 +58,8 @@ public sealed class TenantDashboardController(ITenantDashboardService dashboard)
         [FromQuery] string metric,
         [FromQuery] DateTimeOffset? from,
         [FromQuery] DateTimeOffset? to,
-        CancellationToken cancellationToken)
+        [FromQuery] Guid? locationId = null,
+        CancellationToken cancellationToken = default)
     {
         if (ResolveTenantId() is not { } tenantId)
         {
@@ -77,6 +80,7 @@ public sealed class TenantDashboardController(ITenantDashboardService dashboard)
             rangeFrom,
             rangeTo,
             staffScope,
+            locationId,
             cancellationToken);
 
         return ApiResults.FromResult(result, Ok, HttpContext);
@@ -87,7 +91,8 @@ public sealed class TenantDashboardController(ITenantDashboardService dashboard)
         [FromQuery] string dimension,
         [FromQuery] DateTimeOffset? from,
         [FromQuery] DateTimeOffset? to,
-        CancellationToken cancellationToken)
+        [FromQuery] Guid? locationId = null,
+        CancellationToken cancellationToken = default)
     {
         if (ResolveTenantId() is not { } tenantId)
         {
@@ -108,6 +113,7 @@ public sealed class TenantDashboardController(ITenantDashboardService dashboard)
             rangeFrom,
             rangeTo,
             staffScope,
+            locationId,
             cancellationToken);
 
         return ApiResults.FromResult(result, Ok, HttpContext);

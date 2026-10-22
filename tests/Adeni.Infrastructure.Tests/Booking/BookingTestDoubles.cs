@@ -31,12 +31,14 @@ internal sealed class NoOpQueueService : IQueueService
         Guid tenantId,
         Guid? requireStaffMemberId = null,
         bool includeFinishedToday = true,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default) =>
         throw new NotSupportedException();
 
     public Task<Result<TenantQueueFloorResponse>> GetFloorForTenantAsync(
         Guid tenantId,
         Guid? requireStaffMemberId = null,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default) =>
         throw new NotSupportedException();
 

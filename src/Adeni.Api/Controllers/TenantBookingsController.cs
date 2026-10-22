@@ -28,6 +28,7 @@ public sealed class TenantBookingsController(
         [FromQuery] int pageSize = 25,
         [FromQuery] string? sortBy = null,
         [FromQuery] string? sortDir = null,
+        [FromQuery] Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
         if (ResolveTenantId() is not { } tenantId)
@@ -64,6 +65,7 @@ public sealed class TenantBookingsController(
             page,
             pageSize,
             staffScope,
+            locationId,
             sort.Value!.SortBy,
             sort.Value.SortDirection,
             cancellationToken);

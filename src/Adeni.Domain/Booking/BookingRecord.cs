@@ -15,6 +15,9 @@ public sealed class BookingRecord : ITenantEntity
     /// <summary>Null = customer chose “any available”; business may assign later.</summary>
     public Guid? StaffMemberId { get; set; }
 
+    /// <summary>Branch where the appointment occurs (Discover slug / portal context).</summary>
+    public Guid? BusinessLocationId { get; set; }
+
     /// <summary>Party size; MVP appointment duration scales by this count.</summary>
     public int GuestCount { get; set; } = 1;
 

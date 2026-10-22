@@ -48,6 +48,7 @@ public interface IStaffCompensationService
         Guid tenantId,
         DateTimeOffset from,
         DateTimeOffset to,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default);
 }
 

@@ -86,6 +86,118 @@ public sealed class TenantDashboardIntegrationTests : IClassFixture<WebApplicati
     }
 
     [Fact]
+    public async Task Summary_filters_by_locationId()
+    {
+        var tenantId = Guid.NewGuid();
+        const string ownerSub = "auth0|dashboard-loc-filter";
+        var locA = Guid.NewGuid();
+        var locB = Guid.NewGuid();
+        var serviceId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var startAt = DateTimeOffset.UtcNow.AddHours(2);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+            SeedTenant(db, tenantId, ownerSub);
+            db.Customers.Add(new Customer
+            {
+                Id = customerId,
+                Auth0Sub = "auth0|dash-cust",
+                Name = "Dash Customer",
+                Phone = "+2348022222222",
+                CreatedAt = startAt,
+            });
+            db.ServiceOfferings.Add(new ServiceOffering
+            {
+                Id = serviceId,
+                TenantId = tenantId,
+                Name = "Cut",
+                PriceAmount = 3000m,
+                Currency = "NGN",
+                DurationMinutes = 30,
+                IsActive = true,
+                CreatedAt = startAt,
+                UpdatedAt = startAt,
+            });
+            db.BusinessLocations.Add(new BusinessLocation
+            {
+                Id = locA,
+                TenantId = tenantId,
+                Name = "A",
+                Slug = "dash-loc-a",
+                MarketId = "lagos",
+                AddressLine = "1",
+                Area = "A",
+                IsPrimary = true,
+                IsActive = true,
+                CreatedAt = startAt,
+                UpdatedAt = startAt,
+            });
+            db.BusinessLocations.Add(new BusinessLocation
+            {
+                Id = locB,
+                TenantId = tenantId,
+                Name = "B",
+                Slug = "dash-loc-b",
+                MarketId = "lagos",
+                AddressLine = "2",
+                Area = "B",
+                IsPrimary = false,
+                IsActive = true,
+                CreatedAt = startAt,
+                UpdatedAt = startAt,
+            });
+            db.Bookings.Add(new BookingRecord
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                ServiceOfferingId = serviceId,
+                CustomerId = customerId,
+                BusinessLocationId = locA,
+                StartAt = startAt,
+                EndAt = startAt.AddMinutes(30),
+                Status = BookingStatus.Pending,
+                CreatedAt = startAt,
+                UpdatedAt = startAt,
+            });
+            db.Bookings.Add(new BookingRecord
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                ServiceOfferingId = serviceId,
+                CustomerId = customerId,
+                BusinessLocationId = locB,
+                StartAt = startAt.AddHours(1),
+                EndAt = startAt.AddHours(1).AddMinutes(30),
+                Status = BookingStatus.Pending,
+                CreatedAt = startAt,
+                UpdatedAt = startAt,
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add(DevBusinessAuthMiddleware.DevAuth0SubHeader, ownerSub);
+        client.DefaultRequestHeaders.Add(TenantAccessMiddleware.TenantHeaderName, tenantId.ToString());
+
+        var from = Uri.EscapeDataString(DateTimeOffset.UtcNow.AddDays(-1).ToString("O"));
+        var to = Uri.EscapeDataString(DateTimeOffset.UtcNow.AddDays(1).ToString("O"));
+        var allResponse = await client.GetAsync($"/api/v1/tenant/dashboard/summary?from={from}&to={to}");
+        var scopedResponse = await client.GetAsync(
+            $"/api/v1/tenant/dashboard/summary?from={from}&to={to}&locationId={locA:D}");
+
+        Assert.Equal(HttpStatusCode.OK, allResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, scopedResponse.StatusCode);
+        var allPayload = await allResponse.Content.ReadFromJsonAsync<DashboardSummaryPayload>();
+        var scopedPayload = await scopedResponse.Content.ReadFromJsonAsync<DashboardSummaryPayload>();
+        Assert.NotNull(allPayload);
+        Assert.NotNull(scopedPayload);
+        Assert.Equal(2, allPayload!.PendingCount);
+        Assert.Equal(1, scopedPayload!.PendingCount);
+    }
+
+    [Fact]
     public async Task Series_appointments_allowed_without_analytics()
     {
         var tenantId = Guid.NewGuid();
