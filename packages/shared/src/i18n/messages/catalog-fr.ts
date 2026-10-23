@@ -135,6 +135,9 @@ export const frCatalog: MessageTree = {
       customerPiiErasureWasInitiated: "L'effacement des données personnelles du client a été lancé.",
       customerPrivacy: "Confidentialité des clients",
       customerSearchPages: "Pages de recherche de clients",
+      devLoadSampleCustomers: "Charger les clients d'exemple (dev)",
+      devSeedSearchHint:
+        "En développement local, recherchez dev-privacy ou seed.privacy.local après avoir redémarré l'API pour charger les dossiers de démo.",
       download: "Télécharger",
       downloadJson: "Télécharger le JSON",
       emailNamePhoneAuth0Sub: "Courriel, nom, téléphone ou sub Auth0",

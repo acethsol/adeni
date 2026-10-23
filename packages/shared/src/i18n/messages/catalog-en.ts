@@ -135,6 +135,9 @@ export const enCatalog: MessageTree = {
       customerPiiErasureWasInitiated: "Customer PII erasure was initiated.",
       customerPrivacy: "Customer privacy",
       customerSearchPages: "Customer search pages",
+      devLoadSampleCustomers: "Load dev sample customers",
+      devSeedSearchHint:
+        "In local development, search dev-privacy or seed.privacy.local after restarting the API to load seeded demo records.",
       download: "Download",
       downloadJson: "Download JSON",
       emailNamePhoneAuth0Sub: "Email, name, phone, or Auth0 sub",

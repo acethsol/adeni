@@ -19,6 +19,7 @@ import {
   injectAdeniTranslate,
   injectAdeniApiError,
 } from "@adeni/ui";
+import { ADENI_ADMIN_CONFIG, isAdminPortalDevMode } from "../../core/adeni-config";
 import { AdminApiService } from "../../core/services/admin-api.service";
 import {
   ADMIN_LIST_PAGE_SIZE,
@@ -51,6 +52,7 @@ import { erasurePill } from "../../shared/admin-pill-maps";
 export class AdminCustomersComponent {
   protected readonly tr = injectAdeniTranslate();
   protected readonly apiErr = injectAdeniApiError();
+  protected readonly devMode = isAdminPortalDevMode(inject(ADENI_ADMIN_CONFIG));
   private readonly api = inject(AdminApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -106,6 +108,13 @@ export class AdminCustomersComponent {
         this.customers.set([]);
         this.totalCount.set(0);
       }
+    });
+  }
+
+  loadDevSampleCustomers(): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { q: "dev-privacy", email: null, page: null },
     });
   }
 

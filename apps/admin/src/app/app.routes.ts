@@ -83,7 +83,7 @@ export const routes: Routes = [
           },
         ],
       },
-      { path: "customers", component: AdminCustomersComponent, title: "Customers" },
+      { path: "customers", component: AdminCustomersComponent, title: "Customer privacy" },
       { path: "audit-logs", component: AdminAuditLogsComponent, title: "Audit trail" },
     ],
   },

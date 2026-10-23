@@ -68,7 +68,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     id: "compliance",
     label: "Compliance",
     items: [
-      { path: "/customers", label: "Customers", icon: "privacy" },
+      { path: "/customers", label: "Customer privacy", icon: "privacy" },
       { path: "/audit-logs", label: "Audit trail", icon: "privacy" },
     ],
   },

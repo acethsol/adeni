@@ -28,8 +28,18 @@
     <adeni-portal-empty-state
       icon="user--filled"
       [title]="tr('admin.customers.findCustomerRecord')"
-      [description]="tr('admin.customers.enterEmailNamePhoneNumber')"
-    />
+      [description]="
+        devMode
+          ? tr('admin.customers.enterEmailNamePhoneNumber') + ' ' + tr('admin.customers.devSeedSearchHint')
+          : tr('admin.customers.enterEmailNamePhoneNumber')
+      "
+    >
+      @if (devMode) {
+        <adeni-staff-btn icon="search" variant="primary" (pressed)="loadDevSampleCustomers()">
+          {{ tr('admin.customers.devLoadSampleCustomers') }}
+        </adeni-staff-btn>
+      }
+    </adeni-portal-empty-state>
   } @else if (customers().length === 0 && !error()) {
     <adeni-portal-empty-state
       icon="search"

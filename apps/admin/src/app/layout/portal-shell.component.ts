@@ -86,7 +86,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     "/businesses": "Businesses",
     "/insights": "Revenue",
     "/transactions": "Transactions",
-    "/customers": "Customers",
+    "/customers": "Customer privacy",
     "/audit-logs": "Audit trail",
   },
   fr: {
@@ -114,7 +114,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     "/businesses": "Établissements",
     "/insights": "Abonnements",
     "/transactions": "Transactions",
-    "/customers": "Clients",
+    "/customers": "Confidentialité des clients",
     "/audit-logs": "Journal d'audit",
   },
 };
