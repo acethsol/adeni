@@ -10,6 +10,7 @@ import { BusinessCommercialTermsComponent } from "./pages/businesses/business-co
 import { BusinessDetailShellComponent } from "./pages/businesses/business-detail-shell.component";
 import { BusinessOverviewComponent } from "./pages/businesses/business-overview.component";
 import { AdminCustomersComponent } from "./pages/customers/customers.component";
+import { AdminAuditLogsComponent } from "./pages/audit-logs/audit-logs.component";
 import { AdminTrustBadgesComponent } from "./pages/trust-badges/trust-badges.component";
 import { AdminReviewsComponent } from "./pages/reviews/reviews.component";
 import { AdminInsightsComponent } from "./pages/insights/insights.component";
@@ -83,6 +84,7 @@ export const routes: Routes = [
         ],
       },
       { path: "customers", component: AdminCustomersComponent, title: "Customers" },
+      { path: "audit-logs", component: AdminAuditLogsComponent, title: "Audit trail" },
     ],
   },
   { path: "**", redirectTo: "dashboard" },

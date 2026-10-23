@@ -40,6 +40,7 @@ import {
   adminBusinessSummarySchema,
   adminRevenueMetricsSchema,
   adminTransactionsSearchResponseSchema,
+  adminAuditLogsListResponseSchema,
   availableSlotsResponseSchema,
   bookingResponseSchema,
   billingDocumentResponseSchema,
@@ -187,6 +188,7 @@ import {
   type AdminSubscriptionMetrics,
   type AdminRevenueMetrics,
   type AdminTransactionSearchItem,
+  type AdminAuditLogListItem,
   type AvailableSlot,
   type BillingDocumentResponse,
   type BookingResponse,
@@ -2081,6 +2083,36 @@ export class AdeniApiClient {
     appendListSortParams(query, options.sort);
     const response = await this.request(`/api/v1/admin/transactions?${query.toString()}`);
     return adminTransactionsSearchResponseSchema.parse(await response.json());
+  }
+
+  async listAdminAuditLogs(
+    options: {
+      action?: string;
+      from?: string;
+      to?: string;
+      page?: number;
+      pageSize?: number;
+    } = {},
+  ): Promise<AdminPagedResult<AdminAuditLogListItem>> {
+    const query = new URLSearchParams();
+    if (options.action?.trim()) {
+      query.set("action", options.action.trim());
+    }
+    if (options.from?.trim()) {
+      query.set("from", options.from.trim());
+    }
+    if (options.to?.trim()) {
+      query.set("to", options.to.trim());
+    }
+    if (options.page != null) {
+      query.set("page", String(options.page));
+    }
+    if (options.pageSize != null) {
+      query.set("pageSize", String(options.pageSize));
+    }
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
+    const response = await this.request(`/api/v1/admin/audit-logs${suffix}`);
+    return adminAuditLogsListResponseSchema.parse(await response.json());
   }
 
   async getAdminBusiness(tenantId: string): Promise<AdminBusinessSummary> {

@@ -12,7 +12,9 @@ This checklist splits **work that ships in repo / CI** from **deploy and ops** t
 
 | ID | Requirement | Status | Evidence / notes |
 |----|-------------|--------|------------------|
-| **SOC2-01** | Admin and high-impact portal actions → `admin.audit_logs` | ✅ Code | `AuditMiddleware` (2xx only, dedupe), service audits — [audit-runbook.md](./audit-runbook.md) |
+| **SOC2-01** | Admin and high-impact portal actions → `admin.audit_logs` | ✅ Code | Middleware + service audits (bookings, staff, settings, exports, …) — [audit-runbook.md](./audit-runbook.md) |
+| **SOC2-01b** | Audit retention / access / owner runbook | ✅ Docs | [audit-runbook.md §8–9](./audit-runbook.md) |
+| **SOC2-01c** | Admin read-only audit trail UI (demo) | ✅ Code + UI | `GET /api/v1/admin/audit-logs`, admin **Audit trail** page; read audited |
 | **SOC2-02** | Cross-tenant attempts → 403 + audit | ✅ Code + tests | `TenantAccessMiddleware`, `security.cross_tenant_denied` |
 | **SOC2-03** | PII masked in logs | ✅ Code | `PiiMasker`, Serilog policy — [AGENTS.md](../AGENTS.md) |
 | **SOC2-07** | Dependency scan on PR | ✅ CI | NuGet + npm gates in pipeline |
@@ -23,7 +25,7 @@ This checklist splits **work that ships in repo / CI** from **deploy and ops** t
 | **PDF branding (R-D3)** | Option 3 wordmark on tenant PDFs incl. sales-summary | ✅ Code + tests | `Brand/adeni-wordmark.png`, QuestPDF footer |
 | **Portal branch switch UX** | Artificial delay only in Angular dev mode | ✅ Code | `isDevMode()` gate in `portal-active-location.service.ts` |
 | **Automated test gate** | `dotnet test Adeni.slnx -c Release` | ✅ Required before push | Local + CI |
-| **i18n parity** | en/fr for API errors + major UI | 🟡 Tail documented | [specs/sprint-ui-i18n-full-parity.md](./specs/sprint-ui-i18n-full-parity.md) §9 residual |
+| **i18n parity** | en/fr for API errors + major UI | 🟡 Tail documented | Audit trail admin strings in overlay en/fr; full catalog tail in [specs/sprint-ui-i18n-full-parity.md](./specs/sprint-ui-i18n-full-parity.md) §9 |
 
 ---
 

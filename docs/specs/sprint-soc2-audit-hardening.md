@@ -4,7 +4,7 @@
 |-------|-------|
 | **Sprint** | SOC 2 readiness — audit trail hardening |
 | **Author** | Agent |
-| **Status** | Implemented |
+| **Status** | Implemented (pre-staging closeout) |
 | **Created** | 2026-10-23 |
 
 ---
@@ -30,7 +30,9 @@ Make `admin.audit_logs` a trustworthy SOC 2 trail: no false positives on failed 
 - [x] `ReviewService.HideAsync`, `VerificationBadgeService` grant/revoke — service audits
 - [x] `subscription.webhook_received` before signature parse (no body)
 - [x] Admin **GET** `/metrics/*` and `/transactions` — same pattern as reporting reads
-- [x] Portal high-impact mutations: verification submit, booking status transitions, notification preferences
+- [x] Portal high-impact mutations: verification submit, booking status transitions, notification preferences, **tenant settings** (deposit/auto-confirm), **tenant report exports**
+- [x] Admin audit log query API + demo UI (`admin.audit_logs.read`)
+- [x] Runbook: retention, access, named owners, auditor export process
 
 ## 4. Out of scope
 
@@ -46,7 +48,7 @@ Make `admin.audit_logs` a trustworthy SOC 2 trail: no false positives on failed 
 |-------|------|
 | **Middleware** | `/api/v1/admin` mutating verbs + sensitive admin GETs (reporting, metrics, transactions); **2xx only**; **suppressed** when service owns the action |
 | **Service** | Authoritative row with correct `entityType`, metadata, actor (`sub` or `system:*`) |
-| **Portal** | High-impact tenant mutations listed in §3 → same `admin.audit_logs` store (v1) |
+| **Portal** | High-impact tenant mutations listed in §3 → same `admin.audit_logs` store (v1); staff.* via `StaffAccessService` |
 
 **Dedupe list (middleware suppressed):** business approve/reject, commercial terms PATCH, markets mutations, pricing catalog mutations, customer erasure POST, review hide DELETE, verification badge grant/revoke POST.
 
@@ -59,7 +61,9 @@ Make `admin.audit_logs` a trustworthy SOC 2 trail: no false positives on failed 
 | Domain | `AuditActions.cs` |
 | Api | `AuditMiddleware.cs`, `AdminAuditRules.cs`, `SubscriptionController.cs` |
 | Infrastructure | `ReviewService`, `VerificationBadgeService`, `SubscriptionBillingOrchestrator`, `BusinessOnboardingService`, `NotificationPreferencesService`, `BookingService` |
-| Tests | `MiddlewareTests`, `AuditTestDoubles`, booking/discovery/notification test registration |
+| Tests | `MiddlewareTests`, `PortalSoc2AuditIntegrationTests`, `TenantReportingExportIntegrationTests`, `AdminAuditLogsIntegrationTests`, `AuditTestDoubles` |
+| Api | `AdminAuditLogsController`, `TenantReportingController` (actor on export) |
+| Admin UI | `apps/admin/.../audit-logs/*` |
 | Docs | This spec, [audit-runbook.md](../audit-runbook.md), [soc2-readiness-checklist.md](../soc2-readiness-checklist.md) |
 
 ---

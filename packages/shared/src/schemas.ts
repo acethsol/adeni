@@ -1253,6 +1253,25 @@ export const adminTransactionsSearchResponseSchema = adminPagedResultSchema(
 
 export type AdminTransactionsSearchResponse = z.infer<typeof adminTransactionsSearchResponseSchema>;
 
+export const adminAuditLogListItemSchema = z.object({
+  id: z.string().uuid(),
+  actorId: z.string(),
+  action: z.string(),
+  entityType: z.string(),
+  entityId: z.string(),
+  correlationId: z.string(),
+  occurredAt: z.string(),
+  metadataJson: z.string().nullable().optional(),
+});
+
+export type AdminAuditLogListItem = z.infer<typeof adminAuditLogListItemSchema>;
+
+export const adminAuditLogsListResponseSchema = adminPagedResultSchema(
+  adminAuditLogListItemSchema,
+);
+
+export type AdminAuditLogsListResponse = z.infer<typeof adminAuditLogsListResponseSchema>;
+
 export const completeStubSubscriptionCheckoutRequestSchema = z.object({
   tenantId: z.string().uuid(),
   providerReference: z.string().min(1),

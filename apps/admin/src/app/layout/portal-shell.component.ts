@@ -57,7 +57,8 @@ type ChromeKey =
   | "/businesses"
   | "/insights"
   | "/transactions"
-  | "/customers";
+  | "/customers"
+  | "/audit-logs";
 
 const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
   en: {
@@ -86,6 +87,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     "/insights": "Revenue",
     "/transactions": "Transactions",
     "/customers": "Customers",
+    "/audit-logs": "Audit trail",
   },
   fr: {
     search: "Rechercher",
@@ -113,6 +115,7 @@ const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     "/insights": "Abonnements",
     "/transactions": "Transactions",
     "/customers": "Clients",
+    "/audit-logs": "Journal d'audit",
   },
 };
 

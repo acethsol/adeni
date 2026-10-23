@@ -134,6 +134,22 @@ export const enOverlay: MessageTree = {
     businesses: {
       subscriptionUpdatedSku: "Subscription updated ({sku}).",
     },
+    auditLogs: {
+      title: "Audit trail",
+      description: "Read-only view of admin.audit_logs for demos and SOC 2 spot-checks. Sensitive reads are audit-logged.",
+      action: "Action",
+      actor: "Actor",
+      entity: "Entity",
+      correlation: "Correlation ID",
+      actionFilter: "Filter by action",
+      actionPlaceholder: "e.g. booking.accepted",
+      applyFilter: "Apply filter",
+      loading: "Loading audit entries…",
+      loadFailed: "Could not load audit entries.",
+      emptyTitle: "No audit entries",
+      emptyDescription: "Try clearing the action filter or perform an admin or portal action first.",
+      metadataPresent: "Has metadata (no PII in UI)",
+    },
   },
   discover: {
     plan: {

@@ -1,0 +1,70 @@
+<app-portal-page
+  [title]="tr('admin.auditLogs.title')"
+  [description]="tr('admin.auditLogs.description')"
+>
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  <section class="card list-toolbar">
+    <form class="filter-form" (submit)="applyActionFilter(); $event.preventDefault()">
+      <label class="filter-field">
+        <span class="field-label">{{ tr('admin.auditLogs.actionFilter') }}</span>
+        <input
+          type="search"
+          [(ngModel)]="actionFilterInput"
+          name="action"
+          [placeholder]="tr('admin.auditLogs.actionPlaceholder')"
+          autocomplete="off"
+        />
+      </label>
+      <button type="submit" class="apply-btn" [disabled]="loading()">
+        {{ tr('admin.auditLogs.applyFilter') }}
+      </button>
+    </form>
+    @if (loaded() && totalCount() > 0) {
+      <p class="toolbar-meta">{{ showingRange() }}</p>
+    }
+  </section>
+
+  @if (loading() && !loaded()) {
+    <p class="muted">{{ tr('admin.auditLogs.loading') }}</p>
+  } @else if (loaded() && totalCount() === 0 && !error()) {
+    <adeni-portal-empty-state
+      icon="search"
+      [title]="tr('admin.auditLogs.emptyTitle')"
+      [description]="tr('admin.auditLogs.emptyDescription')"
+    />
+  } @else if (rows().length > 0) {
+    <adeni-data-table
+      [rows]="rows()"
+      [columns]="columns()"
+      [trackRow]="trackRow"
+      [sortRows]="false"
+    >
+      <ng-template adeniDataTableCell="when" let-row>
+        {{ row.occurredAt | date: "medium" }}
+      </ng-template>
+      <ng-template adeniDataTableCell="entity" let-row>
+        <span class="mono">{{ row.entityType }}:{{ row.entityId }}</span>
+        @if (row.metadataJson) {
+          <span class="row-sub muted">{{ tr('admin.auditLogs.metadataPresent') }}</span>
+        }
+      </ng-template>
+      <ng-template adeniDataTableCell="correlation" let-row>
+        <span class="mono ref">{{ row.correlationId }}</span>
+      </ng-template>
+    </adeni-data-table>
+
+    <adeni-list-pagination
+      [page]="page()"
+      [pageSize]="pageSize()"
+      [totalCount]="totalCount()"
+      [pageSizeOptions]="listPageSizeOptions"
+      [loading]="loading()"
+      [ariaLabel]="tr('admin.auditLogs.title')"
+      (pageChange)="goToPage($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    />
+  }
+</app-portal-page>

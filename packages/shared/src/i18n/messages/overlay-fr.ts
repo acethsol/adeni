@@ -134,6 +134,22 @@ export const frOverlay: MessageTree = {
     businesses: {
       subscriptionUpdatedSku: "Abonnement mis à jour ({sku}).",
     },
+    auditLogs: {
+      title: "Journal d'audit",
+      description: "Vue en lecture seule de admin.audit_logs pour démos et contrôles SOC 2. Les lectures sensibles sont journalisées.",
+      action: "Action",
+      actor: "Acteur",
+      entity: "Entité",
+      correlation: "ID de corrélation",
+      actionFilter: "Filtrer par action",
+      actionPlaceholder: "p. ex. booking.accepted",
+      applyFilter: "Appliquer le filtre",
+      loading: "Chargement des entrées d'audit…",
+      loadFailed: "Impossible de charger les entrées d'audit.",
+      emptyTitle: "Aucune entrée d'audit",
+      emptyDescription: "Effacez le filtre d'action ou effectuez d'abord une action admin ou portail.",
+      metadataPresent: "Métadonnées présentes (pas de PII dans l'UI)",
+    },
   },
   discover: {
     plan: {
