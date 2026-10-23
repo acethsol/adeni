@@ -429,12 +429,14 @@
 .topbar-actions {
   display: flex;
   align-items: center;
-  gap: 0.2rem;
+  gap: 0.35rem;
 }
 
 .topbar-location {
   display: flex;
   align-items: center;
+  max-width: min(22rem, 42vw);
+  margin-right: 0.15rem;
 }
 
 .topbar-rule {

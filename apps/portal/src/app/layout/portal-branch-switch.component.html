@@ -1,9 +1,15 @@
-<div class="branch-root" data-menu-root="branch">
+<div
+  class="branch-root"
+  data-menu-root="branch"
+  [class.is-open]="open()"
+  (keydown)="onRootKeydown($event)"
+>
   <button
     type="button"
     class="branch-trigger"
     aria-haspopup="menu"
     [attr.aria-expanded]="open()"
+    [attr.aria-controls]="menuId"
     [attr.aria-label]="ariaLabel()"
     (click)="toggle($event)"
   >
@@ -12,11 +18,13 @@
       <span class="branch-title-row">
         <span class="branch-title" [title]="display().title">{{ display().title }}</span>
         @if (display().isPrimary && !display().allLocationsScope) {
-          <adeni-pill tone="brand" class="branch-primary-pill">{{ tr('common.primary') }}</adeni-pill>
+          <adeni-pill tone="brand" [compact]="true" class="branch-primary-pill">{{
+            tr('common.primary')
+          }}</adeni-pill>
         }
       </span>
       @if (display().hint) {
-        <span class="branch-hint">{{ display().hint }}</span>
+        <span class="branch-hint" [title]="display().hint">{{ display().hint }}</span>
       }
     </span>
     <adeni-carbon-icon
@@ -29,7 +37,12 @@
   </button>
 
   @if (open()) {
-    <div class="branch-menu" role="menu" [attr.aria-label]="ariaLabel()">
+    <div
+      class="branch-menu"
+      [id]="menuId"
+      role="menu"
+      [attr.aria-label]="ariaLabel()"
+    >
       <p class="branch-menu-label">{{ ariaLabel() }}</p>
       @if (showAllOption()) {
         <button
@@ -40,7 +53,7 @@
           [class.is-active]="isSelected(allScopeValue)"
           (click)="select(allScopeValue, $event)"
         >
-          <adeni-carbon-icon name="map--center" [size]="16" aria-hidden="true" />
+          <adeni-carbon-icon class="branch-item-icon" name="map--center" [size]="16" aria-hidden="true" />
           <span class="branch-item-copy">
             <span class="branch-item-title">{{ allLocationsLabel() }}</span>
             <span class="branch-item-hint">{{ branches().length }} branches</span>
@@ -60,18 +73,20 @@
           [class.is-active]="isSelected(branch.id)"
           (click)="select(branch.id, $event)"
         >
-          <adeni-carbon-icon name="location--filled" [size]="16" aria-hidden="true" />
+          <adeni-carbon-icon class="branch-item-icon" name="location--filled" [size]="16" aria-hidden="true" />
           <span class="branch-item-copy">
             <span class="branch-item-title-row">
               <span class="branch-item-title" [title]="activeLocation.branchRowLabel(branch)">{{
                 activeLocation.branchRowLabel(branch)
               }}</span>
               @if (branch.isPrimary) {
-                <adeni-pill tone="brand" class="branch-primary-pill">{{ tr('common.primary') }}</adeni-pill>
+                <adeni-pill tone="brand" [compact]="true" class="branch-primary-pill">{{
+                  tr('common.primary')
+                }}</adeni-pill>
               }
             </span>
             @if (activeLocation.branchRowHint(branch); as hint) {
-              <span class="branch-item-hint">{{ hint }}</span>
+              <span class="branch-item-hint" [title]="hint">{{ hint }}</span>
             }
           </span>
           @if (isSelected(branch.id)) {
