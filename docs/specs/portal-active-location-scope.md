@@ -32,7 +32,7 @@ Make the portal **branch switch** drive tenant APIs and exports honestly — fil
 | Payments ledger | Ledger API had no branch filter | `GET .../finance/ledger?locationId=` + portal |
 | Customer detail | History ignored branch | `GET .../customers/{id}?locationId=` + reload on switch |
 | Messaging | Inbox / unread / dashboard widget unscoped | `locationId` on conversations + unread (booking-context filter) |
-| Quotes | No `BusinessLocationId` on `QuoteRequestRecord` | Documented; portal lists all until migration |
+| Quotes | No `BusinessLocationId` on `QuoteRequestRecord` | `BusinessLocationId` on quotes + `GET .../tenant/quotes?locationId=` + portal reload |
 | List APIs (2+ branches, no `multiLocationReporting`) | Omitted `locationId` returned all rows | `TenantLocationScope.ResolveListLocationAsync` defaults to primary |
 | Kiosk | All-branch arrivals | `?locationId=` from bookings “Open kiosk” + scoped list |
 | Staff roster | Unassigned + wrong-branch staff visible; create without branch | Strict roster filter; create defaults to active branch; all staff API calls pass `locationId` |
@@ -100,6 +100,7 @@ Make the portal **branch switch** drive tenant APIs and exports honestly — fil
 | GET | `/api/v1/tenant/messages/unread-count` | Messages | **`locationId?`** | Same scope as conversation list. |
 | GET | `/api/v1/tenant/customers/{id}` | Bookings | **`locationId?`** | Recent bookings/queue history scoped to branch. |
 | GET | `/api/v1/tenant/subscription` | Plan / overview | **`locationId?`** | Monthly booking usage counted at branch when set. |
+| GET | `/api/v1/tenant/quotes` | Quotes | **`locationId?`** | Quote inbox filtered by branch when set. |
 | POST | `/api/v1/bookings` | Customer JWT | body **`businessLocationId?`** | Persist branch on create (must belong to tenant). |
 
 **Tiers**
@@ -129,7 +130,7 @@ Make the portal **branch switch** drive tenant APIs and exports honestly — fil
 | `/plan` | subscription usage | Yes |
 | `/customers/:id` | detail history | Yes |
 | `/kiosk` | arrivals list | Yes (`locationId` query from bookings) |
-| `/quotes` | — | No (`QuoteRequestRecord` has no branch FK — backlog) |
+| `/quotes` | list | Yes |
 | Shell pending bookings badge | pending list | Yes |
 | Shell messages badge | unread count | Yes |
 | `/availability` | hours + closed dates | Yes (branch picker when “All locations”) |
@@ -140,11 +141,11 @@ Make the portal **branch switch** drive tenant APIs and exports honestly — fil
 
 | Layer | Files |
 |-------|-------|
-| Domain | `BookingRecord`, `QueueTicket`, `StaffMember` |
+| Domain | `BookingRecord`, `QueueTicket`, `StaffMember`, `QuoteRequestRecord` |
 | Application | `IStaffService`, `IReviewService`, `ITenantCustomerService`, `ITenantReportExportQueryService`, … |
 | Infrastructure | `StaffService`, `ReviewService`, `TenantCustomerService`, `TenantReportExportQueryService`, `TenantLocationScope` |
 | Api | `TenantStaffController`, `TenantCustomersController`, `TenantReviewsController` |
-| DB | `staff_members.sql`, `db/scripts/staff-location-scope.sql` |
+| DB | `staff_members.sql`, `quote_requests.sql`, `db/scripts/staff-location-scope.sql`, `db/scripts/quote-location-scope.sql` |
 | Tests | `StaffServiceTests`, export integration tests |
 | Shared / client / portal | `schemas.ts`, `api-client`, branch switch + `PortalActiveLocationService`, page reload subscribers |
 
@@ -166,6 +167,7 @@ Make the portal **branch switch** drive tenant APIs and exports honestly — fil
 
 - [x] Export bookings-register with `locationId` returns subset.
 - [x] Dashboard summary respects `locationId`.
+- [x] Tenant quotes list respects `locationId`.
 - [x] Staff roster list respects branch assignment + `locationId` query.
 - Run: `dotnet test Adeni.slnx -c Release`, shared vitest, portal typecheck.
 

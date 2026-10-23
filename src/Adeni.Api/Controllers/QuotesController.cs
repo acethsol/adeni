@@ -21,7 +21,9 @@ public sealed class TenantQuotesController(
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> List(CancellationToken cancellationToken)
+    public async Task<IActionResult> List(
+        [FromQuery] Guid? locationId = null,
+        CancellationToken cancellationToken = default)
     {
         var auth0Sub = ResolveAuth0Sub();
         if (auth0Sub is null || ResolveTenantId() is not { } tenantId)
@@ -29,7 +31,7 @@ public sealed class TenantQuotesController(
             return Unauthorized();
         }
 
-        var items = await quotes.ListForTenantAsync(tenantId, auth0Sub, cancellationToken);
+        var items = await quotes.ListForTenantAsync(tenantId, auth0Sub, locationId, cancellationToken);
         return Ok(new { items });
     }
 

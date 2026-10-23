@@ -59,6 +59,7 @@ public interface IQuoteRequestService
     Task<IReadOnlyList<QuoteRequestResponse>> ListForTenantAsync(
         Guid tenantId,
         string auth0Sub,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<QuoteRequestResponse>> GetForTenantByIdAsync(

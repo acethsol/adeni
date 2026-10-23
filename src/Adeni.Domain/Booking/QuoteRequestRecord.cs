@@ -8,6 +8,8 @@ public sealed class QuoteRequestRecord : ITenantEntity
 
     public Guid TenantId { get; set; }
 
+    public Guid? BusinessLocationId { get; set; }
+
     public Guid CustomerId { get; set; }
 
     public string Description { get; set; } = string.Empty;

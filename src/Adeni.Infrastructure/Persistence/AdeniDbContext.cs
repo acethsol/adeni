@@ -588,6 +588,10 @@ public sealed class AdeniDbContext(
         {
             entity.ToTable("quote_requests", "booking");
             entity.HasKey(x => x.Id);
+            entity.HasOne<BusinessLocation>()
+                .WithMany()
+                .HasForeignKey(x => x.BusinessLocationId)
+                .OnDelete(DeleteBehavior.NoAction);
             entity.Property(x => x.Description).HasMaxLength(2000);
             entity.Property(x => x.ServiceAddress).HasMaxLength(500);
             entity.Property(x => x.PhotoKeysJson).HasMaxLength(2000);
@@ -596,6 +600,7 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.QuotedAmount).HasPrecision(12, 2);
             entity.Property(x => x.Status).HasConversion<int>();
             entity.HasIndex(x => new { x.TenantId, x.CreatedAt });
+            entity.HasIndex(x => new { x.TenantId, x.BusinessLocationId, x.CreatedAt });
             entity.HasIndex(x => new { x.CustomerId, x.CreatedAt });
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });

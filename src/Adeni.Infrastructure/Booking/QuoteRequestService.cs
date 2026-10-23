@@ -4,6 +4,7 @@ using System.Text.Json;
 using Adeni.Application.Booking;
 using Adeni.Application.Realtime;
 using Adeni.Application.Storage;
+using Adeni.Application.Subscriptions;
 using Adeni.Infrastructure.Realtime;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
@@ -15,7 +16,8 @@ using Microsoft.EntityFrameworkCore;
 public sealed class QuoteRequestService(
     AdeniDbContext dbContext,
     IFileStorage fileStorage,
-    ITenantRealtimePublisher tenantRealtime) : IQuoteRequestService
+    ITenantRealtimePublisher tenantRealtime,
+    IEntitlementsService entitlementsService) : IQuoteRequestService
 {
     private const int MaxPhotoKeys = 5;
 
@@ -37,15 +39,17 @@ public sealed class QuoteRequestService(
         }
 
         var normalizedSlug = slug.Trim().ToLowerInvariant();
-        var tenantId = await VerifiedLocationQueries.ResolveTenantIdBySlugAsync(
+        var locationMatch = await VerifiedLocationQueries.ResolveLocationBySlugAsync(
             dbContext,
             normalizedSlug,
             cancellationToken);
 
-        if (tenantId == Guid.Empty)
+        if (locationMatch is null)
         {
             return Result.Failure<QuoteRequestResponse>(Error.NotFound("Business"));
         }
+
+        var (businessLocationId, tenantId) = locationMatch.Value;
 
         var profileBooking = await dbContext.BusinessProfiles
             .AsNoTracking()
@@ -69,6 +73,7 @@ public sealed class QuoteRequestService(
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
+            BusinessLocationId = businessLocationId,
             CustomerId = customer.Id,
             Description = request.Description.Trim(),
             ServiceAddress = string.IsNullOrWhiteSpace(request.ServiceAddress)
@@ -126,6 +131,7 @@ public sealed class QuoteRequestService(
     public async Task<IReadOnlyList<QuoteRequestResponse>> ListForTenantAsync(
         Guid tenantId,
         string auth0Sub,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
         if (!await HasBusinessAccessAsync(tenantId, auth0Sub, cancellationToken))
@@ -133,9 +139,25 @@ public sealed class QuoteRequestService(
             return [];
         }
 
+        var tenant = await dbContext.Tenants.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+        var multiLocationReporting = tenant is not null
+            && entitlementsService.GetEntitlementsForTenant(tenant).MultiLocationReporting;
+        var locationCheck = await TenantLocationScope.ResolveListLocationAsync(
+            dbContext,
+            tenantId,
+            locationId,
+            multiLocationReporting,
+            cancellationToken);
+        if (locationCheck.IsFailure)
+        {
+            return [];
+        }
+
         var records = await dbContext.QuoteRequests
             .AsNoTracking()
             .Where(x => x.TenantId == tenantId)
+            .FilterQuotesByLocation(locationCheck.Value)
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(cancellationToken);
 
@@ -281,6 +303,7 @@ public sealed class QuoteRequestService(
         {
             Id = Guid.NewGuid(),
             TenantId = record.TenantId,
+            BusinessLocationId = record.BusinessLocationId,
             CustomerId = record.CustomerId,
             ServiceOfferingId = record.ServiceOfferingId.Value,
             StartAt = record.ProposedStartAt.Value.ToUniversalTime(),

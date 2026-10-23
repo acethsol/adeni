@@ -1,6 +1,7 @@
 CREATE TABLE [booking].[quote_requests] (
     [Id]                UNIQUEIDENTIFIER   NOT NULL,
     [TenantId]          UNIQUEIDENTIFIER   NOT NULL,
+    [BusinessLocationId] UNIQUEIDENTIFIER  NULL,
     [CustomerId]        UNIQUEIDENTIFIER   NOT NULL,
     [Description]       NVARCHAR (2000)    NOT NULL,
     [ServiceAddress]    NVARCHAR (500)     NULL,
@@ -16,7 +17,8 @@ CREATE TABLE [booking].[quote_requests] (
     [ExpiresAt]         DATETIMEOFFSET (7) NULL,
     [BookingId]         UNIQUEIDENTIFIER   NULL,
     [CreatedAt]         DATETIMEOFFSET (7) NOT NULL,
-    CONSTRAINT [PK_quote_requests] PRIMARY KEY CLUSTERED ([Id] ASC)
+    CONSTRAINT [PK_quote_requests] PRIMARY KEY CLUSTERED ([Id] ASC),
+    CONSTRAINT [FK_quote_requests_business_locations_BusinessLocationId] FOREIGN KEY ([BusinessLocationId]) REFERENCES [tenancy].[business_locations] ([Id])
 );
 
 
@@ -30,6 +32,12 @@ GO
 
 CREATE NONCLUSTERED INDEX [IX_quote_requests_TenantId_CreatedAt]
     ON [booking].[quote_requests]([TenantId] ASC, [CreatedAt] ASC);
+
+
+GO
+
+CREATE NONCLUSTERED INDEX [IX_quote_requests_TenantId_BusinessLocationId_CreatedAt]
+    ON [booking].[quote_requests]([TenantId] ASC, [BusinessLocationId] ASC, [CreatedAt] ASC);
 
 
 GO

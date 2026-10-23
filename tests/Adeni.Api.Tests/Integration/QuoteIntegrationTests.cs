@@ -165,6 +165,122 @@ public sealed class QuoteIntegrationTests : IClassFixture<WebApplicationFactory<
         Assert.Contains(bookings!.Items, item => item.Id == accepted.BookingId);
     }
 
+    [Fact]
+    public async Task Tenant_quotes_list_filters_by_locationId()
+    {
+        const string ownerSub = "auth0|quote-loc-filter-owner";
+        var tenantId = Guid.NewGuid();
+        var locA = Guid.NewGuid();
+        var locB = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var quoteA = Guid.NewGuid();
+        var quoteB = Guid.NewGuid();
+        var createdAt = DateTimeOffset.UtcNow;
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+            db.Tenants.Add(new Tenant
+            {
+                Id = tenantId,
+                Name = "Quote Loc Filter",
+                Status = TenantStatus.Verified,
+                CreatedAt = createdAt,
+                VerifiedAt = createdAt,
+            });
+            db.BusinessUsers.Add(new BusinessUser
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                Auth0Sub = ownerSub,
+                Role = "owner",
+                CreatedAt = createdAt,
+            });
+            db.BusinessLocations.Add(new BusinessLocation
+            {
+                Id = locA,
+                TenantId = tenantId,
+                Slug = $"quote-loc-a-{tenantId:N}"[..18],
+                Name = "A",
+                MarketId = "lagos",
+                AddressLine = "1",
+                Area = "A",
+                IsPrimary = true,
+                IsActive = true,
+                CreatedAt = createdAt,
+                UpdatedAt = createdAt,
+            });
+            db.BusinessLocations.Add(new BusinessLocation
+            {
+                Id = locB,
+                TenantId = tenantId,
+                Slug = $"quote-loc-b-{tenantId:N}"[..18],
+                Name = "B",
+                MarketId = "lagos",
+                AddressLine = "2",
+                Area = "B",
+                IsPrimary = false,
+                IsActive = true,
+                CreatedAt = createdAt,
+                UpdatedAt = createdAt,
+            });
+            db.Customers.Add(new Customer
+            {
+                Id = customerId,
+                Auth0Sub = CustomerSub,
+                Name = "Quote Customer",
+                CreatedAt = createdAt,
+            });
+            db.QuoteRequests.Add(new QuoteRequestRecord
+            {
+                Id = quoteA,
+                TenantId = tenantId,
+                BusinessLocationId = locA,
+                CustomerId = customerId,
+                Description = "Branch A quote request description.",
+                Status = QuoteRequestStatus.Submitted,
+                CreatedAt = createdAt,
+            });
+            db.QuoteRequests.Add(new QuoteRequestRecord
+            {
+                Id = quoteB,
+                TenantId = tenantId,
+                BusinessLocationId = locB,
+                CustomerId = customerId,
+                Description = "Branch B quote request description.",
+                Status = QuoteRequestStatus.Submitted,
+                CreatedAt = createdAt,
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add(DevBusinessAuthMiddleware.DevAuth0SubHeader, ownerSub);
+        client.DefaultRequestHeaders.Add(TenantAccessMiddleware.TenantHeaderName, tenantId.ToString());
+
+        var defaultResponse = await client.GetAsync("/api/v1/tenant/quotes");
+        var locAResponse = await client.GetAsync($"/api/v1/tenant/quotes?locationId={locA:D}");
+        var locBResponse = await client.GetAsync($"/api/v1/tenant/quotes?locationId={locB:D}");
+
+        Assert.Equal(HttpStatusCode.OK, defaultResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, locAResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, locBResponse.StatusCode);
+
+        var defaultPayload = await defaultResponse.Content.ReadFromJsonAsync<TenantQuotesPayload>();
+        var locAPayload = await locAResponse.Content.ReadFromJsonAsync<TenantQuotesPayload>();
+        var locBPayload = await locBResponse.Content.ReadFromJsonAsync<TenantQuotesPayload>();
+
+        Assert.NotNull(defaultPayload);
+        Assert.NotNull(locAPayload);
+        Assert.NotNull(locBPayload);
+        Assert.Single(defaultPayload!.Items);
+        Assert.Equal(quoteA, defaultPayload.Items[0].Id);
+        Assert.Single(locAPayload!.Items);
+        Assert.Equal(quoteA, locAPayload.Items[0].Id);
+        Assert.Single(locBPayload!.Items);
+        Assert.Equal(quoteB, locBPayload.Items[0].Id);
+    }
+
     private sealed record QuotePayload(
         Guid Id,
         string Status,
@@ -174,4 +290,8 @@ public sealed class QuoteIntegrationTests : IClassFixture<WebApplicationFactory<
     private sealed record CustomerBookingsPayload(IReadOnlyList<CustomerBookingItem> Items);
 
     private sealed record CustomerBookingItem(Guid Id);
+
+    private sealed record TenantQuotesPayload(IReadOnlyList<TenantQuoteItem> Items);
+
+    private sealed record TenantQuoteItem(Guid Id);
 }

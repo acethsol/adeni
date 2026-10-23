@@ -16,7 +16,9 @@ import {
   injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
 import { TenantOperationsRealtimeService } from "@adeni/ui";
+import { mergeTenantEntitlements } from "@adeni/shared";
 
 @Component({
   selector: "app-quotes",
@@ -29,9 +31,10 @@ export class QuotesComponent implements OnInit, OnDestroy {
   protected readonly tr = injectAdeniTranslate();
   protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
+  private readonly activeLocation = inject(PortalActiveLocationService);
   private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
   private readonly feedback = inject(AdeniFeedbackService);
-  private opsSub: Subscription | null = null;
+  private readonly subscriptions = new Subscription();
 
   readonly error = signal<string | null>(null);
   readonly quotes = signal<QuoteRequestResponse[]>([]);
@@ -53,13 +56,20 @@ export class QuotesComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     void this.load();
-    this.opsSub = this.operationsRealtime.quotePipelineChanged$.subscribe(() => {
-      void this.load();
-    });
+    this.subscriptions.add(
+      this.operationsRealtime.quotePipelineChanged$.subscribe(() => {
+        void this.load();
+      }),
+    );
+    this.subscriptions.add(
+      this.activeLocation.selectionChanged$.subscribe(() => {
+        void this.activeLocation.runOnBranchSwitch(() => this.load());
+      }),
+    );
   }
 
   ngOnDestroy(): void {
-    this.opsSub?.unsubscribe();
+    this.subscriptions.unsubscribe();
   }
 
   openQuotes(): QuoteRequestResponse[] {
@@ -78,10 +88,23 @@ export class QuotesComponent implements OnInit, OnDestroy {
     this.error.set(null);
     try {
       await this.feedback.runLoading(async () => {
-        // QuoteRequest has no BusinessLocationId yet — tenant list is all branches until migration.
-        const [quotes, services] = await this.api.withAuthorizedClient((client) =>
-          Promise.all([client.listTenantQuotes(), client.getTenantServices()]),
-        );
+        const [quotes, services] = await this.api.withAuthorizedClient(async (client) => {
+          const profile = await client.getTenantProfile().catch(() => null);
+          if (profile) {
+            this.activeLocation.syncFromProfile(profile);
+          }
+          const entitlements = await client.getTenantEntitlements().catch(() => null);
+          const merged = mergeTenantEntitlements(
+            entitlements,
+            profile?.entitlements,
+            profile?.entitlements,
+          );
+          const locationQueryId = this.activeLocation.tenantApiLocationId(merged);
+          return Promise.all([
+            client.listTenantQuotes({ locationId: locationQueryId }),
+            client.getTenantServices(),
+          ]);
+        });
         this.quotes.set(quotes);
         this.services.set(services.filter((service) => service.isActive));
         if (services[0]?.currency) this.currency = services[0].currency;

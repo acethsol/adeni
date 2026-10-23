@@ -757,7 +757,9 @@ export class DashboardComponent implements OnInit {
             ? client.getTenantQueueFloor(locationQueryId).catch(() => null)
             : Promise.resolve(null),
           wantsQuotes && caps.includes("quotes")
-            ? client.listTenantQuotes().catch(() => [] as QuoteRequestResponse[])
+            ? client
+                .listTenantQuotes({ locationId: locationQueryId })
+                .catch(() => [] as QuoteRequestResponse[])
             : Promise.resolve([] as QuoteRequestResponse[]),
         ]);
 

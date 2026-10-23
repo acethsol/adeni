@@ -911,8 +911,13 @@ export class AdeniApiClient {
     return quoteRequestResponseSchema.parse(await response.json());
   }
 
-  async listTenantQuotes(): Promise<QuoteRequestResponse[]> {
-    const response = await this.request("/api/v1/tenant/quotes");
+  async listTenantQuotes(options: { locationId?: string } = {}): Promise<QuoteRequestResponse[]> {
+    const query = new URLSearchParams();
+    if (options.locationId) {
+      query.set("locationId", options.locationId);
+    }
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
+    const response = await this.request(`/api/v1/tenant/quotes${suffix}`);
     const payload = quoteRequestsResponseSchema.parse(await response.json());
     return payload.items;
   }
