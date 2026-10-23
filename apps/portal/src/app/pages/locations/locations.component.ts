@@ -41,6 +41,7 @@ import {
   injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -95,6 +96,7 @@ export class LocationsComponent implements OnInit {
   protected readonly tr = injectAdeniTranslate();
   protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
+  private readonly activeLocation = inject(PortalActiveLocationService);
   private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly feedback = inject(AdeniFeedbackService);
 
@@ -242,10 +244,16 @@ export class LocationsComponent implements OnInit {
         this.markets.set(markets);
         this.defaultMarketId = markets[0]?.id ?? "lagos";
         await this.api.withAuthorizedClient(async (c) => {
-          const [profile, usage, planEntitlements, items] = await Promise.all([
-            c.getTenantProfile().catch(() => null),
-            c.getTenantSubscriptionUsage().catch(() => null),
-            c.getTenantEntitlements().catch(() => null),
+          const profile = await c.getTenantProfile().catch(() => null);
+          const planEntitlements = await c.getTenantEntitlements().catch(() => null);
+          const mergedForLocation = mergeTenantEntitlements(
+            planEntitlements,
+            profile?.entitlements,
+            profile?.entitlements,
+          );
+          const locationQueryId = this.activeLocation.tenantApiLocationId(mergedForLocation);
+          const [usage, items] = await Promise.all([
+            c.getTenantSubscriptionUsage(locationQueryId).catch(() => null),
             c.getTenantLocations(),
           ]);
           this.entitlements.set(

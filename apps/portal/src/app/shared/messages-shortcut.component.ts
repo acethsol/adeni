@@ -1,8 +1,9 @@
 import { Component, inject, OnDestroy, OnInit, signal } from "@angular/core";
 import { NavigationEnd, Router, RouterLink } from "@angular/router";
 import { filter, Subscription } from "rxjs";
-import { hasTenantEntitlement } from "@adeni/shared";
+import { hasTenantEntitlement, mergeTenantEntitlements } from "@adeni/shared";
 import { BusinessApiService } from "../core/services/business-api.service";
+import { PortalActiveLocationService } from "../core/services/portal-active-location.service";
 import { MessagingRealtimeService, injectAdeniTranslate } from "@adeni/ui";
 import { PortalNavBadgesService } from "../core/services/portal-nav-badges.service";
 
@@ -71,6 +72,7 @@ export class MessagesShortcutComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly navBadges = inject(PortalNavBadgesService);
   private readonly messagingRealtime = inject(MessagingRealtimeService);
+  private readonly activeLocation = inject(PortalActiveLocationService);
 
   readonly visible = signal(false);
   readonly unreadCount = signal(0);
@@ -107,7 +109,9 @@ export class MessagesShortcutComponent implements OnInit, OnDestroy {
     }
     try {
       await this.api.withAuthorizedClient(async (client) => {
-        const count = await client.getTenantMessageUnreadCount();
+        const profile = await client.getTenantProfile().catch(() => null);
+        const locationId = this.activeLocation.tenantApiLocationId(profile?.entitlements ?? null);
+        const count = await client.getTenantMessageUnreadCount(locationId);
         this.unreadCount.set(count);
       });
     } catch {
@@ -125,7 +129,14 @@ export class MessagesShortcutComponent implements OnInit, OnDestroy {
           return;
         }
         this.visible.set(true);
-        const count = await client.getTenantMessageUnreadCount();
+        const planEntitlements = await client.getTenantEntitlements().catch(() => null);
+        const merged = mergeTenantEntitlements(
+          planEntitlements,
+          profile.entitlements,
+          profile.entitlements,
+        );
+        const locationId = this.activeLocation.tenantApiLocationId(merged);
+        const count = await client.getTenantMessageUnreadCount(locationId);
         this.unreadCount.set(count);
       });
     } catch {

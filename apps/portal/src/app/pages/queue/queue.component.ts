@@ -178,20 +178,23 @@ export class QueueComponent implements OnInit, OnDestroy {
     try {
       const fetch = async (): Promise<void> => {
       await this.api.withAuthorizedClient(async (client) => {
-        const [profile, entitlements, usage] = await Promise.all([
-          client.getTenantProfile(),
-          client.getTenantEntitlements().catch(() => null),
-          client.getTenantSubscriptionUsage().catch(() => null),
-        ]);
+        const profile = await client.getTenantProfile();
         this.activeLocation.syncFromProfile(profile);
+        const entitlements = await client.getTenantEntitlements().catch(() => null);
         const locationQueryId = this.activeLocation.tenantApiLocationId(
+          mergeTenantEntitlements(entitlements, profile.entitlements, profile.entitlements),
+        );
+        const usage = await client.getTenantSubscriptionUsage(locationQueryId).catch(() => null);
+        const scopedLocationId = this.activeLocation.tenantApiLocationId(
           mergeTenantEntitlements(entitlements, usage?.entitlements, profile.entitlements),
         );
-        const floor = await client.getTenantQueueFloor(locationQueryId);
+        const floor = await client.getTenantQueueFloor(scopedLocationId);
         const services = await client.getTenantServices();
         let staff: StaffMember[] = [];
         if (this.session.can("portal.bookings")) {
-          staff = await client.listTenantStaff().catch(() => []);
+          staff = await client
+            .listTenantStaff({ locationId: scopedLocationId })
+            .catch(() => []);
         }
         this.profile.set(profile);
         this.tickets.set(floor.items);

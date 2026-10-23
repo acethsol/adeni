@@ -673,7 +673,9 @@ export class PortalShellComponent {
               locationId: locationQueryId,
             })
             .catch(() => ({ items: [], totalCount: 0, page: 1, pageSize: 100 })),
-          messaging ? client.getTenantMessageUnreadCount().catch(() => 0) : Promise.resolve(0),
+          messaging
+            ? client.getTenantMessageUnreadCount(locationQueryId).catch(() => 0)
+            : Promise.resolve(0),
         ]),
       );
       this.pendingBookings.set(bookingsPage.items.filter((booking) => booking.status === 0).length);

@@ -214,11 +214,15 @@ export class CustomersComponent implements OnInit, OnDestroy {
         const term = this.searchQuery().trim();
         const filter = this.accountFilter();
         await this.api.withAuthorizedClient(async (client) => {
-          const [profile, usage, planEntitlements] = await Promise.all([
-            client.getTenantProfile().catch(() => null),
-            client.getTenantSubscriptionUsage().catch(() => null),
-            client.getTenantEntitlements().catch(() => null),
-          ]);
+          const profile = await client.getTenantProfile().catch(() => null);
+          const planEntitlements = await client.getTenantEntitlements().catch(() => null);
+          const entitlementsForLocation = mergeTenantEntitlements(
+            planEntitlements,
+            profile?.entitlements,
+            profile?.entitlements,
+          );
+          const locationQueryId = this.activeLocation.tenantApiLocationId(entitlementsForLocation);
+          const usage = await client.getTenantSubscriptionUsage(locationQueryId).catch(() => null);
           const entitlements = mergeTenantEntitlements(
             planEntitlements,
             usage?.entitlements,

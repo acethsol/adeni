@@ -332,25 +332,31 @@ export class BookingsComponent {
     try {
       await this.feedback.runLoading(async () => {
       await this.api.withAuthorizedClient(async (client) => {
-        const [kiosk, usage, profile, entitlements] = await Promise.all([
-          client.getTenantKioskStatus().catch(() => null),
-          client.getTenantSubscriptionUsage().catch(() => null),
-          client.getTenantProfile().catch(() => null),
-          client.getTenantEntitlements().catch(() => null),
-        ]);
+        const profile = await client.getTenantProfile().catch(() => null);
         if (profile) {
           this.activeLocation.syncFromProfile(profile);
         }
+        const entitlements = await client.getTenantEntitlements().catch(() => null);
+        const mergedForLocation = mergeTenantEntitlements(
+          entitlements,
+          profile?.entitlements,
+          profile?.entitlements,
+        );
+        const locationQueryId = this.activeLocation.tenantApiLocationId(mergedForLocation);
+        const [kiosk, usage] = await Promise.all([
+          client.getTenantKioskStatus().catch(() => null),
+          client.getTenantSubscriptionUsage(locationQueryId).catch(() => null),
+        ]);
         this.planEntitlements.set(
           mergeTenantEntitlements(entitlements, usage?.entitlements, profile?.entitlements),
         );
-        const locationQueryId = this.activeLocation.tenantApiLocationId(this.planEntitlements());
+        const bookingsLocationId = this.activeLocation.tenantApiLocationId(this.planEntitlements());
         const bookingsPage = await client.listTenantBookings({
           tab,
           page: this.page(),
           pageSize: this.pageSize(),
           sort: listSortParamsFromColumn(this.sortColumnId(), this.sortDirection()),
-          locationId: locationQueryId,
+          locationId: bookingsLocationId,
         });
         this.bookings.set(bookingsPage.items);
         this.totalCount.set(bookingsPage.totalCount);
@@ -421,7 +427,10 @@ export class BookingsComponent {
   openKiosk(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
-    const path = this.router.serializeUrl(this.router.createUrlTree(["/kiosk"]));
+    const locationId = this.activeLocation.tenantApiLocationId(this.planEntitlements());
+    const path = this.router.serializeUrl(
+      this.router.createUrlTree(["/kiosk"], locationId ? { queryParams: { locationId } } : {}),
+    );
     const url = new URL(path, document.baseURI).href;
     const popup = window.open(url, "_blank", "noopener,noreferrer");
     if (!popup) {

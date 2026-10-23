@@ -48,6 +48,7 @@ import {
   injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
 
 type ServiceDraft = {
   name: string;
@@ -92,6 +93,7 @@ export class ServicesComponent implements OnInit {
   protected readonly tr = injectAdeniTranslate();
   protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
+  private readonly activeLocation = inject(PortalActiveLocationService);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly confirmDialog = inject(AdeniConfirmService);
 
@@ -279,11 +281,17 @@ export class ServicesComponent implements OnInit {
     try {
       await this.feedback.runLoading(async () => {
         await this.api.withAuthorizedClient(async (c) => {
-          const [catalog, profile, usage, planEntitlements] = await Promise.all([
+          const profile = await c.getTenantProfile().catch(() => null);
+          const planEntitlements = await c.getTenantEntitlements().catch(() => null);
+          const mergedForLocation = mergeTenantEntitlements(
+            planEntitlements,
+            profile?.entitlements,
+            profile?.entitlements,
+          );
+          const locationQueryId = this.activeLocation.tenantApiLocationId(mergedForLocation);
+          const [catalog, usage] = await Promise.all([
             c.getTenantServiceCatalog(),
-            c.getTenantProfile().catch(() => null),
-            c.getTenantSubscriptionUsage().catch(() => null),
-            c.getTenantEntitlements().catch(() => null),
+            c.getTenantSubscriptionUsage(locationQueryId).catch(() => null),
           ]);
           this.services.set(catalog.items);
           this.groups.set(catalog.groups);

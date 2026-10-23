@@ -24,8 +24,10 @@ import {
   injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
 import { MessagingRealtimeService } from "@adeni/ui";
 import { PortalNavBadgesService } from "../../core/services/portal-nav-badges.service";
+import { mergeTenantEntitlements } from "@adeni/shared";
 
 const ALLOWED_ATTACHMENT_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
@@ -50,6 +52,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly realtime = inject(MessagingRealtimeService);
   private readonly navBadges = inject(PortalNavBadgesService);
+  private readonly activeLocation = inject(PortalActiveLocationService);
   private readonly subscriptions = new Subscription();
 
   readonly profile = signal<BusinessProfile | null>(null);
@@ -87,6 +90,11 @@ export class MessagesComponent implements OnInit, OnDestroy {
       this.realtime.readUpdated$.subscribe((event) => this.onReadUpdated(event)),
     );
     void this.load();
+    this.subscriptions.add(
+      this.activeLocation.selectionChanged$.subscribe(() => {
+        void this.activeLocation.runOnBranchSwitch(() => this.load());
+      }),
+    );
   }
 
   ngOnDestroy(): void {
@@ -120,10 +128,18 @@ export class MessagesComponent implements OnInit, OnDestroy {
             whatsAppBusinessUrl = null;
           }
         }
+        const planEntitlements = await client.getTenantEntitlements().catch(() => null);
+        const mergedEntitlements = mergeTenantEntitlements(
+          planEntitlements,
+          profile.entitlements,
+          profile.entitlements,
+        );
+        const locationQueryId = this.activeLocation.tenantApiLocationId(mergedEntitlements);
         const [conversationPageResult, templateList] = await Promise.all([
           client.listTenantConversations({
             page: this.conversationPage(),
             pageSize: this.conversationPageSize(),
+            locationId: locationQueryId,
           }),
           client.getTenantMessageTemplates(),
         ]);

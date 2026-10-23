@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, OnDestroy, OnInit, signal } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import { map } from "rxjs";
@@ -8,7 +8,7 @@ import type {
   TenantCustomerRecentQueueVisit,
   TenantBookingListTab,
 } from "@adeni/shared";
-import { formatQueueTicketStatus, formatSlotTime } from "@adeni/shared";
+import { formatQueueTicketStatus, formatSlotTime, mergeTenantEntitlements } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
   AdeniFeedbackService,
@@ -32,6 +32,8 @@ import {
 } from "@adeni/ui";
 import { AdeniApiError } from "@adeni/api-client";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
+import { Subscription } from "rxjs";
 
 const CUSTOMER_DETAIL_TABS = new Set(["overview", "bookings", "queue"]);
 
@@ -66,12 +68,14 @@ const PAID_STATUS = 6;
   templateUrl: "./customer-detail.component.html",
   styleUrl: "./customer-detail.component.scss",
 })
-export class CustomerDetailComponent implements OnInit {
+export class CustomerDetailComponent implements OnInit, OnDestroy {
   protected readonly tr = injectAdeniTranslate();
   protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly feedback = inject(AdeniFeedbackService);
+  private readonly activeLocation = inject(PortalActiveLocationService);
+  private branchSub: Subscription | null = null;
 
   readonly tab = toSignal(
     this.route.queryParamMap.pipe(map((params) => normalizeCustomerDetailTab(params.get("tab")))),
@@ -181,6 +185,13 @@ export class CustomerDetailComponent implements OnInit {
 
   ngOnInit(): void {
     void this.load();
+    this.branchSub = this.activeLocation.selectionChanged$.subscribe(() => {
+      void this.activeLocation.runOnBranchSwitch(() => this.load());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.branchSub?.unsubscribe();
   }
 
   async load(): Promise<void> {
@@ -193,9 +204,17 @@ export class CustomerDetailComponent implements OnInit {
     this.error.set(null);
     try {
       await this.feedback.runLoading(async () => {
-        const detail = await this.api.withAuthorizedClient((client) =>
-          client.getTenantCustomer(id),
-        );
+        const detail = await this.api.withAuthorizedClient(async (client) => {
+          const profile = await client.getTenantProfile().catch(() => null);
+          const planEntitlements = await client.getTenantEntitlements().catch(() => null);
+          const merged = mergeTenantEntitlements(
+            planEntitlements,
+            profile?.entitlements,
+            profile?.entitlements,
+          );
+          const locationId = this.activeLocation.tenantApiLocationId(merged);
+          return client.getTenantCustomer(id, locationId);
+        });
         this.customer.set(detail);
       });
     } catch (err) {

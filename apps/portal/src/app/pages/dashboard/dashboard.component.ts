@@ -746,11 +746,11 @@ export class DashboardComponent implements OnInit {
             ? client.getTenantDashboardBreakdown("staff", range.from, range.to, locationQueryId).catch(() => null)
             : Promise.resolve(null),
           wantsUnread && messaging
-            ? client.getTenantMessageUnreadCount().catch(() => 0)
+            ? client.getTenantMessageUnreadCount(locationQueryId).catch(() => 0)
             : Promise.resolve(0),
           wantsUnread && messaging
             ? client
-                .listTenantConversations({ page: 1, pageSize: 4 })
+                .listTenantConversations({ page: 1, pageSize: 4, locationId: locationQueryId })
                 .catch(() => ({ items: [] as ConversationSummary[], totalCount: 0, page: 1, pageSize: 4 }))
             : Promise.resolve({ items: [] as ConversationSummary[], totalCount: 0, page: 1, pageSize: 4 }),
           wantsQueue && caps.includes("walk_in_queue")

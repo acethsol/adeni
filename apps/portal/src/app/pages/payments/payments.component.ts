@@ -157,22 +157,24 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     try {
       await this.feedback.runLoading(async () => {
       await this.api.withAuthorizedClient(async (c) => {
-        const [profile, usage, entitlements] = await Promise.all([
-          c.getTenantProfile(),
-          c.getTenantSubscriptionUsage().catch(() => null),
-          c.getTenantEntitlements().catch(() => null),
-        ]);
-        this.profile.set(profile);
+        const profile = await c.getTenantProfile();
+        const entitlements = await c.getTenantEntitlements().catch(() => null);
         const mergedEntitlements = mergeTenantEntitlements(
           entitlements,
-          usage?.entitlements,
+          profile.entitlements,
           profile.entitlements,
         );
-        this.planEntitlements.set(mergedEntitlements);
+        const locationQueryId = this.activeLocation.tenantApiLocationId(mergedEntitlements);
+        const usage = await c.getTenantSubscriptionUsage(locationQueryId).catch(() => null);
+        this.profile.set(profile);
+        this.planEntitlements.set(
+          mergeTenantEntitlements(entitlements, usage?.entitlements, profile.entitlements),
+        );
         const ledgerPage = await c.listPaymentLedger(
           profile.tenantId,
           this.ledgerPage(),
           this.ledgerPageSize(),
+          locationQueryId,
         );
         this.ledger.set(ledgerPage.items);
         this.ledgerTotalCount.set(ledgerPage.totalCount);

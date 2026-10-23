@@ -888,6 +888,7 @@ export class StaffComponent implements OnInit, OnDestroy {
           from: from.toISOString(),
           to: to.toISOString(),
           format: "csv",
+          locationId: this.activeLocation.reportExportLocationId(this.entitlements()),
         }),
       );
       const url = URL.createObjectURL(blob);
@@ -921,11 +922,17 @@ export class StaffComponent implements OnInit, OnDestroy {
 
   private async fetchStaffPageData(): Promise<void> {
     await this.api.withAuthorizedClient(async (c) => {
-      const [catalog, profile, usage, entitlements] = await Promise.all([
+      const profile = await c.getTenantProfile().catch(() => null);
+      const entitlements = await c.getTenantEntitlements().catch(() => null);
+      const mergedForUsage = mergeTenantEntitlements(
+        entitlements,
+        profile?.entitlements,
+        profile?.entitlements,
+      );
+      const locationQueryId = this.activeLocation.tenantApiLocationId(mergedForUsage);
+      const [catalog, usage] = await Promise.all([
         c.getTenantServiceCatalog(),
-        c.getTenantProfile().catch(() => null),
-        c.getTenantSubscriptionUsage().catch(() => null),
-        c.getTenantEntitlements().catch(() => null),
+        c.getTenantSubscriptionUsage(locationQueryId).catch(() => null),
       ]);
       const mergedEntitlements = mergeTenantEntitlements(
         entitlements,
@@ -958,6 +965,10 @@ export class StaffComponent implements OnInit, OnDestroy {
     this.preserveRoleKey.set(null);
     this.formTab.set("profile");
     this.draft = this.emptyDraft();
+    const branchId = this.activeLocation.selectedLocation()?.id;
+    if (branchId) {
+      this.draft.businessLocationId = branchId;
+    }
     this.hourRows = defaultWorkingRows();
     this.leaveItems.set([]);
     this.leaveStart = "";
@@ -1003,7 +1014,11 @@ export class StaffComponent implements OnInit, OnDestroy {
 
   async copyBusinessHours(): Promise<void> {
     try {
-      const rules = await this.api.withAuthorizedClient((c) => c.getTenantAvailability());
+      const rules = await this.api.withAuthorizedClient((c) =>
+        c.getTenantAvailability(
+          this.activeLocation.tenantApiLocationId(this.entitlements()),
+        ),
+      );
       this.hourRows = rulesToRows(rules);
       this.feedback.success(this.tr("portal.staff.copiedBusinessHoursSaveApply"));
     } catch (caught) {

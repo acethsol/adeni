@@ -1,6 +1,6 @@
 import { Component, HostListener, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { Router } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import type { BookingResponse, KioskStatusResponse, ServiceOffering } from "@adeni/shared";
 import {
   combineGuestName,
@@ -45,6 +45,7 @@ export class KioskComponent implements OnInit {
   protected readonly tr = injectAdeniTranslate();
   private readonly api = inject(BusinessApiService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly documentTitle = inject(AdeniDocumentTitleStrategy);
   private readonly localeService = inject(AdeniLocaleService);
   private readonly feedback = inject(AdeniFeedbackService);
@@ -113,12 +114,19 @@ export class KioskComponent implements OnInit {
     try {
       await this.feedback.runLoading(async () => {
       await this.api.withAuthorizedClient(async (client) => {
-        const [status, profile, bookings, services] = await Promise.all([
+        const locationId = this.route.snapshot.queryParamMap.get("locationId") ?? undefined;
+        const [status, profile, bookingsPage, services] = await Promise.all([
           client.getTenantKioskStatus(),
           client.getTenantProfile(),
-          client.getTenantBookings(),
+          client.listTenantBookings({
+            tab: "upcoming",
+            page: 1,
+            pageSize: 200,
+            locationId,
+          }),
           client.getTenantServices(),
         ]);
+        const bookings = bookingsPage.items;
         this.status.set(status);
         const name = profile.businessName?.trim() || this.tr("portal.queue.check");
         this.businessName.set(name);

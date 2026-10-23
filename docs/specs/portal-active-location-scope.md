@@ -22,6 +22,21 @@ Make the portal **branch switch** drive tenant APIs and exports honestly — fil
 
 **Gap (pre-fix):** `TenantReportExportQueryService` ignored `locationId`; dashboard/bookings/list APIs had no branch filter; `BookingRecord` had no branch FK.
 
+**Gap (post–Phase 3 closeout, fixed on dev):**
+
+| Area | Issue | Fix |
+|------|--------|-----|
+| Queue staff picker | `listTenantStaff` without `locationId` | Portal passes active branch |
+| Plan / bookings usage | `getTenantSubscriptionUsage` tenant-wide | Optional `locationId` on subscription API + portal |
+| Staff copy business hours | `getTenantAvailability()` ignored branch | Active branch on copy |
+| Payments ledger | Ledger API had no branch filter | `GET .../finance/ledger?locationId=` + portal |
+| Customer detail | History ignored branch | `GET .../customers/{id}?locationId=` + reload on switch |
+| Messaging | Inbox / unread / dashboard widget unscoped | `locationId` on conversations + unread (booking-context filter) |
+| Quotes | No `BusinessLocationId` on `QuoteRequestRecord` | Documented; portal lists all until migration |
+| List APIs (2+ branches, no `multiLocationReporting`) | Omitted `locationId` returned all rows | `TenantLocationScope.ResolveListLocationAsync` defaults to primary |
+| Kiosk | All-branch arrivals | `?locationId=` from bookings “Open kiosk” + scoped list |
+| Staff roster | Unassigned + wrong-branch staff visible; create without branch | Strict roster filter; create defaults to active branch; all staff API calls pass `locationId` |
+
 ---
 
 ## 3. In scope
@@ -80,6 +95,11 @@ Make the portal **branch switch** drive tenant APIs and exports honestly — fil
 | GET | `/api/v1/tenant/closed-dates` | Hours | **`locationId?`** | Closed ranges for branch. |
 | POST | `/api/v1/tenant/closed-dates` | Hours | **`locationId?`** | Add closed range for branch. |
 | GET | `/api/v1/tenant/reporting/exports/{key}` | Per report | `from`, `to`, **`locationId?`** | Existing gate: multi-branch tenants without entitlement must send `locationId`. |
+| GET | `/api/v1/finance/ledger` | Finance | `tenantId`, `page`, `pageSize`, **`locationId?`** | Ledger rows tied to bookings at branch; unlinked payments omitted when scoped. |
+| GET | `/api/v1/tenant/messages/conversations` | Messages | `page`, `pageSize`, **`locationId?`** | Booking-context threads filtered by booking branch; profile/quote threads unchanged. |
+| GET | `/api/v1/tenant/messages/unread-count` | Messages | **`locationId?`** | Same scope as conversation list. |
+| GET | `/api/v1/tenant/customers/{id}` | Bookings | **`locationId?`** | Recent bookings/queue history scoped to branch. |
+| GET | `/api/v1/tenant/subscription` | Plan / overview | **`locationId?`** | Monthly booking usage counted at branch when set. |
 | POST | `/api/v1/bookings` | Customer JWT | body **`businessLocationId?`** | Persist branch on create (must belong to tenant). |
 
 **Tiers**
@@ -104,7 +124,14 @@ Make the portal **branch switch** drive tenant APIs and exports honestly — fil
 | `/customers` | list + export | Yes |
 | `/profile?tab=reviews` | public reviews by active branch slug | Yes |
 | `/payments` (exports) | export (existing) | Yes |
+| `/finance` (ledger tab) | ledger list | Yes |
+| `/messages` | conversations + unread | Yes |
+| `/plan` | subscription usage | Yes |
+| `/customers/:id` | detail history | Yes |
+| `/kiosk` | arrivals list | Yes (`locationId` query from bookings) |
+| `/quotes` | — | No (`QuoteRequestRecord` has no branch FK — backlog) |
 | Shell pending bookings badge | pending list | Yes |
+| Shell messages badge | unread count | Yes |
 | `/availability` | hours + closed dates | Yes (branch picker when “All locations”) |
 
 ---

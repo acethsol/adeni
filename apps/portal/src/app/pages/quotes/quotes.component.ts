@@ -78,6 +78,7 @@ export class QuotesComponent implements OnInit, OnDestroy {
     this.error.set(null);
     try {
       await this.feedback.runLoading(async () => {
+        // QuoteRequest has no BusinessLocationId yet — tenant list is all branches until migration.
         const [quotes, services] = await this.api.withAuthorizedClient((client) =>
           Promise.all([client.listTenantQuotes(), client.getTenantServices()]),
         );

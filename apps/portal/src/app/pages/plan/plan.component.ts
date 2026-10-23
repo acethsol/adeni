@@ -19,6 +19,7 @@ import {
   isSelfServePricingEnabled,
   planComparisonCell,
   PLAN_COMPARISON,
+  mergeTenantEntitlements,
   resolveSubscriptionSku,
   SUBSCRIPTION_SKUS,
   SUBSCRIPTION_SKU_LABELS,
@@ -51,6 +52,7 @@ import {
   injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
 
 const BILLING_EVENT_KEYS: Record<string, string> = {
   "subscription.create": "portal.plan.billingEventPlanActivated",
@@ -79,6 +81,7 @@ export class PlanComponent implements OnInit {
   protected readonly tr = injectAdeniTranslate();
   protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
+  private readonly activeLocation = inject(PortalActiveLocationService);
   readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly feedback = inject(AdeniFeedbackService);
@@ -192,12 +195,14 @@ export class PlanComponent implements OnInit {
     try {
       await this.feedback.runLoading(async () => {
       await this.api.withAuthorizedClient(async (c) => {
-        const [context, profile, subscriptionUsage, history] = await Promise.all([
+        const [context, profile, history] = await Promise.all([
           c.getBusinessContext(),
           c.getTenantProfile(),
-          c.getTenantSubscriptionUsage(),
           c.getTenantBillingHistory(10).catch(() => []),
         ]);
+        this.activeLocation.syncFromProfile(profile);
+        const locationQueryId = this.activeLocation.tenantApiLocationId(profile.entitlements);
+        const subscriptionUsage = await c.getTenantSubscriptionUsage(locationQueryId);
         this.tenantId.set(context.tenantId);
         this.effectiveSku.set(resolveSubscriptionSku(subscriptionUsage.subscriptionSku));
         this.contractSku.set(
