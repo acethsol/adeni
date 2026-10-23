@@ -1,7 +1,16 @@
 import type { MessageTree } from "../types";
 
-/** Hand-written keys for copy built from TS expressions (confirm dialogs, plurals, status maps, module constants). */
-export const enExtras2: MessageTree = {
+/** Hand-written keys not in the generated catalog: UI chrome, toasts, validation, confirm dialogs, plurals, status maps, module constants. */
+export const enOverlay: MessageTree = {
+  toast: {
+    saved: "Saved",
+    somethingWrong: "Something went wrong",
+    somethingWrongShort: "Something went wrong.",
+    notice: "Notice",
+    loading: "Loading…",
+    loadingDetail: "Just a moment",
+    dismiss: "Dismiss",
+  },
   common: {
     monthNames: {
       january: "January",
@@ -24,6 +33,7 @@ export const enExtras2: MessageTree = {
       closedDatesSavedConflictsMany: "Closed dates saved. {count} existing bookings fall in this range — not cancelled. Review Bookings.",
     },
     bookings: {
+      couldNotDownloadExport: "Could not download the bookings export.",
       rejectConfirm: "Reject {service} on {time}? The customer will be notified.",
       exportPdfUnavailable: "Not available for bookings register",
     },
@@ -31,6 +41,8 @@ export const enExtras2: MessageTree = {
       deleteConfirm: "Delete “{name}”? It will no longer appear on your public page.",
     },
     payments: {
+      couldNotDownloadSalesSummary: "Could not download sales summary export.",
+      couldNotDownloadCompensation: "Could not download compensation export.",
       refundConfirm: "Refund {amount}? This cannot be undone from Adeni.",
       exportSalesSummaryCsv: "Sales summary CSV",
       exportSalesSummaryPdf: "Sales summary PDF",

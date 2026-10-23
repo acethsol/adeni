@@ -1,7 +1,6 @@
 import { mergeMessageTrees, type Messages } from "../types";
 import { enCatalog } from "./catalog-en";
-import { enExtras } from "./extras-en";
-import { enExtras2 } from "./extras2-en";
+import { enOverlay } from "./overlay-en";
 import { enErrorMessages } from "../errors";
 
 const enBase: Messages = {
@@ -585,5 +584,5 @@ const enBase: Messages = {
   errors: enErrorMessages,
 };
 
-/** Base hand-written copy + generated catalog + extras; keys must not collide (merge throws). */
-export const enMessages: Messages = mergeMessageTrees(enBase, enCatalog, enExtras, enExtras2);
+/** Base hand-written copy + generated catalog + overlay; keys must not collide (merge throws). */
+export const enMessages: Messages = mergeMessageTrees(enBase, enCatalog, enOverlay);

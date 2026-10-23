@@ -1,7 +1,6 @@
 import { mergeMessageTrees, type Messages } from "../types";
 import { frCatalog } from "./catalog-fr";
-import { frExtras } from "./extras-fr";
-import { frExtras2 } from "./extras2-fr";
+import { frOverlay } from "./overlay-fr";
 import { frErrorMessages } from "../errors";
 
 const frBase: Messages = {
@@ -587,5 +586,5 @@ const frBase: Messages = {
   errors: frErrorMessages,
 };
 
-/** Base hand-written copy + generated catalog + extras; keys must not collide (merge throws). */
-export const frMessages: Messages = mergeMessageTrees(frBase, frCatalog, frExtras, frExtras2);
+/** Base hand-written copy + generated catalog + overlay; keys must not collide (merge throws). */
+export const frMessages: Messages = mergeMessageTrees(frBase, frCatalog, frOverlay);

@@ -67,7 +67,7 @@ No HTTP contract change. Client-side contract:
 
 | Layer | Files |
 |-------|-------|
-| `@adeni/shared` | `api-errors.ts`, `i18n/types.ts` (`mergeMessageTrees`), `i18n/errors.ts`, `i18n/messages/{en,fr,extras-en,extras-fr,catalog-en,catalog-fr}.ts`, tests |
+| `@adeni/shared` | `api-errors.ts`, `i18n/types.ts` (`mergeMessageTrees`), `i18n/errors.ts`, `i18n/messages/{en,fr,overlay-en,overlay-fr,catalog-en,catalog-fr}.ts`, tests |
 | `@adeni/api-client` | `index.ts` |
 | `@adeni/ui` | `locale/adeni-i18n.ts`, `feedback/*`, list pagination/toolbar/modal/data-table, `index.ts` |
 | Portal / Admin / Discover | `core/services/*-api.service.ts`, every page/layout/shared component with static copy |

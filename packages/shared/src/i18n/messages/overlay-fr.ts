@@ -1,7 +1,16 @@
 import type { MessageTree } from "../types";
 
-/** French mirror of `extras2-en.ts` — keep key structure identical. */
-export const frExtras2: MessageTree = {
+/** French mirror of `overlay-en.ts` — keep key structure identical. */
+export const frOverlay: MessageTree = {
+  toast: {
+    saved: "Enregistré",
+    somethingWrong: "Une erreur s'est produite",
+    somethingWrongShort: "Une erreur s'est produite.",
+    notice: "Avis",
+    loading: "Chargement…",
+    loadingDetail: "Un instant",
+    dismiss: "Fermer",
+  },
   common: {
     monthNames: {
       january: "janvier",
@@ -24,6 +33,7 @@ export const frExtras2: MessageTree = {
       closedDatesSavedConflictsMany: "Dates de fermeture enregistrées. {count} réservations existantes tombent dans cette période — non annulées. Consultez les réservations.",
     },
     bookings: {
+      couldNotDownloadExport: "Impossible de télécharger l'exportation des réservations.",
       rejectConfirm: "Refuser {service} le {time} ? Le client sera averti.",
       exportPdfUnavailable: "Non disponible pour le registre des réservations",
     },
@@ -31,6 +41,8 @@ export const frExtras2: MessageTree = {
       deleteConfirm: "Supprimer « {name} » ? Cet emplacement n’apparaîtra plus sur votre page publique.",
     },
     payments: {
+      couldNotDownloadSalesSummary: "Impossible de télécharger l'exportation du sommaire des ventes.",
+      couldNotDownloadCompensation: "Impossible de télécharger l'exportation des commissions.",
       refundConfirm: "Rembourser {amount} ? Cette action ne peut pas être annulée depuis Adeni.",
       exportSalesSummaryCsv: "Résumé des ventes (CSV)",
       exportSalesSummaryPdf: "Résumé des ventes (PDF)",
