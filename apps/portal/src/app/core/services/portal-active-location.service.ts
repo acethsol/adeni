@@ -1,4 +1,4 @@
-import { Injectable, computed, inject, isDevMode, signal } from "@angular/core";
+import { Injectable, computed, inject, signal } from "@angular/core";
 import { Subject } from "rxjs";
 import type { BusinessLocation, BusinessProfile, TenantEntitlements } from "@adeni/shared";
 import {
@@ -12,9 +12,6 @@ import {
   readPersistedPortalActiveLocation,
   writePersistedPortalActiveLocation,
 } from "./portal-active-location-store";
-
-/** uncommitted dev-only — remove before PR */
-const PORTAL_BRANCH_SWITCH_DEBUG_MIN_MS = 1000;
 
 function defaultBranchLocationId(active: BusinessLocation[]): string | undefined {
   if (active.length === 0) {
@@ -40,8 +37,6 @@ export class PortalActiveLocationService {
   private readonly selectionChangedSubject = new Subject<string>();
   private branchSwitchActive = false;
   private branchSwitchPending = 0;
-  private branchSwitchStartedAt = 0;
-  private branchSwitchFinishTimer: ReturnType<typeof setTimeout> | null = null;
 
   /** Fires when the user picks a branch in the shell (not on profile hydration). */
   readonly selectionChanged$ = this.selectionChangedSubject.asObservable();
@@ -139,11 +134,6 @@ export class PortalActiveLocationService {
 
     this.branchSwitchActive = true;
     this.branchSwitchPending = 0;
-    this.branchSwitchStartedAt = Date.now();
-    if (this.branchSwitchFinishTimer) {
-      clearTimeout(this.branchSwitchFinishTimer);
-      this.branchSwitchFinishTimer = null;
-    }
     this.beginBranchSwitchTransaction();
     this.selectionChangedSubject.next(next);
     queueMicrotask(() => this.tryFinishBranchSwitch());
@@ -175,26 +165,8 @@ export class PortalActiveLocationService {
       return;
     }
 
-    const finish = (): void => {
-      if (!this.branchSwitchActive || this.branchSwitchPending > 0) {
-        return;
-      }
-      this.branchSwitchActive = false;
-      this.endBranchSwitchTransaction();
-    };
-
-    if (isDevMode() && PORTAL_BRANCH_SWITCH_DEBUG_MIN_MS > 0) {
-      const remaining = PORTAL_BRANCH_SWITCH_DEBUG_MIN_MS - (Date.now() - this.branchSwitchStartedAt);
-      if (remaining > 0) {
-        this.branchSwitchFinishTimer = setTimeout(() => {
-          this.branchSwitchFinishTimer = null;
-          finish();
-        }, remaining);
-        return;
-      }
-    }
-
-    finish();
+    this.branchSwitchActive = false;
+    this.endBranchSwitchTransaction();
   }
 
   /** @deprecated Use switch UI labels from `switchDisplay` or branch rows directly. */
