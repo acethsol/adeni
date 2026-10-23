@@ -33,6 +33,7 @@ Switching language (EN ⇄ FR) updates **every** user-visible string on every pa
   - `resolveApiErrorMessage(locale, err, fallbackKey, vars?)` in `@adeni/shared` (`api-errors.ts`) + unit tests: API `code`/`params` → `errors.*`; anything else → localized fallback key (server English text is never surfaced).
   - `localizeErrorResponse` last-resort string is now `toast.somethingWrongShort` (localized).
   - `AdeniFeedbackService` injects `AdeniLocaleService` (`optional`) — default toast titles / loading label+detail are keys (`toast.*`) resolved reactively; `AdeniToastHostComponent` dismiss `aria-label` localized.
+  - **Global loading panel:** one `AdeniGlobalLoadingPanelComponent` per portal/admin/discover shell; ref-counted `showLoading`/`hideLoading` only (not tied to page `loading` signals). Default overlay copy: generic `toast.loading` / `toast.loadingDetail`; callers pass custom label/detail only when needed.
   - `tenantReportExportErrorMessage("en", …)` call sites (bookings, payments ×2) replaced by `apiErr(err, key)`.
   - Complete `errors.*` for every `ErrorCodes.cs` constant in **en and fr** (queue, messaging, entitlements, reporting were missing in fr); guarded by `parity.test.ts`.
 - [x] **Component helpers** (`@adeni/ui`): `injectAdeniTranslate()` → `protected readonly tr = …` and `injectAdeniApiError()` → `protected readonly apiErr = …`. Templates use `{{ tr('portal.page.key') }}` / `[title]="tr('…')"`; catch blocks use `this.apiErr(err, 'key')`.

@@ -7,8 +7,11 @@ export class DiscoverLoadingService {
   protected readonly tr = injectAdeniTranslate();
   private readonly feedback = inject(AdeniFeedbackService);
 
-  show(label = this.tr("common.loading"), detail = this.tr("discover.core.justMoment")): void {
-    this.feedback.showLoading(label, detail);
+  show(label?: string, detail?: string): void {
+    this.feedback.showLoading(
+      label ?? this.tr("toast.loading"),
+      detail ?? this.tr("toast.loadingDetail"),
+    );
   }
 
   hide(): void {

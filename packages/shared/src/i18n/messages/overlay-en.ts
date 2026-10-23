@@ -7,8 +7,8 @@ export const enOverlay: MessageTree = {
     somethingWrong: "Something went wrong",
     somethingWrongShort: "Something went wrong.",
     notice: "Notice",
-    loading: "Loading…",
-    loadingDetail: "Just a moment",
+    loading: "Please wait…",
+    loadingDetail: "Loading…",
     dismiss: "Dismiss",
   },
   common: {

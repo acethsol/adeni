@@ -7,8 +7,8 @@ export const frOverlay: MessageTree = {
     somethingWrong: "Une erreur s'est produite",
     somethingWrongShort: "Une erreur s'est produite.",
     notice: "Avis",
-    loading: "Chargement…",
-    loadingDetail: "Un instant",
+    loading: "Veuillez patienter…",
+    loadingDetail: "Chargement…",
     dismiss: "Fermer",
   },
   common: {

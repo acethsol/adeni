@@ -1,3 +1,8 @@
+/**
+ * Ref-counted global loading overlay + toast queue (`AdeniGlobalLoadingPanelComponent` / toast host in each app shell).
+ * Only code paths that call `showLoading` / `runLoading` show the panel — not automatic for every async delay or page `loading` signals.
+ * Default copy: `toast.loading` + `toast.loadingDetail` in `@adeni/shared`; pass label/detail only when the action needs specific messaging.
+ */
 import { Injectable, computed, inject, signal } from "@angular/core";
 import { defaultLocale, t } from "@adeni/shared";
 import { AdeniLocaleService } from "../locale/adeni-locale.service";

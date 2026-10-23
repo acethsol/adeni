@@ -140,7 +140,7 @@ export class PortalActiveLocationService {
   }
 
   beginBranchSwitchTransaction(): void {
-    this.feedback.showLoading(this.tr("portal.core.switchingBranch"), this.tr("portal.core.updatingDashboardBookingsCalendar"));
+    this.feedback.showLoading();
   }
 
   endBranchSwitchTransaction(): void {
@@ -150,11 +150,7 @@ export class PortalActiveLocationService {
   /** Wrap branch-switch refetches so the global loading panel stays up until work finishes. */
   runOnBranchSwitch<T>(work: () => Promise<T> | T): Promise<T> {
     if (!this.branchSwitchActive) {
-      return this.feedback.runLoading(
-        () => Promise.resolve(work()),
-        this.tr("portal.core.switchingBranch"),
-        this.tr("portal.core.updatingDashboardBookingsCalendar"),
-      );
+      return this.feedback.runLoading(() => Promise.resolve(work()));
     }
 
     this.branchSwitchPending += 1;
