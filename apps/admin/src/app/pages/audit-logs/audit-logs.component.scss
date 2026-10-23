@@ -1,31 +1,8 @@
 @use "../../shared/admin-list-page" as *;
 
-.filter-form {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 0.75rem;
-}
-
-.filter-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  min-width: min(100%, 20rem);
-}
-
-.field-label {
-  font-size: 0.8125rem;
-  font-weight: 500;
-}
-
-.apply-btn {
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  border: 1px solid var(--cds-border-subtle-01, #e0e0e0);
-  background: var(--cds-button-secondary, #393939);
-  color: var(--cds-text-on-color, #fff);
-  cursor: pointer;
+.list-lead {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
 }
 
 .mono {

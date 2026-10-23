@@ -6,26 +6,34 @@
     <p class="error-banner">{{ error() }}</p>
   }
 
-  <section class="card list-toolbar">
-    <form class="filter-form" (submit)="applyActionFilter(); $event.preventDefault()">
-      <label class="filter-field">
-        <span class="field-label">{{ tr('admin.auditLogs.actionFilter') }}</span>
-        <input
-          type="search"
-          [(ngModel)]="actionFilterInput"
-          name="action"
-          [placeholder]="tr('admin.auditLogs.actionPlaceholder')"
-          autocomplete="off"
-        />
-      </label>
-      <button type="submit" class="apply-btn" [disabled]="loading()">
-        {{ tr('admin.auditLogs.applyFilter') }}
-      </button>
-    </form>
-    @if (loaded() && totalCount() > 0) {
-      <p class="toolbar-meta">{{ showingRange() }}</p>
-    }
-  </section>
+  <adeni-list-toolbar
+    [showViewSwitcher]="false"
+    [showSearch]="!actionFilter()"
+    [count]="rows().length"
+    [countTotal]="totalCount()"
+    [singularCountLabel]="tr('admin.auditLogs.entry')"
+    [pluralCountLabel]="tr('admin.auditLogs.entries')"
+    [searchPlaceholder]="tr('admin.auditLogs.actionPlaceholder')"
+    [searchQuery]="customAction()"
+    (searchQueryChange)="onCustomActionSearch($event)"
+  >
+    <adeni-list-filter-row listFilters>
+      <adeni-filter-select
+        layout="toolbar"
+        [label]="tr('admin.auditLogs.actionFilter')"
+        [options]="actionFilterOptions()"
+        [value]="actionFilter()"
+        (valueChange)="onPresetActionChange($any($event))"
+      />
+      <adeni-staff-btn icon="restart" [disabled]="loading()" (pressed)="refresh()">
+        {{ tr('common.refresh') }}
+      </adeni-staff-btn>
+    </adeni-list-filter-row>
+  </adeni-list-toolbar>
+
+  @if (loaded() && totalCount() > 0) {
+    <p class="list-lead muted">{{ showingRange() }}</p>
+  }
 
   @if (loading() && !loaded()) {
     <p class="muted">{{ tr('admin.auditLogs.loading') }}</p>
@@ -43,16 +51,25 @@
       [sortRows]="false"
     >
       <ng-template adeniDataTableCell="when" let-row>
-        {{ row.occurredAt | date: "medium" }}
+        <span class="muted">{{ row.occurredAt | date: "medium" }}</span>
+      </ng-template>
+      <ng-template adeniDataTableCell="action" let-row>
+        <admin-pill
+          [label]="row.action"
+          [variant]="actionPillVariant(row.action)"
+          [compact]="true"
+        />
       </ng-template>
       <ng-template adeniDataTableCell="entity" let-row>
-        <span class="mono">{{ row.entityType }}:{{ row.entityId }}</span>
-        @if (row.metadataJson) {
-          <span class="row-sub muted">{{ tr('admin.auditLogs.metadataPresent') }}</span>
-        }
+        <div class="cell-stack">
+          <span class="mono">{{ row.entityType }}:{{ row.entityId }}</span>
+          @if (row.metadataJson) {
+            <span class="row-sub muted">{{ tr('admin.auditLogs.metadataPresent') }}</span>
+          }
+        </div>
       </ng-template>
       <ng-template adeniDataTableCell="correlation" let-row>
-        <span class="mono ref">{{ row.correlationId }}</span>
+        <span class="mono ref" [title]="row.correlationId">{{ displayCorrelation(row) }}</span>
       </ng-template>
     </adeni-data-table>
 
