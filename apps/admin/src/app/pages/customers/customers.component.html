@@ -73,8 +73,12 @@
             <span class="mono muted">{{ c.auth0Sub }}</span>
           </ng-template>
           <ng-template adeniDataTableActions let-c>
-            <div class="actions-inline">
-              <adeni-staff-btn icon="launch" [disabled]="busyId() === c.id" (pressed)="export(c.id)">
+            <adeni-row-action-bar>
+              <adeni-staff-btn
+                icon="launch"
+                [disabled]="busyId() === c.id"
+                (pressed)="export(c.id)"
+              >
                 {{ tr('common.export') }}
               </adeni-staff-btn>
               <adeni-staff-btn
@@ -85,7 +89,7 @@
               >
                 {{ tr('admin.customers.erasure') }}
               </adeni-staff-btn>
-            </div>
+            </adeni-row-action-bar>
           </ng-template>
         </adeni-data-table>
 

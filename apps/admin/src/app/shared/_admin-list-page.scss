@@ -23,6 +23,19 @@
     background: transparent;
     box-shadow: none;
   }
+
+  /* Row action templates render inside adeni-data-table — pierce for flex row layout */
+  adeni-data-table ::ng-deep .actions-inline,
+  adeni-data-table ::ng-deep .adeni-row-action-bar {
+    flex-wrap: nowrap;
+  }
+
+  adeni-data-table ::ng-deep .actions-inline .btn,
+  adeni-data-table ::ng-deep .adeni-row-action-bar .btn {
+    min-height: 2rem;
+    padding: 0 var(--cds-spacing-04);
+    font-size: 0.8125rem;
+  }
 }
 
 // Prefer `<adeni-staff-btn icon="…" variant="…">Label</adeni-staff-btn>` from `@adeni/ui` (staff buttons).
