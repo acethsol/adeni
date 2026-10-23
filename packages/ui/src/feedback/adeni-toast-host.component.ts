@@ -5,12 +5,7 @@ import { AdeniFeedbackService } from "./adeni-feedback.service";
   selector: "adeni-toast-host",
   standalone: true,
   template: `
-    <div
-      class="toast-host"
-      [class.is-lifted]="feedback.loadingVisible()"
-      aria-live="polite"
-      aria-relevant="additions"
-    >
+    <div class="toast-host" aria-live="polite" aria-relevant="additions">
       @for (toast of feedback.toasts(); track toast.id) {
         <div class="toast" [attr.data-tone]="toast.tone" role="status">
           <div class="toast-copy">
@@ -39,10 +34,6 @@ import { AdeniFeedbackService } from "./adeni-feedback.service";
       gap: 0.55rem;
       width: min(22rem, calc(100vw - 2rem));
       pointer-events: none;
-    }
-
-    .toast-host.is-lifted {
-      bottom: 5.5rem;
     }
 
     .toast {

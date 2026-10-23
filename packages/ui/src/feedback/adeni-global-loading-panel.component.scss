@@ -1,0 +1,182 @@
+/**
+ * Layer stack (packages/ui): shell content < loading (1100) < adeni-modal (1200)
+ * < adeni-confirm-host (1400) < adeni-toast-host (2100).
+ */
+
+:host {
+  display: contents;
+}
+
+.load-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgb(22 22 22 / 50%);
+  pointer-events: all;
+  animation: load-backdrop-in 200ms ease;
+}
+
+:host-context([data-theme="dark"]) .load-backdrop {
+  background: rgb(0 0 0 / 58%);
+}
+
+.load-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  width: min(22rem, calc(100vw - 2.5rem));
+  padding: 1.15rem 1.25rem 1.2rem;
+  border: 1px solid var(--cds-border-subtle, #e0e0e0);
+  border-radius: var(--cds-radius-none, 0);
+  background: var(--cds-layer-01, #fff);
+  color: var(--cds-text-primary, #161616);
+  box-shadow:
+    0 12px 32px rgb(0 0 0 / 18%),
+    0 0 0 1px rgb(255 255 255 / 6%) inset;
+  animation: load-card-in 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:host-context([data-theme="dark"]) .load-card {
+  background: var(--cds-layer-01, #262626);
+  border-color: rgb(255 255 255 / 14%);
+  color: #f4f4f4;
+  box-shadow:
+    0 16px 40px rgb(0 0 0 / 45%),
+    0 0 0 1px rgb(255 255 255 / 8%) inset;
+}
+
+.load-card__ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    120deg,
+    transparent 35%,
+    color-mix(in srgb, var(--interactive, #7f56ff) 55%, transparent) 50%,
+    transparent 65%
+  );
+  background-size: 220% 220%;
+  opacity: 0.55;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  padding: 2px;
+  animation: load-ring-shimmer 2.4s ease-in-out infinite;
+}
+
+.load-card__body strong {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.load-card__body p {
+  margin: 0.35rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--cds-text-secondary, #525252);
+}
+
+:host-context([data-theme="dark"]) .load-card__body p {
+  color: #c6c6c6;
+}
+
+.load-spinner-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.load-spinner-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--interactive, #7f56ff) 22%, transparent);
+  animation: load-ring-pulse 2s ease-in-out infinite;
+}
+
+.load-spinner {
+  position: absolute;
+  inset: 0.35rem;
+  border-radius: 50%;
+  border: 2px solid var(--cds-gray-30, #c6c6c6);
+  border-top-color: var(--interactive, #7f56ff);
+  border-right-color: color-mix(in srgb, var(--adeni-teal, #2a9d8f) 70%, var(--interactive, #7f56ff));
+  animation: load-spin 0.85s linear infinite;
+}
+
+@keyframes load-backdrop-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes load-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes load-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes load-ring-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.85;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes load-ring-shimmer {
+  0% {
+    background-position: 120% 50%;
+  }
+
+  100% {
+    background-position: -20% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .load-backdrop,
+  .load-card,
+  .load-spinner,
+  .load-spinner-wrap::before,
+  .load-card__ring {
+    animation: none;
+  }
+
+  .load-card__ring {
+    opacity: 0.35;
+    background: color-mix(in srgb, var(--interactive, #7f56ff) 40%, transparent);
+  }
+}

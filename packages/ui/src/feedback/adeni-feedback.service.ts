@@ -11,21 +11,30 @@ export type AdeniToast = {
   message: string;
 };
 
+type LoadingFrame = {
+  label: string | null;
+  detail: string | null;
+};
+
 @Injectable({ providedIn: "root" })
 export class AdeniFeedbackService {
   /** Optional so unit tests / hosts without `provideAdeniLocale` fall back to English. */
   private readonly localeService = inject(AdeniLocaleService, { optional: true });
-  private readonly loadDepth = signal(0);
-  /** `null` = use the localized default (`toast.loading` / `toast.loadingDetail`). */
-  private readonly labelSignal = signal<string | null>(null);
-  private readonly detailSignal = signal<string | null>(null);
+  /** Nested `showLoading` / `hideLoading` pairs — top frame drives visible copy. */
+  private readonly loadingFrames = signal<LoadingFrame[]>([]);
   private readonly toastsSignal = signal<AdeniToast[]>([]);
   private toastSeq = 0;
   private readonly dismissTimers = new Map<number, ReturnType<typeof setTimeout>>();
 
-  readonly loadingVisible = computed(() => this.loadDepth() > 0);
-  readonly loadingLabel = computed(() => this.labelSignal() ?? this.text("toast.loading"));
-  readonly loadingDetail = computed(() => this.detailSignal() ?? this.text("toast.loadingDetail"));
+  readonly loadingVisible = computed(() => this.loadingFrames().length > 0);
+  readonly loadingLabel = computed(() => {
+    const top = this.topLoadingFrame();
+    return top?.label ?? this.text("toast.loading");
+  });
+  readonly loadingDetail = computed(() => {
+    const top = this.topLoadingFrame();
+    return top?.detail ?? this.text("toast.loadingDetail");
+  });
   readonly toasts = this.toastsSignal.asReadonly();
 
   /** Localized string in the active locale; reactive when read inside `computed`/templates. */
@@ -34,13 +43,19 @@ export class AdeniFeedbackService {
   }
 
   showLoading(label?: string, detail?: string): void {
-    this.labelSignal.set(label ?? null);
-    this.detailSignal.set(detail ?? null);
-    this.loadDepth.update((n) => n + 1);
+    this.loadingFrames.update((frames) => [
+      ...frames,
+      { label: label ?? null, detail: detail ?? null },
+    ]);
   }
 
   hideLoading(): void {
-    this.loadDepth.update((n) => Math.max(0, n - 1));
+    this.loadingFrames.update((frames) => {
+      if (frames.length === 0) {
+        return frames;
+      }
+      return frames.slice(0, -1);
+    });
   }
 
   async runLoading<T>(
@@ -75,6 +90,11 @@ export class AdeniFeedbackService {
       this.dismissTimers.delete(id);
     }
     this.toastsSignal.update((list) => list.filter((t) => t.id !== id));
+  }
+
+  private topLoadingFrame(): LoadingFrame | undefined {
+    const frames = this.loadingFrames();
+    return frames.length > 0 ? frames[frames.length - 1] : undefined;
   }
 
   private push(tone: AdeniToastTone, title: string, message: string): void {
