@@ -77,6 +77,31 @@ public sealed class PortalSoc2AuditIntegrationTests : IClassFixture<WebApplicati
     }
 
     [Fact]
+    public async Task Settings_patch_writes_tenant_settings_updated_audit()
+    {
+        const string businessSub = "auth0|audit-settings-business";
+        var tenantId = await SeedTenantAsync(businessSub);
+
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add(DevBusinessAuthMiddleware.DevAuth0SubHeader, businessSub);
+        client.DefaultRequestHeaders.Add(TenantAccessMiddleware.TenantHeaderName, tenantId.ToString());
+
+        var patch = await client.PatchAsJsonAsync(
+            "/api/v1/tenant/settings",
+            new { autoConfirmBookings = true, depositPercent = 25 });
+        Assert.Equal(HttpStatusCode.OK, patch.StatusCode);
+
+        var writer = _factory.Services.GetRequiredService<IAuditLogWriter>() as InMemoryAuditLogWriter;
+        Assert.NotNull(writer);
+        Assert.Contains(
+            writer!.Entries,
+            e => e.Action == AuditActions.TenantSettingsUpdated
+                && e.EntityType == "tenant"
+                && e.EntityId == tenantId.ToString()
+                && e.ActorId == businessSub);
+    }
+
+    [Fact]
     public async Task Notification_preferences_patch_writes_tenant_notification_preferences_audit()
     {
         const string businessSub = "auth0|audit-prefs-business";

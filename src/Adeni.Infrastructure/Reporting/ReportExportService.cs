@@ -1,9 +1,12 @@
 namespace Adeni.Infrastructure.Reporting;
 
 using System.Text;
+using System.Text.Json;
+using Adeni.Application.Abstractions;
 using Adeni.Application.Finance;
 using Adeni.Application.Reporting;
 using Adeni.Application.Subscriptions;
+using Adeni.Domain.Auditing;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
 using Microsoft.Extensions.Logging;
@@ -13,6 +16,8 @@ public sealed class ReportExportService(
     IStaffCompensationService staffCompensation,
     IReportRenderer reportRenderer,
     IReportPdfBrandingLoader pdfBrandingLoader,
+    IAuditLogWriter auditLogWriter,
+    ICorrelationContext correlationContext,
     ILogger<ReportExportService> logger) : IReportExportService
 {
     public async Task<Result<ReportExportPayload>> ExportAsync(
@@ -77,7 +82,7 @@ public sealed class ReportExportService(
 
         logger.LogInformation("Report export started");
 
-        return request.ReportKey.ToLowerInvariant() switch
+        var exportResult = request.ReportKey.ToLowerInvariant() switch
         {
             ReportKeys.BookingsRegister => await ExportBookingsRegisterAsync(request, cancellationToken),
             ReportKeys.Compensation => await ExportCompensationAsync(request, cancellationToken),
@@ -88,6 +93,38 @@ public sealed class ReportExportService(
             ReportKeys.TenantServices => await ExportTenantServicesAsync(request, cancellationToken),
             _ => Result.Failure<ReportExportPayload>(ErrorCodes.ReportNotFoundError(request.ReportKey)),
         };
+
+        if (exportResult.IsSuccess)
+        {
+            await WriteExportAuditAsync(request, cancellationToken);
+        }
+
+        return exportResult;
+    }
+
+    private async Task WriteExportAuditAsync(ReportExportRequest request, CancellationToken cancellationToken)
+    {
+        var metadata = JsonSerializer.Serialize(new
+        {
+            tenantId = request.TenantId,
+            reportKey = request.ReportKey,
+            format = request.Format.ToString().ToLowerInvariant(),
+            from = request.From.UtcDateTime.ToString("O"),
+            to = request.To.UtcDateTime.ToString("O"),
+            locationId = request.LocationId,
+        });
+
+        await auditLogWriter.WriteAsync(
+            new AuditEntry(
+                Guid.NewGuid(),
+                request.ActorAuth0Sub,
+                AuditActions.TenantReportingExported,
+                "tenant",
+                request.TenantId.ToString(),
+                correlationContext.CorrelationId,
+                DateTimeOffset.UtcNow,
+                metadata),
+            cancellationToken);
     }
 
     private static Error? ValidateEntitlements(

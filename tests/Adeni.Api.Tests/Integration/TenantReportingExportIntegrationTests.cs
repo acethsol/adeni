@@ -2,7 +2,10 @@ namespace Adeni.Api.Tests.Integration;
 
 using System.Net;
 using Adeni.Api.Middleware;
+using Adeni.Application.Abstractions;
+using Adeni.Domain.Auditing;
 using Adeni.Domain.Identity;
+using Adeni.Infrastructure.Auditing;
 using Adeni.Domain.Subscriptions;
 using Adeni.Domain.Tenancy;
 using Adeni.Domain.Booking;
@@ -11,6 +14,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 public sealed class TenantReportingExportIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
 {
@@ -28,6 +32,11 @@ public sealed class TenantReportingExportIntegrationTests : IClassFixture<WebApp
                     ["Redis:ConnectionString"] = string.Empty,
                     ["Auth0:Enabled"] = "false",
                 });
+            });
+            builder.ConfigureServices(services =>
+            {
+                services.RemoveAll<IAuditLogWriter>();
+                services.AddSingleton<IAuditLogWriter, InMemoryAuditLogWriter>();
             });
         });
 
@@ -55,6 +64,15 @@ public sealed class TenantReportingExportIntegrationTests : IClassFixture<WebApp
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("text/csv", response.Content.Headers.ContentType?.MediaType);
+
+        var writer = _factory.Services.GetRequiredService<IAuditLogWriter>() as InMemoryAuditLogWriter;
+        Assert.NotNull(writer);
+        Assert.Contains(
+            writer!.Entries,
+            e => e.Action == AuditActions.TenantReportingExported
+                && e.EntityType == "tenant"
+                && e.EntityId == tenantId.ToString()
+                && e.ActorId == ownerSub);
     }
 
     [Fact]

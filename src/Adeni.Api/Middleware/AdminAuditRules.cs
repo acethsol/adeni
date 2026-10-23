@@ -130,6 +130,12 @@ public static class AdminAuditRules
             return Domain.Auditing.AuditActions.AdminTransactionsRead;
         }
 
+        if (context.Request.Path.StartsWithSegments("/api/v1/admin/audit-logs", StringComparison.OrdinalIgnoreCase)
+            && HttpMethods.IsGet(context.Request.Method))
+        {
+            return Domain.Auditing.AuditActions.AdminAuditLogsRead;
+        }
+
         if (path.Contains("/export", StringComparison.OrdinalIgnoreCase))
         {
             return Domain.Auditing.AuditActions.CustomerExported;
@@ -182,5 +188,6 @@ public static class AdminAuditRules
         HttpMethods.IsGet(context.Request.Method)
         && (context.Request.Path.StartsWithSegments("/api/v1/admin/reporting", StringComparison.OrdinalIgnoreCase)
             || context.Request.Path.StartsWithSegments("/api/v1/admin/metrics", StringComparison.OrdinalIgnoreCase)
-            || context.Request.Path.StartsWithSegments("/api/v1/admin/transactions", StringComparison.OrdinalIgnoreCase));
+            || context.Request.Path.StartsWithSegments("/api/v1/admin/transactions", StringComparison.OrdinalIgnoreCase)
+            || context.Request.Path.StartsWithSegments("/api/v1/admin/audit-logs", StringComparison.OrdinalIgnoreCase));
 }

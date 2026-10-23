@@ -289,6 +289,18 @@ public sealed class BusinessOnboardingService(
         profile.UpdatedAt = DateTimeOffset.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
 
+        await auditLogWriter.WriteAsync(
+            new AuditEntry(
+                Guid.NewGuid(),
+                auth0Sub,
+                AuditActions.TenantSettingsUpdated,
+                "tenant",
+                tenantId.ToString(),
+                correlationContext.CorrelationId,
+                profile.UpdatedAt,
+                $"{{\"autoConfirmBookings\":{request.AutoConfirmBookings.ToString().ToLowerInvariant()},\"depositPercent\":{profile.DepositPercent}}}"),
+            cancellationToken);
+
         var locations = await dbContext.BusinessLocations
             .AsNoTracking()
             .Where(x => x.TenantId == tenantId && x.IsActive)

@@ -73,6 +73,7 @@ public sealed class TenantReportingController(
                 exportFormat,
                 access.Permissions,
                 entitlementsResult.Value!,
+                auth0Sub,
                 locationId,
                 staffScope),
             cancellationToken);

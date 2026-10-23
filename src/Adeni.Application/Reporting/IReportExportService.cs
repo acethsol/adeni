@@ -11,6 +11,7 @@ public sealed record ReportExportRequest(
     ReportExportFormat Format,
     IReadOnlyList<string> PortalPermissions,
     TenantEntitlements Entitlements,
+    string ActorAuth0Sub,
     Guid? LocationId = null,
     Guid? StaffMemberId = null);
 

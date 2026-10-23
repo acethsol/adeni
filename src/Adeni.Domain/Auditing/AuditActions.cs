@@ -36,5 +36,8 @@ public static class AuditActions
     public const string PricingCatalogVersionActivated = "pricing_catalog.version_activated";
 
     public const string TenantCommercialBound = "tenant.commercial_bound";
+    public const string TenantSettingsUpdated = "tenant.settings_updated";
+    public const string TenantReportingExported = "tenant.reporting.exported";
     public const string AdminReportingRead = "admin.reporting.read";
+    public const string AdminAuditLogsRead = "admin.audit_logs.read";
 }

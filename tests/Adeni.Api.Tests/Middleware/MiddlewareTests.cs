@@ -168,6 +168,7 @@ public sealed class AuditMiddlewareTests
     [InlineData("/api/v1/admin/reporting/gmv", "GET", true)]
     [InlineData("/api/v1/admin/metrics/subscription", "GET", true)]
     [InlineData("/api/v1/admin/transactions", "GET", true)]
+    [InlineData("/api/v1/admin/audit-logs", "GET", true)]
     [InlineData("/api/v1/admin/businesses", "GET", false)]
     public void IsAuditableAdminRequest_includes_sensitive_reads(string path, string method, bool expected)
     {
@@ -188,6 +189,7 @@ public sealed class AuditMiddlewareTests
     [InlineData("/api/v1/admin/reporting/platform-subscription-mrr", AuditActions.AdminReportingRead)]
     [InlineData("/api/v1/admin/metrics/subscription", AuditActions.AdminMetricsRead)]
     [InlineData("/api/v1/admin/transactions", AuditActions.AdminTransactionsRead)]
+    [InlineData("/api/v1/admin/audit-logs", AuditActions.AdminAuditLogsRead)]
     public void MapAction_maps_known_routes(string path, string expected)
     {
         var context = new DefaultHttpContext();
@@ -196,6 +198,7 @@ public sealed class AuditMiddlewareTests
             path.Contains("/admin/reporting", StringComparison.Ordinal) ? "GET"
             : path.Contains("/admin/metrics", StringComparison.Ordinal) ? "GET"
             : path.Contains("/admin/transactions", StringComparison.Ordinal) ? "GET"
+            : path.Contains("/admin/audit-logs", StringComparison.Ordinal) ? "GET"
             : path.Contains("/reviews/", StringComparison.Ordinal) ? "DELETE"
             : "POST";
 

@@ -15,6 +15,7 @@ public static class AdminServiceCollectionExtensions
         services.AddScoped<IAdminReportingQueryService, AdminReportingQueryService>();
         services.AddScoped<IAdminTransactionSearchService, AdminTransactionSearchService>();
         services.AddScoped<IAdminReportExportQueryService, AdminReportExportQueryService>();
+        services.AddScoped<IAdminAuditLogQueryService, AdminAuditLogQueryService>();
         return services;
     }
 }

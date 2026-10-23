@@ -88,6 +88,38 @@ public sealed class BusinessOnboardingServiceTests
     }
 
     [Fact]
+    public async Task UpdateSettings_writes_tenant_settings_updated_audit()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var service = scope.ServiceProvider.GetRequiredService<BusinessOnboardingService>();
+        const string auth0Sub = "auth0|settings-audit";
+
+        var registered = await service.RegisterAsync(ValidRequest, auth0Sub);
+        var tenantId = registered.Value!.TenantId;
+
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        var tenant = await db.Tenants.FirstAsync(t => t.Id == tenantId);
+        tenant.Status = TenantStatus.Verified;
+        tenant.VerifiedAt = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync();
+
+        var updated = await service.UpdateSettingsAsync(
+            tenantId,
+            new UpdateBusinessSettingsRequest(true, 30),
+            auth0Sub);
+
+        Assert.True(updated.IsSuccess);
+
+        var writer = (InMemoryAuditLogWriter)scope.ServiceProvider.GetRequiredService<IAuditLogWriter>();
+        Assert.Contains(
+            writer.Entries,
+            e => e.Action == AuditActions.TenantSettingsUpdated
+                && e.EntityId == tenantId.ToString()
+                && e.ActorId == auth0Sub);
+    }
+
+    [Fact]
     public async Task SubmitVerification_moves_tenant_to_pending()
     {
         await using var provider = BuildProvider();
