@@ -64,6 +64,7 @@ public interface ITenantCustomerService
     Task<Result<TenantCustomerDetailResponse>> GetByIdAsync(
         Guid tenantId,
         Guid tenantCustomerId,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<TenantCustomerListResponse>> ListForTenantAsync(

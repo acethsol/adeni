@@ -1142,9 +1142,13 @@ export class AdeniApiClient {
     return tenantCustomerListResponseSchema.parse(await response.json());
   }
 
-  async getTenantCustomer(tenantCustomerId: string): Promise<TenantCustomerDetail> {
+  async getTenantCustomer(
+    tenantCustomerId: string,
+    locationId?: string,
+  ): Promise<TenantCustomerDetail> {
+    const query = locationId ? `?locationId=${encodeURIComponent(locationId)}` : "";
     const response = await this.request(
-      `/api/v1/tenant/customers/${encodeURIComponent(tenantCustomerId)}`,
+      `/api/v1/tenant/customers/${encodeURIComponent(tenantCustomerId)}${query}`,
     );
     const json = (await response.json()) as Record<string, unknown>;
     return tenantCustomerDetailSchema.parse({
@@ -1216,12 +1220,16 @@ export class AdeniApiClient {
     tenantId: string,
     page = 1,
     pageSize = 50,
+    locationId?: string,
   ): Promise<PagedResult<PaymentLedgerEntry>> {
     const query = new URLSearchParams({
       tenantId,
       page: String(page),
       pageSize: String(pageSize),
     });
+    if (locationId) {
+      query.set("locationId", locationId);
+    }
     const response = await this.request(`/api/v1/finance/ledger?${query.toString()}`);
     return paymentLedgerResponseSchema.parse(await response.json());
   }
@@ -2340,6 +2348,7 @@ export class AdeniApiClient {
   async listTenantConversations(options: {
     page?: number;
     pageSize?: number;
+    locationId?: string;
   } = {}): Promise<PagedResult<ConversationSummary>> {
     const query = new URLSearchParams();
     if (options.page != null) {
@@ -2348,13 +2357,17 @@ export class AdeniApiClient {
     if (options.pageSize != null) {
       query.set("pageSize", String(options.pageSize));
     }
+    if (options.locationId) {
+      query.set("locationId", options.locationId);
+    }
     const suffix = query.size > 0 ? `?${query.toString()}` : "";
     const response = await this.request(`/api/v1/tenant/messages/conversations${suffix}`);
     return conversationsResponseSchema.parse(await response.json());
   }
 
-  async getTenantMessageUnreadCount(): Promise<number> {
-    const response = await this.request("/api/v1/tenant/messages/unread-count");
+  async getTenantMessageUnreadCount(locationId?: string): Promise<number> {
+    const query = locationId ? `?locationId=${encodeURIComponent(locationId)}` : "";
+    const response = await this.request(`/api/v1/tenant/messages/unread-count${query}`);
     const payload = unreadCountResponseSchema.parse(await response.json());
     return payload.count;
   }

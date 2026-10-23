@@ -270,13 +270,14 @@ public sealed class StaffServiceTests
                 locA));
 
         var scoped = await staff.ListForTenantAsync(tenantId, locA);
-        Assert.Equal(2, scoped.Count);
-        Assert.Contains(scoped, x => x.Id == allBranches.Value!.Id);
-        Assert.Contains(scoped, x => x.Id == branchOnly.Value!.Id);
+        Assert.Single(scoped);
+        Assert.Equal(branchOnly.Value!.Id, scoped[0].Id);
 
         var otherBranch = await staff.ListForTenantAsync(tenantId, locB);
-        Assert.Single(otherBranch);
-        Assert.Equal(allBranches.Value!.Id, otherBranch[0].Id);
+        Assert.Empty(otherBranch);
+
+        var all = await staff.ListForTenantAsync(tenantId);
+        Assert.Equal(2, all.Count);
     }
 
     [Fact]

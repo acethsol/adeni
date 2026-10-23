@@ -38,10 +38,12 @@ public sealed class SubscriptionService(
             return Result.Failure<SubscriptionUsageResponse>(Error.NotFound("Business"));
         }
 
-        var locationCheck = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+        var entitlements = entitlementsService.GetEntitlementsForTenant(tenant);
+        var locationCheck = await TenantLocationScope.ResolveListLocationAsync(
             dbContext,
             tenantId,
             locationId,
+            entitlements.MultiLocationReporting,
             cancellationToken);
         if (locationCheck.IsFailure)
         {

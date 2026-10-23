@@ -2,11 +2,16 @@ namespace Adeni.Api.Controllers;
 
 using System.Security.Claims;
 using Adeni.Api.Auth;
+using Adeni.Api.Common;
+using Adeni.Api.Errors;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
 using Adeni.Application.Messaging;
+using Adeni.Application.Subscriptions;
+using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Auth;
+using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -15,6 +20,8 @@ using Microsoft.Extensions.Options;
 [RequiresPortalPermission(PortalPermissions.Messages)]
 public sealed class TenantMessagesController(
     IConversationService messaging,
+    AdeniDbContext dbContext,
+    IEntitlementsService entitlementsService,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     public sealed record SendMessageBody(
@@ -26,6 +33,7 @@ public sealed class TenantMessagesController(
     public async Task<IActionResult> ListConversations(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 25,
+        [FromQuery] Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
         if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
@@ -33,7 +41,23 @@ public sealed class TenantMessagesController(
             return Unauthorized();
         }
 
-        var result = await messaging.ListForTenantAsync(tenantId, page, pageSize, cancellationToken);
+        var scoped = await TenantListLocationQuery.ResolveAsync(
+            dbContext,
+            entitlementsService,
+            tenantId,
+            locationId,
+            cancellationToken);
+        if (scoped.IsFailure)
+        {
+            return ApiErrorResponseMapper.ToActionResult(scoped.Error!, HttpContext);
+        }
+
+        var result = await messaging.ListForTenantAsync(
+            tenantId,
+            page,
+            pageSize,
+            scoped.Value,
+            cancellationToken);
         return ApiResults.FromResult(
             result,
             payload => Ok(new
@@ -47,14 +71,27 @@ public sealed class TenantMessagesController(
     }
 
     [HttpGet("unread-count")]
-    public async Task<IActionResult> GetUnreadCount(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetUnreadCount(
+        [FromQuery] Guid? locationId = null,
+        CancellationToken cancellationToken = default)
     {
         if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
         {
             return Unauthorized();
         }
 
-        var result = await messaging.GetTeamUnreadCountForTenantAsync(tenantId, cancellationToken);
+        var scoped = await TenantListLocationQuery.ResolveAsync(
+            dbContext,
+            entitlementsService,
+            tenantId,
+            locationId,
+            cancellationToken);
+        if (scoped.IsFailure)
+        {
+            return ApiErrorResponseMapper.ToActionResult(scoped.Error!, HttpContext);
+        }
+
+        var result = await messaging.GetTeamUnreadCountForTenantAsync(tenantId, scoped.Value, cancellationToken);
         return ApiResults.FromResult(result, Ok, HttpContext);
     }
 

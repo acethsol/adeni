@@ -37,10 +37,12 @@ public sealed class TenantDashboardService(
             return Result.Failure<TenantDashboardSummaryResponse>(Error.NotFound("Tenant"));
         }
 
-        var locationCheck = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+        var multiLocationReporting = entitlementsService.GetEntitlementsForTenant(tenant).MultiLocationReporting;
+        var locationCheck = await TenantLocationScope.ResolveListLocationAsync(
             dbContext,
             tenantId,
             locationId,
+            multiLocationReporting,
             cancellationToken);
         if (locationCheck.IsFailure)
         {
@@ -145,10 +147,12 @@ public sealed class TenantDashboardService(
             return Result.Failure<TenantDashboardSeriesResponse>(Error.NotFound("Tenant"));
         }
 
-        var locationCheck = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+        var multiLocationReporting = entitlementsService.GetEntitlementsForTenant(tenant).MultiLocationReporting;
+        var locationCheck = await TenantLocationScope.ResolveListLocationAsync(
             dbContext,
             tenantId,
             locationId,
+            multiLocationReporting,
             cancellationToken);
         if (locationCheck.IsFailure)
         {
@@ -210,10 +214,12 @@ public sealed class TenantDashboardService(
             return Result.Failure<TenantDashboardBreakdownResponse>(Error.NotFound("Tenant"));
         }
 
-        var locationCheck = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+        var multiLocationReporting = entitlementsService.GetEntitlementsForTenant(tenant).MultiLocationReporting;
+        var locationCheck = await TenantLocationScope.ResolveListLocationAsync(
             dbContext,
             tenantId,
             locationId,
+            multiLocationReporting,
             cancellationToken);
         if (locationCheck.IsFailure)
         {

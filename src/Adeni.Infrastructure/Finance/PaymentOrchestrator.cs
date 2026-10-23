@@ -78,6 +78,7 @@ public sealed class PaymentOrchestrator(
         Guid tenantId,
         int page = 1,
         int pageSize = 50,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
         var normalized = Paging.Normalize(page, pageSize);
@@ -88,9 +89,31 @@ public sealed class PaymentOrchestrator(
 
         (page, pageSize) = normalized.Value!;
 
+        var locationCheck = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+            dbContext,
+            tenantId,
+            locationId,
+            cancellationToken);
+        if (locationCheck.IsFailure)
+        {
+            return Result.Failure<PagedResult<PaymentLedgerEntry>>(locationCheck.Error!);
+        }
+
+        locationId = locationCheck.Value;
+
         var query = dbContext.PaymentIntents
             .AsNoTracking()
             .Where(x => x.TenantId == tenantId);
+
+        if (locationId is Guid branchId)
+        {
+            query = query.Where(p =>
+                p.BookingId != null
+                && dbContext.Bookings.Any(b =>
+                    b.TenantId == tenantId
+                    && b.Id == p.BookingId
+                    && b.BusinessLocationId == branchId));
+        }
 
         var totalCount = await query.CountAsync(cancellationToken);
 

@@ -101,6 +101,7 @@ public interface IConversationService
         Guid tenantId,
         int page = 1,
         int pageSize = Paging.DefaultPageSize,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<ConversationDetailResponse>> GetAsync(
@@ -113,6 +114,7 @@ public interface IConversationService
 
     Task<Result<UnreadCountResponse>> GetTeamUnreadCountForTenantAsync(
         Guid tenantId,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default);
 
     Task<Result> MarkReadAsync(

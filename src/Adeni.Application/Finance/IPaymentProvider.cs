@@ -153,6 +153,7 @@ public interface IPaymentOrchestrator
         Guid tenantId,
         int page = 1,
         int pageSize = 50,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<PaymentWebhookResult>> ProcessWebhookAsync(

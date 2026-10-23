@@ -6,6 +6,7 @@ using Adeni.Application.Booking;
 using Adeni.Application.Catalog;
 using Adeni.Application.Notifications;
 using Adeni.Application.Realtime;
+using Adeni.Application.Subscriptions;
 using Adeni.Application.Tenancy;
 using Adeni.Infrastructure.Realtime;
 using Adeni.Domain.Booking;
@@ -18,6 +19,7 @@ using Microsoft.EntityFrameworkCore;
 public sealed class QueueService(
     AdeniDbContext dbContext,
     IBusinessCapabilitiesService capabilities,
+    IEntitlementsService entitlementsService,
     INotificationDispatcher notificationDispatcher,
     ITenantCustomerService tenantCustomers,
     ITenantRealtimePublisher tenantRealtime) : IQueueService
@@ -97,10 +99,15 @@ public sealed class QueueService(
             return Result.Failure<IReadOnlyList<QueueTicketResponse>>(capability.Error);
         }
 
-        var locationCheck = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+        var tenant = await dbContext.Tenants.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+        var multiLocationReporting = tenant is not null
+            && entitlementsService.GetEntitlementsForTenant(tenant).MultiLocationReporting;
+        var locationCheck = await TenantLocationScope.ResolveListLocationAsync(
             dbContext,
             tenantId,
             locationId,
+            multiLocationReporting,
             cancellationToken);
         if (locationCheck.IsFailure)
         {

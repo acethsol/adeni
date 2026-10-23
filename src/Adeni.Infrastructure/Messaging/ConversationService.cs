@@ -364,6 +364,7 @@ public sealed class ConversationService(
         Guid tenantId,
         int page = 1,
         int pageSize = Paging.DefaultPageSize,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
         var tenant = await dbContext.Tenants
@@ -383,9 +384,22 @@ public sealed class ConversationService(
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, Paging.MaxPageSize);
 
+        var locationCheck = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+            dbContext,
+            tenantId,
+            locationId,
+            cancellationToken);
+        if (locationCheck.IsFailure)
+        {
+            return Result.Failure<PagedResult<ConversationSummaryResponse>>(locationCheck.Error!);
+        }
+
+        locationId = locationCheck.Value;
+
         var query = dbContext.Conversations
             .AsNoTracking()
             .Where(x => x.TenantId == tenantId)
+            .FilterConversationsByLocation(dbContext, tenantId, locationId)
             .OrderByDescending(x => x.LastMessageAt);
 
         var total = await query.CountAsync(cancellationToken);
@@ -520,6 +534,7 @@ public sealed class ConversationService(
 
     public async Task<Result<UnreadCountResponse>> GetTeamUnreadCountForTenantAsync(
         Guid tenantId,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
         var tenant = await dbContext.Tenants
@@ -536,9 +551,22 @@ public sealed class ConversationService(
             return Result.Failure<UnreadCountResponse>(entitlement.Error);
         }
 
+        var locationCheck = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+            dbContext,
+            tenantId,
+            locationId,
+            cancellationToken);
+        if (locationCheck.IsFailure)
+        {
+            return Result.Failure<UnreadCountResponse>(locationCheck.Error!);
+        }
+
+        locationId = locationCheck.Value;
+
         var conversationIds = await dbContext.Conversations
             .AsNoTracking()
             .Where(x => x.TenantId == tenantId && x.Status == ConversationStatus.Open)
+            .FilterConversationsByLocation(dbContext, tenantId, locationId)
             .Select(x => x.Id)
             .ToListAsync(cancellationToken);
 

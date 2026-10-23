@@ -2,10 +2,12 @@ namespace Adeni.Api.Controllers;
 
 using System.Security.Claims;
 using Adeni.Api.Auth;
+using Adeni.Api.Common;
 using Adeni.Api.Errors;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
 using Adeni.Application.Booking;
+using Adeni.Application.Subscriptions;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Auth;
@@ -19,6 +21,7 @@ public sealed class TenantStaffController(
     IStaffService staff,
     IStaffAccessService staffAccess,
     AdeniDbContext dbContext,
+    IEntitlementsService entitlementsService,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet]
@@ -33,8 +36,9 @@ public sealed class TenantStaffController(
             return Unauthorized();
         }
 
-        var scoped = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+        var scoped = await TenantListLocationQuery.ResolveAsync(
             dbContext,
+            entitlementsService,
             tenantId.Value,
             locationId,
             cancellationToken);

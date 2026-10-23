@@ -368,10 +368,15 @@ public sealed class BookingService(
         var effectiveTab = TenantBookingTabs.IsValid(tab) ? tab : TenantBookingTabs.Pending;
         var startOfTodayUtc = DateTimeOffset.UtcNow.Date;
 
-        var locationCheck = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+        var tenant = await dbContext.Tenants.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+        var multiLocationReporting = tenant is not null
+            && entitlementsService.GetEntitlementsForTenant(tenant).MultiLocationReporting;
+        var locationCheck = await TenantLocationScope.ResolveListLocationAsync(
             dbContext,
             tenantId,
             locationId,
+            multiLocationReporting,
             cancellationToken);
         if (locationCheck.IsFailure)
         {

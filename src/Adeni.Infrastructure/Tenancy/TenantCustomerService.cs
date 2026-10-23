@@ -146,6 +146,7 @@ public sealed class TenantCustomerService(
     public async Task<Result<TenantCustomerDetailResponse>> GetByIdAsync(
         Guid tenantId,
         Guid tenantCustomerId,
+        Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
         var row = await dbContext.TenantCustomers.AsNoTracking()
@@ -157,18 +158,34 @@ public sealed class TenantCustomerService(
 
         var tenant = await dbContext.Tenants.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+        var multiLocationReporting = tenant is not null
+            && entitlementsService.GetEntitlementsForTenant(tenant).MultiLocationReporting;
+        var locationCheck = await TenantLocationScope.ResolveListLocationAsync(
+            dbContext,
+            tenantId,
+            locationId,
+            multiLocationReporting,
+            cancellationToken);
+        if (locationCheck.IsFailure)
+        {
+            return Result.Failure<TenantCustomerDetailResponse>(locationCheck.Error!);
+        }
+
+        locationId = locationCheck.Value;
+
         var entitlements = tenant is null
             ? SubscriptionEntitlements.ForSku(SubscriptionSku.Starter)
             : entitlementsService.GetEntitlementsForTenant(tenant);
         var historyLimit = entitlements.CustomerRetentionAnalytics ? 25 : 3;
 
         var recentBookingRows = row.CustomerId is Guid platformCustomerId
-            ? await LoadRecentBookingsAsync(tenantId, platformCustomerId, historyLimit, cancellationToken)
+            ? await LoadRecentBookingsAsync(tenantId, platformCustomerId, historyLimit, locationId, cancellationToken)
             : [];
 
         var recentQueueRows = await LoadRecentQueueVisitsAsync(
             tenantId,
             tenantCustomerId,
+            locationId,
             cancellationToken);
 
         return Result.Success(MapDetail(row, recentBookingRows, recentQueueRows));
@@ -188,10 +205,15 @@ public sealed class TenantCustomerService(
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 100);
 
-        var scoped = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+        var tenantForScope = await dbContext.Tenants.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+        var multiLocationReporting = tenantForScope is not null
+            && entitlementsService.GetEntitlementsForTenant(tenantForScope).MultiLocationReporting;
+        var scoped = await TenantLocationScope.ResolveListLocationAsync(
             dbContext,
             tenantId,
             locationId,
+            multiLocationReporting,
             cancellationToken);
         if (scoped.IsFailure)
         {
@@ -202,7 +224,7 @@ public sealed class TenantCustomerService(
 
         if (!string.IsNullOrWhiteSpace(discoverFilter))
         {
-            var tenant = await dbContext.Tenants.AsNoTracking()
+            var tenant = tenantForScope ?? await dbContext.Tenants.AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
             if (tenant is not null)
             {
@@ -348,6 +370,7 @@ public sealed class TenantCustomerService(
         Guid tenantId,
         Guid platformCustomerId,
         int limit,
+        Guid? locationId,
         CancellationToken cancellationToken)
     {
         var bookings = await dbContext.Bookings.AsNoTracking()
@@ -355,6 +378,7 @@ public sealed class TenantCustomerService(
             .Include(x => x.ServiceOffering)
             .Include(x => x.StaffMember)
             .Where(x => x.TenantId == tenantId && x.CustomerId == platformCustomerId)
+            .FilterBookingsByLocation(locationId)
             .OrderByDescending(x => x.StartAt)
             .Take(limit)
             .ToListAsync(cancellationToken);
@@ -378,12 +402,14 @@ public sealed class TenantCustomerService(
     private async Task<IReadOnlyList<TenantCustomerRecentQueueVisitResponse>> LoadRecentQueueVisitsAsync(
         Guid tenantId,
         Guid tenantCustomerId,
+        Guid? locationId,
         CancellationToken cancellationToken)
     {
         var tickets = await dbContext.QueueTickets.AsNoTracking()
             .Include(x => x.ServiceOffering)
             .Include(x => x.StaffMember)
             .Where(x => x.TenantId == tenantId && x.TenantCustomerId == tenantCustomerId)
+            .FilterQueueByLocation(locationId)
             .OrderByDescending(x => x.JoinedAt)
             .Take(5)
             .ToListAsync(cancellationToken);

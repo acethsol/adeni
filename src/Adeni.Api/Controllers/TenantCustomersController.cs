@@ -81,14 +81,17 @@ public sealed class TenantCustomersController(
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Get(
+        Guid id,
+        [FromQuery] Guid? locationId = null,
+        CancellationToken cancellationToken = default)
     {
         if (ResolveTenantId() is not { } tenantId)
         {
             return Unauthorized();
         }
 
-        var result = await customers.GetByIdAsync(tenantId, id, cancellationToken);
+        var result = await customers.GetByIdAsync(tenantId, id, locationId, cancellationToken);
         return ApiResults.FromResult(result, Ok, HttpContext);
     }
 

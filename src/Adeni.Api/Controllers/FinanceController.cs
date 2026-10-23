@@ -7,7 +7,9 @@ using Adeni.Api.Extensions;
 using Adeni.Api.Errors;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
+using Adeni.Api.Common;
 using Adeni.Application.Finance;
+using Adeni.Application.Subscriptions;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Auth;
@@ -24,6 +26,7 @@ public sealed class FinanceController(
     IBillingDocumentService billingDocuments,
     IStaffCompensationService staffCompensation,
     AdeniDbContext dbContext,
+    IEntitlementsService entitlementsService,
     IOptions<Auth0Options> auth0Options,
     IHostEnvironment environment) : ControllerBase
 {
@@ -177,6 +180,7 @@ public sealed class FinanceController(
         [FromQuery] Guid tenantId,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
+        [FromQuery] Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
         if (ResolveBusinessAuth0Sub() is null || ResolveTenantId() is not { } callerTenantId)
@@ -189,7 +193,23 @@ public sealed class FinanceController(
             return CrossTenantDenied();
         }
 
-        var result = await paymentOrchestrator.ListLedgerAsync(tenantId, page, pageSize, cancellationToken);
+        var scoped = await TenantListLocationQuery.ResolveAsync(
+            dbContext,
+            entitlementsService,
+            tenantId,
+            locationId,
+            cancellationToken);
+        if (scoped.IsFailure)
+        {
+            return ApiErrorResponseMapper.ToActionResult(scoped.Error!, HttpContext);
+        }
+
+        var result = await paymentOrchestrator.ListLedgerAsync(
+            tenantId,
+            page,
+            pageSize,
+            scoped.Value,
+            cancellationToken);
         return ApiResults.FromResult(
             result,
             payload => Ok(new

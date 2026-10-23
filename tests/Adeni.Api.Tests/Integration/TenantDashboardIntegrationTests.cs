@@ -193,8 +193,14 @@ public sealed class TenantDashboardIntegrationTests : IClassFixture<WebApplicati
         var scopedPayload = await scopedResponse.Content.ReadFromJsonAsync<DashboardSummaryPayload>();
         Assert.NotNull(allPayload);
         Assert.NotNull(scopedPayload);
-        Assert.Equal(2, allPayload!.PendingCount);
+        // Starter tier: omitted locationId defaults to primary branch when 2+ locations.
+        Assert.Equal(1, allPayload!.PendingCount);
         Assert.Equal(1, scopedPayload!.PendingCount);
+        var locBResponse = await client.GetAsync(
+            $"/api/v1/tenant/dashboard/summary?from={from}&to={to}&locationId={locB:D}");
+        var locBPayload = await locBResponse.Content.ReadFromJsonAsync<DashboardSummaryPayload>();
+        Assert.NotNull(locBPayload);
+        Assert.Equal(1, locBPayload!.PendingCount);
     }
 
     [Fact]
@@ -292,8 +298,13 @@ public sealed class TenantDashboardIntegrationTests : IClassFixture<WebApplicati
         var scopedPayload = await scopedResponse.Content.ReadFromJsonAsync<SubscriptionUsagePayload>();
         Assert.NotNull(allPayload);
         Assert.NotNull(scopedPayload);
-        Assert.Equal(2, allPayload!.BookingsUsedThisMonth);
+        Assert.Equal(1, allPayload!.BookingsUsedThisMonth);
         Assert.Equal(1, scopedPayload!.BookingsUsedThisMonth);
+        var locBResponse = await client.GetAsync(
+            $"/api/v1/tenant/subscription?locationId={locB:D}");
+        var locBPayload = await locBResponse.Content.ReadFromJsonAsync<SubscriptionUsagePayload>();
+        Assert.NotNull(locBPayload);
+        Assert.Equal(1, locBPayload!.BookingsUsedThisMonth);
     }
 
     [Fact]
