@@ -66,3 +66,5 @@ Docs: [SDK-style SSDT (preview)](https://learn.microsoft.com/sql/ssdt/sql-server
 ## Dev seed vs post-deploy
 
 Bulk Lagos/Ottawa sample businesses stay in `DevelopmentDataSeeder` (API, Development only). Put stable reference SQL (permissions, lookup rows shared by all environments) in **PostDeployment**.
+
+**Admin Customer privacy (`/customers`):** After restart in Development, search `seed.privacy.local` or `dev-privacy` for demo platform customers (Ottawa + Lagos names, one erasure row, export booking on Ada Okonkwo).

@@ -194,6 +194,7 @@ public static class DevelopmentDataSeeder
         await SeedDevQueueFloorAsync(db, cancellationToken);
         await SeedDevMessagingAsync(db, cancellationToken);
         await SeedDevTenantCustomersAsync(db, cancellationToken);
+        await SeedDevAdminPrivacyCustomersAsync(db, cancellationToken);
     }
 
     /// <summary>
@@ -271,6 +272,139 @@ public static class DevelopmentDataSeeder
 
         await db.SaveChangesAsync(cancellationToken);
     }
+
+    private const string DevAdminPrivacySeedAuth0Prefix = "auth0|dev-privacy-";
+
+    private const string DevAdminPrivacySeedEmailDomain = "@seed.privacy.local";
+
+    /// <summary>
+    /// Platform customers for admin Customer privacy (<c>/customers</c>): search, DSAR export, erasure demo.
+    /// Idempotent: skips when any Auth0 sub starts with <see cref="DevAdminPrivacySeedAuth0Prefix"/>.
+    /// Restart the API in Development to seed; search e.g. <c>dev-privacy</c> or <c>seed.privacy.local</c>.
+    /// </summary>
+    private static async Task SeedDevAdminPrivacyCustomersAsync(
+        AdeniDbContext db,
+        CancellationToken cancellationToken)
+    {
+        if (await db.Customers
+                .IgnoreQueryFilters()
+                .AnyAsync(
+                    customer => customer.Auth0Sub.StartsWith(DevAdminPrivacySeedAuth0Prefix),
+                    cancellationToken))
+        {
+            return;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var seeds = new AdminPrivacyCustomerSeed[]
+        {
+            new("auth0|dev-privacy-amara-k", "Amara Kouassi", "amara.kouassi", "+16135550102", 45, false),
+            new("auth0|dev-privacy-chidi-o", "Chidi Okafor", "chidi.okafor", "+2348015550201", 120, false),
+            new("auth0|dev-privacy-sarah-m", "Sarah Mensah", "sarah.mensah", "+2348015550202", 30, false),
+            new("auth0|dev-privacy-jordan-t", "Jordan Tremblay", "jordan.tremblay", "+16135550188", 14, false),
+            new("auth0|dev-privacy-ada-export", "Ada Okonkwo", "ada.export", "+2348015550203", 60, false),
+            new("auth0|dev-privacy-erased", "[erased]", "erased.demo", "+2348015550299", 200, true),
+        };
+
+        foreach (var seed in seeds)
+        {
+            var createdAt = now.AddDays(-seed.CreatedDaysAgo);
+            if (seed.Erased)
+            {
+                db.Customers.Add(new Customer
+                {
+                    Id = Guid.NewGuid(),
+                    Auth0Sub = seed.Auth0Sub,
+                    Name = seed.Name,
+                    Email = null,
+                    Phone = null,
+                    CreatedAt = createdAt,
+                    ErasureRequestedAt = now.AddDays(-7),
+                });
+                continue;
+            }
+
+            db.Customers.Add(new Customer
+            {
+                Id = Guid.NewGuid(),
+                Auth0Sub = seed.Auth0Sub,
+                Name = seed.Name,
+                Email = $"{seed.EmailLocalPart}{DevAdminPrivacySeedEmailDomain}",
+                Phone = seed.Phone,
+                CreatedAt = createdAt,
+            });
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+
+        var exportCustomer = await db.Customers
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                customer => customer.Auth0Sub == "auth0|dev-privacy-ada-export",
+                cancellationToken);
+        if (exportCustomer is null)
+        {
+            return;
+        }
+
+        var location = await db.BusinessLocations
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(entry => entry.Slug == SeedMarkerSlug, cancellationToken);
+        if (location is null)
+        {
+            return;
+        }
+
+        if (await db.Bookings
+                .IgnoreQueryFilters()
+                .AnyAsync(
+                    booking =>
+                        booking.CustomerId == exportCustomer.Id
+                        && booking.TenantId == location.TenantId,
+                    cancellationToken))
+        {
+            return;
+        }
+
+        var service = await db.ServiceOfferings
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(entry => entry.TenantId == location.TenantId && entry.IsActive)
+            .OrderBy(entry => entry.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (service is null)
+        {
+            return;
+        }
+
+        var startAt = now.AddDays(-10);
+        var endAt = startAt.AddMinutes(service.DurationMinutes);
+        db.Bookings.Add(new BookingRecord
+        {
+            Id = Guid.NewGuid(),
+            TenantId = location.TenantId,
+            ServiceOfferingId = service.Id,
+            CustomerId = exportCustomer.Id,
+            StartAt = startAt,
+            EndAt = endAt,
+            Status = BookingStatus.Completed,
+            CustomerNotes = "Dev seed — admin privacy export demo",
+            CreatedAt = startAt,
+            UpdatedAt = endAt,
+        });
+
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private sealed record AdminPrivacyCustomerSeed(
+        string Auth0Sub,
+        string Name,
+        string EmailLocalPart,
+        string Phone,
+        int CreatedDaysAgo,
+        bool Erased);
 
     private static string NormalizeSeedPhone(string phone)
     {
