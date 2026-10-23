@@ -10,9 +10,7 @@
     <p class="error-banner">{{ error() }}</p>
   }
 
-  @if (loading()) {
-    <p class="muted">{{ tr('common.loading') }}</p>
-  } @else if (profile(); as p) {
+  @if (profile(); as p) {
     <section class="card">
       <h3>{{ tr('portal.register.alreadyRegistered') }}</h3>
       <p>
@@ -30,7 +28,7 @@
       <a routerLink="/dashboard" class="btn btn-primary">{{ tr('portal.register.goDashboard') }}</a>
       <a routerLink="/services" class="btn btn-secondary">{{ tr('portal.register.addServices') }}</a>
     </section>
-  } @else {
+  } @else if (markets().length > 0) {
     <section class="card">
       <div class="field">
         <label>{{ tr('common.businessName') }}</label>

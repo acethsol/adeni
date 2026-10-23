@@ -37,9 +37,7 @@
     </div>
   </header>
 
-  @if (loading()) {
-    <p class="muted kiosk-loading">{{ label("kiosk.loading") }}</p>
-  } @else if (checkedIn(); as booking) {
+  @if (checkedIn(); as booking) {
     <section class="card kiosk-success">
       <adeni-carbon-icon name="checkmark--filled" [size]="40" />
       <h2>{{ label("kiosk.checkedIn") }}</h2>
@@ -55,7 +53,7 @@
         {{ label("kiosk.nextGuest") }}
       </button>
     </section>
-  } @else {
+  } @else if (status()) {
     @if (error() && !exitOpen()) {
       <p class="error-banner">{{ error() }}</p>
     }

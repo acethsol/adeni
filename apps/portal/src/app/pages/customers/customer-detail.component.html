@@ -10,9 +10,7 @@
     <p class="error-banner">{{ error() }}</p>
   }
 
-  @if (loading()) {
-    <p class="muted">{{ tr('common.loading') }}</p>
-  } @else if (customer(); as c) {
+  @if (customer(); as c) {
     <section class="card profile-hero">
       <div class="profile-hero__identity">
         <adeni-table-person-cell

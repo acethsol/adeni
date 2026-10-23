@@ -79,14 +79,7 @@
 
     <div class="cal-workspace">
       <div class="cal-main">
-        @if (loading() && !calendar() && !team()) {
-          <div class="cal-skeleton" aria-busy="true">
-            <div class="skel-rail"></div>
-            @for (_ of [1, 2, 3, 4, 5, 6, 7]; track $index) {
-              <div class="skel-col"></div>
-            }
-          </div>
-        } @else if (calendar() || team()) {
+        @if (calendar() || team()) {
           @if (listViewMode() === "table") {
             @if (displayBlocks().length === 0) {
               <adeni-portal-empty-state

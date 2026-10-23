@@ -2,9 +2,7 @@
   [title]="tr('common.publicPage')"
   [description]="tr('portal.publicPage.chooseHowAdeniBookingPage')"
 >
-  @if (loading()) {
-    <p class="muted">{{ tr('common.loading') }}</p>
-  } @else if (profile(); as p) {
+  @if (profile(); as p) {
     <div class="layout">
       <div class="controls">
         <section class="card">

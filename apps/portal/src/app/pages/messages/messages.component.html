@@ -16,10 +16,7 @@
     <p class="ok">{{ notice() }}</p>
   }
 
-  @if (loading()) {
-    <p class="muted loading-line">{{ tr('common.loading') }}</p>
-  } @else {
-    <div class="messages-layout">
+  <div class="messages-layout">
       <section class="card messages-pane thread-list" [attr.aria-label]="tr('common.inbox')">
         <header class="messages-pane__head">
           <h3>{{ tr('common.inbox') }}</h3>
@@ -181,7 +178,6 @@
         }
       </section>
     </div>
-  }
 
   @if (imagePreview(); as preview) {
     <adeni-modal

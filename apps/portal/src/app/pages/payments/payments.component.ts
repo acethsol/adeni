@@ -155,6 +155,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     this.loading.set(true);
     this.error.set(null);
     try {
+      await this.feedback.runLoading(async () => {
       await this.api.withAuthorizedClient(async (c) => {
         const [profile, usage, entitlements] = await Promise.all([
           c.getTenantProfile(),
@@ -178,6 +179,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
         this.ledgerPage.set(ledgerPage.page);
         const docs = await c.listBillingDocuments();
         this.documents.set(docs);
+      });
       });
     } catch (caught) {
       this.error.set(this.apiErr(caught, "portal.payments.couldNotLoadPayments"));

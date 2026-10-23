@@ -154,7 +154,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
           // REST inbox still works if realtime is unavailable.
         }
       }
-      }, this.tr("portal.messages.loadingMessages"), this.tr("portal.messages.fetchingInbox"));
+      });
     } catch (caught) {
       this.error.set(this.apiErr(caught, "portal.messages.couldNotLoadMessages"));
     } finally {

@@ -10,10 +10,7 @@
     <p class="ok-banner">{{ tr('portal.plan.planUpdatedEntitlementsRefreshWithin') }}</p>
   }
 
-  @if (loading()) {
-    <p class="muted">{{ tr('common.loading') }}</p>
-  } @else {
-    <adeni-tabs [tabs]="planTabs()" />
+  <adeni-tabs [tabs]="planTabs()" />
 
     @if (planTab() === "compare") {
       <section class="card compare">
@@ -294,5 +291,4 @@
       }
     </section>
     }
-  }
 </app-portal-page>

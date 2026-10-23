@@ -8,9 +8,7 @@
 
   <adeni-tabs [tabs]="tabs()" />
 
-  @if (loading()) {
-    <p class="muted">{{ tr('common.loading') }}</p>
-  } @else {
+  @if (profile()) {
     @if (tab() === "bookings") {
       <section class="card settings-card">
         <header class="settings-card__head">

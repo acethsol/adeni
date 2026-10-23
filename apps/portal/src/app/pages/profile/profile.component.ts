@@ -76,7 +76,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
     { id: "verification", label: this.tr("portal.profile.verification") },
   ]);
 
-  readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly profile = signal<BusinessProfile | null>(null);
   readonly saving = signal(false);
@@ -143,7 +142,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   async load(): Promise<void> {
-    this.loading.set(true);
     this.error.set(null);
     try {
       await this.feedback.runLoading(async () => {
@@ -157,13 +155,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.coverPreview.set(resolveBusinessCoverImage(p.categorySlug, p.coverImageUrl));
         this.galleryImages.set(p.galleryImages ?? []);
         await Promise.all([this.loadCategories(p), this.loadReviews(p)]);
-      }, this.tr("portal.profile.loadingProfile"), this.tr("portal.profile.fetchingBusinessDetails"));
+      });
     } catch (caught) {
       this.error.set(this.apiErr(caught, "portal.profile.couldNotLoadProfile"));
       this.feedback.error(this.apiErr(caught, "portal.profile.couldNotLoadProfile"));
       this.profile.set(null);
-    } finally {
-      this.loading.set(false);
     }
   }
 

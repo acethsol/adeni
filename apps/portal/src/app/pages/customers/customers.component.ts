@@ -236,7 +236,7 @@ export class CustomersComponent implements OnInit, OnDestroy {
           this.totalCount.set(result.totalCount);
           this.entitlements.set(entitlements);
         });
-      }, this.tr("portal.customers.loadingCustomers2"), this.tr("portal.customers.fetchingProfiles"));
+      });
     } catch (caught) {
       this.error.set(this.apiErr(caught, "portal.customers.couldNotLoadCustomersTry"));
       this.feedback.error(this.apiErr(caught, "portal.customers.couldNotLoadCustomers"));

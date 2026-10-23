@@ -131,7 +131,6 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
   private readonly session = inject(PortalSessionService);
   private branchSub: Subscription | null = null;
 
-  readonly loading = signal(true);
   readonly saving = signal(false);
   readonly closedBusy = signal(false);
   readonly error = signal<string | null>(null);
@@ -279,9 +278,9 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
   }
 
   async load(): Promise<void> {
-    this.loading.set(true);
     this.error.set(null);
     try {
+      await this.feedback.runLoading(async () => {
       const [, rules, closed] = await this.api.withAuthorizedClient(async (c) => {
         const tenantProfile = await c.getTenantProfile();
         this.profile.set(tenantProfile);
@@ -296,10 +295,9 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
       });
       this.rows = rulesToRows(rules);
       this.closedRanges.set(closed);
+      });
     } catch (caught) {
       this.error.set(this.apiErr(caught, "portal.availability.couldNotLoadAvailability"));
-    } finally {
-      this.loading.set(false);
     }
   }
 

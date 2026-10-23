@@ -38,7 +38,6 @@ export class PublicPageSettingsComponent implements OnInit {
   private readonly feedback = inject(AdeniFeedbackService);
 
   readonly templates = PUBLIC_PAGE_TEMPLATES;
-  readonly loading = signal(true);
   readonly saving = signal(false);
   readonly profile = signal<BusinessProfile | null>(null);
   private readonly savedSnapshot = signal("");
@@ -59,7 +58,7 @@ export class PublicPageSettingsComponent implements OnInit {
     return this.serializeDraft() !== this.savedSnapshot();
   });
 
-  readonly canSave = computed(() => this.dirty() && !this.saving() && !this.loading());
+  readonly canSave = computed(() => this.dirty() && !this.saving() && this.profile() != null);
 
   readonly previewSlug = computed(() => {
     const locations = this.profile()?.locations ?? [];
@@ -81,7 +80,6 @@ export class PublicPageSettingsComponent implements OnInit {
   }
 
   async load(): Promise<void> {
-    this.loading.set(true);
     try {
       await this.feedback.runLoading(async () => {
         const p = await this.api.withAuthorizedClient((c) => c.getTenantProfile());
@@ -97,12 +95,10 @@ export class PublicPageSettingsComponent implements OnInit {
         this.showBook = page.sections.book ?? true;
         this.showPolicies = page.sections.policies ?? false;
         this.captureSnapshot();
-      }, this.tr("portal.publicPage.loadingPublicPage"), this.tr("portal.publicPage.fetchingTemplateLayout"));
+      });
     } catch (caught) {
       this.profile.set(null);
       this.feedback.error(this.apiErr(caught, "portal.publicPage.couldNotLoadPublicPage"));
-    } finally {
-      this.loading.set(false);
     }
   }
 

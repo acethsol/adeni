@@ -865,7 +865,7 @@ export class StaffComponent implements OnInit, OnDestroy {
     try {
       await this.feedback.runLoading(async () => {
         await this.fetchStaffPageData();
-      }, this.tr("portal.staff.loadingStaff"), this.tr("portal.staff.fetchingRosterServices"));
+      });
     } catch (caught) {
       this.error.set(this.apiErr(caught, "portal.staff.couldNotLoadStaffTry"));
     } finally {

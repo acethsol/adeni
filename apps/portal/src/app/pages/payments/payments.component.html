@@ -6,13 +6,11 @@
     <p class="error-banner">{{ error() }}</p>
   }
 
-  @if (loading()) {
-    <p class="muted">{{ tr('common.loading') }}</p>
-  } @else if (!supportsPayments()) {
+  @if (profile() && !supportsPayments()) {
     <section class="card">
       <p class="muted">{{ tr('portal.payments.paymentsNotEnabledBusinessCategory') }}</p>
     </section>
-  } @else {
+  } @else if (profile()) {
     <adeni-tabs [tabs]="tabs()" />
     @if (tab() === "ledger") {
       <section class="card">

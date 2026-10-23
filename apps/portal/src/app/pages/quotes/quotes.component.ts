@@ -8,7 +8,13 @@ import {
   type QuoteRequestResponse,
   type ServiceOffering,
 } from "@adeni/shared";
-import { AdeniPortalEmptyStateComponent, PortalPageComponent, injectAdeniTranslate, injectAdeniApiError } from "@adeni/ui";
+import {
+  AdeniFeedbackService,
+  AdeniPortalEmptyStateComponent,
+  PortalPageComponent,
+  injectAdeniTranslate,
+  injectAdeniApiError,
+} from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { TenantOperationsRealtimeService } from "@adeni/ui";
 
@@ -24,9 +30,9 @@ export class QuotesComponent implements OnInit, OnDestroy {
   protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
+  private readonly feedback = inject(AdeniFeedbackService);
   private opsSub: Subscription | null = null;
 
-  readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly quotes = signal<QuoteRequestResponse[]>([]);
   readonly services = signal<ServiceOffering[]>([]);
@@ -69,19 +75,18 @@ export class QuotesComponent implements OnInit, OnDestroy {
   }
 
   async load(): Promise<void> {
-    this.loading.set(true);
     this.error.set(null);
     try {
-      const [quotes, services] = await this.api.withAuthorizedClient((client) =>
-        Promise.all([client.listTenantQuotes(), client.getTenantServices()]),
-      );
-      this.quotes.set(quotes);
-      this.services.set(services.filter((service) => service.isActive));
-      if (services[0]?.currency) this.currency = services[0].currency;
+      await this.feedback.runLoading(async () => {
+        const [quotes, services] = await this.api.withAuthorizedClient((client) =>
+          Promise.all([client.listTenantQuotes(), client.getTenantServices()]),
+        );
+        this.quotes.set(quotes);
+        this.services.set(services.filter((service) => service.isActive));
+        if (services[0]?.currency) this.currency = services[0].currency;
+      });
     } catch (caught) {
       this.error.set(this.apiErr(caught, "portal.quotes.couldNotLoadQuoteRequests"));
-    } finally {
-      this.loading.set(false);
     }
   }
 

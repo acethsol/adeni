@@ -106,9 +106,7 @@
     </div>
   </adeni-modal>
 
-  @if (loading()) {
-    <p class="muted">{{ tr('common.loading') }}</p>
-  } @else if (services().length === 0) {
+  @if (services().length === 0 && !loading()) {
     <adeni-portal-empty-state
       icon="add"
       [title]="tr('portal.services.noServicesYet')"

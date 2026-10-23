@@ -70,6 +70,7 @@ import {
 } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
+  AdeniFeedbackService,
   AdeniPortalEmptyStateComponent,
   AdeniStaffButtonComponent,
   AdeniDashboardLayoutPresetCardComponent,
@@ -126,6 +127,7 @@ export class DashboardComponent implements OnInit {
   private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
   readonly session = inject(PortalSessionService);
   private readonly activeLocation = inject(PortalActiveLocationService);
+  private readonly feedback = inject(AdeniFeedbackService);
 
   readonly formatTenantStatus = formatTenantStatus;
   readonly formatSlotTime = formatSlotTime;
@@ -680,6 +682,7 @@ export class DashboardComponent implements OnInit {
   async load(): Promise<void> {
     this.loadError.set(false);
     try {
+      await this.feedback.runLoading(async () => {
       const range = resolveDashboardRange(this.rangePreset());
       const snapshot = await this.businessApi.withAuthorizedClient(async (client) => {
         const [profile, exportEntitlements] = await Promise.all([
@@ -865,6 +868,7 @@ export class DashboardComponent implements OnInit {
         this.ratingLabel.set(this.tr("common.new"));
         this.ratingHint.set(this.tr("common.noReviewsYet"));
       }
+      });
     } catch {
       this.loadError.set(true);
       this.profile.set(null);

@@ -24,6 +24,7 @@ import {
 import {
   AdeniCarbonIconComponent,
   AdeniConfirmService,
+  AdeniFeedbackService,
   AdeniDataTableActionsDirective,
   AdeniDataTableCellDirective,
   AdeniDataTableComponent,
@@ -88,6 +89,7 @@ export class BookingsComponent {
   private readonly api = inject(BusinessApiService);
   private readonly config = inject(ADENI_PORTAL_CONFIG);
   private readonly confirmDialog = inject(AdeniConfirmService);
+  private readonly feedback = inject(AdeniFeedbackService);
   private readonly session = inject(PortalSessionService);
   private readonly activeLocation = inject(PortalActiveLocationService);
   private readonly route = inject(ActivatedRoute);
@@ -328,6 +330,7 @@ export class BookingsComponent {
     this.error.set(null);
     const tab = (this.tab() ?? "pending") as TenantBookingListTab;
     try {
+      await this.feedback.runLoading(async () => {
       await this.api.withAuthorizedClient(async (client) => {
         const [kiosk, usage, profile, entitlements] = await Promise.all([
           client.getTenantKioskStatus().catch(() => null),
@@ -353,6 +356,7 @@ export class BookingsComponent {
         this.totalCount.set(bookingsPage.totalCount);
         this.page.set(bookingsPage.page);
         this.kioskStatus.set(kiosk);
+      });
       });
     } catch (caught) {
       this.error.set(this.apiErr(caught, "portal.bookings.couldNotLoadBookingsCheck"));

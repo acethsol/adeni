@@ -22,10 +22,7 @@
     <p class="warn-banner">{{ conflictWarning() }}</p>
   }
 
-  @if (loading()) {
-    <p class="muted">{{ tr('common.loading') }}</p>
-  } @else {
-    <section class="hours-shell">
+  <section class="hours-shell">
       <header class="hours-shell-head">
         <div>
           <h2 class="hours-shell-title">{{ tr('portal.availability.weeklySchedule') }}</h2>
@@ -91,7 +88,6 @@
         </button>
       </p>
     }
-  }
 
   <adeni-modal
     [open]="showClosedDatesModal()"

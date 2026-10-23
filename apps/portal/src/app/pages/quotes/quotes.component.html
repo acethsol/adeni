@@ -6,9 +6,7 @@
     <p class="error-banner">{{ error() }}</p>
   }
 
-  @if (loading()) {
-    <p class="muted">{{ tr('portal.quotes.loadingQuotes') }}</p>
-  } @else if (quotes().length === 0) {
+  @if (quotes().length === 0 && services().length > 0) {
     <adeni-portal-empty-state
       icon="edit"
       [title]="tr('portal.quotes.noQuoteRequestsYet')"

@@ -14,6 +14,7 @@ import {
 import {
   AdeniCarbonIconComponent,
   AdeniDocumentTitleStrategy,
+  AdeniFeedbackService,
   AdeniLocaleService,
   AdeniPortalEmptyStateComponent,
   type AdeniCarbonIconName,
@@ -46,10 +47,10 @@ export class KioskComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly documentTitle = inject(AdeniDocumentTitleStrategy);
   private readonly localeService = inject(AdeniLocaleService);
+  private readonly feedback = inject(AdeniFeedbackService);
   readonly portalTheme = inject(PortalThemeService);
   readonly locale = this.localeService.locale;
 
-  readonly loading = signal(true);
   readonly checkingIn = signal<string | null>(null);
   readonly exiting = signal(false);
   readonly error = signal<string | null>(null);
@@ -108,9 +109,9 @@ export class KioskComponent implements OnInit {
   }
 
   async bootstrap(): Promise<void> {
-    this.loading.set(true);
     this.error.set(null);
     try {
+      await this.feedback.runLoading(async () => {
       await this.api.withAuthorizedClient(async (client) => {
         const [status, profile, bookings, services] = await Promise.all([
           client.getTenantKioskStatus(),
@@ -129,10 +130,9 @@ export class KioskComponent implements OnInit {
         this.bookings.set(bookings);
         this.services.set(services.filter((service) => service.isActive !== false));
       });
+      });
     } catch {
       this.error.set(this.label("kiosk.errorOpen"));
-    } finally {
-      this.loading.set(false);
     }
   }
 

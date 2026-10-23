@@ -11,6 +11,7 @@ import type {
 import { formatQueueTicketStatus, formatSlotTime } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
+  AdeniFeedbackService,
   AdeniDataTableActionsDirective,
   AdeniDataTableCellDirective,
   AdeniDataTableComponent,
@@ -70,6 +71,7 @@ export class CustomerDetailComponent implements OnInit {
   protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   private readonly route = inject(ActivatedRoute);
+  private readonly feedback = inject(AdeniFeedbackService);
 
   readonly tab = toSignal(
     this.route.queryParamMap.pipe(map((params) => normalizeCustomerDetailTab(params.get("tab")))),
@@ -95,7 +97,6 @@ export class CustomerDetailComponent implements OnInit {
     ];
   });
 
-  readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly customer = signal<TenantCustomerDetail | null>(null);
   readonly statementDownloading = signal(false);
@@ -186,17 +187,17 @@ export class CustomerDetailComponent implements OnInit {
     const id = this.route.snapshot.paramMap.get("id");
     if (!id) {
       this.error.set(this.tr("portal.customers.customerNotFound2"));
-      this.loading.set(false);
       return;
     }
 
-    this.loading.set(true);
     this.error.set(null);
     try {
-      const detail = await this.api.withAuthorizedClient((client) =>
-        client.getTenantCustomer(id),
-      );
-      this.customer.set(detail);
+      await this.feedback.runLoading(async () => {
+        const detail = await this.api.withAuthorizedClient((client) =>
+          client.getTenantCustomer(id),
+        );
+        this.customer.set(detail);
+      });
     } catch (err) {
       if (err instanceof AdeniApiError && err.statusCode === 404) {
         this.error.set(null);
@@ -204,8 +205,6 @@ export class CustomerDetailComponent implements OnInit {
         this.error.set(this.apiErr(err, "portal.customers.couldNotLoadCustomer"));
       }
       this.customer.set(null);
-    } finally {
-      this.loading.set(false);
     }
   }
 

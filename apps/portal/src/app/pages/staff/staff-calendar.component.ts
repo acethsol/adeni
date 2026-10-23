@@ -1024,7 +1024,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
           this.calendar.set(data);
           this.team.set(null);
         }
-      }, this.tr("portal.staff.loadingCalendar"));
+      });
     } catch (caught) {
       this.error.set(this.apiErr(caught, "portal.staff.couldNotLoadCalendar"));
       this.calendar.set(null);

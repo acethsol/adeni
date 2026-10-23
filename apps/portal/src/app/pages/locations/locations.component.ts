@@ -253,7 +253,7 @@ export class LocationsComponent implements OnInit {
           );
           this.locations.set(items);
         });
-      }, this.tr("portal.locations.loadingLocations"), this.tr("portal.locations.fetchingBranches"));
+      });
     } catch (caught) {
       this.error.set(this.apiErr(caught, "portal.locations.couldNotLoadLocations"));
       this.feedback.error(this.apiErr(caught, "portal.locations.couldNotLoadLocations"));

@@ -64,9 +64,7 @@
     </div>
   </adeni-modal>
 
-  @if (loading()) {
-    <p class="muted">{{ tr('common.loading') }}</p>
-  } @else if (locations().length === 0) {
+  @if (locations().length === 0 && !loading()) {
     <adeni-portal-empty-state
       icon="location--filled"
       [title]="tr('portal.locations.noLocationsYet')"

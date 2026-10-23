@@ -3,13 +3,11 @@
     <p class="error-banner">{{ error() }}</p>
   }
 
-  @if (loading()) {
-    <p class="muted">{{ tr('common.loadingQueue') }}</p>
-  } @else if (!supportsQueue()) {
+  @if (profile() && !supportsQueue()) {
     <section class="card">
       <p class="muted">{{ tr('portal.queue.walkQueueNotEnabledBusiness') }}</p>
     </section>
-  } @else {
+  } @else if (profile()) {
     <div class="queue-shell">
       <header class="queue-toolbar card">
         <div class="queue-toolbar__meta">

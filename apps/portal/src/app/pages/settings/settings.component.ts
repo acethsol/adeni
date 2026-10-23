@@ -70,7 +70,6 @@ export class SettingsComponent implements OnInit {
     return base;
   });
 
-  readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly notificationsError = signal<string | null>(null);
   readonly saving = signal(false);
@@ -124,7 +123,6 @@ export class SettingsComponent implements OnInit {
   }
 
   async load(): Promise<void> {
-    this.loading.set(true);
     this.error.set(null);
     try {
       await this.feedback.runLoading(async () => {
@@ -168,8 +166,6 @@ export class SettingsComponent implements OnInit {
       });
     } catch (caught) {
       this.error.set(this.apiErr(caught, "portal.settings.couldNotLoadSettings"));
-    } finally {
-      this.loading.set(false);
     }
   }
 

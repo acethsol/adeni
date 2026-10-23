@@ -298,7 +298,7 @@ export class ServicesComponent implements OnInit {
           else if (marketId === "ottawa" || marketId === "toronto") this.defaultCurrency = "CAD";
           else if (catalog.items[0]?.currency) this.defaultCurrency = catalog.items[0].currency;
         });
-      }, this.tr("portal.services.loadingServices"), this.tr("portal.services.fetchingMenuCollections"));
+      });
     } catch (caught) {
       this.error.set(this.apiErr(caught, "portal.services.couldNotLoadServices"));
       this.feedback.error(this.apiErr(caught, "portal.services.couldNotLoadServices"));

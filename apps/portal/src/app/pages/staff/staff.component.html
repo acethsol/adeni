@@ -22,9 +22,7 @@
     <p class="error-banner">{{ error() }}</p>
   }
 
-  @if (loading()) {
-    <p class="muted">{{ tr('common.loading') }}</p>
-  } @else if (staff().length === 0) {
+  @if (staff().length === 0 && !loading()) {
     <adeni-portal-empty-state
       icon="user--follow"
       [title]="tr('portal.staff.buildTeam')"

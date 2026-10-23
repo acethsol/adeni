@@ -47,9 +47,7 @@
     </div>
   </section>
 
-  @if (loading()) {
-    <p class="muted">{{ tr('portal.bookings.loadingBookings') }}</p>
-  } @else if (displayedBookings().length === 0) {
+  @if (displayedBookings().length === 0 && !loading()) {
     @let empty = emptyState();
     <adeni-portal-empty-state
       [title]="empty.title"

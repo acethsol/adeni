@@ -39,6 +39,7 @@ import {
   AdeniDataTableComponent,
   AdeniListToolbarComponent,
   AdeniPillComponent,
+  AdeniFeedbackService,
   AdeniPortalEmptyStateComponent,
   PortalPageComponent,
   AdeniTabsComponent,
@@ -80,8 +81,8 @@ export class PlanComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
   readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly feedback = inject(AdeniFeedbackService);
 
-  readonly loading = signal(true);
   readonly checkoutBusy = signal(false);
   readonly error = signal<string | null>(null);
   readonly effectiveSku = signal<SubscriptionSku>("starter");
@@ -187,9 +188,9 @@ export class PlanComponent implements OnInit {
   }
 
   async load(): Promise<void> {
-    this.loading.set(true);
     this.error.set(null);
     try {
+      await this.feedback.runLoading(async () => {
       await this.api.withAuthorizedClient(async (c) => {
         const [context, profile, subscriptionUsage, history] = await Promise.all([
           c.getBusinessContext(),
@@ -225,10 +226,9 @@ export class PlanComponent implements OnInit {
         }
       });
       await this.maybeCompleteStubCheckout();
+      });
     } catch (caught) {
       this.error.set(this.apiErr(caught, "portal.plan.couldNotLoadPlanDetails"));
-    } finally {
-      this.loading.set(false);
     }
   }
 

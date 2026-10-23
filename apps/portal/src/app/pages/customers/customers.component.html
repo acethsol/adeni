@@ -6,9 +6,7 @@
     <p class="error-banner">{{ error() }}</p>
   }
 
-  @if (loading() && items().length === 0) {
-    <p class="muted">{{ tr('portal.customers.loadingCustomers') }}</p>
-  } @else if (totalCount() === 0 && !searchQuery().trim() && accountFilter() === "all" && !loading()) {
+  @if (totalCount() === 0 && !searchQuery().trim() && accountFilter() === "all" && !loading()) {
     <adeni-portal-empty-state
       icon="user--filled"
       [title]="tr('portal.customers.noCustomersYet')"

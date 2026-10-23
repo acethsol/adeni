@@ -3,7 +3,12 @@ import { FormsModule } from "@angular/forms";
 import { RouterLink } from "@angular/router";
 import type { BusinessProfile, Category, MarketConfig } from "@adeni/shared";
 import { getCategoryLabel } from "@adeni/shared";
-import { PortalPageComponent, injectAdeniTranslate, injectAdeniApiError } from "@adeni/ui";
+import {
+  AdeniFeedbackService,
+  PortalPageComponent,
+  injectAdeniTranslate,
+  injectAdeniApiError,
+} from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 
 const PHONE_PATTERN = /^\+?[0-9\s-]{7,20}$/;
@@ -20,8 +25,7 @@ export class RegisterComponent implements OnInit {
   protected readonly tr = injectAdeniTranslate();
   protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
-
-  readonly loading = signal(true);
+  private readonly feedback = inject(AdeniFeedbackService);
   readonly submitting = signal(false);
   readonly error = signal<string | null>(null);
   readonly profile = signal<BusinessProfile | null>(null);
@@ -62,8 +66,8 @@ export class RegisterComponent implements OnInit {
   }
 
   async load(): Promise<void> {
-    this.loading.set(true);
     try {
+      await this.feedback.runLoading(async () => {
       const publicClient = this.api.createPublicClient();
       const markets = await publicClient.getMarkets();
       this.markets.set(markets);
@@ -77,10 +81,9 @@ export class RegisterComponent implements OnInit {
       } catch {
         this.profile.set(null);
       }
+      });
     } catch (caught) {
       this.error.set(this.apiErr(caught, "portal.register.couldNotLoadRegistrationForm"));
-    } finally {
-      this.loading.set(false);
     }
   }
 

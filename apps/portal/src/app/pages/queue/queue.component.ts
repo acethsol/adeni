@@ -66,7 +66,6 @@ export class QueueComponent implements OnInit, OnDestroy {
   private branchSub: Subscription | null = null;
   private opsSub: { unsubscribe(): void } | null = null;
 
-  readonly loading = signal(true);
   readonly refreshing = signal(false);
   readonly error = signal<string | null>(null);
   readonly profile = signal<BusinessProfile | null>(null);
@@ -172,13 +171,12 @@ export class QueueComponent implements OnInit, OnDestroy {
   }
 
   async load(initial: boolean): Promise<void> {
-    if (initial) {
-      this.loading.set(true);
-    } else {
+    if (!initial) {
       this.refreshing.set(true);
     }
     this.error.set(null);
     try {
+      const fetch = async (): Promise<void> => {
       await this.api.withAuthorizedClient(async (client) => {
         const [profile, entitlements, usage] = await Promise.all([
           client.getTenantProfile(),
@@ -203,13 +201,18 @@ export class QueueComponent implements OnInit, OnDestroy {
         this.staff.set(staff.filter((m) => m.isActive !== false));
       });
       this.lastRefreshedAt.set(new Date());
+      };
+      if (initial) {
+        await this.feedback.runLoading(fetch);
+      } else {
+        await fetch();
+      }
     } catch (caught) {
       if (initial) {
         this.error.set(this.apiErr(caught, "portal.queue.couldNotLoadQueue"));
         this.tickets.set([]);
       }
     } finally {
-      this.loading.set(false);
       this.refreshing.set(false);
     }
   }
