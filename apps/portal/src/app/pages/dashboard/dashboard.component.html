@@ -21,7 +21,7 @@
           role="tablist"
           [attr.aria-label]="tr('portal.dashboard.dashboardDateRange')"
         >
-          @for (preset of rangePresets; track preset.id) {
+          @for (preset of rangePresetOptions(); track preset.id) {
             <button
               type="button"
               role="tab"
@@ -56,7 +56,7 @@
           <a class="btn" routerLink="/bookings">
             <adeni-carbon-icon name="time" [size]="16" />
             @if (pendingCount() > 0) {
-              {{ pendingCount() }} waiting
+              {{ tr('portal.dashboard.pendingWaiting', { count: pendingCount() }) }}
             } @else {
               {{ tr('common.myBookings') }}
             }
@@ -71,7 +71,7 @@
           <a class="btn" routerLink="/bookings">
             <adeni-carbon-icon name="time" [size]="16" />
             @if (pendingCount() > 0) {
-              {{ pendingCount() }} waiting
+              {{ tr('portal.dashboard.pendingWaiting', { count: pendingCount() }) }}
             } @else {
               {{ tr('portal.dashboard.bookingInbox') }}
             }
@@ -95,7 +95,7 @@
               <div class="dashboard-native-tile" [class.dashboard-native-tile--edit]="editMode()">
                 @if (editMode()) {
                   <app-dashboard-widget-edit-chrome
-                    [title]="dashboardWidgetTitle(entry.id)"
+                    [title]="widgetTitle(entry.id)"
                     [width]="widgetLayoutWidth(entry)"
                     [removable]="widgetRemovable(entry.id)"
                     (widthChange)="setWidgetWidth(entry.id, $event)"
@@ -106,9 +106,9 @@
                 <a class="widget-card usage" routerLink="/plan" [class.usage-warn]="isNearBookingLimit(plan)">
                   <div>
                     <p class="usage-label">{{ planUsageLabel() }}</p>
-                    <p class="usage-value">{{ formatBookingUsage(plan) }}</p>
+                    <p class="usage-value">{{ bookingUsageText(plan) }}</p>
                     @if (planPriceHint(); as price) {
-                      <p class="usage-meta">{{ price }} list · Manage plan</p>
+                      <p class="usage-meta">{{ tr('portal.dashboard.planPriceListMeta', { price, managePlan: tr('portal.dashboard.managePlan') }) }}</p>
                     } @else {
                       <p class="usage-meta">{{ tr('portal.dashboard.managePlan') }}</p>
                     }
@@ -132,7 +132,7 @@
               >
                 @if (editMode()) {
                   <app-dashboard-widget-edit-chrome
-                    [title]="dashboardWidgetTitle(entry.id)"
+                    [title]="widgetTitle(entry.id)"
                     [width]="widgetLayoutWidth(entry)"
                     [removable]="widgetRemovable(entry.id)"
                     (widthChange)="setWidgetWidth(entry.id, $event)"
@@ -142,7 +142,7 @@
                 @if (!editMode()) {
                 <header class="widget-card__head overview-head">
                   <div class="overview-head-copy">
-                    <h3>{{ dashboardWidgetTitle("kpis_row") }}</h3>
+                    <h3>{{ widgetTitle("kpis_row") }}</h3>
                     <p class="hint">{{ rangeOverviewHint() }}</p>
                     <p class="overview-insight">{{ overviewInsight() }}</p>
                   </div>
@@ -228,8 +228,8 @@
                 [layoutRemovable]="widgetRemovable(entry.id)"
                 (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
                 (layoutRemove)="removeWidget(entry.id)"
-                [title]="dashboardWidgetTitle('week_appointments')"
-                [hint]="'Daily count · ' + rangeOverviewHint() + '.'"
+                [title]="widgetTitle('week_appointments')"
+                [hint]="tr('portal.dashboard.chartHintDailyCount', { rangeHint: rangeOverviewHint() })"
               >
                 @if (appointmentChartData().length === 0) {
                   <div class="widget-body-empty">
@@ -253,7 +253,7 @@
                 (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
                 (layoutRemove)="removeWidget(entry.id)"
                 class="today-chair-widget"
-                [title]="dashboardWidgetTitle('today_schedule')"
+                [title]="widgetTitle('today_schedule')"
                 [hint]="tr('portal.dashboard.remainingAppointmentsToday')"
               >
                 @if (today().length === 0) {
@@ -287,7 +287,7 @@
                 [layoutRemovable]="widgetRemovable(entry.id)"
                 (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
                 (layoutRemove)="removeWidget(entry.id)"
-                [title]="dashboardWidgetTitle('booking_mix')"
+                [title]="widgetTitle('booking_mix')"
                 [hint]="tr('portal.dashboard.allBookingsFileGroupedBy')"
               >
                 @if (bookingMixChartData().length === 0) {
@@ -328,8 +328,8 @@
                 [layoutRemovable]="widgetRemovable(entry.id)"
                 (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
                 (layoutRemove)="removeWidget(entry.id)"
-                [title]="dashboardWidgetTitle('collected_revenue')"
-                [hint]="'Online payments · ' + rangeOverviewHint() + '.'"
+                [title]="widgetTitle('collected_revenue')"
+                [hint]="tr('portal.dashboard.chartHintOnlinePayments', { rangeHint: rangeOverviewHint() })"
               >
                 @if (collectedChartData().length === 0) {
                   <p class="hint">{{ tr('portal.dashboard.noCollectedPaymentsRange') }}</p>
@@ -349,8 +349,8 @@
                 [layoutRemovable]="widgetRemovable(entry.id)"
                 (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
                 (layoutRemove)="removeWidget(entry.id)"
-                [title]="dashboardWidgetTitle('service_mix')"
-                [hint]="'Top booked services · ' + rangeOverviewHint() + '.'"
+                [title]="widgetTitle('service_mix')"
+                [hint]="tr('portal.dashboard.chartHintTopBookedServices', { rangeHint: rangeOverviewHint() })"
               >
                 @if (serviceMixChartData().length === 0) {
                   <div class="chart-empty">
@@ -359,7 +359,7 @@
                     </span>
                     <p class="chart-empty-title">{{ tr('portal.dashboard.nothingBookedRange') }}</p>
                     <p class="chart-empty-copy">
-                      Top services appear once you have confirmed visits ({{ rangeStatHint() }}).
+                      {{ tr('portal.dashboard.topServicesEmptyHint', { rangeStat: rangeStatHint() }) }}
                     </p>
                     @if (hasEntitlement("advancedAnalytics")) {
                       <a class="btn btn-ghost" routerLink="/services">{{ tr('common.manageServices') }}</a>
@@ -381,8 +381,8 @@
                 [layoutRemovable]="widgetRemovable(entry.id)"
                 (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
                 (layoutRemove)="removeWidget(entry.id)"
-                [title]="dashboardWidgetTitle('booked_value')"
-                [hint]="'List price · ' + rangeOverviewHint() + ' (not cash in bank).'"
+                [title]="widgetTitle('booked_value')"
+                [hint]="tr('portal.dashboard.chartHintListPrice', { rangeHint: rangeOverviewHint() })"
               >
                 @if (bookedValueChartData().length === 0) {
                   <p class="hint">{{ tr('portal.dashboard.noBookedValueRange') }}</p>
@@ -402,8 +402,8 @@
                 [layoutRemovable]="widgetRemovable(entry.id)"
                 (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
                 (layoutRemove)="removeWidget(entry.id)"
-                [title]="dashboardWidgetTitle('staff_leaderboard')"
-                [hint]="'Bookings by team member · ' + rangeOverviewHint() + '.'"
+                [title]="widgetTitle('staff_leaderboard')"
+                [hint]="tr('portal.dashboard.chartHintBookingsByTeam', { rangeHint: rangeOverviewHint() })"
               >
                 @if (staffLeaderboardChartData().length === 0) {
                   <p class="hint">{{ tr('portal.dashboard.noStaffAssignedBookingsRange') }}</p>
@@ -423,7 +423,7 @@
                 [layoutRemovable]="widgetRemovable(entry.id)"
                 (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
                 (layoutRemove)="removeWidget(entry.id)"
-                [title]="dashboardWidgetTitle('pending_inbox')"
+                [title]="widgetTitle('pending_inbox')"
               >
                 <a class="widget-stat-link" routerLink="/bookings" [queryParams]="{ tab: 'pending' }">
                   <p class="widget-stat-value">{{ pendingCount() }}</p>
@@ -438,7 +438,7 @@
                 [layoutRemovable]="widgetRemovable(entry.id)"
                 (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
                 (layoutRemove)="removeWidget(entry.id)"
-                [title]="dashboardWidgetTitle('messages_unread')"
+                [title]="widgetTitle('messages_unread')"
               >
                 <div class="messages-widget">
                   <div class="messages-widget__hero">
@@ -498,7 +498,7 @@
                 [layoutRemovable]="widgetRemovable(entry.id)"
                 (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
                 (layoutRemove)="removeWidget(entry.id)"
-                [title]="dashboardWidgetTitle('quote_pipeline')"
+                [title]="widgetTitle('quote_pipeline')"
               >
                 <a class="widget-stat-link" routerLink="/quotes">
                   <p class="widget-stat-value">{{ openQuotesCount() }}</p>
@@ -513,7 +513,7 @@
                 [layoutRemovable]="widgetRemovable(entry.id)"
                 (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
                 (layoutRemove)="removeWidget(entry.id)"
-                [title]="dashboardWidgetTitle('rating_summary')"
+                [title]="widgetTitle('rating_summary')"
               >
                 <p class="widget-stat-value">{{ ratingLabel() }}</p>
                 <p class="hint">{{ ratingHint() }}</p>
@@ -529,7 +529,7 @@
                 [layoutRemovable]="widgetRemovable(entry.id)"
                 (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
                 (layoutRemove)="removeWidget(entry.id)"
-                [title]="dashboardWidgetTitle('verification_status')"
+                [title]="widgetTitle('verification_status')"
               >
                 <p class="widget-stat-value">{{ formatTenantStatus(business.status) }}</p>
                 <p class="hint">{{ verificationHint() }}</p>
@@ -545,7 +545,7 @@
                 [layoutRemovable]="widgetRemovable(entry.id)"
                 (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
                 (layoutRemove)="removeWidget(entry.id)"
-                [title]="dashboardWidgetTitle('queue_now')"
+                [title]="widgetTitle('queue_now')"
               >
                 @if (queueWaiting().length === 0) {
                   <adeni-portal-empty-state
@@ -580,7 +580,7 @@
               >
                 @if (editMode()) {
                   <app-dashboard-widget-edit-chrome
-                    [title]="dashboardWidgetTitle(entry.id)"
+                    [title]="widgetTitle(entry.id)"
                     [width]="widgetLayoutWidth(entry)"
                     [removable]="widgetRemovable(entry.id)"
                     (widthChange)="setWidgetWidth(entry.id, $event)"
@@ -589,7 +589,7 @@
                 } @else {
                   <header class="shortcuts-head">
                     <div>
-                      <h3 class="section-title">{{ dashboardWidgetTitle("quick_actions") }}</h3>
+                      <h3 class="section-title">{{ widgetTitle("quick_actions") }}</h3>
                       <p class="section-lead muted">{{ tr('portal.dashboard.jumpToolsYouUseMost') }}</p>
                     </div>
                   </header>
@@ -691,12 +691,12 @@
                 <button
                   type="button"
                   class="picker-widget-btn"
-                  [attr.title]="dashboardWidgetSummary(widget.id)"
-                  [attr.aria-label]="widget.title + '. ' + dashboardWidgetSummary(widget.id)"
+                  [attr.title]="widgetSummary(widget.id)"
+                  [attr.aria-label]="widgetTitle(widget.id) + '. ' + widgetSummary(widget.id)"
                   (click)="addWidget(widget.id)"
                 >
                   <adeni-carbon-icon name="add" [size]="16" />
-                  {{ widget.title }}
+                  {{ widgetTitle(widget.id) }}
                 </button>
               </li>
             }

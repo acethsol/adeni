@@ -2,6 +2,8 @@ import catalog from "./data/country-pricing.json";
 import { formatPrice } from "./format";
 import type { SubscriptionUsage } from "./schemas";
 import { z } from "zod";
+import { t } from "./i18n/index";
+import { defaultLocale } from "./i18n/types";
 
 export const SUBSCRIPTION_SKUS = ["starter", "professional", "business"] as const;
 export type SubscriptionSku = (typeof SUBSCRIPTION_SKUS)[number];
@@ -20,10 +22,13 @@ export function formatSubscriptionSku(sku: SubscriptionSku | null | undefined): 
 }
 
 /** Dashboard / plan strip — SKU names (Starter, Professional). */
-export function formatSubscriptionPlanLabel(usage: SubscriptionUsage): string {
+export function formatSubscriptionPlanLabel(
+  usage: SubscriptionUsage,
+  locale: string = defaultLocale,
+): string {
   const base = SUBSCRIPTION_SKU_LABELS[usage.subscriptionSku];
   if (usage.billingStatus === "trialing") {
-    return `${base} trial`;
+    return t(locale, "portal.dashboard.planTrialLabel", { plan: base });
   }
   return base;
 }

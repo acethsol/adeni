@@ -30,6 +30,7 @@ export { getCategoryLabel, getCategoryGroupLabel } from "./categories";
 export { getReviewCountLabel } from "./reviews";
 export { getMarketTagline, getMarketDescription } from "./market-copy";
 export { formatBookingStatusLabel } from "./bookings";
+export { formatDashboardWidgetSummary, formatDashboardWidgetTitle } from "./dashboard";
 export { getAskAdeniPrompts } from "./search-prompts";
 export {
   TRANSLATION_COOKIE_NAME,

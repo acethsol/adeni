@@ -10,11 +10,14 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { RouterLink } from "@angular/router";
 import {
   addDashboardWidget,
-  BOOKING_STATUS_LABELS,
   cloneDashboardLayout,
   DASHBOARD_LAYOUT_PRESET_ICONS,
   DASHBOARD_LAYOUT_PRESETS,
   DASHBOARD_RANGE_PRESETS,
+  formatDashboardRangePresetLabel,
+  formatDashboardWidgetSummary,
+  formatDashboardWidgetTitle,
+  formatBookingStatusLabel,
   filterDashboardLayoutByVisibility,
   dashboardLayoutFingerprint,
   getDashboardLayoutPresetDisplayCopy,
@@ -23,8 +26,7 @@ import {
   t,
   defaultLocale,
   DASHBOARD_WIDGET_DEFINITIONS,
-  dashboardWidgetTitle,
-  dashboardWidgetSummary,
+  getReviewCountLabel,
   resolveDashboardCapabilities,
   resolveDashboardLayoutPreset,
   type DashboardLayoutPreset,
@@ -75,6 +77,7 @@ import {
   PortalPageComponent,
   type AdeniCarbonIconName,
   injectAdeniTranslate,
+  AdeniLocaleService,
 } from "@adeni/ui";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { BusinessApiService } from "../../core/services/business-api.service";
@@ -115,6 +118,7 @@ type StatusSlice = { status: number; label: string; count: number; percent: numb
 })
 export class DashboardComponent implements OnInit {
   protected readonly tr = injectAdeniTranslate();
+  private readonly uiLocale = inject(AdeniLocaleService).locale;
   private readonly businessApi = inject(BusinessApiService);
   private readonly config = inject(ADENI_PORTAL_CONFIG);
   private readonly destroyRef = inject(DestroyRef);
@@ -125,8 +129,6 @@ export class DashboardComponent implements OnInit {
 
   readonly formatTenantStatus = formatTenantStatus;
   readonly formatSlotTime = formatSlotTime;
-  readonly dashboardWidgetTitle = dashboardWidgetTitle;
-  readonly dashboardWidgetSummary = dashboardWidgetSummary;
   readonly profile = signal<BusinessProfile | null>(null);
   readonly layout = signal<DashboardLayout>(resolveDashboardLayout(false));
   readonly editMode = signal(false);
@@ -156,29 +158,47 @@ export class DashboardComponent implements OnInit {
   readonly exportEntitlementsDirect = signal<TenantEntitlements | null>(null);
   readonly rangePreset = signal<DashboardRangePreset>("7d");
   readonly appointmentsInRange = signal(0);
-  readonly rangePresets = DASHBOARD_RANGE_PRESETS;
 
-  readonly rangeOverviewHint = computed(() =>
-    formatDashboardRangeOverviewHint(this.rangePreset()),
+  readonly rangePresetOptions = computed(() =>
+    DASHBOARD_RANGE_PRESETS.map((entry) => ({
+      id: entry.id,
+      label: formatDashboardRangePresetLabel(this.uiLocale(), entry.id),
+    })),
   );
 
+  readonly rangeOverviewHint = computed(() =>
+    formatDashboardRangeOverviewHint(this.rangePreset(), new Date(), this.uiLocale()),
+  );
+
+  readonly rangeStatHint = computed(() =>
+    formatDashboardRangeStatHint(this.rangePreset(), new Date(), this.uiLocale()),
+  );
+
+  readonly categoryLine = computed(() => {
+    const profile = this.profile();
+    if (!profile) {
+      return "";
+    }
+    return getCategoryLabel(this.uiLocale(), profile.categorySlug);
+  });
+
   readonly overviewInsight = computed(() => {
+    this.uiLocale();
     const pending = this.pendingCount();
     const appointments = this.appointmentsInRange();
     if (pending > 0) {
       return pending === 1
         ? this.tr("portal.dashboard.oneBookingRequestWaitingYou")
-        : `${pending} booking requests are waiting on you.`;
+        : this.tr("portal.dashboard.bookingRequestsWaiting", { count: pending });
     }
     if (appointments > 0) {
       return appointments === 1
         ? this.tr("portal.dashboard.oneVisitScheduledWindow")
-        : `${appointments} visits scheduled in this window.`;
+        : this.tr("portal.dashboard.visitsScheduledInWindow", { count: appointments });
     }
     return this.tr("portal.dashboard.noVisitsWindowYetShare");
   });
 
-  readonly formatBookingUsage = formatBookingUsage;
   readonly isNearBookingLimit = isNearBookingLimit;
 
   readonly visibleLayoutWidgets = computed(() =>
@@ -323,14 +343,25 @@ export class DashboardComponent implements OnInit {
   }
 
   presetRangeLabel(preset: DashboardLayoutPreset): string {
-    return (
-      DASHBOARD_RANGE_PRESETS.find((entry) => entry.id === preset.layout.range)?.label
-      ?? preset.layout.range
-    );
+    return formatDashboardRangePresetLabel(this.uiLocale(), preset.layout.range);
   }
 
   presetPreviewWidgetTitles(preset: DashboardLayoutPreset): string[] {
-    return this.presetPreviewLayout(preset).widgets.map((entry) => dashboardWidgetTitle(entry.id));
+    return this.presetPreviewLayout(preset).widgets.map((entry) =>
+      formatDashboardWidgetTitle(this.uiLocale(), entry.id),
+    );
+  }
+
+  widgetTitle(widgetId: DashboardWidgetId): string {
+    return formatDashboardWidgetTitle(this.uiLocale(), widgetId);
+  }
+
+  widgetSummary(widgetId: DashboardWidgetId): string {
+    return formatDashboardWidgetSummary(this.uiLocale(), widgetId);
+  }
+
+  bookingUsageText(usage: SubscriptionUsage): string {
+    return formatBookingUsage(usage, this.uiLocale());
   }
 
   presetWireframeBlocks(preset: DashboardLayoutPreset): { w: number }[] {
@@ -413,12 +444,6 @@ export class DashboardComponent implements OnInit {
     this.persistLayout(updateDashboardWidgetWidth(this.layout(), widgetId, width));
   }
 
-  categoryLine(): string {
-    const profile = this.profile();
-    if (!profile) return "";
-    return getCategoryLabel("en", profile.categorySlug);
-  }
-
   primaryLocationName(): string | null {
     const profile = this.profile();
     if (!profile) return null;
@@ -454,7 +479,7 @@ export class DashboardComponent implements OnInit {
   planUsageLabel(): string {
     const usage = this.usage();
     if (!usage) return this.tr("admin.businesses.plan");
-    return formatSubscriptionPlanLabel(usage);
+    return formatSubscriptionPlanLabel(usage, this.uiLocale());
   }
 
   planPriceHint(): string | null {
@@ -509,11 +534,7 @@ export class DashboardComponent implements OnInit {
   }
 
   rangeLabel(): string {
-    return this.rangePresets.find((entry) => entry.id === this.rangePreset())?.label ?? this.tr("portal.dashboard.range");
-  }
-
-  rangeStatHint(): string {
-    return formatDashboardRangeStatHint(this.rangePreset());
+    return formatDashboardRangePresetLabel(this.uiLocale(), this.rangePreset());
   }
 
   setRange(preset: DashboardRangePreset): void {
@@ -839,8 +860,7 @@ export class DashboardComponent implements OnInit {
       this.usage.set(snapshot.usage);
       if (snapshot.rating?.avg) {
         this.ratingLabel.set(snapshot.rating.avg.toFixed(1));
-        const count = snapshot.rating.count;
-        this.ratingHint.set(count === 1 ? "1 review" : `${count} reviews`);
+        this.ratingHint.set(getReviewCountLabel(this.uiLocale(), snapshot.rating.count));
       } else {
         this.ratingLabel.set(this.tr("common.new"));
         this.ratingHint.set(this.tr("common.noReviewsYet"));
@@ -884,7 +904,8 @@ export class DashboardComponent implements OnInit {
 
   private formatChartKey(isoDate: string): string {
     const date = new Date(`${isoDate}T12:00:00Z`);
-    return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    const loc = this.uiLocale() === "fr" ? "fr-CA" : "en-CA";
+    return date.toLocaleDateString(loc, { month: "short", day: "numeric" });
   }
 
   private applyRevenueFromSummary(summary: {
@@ -925,7 +946,7 @@ export class DashboardComponent implements OnInit {
       const count = bookings.filter((item) => item.status === status).length;
       return {
         status,
-        label: BOOKING_STATUS_LABELS[status] ?? this.tr("portal.bookings.unknown"),
+        label: formatBookingStatusLabel(this.uiLocale(), status),
         count,
         percent: Math.round((count / total) * 100),
       };

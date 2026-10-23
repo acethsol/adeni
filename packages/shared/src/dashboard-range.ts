@@ -1,3 +1,6 @@
+import { t } from "./i18n/index";
+import { defaultLocale } from "./i18n/types";
+
 export type DashboardRangePreset = "today" | "7d" | "30d" | "mtd";
 
 export const DASHBOARD_RANGE_PRESETS: { id: DashboardRangePreset; label: string }[] = [
@@ -6,6 +9,19 @@ export const DASHBOARD_RANGE_PRESETS: { id: DashboardRangePreset; label: string 
   { id: "30d", label: "30 days" },
   { id: "mtd", label: "Month to date" },
 ];
+
+export function formatDashboardRangePresetLabel(
+  locale: string | undefined,
+  preset: DashboardRangePreset,
+): string {
+  const loc = locale ?? defaultLocale;
+  const key = `portal.dashboard.rangePreset.${preset}`;
+  const translated = t(loc, key);
+  if (translated !== key) {
+    return translated;
+  }
+  return DASHBOARD_RANGE_PRESETS.find((entry) => entry.id === preset)?.label ?? t(loc, "portal.dashboard.range");
+}
 
 /** UTC range [from, to) for dashboard aggregate APIs. */
 export function resolveDashboardRange(
@@ -89,30 +105,23 @@ export function formatDashboardRangeDateSpan(
 export function formatDashboardRangeOverviewHint(
   preset: DashboardRangePreset,
   now = new Date(),
-  locale = "en-CA",
+  locale: string = defaultLocale,
 ): string {
-  const span = formatDashboardRangeDateSpan(preset, now, locale);
-  const presetLabel =
-    DASHBOARD_RANGE_PRESETS.find((entry) => entry.id === preset)?.label ?? "Range";
-
-  switch (preset) {
-    case "today":
-      return `${presetLabel} · ${span}`;
-    case "mtd":
-      return `${presetLabel} · ${span}`;
-    default:
-      return `${presetLabel} · ${span}`;
-  }
+  const dateLocale = locale === "fr" ? "fr-CA" : "en-CA";
+  const span = formatDashboardRangeDateSpan(preset, now, dateLocale);
+  const presetLabel = formatDashboardRangePresetLabel(locale, preset);
+  return `${presetLabel} · ${span}`;
 }
 
 /** Short phrase for stat subtitles, e.g. "Oct 14–21". */
 export function formatDashboardRangeStatHint(
   preset: DashboardRangePreset,
   now = new Date(),
-  locale = "en-CA",
+  locale: string = defaultLocale,
 ): string {
+  const dateLocale = locale === "fr" ? "fr-CA" : "en-CA";
   if (preset === "today") {
-    return "Today";
+    return formatDashboardRangePresetLabel(locale, "today");
   }
-  return formatDashboardRangeDateSpan(preset, now, locale);
+  return formatDashboardRangeDateSpan(preset, now, dateLocale);
 }

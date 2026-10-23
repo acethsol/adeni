@@ -1,5 +1,7 @@
 import type { SubscriptionUsage, TenantBillingStatus } from "./schemas";
 import { PLAN_COMPARISON, planComparisonCell } from "./plan-entitlements";
+import { t } from "./i18n/index";
+import { defaultLocale } from "./i18n/types";
 
 export type { PlanFeature } from "./plan-entitlements";
 export { PLAN_COMPARISON, planComparisonCell };
@@ -34,11 +36,16 @@ export function formatBillingChargeStatus(status: string): string {
   return status;
 }
 
-export function formatBookingUsage(usage: SubscriptionUsage): string {
+export function formatBookingUsage(usage: SubscriptionUsage, locale: string = defaultLocale): string {
   if (usage.bookingsLimitThisMonth == null) {
-    return `${usage.bookingsUsedThisMonth} bookings this month`;
+    return t(locale, "portal.dashboard.bookingsThisMonth", {
+      used: usage.bookingsUsedThisMonth,
+    });
   }
-  return `${usage.bookingsUsedThisMonth} / ${usage.bookingsLimitThisMonth} bookings this month`;
+  return t(locale, "portal.dashboard.bookingsThisMonthLimited", {
+    used: usage.bookingsUsedThisMonth,
+    limit: usage.bookingsLimitThisMonth,
+  });
 }
 
 /** Compact metric line for plan usage rows (bookings omit "this month" — heading provides context). */
