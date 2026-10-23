@@ -2,6 +2,7 @@
   class="branch-root"
   data-menu-root="branch"
   [class.is-open]="open()"
+  [class.has-hint]="!!display().hint"
   (keydown)="onRootKeydown($event)"
 >
   <button
@@ -15,25 +16,25 @@
   >
     <adeni-carbon-icon class="branch-icon" name="location--filled" [size]="16" aria-hidden="true" />
     <span class="branch-copy">
-      <span class="branch-title-row">
-        <span class="branch-title" [title]="display().title">{{ display().title }}</span>
-        @if (display().isPrimary && !display().allLocationsScope) {
-          <adeni-pill tone="brand" [compact]="true" class="branch-primary-pill">{{
-            tr('common.primary')
-          }}</adeni-pill>
-        }
-      </span>
+      <span class="branch-title" [title]="display().title">{{ display().title }}</span>
       @if (display().hint) {
         <span class="branch-hint" [title]="display().hint">{{ display().hint }}</span>
       }
     </span>
-    <adeni-carbon-icon
-      class="branch-chev"
-      name="chevron--down"
-      [size]="16"
-      aria-hidden="true"
-      [class.is-open]="open()"
-    />
+    <span class="branch-trailing">
+      @if (display().isPrimary && !display().allLocationsScope) {
+        <adeni-pill tone="brand" [compact]="true" class="branch-primary-pill">{{
+          tr('common.primary')
+        }}</adeni-pill>
+      }
+      <adeni-carbon-icon
+        class="branch-chev"
+        name="chevron--down"
+        [size]="16"
+        aria-hidden="true"
+        [class.is-open]="open()"
+      />
+    </span>
   </button>
 
   @if (open()) {

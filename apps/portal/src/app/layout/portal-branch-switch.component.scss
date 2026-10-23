@@ -8,32 +8,30 @@
   align-items: center;
   gap: var(--cds-spacing-03, 0.5rem);
   width: 100%;
-  min-width: 11.5rem;
+  min-width: 9rem;
   max-width: 100%;
-  min-height: 2.5rem;
-  padding: 0.3rem var(--cds-spacing-03, 0.5rem) 0.3rem var(--cds-spacing-04, 0.75rem);
-  border: 1px solid var(--border);
+  height: 2rem;
+  padding: 0 0.5rem 0 0.55rem;
+  border: 1px solid transparent;
   border-radius: 0;
-  background: var(--surface);
+  background: var(--bg-subtle);
   color: var(--text);
   font: inherit;
   cursor: pointer;
   text-align: left;
   transition:
     border-color 0.15s ease,
-    background-color 0.15s ease,
-    box-shadow 0.15s ease;
+    background-color 0.15s ease;
 
   &:hover {
-    border-color: rgb(127 86 255 / 35%);
-    background: rgb(127 86 255 / 4%);
+    border-color: var(--border);
+    background: var(--surface);
   }
 
   &[aria-expanded="true"],
   .branch-root.is-open & {
     border-color: var(--adeni-purple);
-    background: rgb(127 86 255 / 6%);
-    box-shadow: 0 0 0 1px rgb(127 86 255 / 18%);
+    background: var(--surface);
   }
 
   &:focus-visible {
@@ -51,25 +49,22 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 0.125rem;
   justify-content: center;
+  gap: 0;
   min-width: 0;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 
-.branch-title-row,
-.branch-item-title-row {
-  display: flex;
+.branch-root:not(.has-hint) .branch-copy {
+  flex-direction: row;
   align-items: center;
-  gap: var(--cds-spacing-03, 0.5rem);
-  min-width: 0;
 }
 
 .branch-title,
 .branch-item-title {
   overflow: hidden;
   font-size: 0.8125rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: 0.01em;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -81,9 +76,25 @@
   color: var(--text-muted);
   font-size: 0.6875rem;
   font-weight: 500;
-  line-height: 1.2;
+  line-height: 1.15;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.branch-root.has-hint .branch-hint {
+  margin-top: 0.0625rem;
+}
+
+.branch-trailing {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: 0.125rem;
+}
+
+.branch-root.has-hint .branch-trailing {
+  align-self: center;
 }
 
 .branch-primary-pill {
@@ -92,7 +103,6 @@
 
 .branch-chev {
   flex-shrink: 0;
-  margin-left: auto;
   color: var(--text-muted);
   transition: transform 0.2s ease, color 0.15s ease;
 
@@ -187,6 +197,13 @@
   .branch-item.is-active & {
     color: var(--adeni-purple);
   }
+}
+
+.branch-item-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--cds-spacing-03, 0.5rem);
+  min-width: 0;
 }
 
 .branch-item-copy {

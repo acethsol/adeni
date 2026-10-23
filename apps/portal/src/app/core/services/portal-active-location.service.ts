@@ -75,11 +75,9 @@ export class PortalActiveLocationService {
         isPrimary: false,
       };
     }
-    const name = branch.name?.trim() || branch.slug || this.tr("portal.availability.branch");
-    const hint = branch.area?.trim() || branch.slug || null;
     return {
-      title: name,
-      hint,
+      title: this.branchRowLabel(branch),
+      hint: this.branchRowHint(branch),
       allLocationsScope: false,
       isPrimary: branch.isPrimary,
     };
@@ -200,11 +198,16 @@ export class PortalActiveLocationService {
   }
 
   branchRowHint(location: BusinessLocation): string | null {
+    const label = this.branchRowLabel(location);
     const area = location.area?.trim();
-    if (area && area !== this.branchRowLabel(location)) {
+    if (area && area !== label) {
       return area;
     }
-    return location.slug?.trim() || null;
+    const slug = location.slug?.trim();
+    if (slug && slug !== label) {
+      return slug;
+    }
+    return null;
   }
 
   /** Resolves `locationId` for tenant report export API calls (global branch scope). */
