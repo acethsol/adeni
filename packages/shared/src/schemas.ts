@@ -2013,8 +2013,8 @@ export type NotificationLocale = z.infer<typeof notificationLocaleSchema>;
 export const notificationTemplateOverrideSchema = z.object({
   templateId: notificationTemplateIdSchema,
   locale: notificationLocaleSchema,
-  subject: z.string().trim().max(200).optional(),
-  body: z.string().trim().max(2000).optional(),
+  subject: z.string().trim().max(200).nullish(),
+  body: z.string().trim().max(2000).nullish(),
 });
 
 export type NotificationTemplateOverride = z.infer<typeof notificationTemplateOverrideSchema>;
@@ -2028,7 +2028,7 @@ const notificationPreferencesBaseSchema = z.object({
   pushEnabled: z.boolean(),
   smsRemindersEnabled: z.boolean(),
   defaultNotificationLocale: notificationLocaleSchema.default("en"),
-  secondaryNotificationLocale: notificationLocaleSchema.optional(),
+  secondaryNotificationLocale: notificationLocaleSchema.nullish(),
   notificationLanguageMode: notificationLanguageModeSchema.default("single"),
   templateOverrides: z.array(notificationTemplateOverrideSchema).max(32).default([]),
 });
@@ -2037,7 +2037,7 @@ function refineNotificationLanguageLocales<
   T extends {
     notificationLanguageMode: NotificationLanguageMode;
     defaultNotificationLocale: string;
-    secondaryNotificationLocale?: string;
+    secondaryNotificationLocale?: string | null;
   },
 >(data: T, ctx: z.RefinementCtx): void {
   if (data.notificationLanguageMode !== "bilingual") {

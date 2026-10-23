@@ -189,6 +189,27 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
     }
 
     [Fact]
+    public async Task Notification_preferences_get_returns_defaults()
+    {
+        var tenantId = await SeedTenantAsync(
+            SubscriptionSku.Starter,
+            "auth0|messaging-prefs-get-business",
+            "Prefs Get Shop",
+            "messaging-prefs-get-shop");
+
+        var businessClient = _factory.CreateClient();
+        businessClient.DefaultRequestHeaders.Add("X-Dev-Auth0-Sub", "auth0|messaging-prefs-get-business");
+        businessClient.DefaultRequestHeaders.Add("X-Tenant-Id", tenantId.ToString());
+
+        var get = await businessClient.GetAsync("/api/v1/tenant/notification-preferences");
+        Assert.Equal(HttpStatusCode.OK, get.StatusCode);
+
+        var body = await get.Content.ReadAsStringAsync();
+        Assert.Contains("\"emailEnabled\"", body, StringComparison.Ordinal);
+        Assert.Contains("\"secondaryNotificationLocale\":null", body, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task Notification_preferences_can_be_updated()
     {
         var tenantId = await SeedTenantAsync(
