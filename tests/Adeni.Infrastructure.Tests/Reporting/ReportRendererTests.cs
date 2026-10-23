@@ -58,6 +58,37 @@ public sealed class ReportRendererTests
     }
 
     [Fact]
+    public void Adeni_wordmark_asset_is_available_for_pdf_footer()
+    {
+        var bytes = QuestPdfAdeniBrandAssets.GetPoweredByWordmarkBytes();
+        Assert.NotEmpty(bytes);
+        Assert.True(bytes.Length > 500);
+    }
+
+    [Fact]
+    public async Task RenderDocumentAsync_sales_summary_statement_includes_branded_footer()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var renderer = scope.ServiceProvider.GetRequiredService<IReportRenderer>();
+
+        var data = new StatementDocumentReportData(
+            "Fixture Salon",
+            "All customers",
+            "—",
+            FixedIssuedAt.AddDays(-30),
+            FixedIssuedAt,
+            [new CustomerStatementLine(FixedIssuedAt, "Gross sales: 120000", null, "NGN")],
+            null);
+
+        var result = await renderer.RenderDocumentAsync(ReportKind.CustomerStatement, data);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        AssertPdfHeader(result.Value!);
+        Assert.True(result.Value!.Length > 800);
+    }
+
+    [Fact]
     public async Task RenderDocumentAsync_same_fixture_is_deterministic()
     {
         await using var provider = BuildProvider();

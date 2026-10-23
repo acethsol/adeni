@@ -1,5 +1,7 @@
 namespace Adeni.Infrastructure.Tests.Booking;
 
+using Adeni.Domain.Auditing;
+using Adeni.Infrastructure.Auditing;
 using Adeni.Infrastructure.Tests.TestSupport;
 using Adeni.Infrastructure.Tests.Subscriptions;
 using Adeni.Application.Abstractions;
@@ -132,6 +134,13 @@ public sealed class BookingFlowTests
 
         Assert.True(accepted.IsSuccess);
         Assert.Equal(BookingStatus.Confirmed, accepted.Value!.Status);
+
+        var writer = (InMemoryAuditLogWriter)scope.ServiceProvider.GetRequiredService<IAuditLogWriter>();
+        Assert.Contains(
+            writer.Entries,
+            e => e.Action == AuditActions.BookingAccepted
+                && e.EntityType == "booking"
+                && e.EntityId == created.Value!.Id.ToString());
     }
 
     [Fact]

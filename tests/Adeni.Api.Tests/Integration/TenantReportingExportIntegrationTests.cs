@@ -354,6 +354,106 @@ public sealed class TenantReportingExportIntegrationTests : IClassFixture<WebApp
     }
 
     [Fact]
+    public async Task BookingsRegister_csv_returns_ok_for_practitioner_with_bookings_self_only()
+    {
+        var tenantId = Guid.NewGuid();
+        const string practitionerSub = "auth0|report-export-practitioner";
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+            SeedTenant(db, tenantId, practitionerSub, SubscriptionSku.Professional, role: "practitioner");
+            await db.SaveChangesAsync();
+        }
+
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add(DevBusinessAuthMiddleware.DevAuth0SubHeader, practitionerSub);
+        client.DefaultRequestHeaders.Add(TenantAccessMiddleware.TenantHeaderName, tenantId.ToString());
+
+        var from = Uri.EscapeDataString(DateTimeOffset.UtcNow.AddDays(-7).ToString("O"));
+        var to = Uri.EscapeDataString(DateTimeOffset.UtcNow.ToString("O"));
+        var response = await client.GetAsync(
+            $"/api/v1/tenant/reporting/exports/bookings-register?from={from}&to={to}&format=csv");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task SalesSummary_csv_returns_forbidden_for_practitioner_without_finance()
+    {
+        var tenantId = Guid.NewGuid();
+        const string practitionerSub = "auth0|report-export-practitioner-finance-deny";
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+            SeedTenant(db, tenantId, practitionerSub, SubscriptionSku.Professional, role: "practitioner");
+            await db.SaveChangesAsync();
+        }
+
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add(DevBusinessAuthMiddleware.DevAuth0SubHeader, practitionerSub);
+        client.DefaultRequestHeaders.Add(TenantAccessMiddleware.TenantHeaderName, tenantId.ToString());
+
+        var from = Uri.EscapeDataString(DateTimeOffset.UtcNow.AddDays(-7).ToString("O"));
+        var to = Uri.EscapeDataString(DateTimeOffset.UtcNow.ToString("O"));
+        var response = await client.GetAsync(
+            $"/api/v1/tenant/reporting/exports/sales-summary?from={from}&to={to}&format=csv");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task SalesSummary_csv_returns_ok_for_accountant_with_finance_permission()
+    {
+        var tenantId = Guid.NewGuid();
+        const string accountantSub = "auth0|report-export-accountant";
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+            SeedTenant(db, tenantId, accountantSub, SubscriptionSku.Professional, role: "accountant");
+            await db.SaveChangesAsync();
+        }
+
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add(DevBusinessAuthMiddleware.DevAuth0SubHeader, accountantSub);
+        client.DefaultRequestHeaders.Add(TenantAccessMiddleware.TenantHeaderName, tenantId.ToString());
+
+        var from = Uri.EscapeDataString(DateTimeOffset.UtcNow.AddDays(-7).ToString("O"));
+        var to = Uri.EscapeDataString(DateTimeOffset.UtcNow.ToString("O"));
+        var response = await client.GetAsync(
+            $"/api/v1/tenant/reporting/exports/sales-summary?from={from}&to={to}&format=csv");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task BookingsRegister_csv_returns_forbidden_for_accountant_without_bookings()
+    {
+        var tenantId = Guid.NewGuid();
+        const string accountantSub = "auth0|report-export-accountant-bookings-deny";
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+            SeedTenant(db, tenantId, accountantSub, SubscriptionSku.Professional, role: "accountant");
+            await db.SaveChangesAsync();
+        }
+
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add(DevBusinessAuthMiddleware.DevAuth0SubHeader, accountantSub);
+        client.DefaultRequestHeaders.Add(TenantAccessMiddleware.TenantHeaderName, tenantId.ToString());
+
+        var from = Uri.EscapeDataString(DateTimeOffset.UtcNow.AddDays(-7).ToString("O"));
+        var to = Uri.EscapeDataString(DateTimeOffset.UtcNow.ToString("O"));
+        var response = await client.GetAsync(
+            $"/api/v1/tenant/reporting/exports/bookings-register?from={from}&to={to}&format=csv");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
     public async Task StaffRoster_csv_returns_ok_for_professional()
     {
         var tenantId = Guid.NewGuid();

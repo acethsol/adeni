@@ -5,6 +5,8 @@ using Adeni.Application.Markets;
 using Adeni.Application.Subscriptions;
 using Adeni.Application.Tenancy;
 using Adeni.Domain.Tenancy;
+using Adeni.Application.Abstractions;
+using Adeni.Domain.Auditing;
 using Adeni.Infrastructure.Admin;
 using Adeni.Infrastructure.Auditing;
 using Adeni.Infrastructure.Caching;
@@ -111,6 +113,14 @@ public sealed class BusinessOnboardingServiceTests
         var tenant = await db.Tenants.FirstAsync(t => t.Id == tenantId);
         Assert.Equal(TenantStatus.PendingVerification, tenant.Status);
         Assert.Equal(2, await db.VerificationDocuments.CountAsync());
+
+        var writer = (InMemoryAuditLogWriter)scope.ServiceProvider.GetRequiredService<IAuditLogWriter>();
+        Assert.Contains(
+            writer.Entries,
+            e => e.Action == AuditActions.BusinessVerificationSubmitted
+                && e.EntityType == "tenant"
+                && e.EntityId == tenantId.ToString()
+                && e.ActorId == auth0Sub);
     }
 
     [Fact]
