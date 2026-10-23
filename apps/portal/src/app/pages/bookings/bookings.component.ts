@@ -245,16 +245,10 @@ export class BookingsComponent {
   }
 
   pageDescription(): string {
-    let base: string;
     if (this.session.can("portal.bookings.self") && !this.session.can("portal.bookings")) {
-      base = this.tr("portal.bookings.yourAssignedAppointmentsAcceptCheck");
-    } else {
-      base = this.tr("portal.bookings.acceptRequestsCheckClientsComplete");
+      return this.tr("portal.bookings.yourAssignedAppointmentsAcceptCheck");
     }
-    if (!this.activeLocation.showLocationSwitch()) {
-      return base;
-    }
-    return `${base} (Scope: ${this.activeLocation.switchDisplay().title})`;
+    return this.tr("portal.bookings.acceptRequestsCheckClientsComplete");
   }
 
   constructor() {

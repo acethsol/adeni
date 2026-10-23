@@ -515,24 +515,13 @@ export class DashboardComponent implements OnInit {
   }
 
   pageDescription(): string {
-    const scope = this.branchScopeSubtitle();
-    let base: string;
     if (this.isPractitionerView()) {
-      base = this.tr("portal.dashboard.yourScheduleBookingInboxAt");
-    } else if (this.revenueUsesCollected()) {
-      base = this.tr("portal.dashboard.planUsageAppointmentsCollectedRevenue");
-    } else {
-      base =
-        this.tr("portal.dashboard.planUsageAppointmentsBookedValue");
+      return this.tr("portal.dashboard.yourScheduleBookingInboxAt");
     }
-    return scope ? `${base} ${scope}` : base;
-  }
-
-  branchScopeSubtitle(): string | null {
-    if (!this.activeLocation.showLocationSwitch()) {
-      return null;
+    if (this.revenueUsesCollected()) {
+      return this.tr("portal.dashboard.planUsageAppointmentsCollectedRevenue");
     }
-    return `(Scope: ${this.activeLocation.switchDisplay().title})`;
+    return this.tr("portal.dashboard.planUsageAppointmentsBookedValue");
   }
 
   rangeLabel(): string {
