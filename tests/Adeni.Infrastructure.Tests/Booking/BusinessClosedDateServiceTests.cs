@@ -1,5 +1,7 @@
 namespace Adeni.Infrastructure.Tests.Booking;
 
+using Adeni.Infrastructure.Tests.TestSupport;
+
 using Adeni.Infrastructure.Tests.Subscriptions;
 using Adeni.Application.Abstractions;
 using Adeni.Application.Booking;
@@ -296,8 +298,7 @@ public sealed class BusinessClosedDateServiceTests
             options.Provider = "Stub";
             options.StubCheckoutBaseUrl = "/checkout/stub";
         });
-        services.AddSingleton<ICorrelationContext, ClosedTestCorrelationContext>();
-        services.AddSingleton<IAuditLogWriter, ClosedTestAuditLogWriter>();
+        AuditTestDoubles.Register(services);
         services.AddSingleton<IMarketCatalog, ClosedTestMarketCatalog>();
         services.AddScoped<IPlatformFeeCalculator, PlatformFeeCalculator>();
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();

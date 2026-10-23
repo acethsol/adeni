@@ -4,15 +4,14 @@ using Microsoft.AspNetCore.Http;
 
 public static class AdminAuditRules
 {
-    public static bool IsAuditableAdminMutation(HttpContext context)
+    public static bool IsAuditableAdminRequest(HttpContext context)
     {
         if (!context.Request.Path.StartsWithSegments("/api/v1/admin", StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
 
-        if (HttpMethods.IsGet(context.Request.Method)
-            && context.Request.Path.StartsWithSegments("/api/v1/admin/reporting", StringComparison.OrdinalIgnoreCase))
+        if (IsSensitiveAdminRead(context))
         {
             return true;
         }
@@ -21,6 +20,71 @@ public static class AdminAuditRules
             || HttpMethods.IsPut(context.Request.Method)
             || HttpMethods.IsPatch(context.Request.Method)
             || HttpMethods.IsDelete(context.Request.Method);
+    }
+
+    public static bool IsAuditableAdminMutation(HttpContext context) =>
+        IsAuditableAdminRequest(context) && !IsSensitiveAdminRead(context);
+
+    public static bool IsSuccessfulResponse(HttpContext context) =>
+        context.Response.StatusCode is >= 200 and < 300;
+
+    /// <summary>
+    /// Service-layer audits carry richer entity metadata; skip generic middleware rows for those routes.
+    /// </summary>
+    public static bool IsMiddlewareAuditSuppressed(HttpContext context)
+    {
+        var path = context.Request.Path.Value ?? string.Empty;
+
+        if (path.Contains("/approve", StringComparison.OrdinalIgnoreCase)
+            || path.Contains("/reject", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (path.Contains("/commercial-terms", StringComparison.OrdinalIgnoreCase)
+            && HttpMethods.IsPatch(context.Request.Method))
+        {
+            return true;
+        }
+
+        if (path.Contains("/admin/markets", StringComparison.OrdinalIgnoreCase)
+            && (HttpMethods.IsPost(context.Request.Method)
+                || HttpMethods.IsPut(context.Request.Method)
+                || HttpMethods.IsPatch(context.Request.Method)))
+        {
+            return true;
+        }
+
+        if (path.Contains("/admin/pricing-catalog", StringComparison.OrdinalIgnoreCase)
+            && (HttpMethods.IsPost(context.Request.Method)
+                || HttpMethods.IsPut(context.Request.Method)
+                || HttpMethods.IsPatch(context.Request.Method)))
+        {
+            return true;
+        }
+
+        if (path.Contains("/admin/customers/", StringComparison.OrdinalIgnoreCase)
+            && path.EndsWith("/delete", StringComparison.OrdinalIgnoreCase)
+            && HttpMethods.IsPost(context.Request.Method))
+        {
+            return true;
+        }
+
+        if (path.Contains("/admin/reviews/", StringComparison.OrdinalIgnoreCase)
+            && HttpMethods.IsDelete(context.Request.Method))
+        {
+            return true;
+        }
+
+        if (path.Contains("/admin/verification/", StringComparison.OrdinalIgnoreCase)
+            && (path.EndsWith("/grant", StringComparison.OrdinalIgnoreCase)
+                || path.EndsWith("/revoke", StringComparison.OrdinalIgnoreCase))
+            && HttpMethods.IsPost(context.Request.Method))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     public static string MapAction(HttpContext context)
@@ -52,6 +116,18 @@ public static class AdminAuditRules
             && HttpMethods.IsGet(context.Request.Method))
         {
             return Domain.Auditing.AuditActions.AdminReportingRead;
+        }
+
+        if (path.Contains("/admin/metrics", StringComparison.OrdinalIgnoreCase)
+            && HttpMethods.IsGet(context.Request.Method))
+        {
+            return Domain.Auditing.AuditActions.AdminMetricsRead;
+        }
+
+        if (path.Contains("/admin/transactions", StringComparison.OrdinalIgnoreCase)
+            && HttpMethods.IsGet(context.Request.Method))
+        {
+            return Domain.Auditing.AuditActions.AdminTransactionsRead;
         }
 
         if (path.Contains("/export", StringComparison.OrdinalIgnoreCase))
@@ -101,4 +177,10 @@ public static class AdminAuditRules
 
         return null;
     }
+
+    private static bool IsSensitiveAdminRead(HttpContext context) =>
+        HttpMethods.IsGet(context.Request.Method)
+        && (context.Request.Path.StartsWithSegments("/api/v1/admin/reporting", StringComparison.OrdinalIgnoreCase)
+            || context.Request.Path.StartsWithSegments("/api/v1/admin/metrics", StringComparison.OrdinalIgnoreCase)
+            || context.Request.Path.StartsWithSegments("/api/v1/admin/transactions", StringComparison.OrdinalIgnoreCase));
 }

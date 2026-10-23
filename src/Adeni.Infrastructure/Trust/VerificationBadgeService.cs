@@ -1,13 +1,18 @@
 namespace Adeni.Infrastructure.Trust;
 
 using Adeni.Application.Admin;
+using Adeni.Application.Abstractions;
 using Adeni.Application.Trust;
+using Adeni.Domain.Auditing;
 using Adeni.Domain.Common;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-public sealed class VerificationBadgeService(AdeniDbContext dbContext) : IVerificationBadgeService
+public sealed class VerificationBadgeService(
+    AdeniDbContext dbContext,
+    IAuditLogWriter auditLogWriter,
+    ICorrelationContext correlationContext) : IVerificationBadgeService
 {
     public async Task<IReadOnlyList<VerificationBadgeResponse>> GetGrantedBadgesAsync(
         Guid tenantId,
@@ -176,6 +181,14 @@ public sealed class VerificationBadgeService(AdeniDbContext dbContext) : IVerifi
         badge.GrantedAt = DateTimeOffset.UtcNow;
         badge.GrantedByAdminId = adminId;
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        await WriteBadgeAuditAsync(
+            adminId,
+            AuditActions.VerificationBadgeGranted,
+            tenantId,
+            badgeType,
+            cancellationToken);
+
         return Result.Success(Unit.Value);
     }
 
@@ -197,6 +210,14 @@ public sealed class VerificationBadgeService(AdeniDbContext dbContext) : IVerifi
         badge.GrantedAt = null;
         badge.GrantedByAdminId = adminId;
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        await WriteBadgeAuditAsync(
+            adminId,
+            AuditActions.VerificationBadgeRevoked,
+            tenantId,
+            badgeType,
+            cancellationToken);
+
         return Result.Success(Unit.Value);
     }
 
@@ -268,6 +289,24 @@ public sealed class VerificationBadgeService(AdeniDbContext dbContext) : IVerifi
         await dbContext.BusinessUsers
             .AsNoTracking()
             .AnyAsync(x => x.TenantId == tenantId && x.Auth0Sub == auth0Sub, cancellationToken);
+
+    private Task WriteBadgeAuditAsync(
+        string adminId,
+        string action,
+        Guid tenantId,
+        VerificationBadgeType badgeType,
+        CancellationToken cancellationToken) =>
+        auditLogWriter.WriteAsync(
+            new AuditEntry(
+                Guid.NewGuid(),
+                adminId,
+                action,
+                "tenant",
+                tenantId.ToString(),
+                correlationContext.CorrelationId,
+                DateTimeOffset.UtcNow,
+                $"{{\"badgeType\":\"{ToApiBadgeType(badgeType)}\"}}"),
+            cancellationToken);
 
     private static VerificationBadgeResponse Map(TenantVerificationBadge badge) =>
         new(

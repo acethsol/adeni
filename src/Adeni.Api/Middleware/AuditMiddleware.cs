@@ -14,7 +14,17 @@ public sealed class AuditMiddleware(
     {
         await next(context);
 
-        if (!AdminAuditRules.IsAuditableAdminMutation(context))
+        if (!AdminAuditRules.IsAuditableAdminRequest(context))
+        {
+            return;
+        }
+
+        if (!AdminAuditRules.IsSuccessfulResponse(context))
+        {
+            return;
+        }
+
+        if (AdminAuditRules.IsMiddlewareAuditSuppressed(context))
         {
             return;
         }

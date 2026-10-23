@@ -1,5 +1,7 @@
 namespace Adeni.Infrastructure.Tests.Booking;
 
+using Adeni.Infrastructure.Tests.TestSupport;
+
 using Adeni.Infrastructure.Tests.Subscriptions;
 using Adeni.Application.Abstractions;
 using Adeni.Application.Booking;
@@ -243,8 +245,7 @@ public sealed class PaymentLoopTests
         services.AddScoped<Adeni.Infrastructure.Context.TenantContext>();
         services.AddScoped<ITenantContext>(sp =>
             sp.GetRequiredService<Adeni.Infrastructure.Context.TenantContext>());
-        services.AddSingleton<ICorrelationContext, TestCorrelationContext>();
-        services.AddSingleton<IAuditLogWriter, NoOpAuditLogWriter>();
+        AuditTestDoubles.Register(services);
         services.AddSingleton<IMarketCatalog, LagosMarketCatalog>();
         services.AddScoped<IPlatformFeeCalculator, PlatformFeeCalculator>();
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();

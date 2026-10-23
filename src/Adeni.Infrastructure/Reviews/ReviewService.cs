@@ -1,8 +1,10 @@
 namespace Adeni.Infrastructure.Reviews;
 
+using Adeni.Application.Abstractions;
 using Adeni.Application.Caching;
 using Adeni.Application.Admin;
 using Adeni.Application.Reviews;
+using Adeni.Domain.Auditing;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
 using Adeni.Infrastructure.Persistence;
@@ -10,7 +12,9 @@ using Microsoft.EntityFrameworkCore;
 
 public sealed class ReviewService(
     AdeniDbContext dbContext,
-    ICacheService cache) : IReviewService
+    ICacheService cache,
+    IAuditLogWriter auditLogWriter,
+    ICorrelationContext correlationContext) : IReviewService
 {
     private const int DefaultPageSize = 10;
     private const int MaxPageSize = 50;
@@ -155,6 +159,18 @@ public sealed class ReviewService(
         review.HiddenAt = DateTimeOffset.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
         await InvalidateCachesForTenantAsync(review.TenantId, cancellationToken);
+
+        await auditLogWriter.WriteAsync(
+            new AuditEntry(
+                Guid.NewGuid(),
+                adminId,
+                AuditActions.ReviewHidden,
+                "review",
+                reviewId.ToString(),
+                correlationContext.CorrelationId,
+                DateTimeOffset.UtcNow,
+                $"{{\"tenantId\":\"{review.TenantId}\"}}"),
+            cancellationToken);
 
         return Result.Success(Unit.Value);
     }

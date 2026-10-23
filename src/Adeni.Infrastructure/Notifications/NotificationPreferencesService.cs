@@ -1,7 +1,9 @@
 namespace Adeni.Infrastructure.Notifications;
 
+using Adeni.Application.Abstractions;
 using Adeni.Application.Notifications;
 using Adeni.Application.Subscriptions;
+using Adeni.Domain.Auditing;
 using Adeni.Domain.Common;
 using Adeni.Domain.Notifications;
 using Adeni.Domain.Tenancy;
@@ -10,7 +12,9 @@ using Microsoft.EntityFrameworkCore;
 
 public sealed class NotificationPreferencesService(
     AdeniDbContext dbContext,
-    IEntitlementsService entitlementsService) : INotificationPreferencesService
+    IEntitlementsService entitlementsService,
+    IAuditLogWriter auditLogWriter,
+    ICorrelationContext correlationContext) : INotificationPreferencesService
 {
     private const int MaxOverrides = 32;
     private const int MaxSubjectLength = 200;
@@ -163,6 +167,18 @@ public sealed class NotificationPreferencesService(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        await auditLogWriter.WriteAsync(
+            new AuditEntry(
+                Guid.NewGuid(),
+                auth0Sub,
+                AuditActions.TenantNotificationPreferencesUpdated,
+                "tenant",
+                tenantId.ToString(),
+                correlationContext.CorrelationId,
+                DateTimeOffset.UtcNow,
+                $"{{\"emailEnabled\":{request.EmailEnabled.ToString().ToLowerInvariant()},\"smsRemindersEnabled\":{request.SmsRemindersEnabled.ToString().ToLowerInvariant()},\"templateOverrideCount\":{overrides.Count}}}"),
+            cancellationToken);
 
         return Result.Success(await GetOrDefaultsAsync(tenantId, cancellationToken));
     }

@@ -32,6 +32,18 @@ public sealed class SubscriptionBillingOrchestrator(
         "invoice.payment_failed",
     };
 
+    public Task RecordWebhookReceivedAsync(CancellationToken cancellationToken = default) =>
+        auditLogWriter.WriteAsync(
+            new AuditEntry(
+                Guid.NewGuid(),
+                "system:subscription-billing",
+                AuditActions.SubscriptionWebhookReceived,
+                "subscription_webhook",
+                string.Empty,
+                correlationContext.CorrelationId,
+                DateTimeOffset.UtcNow),
+            cancellationToken);
+
     public async Task<Result<TenantSubscriptionChargeResponse>> ApplyWebhookEventAsync(
         SubscriptionWebhookEvent webhookEvent,
         CancellationToken cancellationToken = default)

@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Tests.Notifications;
 
+using Adeni.Infrastructure.Tests.TestSupport;
 using System.Net;
 using Adeni.Application.Markets;
 using Adeni.Application.Notifications;
@@ -153,6 +154,7 @@ public sealed class NotificationDispatcherTests
         services.AddScoped<Application.Abstractions.ITenantContext>(sp =>
             sp.GetRequiredService<Adeni.Infrastructure.Context.TenantContext>());
         services.AddEntitlementsModule();
+        AuditTestDoubles.Register(services);
         services.AddScoped<INotificationPreferencesService, NotificationPreferencesService>();
         services.AddScoped<INotificationTemplateRenderer, NotificationTemplateRenderer>();
         services.AddScoped<INotificationLocaleResolver, NotificationLocaleResolver>();

@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Booking;
 
+using Adeni.Application.Abstractions;
 using Adeni.Application.Booking;
 using Adeni.Application.Caching;
 using Adeni.Application.Common;
@@ -10,6 +11,7 @@ using Adeni.Application.Subscriptions;
 using Adeni.Application.Realtime;
 using Adeni.Application.Tenancy;
 using Adeni.Infrastructure.Realtime;
+using Adeni.Domain.Auditing;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Booking.Events;
 using Adeni.Domain.Common;
@@ -30,7 +32,10 @@ public sealed class BookingService(
     IBillingDocumentService billingDocuments,
     IStaffCompensationService staffCompensation,
     ITenantCustomerService tenantCustomers,
-    ITenantRealtimePublisher tenantRealtime) : IBookingService
+    ITenantRealtimePublisher tenantRealtime,
+    IAuditLogWriter auditLogWriter,
+    ICorrelationContext correlationContext,
+    ICurrentUser currentUser) : IBookingService
 {
     public async Task<Result<BookingResponse>> CreateAsync(
         string customerAuth0Sub,
@@ -911,6 +916,7 @@ public sealed class BookingService(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await WriteBookingStatusAuditAsync(tenantId, bookingId, booking.Status, cancellationToken);
 
         if (booking.Status == BookingStatus.Paid
             && booking.SettlementSource == BookingSettlementSource.ExternalTill)
@@ -1084,6 +1090,7 @@ public sealed class BookingService(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await WriteBookingStatusAuditAsync(tenantId, bookingId, status, cancellationToken);
         await TenantRealtimeNotifications.PublishPendingBookingsAsync(
             tenantRealtime,
             dbContext,
@@ -1108,6 +1115,41 @@ public sealed class BookingService(
         }
 
         return [new CreateBookingLineRequest(request.ServiceOfferingId, request.StaffMemberId)];
+    }
+
+    private async Task WriteBookingStatusAuditAsync(
+        Guid tenantId,
+        Guid bookingId,
+        BookingStatus status,
+        CancellationToken cancellationToken)
+    {
+        var action = status switch
+        {
+            BookingStatus.Confirmed => AuditActions.BookingAccepted,
+            BookingStatus.Rejected => AuditActions.BookingRejected,
+            BookingStatus.CheckedIn => AuditActions.BookingCheckedIn,
+            BookingStatus.Completed => AuditActions.BookingCompleted,
+            BookingStatus.Paid => AuditActions.BookingMarkedPaid,
+            _ => null,
+        };
+
+        if (action is null)
+        {
+            return;
+        }
+
+        var actorId = currentUser.UserId ?? "portal:unknown";
+        await auditLogWriter.WriteAsync(
+            new AuditEntry(
+                Guid.NewGuid(),
+                actorId,
+                action,
+                "booking",
+                bookingId.ToString(),
+                correlationContext.CorrelationId,
+                DateTimeOffset.UtcNow,
+                $"{{\"tenantId\":\"{tenantId}\",\"status\":\"{status.ToString().ToLowerInvariant()}\"}}"),
+            cancellationToken);
     }
 
     private IOrderedQueryable<BookingRecord> ApplyTenantBookingSort(

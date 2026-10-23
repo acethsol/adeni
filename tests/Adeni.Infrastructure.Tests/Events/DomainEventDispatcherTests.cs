@@ -1,5 +1,7 @@
 namespace Adeni.Infrastructure.Tests.Events;
 
+using Adeni.Infrastructure.Tests.TestSupport;
+
 using Adeni.Infrastructure.Tests.Subscriptions;
 using Adeni.Application.Abstractions;
 using Adeni.Application.Booking;
@@ -159,8 +161,7 @@ public sealed class DomainEventDispatcherTests
             options.Provider = "Stub";
             options.StubCheckoutBaseUrl = "/checkout/stub";
         });
-        services.AddSingleton<ICorrelationContext, EventTestCorrelationContext>();
-        services.AddSingleton<IAuditLogWriter, EventTestAuditLogWriter>();
+        AuditTestDoubles.Register(services);
         services.AddSingleton<IMarketCatalog, EventTestMarketCatalog>();
         services.AddScoped<IPlatformFeeCalculator, PlatformFeeCalculator>();
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();

@@ -151,7 +151,9 @@ public sealed class AuditMiddlewareTests
     [Theory]
     [InlineData("/api/v1/admin/businesses/123/approve", "POST", true)]
     [InlineData("/api/v1/admin/businesses/123/approve", "GET", false)]
-    [InlineData("/api/v1/admin/reporting/gmv", "GET", true)]
+    [InlineData("/api/v1/admin/reporting/gmv", "GET", false)]
+    [InlineData("/api/v1/admin/metrics/subscription", "GET", false)]
+    [InlineData("/api/v1/admin/transactions", "GET", false)]
     [InlineData("/api/v1/customers/me", "POST", false)]
     public void IsAuditableAdminMutation_detects_mutations(string path, string method, bool expected)
     {
@@ -163,6 +165,20 @@ public sealed class AuditMiddlewareTests
     }
 
     [Theory]
+    [InlineData("/api/v1/admin/reporting/gmv", "GET", true)]
+    [InlineData("/api/v1/admin/metrics/subscription", "GET", true)]
+    [InlineData("/api/v1/admin/transactions", "GET", true)]
+    [InlineData("/api/v1/admin/businesses", "GET", false)]
+    public void IsAuditableAdminRequest_includes_sensitive_reads(string path, string method, bool expected)
+    {
+        var context = new DefaultHttpContext();
+        context.Request.Path = path;
+        context.Request.Method = method;
+
+        Assert.Equal(expected, AdminAuditRules.IsAuditableAdminRequest(context));
+    }
+
+    [Theory]
     [InlineData("/api/v1/admin/businesses/123/approve", AuditActions.BusinessApproved)]
     [InlineData("/api/v1/admin/businesses/123/reject", AuditActions.BusinessRejected)]
     [InlineData("/api/v1/admin/businesses/123/suspend", AuditActions.BusinessSuspended)]
@@ -170,12 +186,16 @@ public sealed class AuditMiddlewareTests
     [InlineData("/api/v1/admin/customers/123/export", AuditActions.CustomerExported)]
     [InlineData("/api/v1/admin/customers/123/delete", AuditActions.CustomerDeleted)]
     [InlineData("/api/v1/admin/reporting/platform-subscription-mrr", AuditActions.AdminReportingRead)]
+    [InlineData("/api/v1/admin/metrics/subscription", AuditActions.AdminMetricsRead)]
+    [InlineData("/api/v1/admin/transactions", AuditActions.AdminTransactionsRead)]
     public void MapAction_maps_known_routes(string path, string expected)
     {
         var context = new DefaultHttpContext();
         context.Request.Path = path;
         context.Request.Method =
             path.Contains("/admin/reporting", StringComparison.Ordinal) ? "GET"
+            : path.Contains("/admin/metrics", StringComparison.Ordinal) ? "GET"
+            : path.Contains("/admin/transactions", StringComparison.Ordinal) ? "GET"
             : path.Contains("/reviews/", StringComparison.Ordinal) ? "DELETE"
             : "POST";
 
@@ -220,8 +240,8 @@ public sealed class AuditMiddlewareTests
     {
         var writer = new InMemoryAuditLogWriter();
         var context = new DefaultHttpContext();
-        context.Request.Path = $"/api/v1/admin/businesses/{Guid.NewGuid()}/approve";
-        context.Request.Method = "POST";
+        context.Request.Path = "/api/v1/admin/custom";
+        context.Request.Method = "PATCH";
         context.Items[CorrelationIdMiddleware.ItemKey] = "corr-1";
         context.Response.StatusCode = StatusCodes.Status200OK;
 
@@ -233,7 +253,46 @@ public sealed class AuditMiddlewareTests
             new StubCurrentUser("admin-1"));
 
         Assert.Single(writer.Entries);
-        Assert.Equal(AuditActions.BusinessApproved, writer.Entries.First().Action);
+        Assert.Equal("admin.patch", writer.Entries.First().Action);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_skips_audit_when_response_not_successful()
+    {
+        var writer = new InMemoryAuditLogWriter();
+        var context = new DefaultHttpContext();
+        context.Request.Path = $"/api/v1/admin/businesses/{Guid.NewGuid()}/approve";
+        context.Request.Method = "POST";
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+
+        var middleware = new AuditMiddleware(_ => Task.CompletedTask, NullLogger<AuditMiddleware>.Instance);
+
+        await middleware.InvokeAsync(
+            context,
+            writer,
+            new StubCurrentUser("admin-1"));
+
+        Assert.Empty(writer.Entries);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_skips_audit_when_service_layer_writes()
+    {
+        var writer = new InMemoryAuditLogWriter();
+        var tenantId = Guid.NewGuid();
+        var context = new DefaultHttpContext();
+        context.Request.Path = $"/api/v1/admin/businesses/{tenantId}/approve";
+        context.Request.Method = "POST";
+        context.Response.StatusCode = StatusCodes.Status204NoContent;
+
+        var middleware = new AuditMiddleware(_ => Task.CompletedTask, NullLogger<AuditMiddleware>.Instance);
+
+        await middleware.InvokeAsync(
+            context,
+            writer,
+            new StubCurrentUser("admin-1"));
+
+        Assert.Empty(writer.Entries);
     }
 }
 

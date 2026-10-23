@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Tests.Discovery;
 
+using Adeni.Infrastructure.Tests.TestSupport;
 using Adeni.Application.Caching;
 using Adeni.Application.Catalog;
 using Adeni.Application.Discovery;
@@ -131,6 +132,7 @@ public sealed class DiscoverySearchSqlServerTests
         services.AddScoped<Application.Abstractions.ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
         services.AddDbContext<AdeniDbContext>(o => o.UseSqlServer(connectionString));
         services.AddSingleton<IFileStorage, FakeFileStorage>();
+        AuditTestDoubles.Register(services);
         services.AddScoped<IReviewService, ReviewService>();
         services.AddScoped<DiscoveryService>();
 

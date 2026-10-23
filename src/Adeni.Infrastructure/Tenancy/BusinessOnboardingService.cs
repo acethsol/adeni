@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Tenancy;
 
+using Adeni.Application.Abstractions;
 using Adeni.Application.Booking;
 using Adeni.Application.Caching;
 using Adeni.Application.Catalog;
@@ -9,6 +10,7 @@ using Adeni.Application.Subscriptions;
 using Adeni.Application.Realtime;
 using Adeni.Application.Tenancy;
 using Adeni.Infrastructure.Realtime;
+using Adeni.Domain.Auditing;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
 using Adeni.Domain.Tenancy;
@@ -23,7 +25,9 @@ public sealed class BusinessOnboardingService(
     IFileStorage fileStorage,
     IMarketCatalog marketCatalog,
     ICacheService cache,
-    ITenantRealtimePublisher tenantRealtime) : IBusinessOnboardingService
+    ITenantRealtimePublisher tenantRealtime,
+    IAuditLogWriter auditLogWriter,
+    ICorrelationContext correlationContext) : IBusinessOnboardingService
 {
     public async Task<Result<RegisterBusinessResponse>> RegisterAsync(
         RegisterBusinessRequest request,
@@ -464,6 +468,18 @@ public sealed class BusinessOnboardingService(
         await TenantRealtimeNotifications.PublishAdminVerificationAsync(
             tenantRealtime,
             dbContext,
+            cancellationToken);
+
+        await auditLogWriter.WriteAsync(
+            new AuditEntry(
+                Guid.NewGuid(),
+                auth0Sub,
+                AuditActions.BusinessVerificationSubmitted,
+                "tenant",
+                tenantId.ToString(),
+                correlationContext.CorrelationId,
+                submittedAt,
+                $"{{\"documentCount\":{request.Documents.Count}}}"),
             cancellationToken);
 
         return Result.Success();

@@ -7,6 +7,17 @@ public static class AuditActions
     public const string BusinessVerificationSubmitted = "business.verification_submitted";
     public const string BusinessSuspended = "business.suspended";
     public const string ReviewHidden = "review.hidden";
+    public const string VerificationBadgeGranted = "verification_badge.granted";
+    public const string VerificationBadgeRevoked = "verification_badge.revoked";
+    public const string SubscriptionWebhookReceived = "subscription.webhook_received";
+    public const string AdminMetricsRead = "admin.metrics.read";
+    public const string AdminTransactionsRead = "admin.transactions.read";
+    public const string TenantNotificationPreferencesUpdated = "tenant.notification_preferences_updated";
+    public const string BookingAccepted = "booking.accepted";
+    public const string BookingRejected = "booking.rejected";
+    public const string BookingCheckedIn = "booking.checked_in";
+    public const string BookingCompleted = "booking.completed";
+    public const string BookingMarkedPaid = "booking.marked_paid";
     public const string CustomerExported = "customer.exported";
     public const string CustomerDeleted = "customer.deleted";
     public const string CrossTenantDenied = "security.cross_tenant_denied";

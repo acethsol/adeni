@@ -218,6 +218,8 @@ public sealed class SubscriptionBillingController(
             h => h.Value.ToString(),
             StringComparer.OrdinalIgnoreCase);
 
+        await billingOrchestrator.RecordWebhookReceivedAsync(cancellationToken);
+
         var parseResult = await billingProvider.ParseWebhookAsync(rawBody, headers, cancellationToken);
         if (parseResult.IsFailure)
         {

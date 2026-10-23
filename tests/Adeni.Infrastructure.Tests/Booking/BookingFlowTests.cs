@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Tests.Booking;
 
+using Adeni.Infrastructure.Tests.TestSupport;
 using Adeni.Infrastructure.Tests.Subscriptions;
 using Adeni.Application.Abstractions;
 using Adeni.Application.Booking;
@@ -396,8 +397,7 @@ public sealed class BookingFlowTests
             options.Provider = "Stub";
             options.StubCheckoutBaseUrl = "/checkout/stub";
         });
-        services.AddSingleton<ICorrelationContext, LoopTestCorrelationContext>();
-        services.AddSingleton<IAuditLogWriter, LoopTestAuditLogWriter>();
+        AuditTestDoubles.Register(services);
         services.AddSingleton<IMarketCatalog, LoopTestMarketCatalog>();
         services.AddScoped<IPlatformFeeCalculator, PlatformFeeCalculator>();
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();
@@ -419,18 +419,6 @@ public sealed class BookingFlowTests
         public Task SendAsync(
             Application.Notifications.NotificationMessage message,
             CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
-    }
-
-    private sealed class LoopTestCorrelationContext : ICorrelationContext
-    {
-        public string CorrelationId { get; } = "booking-flow";
-        public void Set(string correlationId) { }
-    }
-
-    private sealed class LoopTestAuditLogWriter : IAuditLogWriter
-    {
-        public Task WriteAsync(Domain.Auditing.AuditEntry entry, CancellationToken cancellationToken = default) =>
             Task.CompletedTask;
     }
 

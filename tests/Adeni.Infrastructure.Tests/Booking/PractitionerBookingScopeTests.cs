@@ -1,5 +1,7 @@
 namespace Adeni.Infrastructure.Tests.Booking;
 
+using Adeni.Infrastructure.Tests.TestSupport;
+
 using Adeni.Infrastructure.Tests.Subscriptions;
 using Adeni.Application.Abstractions;
 using Adeni.Application.Booking;
@@ -218,8 +220,7 @@ public sealed class PractitionerBookingScopeTests
             options.Provider = "Stub";
             options.StubCheckoutBaseUrl = "/checkout/stub";
         });
-        services.AddSingleton<ICorrelationContext, ScopeTestCorrelationContext>();
-        services.AddSingleton<IAuditLogWriter, ScopeTestAuditLogWriter>();
+        AuditTestDoubles.Register(services);
         services.AddSingleton<IMarketCatalog, ScopeTestMarketCatalog>();
         services.AddScoped<IPlatformFeeCalculator, PlatformFeeCalculator>();
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();

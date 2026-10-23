@@ -15,6 +15,8 @@ public sealed record TenantSubscriptionChargeResponse(
 
 public interface ISubscriptionBillingOrchestrator
 {
+    Task RecordWebhookReceivedAsync(CancellationToken cancellationToken = default);
+
     Task<Result<TenantSubscriptionChargeResponse>> ApplyWebhookEventAsync(
         SubscriptionWebhookEvent webhookEvent,
         CancellationToken cancellationToken = default);
