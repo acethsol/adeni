@@ -52,6 +52,8 @@ Seed matches the Beauty & Wellness wedge: **Lagos + Ottawa** and the enabled wel
 
 To re-seed from scratch, drop/recreate the `adeni` database, re-run `./scripts/publish-db.ps1 -CreateNewDatabase`, then restart the API.
 
+**Lekki Cuts staff + branches (local dev):** After pulling location-scope changes, restart the API once in Development — `DevelopmentDataSeeder` adds the Phase 2 branch (`lekki-cuts-phase2`), assigns demo staff per branch, and backfills any existing Lekki staff rows that still have null `BusinessLocationId` to the primary branch. Existing databases that skip the seeder can run [`db/scripts/staff-location-scope.sql`](../db/scripts/staff-location-scope.sql) (backfill to primary) and then restart the API for the full Lekki roster seed.
+
 ## Optional Redis UI
 
 ```powershell

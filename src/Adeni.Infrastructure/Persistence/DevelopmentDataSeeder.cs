@@ -21,6 +21,10 @@ using Microsoft.EntityFrameworkCore;
 public static class DevelopmentDataSeeder
 {
     public const string SeedMarkerSlug = "lekki-cuts";
+
+    /// <summary>Second Lekki Cuts branch for portal multi-location dev (branch switch).</summary>
+    public const string DevLekkiPhase2Slug = "lekki-cuts-phase2";
+
     public const string DevBusinessAuth0Sub = "auth0|local-business";
 
     /// <summary>Second business login for invite accept tests (no tenant until invite accepted).</summary>
@@ -30,6 +34,8 @@ public static class DevelopmentDataSeeder
     public const string DevStaffInviteToken = "dev-lekki-staff-invite-token";
 
     private const string DevQueueFloorSeedNote = "dev-unified-floor-v1";
+
+    private const string DevStaffRosterSeedMarker = "dev-lekki-staff-roster-v1";
 
     /// <summary>Square crop for dev logo on kiosk, discover queue, and public page.</summary>
     private static readonly string DevLekkiLogoImageKey =
@@ -180,6 +186,8 @@ public static class DevelopmentDataSeeder
         await SeedDevBusinessOwnerAsync(db, cancellationToken);
         await EnsureDevPortalTenantBillingAsync(db, cancellationToken);
         await SeedDevPortalSubscriptionChargesAsync(db, cancellationToken);
+        await EnsureDevLekkiMultiBranchAsync(db, cancellationToken);
+        await EnsureDevLekkiStaffRosterAsync(db, cancellationToken);
         await SeedDevStaffInviteAsync(db, cancellationToken);
         await SeedDevDepositSettingsAsync(db, cancellationToken);
         await SeedDevReviewFixtureAsync(db, cancellationToken);
@@ -1108,6 +1116,216 @@ public static class DevelopmentDataSeeder
         await db.SaveChangesAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Lekki Cuts second branch (Phase 2) for portal location switch. Idempotent by slug.
+    /// </summary>
+    private static async Task EnsureDevLekkiMultiBranchAsync(
+        AdeniDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var primary = await db.BusinessLocations
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(entry => entry.Slug == SeedMarkerSlug, cancellationToken);
+
+        if (primary is null)
+        {
+            return;
+        }
+
+        var activeBranchCount = await db.BusinessLocations
+            .IgnoreQueryFilters()
+            .CountAsync(
+                entry => entry.TenantId == primary.TenantId && entry.IsActive,
+                cancellationToken);
+
+        if (activeBranchCount >= 2
+            || await db.BusinessLocations
+                .IgnoreQueryFilters()
+                .AnyAsync(entry => entry.Slug == DevLekkiPhase2Slug, cancellationToken))
+        {
+            return;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var phase2Id = Guid.NewGuid();
+        db.BusinessLocations.Add(new BusinessLocation
+        {
+            Id = phase2Id,
+            TenantId = primary.TenantId,
+            Slug = DevLekkiPhase2Slug,
+            Name = "Lekki Phase 2",
+            MarketId = primary.MarketId,
+            AddressLine = "18 Admiralty Way, Lekki Phase 2",
+            Area = "Lekki Phase 2",
+            Latitude = 6.4490,
+            Longitude = 3.4725,
+            TimeZoneId = primary.TimeZoneId,
+            IsPrimary = false,
+            IsActive = true,
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+
+        var primaryHours = await db.WeeklyAvailabilities
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(x => x.TenantId == primary.TenantId && x.BusinessLocationId == primary.Id)
+            .ToListAsync(cancellationToken);
+
+        foreach (var row in primaryHours)
+        {
+            db.WeeklyAvailabilities.Add(new WeeklyAvailability
+            {
+                Id = Guid.NewGuid(),
+                TenantId = primary.TenantId,
+                BusinessLocationId = phase2Id,
+                DayOfWeek = row.DayOfWeek,
+                OpenTime = row.OpenTime,
+                CloseTime = row.CloseTime,
+            });
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Demo practitioners for Lekki Cuts with branch assignment (portal staff list + queue).
+    /// Backfills legacy rows with null <see cref="StaffMember.BusinessLocationId"/> across active branches.
+    /// </summary>
+    private static async Task EnsureDevLekkiStaffRosterAsync(
+        AdeniDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var primaryLocation = await db.BusinessLocations
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(entry => entry.Slug == SeedMarkerSlug, cancellationToken);
+
+        if (primaryLocation is null)
+        {
+            return;
+        }
+
+        var tenantId = primaryLocation.TenantId;
+        var branches = await db.BusinessLocations
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(entry => entry.TenantId == tenantId && entry.IsActive)
+            .OrderByDescending(entry => entry.Slug == SeedMarkerSlug)
+            .ThenByDescending(entry => entry.IsPrimary)
+            .ThenBy(entry => entry.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        if (branches.Count == 0)
+        {
+            return;
+        }
+
+        var phase1Id = branches.FirstOrDefault(entry => entry.Slug == SeedMarkerSlug)?.Id
+            ?? branches[0].Id;
+        var phase2Id = branches.FirstOrDefault(entry => entry.Slug == DevLekkiPhase2Slug)?.Id
+            ?? branches.FirstOrDefault(entry => entry.Id != phase1Id)?.Id;
+
+        var unassigned = await db.StaffMembers
+            .IgnoreQueryFilters()
+            .Where(member => member.TenantId == tenantId && member.BusinessLocationId == null)
+            .OrderBy(member => member.SortOrder)
+            .ThenBy(member => member.DisplayName)
+            .ToListAsync(cancellationToken);
+
+        if (unassigned.Count > 0)
+        {
+            var now = DateTimeOffset.UtcNow;
+            for (var index = 0; index < unassigned.Count; index++)
+            {
+                unassigned[index].BusinessLocationId = branches[index % branches.Count].Id;
+                unassigned[index].UpdatedAt = now;
+            }
+
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
+        var service = await db.ServiceOfferings
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(entry => entry.TenantId == tenantId && entry.IsActive)
+            .OrderBy(entry => entry.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (service is null)
+        {
+            return;
+        }
+
+        var roster = new (string First, string Last, string Display, string Role, Guid LocationId, int Sort)[]
+        {
+            ("Fela", "Okonkwo", "Baba Fela", StaffRoleKeys.Barber, phase1Id, 0),
+            ("Chi", "Adeyemi", "Chi Ade", StaffRoleKeys.Stylist, phase1Id, 1),
+            ("Tunde", "Balogun", "Tunde B.", StaffRoleKeys.Barber, phase1Id, 2),
+        };
+
+        if (phase2Id is Guid secondBranch)
+        {
+            roster =
+            [
+                ..roster,
+                ("Amaka", "Ojo", "Amaka O.", StaffRoleKeys.Stylist, secondBranch, 0),
+            ];
+        }
+
+        var existingNames = await db.StaffMembers
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(member => member.TenantId == tenantId)
+            .Select(member => member.DisplayName)
+            .ToListAsync(cancellationToken);
+
+        var nameSet = new HashSet<string>(existingNames, StringComparer.OrdinalIgnoreCase);
+        var createdAny = false;
+        var nowCreate = DateTimeOffset.UtcNow;
+
+        foreach (var seed in roster)
+        {
+            if (nameSet.Contains(seed.Display))
+            {
+                continue;
+            }
+
+            var memberId = Guid.NewGuid();
+            db.StaffMembers.Add(new StaffMember
+            {
+                Id = memberId,
+                TenantId = tenantId,
+                FirstName = seed.First,
+                LastName = seed.Last,
+                DisplayName = seed.Display,
+                RoleKey = seed.Role,
+                Title = seed.Role == StaffRoleKeys.Barber ? "Barber" : "Stylist",
+                Bio = DevStaffRosterSeedMarker,
+                IsActive = true,
+                SortOrder = seed.Sort,
+                BusinessLocationId = seed.LocationId,
+                CreatedAt = nowCreate,
+                UpdatedAt = nowCreate,
+            });
+
+            db.StaffServiceLinks.Add(new StaffServiceLink
+            {
+                StaffMemberId = memberId,
+                ServiceOfferingId = service.Id,
+                TenantId = tenantId,
+            });
+
+            nameSet.Add(seed.Display);
+            createdAny = true;
+        }
+
+        if (createdAny)
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+    }
+
     private static async Task SeedDevStaffInviteAsync(
         AdeniDbContext db,
         CancellationToken cancellationToken)
@@ -1140,9 +1358,17 @@ public static class DevelopmentDataSeeder
         var staff = await db.StaffMembers
             .IgnoreQueryFilters()
             .AsNoTracking()
-            .Where(s => s.TenantId == location.TenantId && s.IsActive)
-            .OrderBy(s => s.SortOrder)
-            .FirstOrDefaultAsync(cancellationToken);
+            .Where(s =>
+                s.TenantId == location.TenantId
+                && s.IsActive
+                && s.DisplayName == "Baba Fela")
+            .FirstOrDefaultAsync(cancellationToken)
+            ?? await db.StaffMembers
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(s => s.TenantId == location.TenantId && s.IsActive)
+                .OrderBy(s => s.SortOrder)
+                .FirstOrDefaultAsync(cancellationToken);
 
         db.StaffPortalInvites.Add(new StaffPortalInvite
         {
