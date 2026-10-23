@@ -13,7 +13,7 @@ Read-only and render responsibilities: **PDF documents**, **tenant/admin analyti
 | Area | V1 status | Notes |
 |------|-----------|--------|
 | **Receipt / invoice PDF** | **39A** — `IReportRenderer` + QuestPDF in `Adeni.Infrastructure.Reporting` | Finance delegates `GetPdfAsync` |
-| **Quote / statement PDF** | **39B** — QuestPDF + tenant logo / business name header | Footer: Option 3 wordmark (`Brand/adeni-wordmark.png`, mirrors `@adeni/brand`) |
+| **Quote / statement PDF** | **39B** — QuestPDF + tenant logo / business name header | Footer: Option 3 wordmark (`Brand/adeni-wordmark.png`, mirrors `@adeni/brand`); includes **sales-summary** PDF export |
 | **Portal dashboard KPIs** | Shipped | `ITenantDashboardService` → `/api/v1/tenant/dashboard/*` |
 | **CSV / Excel / PDF exports** | **39B** | `IReportExportService` + ClosedXML; `/api/v1/tenant/reporting/exports/{reportKey}` |
 | **Admin GMV / MRR** | **39B** | `/api/v1/admin/reporting/platform-subscription-mrr`, `/gmv` (MFA + audit) |

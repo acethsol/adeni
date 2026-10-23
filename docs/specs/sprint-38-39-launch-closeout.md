@@ -70,7 +70,7 @@ Close the gap between **shipped Notifications and Reporting code** and **staging
 
 ### 3.5 Testing (N-T1–T4)
 
-- [ ] **N-T1** — `dotnet test Adeni.slnx -c Release` (gating, idempotency, reminders, mock Resend)
+- [x] **N-T1** — `dotnet test Adeni.slnx -c Release` (gating, idempotency, reminders, mock Resend) — CI/local gate; staging send matrix still **N-T3**
 - [ ] **N-T2** — French booking + template override integration tests after 38c SQL on staging DB
 - [ ] **N-T3** — Staging manual matrix **N-O5** + Resend dashboard spot-check
 - [ ] **N-T4** — No production path with unsigned subscription webhooks when secret required
@@ -83,7 +83,7 @@ Close the gap between **shipped Notifications and Reporting code** and **staging
 
 - [x] **R-D1** — [shared-data-grid.md](./shared-data-grid.md) §7 Phase 2: update checkboxes for portal/admin list exports
 - [x] **R-D2** — [reporting.md](../reporting.md) Frontend: `sales-summary` API exists; note missing portal entry; document PDF auth vs public token
-- [ ] **R-D3** — [sprint-39-reporting-module.md](./sprint-39-reporting-module.md): `@adeni/brand` on PDFs — post-39B polish unless launch requires branded sales PDF
+- [x] **R-D3** — [sprint-39-reporting-module.md](./sprint-39-reporting-module.md): `@adeni/brand` on PDFs incl. sales-summary (QuestPDF footer + tenant header)
 - [x] **R-D4** — [roadmap-modules.md](../roadmap-modules.md) #5 Reporting: shipped pending portal export UX + staging audit
 
 ### 4.2 Portal (R-U1–U5)
@@ -101,7 +101,7 @@ Close the gap between **shipped Notifications and Reporting code** and **staging
 
 ### 4.4 Entitlements (R-E1)
 
-- [ ] **R-E1** — QA: `portal.finance` vs bookings-self permissions match `ReportDefinitionRegistry`
+- [x] **R-E1** — `portal.finance` vs `portal.bookings` / `bookings.self` match `ReportDefinitionRegistry` (integration + registry tests)
 
 ### 4.5 Already in good shape (regression-only)
 
@@ -169,7 +169,7 @@ List exports, dashboard appointments widget, quote/statement PDFs, admin Insight
 
 ## 9. Acceptance criteria (closeout complete)
 
-- [x] Runbooks and module specs reflect shipped behavior (N-D*, R-D* — R-D3 deferred)
+- [x] Runbooks and module specs reflect shipped behavior (N-D*, R-D* incl. R-D3)
 - [ ] Staging transactional email/SMS + reminders verified (N-O5)
 - [x] Portal: sales-summary export + authenticated finance PDF (R-U1, R-U2); honest push UX (N-U1)
 - [ ] Admin reporting read paths audited on staging (R-O1)

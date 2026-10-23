@@ -70,7 +70,7 @@ Do **not** use unqualified **`MRR`** in new routes, DTOs, or admin UI where both
 
 - [x] Quote PDF template (Booking/Quotes data via port)
 - [x] Statement template + issue flow (tenant customer period summary — not wallet/custody)
-- [ ] Branding paths from `@adeni/brand` where applicable (minimal text PDF in 39B)
+- [x] Branding paths from `@adeni/brand` where applicable (QuestPDF footer wordmark + tenant header; sales-summary PDF)
 
 #### Export orchestrator
 

@@ -415,6 +415,8 @@ Do not rewrite large sections without approval.
 | [docs/sprints.md](docs/sprints.md) | Sprint scope and status |
 | [docs/specs/](docs/specs/) | Feature specs (write before code) |
 | [docs/prd-v1.1-body.md](docs/prd-v1.1-body.md) | NFRs, SOC2 requirements |
+| [docs/soc2-readiness-checklist.md](docs/soc2-readiness-checklist.md) | SOC2 code vs deploy split |
+| [docs/audit-runbook.md](docs/audit-runbook.md) | `admin.audit_logs` catalog and ops queries |
 | [docs/api-errors.md](docs/api-errors.md) | RFC 7807 errors, versioning & deprecation policy |
 | [docs/observability.md](docs/observability.md) | App Insights + Sentry, correlation IDs |
 | [docs/tooling-policy.md](docs/tooling-policy.md) | Frozen V1 tools: App Insights, Sentry, PostHog, Resend, Twilio, Mapbox, Blob+CDN |

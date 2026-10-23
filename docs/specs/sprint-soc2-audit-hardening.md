@@ -60,7 +60,7 @@ Make `admin.audit_logs` a trustworthy SOC 2 trail: no false positives on failed 
 | Api | `AuditMiddleware.cs`, `AdminAuditRules.cs`, `SubscriptionController.cs` |
 | Infrastructure | `ReviewService`, `VerificationBadgeService`, `SubscriptionBillingOrchestrator`, `BusinessOnboardingService`, `NotificationPreferencesService`, `BookingService` |
 | Tests | `MiddlewareTests`, `AuditTestDoubles`, booking/discovery/notification test registration |
-| Docs | This spec |
+| Docs | This spec, [audit-runbook.md](../audit-runbook.md), [soc2-readiness-checklist.md](../soc2-readiness-checklist.md) |
 
 ---
 
