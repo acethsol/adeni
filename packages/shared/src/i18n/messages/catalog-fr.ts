@@ -128,6 +128,8 @@ export const frCatalog: MessageTree = {
     },
     customers: {
       auth0Sub: "Sub Auth0",
+      customer: "client",
+      customers: "clients",
       buildingCustomerDataPackage: "Création du dossier de données du client",
       couldNotInitiateErasure: "Impossible de lancer l'effacement.",
       couldNotSearchCustomers: "Impossible de rechercher des clients.",
@@ -520,6 +522,7 @@ export const frCatalog: MessageTree = {
     country: "Pays",
     currency: "Devise",
     customer: "Client",
+    customers: "clients",
     dashboard: "Tableau de bord",
     deactivate: "Désactiver",
     description: "Description",

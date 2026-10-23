@@ -128,6 +128,8 @@ export const enCatalog: MessageTree = {
     },
     customers: {
       auth0Sub: "Auth0 sub",
+      customer: "customer",
+      customers: "customers",
       buildingCustomerDataPackage: "Building customer data package",
       couldNotInitiateErasure: "Could not initiate erasure.",
       couldNotSearchCustomers: "Could not search customers.",
@@ -520,6 +522,7 @@ export const enCatalog: MessageTree = {
     country: "Country",
     currency: "Currency",
     customer: "Customer",
+    customers: "customers",
     dashboard: "Dashboard",
     deactivate: "Deactivate",
     description: "Description",

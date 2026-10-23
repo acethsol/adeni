@@ -9,97 +9,99 @@
     <p class="ok">{{ message() }}</p>
   }
 
-  <adeni-list-toolbar
-    storageKey="admin.customers"
-    [showViewSwitcher]="false"
-    [showSearch]="true"
-    [count]="customers().length"
-    [countTotal]="totalCount()"
-    [singularCountLabel]="tr('common.customer')"
-    [pluralCountLabel]="tr('common.customers')"
-    [searchPlaceholder]="tr('admin.customers.emailNamePhoneAuth0Sub')"
-    [searchQuery]="searchQuery()"
-    (searchQueryChange)="onSearchInput($event)"
-  />
-
-  @if (searching() && customers().length === 0 && hasSearched()) {
-    <p class="muted">{{ tr('admin.customers.searching') }}</p>
-  } @else if (!hasSearched()) {
-    <adeni-portal-empty-state
-      icon="user--filled"
-      [title]="tr('admin.customers.findCustomerRecord')"
-      [description]="
-        devMode
-          ? tr('admin.customers.enterEmailNamePhoneNumber') + ' ' + tr('admin.customers.devSeedSearchHint')
-          : tr('admin.customers.enterEmailNamePhoneNumber')
-      "
-    >
-      @if (devMode) {
-        <adeni-staff-btn icon="search" variant="primary" (pressed)="loadDevSampleCustomers()">
-          {{ tr('admin.customers.devLoadSampleCustomers') }}
-        </adeni-staff-btn>
-      }
-    </adeni-portal-empty-state>
-  } @else if (customers().length === 0 && !error()) {
-    <adeni-portal-empty-state
-      icon="search"
-      [title]="tr('admin.customers.noCustomersFound')"
-      [description]="tr('admin.customers.nothingMatchedQueryTryPartial')"
-      [compact]="true"
+  <div class="roster">
+    <adeni-list-toolbar
+      storageKey="admin.customers"
+      [showViewSwitcher]="false"
+      [showSearch]="true"
+      [count]="customers().length"
+      [countTotal]="totalCount()"
+      [singularCountLabel]="tr('admin.customers.customer')"
+      [pluralCountLabel]="tr('admin.customers.customers')"
+      [searchPlaceholder]="tr('admin.customers.emailNamePhoneAuth0Sub')"
+      [searchQuery]="searchQuery()"
+      (searchQueryChange)="onSearchInput($event)"
     />
-  } @else if (customers().length > 0) {
-    <div class="adeni-list-results">
-      <adeni-data-table
-        [rows]="customers()"
-        [columns]="columns()"
-        [trackRow]="trackRow"
-        [sortRows]="false"
-      >
-        <ng-template adeniDataTableCell="customer" let-c>
-          <div class="cell-stack">
-            <adeni-table-person-cell
-              [displayName]="c.name"
-              [subtitle]="c.email ?? '—'"
-              [initials]="customerInitials(c.name)"
-              avatarTone="neutral"
-            />
-            @if (erasurePill(!!c.erasureRequestedAt); as erasure) {
-              <admin-pill [label]="erasure.label" [variant]="erasure.variant" [compact]="true" />
-            }
-          </div>
-        </ng-template>
-        <ng-template adeniDataTableCell="auth0Sub" let-c>
-          <span class="mono muted">{{ c.auth0Sub }}</span>
-        </ng-template>
-        <ng-template adeniDataTableActions let-c>
-          <div class="actions-inline">
-            <adeni-staff-btn icon="launch" [disabled]="busyId() === c.id" (pressed)="export(c.id)">
-              {{ tr('common.export') }}
-            </adeni-staff-btn>
-            <adeni-staff-btn
-              variant="danger"
-              icon="trash-can"
-              [disabled]="busyId() === c.id || !!c.erasureRequestedAt"
-              (pressed)="erase(c)"
-            >
-              {{ tr('admin.customers.erasure') }}
-            </adeni-staff-btn>
-          </div>
-        </ng-template>
-      </adeni-data-table>
 
-      <adeni-list-pagination
-        [page]="page()"
-        [pageSize]="pageSize()"
-        [totalCount]="totalCount()"
-        [pageSizeOptions]="listPageSizeOptions"
-        [loading]="searching()"
-        [ariaLabel]="tr('admin.customers.customerSearchPages')"
-        (pageChange)="goToPage($event)"
-        (pageSizeChange)="onPageSizeChange($event)"
+    @if (searching() && customers().length === 0 && hasSearched()) {
+      <p class="muted">{{ tr('admin.customers.searching') }}</p>
+    } @else if (!hasSearched()) {
+      <adeni-portal-empty-state
+        icon="user--filled"
+        [title]="tr('admin.customers.findCustomerRecord')"
+        [description]="
+          devMode
+            ? tr('admin.customers.enterEmailNamePhoneNumber') + ' ' + tr('admin.customers.devSeedSearchHint')
+            : tr('admin.customers.enterEmailNamePhoneNumber')
+        "
+      >
+        @if (devMode) {
+          <adeni-staff-btn icon="search" variant="primary" (pressed)="loadDevSampleCustomers()">
+            {{ tr('admin.customers.devLoadSampleCustomers') }}
+          </adeni-staff-btn>
+        }
+      </adeni-portal-empty-state>
+    } @else if (customers().length === 0 && !error()) {
+      <adeni-portal-empty-state
+        icon="search"
+        [title]="tr('admin.customers.noCustomersFound')"
+        [description]="tr('admin.customers.nothingMatchedQueryTryPartial')"
+        [compact]="true"
       />
-    </div>
-  }
+    } @else if (customers().length > 0) {
+      <div class="adeni-list-results">
+        <adeni-data-table
+          [rows]="customers()"
+          [columns]="columns()"
+          [trackRow]="trackRow"
+          [sortRows]="false"
+        >
+          <ng-template adeniDataTableCell="customer" let-c>
+            <div class="cell-stack">
+              <adeni-table-person-cell
+                [displayName]="c.name"
+                [subtitle]="c.email ?? '—'"
+                [initials]="customerInitials(c.name)"
+                avatarTone="neutral"
+              />
+              @if (erasurePill(!!c.erasureRequestedAt); as erasure) {
+                <admin-pill [label]="erasure.label" [variant]="erasure.variant" [compact]="true" />
+              }
+            </div>
+          </ng-template>
+          <ng-template adeniDataTableCell="auth0Sub" let-c>
+            <span class="mono muted">{{ c.auth0Sub }}</span>
+          </ng-template>
+          <ng-template adeniDataTableActions let-c>
+            <div class="actions-inline">
+              <adeni-staff-btn icon="launch" [disabled]="busyId() === c.id" (pressed)="export(c.id)">
+                {{ tr('common.export') }}
+              </adeni-staff-btn>
+              <adeni-staff-btn
+                variant="danger"
+                icon="trash-can"
+                [disabled]="busyId() === c.id || !!c.erasureRequestedAt"
+                (pressed)="erase(c)"
+              >
+                {{ tr('admin.customers.erasure') }}
+              </adeni-staff-btn>
+            </div>
+          </ng-template>
+        </adeni-data-table>
+
+        <adeni-list-pagination
+          [page]="page()"
+          [pageSize]="pageSize()"
+          [totalCount]="totalCount()"
+          [pageSizeOptions]="listPageSizeOptions"
+          [loading]="searching()"
+          [ariaLabel]="tr('admin.customers.customerSearchPages')"
+          (pageChange)="goToPage($event)"
+          (pageSizeChange)="onPageSizeChange($event)"
+        />
+      </div>
+    }
+  </div>
 
   @if (exportData(); as ex) {
     <section class="card export-preview">
