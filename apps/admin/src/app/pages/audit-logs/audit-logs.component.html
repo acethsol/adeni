@@ -7,8 +7,9 @@
   }
 
   <adeni-list-toolbar
+    storageKey="admin.audit-logs"
     [showViewSwitcher]="false"
-    [showSearch]="!actionFilter()"
+    [showSearch]="true"
     [count]="rows().length"
     [countTotal]="totalCount()"
     [singularCountLabel]="tr('admin.auditLogs.entry')"
@@ -31,10 +32,6 @@
     </adeni-list-filter-row>
   </adeni-list-toolbar>
 
-  @if (loaded() && totalCount() > 0) {
-    <p class="list-lead muted">{{ showingRange() }}</p>
-  }
-
   @if (loading() && !loaded()) {
     <p class="muted">{{ tr('admin.auditLogs.loading') }}</p>
   } @else if (loaded() && totalCount() === 0 && !error()) {
@@ -44,44 +41,46 @@
       [description]="tr('admin.auditLogs.emptyDescription')"
     />
   } @else if (rows().length > 0) {
-    <adeni-data-table
-      [rows]="rows()"
-      [columns]="columns()"
-      [trackRow]="trackRow"
-      [sortRows]="false"
-    >
-      <ng-template adeniDataTableCell="when" let-row>
-        <span class="muted">{{ row.occurredAt | date: "medium" }}</span>
-      </ng-template>
-      <ng-template adeniDataTableCell="action" let-row>
-        <admin-pill
-          [label]="row.action"
-          [variant]="actionPillVariant(row.action)"
-          [compact]="true"
-        />
-      </ng-template>
-      <ng-template adeniDataTableCell="entity" let-row>
-        <div class="cell-stack">
-          <span class="mono">{{ row.entityType }}:{{ row.entityId }}</span>
-          @if (row.metadataJson) {
-            <span class="row-sub muted">{{ tr('admin.auditLogs.metadataPresent') }}</span>
-          }
-        </div>
-      </ng-template>
-      <ng-template adeniDataTableCell="correlation" let-row>
-        <span class="mono ref" [title]="row.correlationId">{{ displayCorrelation(row) }}</span>
-      </ng-template>
-    </adeni-data-table>
+    <div class="adeni-list-results">
+      <adeni-data-table
+        [rows]="rows()"
+        [columns]="columns()"
+        [trackRow]="trackRow"
+        [sortRows]="false"
+      >
+        <ng-template adeniDataTableCell="when" let-row>
+          <span class="muted">{{ row.occurredAt | date: "medium" }}</span>
+        </ng-template>
+        <ng-template adeniDataTableCell="action" let-row>
+          <admin-pill
+            [label]="row.action"
+            [variant]="actionPillVariant(row.action)"
+            [compact]="true"
+          />
+        </ng-template>
+        <ng-template adeniDataTableCell="entity" let-row>
+          <div class="cell-stack">
+            <span class="mono">{{ row.entityType }}:{{ row.entityId }}</span>
+            @if (row.metadataJson) {
+              <span class="row-sub muted">{{ tr('admin.auditLogs.metadataPresent') }}</span>
+            }
+          </div>
+        </ng-template>
+        <ng-template adeniDataTableCell="correlation" let-row>
+          <span class="mono ref" [title]="row.correlationId">{{ displayCorrelation(row) }}</span>
+        </ng-template>
+      </adeni-data-table>
 
-    <adeni-list-pagination
-      [page]="page()"
-      [pageSize]="pageSize()"
-      [totalCount]="totalCount()"
-      [pageSizeOptions]="listPageSizeOptions"
-      [loading]="loading()"
-      [ariaLabel]="tr('admin.auditLogs.title')"
-      (pageChange)="goToPage($event)"
-      (pageSizeChange)="onPageSizeChange($event)"
-    />
+      <adeni-list-pagination
+        [page]="page()"
+        [pageSize]="pageSize()"
+        [totalCount]="totalCount()"
+        [pageSizeOptions]="listPageSizeOptions"
+        [loading]="loading()"
+        [ariaLabel]="tr('admin.auditLogs.title')"
+        (pageChange)="goToPage($event)"
+        (pageSizeChange)="onPageSizeChange($event)"
+      />
+    </div>
   }
 </app-portal-page>

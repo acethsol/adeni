@@ -22,7 +22,6 @@ import { AdminApiService } from "../../core/services/admin-api.service";
 import { AdminPillComponent } from "../../shared/admin-pill.component";
 import {
   ADMIN_LIST_PAGE_SIZE,
-  adminListRangeLabel,
   adminListTotalPages,
   LIST_PAGE_SIZE_OPTIONS,
 } from "../../shared/admin-list-paging";
@@ -84,9 +83,6 @@ export class AdminAuditLogsComponent {
   private searchDebounce: ReturnType<typeof setTimeout> | null = null;
 
   readonly totalPages = computed(() => adminListTotalPages(this.totalCount(), this.pageSize()));
-  readonly showingRange = computed(() =>
-    adminListRangeLabel(this.page(), this.pageSize(), this.totalCount()),
-  );
 
   readonly actionFilterOptions = computed<AdeniFilterSelectOption[]>(() =>
     AUDIT_ACTION_PRESETS.map((value) => ({

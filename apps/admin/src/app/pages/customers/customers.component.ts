@@ -1,24 +1,27 @@
 import { Component, computed, inject, signal } from "@angular/core";
 import { JsonPipe } from "@angular/common";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import type { AdminCustomerSummary, CustomerDataExport } from "@adeni/shared";
 import {
-  AdeniCarbonIconComponent,
   AdeniConfirmService,
-  AdeniListPaginationComponent,
-  AdeniStaffButtonComponent,
+  AdeniDataTableActionsDirective,
+  AdeniDataTableCellDirective,
+  AdeniDataTableComponent,
   AdeniFeedbackService,
+  AdeniListPaginationComponent,
+  AdeniListToolbarComponent,
   AdeniPortalEmptyStateComponent,
+  AdeniStaffButtonComponent,
+  AdeniTablePersonCellComponent,
   PortalPageComponent,
+  type AdeniDataTableColumn,
   injectAdeniTranslate,
   injectAdeniApiError,
 } from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 import {
   ADMIN_LIST_PAGE_SIZE,
-  adminListRangeLabel,
   adminListTotalPages,
   LIST_PAGE_SIZE_OPTIONS,
 } from "../../shared/admin-list-paging";
@@ -31,9 +34,12 @@ import { erasurePill } from "../../shared/admin-pill-maps";
   standalone: true,
   imports: [
     PortalPageComponent,
-    FormsModule,
     JsonPipe,
-    AdeniCarbonIconComponent,
+    AdeniListToolbarComponent,
+    AdeniDataTableComponent,
+    AdeniDataTableCellDirective,
+    AdeniDataTableActionsDirective,
+    AdeniTablePersonCellComponent,
     AdeniStaffButtonComponent,
     AdeniListPaginationComponent,
     AdeniPortalEmptyStateComponent,
@@ -51,7 +57,7 @@ export class AdminCustomersComponent {
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly confirmDialog = inject(AdeniConfirmService);
 
-  searchInput = "";
+  readonly searchQuery = signal("");
   readonly searching = signal(false);
   readonly hasSearched = signal(false);
   readonly error = signal<string | null>(null);
@@ -64,20 +70,34 @@ export class AdminCustomersComponent {
   readonly exportData = signal<CustomerDataExport | null>(null);
   readonly busyId = signal<string | null>(null);
 
+  private searchDebounce: ReturnType<typeof setTimeout> | null = null;
+
   readonly totalPages = computed(() => adminListTotalPages(this.totalCount(), this.pageSize()));
-  readonly showingRange = computed(() =>
-    adminListRangeLabel(this.page(), this.pageSize(), this.totalCount()),
-  );
 
   readonly erasurePill = erasurePill;
+
+  readonly columns = computed<AdeniDataTableColumn<AdminCustomerSummary>[]>(() => [
+    {
+      id: "customer",
+      header: this.tr("common.customer"),
+      cell: (row) => row.name,
+      sortValue: (row) => row.name.toLowerCase(),
+    },
+    {
+      id: "auth0Sub",
+      header: this.tr("admin.customers.auth0Sub"),
+      cell: (row) => row.auth0Sub,
+      sortValue: (row) => row.auth0Sub,
+    },
+  ]);
+
+  readonly trackRow = (row: AdminCustomerSummary): string => row.id;
 
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       const q = (params.get("q") ?? params.get("email") ?? "").trim();
       const page = Number(params.get("page") ?? "1");
-      if (q && q !== this.searchInput) {
-        this.searchInput = q;
-      }
+      this.searchQuery.set(q);
       this.page.set(Number.isFinite(page) && page >= 1 ? page : 1);
       if (q) {
         void this.runSearch(q);
@@ -89,15 +109,29 @@ export class AdminCustomersComponent {
     });
   }
 
-  async search(): Promise<void> {
-    const q = this.searchInput.trim();
-    if (!q) {
-      return;
+  onSearchInput(value: string): void {
+    this.searchQuery.set(value);
+    if (this.searchDebounce) {
+      clearTimeout(this.searchDebounce);
     }
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { q, email: null, page: null },
-    });
+    this.searchDebounce = setTimeout(() => {
+      const q = value.trim();
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { q: q || null, email: null, page: null },
+      });
+    }, 400);
+  }
+
+  customerInitials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) {
+      return "?";
+    }
+    if (parts.length === 1) {
+      return parts[0]!.slice(0, 2).toUpperCase();
+    }
+    return `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase();
   }
 
   private async runSearch(q: string): Promise<void> {

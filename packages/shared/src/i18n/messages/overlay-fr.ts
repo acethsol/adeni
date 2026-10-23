@@ -144,8 +144,6 @@ export const frOverlay: MessageTree = {
       actionFilter: "Filtrer par action",
       allActions: "Toutes les actions",
       actionPlaceholder: "Action exacte, p. ex. booking.accepted",
-      applyFilter: "Appliquer le filtre",
-      refresh: "Actualiser",
       entry: "entrée",
       entries: "entrées",
       loading: "Chargement des entrées d'audit…",

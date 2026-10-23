@@ -144,8 +144,6 @@ export const enOverlay: MessageTree = {
       actionFilter: "Filter by action",
       allActions: "All actions",
       actionPlaceholder: "Exact action, e.g. booking.accepted",
-      applyFilter: "Apply filter",
-      refresh: "Refresh",
       entry: "entry",
       entries: "entries",
       loading: "Loading audit entries…",
