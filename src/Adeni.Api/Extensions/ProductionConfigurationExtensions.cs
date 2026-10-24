@@ -1,6 +1,8 @@
 namespace Adeni.Api.Extensions;
 
 using Adeni.Application.Auth;
+using Adeni.Application.Subscriptions;
+using Adeni.Infrastructure.Notifications;
 using Adeni.Infrastructure.Finance;
 
 public static class ProductionConfigurationExtensions
@@ -30,6 +32,41 @@ public static class ProductionConfigurationExtensions
         var paymentsProvider = configuration.GetSection(FinanceOptions.SectionName)["Provider"]
             ?? configuration.GetSection(PaymentsOptions.SectionName)["Provider"]
             ?? "Stub";
+        if (!new[] { "Paystack", "Stripe", "MarketDefault" }.Contains(paymentsProvider, StringComparer.OrdinalIgnoreCase))
+        {
+            errors.Add("Payments:Provider (or Finance:Provider override) must be Paystack, Stripe, or MarketDefault in Staging/Production; Stub is not allowed.");
+        }
+
+        var subscriptionProvider = configuration.GetSection(SubscriptionBillingOptions.SectionName)["Provider"] ?? "Stub";
+        if (!new[] { "Paystack", "MarketDefault" }.Contains(subscriptionProvider, StringComparer.OrdinalIgnoreCase))
+        {
+            errors.Add("SubscriptionBilling:Provider must be Paystack or MarketDefault in Staging/Production; Stub is not allowed.");
+        }
+
+        var notifications = configuration.GetSection(NotificationsOptions.SectionName).Get<NotificationsOptions>()
+            ?? new NotificationsOptions();
+        RequireNotificationValue(notifications.Resend.ApiKey, "Notifications:Resend:ApiKey");
+        RequireNotificationValue(notifications.Twilio.AccountSid, "Notifications:Twilio:AccountSid");
+        RequireNotificationValue(notifications.Twilio.AuthToken, "Notifications:Twilio:AuthToken");
+
+        // Global senders cover tenants whose market has no explicit override.
+        RequireNotificationValue(notifications.Resend.From, "Notifications:Resend:From");
+        RequireNotificationValue(notifications.Twilio.From, "Notifications:Twilio:From");
+        for (var index = 0; index < notifications.Senders.Count; index++)
+        {
+            var sender = notifications.Senders[index];
+            RequireNotificationValue(sender.FromEmail ?? notifications.Resend.From, $"Notifications:Senders:{index}:FromEmail");
+            RequireNotificationValue(sender.SmsFrom ?? notifications.Twilio.From, $"Notifications:Senders:{index}:SmsFrom");
+        }
+
+        void RequireNotificationValue(string? value, string key)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                errors.Add($"{key} must be set in Staging/Production.");
+            }
+        }
+
         var paystackWebhookSecret = configuration.GetSection(PaystackOptions.SectionName)["WebhookSecret"];
         var stripeWebhookSecret = configuration.GetSection(StripeOptions.SectionName)["WebhookSecret"];
 

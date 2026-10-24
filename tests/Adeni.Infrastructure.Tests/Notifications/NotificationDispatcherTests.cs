@@ -15,6 +15,7 @@ using Adeni.Infrastructure.Subscriptions;
 using Adeni.Infrastructure.Tests.Subscriptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -126,6 +127,103 @@ public sealed class NotificationDispatcherTests
         Assert.Single(requests);
         Assert.Equal(HttpMethod.Post, requests[0].Method);
         Assert.Contains("/emails", requests[0].RequestUri!.AbsoluteUri);
+    }
+
+    [Theory]
+    [InlineData("sms", 1, 0)]
+    [InlineData(" SMS ", 1, 0)]
+    [InlineData("email", 0, 1)]
+    [InlineData("whatsapp", 0, 0)]
+    [InlineData(" WhatsApp ", 0, 0)]
+    public async Task SendAsync_Channel_DispatchesOnlyEmailAndSms(string channel, int smsCount, int emailCount)
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var dispatcher = scope.ServiceProvider.GetRequiredService<ChannelNotificationDispatcher>();
+
+        await dispatcher.SendAsync(new NotificationMessage(channel, "recipient", "Subject", "Body", null));
+
+        Assert.Equal(smsCount, scope.ServiceProvider.GetRequiredService<CapturingSmsProvider>().Sent.Count);
+        Assert.Equal(emailCount, scope.ServiceProvider.GetRequiredService<CapturingEmailProvider>().Sent.Count);
+    }
+
+    [Theory]
+    [InlineData("Staging", "Notifications:Resend:ApiKey")]
+    [InlineData("Production", "Notifications:Resend:ApiKey")]
+    [InlineData("Staging", "Notifications:Twilio:AccountSid")]
+    [InlineData("Production", "Notifications:Twilio:AccountSid")]
+    [InlineData("Staging", "Notifications:Twilio:AuthToken")]
+    [InlineData("Production", "Notifications:Twilio:AuthToken")]
+    public void ResolveProvider_MissingProductionCredentials_RejectsLoggingFallback(string environment, string key)
+    {
+        foreach (var value in new string?[] { null, "", " " })
+        {
+            using var provider = BuildNotificationModule(environment, key, value);
+            using var scope = provider.CreateScope();
+
+            var error = Assert.Throws<InvalidOperationException>(() =>
+            {
+                if (key.Contains("Resend"))
+                {
+                    scope.ServiceProvider.GetRequiredService<IEmailNotificationProvider>();
+                }
+                else
+                {
+                    scope.ServiceProvider.GetRequiredService<ISmsNotificationProvider>();
+                }
+            });
+
+            Assert.Contains(key, error.Message);
+            Assert.Contains("logging-only", error.Message);
+        }
+    }
+
+    [Theory]
+    [InlineData("Development")]
+    [InlineData("Testing")]
+    public void ResolveProvider_MissingLocalCredentials_UsesLogging(string environment)
+    {
+        using var provider = BuildNotificationModule(environment, "Notifications:Resend:ApiKey", null);
+        using var scope = provider.CreateScope();
+        Assert.IsType<LoggingEmailNotificationProvider>(scope.ServiceProvider.GetRequiredService<IEmailNotificationProvider>());
+
+        using var smsProvider = BuildNotificationModule(environment, "Notifications:Twilio:AuthToken", null);
+        using var smsScope = smsProvider.CreateScope();
+        Assert.IsType<LoggingSmsNotificationProvider>(smsScope.ServiceProvider.GetRequiredService<ISmsNotificationProvider>());
+    }
+
+    [Theory]
+    [InlineData("Development")]
+    [InlineData("Testing")]
+    [InlineData("Staging")]
+    [InlineData("Production")]
+    public void ResolveProvider_ConfiguredCredentials_UsesResendAndTwilio(string environment)
+    {
+        using var provider = BuildNotificationModule(environment);
+        using var scope = provider.CreateScope();
+
+        Assert.IsType<ResendEmailNotificationProvider>(scope.ServiceProvider.GetRequiredService<IEmailNotificationProvider>());
+        Assert.IsType<TwilioSmsNotificationProvider>(scope.ServiceProvider.GetRequiredService<ISmsNotificationProvider>());
+    }
+
+    private static ServiceProvider BuildNotificationModule(string environment, string? key = null, string? value = null)
+    {
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Notifications:Resend:ApiKey"] = "test-key",
+            ["Notifications:Twilio:AccountSid"] = "test-sid",
+            ["Notifications:Twilio:AuthToken"] = "test-token",
+        }).Build();
+        if (key is not null)
+        {
+            configuration[key] = value;
+        }
+
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddSingleton<IHostEnvironment>(new TestHost { EnvironmentName = environment });
+        services.AddNotificationsModule(configuration);
+        return services.BuildServiceProvider();
     }
 
     internal static ServiceProvider BuildProvider(

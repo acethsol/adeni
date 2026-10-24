@@ -351,6 +351,66 @@ public sealed class TenantAccessMiddlewareInvokeTests
         Assert.Equal(StatusCodes.Status400BadRequest, context.Response.StatusCode);
     }
 
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(false, true)]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    public async Task InvokeAsync_MembershipForRequestedTenant_EnforcesAccess(bool isMember, bool authenticated)
+    {
+        var requestedTenant = Guid.NewGuid();
+        var otherTenant = Guid.NewGuid();
+        await using var db = CreateEmptyDbContext();
+        db.BusinessUsers.Add(new Adeni.Domain.Identity.BusinessUser
+        {
+            Id = Guid.NewGuid(), TenantId = otherTenant, Auth0Sub = "auth0|member",
+        });
+        // A different user's membership must never authorize this caller.
+        db.BusinessUsers.Add(new Adeni.Domain.Identity.BusinessUser
+        {
+            Id = Guid.NewGuid(), TenantId = requestedTenant, Auth0Sub = "auth0|someone-else",
+        });
+        if (isMember)
+        {
+            db.BusinessUsers.Add(new Adeni.Domain.Identity.BusinessUser
+            {
+                Id = Guid.NewGuid(), TenantId = requestedTenant, Auth0Sub = "auth0|member",
+            });
+        }
+
+        await db.SaveChangesAsync();
+        var tenantContext = new TenantContext();
+        using var services = new ServiceCollection().AddSingleton<ITenantContext>(tenantContext).BuildServiceProvider();
+        var context = new DefaultHttpContext { RequestServices = services };
+        context.Request.Path = "/api/v1/tenant/profile";
+        context.Request.Headers[TenantAccessMiddleware.TenantHeaderName] = requestedTenant.ToString();
+        context.Response.Body = new MemoryStream();
+        context.User = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(
+            [new System.Security.Claims.Claim("sub", "auth0|member")], authenticated ? "Test" : null));
+        var nextCalled = false;
+        var writer = new InMemoryAuditLogWriter();
+        var middleware = new TenantAccessMiddleware(_ =>
+        {
+            nextCalled = true;
+            return Task.CompletedTask;
+        }, NullLogger<TenantAccessMiddleware>.Instance);
+
+        await middleware.InvokeAsync(context, new StubCurrentUser("auth0|member", otherTenant), writer, db);
+
+        Assert.Equal(isMember && authenticated, nextCalled);
+        Assert.Equal(isMember && authenticated, tenantContext.IsTenantFilterActive);
+        if (nextCalled)
+        {
+            Assert.Equal(requestedTenant, tenantContext.CurrentTenantId!.Value.Value);
+            Assert.Empty(writer.Entries);
+        }
+        else
+        {
+            Assert.Equal(StatusCodes.Status403Forbidden, context.Response.StatusCode);
+            Assert.Equal(AuditActions.CrossTenantDenied, Assert.Single(writer.Entries).Action);
+        }
+    }
+
     private static AdeniDbContext CreateEmptyDbContext()
     {
         var services = new ServiceCollection();

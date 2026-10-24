@@ -16,7 +16,7 @@ Async **email**, **SMS**, and (later) **push** driven by **domain events** and *
 | `INotificationDispatcher` | Application port |
 | `INotificationPreferencesService` | Tenant toggles: email, push, SMS reminders (`SmsRemindersEnabled`) |
 | `PreferenceAwareNotificationDispatcher` | Gates by channel + prefs |
-| **Delivery (38A/38B)** | Resend + Twilio when `Resend:ApiKey` / Twilio credentials are set; **Development/Testing** without keys → logging providers; **Staging/Prod** should configure keys (otherwise sends still log-only) |
+| **Delivery (38A/38B)** | Resend + Twilio when `Notifications:Resend:ApiKey` / Twilio credentials are set; **Development/Testing** without keys → logging providers; **Staging/Production** rejects missing credentials and sender configuration at startup; logging-only fallback is forbidden |
 | **Appointment reminder scheduler (38B)** | **Hangfire** recurring job → `AppointmentReminderProcessor` — 24h/2h email/SMS; entitlement-gated follow-up email |
 | **Event-driven sends (38B+)** | App code → **`INotificationDispatcher.SendAsync`** only → after-commit → Hangfire `NotificationSendHangfireJob` (automatic retry); inline worker in **Testing** |
 | **Receipt email (38B)** | `PaymentCompleted` → same dispatcher with `PaymentReceipt` metadata → worker issues receipt + PDF via **`IReportRenderer`**, then **`INotificationDeliveryDispatcher`** |
@@ -96,13 +96,13 @@ Portal **Settings → Notifications** (`/settings/notifications`) persists prefs
 
 | Key | Purpose |
 |-----|---------|
-| `Resend:ApiKey` | Resend API |
-| `Resend:From` | From address |
-| `Twilio:AccountSid` | Twilio |
-| `Twilio:AuthToken` | Twilio |
-| `Twilio:FromNumber` | SMS sender |
+| `Notifications:Resend:ApiKey` | Resend API |
+| `Notifications:Resend:From` | Required global fallback From address |
+| `Notifications:Twilio:AccountSid` | Twilio |
+| `Notifications:Twilio:AuthToken` | Twilio |
+| `Notifications:Twilio:From` | Required global fallback SMS sender |
 | `Notifications:Reminders:*` | Reminder job (see below) |
-| `NotificationSenderConfig` | Per-market from/reply (CA/NG) via `INotificationSenderConfigResolver` |
+| `Notifications:Senders` | Optional per-market `CountryCode`, `FromEmail`, `SmsFrom`; omitted sender values inherit global fallbacks, blank overrides are rejected |
 
 Keys in Key Vault for **Staging/Production** — never commit. **Development/Testing** may omit keys (log fallback).
 
