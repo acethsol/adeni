@@ -32,6 +32,8 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
+builder.ValidateProductionConfiguration();
+builder.Services.AddAdeniForwardedHeaders(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser>(sp =>
     sp.GetRequiredService<IHttpContextAccessor>().HttpContext?.User.ToCurrentUser()
@@ -57,8 +59,6 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddAdeniOpenApi();
 }
 
-builder.ValidateProductionConfiguration();
-
 var app = builder.Build();
 var fileStorage = app.Services.GetRequiredService<IFileStorage>();
 
@@ -78,6 +78,7 @@ if (app.Environment.IsDevelopment())
 
 await WarmMarketCatalogAsync(app.Services);
 
+app.UseForwardedHeaders();
 app.UseExceptionHandler();
 app.UseSerilogRequestLogging(options =>
 {
