@@ -7,16 +7,13 @@ using Adeni.Api.Extensions;
 using Adeni.Api.Errors;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
-using Adeni.Api.Common;
 using Adeni.Application.Finance;
-using Adeni.Application.Subscriptions;
+using Adeni.Application.Tenancy;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Auth;
-using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 [ApiController]
@@ -25,8 +22,8 @@ public sealed class FinanceController(
     IPaymentOrchestrator paymentOrchestrator,
     IBillingDocumentService billingDocuments,
     IStaffCompensationService staffCompensation,
-    AdeniDbContext dbContext,
-    IEntitlementsService entitlementsService,
+    IPaymentAccessService paymentAccess,
+    ITenantLocationScopeService locationScope,
     IOptions<Auth0Options> auth0Options,
     IHostEnvironment environment) : ControllerBase
 {
@@ -90,7 +87,7 @@ public sealed class FinanceController(
         }
 
         var payment = result.Value!;
-        if (!await CanAccessPaymentAsync(payment, customerSub, businessSub, cancellationToken))
+        if (!await paymentAccess.CanAccessAsync(payment, customerSub, businessSub, cancellationToken))
         {
             return CrossTenantDenied();
         }
@@ -115,7 +112,7 @@ public sealed class FinanceController(
         }
 
         var payment = paymentResult.Value!;
-        if (!await CanAccessPaymentAsync(payment, customerSub, businessSub, cancellationToken))
+        if (!await paymentAccess.CanAccessAsync(payment, customerSub, businessSub, cancellationToken))
         {
             return CrossTenantDenied();
         }
@@ -193,9 +190,7 @@ public sealed class FinanceController(
             return CrossTenantDenied();
         }
 
-        var scoped = await TenantListLocationQuery.ResolveAsync(
-            dbContext,
-            entitlementsService,
+        var scoped = await locationScope.ResolveListLocationAsync(
             tenantId,
             locationId,
             cancellationToken);
@@ -273,47 +268,6 @@ public sealed class FinanceController(
 
         var result = await paymentOrchestrator.ConfirmStubCheckoutAsync(request.Reference, cancellationToken);
         return ApiResults.FromResult(result, Ok, HttpContext);
-    }
-
-    private async Task<bool> CanAccessPaymentAsync(
-        PaymentIntentResponse payment,
-        string? customerSub,
-        string? businessSub,
-        CancellationToken cancellationToken)
-    {
-        if (businessSub is not null)
-        {
-            var isBusinessMember = await dbContext.BusinessUsers
-                .AsNoTracking()
-                .AnyAsync(
-                    b => b.Auth0Sub == businessSub && b.TenantId == payment.TenantId,
-                    cancellationToken);
-
-            if (isBusinessMember)
-            {
-                return true;
-            }
-        }
-
-        if (customerSub is null || payment.BookingId is null)
-        {
-            return false;
-        }
-
-        var customer = await dbContext.Customers
-            .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Auth0Sub == customerSub, cancellationToken);
-
-        if (customer is null)
-        {
-            return false;
-        }
-
-        return await dbContext.Bookings
-            .AsNoTracking()
-            .AnyAsync(
-                b => b.Id == payment.BookingId && b.CustomerId == customer.Id,
-                cancellationToken);
     }
 
     private string? ResolveCustomerAuth0Sub()

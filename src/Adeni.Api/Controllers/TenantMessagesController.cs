@@ -2,16 +2,14 @@ namespace Adeni.Api.Controllers;
 
 using System.Security.Claims;
 using Adeni.Api.Auth;
-using Adeni.Api.Common;
 using Adeni.Api.Errors;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
+using Adeni.Application.Tenancy;
 using Adeni.Application.Messaging;
-using Adeni.Application.Subscriptions;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Auth;
-using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -20,8 +18,7 @@ using Microsoft.Extensions.Options;
 [RequiresPortalPermission(PortalPermissions.Messages)]
 public sealed class TenantMessagesController(
     IConversationService messaging,
-    AdeniDbContext dbContext,
-    IEntitlementsService entitlementsService,
+    ITenantLocationScopeService locationScope,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     public sealed record SendMessageBody(
@@ -41,9 +38,7 @@ public sealed class TenantMessagesController(
             return Unauthorized();
         }
 
-        var scoped = await TenantListLocationQuery.ResolveAsync(
-            dbContext,
-            entitlementsService,
+        var scoped = await locationScope.ResolveListLocationAsync(
             tenantId,
             locationId,
             cancellationToken);
@@ -80,9 +75,7 @@ public sealed class TenantMessagesController(
             return Unauthorized();
         }
 
-        var scoped = await TenantListLocationQuery.ResolveAsync(
-            dbContext,
-            entitlementsService,
+        var scoped = await locationScope.ResolveListLocationAsync(
             tenantId,
             locationId,
             cancellationToken);

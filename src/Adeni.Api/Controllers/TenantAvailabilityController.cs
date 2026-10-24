@@ -6,10 +6,10 @@ using Adeni.Api.Auth;
 using Adeni.Api.Middleware;
 using Adeni.Application.Booking;
 using Adeni.Application.Auth;
+using Adeni.Application.Tenancy;
 using Adeni.Domain.Identity;
 using Adeni.Domain.Common;
 using Adeni.Infrastructure.Auth;
-using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -18,7 +18,7 @@ using Microsoft.Extensions.Options;
 [RequiresPortalPermission(PortalPermissions.Hours)]
 public sealed class TenantAvailabilityController(
     IAvailabilityService availability,
-    AdeniDbContext dbContext,
+    ITenantLocationScopeService locationScope,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet]
@@ -31,8 +31,7 @@ public sealed class TenantAvailabilityController(
             return Unauthorized();
         }
 
-        var scoped = await TenantLocationScope.ResolveAvailabilityLocationAsync(
-            dbContext,
+        var scoped = await locationScope.ResolveAvailabilityLocationAsync(
             tenantId,
             locationId,
             cancellationToken);

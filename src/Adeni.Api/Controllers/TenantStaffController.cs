@@ -2,16 +2,14 @@ namespace Adeni.Api.Controllers;
 
 using System.Security.Claims;
 using Adeni.Api.Auth;
-using Adeni.Api.Common;
 using Adeni.Api.Errors;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
+using Adeni.Application.Tenancy;
 using Adeni.Application.Booking;
-using Adeni.Application.Subscriptions;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Auth;
-using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -20,8 +18,7 @@ using Microsoft.Extensions.Options;
 public sealed class TenantStaffController(
     IStaffService staff,
     IStaffAccessService staffAccess,
-    AdeniDbContext dbContext,
-    IEntitlementsService entitlementsService,
+    ITenantLocationScopeService locationScope,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet]
@@ -36,9 +33,7 @@ public sealed class TenantStaffController(
             return Unauthorized();
         }
 
-        var scoped = await TenantListLocationQuery.ResolveAsync(
-            dbContext,
-            entitlementsService,
+        var scoped = await locationScope.ResolveListLocationAsync(
             tenantId.Value,
             locationId,
             cancellationToken);
@@ -259,8 +254,7 @@ public sealed class TenantStaffController(
             return Unauthorized();
         }
 
-        var scoped = await TenantLocationScope.ValidateOptionalLocationIdAsync(
-            dbContext,
+        var scoped = await locationScope.ValidateOptionalLocationIdAsync(
             tenantId,
             locationId,
             cancellationToken);
@@ -295,8 +289,7 @@ public sealed class TenantStaffController(
             return Unauthorized();
         }
 
-        var scoped = await TenantLocationScope.ValidateOptionalLocationIdAsync(
-            dbContext,
+        var scoped = await locationScope.ValidateOptionalLocationIdAsync(
             tenantId,
             locationId,
             cancellationToken);
