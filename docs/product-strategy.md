@@ -304,14 +304,16 @@ Auto-responds to inquiries using business hours, services, prices, availability.
 
 This section captures **Cursor/codebase reality**, which diverges from early ChatGPT assumptions in healthy ways.
 
-### 7.1 Stack — what we actually built
+### 7.1 Historical stack decisions (ADR-010 snapshot)
 
-| ChatGPT early advice | Current reality | Verdict |
+| ChatGPT early advice | Reality at ADR-010 (historical) | Verdict |
 |---------------------|-----------------|---------|
 | Flutter single codebase | Next.js web + Expo mobile monorepo (`packages/shared`, `@adeni/api-client`) | ✅ Correct pivot (ADR-010). SEO web + native mobile beats Flutter web for discovery. |
 | NativeScript mobile | Expo + React Native | ✅ Upgraded |
 | Auth0 | Auth0 (web + mobile) | ✅ As planned |
 | .NET + SQL Server + Redis | .NET + SQL Server + Redis | ✅ As planned |
+
+Current target: Angular Discover/Portal/Admin, SQL Server, and native Flutter mobile direction; Next.js/Expo are archived. See [target-client-architecture.md](target-client-architecture.md) and the V1 authority above.
 
 ### 7.2 Architecture — modular monolith, not microservices
 
@@ -351,11 +353,13 @@ Keeps payment logic out of Booking and avoids rewrite when fintech layer lands.
 | Reality | Implication |
 |---------|-------------|
 | WhatsApp is the UI | Payment links + deep links > building chat first |
-| Unreliable connectivity | Offline-friendly mobile (React Query cache ✅); SMS fallback for reminders |
+| Unreliable connectivity | Offline-friendly native mobile; historical Expo used React Query cache. Current Angular uses Signals/RxJS; SMS reminders use Notifications |
 | Paystack dominance | First payment provider for NG; abstract behind port |
 | CAC verification | Manual admin v1 → API integration v2 (Sprint 19) |
 
-### 7.5 What's built vs. strategic gaps
+### 7.5 Historical Sprint ≤13 gap snapshot (with later annotations)
+
+This table preserves earlier planning context, not the current target or launch checklist. Use [sprints.md](sprints.md) for shipped module status and [audit-hardening-closeout.md](audit-hardening-closeout.md) for current production blockers.
 
 | Capability | Built (Sprint ≤13) | Gap |
 |------------|-------------------|-----|

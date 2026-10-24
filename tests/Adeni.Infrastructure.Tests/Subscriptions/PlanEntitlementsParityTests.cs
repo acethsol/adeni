@@ -45,8 +45,8 @@ public sealed class PlanEntitlementsParityTests
         var catalog = PlanEntitlementsCatalog.ForSku(sku);
         var row = ReadCatalogJson("plan-entitlements.json").GetProperty(jsonKey);
 
-        Assert.Equal(row.GetProperty("maxLocations").GetInt32(), catalog.MaxLocations);
-        Assert.Equal(row.GetProperty("maxPractitioners").GetInt32(), catalog.MaxPractitioners);
+        Assert.Equal(row.GetProperty("maxLocations").Deserialize<int?>(), catalog.MaxLocations);
+        Assert.Equal(row.GetProperty("maxPractitioners").Deserialize<int?>(), catalog.MaxPractitioners);
         Assert.Equal(row.GetProperty("additionalLocationsAllowed").GetBoolean(), catalog.AdditionalLocationsAllowed);
         Assert.Equal(row.GetProperty("additionalPractitionersAllowed").GetBoolean(), catalog.AdditionalPractitionersAllowed);
         Assert.Equal(row.GetProperty("unlimitedServices").GetBoolean(), catalog.UnlimitedServices);
@@ -74,6 +74,45 @@ public sealed class PlanEntitlementsParityTests
         Assert.True(catalog.InvoicesReceipts);
         Assert.True(catalog.OnlinePayments);
         Assert.True(catalog.Deposits);
+    }
+
+    [Fact]
+    public void Shared_catalog_has_exactly_the_supported_dotnet_skus()
+    {
+        var keys = ReadCatalogJson("plan-entitlements.json").EnumerateObject().Select(p => p.Name).Order().ToArray();
+        var supported = Enum.GetNames<SubscriptionSku>().Select(JsonNamingPolicy.CamelCase.ConvertName).Order().ToArray();
+        Assert.Equal(supported, keys);
+        var matrix = new JsonPlanEntitlementsMatrix(new ParityTestHostEnvironment());
+        Assert.Throws<ArgumentOutOfRangeException>(() => matrix.ForSku((SubscriptionSku)int.MaxValue));
+    }
+
+    [Theory]
+    [InlineData(SubscriptionSku.Starter, "starter")]
+    [InlineData(SubscriptionSku.Professional, "professional")]
+    [InlineData(SubscriptionSku.Business, "business")]
+    public void Catalog_and_serialized_dotnet_contract_have_exact_keys_types_and_values(SubscriptionSku sku, string key)
+    {
+        var seed = ReadCatalogJson("plan-entitlements.json").GetProperty(key);
+        var mapped = PlanEntitlementsCatalog.ForSku(sku);
+        var api = JsonSerializer.SerializeToElement(mapped, JsonOptions);
+        var derived = new[] { "invoicesReceipts", "onlinePayments", "deposits", "advancedReminders", "multiLocation" };
+        Assert.Equal(api.EnumerateObject().Select(p => p.Name).Except(derived).Order(),
+            seed.EnumerateObject().Select(p => p.Name).Order());
+        foreach (var field in seed.EnumerateObject())
+        {
+            var serialized = api.GetProperty(field.Name);
+            Assert.Equal(field.Value.ValueKind, serialized.ValueKind);
+            Assert.True(JsonNode.DeepEquals(JsonNode.Parse(field.Value.GetRawText()), JsonNode.Parse(serialized.GetRawText())), field.Name);
+        }
+
+        Assert.Equal(seed.GetProperty("configurableReminders").GetBoolean() || seed.GetProperty("followUpAutomation").GetBoolean(), mapped.AdvancedReminders);
+        var limit = seed.GetProperty("maxLocations").Deserialize<int?>();
+        Assert.Equal(limit is null || limit > 1, mapped.MultiLocation);
+        Assert.True(mapped.InvoicesReceipts && mapped.OnlinePayments && mapped.Deposits);
+        foreach (var field in typeof(TenantEntitlements).GetProperties())
+        {
+            Assert.True(field.PropertyType == typeof(bool) || field.PropertyType == typeof(int?), field.Name);
+        }
     }
 
     private static JsonElement ReadCatalogJson(string fileName) =>

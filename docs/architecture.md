@@ -31,14 +31,15 @@ src/
   Adeni.Infrastructure/   Module implementations (adapters), EF, Redis, external APIs
   Adeni.Api/              HTTP controllers, middleware, composition root
 apps/
-  discover/               Angular SSR — public SEO, consumers (target; strangler off Next)
+  discover/               Angular SSR — public SEO, consumers
   portal/                 Angular — business tenants
   admin/                  Angular — internal ops
-  web/                    Next.js — legacy until strangler complete
-  mobile/                 Expo (Flutter consumer app deferred per ADR-012)
+  mobile/                 Flutter business-ops skeleton; native mobile only
 packages/
   shared/                 Cross-client types aligned with API contracts
-  api-client/             Typed HTTP client
+  api-client/             Typed HTTP transport + internal domain modules; compatible root facade
+  ui/                     Reusable Angular UI
+  brand/                  Brand identity/assets
 tests/                    Unit + integration + architecture tests per module
 ```
 
@@ -46,7 +47,7 @@ The **composition root** is `Adeni.Api` + `Infrastructure/DependencyInjection/Se
 
 ### 2.1 Target client architecture (internet-facing)
 
-Canonical diagram: **[target-client-architecture.md](./target-client-architecture.md)** — Discover (Angular SSR), Business Portal (Angular), Admin (Angular), Flutter mobile (target), all clients → one .NET API → SQL Server + Redis. Next.js and Expo remain during the ADR-012 strangler.
+Canonical diagram: **[target-client-architecture.md](./target-client-architecture.md)** — Discover (Angular SSR), Business Portal (Angular), Admin (Angular), Flutter mobile (target), all clients → one .NET API → SQL Server + Redis. Next.js and Expo are archived in a separate repository. Flutter consumer mobile is the product priority; the checked-in Flutter business skeleton is not a web client. [Product direction](./product-direction.md) is the current V1 authority.
 
 ---
 
@@ -129,7 +130,7 @@ public interface IDomainEventDispatcher
 // Handlers live in the module that reacts (Notifications, Reviews, Analytics)
 ```
 
-Domain events dispatch after **`SaveChanges`** succeeds. **Notifications** call **`INotificationDispatcher.SendAsync`** (after-commit via **`IAfterCommitWorkQueue`**; Hangfire in Staging/Prod; inline worker in Testing). Workers deliver via **`INotificationDeliveryDispatcher`**. Reminder sweeps use Hangfire recurring jobs. Swap to Azure Service Bus / RabbitMQ only if Analytics or cross-service fan-out requires it — see [notifications.md](./notifications.md).
+Domain events dispatch after **`SaveChanges`** succeeds. **Notifications** call **`INotificationDispatcher.SendAsync`** (after-commit via **`IAfterCommitWorkQueue`**; Hangfire in Staging/Prod; inline worker in Testing). Workers deliver via **`INotificationDeliveryDispatcher`**. Reminder sweeps use Hangfire recurring jobs. This is not durable transactional event delivery: a handler/enqueue failure can surface after persistence. See [transactional-outbox-design.md](./transactional-outbox-design.md) for the deferred design. Swap to Azure Service Bus / RabbitMQ only if Analytics or cross-service fan-out requires it — see [notifications.md](./notifications.md).
 
 ### 4.4 New feature checklist
 
@@ -138,7 +139,7 @@ Before merging any sprint work:
 1. Code lives under the correct **module folder** in Domain / Application / Infrastructure.
 2. Cross-module calls go through **Application interfaces** only.
 3. New entities get **tenant isolation** if tenant-scoped (`ITenantEntity` + global filter).
-4. Side effects use **domain events** (once 15a lands) or explicit port calls — not hidden coupling.
+4. Side effects use **domain events** or explicit port calls — not hidden coupling.
 5. API surface documented in OpenAPI; client types updated in `packages/shared` when contract changes.
 6. Architecture test added if introducing a new module or dependency direction.
 
@@ -186,9 +187,9 @@ Extraction steps (when justified): copy module folders → new service → repla
 | Single flat DI registration | ✅ Per-module `AddXxxModule()` | **15a** |
 | Domain events | ✅ In-process dispatcher | **15a** |
 | Module boundary architecture tests | ✅ NetArchTest | **15a** |
-| PostgreSQL schema separation | ✅ `payments.*` schema extended (Sprint 17) | — |
+| SQL Server schema separation | ✅ Database Project + SqlPackage; PostgreSQL is archived | — |
 | Payments as isolated module | ✅ Paystack + stub providers, orchestrator, webhooks | — |
-| Messaging as isolated module | ❌ | **18** |
+| Messaging as isolated module | ✅ Conversations + SignalR; replaced Sprint 18 implementation | **36** |
 | Notifications decoupled from Booking | ✅ Domain events → after-commit Hangfire send (Resend/Twilio) | **38** |
 | Subscriptions / entitlements module | ✅ Tiers + gating; billing stub (Paystack patterns aligned) | **17+** |
 

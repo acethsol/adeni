@@ -4,9 +4,10 @@
 
 | App type | Client | Used by |
 |----------|--------|---------|
-| **Regular Web** | Next.js (`@auth0/nextjs-auth0`) | Legacy web until strangler completes |
+| **Regular Web (archived)** | Next.js (`@auth0/nextjs-auth0`) | Reference only in the legacy client archive |
 | **SPA (PKCE)** | `@auth0/auth0-angular` | `apps/portal`, `apps/discover`, `apps/admin` (Angular) |
-| **Native** | Expo AuthSession | iOS + Android mobile (until Flutter) |
+| **Native (target)** | Flutter / PKCE | Native mobile only; configure for release, not an active web client |
+| **Native (archived)** | Expo AuthSession | Historical implementation in the legacy archive |
 
 Create Auth0 **API** with identifier `https://api.adeni.io` (matches `Auth0:Audience`).
 

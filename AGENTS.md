@@ -52,7 +52,7 @@ Check [docs/sprints.md](docs/sprints.md) for live status. As of last playbook up
 
 | | |
 |---|---|
-| **Done through** | Sprint 36 — Messaging rewrite (conversations + SignalR; replaces Sprint 18) |
+| **Shipped modules** | Sprint 36 Messaging, 38A/B/C Notifications, 39A/B Reporting; see sprints.md for incomplete tracks |
 | **Next up** | Sprint 32a dashboard / Sprint 33 SaaS billing remainder — see sprints.md |
 | **Then** | Sprint 34 settlement; Sprint 20 deploy + AI + observability |
 
@@ -303,7 +303,7 @@ AI gets layers 1–5 (frontend, API, DB, auth, hosting). Gaps to close before re
 | Now | Rate limiting | Public endpoints (discovery, profiles, auth/sync) |
 | Sprint 20 | Error tracking | App Insights + Sentry per [observability.md](docs/observability.md); product analytics: PostHog per [tooling-policy.md](docs/tooling-policy.md) |
 | Sprint 20 | CI/CD deploy | Staging → production pipeline |
-| Later | Postgres RLS | Defense-in-depth on tenant tables |
+| Later | SQL Server row-level security | Deferred defense-in-depth on tenant tables |
 | Staging/prod | CDN | Azure CDN/Front Door on public blob (`PublicBaseUrl`) — [media-storage.md](docs/media-storage.md), [tooling-policy.md](docs/tooling-policy.md) |
 | Later | Scale search | Elasticsearch only if SQL discovery QPS demands it |
 
@@ -422,7 +422,7 @@ Do not rewrite large sections without approval.
 | [docs/tooling-policy.md](docs/tooling-policy.md) | Frozen V1 tools: App Insights, Sentry, PostHog, Resend, Twilio, Mapbox, Blob+CDN |
 | [docs/media-storage.md](docs/media-storage.md) | Azure Blob upload keys, public CDN URLs |
 | [docs/auth0-setup.md](docs/auth0-setup.md) | Auth0 claims, MFA |
-| [docs/database-setup.md](docs/database-setup.md) | Postgres, migrations |
+| [docs/database-setup.md](docs/database-setup.md) | SQL Server Database Project + SqlPackage |
 | [docs/caching-setup.md](docs/caching-setup.md) | Redis keys, health |
 | [docs/finance.md](docs/finance.md) | Commerce orchestration, webhooks, deposits (`/api/v1/finance/*`) |
 | [docs/reporting.md](docs/reporting.md) | Documents, dashboard queries, exports (Reporting module) |

@@ -2,7 +2,9 @@
 
 > **Status:** Canonical target (Oct 2026)  
 > **Backend:** [architecture.md](./architecture.md) (modular monolith)  
-> **Migration:** [ADR-012](./adr/ADR-012-angular-web-deferred-flutter.md) (Next.js strangler → three Angular apps)
+> **Historical migration decision:** [ADR-012](./adr/ADR-012-angular-web-deferred-flutter.md) (Next.js strangler → three Angular apps)
+
+[product-direction.md](./product-direction.md) is the current V1 product authority; archived choices do not override it.
 
 This document is the **north-star diagram** for who talks to what on the public internet. One .NET API remains the source of truth for domain logic; clients differ by audience and deploy boundary only.
 
@@ -45,7 +47,7 @@ This document is the **north-star diagram** for who talks to what on the public 
                │
        ┌───────┴───────┐
        │               │
-   PostgreSQL        Redis
+   SQL Server        Redis
 ```
 
 ---
@@ -57,9 +59,9 @@ This document is the **north-star diagram** for who talks to what on the public 
 | **Discover Web** | `apps/discover` | Consumers (web) | SSR for SEO, public discovery, business profiles, booking. Auth0 SPA for signed-in customers when enabled. |
 | **Business Portal** | `apps/portal` | Business tenants | Services, availability, bookings, profile, payments/plan. Auth0 SPA (business role) or dev sub locally. |
 | **Admin Portal** | `apps/admin` | Adeni staff | Pending verification, markets, businesses, customer privacy (export/erasure). Separate origin recommended in production (e.g. `admin.adeni.com`). |
-| **Flutter mobile** | `apps/mobile` | Business ops (owner, employee, front desk) | Skeleton in repo; consumer app after web GA. Same API + OpenAPI. |
+| **Flutter mobile** | `apps/mobile` (business skeleton) | Native mobile only | Consumer mobile is the V1 mobile priority; checked-in owner/employee/front-desk skeleton is not the consumer app or an active web client. Same API + OpenAPI. |
 | **.NET API** | `src/Adeni.Api` | All of the above | Modular monolith; no business logic duplicated in clients. |
-| **PostgreSQL / Redis** | infra | API | Primary store + cache/session/rate-limit as configured. |
+| **SQL Server / Redis** | `db/Adeni.Database` / infra | API | SQL Server via EF + SqlPackage; Redis cache and slot locks. In-memory HTTP rate limits are per API process. |
 
 **Shared contracts:** `packages/shared`, `packages/api-client` (TypeScript today; Flutter codegen from OpenAPI when mobile lands). **Shared Angular UI:** `packages/ui` (portal + admin).
 

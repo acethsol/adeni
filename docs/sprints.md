@@ -1,6 +1,10 @@
 # Sprint plan
 
-## Status overview (July 2026)
+## Current target and historical notes
+
+Current V1 authority: [product-direction.md](./product-direction.md). Supported web clients are Angular Discover (SSR), Portal, and Admin; SQL Server is authoritative. Next.js, Expo, and PostgreSQL references in completed sprint entries below describe historical implementations, not current target architecture. See [legacy-clients-archive.md](./legacy-clients-archive.md) and [legacy-postgres-archive.md](./legacy-postgres-archive.md). Flutter is native mobile only; `apps/mobile` is a business skeleton, while consumer mobile remains the product priority.
+
+## Status overview (maintained through October 2026)
 
 | Sprint | Name | Status |
 |--------|------|--------|

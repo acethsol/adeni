@@ -67,4 +67,23 @@ public sealed class TenantBillingPolicyTests
         Assert.Equal(SubscriptionSku.Professional, tenant.TrialSku);
         Assert.Equal(now.AddDays(TenantBillingDefaults.DefaultTrialDays), tenant.TrialEndsAt);
     }
+    [Theory]
+    [InlineData(TenantBillingStatus.Active, -1, SubscriptionSku.Business)]
+    [InlineData(TenantBillingStatus.Trialing, 1, SubscriptionSku.Professional)]
+    [InlineData(TenantBillingStatus.Trialing, -1, SubscriptionSku.Business)]
+    [InlineData(TenantBillingStatus.Trialing, 0, SubscriptionSku.Business)]
+    [InlineData(TenantBillingStatus.Canceled, 1, SubscriptionSku.Starter)]
+    [InlineData(TenantBillingStatus.Suspended, 1, SubscriptionSku.Starter)]
+    public void ResolveEffectiveSku_preserves_trial_boundary_and_billing_status_rules(
+        TenantBillingStatus status, int trialDaysRemaining, SubscriptionSku expected)
+    {
+        var now = new DateTimeOffset(2026, 10, 24, 12, 0, 0, TimeSpan.Zero);
+        var tenant = new Tenant
+        {
+            SubscriptionSku = SubscriptionSku.Business, BillingStatus = status,
+            TrialSku = null, TrialEndsAt = now.AddDays(trialDaysRemaining),
+        };
+        Assert.Equal(expected, TenantBillingPolicy.ResolveEffectiveSku(tenant, now));
+    }
+
 }
