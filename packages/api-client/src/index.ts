@@ -1,438 +1,67 @@
+export { AdeniApiError, type AdeniApiClientOptions } from "./core/api-transport";
+export type { DiscoverySearchParams } from "./discovery/discovery-api";
+import { ApiTransport, type ApiClientContext } from "./core/api-transport";
 import {
-  authSessionSchema,
-  adminCustomersResponseSchema,
-  adminMarketsResponseSchema,
-  adminMarketSchema,
-  adminBusinessesResponseSchema,
-  adminBusinessDirectoryStatsSchema,
-  adminMarketCatalogStatsSchema,
-  type AdminBusinessDirectoryStats,
-  type AdminMarketCatalogStats,
-  type AdminPagedResult,
-  type PagedResult,
-  setTenantCommercialTermsRequestSchema,
-  adminTenantCommercialTermsSchema,
-  publicCountryPricingSchema,
-  pricingCatalogVersionSummarySchema,
-  pricingCatalogVersionDetailSchema,
-  pricingCatalogVersionListResponseSchema,
-  subscriptionUsageSchema,
-  tenantEntitlementsSchema,
-  type TenantEntitlements,
-  subscriptionCheckoutRequestSchema,
-  subscriptionCheckoutResponseSchema,
-  tenantBillingHistoryResponseSchema,
-  completeStubSubscriptionCheckoutRequestSchema,
-  tenantSubscriptionChargeSchema,
-  tenantDashboardSummarySchema,
-  tenantDashboardSeriesSchema,
-  tenantDashboardBreakdownSchema,
-  tenantDashboardLayoutSchema,
-  type TenantDashboardSummary,
-  type TenantDashboardSeries,
-  type TenantDashboardBreakdown,
-  type TenantDashboardLayout,
-  adminSubscriptionMetricsSchema,
-  adminPlatformSubscriptionMrrSchema,
-  adminGmvSummarySchema,
-  type AdminPlatformSubscriptionMrr,
-  type AdminGmvSummary,
-  adminBusinessSummarySchema,
-  adminRevenueMetricsSchema,
-  adminTransactionsSearchResponseSchema,
-  adminAuditLogsListResponseSchema,
-  availableSlotsResponseSchema,
-  bookingResponseSchema,
-  billingDocumentResponseSchema,
-  billingDocumentsResponseSchema,
-  collectBalanceResponseSchema,
-  createInvoiceRequestSchema,
-  markBookingPaidRequestSchema,
-  paymentReceiptResponseSchema,
-  businessContextResponseSchema,
-  businessLocationSchema,
-  businessProfileSchema,
-  categoriesResponseSchema,
-  createBookingRequestSchema,
-  createMarketRequestSchema,
-  createServiceOfferingRequestSchema,
-  customerBookingsResponseSchema,
-  customerBookingResponseSchema,
-  customerDataExportSchema,
-  discoveryResponseSchema,
-  marketsResponseSchema,
-  mapApiMarketToConfig,
-  pendingBusinessesResponseSchema,
-  publicBusinessProfileSchema,
-  registerBusinessRequestSchema,
-  registerBusinessResponseSchema,
-  rejectBusinessRequestSchema,
-  setMarketLiveRequestSchema,
-  serviceOfferingSchema,
-  serviceOfferingsResponseSchema,
-  serviceTemplatesResponseSchema,
-  type ServiceTemplate,
-  submitVerificationRequestSchema,
-  tenantBookingsResponseSchema,
-  tenantLocationsResponseSchema,
-  updateBusinessProfileRequestSchema,
-  upsertBusinessLocationRequestSchema,
-  mediaUploadUrlRequestSchema,
-  mediaUploadUrlResponseSchema,
-  updateCoverImageRequestSchema,
-  updateCoverImageResponseSchema,
-  addGalleryImageRequestSchema,
-  removeGalleryImageRequestSchema,
-  galleryImagesResponseSchema,
-  createReviewRequestSchema,
-  createQuoteRequestSchema,
-  quoteRequestResponseSchema,
-  quoteRequestsResponseSchema,
-  submitQuoteOfferRequestSchema,
-  replyToReviewRequestSchema,
-  requestVerificationBadgeRequestSchema,
-  verificationBadgeSchema,
-  pendingBadgesResponseSchema,
-  adminReviewsListResultSchema,
-  type PendingBadgeRequest,
-  type AdminReviewListItem,
-  type AdminReviewsListResult,
-  publicReviewItemSchema,
-  joinWaitlistRequestSchema,
-  joinQueueRequestSchema,
-  queueTicketResponseSchema,
-  queueTicketsResponseSchema,
-  tenantQueueFloorResponseSchema,
-  walkInSettingsSchema,
-  updateWalkInSettingsRequestSchema,
-  openWalkInBlockRequestSchema,
-  staffAddQueueRequestSchema,
-  tenantCustomerListResponseSchema,
-  tenantCustomerDetailSchema,
-  type TenantCustomerListResponse,
-  type TenantCustomerDetail,
-  kioskStatusResponseSchema,
-  setKioskPinRequestSchema,
-  verifyKioskPinRequestSchema,
-  verifyKioskPinResponseSchema,
-  initializePaymentRequestSchema,
-  paymentIntentResponseSchema,
-  createPaymentLinkRequestSchema,
-  paymentLedgerResponseSchema,
-  refundPaymentRequestSchema,
-  updateBusinessSettingsRequestSchema,
-  updateBusinessPoliciesRequestSchema,
-  updatePublicPageRequestSchema,
-  createServiceMenuGroupRequestSchema,
-  updateServiceMenuGroupRequestSchema,
-  serviceMenuGroupsResponseSchema,
-  serviceMenuGroupSchema,
-  staffMemberSchema,
-  staffMembersResponseSchema,
-  publicStaffMembersResponseSchema,
-  createStaffMemberRequestSchema,
-  updateStaffMemberRequestSchema,
-  replaceStaffServicesRequestSchema,
-  staffLeaveSchema,
-  staffLeaveListResponseSchema,
-  createStaffLeaveRequestSchema,
-  staffCalendarResponseSchema,
-  staffTeamCalendarResponseSchema,
-  createStaffInviteRequestSchema,
-  staffPortalInviteSchema,
-  staffPortalInvitesResponseSchema,
-  tenantAccessUserSchema,
-  tenantAccessUsersResponseSchema,
-  updateAccessUserRequestSchema,
-  updateStaffAvatarRequestSchema,
-  acceptStaffInviteRequestSchema,
-  acceptStaffInviteResponseSchema,
-  reviewResponseSchema,
-  publicReviewsResponseSchema,
-  createConversationRequestSchema,
-  sendMessageRequestSchema,
-  conversationSummarySchema,
-  conversationDetailSchema,
-  conversationsResponseSchema,
-  conversationListResponseSchema,
-  conversationMessageSchema,
-  unreadCountResponseSchema,
-  whatsAppLinkResponseSchema,
-  messageTemplatesResponseSchema,
-  notificationPreferencesSchema,
-  updateNotificationPreferencesRequestSchema,
-  messagingSettingsSchema,
-  updateMessagingSettingsRequestSchema,
-  updateMarketRequestSchema,
-  updateServiceOfferingRequestSchema,
-  weeklyAvailabilityResponseSchema,
-  businessClosedDateSchema,
-  businessClosedDatesResponseSchema,
-  createBusinessClosedDateRequestSchema,
-  type AuthSession,
-  type AdminCustomerSummary,
-  type AdminMarket,
-  type AdminBusinessSummary,
-  type AdminTenantCommercialTerms,
-  type SetTenantCommercialTermsRequest,
-  type PublicCountryPricing,
-  type PricingCatalogVersionSummary,
-  type PricingCatalogVersionDetail,
-  type CreatePricingCatalogVersionRequest,
-  type UpsertPricingCatalogEntriesRequest,
-  type SubscriptionUsage,
-  type SubscriptionCheckoutRequest,
-  type SubscriptionCheckoutResponse,
-  type TenantSubscriptionCharge,
-  type CompleteStubSubscriptionCheckoutRequest,
-  type AdminSubscriptionMetrics,
-  type AdminRevenueMetrics,
-  type AdminTransactionSearchItem,
-  type AdminAuditLogListItem,
-  type AvailableSlot,
-  type BillingDocumentResponse,
   type BookingResponse,
-  type CollectBalanceResponse,
-  type CreateInvoiceRequest,
-  type MarkBookingPaidRequest,
-  type PaymentReceiptResponse,
-  type BusinessContextResponse,
-  type BusinessProfile,
-  type BusinessLocation,
-  type Category,
-  type CreateBookingRequest,
-  type CreateServiceOfferingRequest,
-  type CustomerBookingResponse,
-  type CustomerDataExport,
-  type DiscoveryResponse,
-  type MarketConfig,
-  type PendingBusiness,
-  type PublicBusinessProfile,
-  type RegisterBusinessRequest,
-  type RegisterBusinessResponse,
   type ServiceOffering,
-  type SubmitVerificationRequest,
-  type UpdateBusinessProfileRequest,
-  type UpdateBusinessSettingsRequest,
-  type UpdateBusinessPoliciesRequest,
-  type UpdatePublicPageRequest,
-  type ServiceMenuGroup,
-  type CreateServiceMenuGroupRequest,
-  type UpdateServiceMenuGroupRequest,
-  type StaffMember,
-  type PublicStaffMember,
-  type CreateStaffMemberRequest,
-  type UpdateStaffMemberRequest,
-  type ReplaceStaffServicesRequest,
-  type StaffLeave,
-  type CreateStaffLeaveRequest,
-  type CreateStaffInviteRequest,
-  type StaffPortalInvite,
-  type TenantAccessUser,
-  type UpdateAccessUserRequest,
-  type UpdateStaffAvatarRequest,
-  type AcceptStaffInviteRequest,
-  type AcceptStaffInviteResponse,
-  type StaffCalendarResponse,
-  type StaffTeamCalendarResponse,
-  type WeeklyAvailabilityRule,
-  type BusinessClosedDate,
-  type CreateBusinessClosedDateRequest,
-  type ServiceOfferingsResponse,
-  type CreateQuoteRequest,
-  type QuoteRequestResponse,
-  type SubmitQuoteOfferRequest,
-  type RequestVerificationBadgeRequest,
-  type VerificationBadge,
-  type PublicReviewItem,
-  type JoinWaitlistRequest,
-  type JoinQueueRequest,
   type QueueTicketResponse,
-  type TenantQueueFloorResponse,
-  type WalkInSettings,
-  type UpdateWalkInSettingsRequest,
-  type QueueExpectedArrival,
-  type WalkInStatus,
-  type StaffAddQueueRequest,
-  type KioskStatusResponse,
-  type VerifyKioskPinResponse,
-  type InitializePaymentRequest,
-  type PaymentIntentResponse,
-  type CreatePaymentLinkRequest,
-  type PaymentLedgerEntry,
-  type RefundPaymentRequest,
-  type CreateReviewRequest,
-  type ReviewResponse,
-  type PublicReviewsResponse,
-  type CreateConversationRequest,
-  type SendMessageRequest,
-  type ConversationSummary,
-  type ConversationDetail,
-  type ConversationMessage,
-  type UnreadCountResponse,
-  type WhatsAppLinkResponse,
-  type MessageTemplate,
-  type NotificationPreferences,
-  type UpdateNotificationPreferencesRequest,
-  type MessagingSettings,
-  type UpdateMessagingSettingsRequest,
-  type UpdateCoverImageRequest,
-  type AddGalleryImageRequest,
-  type RemoveGalleryImageRequest,
-  type GalleryImage,
-  type MediaUploadUrlResponse,
-  type MediaUploadUrlRequest,
-  type UpdateServiceOfferingRequest,
-  type UpsertBusinessLocationRequest,
-  localizeErrorResponse,
-  type ApiErrorResponse,
-  appendListSortParams,
-  type ListSortParams,
 } from "@adeni/shared";
+import { DiscoveryApi } from "./discovery/discovery-api";
+import { BookingApi } from "./booking/booking-api";
+import { AdminApi } from "./admin/admin-api";
+import { FinanceApi } from "./finance/finance-api";
+import { BusinessApi } from "./business/business-api";
+import { SubscriptionsApi } from "./subscriptions/subscriptions-api";
+import { QuotesApi } from "./quotes/quotes-api";
+import { ReportingApi } from "./reporting/reporting-api";
+import { QueueApi } from "./queue/queue-api";
+import { CustomersApi } from "./customers/customers-api";
+import { StaffApi } from "./staff/staff-api";
+import { MessagingApi } from "./messaging/messaging-api";
+import { CatalogApi } from "./catalog/catalog-api";
 
-export class AdeniApiError extends Error {
-  constructor(
-    message: string,
-    readonly statusCode?: number,
-    readonly code?: string,
-    readonly params?: ApiErrorResponse["params"],
-  ) {
-    super(message);
-    this.name = "AdeniApiError";
-  }
-}
+/** Compatibility facade: domain operations share the same mutable transport/session state. */
+export class AdeniApiClient extends ApiTransport {
+  private readonly context: ApiClientContext = {
+    baseUrl: this.baseUrl,
+    request: (path, init) => this.request(path, init),
+  };
+  private readonly discovery = new DiscoveryApi(this.context);
+  private readonly booking = new BookingApi(this.context);
+  private readonly admin = new AdminApi(this.context);
+  private readonly finance = new FinanceApi(this.context);
+  private readonly business = new BusinessApi(this.context);
+  private readonly subscriptions = new SubscriptionsApi(this.context);
+  private readonly quotes = new QuotesApi(this.context);
+  private readonly reporting = new ReportingApi(this.context);
+  private readonly queue = new QueueApi(this.context);
+  private readonly customers = new CustomersApi(this.context);
+  private readonly staff = new StaffApi(this.context);
+  private readonly messaging = new MessagingApi(this.context);
+  private readonly catalog = new CatalogApi(this.context);
 
-export type AdeniApiClientOptions = {
-  baseUrl: string;
-  accessToken?: string | null;
-  tenantId?: string | null;
-  /** Development only — maps to X-Dev-Auth0-Sub when Auth0 is disabled on the API. */
-  devAuth0Sub?: string | null;
-  /** Locale for translating API error codes (defaults to en). Pass a getter to follow runtime locale changes. */
-  locale?: string | (() => string);
-  fetchImpl?: typeof fetch;
-};
-
-export type DiscoverySearchParams = {
-  lat: number;
-  lng: number;
-  category?: string | null;
-  market?: string | null;
-  q?: string | null;
-  page?: number;
-  pageSize?: number;
-  sort?: "distance" | "featured";
-  minRating?: number | null;
-};
-
-export class AdeniApiClient {
-  private accessToken: string | null;
-  private tenantId: string | null;
-  private devAuth0Sub: string | null;
-  private readonly locale: string | (() => string);
-  private readonly baseUrl: string;
-  private readonly fetchImpl: typeof fetch;
-
-  constructor(options: AdeniApiClientOptions) {
-    this.baseUrl = options.baseUrl.replace(/\/$/, "");
-    this.accessToken = options.accessToken ?? null;
-    this.tenantId = options.tenantId ?? null;
-    this.devAuth0Sub = options.devAuth0Sub ?? null;
-    this.locale = options.locale ?? "en";
-    this.fetchImpl = options.fetchImpl ?? fetch;
+  getCategories(...args: Parameters<DiscoveryApi["getCategories"]>): ReturnType<DiscoveryApi["getCategories"]> {
+    return this.discovery.getCategories(...args);
   }
 
-  setAccessToken(token: string | null) {
-    this.accessToken = token;
+  getCategoryServiceTemplates(...args: Parameters<DiscoveryApi["getCategoryServiceTemplates"]>): ReturnType<DiscoveryApi["getCategoryServiceTemplates"]> {
+    return this.discovery.getCategoryServiceTemplates(...args);
   }
 
-  setDevAuth0Sub(auth0Sub: string | null) {
-    this.devAuth0Sub = auth0Sub;
+  getMarkets(...args: Parameters<DiscoveryApi["getMarkets"]>): ReturnType<DiscoveryApi["getMarkets"]> {
+    return this.discovery.getMarkets(...args);
   }
 
-  setTenantId(tenantId: string | null) {
-    this.tenantId = tenantId;
+  searchDiscovery(...args: Parameters<DiscoveryApi["searchDiscovery"]>): ReturnType<DiscoveryApi["searchDiscovery"]> {
+    return this.discovery.searchDiscovery(...args);
   }
 
-  async getCategories(options?: {
-    market?: string;
-    wellness?: boolean;
-    includeDisabled?: boolean;
-  }): Promise<Category[]> {
-    const query = new URLSearchParams();
-    if (options?.market) {
-      query.set("market", options.market);
-    }
-    if (options?.wellness === false) {
-      query.set("wellness", "false");
-    }
-    if (options?.includeDisabled) {
-      query.set("includeDisabled", "true");
-    }
-    const suffix = query.size > 0 ? `?${query.toString()}` : "";
-    const response = await this.request(`/api/v1/categories${suffix}`);
-    const payload = categoriesResponseSchema.parse(await response.json());
-    return payload.items;
+  getBusinessProfile(...args: Parameters<DiscoveryApi["getBusinessProfile"]>): ReturnType<DiscoveryApi["getBusinessProfile"]> {
+    return this.discovery.getBusinessProfile(...args);
   }
 
-  async getCategoryServiceTemplates(categorySlug: string): Promise<ServiceTemplate[]> {
-    const response = await this.request(
-      `/api/v1/categories/${encodeURIComponent(categorySlug)}/service-templates`,
-    );
-    const payload = serviceTemplatesResponseSchema.parse(await response.json());
-    return payload.items;
-  }
-
-  async getMarkets(): Promise<MarketConfig[]> {
-    const response = await this.request("/api/v1/markets");
-    const payload = marketsResponseSchema.parse(await response.json());
-    return payload.items.map(mapApiMarketToConfig);
-  }
-
-  async searchDiscovery(params: DiscoverySearchParams): Promise<DiscoveryResponse> {
-    const query = new URLSearchParams({
-      lat: String(params.lat),
-      lng: String(params.lng),
-      page: String(params.page ?? 1),
-      pageSize: String(params.pageSize ?? 20),
-    });
-
-    if (params.category) {
-      query.set("category", params.category);
-    }
-
-    if (params.market) {
-      query.set("market", params.market);
-    }
-
-    if (params.q) {
-      query.set("q", params.q);
-    }
-
-    if (params.sort) {
-      query.set("sort", params.sort);
-    }
-
-    if (params.minRating) {
-      query.set("minRating", String(params.minRating));
-    }
-
-    const response = await this.request(`/api/v1/discovery?${query.toString()}`);
-    return discoveryResponseSchema.parse(await response.json());
-  }
-
-  async getBusinessProfile(slug: string): Promise<PublicBusinessProfile> {
-    const response = await this.request(
-      `/api/v1/businesses/${encodeURIComponent(slug)}`,
-    );
-    return publicBusinessProfileSchema.parse(await response.json());
-  }
-
-  async getBusinessServiceCatalog(slug: string): Promise<ServiceOfferingsResponse> {
-    const response = await this.request(
-      `/api/v1/businesses/${encodeURIComponent(slug)}/services`,
-    );
-    return serviceOfferingsResponseSchema.parse(await response.json());
+  getBusinessServiceCatalog(...args: Parameters<DiscoveryApi["getBusinessServiceCatalog"]>): ReturnType<DiscoveryApi["getBusinessServiceCatalog"]> {
+    return this.discovery.getBusinessServiceCatalog(...args);
   }
 
   async getBusinessServices(slug: string): Promise<ServiceOffering[]> {
@@ -440,198 +69,56 @@ export class AdeniApiClient {
     return catalog.items;
   }
 
-  async getBusinessStaff(
-    slug: string,
-    params?: { serviceId?: string },
-  ): Promise<PublicStaffMember[]> {
-    const query = new URLSearchParams();
-    if (params?.serviceId) {
-      query.set("serviceId", params.serviceId);
-    }
-    const qs = query.toString();
-    const response = await this.request(
-      `/api/v1/businesses/${encodeURIComponent(slug)}/staff${qs ? `?${qs}` : ""}`,
-    );
-    return publicStaffMembersResponseSchema.parse(await response.json()).items;
+  getBusinessStaff(...args: Parameters<DiscoveryApi["getBusinessStaff"]>): ReturnType<DiscoveryApi["getBusinessStaff"]> {
+    return this.discovery.getBusinessStaff(...args);
   }
 
-  async getBusinessSlots(
-    slug: string,
-    params: {
-      serviceId: string;
-      from: string;
-      to: string;
-      staffMemberId?: string | null;
-      serviceIds?: string[];
-      guestCount?: number;
-    },
-  ): Promise<AvailableSlot[]> {
-    const query = new URLSearchParams({
-      serviceId: params.serviceId,
-      from: params.from,
-      to: params.to,
-    });
-    if (params.staffMemberId) {
-      query.set("staffMemberId", params.staffMemberId);
-    }
-    if (params.serviceIds?.length) {
-      query.set("serviceIds", params.serviceIds.join(","));
-    }
-    if (params.guestCount && params.guestCount > 1) {
-      query.set("guestCount", String(params.guestCount));
-    }
-    const response = await this.request(
-      `/api/v1/businesses/${encodeURIComponent(slug)}/slots?${query.toString()}`,
-    );
-    const payload = availableSlotsResponseSchema.parse(await response.json());
-    return payload.items;
+  getBusinessSlots(...args: Parameters<DiscoveryApi["getBusinessSlots"]>): ReturnType<DiscoveryApi["getBusinessSlots"]> {
+    return this.discovery.getBusinessSlots(...args);
   }
 
-  async createBooking(
-    request: CreateBookingRequest,
-    idempotencyKey?: string,
-  ): Promise<BookingResponse> {
-    const body = createBookingRequestSchema.parse(request);
-    const response = await this.request("/api/v1/bookings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-      idempotencyKey,
-    });
-    return bookingResponseSchema.parse(await response.json());
+  createBooking(...args: Parameters<BookingApi["createBooking"]>): ReturnType<BookingApi["createBooking"]> {
+    return this.booking.createBooking(...args);
   }
 
-  async getMyBookings(): Promise<CustomerBookingResponse[]> {
-    const response = await this.request("/api/v1/bookings");
-    const payload = customerBookingsResponseSchema.parse(await response.json());
-    return payload.items;
+  getMyBookings(...args: Parameters<BookingApi["getMyBookings"]>): ReturnType<BookingApi["getMyBookings"]> {
+    return this.booking.getMyBookings(...args);
   }
 
-  async cancelMyBooking(bookingId: string): Promise<CustomerBookingResponse> {
-    const response = await this.request(
-      `/api/v1/bookings/${encodeURIComponent(bookingId)}/cancel`,
-      { method: "POST" },
-    );
-    return customerBookingResponseSchema.parse(await response.json());
+  cancelMyBooking(...args: Parameters<BookingApi["cancelMyBooking"]>): ReturnType<BookingApi["cancelMyBooking"]> {
+    return this.booking.cancelMyBooking(...args);
   }
 
-  async createBookingReview(
-    bookingId: string,
-    request: CreateReviewRequest,
-  ): Promise<ReviewResponse> {
-    const body = createReviewRequestSchema.parse(request);
-    const response = await this.request(
-      `/api/v1/bookings/${encodeURIComponent(bookingId)}/review`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
-    return reviewResponseSchema.parse(await response.json());
+  createBookingReview(...args: Parameters<BookingApi["createBookingReview"]>): ReturnType<BookingApi["createBookingReview"]> {
+    return this.booking.createBookingReview(...args);
   }
 
-  async getBusinessReviews(
-    slug: string,
-    page = 1,
-    pageSize = 10,
-  ): Promise<PublicReviewsResponse> {
-    const query = new URLSearchParams({
-      page: String(page),
-      pageSize: String(pageSize),
-    });
-    const response = await this.request(
-      `/api/v1/businesses/${encodeURIComponent(slug)}/reviews?${query.toString()}`,
-    );
-    return publicReviewsResponseSchema.parse(await response.json());
+  getBusinessReviews(...args: Parameters<DiscoveryApi["getBusinessReviews"]>): ReturnType<DiscoveryApi["getBusinessReviews"]> {
+    return this.discovery.getBusinessReviews(...args);
   }
 
-  async listAdminReviews(options: {
-    q?: string;
-    page?: number;
-    pageSize?: number;
-    includeHidden?: boolean;
-  } = {}): Promise<AdminReviewsListResult> {
-    const query = new URLSearchParams();
-    if (options.q?.trim()) {
-      query.set("q", options.q.trim());
-    }
-    if (options.page != null) {
-      query.set("page", String(options.page));
-    }
-    if (options.pageSize != null) {
-      query.set("pageSize", String(options.pageSize));
-    }
-    if (options.includeHidden) {
-      query.set("includeHidden", "true");
-    }
-    const suffix = query.size > 0 ? `?${query.toString()}` : "";
-    const response = await this.request(`/api/v1/admin/reviews${suffix}`);
-    return adminReviewsListResultSchema.parse(await response.json());
+  listAdminReviews(...args: Parameters<AdminApi["listAdminReviews"]>): ReturnType<AdminApi["listAdminReviews"]> {
+    return this.admin.listAdminReviews(...args);
   }
 
-  async hideAdminReview(reviewId: string): Promise<void> {
-    await this.request(`/api/v1/admin/reviews/${encodeURIComponent(reviewId)}`, {
-      method: "DELETE",
-    });
+  hideAdminReview(...args: Parameters<AdminApi["hideAdminReview"]>): ReturnType<AdminApi["hideAdminReview"]> {
+    return this.admin.hideAdminReview(...args);
   }
 
-  async listAdminPendingBadges(
-    options: { q?: string; page?: number; pageSize?: number } = {},
-  ): Promise<AdminPagedResult<PendingBadgeRequest>> {
-    const query = new URLSearchParams();
-    if (options.q?.trim()) {
-      query.set("q", options.q.trim());
-    }
-    if (options.page != null) {
-      query.set("page", String(options.page));
-    }
-    if (options.pageSize != null) {
-      query.set("pageSize", String(options.pageSize));
-    }
-    const suffix = query.size > 0 ? `?${query.toString()}` : "";
-    const response = await this.request(`/api/v1/admin/verification/pending-badges${suffix}`);
-    return pendingBadgesResponseSchema.parse(await response.json());
+  listAdminPendingBadges(...args: Parameters<AdminApi["listAdminPendingBadges"]>): ReturnType<AdminApi["listAdminPendingBadges"]> {
+    return this.admin.listAdminPendingBadges(...args);
   }
 
-  async grantAdminVerificationBadge(tenantId: string, badgeType: string): Promise<void> {
-    await this.request(
-      `/api/v1/admin/verification/businesses/${encodeURIComponent(tenantId)}/badges/${encodeURIComponent(badgeType)}/grant`,
-      { method: "POST" },
-    );
+  grantAdminVerificationBadge(...args: Parameters<AdminApi["grantAdminVerificationBadge"]>): ReturnType<AdminApi["grantAdminVerificationBadge"]> {
+    return this.admin.grantAdminVerificationBadge(...args);
   }
 
-  async denyAdminVerificationBadge(tenantId: string, badgeType: string): Promise<void> {
-    await this.request(
-      `/api/v1/admin/verification/businesses/${encodeURIComponent(tenantId)}/badges/${encodeURIComponent(badgeType)}/revoke`,
-      { method: "POST" },
-    );
+  denyAdminVerificationBadge(...args: Parameters<AdminApi["denyAdminVerificationBadge"]>): ReturnType<AdminApi["denyAdminVerificationBadge"]> {
+    return this.admin.denyAdminVerificationBadge(...args);
   }
 
-  async listTenantBookings(options: {
-    tab?: "pending" | "upcoming" | "past";
-    page?: number;
-    pageSize?: number;
-    sort?: ListSortParams;
-    locationId?: string;
-  } = {}): Promise<PagedResult<BookingResponse>> {
-    const query = new URLSearchParams();
-    if (options.locationId) {
-      query.set("locationId", options.locationId);
-    }
-    if (options.tab) {
-      query.set("tab", options.tab);
-    }
-    if (options.page != null) {
-      query.set("page", String(options.page));
-    }
-    if (options.pageSize != null) {
-      query.set("pageSize", String(options.pageSize));
-    }
-    appendListSortParams(query, options.sort);
-    const suffix = query.size > 0 ? `?${query.toString()}` : "";
-    const response = await this.request(`/api/v1/tenant/bookings${suffix}`);
-    return tenantBookingsResponseSchema.parse(await response.json());
+  listTenantBookings(...args: Parameters<BookingApi["listTenantBookings"]>): ReturnType<BookingApi["listTenantBookings"]> {
+    return this.booking.listTenantBookings(...args);
   }
 
   /** @deprecated Use listTenantBookings — returns first page of pending tab only. */
@@ -639,397 +126,160 @@ export class AdeniApiClient {
     return (await this.listTenantBookings({ tab: "pending", page: 1, pageSize: 100 })).items;
   }
 
-  async acceptTenantBooking(bookingId: string): Promise<BookingResponse> {
-    const response = await this.request(
-      `/api/v1/tenant/bookings/${encodeURIComponent(bookingId)}/accept`,
-      { method: "POST" },
-    );
-    return bookingResponseSchema.parse(await response.json());
+  acceptTenantBooking(...args: Parameters<BookingApi["acceptTenantBooking"]>): ReturnType<BookingApi["acceptTenantBooking"]> {
+    return this.booking.acceptTenantBooking(...args);
   }
 
-  async rejectTenantBooking(
-    bookingId: string,
-    reason?: string,
-  ): Promise<BookingResponse> {
-    const response = await this.request(
-      `/api/v1/tenant/bookings/${encodeURIComponent(bookingId)}/reject`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: reason ?? null }),
-      },
-    );
-    return bookingResponseSchema.parse(await response.json());
+  rejectTenantBooking(...args: Parameters<BookingApi["rejectTenantBooking"]>): ReturnType<BookingApi["rejectTenantBooking"]> {
+    return this.booking.rejectTenantBooking(...args);
   }
 
-  async checkInTenantBooking(bookingId: string): Promise<BookingResponse> {
-    const response = await this.request(
-      `/api/v1/tenant/bookings/${encodeURIComponent(bookingId)}/check-in`,
-      { method: "POST" },
-    );
-    return bookingResponseSchema.parse(await response.json());
+  checkInTenantBooking(...args: Parameters<BookingApi["checkInTenantBooking"]>): ReturnType<BookingApi["checkInTenantBooking"]> {
+    return this.booking.checkInTenantBooking(...args);
   }
 
-  async completeTenantBooking(bookingId: string): Promise<BookingResponse> {
-    const response = await this.request(
-      `/api/v1/tenant/bookings/${encodeURIComponent(bookingId)}/complete`,
-      { method: "POST" },
-    );
-    return bookingResponseSchema.parse(await response.json());
+  completeTenantBooking(...args: Parameters<BookingApi["completeTenantBooking"]>): ReturnType<BookingApi["completeTenantBooking"]> {
+    return this.booking.completeTenantBooking(...args);
   }
 
-  async markTenantBookingPaid(
-    bookingId: string,
-    request: MarkBookingPaidRequest = {},
-  ): Promise<BookingResponse> {
-    const body = markBookingPaidRequestSchema.parse(request);
-    const response = await this.request(
-      `/api/v1/tenant/bookings/${encodeURIComponent(bookingId)}/mark-paid`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
-    return bookingResponseSchema.parse(await response.json());
+  markTenantBookingPaid(...args: Parameters<BookingApi["markTenantBookingPaid"]>): ReturnType<BookingApi["markTenantBookingPaid"]> {
+    return this.booking.markTenantBookingPaid(...args);
   }
 
-  async collectTenantBookingBalance(
-    bookingId: string,
-  ): Promise<CollectBalanceResponse> {
-    const response = await this.request(
-      `/api/v1/tenant/bookings/${encodeURIComponent(bookingId)}/collect-balance`,
-      { method: "POST" },
-    );
-    return collectBalanceResponseSchema.parse(await response.json());
+  collectTenantBookingBalance(...args: Parameters<BookingApi["collectTenantBookingBalance"]>): ReturnType<BookingApi["collectTenantBookingBalance"]> {
+    return this.booking.collectTenantBookingBalance(...args);
   }
 
-  async getPaymentReceipt(paymentIntentId: string): Promise<PaymentReceiptResponse> {
-    const response = await this.request(
-      `/api/v1/finance/${encodeURIComponent(paymentIntentId)}/receipt`,
-    );
-    return paymentReceiptResponseSchema.parse(await response.json());
+  getPaymentReceipt(...args: Parameters<FinanceApi["getPaymentReceipt"]>): ReturnType<FinanceApi["getPaymentReceipt"]> {
+    return this.finance.getPaymentReceipt(...args);
   }
 
-  async listBillingDocuments(options?: {
-    kind?: string;
-    bookingId?: string;
-    page?: number;
-    pageSize?: number;
-  }): Promise<BillingDocumentResponse[]> {
-    const params = new URLSearchParams();
-    if (options?.kind) params.set("kind", options.kind);
-    if (options?.bookingId) params.set("bookingId", options.bookingId);
-    if (options?.page) params.set("page", String(options.page));
-    if (options?.pageSize) params.set("pageSize", String(options.pageSize));
-    const query = params.toString();
-    const response = await this.request(
-      `/api/v1/finance/documents${query ? `?${query}` : ""}`,
-    );
-    return billingDocumentsResponseSchema.parse(await response.json()).items;
+  listBillingDocuments(...args: Parameters<FinanceApi["listBillingDocuments"]>): ReturnType<FinanceApi["listBillingDocuments"]> {
+    return this.finance.listBillingDocuments(...args);
   }
 
-  async getBillingDocument(documentId: string): Promise<BillingDocumentResponse> {
-    const response = await this.request(
-      `/api/v1/finance/documents/${encodeURIComponent(documentId)}`,
-    );
-    return billingDocumentResponseSchema.parse(await response.json());
+  getBillingDocument(...args: Parameters<FinanceApi["getBillingDocument"]>): ReturnType<FinanceApi["getBillingDocument"]> {
+    return this.finance.getBillingDocument(...args);
   }
 
-  async getBillingDocumentPdfUrl(documentId: string): Promise<string> {
-    return `${this.baseUrl}/api/v1/finance/documents/${encodeURIComponent(documentId)}/pdf`;
+  getBillingDocumentPdfUrl(...args: Parameters<FinanceApi["getBillingDocumentPdfUrl"]>): ReturnType<FinanceApi["getBillingDocumentPdfUrl"]> {
+    return this.finance.getBillingDocumentPdfUrl(...args);
   }
 
-  async downloadBillingDocumentPdf(documentId: string): Promise<Blob> {
-    const response = await this.request(
-      `/api/v1/finance/documents/${encodeURIComponent(documentId)}/pdf`,
-    );
-    return response.blob();
+  downloadBillingDocumentPdf(...args: Parameters<FinanceApi["downloadBillingDocumentPdf"]>): ReturnType<FinanceApi["downloadBillingDocumentPdf"]> {
+    return this.finance.downloadBillingDocumentPdf(...args);
   }
 
-  async emailBillingDocument(
-    documentId: string,
-    toEmail?: string,
-  ): Promise<BillingDocumentResponse> {
-    const response = await this.request(
-      `/api/v1/finance/documents/${encodeURIComponent(documentId)}/email`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ toEmail: toEmail ?? null }),
-      },
-    );
-    return billingDocumentResponseSchema.parse(await response.json());
+  emailBillingDocument(...args: Parameters<FinanceApi["emailBillingDocument"]>): ReturnType<FinanceApi["emailBillingDocument"]> {
+    return this.finance.emailBillingDocument(...args);
   }
 
-  async createInvoice(request: CreateInvoiceRequest): Promise<BillingDocumentResponse> {
-    const body = createInvoiceRequestSchema.parse(request);
-    const response = await this.request("/api/v1/finance/documents/invoices", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return billingDocumentResponseSchema.parse(await response.json());
+  createInvoice(...args: Parameters<FinanceApi["createInvoice"]>): ReturnType<FinanceApi["createInvoice"]> {
+    return this.finance.createInvoice(...args);
   }
 
-  async getPublicBillingDocument(token: string): Promise<BillingDocumentResponse> {
-    const response = await this.request(
-      `/api/v1/public/documents/${encodeURIComponent(token)}`,
-    );
-    return billingDocumentResponseSchema.parse(await response.json());
+  getPublicBillingDocument(...args: Parameters<FinanceApi["getPublicBillingDocument"]>): ReturnType<FinanceApi["getPublicBillingDocument"]> {
+    return this.finance.getPublicBillingDocument(...args);
   }
 
-  async getTenantProfile(): Promise<BusinessProfile> {
-    const response = await this.request("/api/v1/tenant/profile");
-    return businessProfileSchema.parse(await response.json());
+  getTenantProfile(...args: Parameters<BusinessApi["getTenantProfile"]>): ReturnType<BusinessApi["getTenantProfile"]> {
+    return this.business.getTenantProfile(...args);
   }
 
-  async getTenantEntitlements(): Promise<TenantEntitlements> {
-    const response = await this.request("/api/v1/tenant/entitlements");
-    return tenantEntitlementsSchema.parse(await response.json());
+  getTenantEntitlements(...args: Parameters<SubscriptionsApi["getTenantEntitlements"]>): ReturnType<SubscriptionsApi["getTenantEntitlements"]> {
+    return this.subscriptions.getTenantEntitlements(...args);
   }
 
-  async getBusinessContext(): Promise<BusinessContextResponse> {
-    const response = await this.request("/api/v1/tenant/context");
-    return businessContextResponseSchema.parse(await response.json());
+  getBusinessContext(...args: Parameters<BusinessApi["getBusinessContext"]>): ReturnType<BusinessApi["getBusinessContext"]> {
+    return this.business.getBusinessContext(...args);
   }
 
-  async registerBusiness(
-    request: RegisterBusinessRequest,
-  ): Promise<RegisterBusinessResponse> {
-    const body = registerBusinessRequestSchema.parse(request);
-    const response = await this.request("/api/v1/tenant/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return registerBusinessResponseSchema.parse(await response.json());
+  registerBusiness(...args: Parameters<BusinessApi["registerBusiness"]>): ReturnType<BusinessApi["registerBusiness"]> {
+    return this.business.registerBusiness(...args);
   }
 
-  async updateTenantProfile(
-    request: UpdateBusinessProfileRequest,
-  ): Promise<BusinessProfile> {
-    const body = updateBusinessProfileRequestSchema.parse(request);
-    const response = await this.request("/api/v1/tenant/profile", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return businessProfileSchema.parse(await response.json());
+  updateTenantProfile(...args: Parameters<BusinessApi["updateTenantProfile"]>): ReturnType<BusinessApi["updateTenantProfile"]> {
+    return this.business.updateTenantProfile(...args);
   }
 
-  async updateTenantSettings(
-    request: UpdateBusinessSettingsRequest,
-  ): Promise<BusinessProfile> {
-    const body = updateBusinessSettingsRequestSchema.parse(request);
-    const response = await this.request("/api/v1/tenant/settings", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return businessProfileSchema.parse(await response.json());
+  updateTenantSettings(...args: Parameters<BusinessApi["updateTenantSettings"]>): ReturnType<BusinessApi["updateTenantSettings"]> {
+    return this.business.updateTenantSettings(...args);
   }
 
-  async updateTenantPublicPage(
-    request: UpdatePublicPageRequest,
-  ): Promise<BusinessProfile> {
-    const body = updatePublicPageRequestSchema.parse(request);
-    const response = await this.request("/api/v1/tenant/public-page", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return businessProfileSchema.parse(await response.json());
+  updateTenantPublicPage(...args: Parameters<BusinessApi["updateTenantPublicPage"]>): ReturnType<BusinessApi["updateTenantPublicPage"]> {
+    return this.business.updateTenantPublicPage(...args);
   }
 
-  async updateTenantPolicies(
-    request: UpdateBusinessPoliciesRequest,
-  ): Promise<BusinessProfile> {
-    const body = updateBusinessPoliciesRequestSchema.parse(request);
-    const response = await this.request("/api/v1/tenant/policies", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return businessProfileSchema.parse(await response.json());
+  updateTenantPolicies(...args: Parameters<BusinessApi["updateTenantPolicies"]>): ReturnType<BusinessApi["updateTenantPolicies"]> {
+    return this.business.updateTenantPolicies(...args);
   }
 
-  async createQuotePhotoUploadUrl(
-    request: MediaUploadUrlRequest,
-  ): Promise<MediaUploadUrlResponse> {
-    const body = mediaUploadUrlRequestSchema.parse({
-      ...request,
-      purpose: "quote_photo",
-    });
-    const response = await this.request("/api/v1/customer/media/upload-url", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return mediaUploadUrlResponseSchema.parse(await response.json());
+  createQuotePhotoUploadUrl(...args: Parameters<QuotesApi["createQuotePhotoUploadUrl"]>): ReturnType<QuotesApi["createQuotePhotoUploadUrl"]> {
+    return this.quotes.createQuotePhotoUploadUrl(...args);
   }
 
-  async listTenantVerificationBadges(): Promise<VerificationBadge[]> {
-    const response = await this.request("/api/v1/tenant/verification/badges");
-    const payload = (await response.json()) as { items: VerificationBadge[] };
-    return payload.items ?? [];
+  listTenantVerificationBadges(...args: Parameters<BusinessApi["listTenantVerificationBadges"]>): ReturnType<BusinessApi["listTenantVerificationBadges"]> {
+    return this.business.listTenantVerificationBadges(...args);
   }
 
-  async createQuoteRequest(
-    slug: string,
-    request: CreateQuoteRequest,
-  ): Promise<QuoteRequestResponse> {
-    const body = createQuoteRequestSchema.parse(request);
-    const response = await this.request(
-      `/api/v1/businesses/${encodeURIComponent(slug)}/quote-requests`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
-    return quoteRequestResponseSchema.parse(await response.json());
+  createQuoteRequest(...args: Parameters<DiscoveryApi["createQuoteRequest"]>): ReturnType<DiscoveryApi["createQuoteRequest"]> {
+    return this.discovery.createQuoteRequest(...args);
   }
 
-  async listCustomerQuotes(): Promise<QuoteRequestResponse[]> {
-    const response = await this.request("/api/v1/quotes");
-    const payload = quoteRequestsResponseSchema.parse(await response.json());
-    return payload.items;
+  listCustomerQuotes(...args: Parameters<QuotesApi["listCustomerQuotes"]>): ReturnType<QuotesApi["listCustomerQuotes"]> {
+    return this.quotes.listCustomerQuotes(...args);
   }
 
-  async acceptQuote(quoteRequestId: string): Promise<QuoteRequestResponse> {
-    const response = await this.request(
-      `/api/v1/quotes/${encodeURIComponent(quoteRequestId)}/accept`,
-      { method: "POST" },
-    );
-    return quoteRequestResponseSchema.parse(await response.json());
+  acceptQuote(...args: Parameters<QuotesApi["acceptQuote"]>): ReturnType<QuotesApi["acceptQuote"]> {
+    return this.quotes.acceptQuote(...args);
   }
 
-  async declineQuote(quoteRequestId: string): Promise<QuoteRequestResponse> {
-    const response = await this.request(
-      `/api/v1/quotes/${encodeURIComponent(quoteRequestId)}/decline`,
-      { method: "POST" },
-    );
-    return quoteRequestResponseSchema.parse(await response.json());
+  declineQuote(...args: Parameters<QuotesApi["declineQuote"]>): ReturnType<QuotesApi["declineQuote"]> {
+    return this.quotes.declineQuote(...args);
   }
 
-  async listTenantQuotes(options: { locationId?: string } = {}): Promise<QuoteRequestResponse[]> {
-    const query = new URLSearchParams();
-    if (options.locationId) {
-      query.set("locationId", options.locationId);
-    }
-    const suffix = query.size > 0 ? `?${query.toString()}` : "";
-    const response = await this.request(`/api/v1/tenant/quotes${suffix}`);
-    const payload = quoteRequestsResponseSchema.parse(await response.json());
-    return payload.items;
+  listTenantQuotes(...args: Parameters<QuotesApi["listTenantQuotes"]>): ReturnType<QuotesApi["listTenantQuotes"]> {
+    return this.quotes.listTenantQuotes(...args);
   }
 
-  async downloadTenantQuotePdf(quoteId: string): Promise<Blob> {
-    const response = await this.request(
-      `/api/v1/tenant/quotes/${encodeURIComponent(quoteId)}/pdf`,
-    );
-    return response.blob();
+  downloadTenantQuotePdf(...args: Parameters<ReportingApi["downloadTenantQuotePdf"]>): ReturnType<ReportingApi["downloadTenantQuotePdf"]> {
+    return this.reporting.downloadTenantQuotePdf(...args);
   }
 
-  async downloadTenantCustomerStatementPdf(options: {
-    tenantCustomerId: string;
-    from: string;
-    to: string;
-  }): Promise<Blob> {
-    const query = new URLSearchParams({
-      from: options.from,
-      to: options.to,
-    });
-    const response = await this.request(
-      `/api/v1/tenant/customers/${encodeURIComponent(options.tenantCustomerId)}/statement?${query.toString()}`,
-    );
-    return response.blob();
+  downloadTenantCustomerStatementPdf(...args: Parameters<ReportingApi["downloadTenantCustomerStatementPdf"]>): ReturnType<ReportingApi["downloadTenantCustomerStatementPdf"]> {
+    return this.reporting.downloadTenantCustomerStatementPdf(...args);
   }
 
-  async submitQuoteOffer(
-    quoteRequestId: string,
-    request: SubmitQuoteOfferRequest,
-  ): Promise<QuoteRequestResponse> {
-    const body = submitQuoteOfferRequestSchema.parse(request);
-    const response = await this.request(
-      `/api/v1/tenant/quotes/${encodeURIComponent(quoteRequestId)}/offer`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
-    return quoteRequestResponseSchema.parse(await response.json());
+  submitQuoteOffer(...args: Parameters<QuotesApi["submitQuoteOffer"]>): ReturnType<QuotesApi["submitQuoteOffer"]> {
+    return this.quotes.submitQuoteOffer(...args);
   }
 
-  async listTenantReviews(): Promise<PublicReviewItem[]> {
-    const response = await this.request("/api/v1/tenant/reviews");
-    const payload = (await response.json()) as { items: PublicReviewItem[] };
-    return payload.items ?? [];
+  listTenantReviews(...args: Parameters<BusinessApi["listTenantReviews"]>): ReturnType<BusinessApi["listTenantReviews"]> {
+    return this.business.listTenantReviews(...args);
   }
 
-  async replyToReview(reviewId: string, reply: string): Promise<PublicReviewItem> {
-    const body = replyToReviewRequestSchema.parse({ reply });
-    const response = await this.request(
-      `/api/v1/tenant/reviews/${encodeURIComponent(reviewId)}/reply`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
-    return publicReviewItemSchema.parse(await response.json());
+  replyToReview(...args: Parameters<BusinessApi["replyToReview"]>): ReturnType<BusinessApi["replyToReview"]> {
+    return this.business.replyToReview(...args);
   }
 
-  async requestVerificationBadge(
-    request: RequestVerificationBadgeRequest,
-  ): Promise<VerificationBadge> {
-    const body = requestVerificationBadgeRequestSchema.parse(request);
-    const response = await this.request("/api/v1/tenant/verification/badges", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return verificationBadgeSchema.parse(await response.json());
+  requestVerificationBadge(...args: Parameters<BusinessApi["requestVerificationBadge"]>): ReturnType<BusinessApi["requestVerificationBadge"]> {
+    return this.business.requestVerificationBadge(...args);
   }
 
-  async joinWaitlist(request: JoinWaitlistRequest): Promise<{ id: string }> {
-    const body = joinWaitlistRequestSchema.parse(request);
-    const response = await this.request("/api/v1/bookings/waitlist", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return (await response.json()) as { id: string };
+  joinWaitlist(...args: Parameters<BookingApi["joinWaitlist"]>): ReturnType<BookingApi["joinWaitlist"]> {
+    return this.booking.joinWaitlist(...args);
   }
 
-  async joinPublicQueue(
-    slug: string,
-    request: JoinQueueRequest,
-  ): Promise<QueueTicketResponse> {
-    const body = joinQueueRequestSchema.parse(request);
-    const response = await this.request(
-      `/api/v1/public/queue/${encodeURIComponent(slug)}/join`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
-    return queueTicketResponseSchema.parse(await response.json());
+  joinPublicQueue(...args: Parameters<QueueApi["joinPublicQueue"]>): ReturnType<QueueApi["joinPublicQueue"]> {
+    return this.queue.joinPublicQueue(...args);
   }
 
-  async getPublicQueueTicket(token: string): Promise<QueueTicketResponse> {
-    const response = await this.request(
-      `/api/v1/public/queue/tickets/${encodeURIComponent(token)}`,
-    );
-    return queueTicketResponseSchema.parse(await response.json());
+  getPublicQueueTicket(...args: Parameters<QueueApi["getPublicQueueTicket"]>): ReturnType<QueueApi["getPublicQueueTicket"]> {
+    return this.queue.getPublicQueueTicket(...args);
   }
 
-  async getTenantQueueFloor(locationId?: string): Promise<TenantQueueFloorResponse> {
-    const query = locationId ? `?locationId=${encodeURIComponent(locationId)}` : "";
-    const response = await this.request(`/api/v1/tenant/queue${query}`);
-    return tenantQueueFloorResponseSchema.parse(await response.json());
+  getTenantQueueFloor(...args: Parameters<QueueApi["getTenantQueueFloor"]>): ReturnType<QueueApi["getTenantQueueFloor"]> {
+    return this.queue.getTenantQueueFloor(...args);
   }
 
   /** @deprecated Use getTenantQueueFloor */
@@ -1038,415 +288,128 @@ export class AdeniApiClient {
     return floor.items;
   }
 
-  async updateWalkInSettings(
-    request: UpdateWalkInSettingsRequest,
-  ): Promise<WalkInSettings> {
-    const body = updateWalkInSettingsRequestSchema.parse(request);
-    const response = await this.request("/api/v1/tenant/queue/walk-in-settings", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return walkInSettingsSchema.parse(await response.json());
+  updateWalkInSettings(...args: Parameters<QueueApi["updateWalkInSettings"]>): ReturnType<QueueApi["updateWalkInSettings"]> {
+    return this.queue.updateWalkInSettings(...args);
   }
 
-  async openWalkInBlock(durationMinutes: number): Promise<WalkInSettings> {
-    const body = openWalkInBlockRequestSchema.parse({ durationMinutes });
-    const response = await this.request("/api/v1/tenant/queue/walk-in/open", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return walkInSettingsSchema.parse(await response.json());
+  openWalkInBlock(...args: Parameters<QueueApi["openWalkInBlock"]>): ReturnType<QueueApi["openWalkInBlock"]> {
+    return this.queue.openWalkInBlock(...args);
   }
 
-  async addTenantQueueTicket(
-    request: StaffAddQueueRequest,
-  ): Promise<QueueTicketResponse> {
-    const body = staffAddQueueRequestSchema.parse(request);
-    const response = await this.request("/api/v1/tenant/queue", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return queueTicketResponseSchema.parse(await response.json());
+  addTenantQueueTicket(...args: Parameters<QueueApi["addTenantQueueTicket"]>): ReturnType<QueueApi["addTenantQueueTicket"]> {
+    return this.queue.addTenantQueueTicket(...args);
   }
 
-  async callTenantQueueTicket(ticketId: string): Promise<QueueTicketResponse> {
-    const response = await this.request(
-      `/api/v1/tenant/queue/${encodeURIComponent(ticketId)}/call`,
-      { method: "POST" },
-    );
-    return queueTicketResponseSchema.parse(await response.json());
+  callTenantQueueTicket(...args: Parameters<QueueApi["callTenantQueueTicket"]>): ReturnType<QueueApi["callTenantQueueTicket"]> {
+    return this.queue.callTenantQueueTicket(...args);
   }
 
-  async startTenantQueueTicket(
-    ticketId: string,
-    staffMemberId?: string,
-  ): Promise<QueueTicketResponse> {
-    const response = await this.request(
-      `/api/v1/tenant/queue/${encodeURIComponent(ticketId)}/start`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ staffMemberId: staffMemberId ?? null }),
-      },
-    );
-    return queueTicketResponseSchema.parse(await response.json());
+  startTenantQueueTicket(...args: Parameters<QueueApi["startTenantQueueTicket"]>): ReturnType<QueueApi["startTenantQueueTicket"]> {
+    return this.queue.startTenantQueueTicket(...args);
   }
 
-  async completeTenantQueueTicket(ticketId: string): Promise<QueueTicketResponse> {
-    const response = await this.request(
-      `/api/v1/tenant/queue/${encodeURIComponent(ticketId)}/complete`,
-      { method: "POST" },
-    );
-    return queueTicketResponseSchema.parse(await response.json());
+  completeTenantQueueTicket(...args: Parameters<QueueApi["completeTenantQueueTicket"]>): ReturnType<QueueApi["completeTenantQueueTicket"]> {
+    return this.queue.completeTenantQueueTicket(...args);
   }
 
-  async noShowTenantQueueTicket(ticketId: string): Promise<QueueTicketResponse> {
-    const response = await this.request(
-      `/api/v1/tenant/queue/${encodeURIComponent(ticketId)}/no-show`,
-      { method: "POST" },
-    );
-    return queueTicketResponseSchema.parse(await response.json());
+  noShowTenantQueueTicket(...args: Parameters<QueueApi["noShowTenantQueueTicket"]>): ReturnType<QueueApi["noShowTenantQueueTicket"]> {
+    return this.queue.noShowTenantQueueTicket(...args);
   }
 
-  async cancelTenantQueueTicket(ticketId: string): Promise<QueueTicketResponse> {
-    const response = await this.request(
-      `/api/v1/tenant/queue/${encodeURIComponent(ticketId)}/cancel`,
-      { method: "POST" },
-    );
-    return queueTicketResponseSchema.parse(await response.json());
+  cancelTenantQueueTicket(...args: Parameters<QueueApi["cancelTenantQueueTicket"]>): ReturnType<QueueApi["cancelTenantQueueTicket"]> {
+    return this.queue.cancelTenantQueueTicket(...args);
   }
 
-  async listTenantCustomers(params?: {
-    search?: string;
-    page?: number;
-    pageSize?: number;
-    discover?: "discover" | "walk_in";
-    sort?: ListSortParams;
-    locationId?: string;
-  }): Promise<TenantCustomerListResponse> {
-    const query = new URLSearchParams();
-    if (params?.search) {
-      query.set("search", params.search);
-    }
-    if (params?.locationId) {
-      query.set("locationId", params.locationId);
-    }
-    if (params?.page) {
-      query.set("page", String(params.page));
-    }
-    if (params?.pageSize) {
-      query.set("pageSize", String(params.pageSize));
-    }
-    if (params?.discover) {
-      query.set("discover", params.discover);
-    }
-    appendListSortParams(query, params?.sort);
-    const suffix = query.size > 0 ? `?${query.toString()}` : "";
-    const response = await this.request(`/api/v1/tenant/customers${suffix}`);
-    return tenantCustomerListResponseSchema.parse(await response.json());
+  listTenantCustomers(...args: Parameters<CustomersApi["listTenantCustomers"]>): ReturnType<CustomersApi["listTenantCustomers"]> {
+    return this.customers.listTenantCustomers(...args);
   }
 
-  async getTenantCustomer(
-    tenantCustomerId: string,
-    locationId?: string,
-  ): Promise<TenantCustomerDetail> {
-    const query = locationId ? `?locationId=${encodeURIComponent(locationId)}` : "";
-    const response = await this.request(
-      `/api/v1/tenant/customers/${encodeURIComponent(tenantCustomerId)}${query}`,
-    );
-    const json = (await response.json()) as Record<string, unknown>;
-    return tenantCustomerDetailSchema.parse({
-      ...json,
-      recentBookingIds: json["recentBookingIds"] ?? [],
-      recentQueueTicketIds: json["recentQueueTicketIds"] ?? [],
-      recentBookings: json["recentBookings"] ?? [],
-      recentQueueVisits: json["recentQueueVisits"] ?? [],
-    });
+  getTenantCustomer(...args: Parameters<CustomersApi["getTenantCustomer"]>): ReturnType<CustomersApi["getTenantCustomer"]> {
+    return this.customers.getTenantCustomer(...args);
   }
 
-  async getTenantKioskStatus(): Promise<KioskStatusResponse> {
-    const response = await this.request("/api/v1/tenant/kiosk/status");
-    return kioskStatusResponseSchema.parse(await response.json());
+  getTenantKioskStatus(...args: Parameters<QueueApi["getTenantKioskStatus"]>): ReturnType<QueueApi["getTenantKioskStatus"]> {
+    return this.queue.getTenantKioskStatus(...args);
   }
 
-  async setTenantKioskPin(pin: string | null): Promise<KioskStatusResponse> {
-    const body = setKioskPinRequestSchema.parse({ pin });
-    const response = await this.request("/api/v1/tenant/kiosk/pin", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return kioskStatusResponseSchema.parse(await response.json());
+  setTenantKioskPin(...args: Parameters<QueueApi["setTenantKioskPin"]>): ReturnType<QueueApi["setTenantKioskPin"]> {
+    return this.queue.setTenantKioskPin(...args);
   }
 
-  async verifyTenantKioskPin(pin: string): Promise<VerifyKioskPinResponse> {
-    const body = verifyKioskPinRequestSchema.parse({ pin });
-    const response = await this.request("/api/v1/tenant/kiosk/verify-pin", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return verifyKioskPinResponseSchema.parse(await response.json());
+  verifyTenantKioskPin(...args: Parameters<QueueApi["verifyTenantKioskPin"]>): ReturnType<QueueApi["verifyTenantKioskPin"]> {
+    return this.queue.verifyTenantKioskPin(...args);
   }
 
-  async initializePayment(
-    request: InitializePaymentRequest,
-    idempotencyKey?: string,
-  ): Promise<PaymentIntentResponse> {
-    const body = initializePaymentRequestSchema.parse(request);
-    const response = await this.request("/api/v1/finance/initialize", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-      idempotencyKey,
-    });
-    return paymentIntentResponseSchema.parse(await response.json());
+  initializePayment(...args: Parameters<FinanceApi["initializePayment"]>): ReturnType<FinanceApi["initializePayment"]> {
+    return this.finance.initializePayment(...args);
   }
 
-  async getPayment(id: string): Promise<PaymentIntentResponse> {
-    const response = await this.request(`/api/v1/finance/${id}`);
-    return paymentIntentResponseSchema.parse(await response.json());
+  getPayment(...args: Parameters<FinanceApi["getPayment"]>): ReturnType<FinanceApi["getPayment"]> {
+    return this.finance.getPayment(...args);
   }
 
-  async createPaymentLink(
-    request: CreatePaymentLinkRequest,
-  ): Promise<PaymentIntentResponse> {
-    const body = createPaymentLinkRequestSchema.parse(request);
-    const response = await this.request("/api/v1/finance/links", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return paymentIntentResponseSchema.parse(await response.json());
+  createPaymentLink(...args: Parameters<FinanceApi["createPaymentLink"]>): ReturnType<FinanceApi["createPaymentLink"]> {
+    return this.finance.createPaymentLink(...args);
   }
 
-  async listPaymentLedger(
-    tenantId: string,
-    page = 1,
-    pageSize = 50,
-    locationId?: string,
-  ): Promise<PagedResult<PaymentLedgerEntry>> {
-    const query = new URLSearchParams({
-      tenantId,
-      page: String(page),
-      pageSize: String(pageSize),
-    });
-    if (locationId) {
-      query.set("locationId", locationId);
-    }
-    const response = await this.request(`/api/v1/finance/ledger?${query.toString()}`);
-    return paymentLedgerResponseSchema.parse(await response.json());
+  listPaymentLedger(...args: Parameters<FinanceApi["listPaymentLedger"]>): ReturnType<FinanceApi["listPaymentLedger"]> {
+    return this.finance.listPaymentLedger(...args);
   }
 
-  async refundPayment(
-    paymentIntentId: string,
-    request: RefundPaymentRequest,
-  ): Promise<PaymentIntentResponse> {
-    const body = refundPaymentRequestSchema.parse(request);
-    const response = await this.request(`/api/v1/finance/${paymentIntentId}/refund`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return paymentIntentResponseSchema.parse(await response.json());
+  refundPayment(...args: Parameters<FinanceApi["refundPayment"]>): ReturnType<FinanceApi["refundPayment"]> {
+    return this.finance.refundPayment(...args);
   }
 
-  async downloadCompensationExport(options: {
-    tenantId: string;
-    from: string;
-    to: string;
-    format?: "csv" | "json";
-  }): Promise<Blob> {
-    const query = new URLSearchParams({
-      tenantId: options.tenantId,
-      from: options.from,
-      to: options.to,
-      format: options.format ?? "csv",
-    });
-    const response = await this.request(`/api/v1/finance/compensation-export?${query.toString()}`);
-    return response.blob();
+  downloadCompensationExport(...args: Parameters<ReportingApi["downloadCompensationExport"]>): ReturnType<ReportingApi["downloadCompensationExport"]> {
+    return this.reporting.downloadCompensationExport(...args);
   }
 
-  async downloadAdminReportExport(options: {
-    reportKey: string;
-    from: string;
-    to: string;
-    format?: "csv" | "xlsx";
-    q?: string;
-    kind?: string;
-    catalogVersionCode?: string;
-  }): Promise<Blob> {
-    const query = new URLSearchParams({
-      from: options.from,
-      to: options.to,
-      format: options.format ?? "csv",
-    });
-    if (options.q?.trim()) {
-      query.set("q", options.q.trim());
-    }
-    if (options.kind?.trim()) {
-      query.set("kind", options.kind.trim());
-    }
-    if (options.catalogVersionCode?.trim()) {
-      query.set("catalogVersionCode", options.catalogVersionCode.trim());
-    }
-    const response = await this.request(
-      `/api/v1/admin/reporting/exports/${encodeURIComponent(options.reportKey)}?${query.toString()}`,
-    );
-    return response.blob();
+  downloadAdminReportExport(...args: Parameters<AdminApi["downloadAdminReportExport"]>): ReturnType<AdminApi["downloadAdminReportExport"]> {
+    return this.admin.downloadAdminReportExport(...args);
   }
 
-  async downloadTenantReportExport(options: {
-    reportKey: string;
-    from: string;
-    to: string;
-    format?: "csv" | "xlsx" | "pdf";
-    locationId?: string;
-  }): Promise<Blob> {
-    const query = new URLSearchParams({
-      from: options.from,
-      to: options.to,
-      format: options.format ?? "csv",
-    });
-    if (options.locationId) {
-      query.set("locationId", options.locationId);
-    }
-    const response = await this.request(
-      `/api/v1/tenant/reporting/exports/${encodeURIComponent(options.reportKey)}?${query.toString()}`,
-    );
-    return response.blob();
+  downloadTenantReportExport(...args: Parameters<ReportingApi["downloadTenantReportExport"]>): ReturnType<ReportingApi["downloadTenantReportExport"]> {
+    return this.reporting.downloadTenantReportExport(...args);
   }
 
-  async confirmStubPayment(reference: string): Promise<PaymentIntentResponse> {
-    const response = await this.request("/api/v1/finance/stub/confirm", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reference }),
-    });
-    return paymentIntentResponseSchema.parse(await response.json());
+  confirmStubPayment(...args: Parameters<FinanceApi["confirmStubPayment"]>): ReturnType<FinanceApi["confirmStubPayment"]> {
+    return this.finance.confirmStubPayment(...args);
   }
 
-  async createCoverUploadUrl(
-    contentType: string,
-    contentLength: number,
-  ): Promise<MediaUploadUrlResponse> {
-    const body = mediaUploadUrlRequestSchema.parse({
-      purpose: "cover",
-      contentType,
-      contentLength,
-    });
-    const response = await this.request("/api/v1/tenant/media/upload-url", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return mediaUploadUrlResponseSchema.parse(await response.json());
+  createCoverUploadUrl(...args: Parameters<BusinessApi["createCoverUploadUrl"]>): ReturnType<BusinessApi["createCoverUploadUrl"]> {
+    return this.business.createCoverUploadUrl(...args);
   }
 
-  async createGalleryUploadUrl(
-    contentType: string,
-    contentLength: number,
-  ): Promise<MediaUploadUrlResponse> {
-    const body = mediaUploadUrlRequestSchema.parse({
-      purpose: "gallery",
-      contentType,
-      contentLength,
-    });
-    const response = await this.request("/api/v1/tenant/media/upload-url", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return mediaUploadUrlResponseSchema.parse(await response.json());
+  createGalleryUploadUrl(...args: Parameters<BusinessApi["createGalleryUploadUrl"]>): ReturnType<BusinessApi["createGalleryUploadUrl"]> {
+    return this.business.createGalleryUploadUrl(...args);
   }
 
-  async createStaffAvatarUploadUrl(
-    contentType: string,
-    contentLength: number,
-  ): Promise<MediaUploadUrlResponse> {
-    const body = mediaUploadUrlRequestSchema.parse({
-      purpose: "staff_avatar",
-      contentType,
-      contentLength,
-    });
-    const response = await this.request("/api/v1/tenant/media/upload-url", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return mediaUploadUrlResponseSchema.parse(await response.json());
+  createStaffAvatarUploadUrl(...args: Parameters<StaffApi["createStaffAvatarUploadUrl"]>): ReturnType<StaffApi["createStaffAvatarUploadUrl"]> {
+    return this.staff.createStaffAvatarUploadUrl(...args);
   }
 
-  async createMessageAttachmentUploadUrl(
-    contentType: string,
-    contentLength: number,
-  ): Promise<MediaUploadUrlResponse> {
-    const body = mediaUploadUrlRequestSchema.parse({
-      purpose: "message_attachment",
-      contentType,
-      contentLength,
-    });
-    const response = await this.request("/api/v1/tenant/media/upload-url", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return mediaUploadUrlResponseSchema.parse(await response.json());
+  createMessageAttachmentUploadUrl(...args: Parameters<MessagingApi["createMessageAttachmentUploadUrl"]>): ReturnType<MessagingApi["createMessageAttachmentUploadUrl"]> {
+    return this.messaging.createMessageAttachmentUploadUrl(...args);
   }
 
-  async updateTenantStaffAvatar(
-    staffMemberId: string,
-    request: UpdateStaffAvatarRequest,
-  ): Promise<StaffMember> {
-    const body = updateStaffAvatarRequestSchema.parse(request);
-    const response = await this.request(
-      `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/avatar`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
-    return staffMemberSchema.parse(await response.json());
+  updateTenantStaffAvatar(...args: Parameters<StaffApi["updateTenantStaffAvatar"]>): ReturnType<StaffApi["updateTenantStaffAvatar"]> {
+    return this.staff.updateTenantStaffAvatar(...args);
   }
 
-  async updateTenantCoverImage(request: UpdateCoverImageRequest): Promise<string> {
-    const body = updateCoverImageRequestSchema.parse(request);
-    const response = await this.request("/api/v1/tenant/profile/cover", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const payload = updateCoverImageResponseSchema.parse(await response.json());
-    return payload.coverImageUrl;
+  updateTenantCoverImage(...args: Parameters<BusinessApi["updateTenantCoverImage"]>): ReturnType<BusinessApi["updateTenantCoverImage"]> {
+    return this.business.updateTenantCoverImage(...args);
   }
 
-  async addTenantGalleryImage(request: AddGalleryImageRequest): Promise<GalleryImage[]> {
-    const body = addGalleryImageRequestSchema.parse(request);
-    const response = await this.request("/api/v1/tenant/profile/gallery", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return galleryImagesResponseSchema.parse(await response.json()).items;
+  addTenantGalleryImage(...args: Parameters<BusinessApi["addTenantGalleryImage"]>): ReturnType<BusinessApi["addTenantGalleryImage"]> {
+    return this.business.addTenantGalleryImage(...args);
   }
 
-  async removeTenantGalleryImage(request: RemoveGalleryImageRequest): Promise<GalleryImage[]> {
-    const body = removeGalleryImageRequestSchema.parse(request);
-    const response = await this.request("/api/v1/tenant/profile/gallery", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return galleryImagesResponseSchema.parse(await response.json()).items;
+  removeTenantGalleryImage(...args: Parameters<BusinessApi["removeTenantGalleryImage"]>): ReturnType<BusinessApi["removeTenantGalleryImage"]> {
+    return this.business.removeTenantGalleryImage(...args);
   }
 
-  async getTenantServiceCatalog(): Promise<ServiceOfferingsResponse> {
-    const response = await this.request("/api/v1/tenant/services");
-    return serviceOfferingsResponseSchema.parse(await response.json());
+  getTenantServiceCatalog(...args: Parameters<CatalogApi["getTenantServiceCatalog"]>): ReturnType<CatalogApi["getTenantServiceCatalog"]> {
+    return this.catalog.getTenantServiceCatalog(...args);
   }
 
   async getTenantServices(): Promise<ServiceOffering[]> {
@@ -1454,1094 +417,383 @@ export class AdeniApiClient {
     return catalog.items;
   }
 
-  async listTenantServiceMenuGroups(): Promise<ServiceMenuGroup[]> {
-    const response = await this.request("/api/v1/tenant/service-menu-groups");
-    return serviceMenuGroupsResponseSchema.parse(await response.json()).items;
-  }
-
-  async createTenantServiceMenuGroup(
-    request: CreateServiceMenuGroupRequest,
-  ): Promise<ServiceMenuGroup> {
-    const body = createServiceMenuGroupRequestSchema.parse(request);
-    const response = await this.request("/api/v1/tenant/service-menu-groups", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return serviceMenuGroupSchema.parse(await response.json());
-  }
-
-  async updateTenantServiceMenuGroup(
-    groupId: string,
-    request: UpdateServiceMenuGroupRequest,
-  ): Promise<ServiceMenuGroup> {
-    const body = updateServiceMenuGroupRequestSchema.parse(request);
-    const response = await this.request(
-      `/api/v1/tenant/service-menu-groups/${encodeURIComponent(groupId)}`,
-      {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
-    return serviceMenuGroupSchema.parse(await response.json());
-  }
-
-  async deleteTenantServiceMenuGroup(groupId: string): Promise<void> {
-    await this.request(
-      `/api/v1/tenant/service-menu-groups/${encodeURIComponent(groupId)}`,
-      { method: "DELETE" },
-    );
-  }
-
-  async createTenantService(
-    request: CreateServiceOfferingRequest,
-  ): Promise<ServiceOffering> {
-    const body = createServiceOfferingRequestSchema.parse(request);
-    const response = await this.request("/api/v1/tenant/services", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return serviceOfferingSchema.parse(await response.json());
-  }
-
-  async updateTenantService(
-    serviceId: string,
-    request: UpdateServiceOfferingRequest,
-  ): Promise<ServiceOffering> {
-    const body = updateServiceOfferingRequestSchema.parse(request);
-    const response = await this.request(
-      `/api/v1/tenant/services/${encodeURIComponent(serviceId)}`,
-      {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
-    return serviceOfferingSchema.parse(await response.json());
-  }
-
-  async deactivateTenantService(serviceId: string): Promise<void> {
-    await this.request(
-      `/api/v1/tenant/services/${encodeURIComponent(serviceId)}`,
-      { method: "DELETE" },
-    );
-  }
-
-  async listTenantStaff(params?: { locationId?: string }): Promise<StaffMember[]> {
-    const query = new URLSearchParams();
-    if (params?.locationId) {
-      query.set("locationId", params.locationId);
-    }
-    const qs = query.toString();
-    const response = await this.request(`/api/v1/tenant/staff${qs ? `?${qs}` : ""}`);
-    return staffMembersResponseSchema.parse(await response.json()).items;
-  }
-
-  async createTenantStaff(request: CreateStaffMemberRequest): Promise<StaffMember> {
-    const body = createStaffMemberRequestSchema.parse(request);
-    const response = await this.request("/api/v1/tenant/staff", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return staffMemberSchema.parse(await response.json());
-  }
-
-  async updateTenantStaff(
-    staffMemberId: string,
-    request: UpdateStaffMemberRequest,
-  ): Promise<StaffMember> {
-    const body = updateStaffMemberRequestSchema.parse(request);
-    const response = await this.request(
-      `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}`,
-      {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
-    return staffMemberSchema.parse(await response.json());
-  }
-
-  async deactivateTenantStaff(staffMemberId: string): Promise<void> {
-    await this.request(
-      `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/deactivate`,
-      { method: "POST" },
-    );
-  }
-
-  async inviteTenantStaff(
-    staffMemberId: string,
-    request: CreateStaffInviteRequest,
-  ): Promise<StaffPortalInvite> {
-    const body = createStaffInviteRequestSchema.parse(request);
-    const response = await this.request(
-      `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/invite`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
-    return staffPortalInviteSchema.parse(await response.json());
-  }
-
-  async inviteTenantAccess(request: CreateStaffInviteRequest): Promise<StaffPortalInvite> {
-    const body = createStaffInviteRequestSchema.parse(request);
-    const response = await this.request("/api/v1/tenant/access/invites", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return staffPortalInviteSchema.parse(await response.json());
-  }
-
-  async listTenantAccessInvites(): Promise<StaffPortalInvite[]> {
-    const response = await this.request("/api/v1/tenant/access/invites");
-    return staffPortalInvitesResponseSchema.parse(await response.json()).items;
-  }
-
-  async resendTenantAccessInvite(inviteId: string): Promise<StaffPortalInvite> {
-    const response = await this.request(
-      `/api/v1/tenant/access/invites/${encodeURIComponent(inviteId)}/resend`,
-      { method: "POST" },
-    );
-    return staffPortalInviteSchema.parse(await response.json());
-  }
-
-  async revokeTenantAccessInvite(inviteId: string): Promise<void> {
-    await this.request(
-      `/api/v1/tenant/access/invites/${encodeURIComponent(inviteId)}`,
-      { method: "DELETE" },
-    );
-  }
-
-  async listTenantAccessUsers(): Promise<TenantAccessUser[]> {
-    const response = await this.request("/api/v1/tenant/access/users");
-    return tenantAccessUsersResponseSchema.parse(await response.json()).items;
-  }
-
-  async updateTenantAccessUser(
-    businessUserId: string,
-    request: UpdateAccessUserRequest,
-  ): Promise<TenantAccessUser> {
-    const body = updateAccessUserRequestSchema.parse(request);
-    const response = await this.request(
-      `/api/v1/tenant/access/users/${encodeURIComponent(businessUserId)}`,
-      {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
-    return tenantAccessUserSchema.parse(await response.json());
-  }
-
-  async revokeTenantAccessUser(businessUserId: string): Promise<void> {
-    await this.request(
-      `/api/v1/tenant/access/users/${encodeURIComponent(businessUserId)}`,
-      { method: "DELETE" },
-    );
-  }
-
-  async acceptStaffInvite(request: AcceptStaffInviteRequest): Promise<AcceptStaffInviteResponse> {
-    const body = acceptStaffInviteRequestSchema.parse(request);
-    const response = await this.request("/api/v1/auth/accept-staff-invite", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return acceptStaffInviteResponseSchema.parse(await response.json());
-  }
-
-  async replaceTenantStaffServices(
-    staffMemberId: string,
-    request: ReplaceStaffServicesRequest,
-  ): Promise<StaffMember> {
-    const body = replaceStaffServicesRequestSchema.parse(request);
-    const response = await this.request(
-      `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/services`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
-    return staffMemberSchema.parse(await response.json());
-  }
-
-  async getTenantStaffHours(staffMemberId: string): Promise<WeeklyAvailabilityRule[]> {
-    const response = await this.request(
-      `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/hours`,
-    );
-    return weeklyAvailabilityResponseSchema.parse(await response.json()).items;
-  }
-
-  async replaceTenantStaffHours(
-    staffMemberId: string,
-    items: WeeklyAvailabilityRule[],
-  ): Promise<WeeklyAvailabilityRule[]> {
-    const response = await this.request(
-      `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/hours`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items }),
-      },
-    );
-    return weeklyAvailabilityResponseSchema.parse(await response.json()).items;
-  }
-
-  async listTenantStaffLeave(
-    staffMemberId: string,
-    params?: { from?: string; to?: string },
-  ): Promise<StaffLeave[]> {
-    const query = new URLSearchParams();
-    if (params?.from) query.set("from", params.from);
-    if (params?.to) query.set("to", params.to);
-    const qs = query.toString();
-    const response = await this.request(
-      `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/leave${qs ? `?${qs}` : ""}`,
-    );
-    return staffLeaveListResponseSchema.parse(await response.json()).items;
-  }
-
-  async createTenantStaffLeave(
-    staffMemberId: string,
-    request: CreateStaffLeaveRequest,
-  ): Promise<StaffLeave> {
-    const body = createStaffLeaveRequestSchema.parse(request);
-    const response = await this.request(
-      `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/leave`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
-    return staffLeaveSchema.parse(await response.json());
-  }
-
-  async deleteTenantStaffLeave(staffMemberId: string, leaveId: string): Promise<void> {
-    await this.request(
-      `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/leave/${encodeURIComponent(leaveId)}`,
-      { method: "DELETE" },
-    );
-  }
-
-  async getTenantStaffCalendar(
-    staffMemberId: string,
-    params: { from: string; to: string; locationId?: string },
-  ): Promise<StaffCalendarResponse> {
-    const query = new URLSearchParams({ from: params.from, to: params.to });
-    if (params.locationId) {
-      query.set("locationId", params.locationId);
-    }
-    const response = await this.request(
-      `/api/v1/tenant/staff/${encodeURIComponent(staffMemberId)}/calendar?${query}`,
-    );
-    return staffCalendarResponseSchema.parse(await response.json());
-  }
-
-  async getTenantTeamCalendar(params: {
-    from: string;
-    to: string;
-    locationId?: string;
-  }): Promise<StaffTeamCalendarResponse> {
-    const query = new URLSearchParams({ from: params.from, to: params.to });
-    if (params.locationId) {
-      query.set("locationId", params.locationId);
-    }
-    const response = await this.request(`/api/v1/tenant/staff/team-calendar?${query}`);
-    return staffTeamCalendarResponseSchema.parse(await response.json());
-  }
-
-  async getTenantAvailability(locationId?: string): Promise<WeeklyAvailabilityRule[]> {
-    const query = locationId
-      ? `?locationId=${encodeURIComponent(locationId)}`
-      : "";
-    const response = await this.request(`/api/v1/tenant/availability${query}`);
-    const payload = weeklyAvailabilityResponseSchema.parse(await response.json());
-    return payload.items;
-  }
-
-  async replaceTenantAvailability(
-    rules: WeeklyAvailabilityRule[],
-    locationId?: string,
-  ): Promise<WeeklyAvailabilityRule[]> {
-    const query = locationId
-      ? `?locationId=${encodeURIComponent(locationId)}`
-      : "";
-    const response = await this.request(`/api/v1/tenant/availability${query}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items: rules }),
-    });
-    const payload = weeklyAvailabilityResponseSchema.parse(await response.json());
-    return payload.items;
-  }
-
-  async getTenantClosedDates(locationId?: string): Promise<BusinessClosedDate[]> {
-    const query = locationId
-      ? `?locationId=${encodeURIComponent(locationId)}`
-      : "";
-    const response = await this.request(`/api/v1/tenant/closed-dates${query}`);
-    return businessClosedDatesResponseSchema.parse(await response.json()).items;
-  }
-
-  async createTenantClosedDate(
-    request: CreateBusinessClosedDateRequest,
-    locationId?: string,
-  ): Promise<BusinessClosedDate> {
-    const body = createBusinessClosedDateRequestSchema.parse(request);
-    const query = locationId
-      ? `?locationId=${encodeURIComponent(locationId)}`
-      : "";
-    const response = await this.request(`/api/v1/tenant/closed-dates${query}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return businessClosedDateSchema.parse(await response.json());
-  }
-
-  async deleteTenantClosedDate(id: string): Promise<void> {
-    await this.request(`/api/v1/tenant/closed-dates/${encodeURIComponent(id)}`, {
-      method: "DELETE",
-    });
-  }
-
-  async submitTenantVerification(
-    request: SubmitVerificationRequest,
-  ): Promise<void> {
-    const body = submitVerificationRequestSchema.parse(request);
-    await this.request("/api/v1/tenant/verification", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-  }
-
-  async getTenantLocations(): Promise<BusinessLocation[]> {
-    const response = await this.request("/api/v1/tenant/locations");
-    const payload = tenantLocationsResponseSchema.parse(await response.json());
-    return payload.items;
-  }
-
-  async addTenantLocation(
-    request: UpsertBusinessLocationRequest,
-  ): Promise<BusinessLocation> {
-    const body = upsertBusinessLocationRequestSchema.parse(request);
-    const response = await this.request("/api/v1/tenant/locations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return businessLocationSchema.parse(await response.json());
-  }
-
-  async updateTenantLocation(
-    locationId: string,
-    request: UpsertBusinessLocationRequest,
-  ): Promise<BusinessLocation> {
-    const body = upsertBusinessLocationRequestSchema.parse(request);
-    const response = await this.request(
-      `/api/v1/tenant/locations/${encodeURIComponent(locationId)}`,
-      {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
-    return businessLocationSchema.parse(await response.json());
-  }
-
-  async deactivateTenantLocation(locationId: string): Promise<void> {
-    await this.request(
-      `/api/v1/tenant/locations/${encodeURIComponent(locationId)}`,
-      { method: "DELETE" },
-    );
-  }
-
-  async getTenantSubscriptionUsage(locationId?: string): Promise<SubscriptionUsage> {
-    const query = new URLSearchParams();
-    if (locationId) {
-      query.set("locationId", locationId);
-    }
-    const suffix = query.size > 0 ? `?${query.toString()}` : "";
-    const response = await this.request(`/api/v1/tenant/subscription${suffix}`);
-    return subscriptionUsageSchema.parse(await response.json());
-  }
-
-  async getTenantDashboardSummary(
-    from: string,
-    to: string,
-    locationId?: string,
-  ): Promise<TenantDashboardSummary> {
-    const query = new URLSearchParams({ from, to });
-    if (locationId) {
-      query.set("locationId", locationId);
-    }
-    const response = await this.request(`/api/v1/tenant/dashboard/summary?${query.toString()}`);
-    return tenantDashboardSummarySchema.parse(await response.json());
-  }
-
-  async getTenantDashboardSeries(
-    metric: "appointments" | "collected" | "booked_value",
-    from: string,
-    to: string,
-    locationId?: string,
-  ): Promise<TenantDashboardSeries> {
-    const query = new URLSearchParams({ metric, from, to });
-    if (locationId) {
-      query.set("locationId", locationId);
-    }
-    const response = await this.request(`/api/v1/tenant/dashboard/series?${query.toString()}`);
-    return tenantDashboardSeriesSchema.parse(await response.json());
-  }
-
-  async getTenantDashboardBreakdown(
-    dimension: "status" | "service" | "staff",
-    from: string,
-    to: string,
-    locationId?: string,
-  ): Promise<TenantDashboardBreakdown> {
-    const query = new URLSearchParams({ dimension, from, to });
-    if (locationId) {
-      query.set("locationId", locationId);
-    }
-    const response = await this.request(`/api/v1/tenant/dashboard/breakdown?${query.toString()}`);
-    return tenantDashboardBreakdownSchema.parse(await response.json());
-  }
-
-  async getTenantDashboardLayout(): Promise<TenantDashboardLayout> {
-    const response = await this.request("/api/v1/tenant/dashboard/layout");
-    return tenantDashboardLayoutSchema.parse(await response.json());
-  }
-
-  async putTenantDashboardLayout(layout: TenantDashboardLayout): Promise<TenantDashboardLayout> {
-    const payload = tenantDashboardLayoutSchema.parse(layout);
-    const response = await this.request("/api/v1/tenant/dashboard/layout", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    return tenantDashboardLayoutSchema.parse(await response.json());
-  }
-
-  async getTenantBillingHistory(limit = 20): Promise<TenantSubscriptionCharge[]> {
-    const response = await this.request(
-      `/api/v1/tenant/billing?limit=${encodeURIComponent(String(limit))}`,
-    );
-    return tenantBillingHistoryResponseSchema.parse(await response.json()).items;
-  }
-
-  async createSubscriptionCheckout(
-    body: SubscriptionCheckoutRequest,
-  ): Promise<SubscriptionCheckoutResponse> {
-    const payload = subscriptionCheckoutRequestSchema.parse(body);
-    const response = await this.request("/api/v1/subscriptions/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    return subscriptionCheckoutResponseSchema.parse(await response.json());
-  }
-
-  async completeStubSubscriptionCheckout(
-    body: CompleteStubSubscriptionCheckoutRequest,
-  ): Promise<TenantSubscriptionCharge> {
-    const payload = completeStubSubscriptionCheckoutRequestSchema.parse(body);
-    const response = await this.request("/api/v1/subscriptions/checkout/complete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    return tenantSubscriptionChargeSchema.parse(await response.json());
-  }
-
-  async getMe(): Promise<AuthSession> {
-    const response = await this.request("/api/v1/auth/me");
-    return authSessionSchema.parse(await response.json());
-  }
-
-  async listPendingBusinesses(
-    options: { q?: string; page?: number; pageSize?: number; sort?: ListSortParams } = {},
-  ): Promise<AdminPagedResult<PendingBusiness>> {
-    const query = new URLSearchParams();
-    if (options.q?.trim()) {
-      query.set("q", options.q.trim());
-    }
-    if (options.page != null) {
-      query.set("page", String(options.page));
-    }
-    if (options.pageSize != null) {
-      query.set("pageSize", String(options.pageSize));
-    }
-    appendListSortParams(query, options.sort);
-    const suffix = query.size > 0 ? `?${query.toString()}` : "";
-    const response = await this.request(`/api/v1/admin/businesses/pending${suffix}`);
-    return pendingBusinessesResponseSchema.parse(await response.json());
-  }
-
-  async approvePendingBusiness(tenantId: string): Promise<void> {
-    await this.request(
-      `/api/v1/admin/businesses/${encodeURIComponent(tenantId)}/approve`,
-      { method: "POST" },
-    );
-  }
-
-  async rejectPendingBusiness(tenantId: string, reason: string): Promise<void> {
-    const body = rejectBusinessRequestSchema.parse({ reason });
-    await this.request(
-      `/api/v1/admin/businesses/${encodeURIComponent(tenantId)}/reject`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
-  }
-
-  async listAdminBusinesses(
-    options: { q?: string; page?: number; pageSize?: number; sort?: ListSortParams } = {},
-  ): Promise<AdminPagedResult<AdminBusinessSummary>> {
-    const query = new URLSearchParams();
-    if (options.q?.trim()) {
-      query.set("q", options.q.trim());
-    }
-    if (options.page != null) {
-      query.set("page", String(options.page));
-    }
-    if (options.pageSize != null) {
-      query.set("pageSize", String(options.pageSize));
-    }
-    appendListSortParams(query, options.sort);
-    const suffix = query.size > 0 ? `?${query.toString()}` : "";
-    const response = await this.request(`/api/v1/admin/businesses${suffix}`);
-    return adminBusinessesResponseSchema.parse(await response.json());
-  }
-
-  async getAdminBusinessDirectoryStats(): Promise<AdminBusinessDirectoryStats> {
-    const response = await this.request("/api/v1/admin/businesses/stats");
-    return adminBusinessDirectoryStatsSchema.parse(await response.json());
-  }
-
-  async getAdminSubscriptionMetrics(): Promise<AdminSubscriptionMetrics> {
-    const response = await this.request("/api/v1/admin/metrics/subscription");
-    return adminSubscriptionMetricsSchema.parse(await response.json());
-  }
-
-  async getAdminPlatformSubscriptionMrr(): Promise<AdminPlatformSubscriptionMrr> {
-    const response = await this.request("/api/v1/admin/reporting/platform-subscription-mrr");
-    return adminPlatformSubscriptionMrrSchema.parse(await response.json());
-  }
-
-  async getAdminReportingGmv(
-    granularity: "month" | "year" = "month",
-  ): Promise<AdminGmvSummary> {
-    const query = new URLSearchParams({ granularity });
-    const response = await this.request(
-      `/api/v1/admin/reporting/gmv?${query.toString()}`,
-    );
-    return adminGmvSummarySchema.parse(await response.json());
-  }
-
-  async getAdminRevenueMetrics(
-    granularity: "month" | "year" = "month",
-  ): Promise<AdminRevenueMetrics> {
-    const query = new URLSearchParams({ granularity });
-    const response = await this.request(
-      `/api/v1/admin/metrics/revenue?${query.toString()}`,
-    );
-    return adminRevenueMetricsSchema.parse(await response.json());
-  }
-
-  async searchAdminTransactions(
-    queryText: string | null | undefined,
-    options: {
-      kind?: "all" | "commerce" | "saas";
-      page?: number;
-      pageSize?: number;
-      sort?: ListSortParams;
-    } = {},
-  ): Promise<AdminPagedResult<AdminTransactionSearchItem>> {
-    const query = new URLSearchParams();
-    const trimmed = queryText?.trim();
-    if (trimmed) {
-      query.set("q", trimmed);
-    }
-    query.set("kind", options.kind ?? "all");
-    if (options.page != null) {
-      query.set("page", String(options.page));
-    }
-    if (options.pageSize != null) {
-      query.set("pageSize", String(options.pageSize));
-    }
-    appendListSortParams(query, options.sort);
-    const response = await this.request(`/api/v1/admin/transactions?${query.toString()}`);
-    return adminTransactionsSearchResponseSchema.parse(await response.json());
-  }
-
-  async listAdminAuditLogs(
-    options: {
-      action?: string;
-      from?: string;
-      to?: string;
-      page?: number;
-      pageSize?: number;
-    } = {},
-  ): Promise<AdminPagedResult<AdminAuditLogListItem>> {
-    const query = new URLSearchParams();
-    if (options.action?.trim()) {
-      query.set("action", options.action.trim());
-    }
-    if (options.from?.trim()) {
-      query.set("from", options.from.trim());
-    }
-    if (options.to?.trim()) {
-      query.set("to", options.to.trim());
-    }
-    if (options.page != null) {
-      query.set("page", String(options.page));
-    }
-    if (options.pageSize != null) {
-      query.set("pageSize", String(options.pageSize));
-    }
-    const suffix = query.size > 0 ? `?${query.toString()}` : "";
-    const response = await this.request(`/api/v1/admin/audit-logs${suffix}`);
-    return adminAuditLogsListResponseSchema.parse(await response.json());
-  }
-
-  async getAdminBusiness(tenantId: string): Promise<AdminBusinessSummary> {
-    const response = await this.request(
-      `/api/v1/admin/businesses/${encodeURIComponent(tenantId)}`,
-    );
-    return adminBusinessSummarySchema.parse(await response.json());
-  }
-
-  async listAdminTenantCommercialAudit(
-    tenantId: string,
-    limit = 30,
-  ): Promise<
-    Array<{
-      id: string;
-      actorId: string;
-      action: string;
-      occurredAt: string;
-      metadataJson?: string | null;
-    }>
-  > {
-    const response = await this.request(
-      `/api/v1/admin/businesses/${encodeURIComponent(tenantId)}/commercial-audit?limit=${limit}`,
-    );
-    const body = (await response.json()) as { items: unknown[] };
-    return body.items as Array<{
-      id: string;
-      actorId: string;
-      action: string;
-      occurredAt: string;
-      metadataJson?: string | null;
-    }>;
-  }
-
-  async getAdminTenantCommercialTerms(tenantId: string): Promise<AdminTenantCommercialTerms> {
-    const response = await this.request(
-      `/api/v1/admin/businesses/${encodeURIComponent(tenantId)}/commercial-terms`,
-    );
-    return adminTenantCommercialTermsSchema.parse(await response.json());
-  }
-
-  async setAdminTenantCommercialTerms(
-    tenantId: string,
-    body: SetTenantCommercialTermsRequest,
-  ): Promise<void> {
-    const payload = setTenantCommercialTermsRequestSchema.parse(body);
-    await this.request(
-      `/api/v1/admin/businesses/${encodeURIComponent(tenantId)}/commercial-terms`,
-      {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      },
-    );
-  }
-
-  async getPublicPricing(countryCode: string): Promise<PublicCountryPricing> {
-    const query = new URLSearchParams({ countryCode });
-    const response = await this.request(`/api/v1/pricing?${query.toString()}`);
-    return publicCountryPricingSchema.parse(await response.json());
-  }
-
-  async listAdminPricingCatalogVersions(): Promise<PricingCatalogVersionSummary[]> {
-    const response = await this.request("/api/v1/admin/pricing-catalog/versions");
-    return pricingCatalogVersionListResponseSchema.parse(await response.json()).items;
-  }
-
-  async getAdminPricingCatalogVersion(code: string): Promise<PricingCatalogVersionDetail> {
-    const response = await this.request(
-      `/api/v1/admin/pricing-catalog/versions/${encodeURIComponent(code)}`,
-    );
-    return pricingCatalogVersionDetailSchema.parse(await response.json());
-  }
-
-  async createAdminPricingCatalogVersion(
-    payload: CreatePricingCatalogVersionRequest,
-  ): Promise<PricingCatalogVersionDetail> {
-    const response = await this.request("/api/v1/admin/pricing-catalog/versions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    return pricingCatalogVersionDetailSchema.parse(await response.json());
-  }
-
-  async upsertAdminPricingCatalogEntries(
-    code: string,
-    payload: UpsertPricingCatalogEntriesRequest,
-  ): Promise<PricingCatalogVersionDetail> {
-    const response = await this.request(
-      `/api/v1/admin/pricing-catalog/versions/${encodeURIComponent(code)}/entries`,
-      {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      },
-    );
-    return pricingCatalogVersionDetailSchema.parse(await response.json());
-  }
-
-  async activateAdminPricingCatalogVersion(code: string): Promise<PricingCatalogVersionDetail> {
-    const response = await this.request(
-      `/api/v1/admin/pricing-catalog/versions/${encodeURIComponent(code)}/activate`,
-      { method: "POST" },
-    );
-    return pricingCatalogVersionDetailSchema.parse(await response.json());
-  }
-
-  async listAdminTenantSubscriptionCharges(
-    tenantId: string,
-    limit = 20,
-  ): Promise<TenantSubscriptionCharge[]> {
-    const query = new URLSearchParams();
-    if (limit > 0) {
-      query.set("limit", String(limit));
-    }
-    const suffix = query.size > 0 ? `?${query.toString()}` : "";
-    const response = await this.request(
-      `/api/v1/admin/businesses/${encodeURIComponent(tenantId)}/subscription-charges${suffix}`,
-    );
-    return tenantBillingHistoryResponseSchema.parse(await response.json()).items;
-  }
-
-  async searchAdminCustomers(
-    queryText: string,
-    options: { page?: number; pageSize?: number } = {},
-  ): Promise<AdminPagedResult<AdminCustomerSummary>> {
-    const query = new URLSearchParams({ q: queryText.trim() });
-    if (options.page != null) {
-      query.set("page", String(options.page));
-    }
-    if (options.pageSize != null) {
-      query.set("pageSize", String(options.pageSize));
-    }
-    const response = await this.request(`/api/v1/admin/customers?${query.toString()}`);
-    return adminCustomersResponseSchema.parse(await response.json());
-  }
-
-  async exportAdminCustomer(customerId: string): Promise<CustomerDataExport> {
-    const response = await this.request(
-      `/api/v1/admin/customers/${encodeURIComponent(customerId)}/export`,
-    );
-    return customerDataExportSchema.parse(await response.json());
-  }
-
-  async initiateAdminCustomerDelete(customerId: string): Promise<void> {
-    await this.request(
-      `/api/v1/admin/customers/${encodeURIComponent(customerId)}/delete`,
-      { method: "POST" },
-    );
-  }
-
-  async getAdminMarketCatalogStats(): Promise<AdminMarketCatalogStats> {
-    const response = await this.request("/api/v1/admin/markets/stats");
-    return adminMarketCatalogStatsSchema.parse(await response.json());
-  }
-
-  async listAdminMarkets(
-    options: { q?: string; page?: number; pageSize?: number; sort?: ListSortParams } = {},
-  ): Promise<AdminPagedResult<AdminMarket>> {
-    const query = new URLSearchParams();
-    if (options.q?.trim()) {
-      query.set("q", options.q.trim());
-    }
-    if (options.page != null) {
-      query.set("page", String(options.page));
-    }
-    if (options.pageSize != null) {
-      query.set("pageSize", String(options.pageSize));
-    }
-    appendListSortParams(query, options.sort);
-    const suffix = query.size > 0 ? `?${query.toString()}` : "";
-    const response = await this.request(`/api/v1/admin/markets${suffix}`);
-    return adminMarketsResponseSchema.parse(await response.json());
-  }
-
-  async createAdminMarket(
-    body: Parameters<typeof createMarketRequestSchema.parse>[0],
-  ): Promise<AdminMarket> {
-    const payload = createMarketRequestSchema.parse(body);
-    const response = await this.request("/api/v1/admin/markets", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    return adminMarketSchema.parse(await response.json());
-  }
-
-  async updateAdminMarket(
-    id: string,
-    body: Parameters<typeof updateMarketRequestSchema.parse>[0],
-  ): Promise<AdminMarket> {
-    const payload = updateMarketRequestSchema.parse(body);
-    const response = await this.request(`/api/v1/admin/markets/${encodeURIComponent(id)}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    return adminMarketSchema.parse(await response.json());
-  }
-
-  async setAdminMarketLive(id: string, isLive: boolean): Promise<void> {
-    const body = setMarketLiveRequestSchema.parse({ isLive });
-    await this.request(`/api/v1/admin/markets/${encodeURIComponent(id)}/live`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-  }
-
-  async createConversation(
-    request: CreateConversationRequest,
-  ): Promise<ConversationSummary> {
-    const body = createConversationRequestSchema.parse(request);
-    const response = await this.request("/api/v1/messages/conversations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return conversationSummarySchema.parse(await response.json());
-  }
-
-  async listCustomerConversations(): Promise<ConversationSummary[]> {
-    const response = await this.request("/api/v1/messages/conversations");
-    const payload = conversationListResponseSchema.parse(await response.json());
-    return payload.items;
-  }
-
-  async getCustomerConversation(
-    id: string,
-    options: { beforeId?: string; take?: number } = {},
-  ): Promise<ConversationDetail> {
-    const query = new URLSearchParams();
-    if (options.beforeId) query.set("beforeId", options.beforeId);
-    if (options.take != null) query.set("take", String(options.take));
-    const suffix = query.size > 0 ? `?${query.toString()}` : "";
-    const response = await this.request(
-      `/api/v1/messages/conversations/${encodeURIComponent(id)}${suffix}`,
-    );
-    return conversationDetailSchema.parse(await response.json());
-  }
-
-  async sendCustomerMessage(
-    conversationId: string,
-    request: SendMessageRequest,
-  ): Promise<ConversationMessage> {
-    const body = sendMessageRequestSchema.parse(request);
-    const response = await this.request(
-      `/api/v1/messages/conversations/${encodeURIComponent(conversationId)}/messages`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
-    return conversationMessageSchema.parse(await response.json());
-  }
-
-  async markCustomerConversationRead(
-    conversationId: string,
-    messageId?: string,
-  ): Promise<void> {
-    const query = messageId ? `?messageId=${encodeURIComponent(messageId)}` : "";
-    await this.request(
-      `/api/v1/messages/conversations/${encodeURIComponent(conversationId)}/read${query}`,
-      { method: "POST" },
-    );
-  }
-
-  async listTenantConversations(options: {
-    page?: number;
-    pageSize?: number;
-    locationId?: string;
-  } = {}): Promise<PagedResult<ConversationSummary>> {
-    const query = new URLSearchParams();
-    if (options.page != null) {
-      query.set("page", String(options.page));
-    }
-    if (options.pageSize != null) {
-      query.set("pageSize", String(options.pageSize));
-    }
-    if (options.locationId) {
-      query.set("locationId", options.locationId);
-    }
-    const suffix = query.size > 0 ? `?${query.toString()}` : "";
-    const response = await this.request(`/api/v1/tenant/messages/conversations${suffix}`);
-    return conversationsResponseSchema.parse(await response.json());
-  }
-
-  async getTenantMessageUnreadCount(locationId?: string): Promise<number> {
-    const query = locationId ? `?locationId=${encodeURIComponent(locationId)}` : "";
-    const response = await this.request(`/api/v1/tenant/messages/unread-count${query}`);
-    const payload = unreadCountResponseSchema.parse(await response.json());
-    return payload.count;
-  }
-
-  async getTenantConversation(
-    id: string,
-    options: { beforeId?: string; take?: number } = {},
-  ): Promise<ConversationDetail> {
-    const query = new URLSearchParams();
-    if (options.beforeId) query.set("beforeId", options.beforeId);
-    if (options.take != null) query.set("take", String(options.take));
-    const suffix = query.size > 0 ? `?${query.toString()}` : "";
-    const response = await this.request(
-      `/api/v1/tenant/messages/conversations/${encodeURIComponent(id)}${suffix}`,
-    );
-    return conversationDetailSchema.parse(await response.json());
-  }
-
-  async sendTenantMessage(
-    conversationId: string,
-    request: SendMessageRequest,
-  ): Promise<ConversationMessage> {
-    const body = sendMessageRequestSchema.parse(request);
-    const response = await this.request(
-      `/api/v1/tenant/messages/conversations/${encodeURIComponent(conversationId)}/messages`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
-    return conversationMessageSchema.parse(await response.json());
-  }
-
-  async markTenantConversationRead(
-    conversationId: string,
-    messageId?: string,
-  ): Promise<void> {
-    const query = messageId ? `?messageId=${encodeURIComponent(messageId)}` : "";
-    await this.request(
-      `/api/v1/tenant/messages/conversations/${encodeURIComponent(conversationId)}/read${query}`,
-      { method: "POST" },
-    );
-  }
-
-  async getTenantMessageTemplates(): Promise<MessageTemplate[]> {
-    const response = await this.request("/api/v1/tenant/messages/templates");
-    const payload = messageTemplatesResponseSchema.parse(await response.json());
-    return payload.items;
-  }
-
-  async getNotificationPreferences(): Promise<NotificationPreferences> {
-    const response = await this.request("/api/v1/tenant/notification-preferences");
-    return notificationPreferencesSchema.parse(await response.json());
-  }
-
-  async updateNotificationPreferences(
-    request: UpdateNotificationPreferencesRequest,
-  ): Promise<NotificationPreferences> {
-    const body = updateNotificationPreferencesRequestSchema.parse(request);
-    const response = await this.request("/api/v1/tenant/notification-preferences", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return notificationPreferencesSchema.parse(await response.json());
-  }
-
-  async getMessagingSettings(): Promise<MessagingSettings> {
-    const response = await this.request("/api/v1/tenant/messages/settings");
-    return messagingSettingsSchema.parse(await response.json());
-  }
-
-  async updateMessagingSettings(
-    request: UpdateMessagingSettingsRequest,
-  ): Promise<MessagingSettings> {
-    const body = updateMessagingSettingsRequestSchema.parse(request);
-    const response = await this.request("/api/v1/tenant/messages/settings", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return messagingSettingsSchema.parse(await response.json());
-  }
-
-  async getBusinessWhatsAppLink(slug: string): Promise<WhatsAppLinkResponse> {
-    const response = await this.request(
-      `/api/v1/businesses/${encodeURIComponent(slug)}/whatsapp-link`,
-    );
-    return whatsAppLinkResponseSchema.parse(await response.json());
-  }
-
-  async getBookingWhatsAppLink(bookingId: string): Promise<WhatsAppLinkResponse> {
-    const response = await this.request(
-      `/api/v1/bookings/${encodeURIComponent(bookingId)}/whatsapp-link`,
-    );
-    return whatsAppLinkResponseSchema.parse(await response.json());
-  }
-
-  private async request(
-    path: string,
-    init: RequestInit & { idempotencyKey?: string } = {},
-  ): Promise<Response> {
-    const { idempotencyKey, ...requestInit } = init;
-    const headers = new Headers(requestInit.headers);
-    headers.set("Accept", "application/json");
-
-    if (this.accessToken) {
-      headers.set("Authorization", `Bearer ${this.accessToken}`);
-    } else if (this.devAuth0Sub) {
-      headers.set("X-Dev-Auth0-Sub", this.devAuth0Sub);
-    }
-
-    if (this.tenantId) {
-      headers.set("X-Tenant-Id", this.tenantId);
-    }
-
-    if (idempotencyKey) {
-      headers.set("Idempotency-Key", idempotencyKey);
-    }
-
-    // Native fetch throws "Illegal invocation" when called as a method (`this.fetchImpl(...)`).
-    const response = await this.fetchImpl.call(globalThis, `${this.baseUrl}${path}`, {
-      ...requestInit,
-      headers,
-    });
-
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => ({}))) as ApiErrorResponse;
-      throw new AdeniApiError(
-        localizeErrorResponse(typeof this.locale === "function" ? this.locale() : this.locale, payload),
-        response.status,
-        payload.code,
-        payload.params,
-      );
-    }
-
-    return response;
+  listTenantServiceMenuGroups(...args: Parameters<CatalogApi["listTenantServiceMenuGroups"]>): ReturnType<CatalogApi["listTenantServiceMenuGroups"]> {
+    return this.catalog.listTenantServiceMenuGroups(...args);
+  }
+
+  createTenantServiceMenuGroup(...args: Parameters<CatalogApi["createTenantServiceMenuGroup"]>): ReturnType<CatalogApi["createTenantServiceMenuGroup"]> {
+    return this.catalog.createTenantServiceMenuGroup(...args);
+  }
+
+  updateTenantServiceMenuGroup(...args: Parameters<CatalogApi["updateTenantServiceMenuGroup"]>): ReturnType<CatalogApi["updateTenantServiceMenuGroup"]> {
+    return this.catalog.updateTenantServiceMenuGroup(...args);
+  }
+
+  deleteTenantServiceMenuGroup(...args: Parameters<CatalogApi["deleteTenantServiceMenuGroup"]>): ReturnType<CatalogApi["deleteTenantServiceMenuGroup"]> {
+    return this.catalog.deleteTenantServiceMenuGroup(...args);
+  }
+
+  createTenantService(...args: Parameters<CatalogApi["createTenantService"]>): ReturnType<CatalogApi["createTenantService"]> {
+    return this.catalog.createTenantService(...args);
+  }
+
+  updateTenantService(...args: Parameters<CatalogApi["updateTenantService"]>): ReturnType<CatalogApi["updateTenantService"]> {
+    return this.catalog.updateTenantService(...args);
+  }
+
+  deactivateTenantService(...args: Parameters<CatalogApi["deactivateTenantService"]>): ReturnType<CatalogApi["deactivateTenantService"]> {
+    return this.catalog.deactivateTenantService(...args);
+  }
+
+  listTenantStaff(...args: Parameters<StaffApi["listTenantStaff"]>): ReturnType<StaffApi["listTenantStaff"]> {
+    return this.staff.listTenantStaff(...args);
+  }
+
+  createTenantStaff(...args: Parameters<StaffApi["createTenantStaff"]>): ReturnType<StaffApi["createTenantStaff"]> {
+    return this.staff.createTenantStaff(...args);
+  }
+
+  updateTenantStaff(...args: Parameters<StaffApi["updateTenantStaff"]>): ReturnType<StaffApi["updateTenantStaff"]> {
+    return this.staff.updateTenantStaff(...args);
+  }
+
+  deactivateTenantStaff(...args: Parameters<StaffApi["deactivateTenantStaff"]>): ReturnType<StaffApi["deactivateTenantStaff"]> {
+    return this.staff.deactivateTenantStaff(...args);
+  }
+
+  inviteTenantStaff(...args: Parameters<StaffApi["inviteTenantStaff"]>): ReturnType<StaffApi["inviteTenantStaff"]> {
+    return this.staff.inviteTenantStaff(...args);
+  }
+
+  inviteTenantAccess(...args: Parameters<StaffApi["inviteTenantAccess"]>): ReturnType<StaffApi["inviteTenantAccess"]> {
+    return this.staff.inviteTenantAccess(...args);
+  }
+
+  listTenantAccessInvites(...args: Parameters<StaffApi["listTenantAccessInvites"]>): ReturnType<StaffApi["listTenantAccessInvites"]> {
+    return this.staff.listTenantAccessInvites(...args);
+  }
+
+  resendTenantAccessInvite(...args: Parameters<StaffApi["resendTenantAccessInvite"]>): ReturnType<StaffApi["resendTenantAccessInvite"]> {
+    return this.staff.resendTenantAccessInvite(...args);
+  }
+
+  revokeTenantAccessInvite(...args: Parameters<StaffApi["revokeTenantAccessInvite"]>): ReturnType<StaffApi["revokeTenantAccessInvite"]> {
+    return this.staff.revokeTenantAccessInvite(...args);
+  }
+
+  listTenantAccessUsers(...args: Parameters<StaffApi["listTenantAccessUsers"]>): ReturnType<StaffApi["listTenantAccessUsers"]> {
+    return this.staff.listTenantAccessUsers(...args);
+  }
+
+  updateTenantAccessUser(...args: Parameters<StaffApi["updateTenantAccessUser"]>): ReturnType<StaffApi["updateTenantAccessUser"]> {
+    return this.staff.updateTenantAccessUser(...args);
+  }
+
+  revokeTenantAccessUser(...args: Parameters<StaffApi["revokeTenantAccessUser"]>): ReturnType<StaffApi["revokeTenantAccessUser"]> {
+    return this.staff.revokeTenantAccessUser(...args);
+  }
+
+  acceptStaffInvite(...args: Parameters<StaffApi["acceptStaffInvite"]>): ReturnType<StaffApi["acceptStaffInvite"]> {
+    return this.staff.acceptStaffInvite(...args);
+  }
+
+  replaceTenantStaffServices(...args: Parameters<StaffApi["replaceTenantStaffServices"]>): ReturnType<StaffApi["replaceTenantStaffServices"]> {
+    return this.staff.replaceTenantStaffServices(...args);
+  }
+
+  getTenantStaffHours(...args: Parameters<StaffApi["getTenantStaffHours"]>): ReturnType<StaffApi["getTenantStaffHours"]> {
+    return this.staff.getTenantStaffHours(...args);
+  }
+
+  replaceTenantStaffHours(...args: Parameters<StaffApi["replaceTenantStaffHours"]>): ReturnType<StaffApi["replaceTenantStaffHours"]> {
+    return this.staff.replaceTenantStaffHours(...args);
+  }
+
+  listTenantStaffLeave(...args: Parameters<StaffApi["listTenantStaffLeave"]>): ReturnType<StaffApi["listTenantStaffLeave"]> {
+    return this.staff.listTenantStaffLeave(...args);
+  }
+
+  createTenantStaffLeave(...args: Parameters<StaffApi["createTenantStaffLeave"]>): ReturnType<StaffApi["createTenantStaffLeave"]> {
+    return this.staff.createTenantStaffLeave(...args);
+  }
+
+  deleteTenantStaffLeave(...args: Parameters<StaffApi["deleteTenantStaffLeave"]>): ReturnType<StaffApi["deleteTenantStaffLeave"]> {
+    return this.staff.deleteTenantStaffLeave(...args);
+  }
+
+  getTenantStaffCalendar(...args: Parameters<StaffApi["getTenantStaffCalendar"]>): ReturnType<StaffApi["getTenantStaffCalendar"]> {
+    return this.staff.getTenantStaffCalendar(...args);
+  }
+
+  getTenantTeamCalendar(...args: Parameters<StaffApi["getTenantTeamCalendar"]>): ReturnType<StaffApi["getTenantTeamCalendar"]> {
+    return this.staff.getTenantTeamCalendar(...args);
+  }
+
+  getTenantAvailability(...args: Parameters<BookingApi["getTenantAvailability"]>): ReturnType<BookingApi["getTenantAvailability"]> {
+    return this.booking.getTenantAvailability(...args);
+  }
+
+  replaceTenantAvailability(...args: Parameters<BookingApi["replaceTenantAvailability"]>): ReturnType<BookingApi["replaceTenantAvailability"]> {
+    return this.booking.replaceTenantAvailability(...args);
+  }
+
+  getTenantClosedDates(...args: Parameters<BookingApi["getTenantClosedDates"]>): ReturnType<BookingApi["getTenantClosedDates"]> {
+    return this.booking.getTenantClosedDates(...args);
+  }
+
+  createTenantClosedDate(...args: Parameters<BookingApi["createTenantClosedDate"]>): ReturnType<BookingApi["createTenantClosedDate"]> {
+    return this.booking.createTenantClosedDate(...args);
+  }
+
+  deleteTenantClosedDate(...args: Parameters<BookingApi["deleteTenantClosedDate"]>): ReturnType<BookingApi["deleteTenantClosedDate"]> {
+    return this.booking.deleteTenantClosedDate(...args);
+  }
+
+  submitTenantVerification(...args: Parameters<BusinessApi["submitTenantVerification"]>): ReturnType<BusinessApi["submitTenantVerification"]> {
+    return this.business.submitTenantVerification(...args);
+  }
+
+  getTenantLocations(...args: Parameters<BusinessApi["getTenantLocations"]>): ReturnType<BusinessApi["getTenantLocations"]> {
+    return this.business.getTenantLocations(...args);
+  }
+
+  addTenantLocation(...args: Parameters<BusinessApi["addTenantLocation"]>): ReturnType<BusinessApi["addTenantLocation"]> {
+    return this.business.addTenantLocation(...args);
+  }
+
+  updateTenantLocation(...args: Parameters<BusinessApi["updateTenantLocation"]>): ReturnType<BusinessApi["updateTenantLocation"]> {
+    return this.business.updateTenantLocation(...args);
+  }
+
+  deactivateTenantLocation(...args: Parameters<BusinessApi["deactivateTenantLocation"]>): ReturnType<BusinessApi["deactivateTenantLocation"]> {
+    return this.business.deactivateTenantLocation(...args);
+  }
+
+  getTenantSubscriptionUsage(...args: Parameters<SubscriptionsApi["getTenantSubscriptionUsage"]>): ReturnType<SubscriptionsApi["getTenantSubscriptionUsage"]> {
+    return this.subscriptions.getTenantSubscriptionUsage(...args);
+  }
+
+  getTenantDashboardSummary(...args: Parameters<ReportingApi["getTenantDashboardSummary"]>): ReturnType<ReportingApi["getTenantDashboardSummary"]> {
+    return this.reporting.getTenantDashboardSummary(...args);
+  }
+
+  getTenantDashboardSeries(...args: Parameters<ReportingApi["getTenantDashboardSeries"]>): ReturnType<ReportingApi["getTenantDashboardSeries"]> {
+    return this.reporting.getTenantDashboardSeries(...args);
+  }
+
+  getTenantDashboardBreakdown(...args: Parameters<ReportingApi["getTenantDashboardBreakdown"]>): ReturnType<ReportingApi["getTenantDashboardBreakdown"]> {
+    return this.reporting.getTenantDashboardBreakdown(...args);
+  }
+
+  getTenantDashboardLayout(...args: Parameters<ReportingApi["getTenantDashboardLayout"]>): ReturnType<ReportingApi["getTenantDashboardLayout"]> {
+    return this.reporting.getTenantDashboardLayout(...args);
+  }
+
+  putTenantDashboardLayout(...args: Parameters<ReportingApi["putTenantDashboardLayout"]>): ReturnType<ReportingApi["putTenantDashboardLayout"]> {
+    return this.reporting.putTenantDashboardLayout(...args);
+  }
+
+  getTenantBillingHistory(...args: Parameters<FinanceApi["getTenantBillingHistory"]>): ReturnType<FinanceApi["getTenantBillingHistory"]> {
+    return this.finance.getTenantBillingHistory(...args);
+  }
+
+  createSubscriptionCheckout(...args: Parameters<SubscriptionsApi["createSubscriptionCheckout"]>): ReturnType<SubscriptionsApi["createSubscriptionCheckout"]> {
+    return this.subscriptions.createSubscriptionCheckout(...args);
+  }
+
+  completeStubSubscriptionCheckout(...args: Parameters<SubscriptionsApi["completeStubSubscriptionCheckout"]>): ReturnType<SubscriptionsApi["completeStubSubscriptionCheckout"]> {
+    return this.subscriptions.completeStubSubscriptionCheckout(...args);
+  }
+
+  getMe(...args: Parameters<BusinessApi["getMe"]>): ReturnType<BusinessApi["getMe"]> {
+    return this.business.getMe(...args);
+  }
+
+  listPendingBusinesses(...args: Parameters<AdminApi["listPendingBusinesses"]>): ReturnType<AdminApi["listPendingBusinesses"]> {
+    return this.admin.listPendingBusinesses(...args);
+  }
+
+  approvePendingBusiness(...args: Parameters<AdminApi["approvePendingBusiness"]>): ReturnType<AdminApi["approvePendingBusiness"]> {
+    return this.admin.approvePendingBusiness(...args);
+  }
+
+  rejectPendingBusiness(...args: Parameters<AdminApi["rejectPendingBusiness"]>): ReturnType<AdminApi["rejectPendingBusiness"]> {
+    return this.admin.rejectPendingBusiness(...args);
+  }
+
+  listAdminBusinesses(...args: Parameters<AdminApi["listAdminBusinesses"]>): ReturnType<AdminApi["listAdminBusinesses"]> {
+    return this.admin.listAdminBusinesses(...args);
+  }
+
+  getAdminBusinessDirectoryStats(...args: Parameters<AdminApi["getAdminBusinessDirectoryStats"]>): ReturnType<AdminApi["getAdminBusinessDirectoryStats"]> {
+    return this.admin.getAdminBusinessDirectoryStats(...args);
+  }
+
+  getAdminSubscriptionMetrics(...args: Parameters<AdminApi["getAdminSubscriptionMetrics"]>): ReturnType<AdminApi["getAdminSubscriptionMetrics"]> {
+    return this.admin.getAdminSubscriptionMetrics(...args);
+  }
+
+  getAdminPlatformSubscriptionMrr(...args: Parameters<AdminApi["getAdminPlatformSubscriptionMrr"]>): ReturnType<AdminApi["getAdminPlatformSubscriptionMrr"]> {
+    return this.admin.getAdminPlatformSubscriptionMrr(...args);
+  }
+
+  getAdminReportingGmv(...args: Parameters<AdminApi["getAdminReportingGmv"]>): ReturnType<AdminApi["getAdminReportingGmv"]> {
+    return this.admin.getAdminReportingGmv(...args);
+  }
+
+  getAdminRevenueMetrics(...args: Parameters<AdminApi["getAdminRevenueMetrics"]>): ReturnType<AdminApi["getAdminRevenueMetrics"]> {
+    return this.admin.getAdminRevenueMetrics(...args);
+  }
+
+  searchAdminTransactions(...args: Parameters<AdminApi["searchAdminTransactions"]>): ReturnType<AdminApi["searchAdminTransactions"]> {
+    return this.admin.searchAdminTransactions(...args);
+  }
+
+  listAdminAuditLogs(...args: Parameters<AdminApi["listAdminAuditLogs"]>): ReturnType<AdminApi["listAdminAuditLogs"]> {
+    return this.admin.listAdminAuditLogs(...args);
+  }
+
+  getAdminBusiness(...args: Parameters<AdminApi["getAdminBusiness"]>): ReturnType<AdminApi["getAdminBusiness"]> {
+    return this.admin.getAdminBusiness(...args);
+  }
+
+  listAdminTenantCommercialAudit(...args: Parameters<AdminApi["listAdminTenantCommercialAudit"]>): ReturnType<AdminApi["listAdminTenantCommercialAudit"]> {
+    return this.admin.listAdminTenantCommercialAudit(...args);
+  }
+
+  getAdminTenantCommercialTerms(...args: Parameters<AdminApi["getAdminTenantCommercialTerms"]>): ReturnType<AdminApi["getAdminTenantCommercialTerms"]> {
+    return this.admin.getAdminTenantCommercialTerms(...args);
+  }
+
+  setAdminTenantCommercialTerms(...args: Parameters<AdminApi["setAdminTenantCommercialTerms"]>): ReturnType<AdminApi["setAdminTenantCommercialTerms"]> {
+    return this.admin.setAdminTenantCommercialTerms(...args);
+  }
+
+  getPublicPricing(...args: Parameters<SubscriptionsApi["getPublicPricing"]>): ReturnType<SubscriptionsApi["getPublicPricing"]> {
+    return this.subscriptions.getPublicPricing(...args);
+  }
+
+  listAdminPricingCatalogVersions(...args: Parameters<AdminApi["listAdminPricingCatalogVersions"]>): ReturnType<AdminApi["listAdminPricingCatalogVersions"]> {
+    return this.admin.listAdminPricingCatalogVersions(...args);
+  }
+
+  getAdminPricingCatalogVersion(...args: Parameters<AdminApi["getAdminPricingCatalogVersion"]>): ReturnType<AdminApi["getAdminPricingCatalogVersion"]> {
+    return this.admin.getAdminPricingCatalogVersion(...args);
+  }
+
+  createAdminPricingCatalogVersion(...args: Parameters<AdminApi["createAdminPricingCatalogVersion"]>): ReturnType<AdminApi["createAdminPricingCatalogVersion"]> {
+    return this.admin.createAdminPricingCatalogVersion(...args);
+  }
+
+  upsertAdminPricingCatalogEntries(...args: Parameters<AdminApi["upsertAdminPricingCatalogEntries"]>): ReturnType<AdminApi["upsertAdminPricingCatalogEntries"]> {
+    return this.admin.upsertAdminPricingCatalogEntries(...args);
+  }
+
+  activateAdminPricingCatalogVersion(...args: Parameters<AdminApi["activateAdminPricingCatalogVersion"]>): ReturnType<AdminApi["activateAdminPricingCatalogVersion"]> {
+    return this.admin.activateAdminPricingCatalogVersion(...args);
+  }
+
+  listAdminTenantSubscriptionCharges(...args: Parameters<AdminApi["listAdminTenantSubscriptionCharges"]>): ReturnType<AdminApi["listAdminTenantSubscriptionCharges"]> {
+    return this.admin.listAdminTenantSubscriptionCharges(...args);
+  }
+
+  searchAdminCustomers(...args: Parameters<AdminApi["searchAdminCustomers"]>): ReturnType<AdminApi["searchAdminCustomers"]> {
+    return this.admin.searchAdminCustomers(...args);
+  }
+
+  exportAdminCustomer(...args: Parameters<AdminApi["exportAdminCustomer"]>): ReturnType<AdminApi["exportAdminCustomer"]> {
+    return this.admin.exportAdminCustomer(...args);
+  }
+
+  initiateAdminCustomerDelete(...args: Parameters<AdminApi["initiateAdminCustomerDelete"]>): ReturnType<AdminApi["initiateAdminCustomerDelete"]> {
+    return this.admin.initiateAdminCustomerDelete(...args);
+  }
+
+  getAdminMarketCatalogStats(...args: Parameters<AdminApi["getAdminMarketCatalogStats"]>): ReturnType<AdminApi["getAdminMarketCatalogStats"]> {
+    return this.admin.getAdminMarketCatalogStats(...args);
+  }
+
+  listAdminMarkets(...args: Parameters<AdminApi["listAdminMarkets"]>): ReturnType<AdminApi["listAdminMarkets"]> {
+    return this.admin.listAdminMarkets(...args);
+  }
+
+  createAdminMarket(...args: Parameters<AdminApi["createAdminMarket"]>): ReturnType<AdminApi["createAdminMarket"]> {
+    return this.admin.createAdminMarket(...args);
+  }
+
+  updateAdminMarket(...args: Parameters<AdminApi["updateAdminMarket"]>): ReturnType<AdminApi["updateAdminMarket"]> {
+    return this.admin.updateAdminMarket(...args);
+  }
+
+  setAdminMarketLive(...args: Parameters<AdminApi["setAdminMarketLive"]>): ReturnType<AdminApi["setAdminMarketLive"]> {
+    return this.admin.setAdminMarketLive(...args);
+  }
+
+  createConversation(...args: Parameters<MessagingApi["createConversation"]>): ReturnType<MessagingApi["createConversation"]> {
+    return this.messaging.createConversation(...args);
+  }
+
+  listCustomerConversations(...args: Parameters<MessagingApi["listCustomerConversations"]>): ReturnType<MessagingApi["listCustomerConversations"]> {
+    return this.messaging.listCustomerConversations(...args);
+  }
+
+  getCustomerConversation(...args: Parameters<MessagingApi["getCustomerConversation"]>): ReturnType<MessagingApi["getCustomerConversation"]> {
+    return this.messaging.getCustomerConversation(...args);
+  }
+
+  sendCustomerMessage(...args: Parameters<MessagingApi["sendCustomerMessage"]>): ReturnType<MessagingApi["sendCustomerMessage"]> {
+    return this.messaging.sendCustomerMessage(...args);
+  }
+
+  markCustomerConversationRead(...args: Parameters<MessagingApi["markCustomerConversationRead"]>): ReturnType<MessagingApi["markCustomerConversationRead"]> {
+    return this.messaging.markCustomerConversationRead(...args);
+  }
+
+  listTenantConversations(...args: Parameters<MessagingApi["listTenantConversations"]>): ReturnType<MessagingApi["listTenantConversations"]> {
+    return this.messaging.listTenantConversations(...args);
+  }
+
+  getTenantMessageUnreadCount(...args: Parameters<MessagingApi["getTenantMessageUnreadCount"]>): ReturnType<MessagingApi["getTenantMessageUnreadCount"]> {
+    return this.messaging.getTenantMessageUnreadCount(...args);
+  }
+
+  getTenantConversation(...args: Parameters<MessagingApi["getTenantConversation"]>): ReturnType<MessagingApi["getTenantConversation"]> {
+    return this.messaging.getTenantConversation(...args);
+  }
+
+  sendTenantMessage(...args: Parameters<MessagingApi["sendTenantMessage"]>): ReturnType<MessagingApi["sendTenantMessage"]> {
+    return this.messaging.sendTenantMessage(...args);
+  }
+
+  markTenantConversationRead(...args: Parameters<MessagingApi["markTenantConversationRead"]>): ReturnType<MessagingApi["markTenantConversationRead"]> {
+    return this.messaging.markTenantConversationRead(...args);
+  }
+
+  getTenantMessageTemplates(...args: Parameters<MessagingApi["getTenantMessageTemplates"]>): ReturnType<MessagingApi["getTenantMessageTemplates"]> {
+    return this.messaging.getTenantMessageTemplates(...args);
+  }
+
+  getNotificationPreferences(...args: Parameters<MessagingApi["getNotificationPreferences"]>): ReturnType<MessagingApi["getNotificationPreferences"]> {
+    return this.messaging.getNotificationPreferences(...args);
+  }
+
+  updateNotificationPreferences(...args: Parameters<MessagingApi["updateNotificationPreferences"]>): ReturnType<MessagingApi["updateNotificationPreferences"]> {
+    return this.messaging.updateNotificationPreferences(...args);
+  }
+
+  getMessagingSettings(...args: Parameters<MessagingApi["getMessagingSettings"]>): ReturnType<MessagingApi["getMessagingSettings"]> {
+    return this.messaging.getMessagingSettings(...args);
+  }
+
+  updateMessagingSettings(...args: Parameters<MessagingApi["updateMessagingSettings"]>): ReturnType<MessagingApi["updateMessagingSettings"]> {
+    return this.messaging.updateMessagingSettings(...args);
+  }
+
+  getBusinessWhatsAppLink(...args: Parameters<MessagingApi["getBusinessWhatsAppLink"]>): ReturnType<MessagingApi["getBusinessWhatsAppLink"]> {
+    return this.messaging.getBusinessWhatsAppLink(...args);
+  }
+
+  getBookingWhatsAppLink(...args: Parameters<MessagingApi["getBookingWhatsAppLink"]>): ReturnType<MessagingApi["getBookingWhatsAppLink"]> {
+    return this.messaging.getBookingWhatsAppLink(...args);
   }
 }
