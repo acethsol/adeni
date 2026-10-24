@@ -12,8 +12,12 @@ using Microsoft.Extensions.DependencyInjection;
 
 public sealed class StaffCompensationServiceTests
 {
-    [Fact]
-    public async Task ExportAsync_returns_csv_for_till_tip_and_commission()
+    [Theory]
+    [InlineData("Alex", "Alex")]
+    [InlineData("Àda, Guest", "\"Àda, Guest\"")]
+    [InlineData("=1+1", "'=1+1")]
+    [InlineData("A\rB", "\"A\rB\"")]
+    public async Task ExportAsync_returns_csv_for_till_tip_and_commission(string staffName, string expectedName)
     {
         var tenantId = Guid.NewGuid();
         var staffId = Guid.NewGuid();
@@ -37,7 +41,7 @@ public sealed class StaffCompensationServiceTests
         {
             Id = staffId,
             TenantId = tenantId,
-            DisplayName = "Alex",
+            DisplayName = staffName,
             RoleKey = "stylist",
             IsActive = true,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -78,7 +82,7 @@ public sealed class StaffCompensationServiceTests
 
         Assert.True(export.IsSuccess);
         var text = System.Text.Encoding.UTF8.GetString(export.Value!.Body);
-        Assert.Contains("Alex", text);
+        Assert.Contains(expectedName, text);
         Assert.Contains("tip", text);
         Assert.Contains("commission", text);
     }

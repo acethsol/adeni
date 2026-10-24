@@ -8,6 +8,7 @@ using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
 using Adeni.Domain.Finance;
 using Adeni.Infrastructure.Persistence;
+using Adeni.Infrastructure.Serialization;
 using Microsoft.EntityFrameworkCore;
 
 public sealed class StaffCompensationService(AdeniDbContext dbContext) : IStaffCompensationService
@@ -318,33 +319,23 @@ public sealed class StaffCompensationService(AdeniDbContext dbContext) : IStaffC
         builder.AppendLine("created_at,staff_id,staff_name,type,amount,currency,booking_id,payment_intent_id");
         foreach (var row in rows)
         {
-            builder.Append(CsvEscape(row.CreatedAt.ToString("O", CultureInfo.InvariantCulture)));
+            builder.Append(CsvField.Format(row.CreatedAt.ToString("O", CultureInfo.InvariantCulture)));
             builder.Append(',');
-            builder.Append(CsvEscape(row.StaffMemberId.ToString()));
+            builder.Append(CsvField.Format(row.StaffMemberId.ToString()));
             builder.Append(',');
-            builder.Append(CsvEscape(row.StaffDisplayName));
+            builder.Append(CsvField.Format(row.StaffDisplayName));
             builder.Append(',');
-            builder.Append(CsvEscape(row.Type));
+            builder.Append(CsvField.Format(row.Type));
             builder.Append(',');
             builder.Append(row.Amount.ToString(CultureInfo.InvariantCulture));
             builder.Append(',');
-            builder.Append(CsvEscape(row.Currency));
+            builder.Append(CsvField.Format(row.Currency));
             builder.Append(',');
-            builder.Append(CsvEscape(row.BookingId?.ToString() ?? ""));
+            builder.Append(CsvField.Format(row.BookingId?.ToString() ?? ""));
             builder.Append(',');
-            builder.AppendLine(CsvEscape(row.PaymentIntentId?.ToString() ?? ""));
+            builder.AppendLine(CsvField.Format(row.PaymentIntentId?.ToString() ?? ""));
         }
 
         return builder.ToString();
-    }
-
-    private static string CsvEscape(string value)
-    {
-        if (value.Contains('"') || value.Contains(',') || value.Contains('\n'))
-        {
-            return $"\"{value.Replace("\"", "\"\"", StringComparison.Ordinal)}\"";
-        }
-
-        return value;
     }
 }

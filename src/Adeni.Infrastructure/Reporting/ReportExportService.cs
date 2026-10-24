@@ -9,6 +9,7 @@ using Adeni.Application.Subscriptions;
 using Adeni.Domain.Auditing;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
+using Adeni.Infrastructure.Serialization;
 using Microsoft.Extensions.Logging;
 
 public sealed class ReportExportService(
@@ -404,13 +405,13 @@ public sealed class ReportExportService(
             builder.Append(',');
             builder.Append(row.StaffMemberId);
             builder.Append(',');
-            builder.Append(row.StaffDisplayName);
+            builder.Append(CsvField.Format(row.StaffDisplayName));
             builder.Append(',');
-            builder.Append(row.Type);
+            builder.Append(CsvField.Format(row.Type));
             builder.Append(',');
             builder.Append(row.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture));
             builder.Append(',');
-            builder.Append(row.Currency);
+            builder.Append(CsvField.Format(row.Currency));
             builder.Append(',');
             builder.Append(row.BookingId?.ToString() ?? string.Empty);
             builder.Append(',');

@@ -497,6 +497,46 @@ public sealed class TenantReportingExportIntegrationTests : IClassFixture<WebApp
         Assert.Equal("text/csv", response.Content.Headers.ContentType?.MediaType);
     }
 
+    [Fact]
+    public async Task Compensation_csv_escapes_staff_text_and_preserves_negative_amount()
+    {
+        var tenantId = Guid.NewGuid();
+        var staffId = Guid.NewGuid();
+        var ownerSub = $"auth0|compensation-safety-{tenantId:N}";
+        var now = DateTimeOffset.UtcNow;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+            SeedTenant(db, tenantId, ownerSub, SubscriptionSku.Professional);
+            db.StaffMembers.Add(new StaffMember
+            {
+                Id = staffId, TenantId = tenantId, DisplayName = "=SUM(1,2)\r\n\"Àda\"",
+                RoleKey = "stylist", IsActive = true, CreatedAt = now, UpdatedAt = now,
+            });
+            db.StaffCompensationAllocations.Add(new Adeni.Domain.Finance.StaffCompensationAllocation
+            {
+                Id = Guid.NewGuid(), TenantId = tenantId, StaffMemberId = staffId,
+                Type = Adeni.Domain.Finance.StaffCompensationType.Commission,
+                Amount = -12.50m, Currency = "NGN", CreatedAt = now,
+            });
+            await db.SaveChangesAsync();
+        }
+
+        using var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add(DevBusinessAuthMiddleware.DevAuth0SubHeader, ownerSub);
+        client.DefaultRequestHeaders.Add(TenantAccessMiddleware.TenantHeaderName, tenantId.ToString());
+        var from = Uri.EscapeDataString(now.AddDays(-1).ToString("O"));
+        var to = Uri.EscapeDataString(now.AddDays(1).ToString("O"));
+        var response = await client.GetAsync(
+            $"/api/v1/tenant/reporting/exports/compensation?from={from}&to={to}&format=csv");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("text/csv", response.Content.Headers.ContentType?.MediaType);
+        var csv = await response.Content.ReadAsStringAsync();
+        Assert.StartsWith("CreatedAt,StaffMemberId,StaffDisplayName,Type,Amount,Currency,BookingId,PaymentIntentId", csv);
+        Assert.Contains("\"'=SUM(1,2)\r\n\"\"Àda\"\"\",commission,-12.50,NGN,,", csv);
+    }
+
     private static void SeedTenant(
         AdeniDbContext db,
         Guid tenantId,
