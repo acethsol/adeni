@@ -1,6 +1,6 @@
 # F3 — Business gift cards and Pay Links / Quick Pay
 
-**Status: approved by the user; implementation in progress. The approved delivery may remain sandbox-only while merchant settlement is deferred.**
+**Status: approved; Development/Testing Stub implementation completed. Live merchant settlement remains deferred and server-blocked. See [closeout](f3-gift-cards-pay-links-closeout.md).**
 
 Planning baseline: `feature/squarespace-inspired-v1`, completed F2 commit `824e42c9b43e44717cfab9b086a3a81f6dbe0391`. No new branch, protected-branch changes, schema deployment, or F3 code changes during this review.
 
