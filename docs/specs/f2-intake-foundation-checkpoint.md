@@ -1,5 +1,7 @@
 # F2 foundation checkpoint
 
+> Historical snapshot at `89e94bf`, superseded by the [completed F2 closeout](./f2-intake-consultation-forms-closeout.md). The user subsequently resolved retention; the open question recorded below is no longer pending.
+
 F2 is **not complete**. The approved plan is [here](./f2-intake-consultation-forms-plan.md). This checkpoint builds on F1 commit `3fd36d6` on `feature/squarespace-inspired-v1`.
 
 Implemented independent foundation:

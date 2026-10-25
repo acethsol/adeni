@@ -1,11 +1,15 @@
 # F2 — Intake / consultation forms implementation plan
 
-**Status: approved; F2 implementation in progress.** See the [foundation checkpoint](./f2-intake-foundation-checkpoint.md). The response retention period and legal-hold rule remain unresolved; no collection endpoints are enabled.
+**Status: implemented; awaiting F2 review.** See [F2 closeout](./f2-intake-consultation-forms-closeout.md).
 
 Branch: `feature/squarespace-inspired-v1`; implementation base: F1 HEAD `3fd36d6e4d0c1f3a61bc814992847441ac5e6697`.
 Authorities: [product direction](../product-direction.md), [architecture](../architecture.md), [database conventions](../../db/README.md), [F1 closeout](./f1-customer-profile-activity-closeout.md). This proposal follows the repository's [spec template](./_template.md); F2 is the explicitly requested scope extension, not a new sprint inferred from older roadmap notes.
 
 Goal: allow businesses to configure small non-clinical consultation forms, pin their published definitions to bookings, and let the authenticated booking holder submit once for authorized review.
+
+## Approved retention addendum
+
+The subsequent V1 decision resolves the earlier retention question: completed responses expire 24 calendar months after the appointment date; unsubmitted non-actionable assignments expire after 90 days. Explicit submission legal holds defer deletion; release reevaluates expired retention and pending privacy deletion. These are V1 product rules, not a claim of legally mandated periods in every market. No tenant retention settings or answer-reuse feature is added. The proposal below records the approved design; the closeout describes actual delivery and limits.
 
 ## 1. Existing capabilities discovered
 
