@@ -1,6 +1,6 @@
 # F2 — Intake / consultation forms implementation plan
 
-**Status: proposed, awaiting review. No F2 implementation is authorized yet.**
+**Status: approved; F2 implementation in progress.** See the [foundation checkpoint](./f2-intake-foundation-checkpoint.md). The response retention period and legal-hold rule remain unresolved; no collection endpoints are enabled.
 
 Branch: `feature/squarespace-inspired-v1`; implementation base: F1 HEAD `3fd36d6e4d0c1f3a61bc814992847441ac5e6697`.
 Authorities: [product direction](../product-direction.md), [architecture](../architecture.md), [database conventions](../../db/README.md), [F1 closeout](./f1-customer-profile-activity-closeout.md). This proposal follows the repository's [spec template](./_template.md); F2 is the explicitly requested scope extension, not a new sprint inferred from older roadmap notes.

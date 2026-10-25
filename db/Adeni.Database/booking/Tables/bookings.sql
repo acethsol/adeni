@@ -68,3 +68,6 @@ CREATE NONCLUSTERED INDEX [IX_bookings_TenantId_BusinessLocationId_StartAt]
 
 GO
 
+
+GO
+CREATE UNIQUE INDEX [IX_bookings_TenantId_Id] ON [booking].[bookings] ([TenantId], [Id]);
