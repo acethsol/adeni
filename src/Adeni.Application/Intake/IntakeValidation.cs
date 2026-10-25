@@ -2,13 +2,21 @@ namespace Adeni.Application.Intake;
 
 using System.Globalization;
 using Adeni.Domain.Common;
+using System.Text.Json.Serialization;
 using Adeni.Domain.Intake;
 
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record IntakeChoiceDefinition(Guid Id, string Label);
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record IntakeFieldDefinition(Guid Id, IntakeFieldType Type, string Label, string? HelpText,
     bool Required, IReadOnlyList<IntakeChoiceDefinition> Choices);
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record IntakeDefinition(string Title, string? Description, string? Instructions, IReadOnlyList<IntakeFieldDefinition> Fields);
-public sealed record IntakeAnswerInput(Guid FieldId, string? Text = null, bool? Boolean = null, string? Date = null, IReadOnlyList<Guid>? Choices = null);
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
+public sealed record IntakeAnswerInput(Guid FieldId, string? Text = null, bool? Boolean = null, string? Date = null, IReadOnlyList<Guid>? Choices = null)
+{
+    public override string ToString() => $"IntakeAnswerInput {{ FieldId = {FieldId} }}";
+}
 
 /// <summary>Bounded non-clinical field validation. Errors never echo definitions or submitted values.</summary>
 public static class IntakeValidation

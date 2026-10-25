@@ -17,7 +17,8 @@ public sealed class QuoteRequestService(
     AdeniDbContext dbContext,
     IFileStorage fileStorage,
     ITenantRealtimePublisher tenantRealtime,
-    IEntitlementsService entitlementsService) : IQuoteRequestService
+    IEntitlementsService entitlementsService,
+    IBookingIntakeAssignmentWriter? intake = null) : IQuoteRequestService
 {
     private const int MaxPhotoKeys = 5;
 
@@ -313,6 +314,12 @@ public sealed class QuoteRequestService(
             CreatedAt = DateTimeOffset.UtcNow,
         };
 
+        if (intake is not null)
+        {
+            var required = await intake.PrepareAsync(record.TenantId, [booking.ServiceOfferingId], cancellationToken);
+            if (required.IsFailure) return Result.Failure<QuoteRequestResponse>(required.Error);
+            intake.Stage(record.TenantId, booking.Id, required.Value!, booking.CreatedAt);
+        }
         dbContext.Bookings.Add(booking);
         record.Status = QuoteRequestStatus.Accepted;
         record.BookingId = booking.Id;

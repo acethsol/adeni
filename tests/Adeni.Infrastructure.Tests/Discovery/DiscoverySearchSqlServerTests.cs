@@ -1,6 +1,7 @@
 namespace Adeni.Infrastructure.Tests.Discovery;
 
 using Adeni.Infrastructure.Tests.TestSupport;
+using Adeni.Infrastructure.Tests.Subscriptions;
 using Adeni.Application.Caching;
 using Adeni.Application.Catalog;
 using Adeni.Application.Discovery;
@@ -124,6 +125,7 @@ public sealed class DiscoverySearchSqlServerTests
             ?? throw new InvalidOperationException("SQL Server connection string missing.");
 
         var services = new ServiceCollection();
+        services.AddEntitlementsModule();
         services.AddDistributedMemoryCache();
         services.AddSingleton<ICacheService, DistributedCacheService>();
         services.AddSingleton<MarketCatalogState>();

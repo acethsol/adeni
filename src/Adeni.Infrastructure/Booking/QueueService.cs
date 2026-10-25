@@ -22,7 +22,8 @@ public sealed class QueueService(
     IEntitlementsService entitlementsService,
     INotificationDispatcher notificationDispatcher,
     ITenantCustomerService tenantCustomers,
-    ITenantRealtimePublisher tenantRealtime) : IQueueService
+    ITenantRealtimePublisher tenantRealtime,
+    IBookingIntakeAssignmentWriter? intake = null) : IQueueService
 {
     private static readonly Regex PhoneDigits = new(@"[^\d+]", RegexOptions.Compiled);
 
@@ -618,6 +619,12 @@ public sealed class QueueService(
             line.BookingId = booking.Id;
         }
 
+        if (intake is not null)
+        {
+            var required = await intake.PrepareAsync(ticket.TenantId, [service.Id], cancellationToken);
+            if (required.IsFailure) throw new InvalidOperationException("Intake requirement configuration is invalid.");
+            intake.Stage(ticket.TenantId, booking.Id, required.Value!, start);
+        }
         dbContext.Bookings.Add(booking);
         ticket.BookingId = booking.Id;
     }

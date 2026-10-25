@@ -2,6 +2,7 @@ namespace Adeni.Infrastructure.Admin;
 
 using Adeni.Application.Abstractions;
 using Adeni.Application.Admin;
+using Adeni.Application.Intake;
 using Adeni.Domain.Auditing;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
@@ -11,7 +12,8 @@ using Microsoft.EntityFrameworkCore;
 public sealed class AdminCustomerService(
     AdeniDbContext dbContext,
     IAuditLogWriter auditLogWriter,
-    ICorrelationContext correlationContext) : IAdminCustomerService
+    ICorrelationContext correlationContext,
+    IIntakeRetentionService? intakeRetention = null) : IAdminCustomerService
 {
     public async Task<Result<AdminPagedResult<AdminCustomerSummary>>> SearchAsync(
         string? query,
@@ -140,6 +142,7 @@ public sealed class AdminCustomerService(
         customer.Name = "[erased]";
         customer.Email = null;
         customer.Phone = null;
+        if (intakeRetention is not null) await intakeRetention.StagePrivacyPurgeAsync(customerId, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         await auditLogWriter.WriteAsync(new AuditEntry(

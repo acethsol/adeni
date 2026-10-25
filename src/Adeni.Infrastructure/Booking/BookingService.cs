@@ -35,7 +35,8 @@ public sealed class BookingService(
     ITenantRealtimePublisher tenantRealtime,
     IAuditLogWriter auditLogWriter,
     ICorrelationContext correlationContext,
-    ICurrentUser currentUser) : IBookingService
+    ICurrentUser currentUser,
+    IBookingIntakeAssignmentWriter? intake = null) : IBookingService
 {
     public async Task<Result<BookingResponse>> CreateAsync(
         string customerAuth0Sub,
@@ -322,6 +323,13 @@ public sealed class BookingService(
                     DisplayName = name.Length > 120 ? name[..120] : name,
                     SortOrder = i,
                 });
+            }
+
+            if (intake is not null)
+            {
+                var required = await intake.PrepareAsync(request.TenantId, orderedServices.Select(x => x.Id).ToArray(), cancellationToken);
+                if (required.IsFailure) return Result.Failure<BookingResponse>(required.Error);
+                intake.Stage(request.TenantId, booking.Id, required.Value!, now);
             }
 
             if (autoConfirm)

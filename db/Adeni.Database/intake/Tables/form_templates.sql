@@ -7,6 +7,7 @@ CREATE TABLE [intake].[form_templates] (
     [CreatedAt] DATETIMEOFFSET(7) NOT NULL,
     [UpdatedAt] DATETIMEOFFSET(7) NOT NULL,
     [RowVersion] ROWVERSION NOT NULL,
+    CONSTRAINT [FK_intake_template_tenant] FOREIGN KEY ([TenantId]) REFERENCES [tenancy].[tenants] ([Id]),
     CONSTRAINT [PK_form_templates] PRIMARY KEY ([Id]),
     CONSTRAINT [AK_form_templates_0] UNIQUE ([TenantId], [Id]),
     CONSTRAINT [FK_form_templates_0] FOREIGN KEY ([TenantId], [Id], [CurrentPublishedVersionId]) REFERENCES [intake].[form_versions] ([TenantId], [TemplateId], [Id])

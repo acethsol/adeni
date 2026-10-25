@@ -48,6 +48,8 @@ internal static class ApiErrorResponseMapper
     public static int ResolveStatusCode(string code) =>
         code switch
         {
+            "intake.conflict" or "intake.submission_closed" => StatusCodes.Status409Conflict,
+            "intake.validation" => StatusCodes.Status400BadRequest,
             "validation" => StatusCodes.Status400BadRequest,
             "not_found" => StatusCodes.Status404NotFound,
             "forbidden" => StatusCodes.Status403Forbidden,

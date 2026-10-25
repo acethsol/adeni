@@ -79,6 +79,21 @@ public sealed class IntakeFormSubmission : ITenantEntity
     public DateTimeOffset SubmittedAt { get; set; }
     public string IdempotencyKey { get; set; } = string.Empty;
     public DateTimeOffset? PurgedAt { get; set; }
+    public DateTimeOffset? RetentionUpdatedAt { get; set; }
+    public DateTimeOffset? PrivacyDeletionRequestedAt { get; set; }
+    public byte[] RowVersion { get; set; } = [];
+}
+
+public sealed class IntakeSubmissionHold : ITenantEntity
+{
+    public Guid Id { get; set; }
+    public Guid TenantId { get; set; }
+    public Guid SubmissionId { get; set; }
+    public DateTimeOffset PlacedAt { get; set; }
+    public string PlacedBy { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public DateTimeOffset? ReleasedAt { get; set; }
+    public string? ReleasedBy { get; set; }
 }
 
 public sealed class IntakeFormAnswer : ITenantEntity

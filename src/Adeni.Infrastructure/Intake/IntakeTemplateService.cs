@@ -1,6 +1,8 @@
 namespace Adeni.Infrastructure.Intake;
 
 using Adeni.Application.Intake;
+using Adeni.Application.Abstractions;
+using Adeni.Domain.Auditing;
 using Adeni.Domain.Common;
 using Adeni.Domain.Intake;
 using Adeni.Infrastructure.Persistence;
@@ -8,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.SqlClient;
 
 /// <summary>Published content is read-only. This service does not enable customer response collection.</summary>
-public sealed class IntakeTemplateService(AdeniDbContext db, IIntakeManagementAccessQuery access) : IIntakeTemplateService
+public sealed class IntakeTemplateService(AdeniDbContext db, IIntakeManagementAccessQuery access, IAuditLogWriter? audit = null, ICorrelationContext? correlation = null) : IIntakeTemplateService
 {
     public async Task<Result<IntakeTemplateDetail>> CreateAsync(Guid tenantId, string auth0Sub, string name, CancellationToken cancellationToken = default)
     {
@@ -19,6 +21,7 @@ public sealed class IntakeTemplateService(AdeniDbContext db, IIntakeManagementAc
         db.Add(template);
         db.Add(new IntakeFormVersion { Id = Guid.NewGuid(), TenantId = tenantId, TemplateId = template.Id, VersionNumber = 1, Title = name.Trim(), CreatedAt = now });
         await db.SaveChangesAsync(cancellationToken);
+        await AuditAsync(auth0Sub, "intake.template_created", template.Id, cancellationToken);
         return Result.Success(await DetailAsync(template, cancellationToken));
     }
 
@@ -64,7 +67,7 @@ public sealed class IntakeTemplateService(AdeniDbContext db, IIntakeManagementAc
         }
         draft.Title = definition.Title; draft.Description = definition.Description; draft.Instructions = definition.Instructions;
         template.UpdatedAt = DateTimeOffset.UtcNow;
-        return await SaveAsync(template, cancellationToken);
+        return await SaveAsync(template, auth0Sub, cancellationToken);
     }
 
     public async Task<Result<IntakeTemplateDetail>> PublishAsync(Guid tenantId, string auth0Sub, Guid templateId, string revision, CancellationToken cancellationToken = default)
@@ -78,7 +81,7 @@ public sealed class IntakeTemplateService(AdeniDbContext db, IIntakeManagementAc
         if (IntakeValidation.Definition(await DefinitionAsync(draft, cancellationToken)).IsFailure) return Invalid();
         draft.PublishedAt = DateTimeOffset.UtcNow;
         template.CurrentPublishedVersionId = draft.Id; template.UpdatedAt = draft.PublishedAt.Value;
-        return await SaveAsync(template, cancellationToken);
+        return await SaveAsync(template, auth0Sub, cancellationToken);
     }
 
     public async Task<Result<IntakeTemplateDetail>> CreateDraftAsync(Guid tenantId, string auth0Sub, Guid templateId, string revision, CancellationToken cancellationToken = default)
@@ -100,15 +103,39 @@ public sealed class IntakeTemplateService(AdeniDbContext db, IIntakeManagementAc
             for (var j = 0; j < field.Choices.Count; j++) db.Add(new IntakeFieldChoice { Id = Guid.NewGuid(), TenantId = tenantId, VersionId = draft.Id, FieldId = id, SortOrder = j, Label = field.Choices[j].Label });
         }
         template.UpdatedAt = draft.CreatedAt;
-        return await SaveAsync(template, cancellationToken);
+        return await SaveAsync(template, auth0Sub, cancellationToken);
     }
 
-    private async Task<Result<IntakeTemplateDetail>> SaveAsync(IntakeFormTemplate template, CancellationToken ct)
+    public async Task<Result<IReadOnlyList<IntakeTemplateSummary>>> ListAsync(Guid tenantId, string actor, int page = 1, CancellationToken cancellationToken = default)
+    {
+        if (!await access.CanManageAsync(tenantId, actor, cancellationToken)) return Result.Failure<IReadOnlyList<IntakeTemplateSummary>>(ErrorCodes.PermissionDeniedError());
+        if (page is < 1 or > 100000) return Result.Failure<IReadOnlyList<IntakeTemplateSummary>>(new Error("intake.validation"));
+        var rows = await db.Set<IntakeFormTemplate>().AsNoTracking().Where(x => x.TenantId == tenantId).OrderBy(x => x.Name).ThenBy(x => x.Id).Skip((page - 1) * 50).Take(50).ToArrayAsync(cancellationToken);
+        return Result.Success<IReadOnlyList<IntakeTemplateSummary>>(rows.Select(x => new IntakeTemplateSummary(x.Id, x.Name, x.IsActive, x.CurrentPublishedVersionId, Convert.ToBase64String(x.RowVersion))).ToArray());
+    }
+    public async Task<Result<IntakeTemplateDetail>> UpdateAsync(Guid tenantId, string actor, Guid templateId, string name, bool active, string revision, CancellationToken cancellationToken = default)
+    {
+        if (!await access.CanManageAsync(tenantId, actor, cancellationToken)) return Denied();
+        if (string.IsNullOrWhiteSpace(name) || name.Length > 200) return Invalid();
+        var template = await TemplateAsync(tenantId, templateId, cancellationToken);
+        if (template is null) return Missing();
+        if (revision != Convert.ToBase64String(template.RowVersion)) return Conflict();
+        if (!active && await db.Set<ServiceIntakeForm>().AnyAsync(x => x.TenantId == tenantId && x.TemplateId == templateId, cancellationToken)) return Conflict();
+        template.Name = name.Trim(); template.IsActive = active; template.UpdatedAt = DateTimeOffset.UtcNow;
+        return await SaveAsync(template, actor, cancellationToken);
+    }
+    private async Task AuditAsync(string actor, string action, Guid id, CancellationToken ct)
+    {
+        if (audit is not null && correlation is not null) await audit.WriteAsync(new AuditEntry(Guid.NewGuid(), actor, action, "intake", id.ToString(), correlation.CorrelationId, DateTimeOffset.UtcNow), ct);
+    }
+
+    private async Task<Result<IntakeTemplateDetail>> SaveAsync(IntakeFormTemplate template, string actor, CancellationToken ct)
     {
         try { await db.SaveChangesAsync(ct); }
         catch (DbUpdateConcurrencyException) { db.ChangeTracker.Clear(); return Conflict(); }
         catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 2601 or 2627 })
         { db.ChangeTracker.Clear(); return Conflict(); }
+        await AuditAsync(actor, "intake.template_changed", template.Id, ct);
         return Result.Success(await DetailAsync(template, ct));
     }
     private Task<IntakeFormTemplate?> TemplateAsync(Guid tenant, Guid id, CancellationToken ct) =>

@@ -29,6 +29,7 @@ public sealed class CustomerProfileSqlServerTests
         var roster = Guid.NewGuid();
         var branch = Guid.NewGuid();
         db.Tenants.Add(new Tenant { Id = tenant, Name = "SQL profile test", CreatedAt = now });
+        db.BusinessProfiles.Add(new BusinessProfile { TenantId = tenant, CategorySlug = "barbers", Phone = "", UpdatedAt = now });
         db.Customers.Add(new Customer { Id = customer, Auth0Sub = $"sql-profile-{customer:N}", Name = "Profile SQL", CreatedAt = now });
         db.TenantCustomers.Add(new TenantCustomer { Id = roster, TenantId = tenant, CustomerId = customer, DisplayName = "Profile SQL", CreatedAt = now, UpdatedAt = now, LastSeenAt = now });
         db.BusinessLocations.Add(new BusinessLocation { Id = branch, TenantId = tenant, Name = "Test", Slug = $"profile-{branch:N}",

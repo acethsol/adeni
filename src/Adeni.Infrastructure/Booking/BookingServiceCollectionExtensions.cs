@@ -1,6 +1,7 @@
 namespace Adeni.Infrastructure.Booking;
 
 using Adeni.Application.Booking;
+using Adeni.Application.Intake;
 using Adeni.Application.Finance;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,6 +15,8 @@ public static class BookingServiceCollectionExtensions
         services.AddScoped<ITenantSchedulingTimeZone, TenantSchedulingTimeZone>();
         services.AddScoped<IAvailabilityService, AvailabilityService>();
         services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<IIntakeBookingQuery, IntakeBookingQuery>();
+        services.AddScoped<IIntakeServiceQuery, IntakeServiceQuery>();
         services.AddScoped<ICustomerPaymentAccessQuery, CustomerPaymentAccessQuery>();
         services.AddScoped<ICustomerBookingActivityQuery, CustomerBookingActivityQuery>();
         services.AddScoped<ICustomerCommerceBookingQuery, CustomerCommerceBookingQuery>();

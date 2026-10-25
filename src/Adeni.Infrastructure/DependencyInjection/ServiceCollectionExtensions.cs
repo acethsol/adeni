@@ -14,6 +14,7 @@ using Adeni.Infrastructure.Context;
 using Adeni.Infrastructure.Discovery;
 using Adeni.Infrastructure.Events;
 using Adeni.Infrastructure.Identity;
+using Adeni.Infrastructure.Intake;
 using Adeni.Infrastructure.Notifications;
 using Adeni.Infrastructure.Finance;
 using Adeni.Infrastructure.Persistence;
@@ -67,6 +68,7 @@ public static class ServiceCollectionExtensions
         services.Configure<MarketOptions>(configuration.GetSection(MarketOptions.SectionName));
         services.AddAdeniAuth(configuration);
         services.AddIdentityModule();
+        services.AddIntakeModule();
         services.AddAdminModule();
         services.AddTenancyModule();
         services.AddCatalogModule();

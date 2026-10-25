@@ -1,6 +1,7 @@
 namespace Adeni.Api.Extensions;
 
 using Adeni.Infrastructure.Notifications;
+using Adeni.Infrastructure.Intake;
 using Hangfire;
 using Hangfire.SqlServer;
 using Microsoft.Extensions.Options;
@@ -57,6 +58,8 @@ public static class HangfireExtensions
 
         var reminders = app.Services.GetRequiredService<IOptions<NotificationsOptions>>().Value.Reminders;
         var recurringJobs = app.Services.GetRequiredService<IRecurringJobManager>();
+        recurringJobs.AddOrUpdate<IntakeRetentionHangfireJob>("intake-retention-v1",
+            job => job.ExecuteAsync(CancellationToken.None), "0 * * * *");
 
         if (reminders.Enabled)
         {

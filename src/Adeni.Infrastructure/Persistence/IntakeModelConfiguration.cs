@@ -8,6 +8,7 @@ public sealed partial class AdeniDbContext
         modelBuilder.Entity<IntakeFormTemplate>(e =>
         {
             e.ToTable("form_templates", "intake");
+            e.HasOne<Adeni.Domain.Tenancy.Tenant>().WithMany().HasForeignKey(x => x.TenantId).OnDelete(DeleteBehavior.Restrict);
             e.HasKey(x => new { x.Id });
             e.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
             e.Property(x => x.Name).HasMaxLength(200);
@@ -69,6 +70,7 @@ public sealed partial class AdeniDbContext
         });
         modelBuilder.Entity<IntakeFormSubmission>(e =>
         {
+            e.Property(x => x.RowVersion).IsRowVersion();
             e.ToTable("form_submissions", "intake");
             e.HasKey(x => new { x.Id });
             e.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
@@ -95,6 +97,17 @@ public sealed partial class AdeniDbContext
             e.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
             e.HasOne<IntakeFormAnswer>().WithMany().HasForeignKey(x => new { x.TenantId, x.AnswerId, x.VersionId, x.FieldId }).HasPrincipalKey(x => new { x.TenantId, x.Id, x.VersionId, x.FieldId }).OnDelete(DeleteBehavior.Restrict);
             e.HasOne<IntakeFieldChoice>().WithMany().HasForeignKey(x => new { x.TenantId, x.VersionId, x.FieldId, x.ChoiceId }).HasPrincipalKey(x => new { x.TenantId, x.VersionId, x.FieldId, x.Id }).OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<IntakeSubmissionHold>(e =>
+        {
+            e.ToTable("submission_holds", "intake");
+            e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+            e.Property(x => x.PlacedBy).HasMaxLength(128);
+            e.Property(x => x.ReleasedBy).HasMaxLength(128);
+            e.Property(x => x.Category).HasMaxLength(40);
+            e.HasIndex(x => new { x.TenantId, x.SubmissionId }).IsUnique().HasFilter("[ReleasedAt] IS NULL");
+            e.HasOne<IntakeFormSubmission>().WithMany().HasForeignKey(x => new { x.TenantId, x.SubmissionId }).HasPrincipalKey(x => new { x.TenantId, x.Id }).OnDelete(DeleteBehavior.Restrict);
         });
     }
 }
