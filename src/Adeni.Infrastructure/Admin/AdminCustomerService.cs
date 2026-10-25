@@ -14,7 +14,8 @@ public sealed class AdminCustomerService(
     IAuditLogWriter auditLogWriter,
     ICorrelationContext correlationContext,
     IIntakeRetentionService? intakeRetention = null,
-    Adeni.Application.Tenancy.ICustomerSegmentsQueryService? segments = null) : IAdminCustomerService
+    Adeni.Application.Tenancy.ICustomerSegmentsQueryService? segments = null,
+    Adeni.Application.Finance.ICommercePrivacyService? commercePrivacy = null) : IAdminCustomerService
 {
     public async Task<Result<AdminPagedResult<AdminCustomerSummary>>> SearchAsync(
         string? query,
@@ -145,6 +146,7 @@ public sealed class AdminCustomerService(
         customer.Email = null;
         customer.Phone = null;
         if (intakeRetention is not null) await intakeRetention.StagePrivacyPurgeAsync(customerId, cancellationToken);
+        if (commercePrivacy is not null) await commercePrivacy.StageErasureAsync(customerId, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         await auditLogWriter.WriteAsync(new AuditEntry(

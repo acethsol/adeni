@@ -48,6 +48,10 @@ internal static class ApiErrorResponseMapper
     public static int ResolveStatusCode(string code) =>
         code switch
         {
+            ErrorCodes.CommerceValidation => StatusCodes.Status400BadRequest,
+            ErrorCodes.CommerceConflict => StatusCodes.Status409Conflict,
+            ErrorCodes.CommerceSettlementRequired => StatusCodes.Status403Forbidden,
+            ErrorCodes.CommerceCredentialInvalid => StatusCodes.Status404NotFound,
             "intake.conflict" or "intake.submission_closed" => StatusCodes.Status409Conflict,
             "intake.validation" => StatusCodes.Status400BadRequest,
             "validation" => StatusCodes.Status400BadRequest,

@@ -13,7 +13,7 @@ using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-public sealed class PaymentOrchestrator(
+public sealed partial class PaymentOrchestrator(
     AdeniDbContext dbContext,
     IPaymentProvider paymentProvider,
     IPlatformFeeCalculator platformFeeCalculator,
@@ -21,7 +21,8 @@ public sealed class PaymentOrchestrator(
     ICorrelationContext correlationContext,
     IDomainEventCollector domainEventCollector,
     IOptions<FinanceOptions> paymentsOptions,
-    ITenantRealtimePublisher tenantRealtime) : IPaymentOrchestrator
+    ITenantRealtimePublisher tenantRealtime,
+    ICommercePaymentCompletion? commerce = null) : IPaymentOrchestrator
 {
     public Task<Result<PaymentIntentResponse>> InitializeAsync(
         InitializePaymentRequest request,
@@ -163,6 +164,9 @@ public sealed class PaymentOrchestrator(
             return Result.Success(new PaymentWebhookResult(false, "Payment intent not found."));
         }
 
+        if (commerce is not null && await commerce.OwnsIntentAsync(entity.Id, cancellationToken))
+            return await CompleteCommerceAsync(entity, payload, cancellationToken);
+
         if (payload.IsRefund)
         {
             return await ApplyRefundFromWebhookAsync(entity, cancellationToken);
@@ -198,7 +202,9 @@ public sealed class PaymentOrchestrator(
             return Result.Success(Map(entity));
         }
 
-        var webhookResult = await ApplySuccessAsync(entity, cancellationToken);
+        var webhookResult = commerce is not null && await commerce.OwnsIntentAsync(entity.Id, cancellationToken)
+            ? await CompleteCommerceAsync(entity, new("stub.paid", entity.ProviderReference, true, false, false, null, entity.Amount, entity.Currency), cancellationToken)
+            : await ApplySuccessAsync(entity, cancellationToken);
         if (webhookResult.IsFailure)
         {
             return Result.Failure<PaymentIntentResponse>(webhookResult.Error);
@@ -220,6 +226,9 @@ public sealed class PaymentOrchestrator(
         {
             return Result.Failure<PaymentIntentResponse>(ErrorCodes.PaymentNotFoundError());
         }
+
+        if (commerce is not null && await commerce.OwnsIntentAsync(entity.Id, cancellationToken))
+            return Result.Failure<PaymentIntentResponse>(CommerceErrors.Conflict);
 
         if (entity.Status != PaymentIntentStatus.Completed)
         {

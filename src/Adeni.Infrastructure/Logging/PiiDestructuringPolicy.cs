@@ -20,6 +20,15 @@ public sealed class PiiDestructuringPolicy : IDestructuringPolicy
             result = new ScalarValue("[calendar credentials redacted]");
             return true;
         }
+
+        if (value is Adeni.Domain.Finance.BusinessGiftCard or Adeni.Domain.Finance.CommercePaymentRequest
+            or Adeni.Domain.Finance.CommercePaymentAttempt or Adeni.Application.Finance.GiftCodeView
+            or Adeni.Application.Finance.RedeemCommerceRequest or Adeni.Application.Finance.CommerceRequestView
+            or Adeni.Application.Finance.CommerceCheckoutView)
+        {
+            result = new ScalarValue("[commerce credential redacted]");
+            return true;
+        }
         if (value is not PiiLogValue pii)
         {
             return false;

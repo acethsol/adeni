@@ -123,6 +123,7 @@ public sealed partial class AdeniDbContext(
     {
         ConfigureIntake(modelBuilder);
         ConfigureCalendar(modelBuilder);
+        ConfigureCommerce(modelBuilder);
         modelBuilder.HasDefaultSchema("public");
 
         modelBuilder.Entity<Customer>(entity =>
@@ -623,6 +624,7 @@ public sealed partial class AdeniDbContext(
 
         modelBuilder.Entity<PaymentIntentRecord>(entity =>
         {
+            entity.HasAlternateKey(x => new { x.TenantId, x.Id });
             entity.ToTable("payment_intents", "payments");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Currency).HasMaxLength(3);

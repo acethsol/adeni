@@ -19,7 +19,8 @@ public sealed class ReportExportService(
     IReportPdfBrandingLoader pdfBrandingLoader,
     IAuditLogWriter auditLogWriter,
     ICorrelationContext correlationContext,
-    ILogger<ReportExportService> logger) : IReportExportService
+    ILogger<ReportExportService> logger,
+    IGiftCardReportQuery? giftCards = null) : IReportExportService
 {
     public async Task<Result<ReportExportPayload>> ExportAsync(
         ReportExportRequest request,
@@ -85,6 +86,7 @@ public sealed class ReportExportService(
 
         var exportResult = request.ReportKey.ToLowerInvariant() switch
         {
+            ReportKeys.GiftCards => await ExportGiftCardsAsync(request, cancellationToken),
             ReportKeys.BookingsRegister => await ExportBookingsRegisterAsync(request, cancellationToken),
             ReportKeys.Compensation => await ExportCompensationAsync(request, cancellationToken),
             ReportKeys.SalesSummary => await ExportSalesSummaryAsync(request, cancellationToken),
@@ -101,6 +103,17 @@ public sealed class ReportExportService(
         }
 
         return exportResult;
+    }
+
+    private async Task<Result<ReportExportPayload>> ExportGiftCardsAsync(ReportExportRequest request, CancellationToken ct)
+    {
+        if (request.LocationId is not null) return Result.Failure<ReportExportPayload>(Error.Validation("Gift cards are issued by the whole business; select all locations."));
+        if (giftCards is null) return Result.Failure<ReportExportPayload>(ErrorCodes.ReportNotFoundError(request.ReportKey));
+        var result = await giftCards.GetAsync(request.TenantId, request.ActorAuth0Sub, request.From, request.To, ct);
+        if (result.IsFailure) return Result.Failure<ReportExportPayload>(result.Error);
+        var csv = new StringBuilder("CardId,Currency,IssuedValue,OutstandingValue,RedeemedValue,State,IssuedAt\r\n");
+        foreach (var row in result.Value!) csv.AppendJoin(',', new object?[] { row.CardId, row.Currency, row.IssuedValue, row.OutstandingValue, row.RedeemedValue, row.State, row.IssuedAt }.Select(CsvField.Format)).Append("\r\n");
+        return Result.Success(new ReportExportPayload("text/csv; charset=utf-8", "business-gift-cards.csv", Encoding.UTF8.GetBytes(csv.ToString())));
     }
 
     private async Task WriteExportAuditAsync(ReportExportRequest request, CancellationToken cancellationToken)

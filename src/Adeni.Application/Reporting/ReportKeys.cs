@@ -2,6 +2,7 @@ namespace Adeni.Application.Reporting;
 
 public static class ReportKeys
 {
+    public const string GiftCards = "gift-cards";
     public const string BookingsRegister = "bookings-register";
     public const string Compensation = "compensation";
     public const string SalesSummary = "sales-summary";
@@ -13,6 +14,7 @@ public static class ReportKeys
 
     public static readonly IReadOnlySet<string> All = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
+        GiftCards,
         BookingsRegister,
         Compensation,
         SalesSummary,
