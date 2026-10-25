@@ -12,6 +12,7 @@
       <p class="eyebrow">{{ label("business.booking.youreBooked") }}</p>
       <h2>{{ b.serviceName }}</h2>
     </header>
+    <a [routerLink]="['/my-bookings', b.id, 'intake']">{{ label('intake.title') }}</a>
     <p class="done-when">{{ formatSlot(b.startAt) }}</p>
     <p class="muted">
       @if (b.status === 1) {

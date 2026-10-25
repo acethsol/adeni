@@ -183,11 +183,15 @@
                     }
                   </ng-template>
                   <ng-template adeniDataTableCell="status" let-row>
+                    @if(intakeStatuses.rows()[row.id];as forms){<small>{{tr('intake.status')}}: @for(form of forms;track form.id){ {{tr('intake.states.'+form.state)}} }@empty{ {{tr('intake.notRequired')}} }</small>}
+
                     <adeni-pill [tone]="bookingPillTone(row.status)" [compact]="true">
                       {{ bookingStatusLabel(row.status) }}
                     </adeni-pill>
                   </ng-template>
                   <ng-template adeniDataTableActions let-row>
+                    @if(session.can('portal.bookings')){<a [routerLink]="['/bookings',row.id,'intake']">{{tr('intake.status')}}</a>}
+
                     <adeni-row-action-bar>
                       <adeni-icon-btn
                         icon="launch"

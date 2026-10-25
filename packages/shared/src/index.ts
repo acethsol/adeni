@@ -43,3 +43,4 @@ export * from "./media-limits";
 export * from "./public-page-templates";
 export * from "./realtime-events";
 export * from "./customer-profile";
+export * from "./intake";

@@ -1,3 +1,5 @@
+import { PortalSessionService } from "../../core/services/portal-session.service";
+import { RouterLink } from "@angular/router";
 import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import type {
@@ -67,7 +69,7 @@ type ServiceDraft = {
 @Component({
   selector: "app-services",
   standalone: true,
-  imports: [
+  imports: [RouterLink,
     PortalPageComponent,
     FormsModule,
     AdeniCarbonIconComponent,
@@ -90,6 +92,7 @@ type ServiceDraft = {
   styleUrl: "./services.component.scss",
 })
 export class ServicesComponent implements OnInit {
+  readonly intakeSession = inject(PortalSessionService);
   protected readonly tr = injectAdeniTranslate();
   protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);

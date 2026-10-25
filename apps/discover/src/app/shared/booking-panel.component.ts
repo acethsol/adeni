@@ -1,3 +1,4 @@
+import { RouterLink } from "@angular/router";
 import { CurrencyPipe } from "@angular/common";
 import { Component, computed, inject, input, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
@@ -31,7 +32,7 @@ const MAX_GUESTS = 6;
 @Component({
   selector: "app-booking-panel",
   standalone: true,
-  imports: [FormsModule, CurrencyPipe, AdeniWizardComponent],
+  imports: [RouterLink,FormsModule, CurrencyPipe, AdeniWizardComponent],
   templateUrl: "./booking-panel.component.html",
   styleUrl: "./booking-panel.component.scss",
 })

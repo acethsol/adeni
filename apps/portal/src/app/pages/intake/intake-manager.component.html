@@ -1,0 +1,36 @@
+<app-portal-page [title]="tr('intake.title')" [description]="tr('intake.nonClinical')">
+ <a pageActions routerLink="/services">{{tr('intake.services')}}</a>
+ @if(error()){<p role="alert">{{error()}}</p>}
+ <fieldset [disabled]="busy()">
+  <label>{{tr('intake.name')}}<input [ngModel]="name()" (ngModelChange)="name.set($event)" maxlength="200" /></label>
+  <button type="button" (click)="create()" [disabled]="!name().trim()">{{tr('intake.create')}}</button>
+  <ul>@for(row of rows();track row.id){<li><button type="button" (click)="open(row.id)">{{row.name}} · {{tr(row.isActive?'intake.active':'intake.inactive')}}</button></li>}</ul>
+  <button type="button" (click)="paginate(-1)" [disabled]="page()===1">{{tr('intake.previous')}}</button>
+  <button type="button" (click)="paginate(1)" [disabled]="rows().length<50">{{tr('intake.next')}}</button>
+  @if(selected();as form){
+   <p>{{tr(form.isActive?'intake.active':'intake.inactive')}}</p><button type="button" (click)="action('active')">{{tr('intake.toggleActive')}}</button>
+   @if(draft();as d){
+    <h2>{{tr('intake.draft')}}</h2><p>{{tr('intake.publishNotice')}}</p>
+    <label>{{tr('intake.name')}}<input [ngModel]="d.title" (ngModelChange)="change('title',$event)" maxlength="200" /></label>
+    <label>{{tr('intake.description')}}<textarea [ngModel]="d.description" (ngModelChange)="change('description',$event)" maxlength="2000"></textarea></label>
+    <label>{{tr('intake.instructions')}}<textarea [ngModel]="d.instructions" (ngModelChange)="change('instructions',$event)" maxlength="3000"></textarea></label>
+    @for(field of d.fields;track field.id;let i=$index){
+     <fieldset><legend>{{tr('intake.field')}} {{i+1}}</legend>
+      <label>{{tr('intake.label')}}<input [ngModel]="field.label" (ngModelChange)="this.field(i,'label',$event)" maxlength="500" /></label>
+      <label>{{tr('intake.help')}}<input [ngModel]="field.helpText" (ngModelChange)="this.field(i,'helpText',$event)" maxlength="1000" /></label>
+      <label>{{tr('intake.type')}}<select [ngModel]="field.type" (ngModelChange)="this.field(i,'type',+$event)">@for(type of [0,1,2,3,4,5,6];track type){<option [ngValue]="type">{{tr('intake.types.t'+type)}}</option>}</select></label>
+      <label><input type="checkbox" [ngModel]="field.required" (ngModelChange)="this.field(i,'required',$event)" />{{tr('intake.required')}}</label>
+      @if(field.type===2||field.type===3){@for(option of field.choices;track option.id;let j=$index){<label>{{tr('intake.option')}}<input [ngModel]="option.label" (ngModelChange)="choice(i,j,$event)" maxlength="250" /></label><button type="button" (click)="removeChoice(i,j)">{{tr('intake.remove')}}</button>}<button type="button" (click)="addChoice(i)">{{tr('intake.addOption')}}</button>}
+      <button type="button" (click)="move(i,-1)" [disabled]="i===0">{{tr('intake.up')}}</button><button type="button" (click)="move(i,1)" [disabled]="i===d.fields.length-1">{{tr('intake.down')}}</button><button type="button" (click)="remove(i)">{{tr('intake.remove')}}</button>
+     </fieldset>
+    }
+    <button type="button" (click)="add()" [disabled]="d.fields.length>=30">{{tr('intake.addField')}}</button>
+    <button type="button" (click)="action('save')">{{tr('intake.save')}}</button><button type="button" (click)="action('publish')">{{tr('intake.publish')}}</button>
+   }@else{<button type="button" (click)="action('clone')">{{tr('intake.newVersion')}}</button>}
+   @if(form.published;as published){<h2>{{tr('intake.published')}}</h2><h3>{{published.title}}</h3><p>{{published.instructions}}</p><adeni-intake-fields [definition]="published" [readOnly]="true" />}
+  }
+  <h2>{{tr('intake.serviceAssignment')}}</h2>
+  <label>{{tr('intake.services')}}<select [ngModel]="serviceId()" (ngModelChange)="selectService($event)"><option value="">{{tr('intake.choose')}}</option>@for(service of services();track service.id){<option [value]="service.id">{{service.name}}</option>}</select></label>
+  @if(binding();as b){<label>{{tr('intake.form')}}<select [ngModel]="b.templateId??''" (ngModelChange)="bind($event)"><option value="">{{tr('intake.notRequired')}}</option>@for(row of rows();track row.id){@if(row.isActive&&row.publishedVersionId){<option [value]="row.id">{{row.name}}</option>}}</select></label>}
+ </fieldset>
+</app-portal-page>

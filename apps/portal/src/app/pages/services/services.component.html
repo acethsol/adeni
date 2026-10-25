@@ -2,6 +2,7 @@
   [title]="tr('common.services')"
   [description]="tr('portal.services.whatCustomersBookOrganizeInto')"
 >
+  @if(intakeSession.loaded() && (intakeSession.permissionRole()==='owner' || intakeSession.permissionRole()==='manager')){<a pageActions routerLink="/services/intake" class="btn">{{tr('intake.title')}}</a>}
   <button pageActions type="button" class="btn" (click)="showCollectionsManager.set(true)">
     {{ tr('portal.services.menuSections') }}
   </button>

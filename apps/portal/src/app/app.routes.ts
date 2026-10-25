@@ -27,6 +27,8 @@ export const routes: Routes = [
         canActivate: [homeRedirectGuard],
         loadComponent: () => import("./pages/dashboard/dashboard.component").then((m) => m.DashboardComponent),
       },
+      { path: "bookings/:id/intake", loadComponent: () => import("./pages/intake/intake-review.component").then(m => m.IntakeReviewComponent), canActivate: [portalPermissionGuard], title: "Consultation forms" },
+      { path: "services/intake", loadComponent: () => import("./pages/intake/intake-manager.component").then(m => m.IntakeManagerComponent), canActivate: [portalPermissionGuard], title: "Consultation forms" },
       { path: "overview", redirectTo: "dashboard", pathMatch: "full" },
       {
         path: "dashboard",

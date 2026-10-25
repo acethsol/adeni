@@ -1,6 +1,7 @@
 import type { MessageTree } from "./types";
 
 export const enErrorMessages: MessageTree = {
+  intake: {"validation": "Check the intake form fields.", "conflict": "The form changed or was already submitted. Refresh before continuing.", "submission_closed": "This booking is no longer open for intake submission."},
   subscription: {
     booking_limit_reached:
       "This business reached its {limit} booking limit for this month. Upgrade to Pro for unlimited bookings.",
@@ -96,6 +97,7 @@ export const enErrorMessages: MessageTree = {
 };
 
 export const frErrorMessages: MessageTree = {
+  intake: {"validation": "Vérifiez les champs du formulaire.", "conflict": "Le formulaire a changé ou a déjà été envoyé. Actualisez avant de continuer.", "submission_closed": "Cette réservation ne permet plus d’envoyer ce formulaire."},
   subscription: {
     booking_limit_reached:
       "Cette entreprise a atteint sa limite de {limit} réservations ce mois-ci. Passez à Pro pour des réservations illimitées.",

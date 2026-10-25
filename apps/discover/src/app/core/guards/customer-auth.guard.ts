@@ -8,7 +8,7 @@ import {
 import { CustomerApiService } from "../services/customer-api.service";
 
 /** Requires Auth0 customer session, or local dev customer sub. */
-export const customerAuthGuard: CanActivateFn = async () => {
+export const customerAuthGuard: CanActivateFn = async (_route, state) => {
   const config = inject(ADENI_DISCOVER_CONFIG);
   const router = inject(Router);
   const api = inject(CustomerApiService);
@@ -25,6 +25,8 @@ export const customerAuthGuard: CanActivateFn = async () => {
     return true;
   }
 
-  await api.login("/my-bookings");
+  const path = state.url.split(/[?#]/)[0];
+  const returnPath = /^\/my-bookings\/[a-fA-F0-9-]+\/intake(?:\/[a-fA-F0-9-]+)?$/.test(path) ? path : "/my-bookings";
+  await api.login(returnPath);
   return false;
 };

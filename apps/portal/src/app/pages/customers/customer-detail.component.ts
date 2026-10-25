@@ -1,4 +1,5 @@
-import { Component, computed, DestroyRef, inject, OnDestroy, OnInit, signal } from "@angular/core";
+import { IntakeBookingStatusService } from "../intake/intake-booking-status.service";
+import { Component, computed, effect, DestroyRef, inject, OnDestroy, OnInit, signal } from "@angular/core";
 import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import { distinctUntilChanged, map } from "rxjs";
@@ -52,6 +53,7 @@ const PAID_STATUS = 6;
 @Component({
   selector: "app-customer-detail",
   standalone: true,
+  providers: [IntakeBookingStatusService],
   imports: [
     PortalPageComponent,
     AdeniTabsComponent,
@@ -80,6 +82,7 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
   private readonly activeLocation = inject(PortalActiveLocationService);
   private readonly destroyRef = inject(DestroyRef);
   readonly session = inject(PortalSessionService);
+  readonly intakeStatuses = inject(IntakeBookingStatusService);
   readonly profileLocationId = signal<string | undefined>(undefined);
   private loadVersion = 0;
   private branchSub: Subscription | null = null;
@@ -190,6 +193,10 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
 
   readonly trackBookingRow = (row: TenantCustomerRecentBooking): string => row.id;
   readonly trackQueueRow = (row: TenantCustomerRecentQueueVisit): string => row.id;
+
+  constructor() {
+    effect(() => { void this.intakeStatuses.load(this.session.can("portal.bookings") ? this.customer()?.recentBookings.map(x => x.id) ?? [] : []); });
+  }
 
   ngOnInit(): void {
     this.route.paramMap.pipe(map(params => params.get("id")), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
