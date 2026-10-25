@@ -2,6 +2,52 @@ import type { MessageTree } from "../types";
 
 /** French mirror of `overlay-en.ts` — keep key structure identical. */
 export const frOverlay: MessageTree = {
+  customerProfile: {
+    "title": "Vue du client",
+    "activity": "Activité",
+    "loading": "Chargement de l’activité du client…",
+    "loadError": "Impossible de charger l’activité du client.",
+    "refresh": "Actualiser",
+    "completedVisits": "Visites terminées",
+    "nextAppointment": "Prochain rendez-vous",
+    "noneScheduled": "Aucun rendez-vous prévu",
+    "awaitingApproval": "En attente d’approbation",
+    "recordedPayments": "Paiements en ligne enregistrés",
+    "paymentCoverage": "Montants des paiements en ligne liés et terminés, par devise. Exclut les pourboires, les règlements externes, les paiements non liés et les remboursements terminés ou en cours. Ce ne sont pas les dépenses nettes à vie.",
+    "noRecordedPayments": "Aucun paiement en ligne lié admissible enregistré.",
+    "historyCoverage": "Les 90 derniers jours, dans les limites de l’historique récent des réservations et de la file de votre forfait. L’état actuel est affiché séparément de l’activité enregistrée.",
+    "messagingCoverage": "Seules les métadonnées des messages visibles sont affichées. Les heures des paiements indiquent la mise à jour du dossier, et non un règlement confirmé par le fournisseur.",
+    "messagingUnscoped": "L’activité des conversations est indisponible par succursale, car les conversations n’ont pas d’affectation fiable à une succursale.",
+    "notLinked": "Certaines activités sont indisponibles car ce profil sans rendez-vous n’est pas lié à un client Discover.",
+    "truncated": "Certaines activités anciennes dépassent les limites de cet historique.",
+    "currentStatus": "État actuel",
+    "openBooking": "Ouvrir la réservation",
+    "empty": "Aucune activité dans cette vue.",
+    "loadMore": "Afficher plus",
+    "kinds": {
+        "bookingCreated": "Réservation créée",
+        "appointmentScheduled": "Rendez-vous prévu",
+        "queueJoined": "Entrée dans la file",
+        "queueCompleted": "Visite dans la file terminée",
+        "queueNoShow": "Absence dans la file enregistrée",
+        "onlinePaymentRecorded": "Paiement en ligne enregistré",
+        "messageSent": "Activité de messagerie"
+    },
+    "statuses": {
+        "Pending": "En attente d’approbation",
+        "Confirmed": "Confirmé",
+        "Rejected": "Refusé",
+        "Cancelled": "Annulé",
+        "CheckedIn": "Arrivé",
+        "Completed": "Terminé",
+        "Paid": "Payé",
+        "Waiting": "En attente",
+        "Called": "Appelé",
+        "InService": "En cours",
+        "Done": "Terminé",
+        "NoShow": "Absent"
+    }
+},
   toast: {
     saved: "Enregistré",
     somethingWrong: "Une erreur s'est produite",

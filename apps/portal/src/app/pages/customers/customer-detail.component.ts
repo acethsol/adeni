@@ -1,7 +1,7 @@
-import { Component, computed, inject, OnDestroy, OnInit, signal } from "@angular/core";
-import { toSignal } from "@angular/core/rxjs-interop";
+import { Component, computed, DestroyRef, inject, OnDestroy, OnInit, signal } from "@angular/core";
+import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, RouterLink } from "@angular/router";
-import { map } from "rxjs";
+import { distinctUntilChanged, map } from "rxjs";
 import type {
   TenantCustomerDetail,
   TenantCustomerRecentBooking,
@@ -34,8 +34,10 @@ import { AdeniApiError } from "@adeni/api-client";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
 import { Subscription } from "rxjs";
+import { CustomerProfilePanelComponent } from "./customer-profile-panel.component";
+import { PortalSessionService } from "../../core/services/portal-session.service";
 
-const CUSTOMER_DETAIL_TABS = new Set(["overview", "bookings", "queue"]);
+const CUSTOMER_DETAIL_TABS = new Set(["overview", "bookings", "queue", "activity"]);
 
 function normalizeCustomerDetailTab(raw: string | null): string {
   return raw && CUSTOMER_DETAIL_TABS.has(raw) ? raw : "overview";
@@ -64,6 +66,7 @@ const PAID_STATUS = 6;
     AdeniRowActionBarComponent,
     AdeniIconBtnComponent,
     RouterLink,
+    CustomerProfilePanelComponent,
   ],
   templateUrl: "./customer-detail.component.html",
   styleUrl: "./customer-detail.component.scss",
@@ -75,6 +78,10 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly activeLocation = inject(PortalActiveLocationService);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly session = inject(PortalSessionService);
+  readonly profileLocationId = signal<string | undefined>(undefined);
+  private loadVersion = 0;
   private branchSub: Subscription | null = null;
 
   readonly tab = toSignal(
@@ -98,6 +105,7 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
         id: "queue",
         label: queueCount > 0 ? this.tr("portal.customers.queue", { queueCount: queueCount }) : this.tr("common.queue"),
       },
+      ...(this.session.can("portal.bookings") ? [{ id: "activity", label: this.tr("customerProfile.activity") }] : []),
     ];
   });
 
@@ -184,17 +192,20 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
   readonly trackQueueRow = (row: TenantCustomerRecentQueueVisit): string => row.id;
 
   ngOnInit(): void {
-    void this.load();
+    this.route.paramMap.pipe(map(params => params.get("id")), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => { void this.load(); });
     this.branchSub = this.activeLocation.selectionChanged$.subscribe(() => {
       void this.activeLocation.runOnBranchSwitch(() => this.load());
     });
   }
 
   ngOnDestroy(): void {
+    this.loadVersion++;
     this.branchSub?.unsubscribe();
   }
 
   async load(): Promise<void> {
+    const version = ++this.loadVersion;
     const id = this.route.snapshot.paramMap.get("id");
     if (!id) {
       this.error.set(this.tr("portal.customers.customerNotFound2"));
@@ -202,6 +213,7 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
     }
 
     this.error.set(null);
+    this.customer.set(null);
     try {
       await this.feedback.runLoading(async () => {
         const detail = await this.api.withAuthorizedClient(async (client) => {
@@ -213,11 +225,14 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
             profile?.entitlements,
           );
           const locationId = this.activeLocation.tenantApiLocationId(merged);
-          return client.getTenantCustomer(id, locationId);
+          return { detail: await client.getTenantCustomer(id, locationId), locationId };
         });
-        this.customer.set(detail);
+        if (version !== this.loadVersion) return;
+        this.profileLocationId.set(detail.locationId);
+        this.customer.set(detail.detail);
       });
     } catch (err) {
+      if (version !== this.loadVersion) return;
       if (err instanceof AdeniApiError && err.statusCode === 404) {
         this.error.set(null);
       } else {

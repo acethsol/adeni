@@ -28,6 +28,9 @@
 
     <adeni-tabs [tabs]="tabs()" />
 
+    <app-customer-profile-panel [customerId]="c.id" [locationId]="profileLocationId()"
+      [overviewVisible]="tab() === 'overview'" [activityVisible]="tab() === 'activity'" />
+
     @if (tab() === "overview") {
       <div class="tab-panel">
         <p class="overview-actions">

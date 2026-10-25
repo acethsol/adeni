@@ -2,6 +2,52 @@ import type { MessageTree } from "../types";
 
 /** Hand-written keys not in the generated catalog: UI chrome, toasts, validation, confirm dialogs, plurals, status maps, module constants. */
 export const enOverlay: MessageTree = {
+  customerProfile: {
+    "title": "Customer overview",
+    "activity": "Activity",
+    "loading": "Loading customer activity…",
+    "loadError": "Could not load customer activity.",
+    "refresh": "Refresh",
+    "completedVisits": "Completed visits",
+    "nextAppointment": "Next appointment",
+    "noneScheduled": "None scheduled",
+    "awaitingApproval": "Awaiting approval",
+    "recordedPayments": "Recorded online payments",
+    "paymentCoverage": "Completed linked online payment amounts, grouped by currency. Excludes tips, external tills, unlinked payments and refunded/refund-pending records. This is not lifetime net spend.",
+    "noRecordedPayments": "No qualifying linked online payments recorded.",
+    "historyCoverage": "Last 90 days, within your plan’s recent booking and queue history limits. Current status is shown separately from recorded activity.",
+    "messagingCoverage": "Messages show visible activity metadata only. Payment times reflect record updates, not guaranteed provider settlement.",
+    "messagingUnscoped": "Conversation activity is unavailable in branch view because conversations have no reliable branch assignment.",
+    "notLinked": "Some activity is unavailable because this walk-in profile is not linked to a Discover customer.",
+    "truncated": "Some older activity is outside the history limits for this view.",
+    "currentStatus": "Current status",
+    "openBooking": "Open booking",
+    "empty": "No activity in this view.",
+    "loadMore": "Load more",
+    "kinds": {
+        "bookingCreated": "Booking created",
+        "appointmentScheduled": "Appointment scheduled",
+        "queueJoined": "Joined queue",
+        "queueCompleted": "Queue visit completed",
+        "queueNoShow": "Queue no-show recorded",
+        "onlinePaymentRecorded": "Online payment recorded",
+        "messageSent": "Message activity"
+    },
+    "statuses": {
+        "Pending": "Awaiting approval",
+        "Confirmed": "Confirmed",
+        "Rejected": "Declined",
+        "Cancelled": "Cancelled",
+        "CheckedIn": "Checked in",
+        "Completed": "Completed",
+        "Paid": "Paid",
+        "Waiting": "Waiting",
+        "Called": "Called",
+        "InService": "In service",
+        "Done": "Done",
+        "NoShow": "No-show"
+    }
+},
   toast: {
     saved: "Saved",
     somethingWrong: "Something went wrong",

@@ -328,6 +328,14 @@ export class AdeniApiClient extends ApiTransport {
     return this.customers.getTenantCustomer(...args);
   }
 
+  getTenantCustomerProfile(...args: Parameters<CustomersApi["getTenantCustomerProfile"]>): ReturnType<CustomersApi["getTenantCustomerProfile"]> {
+    return this.customers.getTenantCustomerProfile(...args);
+  }
+
+  getTenantCustomerActivity(...args: Parameters<CustomersApi["getTenantCustomerActivity"]>): ReturnType<CustomersApi["getTenantCustomerActivity"]> {
+    return this.customers.getTenantCustomerActivity(...args);
+  }
+
   getTenantKioskStatus(...args: Parameters<QueueApi["getTenantKioskStatus"]>): ReturnType<QueueApi["getTenantKioskStatus"]> {
     return this.queue.getTenantKioskStatus(...args);
   }

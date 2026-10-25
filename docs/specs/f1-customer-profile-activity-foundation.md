@@ -1,6 +1,8 @@
 # F1 — Customer profile and activity timeline foundation
 
-Status: **Proposed; awaiting review. No implementation authorized yet.**
+Status: **Plan approved; F1 foundation implemented, awaiting implementation review.**
+
+Review outcome: the user approved this plan. See [F1 closeout](./f1-customer-profile-activity-closeout.md) for delivered scope, validation and the deliberately deferred practitioner aggregate slice. The proposal below records the reviewed design; later phases have not started.
 
 Base: `chore/audit-hardening-recommendations` at `664269b44ca00094b0613a5d50596481c5f214e4`.
 Stacked branch: `feature/squarespace-inspired-v1`. Product authority: [product direction](../product-direction.md); boundaries: [architecture](../architecture.md).
