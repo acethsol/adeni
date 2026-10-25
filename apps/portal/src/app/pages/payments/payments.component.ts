@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { Subscription } from "rxjs";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute, RouterLink } from "@angular/router";
 import { map } from "rxjs";
 import type {
   BillingDocumentResponse,
@@ -46,6 +46,7 @@ import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
   standalone: true,
   imports: [
     PortalPageComponent,
+    RouterLink,
     FormsModule,
     AdeniTabsComponent,
     AdeniPortalEmptyStateComponent,

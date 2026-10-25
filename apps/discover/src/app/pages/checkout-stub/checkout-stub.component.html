@@ -3,6 +3,7 @@
     @if (paid()) {
       <h1>{{ tr('discover.checkoutStub.paymentComplete') }}</h1>
       <p class="muted">{{ tr('discover.checkoutStub.thankYouBusinessWillSee') }}</p>
+      <a routerLink="/my-gift-cards" class="btn">{{tr("commerce.giftTitle")}}</a>
       <a routerLink="/my-bookings" class="btn btn-primary">{{ tr('common.myBookings') }}</a>
       <a routerLink="/" class="btn">{{ tr('discover.checkoutStub.backAdeni') }}</a>
     } @else if (error() && !reference()) {

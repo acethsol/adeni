@@ -71,4 +71,18 @@ describe("CustomerProfileDataService", () => {
     await service.loadMore();
     expect(client.getTenantCustomerActivity.calls.count()).toBe(1);
   });
+
+  it("does not request purchased gift value from a restricted or location-scoped source", async () => {
+    const cards=jasmine.createSpy().and.resolveTo([]);Object.defineProperty(client,"commerce",{value:{customerCards:cards}});
+    await service.load("roster");await service.loadPurchasedGiftCards();expect(cards).not.toHaveBeenCalled();
+    service.profile.set({...profile,availability:{...profile.availability,finance:"available"}});
+    await service.load("roster","branch");service.profile.set({...profile,availability:{...profile.availability,finance:"available"}});
+    await service.loadPurchasedGiftCards();expect(cards).not.toHaveBeenCalled();
+  });
+  it("clears purchased-card metadata and aborts its request when customer scope changes", async () => {
+    let finish!:(rows:unknown[])=>void;const cards=jasmine.createSpy().and.returnValue(new Promise(resolve=>{finish=resolve;}));Object.defineProperty(client,"commerce",{value:{customerCards:cards}});
+    await service.load("roster");service.profile.set({...profile,availability:{...profile.availability,finance:"available"}});
+    const pending=service.loadPurchasedGiftCards();const abort=cards.calls.mostRecent().args[1] as AbortSignal;
+    await service.load("another-customer");finish([]);await pending;expect(abort.aborted).toBeTrue();expect(service.purchasedGiftCards()).toBeNull();
+  });
 });

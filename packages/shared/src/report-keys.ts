@@ -1,4 +1,5 @@
 export const REPORT_KEYS = {
+  giftCards: "gift-cards",
   bookingsRegister: "bookings-register",
   compensation: "compensation",
   salesSummary: "sales-summary",

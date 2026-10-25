@@ -85,6 +85,39 @@
             }
           </div>
         }
+
+        @if (profile.availability.finance === 'available' && !profile.locationId) {
+          <div class="insights-gifts">
+            <div class="insights-payments__head">
+              <h4 class="insights-subtitle">{{ tr('commerce.giftTitle') }}</h4>
+              <p class="muted coverage-note">{{ tr('commerce.noWallet') }}</p>
+            </div>
+            <button
+              type="button"
+              class="btn btn-ghost"
+              (click)="data.loadPurchasedGiftCards()"
+              [disabled]="data.loadingGifts()"
+            >
+              {{ tr('commerce.giftTitle') }}
+            </button>
+            @if (data.purchasedGiftCards(); as cards) {
+              @if (cards.length) {
+                <ul class="payment-tiles">
+                  @for (card of cards; track card.id) {
+                    <li class="payment-tile">
+                      <span class="payment-tile__currency">••••{{ card.codeSuffix }}</span>
+                      <span class="payment-tile__amount">
+                        {{ formatPrice(card.remainingAmount, card.currency) }} · {{ tr('commerce.states.' + card.state) }}
+                      </span>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="payment-empty muted">{{ tr('commerce.empty') }}</p>
+              }
+            }
+          </div>
+        }
       </section>
     }
 

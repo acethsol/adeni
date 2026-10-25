@@ -1,4 +1,5 @@
 import { calendarPermissionGuard } from "./pages/calendar-sync/calendar-permission.guard";
+import { commercePermissionGuard } from "./pages/commerce/commerce-permission.guard";
 import { Routes } from "@angular/router";
 import { PortalShellComponent } from "./layout/portal-shell.component";
 import { portalAccessGuard } from "./core/guards/portal-access.guard";
@@ -31,6 +32,7 @@ export const routes: Routes = [
       { path: "settings/calendars", loadComponent: () => import("./pages/calendar-sync/calendar-sync.component").then(m => m.CalendarSyncComponent), canActivate: [calendarPermissionGuard], title: "Calendar sync" },
       { path: "public-page/booking-links", loadComponent: () => import("./pages/calendar-sync/booking-links.component").then(m => m.BookingLinksComponent), canActivate: [portalPermissionGuard], data: { permission: "portal.public_page" }, title: "Book with Adeni" },
       { path: "bookings/:id/intake", loadComponent: () => import("./pages/intake/intake-review.component").then(m => m.IntakeReviewComponent), canActivate: [portalPermissionGuard], title: "Consultation forms" },
+      { path: "finance/quick-pay", loadComponent: () => import("./pages/commerce/commerce.component").then(m => m.CommerceComponent), canActivate: [commercePermissionGuard], title: "Quick Pay" },
       { path: "services/intake", loadComponent: () => import("./pages/intake/intake-manager.component").then(m => m.IntakeManagerComponent), canActivate: [portalPermissionGuard], title: "Consultation forms" },
       { path: "overview", redirectTo: "dashboard", pathMatch: "full" },
       {

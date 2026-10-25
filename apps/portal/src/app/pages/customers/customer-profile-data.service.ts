@@ -1,5 +1,5 @@
 import { Injectable, inject, signal, type OnDestroy } from "@angular/core";
-import type { CustomerActivity, CustomerProfile } from "@adeni/shared";
+import type { BusinessGiftCard, CustomerActivity, CustomerProfile } from "@adeni/shared";
 import { BusinessApiService } from "../../core/services/business-api.service";
 
 /** Page-scoped read state. A new customer/branch aborts old requests and discards late responses. */
@@ -10,6 +10,8 @@ export class CustomerProfileDataService implements OnDestroy {
   private scope: { id: string; locationId?: string } | null = null;
   readonly profile = signal<CustomerProfile | null>(null);
   readonly activity = signal<CustomerActivity | null>(null);
+  readonly purchasedGiftCards = signal<BusinessGiftCard[] | null>(null);
+  readonly loadingGifts = signal(false);
   readonly loading = signal(false);
   readonly loadingMore = signal(false);
   readonly error = signal<unknown>(null);
@@ -21,6 +23,8 @@ export class CustomerProfileDataService implements OnDestroy {
     this.scope = { id, locationId };
     this.profile.set(null);
     this.activity.set(null);
+    this.purchasedGiftCards.set(null);
+    this.loadingGifts.set(false);
     this.error.set(null);
     this.loading.set(true);
     this.loadingMore.set(false);
@@ -41,6 +45,15 @@ export class CustomerProfileDataService implements OnDestroy {
     } finally {
       if (this.request === request) this.loading.set(false);
     }
+  }
+
+  async loadPurchasedGiftCards(): Promise<void> {
+    const request=this.request;const scope=this.scope;
+    if(!request||request.signal.aborted||!scope||scope.locationId||this.profile()?.availability.finance!=="available"||this.loadingGifts())return;
+    this.loadingGifts.set(true);
+    try{const rows=await this.api.withAuthorizedClient(c=>c.commerce.customerCards(scope.id,request.signal));if(!request.signal.aborted)this.purchasedGiftCards.set(rows);}
+    catch(e){if(!request.signal.aborted)this.error.set(e);}
+    finally{if(this.request===request)this.loadingGifts.set(false);}
   }
 
   async loadMore(): Promise<void> {

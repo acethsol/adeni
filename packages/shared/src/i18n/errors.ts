@@ -2,6 +2,7 @@ import type { MessageTree } from "./types";
 
 export const enErrorMessages: MessageTree = {
   calendar: { unavailable: "Calendar integration is unavailable. Check configuration or reconnect, then retry.", authorization_invalid: "The calendar connection attempt expired or could not be verified. Start again from Adeni." },
+  commerce: { validation: "Check the amount, currency and payment request.", conflict: "The request changed or is already being processed. Refresh before retrying.", settlement_required: "Live business settlement is not available. This feature is currently sandbox-only.", credential_invalid: "This payment request or gift credential is unavailable." },
   intake: {"validation": "Check the intake form fields.", "conflict": "The form changed or was already submitted. Refresh before continuing.", "submission_closed": "This booking is no longer open for intake submission."},
   subscription: {
     booking_limit_reached:
@@ -99,6 +100,7 @@ export const enErrorMessages: MessageTree = {
 
 export const frErrorMessages: MessageTree = {
   calendar: { unavailable: "L’intégration de calendrier est indisponible. Vérifiez la configuration ou reconnectez le compte.", authorization_invalid: "La connexion a expiré ou n’a pas pu être vérifiée. Recommencez depuis Adeni." },
+  commerce: { validation: "Vérifiez le montant, la devise et la demande.", conflict: "La demande a changé ou est déjà en cours. Actualisez avant de réessayer.", settlement_required: "Le règlement commerçant réel n’est pas disponible. Cette fonction est réservée aux tests.", credential_invalid: "Cette demande ou ce code cadeau n’est pas disponible." },
   intake: {"validation": "Vérifiez les champs du formulaire.", "conflict": "Le formulaire a changé ou a déjà été envoyé. Actualisez avant de continuer.", "submission_closed": "Cette réservation ne permet plus d’envoyer ce formulaire."},
   subscription: {
     booking_limit_reached:

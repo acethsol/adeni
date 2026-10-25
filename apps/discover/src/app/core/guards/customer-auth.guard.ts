@@ -26,7 +26,7 @@ export const customerAuthGuard: CanActivateFn = async (_route, state) => {
   }
 
   const path = state.url.split(/[?#]/)[0];
-  const returnPath = /^\/my-bookings\/[a-fA-F0-9-]+\/intake(?:\/[a-fA-F0-9-]+)?$/.test(path) ? path : "/my-bookings";
+  const returnPath = /^\/my-bookings\/[a-fA-F0-9-]+\/intake(?:\/[a-fA-F0-9-]+)?$/.test(path) ? path : path === "/my-gift-cards" ? path : "/my-bookings";
   await api.login(returnPath);
   return false;
 };

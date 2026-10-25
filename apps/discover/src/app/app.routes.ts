@@ -15,6 +15,8 @@ import { customerAuthGuard } from "./core/guards/customer-auth.guard";
 import { seoMarketCanMatch } from "./core/seo-market.guard";
 
 export const routes: Routes = [
+  { path: "pay", loadComponent: () => import("./pages/pay/pay.component").then(m => m.PayComponent), title: "Payment" },
+  { path: "my-gift-cards", canActivate: [customerAuthGuard], loadComponent: () => import("./pages/pay/purchased-gifts.component").then(m => m.PurchasedGiftsComponent), title: "Purchased gift cards" },
   {
     path: "checkout/stub/:reference",
     component: CheckoutStubComponent,
