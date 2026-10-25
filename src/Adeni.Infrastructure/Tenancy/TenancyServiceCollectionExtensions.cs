@@ -2,6 +2,7 @@ namespace Adeni.Infrastructure.Tenancy;
 
 using Adeni.Application.Tenancy;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 public static class TenancyServiceCollectionExtensions
 {
@@ -11,6 +12,11 @@ public static class TenancyServiceCollectionExtensions
         services.AddScoped<IBusinessLocationService, BusinessLocationService>();
         services.AddScoped<ITenantCustomerService, TenantCustomerService>();
         services.AddScoped<ITenantLocationScopeService, TenantLocationScopeService>();
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddDataProtection();
+        services.AddScoped<ICustomerProfileContextQuery, CustomerProfileContextQuery>();
+        services.AddScoped<ICustomerActivityCursorCodec, CustomerActivityCursorCodec>();
+        services.AddScoped<ICustomerProfileQueryService, CustomerProfileQueryService>();
         return services;
     }
 }

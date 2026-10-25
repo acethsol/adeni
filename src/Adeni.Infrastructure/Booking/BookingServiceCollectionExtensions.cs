@@ -15,6 +15,8 @@ public static class BookingServiceCollectionExtensions
         services.AddScoped<IAvailabilityService, AvailabilityService>();
         services.AddScoped<IBookingService, BookingService>();
         services.AddScoped<ICustomerPaymentAccessQuery, CustomerPaymentAccessQuery>();
+        services.AddScoped<ICustomerBookingActivityQuery, CustomerBookingActivityQuery>();
+        services.AddScoped<ICustomerCommerceBookingQuery, CustomerCommerceBookingQuery>();
         services.AddScoped<IWaitlistService, WaitlistService>();
         services.AddScoped<IQueueService, QueueService>();
         services.AddScoped<IKioskService, KioskService>();
