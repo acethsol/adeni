@@ -86,7 +86,7 @@ This is why the **business portal** is strategically as important as the consume
 
 | Idea | Status in codebase | Priority |
 |------|-------------------|----------|
-| Tiered verification (phone, CAC, address, …) | Basic admin approve/reject only | High — Sprint 19 |
+| Tiered verification (phone, CAC, address, …) | Sprint 19 badges + quotes shipped; **first-time onboarding UX gaps** — [sprint-verification-ux-gap-closeout.md](./specs/sprint-verification-ux-gap-closeout.md) | Closeout backlog |
 | Reviews tied to completed bookings | ✅ Done (Sprint 13) | — |
 | AI concierge (“need a barber in Lekki tomorrow”) | Rule-based Ask Adeni only | Sprint 20 (LLM agent) |
 | Mini website per business | ✅ Public profile + slug | Enhance share/SEO |
