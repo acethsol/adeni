@@ -11,6 +11,7 @@ import type {
   GalleryImage,
   PublicReviewItem,
   VerificationBadge,
+  RequestVerificationBadgeRequest,
 } from "@adeni/shared";
 import {
   formatTenantStatus,
@@ -334,7 +335,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   canSubmitVerification(): boolean {
     const p = this.profile();
-    return p ? (p.status === 0 || p.status === 3) && p.status !== 4 : false;
+    return p ? p.status === 0 || p.status === 3 : false;
   }
 
   isSuspended(): boolean {
@@ -358,7 +359,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.trustBadgeBusy.set(badgeType);
     try {
       await this.api.withAuthorizedClient((c) =>
-        c.requestVerificationBadge({ badgeType, referenceNumber: null }),
+        c.requestVerificationBadge({
+          badgeType: badgeType as RequestVerificationBadgeRequest["badgeType"],
+        }),
       );
       this.feedback.success(this.tr("portal.profile.verificationRequestBadge"));
       const p = this.profile();
