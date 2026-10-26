@@ -1617,6 +1617,8 @@ export type RequestVerificationBadgeRequest = z.infer<typeof requestVerification
 export type VerificationBadge = z.infer<typeof verificationBadgeSchema>;
 
 export const verificationBadgeTypeSchema = z.enum(["phone", "cac", "address", "license"]);
+export type VerificationBadgeType = z.infer<typeof verificationBadgeTypeSchema>;
+export const VERIFICATION_BADGE_TYPES = verificationBadgeTypeSchema.options;
 
 export const pendingBadgeRequestSchema = z.object({
   id: z.string().uuid(),

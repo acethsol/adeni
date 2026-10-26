@@ -4,7 +4,7 @@ import { AdeniCarbonIconComponent } from "./adeni-carbon-icon.component";
 import type { AdeniCarbonIconName } from "./carbon-icon";
 
 /** Staff portal + admin: Carbon icon + label, `.btn` variants from `_staff-layout.scss`. */
-export type AdeniStaffButtonVariant = "default" | "primary" | "danger";
+export type AdeniStaffButtonVariant = "default" | "secondary" | "primary" | "danger";
 export type AdeniStaffButtonIconPosition = "start" | "end";
 
 @Component({

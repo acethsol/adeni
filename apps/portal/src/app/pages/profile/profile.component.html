@@ -231,19 +231,19 @@
             <h4>{{ tr('portal.profile.verificationTrustBadgesTitle') }}</h4>
             <p class="hint">{{ tr('portal.profile.verificationTrustBadgesLead') }}</p>
             <ul class="trust-badge-list">
-              @for (entry of verificationBadgeLabels | keyvalue; track entry.key) {
+              @for (badgeType of verificationBadgeTypes; track badgeType) {
                 <li>
-                  <span>{{ entry.value }}</span>
-                  @if (trustBadgeGranted(entry.key)) {
+                  <span>{{ verificationBadgeLabels[badgeType] }}</span>
+                  @if (trustBadgeGranted(badgeType)) {
                     <span class="badge granted">✓</span>
-                  } @else if (trustBadgePending(entry.key)) {
+                  } @else if (trustBadgePending(badgeType)) {
                     <span class="muted">{{ tr('portal.profile.verificationBadgePending') }}</span>
                   } @else {
                     <button
                       type="button"
                       class="btn btn-ghost"
-                      [disabled]="trustBadgeBusy() === entry.key"
-                      (click)="requestTrustBadge(entry.key)"
+                      [disabled]="trustBadgeBusy() === badgeType"
+                      (click)="requestTrustBadge(badgeType)"
                     >
                       {{ tr('portal.profile.verificationRequestBadge') }}
                     </button>

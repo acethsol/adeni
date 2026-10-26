@@ -11,7 +11,7 @@ import type {
   GalleryImage,
   PublicReviewItem,
   VerificationBadge,
-  RequestVerificationBadgeRequest,
+  VerificationBadgeType,
 } from "@adeni/shared";
 import {
   formatTenantStatus,
@@ -20,6 +20,7 @@ import {
   MAX_UPLOAD_BYTES,
   resolveBusinessCoverImage,
   VERIFICATION_BADGE_LABELS,
+  VERIFICATION_BADGE_TYPES,
   VERIFICATION_DOCUMENT_LABELS,
 } from "@adeni/shared";
 import {
@@ -115,11 +116,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
   readonly verificationFileKey = signal<string | null>(null);
   readonly verificationFileUploading = signal(false);
   readonly trustBadges = signal<VerificationBadge[]>([]);
-  readonly trustBadgeBusy = signal<string | null>(null);
+  readonly trustBadgeBusy = signal<VerificationBadgeType | null>(null);
 
   readonly formatTenantStatus = formatTenantStatus;
   readonly verificationLabels = VERIFICATION_DOCUMENT_LABELS;
   readonly verificationBadgeLabels = VERIFICATION_BADGE_LABELS;
+  readonly verificationBadgeTypes = VERIFICATION_BADGE_TYPES;
 
   readonly verificationSteps = computed(() => {
     const status = this.profile()?.status ?? 0;
@@ -355,13 +357,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
     }
   }
 
-  async requestTrustBadge(badgeType: string): Promise<void> {
+  async requestTrustBadge(badgeType: VerificationBadgeType): Promise<void> {
     this.trustBadgeBusy.set(badgeType);
     try {
       await this.api.withAuthorizedClient((c) =>
-        c.requestVerificationBadge({
-          badgeType: badgeType as RequestVerificationBadgeRequest["badgeType"],
-        }),
+        c.requestVerificationBadge({ badgeType, referenceNumber: undefined }),
       );
       this.feedback.success(this.tr("portal.profile.verificationRequestBadge"));
       const p = this.profile();
