@@ -27,6 +27,8 @@ public sealed class DocumentPreviewService(IPortalTenantAccessQuery access, IBil
         if (result.IsFailure) return Result.Failure<DocumentPreview>(result.Error);
         var doc = result.Value!;
         if (doc.TenantId != tenantId) return Result.Failure<DocumentPreview>(ErrorCodes.PermissionDeniedError());
+        if (doc.Status == "void")
+            return Result.Failure<DocumentPreview>(Error.Conflict("Voided documents cannot be downloaded."));
         if (doc.BookingId is not Guid bookingId || doc.Kind is not ("receipt" or "invoice") || doc.Status is not ("draft" or "issued"))
             return Result.Failure<DocumentPreview>(Error.Validation("Preview requires a non-void booking receipt or invoice."));
         var branch = await bookings.GetLocationAsync(tenantId, bookingId, ct);

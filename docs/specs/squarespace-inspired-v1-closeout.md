@@ -37,7 +37,7 @@ Existing full Bookings permission and runtime CustomerRetentionAnalytics + Basic
 
 Current inferred classifications in the resolved default F1 scope are included additively in the existing MFA-protected, audited customer privacy export, with location/evaluation metadata; past and alternate-view evaluations are not stored. Erased or missing linked identities cannot regenerate classifications from retained bookings; there are no projection/cache/history copies to delete. Existing walk-in-only tenant records still lack a general platform-customer erasure workflow; this inherited gap is explicitly deferred. Logs do not contain classifications/reasons, answers or financial secrets.
 
-Receipt/invoice preview is restricted to existing non-void, booking-linked documents. A shared Application service enforces recognized tenant membership, Finance OR full Bookings permission, existing InvoicesReceipts capability and actual Booking-owned location evidence for preview and corresponding authenticated final download. **Approved security tightening:** formerly unscoped/mismatched booking-document downloads can now be denied. Public-token/unlinked documents, quotes and tenant-wide customer statements were not expanded into preview and retain their separately tracked legacy policies.
+Receipt/invoice preview is restricted to existing non-void, booking-linked documents. A shared Application service enforces recognized tenant membership, Finance OR full Bookings permission, existing InvoicesReceipts capability and actual Booking-owned location evidence for preview and corresponding authenticated final download. **Approved security tightening:** formerly unscoped/mismatched booking-document downloads can now be denied. Voided documents retain the existing `409 Conflict` response in both private preview and the corresponding final download, with a regression assertion. Public-token/unlinked documents, quotes and tenant-wide customer statements were not expanded into preview and retain their separately tracked legacy policies.
 
 Preview and download share Finance snapshot mapping and the same renderer/template: historical business-name snapshot, current existing logo, fixed Adeni colors/footer, line order, typed amount/date inputs. No new address/contact/color branding contract or logo-history snapshot. Same-renderer fidelity is not a claim of immutable archival bytes after a logo change.
 
@@ -144,11 +144,11 @@ No Retention module, memberships/packages/loyalty/referrals, campaigns/CRM DSL/a
 
 ## Final comparison and review commits
 
-Comparison authority: `664269b44ca00094b0613a5d50596481c5f214e4` (audit-hardening), not dev. Exact final file/test-file counts and commit identifiers are recorded below after staging; schema and action counts above refer to source objects/actions, not diff line counts. The closeout commit is the branch HEAD; its SHA is returned in the task result to avoid a self-referential commit hash in this document.
+Comparison authority: `664269b44ca00094b0613a5d50596481c5f214e4` (audit-hardening), not dev. Exact final file/test-file counts and commit identifiers are recorded below after staging; schema and action counts above refer to source objects/actions, not diff line counts. The final review commit is the branch HEAD; its SHA is returned in the task result to avoid a self-referential commit hash in this document.
 
 - **298 total files changed** against audit-hardening, including **53 test-source files** (test-support files are excluded from that test-source count).
 - **65 files changed in F5**, including its approved plan/closeout and 12 new test-source files; 72 new cases.
-- Review commits: `cd32d67` backend/SQL/security tests; `361cb23` shared/client/Portal/lifecycle tests; final documentation commit is branch HEAD.
+- Review commits: `cd32d67` backend/SQL/security tests; `361cb23` shared/client/Portal/lifecycle tests; `c1ffaf0` plan/closeout; the final review commit preserves voided-PDF conflict responses and updates this closeout.
 - No dependency/lockfile or entitlement-catalog drift; 25 tables/two schemas and 51 HTTP actions added across F1–F5; F5 adds no schema objects or Angular route paths.
 - Protected local refs remain dev `0cfecfc75417f72257ec89478aa0168c4a594960` and audit-hardening `664269b44ca00094b0613a5d50596481c5f214e4`. qa/main are absent locally and untouched. No merge/push/promotion performed.
 

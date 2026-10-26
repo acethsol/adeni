@@ -127,6 +127,12 @@ public sealed class DocumentPreviewIntegrationTests : IClassFixture<WebApplicati
         var calls = renderer.Calls.Count; var response = await client.GetAsync($"/api/v1/tenant/reporting/documents/{data.Document}/preview");
         Assert.NotEqual(HttpStatusCode.OK, response.StatusCode); Assert.Equal(calls, renderer.Calls.Count);
         Assert.DoesNotContain("Ada", await response.Content.ReadAsStringAsync());
+        if (scenario == "void")
+        {
+            Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+            Assert.Equal(HttpStatusCode.Conflict, (await client.GetAsync($"/api/v1/finance/documents/{data.Document}/pdf")).StatusCode);
+            Assert.Equal(calls, renderer.Calls.Count);
+        }
     }
     [Fact]
     public async Task Preview_RejectsOversizedLogoBeforeNativeRenderer()
