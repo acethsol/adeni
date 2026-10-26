@@ -43,7 +43,8 @@ public sealed record UpsertBusinessLocationRequest(
 
 public sealed record VerificationDocumentRequest(
     VerificationDocumentType DocumentType,
-    string ReferenceNumber);
+    string ReferenceNumber,
+    string? StorageFileKey = null);
 
 public sealed record SubmitVerificationRequest(
     IReadOnlyList<VerificationDocumentRequest> Documents);
@@ -130,13 +131,16 @@ public sealed record BusinessProfileResponse(
     PublicPageConfigDto? PublicPage = null,
     IReadOnlyList<GalleryImageResponse>? GalleryImages = null,
     BusinessPoliciesDto? Policies = null,
-    WalkInSettingsResponse? WalkInSettings = null);
+    WalkInSettingsResponse? WalkInSettings = null,
+    string? VerificationRejectionReason = null);
 
 public sealed record GalleryImageResponse(string StorageKey, string Url);
 
 public sealed record VerificationDocumentResponse(
     VerificationDocumentType DocumentType,
-    DateTimeOffset SubmittedAt);
+    string ReferenceNumber,
+    DateTimeOffset SubmittedAt,
+    bool HasUploadedFile = false);
 
 public sealed record RegisterBusinessResponse(
     Guid TenantId,

@@ -49,4 +49,7 @@ public sealed class Tenant
     public DateTimeOffset CreatedAt { get; set; }
 
     public DateTimeOffset? VerifiedAt { get; set; }
+
+    /// <summary>Last admin rejection reason; cleared on resubmit or approve.</summary>
+    public string? VerificationRejectionReason { get; set; }
 }

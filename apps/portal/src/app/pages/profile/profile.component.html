@@ -140,10 +140,56 @@
         <p class="lede">
           {{ tr('portal.profile.verifiedBusinessesAppearDiscoverSearch') }}
         </p>
+        <ol class="verification-stepper" [attr.aria-label]="tr('portal.profile.verification')">
+          @for (label of verificationSteps().labels; track label; let i = $index) {
+            <li
+              class="step"
+              [class.active]="i === verificationSteps().activeIndex"
+              [class.done]="i < verificationSteps().activeIndex"
+            >
+              <span class="step-index">{{ i + 1 }}</span>
+              <span class="step-label">{{ label }}</span>
+            </li>
+          }
+        </ol>
         <p class="status-row">
           <span class="status-pill" [attr.data-status]="p.status">{{ formatTenantStatus(p.status) }}</span>
         </p>
+        @if (isSuspended()) {
+          <p class="error-banner">{{ tr('portal.profile.verificationSuspendedCallout') }}</p>
+        }
+        @if (p.status === 3 && p.verificationRejectionReason) {
+          <div class="rejection-banner" role="alert">
+            <strong>{{ tr('portal.profile.verificationRejectionBannerTitle') }}</strong>
+            <p>{{ p.verificationRejectionReason }}</p>
+            <p class="muted">{{ tr('portal.profile.verificationResubmitCta') }}</p>
+          </div>
+        }
+        @if (p.verificationDocuments.length > 0 && p.status !== 0) {
+          <div class="submitted-docs">
+            <h4>{{ tr('portal.profile.verificationSubmittedDocsTitle') }}</h4>
+            <ul>
+              @for (doc of p.verificationDocuments; track doc.submittedAt + doc.referenceNumber) {
+                <li>
+                  <strong>{{ docTypeLabel(doc.documentType) }}</strong>
+                  · {{ doc.referenceNumber }}
+                  · {{ doc.submittedAt | date: "mediumDate" }}
+                  @if (doc.hasUploadedFile) {
+                    · {{ tr('portal.profile.verificationFileAttached') }}
+                  }
+                </li>
+              }
+            </ul>
+          </div>
+        }
         @if (canSubmitVerification()) {
+          <div class="prerequisites">
+            <h4>{{ tr('portal.profile.verificationPrerequisitesTitle') }}</h4>
+            <ul>
+              <li [class.ok]="prerequisitesMet()">{{ tr('portal.profile.verificationPrerequisiteProfile') }}</li>
+              <li [class.ok]="prerequisitesMet()">{{ tr('portal.profile.verificationPrerequisiteLocation') }}</li>
+            </ul>
+          </div>
           <div class="field">
             <label for="verification-doc">{{ tr('portal.profile.documentType') }}</label>
             <select id="verification-doc" [(ngModel)]="verificationDocType">
@@ -154,13 +200,58 @@
           </div>
           <div class="field">
             <label for="verification-ref">{{ tr('portal.profile.referenceNumber') }}</label>
-            <input id="verification-ref" [(ngModel)]="verificationReference" />
+            <input id="verification-ref" [(ngModel)]="verificationReference" minlength="5" />
           </div>
-          <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="submitVerification()">
+          <div class="field">
+            <label for="verification-file">{{ tr('portal.profile.verificationOptionalFile') }}</label>
+            <input
+              id="verification-file"
+              type="file"
+              accept=".pdf,image/jpeg,image/png"
+              [disabled]="verificationFileUploading()"
+              (change)="onVerificationFileSelected($event)"
+            />
+            @if (verificationFileKey()) {
+              <p class="hint ok">{{ tr('portal.profile.verificationFileAttached') }}</p>
+            }
+          </div>
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="saving() || !prerequisitesMet()"
+            (click)="submitVerification()"
+          >
             {{ tr('portal.profile.submitReview') }}
           </button>
-        } @else {
+        } @else if (!isSuspended()) {
           <p class="muted">{{ tr('portal.profile.noNewSubmissionNeededRight') }}</p>
+        }
+        @if (p.status === 2) {
+          <div class="trust-badges-section">
+            <h4>{{ tr('portal.profile.verificationTrustBadgesTitle') }}</h4>
+            <p class="hint">{{ tr('portal.profile.verificationTrustBadgesLead') }}</p>
+            <ul class="trust-badge-list">
+              @for (entry of verificationBadgeLabels | keyvalue; track entry.key) {
+                <li>
+                  <span>{{ entry.value }}</span>
+                  @if (trustBadgeGranted(entry.key)) {
+                    <span class="badge granted">✓</span>
+                  } @else if (trustBadgePending(entry.key)) {
+                    <span class="muted">{{ tr('portal.profile.verificationBadgePending') }}</span>
+                  } @else {
+                    <button
+                      type="button"
+                      class="btn btn-ghost"
+                      [disabled]="trustBadgeBusy() === entry.key"
+                      (click)="requestTrustBadge(entry.key)"
+                    >
+                      {{ tr('portal.profile.verificationRequestBadge') }}
+                    </button>
+                  }
+                </li>
+              }
+            </ul>
+          </div>
         }
         @if (verificationMessage()) {
           <p class="ok">{{ verificationMessage() }}</p>

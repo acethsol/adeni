@@ -16,4 +16,7 @@ public static class NotificationTemplateIds
     public const string StaffInvite = "staff_invite";
     public const string QueueCalled = "queue_called";
     public const string BillingDocumentEmailed = "billing_document_emailed";
+    public const string VerificationSubmitted = "verification_submitted";
+    public const string VerificationApproved = "verification_approved";
+    public const string VerificationRejected = "verification_rejected";
 }

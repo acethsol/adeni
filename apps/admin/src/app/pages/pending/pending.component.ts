@@ -7,10 +7,12 @@ import {
   buildAdminReportExportMenuItems,
   listSortParamsFromColumn,
   REPORT_KEYS,
+  VERIFICATION_DOCUMENT_LABELS,
   type PendingBusiness,
   type ReportExportFormat,
 } from "@adeni/shared";
 import {
+  AdeniConfirmService,
   AdeniDataTableActionsDirective,
   AdeniDataTableCellDirective,
   AdeniDataTableComponent,
@@ -18,6 +20,7 @@ import {
   AdeniFeedbackService,
   AdeniListPaginationComponent,
   AdeniListToolbarComponent,
+  AdeniModalComponent,
   AdeniPortalEmptyStateComponent,
   AdeniStaffButtonComponent,
   PortalPageComponent,
@@ -58,6 +61,7 @@ import {
     AdeniListPaginationComponent,
     AdeniStaffButtonComponent,
     AdeniPortalEmptyStateComponent,
+    AdeniModalComponent,
     DatePipe,
     RouterLink,
     AdminPillComponent,
@@ -73,6 +77,7 @@ export class AdminPendingComponent {
   private readonly router = inject(Router);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly operationsRealtime = inject(AdminOperationsRealtimeService);
+  private readonly confirm = inject(AdeniConfirmService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -85,6 +90,10 @@ export class AdminPendingComponent {
   readonly sortColumnId = signal<string | null>(null);
   readonly sortDirection = signal<AdeniDataTableSortDirection>("asc");
   readonly busyId = signal<string | null>(null);
+  readonly expandedRowId = signal<string | null>(null);
+  readonly rejectModalOpen = signal(false);
+  readonly rejectTarget = signal<PendingBusiness | null>(null);
+  rejectReasonDraft = "";
 
   readonly totalPages = computed(() => adminListTotalPages(this.totalCount(), this.pageSize()));
   readonly showingRange = computed(() =>
@@ -114,7 +123,7 @@ export class AdminPendingComponent {
       id: "submitted",
       header: this.tr("admin.pending.submitted"),
       cell: () => "",
-      sortValue: (item) => item.createdAt,
+      sortValue: (item) => item.submittedAt ?? item.createdAt,
     },
     {
       id: "docs",
@@ -130,6 +139,24 @@ export class AdminPendingComponent {
 
   readonly tenantStatusPill = tenantStatusPill;
   readonly docCountPill = docCountPill;
+
+  docTypeLabel(documentType: string): string {
+    const map: Record<string, string> = {
+      cac: VERIFICATION_DOCUMENT_LABELS[0],
+      nationalid: VERIFICATION_DOCUMENT_LABELS[1],
+      addressproof: VERIFICATION_DOCUMENT_LABELS[2],
+      tradelicense: VERIFICATION_DOCUMENT_LABELS[3],
+    };
+    return map[documentType.toLowerCase()] ?? documentType;
+  }
+
+  submittedAt(item: PendingBusiness): string {
+    return item.submittedAt ?? item.createdAt;
+  }
+
+  toggleExpanded(item: PendingBusiness): void {
+    this.expandedRowId.update((current) => (current === item.id ? null : item.id));
+  }
 
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
@@ -245,6 +272,19 @@ export class AdminPendingComponent {
   }
 
   async approve(item: PendingBusiness): Promise<void> {
+    const confirmed = await this.confirm.confirm({
+      title: this.tr("admin.pending.confirmApproveTitle"),
+      message: this.tr("admin.pending.confirmApproveBody", {
+        name: item.name,
+        marketId: item.marketId,
+      }),
+      confirmLabel: this.tr("admin.pending.approve"),
+      cancelLabel: this.tr("common.cancel"),
+    });
+    if (!confirmed) {
+      return;
+    }
+
     this.busyId.set(item.id);
     try {
       await this.feedback.runLoading(
@@ -255,31 +295,60 @@ export class AdminPendingComponent {
       await this.load();
       this.feedback.success(`${item.name} is now verified.`, this.tr("admin.pending.approved"));
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "admin.pending.approveFailed"));
       this.feedback.error(this.apiErr(caught, "admin.pending.approveFailed"));
     } finally {
       this.busyId.set(null);
     }
   }
 
-  async reject(item: PendingBusiness): Promise<void> {
-    const reason = prompt("Rejection reason (min 10 chars) for " + item.name + "?");
-    if (!reason || reason.trim().length < 10) return;
+  openRejectModal(item: PendingBusiness): void {
+    this.rejectTarget.set(item);
+    this.rejectReasonDraft = "";
+    this.rejectModalOpen.set(true);
+  }
+
+  closeRejectModal(): void {
+    this.rejectModalOpen.set(false);
+    this.rejectTarget.set(null);
+    this.rejectReasonDraft = "";
+  }
+
+  async confirmReject(): Promise<void> {
+    const item = this.rejectTarget();
+    const reason = this.rejectReasonDraft.trim();
+    if (!item) {
+      return;
+    }
+    if (reason.length < 10) {
+      this.feedback.error(this.tr("admin.pending.rejectReasonTooShort"));
+      return;
+    }
+
     this.busyId.set(item.id);
     try {
       await this.feedback.runLoading(
-        () =>
-          this.api.withAuthorizedClient((c) => c.rejectPendingBusiness(item.id, reason.trim())),
+        () => this.api.withAuthorizedClient((c) => c.rejectPendingBusiness(item.id, reason)),
         this.tr("admin.pending.rejecting"),
         item.name,
       );
+      this.closeRejectModal();
       await this.load();
       this.feedback.success(`${item.name} was rejected.`, this.tr("admin.pending.rejected"));
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "admin.pending.rejectFailed"));
       this.feedback.error(this.apiErr(caught, "admin.pending.rejectFailed"));
     } finally {
       this.busyId.set(null);
+    }
+  }
+
+  async viewUploadedFile(item: PendingBusiness, documentId: string): Promise<void> {
+    try {
+      const payload = await this.api.withAuthorizedClient((c) =>
+        c.getAdminVerificationDocumentDownloadUrl(item.id, documentId),
+      );
+      window.open(payload.downloadUrl, "_blank", "noopener,noreferrer");
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "common.exportFailed"));
     }
   }
 }

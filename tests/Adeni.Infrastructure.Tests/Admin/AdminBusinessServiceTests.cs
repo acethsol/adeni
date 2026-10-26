@@ -5,7 +5,11 @@ using Adeni.Application.Subscriptions;
 using Adeni.Domain.Subscriptions;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Admin;
+using Adeni.Application.Notifications;
+using Adeni.Application.Storage;
 using Adeni.Infrastructure.Subscriptions;
+using Adeni.Infrastructure.Tests.Notifications;
+using Adeni.Infrastructure.Tests.Storage;
 using Adeni.Infrastructure.Auditing;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Context;
@@ -102,6 +106,41 @@ public sealed class AdminBusinessServiceTests
     }
 
     [Fact]
+    public async Task Pending_submittedAt_uses_latest_document_time()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        var tenantId = Guid.NewGuid();
+        var created = DateTimeOffset.UtcNow.AddDays(-30);
+        var docSubmitted = DateTimeOffset.UtcNow.AddDays(-2);
+
+        db.Tenants.Add(new Tenant
+        {
+            Id = tenantId,
+            Name = "Pending Salon",
+            Status = TenantStatus.PendingVerification,
+            CreatedAt = created,
+        });
+        db.VerificationDocuments.Add(new VerificationDocument
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            DocumentType = VerificationDocumentType.Cac,
+            ReferenceNumber = "RC12345",
+            SubmittedAt = docSubmitted,
+        });
+        await db.SaveChangesAsync();
+
+        var service = scope.ServiceProvider.GetRequiredService<AdminBusinessService>();
+        var pending = await service.ListPendingVerificationsAsync(null, 1, 25);
+
+        Assert.True(pending.IsSuccess);
+        var row = Assert.Single(pending.Value!.Items);
+        Assert.Equal(docSubmitted, row.SubmittedAt);
+    }
+
+    [Fact]
     public async Task Reject_requires_reason_min_length()
     {
         await using var provider = BuildProvider();
@@ -155,6 +194,8 @@ public sealed class AdminBusinessServiceTests
         services.AddDbContext<AdeniDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));
         services.AddScoped<IPricingCatalogService, PricingCatalogService>();
         services.AddScoped<ITenantPricingResolver, TenantPricingResolver>();
+        services.AddSingleton<IFileStorage, FakeFileStorage>();
+        services.AddSingleton<IVerificationLifecycleNotifier, NoopVerificationLifecycleNotifier>();
         services.AddScoped<AdminBusinessService>();
         return services.BuildServiceProvider();
     }

@@ -78,6 +78,9 @@
               {{ label("business.verifiedOnAdeni") }}
             </span>
           }
+          @for (badge of supplementalBadges(); track badge) {
+            <span class="trust badge">{{ verificationBadgeLabels[badge] ?? badge }}</span>
+          }
           @if (isNew()) {
             <span class="trust new">
               <adeni-carbon-icon name="flash--filled" [size]="14" />

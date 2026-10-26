@@ -195,9 +195,11 @@ export const authSessionSchema = z.object({
 export type AuthSession = z.infer<typeof authSessionSchema>;
 
 export const pendingVerificationDocumentSchema = z.object({
+  id: z.string(),
   documentType: z.string(),
   referenceNumber: z.string(),
   submittedAt: z.string(),
+  hasUploadedFile: z.boolean().optional(),
 });
 
 export const pendingBusinessSchema = z.object({
@@ -207,6 +209,7 @@ export const pendingBusinessSchema = z.object({
   marketId: z.string(),
   status: z.number().int(),
   createdAt: z.string(),
+  submittedAt: z.string().nullable().optional(),
   documents: z.array(pendingVerificationDocumentSchema).optional(),
 });
 
@@ -949,7 +952,9 @@ export type UpsertBusinessLocationRequest = z.infer<
 
 export const verificationDocumentSchema = z.object({
   documentType: z.number(),
+  referenceNumber: z.string(),
   submittedAt: z.string(),
+  hasUploadedFile: z.boolean().optional(),
 });
 
 export const tenantEntitlementsSchema = z.object({
@@ -1491,6 +1496,7 @@ export const businessProfileSchema = z.object({
   description: z.string(),
   createdAt: z.string(),
   verifiedAt: z.string().nullable().optional(),
+  verificationRejectionReason: z.string().nullable().optional(),
   locations: z.array(businessLocationSchema),
   verificationDocuments: z.array(verificationDocumentSchema),
   coverImageUrl: z
@@ -2339,7 +2345,8 @@ export function formatTenantStatus(status: number): string {
 
 export const verificationDocumentRequestSchema = z.object({
   documentType: z.number().int(),
-  referenceNumber: z.string().min(1),
+  referenceNumber: z.string().min(5),
+  storageFileKey: z.string().min(1).optional(),
 });
 
 export const submitVerificationRequestSchema = z.object({

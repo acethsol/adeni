@@ -89,12 +89,17 @@ public sealed class AdminReportExportQueryService(AdeniDbContext dbContext) : IA
             .Where(x => tenantIds.Contains(x.TenantId) && x.IsActive)
             .ToListAsync(cancellationToken);
 
-        var docCounts = await dbContext.VerificationDocuments
+        var docGroups = await dbContext.VerificationDocuments
             .AsNoTracking()
             .Where(x => tenantIds.Contains(x.TenantId))
             .GroupBy(x => x.TenantId)
-            .Select(g => new { TenantId = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.TenantId, x => x.Count, cancellationToken);
+            .Select(g => new
+            {
+                TenantId = g.Key,
+                Count = g.Count(),
+                LatestSubmittedAt = g.Max(x => x.SubmittedAt),
+            })
+            .ToDictionaryAsync(x => x.TenantId, cancellationToken);
 
         var rows = tenants.Select(tenant =>
         {
@@ -103,15 +108,15 @@ public sealed class AdminReportExportQueryService(AdeniDbContext dbContext) : IA
                 .OrderByDescending(x => x.IsPrimary)
                 .FirstOrDefault();
 
-            docCounts.TryGetValue(tenant.Id, out var docCount);
+            docGroups.TryGetValue(tenant.Id, out var docGroup);
 
             return new AdminPendingVerificationExportRow(
                 tenant.Id,
                 tenant.Name,
                 primary?.Slug ?? string.Empty,
                 primary?.MarketId ?? string.Empty,
-                tenant.CreatedAt,
-                docCount);
+                docGroup?.LatestSubmittedAt ?? tenant.CreatedAt,
+                docGroup?.Count ?? 0);
         }).ToList();
 
         return Result.Success<IReadOnlyList<AdminPendingVerificationExportRow>>(rows);

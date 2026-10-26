@@ -44,6 +44,7 @@ public static class NotificationsServiceCollectionExtensions
         services.AddScoped<INotificationLocaleResolver, NotificationLocaleResolver>();
 
         services.AddScoped<PaymentReceiptNotificationSender>();
+        services.AddScoped<IVerificationLifecycleNotifier, VerificationLifecycleNotifier>();
         services.AddScoped<NotificationSendWorker>();
         services.AddScoped<NotificationSendHangfireJob>();
 

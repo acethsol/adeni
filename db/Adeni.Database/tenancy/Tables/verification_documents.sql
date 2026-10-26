@@ -4,6 +4,7 @@ CREATE TABLE [tenancy].[verification_documents] (
     [DocumentType]    INT                NOT NULL,
     [ReferenceNumber] NVARCHAR (128)     NOT NULL,
     [SubmittedAt]     DATETIMEOFFSET (7) NOT NULL,
+    [StorageFileKey]  NVARCHAR (512)     NULL,
     CONSTRAINT [PK_verification_documents] PRIMARY KEY CLUSTERED ([Id] ASC),
     CONSTRAINT [FK_verification_documents_tenants_TenantId] FOREIGN KEY ([TenantId]) REFERENCES [tenancy].[tenants] ([Id]) ON DELETE CASCADE
 );

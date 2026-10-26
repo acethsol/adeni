@@ -6,7 +6,7 @@
 |-------|-------|
 | **Sprint / track** | Backlog — Verification UX gap closeout (post Sprint 19 / 38c) |
 | **Author** | Oladayo Jolaoso |
-| **Status** | Draft (approved for implementation phasing) |
+| **Status** | Shipped on `dev` (Phases 1–3) |
 | **Created** | 2026-10-26 |
 
 ---
@@ -34,30 +34,30 @@ Ship a coherent **first-time verification** experience (submit → admin review 
 
 ### API
 
-- [ ] Expose **admin-review detail** on tenant profile: submitted document **types**, **reference numbers** (masked where appropriate for support — full refs for tenant owner on their profile), and **submittedAt** per document (already stored; not fully exposed on `GET /api/v1/tenant/profile`).
-- [ ] Expose **last rejection reason** on tenant profile when `status === Rejected` (persisted field — today reason exists only in admin audit JSON).
-- [ ] Align **reference number minimum length = 5** in `packages/shared` Zod + portal client validation (API already enforces 5 in `SubmitVerificationAsync`).
-- [ ] Admin pending list: **`submittedAt`** for queue sort/display = latest verification document submit time (fallback `tenant.CreatedAt` if no docs).
+- [x] Expose **admin-review detail** on tenant profile: submitted document **types**, **reference numbers** (masked where appropriate for support — full refs for tenant owner on their profile), and **submittedAt** per document (already stored; not fully exposed on `GET /api/v1/tenant/profile`).
+- [x] Expose **last rejection reason** on tenant profile when `status === Rejected` (persisted field — today reason exists only in admin audit JSON).
+- [x] Align **reference number minimum length = 5** in `packages/shared` Zod + portal client validation (API already enforces 5 in `SubmitVerificationAsync`).
+- [x] Admin pending list: **`submittedAt`** for queue sort/display = latest verification document submit time (fallback `tenant.CreatedAt` if no docs).
 - [ ] Optional admin **`GET /api/v1/admin/businesses/pending/{tenantId}`** detail DTO if list payload is insufficient for drawer UX (may reuse list row shape if extended).
 
 ### Portal
 
-- [ ] **Verification stepper** on profile verification tab (Draft → submitted → in review → verified / rejected), reusing dashboard `verification_status` copy patterns where possible.
-- [ ] **Suspended** status callout (status `4`) on verification tab — not only business-details lock hint.
-- [ ] **Submitted documents list** (type label + submitted date; reference optional/masked tail for owner).
-- [ ] **Rejection banner** with admin reason + CTA to resubmit when `Rejected`.
-- [ ] **Prerequisite copy** before submit (active location, profile fields complete) matching API validation messages (i18n keys in `@adeni/shared`).
-- [ ] **Validation parity:** client min 5 chars for reference (fix current 4-char check).
-- [ ] **Lock public-page / branding edits** while `PendingVerification` (API today locks core profile only; `UpdatePublicPageAsync` still allows edits — align with “editing paused during review” copy).
+- [x] **Verification stepper** on profile verification tab (Draft → submitted → in review → verified / rejected), reusing dashboard `verification_status` copy patterns where possible.
+- [x] **Suspended** status callout (status `4`) on verification tab — not only business-details lock hint.
+- [x] **Submitted documents list** (type label + submitted date; reference optional/masked tail for owner).
+- [x] **Rejection banner** with admin reason + CTA to resubmit when `Rejected`.
+- [x] **Prerequisite copy** before submit (active location, profile fields complete) matching API validation messages (i18n keys in `@adeni/shared`).
+- [x] **Validation parity:** client min 5 chars for reference (fix current 4-char check).
+- [x] **Lock public-page / branding edits** while `PendingVerification` (API today locks core profile only; `UpdatePublicPageAsync` still allows edits — align with “editing paused during review” copy).
 
 ### Admin
 
-- [ ] **Detail panel or expandable row** showing document types + reference numbers for reviewers (data already in list API `documents[]`; UI shows count pill only).
-- [ ] **Confirm approve** dialog (destructive-light guard — name + market confirm).
-- [ ] **Reject modal** with validated reason (min 10 chars) — replace `prompt()`.
+- [x] **Detail panel or expandable row** showing document types + reference numbers for reviewers (data already in list API `documents[]`; UI shows count pill only).
+- [x] **Confirm approve** dialog (destructive-light guard — name + market confirm).
+- [x] **Reject modal** with validated reason (min 10 chars) — replace `prompt()`.
 - [ ] **Empty state** — present; verify i18n + export still works (no change unless QA finds gap).
 - [ ] **Toasts** — success paths exist; standardize error toasts on approve/reject failure (minor).
-- [ ] **Real submittedAt** column — use document submit time, not tenant `createdAt`.
+- [x] **Real submittedAt** column — use document submit time, not tenant `createdAt`.
 
 ### Discover
 
@@ -66,7 +66,7 @@ Ship a coherent **first-time verification** experience (submit → admin review 
 
 ### Cross-cutting
 
-- [ ] Integration tests for new profile fields and reject-reason persistence.
+- [x] Integration tests for new profile fields and reject-reason persistence.
 - [ ] Admin approve/reject audit unchanged (`business.approved`, `business.rejected`); submit audit **`business.verification_submitted`** — **already shipped**.
 
 ---
@@ -234,6 +234,17 @@ Internal: `INotificationService` or domain events after submit / approve / rejec
 2. Portal file picker + API multipart or signed URL pattern (mirror gallery/media patterns).
 3. Admin viewer for uploaded files; **never** expose raw docs on public APIs.
 
+#### Phase 3 addendum (implemented)
+
+| Topic | Decision |
+|-------|----------|
+| **Blob purpose** | `verification_document` via `POST /api/v1/tenant/media/upload-url`; keys `tenants/{tenantId}/verification/{uuid}.pdf\|jpg\|png` (private container / signed download). |
+| **Submit binding** | Optional `storageFileKey` on verification submit; prefix + `ExistsAsync` validation (same as cover/gallery). |
+| **Admin access** | `GET /api/v1/admin/businesses/{tenantId}/verification-documents/{documentId}/download-url` — MFA admin; audit `verification_document.downloaded` (tenant id in metadata only). |
+| **Public APIs** | Never expose storage keys or download URLs on profile/discovery; tenant profile shows `hasUploadedFile` boolean only. |
+| **Virus scan** | Deferred to Sprint 20 infra — treat uploads as trusted admin-review queue input until scanner wired at blob edge. |
+| **Retention** | Follow tenancy lifecycle: purge keys when tenant hard-deleted; soft-delete / legal hold out of scope for V1. |
+
 ---
 
 ## 9. Cross-cutting impact
@@ -251,11 +262,11 @@ Internal: `INotificationService` or domain events after submit / approve / rejec
 
 ## 10. Tests
 
-- [ ] Unit: reject reason persisted and cleared on resubmit; pending `submittedAt` = max document time.
-- [ ] Unit: `UpdatePublicPageAsync` fails when `PendingVerification`.
-- [ ] Integration: `GET /api/v1/tenant/profile` returns rejection reason after reject.
-- [ ] Integration: submit with 4-char reference → 400 validation.
-- [ ] Integration: admin reject with short reason → 400.
+- [x] Unit: reject reason persisted and cleared on resubmit; pending `submittedAt` = max document time.
+- [x] Unit: `UpdatePublicPageAsync` fails when `PendingVerification`.
+- [x] Integration: `GET /api/v1/tenant/profile` returns rejection reason after reject.
+- [x] Integration: submit with 4-char reference → 400 validation.
+- [x] Integration: admin reject with short reason → 400.
 - [ ] Tenant cross-access: unchanged (profile is own-tenant only).
 
 Run: `dotnet test Adeni.slnx -c Release`
@@ -281,12 +292,12 @@ Run: `dotnet test Adeni.slnx -c Release`
 
 ## 12. Acceptance criteria (release)
 
-- [ ] Cloud matrix checklist (§13) all Phase 1 items checked.
-- [ ] No pay-to-verify behavior introduced.
-- [ ] Reference min length 5 on client and server.
-- [ ] Rejection reason visible to business in portal; stored on tenant.
-- [ ] Admin reject uses modal; approve uses confirm.
-- [ ] Pending queue submitted date reflects verification submit time.
+- [x] Cloud matrix checklist (§13) all Phase 1 items checked.
+- [x] No pay-to-verify behavior introduced.
+- [x] Reference min length 5 on client and server.
+- [x] Rejection reason visible to business in portal; stored on tenant.
+- [x] Admin reject uses modal; approve uses confirm.
+- [x] Pending queue submitted date reflects verification submit time.
 - [ ] Docs-only PR for this spec approved before Phase 1 code merge.
 
 ---
@@ -304,51 +315,51 @@ Legend: ☑ shipped · ☐ gap · ~ partial
 | Audit on approve / reject | ☑ |
 | Audit on submit (`business.verification_submitted`) | ☑ |
 | Admin detail: doc types + refs in API payload | ~ (list includes docs; no single-tenant detail route — optional) |
-| Rejection reason on profile API | ☐ |
-| Reference length 5 everywhere (shared + portal) | ~ (API ☑, portal/shared ☐) |
-| File upload | ☐ (Phase 3 — out of Phase 1) |
+| Rejection reason on profile API | ☑ |
+| Reference length 5 everywhere (shared + portal) | ☑ |
+| File upload | ☑ (Phase 3 — optional file on submit) |
 
 ### Portal
 
 | Item | Status |
 |------|--------|
 | Status + submit form + profile lock (pending) | ☑ |
-| Verification stepper | ☐ |
-| Suspended callout (verification tab) | ☐ |
-| Submitted docs list | ☐ |
-| Rejection banner + reason | ☐ |
-| Validation parity (5 chars) | ☐ |
-| Prerequisite copy | ☐ |
-| Lock public-page edits while pending | ☐ |
+| Verification stepper | ☑ |
+| Suspended callout (verification tab) | ☑ |
+| Submitted docs list | ☑ |
+| Rejection banner + reason | ☑ |
+| Validation parity (5 chars) | ☑ |
+| Prerequisite copy | ☑ |
+| Lock public-page edits while pending | ☑ |
 
 ### Admin
 
 | Item | Status |
 |------|--------|
 | Queue + approve/reject actions + dashboard link | ☑ |
-| Detail panel refs/types | ☐ |
-| Confirm approve | ☐ |
-| Reject modal (not prompt) | ☐ |
+| Detail panel refs/types | ☑ |
+| Confirm approve | ☑ |
+| Reject modal (not prompt) | ☑ |
 | Empty state | ☑ |
 | Toasts | ~ |
-| Real submittedAt | ☐ |
+| Real submittedAt | ☑ |
 
 ### Discover
 
 | Item | Status |
 |------|--------|
 | Verified / trust on cards & profile via `verifiedSince` | ~ |
-| Badge stack / consistency all surfaces | ☐ |
+| Badge stack / consistency all surfaces | ☑ (profile stack; cards keep base verified) |
 
 ### Extra (review)
 
 | Item | Status | Phase |
 |------|--------|-------|
-| Transactional email on lifecycle | ☐ | 2 |
-| Soften copy if no email | ☐ | 1 optional |
-| Public-page lock while pending | ☐ | 1 |
-| Portal trust-badge request UI | ☐ | 2 |
-| Pay-before-verify policy | ☐ decision | 2 |
+| Transactional email on lifecycle | ☑ | 2 |
+| Soften copy if no email | ~ (email shipped) | 1 optional |
+| Public-page lock while pending | ☑ | 1 |
+| Portal trust-badge request UI | ☑ | 2 |
+| Pay-before-verify policy | ☑ **No gate** (documented) | 2 |
 | product-strategy vs Sprint 19 reconcile | ~ | docs |
 
 ---

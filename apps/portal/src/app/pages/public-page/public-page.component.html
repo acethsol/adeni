@@ -3,7 +3,10 @@
   [description]="tr('portal.publicPage.chooseHowAdeniBookingPage')"
 >
   @if (profile(); as p) {
-    <div class="layout">
+    @if (publicPageLocked()) {
+      <p class="lock-hint">{{ tr('portal.profile.publicPageLockedPending') }}</p>
+    }
+    <div class="layout" [class.locked]="publicPageLocked()">
       <div class="controls">
         <section class="card">
           <h3>{{ tr('portal.publicPage.template') }}</h3>

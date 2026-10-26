@@ -30,6 +30,7 @@ import {
   resolvePublicPageTemplateId,
   shouldShowQuoteFlow,
   t,
+  VERIFICATION_BADGE_LABELS,
 } from "@adeni/shared";
 import { AdeniCarbonIconComponent, AdeniLocaleService, injectAdeniTranslate, injectAdeniApiError } from "@adeni/ui";
 import {
@@ -112,6 +113,17 @@ export class BusinessProfileComponent implements OnInit {
     const p = this.profile();
     return p ? getCategoryVisual(p.categorySlug) : null;
   });
+
+  /** Base verified = verifiedSince; supplemental badges only when verified (Discover profile). */
+  readonly supplementalBadges = computed(() => {
+    const p = this.profile();
+    if (!p?.verifiedSince) {
+      return [] as string[];
+    }
+    return p.verificationBadges ?? [];
+  });
+
+  readonly verificationBadgeLabels = VERIFICATION_BADGE_LABELS;
 
   readonly gallery = computed(() => {
     const p = this.profile();

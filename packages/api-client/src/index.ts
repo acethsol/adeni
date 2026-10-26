@@ -1363,6 +1363,23 @@ export class AdeniApiClient {
     return mediaUploadUrlResponseSchema.parse(await response.json());
   }
 
+  async createVerificationDocumentUploadUrl(
+    contentType: string,
+    contentLength: number,
+  ): Promise<MediaUploadUrlResponse> {
+    const body = mediaUploadUrlRequestSchema.parse({
+      purpose: "verification_document",
+      contentType,
+      contentLength,
+    });
+    const response = await this.request("/api/v1/tenant/media/upload-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return mediaUploadUrlResponseSchema.parse(await response.json());
+  }
+
   async createStaffAvatarUploadUrl(
     contentType: string,
     contentLength: number,
@@ -2003,6 +2020,16 @@ export class AdeniApiClient {
         body: JSON.stringify(body),
       },
     );
+  }
+
+  async getAdminVerificationDocumentDownloadUrl(
+    tenantId: string,
+    documentId: string,
+  ): Promise<{ downloadUrl: string; expiresAt: string }> {
+    const response = await this.request(
+      `/api/v1/admin/businesses/${encodeURIComponent(tenantId)}/verification-documents/${encodeURIComponent(documentId)}/download-url`,
+    );
+    return (await response.json()) as { downloadUrl: string; expiresAt: string };
   }
 
   async listAdminBusinesses(
