@@ -7,6 +7,7 @@ using Adeni.Infrastructure.Admin;
 using Adeni.Infrastructure.Auditing;
 using Adeni.Infrastructure.Auth;
 using Adeni.Infrastructure.Booking;
+using Adeni.Infrastructure.Calendar;
 using Adeni.Infrastructure.Dashboard;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Catalog;
@@ -73,6 +74,7 @@ public static class ServiceCollectionExtensions
         services.AddTenancyModule();
         services.AddCatalogModule();
         services.AddBookingModule();
+        services.AddCalendarModule(configuration);
         services.AddDashboardModule();
         services.AddReportingModule();
         services.AddReviewsModule();

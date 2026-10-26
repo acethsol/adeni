@@ -343,7 +343,14 @@ public sealed class BookingService(
             }
 
             dbContext.Bookings.Add(booking);
-            await dbContext.SaveChangesAsync(cancellationToken);
+            try { await dbContext.SaveChangesAsync(cancellationToken); }
+            catch (DbUpdateConcurrencyException ex) when (availabilityService.IsAdmissionConflict(ex))
+            {
+                // A synchronized busy snapshot changed after admission. Nothing in this save may commit.
+                dbContext.ChangeTracker.Clear();
+                domainEventCollector.TakeAll();
+                return Result.Failure<BookingResponse>(ErrorCodes.SlotUnavailableError());
+            }
             await TenantRealtimeNotifications.PublishPendingBookingsAsync(
                 tenantRealtime,
                 dbContext,

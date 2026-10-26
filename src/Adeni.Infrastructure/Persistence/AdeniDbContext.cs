@@ -122,6 +122,7 @@ public sealed partial class AdeniDbContext(
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ConfigureIntake(modelBuilder);
+        ConfigureCalendar(modelBuilder);
         modelBuilder.HasDefaultSchema("public");
 
         modelBuilder.Entity<Customer>(entity =>

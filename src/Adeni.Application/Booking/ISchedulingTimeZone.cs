@@ -4,9 +4,13 @@ public interface ISchedulingTimeZone
 {
     string TimeZoneId { get; }
 
+    bool IsConfiguredZoneValid => true;
+
     DateTimeOffset ToLocal(DateTimeOffset instant);
 
     DateTimeOffset ToUtc(DateTime date, TimeOnly time);
+
+    bool IsValidLocalTime(DateTime date, TimeOnly time) => true;
 }
 
 public interface ITenantSchedulingTimeZone

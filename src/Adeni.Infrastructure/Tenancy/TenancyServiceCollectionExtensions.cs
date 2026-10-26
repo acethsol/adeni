@@ -9,6 +9,7 @@ public static class TenancyServiceCollectionExtensions
     public static IServiceCollection AddTenancyModule(this IServiceCollection services)
     {
         services.AddScoped<IBusinessOnboardingService, BusinessOnboardingService>();
+        services.AddScoped<IBookingLinkService, BookingLinkService>();
         services.AddScoped<IBusinessLocationService, BusinessLocationService>();
         services.AddScoped<ITenantCustomerService, TenantCustomerService>();
         services.AddScoped<ITenantLocationScopeService, TenantLocationScopeService>();

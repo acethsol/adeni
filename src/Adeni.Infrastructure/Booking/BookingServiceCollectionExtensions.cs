@@ -14,6 +14,8 @@ public static class BookingServiceCollectionExtensions
         services.AddScoped<IStaffService, StaffService>();
         services.AddScoped<ITenantSchedulingTimeZone, TenantSchedulingTimeZone>();
         services.AddScoped<IAvailabilityService, AvailabilityService>();
+        services.AddScoped<Adeni.Application.Tenancy.IBookingPreselectionQuery, BookingPreselectionQuery>();
+        services.AddScoped<Adeni.Application.Calendar.ICalendarBookingQuery, CalendarBookingQuery>();
         services.AddScoped<IBookingService, BookingService>();
         services.AddScoped<IIntakeBookingQuery, IntakeBookingQuery>();
         services.AddScoped<IIntakeServiceQuery, IntakeServiceQuery>();
