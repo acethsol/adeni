@@ -13,7 +13,8 @@ public sealed class AdminCustomerService(
     AdeniDbContext dbContext,
     IAuditLogWriter auditLogWriter,
     ICorrelationContext correlationContext,
-    IIntakeRetentionService? intakeRetention = null) : IAdminCustomerService
+    IIntakeRetentionService? intakeRetention = null,
+    Adeni.Application.Tenancy.ICustomerSegmentsQueryService? segments = null) : IAdminCustomerService
 {
     public async Task<Result<AdminPagedResult<AdminCustomerSummary>>> SearchAsync(
         string? query,
@@ -116,7 +117,8 @@ public sealed class AdminCustomerService(
             customer.Phone,
             customer.CreatedAt,
             customer.ErasureRequestedAt,
-            bookings));
+            bookings,
+            segments is null ? [] : await segments.ExportAsync(customerId, cancellationToken)));
     }
 
     public async Task<Result<Unit>> InitiateErasureAsync(

@@ -18,6 +18,8 @@ public static class TenancyServiceCollectionExtensions
         services.AddScoped<ICustomerProfileContextQuery, CustomerProfileContextQuery>();
         services.AddScoped<ICustomerActivityCursorCodec, CustomerActivityCursorCodec>();
         services.AddScoped<ICustomerProfileQueryService, CustomerProfileQueryService>();
+        services.AddScoped<ICustomerSegmentContextQuery, CustomerSegmentContextQuery>();
+        services.AddScoped<ICustomerSegmentsQueryService, CustomerSegmentsQueryService>();
         return services;
     }
 }

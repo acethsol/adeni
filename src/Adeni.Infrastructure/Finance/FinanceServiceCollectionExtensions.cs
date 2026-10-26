@@ -52,6 +52,7 @@ public static class FinanceServiceCollectionExtensions
         services.AddScoped<IPlatformFeeCalculator, PlatformFeeCalculator>();
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
         services.AddScoped<IBillingDocumentService, BillingDocumentService>();
+        services.AddScoped<Adeni.Application.Reporting.IBillingDocumentPreviewSource, BillingDocumentService>();
         services.AddScoped<PaymentBookingHandler>();
         services.AddScoped<IDomainEventHandler<PaymentCompleted>, PaymentBookingHandler>();
         services.AddScoped<IDomainEventHandler<PaymentFailed>, PaymentBookingHandler>();

@@ -14,6 +14,8 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<IIntakeManagementAccessQuery, IntakeManagementAccessQuery>();
         services.AddScoped<IBusinessMembershipQuery, BusinessMembershipQuery>();
         services.AddScoped<IPortalPermissionService, PortalPermissionService>();
+        services.AddScoped<IPortalTenantAccessQuery, PortalTenantAccessQuery>();
+        services.AddScoped<ICustomerErasureQuery, PortalTenantAccessQuery>();
         services.AddScoped<IStaffAccessService, StaffAccessService>();
         return services;
     }

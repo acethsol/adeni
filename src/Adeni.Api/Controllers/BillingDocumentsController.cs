@@ -3,6 +3,8 @@ namespace Adeni.Api.Controllers;
 using System.Security.Claims;
 using Adeni.Api.Auth;
 using Adeni.Api.Errors;
+using Adeni.Api.Extensions;
+using Microsoft.AspNetCore.RateLimiting;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
 using Adeni.Application.Finance;
@@ -15,7 +17,8 @@ using Microsoft.Extensions.Options;
 [Route("api/v1/finance/documents")]
 public sealed class BillingDocumentsController(
     IBillingDocumentService documents,
-    IOptions<Auth0Options> auth0Options) : ControllerBase
+    IOptions<Auth0Options> auth0Options,
+    Adeni.Application.Reporting.IDocumentPreviewService previews) : ControllerBase
 {
     [HttpGet]
     [RequiresPortalPermission(PortalPermissions.Finance, PortalPermissions.Bookings)]
@@ -67,8 +70,9 @@ public sealed class BillingDocumentsController(
     }
 
     [HttpGet("{id:guid}/pdf")]
+    [EnableRateLimiting(RateLimitingExtensions.PublicReadPolicy)]
     [RequiresPortalPermission(PortalPermissions.Finance, PortalPermissions.Bookings)]
-    public async Task<IActionResult> Pdf(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Pdf(Guid id, CancellationToken cancellationToken, [FromQuery] Guid? locationId = null)
     {
         if (ResolveBusinessAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
         {
@@ -86,6 +90,15 @@ public sealed class BillingDocumentsController(
             return ApiErrorResponseMapper.ToActionResult(
                 Domain.Common.ErrorCodes.PermissionDeniedError(),
                 HttpContext);
+        }
+
+        if (doc.Value.BookingId is not null)
+        {
+            Response.Headers.CacheControl = "private, no-store";
+            Response.Headers["Referrer-Policy"] = "no-referrer";
+            Response.Headers["X-Content-Type-Options"] = "nosniff";
+            var scoped = await previews.GetAsync(tenantId, id, ResolveBusinessAuth0Sub()!, locationId, cancellationToken);
+            return ApiResults.FromResult(scoped, value => File(value.Bytes, "application/pdf", value.FileName), HttpContext);
         }
 
         var pdf = await documents.GetPdfAsync(id, cancellationToken);

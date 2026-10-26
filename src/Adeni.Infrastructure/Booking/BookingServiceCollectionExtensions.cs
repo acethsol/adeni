@@ -21,6 +21,8 @@ public static class BookingServiceCollectionExtensions
         services.AddScoped<IIntakeServiceQuery, IntakeServiceQuery>();
         services.AddScoped<ICustomerPaymentAccessQuery, CustomerPaymentAccessQuery>();
         services.AddScoped<ICustomerBookingActivityQuery, CustomerBookingActivityQuery>();
+        services.AddScoped<ICustomerSegmentFactsQuery, CustomerSegmentFactsQuery>();
+        services.AddScoped<Adeni.Application.Reporting.IDocumentBookingScopeQuery, DocumentBookingScopeQuery>();
         services.AddScoped<ICustomerCommerceBookingQuery, CustomerCommerceBookingQuery>();
         services.AddScoped<IWaitlistService, WaitlistService>();
         services.AddScoped<IQueueService, QueueService>();

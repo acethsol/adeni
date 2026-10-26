@@ -19,7 +19,7 @@ public sealed class BillingDocumentService(
     IReportRenderer reportRenderer,
     IReportPdfBrandingLoader pdfBrandingLoader,
     IAuditLogWriter auditLogWriter,
-    ICorrelationContext correlationContext) : IBillingDocumentService
+    ICorrelationContext correlationContext) : IBillingDocumentService, IBillingDocumentPreviewSource
 {
 
     public async Task<Result<BillingDocumentResponse>> GetAsync(
@@ -309,9 +309,12 @@ public sealed class BillingDocumentService(
         return Result.Success(Map(entity));
     }
 
-    public async Task<Result<byte[]>> GetPdfAsync(
-        Guid documentId,
-        CancellationToken cancellationToken = default)
+    public Task<Result<byte[]>> GetPdfAsync(Guid documentId, CancellationToken cancellationToken = default) =>
+        RenderPdfAsync(documentId, false, cancellationToken);
+
+    public Task<Result<byte[]>> RenderAsync(Guid documentId, CancellationToken ct) => RenderPdfAsync(documentId, true, ct);
+
+    private async Task<Result<byte[]>> RenderPdfAsync(Guid documentId, bool bounded, CancellationToken cancellationToken)
     {
         var entity = await dbContext.BillingDocuments
             .AsNoTracking()
@@ -328,11 +331,18 @@ public sealed class BillingDocumentService(
             return Result.Failure<byte[]>(Error.Conflict("Voided documents cannot be downloaded."));
         }
 
+        if (bounded && (entity.Lines.Count > 100 || entity.Lines.Any(x => x.Description.Length > 2000)
+            || entity.BusinessNameSnapshot.Length > 300 || entity.CustomerNameSnapshot?.Length > 300 || entity.MethodLabel?.Length > 300))
+            return Result.Failure<byte[]>(Error.Validation("Document exceeds private rendering input limits."));
+
         var branding = await pdfBrandingLoader.LoadForTenantAsync(
             entity.TenantId,
             entity.BusinessNameSnapshot,
             cancellationToken);
 
+        if (bounded && branding.BusinessLogoBytes?.Length > 5 * 1024 * 1024)
+            return Result.Failure<byte[]>(Error.Validation("Business logo exceeds private rendering input limits."));
+        cancellationToken.ThrowIfCancellationRequested();
         return await reportRenderer.RenderDocumentAsync(
             ToReportKind(entity.Kind),
             ToReportData(entity, branding.BusinessLogoBytes),

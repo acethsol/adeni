@@ -10,6 +10,11 @@ public sealed class TenantLocationScopeService(
     AdeniDbContext dbContext,
     IEntitlementsService entitlementsService) : ITenantLocationScopeService
 {
+    // Inactive branches matter: one currently active branch does not prove business-wide historical scope.
+    public async Task<bool> IsSoleHistoricalLocationAsync(Guid tenantId, Guid locationId, CancellationToken ct) =>
+        await dbContext.BusinessLocations.CountAsync(x => x.TenantId == tenantId, ct) == 1
+        && await dbContext.BusinessLocations.AnyAsync(x => x.TenantId == tenantId && x.Id == locationId && x.IsActive, ct);
+
     public async Task<Result<Guid?>> ResolveListLocationAsync(Guid tenantId, Guid? locationId, CancellationToken cancellationToken = default)
     {
         var tenant = await dbContext.Tenants.AsNoTracking()
