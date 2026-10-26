@@ -106,16 +106,18 @@ export class DiscoveryApi {
     return discoveryResponseSchema.parse(await response.json());
   }
 
-  async getBusinessProfile(slug: string): Promise<PublicBusinessProfile> {
+  async getBusinessProfile(slug: string, signal?: AbortSignal): Promise<PublicBusinessProfile> {
     const response = await this.client.request(
       `/api/v1/businesses/${encodeURIComponent(slug)}`,
+      { signal },
     );
     return publicBusinessProfileSchema.parse(await response.json());
   }
 
-  async getBusinessServiceCatalog(slug: string): Promise<ServiceOfferingsResponse> {
+  async getBusinessServiceCatalog(slug: string, signal?: AbortSignal): Promise<ServiceOfferingsResponse> {
     const response = await this.client.request(
       `/api/v1/businesses/${encodeURIComponent(slug)}/services`,
+      { signal },
     );
     return serviceOfferingsResponseSchema.parse(await response.json());
   }
@@ -123,6 +125,7 @@ export class DiscoveryApi {
   async getBusinessStaff(
     slug: string,
     params?: { serviceId?: string },
+    signal?: AbortSignal,
   ): Promise<PublicStaffMember[]> {
     const query = new URLSearchParams();
     if (params?.serviceId) {
@@ -131,6 +134,7 @@ export class DiscoveryApi {
     const qs = query.toString();
     const response = await this.client.request(
       `/api/v1/businesses/${encodeURIComponent(slug)}/staff${qs ? `?${qs}` : ""}`,
+      { signal },
     );
     return publicStaffMembersResponseSchema.parse(await response.json()).items;
   }
@@ -145,6 +149,7 @@ export class DiscoveryApi {
       serviceIds?: string[];
       guestCount?: number;
     },
+    signal?: AbortSignal,
   ): Promise<AvailableSlot[]> {
     const query = new URLSearchParams({
       serviceId: params.serviceId,
@@ -162,6 +167,7 @@ export class DiscoveryApi {
     }
     const response = await this.client.request(
       `/api/v1/businesses/${encodeURIComponent(slug)}/slots?${query.toString()}`,
+      { signal },
     );
     const payload = availableSlotsResponseSchema.parse(await response.json());
     return payload.items;
@@ -171,6 +177,7 @@ export class DiscoveryApi {
     slug: string,
     page = 1,
     pageSize = 10,
+    signal?: AbortSignal,
   ): Promise<PublicReviewsResponse> {
     const query = new URLSearchParams({
       page: String(page),
@@ -178,6 +185,7 @@ export class DiscoveryApi {
     });
     const response = await this.client.request(
       `/api/v1/businesses/${encodeURIComponent(slug)}/reviews?${query.toString()}`,
+      { signal },
     );
     return publicReviewsResponseSchema.parse(await response.json());
   }

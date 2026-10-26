@@ -4,6 +4,7 @@ import { enOverlay } from "./overlay-en";
 import { enErrorMessages } from "../errors";
 
 const enBase: Messages = {
+  calendarUi: {"title": "Calendar sync", "bookWith": "Book with Adeni", "invalidSelection": "This booking selection is unavailable. Choose a service and practitioner again."},
   nav: {
     discover: "Discover",
     bookings: "Bookings",

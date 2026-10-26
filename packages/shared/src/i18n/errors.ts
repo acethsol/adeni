@@ -1,6 +1,7 @@
 import type { MessageTree } from "./types";
 
 export const enErrorMessages: MessageTree = {
+  calendar: { unavailable: "Calendar integration is unavailable. Check configuration or reconnect, then retry.", authorization_invalid: "The calendar connection attempt expired or could not be verified. Start again from Adeni." },
   intake: {"validation": "Check the intake form fields.", "conflict": "The form changed or was already submitted. Refresh before continuing.", "submission_closed": "This booking is no longer open for intake submission."},
   subscription: {
     booking_limit_reached:
@@ -97,6 +98,7 @@ export const enErrorMessages: MessageTree = {
 };
 
 export const frErrorMessages: MessageTree = {
+  calendar: { unavailable: "L’intégration de calendrier est indisponible. Vérifiez la configuration ou reconnectez le compte.", authorization_invalid: "La connexion a expiré ou n’a pas pu être vérifiée. Recommencez depuis Adeni." },
   intake: {"validation": "Vérifiez les champs du formulaire.", "conflict": "Le formulaire a changé ou a déjà été envoyé. Actualisez avant de continuer.", "submission_closed": "Cette réservation ne permet plus d’envoyer ce formulaire."},
   subscription: {
     booking_limit_reached:

@@ -1,6 +1,6 @@
 import { RouterLink } from "@angular/router";
 import { CurrencyPipe } from "@angular/common";
-import { Component, computed, inject, input, signal } from "@angular/core";
+import { Component, computed, inject, input, signal, DestroyRef } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import type {
   BookingResponse,
@@ -8,7 +8,7 @@ import type {
   ServiceMenuGroup,
   ServiceOffering,
 } from "@adeni/shared";
-import { resolvePaymentCheckoutUrl, t } from "@adeni/shared";
+import { resolvePaymentCheckoutUrl, t, parseBookingPreselection, bookingPreselectionQuery } from "@adeni/shared";
 import { AdeniApiError } from "@adeni/api-client";
 import { AdeniFeedbackService, AdeniLocaleService, AdeniWizardComponent, type AdeniWizardStep, injectAdeniTranslate, injectAdeniApiError } from "@adeni/ui";
 import { CustomerApiService } from "../core/services/customer-api.service";
@@ -54,6 +54,21 @@ export class BookingPanelComponent {
   readonly requirePolicyAcceptance = input(false);
   readonly hasPolicies = input(false);
   readonly waitlistEnabled = input(true);
+
+  private staffAbort = new AbortController();
+  private slotsAbort = new AbortController();
+  private preferredPractitioner: string | null = null;
+  constructor() { inject(DestroyRef).onDestroy(() => this.cancelSelectionRequests()); }
+  cancelSelectionRequests(): void { this.staffAbort.abort(); this.slotsAbort.abort(); }
+  resetPreselection(): void { this.preferredPractitioner = null; this.backToServices(); this.error.set(null); }
+  applyPreselection(serviceId: string | null, practitionerId: string | null): void {
+    this.preferredPractitioner = practitionerId;
+    if (serviceId) {
+      const service = this.services().find(x => x.id === serviceId && x.isActive && !x.isAddOn);
+      if (!service) { this.error.set(this.tr("calendarUi.invalidSelection")); return; }
+      this.selectService(service);
+    }
+  }
 
   readonly locale = this.localeService.locale;
   readonly step = signal<Step>("service");
@@ -319,6 +334,7 @@ export class BookingPanelComponent {
       return;
     }
 
+    this.staffAbort.abort(); this.staffAbort = new AbortController(); const signal = this.staffAbort.signal;
     this.addingAnother.set(false);
     this.selectedStaffId.set(null);
     this.selectedStaffName.set(null);
@@ -329,18 +345,27 @@ export class BookingPanelComponent {
     try {
       const staff = await this.api.createPublicClient().getBusinessStaff(this.slug(), {
         serviceId: primary.id,
-      });
+      }, signal);
+      if (signal.aborted) return;
       this.staffOptions.set(staff);
+      if (this.preferredPractitioner) {
+        const preferred = staff.find(x => x.id === this.preferredPractitioner);
+        if (!preferred) { this.error.set(this.tr("calendarUi.invalidSelection")); return; }
+        this.selectStaff(preferred.id, preferred.displayName);
+        this.preferredPractitioner = null;
+        return;
+      }
       if (staff.length > 0) {
         this.step.set("staff");
       } else {
         this.step.set("guests");
       }
     } catch {
+      if (signal.aborted) return;
       this.error.set(this.label("business.booking.staffLoadFailed"));
       this.step.set("guests");
     } finally {
-      this.loadingStaff.set(false);
+      if (!signal.aborted) this.loadingStaff.set(false);
     }
   }
 
@@ -363,6 +388,7 @@ export class BookingPanelComponent {
       return;
     }
 
+    this.slotsAbort.abort(); this.slotsAbort = new AbortController(); const signal = this.slotsAbort.signal;
     this.loadingSlots.set(true);
     this.error.set(null);
     this.slots.set([]);
@@ -382,14 +408,16 @@ export class BookingPanelComponent {
         staffMemberId: staffMemberId ?? undefined,
         serviceIds,
         guestCount: this.guestCount(),
-      });
+      }, signal);
+      if (signal.aborted) return;
       const fresh = items.filter((slot) => new Date(slot.startAt).getTime() > Date.now());
       this.slots.set(fresh);
       this.step.set("slot");
     } catch (caught) {
+      if (signal.aborted) return;
       this.error.set(this.apiErr(caught, "discover.shared.couldNotLoadAvailableTimes"));
     } finally {
-      this.loadingSlots.set(false);
+      if (!signal.aborted) this.loadingSlots.set(false);
     }
   }
 
@@ -533,10 +561,14 @@ export class BookingPanelComponent {
   }
 
   signIn(): void {
-    void this.api.login(window.location.pathname);
+    let context = "";
+    try { context = bookingPreselectionQuery(parseBookingPreselection(new URLSearchParams(window.location.search))); } catch { /* discard unsafe return parameters */ }
+    void this.api.login(window.location.pathname + context + "#book");
   }
 
   backToServices(): void {
+    this.cancelSelectionRequests();
+    this.loadingStaff.set(false); this.loadingSlots.set(false);
     this.step.set("service");
     this.selectedServices.set([]);
     this.addingAnother.set(false);
