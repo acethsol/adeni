@@ -47,3 +47,5 @@ export * from "./intake";
 
 export type { CalendarProvider, CalendarConnection, CalendarSelection, ExternalCalendar, CalendarConflict, BookingLink, BookingLinkDestination } from "./calendar";
 export { parseBookingPreselection, bookingPreselectionQuery, type BookingPreselection } from "./booking-preselection";
+
+export * from "./customer-segments";

@@ -502,6 +502,7 @@ export const frCatalog: MessageTree = {
     },
   },
   common: {
+    preview: "Aperçu",
     account: "Compte",
     actions: "Actions",
     addMarket: "Ajouter un marché",

@@ -58,6 +58,7 @@
                 <span>{{ customerInitials(row) }}</span>
               </div>
               <strong class="org-name">{{ row.displayName }}</strong>
+              @defer (on viewport) { <app-customer-segment-chips [value]="segments.rows().get(row.id)" /> } @placeholder { <span></span> }
               <span class="org-role">{{ row.phoneMasked || tr('common.noPhoneFile') }}</span>
               @if (row.email) {
                 <span class="org-title">{{ row.email }}</span>
@@ -108,6 +109,7 @@
                 [initials]="customerInitials(row)"
                 avatarTone="neutral"
               />
+              @defer (on viewport) { <app-customer-segment-chips [value]="segments.rows().get(row.id)" /> } @placeholder { <span></span> }
             </ng-template>
             <ng-template adeniDataTableCell="email" let-row>
               <span class="adeni-data-table-text">{{ row.email || "—" }}</span>

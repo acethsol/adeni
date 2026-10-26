@@ -61,9 +61,10 @@ export class FinanceApi {
     return `${this.client.baseUrl}/api/v1/finance/documents/${encodeURIComponent(documentId)}/pdf`;
   }
 
-  async downloadBillingDocumentPdf(documentId: string): Promise<Blob> {
+  async downloadBillingDocumentPdf(documentId: string, locationId?: string, signal?: AbortSignal): Promise<Blob> {
     const response = await this.client.request(
-      `/api/v1/finance/documents/${encodeURIComponent(documentId)}/pdf`,
+      `/api/v1/finance/documents/${encodeURIComponent(documentId)}/pdf${locationId ? `?locationId=${encodeURIComponent(locationId)}` : ""}`,
+      { signal, cache: "no-store" },
     );
     return response.blob();
   }

@@ -1,3 +1,4 @@
+import { InsightsApi } from "./insights/insights-api";
 import { CalendarApi } from "./calendar/calendar-api";
 import { IntakeApi } from "./intake/intake-api";
 export { AdeniApiError, type AdeniApiClientOptions } from "./core/api-transport";
@@ -39,6 +40,7 @@ export class AdeniApiClient extends ApiTransport {
   private readonly queue = new QueueApi(this.context);
   private readonly customers = new CustomersApi(this.context);
   readonly calendar = new CalendarApi(this.context);
+  readonly insights = new InsightsApi(this.context);
   readonly intake = new IntakeApi(this.context);
   private readonly staff = new StaffApi(this.context);
   private readonly messaging = new MessagingApi(this.context);

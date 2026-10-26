@@ -1,3 +1,4 @@
+import { CustomerSegmentsPanelComponent } from "./customer-segments-panel.component";
 import { Component, effect, inject, input } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import { formatPrice, formatSlotTime, type CustomerActivityItem } from "@adeni/shared";
@@ -8,7 +9,7 @@ import { CustomerProfileDataService } from "./customer-profile-data.service";
 @Component({
   selector: "app-customer-profile-panel",
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, CustomerSegmentsPanelComponent],
   providers: [CustomerProfileDataService],
   templateUrl: "./customer-profile-panel.component.html",
   styles: `:host { display: block; } section { padding: 1rem; margin-block: 1rem; border: 1px solid var(--border); border-radius: .5rem; }

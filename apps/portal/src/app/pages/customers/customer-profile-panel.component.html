@@ -8,6 +8,7 @@
     @if (data.profile(); as profile) {
       @if (overviewVisible()) {
         <h2>{{ tr('customerProfile.title') }}</h2>
+        @defer (on idle) { <app-customer-segments-panel [customerId]="customerId()" [locationId]="locationId()" /> }
         <dl>
           @if (profile.visitSummary; as visits) {
             <div><dt>{{ tr('customerProfile.completedVisits') }}</dt><dd>{{ visits.completedBookings + visits.completedWalkIns }}</dd></div>

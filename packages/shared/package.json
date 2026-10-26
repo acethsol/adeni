@@ -8,7 +8,9 @@
   "exports": {
     ".": "./src/index.ts",
     "./calendar": "./src/calendar.ts",
-    "./calendar-copy": "./src/calendar-copy.ts"
+    "./calendar-copy": "./src/calendar-copy.ts",
+    "./customer-segments": "./src/customer-segments.ts",
+    "./customer-insights-copy": "./src/customer-insights-copy.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

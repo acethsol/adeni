@@ -1,3 +1,5 @@
+import { CustomerSegmentsDataService } from "./customer-segments-data.service";
+import { CustomerSegmentChipsComponent } from "./customer-segment-chips.component";
 import { Component, computed, inject, OnDestroy, OnInit, signal } from "@angular/core";
 import { Subscription } from "rxjs";
 import { RouterLink } from "@angular/router";
@@ -61,7 +63,9 @@ export type CustomerAccountFilter = "all" | "discover" | "walk_in";
     AdeniTablePersonCellComponent,
     AdeniPillComponent,
     RouterLink,
+    CustomerSegmentChipsComponent,
   ],
+  providers: [CustomerSegmentsDataService],
   templateUrl: "./customers.component.html",
   styleUrl: "./customers.component.scss",
 })
@@ -71,6 +75,8 @@ export class CustomersComponent implements OnInit, OnDestroy {
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly activeLocation = inject(PortalActiveLocationService);
+  readonly segments = inject(CustomerSegmentsDataService);
+  private loadGeneration = 0;
   private branchSub: Subscription | null = null;
 
   readonly loading = signal(true);
@@ -144,6 +150,9 @@ export class CustomersComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.branchSub?.unsubscribe();
+    this.loadGeneration++;
+    this.segments.cancel();
+    if (this.searchDebounce) clearTimeout(this.searchDebounce);
   }
 
   onSearchChange(value: string): void {
@@ -207,6 +216,8 @@ export class CustomersComponent implements OnInit, OnDestroy {
   }
 
   async load(): Promise<void> {
+    const generation = ++this.loadGeneration;
+    this.segments.cancel();
     this.loading.set(true);
     this.error.set(null);
     try {
@@ -236,18 +247,22 @@ export class CustomersComponent implements OnInit, OnDestroy {
             sort: listSortParamsFromColumn(this.sortColumnId(), this.sortDirection()),
             locationId: this.activeLocation.tenantApiLocationId(entitlements),
           });
+          if (generation !== this.loadGeneration) return;
           this.items.set(result.items);
           this.totalCount.set(result.totalCount);
           this.entitlements.set(entitlements);
+          if (entitlements?.customerRetentionAnalytics && entitlements.basicAnalytics)
+            void this.segments.load(result.items.map(row => row.id), this.activeLocation.tenantApiLocationId(entitlements));
         });
       });
     } catch (caught) {
+      if (generation !== this.loadGeneration) return;
       this.error.set(this.apiErr(caught, "portal.customers.couldNotLoadCustomersTry"));
       this.feedback.error(this.apiErr(caught, "portal.customers.couldNotLoadCustomers"));
       this.items.set([]);
       this.totalCount.set(0);
     } finally {
-      this.loading.set(false);
+      if (generation === this.loadGeneration) this.loading.set(false);
     }
   }
 
