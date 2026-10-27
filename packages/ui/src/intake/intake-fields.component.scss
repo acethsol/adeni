@@ -1,0 +1,77 @@
+@use "staff-layout" as *;
+
+:host {
+  display: block;
+}
+
+.adeni-intake-fields {
+  display: flex;
+  flex-direction: column;
+}
+
+.field__required {
+  margin-inline-start: 0.15em;
+  color: var(--cds-support-error, #da1e28);
+  font-weight: 650;
+}
+
+.field__help {
+  margin: calc(-1 * var(--cds-spacing-02)) 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.field__value {
+  margin: 0;
+  padding: var(--cds-spacing-03) var(--cds-spacing-04);
+  min-height: 2.5rem;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--cds-border-strong, var(--border));
+  background: color-mix(in srgb, var(--text) 3%, var(--cds-field-01, var(--surface)));
+  font-size: var(--cds-body-compact-01-size, 0.875rem);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.field__choice-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cds-spacing-03);
+}
+
+.field__choice {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--cds-spacing-03);
+  font-size: var(--cds-body-compact-01-size, 0.875rem);
+  font-weight: 400;
+  color: var(--text);
+  cursor: pointer;
+
+  input {
+    margin-top: 0.15rem;
+  }
+}
+
+.field--consent {
+  padding: var(--cds-spacing-05);
+  border: 1px solid color-mix(in srgb, var(--interactive, #7f56ff) 22%, var(--border));
+  background: color-mix(in srgb, var(--interactive, #7f56ff) 4%, var(--surface));
+}
+
+.field__consent-label {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--cds-spacing-03);
+  font-size: var(--cds-body-compact-01-size, 0.875rem);
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+
+  input {
+    margin-top: 0.2rem;
+  }
+}

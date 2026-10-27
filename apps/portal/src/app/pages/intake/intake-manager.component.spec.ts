@@ -62,7 +62,7 @@ describe('Intake field presentation',()=>{
  });
  it('renders disabled controls in preview mode without showing unanswered copy',()=>{
   const fixture=TestBed.createComponent(IntakeFieldsComponent);fixture.componentRef.setInput('definition',definition);fixture.componentRef.setInput('preview',true);fixture.detectChanges();
-  const fieldset=fixture.nativeElement.querySelector('fieldset') as HTMLFieldSetElement;const input=fixture.nativeElement.querySelector('input[type=text]') as HTMLInputElement;
-  expect(fieldset.disabled).toBeTrue();expect(input).not.toBeNull();expect(input.value).toBe('');expect(fixture.nativeElement.textContent).not.toContain('Not answered');
+  const input=fixture.nativeElement.querySelector('input[type=text]') as HTMLInputElement;const label=fixture.nativeElement.querySelector('.field label') as HTMLLabelElement;
+  expect(input.disabled).toBeTrue();expect(input).not.toBeNull();expect(input.value).toBe('');expect(label.textContent).toContain('Preference');expect(fixture.nativeElement.textContent).not.toContain('Not answered');
  });
 });

@@ -251,6 +251,10 @@ $purple: var(--adeni-purple, #7f56ff);
   padding: var(--cds-spacing-05);
   border: 1px solid color-mix(in srgb, $teal 18%, var(--border));
   background: var(--surface);
+
+  adeni-intake-fields {
+    margin-top: var(--cds-spacing-03);
+  }
 }
 
 .preview-surface__title {
