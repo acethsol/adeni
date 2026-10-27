@@ -11,7 +11,7 @@ Snapshot commit when removed: see archive repo `README.md` (from `adeni` @ `d3b1
 
 ## Why remove from main repo?
 
-- Avoids agents and contributors defaulting to `apps/web` / `apps/mobile`
+- Prevents new work on the archived `apps/web` (Next.js) and former `apps/mobile` (Expo) implementations. The current `apps/mobile` path has been reused for a native Flutter business skeleton; it is not Expo or an active web client.
 - Keeps `npm install` and CI focused on Angular + .NET
 - Preserves BFF and UI patterns for parity checks during migration
 

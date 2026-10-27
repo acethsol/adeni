@@ -50,11 +50,11 @@ public sealed class TenantAccessMiddleware(
             var auth0Sub = context.User.FindFirst("sub")?.Value;
             if (!string.IsNullOrWhiteSpace(auth0Sub))
             {
-                var businessUser = await dbContext.BusinessUsers
+                tenantAllowed = await dbContext.BusinessUsers
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(b => b.Auth0Sub == auth0Sub);
-
-                tenantAllowed = businessUser is not null && businessUser.TenantId == requestedTenantGuid;
+                    .AnyAsync(
+                        b => b.Auth0Sub == auth0Sub && b.TenantId == requestedTenantGuid,
+                        context.RequestAborted);
             }
         }
 

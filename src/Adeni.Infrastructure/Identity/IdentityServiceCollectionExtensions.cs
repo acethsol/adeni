@@ -8,6 +8,7 @@ public static class IdentityServiceCollectionExtensions
     public static IServiceCollection AddIdentityModule(this IServiceCollection services)
     {
         services.AddScoped<IAuthSyncService, AuthSyncService>();
+        services.AddScoped<IBusinessMembershipQuery, BusinessMembershipQuery>();
         services.AddScoped<IPortalPermissionService, PortalPermissionService>();
         services.AddScoped<IStaffAccessService, StaffAccessService>();
         return services;

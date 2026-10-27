@@ -8,7 +8,7 @@ import {
 
 const starterEntitlements = {
   maxLocations: 1,
-  maxPractitioners: 1,
+  maxPractitioners: 3,
   messaging: false,
   waitlist: false,
   advancedAnalytics: false,

@@ -1,16 +1,22 @@
 import { describe, expect, it } from "vitest";
 import { mergeTenantEntitlements } from "./entitlements";
-import { tenantEntitlementsFromPlan } from "./test-tenant-entitlements";
+import { PLAN_ENTITLEMENTS } from "./plan-entitlements";
 import {
   buildAdminReportExportMenuItems,
   buildReportExportMenuItems,
   salesSummaryPdfMenuOption,
 } from "./report-export-menu";
 
+const tenantPlans = {
+  starter: { ...PLAN_ENTITLEMENTS.starter, multiLocation: false },
+  professional: { ...PLAN_ENTITLEMENTS.professional, multiLocation: false },
+  business: { ...PLAN_ENTITLEMENTS.business, multiLocation: true },
+};
+
 describe("buildReportExportMenuItems", () => {
   it("enables CSV for starter entitlements and omits PDF when not requested", () => {
     const items = buildReportExportMenuItems({
-      entitlements: tenantEntitlementsFromPlan("starter"),
+      entitlements: tenantPlans.starter,
       xlsx: true,
     });
     expect(items.map((i) => i.format)).toEqual(["csv", "xlsx"]);
@@ -27,7 +33,7 @@ describe("buildReportExportMenuItems", () => {
 
   it("enables CSV and Excel for professional entitlements", () => {
     const items = buildReportExportMenuItems({
-      entitlements: tenantEntitlementsFromPlan("professional"),
+      entitlements: tenantPlans.professional,
       xlsx: true,
     });
     expect(items.every((i) => !i.disabled)).toBe(true);
@@ -36,11 +42,11 @@ describe("buildReportExportMenuItems", () => {
 
 describe("salesSummaryPdfMenuOption", () => {
   it("requires Pro for PDF when CSV tier is entitled", () => {
-    expect(salesSummaryPdfMenuOption(tenantEntitlementsFromPlan("starter"))).toEqual({
+    expect(salesSummaryPdfMenuOption(tenantPlans.starter)).toEqual({
       disabled: true,
       hint: "Pro plan required for sales PDF",
     });
-    expect(salesSummaryPdfMenuOption(tenantEntitlementsFromPlan("professional"))).toEqual({
+    expect(salesSummaryPdfMenuOption(tenantPlans.professional)).toEqual({
       disabled: false,
     });
   });
@@ -49,13 +55,13 @@ describe("salesSummaryPdfMenuOption", () => {
 describe("compensation-style export menu", () => {
   it("requires Pro for CSV when csvRequiresAdvancedReports is set", () => {
     const starterItems = buildReportExportMenuItems({
-      entitlements: tenantEntitlementsFromPlan("starter"),
+      entitlements: tenantPlans.starter,
       xlsx: true,
       csvRequiresAdvancedReports: true,
     });
     expect(starterItems.find((i) => i.format === "csv")?.disabled).toBe(true);
     const proItems = buildReportExportMenuItems({
-      entitlements: tenantEntitlementsFromPlan("professional"),
+      entitlements: tenantPlans.professional,
       xlsx: true,
       csvRequiresAdvancedReports: true,
     });
@@ -75,9 +81,9 @@ describe("buildAdminReportExportMenuItems", () => {
 describe("mergeTenantEntitlements", () => {
   it("ORs excelExport from plan and usage when profile omits Excel", () => {
     const merged = mergeTenantEntitlements(
-      tenantEntitlementsFromPlan("professional"),
-      { ...tenantEntitlementsFromPlan("starter"), excelExport: false },
-      { ...tenantEntitlementsFromPlan("starter"), excelExport: undefined },
+      tenantPlans.professional,
+      { ...tenantPlans.starter, excelExport: false },
+      { ...tenantPlans.starter, excelExport: undefined },
     );
     expect(merged?.excelExport).toBe(true);
     expect(merged?.basicExports).not.toBe(false);

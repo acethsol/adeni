@@ -47,6 +47,7 @@ public static class RateLimitingExtensions
         int permitLimit,
         TimeSpan window)
     {
+        // Use the connection address normalized by trusted forwarded-header middleware, never raw headers.
         var partitionKey = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         return RateLimitPartition.GetFixedWindowLimiter(
             partitionKey,

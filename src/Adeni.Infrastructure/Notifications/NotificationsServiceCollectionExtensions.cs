@@ -76,6 +76,11 @@ public static class NotificationsServiceCollectionExtensions
             return sp.GetRequiredService<LoggingEmailNotificationProvider>();
         }
 
+        if (env.IsStaging() || env.IsProduction())
+        {
+            throw new InvalidOperationException("Notifications:Resend:ApiKey must be set in Staging/Production; logging-only email delivery is not allowed.");
+        }
+
         return sp.GetRequiredService<LoggingEmailNotificationProvider>();
     }
 
@@ -92,6 +97,11 @@ public static class NotificationsServiceCollectionExtensions
         if (env.IsDevelopment() || env.EnvironmentName == "Testing")
         {
             return sp.GetRequiredService<LoggingSmsNotificationProvider>();
+        }
+
+        if (env.IsStaging() || env.IsProduction())
+        {
+            throw new InvalidOperationException("Notifications:Twilio:AccountSid and Notifications:Twilio:AuthToken must be set in Staging/Production; logging-only SMS delivery is not allowed.");
         }
 
         return sp.GetRequiredService<LoggingSmsNotificationProvider>();

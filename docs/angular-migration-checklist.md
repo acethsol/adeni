@@ -25,11 +25,12 @@ apps/
   discover/         Angular SSR — public SEO, booking, Ask Adeni UI
   portal/           Angular — business role
   admin/            Angular — admin role only
-  web/              Next.js — legacy until strangler complete
-  mobile/           Expo — maintenance until Flutter
+  mobile/           Native Flutter business skeleton; consumer mobile is the product priority
 packages/
-  shared/           Keep until TS types duplicated or imported by codegen only
-  api-client/       Reference for parity; Angular may use generated client
+  shared/           Shared contracts, schemas, permissions, capabilities and entitlement types
+  api-client/       Typed HTTP client; compatible root facade over internal domains
+  ui/               Reusable Angular UI
+  brand/            Brand identity/assets
 ```
 
 | Step | Done |
@@ -182,7 +183,7 @@ Every handler that existed under archived Next `app/api/**` must end as **A**, *
 | API check-in / check-out (front desk) | ☐ |
 | Consumer MVP: discover browse, book, account (after web GA) | ☐ |
 | Deep links to `/businesses/{slug}` on web until parity | ☐ |
-| Store release + deprecate Expo | ☐ |
+| Native Flutter store release / migration from archived Expo store client | ☐ |
 
 ---
 

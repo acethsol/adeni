@@ -5,6 +5,7 @@ using System.Text;
 using Adeni.Application.Finance;
 using Adeni.Application.Reporting;
 using ClosedXML.Excel;
+using Adeni.Infrastructure.Serialization;
 
 internal static class ReportSpreadsheetBuilder
 {
@@ -106,23 +107,23 @@ internal static class ReportSpreadsheetBuilder
         builder.AppendLine("BookingId,StartAt,EndAt,Status,Service,Customer,Staff,Total,Currency");
         foreach (var row in rows)
         {
-            builder.Append(Csv(row.BookingId.ToString()));
+            builder.Append(CsvField.Format(row.BookingId.ToString()));
             builder.Append(',');
-            builder.Append(Csv(row.StartAt.ToString("O", CultureInfo.InvariantCulture)));
+            builder.Append(CsvField.Format(row.StartAt.ToString("O", CultureInfo.InvariantCulture)));
             builder.Append(',');
-            builder.Append(Csv(row.EndAt.ToString("O", CultureInfo.InvariantCulture)));
+            builder.Append(CsvField.Format(row.EndAt.ToString("O", CultureInfo.InvariantCulture)));
             builder.Append(',');
-            builder.Append(Csv(row.Status));
+            builder.Append(CsvField.Format(row.Status));
             builder.Append(',');
-            builder.Append(Csv(row.ServiceName));
+            builder.Append(CsvField.Format(row.ServiceName));
             builder.Append(',');
-            builder.Append(Csv(row.CustomerName));
+            builder.Append(CsvField.Format(row.CustomerName));
             builder.Append(',');
-            builder.Append(Csv(row.StaffDisplayName));
+            builder.Append(CsvField.Format(row.StaffDisplayName));
             builder.Append(',');
-            builder.Append(Csv(row.TotalAmount?.ToString(CultureInfo.InvariantCulture)));
+            builder.Append(CsvField.Format(row.TotalAmount));
             builder.Append(',');
-            builder.AppendLine(Csv(row.Currency));
+            builder.AppendLine(CsvField.Format(row.Currency));
         }
 
         return Encoding.UTF8.GetBytes(builder.ToString());
@@ -134,13 +135,13 @@ internal static class ReportSpreadsheetBuilder
         builder.AppendLine("DisplayName,RoleKey,IsActive,PortalAccess,ServiceCount,SortOrder");
         foreach (var row in rows)
         {
-            builder.Append(Csv(row.DisplayName));
+            builder.Append(CsvField.Format(row.DisplayName));
             builder.Append(',');
-            builder.Append(Csv(row.RoleKey));
+            builder.Append(CsvField.Format(row.RoleKey));
             builder.Append(',');
             builder.Append(row.IsActive ? "true" : "false");
             builder.Append(',');
-            builder.Append(Csv(row.PortalAccessStatus));
+            builder.Append(CsvField.Format(row.PortalAccessStatus));
             builder.Append(',');
             builder.Append(row.ServiceCount.ToString(CultureInfo.InvariantCulture));
             builder.Append(',');
@@ -158,13 +159,13 @@ internal static class ReportSpreadsheetBuilder
         {
             builder.Append(row.Id);
             builder.Append(',');
-            builder.Append(Csv(row.DisplayName));
+            builder.Append(CsvField.Format(row.DisplayName));
             builder.Append(',');
-            builder.Append(Csv(row.PhoneMasked));
+            builder.Append(CsvField.Format(row.PhoneMasked));
             builder.Append(',');
-            builder.Append(Csv(row.Email));
+            builder.Append(CsvField.Format(row.Email));
             builder.Append(',');
-            builder.Append(Csv(row.ProfileType));
+            builder.Append(CsvField.Format(row.ProfileType));
             builder.Append(',');
             builder.Append(row.LastSeenAt.ToString("O", CultureInfo.InvariantCulture));
             builder.Append(',');
@@ -221,15 +222,15 @@ internal static class ReportSpreadsheetBuilder
         builder.AppendLine("Slug,Name,MarketId,AddressLine,Area,IsPrimary,IsActive");
         foreach (var row in rows)
         {
-            builder.Append(Csv(row.Slug));
+            builder.Append(CsvField.Format(row.Slug));
             builder.Append(',');
-            builder.Append(Csv(row.Name));
+            builder.Append(CsvField.Format(row.Name));
             builder.Append(',');
-            builder.Append(Csv(row.MarketId));
+            builder.Append(CsvField.Format(row.MarketId));
             builder.Append(',');
-            builder.Append(Csv(row.AddressLine));
+            builder.Append(CsvField.Format(row.AddressLine));
             builder.Append(',');
-            builder.Append(Csv(row.Area));
+            builder.Append(CsvField.Format(row.Area));
             builder.Append(',');
             builder.Append(row.IsPrimary ? "true" : "false");
             builder.Append(',');
@@ -245,17 +246,17 @@ internal static class ReportSpreadsheetBuilder
         builder.AppendLine("Name,Description,PriceAmount,Currency,DurationMinutes,CategorySlug,IsActive,IsAddOn,SortOrder");
         foreach (var row in rows)
         {
-            builder.Append(Csv(row.Name));
+            builder.Append(CsvField.Format(row.Name));
             builder.Append(',');
-            builder.Append(Csv(row.Description));
+            builder.Append(CsvField.Format(row.Description));
             builder.Append(',');
             builder.Append(row.PriceAmount.ToString(CultureInfo.InvariantCulture));
             builder.Append(',');
-            builder.Append(Csv(row.Currency));
+            builder.Append(CsvField.Format(row.Currency));
             builder.Append(',');
             builder.Append(row.DurationMinutes.ToString(CultureInfo.InvariantCulture));
             builder.Append(',');
-            builder.Append(Csv(row.CategorySlug));
+            builder.Append(CsvField.Format(row.CategorySlug));
             builder.Append(',');
             builder.Append(row.IsActive ? "true" : "false");
             builder.Append(',');
@@ -320,15 +321,15 @@ internal static class ReportSpreadsheetBuilder
         {
             builder.Append(row.TenantId);
             builder.Append(',');
-            builder.Append(Csv(row.Name));
+            builder.Append(CsvField.Format(row.Name));
             builder.Append(',');
-            builder.Append(Csv(row.Slug));
+            builder.Append(CsvField.Format(row.Slug));
             builder.Append(',');
-            builder.Append(Csv(row.Status));
+            builder.Append(CsvField.Format(row.Status));
             builder.Append(',');
-            builder.Append(Csv(row.SubscriptionSku));
+            builder.Append(CsvField.Format(row.SubscriptionSku));
             builder.Append(',');
-            builder.Append(Csv(row.BillingStatus));
+            builder.Append(CsvField.Format(row.BillingStatus));
             builder.Append(',');
             builder.Append(row.TrialEndsAt?.ToString("O", CultureInfo.InvariantCulture) ?? string.Empty);
             builder.Append(',');
@@ -363,11 +364,11 @@ internal static class ReportSpreadsheetBuilder
         {
             builder.Append(row.TenantId);
             builder.Append(',');
-            builder.Append(Csv(row.Name));
+            builder.Append(CsvField.Format(row.Name));
             builder.Append(',');
-            builder.Append(Csv(row.Slug));
+            builder.Append(CsvField.Format(row.Slug));
             builder.Append(',');
-            builder.Append(Csv(row.MarketId));
+            builder.Append(CsvField.Format(row.MarketId));
             builder.Append(',');
             builder.Append(row.SubmittedAt.ToString("O", CultureInfo.InvariantCulture));
             builder.Append(',');
@@ -398,25 +399,25 @@ internal static class ReportSpreadsheetBuilder
         builder.AppendLine("Kind,Id,TenantId,TenantName,ProviderReference,EventType,SubscriptionSku,AmountMinor,Currency,Status,OccurredAt");
         foreach (var row in rows)
         {
-            builder.Append(Csv(row.Kind));
+            builder.Append(CsvField.Format(row.Kind));
             builder.Append(',');
             builder.Append(row.Id);
             builder.Append(',');
             builder.Append(row.TenantId);
             builder.Append(',');
-            builder.Append(Csv(row.TenantName));
+            builder.Append(CsvField.Format(row.TenantName));
             builder.Append(',');
-            builder.Append(Csv(row.ProviderReference));
+            builder.Append(CsvField.Format(row.ProviderReference));
             builder.Append(',');
-            builder.Append(Csv(row.EventType));
+            builder.Append(CsvField.Format(row.EventType));
             builder.Append(',');
-            builder.Append(Csv(row.SubscriptionSku));
+            builder.Append(CsvField.Format(row.SubscriptionSku));
             builder.Append(',');
             builder.Append(row.AmountMinor?.ToString(CultureInfo.InvariantCulture) ?? string.Empty);
             builder.Append(',');
-            builder.Append(Csv(row.Currency));
+            builder.Append(CsvField.Format(row.Currency));
             builder.Append(',');
-            builder.Append(Csv(row.Status));
+            builder.Append(CsvField.Format(row.Status));
             builder.Append(',');
             builder.AppendLine(row.OccurredAt.ToString("O", CultureInfo.InvariantCulture));
         }
@@ -466,13 +467,13 @@ internal static class ReportSpreadsheetBuilder
         builder.AppendLine("CatalogVersionCode,CountryCode,SubscriptionSku,CurrencyCode,MonthlyAmountMajor,PlatformFeePercent,IsSelfServeEnabled");
         foreach (var row in rows)
         {
-            builder.Append(Csv(row.CatalogVersionCode));
+            builder.Append(CsvField.Format(row.CatalogVersionCode));
             builder.Append(',');
-            builder.Append(Csv(row.CountryCode));
+            builder.Append(CsvField.Format(row.CountryCode));
             builder.Append(',');
-            builder.Append(Csv(row.SubscriptionSku));
+            builder.Append(CsvField.Format(row.SubscriptionSku));
             builder.Append(',');
-            builder.Append(Csv(row.CurrencyCode));
+            builder.Append(CsvField.Format(row.CurrencyCode));
             builder.Append(',');
             builder.Append(row.MonthlyAmountMajor?.ToString(CultureInfo.InvariantCulture) ?? string.Empty);
             builder.Append(',');
@@ -544,24 +545,14 @@ internal static class ReportSpreadsheetBuilder
         builder.AppendLine("Metric,Value,Currency");
         foreach (var row in rows)
         {
-            builder.Append(Csv(row.Metric));
+            builder.Append(CsvField.Format(row.Metric));
             builder.Append(',');
-            builder.Append(Csv(row.Value));
+            builder.Append(CsvField.FormattedNumber(row.Value));
             builder.Append(',');
-            builder.AppendLine(Csv(row.Currency));
+            builder.AppendLine(CsvField.Format(row.Currency));
         }
 
         return Encoding.UTF8.GetBytes(builder.ToString());
     }
 
-    private static string Csv(string? value)
-    {
-        var text = value ?? string.Empty;
-        if (text.Contains('"') || text.Contains(',') || text.Contains('\n'))
-        {
-            return $"\"{text.Replace("\"", "\"\"", StringComparison.Ordinal)}\"";
-        }
-
-        return text;
-    }
 }

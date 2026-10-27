@@ -117,3 +117,11 @@ Issued documents use **snapshots** on the entity; PDF regeneration must not sile
 `GET /api/v1/admin/reporting/*` (platform subscription MRR, GMV) is **audit-logged** with action `admin.reporting.read` via `AdminAuditRules` + `AuditMiddleware` (same pipeline as admin mutations). Automated coverage: `AdminReportingAuditIntegrationTests.PlatformSubscriptionMrr_get_writes_admin_reporting_audit`.
 
 **Staging check:** sign in as admin (MFA), call `GET /api/v1/admin/reporting/platform-subscription-mrr` and `GET /api/v1/admin/reporting/gmv?granularity=month`, then confirm `admin.audit_logs` rows with action `admin.reporting.read` and your admin `actor_id`.
+
+### CSV and spreadsheet safety
+
+All CSV text fields use the shared internal `Serialization.CsvField` serializer, including the legacy Finance compensation download. It quotes commas, quotes, CR and LF and doubles embedded quotes. Formula-like text (`=`, `+`, `-`, `@`, including after whitespace) and leading tab/CR/LF receive an apostrophe prefix before CSV escaping. This prefix is intentionally part of the CSV value; consumers must not strip it before spreadsheet import. Typed numeric fields retain their invariant numeric representation, including negative amounts. Sales-summary metric values are validated as complete numbers before bypassing text protection.
+
+XLSX continues to use ClosedXML typed `.Value` assignments, never formulas derived from user input. Amounts/counts/percentages remain numeric. Existing timestamp columns remain round-trip ISO 8601 text to preserve `DateTimeOffset` offsets. Headers, columns, permissions, entitlements, and location filtering are unchanged.
+
+CSV audit inventory: `ReportSpreadsheetBuilder` writes bookings, staff roster, tenant customers/locations/services, sales summary, and admin business directory/pending verifications/transactions/pricing catalog. `ReportExportService` writes compensation; `StaffCompensationService` retains the legacy compensation export. No client-side CSV serializer or additional backend spreadsheet writer was found; the customer privacy export is JSON.

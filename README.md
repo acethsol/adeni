@@ -1,6 +1,8 @@
 # Adeni
 
-Trusted local services marketplace — **.NET 10 API** + **Angular web clients** (discover / portal / admin), SOC 2 controls from Sprint 0.
+Beauty & Wellness for Ottawa and Lagos — **.NET 10 API** + **Angular web clients** (discover / portal / admin), SOC 2 controls from Sprint 0.
+
+**V1 authority:** [docs/product-direction.md](docs/product-direction.md).
 
 **Strategy:** [docs/product-strategy.md](docs/product-strategy.md) — positioning, revenue model, GTM wedge, AI roadmap.
 
@@ -15,7 +17,7 @@ dotnet test Adeni.slnx -c Release
 dotnet run --project src/Adeni.Api --launch-profile http   # Development seed only
 
 # Frontend (separate terminal)
-npm install
+npm ci
 npm run dev:discover                              # http://localhost:5190 (public)
 npm run dev:portal                                # http://localhost:5173 (business)
 ```
@@ -44,7 +46,7 @@ packages/api-client/     Typed API client (shared)
 packages/shared/         Zod schemas, roles, wellness catalog
 packages/ui/             Shared Angular UI for portal + admin
 
-apps/mobile/             Flutter — business mobile skeleton (owner / employee / front desk)
+apps/mobile/             Native Flutter business skeleton; consumer mobile is the product priority
 tests/                   Backend unit/integration tests
 ```
 
@@ -74,7 +76,10 @@ tests/                   Backend unit/integration tests
 | **3** | Auth0 + client shell (backend); frontend pivot | Done |
 | **13** | Reviews & ratings | Done |
 | **14** | UX polish & guardrails | Done |
-| **15–20** | Booking v2 → SaaS → Paystack → Messaging → Trust → AI/deploy | Planned |
+| **15–19** | Booking v2, SaaS foundation, payments, messaging, trust | Shipped; later modules supersede parts |
+| **20** | Deployment, AI & observability | Planned |
+| **32–33** | Dashboard / live SaaS billing validation | In progress |
+| **36, 38, 39** | Messaging rewrite, Notifications, Reporting | Shipped |
 
 Details: [docs/sprints.md](docs/sprints.md) · Strategy: [docs/product-strategy.md](docs/product-strategy.md)
 
@@ -90,3 +95,7 @@ Details: [docs/sprints.md](docs/sprints.md) · Strategy: [docs/product-strategy.
 ## Remote
 
 **GitHub:** [github.com/acethsol/adeni](https://github.com/acethsol/adeni)
+
+## Promotion and audit closeout
+
+Changes enter `dev` by PR, then promote by PR to `qa` (staging), then `main` (production). No direct production commits. See [CI and branch protections](docs/ci.md) and [audit hardening closeout](docs/audit-hardening-closeout.md); the audit branch is not fully production-build-green.

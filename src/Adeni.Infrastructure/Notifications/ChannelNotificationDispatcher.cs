@@ -44,7 +44,7 @@ public sealed class ChannelNotificationDispatcher(
                     cancellationToken);
                 return;
 
-            case "sms" or "whatsapp":
+            case "sms":
                 if (string.IsNullOrWhiteSpace(message.RecipientKey))
                 {
                     logger.LogDebug("Skipping SMS notification — empty recipient.");

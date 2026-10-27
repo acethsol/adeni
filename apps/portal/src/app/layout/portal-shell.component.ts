@@ -1,3 +1,5 @@
+import { CHROME, type ChromeKey } from "./portal-shell-copy";
+import { portalNavigationGroups, portalSearchResults, type SearchHit } from "./portal-shell-navigation";
 import { Component, computed, ElementRef, HostListener, inject, Injector, signal, viewChild } from "@angular/core";
 import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
@@ -27,12 +29,10 @@ import { resolveAuthService } from "../core/auth0-rxjs";
 import { signOutPortalDev } from "../core/portal-dev-session";
 import {
   filterPortalTabs,
-  isPortalNavItemVisible,
   portalEntitlements,
 } from "../core/portal-access";
 import {
   PORTAL_NAV,
-  PORTAL_NAV_GROUPS,
   activePortalTab,
   findPortalNavItem,
   type PortalNavGroup,
@@ -56,187 +56,7 @@ import { PortalNavIconComponent } from "./portal-nav-icon.component";
 import { PortalBranchSwitchComponent } from "./portal-branch-switch.component";
 
 const SIDEBAR_STORAGE_KEY = "adeni.portal.sidebar.collapsed";
-type ChromeKey =
-  | "search"
-  | "appearance"
-  | "language"
-  | "light"
-  | "dark"
-  | "system"
-  | "signOut"
-  | "settings"
-  | "jump"
-  | "marketplace"
-  | "discoverHint"
-  | "groupToday"
-  | "groupListing"
-  | "groupBusiness"
-  | "tabPending"
-  | "tabUpcoming"
-  | "tabPast"
-  | "tabDetails"
-  | "tabOverview"
-  | "tabBusiness"
-  | "tabReviews"
-  | "tabVerification"
-  | "tabInbox"
-  | "tabWhatsapp"
-  | "tabLinks"
-  | "tabLedger"
-  | "tabBookings"
-  | "tabNotifications"
-  | "tabPolicies"
-  | "tabMessaging"
-  | "tabWalkIns"
-  | "businessSettings"
-  | "notificationSettings"
-  | "chromePreferences"
-  | "locationSwitch"
-  | "allLocations"
-  | "/dashboard"
-  | "/bookings"
-  | "/customers"
-  | "/queue"
-  | "/calendar"
-  | "/my-calendar"
-  | "/quotes"
-  | "/messages"
-  | "/services"
-  | "/staff"
-  | "/locations"
-  | "/availability"
-  | "/profile"
-  | "/public-page"
-  | "/register"
-  | "/finance"
-  | "/settings"
-  | "/plan"
-  | "/__discover";
 
-const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
-  en: {
-    search: "Search",
-    appearance: "Appearance",
-    language: "Language",
-    light: "Light",
-    dark: "Dark",
-    system: "Match system",
-    signOut: "Sign out",
-    settings: "Settings",
-    jump: "Jump to",
-    marketplace: "Discover",
-    discoverHint: "Browse Adeni as customers see it (opens in a new tab)",
-    groupToday: "Operations",
-    groupListing: "Setup",
-    groupBusiness: "Account",
-    tabPending: "Pending",
-    tabUpcoming: "Upcoming",
-    tabPast: "Past",
-    tabDetails: "Details",
-    tabOverview: "Overview",
-    tabBusiness: "Business details",
-    tabReviews: "Reviews",
-    tabVerification: "Verification",
-    tabInbox: "Inbox",
-    tabWhatsapp: "WhatsApp",
-    tabLinks: "Links",
-    tabLedger: "Ledger",
-    tabBookings: "Bookings",
-    tabNotifications: "Notifications",
-    tabPolicies: "Policies",
-    tabMessaging: "Messaging",
-    tabWalkIns: "Walk-ins",
-    businessSettings: "Business settings",
-    notificationSettings: "Notification preferences",
-    chromePreferences: "Appearance & language",
-    locationSwitch: "Location",
-    allLocations: "All locations",
-    "/dashboard": "Dashboard",
-    "/bookings": "Bookings",
-    "/customers": "Customers",
-    "/queue": "Queue",
-    "/calendar": "Calendar",
-    "/my-calendar": "My calendar",
-    "/quotes": "Quotes",
-    "/messages": "Messages",
-    "/services": "Services",
-    "/staff": "Staff",
-    "/locations": "Locations",
-    "/availability": "Hours",
-    "/profile": "Profile",
-    "/public-page": "Public page",
-    "/register": "Register",
-    "/finance": "Finance",
-    "/settings": "Settings",
-    "/plan": "Plan",
-    "/__discover": "Discover",
-  },
-  fr: {
-    search: "Rechercher",
-    appearance: "Apparence",
-    language: "Langue",
-    light: "Clair",
-    dark: "Sombre",
-    system: "Système",
-    signOut: "Se déconnecter",
-    settings: "Paramètres",
-    jump: "Aller à",
-    marketplace: "Découvrir",
-    discoverHint: "Parcourir Adeni comme un client (nouvel onglet)",
-    groupToday: "Opérations",
-    groupListing: "Configuration",
-    groupBusiness: "Compte",
-    tabPending: "En attente",
-    tabUpcoming: "À venir",
-    tabPast: "Passées",
-    tabDetails: "Détails",
-    tabOverview: "Aperçu",
-    tabBusiness: "Informations",
-    tabReviews: "Avis",
-    tabVerification: "Vérification",
-    tabInbox: "Boîte",
-    tabWhatsapp: "WhatsApp",
-    tabLinks: "Liens",
-    tabLedger: "Journal",
-    tabBookings: "Réservations",
-    tabNotifications: "Notifications",
-    tabPolicies: "Politiques",
-    tabMessaging: "Messagerie",
-    tabWalkIns: "Sans rendez-vous",
-    businessSettings: "Paramètres de l'entreprise",
-    notificationSettings: "Préférences de notification",
-    chromePreferences: "Apparence et langue",
-    locationSwitch: "Emplacement",
-    allLocations: "Tous les emplacements",
-    "/dashboard": "Tableau de bord",
-    "/bookings": "Réservations",
-    "/customers": "Clients",
-    "/queue": "File",
-    "/calendar": "Calendrier",
-    "/my-calendar": "Mon calendrier",
-    "/quotes": "Devis",
-    "/messages": "Messages",
-    "/services": "Services",
-    "/staff": "Équipe",
-    "/locations": "Lieux",
-    "/availability": "Horaires",
-    "/profile": "Profil",
-    "/public-page": "Page publique",
-    "/register": "Inscription",
-    "/finance": "Finance",
-    "/settings": "Paramètres",
-    "/plan": "Forfait",
-    "/__discover": "Découvrir",
-  },
-};
-
-type SearchHit = {
-  id: string;
-  label: string;
-  path: string;
-  icon: PortalNavItem["icon"];
-  external?: boolean;
-};
 
 function initialsFor(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -271,10 +91,10 @@ function readSidebarCollapsed(): boolean {
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
-  AdeniBrandLogoComponent,
-  AdeniStaffSidebarBrandComponent,
-  AdeniStaffShellFooterComponent,
-  AdeniGlobalLoadingPanelComponent,
+    AdeniBrandLogoComponent,
+    AdeniStaffSidebarBrandComponent,
+    AdeniStaffShellFooterComponent,
+    AdeniGlobalLoadingPanelComponent,
     AdeniToastHostComponent,
     AdeniConfirmHostComponent,
     MessagesShortcutComponent,
@@ -341,50 +161,15 @@ export class PortalShellComponent {
   readonly businessSettingsVisible = computed(() =>
     this.visibleGroups().some((group) => group.items.some((item) => item.path === "/settings")),
   );
-  readonly searchResults = computed<SearchHit[]>(() => {
-    const query = this.searchQuery().trim().toLowerCase();
-    const entitlements = portalEntitlements(this.profile());
-    const navItems = this.visibleGroups().flatMap((group) => group.items);
-    const pages = navItems
-      .filter((item) => !query || this.navLabel(item).toLowerCase().includes(query) || item.label.toLowerCase().includes(query))
-      .map((item) => ({
-        id: item.path,
-        label: this.navLabel(item),
-        path: item.path,
-        icon: item.icon,
-      }));
-    const tabPages = navItems.flatMap((item) => {
-      const tabs = filterPortalTabs(item.tabs, entitlements);
-      return tabs
-        .filter(
-          (tab) =>
-            !query
-            || tab.label.toLowerCase().includes(query)
-            || this.tabLabel(tab.id).toLowerCase().includes(query)
-            || this.navLabel(item).toLowerCase().includes(query),
-        )
-        .map((tab) => ({
-          id: `${item.path}?tab=${tab.id}`,
-          label: `${this.navLabel(item)} — ${this.tabLabel(tab.id)}`,
-          path: `${item.path}?tab=${tab.id}`,
-          icon: item.icon,
-        }));
-    });
-    const discoverLabel = this.text("/__discover");
-    const discover =
-      !query || discoverLabel.toLowerCase().includes(query) || "discover".includes(query)
-        ? [{ id: "discover", label: discoverLabel, path: this.discoverUrl(), icon: "launch" as const, external: true }]
-        : [];
-    const merged = [...tabPages, ...pages, ...discover];
-    const seen = new Set<string>();
-    return merged.filter((hit) => {
-      if (seen.has(hit.path)) {
-        return false;
-      }
-      seen.add(hit.path);
-      return true;
-    }).slice(0, 10);
-  });
+  readonly searchResults = computed(() => portalSearchResults({
+    query: this.searchQuery(),
+    groups: this.visibleGroups(),
+    entitlements: portalEntitlements(this.profile()),
+    navLabel: (item) => this.navLabel(item),
+    tabLabel: (id) => this.tabLabel(id),
+    discoverLabel: this.text("/__discover"),
+    discoverUrl: this.discoverUrl(),
+  }));
 
   constructor() {
     this.auth?.user$.pipe(takeUntilDestroyed()).subscribe((user) => {
@@ -638,10 +423,7 @@ export class PortalShellComponent {
       profileLoaded: this.profileLoaded(),
       permissions,
     };
-    return PORTAL_NAV_GROUPS.map((group) => ({
-      ...group,
-      items: group.items.filter((item) => isPortalNavItemVisible(item, ctx)),
-    })).filter((group) => group.items.length > 0);
+    return portalNavigationGroups(ctx);
   }
 
   private async loadProfile(): Promise<void> {

@@ -3,9 +3,9 @@ namespace Adeni.Api.Controllers;
 using System.Security.Claims;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
+using Adeni.Application.Tenancy;
 using Adeni.Application.Reviews;
 using Adeni.Infrastructure.Auth;
-using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -13,7 +13,7 @@ using Microsoft.Extensions.Options;
 [Route("api/v1/tenant/reviews")]
 public sealed class TenantReviewsController(
     IReviewService reviews,
-    AdeniDbContext dbContext,
+    ITenantLocationScopeService locationScope,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet]
@@ -26,8 +26,7 @@ public sealed class TenantReviewsController(
             return Unauthorized();
         }
 
-        var scoped = await TenantLocationScope.ValidateOptionalLocationIdAsync(
-            dbContext,
+        var scoped = await locationScope.ValidateOptionalLocationIdAsync(
             tenantId,
             locationId,
             cancellationToken);

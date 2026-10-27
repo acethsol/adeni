@@ -19,7 +19,7 @@ Ottawa and Lagos share **one taxonomy and one codebase**. **Market config** cont
 | Service templates per category | `packages/shared/src/data/wellness-service-templates.json` |
 | Operating model defaults | `packages/shared/src/data/category-workflows.json` |
 
-The file is the catalog on purpose. Discover, the portal, and the API all read `packages/shared`, and a business only stores a category slug. `catalog.markets` is copied into Postgres so discovery can filter locations in SQL. Categories are not. Set `enabled` to `false` to hide a category from Explore and onboarding; restart the API so the cache reloads.
+The file is the catalog on purpose. Discover, the portal, and the API all read `packages/shared`, and a business only stores a category slug. `catalog.markets` is copied into SQL Server so discovery can filter locations in SQL. Categories are not. Set `enabled` to `false` to hide a category from Explore and onboarding; restart the API so the cache reloads.
 
 API: `GET /api/v1/categories?market=lagos&wellness=true` · `GET /api/v1/categories/{slug}/service-templates`
 
@@ -135,7 +135,7 @@ Implemented via `marketFeaturedOrder` in `wellness-categories.json` (Lagos vs Ot
 
 ---
 
-## PostgreSQL tables
+## SQL Server tables (current)
 
 | Schema | Table | Role |
 | --- | --- | --- |
@@ -143,7 +143,7 @@ Implemented via `marketFeaturedOrder` in `wellness-categories.json` (Lagos vs Ot
 | `tenancy` | `business_profile_categories` | Primary + additional (`IsPrimary`) |
 | `booking` | `service_offerings` | `CategorySlug`, `CatalogServiceId`, `BookingDeliveryType` |
 
-Migration: `20261005181138_WellnessTaxonomy`.
+Current schema is published from `db/Adeni.Database` with SqlPackage. Historical PostgreSQL EF migration `20261005181138_WellnessTaxonomy` belongs to the [legacy database archive](legacy-postgres-archive.md); do not apply it to SQL Server.
 
 ---
 

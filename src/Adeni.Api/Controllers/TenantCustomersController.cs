@@ -6,12 +6,11 @@ using Adeni.Api.Common;
 using Adeni.Api.Errors;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
-using Adeni.Application.Reporting;
 using Adeni.Application.Tenancy;
+using Adeni.Application.Reporting;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Auth;
-using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
@@ -22,7 +21,7 @@ public sealed class TenantCustomersController(
     ITenantReportExportQueryService reportQueries,
     IReportRenderer reportRenderer,
     IReportPdfBrandingLoader pdfBrandingLoader,
-    AdeniDbContext dbContext) : ControllerBase
+    ITenantLocationScopeService locationScope) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> List(
@@ -54,8 +53,7 @@ public sealed class TenantCustomersController(
                 HttpContext);
         }
 
-        var scoped = await TenantLocationScope.ValidateOptionalLocationIdAsync(
-            dbContext,
+        var scoped = await locationScope.ValidateOptionalLocationIdAsync(
             tenantId,
             locationId,
             cancellationToken);

@@ -31,7 +31,7 @@ export type PlanEntitlementSeed = {
 
 export type PlanEntitlementsCatalog = Record<SubscriptionSku, PlanEntitlementSeed>;
 
-export const PLAN_ENTITLEMENTS = catalog as PlanEntitlementsCatalog;
+export const PLAN_ENTITLEMENTS: PlanEntitlementsCatalog = catalog;
 
 export function getPlanEntitlements(sku: SubscriptionSku): PlanEntitlementSeed {
   return PLAN_ENTITLEMENTS[sku];
