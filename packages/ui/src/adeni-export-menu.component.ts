@@ -58,7 +58,7 @@ export type AdeniExportMenuItem = {
       }
     </div>
   `,
-  styleUrl: "./styles/_data-grid.scss",
+  styleUrl: "./styles/_data-grid-export-menu.scss",
 })
 export class AdeniExportMenuComponent {
   private readonly host = inject(ElementRef<HTMLElement>);

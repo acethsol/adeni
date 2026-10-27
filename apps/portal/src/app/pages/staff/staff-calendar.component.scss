@@ -244,14 +244,6 @@ $line: var(--border);
   color: var(--text-muted);
 }
 
-.adeni-list-results {
-  border: 1px solid var(--border);
-  background: var(--surface);
-
-  adeni-data-table ::ng-deep .adeni-data-table-shell {
-    border: none;
-  }
-}
 
 .agenda-table-time {
   display: block;

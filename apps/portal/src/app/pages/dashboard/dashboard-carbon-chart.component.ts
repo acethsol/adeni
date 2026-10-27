@@ -19,7 +19,7 @@ export type DashboardCarbonChartKind = "bar" | "line" | "donut";
   selector: "app-dashboard-carbon-chart",
   standalone: true,
   template: `
-    <div #holder class="carbon-chart-holder" role="img" [attr.aria-label]="ariaLabel()"></div>
+    <div #host class="carbon-chart-host" role="img" [attr.aria-label]="ariaLabel()"></div>
   `,
   styles: `
     :host {
@@ -27,15 +27,20 @@ export type DashboardCarbonChartKind = "bar" | "line" | "donut";
       min-height: 12rem;
     }
 
-    .carbon-chart-holder {
+    .carbon-chart-host {
       width: 100%;
       min-height: 13.5rem;
     }
 
     /* Carbon injects DOM outside Angular view encapsulation; :global() is not valid Angular CSS. */
-    :host ::ng-deep .carbon-chart-holder.cds--chart-holder,
-    :host ::ng-deep .carbon-chart-holder .layout-child,
-    :host ::ng-deep .carbon-chart-holder svg.layout-svg-wrapper {
+    /* g100 paints the plot area #161616 — a dark slab inside the card; blend it with the surface. */
+    :host ::ng-deep .carbon-chart-host .cds--chart-holder {
+      --cds-grid-bg: transparent;
+    }
+
+    :host ::ng-deep .carbon-chart-host .cds--chart-holder,
+    :host ::ng-deep .carbon-chart-host .layout-child,
+    :host ::ng-deep .carbon-chart-host svg.layout-svg-wrapper {
       background: transparent !important;
     }
   `,
@@ -46,13 +51,16 @@ export class DashboardCarbonChartComponent implements AfterViewInit, OnDestroy {
   readonly ariaLabel = input("Chart");
 
   private readonly portalTheme = inject(PortalThemeService);
-  private readonly holderRef = viewChild<ElementRef<HTMLDivElement>>("holder");
+  /** Stable Angular-owned node. Carbon's `destroy()` calls `holder.remove()`, so it never sees this node. */
+  private readonly holderRef = viewChild<ElementRef<HTMLDivElement>>("host");
   private chart: SimpleBarChart | LineChart | DonutChart | null = null;
   private resizeObserver: ResizeObserver | null = null;
   private observedHolder: HTMLDivElement | null = null;
   /** Carbon theme/kind are fixed at create — remount in place when either changes. */
   readonly chartSurfaceKey = computed(() => `${this.portalTheme.theme()}:${this.kind()}`);
   private mountedSurfaceKey: string | null = null;
+  /** Disposable child of the host that Carbon owns (and removes) for each chart instance. */
+  private chartMount: HTMLDivElement | null = null;
 
   constructor() {
     // One effect only: a separate teardown effect plus an @for-remounted holder raced and left
@@ -113,8 +121,11 @@ export class DashboardCarbonChartComponent implements AfterViewInit, OnDestroy {
   }
 
   private teardownChart(): void {
+    // Carbon's destroy() removes its holder element from the DOM — only ever the disposable mount.
     this.chart?.destroy();
+    this.chartMount?.remove();
     this.chart = null;
+    this.chartMount = null;
     this.mountedSurfaceKey = null;
   }
 
@@ -180,15 +191,18 @@ export class DashboardCarbonChartComponent implements AfterViewInit, OnDestroy {
       grid: { x: { enabled: false }, y: { enabled: true } },
     };
 
-    this.chart?.destroy();
     holder.replaceChildren();
+    const mount = document.createElement("div");
+    mount.className = "carbon-chart-holder";
+    holder.appendChild(mount);
+    this.chartMount = mount;
 
     switch (this.kind()) {
       case "line":
-        this.chart = new LineChart(holder, { data: rows, options: lineOptions });
+        this.chart = new LineChart(mount, { data: rows, options: lineOptions });
         break;
       case "donut":
-        this.chart = new DonutChart(holder, {
+        this.chart = new DonutChart(mount, {
           data: rows,
           options: {
             title: "",
@@ -206,7 +220,7 @@ export class DashboardCarbonChartComponent implements AfterViewInit, OnDestroy {
         });
         break;
       default:
-        this.chart = new SimpleBarChart(holder, { data: rows, options: barOptions });
+        this.chart = new SimpleBarChart(mount, { data: rows, options: barOptions });
         break;
     }
   }

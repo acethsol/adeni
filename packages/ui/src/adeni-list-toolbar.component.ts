@@ -94,7 +94,7 @@ import { injectAdeniTranslate } from "./locale/adeni-i18n";
       </div>
     </div>
   `,
-  styleUrl: "./styles/_data-grid.scss",
+  styleUrl: "./styles/_data-grid-toolbar.scss",
 })
 export class AdeniListToolbarComponent {
   protected readonly tr = injectAdeniTranslate();

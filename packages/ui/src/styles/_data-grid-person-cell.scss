@@ -1,0 +1,52 @@
+/* Person cell (avatar + stack) */
+
+.adeni-cell-person {
+  display: flex;
+  align-items: center;
+  gap: var(--cds-spacing-04);
+  min-width: 0;
+}
+
+.adeni-cell-person-avatar {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: color-mix(in srgb, var(--adeni-purple, #6f4ff2) 70%, #3d5a80);
+}
+
+.adeni-cell-person-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.adeni-cell-person-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.adeni-cell-person-name {
+  font-weight: 650;
+  font-size: 0.875rem;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adeni-cell-person-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

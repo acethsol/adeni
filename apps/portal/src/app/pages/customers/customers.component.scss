@@ -1,5 +1,4 @@
 @use "staff-layout" as *;
-@use "data-grid" as *;
 
 .roster {
   width: 100%;
@@ -69,28 +68,6 @@
   font-size: 0.875rem;
 }
 
-.adeni-list-results {
-  border: 1px solid var(--border);
-  background: var(--surface);
-
-  adeni-data-table ::ng-deep .adeni-data-table-shell {
-    border: none;
-  }
-
-  adeni-list-pagination ::ng-deep .adeni-list-pagination,
-  adeni-list-pagination ::ng-deep .adeni-list-pagination--solo {
-    margin-top: 0;
-    padding: var(--cds-spacing-04) var(--cds-spacing-05);
-    border: none;
-    border-top: 1px solid var(--border);
-    background: transparent;
-    box-shadow: none;
-  }
-}
-
-.adeni-list-results--pagination-only {
-  margin-top: var(--cds-spacing-05);
-}
 
 .org-avatar[data-tone="neutral"] {
   background: #697077;

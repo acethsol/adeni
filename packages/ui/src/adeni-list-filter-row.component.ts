@@ -13,6 +13,6 @@ import { Component } from "@angular/core";
       <ng-content />
     </div>
   `,
-  styleUrl: "./styles/_data-grid.scss",
+  styleUrl: "./styles/_data-grid-filter-row.scss",
 })
 export class AdeniListFilterRowComponent {}

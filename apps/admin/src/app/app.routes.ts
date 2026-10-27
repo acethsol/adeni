@@ -1,90 +1,70 @@
 import { Routes } from "@angular/router";
 import { AdminShellComponent } from "./layout/portal-shell.component";
-import { AdminDashboardComponent } from "./pages/dashboard/dashboard.component";
-import { AdminPendingComponent } from "./pages/pending/pending.component";
-import { AdminMarketsComponent } from "./pages/markets/markets.component";
-import { AdminBusinessesComponent } from "./pages/businesses/businesses.component";
-import { BusinessBillingComponent } from "./pages/businesses/business-billing.component";
-import { BusinessCommercialAuditComponent } from "./pages/businesses/business-commercial-audit.component";
-import { BusinessCommercialTermsComponent } from "./pages/businesses/business-commercial-terms.component";
-import { BusinessDetailShellComponent } from "./pages/businesses/business-detail-shell.component";
-import { BusinessOverviewComponent } from "./pages/businesses/business-overview.component";
-import { AdminCustomersComponent } from "./pages/customers/customers.component";
-import { AdminAuditLogsComponent } from "./pages/audit-logs/audit-logs.component";
-import { AdminTrustBadgesComponent } from "./pages/trust-badges/trust-badges.component";
-import { AdminReviewsComponent } from "./pages/reviews/reviews.component";
-import { AdminInsightsComponent } from "./pages/insights/insights.component";
-import { AdminTransactionsComponent } from "./pages/transactions/transactions.component";
-import { AdminPricingCatalogComponent } from "./pages/pricing/pricing-catalog.component";
-import { AdminPricingGmvComponent } from "./pages/pricing/pricing-gmv.component";
-import { AdminPricingEntitlementsComponent } from "./pages/pricing/pricing-entitlements.component";
-import { SetupComponent } from "./pages/setup/setup.component";
-import { ForbiddenComponent } from "./pages/forbidden/forbidden.component";
 import { adminAccessGuard } from "./core/guards/admin-access.guard";
 import { adminAuthGuard } from "./core/guards/admin-auth.guard";
 
 export const routes: Routes = [
-  { path: "setup", component: SetupComponent, title: "Setup" },
-  { path: "forbidden", component: ForbiddenComponent, title: "Access denied" },
+  { path: "setup", loadComponent: () => import("./pages/setup/setup.component").then((m) => m.SetupComponent), title: "Setup" },
+  { path: "forbidden", loadComponent: () => import("./pages/forbidden/forbidden.component").then((m) => m.ForbiddenComponent), title: "Access denied" },
   {
     path: "",
     canActivate: [adminAccessGuard, adminAuthGuard],
     component: AdminShellComponent,
     children: [
       { path: "", pathMatch: "full", redirectTo: "dashboard" },
-      { path: "dashboard", component: AdminDashboardComponent, title: "Dashboard" },
-      { path: "pending", component: AdminPendingComponent, title: "Pending verifications" },
-      { path: "trust-badges", component: AdminTrustBadgesComponent, title: "Trust badges" },
-      { path: "reviews", component: AdminReviewsComponent, title: "Reviews" },
-      { path: "markets", component: AdminMarketsComponent, title: "Markets" },
+      { path: "dashboard", loadComponent: () => import("./pages/dashboard/dashboard.component").then((m) => m.AdminDashboardComponent), title: "Dashboard" },
+      { path: "pending", loadComponent: () => import("./pages/pending/pending.component").then((m) => m.AdminPendingComponent), title: "Pending verifications" },
+      { path: "trust-badges", loadComponent: () => import("./pages/trust-badges/trust-badges.component").then((m) => m.AdminTrustBadgesComponent), title: "Trust badges" },
+      { path: "reviews", loadComponent: () => import("./pages/reviews/reviews.component").then((m) => m.AdminReviewsComponent), title: "Reviews" },
+      { path: "markets", loadComponent: () => import("./pages/markets/markets.component").then((m) => m.AdminMarketsComponent), title: "Markets" },
       { path: "pricing/plans", pathMatch: "full", redirectTo: "pricing/catalog" },
       {
         path: "pricing/catalog",
-        component: AdminPricingCatalogComponent,
+        loadComponent: () => import("./pages/pricing/pricing-catalog.component").then((m) => m.AdminPricingCatalogComponent),
         title: "Plans & pricing",
       },
       {
         path: "pricing/gmv",
-        component: AdminPricingGmvComponent,
+        loadComponent: () => import("./pages/pricing/pricing-gmv.component").then((m) => m.AdminPricingGmvComponent),
         title: "GMV fees",
       },
       {
         path: "pricing/entitlements",
-        component: AdminPricingEntitlementsComponent,
+        loadComponent: () => import("./pages/pricing/pricing-entitlements.component").then((m) => m.AdminPricingEntitlementsComponent),
         title: "Plan entitlements",
       },
-      { path: "insights", component: AdminInsightsComponent, title: "Subscription insights" },
-      { path: "transactions", component: AdminTransactionsComponent, title: "Transactions" },
-      { path: "businesses", component: AdminBusinessesComponent, title: "Businesses" },
+      { path: "insights", loadComponent: () => import("./pages/insights/insights.component").then((m) => m.AdminInsightsComponent), title: "Subscription insights" },
+      { path: "transactions", loadComponent: () => import("./pages/transactions/transactions.component").then((m) => m.AdminTransactionsComponent), title: "Transactions" },
+      { path: "businesses", loadComponent: () => import("./pages/businesses/businesses.component").then((m) => m.AdminBusinessesComponent), title: "Businesses" },
       {
         path: "businesses/:tenantId",
-        component: BusinessDetailShellComponent,
+        loadComponent: () => import("./pages/businesses/business-detail-shell.component").then((m) => m.BusinessDetailShellComponent),
         children: [
           { path: "", pathMatch: "full", redirectTo: "overview" },
           {
             path: "overview",
-            component: BusinessOverviewComponent,
+            loadComponent: () => import("./pages/businesses/business-overview.component").then((m) => m.BusinessOverviewComponent),
             title: "Business overview",
           },
           {
             path: "terms",
-            component: BusinessCommercialTermsComponent,
+            loadComponent: () => import("./pages/businesses/business-commercial-terms.component").then((m) => m.BusinessCommercialTermsComponent),
             title: "Commercial terms",
           },
           {
             path: "billing",
-            component: BusinessBillingComponent,
+            loadComponent: () => import("./pages/businesses/business-billing.component").then((m) => m.BusinessBillingComponent),
             title: "Billing history",
           },
           {
             path: "audit",
-            component: BusinessCommercialAuditComponent,
+            loadComponent: () => import("./pages/businesses/business-commercial-audit.component").then((m) => m.BusinessCommercialAuditComponent),
             title: "Commercial audit",
           },
         ],
       },
-      { path: "customers", component: AdminCustomersComponent, title: "Customer privacy" },
-      { path: "audit-logs", component: AdminAuditLogsComponent, title: "Audit trail" },
+      { path: "customers", loadComponent: () => import("./pages/customers/customers.component").then((m) => m.AdminCustomersComponent), title: "Customer privacy" },
+      { path: "audit-logs", loadComponent: () => import("./pages/audit-logs/audit-logs.component").then((m) => m.AdminAuditLogsComponent), title: "Audit trail" },
     ],
   },
   { path: "**", redirectTo: "dashboard" },

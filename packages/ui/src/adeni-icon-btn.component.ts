@@ -43,7 +43,7 @@ export type AdeniIconBtnVariant =
       </button>
     }
   `,
-  styleUrl: "./styles/_data-grid.scss",
+  styleUrl: "./styles/_data-grid-icon-btn.scss",
 })
 export class AdeniIconBtnComponent {
   readonly icon = input.required<AdeniCarbonIconName>();

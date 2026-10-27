@@ -20,7 +20,7 @@ export type AdeniPillTone =
       <ng-content />
     </span>
   `,
-  styleUrl: "./styles/_data-grid.scss",
+  styleUrl: "./styles/_data-grid-pill.scss",
 })
 export class AdeniPillComponent {
   readonly tone = input<AdeniPillTone>("neutral");

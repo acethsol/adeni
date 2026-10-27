@@ -1,27 +1,5 @@
 import { Routes } from "@angular/router";
 import { PortalShellComponent } from "./layout/portal-shell.component";
-import { DashboardComponent } from "./pages/dashboard/dashboard.component";
-import { BookingsComponent } from "./pages/bookings/bookings.component";
-import { CustomersComponent } from "./pages/customers/customers.component";
-import { CustomerDetailComponent } from "./pages/customers/customer-detail.component";
-import { QueueComponent } from "./pages/queue/queue.component";
-import { KioskComponent } from "./pages/kiosk/kiosk.component";
-import { ServicesComponent } from "./pages/services/services.component";
-import { StaffComponent } from "./pages/staff/staff.component";
-import { StaffCalendarComponent } from "./pages/staff/staff-calendar.component";
-import { LocationsComponent } from "./pages/locations/locations.component";
-import { AvailabilityComponent } from "./pages/availability/availability.component";
-import { ProfileComponent } from "./pages/profile/profile.component";
-import { PublicPageSettingsComponent } from "./pages/public-page/public-page.component";
-import { RegisterComponent } from "./pages/register/register.component";
-import { PaymentsComponent } from "./pages/payments/payments.component";
-import { PlanComponent } from "./pages/plan/plan.component";
-import { SettingsComponent } from "./pages/settings/settings.component";
-import { MessagesComponent } from "./pages/messages/messages.component";
-import { QuotesComponent } from "./pages/quotes/quotes.component";
-import { SetupComponent } from "./pages/setup/setup.component";
-import { ForbiddenComponent } from "./pages/forbidden/forbidden.component";
-import { AcceptInviteComponent } from "./pages/accept-invite/accept-invite.component";
 import { portalAccessGuard } from "./core/guards/portal-access.guard";
 import { businessAuthGuard } from "./core/guards/business-auth.guard";
 import { portalPermissionGuard } from "./core/guards/portal-permission.guard";
@@ -29,12 +7,12 @@ import { homeRedirectGuard } from "./core/guards/home-redirect.guard";
 import { staffCalendarGuard } from "./core/guards/staff-calendar.guard";
 
 export const routes: Routes = [
-  { path: "setup", component: SetupComponent, title: "Setup" },
-  { path: "forbidden", component: ForbiddenComponent, title: "Access denied" },
-  { path: "accept-invite", component: AcceptInviteComponent, title: "Accept invite" },
+  { path: "setup", loadComponent: () => import("./pages/setup/setup.component").then((m) => m.SetupComponent), title: "Setup" },
+  { path: "forbidden", loadComponent: () => import("./pages/forbidden/forbidden.component").then((m) => m.ForbiddenComponent), title: "Access denied" },
+  { path: "accept-invite", loadComponent: () => import("./pages/accept-invite/accept-invite.component").then((m) => m.AcceptInviteComponent), title: "Accept invite" },
   {
     path: "kiosk",
-    component: KioskComponent,
+    loadComponent: () => import("./pages/kiosk/kiosk.component").then((m) => m.KioskComponent),
     title: "Check-in",
     canActivate: [portalAccessGuard, businessAuthGuard, portalPermissionGuard],
   },
@@ -47,129 +25,129 @@ export const routes: Routes = [
         path: "",
         pathMatch: "full",
         canActivate: [homeRedirectGuard],
-        component: DashboardComponent,
+        loadComponent: () => import("./pages/dashboard/dashboard.component").then((m) => m.DashboardComponent),
       },
       { path: "overview", redirectTo: "dashboard", pathMatch: "full" },
       {
         path: "dashboard",
-        component: DashboardComponent,
+        loadComponent: () => import("./pages/dashboard/dashboard.component").then((m) => m.DashboardComponent),
         title: "Dashboard",
         canActivate: [portalPermissionGuard],
       },
       {
         path: "bookings",
-        component: BookingsComponent,
+        loadComponent: () => import("./pages/bookings/bookings.component").then((m) => m.BookingsComponent),
         title: "Bookings",
         canActivate: [portalPermissionGuard],
       },
       {
         path: "customers",
-        component: CustomersComponent,
+        loadComponent: () => import("./pages/customers/customers.component").then((m) => m.CustomersComponent),
         title: "Customers",
         canActivate: [portalPermissionGuard],
       },
       {
         path: "customers/:id",
-        component: CustomerDetailComponent,
+        loadComponent: () => import("./pages/customers/customer-detail.component").then((m) => m.CustomerDetailComponent),
         title: "Customer",
         canActivate: [portalPermissionGuard],
       },
       {
         path: "queue",
-        component: QueueComponent,
+        loadComponent: () => import("./pages/queue/queue.component").then((m) => m.QueueComponent),
         title: "Queue",
         canActivate: [portalPermissionGuard],
       },
       {
         path: "calendar",
-        component: StaffCalendarComponent,
+        loadComponent: () => import("./pages/staff/staff-calendar.component").then((m) => m.StaffCalendarComponent),
         title: "Appointments",
         canActivate: [portalPermissionGuard],
         data: { teamCalendar: true },
       },
       {
         path: "my-calendar",
-        component: StaffCalendarComponent,
+        loadComponent: () => import("./pages/staff/staff-calendar.component").then((m) => m.StaffCalendarComponent),
         title: "My calendar",
         canActivate: [portalPermissionGuard],
       },
       {
         path: "quotes",
-        component: QuotesComponent,
+        loadComponent: () => import("./pages/quotes/quotes.component").then((m) => m.QuotesComponent),
         title: "Quotes",
         canActivate: [portalPermissionGuard],
       },
       {
         path: "messages",
-        component: MessagesComponent,
+        loadComponent: () => import("./pages/messages/messages.component").then((m) => m.MessagesComponent),
         title: "Messages",
         canActivate: [portalPermissionGuard],
       },
       {
         path: "services",
-        component: ServicesComponent,
+        loadComponent: () => import("./pages/services/services.component").then((m) => m.ServicesComponent),
         title: "Services",
         canActivate: [portalPermissionGuard],
       },
       {
         path: "staff",
-        component: StaffComponent,
+        loadComponent: () => import("./pages/staff/staff.component").then((m) => m.StaffComponent),
         title: "Staff",
         canActivate: [portalPermissionGuard],
       },
       {
         path: "staff/:id/calendar",
-        component: StaffCalendarComponent,
+        loadComponent: () => import("./pages/staff/staff-calendar.component").then((m) => m.StaffCalendarComponent),
         title: "Staff calendar",
         canActivate: [staffCalendarGuard],
       },
       {
         path: "locations",
-        component: LocationsComponent,
+        loadComponent: () => import("./pages/locations/locations.component").then((m) => m.LocationsComponent),
         title: "Locations",
         canActivate: [portalPermissionGuard],
       },
       {
         path: "availability",
-        component: AvailabilityComponent,
+        loadComponent: () => import("./pages/availability/availability.component").then((m) => m.AvailabilityComponent),
         title: "Hours",
         canActivate: [portalPermissionGuard],
       },
       {
         path: "profile",
-        component: ProfileComponent,
+        loadComponent: () => import("./pages/profile/profile.component").then((m) => m.ProfileComponent),
         title: "Profile",
         canActivate: [portalPermissionGuard],
       },
       {
         path: "public-page",
-        component: PublicPageSettingsComponent,
+        loadComponent: () => import("./pages/public-page/public-page.component").then((m) => m.PublicPageSettingsComponent),
         title: "Public page",
         canActivate: [portalPermissionGuard],
       },
-      { path: "register", component: RegisterComponent, title: "Register" },
+      { path: "register", loadComponent: () => import("./pages/register/register.component").then((m) => m.RegisterComponent), title: "Register" },
       {
         path: "finance",
-        component: PaymentsComponent,
+        loadComponent: () => import("./pages/payments/payments.component").then((m) => m.PaymentsComponent),
         title: "Finance",
         canActivate: [portalPermissionGuard],
       },
       {
         path: "settings",
-        component: SettingsComponent,
+        loadComponent: () => import("./pages/settings/settings.component").then((m) => m.SettingsComponent),
         title: "Settings",
         canActivate: [portalPermissionGuard],
       },
       {
         path: "settings/notifications",
-        component: SettingsComponent,
+        loadComponent: () => import("./pages/settings/settings.component").then((m) => m.SettingsComponent),
         title: "Notification settings",
         canActivate: [portalPermissionGuard],
         data: { settingsTab: "notifications" },
       },
       {
         path: "plan",
-        component: PlanComponent,
+        loadComponent: () => import("./pages/plan/plan.component").then((m) => m.PlanComponent),
         title: "Plan",
         canActivate: [portalPermissionGuard],
       },

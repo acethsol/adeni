@@ -32,7 +32,7 @@ One **Carbon-aligned, shareable list/grid shell** in `@adeni/ui` for portal and 
 | Person column | `adeni-table-person-cell` | Fixed 32px avatar + name stack (**use this**, not raw `<img>` in templates) |
 | Sort helper | `sortDataRows()` | Same order for cards + table when needed |
 | View persistence | `readPersistedListViewMode` / `persistListViewMode` | Per-route `storageKey` |
-| Styles | `@adeni/ui/styles/data-grid` | Toolbar, table, filters, export menu (do **not** duplicate in app SCSS) |
+| Styles | `_data-grid-*.scss` partials (one per component `styleUrl`) + `@adeni/ui/styles/data-grid-page` | Component styles per partial; page chrome (`.adeni-list-results`, projected cell/action classes) imported **once** per app in `styles.scss` (do **not** duplicate in app SCSS) |
 
 Types: `AdeniDataTableColumn`, `AdeniListViewMode`, `AdeniExportMenuItem`, `AdeniFilterSelectOption`, `AdeniPillTone`, `AdeniIconBtnVariant`.
 
@@ -94,7 +94,7 @@ Every list page follows the same structure:
 - **Filters:** dropdowns (`adeni-filter-select`), not chip toggles, unless a spec exception is approved.
 - **Export:** single **`adeni-export-menu`** (secondary button + menu), not separate format buttons.
 - **Row actions:** all use **`adeni-icon-btn`** — `variant="table"` (neutral fill) or `variant="danger-soft"` (destructive). Use **`dense="true"`** in tables. Prefer semantic Carbon icons (e.g. `logout` revoke, `view--off` deactivate).
-- **Do not** `@use "data-grid"` inside app page SCSS (bloats budgets); styles come from component `styleUrl`s.
+- **Do not** `@use` any data-grid partial inside app page SCSS (bloats `anyComponentStyle` budgets). Component styles come from each component's own `styleUrl` (`_data-grid-toolbar`, `-table`, `-pagination`, `-pill`, `-icon-btn`, `-filter-select`, `-filter-row`, `-export-menu`, `-row-action-bar`, `-person-cell`). Shared page classes live in `_data-grid-page.scss`, imported once via `@use "data-grid-page";` in `apps/portal/src/styles.scss` and `apps/admin/src/styles.scss` (add to discover only if it adopts list pages).
 
 ---
 
@@ -144,7 +144,7 @@ export type AdeniDataTableColumn<T> = {
 
 ### Phase 1 — Toolkit + Staff pilot ✅
 
-- [x] All toolkit components in `@adeni/ui` + `styles/data-grid`
+- [x] All toolkit components in `@adeni/ui` + split `styles/_data-grid-*.scss` partials
 - [x] Staff: filters, export menu, sort, table actions, card/list switcher
 
 ### Phase 2 — Admin + more portal lists
