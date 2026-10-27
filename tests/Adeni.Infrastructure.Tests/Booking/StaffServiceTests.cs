@@ -281,6 +281,69 @@ public sealed class StaffServiceTests
     }
 
     [Fact]
+    public async Task GetTeamCalendar_FiltersStaffByBusinessLocationAssignment()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var tenantId = await SeedVerifiedTenantAsync(scope.ServiceProvider);
+        var staff = scope.ServiceProvider.GetRequiredService<IStaffService>();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        var locA = Guid.NewGuid();
+        var locB = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+        db.BusinessLocations.AddRange(
+            new BusinessLocation
+            {
+                Id = locA,
+                TenantId = tenantId,
+                Name = "A",
+                Slug = "loc-a-team-cal",
+                MarketId = "lagos",
+                AddressLine = "1",
+                Area = "A",
+                IsPrimary = true,
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now,
+            },
+            new BusinessLocation
+            {
+                Id = locB,
+                TenantId = tenantId,
+                Name = "B",
+                Slug = "loc-b-team-cal",
+                MarketId = "lagos",
+                AddressLine = "2",
+                Area = "B",
+                IsPrimary = false,
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+        await db.SaveChangesAsync();
+
+        var branchA = await staff.CreateAsync(
+            tenantId,
+            new CreateStaffMemberRequest("Branch", "A", BusinessLocationId: locA));
+        var branchB = await staff.CreateAsync(
+            tenantId,
+            new CreateStaffMemberRequest("Branch", "B", BusinessLocationId: locB));
+        Assert.True(branchA.IsSuccess && branchB.IsSuccess);
+
+        var from = now;
+        var to = now.AddDays(7);
+
+        var scoped = await staff.GetTeamCalendarAsync(tenantId, from, to, locA);
+        Assert.True(scoped.IsSuccess);
+        Assert.Single(scoped.Value!.Staff);
+        Assert.Equal(branchA.Value!.Id, scoped.Value.Staff[0].StaffMemberId);
+
+        var allBranches = await staff.GetTeamCalendarAsync(tenantId, from, to);
+        Assert.True(allBranches.IsSuccess);
+        Assert.Equal(2, allBranches.Value!.Staff.Count);
+    }
+
+    [Fact]
     public async Task ListForTenant_IncludesPortalAccessStatus()
     {
         await using var provider = BuildProvider();

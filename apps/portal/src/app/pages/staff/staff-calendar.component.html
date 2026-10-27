@@ -309,6 +309,7 @@
       </div>
 
       <aside #detailRail class="cal-sidebar">
+        <div class="cal-sidebar-body">
         @if (selectedBlock(); as sel) {
           <div class="sidebar-panel">
             <button type="button" class="sidebar-back" (click)="clearSelection()">
@@ -422,46 +423,138 @@
           </div>
 
           @if (teamMode() && team(); as teamData) {
-            <div class="sidebar-section">
-              <p class="sidebar-label">{{ tr('portal.staff.staffCalendar') }}</p>
-              <div class="staff-filter-list" role="list">
-                @for (member of teamData.staff; track member.staffMemberId) {
-                  <button
-                    type="button"
-                    role="listitem"
-                    class="staff-filter-item"
-                    [class.is-off]="!isStaffVisible(member.staffMemberId)"
-                    [style.--staff-color]="staffAccentColor(member.staffMemberId)"
-                    [attr.aria-pressed]="isStaffVisible(member.staffMemberId)"
-                    [attr.aria-label]="
-                      (isStaffVisible(member.staffMemberId) ? 'Hide ' : 'Show ') +
-                      member.displayName +
-                      ' on calendar'
-                    "
-                    (click)="toggleStaffVisibility(member.staffMemberId)"
-                  >
-                    <span class="staff-avatar" aria-hidden="true">{{
-                      staffInitials(member.displayName)
-                    }}</span>
-                    <span class="staff-filter-copy">
-                      <span class="staff-name">{{ member.displayName }}</span>
-                      <span class="staff-hours">{{
-                        staffBookedHoursSummary(member.bookedMinutes)
-                      }}</span>
-                    </span>
-                    <span class="staff-filter-state" aria-hidden="true">
-                      @if (isStaffVisible(member.staffMemberId)) {
-                        <adeni-carbon-icon name="checkmark" [size]="16" />
-                      } @else {
-                        <adeni-carbon-icon name="close" [size]="16" />
-                      }
-                    </span>
-                  </button>
+            <div class="sidebar-section staff-filter-section">
+              <div class="staff-filter-head">
+                <p class="sidebar-label">{{ tr('portal.staff.staffCalendar') }}</p>
+                @if (teamData.staff.length > 1) {
+                  <span class="staff-filter-meta">
+                    {{
+                      tr('portal.staff.staffVisibleOnCalendar', {
+                        visible: visibleTeamStaffCount(),
+                        total: teamData.staff.length,
+                      })
+                    }}
+                  </span>
                 }
               </div>
+
+              @if (teamData.staff.length > 5) {
+                <div class="staff-filter-toolbar">
+                  <div
+                    class="staff-filter-search"
+                    [class.has-value]="staffSidebarSearch().length > 0"
+                    [class.is-focused]="staffSidebarSearchFocused()"
+                  >
+                    <span class="staff-filter-search-icon" aria-hidden="true">
+                      <adeni-carbon-icon name="search" [size]="16" />
+                    </span>
+                    <label class="staff-filter-search-field">
+                      <span class="visually-hidden">{{ tr('portal.staff.searchTeam') }}</span>
+                      <input
+                        type="search"
+                        [placeholder]="tr('portal.staff.searchTeam')"
+                        [value]="staffSidebarSearch()"
+                        (input)="onStaffSidebarSearchChange($any($event.target).value)"
+                        (focus)="staffSidebarSearchFocused.set(true)"
+                        (blur)="staffSidebarSearchFocused.set(false)"
+                      />
+                    </label>
+                    @if (staffSidebarSearch().length > 0) {
+                      <button
+                        type="button"
+                        class="staff-filter-search-clear"
+                        [title]="tr('ui.ui.clearSearch')"
+                        [attr.aria-label]="tr('ui.ui.clearSearch')"
+                        (click)="clearStaffSidebarSearch()"
+                      >
+                        <adeni-carbon-icon name="close" [size]="16" />
+                      </button>
+                    }
+                  </div>
+
+                  <div
+                    class="staff-filter-actions"
+                    role="group"
+                    [attr.aria-label]="tr('portal.staff.calendarVisibilityActions')"
+                  >
+                    <adeni-icon-btn
+                      icon="view"
+                      [label]="tr('portal.staff.showAllOnCalendar')"
+                      variant="ghost"
+                      [dense]="true"
+                      [disabled]="sidebarTeamStaff().length === 0"
+                      (pressed)="showAllTeamStaffOnCalendar()"
+                    />
+                    <adeni-icon-btn
+                      icon="view--off"
+                      [label]="tr('portal.staff.hideAllOnCalendar')"
+                      variant="ghost"
+                      [dense]="true"
+                      [disabled]="sidebarTeamStaff().length === 0"
+                      (pressed)="hideAllTeamStaffOnCalendar()"
+                    />
+                    @if (teamData.staff.length > 10) {
+                      <adeni-icon-btn
+                        [icon]="staffSidebarCompact() ? 'grid' : 'table'"
+                        [label]="tr('portal.staff.compactStaffList')"
+                        [variant]="staffSidebarCompact() ? 'outline' : 'ghost'"
+                        [dense]="true"
+                        (pressed)="toggleStaffSidebarCompact()"
+                      />
+                    }
+                  </div>
+                </div>
+              }
+
+              @if (sidebarTeamStaff().length === 0) {
+                <p class="staff-filter-empty">{{ tr('common.noMatches') }}</p>
+              } @else {
+                <div
+                  class="staff-filter-list"
+                  [class.is-compact]="staffSidebarCompact()"
+                  role="list"
+                >
+                  @for (member of sidebarTeamStaff(); track member.staffMemberId) {
+                    <button
+                      type="button"
+                      role="listitem"
+                      class="staff-filter-item"
+                      [class.is-off]="!isStaffVisible(member.staffMemberId)"
+                      [style.--staff-color]="staffAccentColor(member.staffMemberId)"
+                      [attr.aria-pressed]="isStaffVisible(member.staffMemberId)"
+                      [attr.aria-label]="
+                        (isStaffVisible(member.staffMemberId) ? 'Hide ' : 'Show ') +
+                        member.displayName +
+                        ' on calendar'
+                      "
+                      (click)="toggleStaffVisibility(member.staffMemberId)"
+                    >
+                      <span class="staff-avatar" aria-hidden="true">{{
+                        staffInitials(member.displayName)
+                      }}</span>
+                      <span class="staff-filter-copy">
+                        <span class="staff-name">{{ member.displayName }}</span>
+                        @if (!staffSidebarCompact()) {
+                          <span class="staff-hours">{{
+                            staffBookedHoursSummary(member.bookedMinutes)
+                          }}</span>
+                        }
+                      </span>
+                      <span class="staff-filter-state" aria-hidden="true">
+                        @if (isStaffVisible(member.staffMemberId)) {
+                          <adeni-carbon-icon name="checkmark" [size]="16" />
+                        } @else {
+                          <adeni-carbon-icon name="close" [size]="16" />
+                        }
+                      </span>
+                    </button>
+                  }
+                </div>
+              }
             </div>
           }
         }
+        </div>
       </aside>
     </div>
   </div>

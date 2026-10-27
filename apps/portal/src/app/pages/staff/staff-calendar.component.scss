@@ -12,11 +12,21 @@ $line: var(--border);
   max-width: none;
 }
 
+.cal-shell .adeni-list-results {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .cal-workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(14.5rem, 17.5rem);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--cds-spacing-05);
   align-items: start;
+}
+
+.cal-main,
+.cal-sidebar {
+  min-height: 0;
 }
 
 .cal-main {
@@ -54,18 +64,36 @@ $line: var(--border);
 }
 
 .cal-sidebar {
-  position: sticky;
-  top: 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: var(--cds-spacing-05);
+  min-height: 0;
+  overflow: hidden;
   padding: var(--cds-spacing-05);
   border: 1px solid var(--border);
   background: var(--surface);
 }
 
+.cal-sidebar-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--cds-spacing-05);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sidebar-panel {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--cds-spacing-03);
+  min-height: 0;
+  overflow: auto;
+}
+
 .sidebar-section {
   display: flex;
+  flex-shrink: 0;
   flex-direction: column;
   gap: var(--cds-spacing-03);
 }
@@ -170,12 +198,159 @@ $line: var(--border);
   font-weight: 700;
 }
 
+.sidebar-section.staff-filter-section {
+  flex: 1 1 auto;
+  flex-shrink: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.staff-filter-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 0.5rem;
+}
+
+.staff-filter-meta {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.staff-filter-toolbar {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.staff-filter-search {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.25rem;
+  padding: 0 0.45rem 0 0.55rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.staff-filter-search.is-focused,
+.staff-filter-search.has-value {
+  border-color: var(--cds-focus, #0f62fe);
+  box-shadow: inset 0 0 0 1px var(--cds-focus, #0f62fe);
+}
+
+.staff-filter-search-icon {
+  display: flex;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.staff-filter-search-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+
+.staff-filter-search input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.8125rem;
+  color: var(--text);
+}
+
+.staff-filter-search input:focus {
+  outline: none;
+}
+
+.staff-filter-search input::placeholder {
+  color: var(--text-muted);
+}
+
+.staff-filter-search-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.staff-filter-search-clear:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 14%, transparent);
+}
+
+.staff-filter-actions {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0;
+  min-height: 2.25rem;
+  padding: 0 0.1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.staff-filter-actions adeni-icon-btn:not(:first-child) ::ng-deep .adeni-icon-btn {
+  box-shadow: -1px 0 0 var(--border);
+}
+
+.staff-filter-empty {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .staff-filter-list {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   gap: 0.25rem;
-  max-height: 14rem;
+  min-height: 0;
   overflow: auto;
+}
+
+.staff-filter-list.is-compact {
+  gap: 0.15rem;
+}
+
+.staff-filter-list.is-compact .staff-filter-item {
+  padding: 0.28rem 0.4rem;
+}
+
+.staff-filter-list.is-compact .staff-avatar {
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: 0.5625rem;
 }
 
 .staff-filter-item {
@@ -578,9 +753,23 @@ $line: var(--border);
 .month-board {
   border: 1px solid var(--border, #e0e0e0);
   background: var(--surface);
-  overflow: hidden;
   min-width: 0;
   width: 100%;
+}
+
+.cal-board {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.month-board {
+  overflow: hidden;
+}
+
+.cal-board .day-heads,
+.cal-board .time-grid {
+  min-width: max(100%, calc(3.4rem + var(--cols, 7) * 4.5rem));
 }
 
 .month-dow {
@@ -757,9 +946,12 @@ $line: var(--border);
 
 .day-heads {
   display: grid;
-  grid-template-columns: 3.4rem repeat(var(--cols, 7), minmax(0, 1fr));
+  grid-template-columns: 3.4rem repeat(var(--cols, 7), minmax(4.5rem, 1fr));
   border-bottom: 1px solid $line;
   background: $sand;
+  position: sticky;
+  top: 0;
+  z-index: 6;
 }
 
 .gutter-head {
@@ -843,8 +1035,7 @@ $line: var(--border);
   display: grid;
   grid-template-columns: 3.4rem minmax(0, 1fr);
   position: relative;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: visible;
 }
 
 .hour-rail {
@@ -1197,6 +1388,36 @@ $line: var(--border);
   }
 }
 
+/* Desktop: main column sets workspace height; sidebar is out-of-flow and matches it. */
+@media (min-width: 981px) {
+  .cal-workspace {
+    display: block;
+    position: relative;
+    padding-right: calc(20rem + var(--cds-spacing-05));
+  }
+
+  .cal-sidebar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 20rem;
+    max-width: 20rem;
+    height: 100%;
+    max-height: 100%;
+  }
+}
+
+@media (min-width: 1280px) {
+  .cal-workspace {
+    padding-right: calc(21.5rem + var(--cds-spacing-05));
+  }
+
+  .cal-sidebar {
+    width: 21.5rem;
+    max-width: 22rem;
+  }
+}
+
 @media (max-width: 980px) {
   .cal-workspace {
     grid-template-columns: 1fr;
@@ -1204,7 +1425,57 @@ $line: var(--border);
 
   .cal-sidebar {
     position: static;
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .cal-sidebar-body {
+    overflow: visible;
+  }
+
+  .sidebar-section.staff-filter-section {
+    overflow: visible;
+  }
+
+  .staff-filter-list {
+    flex: 0 1 auto;
+    max-height: 14rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .cal-toolbar {
+    gap: 0.5rem 0.65rem;
+  }
+
+  .period-label {
+    flex: 1 1 100%;
     order: -1;
+    text-align: center;
+    font-size: 0.9rem;
+  }
+
+  .cal-nav {
+    flex: 1 1 auto;
+  }
+
+  .view-toggle {
+    flex: 1 1 auto;
+    margin-left: auto;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .view-toggle button {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-inline: 0.5rem;
+  }
+
+  :host ::ng-deep adeni-list-toolbar .adeni-filter-row {
+    flex-wrap: wrap;
   }
 }
 
@@ -1221,8 +1492,12 @@ $line: var(--border);
     display: none;
   }
 
+  .day-heads {
+    grid-template-columns: 3.4rem repeat(var(--cols, 7), minmax(0, 1fr));
+  }
+
   .day-columns {
-    grid-template-columns: repeat(var(--cols, 1), minmax(0, 1fr));
+    grid-template-columns: repeat(var(--cols, 7), minmax(0, 1fr));
   }
 
   .month-grid {
@@ -1236,5 +1511,53 @@ $line: var(--border);
 
   .month-pill em {
     display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .staff-filter-toolbar {
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  .staff-filter-search {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .staff-filter-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .cal-toolbar {
+    padding-inline: var(--cds-spacing-04);
+  }
+
+  .cal-nav .btn-ghost {
+    padding-inline: 0.55rem;
+    font-size: 0.75rem;
+  }
+
+  .nav-btn {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .month-dow span {
+    padding-inline: 0.15rem;
+    font-size: 0.6rem;
+  }
+
+  .month-dom {
+    width: 1.45rem;
+    height: 1.45rem;
+    font-size: 0.78rem;
+  }
+
+  .month-pill {
+    font-size: 0.625rem;
+    padding-inline: 0.2rem;
   }
 }

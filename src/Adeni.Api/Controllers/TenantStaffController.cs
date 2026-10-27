@@ -254,7 +254,7 @@ public sealed class TenantStaffController(
             return Unauthorized();
         }
 
-        var scoped = await locationScope.ValidateOptionalLocationIdAsync(
+        var scoped = await locationScope.ResolveListLocationAsync(
             tenantId,
             locationId,
             cancellationToken);
@@ -289,7 +289,7 @@ public sealed class TenantStaffController(
             return Unauthorized();
         }
 
-        var scoped = await locationScope.ValidateOptionalLocationIdAsync(
+        var scoped = await locationScope.ResolveListLocationAsync(
             tenantId,
             locationId,
             cancellationToken);

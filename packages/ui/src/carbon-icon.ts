@@ -17,6 +17,8 @@ import Security16 from "@carbon/icons/es/security/16";
 import WarningFilled16 from "@carbon/icons/es/warning--filled/16";
 import Checkmark16 from "@carbon/icons/es/checkmark/16";
 import CheckmarkFilled16 from "@carbon/icons/es/checkmark--filled/16";
+import Checkbox16 from "@carbon/icons/es/checkbox/16";
+import CheckboxChecked16 from "@carbon/icons/es/checkbox--checked/16";
 import ChevronDown16 from "@carbon/icons/es/chevron--down/16";
 import ChevronLeft16 from "@carbon/icons/es/chevron--left/16";
 import ChevronRight16 from "@carbon/icons/es/chevron--right/16";
@@ -46,6 +48,9 @@ import User16 from "@carbon/icons/es/user/16";
 import UserFilled16 from "@carbon/icons/es/user--filled/16";
 import UserFollow16 from "@carbon/icons/es/user--follow/16";
 import UserAvatar16 from "@carbon/icons/es/user--avatar/16";
+import UserMultiple16 from "@carbon/icons/es/user--multiple/16";
+import View16 from "@carbon/icons/es/view/16";
+import ViewOff16 from "@carbon/icons/es/view--off/16";
 import Wallet16 from "@carbon/icons/es/wallet/16";
 import Task16 from "@carbon/icons/es/task/16";
 import Template16 from "@carbon/icons/es/template/16";
@@ -67,6 +72,8 @@ export type AdeniCarbonIconName =
   | "chart--line"
   | "checkmark"
   | "checkmark--filled"
+  | "checkbox"
+  | "checkbox--checked"
   | "chevron--down"
   | "chevron--left"
   | "chevron--right"
@@ -96,6 +103,9 @@ export type AdeniCarbonIconName =
   | "user--filled"
   | "user--follow"
   | "user--avatar"
+  | "user--multiple"
+  | "view"
+  | "view--off"
   | "task"
   | "template"
   | "screen"
@@ -117,6 +127,8 @@ const ICONS: Record<AdeniCarbonIconName, IconDescriptor> = {
   "chart--line": ChartLine16 as IconDescriptor,
   checkmark: Checkmark16 as IconDescriptor,
   "checkmark--filled": CheckmarkFilled16 as IconDescriptor,
+  checkbox: Checkbox16 as IconDescriptor,
+  "checkbox--checked": CheckboxChecked16 as IconDescriptor,
   "chevron--down": ChevronDown16 as IconDescriptor,
   "chevron--left": ChevronLeft16 as IconDescriptor,
   "chevron--right": ChevronRight16 as IconDescriptor,
@@ -146,6 +158,9 @@ const ICONS: Record<AdeniCarbonIconName, IconDescriptor> = {
   "user--filled": UserFilled16 as IconDescriptor,
   "user--follow": UserFollow16 as IconDescriptor,
   "user--avatar": UserAvatar16 as IconDescriptor,
+  "user--multiple": UserMultiple16 as IconDescriptor,
+  view: View16 as IconDescriptor,
+  "view--off": ViewOff16 as IconDescriptor,
   task: Task16 as IconDescriptor,
   template: Template16 as IconDescriptor,
   screen: Screen16 as IconDescriptor,

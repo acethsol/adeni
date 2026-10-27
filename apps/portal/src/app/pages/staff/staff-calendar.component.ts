@@ -20,6 +20,7 @@ import type {
 import { Subscription } from "rxjs";
 import {
   AdeniCarbonIconComponent,
+  AdeniIconBtnComponent,
   AdeniDataTableCellDirective,
   AdeniDataTableComponent,
   AdeniFeedbackService,
@@ -120,6 +121,7 @@ type MonthCell = DayColumn & {
     PortalPageComponent,
     RouterLink,
     AdeniCarbonIconComponent,
+    AdeniIconBtnComponent,
     AdeniListToolbarComponent,
     AdeniListFilterRowComponent,
     AdeniFilterSelectComponent,
@@ -150,6 +152,9 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
   readonly teamMode = signal(false);
   /** Hidden practitioners on the team board (empty = everyone visible). */
   readonly hiddenStaffIds = signal<Set<string>>(new Set());
+  readonly staffSidebarSearch = signal("");
+  readonly staffSidebarSearchFocused = signal(false);
+  readonly staffSidebarCompact = signal(false);
   readonly listViewMode = signal<AdeniListViewMode>(
     readPersistedListViewMode("portal.calendar", "cards"),
   );
@@ -190,6 +195,26 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
     }
     return !this.hiddenStaffIds().has(staffMemberId);
   }
+
+  readonly sidebarTeamStaff = computed((): StaffTeamCalendarResponse["staff"] => {
+    const team = this.team();
+    if (!team) {
+      return [];
+    }
+    const query = this.staffSidebarSearch().trim().toLowerCase();
+    if (!query) {
+      return team.staff;
+    }
+    return team.staff.filter((member) => member.displayName.toLowerCase().includes(query));
+  });
+
+  readonly visibleTeamStaffCount = computed(() => {
+    const team = this.team();
+    if (!team) {
+      return 0;
+    }
+    return team.staff.filter((member) => this.visibleForStaff(member.staffMemberId)).length;
+  });
 
   readonly sourceBookings = computed((): StaffCalendarBookingItem[] => {
     if (this.teamMode()) {
@@ -646,6 +671,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
     await this.session.ensureLoaded();
     await this.api.withAuthorizedClient(async (c) => {
       const profile = await c.getTenantProfile().catch(() => null);
+      this.activeLocation.syncFromProfile(profile);
       this.tenantEntitlements.set(profile?.entitlements ?? null);
     });
     const routeId = this.route.snapshot.paramMap.get("id");
@@ -684,6 +710,44 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
     }
     this.hiddenStaffIds.set(next);
     this.clearSelection();
+  }
+
+  onStaffSidebarSearchChange(value: string): void {
+    this.staffSidebarSearch.set(value);
+  }
+
+  clearStaffSidebarSearch(): void {
+    this.staffSidebarSearch.set("");
+  }
+
+  showAllTeamStaffOnCalendar(): void {
+    const filteredIds = new Set(this.sidebarTeamStaff().map((m) => m.staffMemberId));
+    if (filteredIds.size === 0) {
+      return;
+    }
+    const next = new Set(this.hiddenStaffIds());
+    for (const id of filteredIds) {
+      next.delete(id);
+    }
+    this.hiddenStaffIds.set(next);
+    this.clearSelection();
+  }
+
+  hideAllTeamStaffOnCalendar(): void {
+    const filtered = this.sidebarTeamStaff();
+    if (filtered.length === 0) {
+      return;
+    }
+    const next = new Set(this.hiddenStaffIds());
+    for (const member of filtered) {
+      next.add(member.staffMemberId);
+    }
+    this.hiddenStaffIds.set(next);
+    this.clearSelection();
+  }
+
+  toggleStaffSidebarCompact(): void {
+    this.staffSidebarCompact.update((value) => !value);
   }
 
   staffAccentColor(staffMemberId: string | null): string {
@@ -777,7 +841,12 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
     this.branchSub?.unsubscribe();
   }
 
+  /** Active shell branch when set; otherwise same resolution as other tenant list APIs. */
   private branchLocationQuery(): string | undefined {
+    const branch = this.activeLocation.selectedLocation();
+    if (branch) {
+      return branch.id;
+    }
     return this.activeLocation.tenantApiLocationId(this.tenantEntitlements());
   }
 
