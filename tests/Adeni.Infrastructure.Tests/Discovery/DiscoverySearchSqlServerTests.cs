@@ -18,7 +18,6 @@ using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Reviews;
 using Adeni.Infrastructure.Tests.Catalog;
 using Adeni.Infrastructure.Tests.Storage;
-using Adeni.Infrastructure.Tests.Subscriptions;
 using Adeni.Infrastructure.Tests.TestData;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
