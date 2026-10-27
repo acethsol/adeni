@@ -15,6 +15,7 @@ describe("Portal shell lifecycle", () => {
   it("keeps one subscription per event and cleans up when the shell is destroyed", async () => {
     const messages = new Subject<void>();
     const pending = new Subject<unknown>();
+    const verification = new Subject<unknown>();
     const refresh = new Subject<void>();
     const branches = new Subject<void>();
     TestBed.configureTestingModule({ imports: [PortalShellComponent], providers: [provideRouter([]),
@@ -28,7 +29,7 @@ describe("Portal shell lifecycle", () => {
       { provide: PortalNavBadgesService, useValue: { refreshRequested$: refresh } },
       { provide: PortalRealtimeBootstrapService, useValue: { stop: () => Promise.resolve() } },
       { provide: MessagingRealtimeService, useValue: { conversationUpdated$: messages } },
-      { provide: TenantOperationsRealtimeService, useValue: { pendingBookingsChanged$: pending } },
+      { provide: TenantOperationsRealtimeService, useValue: { pendingBookingsChanged$: pending, tenantVerificationChanged$: verification } },
     ] });
     TestBed.overrideComponent(PortalShellComponent, { set: { template: "", imports: [] } });
     const fixture = TestBed.createComponent(PortalShellComponent);
@@ -37,8 +38,8 @@ describe("Portal shell lifecycle", () => {
     await fixture.whenStable();
     expect(fixture.componentInstance.profileLoaded()).toBeTrue();
     expect(fixture.componentInstance.visibleGroups().flatMap(group => group.items).some(item => item.path === "/register")).toBeTrue();
-    for (const stream of [messages, pending, refresh, branches]) expect(stream.observers.length).toBe(1);
+    for (const stream of [messages, pending, verification, refresh, branches]) expect(stream.observers.length).toBe(1);
     fixture.destroy();
-    for (const stream of [messages, pending, refresh, branches]) expect(stream.observers.length).toBe(0);
+    for (const stream of [messages, pending, verification, refresh, branches]) expect(stream.observers.length).toBe(0);
   });
 });
