@@ -179,6 +179,22 @@
               {{ groupName(service.menuGroupId) }}
             </adeni-pill>
           </ng-template>
+          @if (canManageIntake()) {
+            <ng-template adeniDataTableCell="intake" let-service>
+              <a
+                class="service-name-link intake-form-link"
+                [routerLink]="['/services', service.id]"
+                [queryParams]="{ tab: 'intake' }"
+              >
+                <adeni-pill
+                  [tone]="intakeTemplateId(service.id) ? 'brand' : 'neutral'"
+                  [compact]="true"
+                >
+                  {{ intakeFormLabel(service.id) }}
+                </adeni-pill>
+              </a>
+            </ng-template>
+          }
           <ng-template adeniDataTableCell="tags" let-service>
             <div class="adeni-cell-pills">
               @if (service.isAddOn) {

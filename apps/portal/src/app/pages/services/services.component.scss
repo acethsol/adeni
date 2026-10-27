@@ -61,6 +61,14 @@
   text-decoration: underline;
 }
 
+.intake-form-link {
+  display: inline-flex;
+}
+
+.intake-form-link:hover {
+  text-decoration: none;
+}
+
 .btn-link {
   font: inherit;
   color: var(--link-primary, var(--adeni-purple, #7f56ff));

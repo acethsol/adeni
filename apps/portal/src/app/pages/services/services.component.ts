@@ -2,7 +2,7 @@ import { PortalSessionService } from "../../core/services/portal-session.service
 import { RouterLink } from "@angular/router";
 import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import type { ServiceMenuGroup, ServiceOffering, ServiceTemplate } from "@adeni/shared";
+import type { IntakeSummary, ServiceMenuGroup, ServiceOffering, ServiceTemplate } from "@adeni/shared";
 import {
   buildReportExportMenuItems,
   DEFAULT_PAGE_SIZE,
@@ -107,6 +107,15 @@ export class ServicesComponent implements OnInit {
 
   readonly entitlements = signal<TenantEntitlements | null>(null);
   readonly exporting = signal(false);
+  readonly intakeTemplates = signal<IntakeSummary[]>([]);
+  readonly serviceIntakeBindings = signal<Record<string, string | null>>({});
+
+  readonly canManageIntake = computed(
+    () =>
+      this.intakeSession.loaded() &&
+      (this.intakeSession.permissionRole() === "owner" ||
+        this.intakeSession.permissionRole() === "manager"),
+  );
 
   readonly exportItems = computed((): AdeniExportMenuItem[] =>
     buildReportExportMenuItems({
@@ -168,26 +177,37 @@ export class ServicesComponent implements OnInit {
     sliceListPage(this.sortedFilteredServices(), this.page(), this.pageSize()),
   );
 
-  readonly serviceTableColumns = computed<AdeniDataTableColumn<ServiceOffering>[]>(() => [
-    {
-      id: "name",
-      header: this.tr("common.service"),
-      cell: (s) => s.name,
-      sortValue: (s) => s.name.toLowerCase(),
-    },
-    {
-      id: "collection",
-      header: this.tr("portal.services.section"),
-      cell: (s) => this.groupName(s.menuGroupId),
-      sortValue: (s) => this.groupName(s.menuGroupId).toLowerCase(),
-    },
-    {
+  readonly serviceTableColumns = computed<AdeniDataTableColumn<ServiceOffering>[]>(() => {
+    const columns: AdeniDataTableColumn<ServiceOffering>[] = [
+      {
+        id: "name",
+        header: this.tr("common.service"),
+        cell: (s) => s.name,
+        sortValue: (s) => s.name.toLowerCase(),
+      },
+      {
+        id: "collection",
+        header: this.tr("portal.services.section"),
+        cell: (s) => this.groupName(s.menuGroupId),
+        sortValue: (s) => this.groupName(s.menuGroupId).toLowerCase(),
+      },
+    ];
+    if (this.canManageIntake()) {
+      columns.push({
+        id: "intake",
+        header: this.tr("intake.linkedForm"),
+        cell: (s) => this.intakeFormLabel(s.id),
+        sortValue: (s) => this.intakeFormLabel(s.id).toLowerCase(),
+      });
+    }
+    columns.push({
       id: "tags",
       header: this.tr("portal.services.details"),
       cell: () => "",
       sortValue: (s) => s.priceAmount,
-    },
-  ]);
+    });
+    return columns;
+  });
 
   readonly trackServiceRow = (service: ServiceOffering): string => service.id;
 
@@ -232,6 +252,20 @@ export class ServicesComponent implements OnInit {
 
   emptyDraft(): ServiceDraft {
     return resetEmptyDraft(this.defaultCurrency, this.primaryCategorySlug());
+  }
+
+  intakeFormLabel(serviceId: string): string {
+    const templateId = this.serviceIntakeBindings()[serviceId] ?? null;
+    if (!templateId) {
+      return this.tr("intake.unassigned");
+    }
+    return (
+      this.intakeTemplates().find((row) => row.id === templateId)?.name ?? this.tr("intake.form")
+    );
+  }
+
+  intakeTemplateId(serviceId: string): string | null {
+    return this.serviceIntakeBindings()[serviceId] ?? null;
   }
 
   groupName(groupId: string | null | undefined): string {
@@ -280,6 +314,27 @@ export class ServicesComponent implements OnInit {
           if (marketId === "lagos" || marketId === "abuja") this.defaultCurrency = "NGN";
           else if (marketId === "ottawa" || marketId === "toronto") this.defaultCurrency = "CAD";
           else if (catalog.items[0]?.currency) this.defaultCurrency = catalog.items[0].currency;
+
+          await this.intakeSession.ensureLoaded();
+          if (
+            this.intakeSession.permissionRole() === "owner" ||
+            this.intakeSession.permissionRole() === "manager"
+          ) {
+            const [templates, bindingEntries] = await Promise.all([
+              c.intake.listTemplates(1),
+              Promise.all(
+                catalog.items.map(async (service) => {
+                  const value = await c.intake.getBinding(service.id);
+                  return [service.id, value.templateId] as const;
+                }),
+              ),
+            ]);
+            this.intakeTemplates.set(templates);
+            this.serviceIntakeBindings.set(Object.fromEntries(bindingEntries));
+          } else {
+            this.intakeTemplates.set([]);
+            this.serviceIntakeBindings.set({});
+          }
         });
       });
     } catch (caught) {
