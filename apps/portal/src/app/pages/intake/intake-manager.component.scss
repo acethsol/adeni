@@ -99,15 +99,8 @@ $purple: var(--adeni-purple, #7f56ff);
   gap: var(--cds-spacing-02);
 }
 
-.editor.section {
-  padding: var(--cds-spacing-06);
-  border-color: color-mix(in srgb, $teal 22%, var(--border));
-  background: linear-gradient(
-    165deg,
-    color-mix(in srgb, $teal 7%, var(--surface)) 0%,
-    var(--surface) 42%
-  );
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--text) 4%, transparent);
+.intake-editor-modal {
+  min-height: min(52vh, 28rem);
 }
 
 .editor-toolbar {
@@ -119,6 +112,11 @@ $purple: var(--adeni-purple, #7f56ff);
   padding-bottom: var(--cds-spacing-06);
   margin-bottom: var(--cds-spacing-05);
   border-bottom: 1px solid color-mix(in srgb, $teal 16%, var(--border));
+
+  &--modal {
+    align-items: center;
+    margin-top: calc(-1 * var(--cds-spacing-03));
+  }
 }
 
 .editor-toolbar__intro {
@@ -177,7 +175,7 @@ $purple: var(--adeni-purple, #7f56ff);
 }
 
 .editor-block {
-  margin-top: var(--cds-spacing-06);
+  margin-top: var(--cds-spacing-05);
   padding: var(--cds-spacing-06);
   border: 1px solid var(--border);
   background: var(--surface);
@@ -426,9 +424,9 @@ $purple: var(--adeni-purple, #7f56ff);
     grid-template-columns: 1fr;
   }
 
-  .editor-toolbar__aside {
+  .editor-toolbar--modal {
+    flex-direction: column;
     align-items: stretch;
-    width: 100%;
   }
 
   .editor-meta,

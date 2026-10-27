@@ -90,54 +90,151 @@
     }
   </section>
 
-  @if (selected(); as form) {
-    <section class="card section editor" [attr.aria-busy]="busy()">
-      <header class="editor-toolbar">
-        <div class="editor-toolbar__intro">
-          <span class="editor-toolbar__icon" aria-hidden="true">
-            <adeni-carbon-icon name="edit" [size]="20" />
-          </span>
-          <div class="editor-toolbar__copy">
-            <p class="editor-toolbar__eyebrow">{{ tr('intake.editForm') }}</p>
-            <h3 class="editor-toolbar__title">{{ editorSubtitle() }}</h3>
-          </div>
+  <section class="card section assignment-section">
+    <header class="section-head">
+      <div>
+        <h3>{{ tr('intake.serviceAssignment') }}</h3>
+        <p class="section-lede">{{ tr('intake.serviceLinksLead') }}</p>
+      </div>
+      @if (services().length > 0) {
+        <div class="section-head__aside">
+          <adeni-pill tone="brand" [compact]="true">
+            {{ assignedServiceCount() }} / {{ services().length }}
+          </adeni-pill>
         </div>
-        <div class="editor-toolbar__aside">
-          <div class="editor-meta adeni-cell-pills">
-            <adeni-pill [tone]="form.isActive ? 'brand' : 'neutral'" [compact]="true">
-              {{ tr(form.isActive ? 'intake.active' : 'intake.inactive') }}
-            </adeni-pill>
-            @if (form.publishedVersionId) {
-              <adeni-pill tone="success" [compact]="true">{{ tr('intake.statusPublished') }}</adeni-pill>
-            }
-            @if (form.draftVersionId) {
-              <adeni-pill tone="warning" [compact]="true">{{ tr('intake.statusDraft') }}</adeni-pill>
+      }
+    </header>
+
+    @if (services().length === 0) {
+      <adeni-portal-empty-state
+        icon="template"
+        [title]="tr('intake.noServicesForAssignment')"
+        [description]="tr('intake.serviceLinksLead')"
+        [compact]="true"
+      />
+    } @else {
+      <div class="assignment-layout">
+        <div class="adeni-list-results assignment-table">
+          <adeni-data-table
+            [rows]="serviceLinkRows()"
+            [columns]="serviceLinkColumns()"
+            [trackRow]="trackServiceLink"
+          >
+            <ng-template adeniDataTableCell="service" let-row>
+              <span class="assignment-service-name">{{ row.service.name }}</span>
+            </ng-template>
+            <ng-template adeniDataTableCell="form" let-row>
+              <adeni-pill [tone]="row.templateId ? 'brand' : 'neutral'" [compact]="true">
+                {{ row.formName }}
+              </adeni-pill>
+            </ng-template>
+          </adeni-data-table>
+        </div>
+
+        <aside class="assign-panel" [attr.aria-busy]="busy() && serviceId()">
+          <div class="assign-panel__head">
+            <span class="assign-panel__icon" aria-hidden="true">
+              <adeni-carbon-icon name="task" [size]="20" />
+            </span>
+            <div>
+              <h4 class="assign-panel__title">{{ tr('intake.assignForm') }}</h4>
+              <p class="assign-panel__lead">{{ tr('intake.selectServiceToAssign') }}</p>
+            </div>
+          </div>
+          <div class="assign-filters">
+            <adeni-filter-select
+              [label]="tr('common.service')"
+              [options]="assignServiceOptions()"
+              [value]="serviceId()"
+              (valueChange)="selectService($event)"
+            />
+            @if (binding(); as b) {
+              <adeni-filter-select
+                [label]="tr('intake.form')"
+                [options]="assignableFormOptions()"
+                [value]="b.templateId ?? ''"
+                (valueChange)="bind($event)"
+              />
             }
           </div>
-          <div class="editor-toolbar__actions">
-            @if (form.isActive) {
-              <adeni-staff-btn
-                icon="view--off"
-                variant="secondary"
-                [disabled]="busy()"
-                (pressed)="action('active')"
-              >
-                {{ tr('intake.deactivateForm') }}
-              </adeni-staff-btn>
-            } @else {
-              <adeni-staff-btn
-                icon="checkmark--filled"
-                variant="primary"
-                [disabled]="busy()"
-                (pressed)="action('active')"
-              >
-                {{ tr('intake.activateForm') }}
-              </adeni-staff-btn>
-            }
-            <adeni-staff-btn icon="close" variant="secondary" [disabled]="busy()" (pressed)="closeEditor()">
-              {{ tr('intake.closeEditor') }}
+        </aside>
+      </div>
+    }
+  </section>
+</app-portal-page>
+
+<adeni-modal
+  [open]="showCreate()"
+  [title]="tr('intake.createFormTitle')"
+  [subtitle]="tr('intake.formsSectionLead')"
+  size="lg"
+  [hasFooter]="true"
+  (closed)="closeCreateModal()"
+>
+  <div class="modal-body">
+    <div class="field">
+      <label>{{ tr('intake.name') }}</label>
+      <input
+        [ngModel]="name()"
+        (ngModelChange)="name.set($event)"
+        maxlength="200"
+        [disabled]="busy()"
+        (keyup.enter)="create()"
+      />
+    </div>
+  </div>
+  <div modalFooter class="modal-actions">
+    <adeni-staff-btn icon="close" variant="secondary" [disabled]="busy()" (pressed)="closeCreateModal()">
+      {{ tr('common.cancel') }}
+    </adeni-staff-btn>
+    <adeni-staff-btn variant="primary" icon="add" [disabled]="busy() || !name().trim()" (pressed)="create()">
+      {{ tr('intake.create') }}
+    </adeni-staff-btn>
+  </div>
+</adeni-modal>
+
+<adeni-modal
+  [open]="!!selected()"
+  [title]="tr('intake.editForm')"
+  [subtitle]="editorSubtitle()"
+  size="2xl"
+  [hasFooter]="false"
+  (closed)="closeEditor()"
+>
+  @if (selected(); as form) {
+    <div class="intake-editor-modal" [attr.aria-busy]="busy()">
+      <header class="editor-toolbar editor-toolbar--modal">
+        <div class="editor-meta adeni-cell-pills">
+          <adeni-pill [tone]="form.isActive ? 'brand' : 'neutral'" [compact]="true">
+            {{ tr(form.isActive ? 'intake.active' : 'intake.inactive') }}
+          </adeni-pill>
+          @if (form.publishedVersionId) {
+            <adeni-pill tone="success" [compact]="true">{{ tr('intake.statusPublished') }}</adeni-pill>
+          }
+          @if (form.draftVersionId) {
+            <adeni-pill tone="warning" [compact]="true">{{ tr('intake.statusDraft') }}</adeni-pill>
+          }
+        </div>
+        <div class="editor-toolbar__actions">
+          @if (form.isActive) {
+            <adeni-staff-btn
+              icon="view--off"
+              variant="secondary"
+              [disabled]="busy()"
+              (pressed)="action('active')"
+            >
+              {{ tr('intake.deactivateForm') }}
             </adeni-staff-btn>
-          </div>
+          } @else {
+            <adeni-staff-btn
+              icon="checkmark--filled"
+              variant="primary"
+              [disabled]="busy()"
+              (pressed)="action('active')"
+            >
+              {{ tr('intake.activateForm') }}
+            </adeni-staff-btn>
+          }
         </div>
       </header>
 
@@ -294,108 +391,6 @@
           </div>
         </div>
       }
-    </section>
-  }
-
-  <section class="card section assignment-section">
-    <header class="section-head">
-      <div>
-        <h3>{{ tr('intake.serviceAssignment') }}</h3>
-        <p class="section-lede">{{ tr('intake.serviceLinksLead') }}</p>
-      </div>
-      @if (services().length > 0) {
-        <div class="section-head__aside">
-          <adeni-pill tone="brand" [compact]="true">
-            {{ assignedServiceCount() }} / {{ services().length }}
-          </adeni-pill>
-        </div>
-      }
-    </header>
-
-    @if (services().length === 0) {
-      <adeni-portal-empty-state
-        icon="template"
-        [title]="tr('intake.noServicesForAssignment')"
-        [description]="tr('intake.serviceLinksLead')"
-        [compact]="true"
-      />
-    } @else {
-      <div class="assignment-layout">
-        <div class="adeni-list-results assignment-table">
-          <adeni-data-table
-            [rows]="serviceLinkRows()"
-            [columns]="serviceLinkColumns()"
-            [trackRow]="trackServiceLink"
-          >
-            <ng-template adeniDataTableCell="service" let-row>
-              <span class="assignment-service-name">{{ row.service.name }}</span>
-            </ng-template>
-            <ng-template adeniDataTableCell="form" let-row>
-              <adeni-pill [tone]="row.templateId ? 'brand' : 'neutral'" [compact]="true">
-                {{ row.formName }}
-              </adeni-pill>
-            </ng-template>
-          </adeni-data-table>
-        </div>
-
-        <aside class="assign-panel" [attr.aria-busy]="busy() && serviceId()">
-          <div class="assign-panel__head">
-            <span class="assign-panel__icon" aria-hidden="true">
-              <adeni-carbon-icon name="task" [size]="20" />
-            </span>
-            <div>
-              <h4 class="assign-panel__title">{{ tr('intake.assignForm') }}</h4>
-              <p class="assign-panel__lead">{{ tr('intake.selectServiceToAssign') }}</p>
-            </div>
-          </div>
-          <div class="assign-filters">
-            <adeni-filter-select
-              [label]="tr('common.service')"
-              [options]="assignServiceOptions()"
-              [value]="serviceId()"
-              (valueChange)="selectService($event)"
-            />
-            @if (binding(); as b) {
-              <adeni-filter-select
-                [label]="tr('intake.form')"
-                [options]="assignableFormOptions()"
-                [value]="b.templateId ?? ''"
-                (valueChange)="bind($event)"
-              />
-            }
-          </div>
-        </aside>
-      </div>
-    }
-  </section>
-</app-portal-page>
-
-<adeni-modal
-  [open]="showCreate()"
-  [title]="tr('intake.createFormTitle')"
-  [subtitle]="tr('intake.formsSectionLead')"
-  size="md"
-  [hasFooter]="true"
-  (closed)="closeCreateModal()"
->
-  <div class="modal-body">
-    <div class="field">
-      <label>{{ tr('intake.name') }}</label>
-      <input
-        [ngModel]="name()"
-        (ngModelChange)="name.set($event)"
-        maxlength="200"
-        [disabled]="busy()"
-        (keyup.enter)="create()"
-      />
     </div>
-  </div>
-  <div modalFooter class="modal-actions">
-    <adeni-staff-btn icon="close" variant="secondary" [disabled]="busy()" (pressed)="closeCreateModal()">
-      {{ tr('common.cancel') }}
-    </adeni-staff-btn>
-    <adeni-staff-btn variant="primary" icon="add" [disabled]="busy() || !name().trim()" (pressed)="create()">
-      {{ tr('intake.create') }}
-    </adeni-staff-btn>
-  </div>
+  }
 </adeni-modal>
