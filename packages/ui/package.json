@@ -11,7 +11,7 @@
     "./styles/tokens": "./src/styles/_carbon-adeni-tokens.scss",
     "./styles/carbon-components": "./src/styles/_carbon-components.scss",
     "./styles/dashboard-shell": "./src/styles/_dashboard-shell.scss",
-    "./styles/data-grid": "./src/styles/_data-grid.scss",
+    "./styles/data-grid-page": "./src/styles/_data-grid-page.scss",
     "./realtime": "./src/realtime/index.ts"
   },
   "scripts": {

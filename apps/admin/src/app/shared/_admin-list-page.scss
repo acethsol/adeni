@@ -1,29 +1,12 @@
 @use "staff-layout" as *;
-@use "data-grid" as *;
 @use "admin-pills" as *;
 
 .roster {
   width: 100%;
 }
 
+/* Base `.adeni-list-results` chrome lives in `@adeni/ui/styles/data-grid-page` (global). */
 .adeni-list-results {
-  border: 1px solid var(--border);
-  background: var(--surface);
-
-  adeni-data-table ::ng-deep .adeni-data-table-shell {
-    border: none;
-  }
-
-  adeni-list-pagination ::ng-deep .adeni-list-pagination,
-  adeni-list-pagination ::ng-deep .adeni-list-pagination--solo {
-    margin-top: 0;
-    padding: var(--cds-spacing-04) var(--cds-spacing-05);
-    border: none;
-    border-top: 1px solid var(--border);
-    background: transparent;
-    box-shadow: none;
-  }
-
   /* Row action templates render inside adeni-data-table — pierce for flex row layout */
   adeni-data-table ::ng-deep .actions-inline,
   adeni-data-table ::ng-deep .adeni-row-action-bar {

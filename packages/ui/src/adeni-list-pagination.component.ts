@@ -111,7 +111,7 @@ import { injectAdeniTranslate } from "./locale/adeni-i18n";
       </footer>
     }
   `,
-  styleUrl: "./styles/_data-grid.scss",
+  styleUrl: "./styles/_data-grid-pagination.scss",
 })
 export class AdeniListPaginationComponent {
   protected readonly tr = injectAdeniTranslate();

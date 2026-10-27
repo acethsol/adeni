@@ -9,6 +9,6 @@ import { Component } from "@angular/core";
       <ng-content />
     </div>
   `,
-  styleUrl: "./styles/_data-grid.scss",
+  styleUrl: "./styles/_data-grid-row-action-bar.scss",
 })
 export class AdeniRowActionBarComponent {}

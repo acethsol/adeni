@@ -1,0 +1,101 @@
+/* —— Icon buttons —— */
+
+a.adeni-icon-btn {
+  text-decoration: none;
+}
+
+.adeni-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  padding: 0 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 0;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease,
+    transform 100ms ease;
+}
+
+.adeni-icon-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.adeni-icon-btn:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+.adeni-icon-btn--ghost {
+  color: var(--text-muted);
+  background: transparent;
+}
+
+.adeni-icon-btn--ghost:not(:disabled):hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+.adeni-icon-btn--soft {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 6%, var(--surface));
+  border-color: var(--border);
+}
+
+.adeni-icon-btn--soft:not(:disabled):hover {
+  background: color-mix(in srgb, var(--adeni-purple, #6f4ff2) 10%, var(--surface));
+  border-color: color-mix(in srgb, var(--adeni-purple, #6f4ff2) 25%, var(--border));
+}
+
+.adeni-icon-btn--outline {
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.adeni-icon-btn--outline:not(:disabled):hover {
+  border-color: color-mix(in srgb, var(--text) 25%, var(--border));
+}
+
+.adeni-icon-btn--danger-soft {
+  color: #b42318;
+  background: #fef3f2;
+  border-color: #fecdca;
+}
+
+.adeni-icon-btn--danger-soft:not(:disabled):hover {
+  background: #fee4e2;
+}
+
+.adeni-icon-btn--table {
+  min-height: 2rem;
+  min-width: 2rem;
+  padding: 0;
+  border-radius: 0;
+  color: var(--text-muted);
+  background: transparent;
+  border-color: transparent;
+}
+
+.adeni-icon-btn--table:not(:disabled):hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 8%, var(--surface));
+}
+
+.adeni-icon-btn--dense {
+  min-height: 2rem;
+  min-width: 2rem;
+  padding: 0;
+}
+
+.adeni-icon-btn-label {
+  padding-inline-end: 0.15rem;
+}

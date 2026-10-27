@@ -32,7 +32,7 @@ export type AdeniFilterSelectOption = {
       </div>
     </div>
   `,
-  styleUrl: "./styles/_data-grid.scss",
+  styleUrl: "./styles/_data-grid-filter-select.scss",
 })
 export class AdeniFilterSelectComponent {
   readonly fieldId = `adeni-filter-${Math.random().toString(36).slice(2, 9)}`;

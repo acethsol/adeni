@@ -1,0 +1,61 @@
+/* Export overflow menu */
+
+.adeni-export-menu {
+  position: relative;
+}
+
+.adeni-export-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  padding: 0 var(--cds-spacing-04);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.adeni-export-menu-trigger:hover {
+  background: color-mix(in srgb, var(--text) 4%, var(--surface));
+}
+
+.adeni-export-menu-panel {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  right: 0;
+  z-index: 20;
+  min-width: 11rem;
+  margin: 0;
+  padding: 0.25rem 0;
+  list-style: none;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--text) 12%, transparent);
+}
+
+.adeni-export-menu-item {
+  display: block;
+  width: 100%;
+  padding: 0.5rem var(--cds-spacing-04);
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.8125rem;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.adeni-export-menu-item:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text) 6%, var(--surface));
+}
+
+.adeni-export-menu-item:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+}

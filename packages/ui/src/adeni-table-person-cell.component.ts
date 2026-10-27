@@ -20,7 +20,7 @@ import { Component, input } from "@angular/core";
       </div>
     </div>
   `,
-  styleUrl: "./styles/_data-grid.scss",
+  styleUrl: "./styles/_data-grid-person-cell.scss",
 })
 export class AdeniTablePersonCellComponent {
   readonly displayName = input.required<string>();

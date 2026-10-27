@@ -1,0 +1,73 @@
+/* —— Pills —— */
+
+.adeni-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 1.5rem;
+  padding: 0 0.5rem;
+  border-radius: 0;
+  border: 1px solid transparent;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.adeni-pill--compact {
+  min-height: 1.25rem;
+  padding-inline: 0.5rem;
+  font-size: 0.625rem;
+}
+
+.adeni-pill-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 0;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.adeni-pill--neutral {
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--text) 6%, var(--surface));
+  border-color: var(--border);
+}
+
+.adeni-pill--success {
+  color: #067647;
+  background: #ecfdf3;
+  border-color: #abefc6;
+}
+
+.adeni-pill--warning {
+  color: #b54708;
+  background: #fffaeb;
+  border-color: #fedf89;
+}
+
+.adeni-pill--danger {
+  color: #b42318;
+  background: #fef3f2;
+  border-color: #fecdca;
+}
+
+.adeni-pill--info {
+  color: #175cd3;
+  background: #eff8ff;
+  border-color: #b2ddff;
+}
+
+.adeni-pill--brand {
+  color: var(--adeni-purple, #6f4ff2);
+  background: color-mix(in srgb, var(--adeni-purple, #6f4ff2) 12%, var(--surface));
+  border-color: color-mix(in srgb, var(--adeni-purple, #6f4ff2) 35%, var(--border));
+}
+
+.adeni-pill--accent {
+  color: #027a48;
+  background: color-mix(in srgb, var(--adeni-teal, #2a9d8f) 14%, var(--surface));
+  border-color: color-mix(in srgb, var(--adeni-teal, #2a9d8f) 40%, var(--border));
+}

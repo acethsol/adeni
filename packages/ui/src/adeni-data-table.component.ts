@@ -73,7 +73,7 @@ import { injectAdeniTranslate } from "./locale/adeni-i18n";
       </div>
     </div>
   `,
-  styleUrl: "./styles/_data-grid.scss",
+  styleUrl: "./styles/_data-grid-table.scss",
 })
 export class AdeniDataTableComponent<T> {
   protected readonly tr = injectAdeniTranslate();
