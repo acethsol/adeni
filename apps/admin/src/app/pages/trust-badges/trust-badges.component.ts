@@ -1,17 +1,24 @@
 import { DatePipe } from "@angular/common";
 import { Component, computed, inject, signal } from "@angular/core";
-import { FormsModule } from "@angular/forms";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { type PendingBadgeRequest, VERIFICATION_BADGE_LABELS } from "@adeni/shared";
 import {
   AdminOperationsRealtimeService,
-  AdeniCarbonIconComponent,
+  AdeniDataTableActionsDirective,
+  AdeniDataTableCellDirective,
+  AdeniDataTableComponent,
+  AdeniConfirmService,
   AdeniFeedbackService,
-  AdeniPortalEmptyStateComponent,
+  AdeniIconBtnComponent,
   AdeniListPaginationComponent,
-  AdeniStaffButtonComponent,
+  AdeniListToolbarComponent,
+  AdeniPillComponent,
+  AdeniPortalEmptyStateComponent,
+  AdeniRowActionBarComponent,
   PortalPageComponent,
+  type AdeniDataTableColumn,
+  type AdeniDataTableSortDirection,
   injectAdeniTranslate,
   injectAdeniApiError,
 } from "@adeni/ui";
@@ -23,7 +30,6 @@ import {
   LIST_PAGE_SIZE_OPTIONS,
 } from "../../shared/admin-list-paging";
 import { adminLoadErrorMessage } from "../../shared/admin-load-error";
-import { AdminPillComponent } from "../../shared/admin-pill.component";
 import { badgeTypePill } from "../../shared/admin-pill-maps";
 
 @Component({
@@ -31,14 +37,17 @@ import { badgeTypePill } from "../../shared/admin-pill-maps";
   standalone: true,
   imports: [
     PortalPageComponent,
-    FormsModule,
-    AdeniCarbonIconComponent,
-    AdeniStaffButtonComponent,
+    AdeniListToolbarComponent,
+    AdeniDataTableComponent,
+    AdeniDataTableCellDirective,
+    AdeniDataTableActionsDirective,
     AdeniListPaginationComponent,
     AdeniPortalEmptyStateComponent,
+    AdeniPillComponent,
+    AdeniRowActionBarComponent,
+    AdeniIconBtnComponent,
     DatePipe,
     RouterLink,
-    AdminPillComponent,
   ],
   templateUrl: "./trust-badges.component.html",
   styleUrl: "./trust-badges.component.scss",
@@ -50,6 +59,7 @@ export class AdminTrustBadgesComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly feedback = inject(AdeniFeedbackService);
+  private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly operationsRealtime = inject(AdminOperationsRealtimeService);
 
   readonly loading = signal(true);
@@ -66,10 +76,48 @@ export class AdminTrustBadgesComponent {
   readonly showingRange = computed(() =>
     adminListRangeLabel(this.page(), this.pageSize(), this.totalCount()),
   );
-  readonly isEmptyQueue = computed(() => !this.loading() && this.totalCount() === 0);
+  /** True empty queue only — an empty search result keeps the toolbar visible. */
+  readonly isEmptyQueue = computed(
+    () => !this.loading() && this.totalCount() === 0 && !this.searchText().trim(),
+  );
 
   readonly badgeLabel = (type: PendingBadgeRequest["badgeType"]) => VERIFICATION_BADGE_LABELS[type];
   readonly badgeTypePill = badgeTypePill;
+
+  readonly columns = computed<AdeniDataTableColumn<PendingBadgeRequest>[]>(() => [
+    {
+      id: "business",
+      header: this.tr("common.business"),
+      cell: (item) => item.businessName,
+      sortValue: (item) => item.businessName.toLowerCase(),
+    },
+    {
+      id: "badge",
+      header: this.tr("admin.trustBadges.badge"),
+      cell: (item) => this.badgeLabel(item.badgeType),
+      sortValue: (item) => item.badgeType,
+    },
+    {
+      id: "reference",
+      header: this.tr("admin.trustBadges.reference"),
+      cell: (item) => item.referenceNumber || "—",
+      sortValue: (item) => item.referenceNumber ?? "",
+    },
+    {
+      id: "requested",
+      header: this.tr("admin.trustBadges.requested"),
+      cell: () => "",
+      sortValue: (item) => item.requestedAt,
+    },
+  ]);
+
+  readonly trackRow = (item: PendingBadgeRequest): string => this.rowKey(item);
+
+  /** Client-side sort of the current page (the API has no sort param for this queue). */
+  readonly sortColumnId = signal<string | null>(null);
+  readonly sortDirection = signal<AdeniDataTableSortDirection>("asc");
+
+  private searchDebounce: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
@@ -113,12 +161,18 @@ export class AdminTrustBadgesComponent {
     }
   }
 
-  applySearch(): void {
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { q: this.searchText().trim() || null, page: null },
-      queryParamsHandling: "merge",
-    });
+  onToolbarSearch(value: string): void {
+    this.searchText.set(value);
+    if (this.searchDebounce) {
+      clearTimeout(this.searchDebounce);
+    }
+    this.searchDebounce = setTimeout(() => {
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { q: value.trim() || null, page: null },
+        queryParamsHandling: "merge",
+      });
+    }, 350);
   }
 
   goToPage(next: number): void {
@@ -140,6 +194,10 @@ export class AdminTrustBadgesComponent {
   }
 
   async grant(item: PendingBadgeRequest): Promise<void> {
+    const ok = await this.confirmDialog.confirmKind("grant", { subject: this.badgeSubject(item) });
+    if (!ok) {
+      return;
+    }
     const key = this.rowKey(item);
     this.busyKey.set(key);
     try {
@@ -161,7 +219,18 @@ export class AdminTrustBadgesComponent {
     }
   }
 
+  private badgeSubject(item: PendingBadgeRequest): string {
+    return this.tr("admin.trustBadges.badgeSubject", {
+      badge: this.badgeLabel(item.badgeType),
+      businessName: item.businessName,
+    });
+  }
+
   async deny(item: PendingBadgeRequest): Promise<void> {
+    const ok = await this.confirmDialog.confirmKind("deny", { subject: this.badgeSubject(item) });
+    if (!ok) {
+      return;
+    }
     const key = this.rowKey(item);
     this.busyKey.set(key);
     try {

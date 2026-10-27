@@ -441,6 +441,12 @@ export class BookingsComponent {
       this.error.set(this.tr("portal.bookings.exitPinMustBe4"));
       return;
     }
+    const confirmed = await this.confirmDialog.confirmKind("save", {
+      subject: this.tr("common.confirm.subjects.kioskPin"),
+    });
+    if (!confirmed) {
+      return;
+    }
     this.savingPin.set(true);
     this.error.set(null);
     try {
@@ -457,6 +463,12 @@ export class BookingsComponent {
   }
 
   async clearKioskPin(): Promise<void> {
+    const confirmed = await this.confirmDialog.confirmKind("remove", {
+      subject: this.tr("common.confirm.subjects.kioskPin"),
+    });
+    if (!confirmed) {
+      return;
+    }
     this.savingPin.set(true);
     this.error.set(null);
     try {
@@ -473,6 +485,12 @@ export class BookingsComponent {
   }
 
   async accept(booking: BookingResponse): Promise<void> {
+    const ok = await this.confirmDialog.confirmKind("approve", {
+      subject: `${booking.serviceName} · ${formatSlotTime(booking.startAt)}`,
+    });
+    if (!ok) {
+      return;
+    }
     await this.runStatusAction(booking, "accept");
   }
 
@@ -494,6 +512,14 @@ export class BookingsComponent {
   }
 
   async complete(booking: BookingResponse): Promise<void> {
+    const ok = await this.confirmDialog.confirmKind("approve", {
+      title: this.tr("portal.bookings.completeConfirmTitle"),
+      message: this.tr("portal.bookings.completeConfirm", { service: booking.serviceName }),
+      confirmLabel: this.tr("portal.bookings.completeAction"),
+    });
+    if (!ok) {
+      return;
+    }
     await this.runStatusAction(booking, "complete");
   }
 

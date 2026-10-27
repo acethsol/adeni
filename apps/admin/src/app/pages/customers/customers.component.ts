@@ -228,7 +228,8 @@ export class AdminCustomersComponent {
       title: this.tr("admin.customers.initiateErasure"),
       message: this.tr("admin.customers.erasePiiCannotBeRecovered", { label: label }),
       confirmLabel: this.tr("admin.customers.erase"),
-      danger: true,
+      variant: "danger",
+      requireAcknowledgement: true,
     });
     if (!ok) {
       return;

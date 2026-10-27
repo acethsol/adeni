@@ -579,6 +579,14 @@ export class StaffComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (
+      !(await this.confirmDialog.confirmKind("send", {
+        subject: this.tr("common.confirm.subjects.invite", { name: member.displayName }),
+      }))
+    ) {
+      return;
+    }
+
     this.busy.set(member.id);
     try {
       await this.feedback.runLoading(async () => {
@@ -601,6 +609,13 @@ export class StaffComponent implements OnInit, OnDestroy {
 
   async resendInvite(member: StaffMember): Promise<void> {
     if (!member.portalInviteId) {
+      return;
+    }
+    if (
+      !(await this.confirmDialog.confirmKind("send", {
+        subject: this.tr("common.confirm.subjects.invite", { name: member.displayName }),
+      }))
+    ) {
       return;
     }
     this.busy.set(member.id);
@@ -665,6 +680,14 @@ export class StaffComponent implements OnInit, OnDestroy {
   async saveRoleChange(): Promise<void> {
     const member = this.roleTarget();
     if (!member?.businessUserId) {
+      return;
+    }
+
+    if (
+      !(await this.confirmDialog.confirmKind("save", {
+        subject: this.tr("common.confirm.subjects.accessRole", { name: member.displayName }),
+      }))
+    ) {
       return;
     }
 
@@ -1067,6 +1090,12 @@ export class StaffComponent implements OnInit, OnDestroy {
     const sortOrder = Number.parseInt(this.draft.sortOrder, 10) || 0;
     const businessLocationId = this.draft.businessLocationId.trim() || null;
     const editingId = this.editingId();
+    const confirmed = await this.confirmDialog.confirmKind(editingId ? "save" : "create", {
+      subject: displayName || undefined,
+    });
+    if (!confirmed) {
+      return;
+    }
     this.busy.set(editingId ?? "create");
 
     try {

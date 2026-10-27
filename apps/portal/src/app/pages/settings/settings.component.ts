@@ -21,6 +21,7 @@ import { filterPortalTabs } from "../../core/portal-access";
 import { findPortalNavItem } from "../../core/portal-nav";
 import {
   AdeniCarbonIconComponent,
+  AdeniConfirmService,
   AdeniFeedbackService,
   AdeniTabsComponent,
   PortalPageComponent,
@@ -47,6 +48,7 @@ export class SettingsComponent implements OnInit {
   protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
+  private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -169,7 +171,16 @@ export class SettingsComponent implements OnInit {
     }
   }
 
+  private confirmSave(subjectKey: string): Promise<boolean> {
+    return this.confirmDialog.confirmKind("save", {
+      subject: this.tr(`common.confirm.subjects.${subjectKey}`),
+    });
+  }
+
   async saveBookings(): Promise<void> {
+    if (!(await this.confirmSave("bookingSettings"))) {
+      return;
+    }
     this.saving.set(true);
     try {
       await this.feedback.runLoading(async () => {
@@ -190,6 +201,9 @@ export class SettingsComponent implements OnInit {
   }
 
   async saveNotifications(): Promise<void> {
+    if (!(await this.confirmSave("notifications"))) {
+      return;
+    }
     this.saving.set(true);
     try {
       await this.feedback.runLoading(async () => {
@@ -216,6 +230,9 @@ export class SettingsComponent implements OnInit {
   }
 
   async savePolicies(): Promise<void> {
+    if (!(await this.confirmSave("policies"))) {
+      return;
+    }
     this.saving.set(true);
     try {
       await this.feedback.runLoading(async () => {
@@ -239,6 +256,9 @@ export class SettingsComponent implements OnInit {
   }
 
   async saveWalkIns(): Promise<void> {
+    if (!(await this.confirmSave("walkIns"))) {
+      return;
+    }
     this.saving.set(true);
     try {
       await this.feedback.runLoading(async () => {
@@ -408,6 +428,9 @@ export class SettingsComponent implements OnInit {
 
   async saveMessaging(): Promise<void> {
     if (!hasTenantEntitlement(this.profile()?.entitlements, "messaging")) {
+      return;
+    }
+    if (!(await this.confirmSave("messaging"))) {
       return;
     }
     this.saving.set(true);

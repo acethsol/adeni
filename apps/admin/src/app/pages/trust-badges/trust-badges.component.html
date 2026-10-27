@@ -11,28 +11,6 @@
     <p class="error-banner">{{ error() }}</p>
   }
 
-  <section class="card list-toolbar">
-    <form class="search-form" (submit)="applySearch(); $event.preventDefault()">
-      <label class="search-field">
-        <span class="visually-hidden">{{ tr('admin.trustBadges.filterQueue') }}</span>
-        <adeni-carbon-icon name="search" [size]="16" />
-        <input
-          type="search"
-          [ngModel]="searchText()"
-          (ngModelChange)="searchText.set($event)"
-          name="q"
-          [placeholder]="tr('admin.trustBadges.businessReference')"
-          autocomplete="off"
-        />
-      </label>
-      <adeni-staff-btn type="submit" variant="primary" icon="search">{{ tr('common.search') }}</adeni-staff-btn>
-    </form>
-    <adeni-staff-btn icon="restart" [disabled]="loading()" (pressed)="load()">{{ tr('common.refresh') }}</adeni-staff-btn>
-    @if (!loading() && totalCount() > 0) {
-      <p class="toolbar-meta">{{ showingRange() }}</p>
-    }
-  </section>
-
   @if (loading() && items().length === 0) {
     <p class="muted">{{ tr('admin.trustBadges.loadingBadgeQueue') }}</p>
   } @else if (isEmptyQueue()) {
@@ -42,64 +20,84 @@
       [description]="tr('admin.trustBadges.whenBusinessesRequestPhoneCac')"
     />
   } @else {
-    <section class="card data-table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th scope="col">{{ tr('common.business') }}</th>
-            <th scope="col">{{ tr('admin.trustBadges.badge') }}</th>
-            <th scope="col">{{ tr('admin.trustBadges.reference') }}</th>
-            <th scope="col">{{ tr('admin.trustBadges.requested') }}</th>
-            <th scope="col"><span class="visually-hidden">{{ tr('common.actions') }}</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (item of items(); track item.id) {
-            <tr>
-              <td>
-                <div class="row-title">{{ item.businessName }}</div>
-              </td>
-              <td>
-                @let badge = badgeTypePill(item.badgeType);
-                <admin-pill [label]="badge.label" [variant]="badge.variant" />
-              </td>
-              <td class="muted">{{ item.referenceNumber || "—" }}</td>
-              <td class="muted">{{ item.requestedAt | date: "mediumDate" }}</td>
-              <td class="actions-cell">
-                <div class="actions-inline">
-                  <adeni-staff-btn
-                    variant="danger"
-                    icon="misuse"
-                    [disabled]="busyKey() === rowKey(item)"
-                    (pressed)="deny(item)"
-                  >
-                    {{ tr('admin.trustBadges.deny') }}
-                  </adeni-staff-btn>
-                  <adeni-staff-btn
-                    variant="primary"
-                    icon="checkmark--filled"
-                    [disabled]="busyKey() === rowKey(item)"
-                    (pressed)="grant(item)"
-                  >
-                    {{ tr('admin.trustBadges.grant') }}
-                  </adeni-staff-btn>
-                </div>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </section>
+    <div class="roster">
+      <adeni-list-toolbar
+        storageKey="admin.trust-badges"
+        [showViewSwitcher]="false"
+        [count]="items().length"
+        [countTotal]="totalCount()"
+        [singularCountLabel]="tr('admin.trustBadges.request')"
+        [pluralCountLabel]="tr('admin.trustBadges.requests')"
+        [searchPlaceholder]="tr('admin.trustBadges.businessReference')"
+        [searchQuery]="searchText()"
+        (searchQueryChange)="onToolbarSearch($event)"
+      >
+        <adeni-icon-btn
+          listExports
+          class="refresh-btn"
+          [class.is-loading]="loading()"
+          icon="restart"
+          variant="outline"
+          [label]="tr('admin.trustBadges.refreshQueue')"
+          [disabled]="loading()"
+          (pressed)="load()"
+        />
+      </adeni-list-toolbar>
 
-    <adeni-list-pagination
-      [page]="page()"
-      [pageSize]="pageSize()"
-      [totalCount]="totalCount()"
-      [pageSizeOptions]="listPageSizeOptions"
-      [loading]="loading()"
-      [ariaLabel]="tr('admin.trustBadges.trustBadgePages')"
-      (pageChange)="goToPage($event)"
-      (pageSizeChange)="onPageSizeChange($event)"
-    />
+      <div class="adeni-list-results">
+        <adeni-data-table
+          [rows]="items()"
+          [columns]="columns()"
+          [trackRow]="trackRow"
+          [(sortColumnId)]="sortColumnId"
+          [(sortDirection)]="sortDirection"
+        >
+          <ng-template adeniDataTableCell="business" let-item>
+            <div class="row-title">{{ item.businessName }}</div>
+          </ng-template>
+          <ng-template adeniDataTableCell="badge" let-item>
+            @let badge = badgeTypePill(item.badgeType);
+            <adeni-pill [tone]="badge.variant" [compact]="true">{{ badge.label }}</adeni-pill>
+          </ng-template>
+          <ng-template adeniDataTableCell="reference" let-item>
+            <span class="muted">{{ item.referenceNumber || "—" }}</span>
+          </ng-template>
+          <ng-template adeniDataTableCell="requested" let-item>
+            <span class="muted">{{ item.requestedAt | date: "mediumDate" }}</span>
+          </ng-template>
+          <ng-template adeniDataTableActions let-item>
+            <adeni-row-action-bar>
+              <adeni-icon-btn
+                icon="misuse"
+                [label]="tr('admin.trustBadges.denyRequestFor', { businessName: item.businessName, badge: badgeLabel(item.badgeType) })"
+                variant="danger-soft"
+                [dense]="true"
+                [disabled]="busyKey() === rowKey(item)"
+                (pressed)="deny(item)"
+              />
+              <adeni-icon-btn
+                icon="checkmark--filled"
+                [label]="tr('admin.trustBadges.grantBadgeFor', { businessName: item.businessName, badge: badgeLabel(item.badgeType) })"
+                variant="table"
+                [dense]="true"
+                [disabled]="busyKey() === rowKey(item)"
+                (pressed)="grant(item)"
+              />
+            </adeni-row-action-bar>
+          </ng-template>
+        </adeni-data-table>
+
+        <adeni-list-pagination
+          [page]="page()"
+          [pageSize]="pageSize()"
+          [totalCount]="totalCount()"
+          [pageSizeOptions]="listPageSizeOptions"
+          [loading]="loading()"
+          [ariaLabel]="tr('admin.trustBadges.trustBadgePages')"
+          (pageChange)="goToPage($event)"
+          (pageSizeChange)="onPageSizeChange($event)"
+        />
+      </div>
+    </div>
   }
 </app-portal-page>

@@ -198,6 +198,13 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const confirmed = await this.confirmDialog.confirmKind("create", {
+      subject: this.tr("common.confirm.subjects.paymentLink"),
+    });
+    if (!confirmed) {
+      return;
+    }
+
     this.creating.set(true);
     this.error.set(null);
     try {

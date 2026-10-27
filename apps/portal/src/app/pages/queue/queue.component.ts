@@ -21,6 +21,7 @@ import type {
 import { combineGuestName, hasCapability, optionalEmail } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
+  AdeniConfirmService,
   AdeniFeedbackService,
   AdeniModalComponent,
   AdeniPortalEmptyStateComponent,
@@ -58,6 +59,7 @@ export class QueueComponent implements OnInit, OnDestroy {
   private readonly api = inject(BusinessApiService);
   private readonly session = inject(PortalSessionService);
   private readonly feedback = inject(AdeniFeedbackService);
+  private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly router = inject(Router);
   private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
   private readonly activeLocation = inject(PortalActiveLocationService);
@@ -353,10 +355,24 @@ export class QueueComponent implements OnInit, OnDestroy {
   }
 
   async noShow(ticket: QueueTicketResponse): Promise<void> {
+    const ok = await this.confirmDialog.confirmKind("remove", {
+      title: this.tr("portal.queue.noShowConfirmTitle"),
+      message: this.tr("portal.queue.noShowConfirm"),
+      confirmLabel: this.tr("portal.queue.noShowAction"),
+    });
+    if (!ok) {
+      return;
+    }
     await this.run(ticket.id, (client) => client.noShowTenantQueueTicket(ticket.id));
   }
 
   async cancel(ticket: QueueTicketResponse): Promise<void> {
+    const ok = await this.confirmDialog.confirmKind("cancel", {
+      subject: this.tr("common.confirm.subjects.queueTicket"),
+    });
+    if (!ok) {
+      return;
+    }
     await this.run(ticket.id, (client) => client.cancelTenantQueueTicket(ticket.id));
   }
 

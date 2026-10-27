@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import type { PricingCatalogVersionSummary } from "@adeni/shared";
 import {
+  AdeniConfirmService,
   AdeniFeedbackService,
   AdeniPortalEmptyStateComponent,
   AdeniStaffButtonComponent,
@@ -35,6 +36,7 @@ export class AdminPricingGmvComponent {
   protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(AdminApiService);
   private readonly feedback = inject(AdeniFeedbackService);
+  private readonly confirmDialog = inject(AdeniConfirmService);
 
   readonly loading = signal(true);
   readonly saving = signal(false);
@@ -100,6 +102,9 @@ export class AdminPricingGmvComponent {
   async saveDraft(): Promise<void> {
     const code = this.selectedCode();
     if (!code || !this.canEdit()) {
+      return;
+    }
+    if (!(await this.confirmDialog.confirmKind("save", { subject: code }))) {
       return;
     }
     this.saving.set(true);

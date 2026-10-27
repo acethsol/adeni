@@ -377,6 +377,10 @@ export class AdminPricingCatalogComponent {
     }
     const effectiveFrom = effectiveDate.toISOString();
 
+    if (!(await this.confirmDialog.confirmKind("create", { subject: code }))) {
+      return;
+    }
+
     this.createSaving.set(true);
     try {
       await this.feedback.runLoading(
@@ -508,6 +512,12 @@ export class AdminPricingCatalogComponent {
 
     const countryCode = this.editCountry();
     const subscriptionSku = this.editSku();
+
+    if (
+      !(await this.confirmDialog.confirmKind("save", { subject: `${countryCode} · ${subscriptionSku}` }))
+    ) {
+      return;
+    }
 
     this.editSaving.set(true);
     try {

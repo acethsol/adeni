@@ -441,6 +441,13 @@ export class ServicesComponent implements OnInit {
       return;
     }
 
+    const confirmed = await this.confirmDialog.confirmKind(this.editingId() ? "save" : "create", {
+      subject: this.draft.name.trim(),
+    });
+    if (!confirmed) {
+      return;
+    }
+
     this.busy.set(this.editingId() ?? "new");
     this.error.set(null);
     const createBody = {

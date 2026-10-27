@@ -19,9 +19,7 @@ export type DashboardCarbonChartKind = "bar" | "line" | "donut";
   selector: "app-dashboard-carbon-chart",
   standalone: true,
   template: `
-    @for (surface of [chartSurfaceKey()]; track surface) {
-      <div #holder class="carbon-chart-holder" role="img" [attr.aria-label]="ariaLabel()"></div>
-    }
+    <div #holder class="carbon-chart-holder" role="img" [attr.aria-label]="ariaLabel()"></div>
   `,
   styles: `
     :host {
@@ -34,9 +32,10 @@ export type DashboardCarbonChartKind = "bar" | "line" | "donut";
       min-height: 13.5rem;
     }
 
-    .carbon-chart-holder :global(.cds--chart-holder),
-    .carbon-chart-holder :global(.layout-child),
-    .carbon-chart-holder :global(svg.layout-svg-wrapper) {
+    /* Carbon injects DOM outside Angular view encapsulation; :global() is not valid Angular CSS. */
+    :host ::ng-deep .carbon-chart-holder.cds--chart-holder,
+    :host ::ng-deep .carbon-chart-holder .layout-child,
+    :host ::ng-deep .carbon-chart-holder svg.layout-svg-wrapper {
       background: transparent !important;
     }
   `,
@@ -51,19 +50,15 @@ export class DashboardCarbonChartComponent implements AfterViewInit, OnDestroy {
   private chart: SimpleBarChart | LineChart | DonutChart | null = null;
   private resizeObserver: ResizeObserver | null = null;
   private observedHolder: HTMLDivElement | null = null;
-  /** Recreate holder when Carbon theme or chart kind changes (options fixed at create). */
+  /** Carbon theme/kind are fixed at create — remount in place when either changes. */
   readonly chartSurfaceKey = computed(() => `${this.portalTheme.theme()}:${this.kind()}`);
+  private mountedSurfaceKey: string | null = null;
 
   constructor() {
-    effect((onCleanup) => {
-      this.chartSurfaceKey();
-      onCleanup(() => {
-        this.teardownChart();
-      });
-    });
-
+    // One effect only: a separate teardown effect plus an @for-remounted holder raced and left
+    // the chart attached to a detached node (blank card) after a light/dark toggle.
     effect(() => {
-      this.chartSurfaceKey();
+      const surfaceKey = this.chartSurfaceKey();
       const rows = this.data();
       const holder = this.holderRef()?.nativeElement;
       if (!holder) {
@@ -72,8 +67,10 @@ export class DashboardCarbonChartComponent implements AfterViewInit, OnDestroy {
 
       this.ensureResizeObserver(holder);
 
-      if (!this.chart) {
+      if (!this.chart || this.mountedSurfaceKey !== surfaceKey) {
+        this.teardownChart();
         this.mountChart(holder, rows);
+        this.mountedSurfaceKey = surfaceKey;
         this.scheduleChartUpdate(holder);
         return;
       }
@@ -118,6 +115,7 @@ export class DashboardCarbonChartComponent implements AfterViewInit, OnDestroy {
   private teardownChart(): void {
     this.chart?.destroy();
     this.chart = null;
+    this.mountedSurfaceKey = null;
   }
 
   private resolveChartTheme(): "g10" | "g100" {

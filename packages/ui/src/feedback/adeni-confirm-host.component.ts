@@ -23,6 +23,16 @@ import { AdeniConfirmService } from "./adeni-confirm.service";
         >
           <h2 [id]="titleId">{{ dialog.title }}</h2>
           <p [id]="bodyId">{{ dialog.message }}</p>
+          @if (dialog.requireAcknowledgement) {
+            <label class="ack">
+              <input
+                type="checkbox"
+                [checked]="confirm.acknowledged()"
+                (change)="confirm.setAcknowledged($any($event.target).checked)"
+              />
+              <span>{{ dialog.acknowledgementLabel }}</span>
+            </label>
+          }
           <div class="actions">
             <button type="button" class="btn ghost" (click)="confirm.settle(false)">
               {{ dialog.cancelLabel }}
@@ -30,8 +40,9 @@ import { AdeniConfirmService } from "./adeni-confirm.service";
             <button
               type="button"
               class="btn"
-              [class.danger]="dialog.danger"
-              [class.primary]="!dialog.danger"
+              [class.danger]="dialog.variant === 'danger'"
+              [class.primary]="dialog.variant !== 'danger'"
+              [disabled]="dialog.requireAcknowledgement && !confirm.acknowledged()"
               (click)="confirm.settle(true)"
             >
               {{ dialog.confirmLabel }}
@@ -85,6 +96,26 @@ import { AdeniConfirmService } from "./adeni-confirm.service";
 
     :host-context([data-theme="dark"]) p {
       color: #c6c6c6;
+    }
+
+    .ack {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-top: 0.85rem;
+      font-size: 0.875rem;
+      line-height: 1.4;
+      cursor: pointer;
+    }
+
+    .ack input {
+      margin-top: 0.15rem;
+      accent-color: var(--interactive, #7f56ff);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
     .actions {
