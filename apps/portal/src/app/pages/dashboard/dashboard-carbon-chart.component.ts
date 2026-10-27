@@ -4,10 +4,12 @@ import {
   ElementRef,
   OnDestroy,
   effect,
+  inject,
   input,
   viewChild,
 } from "@angular/core";
 import { DonutChart, LineChart, SimpleBarChart } from "@carbon/charts";
+import { PortalThemeService } from "../../core/portal-theme.service";
 import { ScaleTypes, type ChartTabularData } from "@carbon/charts/interfaces";
 
 export type DashboardCarbonChartKind = "bar" | "line" | "donut";
@@ -39,49 +41,96 @@ export class DashboardCarbonChartComponent implements AfterViewInit, OnDestroy {
   readonly data = input<ChartTabularData>([]);
   readonly ariaLabel = input("Chart");
 
+  private readonly portalTheme = inject(PortalThemeService);
   private readonly holderRef = viewChild<ElementRef<HTMLDivElement>>("holder");
   private chart: SimpleBarChart | LineChart | DonutChart | null = null;
+  private resizeObserver: ResizeObserver | null = null;
+  /** Carbon theme + chart kind — options are fixed at create time. */
+  private mountedContextKey = "";
 
   constructor() {
     effect(() => {
-      const rows = this.data();
-      if (this.chart) {
-        this.chart.model.setData(rows);
-        this.chart.update(true);
+      const holder = this.holderRef()?.nativeElement;
+      if (!holder) {
+        return;
       }
+
+      const rows = this.data();
+      const contextKey = `${this.portalTheme.theme()}:${this.kind()}`;
+
+      this.ensureResizeObserver(holder);
+
+      if (contextKey !== this.mountedContextKey || !this.chart) {
+        this.mountedContextKey = contextKey;
+        this.mountChart(holder, rows);
+        this.scheduleChartUpdate(holder);
+        return;
+      }
+
+      this.chart.model.setData(rows);
+      this.scheduleChartUpdate(holder);
     });
   }
 
   ngAfterViewInit(): void {
-    this.renderChart();
-  }
-
-  ngOnDestroy(): void {
-    this.chart?.destroy();
-    this.chart = null;
-  }
-
-  private resolveChartTheme(): "g10" | "g100" {
-    if (typeof document === "undefined") {
-      return "g10";
-    }
-    return document.documentElement.getAttribute("data-theme") === "dark" ? "g100" : "g10";
-  }
-
-  private renderChart(): void {
     const holder = this.holderRef()?.nativeElement;
-    if (!holder) {
+    if (holder) {
+      this.ensureResizeObserver(holder);
+    }
+  }
+
+  private ensureResizeObserver(holder: HTMLDivElement): void {
+    if (this.resizeObserver || typeof ResizeObserver === "undefined") {
       return;
     }
 
-    const rows = this.data();
-    const theme = this.resolveChartTheme();
-    const colorScale = {
-      Appointments: "#7f56ff",
-      Collected: "#13c2a3",
-      Booked: "#13c2a3",
-      Bookings: "#7f56ff",
+    this.resizeObserver = new ResizeObserver(() => {
+      this.scheduleChartUpdate(holder);
+    });
+    this.resizeObserver.observe(holder);
+  }
+
+  ngOnDestroy(): void {
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = null;
+    this.chart?.destroy();
+    this.chart = null;
+    this.mountedContextKey = "";
+  }
+
+  private resolveChartTheme(): "g10" | "g100" {
+    return this.portalTheme.theme() === "dark" ? "g100" : "g10";
+  }
+
+  private scheduleChartUpdate(holder: HTMLDivElement): void {
+    if (!this.chart) {
+      return;
+    }
+
+    const runUpdate = (): void => {
+      if (!this.chart || !holder.isConnected) {
+        return;
+      }
+      if (holder.clientWidth <= 0) {
+        requestAnimationFrame(runUpdate);
+        return;
+      }
+      this.chart.update(true);
     };
+
+    queueMicrotask(runUpdate);
+  }
+
+  /** Brand palette keyed by actual `group` values (i18n-safe). */
+  private buildColorScale(rows: ChartTabularData): Record<string, string> {
+    const palette = ["#7f56ff", "#13c2a3", "#f5a623", "#e85d75"];
+    const groups = [...new Set(rows.map((row) => String(row["group"] ?? "")))].filter((g) => g.length > 0);
+    return Object.fromEntries(groups.map((group, index) => [group, palette[index % palette.length]!]));
+  }
+
+  private mountChart(holder: HTMLDivElement, rows: ChartTabularData): void {
+    const theme = this.resolveChartTheme();
+    const colorScale = this.buildColorScale(rows);
     const barOptions = {
       title: "",
       axes: {
@@ -103,6 +152,7 @@ export class DashboardCarbonChartComponent implements AfterViewInit, OnDestroy {
       },
       legend: { enabled: false },
       toolbar: { enabled: false },
+      tooltip: { enabled: true },
     };
     const lineOptions = {
       ...barOptions,
@@ -111,6 +161,7 @@ export class DashboardCarbonChartComponent implements AfterViewInit, OnDestroy {
     };
 
     this.chart?.destroy();
+    holder.replaceChildren();
 
     switch (this.kind()) {
       case "line":
@@ -130,6 +181,7 @@ export class DashboardCarbonChartComponent implements AfterViewInit, OnDestroy {
             },
             legend: { alignment: "center" },
             toolbar: { enabled: false },
+            tooltip: { enabled: true },
           },
         });
         break;
