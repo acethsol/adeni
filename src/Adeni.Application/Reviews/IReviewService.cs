@@ -39,6 +39,13 @@ public sealed record PublicReviewsResult(
     int PageSize,
     int TotalCount);
 
+public sealed record TenantReviewsListResult(
+    IReadOnlyList<TenantReviewItem> Items,
+    int Page,
+    int PageSize,
+    int TotalCount,
+    int RepliedCount);
+
 public sealed record TenantRatingSummary(
     double? RatingAvg,
     int ReviewCount);
@@ -101,8 +108,10 @@ public interface IReviewService
         ReplyToReviewRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<TenantReviewItem>> ListForTenantAsync(
+    Task<Result<TenantReviewsListResult>> ListForTenantAsync(
         Guid tenantId,
+        int page,
+        int pageSize,
         Guid? locationId = null,
         CancellationToken cancellationToken = default);
 }

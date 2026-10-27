@@ -284,11 +284,20 @@ public sealed class ReviewService(
         return reviews.ToDictionary(x => x.BookingId, MapReview);
     }
 
-    public async Task<IReadOnlyList<TenantReviewItem>> ListForTenantAsync(
+    public async Task<Result<TenantReviewsListResult>> ListForTenantAsync(
         Guid tenantId,
+        int page,
+        int pageSize,
         Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
+        if (page < 1)
+        {
+            return Result.Failure<TenantReviewsListResult>(Error.Validation("Page must be at least 1."));
+        }
+
+        var effectivePageSize = pageSize <= 0 ? DefaultPageSize : Math.Min(pageSize, MaxPageSize);
+
         var reviewQuery = dbContext.Reviews
             .AsNoTracking()
             .Where(x => x.TenantId == tenantId && !x.IsHidden);
@@ -302,19 +311,34 @@ public sealed class ReviewService(
                     && booking.BusinessLocationId == branchId));
         }
 
-        var items = await reviewQuery
+        var joinedQuery = reviewQuery
             .Join(
                 dbContext.Customers.AsNoTracking(),
                 review => review.CustomerId,
                 customer => customer.Id,
-                (review, customer) => new { review, customer })
+                (review, customer) => new { review, customer });
+
+        var totalCount = await joinedQuery.CountAsync(cancellationToken);
+        var repliedCount = await joinedQuery.CountAsync(
+            x => x.review.OwnerReply != null && x.review.OwnerReply != string.Empty,
+            cancellationToken);
+
+        var items = await joinedQuery
             .OrderByDescending(x => x.review.CreatedAt)
-            .Take(50)
+            .Skip((page - 1) * effectivePageSize)
+            .Take(effectivePageSize)
             .ToListAsync(cancellationToken);
 
-        return items
+        var mapped = items
             .Select(x => MapTenantReview(x.review, x.customer.Name))
             .ToList();
+
+        return Result.Success(new TenantReviewsListResult(
+            mapped,
+            page,
+            effectivePageSize,
+            totalCount,
+            repliedCount));
     }
 
     public async Task<Result<TenantReviewItem>> ReplyAsync(

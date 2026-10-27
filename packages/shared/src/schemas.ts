@@ -1668,6 +1668,14 @@ export const replyToReviewRequestSchema = z.object({
 
 export const tenantReviewItemSchema = publicReviewItemSchema;
 
+export const tenantReviewsListResponseSchema = pagedResultSchema(tenantReviewItemSchema).and(
+  z.object({
+    repliedCount: z.number().int().nonnegative().optional(),
+  }),
+);
+
+export type TenantReviewsListResponse = z.infer<typeof tenantReviewsListResponseSchema>;
+
 export const joinWaitlistRequestSchema = z.object({
   tenantId: z.string().uuid(),
   serviceOfferingId: z.string().uuid(),

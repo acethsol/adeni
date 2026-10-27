@@ -10,60 +10,218 @@
     <adeni-tabs [tabs]="tabs()" />
 
     @if (tab() === "reviews") {
-      @if (reviews().length === 0) {
+      @if (reviewsLoading() && reviews().length === 0 && reviewsTotalCount() === 0) {
+        <p class="muted reviews-loading">{{ tr('portal.profile.reviewsLoading') }}</p>
+      } @else if (!reviewsLoading() && reviewsTotalCount() === 0) {
         <adeni-portal-empty-state
-          icon="user--filled"
+          icon="user--follow"
           [title]="tr('common.noReviewsYet')"
           [description]="tr('portal.profile.reviewsPublishedAfterCustomersComplete')"
         />
       } @else {
-      <section class="card reviews-card">
-        <div class="section-head">
-          <h3>{{ tr('portal.profile.customerReviews') }}</h3>
-          @if (reviewSummary().count > 0) {
-            <p class="review-stats">
-              <strong>{{ reviewSummary().avg?.toFixed(1) }}</strong> average ·
-              {{ reviewSummary().count }} review@if (reviewSummary().count !== 1) {s}
-            </p>
-          }
-        </div>
-          <ul class="review-list">
-            @for (review of reviews(); track review.id) {
-              <li class="review-item">
-                <div class="review-head">
-                  <strong>{{ review.customerDisplayName }}</strong>
-                  <span class="rating">{{ review.rating }}/5</span>
+        <section class="card reviews-card">
+          @if (reviewsHero(); as hero) {
+            <div class="reviews-hero" [attr.data-status]="hero.status">
+              <span class="hero-icon" aria-hidden="true">
+                <adeni-carbon-icon [name]="hero.icon" [size]="20" />
+              </span>
+              <div class="hero-copy">
+                <div class="hero-head">
+                  <h3>{{ hero.title }}</h3>
+                  <adeni-pill [tone]="hero.tone" [dot]="true">{{ hero.badge }}</adeni-pill>
                 </div>
-                <p class="review-body">{{ review.comment || tr('portal.profile.noComment') }}</p>
-                @if (review.ownerReply) {
-                  <p class="owner-reply"><span>{{ tr('portal.profile.yourReply') }}</span> {{ review.ownerReply }}</p>
-                } @else if (replyingId() === review.id) {
-                  <div class="field reply-field">
-                    <label [for]="'reply-' + review.id">{{ tr('common.reply') }}</label>
-                    <textarea [id]="'reply-' + review.id" rows="2" [(ngModel)]="replyDraft"></textarea>
-                  </div>
-                  <div class="inline-actions">
-                    <button
-                      type="button"
-                      class="btn btn-primary"
-                      [disabled]="saving()"
-                      (click)="sendReviewReply(review.id)"
+                <p>{{ hero.body }}</p>
+              </div>
+            </div>
+          }
+
+          <div class="reviews-stats" [attr.aria-label]="tr('portal.profile.customerReviews')">
+            <article class="reviews-stat reviews-stat--rating">
+              <span class="reviews-stat-icon" aria-hidden="true">
+                <adeni-carbon-icon name="user--filled" [size]="18" />
+              </span>
+              <div>
+                <p class="reviews-stat-label">{{ tr('portal.profile.reviewsStatAverage') }}</p>
+                <p class="reviews-stat-value">{{ reviewAverageDisplay() }}</p>
+                <div class="reviews-star-meter" [attr.aria-label]="tr('portal.profile.reviewsStatAverage')">
+                  @for (star of reviewStarSlots; track star) {
+                    <span
+                      class="reviews-star"
+                      [class.reviews-star--filled]="isReviewStarFilled(star, reviewAverageStars())"
+                      aria-hidden="true"
                     >
-                      {{ tr('portal.profile.postReply') }}
-                    </button>
-                    <button type="button" class="btn" (click)="replyingId.set(null); replyDraft = ''">
-                      {{ tr('common.cancel') }}
-                    </button>
+                      ★
+                    </span>
+                  }
+                </div>
+                <p class="reviews-stat-hint">{{ reviewsCountLabel() }}</p>
+              </div>
+            </article>
+            <article class="reviews-stat reviews-stat--total">
+              <span class="reviews-stat-icon" aria-hidden="true">
+                <adeni-carbon-icon name="user--follow" [size]="18" />
+              </span>
+              <div>
+                <p class="reviews-stat-label">{{ tr('portal.profile.reviewsStatTotal') }}</p>
+                <p class="reviews-stat-value">{{ reviewSummary().count }}</p>
+                <p class="reviews-stat-hint">{{ reviewsScopeHint() }}</p>
+              </div>
+            </article>
+            <article class="reviews-stat reviews-stat--replies">
+              <span class="reviews-stat-icon" aria-hidden="true">
+                <adeni-carbon-icon name="send" [size]="18" />
+              </span>
+              <div>
+                <p class="reviews-stat-label">{{ tr('portal.profile.reviewsStatReplied') }}</p>
+                <p class="reviews-stat-value">{{ reviewsReplyStats().replied }}</p>
+                <p class="reviews-stat-hint">
+                  {{ tr('portal.profile.reviewsResponseRate', { rate: reviewsReplyStats().rate }) }}
+                </p>
+              </div>
+            </article>
+          </div>
+
+          @if (reviewsRatingDistribution(); as distribution) {
+            <div class="reviews-distribution" [attr.aria-label]="tr('portal.profile.reviewsDistributionTitle')">
+              <p class="reviews-distribution-title">{{ tr('portal.profile.reviewsDistributionTitle') }}</p>
+              @for (row of distribution; track row.stars) {
+                <div class="reviews-distribution-row">
+                  <span class="reviews-distribution-label">{{ row.stars }}★</span>
+                  <span class="reviews-distribution-track" aria-hidden="true">
+                    <span class="reviews-distribution-fill" [style.width.%]="row.percent"></span>
+                  </span>
+                  <span class="reviews-distribution-count">{{ row.count }}</span>
+                </div>
+              }
+            </div>
+          }
+
+          <adeni-list-toolbar
+            storageKey="portal.profile.reviews"
+            [showSearch]="false"
+            [showViewSwitcher]="false"
+            [count]="reviews().length"
+            [countTotal]="reviewsTotalCount()"
+            [singularCountLabel]="tr('portal.profile.reviewsToolbarSingular')"
+            [pluralCountLabel]="tr('portal.profile.reviewsToolbarPlural')"
+          >
+            <p class="reviews-toolbar-lead" listFilters>
+              {{ tr('portal.profile.reviewsRecentLead') }}
+              @if (reviewsLoading()) {
+                <span class="hint"> · {{ tr('portal.profile.reviewsLoading') }}</span>
+              }
+            </p>
+          </adeni-list-toolbar>
+
+          @if (reviews().length === 0) {
+            <adeni-portal-empty-state
+              [embedded]="true"
+              [compact]="true"
+              icon="user--follow"
+              [title]="tr('common.noReviewsYet')"
+              [description]="tr('portal.profile.reviewsNoMatchesForScope')"
+            />
+          } @else {
+            <ul class="review-feed">
+              @for (review of reviews(); track review.id) {
+                <li class="review-row" [attr.data-rating]="review.rating">
+                  <div class="review-row-main">
+                    <div class="review-row-head">
+                      <div class="review-row-identity">
+                        <span class="review-avatar" aria-hidden="true">
+                          <adeni-carbon-icon name="user--avatar" [size]="16" />
+                        </span>
+                        <div>
+                          <strong class="review-customer">{{ review.customerDisplayName }}</strong>
+                          <p class="review-meta muted">
+                            {{ review.createdAt | date: "mediumDate" }}
+                          </p>
+                          <div class="reviews-star-meter reviews-star-meter--inline" aria-hidden="true">
+                            @for (star of reviewStarSlots; track star) {
+                              <span
+                                class="reviews-star"
+                                [class.reviews-star--filled]="isReviewStarFilled(star, review.rating)"
+                              >
+                                ★
+                              </span>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                      <div class="review-row-badges">
+                        <adeni-pill [tone]="reviewRatingTone(review.rating)" [dot]="true">
+                          {{ tr('portal.profile.reviewRatingOfFive', { rating: review.rating }) }}
+                        </adeni-pill>
+                        @if (review.ownerReply?.trim()) {
+                          <adeni-pill tone="success" [dot]="true">{{ tr('portal.profile.reviewReplied') }}</adeni-pill>
+                        } @else {
+                          <adeni-pill tone="warning" [dot]="true">{{ tr('portal.profile.reviewAwaitingReply') }}</adeni-pill>
+                        }
+                      </div>
+                    </div>
+                    <p class="review-body">
+                      {{ review.comment.trim() ? review.comment : tr('portal.profile.noComment') }}
+                    </p>
+                    @if (review.ownerReply?.trim()) {
+                      <div class="owner-reply">
+                        <span>{{ tr('portal.profile.yourReply') }}</span>
+                        <p>{{ review.ownerReply }}</p>
+                        @if (review.ownerReplyAt) {
+                          <p class="review-meta muted">{{ review.ownerReplyAt | date: "mediumDate" }}</p>
+                        }
+                      </div>
+                    }
                   </div>
-                } @else {
-                  <button type="button" class="btn btn-ghost" (click)="replyingId.set(review.id); replyDraft = ''">
-                    {{ tr('common.reply') }}
-                  </button>
-                }
-              </li>
-            }
-          </ul>
-      </section>
+                  <div class="review-row-action">
+                    @if (!review.ownerReply?.trim()) {
+                      @if (replyingId() === review.id) {
+                        <div class="field reply-field">
+                          <label [for]="'reply-' + review.id">{{ tr('common.reply') }}</label>
+                          <textarea [id]="'reply-' + review.id" rows="3" [(ngModel)]="replyDraft"></textarea>
+                        </div>
+                        <div class="inline-actions">
+                          <adeni-staff-btn
+                            icon="send"
+                            variant="primary"
+                            [disabled]="saving()"
+                            (pressed)="sendReviewReply(review.id)"
+                          >
+                            {{ tr('portal.profile.postReply') }}
+                          </adeni-staff-btn>
+                          <adeni-staff-btn icon="close" (pressed)="replyingId.set(null); replyDraft = ''">
+                            {{ tr('common.cancel') }}
+                          </adeni-staff-btn>
+                        </div>
+                      } @else {
+                        <adeni-staff-btn
+                          icon="send"
+                          [disabled]="saving()"
+                          (pressed)="replyingId.set(review.id); replyDraft = ''"
+                        >
+                          {{ tr('common.reply') }}
+                        </adeni-staff-btn>
+                      }
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+
+            <div class="adeni-list-results adeni-list-results--pagination-only">
+              <adeni-list-pagination
+                [embedded]="true"
+                [page]="reviewsPage()"
+                [pageSize]="reviewsPageSize()"
+                [totalCount]="reviewsTotalCount()"
+                [pageSizeOptions]="reviewsPageSizeOptions"
+                [loading]="reviewsLoading()"
+                [showEdgeJumpers]="false"
+                [ariaLabel]="tr('portal.profile.reviewPages')"
+                (pageChange)="goToReviewsPage($event)"
+              />
+            </div>
+          }
+        </section>
       }
     } @else if (tab() === "business") {
       <section class="card edit-card">
@@ -253,7 +411,7 @@
                   <span class="trust-badge-icon" aria-hidden="true">
                     <adeni-carbon-icon [name]="verificationBadgeMeta[badgeType].icon" [size]="16" />
                   </span>
-                  <div class="trust-badge-copy">
+                  <div class="trust-badge-main">
                     <span class="trust-badge-name">{{ verificationBadgeLabels[badgeType] }}</span>
                     <span class="trust-badge-desc">{{ tr(verificationBadgeMeta[badgeType].descKey) }}</span>
                   </div>

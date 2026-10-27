@@ -18,6 +18,8 @@ public sealed class TenantReviewsController(
 {
     [HttpGet]
     public async Task<IActionResult> List(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
         [FromQuery] Guid? locationId = null,
         CancellationToken cancellationToken = default)
     {
@@ -35,8 +37,26 @@ public sealed class TenantReviewsController(
             return BadRequest(new { title = scoped.Error!.Message });
         }
 
-        var items = await reviews.ListForTenantAsync(tenantId, scoped.Value, cancellationToken);
-        return Ok(new { items });
+        var result = await reviews.ListForTenantAsync(
+            tenantId,
+            page,
+            pageSize,
+            scoped.Value,
+            cancellationToken);
+        return result.Match<IActionResult>(
+            value => Ok(new
+            {
+                items = value.Items,
+                page = value.Page,
+                pageSize = value.PageSize,
+                totalCount = value.TotalCount,
+                repliedCount = value.RepliedCount,
+            }),
+            error => error.Code switch
+            {
+                "validation" => BadRequest(new { title = error.Message }),
+                _ => BadRequest(new { title = error.Message }),
+            });
     }
 
     [HttpPost("{id:guid}/reply")]

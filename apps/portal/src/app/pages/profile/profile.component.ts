@@ -16,8 +16,10 @@ import type {
 import {
   formatTenantStatus,
   getCategoryLabel,
+  getReviewCountLabel,
   MAX_GALLERY_PHOTOS,
   MAX_UPLOAD_BYTES,
+  PROFILE_REVIEWS_PAGE_SIZE,
   resolveBusinessCoverImage,
   VERIFICATION_BADGE_LABELS,
   VERIFICATION_BADGE_TYPES,
@@ -29,8 +31,11 @@ import {
   AdeniCarbonIconComponent,
   AdeniConfirmService,
   AdeniFeedbackService,
+  AdeniLocaleService,
   AdeniPillComponent,
   AdeniPortalEmptyStateComponent,
+  AdeniListPaginationComponent,
+  AdeniListToolbarComponent,
   AdeniStaffButtonComponent,
   PortalPageComponent,
   AdeniTabsComponent,
@@ -57,6 +62,8 @@ const MAX_BYTES = MAX_UPLOAD_BYTES;
     AdeniTabsComponent,
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
+    AdeniListPaginationComponent,
+    AdeniListToolbarComponent,
     AdeniPillComponent,
     AdeniStaffButtonComponent,
     RouterLink,
@@ -72,7 +79,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly route = inject(ActivatedRoute);
-  private readonly activeLocation = inject(PortalActiveLocationService);
+  protected readonly activeLocation = inject(PortalActiveLocationService);
+  private readonly uiLocale = inject(AdeniLocaleService).locale;
   private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
   private branchSub: Subscription | null = null;
   private verificationSub: Subscription | null = null;
@@ -117,7 +125,14 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.categories().filter((c) => c.slug !== this.categorySlug),
   );
   readonly reviews = signal<PublicReviewItem[]>([]);
+  readonly reviewsLoading = signal(false);
+  readonly reviewsPage = signal(1);
+  readonly reviewsPageSize = signal(PROFILE_REVIEWS_PAGE_SIZE);
+  readonly reviewsPageSizeOptions = [PROFILE_REVIEWS_PAGE_SIZE] as const;
+  readonly reviewsTotalCount = signal(0);
+  readonly reviewsRepliedCount = signal(0);
   readonly reviewSummary = signal<{ avg: number | null; count: number }>({ avg: null, count: 0 });
+  readonly reviewStarSlots = [1, 2, 3, 4, 5] as const;
   readonly replyingId = signal<string | null>(null);
   replyDraft = "";
   readonly verificationMessage = signal<string | null>(null);
@@ -183,6 +198,65 @@ export class ProfileComponent implements OnInit, OnDestroy {
     });
   });
 
+  readonly reviewsReplyStats = computed(() => {
+    const replied = this.reviewsRepliedCount();
+    const total = this.reviewsTotalCount();
+    const rate = total > 0 ? Math.round((replied / total) * 100) : 0;
+    return { replied, total, rate };
+  });
+
+  readonly reviewsScopeHint = computed(() => {
+    const display = this.activeLocation.switchDisplay();
+    if (display.allLocationsScope) {
+      return this.tr("portal.profile.reviewsAllLocations");
+    }
+    return this.tr("portal.profile.reviewsBranchScope", { branch: display.title });
+  });
+
+  readonly reviewsHero = computed(() => {
+    const count = this.reviewSummary().count;
+    if (count <= 0) {
+      return {
+        status: "empty" as const,
+        icon: "user--follow" as AdeniCarbonIconName,
+        tone: "brand" as AdeniPillTone,
+        title: this.tr("portal.profile.reviewsHeroEmptyTitle"),
+        body: this.tr("portal.profile.reviewsHeroEmptyBody"),
+        badge: this.tr("portal.profile.reviewsHeroEmptyBadge"),
+      };
+    }
+    return {
+      status: "active" as const,
+      icon: "checkmark--filled" as AdeniCarbonIconName,
+      tone: "success" as AdeniPillTone,
+      title: this.tr("portal.profile.reviewsHeroActiveTitle"),
+      body: this.tr("portal.profile.reviewsHeroActiveBody"),
+      badge: this.tr("portal.profile.reviewsHeroActiveBadge"),
+    };
+  });
+
+  readonly reviewsCountLabel = computed(() =>
+    getReviewCountLabel(this.uiLocale(), this.reviewSummary().count),
+  );
+
+  readonly reviewsRatingDistribution = computed(() => {
+    const items = this.reviews();
+    if (items.length === 0) {
+      return null;
+    }
+    const counts = [0, 0, 0, 0, 0];
+    for (const row of items) {
+      const bucket = Math.min(5, Math.max(1, Math.round(row.rating))) - 1;
+      counts[bucket]++;
+    }
+    const peak = Math.max(...counts, 1);
+    return ([5, 4, 3, 2, 1] as const).map((stars) => ({
+      stars,
+      count: counts[stars - 1],
+      percent: (counts[stars - 1] / peak) * 100,
+    }));
+  });
+
   readonly verificationSteps = computed(() => {
     const status = this.profile()?.status ?? 0;
     const labels = [
@@ -233,6 +307,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       if (!profile) {
         return;
       }
+      this.reviewsPage.set(1);
       void this.activeLocation.runOnBranchSwitch(() => this.loadReviews(profile));
     });
     this.verificationSub = merge(
@@ -499,29 +574,85 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   async loadReviews(profile: BusinessProfile): Promise<void> {
+    this.reviewsLoading.set(true);
     const branch =
       this.activeLocation.resolveContextLocation(profile)
       ?? profile.locations.find((l) => l.isPrimary)
       ?? profile.locations[0];
-    const slug = branch?.slug;
-    if (!slug) {
-      this.reviews.set([]);
-      return;
-    }
+    const slug = branch?.slug?.trim();
+    const locationId = this.activeLocation.tenantApiLocationId(profile.entitlements);
     try {
       await this.api.withAuthorizedClient(async (c) => {
-        const [publicProfile, payload] = await Promise.all([
-          c.getBusinessProfile(slug),
-          c.getBusinessReviews(slug, 1, 10),
-        ]);
-        this.reviews.set(payload.items);
-        this.reviewSummary.set({
-          avg: publicProfile.ratingAvg ?? null,
-          count: publicProfile.reviewCount ?? 0,
+        const pageSize = this.reviewsPageSize();
+        const payload = await c.listTenantReviews({
+          page: this.reviewsPage(),
+          pageSize,
+          locationId,
         });
+        this.reviews.set(payload.items.slice(0, pageSize));
+        this.reviewsTotalCount.set(payload.totalCount);
+        this.reviewsRepliedCount.set(payload.repliedCount ?? 0);
+
+        let avg: number | null = null;
+        let count = payload.totalCount;
+        if (slug) {
+          const publicProfile = await c.getBusinessProfile(slug);
+          avg = publicProfile.ratingAvg ?? null;
+          count = publicProfile.reviewCount ?? payload.totalCount;
+        }
+        this.reviewSummary.set({ avg, count });
       });
     } catch {
       this.reviews.set([]);
+      this.reviewsTotalCount.set(0);
+      this.reviewsRepliedCount.set(0);
+      this.reviewSummary.set({ avg: null, count: 0 });
+    } finally {
+      this.reviewsLoading.set(false);
+    }
+  }
+
+  reviewRatingTone(rating: number): AdeniPillTone {
+    if (rating >= 5) {
+      return "success";
+    }
+    if (rating >= 4) {
+      return "brand";
+    }
+    if (rating >= 3) {
+      return "warning";
+    }
+    return "danger";
+  }
+
+  reviewAverageDisplay(): string {
+    const avg = this.reviewSummary().avg;
+    if (avg == null) {
+      return "—";
+    }
+    return avg.toFixed(1);
+  }
+
+  reviewAverageStars(): number {
+    const avg = this.reviewSummary().avg;
+    if (avg == null) {
+      return 0;
+    }
+    return Math.min(5, Math.max(0, Math.round(avg)));
+  }
+
+  isReviewStarFilled(starIndex: number, rating: number): boolean {
+    return starIndex <= rating;
+  }
+
+  goToReviewsPage(next: number): void {
+    if (next === this.reviewsPage()) {
+      return;
+    }
+    this.reviewsPage.set(next);
+    const profile = this.profile();
+    if (profile) {
+      void this.loadReviews(profile);
     }
   }
 
@@ -537,11 +668,15 @@ export class ProfileComponent implements OnInit, OnDestroy {
     }
     this.saving.set(true);
     this.error.set(null);
+    const hadReply = (this.reviews().find((item) => item.id === reviewId)?.ownerReply?.trim()?.length ?? 0) > 0;
     try {
       const updated = await this.api.withAuthorizedClient((client) =>
         client.replyToReview(reviewId, reply),
       );
       this.reviews.update((items) => items.map((item) => (item.id === updated.id ? updated : item)));
+      if (!hadReply) {
+        this.reviewsRepliedCount.update((count) => count + 1);
+      }
       this.replyingId.set(null);
       this.replyDraft = "";
     } catch (caught) {

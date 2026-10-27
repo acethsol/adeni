@@ -20,6 +20,9 @@ import {
   requestVerificationBadgeRequestSchema,
   verificationBadgeSchema,
   publicReviewItemSchema,
+  tenantReviewsListResponseSchema,
+  PROFILE_REVIEWS_PAGE_SIZE,
+  type PagedResult,
   updateBusinessSettingsRequestSchema,
   updateBusinessPoliciesRequestSchema,
   updatePublicPageRequestSchema,
@@ -125,10 +128,19 @@ export class BusinessApi {
     return payload.items ?? [];
   }
 
-  async listTenantReviews(): Promise<PublicReviewItem[]> {
-    const response = await this.client.request("/api/v1/tenant/reviews");
-    const payload = (await response.json()) as { items: PublicReviewItem[] };
-    return payload.items ?? [];
+  async listTenantReviews(options: {
+    page?: number;
+    pageSize?: number;
+    locationId?: string;
+  } = {}): Promise<PagedResult<PublicReviewItem> & { repliedCount?: number }> {
+    const query = new URLSearchParams();
+    if (options.locationId) {
+      query.set("locationId", options.locationId);
+    }
+    query.set("page", String(options.page ?? 1));
+    query.set("pageSize", String(options.pageSize ?? PROFILE_REVIEWS_PAGE_SIZE));
+    const response = await this.client.request(`/api/v1/tenant/reviews?${query.toString()}`);
+    return tenantReviewsListResponseSchema.parse(await response.json());
   }
 
   async replyToReview(reviewId: string, reply: string): Promise<PublicReviewItem> {
