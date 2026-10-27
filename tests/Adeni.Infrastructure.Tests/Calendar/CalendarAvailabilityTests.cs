@@ -10,8 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
-using static Adeni.Infrastructure.Tests.Finance.CommerceTestSupport;
-using static CalendarTestSupport;
+using static Adeni.Infrastructure.Tests.Calendar.CalendarTestSupport;
 
 public sealed class CalendarAvailabilityTests
 {

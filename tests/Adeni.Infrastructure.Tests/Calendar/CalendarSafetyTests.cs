@@ -10,8 +10,7 @@ using Adeni.Infrastructure.Calendar;
 using Adeni.Infrastructure.Identity;
 using Adeni.Infrastructure.Booking;
 using Microsoft.EntityFrameworkCore;
-using static Adeni.Infrastructure.Tests.Finance.CommerceTestSupport;
-using static CalendarTestSupport;
+using static Adeni.Infrastructure.Tests.Calendar.CalendarTestSupport;
 
 public sealed class CalendarSafetyTests
 {

@@ -8,13 +8,19 @@ using Adeni.Domain.Booking;
 using Adeni.Infrastructure.Calendar;
 using Adeni.Infrastructure.Identity;
 using Adeni.Infrastructure.Booking;
+using Adeni.Infrastructure.Context;
 using Adeni.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging.Abstractions;
-using static Adeni.Infrastructure.Tests.Finance.CommerceTestSupport;
 
 internal static class CalendarTestSupport
 {
+    internal static readonly DateTimeOffset Now = new(2026, 10, 25, 12, 0, 0, TimeSpan.Zero);
+    internal sealed class Clock : TimeProvider { public override DateTimeOffset GetUtcNow() => Now; }
+    internal static AdeniDbContext Memory() =>
+        new(new DbContextOptionsBuilder<AdeniDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options, new TenantContext());
+
     internal static IOptions<CalendarOptions> Options() => Microsoft.Extensions.Options.Options.Create(new CalendarOptions {
         ApiBaseUrl = "https://api.example.test", PortalBaseUrl = "https://portal.example.test", CurrentKeyVersion = "v1",
         EncryptionKeys = new() { ["v1"] = Convert.ToBase64String(Enumerable.Range(1,32).Select(i => (byte)i).ToArray()) },

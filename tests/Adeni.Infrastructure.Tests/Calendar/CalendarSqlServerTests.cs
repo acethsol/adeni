@@ -8,8 +8,7 @@ using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using static Adeni.Infrastructure.Tests.Finance.CommerceTestSupport;
-using static CalendarTestSupport;
+using static Adeni.Infrastructure.Tests.Calendar.CalendarTestSupport;
 
 [Trait("Category", "SqlServer")]
 public sealed class CalendarSqlServerTests

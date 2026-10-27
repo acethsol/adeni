@@ -6,8 +6,7 @@ using System.Text.Json;
 using Adeni.Application.Calendar;
 using Adeni.Infrastructure.Calendar;
 using Microsoft.AspNetCore.WebUtilities;
-using static Adeni.Infrastructure.Tests.Finance.CommerceTestSupport;
-using static CalendarTestSupport;
+using static Adeni.Infrastructure.Tests.Calendar.CalendarTestSupport;
 
 public sealed class CalendarProviderTests
 {
