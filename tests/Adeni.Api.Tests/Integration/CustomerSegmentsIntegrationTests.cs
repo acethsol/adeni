@@ -124,26 +124,6 @@ public sealed class CustomerSegmentsIntegrationTests : IClassFixture<WebApplicat
         var serialized = JsonSerializer.Serialize(after); Assert.DoesNotContain("Ada", serialized); Assert.DoesNotContain("Answer", serialized);
     }
 
-    [Theory]
-    [InlineData(false, HttpStatusCode.OK)]
-    [InlineData(true, HttpStatusCode.BadRequest)]
-    public async Task GiftMetadata_ImplicitSoleLocationIsSafe_ButExplicitBranchCannotExpand(bool explicitBranch, HttpStatusCode expected)
-    {
-        var data = await Seed(); using var client = data.Client;
-        var suffix = explicitBranch ? $"?locationId={data.Location}" : "";
-        Assert.Equal(expected, (await client.GetAsync($"/api/v1/tenant/customers/{data.Roster}/purchased-gift-cards{suffix}")).StatusCode);
-    }
-
-    [Fact]
-    public async Task GiftMetadata_InactiveHistoricalBranchStillPreventsTenantWideExpansion()
-    {
-        var data = await Seed(); using var client = data.Client;
-        using (var scope = factory.Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
-            db.BusinessLocations.Add(new BusinessLocation { Id = Guid.NewGuid(), TenantId = data.Tenant, Slug = Guid.NewGuid().ToString(), IsActive = false }); await db.SaveChangesAsync();
-        }
-        Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync($"/api/v1/tenant/customers/{data.Roster}/purchased-gift-cards")).StatusCode);
-    }
-
+    // GiftMetadata_* (purchased-gift-cards scope rules) live on feature/f3-gift-cards-pay-links — see PR #40.
+    // F5 segment tests above do not depend on F3 gift-card routes.
 }
