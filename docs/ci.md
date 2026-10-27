@@ -13,6 +13,8 @@ Runs on pushes and PRs targeting `dev`, `qa`, or `main`.
 
 [`.github/dependabot.yml`](../.github/dependabot.yml) — weekly PRs for NuGet, npm, and GitHub Actions.
 
+Root [`package.json`](../package.json) **overrides** pin transitive fixes for CI `npm audit --omit=dev --audit-level=high` (currently `body-parser@2.4.0`, `zod@4.6.7`; `@adeni/shared` depends on Zod 4). After changing overrides, run `npm install` and re-run the audit commands below.
+
 ## Local equivalents
 
 ```powershell
