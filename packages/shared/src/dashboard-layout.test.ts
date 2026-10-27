@@ -7,6 +7,8 @@ import {
 } from "./dashboard-layout";
 
 const starterEntitlements = {
+  maxLocations: 1,
+  maxPractitioners: 1,
   messaging: false,
   waitlist: false,
   advancedAnalytics: false,

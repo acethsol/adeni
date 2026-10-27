@@ -5,6 +5,8 @@ import { resolveDashboardLayoutPreset } from "./dashboard-layout-presets";
 import type { DashboardWidgetVisibilityContext } from "./dashboard-layout";
 
 const starterEntitlements = {
+  maxLocations: 1,
+  maxPractitioners: 1,
   messaging: false,
   waitlist: false,
   advancedAnalytics: false,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PLAN_ENTITLEMENTS } from "./plan-entitlements";
+import { tenantEntitlementsFromPlan } from "./test-tenant-entitlements";
 import type { BusinessLocation } from "./schemas";
 import {
   activeBusinessLocations,
@@ -26,10 +26,10 @@ describe("report export location", () => {
     expect(
       resolveReportExportLocationId({
         locations,
-        entitlements: PLAN_ENTITLEMENTS.starter,
+        entitlements: tenantEntitlementsFromPlan("starter"),
       }),
     ).toBe("a");
-    expect(needsReportExportLocationPicker(locations, PLAN_ENTITLEMENTS.starter)).toBe(false);
+    expect(needsReportExportLocationPicker(locations, tenantEntitlementsFromPlan("starter"))).toBe(false);
   });
 
   it("defaults to primary branch when multi-location gate applies", () => {
@@ -37,11 +37,11 @@ describe("report export location", () => {
       loc({ id: "primary", isPrimary: true }),
       loc({ id: "secondary", isPrimary: false }),
     ];
-    expect(needsReportExportLocationPicker(locations, PLAN_ENTITLEMENTS.professional)).toBe(true);
+    expect(needsReportExportLocationPicker(locations, tenantEntitlementsFromPlan("professional"))).toBe(true);
     expect(
       resolveReportExportLocationId({
         locations,
-        entitlements: PLAN_ENTITLEMENTS.professional,
+        entitlements: tenantEntitlementsFromPlan("professional"),
       }),
     ).toBe("primary");
   });
@@ -51,18 +51,18 @@ describe("report export location", () => {
       loc({ id: "primary", isPrimary: true }),
       loc({ id: "secondary", isPrimary: false }),
     ];
-    expect(needsReportExportLocationPicker(locations, PLAN_ENTITLEMENTS.business)).toBe(false);
+    expect(needsReportExportLocationPicker(locations, tenantEntitlementsFromPlan("business"))).toBe(false);
     expect(
       resolveReportExportLocationId({
         locations,
-        entitlements: PLAN_ENTITLEMENTS.business,
+        entitlements: tenantEntitlementsFromPlan("business"),
         selectedLocationId: "secondary",
       }),
     ).toBe("secondary");
     expect(
       resolveReportExportLocationId({
         locations,
-        entitlements: PLAN_ENTITLEMENTS.business,
+        entitlements: tenantEntitlementsFromPlan("business"),
       }),
     ).toBeUndefined();
   });
