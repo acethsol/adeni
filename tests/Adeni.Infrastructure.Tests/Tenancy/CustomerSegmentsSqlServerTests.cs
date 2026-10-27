@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Tests.Tenancy;
 
+using Adeni.Infrastructure.Tests.SqlServer;
 using System.Data.Common;
 using Adeni.Application.Booking;
 using Adeni.Application.Tenancy;
@@ -13,6 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
 [Trait("Category", "SqlServer")]
+[Collection(SqlServerTestCollection.Name)]
 public sealed class CustomerSegmentsSqlServerTests
 {
     private sealed class SqlFactAttribute : FactAttribute

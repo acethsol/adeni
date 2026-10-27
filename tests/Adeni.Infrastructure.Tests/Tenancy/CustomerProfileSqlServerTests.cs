@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Tests.Tenancy;
 
+using Adeni.Infrastructure.Tests.SqlServer;
 using Adeni.Application.Tenancy;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Finance;
@@ -14,6 +15,7 @@ using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 [Trait("Category", "SqlServer")]
+[Collection(SqlServerTestCollection.Name)]
 public sealed class CustomerProfileSqlServerTests
 {
     [CustomerProfileSqlServerFact]

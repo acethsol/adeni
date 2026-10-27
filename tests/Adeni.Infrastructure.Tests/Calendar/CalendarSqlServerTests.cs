@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Tests.Calendar;
 
+using Adeni.Infrastructure.Tests.SqlServer;
 using Adeni.Domain.Calendar;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Identity;
@@ -11,6 +12,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using static Adeni.Infrastructure.Tests.Calendar.CalendarTestSupport;
 
 [Trait("Category", "SqlServer")]
+[Collection(SqlServerTestCollection.Name)]
 public sealed class CalendarSqlServerTests
 {
     private sealed class SqlFactAttribute : FactAttribute

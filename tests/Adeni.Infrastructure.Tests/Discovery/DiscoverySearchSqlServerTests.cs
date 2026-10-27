@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Tests.Discovery;
 
+using Adeni.Infrastructure.Tests.SqlServer;
 using Adeni.Infrastructure.Tests.TestSupport;
 using Adeni.Infrastructure.Tests.Subscriptions;
 using Adeni.Application.Caching;
@@ -29,6 +30,7 @@ using Microsoft.Extensions.DependencyInjection;
 /// Opt in: <c>ADENI_SQLSERVER_TESTS=1</c> (and publish via <c>scripts/publish-db.ps1</c>).
 /// </summary>
 [Trait("Category", "SqlServer")]
+[Collection(SqlServerTestCollection.Name)]
 public sealed class DiscoverySearchSqlServerTests
 {
     [SqlServerFact]

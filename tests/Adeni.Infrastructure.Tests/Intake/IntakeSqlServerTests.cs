@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Tests.Intake;
 
+using Adeni.Infrastructure.Tests.SqlServer;
 using Adeni.Application.Intake;
 using Adeni.Application.Booking;
 using Adeni.Domain.Booking;
@@ -12,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
 [Trait("Category","SqlServer")]
+[Collection(SqlServerTestCollection.Name)]
 public sealed class IntakeSqlServerTests
 {
     private static readonly DateTimeOffset Now = new(2026,10,25,12,0,0,TimeSpan.Zero);
