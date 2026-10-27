@@ -61,7 +61,7 @@ describe("CustomerProfilePanelComponent", () => {
     fixture.detectChanges(); await fixture.whenStable(); fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain("No activity in this view");
     expect(fixture.nativeElement.textContent).toContain("Some older activity");
-    expect(fixture.nativeElement.textContent).toContain("Conversation activity is unavailable in branch view");
+    expect(fixture.nativeElement.textContent).toContain("Messaging activity is unavailable in branch view");
     fixture.destroy();
     expect(data.cancel).toHaveBeenCalled();
   });

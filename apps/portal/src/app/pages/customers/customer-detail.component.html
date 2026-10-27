@@ -28,21 +28,8 @@
 
     <adeni-tabs [tabs]="tabs()" />
 
-    <app-customer-profile-panel [customerId]="c.id" [locationId]="profileLocationId()"
-      [overviewVisible]="tab() === 'overview'" [activityVisible]="tab() === 'activity'" />
-
     @if (tab() === "overview") {
       <div class="tab-panel">
-        <p class="overview-actions">
-          <button
-            type="button"
-            class="btn"
-            [disabled]="statementDownloading()"
-            (click)="downloadStatement()"
-          >
-            {{ statementDownloading() ? tr('portal.customers.preparingPdf') : tr('portal.customers.downloadStatement90Days') }}
-          </button>
-        </p>
         <div class="stat-strip">
           <a class="stat-card stat-card--bookings" routerLink="." [queryParams]="{ tab: 'bookings' }">
             <span class="stat-icon stat-icon--bookings" aria-hidden="true">
@@ -82,44 +69,118 @@
           </article>
         </div>
 
-        <section class="card profile-grid">
-          <div class="profile-panel">
-            <h3 class="section-title">{{ tr('portal.customers.contact') }}</h3>
-            <p class="muted section-lede">{{ tr('portal.customers.whatStaffSeeWhenScheduling') }}</p>
-            <dl class="detail-list">
-              <div>
-                <dt>{{ tr('common.phone') }}</dt>
-                <dd>{{ c.phoneMasked || "—" }}</dd>
-              </div>
-              <div>
-                <dt>{{ tr('common.email') }}</dt>
-                <dd>{{ c.email || "—" }}</dd>
-              </div>
-              @if (c.platformCustomerId) {
-                <div>
-                  <dt>{{ tr('portal.customers.onlineAccount') }}</dt>
-                  <dd>{{ tr('portal.customers.linkedDiscoverSign') }}</dd>
-                </div>
-              }
-            </dl>
+        <app-customer-profile-panel
+          [customerId]="c.id"
+          [locationId]="profileLocationId()"
+          [overviewVisible]="true"
+          [activityVisible]="false"
+        />
+        <section class="card customer-reach" [attr.aria-label]="tr('portal.customers.reachAndProfile')">
+          <div class="section-head customer-reach__head">
+            <div>
+              <h3 class="section-title">{{ tr('portal.customers.reachAndProfile') }}</h3>
+              <p class="muted section-lede">{{ tr('portal.customers.reachAndProfileLede') }}</p>
+            </div>
+            <adeni-staff-btn
+              variant="secondary"
+              icon="download"
+              [disabled]="statementDownloading()"
+              (pressed)="downloadStatement()"
+            >
+              {{
+                statementDownloading()
+                  ? tr('portal.customers.preparingPdf')
+                  : tr('portal.customers.downloadStatement90Days')
+              }}
+            </adeni-staff-btn>
           </div>
-          <div class="profile-panel">
-            <h3 class="section-title">{{ tr('portal.customers.engagement') }}</h3>
-            <p class="muted section-lede">{{ tr('portal.customers.howOftenTheyInteractWith') }}</p>
-            <dl class="detail-list">
-              <div>
-                <dt>{{ tr('portal.customers.lastSeen') }}</dt>
-                <dd>{{ formatSlotTime(c.lastSeenAt) }}</dd>
-              </div>
-              <div>
-                <dt>{{ tr('portal.customers.lastBooking') }}</dt>
-                <dd>{{ c.lastBookingAt ? formatSlotTime(c.lastBookingAt) : "—" }}</dd>
-              </div>
-              <div>
-                <dt>{{ tr('portal.customers.lastWalk') }}</dt>
-                <dd>{{ c.lastQueueJoinAt ? formatSlotTime(c.lastQueueJoinAt) : "—" }}</dd>
-              </div>
-            </dl>
+
+          <div class="customer-reach__columns">
+            <div class="customer-reach__column">
+              <h4 class="customer-reach__column-title">
+                <span class="customer-reach__column-icon customer-reach__column-icon--contact" aria-hidden="true">
+                  <adeni-carbon-icon name="phone" [size]="16" />
+                </span>
+                {{ tr('portal.customers.contact') }}
+              </h4>
+              <ul class="customer-reach__fields">
+                <li class="customer-reach__field">
+                  <span class="customer-reach__field-icon" aria-hidden="true">
+                    <adeni-carbon-icon name="phone" [size]="16" />
+                  </span>
+                  <span class="customer-reach__field-body">
+                    <span class="customer-reach__field-label">{{ tr('common.phone') }}</span>
+                    <span class="customer-reach__field-value">{{ c.phoneMasked || "—" }}</span>
+                  </span>
+                </li>
+                <li class="customer-reach__field">
+                  <span class="customer-reach__field-icon" aria-hidden="true">
+                    <adeni-carbon-icon name="email" [size]="16" />
+                  </span>
+                  <span class="customer-reach__field-body">
+                    <span class="customer-reach__field-label">{{ tr('common.email') }}</span>
+                    <span class="customer-reach__field-value">{{ c.email || "—" }}</span>
+                  </span>
+                </li>
+                @if (c.platformCustomerId) {
+                  <li class="customer-reach__field">
+                    <span class="customer-reach__field-icon" aria-hidden="true">
+                      <adeni-carbon-icon name="user--filled" [size]="16" />
+                    </span>
+                    <span class="customer-reach__field-body">
+                      <span class="customer-reach__field-label">{{ tr('portal.customers.onlineAccount') }}</span>
+                      <span class="customer-reach__field-value">
+                        <adeni-pill tone="info" [compact]="true">{{ tr('portal.customers.linkedDiscoverSign') }}</adeni-pill>
+                      </span>
+                    </span>
+                  </li>
+                }
+              </ul>
+            </div>
+
+            <div class="customer-reach__column">
+              <h4 class="customer-reach__column-title">
+                <span class="customer-reach__column-icon customer-reach__column-icon--engagement" aria-hidden="true">
+                  <adeni-carbon-icon name="chart--line" [size]="16" />
+                </span>
+                {{ tr('portal.customers.engagement') }}
+              </h4>
+              <ul class="customer-reach__fields">
+                <li class="customer-reach__field">
+                  <span class="customer-reach__field-icon" aria-hidden="true">
+                    <adeni-carbon-icon name="time" [size]="16" />
+                  </span>
+                  <span class="customer-reach__field-body">
+                    <span class="customer-reach__field-label">{{ tr('portal.customers.lastSeen') }}</span>
+                    <span class="customer-reach__field-value customer-reach__field-value--tabular">{{
+                      formatSlotTime(c.lastSeenAt)
+                    }}</span>
+                  </span>
+                </li>
+                <li class="customer-reach__field">
+                  <span class="customer-reach__field-icon" aria-hidden="true">
+                    <adeni-carbon-icon name="calendar" [size]="16" />
+                  </span>
+                  <span class="customer-reach__field-body">
+                    <span class="customer-reach__field-label">{{ tr('portal.customers.lastBooking') }}</span>
+                    <span class="customer-reach__field-value customer-reach__field-value--tabular">{{
+                      c.lastBookingAt ? formatSlotTime(c.lastBookingAt) : "—"
+                    }}</span>
+                  </span>
+                </li>
+                <li class="customer-reach__field">
+                  <span class="customer-reach__field-icon" aria-hidden="true">
+                    <adeni-carbon-icon name="user--follow" [size]="16" />
+                  </span>
+                  <span class="customer-reach__field-body">
+                    <span class="customer-reach__field-label">{{ tr('portal.customers.lastWalk') }}</span>
+                    <span class="customer-reach__field-value customer-reach__field-value--tabular">{{
+                      c.lastQueueJoinAt ? formatSlotTime(c.lastQueueJoinAt) : "—"
+                    }}</span>
+                  </span>
+                </li>
+              </ul>
+            </div>
           </div>
         </section>
       </div>
@@ -183,16 +244,21 @@
                     }
                   </ng-template>
                   <ng-template adeniDataTableCell="status" let-row>
-                    @if(intakeStatuses.rows()[row.id];as forms){<small>{{tr('intake.status')}}: @for(form of forms;track form.id){ {{tr('intake.states.'+form.state)}} }@empty{ {{tr('intake.notRequired')}} }</small>}
-
                     <adeni-pill [tone]="bookingPillTone(row.status)" [compact]="true">
                       {{ bookingStatusLabel(row.status) }}
                     </adeni-pill>
                   </ng-template>
                   <ng-template adeniDataTableActions let-row>
-                    @if(session.can('portal.bookings')){<a [routerLink]="['/bookings',row.id,'intake']">{{tr('intake.status')}}</a>}
-
                     <adeni-row-action-bar>
+                      @if (session.can('portal.bookings') && showIntakeAction(row.id)) {
+                        <adeni-icon-btn
+                          icon="document"
+                          [label]="tr('intake.review')"
+                          variant="table"
+                          [dense]="true"
+                          [routerLink]="['/bookings', row.id, 'intake']"
+                        />
+                      }
                       <adeni-icon-btn
                         icon="launch"
                         [label]="tr('portal.customers.openBookings')"
@@ -274,6 +340,15 @@
           </div>
         }
       </section>
+    } @else if (tab() === "activity") {
+      <div class="tab-panel">
+        <app-customer-profile-panel
+          [customerId]="c.id"
+          [locationId]="profileLocationId()"
+          [overviewVisible]="false"
+          [activityVisible]="true"
+        />
+      </div>
     }
   } @else if (!error()) {
     <adeni-portal-empty-state

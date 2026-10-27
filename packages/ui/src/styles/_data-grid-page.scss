@@ -66,6 +66,16 @@
   gap: 0.35rem 0.5rem;
 }
 
+/* Projected into adeni-data-table actions cell (page templates). */
+adeni-row-action-bar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .adeni-row-action-bar {
   display: inline-flex;
   flex-wrap: nowrap;

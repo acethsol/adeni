@@ -1,36 +1,401 @@
-<app-portal-page [title]="tr('intake.title')" [description]="tr('intake.nonClinical')">
- <a pageActions routerLink="/services">{{tr('intake.services')}}</a>
- @if(error()){<p role="alert">{{error()}}</p>}
- <fieldset [disabled]="busy()">
-  <label>{{tr('intake.name')}}<input [ngModel]="name()" (ngModelChange)="name.set($event)" maxlength="200" /></label>
-  <button type="button" (click)="create()" [disabled]="!name().trim()">{{tr('intake.create')}}</button>
-  <ul>@for(row of rows();track row.id){<li><button type="button" (click)="open(row.id)">{{row.name}} · {{tr(row.isActive?'intake.active':'intake.inactive')}}</button></li>}</ul>
-  <button type="button" (click)="paginate(-1)" [disabled]="page()===1">{{tr('intake.previous')}}</button>
-  <button type="button" (click)="paginate(1)" [disabled]="rows().length<50">{{tr('intake.next')}}</button>
-  @if(selected();as form){
-   <p>{{tr(form.isActive?'intake.active':'intake.inactive')}}</p><button type="button" (click)="action('active')">{{tr('intake.toggleActive')}}</button>
-   @if(draft();as d){
-    <h2>{{tr('intake.draft')}}</h2><p>{{tr('intake.publishNotice')}}</p>
-    <label>{{tr('intake.name')}}<input [ngModel]="d.title" (ngModelChange)="change('title',$event)" maxlength="200" /></label>
-    <label>{{tr('intake.description')}}<textarea [ngModel]="d.description" (ngModelChange)="change('description',$event)" maxlength="2000"></textarea></label>
-    <label>{{tr('intake.instructions')}}<textarea [ngModel]="d.instructions" (ngModelChange)="change('instructions',$event)" maxlength="3000"></textarea></label>
-    @for(field of d.fields;track field.id;let i=$index){
-     <fieldset><legend>{{tr('intake.field')}} {{i+1}}</legend>
-      <label>{{tr('intake.label')}}<input [ngModel]="field.label" (ngModelChange)="this.field(i,'label',$event)" maxlength="500" /></label>
-      <label>{{tr('intake.help')}}<input [ngModel]="field.helpText" (ngModelChange)="this.field(i,'helpText',$event)" maxlength="1000" /></label>
-      <label>{{tr('intake.type')}}<select [ngModel]="field.type" (ngModelChange)="this.field(i,'type',+$event)">@for(type of [0,1,2,3,4,5,6];track type){<option [ngValue]="type">{{tr('intake.types.t'+type)}}</option>}</select></label>
-      <label><input type="checkbox" [ngModel]="field.required" (ngModelChange)="this.field(i,'required',$event)" />{{tr('intake.required')}}</label>
-      @if(field.type===2||field.type===3){@for(option of field.choices;track option.id;let j=$index){<label>{{tr('intake.option')}}<input [ngModel]="option.label" (ngModelChange)="choice(i,j,$event)" maxlength="250" /></label><button type="button" (click)="removeChoice(i,j)">{{tr('intake.remove')}}</button>}<button type="button" (click)="addChoice(i)">{{tr('intake.addOption')}}</button>}
-      <button type="button" (click)="move(i,-1)" [disabled]="i===0">{{tr('intake.up')}}</button><button type="button" (click)="move(i,1)" [disabled]="i===d.fields.length-1">{{tr('intake.down')}}</button><button type="button" (click)="remove(i)">{{tr('intake.remove')}}</button>
-     </fieldset>
-    }
-    <button type="button" (click)="add()" [disabled]="d.fields.length>=30">{{tr('intake.addField')}}</button>
-    <button type="button" (click)="action('save')">{{tr('intake.save')}}</button><button type="button" (click)="action('publish')">{{tr('intake.publish')}}</button>
-   }@else{<button type="button" (click)="action('clone')">{{tr('intake.newVersion')}}</button>}
-   @if(form.published;as published){<h2>{{tr('intake.published')}}</h2><h3>{{published.title}}</h3><p>{{published.instructions}}</p><adeni-intake-fields [definition]="published" [readOnly]="true" />}
+﻿<app-portal-page [title]="tr('intake.title')" [description]="tr('intake.pageLead')">
+  <a pageActions routerLink="/services" class="btn">
+    <adeni-carbon-icon name="arrow--left" [size]="16" />
+    {{ tr('intake.backToServices') }}
+  </a>
+  <adeni-staff-btn pageActions variant="primary" icon="add" (pressed)="openCreateModal()">
+    {{ tr('intake.create') }}
+  </adeni-staff-btn>
+
+  <p class="clinical-note">
+    <adeni-carbon-icon name="security" [size]="16" aria-hidden="true" />
+    <span>{{ tr('intake.nonClinical') }}</span>
+  </p>
+
+  @if (error()) {
+    <p class="error-banner" role="alert">{{ error() }}</p>
   }
-  <h2>{{tr('intake.serviceAssignment')}}</h2>
-  <label>{{tr('intake.services')}}<select [ngModel]="serviceId()" (ngModelChange)="selectService($event)"><option value="">{{tr('intake.choose')}}</option>@for(service of services();track service.id){<option [value]="service.id">{{service.name}}</option>}</select></label>
-  @if(binding();as b){<label>{{tr('intake.form')}}<select [ngModel]="b.templateId??''" (ngModelChange)="bind($event)"><option value="">{{tr('intake.notRequired')}}</option>@for(row of rows();track row.id){@if(row.isActive&&row.publishedVersionId){<option [value]="row.id">{{row.name}}</option>}}</select></label>}
- </fieldset>
+
+  <section class="card section forms-section">
+    <header class="section-head">
+      <div>
+        <h3>{{ tr('intake.formsSection') }}</h3>
+        <p class="section-lede">{{ tr('intake.formsSectionLead') }}</p>
+      </div>
+      @if (!loading() && rows().length > 0) {
+        <div class="section-head__aside">
+          <adeni-pill tone="neutral" [compact]="true">{{ rows().length }}</adeni-pill>
+        </div>
+      }
+    </header>
+
+    @if (loading()) {
+      <p class="loading-line" role="status">{{ tr('intake.loading') }}</p>
+    } @else if (rows().length === 0) {
+      <adeni-portal-empty-state
+        icon="document"
+        [title]="tr('intake.noFormsYet')"
+        [description]="tr('intake.formsSectionLead')"
+        [compact]="true"
+      />
+    } @else {
+      <div class="adeni-list-results">
+        <adeni-data-table
+          [rows]="rows()"
+          [columns]="formTableColumns()"
+          [trackRow]="trackFormRow"
+        >
+          <ng-template adeniDataTableCell="name" let-row>
+            <span class="form-name">{{ row.name }}</span>
+          </ng-template>
+          <ng-template adeniDataTableCell="version" let-row>
+            <div class="form-version-cell adeni-cell-pills">
+              @if (row.publishedVersionId) {
+                <adeni-pill tone="success" [compact]="true">{{ tr('intake.statusPublished') }}</adeni-pill>
+              } @else {
+                <adeni-pill tone="warning" [compact]="true">{{ tr('intake.statusDraft') }}</adeni-pill>
+              }
+            </div>
+          </ng-template>
+          <ng-template adeniDataTableCell="status" let-row>
+            <adeni-pill [tone]="row.isActive ? 'brand' : 'neutral'" [compact]="true">
+              {{ tr(row.isActive ? 'intake.active' : 'intake.inactive') }}
+            </adeni-pill>
+          </ng-template>
+          <ng-template adeniDataTableActions let-row>
+            <adeni-row-action-bar>
+              <adeni-icon-btn
+                icon="edit"
+                [label]="tr('intake.editForm')"
+                variant="table"
+                [dense]="true"
+                [disabled]="busy()"
+                (pressed)="open(row.id)"
+              />
+            </adeni-row-action-bar>
+          </ng-template>
+        </adeni-data-table>
+
+        <adeni-list-pagination
+          [page]="page()"
+          [pageSize]="templatePageSize"
+          [totalCount]="templateTotalCount()"
+          [loading]="busy()"
+          [showMetaWhenSinglePage]="rows().length > 0"
+          [embedded]="true"
+          [ariaLabel]="tr('intake.templatePages')"
+          (pageChange)="onTemplatePageChange($event)"
+        />
+      </div>
+    }
+  </section>
+
+  @if (selected(); as form) {
+    <section class="card section editor" [attr.aria-busy]="busy()">
+      <header class="editor-toolbar">
+        <div class="editor-toolbar__intro">
+          <span class="editor-toolbar__icon" aria-hidden="true">
+            <adeni-carbon-icon name="edit" [size]="20" />
+          </span>
+          <div class="editor-toolbar__copy">
+            <p class="editor-toolbar__eyebrow">{{ tr('intake.editForm') }}</p>
+            <h3 class="editor-toolbar__title">{{ editorSubtitle() }}</h3>
+          </div>
+        </div>
+        <div class="editor-toolbar__aside">
+          <div class="editor-meta adeni-cell-pills">
+            <adeni-pill [tone]="form.isActive ? 'brand' : 'neutral'" [compact]="true">
+              {{ tr(form.isActive ? 'intake.active' : 'intake.inactive') }}
+            </adeni-pill>
+            @if (form.publishedVersionId) {
+              <adeni-pill tone="success" [compact]="true">{{ tr('intake.statusPublished') }}</adeni-pill>
+            }
+            @if (form.draftVersionId) {
+              <adeni-pill tone="warning" [compact]="true">{{ tr('intake.statusDraft') }}</adeni-pill>
+            }
+          </div>
+          <div class="editor-toolbar__actions">
+            @if (form.isActive) {
+              <adeni-staff-btn
+                icon="view--off"
+                variant="secondary"
+                [disabled]="busy()"
+                (pressed)="action('active')"
+              >
+                {{ tr('intake.deactivateForm') }}
+              </adeni-staff-btn>
+            } @else {
+              <adeni-staff-btn
+                icon="checkmark--filled"
+                variant="primary"
+                [disabled]="busy()"
+                (pressed)="action('active')"
+              >
+                {{ tr('intake.activateForm') }}
+              </adeni-staff-btn>
+            }
+            <adeni-staff-btn icon="close" variant="secondary" [disabled]="busy()" (pressed)="closeEditor()">
+              {{ tr('intake.closeEditor') }}
+            </adeni-staff-btn>
+          </div>
+        </div>
+      </header>
+
+      @if (draft(); as d) {
+        <div class="editor-block editor-block--draft">
+          <header class="editor-block__head">
+            <span class="editor-block__icon editor-block__icon--draft" aria-hidden="true">
+              <adeni-carbon-icon name="document" [size]="18" />
+            </span>
+            <div>
+              <h4>{{ tr('intake.draft') }}</h4>
+              <p class="muted">{{ tr('intake.publishNotice') }}</p>
+            </div>
+          </header>
+
+          <div class="field">
+            <label>{{ tr('intake.name') }}</label>
+            <input [ngModel]="d.title" (ngModelChange)="change('title', $event)" maxlength="200" [disabled]="busy()" />
+          </div>
+          <div class="field">
+            <label>{{ tr('intake.description') }}</label>
+            <textarea
+              rows="2"
+              [ngModel]="d.description"
+              (ngModelChange)="change('description', $event)"
+              maxlength="2000"
+              [disabled]="busy()"
+            ></textarea>
+          </div>
+          <div class="field">
+            <label>{{ tr('intake.instructions') }}</label>
+            <textarea
+              rows="3"
+              [ngModel]="d.instructions"
+              (ngModelChange)="change('instructions', $event)"
+              maxlength="3000"
+              [disabled]="busy()"
+            ></textarea>
+          </div>
+
+          @for (draftField of d.fields; track draftField.id; let i = $index) {
+            <fieldset class="field-card" [disabled]="busy()">
+              <legend>{{ tr('intake.field') }} {{ i + 1 }}</legend>
+              <div class="field">
+                <label>{{ tr('intake.label') }}</label>
+                <input
+                  [ngModel]="draftField.label"
+                  (ngModelChange)="patchField(i, 'label', $event)"
+                  maxlength="500"
+                />
+              </div>
+              <div class="field">
+                <label>{{ tr('intake.help') }}</label>
+                <input
+                  [ngModel]="draftField.helpText"
+                  (ngModelChange)="patchField(i, 'helpText', $event)"
+                  maxlength="1000"
+                />
+              </div>
+              <div class="row">
+                <div class="field">
+                  <label>{{ tr('intake.type') }}</label>
+                  <select [ngModel]="draftField.type" (ngModelChange)="patchField(i, 'type', +$event)">
+                    @for (type of fieldTypes; track type) {
+                      <option [ngValue]="type">{{ tr('intake.types.t' + type) }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="field checkbox-field">
+                  <label>
+                    <input
+                      type="checkbox"
+                      [ngModel]="draftField.required"
+                      (ngModelChange)="patchField(i, 'required', $event)"
+                    />
+                    {{ tr('intake.required') }}
+                  </label>
+                </div>
+              </div>
+              @if (draftField.type === 2 || draftField.type === 3) {
+                <div class="choices">
+                  @for (option of draftField.choices; track option.id; let j = $index) {
+                    <div class="choice-row">
+                      <div class="field">
+                        <label>{{ tr('intake.option') }}</label>
+                        <input
+                          [ngModel]="option.label"
+                          (ngModelChange)="choice(i, j, $event)"
+                          maxlength="250"
+                        />
+                      </div>
+                      <button type="button" class="btn btn-danger" (click)="removeChoice(i, j)">
+                        {{ tr('intake.remove') }}
+                      </button>
+                    </div>
+                  }
+                  <button type="button" class="btn" (click)="addChoice(i)">{{ tr('intake.addOption') }}</button>
+                </div>
+              }
+              <div class="field-actions">
+                <button type="button" class="btn" [disabled]="i === 0" (click)="move(i, -1)">
+                  {{ tr('intake.up') }}
+                </button>
+                <button type="button" class="btn" [disabled]="i === d.fields.length - 1" (click)="move(i, 1)">
+                  {{ tr('intake.down') }}
+                </button>
+                <button type="button" class="btn btn-danger" (click)="remove(i)">
+                  {{ tr('intake.remove') }}
+                </button>
+              </div>
+            </fieldset>
+          }
+
+          <div class="actions editor-block__actions">
+            <adeni-staff-btn icon="add" [disabled]="busy() || d.fields.length >= 30" (pressed)="add()">
+              {{ tr('intake.addField') }}
+            </adeni-staff-btn>
+            <adeni-staff-btn icon="save" variant="secondary" [disabled]="busy()" (pressed)="action('save')">
+              {{ tr('intake.save') }}
+            </adeni-staff-btn>
+            <adeni-staff-btn variant="primary" icon="checkmark" [disabled]="busy()" (pressed)="action('publish')">
+              {{ tr('intake.publish') }}
+            </adeni-staff-btn>
+          </div>
+        </div>
+      } @else {
+        <div class="editor-block editor-block--version">
+          <p class="muted">{{ tr('intake.noDraftLead') }}</p>
+          <div class="actions editor-block__actions">
+            <adeni-staff-btn icon="copy" variant="primary" [disabled]="busy()" (pressed)="action('clone')">
+              {{ tr('intake.newVersion') }}
+            </adeni-staff-btn>
+          </div>
+        </div>
+      }
+
+      @if (form.published; as published) {
+        <div class="editor-block editor-block--preview">
+          <header class="editor-block__head">
+            <span class="editor-block__icon editor-block__icon--preview" aria-hidden="true">
+              <adeni-carbon-icon name="view" [size]="18" />
+            </span>
+            <div>
+              <h4>{{ tr('intake.published') }}</h4>
+              <p class="muted">{{ tr('intake.publishedPreviewLead') }}</p>
+            </div>
+          </header>
+          <div class="preview-surface">
+            <h5 class="preview-surface__title">{{ published.title }}</h5>
+            @if (published.instructions) {
+              <p class="muted preview-surface__instructions">{{ published.instructions }}</p>
+            }
+            <adeni-intake-fields [definition]="published" [readOnly]="true" />
+          </div>
+        </div>
+      }
+    </section>
+  }
+
+  <section class="card section assignment-section">
+    <header class="section-head">
+      <div>
+        <h3>{{ tr('intake.serviceAssignment') }}</h3>
+        <p class="section-lede">{{ tr('intake.serviceLinksLead') }}</p>
+      </div>
+      @if (services().length > 0) {
+        <div class="section-head__aside">
+          <adeni-pill tone="brand" [compact]="true">
+            {{ assignedServiceCount() }} / {{ services().length }}
+          </adeni-pill>
+        </div>
+      }
+    </header>
+
+    @if (services().length === 0) {
+      <adeni-portal-empty-state
+        icon="template"
+        [title]="tr('intake.noServicesForAssignment')"
+        [description]="tr('intake.serviceLinksLead')"
+        [compact]="true"
+      />
+    } @else {
+      <div class="assignment-layout">
+        <div class="adeni-list-results assignment-table">
+          <adeni-data-table
+            [rows]="serviceLinkRows()"
+            [columns]="serviceLinkColumns()"
+            [trackRow]="trackServiceLink"
+          >
+            <ng-template adeniDataTableCell="service" let-row>
+              <span class="assignment-service-name">{{ row.service.name }}</span>
+            </ng-template>
+            <ng-template adeniDataTableCell="form" let-row>
+              <adeni-pill [tone]="row.templateId ? 'brand' : 'neutral'" [compact]="true">
+                {{ row.formName }}
+              </adeni-pill>
+            </ng-template>
+          </adeni-data-table>
+        </div>
+
+        <aside class="assign-panel" [attr.aria-busy]="busy() && serviceId()">
+          <div class="assign-panel__head">
+            <span class="assign-panel__icon" aria-hidden="true">
+              <adeni-carbon-icon name="task" [size]="20" />
+            </span>
+            <div>
+              <h4 class="assign-panel__title">{{ tr('intake.assignForm') }}</h4>
+              <p class="assign-panel__lead">{{ tr('intake.selectServiceToAssign') }}</p>
+            </div>
+          </div>
+          <div class="assign-filters">
+            <adeni-filter-select
+              [label]="tr('common.service')"
+              [options]="assignServiceOptions()"
+              [value]="serviceId()"
+              (valueChange)="selectService($event)"
+            />
+            @if (binding(); as b) {
+              <adeni-filter-select
+                [label]="tr('intake.form')"
+                [options]="assignableFormOptions()"
+                [value]="b.templateId ?? ''"
+                (valueChange)="bind($event)"
+              />
+            }
+          </div>
+        </aside>
+      </div>
+    }
+  </section>
 </app-portal-page>
+
+<adeni-modal
+  [open]="showCreate()"
+  [title]="tr('intake.createFormTitle')"
+  [subtitle]="tr('intake.formsSectionLead')"
+  size="md"
+  [hasFooter]="true"
+  (closed)="closeCreateModal()"
+>
+  <div class="modal-body">
+    <div class="field">
+      <label>{{ tr('intake.name') }}</label>
+      <input
+        [ngModel]="name()"
+        (ngModelChange)="name.set($event)"
+        maxlength="200"
+        [disabled]="busy()"
+        (keyup.enter)="create()"
+      />
+    </div>
+  </div>
+  <div modalFooter class="modal-actions">
+    <adeni-staff-btn icon="close" variant="secondary" [disabled]="busy()" (pressed)="closeCreateModal()">
+      {{ tr('common.cancel') }}
+    </adeni-staff-btn>
+    <adeni-staff-btn variant="primary" icon="add" [disabled]="busy() || !name().trim()" (pressed)="create()">
+      {{ tr('intake.create') }}
+    </adeni-staff-btn>
+  </div>
+</adeni-modal>

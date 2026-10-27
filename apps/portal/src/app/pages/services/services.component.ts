@@ -2,12 +2,7 @@ import { PortalSessionService } from "../../core/services/portal-session.service
 import { RouterLink } from "@angular/router";
 import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import type {
-  BookingDeliveryType,
-  ServiceMenuGroup,
-  ServiceOffering,
-  ServiceTemplate,
-} from "@adeni/shared";
+import type { ServiceMenuGroup, ServiceOffering, ServiceTemplate } from "@adeni/shared";
 import {
   buildReportExportMenuItems,
   DEFAULT_PAGE_SIZE,
@@ -51,20 +46,9 @@ import {
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
-
-type ServiceDraft = {
-  name: string;
-  description: string;
-  priceAmount: string;
-  currency: string;
-  durationMinutes: string;
-  categorySlug: string;
-  catalogServiceId: string;
-  bookingDeliveryType: BookingDeliveryType;
-  menuGroupId: string;
-  sortOrder: string;
-  isAddOn: boolean;
-};
+import { ServiceEditFormComponent } from "./service-edit-form.component";
+import { type ServiceDraft } from "./service-draft";
+import { resetEmptyDraft, serviceDraftToCreateBody } from "./service-save.util";
 
 @Component({
   selector: "app-services",
@@ -87,6 +71,7 @@ type ServiceDraft = {
     AdeniPillComponent,
     AdeniModalComponent,
     AdeniTablePersonCellComponent,
+    ServiceEditFormComponent,
   ],
   templateUrl: "./services.component.html",
   styleUrl: "./services.component.scss",
@@ -99,7 +84,6 @@ export class ServicesComponent implements OnInit {
   private readonly activeLocation = inject(PortalActiveLocationService);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly confirmDialog = inject(AdeniConfirmService);
-
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly services = signal<ServiceOffering[]>([]);
@@ -247,19 +231,7 @@ export class ServicesComponent implements OnInit {
   }
 
   emptyDraft(): ServiceDraft {
-    return {
-      name: "",
-      description: "",
-      priceAmount: "",
-      currency: this.defaultCurrency,
-      durationMinutes: "30",
-      categorySlug: this.primaryCategorySlug(),
-      catalogServiceId: "",
-      bookingDeliveryType: "appointment",
-      menuGroupId: "",
-      sortOrder: "0",
-      isAddOn: false,
-    };
+    return resetEmptyDraft(this.defaultCurrency, this.primaryCategorySlug());
   }
 
   groupName(groupId: string | null | undefined): string {
@@ -340,25 +312,6 @@ export class ServicesComponent implements OnInit {
     }
   }
 
-  openEdit(service: ServiceOffering): void {
-    this.editingId.set(service.id);
-    this.draft = {
-      name: service.name,
-      description: service.description ?? "",
-      priceAmount: String(service.priceAmount),
-      currency: service.currency,
-      durationMinutes: String(service.durationMinutes),
-      categorySlug: service.categorySlug ?? this.primaryCategorySlug(),
-      catalogServiceId: service.catalogServiceId ?? "",
-      bookingDeliveryType: service.bookingDeliveryType ?? "appointment",
-      menuGroupId: service.menuGroupId ?? "",
-      sortOrder: String(service.sortOrder ?? 0),
-      isAddOn: service.isAddOn === true,
-    };
-    this.showForm.set(true);
-    void this.loadCatalog(this.draft.categorySlug);
-  }
-
   applyTemplate(template: ServiceTemplate): void {
     this.draft.name = template.name;
     this.draft.durationMinutes = String(template.defaultDurationMinutes);
@@ -436,16 +389,14 @@ export class ServicesComponent implements OnInit {
   }
 
   async save(): Promise<void> {
-    const price = Number(this.draft.priceAmount);
-    const duration = Number(this.draft.durationMinutes);
-    const sortOrder = Number(this.draft.sortOrder);
-    if (!this.draft.name.trim() || Number.isNaN(price) || Number.isNaN(duration)) {
+    const createBody = serviceDraftToCreateBody(this.draft);
+    if (!createBody) {
       this.error.set(this.tr("portal.services.fillNamePriceDuration"));
       return;
     }
 
     const confirmed = await this.confirmDialog.confirmKind(this.editingId() ? "save" : "create", {
-      subject: this.draft.name.trim(),
+      subject: createBody.name,
     });
     if (!confirmed) {
       return;
@@ -453,19 +404,6 @@ export class ServicesComponent implements OnInit {
 
     this.busy.set(this.editingId() ?? "new");
     this.error.set(null);
-    const createBody = {
-      name: this.draft.name.trim(),
-      description: this.draft.description.trim() || undefined,
-      priceAmount: price,
-      currency: this.draft.currency.trim().toUpperCase(),
-      durationMinutes: Math.round(duration),
-      categorySlug: this.draft.categorySlug.trim() || undefined,
-      catalogServiceId: this.draft.catalogServiceId.trim() || undefined,
-      bookingDeliveryType: this.draft.bookingDeliveryType || "appointment",
-      menuGroupId: this.draft.menuGroupId.trim() || null,
-      sortOrder: Number.isNaN(sortOrder) ? 0 : Math.round(sortOrder),
-      isAddOn: this.draft.isAddOn,
-    };
 
     try {
       await this.feedback.runLoading(async () => {

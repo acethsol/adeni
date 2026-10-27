@@ -60,10 +60,12 @@ import { injectAdeniTranslate } from "./locale/adeni-i18n";
                   </td>
                 }
                 @if (actions(); as actionTpl) {
-                  <td class="adeni-data-table-actions">
-                    <ng-container
-                      *ngTemplateOutlet="actionTpl.template; context: { $implicit: row }"
-                    />
+                  <td class="align-right adeni-data-table-actions">
+                    <div class="adeni-data-table-actions-cell">
+                      <ng-container
+                        *ngTemplateOutlet="actionTpl.template; context: { $implicit: row }"
+                      />
+                    </div>
                   </td>
                 }
               </tr>

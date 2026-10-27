@@ -95,6 +95,12 @@ export const routes: Routes = [
         canActivate: [portalPermissionGuard],
       },
       {
+        path: "services/:id",
+        loadComponent: () => import("./pages/services/service-detail.component").then((m) => m.ServiceDetailComponent),
+        title: "Service",
+        canActivate: [portalPermissionGuard],
+      },
+      {
         path: "staff",
         loadComponent: () => import("./pages/staff/staff.component").then((m) => m.StaffComponent),
         title: "Staff",

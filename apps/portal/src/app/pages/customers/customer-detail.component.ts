@@ -24,6 +24,7 @@ import {
   AdeniTablePersonCellComponent,
   PortalPageComponent,
   AdeniTabsComponent,
+  AdeniStaffButtonComponent,
   type AdeniDataTableColumn,
   type AdeniDataTableSortDirection,
   type AdeniPillTone,
@@ -57,6 +58,7 @@ const PAID_STATUS = 6;
   imports: [
     PortalPageComponent,
     AdeniTabsComponent,
+    AdeniStaffButtonComponent,
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
     AdeniTablePersonCellComponent,
@@ -367,6 +369,14 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
     const { tab, focus } = this.bookingQueryParams(row);
     const qs = new URLSearchParams({ tab, focus });
     return `/bookings?${qs.toString()}`;
+  }
+
+  showIntakeAction(bookingId: string): boolean {
+    const forms = this.intakeStatuses.rows()[bookingId];
+    if (!forms?.length) {
+      return false;
+    }
+    return forms.some((form) => form.state === "pending" && form.canSubmit);
   }
 
   async downloadStatement(): Promise<void> {

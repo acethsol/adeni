@@ -1,0 +1,78 @@
+<app-portal-page [title]="service()?.name ?? tr('common.service')" [description]="tr('portal.services.serviceDetailLead')">
+  <a pageActions routerLink="/services" class="btn">
+    <adeni-carbon-icon name="arrow--left" [size]="16" />
+    {{ tr("portal.services.allServices") }}
+  </a>
+  @if (service(); as s) {
+    <adeni-staff-btn
+      pageActions
+      variant="danger"
+      icon="misuse"
+      [disabled]="busy()"
+      (pressed)="deactivate()"
+    >
+      {{ tr("common.deactivate") }}
+    </adeni-staff-btn>
+  }
+
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (service(); as s) {
+    <section class="card profile-hero">
+      <div class="profile-hero__identity">
+        <adeni-table-person-cell
+          [displayName]="s.name"
+          [subtitle]="formatPrice(s.priceAmount, s.currency) + ' · ' + s.durationMinutes + ' min'"
+          [initials]="serviceInitials(s)"
+          avatarTone="neutral"
+        />
+        <div class="profile-hero__meta adeni-cell-pills">
+          <adeni-pill [tone]="sectionPillTone(s)" [compact]="true">{{ groupName(s.menuGroupId) }}</adeni-pill>
+          @if (s.isAddOn) {
+            <adeni-pill tone="neutral" [compact]="true">{{ tr("portal.services.add") }}</adeni-pill>
+          }
+          @if (s.categorySlug) {
+            <adeni-pill tone="info" [compact]="true">{{ categoryLabel("en", s.categorySlug) }}</adeni-pill>
+          }
+        </div>
+      </div>
+    </section>
+
+    <adeni-tabs [tabs]="tabs()" />
+
+    @if (tab() === "details") {
+      <section class="card tab-panel service-details-panel">
+        <div class="section-head">
+          <div>
+            <h3 class="section-title">{{ tr("portal.services.editService") }}</h3>
+            <p class="muted section-lede">{{ tr("portal.services.updatePricingDurationCollection") }}</p>
+          </div>
+        </div>
+        <app-service-edit-form
+          [draft]="draft"
+          [groups]="groups()"
+          [catalogTemplates]="catalogTemplates()"
+          [catalogLoading]="catalogLoading()"
+          [disabled]="busy()"
+          (applyTemplate)="applyTemplate($event)"
+          (cancel)="onCancelDetails()"
+          (save)="save()"
+        />
+      </section>
+    } @else if (tab() === "intake") {
+      <app-service-intake-panel
+        [serviceId]="s.id"
+        [serviceName]="s.name"
+        [canManageForms]="canManageIntake()"
+      />
+    }
+  } @else if (!error()) {
+    <adeni-portal-empty-state
+      icon="template"
+      [title]="tr('portal.services.serviceNotFound')"
+      [description]="tr('portal.services.serviceNotFoundLead')"
+    />
+  }
+</app-portal-page>

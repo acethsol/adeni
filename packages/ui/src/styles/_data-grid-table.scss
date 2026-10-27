@@ -122,13 +122,24 @@
 
 .adeni-data-table-actions-head {
   width: 1%;
+  white-space: nowrap;
 }
 
 .adeni-data-table-actions {
   text-align: right;
   white-space: nowrap;
   width: 1%;
-  min-width: 11.5rem;
+  vertical-align: middle;
+}
+
+.adeni-data-table-actions-cell {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  width: 100%;
+  min-width: 0;
 }
 
 .adeni-data-table-actions-inline {

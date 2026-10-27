@@ -2,19 +2,31 @@ import { CustomerSegmentsPanelComponent } from "./customer-segments-panel.compon
 import { Component, effect, inject, input } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import { formatPrice, formatSlotTime, type CustomerActivityItem } from "@adeni/shared";
-import { AdeniLocaleService, injectAdeniApiError, injectAdeniTranslate } from "@adeni/ui";
+import {
+  AdeniCarbonIconComponent,
+  AdeniLocaleService,
+  AdeniPillComponent,
+  AdeniPortalEmptyStateComponent,
+  injectAdeniApiError,
+  injectAdeniTranslate,
+  type AdeniPillTone,
+} from "@adeni/ui";
 import { PortalSessionService } from "../../core/services/portal-session.service";
 import { CustomerProfileDataService } from "./customer-profile-data.service";
 
 @Component({
   selector: "app-customer-profile-panel",
   standalone: true,
-  imports: [RouterLink, CustomerSegmentsPanelComponent],
+  imports: [
+    RouterLink,
+    CustomerSegmentsPanelComponent,
+    AdeniCarbonIconComponent,
+    AdeniPillComponent,
+    AdeniPortalEmptyStateComponent,
+  ],
   providers: [CustomerProfileDataService],
   templateUrl: "./customer-profile-panel.component.html",
-  styles: `:host { display: block; } section { padding: 1rem; margin-block: 1rem; border: 1px solid var(--border); border-radius: .5rem; }
-    dl { display: flex; flex-wrap: wrap; gap: 1.5rem; } dd { margin: .25rem 0; font-weight: 600; }
-    li { margin-block: 1rem; } time, small { display: block; } button { cursor: pointer; }`,
+  styleUrl: "./customer-profile-panel.component.scss",
 })
 export class CustomerProfilePanelComponent {
   readonly customerId = input.required<string>();
@@ -45,5 +57,28 @@ export class CustomerProfilePanelComponent {
 
   bookingQueryParams(item: CustomerActivityItem): { focus: string; tab: string } {
     return { focus: item.sourceId, tab: "past" };
+  }
+
+  activityStatusTone(status: string): AdeniPillTone {
+    switch (status) {
+      case "Pending":
+        return "warning";
+      case "Confirmed":
+      case "CheckedIn":
+      case "Waiting":
+      case "Called":
+      case "InService":
+        return "info";
+      case "Completed":
+      case "Paid":
+      case "Done":
+        return "success";
+      case "Rejected":
+      case "Cancelled":
+      case "NoShow":
+        return "danger";
+      default:
+        return "neutral";
+    }
   }
 }

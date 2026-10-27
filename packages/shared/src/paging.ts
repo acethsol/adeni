@@ -1,13 +1,13 @@
 import { z } from "zod";
 
-export const DEFAULT_PAGE_SIZE = 25;
+export const DEFAULT_PAGE_SIZE = 10;
 export const MAX_PAGE_SIZE = 100;
 
 /** Portal profile → Reviews tab default page size (matches tenant reviews API default). */
 export const PROFILE_REVIEWS_PAGE_SIZE = 10;
 
 /** Standard footer page-size choices for portal/admin list grids. */
-export const LIST_PAGE_SIZE_OPTIONS: number[] = [10, DEFAULT_PAGE_SIZE, 50];
+export const LIST_PAGE_SIZE_OPTIONS: number[] = [10, 25, 50];
 
 /** Shared list contract: `{ items, page, pageSize, totalCount }`. */
 export function pagedResultSchema<T extends z.ZodTypeAny>(itemSchema: T) {

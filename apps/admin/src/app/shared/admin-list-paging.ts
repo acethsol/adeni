@@ -1,7 +1,7 @@
-import { LIST_PAGE_SIZE_OPTIONS } from "@adeni/shared";
+import { DEFAULT_PAGE_SIZE, LIST_PAGE_SIZE_OPTIONS } from "@adeni/shared";
 
-/** Admin ops grids: small pages keep action-heavy rows scannable. */
-export const ADMIN_LIST_PAGE_SIZE = 10;
+/** Admin ops grids: same default as portal staff lists. */
+export const ADMIN_LIST_PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
 export { LIST_PAGE_SIZE_OPTIONS };
 

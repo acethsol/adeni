@@ -27,84 +27,16 @@
     [hasFooter]="false"
     (closed)="cancelForm()"
   >
-    @if (catalogTemplates().length > 0) {
-      <div class="catalog">
-        <p class="muted">Quick add from catalog ({{ categoryLabel("en", draft.categorySlug) }})</p>
-        <ul class="template-chips">
-          @for (t of catalogTemplates(); track t.id) {
-            <li>
-              <button type="button" class="chip" (click)="applyTemplate(t)">{{ t.name }}</button>
-            </li>
-          }
-        </ul>
-      </div>
-    } @else if (catalogLoading()) {
-      <p class="muted">{{ tr('portal.services.loadingTemplates') }}</p>
-    }
-
-    <div class="field">
-      <label>{{ tr('portal.services.name') }}</label>
-      <input [(ngModel)]="draft.name" />
-    </div>
-    <div class="field">
-      <label>{{ tr('common.description') }}</label>
-      <textarea rows="2" [(ngModel)]="draft.description"></textarea>
-    </div>
-    <div class="row">
-      <div class="field">
-        <label>{{ tr('portal.services.price') }}</label>
-        <input type="number" min="0" step="0.01" [(ngModel)]="draft.priceAmount" />
-      </div>
-      <div class="field">
-        <label>{{ tr('common.currency') }}</label>
-        <input maxlength="3" [(ngModel)]="draft.currency" />
-      </div>
-      <div class="field">
-        <label>{{ tr('portal.services.durationMin') }}</label>
-        <input type="number" min="1" [(ngModel)]="draft.durationMinutes" />
-      </div>
-    </div>
-    <div class="row">
-      <div class="field">
-        <label>{{ tr('portal.services.menuSection') }}</label>
-        <select [(ngModel)]="draft.menuGroupId">
-          <option value="">{{ tr('portal.services.noSection') }}</option>
-          @for (group of groups(); track group.id) {
-            <option [value]="group.id">{{ group.name }}</option>
-          }
-        </select>
-      </div>
-      <div class="field">
-        <label>{{ tr('common.sortOrder') }}</label>
-        <input type="number" [(ngModel)]="draft.sortOrder" />
-      </div>
-    </div>
-    <div class="field">
-      <label>{{ tr('portal.services.bookingType') }}</label>
-      <select [(ngModel)]="draft.bookingDeliveryType">
-        <option value="appointment">{{ tr('portal.services.appointment11Slot') }}</option>
-        <option value="class">{{ tr('portal.services.classFixedStartCapacity') }}</option>
-        <option value="session">{{ tr('portal.services.sessionEGPersonalTraining') }}</option>
-        <option value="experience">{{ tr('portal.services.experienceEGSpaBlock') }}</option>
-        <option value="mobile_appointment">{{ tr('portal.services.mobileAppointment') }}</option>
-      </select>
-    </div>
-    <div class="field checkbox-field">
-      <label>
-        <input type="checkbox" [(ngModel)]="draft.isAddOn" />
-        {{ tr('portal.services.addCannotBeBookedAlone') }}
-      </label>
-    </div>
-    <div class="actions">
-      <button type="button" class="btn" (click)="cancelForm()">
-        <adeni-carbon-icon name="close" [size]="16" />
-        {{ tr('common.cancel') }}
-      </button>
-      <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="save()">
-        <adeni-carbon-icon name="save" [size]="16" />
-        {{ tr('common.save') }}
-      </button>
-    </div>
+    <app-service-edit-form
+      [draft]="draft"
+      [groups]="groups()"
+      [catalogTemplates]="catalogTemplates()"
+      [catalogLoading]="catalogLoading()"
+      [disabled]="!!busy()"
+      (applyTemplate)="applyTemplate($event)"
+      (cancel)="cancelForm()"
+      (save)="save()"
+    />
   </adeni-modal>
 
   @if (services().length === 0 && !loading()) {
@@ -155,10 +87,12 @@
         <ul class="plain staff-grid">
           @for (service of paginatedServices(); track service.id) {
             <li class="org-card">
+              <a class="org-card-link" [routerLink]="['/services', service.id]" [attr.aria-label]="tr('portal.services.viewService')">
               <div class="org-avatar" data-tone="neutral" aria-hidden="true">
                 <span>{{ serviceInitials(service) }}</span>
               </div>
               <strong class="org-name">{{ service.name }}</strong>
+              </a>
               <span class="org-role">{{
                 formatPrice(service.priceAmount, service.currency)
               }}
@@ -181,13 +115,12 @@
                 }
               </div>
               <div class="org-actions">
-                <button
-                  type="button"
-                  [disabled]="busy() === service.id"
-                  (click)="openEdit(service)"
+                <a
+                  class="btn-link"
+                  [routerLink]="['/services', service.id]"
                 >
                   {{ tr('common.edit') }}
-                </button>
+                </a>
                 <button
                   type="button"
                   class="danger"
@@ -224,17 +157,19 @@
           (sortDirectionChange)="onServiceSortDirectionChange($event)"
         >
           <ng-template adeniDataTableCell="name" let-service>
-            <adeni-table-person-cell
-              [displayName]="service.name"
-              [subtitle]="
-                formatPrice(service.priceAmount, service.currency) +
-                ' · ' +
-                service.durationMinutes +
-                ' min'
-              "
-              [initials]="serviceInitials(service)"
-              avatarTone="neutral"
-            />
+            <a [routerLink]="['/services', service.id]" class="service-name-link">
+              <adeni-table-person-cell
+                [displayName]="service.name"
+                [subtitle]="
+                  formatPrice(service.priceAmount, service.currency) +
+                  ' · ' +
+                  service.durationMinutes +
+                  ' min'
+                "
+                [initials]="serviceInitials(service)"
+                avatarTone="neutral"
+              />
+            </a>
           </ng-template>
           <ng-template adeniDataTableCell="collection" let-service>
             <adeni-pill
@@ -263,8 +198,7 @@
                 [label]="tr('portal.services.editService')"
                 variant="table"
                 [dense]="true"
-                [disabled]="busy() === service.id"
-                (pressed)="openEdit(service)"
+                [routerLink]="['/services', service.id]"
               />
               <adeni-icon-btn
                 icon="misuse"

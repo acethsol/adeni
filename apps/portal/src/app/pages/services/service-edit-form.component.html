@@ -1,0 +1,98 @@
+@if (catalogTemplates().length > 0) {
+  <fieldset class="field-card field-card--catalog" [disabled]="disabled()">
+    <legend>{{ tr("portal.services.catalogQuickAdd") }}</legend>
+    <p class="catalog-lede muted">
+      {{ categoryLabel("en", draft().categorySlug) }}
+    </p>
+    <ul class="template-chips plain">
+      @for (t of catalogTemplates(); track t.id) {
+        <li>
+          <button type="button" class="chip" [disabled]="disabled()" (click)="applyTemplate.emit(t)">
+            {{ t.name }}
+          </button>
+        </li>
+      }
+    </ul>
+  </fieldset>
+} @else if (catalogLoading()) {
+  <p class="muted catalog-loading">{{ tr("portal.services.loadingTemplates") }}</p>
+}
+
+<fieldset class="field-card" [disabled]="disabled()">
+  <legend>{{ tr("portal.services.details") }}</legend>
+  <div class="field">
+    <label>{{ tr("portal.services.name") }}</label>
+    <input [(ngModel)]="draft().name" [disabled]="disabled()" />
+  </div>
+  <div class="field field--last">
+    <label>{{ tr("common.description") }}</label>
+    <textarea rows="2" [(ngModel)]="draft().description" [disabled]="disabled()"></textarea>
+  </div>
+</fieldset>
+
+<fieldset class="field-card" [disabled]="disabled()">
+  <legend>{{ tr("portal.services.pricingDuration") }}</legend>
+  <div class="row row--pricing">
+    <div class="field">
+      <label>{{ tr("portal.services.price") }}</label>
+      <input type="number" min="0" step="0.01" [(ngModel)]="draft().priceAmount" [disabled]="disabled()" />
+    </div>
+    <div class="field">
+      <label>{{ tr("common.currency") }}</label>
+      <input maxlength="3" [(ngModel)]="draft().currency" [disabled]="disabled()" />
+    </div>
+    <div class="field field--last">
+      <label>{{ tr("portal.services.durationMin") }}</label>
+      <input type="number" min="1" [(ngModel)]="draft().durationMinutes" [disabled]="disabled()" />
+    </div>
+  </div>
+</fieldset>
+
+<fieldset class="field-card" [disabled]="disabled()">
+  <legend>{{ tr("portal.services.menuSections") }}</legend>
+  <div class="row row--menu">
+    <div class="field">
+      <label>{{ tr("portal.services.menuSection") }}</label>
+      <select [(ngModel)]="draft().menuGroupId" [disabled]="disabled()">
+        <option value="">{{ tr("portal.services.noSection") }}</option>
+        @for (group of groups(); track group.id) {
+          <option [value]="group.id">{{ group.name }}</option>
+        }
+      </select>
+    </div>
+    <div class="field field--last">
+      <label>{{ tr("common.sortOrder") }}</label>
+      <input type="number" [(ngModel)]="draft().sortOrder" [disabled]="disabled()" />
+    </div>
+  </div>
+</fieldset>
+
+<fieldset class="field-card" [disabled]="disabled()">
+  <legend>{{ tr("portal.services.bookingType") }}</legend>
+  <div class="field">
+    <select [(ngModel)]="draft().bookingDeliveryType" [disabled]="disabled()" [attr.aria-label]="tr('portal.services.bookingType')">
+      <option value="appointment">{{ tr("portal.services.appointment11Slot") }}</option>
+      <option value="class">{{ tr("portal.services.classFixedStartCapacity") }}</option>
+      <option value="session">{{ tr("portal.services.sessionEGPersonalTraining") }}</option>
+      <option value="experience">{{ tr("portal.services.experienceEGSpaBlock") }}</option>
+      <option value="mobile_appointment">{{ tr("portal.services.mobileAppointment") }}</option>
+    </select>
+  </div>
+  <div class="field checkbox-field field--last">
+    <label>
+      <input type="checkbox" [(ngModel)]="draft().isAddOn" [disabled]="disabled()" />
+      {{ tr("portal.services.addCannotBeBookedAlone") }}
+    </label>
+  </div>
+</fieldset>
+
+@if (showActions()) {
+  <div class="form-actions">
+    <adeni-staff-btn icon="close" [disabled]="disabled()" (pressed)="cancel.emit()">
+      {{ tr("common.cancel") }}
+    </adeni-staff-btn>
+    <adeni-staff-btn variant="primary" icon="save" [disabled]="disabled()" (pressed)="save.emit()">
+      {{ tr("common.save") }}
+    </adeni-staff-btn>
+  </div>
+}
