@@ -14,6 +14,7 @@ import { injectAdeniTranslate } from "./locale/adeni-i18n";
         class="adeni-list-pagination"
         [class.adeni-list-pagination--solo]="totalPages() <= 1"
         [class.adeni-list-pagination--embedded]="embedded()"
+        [class.adeni-list-pagination--compact]="compact()"
       >
         <div class="adeni-list-pagination__lead">
           <p class="adeni-list-pagination__summary">
@@ -123,6 +124,8 @@ export class AdeniListPaginationComponent {
   readonly showMetaWhenSinglePage = input(true);
   /** Drop outer chrome when nested inside cards or panes. */
   readonly embedded = input(false);
+  /** Narrow panes (e.g. message inbox): stack controls, icon-only prev/next. */
+  readonly compact = input(false);
   /** First / last page icon jumpers when page count is large. */
   readonly showEdgeJumpers = input(true);
   readonly pageSizeOptions = input<readonly number[]>([]);
