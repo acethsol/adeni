@@ -562,11 +562,13 @@ export class AdminShellComponent {
         .withAuthorizedClient((client) => client.listAdminPendingBadges({ page: 1, pageSize: 1 }))
         .catch(() => null),
     ]);
+    // Seed nav counts only when realtime has not set them yet — a slow REST response must not
+    // overwrite a fresher Admin*Changed event (e.g. grant last trust badge while catalog loads).
     if (pendingPage) {
-      this.queueCount.set(pendingPage.totalCount);
+      this.queueCount.update((current) => current ?? pendingPage.totalCount);
     }
     if (pendingBadges) {
-      this.pendingBadgeCount.set(pendingBadges.totalCount);
+      this.pendingBadgeCount.update((current) => current ?? pendingBadges.totalCount);
     }
   }
 

@@ -403,6 +403,12 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
     endDate: string,
     reason: string | null,
   ): Promise<void> {
+    const confirmed = await this.confirmDialog.confirmKind("save", {
+      subject: this.tr("common.confirm.subjects.closedDates"),
+    });
+    if (!confirmed) {
+      return;
+    }
     this.closedBusy.set(true);
     this.conflictWarning.set(null);
     try {

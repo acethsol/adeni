@@ -27,6 +27,7 @@ import {
   type AdeniCarbonIconName,
   type AdeniPillTone,
   AdeniCarbonIconComponent,
+  AdeniConfirmService,
   AdeniFeedbackService,
   AdeniPillComponent,
   AdeniPortalEmptyStateComponent,
@@ -69,6 +70,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private readonly api = inject(BusinessApiService);
   private readonly config = inject(ADENI_PORTAL_CONFIG);
   private readonly feedback = inject(AdeniFeedbackService);
+  private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly route = inject(ActivatedRoute);
   private readonly activeLocation = inject(PortalActiveLocationService);
   private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
@@ -307,6 +309,13 @@ export class ProfileComponent implements OnInit, OnDestroy {
       this.feedback.error(this.tr("portal.profile.fixRequiredFieldsBeforeSaving"));
       return;
     }
+    if (
+      !(await this.confirmDialog.confirmKind("save", {
+        subject: this.tr("common.confirm.subjects.profile"),
+      }))
+    ) {
+      return;
+    }
     this.saving.set(true);
     this.error.set(null);
     try {
@@ -444,6 +453,16 @@ export class ProfileComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (
+      !(await this.confirmDialog.confirmKind("submit", {
+        subject: this.tr("common.confirm.subjects.badgeRequest", {
+          badge: VERIFICATION_BADGE_LABELS[badgeType],
+        }),
+      }))
+    ) {
+      return;
+    }
+
     this.trustBadgeBusy.set(badgeType);
     try {
       const requested = await this.api.withAuthorizedClient((c) =>
@@ -509,6 +528,13 @@ export class ProfileComponent implements OnInit, OnDestroy {
   async sendReviewReply(reviewId: string): Promise<void> {
     const reply = this.replyDraft.trim();
     if (!reply) return;
+    if (
+      !(await this.confirmDialog.confirmKind("send", {
+        subject: this.tr("common.confirm.subjects.reviewReply"),
+      }))
+    ) {
+      return;
+    }
     this.saving.set(true);
     this.error.set(null);
     try {
@@ -533,6 +559,13 @@ export class ProfileComponent implements OnInit, OnDestroy {
     }
     if (!this.prerequisitesMet()) {
       this.error.set(this.tr("portal.profile.fixRequiredFieldsBeforeSaving"));
+      return;
+    }
+    if (
+      !(await this.confirmDialog.confirmKind("submit", {
+        subject: this.tr("common.confirm.subjects.verification"),
+      }))
+    ) {
       return;
     }
     this.saving.set(true);
@@ -676,6 +709,13 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   async removeGalleryImage(storageKey: string): Promise<void> {
+    if (
+      !(await this.confirmDialog.confirmKind("remove", {
+        subject: this.tr("common.confirm.subjects.galleryPhoto"),
+      }))
+    ) {
+      return;
+    }
     this.error.set(null);
     try {
       const items = await this.api.withAuthorizedClient((c) =>

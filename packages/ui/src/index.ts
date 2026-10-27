@@ -106,6 +106,9 @@ export {
   AdeniConfirmService,
   type AdeniConfirmRequest,
   type AdeniConfirmDialog,
+  type AdeniConfirmKind,
+  type AdeniConfirmKindOptions,
+  type AdeniConfirmVariant,
 } from "./feedback/adeni-confirm.service";
 export { AdeniGlobalLoadingPanelComponent } from "./feedback/adeni-global-loading-panel.component";
 export { AdeniToastHostComponent } from "./feedback/adeni-toast-host.component";

@@ -7,7 +7,13 @@ import {
   PUBLIC_PAGE_TEMPLATES,
   resolvePublicPageTemplateId,
 } from "@adeni/shared";
-import { AdeniFeedbackService, PortalPageComponent, injectAdeniTranslate, injectAdeniApiError } from "@adeni/ui";
+import {
+  AdeniConfirmService,
+  AdeniFeedbackService,
+  PortalPageComponent,
+  injectAdeniTranslate,
+  injectAdeniApiError,
+} from "@adeni/ui";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { BusinessApiService } from "../../core/services/business-api.service";
 
@@ -36,6 +42,7 @@ export class PublicPageSettingsComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
   private readonly config = inject(ADENI_PORTAL_CONFIG);
   private readonly feedback = inject(AdeniFeedbackService);
+  private readonly confirmDialog = inject(AdeniConfirmService);
 
   readonly templates = PUBLIC_PAGE_TEMPLATES;
   readonly saving = signal(false);
@@ -122,6 +129,14 @@ export class PublicPageSettingsComponent implements OnInit {
 
     if (!this.showAbout && !this.showServices && !this.showVisit) {
       this.feedback.error(this.tr("portal.publicPage.keepAtLeastOneAbout"));
+      return;
+    }
+
+    if (
+      !(await this.confirmDialog.confirmKind("save", {
+        subject: this.tr("common.confirm.subjects.publicPage"),
+      }))
+    ) {
       return;
     }
 

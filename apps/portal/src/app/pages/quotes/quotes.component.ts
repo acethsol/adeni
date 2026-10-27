@@ -9,6 +9,7 @@ import {
   type ServiceOffering,
 } from "@adeni/shared";
 import {
+  AdeniConfirmService,
   AdeniFeedbackService,
   AdeniPortalEmptyStateComponent,
   PortalPageComponent,
@@ -34,6 +35,7 @@ export class QuotesComponent implements OnInit, OnDestroy {
   private readonly activeLocation = inject(PortalActiveLocationService);
   private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
   private readonly feedback = inject(AdeniFeedbackService);
+  private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly subscriptions = new Subscription();
 
   readonly error = signal<string | null>(null);
@@ -137,6 +139,13 @@ export class QuotesComponent implements OnInit, OnDestroy {
     const amount = Number(this.amount);
     if (!quote || !this.serviceOfferingId || !Number.isFinite(amount) || amount <= 0) {
       this.error.set(this.tr("portal.quotes.addAmountServiceTimeWindow"));
+      return;
+    }
+    if (
+      !(await this.confirmDialog.confirmKind("send", {
+        subject: this.tr("common.confirm.subjects.quoteOffer"),
+      }))
+    ) {
       return;
     }
     this.busy.set(true);

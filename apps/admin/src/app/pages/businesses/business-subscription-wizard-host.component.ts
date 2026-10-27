@@ -1,7 +1,12 @@
 import { Component, inject, signal } from "@angular/core";
 import type { AdminBusinessSummary } from "@adeni/shared";
 import { formatSubscriptionSku } from "@adeni/shared";
-import { AdeniFeedbackService, injectAdeniTranslate, injectAdeniApiError } from "@adeni/ui";
+import {
+  AdeniConfirmService,
+  AdeniFeedbackService,
+  injectAdeniTranslate,
+  injectAdeniApiError,
+} from "@adeni/ui";
 import { AdminApiService } from "../../core/services/admin-api.service";
 import { BusinessDetailFacade } from "./business-detail.facade";
 import { BusinessSubscriptionWizardComponent } from "./business-subscription-wizard.component";
@@ -35,6 +40,7 @@ export class BusinessSubscriptionWizardHostComponent {
   private readonly facade = inject(BusinessDetailFacade);
   private readonly api = inject(AdminApiService);
   private readonly feedback = inject(AdeniFeedbackService);
+  private readonly confirmDialog = inject(AdeniConfirmService);
 
   readonly subscriptionDraft = signal<BusinessSubscriptionDraft | null>(null);
   readonly subscriptionSaving = signal(false);
@@ -81,6 +87,10 @@ export class BusinessSubscriptionWizardHostComponent {
 
     const body = buildCommercialTermsRequest(draft);
     const skuChanged = draft.subscriptionSku !== draft.initialSubscriptionSku;
+
+    if (!(await this.confirmDialog.confirmKind("save", { subject: business.name }))) {
+      return;
+    }
 
     this.subscriptionSaving.set(true);
     try {

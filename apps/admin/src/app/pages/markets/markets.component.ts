@@ -7,6 +7,7 @@ import {
   AdeniDataTableActionsDirective,
   AdeniDataTableCellDirective,
   AdeniDataTableComponent,
+  AdeniConfirmService,
   AdeniFeedbackService,
   AdeniIconBtnComponent,
   AdeniListPaginationComponent,
@@ -67,6 +68,7 @@ export class AdminMarketsComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly feedback = inject(AdeniFeedbackService);
+  private readonly confirmDialog = inject(AdeniConfirmService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -255,6 +257,14 @@ export class AdminMarketsComponent {
       return;
     }
 
+    const confirmed = await this.confirmDialog.confirmKind(
+      this.formMode() === "create" ? "create" : "save",
+      { subject: value.name.trim() || undefined },
+    );
+    if (!confirmed) {
+      return;
+    }
+
     this.formSaving.set(true);
     try {
       if (this.formMode() === "create") {
@@ -313,6 +323,13 @@ export class AdminMarketsComponent {
 
   async toggleLive(market: AdminMarket): Promise<void> {
     const nextLive = !market.isLive;
+    const confirmed = await this.confirmDialog.confirmKind(nextLive ? "activate" : "deactivate", {
+      subject: market.name,
+      confirmLabel: nextLive ? this.tr("admin.markets.goLive") : this.tr("admin.markets.takeOffline"),
+    });
+    if (!confirmed) {
+      return;
+    }
     try {
       await this.feedback.runLoading(
         () => this.api.withAuthorizedClient((c) => c.setAdminMarketLive(market.id, nextLive)),

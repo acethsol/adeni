@@ -40,6 +40,7 @@ import {
   AdeniDataTableComponent,
   AdeniListToolbarComponent,
   AdeniPillComponent,
+  AdeniConfirmService,
   AdeniFeedbackService,
   AdeniPortalEmptyStateComponent,
   PortalPageComponent,
@@ -85,6 +86,7 @@ export class PlanComponent implements OnInit {
   readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly feedback = inject(AdeniFeedbackService);
+  private readonly confirmDialog = inject(AdeniConfirmService);
 
   readonly checkoutBusy = signal(false);
   readonly error = signal<string | null>(null);
@@ -312,6 +314,13 @@ export class PlanComponent implements OnInit {
   async upgrade(sku: SubscriptionSku): Promise<void> {
     const tenantId = this.tenantId();
     if (!tenantId || !this.canUpgrade(sku)) {
+      return;
+    }
+
+    const confirmed = await this.confirmDialog.confirmKind("submit", {
+      subject: this.tr("common.confirm.subjects.planUpgrade", { plan: SUBSCRIPTION_SKU_LABELS[sku] }),
+    });
+    if (!confirmed) {
       return;
     }
 

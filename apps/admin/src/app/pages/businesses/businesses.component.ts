@@ -17,6 +17,7 @@ import {
   AdeniDataTableCellDirective,
   AdeniDataTableComponent,
   AdeniExportMenuComponent,
+  AdeniConfirmService,
   AdeniFeedbackService,
   AdeniIconBtnComponent,
   AdeniListPaginationComponent,
@@ -87,6 +88,7 @@ export class AdminBusinessesComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly feedback = inject(AdeniFeedbackService);
+  private readonly confirmDialog = inject(AdeniConfirmService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -308,6 +310,10 @@ export class AdminBusinessesComponent {
 
     const body = buildCommercialTermsRequest(draft);
     const skuChanged = draft.subscriptionSku !== draft.initialSubscriptionSku;
+
+    if (!(await this.confirmDialog.confirmKind("save", { subject: business.name }))) {
+      return;
+    }
 
     this.subscriptionSaving.set(true);
     try {

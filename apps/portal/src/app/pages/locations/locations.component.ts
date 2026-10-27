@@ -318,6 +318,13 @@ export class LocationsComponent implements OnInit {
       isPrimary: this.draft.isPrimary,
     };
 
+    const confirmed = await this.confirmDialog.confirmKind(this.editingId() ? "save" : "create", {
+      subject: body.name ?? slug,
+    });
+    if (!confirmed) {
+      return;
+    }
+
     this.busy.set(this.editingId() ?? "new");
     this.error.set(null);
     try {

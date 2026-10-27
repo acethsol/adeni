@@ -1,1 +1,18 @@
 @use "../../shared/admin-list-page" as *;
+
+// Spin the restart icon while the queue reloads (icon btn is disabled during load).
+.refresh-btn.is-loading ::ng-deep adeni-carbon-icon {
+  animation: trust-badges-refresh-spin 0.9s linear infinite;
+}
+
+@keyframes trust-badges-refresh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .refresh-btn.is-loading ::ng-deep adeni-carbon-icon {
+    animation: none;
+  }
+}
