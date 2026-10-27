@@ -12,10 +12,12 @@ import {
 } from "@adeni/shared";
 import {
   AdeniBrandLogoComponent,
+  AdeniStaffSidebarBrandComponent,
   AdeniConfirmHostComponent,
   AdeniDocumentTitleStrategy,
   AdeniGlobalLoadingPanelComponent,
   AdeniLocaleService,
+  AdeniStaffShellFooterComponent,
   AdeniToastHostComponent,
   injectAdeniTranslate,
 } from "@adeni/ui";
@@ -269,8 +271,10 @@ function readSidebarCollapsed(): boolean {
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
-    AdeniBrandLogoComponent,
-    AdeniGlobalLoadingPanelComponent,
+  AdeniBrandLogoComponent,
+  AdeniStaffSidebarBrandComponent,
+  AdeniStaffShellFooterComponent,
+  AdeniGlobalLoadingPanelComponent,
     AdeniToastHostComponent,
     AdeniConfirmHostComponent,
     MessagesShortcutComponent,

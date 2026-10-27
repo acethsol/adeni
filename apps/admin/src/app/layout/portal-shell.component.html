@@ -1,4 +1,4 @@
-<div class="shell" [class.is-collapsed]="collapsed()">
+<div class="shell shell--staff-app-admin" [class.is-collapsed]="collapsed()">
   @if (!collapsed()) {
     <button type="button" class="sidebar-scrim" [attr.aria-label]="tr('common.collapseSidebar')" (click)="collapseSidebar()"></button>
   }
@@ -9,7 +9,12 @@
         @if (collapsed()) {
           <adeni-brand-logo variant="mark" [surface]="logoSurface()" [size]="28" />
         } @else {
-          <adeni-brand-logo variant="horizontal" [surface]="logoSurface()" [size]="32" />
+          <adeni-staff-sidebar-brand
+            app="admin"
+            [surface]="logoSurface()"
+            [logoHeight]="32"
+            [caption]="tr('admin.layout.staffAppCaption')"
+          />
         }
       </a>
     </div>
@@ -249,6 +254,13 @@
     <main class="content">
       <router-outlet />
     </main>
+
+    <adeni-staff-shell-footer
+      app="admin"
+      [badgeLabel]="tr('admin.layout.staffAppBadge')"
+      [captionLabel]="tr('admin.layout.staffAppCaption')"
+      [devMode]="devMode"
+    />
   </div>
 </div>
 

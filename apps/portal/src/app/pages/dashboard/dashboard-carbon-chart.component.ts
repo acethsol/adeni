@@ -3,6 +3,7 @@ import {
   Component,
   ElementRef,
   OnDestroy,
+  computed,
   effect,
   inject,
   input,
@@ -17,7 +18,11 @@ export type DashboardCarbonChartKind = "bar" | "line" | "donut";
 @Component({
   selector: "app-dashboard-carbon-chart",
   standalone: true,
-  template: `<div #holder class="carbon-chart-holder" role="img" [attr.aria-label]="ariaLabel()"></div>`,
+  template: `
+    @for (surface of [chartSurfaceKey()]; track surface) {
+      <div #holder class="carbon-chart-holder" role="img" [attr.aria-label]="ariaLabel()"></div>
+    }
+  `,
   styles: `
     :host {
       display: block;
@@ -45,23 +50,29 @@ export class DashboardCarbonChartComponent implements AfterViewInit, OnDestroy {
   private readonly holderRef = viewChild<ElementRef<HTMLDivElement>>("holder");
   private chart: SimpleBarChart | LineChart | DonutChart | null = null;
   private resizeObserver: ResizeObserver | null = null;
-  /** Carbon theme + chart kind — options are fixed at create time. */
-  private mountedContextKey = "";
+  private observedHolder: HTMLDivElement | null = null;
+  /** Recreate holder when Carbon theme or chart kind changes (options fixed at create). */
+  readonly chartSurfaceKey = computed(() => `${this.portalTheme.theme()}:${this.kind()}`);
 
   constructor() {
+    effect((onCleanup) => {
+      this.chartSurfaceKey();
+      onCleanup(() => {
+        this.teardownChart();
+      });
+    });
+
     effect(() => {
+      this.chartSurfaceKey();
+      const rows = this.data();
       const holder = this.holderRef()?.nativeElement;
       if (!holder) {
         return;
       }
 
-      const rows = this.data();
-      const contextKey = `${this.portalTheme.theme()}:${this.kind()}`;
-
       this.ensureResizeObserver(holder);
 
-      if (contextKey !== this.mountedContextKey || !this.chart) {
-        this.mountedContextKey = contextKey;
+      if (!this.chart) {
         this.mountChart(holder, rows);
         this.scheduleChartUpdate(holder);
         return;
@@ -80,7 +91,14 @@ export class DashboardCarbonChartComponent implements AfterViewInit, OnDestroy {
   }
 
   private ensureResizeObserver(holder: HTMLDivElement): void {
-    if (this.resizeObserver || typeof ResizeObserver === "undefined") {
+    if (this.observedHolder === holder) {
+      return;
+    }
+
+    this.resizeObserver?.disconnect();
+    this.observedHolder = holder;
+
+    if (typeof ResizeObserver === "undefined") {
       return;
     }
 
@@ -93,9 +111,13 @@ export class DashboardCarbonChartComponent implements AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
+    this.observedHolder = null;
+    this.teardownChart();
+  }
+
+  private teardownChart(): void {
     this.chart?.destroy();
     this.chart = null;
-    this.mountedContextKey = "";
   }
 
   private resolveChartTheme(): "g10" | "g100" {

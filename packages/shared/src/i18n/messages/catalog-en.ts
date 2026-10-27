@@ -247,6 +247,8 @@ export const enCatalog: MessageTree = {
       admin: "Admin",
       localDevSession: "Local dev session",
       platformAdmin: "Platform admin",
+      staffAppBadge: "Admin",
+      staffAppCaption: "Platform admin",
     },
     markets: {
       addMarket: "Add a market",
@@ -523,6 +525,13 @@ export const enCatalog: MessageTree = {
     closed: "Closed",
     collapse: "Collapse",
     collapseSidebar: "Collapse sidebar",
+    staffFooter: {
+      build: "Build",
+      buildHint: "{app} · build {version}",
+      copyright: "© {year} Adeni. All rights reserved.",
+      localDev: "Local dev",
+      staffSurface: "Staff workspace",
+    },
     commercialAudit: "Commercial audit",
     comparePlans: "Compare plans",
     conversation: "Conversation",
@@ -1071,6 +1080,8 @@ export const enCatalog: MessageTree = {
     },
     layout: {
       adeniBusinessHome: "Adeni business home",
+      staffAppBadge: "Business",
+      staffAppCaption: "Business portal",
     },
     locations: {
       addBranch: "Add a branch",

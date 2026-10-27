@@ -330,6 +330,7 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 100vh;
 }
 
 .topbar {
@@ -351,6 +352,10 @@
   align-items: center;
   min-width: 0;
   gap: 0.25rem;
+}
+
+.shell--staff-app-portal .sidebar {
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--adeni-purple, #7f56ff) 42%, transparent);
 }
 
 .crumb {
@@ -637,7 +642,12 @@
 }
 
 .content {
-  padding: 1.25rem 1.75rem 2rem;
+  flex: 1;
+  padding: 1.25rem 1.75rem 1rem;
+}
+
+.main adeni-staff-shell-footer {
+  padding: 0 1.75rem 0.65rem;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -21,6 +21,11 @@ export {
 export { AdeniBrandLogoComponent } from "./adeni-brand-logo.component";
 export { AdeniBrandLockupComponent } from "./adeni-brand-lockup.component";
 export { AdeniStaffSidebarBrandComponent } from "./adeni-staff-sidebar-brand.component";
+export {
+  AdeniStaffAppContextComponent,
+  type AdeniStaffAppContext,
+} from "./adeni-staff-app-context.component";
+export { AdeniStaffShellFooterComponent } from "./adeni-staff-shell-footer.component";
 export { AdeniCarbonIconComponent } from "./adeni-carbon-icon.component";
 export {
   AdeniStaffButtonComponent,
