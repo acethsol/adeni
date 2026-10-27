@@ -60,4 +60,9 @@ describe('Intake field presentation',()=>{
   const fixture=TestBed.createComponent(IntakeFieldsComponent);fixture.componentRef.setInput('definition',definition);fixture.componentRef.setInput('readOnly',true);fixture.componentRef.setInput('answers',[{fieldId:id,text:'<script>sensitive-sentinel</script>'}]);fixture.detectChanges();
   expect(fixture.nativeElement.querySelector('script')).toBeNull();expect(fixture.nativeElement.textContent).toContain('<script>sensitive-sentinel</script>');expect(fixture.nativeElement.querySelector('input')).toBeNull();
  });
+ it('renders disabled controls in preview mode without showing unanswered copy',()=>{
+  const fixture=TestBed.createComponent(IntakeFieldsComponent);fixture.componentRef.setInput('definition',definition);fixture.componentRef.setInput('preview',true);fixture.detectChanges();
+  const fieldset=fixture.nativeElement.querySelector('fieldset') as HTMLFieldSetElement;const input=fixture.nativeElement.querySelector('input[type=text]') as HTMLInputElement;
+  expect(fieldset.disabled).toBeTrue();expect(input).not.toBeNull();expect(input.value).toBe('');expect(fixture.nativeElement.textContent).not.toContain('Not answered');
+ });
 });

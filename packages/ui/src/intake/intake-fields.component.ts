@@ -8,9 +8,9 @@ import { injectAdeniTranslate } from "../locale/adeni-i18n";
   styles: `fieldset { border: 0; padding: 0; margin: 1rem 0; } label, small { display: block; margin-block: .25rem; } input:not([type=checkbox]), select, textarea { max-width: 100%; padding: .5rem; }`,
   template: `
     @for (field of definition().fields; track field.id) {
-      <fieldset [disabled]="readOnly()"><legend>{{ field.label }} @if(field.required) { <span aria-label="required">*</span> }</legend>
+      <fieldset [disabled]="readOnly() || preview()"><legend>{{ field.label }} @if(field.required) { <span aria-label="required">*</span> }</legend>
       @if(field.helpText) { <small>{{field.helpText}}</small> }
-      @if (readOnly()) { <p>{{display(field)}}</p> }
+      @if (readOnly() && !preview()) { <p>{{display(field)}}</p> }
       @else {
         @switch(field.type) {
           @case(0) { <input type="text" [attr.aria-label]="field.label" maxlength="250" [required]="field.required" [value]="value(field)?.text ?? ''"  (input)="set(field.id, {text:$any($event.target).value})" /> }
@@ -29,6 +29,8 @@ export class IntakeFieldsComponent {
   readonly definition = input.required<IntakeDefinition>();
   readonly answers = input<readonly IntakeAnswer[]>([]);
   readonly readOnly = input(false);
+  /** Disabled controls with empty values — guest-facing layout without answers (e.g. published schema preview). */
+  readonly preview = input(false);
   readonly answersChange = output<IntakeAnswer[]>();
   readonly tr = injectAdeniTranslate();
   value(field: IntakeField): IntakeAnswer | undefined { return this.answers().find(x => x.fieldId === field.id); }
