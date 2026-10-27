@@ -31,6 +31,55 @@
   box-shadow: none;
 }
 
+.adeni-list-pagination--compact {
+  gap: var(--cds-spacing-03);
+  padding: var(--cds-spacing-03) var(--cds-spacing-04);
+
+  @media (min-width: 48rem) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .adeni-list-pagination__lead {
+    justify-content: space-between;
+    gap: var(--cds-spacing-02) var(--cds-spacing-03);
+  }
+
+  .adeni-list-pagination__summary {
+    font-size: 0.75rem;
+  }
+
+  .adeni-list-pagination__nav {
+    flex-wrap: wrap;
+    justify-content: center;
+    overflow-x: visible;
+    gap: var(--cds-spacing-02);
+  }
+
+  .adeni-list-pagination-btn__text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .adeni-list-pagination-btn--nav {
+    min-width: 2rem;
+    padding: 0;
+  }
+
+  .adeni-list-pagination__page {
+    min-width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.75rem;
+  }
+}
+
 .adeni-list-pagination--solo {
   @media (min-width: 48rem) {
     justify-content: flex-start;

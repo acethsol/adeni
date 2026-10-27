@@ -146,6 +146,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
         conversations = conversationPageResult.items;
         conversationTotalCount = conversationPageResult.totalCount;
         conversationPage = conversationPageResult.page;
+        const resolvedPageSize = conversationPageResult.pageSize;
         templates = templateList;
         return {
           conversations,
@@ -153,12 +154,14 @@ export class MessagesComponent implements OnInit, OnDestroy {
           profile,
           conversationTotalCount,
           conversationPage,
+          resolvedPageSize,
           whatsAppBusinessUrl,
         };
       });
       this.conversations.set(snapshot.conversations);
       this.conversationTotalCount.set(snapshot.conversationTotalCount);
       this.conversationPage.set(snapshot.conversationPage);
+      this.conversationPageSize.set(snapshot.resolvedPageSize);
       this.templates.set(snapshot.templates);
       this.profile.set(snapshot.profile);
       this.whatsAppBusinessUrl.set(snapshot.whatsAppBusinessUrl);

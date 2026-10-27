@@ -34,39 +34,44 @@
               [description]="tr('portal.messages.conversationsAppearWhenCustomerMessages')"
             />
           } @else {
-            <ul class="threads">
-              @for (conversation of conversations(); track conversation.id) {
-                <li>
-                  <button
-                    type="button"
-                    class="thread-row"
-                    [class.thread-row--active]="detail()?.id === conversation.id"
-                    (click)="openConversation(conversation)"
-                  >
-                    <span class="thread-row__who">
-                      {{ conversation.customerDisplayName }}
-                      @if (conversation.needsAttention) {
-                        <span class="badge" [attr.aria-label]="tr('common.unread')">1</span>
-                      }
-                    </span>
-                    <span class="thread-row__preview">{{ conversation.preview || tr('portal.messages.noPreviewYet') }}</span>
-                    <span class="thread-row__when">{{ formatSlotTime(conversation.lastMessageAt) }}</span>
-                  </button>
-                </li>
-              }
-            </ul>
-            <adeni-list-pagination
-              [embedded]="true"
-              [page]="conversationPage()"
-              [pageSize]="conversationPageSize()"
-              [totalCount]="conversationTotalCount()"
-              [pageSizeOptions]="listPageSizeOptions"
-              [loading]="loading()"
-              [showEdgeJumpers]="false"
-              [ariaLabel]="tr('portal.messages.conversationPages')"
-              (pageChange)="goToConversationPage($event)"
-              (pageSizeChange)="onConversationPageSizeChange($event)"
-            />
+            <div class="messages-pane__scroll" [attr.aria-label]="tr('common.inbox')">
+              <ul class="threads">
+                @for (conversation of conversations(); track conversation.id) {
+                  <li>
+                    <button
+                      type="button"
+                      class="thread-row"
+                      [class.thread-row--active]="detail()?.id === conversation.id"
+                      (click)="openConversation(conversation)"
+                    >
+                      <span class="thread-row__who">
+                        {{ conversation.customerDisplayName }}
+                        @if (conversation.needsAttention) {
+                          <span class="badge" [attr.aria-label]="tr('common.unread')">1</span>
+                        }
+                      </span>
+                      <span class="thread-row__preview">{{ conversation.preview || tr('portal.messages.noPreviewYet') }}</span>
+                      <span class="thread-row__when">{{ formatSlotTime(conversation.lastMessageAt) }}</span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            </div>
+            <footer class="messages-pane__footer">
+              <adeni-list-pagination
+                [embedded]="true"
+                [compact]="true"
+                [page]="conversationPage()"
+                [pageSize]="conversationPageSize()"
+                [totalCount]="conversationTotalCount()"
+                [pageSizeOptions]="listPageSizeOptions"
+                [loading]="loading()"
+                [showEdgeJumpers]="false"
+                [ariaLabel]="tr('portal.messages.conversationPages')"
+                (pageChange)="goToConversationPage($event)"
+                (pageSizeChange)="onConversationPageSizeChange($event)"
+              />
+            </footer>
           }
         </div>
       </section>
