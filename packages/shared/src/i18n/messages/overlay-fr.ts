@@ -34,6 +34,8 @@ export const frOverlay: MessageTree = {
   "submitError": "Impossible de confirmer l’envoi. Réessayez sans modifier les réponses ou actualisez pour vérifier.",
   "notRequired": "Aucun formulaire attribué",
   "form": "Formulaire",
+  "formsCountSingular": "formulaire",
+  "formsCountPlural": "formulaires",
   "finalNotice": "Un seul envoi pour cette réservation, sans modification ultérieure. Ceci n’est pas une signature électronique juridique ni un formulaire pour les autres invités.",
   "submit": "Envoyer définitivement",
   "services": "Services",

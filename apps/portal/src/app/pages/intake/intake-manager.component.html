@@ -17,77 +17,101 @@
   }
 
   <section class="card section forms-section">
-    <header class="section-head">
-      <div>
-        <h3>{{ tr('intake.formsSection') }}</h3>
-        <p class="section-lede">{{ tr('intake.formsSectionLead') }}</p>
-      </div>
-      @if (!loading() && rows().length > 0) {
-        <div class="section-head__aside">
-          <adeni-pill tone="neutral" [compact]="true">{{ rows().length }}</adeni-pill>
+    <div class="roster">
+      <adeni-list-toolbar
+        storageKey="portal.intake.forms"
+        [showSearch]="false"
+        [showViewSwitcher]="false"
+        [count]="rows().length"
+        [countTotal]="loading() ? null : templateTotalCount()"
+        [singularCountLabel]="tr('intake.formsCountSingular')"
+        [pluralCountLabel]="tr('intake.formsCountPlural')"
+      >
+        <div class="forms-toolbar-intro" listFilters>
+          <h3 class="forms-toolbar-title">{{ tr('intake.formsSection') }}</h3>
+          <p class="forms-toolbar-lede">{{ tr('intake.formsSectionLead') }}</p>
+        </div>
+      </adeni-list-toolbar>
+
+      @if (loading()) {
+        <p class="loading-line" role="status">{{ tr('intake.loading') }}</p>
+      } @else if (rows().length === 0) {
+        <adeni-portal-empty-state
+          icon="document"
+          [title]="tr('intake.noFormsYet')"
+          [description]="tr('intake.formsSectionLead')"
+          [compact]="true"
+        />
+      } @else {
+        <div class="adeni-list-results">
+          <adeni-data-table
+            [rows]="rows()"
+            [columns]="formTableColumns()"
+            [trackRow]="trackFormRow"
+          >
+            <ng-template adeniDataTableCell="name" let-row>
+              <span class="form-name">{{ row.name }}</span>
+            </ng-template>
+            <ng-template adeniDataTableCell="version" let-row>
+              <div class="form-version-cell adeni-cell-pills">
+                @if (row.publishedVersionId) {
+                  <adeni-pill tone="success" [compact]="true">{{ tr('intake.statusPublished') }}</adeni-pill>
+                } @else {
+                  <adeni-pill tone="warning" [compact]="true">{{ tr('intake.statusDraft') }}</adeni-pill>
+                }
+              </div>
+            </ng-template>
+            <ng-template adeniDataTableCell="status" let-row>
+              <adeni-pill [tone]="row.isActive ? 'brand' : 'neutral'" [compact]="true">
+                {{ tr(row.isActive ? 'intake.active' : 'intake.inactive') }}
+              </adeni-pill>
+            </ng-template>
+            <ng-template adeniDataTableActions let-row>
+              <adeni-row-action-bar>
+                <adeni-icon-btn
+                  icon="edit"
+                  [label]="tr('intake.editForm')"
+                  variant="table"
+                  [dense]="true"
+                  [disabled]="busy()"
+                  (pressed)="open(row.id)"
+                />
+                @if (row.isActive) {
+                  <adeni-icon-btn
+                    icon="view--off"
+                    [label]="tr('intake.deactivateForm')"
+                    variant="danger-soft"
+                    [dense]="true"
+                    [disabled]="busy()"
+                    (pressed)="toggleFormActive(row)"
+                  />
+                } @else {
+                  <adeni-icon-btn
+                    icon="checkmark--filled"
+                    [label]="tr('intake.activateForm')"
+                    variant="table"
+                    [dense]="true"
+                    [disabled]="busy()"
+                    (pressed)="toggleFormActive(row)"
+                  />
+                }
+              </adeni-row-action-bar>
+            </ng-template>
+          </adeni-data-table>
+
+          <adeni-list-pagination
+            [page]="page()"
+            [pageSize]="templatePageSize"
+            [totalCount]="templateTotalCount()"
+            [loading]="busy()"
+            [showMetaWhenSinglePage]="rows().length > 0"
+            [embedded]="true"
+            [ariaLabel]="tr('intake.templatePages')"
+            (pageChange)="onTemplatePageChange($event)"
+          />
         </div>
       }
-    </header>
-
-    @if (loading()) {
-      <p class="loading-line" role="status">{{ tr('intake.loading') }}</p>
-    } @else if (rows().length === 0) {
-      <adeni-portal-empty-state
-        icon="document"
-        [title]="tr('intake.noFormsYet')"
-        [description]="tr('intake.formsSectionLead')"
-        [compact]="true"
-      />
-    } @else {
-      <div class="adeni-list-results">
-        <adeni-data-table
-          [rows]="rows()"
-          [columns]="formTableColumns()"
-          [trackRow]="trackFormRow"
-        >
-          <ng-template adeniDataTableCell="name" let-row>
-            <span class="form-name">{{ row.name }}</span>
-          </ng-template>
-          <ng-template adeniDataTableCell="version" let-row>
-            <div class="form-version-cell adeni-cell-pills">
-              @if (row.publishedVersionId) {
-                <adeni-pill tone="success" [compact]="true">{{ tr('intake.statusPublished') }}</adeni-pill>
-              } @else {
-                <adeni-pill tone="warning" [compact]="true">{{ tr('intake.statusDraft') }}</adeni-pill>
-              }
-            </div>
-          </ng-template>
-          <ng-template adeniDataTableCell="status" let-row>
-            <adeni-pill [tone]="row.isActive ? 'brand' : 'neutral'" [compact]="true">
-              {{ tr(row.isActive ? 'intake.active' : 'intake.inactive') }}
-            </adeni-pill>
-          </ng-template>
-          <ng-template adeniDataTableActions let-row>
-            <adeni-row-action-bar>
-              <adeni-icon-btn
-                icon="edit"
-                [label]="tr('intake.editForm')"
-                variant="table"
-                [dense]="true"
-                [disabled]="busy()"
-                (pressed)="open(row.id)"
-              />
-            </adeni-row-action-bar>
-          </ng-template>
-        </adeni-data-table>
-
-        <adeni-list-pagination
-          [page]="page()"
-          [pageSize]="templatePageSize"
-          [totalCount]="templateTotalCount()"
-          [loading]="busy()"
-          [showMetaWhenSinglePage]="rows().length > 0"
-          [embedded]="true"
-          [ariaLabel]="tr('intake.templatePages')"
-          (pageChange)="onTemplatePageChange($event)"
-        />
-      </div>
-    }
+    </div>
   </section>
 
   <section class="card section assignment-section">

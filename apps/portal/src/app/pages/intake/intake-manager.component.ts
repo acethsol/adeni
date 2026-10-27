@@ -7,6 +7,7 @@ import {
   AdeniDataTableCellDirective,
   AdeniDataTableComponent,
   AdeniFilterSelectComponent,
+  AdeniListToolbarComponent,
   AdeniListPaginationComponent,
   AdeniModalComponent,
   AdeniPillComponent,
@@ -42,6 +43,7 @@ const FIELD_TYPES = [0, 1, 2, 3, 4, 5, 6] as const;
     AdeniDataTableActionsDirective,
     AdeniPillComponent,
     AdeniListPaginationComponent,
+    AdeniListToolbarComponent,
     AdeniModalComponent,
     AdeniFilterSelectComponent,
     AdeniRowActionBarComponent,
@@ -336,6 +338,22 @@ export class IntakeManagerComponent implements OnInit {
         await this.reloadTemplateRows();
         await this.refreshServiceBindings();
       }
+    });
+  }
+
+  async toggleFormActive(row: IntakeSummary): Promise<void> {
+    await this.run(async () => {
+      const value = await this.api.withAuthorizedClient((c) =>
+        c.intake.updateTemplate(row.id, row.name, !row.isActive, row.revision),
+      );
+      if (!this.alive) {
+        return;
+      }
+      if (this.selected()?.id === row.id) {
+        this.accept(value);
+      }
+      await this.reloadTemplateRows();
+      await this.refreshServiceBindings();
     });
   }
 

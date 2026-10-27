@@ -10,9 +10,9 @@ const id='11111111-1111-4111-8111-111111111111';const second='22222222-2222-4222
 const definition:IntakeDefinition={title:'Consultation',description:null,instructions:null,fields:[{id,type:0,label:'Preference',helpText:null,required:false,choices:[]}]};
 const template:IntakeTemplate={id,isActive:true,revision:'revision',publishedVersionId:null,draftVersionId:id,draft:definition,published:null};
 describe('Intake manager',()=>{
- let api:{listTemplates:jasmine.Spy;getTemplate:jasmine.Spy;saveDraft:jasmine.Spy;publish:jasmine.Spy;getBinding:jasmine.Spy;setBinding:jasmine.Spy};
+ let api:{listTemplates:jasmine.Spy;getTemplate:jasmine.Spy;saveDraft:jasmine.Spy;publish:jasmine.Spy;updateTemplate:jasmine.Spy;getBinding:jasmine.Spy;setBinding:jasmine.Spy};
  beforeEach(()=>{
-  api={listTemplates:jasmine.createSpy().and.resolveTo([{id,name:'Consultation',isActive:true,publishedVersionId:id,revision:'revision'}]),getTemplate:jasmine.createSpy().and.resolveTo(template),saveDraft:jasmine.createSpy().and.resolveTo({...template,revision:'saved'}),publish:jasmine.createSpy().and.resolveTo({...template,draft:null,published:definition,publishedVersionId:id}),getBinding:jasmine.createSpy().and.resolveTo({templateId:null,revision:''}),setBinding:jasmine.createSpy().and.resolveTo({templateId:id,revision:'bound'})};
+  api={listTemplates:jasmine.createSpy().and.resolveTo([{id,name:'Consultation',isActive:true,publishedVersionId:id,revision:'revision'}]),getTemplate:jasmine.createSpy().and.resolveTo(template),saveDraft:jasmine.createSpy().and.resolveTo({...template,revision:'saved'}),publish:jasmine.createSpy().and.resolveTo({...template,draft:null,published:definition,publishedVersionId:id}),updateTemplate:jasmine.createSpy().and.resolveTo({...template,isActive:false,revision:'inactive'}),getBinding:jasmine.createSpy().and.resolveTo({templateId:null,revision:''}),setBinding:jasmine.createSpy().and.resolveTo({templateId:id,revision:'bound'})};
   const client={intake:api,getTenantServices:async()=>[{id:second,name:'Hair care'}]} as unknown as AdeniApiClient;
   TestBed.configureTestingModule({imports:[IntakeManagerComponent],providers:[provideRouter([]),{provide:AdeniLocaleService,useValue:{locale:signal('en')}},{provide:BusinessApiService,useValue:{withAuthorizedClient:(fn:(c:AdeniApiClient)=>unknown)=>fn(client)}}]});
  });
@@ -24,6 +24,17 @@ describe('Intake manager',()=>{
   expect(api.saveDraft).toHaveBeenCalledWith(id,'revision',jasmine.objectContaining({title:'Changed title'}));
   expect(api.publish).toHaveBeenCalledWith(id,'saved');
   expect(definition.title).toBe('Consultation');expect(component.draft()).toBeNull();
+ });
+ it('deactivates from the grid and refreshes list rows',async()=>{
+  const activeRow={id,name:'Consultation',isActive:true,publishedVersionId:id,revision:'revision'};
+  const inactiveRow={...activeRow,isActive:false,revision:'inactive'};
+  api.listTemplates.and.returnValues(Promise.resolve([activeRow]),Promise.resolve([inactiveRow]));
+  const fixture=TestBed.createComponent(IntakeManagerComponent);fixture.detectChanges();await fixture.whenStable();
+  const component=fixture.componentInstance;
+  await component.toggleFormActive(activeRow);
+  expect(api.updateTemplate).toHaveBeenCalledWith(id,'Consultation',false,'revision');
+  expect(api.listTemplates).toHaveBeenCalledTimes(2);
+  expect(component.rows()[0].isActive).toBeFalse();
  });
  it('refreshes the forms grid after publish',async()=>{
   const publishedRow={id,name:'Consultation',isActive:true,publishedVersionId:id,revision:'revision'};

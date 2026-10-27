@@ -34,6 +34,8 @@ export const enOverlay: MessageTree = {
   "submitError": "Could not confirm submission. Retry with unchanged answers or refresh to check completion.",
   "notRequired": "No intake assigned",
   "form": "Form",
+  "formsCountSingular": "form",
+  "formsCountPlural": "forms",
   "finalNotice": "Submit once for this booking. Submitted answers cannot be edited. This is not a legal e-signature or intake for other guests.",
   "submit": "Submit final answers",
   "services": "Services",

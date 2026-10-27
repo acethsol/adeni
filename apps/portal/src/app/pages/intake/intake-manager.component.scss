@@ -28,6 +28,32 @@ $purple: var(--adeni-purple, #7f56ff);
   margin-bottom: var(--cds-spacing-06);
 }
 
+.roster {
+  width: 100%;
+}
+
+.forms-toolbar-intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cds-spacing-02);
+  min-width: min(100%, 42rem);
+}
+
+.forms-toolbar-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.forms-toolbar-lede {
+  margin: 0;
+  max-width: 42rem;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
 .section-head {
   display: flex;
   flex-wrap: wrap;
