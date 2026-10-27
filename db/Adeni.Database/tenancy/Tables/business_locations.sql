@@ -39,3 +39,6 @@ CREATE NONCLUSTERED INDEX [IX_business_locations_TenantId_IsPrimary]
 
 GO
 
+
+GO
+ALTER TABLE [tenancy].[business_locations] ADD CONSTRAINT [AK_business_locations_TenantId_Id] UNIQUE ([TenantId],[Id]);

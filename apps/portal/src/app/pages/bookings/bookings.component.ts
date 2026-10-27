@@ -1,7 +1,8 @@
-import { Component, computed, inject, signal } from "@angular/core";
+import { IntakeBookingStatusService } from "../intake/intake-booking-status.service";
+import { Component, computed, effect, inject, signal } from "@angular/core";
 import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
-import { ActivatedRoute, Router } from "@angular/router";
+import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import type {
   BookingResponse,
   KioskStatusResponse,
@@ -63,7 +64,8 @@ const PAID_STATUS = 6;
 @Component({
   selector: "app-bookings",
   standalone: true,
-  imports: [
+  providers: [IntakeBookingStatusService],
+  imports: [RouterLink,
     PortalPageComponent,
     AdeniTabsComponent,
     AdeniCarbonIconComponent,
@@ -87,6 +89,7 @@ export class BookingsComponent {
   protected readonly tr = injectAdeniTranslate();
   protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
+  readonly intakeStatuses = inject(IntakeBookingStatusService);
   private readonly config = inject(ADENI_PORTAL_CONFIG);
   private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly feedback = inject(AdeniFeedbackService);
@@ -252,6 +255,7 @@ export class BookingsComponent {
   }
 
   constructor() {
+    effect(() => { void this.intakeStatuses.load(this.filteredBookings().map(x => x.id)); });
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       const page = Number(params.get("page") ?? "1");
       this.page.set(Number.isFinite(page) && page >= 1 ? page : 1);

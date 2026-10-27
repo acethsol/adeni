@@ -18,7 +18,8 @@ public sealed record CustomerDataExportResponse(
     string? Phone,
     DateTimeOffset CreatedAt,
     DateTimeOffset? ErasureRequestedAt,
-    IReadOnlyList<CustomerBookingExportItem> Bookings);
+    IReadOnlyList<CustomerBookingExportItem> Bookings,
+    IReadOnlyList<Adeni.Application.Tenancy.CustomerSegmentsResponse>? CustomerSegments = null);
 
 public sealed record CustomerBookingExportItem(
     Guid Id,

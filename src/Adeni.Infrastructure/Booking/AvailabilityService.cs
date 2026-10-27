@@ -12,8 +12,11 @@ public sealed class AvailabilityService(
     AdeniDbContext dbContext,
     ITenantSchedulingTimeZone tenantSchedulingTimeZone,
     IBusinessClosedDateService closedDates,
-    ICacheService cache) : IAvailabilityService
+    ICacheService cache,
+    Adeni.Application.Calendar.IExternalCalendarAvailability? externalCalendar = null) : IAvailabilityService
 {
+    public bool IsAdmissionConflict(Exception error) => externalCalendar?.IsAdmissionConflict(error) == true;
+
     public async Task<IReadOnlyList<WeeklyAvailabilityRule>> GetWeeklyRulesAsync(
         Guid tenantId,
         Guid? businessLocationId = null,
@@ -197,30 +200,24 @@ public sealed class AvailabilityService(
             .Where(x => x.TenantId == tenantId)
             .ToListAsync(cancellationToken);
 
-        var eligibleStaffIds = await GetEligibleStaffIdsAsync(tenantId, serviceId, cancellationToken);
+        var eligibleStaffIds = await GetEligibleStaffIdsAsync(tenantId, serviceId, locationId, cancellationToken);
         if (additionalServiceIds is { Count: > 0 })
         {
             foreach (var extraId in additionalServiceIds.Where(id => id != serviceId))
             {
-                var extraEligible = await GetEligibleStaffIdsAsync(tenantId, extraId, cancellationToken);
-                if (eligibleStaffIds.Count == 0)
-                {
-                    eligibleStaffIds = extraEligible;
-                }
-                else if (extraEligible.Count > 0)
-                {
-                    eligibleStaffIds = eligibleStaffIds.Intersect(extraEligible).ToArray();
-                }
+                var extraEligible = await GetEligibleStaffIdsAsync(tenantId, extraId, locationId, cancellationToken);
+                eligibleStaffIds = eligibleStaffIds.Intersect(extraEligible).ToArray();
             }
         }
 
         if (staffMemberId is Guid requestedStaffId
-            && eligibleStaffIds.Count > 0
             && !eligibleStaffIds.Contains(requestedStaffId))
         {
             return false;
         }
 
+        if (eligibleStaffIds.Count == 0 && await dbContext.StaffMembers.AsNoTracking().AnyAsync(x => x.TenantId == tenantId && x.IsActive, cancellationToken)) return false;
+        var external = externalCalendar is null ? [] : await externalCalendar.ReadAsync(tenantId, eligibleStaffIds, startAt, endAt, true, cancellationToken);
         if (eligibleStaffIds.Count == 0)
         {
             return SlotGenerator.FitsWeeklyRules(schedulingTimeZone, businessRules, startAt, durationMinutes)
@@ -243,7 +240,8 @@ public sealed class AvailabilityService(
             startAt,
             durationMinutes);
 
-        return BookingConflictChecker.IsStaffSlotAvailable(
+        covering = covering.Where(id => external.All(x => x.StaffMemberId != id || x.IsFree(startAt, endAt))).ToArray();
+        return covering.Count > 0 && BookingConflictChecker.IsStaffSlotAvailable(
             existing,
             covering,
             startAt,
@@ -293,18 +291,15 @@ public sealed class AvailabilityService(
 
         var durationMinutes = services.Sum(x => x.DurationMinutes) * partySize;
 
-        var eligibleStaffIds = await GetEligibleStaffIdsAsync(tenantId, serviceId, cancellationToken);
+        var resolvedBranch = await TenantLocationScope.ResolveAvailabilityLocationAsync(dbContext, tenantId, locationId, cancellationToken);
+        if (resolvedBranch.IsFailure) return Result.Failure<IReadOnlyList<AvailableSlotResponse>>(resolvedBranch.Error!);
+        locationId = resolvedBranch.Value;
+
+        var eligibleStaffIds = await GetEligibleStaffIdsAsync(tenantId, serviceId, locationId, cancellationToken);
         foreach (var extraId in allServiceIds.Where(id => id != serviceId))
         {
-            var extraEligible = await GetEligibleStaffIdsAsync(tenantId, extraId, cancellationToken);
-            if (eligibleStaffIds.Count == 0)
-            {
-                eligibleStaffIds = extraEligible;
-            }
-            else if (extraEligible.Count > 0)
-            {
-                eligibleStaffIds = eligibleStaffIds.Intersect(extraEligible).ToArray();
-            }
+            var extraEligible = await GetEligibleStaffIdsAsync(tenantId, extraId, locationId, cancellationToken);
+            eligibleStaffIds = eligibleStaffIds.Intersect(extraEligible).ToArray();
         }
 
         if (staffMemberId is Guid requestedStaffId)
@@ -321,7 +316,7 @@ public sealed class AvailabilityService(
                     ErrorCodes.StaffUnavailableError());
             }
 
-            if (eligibleStaffIds.Count > 0 && !eligibleStaffIds.Contains(requestedStaffId))
+            if (!eligibleStaffIds.Contains(requestedStaffId))
             {
                 return Result.Failure<IReadOnlyList<AvailableSlotResponse>>(
                     ErrorCodes.StaffNotEligibleError());
@@ -349,6 +344,10 @@ public sealed class AvailabilityService(
             .AsNoTracking()
             .Where(x => x.TenantId == tenantId)
             .ToListAsync(cancellationToken);
+
+        if (eligibleStaffIds.Count == 0 && await dbContext.StaffMembers.AsNoTracking().AnyAsync(x => x.TenantId == tenantId && x.IsActive, cancellationToken))
+            return Result.Success<IReadOnlyList<AvailableSlotResponse>>([]);
+        var external = externalCalendar is null ? [] : await externalCalendar.ReadAsync(tenantId, eligibleStaffIds, rangeStart, rangeEnd, false, cancellationToken);
 
         var hoursByStaff = eligibleStaffIds.Count == 0
             ? new Dictionary<Guid, IReadOnlyList<WeeklyAvailabilityRule>>()
@@ -404,7 +403,8 @@ public sealed class AvailabilityService(
                     start,
                     durationMinutes);
 
-                return BookingConflictChecker.IsStaffSlotAvailable(
+                covering = covering.Where(id => external.All(x => x.StaffMemberId != id || x.IsFree(start, end))).ToArray();
+                return covering.Count > 0 && BookingConflictChecker.IsStaffSlotAvailable(
                     existing,
                     covering,
                     start,
@@ -479,12 +479,13 @@ public sealed class AvailabilityService(
     private async Task<IReadOnlyList<Guid>> GetEligibleStaffIdsAsync(
         Guid tenantId,
         Guid serviceId,
+        Guid? locationId,
         CancellationToken cancellationToken)
     {
         var staff = await dbContext.StaffMembers
             .AsNoTracking()
             .Include(x => x.ServiceLinks)
-            .Where(x => x.TenantId == tenantId && x.IsActive)
+            .Where(x => x.TenantId == tenantId && x.IsActive && (x.BusinessLocationId == null || x.BusinessLocationId == locationId))
             .ToListAsync(cancellationToken);
 
         return staff

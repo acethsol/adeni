@@ -27,6 +27,8 @@ export const routes: Routes = [
       { path: "", pathMatch: "full", component: HomeComponent },
       { path: "discover", component: DiscoverComponent, title: "Explore" },
       { path: "businesses/:slug", component: BusinessProfileComponent },
+      { path: "my-bookings/:bookingId/intake/:assignmentId", canActivate: [customerAuthGuard], loadComponent: () => import("./pages/intake/intake.component").then(m => m.IntakeComponent), title: "Consultation forms" },
+      { path: "my-bookings/:bookingId/intake", canActivate: [customerAuthGuard], loadComponent: () => import("./pages/intake/intake.component").then(m => m.IntakeComponent), title: "Consultation forms" },
       {
         path: "my-bookings",
         canActivate: [customerAuthGuard],

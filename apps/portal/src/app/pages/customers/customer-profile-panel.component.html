@@ -1,0 +1,57 @@
+@if (session.can('portal.bookings') && (overviewVisible() || activityVisible())) {
+  <section [attr.aria-label]="tr('customerProfile.title')" [attr.aria-busy]="data.loading()">
+    @if (data.loading()) { <p role="status">{{ tr('customerProfile.loading') }}</p> }
+    @if (data.error()) {
+      <p role="alert">{{ apiErr(data.error(), 'customerProfile.loadError') }}</p>
+    }
+    <button type="button" (click)="refresh()" [disabled]="data.loading() || data.loadingMore()">{{ tr('customerProfile.refresh') }}</button>
+    @if (data.profile(); as profile) {
+      @if (overviewVisible()) {
+        <h2>{{ tr('customerProfile.title') }}</h2>
+        @defer (on idle) { <app-customer-segments-panel [customerId]="customerId()" [locationId]="locationId()" /> }
+        <dl>
+          @if (profile.visitSummary; as visits) {
+            <div><dt>{{ tr('customerProfile.completedVisits') }}</dt><dd>{{ visits.completedBookings + visits.completedWalkIns }}</dd></div>
+          }
+          <div><dt>{{ tr('customerProfile.nextAppointment') }}</dt><dd>
+            @if (profile.nextAppointment; as next) {
+              <a [routerLink]="['/bookings']" [queryParams]="{ focus: next.bookingId, tab: next.status === 'Pending' ? 'pending' : 'upcoming' }">{{ next.serviceName }} · {{ formatSlotTime(next.startAt) }}</a>
+              @if (next.status === 'Pending') { <small>{{ tr('customerProfile.awaitingApproval') }}</small> }
+            } @else { {{ tr('customerProfile.noneScheduled') }} }
+          </dd></div>
+        </dl>
+        @if (profile.recordedOnlinePaymentsByCurrency; as totals) {
+          <h3>{{ tr('customerProfile.recordedPayments') }}</h3>
+          <p>{{ tr('customerProfile.paymentCoverage') }}</p>
+          @for (total of totals; track total.currency) { <p>{{ formatPrice(total.amount, total.currency) }}</p> }
+          @empty { <p>{{ tr('customerProfile.noRecordedPayments') }}</p> }
+        }
+      }
+      @if (activityVisible()) {
+        <h2>{{ tr('customerProfile.activity') }}</h2>
+        @if (data.activity(); as activity) {
+          <p>{{ tr('customerProfile.historyCoverage') }}</p>
+          <p>{{ tr('customerProfile.messagingCoverage') }}</p>
+          @if (profile.availability.messaging === 'unscoped') { <p>{{ tr('customerProfile.messagingUnscoped') }}</p> }
+          @if (profile.availability.finance === 'notLinked' || profile.availability.messaging === 'notLinked') { <p>{{ tr('customerProfile.notLinked') }}</p> }
+          @if (activity.isTruncated) { <p role="status">{{ tr('customerProfile.truncated') }}</p> }
+          <ol>
+            @for (item of activity.items; track item.id) {
+              <li>
+                <strong>{{ tr('customerProfile.kinds.' + item.kind) }}</strong>
+                <time [attr.datetime]="item.occurredAt">{{ formatSlotTime(item.occurredAt) }}</time>
+                @if (item.serviceName) { <span>{{ item.serviceName }}</span> }
+                @if (item.currentStatus) { <small>{{ tr('customerProfile.currentStatus') }}: {{ tr('customerProfile.statuses.' + item.currentStatus) }}</small> }
+                @if (item.amount !== null && item.currency) { <span>{{ formatPrice(item.amount, item.currency) }}</span> }
+                @if (item.source === 'booking') { <a [routerLink]="['/bookings']" [queryParams]="bookingQueryParams(item)">{{ tr('customerProfile.openBooking') }}</a> }
+              </li>
+            } @empty { <li>{{ tr('customerProfile.empty') }}</li> }
+          </ol>
+          @if (activity.nextCursor) {
+            <button type="button" (click)="data.loadMore()" [disabled]="data.loadingMore()">{{ tr('customerProfile.loadMore') }}</button>
+          }
+        }
+      }
+    }
+  </section>
+}

@@ -1,6 +1,8 @@
 namespace Adeni.Infrastructure.Tests.Discovery;
 
+using Adeni.Infrastructure.Tests.SqlServer;
 using Adeni.Infrastructure.Tests.TestSupport;
+using Adeni.Infrastructure.Tests.Subscriptions;
 using Adeni.Application.Caching;
 using Adeni.Application.Catalog;
 using Adeni.Application.Discovery;
@@ -17,7 +19,6 @@ using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Reviews;
 using Adeni.Infrastructure.Tests.Catalog;
 using Adeni.Infrastructure.Tests.Storage;
-using Adeni.Infrastructure.Tests.Subscriptions;
 using Adeni.Infrastructure.Tests.TestData;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +30,7 @@ using Microsoft.Extensions.DependencyInjection;
 /// Opt in: <c>ADENI_SQLSERVER_TESTS=1</c> (and publish via <c>scripts/publish-db.ps1</c>).
 /// </summary>
 [Trait("Category", "SqlServer")]
+[Collection(SqlServerTestCollection.Name)]
 public sealed class DiscoverySearchSqlServerTests
 {
     [SqlServerFact]
@@ -124,6 +126,7 @@ public sealed class DiscoverySearchSqlServerTests
             ?? throw new InvalidOperationException("SQL Server connection string missing.");
 
         var services = new ServiceCollection();
+        services.AddEntitlementsModule();
         services.AddDistributedMemoryCache();
         services.AddSingleton<ICacheService, DistributedCacheService>();
         services.AddSingleton<MarketCatalogState>();

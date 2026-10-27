@@ -41,3 +41,6 @@ CREATE NONCLUSTERED INDEX [IX_service_offerings_MenuGroupId]
 
 GO
 
+
+GO
+CREATE UNIQUE INDEX [IX_service_offerings_TenantId_Id] ON [booking].[service_offerings] ([TenantId], [Id]);

@@ -25,3 +25,6 @@ CREATE NONCLUSTERED INDEX [IX_staff_members_TenantId_IsActive_SortOrder]
 
 GO
 
+
+GO
+ALTER TABLE [booking].[staff_members] ADD CONSTRAINT [AK_staff_members_TenantId_Id] UNIQUE ([TenantId],[Id]);

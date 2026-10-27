@@ -5,6 +5,7 @@ import {
   writeResponseToNodeResponse,
 } from "@angular/ssr/node";
 import express from "express";
+import { bookingLinkHandler } from "./booking-link-handler";
 import { join } from "node:path";
 import {
   getMarketById,
@@ -28,6 +29,8 @@ const API_BASE = (process.env["ADENI_API_BASE_URL"] ?? "http://localhost:5169").
 const PUBLIC_ORIGIN = (
   process.env["ADENI_PUBLIC_APP_URL"] ?? "http://localhost:5190"
 ).replace(/\/$/, "");
+
+app.get("/book/:slug", bookingLinkHandler(API_BASE));
 
 type SitemapCache = { xml: string; expiresAt: number };
 let sitemapCache: SitemapCache | null = null;

@@ -35,7 +35,8 @@ public sealed class BookingService(
     ITenantRealtimePublisher tenantRealtime,
     IAuditLogWriter auditLogWriter,
     ICorrelationContext correlationContext,
-    ICurrentUser currentUser) : IBookingService
+    ICurrentUser currentUser,
+    IBookingIntakeAssignmentWriter? intake = null) : IBookingService
 {
     public async Task<Result<BookingResponse>> CreateAsync(
         string customerAuth0Sub,
@@ -324,6 +325,13 @@ public sealed class BookingService(
                 });
             }
 
+            if (intake is not null)
+            {
+                var required = await intake.PrepareAsync(request.TenantId, orderedServices.Select(x => x.Id).ToArray(), cancellationToken);
+                if (required.IsFailure) return Result.Failure<BookingResponse>(required.Error);
+                intake.Stage(request.TenantId, booking.Id, required.Value!, now);
+            }
+
             if (autoConfirm)
             {
                 domainEventCollector.Add(new BookingConfirmed(
@@ -335,7 +343,14 @@ public sealed class BookingService(
             }
 
             dbContext.Bookings.Add(booking);
-            await dbContext.SaveChangesAsync(cancellationToken);
+            try { await dbContext.SaveChangesAsync(cancellationToken); }
+            catch (DbUpdateConcurrencyException ex) when (availabilityService.IsAdmissionConflict(ex))
+            {
+                // A synchronized busy snapshot changed after admission. Nothing in this save may commit.
+                dbContext.ChangeTracker.Clear();
+                domainEventCollector.TakeAll();
+                return Result.Failure<BookingResponse>(ErrorCodes.SlotUnavailableError());
+            }
             await TenantRealtimeNotifications.PublishPendingBookingsAsync(
                 tenantRealtime,
                 dbContext,

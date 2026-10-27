@@ -26,6 +26,7 @@ builder.Configuration.AddAdeniKeyVault(builder.Environment);
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Destructure.With<PiiDestructuringPolicy>()
+    .Filter.ByExcluding(CalendarOAuthLogFilter.ShouldExclude)
     .Enrich.FromLogContext()
     .WriteTo.Console()
     .CreateLogger();

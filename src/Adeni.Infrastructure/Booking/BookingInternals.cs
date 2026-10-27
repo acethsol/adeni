@@ -13,7 +13,7 @@ internal static class SlotGenerator
         DateTimeOffset rangeEnd,
         int durationMinutes)
     {
-        if (durationMinutes <= 0 || rangeEnd <= rangeStart)
+        if (!schedulingTimeZone.IsConfiguredZoneValid || durationMinutes <= 0 || rangeEnd <= rangeStart)
         {
             yield break;
         }
@@ -32,8 +32,13 @@ internal static class SlotGenerator
                 }
 
                 var cursor = rule.OpenTime;
-                while (cursor.AddMinutes(durationMinutes) <= rule.CloseTime)
+                while (cursor.ToTimeSpan() + TimeSpan.FromMinutes(durationMinutes) <= rule.CloseTime.ToTimeSpan())
                 {
+                    if (!schedulingTimeZone.IsValidLocalTime(day, cursor))
+                    {
+                        cursor = cursor.AddMinutes(durationMinutes);
+                        continue;
+                    }
                     var slotStart = schedulingTimeZone.ToUtc(day, cursor);
                     var slotEnd = slotStart.AddMinutes(durationMinutes);
 
@@ -60,6 +65,7 @@ internal static class SlotGenerator
         DateTimeOffset startAt,
         int durationMinutes)
     {
+        if (!schedulingTimeZone.IsConfiguredZoneValid) return false;
         var endAt = startAt.AddMinutes(durationMinutes);
         var localStart = schedulingTimeZone.ToLocal(startAt);
         var localEnd = schedulingTimeZone.ToLocal(endAt);

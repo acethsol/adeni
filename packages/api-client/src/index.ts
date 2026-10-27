@@ -1,3 +1,6 @@
+import { InsightsApi } from "./insights/insights-api";
+import { CalendarApi } from "./calendar/calendar-api";
+import { IntakeApi } from "./intake/intake-api";
 export { AdeniApiError, type AdeniApiClientOptions } from "./core/api-transport";
 export type { DiscoverySearchParams } from "./discovery/discovery-api";
 import { ApiTransport, type ApiClientContext } from "./core/api-transport";
@@ -36,6 +39,9 @@ export class AdeniApiClient extends ApiTransport {
   private readonly reporting = new ReportingApi(this.context);
   private readonly queue = new QueueApi(this.context);
   private readonly customers = new CustomersApi(this.context);
+  readonly calendar = new CalendarApi(this.context);
+  readonly insights = new InsightsApi(this.context);
+  readonly intake = new IntakeApi(this.context);
   private readonly staff = new StaffApi(this.context);
   private readonly messaging = new MessagingApi(this.context);
   private readonly catalog = new CatalogApi(this.context);
@@ -326,6 +332,14 @@ export class AdeniApiClient extends ApiTransport {
 
   getTenantCustomer(...args: Parameters<CustomersApi["getTenantCustomer"]>): ReturnType<CustomersApi["getTenantCustomer"]> {
     return this.customers.getTenantCustomer(...args);
+  }
+
+  getTenantCustomerProfile(...args: Parameters<CustomersApi["getTenantCustomerProfile"]>): ReturnType<CustomersApi["getTenantCustomerProfile"]> {
+    return this.customers.getTenantCustomerProfile(...args);
+  }
+
+  getTenantCustomerActivity(...args: Parameters<CustomersApi["getTenantCustomerActivity"]>): ReturnType<CustomersApi["getTenantCustomerActivity"]> {
+    return this.customers.getTenantCustomerActivity(...args);
   }
 
   getTenantKioskStatus(...args: Parameters<QueueApi["getTenantKioskStatus"]>): ReturnType<QueueApi["getTenantKioskStatus"]> {

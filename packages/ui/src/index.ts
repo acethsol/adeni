@@ -125,3 +125,5 @@ export {
   AdeniOperationsRealtimeService as AdminOperationsRealtimeService,
   AdeniPortalRealtimeBootstrapService as PortalRealtimeBootstrapService,
 } from "./realtime";
+
+export { IntakeFieldsComponent } from "./intake/intake-fields.component";

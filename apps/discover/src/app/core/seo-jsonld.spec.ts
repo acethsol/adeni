@@ -61,6 +61,7 @@ describe("buildLocalBusinessJsonLd", () => {
       [
         {
           id: "svc-1",
+          isAddOn: false,
           name: "Fade",
           priceAmount: 5000,
           currency: "NGN",

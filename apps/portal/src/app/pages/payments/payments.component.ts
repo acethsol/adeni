@@ -1,3 +1,4 @@
+import { DocumentPreviewComponent } from "./document-preview/document-preview.component";
 import { Component, computed, DestroyRef, inject, OnDestroy, OnInit, signal } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { Subscription } from "rxjs";
@@ -50,6 +51,7 @@ import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
     AdeniPortalEmptyStateComponent,
     AdeniListPaginationComponent,
     AdeniExportMenuComponent,
+    DocumentPreviewComponent,
   ],
   templateUrl: "./payments.component.html",
   styleUrl: "./payments.component.scss",
@@ -112,6 +114,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
   readonly documents = signal<BillingDocumentResponse[]>([]);
   readonly lastLink = signal<{ checkoutUrl: string; description: string } | null>(null);
   readonly actionId = signal<string | null>(null);
+  readonly previewDocument = signal<BillingDocumentResponse | null>(null);
   readonly pdfBusyId = signal<string | null>(null);
 
   amount = "";
@@ -151,7 +154,10 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     return "NGN";
   }
 
+  previewLocation(): string | undefined { return this.activeLocation.tenantApiLocationId(this.planEntitlements()); }
+
   async load(): Promise<void> {
+    this.previewDocument.set(null);
     this.loading.set(true);
     this.error.set(null);
     try {
@@ -257,7 +263,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     this.pdfBusyId.set(doc.id);
     this.error.set(null);
     try {
-      const blob = await this.api.withAuthorizedClient((c) => c.downloadBillingDocumentPdf(doc.id));
+      const blob = await this.api.withAuthorizedClient((c) => c.downloadBillingDocumentPdf(doc.id, this.previewLocation()));
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;

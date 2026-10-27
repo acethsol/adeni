@@ -2,6 +2,7 @@
   [title]="tr('common.publicPage')"
   [description]="tr('portal.publicPage.chooseHowAdeniBookingPage')"
 >
+  <a pageActions class="btn" routerLink="/public-page/booking-links">{{ tr('calendarUi.bookWith') }}</a>
   @if (profile(); as p) {
     @if (publicPageLocked()) {
       <p class="lock-hint">{{ tr('portal.profile.publicPageLockedPending') }}</p>

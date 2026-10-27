@@ -8,6 +8,7 @@ public static class ReportingServiceCollectionExtensions
     public static IServiceCollection AddReportingModule(this IServiceCollection services)
     {
         services.AddScoped<IReportRenderer, QuestPdfReportRenderer>();
+        services.AddScoped<IDocumentPreviewService, DocumentPreviewService>();
         services.AddScoped<IReportExportService, ReportExportService>();
         services.AddScoped<IAdminReportExportService, AdminReportExportService>();
         services.AddScoped<IReportPdfBrandingLoader, FallbackReportPdfBrandingLoader>();

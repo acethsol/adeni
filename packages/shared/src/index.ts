@@ -42,3 +42,10 @@ export * from "./list-sort";
 export * from "./media-limits";
 export * from "./public-page-templates";
 export * from "./realtime-events";
+export * from "./customer-profile";
+export * from "./intake";
+
+export type { CalendarProvider, CalendarConnection, CalendarSelection, ExternalCalendar, CalendarConflict, BookingLink, BookingLinkDestination } from "./calendar";
+export { parseBookingPreselection, bookingPreselectionQuery, type BookingPreselection } from "./booking-preselection";
+
+export * from "./customer-segments";

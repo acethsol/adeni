@@ -13,6 +13,13 @@ public sealed class PiiDestructuringPolicy : IDestructuringPolicy
     {
         result = null!;
 
+        if (value is Adeni.Application.Calendar.CalendarGrant or Adeni.Application.Calendar.CalendarOAuthLaunch
+            or Adeni.Application.Calendar.CalendarAuthorizationView or Adeni.Domain.Calendar.CalendarConnection
+            or Adeni.Domain.Calendar.CalendarOAuthAttempt)
+        {
+            result = new ScalarValue("[calendar credentials redacted]");
+            return true;
+        }
         if (value is not PiiLogValue pii)
         {
             return false;

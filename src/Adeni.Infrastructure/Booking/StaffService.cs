@@ -116,7 +116,8 @@ public sealed class StaffService(
         var query = dbContext.StaffMembers
             .AsNoTracking()
             .Include(x => x.ServiceLinks)
-            .Where(x => x.TenantId == match.Value.TenantId && x.IsActive);
+            .Where(x => x.TenantId == match.Value.TenantId && x.IsActive
+                && (x.BusinessLocationId == null || x.BusinessLocationId == match.Value.LocationId));
 
         if (serviceOfferingId is Guid serviceId)
         {

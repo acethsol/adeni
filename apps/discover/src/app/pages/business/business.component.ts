@@ -2,6 +2,7 @@ import { DecimalPipe } from "@angular/common";
 import {
   afterNextRender,
   Component,
+  DestroyRef,
   computed,
   inject,
   Injector,
@@ -12,6 +13,7 @@ import {
   TransferState,
   viewChild,
 } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import type {
   PublicBusinessProfile,
@@ -42,6 +44,7 @@ import { CustomerApiService } from "../../core/services/customer-api.service";
 import { DiscoverLoadingService } from "../../core/services/discover-loading.service";
 import { SeoService } from "../../core/services/seo.service";
 import { MarketContextService } from "../../core/services/market-context.service";
+import { BookingPreselectionDirective } from "../../shared/booking-preselection.directive";
 import { BookingPanelComponent } from "../../shared/booking-panel.component";
 import { QuoteRequestPanelComponent } from "../../shared/quote-request-panel.component";
 
@@ -66,6 +69,7 @@ type ServiceCollection = {
     RouterLink,
     DecimalPipe,
     BookingPanelComponent,
+    BookingPreselectionDirective,
     QuoteRequestPanelComponent,
     AdeniCarbonIconComponent,
   ],
@@ -85,6 +89,8 @@ export class BusinessProfileComponent implements OnInit {
   private readonly transferState = inject(TransferState);
   private readonly pageLoading = inject(DiscoverLoadingService);
   private readonly injector = inject(Injector);
+  private readonly destroyRef = inject(DestroyRef);
+  private profileAbort = new AbortController();
   private readonly bookingPanel = viewChild(BookingPanelComponent);
   private bookRailPulseTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -313,7 +319,8 @@ export class BusinessProfileComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe((params) => {
+    this.destroyRef.onDestroy(() => { this.profileAbort.abort(); this.pageLoading.hide(); });
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const slug = params.get("slug");
       if (slug) {
         void this.load(slug);
@@ -409,6 +416,7 @@ export class BusinessProfileComponent implements OnInit {
   }
 
   private async load(slug: string): Promise<void> {
+    this.profileAbort.abort(); this.profileAbort = new AbortController();
     this.galleryIndex.set(0);
     const cached = this.transferState.get(BUSINESS_STATE_KEY, null);
     if (cached?.slug === slug) {
@@ -435,16 +443,18 @@ export class BusinessProfileComponent implements OnInit {
     this.pageLoading.show(this.tr("admin.businesses.loadingBusiness"), this.tr("discover.business.fetchingProfileServicesReviews"));
 
     const client = this.api.createPublicClient();
+    const signal = this.profileAbort.signal;
 
     try {
       const [profile, catalog, reviews] = await Promise.all([
-        client.getBusinessProfile(slug),
-        client.getBusinessServiceCatalog(slug).catch(() => ({ items: [] as ServiceOffering[], groups: [] as ServiceMenuGroup[] })),
+        client.getBusinessProfile(slug, signal),
+        client.getBusinessServiceCatalog(slug, signal).catch(() => ({ items: [] as ServiceOffering[], groups: [] as ServiceMenuGroup[] })),
         client
-          .getBusinessReviews(slug, 1, 6)
+          .getBusinessReviews(slug, 1, 6, signal)
           .then((r) => r.items)
           .catch(() => [] as PublicReviewItem[]),
       ]);
+      if (signal.aborted) return;
       this.profile.set(profile);
       this.services.set(catalog.items);
       this.menuGroups.set(catalog.groups);
@@ -460,14 +470,14 @@ export class BusinessProfileComponent implements OnInit {
       void this.hydrateExtras(slug);
       this.scrollToRouteFragment();
     } catch (caught) {
+      if (signal.aborted) return;
       this.error.set(this.apiErr(caught, "discover.business.businessNotFoundApiUnavailable"));
       this.profile.set(null);
       this.services.set([]);
       this.menuGroups.set([]);
       this.reviews.set([]);
     } finally {
-      this.loading.set(false);
-      this.pageLoading.hide();
+      if (!signal.aborted) { this.loading.set(false); this.pageLoading.hide(); }
     }
   }
 
@@ -487,13 +497,14 @@ export class BusinessProfileComponent implements OnInit {
   private async hydrateExtras(slug: string): Promise<void> {
     const devEnabled = isDiscoverCustomerDevMode(this.config);
     const loggedIn = devEnabled || (await this.api.isLoggedIn());
+    if (this.profileAbort.signal.aborted || this.profile()?.slug !== slug) return;
     this.bookingEnabled.set(loggedIn);
 
     const client = this.api.createPublicClient();
     void client
       .getBusinessWhatsAppLink(slug)
-      .then((link) => this.whatsappUrl.set(link.url))
-      .catch(() => this.whatsappUrl.set(null));
+      .then((link) => { if (this.profile()?.slug === slug && !this.profileAbort.signal.aborted) this.whatsappUrl.set(link.url); })
+      .catch(() => { if (this.profile()?.slug === slug && !this.profileAbort.signal.aborted) this.whatsappUrl.set(null); });
   }
 
   private applySeo(profile: PublicBusinessProfile, slug: string): void {

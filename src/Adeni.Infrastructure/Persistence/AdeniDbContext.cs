@@ -13,7 +13,7 @@ using Adeni.Domain.Subscriptions;
 using Adeni.Domain.Tenancy;
 using Microsoft.EntityFrameworkCore;
 
-public sealed class AdeniDbContext(
+public sealed partial class AdeniDbContext(
     DbContextOptions<AdeniDbContext> options,
     ITenantContext tenantContext,
     IDomainEventCollector? domainEventCollector = null,
@@ -121,6 +121,8 @@ public sealed class AdeniDbContext(
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        ConfigureIntake(modelBuilder);
+        ConfigureCalendar(modelBuilder);
         modelBuilder.HasDefaultSchema("public");
 
         modelBuilder.Entity<Customer>(entity =>

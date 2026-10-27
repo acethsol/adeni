@@ -2,6 +2,9 @@ namespace Adeni.Domain.Common;
 
 public static class ErrorCodes
 {
+    public const string CalendarUnavailable = "calendar.unavailable";
+    public const string CalendarAuthorizationInvalid = "calendar.authorization_invalid";
+
     public const string BookingLimitReached = "subscription.booking_limit_reached";
     public const string MultiLocationRequired = "subscription.multi_location_required";
     public const string SlotExpired = "booking.slot_expired";

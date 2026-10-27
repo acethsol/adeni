@@ -4,6 +4,7 @@ import { frOverlay } from "./overlay-fr";
 import { frErrorMessages } from "../errors";
 
 const frBase: Messages = {
+  calendarUi: {"title": "Synchronisation des calendriers", "bookWith": "Réserver avec Adeni", "invalidSelection": "Cette sélection n’est pas disponible. Choisissez à nouveau le service et le praticien."},
   nav: {
     discover: "Découvrir",
     bookings: "Réservations",

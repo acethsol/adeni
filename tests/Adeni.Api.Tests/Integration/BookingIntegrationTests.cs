@@ -3,6 +3,7 @@ namespace Adeni.Api.Tests.Integration;
 using System.Net;
 using System.Net.Http.Json;
 using Adeni.Domain.Booking;
+using Adeni.Domain.Intake;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
@@ -29,9 +30,10 @@ public sealed class BookingIntegrationTests : IClassFixture<WebApplicationFactor
         });
 
     [Fact]
-    public async Task Public_services_slots_and_booking_flow_work()
+    public async Task Public_services_slots_booking_and_pinned_intake_flow_work()
     {
         var slug = $"book-{Guid.NewGuid():N}"[..20];
+        var formVersionId = Guid.NewGuid();
         var tenantId = Guid.Empty;
         var serviceId = Guid.Empty;
 
@@ -92,6 +94,11 @@ public sealed class BookingIntegrationTests : IClassFixture<WebApplicationFactor
                 OpenTime = new TimeOnly(9, 0),
                 CloseTime = new TimeOnly(17, 0)
             });
+            var templateId = Guid.NewGuid();
+            db.Add(new IntakeFormTemplate { Id = templateId, TenantId = tenantId, Name = "Consultation", CurrentPublishedVersionId = formVersionId });
+            db.Add(new IntakeFormVersion { Id = formVersionId, TenantId = tenantId, TemplateId = templateId, VersionNumber = 1, Title = "Consultation", PublishedAt = DateTimeOffset.UtcNow });
+            db.Add(new IntakeFormField { Id = Guid.NewGuid(), TenantId = tenantId, VersionId = formVersionId, FieldType = IntakeFieldType.YesNo, Label = "Quiet appointment?" });
+            db.Add(new ServiceIntakeForm { TenantId = tenantId, ServiceOfferingId = serviceId, TemplateId = templateId });
             await db.SaveChangesAsync();
         }
 
@@ -125,6 +132,13 @@ public sealed class BookingIntegrationTests : IClassFixture<WebApplicationFactor
             });
 
         Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+        var created = await createResponse.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+        using (var intakeScope = _factory.Services.CreateScope())
+        {
+            var intakeDb = intakeScope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+            Assert.Contains(intakeDb.Set<BookingIntakeAssignment>(), x => x.BookingId == created.GetProperty("id").GetGuid() && x.FormVersionId == formVersionId);
+        }
+
 
         var listResponse = await bookingClient.GetAsync("/api/v1/bookings");
         Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);

@@ -73,6 +73,9 @@
                   </p>
                 </div>
                 <div class="actions">
+                  @if (doc.bookingId && doc.status !== 'void' && (doc.kind === 'receipt' || doc.kind === 'invoice')) {
+                    <button type="button" class="btn" (click)="previewDocument.set(doc)">{{ tr('common.preview') }}</button>
+                  }
                   <a
                     class="btn"
                     [href]="documentPublicUrl(doc)"
@@ -169,3 +172,9 @@
     }
   }
 </app-portal-page>
+
+@if (previewDocument(); as selected) {
+  @defer (when previewDocument() !== null) {
+    <app-document-preview [document]="selected" [locationId]="previewLocation()" (closed)="previewDocument.set(null)" />
+  }
+}

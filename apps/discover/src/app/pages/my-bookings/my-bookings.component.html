@@ -95,6 +95,7 @@
             <div class="body">
               <div class="title-row">
                 <h2>{{ b.serviceName }}</h2>
+                <a [routerLink]="['/my-bookings', b.id, 'intake']">{{ label('intake.title') }}</a>
                 <span class="status" [attr.data-tone]="statusTone(b.status)">{{
                   statusLabel(b.status)
                 }}</span>

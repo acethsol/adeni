@@ -22,6 +22,10 @@
     "paths": {
       "@adeni/api-client": ["../../packages/api-client/src/index.ts"],
       "@adeni/shared": ["../../packages/shared/src/index.ts"],
+      "@adeni/shared/customer-segments": ["../../packages/shared/src/customer-segments.ts"],
+      "@adeni/shared/customer-insights-copy": ["../../packages/shared/src/customer-insights-copy.ts"],
+      "@adeni/shared/calendar": ["../../packages/shared/src/calendar.ts"],
+      "@adeni/shared/calendar-copy": ["../../packages/shared/src/calendar-copy.ts"],
       "@adeni/ui": ["../../packages/ui/src/index.ts"],
       "@adeni/brand": ["../../packages/brand/src/index.ts"]
     }

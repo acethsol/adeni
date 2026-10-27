@@ -1,3 +1,4 @@
+import { customerSegmentsSchema } from "./customer-segments";
 import { z } from "zod";
 import { normalizeDashboardWidgetWidth } from "./dashboard-widget-width";
 import { type PagedResult, pagedResultSchema } from "./paging";
@@ -319,6 +320,7 @@ export const customerBookingExportItemSchema = z.object({
 });
 
 export const customerDataExportSchema = z.object({
+  customerSegments: z.array(customerSegmentsSchema).optional(),
   customerId: z.string(),
   auth0Sub: z.string(),
   name: z.string(),

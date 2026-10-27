@@ -5,11 +5,31 @@ import {
   type TenantCustomerDetail,
   appendListSortParams,
   type ListSortParams,
+  customerProfileSchema,
+  customerActivitySchema,
+  type CustomerProfile,
+  type CustomerActivity,
 } from "@adeni/shared";
 import type { ApiClientContext } from "../core/api-transport";
 
 export class CustomersApi {
   constructor(private readonly client: ApiClientContext) {}
+
+  async getTenantCustomerProfile(id: string, locationId?: string, signal?: AbortSignal): Promise<CustomerProfile> {
+    const query = locationId ? `?locationId=${encodeURIComponent(locationId)}` : "";
+    const response = await this.client.request(`/api/v1/tenant/customers/${encodeURIComponent(id)}/profile${query}`, { signal });
+    return customerProfileSchema.parse(await response.json());
+  }
+
+  async getTenantCustomerActivity(id: string, params?: { locationId?: string; pageSize?: number; cursor?: string }, signal?: AbortSignal): Promise<CustomerActivity> {
+    const query = new URLSearchParams();
+    if (params?.locationId) query.set("locationId", params.locationId);
+    if (params?.pageSize !== undefined) query.set("pageSize", String(params.pageSize));
+    if (params?.cursor) query.set("cursor", params.cursor);
+    const suffix = query.size ? `?${query}` : "";
+    const response = await this.client.request(`/api/v1/tenant/customers/${encodeURIComponent(id)}/activity${suffix}`, { signal });
+    return customerActivitySchema.parse(await response.json());
+  }
 
   async listTenantCustomers(params?: {
     search?: string;

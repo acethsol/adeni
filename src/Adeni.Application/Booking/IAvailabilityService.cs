@@ -13,6 +13,7 @@ public sealed record AvailableSlotResponse(
 
 public interface IAvailabilityService
 {
+    bool IsAdmissionConflict(Exception error) => false;
     Task<IReadOnlyList<WeeklyAvailabilityRule>> GetWeeklyRulesAsync(
         Guid tenantId,
         Guid? businessLocationId = null,
