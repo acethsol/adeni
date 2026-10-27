@@ -25,6 +25,18 @@ describe('Intake manager',()=>{
   expect(api.publish).toHaveBeenCalledWith(id,'saved');
   expect(definition.title).toBe('Consultation');expect(component.draft()).toBeNull();
  });
+ it('refreshes the forms grid after publish',async()=>{
+  const publishedRow={id,name:'Consultation',isActive:true,publishedVersionId:id,revision:'revision'};
+  api.listTemplates.and.returnValues(
+    Promise.resolve([{...publishedRow,publishedVersionId:null}]),
+    Promise.resolve([publishedRow]),
+  );
+  const fixture=TestBed.createComponent(IntakeManagerComponent);fixture.detectChanges();await fixture.whenStable();
+  const component=fixture.componentInstance;expect(component.rows()[0].publishedVersionId).toBeNull();
+  await component.open(id);await component.action('publish');
+  expect(api.listTemplates).toHaveBeenCalledTimes(2);
+  expect(component.rows()[0].publishedVersionId).toBe(id);
+ });
  it('loads service scope and saves exactly one required template binding',async()=>{
   const fixture=TestBed.createComponent(IntakeManagerComponent);fixture.detectChanges();await fixture.whenStable();const component=fixture.componentInstance;
   await component.selectService(second);await component.bind(id);

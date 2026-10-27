@@ -222,15 +222,20 @@ export class IntakeManagerComponent implements OnInit {
     }
   }
 
+  /** Reload list rows without the busy guard — safe inside an existing `run()`. */
+  private async reloadTemplateRows(): Promise<void> {
+    const rows = await this.api.withAuthorizedClient((c) =>
+      c.intake.listTemplates(this.page(), this.abort.signal),
+    );
+    if (this.alive) {
+      this.rows.set(rows);
+      this.hasMoreTemplates.set(rows.length === TEMPLATE_PAGE_SIZE);
+    }
+  }
+
   private async loadTemplates(): Promise<void> {
     await this.run(async () => {
-      const rows = await this.api.withAuthorizedClient((c) =>
-        c.intake.listTemplates(this.page(), this.abort.signal),
-      );
-      if (this.alive) {
-        this.rows.set(rows);
-        this.hasMoreTemplates.set(rows.length === TEMPLATE_PAGE_SIZE);
-      }
+      await this.reloadTemplateRows();
     });
   }
 
@@ -299,7 +304,7 @@ export class IntakeManagerComponent implements OnInit {
       this.accept(await this.api.withAuthorizedClient((c) => c.intake.createTemplate(trimmed)));
       this.name.set("");
       this.showCreate.set(false);
-      await this.loadTemplates();
+      await this.reloadTemplateRows();
     });
   }
 
@@ -328,7 +333,7 @@ export class IntakeManagerComponent implements OnInit {
       );
       this.accept(value);
       if (this.alive) {
-        await this.loadTemplates();
+        await this.reloadTemplateRows();
         await this.refreshServiceBindings();
       }
     });
