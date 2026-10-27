@@ -29,7 +29,7 @@ public sealed class TenantVerificationController(
             return Unauthorized();
         }
 
-        var items = await badges.GetGrantedBadgesAsync(tenantId, cancellationToken);
+        var items = await badges.GetTenantBadgesAsync(tenantId, cancellationToken);
         return Ok(new { items });
     }
 

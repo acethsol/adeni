@@ -6,6 +6,7 @@ using Adeni.Application.Admin;
 using Adeni.Application.Common;
 using Adeni.Application.Caching;
 using Adeni.Application.Notifications;
+using Adeni.Application.Realtime;
 using Adeni.Application.Storage;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Auditing;
@@ -13,6 +14,7 @@ using Adeni.Domain.Common;
 using Adeni.Domain.Subscriptions;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
+using Adeni.Infrastructure.Realtime;
 using Microsoft.EntityFrameworkCore;
 
 public sealed class AdminBusinessService(
@@ -22,7 +24,8 @@ public sealed class AdminBusinessService(
     ICacheService cache,
     ITenantPricingResolver tenantPricingResolver,
     IFileStorage fileStorage,
-    IVerificationLifecycleNotifier verificationLifecycleNotifier) : IAdminBusinessService
+    IVerificationLifecycleNotifier verificationLifecycleNotifier,
+    ITenantRealtimePublisher tenantRealtime) : IAdminBusinessService
 {
     public async Task<Result<AdminPagedResult<PendingBusinessResponse>>> ListPendingVerificationsAsync(
         string? search,
@@ -643,6 +646,15 @@ public sealed class AdminBusinessService(
             correlationContext.CorrelationId,
             DateTimeOffset.UtcNow,
             metadata is null ? null : $"{{\"reason\":\"{metadata}\"}}"),
+            cancellationToken);
+
+        await TenantRealtimeNotifications.PublishAdminVerificationAsync(
+            tenantRealtime,
+            dbContext,
+            cancellationToken);
+        await tenantRealtime.PublishTenantVerificationChangedAsync(
+            tenantId,
+            status.ToString().ToLowerInvariant(),
             cancellationToken);
 
         return Result.Success(Unit.Value);

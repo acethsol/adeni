@@ -23,7 +23,8 @@ public sealed record PendingBadgeRequestResponse(
 
 public interface IVerificationBadgeService
 {
-    Task<IReadOnlyList<VerificationBadgeResponse>> GetGrantedBadgesAsync(
+    /// <summary>Granted and pending badges for the tenant portal (revoked rows omitted).</summary>
+    Task<IReadOnlyList<VerificationBadgeResponse>> GetTenantBadgesAsync(
         Guid tenantId,
         CancellationToken cancellationToken = default);
 

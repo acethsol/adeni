@@ -403,6 +403,11 @@ export class PortalShellComponent {
         this.pendingBookings.set(event.pendingCount);
       }
     });
+    this.operationsRealtime.tenantVerificationChanged$.pipe(takeUntilDestroyed()).subscribe((event) => {
+      if (event.tenantId === this.profile()?.tenantId) {
+        void this.refreshProfileSilently();
+      }
+    });
     this.activeLocation.selectionChanged$.pipe(takeUntilDestroyed()).subscribe(() => {
       void this.activeLocation.runOnBranchSwitch(() => this.loadBadges());
     });
@@ -658,6 +663,18 @@ export class PortalShellComponent {
       await this.portalRealtime.stop();
     } finally {
       this.profileLoaded.set(true);
+    }
+  }
+
+  /** Realtime verification change: refresh nav/status chrome without resetting realtime or session. */
+  private async refreshProfileSilently(): Promise<void> {
+    try {
+      const profile = await this.businessApi.getTenantProfile();
+      if (profile) {
+        this.profile.set(profile);
+      }
+    } catch {
+      // Next navigation or manual refresh will reload.
     }
   }
 

@@ -1,5 +1,5 @@
 import { Component, computed, inject, OnDestroy, OnInit, signal } from "@angular/core";
-import { Subscription } from "rxjs";
+import { merge, Subscription } from "rxjs";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { DatePipe, KeyValuePipe } from "@angular/common";
 import { FormsModule } from "@angular/forms";
@@ -24,11 +24,16 @@ import {
   VERIFICATION_DOCUMENT_LABELS,
 } from "@adeni/shared";
 import {
+  type AdeniCarbonIconName,
+  type AdeniPillTone,
   AdeniCarbonIconComponent,
   AdeniFeedbackService,
+  AdeniPillComponent,
   AdeniPortalEmptyStateComponent,
+  AdeniStaffButtonComponent,
   PortalPageComponent,
   AdeniTabsComponent,
+  TenantOperationsRealtimeService,
   injectAdeniTranslate,
   injectAdeniApiError,
 } from "@adeni/ui";
@@ -51,6 +56,8 @@ const MAX_BYTES = MAX_UPLOAD_BYTES;
     AdeniTabsComponent,
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
+    AdeniPillComponent,
+    AdeniStaffButtonComponent,
     RouterLink,
   ],
   templateUrl: "./profile.component.html",
@@ -64,7 +71,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly route = inject(ActivatedRoute);
   private readonly activeLocation = inject(PortalActiveLocationService);
+  private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
   private branchSub: Subscription | null = null;
+  private verificationSub: Subscription | null = null;
   readonly tab = toSignal(
     this.route.queryParamMap.pipe(
       map((params) => {
@@ -123,6 +132,55 @@ export class ProfileComponent implements OnInit, OnDestroy {
   readonly verificationBadgeLabels = VERIFICATION_BADGE_LABELS;
   readonly verificationBadgeTypes = VERIFICATION_BADGE_TYPES;
 
+  /** Optional registry/license number sent with CAC and license badge requests (admin sees it in the queue). */
+  trustBadgeReferences: Partial<Record<VerificationBadgeType, string>> = {};
+
+  readonly verificationBadgeMeta: Record<
+    VerificationBadgeType,
+    { icon: AdeniCarbonIconName; descKey: string; referenceKey?: string }
+  > = {
+    phone: { icon: "phone", descKey: "portal.profile.verificationBadgeDescPhone" },
+    cac: {
+      icon: "document",
+      descKey: "portal.profile.verificationBadgeDescCac",
+      referenceKey: "portal.profile.verificationBadgeReferenceCac",
+    },
+    address: { icon: "location", descKey: "portal.profile.verificationBadgeDescAddress" },
+    license: {
+      icon: "certificate",
+      descKey: "portal.profile.verificationBadgeDescLicense",
+      referenceKey: "portal.profile.verificationBadgeReferenceLicense",
+    },
+  };
+
+  /** Status hero copy + visual tone (tenant status: 0 draft, 1 pending, 2 verified, 3 rejected, 4 suspended). */
+  readonly verificationHero = computed(() => {
+    const status = this.profile()?.status ?? 0;
+    const map: Record<number, { key: string; icon: AdeniCarbonIconName; tone: AdeniPillTone }> = {
+      0: { key: "Draft", icon: "document", tone: "brand" },
+      1: { key: "Pending", icon: "time", tone: "warning" },
+      2: { key: "Verified", icon: "security", tone: "success" },
+      3: { key: "Rejected", icon: "warning--filled", tone: "danger" },
+      4: { key: "Suspended", icon: "warning--filled", tone: "danger" },
+    };
+    const entry = map[status] ?? map[0];
+    return {
+      status,
+      icon: entry.icon,
+      tone: entry.tone,
+      title: this.tr(`portal.profile.verificationHero${entry.key}Title`),
+      body: this.tr(`portal.profile.verificationHero${entry.key}Body`),
+    };
+  });
+
+  readonly trustBadgeProgress = computed(() => {
+    const granted = VERIFICATION_BADGE_TYPES.filter((t) => this.trustBadgeGranted(t)).length;
+    return this.tr("portal.profile.verificationTrustBadgesProgress", {
+      granted,
+      total: VERIFICATION_BADGE_TYPES.length,
+    });
+  });
+
   readonly verificationSteps = computed(() => {
     const status = this.profile()?.status ?? 0;
     const labels = [
@@ -175,10 +233,30 @@ export class ProfileComponent implements OnInit, OnDestroy {
       }
       void this.activeLocation.runOnBranchSwitch(() => this.loadReviews(profile));
     });
+    this.verificationSub = merge(
+      this.operationsRealtime.tenantVerificationChanged$,
+      this.operationsRealtime.tenantBadgesChanged$,
+    ).subscribe((event) => {
+      if (event.tenantId === this.profile()?.tenantId) {
+        void this.refreshVerificationState();
+      }
+    });
   }
 
   ngOnDestroy(): void {
     this.branchSub?.unsubscribe();
+    this.verificationSub?.unsubscribe();
+  }
+
+  /** Realtime: re-fetch profile status + badge rows without the loading overlay or touching form drafts. */
+  private async refreshVerificationState(): Promise<void> {
+    try {
+      const p = await this.api.withAuthorizedClient((c) => c.getTenantProfile());
+      this.profile.set(p);
+      await this.loadTrustBadges(p);
+    } catch {
+      // Keep current UI; user can reload.
+    }
   }
 
   canEdit(): boolean {
@@ -358,11 +436,25 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   async requestTrustBadge(badgeType: VerificationBadgeType): Promise<void> {
+    const reference = this.verificationBadgeMeta[badgeType].referenceKey
+      ? this.trustBadgeReferences[badgeType]?.trim() || undefined
+      : undefined;
+    if (reference && reference.length < 5) {
+      this.feedback.error(this.tr("portal.profile.referenceNumberMustBeAt"));
+      return;
+    }
+
     this.trustBadgeBusy.set(badgeType);
     try {
-      await this.api.withAuthorizedClient((c) =>
-        c.requestVerificationBadge({ badgeType, referenceNumber: undefined }),
+      const requested = await this.api.withAuthorizedClient((c) =>
+        c.requestVerificationBadge({ badgeType, referenceNumber: reference }),
       );
+      // Show Pending immediately; the list reload below keeps it after refresh.
+      this.trustBadges.update((items) => [
+        ...items.filter((b) => b.badgeType !== badgeType),
+        requested,
+      ]);
+      this.trustBadgeReferences[badgeType] = "";
       this.feedback.success(this.tr("portal.profile.verificationRequestBadge"));
       const p = this.profile();
       if (p) {

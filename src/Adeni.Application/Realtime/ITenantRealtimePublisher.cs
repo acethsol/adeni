@@ -19,6 +19,24 @@ public interface ITenantRealtimePublisher
         int pendingCount,
         CancellationToken cancellationToken = default);
 
+    /// <summary>Tenant group only: admin approved/rejected verification — portal reloads profile.</summary>
+    Task PublishTenantVerificationChangedAsync(
+        Guid tenantId,
+        string status,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Tenant group only: trust badge requested/granted/revoked — portal reloads badge rows.</summary>
+    Task PublishTenantBadgesChangedAsync(
+        Guid tenantId,
+        string? badgeType,
+        string status,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Admin verification group only: pending trust-badge queue size changed.</summary>
+    Task PublishAdminBadgesChangedAsync(
+        int pendingCount,
+        CancellationToken cancellationToken = default);
+
     Task PublishPaymentCompletedAsync(
         Guid tenantId,
         Guid paymentIntentId,

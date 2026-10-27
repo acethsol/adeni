@@ -1602,9 +1602,13 @@ export const quoteRequestsResponseSchema = z.object({
   items: z.array(quoteRequestResponseSchema),
 });
 
+/** Tenant list returns `granted` and `pending` only; `revoked` is hidden so owners can re-request. */
+export const verificationBadgeStatusSchema = z.enum(["pending", "granted", "revoked"]);
+export type VerificationBadgeStatus = z.infer<typeof verificationBadgeStatusSchema>;
+
 export const verificationBadgeSchema = z.object({
   badgeType: z.string(),
-  status: z.string(),
+  status: verificationBadgeStatusSchema,
   grantedAt: z.string().nullable().optional(),
 });
 

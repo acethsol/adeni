@@ -33,6 +33,30 @@ public sealed class SignalRTenantRealtimePublisher(IHubContext<OperationsHub> hu
             .Group(OperationsHub.AdminVerificationGroup)
             .SendAsync("AdminVerificationChanged", new { pendingCount }, cancellationToken);
 
+    public Task PublishTenantVerificationChangedAsync(
+        Guid tenantId,
+        string status,
+        CancellationToken cancellationToken = default) =>
+        hub.Clients
+            .Group(OperationsHub.TenantGroup(tenantId))
+            .SendAsync("TenantVerificationChanged", new { tenantId, status }, cancellationToken);
+
+    public Task PublishTenantBadgesChangedAsync(
+        Guid tenantId,
+        string? badgeType,
+        string status,
+        CancellationToken cancellationToken = default) =>
+        hub.Clients
+            .Group(OperationsHub.TenantGroup(tenantId))
+            .SendAsync("TenantBadgesChanged", new { tenantId, badgeType, status }, cancellationToken);
+
+    public Task PublishAdminBadgesChangedAsync(
+        int pendingCount,
+        CancellationToken cancellationToken = default) =>
+        hub.Clients
+            .Group(OperationsHub.AdminVerificationGroup)
+            .SendAsync("AdminBadgesChanged", new { pendingCount }, cancellationToken);
+
     public async Task PublishPaymentCompletedAsync(
         Guid tenantId,
         Guid paymentIntentId,

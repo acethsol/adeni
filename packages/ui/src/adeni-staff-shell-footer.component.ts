@@ -25,7 +25,7 @@ import { injectAdeniTranslate } from "./locale/adeni-i18n";
           [app]="app()"
           [label]="badgeLabel()"
           [attr.title]="captionLabel()"
-          compact
+          [compact]="true"
         />
       </div>
     </footer>

@@ -9,6 +9,12 @@ import ArrowRight20 from "@carbon/icons/es/arrow--right/20";
 import Calendar16 from "@carbon/icons/es/calendar/16";
 import ChartLine16 from "@carbon/icons/es/chart--line/16";
 import Calendar32 from "@carbon/icons/es/calendar/32";
+import Certificate16 from "@carbon/icons/es/certificate/16";
+import Document16 from "@carbon/icons/es/document/16";
+import Location16 from "@carbon/icons/es/location/16";
+import Phone16 from "@carbon/icons/es/phone/16";
+import Security16 from "@carbon/icons/es/security/16";
+import WarningFilled16 from "@carbon/icons/es/warning--filled/16";
 import Checkmark16 from "@carbon/icons/es/checkmark/16";
 import CheckmarkFilled16 from "@carbon/icons/es/checkmark--filled/16";
 import ChevronDown16 from "@carbon/icons/es/chevron--down/16";
@@ -52,6 +58,12 @@ export type AdeniCarbonIconName =
   | "arrow--right-20"
   | "calendar"
   | "calendar-32"
+  | "certificate"
+  | "document"
+  | "location"
+  | "phone"
+  | "security"
+  | "warning--filled"
   | "chart--line"
   | "checkmark"
   | "checkmark--filled"
@@ -96,6 +108,12 @@ const ICONS: Record<AdeniCarbonIconName, IconDescriptor> = {
   "arrow--right-20": ArrowRight20 as IconDescriptor,
   calendar: Calendar16 as IconDescriptor,
   "calendar-32": Calendar32 as IconDescriptor,
+  certificate: Certificate16 as IconDescriptor,
+  document: Document16 as IconDescriptor,
+  location: Location16 as IconDescriptor,
+  phone: Phone16 as IconDescriptor,
+  security: Security16 as IconDescriptor,
+  "warning--filled": WarningFilled16 as IconDescriptor,
   "chart--line": ChartLine16 as IconDescriptor,
   checkmark: Checkmark16 as IconDescriptor,
   "checkmark--filled": CheckmarkFilled16 as IconDescriptor,

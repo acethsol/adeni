@@ -297,6 +297,11 @@ export class AdminShellComponent {
       .subscribe((event) => {
         this.queueCount.set(event.pendingCount);
       });
+    this.operationsRealtime.adminBadgesChanged$
+      .pipe(takeUntilDestroyed())
+      .subscribe((event) => {
+        this.pendingBadgeCount.set(event.pendingCount);
+      });
   }
 
   text(key: ChromeKey): string {

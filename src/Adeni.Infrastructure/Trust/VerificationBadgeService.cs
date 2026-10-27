@@ -2,25 +2,30 @@ namespace Adeni.Infrastructure.Trust;
 
 using Adeni.Application.Admin;
 using Adeni.Application.Abstractions;
+using Adeni.Application.Realtime;
 using Adeni.Application.Trust;
 using Adeni.Domain.Auditing;
 using Adeni.Domain.Common;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
+using Adeni.Infrastructure.Realtime;
 using Microsoft.EntityFrameworkCore;
 
 public sealed class VerificationBadgeService(
     AdeniDbContext dbContext,
     IAuditLogWriter auditLogWriter,
-    ICorrelationContext correlationContext) : IVerificationBadgeService
+    ICorrelationContext correlationContext,
+    ITenantRealtimePublisher tenantRealtime) : IVerificationBadgeService
 {
-    public async Task<IReadOnlyList<VerificationBadgeResponse>> GetGrantedBadgesAsync(
+    public async Task<IReadOnlyList<VerificationBadgeResponse>> GetTenantBadgesAsync(
         Guid tenantId,
         CancellationToken cancellationToken = default)
     {
+        // Revoked rows stay hidden so the portal offers "Request" again after an admin deny.
         var badges = await dbContext.TenantVerificationBadges
             .AsNoTracking()
-            .Where(x => x.TenantId == tenantId && x.Status == VerificationBadgeStatus.Granted)
+            .Where(x => x.TenantId == tenantId
+                && (x.Status == VerificationBadgeStatus.Granted || x.Status == VerificationBadgeStatus.Pending))
             .OrderBy(x => x.BadgeType)
             .ToListAsync(cancellationToken);
 
@@ -89,20 +94,31 @@ public sealed class VerificationBadgeService(
             return Result.Failure<VerificationBadgeResponse>(Error.Conflict("This badge is already pending review."));
         }
 
-        var badge = new TenantVerificationBadge
+        var referenceNumber = string.IsNullOrWhiteSpace(request.ReferenceNumber)
+            ? null
+            : request.ReferenceNumber.Trim();
+
+        // (TenantId, BadgeType) is unique: re-use a revoked row instead of inserting a duplicate.
+        var badge = existing ?? new TenantVerificationBadge
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
             BadgeType = request.BadgeType,
-            Status = VerificationBadgeStatus.Pending,
-            ReferenceNumber = string.IsNullOrWhiteSpace(request.ReferenceNumber)
-                ? null
-                : request.ReferenceNumber.Trim(),
-            RequestedAt = DateTimeOffset.UtcNow,
         };
 
-        dbContext.TenantVerificationBadges.Add(badge);
+        badge.Status = VerificationBadgeStatus.Pending;
+        badge.ReferenceNumber = referenceNumber;
+        badge.RequestedAt = DateTimeOffset.UtcNow;
+        badge.GrantedAt = null;
+        badge.GrantedByAdminId = null;
+
+        if (existing is null)
+        {
+            dbContext.TenantVerificationBadges.Add(badge);
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
+        await PublishBadgeChangedAsync(tenantId, badge.BadgeType, "pending", cancellationToken);
 
         return Result.Success(Map(badge));
     }
@@ -188,6 +204,7 @@ public sealed class VerificationBadgeService(
             tenantId,
             badgeType,
             cancellationToken);
+        await PublishBadgeChangedAsync(tenantId, badgeType, "granted", cancellationToken);
 
         return Result.Success(Unit.Value);
     }
@@ -217,6 +234,7 @@ public sealed class VerificationBadgeService(
             tenantId,
             badgeType,
             cancellationToken);
+        await PublishBadgeChangedAsync(tenantId, badgeType, "revoked", cancellationToken);
 
         return Result.Success(Unit.Value);
     }
@@ -229,9 +247,11 @@ public sealed class VerificationBadgeService(
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.TenantId == tenantId, cancellationToken);
 
+        var granted = false;
         if (!string.IsNullOrWhiteSpace(profile?.Phone))
         {
             await UpsertGrantedBadgeAsync(tenantId, VerificationBadgeType.Phone, "system", cancellationToken);
+            granted = true;
         }
 
         var documents = await dbContext.VerificationDocuments
@@ -242,16 +262,25 @@ public sealed class VerificationBadgeService(
         if (documents.Any(x => x.DocumentType == VerificationDocumentType.Cac))
         {
             await UpsertGrantedBadgeAsync(tenantId, VerificationBadgeType.Cac, "system", cancellationToken);
+            granted = true;
         }
 
         if (documents.Any(x => x.DocumentType == VerificationDocumentType.AddressProof))
         {
             await UpsertGrantedBadgeAsync(tenantId, VerificationBadgeType.Address, "system", cancellationToken);
+            granted = true;
         }
 
         if (documents.Any(x => x.DocumentType == VerificationDocumentType.TradeLicense))
         {
             await UpsertGrantedBadgeAsync(tenantId, VerificationBadgeType.License, "system", cancellationToken);
+            granted = true;
+        }
+
+        if (granted)
+        {
+            // Batch after approval: portal reloads badge rows; admin queue may shrink if a pending row was upgraded.
+            await PublishBadgeChangedAsync(tenantId, badgeType: null, "granted", cancellationToken);
         }
     }
 
@@ -280,6 +309,21 @@ public sealed class VerificationBadgeService(
         badge.GrantedAt = DateTimeOffset.UtcNow;
         badge.GrantedByAdminId = adminId;
         await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>Push after SQL commit: tenant badge rows + admin pending-badge count (badgeType null = batch).</summary>
+    private async Task PublishBadgeChangedAsync(
+        Guid tenantId,
+        VerificationBadgeType? badgeType,
+        string status,
+        CancellationToken cancellationToken)
+    {
+        await tenantRealtime.PublishTenantBadgesChangedAsync(
+            tenantId,
+            badgeType is null ? null : ToApiBadgeType(badgeType.Value),
+            status,
+            cancellationToken);
+        await TenantRealtimeNotifications.PublishAdminBadgesAsync(tenantRealtime, dbContext, cancellationToken);
     }
 
     private async Task<bool> HasBusinessAccessAsync(
