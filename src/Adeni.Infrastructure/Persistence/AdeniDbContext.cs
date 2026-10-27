@@ -154,6 +154,7 @@ public sealed class AdeniDbContext(
             entity.Property(x => x.AgreedMonthlyAmount).HasPrecision(18, 2);
             entity.Property(x => x.AgreedCurrencyCode).HasMaxLength(3);
             entity.Property(x => x.PricingCatalogVersionCode).HasMaxLength(64);
+            entity.Property(x => x.VerificationRejectionReason).HasMaxLength(2000);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.Id == ActiveTenantFilterId);
         });
 
@@ -268,6 +269,7 @@ public sealed class AdeniDbContext(
             entity.ToTable("verification_documents", "tenancy");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.ReferenceNumber).HasMaxLength(128);
+            entity.Property(x => x.StorageFileKey).HasMaxLength(512);
             entity.HasOne(x => x.Tenant).WithMany().HasForeignKey(x => x.TenantId);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });

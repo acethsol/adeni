@@ -5,6 +5,7 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { type PendingBadgeRequest, VERIFICATION_BADGE_LABELS } from "@adeni/shared";
 import {
+  AdminOperationsRealtimeService,
   AdeniCarbonIconComponent,
   AdeniFeedbackService,
   AdeniPortalEmptyStateComponent,
@@ -49,6 +50,7 @@ export class AdminTrustBadgesComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly feedback = inject(AdeniFeedbackService);
+  private readonly operationsRealtime = inject(AdminOperationsRealtimeService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -74,6 +76,9 @@ export class AdminTrustBadgesComponent {
       this.searchText.set(params.get("q") ?? "");
       const page = Number(params.get("page") ?? "1");
       this.page.set(Number.isFinite(page) && page >= 1 ? page : 1);
+      void this.load();
+    });
+    this.operationsRealtime.adminBadgesChanged$.pipe(takeUntilDestroyed()).subscribe(() => {
       void this.load();
     });
   }

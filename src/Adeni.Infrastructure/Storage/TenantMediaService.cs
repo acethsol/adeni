@@ -15,12 +15,20 @@ public sealed class TenantMediaService(
 {
     public const int MaxGalleryImages = GalleryImageKeys.MaxCount;
     private const long MaxImageBytes = 5 * 1024 * 1024;
+    private const long MaxVerificationDocumentBytes = 10 * 1024 * 1024;
 
-    private static readonly HashSet<string> AllowedContentTypes = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> AllowedImageContentTypes = new(StringComparer.OrdinalIgnoreCase)
     {
         "image/jpeg",
         "image/png",
         "image/webp"
+    };
+
+    private static readonly HashSet<string> AllowedVerificationContentTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "image/jpeg",
+        "image/png",
+        "application/pdf",
     };
 
     public async Task<Result<MediaUploadUrlResponse>> CreateUploadUrlAsync(
@@ -40,14 +48,21 @@ public sealed class TenantMediaService(
             return Result.Failure<MediaUploadUrlResponse>(Error.Validation("Upload purpose is not supported."));
         }
 
-        if (!AllowedContentTypes.Contains(request.ContentType))
+        var maxBytes = purpose == MediaUploadPurpose.VerificationDocument
+            ? MaxVerificationDocumentBytes
+            : MaxImageBytes;
+
+        if (!IsAllowedContentType(purpose, request.ContentType))
         {
-            return Result.Failure<MediaUploadUrlResponse>(Error.Validation("Image type is not supported."));
+            return Result.Failure<MediaUploadUrlResponse>(Error.Validation("File type is not supported."));
         }
 
-        if (request.ContentLength <= 0 || request.ContentLength > MaxImageBytes)
+        if (request.ContentLength <= 0 || request.ContentLength > maxBytes)
         {
-            return Result.Failure<MediaUploadUrlResponse>(Error.Validation("Image must be between 1 byte and 5 MB."));
+            return Result.Failure<MediaUploadUrlResponse>(Error.Validation(
+                purpose == MediaUploadPurpose.VerificationDocument
+                    ? "Verification file must be between 1 byte and 10 MB."
+                    : "Image must be between 1 byte and 5 MB."));
         }
 
         var extension = ExtensionForContentType(request.ContentType);
@@ -56,6 +71,7 @@ public sealed class TenantMediaService(
             MediaUploadPurpose.Gallery => "gallery",
             MediaUploadPurpose.StaffAvatar => "staff",
             MediaUploadPurpose.MessageAttachment => "messages",
+            MediaUploadPurpose.VerificationDocument => "verification",
             _ => "covers",
         };
         var storageKey = $"tenants/{tenantId:N}/{folder}/{Guid.NewGuid():N}{extension}";
@@ -286,8 +302,20 @@ public sealed class TenantMediaService(
             return true;
         }
 
+        if (value.Trim().Equals("verification_document", StringComparison.OrdinalIgnoreCase)
+            || value.Trim().Equals("verificationDocument", StringComparison.OrdinalIgnoreCase))
+        {
+            purpose = MediaUploadPurpose.VerificationDocument;
+            return true;
+        }
+
         return false;
     }
+
+    private static bool IsAllowedContentType(MediaUploadPurpose purpose, string contentType) =>
+        purpose == MediaUploadPurpose.VerificationDocument
+            ? AllowedVerificationContentTypes.Contains(contentType)
+            : AllowedImageContentTypes.Contains(contentType);
 
     private static string ExtensionForContentType(string contentType) =>
         contentType.ToLowerInvariant() switch
@@ -295,6 +323,7 @@ public sealed class TenantMediaService(
             "image/jpeg" => ".jpg",
             "image/png" => ".png",
             "image/webp" => ".webp",
+            "application/pdf" => ".pdf",
             _ => ".bin"
         };
 }

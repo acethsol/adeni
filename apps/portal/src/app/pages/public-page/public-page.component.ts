@@ -58,7 +58,11 @@ export class PublicPageSettingsComponent implements OnInit {
     return this.serializeDraft() !== this.savedSnapshot();
   });
 
-  readonly canSave = computed(() => this.dirty() && !this.saving() && this.profile() != null);
+  readonly publicPageLocked = computed(() => this.profile()?.status === 1);
+
+  readonly canSave = computed(
+    () => this.dirty() && !this.saving() && this.profile() != null && !this.publicPageLocked(),
+  );
 
   readonly previewSlug = computed(() => {
     const locations = this.profile()?.locations ?? [];

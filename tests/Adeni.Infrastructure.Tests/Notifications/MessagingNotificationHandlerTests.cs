@@ -92,5 +92,10 @@ public sealed class MessagingNotificationHandlerTests
             Guid bookingId,
             CancellationToken cancellationToken = default) =>
             Task.FromResult(contact);
+
+        public Task<Result<NotificationContact>> ResolveTenantBusinessOwnerAsync(
+            Guid tenantId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(contact);
     }
 }

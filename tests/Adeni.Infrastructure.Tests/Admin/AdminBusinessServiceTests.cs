@@ -5,7 +5,13 @@ using Adeni.Application.Subscriptions;
 using Adeni.Domain.Subscriptions;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Admin;
+using Adeni.Application.Notifications;
+using Adeni.Application.Realtime;
+using Adeni.Application.Storage;
+using Adeni.Infrastructure.Tests.Realtime;
 using Adeni.Infrastructure.Subscriptions;
+using Adeni.Infrastructure.Tests.Notifications;
+using Adeni.Infrastructure.Tests.Storage;
 using Adeni.Infrastructure.Auditing;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Context;
@@ -65,6 +71,48 @@ public sealed class AdminBusinessServiceTests
     }
 
     [Fact]
+    public async Task Approve_publishes_admin_pending_count_and_tenant_verification()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        var tenantId = Guid.NewGuid();
+
+        db.Tenants.AddRange(
+            new Tenant { Id = tenantId, Name = "Salon", Status = TenantStatus.PendingVerification, CreatedAt = DateTimeOffset.UtcNow },
+            new Tenant { Id = Guid.NewGuid(), Name = "Other", Status = TenantStatus.PendingVerification, CreatedAt = DateTimeOffset.UtcNow });
+        await db.SaveChangesAsync();
+
+        var service = scope.ServiceProvider.GetRequiredService<AdminBusinessService>();
+        var result = await service.ApproveAsync(tenantId, "admin-1");
+
+        Assert.True(result.IsSuccess);
+        var publisher = provider.GetRequiredService<RecordingTenantRealtimePublisher>();
+        Assert.Equal([1], publisher.AdminVerificationCounts);
+        Assert.Equal([(tenantId, "verified")], publisher.TenantVerification);
+    }
+
+    [Fact]
+    public async Task Reject_publishes_admin_pending_count_and_tenant_verification()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        var tenantId = Guid.NewGuid();
+
+        db.Tenants.Add(new Tenant { Id = tenantId, Name = "Salon", Status = TenantStatus.PendingVerification, CreatedAt = DateTimeOffset.UtcNow });
+        await db.SaveChangesAsync();
+
+        var service = scope.ServiceProvider.GetRequiredService<AdminBusinessService>();
+        var result = await service.RejectAsync(tenantId, "admin-1", "Documents are unreadable, please resubmit.");
+
+        Assert.True(result.IsSuccess);
+        var publisher = provider.GetRequiredService<RecordingTenantRealtimePublisher>();
+        Assert.Equal([0], publisher.AdminVerificationCounts);
+        Assert.Equal([(tenantId, "rejected")], publisher.TenantVerification);
+    }
+
+    [Fact]
     public async Task ListBusinesses_sortBy_status_orders_before_paging()
     {
         await using var provider = BuildProvider();
@@ -99,6 +147,41 @@ public sealed class AdminBusinessServiceTests
         Assert.True(result.IsSuccess);
         Assert.Equal(TenantStatus.PendingVerification, result.Value!.Items[0].Status);
         Assert.Equal(TenantStatus.Verified, result.Value.Items[1].Status);
+    }
+
+    [Fact]
+    public async Task Pending_submittedAt_uses_latest_document_time()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        var tenantId = Guid.NewGuid();
+        var created = DateTimeOffset.UtcNow.AddDays(-30);
+        var docSubmitted = DateTimeOffset.UtcNow.AddDays(-2);
+
+        db.Tenants.Add(new Tenant
+        {
+            Id = tenantId,
+            Name = "Pending Salon",
+            Status = TenantStatus.PendingVerification,
+            CreatedAt = created,
+        });
+        db.VerificationDocuments.Add(new VerificationDocument
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            DocumentType = VerificationDocumentType.Cac,
+            ReferenceNumber = "RC12345",
+            SubmittedAt = docSubmitted,
+        });
+        await db.SaveChangesAsync();
+
+        var service = scope.ServiceProvider.GetRequiredService<AdminBusinessService>();
+        var pending = await service.ListPendingVerificationsAsync(null, 1, 25);
+
+        Assert.True(pending.IsSuccess);
+        var row = Assert.Single(pending.Value!.Items);
+        Assert.Equal(docSubmitted, row.SubmittedAt);
     }
 
     [Fact]
@@ -155,6 +238,10 @@ public sealed class AdminBusinessServiceTests
         services.AddDbContext<AdeniDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));
         services.AddScoped<IPricingCatalogService, PricingCatalogService>();
         services.AddScoped<ITenantPricingResolver, TenantPricingResolver>();
+        services.AddSingleton<IFileStorage, FakeFileStorage>();
+        services.AddSingleton<IVerificationLifecycleNotifier, NoopVerificationLifecycleNotifier>();
+        services.AddSingleton<RecordingTenantRealtimePublisher>();
+        services.AddSingleton<ITenantRealtimePublisher>(sp => sp.GetRequiredService<RecordingTenantRealtimePublisher>());
         services.AddScoped<AdminBusinessService>();
         return services.BuildServiceProvider();
     }

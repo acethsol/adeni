@@ -9,6 +9,8 @@ import {
   AdeniConfirmHostComponent,
   AdeniGlobalLoadingPanelComponent,
   AdeniLocaleService,
+  AdeniStaffSidebarBrandComponent,
+  AdeniStaffShellFooterComponent,
   AdeniToastHostComponent,
   injectAdeniTranslate,
 } from "@adeni/ui";
@@ -171,8 +173,10 @@ function readSidebarCollapsed(): boolean {
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
-    AdeniBrandLogoComponent,
-    AdeniGlobalLoadingPanelComponent,
+  AdeniBrandLogoComponent,
+  AdeniStaffSidebarBrandComponent,
+  AdeniStaffShellFooterComponent,
+  AdeniGlobalLoadingPanelComponent,
     AdeniToastHostComponent,
     AdeniConfirmHostComponent,
     AdminNavIconComponent,
@@ -292,6 +296,11 @@ export class AdminShellComponent {
       .pipe(takeUntilDestroyed())
       .subscribe((event) => {
         this.queueCount.set(event.pendingCount);
+      });
+    this.operationsRealtime.adminBadgesChanged$
+      .pipe(takeUntilDestroyed())
+      .subscribe((event) => {
+        this.pendingBadgeCount.set(event.pendingCount);
       });
   }
 

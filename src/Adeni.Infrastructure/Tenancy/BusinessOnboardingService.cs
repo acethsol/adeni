@@ -7,6 +7,7 @@ using Adeni.Application.Catalog;
 using Adeni.Application.Markets;
 using Adeni.Application.Storage;
 using Adeni.Application.Subscriptions;
+using Adeni.Application.Notifications;
 using Adeni.Application.Realtime;
 using Adeni.Application.Tenancy;
 using Adeni.Infrastructure.Realtime;
@@ -27,7 +28,8 @@ public sealed class BusinessOnboardingService(
     ICacheService cache,
     ITenantRealtimePublisher tenantRealtime,
     IAuditLogWriter auditLogWriter,
-    ICorrelationContext correlationContext) : IBusinessOnboardingService
+    ICorrelationContext correlationContext,
+    IVerificationLifecycleNotifier verificationLifecycleNotifier) : IBusinessOnboardingService
 {
     public async Task<Result<RegisterBusinessResponse>> RegisterAsync(
         RegisterBusinessRequest request,
@@ -354,6 +356,19 @@ public sealed class BusinessOnboardingService(
         }
 
         var (tenant, profile) = access.Value!;
+
+        if (tenant.Status is TenantStatus.PendingVerification)
+        {
+            return Result.Failure<BusinessProfileResponse>(
+                Error.Validation("Public page cannot be edited while verification is in progress."));
+        }
+
+        if (tenant.Status is TenantStatus.Suspended)
+        {
+            return Result.Failure<BusinessProfileResponse>(
+                Error.Validation("Public page cannot be edited while the business is suspended."));
+        }
+
         PublicPageConfigMapper.Apply(profile, request);
         profile.UpdatedAt = DateTimeOffset.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -455,7 +470,24 @@ public sealed class BusinessOnboardingService(
             {
                 return Result.Failure(Error.Validation("Each document reference number must be at least 5 characters."));
             }
+
+            if (!string.IsNullOrWhiteSpace(document.StorageFileKey))
+            {
+                var key = document.StorageFileKey.Trim();
+                var prefix = $"tenants/{tenantId:N}/verification/";
+                if (!key.StartsWith(prefix, StringComparison.Ordinal))
+                {
+                    return Result.Failure(Error.Validation("Verification file key is invalid for this business."));
+                }
+
+                if (!await fileStorage.ExistsAsync(key, cancellationToken))
+                {
+                    return Result.Failure(Error.Validation("Verification file upload was not found. Upload the file before submitting."));
+                }
+            }
         }
+
+        tenant.VerificationRejectionReason = null;
 
         var existing = await dbContext.VerificationDocuments
             .Where(d => d.TenantId == tenantId)
@@ -471,12 +503,16 @@ public sealed class BusinessOnboardingService(
                 TenantId = tenantId,
                 DocumentType = document.DocumentType,
                 ReferenceNumber = document.ReferenceNumber.Trim(),
-                SubmittedAt = submittedAt
+                SubmittedAt = submittedAt,
+                StorageFileKey = string.IsNullOrWhiteSpace(document.StorageFileKey)
+                    ? null
+                    : document.StorageFileKey.Trim(),
             });
         }
 
         tenant.Status = TenantStatus.PendingVerification;
         await dbContext.SaveChangesAsync(cancellationToken);
+        await InvalidateProfileCachesAsync(tenantId, cancellationToken);
         await TenantRealtimeNotifications.PublishAdminVerificationAsync(
             tenantRealtime,
             dbContext,
@@ -493,6 +529,8 @@ public sealed class BusinessOnboardingService(
                 submittedAt,
                 $"{{\"documentCount\":{request.Documents.Count}}}"),
             cancellationToken);
+
+        await verificationLifecycleNotifier.NotifySubmittedAsync(tenantId, cancellationToken);
 
         return Result.Success();
     }
@@ -719,7 +757,11 @@ public sealed class BusinessOnboardingService(
             tenant.CreatedAt,
             tenant.VerifiedAt,
             BusinessLocationService.MapLocations(locations),
-            documents.Select(d => new VerificationDocumentResponse(d.DocumentType, d.SubmittedAt)).ToList(),
+            documents.Select(d => new VerificationDocumentResponse(
+                d.DocumentType,
+                d.ReferenceNumber,
+                d.SubmittedAt,
+                !string.IsNullOrWhiteSpace(d.StorageFileKey))).ToList(),
             coverImageUrl,
             BusinessTypeMapping.ToApiValue(profile.BusinessType),
             capabilities,
@@ -743,7 +785,8 @@ public sealed class BusinessOnboardingService(
             PublicPageConfigMapper.FromProfile(profile, logoImageUrl),
             galleryImages,
             PublicPageConfigMapper.PoliciesFromProfile(profile),
-            walkInSettings);
+            walkInSettings,
+            tenant.Status == TenantStatus.Rejected ? tenant.VerificationRejectionReason : null);
     }
 
     private async Task InvalidateProfileCachesAsync(Guid tenantId, CancellationToken cancellationToken)

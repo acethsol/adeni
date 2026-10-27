@@ -136,14 +136,74 @@
       </section>
     } @else if (tab() === "verification") {
       <section class="card verification-card">
-        <h3>{{ tr('portal.profile.verification') }}</h3>
-        <p class="lede">
-          {{ tr('portal.profile.verifiedBusinessesAppearDiscoverSearch') }}
-        </p>
-        <p class="status-row">
-          <span class="status-pill" [attr.data-status]="p.status">{{ formatTenantStatus(p.status) }}</span>
-        </p>
+        @if (verificationHero(); as hero) {
+          <div class="verification-hero" [attr.data-status]="hero.status">
+            <span class="hero-icon" aria-hidden="true">
+              <adeni-carbon-icon [name]="hero.icon" [size]="20" />
+            </span>
+            <div class="hero-copy">
+              <div class="hero-head">
+                <h3>{{ hero.title }}</h3>
+                <adeni-pill [tone]="hero.tone" [dot]="true">{{ formatTenantStatus(p.status) }}</adeni-pill>
+              </div>
+              <p>{{ hero.body }}</p>
+            </div>
+          </div>
+        }
+        <ol class="verification-stepper" [attr.aria-label]="tr('portal.profile.verification')">
+          @for (label of verificationSteps().labels; track label; let i = $index) {
+            <li
+              class="step"
+              [class.active]="i === verificationSteps().activeIndex && p.status !== 2"
+              [class.done]="i < verificationSteps().activeIndex || p.status === 2"
+              [class.alert]="i === verificationSteps().activeIndex && (p.status === 3 || p.status === 4)"
+            >
+              <span class="step-index">
+                @if (i < verificationSteps().activeIndex || p.status === 2) {
+                  <adeni-carbon-icon name="checkmark" [size]="14" />
+                } @else {
+                  {{ i + 1 }}
+                }
+              </span>
+              <span class="step-label">{{ label }}</span>
+            </li>
+          }
+        </ol>
+        @if (isSuspended()) {
+          <p class="error-banner">{{ tr('portal.profile.verificationSuspendedCallout') }}</p>
+        }
+        @if (p.status === 3 && p.verificationRejectionReason) {
+          <div class="rejection-banner" role="alert">
+            <strong>{{ tr('portal.profile.verificationRejectionBannerTitle') }}</strong>
+            <p>{{ p.verificationRejectionReason }}</p>
+            <p class="muted">{{ tr('portal.profile.verificationResubmitCta') }}</p>
+          </div>
+        }
+        @if (p.verificationDocuments.length > 0 && p.status !== 0) {
+          <div class="submitted-docs">
+            <h4>{{ tr('portal.profile.verificationSubmittedDocsTitle') }}</h4>
+            <ul>
+              @for (doc of p.verificationDocuments; track doc.submittedAt + doc.referenceNumber) {
+                <li>
+                  <strong>{{ docTypeLabel(doc.documentType) }}</strong>
+                  · {{ doc.referenceNumber }}
+                  · {{ doc.submittedAt | date: "mediumDate" }}
+                  @if (doc.hasUploadedFile) {
+                    · {{ tr('portal.profile.verificationFileAttached') }}
+                  }
+                </li>
+              }
+            </ul>
+          </div>
+        }
         @if (canSubmitVerification()) {
+          <div class="prerequisites">
+            <h4>{{ tr('portal.profile.verificationPrerequisitesTitle') }}</h4>
+            <ul>
+              <li [class.ok]="prerequisitesMet()">{{ tr('portal.profile.verificationPrerequisiteProfile') }}</li>
+              <li [class.ok]="prerequisitesMet()">{{ tr('portal.profile.verificationPrerequisiteLocation') }}</li>
+            </ul>
+          </div>
           <div class="field">
             <label for="verification-doc">{{ tr('portal.profile.documentType') }}</label>
             <select id="verification-doc" [(ngModel)]="verificationDocType">
@@ -154,13 +214,79 @@
           </div>
           <div class="field">
             <label for="verification-ref">{{ tr('portal.profile.referenceNumber') }}</label>
-            <input id="verification-ref" [(ngModel)]="verificationReference" />
+            <input id="verification-ref" [(ngModel)]="verificationReference" minlength="5" />
           </div>
-          <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="submitVerification()">
+          <div class="field">
+            <label for="verification-file">{{ tr('portal.profile.verificationOptionalFile') }}</label>
+            <input
+              id="verification-file"
+              type="file"
+              accept=".pdf,image/jpeg,image/png"
+              [disabled]="verificationFileUploading()"
+              (change)="onVerificationFileSelected($event)"
+            />
+            @if (verificationFileKey()) {
+              <p class="hint ok">{{ tr('portal.profile.verificationFileAttached') }}</p>
+            }
+          </div>
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="saving() || !prerequisitesMet()"
+            (click)="submitVerification()"
+          >
             {{ tr('portal.profile.submitReview') }}
           </button>
-        } @else {
+        } @else if (!isSuspended()) {
           <p class="muted">{{ tr('portal.profile.noNewSubmissionNeededRight') }}</p>
+        }
+        @if (p.status === 2) {
+          <div class="trust-badges-section">
+            <div class="section-title-row">
+              <h4>{{ tr('portal.profile.verificationTrustBadgesTitle') }}</h4>
+              <span class="hint">{{ trustBadgeProgress() }}</span>
+            </div>
+            <p class="hint">{{ tr('portal.profile.verificationTrustBadgesLead') }}</p>
+            <ul class="trust-badge-list">
+              @for (badgeType of verificationBadgeTypes; track badgeType) {
+                <li class="trust-badge-row" [class.granted]="trustBadgeGranted(badgeType)">
+                  <span class="trust-badge-icon" aria-hidden="true">
+                    <adeni-carbon-icon [name]="verificationBadgeMeta[badgeType].icon" [size]="16" />
+                  </span>
+                  <div class="trust-badge-copy">
+                    <span class="trust-badge-name">{{ verificationBadgeLabels[badgeType] }}</span>
+                    <span class="trust-badge-desc">{{ tr(verificationBadgeMeta[badgeType].descKey) }}</span>
+                  </div>
+                  <div class="trust-badge-action">
+                    @if (trustBadgeGranted(badgeType)) {
+                      <adeni-pill tone="success" [dot]="true">{{ tr('portal.profile.verificationBadgeGranted') }}</adeni-pill>
+                    } @else if (trustBadgePending(badgeType)) {
+                      <adeni-pill tone="warning" [dot]="true">{{ tr('portal.profile.verificationBadgePending') }}</adeni-pill>
+                    } @else {
+                      @if (verificationBadgeMeta[badgeType].referenceKey; as refKey) {
+                        <input
+                          class="trust-badge-ref"
+                          type="text"
+                          maxlength="128"
+                          [name]="'trust-badge-ref-' + badgeType"
+                          [attr.aria-label]="tr(refKey)"
+                          [placeholder]="tr(refKey)"
+                          [(ngModel)]="trustBadgeReferences[badgeType]"
+                        />
+                      }
+                      <adeni-staff-btn
+                        icon="send"
+                        [disabled]="trustBadgeBusy() === badgeType"
+                        (pressed)="requestTrustBadge(badgeType)"
+                      >
+                        {{ tr('portal.profile.verificationRequestBadge') }}
+                      </adeni-staff-btn>
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+          </div>
         }
         @if (verificationMessage()) {
           <p class="ok">{{ verificationMessage() }}</p>

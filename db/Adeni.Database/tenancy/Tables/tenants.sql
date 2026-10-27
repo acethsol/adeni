@@ -21,6 +21,7 @@ CREATE TABLE [tenancy].[tenants] (
     [PriceLockEndsAt]          DATETIMEOFFSET (7) NULL,
     [CreatedAt]                DATETIMEOFFSET (7) NOT NULL,
     [VerifiedAt]               DATETIMEOFFSET (7) NULL,
+    [VerificationRejectionReason] NVARCHAR (2000) NULL,
     CONSTRAINT [PK_tenants] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 

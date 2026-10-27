@@ -173,6 +173,23 @@ export class BusinessApi {
     return mediaUploadUrlResponseSchema.parse(await response.json());
   }
 
+  async createVerificationDocumentUploadUrl(
+    contentType: string,
+    contentLength: number,
+  ): Promise<MediaUploadUrlResponse> {
+    const body = mediaUploadUrlRequestSchema.parse({
+      purpose: "verification_document",
+      contentType,
+      contentLength,
+    });
+    const response = await this.client.request("/api/v1/tenant/media/upload-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return mediaUploadUrlResponseSchema.parse(await response.json());
+  }
+
   async createGalleryUploadUrl(
     contentType: string,
     contentLength: number,

@@ -298,6 +298,28 @@ public sealed class AdminBusinessesController(
             }));
     }
 
+    [HttpGet("{tenantId:guid}/verification-documents/{documentId:guid}/download-url")]
+    public async Task<IActionResult> GetVerificationDocumentDownloadUrl(
+        Guid tenantId,
+        Guid documentId,
+        CancellationToken cancellationToken)
+    {
+        var adminId = User.FindFirst("sub")?.Value ?? "admin";
+        var result = await adminBusinessService.GetVerificationDocumentDownloadUrlAsync(
+            tenantId,
+            documentId,
+            adminId,
+            cancellationToken);
+
+        return result.Match<IActionResult>(
+            payload => Ok(payload),
+            error => error.Code switch
+            {
+                "validation" => BadRequest(new { title = error.Message }),
+                _ => NotFound(new { title = error.Message })
+            });
+    }
+
     [HttpPost("{id:guid}/reject")]
     public async Task<IActionResult> Reject(
         Guid id,

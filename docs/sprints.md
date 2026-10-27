@@ -549,6 +549,7 @@ Business-paid GMV fee via **Stripe Connect** (CA/US) and **Paystack split** (NG)
 
 - [x] Discover SEO landings + sitemap — [discover-seo-landings.md](./specs/discover-seo-landings.md) (`/lagos`, `/ottawa`, category hubs, `robots.txt`, dynamic `sitemap.xml`, richer LocalBusiness JSON-LD)
 - [x] Discover SEO follow-ups — [discover-seo-followups.md](./specs/discover-seo-followups.md) (neighborhoods, opening hours + Offers JSON-LD, GSC runbook, production SSR host/Angular dedupe)
+- [ ] **Verification UX gap closeout** — Spec: [sprint-verification-ux-gap-closeout.md](./specs/sprint-verification-ux-gap-closeout.md). Phase 1: profile rejection reason + doc refs, portal stepper/banners, admin detail/modals, Discover trust parity; Phase 2: lifecycle email + portal trust-badge UI; Phase 3: document upload (deferred).
 
 ## Next up
 

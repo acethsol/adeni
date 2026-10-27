@@ -12,5 +12,8 @@ public sealed class VerificationDocument : ITenantEntity
 
     public DateTimeOffset SubmittedAt { get; set; }
 
+    /// <summary>Private blob key under tenants/{tenantId}/verification/ (Phase 3).</summary>
+    public string? StorageFileKey { get; set; }
+
     public Tenant? Tenant { get; set; }
 }

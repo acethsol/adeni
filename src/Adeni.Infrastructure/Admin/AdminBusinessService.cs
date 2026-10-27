@@ -5,12 +5,16 @@ using Adeni.Application.Abstractions;
 using Adeni.Application.Admin;
 using Adeni.Application.Common;
 using Adeni.Application.Caching;
+using Adeni.Application.Notifications;
+using Adeni.Application.Realtime;
+using Adeni.Application.Storage;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Auditing;
 using Adeni.Domain.Common;
 using Adeni.Domain.Subscriptions;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
+using Adeni.Infrastructure.Realtime;
 using Microsoft.EntityFrameworkCore;
 
 public sealed class AdminBusinessService(
@@ -18,7 +22,10 @@ public sealed class AdminBusinessService(
     IAuditLogWriter auditLogWriter,
     ICorrelationContext correlationContext,
     ICacheService cache,
-    ITenantPricingResolver tenantPricingResolver) : IAdminBusinessService
+    ITenantPricingResolver tenantPricingResolver,
+    IFileStorage fileStorage,
+    IVerificationLifecycleNotifier verificationLifecycleNotifier,
+    ITenantRealtimePublisher tenantRealtime) : IAdminBusinessService
 {
     public async Task<Result<AdminPagedResult<PendingBusinessResponse>>> ListPendingVerificationsAsync(
         string? search,
@@ -97,10 +104,16 @@ public sealed class AdminBusinessService(
             var docs = documents
                 .Where(x => x.TenantId == tenant.Id)
                 .Select(x => new PendingVerificationDocumentResponse(
+                    x.Id,
                     x.DocumentType.ToString().ToLowerInvariant(),
                     x.ReferenceNumber,
-                    x.SubmittedAt))
+                    x.SubmittedAt,
+                    !string.IsNullOrWhiteSpace(x.StorageFileKey)))
                 .ToList();
+
+            DateTimeOffset? submittedAt = docs.Count > 0
+                ? docs.Max(x => x.SubmittedAt)
+                : null;
 
             return new PendingBusinessResponse(
                 tenant.Id,
@@ -109,6 +122,7 @@ public sealed class AdminBusinessService(
                 primary?.MarketId ?? string.Empty,
                 tenant.Status,
                 tenant.CreatedAt,
+                submittedAt,
                 docs);
         }).ToList();
 
@@ -514,14 +528,69 @@ public sealed class AdminBusinessService(
             return Result.Failure<Unit>(Error.Validation("Rejection reason must be at least 10 characters."));
         }
 
-        return await UpdateStatusAsync(
+        var trimmed = reason.Trim();
+        var tenant = await dbContext.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+        if (tenant is null)
+        {
+            return Result.Failure<Unit>(Error.NotFound("Business"));
+        }
+
+        tenant.VerificationRejectionReason = trimmed;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var result = await UpdateStatusAsync(
             tenantId,
             adminId,
             TenantStatus.Rejected,
             AuditActions.BusinessRejected,
             setVerifiedAt: false,
             cancellationToken,
-            reason);
+            trimmed);
+
+        if (result.IsSuccess)
+        {
+            await verificationLifecycleNotifier.NotifyRejectedAsync(tenantId, cancellationToken);
+        }
+
+        return result;
+    }
+
+    public async Task<Result<VerificationDocumentDownloadResponse>> GetVerificationDocumentDownloadUrlAsync(
+        Guid tenantId,
+        Guid documentId,
+        string adminId,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(adminId))
+        {
+            return Result.Failure<VerificationDocumentDownloadResponse>(Error.Forbidden("Authentication is required."));
+        }
+
+        var document = await dbContext.VerificationDocuments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == documentId && x.TenantId == tenantId, cancellationToken);
+
+        if (document is null || string.IsNullOrWhiteSpace(document.StorageFileKey))
+        {
+            return Result.Failure<VerificationDocumentDownloadResponse>(Error.NotFound("Verification document file"));
+        }
+
+        var ttl = TimeSpan.FromMinutes(15);
+        var url = await fileStorage.GetDownloadUrlAsync(document.StorageFileKey, cancellationToken);
+
+        await auditLogWriter.WriteAsync(
+            new AuditEntry(
+                Guid.NewGuid(),
+                adminId,
+                "verification_document.downloaded",
+                "verification_document",
+                documentId.ToString(),
+                correlationContext.CorrelationId,
+                DateTimeOffset.UtcNow,
+                $"{{\"tenantId\":\"{tenantId:D}\"}}"),
+            cancellationToken);
+
+        return Result.Success(new VerificationDocumentDownloadResponse(url, DateTimeOffset.UtcNow.Add(ttl)));
     }
 
     private async Task<Result<Unit>> UpdateStatusAsync(
@@ -543,6 +612,7 @@ public sealed class AdminBusinessService(
         if (setVerifiedAt)
         {
             tenant.VerifiedAt = DateTimeOffset.UtcNow;
+            tenant.VerificationRejectionReason = null;
             if (tenant.TrialEndsAt is null && tenant.BillingStatus != TenantBillingStatus.Active)
             {
                 TenantBillingPolicy.StartDefaultTrial(tenant, DateTimeOffset.UtcNow);
@@ -550,6 +620,11 @@ public sealed class AdminBusinessService(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (status == TenantStatus.Verified)
+        {
+            await verificationLifecycleNotifier.NotifyApprovedAsync(tenantId, cancellationToken);
+        }
 
         var slugs = await dbContext.BusinessLocations
             .AsNoTracking()
@@ -571,6 +646,15 @@ public sealed class AdminBusinessService(
             correlationContext.CorrelationId,
             DateTimeOffset.UtcNow,
             metadata is null ? null : $"{{\"reason\":\"{metadata}\"}}"),
+            cancellationToken);
+
+        await TenantRealtimeNotifications.PublishAdminVerificationAsync(
+            tenantRealtime,
+            dbContext,
+            cancellationToken);
+        await tenantRealtime.PublishTenantVerificationChangedAsync(
+            tenantId,
+            status.ToString().ToLowerInvariant(),
             cancellationToken);
 
         return Result.Success(Unit.Value);
@@ -605,6 +689,15 @@ public sealed class AdminBusinessService(
                     dbContext.VerificationDocuments.Count(doc => doc.TenantId == t.Id))
                 : query.OrderBy(t =>
                     dbContext.VerificationDocuments.Count(doc => doc.TenantId == t.Id)),
+            "submitted" => desc
+                ? query.OrderByDescending(t =>
+                    dbContext.VerificationDocuments
+                        .Where(doc => doc.TenantId == t.Id)
+                        .Max(doc => (DateTimeOffset?)doc.SubmittedAt) ?? t.CreatedAt)
+                : query.OrderBy(t =>
+                    dbContext.VerificationDocuments
+                        .Where(doc => doc.TenantId == t.Id)
+                        .Max(doc => (DateTimeOffset?)doc.SubmittedAt) ?? t.CreatedAt),
             _ => desc
                 ? query.OrderByDescending(t => t.CreatedAt)
                 : query.OrderBy(t => t.CreatedAt),

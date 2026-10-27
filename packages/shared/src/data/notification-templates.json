@@ -139,6 +139,36 @@
         "subject": "{kind} {documentNumber} de {businessName}",
         "body": "Votre {kindLower} {documentNumber} de {total} {currency} est prêt.\n\nVoir : {publicUrl}"
       }
+    },
+    "verification_submitted": {
+      "en": {
+        "subject": "Verification received — {businessName}",
+        "body": "We received your verification documents for {businessName}. An admin will review them; check the portal for status updates."
+      },
+      "fr": {
+        "subject": "Vérification reçue — {businessName}",
+        "body": "Nous avons reçu vos documents de vérification pour {businessName}. Un administrateur les examinera; consultez le portail pour le statut."
+      }
+    },
+    "verification_approved": {
+      "en": {
+        "subject": "{businessName} is verified on Adeni",
+        "body": "Good news — {businessName} is verified. You can appear on Discover when your profile meets listing requirements."
+      },
+      "fr": {
+        "subject": "{businessName} est vérifiée sur Adeni",
+        "body": "Bonne nouvelle — {businessName} est vérifiée. Vous pourrez apparaître sur Découvrir lorsque votre profil remplit les conditions."
+      }
+    },
+    "verification_rejected": {
+      "en": {
+        "subject": "Verification update — {businessName}",
+        "body": "Your verification for {businessName} was not approved. Reason: {reason}. Sign in to the portal to update and resubmit."
+      },
+      "fr": {
+        "subject": "Mise à jour de vérification — {businessName}",
+        "body": "Votre vérification pour {businessName} n'a pas été approuvée. Motif : {reason}. Connectez-vous au portail pour mettre à jour et soumettre à nouveau."
+      }
     }
   }
 }

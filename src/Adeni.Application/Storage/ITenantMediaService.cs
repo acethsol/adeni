@@ -7,7 +7,8 @@ public enum MediaUploadPurpose
     Cover,
     Gallery,
     StaffAvatar,
-    MessageAttachment
+    MessageAttachment,
+    VerificationDocument,
 }
 
 public sealed record MediaUploadUrlRequest(

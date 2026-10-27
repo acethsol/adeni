@@ -14,4 +14,8 @@ public interface INotificationRecipientResolver
         Guid tenantId,
         Guid bookingId,
         CancellationToken cancellationToken = default);
+
+    Task<Result<NotificationContact>> ResolveTenantBusinessOwnerAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default);
 }

@@ -11,12 +11,19 @@ public sealed record PendingBusinessResponse(
     string MarketId,
     TenantStatus Status,
     DateTimeOffset CreatedAt,
+    DateTimeOffset? SubmittedAt,
     IReadOnlyList<PendingVerificationDocumentResponse> Documents);
 
 public sealed record PendingVerificationDocumentResponse(
+    Guid Id,
     string DocumentType,
     string ReferenceNumber,
-    DateTimeOffset SubmittedAt);
+    DateTimeOffset SubmittedAt,
+    bool HasUploadedFile = false);
+
+public sealed record VerificationDocumentDownloadResponse(
+    string DownloadUrl,
+    DateTimeOffset ExpiresAt);
 
 public sealed record AdminBusinessSummaryResponse(
     Guid Id,
@@ -110,6 +117,12 @@ public interface IAdminBusinessService
         Guid tenantId,
         string adminId,
         string reason,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<VerificationDocumentDownloadResponse>> GetVerificationDocumentDownloadUrlAsync(
+        Guid tenantId,
+        Guid documentId,
+        string adminId,
         CancellationToken cancellationToken = default);
 
     Task<Result<AdminTenantCommercialTermsResponse>> GetTenantCommercialTermsAsync(

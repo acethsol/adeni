@@ -1,15 +1,21 @@
 import { Injectable, inject, OnDestroy } from "@angular/core";
 import {
+  adminBadgesChangedSchema,
   adminVerificationChangedSchema,
   paymentCompletedRealtimeSchema,
   pendingBookingsChangedSchema,
   queueFloorChangedSchema,
   quotePipelineChangedSchema,
+  tenantBadgesChangedSchema,
+  tenantVerificationChangedSchema,
+  type AdminBadgesChangedEvent,
   type AdminVerificationChangedEvent,
   type PaymentCompletedRealtimeEvent,
   type PendingBookingsChangedEvent,
   type QueueFloorChangedEvent,
   type QuotePipelineChangedEvent,
+  type TenantBadgesChangedEvent,
+  type TenantVerificationChangedEvent,
 } from "@adeni/shared";
 import { Subject } from "rxjs";
 import { ADENI_REALTIME_AUTH } from "./adeni-realtime-auth.token";
@@ -31,12 +37,18 @@ export class AdeniOperationsRealtimeService implements OnDestroy {
   private readonly quotePipelineSubject = new Subject<QuotePipelineChangedEvent>();
   private readonly paymentCompletedSubject = new Subject<PaymentCompletedRealtimeEvent>();
   private readonly adminVerificationSubject = new Subject<AdminVerificationChangedEvent>();
+  private readonly adminBadgesSubject = new Subject<AdminBadgesChangedEvent>();
+  private readonly tenantVerificationSubject = new Subject<TenantVerificationChangedEvent>();
+  private readonly tenantBadgesSubject = new Subject<TenantBadgesChangedEvent>();
 
   readonly pendingBookingsChanged$ = this.pendingBookingsSubject.asObservable();
   readonly queueFloorChanged$ = this.queueFloorSubject.asObservable();
   readonly quotePipelineChanged$ = this.quotePipelineSubject.asObservable();
   readonly paymentCompleted$ = this.paymentCompletedSubject.asObservable();
   readonly adminVerificationChanged$ = this.adminVerificationSubject.asObservable();
+  readonly adminBadgesChanged$ = this.adminBadgesSubject.asObservable();
+  readonly tenantVerificationChanged$ = this.tenantVerificationSubject.asObservable();
+  readonly tenantBadgesChanged$ = this.tenantBadgesSubject.asObservable();
 
   isConnected(): boolean {
     return this.session.isConnected();
@@ -84,6 +96,12 @@ export class AdeniOperationsRealtimeService implements OnDestroy {
           const parsed = adminVerificationChangedSchema.safeParse(payload);
           if (parsed.success) {
             this.adminVerificationSubject.next(parsed.data);
+          }
+        },
+        AdminBadgesChanged: (payload) => {
+          const parsed = adminBadgesChangedSchema.safeParse(payload);
+          if (parsed.success) {
+            this.adminBadgesSubject.next(parsed.data);
           }
         },
       },
@@ -158,6 +176,18 @@ export class AdeniOperationsRealtimeService implements OnDestroy {
         const parsed = paymentCompletedRealtimeSchema.safeParse(payload);
         if (parsed.success) {
           this.paymentCompletedSubject.next(parsed.data);
+        }
+      },
+      TenantVerificationChanged: (payload) => {
+        const parsed = tenantVerificationChangedSchema.safeParse(payload);
+        if (parsed.success) {
+          this.tenantVerificationSubject.next(parsed.data);
+        }
+      },
+      TenantBadgesChanged: (payload) => {
+        const parsed = tenantBadgesChangedSchema.safeParse(payload);
+        if (parsed.success) {
+          this.tenantBadgesSubject.next(parsed.data);
         }
       },
     };

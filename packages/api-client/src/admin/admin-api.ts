@@ -302,6 +302,16 @@ export class AdminApi {
     return adminBusinessSummarySchema.parse(await response.json());
   }
 
+  async getAdminVerificationDocumentDownloadUrl(
+    tenantId: string,
+    documentId: string,
+  ): Promise<{ downloadUrl: string; expiresAt: string }> {
+    const response = await this.client.request(
+      `/api/v1/admin/businesses/${encodeURIComponent(tenantId)}/verification-documents/${encodeURIComponent(documentId)}/download-url`,
+    );
+    return (await response.json()) as { downloadUrl: string; expiresAt: string };
+  }
+
   async listAdminTenantCommercialAudit(
     tenantId: string,
     limit = 30,

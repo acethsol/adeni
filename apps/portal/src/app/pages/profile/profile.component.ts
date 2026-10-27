@@ -1,25 +1,39 @@
 import { Component, computed, inject, OnDestroy, OnInit, signal } from "@angular/core";
-import { Subscription } from "rxjs";
+import { merge, Subscription } from "rxjs";
 import { toSignal } from "@angular/core/rxjs-interop";
-import { KeyValuePipe } from "@angular/common";
+import { DatePipe, KeyValuePipe } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import { map } from "rxjs";
-import type { BusinessProfile, Category, GalleryImage, PublicReviewItem } from "@adeni/shared";
+import type {
+  BusinessProfile,
+  Category,
+  GalleryImage,
+  PublicReviewItem,
+  VerificationBadge,
+  VerificationBadgeType,
+} from "@adeni/shared";
 import {
   formatTenantStatus,
   getCategoryLabel,
   MAX_GALLERY_PHOTOS,
   MAX_UPLOAD_BYTES,
   resolveBusinessCoverImage,
+  VERIFICATION_BADGE_LABELS,
+  VERIFICATION_BADGE_TYPES,
   VERIFICATION_DOCUMENT_LABELS,
 } from "@adeni/shared";
 import {
+  type AdeniCarbonIconName,
+  type AdeniPillTone,
   AdeniCarbonIconComponent,
   AdeniFeedbackService,
+  AdeniPillComponent,
   AdeniPortalEmptyStateComponent,
+  AdeniStaffButtonComponent,
   PortalPageComponent,
   AdeniTabsComponent,
+  TenantOperationsRealtimeService,
   injectAdeniTranslate,
   injectAdeniApiError,
 } from "@adeni/ui";
@@ -38,9 +52,12 @@ const MAX_BYTES = MAX_UPLOAD_BYTES;
     PortalPageComponent,
     FormsModule,
     KeyValuePipe,
+    DatePipe,
     AdeniTabsComponent,
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
+    AdeniPillComponent,
+    AdeniStaffButtonComponent,
     RouterLink,
   ],
   templateUrl: "./profile.component.html",
@@ -54,7 +71,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly route = inject(ActivatedRoute);
   private readonly activeLocation = inject(PortalActiveLocationService);
+  private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
   private branchSub: Subscription | null = null;
+  private verificationSub: Subscription | null = null;
   readonly tab = toSignal(
     this.route.queryParamMap.pipe(
       map((params) => {
@@ -103,9 +122,107 @@ export class ProfileComponent implements OnInit, OnDestroy {
   readonly shareNotice = signal<string | null>(null);
   verificationDocType = 0;
   verificationReference = "";
+  readonly verificationFileKey = signal<string | null>(null);
+  readonly verificationFileUploading = signal(false);
+  readonly trustBadges = signal<VerificationBadge[]>([]);
+  readonly trustBadgeBusy = signal<VerificationBadgeType | null>(null);
 
   readonly formatTenantStatus = formatTenantStatus;
   readonly verificationLabels = VERIFICATION_DOCUMENT_LABELS;
+  readonly verificationBadgeLabels = VERIFICATION_BADGE_LABELS;
+  readonly verificationBadgeTypes = VERIFICATION_BADGE_TYPES;
+
+  /** Optional registry/license number sent with CAC and license badge requests (admin sees it in the queue). */
+  trustBadgeReferences: Partial<Record<VerificationBadgeType, string>> = {};
+
+  readonly verificationBadgeMeta: Record<
+    VerificationBadgeType,
+    { icon: AdeniCarbonIconName; descKey: string; referenceKey?: string }
+  > = {
+    phone: { icon: "phone", descKey: "portal.profile.verificationBadgeDescPhone" },
+    cac: {
+      icon: "document",
+      descKey: "portal.profile.verificationBadgeDescCac",
+      referenceKey: "portal.profile.verificationBadgeReferenceCac",
+    },
+    address: { icon: "location", descKey: "portal.profile.verificationBadgeDescAddress" },
+    license: {
+      icon: "certificate",
+      descKey: "portal.profile.verificationBadgeDescLicense",
+      referenceKey: "portal.profile.verificationBadgeReferenceLicense",
+    },
+  };
+
+  /** Status hero copy + visual tone (tenant status: 0 draft, 1 pending, 2 verified, 3 rejected, 4 suspended). */
+  readonly verificationHero = computed(() => {
+    const status = this.profile()?.status ?? 0;
+    const map: Record<number, { key: string; icon: AdeniCarbonIconName; tone: AdeniPillTone }> = {
+      0: { key: "Draft", icon: "document", tone: "brand" },
+      1: { key: "Pending", icon: "time", tone: "warning" },
+      2: { key: "Verified", icon: "security", tone: "success" },
+      3: { key: "Rejected", icon: "warning--filled", tone: "danger" },
+      4: { key: "Suspended", icon: "warning--filled", tone: "danger" },
+    };
+    const entry = map[status] ?? map[0];
+    return {
+      status,
+      icon: entry.icon,
+      tone: entry.tone,
+      title: this.tr(`portal.profile.verificationHero${entry.key}Title`),
+      body: this.tr(`portal.profile.verificationHero${entry.key}Body`),
+    };
+  });
+
+  readonly trustBadgeProgress = computed(() => {
+    const granted = VERIFICATION_BADGE_TYPES.filter((t) => this.trustBadgeGranted(t)).length;
+    return this.tr("portal.profile.verificationTrustBadgesProgress", {
+      granted,
+      total: VERIFICATION_BADGE_TYPES.length,
+    });
+  });
+
+  readonly verificationSteps = computed(() => {
+    const status = this.profile()?.status ?? 0;
+    const labels = [
+      this.tr("portal.profile.verificationStepDraft"),
+      this.tr("portal.profile.verificationStepInReview"),
+      this.tr("portal.profile.verificationStepVerified"),
+    ];
+    let activeIndex = 0;
+    if (status === 1) {
+      activeIndex = 1;
+    } else if (status === 2) {
+      activeIndex = 2;
+    } else if (status === 3) {
+      return {
+        labels: [
+          labels[0],
+          this.tr("portal.profile.verificationStepRejected"),
+          labels[2],
+        ],
+        activeIndex: 1,
+      };
+    } else if (status === 4) {
+      return {
+        labels: [
+          labels[0],
+          this.tr("portal.profile.verificationStepSuspended"),
+          labels[2],
+        ],
+        activeIndex: 1,
+      };
+    }
+    return { labels, activeIndex };
+  });
+
+  readonly prerequisitesMet = computed(() => {
+    const p = this.profile();
+    if (!p) return false;
+    const hasLocation = p.locations.some((l) => l.isActive && l.slug.trim().length > 0);
+    const profileReady =
+      p.businessName.trim().length >= 2 && p.categorySlug.trim().length > 0 && p.phone.trim().length >= 10;
+    return hasLocation && profileReady;
+  });
 
   ngOnInit(): void {
     void this.load();
@@ -116,10 +233,30 @@ export class ProfileComponent implements OnInit, OnDestroy {
       }
       void this.activeLocation.runOnBranchSwitch(() => this.loadReviews(profile));
     });
+    this.verificationSub = merge(
+      this.operationsRealtime.tenantVerificationChanged$,
+      this.operationsRealtime.tenantBadgesChanged$,
+    ).subscribe((event) => {
+      if (event.tenantId === this.profile()?.tenantId) {
+        void this.refreshVerificationState();
+      }
+    });
   }
 
   ngOnDestroy(): void {
     this.branchSub?.unsubscribe();
+    this.verificationSub?.unsubscribe();
+  }
+
+  /** Realtime: re-fetch profile status + badge rows without the loading overlay or touching form drafts. */
+  private async refreshVerificationState(): Promise<void> {
+    try {
+      const p = await this.api.withAuthorizedClient((c) => c.getTenantProfile());
+      this.profile.set(p);
+      await this.loadTrustBadges(p);
+    } catch {
+      // Keep current UI; user can reload.
+    }
   }
 
   canEdit(): boolean {
@@ -154,7 +291,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.additionalCategorySlugs = [...(p.additionalCategorySlugs ?? [])];
         this.coverPreview.set(resolveBusinessCoverImage(p.categorySlug, p.coverImageUrl));
         this.galleryImages.set(p.galleryImages ?? []);
-        await Promise.all([this.loadCategories(p), this.loadReviews(p)]);
+        await Promise.all([this.loadCategories(p), this.loadReviews(p), this.loadTrustBadges(p)]);
       });
     } catch (caught) {
       this.error.set(this.apiErr(caught, "portal.profile.couldNotLoadProfile"));
@@ -281,6 +418,67 @@ export class ProfileComponent implements OnInit, OnDestroy {
     return p ? p.status === 0 || p.status === 3 : false;
   }
 
+  isSuspended(): boolean {
+    return this.profile()?.status === 4;
+  }
+
+  async loadTrustBadges(profile: BusinessProfile): Promise<void> {
+    if (profile.status !== 2) {
+      this.trustBadges.set([]);
+      return;
+    }
+    try {
+      const items = await this.api.withAuthorizedClient((c) => c.listTenantVerificationBadges());
+      this.trustBadges.set(items);
+    } catch {
+      this.trustBadges.set([]);
+    }
+  }
+
+  async requestTrustBadge(badgeType: VerificationBadgeType): Promise<void> {
+    const reference = this.verificationBadgeMeta[badgeType].referenceKey
+      ? this.trustBadgeReferences[badgeType]?.trim() || undefined
+      : undefined;
+    if (reference && reference.length < 5) {
+      this.feedback.error(this.tr("portal.profile.referenceNumberMustBeAt"));
+      return;
+    }
+
+    this.trustBadgeBusy.set(badgeType);
+    try {
+      const requested = await this.api.withAuthorizedClient((c) =>
+        c.requestVerificationBadge({ badgeType, referenceNumber: reference }),
+      );
+      // Show Pending immediately; the list reload below keeps it after refresh.
+      this.trustBadges.update((items) => [
+        ...items.filter((b) => b.badgeType !== badgeType),
+        requested,
+      ]);
+      this.trustBadgeReferences[badgeType] = "";
+      this.feedback.success(this.tr("portal.profile.verificationRequestBadge"));
+      const p = this.profile();
+      if (p) {
+        await this.loadTrustBadges(p);
+      }
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "portal.profile.couldNotSubmitVerification"));
+    } finally {
+      this.trustBadgeBusy.set(null);
+    }
+  }
+
+  docTypeLabel(documentType: number): string {
+    return this.verificationLabels[documentType] ?? String(documentType);
+  }
+
+  trustBadgeGranted(badgeType: string): boolean {
+    return this.trustBadges().some((b) => b.badgeType === badgeType && b.status === "granted");
+  }
+
+  trustBadgePending(badgeType: string): boolean {
+    return this.trustBadges().some((b) => b.badgeType === badgeType && b.status === "pending");
+  }
+
   async loadReviews(profile: BusinessProfile): Promise<void> {
     const branch =
       this.activeLocation.resolveContextLocation(profile)
@@ -329,8 +527,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   async submitVerification(): Promise<void> {
     if (!this.canSubmitVerification()) return;
-    if (this.verificationReference.trim().length < 4) {
+    if (this.verificationReference.trim().length < 5) {
       this.error.set(this.tr("portal.profile.referenceNumberMustBeAt"));
+      return;
+    }
+    if (!this.prerequisitesMet()) {
+      this.error.set(this.tr("portal.profile.fixRequiredFieldsBeforeSaving"));
       return;
     }
     this.saving.set(true);
@@ -342,17 +544,56 @@ export class ProfileComponent implements OnInit, OnDestroy {
             {
               documentType: this.verificationDocType,
               referenceNumber: this.verificationReference.trim(),
+              storageFileKey: this.verificationFileKey() ?? undefined,
             },
           ],
         }),
       );
       this.verificationMessage.set(this.tr("portal.profile.verificationSubmittedAdminWillReview"));
       this.verificationReference = "";
+      this.verificationFileKey.set(null);
       await this.load();
     } catch (caught) {
       this.error.set(this.apiErr(caught, "portal.profile.couldNotSubmitVerification"));
     } finally {
       this.saving.set(false);
+    }
+  }
+
+  async onVerificationFileSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const allowed = new Set(["image/jpeg", "image/png", "application/pdf"]);
+    if (!allowed.has(file.type)) {
+      this.error.set(this.tr("common.useJpegPngWebp"));
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      this.error.set(this.tr("common.photoMustBe5Mb"));
+      return;
+    }
+
+    this.verificationFileUploading.set(true);
+    this.error.set(null);
+    try {
+      const key = await this.api.withAuthorizedClient(async (c) => {
+        const slot = await c.createVerificationDocumentUploadUrl(file.type, file.size);
+        const upload = await fetch(slot.uploadUrl, {
+          method: "PUT",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+        if (!upload.ok) throw new Error("upload failed");
+        return slot.storageKey;
+      });
+      this.verificationFileKey.set(key);
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.profile.couldNotSubmitVerification"));
+    } finally {
+      this.verificationFileUploading.set(false);
+      input.value = "";
     }
   }
 

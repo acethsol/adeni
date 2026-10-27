@@ -18,7 +18,9 @@ using Adeni.Infrastructure.Markets;
 using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Subscriptions;
 using Adeni.Infrastructure.Tenancy;
+using Adeni.Application.Notifications;
 using Adeni.Application.Storage;
+using Adeni.Infrastructure.Tests.Notifications;
 using Adeni.Infrastructure.Tests.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
@@ -117,6 +119,66 @@ public sealed class BusinessOnboardingServiceTests
             e => e.Action == AuditActions.TenantSettingsUpdated
                 && e.EntityId == tenantId.ToString()
                 && e.ActorId == auth0Sub);
+    }
+
+    [Fact]
+    public async Task UpdatePublicPage_fails_when_pending_verification()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var service = scope.ServiceProvider.GetRequiredService<BusinessOnboardingService>();
+        const string auth0Sub = "auth0|owner-pending-page";
+
+        var tenantId = (await service.RegisterAsync(ValidRequest, auth0Sub)).Value!.TenantId;
+        await service.SubmitVerificationAsync(
+            tenantId,
+            new SubmitVerificationRequest([new(VerificationDocumentType.Cac, "RC12345")]),
+            auth0Sub);
+
+        var result = await service.UpdatePublicPageAsync(
+            tenantId,
+            new UpdatePublicPageRequest(
+                "studio",
+                new PublicPageSectionsDto(true, true, true, true, true)),
+            auth0Sub);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("validation", result.Error.Code);
+    }
+
+    [Fact]
+    public async Task Reject_reason_on_profile_cleared_on_resubmit()
+    {
+        await using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+        var onboarding = scope.ServiceProvider.GetRequiredService<BusinessOnboardingService>();
+        var admin = scope.ServiceProvider.GetRequiredService<AdminBusinessService>();
+        const string auth0Sub = "auth0|owner-reject-reason";
+
+        var tenantId = (await onboarding.RegisterAsync(ValidRequest, auth0Sub)).Value!.TenantId;
+        await onboarding.SubmitVerificationAsync(
+            tenantId,
+            new SubmitVerificationRequest([new(VerificationDocumentType.Cac, "RC12345")]),
+            auth0Sub);
+
+        await admin.RejectAsync(tenantId, "admin-1", "Documents did not match business name on file.");
+
+        var rejectedProfile = await onboarding.GetProfileAsync(tenantId, auth0Sub);
+        Assert.True(rejectedProfile.IsSuccess);
+        Assert.Equal(TenantStatus.Rejected, rejectedProfile.Value!.Status);
+        Assert.Equal(
+            "Documents did not match business name on file.",
+            rejectedProfile.Value.VerificationRejectionReason);
+
+        await onboarding.SubmitVerificationAsync(
+            tenantId,
+            new SubmitVerificationRequest([new(VerificationDocumentType.Cac, "RC54321")]),
+            auth0Sub);
+
+        var resubmittedProfile = await onboarding.GetProfileAsync(tenantId, auth0Sub);
+        Assert.True(resubmittedProfile.IsSuccess);
+        Assert.Equal(TenantStatus.PendingVerification, resubmittedProfile.Value!.Status);
+        Assert.Null(resubmittedProfile.Value.VerificationRejectionReason);
     }
 
     [Fact]
@@ -295,6 +357,7 @@ public sealed class BusinessOnboardingServiceTests
         services.AddBookingTestRealtime();
         services.AddScoped<IPricingCatalogService, PricingCatalogService>();
         services.AddScoped<ITenantPricingResolver, TenantPricingResolver>();
+        services.AddSingleton<IVerificationLifecycleNotifier, NoopVerificationLifecycleNotifier>();
         services.AddScoped<BusinessOnboardingService>();
         services.AddScoped<AdminBusinessService>();
         var provider = services.BuildServiceProvider();

@@ -63,11 +63,30 @@
         <admin-pill [label]="item.marketId" variant="neutral" [compact]="true" />
       </ng-template>
       <ng-template adeniDataTableCell="submitted" let-item>
-        <span class="muted">{{ item.createdAt | date: "mediumDate" }}</span>
+        <span class="muted">{{ submittedAt(item) | date: "mediumDate" }}</span>
       </ng-template>
       <ng-template adeniDataTableCell="docs" let-item>
         @let docs = docCountPill(item.documents?.length ?? 0);
-        <admin-pill [label]="docs.label" [variant]="docs.variant" />
+        <button type="button" class="pill-btn" (click)="toggleExpanded(item)">
+          <admin-pill [label]="docs.label" [variant]="docs.variant" />
+        </button>
+        @if (expandedRowId() === item.id && (item.documents?.length ?? 0) > 0) {
+          <ul class="doc-detail">
+            @for (doc of item.documents ?? []; track doc.id) {
+              <li>
+                <strong>{{ docTypeLabel(doc.documentType) }}</strong>
+                · {{ doc.referenceNumber }}
+                · {{ doc.submittedAt | date: "mediumDate" }}
+                @if (doc.hasUploadedFile) {
+                  ·
+                  <button type="button" class="linkish" (click)="viewUploadedFile(item, doc.id)">
+                    {{ tr('admin.pending.viewUploadedFile') }}
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        }
       </ng-template>
       <ng-template adeniDataTableActions let-item>
         <div class="actions-inline">
@@ -75,7 +94,7 @@
             variant="danger"
             icon="misuse"
             [disabled]="busyId() === item.id"
-            (pressed)="reject(item)"
+            (pressed)="openRejectModal(item)"
           >
             {{ tr('admin.pending.reject') }}
           </adeni-staff-btn>
@@ -102,4 +121,28 @@
       (pageSizeChange)="onPageSizeChange($event)"
     />
   }
+
+  <adeni-modal
+    [open]="rejectModalOpen()"
+    [title]="tr('admin.pending.rejectModalTitle')"
+    (closed)="closeRejectModal()"
+    [hasFooter]="true"
+  >
+    <p class="muted">{{ tr('admin.pending.rejectModalHint') }}</p>
+    <div class="field">
+      <label for="reject-reason">{{ tr('admin.pending.rejectReasonLabel') }}</label>
+      <textarea id="reject-reason" rows="4" [(ngModel)]="rejectReasonDraft"></textarea>
+    </div>
+    <div modalFooter class="modal-actions">
+      <adeni-staff-btn variant="secondary" icon="close" (pressed)="closeRejectModal()">{{ tr('common.cancel') }}</adeni-staff-btn>
+      <adeni-staff-btn
+        variant="danger"
+        icon="misuse"
+        [disabled]="busyId() !== null"
+        (pressed)="confirmReject()"
+      >
+        {{ tr('admin.pending.reject') }}
+      </adeni-staff-btn>
+    </div>
+  </adeni-modal>
 </app-portal-page>

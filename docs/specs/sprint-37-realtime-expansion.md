@@ -26,7 +26,7 @@ Extend SignalR beyond portal messaging: customer Discover threads, portal chrome
 | Hub | Route | Join | Events |
 |-----|-------|------|--------|
 | Messaging | `/hubs/messaging` | Existing | `MessageCreated`, `ConversationUpdated`, `ReadUpdated` |
-| Operations | `/hubs/operations` | `JoinTenant`, `JoinAdminVerification`, `JoinPaymentCheckout` (stub/public checkout) | `PendingBookingsChanged`, `QueueFloorChanged`, `QuotePipelineChanged`, `AdminVerificationChanged`, `PaymentCompleted` |
+| Operations | `/hubs/operations` | `JoinTenant`, `JoinAdminVerification`, `JoinPaymentCheckout` (stub/public checkout) | `PendingBookingsChanged`, `QueueFloorChanged`, `QuotePipelineChanged`, `AdminVerificationChanged`, `AdminBadgesChanged`, `TenantVerificationChanged`, `TenantBadgesChanged`, `PaymentCompleted` |
 
 ## Client wiring (summary)
 
@@ -38,6 +38,17 @@ Extend SignalR beyond portal messaging: customer Discover threads, portal chrome
 | Discover `/my-messages` | Messaging | `JoinConversation` + `MessageCreated` (bot/FAQ same event) |
 | Discover checkout stub | Operations | `JoinPaymentCheckout(reference)` → paid UI hint |
 | Admin shell + pending | Operations | `JoinAdminVerification` → badge + list refresh |
+
+## Addendum — verification & trust badge pushes
+
+| Event | Group | Payload | Published from |
+|-------|-------|---------|----------------|
+| `AdminVerificationChanged` | `admin-verification` | `{ pendingCount }` | Business submit (existing) **and** admin approve/reject (`AdminBusinessService.UpdateStatusAsync`) |
+| `AdminBadgesChanged` | `admin-verification` | `{ pendingCount }` (pending trust-badge requests) | `VerificationBadgeService` request / grant / revoke / initial grants on approval |
+| `TenantVerificationChanged` | `tenant-ops:{tenantId}` | `{ tenantId, status }` — `status` is `verified` \| `rejected` | Admin approve / reject |
+| `TenantBadgesChanged` | `tenant-ops:{tenantId}` | `{ tenantId, badgeType \| null, status }` — `status` is `pending` \| `granted` \| `revoked`; `badgeType` null = batch grant after approval | Badge request / grant / revoke / `GrantInitialBadgesOnApprovalAsync` |
+
+Clients: portal shell refreshes profile on `TenantVerificationChanged`; portal Profile page silently reloads profile + badge rows on either tenant event; admin shell updates the nav badge from `AdminBadgesChanged`, and the Trust badges page reloads its queue. Pending counts use `IgnoreQueryFilters()` so tenant-scoped callers (submit, badge request) still publish the global count.
 
 ## Follow-ups
 

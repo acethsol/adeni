@@ -19,6 +19,21 @@ public sealed class NoOpTenantRealtimePublisher : ITenantRealtimePublisher
         int pendingCount,
         CancellationToken cancellationToken = default) => Task.CompletedTask;
 
+    public Task PublishTenantVerificationChangedAsync(
+        Guid tenantId,
+        string status,
+        CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+    public Task PublishTenantBadgesChangedAsync(
+        Guid tenantId,
+        string? badgeType,
+        string status,
+        CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+    public Task PublishAdminBadgesChangedAsync(
+        int pendingCount,
+        CancellationToken cancellationToken = default) => Task.CompletedTask;
+
     public Task PublishPaymentCompletedAsync(
         Guid tenantId,
         Guid paymentIntentId,

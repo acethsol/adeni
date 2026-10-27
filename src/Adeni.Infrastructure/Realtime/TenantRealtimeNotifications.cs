@@ -46,9 +46,23 @@ internal static class TenantRealtimeNotifications
         AdeniDbContext dbContext,
         CancellationToken cancellationToken)
     {
+        // Global count: tenant query filters would otherwise scope this to the caller's tenant.
         var pendingCount = await dbContext.Tenants
+            .IgnoreQueryFilters()
             .AsNoTracking()
             .CountAsync(x => x.Status == TenantStatus.PendingVerification, cancellationToken);
         await publisher.PublishAdminVerificationChangedAsync(pendingCount, cancellationToken);
+    }
+
+    internal static async Task PublishAdminBadgesAsync(
+        ITenantRealtimePublisher publisher,
+        AdeniDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var pendingCount = await dbContext.TenantVerificationBadges
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .CountAsync(x => x.Status == VerificationBadgeStatus.Pending, cancellationToken);
+        await publisher.PublishAdminBadgesChangedAsync(pendingCount, cancellationToken);
     }
 }

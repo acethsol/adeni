@@ -384,6 +384,10 @@ export class AdeniApiClient extends ApiTransport {
     return this.business.createGalleryUploadUrl(...args);
   }
 
+  createVerificationDocumentUploadUrl(...args: Parameters<BusinessApi["createVerificationDocumentUploadUrl"]>): ReturnType<BusinessApi["createVerificationDocumentUploadUrl"]> {
+    return this.business.createVerificationDocumentUploadUrl(...args);
+  }
+
   createStaffAvatarUploadUrl(...args: Parameters<StaffApi["createStaffAvatarUploadUrl"]>): ReturnType<StaffApi["createStaffAvatarUploadUrl"]> {
     return this.staff.createStaffAvatarUploadUrl(...args);
   }
@@ -655,6 +659,10 @@ export class AdeniApiClient extends ApiTransport {
 
   getAdminBusiness(...args: Parameters<AdminApi["getAdminBusiness"]>): ReturnType<AdminApi["getAdminBusiness"]> {
     return this.admin.getAdminBusiness(...args);
+  }
+
+  getAdminVerificationDocumentDownloadUrl(...args: Parameters<AdminApi["getAdminVerificationDocumentDownloadUrl"]>): ReturnType<AdminApi["getAdminVerificationDocumentDownloadUrl"]> {
+    return this.admin.getAdminVerificationDocumentDownloadUrl(...args);
   }
 
   listAdminTenantCommercialAudit(...args: Parameters<AdminApi["listAdminTenantCommercialAudit"]>): ReturnType<AdminApi["listAdminTenantCommercialAudit"]> {
