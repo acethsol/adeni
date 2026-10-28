@@ -32,6 +32,7 @@ public sealed record TenantEntitlements(
     bool MultiLocationReporting,
     bool AdvancedPermissions,
     bool PrioritySupport,
+    bool Packages,
     bool MultiLocation);
 
 public static class SubscriptionEntitlements

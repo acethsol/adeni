@@ -15,7 +15,8 @@ public sealed record CustomerActivityBatch(IReadOnlyList<CustomerActivityItem> I
 public sealed record CustomerBookingProfile(CustomerVisitSummary? Visits, CustomerNextAppointment? NextAppointment);
 public sealed record CustomerProfileResponse(Guid TenantCustomerId, DateTimeOffset AsOf, Guid? LocationId,
     CustomerSourceAvailability Availability, CustomerVisitSummary? VisitSummary, CustomerNextAppointment? NextAppointment,
-    IReadOnlyList<CustomerCurrencyTotal>? RecordedOnlinePaymentsByCurrency);
+    IReadOnlyList<CustomerCurrencyTotal>? RecordedOnlinePaymentsByCurrency,
+    Adeni.Application.Retention.CustomerPackageSummary? Packages = null);
 public sealed record CustomerActivityResponse(IReadOnlyList<CustomerActivityItem> Items, string? NextCursor,
     DateTimeOffset AsOf, DateTimeOffset From, bool IsTruncated, CustomerSourceAvailability Availability);
 

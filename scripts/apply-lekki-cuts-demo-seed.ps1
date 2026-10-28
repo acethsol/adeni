@@ -2,10 +2,12 @@
 <#
 .SYNOPSIS
   Seeds (or removes with -Cleanup) sizeable Lekki Cuts demo data for every active branch:
-  ~30 staff per branch, customers, bookings, reviews, messages, queue tickets, calendar blocks.
+  ~30 staff per branch, customers, bookings, reviews, messages, queue tickets, calendar blocks,
+  plus a published wellness consultation intake form (Barbering, Braids, Locs).
 .DESCRIPTION
   Idempotent. Uses the Development connection string (SQL login) unless -ConnectionString is passed.
   Requires sqlcmd on PATH and the API to have run once in Development (base tenant + branches).
+  Run ./scripts/publish-db.ps1 first when the intake schema is missing.
 #>
 param(
     [string] $ConnectionString = "",
@@ -45,14 +47,30 @@ if (-not $server -or -not $database) {
     throw "Could not parse Server/Database from connection string."
 }
 
-$fileName = if ($Cleanup) { "seed-lekki-cuts-demo-cleanup.sql" } else { "seed-lekki-cuts-demo.sql" }
-$sqlPath = Join-Path $root "db/scripts/$fileName"
+$sqlFiles = if ($Cleanup) {
+    @(
+        "seed-lekki-cuts-intake-consultation-cleanup.sql",
+        "seed-lekki-cuts-demo-cleanup.sql"
+    )
+} else {
+    @(
+        "seed-lekki-cuts-demo.sql",
+        "seed-lekki-cuts-intake-consultation.sql"
+    )
+}
 
-# -I = QUOTED_IDENTIFIER ON (filtered indexes); -C trusts the dev container certificate
-$args = @("-S", $server, "-d", $database, "-i", $sqlPath, "-b", "-I", "-C", "-W")
-if ($user) { $args += @("-U", $user, "-P", $password) } else { $args += "-E" }
+function Invoke-SeedSql([string] $fileName) {
+    $sqlPath = Join-Path $root "db/scripts/$fileName"
+    # -I = QUOTED_IDENTIFIER ON (filtered indexes); -C trusts the dev container certificate
+    $args = @("-S", $server, "-d", $database, "-i", $sqlPath, "-b", "-I", "-C", "-W")
+    if ($user) { $args += @("-U", $user, "-P", $password) } else { $args += "-E" }
+    Write-Host "Running $fileName on $database @ $server ..."
+    & sqlcmd @args
+    if ($LASTEXITCODE -ne 0) { throw "sqlcmd failed on $fileName with exit code $LASTEXITCODE" }
+}
 
-Write-Host "Running $fileName on $database @ $server ..."
-& sqlcmd @args
-if ($LASTEXITCODE -ne 0) { throw "sqlcmd failed with exit code $LASTEXITCODE" }
+foreach ($fileName in $sqlFiles) {
+    Invoke-SeedSql $fileName
+}
+
 Write-Host "Done. Restart the API only if you need to clear Redis-cached profile/discovery data."

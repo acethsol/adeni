@@ -23,6 +23,7 @@ public sealed class ModuleBoundaryArchitectureTests
         "Adeni.Infrastructure.Messaging",
         "Adeni.Infrastructure.Reporting",
         "Adeni.Infrastructure.Dashboard",
+        "Adeni.Infrastructure.Retention",
     ];
 
     [Fact]

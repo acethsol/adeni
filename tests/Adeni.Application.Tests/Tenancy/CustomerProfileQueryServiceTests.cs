@@ -44,6 +44,47 @@ public sealed class CustomerProfileQueryServiceTests
         Assert.Equal("notImplemented", result.Value.Availability.Preferences);
     }
 
+    private sealed class PackageSummaries(Adeni.Application.Retention.CustomerPackageSummary? summary) : Adeni.Application.Retention.ICustomerPackageSummaryQuery
+    {
+        public int Calls { get; private set; }
+
+        public Task<Adeni.Application.Retention.CustomerPackageSummary?> GetSummaryAsync(Guid tenantId, Guid tenantCustomerId, CancellationToken cancellationToken = default)
+        {
+            Calls++;
+            return Task.FromResult(summary);
+        }
+    }
+
+    [Fact]
+    public async Task Profile_WithPackagesEntitlement_ExposesRetentionSummary()
+    {
+        actor.Role = PortalPermissionRoles.Owner;
+        context.Entitlements = context.Entitlements with { Packages = true };
+        var summaries = new PackageSummaries(new(1, 2, ["Cut x3"]));
+        actor.TenantId = tenant;
+        var service = new CustomerProfileQueryService(actor, context, locations, sources, sources, sources, new Cursor(), clock, summaries);
+
+        var result = await service.GetProfileAsync(tenant, customer, "actor");
+
+        Assert.Equal("available", result.Value!.Availability.Retention);
+        Assert.Equal(2, result.Value.Packages!.TotalRemainingCredits);
+    }
+
+    [Fact]
+    public async Task Profile_WithoutPackagesEntitlement_ReportsNotEntitledAndSkipsQuery()
+    {
+        actor.Role = PortalPermissionRoles.Owner;
+        context.Entitlements = context.Entitlements with { Packages = false };
+        var summaries = new PackageSummaries(new(1, 2, ["Cut x3"]));
+        actor.TenantId = tenant;
+        var service = new CustomerProfileQueryService(actor, context, locations, sources, sources, sources, new Cursor(), clock, summaries);
+
+        var result = await service.GetProfileAsync(tenant, customer, "actor");
+
+        Assert.Equal("notEntitled", result.Value!.Availability.Retention);
+        Assert.Null(result.Value.Packages);
+        Assert.Equal(0, summaries.Calls);
+    }
     [Theory]
     [InlineData(PortalPermissionRoles.Practitioner)]
     [InlineData(PortalPermissionRoles.Accountant)]

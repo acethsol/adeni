@@ -19,6 +19,7 @@ export const PORTAL_PERMISSIONS = [
   "portal.profile",
   "portal.finance",
   "portal.plan",
+  "portal.retention",
 ] as const;
 
 export type PortalPermission = (typeof PORTAL_PERMISSIONS)[number];
@@ -45,6 +46,7 @@ const RECEPTIONIST: readonly PortalPermission[] = [
   "portal.quotes",
   "portal.services",
   "portal.hours",
+  "portal.retention",
 ];
 
 const PRACTITIONER: readonly PortalPermission[] = [

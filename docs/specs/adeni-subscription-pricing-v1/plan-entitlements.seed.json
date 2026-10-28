@@ -24,7 +24,8 @@
     "waitlist": false,
     "multiLocationReporting": false,
     "advancedPermissions": false,
-    "prioritySupport": false
+    "prioritySupport": false,
+    "packages": true
   },
   "professional": {
     "maxLocations": 1,
@@ -51,7 +52,8 @@
     "waitlist": true,
     "multiLocationReporting": false,
     "advancedPermissions": false,
-    "prioritySupport": false
+    "prioritySupport": false,
+    "packages": true
   },
   "business": {
     "maxLocations": 3,
@@ -78,6 +80,7 @@
     "waitlist": true,
     "multiLocationReporting": true,
     "advancedPermissions": true,
-    "prioritySupport": true
+    "prioritySupport": true,
+    "packages": true
   }
 }

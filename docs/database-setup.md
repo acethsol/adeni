@@ -57,11 +57,11 @@ To re-seed from scratch, drop/recreate the `adeni` database, re-run `./scripts/p
 **Lekki Cuts demo volume (portal/admin grids):** the API seeder only creates a handful of rows. For ~30 staff per branch plus customers, bookings (past / today / upcoming), reviews, booking + profile message threads with unread, queue tickets and calendar blocks (leave, closed dates), run:
 
 ```powershell
-./scripts/apply-lekki-cuts-demo-seed.ps1            # seed (idempotent, per-block markers)
-./scripts/apply-lekki-cuts-demo-seed.ps1 -Cleanup   # remove only the rows this script created
+./scripts/apply-lekki-cuts-demo-seed.ps1            # seed demo data + wellness consultation intake (idempotent)
+./scripts/apply-lekki-cuts-demo-seed.ps1 -Cleanup   # remove only the rows these scripts created
 ```
 
-Requires `sqlcmd` on PATH, the schema published (`./scripts/publish-db.ps1`) and the API started once in Development (so `lekki-cuts`, its branches, services and the `auth0|local-business` owner exist). It reads `ConnectionStrings:AdeniDb` from `appsettings.Development.json` (SQL login or `-E`); or pass `-ConnectionString`. Direct: `sqlcmd -S localhost,1433 -U sa -P <pwd> -C -d adeni -I -i db/scripts/seed-lekki-cuts-demo.sql` (`-I` = QUOTED_IDENTIFIER ON, needed for filtered indexes). SQL: [`seed-lekki-cuts-demo.sql`](../db/scripts/seed-lekki-cuts-demo.sql), [`seed-lekki-cuts-demo-cleanup.sql`](../db/scripts/seed-lekki-cuts-demo-cleanup.sql). Fake PII only (`@seed.lekki.local`, `auth0|dev-lekki-demo-NNN`). Bookings are relative to the run time, so re-run cleanup + seed to refresh "today/upcoming" dates.
+Requires `sqlcmd` on PATH, the schema published (`./scripts/publish-db.ps1`) and the API started once in Development (so `lekki-cuts`, its branches, services and the `auth0|local-business` owner exist). It reads `ConnectionStrings:AdeniDb` from `appsettings.Development.json` (SQL login or `-E`); or pass `-ConnectionString`. Direct: `sqlcmd -S localhost,1433 -U sa -P <pwd> -C -d adeni -I -i db/scripts/seed-lekki-cuts-demo.sql` then `-i db/scripts/seed-lekki-cuts-intake-consultation.sql` (`-I` = QUOTED_IDENTIFIER ON, needed for filtered indexes). SQL: [`seed-lekki-cuts-demo.sql`](../db/scripts/seed-lekki-cuts-demo.sql), [`seed-lekki-cuts-demo-cleanup.sql`](../db/scripts/seed-lekki-cuts-demo-cleanup.sql), [`seed-lekki-cuts-intake-consultation.sql`](../db/scripts/seed-lekki-cuts-intake-consultation.sql), [`seed-lekki-cuts-intake-consultation-cleanup.sql`](../db/scripts/seed-lekki-cuts-intake-consultation-cleanup.sql). The intake script publishes **Wellness consultation** (mapped from a scanned spa form) and links it to **Barbering**, **Braids**, and **Locs**. Fake PII only (`@seed.lekki.local`, `auth0|dev-lekki-demo-NNN`). Bookings are relative to the run time, so re-run cleanup + seed to refresh "today/upcoming" dates.
 
 ## Optional Redis UI
 

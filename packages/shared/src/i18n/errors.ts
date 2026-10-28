@@ -3,6 +3,22 @@ import type { MessageTree } from "./types";
 export const enErrorMessages: MessageTree = {
   calendar: { unavailable: "Calendar integration is unavailable. Check configuration or reconnect, then retry.", authorization_invalid: "The calendar connection attempt expired or could not be verified. Start again from Adeni." },
   commerce: { validation: "Check the amount, currency and payment request.", conflict: "The request changed or is already being processed. Refresh before retrying.", settlement_required: "Live business settlement is not available. This feature is currently sandbox-only.", credential_invalid: "This payment request or gift credential is unavailable." },
+  retention: {
+    package_not_found: "That package was not found.",
+    package_inactive: "This package is no longer for sale.",
+    package_not_active: "This package is not active.",
+    package_expired: "This package has expired.",
+    benefit_not_found: "That package benefit was not found.",
+    benefit_insufficient: "Not enough package credits remain for this booking.",
+    benefit_service_mismatch: "That package credit does not cover the selected service.",
+    benefit_conflict: "Package credits changed at the same time. Refresh and try again.",
+    scope_location_denied: "This package cannot be used at the selected location.",
+    sell_location_denied: "This package cannot be sold at the selected location.",
+    idempotency_key_required: "An Idempotency-Key header is required.",
+    idempotency_conflict: "That Idempotency-Key was already used for a different request.",
+    owner_required: "Only a business owner can do this.",
+    validation: "Check the package details and try again.",
+  },
   intake: {"validation": "Check the intake form fields.", "conflict": "The form changed or was already submitted. Refresh before continuing.", "submission_closed": "This booking is no longer open for intake submission."},
   subscription: {
     booking_limit_reached:
@@ -77,6 +93,7 @@ export const enErrorMessages: MessageTree = {
     practitioner_limit: "Your plan allows up to {maxPractitioners} active team members.",
     waitlist: "Waitlist is not included on your current plan.",
     sms: "SMS notifications are not included on your current plan.",
+    packages: "Prepaid packages are not included on your current plan.",
     exports: "Exports are not included on your current plan.",
     excel_export: "Excel export is not included on your current plan.",
     multi_location_reporting:
@@ -101,6 +118,22 @@ export const enErrorMessages: MessageTree = {
 export const frErrorMessages: MessageTree = {
   calendar: { unavailable: "L’intégration de calendrier est indisponible. Vérifiez la configuration ou reconnectez le compte.", authorization_invalid: "La connexion a expiré ou n’a pas pu être vérifiée. Recommencez depuis Adeni." },
   commerce: { validation: "Vérifiez le montant, la devise et la demande.", conflict: "La demande a changé ou est déjà en cours. Actualisez avant de réessayer.", settlement_required: "Le règlement commerçant réel n’est pas disponible. Cette fonction est réservée aux tests.", credential_invalid: "Cette demande ou ce code cadeau n’est pas disponible." },
+  retention: {
+    package_not_found: "Ce forfait est introuvable.",
+    package_inactive: "Ce forfait n’est plus en vente.",
+    package_not_active: "Ce forfait n’est pas actif.",
+    package_expired: "Ce forfait est expiré.",
+    benefit_not_found: "Cet avantage du forfait est introuvable.",
+    benefit_insufficient: "Il ne reste pas assez de crédits de forfait pour cette réservation.",
+    benefit_service_mismatch: "Ce crédit de forfait ne couvre pas le service sélectionné.",
+    benefit_conflict: "Les crédits du forfait ont changé en même temps. Actualisez et réessayez.",
+    scope_location_denied: "Ce forfait ne peut pas être utilisé à l’établissement sélectionné.",
+    sell_location_denied: "Ce forfait ne peut pas être vendu à l’établissement sélectionné.",
+    idempotency_key_required: "L’en-tête Idempotency-Key est requis.",
+    idempotency_conflict: "Cette clé Idempotency-Key a déjà servi pour une autre demande.",
+    owner_required: "Seul un propriétaire de l’entreprise peut effectuer cette action.",
+    validation: "Vérifiez les détails du forfait et réessayez.",
+  },
   intake: {"validation": "Vérifiez les champs du formulaire.", "conflict": "Le formulaire a changé ou a déjà été envoyé. Actualisez avant de continuer.", "submission_closed": "Cette réservation ne permet plus d’envoyer ce formulaire."},
   subscription: {
     booking_limit_reached:
@@ -156,6 +189,7 @@ export const frErrorMessages: MessageTree = {
     practitioner_limit: "Votre forfait permet jusqu'à {maxPractitioners} membres d'équipe actifs.",
     waitlist: "La liste d'attente n'est pas incluse dans votre forfait actuel.",
     sms: "Les notifications par SMS ne sont pas incluses dans votre forfait actuel.",
+    packages: "Les forfaits prépayés ne sont pas inclus dans votre forfait actuel.",
     exports: "Les exportations ne sont pas incluses dans votre forfait actuel.",
     excel_export: "L'exportation Excel n'est pas incluse dans votre forfait actuel.",
     multi_location_reporting:

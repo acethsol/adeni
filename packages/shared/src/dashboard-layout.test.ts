@@ -16,6 +16,7 @@ const starterEntitlements = {
   staffPerformanceAnalytics: false,
   multiLocationReporting: false,
   prioritySupport: false,
+  packages: false,
   multiLocation: false,
 } as const;
 

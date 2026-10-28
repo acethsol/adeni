@@ -1,11 +1,12 @@
 import { z } from "zod";
+import { customerPackageSummarySchema } from "./retention";
 
 export const customerSourceAvailabilitySchema = z.object({
   booking: z.enum(["available"]),
   finance: z.enum(["available", "restricted", "notEntitled", "notLinked"]),
   messaging: z.enum(["available", "restricted", "notEntitled", "notLinked", "unscoped"]),
   preferences: z.literal("notImplemented"),
-  retention: z.literal("notImplemented"),
+  retention: z.enum(["available", "notEntitled", "notImplemented"]),
 });
 
 export const customerProfileSchema = z.object({
@@ -16,6 +17,7 @@ export const customerProfileSchema = z.object({
   visitSummary: z.object({ completedBookings: z.number().int().nonnegative(), completedWalkIns: z.number().int().nonnegative() }).nullable(),
   nextAppointment: z.object({ bookingId: z.string(), startAt: z.string(), serviceName: z.string(), status: z.enum(["Pending", "Confirmed"]) }).nullable(),
   recordedOnlinePaymentsByCurrency: z.array(z.object({ currency: z.string(), amount: z.number() })).nullable(),
+  packages: customerPackageSummarySchema.nullable().optional(),
 });
 
 export const customerActivityItemSchema = z.object({

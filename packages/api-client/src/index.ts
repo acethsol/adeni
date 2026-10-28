@@ -2,6 +2,7 @@ import { InsightsApi } from "./insights/insights-api";
 import { CalendarApi } from "./calendar/calendar-api";
 import { CommerceApi } from "./finance/commerce-api";
 import { IntakeApi } from "./intake/intake-api";
+import { RetentionApi } from "./retention/retention-api";
 export { AdeniApiError, type AdeniApiClientOptions } from "./core/api-transport";
 export type { DiscoverySearchParams } from "./discovery/discovery-api";
 import { ApiTransport, type ApiClientContext } from "./core/api-transport";
@@ -44,6 +45,7 @@ export class AdeniApiClient extends ApiTransport {
   readonly insights = new InsightsApi(this.context);
   readonly commerce = new CommerceApi(this.context);
   readonly intake = new IntakeApi(this.context);
+  readonly retention = new RetentionApi(this.context);
   private readonly staff = new StaffApi(this.context);
   private readonly messaging = new MessagingApi(this.context);
   private readonly catalog = new CatalogApi(this.context);

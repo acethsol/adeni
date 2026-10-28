@@ -101,6 +101,13 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         permission: ["portal.bookings", "portal.bookings.self"],
       },
       {
+        path: "/retention",
+        label: "Packages",
+        icon: "payments",
+        permission: "portal.retention",
+        entitlement: "packages",
+      },
+      {
         path: "/queue",
         label: "Queue",
         icon: "queue",

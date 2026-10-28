@@ -66,7 +66,8 @@ public sealed class JsonPlanEntitlementsMatrix : IPlanEntitlementsMatrix
             Waitlist: row.GetProperty("waitlist").GetBoolean(),
             MultiLocationReporting: row.GetProperty("multiLocationReporting").GetBoolean(),
             AdvancedPermissions: row.GetProperty("advancedPermissions").GetBoolean(),
-            PrioritySupport: row.GetProperty("prioritySupport").GetBoolean());
+            PrioritySupport: row.GetProperty("prioritySupport").GetBoolean(),
+            Packages: row.GetProperty("packages").GetBoolean());
 
     private static TenantEntitlements MapSeed(PlanEntitlementSeed seed) =>
         new(
@@ -99,6 +100,7 @@ public sealed class JsonPlanEntitlementsMatrix : IPlanEntitlementsMatrix
             MultiLocationReporting: seed.MultiLocationReporting,
             AdvancedPermissions: seed.AdvancedPermissions,
             PrioritySupport: seed.PrioritySupport,
+            Packages: seed.Packages,
             MultiLocation: seed.MaxLocations is null || seed.MaxLocations > 1);
 
     private sealed record PlanEntitlementSeed(
@@ -126,5 +128,6 @@ public sealed class JsonPlanEntitlementsMatrix : IPlanEntitlementsMatrix
         bool Waitlist,
         bool MultiLocationReporting,
         bool AdvancedPermissions,
-        bool PrioritySupport);
+        bool PrioritySupport,
+        bool Packages);
 }
