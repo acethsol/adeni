@@ -8,7 +8,7 @@
 |-------|-------|
 | **Sprint** | Sprint 37.1 — Packages & benefit ledger (R1-A Phase 1) |
 | **Author** | Engineering |
-| **Status** | Draft |
+| **Status** | Implemented (R1-A backend + DACPAC + booking hooks + portal MVP); deferred: Discover purchase UI, online checkout, SQL Server concurrency tests |
 | **Created** | 2026-10-28 |
 
 ---
