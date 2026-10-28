@@ -21,6 +21,7 @@ public static class PortalPermissions
     public const string Profile = "portal.profile";
     public const string Finance = "portal.finance";
     public const string Plan = "portal.plan";
+    public const string Retention = "portal.retention";
 
     public static readonly IReadOnlyList<string> All =
     [
@@ -38,6 +39,7 @@ public static class PortalPermissions
         Profile,
         Finance,
         Plan,
+        Retention,
     ];
 }
 
@@ -84,6 +86,7 @@ public static class PortalPermissionRoles
                 PortalPermissions.Quotes,
                 PortalPermissions.Services,
                 PortalPermissions.Hours,
+                PortalPermissions.Retention,
             ],
             Practitioner =>
             [

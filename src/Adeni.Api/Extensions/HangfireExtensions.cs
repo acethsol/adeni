@@ -63,6 +63,9 @@ public static class HangfireExtensions
         var recurringJobs = app.Services.GetRequiredService<IRecurringJobManager>();
         recurringJobs.AddOrUpdate<Adeni.Infrastructure.Finance.CommerceReconciliationJob>("commerce-reconciliation-v1",
             job => job.ExecuteAsync(CancellationToken.None), "*/5 * * * *");
+        recurringJobs.AddOrUpdate<Adeni.Infrastructure.Retention.PackageExpiryHangfireJob>(
+            Adeni.Infrastructure.Retention.PackageExpiryHangfireJob.RecurringJobId,
+            job => job.ExecuteAsync(CancellationToken.None), "15 * * * *");
         recurringJobs.AddOrUpdate<IntakeRetentionHangfireJob>("intake-retention-v1",
             job => job.ExecuteAsync(CancellationToken.None), "0 * * * *");
 

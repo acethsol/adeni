@@ -40,4 +40,11 @@ public static class AuditActions
     public const string TenantReportingExported = "tenant.reporting.exported";
     public const string AdminReportingRead = "admin.reporting.read";
     public const string AdminAuditLogsRead = "admin.audit_logs.read";
+
+    public const string RetentionPackageCreated = "retention.package_created";
+    public const string RetentionPackageUpdated = "retention.package_updated";
+    public const string RetentionPackageDeactivated = "retention.package_deactivated";
+    public const string RetentionPackageSold = "retention.package_sold";
+    public const string RetentionPackageVoided = "retention.package_voided";
+    public const string RetentionPackageExpired = "retention.package_expired";
 }

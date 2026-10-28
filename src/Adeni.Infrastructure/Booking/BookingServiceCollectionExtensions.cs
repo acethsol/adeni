@@ -19,6 +19,7 @@ public static class BookingServiceCollectionExtensions
         services.AddScoped<IBookingService, BookingService>();
         services.AddScoped<IIntakeBookingQuery, IntakeBookingQuery>();
         services.AddScoped<IIntakeServiceQuery, IntakeServiceQuery>();
+        services.AddScoped<Adeni.Application.Retention.IRetentionServiceLookup, RetentionServiceLookup>();
         services.AddScoped<ICustomerPaymentAccessQuery, CustomerPaymentAccessQuery>();
         services.AddScoped<ICustomerBookingActivityQuery, CustomerBookingActivityQuery>();
         services.AddScoped<ICustomerSegmentFactsQuery, CustomerSegmentFactsQuery>();

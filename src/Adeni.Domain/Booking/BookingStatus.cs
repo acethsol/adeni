@@ -17,4 +17,6 @@ public enum BookingSettlementSource
     None = 0,
     Online = 1,
     ExternalTill = 2,
+    /// <summary>Fully covered by prepaid package credits (Retention).</summary>
+    PackageCredit = 3,
 }

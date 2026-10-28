@@ -36,7 +36,8 @@ public sealed class BookingService(
     IAuditLogWriter auditLogWriter,
     ICorrelationContext correlationContext,
     ICurrentUser currentUser,
-    IBookingIntakeAssignmentWriter? intake = null) : IBookingService
+    IBookingIntakeAssignmentWriter? intake = null,
+    Application.Retention.IBenefitRedemptionService? benefits = null) : IBookingService
 {
     public async Task<Result<BookingResponse>> CreateAsync(
         string customerAuth0Sub,
@@ -342,6 +343,32 @@ public sealed class BookingService(
                     now));
             }
 
+            if (request.AppliedBenefits is { Count: > 0 })
+            {
+                // Package credits are staged on this same unit of work: booking + reserve commit (or fail) together.
+                if (benefits is null)
+                {
+                    return Result.Failure<BookingResponse>(Domain.Retention.RetentionErrorCodes.BenefitNotFoundError());
+                }
+
+                var reserved = await benefits.TryReserveBenefitsAsync(
+                    new Application.Retention.ReserveBenefitsRequest(
+                        request.TenantId,
+                        customer.Id,
+                        booking.Id,
+                        businessLocationId,
+                        orderedServices.Select(x => x.Id).ToArray(),
+                        guestCount,
+                        request.AppliedBenefits,
+                        $"customer:{customer.Id}",
+                        now),
+                    cancellationToken);
+                if (reserved.IsFailure)
+                {
+                    return Result.Failure<BookingResponse>(reserved.Error);
+                }
+            }
+
             dbContext.Bookings.Add(booking);
             try { await dbContext.SaveChangesAsync(cancellationToken); }
             catch (DbUpdateConcurrencyException ex) when (availabilityService.IsAdmissionConflict(ex))
@@ -350,6 +377,13 @@ public sealed class BookingService(
                 dbContext.ChangeTracker.Clear();
                 domainEventCollector.TakeAll();
                 return Result.Failure<BookingResponse>(ErrorCodes.SlotUnavailableError());
+            }
+            catch (DbUpdateException ex) when (benefits is not null && benefits.IsBenefitConflict(ex))
+            {
+                // Another booking took the last credit first; the booking row must not commit without its reserve.
+                dbContext.ChangeTracker.Clear();
+                domainEventCollector.TakeAll();
+                return Result.Failure<BookingResponse>(Domain.Retention.RetentionErrorCodes.BenefitInsufficientError());
             }
             await TenantRealtimeNotifications.PublishPendingBookingsAsync(
                 tenantRealtime,
@@ -830,7 +864,25 @@ public sealed class BookingService(
             booking.ServiceOfferingId,
             booking.StartAt,
             DateTimeOffset.UtcNow));
-        await dbContext.SaveChangesAsync(cancellationToken);
+        var releaseFailure = await StageBenefitReleaseAsync(booking, $"customer:{booking.CustomerId}", "booking_cancelled", cancellationToken);
+        if (releaseFailure is not null)
+        {
+            dbContext.ChangeTracker.Clear();
+            domainEventCollector.TakeAll();
+            return Result.Failure<CustomerBookingResponse>(releaseFailure);
+        }
+
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (benefits is not null && benefits.IsBenefitConflict(ex))
+        {
+            dbContext.ChangeTracker.Clear();
+            domainEventCollector.TakeAll();
+            return Result.Failure<CustomerBookingResponse>(Domain.Retention.RetentionErrorCodes.BenefitConflictError());
+        }
+
         await TenantRealtimeNotifications.PublishPendingBookingsAsync(
             tenantRealtime,
             dbContext,
@@ -911,7 +963,12 @@ public sealed class BookingService(
         if (target == BookingStatus.Completed && remaining <= 0)
         {
             booking.Status = BookingStatus.Paid;
-            booking.SettlementSource = BookingSettlementSource.Online;
+            booking.SettlementSource = await CoveredAmountAsync(booking, cancellationToken) > 0
+                && !await dbContext.PaymentIntents.AsNoTracking().AnyAsync(
+                    x => x.BookingId == booking.Id && x.TenantId == booking.TenantId && x.Status == PaymentIntentStatus.Completed,
+                    cancellationToken)
+                    ? BookingSettlementSource.PackageCredit
+                    : BookingSettlementSource.Online;
             booking.PaidAt = now;
         }
         else if (target == BookingStatus.Paid)
@@ -930,7 +987,30 @@ public sealed class BookingService(
             }
         }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        if (target == BookingStatus.Completed && benefits is not null)
+        {
+            // Reserved credits become used in the same SaveChanges as the status change.
+            var finalized = await benefits.FinalizeRedemptionsAsync(
+                tenantId, booking.Id, currentUser.UserId ?? "portal:unknown", cancellationToken);
+            if (finalized.IsFailure)
+            {
+                dbContext.ChangeTracker.Clear();
+                domainEventCollector.TakeAll();
+                return Result.Failure<BookingResponse>(finalized.Error);
+            }
+        }
+
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (benefits is not null && benefits.IsBenefitConflict(ex))
+        {
+            dbContext.ChangeTracker.Clear();
+            domainEventCollector.TakeAll();
+            return Result.Failure<BookingResponse>(Domain.Retention.RetentionErrorCodes.BenefitConflictError());
+        }
+
         await WriteBookingStatusAuditAsync(tenantId, bookingId, booking.Status, cancellationToken);
 
         if (booking.Status == BookingStatus.Paid
@@ -1008,6 +1088,40 @@ public sealed class BookingService(
         return Result.Success((booking, service, staffName));
     }
 
+    /// <summary>Price of booking lines already paid for by package credits (reserved or redeemed).</summary>
+    private async Task<decimal> CoveredAmountAsync(BookingRecord booking, CancellationToken cancellationToken)
+    {
+        if (benefits is null)
+        {
+            return 0m;
+        }
+
+        var covered = await benefits.GetCoveredServicesAsync(booking.TenantId, booking.Id, cancellationToken);
+        var amount = 0m;
+        foreach (var item in covered)
+        {
+            amount += booking.Lines
+                .Where(x => x.ServiceOfferingId == item.ServiceOfferingId)
+                .OrderBy(x => x.SortOrder)
+                .Take(item.Quantity)
+                .Sum(x => x.PriceAmount);
+        }
+
+        return amount;
+    }
+
+    private async Task<Error?> StageBenefitReleaseAsync(
+        BookingRecord booking, string actor, string reason, CancellationToken cancellationToken)
+    {
+        if (benefits is null)
+        {
+            return null;
+        }
+
+        var released = await benefits.ReleaseReservationsAsync(booking.TenantId, booking.Id, actor, reason, cancellationToken);
+        return released.IsFailure ? released.Error : null;
+    }
+
     private async Task<decimal> CalculateRemainingBalanceAsync(
         BookingRecord booking,
         CancellationToken cancellationToken)
@@ -1022,6 +1136,8 @@ public sealed class BookingService(
                 .FirstOrDefaultAsync(cancellationToken);
             total = servicePrice ?? 0m;
         }
+
+        total = Math.Max(0m, total - await CoveredAmountAsync(booking, cancellationToken));
 
         var paid = await dbContext.PaymentIntents
             .AsNoTracking()
@@ -1104,7 +1220,29 @@ public sealed class BookingService(
             await tenantCustomers.EnsureFromBookingAsync(tenantId, booking.CustomerId, cancellationToken);
         }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        if (status == BookingStatus.Rejected)
+        {
+            var releaseFailure = await StageBenefitReleaseAsync(
+                booking, currentUser.UserId ?? "portal:unknown", "booking_rejected", cancellationToken);
+            if (releaseFailure is not null)
+            {
+                dbContext.ChangeTracker.Clear();
+                domainEventCollector.TakeAll();
+                return Result.Failure<BookingResponse>(releaseFailure);
+            }
+        }
+
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (benefits is not null && benefits.IsBenefitConflict(ex))
+        {
+            dbContext.ChangeTracker.Clear();
+            domainEventCollector.TakeAll();
+            return Result.Failure<BookingResponse>(Domain.Retention.RetentionErrorCodes.BenefitConflictError());
+        }
+
         await WriteBookingStatusAuditAsync(tenantId, bookingId, status, cancellationToken);
         await TenantRealtimeNotifications.PublishPendingBookingsAsync(
             tenantRealtime,

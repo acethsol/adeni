@@ -2,6 +2,7 @@ namespace Adeni.Api.Errors;
 
 using Adeni.Api.Middleware;
 using Adeni.Domain.Common;
+using Adeni.Domain.Retention;
 using Microsoft.AspNetCore.Mvc;
 
 /// <summary>
@@ -83,6 +84,7 @@ internal static class ApiErrorResponseMapper
             _ when code.StartsWith("staff.", StringComparison.Ordinal) => ResolveStaffStatusCode(code),
             _ when code.StartsWith("payment.", StringComparison.Ordinal) => ResolvePaymentStatusCode(code),
             _ when code.StartsWith("messaging.", StringComparison.Ordinal) => ResolveMessagingStatusCode(code),
+            _ when code.StartsWith("retention.", StringComparison.Ordinal) => ResolveRetentionStatusCode(code),
             _ => StatusCodes.Status404NotFound,
         };
 
@@ -120,6 +122,19 @@ internal static class ApiErrorResponseMapper
             ErrorCodes.StaffNotEligible or ErrorCodes.CartEmpty or ErrorCodes.AddonRequiresParent
                 or ErrorCodes.GuestLimit =>
                 StatusCodes.Status400BadRequest,
+            _ => StatusCodes.Status400BadRequest,
+        };
+
+    private static int ResolveRetentionStatusCode(string code) =>
+        code switch
+        {
+            RetentionErrorCodes.PackageNotFound or RetentionErrorCodes.BenefitNotFound => StatusCodes.Status404NotFound,
+            RetentionErrorCodes.OwnerRequired => StatusCodes.Status403Forbidden,
+            RetentionErrorCodes.BenefitInsufficient or RetentionErrorCodes.BenefitConflict
+                or RetentionErrorCodes.IdempotencyConflict or RetentionErrorCodes.PackageInactive
+                or RetentionErrorCodes.PackageNotActive or RetentionErrorCodes.PackageExpired
+                or RetentionErrorCodes.ScopeLocationDenied or RetentionErrorCodes.SellLocationDenied =>
+                StatusCodes.Status409Conflict,
             _ => StatusCodes.Status400BadRequest,
         };
 

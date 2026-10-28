@@ -15,7 +15,8 @@ public sealed class CustomerProfileQueryService(
     ICustomerCommerceQuery finance,
     ICustomerCommunicationActivityQuery messaging,
     ICustomerActivityCursorCodec cursors,
-    TimeProvider clock) : ICustomerProfileQueryService
+    TimeProvider clock,
+    Adeni.Application.Retention.ICustomerPackageSummaryQuery? packages = null) : ICustomerProfileQueryService
 {
     public async Task<Result<CustomerProfileResponse>> GetProfileAsync(Guid tenantId, Guid tenantCustomerId, string auth0Sub,
         Guid? locationId = null, CancellationToken cancellationToken = default)
@@ -28,8 +29,11 @@ public sealed class CustomerProfileQueryService(
         var profile = await booking.GetProfileAsync(access.Scope, now, access.Context.Entitlements.BasicAnalytics, cancellationToken);
         var totals = access.Availability.Finance == "available"
             ? await finance.GetTotalsAsync(access.Scope, now, cancellationToken) : null;
+        // Retention-owned read port; no fake zeros when the plan does not include packages.
+        var packageSummary = access.Availability.Retention == "available" && packages is not null
+            ? await packages.GetSummaryAsync(tenantId, tenantCustomerId, cancellationToken) : null;
         return Result.Success(new CustomerProfileResponse(tenantCustomerId, now, access.Scope.LocationId,
-            access.Availability, profile.Visits, profile.NextAppointment, totals));
+            access.Availability, profile.Visits, profile.NextAppointment, totals, packageSummary));
     }
 
     public async Task<Result<CustomerActivityResponse>> GetActivityAsync(Guid tenantId, Guid tenantCustomerId, string auth0Sub,
@@ -95,7 +99,8 @@ public sealed class CustomerProfileQueryService(
                 : !entitlements.BasicAnalytics ? "notEntitled" : data.CustomerId is null ? "notLinked" : "available",
             !user.Permissions.Contains(PortalPermissions.Messages) ? "restricted"
                 : !entitlements.Messaging ? "notEntitled" : data.CustomerId is null ? "notLinked"
-                : location.Value is not null ? "unscoped" : "available");
+                : location.Value is not null ? "unscoped" : "available",
+            Retention: packages is null ? "notImplemented" : !entitlements.Packages ? "notEntitled" : "available");
         var scope = new CustomerProfileScope(tenantId, customerId, data.CustomerId, location.Value);
         var binding = $"v1:{tenantId}:{customerId}:{data.CustomerId}:{location.Value}:{user.BusinessUserId}:{user.PermissionRole}:{entitlements.CustomerRetentionAnalytics}:{entitlements.BasicAnalytics}:{entitlements.MultiLocationReporting}:{availability.Finance}:{availability.Messaging}";
         return Result.Success(new Access(scope, data, availability, binding));
