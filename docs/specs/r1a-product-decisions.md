@@ -1,6 +1,6 @@
 # R1-A — Product decisions (packages / benefit ledger)
 
-Status: **Decision log** — inputs for future spec [`sprint-37-1-packages-benefit-ledger.md`](./sprint-37-1-packages-benefit-ledger.md). No API, entitlement, or schema work authorized by this document alone.
+Status: **Decision log** — inputs for [`sprint-37-1-packages-benefit-ledger.md`](./sprint-37-1-packages-benefit-ledger.md). No API, entitlement, or schema work authorized by this document alone.
 
 Authority: [product-direction.md](../product-direction.md), [product-strategy.md](../product-strategy.md) (non-custodial commerce; no wallet).
 

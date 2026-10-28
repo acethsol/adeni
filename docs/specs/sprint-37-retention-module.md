@@ -59,6 +59,8 @@ All phases below are **in scope for Retention V1**, not optional backlog. Ship a
 
 ### 37.1 Foundation
 
+> **Packages slice (R1-A):** [sprint-37-1-packages-benefit-ledger.md](./sprint-37-1-packages-benefit-ledger.md) — session credits, benefit ledger, booking hooks. Loyalty items below ship in a follow-on 37.1 PR unless combined at review.
+
 - [ ] **Retention bounded context** — Domain / Application / Infrastructure / Api (`retention.*` schema on SQL Server)
 - [ ] **Prepaid packages** — catalog CRUD, one-time purchase via Finance orchestration, `CustomerPackage` + **benefit balances** (granted / used / reserved / remaining / expiresAt)
 - [ ] **Basic loyalty** — per-tenant program config, **ledger** (`LoyaltyAccount` + `LoyaltyTransaction`), earn on qualifying **completed + paid** commerce events, redeem as fixed discount at checkout/booking
