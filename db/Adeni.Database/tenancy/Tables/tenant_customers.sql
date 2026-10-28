@@ -37,3 +37,8 @@ CREATE NONCLUSTERED INDEX [IX_tenant_customers_TenantId_LastSeenAt]
 
 
 GO
+
+GO
+
+CREATE UNIQUE NONCLUSTERED INDEX [IX_tenant_customers_TenantId_Id]
+    ON [tenancy].[tenant_customers]([TenantId] ASC, [Id] ASC);
