@@ -24,7 +24,7 @@ export const intakeDefinitionSchema = z
     title: z.string().min(1).max(200),
     description: z.string().max(2000).nullable(),
     instructions: z.string().max(3000).nullable(),
-    sections: z.array(intakeSectionSchema).max(10).optional(),
+    sections: z.array(intakeSectionSchema).max(10).nullish(),
     fields: z.array(intakeFieldSchema).min(1).max(30),
   })
   .strict();

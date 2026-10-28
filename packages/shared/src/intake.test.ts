@@ -16,6 +16,9 @@ describe('Intake contracts',()=>{
   expect(intakeAnswerSchema.safeParse({fieldId:id,fileUpload:'url'}).success).toBe(false);
   expect(intakeAnswerSchema.safeParse({fieldId:id,date:'25/10/2026'}).success).toBe(false);
  });
+ it('accepts null sections from API when no sections exist',()=>{
+  expect(intakeDefinitionSchema.safeParse({title:'Consultation',description:null,instructions:null,sections:null,fields:[{id,type:0,label:'Name',helpText:null,required:true,choices:[]}]}).success).toBe(true);
+ });
  it('accepts optional sections and groups fields for display',()=>{
   const form=intakeDefinitionSchema.parse({title:'Consultation',description:null,instructions:null,sections:[{id:sectionId,title:'Personal information',description:null,sortOrder:0}],fields:[{id,type:0,label:'Name',helpText:null,required:true,choices:[],sectionId}]});
   expect(form.sections?.[0].title).toBe('Personal information');
