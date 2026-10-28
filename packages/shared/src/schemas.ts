@@ -1,5 +1,6 @@
 import { customerSegmentsSchema } from "./customer-segments";
 import { z } from "zod";
+import { appliedBenefitRequestSchema } from "./retention";
 import { normalizeDashboardWidgetWidth } from "./dashboard-widget-width";
 import { type PagedResult, pagedResultSchema } from "./paging";
 import { NOTIFICATION_TEMPLATE_IDS } from "./notification-template-ids";
@@ -717,6 +718,7 @@ export const createBookingRequestSchema = z
     guestCount: z.number().int().min(1).max(6).optional(),
     guests: z.array(createBookingGuestRequestSchema).max(6).optional(),
     businessLocationId: z.string().uuid().optional(),
+    appliedBenefits: z.array(appliedBenefitRequestSchema).max(10).optional(),
   })
   .refine((data) => (data.lines?.length ?? 0) > 0 || !!data.serviceOfferingId, {
     message: "serviceOfferingId or lines is required",
@@ -993,6 +995,8 @@ export const tenantEntitlementsSchema = z.object({
   multiLocationReporting: z.boolean(),
   advancedPermissions: z.boolean().optional(),
   prioritySupport: z.boolean(),
+  /** Prepaid packages & benefit ledger (Sprint 37.1). */
+  packages: z.boolean(),
   multiLocation: z.boolean(),
 });
 
