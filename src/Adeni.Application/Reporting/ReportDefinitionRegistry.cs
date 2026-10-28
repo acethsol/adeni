@@ -7,6 +7,8 @@ public static class ReportDefinitionRegistry
     private static readonly IReadOnlyDictionary<string, ReportDefinition> Definitions =
         new Dictionary<string, ReportDefinition>(StringComparer.OrdinalIgnoreCase)
         {
+            [ReportKeys.GiftCards] = new(ReportKeys.GiftCards, PortalPermissions.Finance, ReportBaseEntitlement.BasicExports,
+                new HashSet<ReportExportFormat> { ReportExportFormat.Csv }, RequiresMultiLocationReportingGate: true),
             [ReportKeys.BookingsRegister] = new(
                 ReportKeys.BookingsRegister,
                 PortalPermissions.Bookings,

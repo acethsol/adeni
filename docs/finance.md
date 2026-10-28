@@ -1,6 +1,8 @@
 # Finance — commerce orchestration (Sprint 17+)
 
-Non-custodial payment orchestration via licensed providers. Adeni stores **payment intent state** and provider references only — no wallet or balance tables.
+Non-custodial payment orchestration via licensed providers. Adeni has no platform wallet or cross-business customer cash balance. Business gift cards use a separate tenant-specific liability ledger; they do not hold money on behalf of other businesses.
+
+**F3 development delivery:** fixed custom-charge requests, payment-backed gift cards and whole-charge gift redemption are implemented for Development/Testing with the Stub provider only. New F3 live sales/redemptions are blocked until tenant merchant settlement and provider retry/refund reconciliation are implemented. Existing commerce routes retain their behavior. See the [F3 closeout](./specs/f3-gift-cards-pay-links-closeout.md) for scope, setup, validation and launch blockers.
 
 **Module boundaries:** [specs/finance-module-boundaries.md](./specs/finance-module-boundaries.md)  
 **Roadmap:** [roadmap-workflows-payments-queue.md](./roadmap-workflows-payments-queue.md) · **Settlement:** Sprint 34 · **Tips/export:** Finance spec Phase 3

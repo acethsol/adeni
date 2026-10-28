@@ -5,12 +5,14 @@ using Adeni.Application.Finance;
 using Adeni.Domain.Finance.Events;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 public static class FinanceServiceCollectionExtensions
 {
     public static IServiceCollection AddFinanceModule(this IServiceCollection services, IConfiguration configuration)
     {
+        services.TryAddSingleton(TimeProvider.System);
         services.AddOptions<FinanceOptions>()
             .Configure<IConfiguration>((options, config) =>
             {
@@ -50,7 +52,17 @@ public static class FinanceServiceCollectionExtensions
         services.AddScoped<IPaymentAccessService, PaymentAccessService>();
         services.AddScoped<ICustomerCommerceQuery, CustomerCommerceQuery>();
         services.AddScoped<IPlatformFeeCalculator, PlatformFeeCalculator>();
-        services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
+        services.AddScoped<PaymentOrchestrator>();
+        services.AddScoped<IPaymentOrchestrator>(sp => sp.GetRequiredService<PaymentOrchestrator>());
+        services.AddScoped<ICommercePaymentLifecycle>(sp => sp.GetRequiredService<PaymentOrchestrator>());
+        services.Configure<CommerceOptions>(configuration.GetSection(CommerceOptions.SectionName));
+        services.AddScoped<CommerceCredentials>();
+        services.AddScoped<CommerceReconciliationJob>();
+        services.AddScoped<ICommerceService, CommerceService>();
+        services.AddScoped<Adeni.Application.Tenancy.ICustomerGiftCardQuery, CustomerGiftCardQuery>();
+        services.AddScoped<IGiftCardReportQuery, GiftCardReportQuery>();
+        services.AddScoped<ICommercePaymentCompletion, CommercePaymentCompletion>();
+        services.AddScoped<ICommercePrivacyService, CommercePrivacyService>();
         services.AddScoped<IBillingDocumentService, BillingDocumentService>();
         services.AddScoped<Adeni.Application.Reporting.IBillingDocumentPreviewSource, BillingDocumentService>();
         services.AddScoped<PaymentBookingHandler>();

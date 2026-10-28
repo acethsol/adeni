@@ -2,6 +2,7 @@
   [title]="tr('portal.payments.payments')"
   [description]="tr('portal.payments.createPaymentLinksTrackTransactions')"
 >
+  <a routerLink="/finance/quick-pay">{{tr("commerce.title")}}</a>
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }

@@ -17,6 +17,7 @@ public static class TenancyServiceCollectionExtensions
         services.AddDataProtection();
         services.AddScoped<ICustomerProfileContextQuery, CustomerProfileContextQuery>();
         services.AddScoped<ICustomerActivityCursorCodec, CustomerActivityCursorCodec>();
+        services.AddScoped<ICustomerGiftCardsQueryService, CustomerGiftCardsQueryService>();
         services.AddScoped<ICustomerProfileQueryService, CustomerProfileQueryService>();
         services.AddScoped<ICustomerSegmentContextQuery, CustomerSegmentContextQuery>();
         services.AddScoped<ICustomerSegmentsQueryService, CustomerSegmentsQueryService>();

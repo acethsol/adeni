@@ -61,6 +61,8 @@ public static class HangfireExtensions
 
         var reminders = app.Services.GetRequiredService<IOptions<NotificationsOptions>>().Value.Reminders;
         var recurringJobs = app.Services.GetRequiredService<IRecurringJobManager>();
+        recurringJobs.AddOrUpdate<Adeni.Infrastructure.Finance.CommerceReconciliationJob>("commerce-reconciliation-v1",
+            job => job.ExecuteAsync(CancellationToken.None), "*/5 * * * *");
         recurringJobs.AddOrUpdate<IntakeRetentionHangfireJob>("intake-retention-v1",
             job => job.ExecuteAsync(CancellationToken.None), "0 * * * *");
 

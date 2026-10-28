@@ -4,6 +4,10 @@ public static class ErrorCodes
 {
     public const string CalendarUnavailable = "calendar.unavailable";
     public const string CalendarAuthorizationInvalid = "calendar.authorization_invalid";
+    public const string CommerceValidation = "commerce.validation";
+    public const string CommerceConflict = "commerce.conflict";
+    public const string CommerceSettlementRequired = "commerce.settlement_required";
+    public const string CommerceCredentialInvalid = "commerce.credential_invalid";
 
     public const string BookingLimitReached = "subscription.booking_limit_reached";
     public const string MultiLocationRequired = "subscription.multi_location_required";

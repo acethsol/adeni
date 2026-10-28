@@ -40,3 +40,7 @@ CREATE UNIQUE NONCLUSTERED INDEX [IX_payment_intents_IdempotencyKey]
 
 GO
 
+
+CREATE UNIQUE NONCLUSTERED INDEX [AK_payment_intents_TenantId_Id]
+    ON [payments].[payment_intents]([TenantId],[Id]);
+GO
