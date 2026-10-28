@@ -57,6 +57,19 @@ public sealed class IntakeValidationTests
     }
 
     [Fact]
+    public void Definition_RejectsOrphanSectionReferencesAndEmptySectionTitles()
+    {
+        var section = Guid.NewGuid();
+        var field = Guid.NewGuid();
+        var withSection = new IntakeDefinition("Consultation", null, null,
+            [new(field, IntakeFieldType.ShortText, "Name", null, true, [], section)],
+            [new(section, "Personal information", null, 0)]);
+        Assert.True(IntakeValidation.Definition(withSection).IsSuccess);
+        Assert.True(IntakeValidation.Definition(withSection with { Fields = [withSection.Fields[0] with { SectionId = Guid.NewGuid() }] }).IsFailure);
+        Assert.True(IntakeValidation.Definition(withSection with { Sections = [new(section, " ", null, 0)] }).IsFailure);
+    }
+
+    [Fact]
     public void DefinitionAndText_EnforceTechnicalBounds()
     {
         Assert.True(IntakeValidation.Definition(Definition((IntakeFieldType)999)).IsFailure);

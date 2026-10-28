@@ -8,10 +8,13 @@ using Adeni.Domain.Intake;
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record IntakeChoiceDefinition(Guid Id, string Label);
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
-public sealed record IntakeFieldDefinition(Guid Id, IntakeFieldType Type, string Label, string? HelpText,
-    bool Required, IReadOnlyList<IntakeChoiceDefinition> Choices);
+public sealed record IntakeSectionDefinition(Guid Id, string Title, string? Description, int SortOrder);
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
-public sealed record IntakeDefinition(string Title, string? Description, string? Instructions, IReadOnlyList<IntakeFieldDefinition> Fields);
+public sealed record IntakeFieldDefinition(Guid Id, IntakeFieldType Type, string Label, string? HelpText,
+    bool Required, IReadOnlyList<IntakeChoiceDefinition> Choices, Guid? SectionId = null);
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
+public sealed record IntakeDefinition(string Title, string? Description, string? Instructions, IReadOnlyList<IntakeFieldDefinition> Fields,
+    IReadOnlyList<IntakeSectionDefinition>? Sections = null);
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record IntakeAnswerInput(Guid FieldId, string? Text = null, bool? Boolean = null, string? Date = null, IReadOnlyList<Guid>? Choices = null)
 {
@@ -29,6 +32,17 @@ public static class IntakeValidation
             || definition.Description?.Length > 2000 || definition.Instructions?.Length > 3000
             || definition.Fields is null || definition.Fields.Count is < 1 or > 30 || definition.Fields.Any(x => x is null)
             || definition.Fields.Select(x => x.Id).Distinct().Count() != definition.Fields.Count) return Invalid();
+        var sections = definition.Sections ?? [];
+        if (sections.Count > 10 || sections.Any(x => x is null)
+            || sections.Select(x => x.Id).Distinct().Count() != sections.Count) return Invalid();
+        foreach (var section in sections)
+        {
+            if (section.Id == Guid.Empty || string.IsNullOrWhiteSpace(section.Title) || section.Title.Length > 200
+                || section.Description?.Length > 1000 || section.SortOrder is < 0 or > 9) return Invalid();
+        }
+        var sectionIds = sections.Select(x => x.Id).ToHashSet();
+        if (definition.Fields.Any(f => f.SectionId is { } sid && (sid == Guid.Empty || !sectionIds.Contains(sid)))) return Invalid();
+        if (sections.Count == 0 && definition.Fields.Any(f => f.SectionId is not null)) return Invalid();
         if (definition.Fields.Any(x => x.Choices?.Any(c => c is null) == true)) return Invalid();
         var optionIds = definition.Fields.SelectMany(x => x.Choices ?? []).Select(x => x.Id).ToArray();
         if (optionIds.Distinct().Count() != optionIds.Length) return Invalid();

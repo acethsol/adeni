@@ -30,6 +30,16 @@ public sealed partial class AdeniDbContext
             e.HasIndex(x => new { x.TenantId, x.TemplateId }).IsUnique().HasFilter("[PublishedAt] IS NULL");
             e.HasOne<IntakeFormTemplate>().WithMany().HasForeignKey(x => new { x.TenantId, x.TemplateId }).HasPrincipalKey(x => new { x.TenantId, x.Id }).OnDelete(DeleteBehavior.Restrict);
         });
+        modelBuilder.Entity<IntakeFormSection>(e =>
+        {
+            e.ToTable("form_sections", "intake");
+            e.HasKey(x => new { x.Id });
+            e.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+            e.Property(x => x.Title).HasMaxLength(200);
+            e.Property(x => x.Description).HasMaxLength(1000);
+            e.HasAlternateKey(x => new { x.TenantId, x.VersionId, x.Id });
+            e.HasOne<IntakeFormVersion>().WithMany().HasForeignKey(x => new { x.TenantId, x.VersionId }).HasPrincipalKey(x => new { x.TenantId, x.Id }).OnDelete(DeleteBehavior.Restrict);
+        });
         modelBuilder.Entity<IntakeFormField>(e =>
         {
             e.ToTable("form_fields", "intake");
@@ -39,6 +49,7 @@ public sealed partial class AdeniDbContext
             e.Property(x => x.HelpText).HasMaxLength(1000);
             e.HasAlternateKey(x => new { x.TenantId, x.VersionId, x.Id });
             e.HasOne<IntakeFormVersion>().WithMany().HasForeignKey(x => new { x.TenantId, x.VersionId }).HasPrincipalKey(x => new { x.TenantId, x.Id }).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<IntakeFormSection>().WithMany().HasForeignKey(x => new { x.TenantId, x.VersionId, x.SectionId }).HasPrincipalKey(x => new { x.TenantId, x.VersionId, x.Id }).OnDelete(DeleteBehavior.Restrict);
         });
         modelBuilder.Entity<IntakeFieldChoice>(e =>
         {

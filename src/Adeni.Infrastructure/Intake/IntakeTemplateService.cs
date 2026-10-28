@@ -41,22 +41,32 @@ public sealed class IntakeTemplateService(AdeniDbContext db, IIntakeManagementAc
         if (revision != Convert.ToBase64String(template.RowVersion)) return Conflict();
         var draft = await db.Set<IntakeFormVersion>().SingleOrDefaultAsync(x => x.TenantId == tenantId && x.TemplateId == templateId && x.PublishedAt == null, cancellationToken);
         if (draft is null) return Conflict();
+        var sections = await db.Set<IntakeFormSection>().Where(x => x.TenantId == tenantId && x.VersionId == draft.Id).ToListAsync(cancellationToken);
         var fields = await db.Set<IntakeFormField>().Where(x => x.TenantId == tenantId && x.VersionId == draft.Id).ToListAsync(cancellationToken);
         var choices = await db.Set<IntakeFieldChoice>().Where(x => x.TenantId == tenantId && x.VersionId == draft.Id).ToListAsync(cancellationToken);
+        var requestedSections = (definition.Sections ?? []).Select(x => x.Id).ToHashSet();
         var requestedFields = definition.Fields.Select(x => x.Id).ToHashSet();
         var requestedChoices = definition.Fields.SelectMany(x => x.Choices).Select(x => x.Id).ToHashSet();
         // Do not allow a field/option identity to be moved between versions or other fields.
+        var foreignSection = await db.Set<IntakeFormSection>().AnyAsync(x => requestedSections.Contains(x.Id) && (x.TenantId != tenantId || x.VersionId != draft.Id), cancellationToken);
         var foreignField = await db.Set<IntakeFormField>().AnyAsync(x => requestedFields.Contains(x.Id) && (x.TenantId != tenantId || x.VersionId != draft.Id), cancellationToken);
         var foreignChoice = await db.Set<IntakeFieldChoice>().AnyAsync(x => requestedChoices.Contains(x.Id) && (x.TenantId != tenantId || x.VersionId != draft.Id), cancellationToken);
-        if (foreignField || foreignChoice || definition.Fields.Any(f => f.Choices.Any(c => choices.Any(old => old.Id == c.Id && old.FieldId != f.Id)))) return Invalid();
+        if (foreignSection || foreignField || foreignChoice || definition.Fields.Any(f => f.Choices.Any(c => choices.Any(old => old.Id == c.Id && old.FieldId != f.Id)))) return Invalid();
         db.RemoveRange(choices.Where(x => !requestedChoices.Contains(x.Id)));
-        db.RemoveRange(fields.Where(x => !requestedFields.Contains(x.Id)));
+        var sectionInputs = definition.Sections ?? [];
+        for (var order = 0; order < sectionInputs.Count; order++)
+        {
+            var input = sectionInputs[order];
+            var row = sections.SingleOrDefault(x => x.Id == input.Id);
+            if (row is null) { row = new() { Id = input.Id, TenantId = tenantId, VersionId = draft.Id }; db.Add(row); }
+            row.SortOrder = order; row.Title = input.Title; row.Description = input.Description;
+        }
         for (var order = 0; order < definition.Fields.Count; order++)
         {
             var input = definition.Fields[order];
             var field = fields.SingleOrDefault(x => x.Id == input.Id);
             if (field is null) { field = new() { Id = input.Id, TenantId = tenantId, VersionId = draft.Id }; db.Add(field); }
-            field.SortOrder = order; field.FieldType = input.Type; field.Label = input.Label; field.HelpText = input.HelpText; field.IsRequired = input.Required;
+            field.SortOrder = order; field.FieldType = input.Type; field.Label = input.Label; field.HelpText = input.HelpText; field.IsRequired = input.Required; field.SectionId = input.SectionId;
             for (var i = 0; i < input.Choices.Count; i++)
             {
                 var option = input.Choices[i];
@@ -65,6 +75,8 @@ public sealed class IntakeTemplateService(AdeniDbContext db, IIntakeManagementAc
                 row.SortOrder = i; row.Label = option.Label;
             }
         }
+        db.RemoveRange(fields.Where(x => !requestedFields.Contains(x.Id)));
+        db.RemoveRange(sections.Where(x => !requestedSections.Contains(x.Id)));
         draft.Title = definition.Title; draft.Description = definition.Description; draft.Instructions = definition.Instructions;
         template.UpdatedAt = DateTimeOffset.UtcNow;
         return await SaveAsync(template, auth0Sub, cancellationToken);
@@ -96,10 +108,18 @@ public sealed class IntakeTemplateService(AdeniDbContext db, IIntakeManagementAc
         var draft = new IntakeFormVersion { Id = Guid.NewGuid(), TenantId = tenantId, TemplateId = templateId, VersionNumber = published.VersionNumber + 1,
             Title = content.Title, Description = content.Description, Instructions = content.Instructions, CreatedAt = DateTimeOffset.UtcNow };
         db.Add(draft);
+        var sectionMap = new Dictionary<Guid, Guid>();
+        foreach (var section in content.Sections ?? [])
+        {
+            var id = Guid.NewGuid();
+            sectionMap[section.Id] = id;
+            db.Add(new IntakeFormSection { Id = id, TenantId = tenantId, VersionId = draft.Id, SortOrder = section.SortOrder, Title = section.Title, Description = section.Description });
+        }
         for (var i = 0; i < content.Fields.Count; i++)
         {
             var field = content.Fields[i]; var id = Guid.NewGuid();
-            db.Add(new IntakeFormField { Id = id, TenantId = tenantId, VersionId = draft.Id, SortOrder = i, FieldType = field.Type, Label = field.Label, HelpText = field.HelpText, IsRequired = field.Required });
+            Guid? sectionId = field.SectionId is { } sid && sectionMap.TryGetValue(sid, out var mapped) ? mapped : null;
+            db.Add(new IntakeFormField { Id = id, TenantId = tenantId, VersionId = draft.Id, SortOrder = i, FieldType = field.Type, Label = field.Label, HelpText = field.HelpText, IsRequired = field.Required, SectionId = sectionId });
             for (var j = 0; j < field.Choices.Count; j++) db.Add(new IntakeFieldChoice { Id = Guid.NewGuid(), TenantId = tenantId, VersionId = draft.Id, FieldId = id, SortOrder = j, Label = field.Choices[j].Label });
         }
         template.UpdatedAt = draft.CreatedAt;
@@ -148,13 +168,8 @@ public sealed class IntakeTemplateService(AdeniDbContext db, IIntakeManagementAc
         return new(template.Id, template.IsActive, Convert.ToBase64String(template.RowVersion), published?.Id, draft?.Id,
             draft is null ? null : await DefinitionAsync(draft, ct), published is null ? null : await DefinitionAsync(published, ct));
     }
-    private async Task<IntakeDefinition> DefinitionAsync(IntakeFormVersion version, CancellationToken ct)
-    {
-        var fields = await db.Set<IntakeFormField>().AsNoTracking().Where(x => x.TenantId == version.TenantId && x.VersionId == version.Id).OrderBy(x => x.SortOrder).ToArrayAsync(ct);
-        var choices = await db.Set<IntakeFieldChoice>().AsNoTracking().Where(x => x.TenantId == version.TenantId && x.VersionId == version.Id).OrderBy(x => x.SortOrder).ToArrayAsync(ct);
-        return new(version.Title, version.Description, version.Instructions, fields.Select(x => new IntakeFieldDefinition(x.Id, x.FieldType, x.Label, x.HelpText, x.IsRequired,
-            choices.Where(c => c.FieldId == x.Id).Select(c => new IntakeChoiceDefinition(c.Id, c.Label)).ToArray())).ToArray());
-    }
+    private Task<IntakeDefinition> DefinitionAsync(IntakeFormVersion version, CancellationToken ct) =>
+        IntakeDefinitions.ReadAsync(db, version.TenantId, version.Id, ct);
     private static Result<IntakeTemplateDetail> Denied() => Result.Failure<IntakeTemplateDetail>(ErrorCodes.PermissionDeniedError());
     private static Result<IntakeTemplateDetail> Invalid() => Result.Failure<IntakeTemplateDetail>(new Error("intake.validation"));
     private static Result<IntakeTemplateDetail> Conflict() => Result.Failure<IntakeTemplateDetail>(new Error("intake.conflict"));
