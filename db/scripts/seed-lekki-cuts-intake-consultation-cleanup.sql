@@ -50,6 +50,7 @@ DELETE FROM intake.service_form_links WHERE TenantId = @TenantId AND TemplateId 
 
 DELETE FROM intake.field_choices WHERE TenantId = @TenantId AND VersionId IN (SELECT Id FROM @VersionIds);
 DELETE FROM intake.form_fields WHERE TenantId = @TenantId AND VersionId IN (SELECT Id FROM @VersionIds);
+DELETE FROM intake.form_sections WHERE TenantId = @TenantId AND VersionId IN (SELECT Id FROM @VersionIds);
 DELETE FROM intake.form_versions WHERE TenantId = @TenantId AND TemplateId = @TemplateId;
 DELETE FROM intake.form_templates WHERE TenantId = @TenantId AND Id = @TemplateId;
 

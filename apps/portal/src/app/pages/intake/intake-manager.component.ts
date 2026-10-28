@@ -1,4 +1,4 @@
-﻿import { Component, computed, DestroyRef, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, DestroyRef, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { RouterLink } from "@angular/router";
 import {
@@ -22,11 +22,12 @@ import {
   type AdeniDataTableColumn,
   type AdeniFilterSelectOption,
 } from "@adeni/ui";
-import type { IntakeDefinition, IntakeSummary, IntakeTemplate, ServiceOffering } from "@adeni/shared";
+import type { IntakeDefinition, IntakeSection, IntakeSummary, IntakeTemplate, ServiceOffering } from "@adeni/shared";
 import { BusinessApiService } from "../../core/services/business-api.service";
 
 const TEMPLATE_PAGE_SIZE = 50;
 const FIELD_TYPES = [0, 1, 2, 3, 4, 5, 6] as const;
+const MAX_SECTIONS = 10;
 
 @Component({
   selector: "app-intake-manager",
@@ -108,6 +109,19 @@ export class IntakeManagerComponent implements OnInit {
   readonly assignedServiceCount = computed(
     () => this.serviceLinkRows().filter((row) => row.templateId).length,
   );
+
+  readonly draftSections = computed((): IntakeSection[] => {
+    const draft = this.draft();
+    if (!draft?.sections?.length) {
+      return [];
+    }
+    return [...draft.sections].sort((a, b) => a.sortOrder - b.sortOrder);
+  });
+
+  readonly fieldSectionOptions = computed((): AdeniFilterSelectOption[] => [
+    { value: "", label: this.tr("intake.sectionDefault") },
+    ...this.draftSections().map((section) => ({ value: section.id, label: section.title || this.tr("intake.section") })),
+  ]);
 
   readonly formTableColumns = computed((): AdeniDataTableColumn<IntakeSummary>[] => [
     {
@@ -359,6 +373,77 @@ export class IntakeManagerComponent implements OnInit {
 
   change(key: "title" | "description" | "instructions", value: string): void {
     this.draft.update((d) => (d ? { ...d, [key]: value } : d));
+  }
+
+  addSection(): void {
+    this.draft.update((d) => {
+      if (!d || (d.sections?.length ?? 0) >= MAX_SECTIONS) {
+        return d;
+      }
+      const sections = [...(d.sections ?? [])];
+      sections.push({
+        id: crypto.randomUUID(),
+        title: "",
+        description: null,
+        sortOrder: sections.length,
+      });
+      return { ...d, sections };
+    });
+  }
+
+  patchSection(index: number, key: "title" | "description", value: string): void {
+    this.draft.update((d) => {
+      if (!d?.sections?.length) {
+        return d;
+      }
+      const sections = d.sections.map((section, i) =>
+        i === index ? { ...section, [key]: key === "description" && !value.trim() ? null : value } : section,
+      );
+      return { ...d, sections };
+    });
+  }
+
+  moveSection(index: number, delta: number): void {
+    this.draft.update((d) => {
+      if (!d?.sections?.length || index + delta < 0 || index + delta >= d.sections.length) {
+        return d;
+      }
+      const sections = [...d.sections];
+      [sections[index], sections[index + delta]] = [sections[index + delta]!, sections[index]!];
+      return {
+        ...d,
+        sections: sections.map((section, sortOrder) => ({ ...section, sortOrder })),
+      };
+    });
+  }
+
+  removeSection(index: number): void {
+    this.draft.update((d) => {
+      if (!d?.sections?.length) {
+        return d;
+      }
+      const removed = d.sections[index]?.id;
+      const sections = d.sections
+        .filter((_, i) => i !== index)
+        .map((section, sortOrder) => ({ ...section, sortOrder }));
+      const fields = removed
+        ? d.fields.map((field) => (field.sectionId === removed ? { ...field, sectionId: null } : field))
+        : d.fields;
+      return { ...d, sections: sections.length ? sections : undefined, fields };
+    });
+  }
+
+  patchFieldSection(index: number, sectionId: string): void {
+    this.draft.update((d) =>
+      d
+        ? {
+            ...d,
+            fields: d.fields.map((f, i) =>
+              i === index ? { ...f, sectionId: sectionId ? sectionId : null } : f,
+            ),
+          }
+        : d,
+    );
   }
 
   patchField(index: number, key: "label" | "helpText" | "required" | "type", value: string | boolean | number): void {

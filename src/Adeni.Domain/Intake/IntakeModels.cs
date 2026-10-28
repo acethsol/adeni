@@ -29,6 +29,16 @@ public sealed class IntakeFormVersion : ITenantEntity
     public DateTimeOffset? PublishedAt { get; set; }
 }
 
+public sealed class IntakeFormSection : ITenantEntity
+{
+    public Guid Id { get; set; }
+    public Guid TenantId { get; set; }
+    public Guid VersionId { get; set; }
+    public int SortOrder { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
+}
+
 public sealed class IntakeFormField : ITenantEntity
 {
     public Guid Id { get; set; }
@@ -39,6 +49,7 @@ public sealed class IntakeFormField : ITenantEntity
     public string Label { get; set; } = string.Empty;
     public string? HelpText { get; set; }
     public bool IsRequired { get; set; }
+    public Guid? SectionId { get; set; }
 }
 
 public sealed class IntakeFieldChoice : ITenantEntity

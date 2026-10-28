@@ -1,4 +1,4 @@
-﻿<app-portal-page [title]="tr('intake.title')" [description]="tr('intake.pageLead')">
+<app-portal-page [title]="tr('intake.title')" [description]="tr('intake.pageLead')">
   <a pageActions routerLink="/services" class="btn">
     <adeni-carbon-icon name="arrow--left" [size]="16" />
     {{ tr('intake.backToServices') }}
@@ -299,6 +299,58 @@
             ></textarea>
           </div>
 
+          <div class="sections-editor">
+            <header class="sections-editor__head">
+              <h5>{{ tr('intake.sectionsHeading') }}</h5>
+              <p class="muted">{{ tr('intake.sectionsLead') }}</p>
+            </header>
+            @for (section of draftSections(); track section.id; let si = $index) {
+              <fieldset class="section-card" [disabled]="busy()">
+                <legend>{{ tr('intake.section') }} {{ si + 1 }}</legend>
+                <div class="field">
+                  <label>{{ tr('intake.sectionTitle') }}</label>
+                  <input
+                    [ngModel]="section.title"
+                    (ngModelChange)="patchSection(si, 'title', $event)"
+                    maxlength="200"
+                  />
+                </div>
+                <div class="field">
+                  <label>{{ tr('intake.sectionDescription') }}</label>
+                  <input
+                    [ngModel]="section.description ?? ''"
+                    (ngModelChange)="patchSection(si, 'description', $event)"
+                    maxlength="1000"
+                  />
+                </div>
+                <div class="field-actions">
+                  <button type="button" class="btn" [disabled]="si === 0" (click)="moveSection(si, -1)">
+                    {{ tr('intake.up') }}
+                  </button>
+                  <button
+                    type="button"
+                    class="btn"
+                    [disabled]="si === draftSections().length - 1"
+                    (click)="moveSection(si, 1)"
+                  >
+                    {{ tr('intake.down') }}
+                  </button>
+                  <button type="button" class="btn btn-danger" (click)="removeSection(si)">
+                    {{ tr('intake.remove') }}
+                  </button>
+                </div>
+              </fieldset>
+            }
+            <adeni-staff-btn
+              icon="add"
+              variant="secondary"
+              [disabled]="busy() || draftSections().length >= 10"
+              (pressed)="addSection()"
+            >
+              {{ tr('intake.addSection') }}
+            </adeni-staff-btn>
+          </div>
+
           @for (draftField of d.fields; track draftField.id; let i = $index) {
             <fieldset class="field-card" [disabled]="busy()">
               <legend>{{ tr('intake.field') }} {{ i + 1 }}</legend>
@@ -327,6 +379,19 @@
                     }
                   </select>
                 </div>
+                @if (draftSections().length > 0) {
+                  <div class="field">
+                    <label>{{ tr('intake.sectionPlacement') }}</label>
+                    <select
+                      [ngModel]="draftField.sectionId ?? ''"
+                      (ngModelChange)="patchFieldSection(i, $event)"
+                    >
+                      @for (option of fieldSectionOptions(); track option.value) {
+                        <option [value]="option.value">{{ option.label }}</option>
+                      }
+                    </select>
+                  </div>
+                }
                 <div class="field checkbox-field">
                   <label>
                     <input

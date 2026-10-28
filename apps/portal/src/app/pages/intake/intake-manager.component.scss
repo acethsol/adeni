@@ -308,6 +308,24 @@ $purple: var(--adeni-purple, #7f56ff);
   gap: var(--cds-spacing-05);
 }
 
+.sections-editor {
+  margin: 0 0 var(--cds-spacing-06);
+  padding: var(--cds-spacing-05);
+  border: 1px dashed color-mix(in srgb, $purple 28%, var(--border));
+  background: color-mix(in srgb, $purple 3%, var(--surface));
+}
+
+.sections-editor__head {
+  margin-bottom: var(--cds-spacing-04);
+
+  h5 {
+    margin: 0 0 var(--cds-spacing-02);
+    font-size: 0.875rem;
+    font-weight: 650;
+  }
+}
+
+.section-card,
 .field-card {
   margin: 0 0 var(--cds-spacing-05);
   padding: var(--cds-spacing-05);

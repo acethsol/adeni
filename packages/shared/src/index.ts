@@ -46,6 +46,7 @@ export * from "./public-page-templates";
 export * from "./realtime-events";
 export * from "./customer-profile";
 export * from "./intake";
+export * from "./intake-layout";
 
 export type { CalendarProvider, CalendarConnection, CalendarSelection, ExternalCalendar, CalendarConflict, BookingLink, BookingLinkDestination } from "./calendar";
 export { parseBookingPreselection, bookingPreselectionQuery, type BookingPreselection } from "./booking-preselection";

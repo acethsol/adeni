@@ -133,6 +133,7 @@ public sealed class IntakeSqlServerTests
             await cleanup.Set<ServiceIntakeForm>().Where(x=>x.TenantId==seed.Tenant).ExecuteDeleteAsync();
             await cleanup.Set<IntakeFieldChoice>().Where(x=>x.TenantId==seed.Tenant).ExecuteDeleteAsync();
             await cleanup.Set<IntakeFormField>().Where(x=>x.TenantId==seed.Tenant).ExecuteDeleteAsync();
+            await cleanup.Set<IntakeFormSection>().Where(x=>x.TenantId==seed.Tenant).ExecuteDeleteAsync();
             await cleanup.Set<IntakeFormTemplate>().Where(x=>x.TenantId==seed.Tenant).ExecuteUpdateAsync(s=>s.SetProperty(x=>x.CurrentPublishedVersionId,(Guid?)null));
             await cleanup.Set<IntakeFormVersion>().Where(x=>x.TenantId==seed.Tenant).ExecuteDeleteAsync();
             await cleanup.Set<IntakeFormTemplate>().Where(x=>x.TenantId==seed.Tenant).ExecuteDeleteAsync();
