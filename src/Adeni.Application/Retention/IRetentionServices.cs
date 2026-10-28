@@ -115,6 +115,48 @@ public interface IBenefitRedemptionService
     bool IsBenefitConflict(Exception error);
 }
 
+/// <summary>Consumer / Discover surface: public catalog, online purchase and customer-side redeemable credits.</summary>
+public interface IPackageStorefrontService
+{
+    /// <summary>Anonymous. Verified businesses only; empty when the plan has no <c>packages</c> entitlement.</summary>
+    Task<Result<PublicPackageCatalogResponse>> GetPublicCatalogAsync(
+        string slug,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Starts a Finance payment intent and a <c>PendingPayment</c> package. Credits are granted only by the
+    /// idempotent <c>PaymentCompleted</c> handler. <paramref name="idempotencyKey"/> is required.
+    /// </summary>
+    Task<Result<PackagePurchaseResponse>> PurchaseAsync(
+        string customerAuth0Sub,
+        string slug,
+        Guid packageDefinitionId,
+        string? idempotencyKey,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>The signed-in customer's own redeemable credits at one business (booking UI).</summary>
+    Task<Result<RedeemableBenefitListResponse>> ListRedeemableForCustomerAsync(
+        string customerAuth0Sub,
+        string slug,
+        Guid? businessLocationId,
+        IReadOnlyList<Guid>? serviceOfferingIds,
+        CancellationToken cancellationToken = default);
+}
+
+/// <summary>Activates <c>PendingPayment</c> packages after a confirmed payment (idempotent).</summary>
+public interface IPackagePurchaseActivation
+{
+    Task<bool> ActivateForPaymentAsync(
+        Guid tenantId,
+        Guid paymentIntentId,
+        decimal amount,
+        string currency,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Safety net: re-checks pending online packages whose payment already completed.</summary>
+    Task<int> ReconcilePendingAsync(int batchSize, CancellationToken cancellationToken = default);
+}
+
 /// <summary>Thin wrapper over <c>IEntitlementsService</c> for the <c>packages</c> plan flag.</summary>
 public interface IRetentionEntitlementGuard
 {

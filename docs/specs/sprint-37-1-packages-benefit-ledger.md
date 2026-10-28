@@ -8,7 +8,7 @@
 |-------|-------|
 | **Sprint** | Sprint 37.1 — Packages & benefit ledger (R1-A Phase 1) |
 | **Author** | Engineering |
-| **Status** | Implemented (R1-A backend + DACPAC + booking hooks + portal MVP); deferred: Discover purchase UI, online checkout, SQL Server concurrency tests |
+| **Status** | **Implemented** (backend + DACPAC + booking hooks + portal + Discover storefront/purchase/my-packages/`appliedBenefits`). Live online settlement gated on Sprint 34 (stub-only until then); SQL Server concurrency tests authored but pending a run on an isolated SQL Server |
 | **Created** | 2026-10-28 |
 
 ---
@@ -42,20 +42,20 @@ Let beauty & wellness businesses sell **prepaid session/service credit packages*
 
 ## 3. In scope
 
-- [ ] **Retention bounded context (packages slice)** — `retention.*` schema on SQL Server; EF in Infrastructure only
-- [ ] **Package catalog** — CRUD for `PackageDefinition` + nested **benefit lines** (which catalog services / quantities are granted)
-- [ ] **Sell package to customer** — grant `CustomerPackage` + `BenefitBalance` rows:
+- [x] **Retention bounded context (packages slice)** — `retention.*` schema on SQL Server; EF in Infrastructure only
+- [x] **Package catalog** — CRUD for `PackageDefinition` + nested **benefit lines** (which catalog services / quantities are granted)
+- [x] **Sell package to customer** — grant `CustomerPackage` + `BenefitBalance` rows:
   - **In-person:** till / bank transfer / external payment recorded in Portal (no provider checkout) — **allowed before live online settlement**
   - **Online (Discover / consumer):** Finance payment intent → activate grants **only** on idempotent `PaymentCompleted` (Murphy); subject to Sprint **34** settlement + stub/live provider guards
-- [ ] **Benefit ledger** — immutable `BenefitTransaction` history; mutable `BenefitBalance` with **granted / used / reserved / remaining** (+ optional duration counters if spec’d on benefit line)
-- [ ] **`IBenefitRedemptionService`** — Booking hooks: reserve on create, release on cancel, finalize on completed appointment (same SQL transaction as booking create for reserve)
-- [ ] **Redemption & sell scope** — enums and validation per [r1a-product-decisions.md](./r1a-product-decisions.md) §6 (booking location vs package scope; customer home location unchanged)
-- [ ] **Expiry & forfeiture** — default **12 months** (tenant-configurable months); unused credits forfeit at expiry; **owner void** with audit
-- [ ] **Portal RBAC** — new **`portal.retention`** permission; package catalog, sell, customer package list, void (owner)
-- [ ] **Discover (Angular)** — public catalog; logged-in **my packages / balances**; online purchase when settlement allows
-- [ ] **Entitlement enforcement** — `IEntitlementsService` **`packages`** on mutating tenant/consumer package routes (see §9)
-- [ ] **API contracts** under `/api/v1/tenant/retention/...` and consumer routes; Zod in `@adeni/shared`, client in `@adeni/api-client`
-- [ ] **Tests** — tenant isolation, idempotent grant from duplicate webhooks, concurrent reserve/redemption, scope denial, entitlement denial
+- [x] **Benefit ledger** — immutable `BenefitTransaction` history; mutable `BenefitBalance` with **granted / used / reserved / remaining** (+ optional duration counters if spec’d on benefit line)
+- [x] **`IBenefitRedemptionService`** — Booking hooks: reserve on create, release on cancel, finalize on completed appointment (same SQL transaction as booking create for reserve)
+- [x] **Redemption & sell scope** — enums and validation per [r1a-product-decisions.md](./r1a-product-decisions.md) §6 (booking location vs package scope; customer home location unchanged)
+- [x] **Expiry & forfeiture** — default **12 months** (tenant-configurable months); unused credits forfeit at expiry; **owner void** with audit
+- [x] **Portal RBAC** — new **`portal.retention`** permission; package catalog, sell, customer package list, void (owner)
+- [x] **Discover (Angular)** — public catalog; logged-in **my packages / balances**; online purchase when settlement allows
+- [x] **Entitlement enforcement** — `IEntitlementsService` **`packages`** on mutating tenant/consumer package routes (see §9)
+- [x] **API contracts** under `/api/v1/tenant/retention/...` and consumer routes; Zod in `@adeni/shared`, client in `@adeni/api-client`
+- [x] **Tests** — tenant isolation, idempotent grant from duplicate webhooks, concurrent reserve/redemption, scope denial, entitlement denial
 
 ---
 
@@ -314,15 +314,15 @@ Void package: **owner** role only (stricter than permission).
 
 ## 12. Tests
 
-- [ ] Unit: scope validation (`purchase_location_only`, `selected_locations`); expiry forfeit math; void releases reserve
-- [ ] Integration: sell in-person → grant balances; duplicate sell idempotency key → same package
-- [ ] Integration: online purchase → pending → webhook twice → single grant
-- [ ] Integration: booking create reserves; cancel releases; complete redeems
-- [ ] Integration: concurrent two bookings reserve last credit → one succeeds, one `benefit_insufficient`
-- [ ] Integration: cross-tenant customer package id → 403/404
-- [ ] Integration: Starter without `packages` manipulation (if key false in test seed) → 403
-- [ ] Integration: redeem at wrong location → `retention.scope_location_denied`
-- [ ] Architecture: Booking does not reference Retention Infrastructure
+- [x] Unit: scope validation (`purchase_location_only`, `selected_locations`); expiry forfeit math; void releases reserve
+- [x] Integration: sell in-person → grant balances; duplicate sell idempotency key → same package
+- [x] Integration: online purchase → pending → webhook twice → single grant
+- [x] Integration: booking create reserves; cancel releases; complete redeems
+- [x] Integration: concurrent two bookings reserve last credit → one succeeds, one `benefit_insufficient` (sequential path: `Reserve_SecondBookingBeyondRemaining_IsInsufficient`; true race: `RetentionSqlServerTests` — authored, runs with `ADENI_SQLSERVER_TESTS=1`, **not yet executed against an isolated SQL Server**)
+- [x] Integration: cross-tenant customer package id → 403/404
+- [x] Integration: Starter without `packages` manipulation (if key false in test seed) → 403
+- [x] Integration: redeem at wrong location → `retention.scope_location_denied`
+- [x] Architecture: Booking does not reference Retention Infrastructure
 
 Run: `dotnet test Adeni.slnx -c Release`
 
@@ -348,14 +348,30 @@ Run: `dotnet test Adeni.slnx -c Release`
 
 ## 14. Acceptance criteria
 
-- [ ] Business can define packages with benefit lines and redemption/sell scopes
-- [ ] Staff can sell package in-person before live online settlement; balances appear on customer
-- [ ] Customer with Active package can redeem at booking when location + service rules pass
-- [ ] Cancel releases reservation; complete consumes credit
-- [ ] Expired package forfeits remaining credits; owner can void with audit
-- [ ] Gift card ledger and package ledger remain separate; no gift tender for packages in 37.1
-- [ ] Online purchase double webhook does not double-grant
-- [ ] Entitlement and tenant isolation enforced on all mutations
+- [x] Business can define packages with benefit lines and redemption/sell scopes
+- [x] Staff can sell package in-person before live online settlement; balances appear on customer
+- [x] Customer with Active package can redeem at booking when location + service rules pass
+- [x] Cancel releases reservation; complete consumes credit
+- [x] Expired package forfeits remaining credits; owner can void with audit
+- [x] Gift card ledger and package ledger remain separate; no gift tender for packages in 37.1
+- [x] Online purchase double webhook does not double-grant
+- [x] Entitlement and tenant isolation enforced on all mutations
+
+---
+
+## 14a. Implementation notes (closeout)
+
+**Online purchase (Discover):**
+
+- `GET /api/v1/businesses/{slug}/retention/packages` (anonymous, `PublicReadPolicy`) → `{ items, onlinePurchaseEnabled }`.
+- `POST /api/v1/businesses/{slug}/retention/packages/{id}/purchase` (customer JWT, `PublicMutationPolicy`, optional `Idempotency-Key`) creates a `pending_payment` `CustomerPackage` + a Finance payment intent and returns `{ customerPackageId, paymentIntentId, status, checkoutUrl }`. **No credits exist until `PaymentCompleted`.**
+- `GET /api/v1/businesses/{slug}/retention/redeemable-benefits` (customer JWT) feeds the Discover booking panel's `appliedBenefits` selection.
+- **Config gate (Sprint 34):** `onlinePurchaseEnabled` / purchase succeeds only for the F3 sandbox condition — `(Development || Testing)` **and** payment provider `Stub`. Otherwise the purchase returns **503 `retention.online_purchase_unavailable`** and Discover shows "ask them to sell in person". Enabling live Paystack settlement means replacing that gate with tenant settlement readiness; no wallet/custody tables are involved either way.
+- **Grant:** `PackagePurchasePaymentHandler` (`PaymentCompleted`, own DI scope) → `PackagePurchaseActivation`. Idempotent: non-pending packages are a no-op; amount/currency must equal the snapshot or the package stays pending (logged); package rowversion makes a concurrent duplicate lose. `PackageExpiryHangfireJob` also reconciles still-pending packages whose intent is `completed` (safety net if the handler failed).
+- Known limits: benefits and expiry months are read from the live definition **at activation** (no benefit snapshot table — editing a definition between purchase and payment changes what is granted); refunds of online package payments require a manual owner **void**; stale unpaid `pending_payment` packages are not auto-expired.
+- Bug fixed on the way: `PaymentOrchestrator` reused the payment-intent id as the audit-log primary key, so the second audit write per intent (`payment.confirmed`) collided and confirmation returned HTTP 500 after the payment had already committed. Audit rows now get their own ids.
+
+**Surfaces:** portal `/customers/:id?tab=packages` (sold location/channel, redemption scope, balances, expiry), F1 profile tile (active count / remaining credits), Discover `/businesses/:slug#packages`, `/my-packages`, booking panel "Use package credits" on the confirm step.
 
 ---
 

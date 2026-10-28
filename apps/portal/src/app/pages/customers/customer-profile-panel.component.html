@@ -53,6 +53,20 @@
               }
             </div>
           </article>
+          @if (profile.packages; as pkg) {
+            <article class="insights-stat-tile">
+              <p class="insights-stat-tile__label">{{ tr('portal.retention.title') }}</p>
+              <a class="insights-stat-tile__value insights-stat-tile__value--link" [routerLink]="['/customers', customerId()]" [queryParams]="{ tab: 'packages' }">
+                {{ pkg.totalRemainingCredits }}
+              </a>
+              <p class="insights-stat-tile__hint muted">
+                {{ tr('portal.retention.profileSummary', { count: pkg.activeCount, credits: pkg.totalRemainingCredits }) }}
+              </p>
+              @if (pkg.activePackageNames.length > 0) {
+                <p class="insights-stat-tile__hint muted">{{ pkg.activePackageNames.join(', ') }}</p>
+              }
+            </article>
+          }
         </div>
 
         @defer (on idle) {

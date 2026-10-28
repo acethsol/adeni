@@ -384,6 +384,25 @@
           ></textarea>
         </label>
 
+        @if (applicableBenefits().length > 0) {
+          <fieldset class="package-credits">
+            <legend>{{ tr("discover.packages.applyTitle") }}</legend>
+            @for (b of applicableBenefits(); track b.benefitBalanceId) {
+              <label class="package-credit">
+                <input
+                  type="checkbox"
+                  [checked]="isBenefitUsed(b)"
+                  (change)="toggleBenefit(b, $any($event.target).checked)"
+                />
+                <span>
+                  {{ b.packageName }} · {{ b.serviceName }} ×{{ creditsToApply(b) }}
+                  <span class="tiny">{{ tr("discover.packages.applyHint", { name: b.serviceName, count: b.remaining }) }}</span>
+                </span>
+              </label>
+            }
+          </fieldset>
+        }
+
         @if (supportsDeposits() && depositPercent() > 0) {
           <p class="deposit">
             {{ label("business.booking.depositNotice", { percent: depositPercent() }) }}

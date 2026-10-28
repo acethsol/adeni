@@ -10,6 +10,7 @@
       <a class="cds-btn cds-btn--primary" routerLink="/discover">{{
         label("bookings.bookAnother")
       }}</a>
+      <a class="ghost" routerLink="/my-packages">{{ tr("discover.packages.myLink") }}</a>
       @if (auth0Mode) {
         <button type="button" class="ghost" (click)="logout()">{{ label("bookings.logOut") }}</button>
       }

@@ -84,11 +84,15 @@ public sealed class PackageExpiryService(
     }
 }
 
-public sealed class PackageExpiryHangfireJob(IPackageExpiryService expiry)
+public sealed class PackageExpiryHangfireJob(IPackageExpiryService expiry, IPackagePurchaseActivation purchases)
 {
     public const string RecurringJobId = "retention-package-expiry-v1";
 
     [DisableConcurrentExecution(300)]
-    public Task ExecuteAsync(CancellationToken cancellationToken) =>
-        expiry.ExpireDuePackagesAsync(200, cancellationToken);
+    public async Task ExecuteAsync(CancellationToken cancellationToken)
+    {
+        await expiry.ExpireDuePackagesAsync(200, cancellationToken);
+        // Safety net for online purchases whose PaymentCompleted delivery failed after the payment was confirmed.
+        await purchases.ReconcilePendingAsync(100, cancellationToken);
+    }
 }

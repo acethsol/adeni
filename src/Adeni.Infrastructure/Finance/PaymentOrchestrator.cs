@@ -632,9 +632,11 @@ public sealed partial class PaymentOrchestrator(
         Guid? entityId,
         CancellationToken cancellationToken)
     {
+        // Callers pass the payment intent id; reusing it as the audit PK made the 2nd audit write per intent
+        // (initialized → confirmed) collide, so confirmation threw after the payment had already committed.
         await auditLogWriter.WriteAsync(
             new AuditEntry(
-                auditId,
+                Guid.NewGuid(),
                 tenantId == Guid.Empty ? "system" : tenantId.ToString(),
                 action,
                 entityType,

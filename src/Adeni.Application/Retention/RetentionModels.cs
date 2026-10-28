@@ -238,6 +238,29 @@ public sealed record CustomerPackageSummary(
     int TotalRemainingCredits,
     IReadOnlyList<string> ActivePackageNames);
 
+/// <summary>Anonymous Discover catalog entry (no location ids, no internal flags).</summary>
+public sealed record PublicPackageResponse(
+    Guid Id,
+    string Name,
+    string? Description,
+    decimal ListPrice,
+    string Currency,
+    int ExpiryMonths,
+    string RedemptionScope,
+    IReadOnlyList<PackageBenefitResponse> Benefits);
+
+/// <summary><c>OnlinePurchaseEnabled</c> is false until tenant merchant settlement is live (Sprint 34 gate).</summary>
+public sealed record PublicPackageCatalogResponse(
+    IReadOnlyList<PublicPackageResponse> Items,
+    bool OnlinePurchaseEnabled);
+
+/// <summary>Result of starting an online purchase: the package stays <c>pending_payment</c> until <c>PaymentCompleted</c>.</summary>
+public sealed record PackagePurchaseResponse(
+    Guid CustomerPackageId,
+    Guid PaymentIntentId,
+    string Status,
+    string? CheckoutUrl);
+
 /// <summary>Per-service credit count already applied to a booking (price covered by package).</summary>
 public sealed record CoveredBenefitService(Guid ServiceOfferingId, int Quantity);
 

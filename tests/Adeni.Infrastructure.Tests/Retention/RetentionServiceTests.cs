@@ -510,4 +510,76 @@ public sealed class RetentionServiceTests
         Assert.Equal(1, summary!.ActiveCount);
         Assert.Equal(2, summary.TotalRemainingCredits);
     }
+
+    // ---- Online purchase activation (PaymentCompleted) ----
+
+    private static async Task<(Guid PackageId, Guid IntentId)> PendingOnlineAsync(Harness h, int quantity = 3)
+    {
+        var definition = await h.DefinitionAsync(quantity);
+        var package = new CustomerPackage
+        {
+            Id = Guid.NewGuid(), TenantId = h.Tenant, TenantCustomerId = h.TenantCustomer, PackageDefinitionId = definition.Id,
+            SoldChannel = PackageSoldChannel.Online, PaymentIntentId = Guid.NewGuid(), Status = CustomerPackageStatus.PendingPayment,
+            NameSnapshot = definition.Name, ListPriceSnapshot = definition.ListPrice, CurrencySnapshot = definition.Currency,
+            RedemptionScopeSnapshot = PackageRedemptionScope.AllLocations, SoldBy = "customer", CreatedAt = h.Clock.Now,
+        };
+        h.Db.Add(package);
+        await h.Db.SaveChangesAsync();
+        return (package.Id, package.PaymentIntentId!.Value);
+    }
+
+    private static PackagePurchaseActivation Activation(Harness h) =>
+        new(h.Db, h.Events, h.Clock, Microsoft.Extensions.Logging.Abstractions.NullLogger<PackagePurchaseActivation>.Instance);
+
+    [Fact]
+    public async Task Activate_PaymentCompleted_GrantsBalancesOnce_AndDuplicateDeliveryIsNoOp()
+    {
+        var h = await NewAsync();
+        var (packageId, intentId) = await PendingOnlineAsync(h, quantity: 3);
+        var activation = Activation(h);
+
+        Assert.True(await activation.ActivateForPaymentAsync(h.Tenant, intentId, 12000m, "NGN"));
+        Assert.True(await activation.ActivateForPaymentAsync(h.Tenant, intentId, 12000m, "NGN"));
+
+        var package = await h.Db.Set<CustomerPackage>().AsNoTracking().Include(x => x.Balances).SingleAsync(x => x.Id == packageId);
+        Assert.Equal(CustomerPackageStatus.Active, package.Status);
+        Assert.Equal(h.Clock.Now.AddMonths(12), package.ExpiresAt);
+        Assert.Equal(3, Assert.Single(package.Balances).Granted);
+        Assert.Equal(1, await h.Db.Set<BenefitTransaction>().CountAsync(x => x.Kind == BenefitTransactionKind.Grant));
+    }
+
+    [Fact]
+    public async Task Activate_AmountMismatch_DoesNotGrant()
+    {
+        var h = await NewAsync();
+        var (packageId, intentId) = await PendingOnlineAsync(h);
+
+        Assert.False(await Activation(h).ActivateForPaymentAsync(h.Tenant, intentId, 1m, "NGN"));
+        Assert.False(await Activation(h).ActivateForPaymentAsync(h.Tenant, intentId, 12000m, "USD"));
+
+        Assert.Equal(CustomerPackageStatus.PendingPayment, (await h.Db.Set<CustomerPackage>().AsNoTracking().SingleAsync(x => x.Id == packageId)).Status);
+        Assert.Equal(0, await h.Db.Set<BenefitBalance>().CountAsync());
+    }
+
+    [Fact]
+    public async Task Activate_IntentWithoutPackage_IsIgnored()
+    {
+        var h = await NewAsync();
+
+        Assert.False(await Activation(h).ActivateForPaymentAsync(h.Tenant, Guid.NewGuid(), 12000m, "NGN"));
+        Assert.Equal(0, await h.Db.Set<BenefitTransaction>().CountAsync());
+    }
+
+    [Fact]
+    public async Task Activate_VoidedPendingPackage_NeverGrants()
+    {
+        var h = await NewAsync();
+        var (packageId, intentId) = await PendingOnlineAsync(h);
+        var package = await h.Db.Set<CustomerPackage>().SingleAsync(x => x.Id == packageId);
+        package.Status = CustomerPackageStatus.Voided;
+        await h.Db.SaveChangesAsync();
+
+        Assert.True(await Activation(h).ActivateForPaymentAsync(h.Tenant, intentId, 12000m, "NGN")); // terminal: nothing to do
+        Assert.Equal(0, await h.Db.Set<BenefitBalance>().CountAsync());
+    }
 }

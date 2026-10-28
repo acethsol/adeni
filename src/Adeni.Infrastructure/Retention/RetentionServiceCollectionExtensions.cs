@@ -1,6 +1,8 @@
 namespace Adeni.Infrastructure.Retention;
 
+using Adeni.Application.Events;
 using Adeni.Application.Retention;
+using Adeni.Domain.Finance.Events;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -13,6 +15,9 @@ public static class RetentionServiceCollectionExtensions
         services.AddScoped<IPackageCatalogService, PackageCatalogService>();
         services.AddScoped<ICustomerPackageService, CustomerPackageService>();
         services.AddScoped<IBenefitRedemptionService, BenefitRedemptionService>();
+        services.AddScoped<IPackageStorefrontService, PackageStorefrontService>();
+        services.AddScoped<IPackagePurchaseActivation, PackagePurchaseActivation>();
+        services.AddScoped<IDomainEventHandler<PaymentCompleted>, PackagePurchasePaymentHandler>();
         services.AddScoped<IPackageExpiryService, PackageExpiryService>();
         services.AddScoped<ICustomerPackageSummaryQuery, CustomerPackageSummaryQuery>();
         services.AddScoped<PackageExpiryHangfireJob>();

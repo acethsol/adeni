@@ -130,6 +130,7 @@ internal static class ApiErrorResponseMapper
         {
             RetentionErrorCodes.PackageNotFound or RetentionErrorCodes.BenefitNotFound => StatusCodes.Status404NotFound,
             RetentionErrorCodes.OwnerRequired => StatusCodes.Status403Forbidden,
+            RetentionErrorCodes.OnlinePurchaseUnavailable => StatusCodes.Status503ServiceUnavailable,
             RetentionErrorCodes.BenefitInsufficient or RetentionErrorCodes.BenefitConflict
                 or RetentionErrorCodes.IdempotencyConflict or RetentionErrorCodes.PackageInactive
                 or RetentionErrorCodes.PackageNotActive or RetentionErrorCodes.PackageExpired

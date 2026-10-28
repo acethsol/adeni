@@ -4,6 +4,8 @@ import {
   customerPackageSchema,
   packageDefinitionListSchema,
   packageDefinitionSchema,
+  packagePurchaseResponseSchema,
+  publicPackageCatalogSchema,
   redeemableBenefitListSchema,
   type CreatePackageDefinitionRequest,
   type SellPackageRequest,
@@ -12,6 +14,7 @@ import {
 import type { ApiClientContext } from "../core/api-transport";
 
 const BASE = "/api/v1/tenant/retention";
+const publicBase = (slug: string) => `/api/v1/businesses/${encodeURIComponent(slug)}/retention`;
 
 /** Tenant retention API: package catalog, in-person sales, customer packages and the benefit ledger. */
 export class RetentionApi {
@@ -93,5 +96,31 @@ export class RetentionApi {
   /** Signed-in consumer's packages across businesses. */
   myPackages(signal?: AbortSignal) {
     return this.get("/api/v1/me/retention/packages", customerPackageListSchema, signal);
+  }
+
+  /** Anonymous Discover storefront: sellable packages for a business (+ whether online purchase is live). */
+  publicCatalog(slug: string, signal?: AbortSignal) {
+    return this.get(`${publicBase(slug)}/packages`, publicPackageCatalogSchema, signal);
+  }
+
+  /** Customer online purchase. Credits are granted only after payment completes; reuse `key` on retries. */
+  purchasePackage(slug: string, packageId: string, key: string, signal?: AbortSignal) {
+    return this.write(
+      `${publicBase(slug)}/packages/${encodeURIComponent(packageId)}/purchase`,
+      {},
+      packagePurchaseResponseSchema,
+      "POST",
+      key,
+      signal,
+    );
+  }
+
+  /** Signed-in customer's credits at one business, filtered to what applies to the booking being built. */
+  myRedeemableBenefits(slug: string, params: { locationId?: string; serviceIds?: string[] } = {}, signal?: AbortSignal) {
+    const query = new URLSearchParams();
+    if (params.locationId) query.set("businessLocationId", params.locationId);
+    for (const id of params.serviceIds ?? []) query.append("serviceOfferingIds", id);
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
+    return this.get(`${publicBase(slug)}/redeemable-benefits${suffix}`, redeemableBenefitListSchema, signal);
   }
 }

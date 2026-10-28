@@ -16,6 +16,7 @@ import { seoMarketCanMatch } from "./core/seo-market.guard";
 
 export const routes: Routes = [
   { path: "pay", loadComponent: () => import("./pages/pay/pay.component").then(m => m.PayComponent), title: "Payment" },
+  { path: "my-packages", canActivate: [customerAuthGuard], loadComponent: () => import("./pages/my-packages/my-packages.component").then(m => m.MyPackagesComponent), title: "My packages" },
   { path: "my-gift-cards", canActivate: [customerAuthGuard], loadComponent: () => import("./pages/pay/purchased-gifts.component").then(m => m.PurchasedGiftsComponent), title: "Purchased gift cards" },
   {
     path: "checkout/stub/:reference",

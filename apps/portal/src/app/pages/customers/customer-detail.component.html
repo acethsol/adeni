@@ -349,6 +349,10 @@
           [activityVisible]="true"
         />
       </div>
+    } @else if (tab() === "packages" && session.can("portal.retention")) {
+      <div class="tab-panel">
+        <app-customer-packages-panel [customerId]="c.id" />
+      </div>
     }
   } @else if (!error()) {
     <adeni-portal-empty-state

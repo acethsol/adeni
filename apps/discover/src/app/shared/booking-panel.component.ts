@@ -1,10 +1,12 @@
 import { RouterLink } from "@angular/router";
 import { CurrencyPipe } from "@angular/common";
-import { Component, computed, inject, input, signal, DestroyRef } from "@angular/core";
+import { Component, computed, effect, inject, input, signal, untracked, DestroyRef } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import type {
+  AppliedBenefitRequest,
   BookingResponse,
   PublicStaffMember,
+  RedeemableBenefit,
   ServiceMenuGroup,
   ServiceOffering,
 } from "@adeni/shared";
@@ -58,7 +60,15 @@ export class BookingPanelComponent {
   private staffAbort = new AbortController();
   private slotsAbort = new AbortController();
   private preferredPractitioner: string | null = null;
-  constructor() { inject(DestroyRef).onDestroy(() => this.cancelSelectionRequests()); }
+  constructor() {
+    inject(DestroyRef).onDestroy(() => this.cancelSelectionRequests());
+    // Package credits are only offered on the confirm step, once service/location/party are known.
+    effect(() => {
+      if (this.step() === "confirm" && this.bookingEnabled()) {
+        untracked(() => void this.loadRedeemableBenefits());
+      }
+    });
+  }
   cancelSelectionRequests(): void { this.staffAbort.abort(); this.slotsAbort.abort(); }
   resetPreselection(): void { this.preferredPractitioner = null; this.backToServices(); this.error.set(null); }
   applyPreselection(serviceId: string | null, practitionerId: string | null): void {
@@ -91,6 +101,59 @@ export class BookingPanelComponent {
   readonly submitting = signal(false);
   readonly error = signal<string | null>(null);
   readonly booking = signal<BookingResponse | null>(null);
+  /** Customer's package credits that could cover this booking (fetched on the confirm step). */
+  readonly redeemableBenefits = signal<RedeemableBenefit[]>([]);
+  private readonly useBenefitIds = signal<ReadonlySet<string>>(new Set());
+
+  /** One credit = one service unit: at most (matching lines × guests), capped by what is left. */
+  private creditsFor(benefit: RedeemableBenefit): number {
+    const lines = this.selectedServices().filter((s) => s.id === benefit.serviceOfferingId).length;
+    return Math.min(benefit.remaining, lines * this.guestCount());
+  }
+
+  readonly applicableBenefits = computed(() =>
+    this.redeemableBenefits().filter((b) => this.creditsFor(b) > 0),
+  );
+
+  readonly appliedBenefits = computed((): AppliedBenefitRequest[] =>
+    this.applicableBenefits()
+      .filter((b) => this.useBenefitIds().has(b.benefitBalanceId))
+      .map((b) => ({
+        customerPackageId: b.customerPackageId,
+        benefitBalanceId: b.benefitBalanceId,
+        quantity: this.creditsFor(b),
+      })),
+  );
+
+  isBenefitUsed(benefit: RedeemableBenefit): boolean {
+    return this.useBenefitIds().has(benefit.benefitBalanceId);
+  }
+
+  creditsToApply(benefit: RedeemableBenefit): number {
+    return this.creditsFor(benefit);
+  }
+
+  toggleBenefit(benefit: RedeemableBenefit, on: boolean): void {
+    const next = new Set(this.useBenefitIds());
+    if (on) next.add(benefit.benefitBalanceId); else next.delete(benefit.benefitBalanceId);
+    this.useBenefitIds.set(next);
+  }
+
+  private async loadRedeemableBenefits(): Promise<void> {
+    this.useBenefitIds.set(new Set());
+    this.redeemableBenefits.set([]);
+    const serviceIds = [...new Set(this.selectedServices().map((s) => s.id))];
+    if (serviceIds.length === 0) return;
+    try {
+      const result = await this.api.withAuthorizedClient((c) =>
+        c.retention.myRedeemableBenefits(this.slug(), { locationId: this.locationId(), serviceIds }),
+      );
+      this.redeemableBenefits.set(result.items);
+    } catch {
+      // Packages are optional; booking proceeds normally without them.
+      this.redeemableBenefits.set([]);
+    }
+  }
 
   readonly primaryService = computed(
     () => this.selectedServices().find((s) => !s.isAddOn) ?? null,
@@ -504,6 +567,7 @@ export class BookingPanelComponent {
               guestCount: this.guestCount(),
               guests,
               lines: cart.map((s) => ({ serviceOfferingId: s.id })),
+              ...(this.appliedBenefits().length > 0 ? { appliedBenefits: this.appliedBenefits() } : {}),
             }),
           ),
         this.label("business.booking.confirming"),

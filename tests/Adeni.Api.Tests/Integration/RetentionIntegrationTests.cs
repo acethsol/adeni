@@ -258,6 +258,171 @@ public sealed class RetentionIntegrationTests : IClassFixture<WebApplicationFact
         Assert.Contains(BenefitTransactionKind.Redeem, kinds);
     }
 
+    // ---- Storefront: public catalog + online purchase (stub provider; credits only on PaymentCompleted) ----
+
+    private async Task<Guid> CreateDefinitionAsync(HttpClient owner, Seeded s, int price, int quantity = 3, bool deactivate = false)
+    {
+        var response = await owner.PostAsJsonAsync("/api/v1/tenant/retention/packages", new
+        {
+            name = $"Online x{quantity}",
+            listPrice = price,
+            currency = "NGN",
+            benefits = new[] { new { serviceOfferingId = s.Service, quantityGranted = quantity } },
+        });
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var id = (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        if (deactivate)
+        {
+            Assert.Equal(HttpStatusCode.OK, (await owner.PostAsync($"/api/v1/tenant/retention/packages/{id}/deactivate", null)).StatusCode);
+        }
+
+        return id;
+    }
+
+    private static string ReferenceFrom(JsonElement purchase) =>
+        purchase.GetProperty("checkoutUrl").GetString()!.TrimEnd('/').Split('/').Last();
+
+    [Fact]
+    public async Task PublicCatalog_IsAnonymous_ListsOnlyActivePackages_WithoutInternalFields()
+    {
+        var s = await SeedAsync();
+        using var owner = Client(s.Owner, s.Tenant);
+        var active = await CreateDefinitionAsync(owner, s, price: 9000);
+        await CreateDefinitionAsync(owner, s, price: 1000, deactivate: true);
+
+        using var anon = Client();
+        var response = await anon.GetAsync($"/api/v1/businesses/{s.Slug}/retention/packages");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var catalog = await response.Content.ReadFromJsonAsync<JsonElement>();
+        var item = Assert.Single(catalog.GetProperty("items").EnumerateArray());
+        Assert.Equal(active, item.GetProperty("id").GetGuid());
+        Assert.True(catalog.GetProperty("onlinePurchaseEnabled").GetBoolean());
+        Assert.False(item.TryGetProperty("redemptionLocationIds", out _));
+        Assert.False(item.TryGetProperty("sellLocationIds", out _));
+
+        var unknown = await anon.GetAsync("/api/v1/businesses/no-such-business/retention/packages");
+        Assert.Equal(HttpStatusCode.OK, unknown.StatusCode);
+        Assert.Empty((await unknown.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("items").EnumerateArray());
+    }
+
+    [Fact]
+    public async Task Purchase_RequiresCustomerAuthAndIdempotencyKey()
+    {
+        var s = await SeedAsync();
+        using var owner = Client(s.Owner, s.Tenant);
+        var definition = await CreateDefinitionAsync(owner, s, price: 9000);
+        var url = $"/api/v1/businesses/{s.Slug}/retention/packages/{definition}/purchase";
+
+        using var anon = Client();
+        Assert.Equal(HttpStatusCode.Unauthorized, (await anon.SendAsync(Post(url, null, "k"))).StatusCode);
+
+        using var customer = Client(s.Customer);
+        Assert.Equal(HttpStatusCode.BadRequest, (await customer.SendAsync(Post(url, null, null))).StatusCode);
+    }
+
+    [Fact]
+    public async Task Purchase_GrantsOnlyAfterPaymentCompleted_AndDuplicateConfirmationNeverDoubleGrants()
+    {
+        var s = await SeedAsync();
+        using var owner = Client(s.Owner, s.Tenant);
+        using var customer = Client(s.Customer);
+        var definition = await CreateDefinitionAsync(owner, s, price: 9000, quantity: 3);
+        var url = $"/api/v1/businesses/{s.Slug}/retention/packages/{definition}/purchase";
+
+        var started = await customer.SendAsync(Post(url, null, "buy-1"));
+        Assert.True(started.IsSuccessStatusCode, await started.Content.ReadAsStringAsync());
+        var purchase = await started.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("pending_payment", purchase.GetProperty("status").GetString());
+        var packageId = purchase.GetProperty("customerPackageId").GetGuid();
+
+        // Replaying the same key returns the same pending package + intent (no second charge).
+        var replay = await (await customer.SendAsync(Post(url, null, "buy-1"))).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(packageId, replay.GetProperty("customerPackageId").GetGuid());
+        Assert.Equal(purchase.GetProperty("paymentIntentId").GetGuid(), replay.GetProperty("paymentIntentId").GetGuid());
+
+        // Pending: nothing granted, hidden from the customer's list.
+        var before = await customer.GetFromJsonAsync<JsonElement>("/api/v1/me/retention/packages");
+        Assert.Empty(before.GetProperty("items").EnumerateArray());
+        var pendingRow = (await owner.GetFromJsonAsync<JsonElement>($"/api/v1/tenant/retention/customers/{s.TenantCustomer}/packages"))
+            .GetProperty("items")[0];
+        Assert.Equal("pending_payment", pendingRow.GetProperty("status").GetString());
+        Assert.Equal("online", pendingRow.GetProperty("soldChannel").GetString());
+        Assert.Empty(pendingRow.GetProperty("balances").EnumerateArray());
+
+        // Confirm twice (duplicate delivery): exactly one grant.
+        var reference = ReferenceFrom(purchase);
+        Assert.Equal(HttpStatusCode.OK, (await customer.PostAsJsonAsync("/api/v1/finance/stub/confirm", new { reference })).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await customer.PostAsJsonAsync("/api/v1/finance/stub/confirm", new { reference })).StatusCode);
+
+        var after = (await customer.GetFromJsonAsync<JsonElement>("/api/v1/me/retention/packages")).GetProperty("items");
+        var mine = Assert.Single(after.EnumerateArray());
+        Assert.Equal("active", mine.GetProperty("status").GetString());
+        Assert.Equal(3, mine.GetProperty("balances")[0].GetProperty("remaining").GetInt32());
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        Assert.Equal(1, await db.Set<BenefitTransaction>().CountAsync(x => x.TenantId == s.Tenant && x.Kind == BenefitTransactionKind.Grant));
+
+        // Re-submitting the (now paid) purchase key is still idempotent.
+        var again = await (await customer.SendAsync(Post(url, null, "buy-1"))).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("active", again.GetProperty("status").GetString());
+    }
+
+    [Fact]
+    public async Task Purchase_DifferentBodyForSameKey_ConflictsAndInactivePackageIsRejected()
+    {
+        var s = await SeedAsync();
+        using var owner = Client(s.Owner, s.Tenant);
+        using var customer = Client(s.Customer);
+        var first = await CreateDefinitionAsync(owner, s, price: 9000);
+        var second = await CreateDefinitionAsync(owner, s, price: 5000);
+        var inactive = await CreateDefinitionAsync(owner, s, price: 2000, deactivate: true);
+
+        Assert.True((await customer.SendAsync(Post($"/api/v1/businesses/{s.Slug}/retention/packages/{first}/purchase", null, "same"))).IsSuccessStatusCode);
+        var conflict = await customer.SendAsync(Post($"/api/v1/businesses/{s.Slug}/retention/packages/{second}/purchase", null, "same"));
+        Assert.Equal(HttpStatusCode.Conflict, conflict.StatusCode);
+
+        var gone = await customer.SendAsync(Post($"/api/v1/businesses/{s.Slug}/retention/packages/{inactive}/purchase", null, "other"));
+        Assert.Equal(HttpStatusCode.Conflict, gone.StatusCode);
+        Assert.Contains("retention.package_inactive", await gone.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Purchase_CannotUseAnotherBusinessesPackage()
+    {
+        var a = await SeedAsync();
+        var b = await SeedAsync();
+        using var ownerB = Client(b.Owner, b.Tenant);
+        var foreign = await CreateDefinitionAsync(ownerB, b, price: 9000);
+
+        using var customer = Client(a.Customer);
+        var response = await customer.SendAsync(Post($"/api/v1/businesses/{a.Slug}/retention/packages/{foreign}/purchase", null, "x"));
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task RedeemableBenefits_ReturnsOnlyTheSignedInCustomersCredits()
+    {
+        var s = await SeedAsync();
+        using var owner = Client(s.Owner, s.Tenant);
+        using var customer = Client(s.Customer);
+        var definition = await CreateDefinitionAsync(owner, s);
+        await SellAsync(owner, s, definition, "sell-r");
+
+        var mine = await customer.GetFromJsonAsync<JsonElement>(
+            $"/api/v1/businesses/{s.Slug}/retention/redeemable-benefits?businessLocationId={s.Location}&serviceOfferingIds={s.Service}");
+        var item = Assert.Single(mine.GetProperty("items").EnumerateArray());
+        Assert.Equal(s.Service, item.GetProperty("serviceOfferingId").GetGuid());
+
+        var other = await SeedAsync();
+        using var stranger = Client(other.Customer);
+        var theirs = await stranger.GetFromJsonAsync<JsonElement>($"/api/v1/businesses/{s.Slug}/retention/redeemable-benefits");
+        Assert.Empty(theirs.GetProperty("items").EnumerateArray());
+
+        using var anon = Client();
+        Assert.Equal(HttpStatusCode.Unauthorized, (await anon.GetAsync($"/api/v1/businesses/{s.Slug}/retention/redeemable-benefits")).StatusCode);
+    }
+
     [Fact]
     public async Task Booking_ExceedingRemainingCredit_IsRejectedWithStableCode()
     {

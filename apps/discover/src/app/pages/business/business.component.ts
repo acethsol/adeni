@@ -46,6 +46,7 @@ import { SeoService } from "../../core/services/seo.service";
 import { MarketContextService } from "../../core/services/market-context.service";
 import { BookingPreselectionDirective } from "../../shared/booking-preselection.directive";
 import { BookingPanelComponent } from "../../shared/booking-panel.component";
+import { BusinessPackagesComponent } from "../../shared/business-packages.component";
 import { QuoteRequestPanelComponent } from "../../shared/quote-request-panel.component";
 
 const BUSINESS_STATE_KEY = makeStateKey<{
@@ -69,6 +70,7 @@ type ServiceCollection = {
     RouterLink,
     DecimalPipe,
     BookingPanelComponent,
+    BusinessPackagesComponent,
     BookingPreselectionDirective,
     QuoteRequestPanelComponent,
     AdeniCarbonIconComponent,

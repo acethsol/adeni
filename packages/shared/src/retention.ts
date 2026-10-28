@@ -145,6 +145,34 @@ export const customerPackageSummarySchema = z.object({
   activePackageNames: z.array(z.string()),
 });
 
+/** Discover storefront (anonymous catalog). `onlinePurchaseEnabled` is false until merchant settlement is live (Sprint 34 gate). */
+export const publicPackageSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  description: z.string().nullable(),
+  listPrice: z.number().nonnegative(),
+  currency: z.string(),
+  expiryMonths: z.number().int().positive(),
+  redemptionScope: packageRedemptionScopeSchema,
+  benefits: z.array(packageBenefitSchema),
+});
+
+export const publicPackageCatalogSchema = z.object({
+  items: z.array(publicPackageSchema),
+  onlinePurchaseEnabled: z.boolean(),
+});
+
+/** Online purchase start: package stays `pending_payment` until PaymentCompleted. */
+export const packagePurchaseResponseSchema = z.object({
+  customerPackageId: z.string().uuid(),
+  paymentIntentId: z.string().uuid(),
+  status: customerPackageStatusSchema,
+  checkoutUrl: z.string().nullable(),
+});
+
+export type PublicPackage = z.infer<typeof publicPackageSchema>;
+export type PublicPackageCatalog = z.infer<typeof publicPackageCatalogSchema>;
+export type PackagePurchaseResponse = z.infer<typeof packagePurchaseResponseSchema>;
 export type PackageDefinition = z.infer<typeof packageDefinitionSchema>;
 export type CreatePackageDefinitionRequest = z.infer<typeof createPackageDefinitionRequestSchema>;
 export type UpdatePackageDefinitionRequest = z.infer<typeof updatePackageDefinitionRequestSchema>;

@@ -20,6 +20,11 @@ public static class RetentionErrorCodes
     public const string IdempotencyConflict = "retention.idempotency_conflict";
     public const string OwnerRequired = "retention.owner_required";
     public const string Validation = "retention.validation";
+    public const string OnlinePurchaseUnavailable = "retention.online_purchase_unavailable";
+
+    /// <summary>Online checkout is gated until tenant merchant settlement is live (Sprint 34); sandbox/stub only.</summary>
+    public static Error OnlinePurchaseUnavailableError() =>
+        new(OnlinePurchaseUnavailable, "Online package purchase is not available for this business yet.");
 
     public static Error PackagesNotEntitledError() =>
         new(PackagesNotEntitled, "Prepaid packages are not included on your current plan.");

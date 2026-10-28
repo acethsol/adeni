@@ -5,6 +5,8 @@ import {
   createPackageDefinitionRequestSchema,
   customerPackageSchema,
   customerProfileSchema,
+  packagePurchaseResponseSchema,
+  publicPackageCatalogSchema,
   sellPackageRequestSchema,
 } from "./index";
 import { t } from "./i18n";
@@ -43,6 +45,20 @@ describe("retention contracts", () => {
     expect(parsed.balances[0]?.remaining).toBe(2);
   });
 
+  it("parses the public storefront catalog and purchase response", () => {
+    const catalog = publicPackageCatalogSchema.parse({
+      onlinePurchaseEnabled: false,
+      items: [{
+        id, name: "Cut x3", description: null, listPrice: 100, currency: "NGN", expiryMonths: 6,
+        redemptionScope: "all_locations", benefits: [{ id, serviceOfferingId: id, serviceName: "Haircut", quantityGranted: 3 }],
+      }],
+    });
+    expect(catalog.items[0]?.benefits[0]?.quantityGranted).toBe(3);
+    expect(packagePurchaseResponseSchema.parse({
+      customerPackageId: id, paymentIntentId: id, status: "pending_payment", checkoutUrl: null,
+    }).status).toBe("pending_payment");
+  });
+
   it("exposes retention availability and summary on the customer profile", () => {
     const profile = customerProfileSchema.parse({
       tenantCustomerId: id, asOf: "2026-10-25", locationId: null,
@@ -57,7 +73,8 @@ describe("retention contracts", () => {
     const codes = [
       "package_not_found", "package_inactive", "package_not_active", "package_expired", "benefit_not_found",
       "benefit_insufficient", "benefit_service_mismatch", "benefit_conflict", "scope_location_denied",
-      "sell_location_denied", "idempotency_key_required", "idempotency_conflict", "owner_required", "validation",
+      "sell_location_denied", "idempotency_key_required", "idempotency_conflict", "owner_required",
+      "online_purchase_unavailable", "validation",
     ];
     for (const locale of ["en", "fr"] as const) {
       for (const code of codes) {

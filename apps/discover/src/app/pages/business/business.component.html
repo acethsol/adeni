@@ -265,6 +265,8 @@
           </section>
         }
 
+        <app-business-packages [slug]="p.slug" />
+
         @if (showPolicies()) {
           <section id="policies" class="block policies">
             <h2>{{ label("business.policies") }}</h2>
