@@ -12,18 +12,29 @@ Authority: [product-direction.md](../product-direction.md), [product-strategy.md
 | **Package value type** | Packages are **session / service credits only** (count or duration tied to catalog services). They are **not** a monetary wallet, stored balance, or withdrawable cash value. |
 | **Expiry** | Default **12 months** from purchase or activation (exact anchor TBD in spec). Tenant may configure expiry in **months**. Unused credits **forfeit** at expiry unless the **owner voids** the package (audit-logged). |
 | **Portal entitlement** | **`portal.retention`** — yes; package management and redemption UI in Portal is in scope for R1-A when implemented. |
-| **Redemption scope** | **Tenant-configurable**: redeem at a **single location** vs **any location** under the tenant. |
+| **Redemption scope (#6)** | **Approved** — package-level redemption + sell scope; validate **booking location** at redemption; customer home location unchanged. See section 6 below. |
 
-## Open design — customer ↔ location
+## 6. Redemption scope — **Approved**
 
-Today, roster and operational flows often treat customers in a **branch context** (location filters on profile, bookings, queue). Multi-location redemption implies a customer can spend credits booked at Location A at Location B.
+**Package definition**
 
-**Recommendation for spec draft (not decided):**
+- **Redemption scope** (enum): `all_locations` | `purchase_location_only` | `selected_locations` (location checklist).
+- **Sell scope:** which locations may sell the package (Fresha-style default: all active locations).
 
-- Persist redemption scope on the **package product** (or tenant default), not per customer.
-- Ledger entries remain **tenant-scoped**; optional `BusinessLocationId` on grant/redemption rows when scope is single-location or when the sale origin must be recorded for reporting.
-- Do **not** fork `TenantCustomer` per location for packages; use existing roster identity and enforce location at redemption time via tenant settings + booking/queue location.
-- Portal: when scope is single-location, show **where the package was sold** and **where it may be redeemed** explicitly to avoid staff assuming tenant-wide validity.
+**At redemption**
+
+- Validate **booking location** against the package redemption scope.
+- Do **not** move or overwrite the customer **home location** for redemption.
+- Customer home location remains for CRM/segments; redeem at another branch only when the package allows.
+- Service must exist at the branch to redeem (catalog constraint at booking/redemption time).
+
+**Defaults & implementation notes**
+
+- Default redemption scope: **`all_locations`**; default sell scope: **all locations** may sell unless restricted.
+- Persist scope on the **package product** (or tenant default), not per customer.
+- Ledger entries remain **tenant-scoped**; optional `BusinessLocationId` on grant/redemption rows for sale origin and reporting.
+- Do **not** fork `TenantCustomer` per location for packages; enforce location at redemption via package scope + booking/queue location.
+- Portal: show **where the package was sold**, **redemption scope**, and **where it may be redeemed** so staff do not assume tenant-wide validity when scope is narrower.
 
 ## Out of scope for this log
 
