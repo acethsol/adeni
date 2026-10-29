@@ -134,7 +134,7 @@ Let **wellness businesses that mostly take appointments** offer **selected servi
 | `packages/shared` | `capabilities.ts`, `category-workflows.ts` + JSON, schemas, i18n, `shouldShowServiceQuotes` |
 | `packages/api-client` | Create quote body; my-quotes helpers if missing |
 | `apps/discover` | `business.component`, `booking-panel` or service list, **`my-quotes`**, routes, shell nav |
-| `apps/portal` | Nav capability gate (`service_quotes`), services UI pricing type, optional badge |
+| `apps/business` | Nav capability gate (`service_quotes`), services UI pricing type, optional badge |
 | `apps/mobile` | Out of scope unless 38m |
 
 ---

@@ -197,7 +197,7 @@ Owner remains a register/onboarding path, not an invite default.
 | Tests | Auth sync no-new-tenant for invite; permission denial; invite accept; practitioner booking filter; last-owner guard |
 | `packages/shared` | Permission keys, role templates, Zod, i18n error strings |
 | `packages/api-client` | Invite + access methods |
-| `apps/portal` | Nav + route guards by permission; Staff invite UI; practitioner home |
+| `apps/business` | Nav + route guards by permission; Staff invite UI; practitioner home |
 
 Follow [architecture.md](../architecture.md): Booking stays roster/hours; Identity owns login membership.
 

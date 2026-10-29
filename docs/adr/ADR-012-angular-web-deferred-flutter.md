@@ -25,7 +25,7 @@ The maintainer is a **solo developer** with strong Angular experience, wants:
 
 ADR-010 chose Next + Expo over Flutter for SEO + native mobile. This ADR revisits **implementation** while keeping the same product goals: SEO discovery wedge, business OS, single API.
 
-**Maintainer confirmation (Oct 2026):** Accept strangler migration; repo paths **`apps/discover`**, **`apps/portal`**, **`apps/admin`**.
+**Maintainer confirmation (Oct 2026):** Accept strangler migration; repo paths **`apps/discover`**, **`apps/business`**, **`apps/admin`**.
 
 ## Decision
 
@@ -33,14 +33,14 @@ Adeni will:
 
 1. **Adopt Angular (v22+) for all new web UI work**, split into **three deployable apps**:
    - **`apps/discover`** — public discovery, business profiles, booking entry, market context, Ask Adeni UI; **SSR/prerender** for SEO routes.
-   - **`apps/portal`** — Auth0 **business** role: profile, services, calendar, inbox, payments, reviews, settings, messaging.
+   - **`apps/business`** — Auth0 **business** role: profile, services, calendar, inbox, payments, reviews, settings, messaging.
    - **`apps/admin`** — Auth0 **admin** role only: business approval, customers, markets, subscriptions; **no** business-portal features (smaller blast radius, stricter access).
 2. **Migrate from Next.js using a strangler pattern** (see [migration checklist](../angular-migration-checklist.md)) — Next remains in production until each route group is replaced and verified; no big-bang cutover required.
 3. **Keep Expo in maintenance mode** until web GA; then **build Flutter consumer mobile** against the same OpenAPI/API, launching **after** web launch unless a critical mobile deadline forces overlap.
 4. **Do not** use Angular SSR or Flutter web as the primary mobile strategy — store apps are **Flutter (phase 2)**; PWA/mobile web is acceptable only as a **bridge** (e.g. WhatsApp booking links).
 5. **Preserve API-first Ask Adeni** — agent tools live on the backend; chat UI is a thin client in **discover** (Next or Angular during migration).
 
-**Migration order (recommended):** **`apps/portal`** → **`apps/admin`** → **`apps/discover`** → decommission Next. Portal first aligns with supply-first GTM; admin is a small, auth-heavy surface that reuses portal patterns; discover last preserves SEO until Angular SSR parity is proven.
+**Migration order (recommended):** **`apps/business`** → **`apps/admin`** → **`apps/discover`** → decommission Next. Portal first aligns with supply-first GTM; admin is a small, auth-heavy surface that reuses portal patterns; discover last preserves SEO until Angular SSR parity is proven.
 
 ## Strangler pattern (what we mean)
 
@@ -53,18 +53,18 @@ flowchart LR
   subgraph phase1 [Phase 1]
     U[Users] --> R[Reverse proxy / host rules]
     R --> N[Next.js legacy]
-    R --> P[apps/portal]
+    R --> P[apps/business]
   end
   subgraph phase2 [Phase 2]
     U2[Users] --> R2[Routing]
-    R2 --> P2[apps/portal]
+    R2 --> P2[apps/business]
     R2 --> AD[apps/admin]
     R2 --> N2[Next.js shrinking]
   end
   subgraph phase3 [Phase 3]
     U3[Users] --> R3[Routing]
     R3 --> D[apps/discover]
-    R3 --> P3[apps/portal]
+    R3 --> P3[apps/business]
     R3 --> AD2[apps/admin]
   end
   subgraph phase4 [Phase 4]
@@ -118,13 +118,13 @@ Concrete tactics:
 
 ## Acceptance criteria (execution — checklist)
 
-- [x] Three-app split: `apps/discover`, `apps/portal`, `apps/admin`.
+- [x] Three-app split: `apps/discover`, `apps/business`, `apps/admin`.
 - [x] Migration order: portal → admin → discover (strangler).
 - [ ] Staging routing plan documented (Azure: Front Door / App Service / Container Apps paths).
 - [ ] OpenAPI codegen path chosen for Angular (e.g. `ng-openapi` or shared package strategy).
 - [ ] Auth0 applications/callback URLs defined for **discover**, **portal**, and **admin** origins.
-- [x] First Angular app scaffold merged (`apps/portal`, Auth0 SPA + `@adeni/api-client`, dev sub).
-- [x] CI job for `npm run build:portal` on PRs (`.github/workflows/ci.yml` → `portal-angular`).
+- [x] First Angular app scaffold merged (`apps/business`, Auth0 SPA + `@adeni/api-client`, dev sub).
+- [x] CI job for `npm run build:business` on PRs (`.github/workflows/ci.yml` → `portal-angular`).
 
 ## References
 

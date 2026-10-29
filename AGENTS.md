@@ -11,7 +11,7 @@ Project DNA for Cursor Cloud Agents and local Agent sessions. Read this before c
 | API | .NET 10, modular monolith, Clean Architecture / DDD |
 | Data | SQL Server (`db/Adeni.Database` + SqlPackage), EF Core ORM only, Redis (cache + slot locks where justified) |
 | Auth | Auth0 JWT (RS256), claims under `https://adeni.io/` |
-| Web | Angular — `apps/discover` (SSR/SEO), `apps/portal`, `apps/admin` |
+| Web | Angular — `apps/customer` (SSR/SEO + consumer app), `apps/business`, `apps/admin` |
 | Mobile | Flutter — **consumer app primary** on mobile; `apps/mobile` business skeleton until aligned |
 | Realtime | SignalR (messaging) |
 | Shared contracts | `packages/shared`, `packages/api-client` |
@@ -31,7 +31,7 @@ src/
 ├── Adeni.Infrastructure/   # EF, Redis, Auth0, module implementations
 └── Adeni.Api/              # Controllers, middleware, composition root
 apps/
-├── discover/               # Angular SSR — public discovery & booking
+├── customer/               # Angular SSR — public discovery & booking (consumer app)
 ├── portal/                 # Angular — business portal
 ├── admin/                  # Angular — admin portal
 └── mobile/                 # Flutter — business ops (owner / employee / front desk)
@@ -172,7 +172,7 @@ Register new services in `ServiceCollectionExtensions`. New modules: follow [arc
 | **Section tabs** (detail pages, settings, list sub-views) | `AdeniTabsComponent` (`linkMode`: `query` \| `path` \| `button`) — not `cds-content-switcher` (that's for filters/ranges) |
 | Presentational pattern duplicated across staff apps | Status chips (when extracted); staff actions use `AdeniStaffButtonComponent` + Carbon icon |
 
-| Keep in **one app** (`apps/discover`, `apps/portal`, …) when… | Examples |
+| Keep in **one app** (`apps/customer`, `apps/business`, …) when… | Examples |
 |----------------------------------------------------------------|----------|
 | Route, page, or shell layout for that audience only | Discover booking panel, portal nav + pending bell |
 | Feature UI tied to one surface | Consumer SEO/discovery vs tenant admin tables |

@@ -41,10 +41,10 @@ Backend delivery: `f3baa82` (after foundation `89e94bf`). Frontend delivery: `2f
 | `sqlpackage /Action:Publish /SourceFile:db/Adeni.Database/bin/Release/Adeni.Database.dacpac /TargetConnectionString:<local SQL connection> /p:BlockOnPossibleDataLoss=True` | Passed against isolated local test database; not an Azure/production deployment. |
 | `npm run typecheck` | Passed all workspace checks, including Portal/Admin/Discover development builds and shared/API-client/UI/brand TypeScript checks. |
 | `npm test --workspace @adeni/shared` | **80 passed**. |
-| `CHROME_BIN=/tmp/adeni-chrome npm test --workspace @adeni/portal` | **34 passed**. |
+| `CHROME_BIN=/tmp/adeni-chrome npm test --workspace @adeni/business` | **34 passed**. |
 | `npm test --workspace @adeni/discover` | **7 passed**, including private-route/rendering/TransferState assertions and existing public SEO tests. |
 | Private-route HTTP smoke test against development SSR server | HTTP 200, `Cache-Control: no-store`, `X-Robots-Tag: noindex, nofollow`; client shell without form inputs or answer sentinel. |
-| `npm run build:portal` | Fails inherited styles: services **24.50 kB**, staff **27.41 kB**, plan **28.33 kB**, each against **24 kB** error limit. Initial **2.99 MB**, below **3 MB** error threshold (above warning). New pages are lazy-loaded. |
+| `npm run build:business` | Fails inherited styles: services **24.50 kB**, staff **27.41 kB**, plan **28.33 kB**, each against **24 kB** error limit. Initial **2.99 MB**, below **3 MB** error threshold (above warning). New pages are lazy-loaded. |
 | `npm run build:admin` | Fails inherited 14 component-style budgets and initial bundle, now approximately **2.18 MB / 2 MB** error limit. Shared additions affect size; no budget increase or waived failure. |
 | `npm run build:discover` | Fails inherited shared `_data-grid.scss`: **16.90 kB / 14 kB** error limit. Initial approximately **1.44 MB**, below its error threshold. |
 | `git diff --check` | Passed. |
@@ -82,20 +82,20 @@ apps/discover/src/app/pages/intake/intake.component.ts
 apps/discover/src/app/pages/my-bookings/my-bookings.component.html
 apps/discover/src/app/shared/booking-panel.component.html
 apps/discover/src/app/shared/booking-panel.component.ts
-apps/portal/src/app/app.routes.ts
-apps/portal/src/app/core/intake-api.spec.ts
-apps/portal/src/app/pages/bookings/bookings.component.html
-apps/portal/src/app/pages/bookings/bookings.component.ts
-apps/portal/src/app/pages/customers/customer-detail.component.html
-apps/portal/src/app/pages/customers/customer-detail.component.ts
-apps/portal/src/app/pages/intake/intake-booking-status.service.spec.ts
-apps/portal/src/app/pages/intake/intake-booking-status.service.ts
-apps/portal/src/app/pages/intake/intake-manager.component.html
-apps/portal/src/app/pages/intake/intake-manager.component.spec.ts
-apps/portal/src/app/pages/intake/intake-manager.component.ts
-apps/portal/src/app/pages/intake/intake-review.component.ts
-apps/portal/src/app/pages/services/services.component.html
-apps/portal/src/app/pages/services/services.component.ts
+apps/business/src/app/app.routes.ts
+apps/business/src/app/core/intake-api.spec.ts
+apps/business/src/app/pages/bookings/bookings.component.html
+apps/business/src/app/pages/bookings/bookings.component.ts
+apps/business/src/app/pages/customers/customer-detail.component.html
+apps/business/src/app/pages/customers/customer-detail.component.ts
+apps/business/src/app/pages/intake/intake-booking-status.service.spec.ts
+apps/business/src/app/pages/intake/intake-booking-status.service.ts
+apps/business/src/app/pages/intake/intake-manager.component.html
+apps/business/src/app/pages/intake/intake-manager.component.spec.ts
+apps/business/src/app/pages/intake/intake-manager.component.ts
+apps/business/src/app/pages/intake/intake-review.component.ts
+apps/business/src/app/pages/services/services.component.html
+apps/business/src/app/pages/services/services.component.ts
 db/Adeni.Database/Security/intake.sql
 db/Adeni.Database/booking/Tables/bookings.sql
 db/Adeni.Database/booking/Tables/service_offerings.sql

@@ -236,7 +236,7 @@ Admin delivery visibility: 38B via audit/ops, not customer API.
 | **Api** | Tenant settings controller (prefs); no vendor calls in controllers |
 | **Tests** | Unit: prefs + entitlement gating; integration: mock provider + idempotency; 38B: mock `IReportRenderer` |
 | **packages/shared** | Notification prefs schema (`SmsRemindersEnabled`); entitlement error keys if new |
-| **apps/portal** | Settings notifications section; SMS toggle UX |
+| **apps/business** | Settings notifications section; SMS toggle UX |
 
 ---
 

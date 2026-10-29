@@ -6,8 +6,8 @@ Clients for the Adeni marketplace API. Backend is a **modular monolith** — see
 
 ```
 apps/
-  discover/            Angular SSR — public SEO, consumers (`npm run dev:discover`, :5190)
-  portal/              Angular — business portal (`npm run dev:portal`, :5173)
+  customer/            Angular SSR — public SEO + signed-in consumer app (`npm run dev:customer`, :5190)
+  business/            Angular — business portal (`npm run dev:business`, :5173)
   admin/               Angular — admin portal (`npm run dev:admin`, :5180)
   mobile/              Flutter — business skeleton (owner / employee / front desk)
 packages/
@@ -39,16 +39,16 @@ dotnet run --project src/Adeni.Api --launch-profile http
 ## Run Angular clients
 
 ```powershell
-npm run dev:discover   # http://localhost:5190
-npm run dev:portal     # http://localhost:5173
+npm run dev:customer   # http://localhost:5190
+npm run dev:business     # http://localhost:5173
 npm run dev:admin      # http://localhost:5180
 ```
 
-Environment files: `apps/discover/.env.example.md`, `apps/portal/.env.example.md`, `apps/admin/.env.example.md`. Auth0 SPA keys can stay empty locally; use dev Auth0 subs — [auth0-setup.md](./auth0-setup.md).
+Environment files: `apps/customer/.env.example.md`, `apps/business/.env.example.md`, `apps/admin/.env.example.md`. Auth0 SPA keys can stay empty locally; use dev Auth0 subs — [auth0-setup.md](./auth0-setup.md).
 
 Protected routes: portal (business role), admin (admin role). Without Auth0 env vars, portals show setup instructions instead of login.
 
-Public booking and discovery: **discover** app (`/businesses/{slug}`, `/discover`, …).
+Public booking and discovery: **customer** app (`/businesses/{slug}`, `/discover`, …).
 
 ## Docs
 

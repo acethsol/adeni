@@ -18,15 +18,15 @@ dotnet run --project src/Adeni.Api --launch-profile http   # Development seed on
 
 # Frontend (separate terminal)
 npm ci
-npm run dev:discover                              # http://localhost:5190 (public)
-npm run dev:portal                                # http://localhost:5173 (business)
+npm run dev:customer                              # http://localhost:5190 (public)
+npm run dev:business                                # http://localhost:5173 (business)
 ```
 
 | Service | URL |
 |---------|-----|
 | API | http://localhost:5169 |
 | API docs (dev) | http://localhost:5169/scalar/v1 |
-| Discover (Angular) | http://localhost:5190 |
+| Customer app (Angular) | http://localhost:5190 |
 | Business portal | http://localhost:5173 |
 | Admin portal | http://localhost:5180 |
 | SQL Server | `localhost,1433` (sa / see appsettings.Development.json) |
@@ -39,8 +39,8 @@ See [docs/database-setup.md](docs/database-setup.md), [docs/caching-setup.md](do
 ```
 src/                     .NET backend — **modular monolith** (see docs/architecture.md)
 db/Adeni.Database/       SQL Server Database Project (.sqlproj + SqlPackage)
-apps/discover/           Angular SSR — public discovery & booking
-apps/portal/             Angular — business portal
+apps/customer/           Angular SSR — public discovery & booking (consumer app)
+apps/business/             Angular — business portal
 apps/admin/              Angular — admin portal
 packages/api-client/     Typed API client (shared)
 packages/shared/         Zod schemas, roles, wellness catalog

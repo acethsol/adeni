@@ -76,7 +76,7 @@ Ship a **single-locale, template-driven** notification loop: central template ID
 | Tests | Renderer unit tests, booking French integration, update handler tests |
 | packages/shared | `notification-templates.ts`, `data/notification-templates.json`, schemas, i18n portal labels |
 | packages/api-client | prefs methods (schema parse) |
-| apps/portal | settings notifications tab |
+| apps/business | settings notifications tab |
 
 ---
 

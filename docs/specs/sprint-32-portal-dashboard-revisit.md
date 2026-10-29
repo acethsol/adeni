@@ -20,7 +20,7 @@ Replace the static portal home with a **widget-based, chart-rich dashboard** own
 
 ### Today
 
-`apps/portal/src/app/pages/dashboard/` — hero, plan meter, four KPI tiles, simple bar chart (week counts), booking mix strip, shortcut grid. **No** server-side analytics aggregates, **no** user layout persistence, **no** date-range control.
+`apps/business/src/app/pages/dashboard/` — hero, plan meter, four KPI tiles, simple bar chart (week counts), booking mix strip, shortcut grid. **No** server-side analytics aggregates, **no** user layout persistence, **no** date-range control.
 
 Sprint 16 **16d** (analytics v2) is marked done in [sprints.md](../sprints.md) but **not surfaced** on the live dashboard — treat as **product debt**; this sprint delivers the UI + API those metrics need.
 
@@ -155,7 +155,7 @@ Implement in **Application** port `ITenantDashboardService` + **Infrastructure**
 | packages/shared | Widget ids, layout schema (Zod), metric enums |
 | packages/api-client | Dashboard methods |
 | packages/ui | `DashboardWidgetHost`, chart wrappers (if shared) |
-| apps/portal | Replace `dashboard/*` with widget grid + edit mode |
+| apps/business | Replace `dashboard/*` with widget grid + edit mode |
 
 ---
 

@@ -76,9 +76,9 @@ Runtime: .NET 10.0.402, local Node 24.19.0/npm 11.9, Chromium 154, isolated SQL 
 | `ADENI_SQLSERVER_TESTS=1 ConnectionStrings__AdeniDb=<isolated-test-connection> dotnet test tests/Adeni.Infrastructure.Tests/Adeni.Infrastructure.Tests.csproj -c Release --no-restore --filter 'Category=SqlServer'` | **27 passed, zero skipped**, including three new aggregate/deduplication/window/batching cases and all F1–F4 SQL cases. |
 | `npm run typecheck` | Passed: shared/api-client/UI/brand TypeScript and Portal/Admin/Discover development builds. |
 | `npm test --workspace @adeni/shared` | **90 passed**. |
-| `CHROME_BIN=/workspace/scratch/adeni-f4/chrome npm test --workspace @adeni/portal` | **59 passed**. Wrapper adds container-only Chromium `--no-sandbox`. |
+| `CHROME_BIN=/workspace/scratch/adeni-f4/chrome npm test --workspace @adeni/business` | **59 passed**. Wrapper adds container-only Chromium `--no-sandbox`. |
 | `npm test --workspace @adeni/discover` | **16 passed**, including existing SSR/hydration/redirect coverage. |
-| `NG_BUILD_MAX_WORKERS=2 npm run build:portal` | Failed only the three existing stylesheet error categories below. Initial bundle ~**2,963.66 kB**, below 3 MB; F4 was ~2,996.25 kB. Existing 2.5 MB warning persists. |
+| `NG_BUILD_MAX_WORKERS=2 npm run build:business` | Failed only the three existing stylesheet error categories below. Initial bundle ~**2,963.66 kB**, below 3 MB; F4 was ~2,996.25 kB. Existing 2.5 MB warning persists. |
 | `npm run build:admin` | Failed existing initial and 14 stylesheet budget categories below. |
 | `npm run build:discover` | Failed existing shared data-grid stylesheet error below. |
 | `git diff --check`; source/controller/dependency review | Passed; no new product controller EF or forbidden Domain/Application dependency. |
@@ -229,26 +229,26 @@ Paths retain source route constraints. OAuth/public-token access is intentionall
 
 - `apps/admin/tsconfig.json`
 - `apps/discover/tsconfig.json`
-- `apps/portal/src/app/app.routes.ts`
-- `apps/portal/src/app/core/customer-insights-api.spec.ts`
-- `apps/portal/src/app/core/customer-route-compatibility.spec.ts`
-- `apps/portal/src/app/pages/customers/customer-profile-panel.component.html`
-- `apps/portal/src/app/pages/customers/customer-profile-panel.component.ts`
-- `apps/portal/src/app/pages/customers/customer-segment-chips.component.spec.ts`
-- `apps/portal/src/app/pages/customers/customer-segment-chips.component.ts`
-- `apps/portal/src/app/pages/customers/customer-segments-data.service.spec.ts`
-- `apps/portal/src/app/pages/customers/customer-segments-data.service.ts`
-- `apps/portal/src/app/pages/customers/customer-segments-panel.component.ts`
-- `apps/portal/src/app/pages/customers/customers.component.html`
-- `apps/portal/src/app/pages/customers/customers.component.spec.ts`
-- `apps/portal/src/app/pages/customers/customers.component.ts`
-- `apps/portal/src/app/pages/payments/document-preview/document-preview-data.service.spec.ts`
-- `apps/portal/src/app/pages/payments/document-preview/document-preview-data.service.ts`
-- `apps/portal/src/app/pages/payments/document-preview/document-preview.component.spec.ts`
-- `apps/portal/src/app/pages/payments/document-preview/document-preview.component.ts`
-- `apps/portal/src/app/pages/payments/payments.component.html`
-- `apps/portal/src/app/pages/payments/payments.component.ts`
-- `apps/portal/tsconfig.json`
+- `apps/business/src/app/app.routes.ts`
+- `apps/business/src/app/core/customer-insights-api.spec.ts`
+- `apps/business/src/app/core/customer-route-compatibility.spec.ts`
+- `apps/business/src/app/pages/customers/customer-profile-panel.component.html`
+- `apps/business/src/app/pages/customers/customer-profile-panel.component.ts`
+- `apps/business/src/app/pages/customers/customer-segment-chips.component.spec.ts`
+- `apps/business/src/app/pages/customers/customer-segment-chips.component.ts`
+- `apps/business/src/app/pages/customers/customer-segments-data.service.spec.ts`
+- `apps/business/src/app/pages/customers/customer-segments-data.service.ts`
+- `apps/business/src/app/pages/customers/customer-segments-panel.component.ts`
+- `apps/business/src/app/pages/customers/customers.component.html`
+- `apps/business/src/app/pages/customers/customers.component.spec.ts`
+- `apps/business/src/app/pages/customers/customers.component.ts`
+- `apps/business/src/app/pages/payments/document-preview/document-preview-data.service.spec.ts`
+- `apps/business/src/app/pages/payments/document-preview/document-preview-data.service.ts`
+- `apps/business/src/app/pages/payments/document-preview/document-preview.component.spec.ts`
+- `apps/business/src/app/pages/payments/document-preview/document-preview.component.ts`
+- `apps/business/src/app/pages/payments/payments.component.html`
+- `apps/business/src/app/pages/payments/payments.component.ts`
+- `apps/business/tsconfig.json`
 - `docs/specs/f5-smart-segments-document-preview-plan.md`
 - `docs/specs/squarespace-inspired-v1-closeout.md`
 - `packages/api-client/src/finance/finance-api.ts`

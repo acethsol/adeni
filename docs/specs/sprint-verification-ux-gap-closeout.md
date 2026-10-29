@@ -181,7 +181,7 @@ Internal: `INotificationService` or domain events after submit / approve / rejec
 
 ## 7. UI acceptance criteria
 
-### Portal (`apps/portal`)
+### Portal (`apps/business`)
 
 - Verification tab shows **stepper** states for status 0,1,2,3,4 with accessible labels (i18n).
 - Status **1 (Pending):** no submit form; shows submitted docs list + “in review” copy; business tab shows lock hint (existing).
@@ -284,7 +284,7 @@ Run: `dotnet test Adeni.slnx -c Release`
 | **Tests** | `BusinessOnboardingServiceTests.cs`, `AdminBusinessServiceTests.cs`, `PortalSoc2AuditIntegrationTests.cs`, API integration tests |
 | **packages/shared** | `schemas.ts`, `catalog-en.ts`, `catalog-fr.ts`, `VERIFICATION_DOCUMENT_LABELS` |
 | **packages/api-client** | profile/pending parsers if needed |
-| **apps/portal** | `profile.component.*`, `public-page` route guard or component disable |
+| **apps/business** | `profile.component.*`, `public-page` route guard or component disable |
 | **apps/admin** | `pending.component.*`, shared reject modal component (optional in `@adeni/ui`) |
 | **apps/discover** | `discovery-business-card.*`, `business.component.*`, `hero-category-stage.*` |
 

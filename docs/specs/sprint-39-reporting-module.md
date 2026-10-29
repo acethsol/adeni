@@ -227,7 +227,7 @@ All routes under `/api/v1/`; mutating document issue flows authenticated.
 | **Tests** | Renderer smoke; export 403 when permission/entitlement missing; architecture test — Reporting does not reference Finance/Retention EF |
 | **packages/shared** | Export query schemas, reportKey enum, entitlement error keys |
 | **packages/api-client** | Export download methods |
-| **apps/portal** | Dashboard export buttons; grid toolbar wiring |
+| **apps/business** | Dashboard export buttons; grid toolbar wiring |
 | **apps/admin** | Reporting metrics pages (39B) |
 
 ---

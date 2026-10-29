@@ -28,5 +28,5 @@ Make `/queue` a usable **front-desk floor board** (live refresh, full staff acti
 
 | Layer | Files |
 |-------|-------|
-| Portal | `apps/portal/src/app/pages/queue/*` |
+| Portal | `apps/business/src/app/pages/queue/*` |
 | Docs | this spec |

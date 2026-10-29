@@ -84,7 +84,7 @@ Every list page follows the same structure:
 3. `displayRows` = `sortDataRows(filteredRows, sortColumnId, sortDirection, columns)` when cards must match table order.
 4. `exportItems`: three entries (`csv`, `xlsx`, `pdf`); disabled until Reporting API; `(exportSelect)` → `api-client` when live.
 
-**Reference:** `apps/portal/src/app/pages/staff/staff.component.*`
+**Reference:** `apps/business/src/app/pages/staff/staff.component.*`
 
 ---
 
@@ -94,7 +94,7 @@ Every list page follows the same structure:
 - **Filters:** dropdowns (`adeni-filter-select`), not chip toggles, unless a spec exception is approved.
 - **Export:** single **`adeni-export-menu`** (secondary button + menu), not separate format buttons.
 - **Row actions:** all use **`adeni-icon-btn`** — `variant="table"` (neutral fill) or `variant="danger-soft"` (destructive). Use **`dense="true"`** in tables. Prefer semantic Carbon icons (e.g. `logout` revoke, `view--off` deactivate).
-- **Do not** `@use` any data-grid partial inside app page SCSS (bloats `anyComponentStyle` budgets). Component styles come from each component's own `styleUrl` (`_data-grid-toolbar`, `-table`, `-pagination`, `-pill`, `-icon-btn`, `-filter-select`, `-filter-row`, `-export-menu`, `-row-action-bar`, `-person-cell`). Shared page classes live in `_data-grid-page.scss`, imported once via `@use "data-grid-page";` in `apps/portal/src/styles.scss` and `apps/admin/src/styles.scss` (add to discover only if it adopts list pages).
+- **Do not** `@use` any data-grid partial inside app page SCSS (bloats `anyComponentStyle` budgets). Component styles come from each component's own `styleUrl` (`_data-grid-toolbar`, `-table`, `-pagination`, `-pill`, `-icon-btn`, `-filter-select`, `-filter-row`, `-export-menu`, `-row-action-bar`, `-person-cell`). Shared page classes live in `_data-grid-page.scss`, imported once via `@use "data-grid-page";` in `apps/business/src/styles.scss` and `apps/admin/src/styles.scss` (add to discover only if it adopts list pages).
 
 ---
 

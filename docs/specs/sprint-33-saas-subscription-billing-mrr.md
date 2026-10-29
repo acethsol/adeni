@@ -43,7 +43,7 @@ Per [pricing-and-monetization.md](../pricing-and-monetization.md): **no perpetua
 | Entitlements | `IEntitlementsService`, profile `entitlements[]` | Driven by tier; admin override |
 | Checkout | `StubSubscriptionBillingProvider` | Fake URL; no charge |
 | Webhook | `POST /api/v1/subscriptions/webhook` | Dev-only; **no signature** (Murphy gap) |
-| Portal Plan | `apps/portal/src/app/pages/plan/` | No pay button; “billing goes live on Azure” |
+| Portal Plan | `apps/business/src/app/pages/plan/` | No pay button; “billing goes live on Azure” |
 | Admin | Paid plan **count** + tier mix | Not currency MRR |
 | api-client | No subscription checkout method | Wire when contract stable |
 
@@ -98,7 +98,7 @@ Request/response shapes to be added in `packages/shared` before merge.
 | Api | `SubscriptionBillingController`, admin metrics controller |
 | Tests | Webhook signature, idempotency, tenant isolation |
 | packages/shared, api-client | Schemas + client methods |
-| apps/portal | `plan/*`, optional dashboard link from Sprint 32 |
+| apps/business | `plan/*`, optional dashboard link from Sprint 32 |
 | apps/admin | MRR KPIs |
 
 ---

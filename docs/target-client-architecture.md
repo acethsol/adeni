@@ -56,8 +56,8 @@ This document is the **north-star diagram** for who talks to what on the public 
 
 | Client | Repo (target) | Audience | Notes |
 |--------|---------------|----------|--------|
-| **Discover Web** | `apps/discover` | Consumers (web) | SSR for SEO, public discovery, business profiles, booking. Auth0 SPA for signed-in customers when enabled. |
-| **Business Portal** | `apps/portal` | Business tenants | Services, availability, bookings, profile, payments/plan. Auth0 SPA (business role) or dev sub locally. |
+| **Customer web** | `apps/customer` | Consumers (web) | SSR for SEO, public discovery, business profiles, booking. Auth0 SPA for signed-in customers when enabled. |
+| **Business Portal** | `apps/business` | Business tenants | Services, availability, bookings, profile, payments/plan. Auth0 SPA (business role) or dev sub locally. |
 | **Admin Portal** | `apps/admin` | Adeni staff | Pending verification, markets, businesses, customer privacy (export/erasure). Separate origin recommended in production (e.g. `admin.adeni.com`). |
 | **Flutter mobile** | `apps/mobile` (business skeleton) | Native mobile only | Consumer mobile is the V1 mobile priority; checked-in owner/employee/front-desk skeleton is not the consumer app or an active web client. Same API + OpenAPI. |
 | **.NET API** | `src/Adeni.Api` | All of the above | Modular monolith; no business logic duplicated in clients. |
@@ -78,10 +78,10 @@ Next.js and Expo were **removed from the main monorepo** (October 2026). Referen
 | App | Command | URL |
 |-----|---------|-----|
 | API | `dotnet run --project src/Adeni.Api` | `http://localhost:5169` |
-| Discover | `npm run dev:discover` | `http://localhost:5190` |
-| Portal | `npm run dev:portal` | `http://localhost:5173` |
+| Customer | `npm run dev:customer` | `http://localhost:5190` |
+| Business | `npm run dev:business` | `http://localhost:5173` |
 | Admin | `npm run dev:admin` | `http://localhost:5180` |
-Auth0: three **SPA** applications (discover, portal, admin) when staging is ready; local dev can use `X-Dev-Auth0-Sub` with `Auth0:Enabled: false` — see [auth0-setup.md](./auth0-setup.md).
+Auth0: three **SPA** applications (customer, portal, admin) when staging is ready; local dev can use `X-Dev-Auth0-Sub` with `Auth0:Enabled: false` — see [auth0-setup.md](./auth0-setup.md).
 
 ---
 

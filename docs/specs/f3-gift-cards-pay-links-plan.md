@@ -219,10 +219,10 @@ dotnet build Adeni.slnx -c Release
 dotnet test Adeni.slnx -c Release
 ADENI_SQLSERVER_TESTS=1 dotnet test tests/Adeni.Infrastructure.Tests/Adeni.Infrastructure.Tests.csproj -c Release --filter 'Category=SqlServer'
 npm test --workspace @adeni/shared
-npm test --workspace @adeni/portal
+npm test --workspace @adeni/business
 npm test --workspace @adeni/discover
 npm run typecheck
-npm run build:portal
+npm run build:business
 npm run build:admin
 npm run build:discover
 ```

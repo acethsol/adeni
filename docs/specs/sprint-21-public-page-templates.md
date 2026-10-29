@@ -122,7 +122,7 @@ Validation:
 | Tests | Unit validation; integration GET public + PATCH tenant; cross-tenant 403 |
 | `packages/shared` | `public-page-templates.ts`, Zod schemas, i18n labels |
 | `packages/api-client` | `getTenantProfile` shape + `updatePublicPage` |
-| `apps/portal` | Branding / Public page settings UI + preview |
+| `apps/business` | Branding / Public page settings UI + preview |
 | `apps/discover` | Template host on business page (CSS variants / section flags) |
 
 Follow [architecture.md](../architecture.md) — Tenancy owns write; Discovery reads via existing public profile path (no cross-Infrastructure imports).

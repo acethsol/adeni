@@ -63,8 +63,8 @@ dotnet build Adeni.slnx -c Release
 dotnet test Adeni.slnx -c Release
 npm run typecheck
 npm test --workspace @adeni/shared
-CHROME_BIN=/tmp/adeni-chrome npm test --workspace @adeni/portal
-npm run build:portal
+CHROME_BIN=/tmp/adeni-chrome npm test --workspace @adeni/business
+npm run build:business
 npm run build:admin
 npm run build:discover
 ```

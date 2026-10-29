@@ -5,7 +5,7 @@
 | App type | Client | Used by |
 |----------|--------|---------|
 | **Regular Web (archived)** | Next.js (`@auth0/nextjs-auth0`) | Reference only in the legacy client archive |
-| **SPA (PKCE)** | `@auth0/auth0-angular` | `apps/portal`, `apps/discover`, `apps/admin` (Angular) |
+| **SPA (PKCE)** | `@auth0/auth0-angular` | `apps/business`, `apps/customer`, `apps/admin` (Angular) |
 | **Native (target)** | Flutter / PKCE | Native mobile only; configure for release, not an active web client |
 | **Native (archived)** | Expo AuthSession | Historical implementation in the legacy archive |
 
@@ -38,11 +38,11 @@ exports.onExecutePostLogin = async (event, api) => {
 3. Set `Auth0:RequireMfaForAdmin=true` in API config.
 4. API policy `AdminMfaPolicy` rejects admin JWTs without `amr: mfa`.
 
-## Angular portal (`apps/portal`)
+## Angular business (`apps/business`)
 
 1. Create Auth0 **Single Page Application** (not Regular Web).
 2. Callback / logout / web origins: `http://localhost:5173` (local).
-3. Set `auth0.domain`, `auth0.clientId`, and `auth0.audience` in `apps/portal/src/environments/environment.development.ts` (see `apps/portal/.env.example.md`).
+3. Set `auth0.domain`, `auth0.clientId`, and `auth0.audience` in `apps/business/src/environments/environment.development.ts` (see `apps/business/.env.example.md`).
 4. Local dev without Auth0: keep `devBusinessAuth0Sub` (same as Next `DEV_BUSINESS_AUTH0_SUB`) with API `Auth0:Enabled: false`.
 
 ## Angular admin (`apps/admin`)
@@ -50,21 +50,21 @@ exports.onExecutePostLogin = async (event, api) => {
 1. Auth0 **SPA** (when staging/Azure is ready) — separate client; callback `http://localhost:5180`.
 2. Local dev without Auth0: `devAdminAuth0Sub: "auth0|local-admin"` in `apps/admin/src/environments/environment.development.ts` (`DevAdminAuthMiddleware` on the API).
 
-## Angular discover (`apps/discover`)
+## Angular customer app (`apps/customer`)
 
 1. Auth0 **SPA** for **customers** — separate client from portal/admin; callback `http://localhost:5190`.
 2. Local dev without Auth0: `devCustomerAuth0Sub: "auth0|local-customer"` (same as Next `DEV_CUSTOMER_AUTH0_SUB` / API seeder).
-3. See `apps/discover/.env.example.md` for environment fields (`publicAppUrl`, optional `envMarketId`).
+3. See `apps/customer/.env.example.md` for environment fields (`publicAppUrl`, optional `envMarketId`).
 4. **You can defer Auth0 registration** until staging: leave `auth0.domain` / `clientId` empty and use dev customer sub with `Auth0:Enabled: false` on the API.
 
-## Angular web (discover, portal, admin)
+## Angular web (customer, business, admin)
 
 Create three Auth0 **Single Page Application** clients (or one app with multiple callback URLs during early dev):
 
 | App | Local origin | Env docs |
 |-----|--------------|----------|
-| Discover | `http://localhost:5190` | `apps/discover/.env.example.md` |
-| Portal | `http://localhost:5173` | `apps/portal/.env.example.md` |
+| Customer | `http://localhost:5190` | `apps/customer/.env.example.md` |
+| Business | `http://localhost:5173` | `apps/business/.env.example.md` |
 | Admin | `http://localhost:5180` | `apps/admin/.env.example.md` |
 
 Use Auth0 SPA SDK in each app; callbacks and logout URLs must match deployed origins.

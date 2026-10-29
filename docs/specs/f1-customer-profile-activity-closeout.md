@@ -42,9 +42,9 @@ Memberships, packages, loyalty and persistent customer preferences remain unimpl
 | `dotnet test tests/Adeni.Application.Tests/Adeni.Application.Tests.csproj -c Release` | Initial targeted run identified a test fixture relying on an uninitialized catalog; fixed to use explicit fake entitlements and covered by the passing full run. |
 | `dotnet test tests/Adeni.Infrastructure.Tests/Adeni.Infrastructure.Tests.csproj -c Release --filter FullyQualifiedName~CustomerProfileSourcesTests` | Initial compile caught an xUnit assertion convention; corrected, then all 9 source/cursor cases passed in the full run. |
 | `npm test --workspace @adeni/shared` | **77 passed**, including 4 new contract/localization cases and existing entitlement parity tests. |
-| `CHROME_BIN=/tmp/adeni-chrome npm test --workspace @adeni/portal` | **25 passed**, including 10 new API-client, request lifecycle, rendering and permission cases. |
+| `CHROME_BIN=/tmp/adeni-chrome npm test --workspace @adeni/business` | **25 passed**, including 10 new API-client, request lifecycle, rendering and permission cases. |
 | `npm run typecheck` | Passed all workspaces: shared, API-client, UI, brand and Portal/Admin/Discover development builds including SSR. |
-| `npm run build:portal` | Failed existing 24 kB component-style error budgets: services 24.50 kB, staff 27.41 kB, plan 28.33 kB. Initial 2.98 MB remains below 3 MB error threshold, above 2.5 MB warning. |
+| `npm run build:business` | Failed existing 24 kB component-style error budgets: services 24.50 kB, staff 27.41 kB, plan 28.33 kB. Initial 2.98 MB remains below 3 MB error threshold, above 2.5 MB warning. |
 | `npm run build:admin` | Failed existing 14 component-style error budgets (same paths/sizes as audit closeout) and initial bundle **2.17 MB / 2.00 MB error limit**. Shared bilingual additions affect bundle size; no new failure category. |
 | `npm run build:discover` | Failed existing shared `_data-grid.scss` **16.90 kB / 14 kB error limit**. Initial 1.42 MB; SSR build otherwise runs. |
 | `git diff --check` | Passed. |

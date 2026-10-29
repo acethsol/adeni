@@ -308,7 +308,7 @@ Void package: **owner** role only (stricter than permission).
 | Tests | Unit (balance math, scope), integration (HTTP, tenant denial, idempotency, concurrent reserve) |
 | packages/shared | Zod, i18n errors, `portal.retention`, entitlement type |
 | packages/api-client | retention module |
-| apps/portal, apps/discover | UX per §8 |
+| apps/business, apps/discover | UX per §8 |
 
 ---
 

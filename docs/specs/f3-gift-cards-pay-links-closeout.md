@@ -68,10 +68,10 @@ Backend commands used `/workspace/dotnet/dotnet` with `DOTNET_CLI_HOME=/workspac
 | `ADENI_SQLSERVER_TESTS=1 /workspace/dotnet/dotnet test tests/Adeni.Infrastructure.Tests/Adeni.Infrastructure.Tests.csproj -c Release --filter 'Category=SqlServer'` | With local `ConnectionStrings__AdeniDb`: **16 passed, none skipped** (eight F3 plus eight inherited). |
 | `/workspace/dotnet/dotnet test tests/Adeni.Api.Tests/Adeni.Api.Tests.csproj -c Release --filter FullyQualifiedName~Commerce` | Eight passed, including real HTTP gift purchase/confirm/reveal/redeem, refund-route bypass rejection and Reporting export. |
 | `npm test --workspace @adeni/shared` | 83 passed. |
-| `CHROME_BIN=/tmp/adeni-chrome npm test --workspace @adeni/portal` | 41 passed. Wrapper selects installed Chromium with container sandbox flags. |
+| `CHROME_BIN=/tmp/adeni-chrome npm test --workspace @adeni/business` | 41 passed. Wrapper selects installed Chromium with container sandbox flags. |
 | `npm test --workspace @adeni/discover` | Ten passed. |
 | `npm run typecheck` | Exit 0; shared/api-client/UI/brand typechecks and Portal/Admin/Discover development builds, including Discover SSR. |
-| `npm run build:portal` | Exit 1; existing component-style error categories remain. Initial bundle rounds to 3.00 MB, below its error threshold but with very little headroom. |
+| `npm run build:business` | Exit 1; existing component-style error categories remain. Initial bundle rounds to 3.00 MB, below its error threshold but with very little headroom. |
 | `npm run build:admin` | Exit 1; existing style categories and initial bundle error remain. |
 | `npm run build:discover` | Exit 1; existing shared stylesheet error remains. |
 
@@ -128,17 +128,17 @@ Review the guarded F3 implementation before authorizing further work. Merchant s
 - [apps/discover/src/app/pages/pay/pay.component.spec.ts](../../apps/discover/src/app/pages/pay/pay.component.spec.ts)
 - [apps/discover/src/app/pages/pay/pay.component.ts](../../apps/discover/src/app/pages/pay/pay.component.ts)
 - [apps/discover/src/app/pages/pay/purchased-gifts.component.ts](../../apps/discover/src/app/pages/pay/purchased-gifts.component.ts)
-- [apps/portal/src/app/app.routes.ts](../../apps/portal/src/app/app.routes.ts)
-- [apps/portal/src/app/core/commerce-api.spec.ts](../../apps/portal/src/app/core/commerce-api.spec.ts)
-- [apps/portal/src/app/pages/commerce/commerce-permission.guard.ts](../../apps/portal/src/app/pages/commerce/commerce-permission.guard.ts)
-- [apps/portal/src/app/pages/commerce/commerce.component.html](../../apps/portal/src/app/pages/commerce/commerce.component.html)
-- [apps/portal/src/app/pages/commerce/commerce.component.spec.ts](../../apps/portal/src/app/pages/commerce/commerce.component.spec.ts)
-- [apps/portal/src/app/pages/commerce/commerce.component.ts](../../apps/portal/src/app/pages/commerce/commerce.component.ts)
-- [apps/portal/src/app/pages/customers/customer-profile-data.service.spec.ts](../../apps/portal/src/app/pages/customers/customer-profile-data.service.spec.ts)
-- [apps/portal/src/app/pages/customers/customer-profile-data.service.ts](../../apps/portal/src/app/pages/customers/customer-profile-data.service.ts)
-- [apps/portal/src/app/pages/customers/customer-profile-panel.component.html](../../apps/portal/src/app/pages/customers/customer-profile-panel.component.html)
-- [apps/portal/src/app/pages/payments/payments.component.html](../../apps/portal/src/app/pages/payments/payments.component.html)
-- [apps/portal/src/app/pages/payments/payments.component.ts](../../apps/portal/src/app/pages/payments/payments.component.ts)
+- [apps/business/src/app/app.routes.ts](../../apps/business/src/app/app.routes.ts)
+- [apps/business/src/app/core/commerce-api.spec.ts](../../apps/business/src/app/core/commerce-api.spec.ts)
+- [apps/business/src/app/pages/commerce/commerce-permission.guard.ts](../../apps/business/src/app/pages/commerce/commerce-permission.guard.ts)
+- [apps/business/src/app/pages/commerce/commerce.component.html](../../apps/business/src/app/pages/commerce/commerce.component.html)
+- [apps/business/src/app/pages/commerce/commerce.component.spec.ts](../../apps/business/src/app/pages/commerce/commerce.component.spec.ts)
+- [apps/business/src/app/pages/commerce/commerce.component.ts](../../apps/business/src/app/pages/commerce/commerce.component.ts)
+- [apps/business/src/app/pages/customers/customer-profile-data.service.spec.ts](../../apps/business/src/app/pages/customers/customer-profile-data.service.spec.ts)
+- [apps/business/src/app/pages/customers/customer-profile-data.service.ts](../../apps/business/src/app/pages/customers/customer-profile-data.service.ts)
+- [apps/business/src/app/pages/customers/customer-profile-panel.component.html](../../apps/business/src/app/pages/customers/customer-profile-panel.component.html)
+- [apps/business/src/app/pages/payments/payments.component.html](../../apps/business/src/app/pages/payments/payments.component.html)
+- [apps/business/src/app/pages/payments/payments.component.ts](../../apps/business/src/app/pages/payments/payments.component.ts)
 - [db/Adeni.Database/payments/Tables/commerce_attempts.sql](../../db/Adeni.Database/payments/Tables/commerce_attempts.sql)
 - [db/Adeni.Database/payments/Tables/commerce_operations.sql](../../db/Adeni.Database/payments/Tables/commerce_operations.sql)
 - [db/Adeni.Database/payments/Tables/commerce_requests.sql](../../db/Adeni.Database/payments/Tables/commerce_requests.sql)

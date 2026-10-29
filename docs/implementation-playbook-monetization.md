@@ -65,7 +65,7 @@ Spec: [sprint-32-portal-dashboard-revisit.md](./specs/sprint-32-portal-dashboard
 
 | Task | Where |
 |------|--------|
-| Fix revenue KPI (ledger **Collected** or honest label) | `apps/portal/.../dashboard` |
+| Fix revenue KPI (ledger **Collected** or honest label) | `apps/business/.../dashboard` |
 | Plan strip + link `/plan` + near-limit | dashboard + `@adeni/shared` |
 | Gated shortcuts (messages, staff, etc.) | dashboard template |
 | Optional: show country + trial placeholder copy | dashboard |

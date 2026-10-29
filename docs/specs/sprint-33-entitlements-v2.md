@@ -148,7 +148,7 @@ Existing routes stay under `/api/v1/`. Extend payloads; avoid breaking renames w
 | **Api** | Profile/subscription controllers — serialized entitlements v2 |
 | **Tests** | `EntitlementsServiceTests.cs`; integration tests for staff/location/waitlist/messaging; optional `country-pricing`-style test asserting seed ↔ C# parity |
 | **packages/shared** | `tenantEntitlementsSchema`, `entitlements.ts` flags, `subscription-tiers.ts` / `PLAN_COMPARISON`, export seed or generated TS |
-| **apps/portal** | `portal-nav.ts`, `portal-access.ts`, `locations/*`, `portal-shell.component.ts`, `dashboard/*` (no upgrade nag copy), `plan/*` (comparison only) |
+| **apps/business** | `portal-nav.ts`, `portal-access.ts`, `locations/*`, `portal-shell.component.ts`, `dashboard/*` (no upgrade nag copy), `plan/*` (comparison only) |
 | **apps/discover** | `plan/*` if `PLAN_COMPARISON` shared |
 | **Docs** | This spec; one-line updates in sprints + 33b cross-ref |
 

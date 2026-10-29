@@ -29,7 +29,7 @@ dotnet test tests/Adeni.Infrastructure.Tests --filter "Category=SqlServer"
 npm ci
 npm run typecheck
 npm test --workspace @adeni/shared
-npm run build:portal
+npm run build:business
 npm audit --omit=dev --audit-level=high
 npm audit --audit-level=critical
 ```

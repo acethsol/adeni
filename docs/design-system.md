@@ -15,10 +15,10 @@ Cross-platform tokens live in `@adeni/shared`. Shared staff-app UI (page layout,
 | App | Styles entry |
 |-----|----------------|
 | Discover | `apps/discover/src/styles.scss` |
-| Portal | `apps/portal/src/styles.scss` |
+| Portal | `apps/business/src/styles.scss` |
 | Admin | `apps/admin/src/styles.scss` |
 
-Staff layout SCSS: `@use "staff-layout" as *` (from `@adeni/ui`, via `stylePreprocessorOptions.includePaths` in portal/admin). Portal-only widgets (e.g. pending bookings bell): `apps/portal/src/app/shared/`.
+Staff layout SCSS: `@use "staff-layout" as *` (from `@adeni/ui`, via `stylePreprocessorOptions.includePaths` in portal/admin). Portal-only widgets (e.g. pending bookings bell): `apps/business/src/app/shared/`.
 
 ### Floor calendar
 

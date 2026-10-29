@@ -281,7 +281,7 @@ Schema **`retention.*`**: package definitions/balances, loyalty program/accounts
 | Finance / Booking | Metadata + `IBenefitRedemptionService` hooks |
 | Tests | Unit + integration + architecture (no cross-module EF) |
 | packages/shared | Zod, entitlements, i18n |
-| apps/portal, apps/discover | Retention UX |
+| apps/business, apps/discover | Retention UX |
 
 ---
 

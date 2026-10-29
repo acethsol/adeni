@@ -1,6 +1,6 @@
 # Legacy Next.js & Expo archive
 
-ADR-012 made **Angular** (`apps/discover`, `apps/portal`, `apps/admin`) the only supported web clients in the main monorepo. **Next.js** and **Expo** were extracted for reference.
+ADR-012 made **Angular** (`apps/discover`, `apps/business`, `apps/admin`) the only supported web clients in the main monorepo. **Next.js** and **Expo** were extracted for reference.
 
 | Archive | Location |
 |---------|----------|

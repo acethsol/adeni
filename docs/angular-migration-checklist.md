@@ -1,6 +1,6 @@
 # Angular web migration checklist (strangler)
 
-Companion to [ADR-012](./adr/ADR-012-angular-web-deferred-flutter.md). Use this as a living parity list while **`apps/discover`**, **`apps/portal`**, and **`apps/admin`** reach feature parity with the archived Next.js app ([legacy-clients-archive.md](./legacy-clients-archive.md)).
+Companion to [ADR-012](./adr/ADR-012-angular-web-deferred-flutter.md). Use this as a living parity list while **`apps/customer`**, **`apps/business`**, and **`apps/admin`** reach feature parity with the archived Next.js app ([legacy-clients-archive.md](./legacy-clients-archive.md)).
 
 **Order:** portal → admin → discover → remove Next → Flutter mobile (phase 2).
 
@@ -10,8 +10,8 @@ Companion to [ADR-012](./adr/ADR-012-angular-web-deferred-flutter.md). Use this 
 
 | Step | Done |
 |------|------|
-| ADR-012 accepted — three apps: `discover`, `portal`, `admin` | ☑ |
-| Add Auth0 SPA configs: discover, portal, admin origins + callback/logout URLs | ☑ wired in Angular env; **Auth0 tenant registration deferred** until staging (dev subs OK) |
+| ADR-012 accepted — three apps: `customer`, `business`, `admin` | ☑ |
+| Add Auth0 SPA configs: customer, business, admin origins + callback/logout URLs | ☑ wired in Angular env; **Auth0 tenant registration deferred** until staging (dev subs OK) |
 | Choose OpenAPI → TypeScript client for Angular (regenerate in CI from `src/Adeni.Api`) | ☐ |
 | Document staging URL map (which paths hit Next vs each Angular app) | ☐ |
 | Copy market resolution rules from [markets.md](./markets.md) + `@adeni/shared` behavior | ☐ |
@@ -22,8 +22,8 @@ Companion to [ADR-012](./adr/ADR-012-angular-web-deferred-flutter.md). Use this 
 
 ```
 apps/
-  discover/         Angular SSR — public SEO, booking, Ask Adeni UI
-  portal/           Angular — business role
+  customer/         Angular SSR — public SEO, booking, Ask Adeni UI
+  business/         Angular — business role
   admin/            Angular — admin role only
   mobile/           Native Flutter business skeleton; consumer mobile is the product priority
 packages/
@@ -35,10 +35,10 @@ packages/
 
 | Step | Done |
 |------|------|
-| Scaffold `apps/portal` (Angular 22+; CSR or SSR only if needed) | ☑ |
+| Scaffold `apps/business` (Angular 22+; CSR or SSR only if needed) | ☑ |
 | Scaffold `apps/admin` (Angular 22+; CSR typical) | ☑ |
-| Scaffold `apps/discover` (SSR/prerender for `/`, `/discover`, `/businesses/:slug`) | ☑ MVP SSR (`/`, `/discover`, `/businesses/:slug`; booking flow later) |
-| Root scripts: `dev:portal`, `dev:admin`, `dev:discover`, CI jobs per app | ☑ (`dev:discover` :5190; CI builds portal + admin + discover) |
+| Scaffold `apps/customer` (SSR/prerender for `/`, `/discover`, `/businesses/:slug`) | ☑ MVP SSR (`/`, `/discover`, `/businesses/:slug`; booking flow later) |
+| Root scripts: `dev:business`, `dev:admin`, `dev:customer`, CI jobs per app | ☑ (`dev:customer` :5190; `dev:business` :5173; CI builds business + admin + customer) |
 | Shared eslint/prettier or Nx boundary rules (optional) | ☐ |
 
 ---
@@ -66,7 +66,7 @@ Every handler that existed under archived Next `app/api/**` must end as **A**, *
 | `.../api/bookings/[id]/cancel` | A | |
 | `.../api/bookings/[id]/review` | A | Customer auth |
 
-### Business portal → `apps/portal`
+### Business portal → `apps/business`
 
 | Next route | Class | Notes |
 |------------|-------|--------|
@@ -102,11 +102,11 @@ Every handler that existed under archived Next `app/api/**` must end as **A**, *
 |------|------|
 | All routes classified A/B/C | ☐ |
 | HTTP interceptor per app: Auth0 token + `Idempotency-Key` where required | ☐ |
-| CORS verified for discover, portal, admin origins on `Adeni.Api` | ☐ |
+| CORS verified for customer, business, admin origins on `Adeni.Api` | ☐ |
 
 ---
 
-## 3. `apps/portal` feature parity (migrate first)
+## 3. `apps/business` feature parity (migrate first)
 
 | Area | Next reference | Done |
 |------|----------------|------|
@@ -123,7 +123,7 @@ Every handler that existed under archived Next `app/api/**` must end as **A**, *
 | Messaging (Sprint 36) | | ☑ Conversations + SignalR inbox; WhatsApp templates + nav |
 | Pending bookings bell (topbar) | `business-portal-bell.tsx` | ☑ |
 
-**Cutover:** proxy `/business/*` to `apps/portal` in staging → production.
+**Cutover:** proxy `/business/*` to `apps/business` in staging → production.
 
 ---
 

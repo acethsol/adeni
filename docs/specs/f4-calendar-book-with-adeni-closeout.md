@@ -51,9 +51,9 @@ Final results: Runtime: .NET 10.0.402, Node 24.19.0/npm 11.9, Chromium 154, SQL 
 | `ADENI_SQLSERVER_TESTS=1 ConnectionStrings__AdeniDb=<isolated-test-connection> dotnet test tests/Adeni.Infrastructure.Tests/Adeni.Infrastructure.Tests.csproj -c Release --filter 'Category=SqlServer'` | **24 passed**, zero skipped, including **8 new F4 SQL cases** and all 16 F1–F3 SQL cases. |
 | `npm run typecheck` | Passed: Discover, Portal, Admin development builds; shared/api-client/UI/brand TypeScript checks. |
 | `npm run test --workspace @adeni/shared` | 86 passed. Includes new API-client facade/HTTP contract coverage; api-client has no standalone test script. |
-| `CHROME_BIN=<local-Chromium-wrapper> npm run test --workspace @adeni/portal` | 44 passed, Chromium 154. Wrapper only adds the container's required `--no-sandbox`. |
+| `CHROME_BIN=<local-Chromium-wrapper> npm run test --workspace @adeni/business` | 44 passed, Chromium 154. Wrapper only adds the container's required `--no-sandbox`. |
 | `npm run test --workspace @adeni/discover` | 16 passed, including SSR/TransferState/once-after-hydration/stale context and redirect safety. |
-| `NG_BUILD_MAX_WORKERS=2 npm run build:portal` | Failed: existing component stylesheet errors: services **24.50 kB**, staff **27.41 kB**, plan **28.33 kB**, each over **24 kB**. Initial bundle about **2,996.25 kB**, under 3 MB error limit; 2.5 MB warning remains. |
+| `NG_BUILD_MAX_WORKERS=2 npm run build:business` | Failed: existing component stylesheet errors: services **24.50 kB**, staff **27.41 kB**, plan **28.33 kB**, each over **24 kB**. Initial bundle about **2,996.25 kB**, under 3 MB error limit; 2.5 MB warning remains. |
 | `NG_BUILD_MAX_WORKERS=2 npm run build:admin` | Failed: existing initial budget **2 MB**, actual about **2,186.96 kB**, plus 14 existing component styles over **24 kB** (25.25–37.71 kB). No Admin product code or styles changed. |
 | `NG_BUILD_MAX_WORKERS=2 npm run build:discover` | Failed: existing shared `_data-grid.scss` **16.90 kB** over **14 kB**. Initial bundle about **1.47 MB**, under 3 MB error limit. |
 | Real local Node SSR utility HTTP | Valid `/book/studio?service=<public-id>` returned **302** to the current business route with `#book`, no-store/noindex/no-referrer. Unsafe `price=1` returned **400**. Used a local API stub; not a live provider test. |
@@ -98,16 +98,16 @@ A full-suite run intermittently failed the unchanged `ReportRendererTests.Render
 - `apps/discover/src/booking-link-handler.ts`
 - `apps/discover/src/server.ts`
 - `apps/discover/tsconfig.json`
-- `apps/portal/src/app/app.routes.ts`
-- `apps/portal/src/app/pages/calendar-sync/booking-links.component.html`
-- `apps/portal/src/app/pages/calendar-sync/booking-links.component.ts`
-- `apps/portal/src/app/pages/calendar-sync/calendar-permission.guard.ts`
-- `apps/portal/src/app/pages/calendar-sync/calendar-sync.component.html`
-- `apps/portal/src/app/pages/calendar-sync/calendar-sync.component.spec.ts`
-- `apps/portal/src/app/pages/calendar-sync/calendar-sync.component.ts`
-- `apps/portal/src/app/pages/public-page/public-page.component.html`
-- `apps/portal/src/app/pages/staff/staff.component.html`
-- `apps/portal/tsconfig.json`
+- `apps/business/src/app/app.routes.ts`
+- `apps/business/src/app/pages/calendar-sync/booking-links.component.html`
+- `apps/business/src/app/pages/calendar-sync/booking-links.component.ts`
+- `apps/business/src/app/pages/calendar-sync/calendar-permission.guard.ts`
+- `apps/business/src/app/pages/calendar-sync/calendar-sync.component.html`
+- `apps/business/src/app/pages/calendar-sync/calendar-sync.component.spec.ts`
+- `apps/business/src/app/pages/calendar-sync/calendar-sync.component.ts`
+- `apps/business/src/app/pages/public-page/public-page.component.html`
+- `apps/business/src/app/pages/staff/staff.component.html`
+- `apps/business/tsconfig.json`
 - `db/Adeni.Database/Security/calendar.sql`
 - `db/Adeni.Database/booking/Tables/staff_members.sql`
 - `db/Adeni.Database/calendar/Tables/booking_events.sql`
