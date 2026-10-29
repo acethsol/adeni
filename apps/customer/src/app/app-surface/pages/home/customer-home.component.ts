@@ -61,7 +61,9 @@ export class CustomerHomeComponent implements OnInit {
 
   readonly title = computed(() => {
     const name = this.session.firstName();
-    return name ? this.tr("discover.home.greetingName", { name }) : this.tr("discover.home.greeting");
+    return name
+      ? this.tr("customer.app.home.greetingName", { name })
+      : this.tr("customer.app.home.greeting");
   });
 
   constructor() {

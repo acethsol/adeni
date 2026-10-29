@@ -41,7 +41,7 @@
             <dd>{{ b.staffDisplayName }}</dd>
           </div>
         }
-        @if ((b.guestCount ?? 1) > 1) {
+        @if (b.guestCount > 1) {
           <div>
             <dt>{{ tr('bookings.partyLabel') }}</dt>
             <dd>{{ tr('bookings.partyOf', { count: b.guestCount }) }}</dd>
@@ -77,7 +77,7 @@
             [routerLink]="again.commands"
             [queryParams]="again.queryParams"
             [fragment]="again.fragment"
-          >{{ tr('discover.home.bookAgain') }}</a>
+          >{{ tr('customer.app.home.bookAgain') }}</a>
         }
       </div>
     </article>

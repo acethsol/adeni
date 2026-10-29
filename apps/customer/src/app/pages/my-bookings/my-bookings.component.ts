@@ -7,11 +7,15 @@ import {
   t,
 } from "@adeni/shared";
 import {
-  AdeniCarbonIconComponent,
   AdeniConfirmService,
   AdeniFeedbackService,
   AdeniLocaleService,
+  AdeniPortalEmptyStateComponent,
+  AdeniPillComponent,
+  AdeniTabsComponent,
+  PortalPageComponent,
   injectAdeniTranslate,
+  type AdeniPillTone,
 } from "@adeni/ui";
 import { CustomerApiService } from "../../core/services/customer-api.service";
 import {
@@ -24,7 +28,13 @@ type BookingsTab = "upcoming" | "past";
 @Component({
   selector: "app-my-bookings",
   standalone: true,
-  imports: [RouterLink, AdeniCarbonIconComponent],
+  imports: [
+    RouterLink,
+    PortalPageComponent,
+    AdeniTabsComponent,
+    AdeniPortalEmptyStateComponent,
+    AdeniPillComponent,
+  ],
   templateUrl: "./my-bookings.component.html",
   styleUrl: "./my-bookings.component.scss",
 })
@@ -63,12 +73,43 @@ export class MyBookingsComponent implements OnInit {
     this.tab() === "upcoming" ? this.upcoming() : this.past(),
   );
 
+  readonly tabs = computed(() => [
+    {
+      id: "upcoming",
+      label: this.label("bookings.upcomingCount", { count: this.upcoming().length }),
+    },
+    {
+      id: "past",
+      label: this.label("bookings.pastCount", { count: this.past().length }),
+    },
+  ]);
+
   label(key: string, vars?: Record<string, string | number>): string {
     return t(this.locale(), key, vars);
   }
 
   statusLabel(status: number): string {
     return formatBookingStatusLabel(this.locale(), status);
+  }
+
+  onTabChange(id: string): void {
+    if (id === "upcoming" || id === "past") {
+      this.tab.set(id);
+    }
+  }
+
+  pillTone(status: number): AdeniPillTone {
+    switch (status) {
+      case 0:
+        return "warning";
+      case 1:
+        return "success";
+      case 2:
+      case 3:
+        return "neutral";
+      default:
+        return "neutral";
+    }
   }
 
   statusTone(status: number): string {

@@ -98,8 +98,8 @@ export const DEFAULT_OWNER_DASHBOARD_LAYOUT: DashboardLayout = {
   widgets: [
     { id: "plan_usage", w: 12 },
     { id: "kpis_row", w: 12 },
-    { id: "week_appointments", w: 8 },
-    { id: "today_schedule", w: 4 },
+    { id: "week_appointments", w: 6 },
+    { id: "today_schedule", w: 6 },
     { id: "booking_mix", w: 6 },
     { id: "service_mix", w: 6 },
   ],

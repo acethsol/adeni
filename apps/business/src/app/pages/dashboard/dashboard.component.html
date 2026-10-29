@@ -257,25 +257,65 @@
                 [hint]="tr('businessApp.dashboard.remainingAppointmentsToday')"
               >
                 @if (today().length === 0) {
-                  <div class="today-chair-empty">
-                    <span class="today-chair-icon" aria-hidden="true">
-                      <adeni-carbon-icon name="calendar-32" [size]="32" />
+                  <div class="today-chair-empty today-chair-empty--narrow">
+                    <span class="today-chair-empty__accent" aria-hidden="true"></span>
+                    <span class="today-chair-icon today-chair-icon--compact" aria-hidden="true">
+                      <adeni-carbon-icon name="calendar" [size]="24" />
                     </span>
                     <p class="today-chair-title">{{ tr('businessApp.dashboard.noAppointmentsScheduled') }}</p>
                     <p class="today-chair-copy">
                       {{ tr('businessApp.dashboard.yourCalendarClearRestToday') }}
                     </p>
-                    <a class="btn btn-ghost" routerLink="/availability">{{ tr('businessApp.dashboard.viewHours') }}</a>
+                    <a class="btn btn-ghost btn-ghost--compact" routerLink="/bookings">{{ tr('businessApp.dashboard.bookingInbox') }}</a>
+                    <a class="btn btn-ghost btn-ghost--compact" routerLink="/availability">{{ tr('businessApp.dashboard.viewHours') }}</a>
                   </div>
                 } @else {
-                  <ul class="today-list">
+                  <div class="today-schedule-meta">
+                    <span
+                      class="today-schedule-badge"
+                      [attr.aria-label]="tr('businessApp.dashboard.remainingAppointmentsToday')"
+                    >
+                      <span class="today-schedule-badge__label">{{ tr('businessApp.dashboard.scheduleTodayBadge') }}</span>
+                      <span class="today-schedule-badge__count">{{ today().length }}</span>
+                    </span>
+                  </div>
+                  <ol class="today-timeline">
                     @for (booking of today(); track booking.id) {
-                      <li>
-                        <strong>{{ formatSlotTime(booking.startAt) }}</strong>
-                        <span>{{ booking.serviceName }}</span>
+                      <li
+                        class="today-timeline__item"
+                        [class.today-timeline__item--now]="isBookingInProgress(booking)"
+                        [class.today-timeline__item--next]="isNextUpBooking(booking)"
+                      >
+                        <a
+                          class="today-timeline__row"
+                          [routerLink]="['/bookings']"
+                          [queryParams]="bookingFocusQuery(booking)"
+                          [attr.aria-label]="booking.serviceName + ', ' + formatSlotTime(booking.startAt)"
+                        >
+                          <span class="today-timeline__rail" aria-hidden="true">
+                            <span class="today-timeline__dot"></span>
+                          </span>
+                          <div class="today-timeline__body">
+                            <div class="today-timeline__headline">
+                              <time class="today-timeline__time-pill">{{ formatSlotTime(booking.startAt) }}</time>
+                              @if (bookingDurationLabel(booking); as duration) {
+                                <span class="today-timeline__duration">{{ duration }}</span>
+                              }
+                              @if (isBookingInProgress(booking)) {
+                                <span class="today-timeline__now">{{ tr('businessApp.dashboard.scheduleNow') }}</span>
+                              } @else if (isNextUpBooking(booking)) {
+                                <span class="today-timeline__next">{{ tr('businessApp.dashboard.scheduleNextUp') }}</span>
+                              }
+                            </div>
+                            <span class="today-timeline__service-chip" [title]="booking.serviceName">{{ booking.serviceName }}</span>
+                            @if (booking.staffDisplayName) {
+                              <span class="today-timeline__staff">{{ tr('businessApp.dashboard.scheduleWithStaff', { name: booking.staffDisplayName }) }}</span>
+                            }
+                          </div>
+                        </a>
                       </li>
                     }
-                  </ul>
+                  </ol>
                   <a class="text-link" routerLink="/bookings" [queryParams]="{ tab: 'upcoming' }">{{ tr('businessApp.dashboard.fullSchedule') }}</a>
                 }
               </app-dashboard-widget>

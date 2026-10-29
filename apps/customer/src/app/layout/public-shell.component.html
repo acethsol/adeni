@@ -28,7 +28,10 @@
 
     <div class="header-right">
       @if (signedIn()) {
-        <a class="cds-btn cds-btn--primary" routerLink="/app/home">{{ tr('customer.app.openApp') }}</a>
+        <a class="cds-btn cds-btn--primary cds-btn--sm header-open-app" routerLink="/app/home">
+          <adeni-carbon-icon name="launch" [size]="16" aria-hidden="true" />
+          {{ tr('customer.app.openApp') }}
+        </a>
       }
       @if (auth0Mode) {
         @if (signedIn()) {

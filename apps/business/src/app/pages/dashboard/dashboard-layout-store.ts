@@ -4,6 +4,7 @@ import {
   resolveDashboardLayout,
 } from "@adeni/shared";
 
+/** Persists customized layouts per tenant/role. Width defaults in @adeni/shared only apply on first load or after reset — not for saved layouts (clear storage or re-apply a preset to pick up new defaults). */
 const STORAGE_PREFIX = "adeni.businessApp.dashboard.layout.v1";
 const LEGACY_STORAGE_PREFIX = "adeni.portal.dashboard.layout.v1";
 

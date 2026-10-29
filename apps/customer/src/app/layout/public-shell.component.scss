@@ -162,6 +162,13 @@
   padding: 0 var(--cds-spacing-04);
 }
 
+.header-open-app {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-decoration: none;
+}
+
 .dev {
   font-size: 0.8rem;
   color: var(--text-muted);

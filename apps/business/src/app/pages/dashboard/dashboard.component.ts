@@ -157,6 +157,18 @@ export class DashboardComponent implements OnInit {
   readonly mix = signal<StatusSlice[]>([]);
   readonly bookingMixChartData = signal<ChartTabularData>([]);
   readonly today = signal<BookingResponse[]>([]);
+  readonly todayNextUpId = computed(() => {
+    const now = Date.now();
+    for (const booking of this.today()) {
+      if (this.isBookingInProgress(booking)) {
+        continue;
+      }
+      if (Date.parse(booking.startAt) > now) {
+        return booking.id;
+      }
+    }
+    return null;
+  });
   readonly usage = signal<SubscriptionUsage | null>(null);
   readonly exportEntitlementsDirect = signal<TenantEntitlements | null>(null);
   readonly rangePreset = signal<DashboardRangePreset>("7d");
@@ -609,11 +621,13 @@ export class DashboardComponent implements OnInit {
 
   addWidget(widgetId: DashboardWidgetId): void {
     const width =
-      widgetId === "today_schedule" || widgetId === "pending_inbox" || widgetId === "messages_unread"
-        ? 3
-        : widgetId === "week_appointments" || widgetId === "queue_now"
-          ? 9
-          : 12;
+      widgetId === "today_schedule" || widgetId === "week_appointments"
+        ? 6
+        : widgetId === "pending_inbox" || widgetId === "messages_unread"
+          ? 3
+          : widgetId === "queue_now"
+            ? 9
+            : 12;
     this.pickerOpen.set(false);
     void this.persistLayout(addDashboardWidget(this.layout(), widgetId, width), true);
   }
@@ -819,6 +833,32 @@ export class DashboardComponent implements OnInit {
     this.revenueUsesCollected.set(false);
     this.revenueLabel.set("—");
     this.revenueHint.set(this.tr("businessApp.dashboard.revenueMetricsNotShownPeriod"));
+  }
+
+  isBookingInProgress(booking: BookingResponse): boolean {
+    const now = Date.now();
+    return now >= Date.parse(booking.startAt) && now < Date.parse(booking.endAt);
+  }
+
+  isNextUpBooking(booking: BookingResponse): boolean {
+    return this.todayNextUpId() === booking.id;
+  }
+
+  bookingFocusQuery(booking: BookingResponse): { tab: string; focus: string } {
+    return { tab: "upcoming", focus: booking.id };
+  }
+
+  bookingDurationLabel(booking: BookingResponse): string | null {
+    const start = Date.parse(booking.startAt);
+    const end = Date.parse(booking.endAt);
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+      return null;
+    }
+    const minutes = Math.round((end - start) / 60_000);
+    if (minutes <= 0) {
+      return null;
+    }
+    return this.tr("businessApp.dashboard.scheduleDurationMinutes", { minutes });
   }
 
   private applyBookings(

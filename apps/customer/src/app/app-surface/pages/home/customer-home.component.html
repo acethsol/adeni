@@ -1,6 +1,6 @@
-<app-portal-page [title]="title()" [description]="tr('discover.home.description')">
-  <section class="app-section" [attr.aria-label]="tr('discover.home.upNext')">
-    <h3 class="app-section__title">{{ tr('discover.home.upNext') }}</h3>
+<app-portal-page [title]="title()" [description]="tr('customer.app.home.description')">
+  <section class="app-section" [attr.aria-label]="tr('customer.app.home.upNext')">
+    <h3 class="app-section__title">{{ tr('customer.app.home.upNext') }}</h3>
 
     @if (loading()) {
       <div class="app-panel app-panel--skeleton" aria-hidden="true">
@@ -44,7 +44,7 @@
           }
           <div class="app-actions">
             <a class="cds-btn cds-btn--primary cds-btn--sm" [routerLink]="['/app/bookings', booking.id]">
-              {{ tr('discover.home.viewDetails') }}
+              {{ tr('customer.app.home.viewDetails') }}
             </a>
             <a class="cds-btn cds-btn--tertiary cds-btn--sm" [routerLink]="['/app/bookings', booking.id, 'intake']">
               {{ tr('intake.title') }}
@@ -57,7 +57,7 @@
       </article>
 
       @if (later().length > 0) {
-        <h3 class="app-section__title">{{ tr('discover.home.comingUp') }}</h3>
+        <h3 class="app-section__title">{{ tr('customer.app.home.comingUp') }}</h3>
         <ul class="app-list">
           @for (item of later(); track item.id) {
             <li>
@@ -72,25 +72,25 @@
           }
         </ul>
       }
-      <p class="app-more"><a routerLink="/app/bookings">{{ tr('discover.home.seeAll') }}</a></p>
+      <p class="app-more"><a routerLink="/app/bookings">{{ tr('customer.app.home.seeAll') }}</a></p>
     } @else {
       <adeni-portal-empty-state
         [compact]="true"
         icon="calendar"
-        [title]="tr('discover.home.noUpcomingTitle')"
-        [description]="tr('discover.home.noUpcomingDescription')"
+        [title]="tr('customer.app.home.noUpcomingTitle')"
+        [description]="tr('customer.app.home.noUpcomingDescription')"
       >
-        <a class="cds-btn cds-btn--primary cds-btn--sm" routerLink="/app/discover">{{ tr('discover.home.findBusiness') }}</a>
+        <a class="cds-btn cds-btn--primary cds-btn--sm" routerLink="/app/discover">{{ tr('customer.app.home.findBusiness') }}</a>
       </adeni-portal-empty-state>
     }
   </section>
 
-  <section class="app-section" [attr.aria-label]="tr('discover.home.quickActions')">
-    <h3 class="app-section__title">{{ tr('discover.home.quickActions') }}</h3>
+  <section class="app-section" [attr.aria-label]="tr('customer.app.home.quickActions')">
+    <h3 class="app-section__title">{{ tr('customer.app.home.quickActions') }}</h3>
     <div class="app-quick">
       <a class="app-quick__item" routerLink="/app/discover">
         <adeni-carbon-icon name="search" [size]="20" />
-        <span>{{ tr('discover.home.findBusiness') }}</span>
+        <span>{{ tr('customer.app.home.findBusiness') }}</span>
       </a>
       @if (bookAgain(); as again) {
         <a
@@ -100,7 +100,7 @@
           [fragment]="again.link.fragment"
         >
           <adeni-carbon-icon name="restart" [size]="20" />
-          <span>{{ tr('discover.home.bookAgain') }}</span>
+          <span>{{ tr('customer.app.home.bookAgain') }}</span>
           <small class="app-muted">{{ again.source.businessName }}</small>
         </a>
       }

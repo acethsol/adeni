@@ -14,6 +14,7 @@ import { MarketGeoSyncComponent } from "../shared/market-geo-sync.component";
 import { PublicFooterComponent } from "../shared/public-footer.component";
 import {
   AdeniBrandLockupComponent,
+  AdeniCarbonIconComponent,
   AdeniConfirmHostComponent,
   AdeniGlobalLoadingPanelComponent,
   AdeniToastHostComponent,
@@ -35,6 +36,7 @@ const MARKET_HEADER_TONES: Record<string, { h1: string; h2: string; h3: string }
     RouterLinkActive,
     MarketGeoSyncComponent,
     AdeniBrandLockupComponent,
+    AdeniCarbonIconComponent,
     DiscoverySearchComponent,
     AdeniGlobalLoadingPanelComponent,
     AdeniToastHostComponent,

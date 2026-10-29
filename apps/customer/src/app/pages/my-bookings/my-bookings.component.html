@@ -1,24 +1,14 @@
-<div class="page">
-  <header class="page-head">
-    <span class="wash" aria-hidden="true"></span>
-    <div class="head-copy">
-      <p class="kicker">Adeni</p>
-      <h1>{{ label("bookings.title") }}</h1>
-      <p class="lede">{{ label("bookings.description") }}</p>
-    </div>
-    <div class="head-actions">
-      <a class="cds-btn cds-btn--primary" routerLink="/discover">{{
-        label("bookings.bookAnother")
-      }}</a>
-    </div>
-  </header>
+<app-portal-page [title]="label('bookings.title')" [description]="label('bookings.description')">
+  <a pageActions class="cds-btn cds-btn--primary" routerLink="/app/discover">{{
+    label("bookings.bookAnother")
+  }}</a>
 
   @if (devMode) {
     <p class="dev-banner">{{ label("bookings.devMode") }}</p>
   }
 
   @if (loading()) {
-    <ul class="list skeletons" aria-hidden="true">
+    <ul class="booking-list skeletons" aria-hidden="true">
       @for (n of [1, 2, 3]; track n) {
         <li class="card skeleton">
           <span class="sk-date"></span>
@@ -30,58 +20,45 @@
       }
     </ul>
   } @else if (loadFailed()) {
-    <div class="empty">
-      <div class="empty-icon" aria-hidden="true">
-        <adeni-carbon-icon name="calendar" [size]="40" />
-      </div>
-      <h2>{{ label("bookings.loadErrorTitle") }}</h2>
-      <p>{{ label("bookings.loadError") }}</p>
+    <adeni-portal-empty-state
+      icon="calendar"
+      [title]="label('bookings.loadErrorTitle')"
+      [description]="label('bookings.loadError')"
+    >
       <button type="button" class="cds-btn cds-btn--primary" (click)="load()">
         {{ label("discover.tryAgain") }}
       </button>
-    </div>
+    </adeni-portal-empty-state>
   } @else {
-    <div class="tabs cds-content-switcher" role="tablist" [attr.aria-label]="tr('discover.myBookings.bookingFilters')">
-      <button
-        type="button"
-        role="tab"
-        [class.active]="tab() === 'upcoming'"
-        [attr.aria-selected]="tab() === 'upcoming'"
-        (click)="tab.set('upcoming')"
-      >
-        {{ label("bookings.upcomingCount", { count: upcoming().length }) }}
-      </button>
-      <button
-        type="button"
-        role="tab"
-        [class.active]="tab() === 'past'"
-        [attr.aria-selected]="tab() === 'past'"
-        (click)="tab.set('past')"
-      >
-        {{ label("bookings.pastCount", { count: past().length }) }}
-      </button>
-    </div>
+    <adeni-tabs
+      linkMode="button"
+      [tabs]="tabs()"
+      [activeId]="tab()"
+      (activeIdChange)="onTabChange($event)"
+    />
 
     @if (visible().length === 0) {
-      <div class="empty">
-        <div class="empty-icon" aria-hidden="true">
-          <adeni-carbon-icon name="calendar" [size]="40" />
-        </div>
-        @if (tab() === "upcoming") {
-          <h2>{{ label("bookings.emptyTitle") }}</h2>
-          <p>{{ label("bookings.emptyDescription") }}</p>
-          <a class="cds-btn cds-btn--primary" routerLink="/discover">{{
+      @if (tab() === "upcoming") {
+        <adeni-portal-empty-state
+          icon="calendar"
+          [title]="label('bookings.emptyTitle')"
+          [description]="label('bookings.emptyDescription')"
+        >
+          <a class="cds-btn cds-btn--primary" routerLink="/app/discover">{{
             label("bookings.discoverBusinesses")
           }}</a>
-        } @else {
-          <h2>{{ label("bookings.emptyPastTitle") }}</h2>
-          <p>{{ label("bookings.emptyPastDescription") }}</p>
-        }
-      </div>
+        </adeni-portal-empty-state>
+      } @else {
+        <adeni-portal-empty-state
+          icon="calendar"
+          [title]="label('bookings.emptyPastTitle')"
+          [description]="label('bookings.emptyPastDescription')"
+        />
+      }
     } @else {
-      <ul class="list">
+      <ul class="booking-list">
         @for (b of visible(); track b.id) {
-          <li class="card" [attr.data-status]="statusTone(b.status)">
+          <li class="card booking-card" [attr.data-status]="statusTone(b.status)">
             @let when = dayPart(b.startAt);
             <div class="date-block" aria-hidden="true">
               <span class="weekday">{{ when.weekday }}</span>
@@ -92,30 +69,28 @@
             <div class="body">
               <div class="title-row">
                 <h2>{{ b.serviceName }}</h2>
-                <span class="status" [attr.data-tone]="statusTone(b.status)">{{
-                  statusLabel(b.status)
-                }}</span>
+                <adeni-pill [tone]="pillTone(b.status)" [compact]="true">{{ statusLabel(b.status) }}</adeni-pill>
               </div>
-              <p class="meta">
+              <p class="meta muted">
                 <a [routerLink]="['/businesses', b.businessSlug]">{{ b.businessName }}</a>
-                <span aria-hidden="true">·</span>
+                <span aria-hidden="true"> · </span>
                 <time [attr.datetime]="b.startAt">{{ formatWhen(b.startAt) }}</time>
               </p>
               @if (b.staffDisplayName) {
-                <p class="detail">
+                <p class="detail muted">
                   <span>{{ label("bookings.withStaff") }}</span>
                   {{ b.staffDisplayName }}
                 </p>
               }
-              @if ((b.guestCount ?? 1) > 1) {
-                <p class="detail">
+              @if (b.guestCount > 1) {
+                <p class="detail muted">
                   <span>{{ label("bookings.partyLabel") }}</span>
                   {{ label("bookings.partyOf", { count: b.guestCount }) }}
                 </p>
               }
               @if (namedGuests(b); as names) {
                 @if (names.length > 0) {
-                  <p class="detail guests">
+                  <p class="detail muted guests">
                     <span>{{ label("bookings.guestsLabel") }}</span>
                     {{ names.join(", ") }}
                   </p>
@@ -137,13 +112,16 @@
                 </ul>
               }
               @if (b.customerNotes?.trim()) {
-                <p class="notes">
+                <p class="notes muted">
                   <span>{{ label("bookings.notesLabel") }}</span>
                   {{ b.customerNotes }}
                 </p>
               }
               <div class="actions">
-                <a class="text-link" [routerLink]="['/businesses', b.businessSlug]">{{
+                <a class="cds-btn cds-btn--ghost cds-btn--sm" [routerLink]="['/app/bookings', b.id]">{{
+                  label("customer.app.home.viewDetails")
+                }}</a>
+                <a class="cds-btn cds-btn--tertiary cds-btn--sm" [routerLink]="['/businesses', b.businessSlug]">{{
                   label("bookings.viewBusiness")
                 }}</a>
                 <a class="cds-btn cds-btn--tertiary cds-btn--sm" [routerLink]="['/app/bookings', b.id, 'intake']">{{
@@ -152,7 +130,7 @@
                 @if (canCancel(b)) {
                   <button
                     type="button"
-                    class="danger"
+                    class="cds-btn cds-btn--danger cds-btn--sm"
                     [disabled]="cancelId() === b.id"
                     (click)="cancel(b)"
                   >
@@ -170,4 +148,4 @@
       </ul>
     }
   }
-</div>
+</app-portal-page>

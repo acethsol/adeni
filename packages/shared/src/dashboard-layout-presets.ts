@@ -35,8 +35,8 @@ const MANAGER_DASHBOARD_LAYOUT: DashboardLayout = {
     { id: "pending_inbox", w: 4 },
     { id: "messages_unread", w: 4 },
     { id: "quote_pipeline", w: 4 },
-    { id: "week_appointments", w: 8 },
-    { id: "today_schedule", w: 4 },
+    { id: "week_appointments", w: 6 },
+    { id: "today_schedule", w: 6 },
     { id: "staff_leaderboard", w: 12 },
   ],
 };

@@ -11,8 +11,8 @@ public static class DashboardLayoutDefaults
         [
             new("plan_usage", 12),
             new("kpis_row", 12),
-            new("week_appointments", 8),
-            new("today_schedule", 4),
+            new("week_appointments", 6),
+            new("today_schedule", 6),
             new("booking_mix", 12),
             new("service_mix", 12),
             new("quick_actions", 12),
