@@ -76,6 +76,18 @@ public enum MembershipEnrolChannel
     Online = 2,
 }
 
+/// <summary>
+/// Loyalty ledger vocabulary (Sprint 37.3). Persisted as int. Slice A writes only <c>Adjust</c>; <c>Earn</c> /
+/// <c>Redeem</c> / <c>Expire</c> are reserved for slices B–C so the check constraint never has to change.
+/// </summary>
+public enum LoyaltyTransactionKind
+{
+    Earn = 0,
+    Redeem = 1,
+    Adjust = 2,
+    Expire = 3,
+}
+
 /// <summary>When a member-requested cancellation takes effect. Persisted as int.</summary>
 public enum MembershipCancellationPolicy
 {

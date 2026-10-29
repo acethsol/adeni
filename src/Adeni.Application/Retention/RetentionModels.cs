@@ -130,6 +130,8 @@ public sealed record PackageDefinitionListResponse(IReadOnlyList<PackageDefiniti
 public sealed record RetentionActor(string Id, string Role)
 {
     public bool IsOwner => string.Equals(Role, "owner", StringComparison.OrdinalIgnoreCase);
+
+    public bool IsOwnerOrManager => IsOwner || string.Equals(Role, "manager", StringComparison.OrdinalIgnoreCase);
 }
 
 public static class SellPaymentMethods
@@ -176,7 +178,8 @@ public sealed record CustomerPackageResponse(
     string? VoidReason,
     string? Note,
     IReadOnlyList<BenefitBalanceResponse> Balances,
-    string? BusinessName = null);
+    string? BusinessName = null,
+    string? BusinessSlug = null);
 
 public sealed record CustomerPackageListResponse(IReadOnlyList<CustomerPackageResponse> Items);
 

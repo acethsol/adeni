@@ -66,6 +66,12 @@ export const routes: Routes = [
         canActivate: [portalPermissionGuard],
       },
       {
+        path: "retention/loyalty",
+        loadComponent: () => import("./pages/retention/retention-loyalty.component").then((m) => m.RetentionLoyaltyComponent),
+        title: "Loyalty",
+        canActivate: [portalPermissionGuard],
+      },
+      {
         path: "customers/:id",
         loadComponent: () => import("./pages/customers/customer-detail.component").then((m) => m.CustomerDetailComponent),
         title: "Customer",

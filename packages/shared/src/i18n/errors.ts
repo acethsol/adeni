@@ -28,6 +28,9 @@ export const enErrorMessages: MessageTree = {
     owner_required: "Only a business owner can do this.",
     online_purchase_unavailable: "Online package purchase is not available for this business yet.",
     validation: "Check the package details and try again.",
+    loyalty_program_not_configured: "Set up the loyalty program before adjusting points.",
+    loyalty_insufficient_points: "That would take the customer's points balance below zero.",
+    loyalty_conflict: "The points balance changed at the same time. Refresh and try again.",
   },
   intake: {"validation": "Check the intake form fields.", "conflict": "The form changed or was already submitted. Refresh before continuing.", "submission_closed": "This booking is no longer open for intake submission."},
   subscription: {
@@ -106,6 +109,7 @@ export const enErrorMessages: MessageTree = {
     packages: "Prepaid packages are not included on your current plan.",
     memberships: "Memberships are not included on your current plan.",
     recurringMembershipBilling: "Recurring membership billing is not included on your current plan.",
+    loyaltyBasic: "Loyalty is not included on your current plan.",
     exports: "Exports are not included on your current plan.",
     excel_export: "Excel export is not included on your current plan.",
     multi_location_reporting:
@@ -155,6 +159,9 @@ export const frErrorMessages: MessageTree = {
     owner_required: "Seul un propriétaire de l’entreprise peut effectuer cette action.",
     online_purchase_unavailable: "L’achat de forfaits en ligne n’est pas encore disponible pour cette entreprise.",
     validation: "Vérifiez les détails du forfait et réessayez.",
+    loyalty_program_not_configured: "Configurez le programme de fidélité avant d’ajuster des points.",
+    loyalty_insufficient_points: "Cela ferait passer le solde de points du client sous zéro.",
+    loyalty_conflict: "Le solde de points a changé en même temps. Actualisez et réessayez.",
   },
   intake: {"validation": "Vérifiez les champs du formulaire.", "conflict": "Le formulaire a changé ou a déjà été envoyé. Actualisez avant de continuer.", "submission_closed": "Cette réservation ne permet plus d’envoyer ce formulaire."},
   subscription: {
@@ -214,6 +221,7 @@ export const frErrorMessages: MessageTree = {
     packages: "Les forfaits prépayés ne sont pas inclus dans votre forfait actuel.",
     memberships: "Les abonnements ne sont pas inclus dans votre forfait actuel.",
     recurringMembershipBilling: "La facturation récurrente des abonnements n’est pas incluse dans votre forfait actuel.",
+    loyaltyBasic: "La fidélité n’est pas incluse dans votre forfait actuel.",
     exports: "Les exportations ne sont pas incluses dans votre forfait actuel.",
     excel_export: "L'exportation Excel n'est pas incluse dans votre forfait actuel.",
     multi_location_reporting:

@@ -18,7 +18,7 @@ public sealed record CommerceCheckoutView(string State, string? CheckoutUrl)
     public override string ToString() => $"Checkout {State} [redirect redacted]";
 }
 public sealed record GiftCardView(Guid Id, string BusinessName, decimal OriginalAmount, decimal RemainingAmount, string Currency,
-    string State, string CodeSuffix, DateTimeOffset? IssuedAt);
+    string State, string CodeSuffix, DateTimeOffset? IssuedAt, string? BusinessSlug = null);
 public sealed record GiftTransactionView(Guid Id, string Kind, decimal Delta, decimal BalanceAfter, DateTimeOffset OccurredAt);
 public sealed record GiftCodeView(string Code)
 {

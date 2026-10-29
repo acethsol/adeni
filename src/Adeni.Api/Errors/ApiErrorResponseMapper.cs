@@ -140,7 +140,9 @@ internal static class ApiErrorResponseMapper
                 or RetentionErrorCodes.ScopeLocationDenied or RetentionErrorCodes.SellLocationDenied
                 or RetentionErrorCodes.MembershipPlanInactive or RetentionErrorCodes.MembershipAlreadyActive
                 or RetentionErrorCodes.MembershipInvalidState or RetentionErrorCodes.MembershipFreezeNotAllowed
-                or RetentionErrorCodes.MembershipRenewalNotDue or RetentionErrorCodes.MembershipNotRedeemable =>
+                or RetentionErrorCodes.MembershipRenewalNotDue or RetentionErrorCodes.MembershipNotRedeemable
+                or RetentionErrorCodes.LoyaltyProgramNotConfigured or RetentionErrorCodes.LoyaltyInsufficientPoints
+                or RetentionErrorCodes.LoyaltyConflict =>
                 StatusCodes.Status409Conflict,
             _ => StatusCodes.Status400BadRequest,
         };

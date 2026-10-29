@@ -31,6 +31,11 @@ public sealed class RetentionSqlServerTests
 
     private sealed class Guard : IRetentionEntitlementGuard
     {
+        public Task<bool> IsLoyaltyBasicEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) => Task.FromResult(true);
+
+        public Task<Domain.Common.Result> EnsureLoyaltyBasicEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Domain.Common.Result.Success());
+
         public Task<bool> IsMembershipsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) => Task.FromResult(true);
 
         public Task<Domain.Common.Result> EnsureMembershipsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>

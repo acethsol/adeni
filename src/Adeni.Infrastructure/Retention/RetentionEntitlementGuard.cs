@@ -11,6 +11,18 @@ public sealed class RetentionEntitlementGuard(
     AdeniDbContext db,
     IEntitlementsService entitlements) : IRetentionEntitlementGuard
 {
+    public async Task<bool> IsLoyaltyBasicEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default)
+    {
+        var tenant = await db.Tenants.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+        return tenant is not null && entitlements.GetEntitlementsForTenant(tenant).LoyaltyBasic;
+    }
+
+    public async Task<Result> EnsureLoyaltyBasicEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+        await IsLoyaltyBasicEntitledAsync(tenantId, cancellationToken)
+            ? Result.Success()
+            : Result.Failure(RetentionErrorCodes.LoyaltyBasicNotEntitledError());
+
     public async Task<bool> IsMembershipsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default)
     {
         var tenant = await db.Tenants.AsNoTracking()

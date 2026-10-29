@@ -1,0 +1,93 @@
+namespace Adeni.Api.Controllers.Retention;
+
+using System.Security.Claims;
+using Adeni.Api.Auth;
+using Adeni.Api.Constants;
+using Adeni.Api.Extensions;
+using Adeni.Api.Middleware;
+using Adeni.Application.Auth;
+using Adeni.Application.Retention;
+using Adeni.Domain.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+
+/// <summary>
+/// Loyalty program + points ledger (Sprint 37.3-A). Every route needs the <c>loyaltyBasic</c> plan entitlement
+/// (enforced in the services). Program changes are owner-only; manual adjustments are owner/manager and need an
+/// <c>Idempotency-Key</c>. Earning / redeeming arrive in later slices.
+/// </summary>
+[ApiController]
+[Route("api/v1/tenant/retention/loyalty")]
+public sealed class TenantLoyaltyController(
+    ILoyaltyProgramService programs,
+    ILoyaltyAccountService accounts,
+    IOptions<Auth0Options> auth0Options) : ControllerBase
+{
+    [HttpGet("program")]
+    [RequiresPortalPermission(PortalPermissions.Retention, PortalPermissions.Bookings)]
+    public async Task<IActionResult> GetProgram(CancellationToken cancellationToken)
+    {
+        if (ResolveActor() is not { } actor) return Unauthorized();
+        return ApiResults.FromResult(await programs.GetAsync(actor.TenantId, cancellationToken), Ok, HttpContext);
+    }
+
+    [HttpPut("program")]
+    [RequiresPortalPermission(PortalPermissions.Retention)]
+    public async Task<IActionResult> UpsertProgram([FromBody] UpsertLoyaltyProgramRequest request, CancellationToken cancellationToken)
+    {
+        if (ResolveActor() is not { } actor) return Unauthorized();
+        return ApiResults.FromResult(
+            await programs.UpsertAsync(actor.TenantId, actor.Actor, request, cancellationToken), Ok, HttpContext);
+    }
+
+    [HttpGet("customers/{tenantCustomerId:guid}/account")]
+    [RequiresPortalPermission(PortalPermissions.Retention, PortalPermissions.Bookings)]
+    public async Task<IActionResult> GetAccount(Guid tenantCustomerId, CancellationToken cancellationToken)
+    {
+        if (ResolveActor() is not { } actor) return Unauthorized();
+        return ApiResults.FromResult(
+            await accounts.GetForCustomerAsync(actor.TenantId, tenantCustomerId, cancellationToken), Ok, HttpContext);
+    }
+
+    [HttpGet("customers/{tenantCustomerId:guid}/transactions")]
+    [RequiresPortalPermission(PortalPermissions.Retention, PortalPermissions.Bookings)]
+    public async Task<IActionResult> ListTransactions(
+        Guid tenantCustomerId, [FromQuery] int limit = 50, CancellationToken cancellationToken = default)
+    {
+        if (ResolveActor() is not { } actor) return Unauthorized();
+        return ApiResults.FromResult(
+            await accounts.ListTransactionsAsync(actor.TenantId, tenantCustomerId, limit, cancellationToken), Ok, HttpContext);
+    }
+
+    [HttpPost("customers/{tenantCustomerId:guid}/adjust")]
+    [RequiresPortalPermission(PortalPermissions.Retention)]
+    public async Task<IActionResult> Adjust(
+        Guid tenantCustomerId, [FromBody] AdjustLoyaltyPointsRequest request, CancellationToken cancellationToken)
+    {
+        if (ResolveActor() is not { } actor) return Unauthorized();
+        if (Request.Headers.ContainsKey(IdempotencyHeaders.Key) && Request.GetIdempotencyKey() is null)
+        {
+            return this.InvalidIdempotencyKeyResult();
+        }
+
+        var result = await accounts.AdjustAsync(
+            actor.TenantId, actor.Actor, tenantCustomerId, request, Request.GetIdempotencyKey(), cancellationToken);
+        return ApiResults.FromResult(result, Ok, HttpContext);
+    }
+
+    private (Guid TenantId, RetentionActor Actor)? ResolveActor()
+    {
+        var access = PortalAccessHttpContext.Get(HttpContext);
+        var sub = User.Identity?.IsAuthenticated == true ? User.FindFirstValue("sub") : null;
+        if (sub is null && !auth0Options.Value.Enabled)
+        {
+            sub = Request.Headers[DevBusinessAuthMiddleware.DevAuth0SubHeader].FirstOrDefault();
+        }
+
+        // Tenant comes from the resolved business user (DB), never from client input alone;
+        // TenantAccessMiddleware additionally requires X-Tenant-Id to match.
+        return access is not null && !string.IsNullOrWhiteSpace(sub)
+            ? (access.TenantId, new RetentionActor(sub, access.PermissionRole))
+            : null;
+    }
+}

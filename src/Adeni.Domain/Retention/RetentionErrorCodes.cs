@@ -13,6 +13,10 @@ public static class RetentionErrorCodes
     public const string MembershipAlreadyActive = "retention.membership_already_active";
     public const string MembershipInvalidState = "retention.membership_invalid_state";
     public const string MembershipFreezeNotAllowed = "retention.membership_freeze_not_allowed";
+    public const string LoyaltyBasicNotEntitled = "entitlements.loyaltyBasic";
+    public const string LoyaltyProgramNotConfigured = "retention.loyalty_program_not_configured";
+    public const string LoyaltyInsufficientPoints = "retention.loyalty_insufficient_points";
+    public const string LoyaltyConflict = "retention.loyalty_conflict";
     public const string PackageNotFound = "retention.package_not_found";
     public const string PackageInactive = "retention.package_inactive";
     public const string PackageNotActive = "retention.package_not_active";
@@ -55,6 +59,18 @@ public static class RetentionErrorCodes
 
     public static Error MembershipsNotEntitledError() =>
         new(MembershipsNotEntitled, "Memberships are not included on your current plan.");
+
+    public static Error LoyaltyBasicNotEntitledError() =>
+        new(LoyaltyBasicNotEntitled, "Loyalty is not included on your current plan.");
+
+    public static Error LoyaltyProgramNotConfiguredError() =>
+        new(LoyaltyProgramNotConfigured, "Set up the loyalty program before adjusting points.");
+
+    public static Error LoyaltyInsufficientPointsError() =>
+        new(LoyaltyInsufficientPoints, "That would take the customer's points balance below zero.");
+
+    public static Error LoyaltyConflictError() =>
+        new(LoyaltyConflict, "The points balance changed at the same time. Try again.");
 
     public static Error MembershipPlanNotFoundError() =>
         new(MembershipPlanNotFound, "Membership plan was not found.");

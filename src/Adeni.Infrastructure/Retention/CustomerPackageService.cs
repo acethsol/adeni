@@ -367,9 +367,18 @@ public sealed class CustomerPackageService(
             .Where(x => tenantIds.Contains(x.Id))
             .ToDictionaryAsync(x => x.Id, x => x.Name, cancellationToken);
 
+        // Public booking slug (primary active location) so clients can deep-link "book again" without a second lookup.
+        var slugRows = await db.BusinessLocations.AsNoTracking()
+            .Where(x => tenantIds.Contains(x.TenantId) && x.IsActive)
+            .Select(x => new { x.TenantId, x.Slug, x.IsPrimary })
+            .ToListAsync(cancellationToken);
+        var slugs = slugRows
+            .GroupBy(x => x.TenantId)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.IsPrimary).Select(x => x.Slug).First());
+
         var now = clock.GetUtcNow();
         return Result.Success(new CustomerPackageListResponse(rows
-            .Select(x => RetentionMapper.ToResponse(x, now, names.GetValueOrDefault(x.TenantId)))
+            .Select(x => RetentionMapper.ToResponse(x, now, names.GetValueOrDefault(x.TenantId), slugs.GetValueOrDefault(x.TenantId)))
             .ToArray()));
     }
 

@@ -88,6 +88,8 @@ export const customerPackageSchema = z.object({
   note: z.string().nullable(),
   balances: z.array(benefitBalanceSchema),
   businessName: z.string().nullable().optional(),
+  /** Public booking slug (`/businesses/:slug`) — present on `/me/retention/packages` only. */
+  businessSlug: z.string().nullable().optional(),
 });
 
 export const customerPackageListSchema = z.object({ items: z.array(customerPackageSchema) });
@@ -381,3 +383,76 @@ export type PublicMembershipPlanCatalog = z.infer<typeof publicMembershipPlanCat
 export type MembershipSubscribeResponse = z.infer<typeof membershipSubscribeResponseSchema>;
 export type RenewMembershipRequest = z.infer<typeof renewMembershipRequestSchema>;
 export type TenantMembershipMrrResponse = z.infer<typeof tenantMembershipMrrResponseSchema>;
+
+// ---- Loyalty (Sprint 37.3-A): program settings + points ledger. Earn / redeem / tiers / referrals land in later slices. ----
+
+export const loyaltyTransactionKindSchema = z.enum(["earn", "redeem", "adjust", "expire"]);
+
+/** Earn `earnPoints` per `earnPerAmount` spent; `redeemPoints` points are worth `redeemValue` off. Points are program credits, never cash. */
+export const loyaltyProgramSchema = z.object({
+  configured: z.boolean(),
+  id: z.string().uuid().nullable(),
+  isEnabled: z.boolean(),
+  currency: z.string(),
+  earnPoints: z.number().int().positive(),
+  earnPerAmount: z.number().positive(),
+  redeemPoints: z.number().int().positive(),
+  redeemValue: z.number().positive(),
+  minRedeemPoints: z.number().int().nonnegative(),
+  pointsExpiryMonths: z.number().int().positive().nullable(),
+  createdAt: z.string().nullable(),
+  updatedAt: z.string().nullable(),
+});
+
+export const upsertLoyaltyProgramRequestSchema = z.object({
+  isEnabled: z.boolean(),
+  currency: z.string().length(3),
+  earnPoints: z.number().int().min(1).max(1000),
+  earnPerAmount: z.number().positive(),
+  redeemPoints: z.number().int().min(1).max(1_000_000),
+  redeemValue: z.number().positive(),
+  minRedeemPoints: z.number().int().min(0).max(1_000_000),
+  pointsExpiryMonths: z.number().int().min(1).max(60).nullable().optional(),
+});
+
+export const loyaltyAccountSchema = z.object({
+  tenantCustomerId: z.string().uuid(),
+  pointsBalance: z.number().int().nonnegative(),
+  lifetimeEarned: z.number().int().nonnegative(),
+  lifetimeRedeemed: z.number().int().nonnegative(),
+  updatedAt: z.string().nullable(),
+});
+
+export const loyaltyTransactionSchema = z.object({
+  id: z.string().uuid(),
+  sequence: z.number().int().positive(),
+  kind: loyaltyTransactionKindSchema,
+  points: z.number().int(),
+  balanceAfter: z.number().int().nonnegative(),
+  reason: z.string().nullable(),
+  bookingId: z.string().uuid().nullable(),
+  occurredAt: z.string(),
+});
+
+export const loyaltyTransactionListSchema = z.object({ items: z.array(loyaltyTransactionSchema) });
+
+export const adjustLoyaltyPointsRequestSchema = z.object({
+  points: z
+    .number()
+    .int()
+    .refine((value) => value !== 0, "Points must not be zero")
+    .refine((value) => Math.abs(value) <= 1_000_000, "Points are limited to 1,000,000"),
+  reason: z.string().trim().min(1).max(500),
+});
+
+export const loyaltyAdjustmentSchema = z.object({
+  account: loyaltyAccountSchema,
+  transaction: loyaltyTransactionSchema,
+});
+
+export type LoyaltyProgram = z.infer<typeof loyaltyProgramSchema>;
+export type UpsertLoyaltyProgramRequest = z.infer<typeof upsertLoyaltyProgramRequestSchema>;
+export type LoyaltyAccount = z.infer<typeof loyaltyAccountSchema>;
+export type LoyaltyTransaction = z.infer<typeof loyaltyTransactionSchema>;
+export type AdjustLoyaltyPointsRequest = z.infer<typeof adjustLoyaltyPointsRequestSchema>;
+export type LoyaltyAdjustment = z.infer<typeof loyaltyAdjustmentSchema>;

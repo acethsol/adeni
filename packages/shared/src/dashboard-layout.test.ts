@@ -19,6 +19,7 @@ const starterEntitlements = {
   packages: false,
   memberships: false,
   recurringMembershipBilling: false,
+  loyaltyBasic: true,
   multiLocation: false,
 } as const;
 

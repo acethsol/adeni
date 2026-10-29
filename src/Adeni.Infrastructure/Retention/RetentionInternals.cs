@@ -109,7 +109,8 @@ internal static class RetentionMapper
     public static CustomerPackageResponse ToResponse(
         CustomerPackage package,
         DateTimeOffset now,
-        string? businessName = null)
+        string? businessName = null,
+        string? businessSlug = null)
     {
         // Read-time lazy expiry: an Active package past ExpiresAt is shown as expired even before the job runs.
         var status = package.Status == CustomerPackageStatus.Active && package.ExpiresAt is { } expires && expires <= now
@@ -139,7 +140,8 @@ internal static class RetentionMapper
                 .Select(x => new BenefitBalanceResponse(
                     x.Id, x.ServiceOfferingId, x.ServiceName, x.Granted, x.Used, x.Reserved, x.Forfeited, x.Remaining, x.ExpiresAt))
                 .ToArray(),
-            businessName);
+            businessName,
+            businessSlug);
     }
 }
 

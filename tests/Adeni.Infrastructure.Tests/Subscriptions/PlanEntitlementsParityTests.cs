@@ -73,6 +73,7 @@ public sealed class PlanEntitlementsParityTests
         Assert.Equal(row.GetProperty("packages").GetBoolean(), catalog.Packages);
         Assert.Equal(row.GetProperty("memberships").GetBoolean(), catalog.Memberships);
         Assert.Equal(row.GetProperty("recurringMembershipBilling").GetBoolean(), catalog.RecurringMembershipBilling);
+        Assert.Equal(row.GetProperty("loyaltyBasic").GetBoolean(), catalog.LoyaltyBasic);
 
         Assert.True(catalog.InvoicesReceipts);
         Assert.True(catalog.OnlinePayments);

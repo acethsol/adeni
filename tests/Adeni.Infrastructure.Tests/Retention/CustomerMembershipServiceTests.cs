@@ -24,6 +24,12 @@ public sealed class CustomerMembershipServiceTests
 
     private sealed class Guard(bool entitled) : IRetentionEntitlementGuard
     {
+        public Task<bool> IsLoyaltyBasicEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(true);
+
+        public Task<Domain.Common.Result> EnsureLoyaltyBasicEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Domain.Common.Result.Success());
+
         public Task<bool> IsMembershipsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
             Task.FromResult(entitled);
 

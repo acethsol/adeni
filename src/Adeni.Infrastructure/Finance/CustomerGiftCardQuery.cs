@@ -15,6 +15,7 @@ public sealed class CustomerGiftCardQuery(AdeniDbContext db, IFinanceCommerceAcc
             join tenant in db.Tenants on card.TenantId equals tenant.Id
             where card.TenantId==scope.TenantId && card.PurchaserCustomerId==scope.CustomerId && card.IssuedAt!=null
             orderby card.IssuedAt descending,card.Id
-            select new GiftCardView(card.Id,tenant.Name,card.OriginalAmount,card.RemainingAmount,card.Currency,card.State.ToString(),card.CodeSuffix,card.IssuedAt)).Take(25).ToArrayAsync(ct));
+            select new GiftCardView(card.Id,tenant.Name,card.OriginalAmount,card.RemainingAmount,card.Currency,card.State.ToString(),card.CodeSuffix,card.IssuedAt,
+                db.BusinessLocations.Where(l=>l.TenantId==card.TenantId&&l.IsActive).OrderByDescending(l=>l.IsPrimary).Select(l=>l.Slug).FirstOrDefault())).Take(25).ToArrayAsync(ct));
     }
 }

@@ -205,7 +205,8 @@ public sealed partial class CommerceService(AdeniDbContext db, IFinanceCommerceA
 
     private async Task<GiftCardView[]> CardViews(IQueryable<BusinessGiftCard> query, CancellationToken ct) => await (
         from c in query join t in db.Tenants on c.TenantId equals t.Id orderby c.IssuedAt descending, c.Id
-        select new GiftCardView(c.Id, t.Name, c.OriginalAmount, c.RemainingAmount, c.Currency, c.State.ToString(), c.CodeSuffix, c.IssuedAt)).Take(100).ToArrayAsync(ct);
+        select new GiftCardView(c.Id, t.Name, c.OriginalAmount, c.RemainingAmount, c.Currency, c.State.ToString(), c.CodeSuffix, c.IssuedAt,
+            db.BusinessLocations.Where(l => l.TenantId == c.TenantId && l.IsActive).OrderByDescending(l => l.IsPrimary).Select(l => l.Slug).FirstOrDefault())).Take(100).ToArrayAsync(ct);
     public async Task<Result<IReadOnlyList<GiftCardView>>> CardsAsync(Guid tenant, string actor, int page, CancellationToken ct)
     {
         if (!await access.CanReadAsync(tenant, actor, ct)) return Result.Failure<IReadOnlyList<GiftCardView>>(Denied);

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  adjustLoyaltyPointsRequestSchema,
   appliedBenefitRequestSchema,
   createBookingRequestSchema,
   createMembershipPlanRequestSchema,
@@ -10,11 +11,16 @@ import {
   customerProfileSchema,
   enrolMembershipRequestSchema,
   membershipSubscribeResponseSchema,
+  loyaltyAccountSchema,
+  loyaltyAdjustmentSchema,
+  loyaltyProgramSchema,
+  loyaltyTransactionKindSchema,
   packagePurchaseResponseSchema,
   publicMembershipPlanCatalogSchema,
   publicPackageCatalogSchema,
   sellPackageRequestSchema,
   tenantMembershipMrrResponseSchema,
+  upsertLoyaltyProgramRequestSchema,
 } from "./index";
 import { t } from "./i18n";
 
@@ -105,6 +111,58 @@ describe("retention contracts", () => {
       expect(t(locale, "errors.entitlements.recurringMembershipBilling")).not.toBe("errors.entitlements.recurringMembershipBilling");
     }
   });
+  it("parses loyalty program, account and ledger rows and validates program / adjust requests", () => {
+    const program = loyaltyProgramSchema.parse({
+      configured: true, id, isEnabled: true, currency: "NGN", earnPoints: 1, earnPerAmount: 100, redeemPoints: 100,
+      redeemValue: 500, minRedeemPoints: 100, pointsExpiryMonths: null, createdAt: "2026-10-29T12:00:00Z", updatedAt: "2026-10-29T12:00:00Z",
+    });
+    expect(program.pointsExpiryMonths).toBeNull();
+    expect(loyaltyProgramSchema.safeParse({ ...program, configured: false, id: null, createdAt: null, updatedAt: null }).success).toBe(true);
+
+    const body = {
+      isEnabled: true, currency: "NGN", earnPoints: 1, earnPerAmount: 100, redeemPoints: 100, redeemValue: 500, minRedeemPoints: 100,
+    };
+    expect(upsertLoyaltyProgramRequestSchema.safeParse(body).success).toBe(true);
+    expect(upsertLoyaltyProgramRequestSchema.safeParse({ ...body, pointsExpiryMonths: null }).success).toBe(true);
+    expect(upsertLoyaltyProgramRequestSchema.safeParse({ ...body, earnPoints: 0 }).success).toBe(false);
+    expect(upsertLoyaltyProgramRequestSchema.safeParse({ ...body, redeemValue: 0 }).success).toBe(false);
+    expect(upsertLoyaltyProgramRequestSchema.safeParse({ ...body, pointsExpiryMonths: 61 }).success).toBe(false);
+
+    expect(loyaltyAccountSchema.parse({
+      tenantCustomerId: id, pointsBalance: 10, lifetimeEarned: 0, lifetimeRedeemed: 0, updatedAt: null,
+    }).pointsBalance).toBe(10);
+    const adjustment = loyaltyAdjustmentSchema.parse({
+      account: { tenantCustomerId: id, pointsBalance: 120, lifetimeEarned: 0, lifetimeRedeemed: 0, updatedAt: "2026-10-29T12:00:00Z" },
+      transaction: { id, sequence: 1, kind: "adjust", points: 120, balanceAfter: 120, reason: "Welcome", bookingId: null, occurredAt: "2026-10-29T12:00:00Z" },
+    });
+    expect(adjustment.transaction.kind).toBe("adjust");
+    expect(loyaltyTransactionKindSchema.safeParse("transfer").success).toBe(false);
+
+    expect(adjustLoyaltyPointsRequestSchema.safeParse({ points: -5, reason: "Fix" }).success).toBe(true);
+    expect(adjustLoyaltyPointsRequestSchema.safeParse({ points: 0, reason: "Fix" }).success).toBe(false);
+    expect(adjustLoyaltyPointsRequestSchema.safeParse({ points: 1.5, reason: "Fix" }).success).toBe(false);
+    expect(adjustLoyaltyPointsRequestSchema.safeParse({ points: 1_000_001, reason: "Fix" }).success).toBe(false);
+    expect(adjustLoyaltyPointsRequestSchema.safeParse({ points: 5, reason: "   " }).success).toBe(false);
+  });
+
+  it("has English and French messages for every loyalty error code and the portal page", () => {
+    const codes = ["loyalty_program_not_configured", "loyalty_insufficient_points", "loyalty_conflict"];
+    const pageKeys = [
+      "title", "description", "setupNotice", "nonCash", "notConfigured", "enabled", "enabledHint", "currency", "earnHeading",
+      "earnPoints", "earnPerAmount", "redeemHeading", "redeemPoints", "redeemValue", "minRedeem", "expiryHeading", "expiryMonths",
+      "expiryNever", "summaryEarn", "summaryRedeem", "save", "saved", "couldNotLoad", "couldNotSave", "ownerOnlyHint",
+    ];
+    for (const locale of ["en", "fr"] as const) {
+      for (const code of codes) {
+        expect(t(locale, `errors.retention.${code}`), `${locale}:${code}`).not.toBe(`errors.retention.${code}`);
+      }
+      expect(t(locale, "errors.entitlements.loyaltyBasic")).not.toBe("errors.entitlements.loyaltyBasic");
+      for (const key of pageKeys) {
+        expect(t(locale, `portal.loyalty.${key}`), `${locale}:${key}`).not.toBe(`portal.loyalty.${key}`);
+      }
+    }
+  });
+
   it("parses customer memberships and validates the enrol request", () => {
     const uuid = "11111111-1111-4111-8111-111111111111";
     const membership = customerMembershipSchema.parse({

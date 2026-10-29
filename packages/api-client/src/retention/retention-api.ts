@@ -14,6 +14,7 @@ import {
   publicPackageCatalogSchema,
   redeemableBenefitListSchema,
   tenantMembershipMrrResponseSchema,
+  loyaltyProgramSchema,
   type CreateMembershipPlanRequest,
   type CreatePackageDefinitionRequest,
   type EnrolMembershipRequest,
@@ -21,6 +22,7 @@ import {
   type SellPackageRequest,
   type UpdateMembershipPlanRequest,
   type UpdatePackageDefinitionRequest,
+  type UpsertLoyaltyProgramRequest,
 } from "@adeni/shared";
 import type { ApiClientContext } from "../core/api-transport";
 
@@ -39,7 +41,7 @@ export class RetentionApi {
     path: string,
     body: unknown,
     schema: { parse(value: unknown): T },
-    method: "POST" | "PATCH" = "POST",
+    method: "POST" | "PATCH" | "PUT" = "POST",
     key?: string,
     signal?: AbortSignal,
   ): Promise<T> {
@@ -225,6 +227,15 @@ export class RetentionApi {
       key,
       signal,
     );
+  }
+
+  /** Loyalty program settings (Sprint 37.3-A). Requires the `loyaltyBasic` entitlement; `configured:false` until saved. */
+  getLoyaltyProgram(signal?: AbortSignal) {
+    return this.get(`${BASE}/loyalty/program`, loyaltyProgramSchema, signal);
+  }
+
+  saveLoyaltyProgram(body: UpsertLoyaltyProgramRequest, signal?: AbortSignal) {
+    return this.write(`${BASE}/loyalty/program`, body, loyaltyProgramSchema, "PUT", undefined, signal);
   }
 
   /** Signed-in customer's credits at one business, filtered to what applies to the booking being built. */

@@ -116,6 +116,13 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         entitlement: "memberships",
       },
       {
+        path: "/retention/loyalty",
+        label: "Loyalty",
+        icon: "payments",
+        permission: "portal.retention",
+        entitlement: "loyaltyBasic",
+      },
+      {
         path: "/queue",
         label: "Queue",
         icon: "queue",
