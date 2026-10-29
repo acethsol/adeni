@@ -9,9 +9,12 @@ import {
   customerPackageSchema,
   customerProfileSchema,
   enrolMembershipRequestSchema,
+  membershipSubscribeResponseSchema,
   packagePurchaseResponseSchema,
+  publicMembershipPlanCatalogSchema,
   publicPackageCatalogSchema,
   sellPackageRequestSchema,
+  tenantMembershipMrrResponseSchema,
 } from "./index";
 import { t } from "./i18n";
 
@@ -88,8 +91,9 @@ describe("retention contracts", () => {
       "package_not_found", "package_inactive", "package_not_active", "package_expired", "benefit_not_found",
       "benefit_insufficient", "benefit_service_mismatch", "benefit_conflict", "scope_location_denied",
       "sell_location_denied", "idempotency_key_required", "idempotency_conflict", "owner_required",
-      "online_purchase_unavailable", "validation", "membership_plan_not_found", "membership_not_found",
+      "online_purchase_unavailable", "online_subscription_unavailable", "validation", "membership_plan_not_found", "membership_not_found",
       "membership_plan_inactive", "membership_already_active", "membership_invalid_state", "membership_freeze_not_allowed",
+      "membership_renewal_not_due", "membership_not_redeemable",
     ];
     for (const locale of ["en", "fr"] as const) {
       for (const code of codes) {
@@ -98,6 +102,7 @@ describe("retention contracts", () => {
       }
       expect(t(locale, "errors.entitlements.packages")).not.toBe("errors.entitlements.packages");
       expect(t(locale, "errors.entitlements.memberships")).not.toBe("errors.entitlements.memberships");
+      expect(t(locale, "errors.entitlements.recurringMembershipBilling")).not.toBe("errors.entitlements.recurringMembershipBilling");
     }
   });
   it("parses customer memberships and validates the enrol request", () => {
@@ -121,5 +126,31 @@ describe("retention contracts", () => {
 
     expect(enrolMembershipRequestSchema.safeParse({ membershipPlanId: uuid, businessLocationId: uuid, paymentMethod: "till" }).success).toBe(true);
     expect(enrolMembershipRequestSchema.safeParse({ membershipPlanId: uuid, businessLocationId: uuid, paymentMethod: "card" }).success).toBe(false);
+  });
+
+  it("parses public membership plans, subscribe, and MRR, and accepts membership credits on booking", () => {
+    const uuid = "11111111-1111-4111-8111-111111111111";
+    const catalog = publicMembershipPlanCatalogSchema.parse({
+      onlineSubscribeEnabled: false,
+      items: [{
+        id: uuid, name: "Fade Club", description: null, price: 25000, currency: "NGN",
+        billingInterval: "monthly", rolloverPolicy: "none", cancellationPolicy: "end_of_cycle",
+        allowFreeze: true, pastDueGraceDays: 7,
+        benefits: [{ id: uuid, serviceOfferingId: uuid, serviceName: "Haircut", quantityPerCycle: 2 }],
+      }],
+    });
+    expect(catalog.items).toHaveLength(1);
+    expect(membershipSubscribeResponseSchema.parse({
+      customerMembershipId: uuid, paymentIntentId: uuid, status: "pending", checkoutUrl: null,
+    }).status).toBe("pending");
+    expect(tenantMembershipMrrResponseSchema.parse({
+      asOf: "2026-10-29T12:00:00Z",
+      items: [{ currency: "NGN", monthlyRecurringRevenue: 25000, memberCount: 1 }],
+    }).items[0]?.memberCount).toBe(1);
+    expect(appliedBenefitRequestSchema.safeParse({ customerMembershipId: uuid, benefitBalanceId: uuid, quantity: 1 }).success).toBe(true);
+    expect(appliedBenefitRequestSchema.safeParse({ benefitBalanceId: uuid, quantity: 1 }).success).toBe(false);
+    expect(appliedBenefitRequestSchema.safeParse({
+      customerPackageId: uuid, customerMembershipId: uuid, benefitBalanceId: uuid, quantity: 1,
+    }).success).toBe(false);
   });
 });

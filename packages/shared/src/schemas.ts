@@ -999,6 +999,8 @@ export const tenantEntitlementsSchema = z.object({
   packages: z.boolean(),
   /** Membership plans & recurring memberships (Sprint 37.2). */
   memberships: z.boolean(),
+  /** Provider-billed recurring memberships: online subscribe + renewals (Sprint 37.2-C). */
+  recurringMembershipBilling: z.boolean(),
   multiLocation: z.boolean(),
 });
 

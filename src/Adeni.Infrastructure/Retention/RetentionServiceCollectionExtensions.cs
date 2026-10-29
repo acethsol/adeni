@@ -23,6 +23,12 @@ public static class RetentionServiceCollectionExtensions
         services.AddScoped<IPackageExpiryService, PackageExpiryService>();
         services.AddScoped<ICustomerPackageSummaryQuery, CustomerPackageSummaryQuery>();
         services.AddScoped<PackageExpiryHangfireJob>();
+        services.AddScoped<IMembershipBillingCoordinator, MembershipBillingCoordinator>();
+        services.AddScoped<IMembershipStorefrontService, MembershipStorefrontService>();
+        services.AddScoped<IMembershipMrrService, MembershipMrrService>();
+        services.AddScoped<IDomainEventHandler<PaymentCompleted>, MembershipPaymentHandler>();
+        services.AddScoped<IDomainEventHandler<PaymentFailed>, MembershipPaymentHandler>();
+        services.AddScoped<MembershipBillingHangfireJob>();
         return services;
     }
 }

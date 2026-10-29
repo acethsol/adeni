@@ -39,9 +39,18 @@ public sealed class BenefitBalance : ITenantEntity
 
     public DateTimeOffset? ExpiresAt { get; set; }
 
+    /// <summary>Credits rolled in from the previous cycle (37.2-C, <c>carry_over_one_cycle</c>); already counted in <see cref="Granted"/>.</summary>
+    public int CarriedIn { get; set; }
+
     public byte[] RowVersion { get; set; } = [];
 
     public int Remaining => Granted - Used - Reserved - Forfeited;
+
+    /// <summary>
+    /// Credits that may roll into the next cycle. Rolled-in credits are consumed first (FIFO) and never roll twice,
+    /// so a credit lives at most one extra cycle.
+    /// </summary>
+    public int CarryableToNextCycle => Math.Max(0, Remaining - Math.Max(0, CarriedIn - Used - Reserved));
 
     public static BenefitBalance Grant(
         Guid tenantId,
@@ -79,8 +88,27 @@ public sealed class BenefitBalance : ITenantEntity
         Guid? locationId,
         DateTimeOffset cycleEnd,
         DateTimeOffset at,
+        out BenefitTransaction transaction) =>
+        GrantForMembership(
+            tenantId, customerMembershipId, cycleNumber, serviceOfferingId, serviceName, quantity, 0, actor, locationId,
+            cycleEnd, at, out transaction);
+
+    /// <summary>As above, plus <paramref name="carriedIn"/> credits rolled over from the previous cycle (one ledger grant row).</summary>
+    public static BenefitBalance GrantForMembership(
+        Guid tenantId,
+        Guid customerMembershipId,
+        int cycleNumber,
+        Guid serviceOfferingId,
+        string serviceName,
+        int quantity,
+        int carriedIn,
+        string actor,
+        Guid? locationId,
+        DateTimeOffset cycleEnd,
+        DateTimeOffset at,
         out BenefitTransaction transaction)
     {
+        var total = quantity + Math.Max(0, carriedIn);
         var balance = new BenefitBalance
         {
             Id = Guid.NewGuid(),
@@ -89,11 +117,14 @@ public sealed class BenefitBalance : ITenantEntity
             CycleNumber = cycleNumber,
             ServiceOfferingId = serviceOfferingId,
             ServiceName = serviceName,
-            Granted = quantity,
+            Granted = total,
+            CarriedIn = Math.Max(0, carriedIn),
             ExpiresAt = cycleEnd,
         };
-        transaction = balance.Append(
-            BenefitTransactionKind.Grant, quantity, quantity, null, locationId, actor, $"membership_cycle_{cycleNumber}", at);
+        var reason = carriedIn > 0
+            ? $"membership_cycle_{cycleNumber}_carry_{carriedIn}"
+            : $"membership_cycle_{cycleNumber}";
+        transaction = balance.Append(BenefitTransactionKind.Grant, total, total, null, locationId, actor, reason, at);
         return balance;
     }
 

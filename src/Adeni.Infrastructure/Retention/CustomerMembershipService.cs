@@ -2,6 +2,7 @@ namespace Adeni.Infrastructure.Retention;
 
 using Adeni.Application.Abstractions;
 using Adeni.Application.Events;
+using Adeni.Application.Finance;
 using Adeni.Application.Retention;
 using Adeni.Domain.Auditing;
 using Adeni.Domain.Common;
@@ -16,9 +17,11 @@ public sealed class CustomerMembershipService(
     IDomainEventCollector events,
     TimeProvider clock,
     IAuditLogWriter? audit = null,
-    ICorrelationContext? correlation = null) : ICustomerMembershipService
+    ICorrelationContext? correlation = null,
+    IPaymentOrchestrator? payments = null) : ICustomerMembershipService
 {
     private const string EnrolKind = "membership_enrol";
+    private const string RenewKind = "membership_renew";
 
     public async Task<Result<CustomerMembershipListResponse>> ListForCustomerAsync(
         Guid tenantId, Guid tenantCustomerId, CancellationToken cancellationToken = default)
@@ -229,48 +232,18 @@ public sealed class CustomerMembershipService(
         Guid tenantId, RetentionActor actor, Guid customerMembershipId, CancellationToken cancellationToken = default)
     {
         var loaded = await LoadForChangeAsync(tenantId, actor, customerMembershipId, cancellationToken);
-        if (loaded.IsFailure)
-        {
-            return Result.Failure<CustomerMembershipResponse>(loaded.Error);
-        }
-
-        var membership = loaded.Value!;
-        if (membership.Status == CustomerMembershipStatus.Frozen)
-        {
-            return Result.Success(RetentionMapper.ToResponse(membership));
-        }
-
-        var frozen = membership.Freeze(clock.GetUtcNow());
-        if (frozen.IsFailure)
-        {
-            return Result.Failure<CustomerMembershipResponse>(frozen.Error);
-        }
-
-        return await SaveAsync(membership, actor, AuditActions.RetentionMembershipFrozen, tenantId, cancellationToken);
+        return loaded.IsFailure
+            ? Result.Failure<CustomerMembershipResponse>(loaded.Error)
+            : await ApplyFreezeAsync(loaded.Value!, actor.Id, cancellationToken);
     }
 
     public async Task<Result<CustomerMembershipResponse>> UnfreezeAsync(
         Guid tenantId, RetentionActor actor, Guid customerMembershipId, CancellationToken cancellationToken = default)
     {
         var loaded = await LoadForChangeAsync(tenantId, actor, customerMembershipId, cancellationToken);
-        if (loaded.IsFailure)
-        {
-            return Result.Failure<CustomerMembershipResponse>(loaded.Error);
-        }
-
-        var membership = loaded.Value!;
-        if (membership.Status == CustomerMembershipStatus.Active)
-        {
-            return Result.Success(RetentionMapper.ToResponse(membership));
-        }
-
-        var thawed = membership.Unfreeze();
-        if (thawed.IsFailure)
-        {
-            return Result.Failure<CustomerMembershipResponse>(thawed.Error);
-        }
-
-        return await SaveAsync(membership, actor, AuditActions.RetentionMembershipUnfrozen, tenantId, cancellationToken);
+        return loaded.IsFailure
+            ? Result.Failure<CustomerMembershipResponse>(loaded.Error)
+            : await ApplyUnfreezeAsync(loaded.Value!, actor.Id, cancellationToken);
     }
 
     public async Task<Result<CustomerMembershipResponse>> CancelAsync(
@@ -280,27 +253,277 @@ public sealed class CustomerMembershipService(
         CancelMembershipRequest request,
         CancellationToken cancellationToken = default)
     {
-        var reason = string.IsNullOrWhiteSpace(request.Reason) ? null : request.Reason.Trim();
-        if (reason is { Length: > 500 })
+        var reason = NormalizeReason(request, out var invalid);
+        if (invalid is not null)
         {
-            return Result.Failure<CustomerMembershipResponse>(
-                RetentionErrorCodes.ValidationError("Reason must be at most 500 characters."));
+            return Result.Failure<CustomerMembershipResponse>(invalid);
         }
 
         var loaded = await LoadForChangeAsync(tenantId, actor, customerMembershipId, cancellationToken);
-        if (loaded.IsFailure)
+        return loaded.IsFailure
+            ? Result.Failure<CustomerMembershipResponse>(loaded.Error)
+            : await ApplyCancelAsync(loaded.Value!, actor.Id, reason, cancellationToken);
+    }
+
+    public async Task<Result<CustomerMembershipResponse>> RenewAsync(
+        Guid tenantId,
+        RetentionActor actor,
+        Guid customerMembershipId,
+        RenewMembershipRequest request,
+        string? idempotencyKey,
+        CancellationToken cancellationToken = default)
+    {
+        var entitled = await entitlements.EnsureMembershipsEntitledAsync(tenantId, cancellationToken);
+        if (entitled.IsFailure)
         {
-            return Result.Failure<CustomerMembershipResponse>(loaded.Error);
+            return Result.Failure<CustomerMembershipResponse>(entitled.Error);
         }
 
-        var membership = loaded.Value!;
+        var key = Adeni.Application.Common.IdempotencyKeyNormalizer.Normalize(idempotencyKey);
+        if (key is null)
+        {
+            return Result.Failure<CustomerMembershipResponse>(RetentionErrorCodes.IdempotencyKeyRequiredError());
+        }
+
+        var method = request.PaymentMethod?.Trim().ToLowerInvariant();
+        if (method is not (SellPaymentMethods.Till or SellPaymentMethods.Transfer))
+        {
+            return Result.Failure<CustomerMembershipResponse>(
+                RetentionErrorCodes.ValidationError("Payment method must be till or transfer."));
+        }
+
+        var note = string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim();
+        if (note is { Length: > 500 })
+        {
+            return Result.Failure<CustomerMembershipResponse>(
+                RetentionErrorCodes.ValidationError("Note must be at most 500 characters."));
+        }
+
+        var keyHash = RetentionHash.KeyHash(tenantId, RenewKind, actor.Id, key);
+        var fingerprint = RetentionHash.Fingerprint(customerMembershipId, method, note);
+        var replay = await ReplayAsync(tenantId, keyHash, fingerprint, cancellationToken);
+        if (replay is not null)
+        {
+            return replay.Value;
+        }
+
+        var membership = await db.Set<CustomerMembership>()
+            .Include(x => x.Benefits)
+            .Include(x => x.Balances)
+            .FirstOrDefaultAsync(x => x.TenantId == tenantId && x.Id == customerMembershipId, cancellationToken);
+        if (membership is null)
+        {
+            return Result.Failure<CustomerMembershipResponse>(RetentionErrorCodes.MembershipNotFoundError());
+        }
+
+        var now = clock.GetUtcNow();
+        // Online memberships renew only through confirmed provider payments. In-person ones are renewed by staff
+        // once the paid cycle has ended and while the plan's grace is still running.
+        if (membership.IsOnline
+            || membership.Status is not (CustomerMembershipStatus.Active or CustomerMembershipStatus.PastDue)
+            || membership.CurrentCycleEnd is not { } end
+            || now < end
+            || membership.GraceElapsed(now))
+        {
+            return Result.Failure<CustomerMembershipResponse>(RetentionErrorCodes.MembershipRenewalNotDueError());
+        }
+
+        var carry = MembershipCycles.CloseCurrentCycle(db, membership, actor.Id, now);
+        var renewed = membership.ApplyRenewal(now);
+        if (renewed.IsFailure)
+        {
+            db.ChangeTracker.Clear();
+            events.TakeAll();
+            return Result.Failure<CustomerMembershipResponse>(renewed.Error);
+        }
+
+        MembershipCycles.GrantCurrentCycle(db, membership, actor.Id, membership.EnrolledAtLocationId, now, carry);
+        db.Add(new BenefitOperation
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            KeyHash = keyHash,
+            Fingerprint = fingerprint,
+            Kind = RenewKind,
+            Actor = actor.Id,
+            ResultCustomerMembershipId = membership.Id,
+            OccurredAt = now,
+        });
+        events.Add(new CustomerMembershipRenewed(
+            membership.Id, tenantId, membership.TenantCustomerId, membership.CurrentCycleNumber, now));
+
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            // Lost a race on the idempotency key (replay) or on the cycle (another renewal applied first).
+            db.ChangeTracker.Clear();
+            events.TakeAll();
+            var winner = await ReplayAsync(tenantId, keyHash, fingerprint, cancellationToken);
+            return winner ?? Result.Failure<CustomerMembershipResponse>(RetentionErrorCodes.BenefitConflictError());
+        }
+
+        await AuditAsync(actor.Id, AuditActions.RetentionMembershipRenewed, membership.Id, tenantId, cancellationToken);
+        return Result.Success(RetentionMapper.ToResponse(membership));
+    }
+
+    public async Task<Result<CustomerMembershipListResponse>> ListForPlatformCustomerAsync(
+        string customerAuth0Sub, CancellationToken cancellationToken = default)
+    {
+        var tenantCustomerIds = await OwnTenantCustomerIdsAsync(customerAuth0Sub, cancellationToken);
+        if (tenantCustomerIds.IsFailure)
+        {
+            return Result.Failure<CustomerMembershipListResponse>(tenantCustomerIds.Error);
+        }
+
+        var own = tenantCustomerIds.Value!.ToArray();
+        if (own.Length == 0)
+        {
+            return Result.Success(new CustomerMembershipListResponse([]));
+        }
+
+        var rows = await db.Set<CustomerMembership>().AsNoTracking()
+            .Include(x => x.Benefits)
+            .Include(x => x.Balances)
+            .Where(x => own.Contains(x.TenantCustomerId) && x.Status != CustomerMembershipStatus.Pending)
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync(cancellationToken);
+        var tenantIds = rows.Select(x => x.TenantId).Distinct().ToArray();
+        var names = await db.Tenants.AsNoTracking()
+            .Where(x => tenantIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, x => x.Name, cancellationToken);
+
+        // Open renewal charge, so a past-due member can pay without waiting for staff.
+        var dueIntents = new Dictionary<Guid, Guid>();
+        if (payments is not null)
+        {
+            var onlineIds = rows
+                .Where(x => x.IsOnline && x.Status is CustomerMembershipStatus.Active or CustomerMembershipStatus.PastDue)
+                .Select(x => x.Id)
+                .ToArray();
+            if (onlineIds.Length > 0)
+            {
+                var open = await db.Set<MembershipPayment>().AsNoTracking()
+                    .Where(x => onlineIds.Contains(x.CustomerMembershipId)
+                        && x.Kind == MembershipPaymentKind.Renewal && x.Status == MembershipPaymentStatus.Pending)
+                    .OrderBy(x => x.CreatedAt)
+                    .ToListAsync(cancellationToken);
+                foreach (var row in open)
+                {
+                    dueIntents[row.CustomerMembershipId] = row.PaymentIntentId;
+                }
+            }
+        }
+
+        var items = new List<CustomerMembershipResponse>(rows.Count);
+        foreach (var row in rows)
+        {
+            string? checkoutUrl = null;
+            if (dueIntents.TryGetValue(row.Id, out var intentId) && payments is not null)
+            {
+                var intent = await payments.GetAsync(intentId, cancellationToken);
+                checkoutUrl = intent.IsSuccess && !string.IsNullOrWhiteSpace(intent.Value!.CheckoutUrl)
+                    ? intent.Value.CheckoutUrl
+                    : null;
+            }
+
+            items.Add(RetentionMapper.ToResponse(row) with
+            {
+                BusinessName = names.GetValueOrDefault(row.TenantId),
+                PaymentDueCheckoutUrl = checkoutUrl,
+            });
+        }
+
+        return Result.Success(new CustomerMembershipListResponse(items));
+    }
+
+    public async Task<Result<CustomerMembershipResponse>> FreezeForCustomerAsync(
+        string customerAuth0Sub, Guid customerMembershipId, CancellationToken cancellationToken = default)
+    {
+        var owned = await LoadOwnedAsync(customerAuth0Sub, customerMembershipId, cancellationToken);
+        return owned.IsFailure
+            ? Result.Failure<CustomerMembershipResponse>(owned.Error)
+            : await ApplyFreezeAsync(owned.Value!, $"customer:{customerAuth0Sub}", cancellationToken);
+    }
+
+    public async Task<Result<CustomerMembershipResponse>> UnfreezeForCustomerAsync(
+        string customerAuth0Sub, Guid customerMembershipId, CancellationToken cancellationToken = default)
+    {
+        var owned = await LoadOwnedAsync(customerAuth0Sub, customerMembershipId, cancellationToken);
+        return owned.IsFailure
+            ? Result.Failure<CustomerMembershipResponse>(owned.Error)
+            : await ApplyUnfreezeAsync(owned.Value!, $"customer:{customerAuth0Sub}", cancellationToken);
+    }
+
+    public async Task<Result<CustomerMembershipResponse>> CancelForCustomerAsync(
+        string customerAuth0Sub,
+        Guid customerMembershipId,
+        CancelMembershipRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var reason = NormalizeReason(request, out var invalid);
+        if (invalid is not null)
+        {
+            return Result.Failure<CustomerMembershipResponse>(invalid);
+        }
+
+        var owned = await LoadOwnedAsync(customerAuth0Sub, customerMembershipId, cancellationToken);
+        return owned.IsFailure
+            ? Result.Failure<CustomerMembershipResponse>(owned.Error)
+            : await ApplyCancelAsync(owned.Value!, $"customer:{customerAuth0Sub}", reason, cancellationToken);
+    }
+
+    // ---- shared actions (membership already loaded + authorised) ----
+
+    private async Task<Result<CustomerMembershipResponse>> ApplyFreezeAsync(
+        CustomerMembership membership, string actorId, CancellationToken cancellationToken)
+    {
+        if (membership.Status == CustomerMembershipStatus.Frozen)
+        {
+            return Result.Success(RetentionMapper.ToResponse(membership));
+        }
+
+        var frozen = membership.Freeze(clock.GetUtcNow());
+        return frozen.IsFailure
+            ? Result.Failure<CustomerMembershipResponse>(frozen.Error)
+            : await SaveAsync(membership, actorId, AuditActions.RetentionMembershipFrozen, cancellationToken);
+    }
+
+    private async Task<Result<CustomerMembershipResponse>> ApplyUnfreezeAsync(
+        CustomerMembership membership, string actorId, CancellationToken cancellationToken)
+    {
+        if (membership.Status == CustomerMembershipStatus.Active)
+        {
+            return Result.Success(RetentionMapper.ToResponse(membership));
+        }
+
+        var thawed = membership.Unfreeze(clock.GetUtcNow());
+        if (thawed.IsFailure)
+        {
+            return Result.Failure<CustomerMembershipResponse>(thawed.Error);
+        }
+
+        // The freeze extended the paid cycle; the current cycle's credits live as long as the cycle does.
+        foreach (var balance in membership.Balances.Where(x => x.CycleNumber == membership.CurrentCycleNumber))
+        {
+            balance.ExpiresAt = membership.CurrentCycleEnd;
+        }
+
+        return await SaveAsync(membership, actorId, AuditActions.RetentionMembershipUnfrozen, cancellationToken);
+    }
+
+    private async Task<Result<CustomerMembershipResponse>> ApplyCancelAsync(
+        CustomerMembership membership, string actorId, string? reason, CancellationToken cancellationToken)
+    {
         if (membership.Status is CustomerMembershipStatus.CancelPending or CustomerMembershipStatus.Cancelled)
         {
             return Result.Success(RetentionMapper.ToResponse(membership));
         }
 
         var now = clock.GetUtcNow();
-        var cancelled = membership.RequestCancel(actor.Id, reason, now);
+        var cancelled = membership.RequestCancel(actorId, reason, now);
         if (cancelled.IsFailure)
         {
             return Result.Failure<CustomerMembershipResponse>(cancelled.Error);
@@ -309,29 +532,26 @@ public sealed class CustomerMembershipService(
         var immediate = cancelled.Value;
         if (immediate)
         {
-            foreach (var balance in membership.Balances)
+            var forfeited = await MembershipCycles.ReleaseAndForfeitAllAsync(
+                db, events, membership, actorId, "membership_cancelled", now, cancellationToken);
+            if (forfeited.IsFailure)
             {
-                foreach (var open in await RetentionLedger.OpenReservationsAsync(db, tenantId, balance.Id, cancellationToken))
-                {
-                    var released = balance.Release(open.Quantity, open.BookingId, open.LocationId, actor.Id, "membership_cancelled", now);
-                    if (released.IsFailure)
-                    {
-                        return Result.Failure<CustomerMembershipResponse>(released.Error);
-                    }
-
-                    db.Add(released.Value!);
-                    events.Add(new BenefitReleased(balance.Id, tenantId, open.BookingId, open.Quantity, now));
-                }
-
-                if (balance.ForfeitRemaining(BenefitTransactionKind.Forfeit, actor.Id, "membership_cancelled", now) is { } forfeited)
-                {
-                    db.Add(forfeited);
-                }
+                return Result.Failure<CustomerMembershipResponse>(forfeited.Error);
             }
         }
 
-        events.Add(new CustomerMembershipCancelled(membership.Id, tenantId, immediate, now));
-        return await SaveAsync(membership, actor, AuditActions.RetentionMembershipCancelled, tenantId, cancellationToken);
+        // End-of-cycle cancellations are scheduled here and closed by the billing sweep at CurrentCycleEnd.
+        events.Add(new CustomerMembershipCancelled(membership.Id, membership.TenantId, immediate, now));
+        return await SaveAsync(membership, actorId, AuditActions.RetentionMembershipCancelled, cancellationToken);
+    }
+
+    private static string? NormalizeReason(CancelMembershipRequest request, out Error? invalid)
+    {
+        var reason = string.IsNullOrWhiteSpace(request.Reason) ? null : request.Reason.Trim();
+        invalid = reason is { Length: > 500 }
+            ? RetentionErrorCodes.ValidationError("Reason must be at most 500 characters.")
+            : null;
+        return reason;
     }
 
     private async Task<Result<CustomerMembership>> LoadForChangeAsync(
@@ -357,8 +577,48 @@ public sealed class CustomerMembershipService(
             : Result.Success(membership);
     }
 
+    /// <summary>Loads a membership only if it belongs to the signed-in customer; anything else is "not found".</summary>
+    private async Task<Result<CustomerMembership>> LoadOwnedAsync(
+        string customerAuth0Sub, Guid customerMembershipId, CancellationToken cancellationToken)
+    {
+        var ids = await OwnTenantCustomerIdsAsync(customerAuth0Sub, cancellationToken);
+        if (ids.IsFailure)
+        {
+            return Result.Failure<CustomerMembership>(ids.Error);
+        }
+
+        var own = ids.Value!.ToArray();
+        var membership = await db.Set<CustomerMembership>()
+            .Include(x => x.Benefits)
+            .Include(x => x.Balances)
+            .FirstOrDefaultAsync(
+                x => x.Id == customerMembershipId && own.Contains(x.TenantCustomerId)
+                    && x.Status != CustomerMembershipStatus.Pending,
+                cancellationToken);
+        return membership is null
+            ? Result.Failure<CustomerMembership>(RetentionErrorCodes.MembershipNotFoundError())
+            : Result.Success(membership);
+    }
+
+    /// <summary>Strictly the signed-in customer's own roster rows; never trusts a client-supplied tenant.</summary>
+    private async Task<Result<IReadOnlyList<Guid>>> OwnTenantCustomerIdsAsync(
+        string customerAuth0Sub, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(customerAuth0Sub))
+        {
+            return Result.Failure<IReadOnlyList<Guid>>(ErrorCodes.CustomerAuthRequiredError());
+        }
+
+        var ids = await (
+            from tc in db.TenantCustomers.AsNoTracking()
+            join c in db.Customers.AsNoTracking() on tc.CustomerId equals c.Id
+            where c.Auth0Sub == customerAuth0Sub
+            select tc.Id).ToListAsync(cancellationToken);
+        return Result.Success<IReadOnlyList<Guid>>(ids);
+    }
+
     private async Task<Result<CustomerMembershipResponse>> SaveAsync(
-        CustomerMembership membership, RetentionActor actor, string auditAction, Guid tenantId, CancellationToken cancellationToken)
+        CustomerMembership membership, string actorId, string auditAction, CancellationToken cancellationToken)
     {
         try
         {
@@ -371,7 +631,7 @@ public sealed class CustomerMembershipService(
             return Result.Failure<CustomerMembershipResponse>(RetentionErrorCodes.BenefitConflictError());
         }
 
-        await AuditAsync(actor.Id, auditAction, membership.Id, tenantId, cancellationToken);
+        await AuditAsync(actorId, auditAction, membership.Id, membership.TenantId, cancellationToken);
         return Result.Success(RetentionMapper.ToResponse(membership));
     }
 

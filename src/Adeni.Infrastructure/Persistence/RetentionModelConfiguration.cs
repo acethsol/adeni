@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 public sealed partial class AdeniDbContext
 {
-    // Mirrors db/Adeni.Database/retention/Tables (DACPAC is schema authority — no EF migrations).
+    // Mirrors db/Adeni.Database/retention/Tables (DACPAC is schema authority ï¿½ no EF migrations).
     private void ConfigureRetention(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<PackageDefinition>(e =>
@@ -133,6 +133,11 @@ public sealed partial class AdeniDbContext
             e.Property(x => x.EnrolledBy).HasMaxLength(128);
             e.Property(x => x.CancelledBy).HasMaxLength(128);
             e.Property(x => x.CancelReason).HasMaxLength(500);
+            e.Property(x => x.ProviderName).HasMaxLength(32);
+            e.Property(x => x.ProviderMandateRef).HasMaxLength(128);
+            e.Property(x => x.ProviderSubscriptionRef).HasMaxLength(128);
+            e.Ignore(x => x.IsOnline);
+            e.Ignore(x => x.GracePeriod);
             e.Property(x => x.RowVersion).IsRowVersion();
             e.HasIndex(x => new { x.TenantId, x.TenantCustomerId, x.Status });
             e.HasIndex(x => new { x.TenantId, x.Status, x.CurrentCycleEnd });
@@ -142,6 +147,36 @@ public sealed partial class AdeniDbContext
                 .HasFilter("[Status] IN (0,1,2,3,4)");
             e.HasOne<MembershipPlan>().WithMany()
                 .HasForeignKey(x => new { x.TenantId, x.MembershipPlanId })
+                .HasPrincipalKey(x => new { x.TenantId, x.Id })
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<MembershipPayment>(e =>
+        {
+            e.ToTable("membership_payments", "retention", t =>
+            {
+                t.HasCheckConstraint("CK_membership_payments_Kind", "[Kind] IN (0,1)");
+                t.HasCheckConstraint("CK_membership_payments_Status", "[Status] IN (0,1,2,3)");
+                t.HasCheckConstraint("CK_membership_payments_CycleNumber", "[CycleNumber] >= 1");
+            });
+            e.HasKey(x => x.Id);
+            e.HasAlternateKey(x => new { x.TenantId, x.Id });
+            e.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+            e.HasOne<Tenant>().WithMany().HasForeignKey(x => x.TenantId).OnDelete(DeleteBehavior.Restrict);
+            e.Property(x => x.Amount).HasPrecision(12, 2);
+            e.Property(x => x.Currency).HasMaxLength(3);
+            e.Property(x => x.ProviderReference).HasMaxLength(128);
+            e.Property(x => x.FailureReason).HasMaxLength(200);
+            e.Property(x => x.RowVersion).IsRowVersion();
+            // One provider intent maps to exactly one cycle charge (replay-safe).
+            e.HasIndex(x => x.PaymentIntentId).IsUnique();
+            // At most one open-or-paid charge per membership cycle; failed/unapplied attempts may be superseded.
+            e.HasIndex(x => new { x.TenantId, x.CustomerMembershipId, x.CycleNumber })
+                .IsUnique()
+                .HasFilter("[Status] IN (0,1)");
+            e.HasIndex(x => new { x.TenantId, x.Status, x.CreatedAt });
+            e.HasOne<CustomerMembership>().WithMany()
+                .HasForeignKey(x => new { x.TenantId, x.CustomerMembershipId })
                 .HasPrincipalKey(x => new { x.TenantId, x.Id })
                 .OnDelete(DeleteBehavior.Restrict);
         });
@@ -178,6 +213,7 @@ public sealed partial class AdeniDbContext
             e.Property(x => x.ServiceName).HasMaxLength(200);
             e.Property(x => x.RowVersion).IsRowVersion();
             e.Ignore(x => x.Remaining);
+            e.Ignore(x => x.CarryableToNextCycle);
             e.HasIndex(x => new { x.TenantId, x.CustomerPackageId, x.ServiceOfferingId })
                 .IsUnique()
                 .HasFilter("[CustomerPackageId] IS NOT NULL");

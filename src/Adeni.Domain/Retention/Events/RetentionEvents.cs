@@ -49,3 +49,26 @@ public sealed record CustomerMembershipCancelled(
     Guid TenantId,
     bool Immediate,
     DateTimeOffset At) : IDomainEvent;
+
+/// <summary>A paid renewal started <paramref name="CycleNumber"/> (Sprint 37.2-C). Notifications consume in 38B+.</summary>
+public sealed record CustomerMembershipRenewed(
+    Guid CustomerMembershipId,
+    Guid TenantId,
+    Guid TenantCustomerId,
+    int CycleNumber,
+    DateTimeOffset At) : IDomainEvent;
+
+/// <summary>A renewal charge failed or went unpaid; the membership is <c>PastDue</c> (Sprint 37.2-C). Reason is a code, never PII.</summary>
+public sealed record CustomerMembershipPaymentFailed(
+    Guid CustomerMembershipId,
+    Guid TenantId,
+    Guid TenantCustomerId,
+    string? Reason,
+    DateTimeOffset At) : IDomainEvent;
+
+/// <summary>Grace ran out without payment; remaining credits were forfeited (Sprint 37.2-C).</summary>
+public sealed record CustomerMembershipExpired(
+    Guid CustomerMembershipId,
+    Guid TenantId,
+    Guid TenantCustomerId,
+    DateTimeOffset At) : IDomainEvent;

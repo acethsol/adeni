@@ -23,6 +23,24 @@ public sealed class RetentionEntitlementGuard(
             ? Result.Success()
             : Result.Failure(RetentionErrorCodes.MembershipsNotEntitledError());
 
+    public async Task<bool> IsRecurringBillingEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default)
+    {
+        var tenant = await db.Tenants.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+        if (tenant is null)
+        {
+            return false;
+        }
+
+        var entitled = entitlements.GetEntitlementsForTenant(tenant);
+        return entitled.Memberships && entitled.RecurringMembershipBilling;
+    }
+
+    public async Task<Result> EnsureRecurringBillingEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+        await IsRecurringBillingEntitledAsync(tenantId, cancellationToken)
+            ? Result.Success()
+            : Result.Failure(RetentionErrorCodes.RecurringBillingNotEntitledError());
+
     public async Task<bool> IsPackagesEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default)
     {
         var tenant = await db.Tenants.AsNoTracking()

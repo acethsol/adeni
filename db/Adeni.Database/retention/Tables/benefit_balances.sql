@@ -12,6 +12,7 @@ CREATE TABLE [retention].[benefit_balances] (
     [Forfeited]            INT                NOT NULL,
     [Sequence]             INT                NOT NULL,
     [ExpiresAt]            DATETIMEOFFSET (7) NULL,
+    [CarriedIn]            INT                NOT NULL CONSTRAINT [DF_benefit_balances_CarriedIn] DEFAULT (0),
     [RowVersion]           ROWVERSION         NOT NULL,
     CONSTRAINT [PK_benefit_balances] PRIMARY KEY CLUSTERED ([Id] ASC),
     CONSTRAINT [AK_benefit_balances_TenantId_Id] UNIQUE ([TenantId], [Id]),
@@ -21,6 +22,7 @@ CREATE TABLE [retention].[benefit_balances] (
     CONSTRAINT [CK_benefit_balances_Invariant] CHECK (
         [Granted] > 0 AND [Used] >= 0 AND [Reserved] >= 0 AND [Forfeited] >= 0
         AND ([Used] + [Reserved] + [Forfeited]) <= [Granted]),
+    CONSTRAINT [CK_benefit_balances_CarriedIn] CHECK ([CarriedIn] >= 0 AND [CarriedIn] <= [Granted]),
     -- Exactly one owner: a package, or a membership billing cycle (37.2-B).
     CONSTRAINT [CK_benefit_balances_Owner] CHECK (
         ([CustomerPackageId] IS NOT NULL AND [CustomerMembershipId] IS NULL AND [CycleNumber] IS NULL)

@@ -54,4 +54,10 @@ public static class AuditActions
     public const string RetentionMembershipFrozen = "retention.membership_frozen";
     public const string RetentionMembershipUnfrozen = "retention.membership_unfrozen";
     public const string RetentionMembershipCancelled = "retention.membership_cancelled";
+    public const string RetentionMembershipSubscribed = "retention.membership_subscribed";
+    public const string RetentionMembershipActivated = "retention.membership_activated";
+    public const string RetentionMembershipRenewed = "retention.membership_renewed";
+    public const string RetentionMembershipPaymentFailed = "retention.membership_payment_failed";
+    public const string RetentionMembershipPastDue = "retention.membership_past_due";
+    public const string RetentionMembershipExpired = "retention.membership_expired";
 }

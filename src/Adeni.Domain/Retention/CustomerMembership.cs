@@ -66,6 +66,21 @@ public sealed class CustomerMembership : ITenantEntity
 
     public string? CancelReason { get; set; }
 
+    /// <summary>Billing provider that holds the mandate / subscription (37.2-C). References only — never card data or balances.</summary>
+    public string? ProviderName { get; set; }
+
+    public string? ProviderMandateRef { get; set; }
+
+    public string? ProviderSubscriptionRef { get; set; }
+
+    /// <summary>When the unpaid renewal started (= the ended cycle's end); grace is measured from here.</summary>
+    public DateTimeOffset? PastDueSince { get; set; }
+
+    /// <summary>Consecutive failed/unpaid renewal attempts; reset on a paid renewal.</summary>
+    public int FailedPaymentCount { get; set; }
+
+    public DateTimeOffset? ExpiredAt { get; set; }
+
     public byte[] RowVersion { get; set; } = [];
 
     public ICollection<CustomerMembershipBenefit> Benefits { get; set; } = new List<CustomerMembershipBenefit>();
@@ -114,16 +129,119 @@ public sealed class CustomerMembership : ITenantEntity
         return Result.Success();
     }
 
-    /// <summary>Frozen → Active within the same paid cycle.</summary>
-    public Result Unfreeze()
+    /// <summary>
+    /// Frozen → Active. The paid cycle is extended by the time spent frozen so a freeze never burns paid days
+    /// (the caller moves the current-cycle balances' expiry to the new <see cref="CurrentCycleEnd"/>).
+    /// </summary>
+    public Result Unfreeze(DateTimeOffset at)
     {
         if (Status != CustomerMembershipStatus.Frozen)
         {
             return Result.Failure(RetentionErrorCodes.MembershipInvalidStateError());
         }
 
+        if (FrozenAt is { } frozenAt && CurrentCycleEnd is { } end && at > frozenAt)
+        {
+            CurrentCycleEnd = end + (at - frozenAt);
+        }
+
         Status = CustomerMembershipStatus.Active;
         FrozenAt = null;
+        return Result.Success();
+    }
+
+    /// <summary>Online memberships are billed through a provider; in-person ones are renewed by staff recording a till/transfer payment.</summary>
+    public bool IsOnline => EnrolChannel == MembershipEnrolChannel.Online;
+
+    public TimeSpan GracePeriod => TimeSpan.FromDays(Math.Max(0, PastDueGraceDaysSnapshot));
+
+    /// <summary>
+    /// Whether this cycle's credits may be reserved at <paramref name="at"/>: paid cycle in force, or the plan's
+    /// past-due grace after it. Frozen / pending / terminal memberships never redeem.
+    /// </summary>
+    public bool CanRedeem(DateTimeOffset at)
+    {
+        if (CurrentCycleEnd is not { } end)
+        {
+            return false;
+        }
+
+        return Status switch
+        {
+            CustomerMembershipStatus.Active or CustomerMembershipStatus.PastDue => at <= end + GracePeriod,
+            CustomerMembershipStatus.CancelPending => at < end,
+            _ => false,
+        };
+    }
+
+    /// <summary>True when the paid cycle has ended and the plan's grace has also run out.</summary>
+    public bool GraceElapsed(DateTimeOffset at) =>
+        CurrentCycleEnd is { } end && at > end + GracePeriod;
+
+    /// <summary>Active → PastDue when a cycle ends unpaid (or a renewal charge fails). Idempotent once past due.</summary>
+    public bool MarkPastDue()
+    {
+        if (Status != CustomerMembershipStatus.Active)
+        {
+            return false;
+        }
+
+        Status = CustomerMembershipStatus.PastDue;
+        PastDueSince ??= CurrentCycleEnd;
+        return true;
+    }
+
+    /// <summary>
+    /// A paid renewal starts the next cycle. Continuous with the previous one (<see cref="CurrentCycleEnd"/>) unless
+    /// that already lapsed, in which case the cycle starts at <paramref name="at"/>. Active / PastDue only.
+    /// </summary>
+    public Result ApplyRenewal(DateTimeOffset at)
+    {
+        if (Status is not (CustomerMembershipStatus.Active or CustomerMembershipStatus.PastDue))
+        {
+            return Result.Failure(RetentionErrorCodes.MembershipInvalidStateError());
+        }
+
+        var start = CurrentCycleEnd ?? at;
+        var end = AddCycle(start, BillingIntervalSnapshot);
+        if (end <= at)
+        {
+            start = at;
+            end = AddCycle(at, BillingIntervalSnapshot);
+        }
+
+        Status = CustomerMembershipStatus.Active;
+        CurrentCycleNumber++;
+        CurrentCycleStart = start;
+        CurrentCycleEnd = end;
+        PastDueSince = null;
+        FailedPaymentCount = 0;
+        return Result.Success();
+    }
+
+    /// <summary>PastDue → Expired once grace has run out without payment.</summary>
+    public Result Expire(DateTimeOffset at)
+    {
+        if (Status != CustomerMembershipStatus.PastDue)
+        {
+            return Result.Failure(RetentionErrorCodes.MembershipInvalidStateError());
+        }
+
+        Status = CustomerMembershipStatus.Expired;
+        ExpiredAt = at;
+        return Result.Success();
+    }
+
+    /// <summary>CancelPending → Cancelled at the end of the paid cycle.</summary>
+    public Result CompleteCancellation(DateTimeOffset at)
+    {
+        if (Status != CustomerMembershipStatus.CancelPending)
+        {
+            return Result.Failure(RetentionErrorCodes.MembershipInvalidStateError());
+        }
+
+        Status = CustomerMembershipStatus.Cancelled;
+        CancelledAt = at;
         return Result.Success();
     }
 

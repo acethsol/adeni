@@ -51,4 +51,39 @@ public interface ICustomerMembershipService
         Guid customerMembershipId,
         CancelMembershipRequest request,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Staff records a till/transfer renewal for an <b>in-person</b> membership whose paid cycle has ended
+    /// (still within past-due grace). Starts the next cycle and grants its credits. <paramref name="idempotencyKey"/> is required.
+    /// </summary>
+    Task<Result<CustomerMembershipResponse>> RenewAsync(
+        Guid tenantId,
+        RetentionActor actor,
+        Guid customerMembershipId,
+        RenewMembershipRequest request,
+        string? idempotencyKey,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>The signed-in customer's own memberships across businesses (excludes unpaid <c>pending</c> checkouts).</summary>
+    Task<Result<CustomerMembershipListResponse>> ListForPlatformCustomerAsync(
+        string customerAuth0Sub,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Customer self-service freeze (only when the plan snapshot allows it). Never touches another customer's membership.</summary>
+    Task<Result<CustomerMembershipResponse>> FreezeForCustomerAsync(
+        string customerAuth0Sub,
+        Guid customerMembershipId,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<CustomerMembershipResponse>> UnfreezeForCustomerAsync(
+        string customerAuth0Sub,
+        Guid customerMembershipId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Customer self-service cancel; applies the plan's cancellation policy (immediate or end of the paid cycle).</summary>
+    Task<Result<CustomerMembershipResponse>> CancelForCustomerAsync(
+        string customerAuth0Sub,
+        Guid customerMembershipId,
+        CancelMembershipRequest request,
+        CancellationToken cancellationToken = default);
 }

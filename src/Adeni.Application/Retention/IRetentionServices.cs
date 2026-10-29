@@ -164,6 +164,11 @@ public interface IRetentionEntitlementGuard
 
     Task<bool> IsMembershipsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default);
 
+    /// <summary>Provider-billed recurring memberships (online subscribe + renewals). Requires both the memberships and recurringMembershipBilling plan flags.</summary>
+    Task<Result> EnsureRecurringBillingEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default);
+
+    Task<bool> IsRecurringBillingEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default);
+
     Task<Result> EnsurePackagesEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default);
 
     Task<bool> IsPackagesEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default);

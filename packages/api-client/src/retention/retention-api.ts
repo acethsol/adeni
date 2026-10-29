@@ -6,14 +6,18 @@ import {
   customerPackageSchema,
   membershipPlanListSchema,
   membershipPlanSchema,
+  membershipSubscribeResponseSchema,
   packageDefinitionListSchema,
   packageDefinitionSchema,
   packagePurchaseResponseSchema,
+  publicMembershipPlanCatalogSchema,
   publicPackageCatalogSchema,
   redeemableBenefitListSchema,
+  tenantMembershipMrrResponseSchema,
   type CreateMembershipPlanRequest,
   type CreatePackageDefinitionRequest,
   type EnrolMembershipRequest,
+  type RenewMembershipRequest,
   type SellPackageRequest,
   type UpdateMembershipPlanRequest,
   type UpdatePackageDefinitionRequest,
@@ -127,6 +131,16 @@ export class RetentionApi {
     return this.write(`${BASE}/customer-memberships/${encodeURIComponent(id)}/cancel`, { reason }, customerMembershipSchema, "POST", undefined, signal);
   }
 
+  /** In-person renewal once the paid cycle has ended. Idempotency-Key required. */
+  renewCustomerMembership(id: string, body: RenewMembershipRequest, key: string, signal?: AbortSignal) {
+    return this.write(`${BASE}/customer-memberships/${encodeURIComponent(id)}/renew`, body, customerMembershipSchema, "POST", key, signal);
+  }
+
+  /** TenantMembershipMrr per currency (not Adeni SaaS MRR). */
+  membershipMrr(signal?: AbortSignal) {
+    return this.get(`${BASE}/memberships/mrr`, tenantMembershipMrrResponseSchema, signal);
+  }
+
   listCustomerPackages(tenantCustomerId: string, signal?: AbortSignal) {
     return this.get(`${BASE}/customers/${encodeURIComponent(tenantCustomerId)}/packages`, customerPackageListSchema, signal);
   }
@@ -162,6 +176,23 @@ export class RetentionApi {
     return this.get("/api/v1/me/retention/packages", customerPackageListSchema, signal);
   }
 
+  /** Signed-in consumer's memberships across businesses (excludes unpaid pending checkouts). */
+  myMemberships(signal?: AbortSignal) {
+    return this.get("/api/v1/me/retention/memberships", customerMembershipListSchema, signal);
+  }
+
+  freezeMyMembership(id: string, signal?: AbortSignal) {
+    return this.write(`/api/v1/me/retention/memberships/${encodeURIComponent(id)}/freeze`, {}, customerMembershipSchema, "POST", undefined, signal);
+  }
+
+  unfreezeMyMembership(id: string, signal?: AbortSignal) {
+    return this.write(`/api/v1/me/retention/memberships/${encodeURIComponent(id)}/unfreeze`, {}, customerMembershipSchema, "POST", undefined, signal);
+  }
+
+  cancelMyMembership(id: string, reason: string | undefined, signal?: AbortSignal) {
+    return this.write(`/api/v1/me/retention/memberships/${encodeURIComponent(id)}/cancel`, { reason }, customerMembershipSchema, "POST", undefined, signal);
+  }
+
   /** Anonymous Discover storefront: sellable packages for a business (+ whether online purchase is live). */
   publicCatalog(slug: string, signal?: AbortSignal) {
     return this.get(`${publicBase(slug)}/packages`, publicPackageCatalogSchema, signal);
@@ -173,6 +204,23 @@ export class RetentionApi {
       `${publicBase(slug)}/packages/${encodeURIComponent(packageId)}/purchase`,
       {},
       packagePurchaseResponseSchema,
+      "POST",
+      key,
+      signal,
+    );
+  }
+
+  /** Anonymous Discover storefront: active membership plans (+ whether online subscribe is live). */
+  publicMembershipPlans(slug: string, signal?: AbortSignal) {
+    return this.get(`${publicBase(slug)}/memberships/plans`, publicMembershipPlanCatalogSchema, signal);
+  }
+
+  /** Customer online subscribe. The membership stays pending until PaymentCompleted. Reuse `key` on retries. */
+  subscribeMembership(slug: string, planId: string, key: string, signal?: AbortSignal) {
+    return this.write(
+      `${publicBase(slug)}/memberships/plans/${encodeURIComponent(planId)}/subscribe`,
+      {},
+      membershipSubscribeResponseSchema,
       "POST",
       key,
       signal,

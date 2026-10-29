@@ -19,6 +19,7 @@ using Microsoft.Extensions.Options;
 [Route("api/v1/tenant/retention")]
 public sealed class TenantCustomerMembershipsController(
     ICustomerMembershipService memberships,
+    IMembershipMrrService mrr,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet("customers/{tenantCustomerId:guid}/memberships")]
@@ -79,6 +80,31 @@ public sealed class TenantCustomerMembershipsController(
         var result = await memberships.CancelAsync(
             actor.TenantId, actor.Actor, id, request ?? new CancelMembershipRequest(), cancellationToken);
         return ApiResults.FromResult(result, Ok, HttpContext);
+    }
+
+    /// <summary>In-person renewal (till / transfer) once the paid cycle has ended; Idempotency-Key required.</summary>
+    [HttpPost("customer-memberships/{id:guid}/renew")]
+    [RequiresPortalPermission(PortalPermissions.Retention)]
+    public async Task<IActionResult> Renew(Guid id, [FromBody] RenewMembershipRequest request, CancellationToken cancellationToken)
+    {
+        if (ResolveActor() is not { } actor) return Unauthorized();
+        if (Request.Headers.ContainsKey(IdempotencyHeaders.Key) && Request.GetIdempotencyKey() is null)
+        {
+            return this.InvalidIdempotencyKeyResult();
+        }
+
+        var result = await memberships.RenewAsync(
+            actor.TenantId, actor.Actor, id, request, Request.GetIdempotencyKey(), cancellationToken);
+        return ApiResults.FromResult(result, Ok, HttpContext);
+    }
+
+    /// <summary>TenantMembershipMrr: normalized monthly recurring revenue per currency (Retention-owned, not Adeni SaaS MRR).</summary>
+    [HttpGet("memberships/mrr")]
+    [RequiresPortalPermission(PortalPermissions.Retention)]
+    public async Task<IActionResult> Mrr(CancellationToken cancellationToken)
+    {
+        if (ResolveActor() is not { } actor) return Unauthorized();
+        return ApiResults.FromResult(await mrr.GetAsync(actor.TenantId, cancellationToken), Ok, HttpContext);
     }
 
     private (Guid TenantId, RetentionActor Actor)? ResolveActor()

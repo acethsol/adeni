@@ -9,7 +9,7 @@
 |-------|-------|
 | **Sprint** | Sprint 37.2 — Memberships |
 | **Author** | Engineering |
-| **Status** | **Approved to start (dev/local).** Slice **37.2-A** (plan catalog) and **37.2-B** (in-person customer memberships) implemented; 37.2-C…E draft |
+| **Status** | **Approved to start (dev/local).** Slices **37.2-A** through **37.2-E** implemented. Live provider billing stays stub-gated until Sprint 34. |
 | **Created** | 2026-10-29 |
 
 ---
@@ -36,9 +36,9 @@ Let beauty & wellness businesses define **recurring membership plans** (price, b
 |-------|---------|--------|
 | **37.2-A — Plan catalog (first PR)** | `memberships` entitlement key; `MembershipPlan` + benefit lines (Domain, DACPAC, EF); `IMembershipPlanService`; tenant plan CRUD API; shared Zod/i18n/api-client; portal **Memberships** plan list/create/deactivate shell route; tests | **Implemented in this PR** |
 | 37.2-B — Customer memberships (in-person) | `CustomerMembership` + lifecycle enum (Pending → Active → PastDue → Frozen → CancelPending → Cancelled → Expired); enrol at till/transfer (`Idempotency-Key`); cycle benefit grant; owner cancel/freeze; audit; portal customer tab | **Implemented** (§12) |
-| 37.2-C — Billing coordinator | `IMembershipBillingCoordinator`; `recurringMembershipBilling` entitlement; provider mandate/subscription **references only**; activate/renew **only** on idempotent `PaymentCompleted`; PastDue grace policy; Murphy webhook rules; stub-gated online | Draft (gated on Sprint 34 for live) |
-| 37.2-D — Discover | Public plan list, subscribe (customer JWT), my memberships, cancel/freeze requests; `/api/v1/me/retention/memberships` | Draft |
-| 37.2-E — Booking benefits + MRR | Redeem membership credits via `IBenefitRedemptionService`; `TenantMembershipMrr` calc (port ready for 37.5 `IRetentionAnalyticsService`); `MembershipActivated/Renewed/PaymentFailed/Cancelled` events (Notifications consume in 38B+) | Draft |
+| 37.2-C — Billing coordinator | `IMembershipBillingCoordinator`; `recurringMembershipBilling` entitlement; provider mandate/subscription **references only**; activate/renew **only** on idempotent `PaymentCompleted`; PastDue grace policy; Murphy webhook rules; stub-gated online | **Implemented** (§13) |
+| 37.2-D — Discover | Public plan list, subscribe (customer JWT), my memberships, cancel/freeze requests; `/api/v1/me/retention/memberships` | **Implemented** (§13). Customer list UI is `/app/benefits/memberships` (C1), not `/my-*`. |
+| 37.2-E — Booking benefits + MRR | Redeem membership credits via `IBenefitRedemptionService`; `TenantMembershipMrr` calc (port ready for 37.5 `IRetentionAnalyticsService`); `MembershipActivated/Renewed/PaymentFailed/Cancelled` events (Notifications consume in 38B+) | **Implemented** (§13) |
 
 ---
 
@@ -196,3 +196,20 @@ New stable codes: `retention.membership_not_found` (404), `retention.membership_
 **Schema (DACPAC, no EF migrations):** new `customer_memberships`, `customer_membership_benefits`; altered `benefit_balances`, `benefit_operations`. Existing dev databases need a SqlPackage publish (nullable `CustomerPackageId` + filtered index rebuild).
 
 **Tests:** `CustomerMembershipServiceTests` (enrol/replay/conflict/duplicate/inactive/cross-tenant/validation/entitlement/snapshot, freeze, cancel policies, owner-only), `CustomerMembershipsIntegrationTests` (HTTP contract, auth, Starter denial, cross-tenant), shared Zod + i18n parity tests.
+
+---
+
+## 13. Slices 37.2-C / D / E — implementation notes
+
+**C — billing coordinator.** `IMembershipBillingCoordinator` starts an online subscription as a `Pending` membership plus a Finance payment intent. A cycle is granted only from the idempotent `PaymentCompleted` handler (`MembershipPaymentHandler`). Provider mandate and subscription references are stored on the membership; Retention does not hold funds. `recurringMembershipBilling` is Starter `false`, Professional/Business `true`, and is required together with `memberships` for online subscribe and renewal charges. Outside Development/Testing (or when the stub provider is off), subscribe returns `503 retention.online_subscription_unavailable` until Sprint 34 live settlement. The scheduled sweep closes `CancelPending` at cycle end, starts renewal charges, moves unpaid online memberships to `PastDue`, and expires them after the snapshotted grace days. In-person renewals are `POST …/customer-memberships/{id}/renew` (till/transfer, `Idempotency-Key`) once the cycle has ended.
+
+**D — Discover.** Anonymous `GET /api/v1/businesses/{slug}/retention/memberships/plans`. Customer `POST …/memberships/plans/{id}/subscribe` (`Idempotency-Key`). Signed-in `GET /api/v1/me/retention/memberships` plus self-service freeze / unfreeze / cancel (the caller's own rows only; unpaid pending checkouts are omitted from the list). The public business profile renders the plan list. There is no `/my-memberships` route — the signed-in list lives at `/app/benefits/memberships` with the customer app (C1).
+
+**E — booking + MRR.** `IBenefitRedemptionService` redeems membership cycle credits the same way as package credits (exactly one of `customerPackageId` / `customerMembershipId`). Rollover `carry_over_one_cycle` is applied when a new cycle is granted. `GET /api/v1/tenant/retention/memberships/mrr` returns `TenantMembershipMrr` per currency for Active and PastDue members (quarterly ÷ 3, annually ÷ 12). Domain events emitted for Notifications (38B+), with no email sender here: `CustomerMembershipActivated`, `CustomerMembershipRenewed`, `CustomerMembershipPaymentFailed`, `CustomerMembershipCancelled`, `CustomerMembershipExpired`.
+
+**New codes:** `entitlements.recurringMembershipBilling` (403), `retention.online_subscription_unavailable` (503), `retention.membership_renewal_not_due` (409), `retention.membership_not_redeemable` (409).
+
+**Schema (DACPAC):** `retention.membership_payments`; `customer_memberships` provider-reference and past-due columns; `benefit_balances.CarriedIn` for one-cycle rollover. Publish with SqlPackage before exercising billing on an existing dev database.
+
+**Deferred to Sprint 34:** live Paystack/Stripe mandates, production online subscribe, and webhook edge rate limits beyond the existing payment webhook rules. Stub confirm in Development/Testing is the only online path.
+

@@ -82,3 +82,22 @@ public enum MembershipCancellationPolicy
     EndOfCycle = 0,
     Immediate = 1,
 }
+
+/// <summary>Which charge of a membership a <see cref="MembershipPayment"/> row tracks. Persisted as int.</summary>
+public enum MembershipPaymentKind
+{
+    Initial = 0,
+    Renewal = 1,
+}
+
+/// <summary>
+/// Membership charge outcome. <c>Unapplied</c> = the provider confirmed the payment but the membership could no
+/// longer take it (cancelled / expired) — flagged for manual refund review, never silently granted. Persisted as int.
+/// </summary>
+public enum MembershipPaymentStatus
+{
+    Pending = 0,
+    Succeeded = 1,
+    Failed = 2,
+    Unapplied = 3,
+}

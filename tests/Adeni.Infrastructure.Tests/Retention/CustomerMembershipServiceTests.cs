@@ -32,6 +32,11 @@ public sealed class CustomerMembershipServiceTests
                 ? Domain.Common.Result.Success()
                 : Domain.Common.Result.Failure(RetentionErrorCodes.MembershipsNotEntitledError()));
 
+        public Task<bool> IsRecurringBillingEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) => Task.FromResult(true);
+
+        public Task<Domain.Common.Result> EnsureRecurringBillingEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Domain.Common.Result.Success());
+
         public Task<bool> IsPackagesEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
             Task.FromResult(true);
 

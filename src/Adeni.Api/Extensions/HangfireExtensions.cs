@@ -66,6 +66,9 @@ public static class HangfireExtensions
         recurringJobs.AddOrUpdate<Adeni.Infrastructure.Retention.PackageExpiryHangfireJob>(
             Adeni.Infrastructure.Retention.PackageExpiryHangfireJob.RecurringJobId,
             job => job.ExecuteAsync(CancellationToken.None), "15 * * * *");
+        recurringJobs.AddOrUpdate<Adeni.Infrastructure.Retention.MembershipBillingHangfireJob>(
+            Adeni.Infrastructure.Retention.MembershipBillingHangfireJob.RecurringJobId,
+            job => job.ExecuteAsync(CancellationToken.None), "30 * * * *");
         recurringJobs.AddOrUpdate<IntakeRetentionHangfireJob>("intake-retention-v1",
             job => job.ExecuteAsync(CancellationToken.None), "0 * * * *");
 

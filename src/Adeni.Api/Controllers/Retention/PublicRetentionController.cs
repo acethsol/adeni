@@ -18,6 +18,7 @@ using Microsoft.Extensions.Options;
 [Route("api/v1/businesses/{slug}/retention")]
 public sealed class PublicRetentionController(
     IPackageStorefrontService storefront,
+    IMembershipStorefrontService membershipStorefront,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet("packages")]
@@ -43,6 +44,38 @@ public sealed class PublicRetentionController(
 
         return ApiResults.FromResult(
             await storefront.PurchaseAsync(sub, slug, id, Request.GetIdempotencyKey(), cancellationToken),
+            Ok,
+            HttpContext);
+    }
+
+    /// <summary>Anonymous: active membership plans of a verified business (Sprint 37.2-D).</summary>
+    [HttpGet("memberships/plans")]
+    [AllowAnonymous]
+    [EnableRateLimiting(RateLimitingExtensions.PublicReadPolicy)]
+    public async Task<IActionResult> MembershipPlans(string slug, CancellationToken cancellationToken) =>
+        ApiResults.FromResult(await membershipStorefront.GetPublicPlansAsync(slug, cancellationToken), Ok, HttpContext);
+
+    /// <summary>
+    /// Customer subscribes online: starts a pending membership + first-cycle payment intent. Activation happens only
+    /// on the idempotent <c>PaymentCompleted</c> signal. 503 until live settlement exists outside dev (Sprint 34).
+    /// </summary>
+    [HttpPost("memberships/plans/{id:guid}/subscribe")]
+    [EnableRateLimiting(RateLimitingExtensions.PublicMutationPolicy)]
+    public async Task<IActionResult> Subscribe(string slug, Guid id, CancellationToken cancellationToken)
+    {
+        var sub = ResolveCustomerAuth0Sub();
+        if (sub is null)
+        {
+            return Unauthorized();
+        }
+
+        if (Request.Headers.ContainsKey(IdempotencyHeaders.Key) && Request.GetIdempotencyKey() is null)
+        {
+            return this.InvalidIdempotencyKeyResult();
+        }
+
+        return ApiResults.FromResult(
+            await membershipStorefront.SubscribeAsync(sub, slug, id, Request.GetIdempotencyKey(), cancellationToken),
             Ok,
             HttpContext);
     }

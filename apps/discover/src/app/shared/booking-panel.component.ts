@@ -119,7 +119,8 @@ export class BookingPanelComponent {
     this.applicableBenefits()
       .filter((b) => this.useBenefitIds().has(b.benefitBalanceId))
       .map((b) => ({
-        customerPackageId: b.customerPackageId,
+        customerPackageId: b.customerPackageId ?? undefined,
+        customerMembershipId: b.customerMembershipId ?? undefined,
         benefitBalanceId: b.benefitBalanceId,
         quantity: this.creditsFor(b),
       })),

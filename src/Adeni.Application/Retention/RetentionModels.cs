@@ -197,22 +197,31 @@ public sealed record BenefitTransactionResponse(
 
 public sealed record CustomerPackageLedgerResponse(IReadOnlyList<BenefitTransactionResponse> Items);
 
+/// <summary>
+/// One redeemable credit line. Exactly one of <c>CustomerPackageId</c> / <c>CustomerMembershipId</c> is set;
+/// <c>PackageName</c> carries the package or membership display name.
+/// </summary>
 public sealed record RedeemableBenefitResponse(
-    Guid CustomerPackageId,
+    Guid? CustomerPackageId,
     string PackageName,
     Guid BenefitBalanceId,
     Guid ServiceOfferingId,
     string ServiceName,
     int Remaining,
-    DateTimeOffset? ExpiresAt);
+    DateTimeOffset? ExpiresAt,
+    Guid? CustomerMembershipId = null);
 
 public sealed record RedeemableBenefitListResponse(IReadOnlyList<RedeemableBenefitResponse> Items);
 
-/// <summary>Booking payload: apply credits from a package benefit balance to this booking.</summary>
+/// <summary>
+/// Booking payload: apply credits from a benefit balance to this booking. Exactly one of 
+/// <c>CustomerPackageId</c> / <c>CustomerMembershipId</c> identifies the owner of <c>BenefitBalanceId</c>.
+/// </summary>
 public sealed record AppliedBenefitRequest(
-    Guid CustomerPackageId,
+    Guid? CustomerPackageId,
     Guid BenefitBalanceId,
-    int Quantity = 1);
+    int Quantity = 1,
+    Guid? CustomerMembershipId = null);
 
 /// <summary>Everything Retention needs from Booking to validate a reserve (no Booking DbSets in Retention).</summary>
 public sealed record ReserveBenefitsRequest(
@@ -227,10 +236,11 @@ public sealed record ReserveBenefitsRequest(
     DateTimeOffset At);
 
 public sealed record ReservedBenefit(
-    Guid CustomerPackageId,
+    Guid? CustomerPackageId,
     Guid BenefitBalanceId,
     Guid ServiceOfferingId,
-    int Quantity);
+    int Quantity,
+    Guid? CustomerMembershipId = null);
 
 /// <summary>Tenant-owned customer's package summary for F1 profile (counts + names only).</summary>
 public sealed record CustomerPackageSummary(

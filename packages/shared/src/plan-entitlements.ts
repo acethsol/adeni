@@ -31,6 +31,8 @@ export type PlanEntitlementSeed = {
   packages: boolean;
   /** Sprint 37.2 — membership plans & recurring memberships (Retention). */
   memberships: boolean;
+  /** Sprint 37.2-C — provider-billed recurring memberships (online subscribe / renew). */
+  recurringMembershipBilling: boolean;
 };
 
 export type PlanEntitlementsCatalog = Record<SubscriptionSku, PlanEntitlementSeed>;
@@ -154,6 +156,7 @@ export const PLAN_ADMIN_MATRIX_ROW_DEFS: PlanAdminMatrixRowDef[] = [
   { key: "prioritySupport", label: "Priority support", kind: "flag" },
   { key: "packages", label: "Prepaid packages", kind: "flag" },
   { key: "memberships", label: "Memberships", kind: "flag" },
+  { key: "recurringMembershipBilling", label: "Recurring membership billing", kind: "flag" },
 ];
 
 function formatPlanLimit(key: "maxLocations" | "maxPractitioners", value: number | null): string {

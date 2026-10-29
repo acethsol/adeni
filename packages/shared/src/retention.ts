@@ -120,7 +120,9 @@ export const benefitTransactionSchema = z.object({
 export const customerPackageLedgerSchema = z.object({ items: z.array(benefitTransactionSchema) });
 
 export const redeemableBenefitSchema = z.object({
-  customerPackageId: z.string().uuid(),
+  customerPackageId: z.string().uuid().nullable(),
+  /** Set when the credit comes from a membership cycle (Sprint 37.2-E). Exactly one owner id is present. */
+  customerMembershipId: z.string().uuid().nullish(),
   packageName: z.string(),
   benefitBalanceId: z.string().uuid(),
   serviceOfferingId: z.string().uuid(),
@@ -131,12 +133,17 @@ export const redeemableBenefitSchema = z.object({
 
 export const redeemableBenefitListSchema = z.object({ items: z.array(redeemableBenefitSchema) });
 
-/** Booking payload: apply package credits to a booking (one credit = one service unit). */
-export const appliedBenefitRequestSchema = z.object({
-  customerPackageId: z.string().uuid(),
-  benefitBalanceId: z.string().uuid(),
-  quantity: z.number().int().min(1).max(10).optional(),
-});
+/** Booking payload: apply package or membership credits (one credit = one service unit). Exactly one owner id. */
+export const appliedBenefitRequestSchema = z
+  .object({
+    customerPackageId: z.string().uuid().nullish(),
+    customerMembershipId: z.string().uuid().nullish(),
+    benefitBalanceId: z.string().uuid(),
+    quantity: z.number().int().min(1).max(10).optional(),
+  })
+  .refine((v) => Boolean(v.customerPackageId) !== Boolean(v.customerMembershipId), {
+    message: "Exactly one of customerPackageId or customerMembershipId is required.",
+  });
 
 /** F1 customer profile summary — counts and names only. */
 export const customerPackageSummarySchema = z.object({
@@ -303,6 +310,9 @@ export const customerMembershipSchema = z.object({
   benefits: z.array(membershipBenefitSnapshotSchema),
   balances: z.array(membershipCycleBalanceSchema),
   createdAt: z.string(),
+  pastDueSince: z.string().nullish(),
+  businessName: z.string().nullish(),
+  paymentDueCheckoutUrl: z.string().nullish(),
 });
 
 export const customerMembershipListSchema = z.object({ items: z.array(customerMembershipSchema) });
@@ -316,8 +326,58 @@ export const enrolMembershipRequestSchema = z.object({
 
 export const cancelMembershipRequestSchema = z.object({ reason: z.string().max(500).optional() });
 
+/** Anonymous Discover catalog. `onlineSubscribeEnabled` is false until merchant settlement is live (Sprint 34) or the plan lacks recurring billing. */
+export const publicMembershipPlanSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  description: z.string().nullable(),
+  price: z.number().positive(),
+  currency: z.string(),
+  billingInterval: membershipBillingIntervalSchema,
+  rolloverPolicy: membershipRolloverPolicySchema,
+  cancellationPolicy: membershipCancellationPolicySchema,
+  allowFreeze: z.boolean(),
+  pastDueGraceDays: z.number().int().min(0).max(30),
+  benefits: z.array(membershipBenefitSchema),
+});
+
+export const publicMembershipPlanCatalogSchema = z.object({
+  items: z.array(publicMembershipPlanSchema),
+  onlineSubscribeEnabled: z.boolean(),
+});
+
+/** Online subscribe start: membership stays `pending` until PaymentCompleted. */
+export const membershipSubscribeResponseSchema = z.object({
+  customerMembershipId: z.string().uuid(),
+  paymentIntentId: z.string().uuid(),
+  status: z.string(),
+  checkoutUrl: z.string().nullable(),
+});
+
+export const renewMembershipRequestSchema = z.object({
+  paymentMethod: sellPaymentMethodSchema,
+  note: z.string().max(500).optional(),
+});
+
+/** Retention-owned monthly recurring revenue. Never summed across currencies. */
+export const tenantMembershipMrrSchema = z.object({
+  currency: z.string(),
+  monthlyRecurringRevenue: z.number().nonnegative(),
+  memberCount: z.number().int().nonnegative(),
+});
+
+export const tenantMembershipMrrResponseSchema = z.object({
+  items: z.array(tenantMembershipMrrSchema),
+  asOf: z.string(),
+});
+
 export type CustomerMembership = z.infer<typeof customerMembershipSchema>;
 export type CustomerMembershipStatus = z.infer<typeof customerMembershipStatusSchema>;
 export type MembershipCycleBalance = z.infer<typeof membershipCycleBalanceSchema>;
 export type EnrolMembershipRequest = z.infer<typeof enrolMembershipRequestSchema>;
 export type CancelMembershipRequest = z.infer<typeof cancelMembershipRequestSchema>;
+export type PublicMembershipPlan = z.infer<typeof publicMembershipPlanSchema>;
+export type PublicMembershipPlanCatalog = z.infer<typeof publicMembershipPlanCatalogSchema>;
+export type MembershipSubscribeResponse = z.infer<typeof membershipSubscribeResponseSchema>;
+export type RenewMembershipRequest = z.infer<typeof renewMembershipRequestSchema>;
+export type TenantMembershipMrrResponse = z.infer<typeof tenantMembershipMrrResponseSchema>;

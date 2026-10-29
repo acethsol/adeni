@@ -35,6 +35,9 @@ public sealed record EnrolMembershipRequest(
 
 public sealed record CancelMembershipRequest(string? Reason = null);
 
+/// <summary>Staff records a till/transfer renewal payment for an in-person membership whose cycle has ended.</summary>
+public sealed record RenewMembershipRequest(string PaymentMethod, string? Note = null);
+
 /// <summary>
 /// Plan terms are snapshots taken at enrolment. <c>Balances</c> are the credits of the current cycle only
 /// (cycle number on each line); history stays in the ledger.
@@ -66,7 +69,10 @@ public sealed record CustomerMembershipResponse(
     string? Note,
     IReadOnlyList<MembershipBenefitSnapshotResponse> Benefits,
     IReadOnlyList<MembershipCycleBalanceResponse> Balances,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? PastDueSince = null,
+    string? BusinessName = null,
+    string? PaymentDueCheckoutUrl = null);
 
 public sealed record MembershipBenefitSnapshotResponse(Guid ServiceOfferingId, string ServiceName, int QuantityPerCycle);
 

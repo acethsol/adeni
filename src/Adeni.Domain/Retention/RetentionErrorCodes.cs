@@ -28,6 +28,23 @@ public static class RetentionErrorCodes
     public const string OwnerRequired = "retention.owner_required";
     public const string Validation = "retention.validation";
     public const string OnlinePurchaseUnavailable = "retention.online_purchase_unavailable";
+    public const string RecurringBillingNotEntitled = "entitlements.recurringMembershipBilling";
+    public const string OnlineSubscriptionUnavailable = "retention.online_subscription_unavailable";
+    public const string MembershipRenewalNotDue = "retention.membership_renewal_not_due";
+    public const string MembershipNotRedeemable = "retention.membership_not_redeemable";
+
+    public static Error MembershipNotRedeemableError() =>
+        new(MembershipNotRedeemable, "This membership's credits cannot be used right now.");
+
+    /// <summary>Online recurring checkout is gated until tenant merchant settlement is live (Sprint 34); sandbox/stub only.</summary>
+    public static Error OnlineSubscriptionUnavailableError() =>
+        new(OnlineSubscriptionUnavailable, "Online membership billing is not available for this business yet.");
+
+    public static Error RecurringBillingNotEntitledError() =>
+        new(RecurringBillingNotEntitled, "Recurring membership billing is not included on your current plan.");
+
+    public static Error MembershipRenewalNotDueError() =>
+        new(MembershipRenewalNotDue, "This membership is not due for renewal yet, or cannot be renewed here.");
 
     /// <summary>Online checkout is gated until tenant merchant settlement is live (Sprint 34); sandbox/stub only.</summary>
     public static Error OnlinePurchaseUnavailableError() =>
