@@ -15,7 +15,7 @@
 
     <nav class="nav" [attr.aria-label]="tr('common.primary')" [class.hidden-when-pinned]="headerCompact()">
       <a routerLink="/discover" routerLinkActive="active">{{ tr('common.explore') }}</a>
-      @if (portalUrl; as businessUrl) {
+      @if (businessPortalUrl; as businessUrl) {
         <a [href]="businessUrl" target="_blank" rel="noopener noreferrer">{{ tr('common.forBusinesses') }}</a>
       }
     </nav>

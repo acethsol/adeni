@@ -72,9 +72,9 @@ export class PublicShellComponent implements OnInit {
   });
   readonly headerBrandHeight = computed(() => (this.headerCompact() ? 30 : 36));
 
-  get portalUrl(): string | null {
-    const origin = this.config.portalAppUrl.trim();
-    return origin || null;
+  get businessPortalUrl(): string | null {
+    const businessPortalBaseUrl = this.config.portalAppUrl.trim();
+    return businessPortalBaseUrl || null;
   }
 
   constructor() {

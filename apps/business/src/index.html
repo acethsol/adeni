@@ -20,12 +20,14 @@
     <script>
       (function () {
         try {
-          var theme = localStorage.getItem("adeni.portal.theme");
+          var theme =
+            localStorage.getItem("adeni.businessApp.theme") ||
+            localStorage.getItem("adeni.portal.theme");
           if (theme !== "light" && theme !== "dark") {
             theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
           }
           document.documentElement.setAttribute("data-theme", theme);
-          document.documentElement.setAttribute("data-staff-app", "portal");
+          document.documentElement.setAttribute("data-staff-app", "business");
         } catch (e) {}
       })();
     </script>

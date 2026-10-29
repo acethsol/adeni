@@ -2,7 +2,7 @@ import { Component, input } from "@angular/core";
 import type { AdeniBrandSurface } from "@adeni/brand";
 import { AdeniBrandLogoComponent } from "./adeni-brand-logo.component";
 
-/** Portal/admin sidebar: horizontal lockup + caption aligned to the wordmark (not the mark). */
+/** Business/admin sidebar: horizontal lockup + caption aligned to the wordmark (not the mark). */
 @Component({
   selector: "adeni-staff-sidebar-brand",
   standalone: true,
@@ -52,5 +52,5 @@ export class AdeniStaffSidebarBrandComponent {
   readonly caption = input<string | null>(null);
   readonly logoHeight = input(32);
   readonly surface = input<AdeniBrandSurface>("light");
-  readonly app = input<"portal" | "admin">("portal");
+  readonly app = input<"business" | "admin">("business");
 }

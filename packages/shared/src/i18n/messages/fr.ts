@@ -533,57 +533,6 @@ const frBase: Messages = {
       },
     },
   },
-  portalDashboard: {
-    presets: {
-      recommended: "Recommandé pour vous",
-      currentLayout: "Disposition actuelle",
-      useLayout: "Utiliser la disposition {label}",
-      rangeMeta: "Période {range}",
-      widgetsOnPlan: "{count} widget sur votre forfait",
-      widgetsOnPlan_plural: "{count} widgets sur votre forfait",
-      emptyPlan: "Aucun widget disponible sur votre forfait pour ce modèle.",
-      owner: {
-        focus: "Croissance et forfait",
-        description: "Forfait, KPI, graphiques et mix services sur la semaine.",
-        market: {
-          lagos: "Pensé pour les studios à Lagos — la semaine en un coup d’œil.",
-          ottawa: "Pensé pour les salons à Ottawa — semaine et walk-ins.",
-        },
-      },
-      manager: {
-        focus: "Boîte de réception et équipe",
-        description: "En attente, messages, devis et classement équipe.",
-        market: {
-          lagos: "Gardez le salon fluide quand chaque fauteuil compte.",
-          ottawa: "Coordonnez l’équipe et l’inbox aux heures de pointe.",
-        },
-      },
-      front_desk: {
-        focus: "Aujourd’hui au salon",
-        description: "File d’attente, agenda du jour et réponses rapides.",
-        market: {
-          lagos: "File, messages et agenda — sans graphiques propriétaire.",
-          ottawa: "Vue accueil pour enregistrements et réponses.",
-        },
-      },
-      practitioner: {
-        focus: "Mon fauteuil aujourd’hui",
-        description: "KPI personnels et agenda — sans tuiles propriétaire.",
-        market: {
-          lagos: "Vos client·es et votre fauteuil — rien d’autre.",
-          ottawa: "Votre journée, vos réservations, votre calendrier.",
-        },
-      },
-      minimal: {
-        focus: "Tableau léger",
-        description: "KPI de synthèse seulement — ajoutez des widgets ensuite.",
-        market: {
-          lagos: "Commencez léger, enrichissez le tableau en grandissant.",
-          ottawa: "Simple au départ — ajoutez des tuiles au besoin.",
-        },
-      },
-    },
-  },
   errors: frErrorMessages,
 };
 

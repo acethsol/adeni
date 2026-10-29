@@ -97,9 +97,9 @@ export class HeroCategoryStageComponent implements OnInit {
   readonly verifiedLabel = computed(() => t(this.locale(), "business.verified"));
   readonly brandPill = computed(() => t(this.locale(), "home.brandPill"));
 
-  readonly portalUrl = computed(() => {
-    const origin = this.config.portalAppUrl.trim();
-    return origin ? origin.replace(/\/$/, "") : null;
+  readonly businessPortalUrl = computed(() => {
+    const businessPortalBaseUrl = this.config.portalAppUrl.trim();
+    return businessPortalBaseUrl ? businessPortalBaseUrl.replace(/\/$/, "") : null;
   });
 
   readonly chips = computed<HeroCategoryChip[]>(() => {

@@ -38,11 +38,11 @@ export function formatBillingChargeStatus(status: string): string {
 
 export function formatBookingUsage(usage: SubscriptionUsage, locale: string = defaultLocale): string {
   if (usage.bookingsLimitThisMonth == null) {
-    return t(locale, "portal.dashboard.bookingsThisMonth", {
+    return t(locale, "businessApp.dashboard.bookingsThisMonth", {
       used: usage.bookingsUsedThisMonth,
     });
   }
-  return t(locale, "portal.dashboard.bookingsThisMonthLimited", {
+  return t(locale, "businessApp.dashboard.bookingsThisMonthLimited", {
     used: usage.bookingsUsedThisMonth,
     limit: usage.bookingsLimitThisMonth,
   });

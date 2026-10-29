@@ -1,7 +1,8 @@
-/** Persisted portal branch scope; sentinel = all locations (Business reporting). */
+/** Persisted business-app branch scope; sentinel = all locations (reporting). */
 export const PORTAL_ALL_LOCATIONS_SCOPE = "__all_locations__";
 
-const STORAGE_PREFIX = "adeni.portal.activeLocation.v1";
+const STORAGE_PREFIX = "adeni.businessApp.activeLocation.v1";
+const LEGACY_STORAGE_PREFIX = "adeni.portal.activeLocation.v1";
 
 function storageKey(tenantId: string): string {
   return `${STORAGE_PREFIX}.${tenantId}`;
@@ -19,7 +20,15 @@ export function readPersistedBusinessActiveLocation(tenantId: string): string | 
     return null;
   }
   try {
-    const raw = localStorage.getItem(storageKey(tenantId));
+    const key = storageKey(tenantId);
+    let raw = localStorage.getItem(key);
+    if (raw === null) {
+      const legacyKey = `${LEGACY_STORAGE_PREFIX}.${tenantId}`;
+      raw = localStorage.getItem(legacyKey);
+      if (raw !== null) {
+        localStorage.setItem(key, raw);
+      }
+    }
     if (raw === null) {
       return null;
     }

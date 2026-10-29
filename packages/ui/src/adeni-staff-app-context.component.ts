@@ -1,8 +1,8 @@
 import { Component, input } from "@angular/core";
 
-export type AdeniStaffAppContext = "portal" | "admin";
+export type AdeniStaffAppContext = "business" | "admin";
 
-/** Compact “which app am I in?” marker for staff shells (portal vs admin). */
+/** Compact “which app am I in?” marker for staff shells (business vs admin). */
 @Component({
   selector: "adeni-staff-app-context",
   standalone: true,
@@ -42,6 +42,7 @@ export type AdeniStaffAppContext = "portal" | "admin";
       background: var(--adeni-teal, #13c2a3);
     }
 
+    .staff-app-context[data-app="business"],
     .staff-app-context[data-app="portal"] {
       border-color: color-mix(in srgb, var(--adeni-purple, #7f56ff) 22%, var(--border));
       background: color-mix(in srgb, var(--adeni-purple, #7f56ff) 7%, var(--surface));

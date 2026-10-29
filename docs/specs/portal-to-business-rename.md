@@ -20,6 +20,9 @@
 | RBAC permission strings `portal.*` → `business.*` | **Done** — `BusinessPermissions`, `@adeni/shared` `business-permissions.ts`, `RequiresBusinessPermission` |
 | Business app shell: `business-shell`, `business-nav`, `business-access` guards | **Done** |
 | Staff UI i18n `portal.*` → `businessApp.*` (overlay EN/FR + catalog; avoids `business.*` public profile keys in `en.ts`) | **Done** |
+| Phase 2: shared dashboard helpers, `portalDashboard` → `businessApp.dashboard.presets`, localStorage `adeni.businessApp.*` | **Done** |
+| Phase 2: admin `admin-shell` layout filenames (was `portal-shell`) | **Done** |
+| Phase 2: customer env-adjacent vars (`businessPortalUrl`, …); keep `portalAppUrl` config key | **Done** |
 | CI: test `@adeni/business`, `npm run build:business` | **Done** |
 | Docs: operational paths/scripts (not historical sprint specs) | **Best-effort** |
 

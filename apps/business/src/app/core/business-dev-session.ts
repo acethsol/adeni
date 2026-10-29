@@ -1,8 +1,16 @@
-const DEV_SIGNED_OUT_KEY = "adeni.portal.dev.signed-out";
+const DEV_SIGNED_OUT_KEY = "adeni.businessApp.dev.signed-out";
+const LEGACY_DEV_SIGNED_OUT_KEY = "adeni.portal.dev.signed-out";
 
 export function isPortalDevSignedOut(): boolean {
   try {
-    return sessionStorage.getItem(DEV_SIGNED_OUT_KEY) === "1";
+    if (sessionStorage.getItem(DEV_SIGNED_OUT_KEY) === "1") {
+      return true;
+    }
+    if (sessionStorage.getItem(LEGACY_DEV_SIGNED_OUT_KEY) === "1") {
+      sessionStorage.setItem(DEV_SIGNED_OUT_KEY, "1");
+      return true;
+    }
+    return false;
   } catch {
     return false;
   }

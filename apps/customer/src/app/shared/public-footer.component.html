@@ -51,7 +51,7 @@
         <h2>{{ label("footer.sections.business") }}</h2>
         <p>{{ label("footer.businessLede") }}</p>
         <div class="business-actions">
-          @if (portalRegisterUrl(); as registerUrl) {
+          @if (businessPortalRegisterUrl(); as registerUrl) {
             <a
               class="cds-btn cds-btn--primary business-cta"
               [href]="registerUrl"
@@ -64,10 +64,10 @@
               label("footer.links.listBusiness")
             }}</a>
           }
-          @if (portalUrl(); as portal) {
+          @if (businessPortalUrl(); as businessPortal) {
             <a
               class="cds-btn cds-btn--tertiary business-ghost"
-              [href]="portal"
+              [href]="businessPortal"
               target="_blank"
               rel="noopener noreferrer"
               >{{ label("footer.links.businessPortal") }}</a

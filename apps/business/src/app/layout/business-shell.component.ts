@@ -55,7 +55,8 @@ import { BusinessIconTooltipDirective } from "../shared/business-icon-tooltip.di
 import { BusinessNavIconComponent } from "./business-nav-icon.component";
 import { BusinessBranchSwitchComponent } from "./business-branch-switch.component";
 
-const SIDEBAR_STORAGE_KEY = "adeni.portal.sidebar.collapsed";
+const SIDEBAR_STORAGE_KEY = "adeni.businessApp.sidebar.collapsed";
+const LEGACY_SIDEBAR_STORAGE_KEY = "adeni.portal.sidebar.collapsed";
 
 
 function initialsFor(name: string): string {
@@ -71,7 +72,13 @@ function initialsFor(name: string): string {
 
 function readSidebarCollapsed(): boolean {
   try {
-    const stored = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+    let stored = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+    if (stored === null) {
+      stored = localStorage.getItem(LEGACY_SIDEBAR_STORAGE_KEY);
+      if (stored === "0" || stored === "1") {
+        localStorage.setItem(SIDEBAR_STORAGE_KEY, stored);
+      }
+    }
     if (stored === "1") {
       return true;
     }

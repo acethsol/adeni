@@ -15,12 +15,12 @@ export function formatDashboardRangePresetLabel(
   preset: DashboardRangePreset,
 ): string {
   const loc = locale ?? defaultLocale;
-  const key = `portal.dashboard.rangePreset.${preset}`;
+  const key = `businessApp.dashboard.rangePreset.${preset}`;
   const translated = t(loc, key);
   if (translated !== key) {
     return translated;
   }
-  return DASHBOARD_RANGE_PRESETS.find((entry) => entry.id === preset)?.label ?? t(loc, "portal.dashboard.range");
+  return DASHBOARD_RANGE_PRESETS.find((entry) => entry.id === preset)?.label ?? t(loc, "businessApp.dashboard.range");
 }
 
 /** UTC range [from, to) for dashboard aggregate APIs. */

@@ -52,7 +52,7 @@ exports.onExecutePostLogin = async (event, api) => {
 
 ## Angular customer app (`apps/customer`)
 
-1. Auth0 **SPA** for **customers** — separate client from portal/admin; callback `http://localhost:5190`.
+1. Auth0 **SPA** for **customers** — separate client from business/admin; callback `http://localhost:5190`.
 2. Local dev without Auth0: `devCustomerAuth0Sub: "auth0|local-customer"` (same as Next `DEV_CUSTOMER_AUTH0_SUB` / API seeder).
 3. See `apps/customer/.env.example.md` for environment fields (`publicAppUrl`, optional `envMarketId`).
 4. **You can defer Auth0 registration** until staging: leave `auth0.domain` / `clientId` empty and use dev customer sub with `Auth0:Enabled: false` on the API.
@@ -73,13 +73,13 @@ Use Auth0 SPA SDK in each app; callbacks and logout URLs must match deployed ori
 
 Archived — see [legacy-clients-archive.md](./legacy-clients-archive.md) for Auth0 Regular Web / Native setup used historically.
 
-## Staff portal invites (Sprint 25b)
+## Staff business-app invites (Sprint 25b)
 
 V1 uses an **Adeni invite token** (not Auth0 Organizations).
 
 1. Owner/manager with `business.staff` creates an invite (`POST /api/v1/tenant/staff/{id}/invite` or `/api/v1/tenant/access/invites`).
 2. Invitee receives email (logged in Development) with link: `{Portal:PublicBaseUrl}/accept-invite?token=…`.
-3. Invitee signs up / logs in with Auth0 (portal SPA), then `POST /api/v1/auth/accept-staff-invite` with `{ "token" }`.
+3. Invitee signs up / logs in with Auth0 (business SPA), then `POST /api/v1/auth/accept-staff-invite` with `{ "token" }`.
 4. API creates a `BusinessUser` on the **existing** tenant, sets permission role + optional `StaffMemberId`, marks invite accepted.
 
 **Hard rule:** `POST /api/v1/auth/sync` with `roleHint=business` does **not** create a new tenant. Owner onboarding uses `POST /api/v1/tenant/register`. Unknown business users without membership get `auth.business_access_denied`.

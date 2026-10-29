@@ -13,7 +13,7 @@ export function formatDashboardWidgetTitle(
   widgetId: DashboardWidgetId,
 ): string {
   const loc = resolve(locale);
-  const key = `portal.dashboard.widgetTitle.${widgetId}`;
+  const key = `businessApp.dashboard.widgetTitle.${widgetId}`;
   const translated = t(loc, key);
   if (translated !== key) {
     return translated;
@@ -26,7 +26,7 @@ export function formatDashboardWidgetSummary(
   widgetId: DashboardWidgetId,
 ): string {
   const loc = resolve(locale);
-  const key = `portal.dashboard.widgetSummary.${widgetId}`;
+  const key = `businessApp.dashboard.widgetSummary.${widgetId}`;
   const translated = t(loc, key);
   if (translated !== key) {
     return translated;

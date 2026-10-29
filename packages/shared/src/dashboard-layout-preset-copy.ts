@@ -11,11 +11,11 @@ export type DashboardLayoutPresetDisplayCopy = {
 };
 
 function presetMessageKey(presetId: DashboardLayoutPresetId, field: "focus" | "description"): string {
-  return `portalDashboard.presets.${presetId}.${field}`;
+  return `businessApp.dashboard.presets.${presetId}.${field}`;
 }
 
 function marketLineKey(presetId: DashboardLayoutPresetId, marketId: string): string {
-  return `portalDashboard.presets.${presetId}.market.${marketId}`;
+  return `businessApp.dashboard.presets.${presetId}.market.${marketId}`;
 }
 
 export function getDashboardLayoutPresetDisplayCopy(

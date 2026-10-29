@@ -28,7 +28,7 @@
 
       <div class="actions">
         <a class="cds-btn cds-btn--primary" routerLink="/discover">{{ browseServicesLabel() }}</a>
-        @if (portalUrl(); as businessUrl) {
+        @if (businessPortalUrl(); as businessUrl) {
           <a
             class="cds-btn cds-btn--secondary"
             [href]="businessUrl"

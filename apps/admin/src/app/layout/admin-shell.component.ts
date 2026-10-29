@@ -182,8 +182,8 @@ function readSidebarCollapsed(): boolean {
     AdminNavIconComponent,
     AdminIconTooltipDirective,
   ],
-  templateUrl: "./portal-shell.component.html",
-  styleUrl: "./portal-shell.component.scss",
+  templateUrl: "./admin-shell.component.html",
+  styleUrl: "./admin-shell.component.scss",
 })
 export class AdminShellComponent {
   protected readonly tr = injectAdeniTranslate();

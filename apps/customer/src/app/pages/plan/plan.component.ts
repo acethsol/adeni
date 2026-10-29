@@ -54,8 +54,10 @@ export class PlanPageComponent implements OnInit {
   });
 
   readonly registerUrl = computed(() => {
-    const portal = this.config.portalAppUrl.trim();
-    return portal ? `${portal.replace(/\/$/, "")}/register` : null;
+    const businessPortalBaseUrl = this.config.portalAppUrl.trim();
+    return businessPortalBaseUrl
+      ? `${businessPortalBaseUrl.replace(/\/$/, "")}/register`
+      : null;
   });
 
   readonly selfServeEnabled = computed(() => {

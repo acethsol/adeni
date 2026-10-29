@@ -62,14 +62,16 @@ export class PublicFooterComponent {
   /** Full catalog — isLive is GTM supply, not a browse gate (see docs/markets.md). */
   readonly cityLinks = computed((): MarketConfig[] => listMarkets());
 
-  readonly portalRegisterUrl = computed(() => {
-    const portal = this.config.portalAppUrl.trim();
-    return portal ? `${portal.replace(/\/$/, "")}/register` : null;
+  readonly businessPortalRegisterUrl = computed(() => {
+    const businessPortalBaseUrl = this.config.portalAppUrl.trim();
+    return businessPortalBaseUrl
+      ? `${businessPortalBaseUrl.replace(/\/$/, "")}/register`
+      : null;
   });
 
-  readonly portalUrl = computed(() => {
-    const portal = this.config.portalAppUrl.trim();
-    return portal ? portal.replace(/\/$/, "") : null;
+  readonly businessPortalUrl = computed(() => {
+    const businessPortalBaseUrl = this.config.portalAppUrl.trim();
+    return businessPortalBaseUrl ? businessPortalBaseUrl.replace(/\/$/, "") : null;
   });
 
   label(key: string, params?: Record<string, string | number>): string {

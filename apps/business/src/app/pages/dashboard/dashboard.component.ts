@@ -306,7 +306,7 @@ export class DashboardComponent implements OnInit {
     return location?.marketId ?? null;
   }
 
-  portalLocale(): string {
+  marketLocale(): string {
     const profile = this.profile();
     if (!profile) {
       return defaultLocale;
@@ -317,17 +317,22 @@ export class DashboardComponent implements OnInit {
   }
 
   presetUiCopy(key: "recommended" | "currentLayout" | "emptyPlan" | "useLayout", vars?: Record<string, string>): string {
-    const base = `portalDashboard.presets.${key}`;
+    const messageKeys: Record<typeof key, string> = {
+      recommended: "businessApp.dashboard.presets.recommended",
+      currentLayout: "businessApp.dashboard.currentLayout",
+      emptyPlan: "businessApp.dashboard.presets.emptyPlan",
+      useLayout: "businessApp.dashboard.useLayout",
+    };
+    const translated = t(this.marketLocale(), messageKeys[key], vars);
+    if (translated !== messageKeys[key]) {
+      return translated;
+    }
     const fallbacks: Record<typeof key, string> = {
       recommended: this.tr("businessApp.dashboard.recommendedYou"),
       currentLayout: this.tr("businessApp.dashboard.currentLayout"),
       emptyPlan: this.tr("businessApp.dashboard.noWidgetsPlanTemplate"),
       useLayout: this.tr("businessApp.dashboard.useLayout"),
     };
-    const translated = t(this.portalLocale(), base, vars);
-    if (translated !== base) {
-      return translated;
-    }
     let fallback = fallbacks[key];
     if (vars) {
       for (const [name, value] of Object.entries(vars)) {
@@ -373,7 +378,7 @@ export class DashboardComponent implements OnInit {
 
   presetDisplayCopy(preset: DashboardLayoutPreset) {
     return getDashboardLayoutPresetDisplayCopy(
-      this.portalLocale(),
+      this.marketLocale(),
       preset.id,
       this.tenantMarketId(),
       { focus: preset.focus, description: preset.description },
@@ -384,14 +389,16 @@ export class DashboardComponent implements OnInit {
     const count = this.presetPreviewWidgetTitles(preset).length;
     const rangeLabel = this.presetRangeLabel(preset);
     const widgetsKey =
-      count === 1 ? "portalDashboard.presets.widgetsOnPlan" : "portalDashboard.presets.widgetsOnPlan_plural";
+      count === 1
+        ? "businessApp.dashboard.presets.widgetsOnPlan"
+        : "businessApp.dashboard.presets.widgetsOnPlan_plural";
     const widgetsFallback =
       count === 1 ? `${count} widget on your plan` : `${count} widgets on your plan`;
-    const widgetsPart = t(this.portalLocale(), widgetsKey, { count });
-    const rangePart = t(this.portalLocale(), "portalDashboard.presets.rangeMeta", { range: rangeLabel });
+    const widgetsPart = t(this.marketLocale(), widgetsKey, { count });
+    const rangePart = t(this.marketLocale(), "businessApp.dashboard.presets.rangeMeta", { range: rangeLabel });
     const resolvedWidgets = widgetsPart === widgetsKey ? widgetsFallback : widgetsPart;
     const resolvedRange =
-      rangePart === "portalDashboard.presets.rangeMeta" ? `${rangeLabel} range` : rangePart;
+      rangePart === "businessApp.dashboard.presets.rangeMeta" ? `${rangeLabel} range` : rangePart;
     return `${resolvedRange} · ${resolvedWidgets}`;
   }
 
@@ -415,7 +422,7 @@ export class DashboardComponent implements OnInit {
 
   presetCtaLabel(preset: DashboardLayoutPreset): string {
     const label = this.presetUiCopy("useLayout", { label: preset.label });
-    return label === "portalDashboard.presets.useLayout"
+    return label === "businessApp.dashboard.useLayout"
       ? this.tr("businessApp.dashboard.useLayout", { label: preset.label })
       : label;
   }

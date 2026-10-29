@@ -43,6 +43,7 @@ import { injectAdeniTranslate } from "./locale/adeni-i18n";
       background: var(--border);
     }
 
+    .staff-shell-footer[data-app="business"] .staff-shell-footer__hairline,
     .staff-shell-footer[data-app="portal"] .staff-shell-footer__hairline {
       background: linear-gradient(
         90deg,
@@ -89,6 +90,7 @@ import { injectAdeniTranslate } from "./locale/adeni-i18n";
       flex-shrink: 0;
     }
 
+    .staff-shell-footer[data-app="business"] .staff-shell-footer__sep,
     .staff-shell-footer[data-app="portal"] .staff-shell-footer__sep {
       background: color-mix(in srgb, var(--adeni-purple, #7f56ff) 45%, var(--text-muted));
     }

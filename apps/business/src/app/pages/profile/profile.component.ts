@@ -185,8 +185,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
       status,
       icon: entry.icon,
       tone: entry.tone,
-      title: this.tr(`portal.profile.verificationHero${entry.key}Title`),
-      body: this.tr(`portal.profile.verificationHero${entry.key}Body`),
+      title: this.tr(`businessApp.profile.verificationHero${entry.key}Title`),
+      body: this.tr(`businessApp.profile.verificationHero${entry.key}Body`),
     };
   });
 

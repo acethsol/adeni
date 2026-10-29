@@ -1,5 +1,5 @@
 import { Routes } from "@angular/router";
-import { AdminShellComponent } from "./layout/portal-shell.component";
+import { AdminShellComponent } from "./layout/admin-shell.component";
 import { adminAccessGuard } from "./core/guards/admin-access.guard";
 import { adminAuthGuard } from "./core/guards/admin-auth.guard";
 

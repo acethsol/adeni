@@ -1059,7 +1059,54 @@ export const enCatalog: MessageTree = {
         messages_unread: "Unread client messages plus a quick inbox preview.",
         quote_pipeline: "Quote requests still waiting for a price or reply.",
         verification_status: "Discovery verification status and what to do next.",
-        quick_actions: "One-tap links to common portal pages.",
+        quick_actions: "One-tap links to common business app pages.",
+      },
+      presets: {
+        recommended: "Recommended for you",
+        rangeMeta: "{range} range",
+        widgetsOnPlan: "{count} widget on your plan",
+        widgetsOnPlan_plural: "{count} widgets on your plan",
+        emptyPlan: "No widgets on your plan for this template.",
+        owner: {
+          focus: "Growth & plan health",
+          description: "Plan usage, KPIs, charts, and service mix for the week.",
+          market: {
+            lagos: "Built for busy Lagos studios — see the week at a glance.",
+            ottawa: "Built for Ottawa salons — winter weeks and walk-ins in one view.",
+          },
+        },
+        manager: {
+          focus: "Inbox & team load",
+          description: "Pending work, messaging, quotes, and staff leaderboard.",
+          market: {
+            lagos: "Keep the floor moving when every chair matters.",
+            ottawa: "Coordinate staff and inbox during peak hours.",
+          },
+        },
+        front_desk: {
+          focus: "Today on the floor",
+          description: "Live queue, today's chair, and fast replies.",
+          market: {
+            lagos: "Queue, DMs, and today's chair — no owner charts.",
+            ottawa: "Front-of-house view for check-ins and replies.",
+          },
+        },
+        practitioner: {
+          focus: "My chair today",
+          description: "Personal KPIs and schedule — no owner-only tiles.",
+          market: {
+            lagos: "Your clients and chair — nothing else.",
+            ottawa: "Your day, your bookings, your calendar.",
+          },
+        },
+        minimal: {
+          focus: "Clean slate",
+          description: "Overview KPIs only — add widgets as you go.",
+          market: {
+            lagos: "Start light, then grow the board as you scale.",
+            ottawa: "Start simple — add tiles when you need them.",
+          },
+        },
       },
       recommendedYou: "Recommended for you",
       remainingAppointmentsToday: "Remaining appointments for today.",

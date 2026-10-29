@@ -1,14 +1,21 @@
 import { DestroyRef, Injectable, inject, signal } from "@angular/core";
 import { injectAdeniTranslate } from "@adeni/ui";
 
-const THEME_STORAGE_KEY = "adeni.portal.theme";
+const THEME_STORAGE_KEY = "adeni.businessApp.theme";
+const LEGACY_THEME_STORAGE_KEY = "adeni.portal.theme";
 
 export type businessTheme = "light" | "dark";
 export type ThemePreference = businessTheme | "system";
 
 function readThemePreference(): ThemePreference {
   try {
-    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    let stored = localStorage.getItem(THEME_STORAGE_KEY);
+    if (!stored) {
+      stored = localStorage.getItem(LEGACY_THEME_STORAGE_KEY);
+      if (stored === "light" || stored === "dark" || stored === "system") {
+        localStorage.setItem(THEME_STORAGE_KEY, stored);
+      }
+    }
     if (stored === "light" || stored === "dark" || stored === "system") {
       return stored;
     }

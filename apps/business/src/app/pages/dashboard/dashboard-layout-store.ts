@@ -4,7 +4,8 @@ import {
   resolveDashboardLayout,
 } from "@adeni/shared";
 
-const STORAGE_PREFIX = "adeni.portal.dashboard.layout.v1";
+const STORAGE_PREFIX = "adeni.businessApp.dashboard.layout.v1";
+const LEGACY_STORAGE_PREFIX = "adeni.portal.dashboard.layout.v1";
 
 function storageKey(tenantId: string, practitioner: boolean): string {
   return `${STORAGE_PREFIX}.${tenantId}.${practitioner ? "practitioner" : "owner"}`;
@@ -16,7 +17,15 @@ export function loadDashboardLayout(tenantId: string, practitioner: boolean): Da
     return fallback;
   }
   try {
-    const raw = localStorage.getItem(storageKey(tenantId, practitioner));
+    const key = storageKey(tenantId, practitioner);
+    let raw = localStorage.getItem(key);
+    if (!raw) {
+      const legacyKey = `${LEGACY_STORAGE_PREFIX}.${tenantId}.${practitioner ? "practitioner" : "owner"}`;
+      raw = localStorage.getItem(legacyKey);
+      if (raw) {
+        localStorage.setItem(key, raw);
+      }
+    }
     if (!raw) {
       return fallback;
     }

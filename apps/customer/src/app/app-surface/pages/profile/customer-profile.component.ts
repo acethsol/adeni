@@ -49,9 +49,9 @@ import { CustomerAppSessionService } from "../../services/customer-app-session.s
             <adeni-carbon-icon name="chevron--right" [size]="16" />
           </a>
         </li>
-        @if (portalUrl) {
+        @if (businessPortalUrl) {
           <li>
-            <a class="app-row" [href]="portalUrl" target="_blank" rel="noopener noreferrer">
+            <a class="app-row" [href]="businessPortalUrl" target="_blank" rel="noopener noreferrer">
               <span class="app-row__main"><adeni-carbon-icon name="launch" [size]="16" />{{ tr('common.forBusinesses') }}</span>
               <adeni-carbon-icon name="chevron--right" [size]="16" />
             </a>
@@ -84,5 +84,5 @@ import { CustomerAppSessionService } from "../../services/customer-app-session.s
 export class CustomerProfileComponent {
   protected readonly tr = injectAdeniTranslate();
   protected readonly session = inject(CustomerAppSessionService);
-  protected readonly portalUrl = inject(ADENI_DISCOVER_CONFIG).portalAppUrl.trim() || null;
+  protected readonly businessPortalUrl = inject(ADENI_DISCOVER_CONFIG).portalAppUrl.trim() || null;
 }

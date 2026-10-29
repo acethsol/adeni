@@ -34,7 +34,7 @@ function ctx(
 }
 
 describe("resolveRecommendedDashboardLayoutPresetId", () => {
-  it("maps portal roles to preset ids", () => {
+  it("maps business staff roles to preset ids", () => {
     expect(
       resolveRecommendedDashboardLayoutPresetId({
         isPractitionerView: false,

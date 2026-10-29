@@ -28,7 +28,7 @@ export function formatSubscriptionPlanLabel(
 ): string {
   const base = SUBSCRIPTION_SKU_LABELS[usage.subscriptionSku];
   if (usage.billingStatus === "trialing") {
-    return t(locale, "portal.dashboard.planTrialLabel", { plan: base });
+    return t(locale, "businessApp.dashboard.planTrialLabel", { plan: base });
   }
   return base;
 }
