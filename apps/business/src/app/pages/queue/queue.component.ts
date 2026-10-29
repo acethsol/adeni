@@ -112,7 +112,7 @@ export class QueueComponent implements OnInit, OnDestroy {
   }
 
   pageDescription(): string {
-    if (this.session.can("portal.bookings.self") && !this.session.can("portal.bookings")) {
+    if (this.session.can("business.bookings.self") && !this.session.can("business.bookings")) {
       return this.tr("portal.queue.yourAssignedWalkInsCall");
     }
     return this.tr("portal.queue.liveFloorBoardWalkIns");
@@ -123,7 +123,7 @@ export class QueueComponent implements OnInit, OnDestroy {
   }
 
   canManageAll(): boolean {
-    return this.session.can("portal.bookings");
+    return this.session.can("business.bookings");
   }
 
   waiting(): QueueTicketResponse[] {
@@ -193,7 +193,7 @@ export class QueueComponent implements OnInit, OnDestroy {
         const floor = await client.getTenantQueueFloor(scopedLocationId);
         const services = await client.getTenantServices();
         let staff: StaffMember[] = [];
-        if (this.session.can("portal.bookings")) {
+        if (this.session.can("business.bookings")) {
           staff = await client
             .listTenantStaff({ locationId: scopedLocationId })
             .catch(() => []);

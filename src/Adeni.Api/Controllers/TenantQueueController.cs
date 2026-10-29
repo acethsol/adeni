@@ -14,7 +14,7 @@ using Microsoft.Extensions.Options;
 
 [ApiController]
 [Route("api/v1/tenant/queue")]
-[RequiresPortalPermission(PortalPermissions.Bookings, PortalPermissions.BookingsSelf)]
+[RequiresBusinessPermission(BusinessPermissions.Bookings, BusinessPermissions.BookingsSelf)]
 public sealed class TenantQueueController(
     IQueueService queue,
     IOptions<Auth0Options> auth0Options) : ControllerBase
@@ -57,7 +57,7 @@ public sealed class TenantQueueController(
         }
 
         var access = PortalAccessHttpContext.Get(HttpContext);
-        if (access is null || !access.Permissions.Contains(PortalPermissions.Bookings))
+        if (access is null || !access.Permissions.Contains(BusinessPermissions.Bookings))
         {
             return ApiErrorResponseMapper.ToActionResult(ErrorCodes.PermissionDeniedError(), HttpContext);
         }
@@ -77,7 +77,7 @@ public sealed class TenantQueueController(
         }
 
         var access = PortalAccessHttpContext.Get(HttpContext);
-        if (access is null || !access.Permissions.Contains(PortalPermissions.Bookings))
+        if (access is null || !access.Permissions.Contains(BusinessPermissions.Bookings))
         {
             return ApiErrorResponseMapper.ToActionResult(ErrorCodes.PermissionDeniedError(), HttpContext);
         }

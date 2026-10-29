@@ -1,27 +1,27 @@
 namespace Adeni.Domain.Identity;
 
 /// <summary>
-/// Portal RBAC keys — what a business login can open.
+/// Business app RBAC keys — what a business login can open.
 /// Distinct from booking floor <c>StaffMember.RoleKey</c>.
-/// Keep in sync with <c>packages/shared/src/portal-permissions.ts</c>.
+/// Keep in sync with <c>packages/shared/src/business-permissions.ts</c>.
 /// </summary>
-public static class PortalPermissions
+public static class BusinessPermissions
 {
-    public const string Overview = "portal.overview";
-    public const string Bookings = "portal.bookings";
-    public const string BookingsSelf = "portal.bookings.self";
-    public const string Messages = "portal.messages";
-    public const string Quotes = "portal.quotes";
-    public const string Services = "portal.services";
-    public const string Staff = "portal.staff";
-    public const string StaffSelf = "portal.staff.self";
-    public const string Hours = "portal.hours";
-    public const string Locations = "portal.locations";
-    public const string PublicPage = "portal.public_page";
-    public const string Profile = "portal.profile";
-    public const string Finance = "portal.finance";
-    public const string Plan = "portal.plan";
-    public const string Retention = "portal.retention";
+    public const string Overview = "business.overview";
+    public const string Bookings = "business.bookings";
+    public const string BookingsSelf = "business.bookings.self";
+    public const string Messages = "business.messages";
+    public const string Quotes = "business.quotes";
+    public const string Services = "business.services";
+    public const string Staff = "business.staff";
+    public const string StaffSelf = "business.staff.self";
+    public const string Hours = "business.hours";
+    public const string Locations = "business.locations";
+    public const string PublicPage = "business.public_page";
+    public const string Profile = "business.profile";
+    public const string Finance = "business.finance";
+    public const string Plan = "business.plan";
+    public const string Retention = "business.retention";
 
     public static readonly IReadOnlyList<string> All =
     [
@@ -44,7 +44,7 @@ public static class PortalPermissions
 }
 
 /// <summary>Login permission roles (RBAC). Stored on <see cref="BusinessUser.Role"/>.</summary>
-public static class PortalPermissionRoles
+public static class BusinessPermissionRoles
 {
     public const string Owner = "owner";
     public const string Manager = "manager";
@@ -77,38 +77,38 @@ public static class PortalPermissionRoles
     public static IReadOnlyList<string> PermissionsFor(string? role) =>
         Normalize(role) switch
         {
-            Manager => PortalPermissions.All.Where(p => p != PortalPermissions.Plan).ToArray(),
+            Manager => BusinessPermissions.All.Where(p => p != BusinessPermissions.Plan).ToArray(),
             Receptionist =>
             [
-                PortalPermissions.Overview,
-                PortalPermissions.Bookings,
-                PortalPermissions.Messages,
-                PortalPermissions.Quotes,
-                PortalPermissions.Services,
-                PortalPermissions.Hours,
-                PortalPermissions.Retention,
+                BusinessPermissions.Overview,
+                BusinessPermissions.Bookings,
+                BusinessPermissions.Messages,
+                BusinessPermissions.Quotes,
+                BusinessPermissions.Services,
+                BusinessPermissions.Hours,
+                BusinessPermissions.Retention,
             ],
             Practitioner =>
             [
-                PortalPermissions.Overview,
-                PortalPermissions.BookingsSelf,
-                PortalPermissions.StaffSelf,
-                PortalPermissions.Messages,
+                BusinessPermissions.Overview,
+                BusinessPermissions.BookingsSelf,
+                BusinessPermissions.StaffSelf,
+                BusinessPermissions.Messages,
             ],
             Accountant =>
             [
-                PortalPermissions.Overview,
-                PortalPermissions.Finance,
+                BusinessPermissions.Overview,
+                BusinessPermissions.Finance,
             ],
             Ops =>
             [
-                PortalPermissions.Overview,
-                PortalPermissions.Services,
-                PortalPermissions.Hours,
-                PortalPermissions.Locations,
-                PortalPermissions.PublicPage,
+                BusinessPermissions.Overview,
+                BusinessPermissions.Services,
+                BusinessPermissions.Hours,
+                BusinessPermissions.Locations,
+                BusinessPermissions.PublicPage,
             ],
-            _ => PortalPermissions.All,
+            _ => BusinessPermissions.All,
         };
 
     public static bool Has(string? role, string permission) =>
@@ -117,7 +117,7 @@ public static class PortalPermissionRoles
     public static bool HasAny(string? role, params string[] permissions) =>
         permissions.Any(p => Has(role, p));
 
-    /// <summary>Floor <c>StaffMember.RoleKey</c> → default portal RBAC role when inviting.</summary>
+    /// <summary>Floor <c>StaffMember.RoleKey</c> → default Business app RBAC role when inviting.</summary>
     public static string DefaultForFloorRole(string? roleKey) =>
         (roleKey ?? string.Empty).Trim().ToLowerInvariant() switch
         {

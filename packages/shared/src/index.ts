@@ -7,7 +7,7 @@ export * from "./markets";
 export * from "./auth";
 export * from "./roles";
 export * from "./staff-roles";
-export * from "./portal-permissions";
+export * from "./business-permissions";
 export * from "./schemas";
 export * from "./business-types";
 export * from "./capabilities";

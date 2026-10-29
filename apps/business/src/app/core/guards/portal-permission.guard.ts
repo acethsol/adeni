@@ -1,6 +1,6 @@
 import { inject } from "@angular/core";
 import { CanActivateFn, Router } from "@angular/router";
-import { hasCapability, hasTenantEntitlement, type PortalPermission } from "@adeni/shared";
+import { hasCapability, hasTenantEntitlement, type BusinessPermission } from "@adeni/shared";
 import {
   filterPortalTabs,
   firstPortalTabId,
@@ -25,10 +25,10 @@ export const portalPermissionGuard: CanActivateFn = async (route) => {
     return router.createUrlTree(["/forbidden"]);
   }
 
-  const required = match.item.permission as PortalPermission | readonly PortalPermission[] | undefined;
+  const required = match.item.permission as BusinessPermission | readonly BusinessPermission[] | undefined;
 
   if (!session.can(required)) {
-    if (session.can("portal.overview")) {
+    if (session.can("business.overview")) {
       return router.createUrlTree(["/dashboard"]);
     }
     return router.createUrlTree(["/forbidden"]);

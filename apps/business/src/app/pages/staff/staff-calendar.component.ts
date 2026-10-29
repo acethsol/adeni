@@ -677,8 +677,8 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
     const routeId = this.route.snapshot.paramMap.get("id");
     const path = this.route.snapshot.routeConfig?.path ?? "";
     const isTeamRoute = path === "calendar" || this.route.snapshot.data["teamCalendar"] === true;
-    this.teamMode.set(isTeamRoute && this.session.can("portal.staff"));
-    this.colorBy.set(isTeamRoute && this.session.can("portal.staff") ? "staff" : "status");
+    this.teamMode.set(isTeamRoute && this.session.can("business.staff"));
+    this.colorBy.set(isTeamRoute && this.session.can("business.staff") ? "staff" : "status");
     this.staffId = routeId ?? this.session.staffMemberId() ?? "";
     if (typeof window !== "undefined" && window.matchMedia("(max-width: 820px)").matches) {
       this.view.set("day");
@@ -831,7 +831,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
 
   /** Roster admins see a back link; practitioners viewing their own calendar do not. */
   showRosterBackLink(): boolean {
-    return this.session.can("portal.staff");
+    return this.session.can("business.staff");
   }
 
   ngOnDestroy(): void {

@@ -177,7 +177,7 @@ public sealed class PortalSoc2AuditIntegrationTests : IClassFixture<WebApplicati
             Id = Guid.NewGuid(),
             TenantId = tenantId,
             Auth0Sub = businessSub,
-            Role = PortalPermissionRoles.Owner,
+            Role = BusinessPermissionRoles.Owner,
             CreatedAt = now,
         });
         await db.SaveChangesAsync();

@@ -16,7 +16,7 @@ using Microsoft.Extensions.Options;
 
 [ApiController]
 [Route("api/v1/tenant/bookings")]
-[RequiresPortalPermission(PortalPermissions.Bookings, PortalPermissions.BookingsSelf)]
+[RequiresBusinessPermission(BusinessPermissions.Bookings, BusinessPermissions.BookingsSelf)]
 public sealed class TenantBookingsController(
     IBookingService bookings,
     IOptions<Auth0Options> auth0Options) : ControllerBase

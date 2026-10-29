@@ -6,7 +6,7 @@ using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-public sealed class PortalPermissionService(AdeniDbContext dbContext) : IPortalPermissionService
+public sealed class BusinessPermissionService(AdeniDbContext dbContext) : IBusinessPermissionService
 {
     public async Task<Result<PortalAccessSnapshot>> ResolveAsync(
         string auth0Sub,
@@ -26,12 +26,12 @@ public sealed class PortalPermissionService(AdeniDbContext dbContext) : IPortalP
             return Result.Failure<PortalAccessSnapshot>(ErrorCodes.BusinessAccessDeniedError());
         }
 
-        var role = PortalPermissionRoles.Normalize(user.Role);
+        var role = BusinessPermissionRoles.Normalize(user.Role);
         return Result.Success(new PortalAccessSnapshot(
             user.Id,
             user.TenantId,
             role,
-            PortalPermissionRoles.PermissionsFor(role),
+            BusinessPermissionRoles.PermissionsFor(role),
             user.StaffMemberId));
     }
 
@@ -46,7 +46,7 @@ public sealed class PortalPermissionService(AdeniDbContext dbContext) : IPortalP
             return Result.Failure(resolved.Error);
         }
 
-        if (!PortalPermissionRoles.Has(resolved.Value.PermissionRole, permission))
+        if (!BusinessPermissionRoles.Has(resolved.Value.PermissionRole, permission))
         {
             return Result.Failure(ErrorCodes.PermissionDeniedError());
         }

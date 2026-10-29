@@ -9,7 +9,7 @@ import {
   defaultPermissionRoleForFloorRole,
   defaultStaffRoleForCategories,
   staffRolesForCategories,
-  type PortalPermissionRole,
+  type BusinessPermissionRole,
   type ServiceOffering,
   type StaffLeave,
   type StaffMember,
@@ -398,8 +398,8 @@ export class StaffComponent implements OnInit, OnDestroy {
   readonly roleTarget = signal<StaffMember | null>(null);
   readonly inviteRoles = PORTAL_PERMISSION_ROLES.filter((r) => r !== "owner");
   inviteEmail = "";
-  invitePermissionRole: Exclude<PortalPermissionRole, "owner"> = "practitioner";
-  editPermissionRole: Exclude<PortalPermissionRole, "owner"> = "practitioner";
+  invitePermissionRole: Exclude<BusinessPermissionRole, "owner"> = "practitioner";
+  editPermissionRole: Exclude<BusinessPermissionRole, "owner"> = "practitioner";
 
   /** Local object URL or existing remote avatar for the open form. */
   readonly avatarPreviewUrl = signal<string | null>(null);
@@ -551,7 +551,7 @@ export class StaffComponent implements OnInit, OnDestroy {
     this.inviteTarget.set(member);
     this.inviteEmail = "";
     this.invitePermissionRole = defaultPermissionRoleForFloorRole(member.roleKey) as Exclude<
-      PortalPermissionRole,
+      BusinessPermissionRole,
       "owner"
     >;
   }
@@ -566,7 +566,7 @@ export class StaffComponent implements OnInit, OnDestroy {
     }
     this.roleTarget.set(member);
     this.editPermissionRole = (member.permissionRole ??
-      defaultPermissionRoleForFloorRole(member.roleKey)) as Exclude<PortalPermissionRole, "owner">;
+      defaultPermissionRoleForFloorRole(member.roleKey)) as Exclude<BusinessPermissionRole, "owner">;
   }
 
   closeChangeRole(): void {

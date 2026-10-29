@@ -9,7 +9,7 @@ public sealed record PortalAccessSnapshot(
     IReadOnlyList<string> Permissions,
     Guid? StaffMemberId);
 
-public interface IPortalPermissionService
+public interface IBusinessPermissionService
 {
     Task<Result<PortalAccessSnapshot>> ResolveAsync(
         string auth0Sub,

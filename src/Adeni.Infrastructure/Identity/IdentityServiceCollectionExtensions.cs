@@ -14,7 +14,7 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<Adeni.Application.Finance.IFinanceCommerceAccessQuery, FinanceCommerceAccessQuery>();
         services.AddScoped<IIntakeManagementAccessQuery, IntakeManagementAccessQuery>();
         services.AddScoped<IBusinessMembershipQuery, BusinessMembershipQuery>();
-        services.AddScoped<IPortalPermissionService, PortalPermissionService>();
+        services.AddScoped<IBusinessPermissionService, BusinessPermissionService>();
         services.AddScoped<IPortalTenantAccessQuery, PortalTenantAccessQuery>();
         services.AddScoped<ICustomerErasureQuery, PortalTenantAccessQuery>();
         services.AddScoped<IStaffAccessService, StaffAccessService>();

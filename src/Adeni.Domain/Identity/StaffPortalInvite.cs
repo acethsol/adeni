@@ -11,8 +11,8 @@ public sealed class StaffPortalInvite : ITenantEntity
 
     public string Email { get; set; } = string.Empty;
 
-    /// <summary>Portal RBAC role granted on accept (<see cref="PortalPermissionRoles"/>).</summary>
-    public string PermissionRole { get; set; } = PortalPermissionRoles.Practitioner;
+    /// <summary>Portal RBAC role granted on accept (<see cref="BusinessPermissionRoles"/>).</summary>
+    public string PermissionRole { get; set; } = BusinessPermissionRoles.Practitioner;
 
     public Guid? StaffMemberId { get; set; }
 

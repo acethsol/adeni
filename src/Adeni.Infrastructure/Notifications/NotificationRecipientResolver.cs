@@ -48,7 +48,7 @@ public sealed class NotificationRecipientResolver(AdeniDbContext dbContext) : IN
         var owner = await dbContext.BusinessUsers
             .AsNoTracking()
             .Where(x => x.TenantId == tenantId)
-            .OrderBy(x => x.Role == PortalPermissionRoles.Owner ? 0 : 1)
+            .OrderBy(x => x.Role == BusinessPermissionRoles.Owner ? 0 : 1)
             .ThenBy(x => x.CreatedAt)
             .FirstOrDefaultAsync(cancellationToken);
 

@@ -114,9 +114,9 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
         id: "queue",
         label: queueCount > 0 ? this.tr("portal.customers.queue", { queueCount: queueCount }) : this.tr("common.queue"),
       },
-      ...(this.session.can("portal.bookings") ? [{ id: "activity", label: this.tr("customerProfile.activity") }] : []),
-      ...(this.session.can("portal.retention") ? [{ id: "packages", label: this.tr("portal.retention.customerTab") }] : []),
-      ...(this.session.can("portal.retention") ? [{ id: "memberships", label: this.tr("portal.memberships.customerTab") }] : []),
+      ...(this.session.can("business.bookings") ? [{ id: "activity", label: this.tr("customerProfile.activity") }] : []),
+      ...(this.session.can("business.retention") ? [{ id: "packages", label: this.tr("portal.retention.customerTab") }] : []),
+      ...(this.session.can("business.retention") ? [{ id: "memberships", label: this.tr("portal.memberships.customerTab") }] : []),
     ];
   });
 
@@ -203,7 +203,7 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
   readonly trackQueueRow = (row: TenantCustomerRecentQueueVisit): string => row.id;
 
   constructor() {
-    effect(() => { void this.intakeStatuses.load(this.session.can("portal.bookings") ? this.customer()?.recentBookings.map(x => x.id) ?? [] : []); });
+    effect(() => { void this.intakeStatuses.load(this.session.can("business.bookings") ? this.customer()?.recentBookings.map(x => x.id) ?? [] : []); });
   }
 
   ngOnInit(): void {

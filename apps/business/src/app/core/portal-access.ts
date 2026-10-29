@@ -1,10 +1,10 @@
 import {
   hasCapability,
-  hasPortalPermission,
+  hasBusinessPermission,
   hasTenantEntitlement,
   resolveCapabilities,
   type BusinessProfile,
-  type PortalPermission,
+  type BusinessPermission,
   type TenantEntitlements,
 } from "@adeni/shared";
 import type { PortalNavItem, PortalTab } from "./portal-nav";
@@ -12,7 +12,7 @@ import type { PortalNavItem, PortalTab } from "./portal-nav";
 export type PortalAccessContext = {
   profile: BusinessProfile | null;
   profileLoaded: boolean;
-  permissions: readonly PortalPermission[];
+  permissions: readonly BusinessPermission[];
 };
 
 export function portalEntitlements(profile: BusinessProfile | null): TenantEntitlements | null {
@@ -45,12 +45,12 @@ export function isPortalNavItemVisible(item: PortalNavItem, ctx: PortalAccessCon
   if (item.unregisteredOnly) {
     return ctx.profileLoaded && !ctx.profile;
   }
-  if (item.permission && !hasPortalPermission(ctx.permissions, item.permission)) {
+  if (item.permission && !hasBusinessPermission(ctx.permissions, item.permission)) {
     return false;
   }
   if (
     item.excludeIfPermission &&
-    hasPortalPermission(ctx.permissions, item.excludeIfPermission)
+    hasBusinessPermission(ctx.permissions, item.excludeIfPermission)
   ) {
     return false;
   }

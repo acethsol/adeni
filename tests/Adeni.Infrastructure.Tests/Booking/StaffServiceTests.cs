@@ -362,7 +362,7 @@ public sealed class StaffServiceTests
             Id = Guid.NewGuid(),
             TenantId = tenantId,
             Email = "pending@example.com",
-            PermissionRole = PortalPermissionRoles.Practitioner,
+            PermissionRole = BusinessPermissionRoles.Practitioner,
             StaffMemberId = pending.Value!.Id,
             TokenHash = Convert.ToHexString(Guid.NewGuid().ToByteArray()).ToLowerInvariant(),
             Status = StaffPortalInviteStatuses.Pending,
@@ -375,7 +375,7 @@ public sealed class StaffServiceTests
             Id = Guid.NewGuid(),
             TenantId = tenantId,
             Auth0Sub = "auth0|active-staff",
-            Role = PortalPermissionRoles.Practitioner,
+            Role = BusinessPermissionRoles.Practitioner,
             StaffMemberId = active.Value!.Id,
             CreatedAt = DateTimeOffset.UtcNow,
         });
@@ -387,7 +387,7 @@ public sealed class StaffServiceTests
         Assert.NotNull(list.Single(x => x.Id == pending.Value!.Id).PortalInviteId);
         var activeRow = list.Single(x => x.Id == active.Value!.Id);
         Assert.Equal(PortalAccessStatuses.Active, activeRow.PortalAccessStatus);
-        Assert.Equal(PortalPermissionRoles.Practitioner, activeRow.PermissionRole);
+        Assert.Equal(BusinessPermissionRoles.Practitioner, activeRow.PermissionRole);
         Assert.NotNull(activeRow.BusinessUserId);
     }
 

@@ -57,7 +57,7 @@ public sealed class StaffAccessServiceTests
             CancellationToken.None);
 
         Assert.True(invite.IsSuccess);
-        Assert.Equal(PortalPermissionRoles.Practitioner, invite.Value!.PermissionRole);
+        Assert.Equal(BusinessPermissionRoles.Practitioner, invite.Value!.PermissionRole);
 
         var plain = "unit-test-invite-token-value";
         var stored = await db.StaffPortalInvites.SingleAsync();
@@ -76,7 +76,7 @@ public sealed class StaffAccessServiceTests
         Assert.Equal(1, await db.Tenants.CountAsync());
 
         var user = await db.BusinessUsers.IgnoreQueryFilters().SingleAsync(u => u.Auth0Sub == "auth0|staff-fela");
-        Assert.Equal(PortalPermissionRoles.Practitioner, user.Role);
+        Assert.Equal(BusinessPermissionRoles.Practitioner, user.Role);
         Assert.Equal(staffId, user.StaffMemberId);
 
         var writer = (InMemoryAuditLogWriter)scope.ServiceProvider.GetRequiredService<IAuditLogWriter>();
@@ -124,7 +124,7 @@ public sealed class StaffAccessServiceTests
             Id = ownerId,
             TenantId = tenantId,
             Auth0Sub = "auth0|only-owner",
-            Role = PortalPermissionRoles.Owner,
+            Role = BusinessPermissionRoles.Owner,
             CreatedAt = DateTimeOffset.UtcNow,
         });
         await db.SaveChangesAsync();
@@ -161,7 +161,7 @@ public sealed class StaffAccessServiceTests
             Id = ownerId,
             TenantId = tenantId,
             Auth0Sub = "auth0|only-owner",
-            Role = PortalPermissionRoles.Owner,
+            Role = BusinessPermissionRoles.Owner,
             CreatedAt = DateTimeOffset.UtcNow,
         });
         await db.SaveChangesAsync();
@@ -170,7 +170,7 @@ public sealed class StaffAccessServiceTests
         var result = await access.UpdateRoleAsync(
             tenantId,
             ownerId,
-            new UpdateAccessUserRequest(PortalPermissionRoles.Manager),
+            new UpdateAccessUserRequest(BusinessPermissionRoles.Manager),
             "auth0|only-owner",
             CancellationToken.None);
 
@@ -201,7 +201,7 @@ public sealed class StaffAccessServiceTests
                 Id = ownerId,
                 TenantId = tenantId,
                 Auth0Sub = "auth0|owner",
-                Role = PortalPermissionRoles.Owner,
+                Role = BusinessPermissionRoles.Owner,
                 CreatedAt = DateTimeOffset.UtcNow,
             },
             new BusinessUser
@@ -209,7 +209,7 @@ public sealed class StaffAccessServiceTests
                 Id = staffUserId,
                 TenantId = tenantId,
                 Auth0Sub = "auth0|staff",
-                Role = PortalPermissionRoles.Practitioner,
+                Role = BusinessPermissionRoles.Practitioner,
                 StaffMemberId = staffMemberId,
                 CreatedAt = DateTimeOffset.UtcNow,
             });
@@ -231,11 +231,11 @@ public sealed class StaffAccessServiceTests
     }
 
     [Theory]
-    [InlineData("receptionist", PortalPermissionRoles.Receptionist)]
-    [InlineData("manager", PortalPermissionRoles.Manager)]
-    [InlineData("barber", PortalPermissionRoles.Practitioner)]
+    [InlineData("receptionist", BusinessPermissionRoles.Receptionist)]
+    [InlineData("manager", BusinessPermissionRoles.Manager)]
+    [InlineData("barber", BusinessPermissionRoles.Practitioner)]
     public void DefaultForFloorRole_maps_expected(string floor, string expected) =>
-        Assert.Equal(expected, PortalPermissionRoles.DefaultForFloorRole(floor));
+        Assert.Equal(expected, BusinessPermissionRoles.DefaultForFloorRole(floor));
 
     private static ServiceProvider BuildProvider()
     {

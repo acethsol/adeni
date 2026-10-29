@@ -250,7 +250,7 @@
                   </ng-template>
                   <ng-template adeniDataTableActions let-row>
                     <adeni-row-action-bar>
-                      @if (session.can('portal.bookings') && showIntakeAction(row.id)) {
+                      @if (session.can('business.bookings') && showIntakeAction(row.id)) {
                         <adeni-icon-btn
                           icon="document"
                           [label]="tr('intake.review')"
@@ -349,11 +349,11 @@
           [activityVisible]="true"
         />
       </div>
-    } @else if (tab() === "packages" && session.can("portal.retention")) {
+    } @else if (tab() === "packages" && session.can("business.retention")) {
       <div class="tab-panel">
         <app-customer-packages-panel [customerId]="c.id" />
       </div>
-    } @else if (tab() === "memberships" && session.can("portal.retention")) {
+    } @else if (tab() === "memberships" && session.can("business.retention")) {
       <div class="tab-panel">
         <app-customer-memberships-panel [customerId]="c.id" />
       </div>

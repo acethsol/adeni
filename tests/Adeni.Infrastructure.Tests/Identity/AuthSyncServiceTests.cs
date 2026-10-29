@@ -66,7 +66,7 @@ public sealed class AuthSyncServiceTests
             Id = Guid.NewGuid(),
             TenantId = tenantId,
             Auth0Sub = "auth0|biz-existing",
-            Role = PortalPermissionRoles.Practitioner,
+            Role = BusinessPermissionRoles.Practitioner,
             CreatedAt = DateTimeOffset.UtcNow,
         });
         await db.SaveChangesAsync();

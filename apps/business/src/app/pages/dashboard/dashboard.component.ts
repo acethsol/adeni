@@ -287,9 +287,9 @@ export class DashboardComponent implements OnInit {
       isPractitionerView: this.isPractitionerView(),
       entitlements: this.exportEntitlements(),
       capabilities: resolveDashboardCapabilities(this.profile()),
-      canPortal: (permission: Parameters<PortalSessionService["can"]>[0]) =>
+      canBusiness: (permission: Parameters<PortalSessionService["can"]>[0]) =>
         this.session.can(permission)
-        || (permission === "portal.bookings" && this.session.can("portal.bookings.self")),
+        || (permission === "business.bookings" && this.session.can("business.bookings.self")),
     };
   }
 
@@ -512,7 +512,7 @@ export class DashboardComponent implements OnInit {
   }
 
   isPractitionerView(): boolean {
-    return this.session.can("portal.staff.self") && !this.session.can("portal.staff");
+    return this.session.can("business.staff.self") && !this.session.can("business.staff");
   }
 
   pageDescription(): string {
@@ -685,9 +685,9 @@ export class DashboardComponent implements OnInit {
           snapshot.profile.entitlements,
         ),
         capabilities: resolveDashboardCapabilities(snapshot.profile),
-        canPortal: (permission: Parameters<PortalSessionService["can"]>[0]) =>
+        canBusiness: (permission: Parameters<PortalSessionService["can"]>[0]) =>
           this.session.can(permission)
-          || (permission === "portal.bookings" && this.session.can("portal.bookings.self")),
+          || (permission === "business.bookings" && this.session.can("business.bookings.self")),
       };
       const normalizedLayout = filterDashboardLayoutByVisibility(snapshot.storedLayout, visibility);
       this.layout.set(normalizedLayout);

@@ -9,7 +9,7 @@ public sealed record ReportExportRequest(
     DateTimeOffset From,
     DateTimeOffset To,
     ReportExportFormat Format,
-    IReadOnlyList<string> PortalPermissions,
+    IReadOnlyList<string> BusinessPermissions,
     TenantEntitlements Entitlements,
     string ActorAuth0Sub,
     Guid? LocationId = null,

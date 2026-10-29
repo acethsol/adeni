@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
 /// <summary>
-/// Membership plan catalog (Sprint 37.2-A). Mutations need <c>portal.retention</c>; every route needs the
+/// Membership plan catalog (Sprint 37.2-A). Mutations need <c>business.retention</c>; every route needs the
 /// <c>memberships</c> plan entitlement (enforced in the service).
 /// </summary>
 [ApiController]
@@ -21,7 +21,7 @@ public sealed class TenantMembershipPlansController(
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet]
-    [RequiresPortalPermission(PortalPermissions.Retention, PortalPermissions.Bookings)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention, BusinessPermissions.Bookings)]
     public async Task<IActionResult> List([FromQuery] bool activeOnly = false, CancellationToken cancellationToken = default)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
@@ -29,7 +29,7 @@ public sealed class TenantMembershipPlansController(
     }
 
     [HttpPost]
-    [RequiresPortalPermission(PortalPermissions.Retention)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention)]
     public async Task<IActionResult> Create([FromBody] CreateMembershipPlanRequest request, CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
@@ -41,7 +41,7 @@ public sealed class TenantMembershipPlansController(
     }
 
     [HttpGet("{id:guid}")]
-    [RequiresPortalPermission(PortalPermissions.Retention, PortalPermissions.Bookings)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention, BusinessPermissions.Bookings)]
     public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
@@ -49,7 +49,7 @@ public sealed class TenantMembershipPlansController(
     }
 
     [HttpPatch("{id:guid}")]
-    [RequiresPortalPermission(PortalPermissions.Retention)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateMembershipPlanRequest request, CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
@@ -57,7 +57,7 @@ public sealed class TenantMembershipPlansController(
     }
 
     [HttpPost("{id:guid}/deactivate")]
-    [RequiresPortalPermission(PortalPermissions.Retention)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention)]
     public async Task<IActionResult> Deactivate(Guid id, CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();

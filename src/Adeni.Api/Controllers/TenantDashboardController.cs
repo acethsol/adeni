@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("api/v1/tenant/dashboard")]
-[RequiresPortalPermission(PortalPermissions.Overview)]
+[RequiresBusinessPermission(BusinessPermissions.Overview)]
 public sealed class TenantDashboardController(ITenantDashboardService dashboard) : ControllerBase
 {
     [HttpGet("summary")]
@@ -165,8 +165,8 @@ public sealed class TenantDashboardController(ITenantDashboardService dashboard)
     private Guid? ResolveTenantId() => PortalAccessHttpContext.Get(HttpContext)?.TenantId;
 
     private static bool IsPractitionerDashboardView(PortalAccessSnapshot access) =>
-        access.Permissions.Contains(PortalPermissions.StaffSelf)
-        && !access.Permissions.Contains(PortalPermissions.Staff);
+        access.Permissions.Contains(BusinessPermissions.StaffSelf)
+        && !access.Permissions.Contains(BusinessPermissions.Staff);
 
     private static (DateTimeOffset From, DateTimeOffset To) NormalizeRange(
         DateTimeOffset? from,

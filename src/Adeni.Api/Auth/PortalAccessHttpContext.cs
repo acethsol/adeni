@@ -17,12 +17,12 @@ internal static class PortalAccessHttpContext
 
     /// <summary>
     /// True when the user may only see their own staff-assigned bookings/calendar
-    /// (has <c>portal.bookings.self</c> but not full <c>portal.bookings</c>).
+    /// (has <c>business.bookings.self</c> but not full <c>business.bookings</c>).
     /// </summary>
     public static bool IsBookingsSelfOnly(PortalAccessSnapshot? access) =>
         access is not null
-        && access.Permissions.Contains(PortalPermissions.BookingsSelf)
-        && !access.Permissions.Contains(PortalPermissions.Bookings);
+        && access.Permissions.Contains(BusinessPermissions.BookingsSelf)
+        && !access.Permissions.Contains(BusinessPermissions.Bookings);
 
     /// <summary>
     /// Resolves the staff filter for bookings APIs.
@@ -46,11 +46,11 @@ internal static class PortalAccessHttpContext
     }
 
     /// <summary>
-    /// True when the user can administer the full roster (<c>portal.staff</c>).
+    /// True when the user can administer the full roster (<c>business.staff</c>).
     /// </summary>
     public static bool CanManageStaff(PortalAccessSnapshot? access) =>
         access is not null
-        && access.Permissions.Contains(PortalPermissions.Staff);
+        && access.Permissions.Contains(BusinessPermissions.Staff);
 
     /// <summary>
     /// True when the user may access this staff member's self-scoped data.
@@ -58,6 +58,6 @@ internal static class PortalAccessHttpContext
     public static bool CanAccessStaffMember(PortalAccessSnapshot? access, Guid staffMemberId) =>
         CanManageStaff(access)
         || (access is not null
-            && access.Permissions.Contains(PortalPermissions.StaffSelf)
+            && access.Permissions.Contains(BusinessPermissions.StaffSelf)
             && access.StaffMemberId == staffMemberId);
 }

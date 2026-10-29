@@ -15,7 +15,7 @@ using Microsoft.Extensions.Options;
 
 [ApiController]
 [Route("api/v1/tenant/messages")]
-[RequiresPortalPermission(PortalPermissions.Messages)]
+[RequiresBusinessPermission(BusinessPermissions.Messages)]
 public sealed class TenantMessagesController(
     IConversationService messaging,
     ITenantLocationScopeService locationScope,

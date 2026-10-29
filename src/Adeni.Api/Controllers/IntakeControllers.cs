@@ -34,7 +34,7 @@ public abstract class IntakeControllerBase(IOptions<Auth0Options> auth) : Contro
     protected IActionResult Map<T>(Result<T> result) => ApiResults.FromResult(result, value => Ok(value), HttpContext);
 }
 
-[ApiController, IntakePrivacy, Route("api/v1/tenant/intake"), RequiresPortalPermission(PortalPermissions.Services)]
+[ApiController, IntakePrivacy, Route("api/v1/tenant/intake"), RequiresBusinessPermission(BusinessPermissions.Services)]
 public sealed class IntakeTemplatesController(IIntakeTemplateService templates, IIntakeServiceBinding bindings, IOptions<Auth0Options> auth) : IntakeControllerBase(auth)
 {
     [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)] public sealed record CreateBody(string Name);
@@ -62,7 +62,7 @@ public sealed class IntakeTemplatesController(IIntakeTemplateService templates, 
     public async Task<IActionResult> Bind(Guid id, BindingBody body, CancellationToken ct) => Actor is not { } actor || Tenant is not { } tenant ? Unauthorized() : Map(await bindings.SetAsync(tenant, actor, id, body.TemplateId, body.Revision, ct));
 }
 
-[ApiController, IntakePrivacy, Route("api/v1/tenant/intake/bookings"), RequiresPortalPermission(PortalPermissions.Bookings, PortalPermissions.BookingsSelf)]
+[ApiController, IntakePrivacy, Route("api/v1/tenant/intake/bookings"), RequiresBusinessPermission(BusinessPermissions.Bookings, BusinessPermissions.BookingsSelf)]
 public sealed class IntakeReviewController(IIntakeSubmissionService intake, IOptions<Auth0Options> auth) : IntakeControllerBase(auth)
 {
     [HttpGet("{bookingId:guid}")]

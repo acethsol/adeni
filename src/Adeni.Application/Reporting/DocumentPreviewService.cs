@@ -16,7 +16,7 @@ public sealed class DocumentPreviewService(IPortalTenantAccessQuery access, IBil
     public async Task<Result<DocumentPreview>> GetAsync(Guid tenantId, Guid documentId, string actor, Guid? locationId, CancellationToken ct)
     {
         var user = await access.ResolveAsync(tenantId, actor, ct);
-        if (user.IsFailure || !user.Value!.Permissions.Any(x => x is PortalPermissions.Finance or PortalPermissions.Bookings))
+        if (user.IsFailure || !user.Value!.Permissions.Any(x => x is BusinessPermissions.Finance or BusinessPermissions.Bookings))
             return Result.Failure<DocumentPreview>(ErrorCodes.PermissionDeniedError());
         var entitlement = await entitlements.GetEntitlementsForMemberAsync(tenantId, actor, ct);
         if (entitlement.IsFailure) return Result.Failure<DocumentPreview>(entitlement.Error);

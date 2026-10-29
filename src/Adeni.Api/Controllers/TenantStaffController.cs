@@ -22,7 +22,7 @@ public sealed class TenantStaffController(
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet]
-    [RequiresPortalPermission(PortalPermissions.Staff)]
+    [RequiresBusinessPermission(BusinessPermissions.Staff)]
     public async Task<IActionResult> List(
         [FromQuery] Guid? locationId = null,
         CancellationToken cancellationToken = default)
@@ -50,7 +50,7 @@ public sealed class TenantStaffController(
     }
 
     [HttpPost]
-    [RequiresPortalPermission(PortalPermissions.Staff)]
+    [RequiresBusinessPermission(BusinessPermissions.Staff)]
     public async Task<IActionResult> Create(
         [FromBody] CreateStaffMemberRequest request,
         CancellationToken cancellationToken)
@@ -68,7 +68,7 @@ public sealed class TenantStaffController(
     }
 
     [HttpPatch("{id:guid}")]
-    [RequiresPortalPermission(PortalPermissions.Staff)]
+    [RequiresBusinessPermission(BusinessPermissions.Staff)]
     public async Task<IActionResult> Update(
         Guid id,
         [FromBody] UpdateStaffMemberRequest request,
@@ -84,7 +84,7 @@ public sealed class TenantStaffController(
     }
 
     [HttpPost("{id:guid}/deactivate")]
-    [RequiresPortalPermission(PortalPermissions.Staff)]
+    [RequiresBusinessPermission(BusinessPermissions.Staff)]
     public async Task<IActionResult> Deactivate(Guid id, CancellationToken cancellationToken)
     {
         if (ResolveAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
@@ -97,7 +97,7 @@ public sealed class TenantStaffController(
     }
 
     [HttpPut("{id:guid}/avatar")]
-    [RequiresPortalPermission(PortalPermissions.Staff)]
+    [RequiresBusinessPermission(BusinessPermissions.Staff)]
     public async Task<IActionResult> UpdateAvatar(
         Guid id,
         [FromBody] UpdateStaffAvatarRequest request,
@@ -117,7 +117,7 @@ public sealed class TenantStaffController(
     }
 
     [HttpPut("{id:guid}/services")]
-    [RequiresPortalPermission(PortalPermissions.Staff)]
+    [RequiresBusinessPermission(BusinessPermissions.Staff)]
     public async Task<IActionResult> ReplaceServices(
         Guid id,
         [FromBody] ReplaceStaffServicesRequest request,
@@ -137,7 +137,7 @@ public sealed class TenantStaffController(
     }
 
     [HttpGet("{id:guid}/hours")]
-    [RequiresPortalPermission(PortalPermissions.Staff, PortalPermissions.StaffSelf)]
+    [RequiresBusinessPermission(BusinessPermissions.Staff, BusinessPermissions.StaffSelf)]
     public async Task<IActionResult> GetHours(Guid id, CancellationToken cancellationToken)
     {
         if (DenyUnlessStaffAccess(id) is { } denied)
@@ -155,7 +155,7 @@ public sealed class TenantStaffController(
     }
 
     [HttpPut("{id:guid}/hours")]
-    [RequiresPortalPermission(PortalPermissions.Staff)]
+    [RequiresBusinessPermission(BusinessPermissions.Staff)]
     public async Task<IActionResult> ReplaceHours(
         Guid id,
         [FromBody] ReplaceStaffHoursRequest request,
@@ -175,7 +175,7 @@ public sealed class TenantStaffController(
     }
 
     [HttpGet("{id:guid}/leave")]
-    [RequiresPortalPermission(PortalPermissions.Staff, PortalPermissions.StaffSelf)]
+    [RequiresBusinessPermission(BusinessPermissions.Staff, BusinessPermissions.StaffSelf)]
     public async Task<IActionResult> ListLeave(
         Guid id,
         [FromQuery] DateTimeOffset? from,
@@ -197,7 +197,7 @@ public sealed class TenantStaffController(
     }
 
     [HttpPost("{id:guid}/leave")]
-    [RequiresPortalPermission(PortalPermissions.Staff, PortalPermissions.StaffSelf)]
+    [RequiresBusinessPermission(BusinessPermissions.Staff, BusinessPermissions.StaffSelf)]
     public async Task<IActionResult> CreateLeave(
         Guid id,
         [FromBody] CreateStaffLeaveRequest request,
@@ -221,7 +221,7 @@ public sealed class TenantStaffController(
     }
 
     [HttpDelete("{id:guid}/leave/{leaveId:guid}")]
-    [RequiresPortalPermission(PortalPermissions.Staff, PortalPermissions.StaffSelf)]
+    [RequiresBusinessPermission(BusinessPermissions.Staff, BusinessPermissions.StaffSelf)]
     public async Task<IActionResult> DeleteLeave(
         Guid id,
         Guid leaveId,
@@ -242,7 +242,7 @@ public sealed class TenantStaffController(
     }
 
     [HttpGet("team-calendar")]
-    [RequiresPortalPermission(PortalPermissions.Staff)]
+    [RequiresBusinessPermission(BusinessPermissions.Staff)]
     public async Task<IActionResult> GetTeamCalendar(
         [FromQuery] DateTimeOffset from,
         [FromQuery] DateTimeOffset to,
@@ -271,7 +271,7 @@ public sealed class TenantStaffController(
     }
 
     [HttpGet("{id:guid}/calendar")]
-    [RequiresPortalPermission(PortalPermissions.Staff, PortalPermissions.StaffSelf)]
+    [RequiresBusinessPermission(BusinessPermissions.Staff, BusinessPermissions.StaffSelf)]
     public async Task<IActionResult> GetCalendar(
         Guid id,
         [FromQuery] DateTimeOffset from,
@@ -306,7 +306,7 @@ public sealed class TenantStaffController(
     }
 
     [HttpPost("{id:guid}/invite")]
-    [RequiresPortalPermission(PortalPermissions.Staff)]
+    [RequiresBusinessPermission(BusinessPermissions.Staff)]
     public async Task<IActionResult> Invite(
         Guid id,
         [FromBody] CreateStaffInviteRequest request,

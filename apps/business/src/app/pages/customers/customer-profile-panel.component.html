@@ -1,4 +1,4 @@
-@if (session.can('portal.bookings') && (overviewVisible() || activityVisible())) {
+@if (session.can('business.bookings') && (overviewVisible() || activityVisible())) {
   @if (data.loading()) {
     <p class="muted profile-status" role="status">{{ tr('customerProfile.loading') }}</p>
   }

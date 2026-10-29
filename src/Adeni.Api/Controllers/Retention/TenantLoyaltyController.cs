@@ -24,7 +24,7 @@ public sealed class TenantLoyaltyController(
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet("program")]
-    [RequiresPortalPermission(PortalPermissions.Retention, PortalPermissions.Bookings)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention, BusinessPermissions.Bookings)]
     public async Task<IActionResult> GetProgram(CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
@@ -32,7 +32,7 @@ public sealed class TenantLoyaltyController(
     }
 
     [HttpPut("program")]
-    [RequiresPortalPermission(PortalPermissions.Retention)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention)]
     public async Task<IActionResult> UpsertProgram([FromBody] UpsertLoyaltyProgramRequest request, CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
@@ -41,7 +41,7 @@ public sealed class TenantLoyaltyController(
     }
 
     [HttpGet("customers/{tenantCustomerId:guid}/account")]
-    [RequiresPortalPermission(PortalPermissions.Retention, PortalPermissions.Bookings)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention, BusinessPermissions.Bookings)]
     public async Task<IActionResult> GetAccount(Guid tenantCustomerId, CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
@@ -50,7 +50,7 @@ public sealed class TenantLoyaltyController(
     }
 
     [HttpGet("customers/{tenantCustomerId:guid}/transactions")]
-    [RequiresPortalPermission(PortalPermissions.Retention, PortalPermissions.Bookings)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention, BusinessPermissions.Bookings)]
     public async Task<IActionResult> ListTransactions(
         Guid tenantCustomerId, [FromQuery] int limit = 50, CancellationToken cancellationToken = default)
     {
@@ -60,7 +60,7 @@ public sealed class TenantLoyaltyController(
     }
 
     [HttpPost("customers/{tenantCustomerId:guid}/adjust")]
-    [RequiresPortalPermission(PortalPermissions.Retention)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention)]
     public async Task<IActionResult> Adjust(
         Guid tenantCustomerId, [FromBody] AdjustLoyaltyPointsRequest request, CancellationToken cancellationToken)
     {

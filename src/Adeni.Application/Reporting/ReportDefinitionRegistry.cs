@@ -7,44 +7,44 @@ public static class ReportDefinitionRegistry
     private static readonly IReadOnlyDictionary<string, ReportDefinition> Definitions =
         new Dictionary<string, ReportDefinition>(StringComparer.OrdinalIgnoreCase)
         {
-            [ReportKeys.GiftCards] = new(ReportKeys.GiftCards, PortalPermissions.Finance, ReportBaseEntitlement.BasicExports,
+            [ReportKeys.GiftCards] = new(ReportKeys.GiftCards, BusinessPermissions.Finance, ReportBaseEntitlement.BasicExports,
                 new HashSet<ReportExportFormat> { ReportExportFormat.Csv }, RequiresMultiLocationReportingGate: true),
             [ReportKeys.BookingsRegister] = new(
                 ReportKeys.BookingsRegister,
-                PortalPermissions.Bookings,
+                BusinessPermissions.Bookings,
                 ReportBaseEntitlement.BasicExports,
                 new HashSet<ReportExportFormat> { ReportExportFormat.Csv, ReportExportFormat.Xlsx },
                 RequiresMultiLocationReportingGate: true),
             [ReportKeys.Compensation] = new(
                 ReportKeys.Compensation,
-                PortalPermissions.Finance,
+                BusinessPermissions.Finance,
                 ReportBaseEntitlement.AdvancedReports,
                 new HashSet<ReportExportFormat> { ReportExportFormat.Csv, ReportExportFormat.Xlsx },
                 RequiresMultiLocationReportingGate: true),
             [ReportKeys.SalesSummary] = new(
                 ReportKeys.SalesSummary,
-                PortalPermissions.Finance,
+                BusinessPermissions.Finance,
                 ReportBaseEntitlement.BasicExports,
                 new HashSet<ReportExportFormat> { ReportExportFormat.Csv, ReportExportFormat.Pdf },
                 RequiresMultiLocationReportingGate: true),
             [ReportKeys.StaffRoster] = new(
                 ReportKeys.StaffRoster,
-                PortalPermissions.Staff,
+                BusinessPermissions.Staff,
                 ReportBaseEntitlement.BasicExports,
                 new HashSet<ReportExportFormat> { ReportExportFormat.Csv }),
             [ReportKeys.TenantCustomers] = new(
                 ReportKeys.TenantCustomers,
-                PortalPermissions.Bookings,
+                BusinessPermissions.Bookings,
                 ReportBaseEntitlement.BasicExports,
                 new HashSet<ReportExportFormat> { ReportExportFormat.Csv, ReportExportFormat.Xlsx }),
             [ReportKeys.TenantLocations] = new(
                 ReportKeys.TenantLocations,
-                PortalPermissions.Locations,
+                BusinessPermissions.Locations,
                 ReportBaseEntitlement.BasicExports,
                 new HashSet<ReportExportFormat> { ReportExportFormat.Csv }),
             [ReportKeys.TenantServices] = new(
                 ReportKeys.TenantServices,
-                PortalPermissions.Services,
+                BusinessPermissions.Services,
                 ReportBaseEntitlement.BasicExports,
                 new HashSet<ReportExportFormat> { ReportExportFormat.Csv, ReportExportFormat.Xlsx }),
         };

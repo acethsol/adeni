@@ -30,7 +30,7 @@ export const routes: Routes = [
         loadComponent: () => import("./pages/dashboard/dashboard.component").then((m) => m.DashboardComponent),
       },
       { path: "settings/calendars", loadComponent: () => import("./pages/calendar-sync/calendar-sync.component").then(m => m.CalendarSyncComponent), canActivate: [calendarPermissionGuard], title: "Calendar sync" },
-      { path: "public-page/booking-links", loadComponent: () => import("./pages/calendar-sync/booking-links.component").then(m => m.BookingLinksComponent), canActivate: [portalPermissionGuard], data: { permission: "portal.public_page" }, title: "Book with Adeni" },
+      { path: "public-page/booking-links", loadComponent: () => import("./pages/calendar-sync/booking-links.component").then(m => m.BookingLinksComponent), canActivate: [portalPermissionGuard], data: { permission: "business.public_page" }, title: "Book with Adeni" },
       { path: "bookings/:id/intake", loadComponent: () => import("./pages/intake/intake-review.component").then(m => m.IntakeReviewComponent), canActivate: [portalPermissionGuard], title: "Consultation forms" },
       { path: "finance/quick-pay", loadComponent: () => import("./pages/commerce/commerce.component").then(m => m.CommerceComponent), canActivate: [commercePermissionGuard], title: "Quick Pay" },
       { path: "services/intake", loadComponent: () => import("./pages/intake/intake-manager.component").then(m => m.IntakeManagerComponent), canActivate: [portalPermissionGuard], title: "Consultation forms" },

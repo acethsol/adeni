@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
 /// <summary>
-/// Prepaid packages &amp; benefit ledger (Sprint 37.1). Mutations need <c>portal.retention</c> and the
+/// Prepaid packages &amp; benefit ledger (Sprint 37.1). Mutations need <c>business.retention</c> and the
 /// <c>packages</c> plan entitlement (enforced in the services); void is owner-only.
 /// </summary>
 [ApiController]
@@ -24,7 +24,7 @@ public sealed class TenantRetentionController(
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet("packages")]
-    [RequiresPortalPermission(PortalPermissions.Retention, PortalPermissions.Bookings)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention, BusinessPermissions.Bookings)]
     public async Task<IActionResult> ListPackages([FromQuery] bool activeOnly = false, CancellationToken cancellationToken = default)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
@@ -32,7 +32,7 @@ public sealed class TenantRetentionController(
     }
 
     [HttpPost("packages")]
-    [RequiresPortalPermission(PortalPermissions.Retention)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention)]
     public async Task<IActionResult> CreatePackage([FromBody] CreatePackageDefinitionRequest request, CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
@@ -41,7 +41,7 @@ public sealed class TenantRetentionController(
     }
 
     [HttpGet("packages/{id:guid}")]
-    [RequiresPortalPermission(PortalPermissions.Retention, PortalPermissions.Bookings)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention, BusinessPermissions.Bookings)]
     public async Task<IActionResult> GetPackage(Guid id, CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
@@ -49,7 +49,7 @@ public sealed class TenantRetentionController(
     }
 
     [HttpPatch("packages/{id:guid}")]
-    [RequiresPortalPermission(PortalPermissions.Retention)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention)]
     public async Task<IActionResult> UpdatePackage(Guid id, [FromBody] UpdatePackageDefinitionRequest request, CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
@@ -57,7 +57,7 @@ public sealed class TenantRetentionController(
     }
 
     [HttpPost("packages/{id:guid}/deactivate")]
-    [RequiresPortalPermission(PortalPermissions.Retention)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention)]
     public async Task<IActionResult> DeactivatePackage(Guid id, CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
@@ -65,7 +65,7 @@ public sealed class TenantRetentionController(
     }
 
     [HttpGet("customers/{tenantCustomerId:guid}/packages")]
-    [RequiresPortalPermission(PortalPermissions.Retention, PortalPermissions.Bookings)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention, BusinessPermissions.Bookings)]
     public async Task<IActionResult> ListCustomerPackages(Guid tenantCustomerId, CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
@@ -73,7 +73,7 @@ public sealed class TenantRetentionController(
     }
 
     [HttpPost("customers/{tenantCustomerId:guid}/packages/sell")]
-    [RequiresPortalPermission(PortalPermissions.Retention)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention)]
     public async Task<IActionResult> SellPackage(Guid tenantCustomerId, [FromBody] SellPackageRequest request, CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
@@ -88,7 +88,7 @@ public sealed class TenantRetentionController(
     }
 
     [HttpGet("customer-packages/{id:guid}")]
-    [RequiresPortalPermission(PortalPermissions.Retention, PortalPermissions.Bookings)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention, BusinessPermissions.Bookings)]
     public async Task<IActionResult> GetCustomerPackage(Guid id, CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
@@ -96,7 +96,7 @@ public sealed class TenantRetentionController(
     }
 
     [HttpGet("customer-packages/{id:guid}/ledger")]
-    [RequiresPortalPermission(PortalPermissions.Retention)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention)]
     public async Task<IActionResult> GetLedger(Guid id, CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
@@ -104,7 +104,7 @@ public sealed class TenantRetentionController(
     }
 
     [HttpPost("customer-packages/{id:guid}/void")]
-    [RequiresPortalPermission(PortalPermissions.Retention)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention)]
     public async Task<IActionResult> VoidCustomerPackage(Guid id, [FromBody] VoidCustomerPackageRequest? request, CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
@@ -119,7 +119,7 @@ public sealed class TenantRetentionController(
     }
 
     [HttpGet("customers/{tenantCustomerId:guid}/redeemable-benefits")]
-    [RequiresPortalPermission(PortalPermissions.Retention, PortalPermissions.Bookings)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention, BusinessPermissions.Bookings)]
     public async Task<IActionResult> RedeemableBenefits(
         Guid tenantCustomerId,
         [FromQuery] Guid? businessLocationId,

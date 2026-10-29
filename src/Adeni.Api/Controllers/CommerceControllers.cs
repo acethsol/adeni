@@ -36,7 +36,7 @@ public abstract class CommerceControllerBase : ControllerBase
     protected IActionResult Map<T>(Result<T> result) => ApiResults.FromResult(result, value => Ok(value), HttpContext);
 }
 
-[ApiController, CommercePrivacy, Route("api/v1/tenant/finance"), RequiresPortalPermission(PortalPermissions.Finance)]
+[ApiController, CommercePrivacy, Route("api/v1/tenant/finance"), RequiresBusinessPermission(BusinessPermissions.Finance)]
 public sealed class CommerceManagementController(ICommerceService commerce) : CommerceControllerBase
 {
     [HttpGet("pay-links")]
@@ -84,7 +84,7 @@ public sealed class CommercePrivacyController(ICommercePrivacyService privacy) :
     public async Task<IActionResult> Export(Guid id, CancellationToken ct) => Ok(await privacy.ExportAsync(id, ct));
 }
 
-[ApiController, CommercePrivacy, Route("api/v1/tenant/customers"), RequiresPortalPermission(PortalPermissions.Bookings)]
+[ApiController, CommercePrivacy, Route("api/v1/tenant/customers"), RequiresBusinessPermission(BusinessPermissions.Bookings)]
 public sealed class CustomerGiftMetadataController(Adeni.Application.Tenancy.ICustomerGiftCardsQueryService gifts) : CommerceControllerBase
 {
     [HttpGet("{id:guid}/purchased-gift-cards")]

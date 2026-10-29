@@ -16,7 +16,7 @@ using Microsoft.Extensions.Options;
 
 [ApiController]
 [Route("api/v1/tenant/subscription")]
-[RequiresPortalPermission(PortalPermissions.Overview, PortalPermissions.Plan)]
+[RequiresBusinessPermission(BusinessPermissions.Overview, BusinessPermissions.Plan)]
 public sealed class TenantSubscriptionController(
     ISubscriptionService subscriptionService,
     IOptions<Auth0Options> auth0Options) : ControllerBase
@@ -81,7 +81,7 @@ public sealed class TenantSubscriptionController(
 
 [ApiController]
 [Route("api/v1/tenant/billing")]
-[RequiresPortalPermission(PortalPermissions.Plan)]
+[RequiresBusinessPermission(BusinessPermissions.Plan)]
 public sealed class TenantBillingController(
     ISubscriptionBillingOrchestrator billingOrchestrator,
     IOptions<Auth0Options> auth0Options) : ControllerBase
@@ -153,7 +153,7 @@ public sealed class SubscriptionBillingController(
     IHostEnvironment environment) : ControllerBase
 {
     [HttpPost("checkout")]
-    [RequiresPortalPermission(PortalPermissions.Plan)]
+    [RequiresBusinessPermission(BusinessPermissions.Plan)]
     public async Task<IActionResult> CreateCheckout(
         [FromBody] CreateSubscriptionCheckoutRequest request,
         CancellationToken cancellationToken)
@@ -176,7 +176,7 @@ public sealed class SubscriptionBillingController(
 
     /// <summary>Stub/dev: finalize checkout when provider webhook is not wired (Development/Testing only).</summary>
     [HttpPost("checkout/complete")]
-    [RequiresPortalPermission(PortalPermissions.Plan)]
+    [RequiresBusinessPermission(BusinessPermissions.Plan)]
     public async Task<IActionResult> CompleteStubCheckout(
         [FromBody] CompleteStubSubscriptionCheckoutRequest body,
         CancellationToken cancellationToken)

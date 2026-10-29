@@ -8,7 +8,7 @@ using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
 
 public sealed class CustomerProfileQueryService(
-    IPortalPermissionService permissions,
+    IBusinessPermissionService permissions,
     ICustomerProfileContextQuery contexts,
     ITenantLocationScopeService locations,
     ICustomerBookingActivityQuery booking,
@@ -85,7 +85,7 @@ public sealed class CustomerProfileQueryService(
         if (actor.IsFailure) return Result.Failure<Access>(actor.Error);
         var user = actor.Value!;
         // Self-only customer aggregates are deferred: legacy customer and booking scopes differ.
-        if (user.TenantId != tenantId || !user.Permissions.Contains(PortalPermissions.Bookings))
+        if (user.TenantId != tenantId || !user.Permissions.Contains(BusinessPermissions.Bookings))
             return Result.Failure<Access>(ErrorCodes.PermissionDeniedError());
         var context = await contexts.GetAsync(tenantId, customerId, cancellationToken);
         if (context.IsFailure) return Result.Failure<Access>(context.Error);
@@ -95,9 +95,9 @@ public sealed class CustomerProfileQueryService(
         var entitlements = data.Entitlements;
         var availability = new CustomerSourceAvailability(
             "available",
-            !user.Permissions.Contains(PortalPermissions.Finance) ? "restricted"
+            !user.Permissions.Contains(BusinessPermissions.Finance) ? "restricted"
                 : !entitlements.BasicAnalytics ? "notEntitled" : data.CustomerId is null ? "notLinked" : "available",
-            !user.Permissions.Contains(PortalPermissions.Messages) ? "restricted"
+            !user.Permissions.Contains(BusinessPermissions.Messages) ? "restricted"
                 : !entitlements.Messaging ? "notEntitled" : data.CustomerId is null ? "notLinked"
                 : location.Value is not null ? "unscoped" : "available",
             Retention: packages is null ? "notImplemented" : !entitlements.Packages ? "notEntitled" : "available");

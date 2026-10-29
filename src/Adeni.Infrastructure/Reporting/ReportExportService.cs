@@ -45,10 +45,10 @@ public sealed class ReportExportService(
 
         var permissionOk = definition.RequiredPermission switch
         {
-            PortalPermissions.Bookings =>
-                request.PortalPermissions.Contains(PortalPermissions.Bookings)
-                || request.PortalPermissions.Contains(PortalPermissions.BookingsSelf),
-            _ => request.PortalPermissions.Contains(definition.RequiredPermission),
+            BusinessPermissions.Bookings =>
+                request.BusinessPermissions.Contains(BusinessPermissions.Bookings)
+                || request.BusinessPermissions.Contains(BusinessPermissions.BookingsSelf),
+            _ => request.BusinessPermissions.Contains(definition.RequiredPermission),
         };
 
         if (!permissionOk)

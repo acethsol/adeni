@@ -1509,7 +1509,7 @@ public static class DevelopmentDataSeeder
             Id = Guid.NewGuid(),
             TenantId = location.TenantId,
             Email = "fela@lekki.cuts",
-            PermissionRole = PortalPermissionRoles.Practitioner,
+            PermissionRole = BusinessPermissionRoles.Practitioner,
             StaffMemberId = staff?.Id,
             TokenHash = tokenHash,
             Status = StaffPortalInviteStatuses.Pending,

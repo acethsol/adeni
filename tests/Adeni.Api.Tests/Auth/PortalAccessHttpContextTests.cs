@@ -10,8 +10,8 @@ public sealed class PortalAccessHttpContextTests
     public void ResolveBookingsStaffScope_full_bookings_is_unscoped()
     {
         var access = Snapshot(
-            PortalPermissionRoles.Owner,
-            PortalPermissionRoles.PermissionsFor(PortalPermissionRoles.Owner),
+            BusinessPermissionRoles.Owner,
+            BusinessPermissionRoles.PermissionsFor(BusinessPermissionRoles.Owner),
             staffMemberId: null);
 
         var (failClosed, staffId) = PortalAccessHttpContext.ResolveBookingsStaffScope(access);
@@ -25,8 +25,8 @@ public sealed class PortalAccessHttpContextTests
     {
         var staffId = Guid.NewGuid();
         var access = Snapshot(
-            PortalPermissionRoles.Practitioner,
-            PortalPermissionRoles.PermissionsFor(PortalPermissionRoles.Practitioner),
+            BusinessPermissionRoles.Practitioner,
+            BusinessPermissionRoles.PermissionsFor(BusinessPermissionRoles.Practitioner),
             staffId);
 
         var (failClosed, scoped) = PortalAccessHttpContext.ResolveBookingsStaffScope(access);
@@ -39,8 +39,8 @@ public sealed class PortalAccessHttpContextTests
     public void ResolveBookingsStaffScope_practitioner_without_link_fails_closed()
     {
         var access = Snapshot(
-            PortalPermissionRoles.Practitioner,
-            PortalPermissionRoles.PermissionsFor(PortalPermissionRoles.Practitioner),
+            BusinessPermissionRoles.Practitioner,
+            BusinessPermissionRoles.PermissionsFor(BusinessPermissionRoles.Practitioner),
             staffMemberId: null);
 
         var (failClosed, scoped) = PortalAccessHttpContext.ResolveBookingsStaffScope(access);
@@ -55,8 +55,8 @@ public sealed class PortalAccessHttpContextTests
         var own = Guid.NewGuid();
         var other = Guid.NewGuid();
         var access = Snapshot(
-            PortalPermissionRoles.Practitioner,
-            PortalPermissionRoles.PermissionsFor(PortalPermissionRoles.Practitioner),
+            BusinessPermissionRoles.Practitioner,
+            BusinessPermissionRoles.PermissionsFor(BusinessPermissionRoles.Practitioner),
             own);
 
         Assert.True(PortalAccessHttpContext.CanAccessStaffMember(access, own));
@@ -67,8 +67,8 @@ public sealed class PortalAccessHttpContextTests
     public void CanAccessStaffMember_manager_any_id()
     {
         var access = Snapshot(
-            PortalPermissionRoles.Manager,
-            PortalPermissionRoles.PermissionsFor(PortalPermissionRoles.Manager),
+            BusinessPermissionRoles.Manager,
+            BusinessPermissionRoles.PermissionsFor(BusinessPermissionRoles.Manager),
             staffMemberId: null);
 
         Assert.True(PortalAccessHttpContext.CanAccessStaffMember(access, Guid.NewGuid()));

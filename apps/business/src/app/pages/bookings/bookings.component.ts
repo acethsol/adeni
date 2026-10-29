@@ -124,7 +124,7 @@ export class BookingsComponent {
   );
   readonly bookingSearch = signal("");
   readonly viewMode = signal<AdeniListViewMode>(
-    readPersistedListViewMode("portal.bookings", "cards"),
+    readPersistedListViewMode("business.bookings", "cards"),
   );
 
   readonly exporting = signal(false);
@@ -248,7 +248,7 @@ export class BookingsComponent {
   }
 
   pageDescription(): string {
-    if (this.session.can("portal.bookings.self") && !this.session.can("portal.bookings")) {
+    if (this.session.can("business.bookings.self") && !this.session.can("business.bookings")) {
       return this.tr("portal.bookings.yourAssignedAppointmentsAcceptCheck");
     }
     return this.tr("portal.bookings.acceptRequestsCheckClientsComplete");

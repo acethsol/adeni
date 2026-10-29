@@ -71,7 +71,7 @@ public sealed class StaffService(
             {
                 accessStatus = PortalAccessStatuses.Active;
                 businessUserId = user.Id;
-                permissionRole = PortalPermissionRoles.Normalize(user.Role);
+                permissionRole = BusinessPermissionRoles.Normalize(user.Role);
             }
             else if (inviteByStaff.TryGetValue(member.Id, out var invite))
             {

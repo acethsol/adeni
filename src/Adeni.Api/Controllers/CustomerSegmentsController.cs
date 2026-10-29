@@ -12,7 +12,7 @@ using Microsoft.Extensions.Options;
 
 [ApiController]
 [Route("api/v1/tenant")]
-[RequiresPortalPermission(PortalPermissions.Bookings)]
+[RequiresBusinessPermission(BusinessPermissions.Bookings)]
 public sealed class CustomerSegmentsController(ICustomerSegmentsQueryService segments, IOptions<Auth0Options> auth0) : ControllerBase
 {
     [HttpGet("customer-segments/definitions")]

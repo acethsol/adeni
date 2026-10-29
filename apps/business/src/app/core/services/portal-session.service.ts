@@ -1,10 +1,10 @@
 import { Injectable, inject, signal } from "@angular/core";
 import {
-  hasPortalPermission,
-  normalizePortalPermissionRole,
+  hasBusinessPermission,
+  normalizeBusinessPermissionRole,
   permissionsForRole,
-  type PortalPermission,
-  type PortalPermissionRole,
+  type BusinessPermission,
+  type BusinessPermissionRole,
 } from "@adeni/shared";
 import { BusinessApiService } from "./business-api.service";
 
@@ -12,8 +12,8 @@ import { BusinessApiService } from "./business-api.service";
 export class PortalSessionService {
   private readonly api = inject(BusinessApiService);
 
-  readonly permissionRole = signal<PortalPermissionRole>("owner");
-  readonly permissions = signal<readonly PortalPermission[]>([]);
+  readonly permissionRole = signal<BusinessPermissionRole>("owner");
+  readonly permissions = signal<readonly BusinessPermission[]>([]);
   readonly staffMemberId = signal<string | null>(null);
   readonly loaded = signal(false);
 
@@ -27,8 +27,8 @@ export class PortalSessionService {
   async refresh(): Promise<void> {
     try {
       const context = await this.api.withAuthorizedClient((client) => client.getBusinessContext());
-      const role = normalizePortalPermissionRole(context.permissionRole);
-      const fromApi = (context.permissions ?? []) as PortalPermission[];
+      const role = normalizeBusinessPermissionRole(context.permissionRole);
+      const fromApi = (context.permissions ?? []) as BusinessPermission[];
       this.permissionRole.set(role);
       this.permissions.set(fromApi.length > 0 ? fromApi : permissionsForRole(role));
       this.staffMemberId.set(context.staffMemberId ?? null);
@@ -42,10 +42,10 @@ export class PortalSessionService {
     }
   }
 
-  can(required: PortalPermission | readonly PortalPermission[] | undefined): boolean {
+  can(required: BusinessPermission | readonly BusinessPermission[] | undefined): boolean {
     if (!required) {
       return true;
     }
-    return hasPortalPermission(this.permissions(), required);
+    return hasBusinessPermission(this.permissions(), required);
   }
 }

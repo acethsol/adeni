@@ -51,7 +51,7 @@ public sealed class FinanceController(
     }
 
     [HttpPost("links")]
-    [RequiresPortalPermission(PortalPermissions.Finance)]
+    [RequiresBusinessPermission(BusinessPermissions.Finance)]
     public async Task<IActionResult> CreateLink(
         [FromBody] CreatePaymentLinkRequest request,
         CancellationToken cancellationToken)
@@ -129,7 +129,7 @@ public sealed class FinanceController(
     }
 
     [HttpGet("compensation-export")]
-    [RequiresPortalPermission(PortalPermissions.Finance)]
+    [RequiresBusinessPermission(BusinessPermissions.Finance)]
     public async Task<IActionResult> CompensationExport(
         [FromQuery] Guid tenantId,
         [FromQuery] DateTimeOffset from,
@@ -172,7 +172,7 @@ public sealed class FinanceController(
     }
 
     [HttpGet("ledger")]
-    [RequiresPortalPermission(PortalPermissions.Finance)]
+    [RequiresBusinessPermission(BusinessPermissions.Finance)]
     public async Task<IActionResult> Ledger(
         [FromQuery] Guid tenantId,
         [FromQuery] int page = 1,
@@ -218,7 +218,7 @@ public sealed class FinanceController(
     }
 
     [HttpPost("{id:guid}/refund")]
-    [RequiresPortalPermission(PortalPermissions.Finance)]
+    [RequiresBusinessPermission(BusinessPermissions.Finance)]
     public async Task<IActionResult> Refund(
         Guid id,
         [FromBody] RefundPaymentRequest request,

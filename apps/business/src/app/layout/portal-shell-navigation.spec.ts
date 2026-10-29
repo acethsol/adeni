@@ -1,5 +1,5 @@
 import { computed, signal } from "@angular/core";
-import { businessProfileSchema, permissionsForRole, PLAN_ENTITLEMENTS, tenantEntitlementsSchema, type PortalPermission } from "@adeni/shared";
+import { businessProfileSchema, permissionsForRole, PLAN_ENTITLEMENTS, tenantEntitlementsSchema, type BusinessPermission } from "@adeni/shared";
 import { CHROME } from "./portal-shell-copy";
 import { portalNavigationGroups, portalSearchResults } from "./portal-shell-navigation";
 
@@ -9,7 +9,7 @@ describe("Portal shell navigation", () => {
     phone: "", description: "", createdAt: "2026-01-01", locations: [], verificationDocuments: [], entitlements });
 
   it("keeps permission, capability and entitlement navigation gates separate and reactive", () => {
-    const permissions = signal<readonly PortalPermission[]>(permissionsForRole("owner"));
+    const permissions = signal<readonly BusinessPermission[]>(permissionsForRole("owner"));
     const groups = computed(() => portalNavigationGroups({ profile, profileLoaded: true, permissions: permissions() }));
     const paths = () => groups().flatMap(group => group.items.map(item => item.path));
     expect(paths()).toContain("/services");

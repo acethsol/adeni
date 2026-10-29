@@ -104,7 +104,7 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
             BusinessSub + "-accountant",
             "Accountant Shop",
             "messaging-accountant-shop",
-            role: PortalPermissionRoles.Accountant);
+            role: BusinessPermissionRoles.Accountant);
 
         var businessClient = _factory.CreateClient();
         businessClient.DefaultRequestHeaders.Add("X-Dev-Auth0-Sub", BusinessSub + "-accountant");
@@ -297,7 +297,7 @@ public sealed class MessagingIntegrationTests : IClassFixture<WebApplicationFact
         string name,
         string slug,
         bool faqEnabled = false,
-        string role = PortalPermissionRoles.Owner)
+        string role = BusinessPermissionRoles.Owner)
     {
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();

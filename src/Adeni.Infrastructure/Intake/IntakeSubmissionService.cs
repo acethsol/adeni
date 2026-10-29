@@ -14,7 +14,7 @@ using Adeni.Infrastructure.Persistence;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
-public sealed class IntakeSubmissionService(AdeniDbContext db, IIntakeBookingQuery bookings, IPortalPermissionService permissions,
+public sealed class IntakeSubmissionService(AdeniDbContext db, IIntakeBookingQuery bookings, IBusinessPermissionService permissions,
     IIntakeManagementAccessQuery management, IAuditLogWriter audit, ICorrelationContext correlation, TimeProvider clock) : IIntakeSubmissionService
 {
     private bool Open(IntakeBookingFacts b) => b.Status is 0 or 1 && clock.GetUtcNow() < b.StartAt;
@@ -123,8 +123,8 @@ public sealed class IntakeSubmissionService(AdeniDbContext db, IIntakeBookingQue
         var resolved = await permissions.ResolveAsync(actor, ct);
         if (resolved.IsFailure || resolved.Value!.TenantId != tenantId) return false;
         var access = resolved.Value;
-        return access.Permissions.Contains(PortalPermissions.Bookings)
-            || (access.Permissions.Contains(PortalPermissions.BookingsSelf) && access.StaffMemberId is not null && access.StaffMemberId == b.StaffMemberId);
+        return access.Permissions.Contains(BusinessPermissions.Bookings)
+            || (access.Permissions.Contains(BusinessPermissions.BookingsSelf) && access.StaffMemberId is not null && access.StaffMemberId == b.StaffMemberId);
     }
     public async Task<Result<IReadOnlyList<IntakeAssignmentStatus>>> StaffStatusesAsync(Guid tenantId, string actor, Guid bookingId, CancellationToken cancellationToken = default)
     {
@@ -139,7 +139,7 @@ public sealed class IntakeSubmissionService(AdeniDbContext db, IIntakeBookingQue
         var b = await bookings.GetAsync(tenantId, bookingId, cancellationToken);
         if (b is null) return Missing();
         var resolved = await permissions.ResolveAsync(actor, cancellationToken);
-        if (resolved.IsFailure || resolved.Value!.TenantId != tenantId || !resolved.Value.Permissions.Contains(PortalPermissions.Bookings))
+        if (resolved.IsFailure || resolved.Value!.TenantId != tenantId || !resolved.Value.Permissions.Contains(BusinessPermissions.Bookings))
             return Result.Failure<IntakeSubmissionView>(ErrorCodes.PermissionDeniedError());
         var a = await AssignmentAsync(b, assignmentId, cancellationToken);
         if (a is null) return Missing();

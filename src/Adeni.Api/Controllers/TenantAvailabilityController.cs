@@ -15,7 +15,7 @@ using Microsoft.Extensions.Options;
 
 [ApiController]
 [Route("api/v1/tenant/availability")]
-[RequiresPortalPermission(PortalPermissions.Hours)]
+[RequiresBusinessPermission(BusinessPermissions.Hours)]
 public sealed class TenantAvailabilityController(
     IAvailabilityService availability,
     ITenantLocationScopeService locationScope,

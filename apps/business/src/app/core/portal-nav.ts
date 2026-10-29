@@ -1,4 +1,4 @@
-import type { Capability, PortalPermission, TenantEntitlementFlag } from "@adeni/shared";
+import type { Capability, BusinessPermission, TenantEntitlementFlag } from "@adeni/shared";
 
 export type PortalNavIconName =
   | "overview"
@@ -49,12 +49,12 @@ export type PortalNavItem = {
   /** Subscription plan — hide route when not entitled (API enforces the same). */
   entitlement?: TenantEntitlementFlag;
   /** Portal RBAC — any listed permission grants access. */
-  permission?: PortalPermission | readonly PortalPermission[];
+  permission?: BusinessPermission | readonly BusinessPermission[];
   /**
    * Hide this item when the user also has this permission
    * (e.g. “My calendar” for practitioners only — not owners with full staff).
    */
-  excludeIfPermission?: PortalPermission;
+  excludeIfPermission?: BusinessPermission;
   badge?: "bookings" | "messages";
   /** Shown only before a business profile exists. */
   unregisteredOnly?: boolean;
@@ -79,14 +79,14 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         label: "Dashboard",
         icon: "overview",
         exact: true,
-        permission: "portal.overview",
+        permission: "business.overview",
       },
       {
         path: "/bookings",
         label: "Bookings",
         icon: "bookings",
         capability: "calendar",
-        permission: ["portal.bookings", "portal.bookings.self"],
+        permission: ["business.bookings", "business.bookings.self"],
         badge: "bookings",
         tabs: [
           { id: "pending", label: "Pending" },
@@ -98,13 +98,13 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         path: "/customers",
         label: "Customers",
         icon: "customers",
-        permission: ["portal.bookings", "portal.bookings.self"],
+        permission: ["business.bookings", "business.bookings.self"],
       },
       {
         path: "/retention",
         label: "Packages",
         icon: "payments",
-        permission: "portal.retention",
+        permission: "business.retention",
         entitlement: "packages",
         exact: true,
       },
@@ -112,14 +112,14 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         path: "/retention/memberships",
         label: "Memberships",
         icon: "payments",
-        permission: "portal.retention",
+        permission: "business.retention",
         entitlement: "memberships",
       },
       {
         path: "/retention/loyalty",
         label: "Loyalty",
         icon: "payments",
-        permission: "portal.retention",
+        permission: "business.retention",
         entitlement: "loyaltyBasic",
       },
       {
@@ -127,13 +127,13 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         label: "Queue",
         icon: "queue",
         capability: "walk_in_queue",
-        permission: ["portal.bookings", "portal.bookings.self"],
+        permission: ["business.bookings", "business.bookings.self"],
       },
       {
         path: "/kiosk",
         label: "Check-in",
         icon: "bookings",
-        permission: ["portal.bookings", "portal.bookings.self"],
+        permission: ["business.bookings", "business.bookings.self"],
         shellHidden: true,
       },
       {
@@ -141,28 +141,28 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         label: "Calendar",
         icon: "calendar",
         capability: "calendar",
-        permission: "portal.staff",
+        permission: "business.staff",
       },
       {
         path: "/my-calendar",
         label: "My calendar",
         icon: "calendar",
         capability: "calendar",
-        permission: "portal.staff.self",
-        excludeIfPermission: "portal.staff",
+        permission: "business.staff.self",
+        excludeIfpermission: "business.staff",
       },
       {
         path: "/quotes",
         label: "Quotes",
         icon: "quotes",
         capability: "quotes",
-        permission: "portal.quotes",
+        permission: "business.quotes",
       },
       {
         path: "/messages",
         label: "Messages",
         icon: "messages",
-        permission: "portal.messages",
+        permission: "business.messages",
         badge: "messages",
         tabs: [{ id: "inbox", label: "Inbox" }],
       },
@@ -173,22 +173,22 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
     id: "listing",
     label: "Setup",
     items: [
-      { path: "/services", label: "Services", icon: "services", permission: "portal.services" },
+      { path: "/services", label: "Services", icon: "services", permission: "business.services" },
       {
         path: "/availability",
         label: "Hours",
         icon: "availability",
         capability: "calendar",
-        permission: "portal.hours",
+        permission: "business.hours",
       },
       {
         path: "/staff",
         label: "Staff",
         icon: "staff",
         capability: "calendar",
-        permission: "portal.staff",
+        permission: "business.staff",
       },
-      { path: "/locations", label: "Locations", icon: "locations", permission: "portal.locations" },
+      { path: "/locations", label: "Locations", icon: "locations", permission: "business.locations" },
     ],
   },
   {
@@ -199,7 +199,7 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         path: "/profile",
         label: "Profile",
         icon: "profile",
-        permission: "portal.profile",
+        permission: "business.profile",
         tabs: [
           { id: "overview", label: "Overview" },
           { id: "business", label: "Business details" },
@@ -211,13 +211,13 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         path: "/public-page",
         label: "Public page",
         icon: "public",
-        permission: "portal.public_page",
+        permission: "business.public_page",
       },
       {
         path: "/settings",
         label: "Settings",
         icon: "settings",
-        permission: "portal.profile",
+        permission: "business.profile",
         tabs: [
           { id: "bookings", label: "Bookings" },
           { id: "notifications", label: "Notifications" },
@@ -230,19 +230,19 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         label: "Finance",
         icon: "payments",
         capability: "deposits",
-        permission: "portal.finance",
+        permission: "business.finance",
         tabs: [
           { id: "links", label: "Links" },
           { id: "ledger", label: "Ledger" },
         ],
       },
-      { path: "/plan", label: "Plan", icon: "plan", permission: "portal.plan" },
+      { path: "/plan", label: "Plan", icon: "plan", permission: "business.plan" },
       {
         path: "/__discover",
         label: "Discover",
         icon: "launch",
         openDiscover: true,
-        permission: "portal.overview",
+        permission: "business.overview",
       },
     ],
   },

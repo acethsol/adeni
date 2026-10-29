@@ -612,25 +612,25 @@
                       <strong>{{ tr('common.messages') }}</strong>
                       <span>{{ tr('portal.dashboard.replyBookingConversationsReachOut') }}</span>
                     </a>
-                  } @else if (session.can("portal.messages")) {
+                  } @else if (session.can("business.messages")) {
                     <a routerLink="/messages">
                       <strong>{{ tr('common.messages') }}</strong>
                       <span>{{ tr('portal.dashboard.sendQuickNoteOutsideInbox') }}</span>
                     </a>
                   }
-                  @if (session.can("portal.services")) {
+                  @if (session.can("business.services")) {
                     <a routerLink="/services">
                       <strong>{{ tr('common.services') }}</strong>
                       <span>{{ tr('portal.dashboard.pricesDurationWhatClientsCan') }}</span>
                     </a>
                   }
-                  @if (offers("calendar") && session.can("portal.hours")) {
+                  @if (offers("calendar") && session.can("business.hours")) {
                     <a routerLink="/availability">
                       <strong>{{ tr('common.hours') }}</strong>
                       <span>{{ tr('portal.dashboard.theWeekCustomersAllowedBook') }}</span>
                     </a>
                   }
-                  @if (session.can("portal.profile")) {
+                  @if (session.can("business.profile")) {
                     <a routerLink="/profile">
                       <strong>{{ tr('common.profile') }}</strong>
                       <span>{{ tr('portal.dashboard.coverShareLinkReviewsVerification') }}</span>

@@ -1,7 +1,7 @@
 import type { DashboardLayoutPresetId } from "./dashboard-layout-presets";
 import { t } from "./i18n";
 import { getMarketById } from "./markets";
-import type { PortalPermissionRole } from "./portal-permissions";
+import type { BusinessPermissionRole } from "./business-permissions";
 
 export type DashboardLayoutPresetDisplayCopy = {
   focus: string;
@@ -49,7 +49,7 @@ export function getDashboardLayoutPresetDisplayCopy(
 
 export function resolveRecommendedDashboardLayoutPresetId(opts: {
   isPractitionerView: boolean;
-  permissionRole: PortalPermissionRole;
+  permissionRole: BusinessPermissionRole;
 }): DashboardLayoutPresetId {
   if (opts.isPractitionerView) {
     return "practitioner";

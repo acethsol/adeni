@@ -36,7 +36,7 @@ public sealed class TenantQuotesController(
     }
 
     [HttpGet("{id:guid}/pdf")]
-    [RequiresPortalPermission(PortalPermissions.Quotes)]
+    [RequiresBusinessPermission(BusinessPermissions.Quotes)]
     public async Task<IActionResult> Pdf(Guid id, CancellationToken cancellationToken)
     {
         var auth0Sub = ResolveAuth0Sub();

@@ -2,7 +2,7 @@ import { signal, type WritableSignal } from "@angular/core";
 import { TestBed } from "@angular/core/testing";
 import { provideRouter } from "@angular/router";
 import { AdeniLocaleService } from "@adeni/ui";
-import { customerActivitySchema, customerProfileSchema, type CustomerProfile, type CustomerActivity, type PortalPermission } from "@adeni/shared";
+import { customerActivitySchema, customerProfileSchema, type CustomerProfile, type CustomerActivity, type BusinessPermission } from "@adeni/shared";
 import { PortalSessionService } from "../../core/services/portal-session.service";
 import { CustomerProfileDataService } from "./customer-profile-data.service";
 import { CustomerProfilePanelComponent } from "./customer-profile-panel.component";
@@ -26,7 +26,7 @@ describe("CustomerProfilePanelComponent", () => {
       load: jasmine.createSpy().and.resolveTo(), loadMore: jasmine.createSpy().and.resolveTo(), cancel: jasmine.createSpy(),
     };
     TestBed.configureTestingModule({ imports: [CustomerProfilePanelComponent], providers: [provideRouter([]),
-      { provide: PortalSessionService, useValue: { ensureLoaded: async () => {}, can: (permission: PortalPermission) => canBook && permission === "portal.bookings" } },
+      { provide: PortalSessionService, useValue: { ensureLoaded: async () => {}, can: (permission: BusinessPermission) => canBook && permission === "business.bookings" } },
       { provide: AdeniLocaleService, useValue: { locale: signal("en") } }] });
     TestBed.overrideComponent(CustomerProfilePanelComponent, { set: { providers: [{ provide: CustomerProfileDataService, useValue: data }] } });
   });

@@ -11,20 +11,20 @@ export const staffCalendarGuard: CanActivateFn = async (route) => {
 
   await session.ensureLoaded();
 
-  if (session.can("portal.staff")) {
+  if (session.can("business.staff")) {
     return true;
   }
 
   const id = route.paramMap.get("id");
-  if (session.can("portal.staff.self") && id && id === session.staffMemberId()) {
+  if (session.can("business.staff.self") && id && id === session.staffMemberId()) {
     return true;
   }
 
-  if (session.can("portal.staff.self") && session.staffMemberId()) {
+  if (session.can("business.staff.self") && session.staffMemberId()) {
     return router.createUrlTree(["/my-calendar"]);
   }
 
-  if (session.can("portal.overview")) {
+  if (session.can("business.overview")) {
     return router.createUrlTree(["/dashboard"]);
   }
 

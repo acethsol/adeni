@@ -21,12 +21,12 @@ public sealed class TenantReportingController(
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet("exports/{reportKey}")]
-    [RequiresPortalPermission(
-        PortalPermissions.Overview,
-        PortalPermissions.Bookings,
-        PortalPermissions.BookingsSelf,
-        PortalPermissions.Finance,
-        PortalPermissions.Staff)]
+    [RequiresBusinessPermission(
+        BusinessPermissions.Overview,
+        BusinessPermissions.Bookings,
+        BusinessPermissions.BookingsSelf,
+        BusinessPermissions.Finance,
+        BusinessPermissions.Staff)]
     public async Task<IActionResult> Export(
         string reportKey,
         [FromQuery] DateTimeOffset from,

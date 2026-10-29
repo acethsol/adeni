@@ -215,7 +215,7 @@ public sealed class StaffAccessService(
             Id = Guid.NewGuid(),
             TenantId = invite.TenantId,
             Auth0Sub = auth0Sub,
-            Role = PortalPermissionRoles.Normalize(invite.PermissionRole),
+            Role = BusinessPermissionRoles.Normalize(invite.PermissionRole),
             StaffMemberId = invite.StaffMemberId,
             CreatedAt = now,
         };
@@ -276,19 +276,19 @@ public sealed class StaffAccessService(
         }
 
         var newRole = request.PermissionRole?.Trim().ToLowerInvariant();
-        if (!PortalPermissionRoles.IsValid(newRole))
+        if (!BusinessPermissionRoles.IsValid(newRole))
         {
             return Result.Failure<TenantAccessUserResponse>(
                 Error.Validation("A valid permission role is required."));
         }
 
-        var currentRole = PortalPermissionRoles.Normalize(user.Role);
+        var currentRole = BusinessPermissionRoles.Normalize(user.Role);
         if (currentRole == newRole)
         {
             return Result.Success(ToUserResponse(user));
         }
 
-        if (currentRole == PortalPermissionRoles.Owner && newRole != PortalPermissionRoles.Owner)
+        if (currentRole == BusinessPermissionRoles.Owner && newRole != BusinessPermissionRoles.Owner)
         {
             var ownerCount = await CountOwnersAsync(tenantId, cancellationToken);
             if (ownerCount <= 1)
@@ -298,7 +298,7 @@ public sealed class StaffAccessService(
         }
 
         // Owners are created via registration — do not promote via this path.
-        if (newRole == PortalPermissionRoles.Owner && currentRole != PortalPermissionRoles.Owner)
+        if (newRole == BusinessPermissionRoles.Owner && currentRole != BusinessPermissionRoles.Owner)
         {
             return Result.Failure<TenantAccessUserResponse>(
                 Error.Validation("Owner access is created through business registration, not role edits."));
@@ -340,7 +340,7 @@ public sealed class StaffAccessService(
             return Result.Failure(Error.NotFound("Business user"));
         }
 
-        if (PortalPermissionRoles.Normalize(user.Role) == PortalPermissionRoles.Owner)
+        if (BusinessPermissionRoles.Normalize(user.Role) == BusinessPermissionRoles.Owner)
         {
             var ownerCount = await CountOwnersAsync(tenantId, cancellationToken);
             if (ownerCount <= 1)
@@ -349,7 +349,7 @@ public sealed class StaffAccessService(
             }
         }
 
-        var revokedRole = PortalPermissionRoles.Normalize(user.Role);
+        var revokedRole = BusinessPermissionRoles.Normalize(user.Role);
         dbContext.BusinessUsers.Remove(user);
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -411,7 +411,7 @@ public sealed class StaffAccessService(
             permissionRole = ResolveInviteRole(request.PermissionRole, floorRoleKey: null);
         }
 
-        if (permissionRole == PortalPermissionRoles.Owner)
+        if (permissionRole == BusinessPermissionRoles.Owner)
         {
             return Result.Failure<StaffPortalInviteResponse>(
                 Error.Validation("Owner access is created through business registration, not invites."));
@@ -472,7 +472,7 @@ public sealed class StaffAccessService(
         dbContext.BusinessUsers
             .AsNoTracking()
             .CountAsync(
-                x => x.TenantId == tenantId && x.Role == PortalPermissionRoles.Owner,
+                x => x.TenantId == tenantId && x.Role == BusinessPermissionRoles.Owner,
                 cancellationToken);
 
     private async Task WriteAuditAsync(
@@ -534,13 +534,13 @@ public sealed class StaffAccessService(
         if (!string.IsNullOrWhiteSpace(requested))
         {
             var normalized = requested.Trim().ToLowerInvariant();
-            if (PortalPermissionRoles.IsValid(normalized) && normalized != PortalPermissionRoles.Owner)
+            if (BusinessPermissionRoles.IsValid(normalized) && normalized != BusinessPermissionRoles.Owner)
             {
                 return normalized;
             }
         }
 
-        return PortalPermissionRoles.DefaultForFloorRole(floorRoleKey);
+        return BusinessPermissionRoles.DefaultForFloorRole(floorRoleKey);
     }
 
     private static string? NormalizeEmail(string? email)
@@ -588,7 +588,7 @@ public sealed class StaffAccessService(
     private static TenantAccessUserResponse ToUserResponse(BusinessUser user) =>
         new(
             user.Id,
-            PortalPermissionRoles.Normalize(user.Role),
+            BusinessPermissionRoles.Normalize(user.Role),
             user.StaffMemberId,
             user.CreatedAt);
 }

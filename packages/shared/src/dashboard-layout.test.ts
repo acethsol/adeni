@@ -30,7 +30,7 @@ function ctx(
     isPractitionerView: false,
     entitlements: starterEntitlements,
     capabilities: ["calendar"],
-    canPortal: () => true,
+    canBusiness: () => true,
     ...partial,
   };
 }

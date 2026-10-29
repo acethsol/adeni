@@ -48,7 +48,7 @@ export class CustomerProfilePanelComponent {
       let active = true;
       onCleanup(() => { active = false; this.data.cancel(); });
       void this.session.ensureLoaded().then(() => {
-        if (active && this.session.can("portal.bookings")) void this.data.load(id, location);
+        if (active && this.session.can("business.bookings")) void this.data.load(id, location);
       });
     });
   }

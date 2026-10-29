@@ -13,7 +13,7 @@ using Microsoft.Extensions.Options;
 
 [ApiController]
 [Route("api/v1/tenant/closed-dates")]
-[RequiresPortalPermission(PortalPermissions.Hours)]
+[RequiresBusinessPermission(BusinessPermissions.Hours)]
 public sealed class TenantClosedDatesController(
     IBusinessClosedDateService closedDates,
     IOptions<Auth0Options> auth0Options) : ControllerBase

@@ -12,10 +12,10 @@ public sealed class PortalTenantAccessQuery(AdeniDbContext db) : IPortalTenantAc
     {
         var user = await db.BusinessUsers.AsNoTracking()
             .SingleOrDefaultAsync(x => x.TenantId == tenantId && x.Auth0Sub == auth0Sub, ct);
-        if (string.IsNullOrWhiteSpace(auth0Sub) || user is null || !PortalPermissionRoles.IsValid(user.Role))
+        if (string.IsNullOrWhiteSpace(auth0Sub) || user is null || !BusinessPermissionRoles.IsValid(user.Role))
             return Result.Failure<PortalAccessSnapshot>(ErrorCodes.PermissionDeniedError());
         var role = user.Role.Trim().ToLowerInvariant();
-        return Result.Success(new PortalAccessSnapshot(user.Id, tenantId, role, PortalPermissionRoles.PermissionsFor(role), user.StaffMemberId));
+        return Result.Success(new PortalAccessSnapshot(user.Id, tenantId, role, BusinessPermissionRoles.PermissionsFor(role), user.StaffMemberId));
     }
 
     public async Task<IReadOnlySet<Guid>> GetErasedAsync(IReadOnlyCollection<Guid> customerIds, CancellationToken ct)

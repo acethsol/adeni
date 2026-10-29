@@ -21,7 +21,7 @@ public sealed class BillingDocumentsController(
     Adeni.Application.Reporting.IDocumentPreviewService previews) : ControllerBase
 {
     [HttpGet]
-    [RequiresPortalPermission(PortalPermissions.Finance, PortalPermissions.Bookings)]
+    [RequiresBusinessPermission(BusinessPermissions.Finance, BusinessPermissions.Bookings)]
     public async Task<IActionResult> List(
         [FromQuery] string? kind = null,
         [FromQuery] Guid? bookingId = null,
@@ -45,7 +45,7 @@ public sealed class BillingDocumentsController(
     }
 
     [HttpGet("{id:guid}")]
-    [RequiresPortalPermission(PortalPermissions.Finance, PortalPermissions.Bookings)]
+    [RequiresBusinessPermission(BusinessPermissions.Finance, BusinessPermissions.Bookings)]
     public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
     {
         if (ResolveBusinessAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
@@ -71,7 +71,7 @@ public sealed class BillingDocumentsController(
 
     [HttpGet("{id:guid}/pdf")]
     [EnableRateLimiting(RateLimitingExtensions.PublicReadPolicy)]
-    [RequiresPortalPermission(PortalPermissions.Finance, PortalPermissions.Bookings)]
+    [RequiresBusinessPermission(BusinessPermissions.Finance, BusinessPermissions.Bookings)]
     public async Task<IActionResult> Pdf(Guid id, CancellationToken cancellationToken, [FromQuery] Guid? locationId = null)
     {
         if (ResolveBusinessAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
@@ -112,7 +112,7 @@ public sealed class BillingDocumentsController(
     }
 
     [HttpPost("invoices")]
-    [RequiresPortalPermission(PortalPermissions.Finance)]
+    [RequiresBusinessPermission(BusinessPermissions.Finance)]
     public async Task<IActionResult> CreateInvoice(
         [FromBody] CreateInvoiceRequest request,
         CancellationToken cancellationToken)
@@ -134,7 +134,7 @@ public sealed class BillingDocumentsController(
     }
 
     [HttpPost("{id:guid}/void")]
-    [RequiresPortalPermission(PortalPermissions.Finance)]
+    [RequiresBusinessPermission(BusinessPermissions.Finance)]
     public async Task<IActionResult> Void(
         Guid id,
         [FromBody] VoidBillingDocumentRequest? body,
@@ -154,7 +154,7 @@ public sealed class BillingDocumentsController(
     }
 
     [HttpPost("{id:guid}/email")]
-    [RequiresPortalPermission(PortalPermissions.Finance, PortalPermissions.Bookings)]
+    [RequiresBusinessPermission(BusinessPermissions.Finance, BusinessPermissions.Bookings)]
     public async Task<IActionResult> Email(
         Guid id,
         [FromBody] EmailBillingDocumentRequest? body,

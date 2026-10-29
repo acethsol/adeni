@@ -28,9 +28,9 @@ public sealed class CustomerProfileQueryServiceTests
     }
 
     [Theory]
-    [InlineData(PortalPermissionRoles.Owner, true, true)]
-    [InlineData(PortalPermissionRoles.Manager, true, true)]
-    [InlineData(PortalPermissionRoles.Receptionist, false, true)]
+    [InlineData(BusinessPermissionRoles.Owner, true, true)]
+    [InlineData(BusinessPermissionRoles.Manager, true, true)]
+    [InlineData(BusinessPermissionRoles.Receptionist, false, true)]
     public async Task Profile_UsesServerPermissionsWithoutCallingRestrictedSources(string role, bool finance, bool messages)
     {
         actor.Role = role;
@@ -58,7 +58,7 @@ public sealed class CustomerProfileQueryServiceTests
     [Fact]
     public async Task Profile_WithPackagesEntitlement_ExposesRetentionSummary()
     {
-        actor.Role = PortalPermissionRoles.Owner;
+        actor.Role = BusinessPermissionRoles.Owner;
         context.Entitlements = context.Entitlements with { Packages = true };
         var summaries = new PackageSummaries(new(1, 2, ["Cut x3"]));
         actor.TenantId = tenant;
@@ -73,7 +73,7 @@ public sealed class CustomerProfileQueryServiceTests
     [Fact]
     public async Task Profile_WithoutPackagesEntitlement_ReportsNotEntitledAndSkipsQuery()
     {
-        actor.Role = PortalPermissionRoles.Owner;
+        actor.Role = BusinessPermissionRoles.Owner;
         context.Entitlements = context.Entitlements with { Packages = false };
         var summaries = new PackageSummaries(new(1, 2, ["Cut x3"]));
         actor.TenantId = tenant;
@@ -86,9 +86,9 @@ public sealed class CustomerProfileQueryServiceTests
         Assert.Equal(0, summaries.Calls);
     }
     [Theory]
-    [InlineData(PortalPermissionRoles.Practitioner)]
-    [InlineData(PortalPermissionRoles.Accountant)]
-    [InlineData(PortalPermissionRoles.Ops)]
+    [InlineData(BusinessPermissionRoles.Practitioner)]
+    [InlineData(BusinessPermissionRoles.Accountant)]
+    [InlineData(BusinessPermissionRoles.Ops)]
     public async Task Profile_WithoutFullBookingsPermission_DeniesBeforeReadingCustomer(string role)
     {
         actor.Role = role;
@@ -226,14 +226,14 @@ public sealed class CustomerProfileQueryServiceTests
         public DateTimeOffset Now = new(2026, 10, 25, 12, 0, 0, TimeSpan.Zero);
         public override DateTimeOffset GetUtcNow() => Now;
     }
-    private sealed class Actor : IPortalPermissionService
+    private sealed class Actor : IBusinessPermissionService
     {
         public static readonly Guid OriginalId = Guid.NewGuid();
         public Guid Id = OriginalId;
         public Guid TenantId;
-        public string Role = PortalPermissionRoles.Owner;
+        public string Role = BusinessPermissionRoles.Owner;
         public Task<Result<PortalAccessSnapshot>> ResolveAsync(string sub, CancellationToken ct) =>
-            Task.FromResult(Result.Success(new PortalAccessSnapshot(Id, TenantId, Role, PortalPermissionRoles.PermissionsFor(Role), null)));
+            Task.FromResult(Result.Success(new PortalAccessSnapshot(Id, TenantId, Role, BusinessPermissionRoles.PermissionsFor(Role), null)));
         public Task<Result> EnsureAsync(string sub, string permission, CancellationToken ct) => throw new NotSupportedException();
     }
     private sealed class Context : ICustomerProfileContextQuery

@@ -11,7 +11,7 @@ using Microsoft.Extensions.Options;
 
 [ApiController]
 [Route("api/v1/tenant/access")]
-[RequiresPortalPermission(PortalPermissions.Staff)]
+[RequiresBusinessPermission(BusinessPermissions.Staff)]
 public sealed class TenantAccessController(
     IStaffAccessService staffAccess,
     IOptions<Auth0Options> auth0Options) : ControllerBase

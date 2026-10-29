@@ -6,13 +6,13 @@ using Adeni.Domain.Identity;
 public sealed class ReportDefinitionRegistryTests
 {
     [Theory]
-    [InlineData(ReportKeys.BookingsRegister, PortalPermissions.Bookings)]
-    [InlineData(ReportKeys.TenantCustomers, PortalPermissions.Bookings)]
-    [InlineData(ReportKeys.SalesSummary, PortalPermissions.Finance)]
-    [InlineData(ReportKeys.Compensation, PortalPermissions.Finance)]
-    [InlineData(ReportKeys.StaffRoster, PortalPermissions.Staff)]
-    [InlineData(ReportKeys.TenantLocations, PortalPermissions.Locations)]
-    [InlineData(ReportKeys.TenantServices, PortalPermissions.Services)]
+    [InlineData(ReportKeys.BookingsRegister, BusinessPermissions.Bookings)]
+    [InlineData(ReportKeys.TenantCustomers, BusinessPermissions.Bookings)]
+    [InlineData(ReportKeys.SalesSummary, BusinessPermissions.Finance)]
+    [InlineData(ReportKeys.Compensation, BusinessPermissions.Finance)]
+    [InlineData(ReportKeys.StaffRoster, BusinessPermissions.Staff)]
+    [InlineData(ReportKeys.TenantLocations, BusinessPermissions.Locations)]
+    [InlineData(ReportKeys.TenantServices, BusinessPermissions.Services)]
     public void Registry_required_permission_matches_launch_matrix(string reportKey, string expectedPermission)
     {
         Assert.True(ReportDefinitionRegistry.TryGet(reportKey, out var definition));
@@ -23,7 +23,7 @@ public sealed class ReportDefinitionRegistryTests
     public void Bookings_register_allows_bookings_self_at_export_service_layer()
     {
         Assert.True(ReportDefinitionRegistry.TryGet(ReportKeys.BookingsRegister, out var definition));
-        Assert.Equal(PortalPermissions.Bookings, definition!.RequiredPermission);
+        Assert.Equal(BusinessPermissions.Bookings, definition!.RequiredPermission);
         Assert.Contains(ReportExportFormat.Csv, definition.SupportedFormats);
     }
 

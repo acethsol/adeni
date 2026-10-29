@@ -14,7 +14,7 @@ using Microsoft.Extensions.Options;
 public sealed class MessagingHub(
     IOptions<Auth0Options> auth0Options,
     AdeniDbContext dbContext,
-    IPortalPermissionService permissionService,
+    IBusinessPermissionService permissionService,
     IEntitlementsService entitlementsService) : Hub
 {
     public static string ConversationGroup(Guid conversationId) => $"conversation:{conversationId:D}";
@@ -73,7 +73,7 @@ public sealed class MessagingHub(
             throw new HubException("Forbidden");
         }
 
-        if (!PortalPermissionRoles.HasAny(access.Value.PermissionRole, PortalPermissions.Messages))
+        if (!BusinessPermissionRoles.HasAny(access.Value.PermissionRole, BusinessPermissions.Messages))
         {
             throw new HubException("Forbidden");
         }

@@ -10,8 +10,8 @@ export const homeRedirectGuard: CanActivateFn = async () => {
   await session.ensureLoaded();
 
   if (
-    session.can("portal.staff.self") &&
-    !session.can("portal.staff") &&
+    session.can("business.staff.self") &&
+    !session.can("business.staff") &&
     session.staffMemberId()
   ) {
     return router.createUrlTree(["/my-calendar"]);

@@ -10,7 +10,7 @@ using Microsoft.Extensions.Options;
 /// <summary>Push-only hub for bookings, queue, quotes, payments, admin verification.</summary>
 public sealed class OperationsHub(
     IOptions<Auth0Options> auth0Options,
-    IPortalPermissionService permissionService) : Hub
+    IBusinessPermissionService permissionService) : Hub
 {
     public static string TenantGroup(Guid tenantId) => $"tenant-ops:{tenantId:D}";
 

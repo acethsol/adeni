@@ -77,7 +77,7 @@ Archived — see [legacy-clients-archive.md](./legacy-clients-archive.md) for Au
 
 V1 uses an **Adeni invite token** (not Auth0 Organizations).
 
-1. Owner/manager with `portal.staff` creates an invite (`POST /api/v1/tenant/staff/{id}/invite` or `/api/v1/tenant/access/invites`).
+1. Owner/manager with `business.staff` creates an invite (`POST /api/v1/tenant/staff/{id}/invite` or `/api/v1/tenant/access/invites`).
 2. Invitee receives email (logged in Development) with link: `{Portal:PublicBaseUrl}/accept-invite?token=…`.
 3. Invitee signs up / logs in with Auth0 (portal SPA), then `POST /api/v1/auth/accept-staff-invite` with `{ "token" }`.
 4. API creates a `BusinessUser` on the **existing** tenant, sets permission role + optional `StaffMemberId`, marks invite accepted.

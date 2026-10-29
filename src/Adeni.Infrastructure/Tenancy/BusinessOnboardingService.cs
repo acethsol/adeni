@@ -167,8 +167,8 @@ public sealed class BusinessOnboardingService(
             return Result.Failure<BusinessContextResponse>(Error.NotFound("Business location"));
         }
 
-        var permissionRole = Domain.Identity.PortalPermissionRoles.Normalize(businessUser.Role);
-        var permissions = Domain.Identity.PortalPermissionRoles.PermissionsFor(permissionRole);
+        var permissionRole = Domain.Identity.BusinessPermissionRoles.Normalize(businessUser.Role);
+        var permissions = Domain.Identity.BusinessPermissionRoles.PermissionsFor(permissionRole);
 
         return Result.Success(new BusinessContextResponse(
             businessUser.TenantId,

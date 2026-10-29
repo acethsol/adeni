@@ -22,7 +22,7 @@ export class IntakeReviewComponent implements OnInit{
  readonly tr=injectAdeniTranslate();readonly apiErr=injectAdeniApiError();private readonly api=inject(BusinessApiService);private readonly route=inject(ActivatedRoute);private readonly destroy=inject(DestroyRef);readonly session=inject(PortalSessionService);
  readonly statuses=signal<IntakeStatus[]>([]);readonly view=signal<IntakeView|null>(null);readonly error=signal<string|null>(null);readonly loading=signal(false);
  private booking='';private abort=new AbortController();private request=0;
- canReview():boolean{return this.session.can('portal.bookings')&&['owner','manager'].includes(this.session.permissionRole());}
+ canReview():boolean{return this.session.can('business.bookings')&&['owner','manager'].includes(this.session.permissionRole());}
  constructor(){this.destroy.onDestroy(()=>{this.abort.abort();this.view.set(null);});}
  ngOnInit():void{this.route.paramMap.pipe(map(p=>p.get('id')??''),distinctUntilChanged(),takeUntilDestroyed(this.destroy)).subscribe(id=>{void this.load(id);});}
  async load(id:string):Promise<void>{this.abort.abort();const abort=new AbortController();this.abort=abort;this.booking=id;this.request++;this.view.set(null);this.statuses.set([]);this.error.set(null);this.loading.set(true);

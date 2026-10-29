@@ -25,7 +25,7 @@ public abstract class CalendarControllerBase : ControllerBase
     }
 }
 
-[ApiController, Route("api/v1/tenant/calendar"), RequiresPortalPermission(PortalPermissions.Staff)]
+[ApiController, Route("api/v1/tenant/calendar"), RequiresBusinessPermission(BusinessPermissions.Staff)]
 public sealed class CalendarManagementController(ICalendarService calendar) : CalendarControllerBase
 {
     [HttpGet("connections")]
@@ -72,7 +72,7 @@ public sealed class CalendarOAuthController(ICalendarService calendar, IOptions<
     }
 }
 
-[ApiController, Route("api/v1/tenant/booking-links"), RequiresPortalPermission(PortalPermissions.PublicPage)]
+[ApiController, Route("api/v1/tenant/booking-links"), RequiresBusinessPermission(BusinessPermissions.PublicPage)]
 public sealed class BookingLinkManagementController(IBookingLinkService links) : CalendarControllerBase
 {
     [HttpPost, RequestSizeLimit(2048)]

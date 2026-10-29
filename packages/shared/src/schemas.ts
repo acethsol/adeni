@@ -746,7 +746,7 @@ export const staffRoleKeySchema = z.enum([
   "other",
 ]);
 
-export const portalPermissionRoleSchema = z.enum([
+export const BusinessPermissionRoleSchema = z.enum([
   "owner",
   "manager",
   "receptionist",
@@ -774,7 +774,7 @@ export const staffMemberSchema = z.object({
   portalAccessStatus: portalAccessStatusSchema.optional().default("none"),
   portalInviteId: z.string().uuid().nullable().optional(),
   businessUserId: z.string().uuid().nullable().optional(),
-  permissionRole: portalPermissionRoleSchema.nullable().optional(),
+  permissionRole: BusinessPermissionRoleSchema.nullable().optional(),
   businessLocationId: z.string().uuid().nullable().optional(),
 });
 
@@ -863,7 +863,7 @@ export type CreateStaffLeaveRequest = z.infer<typeof createStaffLeaveRequestSche
 
 export const createStaffInviteRequestSchema = z.object({
   email: z.string().email().max(320),
-  permissionRole: portalPermissionRoleSchema.exclude(["owner"]).optional(),
+  permissionRole: BusinessPermissionRoleSchema.exclude(["owner"]).optional(),
 });
 
 export type CreateStaffInviteRequest = z.infer<typeof createStaffInviteRequestSchema>;
@@ -871,7 +871,7 @@ export type CreateStaffInviteRequest = z.infer<typeof createStaffInviteRequestSc
 export const staffPortalInviteSchema = z.object({
   inviteId: z.string().uuid(),
   email: z.string(),
-  permissionRole: portalPermissionRoleSchema,
+  permissionRole: BusinessPermissionRoleSchema,
   staffMemberId: z.string().uuid().nullable().optional(),
   status: z.enum(["pending", "accepted", "revoked", "expired"]),
   expiresAt: z.string(),
@@ -885,7 +885,7 @@ export const staffPortalInvitesResponseSchema = z.object({
 
 export const tenantAccessUserSchema = z.object({
   businessUserId: z.string().uuid(),
-  permissionRole: portalPermissionRoleSchema,
+  permissionRole: BusinessPermissionRoleSchema,
   staffMemberId: z.string().uuid().nullable().optional(),
   createdAt: z.string(),
 });
@@ -897,7 +897,7 @@ export const tenantAccessUsersResponseSchema = z.object({
 });
 
 export const updateAccessUserRequestSchema = z.object({
-  permissionRole: portalPermissionRoleSchema.exclude(["owner"]),
+  permissionRole: BusinessPermissionRoleSchema.exclude(["owner"]),
 });
 
 export type UpdateAccessUserRequest = z.infer<typeof updateAccessUserRequestSchema>;
@@ -912,7 +912,7 @@ export const acceptStaffInviteResponseSchema = z.object({
   platformUserId: z.string().uuid(),
   auth0Sub: z.string(),
   tenantId: z.string().uuid(),
-  permissionRole: portalPermissionRoleSchema,
+  permissionRole: BusinessPermissionRoleSchema,
   staffMemberId: z.string().uuid().nullable().optional(),
 });
 

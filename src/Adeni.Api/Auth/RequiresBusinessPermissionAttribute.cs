@@ -12,21 +12,21 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Options;
 
 /// <summary>
-/// Requires the current business user to hold at least one of the given portal RBAC permissions.
+/// Requires the current business user to hold at least one of the given business RBAC permissions.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
-public sealed class RequiresPortalPermissionAttribute : Attribute, IAsyncActionFilter
+public sealed class RequiresBusinessPermissionAttribute : Attribute, IAsyncActionFilter
 {
-    public RequiresPortalPermissionAttribute(string permission)
+    public RequiresBusinessPermissionAttribute(string permission)
         : this([permission])
     {
     }
 
-    public RequiresPortalPermissionAttribute(params string[] permissions)
+    public RequiresBusinessPermissionAttribute(params string[] permissions)
     {
         Permissions = permissions is { Length: > 0 }
             ? permissions
-            : [PortalPermissions.Overview];
+            : [BusinessPermissions.Overview];
     }
 
     public IReadOnlyList<string> Permissions { get; }
@@ -34,7 +34,7 @@ public sealed class RequiresPortalPermissionAttribute : Attribute, IAsyncActionF
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
         var auth0Options = context.HttpContext.RequestServices.GetRequiredService<IOptions<Auth0Options>>();
-        var permissionService = context.HttpContext.RequestServices.GetRequiredService<IPortalPermissionService>();
+        var permissionService = context.HttpContext.RequestServices.GetRequiredService<IBusinessPermissionService>();
 
         var auth0Sub = ResolveAuth0Sub(context.HttpContext, auth0Options.Value.Enabled);
         if (string.IsNullOrWhiteSpace(auth0Sub))
@@ -50,7 +50,7 @@ public sealed class RequiresPortalPermissionAttribute : Attribute, IAsyncActionF
             return;
         }
 
-        if (!PortalPermissionRoles.HasAny(resolved.Value.PermissionRole, Permissions.ToArray()))
+        if (!BusinessPermissionRoles.HasAny(resolved.Value.PermissionRole, Permissions.ToArray()))
         {
             context.Result = ApiErrorResponseMapper.ToActionResult(
                 ErrorCodes.PermissionDeniedError(),

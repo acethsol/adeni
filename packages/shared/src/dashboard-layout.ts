@@ -2,7 +2,7 @@ import type { Capability } from "./capabilities";
 import { hasCapability, resolveCapabilities } from "./capabilities";
 import type { DashboardRangePreset } from "./dashboard-range";
 import { hasTenantEntitlement, type TenantEntitlementFlag } from "./entitlements";
-import type { PortalPermission } from "./portal-permissions";
+import type { BusinessPermission } from "./business-permissions";
 import type { DashboardWidgetWidth } from "./dashboard-widget-width";
 import { normalizeDashboardWidgetWidth } from "./dashboard-widget-width";
 import type { BusinessProfile, TenantEntitlements } from "./schemas";
@@ -50,7 +50,7 @@ export type DashboardWidgetDefinition = {
   title: string;
   requiredEntitlements?: TenantEntitlementFlag[];
   requiredCapabilities?: Capability[];
-  requiredPortalPermissions?: PortalPermission[];
+  requiredBusinessPermissions?: BusinessPermission[];
   ownerOnly?: boolean;
 };
 
@@ -58,7 +58,7 @@ export const DASHBOARD_WIDGET_DEFINITIONS: DashboardWidgetDefinition[] = [
   { id: "plan_usage", title: "Plan & usage", ownerOnly: true },
   { id: "kpis_row", title: "Overview" },
   { id: "today_schedule", title: "Today's schedule", requiredCapabilities: ["calendar"] },
-  { id: "pending_inbox", title: "Needs response", requiredCapabilities: ["calendar"], requiredPortalPermissions: ["portal.bookings"] },
+  { id: "pending_inbox", title: "Needs response", requiredCapabilities: ["calendar"], requiredBusinessPermissions: ["business.bookings"] },
   { id: "week_appointments", title: "Appointments over time", requiredCapabilities: ["calendar"] },
   {
     id: "booking_mix",
@@ -68,12 +68,12 @@ export const DASHBOARD_WIDGET_DEFINITIONS: DashboardWidgetDefinition[] = [
   { id: "collected_revenue", title: "Collected", requiredEntitlements: ["advancedAnalytics"], requiredCapabilities: ["deposits"], ownerOnly: true },
   { id: "booked_value", title: "Booked value", requiredEntitlements: ["advancedAnalytics"], ownerOnly: true },
   { id: "service_mix", title: "Top services", requiredEntitlements: ["advancedAnalytics"], ownerOnly: true },
-  { id: "staff_leaderboard", title: "Team bookings", requiredEntitlements: ["staffPerformanceAnalytics"], requiredPortalPermissions: ["portal.staff"], ownerOnly: true },
+  { id: "staff_leaderboard", title: "Team bookings", requiredEntitlements: ["staffPerformanceAnalytics"], requiredBusinessPermissions: ["business.staff"], ownerOnly: true },
   { id: "rating_summary", title: "Reputation" },
   { id: "queue_now", title: "Walk-in queue", requiredCapabilities: ["walk_in_queue"] },
-  { id: "messages_unread", title: "Unread messages", requiredEntitlements: ["messaging"], requiredPortalPermissions: ["portal.messages"] },
-  { id: "quote_pipeline", title: "Open quotes", requiredCapabilities: ["quotes"], requiredPortalPermissions: ["portal.quotes"] },
-  { id: "verification_status", title: "Verification", requiredPortalPermissions: ["portal.profile"], ownerOnly: true },
+  { id: "messages_unread", title: "Unread messages", requiredEntitlements: ["messaging"], requiredBusinessPermissions: ["business.messages"] },
+  { id: "quote_pipeline", title: "Open quotes", requiredCapabilities: ["quotes"], requiredBusinessPermissions: ["business.quotes"] },
+  { id: "verification_status", title: "Verification", requiredBusinessPermissions: ["business.profile"], ownerOnly: true },
   { id: "quick_actions", title: "Shortcuts" },
 ];
 
@@ -81,7 +81,7 @@ export type DashboardWidgetVisibilityContext = {
   isPractitionerView: boolean;
   entitlements: TenantEntitlements | null | undefined;
   capabilities: Capability[];
-  canPortal: (permission: PortalPermission) => boolean;
+  canBusiness: (permission: BusinessPermission) => boolean;
 };
 
 export function resolveDashboardCapabilities(profile: BusinessProfile | null | undefined): Capability[] {
@@ -138,7 +138,7 @@ export function isDashboardWidgetVisible(
   if (widget.requiredCapabilities?.some((capability) => !hasCapability(opts.capabilities, capability))) {
     return false;
   }
-  if (widget.requiredPortalPermissions?.some((permission) => !opts.canPortal(permission))) {
+  if (widget.requiredBusinessPermissions?.some((permission) => !opts.canBusiness(permission))) {
     return false;
   }
   return true;

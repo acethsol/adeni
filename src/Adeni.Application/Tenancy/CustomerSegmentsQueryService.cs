@@ -29,7 +29,7 @@ public sealed class CustomerSegmentsQueryService(IPortalTenantAccessQuery access
     private async Task<Result> AuthorizeAsync(Guid tenantId, string actor, CancellationToken ct)
     {
         var user = await access.ResolveAsync(tenantId, actor, ct);
-        return user.IsFailure || !user.Value!.Permissions.Contains(PortalPermissions.Bookings)
+        return user.IsFailure || !user.Value!.Permissions.Contains(BusinessPermissions.Bookings)
             ? Result.Failure(ErrorCodes.PermissionDeniedError()) : Result.Success();
     }
 

@@ -14,7 +14,7 @@ using Microsoft.Extensions.Options;
 
 [ApiController]
 [Route("api/v1/tenant/reporting/documents")]
-[RequiresPortalPermission(PortalPermissions.Finance, PortalPermissions.Bookings)]
+[RequiresBusinessPermission(BusinessPermissions.Finance, BusinessPermissions.Bookings)]
 public sealed class DocumentPreviewController(IDocumentPreviewService previews, IOptions<Auth0Options> auth0) : ControllerBase
 {
     [HttpGet("{id:guid}/preview")]

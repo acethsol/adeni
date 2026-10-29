@@ -9,10 +9,10 @@ public sealed class FinanceCommerceAccessQuery(AdeniDbContext db) : IFinanceComm
 {
     public Task<bool> CanManageAsync(Guid tenantId, string actor, CancellationToken ct) =>
         db.BusinessUsers.AsNoTracking().AnyAsync(x => x.TenantId == tenantId && x.Auth0Sub == actor
-            && (x.Role == PortalPermissionRoles.Owner || x.Role == PortalPermissionRoles.Manager), ct);
+            && (x.Role == BusinessPermissionRoles.Owner || x.Role == BusinessPermissionRoles.Manager), ct);
     public Task<bool> CanReadAsync(Guid tenantId, string actor, CancellationToken ct) =>
         db.BusinessUsers.AsNoTracking().AnyAsync(x => x.TenantId == tenantId && x.Auth0Sub == actor
-            && (x.Role == PortalPermissionRoles.Owner || x.Role == PortalPermissionRoles.Manager || x.Role == PortalPermissionRoles.Accountant), ct);
+            && (x.Role == BusinessPermissionRoles.Owner || x.Role == BusinessPermissionRoles.Manager || x.Role == BusinessPermissionRoles.Accountant), ct);
     public Task<Guid?> CustomerIdAsync(string actor, CancellationToken ct) => db.Customers.AsNoTracking()
         .Where(x => x.Auth0Sub == actor && x.ErasureRequestedAt == null).Select(x => (Guid?)x.Id).SingleOrDefaultAsync(ct);
 }

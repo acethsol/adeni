@@ -13,7 +13,7 @@ using Microsoft.Extensions.Options;
 
 /// <summary>
 /// Customer memberships, in-person (Sprint 37.2-B). Every route needs the <c>memberships</c> plan entitlement
-/// (enforced in the service); enrol needs <c>portal.retention</c> + <c>Idempotency-Key</c>; freeze / cancel are owner-only.
+/// (enforced in the service); enrol needs <c>business.retention</c> + <c>Idempotency-Key</c>; freeze / cancel are owner-only.
 /// </summary>
 [ApiController]
 [Route("api/v1/tenant/retention")]
@@ -23,7 +23,7 @@ public sealed class TenantCustomerMembershipsController(
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet("customers/{tenantCustomerId:guid}/memberships")]
-    [RequiresPortalPermission(PortalPermissions.Retention, PortalPermissions.Bookings)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention, BusinessPermissions.Bookings)]
     public async Task<IActionResult> ListForCustomer(Guid tenantCustomerId, CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
@@ -32,7 +32,7 @@ public sealed class TenantCustomerMembershipsController(
     }
 
     [HttpPost("customers/{tenantCustomerId:guid}/memberships/enrol")]
-    [RequiresPortalPermission(PortalPermissions.Retention)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention)]
     public async Task<IActionResult> Enrol(
         Guid tenantCustomerId, [FromBody] EnrolMembershipRequest request, CancellationToken cancellationToken)
     {
@@ -49,7 +49,7 @@ public sealed class TenantCustomerMembershipsController(
     }
 
     [HttpGet("customer-memberships/{id:guid}")]
-    [RequiresPortalPermission(PortalPermissions.Retention, PortalPermissions.Bookings)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention, BusinessPermissions.Bookings)]
     public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
@@ -57,7 +57,7 @@ public sealed class TenantCustomerMembershipsController(
     }
 
     [HttpPost("customer-memberships/{id:guid}/freeze")]
-    [RequiresPortalPermission(PortalPermissions.Retention)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention)]
     public async Task<IActionResult> Freeze(Guid id, CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
@@ -65,7 +65,7 @@ public sealed class TenantCustomerMembershipsController(
     }
 
     [HttpPost("customer-memberships/{id:guid}/unfreeze")]
-    [RequiresPortalPermission(PortalPermissions.Retention)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention)]
     public async Task<IActionResult> Unfreeze(Guid id, CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
@@ -73,7 +73,7 @@ public sealed class TenantCustomerMembershipsController(
     }
 
     [HttpPost("customer-memberships/{id:guid}/cancel")]
-    [RequiresPortalPermission(PortalPermissions.Retention)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention)]
     public async Task<IActionResult> Cancel(Guid id, [FromBody] CancelMembershipRequest? request, CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
@@ -84,7 +84,7 @@ public sealed class TenantCustomerMembershipsController(
 
     /// <summary>In-person renewal (till / transfer) once the paid cycle has ended; Idempotency-Key required.</summary>
     [HttpPost("customer-memberships/{id:guid}/renew")]
-    [RequiresPortalPermission(PortalPermissions.Retention)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention)]
     public async Task<IActionResult> Renew(Guid id, [FromBody] RenewMembershipRequest request, CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
@@ -100,7 +100,7 @@ public sealed class TenantCustomerMembershipsController(
 
     /// <summary>TenantMembershipMrr: normalized monthly recurring revenue per currency (Retention-owned, not Adeni SaaS MRR).</summary>
     [HttpGet("memberships/mrr")]
-    [RequiresPortalPermission(PortalPermissions.Retention)]
+    [RequiresBusinessPermission(BusinessPermissions.Retention)]
     public async Task<IActionResult> Mrr(CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
