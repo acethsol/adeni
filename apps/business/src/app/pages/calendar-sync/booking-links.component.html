@@ -1,0 +1,15 @@
+<app-portal-page [title]="tr('calendarUi.bookWith')" [description]="tr('calendarUi.linkDescription')">
+  @if (error()) { <p role="alert" class="error-banner">{{ error() }}</p> }
+  <form (ngSubmit)="generate()"><fieldset [disabled]="busy()"><legend>{{ tr('calendarUi.context') }}</legend>
+    <label>{{ tr('calendarUi.location') }} <select name="location" [(ngModel)]="locationId" (ngModelChange)="clear()" required><option value="">—</option>@for (location of locations(); track location.id) { <option [value]="location.id">{{ location.name }}</option> }</select></label>
+    <label>{{ tr('calendarUi.service') }} <select name="service" [(ngModel)]="serviceId" (ngModelChange)="clear()"><option value="">—</option>@for (service of services(); track service.id) { <option [value]="service.id">{{ service.name }}</option> }</select></label>
+    <label>{{ tr('calendarUi.practitioner') }} <select name="practitioner" [(ngModel)]="practitionerId" (ngModelChange)="clear()"><option value="">—</option>@for (member of staff(); track member.id) { <option [value]="member.id">{{ member.displayName }}</option> }</select></label>
+    <button class="btn btn-primary" type="submit" [disabled]="!locationId">{{ tr('calendarUi.generate') }}</button>
+  </fieldset></form>
+  @if (link(); as generated) {
+    <p><a [href]="generated.url" target="_blank" rel="noopener noreferrer">{{ tr('calendarUi.preview') }}</a></p>
+    <label>{{ tr('calendarUi.bookingUrl') }}<input readonly [value]="generated.url" /></label><button class="btn" type="button" (click)="copy()">{{ tr('calendarUi.copyLink') }}</button>
+    <label>{{ tr('calendarUi.html') }}<textarea readonly [value]="generated.html"></textarea></label><button class="btn" type="button" (click)="copy(true)">{{ tr('calendarUi.copyHtml') }}</button>
+  }
+  @if (notice()) { <p role="status">{{ notice() }}</p> }
+</app-portal-page>

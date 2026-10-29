@@ -1,0 +1,294 @@
+<app-portal-page
+  [title]="tr('portal.plan.plansBilling')"
+  [description]="tr('portal.plan.compareAdeniPlansTrackUsage')"
+>
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (route.snapshot.queryParamMap.get("upgraded") === "1") {
+    <p class="ok-banner">{{ tr('portal.plan.planUpdatedEntitlementsRefreshWithin') }}</p>
+  }
+
+  <adeni-tabs [tabs]="planTabs()" />
+
+    @if (planTab() === "compare") {
+      <section class="card compare">
+        <div class="compare-head">
+          <h3>{{ tr('common.comparePlans') }}</h3>
+          <p class="muted compare-lede">
+            {{ tr('portal.plan.featureRowsMatchLiveEntitlements') }}
+          </p>
+        </div>
+        <div class="compare-table-shell">
+          <div class="compare-table-wrap" role="region" [attr.aria-label]="tr('portal.plan.planFeatureComparison')" tabindex="0">
+            <table class="compare-table">
+              <colgroup>
+                <col class="compare-feature-col" />
+                @for (sku of skus; track sku) {
+                  <col class="compare-plan-col" />
+                }
+              </colgroup>
+              <thead>
+                <tr class="compare-header-row">
+                  <th scope="col" class="compare-feature-col compare-th-feature">
+                    <span class="compare-section-label">{{ tr('portal.plan.whatSIncluded') }}</span>
+                  </th>
+                  @for (sku of skus; track sku) {
+                    @let display = planDisplay(sku);
+                    <th
+                      scope="col"
+                      class="compare-plan-col compare-th-plan"
+                      [class.is-current]="isCurrentPlan(sku)"
+                      [class.is-popular]="isPopular(sku)"
+                    >
+                      <div class="compare-plan-head">
+                        <span class="compare-plan-tier">{{ display.name }}</span>
+                        <span class="compare-plan-price">{{ display.priceLabel }}</span>
+                        @if (isCurrentPlan(sku)) {
+                          <span class="compare-plan-badge compare-plan-badge--current">{{ tr('portal.plan.yourPlan') }}</span>
+                        } @else if (isPopular(sku)) {
+                          <span class="compare-plan-badge compare-plan-badge--popular">{{ tr('common.mostPopular') }}</span>
+                        }
+                      </div>
+                    </th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of planComparison; track row.label; let alt = $even) {
+                  <tr [class.compare-row-alt]="alt">
+                    <th scope="row" class="compare-feature-col compare-feature-label">{{ row.label }}</th>
+                    @for (sku of skus; track sku) {
+                      @let kind = comparisonCellKind(row, sku);
+                      <td
+                        class="compare-plan-col compare-value-col"
+                        [class.is-current]="isCurrentPlan(sku)"
+                        [class.cell-yes]="kind === 'yes'"
+                        [class.cell-dash]="kind === 'dash'"
+                      >
+                        @if (kind === "yes") {
+                          <span class="compare-yes" aria-hidden="true">✓</span>
+                          <span class="sr-only">{{ tr('portal.plan.included') }}</span>
+                        } @else if (kind === "dash") {
+                          <span aria-hidden="true">—</span>
+                          <span class="sr-only">{{ tr('portal.plan.notIncluded') }}</span>
+                        } @else {
+                          {{ comparisonCell(row, sku) }}
+                        }
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    } @else {
+    @if (usage(); as u) {
+      <section class="card usage" [class.warn]="isPlanUsageNearLimit(u)">
+        <div class="usage-head">
+          <h3>{{ tr('portal.plan.usageMonth') }}</h3>
+          <p class="usage-plan">{{ formatSubscriptionPlanLabel(u) }}</p>
+        </div>
+
+        <ul class="usage-metrics">
+          <li class="usage-metric">
+            <span class="usage-metric-label">{{ tr('common.bookings') }}</span>
+            <span class="usage-metric-value">{{ formatBookingUsageMetric(u) }}</span>
+            @if (u.bookingsLimitThisMonth) {
+              <div class="meter" role="progressbar" [attr.aria-valuenow]="bookingsUsagePercent(u)" aria-valuemin="0" aria-valuemax="100">
+                <span [style.width.%]="bookingsUsagePercent(u)"></span>
+              </div>
+            } @else {
+              <p class="usage-metric-hint muted">{{ tr('portal.plan.unlimitedPlan') }}</p>
+            }
+          </li>
+          <li class="usage-metric">
+            <span class="usage-metric-label">{{ tr('common.locations') }}</span>
+            <span class="usage-metric-value">{{ formatLocationUsageMetric(u) }}</span>
+            @if (u.entitlements.maxLocations) {
+              <div
+                class="meter"
+                role="progressbar"
+                [attr.aria-valuenow]="usagePercentForLimit(u.locationsActive, u.entitlements.maxLocations)"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              >
+                <span [style.width.%]="usagePercentForLimit(u.locationsActive, u.entitlements.maxLocations)"></span>
+              </div>
+            } @else {
+              <p class="usage-metric-hint muted">{{ tr('portal.plan.multipleLocationsAllowed') }}</p>
+            }
+          </li>
+          <li class="usage-metric">
+            <span class="usage-metric-label">{{ tr('portal.plan.teamMembers') }}</span>
+            <span class="usage-metric-value">{{ formatTeamUsageMetric(u) }}</span>
+            @if (u.entitlements.maxPractitioners) {
+              <div
+                class="meter"
+                role="progressbar"
+                [attr.aria-valuenow]="usagePercentForLimit(u.practitionersActive, u.entitlements.maxPractitioners)"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              >
+                <span [style.width.%]="usagePercentForLimit(u.practitionersActive, u.entitlements.maxPractitioners)"></span>
+              </div>
+            } @else {
+              <p class="usage-metric-hint muted">{{ tr('portal.plan.unlimitedTeamMembers') }}</p>
+            }
+          </li>
+        </ul>
+
+        <div class="usage-billing">
+          @if (u.billingStatus) {
+            <p class="muted">Billing status: {{ formatTenantBillingStatus(u.billingStatus) }}</p>
+          }
+          @if (u.trialEndsAt) {
+            <p class="muted">Trial ends {{ u.trialEndsAt | date: "mediumDate" }}</p>
+          }
+          @if (u.paidThrough) {
+            <p class="muted">Paid through {{ u.paidThrough | date: "mediumDate" }}</p>
+          }
+          @if (u.agreedMonthlyAmountMajor != null && u.currencyCode) {
+            <p class="muted">
+              Your plan price: {{ formatPrice(u.agreedMonthlyAmountMajor, u.currencyCode) }}/mo
+            </p>
+          }
+          @if (
+            u.catalogListPriceMajor != null &&
+            u.currencyCode &&
+            u.agreedMonthlyAmountMajor != null &&
+            u.catalogListPriceMajor !== u.agreedMonthlyAmountMajor
+          ) {
+            <p class="muted">
+              Current list price for new sign-ups:
+              {{ formatPrice(u.catalogListPriceMajor, u.currencyCode) }}/mo
+            </p>
+          }
+          @if (
+            u.effectiveMonthlyAmountMajor != null &&
+            u.currencyCode &&
+            u.agreedMonthlyAmountMajor != null &&
+            u.effectiveMonthlyAmountMajor !== u.agreedMonthlyAmountMajor
+          ) {
+            <p class="muted">
+              Next charge: {{ formatPrice(u.effectiveMonthlyAmountMajor, u.currencyCode) }}/mo
+            </p>
+          }
+          @if (apiPricing(); as pricing) {
+            <p class="muted">Online payment platform fee: {{ pricing.platformFeePercent }}%</p>
+          }
+        </div>
+
+        @if (isPlanUsageNearLimit(u)) {
+          <p class="warn-text">{{ tr('portal.plan.youReApproachingPlanLimit') }}</p>
+        }
+      </section>
+    }
+
+    @if (!selfServeEnabled()) {
+      <p class="muted self-serve-note" role="note">
+        {{ tr('portal.plan.selfServeCheckoutNotAvailable') }}
+      </p>
+    }
+
+    <div class="tier-grid">
+      @for (sku of skus; track sku) {
+        @let display = planDisplay(sku);
+        <section
+          class="card tier"
+          [class.current]="isCurrentPlan(sku)"
+          [class.popular]="isPopular(sku)"
+        >
+          <div class="tier-badge-slot">
+            @if (isCurrentPlan(sku)) {
+              <span class="pill current-pill">{{ tr('portal.plan.currentPlan') }}</span>
+            } @else if (isPopular(sku)) {
+              <span class="pill popular-pill">{{ tr('common.mostPopular') }}</span>
+            }
+          </div>
+          <p class="tier-name">{{ display.name }}</p>
+          <p class="price">{{ display.priceLabel }}</p>
+          <p class="tagline">{{ display.tagline }}</p>
+          <p class="muted tier-desc">{{ display.description }}</p>
+          <div class="tier-actions">
+            @if (canUpgrade(sku) && selfServeEnabled()) {
+              <button
+                type="button"
+                class="btn btn-primary upgrade-btn"
+                [disabled]="checkoutBusy()"
+                (click)="upgrade(sku)"
+              >
+                Upgrade to {{ display.name }}
+              </button>
+            }
+          </div>
+        </section>
+      }
+    </div>
+
+    <section class="card billing-history">
+      <div class="billing-history-head">
+        <h3>{{ tr('portal.plan.recentBillingActivity') }}</h3>
+        <p class="muted billing-history-lede">
+          {{ tr('portal.plan.yourLatestAdeniSubscriptionCharges') }}
+        </p>
+      </div>
+      @if (billingHistory().length === 0) {
+        <adeni-portal-empty-state
+          icon="time"
+          [title]="tr('portal.plan.noChargesYet')"
+          [description]="tr('portal.plan.yourAdeniSubscriptionChargesAppear')"
+          [compact]="true"
+        />
+      } @else {
+        <div class="roster billing-roster">
+          <adeni-list-toolbar
+            storageKey="portal.plan.billing"
+            [showViewSwitcher]="false"
+            [count]="filteredBillingHistory().length"
+            [singularCountLabel]="tr('common.charge')"
+            [pluralCountLabel]="tr('common.charges')"
+            [searchPlaceholder]="tr('portal.plan.searchEventStatusReference')"
+            [searchQuery]="billingSearchQuery()"
+            (searchQueryChange)="billingSearchQuery.set($event)"
+          />
+          @if (filteredBillingHistory().length === 0) {
+            <adeni-portal-empty-state
+              icon="search"
+              [title]="tr('common.noMatches')"
+              [description]="tr('common.tryDifferentSearchTerm')"
+              [compact]="true"
+            />
+          } @else {
+            <div class="adeni-list-results">
+              <adeni-data-table
+                [rows]="filteredBillingHistory()"
+                [columns]="billingColumns()"
+                [trackRow]="trackBillingRow"
+                [sortColumnId]="billingSortColumn()"
+                (sortColumnIdChange)="billingSortColumn.set($event)"
+                [sortDirection]="billingSortDirection()"
+                (sortDirectionChange)="billingSortDirection.set($event)"
+              >
+                <ng-template adeniDataTableCell="occurredAt" let-row>
+                  {{ row.occurredAt | date: "mediumDate" }}
+                </ng-template>
+                <ng-template adeniDataTableCell="amount" let-row>
+                  <span class="billing-amount">{{ formatChargeAmount(row) }}</span>
+                </ng-template>
+                <ng-template adeniDataTableCell="status" let-row>
+                  <adeni-pill [tone]="billingStatusPillTone(row.status)" [compact]="true">
+                    {{ formatBillingChargeStatus(row.status) }}
+                  </adeni-pill>
+                </ng-template>
+              </adeni-data-table>
+            </div>
+          }
+        </div>
+      }
+    </section>
+    }
+</app-portal-page>

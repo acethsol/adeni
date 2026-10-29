@@ -1,0 +1,708 @@
+@if (loadError()) {
+  <section class="panel error">
+    <h2>{{ tr('portal.dashboard.couldNotLoadStudio') }}</h2>
+    <p>{{ tr('portal.dashboard.theApiPort5169Did') }}</p>
+    <a class="btn btn-primary" routerLink="/register">
+      <adeni-carbon-icon name="add" [size]="16" />
+      {{ tr('common.registerBusiness') }}
+    </a>
+  </section>
+} @else if (profile(); as business) {
+  <app-portal-page [title]="tr('common.dashboard')" [description]="pageDescription()">
+    <div pageActions class="page-toolbar">
+      @if (editMode()) {
+        <adeni-staff-btn icon="add" (pressed)="openPicker()">{{ tr('portal.dashboard.addWidget2') }}</adeni-staff-btn>
+        <adeni-staff-btn icon="restart" (pressed)="resetLayoutDefault()">{{ tr('portal.dashboard.resetLayout') }}</adeni-staff-btn>
+        <adeni-staff-btn variant="primary" icon="checkmark" (pressed)="finishCustomize()">{{ tr('common.done') }}</adeni-staff-btn>
+      } @else {
+        <adeni-staff-btn icon="edit" (pressed)="toggleCustomize()">{{ tr('portal.dashboard.customize') }}</adeni-staff-btn>
+        <div
+          class="range-switcher cds-content-switcher"
+          role="tablist"
+          [attr.aria-label]="tr('portal.dashboard.dashboardDateRange')"
+        >
+          @for (preset of rangePresetOptions(); track preset.id) {
+            <button
+              type="button"
+              role="tab"
+              [class.active]="rangePreset() === preset.id"
+              [attr.aria-selected]="rangePreset() === preset.id"
+              (click)="setRange(preset.id)"
+            >
+              {{ preset.label }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <section class="hero widget-span-12">
+      <div>
+        <p class="kicker">{{ categoryLine() }}</p>
+        <h2>{{ business.businessName }}</h2>
+        <p class="meta">
+          {{ formatTenantStatus(business.status) }}
+          @if (primaryLocationName(); as place) {
+            · {{ place }}
+          }
+        </p>
+      </div>
+      <div class="hero-actions">
+        @if (isPractitionerView()) {
+          <a class="btn btn-primary" routerLink="/my-calendar">
+            <adeni-carbon-icon name="calendar" [size]="16" />
+            {{ tr('portal.dashboard.myCalendar') }}
+          </a>
+          <a class="btn" routerLink="/bookings">
+            <adeni-carbon-icon name="time" [size]="16" />
+            @if (pendingCount() > 0) {
+              {{ tr('portal.dashboard.pendingWaiting', { count: pendingCount() }) }}
+            } @else {
+              {{ tr('common.myBookings') }}
+            }
+          </a>
+        } @else {
+          @if (publicProfileUrl(); as url) {
+            <a class="btn btn-primary" [href]="url" target="_blank" rel="noopener">
+              <adeni-carbon-icon name="launch" [size]="16" />
+              {{ tr('portal.dashboard.viewPublicProfile') }}
+            </a>
+          }
+          <a class="btn" routerLink="/bookings">
+            <adeni-carbon-icon name="time" [size]="16" />
+            @if (pendingCount() > 0) {
+              {{ tr('portal.dashboard.pendingWaiting', { count: pendingCount() }) }}
+            } @else {
+              {{ tr('portal.dashboard.bookingInbox') }}
+            }
+          </a>
+        }
+      </div>
+    </section>
+
+    <div
+      class="widget-grid dashboard-widgets"
+      [class.is-customizing]="editMode()"
+      [class.layout-preset-applied]="layoutPresetPulse()"
+      cdkDropList
+      [cdkDropListDisabled]="!editMode()"
+      (cdkDropListDropped)="onWidgetDrop($event)"
+    >
+      @for (entry of visibleLayoutWidgets(); track entry.id) {
+        <div cdkDrag [cdkDragDisabled]="!editMode()" [class]="widgetSpanClass(entry)" class="dashboard-grid-cell">
+          @switch (entry.id) {
+            @case ("plan_usage") {
+              <div class="dashboard-native-tile" [class.dashboard-native-tile--edit]="editMode()">
+                @if (editMode()) {
+                  <app-dashboard-widget-edit-chrome
+                    [title]="widgetTitle(entry.id)"
+                    [width]="widgetLayoutWidth(entry)"
+                    [removable]="widgetRemovable(entry.id)"
+                    (widthChange)="setWidgetWidth(entry.id, $event)"
+                    (remove)="removeWidget(entry.id)"
+                  />
+                }
+              @if (usage(); as plan) {
+                <a class="widget-card usage" routerLink="/plan" [class.usage-warn]="isNearBookingLimit(plan)">
+                  <div>
+                    <p class="usage-label">{{ planUsageLabel() }}</p>
+                    <p class="usage-value">{{ bookingUsageText(plan) }}</p>
+                    @if (planPriceHint(); as price) {
+                      <p class="usage-meta">{{ tr('portal.dashboard.planPriceListMeta', { price, managePlan: tr('portal.dashboard.managePlan') }) }}</p>
+                    } @else {
+                      <p class="usage-meta">{{ tr('portal.dashboard.managePlan') }}</p>
+                    }
+                    @if (isNearBookingLimit(plan)) {
+                      <p class="usage-warn-text">{{ tr('portal.dashboard.youReApproachingMonthlyBooking') }}</p>
+                    }
+                  </div>
+                  @if (plan.bookingsLimitThisMonth) {
+                    <div class="meter" aria-hidden="true">
+                      <span [style.width.%]="usagePercent()"></span>
+                    </div>
+                  }
+                </a>
+              }
+              </div>
+            }
+            @case ("kpis_row") {
+              <section
+                class="widget-card widget-card--kpis widget-card--overview dashboard-native-tile"
+                [class.dashboard-native-tile--edit]="editMode()"
+              >
+                @if (editMode()) {
+                  <app-dashboard-widget-edit-chrome
+                    [title]="widgetTitle(entry.id)"
+                    [width]="widgetLayoutWidth(entry)"
+                    [removable]="widgetRemovable(entry.id)"
+                    (widthChange)="setWidgetWidth(entry.id, $event)"
+                    (remove)="removeWidget(entry.id)"
+                  />
+                }
+                @if (!editMode()) {
+                <header class="widget-card__head overview-head">
+                  <div class="overview-head-copy">
+                    <h3>{{ widgetTitle("kpis_row") }}</h3>
+                    <p class="hint">{{ rangeOverviewHint() }}</p>
+                    <p class="overview-insight">{{ overviewInsight() }}</p>
+                  </div>
+                  <span class="overview-period-pill" aria-live="polite">
+                    <adeni-carbon-icon name="calendar" [size]="16" />
+                    {{ rangeLabel() }}
+                  </span>
+                </header>
+                }
+                <div class="stats overview-stats">
+                @if (pendingCount() > 0) {
+                  <a class="stat-card stat-card--pending stat-card--action" routerLink="/bookings">
+                    <span class="stat-icon stat-icon--pending" aria-hidden="true">
+                      <adeni-carbon-icon name="time" [size]="20" />
+                    </span>
+                    <div class="stat-body">
+                      <p class="stat-label">{{ tr('portal.dashboard.pendingRequests') }}</p>
+                      <p class="stat-value">{{ pendingCount() }}</p>
+                      <p class="stat-hint">{{ tr('portal.dashboard.tapOpenInbox') }}</p>
+                    </div>
+                  </a>
+                } @else {
+                  <article class="stat-card stat-card--pending">
+                    <span class="stat-icon stat-icon--pending" aria-hidden="true">
+                      <adeni-carbon-icon name="time" [size]="20" />
+                    </span>
+                    <div class="stat-body">
+                      <p class="stat-label">{{ tr('portal.dashboard.pendingRequests') }}</p>
+                      <p class="stat-value">{{ pendingCount() }}</p>
+                      <p class="stat-hint">{{ tr('portal.dashboard.inboxClear') }}</p>
+                    </div>
+                  </article>
+                }
+                <a class="stat-card stat-card--appointments stat-card--action" [routerLink]="isPractitionerView() ? '/my-calendar' : '/bookings'">
+                  <span class="stat-icon stat-icon--appointments" aria-hidden="true">
+                    <adeni-carbon-icon name="calendar" [size]="20" />
+                  </span>
+                  <div class="stat-body">
+                    <p class="stat-label">{{ tr('portal.dashboard.appointments') }}</p>
+                    <p class="stat-value">{{ appointmentsInRange() }}</p>
+                    <p class="stat-hint">{{ rangeStatHint() }}</p>
+                  </div>
+                </a>
+                <article class="stat-card stat-card--services">
+                  <span class="stat-icon stat-icon--services" aria-hidden="true">
+                    <adeni-carbon-icon name="filter" [size]="20" />
+                  </span>
+                  <div class="stat-body">
+                    <p class="stat-label">{{ tr('portal.dashboard.activeServices') }}</p>
+                    <p class="stat-value">{{ activeServices() }}</p>
+                    <p class="stat-hint">{{ tr('portal.dashboard.availableOnlineBooking') }}</p>
+                  </div>
+                </article>
+                @if (!isPractitionerView()) {
+                  <article class="stat-card stat-card--revenue">
+                    <span class="stat-icon stat-icon--revenue" aria-hidden="true">
+                      <adeni-carbon-icon name="flash--filled" [size]="20" />
+                    </span>
+                    <div class="stat-body">
+                      <p class="stat-label">{{ revenueUsesCollected() ? tr('portal.dashboard.collectedRevenue') : tr('portal.dashboard.bookedValue') }}</p>
+                      <p class="stat-value">{{ revenueLabel() }}</p>
+                      <p class="stat-hint">{{ revenueHint() }}</p>
+                    </div>
+                  </article>
+                }
+                <article class="stat-card stat-card--rating">
+                  <span class="stat-icon stat-icon--rating" aria-hidden="true">
+                    <adeni-carbon-icon name="user--filled" [size]="20" />
+                  </span>
+                  <div class="stat-body">
+                    <p class="stat-label">{{ tr('portal.dashboard.customerRating') }}</p>
+                    <p class="stat-value">{{ ratingLabel() }}</p>
+                    <p class="stat-hint">{{ ratingHint() }}</p>
+                  </div>
+                </article>
+                </div>
+              </section>
+            }
+            @case ("week_appointments") {
+              <app-dashboard-widget
+                [customizeMode]="editMode()"
+                [layoutWidth]="widgetLayoutWidth(entry)"
+                [layoutRemovable]="widgetRemovable(entry.id)"
+                (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
+                (layoutRemove)="removeWidget(entry.id)"
+                [title]="widgetTitle('week_appointments')"
+                [hint]="tr('portal.dashboard.chartHintDailyCount', { rangeHint: rangeOverviewHint() })"
+              >
+                @if (appointmentChartData().length === 0) {
+                  <div class="widget-body-empty">
+                    <p class="chart-empty-title">{{ tr('common.noAppointmentsRange') }}</p>
+                    <p class="chart-empty-copy">{{ tr('portal.dashboard.tryWiderRangeAboveShare') }}</p>
+                  </div>
+                } @else {
+                  <app-dashboard-carbon-chart
+                    kind="bar"
+                    [data]="appointmentChartData()"
+                    [ariaLabel]="tr('portal.dashboard.appointmentsOverTime')"
+                  />
+                }
+              </app-dashboard-widget>
+            }
+            @case ("today_schedule") {
+              <app-dashboard-widget
+                [customizeMode]="editMode()"
+                [layoutWidth]="widgetLayoutWidth(entry)"
+                [layoutRemovable]="widgetRemovable(entry.id)"
+                (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
+                (layoutRemove)="removeWidget(entry.id)"
+                class="today-chair-widget"
+                [title]="widgetTitle('today_schedule')"
+                [hint]="tr('portal.dashboard.remainingAppointmentsToday')"
+              >
+                @if (today().length === 0) {
+                  <div class="today-chair-empty">
+                    <span class="today-chair-icon" aria-hidden="true">
+                      <adeni-carbon-icon name="calendar-32" [size]="32" />
+                    </span>
+                    <p class="today-chair-title">{{ tr('portal.dashboard.noAppointmentsScheduled') }}</p>
+                    <p class="today-chair-copy">
+                      {{ tr('portal.dashboard.yourCalendarClearRestToday') }}
+                    </p>
+                    <a class="btn btn-ghost" routerLink="/availability">{{ tr('portal.dashboard.viewHours') }}</a>
+                  </div>
+                } @else {
+                  <ul class="today-list">
+                    @for (booking of today(); track booking.id) {
+                      <li>
+                        <strong>{{ formatSlotTime(booking.startAt) }}</strong>
+                        <span>{{ booking.serviceName }}</span>
+                      </li>
+                    }
+                  </ul>
+                  <a class="text-link" routerLink="/bookings" [queryParams]="{ tab: 'upcoming' }">{{ tr('portal.dashboard.fullSchedule') }}</a>
+                }
+              </app-dashboard-widget>
+            }
+            @case ("booking_mix") {
+              <app-dashboard-widget
+                [customizeMode]="editMode()"
+                [layoutWidth]="widgetLayoutWidth(entry)"
+                [layoutRemovable]="widgetRemovable(entry.id)"
+                (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
+                (layoutRemove)="removeWidget(entry.id)"
+                [title]="widgetTitle('booking_mix')"
+                [hint]="tr('portal.dashboard.allBookingsFileGroupedBy')"
+              >
+                @if (bookingMixChartData().length === 0) {
+                  <div class="chart-empty">
+                    <span class="chart-empty-icon" aria-hidden="true">
+                      <adeni-carbon-icon name="calendar" [size]="28" />
+                    </span>
+                    <p class="chart-empty-title">{{ tr('common.noBookingsYet') }}</p>
+                    <p class="chart-empty-copy">
+                      {{ tr('portal.dashboard.pendingConfirmedCancelledVisitsWill') }}
+                    </p>
+                    <a class="btn btn-ghost" routerLink="/bookings">{{ tr('portal.dashboard.bookingInbox') }}</a>
+                  </div>
+                } @else {
+                  <app-dashboard-carbon-chart
+                    kind="donut"
+                    [data]="bookingMixChartData()"
+                    [ariaLabel]="tr('portal.dashboard.bookingStatusMix')"
+                  />
+                  <ul class="mix-legend">
+                    @for (slice of mix(); track slice.status) {
+                      @if (slice.count > 0) {
+                        <li>
+                          <i class="swatch s{{ slice.status }}"></i>
+                          {{ slice.label }}
+                          <strong>{{ slice.count }}</strong>
+                        </li>
+                      }
+                    }
+                  </ul>
+                }
+              </app-dashboard-widget>
+            }
+            @case ("collected_revenue") {
+              <app-dashboard-widget
+                [customizeMode]="editMode()"
+                [layoutWidth]="widgetLayoutWidth(entry)"
+                [layoutRemovable]="widgetRemovable(entry.id)"
+                (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
+                (layoutRemove)="removeWidget(entry.id)"
+                [title]="widgetTitle('collected_revenue')"
+                [hint]="tr('portal.dashboard.chartHintOnlinePayments', { rangeHint: rangeOverviewHint() })"
+              >
+                @if (collectedChartData().length === 0) {
+                  <p class="hint">{{ tr('portal.dashboard.noCollectedPaymentsRange') }}</p>
+                } @else {
+                  <app-dashboard-carbon-chart
+                    kind="line"
+                    [data]="collectedChartData()"
+                    [ariaLabel]="tr('portal.dashboard.collectedRevenueOverTime')"
+                  />
+                }
+              </app-dashboard-widget>
+            }
+            @case ("service_mix") {
+              <app-dashboard-widget
+                [customizeMode]="editMode()"
+                [layoutWidth]="widgetLayoutWidth(entry)"
+                [layoutRemovable]="widgetRemovable(entry.id)"
+                (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
+                (layoutRemove)="removeWidget(entry.id)"
+                [title]="widgetTitle('service_mix')"
+                [hint]="tr('portal.dashboard.chartHintTopBookedServices', { rangeHint: rangeOverviewHint() })"
+              >
+                @if (serviceMixChartData().length === 0) {
+                  <div class="chart-empty">
+                    <span class="chart-empty-icon" aria-hidden="true">
+                      <adeni-carbon-icon name="filter" [size]="28" />
+                    </span>
+                    <p class="chart-empty-title">{{ tr('portal.dashboard.nothingBookedRange') }}</p>
+                    <p class="chart-empty-copy">
+                      {{ tr('portal.dashboard.topServicesEmptyHint', { rangeStat: rangeStatHint() }) }}
+                    </p>
+                    @if (hasEntitlement("advancedAnalytics")) {
+                      <a class="btn btn-ghost" routerLink="/services">{{ tr('common.manageServices') }}</a>
+                    }
+                  </div>
+                } @else {
+                  <app-dashboard-carbon-chart
+                    kind="donut"
+                    [data]="serviceMixChartData()"
+                    [ariaLabel]="tr('portal.dashboard.topServices')"
+                  />
+                }
+              </app-dashboard-widget>
+            }
+            @case ("booked_value") {
+              <app-dashboard-widget
+                [customizeMode]="editMode()"
+                [layoutWidth]="widgetLayoutWidth(entry)"
+                [layoutRemovable]="widgetRemovable(entry.id)"
+                (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
+                (layoutRemove)="removeWidget(entry.id)"
+                [title]="widgetTitle('booked_value')"
+                [hint]="tr('portal.dashboard.chartHintListPrice', { rangeHint: rangeOverviewHint() })"
+              >
+                @if (bookedValueChartData().length === 0) {
+                  <p class="hint">{{ tr('portal.dashboard.noBookedValueRange') }}</p>
+                } @else {
+                  <app-dashboard-carbon-chart
+                    kind="line"
+                    [data]="bookedValueChartData()"
+                    [ariaLabel]="tr('portal.dashboard.bookedValueOverTime')"
+                  />
+                }
+              </app-dashboard-widget>
+            }
+            @case ("staff_leaderboard") {
+              <app-dashboard-widget
+                [customizeMode]="editMode()"
+                [layoutWidth]="widgetLayoutWidth(entry)"
+                [layoutRemovable]="widgetRemovable(entry.id)"
+                (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
+                (layoutRemove)="removeWidget(entry.id)"
+                [title]="widgetTitle('staff_leaderboard')"
+                [hint]="tr('portal.dashboard.chartHintBookingsByTeam', { rangeHint: rangeOverviewHint() })"
+              >
+                @if (staffLeaderboardChartData().length === 0) {
+                  <p class="hint">{{ tr('portal.dashboard.noStaffAssignedBookingsRange') }}</p>
+                } @else {
+                  <app-dashboard-carbon-chart
+                    kind="bar"
+                    [data]="staffLeaderboardChartData()"
+                    [ariaLabel]="tr('portal.dashboard.teamBookings')"
+                  />
+                }
+              </app-dashboard-widget>
+            }
+            @case ("pending_inbox") {
+              <app-dashboard-widget
+                [customizeMode]="editMode()"
+                [layoutWidth]="widgetLayoutWidth(entry)"
+                [layoutRemovable]="widgetRemovable(entry.id)"
+                (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
+                (layoutRemove)="removeWidget(entry.id)"
+                [title]="widgetTitle('pending_inbox')"
+              >
+                <a class="widget-stat-link" routerLink="/bookings" [queryParams]="{ tab: 'pending' }">
+                  <p class="widget-stat-value">{{ pendingCount() }}</p>
+                  <p class="hint">{{ tr('portal.dashboard.awaitingConfirmation') }}</p>
+                </a>
+              </app-dashboard-widget>
+            }
+            @case ("messages_unread") {
+              <app-dashboard-widget
+                [customizeMode]="editMode()"
+                [layoutWidth]="widgetLayoutWidth(entry)"
+                [layoutRemovable]="widgetRemovable(entry.id)"
+                (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
+                (layoutRemove)="removeWidget(entry.id)"
+                [title]="widgetTitle('messages_unread')"
+              >
+                <div class="messages-widget">
+                  <div class="messages-widget__hero">
+                    @if (unreadMessagesCount() > 0) {
+                      <div class="messages-widget__pulse" aria-hidden="true">
+                        <span class="messages-widget__count">{{ unreadMessagesCount() > 9 ? "9+" : unreadMessagesCount() }}</span>
+                      </div>
+                      <p class="messages-widget__headline">
+                        {{ unreadMessagesCount() === 1 ? tr('portal.dashboard.conversationNeedsYou') : tr('portal.dashboard.conversationsNeedYou') }}
+                      </p>
+                      <p class="hint">{{ tr('portal.dashboard.replyWhileContextStillFresh') }}</p>
+                    } @else {
+                      <div class="messages-widget__bubble-art" aria-hidden="true">
+                        <span class="bubble bubble--them"></span>
+                        <span class="bubble bubble--you"></span>
+                      </div>
+                      <p class="messages-widget__headline">{{ tr('common.inboxQuiet') }}</p>
+                      <p class="hint">{{ tr('portal.dashboard.youReCaughtUpNice') }}</p>
+                    }
+                  </div>
+
+                  @if (messageInboxPreview().length > 0) {
+                    <ul class="messages-widget__threads">
+                      @for (conversation of messageInboxPreview(); track conversation.id) {
+                        <li>
+                          <a class="messages-widget__thread" routerLink="/messages">
+                            <span class="messages-widget__avatar">{{ customerInitials(conversation.customerDisplayName) }}</span>
+                            <span class="messages-widget__copy">
+                              <span class="messages-widget__row">
+                                <strong>{{ conversation.customerDisplayName }}</strong>
+                                <time>{{ formatSlotTime(conversation.lastMessageAt) }}</time>
+                              </span>
+                              <span class="messages-widget__preview">
+                                {{ conversation.preview || tr('portal.dashboard.newConversation') }}
+                              </span>
+                            </span>
+                            @if (conversation.needsAttention) {
+                              <span class="messages-widget__dot" [attr.aria-label]="tr('common.unread')"></span>
+                            }
+                          </a>
+                        </li>
+                      }
+                    </ul>
+                  }
+
+                  <a class="btn messages-widget__cta" routerLink="/messages">
+                    {{ tr('portal.dashboard.openInbox') }}
+                    <adeni-carbon-icon name="arrow--right" [size]="16" />
+                  </a>
+                </div>
+              </app-dashboard-widget>
+            }
+            @case ("quote_pipeline") {
+              <app-dashboard-widget
+                [customizeMode]="editMode()"
+                [layoutWidth]="widgetLayoutWidth(entry)"
+                [layoutRemovable]="widgetRemovable(entry.id)"
+                (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
+                (layoutRemove)="removeWidget(entry.id)"
+                [title]="widgetTitle('quote_pipeline')"
+              >
+                <a class="widget-stat-link" routerLink="/quotes">
+                  <p class="widget-stat-value">{{ openQuotesCount() }}</p>
+                  <p class="hint">{{ tr('portal.dashboard.quotesWaitingOfferAnswer') }}</p>
+                </a>
+              </app-dashboard-widget>
+            }
+            @case ("rating_summary") {
+              <app-dashboard-widget
+                [customizeMode]="editMode()"
+                [layoutWidth]="widgetLayoutWidth(entry)"
+                [layoutRemovable]="widgetRemovable(entry.id)"
+                (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
+                (layoutRemove)="removeWidget(entry.id)"
+                [title]="widgetTitle('rating_summary')"
+              >
+                <p class="widget-stat-value">{{ ratingLabel() }}</p>
+                <p class="hint">{{ ratingHint() }}</p>
+                @if (publicProfileUrl(); as url) {
+                  <a class="btn" [href]="url" target="_blank" rel="noopener">{{ tr('portal.dashboard.viewReviews') }}</a>
+                }
+              </app-dashboard-widget>
+            }
+            @case ("verification_status") {
+              <app-dashboard-widget
+                [customizeMode]="editMode()"
+                [layoutWidth]="widgetLayoutWidth(entry)"
+                [layoutRemovable]="widgetRemovable(entry.id)"
+                (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
+                (layoutRemove)="removeWidget(entry.id)"
+                [title]="widgetTitle('verification_status')"
+              >
+                <p class="widget-stat-value">{{ formatTenantStatus(business.status) }}</p>
+                <p class="hint">{{ verificationHint() }}</p>
+                @if (business.status !== 2) {
+                  <a class="btn" routerLink="/profile">{{ tr('portal.dashboard.continueVerification') }}</a>
+                }
+              </app-dashboard-widget>
+            }
+            @case ("queue_now") {
+              <app-dashboard-widget
+                [customizeMode]="editMode()"
+                [layoutWidth]="widgetLayoutWidth(entry)"
+                [layoutRemovable]="widgetRemovable(entry.id)"
+                (layoutWidthChange)="setWidgetWidth(entry.id, $event)"
+                (layoutRemove)="removeWidget(entry.id)"
+                [title]="widgetTitle('queue_now')"
+              >
+                @if (queueWaiting().length === 0) {
+                  <adeni-portal-empty-state
+                    [compact]="true"
+                    [embedded]="true"
+                    icon="time"
+                    [title]="tr('portal.dashboard.queueClear')"
+                    [description]="tr('portal.dashboard.noWalkInsWaitingRight')"
+                  >
+                    @if (offersWalkInQueue()) {
+                      <a class="btn" routerLink="/queue">{{ tr('common.openQueue') }}</a>
+                    }
+                  </adeni-portal-empty-state>
+                } @else {
+                  <ul class="today-list">
+                    @for (ticket of queueWaiting(); track ticket.id) {
+                      <li>
+                        <strong>#{{ ticket.position }} · {{ ticket.displayName }}</strong>
+                        <span>{{ ticket.serviceName ?? tr('common.walk') }}</span>
+                      </li>
+                    }
+                  </ul>
+                  <a class="btn" routerLink="/queue">{{ tr('portal.dashboard.manageQueue') }}</a>
+                }
+              </app-dashboard-widget>
+            }
+            @case ("quick_actions") {
+              <section
+                class="shortcuts-panel dashboard-native-tile"
+                [class.dashboard-native-tile--edit]="editMode()"
+                [class.shortcuts-panel--customize]="editMode()"
+              >
+                @if (editMode()) {
+                  <app-dashboard-widget-edit-chrome
+                    [title]="widgetTitle(entry.id)"
+                    [width]="widgetLayoutWidth(entry)"
+                    [removable]="widgetRemovable(entry.id)"
+                    (widthChange)="setWidgetWidth(entry.id, $event)"
+                    (remove)="removeWidget(entry.id)"
+                  />
+                } @else {
+                  <header class="shortcuts-head">
+                    <div>
+                      <h3 class="section-title">{{ widgetTitle("quick_actions") }}</h3>
+                      <p class="section-lead muted">{{ tr('portal.dashboard.jumpToolsYouUseMost') }}</p>
+                    </div>
+                  </header>
+                }
+                <div class="actions">
+                  @if (offers("calendar")) {
+                    <a routerLink="/bookings" [queryParams]="{ tab: 'pending' }">
+                      <strong>{{ tr('portal.dashboard.bookingInbox') }}</strong>
+                      <span>{{ tr('portal.dashboard.acceptRejectSeeWhoComing') }}</span>
+                    </a>
+                  }
+                  @if (offers("quotes")) {
+                    <a routerLink="/quotes">
+                      <strong>{{ tr('common.quotes') }}</strong>
+                      <span>{{ tr('portal.dashboard.priceCustomWorkTurnInto') }}</span>
+                    </a>
+                  }
+                  @if (hasEntitlement("messaging")) {
+                    <a routerLink="/messages">
+                      <strong>{{ tr('common.messages') }}</strong>
+                      <span>{{ tr('portal.dashboard.replyBookingConversationsReachOut') }}</span>
+                    </a>
+                  } @else if (session.can("portal.messages")) {
+                    <a routerLink="/messages">
+                      <strong>{{ tr('common.messages') }}</strong>
+                      <span>{{ tr('portal.dashboard.sendQuickNoteOutsideInbox') }}</span>
+                    </a>
+                  }
+                  @if (session.can("portal.services")) {
+                    <a routerLink="/services">
+                      <strong>{{ tr('common.services') }}</strong>
+                      <span>{{ tr('portal.dashboard.pricesDurationWhatClientsCan') }}</span>
+                    </a>
+                  }
+                  @if (offers("calendar") && session.can("portal.hours")) {
+                    <a routerLink="/availability">
+                      <strong>{{ tr('common.hours') }}</strong>
+                      <span>{{ tr('portal.dashboard.theWeekCustomersAllowedBook') }}</span>
+                    </a>
+                  }
+                  @if (session.can("portal.profile")) {
+                    <a routerLink="/profile">
+                      <strong>{{ tr('common.profile') }}</strong>
+                      <span>{{ tr('portal.dashboard.coverShareLinkReviewsVerification') }}</span>
+                    </a>
+                  }
+                </div>
+              </section>
+            }
+          }
+        </div>
+      }
+    </div>
+
+    <adeni-modal
+      [open]="pickerOpen()"
+      size="2xl"
+      [hasFooter]="false"
+      [title]="tr('portal.dashboard.customizeDashboard')"
+      [subtitle]="tr('portal.dashboard.pickLayoutTemplateAddIndividual')"
+      (closed)="closePicker()"
+    >
+      <div class="widget-picker">
+        <h4 class="widget-picker__section-title">{{ tr('portal.dashboard.layoutPresets') }}</h4>
+        <div class="layout-preset-grid" role="list">
+          @for (preset of layoutPresetsForPicker(); track preset.id) {
+            @if (presetDisplayCopy(preset); as copy) {
+              <adeni-dashboard-layout-preset-card
+                role="listitem"
+                [presetId]="preset.id"
+                [icon]="presetCardIcon(preset.id)"
+                [focus]="copy.focus"
+                [label]="preset.label"
+                [description]="copy.description"
+                [marketLine]="copy.marketLine"
+                [metaLine]="presetMetaLine(preset)"
+                [widgetTitles]="presetPreviewWidgetTitles(preset)"
+                [wireframeBlocks]="presetWireframeBlocks(preset)"
+                [recommended]="isPresetRecommended(preset)"
+                [active]="isPresetActive(preset)"
+                [disabled]="presetCardDisabled(preset)"
+                [recommendedLabel]="presetUiCopy('recommended')"
+                [activeLabel]="presetUiCopy('currentLayout')"
+                [emptyPlanHint]="presetUiCopy('emptyPlan')"
+                [ctaLabel]="presetCtaLabel(preset)"
+                (selected)="applyLayoutPreset(preset.id)"
+              />
+            }
+          }
+        </div>
+
+        <h4 class="widget-picker__section-title">{{ tr('portal.dashboard.addWidget') }}</h4>
+        @if (addableWidgets().length === 0) {
+          <p class="hint">{{ tr('portal.dashboard.everyWidgetAvailablePlanAlready') }}</p>
+        } @else {
+          <ul class="picker-list picker-list--widgets">
+            @for (widget of addableWidgets(); track widget.id) {
+              <li>
+                <button
+                  type="button"
+                  class="picker-widget-btn"
+                  [attr.title]="widgetSummary(widget.id)"
+                  [attr.aria-label]="widgetTitle(widget.id) + '. ' + widgetSummary(widget.id)"
+                  (click)="addWidget(widget.id)"
+                >
+                  <adeni-carbon-icon name="add" [size]="16" />
+                  {{ widgetTitle(widget.id) }}
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </adeni-modal>
+  </app-portal-page>
+}

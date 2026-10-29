@@ -1,0 +1,33 @@
+<main class="accept">
+  <p class="brand">Adeni</p>
+  <h1>{{ tr('portal.acceptInvite.acceptStaffInvite') }}</h1>
+  <p class="lede">{{ message() }}</p>
+
+  @if (devMode && status() === "ready") {
+    <label class="field">
+      <span>{{ tr('portal.acceptInvite.devAuth0SubInvitee') }}</span>
+      <input [(ngModel)]="devAuth0Sub" autocomplete="off" />
+    </label>
+  }
+
+  @if (auth0Mode && status() === "ready") {
+    <p class="hint">{{ tr('portal.acceptInvite.useAuth0AccountMatchesInvited') }}</p>
+  }
+
+  <div class="actions">
+    @if (status() === "ready" || status() === "error") {
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="!tokenReady()"
+        (click)="accept()"
+      >
+        {{ tr('portal.acceptInvite.acceptInvite') }}
+      </button>
+    }
+    @if (status() === "working") {
+      <p class="muted">{{ tr('portal.acceptInvite.accepting') }}</p>
+    }
+    <a routerLink="/dashboard">{{ tr('portal.acceptInvite.backPortal') }}</a>
+  </div>
+</main>

@@ -1,0 +1,214 @@
+<app-portal-page [title]="tr('common.locations')" [description]="tr('portal.locations.manageBranchesPublicProfileUrls')">
+  <button
+    pageActions
+    type="button"
+    class="btn btn-primary"
+    [disabled]="!canAddLocation()"
+    [title]="canAddLocation() ? tr('portal.locations.addBranch') : tr('portal.locations.locationLimitReachedPlan')"
+    (click)="openCreate()"
+  >
+    <adeni-carbon-icon name="add" [size]="16" />
+    {{ tr('portal.locations.addLocation') }}
+  </button>
+
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  <adeni-modal
+    [open]="showForm()"
+    [title]="editingId() ? tr('portal.locations.editLocation') : tr('portal.locations.newLocation')"
+    [subtitle]="tr('portal.locations.slugAppearsPublicUrlBusinesses')"
+    size="lg"
+    [hasFooter]="false"
+    (closed)="cancelForm()"
+  >
+    <div class="field">
+      <label>{{ tr('portal.locations.slug') }}</label>
+      <input [(ngModel)]="draft.slug" />
+    </div>
+    <div class="field">
+      <label>{{ tr('common.displayName') }}</label>
+      <input [(ngModel)]="draft.name" />
+    </div>
+    <div class="field">
+      <label>{{ tr('common.address') }}</label>
+      <input [(ngModel)]="draft.addressLine" />
+    </div>
+    <div class="field">
+      <label>{{ tr('common.area') }}</label>
+      <input [(ngModel)]="draft.area" />
+    </div>
+    <div class="field">
+      <label>{{ tr('common.market') }}</label>
+      <select [(ngModel)]="draft.marketId">
+        @for (m of markets(); track m.id) {
+          <option [value]="m.id">{{ m.name }}</option>
+        }
+      </select>
+    </div>
+    <label class="cds-toggle">
+      <input type="checkbox" role="switch" [(ngModel)]="draft.isPrimary" />
+      <span class="cds-toggle__track" aria-hidden="true"></span>
+      <span class="cds-toggle__label">{{ tr('portal.locations.primaryLocation') }}</span>
+    </label>
+    <div class="actions">
+      <button type="button" class="btn" (click)="cancelForm()">
+        <adeni-carbon-icon name="close" [size]="16" />
+        {{ tr('common.cancel') }}
+      </button>
+      <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="save()">
+        <adeni-carbon-icon name="save" [size]="16" />
+        {{ tr('common.save') }}
+      </button>
+    </div>
+  </adeni-modal>
+
+  @if (locations().length === 0 && !loading()) {
+    <adeni-portal-empty-state
+      icon="location--filled"
+      [title]="tr('portal.locations.noLocationsYet')"
+      [description]="tr('portal.locations.addFirstBranchSoCustomers')"
+    />
+  } @else {
+    <div class="roster">
+      <adeni-list-toolbar
+        storageKey="portal.locations"
+        [viewMode]="viewMode()"
+        (viewModeChange)="viewMode.set($event)"
+        [count]="paginatedLocations().length"
+        [countTotal]="filteredLocationsCount()"
+        [singularCountLabel]="tr('portal.locations.location')"
+        [pluralCountLabel]="tr('portal.locations.locations')"
+        [searchPlaceholder]="tr('portal.locations.searchLocations')"
+        [searchQuery]="locationSearch()"
+        (searchQueryChange)="onLocationSearchChange($event)"
+      >
+        <adeni-export-menu
+          listExports
+          [label]="tr('common.export')"
+          [items]="exportItems()"
+          (exportSelect)="downloadLocationsExport($event)"
+        />
+      </adeni-list-toolbar>
+
+      @if (filteredLocations().length === 0) {
+        <adeni-portal-empty-state
+          icon="search"
+          [title]="tr('common.noMatches')"
+          [description]="tr('portal.locations.tryDifferentNameAreaSlug')"
+          [compact]="true"
+        />
+      } @else if (viewMode() === "cards") {
+        <ul class="plain staff-grid">
+          @for (loc of paginatedLocations(); track loc.id) {
+            <li class="org-card">
+              <div class="org-avatar" data-tone="neutral" aria-hidden="true">
+                <span>{{ locationInitials(loc) }}</span>
+              </div>
+              <strong class="org-name">{{ loc.name || loc.slug }}</strong>
+              <span class="org-role">{{ loc.area }}</span>
+              <span class="org-title">{{ loc.addressLine }}</span>
+              <div class="org-meta adeni-cell-pills">
+                @if (loc.isPrimary) {
+                  <adeni-pill tone="brand" [compact]="true">{{ tr('common.primary') }}</adeni-pill>
+                }
+                <adeni-pill tone="neutral" [compact]="true">{{ loc.marketId }}</adeni-pill>
+              </div>
+              <p class="loc-slug muted">/businesses/{{ loc.slug }}</p>
+              <div class="org-actions">
+                <button type="button" [disabled]="busy() === loc.id" (click)="openEdit(loc)">
+                  {{ tr('common.edit') }}
+                </button>
+                <button
+                  type="button"
+                  class="danger"
+                  [disabled]="busy() === loc.id"
+                  (click)="remove(loc)"
+                >
+                  {{ tr('portal.locations.delete') }}
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+
+        <div class="adeni-list-results adeni-list-results--pagination-only">
+          <adeni-list-pagination
+            [page]="page()"
+            [pageSize]="pageSize()"
+            [totalCount]="filteredLocationsCount()"
+            [pageSizeOptions]="listPageSizeOptions"
+            [ariaLabel]="tr('portal.locations.locationPages')"
+            (pageChange)="goToLocationsPage($event)"
+            (pageSizeChange)="onLocationsPageSizeChange($event)"
+          />
+        </div>
+      } @else {
+        <div class="adeni-list-results">
+        <adeni-data-table
+          [rows]="paginatedLocations()"
+          [columns]="locationColumns()"
+          [trackRow]="trackLocationRow"
+          [sortColumnId]="sortColumnId()"
+          (sortColumnIdChange)="onLocationSortColumnChange($event)"
+          [sortDirection]="sortDirection()"
+          (sortDirectionChange)="onLocationSortDirectionChange($event)"
+        >
+          <ng-template adeniDataTableCell="name" let-loc>
+            <adeni-table-person-cell
+              [displayName]="loc.name || loc.slug"
+              [subtitle]="loc.area"
+              [initials]="locationInitials(loc)"
+              avatarTone="neutral"
+            />
+          </ng-template>
+          <ng-template adeniDataTableCell="address" let-loc>
+            <span class="adeni-data-table-text">{{ loc.addressLine }}</span>
+          </ng-template>
+          <ng-template adeniDataTableCell="market" let-loc>
+            <adeni-pill tone="neutral" [compact]="true">{{ loc.marketId }}</adeni-pill>
+          </ng-template>
+          <ng-template adeniDataTableCell="primary" let-loc>
+            @if (loc.isPrimary) {
+              <adeni-pill tone="brand" [compact]="true">{{ tr('common.primary') }}</adeni-pill>
+            } @else {
+              <span class="adeni-data-table-text">—</span>
+            }
+          </ng-template>
+          <ng-template adeniDataTableActions let-loc>
+            <adeni-row-action-bar>
+              <adeni-icon-btn
+                icon="edit"
+                [label]="tr('portal.locations.editLocation')"
+                variant="table"
+                [dense]="true"
+                [disabled]="busy() === loc.id"
+                (pressed)="openEdit(loc)"
+              />
+              <adeni-icon-btn
+                icon="trash-can"
+                [label]="tr('portal.locations.deleteLocation')"
+                variant="danger-soft"
+                [dense]="true"
+                [disabled]="busy() === loc.id"
+                (pressed)="remove(loc)"
+              />
+            </adeni-row-action-bar>
+          </ng-template>
+        </adeni-data-table>
+
+          <adeni-list-pagination
+            [page]="page()"
+            [pageSize]="pageSize()"
+            [totalCount]="filteredLocationsCount()"
+            [pageSizeOptions]="listPageSizeOptions"
+            [ariaLabel]="tr('portal.locations.locationPages')"
+            (pageChange)="goToLocationsPage($event)"
+            (pageSizeChange)="onLocationsPageSizeChange($event)"
+          />
+        </div>
+      }
+    </div>
+  }
+</app-portal-page>

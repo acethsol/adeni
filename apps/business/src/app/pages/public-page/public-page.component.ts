@@ -1,0 +1,206 @@
+import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { FormsModule } from "@angular/forms";
+import { RouterLink } from "@angular/router";
+import type { BusinessProfile, PublicPageTemplateId } from "@adeni/shared";
+import {
+  DEFAULT_PUBLIC_PAGE_CONFIG,
+  PUBLIC_PAGE_TEMPLATES,
+  resolvePublicPageTemplateId,
+} from "@adeni/shared";
+import {
+  AdeniConfirmService,
+  AdeniFeedbackService,
+  PortalPageComponent,
+  injectAdeniTranslate,
+  injectAdeniApiError,
+} from "@adeni/ui";
+import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
+import { BusinessApiService } from "../../core/services/business-api.service";
+
+type PublicPageDraft = {
+  templateId: PublicPageTemplateId;
+  accentColor: string;
+  useAccent: boolean;
+  showAbout: boolean;
+  showServices: boolean;
+  showReviews: boolean;
+  showVisit: boolean;
+  showBook: boolean;
+  showPolicies: boolean;
+};
+
+@Component({
+  selector: "app-public-page",
+  standalone: true,
+  imports: [PortalPageComponent, FormsModule, RouterLink],
+  templateUrl: "./public-page.component.html",
+  styleUrl: "./public-page.component.scss",
+})
+export class PublicPageSettingsComponent implements OnInit {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
+  private readonly api = inject(BusinessApiService);
+  private readonly config = inject(ADENI_PORTAL_CONFIG);
+  private readonly feedback = inject(AdeniFeedbackService);
+  private readonly confirmDialog = inject(AdeniConfirmService);
+
+  readonly templates = PUBLIC_PAGE_TEMPLATES;
+  readonly saving = signal(false);
+  readonly profile = signal<BusinessProfile | null>(null);
+  private readonly savedSnapshot = signal("");
+  private readonly formTick = signal(0);
+
+  templateId: PublicPageTemplateId = "studio";
+  accentColor = "#0F766E";
+  useAccent = false;
+  showAbout = true;
+  showServices = true;
+  showReviews = true;
+  showVisit = true;
+  showBook = true;
+  showPolicies = false;
+
+  readonly dirty = computed(() => {
+    this.formTick();
+    return this.serializeDraft() !== this.savedSnapshot();
+  });
+
+  readonly publicPageLocked = computed(() => this.profile()?.status === 1);
+
+  readonly canSave = computed(
+    () => this.dirty() && !this.saving() && this.profile() != null && !this.publicPageLocked(),
+  );
+
+  readonly previewSlug = computed(() => {
+    const locations = this.profile()?.locations ?? [];
+    const primary = locations.find((l) => l.isPrimary) ?? locations[0];
+    return primary?.slug ?? null;
+  });
+
+  readonly liveUrl = computed(() => {
+    const slug = this.previewSlug();
+    return slug ? `${this.config.discoverWebUrl}/businesses/${slug}` : null;
+  });
+
+  ngOnInit(): void {
+    void this.load();
+  }
+
+  markDirty(): void {
+    this.formTick.update((n) => n + 1);
+  }
+
+  async load(): Promise<void> {
+    try {
+      await this.feedback.runLoading(async () => {
+        const p = await this.api.withAuthorizedClient((c) => c.getTenantProfile());
+        this.profile.set(p);
+        const page = p.publicPage ?? DEFAULT_PUBLIC_PAGE_CONFIG;
+        this.templateId = resolvePublicPageTemplateId(page.templateId);
+        this.useAccent = Boolean(page.accentColor);
+        this.accentColor = page.accentColor ?? "#0F766E";
+        this.showAbout = page.sections.about;
+        this.showServices = page.sections.services;
+        this.showReviews = page.sections.reviews;
+        this.showVisit = page.sections.visit;
+        this.showBook = page.sections.book ?? true;
+        this.showPolicies = page.sections.policies ?? false;
+        this.captureSnapshot();
+      });
+    } catch (caught) {
+      this.profile.set(null);
+      this.feedback.error(this.apiErr(caught, "portal.publicPage.couldNotLoadPublicPage"));
+    }
+  }
+
+  selectTemplate(id: PublicPageTemplateId): void {
+    if (this.templateId === id) {
+      return;
+    }
+    this.templateId = id;
+    this.markDirty();
+  }
+
+  async save(): Promise<void> {
+    if (!this.dirty()) {
+      this.feedback.info(this.tr("portal.publicPage.nothingSaveNoChangesYet"));
+      return;
+    }
+
+    if (!this.showAbout && !this.showServices && !this.showVisit) {
+      this.feedback.error(this.tr("portal.publicPage.keepAtLeastOneAbout"));
+      return;
+    }
+
+    if (
+      !(await this.confirmDialog.confirmKind("save", {
+        subject: this.tr("common.confirm.subjects.publicPage"),
+      }))
+    ) {
+      return;
+    }
+
+    this.saving.set(true);
+    try {
+      await this.feedback.runLoading(async () => {
+        await this.api.withAuthorizedClient(async (c) => {
+          const updated = await c.updateTenantPublicPage({
+            templateId: this.templateId,
+            accentColor: this.useAccent ? this.accentColor : null,
+            sections: {
+              about: this.showAbout,
+              services: this.showServices,
+              reviews: this.showReviews,
+              visit: this.showVisit,
+              book: this.showBook,
+              policies: this.showPolicies,
+            },
+          });
+          this.profile.set(updated);
+        });
+      }, this.tr("common.saving"), this.tr("portal.publicPage.updatingTemplateSections"));
+
+      this.captureSnapshot();
+      this.feedback.success(
+        this.showBook
+          ? this.tr("portal.publicPage.templateSectionsLiveBookingPage")
+          : this.tr("portal.publicPage.savedOnlineBookingOffCustomers"),
+        this.tr("portal.publicPage.publicPageSaved"),
+      );
+    } catch (err) {
+      this.feedback.error(err instanceof Error ? err.message : this.tr("portal.publicPage.couldNotSavePublicPage"));
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  private captureSnapshot(): void {
+    this.savedSnapshot.set(this.serializeDraft());
+    this.formTick.update((n) => n + 1);
+  }
+
+  hasPolicyContent(): boolean {
+    const policies = this.profile()?.policies;
+    return Boolean(
+      policies?.booking?.trim() ||
+        policies?.payment?.trim() ||
+        policies?.cancellation?.trim() ||
+        policies?.terms?.trim(),
+    );
+  }
+
+  private serializeDraft(): string {
+    const draft: PublicPageDraft = {
+      templateId: this.templateId,
+      accentColor: this.useAccent ? this.accentColor.trim().toUpperCase() : "",
+      useAccent: this.useAccent,
+      showAbout: this.showAbout,
+      showServices: this.showServices,
+      showReviews: this.showReviews,
+      showVisit: this.showVisit,
+      showBook: this.showBook,
+      showPolicies: this.showPolicies,
+    };
+    return JSON.stringify(draft);
+  }
+}

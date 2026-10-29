@@ -1,0 +1,135 @@
+<app-portal-page
+  [title]="tr('common.quotes')"
+  [description]="tr('portal.quotes.customWorkDoesNotFit')"
+>
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (quotes().length === 0 && services().length > 0) {
+    <adeni-portal-empty-state
+      icon="edit"
+      [title]="tr('portal.quotes.noQuoteRequestsYet')"
+      [description]="tr('portal.quotes.clientsSendTheseFromPublic')"
+    />
+  } @else {
+    <section class="card">
+      <h3>{{ tr('common.open') }}</h3>
+      @if (openQuotes().length === 0) {
+        <adeni-portal-empty-state
+          [compact]="true"
+          [embedded]="true"
+          icon="checkmark--filled"
+          [title]="tr('portal.quotes.allCaughtUp')"
+          [description]="tr('portal.quotes.nothingWaitingPriceRightNow')"
+        />
+      } @else {
+        <ul class="plain">
+          @for (quote of openQuotes(); track quote.id) {
+            <li class="list-row">
+              <div>
+                <strong>{{ statusLabel(quote.status) }}</strong>
+                <p>{{ quote.description }}</p>
+                <p class="muted">
+                  {{ formatSlotTime(quote.createdAt) }}
+                  @if (quote.quotedAmount && quote.quotedCurrency) {
+                    · {{ formatPrice(quote.quotedAmount, quote.quotedCurrency) }}
+                  }
+                  @if (quote.serviceAddress) {
+                    · {{ quote.serviceAddress }}
+                  }
+                </p>
+              </div>
+              <div class="row-actions">
+                @if (quote.status === "submitted") {
+                  <button type="button" class="btn btn-primary" (click)="startOffer(quote)">{{ tr('portal.quotes.price') }}</button>
+                }
+                @if (canDownloadPdf(quote)) {
+                  <button
+                    type="button"
+                    class="btn"
+                    [disabled]="pdfBusyId() === quote.id"
+                    (click)="downloadQuotePdf(quote)"
+                  >
+                    {{ pdfBusyId() === quote.id ? tr('common.downloading') : tr('common.downloadPdf') }}
+                  </button>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    @if (selected(); as quote) {
+      <section class="card form">
+        <h3>{{ tr('portal.quotes.sendQuote') }}</h3>
+        <p class="muted">{{ quote.description }}</p>
+        <div class="row">
+          <div class="field">
+            <label>{{ tr('portal.quotes.amount') }}</label>
+            <input type="number" min="0" step="0.01" [(ngModel)]="amount" />
+          </div>
+          <div class="field">
+            <label>{{ tr('common.currency') }}</label>
+            <input maxlength="3" [(ngModel)]="currency" />
+          </div>
+        </div>
+        <div class="field">
+          <label>{{ tr('common.service') }}</label>
+          <select [(ngModel)]="serviceOfferingId">
+            @for (service of services(); track service.id) {
+              <option [value]="service.id">{{ service.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>{{ tr('common.start') }}</label>
+            <input type="datetime-local" [(ngModel)]="proposedStart" />
+          </div>
+          <div class="field">
+            <label>{{ tr('common.end') }}</label>
+            <input type="datetime-local" [(ngModel)]="proposedEnd" />
+          </div>
+        </div>
+        <div class="field">
+          <label>{{ tr('common.notes') }}</label>
+          <textarea rows="3" [(ngModel)]="notes"></textarea>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn" (click)="cancelOffer()">{{ tr('common.cancel') }}</button>
+          <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="sendOffer()">
+            {{ busy() ? tr('common.sending') : tr('portal.quotes.sendQuote2') }}
+          </button>
+        </div>
+      </section>
+    }
+
+    @if (closedQuotes().length > 0) {
+      <section class="card">
+        <h3>{{ tr('common.closed') }}</h3>
+        <ul class="plain">
+          @for (quote of closedQuotes(); track quote.id) {
+            <li class="list-row">
+              <div>
+                <strong>{{ statusLabel(quote.status) }}</strong>
+                <p class="muted">{{ quote.description }}</p>
+              </div>
+              @if (canDownloadPdf(quote)) {
+                <button
+                  type="button"
+                  class="btn"
+                  [disabled]="pdfBusyId() === quote.id"
+                  (click)="downloadQuotePdf(quote)"
+                >
+                  {{ tr('portal.quotes.pdf') }}
+                </button>
+              }
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+</app-portal-page>

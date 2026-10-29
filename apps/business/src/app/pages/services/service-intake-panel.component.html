@@ -1,0 +1,73 @@
+<section class="card tab-panel intake-panel">
+  <header class="section-head">
+    <div>
+      <h3 class="section-title">{{ tr("portal.services.consultationFormTab") }}</h3>
+      <p class="muted section-lede">{{ tr("intake.serviceLinksLead") }}</p>
+    </div>
+    @if (canManageForms()) {
+      <div class="section-head__aside">
+        <a routerLink="/services/intake" class="btn btn-ghost">
+          <adeni-carbon-icon name="launch" [size]="16" />
+          {{ tr("portal.services.manageAllForms") }}
+        </a>
+      </div>
+    }
+  </header>
+
+  @if (error()) {
+    <p class="error-banner" role="alert">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="loading-line" role="status">{{ tr("intake.loading") }}</p>
+  } @else {
+    <div class="assign-panel" [attr.aria-busy]="busy()">
+      <div class="assign-panel__head">
+        <span class="assign-panel__icon" aria-hidden="true">
+          <adeni-carbon-icon name="task" [size]="20" />
+        </span>
+        <div>
+          <h4 class="assign-panel__title">{{ tr("intake.assignForm") }}</h4>
+          <p class="assign-panel__lead">
+            {{ tr("portal.services.intakeScopedToService", { name: serviceName() }) }}
+          </p>
+        </div>
+      </div>
+
+      <div class="intake-status">
+        <span class="intake-status__label">{{ tr("intake.linkedForm") }}</span>
+        <adeni-pill [tone]="bindingTemplateId() ? 'brand' : 'neutral'" [compact]="true">
+          {{ templateLabel(bindingTemplateId()) }}
+        </adeni-pill>
+        @if (bindingTemplateId() && !assignedFormPublished()) {
+          <adeni-pill tone="warning" [compact]="true">{{ tr("intake.statusDraft") }}</adeni-pill>
+        }
+      </div>
+
+      @if (assignableFormOptions().length <= 1) {
+        <adeni-portal-empty-state
+          icon="document"
+          [title]="tr('intake.noFormsYet')"
+          [description]="tr('intake.noServicesForAssignment')"
+          [compact]="true"
+        />
+        @if (canManageForms()) {
+          <p class="intake-actions">
+            <adeni-staff-btn variant="primary" icon="add" [routerLink]="'/services/intake'">
+              {{ tr("intake.create") }}
+            </adeni-staff-btn>
+          </p>
+        }
+      } @else {
+        <div class="assign-filters">
+          <adeni-filter-select
+            [label]="tr('intake.form')"
+            [options]="assignableFormOptions()"
+            [value]="bindingTemplateId() ?? ''"
+            (valueChange)="onFormChange($event)"
+          />
+        </div>
+      }
+    </div>
+  }
+</section>

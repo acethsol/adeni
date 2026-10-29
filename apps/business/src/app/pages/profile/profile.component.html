@@ -1,0 +1,564 @@
+<app-portal-page
+  [title]="tr('common.profile')"
+  [description]="tr('portal.profile.yourBusinessIdentityDiscoverPhotos')"
+>
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (profile(); as p) {
+    <adeni-tabs [tabs]="tabs()" />
+
+    @if (tab() === "reviews") {
+      @if (reviewsLoading() && reviews().length === 0 && reviewsTotalCount() === 0) {
+        <p class="muted reviews-loading">{{ tr('portal.profile.reviewsLoading') }}</p>
+      } @else if (!reviewsLoading() && reviewsTotalCount() === 0) {
+        <adeni-portal-empty-state
+          icon="user--follow"
+          [title]="tr('common.noReviewsYet')"
+          [description]="tr('portal.profile.reviewsPublishedAfterCustomersComplete')"
+        />
+      } @else {
+        <section class="card reviews-card">
+          @if (reviewsHero(); as hero) {
+            <div class="reviews-hero" [attr.data-status]="hero.status">
+              <span class="hero-icon" aria-hidden="true">
+                <adeni-carbon-icon [name]="hero.icon" [size]="20" />
+              </span>
+              <div class="hero-copy">
+                <div class="hero-head">
+                  <h3>{{ hero.title }}</h3>
+                  <adeni-pill [tone]="hero.tone" [dot]="true">{{ hero.badge }}</adeni-pill>
+                </div>
+                <p>{{ hero.body }}</p>
+              </div>
+            </div>
+          }
+
+          <div class="reviews-stats" [attr.aria-label]="tr('portal.profile.customerReviews')">
+            <article class="reviews-stat reviews-stat--rating">
+              <span class="reviews-stat-icon" aria-hidden="true">
+                <adeni-carbon-icon name="user--filled" [size]="18" />
+              </span>
+              <div>
+                <p class="reviews-stat-label">{{ tr('portal.profile.reviewsStatAverage') }}</p>
+                <p class="reviews-stat-value">{{ reviewAverageDisplay() }}</p>
+                <div class="reviews-star-meter" [attr.aria-label]="tr('portal.profile.reviewsStatAverage')">
+                  @for (star of reviewStarSlots; track star) {
+                    <span
+                      class="reviews-star"
+                      [class.reviews-star--filled]="isReviewStarFilled(star, reviewAverageStars())"
+                      aria-hidden="true"
+                    >
+                      ★
+                    </span>
+                  }
+                </div>
+                <p class="reviews-stat-hint">{{ reviewsCountLabel() }}</p>
+              </div>
+            </article>
+            <article class="reviews-stat reviews-stat--total">
+              <span class="reviews-stat-icon" aria-hidden="true">
+                <adeni-carbon-icon name="user--follow" [size]="18" />
+              </span>
+              <div>
+                <p class="reviews-stat-label">{{ tr('portal.profile.reviewsStatTotal') }}</p>
+                <p class="reviews-stat-value">{{ reviewSummary().count }}</p>
+                <p class="reviews-stat-hint">{{ reviewsScopeHint() }}</p>
+              </div>
+            </article>
+            <article class="reviews-stat reviews-stat--replies">
+              <span class="reviews-stat-icon" aria-hidden="true">
+                <adeni-carbon-icon name="send" [size]="18" />
+              </span>
+              <div>
+                <p class="reviews-stat-label">{{ tr('portal.profile.reviewsStatReplied') }}</p>
+                <p class="reviews-stat-value">{{ reviewsReplyStats().replied }}</p>
+                <p class="reviews-stat-hint">
+                  {{ tr('portal.profile.reviewsResponseRate', { rate: reviewsReplyStats().rate }) }}
+                </p>
+              </div>
+            </article>
+          </div>
+
+          @if (reviewsRatingDistribution(); as distribution) {
+            <div class="reviews-distribution" [attr.aria-label]="tr('portal.profile.reviewsDistributionTitle')">
+              <p class="reviews-distribution-title">{{ tr('portal.profile.reviewsDistributionTitle') }}</p>
+              @for (row of distribution; track row.stars) {
+                <div class="reviews-distribution-row">
+                  <span class="reviews-distribution-label">{{ row.stars }}★</span>
+                  <span class="reviews-distribution-track" aria-hidden="true">
+                    <span class="reviews-distribution-fill" [style.width.%]="row.percent"></span>
+                  </span>
+                  <span class="reviews-distribution-count">{{ row.count }}</span>
+                </div>
+              }
+            </div>
+          }
+
+          <adeni-list-toolbar
+            storageKey="portal.profile.reviews"
+            [showSearch]="false"
+            [showViewSwitcher]="false"
+            [count]="reviews().length"
+            [countTotal]="reviewsTotalCount()"
+            [singularCountLabel]="tr('portal.profile.reviewsToolbarSingular')"
+            [pluralCountLabel]="tr('portal.profile.reviewsToolbarPlural')"
+          >
+            <p class="reviews-toolbar-lead" listFilters>
+              {{ tr('portal.profile.reviewsRecentLead') }}
+              @if (reviewsLoading()) {
+                <span class="hint"> · {{ tr('portal.profile.reviewsLoading') }}</span>
+              }
+            </p>
+          </adeni-list-toolbar>
+
+          @if (reviews().length === 0) {
+            <adeni-portal-empty-state
+              [embedded]="true"
+              [compact]="true"
+              icon="user--follow"
+              [title]="tr('common.noReviewsYet')"
+              [description]="tr('portal.profile.reviewsNoMatchesForScope')"
+            />
+          } @else {
+            <ul class="review-feed">
+              @for (review of reviews(); track review.id) {
+                <li class="review-row" [attr.data-rating]="review.rating">
+                  <div class="review-row-main">
+                    <div class="review-row-head">
+                      <div class="review-row-identity">
+                        <span class="review-avatar" aria-hidden="true">
+                          <adeni-carbon-icon name="user--avatar" [size]="16" />
+                        </span>
+                        <div>
+                          <strong class="review-customer">{{ review.customerDisplayName }}</strong>
+                          <p class="review-meta muted">
+                            {{ review.createdAt | date: "mediumDate" }}
+                          </p>
+                          <div class="reviews-star-meter reviews-star-meter--inline" aria-hidden="true">
+                            @for (star of reviewStarSlots; track star) {
+                              <span
+                                class="reviews-star"
+                                [class.reviews-star--filled]="isReviewStarFilled(star, review.rating)"
+                              >
+                                ★
+                              </span>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                      <div class="review-row-badges">
+                        <adeni-pill [tone]="reviewRatingTone(review.rating)" [dot]="true">
+                          {{ tr('portal.profile.reviewRatingOfFive', { rating: review.rating }) }}
+                        </adeni-pill>
+                        @if (review.ownerReply?.trim()) {
+                          <adeni-pill tone="success" [dot]="true">{{ tr('portal.profile.reviewReplied') }}</adeni-pill>
+                        } @else {
+                          <adeni-pill tone="warning" [dot]="true">{{ tr('portal.profile.reviewAwaitingReply') }}</adeni-pill>
+                        }
+                      </div>
+                    </div>
+                    <p class="review-body">
+                      {{ review.comment.trim() ? review.comment : tr('portal.profile.noComment') }}
+                    </p>
+                    @if (review.ownerReply?.trim()) {
+                      <div class="owner-reply">
+                        <span>{{ tr('portal.profile.yourReply') }}</span>
+                        <p>{{ review.ownerReply }}</p>
+                        @if (review.ownerReplyAt) {
+                          <p class="review-meta muted">{{ review.ownerReplyAt | date: "mediumDate" }}</p>
+                        }
+                      </div>
+                    }
+                  </div>
+                  <div class="review-row-action">
+                    @if (!review.ownerReply?.trim()) {
+                      @if (replyingId() === review.id) {
+                        <div class="field reply-field">
+                          <label [for]="'reply-' + review.id">{{ tr('common.reply') }}</label>
+                          <textarea [id]="'reply-' + review.id" rows="3" [(ngModel)]="replyDraft"></textarea>
+                        </div>
+                        <div class="inline-actions">
+                          <adeni-staff-btn
+                            icon="send"
+                            variant="primary"
+                            [disabled]="saving()"
+                            (pressed)="sendReviewReply(review.id)"
+                          >
+                            {{ tr('portal.profile.postReply') }}
+                          </adeni-staff-btn>
+                          <adeni-staff-btn icon="close" (pressed)="replyingId.set(null); replyDraft = ''">
+                            {{ tr('common.cancel') }}
+                          </adeni-staff-btn>
+                        </div>
+                      } @else {
+                        <adeni-staff-btn
+                          icon="send"
+                          [disabled]="saving()"
+                          (pressed)="replyingId.set(review.id); replyDraft = ''"
+                        >
+                          {{ tr('common.reply') }}
+                        </adeni-staff-btn>
+                      }
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+
+            <div class="adeni-list-results adeni-list-results--pagination-only">
+              <adeni-list-pagination
+                [embedded]="true"
+                [page]="reviewsPage()"
+                [pageSize]="reviewsPageSize()"
+                [totalCount]="reviewsTotalCount()"
+                [pageSizeOptions]="reviewsPageSizeOptions"
+                [loading]="reviewsLoading()"
+                [showEdgeJumpers]="false"
+                [ariaLabel]="tr('portal.profile.reviewPages')"
+                (pageChange)="goToReviewsPage($event)"
+              />
+            </div>
+          }
+        </section>
+      }
+    } @else if (tab() === "business") {
+      <section class="card edit-card">
+        <h3>{{ tr('portal.profile.businessDetails') }}</h3>
+        <p class="lede">{{ tr('portal.profile.shownPublicProfileUsedDiscover') }}</p>
+        @if (profileEditLockReason(); as lockReason) {
+          <p class="muted lock-hint">{{ lockReason }}</p>
+        }
+        <div class="field">
+          <label for="businessName">{{ tr('common.businessName') }}</label>
+          <input id="businessName" [(ngModel)]="businessName" [disabled]="!canEdit()" />
+        </div>
+        <div class="field">
+          <label for="categorySlug">{{ tr('common.primaryCategory') }}</label>
+          @if (categories().length > 0) {
+            <select
+              id="categorySlug"
+              [(ngModel)]="categorySlug"
+              [disabled]="!canEdit()"
+              (ngModelChange)="onPrimaryCategoryChange()"
+            >
+              @for (cat of categories(); track cat.slug) {
+                <option [value]="cat.slug">{{ cat.name }}</option>
+              }
+            </select>
+          } @else {
+            <input id="categorySlug" [(ngModel)]="categorySlug" [disabled]="!canEdit()" />
+          }
+          <p class="hint">{{ tr('portal.profile.mainListingTypeDrivesDefault') }}</p>
+        </div>
+        @if (canEdit() && additionalOptions().length > 0) {
+          <fieldset class="field additional">
+            <legend>{{ tr('common.alsoListUnderOptional') }}</legend>
+            <ul class="checkbox-list">
+              @for (cat of additionalOptions(); track cat.slug) {
+                <li>
+                  <label>
+                    <input
+                      type="checkbox"
+                      [checked]="isAdditionalSelected(cat.slug)"
+                      (change)="toggleAdditional(cat.slug)"
+                    />
+                    {{ cat.name }}
+                  </label>
+                </li>
+              }
+            </ul>
+          </fieldset>
+        } @else if (additionalCategorySlugs.length > 0) {
+          <p class="muted">
+            {{ tr('portal.profile.alsoListedUnder') }}
+            @for (slug of additionalCategorySlugs; track slug; let last = $last) {
+              {{ categoryLabel("en", slug) }}@if (!last) {, }
+            }
+          </p>
+        }
+        <div class="field">
+          <label for="phone">{{ tr('common.phone') }}</label>
+          <input id="phone" [(ngModel)]="phone" [disabled]="!canEdit()" />
+          <p class="hint">{{ tr('portal.profile.includeCountryCodeMaskedPublic') }}</p>
+        </div>
+        <div class="field">
+          <label for="description">{{ tr('common.description') }}</label>
+          <textarea id="description" rows="4" [(ngModel)]="description" [disabled]="!canEdit()"></textarea>
+        </div>
+        <button type="button" class="btn btn-primary" [disabled]="!canEdit() || saving()" (click)="saveProfile()">
+          <adeni-carbon-icon name="save" [size]="16" />
+          {{ tr('portal.profile.saveProfile') }}
+        </button>
+      </section>
+    } @else if (tab() === "verification") {
+      <section class="card verification-card">
+        @if (verificationHero(); as hero) {
+          <div class="verification-hero" [attr.data-status]="hero.status">
+            <span class="hero-icon" aria-hidden="true">
+              <adeni-carbon-icon [name]="hero.icon" [size]="20" />
+            </span>
+            <div class="hero-copy">
+              <div class="hero-head">
+                <h3>{{ hero.title }}</h3>
+                <adeni-pill [tone]="hero.tone" [dot]="true">{{ formatTenantStatus(p.status) }}</adeni-pill>
+              </div>
+              <p>{{ hero.body }}</p>
+            </div>
+          </div>
+        }
+        <ol class="verification-stepper" [attr.aria-label]="tr('portal.profile.verification')">
+          @for (label of verificationSteps().labels; track label; let i = $index) {
+            <li
+              class="step"
+              [class.active]="i === verificationSteps().activeIndex && p.status !== 2"
+              [class.done]="i < verificationSteps().activeIndex || p.status === 2"
+              [class.alert]="i === verificationSteps().activeIndex && (p.status === 3 || p.status === 4)"
+            >
+              <span class="step-index">
+                @if (i < verificationSteps().activeIndex || p.status === 2) {
+                  <adeni-carbon-icon name="checkmark" [size]="14" />
+                } @else {
+                  {{ i + 1 }}
+                }
+              </span>
+              <span class="step-label">{{ label }}</span>
+            </li>
+          }
+        </ol>
+        @if (isSuspended()) {
+          <p class="error-banner">{{ tr('portal.profile.verificationSuspendedCallout') }}</p>
+        }
+        @if (p.status === 3 && p.verificationRejectionReason) {
+          <div class="rejection-banner" role="alert">
+            <strong>{{ tr('portal.profile.verificationRejectionBannerTitle') }}</strong>
+            <p>{{ p.verificationRejectionReason }}</p>
+            <p class="muted">{{ tr('portal.profile.verificationResubmitCta') }}</p>
+          </div>
+        }
+        @if (p.verificationDocuments.length > 0 && p.status !== 0) {
+          <div class="submitted-docs">
+            <h4>{{ tr('portal.profile.verificationSubmittedDocsTitle') }}</h4>
+            <ul>
+              @for (doc of p.verificationDocuments; track doc.submittedAt + doc.referenceNumber) {
+                <li>
+                  <strong>{{ docTypeLabel(doc.documentType) }}</strong>
+                  · {{ doc.referenceNumber }}
+                  · {{ doc.submittedAt | date: "mediumDate" }}
+                  @if (doc.hasUploadedFile) {
+                    · {{ tr('portal.profile.verificationFileAttached') }}
+                  }
+                </li>
+              }
+            </ul>
+          </div>
+        }
+        @if (canSubmitVerification()) {
+          <div class="prerequisites">
+            <h4>{{ tr('portal.profile.verificationPrerequisitesTitle') }}</h4>
+            <ul>
+              <li [class.ok]="prerequisitesMet()">{{ tr('portal.profile.verificationPrerequisiteProfile') }}</li>
+              <li [class.ok]="prerequisitesMet()">{{ tr('portal.profile.verificationPrerequisiteLocation') }}</li>
+            </ul>
+          </div>
+          <div class="field">
+            <label for="verification-doc">{{ tr('portal.profile.documentType') }}</label>
+            <select id="verification-doc" [(ngModel)]="verificationDocType">
+              @for (label of verificationLabels | keyvalue; track label.key) {
+                <option [ngValue]="+label.key">{{ label.value }}</option>
+              }
+            </select>
+          </div>
+          <div class="field">
+            <label for="verification-ref">{{ tr('portal.profile.referenceNumber') }}</label>
+            <input id="verification-ref" [(ngModel)]="verificationReference" minlength="5" />
+          </div>
+          <div class="field">
+            <label for="verification-file">{{ tr('portal.profile.verificationOptionalFile') }}</label>
+            <input
+              id="verification-file"
+              type="file"
+              accept=".pdf,image/jpeg,image/png"
+              [disabled]="verificationFileUploading()"
+              (change)="onVerificationFileSelected($event)"
+            />
+            @if (verificationFileKey()) {
+              <p class="hint ok">{{ tr('portal.profile.verificationFileAttached') }}</p>
+            }
+          </div>
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="saving() || !prerequisitesMet()"
+            (click)="submitVerification()"
+          >
+            {{ tr('portal.profile.submitReview') }}
+          </button>
+        } @else if (!isSuspended()) {
+          <p class="muted">{{ tr('portal.profile.noNewSubmissionNeededRight') }}</p>
+        }
+        @if (p.status === 2) {
+          <div class="trust-badges-section">
+            <div class="section-title-row">
+              <h4>{{ tr('portal.profile.verificationTrustBadgesTitle') }}</h4>
+              <span class="hint">{{ trustBadgeProgress() }}</span>
+            </div>
+            <p class="hint">{{ tr('portal.profile.verificationTrustBadgesLead') }}</p>
+            <ul class="trust-badge-list">
+              @for (badgeType of verificationBadgeTypes; track badgeType) {
+                <li class="trust-badge-row" [class.granted]="trustBadgeGranted(badgeType)">
+                  <span class="trust-badge-icon" aria-hidden="true">
+                    <adeni-carbon-icon [name]="verificationBadgeMeta[badgeType].icon" [size]="16" />
+                  </span>
+                  <div class="trust-badge-main">
+                    <span class="trust-badge-name">{{ verificationBadgeLabels[badgeType] }}</span>
+                    <span class="trust-badge-desc">{{ tr(verificationBadgeMeta[badgeType].descKey) }}</span>
+                  </div>
+                  <div class="trust-badge-action">
+                    @if (trustBadgeGranted(badgeType)) {
+                      <adeni-pill tone="success" [dot]="true">{{ tr('portal.profile.verificationBadgeGranted') }}</adeni-pill>
+                    } @else if (trustBadgePending(badgeType)) {
+                      <adeni-pill tone="warning" [dot]="true">{{ tr('portal.profile.verificationBadgePending') }}</adeni-pill>
+                    } @else {
+                      @if (verificationBadgeMeta[badgeType].referenceKey; as refKey) {
+                        <input
+                          class="trust-badge-ref"
+                          type="text"
+                          maxlength="128"
+                          [name]="'trust-badge-ref-' + badgeType"
+                          [attr.aria-label]="tr(refKey)"
+                          [placeholder]="tr(refKey)"
+                          [(ngModel)]="trustBadgeReferences[badgeType]"
+                        />
+                      }
+                      <adeni-staff-btn
+                        icon="send"
+                        [disabled]="trustBadgeBusy() === badgeType"
+                        (pressed)="requestTrustBadge(badgeType)"
+                      >
+                        {{ tr('portal.profile.verificationRequestBadge') }}
+                      </adeni-staff-btn>
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+        @if (verificationMessage()) {
+          <p class="ok">{{ verificationMessage() }}</p>
+        }
+      </section>
+    } @else {
+      <section class="card summary">
+        <div class="summary-main">
+          <p class="kicker">{{ categoryLine() }}</p>
+          <h2>{{ p.businessName }}</h2>
+          <p class="meta">
+            <span class="status-pill" [attr.data-status]="p.status">{{ formatTenantStatus(p.status) }}</span>
+            @if (primaryLocationName(); as place) {
+              <span class="meta-sep">·</span> {{ place }}
+            }
+          </p>
+        </div>
+        <div class="summary-actions">
+          @if (primarySlug()) {
+            <a class="btn" [href]="publicBookingUrl()" target="_blank" rel="noopener">
+              <adeni-carbon-icon name="launch" [size]="16" />
+              {{ tr('common.publicPage') }}
+            </a>
+          }
+          <a class="btn" routerLink="/public-page">{{ tr('portal.profile.pageDesign') }}</a>
+          <a class="btn" routerLink="/locations">{{ tr('common.locations') }}</a>
+          <a class="btn" routerLink="/settings">{{ tr('common.settings') }}</a>
+          @if (canSubmitVerification()) {
+            <a class="btn btn-primary" routerLink="/profile" [queryParams]="{ tab: 'verification' }">
+              {{ tr('portal.profile.verifyBusiness') }}
+            </a>
+          }
+        </div>
+      </section>
+
+      @if (primarySlug()) {
+        <section class="card share">
+          <h3>{{ tr('portal.profile.shareKit') }}</h3>
+          <p class="muted">{{ tr('portal.profile.bookingLinkWhatsappInstagramBio') }}</p>
+          <code class="link">{{ publicBookingUrl() }}</code>
+          <div class="inline-actions">
+            <button type="button" class="btn" (click)="copyPublicLink()">
+              <adeni-carbon-icon name="copy" [size]="16" />
+              {{ tr('portal.profile.copyLink') }}
+            </button>
+            <a class="btn btn-primary" [href]="whatsAppShareUrl()" target="_blank" rel="noopener">
+              <adeni-carbon-icon name="launch" [size]="16" />
+              {{ tr('portal.profile.shareWhatsapp') }}
+            </a>
+          </div>
+          @if (shareNotice()) {
+            <p class="ok">{{ shareNotice() }}</p>
+          }
+        </section>
+      }
+
+      <div class="media-grid">
+        <section class="card media-card">
+          <h3>{{ tr('portal.profile.coverPhoto') }}</h3>
+          <p class="media-lede">{{ tr('portal.profile.mainImageDiscoverCardsPublic') }}</p>
+          <div class="media-stage media-stage--cover">
+            <img class="cover" [src]="coverPreview()" alt="" />
+          </div>
+          <div class="media-footer">
+            <label class="btn">
+              <adeni-carbon-icon name="upload" [size]="16" />
+              {{ uploading() ? tr('common.uploading') : tr('portal.profile.uploadCover') }}
+              <input type="file" accept="image/jpeg,image/png,image/webp" hidden (change)="onCoverSelected($event)" />
+            </label>
+            <p class="hint">{{ tr('portal.profile.jpegPngWebpUp5') }}</p>
+          </div>
+        </section>
+
+        <section class="card media-card">
+          <h3>{{ tr('portal.profile.gallery') }}</h3>
+          <p class="media-lede">Up to {{ maxGalleryPhotos }} extra photos for Explore and map previews.</p>
+          <div class="media-stage media-stage--scroll">
+            @if (galleryImages().length === 0) {
+              <adeni-portal-empty-state
+                [embedded]="true"
+                [compact]="true"
+                icon="image"
+                [title]="tr('portal.profile.noGalleryPhotos')"
+                [description]="tr('portal.profile.addPhotosCustomersCanBrowse')"
+              />
+            } @else {
+              <div class="gallery-grid">
+                @for (photo of galleryImages(); track photo.storageKey) {
+                  <div class="gallery-item">
+                    <img [src]="photo.url" alt="" />
+                    <button type="button" class="remove" (click)="removeGalleryImage(photo.storageKey)">
+                      {{ tr('common.remove') }}
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+          <div class="media-footer">
+            <label class="btn" [class.disabled]="galleryImages().length >= maxGalleryPhotos">
+              <adeni-carbon-icon name="image" [size]="16" />
+              {{ galleryUploading() ? tr('common.uploading') : tr('portal.profile.addPhoto') }}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                hidden
+                [disabled]="galleryImages().length >= maxGalleryPhotos || galleryUploading()"
+                (change)="onGallerySelected($event)"
+              />
+            </label>
+            <p class="hint">{{ galleryImages().length }} / {{ maxGalleryPhotos }} photos</p>
+          </div>
+        </section>
+      </div>
+    }
+  }
+</app-portal-page>

@@ -1,0 +1,375 @@
+<app-portal-page
+  [title]="tr('common.settings')"
+  [description]="tr('portal.settings.configureHowBookingsNotificationsPolicies')"
+>
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  <adeni-tabs [tabs]="tabs()" />
+
+  @if (profile()) {
+    @if (tab() === "bookings") {
+      <section class="card settings-card">
+        <header class="settings-card__head">
+          <h3>{{ tr('portal.settings.bookingBehaviour') }}</h3>
+          <p class="lede">
+            {{ tr('portal.settings.controlHowNewAppointmentsAccepted') }}
+          </p>
+        </header>
+        <div class="settings-panel-grid settings-panel-grid--2">
+          <div class="settings-panel">
+            <h4 class="settings-panel__title">{{ tr('portal.settings.confirmation') }}</h4>
+            <label class="cds-toggle">
+              <input type="checkbox" role="switch" [(ngModel)]="autoConfirm" />
+              <span class="cds-toggle__track" aria-hidden="true"></span>
+              <span class="cds-toggle__label">{{ tr('portal.settings.autoConfirmNewBookings') }}</span>
+            </label>
+            <p class="hint">{{ tr('portal.settings.whenOffNewBookingsStay') }}</p>
+          </div>
+          <div class="settings-panel">
+            <h4 class="settings-panel__title">{{ tr('portal.settings.deposits') }}</h4>
+            <div class="field field--compact">
+              <label for="deposit">{{ tr('portal.settings.depositPercent0100') }}</label>
+              <input
+                id="deposit"
+                type="number"
+                min="0"
+                max="100"
+                [(ngModel)]="depositPercent"
+              />
+              <p class="hint">{{ tr('portal.settings.n0MeansNoDepositApplies') }}</p>
+            </div>
+          </div>
+        </div>
+        <footer class="settings-actions">
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="saving()"
+            (click)="saveBookings()"
+          >
+            <adeni-carbon-icon name="save" [size]="16" />
+            {{ tr('portal.settings.saveBookingSettings') }}
+          </button>
+        </footer>
+      </section>
+    }
+
+    @if (tab() === "notifications") {
+      <section class="card settings-card">
+        <header class="settings-card__head">
+          <h3>{{ tr('portal.settings.customerStaffAlerts') }}</h3>
+          <p class="lede">{{ tr('portal.settings.chooseChannelsLanguageOptionalCustom') }}</p>
+        </header>
+        @if (notificationsError()) {
+          <p class="error-banner">{{ notificationsError() }}</p>
+        }
+
+        <div class="settings-notifications-layout">
+          <div class="settings-notifications-side">
+            <div class="settings-panel">
+              <h4 class="settings-panel__title">{{ tr('portal.settings.deliveryChannels') }}</h4>
+              <ul class="settings-toggle-stack">
+                <li>
+                  <label class="cds-toggle">
+                    <input type="checkbox" role="switch" [(ngModel)]="emailEnabled" />
+                    <span class="cds-toggle__track" aria-hidden="true"></span>
+                    <span class="cds-toggle__label">{{ tr('portal.settings.emailNotifications') }}</span>
+                  </label>
+                </li>
+                <li>
+                  <label class="cds-toggle cds-toggle--disabled">
+                    <input type="checkbox" role="switch" disabled aria-disabled="true" />
+                    <span class="cds-toggle__track" aria-hidden="true"></span>
+                    <span class="cds-toggle__label">{{ tr('portal.settings.pushNotifications') }}</span>
+                  </label>
+                  <p class="hint muted">{{ tr('portal.settings.comingSoonMobilePushNot') }}</p>
+                </li>
+                @if (smsEntitled()) {
+                  <li>
+                    <label class="cds-toggle">
+                      <input type="checkbox" role="switch" [(ngModel)]="smsRemindersEnabled" />
+                      <span class="cds-toggle__track" aria-hidden="true"></span>
+                      <span class="cds-toggle__label">{{ tr('portal.settings.smsReminders') }}</span>
+                    </label>
+                  </li>
+                }
+              </ul>
+              @if (!smsEntitled()) {
+                <p class="hint muted">
+                  {{ tr('portal.settings.smsRemindersProfessionalBusiness') }}
+                  <a routerLink="/plan">{{ tr('common.comparePlans') }}</a>
+                </p>
+              }
+            </div>
+
+            <div class="settings-panel settings-panel--language">
+              <h4 class="settings-panel__title" id="notification-language-heading">{{ tr('portal.settings.customerNotificationLanguage') }}</h4>
+              <div class="field field--compact">
+                <label class="field__label" for="notification-language-mode">{{ tr('portal.settings.languageMode') }}</label>
+                <select
+                  id="notification-language-mode"
+                  aria-labelledby="notification-language-heading"
+                  [(ngModel)]="notificationLanguageMode"
+                  (ngModelChange)="onNotificationLanguageModeChange()"
+                >
+                  <option value="single">{{ tr('portal.settings.singleLanguage') }}</option>
+                  <option value="bilingual">{{ tr('portal.settings.bilingualTwoLanguagesOneEmail') }}</option>
+                </select>
+              </div>
+              @if (notificationLanguageMode === "single") {
+                <div class="field field--compact">
+                  <label class="field__label" for="notification-locale">{{ tr('portal.settings.locale') }}</label>
+                  <select
+                    id="notification-locale"
+                    [(ngModel)]="defaultNotificationLocale"
+                    (ngModelChange)="onPrimaryNotificationLocaleChange()"
+                  >
+                    @for (option of localeOptions; track option.id) {
+                      <option [value]="option.id">{{ option.label }} ({{ option.nativeLabel }})</option>
+                    }
+                  </select>
+                  <p class="hint">
+                    {{ tr('portal.settings.eachMessageSentOneLanguage') }}
+                  </p>
+                </div>
+              } @else {
+                <div class="field field--compact">
+                  <label class="field__label" for="notification-locale-primary">{{ tr('portal.settings.primaryLocaleEmailFirstSection') }}</label>
+                  <select
+                    id="notification-locale-primary"
+                    [(ngModel)]="defaultNotificationLocale"
+                    (ngModelChange)="onPrimaryNotificationLocaleChange()"
+                  >
+                    @for (option of localeOptions; track option.id) {
+                      <option [value]="option.id">{{ option.label }} ({{ option.nativeLabel }})</option>
+                    }
+                  </select>
+                </div>
+                <div class="field field--compact">
+                  <label class="field__label" for="notification-locale-secondary">{{ tr('portal.settings.secondaryLocaleEmailSecondSection') }}</label>
+                  <select
+                    id="notification-locale-secondary"
+                    [(ngModel)]="secondaryNotificationLocale"
+                    (ngModelChange)="onSecondaryNotificationLocaleChange()"
+                  >
+                    @for (option of localeOptions; track option.id) {
+                      @if (option.id !== defaultNotificationLocale) {
+                        <option [value]="option.id">{{ option.label }} ({{ option.nativeLabel }})</option>
+                      }
+                    }
+                  </select>
+                  <p class="hint">
+                    Email includes {{ localeLabel(defaultNotificationLocale) }} and
+                    {{ localeLabel(secondaryNotificationLocale) }} sections in one message. SMS uses the primary locale only.
+                  </p>
+                </div>
+              }
+            </div>
+          </div>
+
+          @if (templateOverridesEntitled()) {
+            <div class="settings-panel settings-panel--editor">
+              <h4 class="settings-panel__title">{{ tr('portal.settings.messageTextOverrides') }}</h4>
+              <div class="field field--compact">
+                <label class="field__label" for="template-override-locale">{{ tr('portal.settings.templateLocale') }}</label>
+                <select
+                  id="template-override-locale"
+                  [(ngModel)]="templateOverrideEditLocale"
+                  (ngModelChange)="onTemplateOverrideEditLocaleChange()"
+                >
+                  @for (locale of templateOverrideLocaleOptions(); track locale) {
+                    <option [value]="locale">{{ localeLabel(locale) }}</option>
+                  }
+                </select>
+              </div>
+              <p class="hint hint--tight">
+                Edit catalog defaults for {{ localeLabel(templateOverrideEditLocale) }}. Save to persist overrides.
+              </p>
+              <div class="template-override-list">
+                @for (templateId of editableTemplateIds; track templateId) {
+                  <article class="template-override-card">
+                    <h5 class="template-override-card__title">{{ templateLabel(templateId) }}</h5>
+                    <div class="field field--compact">
+                      <label class="sr-only" [for]="'tpl-subject-' + templateId">{{ tr('portal.settings.subject') }}</label>
+                      <input
+                        [id]="'tpl-subject-' + templateId"
+                        type="text"
+                        [placeholder]="tr('portal.settings.subject')"
+                        [(ngModel)]="overrideFor(templateId).subject"
+                      />
+                    </div>
+                    <div class="field field--compact">
+                      <label class="sr-only" [for]="'tpl-body-' + templateId">{{ tr('portal.settings.body') }}</label>
+                      <textarea
+                        [id]="'tpl-body-' + templateId"
+                        rows="6"
+                        [placeholder]="tr('portal.settings.body')"
+                        [(ngModel)]="overrideFor(templateId).body"
+                      ></textarea>
+                    </div>
+                  </article>
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="settings-panel settings-panel--muted">
+              <h4 class="settings-panel__title">{{ tr('portal.settings.messageTextOverrides') }}</h4>
+              <p class="hint muted">
+                {{ tr('portal.settings.customReminderBookingMessageText') }}
+                <a routerLink="/plan">{{ tr('common.comparePlans') }}</a>
+              </p>
+            </div>
+          }
+        </div>
+
+        <footer class="settings-actions">
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="saving()"
+            (click)="saveNotifications()"
+          >
+            <adeni-carbon-icon name="save" [size]="16" />
+            {{ tr('portal.settings.saveNotificationPreferences') }}
+          </button>
+        </footer>
+      </section>
+    }
+
+    @if (tab() === "policies") {
+      <section class="card settings-card">
+        <header class="settings-card__head">
+          <h3>{{ tr('portal.settings.customerFacingPolicies') }}</h3>
+          <p class="lede">
+            {{ tr('portal.settings.editPolicyTextHere') }}
+            <a routerLink="/public-page">{{ tr('common.publicPage') }}</a>{{ tr('portal.settings.youOnlyChooseWhetherPolicies') }}
+          </p>
+        </header>
+        <div class="settings-panel">
+          <div class="settings-policy-grid">
+            <div class="field field--compact">
+              <label for="policy-booking">{{ tr('portal.settings.bookingPolicy') }}</label>
+              <textarea id="policy-booking" rows="5" [(ngModel)]="policyBooking"></textarea>
+            </div>
+            <div class="field field--compact">
+              <label for="policy-payment">{{ tr('portal.settings.paymentPolicy') }}</label>
+              <textarea id="policy-payment" rows="5" [(ngModel)]="policyPayment"></textarea>
+            </div>
+            <div class="field field--compact">
+              <label for="policy-cancellation">{{ tr('portal.settings.cancellationPolicy') }}</label>
+              <textarea id="policy-cancellation" rows="5" [(ngModel)]="policyCancellation"></textarea>
+            </div>
+            <div class="field field--compact">
+              <label for="policy-terms">{{ tr('portal.settings.terms') }}</label>
+              <textarea id="policy-terms" rows="5" [(ngModel)]="policyTerms"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="settings-panel settings-panel--inline">
+          <label class="cds-toggle">
+            <input type="checkbox" role="switch" [(ngModel)]="requireAcceptance" />
+            <span class="cds-toggle__track" aria-hidden="true"></span>
+            <span class="cds-toggle__label">{{ tr('portal.settings.requireAcceptanceBeforeBooking') }}</span>
+          </label>
+        </div>
+        <footer class="settings-actions">
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="saving()"
+            (click)="savePolicies()"
+          >
+            <adeni-carbon-icon name="save" [size]="16" />
+            {{ tr('portal.settings.savePolicies') }}
+          </button>
+        </footer>
+      </section>
+    }
+
+    @if (tab() === "walk-ins") {
+      <section class="card settings-card">
+        <header class="settings-card__head">
+          <h3>{{ tr('portal.settings.walkQueue') }}</h3>
+          <p class="lede">
+            {{ tr('portal.settings.controlWhenGuestsCanJoin') }}
+          </p>
+        </header>
+        <div class="settings-panel-grid settings-panel-grid--2">
+          <div class="settings-panel">
+            <h4 class="settings-panel__title">{{ tr('portal.settings.acceptance') }}</h4>
+            <label class="cds-toggle">
+              <input type="checkbox" role="switch" [(ngModel)]="walkInsEnabled" />
+              <span class="cds-toggle__track" aria-hidden="true"></span>
+              <span class="cds-toggle__label">{{ tr('portal.settings.acceptWalkIns') }}</span>
+            </label>
+            <p class="hint">
+              {{ tr('portal.settings.use') }} <strong>{{ tr('common.open90Minutes') }}</strong> {{ tr('portal.settings.onQueuePageQuickTemporary') }}
+            </p>
+          </div>
+          <div class="settings-panel">
+            <h4 class="settings-panel__title">{{ tr('portal.settings.capacityCalendar') }}</h4>
+            <div class="field field--compact">
+              <label for="max-waiting">{{ tr('portal.settings.maxGuestsWaitingEmptyNo') }}</label>
+              <input
+                id="max-waiting"
+                type="number"
+                min="1"
+                max="200"
+                [ngModel]="maxWalkInWaiting"
+                (ngModelChange)="maxWalkInWaiting = $event === '' || $event == null ? null : +$event"
+              />
+            </div>
+            <div class="field field--compact">
+              <label for="walk-in-policy">{{ tr('portal.settings.calendarPolicy') }}</label>
+              <select id="walk-in-policy" [(ngModel)]="walkInCalendarPolicy">
+                <option value="relaxed">{{ tr('portal.settings.relaxedAllowJoinWithLong') }}</option>
+                <option value="strict">{{ tr('portal.settings.strictBlockWhenAppointmentsWould') }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <footer class="settings-actions">
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="saving()"
+            (click)="saveWalkIns()"
+          >
+            <adeni-carbon-icon name="save" [size]="16" />
+            {{ tr('portal.settings.saveWalkSettings') }}
+          </button>
+        </footer>
+      </section>
+    }
+
+    @if (tab() === "messaging") {
+      <section class="card settings-card">
+        <header class="settings-card__head">
+          <h3>{{ tr('portal.settings.inAppMessaging') }}</h3>
+          <p class="lede">{{ tr('portal.settings.automationsCustomerConversationsTiedBookings') }}</p>
+        </header>
+        <div class="settings-panel settings-panel--inline">
+          <label class="cds-toggle">
+            <input type="checkbox" role="switch" [(ngModel)]="faqAutoResponderEnabled" />
+            <span class="cds-toggle__track" aria-hidden="true"></span>
+            <span class="cds-toggle__label">{{ tr('portal.settings.faqAutoResponder') }}</span>
+          </label>
+          <p class="hint">{{ tr('portal.settings.sendsShortCannedReplyWhen') }}</p>
+        </div>
+        <footer class="settings-actions">
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="saving()"
+            (click)="saveMessaging()"
+          >
+            <adeni-carbon-icon name="save" [size]="16" />
+            {{ tr('portal.settings.saveMessagingSettings') }}
+          </button>
+        </footer>
+      </section>
+    }
+  }
+</app-portal-page>

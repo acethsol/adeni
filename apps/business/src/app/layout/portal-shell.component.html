@@ -1,0 +1,278 @@
+<div class="shell shell--staff-app-portal" [class.is-collapsed]="collapsed()">
+  @if (!collapsed()) {
+    <button type="button" class="sidebar-scrim" [attr.aria-label]="tr('common.collapseSidebar')" (click)="collapseSidebar()"></button>
+  }
+
+  <aside id="portal-sidebar" class="sidebar">
+    <div class="sidebar-head">
+      <a class="brand" routerLink="/dashboard" [attr.aria-label]="tr('portal.layout.adeniBusinessHome')">
+        @if (collapsed()) {
+          <adeni-brand-logo variant="mark" [surface]="logoSurface()" [size]="28" />
+        } @else {
+          <adeni-staff-sidebar-brand
+            app="portal"
+            [surface]="logoSurface()"
+            [logoHeight]="32"
+            [caption]="tr('portal.layout.staffAppCaption')"
+          />
+        }
+      </a>
+    </div>
+
+    <nav class="nav" [attr.aria-label]="tr('common.business')">
+      @for (group of visibleGroups(); track group.id) {
+        <div class="nav-group">
+          @if (!collapsed()) {
+            <p class="nav-section">{{ groupLabel(group) }}</p>
+          } @else if (!$first) {
+            <div class="nav-divider" aria-hidden="true"></div>
+          }
+          @for (item of group.items; track item.path) {
+            @if (item.openDiscover) {
+              <a
+                class="nav-link nav-external"
+                [href]="discoverUrl()"
+                target="_blank"
+                rel="noopener"
+                [attr.aria-label]="collapsed() ? navLabel(item) : null"
+                [attr.data-label]="collapsed() ? navLabel(item) : null"
+              >
+                <span class="nav-ico" aria-hidden="true">
+                  <app-portal-nav-icon [name]="item.icon" />
+                </span>
+                <span class="nav-label">{{ navLabel(item) }}</span>
+              </a>
+            } @else {
+              <a
+                class="nav-link"
+                [routerLink]="item.path"
+                routerLinkActive="active"
+                ariaCurrentWhenActive="page"
+                [routerLinkActiveOptions]="{ exact: !!item.exact }"
+                [attr.aria-label]="collapsed() ? navLabel(item) : null"
+                [attr.data-label]="collapsed() ? navLabel(item) : null"
+              >
+                <span class="nav-ico" aria-hidden="true">
+                  <app-portal-nav-icon [name]="item.icon" />
+                </span>
+                <span class="nav-label">{{ navLabel(item) }}</span>
+                @if (badgeCount(item); as count) {
+                  <span class="nav-count" aria-hidden="true">{{ count > 9 ? "9+" : count }}</span>
+                }
+              </a>
+            }
+          }
+        </div>
+      }
+    </nav>
+
+    <div class="sidebar-foot">
+      <button
+        type="button"
+        class="rail-toggle"
+        [attr.title]="collapsed() ? tr('common.expandSidebar') : tr('common.collapseSidebar')"
+        [attr.data-label]="collapsed() ? tr('common.expand') : null"
+        [attr.aria-expanded]="!collapsed()"
+        aria-controls="portal-sidebar"
+        [attr.aria-label]="collapsed() ? tr('common.expandSidebar') : tr('common.collapseSidebar')"
+        (click)="toggleSidebar()"
+      >
+        <app-portal-nav-icon [name]="collapsed() ? 'expand' : 'collapse'" />
+        @if (!collapsed()) {
+          <span class="rail-toggle-label">{{ tr('common.collapse') }}</span>
+        }
+      </button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-lead">
+        <nav class="crumb" [attr.aria-label]="tr('common.breadcrumb')">
+          @for (crumb of crumbs(); track crumb.label; let last = $last) {
+            @if (last || !crumb.path) {
+              <span [class.crumb-current]="last">{{ crumb.label }}</span>
+            } @else {
+              <a [routerLink]="crumb.path">{{ crumb.label }}</a>
+            }
+            @if (!last) {
+              <span class="crumb-sep" aria-hidden="true"></span>
+            }
+          }
+        </nav>
+      </div>
+
+      <div class="search-root" data-menu-root="search">
+        <form class="topbar-search" role="search" (submit)="submitSearch($event)">
+          <app-portal-nav-icon name="search" />
+          <input
+            #searchField
+            type="search"
+            [value]="searchQuery()"
+            [attr.placeholder]="text('search')"
+            [attr.aria-label]="text('search')"
+            [attr.aria-activedescendant]="searchOpen() ? 'portal-search-hit-' + searchIndex() : null"
+            autocomplete="off"
+            role="combobox"
+            aria-autocomplete="list"
+            [attr.aria-expanded]="searchOpen()"
+            aria-controls="portal-search-list"
+            (focus)="openSearch()"
+            (input)="onSearchInput($event)"
+            (keydown)="onSearchKey($event)"
+          />
+        </form>
+        @if (searchOpen() && searchResults().length) {
+          <div id="portal-search-list" class="menu menu-search" role="listbox" [attr.aria-label]="text('search')">
+            @if (!searchQuery().trim()) {
+              <p class="menu-label">{{ text("jump") }}</p>
+            }
+            @for (hit of searchResults(); track hit.id; let i = $index) {
+              <button
+                type="button"
+                class="menu-item"
+                role="option"
+                [id]="'portal-search-hit-' + i"
+                [class.is-active]="i === searchIndex()"
+                [attr.aria-selected]="i === searchIndex()"
+                (mouseenter)="searchIndex.set(i)"
+                (click)="openSearchHit(hit)"
+              >
+                <span class="nav-ico">
+                  <app-portal-nav-icon [name]="hit.icon" />
+                </span>
+                <span class="nav-label">{{ hit.label }}</span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="topbar-actions">
+        @if (activeLocation.showLocationSwitch()) {
+          <div class="topbar-location">
+            <app-portal-branch-switch
+              [ariaLabel]="text('locationSwitch')"
+              [entitlements]="portalEntitlements(profile())"
+              [allLocationsLabel]="text('allLocations')"
+            />
+          </div>
+          <span class="topbar-rule" aria-hidden="true"></span>
+        }
+        <app-messages-shortcut />
+        <app-pending-bookings-bell />
+
+        <button
+          type="button"
+          class="header-btn"
+          [attr.aria-pressed]="theme() === 'dark'"
+          [attr.aria-label]="theme() === 'dark' ? tr('common.switchLightTheme') : tr('common.switchDarkTheme')"
+          (click)="toggleTheme()"
+        >
+          <app-portal-nav-icon [name]="theme() === 'dark' ? 'light' : 'asleep'" />
+        </button>
+
+        <div class="menu-root" data-menu-root="settings">
+          <button
+            type="button"
+            class="header-btn"
+            aria-haspopup="menu"
+            [attr.aria-label]="text('chromePreferences')"
+            [attr.aria-expanded]="settingsOpen()"
+            (click)="toggleSettings($event)"
+          >
+            <app-portal-nav-icon name="settings" />
+          </button>
+          @if (settingsOpen()) {
+            <div class="menu" role="menu" [attr.aria-label]="text('chromePreferences')">
+              @if (businessSettingsVisible()) {
+                <p class="menu-label">{{ text("businessSettings") }}</p>
+                <button type="button" class="menu-item" role="menuitem" (click)="navigateSettings('/settings')">
+                  {{ text("businessSettings") }}
+                </button>
+                <button
+                  type="button"
+                  class="menu-item"
+                  role="menuitem"
+                  (click)="navigateSettings('/settings?tab=notifications')"
+                >
+                  {{ text("notificationSettings") }}
+                </button>
+                <div class="menu-rule" role="separator"></div>
+              }
+              <p class="menu-label">{{ text("appearance") }}</p>
+              <button type="button" class="menu-item" role="menuitemradio" [attr.aria-checked]="themePreference() === 'light'" (click)="setTheme('light')">
+                <app-portal-nav-icon name="light" />
+                {{ text("light") }}
+              </button>
+              <button type="button" class="menu-item" role="menuitemradio" [attr.aria-checked]="themePreference() === 'dark'" (click)="setTheme('dark')">
+                <app-portal-nav-icon name="asleep" />
+                {{ text("dark") }}
+              </button>
+              <button type="button" class="menu-item" role="menuitemradio" [attr.aria-checked]="themePreference() === 'system'" (click)="setTheme('system')">
+                {{ text("system") }}
+              </button>
+              <div class="menu-rule" role="separator"></div>
+              <p class="menu-label">{{ text("language") }}</p>
+              @for (option of locales; track option.id) {
+                <button type="button" class="menu-item" role="menuitemradio" [attr.aria-checked]="locale() === option.id" (click)="setLocale(option.id)">
+                  {{ option.nativeLabel }}
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        <span class="topbar-rule" aria-hidden="true"></span>
+
+        <div class="menu-root" data-menu-root="user">
+          <button
+            type="button"
+            class="user-btn"
+            aria-haspopup="menu"
+            [attr.aria-expanded]="userOpen()"
+            [attr.aria-label]="'Account, ' + accountName()"
+            (click)="toggleUser($event)"
+          >
+            <span class="avatar" aria-hidden="true">{{ accountInitials() }}</span>
+            <span class="user-copy">
+              <span class="user-name">{{ accountName() }}</span>
+              <span class="user-role">{{ devMode ? "Local dev" : tr('common.business') }}</span>
+            </span>
+            <span class="chev chev-sm" [class.is-open]="userOpen()" aria-hidden="true"></span>
+          </button>
+          @if (userOpen()) {
+            <div class="menu menu-account" role="menu" [attr.aria-label]="tr('common.account')">
+              <p class="menu-identity">{{ accountName() }}</p>
+              @if (accountDetail()) {
+                <p class="menu-meta">{{ accountDetail() }}</p>
+              }
+              @if (profile(); as business) {
+                <p class="menu-meta">{{ formatTenantStatus(business.status) }}</p>
+              }
+              <button type="button" class="menu-item menu-item-danger" role="menuitem" (click)="logout()">
+                <app-portal-nav-icon name="logout" />
+                {{ text("signOut") }}
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    </header>
+
+    <main class="content">
+      <router-outlet />
+    </main>
+
+    <adeni-staff-shell-footer
+      app="portal"
+      [badgeLabel]="tr('portal.layout.staffAppBadge')"
+      [captionLabel]="tr('portal.layout.staffAppCaption')"
+      [devMode]="devMode"
+    />
+  </div>
+</div>
+
+<adeni-global-loading-panel />
+<adeni-toast-host />
+<adeni-confirm-host />

@@ -1,0 +1,55 @@
+@use "staff-layout" as *;
+
+h3 {
+  margin: 0 0 0.75rem;
+}
+
+h4.export-block-title {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+
+.export-block {
+  margin-top: 1.25rem;
+}
+
+.export-block--divider {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.plain {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.link-box {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.link-box code {
+  display: block;
+  word-break: break-all;
+  margin: 0.5rem 0;
+  font-size: 0.8rem;
+}
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}

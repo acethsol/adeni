@@ -1,0 +1,417 @@
+import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { FormsModule } from "@angular/forms";
+import { AdeniApiError } from "@adeni/api-client";
+import {
+  buildReportExportMenuItems,
+  canAddLocationAtCount,
+  DEFAULT_PAGE_SIZE,
+  LIST_PAGE_SIZE_OPTIONS,
+  mergeTenantEntitlements,
+  REPORT_KEYS,
+  sliceListPage,
+  type BusinessLocation,
+  type MarketConfig,
+  type ReportExportFormat,
+  type TenantEntitlements,
+} from "@adeni/shared";
+import {
+  AdeniCarbonIconComponent,
+  AdeniConfirmService,
+  AdeniDataTableActionsDirective,
+  AdeniDataTableCellDirective,
+  AdeniDataTableComponent,
+  AdeniExportMenuComponent,
+  AdeniFeedbackService,
+  AdeniIconBtnComponent,
+  AdeniListPaginationComponent,
+  AdeniListToolbarComponent,
+  AdeniModalComponent,
+  AdeniPillComponent,
+  AdeniPortalEmptyStateComponent,
+  AdeniRowActionBarComponent,
+  AdeniTablePersonCellComponent,
+  PortalPageComponent,
+  readPersistedListViewMode,
+  sortDataRows,
+  type AdeniDataTableColumn,
+  type AdeniDataTableSortDirection,
+  type AdeniExportMenuItem,
+  type AdeniListViewMode,
+  injectAdeniTranslate,
+  injectAdeniApiError,
+} from "@adeni/ui";
+import { BusinessApiService } from "../../core/services/business-api.service";
+import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
+
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/** Apply upsert response; when primary moves, clear stale primary flags on other rows. */
+function mergeSavedLocation(
+  list: BusinessLocation[],
+  saved: BusinessLocation,
+  editedId: string | null,
+): BusinessLocation[] {
+  const merged = editedId
+    ? list.map((l) => (l.id === editedId ? saved : l))
+    : [...list, saved];
+  if (!saved.isPrimary) {
+    return merged;
+  }
+  return merged.map((l) => (l.id === saved.id ? l : { ...l, isPrimary: false }));
+}
+
+type LocationDraft = {
+  slug: string;
+  name: string;
+  addressLine: string;
+  area: string;
+  marketId: string;
+  isPrimary: boolean;
+};
+
+@Component({
+  selector: "app-locations",
+  standalone: true,
+  imports: [
+    PortalPageComponent,
+    FormsModule,
+    AdeniCarbonIconComponent,
+    AdeniPortalEmptyStateComponent,
+    AdeniModalComponent,
+    AdeniListToolbarComponent,
+    AdeniListPaginationComponent,
+    AdeniExportMenuComponent,
+    AdeniDataTableComponent,
+    AdeniDataTableCellDirective,
+    AdeniDataTableActionsDirective,
+    AdeniRowActionBarComponent,
+    AdeniIconBtnComponent,
+    AdeniPillComponent,
+    AdeniTablePersonCellComponent,
+  ],
+  templateUrl: "./locations.component.html",
+  styleUrl: "./locations.component.scss",
+})
+export class LocationsComponent implements OnInit {
+  protected readonly tr = injectAdeniTranslate();
+  protected readonly apiErr = injectAdeniApiError();
+  private readonly api = inject(BusinessApiService);
+  private readonly activeLocation = inject(PortalActiveLocationService);
+  private readonly confirmDialog = inject(AdeniConfirmService);
+  private readonly feedback = inject(AdeniFeedbackService);
+
+  readonly loading = signal(true);
+  readonly error = signal<string | null>(null);
+  readonly locations = signal<BusinessLocation[]>([]);
+  readonly entitlements = signal<TenantEntitlements | null>(null);
+  readonly markets = signal<MarketConfig[]>([]);
+  readonly busy = signal<string | null>(null);
+  readonly editingId = signal<string | null>(null);
+  readonly showForm = signal(false);
+  readonly locationSearch = signal("");
+  readonly page = signal(1);
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+  readonly listPageSizeOptions = LIST_PAGE_SIZE_OPTIONS;
+  readonly sortColumnId = signal<string | null>(null);
+  readonly sortDirection = signal<AdeniDataTableSortDirection>("asc");
+  readonly viewMode = signal<AdeniListViewMode>(
+    readPersistedListViewMode("portal.locations", "cards"),
+  );
+
+  readonly exporting = signal(false);
+
+  readonly exportItems = computed((): AdeniExportMenuItem[] =>
+    buildReportExportMenuItems({
+      entitlements: this.entitlements(),
+    }),
+  );
+
+  readonly canAddLocation = computed(() =>
+    canAddLocationAtCount(this.entitlements(), this.locations().length),
+  );
+
+  readonly filteredLocations = computed(() => {
+    const query = this.locationSearch().trim().toLowerCase();
+    const list = this.locations();
+    if (!query) {
+      return list;
+    }
+    return list.filter((loc) => {
+      const haystack = [loc.name ?? "", loc.slug, loc.addressLine, loc.area, loc.marketId]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+  });
+
+  readonly sortedFilteredLocations = computed(() =>
+    sortDataRows(
+      this.filteredLocations(),
+      this.sortColumnId(),
+      this.sortDirection(),
+      this.locationColumns(),
+    ),
+  );
+
+  readonly filteredLocationsCount = computed(() => this.filteredLocations().length);
+
+  readonly paginatedLocations = computed(() =>
+    sliceListPage(this.sortedFilteredLocations(), this.page(), this.pageSize()),
+  );
+
+  readonly locationColumns = computed<AdeniDataTableColumn<BusinessLocation>[]>(() => [
+    {
+      id: "name",
+      header: this.tr("portal.core.location"),
+      cell: (l) => l.name || l.slug,
+      sortValue: (l) => (l.name || l.slug).toLowerCase(),
+    },
+    {
+      id: "address",
+      header: this.tr("common.address"),
+      cell: (l) => l.addressLine,
+      sortValue: (l) => l.addressLine.toLowerCase(),
+    },
+    { id: "market", header: this.tr("common.market"), cell: (l) => l.marketId },
+    {
+      id: "primary",
+      header: this.tr("common.primary"),
+      cell: () => "",
+      sortValue: (l) => (l.isPrimary ? 1 : 0),
+    },
+  ]);
+
+  readonly trackLocationRow = (loc: BusinessLocation): string => loc.id;
+
+  defaultMarketId = "lagos";
+  draft: LocationDraft = this.emptyDraft();
+
+  ngOnInit(): void {
+    void this.load();
+  }
+
+  onLocationSearchChange(value: string): void {
+    this.locationSearch.set(value);
+    this.page.set(1);
+  }
+
+  goToLocationsPage(next: number): void {
+    this.page.set(next);
+  }
+
+  onLocationsPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.page.set(1);
+  }
+
+  onLocationSortColumnChange(columnId: string | null): void {
+    this.sortColumnId.set(columnId);
+    this.page.set(1);
+  }
+
+  onLocationSortDirectionChange(direction: AdeniDataTableSortDirection): void {
+    this.sortDirection.set(direction);
+    this.page.set(1);
+  }
+
+  emptyDraft(): LocationDraft {
+    return {
+      slug: "",
+      name: "",
+      addressLine: "",
+      area: "",
+      marketId: this.defaultMarketId,
+      isPrimary: false,
+    };
+  }
+
+  locationInitials(loc: BusinessLocation): string {
+    const label = (loc.name || loc.slug).trim();
+    const parts = label.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0]!.charAt(0) + parts[1]!.charAt(0)).toUpperCase();
+    }
+    return label.slice(0, 2).toUpperCase() || "?";
+  }
+
+  async load(): Promise<void> {
+    this.loading.set(true);
+    this.error.set(null);
+    try {
+      await this.feedback.runLoading(async () => {
+        const publicClient = this.api.createPublicClient();
+        const markets = await publicClient.getMarkets();
+        this.markets.set(markets);
+        this.defaultMarketId = markets[0]?.id ?? "lagos";
+        await this.api.withAuthorizedClient(async (c) => {
+          const profile = await c.getTenantProfile().catch(() => null);
+          const planEntitlements = await c.getTenantEntitlements().catch(() => null);
+          const mergedForLocation = mergeTenantEntitlements(
+            planEntitlements,
+            profile?.entitlements,
+            profile?.entitlements,
+          );
+          const locationQueryId = this.activeLocation.tenantApiLocationId(mergedForLocation);
+          const [usage, items] = await Promise.all([
+            c.getTenantSubscriptionUsage(locationQueryId).catch(() => null),
+            c.getTenantLocations(),
+          ]);
+          this.entitlements.set(
+            mergeTenantEntitlements(planEntitlements, usage?.entitlements, profile?.entitlements),
+          );
+          this.locations.set(items);
+        });
+      });
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.locations.couldNotLoadLocations"));
+      this.feedback.error(this.apiErr(caught, "portal.locations.couldNotLoadLocations"));
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  openCreate(): void {
+    if (!this.canAddLocation()) {
+      const message =
+        this.tr("portal.locations.yourPlanIncludesOneLocation");
+      this.error.set(message);
+      this.feedback.error(message);
+      return;
+    }
+    this.editingId.set(null);
+    this.draft = this.emptyDraft();
+    this.showForm.set(true);
+  }
+
+  openEdit(loc: BusinessLocation): void {
+    this.editingId.set(loc.id);
+    this.draft = {
+      slug: loc.slug,
+      name: loc.name ?? "",
+      addressLine: loc.addressLine,
+      area: loc.area,
+      marketId: loc.marketId,
+      isPrimary: loc.isPrimary,
+    };
+    this.showForm.set(true);
+  }
+
+  cancelForm(): void {
+    this.showForm.set(false);
+    this.editingId.set(null);
+  }
+
+  async save(): Promise<void> {
+    const slug = this.draft.slug.trim().toLowerCase();
+    if (!slug || !SLUG_PATTERN.test(slug) || !this.draft.addressLine.trim() || !this.draft.area.trim()) {
+      this.error.set(this.tr("portal.locations.checkSlugAddressArea"));
+      this.feedback.error(this.tr("portal.locations.checkSlugAddressArea"));
+      return;
+    }
+
+    const body = {
+      slug,
+      name: this.draft.name.trim() || undefined,
+      addressLine: this.draft.addressLine.trim(),
+      area: this.draft.area.trim(),
+      marketId: this.draft.marketId,
+      isPrimary: this.draft.isPrimary,
+    };
+
+    const confirmed = await this.confirmDialog.confirmKind(this.editingId() ? "save" : "create", {
+      subject: body.name ?? slug,
+    });
+    if (!confirmed) {
+      return;
+    }
+
+    this.busy.set(this.editingId() ?? "new");
+    this.error.set(null);
+    try {
+      await this.feedback.runLoading(async () => {
+        const id = this.editingId();
+        if (id) {
+          const updated = await this.api.withAuthorizedClient((c) => c.updateTenantLocation(id, body));
+          this.locations.update((list) => mergeSavedLocation(list, updated, id));
+        } else {
+          const created = await this.api.withAuthorizedClient((c) => c.addTenantLocation(body));
+          this.locations.update((list) => mergeSavedLocation(list, created, null));
+        }
+      }, this.tr("portal.locations.savingLocation"), body.name ?? slug);
+      this.cancelForm();
+      this.feedback.success(this.tr("portal.locations.locationSaved"));
+    } catch (err) {
+      const message =
+        err instanceof AdeniApiError && err.message
+          ? err.message
+          : this.tr("portal.locations.couldNotSaveLocation");
+      this.error.set(message);
+      this.feedback.error(message);
+    } finally {
+      this.busy.set(null);
+    }
+  }
+
+  async remove(loc: BusinessLocation): Promise<void> {
+    const ok = await this.confirmDialog.confirm({
+      title: this.tr("portal.locations.deleteLocation2"),
+      message: this.tr("portal.locations.deleteConfirm", { name: loc.name || loc.slug }),
+      confirmLabel: this.tr("portal.locations.delete"),
+      danger: true,
+    });
+    if (!ok) {
+      return;
+    }
+    this.busy.set(loc.id);
+    try {
+      await this.feedback.runLoading(
+        () => this.api.withAuthorizedClient((c) => c.deactivateTenantLocation(loc.id)),
+        this.tr("portal.locations.deletingLocation"),
+        loc.name || loc.slug,
+      );
+      if (loc.isPrimary) {
+        const items = await this.api.withAuthorizedClient((c) => c.getTenantLocations());
+        this.locations.set(items);
+      } else {
+        this.locations.update((list) => list.filter((l) => l.id !== loc.id));
+      }
+      this.feedback.success(this.tr("portal.locations.locationRemoved"));
+    } catch (caught) {
+      this.error.set(this.apiErr(caught, "portal.locations.couldNotDeleteLocation"));
+      this.feedback.error(this.apiErr(caught, "portal.locations.couldNotDeleteLocation"));
+    } finally {
+      this.busy.set(null);
+    }
+  }
+
+  async downloadLocationsExport(format: ReportExportFormat): Promise<void> {
+    if (format !== "csv") {
+      return;
+    }
+    this.exporting.set(true);
+    try {
+      const to = new Date();
+      const from = new Date(to);
+      from.setFullYear(from.getFullYear() - 1);
+      const blob = await this.api.withAuthorizedClient((client) =>
+        client.downloadTenantReportExport({
+          reportKey: REPORT_KEYS.tenantLocations,
+          from: from.toISOString(),
+          to: to.toISOString(),
+          format: "csv",
+        }),
+      );
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `tenant-locations-${to.toISOString().slice(0, 10)}.csv`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      this.feedback.success(this.tr("portal.locations.locationsDownloaded"));
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "portal.locations.couldNotDownloadLocations"));
+    } finally {
+      this.exporting.set(false);
+    }
+  }
+}

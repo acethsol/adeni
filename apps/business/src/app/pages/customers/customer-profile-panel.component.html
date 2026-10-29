@@ -1,0 +1,228 @@
+@if (session.can('portal.bookings') && (overviewVisible() || activityVisible())) {
+  @if (data.loading()) {
+    <p class="muted profile-status" role="status">{{ tr('customerProfile.loading') }}</p>
+  }
+  @if (data.error()) {
+    <p class="error-banner profile-status" role="alert">{{ apiErr(data.error(), 'customerProfile.loadError') }}</p>
+  }
+
+  @if (data.profile(); as profile) {
+    @if (overviewVisible()) {
+      <section class="card customer-insights" [attr.aria-label]="tr('customerProfile.title')" [attr.aria-busy]="data.loading()">
+        <div class="section-head">
+          <div>
+            <h3 class="section-title">{{ tr('customerProfile.title') }}</h3>
+            <p class="muted section-lede">{{ tr('customerProfile.overviewLede') }}</p>
+          </div>
+          <button
+            type="button"
+            class="btn btn-ghost"
+            (click)="refresh()"
+            [disabled]="data.loading() || data.loadingMore()"
+          >
+            <adeni-carbon-icon name="restart" [size]="16" />
+            {{ tr('customerProfile.refresh') }}
+          </button>
+        </div>
+
+        <div class="insights-stat-tiles">
+          @if (profile.visitSummary; as visits) {
+            <article class="insights-stat-tile">
+              <p class="insights-stat-tile__label">{{ tr('customerProfile.completedVisits') }}</p>
+              <p class="insights-stat-tile__value">{{ visits.completedBookings + visits.completedWalkIns }}</p>
+              <p class="insights-stat-tile__hint muted">{{ tr('customerProfile.visitsLede') }}</p>
+            </article>
+          }
+          <article class="insights-stat-tile">
+            <p class="insights-stat-tile__label">{{ tr('customerProfile.nextAppointment') }}</p>
+            <div class="insights-stat-tile__body">
+              @if (profile.nextAppointment; as next) {
+                <a
+                  class="insights-stat-tile__value insights-stat-tile__value--link"
+                  [routerLink]="['/bookings']"
+                  [queryParams]="{ focus: next.bookingId, tab: next.status === 'Pending' ? 'pending' : 'upcoming' }"
+                >
+                  {{ next.serviceName }}
+                </a>
+                <p class="insights-stat-tile__when muted">{{ formatSlotTime(next.startAt) }}</p>
+                @if (next.status === 'Pending') {
+                  <adeni-pill tone="warning" [compact]="true">{{ tr('customerProfile.awaitingApproval') }}</adeni-pill>
+                }
+              } @else {
+                <p class="insights-stat-tile__value muted">{{ tr('customerProfile.noneScheduled') }}</p>
+              }
+            </div>
+          </article>
+          @if (profile.packages; as pkg) {
+            <article class="insights-stat-tile">
+              <p class="insights-stat-tile__label">{{ tr('portal.retention.title') }}</p>
+              <a class="insights-stat-tile__value insights-stat-tile__value--link" [routerLink]="['/customers', customerId()]" [queryParams]="{ tab: 'packages' }">
+                {{ pkg.totalRemainingCredits }}
+              </a>
+              <p class="insights-stat-tile__hint muted">
+                {{ tr('portal.retention.profileSummary', { count: pkg.activeCount, credits: pkg.totalRemainingCredits }) }}
+              </p>
+              @if (pkg.activePackageNames.length > 0) {
+                <p class="insights-stat-tile__hint muted">{{ pkg.activePackageNames.join(', ') }}</p>
+              }
+            </article>
+          }
+        </div>
+
+        @defer (on idle) {
+          <div class="customer-insights__segments">
+            <app-customer-segments-panel [customerId]="customerId()" [locationId]="locationId()" />
+          </div>
+        }
+
+        @if (profile.availability.finance === 'available') {
+          <div class="insights-payments">
+            <div class="insights-payments__head">
+              <h4 class="insights-subtitle">{{ tr('customerProfile.recordedPayments') }}</h4>
+              <p class="muted coverage-note">{{ tr('customerProfile.paymentsLede') }}</p>
+            </div>
+            @if (profile.recordedOnlinePaymentsByCurrency; as totals) {
+              @if (totals.length) {
+                <ul class="payment-tiles">
+                  @for (total of totals; track total.currency) {
+                    <li class="payment-tile">
+                      <span class="payment-tile__currency">{{ total.currency }}</span>
+                      <span class="payment-tile__amount">{{ formatPrice(total.amount, total.currency) }}</span>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="payment-empty muted">{{ tr('customerProfile.noRecordedPayments') }}</p>
+              }
+            } @else {
+              <p class="payment-empty muted">{{ tr('customerProfile.noRecordedPayments') }}</p>
+            }
+          </div>
+        }
+
+        @if (profile.availability.finance === 'available' && !profile.locationId) {
+          <div class="insights-gifts">
+            <div class="insights-payments__head">
+              <h4 class="insights-subtitle">{{ tr('commerce.giftTitle') }}</h4>
+              <p class="muted coverage-note">{{ tr('commerce.noWallet') }}</p>
+            </div>
+            <button
+              type="button"
+              class="btn btn-ghost"
+              (click)="data.loadPurchasedGiftCards()"
+              [disabled]="data.loadingGifts()"
+            >
+              {{ tr('commerce.giftTitle') }}
+            </button>
+            @if (data.purchasedGiftCards(); as cards) {
+              @if (cards.length) {
+                <ul class="payment-tiles">
+                  @for (card of cards; track card.id) {
+                    <li class="payment-tile">
+                      <span class="payment-tile__currency">••••{{ card.codeSuffix }}</span>
+                      <span class="payment-tile__amount">
+                        {{ formatPrice(card.remainingAmount, card.currency) }} · {{ tr('commerce.states.' + card.state) }}
+                      </span>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="payment-empty muted">{{ tr('commerce.empty') }}</p>
+              }
+            }
+          </div>
+        }
+      </section>
+    }
+
+    @if (activityVisible()) {
+      <section class="card customer-activity" [attr.aria-label]="tr('customerProfile.activity')" [attr.aria-busy]="data.loading()">
+        <div class="section-head">
+          <div>
+            <h3 class="section-title">{{ tr('customerProfile.activity') }}</h3>
+            <ul class="coverage-notes muted">
+              <li>{{ tr('customerProfile.historyCoverageShort') }}</li>
+              <li>{{ tr('customerProfile.messagingCoverageShort') }}</li>
+              @if (profile.availability.messaging === 'unscoped') {
+                <li>{{ tr('customerProfile.messagingUnscopedShort') }}</li>
+              }
+              @if (profile.availability.finance === 'notLinked' || profile.availability.messaging === 'notLinked') {
+                <li>{{ tr('customerProfile.notLinkedShort') }}</li>
+              }
+              @if (data.activity()?.isTruncated) {
+                <li role="status">{{ tr('customerProfile.truncated') }}</li>
+              }
+            </ul>
+          </div>
+          <button
+            type="button"
+            class="btn btn-ghost"
+            (click)="refresh()"
+            [disabled]="data.loading() || data.loadingMore()"
+          >
+            <adeni-carbon-icon name="restart" [size]="16" />
+            {{ tr('customerProfile.refresh') }}
+          </button>
+        </div>
+
+        @if (data.activity(); as activity) {
+          @if (activity.items.length === 0) {
+            <adeni-portal-empty-state
+              icon="time"
+              [title]="tr('customerProfile.empty')"
+              [compact]="true"
+            />
+          } @else {
+            <ul class="activity-timeline">
+              @for (item of activity.items; track item.id) {
+                <li class="activity-card">
+                  <div class="activity-card__head">
+                    <strong class="activity-card__kind">{{ tr('customerProfile.kinds.' + item.kind) }}</strong>
+                    <time class="activity-card__when muted" [attr.datetime]="item.occurredAt">
+                      {{ formatSlotTime(item.occurredAt) }}
+                    </time>
+                  </div>
+                  <div class="activity-card__meta">
+                    @if (item.serviceName) {
+                      <span class="activity-card__service">{{ item.serviceName }}</span>
+                    }
+                    @if (item.currentStatus) {
+                      <adeni-pill [tone]="activityStatusTone(item.currentStatus)" [compact]="true">
+                        {{ tr('customerProfile.statuses.' + item.currentStatus) }}
+                      </adeni-pill>
+                    }
+                    @if (item.amount !== null && item.currency) {
+                      <span class="activity-card__amount">{{ formatPrice(item.amount, item.currency) }}</span>
+                    }
+                  </div>
+                  @if (item.source === 'booking') {
+                    <a class="activity-card__link" [routerLink]="['/bookings']" [queryParams]="bookingQueryParams(item)">
+                      {{ tr('customerProfile.openBooking') }}
+                    </a>
+                  }
+                </li>
+              }
+            </ul>
+          }
+
+          @if (activity.nextCursor) {
+            <p class="activity-load-more">
+              <button
+                type="button"
+                class="btn"
+                (click)="data.loadMore()"
+                [disabled]="data.loadingMore()"
+              >
+                @if (data.loadingMore()) {
+                  {{ tr('toast.loading') }}
+                } @else {
+                  {{ tr('customerProfile.loadMore') }}
+                }
+              </button>
+            </p>
+          }
+        }
+      </section>
+    }
+  }
+}

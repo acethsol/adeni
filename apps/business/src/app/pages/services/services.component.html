@@ -1,0 +1,295 @@
+<app-portal-page
+  [title]="tr('common.services')"
+  [description]="tr('portal.services.whatCustomersBookOrganizeInto')"
+>
+  @if(intakeSession.loaded() && (intakeSession.permissionRole()==='owner' || intakeSession.permissionRole()==='manager')){<a pageActions routerLink="/services/intake" class="btn">{{tr('intake.title')}}</a>}
+  <button pageActions type="button" class="btn" (click)="showCollectionsManager.set(true)">
+    {{ tr('portal.services.menuSections') }}
+  </button>
+  <button pageActions type="button" class="btn btn-primary" (click)="openCreate()">
+    <adeni-carbon-icon name="add" [size]="16" />
+    {{ tr('portal.services.addService') }}
+  </button>
+
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  <adeni-modal
+    [open]="showForm()"
+    [title]="editingId() ? tr('portal.services.editService') : tr('portal.services.newService')"
+    [subtitle]="
+      editingId()
+        ? tr('portal.services.updatePricingDurationCollection')
+        : tr('portal.services.addBookableServicePublicMenu')
+    "
+    size="lg"
+    [hasFooter]="false"
+    (closed)="cancelForm()"
+  >
+    <app-service-edit-form
+      [draft]="draft"
+      [groups]="groups()"
+      [catalogTemplates]="catalogTemplates()"
+      [catalogLoading]="catalogLoading()"
+      [disabled]="!!busy()"
+      (applyTemplate)="applyTemplate($event)"
+      (cancel)="cancelForm()"
+      (save)="save()"
+    />
+  </adeni-modal>
+
+  @if (services().length === 0 && !loading()) {
+    <adeni-portal-empty-state
+      icon="add"
+      [title]="tr('portal.services.noServicesYet')"
+      [description]="tr('portal.services.addAtLeastOneService')"
+    />
+  } @else {
+    <div class="roster">
+      <adeni-list-toolbar
+        storageKey="portal.services"
+        [viewMode]="viewMode()"
+        (viewModeChange)="viewMode.set($event)"
+        [count]="paginatedServices().length"
+        [countTotal]="filteredServicesCount()"
+        [singularCountLabel]="tr('portal.services.service')"
+        [pluralCountLabel]="tr('portal.services.services')"
+        [searchPlaceholder]="tr('portal.services.searchServices')"
+        [searchQuery]="menuSearch()"
+        (searchQueryChange)="onMenuSearchChange($event)"
+      >
+        <adeni-list-filter-row listFilters>
+          <adeni-filter-select
+            layout="toolbar"
+            [label]="tr('portal.services.menuSection')"
+            [options]="groupFilterOptions()"
+            [value]="groupFilter()"
+            (valueChange)="onGroupFilterChange($any($event))"
+          />
+        </adeni-list-filter-row>
+        <adeni-export-menu
+          listExports
+          [label]="tr('common.export')"
+          [items]="exportItems()"
+          (exportSelect)="downloadServicesExport($event)"
+        />
+      </adeni-list-toolbar>
+
+      @if (filteredServices().length === 0) {
+        <adeni-portal-empty-state
+          icon="search"
+          [title]="tr('portal.services.noMatchingServices')"
+          [description]="tr('portal.services.adjustSearchCollectionFilter')"
+          [compact]="true"
+        />
+      } @else if (viewMode() === "cards") {
+        <ul class="plain staff-grid">
+          @for (service of paginatedServices(); track service.id) {
+            <li class="org-card">
+              <a class="org-card-link" [routerLink]="['/services', service.id]" [attr.aria-label]="tr('portal.services.viewService')">
+              <div class="org-avatar" data-tone="neutral" aria-hidden="true">
+                <span>{{ serviceInitials(service) }}</span>
+              </div>
+              <strong class="org-name">{{ service.name }}</strong>
+              </a>
+              <span class="org-role">{{
+                formatPrice(service.priceAmount, service.currency)
+              }}
+                · {{ service.durationMinutes }} min</span>
+              <adeni-pill
+                class="org-section-pill"
+                [tone]="service.menuGroupId ? 'brand' : 'neutral'"
+                [compact]="true"
+              >
+                {{ groupName(service.menuGroupId) }}
+              </adeni-pill>
+              <div class="org-meta adeni-cell-pills">
+                @if (service.isAddOn) {
+                  <adeni-pill tone="neutral" [compact]="true">{{ tr('portal.services.add') }}</adeni-pill>
+                }
+                @if (service.categorySlug) {
+                  <adeni-pill tone="info" [compact]="true">{{
+                    categoryLabel("en", service.categorySlug)
+                  }}</adeni-pill>
+                }
+              </div>
+              <div class="org-actions">
+                <a
+                  class="btn-link"
+                  [routerLink]="['/services', service.id]"
+                >
+                  {{ tr('common.edit') }}
+                </a>
+                <button
+                  type="button"
+                  class="danger"
+                  [disabled]="busy() === service.id"
+                  (click)="deactivate(service)"
+                >
+                  {{ tr('common.deactivate') }}
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+
+        <div class="adeni-list-results adeni-list-results--pagination-only">
+          <adeni-list-pagination
+            [page]="page()"
+            [pageSize]="pageSize()"
+            [totalCount]="filteredServicesCount()"
+            [pageSizeOptions]="listPageSizeOptions"
+            [ariaLabel]="tr('portal.services.servicePages')"
+            (pageChange)="goToServicesPage($event)"
+            (pageSizeChange)="onServicesPageSizeChange($event)"
+          />
+        </div>
+      } @else {
+        <div class="adeni-list-results">
+        <adeni-data-table
+          [rows]="paginatedServices()"
+          [columns]="serviceTableColumns()"
+          [trackRow]="trackServiceRow"
+          [sortColumnId]="sortColumnId()"
+          (sortColumnIdChange)="onServiceSortColumnChange($event)"
+          [sortDirection]="sortDirection()"
+          (sortDirectionChange)="onServiceSortDirectionChange($event)"
+        >
+          <ng-template adeniDataTableCell="name" let-service>
+            <a [routerLink]="['/services', service.id]" class="service-name-link">
+              <adeni-table-person-cell
+                [displayName]="service.name"
+                [subtitle]="
+                  formatPrice(service.priceAmount, service.currency) +
+                  ' · ' +
+                  service.durationMinutes +
+                  ' min'
+                "
+                [initials]="serviceInitials(service)"
+                avatarTone="neutral"
+              />
+            </a>
+          </ng-template>
+          <ng-template adeniDataTableCell="collection" let-service>
+            <adeni-pill
+              [tone]="service.menuGroupId ? 'brand' : 'neutral'"
+              [compact]="true"
+            >
+              {{ groupName(service.menuGroupId) }}
+            </adeni-pill>
+          </ng-template>
+          @if (canManageIntake()) {
+            <ng-template adeniDataTableCell="intake" let-service>
+              <a
+                class="service-name-link intake-form-link"
+                [routerLink]="['/services', service.id]"
+                [queryParams]="{ tab: 'intake' }"
+              >
+                <adeni-pill
+                  [tone]="intakeTemplateId(service.id) ? 'brand' : 'neutral'"
+                  [compact]="true"
+                >
+                  {{ intakeFormLabel(service.id) }}
+                </adeni-pill>
+              </a>
+            </ng-template>
+          }
+          <ng-template adeniDataTableCell="tags" let-service>
+            <div class="adeni-cell-pills">
+              @if (service.isAddOn) {
+                <adeni-pill tone="neutral" [compact]="true">{{ tr('portal.services.add') }}</adeni-pill>
+              }
+              @if (service.categorySlug) {
+                <adeni-pill tone="info" [compact]="true">{{
+                  categoryLabel("en", service.categorySlug)
+                }}</adeni-pill>
+              }
+            </div>
+          </ng-template>
+          <ng-template adeniDataTableActions let-service>
+            <adeni-row-action-bar>
+              <adeni-icon-btn
+                icon="edit"
+                [label]="tr('portal.services.editService')"
+                variant="table"
+                [dense]="true"
+                [routerLink]="['/services', service.id]"
+              />
+              <adeni-icon-btn
+                icon="misuse"
+                [label]="tr('portal.services.deactivateService')"
+                variant="danger-soft"
+                [dense]="true"
+                [disabled]="busy() === service.id"
+                (pressed)="deactivate(service)"
+              />
+            </adeni-row-action-bar>
+          </ng-template>
+        </adeni-data-table>
+
+          <adeni-list-pagination
+            [page]="page()"
+            [pageSize]="pageSize()"
+            [totalCount]="filteredServicesCount()"
+            [pageSizeOptions]="listPageSizeOptions"
+            [ariaLabel]="tr('portal.services.servicePages')"
+            (pageChange)="goToServicesPage($event)"
+            (pageSizeChange)="onServicesPageSizeChange($event)"
+          />
+        </div>
+      }
+    </div>
+  }
+
+  <adeni-modal
+    [open]="showCollectionsManager()"
+    [title]="tr('portal.services.menuSections')"
+    [subtitle]="tr('portal.services.headingsPublicBookingMenuAssign')"
+    size="md"
+    [hasFooter]="true"
+    (closed)="showCollectionsManager.set(false)"
+  >
+    <div class="menu-section-add">
+      <input
+        type="text"
+        [placeholder]="tr('portal.services.sectionNameEGHair')"
+        [ngModel]="newGroupName()"
+        (ngModelChange)="newGroupName.set($event)"
+        maxlength="120"
+        (keyup.enter)="addGroup()"
+      />
+      <button type="button" class="btn btn-primary" [disabled]="busy() === 'group'" (click)="addGroup()">
+        <adeni-carbon-icon name="add" [size]="16" />
+        {{ tr('portal.services.addSection') }}
+      </button>
+    </div>
+    @if (groups().length === 0) {
+      <p class="muted menu-section-empty">
+        {{ tr('portal.services.noSectionsYetServicesShow') }}
+      </p>
+    } @else {
+      <ul class="menu-section-list plain">
+        @for (group of groups(); track group.id) {
+          <li class="menu-section-item">
+            <span class="menu-section-name">{{ group.name }}</span>
+            <button
+              type="button"
+              class="btn btn-ghost-danger"
+              [disabled]="busy() === group.id"
+              (click)="removeGroup(group)"
+            >
+              {{ tr('common.remove') }}
+            </button>
+          </li>
+        }
+      </ul>
+    }
+
+    <div modalFooter class="modal-footer-actions">
+      <button type="button" class="btn" (click)="showCollectionsManager.set(false)">
+        {{ tr('common.done') }}
+      </button>
+    </div>
+  </adeni-modal>
+</app-portal-page>

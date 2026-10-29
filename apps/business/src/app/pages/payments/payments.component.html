@@ -1,0 +1,181 @@
+<app-portal-page
+  [title]="tr('portal.payments.payments')"
+  [description]="tr('portal.payments.createPaymentLinksTrackTransactions')"
+>
+  <a routerLink="/finance/quick-pay">{{tr("commerce.title")}}</a>
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (profile() && !supportsPayments()) {
+    <section class="card">
+      <p class="muted">{{ tr('portal.payments.paymentsNotEnabledBusinessCategory') }}</p>
+    </section>
+  } @else if (profile()) {
+    <adeni-tabs [tabs]="tabs()" />
+    @if (tab() === "ledger") {
+      <section class="card">
+        <h3>{{ tr('portal.payments.ledger') }}</h3>
+        @if (ledger().length === 0) {
+          <adeni-portal-empty-state
+            [compact]="true"
+            icon="checkmark--filled"
+            [title]="tr('portal.payments.noPaymentActivity')"
+            [description]="tr('portal.payments.depositsCheckoutPaymentsWillShow')"
+          />
+        } @else {
+          <ul class="plain">
+            @for (entry of ledger(); track entry.id) {
+              <li class="list-row">
+                <div>
+                  <strong>{{ entry.description || entry.type }}</strong>
+                  <p class="muted">
+                    {{ formatPrice(entry.amount, entry.currency) }} · {{ entry.status }}
+                  </p>
+                </div>
+                @if (entry.status === "completed") {
+                  <button type="button" class="btn btn-danger" (click)="refund(entry)">{{ tr('portal.payments.refund') }}</button>
+                }
+              </li>
+            }
+          </ul>
+          <adeni-list-pagination
+            [embedded]="true"
+            [page]="ledgerPage()"
+            [pageSize]="ledgerPageSize()"
+            [totalCount]="ledgerTotalCount()"
+            [pageSizeOptions]="listPageSizeOptions"
+            [loading]="loading()"
+            [showEdgeJumpers]="false"
+            [ariaLabel]="tr('portal.payments.ledgerPages')"
+            (pageChange)="goToLedgerPage($event)"
+            (pageSizeChange)="onLedgerPageSizeChange($event)"
+          />
+        }
+      </section>
+    } @else if (tab() === "documents") {
+      <section class="card">
+        <h3>{{ tr('portal.payments.receiptsInvoices') }}</h3>
+        @if (documents().length === 0) {
+          <adeni-portal-empty-state
+            [compact]="true"
+            icon="save"
+            [title]="tr('portal.payments.noReceiptsYet')"
+            [description]="tr('portal.payments.completedPaymentsAutomaticallyGenerateReceipts')"
+          />
+        } @else {
+          <ul class="plain">
+            @for (doc of documents(); track doc.id) {
+              <li class="list-row">
+                <div>
+                  <strong>{{ doc.documentNumber }}</strong>
+                  <p class="muted">
+                    {{ doc.kind }} · {{ formatPrice(doc.total, doc.currency) }} · {{ doc.status }}
+                  </p>
+                </div>
+                <div class="actions">
+                  @if (doc.bookingId && doc.status !== 'void' && (doc.kind === 'receipt' || doc.kind === 'invoice')) {
+                    <button type="button" class="btn" (click)="previewDocument.set(doc)">{{ tr('common.preview') }}</button>
+                  }
+                  <a
+                    class="btn"
+                    [href]="documentPublicUrl(doc)"
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    {{ tr('portal.payments.view') }}
+                  </a>
+                  <button
+                    type="button"
+                    class="btn"
+                    [disabled]="pdfBusyId() === doc.id"
+                    (click)="downloadDocumentPdf(doc)"
+                  >
+                    {{ pdfBusyId() === doc.id ? tr('common.downloading') : tr('common.downloadPdf') }}
+                  </button>
+                  @if (doc.status === "issued") {
+                    <button
+                      type="button"
+                      class="btn"
+                      [disabled]="actionId() === doc.id"
+                      (click)="emailDocument(doc)"
+                    >
+                      {{ tr('common.email') }}
+                    </button>
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    } @else if (tab() === "export") {
+      <section class="card">
+        <h3>{{ tr('portal.payments.financeExports') }}</h3>
+        <p class="muted">{{ tr('portal.payments.chooseDateRangeThenDownload') }}</p>
+        <div class="field">
+          <label>{{ tr('common.from') }}</label>
+          <input type="date" [(ngModel)]="exportFrom" />
+        </div>
+        <div class="field">
+          <label>{{ tr('common.to') }}</label>
+          <input type="date" [(ngModel)]="exportTo" />
+        </div>
+        <div class="export-block list-row">
+          <div>
+            <h4 class="export-block-title">{{ tr('portal.payments.salesSummary') }}</h4>
+            <p class="muted">{{ tr('portal.payments.collectedRevenueBreakdownAccountingCsv') }}</p>
+          </div>
+          <adeni-export-menu
+            [label]="tr('common.export')"
+            [items]="salesSummaryExportItems()"
+            (exportSelect)="downloadSalesSummaryExport($event)"
+          />
+        </div>
+
+        <div class="export-block export-block--divider list-row">
+          <div>
+            <h4 class="export-block-title">{{ tr('portal.payments.staffPayouts') }}</h4>
+            <p class="muted">
+              {{ tr('portal.payments.downloadTipsCommissionsPayrollImport') }}
+            </p>
+          </div>
+          <adeni-export-menu
+            [label]="tr('common.export')"
+            [items]="compensationExportItems()"
+            (exportSelect)="downloadCompensationExport($event)"
+          />
+        </div>
+      </section>
+    } @else {
+      <section class="card">
+        <h3>{{ tr('portal.payments.createPaymentLink') }}</h3>
+        <div class="field">
+          <label>Amount ({{ defaultCurrency() }})</label>
+          <input type="number" min="0" step="0.01" [(ngModel)]="amount" />
+        </div>
+        <div class="field">
+          <label>{{ tr('common.description') }}</label>
+          <input [(ngModel)]="description" />
+        </div>
+        <button type="button" class="btn btn-primary" [disabled]="creating()" (click)="createLink()">
+          {{ creating() ? tr('portal.payments.creating') : tr('portal.payments.createLink') }}
+        </button>
+
+        @if (lastLink(); as link) {
+          <div class="link-box">
+            <p class="muted">{{ tr('portal.payments.shareCheckoutUrl') }}</p>
+            <code>{{ link.checkoutUrl }}</code>
+            <a class="btn" [href]="whatsAppUrl(link)" target="_blank" rel="noopener">{{ tr('portal.payments.whatsapp') }}</a>
+          </div>
+        }
+      </section>
+    }
+  }
+</app-portal-page>
+
+@if (previewDocument(); as selected) {
+  @defer (when previewDocument() !== null) {
+    <app-document-preview [document]="selected" [locationId]="previewLocation()" (closed)="previewDocument.set(null)" />
+  }
+}

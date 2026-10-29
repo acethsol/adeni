@@ -1,0 +1,93 @@
+<app-portal-page [title]="tr('portal.loyalty.title')" [description]="tr('portal.loyalty.description')">
+  @if (error()) {
+    <p class="error-banner" role="alert">{{ error() }}</p>
+  }
+
+  <p class="muted note">{{ tr('portal.loyalty.setupNotice') }}</p>
+  <p class="muted note">{{ tr('portal.loyalty.nonCash') }}</p>
+
+  @if (loading()) {
+    <p class="muted" role="status">{{ tr('toast.loading') }}</p>
+  } @else if (!error()) {
+    @if (!configured()) {
+      <p class="muted note">{{ tr('portal.loyalty.notConfigured') }}</p>
+    }
+    @if (!isOwner()) {
+      <p class="muted note">{{ tr('portal.loyalty.ownerOnlyHint') }}</p>
+    }
+
+    <div class="form">
+      <div class="field">
+        <label class="check">
+          <input type="checkbox" [disabled]="!isOwner()" [ngModel]="draft().isEnabled" (ngModelChange)="patch({ isEnabled: $event })" />
+          {{ tr('portal.loyalty.enabled') }}
+        </label>
+        <p class="muted hint">{{ tr('portal.loyalty.enabledHint') }}</p>
+      </div>
+
+      <div class="field">
+        <label for="loyalty-currency">{{ tr('portal.loyalty.currency') }}</label>
+        <select id="loyalty-currency" [disabled]="!isOwner()" [ngModel]="draft().currency" (ngModelChange)="patch({ currency: $event })">
+          @for (code of currencies; track code) {
+            <option [value]="code">{{ code }}</option>
+          }
+        </select>
+      </div>
+
+      <h3>{{ tr('portal.loyalty.earnHeading') }}</h3>
+      <div class="field-row">
+        <div class="field">
+          <label for="loyalty-earn-points">{{ tr('portal.loyalty.earnPoints') }}</label>
+          <input id="loyalty-earn-points" type="number" min="1" max="1000" [disabled]="!isOwner()" [ngModel]="draft().earnPoints" (ngModelChange)="patch({ earnPoints: $event })" />
+        </div>
+        <div class="field">
+          <label for="loyalty-earn-amount">{{ tr('portal.loyalty.earnPerAmount') }}</label>
+          <input id="loyalty-earn-amount" type="number" min="0" step="0.01" [disabled]="!isOwner()" [ngModel]="draft().earnPerAmount" (ngModelChange)="patch({ earnPerAmount: $event })" />
+        </div>
+      </div>
+      @if (summaryEarn()) {
+        <p class="muted hint">{{ summaryEarn() }}</p>
+      }
+
+      <h3>{{ tr('portal.loyalty.redeemHeading') }}</h3>
+      <div class="field-row">
+        <div class="field">
+          <label for="loyalty-redeem-points">{{ tr('portal.loyalty.redeemPoints') }}</label>
+          <input id="loyalty-redeem-points" type="number" min="1" [disabled]="!isOwner()" [ngModel]="draft().redeemPoints" (ngModelChange)="patch({ redeemPoints: $event })" />
+        </div>
+        <div class="field">
+          <label for="loyalty-redeem-value">{{ tr('portal.loyalty.redeemValue') }}</label>
+          <input id="loyalty-redeem-value" type="number" min="0" step="0.01" [disabled]="!isOwner()" [ngModel]="draft().redeemValue" (ngModelChange)="patch({ redeemValue: $event })" />
+        </div>
+        <div class="field">
+          <label for="loyalty-min-redeem">{{ tr('portal.loyalty.minRedeem') }}</label>
+          <input id="loyalty-min-redeem" type="number" min="0" [disabled]="!isOwner()" [ngModel]="draft().minRedeemPoints" (ngModelChange)="patch({ minRedeemPoints: $event })" />
+        </div>
+      </div>
+      @if (summaryRedeem()) {
+        <p class="muted hint">{{ summaryRedeem() }}</p>
+      }
+
+      <h3>{{ tr('portal.loyalty.expiryHeading') }}</h3>
+      <div class="field">
+        <label class="check">
+          <input type="checkbox" [disabled]="!isOwner()" [ngModel]="draft().neverExpires" (ngModelChange)="patch({ neverExpires: $event })" />
+          {{ tr('portal.loyalty.expiryNever') }}
+        </label>
+      </div>
+      @if (!draft().neverExpires) {
+        <div class="field">
+          <label for="loyalty-expiry">{{ tr('portal.loyalty.expiryMonths') }}</label>
+          <input id="loyalty-expiry" type="number" min="1" max="60" [disabled]="!isOwner()" [ngModel]="draft().pointsExpiryMonths" (ngModelChange)="patch({ pointsExpiryMonths: $event })" />
+        </div>
+      }
+
+      <div class="actions">
+        <button type="button" class="btn btn-primary" [disabled]="!canSave() || busy()" (click)="save()">
+          <adeni-carbon-icon name="save" [size]="16" />
+          {{ tr('portal.loyalty.save') }}
+        </button>
+      </div>
+    </div>
+  }
+</app-portal-page>

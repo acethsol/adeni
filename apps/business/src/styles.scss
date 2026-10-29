@@ -1,0 +1,25 @@
+@use "carbon-adeni-tokens" as *;
+@use "carbon-components";
+@use "data-grid-page";
+@use "styles/portal-theme";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family-sans);
+  background: var(--bg-subtle);
+  color: var(--text);
+}
+
+code {
+  font-size: 0.9em;
+}

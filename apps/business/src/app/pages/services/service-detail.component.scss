@@ -1,0 +1,56 @@
+@use "staff-layout" as *;
+
+.profile-hero {
+  margin-bottom: var(--cds-spacing-03);
+  padding: var(--cds-spacing-06);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--adeni-purple, #7f56ff) 8%, var(--surface)) 0%,
+    var(--surface) 55%
+  );
+  border-color: color-mix(in srgb, var(--adeni-purple, #7f56ff) 18%, var(--border));
+}
+
+.profile-hero__identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cds-spacing-05);
+  width: 100%;
+}
+
+.profile-hero__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cds-spacing-03);
+}
+
+.tab-panel {
+  margin-top: var(--cds-spacing-03);
+}
+
+.section-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.section-lede {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  max-width: 42rem;
+  line-height: 1.45;
+}
+
+.section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--cds-spacing-05);
+  margin-bottom: var(--cds-spacing-05);
+}
+
+.service-details-panel {
+  border-color: color-mix(in srgb, var(--adeni-purple, #7f56ff) 14%, var(--border));
+}
