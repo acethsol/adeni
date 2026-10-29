@@ -9,7 +9,7 @@
 |-------|-------|
 | **Sprint** | Sprint 37.2 — Memberships |
 | **Author** | Engineering |
-| **Status** | **Approved to start (dev/local).** Slice **37.2-A** (plan catalog) implemented; 37.2-B…E draft |
+| **Status** | **Approved to start (dev/local).** Slice **37.2-A** (plan catalog) and **37.2-B** (in-person customer memberships) implemented; 37.2-C…E draft |
 | **Created** | 2026-10-29 |
 
 ---
@@ -35,7 +35,7 @@ Let beauty & wellness businesses define **recurring membership plans** (price, b
 | Slice | Content | Status |
 |-------|---------|--------|
 | **37.2-A — Plan catalog (first PR)** | `memberships` entitlement key; `MembershipPlan` + benefit lines (Domain, DACPAC, EF); `IMembershipPlanService`; tenant plan CRUD API; shared Zod/i18n/api-client; portal **Memberships** plan list/create/deactivate shell route; tests | **Implemented in this PR** |
-| 37.2-B — Customer memberships (in-person) | `CustomerMembership` + lifecycle enum (Pending → Active → PastDue → Frozen → CancelPending → Cancelled → Expired); enrol at till/transfer (`Idempotency-Key`); cycle benefit grant; owner cancel/freeze; audit; portal customer tab | Draft |
+| 37.2-B — Customer memberships (in-person) | `CustomerMembership` + lifecycle enum (Pending → Active → PastDue → Frozen → CancelPending → Cancelled → Expired); enrol at till/transfer (`Idempotency-Key`); cycle benefit grant; owner cancel/freeze; audit; portal customer tab | **Implemented** (§12) |
 | 37.2-C — Billing coordinator | `IMembershipBillingCoordinator`; `recurringMembershipBilling` entitlement; provider mandate/subscription **references only**; activate/renew **only** on idempotent `PaymentCompleted`; PastDue grace policy; Murphy webhook rules; stub-gated online | Draft (gated on Sprint 34 for live) |
 | 37.2-D — Discover | Public plan list, subscribe (customer JWT), my memberships, cancel/freeze requests; `/api/v1/me/retention/memberships` | Draft |
 | 37.2-E — Booking benefits + MRR | Redeem membership credits via `IBenefitRedemptionService`; `TenantMembershipMrr` calc (port ready for 37.5 `IRetentionAnalyticsService`); `MembershipActivated/Renewed/PaymentFailed/Cancelled` events (Notifications consume in 38B+) | Draft |
@@ -163,3 +163,36 @@ Run: `dotnet test Adeni.slnx -c Release`
 | Billing intervals | monthly / quarterly / annually | Proposed |
 | Pro-rating on mid-cycle enrol | None — first cycle starts at enrol | TBD slice B |
 | Plan price change vs. active members | Price snapshot on enrolment; plan edits affect new enrolments only | TBD slice B |
+
+---
+
+## 12. Slice 37.2-B — Customer memberships, in-person (implemented)
+
+**Scope:** enrol a roster customer at the till / by transfer, grant cycle-1 credits through the 37.1 benefit ledger, owner freeze / resume / cancel, portal customer tab. **Not built:** renewals, PastDue/Expired transitions, rollover execution, cycle-end sweep of `CancelPending`, online checkout, billing (slice C); Discover (D); booking redemption of membership credits, MRR, events consumed by Notifications (E).
+
+**Decisions (closes §11 rows for B):**
+
+| Question | Decision |
+|----------|----------|
+| Credits storage | Extended `retention.benefit_balances`: `CustomerPackageId` now nullable, plus `CustomerMembershipId` + `CycleNumber`; check constraint `CK_benefit_balances_Owner` = exactly one owner; unique indexes are filtered per owner type. One ledger, one `IBenefitRedemptionService`; membership balances are not yet redeemable (slice E). |
+| Pro-rating | None — cycle 1 starts at enrolment; `CurrentCycleEnd` = start + 1 / 3 / 12 months. |
+| Price/plan snapshot | Name, price, currency, interval, rollover, cancellation, freeze, grace days copied to `customer_memberships`; benefit lines to `customer_membership_benefits` (renewal grants in slice C read these, not the live plan). |
+| Duplicates | One live (Pending/Active/PastDue/Frozen/CancelPending) membership per customer + plan: service pre-check + filtered unique index → `409 retention.membership_already_active`. |
+| Cancel semantics | Plan `immediate` (or still `Pending`) → `Cancelled`, open reservations released, remaining credits forfeited. `end_of_cycle` → `CancelPending`; credits stay until cycle end (slice C closes it). Repeat cancel / freeze / unfreeze are no-ops. |
+| Authority | Enrol: `portal.retention` + `Idempotency-Key`. Freeze / unfreeze / cancel: owner only (`retention.owner_required`). All routes need `memberships` entitlement, including reads. |
+| Idempotency | Enrol reuses `retention.benefit_operations` (new `ResultCustomerMembershipId`); same key + body replays, different body → `409 retention.idempotency_conflict`. |
+
+**API** (`/api/v1/tenant/retention`):
+
+| Method | Route | Notes |
+|--------|-------|-------|
+| GET | `/customers/{tenantCustomerId}/memberships` | `portal.retention` or `portal.bookings` |
+| POST | `/customers/{tenantCustomerId}/memberships/enrol` | `201`; body `{ membershipPlanId, businessLocationId, paymentMethod: till\|transfer, note? }`; `Idempotency-Key` required |
+| GET | `/customer-memberships/{id}` | detail incl. current-cycle `balances` |
+| POST | `/customer-memberships/{id}/freeze` · `/unfreeze` · `/cancel` | owner only; cancel body `{ reason? }` |
+
+New stable codes: `retention.membership_not_found` (404), `retention.membership_plan_inactive`, `retention.membership_already_active`, `retention.membership_invalid_state`, `retention.membership_freeze_not_allowed` (all 409). Audit: `retention.membership_enrolled|frozen|unfrozen|cancelled`. Domain events: `CustomerMembershipActivated`, `CustomerMembershipCancelled` (no consumers yet).
+
+**Schema (DACPAC, no EF migrations):** new `customer_memberships`, `customer_membership_benefits`; altered `benefit_balances`, `benefit_operations`. Existing dev databases need a SqlPackage publish (nullable `CustomerPackageId` + filtered index rebuild).
+
+**Tests:** `CustomerMembershipServiceTests` (enrol/replay/conflict/duplicate/inactive/cross-tenant/validation/entitlement/snapshot, freeze, cancel policies, owner-only), `CustomerMembershipsIntegrationTests` (HTTP contract, auth, Starter denial, cross-tenant), shared Zod + i18n parity tests.

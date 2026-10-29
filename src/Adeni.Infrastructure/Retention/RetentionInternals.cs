@@ -63,6 +63,45 @@ internal static class RetentionMapper
             plan.CreatedAt,
             plan.UpdatedAt);
 
+    public static CustomerMembershipResponse ToResponse(CustomerMembership membership) =>
+        new(
+            membership.Id,
+            membership.TenantId,
+            membership.TenantCustomerId,
+            membership.MembershipPlanId,
+            membership.NameSnapshot,
+            membership.PriceSnapshot,
+            membership.CurrencySnapshot,
+            MembershipPlanCodes.ToApi(membership.BillingIntervalSnapshot),
+            MembershipPlanCodes.ToApi(membership.RolloverPolicySnapshot),
+            MembershipPlanCodes.ToApi(membership.CancellationPolicySnapshot),
+            membership.AllowFreezeSnapshot,
+            membership.PastDueGraceDaysSnapshot,
+            CustomerMembershipCodes.ToApi(membership.Status),
+            CustomerMembershipCodes.ToApi(membership.EnrolChannel),
+            membership.EnrolledAtLocationId,
+            membership.CurrentCycleNumber,
+            membership.CurrentCycleStart,
+            membership.CurrentCycleEnd,
+            membership.ActivatedAt,
+            membership.FrozenAt,
+            membership.CancelRequestedAt,
+            membership.CancelledAt,
+            membership.CancelReason,
+            membership.Note,
+            membership.Benefits
+                .OrderBy(x => x.SortOrder)
+                .Select(x => new MembershipBenefitSnapshotResponse(x.ServiceOfferingId, x.ServiceName, x.QuantityPerCycle))
+                .ToArray(),
+            membership.Balances
+                .Where(x => x.CycleNumber == membership.CurrentCycleNumber)
+                .OrderBy(x => x.ServiceName)
+                .Select(x => new MembershipCycleBalanceResponse(
+                    x.Id, x.CycleNumber ?? 0, x.ServiceOfferingId, x.ServiceName, x.Granted, x.Used, x.Reserved,
+                    x.Forfeited, x.Remaining, x.ExpiresAt))
+                .ToArray(),
+            membership.CreatedAt);
+
     public static CustomerPackageResponse ToResponse(
         CustomerPackage package,
         DateTimeOffset now,

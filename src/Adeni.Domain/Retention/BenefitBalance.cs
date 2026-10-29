@@ -13,7 +13,14 @@ public sealed class BenefitBalance : ITenantEntity
 
     public Guid TenantId { get; set; }
 
-    public Guid CustomerPackageId { get; set; }
+    /// <summary>Owning package; null for membership cycle balances (exactly one of package / membership is set).</summary>
+    public Guid? CustomerPackageId { get; set; }
+
+    /// <summary>Owning membership (37.2-B); null for package balances.</summary>
+    public Guid? CustomerMembershipId { get; set; }
+
+    /// <summary>Billing cycle this balance was granted for (membership balances only).</summary>
+    public int? CycleNumber { get; set; }
 
     public Guid ServiceOfferingId { get; set; }
 
@@ -57,6 +64,36 @@ public sealed class BenefitBalance : ITenantEntity
             Granted = quantity,
         };
         transaction = balance.Append(BenefitTransactionKind.Grant, quantity, quantity, null, locationId, actor, null, at);
+        return balance;
+    }
+
+    /// <summary>Grants one billing cycle's credits for a membership; expires with the cycle.</summary>
+    public static BenefitBalance GrantForMembership(
+        Guid tenantId,
+        Guid customerMembershipId,
+        int cycleNumber,
+        Guid serviceOfferingId,
+        string serviceName,
+        int quantity,
+        string actor,
+        Guid? locationId,
+        DateTimeOffset cycleEnd,
+        DateTimeOffset at,
+        out BenefitTransaction transaction)
+    {
+        var balance = new BenefitBalance
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            CustomerMembershipId = customerMembershipId,
+            CycleNumber = cycleNumber,
+            ServiceOfferingId = serviceOfferingId,
+            ServiceName = serviceName,
+            Granted = quantity,
+            ExpiresAt = cycleEnd,
+        };
+        transaction = balance.Append(
+            BenefitTransactionKind.Grant, quantity, quantity, null, locationId, actor, $"membership_cycle_{cycleNumber}", at);
         return balance;
     }
 

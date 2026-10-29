@@ -241,3 +241,83 @@ export type MembershipPlanBenefit = z.infer<typeof membershipBenefitSchema>;
 export type CreateMembershipPlanRequest = z.infer<typeof createMembershipPlanRequestSchema>;
 export type UpdateMembershipPlanRequest = z.infer<typeof updateMembershipPlanRequestSchema>;
 export type MembershipBillingInterval = z.infer<typeof membershipBillingIntervalSchema>;
+
+// ---- Memberships (Sprint 37.2-B): customer memberships, in-person enrolment. ----
+
+export const customerMembershipStatusSchema = z.enum([
+  "pending",
+  "active",
+  "past_due",
+  "frozen",
+  "cancel_pending",
+  "cancelled",
+  "expired",
+]);
+export const membershipEnrolChannelSchema = z.enum(["in_person_till", "in_person_transfer", "online"]);
+
+export const membershipBenefitSnapshotSchema = z.object({
+  serviceOfferingId: z.string().uuid(),
+  serviceName: z.string(),
+  quantityPerCycle: z.number().int().positive(),
+});
+
+/** Credits of the membership's current cycle only; service sessions, never money. */
+export const membershipCycleBalanceSchema = z.object({
+  id: z.string().uuid(),
+  cycleNumber: z.number().int().positive(),
+  serviceOfferingId: z.string().uuid(),
+  serviceName: z.string(),
+  granted: z.number().int().nonnegative(),
+  used: z.number().int().nonnegative(),
+  reserved: z.number().int().nonnegative(),
+  forfeited: z.number().int().nonnegative(),
+  remaining: z.number().int().nonnegative(),
+  expiresAt: z.string().nullable(),
+});
+
+export const customerMembershipSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  tenantCustomerId: z.string().uuid(),
+  membershipPlanId: z.string().uuid(),
+  name: z.string(),
+  price: z.number().nonnegative(),
+  currency: z.string(),
+  billingInterval: membershipBillingIntervalSchema,
+  rolloverPolicy: membershipRolloverPolicySchema,
+  cancellationPolicy: membershipCancellationPolicySchema,
+  allowFreeze: z.boolean(),
+  pastDueGraceDays: z.number().int().nonnegative(),
+  status: customerMembershipStatusSchema,
+  enrolChannel: membershipEnrolChannelSchema,
+  enrolledAtLocationId: z.string().uuid().nullable(),
+  currentCycleNumber: z.number().int().nonnegative(),
+  currentCycleStart: z.string().nullable(),
+  currentCycleEnd: z.string().nullable(),
+  activatedAt: z.string().nullable(),
+  frozenAt: z.string().nullable(),
+  cancelRequestedAt: z.string().nullable(),
+  cancelledAt: z.string().nullable(),
+  cancelReason: z.string().nullable(),
+  note: z.string().nullable(),
+  benefits: z.array(membershipBenefitSnapshotSchema),
+  balances: z.array(membershipCycleBalanceSchema),
+  createdAt: z.string(),
+});
+
+export const customerMembershipListSchema = z.object({ items: z.array(customerMembershipSchema) });
+
+export const enrolMembershipRequestSchema = z.object({
+  membershipPlanId: z.string().uuid(),
+  businessLocationId: z.string().uuid(),
+  paymentMethod: sellPaymentMethodSchema,
+  note: z.string().max(500).optional(),
+});
+
+export const cancelMembershipRequestSchema = z.object({ reason: z.string().max(500).optional() });
+
+export type CustomerMembership = z.infer<typeof customerMembershipSchema>;
+export type CustomerMembershipStatus = z.infer<typeof customerMembershipStatusSchema>;
+export type MembershipCycleBalance = z.infer<typeof membershipCycleBalanceSchema>;
+export type EnrolMembershipRequest = z.infer<typeof enrolMembershipRequestSchema>;
+export type CancelMembershipRequest = z.infer<typeof cancelMembershipRequestSchema>;

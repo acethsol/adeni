@@ -50,4 +50,8 @@ public static class AuditActions
     public const string RetentionMembershipPlanCreated = "retention.membership_plan_created";
     public const string RetentionMembershipPlanUpdated = "retention.membership_plan_updated";
     public const string RetentionMembershipPlanDeactivated = "retention.membership_plan_deactivated";
+    public const string RetentionMembershipEnrolled = "retention.membership_enrolled";
+    public const string RetentionMembershipFrozen = "retention.membership_frozen";
+    public const string RetentionMembershipUnfrozen = "retention.membership_unfrozen";
+    public const string RetentionMembershipCancelled = "retention.membership_cancelled";
 }

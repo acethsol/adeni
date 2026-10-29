@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 public sealed partial class AdeniDbContext
 {
-    // Mirrors db/Adeni.Database/retention/Tables (DACPAC is schema authority â€” no EF migrations).
+    // Mirrors db/Adeni.Database/retention/Tables (DACPAC is schema authority — no EF migrations).
     private void ConfigureRetention(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<PackageDefinition>(e =>
@@ -112,11 +112,65 @@ public sealed partial class AdeniDbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
+        modelBuilder.Entity<CustomerMembership>(e =>
+        {
+            e.ToTable("customer_memberships", "retention", t =>
+            {
+                t.HasCheckConstraint("CK_customer_memberships_Status", "[Status] IN (0,1,2,3,4,5,6)");
+                t.HasCheckConstraint("CK_customer_memberships_EnrolChannel", "[EnrolChannel] IN (0,1,2)");
+                t.HasCheckConstraint("CK_customer_memberships_BillingInterval", "[BillingIntervalSnapshot] IN (0,1,2)");
+                t.HasCheckConstraint("CK_customer_memberships_RolloverPolicy", "[RolloverPolicySnapshot] IN (0,1)");
+                t.HasCheckConstraint("CK_customer_memberships_CancellationPolicy", "[CancellationPolicySnapshot] IN (0,1)");
+            });
+            e.HasKey(x => x.Id);
+            e.HasAlternateKey(x => new { x.TenantId, x.Id });
+            e.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+            e.HasOne<Tenant>().WithMany().HasForeignKey(x => x.TenantId).OnDelete(DeleteBehavior.Restrict);
+            e.Property(x => x.NameSnapshot).HasMaxLength(200);
+            e.Property(x => x.PriceSnapshot).HasPrecision(12, 2);
+            e.Property(x => x.CurrencySnapshot).HasMaxLength(3);
+            e.Property(x => x.Note).HasMaxLength(500);
+            e.Property(x => x.EnrolledBy).HasMaxLength(128);
+            e.Property(x => x.CancelledBy).HasMaxLength(128);
+            e.Property(x => x.CancelReason).HasMaxLength(500);
+            e.Property(x => x.RowVersion).IsRowVersion();
+            e.HasIndex(x => new { x.TenantId, x.TenantCustomerId, x.Status });
+            e.HasIndex(x => new { x.TenantId, x.Status, x.CurrentCycleEnd });
+            // One live (non-terminal) membership per customer and plan: Pending, Active, PastDue, Frozen, CancelPending.
+            e.HasIndex(x => new { x.TenantId, x.TenantCustomerId, x.MembershipPlanId })
+                .IsUnique()
+                .HasFilter("[Status] IN (0,1,2,3,4)");
+            e.HasOne<MembershipPlan>().WithMany()
+                .HasForeignKey(x => new { x.TenantId, x.MembershipPlanId })
+                .HasPrincipalKey(x => new { x.TenantId, x.Id })
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<CustomerMembershipBenefit>(e =>
+        {
+            e.ToTable("customer_membership_benefits", "retention", t => t.HasCheckConstraint("CK_customer_membership_benefits_Quantity", "[QuantityPerCycle] BETWEEN 1 AND 1000"));
+            e.HasKey(x => x.Id);
+            e.HasAlternateKey(x => new { x.TenantId, x.Id });
+            e.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+            e.HasOne<Tenant>().WithMany().HasForeignKey(x => x.TenantId).OnDelete(DeleteBehavior.Restrict);
+            e.Property(x => x.ServiceName).HasMaxLength(200);
+            e.HasIndex(x => new { x.TenantId, x.CustomerMembershipId, x.ServiceOfferingId }).IsUnique();
+            e.HasOne<CustomerMembership>().WithMany(x => x.Benefits)
+                .HasForeignKey(x => new { x.TenantId, x.CustomerMembershipId })
+                .HasPrincipalKey(x => new { x.TenantId, x.Id })
+                .OnDelete(DeleteBehavior.Restrict);
+        });
         modelBuilder.Entity<BenefitBalance>(e =>
         {
-            e.ToTable("benefit_balances", "retention", t => t.HasCheckConstraint(
-                "CK_benefit_balances_Invariant",
-                "[Granted] > 0 AND [Used] >= 0 AND [Reserved] >= 0 AND [Forfeited] >= 0 AND ([Used] + [Reserved] + [Forfeited]) <= [Granted]"));
+            e.ToTable("benefit_balances", "retention", t =>
+            {
+                t.HasCheckConstraint(
+                    "CK_benefit_balances_Invariant",
+                    "[Granted] > 0 AND [Used] >= 0 AND [Reserved] >= 0 AND [Forfeited] >= 0 AND ([Used] + [Reserved] + [Forfeited]) <= [Granted]");
+                t.HasCheckConstraint(
+                    "CK_benefit_balances_Owner",
+                    "([CustomerPackageId] IS NOT NULL AND [CustomerMembershipId] IS NULL AND [CycleNumber] IS NULL) OR ([CustomerPackageId] IS NULL AND [CustomerMembershipId] IS NOT NULL AND [CycleNumber] >= 1)");
+            });
             e.HasKey(x => x.Id);
             e.HasAlternateKey(x => new { x.TenantId, x.Id });
             e.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
@@ -124,9 +178,18 @@ public sealed partial class AdeniDbContext
             e.Property(x => x.ServiceName).HasMaxLength(200);
             e.Property(x => x.RowVersion).IsRowVersion();
             e.Ignore(x => x.Remaining);
-            e.HasIndex(x => new { x.TenantId, x.CustomerPackageId, x.ServiceOfferingId }).IsUnique();
+            e.HasIndex(x => new { x.TenantId, x.CustomerPackageId, x.ServiceOfferingId })
+                .IsUnique()
+                .HasFilter("[CustomerPackageId] IS NOT NULL");
+            e.HasIndex(x => new { x.TenantId, x.CustomerMembershipId, x.CycleNumber, x.ServiceOfferingId })
+                .IsUnique()
+                .HasFilter("[CustomerMembershipId] IS NOT NULL");
             e.HasOne<CustomerPackage>().WithMany(x => x.Balances)
                 .HasForeignKey(x => new { x.TenantId, x.CustomerPackageId })
+                .HasPrincipalKey(x => new { x.TenantId, x.Id })
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<CustomerMembership>().WithMany(x => x.Balances)
+                .HasForeignKey(x => new { x.TenantId, x.CustomerMembershipId })
                 .HasPrincipalKey(x => new { x.TenantId, x.Id })
                 .OnDelete(DeleteBehavior.Restrict);
         });
@@ -168,6 +231,10 @@ public sealed partial class AdeniDbContext
             e.HasIndex(x => new { x.TenantId, x.KeyHash }).IsUnique();
             e.HasOne<CustomerPackage>().WithMany()
                 .HasForeignKey(x => new { x.TenantId, x.ResultCustomerPackageId })
+                .HasPrincipalKey(x => new { x.TenantId, x.Id })
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<CustomerMembership>().WithMany()
+                .HasForeignKey(x => new { x.TenantId, x.ResultCustomerMembershipId })
                 .HasPrincipalKey(x => new { x.TenantId, x.Id })
                 .OnDelete(DeleteBehavior.Restrict);
         });

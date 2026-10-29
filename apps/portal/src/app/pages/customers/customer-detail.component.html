@@ -353,6 +353,10 @@
       <div class="tab-panel">
         <app-customer-packages-panel [customerId]="c.id" />
       </div>
+    } @else if (tab() === "memberships" && session.can("portal.retention")) {
+      <div class="tab-panel">
+        <app-customer-memberships-panel [customerId]="c.id" />
+      </div>
     }
   } @else if (!error()) {
     <adeni-portal-empty-state

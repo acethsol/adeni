@@ -4,8 +4,11 @@ import {
   createBookingRequestSchema,
   createMembershipPlanRequestSchema,
   createPackageDefinitionRequestSchema,
+  customerMembershipSchema,
+  customerMembershipStatusSchema,
   customerPackageSchema,
   customerProfileSchema,
+  enrolMembershipRequestSchema,
   packagePurchaseResponseSchema,
   publicPackageCatalogSchema,
   sellPackageRequestSchema,
@@ -85,7 +88,8 @@ describe("retention contracts", () => {
       "package_not_found", "package_inactive", "package_not_active", "package_expired", "benefit_not_found",
       "benefit_insufficient", "benefit_service_mismatch", "benefit_conflict", "scope_location_denied",
       "sell_location_denied", "idempotency_key_required", "idempotency_conflict", "owner_required",
-      "online_purchase_unavailable", "validation", "membership_plan_not_found",
+      "online_purchase_unavailable", "validation", "membership_plan_not_found", "membership_not_found",
+      "membership_plan_inactive", "membership_already_active", "membership_invalid_state", "membership_freeze_not_allowed",
     ];
     for (const locale of ["en", "fr"] as const) {
       for (const code of codes) {
@@ -95,5 +99,27 @@ describe("retention contracts", () => {
       expect(t(locale, "errors.entitlements.packages")).not.toBe("errors.entitlements.packages");
       expect(t(locale, "errors.entitlements.memberships")).not.toBe("errors.entitlements.memberships");
     }
+  });
+  it("parses customer memberships and validates the enrol request", () => {
+    const uuid = "11111111-1111-4111-8111-111111111111";
+    const membership = customerMembershipSchema.parse({
+      id: uuid, tenantId: uuid, tenantCustomerId: uuid, membershipPlanId: uuid, name: "Fade Club", price: 25000,
+      currency: "NGN", billingInterval: "monthly", rolloverPolicy: "none", cancellationPolicy: "end_of_cycle",
+      allowFreeze: true, pastDueGraceDays: 7, status: "active", enrolChannel: "in_person_till",
+      enrolledAtLocationId: uuid, currentCycleNumber: 1, currentCycleStart: "2026-10-29T12:00:00Z",
+      currentCycleEnd: "2026-11-29T12:00:00Z", activatedAt: "2026-10-29T12:00:00Z", frozenAt: null,
+      cancelRequestedAt: null, cancelledAt: null, cancelReason: null, note: null,
+      benefits: [{ serviceOfferingId: uuid, serviceName: "Haircut", quantityPerCycle: 2 }],
+      balances: [{
+        id: uuid, cycleNumber: 1, serviceOfferingId: uuid, serviceName: "Haircut", granted: 2, used: 0,
+        reserved: 0, forfeited: 0, remaining: 2, expiresAt: "2026-11-29T12:00:00Z",
+      }],
+      createdAt: "2026-10-29T12:00:00Z",
+    });
+    expect(membership.status).toBe("active");
+    expect(customerMembershipStatusSchema.safeParse("paused").success).toBe(false);
+
+    expect(enrolMembershipRequestSchema.safeParse({ membershipPlanId: uuid, businessLocationId: uuid, paymentMethod: "till" }).success).toBe(true);
+    expect(enrolMembershipRequestSchema.safeParse({ membershipPlanId: uuid, businessLocationId: uuid, paymentMethod: "card" }).success).toBe(false);
   });
 });

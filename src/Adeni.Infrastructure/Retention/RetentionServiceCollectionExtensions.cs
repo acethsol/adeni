@@ -15,6 +15,7 @@ public static class RetentionServiceCollectionExtensions
         services.AddScoped<IPackageCatalogService, PackageCatalogService>();
         services.AddScoped<IMembershipPlanService, MembershipPlanService>();
         services.AddScoped<ICustomerPackageService, CustomerPackageService>();
+        services.AddScoped<ICustomerMembershipService, CustomerMembershipService>();
         services.AddScoped<IBenefitRedemptionService, BenefitRedemptionService>();
         services.AddScoped<IPackageStorefrontService, PackageStorefrontService>();
         services.AddScoped<IPackagePurchaseActivation, PackagePurchaseActivation>();

@@ -36,11 +36,12 @@ import { AdeniApiError } from "@adeni/api-client";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
 import { Subscription } from "rxjs";
+import { CustomerMembershipsPanelComponent } from "./customer-memberships-panel.component";
 import { CustomerPackagesPanelComponent } from "./customer-packages-panel.component";
 import { CustomerProfilePanelComponent } from "./customer-profile-panel.component";
 import { PortalSessionService } from "../../core/services/portal-session.service";
 
-const CUSTOMER_DETAIL_TABS = new Set(["overview", "bookings", "queue", "activity", "packages"]);
+const CUSTOMER_DETAIL_TABS = new Set(["overview", "bookings", "queue", "activity", "packages", "memberships"]);
 
 function normalizeCustomerDetailTab(raw: string | null): string {
   return raw && CUSTOMER_DETAIL_TABS.has(raw) ? raw : "overview";
@@ -73,6 +74,7 @@ const PAID_STATUS = 6;
     RouterLink,
     CustomerProfilePanelComponent,
     CustomerPackagesPanelComponent,
+    CustomerMembershipsPanelComponent,
   ],
   templateUrl: "./customer-detail.component.html",
   styleUrl: "./customer-detail.component.scss",
@@ -114,6 +116,7 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
       },
       ...(this.session.can("portal.bookings") ? [{ id: "activity", label: this.tr("customerProfile.activity") }] : []),
       ...(this.session.can("portal.retention") ? [{ id: "packages", label: this.tr("portal.retention.customerTab") }] : []),
+      ...(this.session.can("portal.retention") ? [{ id: "memberships", label: this.tr("portal.memberships.customerTab") }] : []),
     ];
   });
 

@@ -129,13 +129,16 @@ internal static class ApiErrorResponseMapper
         code switch
         {
             RetentionErrorCodes.PackageNotFound or RetentionErrorCodes.BenefitNotFound
-                or RetentionErrorCodes.MembershipPlanNotFound => StatusCodes.Status404NotFound,
+                or RetentionErrorCodes.MembershipPlanNotFound or RetentionErrorCodes.MembershipNotFound =>
+                StatusCodes.Status404NotFound,
             RetentionErrorCodes.OwnerRequired => StatusCodes.Status403Forbidden,
             RetentionErrorCodes.OnlinePurchaseUnavailable => StatusCodes.Status503ServiceUnavailable,
             RetentionErrorCodes.BenefitInsufficient or RetentionErrorCodes.BenefitConflict
                 or RetentionErrorCodes.IdempotencyConflict or RetentionErrorCodes.PackageInactive
                 or RetentionErrorCodes.PackageNotActive or RetentionErrorCodes.PackageExpired
-                or RetentionErrorCodes.ScopeLocationDenied or RetentionErrorCodes.SellLocationDenied =>
+                or RetentionErrorCodes.ScopeLocationDenied or RetentionErrorCodes.SellLocationDenied
+                or RetentionErrorCodes.MembershipPlanInactive or RetentionErrorCodes.MembershipAlreadyActive
+                or RetentionErrorCodes.MembershipInvalidState or RetentionErrorCodes.MembershipFreezeNotAllowed =>
                 StatusCodes.Status409Conflict,
             _ => StatusCodes.Status400BadRequest,
         };

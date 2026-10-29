@@ -8,6 +8,11 @@ public static class RetentionErrorCodes
     public const string PackagesNotEntitled = "entitlements.packages";
     public const string MembershipsNotEntitled = "entitlements.memberships";
     public const string MembershipPlanNotFound = "retention.membership_plan_not_found";
+    public const string MembershipNotFound = "retention.membership_not_found";
+    public const string MembershipPlanInactive = "retention.membership_plan_inactive";
+    public const string MembershipAlreadyActive = "retention.membership_already_active";
+    public const string MembershipInvalidState = "retention.membership_invalid_state";
+    public const string MembershipFreezeNotAllowed = "retention.membership_freeze_not_allowed";
     public const string PackageNotFound = "retention.package_not_found";
     public const string PackageInactive = "retention.package_inactive";
     public const string PackageNotActive = "retention.package_not_active";
@@ -36,6 +41,21 @@ public static class RetentionErrorCodes
 
     public static Error MembershipPlanNotFoundError() =>
         new(MembershipPlanNotFound, "Membership plan was not found.");
+
+    public static Error MembershipNotFoundError() =>
+        new(MembershipNotFound, "Membership was not found.");
+
+    public static Error MembershipPlanInactiveError() =>
+        new(MembershipPlanInactive, "This membership plan is no longer offered.");
+
+    public static Error MembershipAlreadyActiveError() =>
+        new(MembershipAlreadyActive, "This customer already has a live membership on that plan.");
+
+    public static Error MembershipInvalidStateError() =>
+        new(MembershipInvalidState, "That change is not allowed for the membership's current status.");
+
+    public static Error MembershipFreezeNotAllowedError() =>
+        new(MembershipFreezeNotAllowed, "This membership plan does not allow freezing.");
 
     public static Error PackageNotFoundError() =>
         new(PackageNotFound, "Package was not found.");

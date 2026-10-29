@@ -56,6 +56,26 @@ public enum MembershipRolloverPolicy
     CarryOverOneCycle = 1,
 }
 
+/// <summary>Customer membership lifecycle. Persisted as int.</summary>
+public enum CustomerMembershipStatus
+{
+    Pending = 0,
+    Active = 1,
+    PastDue = 2,
+    Frozen = 3,
+    CancelPending = 4,
+    Cancelled = 5,
+    Expired = 6,
+}
+
+/// <summary>How a membership was enrolled. Persisted as int. <c>Online</c> arrives with slice C/D.</summary>
+public enum MembershipEnrolChannel
+{
+    InPersonTill = 0,
+    InPersonTransfer = 1,
+    Online = 2,
+}
+
 /// <summary>When a member-requested cancellation takes effect. Persisted as int.</summary>
 public enum MembershipCancellationPolicy
 {

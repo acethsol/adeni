@@ -38,3 +38,14 @@ public sealed record CustomerPackageVoided(
     Guid CustomerPackageId,
     Guid TenantId,
     DateTimeOffset At) : IDomainEvent;
+public sealed record CustomerMembershipActivated(
+    Guid CustomerMembershipId,
+    Guid TenantId,
+    Guid TenantCustomerId,
+    DateTimeOffset At) : IDomainEvent;
+
+public sealed record CustomerMembershipCancelled(
+    Guid CustomerMembershipId,
+    Guid TenantId,
+    bool Immediate,
+    DateTimeOffset At) : IDomainEvent;

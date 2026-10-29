@@ -5,6 +5,11 @@ export const enErrorMessages: MessageTree = {
   commerce: { validation: "Check the amount, currency and payment request.", conflict: "The request changed or is already being processed. Refresh before retrying.", settlement_required: "Live business settlement is not available. This feature is currently sandbox-only.", credential_invalid: "This payment request or gift credential is unavailable." },
   retention: {
     membership_plan_not_found: "That membership plan was not found.",
+    membership_not_found: "That membership was not found.",
+    membership_plan_inactive: "This membership plan is no longer offered.",
+    membership_already_active: "This customer already has a membership on that plan.",
+    membership_invalid_state: "That change is not allowed for the membership's current status.",
+    membership_freeze_not_allowed: "This membership plan does not allow freezing.",
     package_not_found: "That package was not found.",
     package_inactive: "This package is no longer for sale.",
     package_not_active: "This package is not active.",
@@ -123,6 +128,11 @@ export const frErrorMessages: MessageTree = {
   commerce: { validation: "Vérifiez le montant, la devise et la demande.", conflict: "La demande a changé ou est déjà en cours. Actualisez avant de réessayer.", settlement_required: "Le règlement commerçant réel n’est pas disponible. Cette fonction est réservée aux tests.", credential_invalid: "Cette demande ou ce code cadeau n’est pas disponible." },
   retention: {
     membership_plan_not_found: "Ce plan d’abonnement est introuvable.",
+    membership_not_found: "Cet abonnement est introuvable.",
+    membership_plan_inactive: "Ce plan d’abonnement n’est plus proposé.",
+    membership_already_active: "Ce client a déjà un abonnement sur ce plan.",
+    membership_invalid_state: "Ce changement n’est pas permis pour le statut actuel de l’abonnement.",
+    membership_freeze_not_allowed: "Ce plan d’abonnement ne permet pas la suspension.",
     package_not_found: "Ce forfait est introuvable.",
     package_inactive: "Ce forfait n’est plus en vente.",
     package_not_active: "Ce forfait n’est pas actif.",

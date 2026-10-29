@@ -1,6 +1,8 @@
 import {
   customerPackageLedgerSchema,
   customerPackageListSchema,
+  customerMembershipListSchema,
+  customerMembershipSchema,
   customerPackageSchema,
   membershipPlanListSchema,
   membershipPlanSchema,
@@ -11,6 +13,7 @@ import {
   redeemableBenefitListSchema,
   type CreateMembershipPlanRequest,
   type CreatePackageDefinitionRequest,
+  type EnrolMembershipRequest,
   type SellPackageRequest,
   type UpdateMembershipPlanRequest,
   type UpdatePackageDefinitionRequest,
@@ -86,6 +89,42 @@ export class RetentionApi {
 
   deactivateMembershipPlan(id: string, signal?: AbortSignal) {
     return this.write(`${BASE}/memberships/plans/${encodeURIComponent(id)}/deactivate`, {}, membershipPlanSchema, "POST", undefined, signal);
+  }
+
+  /** Customer memberships (Sprint 37.2-B). Requires the `memberships` plan entitlement. */
+  listCustomerMemberships(tenantCustomerId: string, signal?: AbortSignal) {
+    return this.get(`${BASE}/customers/${encodeURIComponent(tenantCustomerId)}/memberships`, customerMembershipListSchema, signal);
+  }
+
+  getCustomerMembership(id: string, signal?: AbortSignal) {
+    return this.get(`${BASE}/customer-memberships/${encodeURIComponent(id)}`, customerMembershipSchema, signal);
+  }
+
+  /** In-person enrolment. `key` is the required Idempotency-Key — reuse it when retrying the same enrolment. */
+  enrolMembership(tenantCustomerId: string, body: EnrolMembershipRequest, key: string, signal?: AbortSignal) {
+    return this.write(
+      `${BASE}/customers/${encodeURIComponent(tenantCustomerId)}/memberships/enrol`,
+      body,
+      customerMembershipSchema,
+      "POST",
+      key,
+      signal,
+    );
+  }
+
+  /** Owner-only; Active → Frozen when the plan allows it. */
+  freezeCustomerMembership(id: string, signal?: AbortSignal) {
+    return this.write(`${BASE}/customer-memberships/${encodeURIComponent(id)}/freeze`, {}, customerMembershipSchema, "POST", undefined, signal);
+  }
+
+  /** Owner-only; Frozen → Active. */
+  unfreezeCustomerMembership(id: string, signal?: AbortSignal) {
+    return this.write(`${BASE}/customer-memberships/${encodeURIComponent(id)}/unfreeze`, {}, customerMembershipSchema, "POST", undefined, signal);
+  }
+
+  /** Owner-only; applies the plan's cancellation policy (immediate or end of cycle). */
+  cancelCustomerMembership(id: string, reason: string | undefined, signal?: AbortSignal) {
+    return this.write(`${BASE}/customer-memberships/${encodeURIComponent(id)}/cancel`, { reason }, customerMembershipSchema, "POST", undefined, signal);
   }
 
   listCustomerPackages(tenantCustomerId: string, signal?: AbortSignal) {

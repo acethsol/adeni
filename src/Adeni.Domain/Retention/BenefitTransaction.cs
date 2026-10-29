@@ -55,5 +55,8 @@ public sealed class BenefitOperation : ITenantEntity
 
     public Guid? ResultCustomerPackageId { get; set; }
 
+    /// <summary>Set for membership enrolments (37.2-B); mutually exclusive with <see cref="ResultCustomerPackageId"/>.</summary>
+    public Guid? ResultCustomerMembershipId { get; set; }
+
     public DateTimeOffset OccurredAt { get; set; }
 }
