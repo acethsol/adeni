@@ -32,11 +32,28 @@ function removeNestedAngular(workspaceDir) {
 
 removeNestedAngular(join(root, "packages", "ui"));
 
+function pruneOrphanedAppNodeModules(appDir) {
+  const nm = join(appDir, "node_modules");
+  if (!existsSync(nm)) {
+    return;
+  }
+  const nestedAngular = join(nm, "@angular");
+  const hasNestedAngular =
+    existsSync(nestedAngular) &&
+    readdirSync(nestedAngular, { withFileTypes: true }).some((e) => e.isDirectory());
+  if (!hasNestedAngular && existsSync(join(nm, ".bin"))) {
+    rmSync(nm, { recursive: true, force: true });
+    console.log(`Removed orphaned ${nm} (hoisted Angular CLI and @angular/*).`);
+  }
+}
+
 const appsDir = join(root, "apps");
 if (existsSync(appsDir)) {
   for (const app of readdirSync(appsDir, { withFileTypes: true })) {
     if (app.isDirectory()) {
-      removeNestedAngular(join(appsDir, app.name));
+      const appDir = join(appsDir, app.name);
+      removeNestedAngular(appDir);
+      pruneOrphanedAppNodeModules(appDir);
     }
   }
 }

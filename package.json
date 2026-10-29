@@ -40,9 +40,13 @@
     "@angular/platform-server": "22.2.2",
     "@angular/router": "22.2.2",
     "@angular/ssr": "22.2.2",
-    "@angular-devkit/build-angular": "22.2.2"
+    "@angular-devkit/build-angular": "22.2.2",
+    "typescript": "~6.0.3"
   },
   "devDependencies": {
+    "@angular/platform-server": "22.2.2",
+    "@angular/ssr": "22.2.2",
+    "typescript": "~6.0.3",
     "png-to-ico": "^3.0.2",
     "sharp": "^0.35.5"
   }
