@@ -46,6 +46,11 @@ public sealed class MembershipBillingCoordinatorTests
 
     private sealed class Guard(bool memberships = true, bool recurring = true) : IRetentionEntitlementGuard
     {
+        public Task<bool> IsLoyaltyBasicEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) => Task.FromResult(true);
+
+        public Task<Result> EnsureLoyaltyBasicEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Result.Success());
+
         public Task<bool> IsMembershipsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
             Task.FromResult(memberships);
 
