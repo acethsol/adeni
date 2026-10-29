@@ -15,7 +15,6 @@ import { CustomerApiService } from "../../core/services/customer-api.service";
         <p class="kicker">Adeni</p>
         <h1>{{ tr("discover.packages.myTitle") }}</h1>
         <p class="lede">{{ tr("discover.packages.myDescription") }}</p>
-        <a class="cds-btn cds-btn--ghost" routerLink="/my-bookings">{{ tr("bookings.title") }}</a>
       </header>
 
       @if (loading()) {
@@ -62,15 +61,15 @@ import { CustomerApiService } from "../../core/services/customer-api.service";
   `,
   styles: [
     `
-      .page { max-width: 48rem; margin: 0 auto; padding: 2rem 1rem; }
+      .page { width: min(46rem, 100%); margin: 0 auto; padding: 0 0 3rem; }
       .page-head { margin-bottom: 1.5rem; }
       .kicker { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; opacity: 0.7; margin: 0; }
       .lede, .meta, .tiny { opacity: 0.75; }
       .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
-      .card { border: 1px solid var(--cds-border-subtle, #e0e0e0); border-radius: 0.75rem; padding: 1rem 1.25rem; }
+      .card { border: 1px solid var(--cds-border-subtle, #e0e0e0); background: var(--cds-layer-01, #fff); padding: 1rem 1.25rem; }
       .title-row { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; }
       .title-row h2 { margin: 0; font-size: 1.1rem; }
-      .status { font-size: 0.8rem; padding: 0.15rem 0.5rem; border-radius: 999px; background: var(--cds-layer-accent, #e0e0e0); }
+      .status { font-size: 0.8rem; padding: 0.15rem 0.5rem; background: var(--cds-layer-accent, #e0e0e0); }
       .status[data-tone="active"] { background: #defbe6; }
       .status[data-tone="pending_payment"] { background: #fcf4d6; }
       .balances { margin: 0.5rem 0; padding-left: 1.1rem; }

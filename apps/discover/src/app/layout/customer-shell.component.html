@@ -1,0 +1,36 @@
+<div class="shell">
+  <header class="header">
+    <a class="brand" routerLink="/">
+      <adeni-brand-lockup [height]="32" surface="light" />
+    </a>
+
+    <nav class="nav" [attr.aria-label]="tr('common.primary')">
+      <a routerLink="/my-bookings" routerLinkActive="active">{{ tr('common.myBookings') }}</a>
+      <a routerLink="/my-packages" routerLinkActive="active">{{ tr('discover.packages.myLink') }}</a>
+      <a routerLink="/my-gift-cards" routerLinkActive="active">{{ tr('discover.packages.giftCardsLink') }}</a>
+      <a routerLink="/my-messages" routerLinkActive="active">{{ tr('common.messages') }}</a>
+    </nav>
+
+    <div class="header-right">
+      <a class="cds-btn cds-btn--tertiary cds-btn--sm" routerLink="/discover">{{ tr('common.explore') }}</a>
+      @if (auth0Mode) {
+        @if (signedIn()) {
+          <button type="button" class="cds-btn cds-btn--ghost cds-btn--sm" (click)="logout()">{{ tr('discover.layout.logOut') }}</button>
+        } @else {
+          <button type="button" class="cds-btn cds-btn--primary cds-btn--sm" (click)="login()">{{ tr('common.sign') }}</button>
+        }
+      } @else if (devCustomerMode) {
+        <span class="dev">{{ tr('discover.layout.devCustomer') }}</span>
+      }
+    </div>
+    <span class="header-accent" aria-hidden="true"></span>
+  </header>
+
+  <main>
+    <router-outlet />
+  </main>
+
+  <adeni-global-loading-panel />
+  <adeni-toast-host />
+  <adeni-confirm-host />
+</div>

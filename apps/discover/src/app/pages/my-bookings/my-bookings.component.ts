@@ -16,7 +16,6 @@ import {
 import { CustomerApiService } from "../../core/services/customer-api.service";
 import {
   ADENI_DISCOVER_CONFIG,
-  isAuth0Configured,
   isDiscoverCustomerDevMode,
 } from "../../core/adeni-config";
 
@@ -45,7 +44,6 @@ export class MyBookingsComponent implements OnInit {
 
   readonly locale = this.localeService.locale;
   readonly devMode = isDiscoverCustomerDevMode(this.config);
-  readonly auth0Mode = isAuth0Configured(this.config);
 
   readonly upcoming = computed(() => {
     const now = Date.now();
@@ -165,9 +163,5 @@ export class MyBookingsComponent implements OnInit {
     } finally {
       this.cancelId.set(null);
     }
-  }
-
-  logout(): void {
-    void this.api.logout();
   }
 }

@@ -1,0 +1,115 @@
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-subtle);
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--cds-spacing-03) var(--cds-spacing-06);
+  padding: var(--cds-spacing-03) var(--cds-spacing-06);
+  border-bottom: 1px solid var(--cds-border-subtle);
+  background: var(--cds-layer-01);
+}
+
+.header-accent {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--brand-primary), var(--brand-secondary) 55%, var(--adeni-purple-deep));
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.nav {
+  display: flex;
+  align-items: stretch;
+  gap: var(--cds-spacing-02);
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding: 0 var(--cds-spacing-04);
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.nav a:hover {
+  color: var(--text);
+  background: var(--cds-layer-hover-01, rgb(0 0 0 / 4%));
+}
+
+.nav a.active {
+  color: var(--interactive);
+  font-weight: 700;
+  border-bottom-color: var(--interactive);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--cds-spacing-03);
+}
+
+.dev {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+main {
+  flex: 1;
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: var(--cds-spacing-06);
+}
+
+@media (max-width: 700px) {
+  .header {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "brand right"
+      "nav nav";
+    padding: var(--cds-spacing-03) var(--cds-spacing-05) 0;
+  }
+
+  .brand {
+    grid-area: brand;
+  }
+
+  .header-right {
+    grid-area: right;
+  }
+
+  .nav {
+    grid-area: nav;
+    margin: 0 calc(-1 * var(--cds-spacing-03));
+  }
+
+  main {
+    padding: var(--cds-spacing-04);
+  }
+}

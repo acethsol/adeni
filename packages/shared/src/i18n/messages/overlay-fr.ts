@@ -446,6 +446,7 @@ export const frOverlay: MessageTree = {
       myEmptyDescription: "Les forfaits achetés auprès d’une entreprise apparaîtront ici.",
       loadError: "Impossible de charger vos forfaits.",
       myLink: "Mes forfaits",
+      giftCardsLink: "Cartes-cadeaux",
       statusPending: "En attente de paiement",
       statusActive: "Actif",
       statusExpired: "Expiré",

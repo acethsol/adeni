@@ -446,6 +446,7 @@ export const enOverlay: MessageTree = {
       myEmptyDescription: "Packages you buy from a business will appear here.",
       loadError: "Could not load your packages.",
       myLink: "My packages",
+      giftCardsLink: "Gift cards",
       statusPending: "Awaiting payment",
       statusActive: "Active",
       statusExpired: "Expired",

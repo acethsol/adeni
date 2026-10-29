@@ -10,10 +10,6 @@
       <a class="cds-btn cds-btn--primary" routerLink="/discover">{{
         label("bookings.bookAnother")
       }}</a>
-      <a class="ghost" routerLink="/my-packages">{{ tr("discover.packages.myLink") }}</a>
-      @if (auth0Mode) {
-        <button type="button" class="ghost" (click)="logout()">{{ label("bookings.logOut") }}</button>
-      }
     </div>
   </header>
 
@@ -96,7 +92,6 @@
             <div class="body">
               <div class="title-row">
                 <h2>{{ b.serviceName }}</h2>
-                <a [routerLink]="['/my-bookings', b.id, 'intake']">{{ label('intake.title') }}</a>
                 <span class="status" [attr.data-tone]="statusTone(b.status)">{{
                   statusLabel(b.status)
                 }}</span>
@@ -150,6 +145,9 @@
               <div class="actions">
                 <a class="text-link" [routerLink]="['/businesses', b.businessSlug]">{{
                   label("bookings.viewBusiness")
+                }}</a>
+                <a class="cds-btn cds-btn--tertiary cds-btn--sm" [routerLink]="['/my-bookings', b.id, 'intake']">{{
+                  label("intake.title")
                 }}</a>
                 @if (canCancel(b)) {
                   <button

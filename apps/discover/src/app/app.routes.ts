@@ -1,5 +1,6 @@
 import { Routes } from "@angular/router";
 import { PublicShellComponent } from "./layout/public-shell.component";
+import { CustomerShellComponent } from "./layout/customer-shell.component";
 import { HomeComponent } from "./pages/home/home.component";
 import { DiscoverComponent } from "./pages/discover/discover.component";
 import { BusinessProfileComponent } from "./pages/business/business.component";
@@ -16,8 +17,18 @@ import { seoMarketCanMatch } from "./core/seo-market.guard";
 
 export const routes: Routes = [
   { path: "pay", loadComponent: () => import("./pages/pay/pay.component").then(m => m.PayComponent), title: "Payment" },
-  { path: "my-packages", canActivate: [customerAuthGuard], loadComponent: () => import("./pages/my-packages/my-packages.component").then(m => m.MyPackagesComponent), title: "My packages" },
-  { path: "my-gift-cards", canActivate: [customerAuthGuard], loadComponent: () => import("./pages/pay/purchased-gifts.component").then(m => m.PurchasedGiftsComponent), title: "Purchased gift cards" },
+  {
+    path: "",
+    component: CustomerShellComponent,
+    children: [
+      { path: "my-bookings/:bookingId/intake/:assignmentId", canActivate: [customerAuthGuard], loadComponent: () => import("./pages/intake/intake.component").then(m => m.IntakeComponent), title: "Consultation forms" },
+      { path: "my-bookings/:bookingId/intake", canActivate: [customerAuthGuard], loadComponent: () => import("./pages/intake/intake.component").then(m => m.IntakeComponent), title: "Consultation forms" },
+      { path: "my-bookings", canActivate: [customerAuthGuard], component: MyBookingsComponent, title: "My bookings" },
+      { path: "my-packages", canActivate: [customerAuthGuard], loadComponent: () => import("./pages/my-packages/my-packages.component").then(m => m.MyPackagesComponent), title: "My packages" },
+      { path: "my-gift-cards", canActivate: [customerAuthGuard], loadComponent: () => import("./pages/pay/purchased-gifts.component").then(m => m.PurchasedGiftsComponent), title: "Purchased gift cards" },
+      { path: "my-messages", canActivate: [customerAuthGuard], component: MyMessagesComponent, title: "Messages" },
+    ],
+  },
   {
     path: "checkout/stub/:reference",
     component: CheckoutStubComponent,
@@ -30,20 +41,6 @@ export const routes: Routes = [
       { path: "", pathMatch: "full", component: HomeComponent },
       { path: "discover", component: DiscoverComponent, title: "Explore" },
       { path: "businesses/:slug", component: BusinessProfileComponent },
-      { path: "my-bookings/:bookingId/intake/:assignmentId", canActivate: [customerAuthGuard], loadComponent: () => import("./pages/intake/intake.component").then(m => m.IntakeComponent), title: "Consultation forms" },
-      { path: "my-bookings/:bookingId/intake", canActivate: [customerAuthGuard], loadComponent: () => import("./pages/intake/intake.component").then(m => m.IntakeComponent), title: "Consultation forms" },
-      {
-        path: "my-bookings",
-        canActivate: [customerAuthGuard],
-        component: MyBookingsComponent,
-        title: "My bookings",
-      },
-      {
-        path: "my-messages",
-        canActivate: [customerAuthGuard],
-        component: MyMessagesComponent,
-        title: "Messages",
-      },
       {
         path: "documents/:token",
         component: PublicDocumentComponent,

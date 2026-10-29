@@ -63,19 +63,6 @@ h1 {
   align-items: center;
 }
 
-.ghost {
-  min-height: 3rem;
-  padding: 0 1rem;
-  border: 1px solid var(--cds-border-strong, #8d8d8d);
-  border-radius: var(--cds-radius-none);
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-weight: 600;
-  font-size: 0.875rem;
-  cursor: pointer;
-}
-
 .dev-banner {
   margin: 0 0 1rem;
   padding: 0.55rem 0.75rem;
