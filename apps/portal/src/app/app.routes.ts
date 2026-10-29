@@ -60,6 +60,12 @@ export const routes: Routes = [
         canActivate: [portalPermissionGuard],
       },
       {
+        path: "retention/memberships",
+        loadComponent: () => import("./pages/retention/retention-memberships.component").then((m) => m.RetentionMembershipsComponent),
+        title: "Memberships",
+        canActivate: [portalPermissionGuard],
+      },
+      {
         path: "customers/:id",
         loadComponent: () => import("./pages/customers/customer-detail.component").then((m) => m.CustomerDetailComponent),
         title: "Customer",

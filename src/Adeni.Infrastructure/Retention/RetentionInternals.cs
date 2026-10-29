@@ -43,6 +43,26 @@ internal static class RetentionMapper
             definition.CreatedAt,
             definition.UpdatedAt);
 
+    public static MembershipPlanResponse ToResponse(MembershipPlan plan) =>
+        new(
+            plan.Id,
+            plan.Name,
+            plan.Description,
+            plan.Price,
+            plan.Currency,
+            MembershipPlanCodes.ToApi(plan.BillingInterval),
+            MembershipPlanCodes.ToApi(plan.RolloverPolicy),
+            MembershipPlanCodes.ToApi(plan.CancellationPolicy),
+            plan.AllowFreeze,
+            plan.PastDueGraceDays,
+            plan.IsActive,
+            plan.Benefits
+                .OrderBy(x => x.SortOrder)
+                .Select(x => new MembershipBenefitResponse(x.Id, x.ServiceOfferingId, x.ServiceName, x.QuantityPerCycle))
+                .ToArray(),
+            plan.CreatedAt,
+            plan.UpdatedAt);
+
     public static CustomerPackageResponse ToResponse(
         CustomerPackage package,
         DateTimeOffset now,

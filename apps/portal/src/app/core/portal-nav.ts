@@ -106,6 +106,14 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         icon: "payments",
         permission: "portal.retention",
         entitlement: "packages",
+        exact: true,
+      },
+      {
+        path: "/retention/memberships",
+        label: "Memberships",
+        icon: "payments",
+        permission: "portal.retention",
+        entitlement: "memberships",
       },
       {
         path: "/queue",

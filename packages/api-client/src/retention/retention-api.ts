@@ -2,13 +2,17 @@ import {
   customerPackageLedgerSchema,
   customerPackageListSchema,
   customerPackageSchema,
+  membershipPlanListSchema,
+  membershipPlanSchema,
   packageDefinitionListSchema,
   packageDefinitionSchema,
   packagePurchaseResponseSchema,
   publicPackageCatalogSchema,
   redeemableBenefitListSchema,
+  type CreateMembershipPlanRequest,
   type CreatePackageDefinitionRequest,
   type SellPackageRequest,
+  type UpdateMembershipPlanRequest,
   type UpdatePackageDefinitionRequest,
 } from "@adeni/shared";
 import type { ApiClientContext } from "../core/api-transport";
@@ -61,6 +65,27 @@ export class RetentionApi {
 
   deactivatePackage(id: string, signal?: AbortSignal) {
     return this.write(`${BASE}/packages/${encodeURIComponent(id)}/deactivate`, {}, packageDefinitionSchema, "POST", undefined, signal);
+  }
+
+  /** Membership plan catalog (Sprint 37.2-A). Requires the `memberships` plan entitlement. */
+  listMembershipPlans(activeOnly = false, signal?: AbortSignal) {
+    return this.get(`${BASE}/memberships/plans?activeOnly=${activeOnly}`, membershipPlanListSchema, signal);
+  }
+
+  getMembershipPlan(id: string, signal?: AbortSignal) {
+    return this.get(`${BASE}/memberships/plans/${encodeURIComponent(id)}`, membershipPlanSchema, signal);
+  }
+
+  createMembershipPlan(body: CreateMembershipPlanRequest, signal?: AbortSignal) {
+    return this.write(`${BASE}/memberships/plans`, body, membershipPlanSchema, "POST", undefined, signal);
+  }
+
+  updateMembershipPlan(id: string, body: UpdateMembershipPlanRequest, signal?: AbortSignal) {
+    return this.write(`${BASE}/memberships/plans/${encodeURIComponent(id)}`, body, membershipPlanSchema, "PATCH", undefined, signal);
+  }
+
+  deactivateMembershipPlan(id: string, signal?: AbortSignal) {
+    return this.write(`${BASE}/memberships/plans/${encodeURIComponent(id)}/deactivate`, {}, membershipPlanSchema, "POST", undefined, signal);
   }
 
   listCustomerPackages(tenantCustomerId: string, signal?: AbortSignal) {

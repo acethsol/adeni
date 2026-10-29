@@ -6,6 +6,8 @@ using Adeni.Domain.Common;
 public static class RetentionErrorCodes
 {
     public const string PackagesNotEntitled = "entitlements.packages";
+    public const string MembershipsNotEntitled = "entitlements.memberships";
+    public const string MembershipPlanNotFound = "retention.membership_plan_not_found";
     public const string PackageNotFound = "retention.package_not_found";
     public const string PackageInactive = "retention.package_inactive";
     public const string PackageNotActive = "retention.package_not_active";
@@ -28,6 +30,12 @@ public static class RetentionErrorCodes
 
     public static Error PackagesNotEntitledError() =>
         new(PackagesNotEntitled, "Prepaid packages are not included on your current plan.");
+
+    public static Error MembershipsNotEntitledError() =>
+        new(MembershipsNotEntitled, "Memberships are not included on your current plan.");
+
+    public static Error MembershipPlanNotFoundError() =>
+        new(MembershipPlanNotFound, "Membership plan was not found.");
 
     public static Error PackageNotFoundError() =>
         new(PackageNotFound, "Package was not found.");

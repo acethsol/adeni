@@ -71,6 +71,7 @@ public sealed class PlanEntitlementsParityTests
         Assert.Equal(row.GetProperty("advancedPermissions").GetBoolean(), catalog.AdvancedPermissions);
         Assert.Equal(row.GetProperty("prioritySupport").GetBoolean(), catalog.PrioritySupport);
         Assert.Equal(row.GetProperty("packages").GetBoolean(), catalog.Packages);
+        Assert.Equal(row.GetProperty("memberships").GetBoolean(), catalog.Memberships);
 
         Assert.True(catalog.InvoicesReceipts);
         Assert.True(catalog.OnlinePayments);

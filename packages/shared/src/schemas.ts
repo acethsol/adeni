@@ -997,6 +997,8 @@ export const tenantEntitlementsSchema = z.object({
   prioritySupport: z.boolean(),
   /** Prepaid packages & benefit ledger (Sprint 37.1). */
   packages: z.boolean(),
+  /** Membership plans & recurring memberships (Sprint 37.2). */
+  memberships: z.boolean(),
   multiLocation: z.boolean(),
 });
 

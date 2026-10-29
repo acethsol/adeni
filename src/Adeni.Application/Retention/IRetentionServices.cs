@@ -157,9 +157,13 @@ public interface IPackagePurchaseActivation
     Task<int> ReconcilePendingAsync(int batchSize, CancellationToken cancellationToken = default);
 }
 
-/// <summary>Thin wrapper over <c>IEntitlementsService</c> for the <c>packages</c> plan flag.</summary>
+/// <summary>Thin wrapper over <c>IEntitlementsService</c> for the <c>packages</c> and <c>memberships</c> plan flags.</summary>
 public interface IRetentionEntitlementGuard
 {
+    Task<Result> EnsureMembershipsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default);
+
+    Task<bool> IsMembershipsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default);
+
     Task<Result> EnsurePackagesEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default);
 
     Task<bool> IsPackagesEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default);

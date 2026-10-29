@@ -4,6 +4,7 @@ export const enErrorMessages: MessageTree = {
   calendar: { unavailable: "Calendar integration is unavailable. Check configuration or reconnect, then retry.", authorization_invalid: "The calendar connection attempt expired or could not be verified. Start again from Adeni." },
   commerce: { validation: "Check the amount, currency and payment request.", conflict: "The request changed or is already being processed. Refresh before retrying.", settlement_required: "Live business settlement is not available. This feature is currently sandbox-only.", credential_invalid: "This payment request or gift credential is unavailable." },
   retention: {
+    membership_plan_not_found: "That membership plan was not found.",
     package_not_found: "That package was not found.",
     package_inactive: "This package is no longer for sale.",
     package_not_active: "This package is not active.",
@@ -95,6 +96,7 @@ export const enErrorMessages: MessageTree = {
     waitlist: "Waitlist is not included on your current plan.",
     sms: "SMS notifications are not included on your current plan.",
     packages: "Prepaid packages are not included on your current plan.",
+    memberships: "Memberships are not included on your current plan.",
     exports: "Exports are not included on your current plan.",
     excel_export: "Excel export is not included on your current plan.",
     multi_location_reporting:
@@ -120,6 +122,7 @@ export const frErrorMessages: MessageTree = {
   calendar: { unavailable: "L’intégration de calendrier est indisponible. Vérifiez la configuration ou reconnectez le compte.", authorization_invalid: "La connexion a expiré ou n’a pas pu être vérifiée. Recommencez depuis Adeni." },
   commerce: { validation: "Vérifiez le montant, la devise et la demande.", conflict: "La demande a changé ou est déjà en cours. Actualisez avant de réessayer.", settlement_required: "Le règlement commerçant réel n’est pas disponible. Cette fonction est réservée aux tests.", credential_invalid: "Cette demande ou ce code cadeau n’est pas disponible." },
   retention: {
+    membership_plan_not_found: "Ce plan d’abonnement est introuvable.",
     package_not_found: "Ce forfait est introuvable.",
     package_inactive: "Ce forfait n’est plus en vente.",
     package_not_active: "Ce forfait n’est pas actif.",
@@ -192,6 +195,7 @@ export const frErrorMessages: MessageTree = {
     waitlist: "La liste d'attente n'est pas incluse dans votre forfait actuel.",
     sms: "Les notifications par SMS ne sont pas incluses dans votre forfait actuel.",
     packages: "Les forfaits prépayés ne sont pas inclus dans votre forfait actuel.",
+    memberships: "Les abonnements ne sont pas inclus dans votre forfait actuel.",
     exports: "Les exportations ne sont pas incluses dans votre forfait actuel.",
     excel_export: "L'exportation Excel n'est pas incluse dans votre forfait actuel.",
     multi_location_reporting:

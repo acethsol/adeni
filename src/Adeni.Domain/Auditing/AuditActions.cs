@@ -47,4 +47,7 @@ public static class AuditActions
     public const string RetentionPackageSold = "retention.package_sold";
     public const string RetentionPackageVoided = "retention.package_voided";
     public const string RetentionPackageExpired = "retention.package_expired";
+    public const string RetentionMembershipPlanCreated = "retention.membership_plan_created";
+    public const string RetentionMembershipPlanUpdated = "retention.membership_plan_updated";
+    public const string RetentionMembershipPlanDeactivated = "retention.membership_plan_deactivated";
 }

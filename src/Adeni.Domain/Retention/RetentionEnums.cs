@@ -40,3 +40,25 @@ public enum BenefitTransactionKind
     Void = 5,
     Adjust = 6,
 }
+
+/// <summary>Membership billing cadence. Persisted as int.</summary>
+public enum MembershipBillingInterval
+{
+    Monthly = 0,
+    Quarterly = 1,
+    Annually = 2,
+}
+
+/// <summary>What happens to unused cycle credits at renewal. Persisted as int.</summary>
+public enum MembershipRolloverPolicy
+{
+    None = 0,
+    CarryOverOneCycle = 1,
+}
+
+/// <summary>When a member-requested cancellation takes effect. Persisted as int.</summary>
+public enum MembershipCancellationPolicy
+{
+    EndOfCycle = 0,
+    Immediate = 1,
+}

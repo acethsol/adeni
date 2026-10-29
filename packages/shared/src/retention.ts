@@ -183,3 +183,61 @@ export type BenefitTransaction = z.infer<typeof benefitTransactionSchema>;
 export type RedeemableBenefit = z.infer<typeof redeemableBenefitSchema>;
 export type AppliedBenefitRequest = z.infer<typeof appliedBenefitRequestSchema>;
 export type CustomerPackageSummary = z.infer<typeof customerPackageSummarySchema>;
+
+// ---- Memberships (Sprint 37.2-A): plan catalog. Enrolment / billing land in later slices. ----
+
+export const membershipBillingIntervalSchema = z.enum(["monthly", "quarterly", "annually"]);
+export const membershipRolloverPolicySchema = z.enum(["none", "carry_over_one_cycle"]);
+export const membershipCancellationPolicySchema = z.enum(["end_of_cycle", "immediate"]);
+
+export const membershipBenefitSchema = z.object({
+  id: z.string().uuid(),
+  serviceOfferingId: z.string().uuid(),
+  serviceName: z.string(),
+  quantityPerCycle: z.number().int().positive(),
+});
+
+export const membershipPlanSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  description: z.string().nullable(),
+  price: z.number().positive(),
+  currency: z.string(),
+  billingInterval: membershipBillingIntervalSchema,
+  rolloverPolicy: membershipRolloverPolicySchema,
+  cancellationPolicy: membershipCancellationPolicySchema,
+  allowFreeze: z.boolean(),
+  pastDueGraceDays: z.number().int().min(0).max(30),
+  isActive: z.boolean(),
+  benefits: z.array(membershipBenefitSchema),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export const membershipPlanListSchema = z.object({ items: z.array(membershipPlanSchema) });
+
+export const membershipBenefitInputSchema = z.object({
+  serviceOfferingId: z.string().uuid(),
+  quantityPerCycle: z.number().int().min(1).max(1000),
+});
+
+export const createMembershipPlanRequestSchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().max(1000).optional(),
+  price: z.number().positive(),
+  currency: z.string().length(3),
+  billingInterval: membershipBillingIntervalSchema.optional(),
+  rolloverPolicy: membershipRolloverPolicySchema.optional(),
+  cancellationPolicy: membershipCancellationPolicySchema.optional(),
+  allowFreeze: z.boolean().optional(),
+  pastDueGraceDays: z.number().int().min(0).max(30).optional(),
+  benefits: z.array(membershipBenefitInputSchema).min(1).max(10),
+});
+
+export const updateMembershipPlanRequestSchema = createMembershipPlanRequestSchema.partial();
+
+export type MembershipPlan = z.infer<typeof membershipPlanSchema>;
+export type MembershipPlanBenefit = z.infer<typeof membershipBenefitSchema>;
+export type CreateMembershipPlanRequest = z.infer<typeof createMembershipPlanRequestSchema>;
+export type UpdateMembershipPlanRequest = z.infer<typeof updateMembershipPlanRequestSchema>;
+export type MembershipBillingInterval = z.infer<typeof membershipBillingIntervalSchema>;

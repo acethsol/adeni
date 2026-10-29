@@ -33,6 +33,7 @@ public sealed record TenantEntitlements(
     bool AdvancedPermissions,
     bool PrioritySupport,
     bool Packages,
+    bool Memberships,
     bool MultiLocation);
 
 public static class SubscriptionEntitlements

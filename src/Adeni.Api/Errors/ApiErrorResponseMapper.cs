@@ -128,7 +128,8 @@ internal static class ApiErrorResponseMapper
     private static int ResolveRetentionStatusCode(string code) =>
         code switch
         {
-            RetentionErrorCodes.PackageNotFound or RetentionErrorCodes.BenefitNotFound => StatusCodes.Status404NotFound,
+            RetentionErrorCodes.PackageNotFound or RetentionErrorCodes.BenefitNotFound
+                or RetentionErrorCodes.MembershipPlanNotFound => StatusCodes.Status404NotFound,
             RetentionErrorCodes.OwnerRequired => StatusCodes.Status403Forbidden,
             RetentionErrorCodes.OnlinePurchaseUnavailable => StatusCodes.Status503ServiceUnavailable,
             RetentionErrorCodes.BenefitInsufficient or RetentionErrorCodes.BenefitConflict

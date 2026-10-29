@@ -13,6 +13,7 @@ public static class RetentionServiceCollectionExtensions
         services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<IRetentionEntitlementGuard, RetentionEntitlementGuard>();
         services.AddScoped<IPackageCatalogService, PackageCatalogService>();
+        services.AddScoped<IMembershipPlanService, MembershipPlanService>();
         services.AddScoped<ICustomerPackageService, CustomerPackageService>();
         services.AddScoped<IBenefitRedemptionService, BenefitRedemptionService>();
         services.AddScoped<IPackageStorefrontService, PackageStorefrontService>();

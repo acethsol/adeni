@@ -46,6 +46,42 @@ public sealed partial class AdeniDbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
+        modelBuilder.Entity<MembershipPlan>(e =>
+        {
+            e.ToTable("membership_plans", "retention", t =>
+            {
+                t.HasCheckConstraint("CK_membership_plans_Price", "[Price] > 0");
+                t.HasCheckConstraint("CK_membership_plans_BillingInterval", "[BillingInterval] IN (0,1,2)");
+                t.HasCheckConstraint("CK_membership_plans_RolloverPolicy", "[RolloverPolicy] IN (0,1)");
+                t.HasCheckConstraint("CK_membership_plans_CancellationPolicy", "[CancellationPolicy] IN (0,1)");
+                t.HasCheckConstraint("CK_membership_plans_PastDueGraceDays", "[PastDueGraceDays] BETWEEN 0 AND 30");
+            });
+            e.HasKey(x => x.Id);
+            e.HasAlternateKey(x => new { x.TenantId, x.Id });
+            e.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+            e.HasOne<Tenant>().WithMany().HasForeignKey(x => x.TenantId).OnDelete(DeleteBehavior.Restrict);
+            e.Property(x => x.Name).HasMaxLength(200);
+            e.Property(x => x.Description).HasMaxLength(1000);
+            e.Property(x => x.Price).HasPrecision(12, 2);
+            e.Property(x => x.Currency).HasMaxLength(3);
+            e.HasIndex(x => new { x.TenantId, x.IsActive, x.CreatedAt });
+        });
+
+        modelBuilder.Entity<MembershipPlanBenefit>(e =>
+        {
+            e.ToTable("membership_plan_benefits", "retention", t => t.HasCheckConstraint("CK_membership_plan_benefits_Quantity", "[QuantityPerCycle] BETWEEN 1 AND 1000"));
+            e.HasKey(x => x.Id);
+            e.HasAlternateKey(x => new { x.TenantId, x.Id });
+            e.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+            e.HasOne<Tenant>().WithMany().HasForeignKey(x => x.TenantId).OnDelete(DeleteBehavior.Restrict);
+            e.Property(x => x.ServiceName).HasMaxLength(200);
+            e.HasIndex(x => new { x.TenantId, x.MembershipPlanId, x.ServiceOfferingId }).IsUnique();
+            e.HasOne<MembershipPlan>().WithMany(x => x.Benefits)
+                .HasForeignKey(x => new { x.TenantId, x.MembershipPlanId })
+                .HasPrincipalKey(x => new { x.TenantId, x.Id })
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
         modelBuilder.Entity<CustomerPackage>(e =>
         {
             e.ToTable("customer_packages", "retention", t =>

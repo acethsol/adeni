@@ -25,6 +25,14 @@ public sealed class RetentionServiceTests
 
     private sealed class Guard(bool entitled = true) : IRetentionEntitlementGuard
     {
+        public Task<bool> IsMembershipsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(entitled);
+
+        public Task<Domain.Common.Result> EnsureMembershipsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(entitled
+                ? Domain.Common.Result.Success()
+                : Domain.Common.Result.Failure(RetentionErrorCodes.MembershipsNotEntitledError()));
+
         public Task<bool> IsPackagesEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
             Task.FromResult(entitled);
 

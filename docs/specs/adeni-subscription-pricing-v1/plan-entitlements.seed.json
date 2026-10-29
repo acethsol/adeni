@@ -25,7 +25,8 @@
     "multiLocationReporting": false,
     "advancedPermissions": false,
     "prioritySupport": false,
-    "packages": true
+    "packages": true,
+    "memberships": false
   },
   "professional": {
     "maxLocations": 1,
@@ -53,7 +54,8 @@
     "multiLocationReporting": false,
     "advancedPermissions": false,
     "prioritySupport": false,
-    "packages": true
+    "packages": true,
+    "memberships": true
   },
   "business": {
     "maxLocations": 3,
@@ -81,6 +83,7 @@
     "multiLocationReporting": true,
     "advancedPermissions": true,
     "prioritySupport": true,
-    "packages": true
+    "packages": true,
+    "memberships": true
   }
 }

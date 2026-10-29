@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   appliedBenefitRequestSchema,
   createBookingRequestSchema,
+  createMembershipPlanRequestSchema,
   createPackageDefinitionRequestSchema,
   customerPackageSchema,
   customerProfileSchema,
@@ -19,6 +20,16 @@ describe("retention contracts", () => {
     expect(createPackageDefinitionRequestSchema.safeParse(base).success).toBe(true);
     expect(createPackageDefinitionRequestSchema.safeParse({ ...base, benefits: [] }).success).toBe(false);
     expect(createPackageDefinitionRequestSchema.safeParse({ ...base, currency: "NAIRA" }).success).toBe(false);
+  });
+
+  it("validates membership plan requests (positive price, typed policies, at least one benefit)", () => {
+    const base = { name: "Fade Club", price: 25000, currency: "NGN", benefits: [{ serviceOfferingId: id, quantityPerCycle: 2 }] };
+    expect(createMembershipPlanRequestSchema.safeParse(base).success).toBe(true);
+    expect(createMembershipPlanRequestSchema.safeParse({ ...base, billingInterval: "annually", rolloverPolicy: "carry_over_one_cycle" }).success).toBe(true);
+    expect(createMembershipPlanRequestSchema.safeParse({ ...base, price: 0 }).success).toBe(false);
+    expect(createMembershipPlanRequestSchema.safeParse({ ...base, billingInterval: "weekly" }).success).toBe(false);
+    expect(createMembershipPlanRequestSchema.safeParse({ ...base, pastDueGraceDays: 31 }).success).toBe(false);
+    expect(createMembershipPlanRequestSchema.safeParse({ ...base, benefits: [] }).success).toBe(false);
   });
 
   it("only allows till or transfer when selling in person", () => {
@@ -74,7 +85,7 @@ describe("retention contracts", () => {
       "package_not_found", "package_inactive", "package_not_active", "package_expired", "benefit_not_found",
       "benefit_insufficient", "benefit_service_mismatch", "benefit_conflict", "scope_location_denied",
       "sell_location_denied", "idempotency_key_required", "idempotency_conflict", "owner_required",
-      "online_purchase_unavailable", "validation",
+      "online_purchase_unavailable", "validation", "membership_plan_not_found",
     ];
     for (const locale of ["en", "fr"] as const) {
       for (const code of codes) {
@@ -82,6 +93,7 @@ describe("retention contracts", () => {
         expect(message, `${locale}:${code}`).not.toBe(`errors.retention.${code}`);
       }
       expect(t(locale, "errors.entitlements.packages")).not.toBe("errors.entitlements.packages");
+      expect(t(locale, "errors.entitlements.memberships")).not.toBe("errors.entitlements.memberships");
     }
   });
 });

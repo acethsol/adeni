@@ -17,6 +17,7 @@ const starterEntitlements = {
   multiLocationReporting: false,
   prioritySupport: false,
   packages: false,
+  memberships: false,
   multiLocation: false,
 } as const;
 
