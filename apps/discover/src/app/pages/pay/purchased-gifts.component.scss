@@ -1,0 +1,49 @@
+@use "../../layout/customer-page";
+
+.notice--error {
+  border-left-color: #da1e28;
+  background: #fff1f1;
+  color: #750e13;
+}
+
+.value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  margin-top: 0.6rem;
+}
+
+.amount {
+  font-size: 1.55rem;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+}
+
+.of {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.suffix {
+  font-family: monospace;
+  letter-spacing: 0.08em;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 0.9rem;
+  margin-top: 0.85rem;
+}
+
+.code {
+  flex: 1 1 100%;
+  display: block;
+  overflow-wrap: anywhere;
+  padding: 0.65rem 0.75rem;
+  background: var(--bg-subtle, #f4f4f4);
+  font-family: monospace;
+  font-size: 0.85rem;
+}

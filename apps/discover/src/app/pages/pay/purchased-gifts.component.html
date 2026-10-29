@@ -1,0 +1,81 @@
+<div class="customer-page">
+  <header class="page-head">
+    <span class="wash" aria-hidden="true"></span>
+    <div class="head-copy">
+      <p class="kicker">Adeni</p>
+      <h1>{{ tr("commerce.giftTitle") }}</h1>
+      <p class="lede">{{ tr("discover.packages.giftsDescription") }}</p>
+    </div>
+    <div class="head-actions">
+      <a class="cds-btn cds-btn--secondary" routerLink="/my-bookings">{{ tr("common.myBookings") }}</a>
+      <a class="cds-btn cds-btn--primary" routerLink="/discover">{{ tr("discover.packages.giftsFindBusiness") }}</a>
+    </div>
+  </header>
+
+  <p class="notice">{{ tr("commerce.noWallet") }}</p>
+
+  @if (error() && !loadFailed()) {
+    <p class="notice notice--error" role="alert">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <ul class="list skeletons" aria-hidden="true">
+      @for (n of [1, 2]; track n) {
+        <li class="card skeleton">
+          <span class="sk-line"></span>
+          <span class="sk-line"></span>
+          <span class="sk-line short"></span>
+        </li>
+      }
+    </ul>
+  } @else if (loadFailed()) {
+    <div class="empty" role="alert">
+      <div class="empty-icon" aria-hidden="true">
+        <adeni-carbon-icon name="certificate" [size]="40" />
+      </div>
+      <h2>{{ tr("discover.packages.giftsLoadErrorTitle") }}</h2>
+      <p>{{ error() }}</p>
+      <button type="button" class="cds-btn cds-btn--primary" (click)="load()">{{ tr("discover.tryAgain") }}</button>
+    </div>
+  } @else if (cards().length === 0) {
+    <div class="empty">
+      <div class="empty-icon" aria-hidden="true">
+        <adeni-carbon-icon name="certificate" [size]="40" />
+      </div>
+      <h2>{{ tr("discover.packages.giftsEmptyTitle") }}</h2>
+      <p>{{ tr("discover.packages.giftsEmptyDescription") }}</p>
+      <a class="cds-btn cds-btn--primary" routerLink="/discover">{{ tr("discover.packages.giftsFindBusiness") }}</a>
+    </div>
+  } @else {
+    <ul class="list">
+      @for (card of cards(); track card.id) {
+        <li class="card" [attr.data-tone]="tone(card)">
+          <div class="title-row">
+            <h2>{{ card.businessName }}</h2>
+            <span class="status" [attr.data-tone]="tone(card)">{{ tr("commerce.states." + card.state) }}</span>
+          </div>
+          <div class="value">
+            <span class="amount">{{ formatPrice(card.remainingAmount, card.currency) }}</span>
+            <span class="of">{{ tr("commerce.outstanding") }} · {{ formatPrice(card.originalAmount, card.currency) }}</span>
+          </div>
+          <p class="meta"><span class="suffix">••••{{ card.codeSuffix }}</span></p>
+          <div class="actions">
+            @if (revealedId() === card.id) {
+              <output class="code">{{ code() }}</output>
+              <button type="button" class="cds-btn cds-btn--ghost cds-btn--sm" (click)="hide()">{{ tr("commerce.hide") }}</button>
+            } @else {
+              <button
+                type="button"
+                class="cds-btn cds-btn--tertiary cds-btn--sm"
+                [disabled]="busy()"
+                (click)="reveal(card.id)"
+              >
+                {{ tr("commerce.reveal") }}
+              </button>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</div>
