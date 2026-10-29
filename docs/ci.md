@@ -7,7 +7,7 @@ Runs on pushes and PRs targeting `dev`, `qa`, or `main`.
 |-----|----------------|
 | **build-and-test** | Restore/build .NET, build `Adeni.Database`, `dotnet test`, **fail** if NuGet reports vulnerable packages |
 | **sqlserver** | SQL Server 2022 service → `publish-db.ps1` (SqlPackage) → `Category=SqlServer` tests |
-| **frontend** | `npm ci`, workspace typecheck, `@adeni/shared` Vitest, Portal Jasmine/Chrome unit tests, Angular production builds (portal/admin/discover), **npm audit** (prod high+, all critical) |
+| **frontend** | `npm ci`, workspace typecheck, `@adeni/shared` Vitest, Business Jasmine/Chrome unit tests, Angular production builds (business/admin/customer), **npm audit** (prod high+, all critical) |
 
 ## Dependency updates
 
@@ -46,7 +46,7 @@ npm audit --audit-level=critical
 
 No direct production commits, force pushes, or bypass promotions. A production hotfix should use a reviewed PR and be reconciled through the integration/staging branches. This audit does not create branches, merge PRs, configure GitHub protections, or deploy environments.
 
-The checked-in workflow validates changes; **there is no Azure deployment job yet**. Adding `qa` to its push/PR filters extends validation without deployment side effects. The frontend job now also runs the existing Portal unit-test script (ChromeHeadless on the hosted Ubuntu image), so API-client compatibility, navigation and realtime teardown regressions run in CI. Future delivery should build a versioned artifact, deploy to staging behind protected environment approvals, run provider/SQL/SSR smoke tests, then promote the same artifact to production with an explicit rollback plan. Environment secrets, origin restrictions and trusted proxy addresses must be configured separately; see [production infrastructure](production-infrastructure.md).
+The checked-in workflow validates changes; **there is no Azure deployment job yet**. Adding `qa` to its push/PR filters extends validation without deployment side effects. The frontend job now also runs the existing Business unit-test script (ChromeHeadless on the hosted Ubuntu image), so API-client compatibility, navigation and realtime teardown regressions run in CI. Future delivery should build a versioned artifact, deploy to staging behind protected environment approvals, run provider/SQL/SSR smoke tests, then promote the same artifact to production with an explicit rollback plan. Environment secrets, origin restrictions and trusted proxy addresses must be configured separately; see [production infrastructure](production-infrastructure.md).
 
 Recommended protections for all three branches: PR-only changes, required approving review, required `build-and-test`, `sqlserver` and `frontend` checks, resolved review threads, stale-review dismissal, restricted force pushes/deletion and administrator bypass. Use CODEOWNERS review for auth, billing, CI and public contract changes where the team supports it. These are recommendations, not a claim that protections are installed.
 

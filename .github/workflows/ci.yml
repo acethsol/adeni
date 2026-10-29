@@ -130,11 +130,11 @@ jobs:
       - name: Shared package tests
         run: npm test --workspace @adeni/shared
 
-      - name: Portal unit tests
-        run: npm test --workspace @adeni/portal
+      - name: Business unit tests
+        run: npm test --workspace @adeni/business
 
-      - name: Build Angular portal
-        run: npm run build:portal
+      - name: Build Angular business
+        run: npm run build:business
 
       - name: Build Angular admin
         run: npm run build:admin

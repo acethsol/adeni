@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| **Status** | **Done** (2026-10-29) — clean cutover, no `dev:portal` / `build:portal` aliases |
+| **Status** | **Partial** (2026-10-29) — phase 1: remove `apps/portal`, CI and docs aligned with `@adeni/business` |
 | **Created** | 2026-10-29 |
 | **Authority** | Three Angular product names: **admin**, **customer**, **business** |
 
@@ -13,13 +13,16 @@
 | Item | State |
 |------|-------|
 | Folder `apps/portal` → `apps/business` | **Done** |
+| Remove legacy `apps/portal` tree from repo | **Done** (phase 1) |
 | npm package `@adeni/portal` → `@adeni/business` | **Done** |
 | Root scripts `dev:business` / `build:business` only (no `dev:portal` / `build:portal`) | **Done** |
 | Angular project `business`, `outputPath` `dist/business`, serve port **5173** | **Done** |
 | `scripts/sync-brand-assets.mjs` app id `business` | **Done** |
-| CI: test `@adeni/business`, `npm run build:business` | **Done** |
+| CI: test `@adeni/business`, `npm run build:business` | **Done** (phase 1) |
+| Admin setup / env docs reference `apps/business`, `dev:business` | **Done** (phase 1) |
 | Docs: `README.md`, `AGENTS.md`, `frontend.md`, `auth0-setup.md`, architecture / checklist | **Done** |
-| `npm install` at repo root | Run after the move; lockfile must list `apps/business` |
+| `docs/ci.md` frontend job row (business/customer builds) | **Done** (phase 1) |
+| `npm install` at repo root; lockfile lists `apps/business` only | **Done** (phase 1) |
 | Dev servers | `npm run dev:business` → http://localhost:5173 ; `npm run dev:customer` → http://localhost:5190 |
 
 ## Left unchanged
