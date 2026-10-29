@@ -1,0 +1,21 @@
+@use "../../layout/customer-page";
+
+.balances {
+  list-style: none;
+  margin: 0.85rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.balance-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  font-size: 0.92rem;
+}
+
+.left {
+  font-weight: 650;
+}

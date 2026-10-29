@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const brandPkg = join(root, "packages", "brand", "assets");
-const apps = ["discover", "portal", "admin"];
+const apps = ["customer", "portal", "admin"];
 
 for (const app of apps) {
   const publicDir = join(root, "apps", app, "public");
@@ -28,4 +28,4 @@ for (const app of apps) {
   }
 }
 
-console.log("Synced @adeni/brand assets into discover, portal, and admin public/ folders.");
+console.log("Synced @adeni/brand assets into customer, portal, and admin public/ folders.");

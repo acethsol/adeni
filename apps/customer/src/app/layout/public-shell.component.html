@@ -1,0 +1,56 @@
+<app-market-geo-sync />
+<div class="shell" [class.kiosk]="kioskLayout()">
+  @if (!kioskLayout()) {
+  <header
+    class="header"
+    [class.pinned]="headerCompact()"
+    [class.with-search]="showHeaderSearch() && !headerCompact()"
+    [style.--h1]="headerTone().h1"
+    [style.--h2]="headerTone().h2"
+    [style.--h3]="headerTone().h3"
+  >
+    <a class="brand" routerLink="/">
+      <adeni-brand-lockup class="mark" [height]="headerBrandHeight()" surface="light" />
+    </a>
+
+    <nav class="nav" [attr.aria-label]="tr('common.primary')" [class.hidden-when-pinned]="headerCompact()">
+      <a routerLink="/discover" routerLinkActive="active">{{ tr('common.explore') }}</a>
+      @if (portalUrl; as businessUrl) {
+        <a [href]="businessUrl" target="_blank" rel="noopener noreferrer">{{ tr('common.forBusinesses') }}</a>
+      }
+    </nav>
+
+    <div class="header-search" [class.visible]="showHeaderSearch()">
+      @if (showHeaderSearch()) {
+        <app-discovery-search variant="compact" [initialQuery]="searchQuery()" />
+      }
+    </div>
+
+    <div class="header-right">
+      @if (signedIn()) {
+        <a class="cds-btn cds-btn--primary" routerLink="/app/home">{{ tr('discover.app.openApp') }}</a>
+      }
+      @if (auth0Mode) {
+        @if (signedIn()) {
+          <button type="button" class="cds-btn cds-btn--ghost" (click)="logout()">{{ tr('discover.layout.logOut') }}</button>
+        } @else {
+          <button type="button" class="cds-btn cds-btn--ghost" (click)="login()">{{ tr('common.sign') }}</button>
+          <button type="button" class="cds-btn cds-btn--primary" (click)="login('/app/home')">{{ tr('common.getStarted') }}</button>
+        }
+      } @else if (devCustomerMode) {
+        <span class="dev">{{ tr('discover.layout.devCustomer') }}</span>
+      }
+    </div>
+    <span class="header-accent" aria-hidden="true"></span>
+  </header>
+  }
+  <main [class.flush]="flushLayout() || kioskLayout()">
+    <router-outlet />
+  </main>
+  @if (!kioskLayout()) {
+    <app-public-footer />
+  }
+  <adeni-global-loading-panel />
+  <adeni-toast-host />
+  <adeni-confirm-host />
+</div>

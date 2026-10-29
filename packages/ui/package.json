@@ -25,9 +25,9 @@
     "@carbon/icons": "^11.90.0"
   },
   "peerDependencies": {
-    "@angular/core": "^22.2.0",
-    "@angular/platform-browser": "^22.2.0",
-    "@angular/router": "^22.2.0"
+    "@angular/core": "22.2.2",
+    "@angular/platform-browser": "22.2.2",
+    "@angular/router": "22.2.2"
   },
   "devDependencies": {
     "typescript": "^5.8.2"

@@ -55,6 +55,13 @@ import Wallet16 from "@carbon/icons/es/wallet/16";
 import Task16 from "@carbon/icons/es/task/16";
 import Template16 from "@carbon/icons/es/template/16";
 import Screen16 from "@carbon/icons/es/screen/16";
+import Home16 from "@carbon/icons/es/home/16";
+import Chat16 from "@carbon/icons/es/chat/16";
+import Gift16 from "@carbon/icons/es/gift/16";
+import Menu16 from "@carbon/icons/es/menu/16";
+import Logout16 from "@carbon/icons/es/logout/16";
+import Notification16 from "@carbon/icons/es/notification/16";
+import Settings16 from "@carbon/icons/es/settings/16";
 
 export type AdeniCarbonIconName =
   | "add"
@@ -109,7 +116,14 @@ export type AdeniCarbonIconName =
   | "task"
   | "template"
   | "screen"
-  | "wallet";
+  | "wallet"
+  | "home"
+  | "chat"
+  | "gift"
+  | "menu"
+  | "logout"
+  | "notification"
+  | "settings";
 
 const ICONS: Record<AdeniCarbonIconName, IconDescriptor> = {
   add: Add16 as IconDescriptor,
@@ -165,6 +179,13 @@ const ICONS: Record<AdeniCarbonIconName, IconDescriptor> = {
   template: Template16 as IconDescriptor,
   screen: Screen16 as IconDescriptor,
   wallet: Wallet16 as IconDescriptor,
+  home: Home16 as IconDescriptor,
+  chat: Chat16 as IconDescriptor,
+  gift: Gift16 as IconDescriptor,
+  menu: Menu16 as IconDescriptor,
+  logout: Logout16 as IconDescriptor,
+  notification: Notification16 as IconDescriptor,
+  settings: Settings16 as IconDescriptor,
 };
 
 function iconSize(icon: IconDescriptor, override?: number): number {

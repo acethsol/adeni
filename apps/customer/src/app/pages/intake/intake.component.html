@@ -1,0 +1,89 @@
+<div class="page">
+  <a class="back cds-btn cds-btn--ghost cds-btn--sm" routerLink="/app/bookings">
+    <adeni-carbon-icon name="arrow--left" [size]="16" />
+    {{ tr('intake.myBookings') }}
+  </a>
+
+  <header class="page-head">
+    <span class="wash" aria-hidden="true"></span>
+    <p class="kicker">Adeni</p>
+    <h1>{{ tr('intake.title') }}</h1>
+    <p class="notice">{{ tr('intake.nonClinical') }}</p>
+  </header>
+
+  @if (error()) {
+    <p class="alert" role="alert">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <div class="card loading" role="status">
+      <span class="sk-line"></span>
+      <span class="sk-line short"></span>
+      <span class="visually-hidden">{{ tr('intake.loading') }}</span>
+    </div>
+  } @else if (statuses().length === 0) {
+    @if (!error()) {
+      <div class="card empty">
+        <adeni-carbon-icon name="document" [size]="24" />
+        <p>{{ tr('intake.notRequired') }}</p>
+      </div>
+    }
+  } @else if (statuses().length > 1 || !view()) {
+    <ul class="forms" [attr.aria-label]="tr('intake.title')">
+      @for (status of statuses(); track status.id; let i = $index) {
+        <li>
+          <a
+            class="form-row"
+            [class.current]="view()?.assignment?.id === status.id"
+            [attr.aria-current]="view()?.assignment?.id === status.id ? 'page' : null"
+            [routerLink]="['/app/bookings', bookingId(), 'intake', status.id]"
+          >
+            <adeni-carbon-icon name="document" [size]="16" />
+            <span class="form-name">{{ tr('intake.form') }} {{ i + 1 }}</span>
+            <span class="chip" [attr.data-tone]="status.state">{{ tr('intake.states.' + status.state) }}</span>
+            <span class="form-open">
+              {{ tr('common.open') }}
+              <adeni-carbon-icon name="chevron--right" [size]="16" />
+            </span>
+          </a>
+        </li>
+      }
+    </ul>
+  }
+
+  @if (view(); as v) {
+    <article class="card form-card">
+      <header class="form-head">
+        <div class="form-title">
+          <h2>{{ v.definition.title }}</h2>
+          <span class="chip" [attr.data-tone]="v.assignment.state">{{ tr('intake.states.' + v.assignment.state) }}</span>
+        </div>
+        @if (v.definition.description) {
+          <p class="form-text">{{ v.definition.description }}</p>
+        }
+        @if (v.definition.instructions) {
+          <p class="form-text">{{ v.definition.instructions }}</p>
+        }
+        @if (v.assignment.state === 'completed' && v.assignment.submittedAt) {
+          <p class="form-meta">{{ tr('intake.submittedAt') }} · {{ when(v.assignment.submittedAt) }}</p>
+        }
+      </header>
+
+      @if (v.assignment.canSubmit) {
+        <p class="notice">{{ tr('intake.finalNotice') }}</p>
+        <form ngNativeValidate (ngSubmit)="submit()">
+          <fieldset [disabled]="submitting()">
+            <adeni-intake-fields [definition]="v.definition" [answers]="answers()" (answersChange)="answers.set($event)" />
+            <div class="actions">
+              <button type="submit" class="cds-btn cds-btn--primary">{{ tr('intake.submit') }}</button>
+            </div>
+          </fieldset>
+        </form>
+      } @else if (v.answers) {
+        <adeni-intake-fields [definition]="v.definition" [answers]="v.answers" [readOnly]="true" />
+      } @else if (v.assignment.state !== 'closedUncompleted') {
+        <p class="form-meta">{{ tr('intake.unavailable') }}</p>
+      }
+    </article>
+  }
+</div>

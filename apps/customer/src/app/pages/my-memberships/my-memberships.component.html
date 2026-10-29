@@ -1,0 +1,82 @@
+<div class="customer-page">
+  <header class="page-head">
+    <span class="wash" aria-hidden="true"></span>
+    <div class="head-copy">
+      <p class="kicker">Adeni</p>
+      <h1>{{ tr("discover.memberships.myTitle") }}</h1>
+      <p class="lede">{{ tr("discover.memberships.myDescription") }}</p>
+    </div>
+    <div class="head-actions">
+      <a class="cds-btn cds-btn--secondary" routerLink="/app/bookings">{{ tr("common.myBookings") }}</a>
+      <a class="cds-btn cds-btn--primary" routerLink="/discover">{{ tr("bookings.discoverBusinesses") }}</a>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <ul class="list skeletons" aria-hidden="true">
+      @for (n of [1, 2]; track n) {
+        <li class="card skeleton">
+          <span class="sk-line"></span>
+          <span class="sk-line"></span>
+          <span class="sk-line short"></span>
+        </li>
+      }
+    </ul>
+  } @else if (error()) {
+    <div class="empty" role="alert">
+      <div class="empty-icon" aria-hidden="true">
+        <adeni-carbon-icon name="task" [size]="40" />
+      </div>
+      <h2>{{ tr("discover.memberships.loadErrorTitle") }}</h2>
+      <p>{{ error() }}</p>
+      <button type="button" class="cds-btn cds-btn--primary" (click)="load()">{{ tr("discover.tryAgain") }}</button>
+    </div>
+  } @else if (memberships().length === 0) {
+    <div class="empty">
+      <div class="empty-icon" aria-hidden="true">
+        <adeni-carbon-icon name="task" [size]="40" />
+      </div>
+      <h2>{{ tr("discover.memberships.myEmptyTitle") }}</h2>
+      <p>{{ tr("discover.memberships.myEmptyDescription") }}</p>
+      <a class="cds-btn cds-btn--primary" routerLink="/discover">{{ tr("bookings.discoverBusinesses") }}</a>
+    </div>
+  } @else {
+    <ul class="list">
+      @for (m of memberships(); track m.id) {
+        <li class="card" [attr.data-tone]="tone(m)">
+          <div class="title-row">
+            <h2>{{ m.name }}</h2>
+            <span class="status" [attr.data-tone]="tone(m)">{{ statusLabel(m.status) }}</span>
+          </div>
+          @if (m.businessName) {
+            <p class="meta">{{ m.businessName }}</p>
+          }
+          @if (m.currentCycleEnd) {
+            <p class="meta">{{ tr("portal.memberships.cycleEnds", { date: when(m.currentCycleEnd) }) }}</p>
+          }
+          <ul class="balances">
+            @for (b of m.balances; track b.id) {
+              <li>
+                <div class="balance-row">
+                  <strong>{{ b.serviceName }}</strong>
+                  <span class="left">{{ tr("discover.packages.left", { count: b.remaining }) }}</span>
+                </div>
+                <div
+                  class="meter"
+                  role="progressbar"
+                  aria-valuemin="0"
+                  [attr.aria-valuemax]="b.granted"
+                  [attr.aria-valuenow]="b.used"
+                  [attr.aria-label]="tr('discover.packages.ofTotal', { used: b.used, granted: b.granted })"
+                >
+                  <span [style.width.%]="usedPercent(b.used, b.granted)"></span>
+                </div>
+                <span class="tiny">{{ tr("discover.packages.ofTotal", { used: b.used, granted: b.granted }) }}</span>
+              </li>
+            }
+          </ul>
+        </li>
+      }
+    </ul>
+  }
+</div>

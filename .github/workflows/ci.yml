@@ -139,8 +139,8 @@ jobs:
       - name: Build Angular admin
         run: npm run build:admin
 
-      - name: Build Angular discover
-        run: npm run build:discover
+      - name: Build Angular customer
+        run: npm run build:customer
 
       - name: npm audit (production, fail on high+)
         run: npm audit --omit=dev --audit-level=high
