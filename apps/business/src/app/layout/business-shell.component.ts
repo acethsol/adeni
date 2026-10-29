@@ -1,5 +1,5 @@
-import { CHROME, type ChromeKey } from "./portal-shell-copy";
-import { portalNavigationGroups, portalSearchResults, type SearchHit } from "./portal-shell-navigation";
+import { CHROME, type ChromeKey } from "./business-shell-copy";
+import { businessNavigationGroups, businessSearchResults, type SearchHit } from "./business-shell-navigation";
 import { Component, computed, ElementRef, HostListener, inject, Injector, signal, viewChild } from "@angular/core";
 import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
@@ -26,34 +26,34 @@ import {
 import { filter, map, startWith } from "rxjs";
 import { ADENI_PORTAL_CONFIG, isAuth0Configured, isBusinessPortalDevMode } from "../core/adeni-config";
 import { resolveAuthService } from "../core/auth0-rxjs";
-import { signOutPortalDev } from "../core/portal-dev-session";
+import { signOutPortalDev } from "../core/business-dev-session";
 import {
-  filterPortalTabs,
-  portalEntitlements,
-} from "../core/portal-access";
+  filterBusinessTabs,
+  businessEntitlements,
+} from "../core/business-access";
 import {
-  PORTAL_NAV,
-  activePortalTab,
-  findPortalNavItem,
-  type PortalNavGroup,
-  type PortalNavItem,
-} from "../core/portal-nav";
+  BUSINESS_NAV,
+  activeBusinessTab,
+  findBusinessNavItem,
+  type BusinessNavGroup,
+  type BusinessNavItem,
+} from "../core/business-nav";
 import { BusinessApiService } from "../core/services/business-api.service";
-import { PortalActiveLocationService } from "../core/services/portal-active-location.service";
-import { PortalSessionService } from "../core/services/portal-session.service";
-import type { ThemePreference } from "../core/portal-theme.service";
-import { PortalThemeService } from "../core/portal-theme.service";
+import { BusinessActiveLocationService } from "../core/services/business-active-location.service";
+import { BusinessSessionService } from "../core/services/business-session.service";
+import type { ThemePreference } from "../core/business-theme.service";
+import { BusinessThemeService } from "../core/business-theme.service";
 import {
   MessagingRealtimeService,
   PortalRealtimeBootstrapService,
   TenantOperationsRealtimeService,
 } from "@adeni/ui";
-import { PortalNavBadgesService } from "../core/services/portal-nav-badges.service";
+import { BusinessNavBadgesService } from "../core/services/business-nav-badges.service";
 import { MessagesShortcutComponent } from "../shared/messages-shortcut.component";
 import { PendingBookingsBellComponent } from "../shared/pending-bookings-bell.component";
-import { PortalIconTooltipDirective } from "../shared/portal-icon-tooltip.directive";
-import { PortalNavIconComponent } from "./portal-nav-icon.component";
-import { PortalBranchSwitchComponent } from "./portal-branch-switch.component";
+import { BusinessIconTooltipDirective } from "../shared/business-icon-tooltip.directive";
+import { BusinessNavIconComponent } from "./business-nav-icon.component";
+import { BusinessBranchSwitchComponent } from "./business-branch-switch.component";
 
 const SIDEBAR_STORAGE_KEY = "adeni.portal.sidebar.collapsed";
 
@@ -85,7 +85,7 @@ function readSidebarCollapsed(): boolean {
 }
 
 @Component({
-  selector: "app-portal-shell",
+  selector: "app-business-shell",
   standalone: true,
   imports: [
     RouterOutlet,
@@ -99,14 +99,14 @@ function readSidebarCollapsed(): boolean {
     AdeniConfirmHostComponent,
     MessagesShortcutComponent,
     PendingBookingsBellComponent,
-    PortalNavIconComponent,
-    PortalIconTooltipDirective,
-    PortalBranchSwitchComponent,
+    BusinessNavIconComponent,
+    BusinessIconTooltipDirective,
+    BusinessBranchSwitchComponent,
   ],
-  templateUrl: "./portal-shell.component.html",
-  styleUrl: "./portal-shell.component.scss",
+  templateUrl: "./business-shell.component.html",
+  styleUrl: "./business-shell.component.scss",
 })
-export class PortalShellComponent {
+export class BusinessShellComponent {
   protected readonly tr = injectAdeniTranslate();
   private readonly localeService = inject(AdeniLocaleService);
   readonly locales = this.localeService.locales;
@@ -116,14 +116,14 @@ export class PortalShellComponent {
   private readonly injector = inject(Injector);
   private readonly router = inject(Router);
   private readonly businessApi = inject(BusinessApiService);
-  private readonly navBadges = inject(PortalNavBadgesService);
+  private readonly navBadges = inject(BusinessNavBadgesService);
   private readonly portalRealtime = inject(PortalRealtimeBootstrapService);
   private readonly messagingRealtime = inject(MessagingRealtimeService);
   private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
-  private readonly portalSession = inject(PortalSessionService);
-  readonly activeLocation = inject(PortalActiveLocationService);
+  private readonly businessSession = inject(BusinessSessionService);
+  readonly activeLocation = inject(BusinessActiveLocationService);
   private readonly documentTitleStrategy = inject(AdeniDocumentTitleStrategy);
-  private readonly portalTheme = inject(PortalThemeService);
+  private readonly businessTheme = inject(BusinessThemeService);
   readonly auth: AuthService | null = isAuth0Configured(this.config)
     ? resolveAuthService(this.injector)
     : null;
@@ -131,8 +131,8 @@ export class PortalShellComponent {
   readonly devMode = isBusinessPortalDevMode(this.config);
   readonly auth0Mode = isAuth0Configured(this.config);
   readonly collapsed = signal(readSidebarCollapsed());
-  readonly themePreference = this.portalTheme.preference;
-  readonly theme = this.portalTheme.theme;
+  readonly themePreference = this.businessTheme.preference;
+  readonly theme = this.businessTheme.theme;
   readonly logoSurface = computed<AdeniBrandSurface>(() => (this.theme() === "dark" ? "dark" : "light"));
   readonly settingsOpen = signal(false);
   readonly userOpen = signal(false);
@@ -141,7 +141,7 @@ export class PortalShellComponent {
   readonly searchIndex = signal(0);
   private readonly searchField = viewChild<ElementRef<HTMLInputElement>>("searchField");
   readonly profile = signal<BusinessProfile | null>(null);
-  readonly portalEntitlements = portalEntitlements;
+  readonly businessEntitlementsFn = businessEntitlements;
   readonly profileLoaded = signal(false);
   readonly pendingBookings = signal(0);
   readonly unreadMessages = signal(0);
@@ -161,10 +161,10 @@ export class PortalShellComponent {
   readonly businessSettingsVisible = computed(() =>
     this.visibleGroups().some((group) => group.items.some((item) => item.path === "/settings")),
   );
-  readonly searchResults = computed(() => portalSearchResults({
+  readonly searchResults = computed(() => businessSearchResults({
     query: this.searchQuery(),
     groups: this.visibleGroups(),
-    entitlements: portalEntitlements(this.profile()),
+    entitlements: businessEntitlements(this.profile()),
     navLabel: (item) => this.navLabel(item),
     tabLabel: (id) => this.tabLabel(id),
     discoverLabel: this.text("/__discover"),
@@ -203,16 +203,16 @@ export class PortalShellComponent {
     return CHROME[this.locale()][key];
   }
 
-  groupLabel(group: PortalNavGroup): string {
+  groupLabel(group: BusinessNavGroup): string {
     if (group.id === "today") return this.text("groupToday");
     if (group.id === "listing") return this.text("groupListing");
     return this.text("groupBusiness");
   }
 
-  badgeCount(item: PortalNavItem): number {
+  badgeCount(item: BusinessNavItem): number {
     if (item.badge === "bookings") return this.pendingBookings();
     if (item.badge === "messages") {
-      if (!hasTenantEntitlement(portalEntitlements(this.profile()), "messaging")) {
+      if (!hasTenantEntitlement(businessEntitlements(this.profile()), "messaging")) {
         return 0;
       }
       return this.unreadMessages();
@@ -220,7 +220,7 @@ export class PortalShellComponent {
     return 0;
   }
 
-  navLabel(item: PortalNavItem): string {
+  navLabel(item: BusinessNavItem): string {
     const localized = CHROME[this.locale()][item.path as ChromeKey];
     return localized || item.label;
   }
@@ -234,11 +234,11 @@ export class PortalShellComponent {
   }
 
   toggleTheme(): void {
-    this.portalTheme.toggle();
+    this.businessTheme.toggle();
   }
 
   setTheme(preference: ThemePreference): void {
-    this.portalTheme.setPreference(preference);
+    this.businessTheme.setPreference(preference);
   }
 
   setLocale(locale: LocaleId): void {
@@ -373,7 +373,7 @@ export class PortalShellComponent {
   }
 
   private crumbsForUrl(url: string): { label: string; path?: string }[] {
-    const match = findPortalNavItem(url) ?? findPortalNavItem(PORTAL_NAV[0].path);
+    const match = findBusinessNavItem(url) ?? findBusinessNavItem(BUSINESS_NAV[0].path);
     if (!match) {
       return [{ label: this.text("groupToday") }];
     }
@@ -381,7 +381,7 @@ export class PortalShellComponent {
       { label: this.groupLabel(match.group) },
       { label: this.navLabel(match.item), path: match.item.tabs ? match.item.path : undefined },
     ];
-    const tabId = activePortalTab(url, match.item.tabs);
+    const tabId = activeBusinessTab(url, match.item.tabs);
     const tab = match.item.tabs?.find((entry) => entry.id === tabId);
     if (tab) {
       crumbs.push({ label: this.tabLabel(tab.id) });
@@ -411,24 +411,24 @@ export class PortalShellComponent {
     return key ? this.text(key) : id;
   }
 
-  private groupsForProfile(): PortalNavGroup[] {
+  private groupsForProfile(): BusinessNavGroup[] {
     const profile = this.profile();
-    const fromSession = this.portalSession.permissions();
+    const fromSession = this.businessSession.permissions();
     const permissions =
       fromSession.length > 0
         ? fromSession
-        : permissionsForRole(this.portalSession.permissionRole());
+        : permissionsForRole(this.businessSession.permissionRole());
     const ctx = {
       profile,
       profileLoaded: this.profileLoaded(),
       permissions,
     };
-    return portalNavigationGroups(ctx);
+    return businessNavigationGroups(ctx);
   }
 
   private async loadProfile(): Promise<void> {
     try {
-      await this.portalSession.refresh();
+      await this.businessSession.refresh();
       const profile = await this.businessApi.getTenantProfile();
       this.profile.set(profile);
       this.activeLocation.syncFromProfile(profile);
@@ -463,8 +463,8 @@ export class PortalShellComponent {
   private async loadBadges(): Promise<void> {
     try {
       const profile = this.profile();
-      const messaging = hasTenantEntitlement(portalEntitlements(profile), "messaging");
-      const entitlements = portalEntitlements(profile);
+      const messaging = hasTenantEntitlement(businessEntitlements(profile), "messaging");
+      const entitlements = businessEntitlements(profile);
       const locationQueryId = this.activeLocation.tenantApiLocationId(entitlements);
       const [bookingsPage, unread] = await this.businessApi.withAuthorizedClient((client) =>
         Promise.all([

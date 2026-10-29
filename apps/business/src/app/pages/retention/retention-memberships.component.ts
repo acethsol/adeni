@@ -93,17 +93,17 @@ export class RetentionMembershipsComponent implements OnInit {
   });
 
   readonly columns = computed<AdeniDataTableColumn<MembershipPlan>[]>(() => [
-    { id: "name", header: this.tr("portal.memberships.name"), cell: (row) => row.name, sortValue: (row) => row.name.toLowerCase() },
+    { id: "name", header: this.tr("businessApp.memberships.name"), cell: (row) => row.name, sortValue: (row) => row.name.toLowerCase() },
     {
       id: "price",
-      header: this.tr("portal.memberships.price"),
+      header: this.tr("businessApp.memberships.price"),
       align: "right",
       cell: (row) => formatPrice(row.price, row.currency),
       sortValue: (row) => row.price,
     },
-    { id: "interval", header: this.tr("portal.memberships.interval"), cell: (row) => this.intervalLabel(row.billingInterval), sortValue: (row) => row.billingInterval },
-    { id: "credits", header: this.tr("portal.memberships.credits"), cell: (row) => this.creditsSummary(row), sortable: false },
-    { id: "status", header: this.tr("portal.memberships.status"), cell: (row) => this.statusLabel(row), sortValue: (row) => (row.isActive ? 1 : 0) },
+    { id: "interval", header: this.tr("businessApp.memberships.interval"), cell: (row) => this.intervalLabel(row.billingInterval), sortValue: (row) => row.billingInterval },
+    { id: "credits", header: this.tr("businessApp.memberships.credits"), cell: (row) => this.creditsSummary(row), sortable: false },
+    { id: "status", header: this.tr("businessApp.memberships.status"), cell: (row) => this.statusLabel(row), sortValue: (row) => (row.isActive ? 1 : 0) },
   ]);
 
   readonly trackRow = (row: MembershipPlan): string => row.id;
@@ -115,11 +115,11 @@ export class RetentionMembershipsComponent implements OnInit {
   intervalLabel(interval: MembershipBillingInterval): string {
     switch (interval) {
       case "quarterly":
-        return this.tr("portal.memberships.intervalQuarterly");
+        return this.tr("businessApp.memberships.intervalQuarterly");
       case "annually":
-        return this.tr("portal.memberships.intervalAnnually");
+        return this.tr("businessApp.memberships.intervalAnnually");
       default:
-        return this.tr("portal.memberships.intervalMonthly");
+        return this.tr("businessApp.memberships.intervalMonthly");
     }
   }
 
@@ -128,7 +128,7 @@ export class RetentionMembershipsComponent implements OnInit {
   }
 
   statusLabel(row: MembershipPlan): string {
-    return row.isActive ? this.tr("portal.memberships.active") : this.tr("portal.memberships.inactive");
+    return row.isActive ? this.tr("businessApp.memberships.active") : this.tr("businessApp.memberships.inactive");
   }
 
   async load(): Promise<void> {
@@ -144,7 +144,7 @@ export class RetentionMembershipsComponent implements OnInit {
         this.services.set(services.filter((s) => s.isActive));
       });
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.memberships.couldNotLoad"));
+      this.error.set(this.apiErr(caught, "businessApp.memberships.couldNotLoad"));
       this.plans.set([]);
     } finally {
       this.loading.set(false);
@@ -216,9 +216,9 @@ export class RetentionMembershipsComponent implements OnInit {
       );
       this.plans.update((list) => [created, ...list]);
       this.showCreate.set(false);
-      this.feedback.success(this.tr("portal.memberships.created"));
+      this.feedback.success(this.tr("businessApp.memberships.created"));
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.memberships.couldNotSave"));
+      this.feedback.error(this.apiErr(caught, "businessApp.memberships.couldNotSave"));
     } finally {
       this.busy.set(false);
     }
@@ -226,9 +226,9 @@ export class RetentionMembershipsComponent implements OnInit {
 
   async deactivate(row: MembershipPlan): Promise<void> {
     const ok = await this.confirmDialog.confirm({
-      title: this.tr("portal.memberships.deactivateTitle"),
-      message: this.tr("portal.memberships.deactivateMessage", { name: row.name }),
-      confirmLabel: this.tr("portal.memberships.deactivate"),
+      title: this.tr("businessApp.memberships.deactivateTitle"),
+      message: this.tr("businessApp.memberships.deactivateMessage", { name: row.name }),
+      confirmLabel: this.tr("businessApp.memberships.deactivate"),
       danger: true,
     });
     if (!ok) return;
@@ -236,9 +236,9 @@ export class RetentionMembershipsComponent implements OnInit {
     try {
       const updated = await this.api.withAuthorizedClient((client) => client.retention.deactivateMembershipPlan(row.id));
       this.plans.update((list) => list.map((p) => (p.id === updated.id ? updated : p)));
-      this.feedback.success(this.tr("portal.memberships.deactivated"));
+      this.feedback.success(this.tr("businessApp.memberships.deactivated"));
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.memberships.couldNotSave"));
+      this.feedback.error(this.apiErr(caught, "businessApp.memberships.couldNotSave"));
     } finally {
       this.busy.set(false);
     }

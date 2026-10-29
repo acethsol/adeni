@@ -52,8 +52,8 @@ import {
 import { map } from "rxjs";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
-import { PortalSessionService } from "../../core/services/portal-session.service";
+import { BusinessActiveLocationService } from "../../core/services/business-active-location.service";
+import { BusinessSessionService } from "../../core/services/business-session.service";
 
 const PENDING_STATUS = 0;
 const CONFIRMED_STATUS = 1;
@@ -93,8 +93,8 @@ export class BookingsComponent {
   private readonly config = inject(ADENI_PORTAL_CONFIG);
   private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly feedback = inject(AdeniFeedbackService);
-  private readonly session = inject(PortalSessionService);
-  private readonly activeLocation = inject(PortalActiveLocationService);
+  private readonly session = inject(BusinessSessionService);
+  private readonly activeLocation = inject(BusinessActiveLocationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   readonly tab = toSignal(this.route.queryParamMap.pipe(map((params) => params.get("tab") ?? "pending")), {
@@ -124,7 +124,7 @@ export class BookingsComponent {
   );
   readonly bookingSearch = signal("");
   readonly viewMode = signal<AdeniListViewMode>(
-    readPersistedListViewMode("business.bookings", "cards"),
+    readPersistedListViewMode("businessApp.bookings", "cards"),
   );
 
   readonly exporting = signal(false);
@@ -133,7 +133,7 @@ export class BookingsComponent {
     buildReportExportMenuItems({
       entitlements: this.planEntitlements(),
       xlsx: true,
-      pdf: { disabled: true, hint: this.tr("portal.bookings.exportPdfUnavailable") },
+      pdf: { disabled: true, hint: this.tr("businessApp.bookings.exportPdfUnavailable") },
     }),
   );
 
@@ -163,12 +163,12 @@ export class BookingsComponent {
     {
       id: "customer",
       header: this.tr("common.customer"),
-      cell: (b) => b.customerName?.trim() || this.tr("portal.bookings.guest"),
-      sortValue: (b) => (b.customerName?.trim() || this.tr("portal.bookings.guest")).toLowerCase(),
+      cell: (b) => b.customerName?.trim() || this.tr("businessApp.bookings.guest"),
+      sortValue: (b) => (b.customerName?.trim() || this.tr("businessApp.bookings.guest")).toLowerCase(),
     },
     {
       id: "when",
-      header: this.tr("portal.bookings.when"),
+      header: this.tr("businessApp.bookings.when"),
       cell: (b) => formatSlotTime(b.startAt),
       sortValue: (b) => b.startAt,
     },
@@ -192,9 +192,9 @@ export class BookingsComponent {
   readonly actionId = signal<string | null>(null);
   kioskPin = "";
   readonly tabs = computed(() => [
-    { id: "pending", label: this.tr("portal.staff.pending") },
-    { id: "upcoming", label: this.tr("portal.bookings.upcoming") },
-    { id: "past", label: this.tr("portal.bookings.past") },
+    { id: "pending", label: this.tr("businessApp.staff.pending") },
+    { id: "upcoming", label: this.tr("businessApp.bookings.upcoming") },
+    { id: "past", label: this.tr("businessApp.bookings.past") },
   ]);
 
   readonly formatSlotTime = formatSlotTime;
@@ -229,29 +229,29 @@ export class BookingsComponent {
   } {
     switch (status) {
       case PENDING_STATUS:
-        return { label: this.tr("portal.bookings.awaitingApproval"), icon: "time", tone: "pending" };
+        return { label: this.tr("businessApp.bookings.awaitingApproval"), icon: "time", tone: "pending" };
       case CONFIRMED_STATUS:
-        return { label: this.tr("portal.bookings.scheduled"), icon: "calendar", tone: "scheduled" };
+        return { label: this.tr("businessApp.bookings.scheduled"), icon: "calendar", tone: "scheduled" };
       case CHECKED_IN_STATUS:
-        return { label: this.tr("portal.bookings.onFloor"), icon: "user--filled", tone: "floor" };
+        return { label: this.tr("businessApp.bookings.onFloor"), icon: "user--filled", tone: "floor" };
       case COMPLETED_STATUS:
-        return { label: this.tr("portal.bookings.serviceComplete"), icon: "checkmark", tone: "complete" };
+        return { label: this.tr("businessApp.bookings.serviceComplete"), icon: "checkmark", tone: "complete" };
       case PAID_STATUS:
-        return { label: this.tr("portal.bookings.paid"), icon: "checkmark--filled", tone: "paid" };
+        return { label: this.tr("businessApp.bookings.paid"), icon: "checkmark--filled", tone: "paid" };
       case 2:
-        return { label: this.tr("portal.bookings.declined"), icon: "misuse", tone: "closed" };
+        return { label: this.tr("businessApp.bookings.declined"), icon: "misuse", tone: "closed" };
       case 3:
-        return { label: this.tr("portal.bookings.cancelled"), icon: "close", tone: "closed" };
+        return { label: this.tr("businessApp.bookings.cancelled"), icon: "close", tone: "closed" };
       default:
-        return { label: this.tr("portal.bookings.unknown"), icon: "time", tone: "closed" };
+        return { label: this.tr("businessApp.bookings.unknown"), icon: "time", tone: "closed" };
     }
   }
 
   pageDescription(): string {
     if (this.session.can("business.bookings.self") && !this.session.can("business.bookings")) {
-      return this.tr("portal.bookings.yourAssignedAppointmentsAcceptCheck");
+      return this.tr("businessApp.bookings.yourAssignedAppointmentsAcceptCheck");
     }
-    return this.tr("portal.bookings.acceptRequestsCheckClientsComplete");
+    return this.tr("businessApp.bookings.acceptRequestsCheckClientsComplete");
   }
 
   constructor() {
@@ -275,21 +275,21 @@ export class BookingsComponent {
   emptyState(): { title: string; description: string; icon: AdeniCarbonIconName } {
     if (this.tab() === "upcoming") {
       return {
-        title: this.tr("portal.bookings.nothingScheduledAhead"),
-        description: this.tr("portal.bookings.confirmedAppointmentsWillShowHere"),
+        title: this.tr("businessApp.bookings.nothingScheduledAhead"),
+        description: this.tr("businessApp.bookings.confirmedAppointmentsWillShowHere"),
         icon: "calendar-32",
       };
     }
     if (this.tab() === "past") {
       return {
-        title: this.tr("portal.bookings.noPastBookings"),
-        description: this.tr("portal.bookings.completedCancelledVisitsWillAppear"),
+        title: this.tr("businessApp.bookings.noPastBookings"),
+        description: this.tr("businessApp.bookings.completedCancelledVisitsWillAppear"),
         icon: "time",
       };
     }
     return {
-      title: this.tr("portal.bookings.inboxClear"),
-      description: this.tr("portal.bookings.newBookingRequestsNeedResponse"),
+      title: this.tr("businessApp.bookings.inboxClear"),
+      description: this.tr("businessApp.bookings.newBookingRequestsNeedResponse"),
       icon: "calendar-32",
     };
   }
@@ -363,7 +363,7 @@ export class BookingsComponent {
       });
       });
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.bookings.couldNotLoadBookingsCheck"));
+      this.error.set(this.apiErr(caught, "businessApp.bookings.couldNotLoadBookingsCheck"));
       this.bookings.set([]);
       this.totalCount.set(0);
     } finally {
@@ -433,7 +433,7 @@ export class BookingsComponent {
     const popup = window.open(url, "_blank", "noopener,noreferrer");
     if (!popup) {
       this.error.set(
-        this.tr("portal.bookings.couldNotOpenCheckNew"),
+        this.tr("businessApp.bookings.couldNotOpenCheckNew"),
       );
       return;
     }
@@ -442,7 +442,7 @@ export class BookingsComponent {
 
   async saveKioskPin(): Promise<void> {
     if (!/^\d{4,8}$/.test(this.kioskPin.trim())) {
-      this.error.set(this.tr("portal.bookings.exitPinMustBe4"));
+      this.error.set(this.tr("businessApp.bookings.exitPinMustBe4"));
       return;
     }
     const confirmed = await this.confirmDialog.confirmKind("save", {
@@ -460,7 +460,7 @@ export class BookingsComponent {
       this.kioskStatus.set(status);
       this.kioskPin = "";
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.bookings.couldNotSaveExitPin"));
+      this.error.set(this.apiErr(caught, "businessApp.bookings.couldNotSaveExitPin"));
     } finally {
       this.savingPin.set(false);
     }
@@ -482,7 +482,7 @@ export class BookingsComponent {
       this.kioskStatus.set(status);
       this.kioskPin = "";
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.bookings.couldNotClearExitPin"));
+      this.error.set(this.apiErr(caught, "businessApp.bookings.couldNotClearExitPin"));
     } finally {
       this.savingPin.set(false);
     }
@@ -500,8 +500,8 @@ export class BookingsComponent {
 
   async reject(booking: BookingResponse): Promise<void> {
     const ok = await this.confirmDialog.confirm({
-      title: this.tr("portal.bookings.rejectBooking"),
-      message: this.tr("portal.bookings.rejectConfirm", { service: booking.serviceName, time: formatSlotTime(booking.startAt) }),
+      title: this.tr("businessApp.bookings.rejectBooking"),
+      message: this.tr("businessApp.bookings.rejectConfirm", { service: booking.serviceName, time: formatSlotTime(booking.startAt) }),
       confirmLabel: this.tr("admin.pending.reject"),
       danger: true,
     });
@@ -517,9 +517,9 @@ export class BookingsComponent {
 
   async complete(booking: BookingResponse): Promise<void> {
     const ok = await this.confirmDialog.confirmKind("approve", {
-      title: this.tr("portal.bookings.completeConfirmTitle"),
-      message: this.tr("portal.bookings.completeConfirm", { service: booking.serviceName }),
-      confirmLabel: this.tr("portal.bookings.completeAction"),
+      title: this.tr("businessApp.bookings.completeConfirmTitle"),
+      message: this.tr("businessApp.bookings.completeConfirm", { service: booking.serviceName }),
+      confirmLabel: this.tr("businessApp.bookings.completeAction"),
     });
     if (!ok) {
       return;
@@ -529,9 +529,9 @@ export class BookingsComponent {
 
   async markPaid(booking: BookingResponse): Promise<void> {
     const ok = await this.confirmDialog.confirm({
-      title: this.tr("portal.bookings.markPaidAtTill"),
-      message: this.tr("portal.bookings.markAsPaidOutsideAdeni", { serviceName: booking.serviceName }),
-      confirmLabel: this.tr("portal.bookings.markPaid"),
+      title: this.tr("businessApp.bookings.markPaidAtTill"),
+      message: this.tr("businessApp.bookings.markAsPaidOutsideAdeni", { serviceName: booking.serviceName }),
+      confirmLabel: this.tr("businessApp.bookings.markPaid"),
     });
     if (!ok) {
       return;
@@ -545,7 +545,7 @@ export class BookingsComponent {
       void updated;
       await this.load();
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.bookings.couldNotMarkBookingPaid"));
+      this.error.set(this.apiErr(caught, "businessApp.bookings.couldNotMarkBookingPaid"));
     } finally {
       this.actionId.set(null);
     }
@@ -566,11 +566,11 @@ export class BookingsComponent {
       const popup = window.open(checkoutUrl, "_blank", "noopener,noreferrer");
       if (!popup) {
         this.error.set(
-          this.tr("portal.bookings.paymentPageBlockedAllowPop"),
+          this.tr("businessApp.bookings.paymentPageBlockedAllowPop"),
         );
       }
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.bookings.couldNotStartBalanceCollection"));
+      this.error.set(this.apiErr(caught, "businessApp.bookings.couldNotStartBalanceCollection"));
     } finally {
       this.actionId.set(null);
     }
@@ -598,7 +598,7 @@ export class BookingsComponent {
       void updated;
       await this.load();
     } catch {
-      this.error.set(this.tr("portal.bookings.couldNotBooking", { action: action }));
+      this.error.set(this.tr("businessApp.bookings.couldNotBooking", { action: action }));
     } finally {
       this.actionId.set(null);
     }
@@ -632,7 +632,7 @@ export class BookingsComponent {
       URL.revokeObjectURL(url);
     } catch (err) {
       this.error.set(
-        this.apiErr(err, "portal.bookings.couldNotDownloadExport"),
+        this.apiErr(err, "businessApp.bookings.couldNotDownloadExport"),
       );
     } finally {
       this.exporting.set(false);

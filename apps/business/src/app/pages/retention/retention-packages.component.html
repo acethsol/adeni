@@ -1,7 +1,7 @@
-<app-portal-page [title]="tr('portal.retention.title')" [description]="tr('portal.retention.description')">
+<app-portal-page [title]="tr('businessApp.retention.title')" [description]="tr('businessApp.retention.description')">
   <button pageActions type="button" class="btn btn-primary" [disabled]="services().length === 0" (click)="openCreate()">
     <adeni-carbon-icon name="add" [size]="16" />
-    {{ tr('portal.retention.createPackage') }}
+    {{ tr('businessApp.retention.createPackage') }}
   </button>
 
   @if (error()) {
@@ -10,23 +10,23 @@
 
   <adeni-modal
     [open]="showCreate()"
-    [title]="tr('portal.retention.newPackage')"
-    [subtitle]="tr('portal.retention.creditsAreSessions')"
+    [title]="tr('businessApp.retention.newPackage')"
+    [subtitle]="tr('businessApp.retention.creditsAreSessions')"
     size="lg"
     [hasFooter]="false"
     (closed)="showCreate.set(false)"
   >
     <div class="field">
-      <label for="pkg-name">{{ tr('portal.retention.name') }}</label>
+      <label for="pkg-name">{{ tr('businessApp.retention.name') }}</label>
       <input id="pkg-name" [ngModel]="createDraft().name" (ngModelChange)="patchCreate({ name: $event })" maxlength="120" />
     </div>
     <div class="field-row">
       <div class="field">
-        <label for="pkg-price">{{ tr('portal.retention.listPrice') }}</label>
+        <label for="pkg-price">{{ tr('businessApp.retention.listPrice') }}</label>
         <input id="pkg-price" type="number" min="0" [ngModel]="createDraft().listPrice" (ngModelChange)="patchCreate({ listPrice: $event })" />
       </div>
       <div class="field">
-        <label for="pkg-currency">{{ tr('portal.retention.currency') }}</label>
+        <label for="pkg-currency">{{ tr('businessApp.retention.currency') }}</label>
         <select id="pkg-currency" [ngModel]="createDraft().currency" (ngModelChange)="patchCreate({ currency: $event })">
           @for (code of currencies; track code) {
             <option [value]="code">{{ code }}</option>
@@ -36,7 +36,7 @@
     </div>
     <div class="field-row">
       <div class="field">
-        <label for="pkg-service">{{ tr('portal.retention.service') }}</label>
+        <label for="pkg-service">{{ tr('businessApp.retention.service') }}</label>
         <select id="pkg-service" [ngModel]="createDraft().serviceOfferingId" (ngModelChange)="patchCreate({ serviceOfferingId: $event })">
           @for (service of services(); track service.id) {
             <option [value]="service.id">{{ service.name }}</option>
@@ -44,7 +44,7 @@
         </select>
       </div>
       <div class="field">
-        <label for="pkg-qty">{{ tr('portal.retention.quantity') }}</label>
+        <label for="pkg-qty">{{ tr('businessApp.retention.quantity') }}</label>
         <input id="pkg-qty" type="number" min="1" max="100" [ngModel]="createDraft().quantityGranted" (ngModelChange)="patchCreate({ quantityGranted: $event })" />
       </div>
     </div>
@@ -62,19 +62,19 @@
 
   <adeni-modal
     [open]="sellTarget() !== null"
-    [title]="tr('portal.retention.sellTitle', { name: sellTarget()?.name ?? '' })"
-    [subtitle]="tr('portal.retention.sellSubtitle')"
+    [title]="tr('businessApp.retention.sellTitle', { name: sellTarget()?.name ?? '' })"
+    [subtitle]="tr('businessApp.retention.sellSubtitle')"
     size="lg"
     [hasFooter]="false"
     (closed)="closeSell()"
   >
     @if (sellDraft(); as draft) {
       <div class="field">
-        <label for="sell-customer">{{ tr('portal.retention.customer') }}</label>
+        <label for="sell-customer">{{ tr('businessApp.retention.customer') }}</label>
         <input
           id="sell-customer"
           autocomplete="off"
-          [placeholder]="tr('portal.retention.searchCustomers')"
+          [placeholder]="tr('businessApp.retention.searchCustomers')"
           [ngModel]="customerQuery()"
           (ngModelChange)="onCustomerQuery($event)"
         />
@@ -93,7 +93,7 @@
       </div>
       <div class="field-row">
         <div class="field">
-          <label for="sell-location">{{ tr('portal.retention.location') }}</label>
+          <label for="sell-location">{{ tr('businessApp.retention.location') }}</label>
           <select id="sell-location" [ngModel]="draft.businessLocationId" (ngModelChange)="patchSell({ businessLocationId: $event })">
             @for (location of locations(); track location.id) {
               <option [value]="location.id">{{ location.name || location.slug }}</option>
@@ -101,18 +101,18 @@
           </select>
         </div>
         <div class="field">
-          <label for="sell-method">{{ tr('portal.retention.paymentMethod') }}</label>
+          <label for="sell-method">{{ tr('businessApp.retention.paymentMethod') }}</label>
           <select id="sell-method" [ngModel]="draft.paymentMethod" (ngModelChange)="patchSell({ paymentMethod: $event })">
-            <option value="till">{{ tr('portal.retention.till') }}</option>
-            <option value="transfer">{{ tr('portal.retention.transfer') }}</option>
+            <option value="till">{{ tr('businessApp.retention.till') }}</option>
+            <option value="transfer">{{ tr('businessApp.retention.transfer') }}</option>
           </select>
         </div>
       </div>
       <div class="field">
-        <label for="sell-note">{{ tr('portal.retention.note') }}</label>
+        <label for="sell-note">{{ tr('businessApp.retention.note') }}</label>
         <input id="sell-note" maxlength="500" [ngModel]="draft.note" (ngModelChange)="patchSell({ note: $event })" />
       </div>
-      <p class="muted">{{ tr('portal.retention.noOnlineCharge') }}</p>
+      <p class="muted">{{ tr('businessApp.retention.noOnlineCharge') }}</p>
       <div class="actions">
         <button type="button" class="btn" (click)="closeSell()">
           <adeni-carbon-icon name="close" [size]="16" />
@@ -120,7 +120,7 @@
         </button>
         <button type="button" class="btn btn-primary" [disabled]="!canSell()" (click)="confirmSell()">
           <adeni-carbon-icon name="checkmark" [size]="16" />
-          {{ tr('portal.retention.sell') }}
+          {{ tr('businessApp.retention.sell') }}
         </button>
       </div>
     }
@@ -129,20 +129,20 @@
   @if (packages().length === 0 && !loading()) {
     <adeni-portal-empty-state
       icon="task"
-      [title]="tr('portal.retention.emptyTitle')"
-      [description]="tr('portal.retention.emptyDescription')"
+      [title]="tr('businessApp.retention.emptyTitle')"
+      [description]="tr('businessApp.retention.emptyDescription')"
     />
   } @else {
     <div class="roster">
       <adeni-list-toolbar
-        storageKey="portal.retention.packages"
+        storageKey="businessApp.retention.packages"
         [viewMode]="viewMode()"
         (viewModeChange)="viewMode.set($event)"
         [count]="filtered().length"
         [countTotal]="packages().length"
-        [singularCountLabel]="tr('portal.retention.package')"
-        [pluralCountLabel]="tr('portal.retention.packagesLabel')"
-        [searchPlaceholder]="tr('portal.retention.searchPackages')"
+        [singularCountLabel]="tr('businessApp.retention.package')"
+        [pluralCountLabel]="tr('businessApp.retention.packagesLabel')"
+        [searchPlaceholder]="tr('businessApp.retention.searchPackages')"
         [searchQuery]="search()"
         (searchQueryChange)="search.set($event)"
       />
@@ -161,7 +161,7 @@
               <adeni-row-action-bar>
                 <adeni-icon-btn
                   icon="checkmark"
-                  [label]="tr('portal.retention.sell')"
+                  [label]="tr('businessApp.retention.sell')"
                   variant="table"
                   [dense]="true"
                   [disabled]="!row.isActive || busy()"
@@ -169,7 +169,7 @@
                 />
                 <adeni-icon-btn
                   icon="close"
-                  [label]="tr('portal.retention.deactivate')"
+                  [label]="tr('businessApp.retention.deactivate')"
                   variant="table"
                   [dense]="true"
                   [disabled]="!row.isActive || busy()"

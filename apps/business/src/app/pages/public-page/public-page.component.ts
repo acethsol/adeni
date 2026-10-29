@@ -109,7 +109,7 @@ export class PublicPageSettingsComponent implements OnInit {
       });
     } catch (caught) {
       this.profile.set(null);
-      this.feedback.error(this.apiErr(caught, "portal.publicPage.couldNotLoadPublicPage"));
+      this.feedback.error(this.apiErr(caught, "businessApp.publicPage.couldNotLoadPublicPage"));
     }
   }
 
@@ -123,12 +123,12 @@ export class PublicPageSettingsComponent implements OnInit {
 
   async save(): Promise<void> {
     if (!this.dirty()) {
-      this.feedback.info(this.tr("portal.publicPage.nothingSaveNoChangesYet"));
+      this.feedback.info(this.tr("businessApp.publicPage.nothingSaveNoChangesYet"));
       return;
     }
 
     if (!this.showAbout && !this.showServices && !this.showVisit) {
-      this.feedback.error(this.tr("portal.publicPage.keepAtLeastOneAbout"));
+      this.feedback.error(this.tr("businessApp.publicPage.keepAtLeastOneAbout"));
       return;
     }
 
@@ -158,17 +158,17 @@ export class PublicPageSettingsComponent implements OnInit {
           });
           this.profile.set(updated);
         });
-      }, this.tr("common.saving"), this.tr("portal.publicPage.updatingTemplateSections"));
+      }, this.tr("common.saving"), this.tr("businessApp.publicPage.updatingTemplateSections"));
 
       this.captureSnapshot();
       this.feedback.success(
         this.showBook
-          ? this.tr("portal.publicPage.templateSectionsLiveBookingPage")
-          : this.tr("portal.publicPage.savedOnlineBookingOffCustomers"),
-        this.tr("portal.publicPage.publicPageSaved"),
+          ? this.tr("businessApp.publicPage.templateSectionsLiveBookingPage")
+          : this.tr("businessApp.publicPage.savedOnlineBookingOffCustomers"),
+        this.tr("businessApp.publicPage.publicPageSaved"),
       );
     } catch (err) {
-      this.feedback.error(err instanceof Error ? err.message : this.tr("portal.publicPage.couldNotSavePublicPage"));
+      this.feedback.error(err instanceof Error ? err.message : this.tr("businessApp.publicPage.couldNotSavePublicPage"));
     } finally {
       this.saving.set(false);
     }

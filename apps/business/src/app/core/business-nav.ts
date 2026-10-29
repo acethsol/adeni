@@ -1,6 +1,6 @@
 import type { Capability, BusinessPermission, TenantEntitlementFlag } from "@adeni/shared";
 
-export type PortalNavIconName =
+export type BusinessNavIconName =
   | "overview"
   | "bookings"
   | "customers"
@@ -29,19 +29,19 @@ export type PortalNavIconName =
   | "search";
 
 /** Group ids are stable; display labels live in portal chrome i18n. */
-export type PortalNavGroupId = "today" | "listing" | "business";
+export type BusinessNavGroupId = "today" | "listing" | "business";
 
-export type PortalTab = {
+export type BusinessTab = {
   id: string;
   label: string;
   /** Hide tab when the tenant's plan does not include this entitlement. */
   entitlement?: TenantEntitlementFlag;
 };
 
-export type PortalNavItem = {
+export type BusinessNavItem = {
   path: string;
   label: string;
-  icon: PortalNavIconName;
+  icon: BusinessNavIconName;
   /** Opens the public Discover app in a new tab (browse as a customer). */
   openDiscover?: boolean;
   exact?: boolean;
@@ -60,16 +60,16 @@ export type PortalNavItem = {
   unregisteredOnly?: boolean;
   /** Keep for permission routing but omit from sidebar chrome. */
   shellHidden?: boolean;
-  tabs?: PortalTab[];
+  tabs?: BusinessTab[];
 };
 
-export type PortalNavGroup = {
-  id: PortalNavGroupId;
+export type BusinessNavGroup = {
+  id: BusinessNavGroupId;
   label: string;
-  items: PortalNavItem[];
+  items: BusinessNavItem[];
 };
 
-export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
+export const BUSINESS_NAV_GROUPS: BusinessNavGroup[] = [
   {
     id: "today",
     label: "Operations",
@@ -149,7 +149,7 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
         icon: "calendar",
         capability: "calendar",
         permission: "business.staff.self",
-        excludeIfpermission: "business.staff",
+        excludeIfPermission: "business.staff",
       },
       {
         path: "/quotes",
@@ -248,11 +248,11 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
   },
 ];
 
-export const PORTAL_NAV: PortalNavItem[] = PORTAL_NAV_GROUPS.flatMap((group) => group.items);
+export const BUSINESS_NAV: BusinessNavItem[] = BUSINESS_NAV_GROUPS.flatMap((group) => group.items);
 
-export function findPortalNavItem(path: string): { group: PortalNavGroup; item: PortalNavItem } | null {
+export function findBusinessNavItem(path: string): { group: BusinessNavGroup; item: BusinessNavItem } | null {
   const clean = path.split("?")[0] ?? path;
-  for (const group of PORTAL_NAV_GROUPS) {
+  for (const group of BUSINESS_NAV_GROUPS) {
     const item = group.items.find(
       (entry) => clean === entry.path || (!entry.exact && clean.startsWith(`${entry.path}/`)),
     );
@@ -263,7 +263,7 @@ export function findPortalNavItem(path: string): { group: PortalNavGroup; item: 
   return null;
 }
 
-export function activePortalTab(url: string, tabs: PortalTab[] | undefined): string | null {
+export function activeBusinessTab(url: string, tabs: BusinessTab[] | undefined): string | null {
   if (!tabs?.length) {
     return null;
   }

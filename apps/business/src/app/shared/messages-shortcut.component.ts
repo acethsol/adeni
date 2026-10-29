@@ -3,9 +3,9 @@ import { NavigationEnd, Router, RouterLink } from "@angular/router";
 import { filter, Subscription } from "rxjs";
 import { hasTenantEntitlement, mergeTenantEntitlements } from "@adeni/shared";
 import { BusinessApiService } from "../core/services/business-api.service";
-import { PortalActiveLocationService } from "../core/services/portal-active-location.service";
+import { BusinessActiveLocationService } from "../core/services/business-active-location.service";
 import { MessagingRealtimeService, injectAdeniTranslate } from "@adeni/ui";
-import { PortalNavBadgesService } from "../core/services/portal-nav-badges.service";
+import { BusinessNavBadgesService } from "../core/services/business-nav-badges.service";
 
 @Component({
   selector: "app-messages-shortcut",
@@ -70,9 +70,9 @@ export class MessagesShortcutComponent implements OnInit, OnDestroy {
   protected readonly tr = injectAdeniTranslate();
   private readonly api = inject(BusinessApiService);
   private readonly router = inject(Router);
-  private readonly navBadges = inject(PortalNavBadgesService);
+  private readonly navBadges = inject(BusinessNavBadgesService);
   private readonly messagingRealtime = inject(MessagingRealtimeService);
-  private readonly activeLocation = inject(PortalActiveLocationService);
+  private readonly activeLocation = inject(BusinessActiveLocationService);
 
   readonly visible = signal(false);
   readonly unreadCount = signal(0);

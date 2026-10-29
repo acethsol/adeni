@@ -14,27 +14,27 @@
 
   <div class="cal-shell">
     @if (!teamMode() && showRosterBackLink()) {
-      <a class="back-link" routerLink="/staff">{{ tr('portal.staff.staffRoster') }}</a>
+      <a class="back-link" routerLink="/staff">{{ tr('businessApp.staff.staffRoster') }}</a>
     }
 
     <div class="cal-toolbar">
-      <div class="cal-nav" role="group" [attr.aria-label]="tr('portal.staff.navigateCalendar')">
-        <button type="button" class="btn btn-ghost" (click)="goToday()">{{ tr('portal.staff.today') }}</button>
+      <div class="cal-nav" role="group" [attr.aria-label]="tr('businessApp.staff.navigateCalendar')">
+        <button type="button" class="btn btn-ghost" (click)="goToday()">{{ tr('businessApp.staff.today') }}</button>
         <button type="button" class="nav-btn" (click)="prev()" [attr.aria-label]="tr('common.previous')">‹</button>
         <button type="button" class="nav-btn" (click)="next()" [attr.aria-label]="tr('common.next')">›</button>
       </div>
 
       <strong class="period-label">{{ periodLabel() }}</strong>
 
-      <div class="view-toggle" role="group" [attr.aria-label]="tr('portal.staff.calendarRange')">
+      <div class="view-toggle" role="group" [attr.aria-label]="tr('businessApp.staff.calendarRange')">
         <button type="button" [class.active]="view() === 'month'" (click)="setView('month')">
-          {{ tr('portal.staff.month') }}
+          {{ tr('businessApp.staff.month') }}
         </button>
         <button type="button" [class.active]="view() === 'week'" (click)="setView('week')">
-          {{ tr('portal.staff.week') }}
+          {{ tr('businessApp.staff.week') }}
         </button>
         <button type="button" [class.active]="view() === 'day'" (click)="setView('day')">
-          {{ tr('portal.staff.day') }}
+          {{ tr('businessApp.staff.day') }}
         </button>
       </div>
     </div>
@@ -45,23 +45,23 @@
 
     @if (calendar() || team()) {
       <adeni-list-toolbar
-        storageKey="portal.calendar"
+        storageKey="businessApp.calendar"
         [viewMode]="listViewMode()"
         (viewModeChange)="onListViewChange($event)"
         [viewModeCardsLabel]="tr('common.calendar')"
-        [viewModeTableLabel]="tr('portal.staff.list')"
+        [viewModeTableLabel]="tr('businessApp.staff.list')"
         viewModeCardsIcon="calendar"
         [count]="displayBlocks().length"
-        [singularCountLabel]="tr('portal.staff.item')"
-        [pluralCountLabel]="tr('portal.staff.items')"
-        [searchPlaceholder]="tr('portal.staff.searchServiceStaffDate')"
+        [singularCountLabel]="tr('businessApp.staff.item')"
+        [pluralCountLabel]="tr('businessApp.staff.items')"
+        [searchPlaceholder]="tr('businessApp.staff.searchServiceStaffDate')"
         [searchQuery]="calendarSearch()"
         (searchQueryChange)="calendarSearch.set($event)"
       >
         <adeni-list-filter-row listFilters>
           <adeni-filter-select
             layout="toolbar"
-            [label]="tr('portal.staff.show')"
+            [label]="tr('businessApp.staff.show')"
             [options]="kindFilterOptions()"
             [value]="kindFilter()"
             (valueChange)="kindFilter.set($any($event))"
@@ -85,7 +85,7 @@
               <adeni-portal-empty-state
                 icon="calendar"
                 [title]="tr('common.noAppointmentsRange')"
-                [description]="tr('portal.staff.adjustFiltersChooseAnotherWeek')"
+                [description]="tr('businessApp.staff.adjustFiltersChooseAnotherWeek')"
                 [compact]="true"
               />
             } @else {
@@ -313,7 +313,7 @@
         @if (selectedBlock(); as sel) {
           <div class="sidebar-panel">
             <button type="button" class="sidebar-back" (click)="clearSelection()">
-              {{ tr('portal.staff.back') }}
+              {{ tr('businessApp.staff.back') }}
             </button>
             <p class="rail-kicker">{{ sel.kind === "leave" ? tr('common.leave') : tr('common.appointment') }}</p>
             <h3 class="sidebar-title">{{ sel.title }}</h3>
@@ -321,7 +321,7 @@
             @if (sel.customerSelectedStaff) {
               <p class="rail-requested">
                 <adeni-carbon-icon name="user--filled" [size]="16" />
-                {{ tr('portal.staff.customerRequestedPractitioner') }}
+                {{ tr('businessApp.staff.customerRequestedPractitioner') }}
               </p>
             }
             @if (sel.staffDisplayName && teamMode()) {
@@ -344,16 +344,16 @@
               <p class="rail-notes">{{ sel.booking!.customerNotes }}</p>
             }
             <p class="rail-hint muted">
-              {{ tr('portal.staff.manageStatusPaymentFrom') }}
+              {{ tr('businessApp.staff.manageStatusPaymentFrom') }}
               <a routerLink="/bookings">{{ tr('common.bookings') }}</a>.
             </p>
           </div>
         } @else {
           @if (teamMode()) {
             <div class="sidebar-section">
-              <p class="sidebar-label">{{ tr('portal.staff.calendarColors') }}</p>
-              <p class="sidebar-hint">{{ tr('portal.staff.groupEventsGridByStaff') }}</p>
-              <div class="color-by-toggle" role="group" [attr.aria-label]="tr('portal.staff.calendarColorGrouping')">
+              <p class="sidebar-label">{{ tr('businessApp.staff.calendarColors') }}</p>
+              <p class="sidebar-hint">{{ tr('businessApp.staff.groupEventsGridByStaff') }}</p>
+              <div class="color-by-toggle" role="group" [attr.aria-label]="tr('businessApp.staff.calendarColorGrouping')">
                 <button
                   type="button"
                   [class.active]="colorBy() === 'staff'"
@@ -372,10 +372,10 @@
             </div>
           } @else {
             <div class="sidebar-section">
-              <p class="sidebar-label">{{ tr('portal.staff.legend') }}</p>
+              <p class="sidebar-label">{{ tr('businessApp.staff.legend') }}</p>
               <div class="legend compact">
-                <span class="leg is-confirmed">{{ tr('portal.staff.confirmed') }}</span>
-                <span class="leg is-pending">{{ tr('portal.staff.pending') }}</span>
+                <span class="leg is-confirmed">{{ tr('businessApp.staff.confirmed') }}</span>
+                <span class="leg is-pending">{{ tr('businessApp.staff.pending') }}</span>
                 <span class="leg is-leave">{{ tr('common.leave') }}</span>
               </div>
             </div>
@@ -425,11 +425,11 @@
           @if (teamMode() && team(); as teamData) {
             <div class="sidebar-section staff-filter-section">
               <div class="staff-filter-head">
-                <p class="sidebar-label">{{ tr('portal.staff.staffCalendar') }}</p>
+                <p class="sidebar-label">{{ tr('businessApp.staff.staffCalendar') }}</p>
                 @if (teamData.staff.length > 1) {
                   <span class="staff-filter-meta">
                     {{
-                      tr('portal.staff.staffVisibleOnCalendar', {
+                      tr('businessApp.staff.staffVisibleOnCalendar', {
                         visible: visibleTeamStaffCount(),
                         total: teamData.staff.length,
                       })
@@ -449,10 +449,10 @@
                       <adeni-carbon-icon name="search" [size]="16" />
                     </span>
                     <label class="staff-filter-search-field">
-                      <span class="visually-hidden">{{ tr('portal.staff.searchTeam') }}</span>
+                      <span class="visually-hidden">{{ tr('businessApp.staff.searchTeam') }}</span>
                       <input
                         type="search"
-                        [placeholder]="tr('portal.staff.searchTeam')"
+                        [placeholder]="tr('businessApp.staff.searchTeam')"
                         [value]="staffSidebarSearch()"
                         (input)="onStaffSidebarSearchChange($any($event.target).value)"
                         (focus)="staffSidebarSearchFocused.set(true)"
@@ -475,11 +475,11 @@
                   <div
                     class="staff-filter-actions"
                     role="group"
-                    [attr.aria-label]="tr('portal.staff.calendarVisibilityActions')"
+                    [attr.aria-label]="tr('businessApp.staff.calendarVisibilityActions')"
                   >
                     <adeni-icon-btn
                       icon="view"
-                      [label]="tr('portal.staff.showAllOnCalendar')"
+                      [label]="tr('businessApp.staff.showAllOnCalendar')"
                       variant="ghost"
                       [dense]="true"
                       [disabled]="sidebarTeamStaff().length === 0"
@@ -487,7 +487,7 @@
                     />
                     <adeni-icon-btn
                       icon="view--off"
-                      [label]="tr('portal.staff.hideAllOnCalendar')"
+                      [label]="tr('businessApp.staff.hideAllOnCalendar')"
                       variant="ghost"
                       [dense]="true"
                       [disabled]="sidebarTeamStaff().length === 0"
@@ -496,7 +496,7 @@
                     @if (teamData.staff.length > 10) {
                       <adeni-icon-btn
                         [icon]="staffSidebarCompact() ? 'grid' : 'table'"
-                        [label]="tr('portal.staff.compactStaffList')"
+                        [label]="tr('businessApp.staff.compactStaffList')"
                         [variant]="staffSidebarCompact() ? 'outline' : 'ghost'"
                         [dense]="true"
                         (pressed)="toggleStaffSidebarCompact()"

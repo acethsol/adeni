@@ -83,7 +83,7 @@ export class RegisterComponent implements OnInit {
       }
       });
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.register.couldNotLoadRegistrationForm"));
+      this.error.set(this.apiErr(caught, "businessApp.register.couldNotLoadRegistrationForm"));
     }
   }
 
@@ -91,7 +91,7 @@ export class RegisterComponent implements OnInit {
     try {
       await this.loadCategoriesForMarket();
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.register.couldNotReloadCategoriesMarket"));
+      this.error.set(this.apiErr(caught, "businessApp.register.couldNotReloadCategoriesMarket"));
     }
   }
 
@@ -131,7 +131,7 @@ export class RegisterComponent implements OnInit {
       !this.addressLine.trim() ||
       !this.area.trim()
     ) {
-      this.error.set(this.tr("portal.register.fillAllRequiredFieldsWith"));
+      this.error.set(this.tr("businessApp.register.fillAllRequiredFieldsWith"));
       return;
     }
 
@@ -156,7 +156,7 @@ export class RegisterComponent implements OnInit {
       );
       await this.load();
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.register.registrationFailedSlugMayAlready"));
+      this.error.set(this.apiErr(caught, "businessApp.register.registrationFailedSlugMayAlready"));
     } finally {
       this.submitting.set(false);
     }

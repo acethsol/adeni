@@ -1,11 +1,11 @@
 <app-portal-page
   [title]="tr('common.messages')"
-  [description]="tr('portal.messages.bookingConversationsWithCustomersSame')"
+  [description]="tr('businessApp.messages.bookingConversationsWithCustomersSame')"
 >
   @if (whatsAppBusinessUrl(); as wa) {
     <a pageActions class="btn messages-whatsapp-link" [href]="wa" target="_blank" rel="noopener noreferrer">
       <adeni-carbon-icon name="launch" [size]="16" />
-      {{ tr('portal.messages.messageWhatsapp') }}
+      {{ tr('businessApp.messages.messageWhatsapp') }}
     </a>
   }
 
@@ -31,7 +31,7 @@
               [embedded]="true"
               icon="send"
               [title]="tr('common.inboxQuiet')"
-              [description]="tr('portal.messages.conversationsAppearWhenCustomerMessages')"
+              [description]="tr('businessApp.messages.conversationsAppearWhenCustomerMessages')"
             />
           } @else {
             <div class="messages-pane__scroll" [attr.aria-label]="tr('common.inbox')">
@@ -50,7 +50,7 @@
                           <span class="badge" [attr.aria-label]="tr('common.unread')">1</span>
                         }
                       </span>
-                      <span class="thread-row__preview">{{ conversation.preview || tr('portal.messages.noPreviewYet') }}</span>
+                      <span class="thread-row__preview">{{ conversation.preview || tr('businessApp.messages.noPreviewYet') }}</span>
                       <span class="thread-row__when">{{ formatSlotTime(conversation.lastMessageAt) }}</span>
                     </button>
                   </li>
@@ -67,7 +67,7 @@
                 [pageSizeOptions]="listPageSizeOptions"
                 [loading]="loading()"
                 [showEdgeJumpers]="false"
-                [ariaLabel]="tr('portal.messages.conversationPages')"
+                [ariaLabel]="tr('businessApp.messages.conversationPages')"
                 (pageChange)="goToConversationPage($event)"
                 (pageSizeChange)="onConversationPageSizeChange($event)"
               />
@@ -98,7 +98,7 @@
                       (message.senderType === "business" || message.senderType === "bot")
                       && isMessageReadByCustomer(message)
                     ) {
-                      <span class="bubble-meta__read">{{ tr('portal.messages.read') }}</span>
+                      <span class="bubble-meta__read">{{ tr('businessApp.messages.read') }}</span>
                     }
                   </header>
                   <div class="bubble">
@@ -124,7 +124,7 @@
             </div>
             @if (templates().length > 0) {
               <div class="saved-replies">
-                <span class="saved-replies__label">{{ tr('portal.messages.savedReplies') }}</span>
+                <span class="saved-replies__label">{{ tr('businessApp.messages.savedReplies') }}</span>
                 <ul class="chips">
                   @for (template of templates(); track template.key) {
                     <li>
@@ -141,20 +141,20 @@
                   rows="3"
                   [(ngModel)]="draft"
                   name="draft"
-                  [placeholder]="tr('portal.messages.writeReply')"
+                  [placeholder]="tr('businessApp.messages.writeReply')"
                   [disabled]="sending()"
                 ></textarea>
               </label>
               @if (pendingAttachmentPreview(); as preview) {
                 <div class="pending-attachment">
-                  <img [src]="preview" [alt]="tr('portal.messages.pendingAttachment')" />
+                  <img [src]="preview" [alt]="tr('businessApp.messages.pendingAttachment')" />
                   <button type="button" class="btn" (click)="clearPendingAttachment()">{{ tr('common.remove') }}</button>
                 </div>
               }
               <div class="composer-actions">
                 <label class="btn">
                   <adeni-carbon-icon name="upload" [size]="16" />
-                  {{ attaching() ? tr('common.uploading') : tr('portal.messages.attachImage') }}
+                  {{ attaching() ? tr('common.uploading') : tr('businessApp.messages.attachImage') }}
                   <input
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
@@ -177,7 +177,7 @@
               [embedded]="true"
               icon="send"
               [title]="tr('common.selectConversation')"
-              [description]="tr('portal.messages.pickConversationFromInboxRead')"
+              [description]="tr('businessApp.messages.pickConversationFromInboxRead')"
             />
           </div>
         }

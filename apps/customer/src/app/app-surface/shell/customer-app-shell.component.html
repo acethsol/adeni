@@ -1,6 +1,6 @@
 <div class="adeni-app app-shell">
   <header class="app-topbar">
-    <a class="app-brand" routerLink="/app/home" [attr.aria-label]="tr('discover.app.nav.home')">
+    <a class="app-brand" routerLink="/app/home" [attr.aria-label]="tr('customer.app.nav.home')">
       <adeni-brand-lockup class="app-brand__full" [height]="28" surface="light" />
       <adeni-brand-logo class="app-brand__mark" variant="mark" [size]="30" surface="light" />
     </a>
@@ -16,14 +16,14 @@
           {{ tr(item.labelKey) }}
           @if (item.badge === 'messages' && badge.unread() > 0) {
             <span class="app-badge" aria-hidden="true">{{ badge.unread() }}</span>
-            <span class="visually-hidden">{{ tr('discover.app.unread', { count: badge.unread() }) }}</span>
+            <span class="visually-hidden">{{ tr('customer.app.unread', { count: badge.unread() }) }}</span>
           }
         </a>
       }
     </nav>
 
     <div class="app-topbar__right">
-      <a class="app-topbar__messages" routerLink="/app/messages" [attr.aria-label]="tr('discover.app.nav.messages')">
+      <a class="app-topbar__messages" routerLink="/app/messages" [attr.aria-label]="tr('customer.app.nav.messages')">
         <adeni-carbon-icon name="chat" [size]="20" />
         @if (badge.unread() > 0) {
           <span class="app-badge app-badge--dot" aria-hidden="true"></span>
@@ -37,7 +37,7 @@
             class="app-avatar"
             aria-haspopup="menu"
             [attr.aria-expanded]="menuOpen()"
-            [attr.aria-label]="tr('discover.app.accountMenu')"
+            [attr.aria-label]="tr('customer.app.accountMenu')"
             (click)="toggleMenu()"
           >
             @if (session.initials(); as initials) {
@@ -49,7 +49,7 @@
           @if (menuOpen()) {
             <div class="app-menu" role="menu">
               <div class="app-menu__identity">
-                <strong>{{ session.displayName() || tr('discover.app.account') }}</strong>
+                <strong>{{ session.displayName() || tr('customer.app.account') }}</strong>
                 @if (session.email()) {
                   <span>{{ session.email() }}</span>
                 } @else if (session.devCustomerMode) {
@@ -57,13 +57,13 @@
                 }
               </div>
               <a role="menuitem" routerLink="/app/profile">
-                <adeni-carbon-icon name="user--avatar" [size]="16" />{{ tr('discover.app.nav.profile') }}
+                <adeni-carbon-icon name="user--avatar" [size]="16" />{{ tr('customer.app.nav.profile') }}
               </a>
               <a role="menuitem" routerLink="/app/benefits">
-                <adeni-carbon-icon name="gift" [size]="16" />{{ tr('discover.app.nav.benefits') }}
+                <adeni-carbon-icon name="gift" [size]="16" />{{ tr('customer.app.nav.benefits') }}
               </a>
               <a role="menuitem" routerLink="/discover">
-                <adeni-carbon-icon name="launch" [size]="16" />{{ tr('discover.app.browsePublic') }}
+                <adeni-carbon-icon name="launch" [size]="16" />{{ tr('customer.app.browsePublic') }}
               </a>
               @if (session.auth0Mode) {
                 <button type="button" role="menuitem" (click)="signOut()">
@@ -83,7 +83,7 @@
     <router-outlet />
   </main>
 
-  <nav class="app-tabbar" [attr.aria-label]="tr('discover.app.tabBar')">
+  <nav class="app-tabbar" [attr.aria-label]="tr('customer.app.tabBar')">
     @for (item of tabNav; track item.id) {
       <a
         [routerLink]="item.path"
@@ -99,7 +99,7 @@
         </span>
         <span class="app-tabbar__label">{{ tr(item.labelKey) }}</span>
         @if (item.badge === 'messages' && badge.unread() > 0) {
-          <span class="visually-hidden">{{ tr('discover.app.unread', { count: badge.unread() }) }}</span>
+          <span class="visually-hidden">{{ tr('customer.app.unread', { count: badge.unread() }) }}</span>
         }
       </a>
     }

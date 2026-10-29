@@ -41,7 +41,7 @@ import {
   injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
+import { BusinessActiveLocationService } from "../../core/services/business-active-location.service";
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -96,7 +96,7 @@ export class LocationsComponent implements OnInit {
   protected readonly tr = injectAdeniTranslate();
   protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
-  private readonly activeLocation = inject(PortalActiveLocationService);
+  private readonly activeLocation = inject(BusinessActiveLocationService);
   private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly feedback = inject(AdeniFeedbackService);
 
@@ -115,7 +115,7 @@ export class LocationsComponent implements OnInit {
   readonly sortColumnId = signal<string | null>(null);
   readonly sortDirection = signal<AdeniDataTableSortDirection>("asc");
   readonly viewMode = signal<AdeniListViewMode>(
-    readPersistedListViewMode("portal.locations", "cards"),
+    readPersistedListViewMode("businessApp.locations", "cards"),
   );
 
   readonly exporting = signal(false);
@@ -162,7 +162,7 @@ export class LocationsComponent implements OnInit {
   readonly locationColumns = computed<AdeniDataTableColumn<BusinessLocation>[]>(() => [
     {
       id: "name",
-      header: this.tr("portal.core.location"),
+      header: this.tr("businessApp.core.location"),
       cell: (l) => l.name || l.slug,
       sortValue: (l) => (l.name || l.slug).toLowerCase(),
     },
@@ -263,8 +263,8 @@ export class LocationsComponent implements OnInit {
         });
       });
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.locations.couldNotLoadLocations"));
-      this.feedback.error(this.apiErr(caught, "portal.locations.couldNotLoadLocations"));
+      this.error.set(this.apiErr(caught, "businessApp.locations.couldNotLoadLocations"));
+      this.feedback.error(this.apiErr(caught, "businessApp.locations.couldNotLoadLocations"));
     } finally {
       this.loading.set(false);
     }
@@ -273,7 +273,7 @@ export class LocationsComponent implements OnInit {
   openCreate(): void {
     if (!this.canAddLocation()) {
       const message =
-        this.tr("portal.locations.yourPlanIncludesOneLocation");
+        this.tr("businessApp.locations.yourPlanIncludesOneLocation");
       this.error.set(message);
       this.feedback.error(message);
       return;
@@ -304,8 +304,8 @@ export class LocationsComponent implements OnInit {
   async save(): Promise<void> {
     const slug = this.draft.slug.trim().toLowerCase();
     if (!slug || !SLUG_PATTERN.test(slug) || !this.draft.addressLine.trim() || !this.draft.area.trim()) {
-      this.error.set(this.tr("portal.locations.checkSlugAddressArea"));
-      this.feedback.error(this.tr("portal.locations.checkSlugAddressArea"));
+      this.error.set(this.tr("businessApp.locations.checkSlugAddressArea"));
+      this.feedback.error(this.tr("businessApp.locations.checkSlugAddressArea"));
       return;
     }
 
@@ -337,14 +337,14 @@ export class LocationsComponent implements OnInit {
           const created = await this.api.withAuthorizedClient((c) => c.addTenantLocation(body));
           this.locations.update((list) => mergeSavedLocation(list, created, null));
         }
-      }, this.tr("portal.locations.savingLocation"), body.name ?? slug);
+      }, this.tr("businessApp.locations.savingLocation"), body.name ?? slug);
       this.cancelForm();
-      this.feedback.success(this.tr("portal.locations.locationSaved"));
+      this.feedback.success(this.tr("businessApp.locations.locationSaved"));
     } catch (err) {
       const message =
         err instanceof AdeniApiError && err.message
           ? err.message
-          : this.tr("portal.locations.couldNotSaveLocation");
+          : this.tr("businessApp.locations.couldNotSaveLocation");
       this.error.set(message);
       this.feedback.error(message);
     } finally {
@@ -354,9 +354,9 @@ export class LocationsComponent implements OnInit {
 
   async remove(loc: BusinessLocation): Promise<void> {
     const ok = await this.confirmDialog.confirm({
-      title: this.tr("portal.locations.deleteLocation2"),
-      message: this.tr("portal.locations.deleteConfirm", { name: loc.name || loc.slug }),
-      confirmLabel: this.tr("portal.locations.delete"),
+      title: this.tr("businessApp.locations.deleteLocation2"),
+      message: this.tr("businessApp.locations.deleteConfirm", { name: loc.name || loc.slug }),
+      confirmLabel: this.tr("businessApp.locations.delete"),
       danger: true,
     });
     if (!ok) {
@@ -366,7 +366,7 @@ export class LocationsComponent implements OnInit {
     try {
       await this.feedback.runLoading(
         () => this.api.withAuthorizedClient((c) => c.deactivateTenantLocation(loc.id)),
-        this.tr("portal.locations.deletingLocation"),
+        this.tr("businessApp.locations.deletingLocation"),
         loc.name || loc.slug,
       );
       if (loc.isPrimary) {
@@ -375,10 +375,10 @@ export class LocationsComponent implements OnInit {
       } else {
         this.locations.update((list) => list.filter((l) => l.id !== loc.id));
       }
-      this.feedback.success(this.tr("portal.locations.locationRemoved"));
+      this.feedback.success(this.tr("businessApp.locations.locationRemoved"));
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.locations.couldNotDeleteLocation"));
-      this.feedback.error(this.apiErr(caught, "portal.locations.couldNotDeleteLocation"));
+      this.error.set(this.apiErr(caught, "businessApp.locations.couldNotDeleteLocation"));
+      this.feedback.error(this.apiErr(caught, "businessApp.locations.couldNotDeleteLocation"));
     } finally {
       this.busy.set(null);
     }
@@ -407,9 +407,9 @@ export class LocationsComponent implements OnInit {
       anchor.download = `tenant-locations-${to.toISOString().slice(0, 10)}.csv`;
       anchor.click();
       URL.revokeObjectURL(url);
-      this.feedback.success(this.tr("portal.locations.locationsDownloaded"));
+      this.feedback.success(this.tr("businessApp.locations.locationsDownloaded"));
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.locations.couldNotDownloadLocations"));
+      this.feedback.error(this.apiErr(caught, "businessApp.locations.couldNotDownloadLocations"));
     } finally {
       this.exporting.set(false);
     }

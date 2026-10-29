@@ -4,8 +4,8 @@ import { Subject } from "rxjs";
 import { AdeniFeedbackService, AdeniLocaleService, MessagingRealtimeService, TenantOperationsRealtimeService } from "@adeni/ui";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
-import { PortalSessionService } from "../../core/services/portal-session.service";
+import { BusinessActiveLocationService } from "../../core/services/business-active-location.service";
+import { BusinessSessionService } from "../../core/services/business-session.service";
 import { DashboardComponent } from "./dashboard.component";
 import { DashboardDataService } from "./dashboard-data.service";
 
@@ -21,8 +21,8 @@ describe("Dashboard container lifecycle", () => {
       { provide: ADENI_PORTAL_CONFIG, useValue: {} },
       { provide: AdeniLocaleService, useValue: { locale } },
       { provide: BusinessApiService, useValue: { withAuthorizedClient: () => Promise.resolve(4) } },
-      { provide: PortalActiveLocationService, useValue: { selectionChanged$: branches, runOnBranchSwitch: (fn: () => unknown) => fn() } },
-      { provide: PortalSessionService, useValue: { ensureLoaded: () => Promise.resolve(), can: () => false, permissionRole: signal("owner") } },
+      { provide: BusinessActiveLocationService, useValue: { selectionChanged$: branches, runOnBranchSwitch: (fn: () => unknown) => fn() } },
+      { provide: BusinessSessionService, useValue: { ensureLoaded: () => Promise.resolve(), can: () => false, permissionRole: signal("owner") } },
       { provide: AdeniFeedbackService, useValue: { runLoading: (fn: () => unknown) => fn() } },
       { provide: MessagingRealtimeService, useValue: { conversationUpdated$: messages } },
       { provide: TenantOperationsRealtimeService, useValue: { pendingBookingsChanged$: pending, quotePipelineChanged$: quotes } },

@@ -1,5 +1,5 @@
 <app-portal-page [title]="tr('commerce.title')">
-  <a routerLink="/finance">{{tr('portal.payments.payments')}}</a>
+  <a routerLink="/finance">{{tr('businessApp.payments.payments')}}</a>
   <p>{{tr('commerce.businessWide')}}</p><p role="status">{{tr('commerce.sandbox')}}</p><p>{{tr('commerce.noWallet')}}</p>
   @if(error()){<p role="alert">{{error()}}</p>}
   @if(notice()){<p role="status">{{notice()}}</p>}

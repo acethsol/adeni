@@ -49,13 +49,13 @@ export class BusinessOverviewComponent {
   readonly previewColumns = computed<AdeniDataTableColumn<TenantSubscriptionCharge>[]>(() => [
     {
       id: "when",
-      header: this.tr("portal.plan.date"),
+      header: this.tr("businessApp.plan.date"),
       cell: (row) => row.occurredAt,
       sortable: false,
     },
     {
       id: "amount",
-      header: this.tr("portal.quotes.amount"),
+      header: this.tr("businessApp.quotes.amount"),
       align: "right",
       cell: (row) => formatChargeAmount(row),
       sortable: false,

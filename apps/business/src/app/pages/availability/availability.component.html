@@ -3,12 +3,12 @@
   [description]="
     scopeLabel()
       ? 'Weekly opening times for ' + scopeLabel() + '. Closed dates apply to this branch only.'
-      : tr('portal.availability.weeklyOpeningTimesDaysWhen')
+      : tr('businessApp.availability.weeklyOpeningTimesDaysWhen')
   "
 >
   <button pageActions type="button" class="btn" (click)="showClosedDatesModal.set(true)">
     <adeni-carbon-icon name="calendar" [size]="16" />
-    {{ tr('portal.availability.closedDates') }}
+    {{ tr('businessApp.availability.closedDates') }}
     @if (closedRanges().length > 0) {
       <span class="action-badge">{{ closedRanges().length }}</span>
     }
@@ -25,11 +25,11 @@
   <section class="hours-shell">
       <header class="hours-shell-head">
         <div>
-          <h2 class="hours-shell-title">{{ tr('portal.availability.weeklySchedule') }}</h2>
-          <p class="section-lead">{{ tr('portal.availability.setWhenBranchAcceptsOnline') }}</p>
+          <h2 class="hours-shell-title">{{ tr('businessApp.availability.weeklySchedule') }}</h2>
+          <p class="section-lead">{{ tr('businessApp.availability.setWhenBranchAcceptsOnline') }}</p>
           @if (showHoursBranchPicker()) {
             <label class="branch-picker">
-              <span class="branch-picker-label">{{ tr('portal.availability.branch') }}</span>
+              <span class="branch-picker-label">{{ tr('businessApp.availability.branch') }}</span>
               <select
                 class="branch-picker-select"
                 [ngModel]="hoursBranchPickerId()"
@@ -61,11 +61,11 @@
               <span class="cds-toggle__label">{{ row.closed ? tr('common.closed') : tr('common.open') }}</span>
             </label>
             @if (!row.closed) {
-              <input type="time" class="hours-time" [(ngModel)]="row.openTime" [attr.aria-label]="tr('portal.availability.openTime')" />
+              <input type="time" class="hours-time" [(ngModel)]="row.openTime" [attr.aria-label]="tr('businessApp.availability.openTime')" />
               <span class="hours-to" aria-hidden="true">{{ tr('common.to2') }}</span>
-              <input type="time" class="hours-time" [(ngModel)]="row.closeTime" [attr.aria-label]="tr('portal.availability.closeTime')" />
+              <input type="time" class="hours-time" [(ngModel)]="row.closeTime" [attr.aria-label]="tr('businessApp.availability.closeTime')" />
             } @else {
-              <span class="hours-off muted">{{ tr('portal.availability.notAcceptingBookings') }}</span>
+              <span class="hours-off muted">{{ tr('businessApp.availability.notAcceptingBookings') }}</span>
             }
           </div>
         }
@@ -74,7 +74,7 @@
       <div class="hours-shell-actions">
         <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="save()">
           <adeni-carbon-icon name="save" [size]="16" />
-          {{ saving() ? tr('common.saving') : tr('portal.availability.saveWeeklyHours') }}
+          {{ saving() ? tr('common.saving') : tr('businessApp.availability.saveWeeklyHours') }}
         </button>
       </div>
     </section>
@@ -91,8 +91,8 @@
 
   <adeni-modal
     [open]="showClosedDatesModal()"
-    [title]="tr('portal.availability.closedDates')"
-    [subtitle]="tr('portal.availability.blockSpecificDaysRangesCustomers')"
+    [title]="tr('businessApp.availability.closedDates')"
+    [subtitle]="tr('businessApp.availability.blockSpecificDaysRangesCustomers')"
     size="lg"
     [hasFooter]="true"
     (closed)="showClosedDatesModal.set(false)"
@@ -132,7 +132,7 @@
     </div>
 
     <div class="range-form">
-      <h4 class="range-form-title">{{ tr('portal.availability.addClosedRange') }}</h4>
+      <h4 class="range-form-title">{{ tr('businessApp.availability.addClosedRange') }}</h4>
       <div class="row">
         <div class="field">
           <label for="closed-start">{{ tr('common.from') }}</label>
@@ -144,13 +144,13 @@
         </div>
       </div>
       <div class="field">
-        <label for="closed-reason">{{ tr('portal.availability.reasonOptionalStaffOnly') }}</label>
+        <label for="closed-reason">{{ tr('businessApp.availability.reasonOptionalStaffOnly') }}</label>
         <input
           id="closed-reason"
           type="text"
           maxlength="200"
           [(ngModel)]="rangeReason"
-          [placeholder]="tr('portal.availability.eGPublicHoliday')"
+          [placeholder]="tr('businessApp.availability.eGPublicHoliday')"
         />
       </div>
       <button
@@ -160,7 +160,7 @@
         (click)="addClosedRange()"
       >
         <adeni-carbon-icon name="add" [size]="16" />
-        {{ tr('portal.availability.addClosedRange') }}
+        {{ tr('businessApp.availability.addClosedRange') }}
       </button>
     </div>
 
@@ -169,8 +169,8 @@
         [compact]="true"
         [embedded]="true"
         icon="calendar"
-        [title]="tr('portal.availability.noClosedDates')"
-        [description]="tr('portal.availability.tapDaysCalendarAddDate')"
+        [title]="tr('businessApp.availability.noClosedDates')"
+        [description]="tr('businessApp.availability.tapDaysCalendarAddDate')"
       />
     } @else {
       <ul class="plain closed-list">

@@ -106,15 +106,15 @@
       }
       <a class="app-quick__item" routerLink="/app/messages">
         <adeni-carbon-icon name="chat" [size]="20" />
-        <span>{{ tr('discover.app.nav.messages') }}</span>
+        <span>{{ tr('customer.app.nav.messages') }}</span>
         @if (badge.unread() > 0) {
           <span class="app-badge">{{ badge.unread() }}</span>
-          <span class="visually-hidden">{{ tr('discover.app.unread', { count: badge.unread() }) }}</span>
+          <span class="visually-hidden">{{ tr('customer.app.unread', { count: badge.unread() }) }}</span>
         }
       </a>
       <a class="app-quick__item" routerLink="/app/benefits">
         <adeni-carbon-icon name="gift" [size]="20" />
-        <span>{{ tr('discover.app.nav.benefits') }}</span>
+        <span>{{ tr('customer.app.nav.benefits') }}</span>
       </a>
     </div>
   </section>

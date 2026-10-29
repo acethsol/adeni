@@ -38,7 +38,7 @@ import {
   injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
+import { BusinessActiveLocationService } from "../../core/services/business-active-location.service";
 
 export type CustomerAccountFilter = "all" | "discover" | "walk_in";
 
@@ -70,7 +70,7 @@ export class CustomersComponent implements OnInit, OnDestroy {
   protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
-  private readonly activeLocation = inject(PortalActiveLocationService);
+  private readonly activeLocation = inject(BusinessActiveLocationService);
   private loadGeneration = 0;
   private branchSub: Subscription | null = null;
 
@@ -89,9 +89,9 @@ export class CustomersComponent implements OnInit, OnDestroy {
   private searchDebounce: ReturnType<typeof setTimeout> | null = null;
 
   readonly accountFilterOptions = computed<AdeniFilterSelectOption[]>(() => [
-    { value: "all", label: this.tr("portal.customers.allProfiles") },
-    { value: "discover", label: this.tr("portal.customers.discoverAccount") },
-    { value: "walk_in", label: this.tr("portal.customers.walkQueue") },
+    { value: "all", label: this.tr("businessApp.customers.allProfiles") },
+    { value: "discover", label: this.tr("businessApp.customers.discoverAccount") },
+    { value: "walk_in", label: this.tr("businessApp.customers.walkQueue") },
   ]);
 
   readonly entitlements = signal<TenantEntitlements | null>(null);
@@ -120,13 +120,13 @@ export class CustomersComponent implements OnInit, OnDestroy {
     },
     {
       id: "account",
-      header: this.tr("portal.customers.profileType"),
+      header: this.tr("businessApp.customers.profileType"),
       cell: (row) => this.accountLabel(row),
       sortValue: (row) => (row.platformCustomerId ? 1 : 0),
     },
     {
       id: "lastSeen",
-      header: this.tr("portal.customers.lastSeen"),
+      header: this.tr("businessApp.customers.lastSeen"),
       cell: (row) => formatSlotTime(row.lastSeenAt),
       sortValue: (row) => row.lastSeenAt,
     },
@@ -202,7 +202,7 @@ export class CustomersComponent implements OnInit, OnDestroy {
   }
 
   accountLabel(row: TenantCustomerListItem): string {
-    return row.platformCustomerId ? this.tr("portal.customers.discoverAccount") : this.tr("portal.customers.walkQueue");
+    return row.platformCustomerId ? this.tr("businessApp.customers.discoverAccount") : this.tr("businessApp.customers.walkQueue");
   }
 
   accountPillTone(row: TenantCustomerListItem): AdeniPillTone {
@@ -248,8 +248,8 @@ export class CustomersComponent implements OnInit, OnDestroy {
       });
     } catch (caught) {
       if (generation !== this.loadGeneration) return;
-      this.error.set(this.apiErr(caught, "portal.customers.couldNotLoadCustomersTry"));
-      this.feedback.error(this.apiErr(caught, "portal.customers.couldNotLoadCustomers"));
+      this.error.set(this.apiErr(caught, "businessApp.customers.couldNotLoadCustomersTry"));
+      this.feedback.error(this.apiErr(caught, "businessApp.customers.couldNotLoadCustomers"));
       this.items.set([]);
       this.totalCount.set(0);
     } finally {
@@ -279,9 +279,9 @@ export class CustomersComponent implements OnInit, OnDestroy {
       anchor.download = `tenant-customers-${to.toISOString().slice(0, 10)}.${format === "xlsx" ? "xlsx" : "csv"}`;
       anchor.click();
       URL.revokeObjectURL(url);
-      this.feedback.success(this.tr("portal.customers.customerListDownloaded"));
+      this.feedback.success(this.tr("businessApp.customers.customerListDownloaded"));
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.customers.couldNotDownloadCustomerList"));
+      this.feedback.error(this.apiErr(caught, "businessApp.customers.couldNotDownloadCustomerList"));
     } finally {
       this.exporting.set(false);
     }

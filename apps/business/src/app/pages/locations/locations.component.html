@@ -1,14 +1,14 @@
-<app-portal-page [title]="tr('common.locations')" [description]="tr('portal.locations.manageBranchesPublicProfileUrls')">
+<app-portal-page [title]="tr('common.locations')" [description]="tr('businessApp.locations.manageBranchesPublicProfileUrls')">
   <button
     pageActions
     type="button"
     class="btn btn-primary"
     [disabled]="!canAddLocation()"
-    [title]="canAddLocation() ? tr('portal.locations.addBranch') : tr('portal.locations.locationLimitReachedPlan')"
+    [title]="canAddLocation() ? tr('businessApp.locations.addBranch') : tr('businessApp.locations.locationLimitReachedPlan')"
     (click)="openCreate()"
   >
     <adeni-carbon-icon name="add" [size]="16" />
-    {{ tr('portal.locations.addLocation') }}
+    {{ tr('businessApp.locations.addLocation') }}
   </button>
 
   @if (error()) {
@@ -17,14 +17,14 @@
 
   <adeni-modal
     [open]="showForm()"
-    [title]="editingId() ? tr('portal.locations.editLocation') : tr('portal.locations.newLocation')"
-    [subtitle]="tr('portal.locations.slugAppearsPublicUrlBusinesses')"
+    [title]="editingId() ? tr('businessApp.locations.editLocation') : tr('businessApp.locations.newLocation')"
+    [subtitle]="tr('businessApp.locations.slugAppearsPublicUrlBusinesses')"
     size="lg"
     [hasFooter]="false"
     (closed)="cancelForm()"
   >
     <div class="field">
-      <label>{{ tr('portal.locations.slug') }}</label>
+      <label>{{ tr('businessApp.locations.slug') }}</label>
       <input [(ngModel)]="draft.slug" />
     </div>
     <div class="field">
@@ -50,7 +50,7 @@
     <label class="cds-toggle">
       <input type="checkbox" role="switch" [(ngModel)]="draft.isPrimary" />
       <span class="cds-toggle__track" aria-hidden="true"></span>
-      <span class="cds-toggle__label">{{ tr('portal.locations.primaryLocation') }}</span>
+      <span class="cds-toggle__label">{{ tr('businessApp.locations.primaryLocation') }}</span>
     </label>
     <div class="actions">
       <button type="button" class="btn" (click)="cancelForm()">
@@ -67,20 +67,20 @@
   @if (locations().length === 0 && !loading()) {
     <adeni-portal-empty-state
       icon="location--filled"
-      [title]="tr('portal.locations.noLocationsYet')"
-      [description]="tr('portal.locations.addFirstBranchSoCustomers')"
+      [title]="tr('businessApp.locations.noLocationsYet')"
+      [description]="tr('businessApp.locations.addFirstBranchSoCustomers')"
     />
   } @else {
     <div class="roster">
       <adeni-list-toolbar
-        storageKey="portal.locations"
+        storageKey="businessApp.locations"
         [viewMode]="viewMode()"
         (viewModeChange)="viewMode.set($event)"
         [count]="paginatedLocations().length"
         [countTotal]="filteredLocationsCount()"
-        [singularCountLabel]="tr('portal.locations.location')"
-        [pluralCountLabel]="tr('portal.locations.locations')"
-        [searchPlaceholder]="tr('portal.locations.searchLocations')"
+        [singularCountLabel]="tr('businessApp.locations.location')"
+        [pluralCountLabel]="tr('businessApp.locations.locations')"
+        [searchPlaceholder]="tr('businessApp.locations.searchLocations')"
         [searchQuery]="locationSearch()"
         (searchQueryChange)="onLocationSearchChange($event)"
       >
@@ -96,7 +96,7 @@
         <adeni-portal-empty-state
           icon="search"
           [title]="tr('common.noMatches')"
-          [description]="tr('portal.locations.tryDifferentNameAreaSlug')"
+          [description]="tr('businessApp.locations.tryDifferentNameAreaSlug')"
           [compact]="true"
         />
       } @else if (viewMode() === "cards") {
@@ -126,7 +126,7 @@
                   [disabled]="busy() === loc.id"
                   (click)="remove(loc)"
                 >
-                  {{ tr('portal.locations.delete') }}
+                  {{ tr('businessApp.locations.delete') }}
                 </button>
               </div>
             </li>
@@ -139,7 +139,7 @@
             [pageSize]="pageSize()"
             [totalCount]="filteredLocationsCount()"
             [pageSizeOptions]="listPageSizeOptions"
-            [ariaLabel]="tr('portal.locations.locationPages')"
+            [ariaLabel]="tr('businessApp.locations.locationPages')"
             (pageChange)="goToLocationsPage($event)"
             (pageSizeChange)="onLocationsPageSizeChange($event)"
           />
@@ -180,7 +180,7 @@
             <adeni-row-action-bar>
               <adeni-icon-btn
                 icon="edit"
-                [label]="tr('portal.locations.editLocation')"
+                [label]="tr('businessApp.locations.editLocation')"
                 variant="table"
                 [dense]="true"
                 [disabled]="busy() === loc.id"
@@ -188,7 +188,7 @@
               />
               <adeni-icon-btn
                 icon="trash-can"
-                [label]="tr('portal.locations.deleteLocation')"
+                [label]="tr('businessApp.locations.deleteLocation')"
                 variant="danger-soft"
                 [dense]="true"
                 [disabled]="busy() === loc.id"
@@ -203,7 +203,7 @@
             [pageSize]="pageSize()"
             [totalCount]="filteredLocationsCount()"
             [pageSizeOptions]="listPageSizeOptions"
-            [ariaLabel]="tr('portal.locations.locationPages')"
+            [ariaLabel]="tr('businessApp.locations.locationPages')"
             (pageChange)="goToLocationsPage($event)"
             (pageSizeChange)="onLocationsPageSizeChange($event)"
           />

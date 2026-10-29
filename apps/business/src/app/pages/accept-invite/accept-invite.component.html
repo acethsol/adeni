@@ -1,17 +1,17 @@
 <main class="accept">
   <p class="brand">Adeni</p>
-  <h1>{{ tr('portal.acceptInvite.acceptStaffInvite') }}</h1>
+  <h1>{{ tr('businessApp.acceptInvite.acceptStaffInvite') }}</h1>
   <p class="lede">{{ message() }}</p>
 
   @if (devMode && status() === "ready") {
     <label class="field">
-      <span>{{ tr('portal.acceptInvite.devAuth0SubInvitee') }}</span>
+      <span>{{ tr('businessApp.acceptInvite.devAuth0SubInvitee') }}</span>
       <input [(ngModel)]="devAuth0Sub" autocomplete="off" />
     </label>
   }
 
   @if (auth0Mode && status() === "ready") {
-    <p class="hint">{{ tr('portal.acceptInvite.useAuth0AccountMatchesInvited') }}</p>
+    <p class="hint">{{ tr('businessApp.acceptInvite.useAuth0AccountMatchesInvited') }}</p>
   }
 
   <div class="actions">
@@ -22,12 +22,12 @@
         [disabled]="!tokenReady()"
         (click)="accept()"
       >
-        {{ tr('portal.acceptInvite.acceptInvite') }}
+        {{ tr('businessApp.acceptInvite.acceptInvite') }}
       </button>
     }
     @if (status() === "working") {
-      <p class="muted">{{ tr('portal.acceptInvite.accepting') }}</p>
+      <p class="muted">{{ tr('businessApp.acceptInvite.accepting') }}</p>
     }
-    <a routerLink="/dashboard">{{ tr('portal.acceptInvite.backPortal') }}</a>
+    <a routerLink="/dashboard">{{ tr('businessApp.acceptInvite.backPortal') }}</a>
   </div>
 </main>

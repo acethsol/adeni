@@ -10,7 +10,7 @@ import {
   viewChild,
 } from "@angular/core";
 import { DonutChart, LineChart, SimpleBarChart } from "@carbon/charts";
-import { PortalThemeService } from "../../core/portal-theme.service";
+import { BusinessThemeService } from "../../core/business-theme.service";
 import { ScaleTypes, type ChartTabularData } from "@carbon/charts/interfaces";
 
 export type DashboardCarbonChartKind = "bar" | "line" | "donut";
@@ -50,14 +50,14 @@ export class DashboardCarbonChartComponent implements AfterViewInit, OnDestroy {
   readonly data = input<ChartTabularData>([]);
   readonly ariaLabel = input("Chart");
 
-  private readonly portalTheme = inject(PortalThemeService);
+  private readonly businessTheme = inject(BusinessThemeService);
   /** Stable Angular-owned node. Carbon's `destroy()` calls `holder.remove()`, so it never sees this node. */
   private readonly holderRef = viewChild<ElementRef<HTMLDivElement>>("host");
   private chart: SimpleBarChart | LineChart | DonutChart | null = null;
   private resizeObserver: ResizeObserver | null = null;
   private observedHolder: HTMLDivElement | null = null;
   /** Carbon theme/kind are fixed at create — remount in place when either changes. */
-  readonly chartSurfaceKey = computed(() => `${this.portalTheme.theme()}:${this.kind()}`);
+  readonly chartSurfaceKey = computed(() => `${this.businessTheme.theme()}:${this.kind()}`);
   private mountedSurfaceKey: string | null = null;
   /** Disposable child of the host that Carbon owns (and removes) for each chart instance. */
   private chartMount: HTMLDivElement | null = null;
@@ -130,7 +130,7 @@ export class DashboardCarbonChartComponent implements AfterViewInit, OnDestroy {
   }
 
   private resolveChartTheme(): "g10" | "g100" {
-    return this.portalTheme.theme() === "dark" ? "g100" : "g10";
+    return this.businessTheme.theme() === "dark" ? "g100" : "g10";
   }
 
   private scheduleChartUpdate(holder: HTMLDivElement): void {

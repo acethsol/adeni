@@ -27,11 +27,11 @@ import { BusinessApiService } from "../../core/services/business-api.service";
     } @else if (packages().length === 0) {
       <adeni-portal-empty-state
         icon="user--filled"
-        [title]="tr('portal.retention.customerEmptyTitle')"
-        [description]="tr('portal.retention.customerEmptyDescription')"
+        [title]="tr('businessApp.retention.customerEmptyTitle')"
+        [description]="tr('businessApp.retention.customerEmptyDescription')"
       />
     } @else {
-      <p class="muted note">{{ tr('portal.retention.creditsAreSessions') }}</p>
+      <p class="muted note">{{ tr('businessApp.retention.creditsAreSessions') }}</p>
       <ul class="packages">
         @for (p of packages(); track p.id) {
           <li class="card package">
@@ -40,25 +40,25 @@ import { BusinessApiService } from "../../core/services/business-api.service";
               <adeni-pill [tone]="statusTone(p)" [compact]="true">{{ statusLabel(p) }}</adeni-pill>
             </div>
             <dl class="package__meta muted">
-              <div><dt>{{ tr('portal.retention.soldVia') }}</dt><dd>{{ channelLabel(p) }}</dd></div>
+              <div><dt>{{ tr('businessApp.retention.soldVia') }}</dt><dd>{{ channelLabel(p) }}</dd></div>
               @if (p.soldAtLocationId) {
-                <div><dt>{{ tr('portal.retention.soldAt') }}</dt><dd>{{ locationName(p.soldAtLocationId) }}</dd></div>
+                <div><dt>{{ tr('businessApp.retention.soldAt') }}</dt><dd>{{ locationName(p.soldAtLocationId) }}</dd></div>
               }
-              <div><dt>{{ tr('portal.retention.redeemableAt') }}</dt><dd>{{ scopeLabel(p) }}</dd></div>
-              <div><dt>{{ tr('portal.retention.listPrice') }}</dt><dd>{{ price(p) }}</dd></div>
+              <div><dt>{{ tr('businessApp.retention.redeemableAt') }}</dt><dd>{{ scopeLabel(p) }}</dd></div>
+              <div><dt>{{ tr('businessApp.retention.listPrice') }}</dt><dd>{{ price(p) }}</dd></div>
               <div>
-                <dt>{{ tr('portal.retention.expiry') }}</dt>
-                <dd>{{ p.expiresAt ? tr('portal.retention.expires', { date: when(p.expiresAt) }) : tr('portal.retention.noExpiry') }}</dd>
+                <dt>{{ tr('businessApp.retention.expiry') }}</dt>
+                <dd>{{ p.expiresAt ? tr('businessApp.retention.expires', { date: when(p.expiresAt) }) : tr('businessApp.retention.noExpiry') }}</dd>
               </div>
             </dl>
             <table class="balances">
               <thead>
                 <tr>
-                  <th scope="col">{{ tr('portal.retention.service') }}</th>
-                  <th scope="col">{{ tr('portal.retention.granted') }}</th>
-                  <th scope="col">{{ tr('portal.retention.used') }}</th>
-                  <th scope="col">{{ tr('portal.retention.reserved') }}</th>
-                  <th scope="col">{{ tr('portal.retention.remaining') }}</th>
+                  <th scope="col">{{ tr('businessApp.retention.service') }}</th>
+                  <th scope="col">{{ tr('businessApp.retention.granted') }}</th>
+                  <th scope="col">{{ tr('businessApp.retention.used') }}</th>
+                  <th scope="col">{{ tr('businessApp.retention.reserved') }}</th>
+                  <th scope="col">{{ tr('businessApp.retention.remaining') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -125,7 +125,7 @@ export class CustomerPackagesPanelComponent implements OnInit {
         this.locations.set(locations);
       });
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.retention.customerCouldNotLoad"));
+      this.error.set(this.apiErr(caught, "businessApp.retention.customerCouldNotLoad"));
       this.packages.set([]);
     } finally {
       this.loading.set(false);
@@ -147,41 +147,41 @@ export class CustomerPackagesPanelComponent implements OnInit {
   channelLabel(p: CustomerPackage): string {
     switch (p.soldChannel) {
       case "in_person_till":
-        return this.tr("portal.retention.channelTill");
+        return this.tr("businessApp.retention.channelTill");
       case "in_person_transfer":
-        return this.tr("portal.retention.channelTransfer");
+        return this.tr("businessApp.retention.channelTransfer");
       default:
-        return this.tr("portal.retention.channelOnline");
+        return this.tr("businessApp.retention.channelOnline");
     }
   }
 
   scopeLabel(p: CustomerPackage): string {
     switch (p.redemptionScope) {
       case "purchase_location_only":
-        return this.tr("portal.retention.redeemableAtPurchase", {
+        return this.tr("businessApp.retention.redeemableAtPurchase", {
           location: p.soldAtLocationId ? this.locationName(p.soldAtLocationId) : "—",
         });
       case "selected_locations": {
         const names = p.redemptionLocationIds.map((id) => this.locationName(id));
         return names.length > 0
           ? names.join(", ")
-          : this.tr("portal.retention.redeemableAtSelected", { count: 0 });
+          : this.tr("businessApp.retention.redeemableAtSelected", { count: 0 });
       }
       default:
-        return this.tr("portal.retention.scopeAll");
+        return this.tr("businessApp.retention.scopeAll");
     }
   }
 
   statusLabel(p: CustomerPackage): string {
     switch (p.status) {
       case "pending_payment":
-        return this.tr("portal.retention.statusPending");
+        return this.tr("businessApp.retention.statusPending");
       case "active":
-        return this.tr("portal.retention.statusActive");
+        return this.tr("businessApp.retention.statusActive");
       case "expired":
-        return this.tr("portal.retention.statusExpired");
+        return this.tr("businessApp.retention.statusExpired");
       default:
-        return this.tr("portal.retention.statusVoided");
+        return this.tr("businessApp.retention.statusVoided");
     }
   }
 

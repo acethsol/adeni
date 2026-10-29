@@ -12,37 +12,37 @@
   <section class="card kiosk-row">
     <div class="section-head">
       <div>
-        <h3>{{ tr('portal.bookings.frontDeskCheck') }}</h3>
+        <h3>{{ tr('businessApp.bookings.frontDeskCheck') }}</h3>
         <p class="muted">
-          {{ tr('portal.bookings.fullscreenTabletClientsCheckWhen') }}
+          {{ tr('businessApp.bookings.fullscreenTabletClientsCheckWhen') }}
           @if (kioskStatus()?.hasPin) {
-            {{ tr('portal.bookings.staffExitPinSet') }}
+            {{ tr('businessApp.bookings.staffExitPinSet') }}
           } @else {
-            {{ tr('portal.bookings.optionalStaffExitPinNot') }}
+            {{ tr('businessApp.bookings.optionalStaffExitPinNot') }}
           }
         </p>
       </div>
       <button type="button" class="btn btn-primary" (click)="openKiosk($event)">
         <adeni-carbon-icon name="user--follow" [size]="16" />
-        {{ tr('portal.bookings.openCheck') }}
+        {{ tr('businessApp.bookings.openCheck') }}
       </button>
     </div>
     <div class="pin-fields">
       <input
         [(ngModel)]="kioskPin"
-        [placeholder]="tr('portal.bookings.exitPin48Digits')"
+        [placeholder]="tr('businessApp.bookings.exitPin48Digits')"
         inputmode="numeric"
         maxlength="8"
         autocomplete="off"
       />
       <button type="button" class="btn" [disabled]="savingPin()" (click)="saveKioskPin()">
         <adeni-carbon-icon name="save" [size]="16" />
-        {{ kioskStatus()?.hasPin ? tr('portal.bookings.updatePin') : tr('portal.bookings.setPin') }}
+        {{ kioskStatus()?.hasPin ? tr('businessApp.bookings.updatePin') : tr('businessApp.bookings.setPin') }}
       </button>
       @if (kioskStatus()?.hasPin) {
         <button type="button" class="btn" [disabled]="savingPin()" (click)="clearKioskPin()">
           <adeni-carbon-icon name="close" [size]="16" />
-          {{ tr('portal.bookings.clearPin') }}
+          {{ tr('businessApp.bookings.clearPin') }}
         </button>
       }
     </div>
@@ -58,14 +58,14 @@
   } @else {
     <div class="roster">
       <adeni-list-toolbar
-        storageKey="portal.bookings"
+        storageKey="businessApp.bookings"
         [viewMode]="viewMode()"
         (viewModeChange)="viewMode.set($event)"
         [count]="filteredBookings().length"
         [countTotal]="bookingCountTotal()"
         [singularCountLabel]="tr('common.booking')"
         [pluralCountLabel]="tr('common.bookings2')"
-        [searchPlaceholder]="tr('portal.bookings.searchPage')"
+        [searchPlaceholder]="tr('businessApp.bookings.searchPage')"
         [searchQuery]="bookingSearch()"
         (searchQueryChange)="bookingSearch.set($event)"
       >
@@ -80,8 +80,8 @@
       @if (filteredBookings().length === 0) {
         <adeni-portal-empty-state
           icon="search"
-          [title]="tr('portal.bookings.noMatchesPage')"
-          [description]="tr('portal.bookings.tryAnotherNameServicePhone')"
+          [title]="tr('businessApp.bookings.noMatchesPage')"
+          [description]="tr('businessApp.bookings.tryAnotherNameServicePhone')"
           [compact]="true"
         />
       } @else if (viewMode() === "cards") {
@@ -92,7 +92,7 @@
               <div class="booking-card__body">
                 <div class="booking-card__head">
                   <strong class="booking-card__name">{{
-                    booking.customerName?.trim() || tr('portal.bookings.guest')
+                    booking.customerName?.trim() || tr('businessApp.bookings.guest')
                   }}</strong>
                   <span
                     class="booking-status booking-status--compact"
@@ -135,7 +135,7 @@
                 <div
                   class="booking-card__actions"
                   role="group"
-                  [attr.aria-label]="'Actions for ' + (booking.customerName?.trim() || tr('portal.bookings.guest'))"
+                  [attr.aria-label]="'Actions for ' + (booking.customerName?.trim() || tr('businessApp.bookings.guest'))"
                 >
                   @if (tab() === "pending" && booking.status === 0) {
                     <button
@@ -145,7 +145,7 @@
                       (click)="reject(booking)"
                     >
                       <adeni-carbon-icon name="misuse" [size]="16" />
-                      {{ tr('portal.bookings.decline') }}
+                      {{ tr('businessApp.bookings.decline') }}
                     </button>
                     <button
                       type="button"
@@ -154,7 +154,7 @@
                       (click)="accept(booking)"
                     >
                       <adeni-carbon-icon name="checkmark" [size]="16" />
-                      {{ tr('portal.bookings.accept') }}
+                      {{ tr('businessApp.bookings.accept') }}
                     </button>
                   } @else if (booking.status === 1) {
                     <button
@@ -164,7 +164,7 @@
                       (click)="checkIn(booking)"
                     >
                       <adeni-carbon-icon name="user--follow" [size]="16" />
-                      {{ tr('portal.bookings.markArrived') }}
+                      {{ tr('businessApp.bookings.markArrived') }}
                     </button>
                   } @else if (booking.status === 4) {
                     <button
@@ -174,7 +174,7 @@
                       (click)="complete(booking)"
                     >
                       <adeni-carbon-icon name="checkmark--filled" [size]="16" />
-                      {{ tr('portal.bookings.finishService') }}
+                      {{ tr('businessApp.bookings.finishService') }}
                     </button>
                   } @else if (booking.status === 5) {
                     <button
@@ -184,7 +184,7 @@
                       (click)="collectBalance(booking)"
                     >
                       <adeni-carbon-icon name="launch" [size]="16" />
-                      {{ tr('portal.bookings.collectBalance') }}
+                      {{ tr('businessApp.bookings.collectBalance') }}
                     </button>
                     <button
                       type="button"
@@ -193,7 +193,7 @@
                       (click)="markPaid(booking)"
                     >
                       <adeni-carbon-icon name="checkmark" [size]="16" />
-                      {{ tr('portal.bookings.paidAtTill') }}
+                      {{ tr('businessApp.bookings.paidAtTill') }}
                     </button>
                   }
                 </div>
@@ -215,7 +215,7 @@
         >
           <ng-template adeniDataTableCell="customer" let-booking>
             <adeni-table-person-cell
-              [displayName]="booking.customerName?.trim() || tr('portal.bookings.guest')"
+              [displayName]="booking.customerName?.trim() || tr('businessApp.bookings.guest')"
               [subtitle]="booking.customerPhoneMasked ?? booking.staffDisplayName ?? null"
               [initials]="(booking.customerName?.trim() || 'G').slice(0, 2).toUpperCase()"
               avatarTone="neutral"
@@ -236,7 +236,7 @@
                 @if (tab() === "pending" && booking.status === 0) {
                   <adeni-icon-btn
                     icon="misuse"
-                    [label]="tr('portal.bookings.decline')"
+                    [label]="tr('businessApp.bookings.decline')"
                     variant="danger-soft"
                     [dense]="true"
                     [disabled]="actionId() === booking.id"
@@ -244,7 +244,7 @@
                   />
                   <adeni-icon-btn
                     icon="checkmark"
-                    [label]="tr('portal.bookings.accept')"
+                    [label]="tr('businessApp.bookings.accept')"
                     variant="table"
                     [dense]="true"
                     [disabled]="actionId() === booking.id"
@@ -253,7 +253,7 @@
                 } @else if (booking.status === 1) {
                   <adeni-icon-btn
                     icon="user--follow"
-                    [label]="tr('portal.bookings.markArrived')"
+                    [label]="tr('businessApp.bookings.markArrived')"
                     variant="table"
                     [dense]="true"
                     [disabled]="actionId() === booking.id"
@@ -262,7 +262,7 @@
                 } @else if (booking.status === 4) {
                   <adeni-icon-btn
                     icon="checkmark--filled"
-                    [label]="tr('portal.bookings.finishService')"
+                    [label]="tr('businessApp.bookings.finishService')"
                     variant="table"
                     [dense]="true"
                     [disabled]="actionId() === booking.id"
@@ -271,7 +271,7 @@
                 } @else if (booking.status === 5) {
                   <adeni-icon-btn
                     icon="launch"
-                    [label]="tr('portal.bookings.collectBalance')"
+                    [label]="tr('businessApp.bookings.collectBalance')"
                     variant="table"
                     [dense]="true"
                     [disabled]="actionId() === booking.id"
@@ -279,7 +279,7 @@
                   />
                   <adeni-icon-btn
                     icon="checkmark"
-                    [label]="tr('portal.bookings.paidAtTill')"
+                    [label]="tr('businessApp.bookings.paidAtTill')"
                     variant="table"
                     [dense]="true"
                     [disabled]="actionId() === booking.id"
@@ -296,7 +296,7 @@
           [totalCount]="totalCount()"
           [pageSizeOptions]="listPageSizeOptions"
           [loading]="loading()"
-          [ariaLabel]="tr('portal.bookings.bookingPages')"
+          [ariaLabel]="tr('businessApp.bookings.bookingPages')"
           (pageChange)="goToPage($event)"
           (pageSizeChange)="onPageSizeChange($event)"
         />
@@ -311,7 +311,7 @@
             [totalCount]="totalCount()"
             [pageSizeOptions]="listPageSizeOptions"
             [loading]="loading()"
-            [ariaLabel]="tr('portal.bookings.bookingPages')"
+            [ariaLabel]="tr('businessApp.bookings.bookingPages')"
             (pageChange)="goToPage($event)"
             (pageSizeChange)="onPageSizeChange($event)"
           />

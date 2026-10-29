@@ -107,22 +107,22 @@ export class RetentionPackagesComponent implements OnInit {
   });
 
   readonly columns = computed<AdeniDataTableColumn<PackageDefinition>[]>(() => [
-    { id: "name", header: this.tr("portal.retention.name"), cell: (row) => row.name, sortValue: (row) => row.name.toLowerCase() },
+    { id: "name", header: this.tr("businessApp.retention.name"), cell: (row) => row.name, sortValue: (row) => row.name.toLowerCase() },
     {
       id: "price",
-      header: this.tr("portal.retention.listPrice"),
+      header: this.tr("businessApp.retention.listPrice"),
       align: "right",
       cell: (row) => formatPrice(row.listPrice, row.currency),
       sortValue: (row) => row.listPrice,
     },
-    { id: "credits", header: this.tr("portal.retention.credits"), cell: (row) => this.creditsSummary(row), sortable: false },
+    { id: "credits", header: this.tr("businessApp.retention.credits"), cell: (row) => this.creditsSummary(row), sortable: false },
     {
       id: "expiry",
-      header: this.tr("portal.retention.expiry"),
-      cell: (row) => this.tr("portal.retention.months", { count: row.effectiveExpiryMonths }),
+      header: this.tr("businessApp.retention.expiry"),
+      cell: (row) => this.tr("businessApp.retention.months", { count: row.effectiveExpiryMonths }),
       sortValue: (row) => row.effectiveExpiryMonths,
     },
-    { id: "status", header: this.tr("portal.retention.status"), cell: (row) => this.statusLabel(row), sortValue: (row) => (row.isActive ? 1 : 0) },
+    { id: "status", header: this.tr("businessApp.retention.status"), cell: (row) => this.statusLabel(row), sortValue: (row) => (row.isActive ? 1 : 0) },
   ]);
 
   readonly trackRow = (row: PackageDefinition): string => row.id;
@@ -136,17 +136,17 @@ export class RetentionPackagesComponent implements OnInit {
   }
 
   statusLabel(row: PackageDefinition): string {
-    return row.isActive ? this.tr("portal.retention.active") : this.tr("portal.retention.inactive");
+    return row.isActive ? this.tr("businessApp.retention.active") : this.tr("businessApp.retention.inactive");
   }
 
   scopeLabel(row: PackageDefinition): string {
     switch (row.redemptionScope) {
       case "purchase_location_only":
-        return this.tr("portal.retention.scopePurchase");
+        return this.tr("businessApp.retention.scopePurchase");
       case "selected_locations":
-        return this.tr("portal.retention.scopeSelected");
+        return this.tr("businessApp.retention.scopeSelected");
       default:
-        return this.tr("portal.retention.scopeAll");
+        return this.tr("businessApp.retention.scopeAll");
     }
   }
 
@@ -165,7 +165,7 @@ export class RetentionPackagesComponent implements OnInit {
         this.locations.set(locations.filter((l) => l.isActive !== false));
       });
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.retention.couldNotLoad"));
+      this.error.set(this.apiErr(caught, "businessApp.retention.couldNotLoad"));
       this.packages.set([]);
     } finally {
       this.loading.set(false);
@@ -213,9 +213,9 @@ export class RetentionPackagesComponent implements OnInit {
       );
       this.packages.update((list) => [created, ...list]);
       this.showCreate.set(false);
-      this.feedback.success(this.tr("portal.retention.created"));
+      this.feedback.success(this.tr("businessApp.retention.created"));
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.retention.couldNotSave"));
+      this.feedback.error(this.apiErr(caught, "businessApp.retention.couldNotSave"));
     } finally {
       this.busy.set(false);
     }
@@ -223,9 +223,9 @@ export class RetentionPackagesComponent implements OnInit {
 
   async deactivate(row: PackageDefinition): Promise<void> {
     const ok = await this.confirmDialog.confirm({
-      title: this.tr("portal.retention.deactivateTitle"),
-      message: this.tr("portal.retention.deactivateMessage", { name: row.name }),
-      confirmLabel: this.tr("portal.retention.deactivate"),
+      title: this.tr("businessApp.retention.deactivateTitle"),
+      message: this.tr("businessApp.retention.deactivateMessage", { name: row.name }),
+      confirmLabel: this.tr("businessApp.retention.deactivate"),
       danger: true,
     });
     if (!ok) return;
@@ -233,9 +233,9 @@ export class RetentionPackagesComponent implements OnInit {
     try {
       const updated = await this.api.withAuthorizedClient((client) => client.retention.deactivatePackage(row.id));
       this.packages.update((list) => list.map((p) => (p.id === updated.id ? updated : p)));
-      this.feedback.success(this.tr("portal.retention.deactivated"));
+      this.feedback.success(this.tr("businessApp.retention.deactivated"));
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.retention.couldNotSave"));
+      this.feedback.error(this.apiErr(caught, "businessApp.retention.couldNotSave"));
     } finally {
       this.busy.set(false);
     }
@@ -322,11 +322,11 @@ export class RetentionPackagesComponent implements OnInit {
       );
       this.lastSold.set(sold);
       this.sellKey = newKey();
-      this.feedback.success(this.tr("portal.retention.sold", { name: sold.name, customer: customer.displayName }));
+      this.feedback.success(this.tr("businessApp.retention.sold", { name: sold.name, customer: customer.displayName }));
       this.closeSell();
     } catch (caught) {
       // Keep the same Idempotency-Key so a retry cannot double-sell.
-      this.feedback.error(this.apiErr(caught, "portal.retention.couldNotSell"));
+      this.feedback.error(this.apiErr(caught, "businessApp.retention.couldNotSell"));
     } finally {
       this.busy.set(false);
     }

@@ -13,12 +13,12 @@ import { DiscoverySearchComponent } from "../../../shared/discovery-search.compo
   standalone: true,
   imports: [RouterLink, PortalPageComponent, DiscoverySearchComponent],
   template: `
-    <app-portal-page [title]="tr('discover.app.nav.discover')" [description]="tr('discover.appDiscover.description')">
+    <app-portal-page [title]="tr('customer.app.nav.discover')" [description]="tr('customer.appDiscover.description')">
       <div class="app-discover-search">
         <app-discovery-search variant="default" />
       </div>
       <p class="app-more">
-        <a class="cds-btn cds-btn--tertiary cds-btn--sm" routerLink="/discover">{{ tr('discover.appDiscover.browseAll') }}</a>
+        <a class="cds-btn cds-btn--tertiary cds-btn--sm" routerLink="/discover">{{ tr('customer.appDiscover.browseAll') }}</a>
       </p>
     </app-portal-page>
   `,

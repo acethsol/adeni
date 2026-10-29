@@ -34,8 +34,8 @@ const AUDIT_ACTION_PRESETS = [
   "admin.reporting.read",
   "admin.metrics.read",
   "admin.transactions.read",
-  "business.approved",
-  "business.rejected",
+  "businessApp.approved",
+  "businessApp.rejected",
   "booking.accepted",
   "tenant.settings_updated",
   "tenant.reporting.exported",
@@ -102,7 +102,7 @@ export class AdminAuditLogsComponent {
   readonly columns = computed<AdeniDataTableColumn<AdminAuditLogListItem>[]>(() => [
     {
       id: "when",
-      header: this.tr("portal.bookings.when"),
+      header: this.tr("businessApp.bookings.when"),
       cell: () => "",
       sortValue: (row) => row.occurredAt,
     },

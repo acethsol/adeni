@@ -2,15 +2,15 @@ import { inject, Injectable } from "@angular/core";
 import { hasTenantEntitlement, layoutIncludesWidget, mergeTenantEntitlements, resolveDashboardCapabilities,
   resolveDashboardRange, type ConversationSummary, type DashboardRangePreset, type QuoteRequestResponse } from "@adeni/shared";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
-import { PORTAL_ALL_LOCATIONS_SCOPE } from "../../core/services/portal-active-location-store";
+import { BusinessActiveLocationService } from "../../core/services/business-active-location.service";
+import { PORTAL_ALL_LOCATIONS_SCOPE } from "../../core/services/business-active-location-store";
 import { resolveDashboardLayoutFromApi } from "./dashboard-layout-sync";
 
 /** Page-scoped request orchestration; presentation signals and realtime subscriptions stay in the container. */
 @Injectable()
 export class DashboardDataService {
   private readonly businessApi = inject(BusinessApiService);
-  private readonly activeLocation = inject(PortalActiveLocationService);
+  private readonly activeLocation = inject(BusinessActiveLocationService);
 
   async load(rangePreset: DashboardRangePreset, isPractitionerView: () => boolean) {
     const range = resolveDashboardRange(rangePreset);

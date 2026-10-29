@@ -26,12 +26,12 @@ export type CustomerNavItem = {
 };
 
 export const CUSTOMER_NAV: readonly CustomerNavItem[] = [
-  { id: "home", path: "/app/home", labelKey: "discover.app.nav.home", icon: "home", tab: true, desktop: true },
-  { id: "discover", path: "/app/discover", labelKey: "discover.app.nav.discover", icon: "search", tab: true, desktop: true },
-  { id: "bookings", path: "/app/bookings", labelKey: "discover.app.nav.bookings", icon: "calendar", tab: true, desktop: true },
-  { id: "messages", path: "/app/messages", labelKey: "discover.app.nav.messages", icon: "chat", tab: true, desktop: true, badge: "messages" },
-  { id: "benefits", path: "/app/benefits", labelKey: "discover.app.nav.benefits", icon: "gift", tab: false, desktop: true },
-  { id: "profile", path: "/app/profile", labelKey: "discover.app.nav.profile", icon: "user--avatar", tab: true, desktop: false },
+  { id: "home", path: "/app/home", labelKey: "customer.app.nav.home", icon: "home", tab: true, desktop: true },
+  { id: "discover", path: "/app/discover", labelKey: "customer.app.nav.discover", icon: "search", tab: true, desktop: true },
+  { id: "bookings", path: "/app/bookings", labelKey: "customer.app.nav.bookings", icon: "calendar", tab: true, desktop: true },
+  { id: "messages", path: "/app/messages", labelKey: "customer.app.nav.messages", icon: "chat", tab: true, desktop: true, badge: "messages" },
+  { id: "benefits", path: "/app/benefits", labelKey: "customer.app.nav.benefits", icon: "gift", tab: false, desktop: true },
+  { id: "profile", path: "/app/profile", labelKey: "customer.app.nav.profile", icon: "user--avatar", tab: true, desktop: false },
 ];
 
 export const CUSTOMER_TAB_NAV: readonly CustomerNavItem[] = CUSTOMER_NAV.filter((item) => item.tab);

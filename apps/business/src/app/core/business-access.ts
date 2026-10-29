@@ -7,29 +7,29 @@ import {
   type BusinessPermission,
   type TenantEntitlements,
 } from "@adeni/shared";
-import type { PortalNavItem, PortalTab } from "./portal-nav";
+import type { BusinessNavItem, BusinessTab } from "./business-nav";
 
-export type PortalAccessContext = {
+export type BusinessAccessContext = {
   profile: BusinessProfile | null;
   profileLoaded: boolean;
   permissions: readonly BusinessPermission[];
 };
 
-export function portalEntitlements(profile: BusinessProfile | null): TenantEntitlements | null {
+export function businessEntitlements(profile: BusinessProfile | null): TenantEntitlements | null {
   return profile?.entitlements ?? null;
 }
 
-export function portalCapabilities(profile: BusinessProfile | null) {
+export function businessCapabilities(profile: BusinessProfile | null) {
   if (!profile) {
     return null;
   }
   return resolveCapabilities(profile.businessType, profile.categorySlug, profile.capabilities);
 }
 
-export function filterPortalTabs(
-  tabs: PortalTab[] | undefined,
+export function filterBusinessTabs(
+  tabs: BusinessTab[] | undefined,
   entitlements: TenantEntitlements | null,
-): PortalTab[] {
+): BusinessTab[] {
   if (!tabs?.length) {
     return [];
   }
@@ -38,7 +38,7 @@ export function filterPortalTabs(
   );
 }
 
-export function isPortalNavItemVisible(item: PortalNavItem, ctx: PortalAccessContext): boolean {
+export function isBusinessNavItemVisible(item: BusinessNavItem, ctx: BusinessAccessContext): boolean {
   if (item.shellHidden) {
     return false;
   }
@@ -55,8 +55,8 @@ export function isPortalNavItemVisible(item: PortalNavItem, ctx: PortalAccessCon
     return false;
   }
 
-  const capabilities = portalCapabilities(ctx.profile);
-  const entitlements = portalEntitlements(ctx.profile);
+  const capabilities = businessCapabilities(ctx.profile);
+  const entitlements = businessEntitlements(ctx.profile);
 
   if (item.capability) {
     if (!capabilities) {
@@ -74,7 +74,7 @@ export function isPortalNavItemVisible(item: PortalNavItem, ctx: PortalAccessCon
   return true;
 }
 
-export function firstPortalTabId(item: PortalNavItem, entitlements: TenantEntitlements | null): string | null {
-  const tabs = filterPortalTabs(item.tabs, entitlements);
+export function firstBusinessTabId(item: BusinessNavItem, entitlements: TenantEntitlements | null): string | null {
+  const tabs = filterBusinessTabs(item.tabs, entitlements);
   return tabs[0]?.id ?? null;
 }

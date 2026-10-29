@@ -1,14 +1,14 @@
 <app-portal-page
   [title]="tr('common.services')"
-  [description]="tr('portal.services.whatCustomersBookOrganizeInto')"
+  [description]="tr('businessApp.services.whatCustomersBookOrganizeInto')"
 >
   @if(intakeSession.loaded() && (intakeSession.permissionRole()==='owner' || intakeSession.permissionRole()==='manager')){<a pageActions routerLink="/services/intake" class="btn">{{tr('intake.title')}}</a>}
   <button pageActions type="button" class="btn" (click)="showCollectionsManager.set(true)">
-    {{ tr('portal.services.menuSections') }}
+    {{ tr('businessApp.services.menuSections') }}
   </button>
   <button pageActions type="button" class="btn btn-primary" (click)="openCreate()">
     <adeni-carbon-icon name="add" [size]="16" />
-    {{ tr('portal.services.addService') }}
+    {{ tr('businessApp.services.addService') }}
   </button>
 
   @if (error()) {
@@ -17,11 +17,11 @@
 
   <adeni-modal
     [open]="showForm()"
-    [title]="editingId() ? tr('portal.services.editService') : tr('portal.services.newService')"
+    [title]="editingId() ? tr('businessApp.services.editService') : tr('businessApp.services.newService')"
     [subtitle]="
       editingId()
-        ? tr('portal.services.updatePricingDurationCollection')
-        : tr('portal.services.addBookableServicePublicMenu')
+        ? tr('businessApp.services.updatePricingDurationCollection')
+        : tr('businessApp.services.addBookableServicePublicMenu')
     "
     size="lg"
     [hasFooter]="false"
@@ -42,27 +42,27 @@
   @if (services().length === 0 && !loading()) {
     <adeni-portal-empty-state
       icon="add"
-      [title]="tr('portal.services.noServicesYet')"
-      [description]="tr('portal.services.addAtLeastOneService')"
+      [title]="tr('businessApp.services.noServicesYet')"
+      [description]="tr('businessApp.services.addAtLeastOneService')"
     />
   } @else {
     <div class="roster">
       <adeni-list-toolbar
-        storageKey="portal.services"
+        storageKey="businessApp.services"
         [viewMode]="viewMode()"
         (viewModeChange)="viewMode.set($event)"
         [count]="paginatedServices().length"
         [countTotal]="filteredServicesCount()"
-        [singularCountLabel]="tr('portal.services.service')"
-        [pluralCountLabel]="tr('portal.services.services')"
-        [searchPlaceholder]="tr('portal.services.searchServices')"
+        [singularCountLabel]="tr('businessApp.services.service')"
+        [pluralCountLabel]="tr('businessApp.services.services')"
+        [searchPlaceholder]="tr('businessApp.services.searchServices')"
         [searchQuery]="menuSearch()"
         (searchQueryChange)="onMenuSearchChange($event)"
       >
         <adeni-list-filter-row listFilters>
           <adeni-filter-select
             layout="toolbar"
-            [label]="tr('portal.services.menuSection')"
+            [label]="tr('businessApp.services.menuSection')"
             [options]="groupFilterOptions()"
             [value]="groupFilter()"
             (valueChange)="onGroupFilterChange($any($event))"
@@ -79,15 +79,15 @@
       @if (filteredServices().length === 0) {
         <adeni-portal-empty-state
           icon="search"
-          [title]="tr('portal.services.noMatchingServices')"
-          [description]="tr('portal.services.adjustSearchCollectionFilter')"
+          [title]="tr('businessApp.services.noMatchingServices')"
+          [description]="tr('businessApp.services.adjustSearchCollectionFilter')"
           [compact]="true"
         />
       } @else if (viewMode() === "cards") {
         <ul class="plain staff-grid">
           @for (service of paginatedServices(); track service.id) {
             <li class="org-card">
-              <a class="org-card-link" [routerLink]="['/services', service.id]" [attr.aria-label]="tr('portal.services.viewService')">
+              <a class="org-card-link" [routerLink]="['/services', service.id]" [attr.aria-label]="tr('businessApp.services.viewService')">
               <div class="org-avatar" data-tone="neutral" aria-hidden="true">
                 <span>{{ serviceInitials(service) }}</span>
               </div>
@@ -106,7 +106,7 @@
               </adeni-pill>
               <div class="org-meta adeni-cell-pills">
                 @if (service.isAddOn) {
-                  <adeni-pill tone="neutral" [compact]="true">{{ tr('portal.services.add') }}</adeni-pill>
+                  <adeni-pill tone="neutral" [compact]="true">{{ tr('businessApp.services.add') }}</adeni-pill>
                 }
                 @if (service.categorySlug) {
                   <adeni-pill tone="info" [compact]="true">{{
@@ -140,7 +140,7 @@
             [pageSize]="pageSize()"
             [totalCount]="filteredServicesCount()"
             [pageSizeOptions]="listPageSizeOptions"
-            [ariaLabel]="tr('portal.services.servicePages')"
+            [ariaLabel]="tr('businessApp.services.servicePages')"
             (pageChange)="goToServicesPage($event)"
             (pageSizeChange)="onServicesPageSizeChange($event)"
           />
@@ -198,7 +198,7 @@
           <ng-template adeniDataTableCell="tags" let-service>
             <div class="adeni-cell-pills">
               @if (service.isAddOn) {
-                <adeni-pill tone="neutral" [compact]="true">{{ tr('portal.services.add') }}</adeni-pill>
+                <adeni-pill tone="neutral" [compact]="true">{{ tr('businessApp.services.add') }}</adeni-pill>
               }
               @if (service.categorySlug) {
                 <adeni-pill tone="info" [compact]="true">{{
@@ -211,14 +211,14 @@
             <adeni-row-action-bar>
               <adeni-icon-btn
                 icon="edit"
-                [label]="tr('portal.services.editService')"
+                [label]="tr('businessApp.services.editService')"
                 variant="table"
                 [dense]="true"
                 [routerLink]="['/services', service.id]"
               />
               <adeni-icon-btn
                 icon="misuse"
-                [label]="tr('portal.services.deactivateService')"
+                [label]="tr('businessApp.services.deactivateService')"
                 variant="danger-soft"
                 [dense]="true"
                 [disabled]="busy() === service.id"
@@ -233,7 +233,7 @@
             [pageSize]="pageSize()"
             [totalCount]="filteredServicesCount()"
             [pageSizeOptions]="listPageSizeOptions"
-            [ariaLabel]="tr('portal.services.servicePages')"
+            [ariaLabel]="tr('businessApp.services.servicePages')"
             (pageChange)="goToServicesPage($event)"
             (pageSizeChange)="onServicesPageSizeChange($event)"
           />
@@ -244,8 +244,8 @@
 
   <adeni-modal
     [open]="showCollectionsManager()"
-    [title]="tr('portal.services.menuSections')"
-    [subtitle]="tr('portal.services.headingsPublicBookingMenuAssign')"
+    [title]="tr('businessApp.services.menuSections')"
+    [subtitle]="tr('businessApp.services.headingsPublicBookingMenuAssign')"
     size="md"
     [hasFooter]="true"
     (closed)="showCollectionsManager.set(false)"
@@ -253,7 +253,7 @@
     <div class="menu-section-add">
       <input
         type="text"
-        [placeholder]="tr('portal.services.sectionNameEGHair')"
+        [placeholder]="tr('businessApp.services.sectionNameEGHair')"
         [ngModel]="newGroupName()"
         (ngModelChange)="newGroupName.set($event)"
         maxlength="120"
@@ -261,12 +261,12 @@
       />
       <button type="button" class="btn btn-primary" [disabled]="busy() === 'group'" (click)="addGroup()">
         <adeni-carbon-icon name="add" [size]="16" />
-        {{ tr('portal.services.addSection') }}
+        {{ tr('businessApp.services.addSection') }}
       </button>
     </div>
     @if (groups().length === 0) {
       <p class="muted menu-section-empty">
-        {{ tr('portal.services.noSectionsYetServicesShow') }}
+        {{ tr('businessApp.services.noSectionsYetServicesShow') }}
       </p>
     } @else {
       <ul class="menu-section-list plain">

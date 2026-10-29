@@ -1,4 +1,4 @@
-import { PortalSessionService } from "../../core/services/portal-session.service";
+import { BusinessSessionService } from "../../core/services/business-session.service";
 import { RouterLink } from "@angular/router";
 import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
@@ -45,7 +45,7 @@ import {
   injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
+import { BusinessActiveLocationService } from "../../core/services/business-active-location.service";
 import { ServiceEditFormComponent } from "./service-edit-form.component";
 import { type ServiceDraft } from "./service-draft";
 import { resetEmptyDraft, serviceDraftToCreateBody } from "./service-save.util";
@@ -77,11 +77,11 @@ import { resetEmptyDraft, serviceDraftToCreateBody } from "./service-save.util";
   styleUrl: "./services.component.scss",
 })
 export class ServicesComponent implements OnInit {
-  readonly intakeSession = inject(PortalSessionService);
+  readonly intakeSession = inject(BusinessSessionService);
   protected readonly tr = injectAdeniTranslate();
   protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
-  private readonly activeLocation = inject(PortalActiveLocationService);
+  private readonly activeLocation = inject(BusinessActiveLocationService);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly confirmDialog = inject(AdeniConfirmService);
   readonly loading = signal(true);
@@ -102,7 +102,7 @@ export class ServicesComponent implements OnInit {
   readonly pageSize = signal(DEFAULT_PAGE_SIZE);
   readonly listPageSizeOptions = LIST_PAGE_SIZE_OPTIONS;
   readonly viewMode = signal<AdeniListViewMode>(
-    readPersistedListViewMode("portal.services", "cards"),
+    readPersistedListViewMode("businessApp.services", "cards"),
   );
 
   readonly entitlements = signal<TenantEntitlements | null>(null);
@@ -125,8 +125,8 @@ export class ServicesComponent implements OnInit {
   );
 
   readonly groupFilterOptions = computed((): AdeniFilterSelectOption[] => [
-    { value: "all", label: this.tr("portal.services.allSections") },
-    { value: "none", label: this.tr("portal.services.noSection") },
+    { value: "all", label: this.tr("businessApp.services.allSections") },
+    { value: "none", label: this.tr("businessApp.services.noSection") },
     ...this.groups().map((g) => ({ value: g.id, label: g.name })),
   ]);
 
@@ -187,7 +187,7 @@ export class ServicesComponent implements OnInit {
       },
       {
         id: "collection",
-        header: this.tr("portal.services.section"),
+        header: this.tr("businessApp.services.section"),
         cell: (s) => this.groupName(s.menuGroupId),
         sortValue: (s) => this.groupName(s.menuGroupId).toLowerCase(),
       },
@@ -202,7 +202,7 @@ export class ServicesComponent implements OnInit {
     }
     columns.push({
       id: "tags",
-      header: this.tr("portal.services.details"),
+      header: this.tr("businessApp.services.details"),
       cell: () => "",
       sortValue: (s) => s.priceAmount,
     });
@@ -270,9 +270,9 @@ export class ServicesComponent implements OnInit {
 
   groupName(groupId: string | null | undefined): string {
     if (!groupId) {
-      return this.tr("portal.services.noSection");
+      return this.tr("businessApp.services.noSection");
     }
-    return this.groups().find((g) => g.id === groupId)?.name ?? this.tr("portal.services.noSection");
+    return this.groups().find((g) => g.id === groupId)?.name ?? this.tr("businessApp.services.noSection");
   }
 
   serviceInitials(service: ServiceOffering): string {
@@ -338,8 +338,8 @@ export class ServicesComponent implements OnInit {
         });
       });
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.services.couldNotLoadServices"));
-      this.feedback.error(this.apiErr(caught, "portal.services.couldNotLoadServices"));
+      this.error.set(this.apiErr(caught, "businessApp.services.couldNotLoadServices"));
+      this.feedback.error(this.apiErr(caught, "businessApp.services.couldNotLoadServices"));
     } finally {
       this.loading.set(false);
     }
@@ -384,7 +384,7 @@ export class ServicesComponent implements OnInit {
   async addGroup(): Promise<void> {
     const name = this.newGroupName().trim();
     if (name.length < 2) {
-      this.error.set(this.tr("portal.services.collectionNameNeedsAtLeast"));
+      this.error.set(this.tr("businessApp.services.collectionNameNeedsAtLeast"));
       return;
     }
     this.busy.set("group");
@@ -398,15 +398,15 @@ export class ServicesComponent implements OnInit {
               sortOrder: this.groups().length,
             }),
           ),
-        this.tr("portal.services.addingCollection"),
+        this.tr("businessApp.services.addingCollection"),
         name,
       );
       this.groups.update((list) => [...list, created].sort((a, b) => a.sortOrder - b.sortOrder));
       this.newGroupName.set("");
-      this.feedback.success(`“${created.name}” is ready to assign.`, this.tr("portal.services.collectionAdded"));
+      this.feedback.success(`“${created.name}” is ready to assign.`, this.tr("businessApp.services.collectionAdded"));
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.services.couldNotCreateCollection"));
-      this.feedback.error(this.apiErr(caught, "portal.services.couldNotCreateCollection"));
+      this.error.set(this.apiErr(caught, "businessApp.services.couldNotCreateCollection"));
+      this.feedback.error(this.apiErr(caught, "businessApp.services.couldNotCreateCollection"));
     } finally {
       this.busy.set(null);
     }
@@ -414,8 +414,8 @@ export class ServicesComponent implements OnInit {
 
   async removeGroup(group: ServiceMenuGroup): Promise<void> {
     const ok = await this.confirmDialog.confirm({
-      title: this.tr("portal.services.removeCollection"),
-      message: this.tr("portal.services.removeServicesStayMenuUngrouped", { name: group.name }),
+      title: this.tr("businessApp.services.removeCollection"),
+      message: this.tr("businessApp.services.removeServicesStayMenuUngrouped", { name: group.name }),
       confirmLabel: this.tr("common.remove"),
       danger: true,
     });
@@ -427,17 +427,17 @@ export class ServicesComponent implements OnInit {
     try {
       await this.feedback.runLoading(
         () => this.api.withAuthorizedClient((c) => c.deleteTenantServiceMenuGroup(group.id)),
-        this.tr("portal.services.removingCollection"),
+        this.tr("businessApp.services.removingCollection"),
         group.name,
       );
       this.groups.update((list) => list.filter((g) => g.id !== group.id));
       this.services.update((list) =>
         list.map((s) => (s.menuGroupId === group.id ? { ...s, menuGroupId: null } : s)),
       );
-      this.feedback.success(`“${group.name}” removed. Services are ungrouped.`, this.tr("portal.services.collectionRemoved"));
+      this.feedback.success(`“${group.name}” removed. Services are ungrouped.`, this.tr("businessApp.services.collectionRemoved"));
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.services.couldNotRemoveCollection"));
-      this.feedback.error(this.apiErr(caught, "portal.services.couldNotRemoveCollection"));
+      this.error.set(this.apiErr(caught, "businessApp.services.couldNotRemoveCollection"));
+      this.feedback.error(this.apiErr(caught, "businessApp.services.couldNotRemoveCollection"));
     } finally {
       this.busy.set(null);
     }
@@ -446,7 +446,7 @@ export class ServicesComponent implements OnInit {
   async save(): Promise<void> {
     const createBody = serviceDraftToCreateBody(this.draft);
     if (!createBody) {
-      this.error.set(this.tr("portal.services.fillNamePriceDuration"));
+      this.error.set(this.tr("businessApp.services.fillNamePriceDuration"));
       return;
     }
 
@@ -472,12 +472,12 @@ export class ServicesComponent implements OnInit {
           const created = await this.api.withAuthorizedClient((c) => c.createTenantService(createBody));
           this.services.update((list) => [...list, created]);
         }
-      }, this.tr("portal.services.savingService"), createBody.name);
+      }, this.tr("businessApp.services.savingService"), createBody.name);
       this.cancelForm();
-      this.feedback.success(`“${createBody.name}” is on your menu.`, this.tr("portal.services.serviceSaved"));
+      this.feedback.success(`“${createBody.name}” is on your menu.`, this.tr("businessApp.services.serviceSaved"));
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.services.couldNotSaveService"));
-      this.feedback.error(this.apiErr(caught, "portal.services.couldNotSaveService"));
+      this.error.set(this.apiErr(caught, "businessApp.services.couldNotSaveService"));
+      this.feedback.error(this.apiErr(caught, "businessApp.services.couldNotSaveService"));
     } finally {
       this.busy.set(null);
     }
@@ -485,8 +485,8 @@ export class ServicesComponent implements OnInit {
 
   async deactivate(service: ServiceOffering): Promise<void> {
     const ok = await this.confirmDialog.confirm({
-      title: this.tr("portal.services.deactivateService2"),
-      message: this.tr("portal.services.deactivateCustomersWonTBe", { name: service.name }),
+      title: this.tr("businessApp.services.deactivateService2"),
+      message: this.tr("businessApp.services.deactivateCustomersWonTBe", { name: service.name }),
       confirmLabel: this.tr("common.deactivate"),
       danger: true,
     });
@@ -497,14 +497,14 @@ export class ServicesComponent implements OnInit {
     try {
       await this.feedback.runLoading(
         () => this.api.withAuthorizedClient((c) => c.deactivateTenantService(service.id)),
-        this.tr("portal.services.deactivatingService"),
+        this.tr("businessApp.services.deactivatingService"),
         service.name,
       );
       this.services.update((list) => list.filter((s) => s.id !== service.id));
-      this.feedback.success(`“${service.name}” is no longer bookable.`, this.tr("portal.services.serviceDeactivated"));
+      this.feedback.success(`“${service.name}” is no longer bookable.`, this.tr("businessApp.services.serviceDeactivated"));
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.services.couldNotDeactivateService"));
-      this.feedback.error(this.apiErr(caught, "portal.services.couldNotDeactivateService"));
+      this.error.set(this.apiErr(caught, "businessApp.services.couldNotDeactivateService"));
+      this.feedback.error(this.apiErr(caught, "businessApp.services.couldNotDeactivateService"));
     } finally {
       this.busy.set(null);
     }
@@ -530,9 +530,9 @@ export class ServicesComponent implements OnInit {
       anchor.download = `tenant-services-${to.toISOString().slice(0, 10)}.${format === "xlsx" ? "xlsx" : "csv"}`;
       anchor.click();
       URL.revokeObjectURL(url);
-      this.feedback.success(this.tr("portal.services.serviceMenuDownloaded"));
+      this.feedback.success(this.tr("businessApp.services.serviceMenuDownloaded"));
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.services.couldNotDownloadServiceMenu"));
+      this.feedback.error(this.apiErr(caught, "businessApp.services.couldNotDownloadServiceMenu"));
     } finally {
       this.exporting.set(false);
     }

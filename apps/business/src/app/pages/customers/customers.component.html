@@ -1,6 +1,6 @@
 <app-portal-page
-  [title]="tr('portal.customers.customers')"
-  [description]="tr('portal.customers.peopleWhoBookedOnlineJoined')"
+  [title]="tr('businessApp.customers.customers')"
+  [description]="tr('businessApp.customers.peopleWhoBookedOnlineJoined')"
 >
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
@@ -9,27 +9,27 @@
   @if (totalCount() === 0 && !searchQuery().trim() && accountFilter() === "all" && !loading()) {
     <adeni-portal-empty-state
       icon="user--filled"
-      [title]="tr('portal.customers.noCustomersYet')"
-      [description]="tr('portal.customers.profilesAppearWhenSomeoneBooks')"
+      [title]="tr('businessApp.customers.noCustomersYet')"
+      [description]="tr('businessApp.customers.profilesAppearWhenSomeoneBooks')"
     />
   } @else {
     <div class="roster">
       <adeni-list-toolbar
-        storageKey="portal.customers"
+        storageKey="businessApp.customers"
         [viewMode]="viewMode()"
         (viewModeChange)="viewMode.set($event)"
         [count]="items().length"
         [countTotal]="totalCount()"
-        [singularCountLabel]="tr('portal.customers.customer')"
-        [pluralCountLabel]="tr('portal.customers.customers2')"
-        [searchPlaceholder]="tr('portal.customers.searchNamePhoneEmail')"
+        [singularCountLabel]="tr('businessApp.customers.customer')"
+        [pluralCountLabel]="tr('businessApp.customers.customers2')"
+        [searchPlaceholder]="tr('businessApp.customers.searchNamePhoneEmail')"
         [searchQuery]="searchQuery()"
         (searchQueryChange)="onSearchChange($event)"
       >
         <adeni-list-filter-row listFilters>
           <adeni-filter-select
             layout="toolbar"
-            [label]="tr('portal.customers.profileType')"
+            [label]="tr('businessApp.customers.profileType')"
             [options]="accountFilterOptions()"
             [value]="accountFilter()"
             (valueChange)="onAccountFilterChange($any($event))"
@@ -47,7 +47,7 @@
         <adeni-portal-empty-state
           icon="search"
           [title]="tr('common.noMatches')"
-          [description]="tr('portal.customers.tryDifferentSearchProfileType')"
+          [description]="tr('businessApp.customers.tryDifferentSearchProfileType')"
           [compact]="true"
         />
       } @else if (viewMode() === "cards") {
@@ -71,7 +71,7 @@
                 </adeni-pill>
               </div>
               <div class="org-actions">
-                <a [routerLink]="['/customers', row.id]">{{ tr('portal.customers.viewProfile') }}</a>
+                <a [routerLink]="['/customers', row.id]">{{ tr('businessApp.customers.viewProfile') }}</a>
               </div>
             </li>
           }
@@ -84,7 +84,7 @@
             [totalCount]="totalCount()"
             [pageSizeOptions]="listPageSizeOptions"
             [loading]="loading()"
-            [ariaLabel]="tr('portal.customers.customerPages')"
+            [ariaLabel]="tr('businessApp.customers.customerPages')"
             (pageChange)="goToPage($event)"
             (pageSizeChange)="onPageSizeChange($event)"
           />
@@ -124,7 +124,7 @@
               <adeni-row-action-bar>
                 <adeni-icon-btn
                   icon="arrow--right"
-                  [label]="tr('portal.customers.viewCustomer')"
+                  [label]="tr('businessApp.customers.viewCustomer')"
                   variant="table"
                   [dense]="true"
                   [routerLink]="['/customers', row.id]"
@@ -139,7 +139,7 @@
             [totalCount]="totalCount()"
             [pageSizeOptions]="listPageSizeOptions"
             [loading]="loading()"
-            [ariaLabel]="tr('portal.customers.customerPages')"
+            [ariaLabel]="tr('businessApp.customers.customerPages')"
             (pageChange)="goToPage($event)"
             (pageSizeChange)="onPageSizeChange($event)"
           />

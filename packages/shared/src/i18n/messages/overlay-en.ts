@@ -220,7 +220,30 @@ export const enOverlay: MessageTree = {
       december: "December",
     },
   },
-  portal: {
+  customer: {
+    app: {
+      nav: {
+        home: "Home",
+        discover: "Discover",
+        bookings: "Bookings",
+        messages: "Messages",
+        benefits: "Benefits",
+        profile: "Profile",
+      },
+      openApp: "Open app",
+      unread: "{count} unread",
+      accountMenu: "Account menu",
+      account: "Account",
+      browsePublic: "Browse public site",
+      tabBar: "Main navigation",
+      adeniDiscover: "Adeni Discover",
+    },
+    appDiscover: {
+      description: "Find verified businesses and book your next visit.",
+      browseAll: "Browse all",
+    },
+  },
+  businessApp: {
     memberships: {
       title: "Memberships",
       description: "Define recurring membership plans. Enrolling customers and billing arrive in a later release.",

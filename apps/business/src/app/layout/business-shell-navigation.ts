@@ -1,27 +1,27 @@
 import type { TenantEntitlements } from "@adeni/shared";
-import { filterPortalTabs, isPortalNavItemVisible, type PortalAccessContext } from "../core/portal-access";
-import { PORTAL_NAV_GROUPS, type PortalNavGroup, type PortalNavItem } from "../core/portal-nav";
+import { filterBusinessTabs, isBusinessNavItemVisible, type BusinessAccessContext } from "../core/business-access";
+import { BUSINESS_NAV_GROUPS, type BusinessNavGroup, type BusinessNavItem } from "../core/business-nav";
 
 export type SearchHit = {
   id: string;
   label: string;
   path: string;
-  icon: PortalNavItem["icon"];
+  icon: BusinessNavItem["icon"];
   external?: boolean;
 };
 
-export function portalNavigationGroups(context: PortalAccessContext): PortalNavGroup[] {
-  return PORTAL_NAV_GROUPS.map((group) => ({
+export function businessNavigationGroups(context: BusinessAccessContext): BusinessNavGroup[] {
+  return BUSINESS_NAV_GROUPS.map((group) => ({
     ...group,
-    items: group.items.filter((item) => isPortalNavItemVisible(item, context)),
+    items: group.items.filter((item) => isBusinessNavItemVisible(item, context)),
   })).filter((group) => group.items.length > 0);
 }
 
-export function portalSearchResults(options: {
+export function businessSearchResults(options: {
   query: string;
-  groups: PortalNavGroup[];
+  groups: BusinessNavGroup[];
   entitlements: TenantEntitlements | null;
-  navLabel: (item: PortalNavItem) => string;
+  navLabel: (item: BusinessNavItem) => string;
   tabLabel: (id: string) => string;
   discoverLabel: string;
   discoverUrl: string;
@@ -38,7 +38,7 @@ export function portalSearchResults(options: {
       icon: item.icon,
     }));
   const tabPages = navItems.flatMap((item) => {
-    const tabs = filterPortalTabs(item.tabs, entitlements);
+    const tabs = filterBusinessTabs(item.tabs, entitlements);
     return tabs
       .filter(
         (tab) =>

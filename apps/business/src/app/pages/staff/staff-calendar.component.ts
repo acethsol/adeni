@@ -54,8 +54,8 @@ import {
   injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
-import { PortalSessionService } from "../../core/services/portal-session.service";
+import { BusinessActiveLocationService } from "../../core/services/business-active-location.service";
+import { BusinessSessionService } from "../../core/services/business-session.service";
 
 const PX_PER_HOUR = 64;
 const DEFAULT_START_HOUR = 8;
@@ -139,8 +139,8 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
-  private readonly session = inject(PortalSessionService);
-  private readonly activeLocation = inject(PortalActiveLocationService);
+  private readonly session = inject(BusinessSessionService);
+  private readonly activeLocation = inject(BusinessActiveLocationService);
 
   private readonly detailRail = viewChild<ElementRef<HTMLElement>>("detailRail");
 
@@ -156,7 +156,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
   readonly staffSidebarSearchFocused = signal(false);
   readonly staffSidebarCompact = signal(false);
   readonly listViewMode = signal<AdeniListViewMode>(
-    readPersistedListViewMode("portal.calendar", "cards"),
+    readPersistedListViewMode("businessApp.calendar", "cards"),
   );
   readonly calendarSearch = signal("");
   readonly kindFilter = signal<CalendarKindFilter>("all");
@@ -240,11 +240,11 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
 
   readonly boardTitle = computed(() => {
     if (this.teamMode()) {
-      return this.tr("portal.dashboard.appointments");
+      return this.tr("businessApp.dashboard.appointments");
     }
     return this.calendar()?.displayName
       ? `${this.calendar()!.displayName} · Calendar`
-      : this.tr("portal.dashboard.myCalendar");
+      : this.tr("businessApp.dashboard.myCalendar");
   });
 
   readonly boardSubtitle = computed(() => this.appointmentSummary());
@@ -258,17 +258,17 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
   readonly focusDayKey = computed(() => dayKey(this.focusDay()));
 
   readonly kindFilterOptions = computed<AdeniFilterSelectOption[]>(() => [
-    { value: "all", label: this.tr("portal.staff.allItems") },
-    { value: "bookings", label: this.tr("portal.dashboard.appointments") },
+    { value: "all", label: this.tr("businessApp.staff.allItems") },
+    { value: "bookings", label: this.tr("businessApp.dashboard.appointments") },
     { value: "leave", label: this.tr("common.leave") },
   ]);
 
   readonly statusFilterOptions = computed<AdeniFilterSelectOption[]>(() => [
-    { value: "all", label: this.tr("portal.staff.allStatuses") },
-    { value: "pending", label: this.tr("portal.staff.pending") },
-    { value: "confirmed", label: this.tr("portal.staff.confirmed") },
+    { value: "all", label: this.tr("businessApp.staff.allStatuses") },
+    { value: "pending", label: this.tr("businessApp.staff.pending") },
+    { value: "confirmed", label: this.tr("businessApp.staff.confirmed") },
     { value: "rejected", label: this.tr("admin.pending.rejected") },
-    { value: "cancelled", label: this.tr("portal.bookings.cancelled") },
+    { value: "cancelled", label: this.tr("businessApp.bookings.cancelled") },
     { value: "leave", label: this.tr("common.leave") },
   ]);
 
@@ -320,7 +320,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
   readonly agendaTableColumns = computed<AdeniDataTableColumn<PlacedBlock>[]>(() => [
     {
       id: "when",
-      header: this.tr("portal.bookings.when"),
+      header: this.tr("businessApp.bookings.when"),
       cell: (b) => `${this.formatAgendaDay(b.dayKey)} · ${b.startLabel} – ${b.endLabel}`,
       sortValue: (b) => `${b.dayKey}${b.top.toString().padStart(5, "0")}`,
     },
@@ -537,8 +537,8 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
           startLabel: formatClock(clip.startMin),
           endLabel: formatClock(clip.endMin),
           title: leave.staffDisplayName
-            ? this.tr("portal.staff.timeOff", { staffDisplayName: leave.staffDisplayName })
-            : this.tr("portal.staff.timeOff2"),
+            ? this.tr("businessApp.staff.timeOff", { staffDisplayName: leave.staffDisplayName })
+            : this.tr("businessApp.staff.timeOff2"),
           subtitle: leave.reason ?? null,
           status: null,
           statusLabel: null,
@@ -569,7 +569,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
           title: booking.serviceName,
           subtitle:
             booking.customerNotes?.trim()
-            || (this.teamMode() ? booking.staffDisplayName?.trim() || this.tr("portal.staff.anyAvailable") : null),
+            || (this.teamMode() ? booking.staffDisplayName?.trim() || this.tr("businessApp.staff.anyAvailable") : null),
           status: booking.status,
           statusLabel: this.bookingStatusLabel(booking.status),
           customerSelectedStaff: selected,
@@ -796,15 +796,15 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
   private bookingStatusLabel(status: number): string {
     switch (status) {
       case 0:
-        return this.tr("portal.staff.pending");
+        return this.tr("businessApp.staff.pending");
       case 1:
-        return this.tr("portal.staff.confirmed");
+        return this.tr("businessApp.staff.confirmed");
       case 2:
-        return this.tr("portal.staff.statusRejected");
+        return this.tr("businessApp.staff.statusRejected");
       case 3:
-        return this.tr("portal.staff.statusCancelled");
+        return this.tr("businessApp.staff.statusCancelled");
       default:
-        return this.tr("portal.staff.statusUnknown");
+        return this.tr("businessApp.staff.statusUnknown");
     }
   }
 
@@ -815,18 +815,18 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
   /** Sidebar copy — spelled-out hours for the current calendar range. */
   staffBookedHoursSummary(minutes: number): string {
     if (minutes <= 0) {
-      return this.tr("portal.staff.noHoursBookedRange");
+      return this.tr("businessApp.staff.noHoursBookedRange");
     }
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     const parts: string[] = [];
     if (hours > 0) {
-      parts.push(this.tr(hours === 1 ? "portal.staff.hourCountOne" : "portal.staff.hourCountMany", { count: hours }));
+      parts.push(this.tr(hours === 1 ? "businessApp.staff.hourCountOne" : "businessApp.staff.hourCountMany", { count: hours }));
     }
     if (mins > 0) {
-      parts.push(this.tr("portal.staff.minuteCount", { count: mins }));
+      parts.push(this.tr("businessApp.staff.minuteCount", { count: mins }));
     }
-    return this.tr("portal.staff.totalDuration", { duration: parts.join(" ") });
+    return this.tr("businessApp.staff.totalDuration", { duration: parts.join(" ") });
   }
 
   /** Roster admins see a back link; practitioners viewing their own calendar do not. */
@@ -1061,7 +1061,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
 
   async load(): Promise<void> {
     if (!this.teamMode() && !this.staffId) {
-      this.error.set(this.tr("portal.staff.staffMemberNotFound"));
+      this.error.set(this.tr("businessApp.staff.staffMemberNotFound"));
       this.loading.set(false);
       return;
     }
@@ -1095,7 +1095,7 @@ export class StaffCalendarComponent implements OnInit, OnDestroy {
         }
       });
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.staff.couldNotLoadCalendar"));
+      this.error.set(this.apiErr(caught, "businessApp.staff.couldNotLoadCalendar"));
       this.calendar.set(null);
       this.team.set(null);
     } finally {

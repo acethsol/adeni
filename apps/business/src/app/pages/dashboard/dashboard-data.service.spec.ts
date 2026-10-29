@@ -2,8 +2,8 @@ import { TestBed } from "@angular/core/testing";
 import type { AdeniApiClient } from "@adeni/api-client";
 import { businessProfileSchema, PLAN_ENTITLEMENTS, tenantEntitlementsSchema } from "@adeni/shared";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
-import { PORTAL_ALL_LOCATIONS_SCOPE } from "../../core/services/portal-active-location-store";
+import { BusinessActiveLocationService } from "../../core/services/business-active-location.service";
+import { PORTAL_ALL_LOCATIONS_SCOPE } from "../../core/services/business-active-location-store";
 import { DashboardDataService } from "./dashboard-data.service";
 
 describe("DashboardDataService", () => {
@@ -32,7 +32,7 @@ describe("DashboardDataService", () => {
       selectedLocationId: jasmine.createSpy().and.returnValue(PORTAL_ALL_LOCATIONS_SCOPE), resolveContextLocation: jasmine.createSpy() };
     TestBed.configureTestingModule({ providers: [DashboardDataService,
       { provide: BusinessApiService, useValue: { withAuthorizedClient: (fn: (api: AdeniApiClient) => unknown) => fn(client) } },
-      { provide: PortalActiveLocationService, useValue: location }] });
+      { provide: BusinessActiveLocationService, useValue: location }] });
   });
 
   it("preserves branch-scoped request orchestration and optional failure fallbacks", async () => {

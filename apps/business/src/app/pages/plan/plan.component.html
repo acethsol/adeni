@@ -1,13 +1,13 @@
 <app-portal-page
-  [title]="tr('portal.plan.plansBilling')"
-  [description]="tr('portal.plan.compareAdeniPlansTrackUsage')"
+  [title]="tr('businessApp.plan.plansBilling')"
+  [description]="tr('businessApp.plan.compareAdeniPlansTrackUsage')"
 >
   @if (error()) {
     <p class="error-banner">{{ error() }}</p>
   }
 
   @if (route.snapshot.queryParamMap.get("upgraded") === "1") {
-    <p class="ok-banner">{{ tr('portal.plan.planUpdatedEntitlementsRefreshWithin') }}</p>
+    <p class="ok-banner">{{ tr('businessApp.plan.planUpdatedEntitlementsRefreshWithin') }}</p>
   }
 
   <adeni-tabs [tabs]="planTabs()" />
@@ -17,11 +17,11 @@
         <div class="compare-head">
           <h3>{{ tr('common.comparePlans') }}</h3>
           <p class="muted compare-lede">
-            {{ tr('portal.plan.featureRowsMatchLiveEntitlements') }}
+            {{ tr('businessApp.plan.featureRowsMatchLiveEntitlements') }}
           </p>
         </div>
         <div class="compare-table-shell">
-          <div class="compare-table-wrap" role="region" [attr.aria-label]="tr('portal.plan.planFeatureComparison')" tabindex="0">
+          <div class="compare-table-wrap" role="region" [attr.aria-label]="tr('businessApp.plan.planFeatureComparison')" tabindex="0">
             <table class="compare-table">
               <colgroup>
                 <col class="compare-feature-col" />
@@ -32,7 +32,7 @@
               <thead>
                 <tr class="compare-header-row">
                   <th scope="col" class="compare-feature-col compare-th-feature">
-                    <span class="compare-section-label">{{ tr('portal.plan.whatSIncluded') }}</span>
+                    <span class="compare-section-label">{{ tr('businessApp.plan.whatSIncluded') }}</span>
                   </th>
                   @for (sku of skus; track sku) {
                     @let display = planDisplay(sku);
@@ -46,7 +46,7 @@
                         <span class="compare-plan-tier">{{ display.name }}</span>
                         <span class="compare-plan-price">{{ display.priceLabel }}</span>
                         @if (isCurrentPlan(sku)) {
-                          <span class="compare-plan-badge compare-plan-badge--current">{{ tr('portal.plan.yourPlan') }}</span>
+                          <span class="compare-plan-badge compare-plan-badge--current">{{ tr('businessApp.plan.yourPlan') }}</span>
                         } @else if (isPopular(sku)) {
                           <span class="compare-plan-badge compare-plan-badge--popular">{{ tr('common.mostPopular') }}</span>
                         }
@@ -69,10 +69,10 @@
                       >
                         @if (kind === "yes") {
                           <span class="compare-yes" aria-hidden="true">✓</span>
-                          <span class="sr-only">{{ tr('portal.plan.included') }}</span>
+                          <span class="sr-only">{{ tr('businessApp.plan.included') }}</span>
                         } @else if (kind === "dash") {
                           <span aria-hidden="true">—</span>
-                          <span class="sr-only">{{ tr('portal.plan.notIncluded') }}</span>
+                          <span class="sr-only">{{ tr('businessApp.plan.notIncluded') }}</span>
                         } @else {
                           {{ comparisonCell(row, sku) }}
                         }
@@ -89,7 +89,7 @@
     @if (usage(); as u) {
       <section class="card usage" [class.warn]="isPlanUsageNearLimit(u)">
         <div class="usage-head">
-          <h3>{{ tr('portal.plan.usageMonth') }}</h3>
+          <h3>{{ tr('businessApp.plan.usageMonth') }}</h3>
           <p class="usage-plan">{{ formatSubscriptionPlanLabel(u) }}</p>
         </div>
 
@@ -102,7 +102,7 @@
                 <span [style.width.%]="bookingsUsagePercent(u)"></span>
               </div>
             } @else {
-              <p class="usage-metric-hint muted">{{ tr('portal.plan.unlimitedPlan') }}</p>
+              <p class="usage-metric-hint muted">{{ tr('businessApp.plan.unlimitedPlan') }}</p>
             }
           </li>
           <li class="usage-metric">
@@ -119,11 +119,11 @@
                 <span [style.width.%]="usagePercentForLimit(u.locationsActive, u.entitlements.maxLocations)"></span>
               </div>
             } @else {
-              <p class="usage-metric-hint muted">{{ tr('portal.plan.multipleLocationsAllowed') }}</p>
+              <p class="usage-metric-hint muted">{{ tr('businessApp.plan.multipleLocationsAllowed') }}</p>
             }
           </li>
           <li class="usage-metric">
-            <span class="usage-metric-label">{{ tr('portal.plan.teamMembers') }}</span>
+            <span class="usage-metric-label">{{ tr('businessApp.plan.teamMembers') }}</span>
             <span class="usage-metric-value">{{ formatTeamUsageMetric(u) }}</span>
             @if (u.entitlements.maxPractitioners) {
               <div
@@ -136,7 +136,7 @@
                 <span [style.width.%]="usagePercentForLimit(u.practitionersActive, u.entitlements.maxPractitioners)"></span>
               </div>
             } @else {
-              <p class="usage-metric-hint muted">{{ tr('portal.plan.unlimitedTeamMembers') }}</p>
+              <p class="usage-metric-hint muted">{{ tr('businessApp.plan.unlimitedTeamMembers') }}</p>
             }
           </li>
         </ul>
@@ -183,14 +183,14 @@
         </div>
 
         @if (isPlanUsageNearLimit(u)) {
-          <p class="warn-text">{{ tr('portal.plan.youReApproachingPlanLimit') }}</p>
+          <p class="warn-text">{{ tr('businessApp.plan.youReApproachingPlanLimit') }}</p>
         }
       </section>
     }
 
     @if (!selfServeEnabled()) {
       <p class="muted self-serve-note" role="note">
-        {{ tr('portal.plan.selfServeCheckoutNotAvailable') }}
+        {{ tr('businessApp.plan.selfServeCheckoutNotAvailable') }}
       </p>
     }
 
@@ -204,7 +204,7 @@
         >
           <div class="tier-badge-slot">
             @if (isCurrentPlan(sku)) {
-              <span class="pill current-pill">{{ tr('portal.plan.currentPlan') }}</span>
+              <span class="pill current-pill">{{ tr('businessApp.plan.currentPlan') }}</span>
             } @else if (isPopular(sku)) {
               <span class="pill popular-pill">{{ tr('common.mostPopular') }}</span>
             }
@@ -231,27 +231,27 @@
 
     <section class="card billing-history">
       <div class="billing-history-head">
-        <h3>{{ tr('portal.plan.recentBillingActivity') }}</h3>
+        <h3>{{ tr('businessApp.plan.recentBillingActivity') }}</h3>
         <p class="muted billing-history-lede">
-          {{ tr('portal.plan.yourLatestAdeniSubscriptionCharges') }}
+          {{ tr('businessApp.plan.yourLatestAdeniSubscriptionCharges') }}
         </p>
       </div>
       @if (billingHistory().length === 0) {
         <adeni-portal-empty-state
           icon="time"
-          [title]="tr('portal.plan.noChargesYet')"
-          [description]="tr('portal.plan.yourAdeniSubscriptionChargesAppear')"
+          [title]="tr('businessApp.plan.noChargesYet')"
+          [description]="tr('businessApp.plan.yourAdeniSubscriptionChargesAppear')"
           [compact]="true"
         />
       } @else {
         <div class="roster billing-roster">
           <adeni-list-toolbar
-            storageKey="portal.plan.billing"
+            storageKey="businessApp.plan.billing"
             [showViewSwitcher]="false"
             [count]="filteredBillingHistory().length"
             [singularCountLabel]="tr('common.charge')"
             [pluralCountLabel]="tr('common.charges')"
-            [searchPlaceholder]="tr('portal.plan.searchEventStatusReference')"
+            [searchPlaceholder]="tr('businessApp.plan.searchEventStatusReference')"
             [searchQuery]="billingSearchQuery()"
             (searchQueryChange)="billingSearchQuery.set($event)"
           />

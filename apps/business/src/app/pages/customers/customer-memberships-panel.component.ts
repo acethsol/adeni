@@ -20,7 +20,7 @@ import {
   type AdeniPillTone,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalSessionService } from "../../core/services/portal-session.service";
+import { BusinessSessionService } from "../../core/services/business-session.service";
 
 type EnrolDraft = {
   membershipPlanId: string;
@@ -43,10 +43,10 @@ function newKey(): string {
   imports: [FormsModule, AdeniCarbonIconComponent, AdeniModalComponent, AdeniPillComponent, AdeniPortalEmptyStateComponent],
   template: `
     <div class="memberships__toolbar">
-      <p class="muted note">{{ tr('portal.memberships.creditsAreSessions') }}</p>
+      <p class="muted note">{{ tr('businessApp.memberships.creditsAreSessions') }}</p>
       <button type="button" class="btn btn-primary" [disabled]="loading() || !!error()" (click)="openEnrol()">
         <adeni-carbon-icon name="add" [size]="16" />
-        {{ tr('portal.memberships.enrol') }}
+        {{ tr('businessApp.memberships.enrol') }}
       </button>
     </div>
 
@@ -57,8 +57,8 @@ function newKey(): string {
     } @else if (memberships().length === 0) {
       <adeni-portal-empty-state
         icon="user--filled"
-        [title]="tr('portal.memberships.customerEmptyTitle')"
-        [description]="tr('portal.memberships.customerEmptyDescription')"
+        [title]="tr('businessApp.memberships.customerEmptyTitle')"
+        [description]="tr('businessApp.memberships.customerEmptyDescription')"
       />
     } @else {
       <ul class="memberships">
@@ -69,25 +69,25 @@ function newKey(): string {
               <adeni-pill [tone]="statusTone(m)" [compact]="true">{{ statusLabel(m) }}</adeni-pill>
             </div>
             <dl class="membership__meta muted">
-              <div><dt>{{ tr('portal.memberships.price') }}</dt><dd>{{ price(m) }} / {{ intervalLabel(m) }}</dd></div>
-              <div><dt>{{ tr('portal.memberships.since') }}</dt><dd>{{ when(m.activatedAt ?? m.createdAt) }}</dd></div>
+              <div><dt>{{ tr('businessApp.memberships.price') }}</dt><dd>{{ price(m) }} / {{ intervalLabel(m) }}</dd></div>
+              <div><dt>{{ tr('businessApp.memberships.since') }}</dt><dd>{{ when(m.activatedAt ?? m.createdAt) }}</dd></div>
               @if (m.currentCycleEnd) {
                 <div>
-                  <dt>{{ tr('portal.memberships.cycle', { number: m.currentCycleNumber }) }}</dt>
+                  <dt>{{ tr('businessApp.memberships.cycle', { number: m.currentCycleNumber }) }}</dt>
                   <dd>{{ cycleEndLabel(m) }}</dd>
                 </div>
               }
             </dl>
             @if (m.balances.length > 0) {
               <table class="balances">
-                <caption class="muted">{{ tr('portal.memberships.cycleCredits') }}</caption>
+                <caption class="muted">{{ tr('businessApp.memberships.cycleCredits') }}</caption>
                 <thead>
                   <tr>
-                    <th scope="col">{{ tr('portal.retention.service') }}</th>
-                    <th scope="col">{{ tr('portal.retention.granted') }}</th>
-                    <th scope="col">{{ tr('portal.retention.used') }}</th>
-                    <th scope="col">{{ tr('portal.retention.reserved') }}</th>
-                    <th scope="col">{{ tr('portal.retention.remaining') }}</th>
+                    <th scope="col">{{ tr('businessApp.retention.service') }}</th>
+                    <th scope="col">{{ tr('businessApp.retention.granted') }}</th>
+                    <th scope="col">{{ tr('businessApp.retention.used') }}</th>
+                    <th scope="col">{{ tr('businessApp.retention.reserved') }}</th>
+                    <th scope="col">{{ tr('businessApp.retention.remaining') }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -107,20 +107,20 @@ function newKey(): string {
               <div class="membership__actions">
                 @if (m.status === 'active' && m.allowFreeze) {
                   <button type="button" class="btn" [disabled]="busy()" (click)="freeze(m)">
-                    {{ tr('portal.memberships.freeze') }}
+                    {{ tr('businessApp.memberships.freeze') }}
                   </button>
                 }
                 @if (m.status === 'frozen') {
                   <button type="button" class="btn" [disabled]="busy()" (click)="unfreeze(m)">
-                    {{ tr('portal.memberships.unfreeze') }}
+                    {{ tr('businessApp.memberships.unfreeze') }}
                   </button>
                 }
                 <button type="button" class="btn btn-danger" [disabled]="busy()" (click)="cancel(m)">
-                  {{ tr('portal.memberships.cancelMembership') }}
+                  {{ tr('businessApp.memberships.cancelMembership') }}
                 </button>
               </div>
             } @else if (isLive(m) && !isOwner()) {
-              <p class="muted note">{{ tr('portal.memberships.ownerOnlyHint') }}</p>
+              <p class="muted note">{{ tr('businessApp.memberships.ownerOnlyHint') }}</p>
             }
           </li>
         }
@@ -129,27 +129,27 @@ function newKey(): string {
 
     <adeni-modal
       [open]="enrolDraft() !== null"
-      [title]="tr('portal.memberships.enrolTitle')"
-      [subtitle]="tr('portal.memberships.enrolSubtitle')"
+      [title]="tr('businessApp.memberships.enrolTitle')"
+      [subtitle]="tr('businessApp.memberships.enrolSubtitle')"
       size="lg"
       [hasFooter]="false"
       (closed)="closeEnrol()"
     >
       @if (enrolDraft(); as draft) {
         @if (activePlans().length === 0) {
-          <p class="muted">{{ tr('portal.memberships.noActivePlans') }}</p>
+          <p class="muted">{{ tr('businessApp.memberships.noActivePlans') }}</p>
         } @else {
           <div class="field">
-            <label for="enrol-plan">{{ tr('portal.memberships.selectPlan') }}</label>
+            <label for="enrol-plan">{{ tr('businessApp.memberships.selectPlan') }}</label>
             <select id="enrol-plan" [ngModel]="draft.membershipPlanId" (ngModelChange)="patchEnrol({ membershipPlanId: $event })">
               @for (plan of activePlans(); track plan.id) {
-                <option [value]="plan.id">{{ plan.name }} — {{ formatPlanPrice(plan) }}</option>
+                <option [value]="plan.id">{{ plan.name }} ï¿½ {{ formatPlanPrice(plan) }}</option>
               }
             </select>
           </div>
           <div class="field-row">
             <div class="field">
-              <label for="enrol-location">{{ tr('portal.retention.location') }}</label>
+              <label for="enrol-location">{{ tr('businessApp.retention.location') }}</label>
               <select id="enrol-location" [ngModel]="draft.businessLocationId" (ngModelChange)="patchEnrol({ businessLocationId: $event })">
                 @for (location of locations(); track location.id) {
                   <option [value]="location.id">{{ location.name || location.slug }}</option>
@@ -157,18 +157,18 @@ function newKey(): string {
               </select>
             </div>
             <div class="field">
-              <label for="enrol-method">{{ tr('portal.retention.paymentMethod') }}</label>
+              <label for="enrol-method">{{ tr('businessApp.retention.paymentMethod') }}</label>
               <select id="enrol-method" [ngModel]="draft.paymentMethod" (ngModelChange)="patchEnrol({ paymentMethod: $event })">
-                <option value="till">{{ tr('portal.retention.till') }}</option>
-                <option value="transfer">{{ tr('portal.retention.transfer') }}</option>
+                <option value="till">{{ tr('businessApp.retention.till') }}</option>
+                <option value="transfer">{{ tr('businessApp.retention.transfer') }}</option>
               </select>
             </div>
           </div>
           <div class="field">
-            <label for="enrol-note">{{ tr('portal.retention.note') }}</label>
+            <label for="enrol-note">{{ tr('businessApp.retention.note') }}</label>
             <input id="enrol-note" maxlength="500" [ngModel]="draft.note" (ngModelChange)="patchEnrol({ note: $event })" />
           </div>
-          <p class="muted">{{ tr('portal.retention.noOnlineCharge') }}</p>
+          <p class="muted">{{ tr('businessApp.retention.noOnlineCharge') }}</p>
         }
         <div class="actions">
           <button type="button" class="btn" (click)="closeEnrol()">
@@ -177,7 +177,7 @@ function newKey(): string {
           </button>
           <button type="button" class="btn btn-primary" [disabled]="!canEnrol()" (click)="confirmEnrol()">
             <adeni-carbon-icon name="checkmark" [size]="16" />
-            {{ tr('portal.memberships.enrol') }}
+            {{ tr('businessApp.memberships.enrol') }}
           </button>
         </div>
       }
@@ -212,7 +212,7 @@ export class CustomerMembershipsPanelComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly confirmDialog = inject(AdeniConfirmService);
-  private readonly session = inject(PortalSessionService);
+  private readonly session = inject(BusinessSessionService);
 
   readonly customerId = input.required<string>();
 
@@ -246,7 +246,7 @@ export class CustomerMembershipsPanelComponent implements OnInit {
         this.locations.set(locations);
       });
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.memberships.customerCouldNotLoad"));
+      this.error.set(this.apiErr(caught, "businessApp.memberships.customerCouldNotLoad"));
       this.memberships.set([]);
     } finally {
       this.loading.set(false);
@@ -270,37 +270,37 @@ export class CustomerMembershipsPanelComponent implements OnInit {
   intervalLabel(m: CustomerMembership): string {
     switch (m.billingInterval) {
       case "quarterly":
-        return this.tr("portal.memberships.intervalQuarterly");
+        return this.tr("businessApp.memberships.intervalQuarterly");
       case "annually":
-        return this.tr("portal.memberships.intervalAnnually");
+        return this.tr("businessApp.memberships.intervalAnnually");
       default:
-        return this.tr("portal.memberships.intervalMonthly");
+        return this.tr("businessApp.memberships.intervalMonthly");
     }
   }
 
   cycleEndLabel(m: CustomerMembership): string {
     const date = this.when(m.currentCycleEnd ?? "");
     return m.status === "cancel_pending" || m.status === "cancelled"
-      ? this.tr("portal.memberships.cycleEnds", { date })
-      : this.tr("portal.memberships.renews", { date });
+      ? this.tr("businessApp.memberships.cycleEnds", { date })
+      : this.tr("businessApp.memberships.renews", { date });
   }
 
   statusLabel(m: CustomerMembership): string {
     switch (m.status) {
       case "pending":
-        return this.tr("portal.memberships.statusPending");
+        return this.tr("businessApp.memberships.statusPending");
       case "active":
-        return this.tr("portal.memberships.statusActive");
+        return this.tr("businessApp.memberships.statusActive");
       case "past_due":
-        return this.tr("portal.memberships.statusPastDue");
+        return this.tr("businessApp.memberships.statusPastDue");
       case "frozen":
-        return this.tr("portal.memberships.statusFrozen");
+        return this.tr("businessApp.memberships.statusFrozen");
       case "cancel_pending":
-        return this.tr("portal.memberships.statusCancelPending");
+        return this.tr("businessApp.memberships.statusCancelPending");
       case "cancelled":
-        return this.tr("portal.memberships.statusCancelled");
+        return this.tr("businessApp.memberships.statusCancelled");
       default:
-        return this.tr("portal.memberships.statusExpired");
+        return this.tr("businessApp.memberships.statusExpired");
     }
   }
 
@@ -375,10 +375,10 @@ export class CustomerMembershipsPanelComponent implements OnInit {
       this.memberships.update((list) => [enrolled, ...list.filter((m) => m.id !== enrolled.id)]);
       this.enrolKey = newKey();
       this.closeEnrol();
-      this.feedback.success(this.tr("portal.memberships.enrolled", { name: enrolled.name }));
+      this.feedback.success(this.tr("businessApp.memberships.enrolled", { name: enrolled.name }));
     } catch (caught) {
       // Keep the same Idempotency-Key so a retry of an unchanged request cannot double-enrol.
-      this.feedback.error(this.apiErr(caught, "portal.memberships.couldNotEnrol"));
+      this.feedback.error(this.apiErr(caught, "businessApp.memberships.couldNotEnrol"));
     } finally {
       this.busy.set(false);
     }
@@ -387,25 +387,25 @@ export class CustomerMembershipsPanelComponent implements OnInit {
   // ---- Owner actions ----
 
   async freeze(m: CustomerMembership): Promise<void> {
-    await this.run(m, (client) => client.retention.freezeCustomerMembership(m.id), "portal.memberships.frozenDone");
+    await this.run(m, (client) => client.retention.freezeCustomerMembership(m.id), "businessApp.memberships.frozenDone");
   }
 
   async unfreeze(m: CustomerMembership): Promise<void> {
-    await this.run(m, (client) => client.retention.unfreezeCustomerMembership(m.id), "portal.memberships.unfrozenDone");
+    await this.run(m, (client) => client.retention.unfreezeCustomerMembership(m.id), "businessApp.memberships.unfrozenDone");
   }
 
   async cancel(m: CustomerMembership): Promise<void> {
     const immediate = m.cancellationPolicy === "immediate" || m.status === "pending";
     const ok = await this.confirmDialog.confirm({
-      title: this.tr("portal.memberships.cancelTitle"),
+      title: this.tr("businessApp.memberships.cancelTitle"),
       message: immediate
-        ? this.tr("portal.memberships.cancelMessageImmediate", { name: m.name })
-        : this.tr("portal.memberships.cancelMessageEndOfCycle", { name: m.name, date: this.when(m.currentCycleEnd ?? m.createdAt) }),
-      confirmLabel: this.tr("portal.memberships.cancelMembership"),
+        ? this.tr("businessApp.memberships.cancelMessageImmediate", { name: m.name })
+        : this.tr("businessApp.memberships.cancelMessageEndOfCycle", { name: m.name, date: this.when(m.currentCycleEnd ?? m.createdAt) }),
+      confirmLabel: this.tr("businessApp.memberships.cancelMembership"),
       danger: true,
     });
     if (!ok) return;
-    await this.run(m, (client) => client.retention.cancelCustomerMembership(m.id, undefined), "portal.memberships.cancelledDone");
+    await this.run(m, (client) => client.retention.cancelCustomerMembership(m.id, undefined), "businessApp.memberships.cancelledDone");
   }
 
   private async run(
@@ -420,7 +420,7 @@ export class CustomerMembershipsPanelComponent implements OnInit {
       this.memberships.update((list) => list.map((x) => (x.id === m.id ? updated : x)));
       this.feedback.success(this.tr(successKey));
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.memberships.couldNotUpdate"));
+      this.feedback.error(this.apiErr(caught, "businessApp.memberships.couldNotUpdate"));
     } finally {
       this.busy.set(false);
     }

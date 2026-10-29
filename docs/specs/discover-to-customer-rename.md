@@ -146,4 +146,5 @@ rg -l 'apps/discover|@adeni/discover|dev:discover|build:discover|dist/discover' 
 |------|-------|
 | Spec written | Done |
 | Mechanical rename in repo | **Done** — `apps/customer`, `@adeni/customer`, `dist/customer` |
+| Consumer shell i18n `discover.app.*` → `customer.app.*` (overlay EN/FR) | **Done** — public `/discover` routes unchanged |
 | Tests after rename | Run `npm test --workspace @adeni/customer`, `npm run build:customer` |

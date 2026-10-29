@@ -1,16 +1,16 @@
 <app-portal-page
   [title]="tr('common.publicPage')"
-  [description]="tr('portal.publicPage.chooseHowAdeniBookingPage')"
+  [description]="tr('businessApp.publicPage.chooseHowAdeniBookingPage')"
 >
   <a pageActions class="btn" routerLink="/public-page/booking-links">{{ tr('calendarUi.bookWith') }}</a>
   @if (profile(); as p) {
     @if (publicPageLocked()) {
-      <p class="lock-hint">{{ tr('portal.profile.publicPageLockedPending') }}</p>
+      <p class="lock-hint">{{ tr('businessApp.profile.publicPageLockedPending') }}</p>
     }
     <div class="layout" [class.locked]="publicPageLocked()">
       <div class="controls">
         <section class="card">
-          <h3>{{ tr('portal.publicPage.template') }}</h3>
+          <h3>{{ tr('businessApp.publicPage.template') }}</h3>
           <div class="template-grid">
             @for (tpl of templates; track tpl.id) {
               <button
@@ -29,7 +29,7 @@
         </section>
 
         <section class="card">
-          <h3>{{ tr('portal.publicPage.brandAccent') }}</h3>
+          <h3>{{ tr('businessApp.publicPage.brandAccent') }}</h3>
           <label class="cds-toggle">
             <input
               type="checkbox"
@@ -38,7 +38,7 @@
               (ngModelChange)="markDirty()"
             />
             <span class="cds-toggle__track" aria-hidden="true"></span>
-            <span class="cds-toggle__label">{{ tr('portal.publicPage.useCustomAccentColor') }}</span>
+            <span class="cds-toggle__label">{{ tr('businessApp.publicPage.useCustomAccentColor') }}</span>
           </label>
           @if (useAccent) {
             <div class="color-row">
@@ -55,9 +55,9 @@
         </section>
 
         <section class="card">
-          <h3>{{ tr('portal.publicPage.sections') }}</h3>
+          <h3>{{ tr('businessApp.publicPage.sections') }}</h3>
           <p class="muted tiny">
-            {{ tr('portal.publicPage.composeWhatVisitorsSeeYou') }}
+            {{ tr('businessApp.publicPage.composeWhatVisitorsSeeYou') }}
           </p>
           <label class="cds-toggle">
             <input
@@ -67,7 +67,7 @@
               (ngModelChange)="markDirty()"
             />
             <span class="cds-toggle__track" aria-hidden="true"></span>
-            <span class="cds-toggle__label">{{ tr('portal.publicPage.about') }}</span>
+            <span class="cds-toggle__label">{{ tr('businessApp.publicPage.about') }}</span>
           </label>
           <label class="cds-toggle">
             <input
@@ -97,7 +97,7 @@
               (ngModelChange)="markDirty()"
             />
             <span class="cds-toggle__track" aria-hidden="true"></span>
-            <span class="cds-toggle__label">{{ tr('portal.publicPage.visit') }}</span>
+            <span class="cds-toggle__label">{{ tr('businessApp.publicPage.visit') }}</span>
           </label>
           <div class="booking-callout" [class.off]="!showBook">
             <label class="cds-toggle">
@@ -108,13 +108,13 @@
                 (ngModelChange)="markDirty()"
               />
               <span class="cds-toggle__track" aria-hidden="true"></span>
-              <span class="cds-toggle__label">{{ tr('portal.publicPage.booking') }}</span>
+              <span class="cds-toggle__label">{{ tr('businessApp.publicPage.booking') }}</span>
             </label>
             <p class="status muted tiny">
               @if (showBook) {
-                {{ tr('portal.publicPage.liveCustomersCanBookRequest') }}
+                {{ tr('businessApp.publicPage.liveCustomersCanBookRequest') }}
               } @else {
-                {{ tr('portal.publicPage.quietModeProfileStaysPublic') }}
+                {{ tr('businessApp.publicPage.quietModeProfileStaysPublic') }}
               }
             </p>
           </div>
@@ -126,66 +126,66 @@
               (ngModelChange)="markDirty()"
             />
             <span class="cds-toggle__track" aria-hidden="true"></span>
-            <span class="cds-toggle__label">{{ tr('portal.publicPage.policies') }}</span>
+            <span class="cds-toggle__label">{{ tr('businessApp.publicPage.policies') }}</span>
           </label>
         </section>
 
         <section class="card policy-link-card">
-          <h3>{{ tr('portal.publicPage.policyContent') }}</h3>
+          <h3>{{ tr('businessApp.publicPage.policyContent') }}</h3>
           <p class="muted tiny">
-            {{ tr('portal.publicPage.bookingPaymentCancellationTermsEdited') }}
-            <a routerLink="/settings" [queryParams]="{ tab: 'policies' }">{{ tr('portal.publicPage.settingsPolicies') }}</a>{{ tr('portal.publicPage.use') }} <strong>{{ tr('portal.publicPage.policies') }}</strong> {{ tr('portal.publicPage.toggleAboveShowHideBlock') }}
+            {{ tr('businessApp.publicPage.bookingPaymentCancellationTermsEdited') }}
+            <a routerLink="/settings" [queryParams]="{ tab: 'policies' }">{{ tr('businessApp.publicPage.settingsPolicies') }}</a>{{ tr('businessApp.publicPage.use') }} <strong>{{ tr('businessApp.publicPage.policies') }}</strong> {{ tr('businessApp.publicPage.toggleAboveShowHideBlock') }}
           </p>
           @if (hasPolicyContent()) {
-            <p class="policy-status ok tiny">{{ tr('portal.publicPage.policyTextFilePreviewShows') }}</p>
+            <p class="policy-status ok tiny">{{ tr('businessApp.publicPage.policyTextFilePreviewShows') }}</p>
           } @else {
-            <p class="policy-status muted tiny">{{ tr('portal.publicPage.noPolicyTextYetAdd') }}</p>
+            <p class="policy-status muted tiny">{{ tr('businessApp.publicPage.noPolicyTextYetAdd') }}</p>
           }
         </section>
 
         <div class="actions">
           <button type="button" class="btn primary" [disabled]="!canSave()" (click)="save()">
-            {{ saving() ? tr('common.saving') : dirty() ? tr('common.save') : tr('portal.publicPage.saved') }}
+            {{ saving() ? tr('common.saving') : dirty() ? tr('common.save') : tr('businessApp.publicPage.saved') }}
           </button>
           @if (liveUrl(); as url) {
-            <a class="btn" [href]="url" target="_blank" rel="noopener">{{ tr('portal.publicPage.openLivePage') }}</a>
+            <a class="btn" [href]="url" target="_blank" rel="noopener">{{ tr('businessApp.publicPage.openLivePage') }}</a>
           }
         </div>
       </div>
 
       <aside class="preview" [attr.data-template]="templateId" [style.--accent]="useAccent ? accentColor : '#0F766E'">
-        <p class="preview-label">{{ tr('portal.publicPage.preview') }}</p>
+        <p class="preview-label">{{ tr('businessApp.publicPage.preview') }}</p>
         <div class="phone">
           <div class="hero">
-            <p class="eyebrow">{{ p.categorySlug }} · {{ p.locations[0]?.area ?? tr('portal.publicPage.yourArea') }}</p>
+            <p class="eyebrow">{{ p.categorySlug }} · {{ p.locations[0]?.area ?? tr('businessApp.publicPage.yourArea') }}</p>
             <h2>{{ p.businessName }}</h2>
-            <p class="lead">{{ p.description || tr('portal.publicPage.yourPublicBookingPageAdeni') }}</p>
+            <p class="lead">{{ p.description || tr('businessApp.publicPage.yourPublicBookingPageAdeni') }}</p>
             @if (showBook) {
-              <span class="cta">{{ tr('portal.publicPage.bookNow') }}</span>
+              <span class="cta">{{ tr('businessApp.publicPage.bookNow') }}</span>
             } @else {
-              <span class="cta muted-cta">{{ tr('portal.publicPage.bookingPaused') }}</span>
+              <span class="cta muted-cta">{{ tr('businessApp.publicPage.bookingPaused') }}</span>
             }
           </div>
           <div class="body">
             @if (showAbout) {
-              <p><strong>{{ tr('portal.publicPage.about') }}</strong> {{ tr('portal.publicPage.shortStoryAboutBusiness') }}</p>
+              <p><strong>{{ tr('businessApp.publicPage.about') }}</strong> {{ tr('businessApp.publicPage.shortStoryAboutBusiness') }}</p>
             }
             @if (showServices) {
-              <p><strong>{{ tr('common.services') }}</strong> {{ tr('portal.publicPage.menuPrices') }}</p>
+              <p><strong>{{ tr('common.services') }}</strong> {{ tr('businessApp.publicPage.menuPrices') }}</p>
             }
             @if (showReviews) {
-              <p><strong>{{ tr('common.reviews') }}</strong> {{ tr('portal.publicPage.fromCompletedBookings') }}</p>
+              <p><strong>{{ tr('common.reviews') }}</strong> {{ tr('businessApp.publicPage.fromCompletedBookings') }}</p>
             }
             @if (showVisit) {
-              <p><strong>{{ tr('portal.publicPage.visit') }}</strong> {{ tr('portal.publicPage.addressContact') }}</p>
+              <p><strong>{{ tr('businessApp.publicPage.visit') }}</strong> {{ tr('businessApp.publicPage.addressContact') }}</p>
             }
             @if (showPolicies) {
-              <p><strong>{{ tr('portal.publicPage.policies') }}</strong> {{ tr('portal.publicPage.bookingPaymentCancellationTerms') }}</p>
+              <p><strong>{{ tr('businessApp.publicPage.policies') }}</strong> {{ tr('businessApp.publicPage.bookingPaymentCancellationTerms') }}</p>
             }
             @if (showBook) {
-              <p class="book"><strong>{{ tr('portal.publicPage.book') }}</strong> {{ tr('portal.publicPage.customersCanBookOnline') }}</p>
+              <p class="book"><strong>{{ tr('businessApp.publicPage.book') }}</strong> {{ tr('businessApp.publicPage.customersCanBookOnline') }}</p>
             } @else {
-              <p><strong>{{ tr('portal.publicPage.booking') }}</strong> {{ tr('portal.publicPage.offlineNow') }}</p>
+              <p><strong>{{ tr('businessApp.publicPage.booking') }}</strong> {{ tr('businessApp.publicPage.offlineNow') }}</p>
             }
           </div>
         </div>

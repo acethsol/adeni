@@ -53,7 +53,7 @@ Every handler that existed under archived Next `app/api/**` must end as **A**, *
 | **B — Thin BFF** | Keep a small server only if secrets or cookie shaping require it |
 | **C — Next-only temp** | Leave on Next until that app area migrates |
 
-### Public / discover → `apps/discover`
+### Public / discover → `apps/customer`
 
 | Next route | Class | Notes |
 |------------|-------|--------|
@@ -141,7 +141,7 @@ Every handler that existed under archived Next `app/api/**` must end as **A**, *
 
 ---
 
-## 5. `apps/discover` feature parity (third)
+## 5. `apps/customer` feature parity (third)
 
 | Area | Next reference | Done |
 |------|----------------|------|
@@ -155,7 +155,7 @@ Every handler that existed under archived Next `app/api/**` must end as **A**, *
 | Ask Adeni (rule-based → Sprint 20 LLM UI) | API-first widget | ☐ |
 | Legal / market cookie / `?market=` | | ☐ |
 
-**Cutover:** proxy `/`, `/discover`, `/businesses/*` to `apps/discover`.
+**Cutover:** proxy `/`, `/discover`, `/businesses/*` to `apps/customer`.
 
 ---
 
@@ -195,7 +195,7 @@ Not blocked by Angular migration:
 |------|------|
 | Backend tool endpoints documented in OpenAPI | ☐ |
 | LLM agent (Sprint 20) calls tools server-side | ☐ |
-| Chat component in `apps/discover` | ☐ |
+| Chat component in `apps/customer` | ☐ |
 | Angular MCP / dev skills optional for maintainer productivity | ☐ |
 
 ---

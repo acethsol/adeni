@@ -3,8 +3,8 @@ import { injectAdeniTranslate } from "@adeni/ui";
 
 const THEME_STORAGE_KEY = "adeni.portal.theme";
 
-export type PortalTheme = "light" | "dark";
-export type ThemePreference = PortalTheme | "system";
+export type businessTheme = "light" | "dark";
+export type ThemePreference = businessTheme | "system";
 
 function readThemePreference(): ThemePreference {
   try {
@@ -18,7 +18,7 @@ function readThemePreference(): ThemePreference {
   return "system";
 }
 
-function resolveTheme(preference: ThemePreference): PortalTheme {
+function resolveTheme(preference: ThemePreference): businessTheme {
   if (preference === "light" || preference === "dark") {
     return preference;
   }
@@ -26,12 +26,12 @@ function resolveTheme(preference: ThemePreference): PortalTheme {
 }
 
 @Injectable({ providedIn: "root" })
-export class PortalThemeService {
+export class BusinessThemeService {
   protected readonly tr = injectAdeniTranslate();
   private readonly destroyRef = inject(DestroyRef);
 
   readonly preference = signal<ThemePreference>(readThemePreference());
-  readonly theme = signal<PortalTheme>(resolveTheme(this.preference()));
+  readonly theme = signal<businessTheme>(resolveTheme(this.preference()));
 
   constructor() {
     this.applyResolved(this.theme());
@@ -63,7 +63,7 @@ export class PortalThemeService {
     return this.theme() === "dark" ? this.tr("common.switchLightTheme") : this.tr("common.switchDarkTheme");
   }
 
-  private applyResolved(theme: PortalTheme): void {
+  private applyResolved(theme: businessTheme): void {
     this.theme.set(theme);
     document.documentElement.dataset["theme"] = theme;
   }

@@ -4,7 +4,7 @@ import { FormsModule } from "@angular/forms";
 import { RouterLink } from "@angular/router";
 import {
   DAY_OF_WEEK_LABELS,
-  PORTAL_PERMISSION_ROLES,
+  BUSINESS_PERMISSION_ROLES,
   STAFF_ROLE_LABELS,
   defaultPermissionRoleForFloorRole,
   defaultStaffRoleForCategories,
@@ -62,14 +62,14 @@ import {
   injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
+import { BusinessActiveLocationService } from "../../core/services/business-active-location.service";
 import { Subscription } from "rxjs";
 
 const AVATAR_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
 
 const DAYS_ORDER = [1, 2, 3, 4, 5, 6, 0];
-const STAFF_VIEW_STORAGE_KEY = "portal.staff";
+const STAFF_VIEW_STORAGE_KEY = "businessApp.staff";
 
 type StaffFormTab = "profile" | "services" | "hours" | "leave";
 type StaffBookingFilter = "all" | "bookable" | "inactive";
@@ -190,7 +190,7 @@ export class StaffComponent implements OnInit, OnDestroy {
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly confirmDialog = inject(AdeniConfirmService);
-  readonly activeLocation = inject(PortalActiveLocationService);
+  readonly activeLocation = inject(BusinessActiveLocationService);
   private branchSub: Subscription | null = null;
 
   readonly loading = signal(true);
@@ -206,21 +206,21 @@ export class StaffComponent implements OnInit, OnDestroy {
   readonly listPageSizeOptions = LIST_PAGE_SIZE_OPTIONS;
 
   readonly bookingFilterOptions = computed<AdeniFilterSelectOption[]>(() => [
-    { value: "all", label: this.tr("portal.staff.allBookingStates") },
-    { value: "bookable", label: this.tr("portal.staff.bookable") },
-    { value: "inactive", label: this.tr("portal.staff.inactive") },
+    { value: "all", label: this.tr("businessApp.staff.allBookingStates") },
+    { value: "bookable", label: this.tr("businessApp.staff.bookable") },
+    { value: "inactive", label: this.tr("businessApp.staff.inactive") },
   ]);
 
   readonly portalFilterOptions = computed<AdeniFilterSelectOption[]>(() => [
-    { value: "all", label: this.tr("portal.staff.allPortalAccess") },
-    { value: "has_portal", label: this.tr("portal.staff.hasPortalAccess") },
-    { value: "none", label: this.tr("portal.staff.noPortalAccess") },
+    { value: "all", label: this.tr("businessApp.staff.allPortalAccess") },
+    { value: "has_portal", label: this.tr("businessApp.staff.hasPortalAccess") },
+    { value: "none", label: this.tr("businessApp.staff.noPortalAccess") },
   ]);
 
   readonly staffExportItems = computed((): AdeniExportMenuItem[] =>
     buildReportExportMenuItems({
       entitlements: this.entitlements(),
-      pdf: { disabled: true, hint: this.tr("portal.staff.rosterCsvOnly") },
+      pdf: { disabled: true, hint: this.tr("businessApp.staff.rosterCsvOnly") },
     }),
   );
   readonly staffExporting = signal(false);
@@ -248,19 +248,19 @@ export class StaffComponent implements OnInit, OnDestroy {
       id: "profile",
       label: this.tr("common.profile"),
       title: this.tr("common.profile"),
-      lede: this.tr("portal.staff.photoNameAsCustomersWill"),
+      lede: this.tr("businessApp.staff.photoNameAsCustomersWill"),
     },
     {
       id: "services",
       label: this.tr("common.services"),
       title: this.tr("common.services"),
-      lede: this.tr("portal.staff.leaveBlankAllowEveryActive"),
+      lede: this.tr("businessApp.staff.leaveBlankAllowEveryActive"),
     },
     {
       id: "hours",
       label: this.tr("common.hours"),
       title: this.tr("common.hours"),
-      lede: this.tr("portal.staff.skipFollowBusinessCalendar"),
+      lede: this.tr("businessApp.staff.skipFollowBusinessCalendar"),
     },
   ]);
 
@@ -350,25 +350,25 @@ export class StaffComponent implements OnInit, OnDestroy {
   readonly staffTableColumns = computed<AdeniDataTableColumn<StaffMember>[]>(() => [
     {
       id: "name",
-      header: this.tr("portal.staff.teamMember"),
+      header: this.tr("businessApp.staff.teamMember"),
       cell: (m) => m.displayName.trim(),
       sortValue: (m) => m.displayName.trim().toLowerCase(),
     },
     {
       id: "title",
-      header: this.tr("portal.staff.title"),
+      header: this.tr("businessApp.staff.title"),
       cell: (m) => m.title?.trim() || "—",
       sortValue: (m) => (m.title?.trim() || "").toLowerCase(),
     },
     {
       id: "status",
-      header: this.tr("portal.publicPage.booking"),
+      header: this.tr("businessApp.publicPage.booking"),
       cell: () => "",
       sortValue: (m) => (m.isActive ? 1 : 0),
     },
     {
       id: "access",
-      header: this.tr("portal.staff.portal"),
+      header: this.tr("businessApp.staff.portal"),
       cell: () => "",
       sortValue: (m) => m.portalAccessStatus,
     },
@@ -396,7 +396,7 @@ export class StaffComponent implements OnInit, OnDestroy {
 
   readonly inviteTarget = signal<StaffMember | null>(null);
   readonly roleTarget = signal<StaffMember | null>(null);
-  readonly inviteRoles = PORTAL_PERMISSION_ROLES.filter((r) => r !== "owner");
+  readonly inviteRoles = BUSINESS_PERMISSION_ROLES.filter((r: string) => r !== "owner");
   inviteEmail = "";
   invitePermissionRole: Exclude<BusinessPermissionRole, "owner"> = "practitioner";
   editPermissionRole: Exclude<BusinessPermissionRole, "owner"> = "practitioner";
@@ -522,9 +522,9 @@ export class StaffComponent implements OnInit, OnDestroy {
       case "active":
         return this.tr("admin.pricing.active");
       case "invite_pending":
-        return this.tr("portal.staff.invitePending");
+        return this.tr("businessApp.staff.invitePending");
       default:
-        return this.tr("portal.staff.noAccess");
+        return this.tr("businessApp.staff.noAccess");
     }
   }
 
@@ -597,11 +597,11 @@ export class StaffComponent implements OnInit, OnDestroy {
           });
         });
       });
-      this.feedback.success(this.tr("portal.staff.inviteSentCheckApiLogs"));
+      this.feedback.success(this.tr("businessApp.staff.inviteSentCheckApiLogs"));
       this.closeInvite();
       await this.load();
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.staff.couldNotSendInvite"));
+      this.feedback.error(this.apiErr(caught, "businessApp.staff.couldNotSendInvite"));
     } finally {
       this.busy.set(null);
     }
@@ -625,10 +625,10 @@ export class StaffComponent implements OnInit, OnDestroy {
           await c.resendTenantAccessInvite(member.portalInviteId!);
         });
       });
-      this.feedback.success(this.tr("portal.staff.inviteResent"));
+      this.feedback.success(this.tr("businessApp.staff.inviteResent"));
       await this.load();
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.staff.couldNotResendInvite"));
+      this.feedback.error(this.apiErr(caught, "businessApp.staff.couldNotResendInvite"));
     } finally {
       this.busy.set(null);
     }
@@ -642,11 +642,11 @@ export class StaffComponent implements OnInit, OnDestroy {
     }
 
     const ok = await this.confirmDialog.confirm({
-      title: pending ? this.tr("portal.staff.revokeInvite2") : this.tr("portal.staff.revokePortalAccess"),
+      title: pending ? this.tr("businessApp.staff.revokeInvite2") : this.tr("businessApp.staff.revokePortalAccess"),
       message: pending
         ? `${member.displayName} will no longer be able to accept this invite.`
         : `${member.displayName} will lose portal login immediately. You can invite them again later.`,
-      confirmLabel: this.tr("portal.staff.revoke"),
+      confirmLabel: this.tr("businessApp.staff.revoke"),
       danger: true,
     });
     if (!ok) {
@@ -664,13 +664,13 @@ export class StaffComponent implements OnInit, OnDestroy {
           }
         });
       });
-      this.feedback.success(pending ? this.tr("portal.staff.inviteRevoked") : this.tr("portal.staff.portalAccessRevoked"));
+      this.feedback.success(pending ? this.tr("businessApp.staff.inviteRevoked") : this.tr("businessApp.staff.portalAccessRevoked"));
       await this.load();
     } catch {
       this.feedback.error(
         pending
-          ? this.tr("portal.staff.couldNotRevokeInvite")
-          : this.tr("portal.staff.couldNotRevokeAccessLast"),
+          ? this.tr("businessApp.staff.couldNotRevokeInvite")
+          : this.tr("businessApp.staff.couldNotRevokeAccessLast"),
       );
     } finally {
       this.busy.set(null);
@@ -700,11 +700,11 @@ export class StaffComponent implements OnInit, OnDestroy {
           });
         });
       });
-      this.feedback.success(this.tr("portal.staff.permissionRoleUpdated"));
+      this.feedback.success(this.tr("businessApp.staff.permissionRoleUpdated"));
       this.closeChangeRole();
       await this.load();
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.staff.couldNotChangeRoleLast"));
+      this.feedback.error(this.apiErr(caught, "businessApp.staff.couldNotChangeRoleLast"));
     } finally {
       this.busy.set(null);
     }
@@ -811,13 +811,13 @@ export class StaffComponent implements OnInit, OnDestroy {
     const first = this.draft.firstName.trim();
     const last = this.draft.lastName.trim();
     if (!first || !last) {
-      this.feedback.error(this.tr("portal.staff.firstLastNameRequired"));
+      this.feedback.error(this.tr("businessApp.staff.firstLastNameRequired"));
       return false;
     }
     const display =
       this.draft.displayName.trim() || `${first} ${last}`.trim();
     if (display.length < 2) {
-      this.feedback.error(this.tr("portal.staff.displayNameNeedsAtLeast"));
+      this.feedback.error(this.tr("businessApp.staff.displayNameNeedsAtLeast"));
       return false;
     }
     return true;
@@ -890,7 +890,7 @@ export class StaffComponent implements OnInit, OnDestroy {
         await this.fetchStaffPageData();
       });
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.staff.couldNotLoadStaffTry"));
+      this.error.set(this.apiErr(caught, "businessApp.staff.couldNotLoadStaffTry"));
     } finally {
       this.loading.set(false);
     }
@@ -920,9 +920,9 @@ export class StaffComponent implements OnInit, OnDestroy {
       anchor.download = `staff-roster-${to.toISOString().slice(0, 10)}.csv`;
       anchor.click();
       URL.revokeObjectURL(url);
-      this.feedback.success(this.tr("portal.staff.staffRosterDownloaded"));
+      this.feedback.success(this.tr("businessApp.staff.staffRosterDownloaded"));
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.staff.couldNotDownloadStaffRoster"));
+      this.feedback.error(this.apiErr(caught, "businessApp.staff.couldNotDownloadStaffRoster"));
     } finally {
       this.staffExporting.set(false);
     }
@@ -939,7 +939,7 @@ export class StaffComponent implements OnInit, OnDestroy {
         );
       });
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.staff.couldNotRefreshRoster"));
+      this.feedback.error(this.apiErr(caught, "businessApp.staff.couldNotRefreshRoster"));
     }
   }
 
@@ -979,7 +979,7 @@ export class StaffComponent implements OnInit, OnDestroy {
 
   openCreate(): void {
     if (!this.canAddPractitioner()) {
-      const message = this.tr("portal.staff.yourPlanTeamLimitReached");
+      const message = this.tr("businessApp.staff.yourPlanTeamLimitReached");
       this.error.set(message);
       this.feedback.error(message);
       return;
@@ -1043,9 +1043,9 @@ export class StaffComponent implements OnInit, OnDestroy {
         ),
       );
       this.hourRows = rulesToRows(rules);
-      this.feedback.success(this.tr("portal.staff.copiedBusinessHoursSaveApply"));
+      this.feedback.success(this.tr("businessApp.staff.copiedBusinessHoursSaveApply"));
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.staff.couldNotLoadBusinessHours"));
+      this.feedback.error(this.apiErr(caught, "businessApp.staff.couldNotLoadBusinessHours"));
     }
   }
 
@@ -1137,16 +1137,16 @@ export class StaffComponent implements OnInit, OnDestroy {
             await this.uploadAvatarIfNeeded(created.id);
           }
         });
-      }, editingId ? this.tr("portal.staff.savingChanges") : this.tr("portal.staff.addingTeamMember"), this.tr("portal.staff.pleaseWait"));
+      }, editingId ? this.tr("businessApp.staff.savingChanges") : this.tr("businessApp.staff.addingTeamMember"), this.tr("businessApp.staff.pleaseWait"));
 
       this.cancelForm();
       this.feedback.success(
-        editingId ? this.tr("portal.staff.changesSavedSuccessfully") : this.tr("portal.staff.teamMemberAddedSuccessfully"),
-        editingId ? this.tr("portal.staff.updated") : this.tr("portal.staff.added"),
+        editingId ? this.tr("businessApp.staff.changesSavedSuccessfully") : this.tr("businessApp.staff.teamMemberAddedSuccessfully"),
+        editingId ? this.tr("businessApp.staff.updated") : this.tr("businessApp.staff.added"),
       );
       await this.refreshStaff();
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.staff.couldNotSaveTeamMember"));
+      this.feedback.error(this.apiErr(caught, "businessApp.staff.couldNotSaveTeamMember"));
     } finally {
       this.busy.set(null);
     }
@@ -1155,7 +1155,7 @@ export class StaffComponent implements OnInit, OnDestroy {
   async addLeave(): Promise<void> {
     const editingId = this.editingId();
     if (!editingId || !this.leaveStart || !this.leaveEnd) {
-      this.feedback.error(this.tr("portal.staff.chooseLeaveStartEnd"));
+      this.feedback.error(this.tr("businessApp.staff.chooseLeaveStartEnd"));
       return;
     }
 
@@ -1175,13 +1175,13 @@ export class StaffComponent implements OnInit, OnDestroy {
       this.leaveReason = "";
       if (created.conflictingBookingIds.length > 0) {
         this.feedback.success(
-          this.tr("portal.staff.leaveSavedWarningExistingBooking", { length: created.conflictingBookingIds.length }),
+          this.tr("businessApp.staff.leaveSavedWarningExistingBooking", { length: created.conflictingBookingIds.length }),
         );
       } else {
-        this.feedback.success(this.tr("portal.staff.leaveSaved"));
+        this.feedback.success(this.tr("businessApp.staff.leaveSaved"));
       }
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.staff.couldNotSaveLeave"));
+      this.feedback.error(this.apiErr(caught, "businessApp.staff.couldNotSaveLeave"));
     }
   }
 
@@ -1191,8 +1191,8 @@ export class StaffComponent implements OnInit, OnDestroy {
       return;
     }
     const ok = await this.confirmDialog.confirm({
-      title: this.tr("portal.staff.removeLeave"),
-      message: this.tr("portal.staff.deleteLeaveBlock"),
+      title: this.tr("businessApp.staff.removeLeave"),
+      message: this.tr("businessApp.staff.deleteLeaveBlock"),
       confirmLabel: this.tr("common.remove"),
       danger: true,
     });
@@ -1204,16 +1204,16 @@ export class StaffComponent implements OnInit, OnDestroy {
         c.deleteTenantStaffLeave(editingId, leave.id),
       );
       this.leaveItems.update((items) => items.filter((x) => x.id !== leave.id));
-      this.feedback.success(this.tr("portal.staff.leaveRemoved"));
+      this.feedback.success(this.tr("businessApp.staff.leaveRemoved"));
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.staff.couldNotRemoveLeave"));
+      this.feedback.error(this.apiErr(caught, "businessApp.staff.couldNotRemoveLeave"));
     }
   }
 
   async deactivate(member: StaffMember): Promise<void> {
     const ok = await this.confirmDialog.confirm({
-      title: this.tr("portal.staff.deactivateTeamMember"),
-      message: this.tr("portal.staff.hideFromOnlineBookingExisting", { displayName: member.displayName }),
+      title: this.tr("businessApp.staff.deactivateTeamMember"),
+      message: this.tr("businessApp.staff.hideFromOnlineBookingExisting", { displayName: member.displayName }),
       confirmLabel: this.tr("common.deactivate"),
       danger: true,
     });
@@ -1227,7 +1227,7 @@ export class StaffComponent implements OnInit, OnDestroy {
       this.feedback.success(`${member.displayName} is no longer bookable online.`);
       await this.load();
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.staff.couldNotDeactivate"));
+      this.feedback.error(this.apiErr(caught, "businessApp.staff.couldNotDeactivate"));
     } finally {
       this.busy.set(null);
     }

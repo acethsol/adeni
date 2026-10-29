@@ -38,7 +38,7 @@ import {
   injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
+import { BusinessActiveLocationService } from "../../core/services/business-active-location.service";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 
 @Component({
@@ -66,17 +66,17 @@ export class PaymentsComponent implements OnInit, OnDestroy {
   private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
   private opsSub: Subscription | null = null;
   private readonly config = inject(ADENI_PORTAL_CONFIG);
-  private readonly activeLocation = inject(PortalActiveLocationService);
+  private readonly activeLocation = inject(BusinessActiveLocationService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
   readonly tab = toSignal(this.route.queryParamMap.pipe(map((params) => params.get("tab") ?? "links")), {
     initialValue: this.route.snapshot.queryParamMap.get("tab") ?? "links",
   });
   readonly tabs = computed(() => [
-    { id: "links", label: this.tr("portal.payments.links") },
-    { id: "ledger", label: this.tr("portal.payments.ledger") },
-    { id: "documents", label: this.tr("portal.payments.documents") },
-    { id: "export", label: this.tr("portal.payments.exports") },
+    { id: "links", label: this.tr("businessApp.payments.links") },
+    { id: "ledger", label: this.tr("businessApp.payments.ledger") },
+    { id: "documents", label: this.tr("businessApp.payments.documents") },
+    { id: "export", label: this.tr("businessApp.payments.exports") },
   ]);
 
   exportFrom = "";
@@ -90,7 +90,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       entitlements: this.planEntitlements(),
       xlsx: false,
       pdf: salesSummaryPdfMenuOption(this.planEntitlements()),
-      labels: { csv: this.tr("portal.payments.exportSalesSummaryCsv"), pdf: this.tr("portal.payments.exportSalesSummaryPdf") },
+      labels: { csv: this.tr("businessApp.payments.exportSalesSummaryCsv"), pdf: this.tr("businessApp.payments.exportSalesSummaryPdf") },
     }),
   );
 
@@ -99,7 +99,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       entitlements: this.planEntitlements(),
       xlsx: true,
       csvRequiresAdvancedReports: true,
-      labels: { csv: this.tr("portal.payments.exportStaffPayoutsCsv"), xlsx: this.tr("portal.payments.exportStaffPayoutsExcel") },
+      labels: { csv: this.tr("businessApp.payments.exportStaffPayoutsCsv"), xlsx: this.tr("businessApp.payments.exportStaffPayoutsExcel") },
     }),
   );
 
@@ -135,7 +135,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
         void this.activeLocation.runOnBranchSwitch(() => this.load());
       });
     this.opsSub = this.operationsRealtime.paymentCompleted$.subscribe(() => {
-      this.feedback.info(this.tr("portal.payments.paymentCompletedRefreshingLedger"), this.tr("portal.payments.payment"));
+      this.feedback.info(this.tr("businessApp.payments.paymentCompletedRefreshingLedger"), this.tr("businessApp.payments.payment"));
       void this.load();
     });
   }
@@ -191,7 +191,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       });
       });
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.payments.couldNotLoadPayments"));
+      this.error.set(this.apiErr(caught, "businessApp.payments.couldNotLoadPayments"));
     } finally {
       this.loading.set(false);
     }
@@ -201,7 +201,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     const profile = this.profile();
     const parsed = Number(this.amount);
     if (!profile || !Number.isFinite(parsed) || parsed <= 0 || !this.description.trim()) {
-      this.error.set(this.tr("portal.payments.enterValidAmountDescription"));
+      this.error.set(this.tr("businessApp.payments.enterValidAmountDescription"));
       return;
     }
 
@@ -232,14 +232,14 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       this.description = "";
       await this.load();
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.payments.couldNotCreatePaymentLink"));
+      this.error.set(this.apiErr(caught, "businessApp.payments.couldNotCreatePaymentLink"));
     } finally {
       this.creating.set(false);
     }
   }
 
   whatsAppUrl(link: { checkoutUrl: string; description: string }): string {
-    const text = encodeURIComponent(this.tr("portal.payments.payViaAdeni", { description: link.description, checkoutUrl: link.checkoutUrl }));
+    const text = encodeURIComponent(this.tr("businessApp.payments.payViaAdeni", { description: link.description, checkoutUrl: link.checkoutUrl }));
     return `https://wa.me/?text=${text}`;
   }
 
@@ -254,7 +254,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     try {
       await this.api.withAuthorizedClient((c) => c.emailBillingDocument(doc.id));
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.payments.couldNotEmailDocumentAdd"));
+      this.error.set(this.apiErr(caught, "businessApp.payments.couldNotEmailDocumentAdd"));
     } finally {
       this.actionId.set(null);
     }
@@ -272,7 +272,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       anchor.click();
       URL.revokeObjectURL(url);
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.payments.couldNotDownloadDocumentPdf"));
+      this.error.set(this.apiErr(caught, "businessApp.payments.couldNotDownloadDocumentPdf"));
     } finally {
       this.pdfBusyId.set(null);
     }
@@ -294,7 +294,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
 
   async downloadSalesSummaryExport(format: ReportExportFormat): Promise<void> {
     if (!this.exportFrom || !this.exportTo) {
-      this.error.set(this.tr("portal.payments.chooseDateRangeExport"));
+      this.error.set(this.tr("businessApp.payments.chooseDateRangeExport"));
       return;
     }
 
@@ -320,7 +320,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       URL.revokeObjectURL(url);
     } catch (err) {
       this.error.set(
-        this.apiErr(err, "portal.payments.couldNotDownloadSalesSummary"),
+        this.apiErr(err, "businessApp.payments.couldNotDownloadSalesSummary"),
       );
     } finally {
       this.salesSummaryExporting = false;
@@ -332,7 +332,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       return;
     }
     if (!this.profile() || !this.exportFrom || !this.exportTo) {
-      this.error.set(this.tr("portal.payments.chooseDateRangeExport"));
+      this.error.set(this.tr("businessApp.payments.chooseDateRangeExport"));
       return;
     }
 
@@ -358,7 +358,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       URL.revokeObjectURL(url);
     } catch (err) {
       this.error.set(
-        this.apiErr(err, "portal.payments.couldNotDownloadCompensation"),
+        this.apiErr(err, "businessApp.payments.couldNotDownloadCompensation"),
       );
     } finally {
       this.compensationExporting = false;
@@ -369,9 +369,9 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     const profile = this.profile();
     if (!profile || entry.status !== "completed") return;
     const ok = await this.confirmDialog.confirm({
-      title: this.tr("portal.payments.refundPayment"),
-      message: this.tr("portal.payments.refundConfirm", { amount: formatPrice(entry.amount, entry.currency) }),
-      confirmLabel: this.tr("portal.payments.refund"),
+      title: this.tr("businessApp.payments.refundPayment"),
+      message: this.tr("businessApp.payments.refundConfirm", { amount: formatPrice(entry.amount, entry.currency) }),
+      confirmLabel: this.tr("businessApp.payments.refund"),
       danger: true,
     });
     if (!ok) {
@@ -385,7 +385,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       );
       await this.load();
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.payments.refundFailed"));
+      this.error.set(this.apiErr(caught, "businessApp.payments.refundFailed"));
     }
   }
 }

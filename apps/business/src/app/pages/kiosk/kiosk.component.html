@@ -24,11 +24,11 @@
       <button
         type="button"
         class="kiosk-toolbar-btn kiosk-toolbar-btn--icon"
-        [attr.aria-pressed]="portalTheme.theme() === 'dark'"
+        [attr.aria-pressed]="businessTheme.theme() === 'dark'"
         [attr.aria-label]="themeAriaLabel()"
-        (click)="portalTheme.toggle()"
+        (click)="businessTheme.toggle()"
       >
-        <app-portal-nav-icon [name]="portalTheme.theme() === 'dark' ? 'light' : 'asleep'" />
+        <app-business-nav-icon [name]="businessTheme.theme() === 'dark' ? 'light' : 'asleep'" />
       </button>
       <button type="button" class="kiosk-toolbar-btn" (click)="openExit()">
         <adeni-carbon-icon name="close" [size]="16" />

@@ -28,8 +28,8 @@ export class AcceptInviteComponent implements OnInit {
   readonly message = signal(
     this.tr(
       isBusinessPortalDevMode(this.config)
-        ? "portal.acceptInvite.signInThenAcceptDev"
-        : "portal.acceptInvite.signInThenAccept",
+        ? "businessApp.acceptInvite.signInThenAcceptDev"
+        : "businessApp.acceptInvite.signInThenAccept",
     ),
   );
   readonly devMode = isBusinessPortalDevMode(this.config);
@@ -48,7 +48,7 @@ export class AcceptInviteComponent implements OnInit {
 
     if (!this.token) {
       this.status.set("error");
-      this.message.set(this.tr("portal.acceptInvite.thisInviteLinkMissingToken"));
+      this.message.set(this.tr("businessApp.acceptInvite.thisInviteLinkMissingToken"));
     }
   }
 
@@ -68,15 +68,15 @@ export class AcceptInviteComponent implements OnInit {
         this.devMode ? this.devAuth0Sub : undefined,
       );
       this.status.set("done");
-      this.message.set(this.tr("portal.acceptInvite.youReAsOpeningPortal", { permissionRole: result.permissionRole }));
-      this.feedback.success(this.tr("portal.acceptInvite.inviteAccepted"));
+      this.message.set(this.tr("businessApp.acceptInvite.youReAsOpeningPortal", { permissionRole: result.permissionRole }));
+      this.feedback.success(this.tr("businessApp.acceptInvite.inviteAccepted"));
       await this.router.navigateByUrl("/dashboard");
     } catch (caught) {
       this.status.set("error");
       this.message.set(
-        this.tr("portal.acceptInvite.couldNotAcceptInviteMay"),
+        this.tr("businessApp.acceptInvite.couldNotAcceptInviteMay"),
       );
-      this.feedback.error(this.apiErr(caught, "portal.acceptInvite.inviteNotAccepted"));
+      this.feedback.error(this.apiErr(caught, "businessApp.acceptInvite.inviteNotAccepted"));
     }
   }
 }

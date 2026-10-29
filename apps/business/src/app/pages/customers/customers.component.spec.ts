@@ -4,7 +4,7 @@ import { Subject } from "rxjs";
 import { AdeniFeedbackService, AdeniLocaleService } from "@adeni/ui";
 import { PLAN_ENTITLEMENTS, tenantEntitlementsSchema } from "@adeni/shared";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
+import { BusinessActiveLocationService } from "../../core/services/business-active-location.service";
 import { CustomersComponent } from "./customers.component";
 
 describe("CustomersComponent", () => {
@@ -23,7 +23,7 @@ describe("CustomersComponent", () => {
         { provide: AdeniFeedbackService, useValue: { runLoading: (fn: () => unknown) => fn(), error: jasmine.createSpy() } },
         { provide: AdeniLocaleService, useValue: { locale: signal("en") } },
         {
-          provide: PortalActiveLocationService,
+          provide: BusinessActiveLocationService,
           useValue: { tenantApiLocationId: () => "branch", selectionChanged$: new Subject() },
         },
       ],

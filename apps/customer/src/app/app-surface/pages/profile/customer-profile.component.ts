@@ -17,7 +17,7 @@ import { CustomerAppSessionService } from "../../services/customer-app-session.s
   standalone: true,
   imports: [RouterLink, PortalPageComponent, AdeniCarbonIconComponent],
   template: `
-    <app-portal-page [title]="tr('discover.app.nav.profile')" [description]="tr('discover.profile.description')">
+    <app-portal-page [title]="tr('customer.app.nav.profile')" [description]="tr('discover.profile.description')">
       <section class="app-panel app-profile__identity">
         <span class="app-avatar app-avatar--lg" aria-hidden="true">
           @if (session.initials(); as initials) {
@@ -27,7 +27,7 @@ import { CustomerAppSessionService } from "../../services/customer-app-session.s
           }
         </span>
         <div>
-          <strong>{{ session.displayName() || tr('discover.app.account') }}</strong>
+          <strong>{{ session.displayName() || tr('customer.app.account') }}</strong>
           @if (session.email()) {
             <p class="app-muted">{{ session.email() }}</p>
           } @else if (session.devCustomerMode) {
@@ -39,13 +39,13 @@ import { CustomerAppSessionService } from "../../services/customer-app-session.s
       <ul class="app-list app-profile__links">
         <li>
           <a class="app-row" routerLink="/app/benefits">
-            <span class="app-row__main"><adeni-carbon-icon name="gift" [size]="16" />{{ tr('discover.app.nav.benefits') }}</span>
+            <span class="app-row__main"><adeni-carbon-icon name="gift" [size]="16" />{{ tr('customer.app.nav.benefits') }}</span>
             <adeni-carbon-icon name="chevron--right" [size]="16" />
           </a>
         </li>
         <li>
           <a class="app-row" routerLink="/app/bookings">
-            <span class="app-row__main"><adeni-carbon-icon name="calendar" [size]="16" />{{ tr('discover.app.nav.bookings') }}</span>
+            <span class="app-row__main"><adeni-carbon-icon name="calendar" [size]="16" />{{ tr('customer.app.nav.bookings') }}</span>
             <adeni-carbon-icon name="chevron--right" [size]="16" />
           </a>
         </li>

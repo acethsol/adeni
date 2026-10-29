@@ -17,8 +17,8 @@ import {
   type NotificationTemplateId,
   type NotificationTemplateOverride,
 } from "@adeni/shared";
-import { filterPortalTabs } from "../../core/portal-access";
-import { findPortalNavItem } from "../../core/portal-nav";
+import { filterBusinessTabs } from "../../core/business-access";
+import { findBusinessNavItem } from "../../core/business-nav";
 import {
   AdeniCarbonIconComponent,
   AdeniConfirmService,
@@ -57,7 +57,7 @@ export class SettingsComponent implements OnInit {
     { initialValue: this.route.snapshot.queryParamMap.get("tab") ?? this.defaultTabId() },
   );
 
-  private readonly allTabs = findPortalNavItem("/settings")?.item.tabs ?? [
+  private readonly allTabs = findBusinessNavItem("/settings")?.item.tabs ?? [
     { id: "bookings", label: "Bookings" },
     { id: "notifications", label: "Notifications" },
     { id: "policies", label: "Policies" },
@@ -65,9 +65,9 @@ export class SettingsComponent implements OnInit {
   ];
   readonly tabs = computed(() => {
     const entitlements = this.profile()?.entitlements ?? null;
-    const base = filterPortalTabs(this.allTabs, entitlements);
+    const base = filterBusinessTabs(this.allTabs, entitlements);
     if (hasCapability(this.profile()?.capabilities, "walk_in_queue")) {
-      return [...base, { id: "walk-ins", label: this.tr("portal.settings.walkIns") }];
+      return [...base, { id: "walk-ins", label: this.tr("businessApp.settings.walkIns") }];
     }
     return base;
   });
@@ -152,7 +152,7 @@ export class SettingsComponent implements OnInit {
             this.ensureEditableTemplateRows();
             this.notificationsError.set(null);
           } catch {
-            this.notificationsError.set(this.tr("portal.settings.couldNotLoadNotificationPreferences"));
+            this.notificationsError.set(this.tr("businessApp.settings.couldNotLoadNotificationPreferences"));
           }
 
           if (hasTenantEntitlement(profile.entitlements, "messaging")) {
@@ -167,7 +167,7 @@ export class SettingsComponent implements OnInit {
         });
       });
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.settings.couldNotLoadSettings"));
+      this.error.set(this.apiErr(caught, "businessApp.settings.couldNotLoadSettings"));
     }
   }
 
@@ -191,10 +191,10 @@ export class SettingsComponent implements OnInit {
           }),
         );
         this.profile.set(profile);
-        this.feedback.success(this.tr("portal.settings.bookingSettingsSaved"));
+        this.feedback.success(this.tr("businessApp.settings.bookingSettingsSaved"));
       });
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.settings.couldNotSaveBookingSettings"));
+      this.feedback.error(this.apiErr(caught, "businessApp.settings.couldNotSaveBookingSettings"));
     } finally {
       this.saving.set(false);
     }
@@ -220,10 +220,10 @@ export class SettingsComponent implements OnInit {
               : [],
           }),
         );
-        this.feedback.success(this.tr("portal.settings.notificationPreferencesSaved"));
+        this.feedback.success(this.tr("businessApp.settings.notificationPreferencesSaved"));
       });
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.settings.couldNotSaveNotificationPreferences"));
+      this.feedback.error(this.apiErr(caught, "businessApp.settings.couldNotSaveNotificationPreferences"));
     } finally {
       this.saving.set(false);
     }
@@ -246,10 +246,10 @@ export class SettingsComponent implements OnInit {
           }),
         );
         this.profile.set(profile);
-        this.feedback.success(this.tr("portal.settings.policiesSaved"));
+        this.feedback.success(this.tr("businessApp.settings.policiesSaved"));
       });
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.settings.couldNotSavePolicies"));
+      this.feedback.error(this.apiErr(caught, "businessApp.settings.couldNotSavePolicies"));
     } finally {
       this.saving.set(false);
     }
@@ -272,10 +272,10 @@ export class SettingsComponent implements OnInit {
         this.walkInsEnabled = settings.walkInsEnabled;
         this.maxWalkInWaiting = settings.maxWalkInWaiting ?? null;
         this.walkInCalendarPolicy = settings.calendarPolicy;
-        this.feedback.success(this.tr("portal.settings.walkSettingsSaved"));
+        this.feedback.success(this.tr("businessApp.settings.walkSettingsSaved"));
       });
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.settings.couldNotSaveWalkSettings"));
+      this.feedback.error(this.apiErr(caught, "businessApp.settings.couldNotSaveWalkSettings"));
     } finally {
       this.saving.set(false);
     }
@@ -441,10 +441,10 @@ export class SettingsComponent implements OnInit {
             faqAutoResponderEnabled: this.faqAutoResponderEnabled,
           }),
         );
-        this.feedback.success(this.tr("portal.settings.messagingSettingsSaved"));
+        this.feedback.success(this.tr("businessApp.settings.messagingSettingsSaved"));
       });
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.settings.couldNotSaveMessagingSettings"));
+      this.feedback.error(this.apiErr(caught, "businessApp.settings.couldNotSaveMessagingSettings"));
     } finally {
       this.saving.set(false);
     }

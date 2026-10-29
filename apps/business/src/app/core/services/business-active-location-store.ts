@@ -14,7 +14,7 @@ function normalizePersistedScope(raw: string): string {
   return raw;
 }
 
-export function readPersistedPortalActiveLocation(tenantId: string): string | null {
+export function readPersistedBusinessActiveLocation(tenantId: string): string | null {
   if (typeof localStorage === "undefined" || !tenantId) {
     return null;
   }
@@ -29,7 +29,7 @@ export function readPersistedPortalActiveLocation(tenantId: string): string | nu
   }
 }
 
-export function writePersistedPortalActiveLocation(tenantId: string, locationId: string): void {
+export function writePersistedBusinessActiveLocation(tenantId: string, locationId: string): void {
   if (typeof localStorage === "undefined" || !tenantId) {
     return;
   }
@@ -40,7 +40,7 @@ export function writePersistedPortalActiveLocation(tenantId: string, locationId:
   }
 }
 
-export function clearPersistedPortalActiveLocation(tenantId: string): void {
+export function clearPersistedBusinessActiveLocation(tenantId: string): void {
   if (typeof localStorage === "undefined" || !tenantId) {
     return;
   }

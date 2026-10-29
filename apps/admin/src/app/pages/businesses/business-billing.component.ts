@@ -49,13 +49,13 @@ export class BusinessBillingComponent {
   readonly chargeColumns = computed<AdeniDataTableColumn<TenantSubscriptionCharge>[]>(() => [
     {
       id: "when",
-      header: this.tr("portal.plan.date"),
+      header: this.tr("businessApp.plan.date"),
       cell: (row) => row.occurredAt,
       sortValue: (row) => row.occurredAt,
     },
     {
       id: "amount",
-      header: this.tr("portal.quotes.amount"),
+      header: this.tr("businessApp.quotes.amount"),
       align: "right",
       cell: (row) => formatChargeAmount(row),
       sortValue: (row) => row.amountMinor ?? 0,

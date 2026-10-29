@@ -4,12 +4,12 @@ import { RouterLink } from "@angular/router";
 import { PortalPageComponent, injectAdeniApiError, injectAdeniTranslate } from "@adeni/ui";
 import { formatPrice, type CommerceRequest, type BusinessGiftCard, type GiftTransaction } from "@adeni/shared";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalSessionService } from "../../core/services/portal-session.service";
+import { BusinessSessionService } from "../../core/services/business-session.service";
 @Component({selector:"app-commerce",standalone:true,imports:[FormsModule,RouterLink,PortalPageComponent],
  styles:`label { display:block; margin-block:.75rem; } input,select,button { padding:.5rem; } article { border-block-end:1px solid var(--cds-border-subtle,#ddd); padding-block:1rem; } button,a { margin-inline-end:.5rem; }`,
  templateUrl:"./commerce.component.html"})
 export class CommerceComponent implements OnInit {
- readonly tr=injectAdeniTranslate();readonly apiErr=injectAdeniApiError();private readonly api=inject(BusinessApiService);private readonly session=inject(PortalSessionService);
+ readonly tr=injectAdeniTranslate();readonly apiErr=injectAdeniApiError();private readonly api=inject(BusinessApiService);private readonly session=inject(BusinessSessionService);
  readonly requests=signal<CommerceRequest[]>([]);readonly cards=signal<BusinessGiftCard[]>([]);readonly transactions=signal<GiftTransaction[]>([]);
  readonly selectedCard=signal("");readonly busy=signal(false);readonly error=signal<string|null>(null);readonly notice=signal("");readonly page=signal(1);
  readonly canManage=computed(()=>this.session.loaded() && ["owner","manager"].includes(this.session.permissionRole()));

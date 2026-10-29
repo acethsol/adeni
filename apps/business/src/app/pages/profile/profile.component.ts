@@ -44,7 +44,7 @@ import {
   injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
+import { BusinessActiveLocationService } from "../../core/services/business-active-location.service";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 
 const PHONE_PATTERN = /^\+?[0-9\s-]{7,20}$/;
@@ -79,7 +79,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly route = inject(ActivatedRoute);
-  protected readonly activeLocation = inject(PortalActiveLocationService);
+  protected readonly activeLocation = inject(BusinessActiveLocationService);
   private readonly uiLocale = inject(AdeniLocaleService).locale;
   private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
   private branchSub: Subscription | null = null;
@@ -99,10 +99,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
     },
   );
   readonly tabs = computed(() => [
-    { id: "overview", label: this.tr("portal.customers.overview") },
-    { id: "business", label: this.tr("portal.profile.businessDetails") },
+    { id: "overview", label: this.tr("businessApp.customers.overview") },
+    { id: "business", label: this.tr("businessApp.profile.businessDetails") },
     { id: "reviews", label: this.tr("common.reviews") },
-    { id: "verification", label: this.tr("portal.profile.verification") },
+    { id: "verification", label: this.tr("businessApp.profile.verification") },
   ]);
 
   readonly error = signal<string | null>(null);
@@ -156,17 +156,17 @@ export class ProfileComponent implements OnInit, OnDestroy {
     VerificationBadgeType,
     { icon: AdeniCarbonIconName; descKey: string; referenceKey?: string }
   > = {
-    phone: { icon: "phone", descKey: "portal.profile.verificationBadgeDescPhone" },
+    phone: { icon: "phone", descKey: "businessApp.profile.verificationBadgeDescPhone" },
     cac: {
       icon: "document",
-      descKey: "portal.profile.verificationBadgeDescCac",
-      referenceKey: "portal.profile.verificationBadgeReferenceCac",
+      descKey: "businessApp.profile.verificationBadgeDescCac",
+      referenceKey: "businessApp.profile.verificationBadgeReferenceCac",
     },
-    address: { icon: "location", descKey: "portal.profile.verificationBadgeDescAddress" },
+    address: { icon: "location", descKey: "businessApp.profile.verificationBadgeDescAddress" },
     license: {
       icon: "certificate",
-      descKey: "portal.profile.verificationBadgeDescLicense",
-      referenceKey: "portal.profile.verificationBadgeReferenceLicense",
+      descKey: "businessApp.profile.verificationBadgeDescLicense",
+      referenceKey: "businessApp.profile.verificationBadgeReferenceLicense",
     },
   };
 
@@ -192,7 +192,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   readonly trustBadgeProgress = computed(() => {
     const granted = VERIFICATION_BADGE_TYPES.filter((t) => this.trustBadgeGranted(t)).length;
-    return this.tr("portal.profile.verificationTrustBadgesProgress", {
+    return this.tr("businessApp.profile.verificationTrustBadgesProgress", {
       granted,
       total: VERIFICATION_BADGE_TYPES.length,
     });
@@ -208,9 +208,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
   readonly reviewsScopeHint = computed(() => {
     const display = this.activeLocation.switchDisplay();
     if (display.allLocationsScope) {
-      return this.tr("portal.profile.reviewsAllLocations");
+      return this.tr("businessApp.profile.reviewsAllLocations");
     }
-    return this.tr("portal.profile.reviewsBranchScope", { branch: display.title });
+    return this.tr("businessApp.profile.reviewsBranchScope", { branch: display.title });
   });
 
   readonly reviewsHero = computed(() => {
@@ -220,18 +220,18 @@ export class ProfileComponent implements OnInit, OnDestroy {
         status: "empty" as const,
         icon: "user--follow" as AdeniCarbonIconName,
         tone: "brand" as AdeniPillTone,
-        title: this.tr("portal.profile.reviewsHeroEmptyTitle"),
-        body: this.tr("portal.profile.reviewsHeroEmptyBody"),
-        badge: this.tr("portal.profile.reviewsHeroEmptyBadge"),
+        title: this.tr("businessApp.profile.reviewsHeroEmptyTitle"),
+        body: this.tr("businessApp.profile.reviewsHeroEmptyBody"),
+        badge: this.tr("businessApp.profile.reviewsHeroEmptyBadge"),
       };
     }
     return {
       status: "active" as const,
       icon: "checkmark--filled" as AdeniCarbonIconName,
       tone: "success" as AdeniPillTone,
-      title: this.tr("portal.profile.reviewsHeroActiveTitle"),
-      body: this.tr("portal.profile.reviewsHeroActiveBody"),
-      badge: this.tr("portal.profile.reviewsHeroActiveBadge"),
+      title: this.tr("businessApp.profile.reviewsHeroActiveTitle"),
+      body: this.tr("businessApp.profile.reviewsHeroActiveBody"),
+      badge: this.tr("businessApp.profile.reviewsHeroActiveBadge"),
     };
   });
 
@@ -260,9 +260,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
   readonly verificationSteps = computed(() => {
     const status = this.profile()?.status ?? 0;
     const labels = [
-      this.tr("portal.profile.verificationStepDraft"),
-      this.tr("portal.profile.verificationStepInReview"),
-      this.tr("portal.profile.verificationStepVerified"),
+      this.tr("businessApp.profile.verificationStepDraft"),
+      this.tr("businessApp.profile.verificationStepInReview"),
+      this.tr("businessApp.profile.verificationStepVerified"),
     ];
     let activeIndex = 0;
     if (status === 1) {
@@ -273,7 +273,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       return {
         labels: [
           labels[0],
-          this.tr("portal.profile.verificationStepRejected"),
+          this.tr("businessApp.profile.verificationStepRejected"),
           labels[2],
         ],
         activeIndex: 1,
@@ -282,7 +282,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       return {
         labels: [
           labels[0],
-          this.tr("portal.profile.verificationStepSuspended"),
+          this.tr("businessApp.profile.verificationStepSuspended"),
           labels[2],
         ],
         activeIndex: 1,
@@ -347,12 +347,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
     const p = this.profile();
     if (!p || this.canEdit()) return null;
     if (p.status === 1) {
-      return this.tr("portal.profile.yourProfileWithAdminReview");
+      return this.tr("businessApp.profile.yourProfileWithAdminReview");
     }
     if (p.status === 4) {
-      return this.tr("portal.profile.thisBusinessSuspendedContactSupport");
+      return this.tr("businessApp.profile.thisBusinessSuspendedContactSupport");
     }
-    return this.tr("portal.profile.profileEditingNotAvailableStatus");
+    return this.tr("businessApp.profile.profileEditingNotAvailableStatus");
   }
 
   async load(): Promise<void> {
@@ -371,8 +371,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
         await Promise.all([this.loadCategories(p), this.loadReviews(p), this.loadTrustBadges(p)]);
       });
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.profile.couldNotLoadProfile"));
-      this.feedback.error(this.apiErr(caught, "portal.profile.couldNotLoadProfile"));
+      this.error.set(this.apiErr(caught, "businessApp.profile.couldNotLoadProfile"));
+      this.feedback.error(this.apiErr(caught, "businessApp.profile.couldNotLoadProfile"));
       this.profile.set(null);
     }
   }
@@ -380,8 +380,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
   async saveProfile(): Promise<void> {
     if (!this.canEdit()) return;
     if (!this.businessName.trim() || !this.categorySlug.trim() || !PHONE_PATTERN.test(this.phone.trim())) {
-      this.error.set(this.tr("portal.profile.fixRequiredFieldsBeforeSaving"));
-      this.feedback.error(this.tr("portal.profile.fixRequiredFieldsBeforeSaving"));
+      this.error.set(this.tr("businessApp.profile.fixRequiredFieldsBeforeSaving"));
+      this.feedback.error(this.tr("businessApp.profile.fixRequiredFieldsBeforeSaving"));
       return;
     }
     if (
@@ -405,14 +405,14 @@ export class ProfileComponent implements OnInit, OnDestroy {
               description: this.description.trim(),
             }),
           ),
-        this.tr("portal.profile.savingProfile"),
-        this.tr("portal.profile.updatingBusinessDetails"),
+        this.tr("businessApp.profile.savingProfile"),
+        this.tr("businessApp.profile.updatingBusinessDetails"),
       );
       this.profile.set(updated);
-      this.feedback.success(this.tr("portal.profile.businessDetailsUpdated"), this.tr("portal.profile.profileSaved"));
+      this.feedback.success(this.tr("businessApp.profile.businessDetailsUpdated"), this.tr("businessApp.profile.profileSaved"));
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.profile.couldNotSaveProfile"));
-      this.feedback.error(this.apiErr(caught, "portal.profile.couldNotSaveProfile"));
+      this.error.set(this.apiErr(caught, "businessApp.profile.couldNotSaveProfile"));
+      this.feedback.error(this.apiErr(caught, "businessApp.profile.couldNotSaveProfile"));
     } finally {
       this.saving.set(false);
     }
@@ -479,8 +479,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
   async copyPublicLink(): Promise<void> {
     try {
       await navigator.clipboard.writeText(this.publicBookingUrl());
-      this.shareNotice.set(this.tr("portal.profile.bookingLinkCopied"));
-      this.feedback.success(this.tr("portal.profile.bookingLinkCopied"));
+      this.shareNotice.set(this.tr("businessApp.profile.bookingLinkCopied"));
+      this.feedback.success(this.tr("businessApp.profile.bookingLinkCopied"));
     } catch (caught) {
       this.error.set(this.apiErr(caught, "common.couldNotCopyLink"));
     }
@@ -489,8 +489,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
   whatsAppShareUrl(): string {
     const p = this.profile();
     const text = encodeURIComponent(
-      this.tr("portal.profile.whatsAppShareText", {
-        name: p?.businessName ?? this.tr("portal.profile.whatsAppShareFallbackName"),
+      this.tr("businessApp.profile.whatsAppShareText", {
+        name: p?.businessName ?? this.tr("businessApp.profile.whatsAppShareFallbackName"),
         url: this.publicBookingUrl(),
       }),
     );
@@ -524,7 +524,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       ? this.trustBadgeReferences[badgeType]?.trim() || undefined
       : undefined;
     if (reference && reference.length < 5) {
-      this.feedback.error(this.tr("portal.profile.referenceNumberMustBeAt"));
+      this.feedback.error(this.tr("businessApp.profile.referenceNumberMustBeAt"));
       return;
     }
 
@@ -549,13 +549,13 @@ export class ProfileComponent implements OnInit, OnDestroy {
         requested,
       ]);
       this.trustBadgeReferences[badgeType] = "";
-      this.feedback.success(this.tr("portal.profile.verificationRequestBadge"));
+      this.feedback.success(this.tr("businessApp.profile.verificationRequestBadge"));
       const p = this.profile();
       if (p) {
         await this.loadTrustBadges(p);
       }
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.profile.couldNotSubmitVerification"));
+      this.feedback.error(this.apiErr(caught, "businessApp.profile.couldNotSubmitVerification"));
     } finally {
       this.trustBadgeBusy.set(null);
     }
@@ -680,7 +680,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       this.replyingId.set(null);
       this.replyDraft = "";
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.profile.couldNotPostReply"));
+      this.error.set(this.apiErr(caught, "businessApp.profile.couldNotPostReply"));
     } finally {
       this.saving.set(false);
     }
@@ -689,11 +689,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
   async submitVerification(): Promise<void> {
     if (!this.canSubmitVerification()) return;
     if (this.verificationReference.trim().length < 5) {
-      this.error.set(this.tr("portal.profile.referenceNumberMustBeAt"));
+      this.error.set(this.tr("businessApp.profile.referenceNumberMustBeAt"));
       return;
     }
     if (!this.prerequisitesMet()) {
-      this.error.set(this.tr("portal.profile.fixRequiredFieldsBeforeSaving"));
+      this.error.set(this.tr("businessApp.profile.fixRequiredFieldsBeforeSaving"));
       return;
     }
     if (
@@ -717,12 +717,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
           ],
         }),
       );
-      this.verificationMessage.set(this.tr("portal.profile.verificationSubmittedAdminWillReview"));
+      this.verificationMessage.set(this.tr("businessApp.profile.verificationSubmittedAdminWillReview"));
       this.verificationReference = "";
       this.verificationFileKey.set(null);
       await this.load();
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.profile.couldNotSubmitVerification"));
+      this.error.set(this.apiErr(caught, "businessApp.profile.couldNotSubmitVerification"));
     } finally {
       this.saving.set(false);
     }
@@ -758,7 +758,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       });
       this.verificationFileKey.set(key);
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.profile.couldNotSubmitVerification"));
+      this.error.set(this.apiErr(caught, "businessApp.profile.couldNotSubmitVerification"));
     } finally {
       this.verificationFileUploading.set(false);
       input.value = "";
@@ -775,7 +775,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       return;
     }
     if (file.size > MAX_BYTES) {
-      this.error.set(this.tr("portal.profile.coverMustBe5Mb"));
+      this.error.set(this.tr("businessApp.profile.coverMustBe5Mb"));
       return;
     }
 
@@ -795,7 +795,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       this.coverPreview.set(url);
       await this.load();
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.profile.coverUploadFailed"));
+      this.error.set(this.apiErr(caught, "businessApp.profile.coverUploadFailed"));
     } finally {
       this.uploading.set(false);
       input.value = "";
@@ -808,7 +808,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     if (!file || !this.profile()) return;
 
     if (this.galleryImages().length >= MAX_GALLERY_PHOTOS) {
-      this.error.set(this.tr("portal.profile.youCanAddUpGallery", { MAX_GALLERY_PHOTOS: MAX_GALLERY_PHOTOS }));
+      this.error.set(this.tr("businessApp.profile.youCanAddUpGallery", { MAX_GALLERY_PHOTOS: MAX_GALLERY_PHOTOS }));
       input.value = "";
       return;
     }
@@ -836,7 +836,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       });
       this.galleryImages.set(items);
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.profile.galleryUploadFailed"));
+      this.error.set(this.apiErr(caught, "businessApp.profile.galleryUploadFailed"));
     } finally {
       this.galleryUploading.set(false);
       input.value = "";
@@ -858,7 +858,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       );
       this.galleryImages.set(items);
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.profile.couldNotRemoveGalleryPhoto"));
+      this.error.set(this.apiErr(caught, "businessApp.profile.couldNotRemoveGalleryPhoto"));
     }
   }
 }

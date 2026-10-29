@@ -1,9 +1,9 @@
 <app-portal-page
   [title]="tr('common.registerBusiness')"
-  [description]="tr('portal.register.chooseHowCustomersFindYou')"
+  [description]="tr('businessApp.register.chooseHowCustomersFindYou')"
 >
   <p class="help-link">
-    <a routerLink="/setup">{{ tr('portal.register.howWorksCustomers') }}</a>
+    <a routerLink="/setup">{{ tr('businessApp.register.howWorksCustomers') }}</a>
   </p>
 
   @if (error()) {
@@ -12,21 +12,21 @@
 
   @if (profile(); as p) {
     <section class="card">
-      <h3>{{ tr('portal.register.alreadyRegistered') }}</h3>
+      <h3>{{ tr('businessApp.register.alreadyRegistered') }}</h3>
       <p>
-        <strong>{{ p.businessName }}</strong> {{ tr('portal.register.isLinkedAccount') }}
+        <strong>{{ p.businessName }}</strong> {{ tr('businessApp.register.isLinkedAccount') }}
       </p>
       <p class="muted">
         Primary: {{ categoryLabel("en", p.categorySlug) }}
         @if (p.additionalCategorySlugs?.length) {
-          {{ tr('portal.register.alsoListedUnder') }}
+          {{ tr('businessApp.register.alsoListedUnder') }}
           @for (slug of p.additionalCategorySlugs; track slug; let last = $last) {
             {{ categoryLabel("en", slug) }}@if (!last) {, }
           }
         }
       </p>
-      <a routerLink="/dashboard" class="btn btn-primary">{{ tr('portal.register.goDashboard') }}</a>
-      <a routerLink="/services" class="btn btn-secondary">{{ tr('portal.register.addServices') }}</a>
+      <a routerLink="/dashboard" class="btn btn-primary">{{ tr('businessApp.register.goDashboard') }}</a>
+      <a routerLink="/services" class="btn btn-secondary">{{ tr('businessApp.register.addServices') }}</a>
     </section>
   } @else if (markets().length > 0) {
     <section class="card">
@@ -41,7 +41,7 @@
             <option [value]="m.id">{{ m.name }}</option>
           }
         </select>
-        <p class="hint">{{ tr('portal.register.exploreCategoriesDiscoverOrderedMarket') }}</p>
+        <p class="hint">{{ tr('businessApp.register.exploreCategoriesDiscoverOrderedMarket') }}</p>
       </div>
       <div class="field">
         <label>{{ tr('common.primaryCategory') }}</label>
@@ -50,12 +50,12 @@
             <option [value]="cat.slug">{{ cat.name }}</option>
           }
         </select>
-        <p class="hint">{{ tr('portal.register.mainTypeBusinessUsedDefault') }}</p>
+        <p class="hint">{{ tr('businessApp.register.mainTypeBusinessUsedDefault') }}</p>
       </div>
       @if (additionalOptions().length > 0) {
         <fieldset class="field additional">
           <legend>{{ tr('common.alsoListUnderOptional') }}</legend>
-          <p class="hint">{{ tr('portal.register.customersFilteringTheseCategoriesWill') }}</p>
+          <p class="hint">{{ tr('businessApp.register.customersFilteringTheseCategoriesWill') }}</p>
           <ul class="checkbox-list">
             @for (cat of additionalOptions(); track cat.slug) {
               <li>
@@ -81,7 +81,7 @@
         <textarea rows="2" [(ngModel)]="description"></textarea>
       </div>
       <div class="field">
-        <label>{{ tr('portal.register.publicSlug') }}</label>
+        <label>{{ tr('businessApp.register.publicSlug') }}</label>
         <input [(ngModel)]="slug" />
       </div>
       <div class="field">
@@ -93,7 +93,7 @@
         <input [(ngModel)]="area" />
       </div>
       <button type="button" class="btn btn-primary" [disabled]="submitting()" (click)="submit()">
-        {{ submitting() ? tr('portal.register.submitting') : tr('portal.register.registerBusiness') }}
+        {{ submitting() ? tr('businessApp.register.submitting') : tr('businessApp.register.registerBusiness') }}
       </button>
     </section>
   }

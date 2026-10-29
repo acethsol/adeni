@@ -67,19 +67,19 @@ export class MyMembershipsComponent implements OnInit {
   statusLabel(status: CustomerMembershipStatus): string {
     switch (status) {
       case "pending":
-        return this.tr("portal.memberships.statusPending");
+        return this.tr("businessApp.memberships.statusPending");
       case "active":
-        return this.tr("portal.memberships.statusActive");
+        return this.tr("businessApp.memberships.statusActive");
       case "past_due":
-        return this.tr("portal.memberships.statusPastDue");
+        return this.tr("businessApp.memberships.statusPastDue");
       case "frozen":
-        return this.tr("portal.memberships.statusFrozen");
+        return this.tr("businessApp.memberships.statusFrozen");
       case "cancel_pending":
-        return this.tr("portal.memberships.statusCancelPending");
+        return this.tr("businessApp.memberships.statusCancelPending");
       case "cancelled":
-        return this.tr("portal.memberships.statusCancelled");
+        return this.tr("businessApp.memberships.statusCancelled");
       case "expired":
-        return this.tr("portal.memberships.statusExpired");
+        return this.tr("businessApp.memberships.statusExpired");
       default:
         return status;
     }

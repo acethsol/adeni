@@ -1,7 +1,7 @@
 import { Component, inject } from "@angular/core";
 import { Router, RouterLink } from "@angular/router";
 import { ADENI_PORTAL_CONFIG, isBusinessPortalDevMode } from "../../core/adeni-config";
-import { isPortalDevSignedOut, signInPortalDev } from "../../core/portal-dev-session";
+import { isPortalDevSignedOut, signInPortalDev } from "../../core/business-dev-session";
 
 import { injectAdeniTranslate } from "@adeni/ui";
 @Component({

@@ -31,9 +31,9 @@ import {
 } from "@adeni/shared";
 
 const TAGLINE_KEYS: Record<SubscriptionSku, string> = {
-  starter: "portal.plan.taglineStarter",
-  professional: "portal.plan.taglineProfessional",
-  business: "portal.plan.taglineBusiness",
+  starter: "businessApp.plan.taglineStarter",
+  professional: "businessApp.plan.taglineProfessional",
+  business: "businessApp.plan.taglineBusiness",
 };
 import {
   AdeniDataTableCellDirective,
@@ -53,13 +53,13 @@ import {
   injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
+import { BusinessActiveLocationService } from "../../core/services/business-active-location.service";
 
 const BILLING_EVENT_KEYS: Record<string, string> = {
-  "subscription.create": "portal.plan.billingEventPlanActivated",
-  "subscription.charge.success": "portal.plan.billingEventMonthlySubscription",
-  "invoice.payment_failed": "portal.plan.billingEventPaymentFailed",
-  "subscription.disable": "portal.plan.billingEventSubscriptionCanceled",
+  "subscription.create": "businessApp.plan.billingEventPlanActivated",
+  "subscription.charge.success": "businessApp.plan.billingEventMonthlySubscription",
+  "invoice.payment_failed": "businessApp.plan.billingEventPaymentFailed",
+  "subscription.disable": "businessApp.plan.billingEventSubscriptionCanceled",
 };
 
 @Component({
@@ -82,7 +82,7 @@ export class PlanComponent implements OnInit {
   protected readonly tr = injectAdeniTranslate();
   protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
-  private readonly activeLocation = inject(PortalActiveLocationService);
+  private readonly activeLocation = inject(BusinessActiveLocationService);
   readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly feedback = inject(AdeniFeedbackService);
@@ -115,21 +115,21 @@ export class PlanComponent implements OnInit {
   readonly billingColumns = computed<AdeniDataTableColumn<TenantSubscriptionCharge>[]>(() => [
     {
       id: "occurredAt",
-      header: this.tr("portal.plan.date"),
+      header: this.tr("businessApp.plan.date"),
       cell: (row) => row.occurredAt,
       sortable: true,
       sortValue: (row) => row.occurredAt,
     },
     {
       id: "event",
-      header: this.tr("portal.plan.event"),
+      header: this.tr("businessApp.plan.event"),
       cell: (row) => this.formatBillingEvent(row.eventType),
       sortable: true,
       sortValue: (row) => this.formatBillingEvent(row.eventType),
     },
     {
       id: "amount",
-      header: this.tr("portal.quotes.amount"),
+      header: this.tr("businessApp.quotes.amount"),
       align: "right",
       cell: (row) => this.formatChargeAmount(row),
       sortable: true,
@@ -151,7 +151,7 @@ export class PlanComponent implements OnInit {
   readonly billingSearchQuery = signal("");
 
   readonly planTabs = computed<AdeniTab[]>(() => [
-    { id: "plan", label: this.tr("portal.plan.planBilling") },
+    { id: "plan", label: this.tr("businessApp.plan.planBilling") },
     { id: "compare", label: this.tr("common.comparePlans") },
   ]);
 
@@ -235,7 +235,7 @@ export class PlanComponent implements OnInit {
       await this.maybeCompleteStubCheckout();
       });
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.plan.couldNotLoadPlanDetails"));
+      this.error.set(this.apiErr(caught, "businessApp.plan.couldNotLoadPlanDetails"));
     }
   }
 
@@ -259,13 +259,13 @@ export class PlanComponent implements OnInit {
     const tagline = this.tr(TAGLINE_KEYS[sku]);
     const fallbackDescription =
       getPlanDisplayForCountry(country ?? "", sku)?.description ??
-      this.tr("portal.plan.pricingMarketBeingConfigured");
+      this.tr("businessApp.plan.pricingMarketBeingConfigured");
 
     if (pricing) {
       if (!pricing.selfServeEnabled) {
         return {
           name: SUBSCRIPTION_SKU_LABELS[sku],
-          priceLabel: this.tr("portal.plan.contactUs"),
+          priceLabel: this.tr("businessApp.plan.contactUs"),
           description: fallbackDescription,
           tagline,
         };
@@ -292,7 +292,7 @@ export class PlanComponent implements OnInit {
 
     return {
       name: SUBSCRIPTION_SKU_LABELS[sku],
-      priceLabel: this.tr("portal.plan.contactUs"),
+      priceLabel: this.tr("businessApp.plan.contactUs"),
       description: fallbackDescription,
       tagline,
     };
@@ -351,7 +351,7 @@ export class PlanComponent implements OnInit {
         window.location.href = checkout.checkoutUrl;
       });
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.plan.checkoutCouldNotStartTry"));
+      this.error.set(this.apiErr(caught, "businessApp.plan.checkoutCouldNotStartTry"));
     } finally {
       this.checkoutBusy.set(false);
     }

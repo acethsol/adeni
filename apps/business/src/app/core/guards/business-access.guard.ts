@@ -6,7 +6,7 @@ import {
 } from "../adeni-config";
 
 /** Sends users to /setup when Auth0 and dev sub are both unset. */
-export const portalAccessGuard: CanActivateFn = () => {
+export const businessAccessGuard: CanActivateFn = () => {
   const config = inject(ADENI_PORTAL_CONFIG);
   const router = inject(Router);
 

@@ -46,7 +46,7 @@ export class BusinessCommercialAuditComponent {
   readonly auditColumns = computed<AdeniDataTableColumn<CommercialAuditEntry>[]>(() => [
     {
       id: "when",
-      header: this.tr("portal.plan.date"),
+      header: this.tr("businessApp.plan.date"),
       cell: (row) => row.occurredAt,
       sortValue: (row) => row.occurredAt,
     },

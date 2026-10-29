@@ -101,7 +101,7 @@ export class AdminTransactionsComponent {
   readonly columns = computed<AdeniDataTableColumn<AdminTransactionSearchItem>[]>(() => [
     {
       id: "when",
-      header: this.tr("portal.bookings.when"),
+      header: this.tr("businessApp.bookings.when"),
       cell: () => "",
       sortValue: (row) => row.occurredAt,
     },
@@ -125,7 +125,7 @@ export class AdminTransactionsComponent {
     },
     {
       id: "amount",
-      header: this.tr("portal.quotes.amount"),
+      header: this.tr("businessApp.quotes.amount"),
       align: "right",
       cell: () => "",
       sortValue: (row) => row.amountMinor ?? 0,

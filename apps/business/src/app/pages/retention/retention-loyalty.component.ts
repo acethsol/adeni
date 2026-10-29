@@ -9,7 +9,7 @@ import {
   injectAdeniTranslate,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalSessionService } from "../../core/services/portal-session.service";
+import { BusinessSessionService } from "../../core/services/business-session.service";
 
 const CURRENCIES = ["NGN", "CAD", "USD"] as const;
 
@@ -41,7 +41,7 @@ export class RetentionLoyaltyComponent implements OnInit {
   protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
-  private readonly session = inject(PortalSessionService);
+  private readonly session = inject(BusinessSessionService);
 
   readonly currencies = CURRENCIES;
   readonly loading = signal(true);
@@ -56,7 +56,7 @@ export class RetentionLoyaltyComponent implements OnInit {
   readonly summaryEarn = computed(() => {
     const d = this.draft();
     if (!d.earnPoints || !d.earnPerAmount) return "";
-    return this.tr("portal.loyalty.summaryEarn", {
+    return this.tr("businessApp.loyalty.summaryEarn", {
       points: String(d.earnPoints),
       amount: formatPrice(d.earnPerAmount, d.currency),
     });
@@ -65,7 +65,7 @@ export class RetentionLoyaltyComponent implements OnInit {
   readonly summaryRedeem = computed(() => {
     const d = this.draft();
     if (!d.redeemPoints || !d.redeemValue) return "";
-    return this.tr("portal.loyalty.summaryRedeem", {
+    return this.tr("businessApp.loyalty.summaryRedeem", {
       points: String(d.redeemPoints),
       value: formatPrice(d.redeemValue, d.currency),
     });
@@ -83,7 +83,7 @@ export class RetentionLoyaltyComponent implements OnInit {
       this.configured.set(program.configured);
       this.draft.set(this.toDraft(program));
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.loyalty.couldNotLoad"));
+      this.error.set(this.apiErr(caught, "businessApp.loyalty.couldNotLoad"));
     } finally {
       this.loading.set(false);
     }
@@ -125,9 +125,9 @@ export class RetentionLoyaltyComponent implements OnInit {
       );
       this.configured.set(saved.configured);
       this.draft.set(this.toDraft(saved));
-      this.feedback.success(this.tr("portal.loyalty.saved"));
+      this.feedback.success(this.tr("businessApp.loyalty.saved"));
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.loyalty.couldNotSave"));
+      this.feedback.error(this.apiErr(caught, "businessApp.loyalty.couldNotSave"));
     } finally {
       this.busy.set(false);
     }

@@ -20,10 +20,10 @@ import {
   type AdeniCarbonIconName,
   injectAdeniTranslate,
 } from "@adeni/ui";
-import { PortalThemeService } from "../../core/portal-theme.service";
+import { BusinessThemeService } from "../../core/business-theme.service";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalIconTooltipDirective } from "../../shared/portal-icon-tooltip.directive";
-import { PortalNavIconComponent } from "../../layout/portal-nav-icon.component";
+import { BusinessIconTooltipDirective } from "../../shared/business-icon-tooltip.directive";
+import { BusinessNavIconComponent } from "../../layout/business-nav-icon.component";
 
 const CONFIRMED = 1;
 const CHECKED_IN = 4;
@@ -35,8 +35,8 @@ const CHECKED_IN = 4;
     FormsModule,
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
-    PortalNavIconComponent,
-    PortalIconTooltipDirective,
+    BusinessNavIconComponent,
+    BusinessIconTooltipDirective,
   ],
   templateUrl: "./kiosk.component.html",
   styleUrl: "./kiosk.component.scss",
@@ -49,7 +49,7 @@ export class KioskComponent implements OnInit {
   private readonly documentTitle = inject(AdeniDocumentTitleStrategy);
   private readonly localeService = inject(AdeniLocaleService);
   private readonly feedback = inject(AdeniFeedbackService);
-  readonly portalTheme = inject(PortalThemeService);
+  readonly businessTheme = inject(BusinessThemeService);
   readonly locale = this.localeService.locale;
 
   readonly checkingIn = signal<string | null>(null);
@@ -60,7 +60,7 @@ export class KioskComponent implements OnInit {
   readonly checkedIn = signal<BookingResponse | null>(null);
   readonly exitOpen = signal(false);
   readonly walkInOpen = signal(false);
-  readonly businessName = signal(this.tr("portal.kiosk.checkInTitle"));
+  readonly businessName = signal(this.tr("businessApp.kiosk.checkInTitle"));
   readonly businessLogoUrl = signal<string | null>(null);
   readonly queueEnabled = signal(false);
   readonly services = signal<ServiceOffering[]>([]);
@@ -95,7 +95,7 @@ export class KioskComponent implements OnInit {
   }
 
   themeAriaLabel(): string {
-    return this.portalTheme.theme() === "dark"
+    return this.businessTheme.theme() === "dark"
       ? this.label("kiosk.themeLight")
       : this.label("kiosk.themeDark");
   }
@@ -128,7 +128,7 @@ export class KioskComponent implements OnInit {
         ]);
         const bookings = bookingsPage.items;
         this.status.set(status);
-        const name = profile.businessName?.trim() || this.tr("portal.queue.check");
+        const name = profile.businessName?.trim() || this.tr("businessApp.queue.check");
         this.businessName.set(name);
         this.documentTitle.setAppTitle(name);
         this.businessLogoUrl.set(profile.publicPage?.logoImageUrl ?? null);

@@ -57,7 +57,7 @@ export class BusinessDetailShellComponent {
     const billingLabel = charges > 0 ? this.tr("admin.businesses.billing", { charges: charges }) : this.tr("admin.businesses.billing2");
     const auditLabel = audit > 0 ? this.tr("admin.businesses.commercialAudit", { audit: audit }) : this.tr("common.commercialAudit");
     return [
-      { id: "overview", label: this.tr("portal.customers.overview") },
+      { id: "overview", label: this.tr("businessApp.customers.overview") },
       { id: "terms", label: this.tr("admin.businesses.commercialTerms") },
       { id: "billing", label: billingLabel },
       { id: "audit", label: auditLabel },

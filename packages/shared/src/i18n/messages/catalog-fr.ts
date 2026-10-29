@@ -652,9 +652,6 @@ export const frCatalog: MessageTree = {
     yourAccountDoesNotHave: "Votre compte n'a pas le rôle d'entreprise. Utilisez une connexion d'entreprise ou contactez le soutien.",
   },
   discover: {
-    app: {
-      adeniDiscover: "Adeni Découvrir",
-    },
     business: {
       businessNotFoundApiUnavailable: "Entreprise introuvable ou API indisponible.",
       fetchingProfileServicesReviews: "Récupération du profil, des services et des avis",
@@ -762,7 +759,7 @@ export const frCatalog: MessageTree = {
       weReceivedJobDetails: "Nous avons reçu les détails de votre travail",
     },
   },
-  portal: {
+  businessApp: {
     acceptInvite: {
       acceptInvite: "Accepter l'invitation",
       acceptStaffInvite: "Accepter l'invitation d'équipe",

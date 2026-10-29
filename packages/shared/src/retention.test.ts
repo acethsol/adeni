@@ -158,7 +158,7 @@ describe("retention contracts", () => {
       }
       expect(t(locale, "errors.entitlements.loyaltyBasic")).not.toBe("errors.entitlements.loyaltyBasic");
       for (const key of pageKeys) {
-        expect(t(locale, `portal.loyalty.${key}`), `${locale}:${key}`).not.toBe(`portal.loyalty.${key}`);
+        expect(t(locale, `businessApp.loyalty.${key}`), `${locale}:${key}`).not.toBe(`businessApp.loyalty.${key}`);
       }
     }
   });

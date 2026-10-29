@@ -5,7 +5,7 @@
 
   <aside id="portal-sidebar" class="sidebar">
     <div class="sidebar-head">
-      <a class="brand" routerLink="/dashboard" [attr.aria-label]="tr('portal.layout.adeniBusinessHome')">
+      <a class="brand" routerLink="/dashboard" [attr.aria-label]="tr('businessApp.layout.adeniBusinessHome')">
         @if (collapsed()) {
           <adeni-brand-logo variant="mark" [surface]="logoSurface()" [size]="28" />
         } @else {
@@ -13,7 +13,7 @@
             app="portal"
             [surface]="logoSurface()"
             [logoHeight]="32"
-            [caption]="tr('portal.layout.staffAppCaption')"
+            [caption]="tr('businessApp.layout.staffAppCaption')"
           />
         }
       </a>
@@ -38,7 +38,7 @@
                 [attr.data-label]="collapsed() ? navLabel(item) : null"
               >
                 <span class="nav-ico" aria-hidden="true">
-                  <app-portal-nav-icon [name]="item.icon" />
+                  <app-business-nav-icon [name]="item.icon" />
                 </span>
                 <span class="nav-label">{{ navLabel(item) }}</span>
               </a>
@@ -53,7 +53,7 @@
                 [attr.data-label]="collapsed() ? navLabel(item) : null"
               >
                 <span class="nav-ico" aria-hidden="true">
-                  <app-portal-nav-icon [name]="item.icon" />
+                  <app-business-nav-icon [name]="item.icon" />
                 </span>
                 <span class="nav-label">{{ navLabel(item) }}</span>
                 @if (badgeCount(item); as count) {
@@ -77,7 +77,7 @@
         [attr.aria-label]="collapsed() ? tr('common.expandSidebar') : tr('common.collapseSidebar')"
         (click)="toggleSidebar()"
       >
-        <app-portal-nav-icon [name]="collapsed() ? 'expand' : 'collapse'" />
+        <app-business-nav-icon [name]="collapsed() ? 'expand' : 'collapse'" />
         @if (!collapsed()) {
           <span class="rail-toggle-label">{{ tr('common.collapse') }}</span>
         }
@@ -104,7 +104,7 @@
 
       <div class="search-root" data-menu-root="search">
         <form class="topbar-search" role="search" (submit)="submitSearch($event)">
-          <app-portal-nav-icon name="search" />
+          <app-business-nav-icon name="search" />
           <input
             #searchField
             type="search"
@@ -139,7 +139,7 @@
                 (click)="openSearchHit(hit)"
               >
                 <span class="nav-ico">
-                  <app-portal-nav-icon [name]="hit.icon" />
+                  <app-business-nav-icon [name]="hit.icon" />
                 </span>
                 <span class="nav-label">{{ hit.label }}</span>
               </button>
@@ -151,9 +151,9 @@
       <div class="topbar-actions">
         @if (activeLocation.showLocationSwitch()) {
           <div class="topbar-location">
-            <app-portal-branch-switch
+            <app-business-branch-switch
               [ariaLabel]="text('locationSwitch')"
-              [entitlements]="portalEntitlements(profile())"
+              [entitlements]="businessEntitlementsFn(profile())"
               [allLocationsLabel]="text('allLocations')"
             />
           </div>
@@ -169,7 +169,7 @@
           [attr.aria-label]="theme() === 'dark' ? tr('common.switchLightTheme') : tr('common.switchDarkTheme')"
           (click)="toggleTheme()"
         >
-          <app-portal-nav-icon [name]="theme() === 'dark' ? 'light' : 'asleep'" />
+          <app-business-nav-icon [name]="theme() === 'dark' ? 'light' : 'asleep'" />
         </button>
 
         <div class="menu-root" data-menu-root="settings">
@@ -181,7 +181,7 @@
             [attr.aria-expanded]="settingsOpen()"
             (click)="toggleSettings($event)"
           >
-            <app-portal-nav-icon name="settings" />
+            <app-business-nav-icon name="settings" />
           </button>
           @if (settingsOpen()) {
             <div class="menu" role="menu" [attr.aria-label]="text('chromePreferences')">
@@ -202,11 +202,11 @@
               }
               <p class="menu-label">{{ text("appearance") }}</p>
               <button type="button" class="menu-item" role="menuitemradio" [attr.aria-checked]="themePreference() === 'light'" (click)="setTheme('light')">
-                <app-portal-nav-icon name="light" />
+                <app-business-nav-icon name="light" />
                 {{ text("light") }}
               </button>
               <button type="button" class="menu-item" role="menuitemradio" [attr.aria-checked]="themePreference() === 'dark'" (click)="setTheme('dark')">
-                <app-portal-nav-icon name="asleep" />
+                <app-business-nav-icon name="asleep" />
                 {{ text("dark") }}
               </button>
               <button type="button" class="menu-item" role="menuitemradio" [attr.aria-checked]="themePreference() === 'system'" (click)="setTheme('system')">
@@ -251,7 +251,7 @@
                 <p class="menu-meta">{{ formatTenantStatus(business.status) }}</p>
               }
               <button type="button" class="menu-item menu-item-danger" role="menuitem" (click)="logout()">
-                <app-portal-nav-icon name="logout" />
+                <app-business-nav-icon name="logout" />
                 {{ text("signOut") }}
               </button>
             </div>
@@ -266,8 +266,8 @@
 
     <adeni-staff-shell-footer
       app="portal"
-      [badgeLabel]="tr('portal.layout.staffAppBadge')"
-      [captionLabel]="tr('portal.layout.staffAppCaption')"
+      [badgeLabel]="tr('businessApp.layout.staffAppBadge')"
+      [captionLabel]="tr('businessApp.layout.staffAppCaption')"
       [devMode]="devMode"
     />
   </div>

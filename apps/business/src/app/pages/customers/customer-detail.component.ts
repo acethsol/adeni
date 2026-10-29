@@ -34,12 +34,12 @@ import {
 } from "@adeni/ui";
 import { AdeniApiError } from "@adeni/api-client";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
+import { BusinessActiveLocationService } from "../../core/services/business-active-location.service";
 import { Subscription } from "rxjs";
 import { CustomerMembershipsPanelComponent } from "./customer-memberships-panel.component";
 import { CustomerPackagesPanelComponent } from "./customer-packages-panel.component";
 import { CustomerProfilePanelComponent } from "./customer-profile-panel.component";
-import { PortalSessionService } from "../../core/services/portal-session.service";
+import { BusinessSessionService } from "../../core/services/business-session.service";
 
 const CUSTOMER_DETAIL_TABS = new Set(["overview", "bookings", "queue", "activity", "packages", "memberships"]);
 
@@ -85,9 +85,9 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
   private readonly api = inject(BusinessApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly feedback = inject(AdeniFeedbackService);
-  private readonly activeLocation = inject(PortalActiveLocationService);
+  private readonly activeLocation = inject(BusinessActiveLocationService);
   private readonly destroyRef = inject(DestroyRef);
-  readonly session = inject(PortalSessionService);
+  readonly session = inject(BusinessSessionService);
   readonly intakeStatuses = inject(IntakeBookingStatusService);
   readonly profileLocationId = signal<string | undefined>(undefined);
   private loadVersion = 0;
@@ -105,18 +105,18 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
     const bookingCount = c?.recentBookings.length ?? 0;
     const queueCount = c?.recentQueueVisits.length ?? 0;
     return [
-      { id: "overview", label: this.tr("portal.customers.overview") },
+      { id: "overview", label: this.tr("businessApp.customers.overview") },
       {
         id: "bookings",
-        label: bookingCount > 0 ? this.tr("portal.customers.bookings", { bookingCount: bookingCount }) : this.tr("common.bookings"),
+        label: bookingCount > 0 ? this.tr("businessApp.customers.bookings", { bookingCount: bookingCount }) : this.tr("common.bookings"),
       },
       {
         id: "queue",
-        label: queueCount > 0 ? this.tr("portal.customers.queue", { queueCount: queueCount }) : this.tr("common.queue"),
+        label: queueCount > 0 ? this.tr("businessApp.customers.queue", { queueCount: queueCount }) : this.tr("common.queue"),
       },
       ...(this.session.can("business.bookings") ? [{ id: "activity", label: this.tr("customerProfile.activity") }] : []),
-      ...(this.session.can("business.retention") ? [{ id: "packages", label: this.tr("portal.retention.customerTab") }] : []),
-      ...(this.session.can("business.retention") ? [{ id: "memberships", label: this.tr("portal.memberships.customerTab") }] : []),
+      ...(this.session.can("business.retention") ? [{ id: "packages", label: this.tr("businessApp.retention.customerTab") }] : []),
+      ...(this.session.can("business.retention") ? [{ id: "memberships", label: this.tr("businessApp.memberships.customerTab") }] : []),
     ];
   });
 
@@ -154,7 +154,7 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
   readonly bookingColumns = computed<AdeniDataTableColumn<TenantCustomerRecentBooking>[]>(() => [
     {
       id: "when",
-      header: this.tr("portal.bookings.when"),
+      header: this.tr("businessApp.bookings.when"),
       cell: (row) => formatSlotTime(row.startAt),
       sortable: true,
       sortValue: (row) => row.startAt,
@@ -178,7 +178,7 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
   readonly queueColumns = computed<AdeniDataTableColumn<TenantCustomerRecentQueueVisit>[]>(() => [
     {
       id: "when",
-      header: this.tr("portal.customers.joined"),
+      header: this.tr("businessApp.customers.joined"),
       cell: (row) => formatSlotTime(row.joinedAt),
       sortable: true,
       sortValue: (row) => row.joinedAt,
@@ -223,7 +223,7 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
     const version = ++this.loadVersion;
     const id = this.route.snapshot.paramMap.get("id");
     if (!id) {
-      this.error.set(this.tr("portal.customers.customerNotFound2"));
+      this.error.set(this.tr("businessApp.customers.customerNotFound2"));
       return;
     }
 
@@ -251,7 +251,7 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
       if (err instanceof AdeniApiError && err.statusCode === 404) {
         this.error.set(null);
       } else {
-        this.error.set(this.apiErr(err, "portal.customers.couldNotLoadCustomer"));
+        this.error.set(this.apiErr(err, "businessApp.customers.couldNotLoadCustomer"));
       }
       this.customer.set(null);
     }
@@ -267,7 +267,7 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
   }
 
   accountLabel(c: TenantCustomerDetail): string {
-    return c.platformCustomerId ? this.tr("portal.customers.discoverAccount") : this.tr("portal.customers.walkQueue");
+    return c.platformCustomerId ? this.tr("businessApp.customers.discoverAccount") : this.tr("businessApp.customers.walkQueue");
   }
 
   accountPillTone(c: TenantCustomerDetail): AdeniPillTone {
@@ -277,21 +277,21 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
   bookingStatusLabel(status: number): string {
     switch (status) {
       case PENDING_STATUS:
-        return this.tr("portal.bookings.awaitingApproval");
+        return this.tr("businessApp.bookings.awaitingApproval");
       case CONFIRMED_STATUS:
-        return this.tr("portal.bookings.scheduled");
+        return this.tr("businessApp.bookings.scheduled");
       case CHECKED_IN_STATUS:
-        return this.tr("portal.bookings.onFloor");
+        return this.tr("businessApp.bookings.onFloor");
       case COMPLETED_STATUS:
-        return this.tr("portal.bookings.serviceComplete");
+        return this.tr("businessApp.bookings.serviceComplete");
       case PAID_STATUS:
-        return this.tr("portal.bookings.paid");
+        return this.tr("businessApp.bookings.paid");
       case 2:
-        return this.tr("portal.bookings.declined");
+        return this.tr("businessApp.bookings.declined");
       case 3:
-        return this.tr("portal.bookings.cancelled");
+        return this.tr("businessApp.bookings.cancelled");
       default:
-        return this.tr("portal.bookings.unknown");
+        return this.tr("businessApp.bookings.unknown");
     }
   }
 
@@ -410,7 +410,7 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
       anchor.click();
       URL.revokeObjectURL(url);
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.customers.couldNotDownloadCustomerStatement"));
+      this.error.set(this.apiErr(caught, "businessApp.customers.couldNotDownloadCustomerStatement"));
     } finally {
       this.statementDownloading.set(false);
     }

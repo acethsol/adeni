@@ -14,7 +14,7 @@ Cross-platform tokens live in `@adeni/shared`. Shared staff-app UI (page layout,
 
 | App | Styles entry |
 |-----|----------------|
-| Discover | `apps/discover/src/styles.scss` |
+| Discover | `apps/customer/src/styles.scss` |
 | Portal | `apps/business/src/styles.scss` |
 | Admin | `apps/admin/src/styles.scss` |
 

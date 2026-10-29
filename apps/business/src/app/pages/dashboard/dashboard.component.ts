@@ -81,10 +81,10 @@ import {
 } from "@adeni/ui";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
-import { PORTAL_ALL_LOCATIONS_SCOPE } from "../../core/services/portal-active-location-store";
+import { BusinessActiveLocationService } from "../../core/services/business-active-location.service";
+import { PORTAL_ALL_LOCATIONS_SCOPE } from "../../core/services/business-active-location-store";
 import { MessagingRealtimeService, TenantOperationsRealtimeService } from "@adeni/ui";
-import { PortalSessionService } from "../../core/services/portal-session.service";
+import { BusinessSessionService } from "../../core/services/business-session.service";
 import { DashboardDataService } from "./dashboard-data.service";
 import { DashboardCarbonChartComponent } from "./dashboard-carbon-chart.component";
 import { clearDashboardLayout } from "./dashboard-layout-store";
@@ -126,8 +126,8 @@ export class DashboardComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly messagingRealtime = inject(MessagingRealtimeService);
   private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
-  readonly session = inject(PortalSessionService);
-  private readonly activeLocation = inject(PortalActiveLocationService);
+  readonly session = inject(BusinessSessionService);
+  private readonly activeLocation = inject(BusinessActiveLocationService);
   private readonly feedback = inject(AdeniFeedbackService);
 
   readonly formatTenantStatus = formatTenantStatus;
@@ -141,10 +141,10 @@ export class DashboardComponent implements OnInit {
   readonly pendingCount = signal(0);
   readonly activeServices = signal(0);
   readonly revenueLabel = signal("—");
-  readonly revenueHint = signal(this.tr("portal.dashboard.revenueHintListPrice"));
+  readonly revenueHint = signal(this.tr("businessApp.dashboard.revenueHintListPrice"));
   readonly revenueUsesCollected = signal(false);
-  readonly ratingLabel = signal(this.tr("portal.dashboard.ratingNew"));
-  readonly ratingHint = signal(this.tr("portal.dashboard.ratingNoReviews"));
+  readonly ratingLabel = signal(this.tr("businessApp.dashboard.ratingNew"));
+  readonly ratingHint = signal(this.tr("businessApp.dashboard.ratingNoReviews"));
   readonly appointmentChartData = signal<ChartTabularData>([]);
   readonly collectedChartData = signal<ChartTabularData>([]);
   readonly serviceMixChartData = signal<ChartTabularData>([]);
@@ -191,15 +191,15 @@ export class DashboardComponent implements OnInit {
     const appointments = this.appointmentsInRange();
     if (pending > 0) {
       return pending === 1
-        ? this.tr("portal.dashboard.oneBookingRequestWaitingYou")
-        : this.tr("portal.dashboard.bookingRequestsWaiting", { count: pending });
+        ? this.tr("businessApp.dashboard.oneBookingRequestWaitingYou")
+        : this.tr("businessApp.dashboard.bookingRequestsWaiting", { count: pending });
     }
     if (appointments > 0) {
       return appointments === 1
-        ? this.tr("portal.dashboard.oneVisitScheduledWindow")
-        : this.tr("portal.dashboard.visitsScheduledInWindow", { count: appointments });
+        ? this.tr("businessApp.dashboard.oneVisitScheduledWindow")
+        : this.tr("businessApp.dashboard.visitsScheduledInWindow", { count: appointments });
     }
-    return this.tr("portal.dashboard.noVisitsWindowYetShare");
+    return this.tr("businessApp.dashboard.noVisitsWindowYetShare");
   });
 
   readonly isNearBookingLimit = isNearBookingLimit;
@@ -287,7 +287,7 @@ export class DashboardComponent implements OnInit {
       isPractitionerView: this.isPractitionerView(),
       entitlements: this.exportEntitlements(),
       capabilities: resolveDashboardCapabilities(this.profile()),
-      canBusiness: (permission: Parameters<PortalSessionService["can"]>[0]) =>
+      canBusiness: (permission: Parameters<BusinessSessionService["can"]>[0]) =>
         this.session.can(permission)
         || (permission === "business.bookings" && this.session.can("business.bookings.self")),
     };
@@ -319,10 +319,10 @@ export class DashboardComponent implements OnInit {
   presetUiCopy(key: "recommended" | "currentLayout" | "emptyPlan" | "useLayout", vars?: Record<string, string>): string {
     const base = `portalDashboard.presets.${key}`;
     const fallbacks: Record<typeof key, string> = {
-      recommended: this.tr("portal.dashboard.recommendedYou"),
-      currentLayout: this.tr("portal.dashboard.currentLayout"),
-      emptyPlan: this.tr("portal.dashboard.noWidgetsPlanTemplate"),
-      useLayout: this.tr("portal.dashboard.useLayout"),
+      recommended: this.tr("businessApp.dashboard.recommendedYou"),
+      currentLayout: this.tr("businessApp.dashboard.currentLayout"),
+      emptyPlan: this.tr("businessApp.dashboard.noWidgetsPlanTemplate"),
+      useLayout: this.tr("businessApp.dashboard.useLayout"),
     };
     const translated = t(this.portalLocale(), base, vars);
     if (translated !== base) {
@@ -416,7 +416,7 @@ export class DashboardComponent implements OnInit {
   presetCtaLabel(preset: DashboardLayoutPreset): string {
     const label = this.presetUiCopy("useLayout", { label: preset.label });
     return label === "portalDashboard.presets.useLayout"
-      ? this.tr("portal.dashboard.useLayout", { label: preset.label })
+      ? this.tr("businessApp.dashboard.useLayout", { label: preset.label })
       : label;
   }
 
@@ -517,12 +517,12 @@ export class DashboardComponent implements OnInit {
 
   pageDescription(): string {
     if (this.isPractitionerView()) {
-      return this.tr("portal.dashboard.yourScheduleBookingInboxAt");
+      return this.tr("businessApp.dashboard.yourScheduleBookingInboxAt");
     }
     if (this.revenueUsesCollected()) {
-      return this.tr("portal.dashboard.planUsageAppointmentsCollectedRevenue");
+      return this.tr("businessApp.dashboard.planUsageAppointmentsCollectedRevenue");
     }
-    return this.tr("portal.dashboard.planUsageAppointmentsBookedValue");
+    return this.tr("businessApp.dashboard.planUsageAppointmentsBookedValue");
   }
 
   rangeLabel(): string {
@@ -633,9 +633,9 @@ export class DashboardComponent implements OnInit {
   verificationHint(): string {
     const profile = this.profile();
     if (!profile) return "";
-    if (profile.status === 2) return this.tr("portal.dashboard.verifiedCustomersSeeYouDiscovery");
-    if (profile.status === 1) return this.tr("portal.dashboard.pendingReviewWeLlEmail");
-    return this.tr("portal.dashboard.completeVerificationAppearDiscovery");
+    if (profile.status === 2) return this.tr("businessApp.dashboard.verifiedCustomersSeeYouDiscovery");
+    if (profile.status === 1) return this.tr("businessApp.dashboard.pendingReviewWeLlEmail");
+    return this.tr("businessApp.dashboard.completeVerificationAppearDiscovery");
   }
 
   removeWidget(widgetId: DashboardWidgetId): void {
@@ -685,7 +685,7 @@ export class DashboardComponent implements OnInit {
           snapshot.profile.entitlements,
         ),
         capabilities: resolveDashboardCapabilities(snapshot.profile),
-        canBusiness: (permission: Parameters<PortalSessionService["can"]>[0]) =>
+        canBusiness: (permission: Parameters<BusinessSessionService["can"]>[0]) =>
           this.session.can(permission)
           || (permission === "business.bookings" && this.session.can("business.bookings.self")),
       };
@@ -709,14 +709,14 @@ export class DashboardComponent implements OnInit {
       this.applyRevenueFromSummary(snapshot.summary);
       this.applyBookings(snapshot.bookings, snapshot.services, this.revenueUsesCollected());
       this.appointmentChartData.set(this.toSeriesChartData(snapshot.series?.points ?? []));
-      this.collectedChartData.set(this.toSeriesChartData(snapshot.collectedSeries?.points ?? [], this.tr("portal.dashboard.collected")));
+      this.collectedChartData.set(this.toSeriesChartData(snapshot.collectedSeries?.points ?? [], this.tr("businessApp.dashboard.collected")));
       this.serviceMixChartData.set(
         (snapshot.serviceBreakdown?.items ?? []).map((item: TenantDashboardBreakdown["items"][number]) => ({
           group: item.label,
           value: item.value,
         })),
       );
-      this.bookedValueChartData.set(this.toSeriesChartData(snapshot.bookedSeries?.points ?? [], this.tr("portal.dashboard.booked")));
+      this.bookedValueChartData.set(this.toSeriesChartData(snapshot.bookedSeries?.points ?? [], this.tr("businessApp.dashboard.booked")));
       this.staffLeaderboardChartData.set(
         (snapshot.staffBreakdown?.items ?? []).map((item: TenantDashboardBreakdown["items"][number]) => ({
           group: this.tr("common.bookings"),
@@ -773,7 +773,7 @@ export class DashboardComponent implements OnInit {
 
   private toSeriesChartData(
     points: { date: string; value: number }[],
-    group = this.tr("portal.dashboard.appointments"),
+    group = this.tr("businessApp.dashboard.appointments"),
   ): ChartTabularData {
     return points.slice(-21).map((point) => ({
       group,
@@ -798,20 +798,20 @@ export class DashboardComponent implements OnInit {
     if (summary.analyticsIncluded && summary.collectedAmount != null && summary.collectedAmount > 0) {
       this.revenueUsesCollected.set(true);
       this.revenueLabel.set(formatPrice(summary.collectedAmount, currency));
-      this.revenueHint.set(this.tr("portal.dashboard.collectedOnlineIn", { range: this.rangeLabel().toLowerCase() }));
+      this.revenueHint.set(this.tr("businessApp.dashboard.collectedOnlineIn", { range: this.rangeLabel().toLowerCase() }));
       return;
     }
 
     if (summary.analyticsIncluded && summary.bookedValueAmount != null) {
       this.revenueUsesCollected.set(false);
       this.revenueLabel.set(formatPrice(summary.bookedValueAmount, currency));
-      this.revenueHint.set(this.tr("portal.dashboard.bookedListValueIn", { range: this.rangeLabel().toLowerCase() }));
+      this.revenueHint.set(this.tr("businessApp.dashboard.bookedListValueIn", { range: this.rangeLabel().toLowerCase() }));
       return;
     }
 
     this.revenueUsesCollected.set(false);
     this.revenueLabel.set("—");
-    this.revenueHint.set(this.tr("portal.dashboard.revenueMetricsNotShownPeriod"));
+    this.revenueHint.set(this.tr("businessApp.dashboard.revenueMetricsNotShownPeriod"));
   }
 
   private applyBookings(

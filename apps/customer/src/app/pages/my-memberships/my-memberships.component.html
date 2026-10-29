@@ -52,7 +52,7 @@
             <p class="meta">{{ m.businessName }}</p>
           }
           @if (m.currentCycleEnd) {
-            <p class="meta">{{ tr("portal.memberships.cycleEnds", { date: when(m.currentCycleEnd) }) }}</p>
+            <p class="meta">{{ tr("businessApp.memberships.cycleEnds", { date: when(m.currentCycleEnd) }) }}</p>
           }
           <ul class="balances">
             @for (b of m.balances; track b.id) {

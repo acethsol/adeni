@@ -1,9 +1,9 @@
 import { signal } from '@angular/core';import { TestBed } from '@angular/core/testing';import { provideRouter } from '@angular/router';
-import { AdeniLocaleService } from '@adeni/ui';import { BusinessApiService } from '../../core/services/business-api.service';import { PortalSessionService } from '../../core/services/portal-session.service';import { CommerceComponent } from './commerce.component';
+import { AdeniLocaleService } from '@adeni/ui';import { BusinessApiService } from '../../core/services/business-api.service';import { BusinessSessionService } from '../../core/services/business-session.service';import { CommerceComponent } from './commerce.component';
 describe('Quick Pay page',()=>{
  let commerce:{list:jasmine.Spy;cards:jasmine.Spy;create:jasmine.Spy};let role:ReturnType<typeof signal<string>>;
  beforeEach(()=>{role=signal('owner');commerce={list:jasmine.createSpy().and.resolveTo([]),cards:jasmine.createSpy().and.resolveTo([]),create:jasmine.createSpy().and.resolveTo({})};
-  TestBed.configureTestingModule({imports:[CommerceComponent],providers:[provideRouter([]),{provide:AdeniLocaleService,useValue:{locale:signal('en')}},{provide:PortalSessionService,useValue:{ensureLoaded:async()=>{},loaded:signal(true),permissionRole:role}},{provide:BusinessApiService,useValue:{withAuthorizedClient:(fn:(c:unknown)=>unknown)=>fn({commerce})}}]});});
+  TestBed.configureTestingModule({imports:[CommerceComponent],providers:[provideRouter([]),{provide:AdeniLocaleService,useValue:{locale:signal('en')}},{provide:BusinessSessionService,useValue:{ensureLoaded:async()=>{},loaded:signal(true),permissionRole:role}},{provide:BusinessApiService,useValue:{withAuthorizedClient:(fn:(c:unknown)=>unknown)=>fn({commerce})}}]});});
  it('keeps purchase requests separate from gift redemption and preserves retry keys after failed responses',async()=>{
   const fixture=TestBed.createComponent(CommerceComponent);fixture.detectChanges();await fixture.whenStable();const c=fixture.componentInstance;
   commerce.create.and.rejectWith(new Error('lost response'));c.amount='50';c.currency='CAD';c.label='Gift';c.giftPurchase=true;c.allowGift=true;

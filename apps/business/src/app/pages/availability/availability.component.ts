@@ -18,9 +18,9 @@ import {
   injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
-import { PortalSessionService } from "../../core/services/portal-session.service";
-import { PORTAL_ALL_LOCATIONS_SCOPE } from "../../core/services/portal-active-location-store";
+import { BusinessActiveLocationService } from "../../core/services/business-active-location.service";
+import { BusinessSessionService } from "../../core/services/business-session.service";
+import { PORTAL_ALL_LOCATIONS_SCOPE } from "../../core/services/business-active-location-store";
 
 const DAYS_ORDER = [1, 2, 3, 4, 5, 6, 0];
 const MONTH_KEYS = [
@@ -127,15 +127,15 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly confirmDialog = inject(AdeniConfirmService);
-  readonly activeLocation = inject(PortalActiveLocationService);
-  private readonly session = inject(PortalSessionService);
+  readonly activeLocation = inject(BusinessActiveLocationService);
+  private readonly session = inject(BusinessSessionService);
   private branchSub: Subscription | null = null;
 
   readonly saving = signal(false);
   readonly closedBusy = signal(false);
   readonly error = signal<string | null>(null);
   readonly dayLabels = DAY_OF_WEEK_LABELS;
-  readonly dowHeaders = computed(() => [this.tr("portal.availability.mon"), this.tr("portal.availability.tue"), this.tr("portal.availability.wed"), this.tr("portal.availability.thu"), this.tr("portal.availability.fri"), this.tr("portal.availability.sat"), "Sun"]);
+  readonly dowHeaders = computed(() => [this.tr("businessApp.availability.mon"), this.tr("businessApp.availability.tue"), this.tr("businessApp.availability.wed"), this.tr("businessApp.availability.thu"), this.tr("businessApp.availability.fri"), this.tr("businessApp.availability.sat"), "Sun"]);
 
   rows: DayRow[] = [];
   closedRanges = signal<BusinessClosedDate[]>([]);
@@ -160,7 +160,7 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
     }
     const picked = this.hoursBranchPickerId();
     const branch = this.activeLocation.activeLocations().find((l) => l.id === picked);
-    return branch?.name?.trim() || branch?.slug || this.tr("portal.availability.branch");
+    return branch?.name?.trim() || branch?.slug || this.tr("businessApp.availability.branch");
   });
 
   readonly showHoursBranchPicker = computed(
@@ -297,7 +297,7 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
       this.closedRanges.set(closed);
       });
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.availability.couldNotLoadAvailability"));
+      this.error.set(this.apiErr(caught, "businessApp.availability.couldNotLoadAvailability"));
     }
   }
 
@@ -309,9 +309,9 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
         c.replaceTenantAvailability(rowsToRules(this.rows), this.locationIdForApi()),
       );
       this.rows = rulesToRows(saved);
-      this.feedback.success(this.tr("portal.availability.weeklyHoursSaved"));
+      this.feedback.success(this.tr("businessApp.availability.weeklyHoursSaved"));
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.availability.couldNotSaveAvailability"));
+      this.error.set(this.apiErr(caught, "businessApp.availability.couldNotSaveAvailability"));
     } finally {
       this.saving.set(false);
     }
@@ -349,7 +349,7 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
         return;
       }
       this.feedback.error(
-        this.tr("portal.availability.thatDayPartMultiDay"),
+        this.tr("businessApp.availability.thatDayPartMultiDay"),
       );
       return;
     }
@@ -359,11 +359,11 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
 
   async addClosedRange(): Promise<void> {
     if (!this.rangeStart || !this.rangeEnd) {
-      this.feedback.error(this.tr("portal.availability.chooseStartEndDate"));
+      this.feedback.error(this.tr("businessApp.availability.chooseStartEndDate"));
       return;
     }
     if (this.rangeEnd < this.rangeStart) {
-      this.feedback.error(this.tr("portal.availability.endDateMustBeAfter"));
+      this.feedback.error(this.tr("businessApp.availability.endDateMustBeAfter"));
       return;
     }
     await this.createClosed(this.rangeStart, this.rangeEnd, this.rangeReason.trim() || null);
@@ -375,10 +375,10 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
         ? item.startDate
         : `${item.startDate} – ${item.endDate}`;
     const ok = await this.confirmDialog.confirm({
-      title: this.tr("portal.availability.openTheseDates"),
-      message: this.tr("portal.availability.removeClosedRangeCustomersWill", { label: label }),
+      title: this.tr("businessApp.availability.openTheseDates"),
+      message: this.tr("businessApp.availability.removeClosedRangeCustomersWill", { label: label }),
       confirmLabel: this.tr("common.remove"),
-      cancelLabel: this.tr("portal.availability.keepClosed"),
+      cancelLabel: this.tr("businessApp.availability.keepClosed"),
       danger: true,
     });
     if (!ok) {
@@ -390,9 +390,9 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
     try {
       await this.api.withAuthorizedClient((c) => c.deleteTenantClosedDate(item.id));
       this.closedRanges.update((items) => items.filter((x) => x.id !== item.id));
-      this.feedback.success(this.tr("portal.availability.datesReopened"));
+      this.feedback.success(this.tr("businessApp.availability.datesReopened"));
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.availability.couldNotRemoveClosedRange"));
+      this.feedback.error(this.apiErr(caught, "businessApp.availability.couldNotRemoveClosedRange"));
     } finally {
       this.closedBusy.set(false);
     }
@@ -431,14 +431,14 @@ export class AvailabilityComponent implements OnInit, OnDestroy {
       const conflicts = created.conflictingBookingIds?.length ?? 0;
       if (conflicts > 0) {
         this.conflictWarning.set(
-          this.tr(conflicts === 1 ? "portal.availability.closedDatesSavedConflictsOne" : "portal.availability.closedDatesSavedConflictsMany", { count: conflicts }),
+          this.tr(conflicts === 1 ? "businessApp.availability.closedDatesSavedConflictsOne" : "businessApp.availability.closedDatesSavedConflictsMany", { count: conflicts }),
         );
-        this.feedback.success(this.tr("portal.availability.closedDatesSavedExistingBookings"));
+        this.feedback.success(this.tr("businessApp.availability.closedDatesSavedExistingBookings"));
       } else {
-        this.feedback.success(this.tr("portal.availability.closedDatesSaved"));
+        this.feedback.success(this.tr("businessApp.availability.closedDatesSaved"));
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : this.tr("portal.availability.couldNotCloseDates");
+      const message = err instanceof Error ? err.message : this.tr("businessApp.availability.couldNotCloseDates");
       this.feedback.error(message);
     } finally {
       this.closedBusy.set(false);

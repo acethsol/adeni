@@ -31,9 +31,9 @@ import {
 } from "@adeni/ui";
 import { environment } from "../../../environments/environment";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
+import { BusinessActiveLocationService } from "../../core/services/business-active-location.service";
 import { TenantOperationsRealtimeService } from "@adeni/ui";
-import { PortalSessionService } from "../../core/services/portal-session.service";
+import { BusinessSessionService } from "../../core/services/business-session.service";
 import { mergeTenantEntitlements } from "@adeni/shared";
 
 const REFRESH_MS = 15_000;
@@ -57,12 +57,12 @@ export class QueueComponent implements OnInit, OnDestroy {
   protected readonly tr = injectAdeniTranslate();
   protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
-  private readonly session = inject(PortalSessionService);
+  private readonly session = inject(BusinessSessionService);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly router = inject(Router);
   private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
-  private readonly activeLocation = inject(PortalActiveLocationService);
+  private readonly activeLocation = inject(BusinessActiveLocationService);
 
   private refreshTimer: ReturnType<typeof setInterval> | null = null;
   private branchSub: Subscription | null = null;
@@ -113,9 +113,9 @@ export class QueueComponent implements OnInit, OnDestroy {
 
   pageDescription(): string {
     if (this.session.can("business.bookings.self") && !this.session.can("business.bookings")) {
-      return this.tr("portal.queue.yourAssignedWalkInsCall");
+      return this.tr("businessApp.queue.yourAssignedWalkInsCall");
     }
-    return this.tr("portal.queue.liveFloorBoardWalkIns");
+    return this.tr("businessApp.queue.liveFloorBoardWalkIns");
   }
 
   supportsQueue(): boolean {
@@ -158,15 +158,15 @@ export class QueueComponent implements OnInit, OnDestroy {
       case "waiting":
         return this.tr("common.waiting");
       case "called":
-        return this.tr("portal.queue.called");
+        return this.tr("businessApp.queue.called");
       case "in_service":
-        return this.tr("portal.queue.inService");
+        return this.tr("businessApp.queue.inService");
       case "done":
         return this.tr("common.done");
       case "no_show":
-        return this.tr("portal.queue.noShow");
+        return this.tr("businessApp.queue.noShow");
       case "cancelled":
-        return this.tr("portal.bookings.cancelled");
+        return this.tr("businessApp.bookings.cancelled");
       default:
         return status;
     }
@@ -214,7 +214,7 @@ export class QueueComponent implements OnInit, OnDestroy {
       }
     } catch (caught) {
       if (initial) {
-        this.error.set(this.apiErr(caught, "portal.queue.couldNotLoadQueue"));
+        this.error.set(this.apiErr(caught, "businessApp.queue.couldNotLoadQueue"));
         this.tickets.set([]);
       }
     } finally {
@@ -238,9 +238,9 @@ export class QueueComponent implements OnInit, OnDestroy {
         maxWaiting: settings.maxWalkInWaiting ?? null,
         calendarPolicy: settings.calendarPolicy,
       });
-      this.feedback.success(this.tr("portal.queue.walkInsOpenNext90"), this.tr("common.queue"));
+      this.feedback.success(this.tr("businessApp.queue.walkInsOpenNext90"), this.tr("common.queue"));
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "portal.queue.couldNotOpenWalkIns"));
+      this.feedback.error(this.apiErr(caught, "businessApp.queue.couldNotOpenWalkIns"));
     }
   }
 
@@ -264,7 +264,7 @@ export class QueueComponent implements OnInit, OnDestroy {
     }
     try {
       await navigator.clipboard.writeText(url);
-      this.feedback.success(this.tr("portal.queue.joinLinkCopied"), this.tr("common.queue"));
+      this.feedback.success(this.tr("businessApp.queue.joinLinkCopied"), this.tr("common.queue"));
     } catch (caught) {
       this.feedback.error(this.apiErr(caught, "common.couldNotCopyLink"));
     }
@@ -273,7 +273,7 @@ export class QueueComponent implements OnInit, OnDestroy {
   async addWalkIn(): Promise<void> {
     const displayName = combineGuestName(this.guestFirstName, this.guestLastName);
     if (!displayName || !this.guestPhone.trim()) {
-      this.error.set(this.tr("portal.queue.firstNameLastNamePhone"));
+      this.error.set(this.tr("businessApp.queue.firstNameLastNamePhone"));
       return;
     }
     this.adding.set(true);
@@ -300,9 +300,9 @@ export class QueueComponent implements OnInit, OnDestroy {
       this.assignStaffMemberId = "";
       await this.load(false);
       this.closeAddModal();
-      this.feedback.success(this.tr("portal.queue.walkAddedQueue"), this.tr("common.queue"));
+      this.feedback.success(this.tr("businessApp.queue.walkAddedQueue"), this.tr("common.queue"));
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.queue.couldNotAddWalk"));
+      this.error.set(this.apiErr(caught, "businessApp.queue.couldNotAddWalk"));
     } finally {
       this.adding.set(false);
     }
@@ -330,7 +330,7 @@ export class QueueComponent implements OnInit, OnDestroy {
       );
       await this.load(false);
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.queue.couldNotUpdateTicket"));
+      this.error.set(this.apiErr(caught, "businessApp.queue.couldNotUpdateTicket"));
     } finally {
       this.actionId.set(null);
     }
@@ -345,10 +345,10 @@ export class QueueComponent implements OnInit, OnDestroy {
       );
       await this.load(false);
       if (updated.bookingId) {
-        this.feedback.success(this.tr("portal.queue.serviceCompleteOpenBookingsCollect"), this.tr("common.queue"));
+        this.feedback.success(this.tr("businessApp.queue.serviceCompleteOpenBookingsCollect"), this.tr("common.queue"));
       }
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.queue.couldNotUpdateTicket"));
+      this.error.set(this.apiErr(caught, "businessApp.queue.couldNotUpdateTicket"));
     } finally {
       this.actionId.set(null);
     }
@@ -356,9 +356,9 @@ export class QueueComponent implements OnInit, OnDestroy {
 
   async noShow(ticket: QueueTicketResponse): Promise<void> {
     const ok = await this.confirmDialog.confirmKind("remove", {
-      title: this.tr("portal.queue.noShowConfirmTitle"),
-      message: this.tr("portal.queue.noShowConfirm"),
-      confirmLabel: this.tr("portal.queue.noShowAction"),
+      title: this.tr("businessApp.queue.noShowConfirmTitle"),
+      message: this.tr("businessApp.queue.noShowConfirm"),
+      confirmLabel: this.tr("businessApp.queue.noShowAction"),
     });
     if (!ok) {
       return;
@@ -404,7 +404,7 @@ export class QueueComponent implements OnInit, OnDestroy {
       await this.api.withAuthorizedClient((client) => action(client));
       await this.load(false);
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.queue.couldNotUpdateTicket"));
+      this.error.set(this.apiErr(caught, "businessApp.queue.couldNotUpdateTicket"));
     } finally {
       this.actionId.set(null);
     }

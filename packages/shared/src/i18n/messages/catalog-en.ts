@@ -1,6 +1,6 @@
 import type { MessageTree } from "../types";
 
-/** Static UI copy migrated from templates / catch blocks (portal, admin, discover, ui). */
+/** Static UI copy migrated from templates / catch blocks (business, admin, discover, ui). */
 export const enCatalog: MessageTree = {
   admin: {
     businesses: {
@@ -652,9 +652,6 @@ export const enCatalog: MessageTree = {
     yourAccountDoesNotHave: "Your account does not have the business role. Use a business login or contact support.",
   },
   discover: {
-    app: {
-      adeniDiscover: "Adeni Discover",
-    },
     business: {
       businessNotFoundApiUnavailable: "Business not found or API unavailable.",
       fetchingProfileServicesReviews: "Fetching profile, services, and reviews",
@@ -762,7 +759,7 @@ export const enCatalog: MessageTree = {
       weReceivedJobDetails: "We received your job details",
     },
   },
-  portal: {
+  businessApp: {
     acceptInvite: {
       acceptInvite: "Accept invite",
       acceptStaffInvite: "Accept staff invite",

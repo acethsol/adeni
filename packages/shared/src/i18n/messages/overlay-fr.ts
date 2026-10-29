@@ -220,7 +220,30 @@ export const frOverlay: MessageTree = {
       december: "décembre",
     },
   },
-  portal: {
+  customer: {
+    app: {
+      nav: {
+        home: "Accueil",
+        discover: "Découvrir",
+        bookings: "Réservations",
+        messages: "Messages",
+        benefits: "Avantages",
+        profile: "Profil",
+      },
+      openApp: "Ouvrir l’app",
+      unread: "{count} non lus",
+      accountMenu: "Menu du compte",
+      account: "Compte",
+      browsePublic: "Voir le site public",
+      tabBar: "Navigation principale",
+      adeniDiscover: "Adeni Discover",
+    },
+    appDiscover: {
+      description: "Trouvez des établissements vérifiés et réservez votre prochaine visite.",
+      browseAll: "Tout parcourir",
+    },
+  },
+  businessApp: {
     memberships: {
       title: "Abonnements",
       description: "Définissez des plans d’abonnement récurrents. L’inscription des clients et la facturation arriveront dans une prochaine version.",

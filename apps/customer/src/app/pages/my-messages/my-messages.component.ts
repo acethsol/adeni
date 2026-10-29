@@ -163,7 +163,7 @@ export class MyMessagesComponent implements OnInit, OnDestroy {
 
   senderLabel(message: ConversationMessage, conversation: ConversationDetail): string {
     if (this.isOutgoing(message)) {
-      return this.tr("portal.messages.you");
+      return this.tr("businessApp.messages.you");
     }
     if (message.senderDisplayName?.trim()) {
       return message.senderDisplayName.trim();
@@ -224,7 +224,7 @@ export class MyMessagesComponent implements OnInit, OnDestroy {
   }
 
   private bumpConversationPreview(message: ConversationMessage): void {
-    const preview = message.body?.trim() || this.tr("portal.messages.attachment");
+    const preview = message.body?.trim() || this.tr("businessApp.messages.attachment");
     this.conversations.update((rows) => {
       const next = rows.map((row) =>
         row.id === message.conversationId

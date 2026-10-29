@@ -9,19 +9,19 @@ import {
 } from "@angular/core";
 import type { TenantEntitlements } from "@adeni/shared";
 import { AdeniCarbonIconComponent, AdeniPillComponent, injectAdeniTranslate } from "@adeni/ui";
-import { PortalActiveLocationService } from "../core/services/portal-active-location.service";
-import { PORTAL_ALL_LOCATIONS_SCOPE } from "../core/services/portal-active-location-store";
+import { BusinessActiveLocationService } from "../core/services/business-active-location.service";
+import { PORTAL_ALL_LOCATIONS_SCOPE } from "../core/services/business-active-location-store";
 
 @Component({
-  selector: "app-portal-branch-switch",
+  selector: "app-business-branch-switch",
   standalone: true,
   imports: [AdeniCarbonIconComponent, AdeniPillComponent],
-  templateUrl: "./portal-branch-switch.component.html",
-  styleUrl: "./portal-branch-switch.component.scss",
+  templateUrl: "./business-branch-switch.component.html",
+  styleUrl: "./business-branch-switch.component.scss",
 })
-export class PortalBranchSwitchComponent {
+export class BusinessBranchSwitchComponent {
   protected readonly tr = injectAdeniTranslate();
-  readonly activeLocation = inject(PortalActiveLocationService);
+  readonly activeLocation = inject(BusinessActiveLocationService);
   private readonly host = inject(ElementRef<HTMLElement>);
 
   readonly entitlements = input<TenantEntitlements | null>(null);

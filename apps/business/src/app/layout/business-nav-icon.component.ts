@@ -1,12 +1,12 @@
 import { Component, computed, inject, input } from "@angular/core";
 import { DomSanitizer } from "@angular/platform-browser";
-import type { PortalNavIconName } from "../core/portal-nav";
+import type { BusinessNavIconName } from "../core/business-nav";
 
 /**
  * Carbon Design System 20px icons (Apache-2.0).
  * Copyright IBM Corp. Path data from @carbon/icons@11.68.0.
  */
-const CARBON_ICON_PATHS: Record<PortalNavIconName, string> = {
+const CARBON_ICON_PATHS: Record<BusinessNavIconName, string> = {
   overview: `
     <path d="M24 21H26V26H24zM20 16H22V26H20zM11 26a5.0059 5.0059 0 01-5-5H8a3 3 0 103-3V16a5 5 0 010 10z"/>
     <path d="M28,2H4A2.002,2.002,0,0,0,2,4V28a2.0023,2.0023,0,0,0,2,2H28a2.0027,2.0027,0,0,0,2-2V4A2.0023,2.0023,0,0,0,28,2Zm0,9H14V4H28ZM12,4v7H4V4ZM4,28V13H28.0007l.0013,15Z"/>
@@ -106,7 +106,7 @@ function carbonIcon(inner: string): string {
 }
 
 @Component({
-  selector: "app-portal-nav-icon",
+  selector: "app-business-nav-icon",
   standalone: true,
   template: `<span class="glyph" [innerHTML]="markup()"></span>`,
   styles: `
@@ -121,8 +121,8 @@ function carbonIcon(inner: string): string {
     }
   `,
 })
-export class PortalNavIconComponent {
-  readonly name = input.required<PortalNavIconName>();
+export class BusinessNavIconComponent {
+  readonly name = input.required<BusinessNavIconName>();
   private readonly sanitizer = inject(DomSanitizer);
   readonly markup = computed(() =>
     this.sanitizer.bypassSecurityTrustHtml(carbonIcon(CARBON_ICON_PATHS[this.name()])),

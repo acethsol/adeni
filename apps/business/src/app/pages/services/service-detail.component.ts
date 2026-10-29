@@ -25,8 +25,8 @@ import {
 } from "@adeni/ui";
 import { AdeniApiError } from "@adeni/api-client";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
-import { PortalSessionService } from "../../core/services/portal-session.service";
+import { BusinessActiveLocationService } from "../../core/services/business-active-location.service";
+import { BusinessSessionService } from "../../core/services/business-session.service";
 import { Subscription } from "rxjs";
 import { ServiceEditFormComponent } from "./service-edit-form.component";
 import { ServiceIntakePanelComponent } from "./service-intake-panel.component";
@@ -65,9 +65,9 @@ export class ServiceDetailComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly confirmDialog = inject(AdeniConfirmService);
-  private readonly activeLocation = inject(PortalActiveLocationService);
+  private readonly activeLocation = inject(BusinessActiveLocationService);
   private readonly destroyRef = inject(DestroyRef);
-  readonly session = inject(PortalSessionService);
+  readonly session = inject(BusinessSessionService);
 
   private loadVersion = 0;
   private branchSub: Subscription | null = null;
@@ -101,8 +101,8 @@ export class ServiceDetailComponent implements OnInit, OnDestroy {
 
   readonly tabs = computed((): AdeniTab[] => {
     const base: AdeniTab[] = [
-      { id: "details", label: this.tr("portal.services.details") },
-      { id: "intake", label: this.tr("portal.services.consultationFormTab") },
+      { id: "details", label: this.tr("businessApp.services.details") },
+      { id: "intake", label: this.tr("businessApp.services.consultationFormTab") },
     ];
     return base;
   });
@@ -131,7 +131,7 @@ export class ServiceDetailComponent implements OnInit, OnDestroy {
     const version = ++this.loadVersion;
     const id = this.route.snapshot.paramMap.get("id");
     if (!id) {
-      this.error.set(this.tr("portal.services.serviceNotFound"));
+      this.error.set(this.tr("businessApp.services.serviceNotFound"));
       return;
     }
 
@@ -182,7 +182,7 @@ export class ServiceDetailComponent implements OnInit, OnDestroy {
       if (err instanceof AdeniApiError && err.statusCode === 404) {
         this.error.set(null);
       } else {
-        this.error.set(this.apiErr(err, "portal.services.couldNotLoadService"));
+        this.error.set(this.apiErr(err, "businessApp.services.couldNotLoadService"));
       }
       this.service.set(null);
     }
@@ -215,9 +215,9 @@ export class ServiceDetailComponent implements OnInit, OnDestroy {
 
   groupName(groupId: string | null | undefined): string {
     if (!groupId) {
-      return this.tr("portal.services.noSection");
+      return this.tr("businessApp.services.noSection");
     }
-    return this.groups().find((g) => g.id === groupId)?.name ?? this.tr("portal.services.noSection");
+    return this.groups().find((g) => g.id === groupId)?.name ?? this.tr("businessApp.services.noSection");
   }
 
   sectionPillTone(service: ServiceOffering): AdeniPillTone {
@@ -239,7 +239,7 @@ export class ServiceDetailComponent implements OnInit, OnDestroy {
     }
     const body = serviceDraftToUpdateBody(this.draft);
     if (!body) {
-      this.error.set(this.tr("portal.services.fillNamePriceDuration"));
+      this.error.set(this.tr("businessApp.services.fillNamePriceDuration"));
       return;
     }
 
@@ -259,11 +259,11 @@ export class ServiceDetailComponent implements OnInit, OnDestroy {
         );
         this.service.set(updated);
         this.draft = draftFromService(updated, this.primaryCategorySlug());
-      }, this.tr("portal.services.savingService"), body.name);
-      this.feedback.success(`"${body.name}" is on your menu.`, this.tr("portal.services.serviceSaved"));
+      }, this.tr("businessApp.services.savingService"), body.name);
+      this.feedback.success(`"${body.name}" is on your menu.`, this.tr("businessApp.services.serviceSaved"));
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.services.couldNotSaveService"));
-      this.feedback.error(this.apiErr(caught, "portal.services.couldNotSaveService"));
+      this.error.set(this.apiErr(caught, "businessApp.services.couldNotSaveService"));
+      this.feedback.error(this.apiErr(caught, "businessApp.services.couldNotSaveService"));
     } finally {
       this.busy.set(false);
     }
@@ -282,8 +282,8 @@ export class ServiceDetailComponent implements OnInit, OnDestroy {
       return;
     }
     const ok = await this.confirmDialog.confirm({
-      title: this.tr("portal.services.deactivateService2"),
-      message: this.tr("portal.services.deactivateCustomersWonTBe", { name: service.name }),
+      title: this.tr("businessApp.services.deactivateService2"),
+      message: this.tr("businessApp.services.deactivateCustomersWonTBe", { name: service.name }),
       confirmLabel: this.tr("common.deactivate"),
       danger: true,
     });
@@ -294,14 +294,14 @@ export class ServiceDetailComponent implements OnInit, OnDestroy {
     try {
       await this.feedback.runLoading(
         () => this.api.withAuthorizedClient((c) => c.deactivateTenantService(service.id)),
-        this.tr("portal.services.deactivatingService"),
+        this.tr("businessApp.services.deactivatingService"),
         service.name,
       );
-      this.feedback.success(`"${service.name}" is no longer bookable.`, this.tr("portal.services.serviceDeactivated"));
+      this.feedback.success(`"${service.name}" is no longer bookable.`, this.tr("businessApp.services.serviceDeactivated"));
       await this.router.navigate(["/services"]);
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.services.couldNotDeactivateService"));
-      this.feedback.error(this.apiErr(caught, "portal.services.couldNotDeactivateService"));
+      this.error.set(this.apiErr(caught, "businessApp.services.couldNotDeactivateService"));
+      this.feedback.error(this.apiErr(caught, "businessApp.services.couldNotDeactivateService"));
     } finally {
       this.busy.set(false);
     }

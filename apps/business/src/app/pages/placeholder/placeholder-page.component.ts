@@ -9,7 +9,7 @@ import { injectAdeniTranslate } from "@adeni/ui";
     <section class="card">
       <h2>{{ title }}</h2>
       <p>
-        {{ tr('portal.placeholder.screenParityWithNextJs') }} <code>/business/{{ slug }}</code> {{ tr('portal.placeholder.isPlannedAngularStranglerMigration') }}
+        {{ tr('businessApp.placeholder.screenParityWithNextJs') }} <code>/business/{{ slug }}</code> {{ tr('businessApp.placeholder.isPlannedAngularStranglerMigration') }}
       </p>
     </section>
   `,

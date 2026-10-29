@@ -6,7 +6,7 @@ import { AfterViewInit, Directive, ElementRef, inject } from "@angular/core";
 @Directive({
   selector: "button.header-btn, button.kiosk-toolbar-btn--icon, a.bell",
 })
-export class PortalIconTooltipDirective implements AfterViewInit {
+export class BusinessIconTooltipDirective implements AfterViewInit {
   private readonly element = inject(ElementRef<HTMLElement>);
 
   ngAfterViewInit(): void {

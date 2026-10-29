@@ -1,6 +1,6 @@
 <app-portal-page
   [title]="tr('common.staff')"
-  [description]="tr('portal.staff.rosterRolesHoursLeaveCustomers')"
+  [description]="tr('businessApp.staff.rosterRolesHoursLeaveCustomers')"
 >
   <a pageActions class="btn" routerLink="/settings/calendars">{{ tr('calendarUi.title') }}</a>
   <a pageActions class="btn" routerLink="/calendar">
@@ -12,11 +12,11 @@
     type="button"
     class="btn btn-primary"
     [disabled]="!canAddPractitioner()"
-    [title]="canAddPractitioner() ? tr('portal.staff.addTeamMember') : tr('portal.staff.teamLimitReachedPlan')"
+    [title]="canAddPractitioner() ? tr('businessApp.staff.addTeamMember') : tr('businessApp.staff.teamLimitReachedPlan')"
     (click)="openCreate()"
   >
     <adeni-carbon-icon name="add" [size]="16" />
-    {{ tr('portal.staff.addTeamMember2') }}
+    {{ tr('businessApp.staff.addTeamMember2') }}
   </button>
 
   @if (error()) {
@@ -26,8 +26,8 @@
   @if (staff().length === 0 && !loading()) {
     <adeni-portal-empty-state
       icon="user--follow"
-      [title]="tr('portal.staff.buildTeam')"
-      [description]="tr('portal.staff.addStaffSoCustomersCan')"
+      [title]="tr('businessApp.staff.buildTeam')"
+      [description]="tr('businessApp.staff.addStaffSoCustomersCan')"
     />
   } @else {
     <div class="roster">
@@ -35,28 +35,28 @@
         <p class="hint muted roster-usage">{{ usageLabel }}</p>
       }
       <adeni-list-toolbar
-        storageKey="portal.staff"
+        storageKey="businessApp.staff"
         [viewMode]="viewMode()"
         (viewModeChange)="viewMode.set($event)"
         [count]="paginatedStaff().length"
         [countTotal]="filteredStaffCount()"
-        [singularCountLabel]="tr('portal.staff.member')"
-        [pluralCountLabel]="tr('portal.staff.members')"
-        [searchPlaceholder]="tr('portal.staff.searchTeam')"
+        [singularCountLabel]="tr('businessApp.staff.member')"
+        [pluralCountLabel]="tr('businessApp.staff.members')"
+        [searchPlaceholder]="tr('businessApp.staff.searchTeam')"
         [searchQuery]="rosterSearch()"
         (searchQueryChange)="onRosterSearchChange($event)"
       >
         <adeni-list-filter-row listFilters>
           <adeni-filter-select
             layout="toolbar"
-            [label]="tr('portal.staff.bookingStatus')"
+            [label]="tr('businessApp.staff.bookingStatus')"
             [options]="bookingFilterOptions()"
             [value]="bookingFilter()"
             (valueChange)="onBookingFilterChange($any($event))"
           />
           <adeni-filter-select
             layout="toolbar"
-            [label]="tr('portal.staff.portalAccess')"
+            [label]="tr('businessApp.staff.portalAccess')"
             [options]="portalFilterOptions()"
             [value]="portalFilter()"
             (valueChange)="onPortalFilterChange($any($event))"
@@ -88,7 +88,7 @@
               }
               <div class="org-meta adeni-cell-pills">
                 <adeni-pill [tone]="bookingPillTone(member)" [dot]="member.isActive" [compact]="true">
-                  {{ member.isActive ? tr('portal.staff.activeBooking') : tr('portal.staff.inactive') }}
+                  {{ member.isActive ? tr('businessApp.staff.activeBooking') : tr('businessApp.staff.inactive') }}
                 </adeni-pill>
                 <adeni-pill [tone]="accessPillTone(member.portalAccessStatus)" [compact]="true">
                   {{ accessLabel(member.portalAccessStatus) }}
@@ -98,7 +98,7 @@
                 <a [routerLink]="['/staff', member.id, 'calendar']">{{ tr('common.calendar') }}</a>
                 <button type="button" (click)="openEdit(member)">{{ tr('common.edit') }}</button>
                 @if (member.portalAccessStatus === "none") {
-                  <button type="button" (click)="openInvite(member)">{{ tr('portal.staff.invite') }}</button>
+                  <button type="button" (click)="openInvite(member)">{{ tr('businessApp.staff.invite') }}</button>
                 }
                 @if (member.portalAccessStatus === "invite_pending") {
                   <button
@@ -106,7 +106,7 @@
                     [disabled]="busy() === member.id"
                     (click)="resendInvite(member)"
                   >
-                    {{ tr('portal.staff.resend') }}
+                    {{ tr('businessApp.staff.resend') }}
                   </button>
                   <button
                     type="button"
@@ -114,18 +114,18 @@
                     [disabled]="busy() === member.id"
                     (click)="revokeAccess(member)"
                   >
-                    {{ tr('portal.staff.revoke') }}
+                    {{ tr('businessApp.staff.revoke') }}
                   </button>
                 }
                 @if (member.portalAccessStatus === "active" && member.permissionRole !== "owner") {
-                  <button type="button" (click)="openChangeRole(member)">{{ tr('portal.staff.role') }}</button>
+                  <button type="button" (click)="openChangeRole(member)">{{ tr('businessApp.staff.role') }}</button>
                   <button
                     type="button"
                     class="danger"
                     [disabled]="busy() === member.id"
                     (click)="revokeAccess(member)"
                   >
-                    {{ tr('portal.staff.revokeLogin') }}
+                    {{ tr('businessApp.staff.revokeLogin') }}
                   </button>
                 }
                 @if (member.isActive) {
@@ -149,7 +149,7 @@
             [pageSize]="pageSize()"
             [totalCount]="filteredStaffCount()"
             [pageSizeOptions]="listPageSizeOptions"
-            [ariaLabel]="tr('portal.staff.staffPages')"
+            [ariaLabel]="tr('businessApp.staff.staffPages')"
             (pageChange)="goToStaffPage($event)"
             (pageSizeChange)="onStaffPageSizeChange($event)"
           />
@@ -177,7 +177,7 @@
           </ng-template>
           <ng-template adeniDataTableCell="status" let-member>
             <adeni-pill [tone]="bookingPillTone(member)" [dot]="member.isActive" [compact]="true">
-              {{ member.isActive ? tr('portal.staff.activeBooking') : tr('portal.staff.inactive') }}
+              {{ member.isActive ? tr('businessApp.staff.activeBooking') : tr('businessApp.staff.inactive') }}
             </adeni-pill>
           </ng-template>
           <ng-template adeniDataTableCell="access" let-member>
@@ -204,7 +204,7 @@
               @if (member.portalAccessStatus === "none") {
                 <adeni-icon-btn
                   icon="email"
-                  [label]="tr('portal.staff.invitePortal')"
+                  [label]="tr('businessApp.staff.invitePortal')"
                   variant="table"
                   [dense]="true"
                   (pressed)="openInvite(member)"
@@ -213,7 +213,7 @@
               @if (member.portalAccessStatus === "invite_pending") {
                 <adeni-icon-btn
                   icon="restart"
-                  [label]="tr('portal.staff.resendInvite')"
+                  [label]="tr('businessApp.staff.resendInvite')"
                   variant="table"
                   [dense]="true"
                   [disabled]="busy() === member.id"
@@ -221,7 +221,7 @@
                 />
                 <adeni-icon-btn
                   icon="misuse"
-                  [label]="tr('portal.staff.revokeInvite')"
+                  [label]="tr('businessApp.staff.revokeInvite')"
                   variant="danger-soft"
                   [dense]="true"
                   [disabled]="busy() === member.id"
@@ -231,14 +231,14 @@
               @if (member.portalAccessStatus === "active" && member.permissionRole !== "owner") {
                 <adeni-icon-btn
                   icon="user"
-                  [label]="tr('portal.staff.changeRole')"
+                  [label]="tr('businessApp.staff.changeRole')"
                   variant="table"
                   [dense]="true"
                   (pressed)="openChangeRole(member)"
                 />
                 <adeni-icon-btn
                   icon="misuse"
-                  [label]="tr('portal.staff.revokeLogin')"
+                  [label]="tr('businessApp.staff.revokeLogin')"
                   variant="danger-soft"
                   [dense]="true"
                   [disabled]="busy() === member.id"
@@ -264,7 +264,7 @@
             [pageSize]="pageSize()"
             [totalCount]="filteredStaffCount()"
             [pageSizeOptions]="listPageSizeOptions"
-            [ariaLabel]="tr('portal.staff.staffPages')"
+            [ariaLabel]="tr('businessApp.staff.staffPages')"
             (pageChange)="goToStaffPage($event)"
             (pageSizeChange)="onStaffPageSizeChange($event)"
           />
@@ -275,11 +275,11 @@
 
   <adeni-modal
     [open]="showForm()"
-    [title]="editingId() ? tr('portal.staff.editTeamMember') : tr('portal.staff.addTeamMember2')"
+    [title]="editingId() ? tr('businessApp.staff.editTeamMember') : tr('businessApp.staff.addTeamMember2')"
     [subtitle]="
       editingId()
-        ? tr('portal.staff.updateProfileServicesHoursLeave')
-        : tr('portal.staff.stepThroughProfileServicesHours')
+        ? tr('businessApp.staff.updateProfileServicesHoursLeave')
+        : tr('businessApp.staff.stepThroughProfileServicesHours')
     "
     size="lg"
     [hasFooter]="false"
@@ -289,7 +289,7 @@
       <adeni-wizard
         [steps]="createWizardSteps()"
         [activeId]="formTab()"
-        [ariaLabel]="tr('portal.staff.addTeamMember')"
+        [ariaLabel]="tr('businessApp.staff.addTeamMember')"
         [allowJump]="true"
         (stepSelect)="wizardGo($event)"
       >
@@ -307,7 +307,7 @@
           }
           @if (!isLastCreateStep()) {
             @if (formTab() === "services" || formTab() === "hours") {
-              <button type="button" class="btn" (click)="wizardSkip()">{{ tr('portal.staff.skip') }}</button>
+              <button type="button" class="btn" (click)="wizardSkip()">{{ tr('businessApp.staff.skip') }}</button>
             }
             <button type="button" class="btn btn-primary" (click)="wizardNext()">
               {{ tr('common.next') }}
@@ -321,7 +321,7 @@
               (click)="save()"
             >
               <adeni-carbon-icon name="checkmark" [size]="16" />
-              {{ tr('portal.staff.addTeamMember2') }}
+              {{ tr('businessApp.staff.addTeamMember2') }}
             </button>
           }
         </div>
@@ -342,7 +342,7 @@
         @if (editingId(); as id) {
           <a class="btn" [routerLink]="['/staff', id, 'calendar']">
             <adeni-carbon-icon name="calendar" [size]="16" />
-            {{ tr('portal.staff.openCalendar') }}
+            {{ tr('businessApp.staff.openCalendar') }}
           </a>
         }
         <button
@@ -371,7 +371,7 @@
               </div>
               <span class="avatar-upload-cta">
                 <adeni-carbon-icon name="upload" [size]="16" />
-                {{ avatarPreviewUrl() ? tr('portal.staff.changePhoto') : tr('portal.staff.uploadPhoto') }}
+                {{ avatarPreviewUrl() ? tr('businessApp.staff.changePhoto') : tr('businessApp.staff.uploadPhoto') }}
               </span>
               <input
                 type="file"
@@ -381,8 +381,8 @@
               />
             </label>
             <div class="avatar-copy">
-              <span class="avatar-label">{{ tr('portal.staff.photo') }}</span>
-              <p class="muted">{{ tr('portal.staff.shownRosterBookingPickersJpeg') }}</p>
+              <span class="avatar-label">{{ tr('businessApp.staff.photo') }}</span>
+              <p class="muted">{{ tr('businessApp.staff.shownRosterBookingPickersJpeg') }}</p>
             </div>
           </div>
 
@@ -406,12 +406,12 @@
           </div>
 
           <div class="field">
-            <label>{{ tr('portal.staff.displayNamePublic') }}</label>
+            <label>{{ tr('businessApp.staff.displayNamePublic') }}</label>
             <input [(ngModel)]="draft.displayName" maxlength="120" />
           </div>
 
           <div class="field">
-            <label>{{ tr('portal.staff.role') }}</label>
+            <label>{{ tr('businessApp.staff.role') }}</label>
             <select [(ngModel)]="draft.roleKey">
               @for (key of availableRoles(); track key) {
                 <option [ngValue]="key">{{ roleLabels[key] }}</option>
@@ -421,24 +421,24 @@
 
           @if (!isCreateWizard()) {
             <div class="field">
-              <label>{{ tr('portal.staff.titleOptional') }}</label>
-              <input [(ngModel)]="draft.title" maxlength="120" [placeholder]="tr('portal.staff.seniorStylist')" />
+              <label>{{ tr('businessApp.staff.titleOptional') }}</label>
+              <input [(ngModel)]="draft.title" maxlength="120" [placeholder]="tr('businessApp.staff.seniorStylist')" />
             </div>
 
             <div class="field">
-              <label>{{ tr('portal.staff.shortBioOptional') }}</label>
+              <label>{{ tr('businessApp.staff.shortBioOptional') }}</label>
               <textarea rows="2" [(ngModel)]="draft.bio" maxlength="500"></textarea>
             </div>
             @if (activeLocation.showLocationSwitch()) {
               <div class="field">
-                <label>{{ tr('portal.staff.primaryBranchOptional') }}</label>
+                <label>{{ tr('businessApp.staff.primaryBranchOptional') }}</label>
                 <select [(ngModel)]="draft.businessLocationId">
-                  <option value="">{{ tr('portal.staff.allBranches') }}</option>
+                  <option value="">{{ tr('businessApp.staff.allBranches') }}</option>
                   @for (branch of activeLocation.activeLocations(); track branch.id) {
                     <option [value]="branch.id">{{ activeLocation.branchRowLabel(branch) }}</option>
                   }
                 </select>
-                <p class="field-hint">{{ tr('portal.staff.leaveAsAllBranchesUnless') }}</p>
+                <p class="field-hint">{{ tr('businessApp.staff.leaveAsAllBranchesUnless') }}</p>
               </div>
             }
           }
@@ -451,7 +451,7 @@
               <div class="field toggle-field">
                 <label class="checkbox">
                   <input type="checkbox" [(ngModel)]="draft.isActive" />
-                  {{ tr('portal.staff.activeOnlineBooking') }}
+                  {{ tr('businessApp.staff.activeOnlineBooking') }}
                 </label>
               </div>
             </div>
@@ -463,15 +463,15 @@
         <div class="tab-panel" role="tabpanel">
           <div class="field">
             @if (!isCreateWizard()) {
-              <label>{{ tr('portal.staff.servicesTheyCanPerform') }}</label>
+              <label>{{ tr('businessApp.staff.servicesTheyCanPerform') }}</label>
             }
             @if (services().length === 0) {
               <adeni-portal-empty-state
                 [compact]="true"
                 [embedded]="true"
                 icon="add"
-                [title]="tr('portal.staff.noServicesAssign')"
-                [description]="tr('portal.staff.createServicesFirstThenLink')"
+                [title]="tr('businessApp.staff.noServicesAssign')"
+                [description]="tr('businessApp.staff.createServicesFirstThenLink')"
               />
             } @else {
               <ul class="service-checks">
@@ -498,14 +498,14 @@
           <div class="hours-block flat">
             <div class="hours-head">
               @if (!isCreateWizard()) {
-                <h4>{{ tr('portal.staff.workingHours') }}</h4>
+                <h4>{{ tr('businessApp.staff.workingHours') }}</h4>
               }
               <div class="hours-actions">
                 <button type="button" class="btn" (click)="copyBusinessHours()">
-                  {{ tr('portal.staff.copyBusinessHours') }}
+                  {{ tr('businessApp.staff.copyBusinessHours') }}
                 </button>
                 <button type="button" class="btn" (click)="clearStaffHours()">
-                  {{ tr('portal.staff.followBusinessHours') }}
+                  {{ tr('businessApp.staff.followBusinessHours') }}
                 </button>
               </div>
             </div>
@@ -525,7 +525,7 @@
                     <span class="to">{{ tr('common.to2') }}</span>
                     <input type="time" [(ngModel)]="row.closeTime" />
                   } @else {
-                    <span class="muted">{{ tr('portal.staff.off') }}</span>
+                    <span class="muted">{{ tr('businessApp.staff.off') }}</span>
                   }
                 </div>
               }
@@ -549,10 +549,10 @@
               </div>
             </div>
             <div class="field">
-              <label>{{ tr('portal.staff.reasonOptional') }}</label>
+              <label>{{ tr('businessApp.staff.reasonOptional') }}</label>
               <input [(ngModel)]="leaveReason" maxlength="200" />
             </div>
-            <button type="button" class="btn" (click)="addLeave()">{{ tr('portal.staff.addLeave') }}</button>
+            <button type="button" class="btn" (click)="addLeave()">{{ tr('businessApp.staff.addLeave') }}</button>
             <ul class="plain leave-list">
               @for (item of leaveItems(); track item.id) {
                 <li>
@@ -574,8 +574,8 @@
 
   <adeni-modal
     [open]="inviteTarget() !== null"
-    [title]="tr('portal.staff.invitePortal')"
-    [subtitle]="tr('portal.staff.theyCanLogWithPermission')"
+    [title]="tr('businessApp.staff.invitePortal')"
+    [subtitle]="tr('businessApp.staff.theyCanLogWithPermission')"
     [hasFooter]="false"
     (closed)="closeInvite()"
   >
@@ -585,7 +585,7 @@
         <input id="invite-email" type="email" [(ngModel)]="inviteEmail" autocomplete="email" />
       </div>
       <div class="field">
-        <label for="invite-role">{{ tr('portal.staff.permissionRole') }}</label>
+        <label for="invite-role">{{ tr('businessApp.staff.permissionRole') }}</label>
         <select id="invite-role" [(ngModel)]="invitePermissionRole">
           @for (role of inviteRoles; track role) {
             <option [value]="role">{{ role }}</option>
@@ -604,7 +604,7 @@
           (click)="sendInvite()"
         >
           <adeni-carbon-icon name="email" [size]="16" />
-          {{ tr('portal.staff.sendInvite') }}
+          {{ tr('businessApp.staff.sendInvite') }}
         </button>
       </div>
     }
@@ -612,14 +612,14 @@
 
   <adeni-modal
     [open]="roleTarget() !== null"
-    [title]="tr('portal.staff.changePermissionRole')"
-    [subtitle]="tr('portal.staff.updatesWhatTheyCanOpen')"
+    [title]="tr('businessApp.staff.changePermissionRole')"
+    [subtitle]="tr('businessApp.staff.updatesWhatTheyCanOpen')"
     [hasFooter]="false"
     (closed)="closeChangeRole()"
   >
     @if (roleTarget(); as target) {
       <div class="field">
-        <label for="edit-role">{{ tr('portal.staff.permissionRole') }}</label>
+        <label for="edit-role">{{ tr('businessApp.staff.permissionRole') }}</label>
         <select id="edit-role" [(ngModel)]="editPermissionRole">
           @for (role of inviteRoles; track role) {
             <option [value]="role">{{ role }}</option>
@@ -638,7 +638,7 @@
           (click)="saveRoleChange()"
         >
           <adeni-carbon-icon name="save" [size]="16" />
-          {{ tr('portal.staff.saveRole') }}
+          {{ tr('businessApp.staff.saveRole') }}
         </button>
       </div>
     }

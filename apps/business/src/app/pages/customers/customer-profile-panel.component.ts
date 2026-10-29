@@ -11,7 +11,7 @@ import {
   injectAdeniTranslate,
   type AdeniPillTone,
 } from "@adeni/ui";
-import { PortalSessionService } from "../../core/services/portal-session.service";
+import { BusinessSessionService } from "../../core/services/business-session.service";
 import { CustomerProfileDataService } from "./customer-profile-data.service";
 
 @Component({
@@ -34,7 +34,7 @@ export class CustomerProfilePanelComponent {
   readonly activityVisible = input(false);
   readonly overviewVisible = input(false);
   readonly data = inject(CustomerProfileDataService);
-  readonly session = inject(PortalSessionService);
+  readonly session = inject(BusinessSessionService);
   readonly tr = injectAdeniTranslate();
   readonly apiErr = injectAdeniApiError();
   private readonly locale = inject(AdeniLocaleService);

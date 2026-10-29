@@ -9,7 +9,7 @@ import {
 import { BusinessApiService } from "./business-api.service";
 
 @Injectable({ providedIn: "root" })
-export class PortalSessionService {
+export class BusinessSessionService {
   private readonly api = inject(BusinessApiService);
 
   readonly permissionRole = signal<BusinessPermissionRole>("owner");

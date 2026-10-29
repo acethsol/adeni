@@ -1,6 +1,6 @@
 @if (catalogTemplates().length > 0) {
   <fieldset class="field-card field-card--catalog" [disabled]="disabled()">
-    <legend>{{ tr("portal.services.catalogQuickAdd") }}</legend>
+    <legend>{{ tr("businessApp.services.catalogQuickAdd") }}</legend>
     <p class="catalog-lede muted">
       {{ categoryLabel("en", draft().categorySlug) }}
     </p>
@@ -15,13 +15,13 @@
     </ul>
   </fieldset>
 } @else if (catalogLoading()) {
-  <p class="muted catalog-loading">{{ tr("portal.services.loadingTemplates") }}</p>
+  <p class="muted catalog-loading">{{ tr("businessApp.services.loadingTemplates") }}</p>
 }
 
 <fieldset class="field-card" [disabled]="disabled()">
-  <legend>{{ tr("portal.services.details") }}</legend>
+  <legend>{{ tr("businessApp.services.details") }}</legend>
   <div class="field">
-    <label>{{ tr("portal.services.name") }}</label>
+    <label>{{ tr("businessApp.services.name") }}</label>
     <input [(ngModel)]="draft().name" [disabled]="disabled()" />
   </div>
   <div class="field field--last">
@@ -31,10 +31,10 @@
 </fieldset>
 
 <fieldset class="field-card" [disabled]="disabled()">
-  <legend>{{ tr("portal.services.pricingDuration") }}</legend>
+  <legend>{{ tr("businessApp.services.pricingDuration") }}</legend>
   <div class="row row--pricing">
     <div class="field">
-      <label>{{ tr("portal.services.price") }}</label>
+      <label>{{ tr("businessApp.services.price") }}</label>
       <input type="number" min="0" step="0.01" [(ngModel)]="draft().priceAmount" [disabled]="disabled()" />
     </div>
     <div class="field">
@@ -42,19 +42,19 @@
       <input maxlength="3" [(ngModel)]="draft().currency" [disabled]="disabled()" />
     </div>
     <div class="field field--last">
-      <label>{{ tr("portal.services.durationMin") }}</label>
+      <label>{{ tr("businessApp.services.durationMin") }}</label>
       <input type="number" min="1" [(ngModel)]="draft().durationMinutes" [disabled]="disabled()" />
     </div>
   </div>
 </fieldset>
 
 <fieldset class="field-card" [disabled]="disabled()">
-  <legend>{{ tr("portal.services.menuSections") }}</legend>
+  <legend>{{ tr("businessApp.services.menuSections") }}</legend>
   <div class="row row--menu">
     <div class="field">
-      <label>{{ tr("portal.services.menuSection") }}</label>
+      <label>{{ tr("businessApp.services.menuSection") }}</label>
       <select [(ngModel)]="draft().menuGroupId" [disabled]="disabled()">
-        <option value="">{{ tr("portal.services.noSection") }}</option>
+        <option value="">{{ tr("businessApp.services.noSection") }}</option>
         @for (group of groups(); track group.id) {
           <option [value]="group.id">{{ group.name }}</option>
         }
@@ -68,20 +68,20 @@
 </fieldset>
 
 <fieldset class="field-card" [disabled]="disabled()">
-  <legend>{{ tr("portal.services.bookingType") }}</legend>
+  <legend>{{ tr("businessApp.services.bookingType") }}</legend>
   <div class="field">
-    <select [(ngModel)]="draft().bookingDeliveryType" [disabled]="disabled()" [attr.aria-label]="tr('portal.services.bookingType')">
-      <option value="appointment">{{ tr("portal.services.appointment11Slot") }}</option>
-      <option value="class">{{ tr("portal.services.classFixedStartCapacity") }}</option>
-      <option value="session">{{ tr("portal.services.sessionEGPersonalTraining") }}</option>
-      <option value="experience">{{ tr("portal.services.experienceEGSpaBlock") }}</option>
-      <option value="mobile_appointment">{{ tr("portal.services.mobileAppointment") }}</option>
+    <select [(ngModel)]="draft().bookingDeliveryType" [disabled]="disabled()" [attr.aria-label]="tr('businessApp.services.bookingType')">
+      <option value="appointment">{{ tr("businessApp.services.appointment11Slot") }}</option>
+      <option value="class">{{ tr("businessApp.services.classFixedStartCapacity") }}</option>
+      <option value="session">{{ tr("businessApp.services.sessionEGPersonalTraining") }}</option>
+      <option value="experience">{{ tr("businessApp.services.experienceEGSpaBlock") }}</option>
+      <option value="mobile_appointment">{{ tr("businessApp.services.mobileAppointment") }}</option>
     </select>
   </div>
   <div class="field checkbox-field field--last">
     <label>
       <input type="checkbox" [(ngModel)]="draft().isAddOn" [disabled]="disabled()" />
-      {{ tr("portal.services.addCannotBeBookedAlone") }}
+      {{ tr("businessApp.services.addCannotBeBookedAlone") }}
     </label>
   </div>
 </fieldset>

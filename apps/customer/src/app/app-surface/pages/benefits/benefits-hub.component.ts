@@ -11,7 +11,7 @@ import { AdeniTabsComponent, PortalPageComponent, injectAdeniTranslate, type Ade
   standalone: true,
   imports: [RouterOutlet, PortalPageComponent, AdeniTabsComponent],
   template: `
-    <app-portal-page [title]="tr('discover.app.nav.benefits')" [description]="tr('discover.benefits.description')">
+    <app-portal-page [title]="tr('customer.app.nav.benefits')" [description]="tr('discover.benefits.description')">
       <adeni-tabs [tabs]="tabs()" linkMode="path" />
       <div class="app-benefits__outlet">
         <router-outlet />

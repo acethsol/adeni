@@ -5,7 +5,7 @@ import { distinctUntilChanged, map } from "rxjs";
 import { IntakeFieldsComponent, PortalPageComponent, injectAdeniApiError, injectAdeniTranslate } from "@adeni/ui";
 import type { IntakeStatus, IntakeView } from "@adeni/shared";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalSessionService } from "../../core/services/portal-session.service";
+import { BusinessSessionService } from "../../core/services/business-session.service";
 
 @Component({selector:'app-intake-review',standalone:true,imports:[RouterLink,PortalPageComponent,IntakeFieldsComponent],
  template:`<app-portal-page [title]="tr('intake.status')" [description]="tr('intake.nonClinical')">
@@ -19,7 +19,7 @@ import { PortalSessionService } from "../../core/services/portal-session.service
  @if(v.answers){<adeni-intake-fields [definition]="v.definition" [answers]="v.answers" [readOnly]="true" />}@else{<p>{{tr('intake.unavailable')}}</p>}}
  </app-portal-page>`})
 export class IntakeReviewComponent implements OnInit{
- readonly tr=injectAdeniTranslate();readonly apiErr=injectAdeniApiError();private readonly api=inject(BusinessApiService);private readonly route=inject(ActivatedRoute);private readonly destroy=inject(DestroyRef);readonly session=inject(PortalSessionService);
+ readonly tr=injectAdeniTranslate();readonly apiErr=injectAdeniApiError();private readonly api=inject(BusinessApiService);private readonly route=inject(ActivatedRoute);private readonly destroy=inject(DestroyRef);readonly session=inject(BusinessSessionService);
  readonly statuses=signal<IntakeStatus[]>([]);readonly view=signal<IntakeView|null>(null);readonly error=signal<string|null>(null);readonly loading=signal(false);
  private booking='';private abort=new AbortController();private request=0;
  canReview():boolean{return this.session.can('business.bookings')&&['owner','manager'].includes(this.session.permissionRole());}

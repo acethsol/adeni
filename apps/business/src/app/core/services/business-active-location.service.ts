@@ -9,9 +9,9 @@ import {
 import { AdeniFeedbackService, injectAdeniTranslate } from "@adeni/ui";
 import {
   PORTAL_ALL_LOCATIONS_SCOPE,
-  readPersistedPortalActiveLocation,
-  writePersistedPortalActiveLocation,
-} from "./portal-active-location-store";
+  readPersistedBusinessActiveLocation,
+  writePersistedBusinessActiveLocation,
+} from "./business-active-location-store";
 
 function defaultBranchLocationId(active: BusinessLocation[]): string | undefined {
   if (active.length === 0) {
@@ -29,7 +29,7 @@ export type PortalBranchSwitchDisplay = {
 };
 
 @Injectable({ providedIn: "root" })
-export class PortalActiveLocationService {
+export class BusinessActiveLocationService {
   protected readonly tr = injectAdeniTranslate();
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly tenantId = signal<string | null>(null);
@@ -60,7 +60,7 @@ export class PortalActiveLocationService {
     const allScope = this.selectedLocationId() === PORTAL_ALL_LOCATIONS_SCOPE;
     if (allScope) {
       return {
-        title: this.tr("portal.core.allLocations"),
+        title: this.tr("businessApp.core.allLocations"),
         hint: `${this.activeLocations().length} branches`,
         allLocationsScope: true,
         isPrimary: false,
@@ -69,7 +69,7 @@ export class PortalActiveLocationService {
     const branch = this.selectedLocation();
     if (!branch) {
       return {
-        title: this.tr("portal.core.location"),
+        title: this.tr("businessApp.core.location"),
         hint: null,
         allLocationsScope: false,
         isPrimary: false,
@@ -106,7 +106,7 @@ export class PortalActiveLocationService {
       return;
     }
 
-    const persisted = readPersistedPortalActiveLocation(profile.tenantId);
+    const persisted = readPersistedBusinessActiveLocation(profile.tenantId);
     const resolved = this.resolveInitialSelection(active, entitlements, persisted);
     this.selectedLocationId.set(resolved);
   }
@@ -129,7 +129,7 @@ export class PortalActiveLocationService {
 
     this.selectedLocationId.set(next);
     if (tenantId) {
-      writePersistedPortalActiveLocation(tenantId, next);
+      writePersistedBusinessActiveLocation(tenantId, next);
     }
 
     this.branchSwitchActive = true;
@@ -176,11 +176,11 @@ export class PortalActiveLocationService {
     const active = this.activeLocations();
     const branchOptions = active.map((location) => ({
       value: location.id,
-      label: location.name?.trim() || location.slug || location.area || this.tr("portal.availability.branch"),
+      label: location.name?.trim() || location.slug || location.area || this.tr("businessApp.availability.branch"),
     }));
 
     if (hasMultiLocationReportingEntitlement(entitlements)) {
-      return [{ value: PORTAL_ALL_LOCATIONS_SCOPE, label: this.tr("portal.core.allLocations") }, ...branchOptions];
+      return [{ value: PORTAL_ALL_LOCATIONS_SCOPE, label: this.tr("businessApp.core.allLocations") }, ...branchOptions];
     }
 
     return branchOptions;
@@ -191,7 +191,7 @@ export class PortalActiveLocationService {
   }
 
   branchRowLabel(location: BusinessLocation): string {
-    return location.name?.trim() || location.slug || location.area || this.tr("portal.availability.branch");
+    return location.name?.trim() || location.slug || location.area || this.tr("businessApp.availability.branch");
   }
 
   branchRowHint(location: BusinessLocation): string | null {

@@ -24,9 +24,9 @@ import {
   injectAdeniApiError,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
-import { PortalActiveLocationService } from "../../core/services/portal-active-location.service";
+import { BusinessActiveLocationService } from "../../core/services/business-active-location.service";
 import { MessagingRealtimeService } from "@adeni/ui";
-import { PortalNavBadgesService } from "../../core/services/portal-nav-badges.service";
+import { BusinessNavBadgesService } from "../../core/services/business-nav-badges.service";
 import { mergeTenantEntitlements } from "@adeni/shared";
 
 const ALLOWED_ATTACHMENT_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -51,8 +51,8 @@ export class MessagesComponent implements OnInit, OnDestroy {
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly realtime = inject(MessagingRealtimeService);
-  private readonly navBadges = inject(PortalNavBadgesService);
-  private readonly activeLocation = inject(PortalActiveLocationService);
+  private readonly navBadges = inject(BusinessNavBadgesService);
+  private readonly activeLocation = inject(BusinessActiveLocationService);
   private readonly subscriptions = new Subscription();
 
   readonly profile = signal<BusinessProfile | null>(null);
@@ -175,7 +175,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
       }
       });
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.messages.couldNotLoadMessages"));
+      this.error.set(this.apiErr(caught, "businessApp.messages.couldNotLoadMessages"));
     } finally {
       this.loading.set(false);
     }
@@ -209,8 +209,8 @@ export class MessagesComponent implements OnInit, OnDestroy {
             await client.markTenantConversationRead(conversation.id);
             return loaded;
           }),
-        this.tr("portal.messages.openingConversation"),
-        this.tr("portal.messages.loadingMessages2"),
+        this.tr("businessApp.messages.openingConversation"),
+        this.tr("businessApp.messages.loadingMessages2"),
       );
       this.detail.set(detail);
       this.conversations.update((items) =>
@@ -225,7 +225,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
       }
       this.navBadges.requestRefresh();
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.messages.couldNotOpenConversation"));
+      this.error.set(this.apiErr(caught, "businessApp.messages.couldNotOpenConversation"));
     }
   }
 
@@ -242,7 +242,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
       return;
     }
     if (file.size > MAX_UPLOAD_BYTES) {
-      this.error.set(this.tr("portal.messages.attachmentMustBe5Mb"));
+      this.error.set(this.tr("businessApp.messages.attachmentMustBe5Mb"));
       input.value = "";
       return;
     }
@@ -269,14 +269,14 @@ export class MessagesComponent implements OnInit, OnDestroy {
               fileSize: file.size,
             } satisfies SendMessageAttachment;
           }),
-        this.tr("portal.messages.uploadingImage"),
-        this.tr("portal.messages.preparingAttachment"),
+        this.tr("businessApp.messages.uploadingImage"),
+        this.tr("businessApp.messages.preparingAttachment"),
       );
       this.clearPendingAttachment();
       this.pendingAttachment.set(attachment);
       this.pendingAttachmentPreview.set(URL.createObjectURL(file));
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.messages.couldNotUploadImage"));
+      this.error.set(this.apiErr(caught, "businessApp.messages.couldNotUploadImage"));
     } finally {
       this.attaching.set(false);
       input.value = "";
@@ -313,8 +313,8 @@ export class MessagesComponent implements OnInit, OnDestroy {
               attachments: attachment ? [attachment] : undefined,
             }),
           ),
-        this.tr("portal.messages.sendingMessage"),
-        this.tr("portal.messages.deliveringCustomer"),
+        this.tr("businessApp.messages.sendingMessage"),
+        this.tr("businessApp.messages.deliveringCustomer"),
       );
       this.appendMessage(message);
       this.draft = "";
@@ -324,7 +324,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
           item.id === conversation.id
             ? {
                 ...item,
-                preview: message.body?.trim() || (message.attachments?.length ? this.tr("portal.messages.attachment") : item.preview),
+                preview: message.body?.trim() || (message.attachments?.length ? this.tr("businessApp.messages.attachment") : item.preview),
                 lastMessageAt: message.createdAt,
                 needsAttention: false,
               }
@@ -332,7 +332,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
         ),
       );
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "portal.messages.couldNotSendMessage"));
+      this.error.set(this.apiErr(caught, "businessApp.messages.couldNotSendMessage"));
     } finally {
       this.sending.set(false);
     }
@@ -374,7 +374,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
       return message.senderDisplayName.trim();
     }
     if (message.senderType === "business" || message.senderType === "bot") {
-      return conversation.businessName?.trim() || this.tr("portal.messages.you");
+      return conversation.businessName?.trim() || this.tr("businessApp.messages.you");
     }
     return conversation.customerDisplayName;
   }

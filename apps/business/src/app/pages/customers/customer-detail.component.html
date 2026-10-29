@@ -1,8 +1,8 @@
-<app-portal-page [title]="customer()?.displayName ?? tr('common.customer')" [description]="tr('portal.customers.profileAtBusinessBookingsWalk')">
+<app-portal-page [title]="customer()?.displayName ?? tr('common.customer')" [description]="tr('businessApp.customers.profileAtBusinessBookingsWalk')">
   <p pageActions>
     <a routerLink="/customers" class="btn">
       <adeni-carbon-icon name="arrow--left" [size]="16" />
-      {{ tr('portal.customers.allCustomers') }}
+      {{ tr('businessApp.customers.allCustomers') }}
     </a>
   </p>
 
@@ -36,10 +36,10 @@
               <adeni-carbon-icon name="calendar" [size]="20" />
             </span>
             <span class="stat-body">
-              <span class="stat-label">{{ tr('portal.customers.recentBookings') }}</span>
+              <span class="stat-label">{{ tr('businessApp.customers.recentBookings') }}</span>
               <span class="stat-value">{{ c.recentBookings.length }}</span>
               <span class="stat-hint muted">
-                {{ c.lastBookingAt ? "Last " + formatSlotTime(c.lastBookingAt) : tr('portal.customers.noneFile') }}
+                {{ c.lastBookingAt ? "Last " + formatSlotTime(c.lastBookingAt) : tr('businessApp.customers.noneFile') }}
               </span>
             </span>
           </a>
@@ -48,10 +48,10 @@
               <adeni-carbon-icon name="user--follow" [size]="20" />
             </span>
             <span class="stat-body">
-              <span class="stat-label">{{ tr('portal.customers.queueVisits') }}</span>
+              <span class="stat-label">{{ tr('businessApp.customers.queueVisits') }}</span>
               <span class="stat-value">{{ c.recentQueueVisits.length }}</span>
               <span class="stat-hint muted">
-                {{ c.lastQueueJoinAt ? "Last " + formatSlotTime(c.lastQueueJoinAt) : tr('portal.customers.noWalkInsYet') }}
+                {{ c.lastQueueJoinAt ? "Last " + formatSlotTime(c.lastQueueJoinAt) : tr('businessApp.customers.noWalkInsYet') }}
               </span>
             </span>
           </a>
@@ -61,9 +61,9 @@
             </span>
             <span class="stat-body">
               <span class="stat-label">{{ tr('common.account') }}</span>
-              <span class="stat-value stat-value--text">{{ c.platformCustomerId ? tr('portal.customers.discover') : tr('portal.customers.local') }}</span>
+              <span class="stat-value stat-value--text">{{ c.platformCustomerId ? tr('businessApp.customers.discover') : tr('businessApp.customers.local') }}</span>
               <span class="stat-hint muted">
-                {{ c.platformCustomerId ? tr('portal.customers.signedDiscover') : tr('portal.customers.walkQueueProfile') }}
+                {{ c.platformCustomerId ? tr('businessApp.customers.signedDiscover') : tr('businessApp.customers.walkQueueProfile') }}
               </span>
             </span>
           </article>
@@ -75,11 +75,11 @@
           [overviewVisible]="true"
           [activityVisible]="false"
         />
-        <section class="card customer-reach" [attr.aria-label]="tr('portal.customers.reachAndProfile')">
+        <section class="card customer-reach" [attr.aria-label]="tr('businessApp.customers.reachAndProfile')">
           <div class="section-head customer-reach__head">
             <div>
-              <h3 class="section-title">{{ tr('portal.customers.reachAndProfile') }}</h3>
-              <p class="muted section-lede">{{ tr('portal.customers.reachAndProfileLede') }}</p>
+              <h3 class="section-title">{{ tr('businessApp.customers.reachAndProfile') }}</h3>
+              <p class="muted section-lede">{{ tr('businessApp.customers.reachAndProfileLede') }}</p>
             </div>
             <adeni-staff-btn
               variant="secondary"
@@ -89,8 +89,8 @@
             >
               {{
                 statementDownloading()
-                  ? tr('portal.customers.preparingPdf')
-                  : tr('portal.customers.downloadStatement90Days')
+                  ? tr('businessApp.customers.preparingPdf')
+                  : tr('businessApp.customers.downloadStatement90Days')
               }}
             </adeni-staff-btn>
           </div>
@@ -101,7 +101,7 @@
                 <span class="customer-reach__column-icon customer-reach__column-icon--contact" aria-hidden="true">
                   <adeni-carbon-icon name="phone" [size]="16" />
                 </span>
-                {{ tr('portal.customers.contact') }}
+                {{ tr('businessApp.customers.contact') }}
               </h4>
               <ul class="customer-reach__fields">
                 <li class="customer-reach__field">
@@ -128,9 +128,9 @@
                       <adeni-carbon-icon name="user--filled" [size]="16" />
                     </span>
                     <span class="customer-reach__field-body">
-                      <span class="customer-reach__field-label">{{ tr('portal.customers.onlineAccount') }}</span>
+                      <span class="customer-reach__field-label">{{ tr('businessApp.customers.onlineAccount') }}</span>
                       <span class="customer-reach__field-value">
-                        <adeni-pill tone="info" [compact]="true">{{ tr('portal.customers.linkedDiscoverSign') }}</adeni-pill>
+                        <adeni-pill tone="info" [compact]="true">{{ tr('businessApp.customers.linkedDiscoverSign') }}</adeni-pill>
                       </span>
                     </span>
                   </li>
@@ -143,7 +143,7 @@
                 <span class="customer-reach__column-icon customer-reach__column-icon--engagement" aria-hidden="true">
                   <adeni-carbon-icon name="chart--line" [size]="16" />
                 </span>
-                {{ tr('portal.customers.engagement') }}
+                {{ tr('businessApp.customers.engagement') }}
               </h4>
               <ul class="customer-reach__fields">
                 <li class="customer-reach__field">
@@ -151,7 +151,7 @@
                     <adeni-carbon-icon name="time" [size]="16" />
                   </span>
                   <span class="customer-reach__field-body">
-                    <span class="customer-reach__field-label">{{ tr('portal.customers.lastSeen') }}</span>
+                    <span class="customer-reach__field-label">{{ tr('businessApp.customers.lastSeen') }}</span>
                     <span class="customer-reach__field-value customer-reach__field-value--tabular">{{
                       formatSlotTime(c.lastSeenAt)
                     }}</span>
@@ -162,7 +162,7 @@
                     <adeni-carbon-icon name="calendar" [size]="16" />
                   </span>
                   <span class="customer-reach__field-body">
-                    <span class="customer-reach__field-label">{{ tr('portal.customers.lastBooking') }}</span>
+                    <span class="customer-reach__field-label">{{ tr('businessApp.customers.lastBooking') }}</span>
                     <span class="customer-reach__field-value customer-reach__field-value--tabular">{{
                       c.lastBookingAt ? formatSlotTime(c.lastBookingAt) : "—"
                     }}</span>
@@ -173,7 +173,7 @@
                     <adeni-carbon-icon name="user--follow" [size]="16" />
                   </span>
                   <span class="customer-reach__field-body">
-                    <span class="customer-reach__field-label">{{ tr('portal.customers.lastWalk') }}</span>
+                    <span class="customer-reach__field-label">{{ tr('businessApp.customers.lastWalk') }}</span>
                     <span class="customer-reach__field-value customer-reach__field-value--tabular">{{
                       c.lastQueueJoinAt ? formatSlotTime(c.lastQueueJoinAt) : "—"
                     }}</span>
@@ -188,10 +188,10 @@
       <section class="card tab-panel">
         <div class="section-head">
           <div>
-            <h3 class="section-title">{{ tr('portal.customers.recentBookings') }}</h3>
-            <p class="muted section-lede">{{ tr('portal.customers.latestAppointmentsLinkedProfile') }}</p>
+            <h3 class="section-title">{{ tr('businessApp.customers.recentBookings') }}</h3>
+            <p class="muted section-lede">{{ tr('businessApp.customers.latestAppointmentsLinkedProfile') }}</p>
           </div>
-          <a routerLink="/bookings" class="btn btn-ghost">{{ tr('portal.customers.allBookings') }}</a>
+          <a routerLink="/bookings" class="btn btn-ghost">{{ tr('businessApp.customers.allBookings') }}</a>
         </div>
         @if (c.recentBookings.length === 0) {
           <adeni-portal-empty-state
@@ -199,20 +199,20 @@
             [title]="tr('common.noBookingsYet')"
             [description]="
               c.platformCustomerId
-                ? tr('portal.customers.appointmentsAppearHereAfterThey')
-                : tr('portal.customers.walkProfilesShowBookingsOnce')
+                ? tr('businessApp.customers.appointmentsAppearHereAfterThey')
+                : tr('businessApp.customers.walkProfilesShowBookingsOnce')
             "
             [compact]="true"
           />
         } @else {
           <div class="roster">
             <adeni-list-toolbar
-              storageKey="portal.customer-detail.bookings"
+              storageKey="businessApp.customer-detail.bookings"
               [showViewSwitcher]="false"
               [count]="filteredRecentBookings().length"
               [singularCountLabel]="tr('common.booking')"
               [pluralCountLabel]="tr('common.bookings2')"
-              [searchPlaceholder]="tr('portal.customers.searchServiceStaffStatus')"
+              [searchPlaceholder]="tr('businessApp.customers.searchServiceStaffStatus')"
               [searchQuery]="bookingSearchQuery()"
               (searchQueryChange)="bookingSearchQuery.set($event)"
             />
@@ -261,7 +261,7 @@
                       }
                       <adeni-icon-btn
                         icon="launch"
-                        [label]="tr('portal.customers.openBookings')"
+                        [label]="tr('businessApp.customers.openBookings')"
                         variant="table"
                         [dense]="true"
                         [routerLink]="bookingOpenRouterLink(row)"
@@ -278,27 +278,27 @@
       <section class="card tab-panel">
         <div class="section-head">
           <div>
-            <h3 class="section-title">{{ tr('portal.customers.recentQueueVisits') }}</h3>
-            <p class="muted section-lede">{{ tr('portal.customers.walkTicketsFloorBoard') }}</p>
+            <h3 class="section-title">{{ tr('businessApp.customers.recentQueueVisits') }}</h3>
+            <p class="muted section-lede">{{ tr('businessApp.customers.walkTicketsFloorBoard') }}</p>
           </div>
           <a routerLink="/queue" class="btn btn-ghost">{{ tr('common.openQueue') }}</a>
         </div>
         @if (c.recentQueueVisits.length === 0) {
           <adeni-portal-empty-state
             icon="user--follow"
-            [title]="tr('portal.customers.noQueueVisitsYet')"
-            [description]="tr('portal.customers.whenTheyJoinWalkQueue')"
+            [title]="tr('businessApp.customers.noQueueVisitsYet')"
+            [description]="tr('businessApp.customers.whenTheyJoinWalkQueue')"
             [compact]="true"
           />
         } @else {
           <div class="roster">
             <adeni-list-toolbar
-              storageKey="portal.customer-detail.queue"
+              storageKey="businessApp.customer-detail.queue"
               [showViewSwitcher]="false"
               [count]="filteredRecentQueueVisits().length"
-              [singularCountLabel]="tr('portal.customers.visit')"
-              [pluralCountLabel]="tr('portal.customers.visits')"
-              [searchPlaceholder]="tr('portal.customers.searchServiceStaffStatus')"
+              [singularCountLabel]="tr('businessApp.customers.visit')"
+              [pluralCountLabel]="tr('businessApp.customers.visits')"
+              [searchPlaceholder]="tr('businessApp.customers.searchServiceStaffStatus')"
               [searchQuery]="queueSearchQuery()"
               (searchQueryChange)="queueSearchQuery.set($event)"
             />
@@ -361,8 +361,8 @@
   } @else if (!error()) {
     <adeni-portal-empty-state
       icon="user--filled"
-      [title]="tr('portal.customers.customerNotFound')"
-      [description]="tr('portal.customers.theyMayBelongAnotherBusiness')"
+      [title]="tr('businessApp.customers.customerNotFound')"
+      [description]="tr('businessApp.customers.theyMayBelongAnotherBusiness')"
     />
   }
 </app-portal-page>

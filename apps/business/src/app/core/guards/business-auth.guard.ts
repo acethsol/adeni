@@ -8,7 +8,7 @@ import {
   isAuth0Configured,
   isBusinessPortalDevMode,
 } from "../adeni-config";
-import { isPortalDevSignedOut } from "../portal-dev-session";
+import { isPortalDevSignedOut } from "../business-dev-session";
 
 /** Auth0 login + business role, or local dev sub bypass. */
 export const businessAuthGuard: CanActivateFn = async () => {
