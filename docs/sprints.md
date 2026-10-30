@@ -48,7 +48,7 @@ Current V1 authority: [product-direction.md](./product-direction.md). Supported 
 | **38** | **Notifications module (Resend + Twilio)** | **38A ✅ / 38B ✅** — [sprint-38-notifications-module.md](./specs/sprint-38-notifications-module.md) |
 | **38c** | **Notification templates + i18n + portal** | ✅ Done — [sprint-38c-notification-templates-i18n.md](./specs/sprint-38c-notification-templates-i18n.md) |
 | **39** | **Reporting module (exports + PDF extract)** | **39A ✅ / 39B ✅** — [sprint-39-reporting-module.md](./specs/sprint-39-reporting-module.md); retention export deferred **37.5** |
-| **37** | **Retention (packages, loyalty, memberships)** | **37.1–37.3 implemented** (dev/local — [37.1](./specs/sprint-37-1-packages-benefit-ledger.md), [37.2](./specs/sprint-37-2-memberships.md) stub-gated recurring until Sprint 34, [37.3](./specs/sprint-37-3-rich-loyalty.md)); **37.4** multi-location — [sprint-37-4-multi-location-retention.md](./specs/sprint-37-4-multi-location-retention.md); **37.5** analytics — [sprint-37-5-retention-analytics.md](./specs/sprint-37-5-retention-analytics.md) |
+| **37** | **Retention (packages, loyalty, memberships)** | **✅ Done (dev/local)** — [37.1](./specs/sprint-37-1-packages-benefit-ledger.md)–[37.5](./specs/sprint-37-5-retention-analytics.md); online recurring/package checkout stub-gated until **Sprint 34**; closeout polish on `dev` |
 | **C1** | **Consumer app experience** (`apps/customer`, `/app/*`, no `/my-*`) | Implemented on dev — [sprint-c1-consumer-app-experience.md](./specs/sprint-c1-consumer-app-experience.md) |
 | **C2** | **Consumer portal** (dashboard, calendar, shared `@adeni/ui`) | Implemented on `dev` — [sprint-c2-consumer-portal.md](./specs/sprint-c2-consumer-portal.md) |
 | **39-finance** | **Finance module boundaries (Phase 1)** | ✅ Done — [finance-module-boundaries.md](./specs/finance-module-boundaries.md); `/api/v1/finance/*`, portal `/finance` |
@@ -60,7 +60,7 @@ Current V1 authority: [product-direction.md](./product-direction.md). Supported 
 | — | App Insights (Obs 1) | → Sprint 20 |
 | — | Booking notifications, auto-confirm, payments, waitlist | → Sprint 15 |
 
-**Next up:** **38–39 launch closeout** (Sprint A/B) — [sprint-38-39-launch-closeout.md](./specs/sprint-38-39-launch-closeout.md); then **37.1–37.5** retention. Parallel: **32a** dashboard; **33** staging Paystack + platform subscription MRR E2E; **C2** consumer portal (dashboard + calendar) after C1. **Module order:** ~~33-closeout~~ → ~~38A~~ → ~~39A~~ → ~~38B~~ → ~~38c~~ → ~~39B~~ → **closeout** → **37.1–37.5**. Sprint 20 parallel. See [roadmap-modules.md](./roadmap-modules.md).
+**Next up:** **38–39 launch closeout** (Sprint A/B) — [sprint-38-39-launch-closeout.md](./specs/sprint-38-39-launch-closeout.md). Parallel: **32a** dashboard; **33** staging Paystack + platform subscription MRR E2E; **C2** consumer portal (dashboard + calendar) after C1. **Module order:** ~~33-closeout~~ → ~~38A~~ → ~~39A~~ → ~~38B~~ → ~~38c~~ → ~~39B~~ → **closeout** → **37.1–37.5**. Sprint 20 parallel. See [roadmap-modules.md](./roadmap-modules.md).
 
 ---
 ## Sprint 0 — Foundation & dev tooling ✅

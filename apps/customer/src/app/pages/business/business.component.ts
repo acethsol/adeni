@@ -322,8 +322,19 @@ export class BusinessProfileComponent implements OnInit {
     );
   });
 
+  /** Referral code from `?ref=` on the public booking link (Sprint 37 closeout). */
+  readonly referralFromLink = signal<string | null>(null);
+
   ngOnInit(): void {
     this.destroyRef.onDestroy(() => { this.profileAbort.abort(); this.pageLoading.hide(); });
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((query) => {
+      const raw = query.get("ref")?.trim();
+      if (raw && raw.length >= 4) {
+        this.referralFromLink.set(raw.slice(0, 32).toUpperCase());
+      } else {
+        this.referralFromLink.set(null);
+      }
+    });
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const slug = params.get("slug");
       if (slug) {

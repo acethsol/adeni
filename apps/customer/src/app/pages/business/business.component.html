@@ -391,6 +391,7 @@
               [requirePolicyAcceptance]="p.policies?.requireAcceptance ?? false"
               [hasPolicies]="showPolicies()"
               [waitlistEnabled]="p.waitlistEnabled !== false"
+              [initialReferralCode]="referralFromLink()"
             />
           }
         } @else {

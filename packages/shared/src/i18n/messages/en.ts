@@ -204,6 +204,9 @@ const enBase: Messages = {
       notesLabel: "A note for the team (optional)",
       notesPlaceholder:
         "Running late, allergic to fragrance, quiet chair preferred — leave a hint.",
+      referralCodeLabel: "Referral code (optional)",
+      referralCodePlaceholder: "Friend's code",
+      referralFromLinkHint: "We applied a referral code from your link. You can change it before confirming.",
       depositNotice:
         "A {percent}% deposit is required after confirming. You'll be redirected to checkout.",
       acceptPrefix: "I have read and accept the",

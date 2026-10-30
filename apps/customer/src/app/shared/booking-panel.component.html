@@ -384,6 +384,21 @@
           ></textarea>
         </label>
 
+        <label class="notes">
+          <span>{{ label("business.booking.referralCodeLabel") }}</span>
+          <input
+            type="text"
+            maxlength="32"
+            [ngModel]="referralCode()"
+            (ngModelChange)="referralCode.set($event)"
+            [placeholder]="label('business.booking.referralCodePlaceholder')"
+            autocomplete="off"
+          />
+          @if (showReferralFromLinkHint()) {
+            <span class="tiny">{{ label("business.booking.referralFromLinkHint") }}</span>
+          }
+        </label>
+
         @if (loyaltyAtBusiness(); as loyalty) {
           <label class="loyalty-redeem">
             <span>{{ tr("discover.loyalty.applyTitle") }}</span>

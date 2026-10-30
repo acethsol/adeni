@@ -48,6 +48,30 @@
       @if (showCrossLocationPlanHint(createDraft().redemptionScope)) {
         <p class="muted scope-hint">{{ tr('businessApp.retention.crossLocationPlanHint') }}</p>
       }
+      @if (createDraft().redemptionScope === 'selected_locations') {
+        <fieldset class="location-picks">
+          <legend>{{ tr('businessApp.retention.selectedLocationsLabel') }}</legend>
+          <p class="muted">{{ tr('businessApp.retention.selectedLocationsHint') }}</p>
+          @if (locations().length === 0) {
+            <p class="muted">{{ tr('businessApp.retention.selectedLocationsNoBranches') }}</p>
+          } @else {
+            <ul class="plain location-picks__list">
+              @for (location of locations(); track location.id) {
+                <li>
+                  <label>
+                    <input
+                      type="checkbox"
+                      [checked]="isRedemptionLocationSelected(location.id)"
+                      (change)="toggleRedemptionLocation(location.id)"
+                    />
+                    {{ location.name || location.slug }}
+                  </label>
+                </li>
+              }
+            </ul>
+          }
+        </fieldset>
+      }
     </div>
     <div class="field-row">
       <div class="field">

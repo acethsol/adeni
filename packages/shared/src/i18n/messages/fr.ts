@@ -206,6 +206,9 @@ const frBase: Messages = {
       notesLabel: "Une note pour l'équipe (facultatif)",
       notesPlaceholder:
         "En retard, allergie aux parfums, préférence pour un fauteuil calme — laissez un mot.",
+      referralCodeLabel: "Code de parrainage (facultatif)",
+      referralCodePlaceholder: "Code d'un ami",
+      referralFromLinkHint: "Un code de parrainage a été appliqué depuis votre lien. Vous pouvez le modifier avant de confirmer.",
       depositNotice:
         "Un acompte de {percent} % est requis après confirmation. Vous serez redirigé vers le paiement.",
       acceptPrefix: "J'ai lu et j'accepte les politiques de",

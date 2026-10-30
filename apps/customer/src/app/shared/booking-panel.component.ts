@@ -56,6 +56,8 @@ export class BookingPanelComponent {
   readonly requirePolicyAcceptance = input(false);
   readonly hasPolicies = input(false);
   readonly waitlistEnabled = input(true);
+  /** Prefill from discover `?ref=` (optional). */
+  readonly initialReferralCode = input<string | null>(null);
 
   private staffAbort = new AbortController();
   private slotsAbort = new AbortController();
@@ -69,6 +71,12 @@ export class BookingPanelComponent {
           void this.loadRedeemableBenefits();
           void this.loadLoyaltyAtBusiness();
         });
+      }
+    });
+    effect(() => {
+      const fromLink = this.initialReferralCode();
+      if (fromLink) {
+        untracked(() => this.referralCode.set(fromLink));
       }
     });
   }
@@ -97,6 +105,12 @@ export class BookingPanelComponent {
   readonly guestCount = signal(1);
   readonly guestNames = signal<string[]>([""]);
   readonly notes = signal("");
+  readonly referralCode = signal("");
+  readonly showReferralFromLinkHint = computed(() => {
+    const initial = this.initialReferralCode();
+    const current = this.referralCode().trim().toUpperCase();
+    return !!initial && current === initial;
+  });
   readonly serviceSearch = signal("");
   readonly policiesAccepted = signal(false);
   readonly loadingSlots = signal(false);
@@ -593,6 +607,10 @@ export class BookingPanelComponent {
               lines: cart.map((s) => ({ serviceOfferingId: s.id })),
               ...(this.appliedBenefits().length > 0 ? { appliedBenefits: this.appliedBenefits() } : {}),
               ...(this.loyaltyPointsToRedeem() > 0 ? { loyaltyPointsToRedeem: this.loyaltyPointsToRedeem() } : {}),
+              ...(() => {
+                const code = this.referralCode().trim();
+                return code.length >= 4 ? { referralCode: code.slice(0, 32).toUpperCase() } : {};
+              })(),
             }),
           ),
         this.label("business.booking.confirming"),

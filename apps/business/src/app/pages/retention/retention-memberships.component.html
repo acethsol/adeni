@@ -10,7 +10,12 @@
 
   @if (showMrrPanel()) {
     <section class="mrr-panel" aria-labelledby="membership-mrr-heading">
-      <h2 id="membership-mrr-heading" class="mrr-panel__title">{{ tr('businessApp.memberships.mrrHeading') }}</h2>
+      <div class="mrr-panel__head">
+        <h2 id="membership-mrr-heading" class="mrr-panel__title">{{ tr('businessApp.memberships.mrrHeading') }}</h2>
+        <button type="button" class="btn btn-secondary btn-sm" [disabled]="mrrExporting()" (click)="downloadMrrCsv()">
+          {{ tr('businessApp.memberships.exportMrrCsv') }}
+        </button>
+      </div>
       <p class="muted mrr-panel__hint">{{ tr('businessApp.memberships.mrrHint') }}</p>
       @if (mrrLoading()) {
         <p class="muted">{{ tr('toast.loading') }}</p>

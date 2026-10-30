@@ -4,6 +4,7 @@ import {
   formatPrice,
   hasAdvancedRetentionAnalyticsEntitlement,
   mergeTenantEntitlements,
+  REPORT_KEYS,
   type MembershipBillingInterval,
   type MembershipPlan,
   type ServiceOffering,
@@ -88,6 +89,7 @@ export class RetentionMembershipsComponent implements OnInit {
   readonly entitlements = signal<TenantEntitlements | null>(null);
   readonly mrrItems = signal<TenantMembershipMrr[]>([]);
   readonly mrrLoading = signal(false);
+  readonly mrrExporting = signal(false);
   readonly mrrUpgradeHint = computed(
     () => !hasAdvancedRetentionAnalyticsEntitlement(this.entitlements()) && !this.loading(),
   );
@@ -149,6 +151,37 @@ export class RetentionMembershipsComponent implements OnInit {
 
   statusLabel(row: MembershipPlan): string {
     return row.isActive ? this.tr("businessApp.memberships.active") : this.tr("businessApp.memberships.inactive");
+  }
+
+  async downloadMrrCsv(): Promise<void> {
+    if (this.mrrExporting() || !this.showMrrPanel()) {
+      return;
+    }
+    this.mrrExporting.set(true);
+    try {
+      const to = new Date();
+      const from = new Date(to);
+      from.setUTCDate(from.getUTCDate() - 1);
+      const blob = await this.api.withAuthorizedClient((client) =>
+        client.downloadTenantReportExport({
+          reportKey: REPORT_KEYS.retentionMembershipMrr,
+          from: from.toISOString(),
+          to: to.toISOString(),
+          format: "csv",
+        }),
+      );
+      const stamp = to.toISOString().slice(0, 10);
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `membership-mrr-${stamp}.csv`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "businessApp.memberships.couldNotDownloadMrrExport"));
+    } finally {
+      this.mrrExporting.set(false);
+    }
   }
 
   async load(): Promise<void> {

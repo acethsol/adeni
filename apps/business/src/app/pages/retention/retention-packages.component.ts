@@ -42,6 +42,7 @@ type CreateDraft = {
   serviceOfferingId: string;
   quantityGranted: number;
   redemptionScope: PackageRedemptionScope;
+  redemptionLocationIds: string[];
 };
 
 const REDEMPTION_SCOPES: readonly PackageRedemptionScope[] = [
@@ -214,6 +215,7 @@ export class RetentionPackagesComponent implements OnInit {
       serviceOfferingId: "",
       quantityGranted: 3,
       redemptionScope: "purchase_location_only",
+      redemptionLocationIds: [],
     };
   }
 
@@ -229,7 +231,29 @@ export class RetentionPackagesComponent implements OnInit {
   }
 
   patchCreate(patch: Partial<CreateDraft>): void {
-    this.createDraft.update((d) => ({ ...d, ...patch }));
+    this.createDraft.update((d) => {
+      const next = { ...d, ...patch };
+      if (patch.redemptionScope && patch.redemptionScope !== "selected_locations") {
+        next.redemptionLocationIds = [];
+      }
+      return next;
+    });
+  }
+
+  toggleRedemptionLocation(locationId: string): void {
+    this.createDraft.update((d) => {
+      const set = new Set(d.redemptionLocationIds);
+      if (set.has(locationId)) {
+        set.delete(locationId);
+      } else {
+        set.add(locationId);
+      }
+      return { ...d, redemptionLocationIds: [...set] };
+    });
+  }
+
+  isRedemptionLocationSelected(locationId: string): boolean {
+    return this.createDraft().redemptionLocationIds.includes(locationId);
   }
 
   canCreate(): boolean {
@@ -240,7 +264,7 @@ export class RetentionPackagesComponent implements OnInit {
       && d.listPrice >= 0
       && !!d.serviceOfferingId
       && d.quantityGranted >= 1
-      && d.redemptionScope !== "selected_locations"
+      && (d.redemptionScope !== "selected_locations" || d.redemptionLocationIds.length > 0)
     );
   }
 
@@ -256,6 +280,9 @@ export class RetentionPackagesComponent implements OnInit {
           currency: d.currency,
           benefits: [{ serviceOfferingId: d.serviceOfferingId, quantityGranted: d.quantityGranted }],
           redemptionScope: d.redemptionScope,
+          ...(d.redemptionScope === "selected_locations"
+            ? { redemptionLocationIds: d.redemptionLocationIds }
+            : {}),
         }),
       );
       this.packages.update((list) => [created, ...list]);
