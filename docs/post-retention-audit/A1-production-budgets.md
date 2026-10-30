@@ -1,7 +1,7 @@
 # A1 — Production budget baseline (post-Retention audit)
 
-**Branch:** `chore/post-retention-audit-remediation`  
-**Base `dev`:** `eb86241110d97b88b88e1897457b14e1d3ff9787`
+**Status:** Closed — merged to `dev` @ `1d4f2a4` (PR #43).  
+**Base `dev` (pre-audit):** `eb86241110d97b88b88e1897457b14e1d3ff9787`
 
 ## Policy
 

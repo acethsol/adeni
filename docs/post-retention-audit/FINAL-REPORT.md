@@ -1,8 +1,14 @@
 # Post-Retention audit remediation — final report
 
+## Status
+
+**Closed** — merged to **`dev`** on 2026-10-30 ([PR #43](https://github.com/acethsol/adeni/pull/43), merge commit `1d4f2a4`). CI: **build-and-test**, **frontend**, and **sqlserver** green on merge.
+
+Remediation scope is complete. Items in §24 are **backlog**, not open audit findings.
+
 ## 1. Branch
 
-`chore/post-retention-audit-remediation` (not merged to `dev`, `qa`, or `main`).
+`chore/post-retention-audit-remediation` — **merged** into `dev` (not promoted to `qa` / `main` by this audit).
 
 ## 2. Base `dev` commit
 
@@ -14,6 +20,10 @@
 |--------|-------|
 | `cd17900` | **A1** — production budgets restored, CI customer/admin tests, A1 doc |
 | `d2ab4bb` | **A2–A4** — retention fixes, customer lazy `/app`, phase docs |
+| `6794255` | Final report |
+| `0c6bc3c` | SQL cap test, guard specs, dashboard/calendar SCSS |
+| `e0f8681`–`4e82067` | CI fixes (shared typecheck, customer app.spec, zod audit, SQL test SaveChanges) |
+| `1d4f2a4` | **Merge to `dev`** (squash/merge via PR #43) |
 
 ## 4. Files changed by phase
 
@@ -33,7 +43,7 @@
 
 **Deferred with documentation:** `BusinessType.ScheduledAppointment` loyalty/referral gate (product); full CSS budget cleanup (non-dashboard/calendar sheets); Auth0 localStorage + CSP deep pass; scoped admin roles.
 
-**Follow-up (same branch):** SQL `ConcurrentReferralCap_AtLimit_ExactlyOneExtraReward`; `business-route-nav-path.spec.ts`; dashboard/calendar SCSS moved to global partials (production budget pass).
+**Shipped on merge:** SQL `ConcurrentReferralCap_AtLimit_ExactlyOneExtraReward`; `business-route-nav-path.spec.ts`; dashboard/calendar SCSS → global partials (production budget pass).
 
 ## 7–8. Security / correctness fixes
 
@@ -57,16 +67,13 @@ See `A2-retention-findings.md`, `A3-customer-boundary.md`, `A4-admin-authorizati
 - `ConcurrentReferralCap_AtLimit_ExactlyOneExtraReward` (SQL Server opt-in)
 - `business-route-nav-path.spec.ts` (retention path + tab id helpers)
 
-## 16–18. Validation (local)
+## 16–18. Validation
 
 | Check | Result |
 |-------|--------|
-| `dotnet test Adeni.slnx -c Release` | **875 passed**, 30 skipped (SQL Server opt-in) |
-| `npm test --workspace @adeni/shared` | **Passed** |
-| `npm run build:business` | **PASS** (error budgets) |
-| `npm run build:customer` | **PASS** (error budgets) |
-| `npm run build:admin` | **PASS** (error budgets; warnings remain) |
-| SQL Server category | **Not run locally** (requires `ADENI_SQLSERVER_TESTS=1` + DACPAC) |
+| `dotnet test Adeni.slnx -c Release` | **875 passed**, 31 skipped (SQL Server opt-in) — CI **build-and-test** |
+| Frontend workspaces (typecheck, unit tests, prod builds, audit) | CI **frontend** job on PR #43 |
+| SQL Server `Category=SqlServer` | CI **sqlserver** job (includes referral cap concurrency test) |
 
 ## 19. Vulnerabilities
 
@@ -82,13 +89,15 @@ Historical audit warnings on other Business/Customer component sheets (profile, 
 - In-memory rate limits per instance.
 - Walk-in/hybrid businesses excluded from loyalty/referral earn until product spec changes qualification.
 
-## 24. Next priorities
+## 24. Backlog (post-closeout)
 
-1. Measured shared SCSS / component style split (audit closeout §F).
-2. SQL Server referral cap concurrency test in CI.
-3. Customer `server.ts` / ingress CSP ownership doc + Auth0 storage review.
-4. Optional scoped admin roles post-launch.
+Track via normal sprint work — not part of this audit:
+
+1. Measured shared SCSS / component style split ([audit-hardening-closeout.md §F](../audit-hardening-closeout.md)) — e.g. staff-calendar, my-messages warnings.
+2. Customer `server.ts` / ingress CSP ownership doc + Auth0 storage review.
+3. Product: `BusinessType.ScheduledAppointment` gate for loyalty/referral earn (see A2).
+4. Optional scoped admin roles post-launch (see A4).
 
 ## 25. Diff summary
 
-Run: `git log eb86241..HEAD --oneline` and `git diff eb86241...HEAD --stat`
+Merged range on `dev`: `git log eb86241..1d4f2a4 --oneline` and `git diff eb86241...1d4f2a4 --stat`
