@@ -91,6 +91,10 @@ export class RetentionLoyaltyComponent implements OnInit {
     });
   });
 
+  protected rewardPointsCostLabel(pointsCost: number): string {
+    return this.tr("businessApp.loyalty.rewardPointsCost", { points: String(pointsCost) });
+  }
+
   ngOnInit(): void {
     void this.load();
   }

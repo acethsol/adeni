@@ -179,7 +179,7 @@
               @for (reward of rewards(); track reward.id) {
                 <li [class.inactive]="!reward.isActive">
                   <span class="reward-list__name">{{ reward.name }}</span>
-                  <span class="muted">{{ tr('businessApp.loyalty.rewardPointsCost', { points: reward.pointsCost.toString() }) }}</span>
+                  <span class="muted">{{ rewardPointsCostLabel(reward.pointsCost) }}</span>
                   @if (isOwner()) {
                     <button type="button" class="btn btn-ghost" [disabled]="rewardsBusy()" (click)="toggleRewardActive(reward)">
                       {{ reward.isActive ? tr('businessApp.loyalty.deactivateReward') : tr('businessApp.loyalty.activateReward') }}
