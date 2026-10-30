@@ -1,0 +1,90 @@
+// Portal pages: prefer semantic tokens over #fff / #fafafa so dark mode stays readable.
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  .cds-content-switcher button.active,
+  .cds-content-switcher a.active {
+    background: var(--interactive);
+    color: #fff;
+  }
+
+  .cds-btn--secondary {
+    background: var(--cds-gray-80);
+    border-color: var(--cds-gray-70);
+    color: var(--cds-gray-10);
+  }
+}
+
+@mixin portal-month-grid {
+  .month-dow {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    border: 1px solid var(--border);
+    border-bottom: 0;
+    background: var(--cds-layer-02, var(--bg-subtle));
+  }
+
+  .month-dow span {
+    padding: 0.5rem 0.25rem;
+    text-align: center;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .month-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .month-cell {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+    min-height: 4.25rem;
+    padding: 0.4rem 0.35rem;
+    border: 0;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    text-align: left;
+    cursor: pointer;
+    color: var(--text);
+  }
+
+  .month-cell:nth-child(7n) {
+    border-right: 0;
+  }
+
+  .month-cell:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--text) 6%, var(--surface));
+  }
+
+  .month-cell.is-outside {
+    background: color-mix(in srgb, var(--cds-layer-02, var(--bg-subtle)) 85%, var(--surface));
+    color: var(--text-muted);
+  }
+
+  .month-dom {
+    color: inherit;
+  }
+
+  .month-cell.is-closed {
+    background:
+      repeating-linear-gradient(
+        -55deg,
+        transparent,
+        transparent 6px,
+        color-mix(in srgb, var(--text) 8%, transparent) 6px,
+        color-mix(in srgb, var(--text) 8%, transparent) 7px
+      ),
+      color-mix(in srgb, var(--cds-support-error, #da1e28) 12%, var(--surface));
+  }
+}

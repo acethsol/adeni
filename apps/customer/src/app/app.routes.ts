@@ -1,6 +1,6 @@
 import { Routes } from "@angular/router";
 import { PublicShellComponent } from "./layout/public-shell.component";
-import { CustomerAppShellComponent } from "./app-surface/shell/customer-app-shell.component";
+import { CustomerPortalShellComponent } from "./app-surface/shell/customer-portal-shell.component";
 import { HomeComponent } from "./pages/home/home.component";
 import { DiscoverComponent } from "./pages/discover/discover.component";
 import { BusinessProfileComponent } from "./pages/business/business.component";
@@ -19,7 +19,7 @@ export const routes: Routes = [
     // Authenticated customer app surface — client-rendered, noindex (app.routes.server.ts). Declared before the
     // public group so no market/SEO catch-all can ever shadow it.
     path: "app",
-    component: CustomerAppShellComponent,
+    component: CustomerPortalShellComponent,
     canActivate: [customerAuthGuard],
     data: { surface: "app" },
     children: [

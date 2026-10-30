@@ -65,7 +65,10 @@ export class BookingPanelComponent {
     // Package credits are only offered on the confirm step, once service/location/party are known.
     effect(() => {
       if (this.step() === "confirm" && this.bookingEnabled()) {
-        untracked(() => void this.loadRedeemableBenefits());
+        untracked(() => {
+          void this.loadRedeemableBenefits();
+          void this.loadLoyaltyAtBusiness();
+        });
       }
     });
   }
@@ -103,6 +106,8 @@ export class BookingPanelComponent {
   readonly booking = signal<BookingResponse | null>(null);
   /** Customer's package credits that could cover this booking (fetched on the confirm step). */
   readonly redeemableBenefits = signal<RedeemableBenefit[]>([]);
+  readonly loyaltyAtBusiness = signal<{ pointsBalance: number; programEnabled: boolean; minRedeemPoints: number; redeemPoints: number } | null>(null);
+  readonly loyaltyPointsToRedeem = signal(0);
   private readonly useBenefitIds = signal<ReadonlySet<string>>(new Set());
 
   /** One credit = one service unit: at most (matching lines × guests), capped by what is left. */
@@ -138,6 +143,24 @@ export class BookingPanelComponent {
     const next = new Set(this.useBenefitIds());
     if (on) next.add(benefit.benefitBalanceId); else next.delete(benefit.benefitBalanceId);
     this.useBenefitIds.set(next);
+  }
+
+  private async loadLoyaltyAtBusiness(): Promise<void> {
+    this.loyaltyAtBusiness.set(null);
+    this.loyaltyPointsToRedeem.set(0);
+    try {
+      const row = await this.api.withAuthorizedClient((c) => c.retention.myLoyaltyAtBusiness(this.slug()));
+      if (row.programEnabled && row.pointsBalance >= row.minRedeemPoints) {
+        this.loyaltyAtBusiness.set({
+          pointsBalance: row.pointsBalance,
+          programEnabled: row.programEnabled,
+          minRedeemPoints: row.minRedeemPoints,
+          redeemPoints: row.redeemPoints,
+        });
+      }
+    } catch {
+      this.loyaltyAtBusiness.set(null);
+    }
   }
 
   private async loadRedeemableBenefits(): Promise<void> {
@@ -569,6 +592,7 @@ export class BookingPanelComponent {
               guests,
               lines: cart.map((s) => ({ serviceOfferingId: s.id })),
               ...(this.appliedBenefits().length > 0 ? { appliedBenefits: this.appliedBenefits() } : {}),
+              ...(this.loyaltyPointsToRedeem() > 0 ? { loyaltyPointsToRedeem: this.loyaltyPointsToRedeem() } : {}),
             }),
           ),
         this.label("business.booking.confirming"),

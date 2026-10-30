@@ -290,6 +290,12 @@ export const enOverlay: MessageTree = {
       browsePublic: "Browse public site",
       tabBar: "Main navigation",
       adeniDiscover: "Adeni Discover",
+      shell: {
+        groupMain: "Menu",
+        groupAccount: "Account",
+        badge: "Consumer app",
+        caption: "Your appointments",
+      },
     },
     appDiscover: {
       description: "Find verified businesses and book your next visit.",
@@ -656,6 +662,14 @@ export const enOverlay: MessageTree = {
       applyTitle: "Use package credits",
       applyHint: "{name} — {count} left",
       applyNone: "No package credits apply to this booking.",
+    },
+    loyalty: {
+      applyTitle: "Use loyalty points",
+      applyHint: "Balance {balance}. Min {min}, in steps of {step} points.",
+      myTitle: "My points",
+      myDescription: "Points you have earned at businesses on Adeni.",
+      myEmptyTitle: "No points yet",
+      myEmptyDescription: "Complete paid visits at participating businesses to earn points.",
     },
     memberships: {
       title: "Memberships",

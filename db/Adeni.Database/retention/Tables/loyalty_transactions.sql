@@ -9,6 +9,7 @@ CREATE TABLE [retention].[loyalty_transactions] (
     [BalanceAfter]     INT                NOT NULL,
     [Reason]           NVARCHAR (500)     NULL,
     [BookingId]        UNIQUEIDENTIFIER   NULL,
+    [DiscountAmount]   DECIMAL (18, 2)    NULL,
     [Actor]            NVARCHAR (128)     NOT NULL,
     [KeyHash]          NVARCHAR (64)      NULL,
     [Fingerprint]      NVARCHAR (64)      NULL,
@@ -32,4 +33,13 @@ GO
 CREATE UNIQUE NONCLUSTERED INDEX [IX_loyalty_transactions_TenantId_KeyHash]
     ON [retention].[loyalty_transactions] ([TenantId] ASC, [KeyHash] ASC)
     WHERE [KeyHash] IS NOT NULL;
+GO
+-- One positive earn per booking (Sprint 37.3-B idempotency).
+CREATE UNIQUE NONCLUSTERED INDEX [IX_loyalty_transactions_TenantId_BookingId_Earn]
+    ON [retention].[loyalty_transactions] ([TenantId] ASC, [BookingId] ASC)
+    WHERE [BookingId] IS NOT NULL AND [Kind] = 0 AND [Points] > 0;
+GO
+CREATE UNIQUE NONCLUSTERED INDEX [IX_loyalty_transactions_TenantId_BookingId_Redeem]
+    ON [retention].[loyalty_transactions] ([TenantId] ASC, [BookingId] ASC)
+    WHERE [BookingId] IS NOT NULL AND [Kind] = 1 AND [Points] < 0;
 GO

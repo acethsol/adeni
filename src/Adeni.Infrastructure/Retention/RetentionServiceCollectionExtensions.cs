@@ -18,6 +18,11 @@ public static class RetentionServiceCollectionExtensions
         services.AddScoped<ICustomerMembershipService, CustomerMembershipService>();
         services.AddScoped<ILoyaltyProgramService, LoyaltyProgramService>();
         services.AddScoped<ILoyaltyAccountService, LoyaltyAccountService>();
+        services.AddScoped<ILoyaltyEarnService, LoyaltyEarnService>();
+        services.AddScoped<ILoyaltyRedemptionService, LoyaltyRedemptionService>();
+        services.AddScoped<ILoyaltyCustomerService, LoyaltyCustomerService>();
+        services.AddScoped<ILoyaltyExpiryService, LoyaltyExpiryService>();
+        services.AddScoped<LoyaltyExpiryHangfireJob>();
         services.AddScoped<IBenefitRedemptionService, BenefitRedemptionService>();
         services.AddScoped<IPackageStorefrontService, PackageStorefrontService>();
         services.AddScoped<IPackagePurchaseActivation, PackagePurchaseActivation>();

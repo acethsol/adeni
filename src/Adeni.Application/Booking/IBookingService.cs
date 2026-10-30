@@ -94,7 +94,8 @@ public sealed record CreateBookingRequest(
     int GuestCount = 1,
     IReadOnlyList<CreateBookingGuestRequest>? Guests = null,
     Guid? BusinessLocationId = null,
-    IReadOnlyList<Adeni.Application.Retention.AppliedBenefitRequest>? AppliedBenefits = null);
+    IReadOnlyList<Adeni.Application.Retention.AppliedBenefitRequest>? AppliedBenefits = null,
+    int LoyaltyPointsToRedeem = 0);
 
 public interface IBookingService
 {

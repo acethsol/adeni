@@ -14,7 +14,7 @@ using Microsoft.Extensions.Options;
 /// <summary>
 /// Loyalty program + points ledger (Sprint 37.3-A). Every route needs the <c>loyaltyBasic</c> plan entitlement
 /// (enforced in the services). Program changes are owner-only; manual adjustments are owner/manager and need an
-/// <c>Idempotency-Key</c>. Earning / redeeming arrive in later slices.
+/// <c>Idempotency-Key</c>. Automatic earning is slice 37.3-B; redeeming arrives in 37.3-C.
 /// </summary>
 [ApiController]
 [Route("api/v1/tenant/retention/loyalty")]

@@ -96,6 +96,7 @@ export class CustomerDashboardComponent implements OnInit {
   private readonly now = signal(Date.now());
 
   readonly upcoming = computed(() => pickUpcomingBookings(this.bookings(), this.now()));
+  readonly upcomingCount = computed(() => this.upcoming().length);
   readonly next = computed(() => this.upcoming()[0] ?? null);
   readonly later = computed(() => this.upcoming().slice(1, 1 + UPCOMING_PREVIEW));
   readonly bookAgainSource = computed(() => pickBookAgainSource(this.bookings(), this.now()));

@@ -37,7 +37,9 @@ public sealed class BookingService(
     ICorrelationContext correlationContext,
     ICurrentUser currentUser,
     IBookingIntakeAssignmentWriter? intake = null,
-    Application.Retention.IBenefitRedemptionService? benefits = null) : IBookingService
+    Application.Retention.IBenefitRedemptionService? benefits = null,
+    Application.Retention.ILoyaltyEarnService? loyaltyEarn = null,
+    Application.Retention.ILoyaltyRedemptionService? loyaltyRedeem = null) : IBookingService
 {
     public async Task<Result<BookingResponse>> CreateAsync(
         string customerAuth0Sub,
@@ -343,6 +345,7 @@ public sealed class BookingService(
                     now));
             }
 
+            IReadOnlyList<Application.Retention.ReservedBenefit>? reservedBenefits = null;
             if (request.AppliedBenefits is { Count: > 0 })
             {
                 // Package credits are staged on this same unit of work: booking + reserve commit (or fail) together.
@@ -366,6 +369,36 @@ public sealed class BookingService(
                 if (reserved.IsFailure)
                 {
                     return Result.Failure<BookingResponse>(reserved.Error);
+                }
+
+                reservedBenefits = reserved.Value!;
+            }
+
+            if (request.LoyaltyPointsToRedeem > 0)
+            {
+                if (loyaltyRedeem is null)
+                {
+                    return Result.Failure<BookingResponse>(Domain.Retention.RetentionErrorCodes.LoyaltyRedeemInvalidError());
+                }
+
+                var cartTotal = booking.Lines.Sum(x => x.PriceAmount) * guestCount;
+                var covered = CoveredAmountFromReserved(booking, reservedBenefits);
+                var payable = Math.Max(0m, cartTotal - covered);
+                var stagedRedeem = await loyaltyRedeem.StageRedeemForBookingAsync(
+                    new Application.Retention.StageLoyaltyRedeemRequest(
+                        request.TenantId,
+                        customer.Id,
+                        booking.Id,
+                        request.LoyaltyPointsToRedeem,
+                        payable,
+                        $"customer:{customer.Id}",
+                        now),
+                    cancellationToken);
+                if (stagedRedeem.IsFailure)
+                {
+                    dbContext.ChangeTracker.Clear();
+                    domainEventCollector.TakeAll();
+                    return Result.Failure<BookingResponse>(stagedRedeem.Error);
                 }
             }
 
@@ -872,6 +905,18 @@ public sealed class BookingService(
             return Result.Failure<CustomerBookingResponse>(releaseFailure);
         }
 
+        if (loyaltyRedeem is not null)
+        {
+            var releasedLoyalty = await loyaltyRedeem.ReleaseRedeemForBookingAsync(
+                booking.TenantId, booking.Id, $"customer:{booking.CustomerId}", cancellationToken);
+            if (releasedLoyalty.IsFailure)
+            {
+                dbContext.ChangeTracker.Clear();
+                domainEventCollector.TakeAll();
+                return Result.Failure<CustomerBookingResponse>(releasedLoyalty.Error);
+            }
+        }
+
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);
@@ -1000,6 +1045,18 @@ public sealed class BookingService(
             }
         }
 
+        if (booking.Status == BookingStatus.Paid && loyaltyEarn is not null)
+        {
+            var staged = await loyaltyEarn.StageEarnForPaidBookingAsync(
+                tenantId, booking.Id, currentUser.UserId ?? "portal:unknown", cancellationToken);
+            if (staged.IsFailure)
+            {
+                dbContext.ChangeTracker.Clear();
+                domainEventCollector.TakeAll();
+                return Result.Failure<BookingResponse>(staged.Error);
+            }
+        }
+
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);
@@ -1088,6 +1145,28 @@ public sealed class BookingService(
         return Result.Success((booking, service, staffName));
     }
 
+    private static decimal CoveredAmountFromReserved(
+        BookingRecord booking,
+        IReadOnlyList<Application.Retention.ReservedBenefit>? reserved)
+    {
+        if (reserved is null or { Count: 0 })
+        {
+            return 0m;
+        }
+
+        var amount = 0m;
+        foreach (var item in reserved)
+        {
+            amount += booking.Lines
+                .Where(x => x.ServiceOfferingId == item.ServiceOfferingId)
+                .OrderBy(x => x.SortOrder)
+                .Take(item.Quantity)
+                .Sum(x => x.PriceAmount);
+        }
+
+        return amount;
+    }
+
     /// <summary>Price of booking lines already paid for by package credits (reserved or redeemed).</summary>
     private async Task<decimal> CoveredAmountAsync(BookingRecord booking, CancellationToken cancellationToken)
     {
@@ -1138,6 +1217,10 @@ public sealed class BookingService(
         }
 
         total = Math.Max(0m, total - await CoveredAmountAsync(booking, cancellationToken));
+        if (loyaltyRedeem is not null)
+        {
+            total = Math.Max(0m, total - await loyaltyRedeem.GetDiscountAmountForBookingAsync(booking.TenantId, booking.Id, cancellationToken));
+        }
 
         var paid = await dbContext.PaymentIntents
             .AsNoTracking()

@@ -290,6 +290,12 @@ export const frOverlay: MessageTree = {
       browsePublic: "Voir le site public",
       tabBar: "Navigation principale",
       adeniDiscover: "Adeni Discover",
+      shell: {
+        groupMain: "Menu",
+        groupAccount: "Compte",
+        badge: "App consommateur",
+        caption: "Vos rendez-vous",
+      },
     },
     appDiscover: {
       description: "Trouvez des établissements vérifiés et réservez votre prochaine visite.",
@@ -656,6 +662,14 @@ export const frOverlay: MessageTree = {
       applyTitle: "Utiliser des crédits de forfait",
       applyHint: "{name} — {count} restants",
       applyNone: "Aucun crédit de forfait ne s’applique à cette réservation.",
+    },
+    loyalty: {
+      applyTitle: "Utiliser des points de fidélité",
+      applyHint: "Solde {balance}. Minimum {min}, par tranches de {step} points.",
+      myTitle: "Mes points",
+      myDescription: "Points gagnés chez les entreprises sur Adeni.",
+      myEmptyTitle: "Aucun point pour l’instant",
+      myEmptyDescription: "Effectuez des visites payées chez des entreprises participantes pour gagner des points.",
     },
     memberships: {
       title: "Abonnements",

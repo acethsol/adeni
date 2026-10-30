@@ -31,6 +31,8 @@ export const enErrorMessages: MessageTree = {
     loyalty_program_not_configured: "Set up the loyalty program before adjusting points.",
     loyalty_insufficient_points: "That would take the customer's points balance below zero.",
     loyalty_conflict: "The points balance changed at the same time. Refresh and try again.",
+    loyalty_redeem_invalid: "Those loyalty points cannot be applied to this booking.",
+    loyalty_program_disabled: "The loyalty program is not enabled for this business.",
   },
   intake: {"validation": "Check the intake form fields.", "conflict": "The form changed or was already submitted. Refresh before continuing.", "submission_closed": "This booking is no longer open for intake submission."},
   subscription: {
@@ -162,6 +164,8 @@ export const frErrorMessages: MessageTree = {
     loyalty_program_not_configured: "Configurez le programme de fidélité avant d’ajuster des points.",
     loyalty_insufficient_points: "Cela ferait passer le solde de points du client sous zéro.",
     loyalty_conflict: "Le solde de points a changé en même temps. Actualisez et réessayez.",
+    loyalty_redeem_invalid: "Ces points de fidélité ne peuvent pas être appliqués à cette réservation.",
+    loyalty_program_disabled: "Le programme de fidélité n’est pas activé pour cette entreprise.",
   },
   intake: {"validation": "Vérifiez les champs du formulaire.", "conflict": "Le formulaire a changé ou a déjà été envoyé. Actualisez avant de continuer.", "submission_closed": "Cette réservation ne permet plus d’envoyer ce formulaire."},
   subscription: {

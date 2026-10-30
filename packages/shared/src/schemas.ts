@@ -719,6 +719,7 @@ export const createBookingRequestSchema = z
     guests: z.array(createBookingGuestRequestSchema).max(6).optional(),
     businessLocationId: z.string().uuid().optional(),
     appliedBenefits: z.array(appliedBenefitRequestSchema).max(10).optional(),
+    loyaltyPointsToRedeem: z.number().int().min(0).max(1_000_000).optional(),
   })
   .refine((data) => (data.lines?.length ?? 0) > 0 || !!data.serviceOfferingId, {
     message: "serviceOfferingId or lines is required",

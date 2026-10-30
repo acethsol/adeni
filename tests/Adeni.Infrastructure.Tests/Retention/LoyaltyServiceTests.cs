@@ -1,11 +1,15 @@
 namespace Adeni.Infrastructure.Tests.Retention;
 
 using Adeni.Application.Abstractions;
+using Adeni.Application.Events;
 using Adeni.Application.Retention;
 using Adeni.Domain.Auditing;
+using Adeni.Domain.Booking;
 using Adeni.Domain.Retention;
+using Adeni.Domain.Retention.Events;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Context;
+using Adeni.Infrastructure.Events;
 using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Retention;
 using Microsoft.EntityFrameworkCore;
@@ -75,6 +79,20 @@ public sealed class LoyaltyServiceTests
         public LoyaltyProgramService Programs(bool entitled = true) => new(Db, new Guard(entitled), new FixedClock(), Audit);
 
         public LoyaltyAccountService Accounts(bool entitled = true) => new(Db, new Guard(entitled), new FixedClock(), Audit);
+
+        public DomainEventCollector Events { get; } = new();
+
+        public LoyaltyRedemptionService Redemption(bool entitled = true) =>
+            new(Db, new Guard(entitled), new FixedClock());
+
+        public LoyaltyEarnService Earn(bool entitled = true) =>
+            new(
+                Db,
+                new Guard(entitled),
+                new BenefitRedemptionService(Db, Events, new FixedClock()),
+                Redemption(entitled),
+                Events,
+                new FixedClock());
 
         public async Task SeedAsync()
         {
@@ -477,5 +495,97 @@ public sealed class LoyaltyServiceTests
         Assert.Contains(h.Tenant.ToString(), entry.MetadataJson);
         Assert.Contains("\"points\":7", entry.MetadataJson);
         Assert.DoesNotContain("private staff note", entry.MetadataJson);
+    }
+
+    [Fact]
+    public async Task StageEarn_ForPaidBooking_IsIdempotentAndFloorsPoints()
+    {
+        var h = await NewAsync();
+        await h.SaveProgramAsync();
+        var roster = h.Db.TenantCustomers.Single(x => x.Id == h.Customer);
+        Assert.NotNull(roster.CustomerId);
+        var customerId = roster.CustomerId!.Value;
+        var serviceId = Guid.NewGuid();
+        var bookingId = Guid.NewGuid();
+        h.Db.Add(new BusinessProfile { TenantId = h.Tenant, CategorySlug = "salon", Phone = "+10000000000" });
+        h.Db.Add(new ServiceOffering
+        {
+            Id = serviceId,
+            TenantId = h.Tenant,
+            Name = "Cut",
+            PriceAmount = 250m,
+            Currency = "NGN",
+            DurationMinutes = 30,
+            CreatedAt = Start,
+            UpdatedAt = Start,
+        });
+        h.Db.Add(new BookingRecord
+        {
+            Id = bookingId,
+            TenantId = h.Tenant,
+            ServiceOfferingId = serviceId,
+            CustomerId = customerId,
+            StartAt = Start,
+            EndAt = Start.AddHours(1),
+            Status = BookingStatus.Paid,
+            PaidAt = Start,
+            CreatedAt = Start,
+            UpdatedAt = Start,
+            Lines =
+            [
+                new BookingLine
+                {
+                    Id = Guid.NewGuid(),
+                    BookingId = bookingId,
+                    TenantId = h.Tenant,
+                    ServiceOfferingId = serviceId,
+                    SortOrder = 0,
+                    PriceAmount = 250m,
+                    DurationMinutes = 30,
+                    ServiceName = "Cut",
+                },
+            ],
+        });
+        await h.Db.SaveChangesAsync();
+
+        var earn = h.Earn();
+        var first = await earn.StageEarnForPaidBookingAsync(h.Tenant, bookingId, "test");
+        var second = await earn.StageEarnForPaidBookingAsync(h.Tenant, bookingId, "test");
+        await h.Db.SaveChangesAsync();
+
+        Assert.True(first.IsSuccess);
+        Assert.Equal(2, first.Value);
+        Assert.True(second.IsSuccess);
+        Assert.Equal(2, second.Value);
+        Assert.Equal(1, await h.Db.Set<LoyaltyTransaction>().CountAsync(x => x.Points > 0));
+        var account = await h.Db.Set<LoyaltyAccount>().SingleAsync(x => x.TenantCustomerId == h.Customer);
+        Assert.Equal(2, account.PointsBalance);
+        Assert.Equal(2, account.LifetimeEarned);
+        Assert.IsType<LoyaltyPointsEarned>(Assert.Single(h.Events.TakeAll()));
+    }
+
+    [Fact]
+    public async Task StageRedeem_ForBooking_DebitsPointsAndRecordsDiscount()
+    {
+        var h = await NewAsync();
+        await h.SaveProgramAsync();
+        var roster = h.Db.TenantCustomers.Single(x => x.Id == h.Customer);
+        var account = LoyaltyAccount.Open(h.Tenant, h.Customer, Start);
+        account.PointsBalance = 500;
+        h.Db.Add(account);
+        var bookingId = Guid.NewGuid();
+        await h.Db.SaveChangesAsync();
+
+        var redeem = h.Redemption();
+        var staged = await redeem.StageRedeemForBookingAsync(
+            new StageLoyaltyRedeemRequest(h.Tenant, roster.CustomerId!.Value, bookingId, 100, 5000m, "test", Start));
+        await h.Db.SaveChangesAsync();
+
+        Assert.True(staged.IsSuccess);
+        Assert.Equal(100, staged.Value);
+        var row = await h.Db.Set<LoyaltyTransaction>().SingleAsync(x => x.BookingId == bookingId);
+        Assert.Equal(-100, row.Points);
+        Assert.Equal(500m, row.DiscountAmount);
+        Assert.Equal(400, (await h.Db.Set<LoyaltyAccount>().SingleAsync()).PointsBalance);
     }
 }

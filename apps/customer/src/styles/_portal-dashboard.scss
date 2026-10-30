@@ -1,0 +1,172 @@
+// Consumer portal pages — subset of business dashboard surface (hero + stat tiles + widget cards).
+
+.hero,
+.widget-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--cds-radius-none);
+}
+
+.hero {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1.25rem;
+  align-items: flex-end;
+  margin-bottom: 1.25rem;
+  padding: 1.5rem 1.6rem;
+  background:
+    radial-gradient(circle at top right, rgb(19 194 163 / 18%), transparent 42%),
+    linear-gradient(135deg, #161616 0%, #2a2140 58%, #13c2a3 160%);
+  color: #fff;
+  border: 0;
+}
+
+.hero .kicker {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #13c2a3;
+}
+
+.hero h2 {
+  margin: 0.35rem 0 0;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  letter-spacing: -0.03em;
+}
+
+.hero .meta {
+  margin: 0.4rem 0 0;
+  color: rgb(255 255 255 / 78%);
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.hero .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: var(--cds-radius-none);
+  padding: 0.55rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1px solid rgb(255 255 255 / 24%);
+  color: #fff;
+  background: rgb(255 255 255 / 8%);
+}
+
+.hero .btn-primary {
+  background: #13c2a3;
+  border-color: #13c2a3;
+  color: #0b0f14;
+}
+
+.widget-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.widget-span-12 {
+  grid-column: 1 / -1;
+}
+
+.widget-span-6 {
+  grid-column: span 6;
+}
+
+@media (max-width: 768px) {
+  .widget-span-6 {
+    grid-column: 1 / -1;
+  }
+}
+
+.widget-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-width: 0;
+  padding: var(--cds-spacing-05) var(--cds-spacing-06);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--text) 5%, transparent);
+}
+
+.widget-card__head h3 {
+  margin: 0;
+  font-size: var(--cds-heading-compact-02-size, 1rem);
+  font-weight: 600;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.stats .stat-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 6rem;
+  padding: 0.95rem 1rem;
+  text-decoration: none;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--cds-radius-none);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--text) 4%, transparent);
+}
+
+.stats .stat-card--appointments {
+  background: color-mix(in srgb, #7f56ff 14%, var(--surface));
+  border-color: color-mix(in srgb, #7f56ff 30%, var(--border));
+}
+
+.stats .stat-card--messages {
+  background: color-mix(in srgb, #4589ff 14%, var(--surface));
+  border-color: color-mix(in srgb, #4589ff 30%, var(--border));
+}
+
+.stats .stat-card--benefits {
+  background: color-mix(in srgb, #13c2a3 14%, var(--surface));
+  border-color: color-mix(in srgb, #13c2a3 30%, var(--border));
+}
+
+.stat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--interactive, #7f56ff) 12%, var(--surface));
+}
+
+.stat-label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.stat-value {
+  margin: 0.15rem 0 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.stat-hint {
+  margin: 0.2rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}

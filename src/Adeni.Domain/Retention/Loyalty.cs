@@ -125,6 +125,176 @@ public sealed class LoyaltyAccount : ITenantEntity
             OccurredAt = at,
         });
     }
+
+    /// <summary>Stages a booking earn (slice 37.3-B). Caller persists the ledger row.</summary>
+    public Result<LoyaltyTransaction> RecordEarn(int points, Guid bookingId, string actor, DateTimeOffset at)
+    {
+        if (points <= 0)
+        {
+            return Result.Failure<LoyaltyTransaction>(
+                RetentionErrorCodes.ValidationError("Earn points must be positive."));
+        }
+
+        PointsBalance += points;
+        LifetimeEarned += points;
+        Sequence++;
+        UpdatedAt = at;
+        return Result.Success(new LoyaltyTransaction
+        {
+            Id = Guid.NewGuid(),
+            TenantId = TenantId,
+            LoyaltyAccountId = Id,
+            TenantCustomerId = TenantCustomerId,
+            Sequence = Sequence,
+            Kind = LoyaltyTransactionKind.Earn,
+            Points = points,
+            BalanceAfter = PointsBalance,
+            BookingId = bookingId,
+            Actor = actor,
+            OccurredAt = at,
+        });
+    }
+
+    /// <summary>Reverses a prior earn for the same booking (cancel/refund policy).</summary>
+    public Result<LoyaltyTransaction> RecordEarnReversal(int earnPoints, Guid bookingId, string actor, DateTimeOffset at)
+    {
+        if (earnPoints <= 0)
+        {
+            return Result.Failure<LoyaltyTransaction>(RetentionErrorCodes.ValidationError("Invalid earn reversal."));
+        }
+
+        var reversal = -earnPoints;
+        if ((long)PointsBalance + reversal < 0)
+        {
+            return Result.Failure<LoyaltyTransaction>(RetentionErrorCodes.LoyaltyInsufficientPointsError());
+        }
+
+        PointsBalance += reversal;
+        LifetimeEarned = Math.Max(0, LifetimeEarned - earnPoints);
+        Sequence++;
+        UpdatedAt = at;
+        return Result.Success(new LoyaltyTransaction
+        {
+            Id = Guid.NewGuid(),
+            TenantId = TenantId,
+            LoyaltyAccountId = Id,
+            TenantCustomerId = TenantCustomerId,
+            Sequence = Sequence,
+            Kind = LoyaltyTransactionKind.Earn,
+            Points = reversal,
+            BalanceAfter = PointsBalance,
+            BookingId = bookingId,
+            Reason = "booking_reversal",
+            Actor = actor,
+            OccurredAt = at,
+        });
+    }
+
+    /// <summary>Stages a booking redemption (slice 37.3-C). Caller persists the ledger row.</summary>
+    public Result<LoyaltyTransaction> RecordRedeem(
+        int points,
+        decimal discountAmount,
+        Guid bookingId,
+        string actor,
+        DateTimeOffset at)
+    {
+        if (points <= 0 || discountAmount <= 0)
+        {
+            return Result.Failure<LoyaltyTransaction>(RetentionErrorCodes.ValidationError("Invalid redeem."));
+        }
+
+        if (PointsBalance < points)
+        {
+            return Result.Failure<LoyaltyTransaction>(RetentionErrorCodes.LoyaltyInsufficientPointsError());
+        }
+
+        PointsBalance -= points;
+        LifetimeRedeemed += points;
+        Sequence++;
+        UpdatedAt = at;
+        return Result.Success(new LoyaltyTransaction
+        {
+            Id = Guid.NewGuid(),
+            TenantId = TenantId,
+            LoyaltyAccountId = Id,
+            TenantCustomerId = TenantCustomerId,
+            Sequence = Sequence,
+            Kind = LoyaltyTransactionKind.Redeem,
+            Points = -points,
+            BalanceAfter = PointsBalance,
+            DiscountAmount = discountAmount,
+            BookingId = bookingId,
+            Actor = actor,
+            OccurredAt = at,
+        });
+    }
+
+    /// <summary>Restores points from a booking redeem before the visit is paid (cancel / release).</summary>
+    public Result<LoyaltyTransaction> RecordRedeemReversal(
+        int redeemedPoints,
+        decimal discountAmount,
+        Guid bookingId,
+        string actor,
+        DateTimeOffset at)
+    {
+        if (redeemedPoints <= 0 || discountAmount <= 0)
+        {
+            return Result.Failure<LoyaltyTransaction>(RetentionErrorCodes.ValidationError("Invalid redeem reversal."));
+        }
+
+        PointsBalance += redeemedPoints;
+        LifetimeRedeemed = Math.Max(0, LifetimeRedeemed - redeemedPoints);
+        Sequence++;
+        UpdatedAt = at;
+        return Result.Success(new LoyaltyTransaction
+        {
+            Id = Guid.NewGuid(),
+            TenantId = TenantId,
+            LoyaltyAccountId = Id,
+            TenantCustomerId = TenantCustomerId,
+            Sequence = Sequence,
+            Kind = LoyaltyTransactionKind.Redeem,
+            Points = redeemedPoints,
+            BalanceAfter = PointsBalance,
+            DiscountAmount = discountAmount,
+            BookingId = bookingId,
+            Reason = "booking_reversal",
+            Actor = actor,
+            OccurredAt = at,
+        });
+    }
+
+    /// <summary>Stages expiry of unused points (slice 37.3-C FIFO sweep).</summary>
+    public Result<LoyaltyTransaction> RecordExpire(int points, string actor, DateTimeOffset at)
+    {
+        if (points <= 0)
+        {
+            return Result.Failure<LoyaltyTransaction>(RetentionErrorCodes.ValidationError("Expire points must be positive."));
+        }
+
+        if (PointsBalance < points)
+        {
+            return Result.Failure<LoyaltyTransaction>(RetentionErrorCodes.LoyaltyInsufficientPointsError());
+        }
+
+        PointsBalance -= points;
+        Sequence++;
+        UpdatedAt = at;
+        return Result.Success(new LoyaltyTransaction
+        {
+            Id = Guid.NewGuid(),
+            TenantId = TenantId,
+            LoyaltyAccountId = Id,
+            TenantCustomerId = TenantCustomerId,
+            Sequence = Sequence,
+            Kind = LoyaltyTransactionKind.Expire,
+            Points = -points,
+            BalanceAfter = PointsBalance,
+            Reason = "points_expired",
+            Actor = actor,
+            OccurredAt = at,
+        });
+    }
 }
 
 /// <summary>Append-only points ledger row. Never updated or deleted.</summary>
@@ -151,6 +321,9 @@ public sealed class LoyaltyTransaction : ITenantEntity
 
     /// <summary>Booking that caused an earn / redeem (slices B–C).</summary>
     public Guid? BookingId { get; set; }
+
+    /// <summary>Monetary discount applied for <see cref="LoyaltyTransactionKind.Redeem"/> rows (program currency).</summary>
+    public decimal? DiscountAmount { get; set; }
 
     public string Actor { get; set; } = string.Empty;
 

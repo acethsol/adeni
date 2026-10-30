@@ -384,6 +384,27 @@
           ></textarea>
         </label>
 
+        @if (loyaltyAtBusiness(); as loyalty) {
+          <label class="loyalty-redeem">
+            <span>{{ tr("discover.loyalty.applyTitle") }}</span>
+            <input
+              type="number"
+              min="0"
+              [max]="loyalty.pointsBalance"
+              [step]="loyalty.redeemPoints"
+              [ngModel]="loyaltyPointsToRedeem()"
+              (ngModelChange)="loyaltyPointsToRedeem.set(+$event || 0)"
+            />
+            <span class="tiny">{{
+              tr("discover.loyalty.applyHint", {
+                balance: loyalty.pointsBalance,
+                min: loyalty.minRedeemPoints,
+                step: loyalty.redeemPoints,
+              })
+            }}</span>
+          </label>
+        }
+
         @if (applicableBenefits().length > 0) {
           <fieldset class="package-credits">
             <legend>{{ tr("discover.packages.applyTitle") }}</legend>

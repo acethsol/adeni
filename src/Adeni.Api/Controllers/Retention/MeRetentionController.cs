@@ -12,6 +12,7 @@ using Microsoft.Extensions.Options;
 public sealed class MeRetentionController(
     ICustomerPackageService customerPackages,
     ICustomerMembershipService customerMemberships,
+    ILoyaltyCustomerService loyaltyCustomers,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet("packages")]
@@ -27,6 +28,18 @@ public sealed class MeRetentionController(
     }
 
     /// <summary>Signed-in customer's memberships across businesses (Sprint 37.2-D); excludes unpaid pending checkouts.</summary>
+    [HttpGet("loyalty")]
+    public async Task<IActionResult> MyLoyalty(CancellationToken cancellationToken)
+    {
+        var sub = ResolveCustomerAuth0Sub();
+        if (sub is null)
+        {
+            return Unauthorized();
+        }
+
+        return ApiResults.FromResult(await loyaltyCustomers.ListForPlatformCustomerAsync(sub, cancellationToken), Ok, HttpContext);
+    }
+
     [HttpGet("memberships")]
     public async Task<IActionResult> MyMemberships(CancellationToken cancellationToken)
     {

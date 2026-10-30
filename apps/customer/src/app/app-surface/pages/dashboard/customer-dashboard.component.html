@@ -1,241 +1,164 @@
-<app-portal-page [title]="title()" [description]="tr('customer.app.dashboard.description')">
-  <section class="app-section" [attr.aria-label]="tr('customer.app.dashboard.upNext')">
-    <h3 class="app-section__title">{{ tr('customer.app.dashboard.upNext') }}</h3>
-
-    @if (bookingsLoading()) {
-      <div class="app-panel app-panel--skeleton" aria-hidden="true">
-        <span class="app-sk app-sk--date"></span>
-        <span class="app-sk-stack">
-          <span class="app-sk app-sk--line"></span>
-          <span class="app-sk app-sk--line app-sk--short"></span>
-        </span>
-      </div>
-    } @else if (bookingsFailed()) {
-      <adeni-portal-empty-state
-        [compact]="true"
-        icon="calendar"
-        [title]="tr('bookings.loadErrorTitle')"
-        [description]="tr('bookings.loadError')"
-      >
-        <button type="button" class="cds-btn cds-btn--primary cds-btn--sm" (click)="loadBookings()">
-          {{ tr('discover.tryAgain') }}
-        </button>
-      </adeni-portal-empty-state>
-    } @else if (next(); as booking) {
-      @let d = dayPart(booking.startAt);
-      <article class="app-panel app-up-next" [attr.data-status]="booking.status">
-        <div class="app-date" aria-hidden="true">
-          <span class="app-date__weekday">{{ d.weekday }}</span>
-          <span class="app-date__day">{{ d.day }}</span>
-          <span class="app-date__month">{{ d.month }}</span>
-        </div>
-        <div class="app-up-next__body">
-          <div class="app-up-next__title">
-            <h4>{{ booking.serviceName }}</h4>
-            <adeni-pill [tone]="statusTone(booking.status)" [compact]="true">{{ statusLabel(booking.status) }}</adeni-pill>
-          </div>
-          <p class="app-muted">
-            <a [routerLink]="['/businesses', booking.businessSlug]">{{ booking.businessName }}</a>
-            <span aria-hidden="true"> · </span>
-            <time [attr.datetime]="booking.startAt">{{ when(booking.startAt) }}</time>
-          </p>
-          @if (booking.staffDisplayName) {
-            <p class="app-muted">{{ tr('bookings.withStaff') }} {{ booking.staffDisplayName }}</p>
-          }
-          <div class="app-actions">
-            <a class="cds-btn cds-btn--primary cds-btn--sm" [routerLink]="['/app/bookings', booking.id]">
-              {{ tr('customer.app.dashboard.viewDetails') }}
-            </a>
-            <a class="cds-btn cds-btn--tertiary cds-btn--sm" [routerLink]="['/app/bookings', booking.id, 'intake']">
-              {{ tr('intake.title') }}
-            </a>
-            <a class="cds-btn cds-btn--ghost cds-btn--sm" [routerLink]="['/businesses', booking.businessSlug]">
-              {{ tr('bookings.viewBusiness') }}
-            </a>
-          </div>
-        </div>
-      </article>
-
-      @if (later().length > 0) {
-        <h3 class="app-section__title">{{ tr('customer.app.dashboard.comingUp') }}</h3>
-        <ul class="app-list">
-          @for (item of later(); track item.id) {
-            <li>
-              <a class="app-row" [routerLink]="['/app/bookings', item.id]">
-                <span class="app-row__main">
-                  <strong>{{ item.serviceName }}</strong>
-                  <span class="app-muted">{{ item.businessName }} · {{ when(item.startAt) }}</span>
-                </span>
-                <adeni-pill [tone]="statusTone(item.status)" [compact]="true">{{ statusLabel(item.status) }}</adeni-pill>
-              </a>
-            </li>
-          }
-        </ul>
-      }
-      <p class="app-more"><a routerLink="/app/bookings">{{ tr('customer.app.dashboard.seeAll') }}</a></p>
-    } @else {
-      <adeni-portal-empty-state
-        [compact]="true"
-        icon="calendar"
-        [title]="tr('customer.app.dashboard.noUpcomingTitle')"
-        [description]="tr('customer.app.dashboard.noUpcomingDescription')"
-      >
-        <a class="cds-btn cds-btn--primary cds-btn--sm" routerLink="/app/discover">{{ tr('customer.app.dashboard.findBusiness') }}</a>
-      </adeni-portal-empty-state>
-    }
-  </section>
-
-  @if (reviewCandidate(); as review) {
-    <section class="app-section" [attr.aria-label]="tr('customer.app.dashboard.reviewTitle')">
-      <article class="app-panel">
-        <h3 class="app-section__title">{{ tr('customer.app.dashboard.reviewTitle') }}</h3>
-        <p class="app-muted">
-          {{ tr('customer.app.dashboard.reviewPrompt', { service: review.serviceName, business: review.businessName }) }}
-        </p>
-        <div class="app-actions">
-          <button type="button" class="cds-btn cds-btn--primary cds-btn--sm" (click)="openReview()">
-            {{ tr('customer.app.dashboard.leaveReview') }}
-          </button>
-        </div>
-      </article>
-    </section>
-  }
-
-  <section class="app-section" [attr.aria-label]="tr('customer.app.nav.messages')">
-    <h3 class="app-section__title">{{ tr('customer.app.nav.messages') }}</h3>
-    @if (messagesLoading()) {
-      <div class="app-panel app-panel--skeleton" aria-hidden="true">
-        <span class="app-sk app-sk--line"></span>
-        <span class="app-sk app-sk--line app-sk--short"></span>
-      </div>
-    } @else if (messagesFailed()) {
-      <adeni-portal-empty-state
-        [compact]="true"
-        icon="chat"
-        [title]="tr('customer.app.dashboard.messagesErrorTitle')"
-        [description]="tr('customer.app.dashboard.messagesError')"
-      >
-        <button type="button" class="cds-btn cds-btn--primary cds-btn--sm" (click)="loadMessages()">
-          {{ tr('discover.tryAgain') }}
-        </button>
-      </adeni-portal-empty-state>
-    } @else if (homeConversations().length > 0) {
-      <ul class="app-list">
-        @for (thread of homeConversations(); track thread.id) {
-          <li>
-            <a class="app-row" [routerLink]="['/app/messages']" [queryParams]="{ c: thread.id }">
-              <span class="app-row__main">
-                <strong>{{ thread.businessName || tr('customer.app.dashboard.unknownBusiness') }}</strong>
-                <span class="app-muted">{{ thread.preview || when(thread.lastMessageAt) }}</span>
-              </span>
-              @if (thread.needsAttention) {
-                <adeni-pill tone="warning" [compact]="true">{{ tr('customer.app.dashboard.needsReply') }}</adeni-pill>
-              }
-            </a>
-          </li>
-        }
-      </ul>
-      <p class="app-more"><a routerLink="/app/messages">{{ tr('customer.app.dashboard.seeAllMessages') }}</a></p>
-    } @else {
-      <adeni-portal-empty-state
-        [compact]="true"
-        icon="chat"
-        [title]="tr('customer.app.dashboard.noMessagesTitle')"
-        [description]="tr('customer.app.dashboard.noMessagesDescription')"
-      />
-    }
-  </section>
-
-  @if (showBenefitsCard()) {
-    <section class="app-section" [attr.aria-label]="tr('customer.app.nav.benefits')">
-      <h3 class="app-section__title">{{ tr('customer.app.nav.benefits') }}</h3>
-      @if (benefitsLoading()) {
-        <div class="app-panel app-panel--skeleton" aria-hidden="true">
-          <span class="app-sk app-sk--line"></span>
-        </div>
-      } @else if (benefitsFailed()) {
-        <adeni-portal-empty-state
-          [compact]="true"
-          icon="gift"
-          [title]="tr('customer.app.dashboard.benefitsErrorTitle')"
-          [description]="tr('customer.app.dashboard.benefitsError')"
-        >
-          <button type="button" class="cds-btn cds-btn--primary cds-btn--sm" (click)="loadBenefits()">
-            {{ tr('discover.tryAgain') }}
-          </button>
-        </adeni-portal-empty-state>
-      } @else {
-        @let snap = benefitsSnapshot();
-        <article class="app-panel">
-          <p>
-            {{
-              tr('customer.app.dashboard.benefitsPackages', {
-                packages: snap.activePackages,
-                credits: snap.creditsRemaining,
-              })
-            }}
-          </p>
-          @if (snap.soonestExpiry) {
-            <p class="app-muted">
-              {{ tr('customer.app.dashboard.benefitsExpiry', { date: when(snap.soonestExpiry) }) }}
-            </p>
-          }
-          @for (gift of snap.giftBalancesByCurrency; track gift.currency) {
-            <p class="app-muted">
-              {{ tr('customer.app.dashboard.benefitsGift', { amount: money(gift.amount, gift.currency) }) }}
-            </p>
-          }
-          <div class="app-actions">
-            <a class="cds-btn cds-btn--tertiary cds-btn--sm" routerLink="/app/benefits">
-              {{ tr('customer.app.dashboard.viewBenefits') }}
-            </a>
-          </div>
-        </article>
-      }
-    </section>
-  }
-
-  <section class="app-section" [attr.aria-label]="tr('customer.app.dashboard.quickActions')">
-    <h3 class="app-section__title">{{ tr('customer.app.dashboard.quickActions') }}</h3>
-    <div class="app-quick">
-      <a class="app-quick__item" routerLink="/app/discover">
-        <adeni-carbon-icon name="search" [size]="20" />
-        <span>{{ tr('customer.app.dashboard.findBusiness') }}</span>
+<app-portal-page [title]="tr('customer.app.nav.dashboard')" [description]="tr('customer.app.dashboard.description')">
+  <section class="hero">
+    <div>
+      <p class="kicker">{{ tr('customer.app.shell.badge') }}</p>
+      <h2>{{ title() }}</h2>
+      <p class="meta">{{ tr('customer.app.dashboard.description') }}</p>
+    </div>
+    <div class="hero-actions">
+      <a class="btn btn-primary" routerLink="/app/discover">
+        <adeni-carbon-icon name="search" [size]="16" />
+        {{ tr('customer.app.dashboard.findBusiness') }}
+      </a>
+      <a class="btn" routerLink="/app/calendar">
+        <adeni-carbon-icon name="calendar" [size]="16" />
+        {{ tr('customer.app.nav.calendar') }}
       </a>
       @if (bookAgain(); as again) {
         <a
-          class="app-quick__item"
+          class="btn"
           [routerLink]="again.link.commands"
           [queryParams]="again.link.queryParams"
           [fragment]="again.link.fragment"
         >
-          <adeni-carbon-icon name="restart" [size]="20" />
-          <span>{{ tr('customer.app.dashboard.bookAgain') }}</span>
-          <small class="app-muted">{{ again.source.businessName }}</small>
+          <adeni-carbon-icon name="restart" [size]="16" />
+          {{ tr('customer.app.dashboard.bookAgain') }}
         </a>
       }
-      <a class="app-quick__item" routerLink="/app/calendar">
-        <adeni-carbon-icon name="calendar" [size]="20" />
-        <span>{{ tr('customer.app.nav.calendar') }}</span>
-      </a>
-      <a class="app-quick__item" routerLink="/app/bookings">
-        <adeni-carbon-icon name="task" [size]="20" />
-        <span>{{ tr('customer.app.nav.bookings') }}</span>
-      </a>
-      <a class="app-quick__item" routerLink="/app/messages">
-        <adeni-carbon-icon name="chat" [size]="20" />
-        <span>{{ tr('customer.app.nav.messages') }}</span>
-        @if (badge.unread() > 0) {
-          <span class="app-badge">{{ badge.unread() }}</span>
-          <span class="visually-hidden">{{ tr('customer.app.unread', { count: badge.unread() }) }}</span>
-        }
-      </a>
-      <a class="app-quick__item" routerLink="/app/benefits">
-        <adeni-carbon-icon name="gift" [size]="20" />
-        <span>{{ tr('customer.app.nav.benefits') }}</span>
-      </a>
     </div>
   </section>
+
+  <div class="stats">
+    <a class="stat-card stat-card--appointments" routerLink="/app/calendar">
+      <span class="stat-icon"><adeni-carbon-icon name="calendar" [size]="20" /></span>
+      <span>
+        <p class="stat-label">{{ tr('customer.app.dashboard.upNext') }}</p>
+        <p class="stat-value">{{ upcomingCount() }}</p>
+        <p class="stat-hint">{{ tr('customer.app.nav.calendar') }}</p>
+      </span>
+    </a>
+    <a class="stat-card stat-card--messages" routerLink="/app/messages">
+      <span class="stat-icon"><adeni-carbon-icon name="chat" [size]="20" /></span>
+      <span>
+        <p class="stat-label">{{ tr('customer.app.nav.messages') }}</p>
+        <p class="stat-value">{{ badge.unread() }}</p>
+        <p class="stat-hint">{{ tr('customer.app.dashboard.seeAllMessages') }}</p>
+      </span>
+    </a>
+    <a class="stat-card stat-card--benefits" routerLink="/app/benefits">
+      <span class="stat-icon"><adeni-carbon-icon name="gift" [size]="20" /></span>
+      <span>
+        <p class="stat-label">{{ tr('customer.app.nav.benefits') }}</p>
+        @if (benefitsLoading()) {
+          <p class="stat-value">?</p>
+        } @else {
+          <p class="stat-value">{{ benefitsSnapshot().activePackages }}</p>
+          <p class="stat-hint">
+            {{ tr('customer.app.dashboard.benefitsPackages', { packages: benefitsSnapshot().activePackages, credits: benefitsSnapshot().creditsRemaining }) }}
+          </p>
+        }
+      </span>
+    </a>
+    <a class="stat-card" routerLink="/app/bookings">
+      <span class="stat-icon"><adeni-carbon-icon name="task" [size]="20" /></span>
+      <span>
+        <p class="stat-label">{{ tr('customer.app.nav.bookings') }}</p>
+        <p class="stat-value">{{ bookings().length }}</p>
+        <p class="stat-hint">{{ tr('customer.app.dashboard.seeAll') }}</p>
+      </span>
+    </a>
+  </div>
+
+  <div class="widget-grid">
+    <div class="widget-span-6 widget-card">
+      <div class="widget-card__head">
+        <h3>{{ tr('customer.app.dashboard.upNext') }}</h3>
+      </div>
+      @if (bookingsLoading()) {
+        <p class="app-muted">{{ tr('common.loading') }}</p>
+      } @else if (bookingsFailed()) {
+        <adeni-portal-empty-state
+          [compact]="true"
+          icon="calendar"
+          [title]="tr('bookings.loadErrorTitle')"
+          [description]="tr('bookings.loadError')"
+        >
+          <button type="button" class="cds-btn cds-btn--primary cds-btn--sm" (click)="loadBookings()">
+            {{ tr('discover.tryAgain') }}
+          </button>
+        </adeni-portal-empty-state>
+      } @else if (next(); as booking) {
+        <p><strong>{{ booking.serviceName }}</strong></p>
+        <p class="app-muted">
+          {{ booking.businessName }} · {{ when(booking.startAt) }}
+        </p>
+        <adeni-pill [tone]="statusTone(booking.status)" [compact]="true">{{ statusLabel(booking.status) }}</adeni-pill>
+        <div class="app-actions">
+          <a class="cds-btn cds-btn--primary cds-btn--sm" [routerLink]="['/app/bookings', booking.id]">
+            {{ tr('customer.app.dashboard.viewDetails') }}
+          </a>
+          <a class="cds-btn cds-btn--tertiary cds-btn--sm" routerLink="/app/bookings">{{ tr('customer.app.dashboard.seeAll') }}</a>
+        </div>
+      } @else {
+        <adeni-portal-empty-state
+          [compact]="true"
+          icon="calendar"
+          [title]="tr('customer.app.dashboard.noUpcomingTitle')"
+          [description]="tr('customer.app.dashboard.noUpcomingDescription')"
+        >
+          <a class="cds-btn cds-btn--primary cds-btn--sm" routerLink="/app/discover">{{ tr('customer.app.dashboard.findBusiness') }}</a>
+        </adeni-portal-empty-state>
+      }
+    </div>
+
+    <div class="widget-span-6 widget-card">
+      <div class="widget-card__head">
+        <h3>{{ tr('customer.app.nav.messages') }}</h3>
+      </div>
+      @if (messagesLoading()) {
+        <p class="app-muted">{{ tr('common.loading') }}</p>
+      } @else if (messagesFailed()) {
+        <button type="button" class="cds-btn cds-btn--primary cds-btn--sm" (click)="loadMessages()">
+          {{ tr('discover.tryAgain') }}
+        </button>
+      } @else if (homeConversations().length > 0) {
+        <ul class="app-list">
+          @for (thread of homeConversations(); track thread.id) {
+            <li>
+              <a class="app-row" [routerLink]="['/app/messages']" [queryParams]="{ c: thread.id }">
+                <span class="app-row__main">
+                  <strong>{{ thread.businessName || tr('customer.app.dashboard.unknownBusiness') }}</strong>
+                  <span class="app-muted">{{ thread.preview || when(thread.lastMessageAt) }}</span>
+                </span>
+              </a>
+            </li>
+          }
+        </ul>
+        <p class="app-more"><a routerLink="/app/messages">{{ tr('customer.app.dashboard.seeAllMessages') }}</a></p>
+      } @else {
+        <adeni-portal-empty-state
+          [compact]="true"
+          icon="chat"
+          [title]="tr('customer.app.dashboard.noMessagesTitle')"
+          [description]="tr('customer.app.dashboard.noMessagesDescription')"
+        />
+      }
+    </div>
+
+    @if (reviewCandidate(); as review) {
+      <div class="widget-span-12 widget-card">
+        <div class="widget-card__head">
+          <h3>{{ tr('customer.app.dashboard.reviewTitle') }}</h3>
+        </div>
+        <p class="app-muted">
+          {{ tr('customer.app.dashboard.reviewPrompt', { service: review.serviceName, business: review.businessName }) }}
+        </p>
+        <button type="button" class="cds-btn cds-btn--primary cds-btn--sm" (click)="openReview()">
+          {{ tr('customer.app.dashboard.leaveReview') }}
+        </button>
+      </div>
+    }
+  </div>
 </app-portal-page>
 
 <adeni-modal

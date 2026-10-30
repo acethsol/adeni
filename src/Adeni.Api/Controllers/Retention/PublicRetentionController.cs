@@ -19,6 +19,7 @@ using Microsoft.Extensions.Options;
 public sealed class PublicRetentionController(
     IPackageStorefrontService storefront,
     IMembershipStorefrontService membershipStorefront,
+    ILoyaltyCustomerService loyaltyCustomers,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet("packages")]
@@ -76,6 +77,38 @@ public sealed class PublicRetentionController(
 
         return ApiResults.FromResult(
             await membershipStorefront.SubscribeAsync(sub, slug, id, Request.GetIdempotencyKey(), cancellationToken),
+            Ok,
+            HttpContext);
+    }
+
+    [HttpGet("loyalty")]
+    public async Task<IActionResult> MyLoyaltyAtBusiness(string slug, CancellationToken cancellationToken)
+    {
+        var sub = ResolveCustomerAuth0Sub();
+        if (sub is null)
+        {
+            return Unauthorized();
+        }
+
+        return ApiResults.FromResult(await loyaltyCustomers.GetAtBusinessAsync(sub, slug, cancellationToken), Ok, HttpContext);
+    }
+
+    [HttpGet("loyalty/quote")]
+    public async Task<IActionResult> LoyaltyQuote(
+        string slug,
+        [FromQuery] int points,
+        [FromQuery] decimal payableAfterCredits,
+        [FromQuery] string currency,
+        CancellationToken cancellationToken)
+    {
+        var sub = ResolveCustomerAuth0Sub();
+        if (sub is null)
+        {
+            return Unauthorized();
+        }
+
+        return ApiResults.FromResult(
+            await loyaltyCustomers.QuoteAtBusinessAsync(sub, slug, points, payableAfterCredits, currency, cancellationToken),
             Ok,
             HttpContext);
     }

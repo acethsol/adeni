@@ -2,6 +2,7 @@ namespace Adeni.Infrastructure.Finance;
 
 using Adeni.Application.Events;
 using Adeni.Application.Finance;
+using Adeni.Application.Retention;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Booking.Events;
 using Adeni.Domain.Finance;
@@ -15,6 +16,8 @@ public sealed class PaymentBookingHandler(
     IDomainEventCollector domainEventCollector,
     IBillingDocumentService billingDocuments,
     IStaffCompensationService staffCompensation,
+    ILoyaltyEarnService loyaltyEarn,
+    ILoyaltyRedemptionService loyaltyRedeem,
     ILogger<PaymentBookingHandler> logger) :
     IDomainEventHandler<PaymentCompleted>,
     IDomainEventHandler<PaymentFailed>,
@@ -100,6 +103,19 @@ public sealed class PaymentBookingHandler(
             }
         }
 
+        if (booking is not null && booking.Status == BookingStatus.Paid)
+        {
+            var staged = await loyaltyEarn.StageEarnForPaidBookingAsync(
+                domainEvent.TenantId, booking.Id, "payment:completed", cancellationToken);
+            if (staged.IsFailure)
+            {
+                logger.LogWarning(
+                    "Loyalty earn staging failed for booking {BookingId}: {Error}",
+                    booking.Id,
+                    staged.Error.Message);
+            }
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
         await staffCompensation.RecordTipForPaymentIntentAsync(domainEvent.PaymentIntentId, cancellationToken);
@@ -142,6 +158,26 @@ public sealed class PaymentBookingHandler(
             booking.CustomerId,
             booking.StartAt,
             DateTimeOffset.UtcNow));
+
+        var reversed = await loyaltyEarn.StageReverseEarnForBookingAsync(
+            domainEvent.TenantId, booking.Id, "payment:refund", cancellationToken);
+        if (reversed.IsFailure)
+        {
+            logger.LogWarning(
+                "Loyalty earn reversal failed for booking {BookingId}: {Error}",
+                booking.Id,
+                reversed.Error.Message);
+        }
+
+        var releasedRedeem = await loyaltyRedeem.ReleaseRedeemForBookingAsync(
+            domainEvent.TenantId, booking.Id, "payment:refund", cancellationToken);
+        if (releasedRedeem.IsFailure)
+        {
+            logger.LogWarning(
+                "Loyalty redeem release failed for booking {BookingId}: {Error}",
+                booking.Id,
+                releasedRedeem.Error.Message);
+        }
 
         await dbContext.SaveChangesAsync(cancellationToken);
     }

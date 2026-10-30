@@ -37,11 +37,20 @@ import { BusinessApiService } from "../../core/services/business-api.service";
 import { BusinessActiveLocationService } from "../../core/services/business-active-location.service";
 import { Subscription } from "rxjs";
 import { CustomerMembershipsPanelComponent } from "./customer-memberships-panel.component";
+import { CustomerLoyaltyPanelComponent } from "./customer-loyalty-panel.component";
 import { CustomerPackagesPanelComponent } from "./customer-packages-panel.component";
 import { CustomerProfilePanelComponent } from "./customer-profile-panel.component";
 import { BusinessSessionService } from "../../core/services/business-session.service";
 
-const CUSTOMER_DETAIL_TABS = new Set(["overview", "bookings", "queue", "activity", "packages", "memberships"]);
+const CUSTOMER_DETAIL_TABS = new Set([
+  "overview",
+  "bookings",
+  "queue",
+  "activity",
+  "packages",
+  "memberships",
+  "loyalty",
+]);
 
 function normalizeCustomerDetailTab(raw: string | null): string {
   return raw && CUSTOMER_DETAIL_TABS.has(raw) ? raw : "overview";
@@ -75,6 +84,7 @@ const PAID_STATUS = 6;
     CustomerProfilePanelComponent,
     CustomerPackagesPanelComponent,
     CustomerMembershipsPanelComponent,
+    CustomerLoyaltyPanelComponent,
   ],
   templateUrl: "./customer-detail.component.html",
   styleUrl: "./customer-detail.component.scss",
@@ -117,6 +127,7 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
       ...(this.session.can("business.bookings") ? [{ id: "activity", label: this.tr("customerProfile.activity") }] : []),
       ...(this.session.can("business.retention") ? [{ id: "packages", label: this.tr("businessApp.retention.customerTab") }] : []),
       ...(this.session.can("business.retention") ? [{ id: "memberships", label: this.tr("businessApp.memberships.customerTab") }] : []),
+      ...(this.session.can("business.retention") ? [{ id: "loyalty", label: this.tr("businessApp.loyalty.customerTab") }] : []),
     ];
   });
 

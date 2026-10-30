@@ -1,6 +1,8 @@
 @use "carbon-adeni-tokens" as *;
 @use "carbon-components";
+@use "./styles/portal-theme";
 @use "./styles/app-surface";
+@use "./styles/portal-dashboard";
 
 *,
 *::before,

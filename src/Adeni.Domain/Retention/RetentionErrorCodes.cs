@@ -17,6 +17,8 @@ public static class RetentionErrorCodes
     public const string LoyaltyProgramNotConfigured = "retention.loyalty_program_not_configured";
     public const string LoyaltyInsufficientPoints = "retention.loyalty_insufficient_points";
     public const string LoyaltyConflict = "retention.loyalty_conflict";
+    public const string LoyaltyRedeemInvalid = "retention.loyalty_redeem_invalid";
+    public const string LoyaltyProgramDisabled = "retention.loyalty_program_disabled";
     public const string PackageNotFound = "retention.package_not_found";
     public const string PackageInactive = "retention.package_inactive";
     public const string PackageNotActive = "retention.package_not_active";
@@ -71,6 +73,12 @@ public static class RetentionErrorCodes
 
     public static Error LoyaltyConflictError() =>
         new(LoyaltyConflict, "The points balance changed at the same time. Try again.");
+
+    public static Error LoyaltyRedeemInvalidError(string? detail = null) =>
+        new(LoyaltyRedeemInvalid, detail ?? "Those loyalty points cannot be applied to this booking.");
+
+    public static Error LoyaltyProgramDisabledError() =>
+        new(LoyaltyProgramDisabled, "The loyalty program is not enabled for this business.");
 
     public static Error MembershipPlanNotFoundError() =>
         new(MembershipPlanNotFound, "Membership plan was not found.");

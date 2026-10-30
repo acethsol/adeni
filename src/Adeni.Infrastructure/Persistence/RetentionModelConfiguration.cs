@@ -326,9 +326,14 @@ public sealed partial class AdeniDbContext
             e.Property(x => x.Actor).HasMaxLength(128);
             e.Property(x => x.KeyHash).HasMaxLength(64);
             e.Property(x => x.Fingerprint).HasMaxLength(64);
+            e.Property(x => x.DiscountAmount).HasPrecision(18, 2);
             e.HasIndex(x => new { x.TenantId, x.LoyaltyAccountId, x.Sequence }).IsUnique();
             e.HasIndex(x => new { x.TenantId, x.TenantCustomerId, x.OccurredAt });
             e.HasIndex(x => new { x.TenantId, x.KeyHash }).IsUnique().HasFilter("[KeyHash] IS NOT NULL");
+            e.HasIndex(x => new { x.TenantId, x.BookingId }).IsUnique()
+                .HasFilter("[BookingId] IS NOT NULL AND [Kind] = 0 AND [Points] > 0");
+            e.HasIndex(x => new { x.TenantId, x.BookingId }).IsUnique()
+                .HasFilter("[BookingId] IS NOT NULL AND [Kind] = 1 AND [Points] < 0");
             e.HasOne<LoyaltyAccount>().WithMany()
                 .HasForeignKey(x => new { x.TenantId, x.LoyaltyAccountId })
                 .HasPrincipalKey(x => new { x.TenantId, x.Id })

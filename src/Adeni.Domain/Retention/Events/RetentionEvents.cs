@@ -72,3 +72,12 @@ public sealed record CustomerMembershipExpired(
     Guid TenantId,
     Guid TenantCustomerId,
     DateTimeOffset At) : IDomainEvent;
+
+/// <summary>Points credited for a paid completed visit (Sprint 37.3-B). Notifications consume in 38B+.</summary>
+public sealed record LoyaltyPointsEarned(
+    Guid TenantId,
+    Guid TenantCustomerId,
+    Guid BookingId,
+    int Points,
+    int BalanceAfter,
+    DateTimeOffset At) : IDomainEvent;

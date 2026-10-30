@@ -1,0 +1,159 @@
+<div class="shell shell--staff-app-business" [class.is-collapsed]="collapsed()">
+  @if (!collapsed()) {
+    <button type="button" class="sidebar-scrim" [attr.aria-label]="tr('common.collapseSidebar')" (click)="collapseSidebar()"></button>
+  }
+
+  <aside id="customer-sidebar" class="sidebar">
+    <div class="sidebar-head">
+      <a class="brand" routerLink="/app/dashboard" [attr.aria-label]="tr('customer.app.nav.dashboard')">
+        @if (collapsed()) {
+          <adeni-brand-logo variant="mark" [surface]="logoSurface()" [size]="28" />
+        } @else {
+          <adeni-staff-sidebar-brand
+            app="business"
+            [surface]="logoSurface()"
+            [logoHeight]="32"
+            [caption]="tr('customer.app.shell.caption')"
+          />
+        }
+      </a>
+    </div>
+
+    <nav class="nav" [attr.aria-label]="tr('customer.app.tabBar')">
+      @for (group of navGroups; track group.id) {
+        <div class="nav-group">
+          @if (!collapsed()) {
+            <p class="nav-section">{{ tr(group.labelKey) }}</p>
+          } @else if (!$first) {
+            <div class="nav-divider" aria-hidden="true"></div>
+          }
+          @for (item of group.items; track item.id) {
+            <a
+              class="nav-link"
+              [routerLink]="item.path"
+              routerLinkActive="active"
+              ariaCurrentWhenActive="page"
+              [attr.aria-label]="collapsed() ? tr(item.labelKey) : null"
+              [attr.data-label]="collapsed() ? tr(item.labelKey) : null"
+            >
+              <span class="nav-ico" aria-hidden="true">
+                <adeni-carbon-icon [name]="item.icon" [size]="16" />
+              </span>
+              <span class="nav-label">{{ tr(item.labelKey) }}</span>
+              @if (item.badge === 'messages' && badge.unread() > 0) {
+                <span class="nav-count" aria-hidden="true">{{ badge.unread() > 9 ? '9+' : badge.unread() }}</span>
+              }
+            </a>
+          }
+        </div>
+      }
+    </nav>
+
+    <div class="sidebar-foot">
+      <button
+        type="button"
+        class="rail-toggle"
+        [attr.title]="collapsed() ? tr('common.expandSidebar') : tr('common.collapseSidebar')"
+        [attr.data-label]="collapsed() ? tr('common.expand') : null"
+        [attr.aria-expanded]="!collapsed()"
+        aria-controls="customer-sidebar"
+        [attr.aria-label]="collapsed() ? tr('common.expandSidebar') : tr('common.collapseSidebar')"
+        (click)="toggleSidebar()"
+      >
+        <adeni-carbon-icon [name]="collapsed() ? 'chevron--right' : 'chevron--left'" [size]="16" />
+        @if (!collapsed()) {
+          <span class="rail-toggle-label">{{ tr('common.collapse') }}</span>
+        }
+      </button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-lead">
+        <nav class="crumb" [attr.aria-label]="tr('common.breadcrumb')">
+          @for (crumb of crumbs(); track crumb.label; let last = $last) {
+            @if (last || !crumb.path) {
+              <span [class.crumb-current]="last">{{ crumb.label }}</span>
+            } @else {
+              <a [routerLink]="crumb.path">{{ crumb.label }}</a>
+            }
+            @if (!last) {
+              <span class="crumb-sep" aria-hidden="true"></span>
+            }
+          }
+        </nav>
+      </div>
+
+      <div class="topbar-actions">
+        <a
+          class="header-btn"
+          routerLink="/app/messages"
+          [attr.aria-label]="tr('customer.app.nav.messages')"
+        >
+          <adeni-carbon-icon name="chat" [size]="16" />
+          @if (badge.unread() > 0) {
+            <span class="nav-count nav-count--header">{{ badge.unread() > 9 ? '9+' : badge.unread() }}</span>
+          }
+        </a>
+
+        <span class="topbar-rule" aria-hidden="true"></span>
+
+        <div class="menu-root" data-menu-root="user">
+          <button
+            type="button"
+            class="user-btn"
+            aria-haspopup="menu"
+            [attr.aria-expanded]="userOpen()"
+            [attr.aria-label]="tr('customer.app.accountMenu')"
+            (click)="toggleUser($event)"
+          >
+            <span class="avatar" aria-hidden="true">{{ accountInitials() }}</span>
+            <span class="user-copy">
+              <span class="user-name">{{ accountName() }}</span>
+              <span class="user-role">{{ tr('customer.app.shell.badge') }}</span>
+            </span>
+            <span class="chev chev-sm" [class.is-open]="userOpen()" aria-hidden="true"></span>
+          </button>
+          @if (userOpen()) {
+            <div class="menu menu-account" role="menu" [attr.aria-label]="tr('customer.app.accountMenu')">
+              <p class="menu-identity">{{ accountName() }}</p>
+              @if (accountDetail()) {
+                <p class="menu-meta">{{ accountDetail() }}</p>
+              }
+              <a class="menu-item" role="menuitem" routerLink="/app/profile" (click)="closeMenus()">
+                <adeni-carbon-icon name="user--avatar" [size]="16" />
+                {{ tr('customer.app.nav.profile') }}
+              </a>
+              <a class="menu-item" role="menuitem" routerLink="/discover" (click)="closeMenus()">
+                <adeni-carbon-icon name="launch" [size]="16" />
+                {{ tr('customer.app.browsePublic') }}
+              </a>
+              @if (session.auth0Mode) {
+                <button type="button" class="menu-item menu-item-danger" role="menuitem" (click)="logout()">
+                  <adeni-carbon-icon name="logout" [size]="16" />
+                  {{ tr('discover.layout.logOut') }}
+                </button>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </header>
+
+    <main class="content">
+      <router-outlet />
+    </main>
+
+    <adeni-staff-shell-footer
+      app="business"
+      [badgeLabel]="tr('customer.app.shell.badge')"
+      [captionLabel]="tr('customer.app.shell.caption')"
+      [devMode]="session.devCustomerMode"
+    />
+  </div>
+</div>
+
+<adeni-global-loading-panel />
+<adeni-toast-host />
+<adeni-confirm-host />

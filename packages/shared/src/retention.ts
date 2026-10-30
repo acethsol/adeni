@@ -456,3 +456,33 @@ export type LoyaltyAccount = z.infer<typeof loyaltyAccountSchema>;
 export type LoyaltyTransaction = z.infer<typeof loyaltyTransactionSchema>;
 export type AdjustLoyaltyPointsRequest = z.infer<typeof adjustLoyaltyPointsRequestSchema>;
 export type LoyaltyAdjustment = z.infer<typeof loyaltyAdjustmentSchema>;
+
+export const loyaltyRedeemQuoteSchema = z.object({
+  pointsApplied: z.number().int().nonnegative(),
+  discountAmount: z.number().nonnegative(),
+  currency: z.string().length(3),
+  pointsBalance: z.number().int().nonnegative(),
+  redeemPoints: z.number().int().positive(),
+  redeemValue: z.number().positive(),
+  minRedeemPoints: z.number().int().nonnegative(),
+});
+
+export const customerLoyaltyAtBusinessSchema = z.object({
+  tenantId: z.string().uuid(),
+  businessName: z.string().nullable(),
+  businessSlug: z.string().nullable(),
+  pointsBalance: z.number().int().nonnegative(),
+  programEnabled: z.boolean(),
+  currency: z.string().length(3),
+  redeemPoints: z.number().int().positive(),
+  redeemValue: z.number().positive(),
+  minRedeemPoints: z.number().int().nonnegative(),
+});
+
+export const customerLoyaltyListSchema = z.object({
+  items: z.array(customerLoyaltyAtBusinessSchema),
+});
+
+export type LoyaltyRedeemQuote = z.infer<typeof loyaltyRedeemQuoteSchema>;
+export type CustomerLoyaltyAtBusiness = z.infer<typeof customerLoyaltyAtBusinessSchema>;
+export type CustomerLoyaltyList = z.infer<typeof customerLoyaltyListSchema>;

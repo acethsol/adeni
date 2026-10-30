@@ -63,3 +63,36 @@ public static class LoyaltyCodes
     public const string Adjust = "adjust";
     public const string Expire = "expire";
 }
+
+/// <summary>Quote for applying points at booking checkout (Sprint 37.3-C).</summary>
+public sealed record LoyaltyRedeemQuoteResponse(
+    int PointsApplied,
+    decimal DiscountAmount,
+    string Currency,
+    int PointsBalance,
+    int RedeemPoints,
+    decimal RedeemValue,
+    int MinRedeemPoints);
+
+public sealed record StageLoyaltyRedeemRequest(
+    Guid TenantId,
+    Guid PlatformCustomerId,
+    Guid BookingId,
+    int PointsToRedeem,
+    decimal PayableAfterPackageCredits,
+    string Actor,
+    DateTimeOffset At);
+
+/// <summary>Customer's points at one business (Discover booking + my account).</summary>
+public sealed record CustomerLoyaltyAtBusinessResponse(
+    Guid TenantId,
+    string? BusinessName,
+    string? BusinessSlug,
+    int PointsBalance,
+    bool ProgramEnabled,
+    string Currency,
+    int RedeemPoints,
+    decimal RedeemValue,
+    int MinRedeemPoints);
+
+public sealed record CustomerLoyaltyListResponse(IReadOnlyList<CustomerLoyaltyAtBusinessResponse> Items);

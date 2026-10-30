@@ -15,6 +15,11 @@ import {
   redeemableBenefitListSchema,
   tenantMembershipMrrResponseSchema,
   loyaltyProgramSchema,
+  loyaltyAccountSchema,
+  loyaltyTransactionListSchema,
+  loyaltyRedeemQuoteSchema,
+  customerLoyaltyAtBusinessSchema,
+  customerLoyaltyListSchema,
   type CreateMembershipPlanRequest,
   type CreatePackageDefinitionRequest,
   type EnrolMembershipRequest,
@@ -238,7 +243,41 @@ export class RetentionApi {
     return this.write(`${BASE}/loyalty/program`, body, loyaltyProgramSchema, "PUT", undefined, signal);
   }
 
+  getLoyaltyCustomerAccount(tenantCustomerId: string, signal?: AbortSignal) {
+    return this.get(`${BASE}/loyalty/customers/${tenantCustomerId}/account`, loyaltyAccountSchema, signal);
+  }
+
+  listLoyaltyCustomerTransactions(tenantCustomerId: string, limit = 50, signal?: AbortSignal) {
+    const query = limit > 0 ? `?limit=${limit}` : "";
+    return this.get(
+      `${BASE}/loyalty/customers/${tenantCustomerId}/transactions${query}`,
+      loyaltyTransactionListSchema,
+      signal,
+    );
+  }
+
   /** Signed-in customer's credits at one business, filtered to what applies to the booking being built. */
+  myLoyaltyAtBusiness(slug: string, signal?: AbortSignal) {
+    return this.get(`${publicBase(slug)}/loyalty`, customerLoyaltyAtBusinessSchema, signal);
+  }
+
+  quoteLoyaltyRedeem(
+    slug: string,
+    params: { points: number; payableAfterCredits: number; currency: string },
+    signal?: AbortSignal,
+  ) {
+    const query = new URLSearchParams({
+      points: String(params.points),
+      payableAfterCredits: String(params.payableAfterCredits),
+      currency: params.currency,
+    });
+    return this.get(`${publicBase(slug)}/loyalty/quote?${query.toString()}`, loyaltyRedeemQuoteSchema, signal);
+  }
+
+  myLoyaltyBalances(signal?: AbortSignal) {
+    return this.get("/api/v1/me/retention/loyalty", customerLoyaltyListSchema, signal);
+  }
+
   myRedeemableBenefits(slug: string, params: { locationId?: string; serviceIds?: string[] } = {}, signal?: AbortSignal) {
     const query = new URLSearchParams();
     if (params.locationId) query.set("businessLocationId", params.locationId);
