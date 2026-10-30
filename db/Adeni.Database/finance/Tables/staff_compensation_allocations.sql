@@ -1,4 +1,4 @@
-CREATE TABLE [payments].[staff_compensation_allocations] (
+CREATE TABLE [finance].[staff_compensation_allocations] (
     [Id]               UNIQUEIDENTIFIER   NOT NULL,
     [TenantId]         UNIQUEIDENTIFIER   NOT NULL,
     [StaffMemberId]    UNIQUEIDENTIFIER   NOT NULL,
@@ -15,13 +15,13 @@ CREATE TABLE [payments].[staff_compensation_allocations] (
 GO
 
 CREATE NONCLUSTERED INDEX [IX_staff_compensation_allocations_TenantId_CreatedAt]
-    ON [payments].[staff_compensation_allocations]([TenantId] ASC, [CreatedAt] ASC);
+    ON [finance].[staff_compensation_allocations]([TenantId] ASC, [CreatedAt] ASC);
 
 
 GO
 
 CREATE NONCLUSTERED INDEX [IX_staff_compensation_allocations_TenantId_StaffMemberId_CreatedAt]
-    ON [payments].[staff_compensation_allocations]([TenantId] ASC, [StaffMemberId] ASC, [CreatedAt] ASC);
+    ON [finance].[staff_compensation_allocations]([TenantId] ASC, [StaffMemberId] ASC, [CreatedAt] ASC);
 
 
 GO

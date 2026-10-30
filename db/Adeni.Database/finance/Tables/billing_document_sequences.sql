@@ -1,4 +1,4 @@
-CREATE TABLE [payments].[billing_document_sequences] (
+CREATE TABLE [finance].[billing_document_sequences] (
     [TenantId]  UNIQUEIDENTIFIER NOT NULL,
     [Kind]      INT              NOT NULL,
     [NextValue] INT              NOT NULL,

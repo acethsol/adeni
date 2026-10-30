@@ -1,4 +1,4 @@
-CREATE TABLE [payments].[payment_intents] (
+CREATE TABLE [finance].[payment_intents] (
     [Id]                UNIQUEIDENTIFIER   NOT NULL,
     [TenantId]          UNIQUEIDENTIFIER   NOT NULL,
     [BookingId]         UNIQUEIDENTIFIER   NULL,
@@ -23,24 +23,24 @@ CREATE TABLE [payments].[payment_intents] (
 GO
 
 CREATE UNIQUE NONCLUSTERED INDEX [IX_payment_intents_ProviderReference]
-    ON [payments].[payment_intents]([ProviderReference] ASC);
+    ON [finance].[payment_intents]([ProviderReference] ASC);
 
 
 GO
 
 CREATE NONCLUSTERED INDEX [IX_payment_intents_TenantId_Status_CreatedAt]
-    ON [payments].[payment_intents]([TenantId] ASC, [Status] ASC, [CreatedAt] ASC);
+    ON [finance].[payment_intents]([TenantId] ASC, [Status] ASC, [CreatedAt] ASC);
 
 
 GO
 
 CREATE UNIQUE NONCLUSTERED INDEX [IX_payment_intents_IdempotencyKey]
-    ON [payments].[payment_intents]([IdempotencyKey] ASC) WHERE ([IdempotencyKey] IS NOT NULL);
+    ON [finance].[payment_intents]([IdempotencyKey] ASC) WHERE ([IdempotencyKey] IS NOT NULL);
 
 
 GO
 
 
 CREATE UNIQUE NONCLUSTERED INDEX [AK_payment_intents_TenantId_Id]
-    ON [payments].[payment_intents]([TenantId],[Id]);
+    ON [finance].[payment_intents]([TenantId],[Id]);
 GO

@@ -111,7 +111,7 @@ Adeni.Domain  →  nothing external
 | **Application service call** | Need another module to act or validate | Booking checks tenant status via Tenancy |
 | **Domain event** | Fire-and-forget side effect | `BookingConfirmed` → Notifications |
 | **Read model / query in owning module** | Discovery needs ratings | Reviews exposes `GetPublicRatingSummary(tenantId)` |
-| **Shared DB, separate schemas** | Same monolith, logical separation | `booking.*`, `tenancy.*`, `payments.*` SQL Server schemas (incremental) |
+| **Shared DB, separate schemas** | Same monolith, logical separation | `booking.*`, `tenancy.*`, `finance.*`, `subscriptions.*`, … SQL Server schemas (incremental) |
 
 **Avoid:** BookingService querying `Reviews` DbSet directly; Discovery embedding SQL against tenancy tables without going through a defined port.
 

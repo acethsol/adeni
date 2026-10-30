@@ -1,6 +1,5 @@
-CREATE SCHEMA [payments]
+CREATE SCHEMA [finance]
     AUTHORIZATION [dbo];
 
 
 GO
-

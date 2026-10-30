@@ -89,4 +89,4 @@ Route: **`/finance`** — ledger, links, documents (permission `portal.finance`)
 
 ## Database
 
-Schema: `payments.*` (physical name unchanged).
+Schema: `finance.*` (commerce intents, documents, gift cards, compensation).

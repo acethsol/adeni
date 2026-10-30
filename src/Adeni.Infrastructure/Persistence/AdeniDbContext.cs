@@ -626,7 +626,7 @@ public sealed partial class AdeniDbContext(
         modelBuilder.Entity<PaymentIntentRecord>(entity =>
         {
             entity.HasAlternateKey(x => new { x.TenantId, x.Id });
-            entity.ToTable("payment_intents", "payments");
+            entity.ToTable("payment_intents", "finance");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Currency).HasMaxLength(3);
             entity.Property(x => x.Amount).HasPrecision(12, 2);
@@ -645,7 +645,7 @@ public sealed partial class AdeniDbContext(
 
         modelBuilder.Entity<StaffCompensationAllocation>(entity =>
         {
-            entity.ToTable("staff_compensation_allocations", "payments");
+            entity.ToTable("staff_compensation_allocations", "finance");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Amount).HasPrecision(12, 2);
             entity.Property(x => x.Currency).HasMaxLength(3);
@@ -657,7 +657,7 @@ public sealed partial class AdeniDbContext(
 
         modelBuilder.Entity<BillingDocument>(entity =>
         {
-            entity.ToTable("billing_documents", "payments");
+            entity.ToTable("billing_documents", "finance");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.DocumentNumber).HasMaxLength(64);
             entity.Property(x => x.BusinessNameSnapshot).HasMaxLength(200);
@@ -684,7 +684,7 @@ public sealed partial class AdeniDbContext(
 
         modelBuilder.Entity<BillingDocumentLine>(entity =>
         {
-            entity.ToTable("billing_document_lines", "payments");
+            entity.ToTable("billing_document_lines", "finance");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Description).HasMaxLength(300);
             entity.Property(x => x.Quantity).HasPrecision(12, 2);
@@ -696,7 +696,7 @@ public sealed partial class AdeniDbContext(
 
         modelBuilder.Entity<BillingDocumentSequence>(entity =>
         {
-            entity.ToTable("billing_document_sequences", "payments");
+            entity.ToTable("billing_document_sequences", "finance");
             entity.HasKey(x => new { x.TenantId, x.Kind });
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
         });

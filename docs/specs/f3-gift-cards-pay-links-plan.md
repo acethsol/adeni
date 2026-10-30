@@ -25,7 +25,7 @@ Repository inspection covered Finance Domain/Application/Infrastructure, `Financ
 | Notifications/share | Receipt notification dispatch/deduplication; Portal copy/share and `wa.me` link | Never send gift codes through ordinary logged notification templates. No new WhatsApp integration. |
 | Reliability | Existing Hangfire and [outbox design](../transactional-outbox-design.md) | SaveChanges publishes events after persistence; event failure can leave committed data without effects. Financial issuance cannot rely only on that handler. |
 
-Physical schema remains `payments`, despite logical Finance ownership. Current money columns are `decimal(12,2)`; both providers use integer hundredths. There are no existing gift-card entities/ledger or merchant settlement-account records. [Sprint 34](sprint-34-payment-settlement.md) and [settlement design](../payment-provider-settlement.md) explicitly describe settlement as future work.
+Physical schema is `finance.*` (aligned with Finance module). Current money columns are `decimal(12,2)`; both providers use integer hundredths. There are no existing gift-card entities/ledger or merchant settlement-account records. [Sprint 34](sprint-34-payment-settlement.md) and [settlement design](../payment-provider-settlement.md) explicitly describe settlement as future work.
 
 ## 2. Proposed module ownership
 

@@ -12,6 +12,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Build Remove="PreDeployment\**\*.sql" />
+    <None Include="PreDeployment\RenamePaymentsSchemaToFinance.sql" />
     <Build Remove="PostDeployment\**\*.sql" />
     <Build Remove="_templates\**\*.sql" />
     <None Include="_templates\**\*.sql" />

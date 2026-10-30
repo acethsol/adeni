@@ -173,7 +173,7 @@ Businesses and customers get **real receipts and invoices** (numbered documents,
 ## 6. Data model (sketch)
 
 ```
-payments.billing_documents
+finance.billing_documents
   Id, TenantId, Kind, Status, DocumentNumber,
   BookingId?, PaymentIntentId?,
   BusinessNameSnapshot, CustomerNameSnapshot, CustomerEmailSnapshot,
@@ -181,11 +181,11 @@ payments.billing_documents
   MethodLabel, PublicToken (unique),
   VoidReason?, IssuedAt?, CreatedAt, UpdatedAt
 
-payments.billing_document_lines
+finance.billing_document_lines
   Id, DocumentId, TenantId, SortOrder,
   Description, Quantity, UnitAmount, LineTotal
 
-payments.billing_document_sequences  (optional)
+finance.billing_document_sequences  (optional)
   TenantId, Kind, NextValue
 ```
 

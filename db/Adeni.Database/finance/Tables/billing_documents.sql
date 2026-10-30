@@ -1,4 +1,4 @@
-CREATE TABLE [payments].[billing_documents] (
+CREATE TABLE [finance].[billing_documents] (
     [Id]                     UNIQUEIDENTIFIER   NOT NULL,
     [TenantId]               UNIQUEIDENTIFIER   NOT NULL,
     [Kind]                   INT                NOT NULL,
@@ -26,31 +26,31 @@ CREATE TABLE [payments].[billing_documents] (
 GO
 
 CREATE UNIQUE NONCLUSTERED INDEX [IX_billing_documents_PublicToken]
-    ON [payments].[billing_documents]([PublicToken] ASC);
+    ON [finance].[billing_documents]([PublicToken] ASC);
 
 
 GO
 
 CREATE UNIQUE NONCLUSTERED INDEX [IX_billing_documents_TenantId_DocumentNumber]
-    ON [payments].[billing_documents]([TenantId] ASC, [DocumentNumber] ASC);
+    ON [finance].[billing_documents]([TenantId] ASC, [DocumentNumber] ASC);
 
 
 GO
 
 CREATE UNIQUE NONCLUSTERED INDEX [IX_billing_documents_PaymentIntentId]
-    ON [payments].[billing_documents]([PaymentIntentId] ASC) WHERE ([PaymentIntentId] IS NOT NULL);
+    ON [finance].[billing_documents]([PaymentIntentId] ASC) WHERE ([PaymentIntentId] IS NOT NULL);
 
 
 GO
 
 CREATE NONCLUSTERED INDEX [IX_billing_documents_TenantId_Kind_IssuedAt]
-    ON [payments].[billing_documents]([TenantId] ASC, [Kind] ASC, [IssuedAt] ASC);
+    ON [finance].[billing_documents]([TenantId] ASC, [Kind] ASC, [IssuedAt] ASC);
 
 
 GO
 
 CREATE NONCLUSTERED INDEX [IX_billing_documents_TenantId_BookingId]
-    ON [payments].[billing_documents]([TenantId] ASC, [BookingId] ASC);
+    ON [finance].[billing_documents]([TenantId] ASC, [BookingId] ASC);
 
 
 GO

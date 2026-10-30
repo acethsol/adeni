@@ -7,7 +7,7 @@ public sealed partial class AdeniDbContext
     {
         modelBuilder.Entity<CommercePaymentRequest>(e =>
         {
-            e.ToTable("commerce_requests", "payments", t => { t.HasCheckConstraint("CK_commerce_requests_Amount", "[Amount] > 0"); t.HasCheckConstraint("CK_commerce_requests_Purpose", "[Purpose] IN (0,1)"); t.HasCheckConstraint("CK_commerce_requests_GiftTender", "[Purpose] = 0 OR [AllowsGiftCard] = 0"); });
+            e.ToTable("commerce_requests", "finance", t => { t.HasCheckConstraint("CK_commerce_requests_Amount", "[Amount] > 0"); t.HasCheckConstraint("CK_commerce_requests_Purpose", "[Purpose] IN (0,1)"); t.HasCheckConstraint("CK_commerce_requests_GiftTender", "[Purpose] = 0 OR [AllowsGiftCard] = 0"); });
             e.HasKey(x => x.Id);
             e.HasAlternateKey(x => new { x.TenantId, x.Id });
             e.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
@@ -24,7 +24,7 @@ public sealed partial class AdeniDbContext
         });
         modelBuilder.Entity<CommercePaymentAttempt>(e =>
         {
-            e.ToTable("commerce_attempts", "payments", t => { });
+            e.ToTable("commerce_attempts", "finance", t => { });
             e.HasKey(x => x.Id);
             e.HasAlternateKey(x => new { x.TenantId, x.Id });
             e.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
@@ -41,7 +41,7 @@ public sealed partial class AdeniDbContext
         });
         modelBuilder.Entity<BusinessGiftCard>(e =>
         {
-            e.ToTable("gift_cards", "payments", t => { t.HasCheckConstraint("CK_gift_cards_Balance", "[RemainingAmount] >= 0 AND [RemainingAmount] <= [OriginalAmount] AND [OriginalAmount] > 0"); });
+            e.ToTable("gift_cards", "finance", t => { t.HasCheckConstraint("CK_gift_cards_Balance", "[RemainingAmount] >= 0 AND [RemainingAmount] <= [OriginalAmount] AND [OriginalAmount] > 0"); });
             e.HasKey(x => x.Id);
             e.HasAlternateKey(x => new { x.TenantId, x.Id });
             e.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
@@ -60,7 +60,7 @@ public sealed partial class AdeniDbContext
         });
         modelBuilder.Entity<GiftCardTransaction>(e =>
         {
-            e.ToTable("gift_transactions", "payments", t => { t.HasCheckConstraint("CK_gift_transactions_Balance", "[BalanceAfter] >= 0"); t.HasCheckConstraint("CK_gift_transactions_Delta", "([Kind] IN (0,2) AND [Delta] > 0) OR ([Kind] IN (1,3) AND [Delta] < 0)"); });
+            e.ToTable("gift_transactions", "finance", t => { t.HasCheckConstraint("CK_gift_transactions_Balance", "[BalanceAfter] >= 0"); t.HasCheckConstraint("CK_gift_transactions_Delta", "([Kind] IN (0,2) AND [Delta] > 0) OR ([Kind] IN (1,3) AND [Delta] < 0)"); });
             e.HasKey(x => x.Id);
             e.HasAlternateKey(x => new { x.TenantId, x.Id });
             e.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
@@ -77,7 +77,7 @@ public sealed partial class AdeniDbContext
         });
         modelBuilder.Entity<CommerceSettlement>(e =>
         {
-            e.ToTable("commerce_settlements", "payments", t => { t.HasCheckConstraint("CK_commerce_settlements_Amount", "[Amount] > 0"); t.HasCheckConstraint("CK_commerce_settlements_Tender", "([PaymentIntentId] IS NULL AND [GiftTransactionId] IS NOT NULL) OR ([PaymentIntentId] IS NOT NULL AND [GiftTransactionId] IS NULL)"); });
+            e.ToTable("commerce_settlements", "finance", t => { t.HasCheckConstraint("CK_commerce_settlements_Amount", "[Amount] > 0"); t.HasCheckConstraint("CK_commerce_settlements_Tender", "([PaymentIntentId] IS NULL AND [GiftTransactionId] IS NOT NULL) OR ([PaymentIntentId] IS NOT NULL AND [GiftTransactionId] IS NULL)"); });
             e.HasKey(x => x.Id);
             e.HasAlternateKey(x => new { x.TenantId, x.Id });
             e.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
@@ -94,7 +94,7 @@ public sealed partial class AdeniDbContext
         });
         modelBuilder.Entity<CommerceOperation>(e =>
         {
-            e.ToTable("commerce_operations", "payments", t => { });
+            e.ToTable("commerce_operations", "finance", t => { });
             e.HasKey(x => x.Id);
             e.HasAlternateKey(x => new { x.TenantId, x.Id });
             e.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);

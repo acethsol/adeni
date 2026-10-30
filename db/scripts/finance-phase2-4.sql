@@ -36,9 +36,9 @@ BEGIN
 END
 GO
 
-IF OBJECT_ID(N'[payments].[staff_compensation_allocations]', N'U') IS NULL
+IF OBJECT_ID(N'[finance].[staff_compensation_allocations]', N'U') IS NULL
 BEGIN
-    CREATE TABLE [payments].[staff_compensation_allocations] (
+    CREATE TABLE [finance].[staff_compensation_allocations] (
         [Id]               UNIQUEIDENTIFIER   NOT NULL,
         [TenantId]         UNIQUEIDENTIFIER   NOT NULL,
         [StaffMemberId]    UNIQUEIDENTIFIER   NOT NULL,
@@ -52,16 +52,16 @@ BEGIN
     );
 
     CREATE NONCLUSTERED INDEX [IX_staff_compensation_allocations_TenantId_CreatedAt]
-        ON [payments].[staff_compensation_allocations]([TenantId] ASC, [CreatedAt] ASC);
+        ON [finance].[staff_compensation_allocations]([TenantId] ASC, [CreatedAt] ASC);
 
     CREATE NONCLUSTERED INDEX [IX_staff_compensation_allocations_TenantId_StaffMemberId_CreatedAt]
-        ON [payments].[staff_compensation_allocations]([TenantId] ASC, [StaffMemberId] ASC, [CreatedAt] ASC);
+        ON [finance].[staff_compensation_allocations]([TenantId] ASC, [StaffMemberId] ASC, [CreatedAt] ASC);
 END
 GO
 
-IF COL_LENGTH('payments.payment_intents', 'TipAmount') IS NULL
+IF COL_LENGTH('finance.payment_intents', 'TipAmount') IS NULL
 BEGIN
-    ALTER TABLE [payments].[payment_intents]
+    ALTER TABLE [finance].[payment_intents]
         ADD [TipAmount] DECIMAL (12, 2) NULL,
             [TipStaffMemberId] UNIQUEIDENTIFIER NULL;
 END

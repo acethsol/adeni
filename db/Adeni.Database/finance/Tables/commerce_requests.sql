@@ -1,4 +1,4 @@
-CREATE TABLE [payments].[commerce_requests] (
+CREATE TABLE [finance].[commerce_requests] (
     [Id] uniqueidentifier NOT NULL,
     [TenantId] uniqueidentifier NOT NULL,
     [Amount] decimal(12,2) NOT NULL,
@@ -24,5 +24,5 @@ CREATE TABLE [payments].[commerce_requests] (
     CONSTRAINT [CK_commerce_requests_GiftTender] CHECK ([Purpose] = 0 OR [AllowsGiftCard] = 0)
 );
 GO
-CREATE UNIQUE INDEX [IX_commerce_requests_TokenHash] ON [payments].[commerce_requests] ([TokenHash]);
+CREATE UNIQUE INDEX [IX_commerce_requests_TokenHash] ON [finance].[commerce_requests] ([TokenHash]);
 GO

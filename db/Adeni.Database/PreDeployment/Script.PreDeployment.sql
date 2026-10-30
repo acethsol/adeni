@@ -6,6 +6,8 @@
 PRINT N'Adeni.Database pre-deployment starting...';
 GO
 
+/* payments → finance schema rename runs in scripts/publish-db.ps1 before SqlPackage analyze. */
+
 /* Sprint 36: drop Sprint 18 messaging tables (no data migration). */
 IF OBJECT_ID(N'[messaging].[messages]', N'U') IS NOT NULL
 BEGIN

@@ -1,4 +1,4 @@
-CREATE TABLE [payments].[gift_cards] (
+CREATE TABLE [finance].[gift_cards] (
     [Id] uniqueidentifier NOT NULL,
     [TenantId] uniqueidentifier NOT NULL,
     [OriginalAmount] decimal(12,2) NOT NULL,
@@ -17,11 +17,11 @@ CREATE TABLE [payments].[gift_cards] (
     CONSTRAINT [PK_gift_cards] PRIMARY KEY ([Id]),
     CONSTRAINT [AK_gift_cards_TenantId_Id] UNIQUE ([TenantId], [Id]),
     CONSTRAINT [FK_gift_cards_tenant] FOREIGN KEY ([TenantId]) REFERENCES [tenancy].[tenants] ([Id]),
-    CONSTRAINT [FK_gift_cards_PurchaseRequestId] FOREIGN KEY ([TenantId],[PurchaseRequestId]) REFERENCES [payments].[commerce_requests] ([TenantId],[Id]),
+    CONSTRAINT [FK_gift_cards_PurchaseRequestId] FOREIGN KEY ([TenantId],[PurchaseRequestId]) REFERENCES [finance].[commerce_requests] ([TenantId],[Id]),
     CONSTRAINT [CK_gift_cards_Balance] CHECK ([RemainingAmount] >= 0 AND [RemainingAmount] <= [OriginalAmount] AND [OriginalAmount] > 0)
 );
 GO
-CREATE UNIQUE INDEX [IX_gift_cards_TenantId_PurchaseRequestId] ON [payments].[gift_cards] ([TenantId], [PurchaseRequestId]);
+CREATE UNIQUE INDEX [IX_gift_cards_TenantId_PurchaseRequestId] ON [finance].[gift_cards] ([TenantId], [PurchaseRequestId]);
 GO
-CREATE UNIQUE INDEX [IX_gift_cards_TenantId_CodeHash] ON [payments].[gift_cards] ([TenantId], [CodeHash]);
+CREATE UNIQUE INDEX [IX_gift_cards_TenantId_CodeHash] ON [finance].[gift_cards] ([TenantId], [CodeHash]);
 GO

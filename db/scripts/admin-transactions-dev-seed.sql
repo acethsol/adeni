@@ -33,9 +33,9 @@ BEGIN
     DECLARE @fee DECIMAL(12, 2) = ROUND(@amount * 0.05, 2);
     DECLARE @when DATETIMEOFFSET(7) = DATEADD(DAY, -@i, @now);
 
-    IF NOT EXISTS (SELECT 1 FROM [payments].[payment_intents] WHERE [ProviderReference] = @ref)
+    IF NOT EXISTS (SELECT 1 FROM [finance].[payment_intents] WHERE [ProviderReference] = @ref)
     BEGIN
-        INSERT INTO [payments].[payment_intents] (
+        INSERT INTO [finance].[payment_intents] (
             [Id], [TenantId], [BookingId], [Type], [Amount], [PlatformFeeAmount], [Currency],
             [Status], [ProviderReference], [Description], [IdempotencyKey], [CreatedAt], [UpdatedAt]
         )
