@@ -16,7 +16,10 @@
       </div>
       <h2>{{ tr("discover.packages.loadErrorTitle") }}</h2>
       <p>{{ error() }}</p>
-      <button type="button" class="cds-btn cds-btn--primary" (click)="load()">{{ tr("discover.tryAgain") }}</button>
+      <button type="button" class="btn btn-primary" (click)="load()">
+        <adeni-carbon-icon name="restart" [size]="16" />
+        {{ tr("discover.tryAgain") }}
+      </button>
     </div>
   } @else if (packages().length === 0) {
     <div class="empty">
@@ -25,7 +28,10 @@
       </div>
       <h2>{{ tr("discover.packages.myEmptyTitle") }}</h2>
       <p>{{ tr("discover.packages.myEmptyDescription") }}</p>
-      <a class="cds-btn cds-btn--primary" routerLink="/app/discover">{{ tr("bookings.discoverBusinesses") }}</a>
+      <a class="btn btn-primary" routerLink="/app/discover">
+        <adeni-carbon-icon name="search" [size]="16" />
+        {{ tr("bookings.discoverBusinesses") }}
+      </a>
     </div>
   } @else {
     <ul class="list">

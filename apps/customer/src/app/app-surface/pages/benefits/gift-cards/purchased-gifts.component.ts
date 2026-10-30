@@ -3,7 +3,12 @@ import { isPlatformBrowser } from "@angular/common";
 import { RouterLink } from "@angular/router";
 import { CustomerApiService } from "../../../../core/services/customer-api.service";
 import { formatPrice, type BusinessGiftCard } from "@adeni/shared";
-import { AdeniCarbonIconComponent, injectAdeniApiError, injectAdeniTranslate } from "@adeni/ui";
+import {
+  AdeniCarbonIconComponent,
+  AdeniFeedbackService,
+  injectAdeniApiError,
+  injectAdeniTranslate,
+} from "@adeni/ui";
 
 type GiftTone = "pending" | "active" | "inactive";
 
@@ -19,6 +24,7 @@ export class PurchasedGiftsComponent {
   readonly tr = injectAdeniTranslate();
   readonly apiErr = injectAdeniApiError();
   private readonly api = inject(CustomerApiService);
+  private readonly feedback = inject(AdeniFeedbackService);
   readonly cards = signal<BusinessGiftCard[]>([]);
   readonly loading = signal(true);
   readonly loadFailed = signal(false);
@@ -54,7 +60,11 @@ export class PurchasedGiftsComponent {
     this.loadFailed.set(false);
     this.error.set(null);
     try {
-      const rows = await this.api.withAuthorizedClient((c) => c.commerce.purchasedCards(this.abort.signal));
+      const rows = await this.feedback.runLoading(
+        () => this.api.withAuthorizedClient((c) => c.commerce.purchasedCards(this.abort.signal)),
+        this.tr("discover.packages.giftCardsLink"),
+        this.tr("toast.loadingDetail"),
+      );
       if (!this.abort.signal.aborted) this.cards.set(rows);
     } catch (e) {
       if (!this.abort.signal.aborted) {
@@ -72,7 +82,11 @@ export class PurchasedGiftsComponent {
     this.error.set(null);
     this.busy.set(true);
     try {
-      const result = await this.api.withAuthorizedClient((c) => c.commerce.reveal(id, this.abort.signal));
+      const result = await this.feedback.runLoading(
+        () => this.api.withAuthorizedClient((c) => c.commerce.reveal(id, this.abort.signal)),
+        this.tr("toast.loading"),
+        this.tr("toast.loadingDetail"),
+      );
       if (!this.abort.signal.aborted) {
         this.code.set(result.code);
         this.revealedId.set(id);

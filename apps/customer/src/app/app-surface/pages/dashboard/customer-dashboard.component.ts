@@ -7,6 +7,8 @@ import {
   PLATFORM_ID,
   signal,
 } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { merge } from "rxjs";
 import { isPlatformBrowser } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { RouterLink } from "@angular/router";
@@ -26,6 +28,7 @@ import {
   AdeniModalComponent,
   AdeniPillComponent,
   AdeniPortalEmptyStateComponent,
+  AdeniMessagingRealtimeService,
   PortalPageComponent,
   injectAdeniApiError,
   injectAdeniTranslate,
@@ -63,6 +66,7 @@ const UPCOMING_PREVIEW = 3;
     AdeniModalComponent,
   ],
   templateUrl: "./customer-dashboard.component.html",
+  styleUrl: "./customer-dashboard.component.scss",
 })
 export class CustomerDashboardComponent implements OnInit {
   protected readonly tr = injectAdeniTranslate();
@@ -73,6 +77,8 @@ export class CustomerDashboardComponent implements OnInit {
   private readonly apiErr = injectAdeniApiError();
   private readonly locale = inject(AdeniLocaleService).locale;
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly realtime = inject(AdeniMessagingRealtimeService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly abort = new AbortController();
 
   readonly bookingsLoading = signal(true);
@@ -106,6 +112,9 @@ export class CustomerDashboardComponent implements OnInit {
   });
   readonly reviewCandidate = computed(() => pickReviewCandidate(this.bookings(), this.now()));
   readonly homeConversations = computed(() => pickHomeConversations(this.conversations(), 2));
+  readonly unreadMessagesCount = computed(
+    () => this.conversations().filter((c) => c.needsAttention).length,
+  );
   readonly benefitsSnapshot = computed(() => summarizeBenefits(this.packages(), this.giftCards()));
   readonly showBenefitsCard = computed(
     () =>
@@ -122,7 +131,12 @@ export class CustomerDashboardComponent implements OnInit {
   });
 
   constructor() {
-    inject(DestroyRef).onDestroy(() => this.abort.abort());
+    this.destroyRef.onDestroy(() => this.abort.abort());
+    merge(this.realtime.messageCreated$, this.realtime.conversationUpdated$)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        void this.loadMessages();
+      });
   }
 
   ngOnInit(): void {
@@ -137,7 +151,11 @@ export class CustomerDashboardComponent implements OnInit {
     this.bookingsLoading.set(true);
     this.bookingsFailed.set(false);
     try {
-      const rows = await this.api.withAuthorizedClient((client) => client.getMyBookings());
+      const rows = await this.feedback.runLoading(
+        () => this.api.withAuthorizedClient((client) => client.getMyBookings()),
+        this.tr("customer.app.nav.dashboard"),
+        this.tr("toast.loadingDetail"),
+      );
       if (this.abort.signal.aborted) {
         return;
       }
@@ -159,8 +177,10 @@ export class CustomerDashboardComponent implements OnInit {
     this.messagesLoading.set(true);
     this.messagesFailed.set(false);
     try {
-      const rows = await this.api.withAuthorizedClient((client) =>
-        client.listCustomerConversations(),
+      const rows = await this.feedback.runLoading(
+        () => this.api.withAuthorizedClient((client) => client.listCustomerConversations()),
+        this.tr("customer.app.nav.messages"),
+        this.tr("toast.loadingDetail"),
       );
       if (this.abort.signal.aborted) {
         return;
@@ -183,10 +203,14 @@ export class CustomerDashboardComponent implements OnInit {
     this.benefitsLoading.set(true);
     this.benefitsFailed.set(false);
     try {
-      const [packagesResult, giftsResult] = await Promise.allSettled([
-        this.api.withAuthorizedClient((c) => c.retention.myPackages()),
-        this.api.withAuthorizedClient((c) => c.commerce.purchasedCards()),
-      ]);
+      const [packagesResult, giftsResult] = await this.feedback.runLoading(() =>
+        Promise.allSettled([
+          this.api.withAuthorizedClient((c) => c.retention.myPackages()),
+          this.api.withAuthorizedClient((c) => c.commerce.purchasedCards()),
+        ]),
+        this.tr("customer.app.nav.benefits"),
+        this.tr("toast.loadingDetail"),
+      );
       if (this.abort.signal.aborted) {
         return;
       }
@@ -233,11 +257,16 @@ export class CustomerDashboardComponent implements OnInit {
     }
     this.reviewSubmitting.set(true);
     try {
-      await this.api.withAuthorizedClient((client) =>
-        client.createBookingReview(target.id, {
-          rating: this.reviewRating,
-          comment: this.reviewComment.trim() || undefined,
-        }),
+      await this.feedback.runLoading(
+        () =>
+          this.api.withAuthorizedClient((client) =>
+            client.createBookingReview(target.id, {
+              rating: this.reviewRating,
+              comment: this.reviewComment.trim() || undefined,
+            }),
+          ),
+        this.tr("customer.app.dashboard.submitReview"),
+        target.serviceName,
       );
       this.feedback.success(this.tr("customer.app.dashboard.reviewThanks"));
       this.reviewOpen.set(false);
@@ -255,6 +284,17 @@ export class CustomerDashboardComponent implements OnInit {
 
   when(iso: string): string {
     return formatSlotTime(iso, this.locale());
+  }
+
+  businessInitials(name: string | null | undefined): string {
+    const parts = (name ?? "").trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) {
+      return "?";
+    }
+    if (parts.length === 1) {
+      return parts[0]!.slice(0, 2).toUpperCase();
+    }
+    return `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase();
   }
 
   money(amount: number, currency: string): string {

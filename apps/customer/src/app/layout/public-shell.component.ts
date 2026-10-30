@@ -15,9 +15,6 @@ import { PublicFooterComponent } from "../shared/public-footer.component";
 import {
   AdeniBrandLockupComponent,
   AdeniCarbonIconComponent,
-  AdeniConfirmHostComponent,
-  AdeniGlobalLoadingPanelComponent,
-  AdeniToastHostComponent,
   injectAdeniTranslate,
 } from "@adeni/ui";
 
@@ -38,9 +35,6 @@ const MARKET_HEADER_TONES: Record<string, { h1: string; h2: string; h3: string }
     AdeniBrandLockupComponent,
     AdeniCarbonIconComponent,
     DiscoverySearchComponent,
-    AdeniGlobalLoadingPanelComponent,
-    AdeniToastHostComponent,
-    AdeniConfirmHostComponent,
     PublicFooterComponent,
   ],
   templateUrl: "./public-shell.component.html",

@@ -44,7 +44,8 @@ import { injectAdeniTranslate } from "./locale/adeni-i18n";
     }
 
     .staff-shell-footer[data-app="business"] .staff-shell-footer__hairline,
-    .staff-shell-footer[data-app="portal"] .staff-shell-footer__hairline {
+    .staff-shell-footer[data-app="portal"] .staff-shell-footer__hairline,
+    .staff-shell-footer[data-app="consumer"] .staff-shell-footer__hairline {
       background: linear-gradient(
         90deg,
         color-mix(in srgb, var(--adeni-purple, #7f56ff) 28%, var(--border)) 0%,

@@ -28,6 +28,10 @@ export {
 export { AdeniStaffShellFooterComponent } from "./adeni-staff-shell-footer.component";
 export { AdeniCarbonIconComponent } from "./adeni-carbon-icon.component";
 export {
+  AdeniPortalNavIconComponent,
+  type AdeniPortalNavIconName,
+} from "./adeni-portal-nav-icon.component";
+export {
   AdeniStaffButtonComponent,
   type AdeniStaffButtonIconPosition,
   type AdeniStaffButtonVariant,

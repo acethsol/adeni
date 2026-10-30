@@ -4,14 +4,21 @@ import { ActivatedRoute, RouterLink } from "@angular/router";
 import { FormsModule } from "@angular/forms";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { distinctUntilChanged, map } from "rxjs";
-import { AdeniCarbonIconComponent, AdeniLocaleService, IntakeFieldsComponent, injectAdeniApiError, injectAdeniTranslate } from "@adeni/ui";
+import {
+  AdeniCarbonIconComponent,
+  AdeniLocaleService,
+  IntakeFieldsComponent,
+  PortalPageComponent,
+  injectAdeniApiError,
+  injectAdeniTranslate,
+} from "@adeni/ui";
 import { formatSlotTime, type IntakeAnswer, type IntakeStatus, type IntakeView } from "@adeni/shared";
 import { CustomerApiService } from "../../core/services/customer-api.service";
 
 @Component({
   selector: "app-intake",
   standalone: true,
-  imports: [RouterLink, FormsModule, IntakeFieldsComponent, AdeniCarbonIconComponent],
+  imports: [RouterLink, FormsModule, IntakeFieldsComponent, AdeniCarbonIconComponent, PortalPageComponent],
   templateUrl: "./intake.component.html",
   styleUrl: "./intake.component.scss",
 })

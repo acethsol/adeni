@@ -10,7 +10,7 @@ import {
   viewChild,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { ActivatedRoute, Router, RouterLink } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { Subscription } from "rxjs";
 import type { ConversationDetail, ConversationMessage, ConversationSummary } from "@adeni/shared";
 import {
@@ -18,6 +18,8 @@ import {
   AdeniFeedbackService,
   AdeniMessagingRealtimeService,
   AdeniModalComponent,
+  AdeniPortalEmptyStateComponent,
+  PortalPageComponent,
   injectAdeniTranslate,
   injectAdeniApiError,
 } from "@adeni/ui";
@@ -27,7 +29,13 @@ import { CustomerMessagingBadgeService } from "../../services/customer-messaging
 @Component({
   selector: "app-my-messages",
   standalone: true,
-  imports: [RouterLink, FormsModule, AdeniCarbonIconComponent, AdeniModalComponent],
+  imports: [
+    FormsModule,
+    PortalPageComponent,
+    AdeniCarbonIconComponent,
+    AdeniModalComponent,
+    AdeniPortalEmptyStateComponent,
+  ],
   templateUrl: "./my-messages.component.html",
   styleUrl: "./my-messages.component.scss",
 })
@@ -66,8 +74,12 @@ export class MyMessagesComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    void this.realtime.ensureCustomerConnected();
     this.subscriptions.add(
       this.realtime.messageCreated$.subscribe((message) => this.onRealtimeMessage(message)),
+    );
+    this.subscriptions.add(
+      this.realtime.conversationUpdated$.subscribe((summary) => this.onConversationUpdated(summary)),
     );
     void this.loadConversations();
   }
@@ -85,7 +97,11 @@ export class MyMessagesComponent implements OnInit, OnDestroy {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const items = await this.api.withAuthorizedClient((c) => c.listCustomerConversations());
+      const items = await this.feedback.runLoading(
+        () => this.api.withAuthorizedClient((c) => c.listCustomerConversations()),
+        this.tr("customer.app.nav.messages"),
+        this.tr("toast.loadingDetail"),
+      );
       this.conversations.set(items);
       const deepLink = this.route.snapshot.queryParamMap.get("c");
       const preferred =
@@ -116,14 +132,21 @@ export class MyMessagesComponent implements OnInit, OnDestroy {
       replaceUrl: true,
     });
     try {
-      const detail = await this.api.withAuthorizedClient((c) => c.getCustomerConversation(id));
+      const detail = await this.feedback.runLoading(
+        async () => {
+          const row = await this.api.withAuthorizedClient((c) => c.getCustomerConversation(id));
+          await this.realtime.joinConversation(id);
+          await this.api.withAuthorizedClient((c) =>
+            c.markCustomerConversationRead(id, row.messages.at(-1)?.id),
+          );
+          return row;
+        },
+        this.tr("discover.myMessages.conversations"),
+        this.tr("toast.loadingDetail"),
+      );
       this.detail.set(detail);
       this.conversations.update((rows) =>
         rows.map((row) => (row.id === id ? { ...row, needsAttention: false } : row)),
-      );
-      await this.realtime.joinConversation(id);
-      await this.api.withAuthorizedClient((c) =>
-        c.markCustomerConversationRead(id, detail.messages.at(-1)?.id),
       );
       queueMicrotask(() => this.scrollTranscriptToEnd());
     } catch (caught) {
@@ -145,8 +168,13 @@ export class MyMessagesComponent implements OnInit, OnDestroy {
 
     this.sending.set(true);
     try {
-      const message = await this.api.withAuthorizedClient((c) =>
-        c.sendCustomerMessage(conversationId, { body }),
+      const message = await this.feedback.runLoading(
+        () =>
+          this.api.withAuthorizedClient((c) =>
+            c.sendCustomerMessage(conversationId, { body }),
+          ),
+        this.tr("discover.myMessages.message"),
+        this.tr("toast.loadingDetail"),
       );
       this.draft = "";
       this.appendMessage(message);
@@ -214,6 +242,18 @@ export class MyMessagesComponent implements OnInit, OnDestroy {
 
   closeImagePreview(): void {
     this.imagePreview.set(null);
+  }
+
+  private onConversationUpdated(summary: ConversationSummary): void {
+    this.conversations.update((rows) => {
+      const index = rows.findIndex((row) => row.id === summary.id);
+      if (index === -1) {
+        return [summary, ...rows];
+      }
+      const next = [...rows];
+      next[index] = { ...next[index]!, ...summary };
+      return next;
+    });
   }
 
   private onRealtimeMessage(message: ConversationMessage): void {

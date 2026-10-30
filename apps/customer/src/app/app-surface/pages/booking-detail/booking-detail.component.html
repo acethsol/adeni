@@ -1,94 +1,139 @@
-<a class="app-back cds-btn cds-btn--ghost cds-btn--sm" routerLink="/app/bookings">
-  <adeni-carbon-icon name="arrow--left" [size]="16" />
-  {{ tr('intake.myBookings') }}
-</a>
+<app-portal-page
+  [title]="booking()?.serviceName ?? tr('bookings.title')"
+  [description]="booking()?.businessName ?? tr('bookings.description')"
+>
+  <a pageActions class="btn" routerLink="/app/bookings">
+    <adeni-carbon-icon name="arrow--left" [size]="16" />
+    {{ tr('bookings.title') }}
+  </a>
 
-@if (loading()) {
-  <div class="app-panel app-panel--skeleton" aria-hidden="true">
-    <span class="app-sk app-sk--date"></span>
-    <span class="app-sk-stack">
-      <span class="app-sk app-sk--line"></span>
-      <span class="app-sk app-sk--line app-sk--short"></span>
-    </span>
-  </div>
-} @else if (loadFailed()) {
-  <adeni-portal-empty-state
-    [compact]="true"
-    icon="calendar"
-    [title]="tr('bookings.loadErrorTitle')"
-    [description]="tr('bookings.loadError')"
-  >
-    <button type="button" class="cds-btn cds-btn--primary cds-btn--sm" (click)="load()">{{ tr('discover.tryAgain') }}</button>
-  </adeni-portal-empty-state>
-} @else if (booking(); as b) {
-  <app-portal-page [title]="b.serviceName" [description]="b.businessName">
-    <article class="app-panel app-detail">
-      <div class="app-detail__status">
-        <adeni-pill [tone]="statusTone(b.status)">{{ statusLabel(b.status) }}</adeni-pill>
-      </div>
-      <dl class="app-facts">
-        <div>
-          <dt>{{ tr('discover.bookingDetail.when') }}</dt>
-          <dd><time [attr.datetime]="b.startAt">{{ when(b.startAt) }}</time></dd>
+  @if (loading()) {
+    <div class="booking-detail-skeleton" aria-hidden="true">
+      <span class="sk-block sk-block--hero"></span>
+      <span class="sk-block"></span>
+      <span class="sk-block sk-block--short"></span>
+    </div>
+  } @else if (loadFailed()) {
+    <adeni-portal-empty-state
+      icon="calendar"
+      [title]="tr('bookings.loadErrorTitle')"
+      [description]="tr('bookings.loadError')"
+    >
+      <button type="button" class="btn btn-primary" (click)="load()">
+        <adeni-carbon-icon name="restart" [size]="16" />
+        {{ tr('discover.tryAgain') }}
+      </button>
+    </adeni-portal-empty-state>
+  } @else if (booking(); as b) {
+    @let statusView = bookingStatusView(b.status);
+    @let date = dayPart(b.startAt);
+
+    <article class="booking-detail" [attr.data-tone]="statusView.tone">
+      <header class="booking-detail__hero">
+        <div class="booking-detail__date" aria-hidden="true">
+          <span class="booking-detail__weekday">{{ date.weekday }}</span>
+          <span class="booking-detail__dom">{{ date.day }}</span>
+          <span class="booking-detail__month">{{ date.month }}</span>
+          <span class="booking-detail__year">{{ date.year }}</span>
         </div>
-        <div>
-          <dt>{{ tr('discover.bookingDetail.business') }}</dt>
-          <dd><a [routerLink]="['/businesses', b.businessSlug]">{{ b.businessName }}</a></dd>
+
+        <div class="booking-detail__hero-copy">
+          <p class="booking-detail__kicker">
+            <adeni-carbon-icon name="location" [size]="14" />
+            <a [routerLink]="['/businesses', b.businessSlug]">{{ b.businessName }}</a>
+          </p>
+          <h2 class="booking-detail__title">{{ b.serviceName }}</h2>
+          <span class="booking-status" [attr.data-tone]="statusView.tone">
+            <adeni-carbon-icon [name]="statusView.icon" [size]="14" />
+            {{ statusView.label }}
+          </span>
         </div>
+      </header>
+
+      <section class="booking-detail__when-band" [attr.aria-label]="tr('bookings.detailWhen')">
+        <adeni-carbon-icon name="time" [size]="18" />
+        <div>
+          <strong>{{ formatTimeOnly(b.startAt) }}</strong>
+          <span>{{ when(b.startAt) }}</span>
+        </div>
+      </section>
+
+      <div class="booking-detail__tiles">
+        <article class="detail-tile">
+          <h3 class="detail-tile__label">{{ tr('bookings.detailBusiness') }}</h3>
+          <p class="detail-tile__value">
+            <a [routerLink]="['/businesses', b.businessSlug]">{{ b.businessName }}</a>
+          </p>
+        </article>
+
         @if (b.staffDisplayName) {
-          <div>
-            <dt>{{ tr('bookings.withStaff') }}</dt>
-            <dd>{{ b.staffDisplayName }}</dd>
-          </div>
+          <article class="detail-tile">
+            <h3 class="detail-tile__label">{{ tr('bookings.withStaff') }}</h3>
+            <p class="detail-tile__value">{{ b.staffDisplayName }}</p>
+          </article>
         }
-        @if (b.guestCount > 1) {
-          <div>
-            <dt>{{ tr('bookings.partyLabel') }}</dt>
-            <dd>{{ tr('bookings.partyOf', { count: b.guestCount }) }}</dd>
-          </div>
-        }
-        @if (b.customerNotes?.trim()) {
-          <div>
-            <dt>{{ tr('bookings.notesLabel') }}</dt>
-            <dd>{{ b.customerNotes }}</dd>
-          </div>
-        }
-      </dl>
 
-      @if (b.lines && b.lines.length > 1) {
-        <ul class="app-list">
-          @for (line of b.lines; track line.serviceOfferingId + '-' + line.sortOrder) {
-            <li class="app-row">
-              <span class="app-row__main">
-                <strong>{{ line.serviceName }}</strong>
-                <span class="app-muted">{{ line.durationMinutes }}m</span>
-              </span>
-            </li>
-          }
-        </ul>
+        @if (b.guestCount > 1) {
+          <article class="detail-tile">
+            <h3 class="detail-tile__label">{{ tr('bookings.partyLabel') }}</h3>
+            <p class="detail-tile__value">{{ tr('bookings.partyOf', { count: b.guestCount }) }}</p>
+          </article>
+        }
+      </div>
+
+      @if (b.customerNotes?.trim()) {
+        <section class="booking-detail__notes">
+          <h3>{{ tr('bookings.notesLabel') }}</h3>
+          <p>{{ b.customerNotes }}</p>
+        </section>
       }
 
-      <div class="app-actions">
-        <a class="cds-btn cds-btn--tertiary cds-btn--sm" [routerLink]="['/app/bookings', b.id, 'intake']">{{ tr('intake.title') }}</a>
-        <a class="cds-btn cds-btn--ghost cds-btn--sm" [routerLink]="['/businesses', b.businessSlug]">{{ tr('bookings.viewBusiness') }}</a>
+      @if (b.lines && b.lines.length > 1) {
+        <section class="booking-detail__lines">
+          <h3>{{ tr('common.service') }}</h3>
+          <ul>
+            @for (line of b.lines; track line.serviceOfferingId + '-' + line.sortOrder) {
+              <li>
+                <strong>{{ line.serviceName }}</strong>
+                <span class="muted">{{ line.durationMinutes }}m</span>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
+      <footer class="booking-detail__actions">
+        <a class="btn" [routerLink]="['/app/bookings', b.id, 'intake']">
+          <adeni-carbon-icon name="document" [size]="16" />
+          {{ tr('intake.title') }}
+        </a>
+        <a class="btn" [routerLink]="['/businesses', b.businessSlug]">
+          <adeni-carbon-icon name="location" [size]="16" />
+          {{ tr('bookings.viewBusiness') }}
+        </a>
         @if (bookAgain(); as again) {
           <a
-            class="cds-btn cds-btn--primary cds-btn--sm"
+            class="btn btn-primary"
             [routerLink]="again.commands"
             [queryParams]="again.queryParams"
             [fragment]="again.fragment"
-          >{{ tr('customer.app.dashboard.bookAgain') }}</a>
+          >
+            <adeni-carbon-icon name="restart" [size]="16" />
+            {{ tr('customer.app.dashboard.bookAgain') }}
+          </a>
         }
-      </div>
+      </footer>
     </article>
-  </app-portal-page>
-} @else {
-  <adeni-portal-empty-state
-    [compact]="true"
-    icon="calendar"
-    [title]="tr('discover.bookingDetail.notFoundTitle')"
-    [description]="tr('discover.bookingDetail.notFoundDescription')"
-  >
-    <a class="cds-btn cds-btn--primary cds-btn--sm" routerLink="/app/bookings">{{ tr('intake.myBookings') }}</a>
-  </adeni-portal-empty-state>
-}
+  } @else {
+    <adeni-portal-empty-state
+      icon="calendar"
+      [title]="tr('bookings.notFoundTitle')"
+      [description]="tr('bookings.notFoundDescription')"
+    >
+      <a class="btn btn-primary" routerLink="/app/bookings">
+        <adeni-carbon-icon name="task" [size]="16" />
+        {{ tr('bookings.title') }}
+      </a>
+    </adeni-portal-empty-state>
+  }
+</app-portal-page>

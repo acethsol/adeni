@@ -480,15 +480,6 @@ export const updateLoyaltyRewardRequestSchema = z.object({
   sortOrder: z.number().int(),
 });
 
-export const loyaltyRewardRedemptionSchema = z.object({
-  id: z.string().uuid(),
-  loyaltyRewardId: z.string().uuid(),
-  pointsSpent: z.number().int().positive(),
-  issuedAt: z.string(),
-  account: loyaltyAccountSchema,
-  transaction: loyaltyTransactionSchema,
-});
-
 export const loyaltyTransactionSchema = z.object({
   id: z.string().uuid(),
   sequence: z.number().int().positive(),
@@ -498,6 +489,15 @@ export const loyaltyTransactionSchema = z.object({
   reason: z.string().nullable(),
   bookingId: z.string().uuid().nullable(),
   occurredAt: z.string(),
+});
+
+export const loyaltyRewardRedemptionSchema = z.object({
+  id: z.string().uuid(),
+  loyaltyRewardId: z.string().uuid(),
+  pointsSpent: z.number().int().positive(),
+  issuedAt: z.string(),
+  account: loyaltyAccountSchema,
+  transaction: loyaltyTransactionSchema,
 });
 
 export const loyaltyTransactionListSchema = z.object({ items: z.array(loyaltyTransactionSchema) });

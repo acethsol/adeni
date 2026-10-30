@@ -1,0 +1,209 @@
+<app-portal-page [title]="label('bookings.title')" [description]="label('bookings.description')">
+  <a pageActions class="btn btn-primary" routerLink="/app/discover">
+    <adeni-carbon-icon name="search" [size]="16" />
+    {{ label("bookings.bookAnother") }}
+  </a>
+
+  @if (devMode) {
+    <p class="error-banner">{{ label("bookings.devMode") }}</p>
+  }
+
+  @if (loading()) {
+    <p class="muted">{{ label("common.loading") }}</p>
+  } @else if (loadFailed()) {
+    <adeni-portal-empty-state
+      icon="calendar"
+      [title]="label('bookings.loadErrorTitle')"
+      [description]="label('bookings.loadError')"
+    >
+      <button type="button" class="btn btn-primary" (click)="load()">
+        {{ label("discover.tryAgain") }}
+      </button>
+    </adeni-portal-empty-state>
+  } @else {
+    <adeni-tabs
+      linkMode="button"
+      [tabs]="tabs()"
+      [activeId]="tab()"
+      (activeIdChange)="onTabChange($event)"
+    />
+
+    @if (visible().length === 0) {
+      @if (tab() === "upcoming") {
+        <adeni-portal-empty-state
+          icon="calendar"
+          [title]="label('bookings.emptyTitle')"
+          [description]="label('bookings.emptyDescription')"
+        >
+          <a class="btn btn-primary" routerLink="/app/discover">{{ label("bookings.discoverBusinesses") }}</a>
+        </adeni-portal-empty-state>
+      } @else {
+        <adeni-portal-empty-state
+          icon="calendar"
+          [title]="label('bookings.emptyPastTitle')"
+          [description]="label('bookings.emptyPastDescription')"
+        />
+      }
+    } @else {
+      <div class="roster">
+        <adeni-list-toolbar
+          storageKey="customerApp.bookings"
+          [viewMode]="viewMode()"
+          (viewModeChange)="viewMode.set($event)"
+          [count]="filtered().length"
+          [singularCountLabel]="label('common.booking')"
+          [pluralCountLabel]="label('common.bookings2')"
+          [searchPlaceholder]="label('common.search')"
+          [searchQuery]="bookingSearch()"
+          (searchQueryChange)="onSearchChange($event)"
+          viewModeCardsIcon="grid"
+          [viewModeTableLabel]="label('common.catalogList')"
+        />
+
+        @if (filtered().length === 0) {
+          <adeni-portal-empty-state
+            icon="search"
+            [title]="label('common.noMatchesTitle')"
+            [description]="label('discover.noMatchesDescription')"
+            [compact]="true"
+          />
+        } @else if (viewMode() === "cards") {
+          <div class="adeni-list-results adeni-list-results--cards">
+            <ul class="plain booking-grid">
+              @for (b of paginated(); track b.id) {
+                @let statusView = bookingStatusView(b.status);
+                @let date = dayPart(b.startAt);
+                <li class="booking-card" [attr.data-tone]="statusView.tone">
+                  <a
+                    class="booking-card__link"
+                    [routerLink]="['/app/bookings', b.id]"
+                    [attr.aria-label]="b.serviceName + ' · ' + formatWhen(b.startAt)"
+                  >
+                    <div class="booking-card__date" aria-hidden="true">
+                      <span class="booking-card__weekday">{{ date.weekday }}</span>
+                      <span class="booking-card__dom">{{ date.day }}</span>
+                      <span class="booking-card__month">{{ date.month }}</span>
+                    </div>
+
+                    <div class="booking-card__main">
+                      <div class="booking-card__head">
+                        <strong class="booking-card__service">{{ b.serviceName }}</strong>
+                        <span class="booking-status booking-status--compact" [attr.data-tone]="statusView.tone">
+                          <adeni-carbon-icon [name]="statusView.icon" [size]="14" />
+                          {{ statusView.label }}
+                        </span>
+                      </div>
+
+                      <p class="booking-card__when">
+                        <adeni-carbon-icon name="time" [size]="14" />
+                        <span>{{ formatTimeOnly(b.startAt) }}</span>
+                        <span class="booking-card__when-sep" aria-hidden="true">·</span>
+                        <span class="booking-card__when-full">{{ formatWhen(b.startAt) }}</span>
+                      </p>
+
+                      <p class="booking-card__business">
+                        <adeni-carbon-icon name="location" [size]="14" />
+                        {{ b.businessName }}
+                      </p>
+
+                      @if (b.staffDisplayName) {
+                        <p class="booking-card__meta">
+                          {{ label("bookings.withStaff") }} {{ b.staffDisplayName }}
+                        </p>
+                      }
+                      @if (b.guestCount > 1) {
+                        <p class="booking-card__meta">
+                          {{ label("bookings.partyOf", { count: b.guestCount }) }}
+                        </p>
+                      }
+                    </div>
+
+                    <span class="booking-card__forward" aria-hidden="true">
+                      <adeni-carbon-icon name="arrow--right" [size]="18" />
+                    </span>
+                  </a>
+
+                  @if (canCancel(b)) {
+                    <div class="booking-card__footer">
+                      <button
+                        type="button"
+                        class="btn btn-ghost-danger"
+                        [disabled]="cancelId() === b.id"
+                        (click)="cancel(b)"
+                      >
+                        <adeni-carbon-icon name="misuse" [size]="16" />
+                        {{ cancelId() === b.id ? label("bookings.cancelling") : label("bookings.cancelBooking") }}
+                      </button>
+                    </div>
+                  }
+                </li>
+              }
+            </ul>
+            <adeni-list-pagination
+              [page]="page()"
+              [pageSize]="pageSize()"
+              [totalCount]="filteredCount()"
+              [pageSizeOptions]="listPageSizeOptions"
+              [loading]="loading()"
+              [ariaLabel]="label('businessApp.bookings.bookingPages')"
+              (pageChange)="goToPage($event)"
+              (pageSizeChange)="onPageSizeChange($event)"
+            />
+          </div>
+        } @else {
+          <div class="adeni-list-results">
+            <adeni-data-table
+              [rows]="paginated()"
+              [columns]="tableColumns()"
+              [trackRow]="trackRow"
+            >
+              <ng-template adeniDataTableCell="when" let-booking>
+                <span class="adeni-data-table-text">{{ formatWhen(booking.startAt) }}</span>
+              </ng-template>
+              <ng-template adeniDataTableCell="service" let-booking>
+                <a class="adeni-data-table-link" [routerLink]="['/app/bookings', booking.id]">{{ booking.serviceName }}</a>
+              </ng-template>
+              <ng-template adeniDataTableCell="business" let-booking>
+                <a [routerLink]="['/businesses', booking.businessSlug]">{{ booking.businessName }}</a>
+              </ng-template>
+              <ng-template adeniDataTableCell="status" let-booking>
+                <adeni-pill [tone]="pillTone(booking.status)" [compact]="true">{{ statusLabel(booking.status) }}</adeni-pill>
+              </ng-template>
+              <ng-template adeniDataTableActions let-booking>
+                <adeni-row-action-bar>
+                  <adeni-icon-btn
+                    icon="arrow--right"
+                    [label]="label('customer.app.dashboard.viewDetails')"
+                    variant="outline"
+                    [showLabel]="true"
+                    [routerLink]="['/app/bookings', booking.id]"
+                  />
+                  @if (canCancel(booking)) {
+                    <adeni-icon-btn
+                      icon="misuse"
+                      [label]="label('bookings.cancelBooking')"
+                      variant="danger-soft"
+                      [dense]="true"
+                      [disabled]="cancelId() === booking.id"
+                      (pressed)="cancel(booking)"
+                    />
+                  }
+                </adeni-row-action-bar>
+              </ng-template>
+            </adeni-data-table>
+            <adeni-list-pagination
+              [page]="page()"
+              [pageSize]="pageSize()"
+              [totalCount]="filteredCount()"
+              [pageSizeOptions]="listPageSizeOptions"
+              [loading]="loading()"
+              [ariaLabel]="label('businessApp.bookings.bookingPages')"
+              (pageChange)="goToPage($event)"
+              (pageSizeChange)="onPageSizeChange($event)"
+            />
+          </div>
+        }
+      </div>
+    }
+  }
+</app-portal-page>

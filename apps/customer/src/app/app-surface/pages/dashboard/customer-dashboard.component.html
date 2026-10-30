@@ -1,7 +1,7 @@
 <app-portal-page [title]="tr('customer.app.nav.dashboard')" [description]="tr('customer.app.dashboard.description')">
   <section class="hero">
     <div>
-      <p class="kicker">{{ tr('customer.app.shell.badge') }}</p>
+      <p class="kicker">{{ tr('customer.app.shell.caption') }}</p>
       <h2>{{ title() }}</h2>
       <p class="meta">{{ tr('customer.app.dashboard.description') }}</p>
     </div>
@@ -79,11 +79,13 @@
       } @else if (bookingsFailed()) {
         <adeni-portal-empty-state
           [compact]="true"
-          icon="calendar"
+          [embedded]="true"
+          [hideIcon]="true"
           [title]="tr('bookings.loadErrorTitle')"
           [description]="tr('bookings.loadError')"
         >
-          <button type="button" class="cds-btn cds-btn--primary cds-btn--sm" (click)="loadBookings()">
+          <button type="button" class="btn btn-primary" (click)="loadBookings()">
+            <adeni-carbon-icon name="restart" [size]="16" />
             {{ tr('discover.tryAgain') }}
           </button>
         </adeni-portal-empty-state>
@@ -94,54 +96,102 @@
         </p>
         <adeni-pill [tone]="statusTone(booking.status)" [compact]="true">{{ statusLabel(booking.status) }}</adeni-pill>
         <div class="app-actions">
-          <a class="cds-btn cds-btn--primary cds-btn--sm" [routerLink]="['/app/bookings', booking.id]">
+          <a class="btn btn-primary" [routerLink]="['/app/bookings', booking.id]">
+            <adeni-carbon-icon name="arrow--right" [size]="16" />
             {{ tr('customer.app.dashboard.viewDetails') }}
           </a>
-          <a class="cds-btn cds-btn--tertiary cds-btn--sm" routerLink="/app/bookings">{{ tr('customer.app.dashboard.seeAll') }}</a>
+          <a class="btn" routerLink="/app/bookings">
+            <adeni-carbon-icon name="task" [size]="16" />
+            {{ tr('customer.app.dashboard.seeAll') }}
+          </a>
         </div>
       } @else {
         <adeni-portal-empty-state
           [compact]="true"
-          icon="calendar"
+          [embedded]="true"
+          [hideIcon]="true"
           [title]="tr('customer.app.dashboard.noUpcomingTitle')"
           [description]="tr('customer.app.dashboard.noUpcomingDescription')"
         >
-          <a class="cds-btn cds-btn--primary cds-btn--sm" routerLink="/app/discover">{{ tr('customer.app.dashboard.findBusiness') }}</a>
+          <a class="btn btn-primary" routerLink="/app/discover">
+            <adeni-carbon-icon name="search" [size]="16" />
+            {{ tr('customer.app.dashboard.findBusiness') }}
+          </a>
         </adeni-portal-empty-state>
       }
     </div>
 
-    <div class="widget-span-6 widget-card">
+    <div class="widget-span-6 widget-card widget-card--messages">
       <div class="widget-card__head">
         <h3>{{ tr('customer.app.nav.messages') }}</h3>
       </div>
       @if (messagesLoading()) {
         <p class="app-muted">{{ tr('common.loading') }}</p>
       } @else if (messagesFailed()) {
-        <button type="button" class="cds-btn cds-btn--primary cds-btn--sm" (click)="loadMessages()">
-          {{ tr('discover.tryAgain') }}
-        </button>
-      } @else if (homeConversations().length > 0) {
-        <ul class="app-list">
-          @for (thread of homeConversations(); track thread.id) {
-            <li>
-              <a class="app-row" [routerLink]="['/app/messages']" [queryParams]="{ c: thread.id }">
-                <span class="app-row__main">
-                  <strong>{{ thread.businessName || tr('customer.app.dashboard.unknownBusiness') }}</strong>
-                  <span class="app-muted">{{ thread.preview || when(thread.lastMessageAt) }}</span>
-                </span>
-              </a>
-            </li>
-          }
-        </ul>
-        <p class="app-more"><a routerLink="/app/messages">{{ tr('customer.app.dashboard.seeAllMessages') }}</a></p>
-      } @else {
         <adeni-portal-empty-state
           [compact]="true"
-          icon="chat"
-          [title]="tr('customer.app.dashboard.noMessagesTitle')"
-          [description]="tr('customer.app.dashboard.noMessagesDescription')"
-        />
+          [embedded]="true"
+          [hideIcon]="true"
+          [title]="tr('customer.app.dashboard.messagesErrorTitle')"
+          [description]="tr('customer.app.dashboard.messagesError')"
+        >
+          <button type="button" class="btn btn-primary" (click)="loadMessages()">
+            <adeni-carbon-icon name="restart" [size]="16" />
+            {{ tr('discover.tryAgain') }}
+          </button>
+        </adeni-portal-empty-state>
+      } @else {
+        <div class="messages-widget">
+          @if (unreadMessagesCount() > 0) {
+            <div class="messages-widget__hero">
+              <p class="messages-widget__headline">
+                @if (unreadMessagesCount() === 1) {
+                  {{ tr('customer.app.dashboard.conversationNeedsYou') }}
+                } @else {
+                  {{ tr('customer.app.dashboard.conversationsNeedYou', { count: unreadMessagesCount() }) }}
+                }
+              </p>
+              <p class="hint">{{ tr('customer.app.dashboard.replyWhileContextFresh') }}</p>
+            </div>
+          }
+
+          @if (homeConversations().length > 0) {
+            <ul class="messages-widget__threads">
+              @for (thread of homeConversations(); track thread.id) {
+                <li>
+                  <a class="messages-widget__thread" [routerLink]="['/app/messages']" [queryParams]="{ c: thread.id }">
+                    <span class="messages-widget__avatar">{{ businessInitials(thread.businessName) }}</span>
+                    <span class="messages-widget__copy">
+                      <span class="messages-widget__row">
+                        <strong>{{ thread.businessName || tr('customer.app.dashboard.unknownBusiness') }}</strong>
+                        <time>{{ when(thread.lastMessageAt) }}</time>
+                      </span>
+                      <span class="messages-widget__preview">
+                        {{ thread.preview || tr('customer.app.dashboard.messagePreviewFallback') }}
+                      </span>
+                    </span>
+                    @if (thread.needsAttention) {
+                      <span class="messages-widget__dot" [attr.aria-label]="tr('common.unread')"></span>
+                    }
+                  </a>
+                </li>
+              }
+            </ul>
+          } @else if (unreadMessagesCount() === 0) {
+            <adeni-portal-empty-state
+              [compact]="true"
+              [embedded]="true"
+              [hideIcon]="true"
+              [title]="tr('customer.app.dashboard.noMessagesTitle')"
+              [description]="tr('customer.app.dashboard.noMessagesDescription')"
+            />
+          }
+
+          <a class="btn messages-widget__cta" routerLink="/app/messages">
+            <adeni-carbon-icon name="chat" [size]="16" />
+            {{ tr('customer.app.dashboard.openInbox') }}
+          </a>
+        </div>
       }
     </div>
 
@@ -153,9 +203,12 @@
         <p class="app-muted">
           {{ tr('customer.app.dashboard.reviewPrompt', { service: review.serviceName, business: review.businessName }) }}
         </p>
-        <button type="button" class="cds-btn cds-btn--primary cds-btn--sm" (click)="openReview()">
-          {{ tr('customer.app.dashboard.leaveReview') }}
-        </button>
+        <div class="widget-card__actions">
+          <button type="button" class="btn btn-primary" (click)="openReview()">
+            <adeni-carbon-icon name="edit" [size]="16" />
+            {{ tr('customer.app.dashboard.leaveReview') }}
+          </button>
+        </div>
       </div>
     }
   </div>
@@ -168,28 +221,26 @@
   [hasFooter]="true"
   (closed)="closeReview()"
 >
-  <label class="app-field">
-    <span>{{ tr('customer.app.dashboard.reviewRating') }}</span>
-    <select [(ngModel)]="reviewRating" name="rating">
-      @for (n of [5, 4, 3, 2, 1]; track n) {
-        <option [ngValue]="n">{{ n }}</option>
-      }
-    </select>
-  </label>
-  <label class="app-field">
-    <span>{{ tr('customer.app.dashboard.reviewComment') }}</span>
-    <textarea [(ngModel)]="reviewComment" name="comment" rows="3" maxlength="1000"></textarea>
-  </label>
-  <div modalFooter class="app-actions">
-    <button type="button" class="cds-btn cds-btn--ghost cds-btn--sm" (click)="closeReview()" [disabled]="reviewSubmitting()">
+  <div class="review-form">
+    <div class="field">
+      <label for="review-rating">{{ tr('customer.app.dashboard.reviewRating') }}</label>
+      <select id="review-rating" [(ngModel)]="reviewRating" name="rating">
+        @for (n of [5, 4, 3, 2, 1]; track n) {
+          <option [ngValue]="n">{{ n }}</option>
+        }
+      </select>
+    </div>
+    <div class="field">
+      <label for="review-comment">{{ tr('customer.app.dashboard.reviewComment') }}</label>
+      <textarea id="review-comment" [(ngModel)]="reviewComment" name="comment" rows="4" maxlength="1000"></textarea>
+    </div>
+  </div>
+  <div modalFooter class="modal-actions">
+    <button type="button" class="btn" (click)="closeReview()" [disabled]="reviewSubmitting()">
       {{ tr('common.cancel') }}
     </button>
-    <button
-      type="button"
-      class="cds-btn cds-btn--primary cds-btn--sm"
-      (click)="submitReview()"
-      [disabled]="reviewSubmitting()"
-    >
+    <button type="button" class="btn btn-primary" (click)="submitReview()" [disabled]="reviewSubmitting()">
+      <adeni-carbon-icon name="checkmark" [size]="16" />
       {{ tr('customer.app.dashboard.submitReview') }}
     </button>
   </div>

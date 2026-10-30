@@ -1,107 +1,342 @@
 <app-portal-page
   [title]="tr('customer.app.calendar.title')"
-  [description]="tr('customer.app.calendar.description')"
+  [description]="appointmentSummary()"
 >
-  <div class="cal-toolbar">
-    <adeni-tabs
-      [tabs]="tabs()"
-      linkMode="button"
-      [activeId]="view()"
-      (activeIdChange)="setView($event)"
-    />
-    <div class="cal-period">
-      <button type="button" class="cds-btn cds-btn--ghost cds-btn--sm" (click)="prev()" [attr.aria-label]="tr('customer.app.calendar.prev')">
-        <adeni-carbon-icon name="chevron--left" [size]="16" />
-      </button>
-      <strong>{{ periodLabel() }}</strong>
-      <button type="button" class="cds-btn cds-btn--ghost cds-btn--sm" (click)="next()" [attr.aria-label]="tr('customer.app.calendar.next')">
-        <adeni-carbon-icon name="chevron--right" [size]="16" />
-      </button>
-      <button type="button" class="cds-btn cds-btn--tertiary cds-btn--sm" (click)="goToday()">
-        {{ tr('customer.app.calendar.today') }}
-      </button>
-    </div>
-  </div>
-
-  @if (loading()) {
-    <div class="app-panel app-panel--skeleton" aria-hidden="true">
-      <span class="app-sk app-sk--line"></span>
-      <span class="app-sk app-sk--line"></span>
-    </div>
-  } @else if (failed()) {
-    <adeni-portal-empty-state
-      [compact]="true"
-      icon="calendar"
-      [title]="tr('customer.app.calendar.loadErrorTitle')"
-      [description]="tr('customer.app.calendar.loadError')"
-    >
-      <button type="button" class="cds-btn cds-btn--primary cds-btn--sm" (click)="load()">
-        {{ tr('discover.tryAgain') }}
-      </button>
-    </adeni-portal-empty-state>
-  } @else {
-    <div class="cal-grid" [attr.data-view]="view()" role="grid" [attr.aria-label]="periodLabel()">
-      <div class="cal-weekdays" role="row">
-        @for (label of weekdayLabels(); track label) {
-          <div class="cal-weekday" role="columnheader">{{ label }}</div>
-        }
+  <div class="cal-shell">
+    <div class="cal-toolbar">
+      <div class="cal-nav" role="group" [attr.aria-label]="tr('businessApp.staff.navigateCalendar')">
+        <button type="button" class="btn btn-ghost" (click)="goToday()">{{ tr('customer.app.calendar.today') }}</button>
+        <button type="button" class="nav-btn" (click)="prev()" [attr.aria-label]="tr('common.previous')">‹</button>
+        <button type="button" class="nav-btn" (click)="next()" [attr.aria-label]="tr('common.next')">›</button>
       </div>
-      <div class="cal-days" role="rowgroup">
-        @for (day of gridDays(); track dayKeyTrack(day)) {
-          <button
-            type="button"
-            class="cal-day"
-            role="gridcell"
-            [class.cal-day--outside]="view() === 'month' && !inMonth(day)"
-            [class.cal-day--selected]="isSelected(day)"
-            [class.cal-day--today]="isToday(day)"
-            [attr.aria-selected]="isSelected(day)"
-            [attr.aria-current]="isToday(day) ? 'date' : null"
-            [attr.aria-label]="dayAria(day)"
-            (click)="selectDay(day)"
-          >
-            <span class="cal-day__num">{{ dayNumber(day) }}</span>
-            @if (countFor(day) > 0) {
-              <span class="cal-day__dots" aria-hidden="true">
-                @for (_ of dotSlots(countFor(day)); track $index) {
-                  <span class="cal-dot"></span>
-                }
-              </span>
+
+      <strong class="period-label">{{ periodLabel() }}</strong>
+
+      <div class="view-toggle" role="group" [attr.aria-label]="tr('businessApp.staff.calendarRange')">
+        <button type="button" [class.active]="view() === 'month'" (click)="setView('month')">
+          {{ tr('customer.app.calendar.month') }}
+        </button>
+        <button type="button" [class.active]="view() === 'week'" (click)="setView('week')">
+          {{ tr('customer.app.calendar.week') }}
+        </button>
+        <button type="button" [class.active]="view() === 'day'" (click)="setView('day')">
+          {{ tr('customer.app.calendar.day') }}
+        </button>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <p class="muted">{{ tr('common.loading') }}</p>
+    } @else if (failed()) {
+      <adeni-portal-empty-state
+        icon="calendar"
+        [title]="tr('customer.app.calendar.loadErrorTitle')"
+        [description]="tr('customer.app.calendar.loadError')"
+      >
+        <button type="button" class="btn btn-primary" (click)="load()">
+          <adeni-carbon-icon name="restart" [size]="16" />
+          {{ tr('discover.tryAgain') }}
+        </button>
+      </adeni-portal-empty-state>
+    } @else {
+      <adeni-list-toolbar
+        storageKey="customerApp.calendar"
+        [viewMode]="listViewMode()"
+        (viewModeChange)="onListViewChange($event)"
+        [viewModeCardsLabel]="tr('common.calendar')"
+        [viewModeTableLabel]="tr('businessApp.staff.list')"
+        viewModeCardsIcon="calendar"
+        [count]="displayBlocks().length"
+        [singularCountLabel]="tr('common.appointment')"
+        [pluralCountLabel]="tr('businessApp.dashboard.appointments')"
+        [searchPlaceholder]="tr('customer.app.calendar.searchPlaceholder')"
+        [searchQuery]="calendarSearch()"
+        (searchQueryChange)="calendarSearch.set($event)"
+      />
+
+      <div class="cal-workspace">
+        <div class="cal-main">
+          @if (listViewMode() === 'table') {
+            @if (displayBlocks().length === 0) {
+              <adeni-portal-empty-state
+                icon="calendar"
+                [title]="tr('customer.app.calendar.emptyDayTitle')"
+                [description]="tr('customer.app.calendar.searchPlaceholder')"
+                [compact]="true"
+              />
+            } @else {
+              <div class="adeni-list-results">
+                <adeni-data-table
+                  [rows]="displayBlocks()"
+                  [columns]="agendaTableColumns()"
+                  [trackRow]="trackAgendaRow"
+                >
+                  <ng-template adeniDataTableCell="when" let-block>
+                    <span class="adeni-data-table-text">{{ formatAgendaDay(block.dayKey) }}</span>
+                    <span class="agenda-table-time">{{ block.startLabel }} – {{ block.endLabel }}</span>
+                  </ng-template>
+                  <ng-template adeniDataTableCell="service" let-block>
+                    <a class="adeni-data-table-link" [routerLink]="['/app/bookings', block.booking.id]">
+                      {{ block.title }}
+                    </a>
+                  </ng-template>
+                  <ng-template adeniDataTableCell="business" let-block>
+                    <span class="adeni-data-table-text">{{ block.subtitle ?? '—' }}</span>
+                  </ng-template>
+                  <ng-template adeniDataTableCell="status" let-block>
+                    <adeni-pill [tone]="blockPillTone(block)" [compact]="true">{{ block.statusLabel }}</adeni-pill>
+                  </ng-template>
+                </adeni-data-table>
+              </div>
             }
-          </button>
-        }
-      </div>
-    </div>
+          } @else if (view() === 'month') {
+            <div class="month-board">
+              <div class="month-dow" aria-hidden="true">
+                @for (label of weekdayLabels(); track label) {
+                  <span>{{ label }}</span>
+                }
+              </div>
+              <div class="month-grid">
+                @for (cell of monthCells(); track cell.key) {
+                  <div
+                    class="month-cell"
+                    [class.is-today]="cell.isToday"
+                    [class.is-past]="cell.isPast"
+                    [class.is-outside]="!cell.inMonth"
+                  >
+                    <button
+                      type="button"
+                      class="month-dom-btn"
+                      (click)="openDay(cell)"
+                      [attr.aria-label]="cell.label + ' ' + cell.dateNum"
+                    >
+                      <span class="month-dom">{{ cell.dateNum }}</span>
+                    </button>
+                    <div class="month-items">
+                      @for (item of cell.items.slice(0, 3); track item.id) {
+                        <button
+                          type="button"
+                          class="month-pill"
+                          [class.is-pending]="item.status === 0"
+                          [class.is-confirmed]="item.status === 1"
+                          [class.is-rejected]="item.status === 2"
+                          [class.is-cancelled]="item.status === 3"
+                          (click)="selectBlock(item, $event)"
+                        >
+                          <em>{{ item.startLabel }}</em>
+                          {{ item.title }}
+                        </button>
+                      }
+                      @if (cell.items.length > 3) {
+                        <button type="button" class="month-more" (click)="openDay(cell)">
+                          +{{ cell.items.length - 3 }} more
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="cal-board">
+              <div class="day-heads" [style.--cols]="visibleDays().length">
+                <div class="gutter-head" aria-hidden="true"></div>
+                @for (day of visibleDays(); track day.key) {
+                  <button
+                    type="button"
+                    class="day-head"
+                    [class.is-today]="day.isToday"
+                    [class.is-past]="day.isPast"
+                    [class.is-focus]="isFocusDay(day)"
+                    (click)="openDay(day)"
+                  >
+                    <span class="dow">{{ view() === 'day' ? day.label : day.shortLabel }}</span>
+                    <span class="dom">{{ day.dateNum }}</span>
+                    @if (day.bookingCount > 0) {
+                      <span class="density" [attr.data-n]="day.bookingCount > 3 ? 'hot' : 'warm'">
+                        {{ day.bookingCount }}
+                      </span>
+                    }
+                  </button>
+                }
+              </div>
 
-    <section class="app-section cal-selected" [attr.aria-label]="tr('customer.app.calendar.selectedDay')">
-      <h3 class="app-section__title">{{ tr('customer.app.calendar.selectedDay') }}</h3>
-      @if (selectedBookings().length === 0) {
-        <adeni-portal-empty-state
-          [compact]="true"
-          icon="calendar"
-          [title]="tr('customer.app.calendar.emptyDayTitle')"
-          [description]="tr('customer.app.calendar.emptyDayDescription')"
-        >
-          <a class="cds-btn cds-btn--primary cds-btn--sm" routerLink="/app/discover">
-            {{ tr('customer.app.dashboard.findBusiness') }}
-          </a>
-        </adeni-portal-empty-state>
-      } @else {
-        <ul class="app-list">
-          @for (item of selectedBookings(); track item.id) {
-            <li>
-              <a class="app-row" [routerLink]="['/app/bookings', item.id]">
-                <span class="app-row__main">
-                  <strong>{{ item.serviceName }}</strong>
-                  <span class="app-muted">{{ item.businessName }} · {{ when(item.startAt) }}</span>
-                </span>
-                <adeni-pill [tone]="statusTone(item.status)" [compact]="true">{{ statusLabel(item.status) }}</adeni-pill>
-              </a>
-            </li>
+              <div
+                class="time-grid"
+                [style.--cols]="visibleDays().length"
+                [style.height.px]="gridHeight()"
+              >
+                <div class="hour-rail" aria-hidden="true">
+                  @for (hour of hourMarks(); track hour) {
+                    <div class="hour-mark" [style.top.px]="(hour - rangeHours().start) * pxPerHour">
+                      <span>{{ hourLabel(hour) }}</span>
+                    </div>
+                  }
+                </div>
+
+                <div class="day-columns">
+                  @for (day of visibleDays(); track day.key) {
+                    <div class="day-col" [class.is-today]="day.isToday">
+                      @for (hour of hourMarks(); track hour) {
+                        <div
+                          class="hour-line"
+                          [style.top.px]="(hour - rangeHours().start) * pxPerHour"
+                        ></div>
+                      }
+
+                      @if (nowLine(); as now) {
+                        @if (now.dayKey === day.key) {
+                          <div class="now-line" [style.top.px]="now.top">
+                            <span class="now-dot"></span>
+                            <span class="now-label">{{ now.label }}</span>
+                          </div>
+                        }
+                      }
+
+                      @for (block of blocksForDay(day.key); track block.id) {
+                        <button
+                          type="button"
+                          class="event-block"
+                          [class.is-pending]="block.status === 0"
+                          [class.is-confirmed]="block.status === 1"
+                          [class.is-rejected]="block.status === 2"
+                          [class.is-cancelled]="block.status === 3"
+                          [class.is-selected]="selectedId() === block.id"
+                          [style.top.px]="block.top"
+                          [style.height.px]="block.height"
+                          (click)="selectBlock(block, $event)"
+                        >
+                          <span class="event-time">{{ block.startLabel }} – {{ block.endLabel }}</span>
+                          <span class="event-title">{{ block.title }}</span>
+                          @if (block.height >= 52 && block.subtitle) {
+                            <span class="event-meta">{{ block.subtitle }}</span>
+                          } @else if (block.height >= 56 && block.statusLabel) {
+                            <span class="event-meta">{{ block.statusLabel }}</span>
+                          }
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
           }
-        </ul>
-        <p class="app-more"><a routerLink="/app/bookings">{{ tr('customer.app.dashboard.seeAll') }}</a></p>
-      }
-    </section>
-  }
+        </div>
+
+        <aside #detailRail class="cal-sidebar">
+          <div class="cal-sidebar-body">
+            @if (selectedBlock(); as sel) {
+              <div class="sidebar-panel">
+                <button type="button" class="sidebar-back" (click)="clearSelection()">
+                  {{ tr('businessApp.staff.back') }}
+                </button>
+                <p class="rail-kicker">{{ tr('common.appointment') }}</p>
+                <h3 class="sidebar-title">{{ sel.title }}</h3>
+                <p class="rail-when">{{ sel.startLabel }} – {{ sel.endLabel }}</p>
+                @if (sel.subtitle) {
+                  <p class="rail-staff">{{ sel.subtitle }}</p>
+                }
+                <span
+                  class="rail-status"
+                  [class.is-pending]="sel.status === 0"
+                  [class.is-confirmed]="sel.status === 1"
+                  [class.is-rejected]="sel.status === 2"
+                  [class.is-cancelled]="sel.status === 3"
+                >
+                  {{ sel.statusLabel }}
+                </span>
+                <p class="rail-hint muted">
+                  {{ tr('customer.app.calendar.manageFromBookings') }}
+                  <a routerLink="/app/bookings">{{ tr('common.bookings') }}</a>.
+                </p>
+                <a class="btn btn-primary" [routerLink]="['/app/bookings', sel.booking.id]">
+                  <adeni-carbon-icon name="arrow--right" [size]="16" />
+                  {{ tr('customer.app.calendar.viewBooking') }}
+                </a>
+              </div>
+            } @else {
+              <div class="sidebar-section">
+                <p class="sidebar-label">{{ tr('customer.app.calendar.statusGuide') }}</p>
+                <div class="legend compact">
+                  <span class="leg is-confirmed">{{ tr('businessApp.staff.confirmed') }}</span>
+                  <span class="leg is-pending">{{ tr('businessApp.staff.pending') }}</span>
+                  <span class="leg is-cancelled">{{ tr('businessApp.bookings.cancelled') }}</span>
+                </div>
+              </div>
+
+              <div class="sidebar-section">
+                <div class="mini-cal-head">
+                  <button
+                    type="button"
+                    class="nav-btn mini"
+                    (click)="shiftSidebarMonth(-1)"
+                    [attr.aria-label]="tr('common.previousMonth')"
+                  >
+                    ‹
+                  </button>
+                  <strong>{{ sidebarMonthLabel() }}</strong>
+                  <button
+                    type="button"
+                    class="nav-btn mini"
+                    (click)="shiftSidebarMonth(1)"
+                    [attr.aria-label]="tr('common.nextMonth')"
+                  >
+                    ›
+                  </button>
+                </div>
+                <div class="mini-dow" aria-hidden="true">
+                  @for (label of weekdayLabels(); track label) {
+                    <span>{{ label.slice(0, 1) }}</span>
+                  }
+                </div>
+                <div class="mini-grid">
+                  @for (cell of sidebarMiniCells(); track cell.key) {
+                    <button
+                      type="button"
+                      class="mini-cell"
+                      [class.is-today]="cell.isToday"
+                      [class.is-outside]="!cell.inMonth"
+                      [class.is-selected]="cell.key === focusDayKey()"
+                      (click)="pickSidebarDay(cell)"
+                    >
+                      {{ cell.dateNum }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <div class="sidebar-section sidebar-day-list">
+                <p class="sidebar-label">{{ tr('customer.app.calendar.selectedDay') }}</p>
+                @if (focusDayBookings().length === 0) {
+                  <adeni-portal-empty-state
+                    [compact]="true"
+                    [embedded]="true"
+                    [hideIcon]="true"
+                    [title]="tr('customer.app.calendar.emptyDayTitle')"
+                    [description]="tr('customer.app.calendar.emptyDayDescription')"
+                  >
+                    <a class="btn btn-primary" routerLink="/app/discover">
+                      <adeni-carbon-icon name="search" [size]="16" />
+                      {{ tr('customer.app.dashboard.findBusiness') }}
+                    </a>
+                  </adeni-portal-empty-state>
+                } @else {
+                  <ul class="sidebar-events">
+                    @for (item of focusDayBookings(); track item.id) {
+                      <li>
+                        <a class="sidebar-event" [routerLink]="['/app/bookings', item.id]">
+                          <strong>{{ item.serviceName }}</strong>
+                          <span class="sidebar-event__meta">{{ item.businessName }}</span>
+                        </a>
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
+            }
+          </div>
+        </aside>
+      </div>
+    }
+  </div>
 </app-portal-page>

@@ -1,0 +1,168 @@
+@use "staff-layout" as *;
+
+.widget-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.messages-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-height: 100%;
+}
+
+.messages-widget__hero {
+  display: grid;
+  gap: 0.35rem;
+  justify-items: start;
+}
+
+.messages-widget__headline {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.messages-widget__threads {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--border) 90%, transparent);
+  background: color-mix(in srgb, var(--text) 2%, var(--surface));
+}
+
+.messages-widget__thread {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.65rem 0.75rem;
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  &:hover {
+    background: color-mix(in srgb, var(--interactive, #7f56ff) 6%, var(--surface));
+  }
+}
+
+.messages-widget__avatar {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--interactive, #7f56ff) 16%, var(--surface));
+  color: var(--interactive, #7f56ff);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.messages-widget__copy {
+  min-width: 0;
+}
+
+.messages-widget__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+
+  strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.84rem;
+    font-weight: 650;
+  }
+
+  time {
+    flex-shrink: 0;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.messages-widget__preview {
+  display: block;
+  margin-top: 0.15rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.messages-widget__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--interactive, #7f56ff);
+}
+
+.messages-widget__cta {
+  align-self: flex-start;
+  margin-top: 0.15rem;
+}
+
+.widget-card ::ng-deep adeni-portal-empty-state .portal-empty--embedded {
+  align-items: flex-start;
+  text-align: left;
+  padding-inline: 0;
+}
+
+.review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: min(100%, 22rem);
+}
+
+.modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.25rem;
+  padding: 0 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--interactive, #7f56ff);
+  border-color: var(--interactive, #7f56ff);
+  color: #fff;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

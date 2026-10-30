@@ -22,7 +22,10 @@
       </div>
       <h2>{{ tr("discover.packages.giftsLoadErrorTitle") }}</h2>
       <p>{{ error() }}</p>
-      <button type="button" class="cds-btn cds-btn--primary" (click)="load()">{{ tr("discover.tryAgain") }}</button>
+      <button type="button" class="btn btn-primary" (click)="load()">
+        <adeni-carbon-icon name="restart" [size]="16" />
+        {{ tr("discover.tryAgain") }}
+      </button>
     </div>
   } @else if (cards().length === 0) {
     <div class="empty">
@@ -31,7 +34,10 @@
       </div>
       <h2>{{ tr("discover.packages.giftsEmptyTitle") }}</h2>
       <p>{{ tr("discover.packages.giftsEmptyDescription") }}</p>
-      <a class="cds-btn cds-btn--primary" routerLink="/app/discover">{{ tr("discover.packages.giftsFindBusiness") }}</a>
+      <a class="btn btn-primary" routerLink="/app/discover">
+        <adeni-carbon-icon name="search" [size]="16" />
+        {{ tr("discover.packages.giftsFindBusiness") }}
+      </a>
     </div>
   } @else {
     <ul class="list">
@@ -49,14 +55,18 @@
           <div class="actions">
             @if (revealedId() === card.id) {
               <output class="code">{{ code() }}</output>
-              <button type="button" class="cds-btn cds-btn--ghost cds-btn--sm" (click)="hide()">{{ tr("commerce.hide") }}</button>
+              <button type="button" class="btn" (click)="hide()">
+                <adeni-carbon-icon name="view--off" [size]="16" />
+                {{ tr("commerce.hide") }}
+              </button>
             } @else {
               <button
                 type="button"
-                class="cds-btn cds-btn--tertiary cds-btn--sm"
+                class="btn"
                 [disabled]="busy()"
                 (click)="reveal(card.id)"
               >
+                <adeni-carbon-icon name="view" [size]="16" />
                 {{ tr("commerce.reveal") }}
               </button>
             }

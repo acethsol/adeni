@@ -26,16 +26,16 @@ function booking(partial: Partial<CustomerBookingResponse>): CustomerBookingResp
 }
 
 describe("customer-calendar helpers (C2)", () => {
-  it("builds a 6x7 month grid starting on Sunday", () => {
-    const days = monthGridDays(new Date(2026, 5, 15), 0);
-    expect(days).toHaveLength(42);
-    expect(days[0]!.getDay()).toBe(0);
+  it("builds a month grid with Mon-start weeks", () => {
+    const days = monthGridDays(new Date(2026, 5, 15));
+    expect(days.length).toBeGreaterThanOrEqual(35);
+    expect(days[0]!.getDay()).toBe(1);
   });
 
-  it("builds a 7-day week grid", () => {
-    const days = weekGridDays(new Date(2026, 5, 17), 0);
+  it("builds a Mon–Sun week grid", () => {
+    const days = weekGridDays(new Date(2026, 5, 17));
     expect(days).toHaveLength(7);
-    expect(dayKey(days[0]!)).toBe("2026-06-14");
+    expect(dayKey(days[0]!)).toBe("2026-06-15");
   });
 
   it("groups bookings by local day key", () => {

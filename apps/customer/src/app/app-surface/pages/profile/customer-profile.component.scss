@@ -1,0 +1,146 @@
+@use "staff-layout" as *;
+
+$teal: var(--adeni-teal, #13c2a3);
+
+.profile-hero {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--cds-spacing-05);
+  align-items: center;
+  padding: var(--cds-spacing-06);
+  border: 1px solid var(--border);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, $teal 8%, var(--surface)) 0%,
+    var(--surface) 55%
+  );
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--text) 4%, transparent);
+}
+
+.profile-avatar {
+  display: grid;
+  place-items: center;
+  width: 4rem;
+  height: 4rem;
+  font-size: 1.125rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: linear-gradient(145deg, var(--interactive, #7f56ff), color-mix(in srgb, $teal 65%, #6929c4));
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--interactive, #7f56ff) 25%, transparent);
+}
+
+.profile-kicker {
+  margin: 0 0 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.profile-name {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.profile-meta {
+  margin: 0.35rem 0 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.profile-section {
+  margin-top: var(--cds-spacing-06);
+}
+
+.profile-section__label {
+  margin: 0 0 var(--cds-spacing-04);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.profile-links {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.profile-links li + li {
+  border-top: 1px solid var(--border);
+}
+
+.profile-link {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--cds-spacing-04);
+  padding: 0.85rem var(--cds-spacing-05);
+  text-decoration: none;
+  color: inherit;
+  transition: background 140ms ease;
+}
+
+.profile-link:hover {
+  background: color-mix(in srgb, var(--text) 3%, var(--surface));
+}
+
+.profile-link__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  color: color-mix(in srgb, $teal 70%, var(--text));
+  background: color-mix(in srgb, $teal 10%, var(--surface));
+}
+
+.profile-link__text {
+  font-size: 0.9375rem;
+  font-weight: 650;
+}
+
+.profile-link adeni-carbon-icon:last-child {
+  color: var(--text-muted);
+}
+
+.profile-foot {
+  margin-top: var(--cds-spacing-06);
+  display: flex;
+  justify-content: flex-start;
+}
+
+.btn-ghost-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.25rem;
+  padding: 0 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--cds-support-error, #da1e28) 35%, var(--border));
+  background: transparent;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--cds-support-error, #da1e28);
+  cursor: pointer;
+}
+
+.btn-ghost-danger:hover {
+  background: color-mix(in srgb, var(--cds-support-error, #da1e28) 8%, var(--surface));
+}
+
+@media (max-width: 520px) {
+  .profile-hero {
+    grid-template-columns: 1fr;
+    text-align: center;
+    justify-items: center;
+  }
+}

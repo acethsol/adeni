@@ -64,8 +64,8 @@ export const routes: Routes = [
       {
         path: "bookings",
         loadComponent: () =>
-          import("./app-surface/pages/bookings/my-bookings.component").then(m => m.MyBookingsComponent),
-        title: "My bookings",
+          import("./app-surface/pages/bookings/bookings.component").then(m => m.BookingsComponent),
+        title: "Bookings",
       },
       {
         path: "messages",

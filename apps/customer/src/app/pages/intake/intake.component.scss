@@ -1,3 +1,5 @@
+@use "staff-layout" as *;
+
 :host {
   display: block;
 }
@@ -264,7 +266,7 @@ fieldset {
     display: none;
   }
 
-  .actions .cds-btn {
+  .actions .btn {
     width: 100%;
   }
 }

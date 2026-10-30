@@ -13,9 +13,11 @@ import type { AdeniCarbonIconName } from "./carbon-icon";
       [class.portal-empty--embedded]="embedded()"
       role="status"
     >
-      <div class="portal-empty__icon" aria-hidden="true">
-        <adeni-carbon-icon [name]="icon()" [size]="compact() || embedded() ? 28 : 40" />
-      </div>
+      @if (!hideIcon()) {
+        <div class="portal-empty__icon" aria-hidden="true">
+          <adeni-carbon-icon [name]="icon()" [size]="compact() || embedded() ? 28 : 40" />
+        </div>
+      }
       <h3 class="portal-empty__title">{{ title() }}</h3>
       @if (description()) {
         <p class="portal-empty__desc">{{ description() }}</p>
@@ -115,6 +117,7 @@ export class AdeniPortalEmptyStateComponent {
   readonly title = input.required<string>();
   readonly description = input<string>("");
   readonly icon = input<AdeniCarbonIconName>("search");
+  readonly hideIcon = input(false, { transform: booleanAttribute });
   readonly compact = input(false, { transform: booleanAttribute });
   readonly embedded = input(false, { transform: booleanAttribute });
 

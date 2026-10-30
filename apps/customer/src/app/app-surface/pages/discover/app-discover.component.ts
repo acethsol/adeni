@@ -1,6 +1,6 @@
 import { Component } from "@angular/core";
 import { RouterLink } from "@angular/router";
-import { PortalPageComponent, injectAdeniTranslate } from "@adeni/ui";
+import { AdeniCarbonIconComponent, PortalPageComponent, injectAdeniTranslate } from "@adeni/ui";
 import { DiscoverySearchComponent } from "../../../shared/discovery-search.component";
 
 /**
@@ -11,14 +11,17 @@ import { DiscoverySearchComponent } from "../../../shared/discovery-search.compo
 @Component({
   selector: "app-app-discover",
   standalone: true,
-  imports: [RouterLink, PortalPageComponent, DiscoverySearchComponent],
+  imports: [RouterLink, PortalPageComponent, DiscoverySearchComponent, AdeniCarbonIconComponent],
   template: `
     <app-portal-page [title]="tr('customer.app.nav.discover')" [description]="tr('customer.appDiscover.description')">
       <div class="app-discover-search">
         <app-discovery-search variant="default" />
       </div>
       <p class="app-more">
-        <a class="cds-btn cds-btn--tertiary cds-btn--sm" routerLink="/discover">{{ tr('customer.appDiscover.browseAll') }}</a>
+        <a class="btn" routerLink="/discover">
+          <adeni-carbon-icon name="launch" [size]="16" />
+          {{ tr('customer.appDiscover.browseAll') }}
+        </a>
       </p>
     </app-portal-page>
   `,

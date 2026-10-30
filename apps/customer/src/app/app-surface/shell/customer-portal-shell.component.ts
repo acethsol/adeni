@@ -14,20 +14,23 @@ import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
 import { Meta } from "@angular/platform-browser";
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
 import type { AdeniBrandSurface } from "@adeni/brand";
+import type { LocaleId } from "@adeni/shared";
 import {
   AdeniBrandLogoComponent,
-  AdeniCarbonIconComponent,
-  AdeniConfirmHostComponent,
-  AdeniGlobalLoadingPanelComponent,
+  AdeniPortalNavIconComponent,
+  AdeniLocaleService,
   AdeniStaffShellFooterComponent,
   AdeniStaffSidebarBrandComponent,
-  AdeniToastHostComponent,
   injectAdeniTranslate,
 } from "@adeni/ui";
 import { filter, map, startWith } from "rxjs";
-import { CUSTOMER_NAV_GROUPS, findCustomerNavItem } from "../customer-nav-groups";
+import { CustomerThemeService, type CustomerThemePreference } from "../../core/customer-theme.service";
+import { crumbsForCustomerUrl } from "../customer-app-breadcrumbs";
+import { CUSTOMER_NAV_GROUPS } from "../customer-nav-groups";
 import { CustomerAppSessionService } from "../services/customer-app-session.service";
 import { CustomerMessagingBadgeService } from "../services/customer-messaging-badge.service";
+import { CustomerMessagingShellService } from "../services/customer-messaging-shell.service";
+import { CustomerMessagesShortcutComponent } from "./customer-messages-shortcut.component";
 
 const ROBOTS_NOINDEX = { name: "robots", content: "noindex,nofollow" } as const;
 const SIDEBAR_STORAGE_KEY = "adeni.customerApp.sidebar.collapsed";
@@ -71,11 +74,9 @@ function readSidebarCollapsed(): boolean {
     RouterLinkActive,
     AdeniBrandLogoComponent,
     AdeniStaffSidebarBrandComponent,
-    AdeniCarbonIconComponent,
+    AdeniPortalNavIconComponent,
+    CustomerMessagesShortcutComponent,
     AdeniStaffShellFooterComponent,
-    AdeniGlobalLoadingPanelComponent,
-    AdeniToastHostComponent,
-    AdeniConfirmHostComponent,
   ],
   templateUrl: "./customer-portal-shell.component.html",
   styleUrl: "./customer-portal-shell.component.scss",
@@ -85,6 +86,9 @@ export class CustomerPortalShellComponent implements OnInit {
   protected readonly session = inject(CustomerAppSessionService);
   protected readonly badge = inject(CustomerMessagingBadgeService);
   private readonly router = inject(Router);
+  private readonly localeService = inject(AdeniLocaleService);
+  private readonly customerTheme = inject(CustomerThemeService);
+  private readonly messagingShell = inject(CustomerMessagingShellService);
   private readonly meta = inject(Meta);
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly destroyRef = inject(DestroyRef);
@@ -92,8 +96,13 @@ export class CustomerPortalShellComponent implements OnInit {
 
   protected readonly navGroups = CUSTOMER_NAV_GROUPS;
   readonly collapsed = signal(false);
-  readonly logoSurface = computed<AdeniBrandSurface>(() => "light");
+  readonly settingsOpen = signal(false);
   readonly userOpen = signal(false);
+  readonly locales = this.localeService.locales;
+  readonly locale = this.localeService.locale;
+  readonly themePreference = this.customerTheme.preference;
+  readonly theme = this.customerTheme.theme;
+  readonly logoSurface = computed<AdeniBrandSurface>(() => (this.theme() === "dark" ? "dark" : "light"));
 
   readonly accountName = computed(() => this.session.displayName() || this.tr("customer.app.account"));
   readonly accountDetail = computed(() => this.session.email() ?? "");
@@ -104,22 +113,13 @@ export class CustomerPortalShellComponent implements OnInit {
   private readonly url = toSignal(
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
-      startWith(null),
-      map(() => this.router.url),
+      map((event) => event.urlAfterRedirects),
+      startWith(this.router.url),
     ),
     { initialValue: this.router.url },
   );
 
-  readonly crumbs = computed(() => {
-    const match = findCustomerNavItem(this.url());
-    if (!match) {
-      return [{ label: this.tr("customer.app.nav.dashboard") }];
-    }
-    return [
-      { label: this.tr(match.group.labelKey) },
-      { label: this.tr(match.item.labelKey), path: match.item.path },
-    ];
-  });
+  readonly crumbs = computed(() => crumbsForCustomerUrl((key) => this.tr(key), this.url()));
 
   constructor() {
     this.meta.updateTag(ROBOTS_NOINDEX);
@@ -133,6 +133,7 @@ export class CustomerPortalShellComponent implements OnInit {
     }
 
     this.collapsed.set(readSidebarCollapsed());
+    this.messagingShell.start();
     void this.badge.refresh(true);
     this.router.events
       .pipe(
@@ -156,13 +157,34 @@ export class CustomerPortalShellComponent implements OnInit {
     this.setCollapsed(true);
   }
 
+  toggleTheme(): void {
+    this.customerTheme.toggle();
+  }
+
+  setTheme(preference: CustomerThemePreference): void {
+    this.customerTheme.setPreference(preference);
+  }
+
+  setLocale(locale: LocaleId): void {
+    this.localeService.setLocale(locale);
+    this.settingsOpen.set(false);
+  }
+
+  toggleSettings(event: MouseEvent): void {
+    event.stopPropagation();
+    this.userOpen.set(false);
+    this.settingsOpen.update((open) => !open);
+  }
+
   toggleUser(event: MouseEvent): void {
     event.stopPropagation();
+    this.settingsOpen.set(false);
     this.userOpen.update((open) => !open);
   }
 
   closeMenus(): void {
     this.userOpen.set(false);
+    this.settingsOpen.set(false);
   }
 
   logout(): void {
@@ -176,6 +198,9 @@ export class CustomerPortalShellComponent implements OnInit {
     const target = event.target as Node;
     if (this.userOpen() && !this.host.nativeElement.querySelector('[data-menu-root="user"]')?.contains(target)) {
       this.userOpen.set(false);
+    }
+    if (this.settingsOpen() && !this.host.nativeElement.querySelector('[data-menu-root="settings"]')?.contains(target)) {
+      this.settingsOpen.set(false);
     }
   }
 

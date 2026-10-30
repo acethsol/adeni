@@ -6,36 +6,32 @@ import { map } from "rxjs";
 import { formatBookingStatusLabel, formatSlotTime, type CustomerBookingResponse } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
+  AdeniFeedbackService,
   AdeniLocaleService,
-  AdeniPillComponent,
   AdeniPortalEmptyStateComponent,
   PortalPageComponent,
   injectAdeniTranslate,
-  type AdeniPillTone,
+  type AdeniCarbonIconName,
 } from "@adeni/ui";
 import { CustomerApiService } from "../../../core/services/customer-api.service";
 import { bookAgainLink } from "../dashboard/customer-dashboard.helpers";
 
-/**
- * `/app/bookings/:bookingId` — read-only detail built from the bookings list
- * (there is no customer "get booking by id" API yet; spec §3.2 gap 9).
- * Cancel stays on the list; booking itself always happens on the canonical public business page.
- */
 @Component({
   selector: "app-booking-detail",
   standalone: true,
   imports: [
     RouterLink,
     PortalPageComponent,
-    AdeniPillComponent,
     AdeniCarbonIconComponent,
     AdeniPortalEmptyStateComponent,
   ],
   templateUrl: "./booking-detail.component.html",
+  styleUrl: "./booking-detail.component.scss",
 })
 export class BookingDetailComponent implements OnInit {
   protected readonly tr = injectAdeniTranslate();
   private readonly api = inject(CustomerApiService);
+  private readonly feedback = inject(AdeniFeedbackService);
   private readonly route = inject(ActivatedRoute);
   private readonly locale = inject(AdeniLocaleService).locale;
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
@@ -73,7 +69,11 @@ export class BookingDetailComponent implements OnInit {
     this.loading.set(true);
     this.loadFailed.set(false);
     try {
-      const rows = await this.api.withAuthorizedClient((client) => client.getMyBookings());
+      const rows = await this.feedback.runLoading(
+        () => this.api.withAuthorizedClient((client) => client.getMyBookings()),
+        this.tr("bookings.title"),
+        this.tr("toast.loadingDetail"),
+      );
       if (!this.abort.signal.aborted) {
         this.bookings.set(rows);
       }
@@ -92,11 +92,44 @@ export class BookingDetailComponent implements OnInit {
     return formatSlotTime(iso, this.locale());
   }
 
+  formatTimeOnly(iso: string): string {
+    return new Intl.DateTimeFormat(this.locale(), {
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(new Date(iso));
+  }
+
+  dayPart(iso: string): { day: string; month: string; weekday: string; year: string } {
+    const date = new Date(iso);
+    const loc = this.locale();
+    return {
+      day: new Intl.DateTimeFormat(loc, { day: "numeric" }).format(date),
+      month: new Intl.DateTimeFormat(loc, { month: "long" }).format(date),
+      weekday: new Intl.DateTimeFormat(loc, { weekday: "long" }).format(date),
+      year: new Intl.DateTimeFormat(loc, { year: "numeric" }).format(date),
+    };
+  }
+
   statusLabel(status: number): string {
     return formatBookingStatusLabel(this.locale(), status);
   }
 
-  statusTone(status: number): AdeniPillTone {
-    return status === 1 ? "success" : status === 0 ? "warning" : "neutral";
+  bookingStatusView(status: number): {
+    label: string;
+    icon: AdeniCarbonIconName;
+    tone: "pending" | "confirmed" | "closed";
+  } {
+    switch (status) {
+      case 0:
+        return { label: this.statusLabel(status), icon: "time", tone: "pending" };
+      case 1:
+        return { label: this.statusLabel(status), icon: "calendar", tone: "confirmed" };
+      case 2:
+        return { label: this.statusLabel(status), icon: "misuse", tone: "closed" };
+      case 3:
+        return { label: this.statusLabel(status), icon: "close", tone: "closed" };
+      default:
+        return { label: this.statusLabel(status), icon: "time", tone: "closed" };
+    }
   }
 }

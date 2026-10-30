@@ -1,18 +1,11 @@
-<div class="page">
-  <a class="back cds-btn cds-btn--ghost cds-btn--sm" routerLink="/app/bookings">
+<app-portal-page [title]="tr('intake.title')" [description]="tr('intake.nonClinical')">
+  <a pageActions class="btn" [routerLink]="['/app/bookings', bookingId()]">
     <adeni-carbon-icon name="arrow--left" [size]="16" />
-    {{ tr('intake.myBookings') }}
+    {{ tr('bookings.title') }}
   </a>
 
-  <header class="page-head">
-    <span class="wash" aria-hidden="true"></span>
-    <p class="kicker">Adeni</p>
-    <h1>{{ tr('intake.title') }}</h1>
-    <p class="notice">{{ tr('intake.nonClinical') }}</p>
-  </header>
-
   @if (error()) {
-    <p class="alert" role="alert">{{ error() }}</p>
+    <p class="error-banner">{{ error() }}</p>
   }
 
   @if (loading()) {
@@ -75,7 +68,10 @@
           <fieldset [disabled]="submitting()">
             <adeni-intake-fields [definition]="v.definition" [answers]="answers()" (answersChange)="answers.set($event)" />
             <div class="actions">
-              <button type="submit" class="cds-btn cds-btn--primary">{{ tr('intake.submit') }}</button>
+              <button type="submit" class="btn btn-primary">
+                <adeni-carbon-icon name="checkmark" [size]="16" />
+                {{ tr('intake.submit') }}
+              </button>
             </div>
           </fieldset>
         </form>
@@ -86,4 +82,4 @@
       }
     </article>
   }
-</div>
+</app-portal-page>

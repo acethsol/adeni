@@ -3,6 +3,7 @@ import { RouterLink } from "@angular/router";
 import { formatSlotTime, type CustomerMembership, type CustomerMembershipStatus } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
+  AdeniFeedbackService,
   AdeniLocaleService,
   injectAdeniApiError,
   injectAdeniTranslate,
@@ -23,6 +24,7 @@ export class MyMembershipsComponent implements OnInit {
   protected readonly tr = injectAdeniTranslate();
   private readonly apiErr = injectAdeniApiError();
   private readonly api = inject(CustomerApiService);
+  private readonly feedback = inject(AdeniFeedbackService);
   private readonly localeService = inject(AdeniLocaleService);
 
   readonly loading = signal(true);
@@ -37,7 +39,11 @@ export class MyMembershipsComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const result = await this.api.withAuthorizedClient((c) => c.retention.myMemberships());
+      const result = await this.feedback.runLoading(
+        () => this.api.withAuthorizedClient((c) => c.retention.myMemberships()),
+        this.tr("discover.memberships.myLink"),
+        this.tr("toast.loadingDetail"),
+      );
       this.memberships.set(result.items);
     } catch (caught) {
       this.memberships.set([]);

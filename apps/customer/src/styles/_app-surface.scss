@@ -1,6 +1,8 @@
 // Signed-in customer chrome (`/app/*`) — shell + shared page blocks.
 // Loaded globally from styles.scss (Phase A, sprint-c1-consumer-app-experience).
 
+@use "staff-layout" as *;
+
 .adeni-app {
   --app-topbar-h: 3.25rem;
   --app-tabbar-h: 3.75rem;
@@ -651,8 +653,16 @@
   line-height: 1.5;
 }
 
-.app-benefits-panel .empty .cds-btn {
+.app-benefits-panel .empty .btn {
   margin-top: 1rem;
+}
+
+.app-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: var(--cds-spacing-05);
+  text-decoration: none;
 }
 
 .app-benefits-panel .sk-line {

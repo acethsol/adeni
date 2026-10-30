@@ -1,0 +1,102 @@
+<app-portal-page
+  [title]="tr('customer.app.nav.profile')"
+  [description]="tr('customer.app.profile.description')"
+>
+  <section class="profile-hero card">
+    <span class="profile-avatar" aria-hidden="true">
+      @if (session.initials(); as initials) {
+        {{ initials }}
+      } @else {
+        <adeni-carbon-icon name="user--avatar" [size]="28" />
+      }
+    </span>
+    <div class="profile-hero__copy">
+      <p class="profile-kicker">{{ tr('customer.app.shell.badge') }}</p>
+      <h2 class="profile-name">{{ session.displayName() || tr('customer.app.account') }}</h2>
+      @if (session.email()) {
+        <p class="profile-meta">{{ session.email() }}</p>
+      } @else if (session.devCustomerMode) {
+        <p class="profile-meta">{{ tr('discover.layout.devCustomer') }}</p>
+      }
+    </div>
+  </section>
+
+  <section class="profile-section">
+    <h3 class="profile-section__label">{{ tr('customer.app.profile.shortcuts') }}</h3>
+    <ul class="profile-links">
+      <li>
+        <a class="profile-link" routerLink="/app/benefits">
+          <span class="profile-link__icon"><adeni-portal-nav-icon name="plan" /></span>
+          <span class="profile-link__text">{{ tr('customer.app.nav.benefits') }}</span>
+          <adeni-carbon-icon name="arrow--right" [size]="16" />
+        </a>
+      </li>
+      <li>
+        <a class="profile-link" routerLink="/app/calendar">
+          <span class="profile-link__icon"><adeni-portal-nav-icon name="calendar" /></span>
+          <span class="profile-link__text">{{ tr('customer.app.nav.calendar') }}</span>
+          <adeni-carbon-icon name="arrow--right" [size]="16" />
+        </a>
+      </li>
+      <li>
+        <a class="profile-link" routerLink="/app/bookings">
+          <span class="profile-link__icon"><adeni-portal-nav-icon name="bookings" /></span>
+          <span class="profile-link__text">{{ tr('customer.app.nav.bookings') }}</span>
+          <adeni-carbon-icon name="arrow--right" [size]="16" />
+        </a>
+      </li>
+      <li>
+        <a class="profile-link" routerLink="/app/messages">
+          <span class="profile-link__icon"><adeni-portal-nav-icon name="messages" /></span>
+          <span class="profile-link__text">{{ tr('customer.app.nav.messages') }}</span>
+          <adeni-carbon-icon name="arrow--right" [size]="16" />
+        </a>
+      </li>
+    </ul>
+  </section>
+
+  <section class="profile-section">
+    <h3 class="profile-section__label">{{ tr('customer.app.profile.more') }}</h3>
+    <ul class="profile-links">
+      @if (businessPortalUrl) {
+        <li>
+          <a class="profile-link" [href]="businessPortalUrl" target="_blank" rel="noopener noreferrer">
+            <span class="profile-link__icon"><adeni-carbon-icon name="launch" [size]="18" /></span>
+            <span class="profile-link__text">{{ tr('common.forBusinesses') }}</span>
+            <adeni-carbon-icon name="arrow--right" [size]="16" />
+          </a>
+        </li>
+      }
+      <li>
+        <a class="profile-link" routerLink="/discover">
+          <span class="profile-link__icon"><adeni-carbon-icon name="search" [size]="18" /></span>
+          <span class="profile-link__text">{{ tr('customer.app.browsePublic') }}</span>
+          <adeni-carbon-icon name="arrow--right" [size]="16" />
+        </a>
+      </li>
+      <li>
+        <a class="profile-link" routerLink="/privacy">
+          <span class="profile-link__icon"><adeni-carbon-icon name="security" [size]="18" /></span>
+          <span class="profile-link__text">{{ tr('footer.links.privacy') }}</span>
+          <adeni-carbon-icon name="arrow--right" [size]="16" />
+        </a>
+      </li>
+      <li>
+        <a class="profile-link" routerLink="/terms">
+          <span class="profile-link__icon"><adeni-carbon-icon name="document" [size]="18" /></span>
+          <span class="profile-link__text">{{ tr('footer.links.terms') }}</span>
+          <adeni-carbon-icon name="arrow--right" [size]="16" />
+        </a>
+      </li>
+    </ul>
+  </section>
+
+  @if (session.auth0Mode) {
+    <div class="profile-foot">
+      <button type="button" class="btn btn-ghost-danger" (click)="session.logout()">
+        <adeni-carbon-icon name="logout" [size]="16" />
+        {{ tr('discover.layout.logOut') }}
+      </button>
+    </div>
+  }
+</app-portal-page>

@@ -1,11 +1,10 @@
-import type { AdeniCarbonIconName } from "@adeni/ui";
+import type { AdeniPortalNavIconName } from "@adeni/ui";
 
 /**
  * Config-driven navigation for the signed-in customer app (`/app/*`).
  *
  * Ids are frozen for Flutter parity (`docs/specs/flutter-consumer-app.md`, C2).
- * Mobile tabs (5): Dashboard · Calendar · Discover · Messages · Profile.
- * Bookings + Benefits are desktop menu / deep-link destinations (not bottom tabs).
+ * Sidebar glyphs use the same Carbon 32px set as the business portal (`AdeniPortalNavIconComponent`).
  */
 export type CustomerNavId =
   | "dashboard"
@@ -24,7 +23,7 @@ export type CustomerNavItem = {
   path: string;
   /** i18n key (EN/FR in `@adeni/shared`). */
   labelKey: string;
-  icon: AdeniCarbonIconName;
+  icon: AdeniPortalNavIconName;
   /** Shown in the mobile bottom tab bar. */
   tab: boolean;
   /** Shown in the desktop top-bar primary nav. */
@@ -37,7 +36,7 @@ export const CUSTOMER_NAV: readonly CustomerNavItem[] = [
     id: "dashboard",
     path: "/app/dashboard",
     labelKey: "customer.app.nav.dashboard",
-    icon: "home",
+    icon: "overview",
     tab: true,
     desktop: true,
   },
@@ -61,7 +60,7 @@ export const CUSTOMER_NAV: readonly CustomerNavItem[] = [
     id: "bookings",
     path: "/app/bookings",
     labelKey: "customer.app.nav.bookings",
-    icon: "task",
+    icon: "bookings",
     tab: false,
     desktop: true,
   },
@@ -69,7 +68,7 @@ export const CUSTOMER_NAV: readonly CustomerNavItem[] = [
     id: "messages",
     path: "/app/messages",
     labelKey: "customer.app.nav.messages",
-    icon: "chat",
+    icon: "messages",
     tab: true,
     desktop: true,
     badge: "messages",
@@ -78,7 +77,7 @@ export const CUSTOMER_NAV: readonly CustomerNavItem[] = [
     id: "benefits",
     path: "/app/benefits",
     labelKey: "customer.app.nav.benefits",
-    icon: "gift",
+    icon: "plan",
     tab: false,
     desktop: true,
   },
@@ -86,7 +85,7 @@ export const CUSTOMER_NAV: readonly CustomerNavItem[] = [
     id: "profile",
     path: "/app/profile",
     labelKey: "customer.app.nav.profile",
-    icon: "user--avatar",
+    icon: "profile",
     tab: true,
     desktop: false,
   },
