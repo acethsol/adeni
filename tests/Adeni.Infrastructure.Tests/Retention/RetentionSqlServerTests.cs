@@ -130,6 +130,7 @@ public sealed class RetentionSqlServerTests
         var now = DateTimeOffset.UtcNow;
         var s = new Seeded(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
         db.Add(new Tenant { Id = s.Tenant, Name = "Retention SQL test", CreatedAt = now });
+        db.Add(new BusinessProfile { TenantId = s.Tenant, CategorySlug = "salon", Phone = "+10000000000" });
         db.Add(new Customer { Id = s.PlatformCustomer, Name = "Ada", Auth0Sub = $"retention-{s.PlatformCustomer:N}", CreatedAt = now });
         db.Add(new BusinessLocation { Id = s.Location, TenantId = s.Tenant, Name = "Main", Slug = "main", IsPrimary = true, CreatedAt = now });
         db.Add(new TenantCustomer
@@ -241,6 +242,7 @@ public sealed class RetentionSqlServerTests
         await db.Bookings.Where(x => x.TenantId == s.Tenant).ExecuteDeleteAsync();
         await db.Set<TenantCustomer>().Where(x => x.TenantId == s.Tenant).ExecuteDeleteAsync();
         await db.ServiceOfferings.Where(x => x.TenantId == s.Tenant).ExecuteDeleteAsync();
+        await db.Set<BusinessLocation>().Where(x => x.TenantId == s.Tenant).ExecuteDeleteAsync();
         await db.Set<BusinessProfile>().Where(x => x.TenantId == s.Tenant).ExecuteDeleteAsync();
         await db.Tenants.Where(x => x.Id == s.Tenant).ExecuteDeleteAsync();
         if (customerIds.Count > 0)
@@ -261,6 +263,7 @@ public sealed class RetentionSqlServerTests
         await db.Set<TenantCustomer>().Where(x => x.TenantId == s.Tenant).ExecuteDeleteAsync();
         await db.ServiceOfferings.Where(x => x.TenantId == s.Tenant).ExecuteDeleteAsync();
         await db.Set<BusinessLocation>().Where(x => x.TenantId == s.Tenant).ExecuteDeleteAsync();
+        await db.Set<BusinessProfile>().Where(x => x.TenantId == s.Tenant).ExecuteDeleteAsync();
         await db.Tenants.Where(x => x.Id == s.Tenant).ExecuteDeleteAsync();
         await db.Customers.Where(x => x.Id == s.PlatformCustomer).ExecuteDeleteAsync();
     }
@@ -436,9 +439,9 @@ public sealed class RetentionSqlServerTests
                 Assert.True(result.IsSuccess, result.Error?.Code);
             }
 
-            var gate = new Gate(2);
-            await using var a = Db(gate);
-            await using var b = Db(gate);
+            // No SaveChanges gate: UPDLOCK serializes issue paths; a gate deadlocks when one worker waits on the lock before SaveChanges.
+            await using var a = Db();
+            await using var b = Db();
             await Task.WhenAll(QualifyAsync(a, s.PendingBookingIds[0]), QualifyAsync(b, s.PendingBookingIds[1]));
 
             await using var check = Db();

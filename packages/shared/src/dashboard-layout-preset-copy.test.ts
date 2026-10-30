@@ -18,6 +18,10 @@ const starterEntitlements = {
   memberships: false,
   recurringMembershipBilling: false,
   loyaltyBasic: true,
+  loyaltyTiers: false,
+  referrals: false,
+  crossLocationRetention: false,
+  advancedRetentionAnalytics: false,
   multiLocation: false,
 } as const;
 
