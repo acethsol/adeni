@@ -32,6 +32,15 @@ function removeNestedAngular(workspaceDir) {
 
 removeNestedAngular(join(root, "packages", "ui"));
 
+function removeNestedZod(workspaceDir) {
+  const nestedZod = join(workspaceDir, "node_modules", "zod");
+  const hoistedZod = join(root, "node_modules", "zod");
+  if (existsSync(nestedZod) && existsSync(hoistedZod)) {
+    rmSync(nestedZod, { recursive: true, force: true });
+    console.log(`Removed ${nestedZod} (use hoisted zod).`);
+  }
+}
+
 function pruneOrphanedAppNodeModules(appDir) {
   const nm = join(appDir, "node_modules");
   if (!existsSync(nm)) {
@@ -53,6 +62,7 @@ if (existsSync(appsDir)) {
     if (app.isDirectory()) {
       const appDir = join(appsDir, app.name);
       removeNestedAngular(appDir);
+      removeNestedZod(appDir);
       pruneOrphanedAppNodeModules(appDir);
     }
   }
