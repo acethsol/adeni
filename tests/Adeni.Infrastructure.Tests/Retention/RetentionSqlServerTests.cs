@@ -437,6 +437,8 @@ public sealed class RetentionSqlServerTests
                 var service = new ReferralQualificationService(db, new Guard(), new DomainEventCollector(), TimeProvider.System);
                 var result = await service.TryQualifyAndIssueRewardsForPaidBookingAsync(s.Tenant, bookingId, "sql-test");
                 Assert.True(result.IsSuccess, result.Error?.Code);
+                // Match payment/booking handlers: persist qualify-path Rejected/Qualified before another worker reads counts.
+                await db.SaveChangesAsync();
             }
 
             // No SaveChanges gate: UPDLOCK serializes issue paths; a gate deadlocks when one worker waits on the lock before SaveChanges.
