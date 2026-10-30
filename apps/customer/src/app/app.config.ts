@@ -55,7 +55,7 @@ export const appConfig: ApplicationConfig = {
         scrollPositionRestoration: "enabled",
       }),
     ),
-    ...provideAdeniDocumentTitle("Adeni Discover"),
+    ...provideAdeniDocumentTitle("Adeni Customer"),
     ...provideAdeniLocale({ storage: "cookie" }),
     provideClientHydration(),
     {
