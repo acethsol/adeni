@@ -1,6 +1,6 @@
-<app-portal-page [title]="title()" [description]="tr('customer.app.home.description')">
-  <section class="app-section" [attr.aria-label]="tr('customer.app.home.upNext')">
-    <h3 class="app-section__title">{{ tr('customer.app.home.upNext') }}</h3>
+<app-portal-page [title]="title()" [description]="tr('customer.app.dashboard.description')">
+  <section class="app-section" [attr.aria-label]="tr('customer.app.dashboard.upNext')">
+    <h3 class="app-section__title">{{ tr('customer.app.dashboard.upNext') }}</h3>
 
     @if (bookingsLoading()) {
       <div class="app-panel app-panel--skeleton" aria-hidden="true">
@@ -36,7 +36,7 @@
           </div>
           <p class="app-muted">
             <a [routerLink]="['/businesses', booking.businessSlug]">{{ booking.businessName }}</a>
-            <span aria-hidden="true"> Â· </span>
+            <span aria-hidden="true"> · </span>
             <time [attr.datetime]="booking.startAt">{{ when(booking.startAt) }}</time>
           </p>
           @if (booking.staffDisplayName) {
@@ -44,7 +44,7 @@
           }
           <div class="app-actions">
             <a class="cds-btn cds-btn--primary cds-btn--sm" [routerLink]="['/app/bookings', booking.id]">
-              {{ tr('customer.app.home.viewDetails') }}
+              {{ tr('customer.app.dashboard.viewDetails') }}
             </a>
             <a class="cds-btn cds-btn--tertiary cds-btn--sm" [routerLink]="['/app/bookings', booking.id, 'intake']">
               {{ tr('intake.title') }}
@@ -57,14 +57,14 @@
       </article>
 
       @if (later().length > 0) {
-        <h3 class="app-section__title">{{ tr('customer.app.home.comingUp') }}</h3>
+        <h3 class="app-section__title">{{ tr('customer.app.dashboard.comingUp') }}</h3>
         <ul class="app-list">
           @for (item of later(); track item.id) {
             <li>
               <a class="app-row" [routerLink]="['/app/bookings', item.id]">
                 <span class="app-row__main">
                   <strong>{{ item.serviceName }}</strong>
-                  <span class="app-muted">{{ item.businessName }} Â· {{ when(item.startAt) }}</span>
+                  <span class="app-muted">{{ item.businessName }} · {{ when(item.startAt) }}</span>
                 </span>
                 <adeni-pill [tone]="statusTone(item.status)" [compact]="true">{{ statusLabel(item.status) }}</adeni-pill>
               </a>
@@ -72,29 +72,29 @@
           }
         </ul>
       }
-      <p class="app-more"><a routerLink="/app/bookings">{{ tr('customer.app.home.seeAll') }}</a></p>
+      <p class="app-more"><a routerLink="/app/bookings">{{ tr('customer.app.dashboard.seeAll') }}</a></p>
     } @else {
       <adeni-portal-empty-state
         [compact]="true"
         icon="calendar"
-        [title]="tr('customer.app.home.noUpcomingTitle')"
-        [description]="tr('customer.app.home.noUpcomingDescription')"
+        [title]="tr('customer.app.dashboard.noUpcomingTitle')"
+        [description]="tr('customer.app.dashboard.noUpcomingDescription')"
       >
-        <a class="cds-btn cds-btn--primary cds-btn--sm" routerLink="/app/discover">{{ tr('customer.app.home.findBusiness') }}</a>
+        <a class="cds-btn cds-btn--primary cds-btn--sm" routerLink="/app/discover">{{ tr('customer.app.dashboard.findBusiness') }}</a>
       </adeni-portal-empty-state>
     }
   </section>
 
   @if (reviewCandidate(); as review) {
-    <section class="app-section" [attr.aria-label]="tr('customer.app.home.reviewTitle')">
+    <section class="app-section" [attr.aria-label]="tr('customer.app.dashboard.reviewTitle')">
       <article class="app-panel">
-        <h3 class="app-section__title">{{ tr('customer.app.home.reviewTitle') }}</h3>
+        <h3 class="app-section__title">{{ tr('customer.app.dashboard.reviewTitle') }}</h3>
         <p class="app-muted">
-          {{ tr('customer.app.home.reviewPrompt', { service: review.serviceName, business: review.businessName }) }}
+          {{ tr('customer.app.dashboard.reviewPrompt', { service: review.serviceName, business: review.businessName }) }}
         </p>
         <div class="app-actions">
           <button type="button" class="cds-btn cds-btn--primary cds-btn--sm" (click)="openReview()">
-            {{ tr('customer.app.home.leaveReview') }}
+            {{ tr('customer.app.dashboard.leaveReview') }}
           </button>
         </div>
       </article>
@@ -112,8 +112,8 @@
       <adeni-portal-empty-state
         [compact]="true"
         icon="chat"
-        [title]="tr('customer.app.home.messagesErrorTitle')"
-        [description]="tr('customer.app.home.messagesError')"
+        [title]="tr('customer.app.dashboard.messagesErrorTitle')"
+        [description]="tr('customer.app.dashboard.messagesError')"
       >
         <button type="button" class="cds-btn cds-btn--primary cds-btn--sm" (click)="loadMessages()">
           {{ tr('discover.tryAgain') }}
@@ -125,23 +125,23 @@
           <li>
             <a class="app-row" [routerLink]="['/app/messages']" [queryParams]="{ c: thread.id }">
               <span class="app-row__main">
-                <strong>{{ thread.businessName || tr('customer.app.home.unknownBusiness') }}</strong>
+                <strong>{{ thread.businessName || tr('customer.app.dashboard.unknownBusiness') }}</strong>
                 <span class="app-muted">{{ thread.preview || when(thread.lastMessageAt) }}</span>
               </span>
               @if (thread.needsAttention) {
-                <adeni-pill tone="warning" [compact]="true">{{ tr('customer.app.home.needsReply') }}</adeni-pill>
+                <adeni-pill tone="warning" [compact]="true">{{ tr('customer.app.dashboard.needsReply') }}</adeni-pill>
               }
             </a>
           </li>
         }
       </ul>
-      <p class="app-more"><a routerLink="/app/messages">{{ tr('customer.app.home.seeAllMessages') }}</a></p>
+      <p class="app-more"><a routerLink="/app/messages">{{ tr('customer.app.dashboard.seeAllMessages') }}</a></p>
     } @else {
       <adeni-portal-empty-state
         [compact]="true"
         icon="chat"
-        [title]="tr('customer.app.home.noMessagesTitle')"
-        [description]="tr('customer.app.home.noMessagesDescription')"
+        [title]="tr('customer.app.dashboard.noMessagesTitle')"
+        [description]="tr('customer.app.dashboard.noMessagesDescription')"
       />
     }
   </section>
@@ -157,8 +157,8 @@
         <adeni-portal-empty-state
           [compact]="true"
           icon="gift"
-          [title]="tr('customer.app.home.benefitsErrorTitle')"
-          [description]="tr('customer.app.home.benefitsError')"
+          [title]="tr('customer.app.dashboard.benefitsErrorTitle')"
+          [description]="tr('customer.app.dashboard.benefitsError')"
         >
           <button type="button" class="cds-btn cds-btn--primary cds-btn--sm" (click)="loadBenefits()">
             {{ tr('discover.tryAgain') }}
@@ -169,7 +169,7 @@
         <article class="app-panel">
           <p>
             {{
-              tr('customer.app.home.benefitsPackages', {
+              tr('customer.app.dashboard.benefitsPackages', {
                 packages: snap.activePackages,
                 credits: snap.creditsRemaining,
               })
@@ -177,17 +177,17 @@
           </p>
           @if (snap.soonestExpiry) {
             <p class="app-muted">
-              {{ tr('customer.app.home.benefitsExpiry', { date: when(snap.soonestExpiry) }) }}
+              {{ tr('customer.app.dashboard.benefitsExpiry', { date: when(snap.soonestExpiry) }) }}
             </p>
           }
           @for (gift of snap.giftBalancesByCurrency; track gift.currency) {
             <p class="app-muted">
-              {{ tr('customer.app.home.benefitsGift', { amount: money(gift.amount, gift.currency) }) }}
+              {{ tr('customer.app.dashboard.benefitsGift', { amount: money(gift.amount, gift.currency) }) }}
             </p>
           }
           <div class="app-actions">
             <a class="cds-btn cds-btn--tertiary cds-btn--sm" routerLink="/app/benefits">
-              {{ tr('customer.app.home.viewBenefits') }}
+              {{ tr('customer.app.dashboard.viewBenefits') }}
             </a>
           </div>
         </article>
@@ -195,12 +195,12 @@
     </section>
   }
 
-  <section class="app-section" [attr.aria-label]="tr('customer.app.home.quickActions')">
-    <h3 class="app-section__title">{{ tr('customer.app.home.quickActions') }}</h3>
+  <section class="app-section" [attr.aria-label]="tr('customer.app.dashboard.quickActions')">
+    <h3 class="app-section__title">{{ tr('customer.app.dashboard.quickActions') }}</h3>
     <div class="app-quick">
       <a class="app-quick__item" routerLink="/app/discover">
         <adeni-carbon-icon name="search" [size]="20" />
-        <span>{{ tr('customer.app.home.findBusiness') }}</span>
+        <span>{{ tr('customer.app.dashboard.findBusiness') }}</span>
       </a>
       @if (bookAgain(); as again) {
         <a
@@ -210,10 +210,18 @@
           [fragment]="again.link.fragment"
         >
           <adeni-carbon-icon name="restart" [size]="20" />
-          <span>{{ tr('customer.app.home.bookAgain') }}</span>
+          <span>{{ tr('customer.app.dashboard.bookAgain') }}</span>
           <small class="app-muted">{{ again.source.businessName }}</small>
         </a>
       }
+      <a class="app-quick__item" routerLink="/app/calendar">
+        <adeni-carbon-icon name="calendar" [size]="20" />
+        <span>{{ tr('customer.app.nav.calendar') }}</span>
+      </a>
+      <a class="app-quick__item" routerLink="/app/bookings">
+        <adeni-carbon-icon name="task" [size]="20" />
+        <span>{{ tr('customer.app.nav.bookings') }}</span>
+      </a>
       <a class="app-quick__item" routerLink="/app/messages">
         <adeni-carbon-icon name="chat" [size]="20" />
         <span>{{ tr('customer.app.nav.messages') }}</span>
@@ -232,13 +240,13 @@
 
 <adeni-modal
   [open]="reviewOpen()"
-  [title]="tr('customer.app.home.reviewTitle')"
-  [subtitle]="tr('customer.app.home.reviewSubtitle')"
+  [title]="tr('customer.app.dashboard.reviewTitle')"
+  [subtitle]="tr('customer.app.dashboard.reviewSubtitle')"
   [hasFooter]="true"
   (closed)="closeReview()"
 >
   <label class="app-field">
-    <span>{{ tr('customer.app.home.reviewRating') }}</span>
+    <span>{{ tr('customer.app.dashboard.reviewRating') }}</span>
     <select [(ngModel)]="reviewRating" name="rating">
       @for (n of [5, 4, 3, 2, 1]; track n) {
         <option [ngValue]="n">{{ n }}</option>
@@ -246,7 +254,7 @@
     </select>
   </label>
   <label class="app-field">
-    <span>{{ tr('customer.app.home.reviewComment') }}</span>
+    <span>{{ tr('customer.app.dashboard.reviewComment') }}</span>
     <textarea [(ngModel)]="reviewComment" name="comment" rows="3" maxlength="1000"></textarea>
   </label>
   <div modalFooter class="app-actions">
@@ -259,7 +267,7 @@
       (click)="submitReview()"
       [disabled]="reviewSubmitting()"
     >
-      {{ tr('customer.app.home.submitReview') }}
+      {{ tr('customer.app.dashboard.submitReview') }}
     </button>
   </div>
 </adeni-modal>

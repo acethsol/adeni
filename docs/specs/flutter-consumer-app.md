@@ -1,26 +1,29 @@
 # Spec stub: Flutter consumer app (parity with web `/app/*`)
 
-> **Status:** Stub — planning only. Not part of Sprint C1 delivery.  
-> **Depends on:** [sprint-c1-consumer-app-experience.md](./sprint-c1-consumer-app-experience.md) (web IA frozen), [target-client-architecture.md](../target-client-architecture.md), ADR-012.
+> **Status:** Stub — planning only. Not part of Sprint C1/C2 delivery.  
+> **Depends on:** [sprint-c1-consumer-app-experience.md](./sprint-c1-consumer-app-experience.md), [sprint-c2-consumer-portal.md](./sprint-c2-consumer-portal.md), [target-client-architecture.md](../target-client-architecture.md), ADR-012.
 
 ## Goal
 
-Ship a native Flutter consumer app that mirrors the signed-in **customer app** information architecture already live on web under `/app/*`, while public SEO discovery remains web-only (`apps/customer` SSR).
+Ship a native Flutter consumer app that mirrors the signed-in **customer portal** information architecture under `/app/*`, while public SEO discovery remains web-only (`apps/customer` SSR).
 
-## Frozen nav ids (do not rename without a migration)
+## Frozen nav ids (C2 — do not rename without a migration)
 
 Source of truth: `apps/customer/src/app/app-surface/customer-nav.ts`.
 
-| Id | Web path | Role |
-|----|----------|------|
-| `home` | `/app/home` | Tab + desktop |
-| `discover` | `/app/discover` | Tab + desktop (handoff to public business pages for booking) |
-| `bookings` | `/app/bookings` | Tab + desktop |
-| `messages` | `/app/messages` | Tab + desktop; badge = `needsAttention` |
-| `benefits` | `/app/benefits` | Desktop (packages / memberships / gift-cards) |
-| `profile` | `/app/profile` | Mobile tab |
+| Id | Web path | Desktop | Mobile tab | Role |
+|----|----------|---------|------------|------|
+| `dashboard` | `/app/dashboard` | Yes | Yes | Default landing / Open app |
+| `calendar` | `/app/calendar` | Yes | Yes | Appointment month/week |
+| `discover` | `/app/discover` | Yes | Yes | In-app find → public business pages |
+| `bookings` | `/app/bookings` | Yes | No | List + detail + intake |
+| `messages` | `/app/messages` | Yes | Yes | Badge = `needsAttention` |
+| `benefits` | `/app/benefits` | Yes | No | Packages / memberships / gift-cards |
+| `profile` | `/app/profile` | Account menu | Yes | Identity + shortcuts |
 
-Home composition helpers live in `apps/customer/src/app/app-surface/pages/home/customer-home.helpers.ts` — promote to `@adeni/shared` (pure TS) before Dart ports if Flutter starts before a shared package extract.
+`/app/home` redirects to `/app/dashboard` on web; Flutter should not register a `home` destination.
+
+Dashboard helpers: `app-surface/pages/dashboard/customer-dashboard.helpers.ts` — promote to `@adeni/shared` before Dart ports if needed.
 
 ## Out of scope for this stub
 

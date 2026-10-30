@@ -3,7 +3,7 @@ import {
   pickHomeConversations,
   pickReviewCandidate,
   summarizeBenefits,
-} from "./customer-home.helpers";
+} from "./customer-dashboard.helpers";
 import type {
   BusinessGiftCard,
   ConversationSummary,
@@ -28,7 +28,7 @@ function booking(partial: Partial<CustomerBookingResponse>): CustomerBookingResp
   };
 }
 
-describe("customer-home helpers (Phase C)", () => {
+describe("customer-dashboard helpers (C2)", () => {
   it("picks the newest reviewable booking", () => {
     const now = Date.parse("2026-06-01T00:00:00.000Z");
     const pick = pickReviewCandidate(

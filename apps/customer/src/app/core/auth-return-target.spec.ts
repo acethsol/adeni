@@ -2,7 +2,8 @@ import { isSafeAuthReturnTarget, resolveAuthReturnTarget } from "./auth-return-t
 
 describe("auth return target allowlist", () => {
   it("accepts same-origin app and public deep links", () => {
-    expect(isSafeAuthReturnTarget("/app/home")).toBe(true);
+    expect(isSafeAuthReturnTarget("/app/dashboard")).toBe(true);
+    expect(isSafeAuthReturnTarget("/app/calendar")).toBe(true);
     expect(isSafeAuthReturnTarget("/app/bookings/abc/intake")).toBe(true);
     expect(isSafeAuthReturnTarget("/businesses/lekki-cuts?service=1#book")).toBe(true);
     expect(isSafeAuthReturnTarget("/discover?market=lagos")).toBe(true);
@@ -21,7 +22,7 @@ describe("auth return target allowlist", () => {
   });
 
   it("falls back when target is unsafe", () => {
-    expect(resolveAuthReturnTarget("//evil", "/app/home")).toBe("/app/home");
-    expect(resolveAuthReturnTarget("/app/messages", "/app/home")).toBe("/app/messages");
+    expect(resolveAuthReturnTarget("//evil", "/app/dashboard")).toBe("/app/dashboard");
+    expect(resolveAuthReturnTarget("/app/messages", "/app/dashboard")).toBe("/app/messages");
   });
 });

@@ -28,7 +28,7 @@
 
     <div class="header-right">
       @if (signedIn()) {
-        <a class="cds-btn cds-btn--primary cds-btn--sm header-open-app" routerLink="/app/home">
+        <a class="cds-btn cds-btn--primary cds-btn--sm header-open-app" routerLink="/app/dashboard">
           <adeni-carbon-icon name="launch" [size]="16" aria-hidden="true" />
           {{ tr('customer.app.openApp') }}
         </a>
@@ -38,7 +38,7 @@
           <button type="button" class="cds-btn cds-btn--ghost" (click)="logout()">{{ tr('discover.layout.logOut') }}</button>
         } @else {
           <button type="button" class="cds-btn cds-btn--ghost" (click)="login()">{{ tr('common.sign') }}</button>
-          <button type="button" class="cds-btn cds-btn--primary" (click)="login('/app/home')">{{ tr('common.getStarted') }}</button>
+          <button type="button" class="cds-btn cds-btn--primary" (click)="login('/app/dashboard')">{{ tr('common.getStarted') }}</button>
         }
       } @else if (devCustomerMode) {
         <span class="dev">{{ tr('discover.layout.devCustomer') }}</span>

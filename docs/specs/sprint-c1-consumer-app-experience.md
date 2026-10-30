@@ -9,6 +9,7 @@
 | **Status** | Implemented on `dev` (Phases A–F client closeout; Auth0 real-tenant return-path smoke still required before launch) |
 | **Created** | 2026-10-29 |
 | **Updated** | 2026-10-30 |
+| **Follow-up** | [sprint-c2-consumer-portal.md](./sprint-c2-consumer-portal.md) — dashboard, calendar, shared UI portal parity |
 | **Baseline** | `dev` @ `5900b4a` (customer shell `3e806b2`, my-packages/gift-cards polish `5900b4a`, 37.2-A `e124630`; 37.2-B working tree staged, not part of this spec) |
 
 ---

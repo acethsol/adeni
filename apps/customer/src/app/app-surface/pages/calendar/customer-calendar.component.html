@@ -1,0 +1,107 @@
+<app-portal-page
+  [title]="tr('customer.app.calendar.title')"
+  [description]="tr('customer.app.calendar.description')"
+>
+  <div class="cal-toolbar">
+    <adeni-tabs
+      [tabs]="tabs()"
+      linkMode="button"
+      [activeId]="view()"
+      (activeIdChange)="setView($event)"
+    />
+    <div class="cal-period">
+      <button type="button" class="cds-btn cds-btn--ghost cds-btn--sm" (click)="prev()" [attr.aria-label]="tr('customer.app.calendar.prev')">
+        <adeni-carbon-icon name="chevron--left" [size]="16" />
+      </button>
+      <strong>{{ periodLabel() }}</strong>
+      <button type="button" class="cds-btn cds-btn--ghost cds-btn--sm" (click)="next()" [attr.aria-label]="tr('customer.app.calendar.next')">
+        <adeni-carbon-icon name="chevron--right" [size]="16" />
+      </button>
+      <button type="button" class="cds-btn cds-btn--tertiary cds-btn--sm" (click)="goToday()">
+        {{ tr('customer.app.calendar.today') }}
+      </button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="app-panel app-panel--skeleton" aria-hidden="true">
+      <span class="app-sk app-sk--line"></span>
+      <span class="app-sk app-sk--line"></span>
+    </div>
+  } @else if (failed()) {
+    <adeni-portal-empty-state
+      [compact]="true"
+      icon="calendar"
+      [title]="tr('customer.app.calendar.loadErrorTitle')"
+      [description]="tr('customer.app.calendar.loadError')"
+    >
+      <button type="button" class="cds-btn cds-btn--primary cds-btn--sm" (click)="load()">
+        {{ tr('discover.tryAgain') }}
+      </button>
+    </adeni-portal-empty-state>
+  } @else {
+    <div class="cal-grid" [attr.data-view]="view()" role="grid" [attr.aria-label]="periodLabel()">
+      <div class="cal-weekdays" role="row">
+        @for (label of weekdayLabels(); track label) {
+          <div class="cal-weekday" role="columnheader">{{ label }}</div>
+        }
+      </div>
+      <div class="cal-days" role="rowgroup">
+        @for (day of gridDays(); track dayKeyTrack(day)) {
+          <button
+            type="button"
+            class="cal-day"
+            role="gridcell"
+            [class.cal-day--outside]="view() === 'month' && !inMonth(day)"
+            [class.cal-day--selected]="isSelected(day)"
+            [class.cal-day--today]="isToday(day)"
+            [attr.aria-selected]="isSelected(day)"
+            [attr.aria-current]="isToday(day) ? 'date' : null"
+            [attr.aria-label]="dayAria(day)"
+            (click)="selectDay(day)"
+          >
+            <span class="cal-day__num">{{ dayNumber(day) }}</span>
+            @if (countFor(day) > 0) {
+              <span class="cal-day__dots" aria-hidden="true">
+                @for (_ of dotSlots(countFor(day)); track $index) {
+                  <span class="cal-dot"></span>
+                }
+              </span>
+            }
+          </button>
+        }
+      </div>
+    </div>
+
+    <section class="app-section cal-selected" [attr.aria-label]="tr('customer.app.calendar.selectedDay')">
+      <h3 class="app-section__title">{{ tr('customer.app.calendar.selectedDay') }}</h3>
+      @if (selectedBookings().length === 0) {
+        <adeni-portal-empty-state
+          [compact]="true"
+          icon="calendar"
+          [title]="tr('customer.app.calendar.emptyDayTitle')"
+          [description]="tr('customer.app.calendar.emptyDayDescription')"
+        >
+          <a class="cds-btn cds-btn--primary cds-btn--sm" routerLink="/app/discover">
+            {{ tr('customer.app.dashboard.findBusiness') }}
+          </a>
+        </adeni-portal-empty-state>
+      } @else {
+        <ul class="app-list">
+          @for (item of selectedBookings(); track item.id) {
+            <li>
+              <a class="app-row" [routerLink]="['/app/bookings', item.id]">
+                <span class="app-row__main">
+                  <strong>{{ item.serviceName }}</strong>
+                  <span class="app-muted">{{ item.businessName }} · {{ when(item.startAt) }}</span>
+                </span>
+                <adeni-pill [tone]="statusTone(item.status)" [compact]="true">{{ statusLabel(item.status) }}</adeni-pill>
+              </a>
+            </li>
+          }
+        </ul>
+        <p class="app-more"><a routerLink="/app/bookings">{{ tr('customer.app.dashboard.seeAll') }}</a></p>
+      }
+    </section>
+  }
+</app-portal-page>

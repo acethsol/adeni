@@ -42,16 +42,16 @@ import {
   pickReviewCandidate,
   pickUpcomingBookings,
   summarizeBenefits,
-} from "./customer-home.helpers";
+} from "./customer-dashboard.helpers";
 
 const UPCOMING_PREVIEW = 3;
 
 /**
- * `/app/home` — Up next, messages, benefits snapshot, review prompt (C1 Phase C).
+ * `/app/dashboard` — portal overview: Up next, messages, benefits, review prompt (C2).
  * Each card loads independently so one failing API never blanks the page.
  */
 @Component({
-  selector: "app-customer-home",
+  selector: "app-customer-dashboard",
   standalone: true,
   imports: [
     RouterLink,
@@ -62,9 +62,9 @@ const UPCOMING_PREVIEW = 3;
     AdeniPortalEmptyStateComponent,
     AdeniModalComponent,
   ],
-  templateUrl: "./customer-home.component.html",
+  templateUrl: "./customer-dashboard.component.html",
 })
-export class CustomerHomeComponent implements OnInit {
+export class CustomerDashboardComponent implements OnInit {
   protected readonly tr = injectAdeniTranslate();
   protected readonly session = inject(CustomerAppSessionService);
   protected readonly badge = inject(CustomerMessagingBadgeService);
@@ -116,8 +116,8 @@ export class CustomerHomeComponent implements OnInit {
   readonly title = computed(() => {
     const name = this.session.firstName();
     return name
-      ? this.tr("customer.app.home.greetingName", { name })
-      : this.tr("customer.app.home.greeting");
+      ? this.tr("customer.app.dashboard.greetingName", { name })
+      : this.tr("customer.app.dashboard.greeting");
   });
 
   constructor() {
@@ -238,7 +238,7 @@ export class CustomerHomeComponent implements OnInit {
           comment: this.reviewComment.trim() || undefined,
         }),
       );
-      this.feedback.success(this.tr("customer.app.home.reviewThanks"));
+      this.feedback.success(this.tr("customer.app.dashboard.reviewThanks"));
       this.reviewOpen.set(false);
       this.bookings.update((rows) =>
         rows.map((b) =>
@@ -246,7 +246,7 @@ export class CustomerHomeComponent implements OnInit {
         ),
       );
     } catch (caught) {
-      this.feedback.error(this.apiErr(caught, "customer.app.home.reviewError"));
+      this.feedback.error(this.apiErr(caught, "customer.app.dashboard.reviewError"));
     } finally {
       this.reviewSubmitting.set(false);
     }

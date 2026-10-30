@@ -16,7 +16,7 @@ packages/
   ui/                  Shared Angular UI (portal + admin page chrome, staff SCSS)
 ```
 
-**Customer app surfaces:** public SSR routes (`/`, `/discover`, `/businesses/:slug`, SEO hubs) stay crawlable; authenticated UX lives under `/app/*` (client-rendered, `noindex`) — [sprint-c1-consumer-app-experience.md](./specs/sprint-c1-consumer-app-experience.md). Flutter consumer stub: [specs/flutter-consumer-app.md](./specs/flutter-consumer-app.md). Business Flutter: [specs/flutter-business-mobile-skeleton.md](./specs/flutter-business-mobile-skeleton.md).
+**Customer app surfaces:** public SSR routes (`/`, `/discover`, `/businesses/:slug`, SEO hubs) stay crawlable; authenticated **consumer portal** under `/app/*` (dashboard, calendar, bookings, messages, benefits — client-rendered, `noindex`) — [sprint-c1-consumer-app-experience.md](./specs/sprint-c1-consumer-app-experience.md), [sprint-c2-consumer-portal.md](./specs/sprint-c2-consumer-portal.md). Flutter consumer stub: [specs/flutter-consumer-app.md](./specs/flutter-consumer-app.md). Business Flutter: [specs/flutter-business-mobile-skeleton.md](./specs/flutter-business-mobile-skeleton.md).
 
 Consumer **Flutter** (discover/book) remains planned after web GA (ADR-012). Archived **Next.js + Expo**: [legacy-clients-archive.md](./legacy-clients-archive.md).
 

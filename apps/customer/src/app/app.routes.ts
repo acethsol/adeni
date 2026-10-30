@@ -23,11 +23,23 @@ export const routes: Routes = [
     canActivate: [customerAuthGuard],
     data: { surface: "app" },
     children: [
-      { path: "", pathMatch: "full", redirectTo: "home" },
+      { path: "", pathMatch: "full", redirectTo: "dashboard" },
+      { path: "home", pathMatch: "full", redirectTo: "dashboard" },
       {
-        path: "home",
-        loadComponent: () => import("./app-surface/pages/home/customer-home.component").then(m => m.CustomerHomeComponent),
-        title: "Home",
+        path: "dashboard",
+        loadComponent: () =>
+          import("./app-surface/pages/dashboard/customer-dashboard.component").then(
+            m => m.CustomerDashboardComponent,
+          ),
+        title: "Dashboard",
+      },
+      {
+        path: "calendar",
+        loadComponent: () =>
+          import("./app-surface/pages/calendar/customer-calendar.component").then(
+            m => m.CustomerCalendarComponent,
+          ),
+        title: "Calendar",
       },
       {
         path: "discover",
@@ -95,9 +107,10 @@ export const routes: Routes = [
         loadComponent: () => import("./app-surface/pages/profile/customer-profile.component").then(m => m.CustomerProfileComponent),
         title: "Profile",
       },
-      { path: "**", redirectTo: "home" },
+      { path: "**", redirectTo: "dashboard" },
     ],
-  },  {
+  },
+  {
     path: "checkout/stub/:reference",
     component: CheckoutStubComponent,
     title: "Checkout",

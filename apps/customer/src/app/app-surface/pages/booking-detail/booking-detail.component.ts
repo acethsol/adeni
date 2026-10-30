@@ -14,7 +14,7 @@ import {
   type AdeniPillTone,
 } from "@adeni/ui";
 import { CustomerApiService } from "../../../core/services/customer-api.service";
-import { bookAgainLink } from "../home/customer-home.helpers";
+import { bookAgainLink } from "../dashboard/customer-dashboard.helpers";
 
 /**
  * `/app/bookings/:bookingId` — read-only detail built from the bookings list

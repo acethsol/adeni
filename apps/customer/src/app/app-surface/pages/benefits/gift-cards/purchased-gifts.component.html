@@ -1,4 +1,4 @@
-<div class="customer-page customer-page--embedded">
+<div class="app-benefits-panel">
   <p class="notice">{{ tr("commerce.noWallet") }}</p>
 
   @if (error() && !loadFailed()) {
@@ -43,9 +43,9 @@
           </div>
           <div class="value">
             <span class="amount">{{ formatPrice(card.remainingAmount, card.currency) }}</span>
-            <span class="of">{{ tr("commerce.outstanding") }} Â· {{ formatPrice(card.originalAmount, card.currency) }}</span>
+            <span class="of">{{ tr("commerce.outstanding") }} · {{ formatPrice(card.originalAmount, card.currency) }}</span>
           </div>
-          <p class="meta"><span class="suffix">â€¢â€¢â€¢â€¢{{ card.codeSuffix }}</span></p>
+          <p class="meta"><span class="suffix">••••{{ card.codeSuffix }}</span></p>
           <div class="actions">
             @if (revealedId() === card.id) {
               <output class="code">{{ code() }}</output>

@@ -44,8 +44,14 @@ import { CustomerAppSessionService } from "../../services/customer-app-session.s
           </a>
         </li>
         <li>
+          <a class="app-row" routerLink="/app/calendar">
+            <span class="app-row__main"><adeni-carbon-icon name="calendar" [size]="16" />{{ tr('customer.app.nav.calendar') }}</span>
+            <adeni-carbon-icon name="chevron--right" [size]="16" />
+          </a>
+        </li>
+        <li>
           <a class="app-row" routerLink="/app/bookings">
-            <span class="app-row__main"><adeni-carbon-icon name="calendar" [size]="16" />{{ tr('customer.app.nav.bookings') }}</span>
+            <span class="app-row__main"><adeni-carbon-icon name="task" [size]="16" />{{ tr('customer.app.nav.bookings') }}</span>
             <adeni-carbon-icon name="chevron--right" [size]="16" />
           </a>
         </li>
