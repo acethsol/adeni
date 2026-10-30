@@ -133,6 +133,12 @@ jobs:
       - name: Business unit tests
         run: npm test --workspace @adeni/business
 
+      - name: Customer unit tests
+        run: npm test --workspace @adeni/customer
+
+      - name: Admin unit tests
+        run: npm test --workspace @adeni/admin
+
       - name: Build Angular business
         run: npm run build:business
 

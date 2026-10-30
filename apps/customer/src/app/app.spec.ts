@@ -1,10 +1,17 @@
-import { TestBed } from '@angular/core/testing';
-import { App } from './app';
+import { signal } from "@angular/core";
+import { TestBed } from "@angular/core/testing";
+import { provideRouter } from "@angular/router";
+import { AdeniLocaleService } from "@adeni/ui";
+import { App } from "./app";
 
-describe('App', () => {
+describe("App", () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
+      providers: [
+        provideRouter([]),
+        { provide: AdeniLocaleService, useValue: { locale: signal("en") } },
+      ],
     }).compileComponents();
   });
 

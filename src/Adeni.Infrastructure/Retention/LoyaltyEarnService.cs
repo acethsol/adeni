@@ -88,7 +88,8 @@ public sealed class LoyaltyEarnService(
         }
 
         var currency = await ResolveBookingCurrencyAsync(booking, cancellationToken);
-        if (!string.Equals(currency, program.Currency, StringComparison.OrdinalIgnoreCase))
+        if (currency is null
+            || !string.Equals(currency, program.Currency, StringComparison.OrdinalIgnoreCase))
         {
             return Result.Success<int?>(null);
         }
@@ -224,9 +225,30 @@ public sealed class LoyaltyEarnService(
         return Math.Max(0m, qualifying - loyaltyDiscount);
     }
 
-    private async Task<string> ResolveBookingCurrencyAsync(BookingRecord booking, CancellationToken cancellationToken) =>
-        await db.ServiceOfferings.AsNoTracking()
+    private async Task<string?> ResolveBookingCurrencyAsync(BookingRecord booking, CancellationToken cancellationToken)
+    {
+        var fromPrimary = await db.ServiceOfferings.AsNoTracking()
             .Where(x => x.Id == booking.ServiceOfferingId)
             .Select(x => x.Currency)
-            .FirstOrDefaultAsync(cancellationToken) ?? "NGN";
+            .FirstOrDefaultAsync(cancellationToken);
+        if (!string.IsNullOrWhiteSpace(fromPrimary))
+        {
+            return fromPrimary;
+        }
+
+        if (booking.Lines.Count > 0)
+        {
+            var lineServiceIds = booking.Lines.Select(x => x.ServiceOfferingId).Distinct().ToList();
+            var fromLines = await db.ServiceOfferings.AsNoTracking()
+                .Where(x => lineServiceIds.Contains(x.Id) && x.Currency != null && x.Currency != "")
+                .Select(x => x.Currency)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (!string.IsNullOrWhiteSpace(fromLines))
+            {
+                return fromLines;
+            }
+        }
+
+        return null;
+    }
 }

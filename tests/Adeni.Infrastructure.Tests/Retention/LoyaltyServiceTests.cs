@@ -533,6 +533,105 @@ public sealed class LoyaltyServiceTests
     }
 
     [Fact]
+    public async Task StageEarn_WhenServiceCurrencyMissing_DoesNotFallbackToNgn()
+    {
+        var h = await NewAsync();
+        await h.SaveProgramAsync();
+        var roster = h.Db.TenantCustomers.Single(x => x.Id == h.Customer);
+        Assert.NotNull(roster.CustomerId);
+        var customerId = roster.CustomerId!.Value;
+        var serviceId = Guid.NewGuid();
+        var bookingId = Guid.NewGuid();
+        h.Db.Add(new BusinessProfile
+        {
+            TenantId = h.Tenant,
+            CategorySlug = "salon",
+            Phone = "+10000000000",
+            BusinessType = BusinessType.ScheduledAppointment,
+        });
+        h.Db.Add(new ServiceOffering
+        {
+            Id = serviceId,
+            TenantId = h.Tenant,
+            Name = "Cut",
+            PriceAmount = 250m,
+            Currency = "",
+            DurationMinutes = 30,
+            CreatedAt = Start,
+            UpdatedAt = Start,
+        });
+        h.Db.Add(new BookingRecord
+        {
+            Id = bookingId,
+            TenantId = h.Tenant,
+            ServiceOfferingId = serviceId,
+            CustomerId = customerId,
+            StartAt = Start,
+            EndAt = Start.AddHours(1),
+            Status = BookingStatus.Paid,
+            PaidAt = Start,
+            CreatedAt = Start,
+            UpdatedAt = Start,
+        });
+        await h.Db.SaveChangesAsync();
+
+        var result = await h.Earn().StageEarnForPaidBookingAsync(h.Tenant, bookingId, "test");
+        await h.Db.SaveChangesAsync();
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value);
+        Assert.Equal(0, await h.Db.Set<LoyaltyTransaction>().CountAsync());
+    }
+
+    [Fact]
+    public async Task StageEarn_WhenProgramCadAndBookingNgn_DoesNotEarn()
+    {
+        var h = await NewAsync();
+        var saved = await h.Programs().UpsertAsync(h.Tenant, Owner, Harness.Program(currency: "CAD"));
+        Assert.True(saved.IsSuccess);
+        var roster = h.Db.TenantCustomers.Single(x => x.Id == h.Customer);
+        var customerId = roster.CustomerId!.Value;
+        var serviceId = Guid.NewGuid();
+        var bookingId = Guid.NewGuid();
+        h.Db.Add(new BusinessProfile
+        {
+            TenantId = h.Tenant,
+            CategorySlug = "salon",
+            Phone = "+10000000000",
+            BusinessType = BusinessType.ScheduledAppointment,
+        });
+        h.Db.Add(new ServiceOffering
+        {
+            Id = serviceId,
+            TenantId = h.Tenant,
+            Name = "Cut",
+            PriceAmount = 250m,
+            Currency = "NGN",
+            DurationMinutes = 30,
+            CreatedAt = Start,
+            UpdatedAt = Start,
+        });
+        h.Db.Add(new BookingRecord
+        {
+            Id = bookingId,
+            TenantId = h.Tenant,
+            ServiceOfferingId = serviceId,
+            CustomerId = customerId,
+            StartAt = Start,
+            EndAt = Start.AddHours(1),
+            Status = BookingStatus.Paid,
+            PaidAt = Start,
+            CreatedAt = Start,
+            UpdatedAt = Start,
+        });
+        await h.Db.SaveChangesAsync();
+
+        var result = await h.Earn().StageEarnForPaidBookingAsync(h.Tenant, bookingId, "test");
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value);
+    }
+
+    [Fact]
     public async Task StageEarn_ForPaidBooking_IsIdempotentAndFloorsPoints()
     {
         var h = await NewAsync();

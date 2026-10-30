@@ -1,6 +1,7 @@
 namespace Adeni.Infrastructure.Tests.Retention;
 
 using Adeni.Application.Retention;
+using Adeni.Domain.Booking;
 using Adeni.Domain.Identity;
 using Adeni.Domain.Retention;
 using Adeni.Domain.Tenancy;
@@ -103,6 +104,12 @@ public sealed class RetentionSqlServerTests
 
     private sealed record Seeded(Guid Tenant, Guid Location, Guid PlatformCustomer, Guid TenantCustomer, Guid Service);
 
+    private sealed record ReferralCapSeed(
+        Guid Tenant,
+        Guid ReferrerTenantCustomer,
+        Guid ServiceId,
+        IReadOnlyList<Guid> PendingBookingIds);
+
     private static readonly RetentionActor Owner = new("owner-1", "owner");
 
     private static AdeniDbContext Db(IInterceptor? interceptor = null)
@@ -123,6 +130,7 @@ public sealed class RetentionSqlServerTests
         var now = DateTimeOffset.UtcNow;
         var s = new Seeded(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
         db.Add(new Tenant { Id = s.Tenant, Name = "Retention SQL test", CreatedAt = now });
+        db.Add(new BusinessProfile { TenantId = s.Tenant, CategorySlug = "salon", Phone = "+10000000000" });
         db.Add(new Customer { Id = s.PlatformCustomer, Name = "Ada", Auth0Sub = $"retention-{s.PlatformCustomer:N}", CreatedAt = now });
         db.Add(new BusinessLocation { Id = s.Location, TenantId = s.Tenant, Name = "Main", Slug = "main", IsPrimary = true, CreatedAt = now });
         db.Add(new TenantCustomer
@@ -133,6 +141,114 @@ public sealed class RetentionSqlServerTests
         db.Add(new Domain.Booking.ServiceOffering { Id = s.Service, TenantId = s.Tenant, Name = "Haircut", PriceAmount = 5000 });
         await db.SaveChangesAsync();
         return s;
+    }
+
+    private static async Task<ReferralCapSeed> SeedReferralCapAsync(int rewardedCount, int cap)
+    {
+        await using var db = Db();
+        var now = DateTimeOffset.UtcNow;
+        var tenant = Guid.NewGuid();
+        var referrerRoster = Guid.NewGuid();
+        var referrerPlatform = Guid.NewGuid();
+        var serviceId = Guid.NewGuid();
+        var codeId = Guid.NewGuid();
+        db.Add(new Tenant { Id = tenant, Name = "Referral cap SQL", CreatedAt = now });
+        db.Add(new BusinessProfile { TenantId = tenant, CategorySlug = "salon", Phone = "+10000000001" });
+        db.Add(new Customer { Id = referrerPlatform, Name = "Referrer", Auth0Sub = $"ref-{referrerPlatform:N}", CreatedAt = now });
+        db.Add(new TenantCustomer
+        {
+            Id = referrerRoster, TenantId = tenant, CustomerId = referrerPlatform, DisplayName = "Referrer",
+            CreatedAt = now, UpdatedAt = now, LastSeenAt = now,
+        });
+        db.Add(new LoyaltyProgram
+        {
+            Id = Guid.NewGuid(), TenantId = tenant, IsEnabled = true, Currency = "NGN", EarnPoints = 1, EarnPerAmount = 100,
+            RedeemPoints = 100, RedeemValue = 500, MinRedeemPoints = 0, CreatedAt = now, UpdatedAt = now, UpdatedBy = "owner",
+        });
+        db.Add(new ReferralProgram
+        {
+            Id = Guid.NewGuid(), TenantId = tenant, IsEnabled = true, ReferrerRewardPoints = 10, RefereeRewardPoints = 5,
+            MaxRewardsPerReferrer = cap, CreatedAt = now, UpdatedAt = now, UpdatedBy = "owner",
+        });
+        db.Add(new ReferralCode
+        {
+            Id = codeId, TenantId = tenant, TenantCustomerId = referrerRoster, Code = "CAPTEST01", CreatedAt = now,
+        });
+        db.Add(new ServiceOffering
+        {
+            Id = serviceId, TenantId = tenant, Name = "Cut", PriceAmount = 100m, Currency = "NGN", DurationMinutes = 30,
+            CreatedAt = now, UpdatedAt = now,
+        });
+
+        for (var i = 0; i < rewardedCount; i++)
+        {
+            var refereeRoster = Guid.NewGuid();
+            var refereePlatform = Guid.NewGuid();
+            db.Add(new Customer { Id = refereePlatform, Name = $"Ref{i}", Auth0Sub = $"ref-{refereePlatform:N}", CreatedAt = now });
+            db.Add(new TenantCustomer
+            {
+                Id = refereeRoster, TenantId = tenant, CustomerId = refereePlatform, DisplayName = $"Ref{i}",
+                CreatedAt = now, UpdatedAt = now, LastSeenAt = now,
+            });
+            db.Add(new ReferralAttribution
+            {
+                Id = Guid.NewGuid(), TenantId = tenant, ReferrerTenantCustomerId = referrerRoster, RefereeTenantCustomerId = refereeRoster,
+                ReferralCodeId = codeId, Status = ReferralAttributionStatus.Rewarded, RewardedAt = now, CreatedAt = now,
+            });
+        }
+
+        var pendingBookings = new List<Guid>();
+        for (var j = 0; j < 2; j++)
+        {
+            var refereeRoster = Guid.NewGuid();
+            var refereePlatform = Guid.NewGuid();
+            var bookingId = Guid.NewGuid();
+            pendingBookings.Add(bookingId);
+            db.Add(new Customer { Id = refereePlatform, Name = $"Pending{j}", Auth0Sub = $"pend-{refereePlatform:N}", CreatedAt = now });
+            db.Add(new TenantCustomer
+            {
+                Id = refereeRoster, TenantId = tenant, CustomerId = refereePlatform, DisplayName = $"Pending{j}",
+                CreatedAt = now, UpdatedAt = now, LastSeenAt = now,
+            });
+            db.Add(new ReferralAttribution
+            {
+                Id = Guid.NewGuid(), TenantId = tenant, ReferrerTenantCustomerId = referrerRoster, RefereeTenantCustomerId = refereeRoster,
+                ReferralCodeId = codeId, Status = ReferralAttributionStatus.Pending, CreatedAt = now,
+            });
+            db.Add(new BookingRecord
+            {
+                Id = bookingId, TenantId = tenant, ServiceOfferingId = serviceId, CustomerId = refereePlatform,
+                StartAt = now, EndAt = now.AddHours(1), Status = BookingStatus.Paid, PaidAt = now, CreatedAt = now, UpdatedAt = now,
+            });
+        }
+
+        await db.SaveChangesAsync();
+        return new ReferralCapSeed(tenant, referrerRoster, serviceId, pendingBookings);
+    }
+
+    private static async Task CleanupReferralCapAsync(ReferralCapSeed s)
+    {
+        await using var db = Db();
+        var customerIds = await db.Set<TenantCustomer>().AsNoTracking()
+            .Where(x => x.TenantId == s.Tenant)
+            .Select(x => x.CustomerId)
+            .ToListAsync();
+        await db.Set<LoyaltyTransaction>().Where(x => x.TenantId == s.Tenant).ExecuteDeleteAsync();
+        await db.Set<LoyaltyAccount>().Where(x => x.TenantId == s.Tenant).ExecuteDeleteAsync();
+        await db.Set<ReferralAttribution>().Where(x => x.TenantId == s.Tenant).ExecuteDeleteAsync();
+        await db.Set<ReferralCode>().Where(x => x.TenantId == s.Tenant).ExecuteDeleteAsync();
+        await db.Set<ReferralProgram>().Where(x => x.TenantId == s.Tenant).ExecuteDeleteAsync();
+        await db.Set<LoyaltyProgram>().Where(x => x.TenantId == s.Tenant).ExecuteDeleteAsync();
+        await db.Bookings.Where(x => x.TenantId == s.Tenant).ExecuteDeleteAsync();
+        await db.Set<TenantCustomer>().Where(x => x.TenantId == s.Tenant).ExecuteDeleteAsync();
+        await db.ServiceOfferings.Where(x => x.TenantId == s.Tenant).ExecuteDeleteAsync();
+        await db.Set<BusinessLocation>().Where(x => x.TenantId == s.Tenant).ExecuteDeleteAsync();
+        await db.Set<BusinessProfile>().Where(x => x.TenantId == s.Tenant).ExecuteDeleteAsync();
+        await db.Tenants.Where(x => x.Id == s.Tenant).ExecuteDeleteAsync();
+        if (customerIds.Count > 0)
+        {
+            await db.Customers.Where(x => customerIds.Contains(x.Id)).ExecuteDeleteAsync();
+        }
     }
 
     private static async Task CleanupAsync(Seeded s)
@@ -147,6 +263,7 @@ public sealed class RetentionSqlServerTests
         await db.Set<TenantCustomer>().Where(x => x.TenantId == s.Tenant).ExecuteDeleteAsync();
         await db.ServiceOfferings.Where(x => x.TenantId == s.Tenant).ExecuteDeleteAsync();
         await db.Set<BusinessLocation>().Where(x => x.TenantId == s.Tenant).ExecuteDeleteAsync();
+        await db.Set<BusinessProfile>().Where(x => x.TenantId == s.Tenant).ExecuteDeleteAsync();
         await db.Tenants.Where(x => x.Id == s.Tenant).ExecuteDeleteAsync();
         await db.Customers.Where(x => x.Id == s.PlatformCustomer).ExecuteDeleteAsync();
     }
@@ -306,6 +423,40 @@ public sealed class RetentionSqlServerTests
         finally
         {
             await CleanupAsync(s);
+        }
+    }
+
+    [SqlFact]
+    public async Task ConcurrentReferralCap_AtLimit_ExactlyOneExtraReward()
+    {
+        var s = await SeedReferralCapAsync(rewardedCount: 9, cap: 10);
+        try
+        {
+            async Task QualifyAsync(AdeniDbContext db, Guid bookingId)
+            {
+                var service = new ReferralQualificationService(db, new Guard(), new DomainEventCollector(), TimeProvider.System);
+                var result = await service.TryQualifyAndIssueRewardsForPaidBookingAsync(s.Tenant, bookingId, "sql-test");
+                Assert.True(result.IsSuccess, result.Error?.Code);
+                // Match payment/booking handlers: persist qualify-path Rejected/Qualified before another worker reads counts.
+                await db.SaveChangesAsync();
+            }
+
+            // No SaveChanges gate: UPDLOCK serializes issue paths; a gate deadlocks when one worker waits on the lock before SaveChanges.
+            await using var a = Db();
+            await using var b = Db();
+            await Task.WhenAll(QualifyAsync(a, s.PendingBookingIds[0]), QualifyAsync(b, s.PendingBookingIds[1]));
+
+            await using var check = Db();
+            var attributions = await check.Set<ReferralAttribution>().AsNoTracking()
+                .Where(x => x.TenantId == s.Tenant && x.ReferrerTenantCustomerId == s.ReferrerTenantCustomer)
+                .ToListAsync();
+            Assert.Equal(11, attributions.Count);
+            Assert.Equal(10, attributions.Count(x => x.Status == ReferralAttributionStatus.Rewarded));
+            Assert.Equal(1, attributions.Count(x => x.Status == ReferralAttributionStatus.Rejected && x.RejectReason == "referrer_cap"));
+        }
+        finally
+        {
+            await CleanupReferralCapAsync(s);
         }
     }
 }

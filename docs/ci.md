@@ -7,7 +7,7 @@ Runs on pushes and PRs targeting `dev`, `qa`, or `main`.
 |-----|----------------|
 | **build-and-test** | Restore/build .NET, build `Adeni.Database`, `dotnet test`, **fail** if NuGet reports vulnerable packages |
 | **sqlserver** | SQL Server 2022 service → `publish-db.ps1` (SqlPackage) → `Category=SqlServer` tests |
-| **frontend** | `npm ci`, workspace typecheck, `@adeni/shared` Vitest, Business Jasmine/Chrome unit tests, Angular production builds (business/admin/customer), **npm audit** (prod high+, all critical) |
+| **frontend** | `npm ci`, workspace typecheck, Vitest/Jasmine for **shared**, **business**, **customer**, and **admin**, Angular production builds (business/admin/customer), **npm audit** (prod high+, all critical) |
 
 ## Dependency updates
 
@@ -29,7 +29,12 @@ dotnet test tests/Adeni.Infrastructure.Tests --filter "Category=SqlServer"
 npm ci
 npm run typecheck
 npm test --workspace @adeni/shared
+npm test --workspace @adeni/business
+npm test --workspace @adeni/customer
+npm test --workspace @adeni/admin
 npm run build:business
+npm run build:admin
+npm run build:customer
 npm audit --omit=dev --audit-level=high
 npm audit --audit-level=critical
 ```
