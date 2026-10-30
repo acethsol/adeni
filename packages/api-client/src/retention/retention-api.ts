@@ -20,7 +20,14 @@ import {
   loyaltyRedeemQuoteSchema,
   customerLoyaltyAtBusinessSchema,
   customerLoyaltyListSchema,
+  loyaltyTierListSchema,
+  loyaltyRewardListSchema,
+  loyaltyRewardSchema,
+  loyaltyRewardRedemptionSchema,
   type CreateMembershipPlanRequest,
+  type CreateLoyaltyRewardRequest,
+  type ReplaceLoyaltyTiersRequest,
+  type UpdateLoyaltyRewardRequest,
   type CreatePackageDefinitionRequest,
   type EnrolMembershipRequest,
   type RenewMembershipRequest,
@@ -276,6 +283,38 @@ export class RetentionApi {
 
   myLoyaltyBalances(signal?: AbortSignal) {
     return this.get("/api/v1/me/retention/loyalty", customerLoyaltyListSchema, signal);
+  }
+
+  /** Tier thresholds (Sprint 37.3-D). Requires `loyaltyTiers`; empty list when not entitled. */
+  listLoyaltyTiers(signal?: AbortSignal) {
+    return this.get(`${BASE}/loyalty/tiers`, loyaltyTierListSchema, signal);
+  }
+
+  saveLoyaltyTiers(body: ReplaceLoyaltyTiersRequest, signal?: AbortSignal) {
+    return this.write(`${BASE}/loyalty/tiers`, body, loyaltyTierListSchema, "PUT", undefined, signal);
+  }
+
+  listLoyaltyRewards(activeOnly = true, signal?: AbortSignal) {
+    return this.get(`${BASE}/loyalty/rewards?activeOnly=${activeOnly}`, loyaltyRewardListSchema, signal);
+  }
+
+  createLoyaltyReward(body: CreateLoyaltyRewardRequest, signal?: AbortSignal) {
+    return this.write(`${BASE}/loyalty/rewards`, body, loyaltyRewardSchema, "POST", undefined, signal);
+  }
+
+  updateLoyaltyReward(id: string, body: UpdateLoyaltyRewardRequest, signal?: AbortSignal) {
+    return this.write(`${BASE}/loyalty/rewards/${encodeURIComponent(id)}`, body, loyaltyRewardSchema, "PATCH", undefined, signal);
+  }
+
+  redeemLoyaltyRewardForCustomer(tenantCustomerId: string, rewardId: string, key: string, signal?: AbortSignal) {
+    return this.write(
+      `${BASE}/loyalty/customers/${encodeURIComponent(tenantCustomerId)}/rewards/${encodeURIComponent(rewardId)}/redeem`,
+      {},
+      loyaltyRewardRedemptionSchema,
+      "POST",
+      key,
+      signal,
+    );
   }
 
   myRedeemableBenefits(slug: string, params: { locationId?: string; serviceIds?: string[] } = {}, signal?: AbortSignal) {

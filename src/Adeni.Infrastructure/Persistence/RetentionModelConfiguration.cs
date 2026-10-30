@@ -307,7 +307,64 @@ public sealed partial class AdeniDbContext
             e.Property(x => x.RowVersion).IsRowVersion();
             // FK (TenantId, TenantCustomerId) ? tenancy.tenant_customers lives in the DACPAC; like the other retention
             // tables it is not mapped here (TenantCustomer has no composite alternate key in the EF model).
+            e.HasOne<LoyaltyTier>().WithMany()
+                .HasForeignKey(x => new { x.TenantId, x.CurrentTierId })
+                .HasPrincipalKey(x => new { x.TenantId, x.Id })
+                .OnDelete(DeleteBehavior.Restrict);
             e.HasIndex(x => new { x.TenantId, x.TenantCustomerId }).IsUnique();
+        });
+
+        modelBuilder.Entity<LoyaltyTier>(e =>
+        {
+            e.ToTable("loyalty_tiers", "retention", t =>
+            {
+                t.HasCheckConstraint("CK_loyalty_tiers_MinLifetimeEarned", "[MinLifetimeEarned] >= 0");
+                t.HasCheckConstraint("CK_loyalty_tiers_SortOrder", "[SortOrder] >= 0");
+            });
+            e.HasKey(x => x.Id);
+            e.HasAlternateKey(x => new { x.TenantId, x.Id });
+            e.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+            e.HasOne<Tenant>().WithMany().HasForeignKey(x => x.TenantId).OnDelete(DeleteBehavior.Restrict);
+            e.Property(x => x.Name).HasMaxLength(LoyaltyTier.MaxNameLength);
+            e.HasIndex(x => new { x.TenantId, x.MinLifetimeEarned }).IsUnique();
+        });
+
+        modelBuilder.Entity<LoyaltyReward>(e =>
+        {
+            e.ToTable("loyalty_rewards", "retention", t =>
+            {
+                t.HasCheckConstraint("CK_loyalty_rewards_Kind", "[Kind] IN (0)");
+                t.HasCheckConstraint("CK_loyalty_rewards_PointsCost", "[PointsCost] > 0");
+                t.HasCheckConstraint("CK_loyalty_rewards_SortOrder", "[SortOrder] >= 0");
+            });
+            e.HasKey(x => x.Id);
+            e.HasAlternateKey(x => new { x.TenantId, x.Id });
+            e.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+            e.HasOne<Tenant>().WithMany().HasForeignKey(x => x.TenantId).OnDelete(DeleteBehavior.Restrict);
+            e.Property(x => x.Name).HasMaxLength(LoyaltyReward.MaxNameLength);
+            e.Property(x => x.Description).HasMaxLength(LoyaltyReward.MaxDescriptionLength);
+        });
+
+        modelBuilder.Entity<LoyaltyRewardRedemption>(e =>
+        {
+            e.ToTable("loyalty_reward_redemptions", "retention", t =>
+                t.HasCheckConstraint("CK_loyalty_reward_redemptions_PointsSpent", "[PointsSpent] > 0"));
+            e.HasKey(x => x.Id);
+            e.HasAlternateKey(x => new { x.TenantId, x.Id });
+            e.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+            e.HasOne<Tenant>().WithMany().HasForeignKey(x => x.TenantId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<LoyaltyAccount>().WithMany()
+                .HasForeignKey(x => new { x.TenantId, x.LoyaltyAccountId })
+                .HasPrincipalKey(x => new { x.TenantId, x.Id })
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<LoyaltyReward>().WithMany()
+                .HasForeignKey(x => new { x.TenantId, x.LoyaltyRewardId })
+                .HasPrincipalKey(x => new { x.TenantId, x.Id })
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<LoyaltyTransaction>().WithMany()
+                .HasForeignKey(x => new { x.TenantId, x.LoyaltyTransactionId })
+                .HasPrincipalKey(x => new { x.TenantId, x.Id })
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<LoyaltyTransaction>(e =>

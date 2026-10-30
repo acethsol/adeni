@@ -16,6 +16,7 @@ public sealed class LoyaltyEarnService(
     IRetentionEntitlementGuard entitlements,
     IBenefitRedemptionService benefits,
     ILoyaltyRedemptionService loyaltyRedeem,
+    ILoyaltyTierService loyaltyTiers,
     IDomainEventCollector domainEvents,
     TimeProvider clock) : ILoyaltyEarnService
 {
@@ -120,6 +121,7 @@ public sealed class LoyaltyEarnService(
         }
 
         db.Add(earned.Value!);
+        await loyaltyTiers.EvaluateAfterEarnAsync(tenantId, account.Id, cancellationToken);
         domainEvents.Add(new LoyaltyPointsEarned(
             tenantId,
             tenantCustomerId.Value,

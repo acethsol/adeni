@@ -112,6 +112,7 @@ export const enErrorMessages: MessageTree = {
     memberships: "Memberships are not included on your current plan.",
     recurringMembershipBilling: "Recurring membership billing is not included on your current plan.",
     loyaltyBasic: "Loyalty is not included on your current plan.",
+    loyaltyTiers: "Loyalty tiers and rewards are not included on your current plan.",
     exports: "Exports are not included on your current plan.",
     excel_export: "Excel export is not included on your current plan.",
     multi_location_reporting:
@@ -226,6 +227,7 @@ export const frErrorMessages: MessageTree = {
     memberships: "Les abonnements ne sont pas inclus dans votre forfait actuel.",
     recurringMembershipBilling: "La facturation récurrente des abonnements n’est pas incluse dans votre forfait actuel.",
     loyaltyBasic: "La fidélité n’est pas incluse dans votre forfait actuel.",
+    loyaltyTiers: "Les paliers et récompenses de fidélité ne sont pas inclus dans votre forfait actuel.",
     exports: "Les exportations ne sont pas incluses dans votre forfait actuel.",
     excel_export: "L'exportation Excel n'est pas incluse dans votre forfait actuel.",
     multi_location_reporting:

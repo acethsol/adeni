@@ -69,6 +69,11 @@ public sealed class MembershipBillingCoordinatorTests
 
         public Task<Result> EnsurePackagesEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
             Task.FromResult(Result.Success());
+
+        public Task<bool> IsLoyaltyTiersEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) => Task.FromResult(true);
+
+        public Task<Result> EnsureLoyaltyTiersEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Result.Success());
     }
 
     private sealed class FakeProvider(string name = "Stub") : IPaymentProvider

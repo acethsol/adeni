@@ -21,6 +21,8 @@ using Microsoft.Extensions.Options;
 public sealed class TenantLoyaltyController(
     ILoyaltyProgramService programs,
     ILoyaltyAccountService accounts,
+    ILoyaltyTierService tiers,
+    ILoyaltyRewardCatalogService rewards,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet("program")]
@@ -73,6 +75,69 @@ public sealed class TenantLoyaltyController(
         var result = await accounts.AdjustAsync(
             actor.TenantId, actor.Actor, tenantCustomerId, request, Request.GetIdempotencyKey(), cancellationToken);
         return ApiResults.FromResult(result, Ok, HttpContext);
+    }
+
+    [HttpGet("tiers")]
+    [RequiresBusinessPermission(BusinessPermissions.Retention, BusinessPermissions.Bookings)]
+    public async Task<IActionResult> ListTiers(CancellationToken cancellationToken)
+    {
+        if (ResolveActor() is not { } actor) return Unauthorized();
+        return ApiResults.FromResult(await tiers.ListAsync(actor.TenantId, cancellationToken), Ok, HttpContext);
+    }
+
+    [HttpPut("tiers")]
+    [RequiresBusinessPermission(BusinessPermissions.Retention)]
+    public async Task<IActionResult> ReplaceTiers([FromBody] ReplaceLoyaltyTiersRequest request, CancellationToken cancellationToken)
+    {
+        if (ResolveActor() is not { } actor) return Unauthorized();
+        return ApiResults.FromResult(await tiers.ReplaceAsync(actor.TenantId, actor.Actor, request, cancellationToken), Ok, HttpContext);
+    }
+
+    [HttpGet("rewards")]
+    [RequiresBusinessPermission(BusinessPermissions.Retention, BusinessPermissions.Bookings)]
+    public async Task<IActionResult> ListRewards([FromQuery] bool activeOnly = true, CancellationToken cancellationToken = default)
+    {
+        if (ResolveActor() is not { } actor) return Unauthorized();
+        return ApiResults.FromResult(await rewards.ListAsync(actor.TenantId, activeOnly, cancellationToken), Ok, HttpContext);
+    }
+
+    [HttpPost("rewards")]
+    [RequiresBusinessPermission(BusinessPermissions.Retention)]
+    public async Task<IActionResult> CreateReward([FromBody] CreateLoyaltyRewardRequest request, CancellationToken cancellationToken)
+    {
+        if (ResolveActor() is not { } actor) return Unauthorized();
+        return ApiResults.FromResult(
+            await rewards.CreateAsync(actor.TenantId, actor.Actor, request, cancellationToken),
+            payload => Created($"/api/v1/tenant/retention/loyalty/rewards/{payload.Id}", payload),
+            HttpContext);
+    }
+
+    [HttpPatch("rewards/{rewardId:guid}")]
+    [RequiresBusinessPermission(BusinessPermissions.Retention)]
+    public async Task<IActionResult> UpdateReward(
+        Guid rewardId, [FromBody] UpdateLoyaltyRewardRequest request, CancellationToken cancellationToken)
+    {
+        if (ResolveActor() is not { } actor) return Unauthorized();
+        return ApiResults.FromResult(
+            await rewards.UpdateAsync(actor.TenantId, actor.Actor, rewardId, request, cancellationToken), Ok, HttpContext);
+    }
+
+    [HttpPost("customers/{tenantCustomerId:guid}/rewards/{rewardId:guid}/redeem")]
+    [RequiresBusinessPermission(BusinessPermissions.Retention)]
+    public async Task<IActionResult> RedeemReward(
+        Guid tenantCustomerId, Guid rewardId, CancellationToken cancellationToken)
+    {
+        if (ResolveActor() is not { } actor) return Unauthorized();
+        if (Request.Headers.ContainsKey(IdempotencyHeaders.Key) && Request.GetIdempotencyKey() is null)
+        {
+            return this.InvalidIdempotencyKeyResult();
+        }
+
+        return ApiResults.FromResult(
+            await rewards.RedeemForCustomerAsync(
+                actor.TenantId, actor.Actor, tenantCustomerId, rewardId, Request.GetIdempotencyKey(), cancellationToken),
+            Ok,
+            HttpContext);
     }
 
     private (Guid TenantId, RetentionActor Actor)? ResolveActor()

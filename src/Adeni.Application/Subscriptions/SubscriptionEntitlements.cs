@@ -36,6 +36,7 @@ public sealed record TenantEntitlements(
     bool Memberships,
     bool RecurringMembershipBilling,
     bool LoyaltyBasic,
+    bool LoyaltyTiers,
     bool MultiLocation);
 
 public static class SubscriptionEntitlements

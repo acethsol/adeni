@@ -1,6 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { formatPrice, type LoyaltyProgram } from "@adeni/shared";
+import { formatPrice, type LoyaltyProgram, type LoyaltyReward, type LoyaltyTier } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
   AdeniFeedbackService,
@@ -25,9 +25,12 @@ type Draft = {
   pointsExpiryMonths: number | null;
 };
 
+type TierDraft = { name: string; minLifetimeEarned: number; sortOrder: number };
+
+type NewRewardDraft = { name: string; pointsCost: number | null; sortOrder: number };
+
 /**
- * Sprint 37.3-A shell: loyalty program settings. Slice A only stores the settings — nothing earns or redeems
- * points yet (slices B-C). Points are program credits for this business, never cash.
+ * Loyalty program settings (37.3-A–C) plus tiers and reward catalog when `loyaltyTiers` is entitled (37.3-D).
  */
 @Component({
   selector: "app-retention-loyalty",
@@ -46,11 +49,16 @@ export class RetentionLoyaltyComponent implements OnInit {
   readonly currencies = CURRENCIES;
   readonly loading = signal(true);
   readonly busy = signal(false);
+  readonly tiersBusy = signal(false);
+  readonly rewardsBusy = signal(false);
   readonly error = signal<string | null>(null);
   readonly configured = signal(false);
   readonly draft = signal<Draft>(this.toDraft(null));
+  readonly loyaltyTiersEntitled = signal(false);
+  readonly tierDrafts = signal<TierDraft[]>([]);
+  readonly rewards = signal<LoyaltyReward[]>([]);
+  readonly newReward = signal<NewRewardDraft>({ name: "", pointsCost: 100, sortOrder: 0 });
 
-  /** Only the owner may change what a point is worth; everyone else sees the settings read-only. */
   readonly isOwner = computed(() => this.session.permissionRole() === "owner");
 
   readonly summaryEarn = computed(() => {
@@ -79,9 +87,21 @@ export class RetentionLoyaltyComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const program = await this.api.withAuthorizedClient((client) => client.retention.getLoyaltyProgram());
-      this.configured.set(program.configured);
-      this.draft.set(this.toDraft(program));
+      await this.api.withAuthorizedClient(async (client) => {
+        const program = await client.retention.getLoyaltyProgram();
+        this.configured.set(program.configured);
+        this.draft.set(this.toDraft(program));
+
+        const entitlements = await client.getTenantEntitlements().catch(() => null);
+        const tiersOn = entitlements?.loyaltyTiers === true;
+        this.loyaltyTiersEntitled.set(tiersOn);
+        if (tiersOn) {
+          const tierList = await client.retention.listLoyaltyTiers();
+          this.tierDrafts.set(tierList.items.map((t) => this.tierToDraft(t)));
+          const rewardList = await client.retention.listLoyaltyRewards(false);
+          this.rewards.set(rewardList.items);
+        }
+      });
     } catch (caught) {
       this.error.set(this.apiErr(caught, "businessApp.loyalty.couldNotLoad"));
     } finally {
@@ -91,6 +111,22 @@ export class RetentionLoyaltyComponent implements OnInit {
 
   patch(patch: Partial<Draft>): void {
     this.draft.update((d) => ({ ...d, ...patch }));
+  }
+
+  patchTier(index: number, patch: Partial<TierDraft>): void {
+    this.tierDrafts.update((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+  }
+
+  addTierRow(): void {
+    this.tierDrafts.update((rows) => [...rows, { name: "", minLifetimeEarned: 0, sortOrder: rows.length }]);
+  }
+
+  removeTierRow(index: number): void {
+    this.tierDrafts.update((rows) => rows.filter((_, i) => i !== index));
+  }
+
+  patchNewReward(patch: Partial<NewRewardDraft>): void {
+    this.newReward.update((d) => ({ ...d, ...patch }));
   }
 
   canSave(): boolean {
@@ -104,6 +140,24 @@ export class RetentionLoyaltyComponent implements OnInit {
       d.minRedeemPoints !== null && d.minRedeemPoints >= 0 &&
       (d.neverExpires || (!!d.pointsExpiryMonths && d.pointsExpiryMonths >= 1 && d.pointsExpiryMonths <= 60))
     );
+  }
+
+  canSaveTiers(): boolean {
+    if (!this.isOwner() || !this.loyaltyTiersEntitled()) return false;
+    const rows = this.tierDrafts();
+    if (rows.length === 0) return true;
+    const thresholds = new Set<number>();
+    return rows.every((r) => {
+      if (r.name.trim().length === 0 || r.minLifetimeEarned < 0) return false;
+      if (thresholds.has(r.minLifetimeEarned)) return false;
+      thresholds.add(r.minLifetimeEarned);
+      return true;
+    });
+  }
+
+  canCreateReward(): boolean {
+    const r = this.newReward();
+    return this.isOwner() && this.loyaltyTiersEntitled() && r.name.trim().length > 0 && !!r.pointsCost && r.pointsCost >= 1;
   }
 
   async save(): Promise<void> {
@@ -133,6 +187,73 @@ export class RetentionLoyaltyComponent implements OnInit {
     }
   }
 
+  async saveTiers(): Promise<void> {
+    if (!this.canSaveTiers() || this.tiersBusy()) return;
+    this.tiersBusy.set(true);
+    try {
+      const saved = await this.api.withAuthorizedClient((client) =>
+        client.retention.saveLoyaltyTiers({
+          tiers: this.tierDrafts().map((t) => ({
+            name: t.name.trim(),
+            minLifetimeEarned: t.minLifetimeEarned,
+            sortOrder: t.sortOrder,
+          })),
+        }),
+      );
+      this.tierDrafts.set(saved.items.map((t) => this.tierToDraft(t)));
+      this.feedback.success(this.tr("businessApp.loyalty.tiersSaved"));
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "businessApp.loyalty.couldNotSaveTiers"));
+    } finally {
+      this.tiersBusy.set(false);
+    }
+  }
+
+  async createReward(): Promise<void> {
+    if (!this.canCreateReward() || this.rewardsBusy()) return;
+    const r = this.newReward();
+    this.rewardsBusy.set(true);
+    try {
+      const created = await this.api.withAuthorizedClient((client) =>
+        client.retention.createLoyaltyReward({
+          name: r.name.trim(),
+          kind: "free_service",
+          pointsCost: r.pointsCost ?? 1,
+          sortOrder: r.sortOrder,
+        }),
+      );
+      this.rewards.update((list) => [...list, created].sort((a, b) => a.sortOrder - b.sortOrder));
+      this.newReward.set({ name: "", pointsCost: 100, sortOrder: this.rewards().length });
+      this.feedback.success(this.tr("businessApp.loyalty.rewardCreated"));
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "businessApp.loyalty.couldNotCreateReward"));
+    } finally {
+      this.rewardsBusy.set(false);
+    }
+  }
+
+  async toggleRewardActive(reward: LoyaltyReward): Promise<void> {
+    if (!this.isOwner() || this.rewardsBusy()) return;
+    this.rewardsBusy.set(true);
+    try {
+      const updated = await this.api.withAuthorizedClient((client) =>
+        client.retention.updateLoyaltyReward(reward.id, {
+          name: reward.name,
+          description: reward.description,
+          pointsCost: reward.pointsCost,
+          serviceOfferingId: reward.serviceOfferingId,
+          isActive: !reward.isActive,
+          sortOrder: reward.sortOrder,
+        }),
+      );
+      this.rewards.update((list) => list.map((r) => (r.id === updated.id ? updated : r)));
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "businessApp.loyalty.couldNotUpdateReward"));
+    } finally {
+      this.rewardsBusy.set(false);
+    }
+  }
+
   private toDraft(program: LoyaltyProgram | null): Draft {
     return {
       isEnabled: program?.isEnabled ?? false,
@@ -145,5 +266,9 @@ export class RetentionLoyaltyComponent implements OnInit {
       neverExpires: program ? program.pointsExpiryMonths === null : false,
       pointsExpiryMonths: program?.pointsExpiryMonths ?? 12,
     };
+  }
+
+  private tierToDraft(tier: LoyaltyTier): TierDraft {
+    return { name: tier.name, minLifetimeEarned: tier.minLifetimeEarned, sortOrder: tier.sortOrder };
   }
 }

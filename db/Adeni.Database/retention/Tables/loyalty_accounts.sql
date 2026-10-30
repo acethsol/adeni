@@ -6,6 +6,7 @@ CREATE TABLE [retention].[loyalty_accounts] (
     [LifetimeEarned]   INT                NOT NULL,
     [LifetimeRedeemed] INT                NOT NULL,
     [Sequence]         INT                NOT NULL,
+    [CurrentTierId]    UNIQUEIDENTIFIER   NULL,
     [RowVersion]       ROWVERSION         NOT NULL,
     [CreatedAt]        DATETIMEOFFSET (7) NOT NULL,
     [UpdatedAt]        DATETIMEOFFSET (7) NOT NULL,

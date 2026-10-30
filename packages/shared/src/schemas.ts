@@ -1004,6 +1004,7 @@ export const tenantEntitlementsSchema = z.object({
   recurringMembershipBilling: z.boolean(),
   /** Loyalty program + points ledger (Sprint 37.3). */
   loyaltyBasic: z.boolean(),
+  loyaltyTiers: z.boolean(),
   multiLocation: z.boolean(),
 });
 

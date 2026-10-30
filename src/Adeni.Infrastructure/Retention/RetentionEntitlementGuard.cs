@@ -64,4 +64,22 @@ public sealed class RetentionEntitlementGuard(
         await IsPackagesEntitledAsync(tenantId, cancellationToken)
             ? Result.Success()
             : Result.Failure(RetentionErrorCodes.PackagesNotEntitledError());
+
+    public async Task<bool> IsLoyaltyTiersEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default)
+    {
+        var tenant = await db.Tenants.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+        if (tenant is null)
+        {
+            return false;
+        }
+
+        var entitled = entitlements.GetEntitlementsForTenant(tenant);
+        return entitled.LoyaltyBasic && entitled.LoyaltyTiers;
+    }
+
+    public async Task<Result> EnsureLoyaltyTiersEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+        await IsLoyaltyTiersEntitledAsync(tenantId, cancellationToken)
+            ? Result.Success()
+            : Result.Failure(RetentionErrorCodes.LoyaltyTiersNotEntitledError());
 }

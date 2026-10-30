@@ -69,6 +69,9 @@ public sealed class LoyaltyAccount : ITenantEntity
     /// <summary>Last ledger sequence written for this account.</summary>
     public int Sequence { get; set; }
 
+    /// <summary>Current tier after evaluation (slice D); null until first qualifying earn.</summary>
+    public Guid? CurrentTierId { get; set; }
+
     public byte[] RowVersion { get; set; } = [];
 
     public DateTimeOffset CreatedAt { get; set; }
@@ -259,6 +262,39 @@ public sealed class LoyaltyAccount : ITenantEntity
             DiscountAmount = discountAmount,
             BookingId = bookingId,
             Reason = "booking_reversal",
+            Actor = actor,
+            OccurredAt = at,
+        });
+    }
+
+    /// <summary>Redeems points for a catalog reward (slice 37.3-D). No booking link.</summary>
+    public Result<LoyaltyTransaction> RecordCatalogRedeem(int points, Guid rewardId, string actor, DateTimeOffset at)
+    {
+        if (points <= 0)
+        {
+            return Result.Failure<LoyaltyTransaction>(RetentionErrorCodes.ValidationError("Invalid catalog redeem."));
+        }
+
+        if (PointsBalance < points)
+        {
+            return Result.Failure<LoyaltyTransaction>(RetentionErrorCodes.LoyaltyInsufficientPointsError());
+        }
+
+        PointsBalance -= points;
+        LifetimeRedeemed += points;
+        Sequence++;
+        UpdatedAt = at;
+        return Result.Success(new LoyaltyTransaction
+        {
+            Id = Guid.NewGuid(),
+            TenantId = TenantId,
+            LoyaltyAccountId = Id,
+            TenantCustomerId = TenantCustomerId,
+            Sequence = Sequence,
+            Kind = LoyaltyTransactionKind.Redeem,
+            Points = -points,
+            BalanceAfter = PointsBalance,
+            Reason = $"catalog:{rewardId:D}",
             Actor = actor,
             OccurredAt = at,
         });

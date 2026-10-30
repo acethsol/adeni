@@ -420,7 +420,73 @@ export const loyaltyAccountSchema = z.object({
   pointsBalance: z.number().int().nonnegative(),
   lifetimeEarned: z.number().int().nonnegative(),
   lifetimeRedeemed: z.number().int().nonnegative(),
+  currentTierId: z.string().uuid().nullable(),
   updatedAt: z.string().nullable(),
+});
+
+export const loyaltyTierSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  minLifetimeEarned: z.number().int().nonnegative(),
+  sortOrder: z.number().int(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export const loyaltyTierListSchema = z.object({ items: z.array(loyaltyTierSchema) });
+
+export const upsertLoyaltyTierRequestSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  minLifetimeEarned: z.number().int().nonnegative(),
+  sortOrder: z.number().int(),
+});
+
+export const replaceLoyaltyTiersRequestSchema = z.object({
+  tiers: z.array(upsertLoyaltyTierRequestSchema).max(20),
+});
+
+export const loyaltyRewardKindSchema = z.enum(["free_service"]);
+
+export const loyaltyRewardSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  description: z.string().nullable(),
+  kind: loyaltyRewardKindSchema,
+  pointsCost: z.number().int().positive(),
+  serviceOfferingId: z.string().uuid().nullable(),
+  isActive: z.boolean(),
+  sortOrder: z.number().int(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export const loyaltyRewardListSchema = z.object({ items: z.array(loyaltyRewardSchema) });
+
+export const createLoyaltyRewardRequestSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  description: z.string().trim().max(500).nullable().optional(),
+  kind: loyaltyRewardKindSchema,
+  pointsCost: z.number().int().min(1).max(1_000_000),
+  serviceOfferingId: z.string().uuid().nullable().optional(),
+  sortOrder: z.number().int(),
+});
+
+export const updateLoyaltyRewardRequestSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  description: z.string().trim().max(500).nullable().optional(),
+  pointsCost: z.number().int().min(1).max(1_000_000),
+  serviceOfferingId: z.string().uuid().nullable().optional(),
+  isActive: z.boolean(),
+  sortOrder: z.number().int(),
+});
+
+export const loyaltyRewardRedemptionSchema = z.object({
+  id: z.string().uuid(),
+  loyaltyRewardId: z.string().uuid(),
+  pointsSpent: z.number().int().positive(),
+  issuedAt: z.string(),
+  account: loyaltyAccountSchema,
+  transaction: loyaltyTransactionSchema,
 });
 
 export const loyaltyTransactionSchema = z.object({
@@ -453,6 +519,12 @@ export const loyaltyAdjustmentSchema = z.object({
 export type LoyaltyProgram = z.infer<typeof loyaltyProgramSchema>;
 export type UpsertLoyaltyProgramRequest = z.infer<typeof upsertLoyaltyProgramRequestSchema>;
 export type LoyaltyAccount = z.infer<typeof loyaltyAccountSchema>;
+export type LoyaltyTier = z.infer<typeof loyaltyTierSchema>;
+export type ReplaceLoyaltyTiersRequest = z.infer<typeof replaceLoyaltyTiersRequestSchema>;
+export type LoyaltyReward = z.infer<typeof loyaltyRewardSchema>;
+export type CreateLoyaltyRewardRequest = z.infer<typeof createLoyaltyRewardRequestSchema>;
+export type UpdateLoyaltyRewardRequest = z.infer<typeof updateLoyaltyRewardRequestSchema>;
+export type LoyaltyRewardRedemption = z.infer<typeof loyaltyRewardRedemptionSchema>;
 export type LoyaltyTransaction = z.infer<typeof loyaltyTransactionSchema>;
 export type AdjustLoyaltyPointsRequest = z.infer<typeof adjustLoyaltyPointsRequestSchema>;
 export type LoyaltyAdjustment = z.infer<typeof loyaltyAdjustmentSchema>;

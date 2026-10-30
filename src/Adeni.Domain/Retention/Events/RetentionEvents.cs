@@ -81,3 +81,11 @@ public sealed record LoyaltyPointsEarned(
     int Points,
     int BalanceAfter,
     DateTimeOffset At) : IDomainEvent;
+
+public sealed record LoyaltyTierChanged(
+    Guid TenantId,
+    Guid TenantCustomerId,
+    Guid? PreviousTierId,
+    Guid? NewTierId,
+    int LifetimeEarned,
+    DateTimeOffset At) : IDomainEvent;

@@ -4,6 +4,9 @@
   }
 
   <p class="muted note">{{ tr('businessApp.loyalty.setupNotice') }}</p>
+  @if (loyaltyTiersEntitled()) {
+    <p class="muted note">{{ tr('businessApp.loyalty.tiersNotice') }}</p>
+  }
   <p class="muted note">{{ tr('businessApp.loyalty.nonCash') }}</p>
 
   @if (loading()) {
@@ -88,6 +91,77 @@
           {{ tr('businessApp.loyalty.save') }}
         </button>
       </div>
+
+      @if (loyaltyTiersEntitled()) {
+        <section class="loyalty-section">
+          <h3>{{ tr('businessApp.loyalty.tiersHeading') }}</h3>
+          <p class="muted hint">{{ tr('businessApp.loyalty.tiersHint') }}</p>
+          @for (tier of tierDrafts(); track $index) {
+            <div class="field-row tier-row">
+              <div class="field">
+                <label>{{ tr('businessApp.loyalty.tierName') }}</label>
+                <input type="text" [disabled]="!isOwner()" [ngModel]="tier.name" (ngModelChange)="patchTier($index, { name: $event })" />
+              </div>
+              <div class="field">
+                <label>{{ tr('businessApp.loyalty.tierThreshold') }}</label>
+                <input type="number" min="0" [disabled]="!isOwner()" [ngModel]="tier.minLifetimeEarned" (ngModelChange)="patchTier($index, { minLifetimeEarned: $event })" />
+              </div>
+              @if (isOwner()) {
+                <button type="button" class="btn btn-ghost icon-btn" [attr.aria-label]="tr('businessApp.loyalty.removeTier')" (click)="removeTierRow($index)">
+                  <adeni-carbon-icon name="trash-can" [size]="16" />
+                </button>
+              }
+            </div>
+          }
+          @if (isOwner()) {
+            <div class="actions">
+              <button type="button" class="btn btn-secondary" (click)="addTierRow()">{{ tr('businessApp.loyalty.addTier') }}</button>
+              <button type="button" class="btn btn-primary" [disabled]="!canSaveTiers() || tiersBusy()" (click)="saveTiers()">
+                {{ tr('businessApp.loyalty.saveTiers') }}
+              </button>
+            </div>
+          }
+        </section>
+
+        <section class="loyalty-section">
+          <h3>{{ tr('businessApp.loyalty.rewardsHeading') }}</h3>
+          <p class="muted hint">{{ tr('businessApp.loyalty.rewardsHint') }}</p>
+          @if (rewards().length === 0) {
+            <p class="muted">{{ tr('businessApp.loyalty.rewardsEmpty') }}</p>
+          } @else {
+            <ul class="reward-list">
+              @for (reward of rewards(); track reward.id) {
+                <li [class.inactive]="!reward.isActive">
+                  <span class="reward-list__name">{{ reward.name }}</span>
+                  <span class="muted">{{ tr('businessApp.loyalty.rewardPointsCost', { points: String(reward.pointsCost) }) }}</span>
+                  @if (isOwner()) {
+                    <button type="button" class="btn btn-ghost" [disabled]="rewardsBusy()" (click)="toggleRewardActive(reward)">
+                      {{ reward.isActive ? tr('businessApp.loyalty.deactivateReward') : tr('businessApp.loyalty.activateReward') }}
+                    </button>
+                  }
+                </li>
+              }
+            </ul>
+          }
+          @if (isOwner()) {
+            <div class="field-row">
+              <div class="field">
+                <label for="new-reward-name">{{ tr('businessApp.loyalty.rewardName') }}</label>
+                <input id="new-reward-name" type="text" [ngModel]="newReward().name" (ngModelChange)="patchNewReward({ name: $event })" />
+              </div>
+              <div class="field">
+                <label for="new-reward-cost">{{ tr('businessApp.loyalty.rewardPointsCostLabel') }}</label>
+                <input id="new-reward-cost" type="number" min="1" [ngModel]="newReward().pointsCost" (ngModelChange)="patchNewReward({ pointsCost: $event })" />
+              </div>
+            </div>
+            <div class="actions">
+              <button type="button" class="btn btn-primary" [disabled]="!canCreateReward() || rewardsBusy()" (click)="createReward()">
+                {{ tr('businessApp.loyalty.addReward') }}
+              </button>
+            </div>
+          }
+        </section>
+      }
     </div>
   }
 </app-portal-page>

@@ -46,6 +46,11 @@ public sealed class MembershipPlanServiceTests
 
         public Task<Domain.Common.Result> EnsurePackagesEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
             Task.FromResult(Domain.Common.Result.Success());
+
+        public Task<bool> IsLoyaltyTiersEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) => Task.FromResult(true);
+
+        public Task<Domain.Common.Result> EnsureLoyaltyTiersEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Domain.Common.Result.Success());
     }
 
     private sealed class Lookup(AdeniDbContext db, Guid? inactiveService = null) : IRetentionServiceLookup

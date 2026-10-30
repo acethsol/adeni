@@ -51,6 +51,14 @@ public sealed class RetentionServiceTests
             Task.FromResult(entitled
                 ? Domain.Common.Result.Success()
                 : Domain.Common.Result.Failure(RetentionErrorCodes.PackagesNotEntitledError()));
+
+        public Task<bool> IsLoyaltyTiersEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(entitled);
+
+        public Task<Domain.Common.Result> EnsureLoyaltyTiersEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(entitled
+                ? Domain.Common.Result.Success()
+                : Domain.Common.Result.Failure(RetentionErrorCodes.LoyaltyTiersNotEntitledError()));
     }
 
     private sealed class Lookup(AdeniDbContext db) : IRetentionServiceLookup

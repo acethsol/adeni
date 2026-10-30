@@ -88,6 +88,12 @@ public enum LoyaltyTransactionKind
     Expire = 3,
 }
 
+/// <summary>Reward catalog entry type (Sprint 37.3-D). Persisted as int.</summary>
+public enum LoyaltyRewardKind
+{
+    FreeService = 0,
+}
+
 /// <summary>When a member-requested cancellation takes effect. Persisted as int.</summary>
 public enum MembershipCancellationPolicy
 {

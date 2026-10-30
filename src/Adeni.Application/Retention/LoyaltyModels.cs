@@ -37,6 +37,7 @@ public sealed record LoyaltyAccountResponse(
     int PointsBalance,
     int LifetimeEarned,
     int LifetimeRedeemed,
+    Guid? CurrentTierId,
     DateTimeOffset? UpdatedAt);
 
 public sealed record LoyaltyTransactionResponse(

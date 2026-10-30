@@ -62,4 +62,6 @@ public static class AuditActions
     public const string RetentionMembershipExpired = "retention.membership_expired";
     public const string RetentionLoyaltyProgramSaved = "retention.loyalty_program_saved";
     public const string RetentionLoyaltyPointsAdjusted = "retention.loyalty_points_adjusted";
+    public const string RetentionLoyaltyTiersSaved = "retention.loyalty_tiers_saved";
+    public const string RetentionLoyaltyRewardRedeemed = "retention.loyalty_reward_redeemed";
 }

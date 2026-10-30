@@ -186,9 +186,15 @@ internal static class LoyaltyMapper
             program.UpdatedAt);
 
     public static LoyaltyAccountResponse ToResponse(LoyaltyAccount account) =>
-        new(account.TenantCustomerId, account.PointsBalance, account.LifetimeEarned, account.LifetimeRedeemed, account.UpdatedAt);
+        new(
+            account.TenantCustomerId,
+            account.PointsBalance,
+            account.LifetimeEarned,
+            account.LifetimeRedeemed,
+            account.CurrentTierId,
+            account.UpdatedAt);
 
-    public static LoyaltyAccountResponse Empty(Guid tenantCustomerId) => new(tenantCustomerId, 0, 0, 0, null);
+    public static LoyaltyAccountResponse Empty(Guid tenantCustomerId) => new(tenantCustomerId, 0, 0, 0, null, null);
 
     public static LoyaltyTransactionResponse ToResponse(LoyaltyTransaction row) =>
         new(row.Id, row.Sequence, ToApi(row.Kind), row.Points, row.BalanceAfter, row.Reason, row.BookingId, row.OccurredAt);

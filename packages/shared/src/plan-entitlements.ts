@@ -35,6 +35,8 @@ export type PlanEntitlementSeed = {
   recurringMembershipBilling: boolean;
   /** Sprint 37.3 — loyalty program + points ledger (Retention). */
   loyaltyBasic: boolean;
+  /** Sprint 37.3-D — loyalty tiers + reward catalog (Professional+). */
+  loyaltyTiers: boolean;
 };
 
 export type PlanEntitlementsCatalog = Record<SubscriptionSku, PlanEntitlementSeed>;
@@ -160,6 +162,7 @@ export const PLAN_ADMIN_MATRIX_ROW_DEFS: PlanAdminMatrixRowDef[] = [
   { key: "memberships", label: "Memberships", kind: "flag" },
   { key: "recurringMembershipBilling", label: "Recurring membership billing", kind: "flag" },
   { key: "loyaltyBasic", label: "Loyalty program", kind: "flag" },
+  { key: "loyaltyTiers", label: "Loyalty tiers & rewards", kind: "flag" },
 ];
 
 function formatPlanLimit(key: "maxLocations" | "maxPractitioners", value: number | null): string {

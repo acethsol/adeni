@@ -51,6 +51,14 @@ public sealed class LoyaltyServiceTests
 
         public Task<Domain.Common.Result> EnsurePackagesEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
             Task.FromResult(Domain.Common.Result.Success());
+
+        public Task<bool> IsLoyaltyTiersEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(entitled);
+
+        public Task<Domain.Common.Result> EnsureLoyaltyTiersEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(entitled
+                ? Domain.Common.Result.Success()
+                : Domain.Common.Result.Failure(RetentionErrorCodes.LoyaltyTiersNotEntitledError()));
     }
 
     private sealed class CapturingAudit : IAuditLogWriter
@@ -85,12 +93,19 @@ public sealed class LoyaltyServiceTests
         public LoyaltyRedemptionService Redemption(bool entitled = true) =>
             new(Db, new Guard(entitled), new FixedClock());
 
+        public LoyaltyTierService TierService(bool entitled = true) =>
+            new(Db, new Guard(entitled), Events, new FixedClock(), Audit);
+
+        public LoyaltyRewardCatalogService RewardCatalog(bool entitled = true) =>
+            new(Db, new Guard(entitled), new FixedClock(), Audit);
+
         public LoyaltyEarnService Earn(bool entitled = true) =>
             new(
                 Db,
                 new Guard(entitled),
                 new BenefitRedemptionService(Db, Events, new FixedClock()),
                 Redemption(entitled),
+                TierService(entitled),
                 Events,
                 new FixedClock());
 
@@ -587,5 +602,128 @@ public sealed class LoyaltyServiceTests
         Assert.Equal(-100, row.Points);
         Assert.Equal(500m, row.DiscountAmount);
         Assert.Equal(400, (await h.Db.Set<LoyaltyAccount>().SingleAsync()).PointsBalance);
+    }
+
+    [Fact]
+    public async Task ReplaceTiers_OwnerOnly_ReplacesRows()
+    {
+        var h = await NewAsync();
+        var tiers = h.TierService();
+        var denied = await tiers.ReplaceAsync(
+            h.Tenant, Manager, new ReplaceLoyaltyTiersRequest([new("Bronze", 0, 0)]));
+        var saved = await tiers.ReplaceAsync(
+            h.Tenant,
+            Owner,
+            new ReplaceLoyaltyTiersRequest([
+                new("Bronze", 0, 0),
+                new("Gold", 500, 1),
+            ]));
+
+        Assert.Equal(RetentionErrorCodes.OwnerRequired, denied.Error!.Code);
+        Assert.True(saved.IsSuccess);
+        Assert.Equal(2, saved.Value!.Items.Count);
+        Assert.Equal(2, await h.Db.Set<LoyaltyTier>().CountAsync());
+        Assert.Single(h.Audit.Entries, e => e.Action == AuditActions.RetentionLoyaltyTiersSaved);
+    }
+
+    [Fact]
+    public async Task StageEarn_PromotesTier_WhenLifetimeEarnedCrossesThreshold()
+    {
+        var h = await NewAsync();
+        await h.SaveProgramAsync();
+        var tiers = h.TierService();
+        await tiers.ReplaceAsync(
+            h.Tenant,
+            Owner,
+            new ReplaceLoyaltyTiersRequest([
+                new("Member", 0, 0),
+                new("VIP", 100, 1),
+            ]));
+        var roster = h.Db.TenantCustomers.Single(x => x.Id == h.Customer);
+        var customerId = roster.CustomerId!.Value;
+        var serviceId = Guid.NewGuid();
+        h.Db.Add(new BusinessProfile { TenantId = h.Tenant, CategorySlug = "salon", Phone = "+10000000000" });
+        h.Db.Add(new ServiceOffering
+        {
+            Id = serviceId,
+            TenantId = h.Tenant,
+            Name = "Cut",
+            PriceAmount = 10_000m,
+            Currency = "NGN",
+            DurationMinutes = 30,
+            CreatedAt = Start,
+            UpdatedAt = Start,
+        });
+        var bookingId = Guid.NewGuid();
+        h.Db.Add(new BookingRecord
+        {
+            Id = bookingId,
+            TenantId = h.Tenant,
+            ServiceOfferingId = serviceId,
+            CustomerId = customerId,
+            StartAt = Start,
+            EndAt = Start.AddHours(1),
+            Status = BookingStatus.Paid,
+            PaidAt = Start,
+            CreatedAt = Start,
+            UpdatedAt = Start,
+            Lines =
+            [
+                new BookingLine
+                {
+                    Id = Guid.NewGuid(),
+                    BookingId = bookingId,
+                    TenantId = h.Tenant,
+                    ServiceOfferingId = serviceId,
+                    SortOrder = 0,
+                    PriceAmount = 10_000m,
+                    DurationMinutes = 30,
+                    ServiceName = "Cut",
+                },
+            ],
+        });
+        await h.Db.SaveChangesAsync();
+
+        var earn = h.Earn();
+        Assert.True((await earn.StageEarnForPaidBookingAsync(h.Tenant, bookingId, "test")).IsSuccess);
+        await h.Db.SaveChangesAsync();
+
+        var account = await h.Db.Set<LoyaltyAccount>().SingleAsync(x => x.TenantCustomerId == h.Customer);
+        Assert.True(account.LifetimeEarned >= 100);
+        Assert.NotNull(account.CurrentTierId);
+        var vip = await h.Db.Set<LoyaltyTier>().SingleAsync(x => x.Name == "VIP");
+        Assert.Equal(vip.Id, account.CurrentTierId);
+        Assert.Contains(h.Events.TakeAll(), e => e is LoyaltyTierChanged);
+    }
+
+    [Fact]
+    public async Task RedeemCatalogReward_DebitsPoints_Idempotent()
+    {
+        var h = await NewAsync();
+        await h.SaveProgramAsync();
+        var account = LoyaltyAccount.Open(h.Tenant, h.Customer, Start);
+        account.PointsBalance = 300;
+        h.Db.Add(account);
+        await h.Db.SaveChangesAsync();
+
+        var catalog = h.RewardCatalog();
+        var created = await catalog.CreateAsync(
+            h.Tenant,
+            Owner,
+            new CreateLoyaltyRewardRequest("Free trim", null, LoyaltyRewardCodes.FreeService, 200, null, 0));
+        Assert.True(created.IsSuccess);
+
+        var first = await catalog.RedeemForCustomerAsync(
+            h.Tenant, Manager, h.Customer, created.Value!.Id, "redeem-key");
+        var replay = await catalog.RedeemForCustomerAsync(
+            h.Tenant, Manager, h.Customer, created.Value.Id, "redeem-key");
+        await h.Db.SaveChangesAsync();
+
+        Assert.True(first.IsSuccess);
+        Assert.True(replay.IsSuccess);
+        Assert.Equal(first.Value!.Transaction.Id, replay.Value!.Transaction.Id);
+        Assert.Equal(100, (await h.Db.Set<LoyaltyAccount>().SingleAsync()).PointsBalance);
+        Assert.Single(await h.Db.Set<LoyaltyRewardRedemption>().ToListAsync());
+        Assert.Single(h.Audit.Entries, e => e.Action == AuditActions.RetentionLoyaltyRewardRedeemed);
     }
 }

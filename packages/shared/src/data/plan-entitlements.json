@@ -28,7 +28,8 @@
     "packages": true,
     "memberships": false,
     "recurringMembershipBilling": false,
-    "loyaltyBasic": true
+    "loyaltyBasic": true,
+    "loyaltyTiers": false
   },
   "professional": {
     "maxLocations": 1,
@@ -59,7 +60,8 @@
     "packages": true,
     "memberships": true,
     "recurringMembershipBilling": true,
-    "loyaltyBasic": true
+    "loyaltyBasic": true,
+    "loyaltyTiers": true
   },
   "business": {
     "maxLocations": 3,
@@ -90,6 +92,7 @@
     "packages": true,
     "memberships": true,
     "recurringMembershipBilling": true,
-    "loyaltyBasic": true
+    "loyaltyBasic": true,
+    "loyaltyTiers": true
   }
 }

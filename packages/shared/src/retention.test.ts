@@ -129,10 +129,10 @@ describe("retention contracts", () => {
     expect(upsertLoyaltyProgramRequestSchema.safeParse({ ...body, pointsExpiryMonths: 61 }).success).toBe(false);
 
     expect(loyaltyAccountSchema.parse({
-      tenantCustomerId: id, pointsBalance: 10, lifetimeEarned: 0, lifetimeRedeemed: 0, updatedAt: null,
+      tenantCustomerId: id, pointsBalance: 10, lifetimeEarned: 0, lifetimeRedeemed: 0, currentTierId: null, updatedAt: null,
     }).pointsBalance).toBe(10);
     const adjustment = loyaltyAdjustmentSchema.parse({
-      account: { tenantCustomerId: id, pointsBalance: 120, lifetimeEarned: 0, lifetimeRedeemed: 0, updatedAt: "2026-10-29T12:00:00Z" },
+      account: { tenantCustomerId: id, pointsBalance: 120, lifetimeEarned: 0, lifetimeRedeemed: 0, currentTierId: null, updatedAt: "2026-10-29T12:00:00Z" },
       transaction: { id, sequence: 1, kind: "adjust", points: 120, balanceAfter: 120, reason: "Welcome", bookingId: null, occurredAt: "2026-10-29T12:00:00Z" },
     });
     expect(adjustment.transaction.kind).toBe("adjust");
@@ -151,6 +151,10 @@ describe("retention contracts", () => {
       "title", "description", "setupNotice", "nonCash", "notConfigured", "enabled", "enabledHint", "currency", "earnHeading",
       "earnPoints", "earnPerAmount", "redeemHeading", "redeemPoints", "redeemValue", "minRedeem", "expiryHeading", "expiryMonths",
       "expiryNever", "summaryEarn", "summaryRedeem", "save", "saved", "couldNotLoad", "couldNotSave", "ownerOnlyHint",
+      "tiersNotice", "tiersHeading", "tiersHint", "tierName", "tierThreshold", "addTier", "removeTier", "saveTiers",
+      "tiersSaved", "couldNotSaveTiers", "rewardsHeading", "rewardsHint", "rewardsEmpty", "rewardName",
+      "rewardPointsCostLabel", "rewardPointsCost", "addReward", "rewardCreated", "couldNotCreateReward",
+      "couldNotUpdateReward", "deactivateReward", "activateReward",
     ];
     for (const locale of ["en", "fr"] as const) {
       for (const code of codes) {
