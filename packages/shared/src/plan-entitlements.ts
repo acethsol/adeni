@@ -39,6 +39,9 @@ export type PlanEntitlementSeed = {
   loyaltyTiers: boolean;
   /** Sprint 37.3-E — refer-a-friend (Professional+). */
   referrals: boolean;
+  /** Sprint 37.4 — redeem packages/memberships at other branches (Business). */
+  crossLocationRetention: boolean;
+  advancedRetentionAnalytics: boolean;
 };
 
 export type PlanEntitlementsCatalog = Record<SubscriptionSku, PlanEntitlementSeed>;
@@ -166,6 +169,8 @@ export const PLAN_ADMIN_MATRIX_ROW_DEFS: PlanAdminMatrixRowDef[] = [
   { key: "loyaltyBasic", label: "Loyalty program", kind: "flag" },
   { key: "loyaltyTiers", label: "Loyalty tiers & rewards", kind: "flag" },
   { key: "referrals", label: "Refer-a-friend", kind: "flag" },
+  { key: "crossLocationRetention", label: "Cross-location retention redeem", kind: "flag" },
+  { key: "advancedRetentionAnalytics", label: "Retention analytics (MRR, utilization)", kind: "flag" },
 ];
 
 function formatPlanLimit(key: "maxLocations" | "maxPractitioners", value: number | null): string {

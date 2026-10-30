@@ -37,4 +37,13 @@ public sealed class PackageScopePolicyTests
         Assert.True(PackageScopePolicy.CanRedeemAt(PackageRedemptionScope.SelectedLocations, [B], A, B));
         Assert.False(PackageScopePolicy.CanRedeemAt(PackageRedemptionScope.SelectedLocations, [B], A, A));
     }
+
+    [Fact]
+    public void IsCrossLocationRedeemAttempt_RequiresBothLocationsAndDifference()
+    {
+        Assert.False(PackageScopePolicy.IsCrossLocationRedeemAttempt(null, B));
+        Assert.False(PackageScopePolicy.IsCrossLocationRedeemAttempt(A, null));
+        Assert.False(PackageScopePolicy.IsCrossLocationRedeemAttempt(A, A));
+        Assert.True(PackageScopePolicy.IsCrossLocationRedeemAttempt(A, B));
+    }
 }

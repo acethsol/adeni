@@ -8,6 +8,28 @@
     <p class="error-banner">{{ error() }}</p>
   }
 
+  @if (showMrrPanel()) {
+    <section class="mrr-panel" aria-labelledby="membership-mrr-heading">
+      <h2 id="membership-mrr-heading" class="mrr-panel__title">{{ tr('businessApp.memberships.mrrHeading') }}</h2>
+      <p class="muted mrr-panel__hint">{{ tr('businessApp.memberships.mrrHint') }}</p>
+      @if (mrrLoading()) {
+        <p class="muted">{{ tr('toast.loading') }}</p>
+      } @else if (mrrRows().length === 0) {
+        <p class="muted">{{ tr('businessApp.memberships.mrrEmpty') }}</p>
+      } @else {
+        <ul class="plain mrr-list">
+          @for (row of mrrRows(); track row.currency) {
+            <li>{{ tr('businessApp.memberships.mrrRow', { currency: row.currency, amount: row.amountLabel, count: row.memberCount }) }}</li>
+          }
+        </ul>
+      }
+    </section>
+  } @else if (mrrUpgradeHint()) {
+    <p class="muted mrr-upgrade">{{ tr('businessApp.memberships.mrrUpgrade') }}</p>
+  }
+
+  <p class="muted membership-location-hint">{{ tr('businessApp.retention.membershipCrossLocationHint') }}</p>
+
   <adeni-modal
     [open]="showCreate()"
     [title]="tr('businessApp.memberships.newPlan')"

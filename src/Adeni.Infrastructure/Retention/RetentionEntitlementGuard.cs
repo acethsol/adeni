@@ -100,4 +100,28 @@ public sealed class RetentionEntitlementGuard(
         await IsReferralsEntitledAsync(tenantId, cancellationToken)
             ? Result.Success()
             : Result.Failure(RetentionErrorCodes.ReferralsNotEntitledError());
+
+    public async Task<bool> IsCrossLocationRetentionEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default)
+    {
+        var tenant = await db.Tenants.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+        return tenant is not null && entitlements.GetEntitlementsForTenant(tenant).CrossLocationRetention;
+    }
+
+    public async Task<Result> EnsureCrossLocationRetentionEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+        await IsCrossLocationRetentionEntitledAsync(tenantId, cancellationToken)
+            ? Result.Success()
+            : Result.Failure(RetentionErrorCodes.CrossLocationRetentionNotEntitledError());
+
+    public async Task<bool> IsAdvancedRetentionAnalyticsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default)
+    {
+        var tenant = await db.Tenants.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+        return tenant is not null && entitlements.GetEntitlementsForTenant(tenant).AdvancedRetentionAnalytics;
+    }
+
+    public async Task<Result> EnsureAdvancedRetentionAnalyticsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+        await IsAdvancedRetentionAnalyticsEntitledAsync(tenantId, cancellationToken)
+            ? Result.Success()
+            : Result.Failure(RetentionErrorCodes.AdvancedRetentionAnalyticsNotEntitledError());
 }

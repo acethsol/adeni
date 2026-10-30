@@ -58,6 +58,18 @@ public sealed class CustomerMembershipServiceTests
 
         public Task<Domain.Common.Result> EnsureReferralsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
             Task.FromResult(Domain.Common.Result.Success());
+
+        public Task<bool> IsCrossLocationRetentionEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(true);
+
+        public Task<Domain.Common.Result> EnsureCrossLocationRetentionEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Domain.Common.Result.Success());
+
+        public Task<bool> IsAdvancedRetentionAnalyticsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(true);
+
+        public Task<Domain.Common.Result> EnsureAdvancedRetentionAnalyticsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Domain.Common.Result.Success());
     }
 
     private sealed class CapturingAudit : IAuditLogWriter

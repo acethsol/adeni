@@ -23,7 +23,8 @@ public sealed class RetentionServiceTests
         public override DateTimeOffset GetUtcNow() => Now;
     }
 
-    private sealed class Guard(bool entitled = true) : IRetentionEntitlementGuard
+    private sealed class Guard(bool entitled = true, bool crossLocationEntitled = false, bool advancedAnalyticsEntitled = true)
+        : IRetentionEntitlementGuard
     {
         public Task<bool> IsLoyaltyBasicEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
             Task.FromResult(true);
@@ -67,6 +68,22 @@ public sealed class RetentionServiceTests
             Task.FromResult(entitled
                 ? Domain.Common.Result.Success()
                 : Domain.Common.Result.Failure(RetentionErrorCodes.ReferralsNotEntitledError()));
+
+        public Task<bool> IsCrossLocationRetentionEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(crossLocationEntitled);
+
+        public Task<Domain.Common.Result> EnsureCrossLocationRetentionEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(crossLocationEntitled
+                ? Domain.Common.Result.Success()
+                : Domain.Common.Result.Failure(RetentionErrorCodes.CrossLocationRetentionNotEntitledError()));
+
+        public Task<bool> IsAdvancedRetentionAnalyticsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(advancedAnalyticsEntitled);
+
+        public Task<Domain.Common.Result> EnsureAdvancedRetentionAnalyticsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(advancedAnalyticsEntitled
+                ? Domain.Common.Result.Success()
+                : Domain.Common.Result.Failure(RetentionErrorCodes.AdvancedRetentionAnalyticsNotEntitledError()));
     }
 
     private sealed class Lookup(AdeniDbContext db) : IRetentionServiceLookup
@@ -99,7 +116,8 @@ public sealed class RetentionServiceTests
         public CustomerPackageService Packages(bool entitled = true) =>
             new(Db, new Guard(entitled), Events, Clock);
 
-        public BenefitRedemptionService Benefits() => new(Db, Events, Clock);
+        public BenefitRedemptionService Benefits(bool crossLocationEntitled = false) =>
+            new(Db, Events, Clock, new Guard(crossLocationEntitled: crossLocationEntitled));
 
         public PackageExpiryService Expiry() =>
             new(Db, Events, Clock, Microsoft.Extensions.Logging.Abstractions.NullLogger<PackageExpiryService>.Instance);
@@ -377,14 +395,39 @@ public sealed class RetentionServiceTests
     }
 
     [Fact]
-    public async Task Reserve_AllLocationsScope_AllowsAnyBranch()
+    public async Task Reserve_AllLocationsScope_CrossBranchDeniedWithoutEntitlement()
     {
         var h = await NewAsync();
         var sold = await h.SellAsync(await h.DefinitionAsync(), location: h.LocationA);
 
         var result = await h.Benefits().TryReserveBenefitsAsync(h.Reserve(sold, Guid.NewGuid(), location: h.LocationB));
 
+        Assert.Equal(RetentionErrorCodes.CrossLocationRetentionNotEntitled, result.Error!.Code);
+    }
+
+    [Fact]
+    public async Task Reserve_AllLocationsScope_CrossBranchAllowedWhenEntitled()
+    {
+        var h = await NewAsync();
+        var sold = await h.SellAsync(await h.DefinitionAsync(), location: h.LocationA);
+
+        var result = await h.Benefits(crossLocationEntitled: true)
+            .TryReserveBenefitsAsync(h.Reserve(sold, Guid.NewGuid(), location: h.LocationB));
+
         Assert.True(result.IsSuccess, result.Error?.Code);
+    }
+
+    [Fact]
+    public async Task ListRedeemable_AllLocationsScope_FiltersCrossBranchWhenNotEntitled()
+    {
+        var h = await NewAsync();
+        await h.SellAsync(await h.DefinitionAsync(), location: h.LocationA);
+
+        var atA = await h.Benefits().ListRedeemableAsync(h.Tenant, h.TenantCustomer, h.LocationA, null);
+        var atB = await h.Benefits().ListRedeemableAsync(h.Tenant, h.TenantCustomer, h.LocationB, null);
+
+        Assert.Single(atA.Value!.Items);
+        Assert.Empty(atB.Value!.Items);
     }
 
     [Fact]

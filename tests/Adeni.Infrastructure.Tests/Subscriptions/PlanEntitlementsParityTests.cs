@@ -76,6 +76,8 @@ public sealed class PlanEntitlementsParityTests
         Assert.Equal(row.GetProperty("loyaltyBasic").GetBoolean(), catalog.LoyaltyBasic);
         Assert.Equal(row.GetProperty("loyaltyTiers").GetBoolean(), catalog.LoyaltyTiers);
         Assert.Equal(row.GetProperty("referrals").GetBoolean(), catalog.Referrals);
+        Assert.Equal(row.GetProperty("crossLocationRetention").GetBoolean(), catalog.CrossLocationRetention);
+        Assert.Equal(row.GetProperty("advancedRetentionAnalytics").GetBoolean(), catalog.AdvancedRetentionAnalytics);
 
         Assert.True(catalog.InvoicesReceipts);
         Assert.True(catalog.OnlinePayments);

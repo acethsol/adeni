@@ -38,6 +38,8 @@ public sealed record TenantEntitlements(
     bool LoyaltyBasic,
     bool LoyaltyTiers,
     bool Referrals,
+    bool CrossLocationRetention,
+    bool AdvancedRetentionAnalytics,
     bool MultiLocation);
 
 public static class SubscriptionEntitlements

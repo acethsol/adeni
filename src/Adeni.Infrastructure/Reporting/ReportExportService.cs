@@ -5,7 +5,9 @@ using System.Text.Json;
 using Adeni.Application.Abstractions;
 using Adeni.Application.Finance;
 using Adeni.Application.Reporting;
+using Adeni.Application.Retention;
 using Adeni.Application.Subscriptions;
+using Adeni.Domain.Retention;
 using Adeni.Domain.Auditing;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
@@ -20,7 +22,8 @@ public sealed class ReportExportService(
     IAuditLogWriter auditLogWriter,
     ICorrelationContext correlationContext,
     ILogger<ReportExportService> logger,
-    IGiftCardReportQuery? giftCards = null) : IReportExportService
+    IGiftCardReportQuery? giftCards = null,
+    IRetentionAnalyticsService? retentionAnalytics = null) : IReportExportService
 {
     public async Task<Result<ReportExportPayload>> ExportAsync(
         ReportExportRequest request,
@@ -94,6 +97,7 @@ public sealed class ReportExportService(
             ReportKeys.TenantCustomers => await ExportTenantCustomersAsync(request, cancellationToken),
             ReportKeys.TenantLocations => await ExportTenantLocationsAsync(request, cancellationToken),
             ReportKeys.TenantServices => await ExportTenantServicesAsync(request, cancellationToken),
+            ReportKeys.RetentionMembershipMrr => await ExportRetentionMembershipMrrAsync(request, cancellationToken),
             _ => Result.Failure<ReportExportPayload>(ErrorCodes.ReportNotFoundError(request.ReportKey)),
         };
 
@@ -168,7 +172,60 @@ public sealed class ReportExportService(
             return ErrorCodes.ExportsNotEntitledError();
         }
 
+        if (definition.RequiresAdvancedRetentionAnalytics && !entitlements.AdvancedRetentionAnalytics)
+        {
+            return RetentionErrorCodes.AdvancedRetentionAnalyticsNotEntitledError();
+        }
+
         return null;
+    }
+
+    private async Task<Result<ReportExportPayload>> ExportRetentionMembershipMrrAsync(
+        ReportExportRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (retentionAnalytics is null)
+        {
+            return Result.Failure<ReportExportPayload>(ErrorCodes.ReportNotFoundError(request.ReportKey));
+        }
+
+        if (request.LocationId is not null)
+        {
+            return Result.Failure<ReportExportPayload>(
+                Error.Validation("Membership MRR is calculated for the whole business; select all locations."));
+        }
+
+        var mrr = await retentionAnalytics.GetMembershipMrrAsync(request.TenantId, cancellationToken);
+        if (mrr.IsFailure)
+        {
+            return Result.Failure<ReportExportPayload>(mrr.Error!);
+        }
+
+        var stamp = DateTimeOffset.UtcNow.ToString("yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture);
+        var rows = mrr.Value!.Items;
+        return request.Format switch
+        {
+            ReportExportFormat.Csv => Result.Success(new ReportExportPayload(
+                "text/csv; charset=utf-8",
+                $"retention-membership-mrr-{stamp}.csv",
+                Encoding.UTF8.GetBytes(BuildMembershipMrrCsv(rows, mrr.Value.AsOf)))),
+            _ => Result.Failure<ReportExportPayload>(
+                ErrorCodes.ReportFormatNotSupportedError(request.ReportKey, request.Format.ToString())),
+        };
+    }
+
+    private static string BuildMembershipMrrCsv(
+        IReadOnlyList<TenantMembershipMrr> rows,
+        DateTimeOffset asOf)
+    {
+        var csv = new StringBuilder("Currency,MonthlyRecurringRevenue,MemberCount,AsOf\r\n");
+        foreach (var row in rows)
+        {
+            csv.AppendJoin(',', new object?[] { row.Currency, row.MonthlyRecurringRevenue, row.MemberCount, asOf.UtcDateTime.ToString("O") }.Select(CsvField.Format))
+                .Append("\r\n");
+        }
+
+        return csv.ToString();
     }
 
     private async Task<Result<ReportExportPayload>> ExportStaffRosterAsync(

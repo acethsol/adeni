@@ -67,6 +67,18 @@ public sealed class LoyaltyServiceTests
             Task.FromResult(entitled
                 ? Domain.Common.Result.Success()
                 : Domain.Common.Result.Failure(RetentionErrorCodes.ReferralsNotEntitledError()));
+
+        public Task<bool> IsCrossLocationRetentionEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(true);
+
+        public Task<Domain.Common.Result> EnsureCrossLocationRetentionEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Domain.Common.Result.Success());
+
+        public Task<bool> IsAdvancedRetentionAnalyticsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(true);
+
+        public Task<Domain.Common.Result> EnsureAdvancedRetentionAnalyticsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Domain.Common.Result.Success());
     }
 
     private sealed class CapturingAudit : IAuditLogWriter
@@ -111,7 +123,7 @@ public sealed class LoyaltyServiceTests
             new(
                 Db,
                 new Guard(entitled),
-                new BenefitRedemptionService(Db, Events, new FixedClock()),
+                new BenefitRedemptionService(Db, Events, new FixedClock(), new Guard(entitled)),
                 Redemption(entitled),
                 TierService(entitled),
                 Events,

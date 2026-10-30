@@ -60,6 +60,18 @@ public sealed class RetentionSqlServerTests
 
         public Task<Domain.Common.Result> EnsureReferralsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
             Task.FromResult(Domain.Common.Result.Success());
+
+        public Task<bool> IsCrossLocationRetentionEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(true);
+
+        public Task<Domain.Common.Result> EnsureCrossLocationRetentionEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Domain.Common.Result.Success());
+
+        public Task<bool> IsAdvancedRetentionAnalyticsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(true);
+
+        public Task<Domain.Common.Result> EnsureAdvancedRetentionAnalyticsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Domain.Common.Result.Success());
     }
 
     private sealed class Lookup(AdeniDbContext db) : IRetentionServiceLookup
@@ -169,7 +181,7 @@ public sealed class RetentionSqlServerTests
 
             async Task<bool> TryBookAsync(AdeniDbContext db)
             {
-                var service = new BenefitRedemptionService(db, new DomainEventCollector(), TimeProvider.System);
+                var service = new BenefitRedemptionService(db, new DomainEventCollector(), TimeProvider.System, new Guard());
                 var reserved = await service.TryReserveBenefitsAsync(new ReserveBenefitsRequest(
                     s.Tenant, s.PlatformCustomer, Guid.NewGuid(), s.Location, [s.Service], 1,
                     [new AppliedBenefitRequest(package.Id, balanceId, 1)], "customer", DateTimeOffset.UtcNow));
@@ -217,7 +229,7 @@ public sealed class RetentionSqlServerTests
 
             async Task<bool> TryBookAsync(AdeniDbContext db)
             {
-                var service = new BenefitRedemptionService(db, new DomainEventCollector(), TimeProvider.System);
+                var service = new BenefitRedemptionService(db, new DomainEventCollector(), TimeProvider.System, new Guard());
                 var reserved = await service.TryReserveBenefitsAsync(new ReserveBenefitsRequest(
                     s.Tenant, s.PlatformCustomer, Guid.NewGuid(), s.Location, [s.Service], 1,
                     [new AppliedBenefitRequest(package.Id, balanceId, 1)], "customer", DateTimeOffset.UtcNow));

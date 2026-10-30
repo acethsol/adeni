@@ -27,3 +27,30 @@
   flex-wrap: wrap;
   margin-top: 1rem;
 }
+
+.mrr-panel {
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--cds-border-subtle, #e0e0e0);
+  border-radius: 4px;
+}
+
+.mrr-panel__title {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+
+.mrr-panel__hint,
+.mrr-upgrade,
+.membership-location-hint {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+}
+
+.mrr-list {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}

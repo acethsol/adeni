@@ -2,11 +2,15 @@ import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import {
   formatPrice,
+  hasCrossLocationRetentionEntitlement,
+  mergeTenantEntitlements,
   type BusinessLocation,
   type CustomerPackage,
   type PackageDefinition,
+  type PackageRedemptionScope,
   type ServiceOffering,
   type TenantCustomerListItem,
+  type TenantEntitlements,
 } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
@@ -37,7 +41,14 @@ type CreateDraft = {
   currency: string;
   serviceOfferingId: string;
   quantityGranted: number;
+  redemptionScope: PackageRedemptionScope;
 };
+
+const REDEMPTION_SCOPES: readonly PackageRedemptionScope[] = [
+  "purchase_location_only",
+  "all_locations",
+  "selected_locations",
+];
 
 type SellDraft = {
   packageDefinitionId: string;
@@ -79,6 +90,8 @@ export class RetentionPackagesComponent implements OnInit {
   private readonly confirmDialog = inject(AdeniConfirmService);
 
   readonly currencies = CURRENCIES;
+  readonly redemptionScopes = REDEMPTION_SCOPES;
+  readonly entitlements = signal<TenantEntitlements | null>(null);
   readonly loading = signal(true);
   readonly busy = signal(false);
   readonly error = signal<string | null>(null);
@@ -117,6 +130,12 @@ export class RetentionPackagesComponent implements OnInit {
     },
     { id: "credits", header: this.tr("businessApp.retention.credits"), cell: (row) => this.creditsSummary(row), sortable: false },
     {
+      id: "scope",
+      header: this.tr("businessApp.retention.redemptionScope"),
+      cell: (row) => this.scopeLabel(row),
+      sortValue: (row) => row.redemptionScope,
+    },
+    {
       id: "expiry",
       header: this.tr("businessApp.retention.expiry"),
       cell: (row) => this.tr("businessApp.retention.months", { count: row.effectiveExpiryMonths }),
@@ -140,7 +159,11 @@ export class RetentionPackagesComponent implements OnInit {
   }
 
   scopeLabel(row: PackageDefinition): string {
-    switch (row.redemptionScope) {
+    return this.redemptionScopeLabel(row.redemptionScope);
+  }
+
+  redemptionScopeLabel(scope: PackageRedemptionScope): string {
+    switch (scope) {
       case "purchase_location_only":
         return this.tr("businessApp.retention.scopePurchase");
       case "selected_locations":
@@ -150,16 +173,25 @@ export class RetentionPackagesComponent implements OnInit {
     }
   }
 
+  showCrossLocationPlanHint(scope: PackageRedemptionScope): boolean {
+    return scope === "all_locations" && !hasCrossLocationRetentionEntitlement(this.entitlements());
+  }
+
   async load(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
     try {
       await this.api.withAuthorizedClient(async (client) => {
-        const [list, services, locations] = await Promise.all([
+        const [list, services, locations, planEntitlements, profile] = await Promise.all([
           client.retention.listPackages(false),
           client.getTenantServices().catch(() => [] as ServiceOffering[]),
           client.getTenantLocations().catch(() => [] as BusinessLocation[]),
+          client.getTenantEntitlements().catch(() => null),
+          client.getTenantProfile().catch(() => null),
         ]);
+        this.entitlements.set(
+          mergeTenantEntitlements(planEntitlements, null, profile?.entitlements ?? null),
+        );
         this.packages.set(list.items);
         this.services.set(services.filter((s) => s.isActive));
         this.locations.set(locations.filter((l) => l.isActive !== false));
@@ -175,7 +207,14 @@ export class RetentionPackagesComponent implements OnInit {
   // ---- Create ----
 
   private emptyCreate(): CreateDraft {
-    return { name: "", listPrice: null, currency: "NGN", serviceOfferingId: "", quantityGranted: 3 };
+    return {
+      name: "",
+      listPrice: null,
+      currency: "NGN",
+      serviceOfferingId: "",
+      quantityGranted: 3,
+      redemptionScope: "purchase_location_only",
+    };
   }
 
   openCreate(): void {
@@ -195,7 +234,14 @@ export class RetentionPackagesComponent implements OnInit {
 
   canCreate(): boolean {
     const d = this.createDraft();
-    return d.name.trim().length > 0 && d.listPrice !== null && d.listPrice >= 0 && !!d.serviceOfferingId && d.quantityGranted >= 1;
+    return (
+      d.name.trim().length > 0
+      && d.listPrice !== null
+      && d.listPrice >= 0
+      && !!d.serviceOfferingId
+      && d.quantityGranted >= 1
+      && d.redemptionScope !== "selected_locations"
+    );
   }
 
   async saveCreate(): Promise<void> {
@@ -209,6 +255,7 @@ export class RetentionPackagesComponent implements OnInit {
           listPrice: d.listPrice ?? 0,
           currency: d.currency,
           benefits: [{ serviceOfferingId: d.serviceOfferingId, quantityGranted: d.quantityGranted }],
+          redemptionScope: d.redemptionScope,
         }),
       );
       this.packages.update((list) => [created, ...list]);

@@ -47,6 +47,12 @@ public static class ReportDefinitionRegistry
                 BusinessPermissions.Services,
                 ReportBaseEntitlement.BasicExports,
                 new HashSet<ReportExportFormat> { ReportExportFormat.Csv, ReportExportFormat.Xlsx }),
+            [ReportKeys.RetentionMembershipMrr] = new(
+                ReportKeys.RetentionMembershipMrr,
+                BusinessPermissions.Retention,
+                ReportBaseEntitlement.BasicExports,
+                new HashSet<ReportExportFormat> { ReportExportFormat.Csv },
+                RequiresAdvancedRetentionAnalytics: true),
         };
 
     public static bool TryGet(string reportKey, out ReportDefinition definition) =>

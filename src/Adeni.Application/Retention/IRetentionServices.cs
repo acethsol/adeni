@@ -184,6 +184,14 @@ public interface IRetentionEntitlementGuard
     Task<Result> EnsureReferralsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default);
 
     Task<bool> IsReferralsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default);
+
+    Task<Result> EnsureCrossLocationRetentionEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default);
+
+    Task<bool> IsCrossLocationRetentionEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default);
+
+    Task<Result> EnsureAdvancedRetentionAnalyticsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default);
+
+    Task<bool> IsAdvancedRetentionAnalyticsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default);
 }
 
 /// <summary>Catalog service lookup implemented by Booking infrastructure (Retention never reads Booking DbSets).</summary>

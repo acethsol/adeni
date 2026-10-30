@@ -19,7 +19,7 @@ using Microsoft.Extensions.Options;
 [Route("api/v1/tenant/retention")]
 public sealed class TenantCustomerMembershipsController(
     ICustomerMembershipService memberships,
-    IMembershipMrrService mrr,
+    IRetentionAnalyticsService analytics,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet("customers/{tenantCustomerId:guid}/memberships")]
@@ -104,7 +104,7 @@ public sealed class TenantCustomerMembershipsController(
     public async Task<IActionResult> Mrr(CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
-        return ApiResults.FromResult(await mrr.GetAsync(actor.TenantId, cancellationToken), Ok, HttpContext);
+        return ApiResults.FromResult(await analytics.GetMembershipMrrAsync(actor.TenantId, cancellationToken), Ok, HttpContext);
     }
 
     private (Guid TenantId, RetentionActor Actor)? ResolveActor()

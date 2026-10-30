@@ -46,6 +46,20 @@ export function hasAdvancedReportsEntitlement(
   return entitlements.advancedReports === true;
 }
 
+/** Cross-location package/membership redemption (Business). */
+export function hasCrossLocationRetentionEntitlement(
+  entitlements: TenantEntitlements | null | undefined,
+): boolean {
+  return hasTenantEntitlement(entitlements, "crossLocationRetention");
+}
+
+/** Retention module analytics: MRR, utilization, loyalty aggregates (Pro+). */
+export function hasAdvancedRetentionAnalyticsEntitlement(
+  entitlements: TenantEntitlements | null | undefined,
+): boolean {
+  return hasTenantEntitlement(entitlements, "advancedRetentionAnalytics");
+}
+
 /** Merge entitlement flags from API profile, usage, and `/tenant/entitlements` (OR for tier gates). */
 export function mergeTenantEntitlements(
   ...sources: Array<TenantEntitlements | null | undefined>
@@ -68,6 +82,12 @@ export function mergeTenantEntitlements(
   merged.advancedReports = present.some((source) => source.advancedReports === true);
   merged.multiLocationReporting = present.some(
     (source) => source.multiLocationReporting === true,
+  );
+  merged.crossLocationRetention = present.some(
+    (source) => source.crossLocationRetention === true,
+  );
+  merged.advancedRetentionAnalytics = present.some(
+    (source) => source.advancedRetentionAnalytics === true,
   );
 
   return merged;

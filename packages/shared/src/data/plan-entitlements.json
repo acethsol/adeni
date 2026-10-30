@@ -30,7 +30,9 @@
     "recurringMembershipBilling": false,
     "loyaltyBasic": true,
     "loyaltyTiers": false,
-    "referrals": false
+    "referrals": false,
+    "crossLocationRetention": false,
+    "advancedRetentionAnalytics": false
   },
   "professional": {
     "maxLocations": 1,
@@ -63,7 +65,9 @@
     "recurringMembershipBilling": true,
     "loyaltyBasic": true,
     "loyaltyTiers": true,
-    "referrals": true
+    "referrals": true,
+    "crossLocationRetention": false,
+    "advancedRetentionAnalytics": true
   },
   "business": {
     "maxLocations": 3,
@@ -96,6 +100,8 @@
     "recurringMembershipBilling": true,
     "loyaltyBasic": true,
     "loyaltyTiers": true,
-    "referrals": true
+    "referrals": true,
+    "crossLocationRetention": true,
+    "advancedRetentionAnalytics": true
   }
 }

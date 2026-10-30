@@ -1009,6 +1009,9 @@ export const tenantEntitlementsSchema = z.object({
   loyaltyTiers: z.boolean(),
   /** Refer-a-friend program (Sprint 37.3-E, Professional+). */
   referrals: z.boolean(),
+  /** Cross-location package/membership redemption (Sprint 37.4, Business). */
+  crossLocationRetention: z.boolean(),
+  advancedRetentionAnalytics: z.boolean(),
   multiLocation: z.boolean(),
 });
 

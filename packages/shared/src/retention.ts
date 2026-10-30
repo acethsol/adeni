@@ -3,6 +3,7 @@ import { z } from "zod";
 /** Retention (R1-A): prepaid service packages + benefit ledger. Credits are service/session counts — never currency. */
 
 export const packageRedemptionScopeSchema = z.enum(["all_locations", "purchase_location_only", "selected_locations"]);
+export type PackageRedemptionScope = z.infer<typeof packageRedemptionScopeSchema>;
 export const packageSellScopeSchema = z.enum(["all_locations", "selected_locations"]);
 export const customerPackageStatusSchema = z.enum(["pending_payment", "active", "expired", "voided"]);
 export const packageSoldChannelSchema = z.enum(["in_person_till", "in_person_transfer", "online"]);
@@ -382,6 +383,7 @@ export type PublicMembershipPlan = z.infer<typeof publicMembershipPlanSchema>;
 export type PublicMembershipPlanCatalog = z.infer<typeof publicMembershipPlanCatalogSchema>;
 export type MembershipSubscribeResponse = z.infer<typeof membershipSubscribeResponseSchema>;
 export type RenewMembershipRequest = z.infer<typeof renewMembershipRequestSchema>;
+export type TenantMembershipMrr = z.infer<typeof tenantMembershipMrrSchema>;
 export type TenantMembershipMrrResponse = z.infer<typeof tenantMembershipMrrResponseSchema>;
 
 // ---- Loyalty (Sprint 37.3-A): program settings + points ledger. Earn / redeem / tiers / referrals land in later slices. ----

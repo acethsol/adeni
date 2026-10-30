@@ -2,8 +2,11 @@ import { Component, computed, inject, input, OnInit, signal } from "@angular/cor
 import {
   formatPrice,
   formatSlotTime,
+  hasCrossLocationRetentionEntitlement,
+  mergeTenantEntitlements,
   type BusinessLocation,
   type CustomerPackage,
+  type TenantEntitlements,
 } from "@adeni/shared";
 import {
   AdeniPillComponent,
@@ -51,6 +54,9 @@ import { BusinessApiService } from "../../core/services/business-api.service";
                 <dd>{{ p.expiresAt ? tr('businessApp.retention.expires', { date: when(p.expiresAt) }) : tr('businessApp.retention.noExpiry') }}</dd>
               </div>
             </dl>
+            @if (showCrossLocationFootnote(p)) {
+              <p class="scope-footnote muted">{{ tr('businessApp.retention.crossLocationScopeFootnote') }}</p>
+            }
             <table class="balances">
               <thead>
                 <tr>
@@ -89,6 +95,7 @@ import { BusinessApiService } from "../../core/services/business-api.service";
       .package__meta div { display: flex; gap: 0.35rem; }
       .package__meta dt, .package__meta dd { margin: 0; }
       .package__meta dt::after { content: ":"; }
+      .scope-footnote { margin: 0.25rem 0 0; width: 100%; }
       .balances { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
       .balances th, .balances td { padding: 0.35rem 0.5rem; text-align: right; border-top: 1px solid var(--cds-border-subtle, #e0e0e0); }
       .balances th:first-child { text-align: left; font-weight: 500; }
@@ -105,6 +112,7 @@ export class CustomerPackagesPanelComponent implements OnInit {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly packages = signal<CustomerPackage[]>([]);
+  private readonly entitlements = signal<TenantEntitlements | null>(null);
   private readonly locations = signal<BusinessLocation[]>([]);
   private readonly locationNames = computed(() => new Map(this.locations().map((l) => [l.id, l.name])));
 
@@ -117,10 +125,15 @@ export class CustomerPackagesPanelComponent implements OnInit {
     this.error.set(null);
     try {
       await this.api.withAuthorizedClient(async (client) => {
-        const [list, locations] = await Promise.all([
+        const [list, locations, planEntitlements, profile] = await Promise.all([
           client.retention.listCustomerPackages(this.customerId()),
           client.getTenantLocations().catch(() => [] as BusinessLocation[]),
+          client.getTenantEntitlements().catch(() => null),
+          client.getTenantProfile().catch(() => null),
         ]);
+        this.entitlements.set(
+          mergeTenantEntitlements(planEntitlements, null, profile?.entitlements ?? null),
+        );
         this.packages.set(list.items);
         this.locations.set(locations);
       });
@@ -153,6 +166,10 @@ export class CustomerPackagesPanelComponent implements OnInit {
       default:
         return this.tr("businessApp.retention.channelOnline");
     }
+  }
+
+  showCrossLocationFootnote(p: CustomerPackage): boolean {
+    return p.redemptionScope === "all_locations" && !hasCrossLocationRetentionEntitlement(this.entitlements());
   }
 
   scopeLabel(p: CustomerPackage): string {

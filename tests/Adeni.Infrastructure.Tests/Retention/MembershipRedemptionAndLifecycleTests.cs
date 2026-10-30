@@ -59,6 +59,18 @@ public sealed class MembershipRedemptionAndLifecycleTests
 
         public Task<Domain.Common.Result> EnsureReferralsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
             Task.FromResult(Domain.Common.Result.Success());
+
+        public Task<bool> IsCrossLocationRetentionEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(true);
+
+        public Task<Domain.Common.Result> EnsureCrossLocationRetentionEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Domain.Common.Result.Success());
+
+        public Task<bool> IsAdvancedRetentionAnalyticsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(true);
+
+        public Task<Domain.Common.Result> EnsureAdvancedRetentionAnalyticsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Domain.Common.Result.Success());
     }
 
     private sealed class NullAudit : IAuditLogWriter
@@ -85,7 +97,7 @@ public sealed class MembershipRedemptionAndLifecycleTests
         public CustomerMembershipService Memberships(bool entitled = true) =>
             new(Db, new Guard(entitled), Events, Clock, new NullAudit());
 
-        public BenefitRedemptionService Redemption() => new(Db, Events, Clock);
+        public BenefitRedemptionService Redemption() => new(Db, Events, Clock, new Guard());
 
         public MembershipMrrService Mrr(bool entitled = true) => new(Db, new Guard(entitled), Clock);
 

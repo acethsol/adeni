@@ -115,6 +115,9 @@ export const enErrorMessages: MessageTree = {
     loyaltyBasic: "Loyalty is not included on your current plan.",
     loyaltyTiers: "Loyalty tiers and rewards are not included on your current plan.",
     referrals: "Refer-a-friend is not included on your current plan.",
+    crossLocationRetention:
+      "Redeeming packages or memberships at another location requires the Business plan.",
+    advancedRetentionAnalytics: "Retention analytics are not included on your current plan.",
     exports: "Exports are not included on your current plan.",
     excel_export: "Excel export is not included on your current plan.",
     multi_location_reporting:
@@ -232,6 +235,10 @@ export const frErrorMessages: MessageTree = {
     loyaltyBasic: "La fidélité n’est pas incluse dans votre forfait actuel.",
     loyaltyTiers: "Les paliers et récompenses de fidélité ne sont pas inclus dans votre forfait actuel.",
     referrals: "Le parrainage n'est pas inclus dans votre forfait actuel.",
+    crossLocationRetention:
+      "L'utilisation de forfaits ou d'abonnements dans un autre établissement nécessite le forfait Business.",
+    advancedRetentionAnalytics:
+      "Les analyses de fidélisation ne sont pas incluses dans votre forfait actuel.",
     exports: "Les exportations ne sont pas incluses dans votre forfait actuel.",
     excel_export: "L'exportation Excel n'est pas incluse dans votre forfait actuel.",
     multi_location_reporting:

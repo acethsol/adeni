@@ -2,9 +2,13 @@ import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import {
   formatPrice,
+  hasAdvancedRetentionAnalyticsEntitlement,
+  mergeTenantEntitlements,
   type MembershipBillingInterval,
   type MembershipPlan,
   type ServiceOffering,
+  type TenantEntitlements,
+  type TenantMembershipMrr,
 } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
@@ -81,6 +85,22 @@ export class RetentionMembershipsComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly plans = signal<MembershipPlan[]>([]);
   readonly services = signal<ServiceOffering[]>([]);
+  readonly entitlements = signal<TenantEntitlements | null>(null);
+  readonly mrrItems = signal<TenantMembershipMrr[]>([]);
+  readonly mrrLoading = signal(false);
+  readonly mrrUpgradeHint = computed(
+    () => !hasAdvancedRetentionAnalyticsEntitlement(this.entitlements()) && !this.loading(),
+  );
+  readonly showMrrPanel = computed(
+    () => hasAdvancedRetentionAnalyticsEntitlement(this.entitlements()) && !this.loading(),
+  );
+  readonly mrrRows = computed(() =>
+    this.mrrItems().map((row) => ({
+      currency: row.currency,
+      memberCount: row.memberCount,
+      amountLabel: formatPrice(row.monthlyRecurringRevenue, row.currency),
+    })),
+  );
   readonly search = signal("");
   readonly viewMode = signal<AdeniListViewMode>("table");
 
@@ -136,12 +156,29 @@ export class RetentionMembershipsComponent implements OnInit {
     this.error.set(null);
     try {
       await this.api.withAuthorizedClient(async (client) => {
-        const [list, services] = await Promise.all([
+        const [list, services, planEntitlements, profile] = await Promise.all([
           client.retention.listMembershipPlans(false),
           client.getTenantServices().catch(() => [] as ServiceOffering[]),
+          client.getTenantEntitlements().catch(() => null),
+          client.getTenantProfile().catch(() => null),
         ]);
+        const merged = mergeTenantEntitlements(planEntitlements, null, profile?.entitlements ?? null);
+        this.entitlements.set(merged);
         this.plans.set(list.items);
         this.services.set(services.filter((s) => s.isActive));
+        if (hasAdvancedRetentionAnalyticsEntitlement(merged)) {
+          this.mrrLoading.set(true);
+          try {
+            const mrr = await client.retention.membershipMrr();
+            this.mrrItems.set(mrr.items);
+          } catch {
+            this.mrrItems.set([]);
+          } finally {
+            this.mrrLoading.set(false);
+          }
+        } else {
+          this.mrrItems.set([]);
+        }
       });
     } catch (caught) {
       this.error.set(this.apiErr(caught, "businessApp.memberships.couldNotLoad"));

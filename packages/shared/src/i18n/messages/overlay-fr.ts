@@ -388,6 +388,11 @@ export const frOverlay: MessageTree = {
       searchPlans: "Rechercher des plans",
       couldNotLoad: "Impossible de charger les plans d’abonnement.",
       couldNotSave: "Impossible d’enregistrer le plan.",
+      mrrHeading: "Revenus d’abonnements (MRR)",
+      mrrHint: "Revenu mensuel récurrent normalisé des membres actifs et en retard. Ce n’est pas votre facture Adeni.",
+      mrrEmpty: "Aucun membre payant pour l’instant.",
+      mrrRow: "{currency} · {amount}/mois · {count} membres",
+      mrrUpgrade: "Passez au forfait Professional pour voir le MRR des abonnements.",
       customerTab: "Abonnements",
       customerEmptyTitle: "Aucun abonnement pour l’instant",
       customerEmptyDescription: "Inscrivez ce client à un plan d’abonnement payé en caisse ou par virement.",
@@ -519,6 +524,13 @@ export const frOverlay: MessageTree = {
       scopeAll: "Tout établissement",
       scopePurchase: "Établissement d’achat seulement",
       scopeSelected: "Établissements choisis",
+      redemptionScope: "Où utiliser les crédits",
+      crossLocationPlanHint:
+        "L’utilisation dans une autre succursale nécessite le forfait Business. Les crédits restent à l’établissement de vente sans cette option.",
+      crossLocationScopeFootnote:
+        "Affiché comme tous les établissements, mais votre forfait n’autorise l’utilisation qu’à la succursale de vente.",
+      membershipCrossLocationHint:
+        "Les crédits d’abonnement s’appliquent à l’établissement d’inscription. Les autres succursales nécessitent le forfait Business.",
       sell: "Vendre",
       sellTitle: "Vendre {name}",
       sellSubtitle: "Vente en personne payée en caisse ou par virement. Les crédits du client commencent maintenant.",

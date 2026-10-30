@@ -388,6 +388,11 @@ export const enOverlay: MessageTree = {
       searchPlans: "Search plans",
       couldNotLoad: "Could not load membership plans.",
       couldNotSave: "Could not save the plan.",
+      mrrHeading: "Membership revenue (MRR)",
+      mrrHint: "Normalized monthly recurring revenue from active and past-due members. Not Adeni subscription fees.",
+      mrrEmpty: "No paying members yet.",
+      mrrRow: "{currency} · {amount}/mo · {count} members",
+      mrrUpgrade: "Upgrade to Professional to see membership MRR.",
       customerTab: "Memberships",
       customerEmptyTitle: "No memberships yet",
       customerEmptyDescription: "Enrol this customer in a membership plan paid at the till or by transfer.",
@@ -519,6 +524,13 @@ export const enOverlay: MessageTree = {
       scopeAll: "Any location",
       scopePurchase: "Purchase location only",
       scopeSelected: "Selected locations",
+      redemptionScope: "Where credits can be used",
+      crossLocationPlanHint:
+        "Redeeming at another branch requires the Business plan. Credits stay at the location where the package was sold unless you upgrade.",
+      crossLocationScopeFootnote:
+        "Shown as all locations, but your plan only allows redemption at the branch where this package was sold.",
+      membershipCrossLocationHint:
+        "Membership credits apply at the branch where the member enrolled. Using credits at other branches requires the Business plan.",
       sell: "Sell",
       sellTitle: "Sell {name}",
       sellSubtitle: "In-person sale paid at the till or by transfer. The customer's credits start now.",

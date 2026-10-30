@@ -28,4 +28,8 @@ public static class PackageScopePolicy
                 bookingLocationId is Guid booked && selectedLocationIds.Contains(booked),
             _ => false,
         };
+
+    /// <summary>True when both locations are known and differ (37.4 plan gate — not product scope).</summary>
+    public static bool IsCrossLocationRedeemAttempt(Guid? originLocationId, Guid? bookingLocationId) =>
+        originLocationId is Guid origin && bookingLocationId is Guid booked && origin != booked;
 }

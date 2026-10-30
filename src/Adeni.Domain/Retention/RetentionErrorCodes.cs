@@ -16,6 +16,8 @@ public static class RetentionErrorCodes
     public const string LoyaltyBasicNotEntitled = "entitlements.loyaltyBasic";
     public const string LoyaltyTiersNotEntitled = "entitlements.loyaltyTiers";
     public const string ReferralsNotEntitled = "entitlements.referrals";
+    public const string CrossLocationRetentionNotEntitled = "entitlements.crossLocationRetention";
+    public const string AdvancedRetentionAnalyticsNotEntitled = "entitlements.advancedRetentionAnalytics";
     public const string ReferralProgramNotConfigured = "retention.referral_program_not_configured";
     public const string LoyaltyProgramNotConfigured = "retention.loyalty_program_not_configured";
     public const string LoyaltyInsufficientPoints = "retention.loyalty_insufficient_points";
@@ -73,6 +75,12 @@ public static class RetentionErrorCodes
 
     public static Error ReferralsNotEntitledError() =>
         new(ReferralsNotEntitled, "Referrals are not included on your current plan.");
+
+    public static Error CrossLocationRetentionNotEntitledError() =>
+        new(CrossLocationRetentionNotEntitled, "Cross-location package and membership redemption requires the Business plan.");
+
+    public static Error AdvancedRetentionAnalyticsNotEntitledError() =>
+        new(AdvancedRetentionAnalyticsNotEntitled, "Retention analytics are not included on your current plan.");
 
     public static Error ReferralProgramNotConfiguredError() =>
         new(ReferralProgramNotConfigured, "Set up the referral program before sharing codes.");

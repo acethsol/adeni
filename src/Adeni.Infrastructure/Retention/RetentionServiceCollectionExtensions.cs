@@ -29,6 +29,7 @@ public static class RetentionServiceCollectionExtensions
         services.AddScoped<IReferralCodeService, ReferralCodeService>();
         services.AddScoped<IReferralQualificationService, ReferralQualificationService>();
         services.AddScoped<IBenefitRedemptionService, BenefitRedemptionService>();
+        services.AddScoped<IRetentionAnalyticsService, RetentionAnalyticsService>();
         services.AddScoped<IPackageStorefrontService, PackageStorefrontService>();
         services.AddScoped<IPackagePurchaseActivation, PackagePurchaseActivation>();
         services.AddScoped<IDomainEventHandler<PaymentCompleted>, PackagePurchasePaymentHandler>();

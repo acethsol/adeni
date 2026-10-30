@@ -15,7 +15,8 @@ using Microsoft.EntityFrameworkCore;
 public sealed class BenefitRedemptionService(
     AdeniDbContext db,
     IDomainEventCollector events,
-    TimeProvider clock) : IBenefitRedemptionService
+    TimeProvider clock,
+    IRetentionEntitlementGuard entitlements) : IBenefitRedemptionService
 {
     public async Task<Result<IReadOnlyList<ReservedBenefit>>> TryReserveBenefitsAsync(
         ReserveBenefitsRequest request, CancellationToken cancellationToken = default)
@@ -29,6 +30,8 @@ public sealed class BenefitRedemptionService(
         {
             return Failure(RetentionErrorCodes.ValidationError("Applied quantity must be positive."));
         }
+
+        var crossLocationEntitled = await entitlements.IsCrossLocationRetentionEntitledAsync(request.TenantId, cancellationToken);
 
         // One entry per balance (sum duplicates) so the invariant is checked once. Each balance is owned by exactly
         // one of a package / a membership; anything ambiguous or mixed is rejected.
@@ -126,6 +129,12 @@ public sealed class BenefitRedemptionService(
                 {
                     return Failure(RetentionErrorCodes.ScopeLocationDeniedError());
                 }
+
+                if (!crossLocationEntitled
+                    && PackageScopePolicy.IsCrossLocationRedeemAttempt(package.SoldAtLocationId, request.BusinessLocationId))
+                {
+                    return Failure(RetentionErrorCodes.CrossLocationRetentionNotEntitledError());
+                }
             }
             else
             {
@@ -150,6 +159,12 @@ public sealed class BenefitRedemptionService(
                 if (!covered)
                 {
                     return Failure(RetentionErrorCodes.BenefitServiceMismatchError());
+                }
+
+                if (!crossLocationEntitled
+                    && PackageScopePolicy.IsCrossLocationRedeemAttempt(membership.EnrolledAtLocationId, request.BusinessLocationId))
+                {
+                    return Failure(RetentionErrorCodes.CrossLocationRetentionNotEntitledError());
                 }
             }
 
@@ -194,6 +209,7 @@ public sealed class BenefitRedemptionService(
         CancellationToken cancellationToken = default)
     {
         var now = clock.GetUtcNow();
+        var crossLocationEntitled = await entitlements.IsCrossLocationRetentionEntitledAsync(tenantId, cancellationToken);
         var packages = await db.Set<CustomerPackage>().AsNoTracking()
             .Include(x => x.Balances)
             .Where(x => x.TenantId == tenantId && x.TenantCustomerId == tenantCustomerId
@@ -209,6 +225,13 @@ public sealed class BenefitRedemptionService(
                     LocationIdList.Parse(package.RedemptionLocationIdsJson),
                     package.SoldAtLocationId,
                     businessLocationId))
+            {
+                continue;
+            }
+
+            if (businessLocationId is not null
+                && !crossLocationEntitled
+                && PackageScopePolicy.IsCrossLocationRedeemAttempt(package.SoldAtLocationId, businessLocationId))
             {
                 continue;
             }
@@ -231,6 +254,13 @@ public sealed class BenefitRedemptionService(
             .ToListAsync(cancellationToken);
         foreach (var membership in memberships.Where(x => x.CanRedeem(now)))
         {
+            if (businessLocationId is not null
+                && !crossLocationEntitled
+                && PackageScopePolicy.IsCrossLocationRedeemAttempt(membership.EnrolledAtLocationId, businessLocationId))
+            {
+                continue;
+            }
+
             foreach (var balance in membership.Balances.Where(x => x.CycleNumber == membership.CurrentCycleNumber
                 && x.Remaining > 0
                 && (serviceOfferingIds is not { Count: > 0 } || serviceOfferingIds.Contains(x.ServiceOfferingId))))
