@@ -98,7 +98,7 @@ export type AdeniWizardStep = {
     }
 
     li.on .beat {
-      border-bottom-color: var(--adeni-purple, #7f56ff);
+      border-bottom-color: var(--interactive, #7f56ff);
       color: var(--text, #161616);
     }
 

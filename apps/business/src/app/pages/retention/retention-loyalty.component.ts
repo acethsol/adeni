@@ -1,14 +1,22 @@
 import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
+import { ActivatedRoute } from "@angular/router";
+import { map } from "rxjs";
 import { formatPrice, type LoyaltyProgram, type LoyaltyReward, type LoyaltyTier, type ReferralProgram } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
+  AdeniConfirmService,
   AdeniFeedbackService,
+  AdeniIconBtnComponent,
+  AdeniPillComponent,
+  AdeniTabsComponent,
   PortalPageComponent,
   injectAdeniApiError,
   injectAdeniTranslate,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { withRetentionPageLoading } from "./retention-page-loading";
 import { BusinessSessionService } from "../../core/services/business-session.service";
 
 const CURRENCIES = ["NGN", "CAD", "USD"] as const;
@@ -43,7 +51,14 @@ type ReferralDraft = {
 @Component({
   selector: "app-retention-loyalty",
   standalone: true,
-  imports: [PortalPageComponent, FormsModule, AdeniCarbonIconComponent],
+  imports: [
+    PortalPageComponent,
+    FormsModule,
+    AdeniCarbonIconComponent,
+    AdeniPillComponent,
+    AdeniIconBtnComponent,
+    AdeniTabsComponent,
+  ],
   templateUrl: "./retention-loyalty.component.html",
   styleUrl: "./retention-loyalty.component.scss",
 })
@@ -52,7 +67,14 @@ export class RetentionLoyaltyComponent implements OnInit {
   protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
+  private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly session = inject(BusinessSessionService);
+  private readonly route = inject(ActivatedRoute);
+
+  readonly loyaltyTabQuery = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get("loyaltyTab"))),
+    { initialValue: this.route.snapshot.queryParamMap.get("loyaltyTab") },
+  );
 
   readonly currencies = CURRENCIES;
   readonly loading = signal(true);
@@ -72,6 +94,30 @@ export class RetentionLoyaltyComponent implements OnInit {
   readonly newReward = signal<NewRewardDraft>({ name: "", pointsCost: 100, sortOrder: 0 });
 
   readonly isOwner = computed(() => this.session.permissionRole() === "owner");
+
+  readonly showLoyaltySubTabs = computed(
+    () => this.loyaltyTiersEntitled() || this.referralsEntitled(),
+  );
+
+  readonly loyaltyTabs = computed(() => {
+    const tabs = [{ id: "program", label: this.tr("businessApp.loyalty.tabProgram") }];
+    if (this.loyaltyTiersEntitled()) {
+      tabs.push({ id: "catalog", label: this.tr("businessApp.loyalty.tabCatalog") });
+    }
+    if (this.referralsEntitled()) {
+      tabs.push({ id: "referrals", label: this.tr("businessApp.loyalty.tabReferrals") });
+    }
+    return tabs;
+  });
+
+  readonly activeLoyaltyTab = computed(() => {
+    const current = this.loyaltyTabQuery();
+    const allowed = new Set(this.loyaltyTabs().map((tab) => tab.id));
+    if (current && allowed.has(current)) {
+      return current;
+    }
+    return "program";
+  });
 
   readonly summaryEarn = computed(() => {
     const d = this.draft();
@@ -95,6 +141,11 @@ export class RetentionLoyaltyComponent implements OnInit {
     return this.tr("businessApp.loyalty.rewardPointsCost", { points: String(pointsCost) });
   }
 
+  /** Strips dev seed prefixes so catalog labels read cleanly in the portal. */
+  protected displayCatalogLabel(name: string): string {
+    return name.replace(/^\[SEED\]\s*/i, "").trim();
+  }
+
   ngOnInit(): void {
     void this.load();
   }
@@ -103,29 +154,35 @@ export class RetentionLoyaltyComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     try {
-      await this.api.withAuthorizedClient(async (client) => {
-        const program = await client.retention.getLoyaltyProgram();
-        this.configured.set(program.configured);
-        this.draft.set(this.toDraft(program));
+      await withRetentionPageLoading(
+        this.feedback,
+        this.tr("toast.loading"),
+        this.tr("businessApp.retention.loadingSection"),
+        () =>
+          this.api.withAuthorizedClient(async (client) => {
+            const program = await client.retention.getLoyaltyProgram();
+            this.configured.set(program.configured);
+            this.draft.set(this.toDraft(program));
 
-        const entitlements = await client.getTenantEntitlements().catch(() => null);
-        const tiersOn = entitlements?.loyaltyTiers === true;
-        this.loyaltyTiersEntitled.set(tiersOn);
-        if (tiersOn) {
-          const tierList = await client.retention.listLoyaltyTiers();
-          this.tierDrafts.set(tierList.items.map((t) => this.tierToDraft(t)));
-          const rewardList = await client.retention.listLoyaltyRewards(false);
-          this.rewards.set(rewardList.items);
-        }
+            const entitlements = await client.getTenantEntitlements().catch(() => null);
+            const tiersOn = entitlements?.loyaltyTiers === true;
+            this.loyaltyTiersEntitled.set(tiersOn);
+            if (tiersOn) {
+              const tierList = await client.retention.listLoyaltyTiers();
+              this.tierDrafts.set(tierList.items.map((t) => this.tierToDraft(t)));
+              const rewardList = await client.retention.listLoyaltyRewards(false);
+              this.rewards.set(rewardList.items);
+            }
 
-        const referralsOn = entitlements?.referrals === true;
-        this.referralsEntitled.set(referralsOn);
-        if (referralsOn) {
-          const referral = await client.retention.getReferralProgram();
-          this.referralConfigured.set(referral.configured);
-          this.referralDraft.set(this.toReferralDraft(referral));
-        }
-      });
+            const referralsOn = entitlements?.referrals === true;
+            this.referralsEntitled.set(referralsOn);
+            if (referralsOn) {
+              const referral = await client.retention.getReferralProgram();
+              this.referralConfigured.set(referral.configured);
+              this.referralDraft.set(this.toReferralDraft(referral));
+            }
+          }),
+      );
     } catch (caught) {
       this.error.set(this.apiErr(caught, "businessApp.loyalty.couldNotLoad"));
     } finally {
@@ -186,6 +243,9 @@ export class RetentionLoyaltyComponent implements OnInit {
 
   async save(): Promise<void> {
     if (!this.canSave() || this.busy()) return;
+    if (!(await this.confirmDialog.confirmKind("save", { subject: this.tr("businessApp.loyalty.programHeading") }))) {
+      return;
+    }
     const d = this.draft();
     this.busy.set(true);
     try {
@@ -213,6 +273,9 @@ export class RetentionLoyaltyComponent implements OnInit {
 
   async saveTiers(): Promise<void> {
     if (!this.canSaveTiers() || this.tiersBusy()) return;
+    if (!(await this.confirmDialog.confirmKind("save", { subject: this.tr("businessApp.loyalty.tiersHeading") }))) {
+      return;
+    }
     this.tiersBusy.set(true);
     try {
       const saved = await this.api.withAuthorizedClient((client) =>
@@ -236,6 +299,9 @@ export class RetentionLoyaltyComponent implements OnInit {
   async createReward(): Promise<void> {
     if (!this.canCreateReward() || this.rewardsBusy()) return;
     const r = this.newReward();
+    if (!(await this.confirmDialog.confirmKind("create", { subject: r.name.trim() }))) {
+      return;
+    }
     this.rewardsBusy.set(true);
     try {
       const created = await this.api.withAuthorizedClient((client) =>
@@ -258,6 +324,10 @@ export class RetentionLoyaltyComponent implements OnInit {
 
   async toggleRewardActive(reward: LoyaltyReward): Promise<void> {
     if (!this.isOwner() || this.rewardsBusy()) return;
+    const kind = reward.isActive ? "deactivate" : "activate";
+    if (!(await this.confirmDialog.confirmKind(kind, { subject: reward.name }))) {
+      return;
+    }
     this.rewardsBusy.set(true);
     try {
       const updated = await this.api.withAuthorizedClient((client) =>
@@ -316,6 +386,9 @@ export class RetentionLoyaltyComponent implements OnInit {
 
   async saveReferral(): Promise<void> {
     if (!this.canSaveReferral() || this.referralBusy()) return;
+    if (!(await this.confirmDialog.confirmKind("save", { subject: this.tr("businessApp.loyalty.referralsHeading") }))) {
+      return;
+    }
     const d = this.referralDraft();
     this.referralBusy.set(true);
     try {

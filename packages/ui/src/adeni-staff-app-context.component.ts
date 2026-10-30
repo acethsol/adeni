@@ -35,23 +35,15 @@ export type AdeniStaffAppContext = "business" | "admin" | "consumer";
       width: 0.2rem;
       height: 0.85rem;
       border-radius: 999px;
-      background: var(--adeni-purple, #7f56ff);
-    }
-
-    .staff-app-context[data-app="admin"] .staff-app-context__mark {
-      background: var(--adeni-teal, #13c2a3);
+      background: var(--interactive, #7f56ff);
     }
 
     .staff-app-context[data-app="business"],
     .staff-app-context[data-app="portal"],
+    .staff-app-context[data-app="admin"],
     .staff-app-context[data-app="consumer"] {
-      border-color: color-mix(in srgb, var(--adeni-purple, #7f56ff) 22%, var(--border));
-      background: color-mix(in srgb, var(--adeni-purple, #7f56ff) 7%, var(--surface));
-    }
-
-    .staff-app-context[data-app="admin"] {
-      border-color: color-mix(in srgb, var(--adeni-teal, #13c2a3) 22%, var(--border));
-      background: color-mix(in srgb, var(--adeni-teal, #13c2a3) 7%, var(--surface));
+      border-color: color-mix(in srgb, var(--interactive, #7f56ff) 22%, var(--border));
+      background: color-mix(in srgb, var(--interactive, #7f56ff) 7%, var(--surface));
     }
 
     .staff-app-context__label {

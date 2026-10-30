@@ -3,211 +3,279 @@
     <p class="error-banner" role="alert">{{ error() }}</p>
   }
 
-  <p class="muted note">{{ tr('businessApp.loyalty.setupNotice') }}</p>
-  @if (loyaltyTiersEntitled()) {
-    <p class="muted note">{{ tr('businessApp.loyalty.tiersNotice') }}</p>
+  @if (!isOwner()) {
+    <p class="retention-callout" role="status">{{ tr('businessApp.loyalty.ownerOnlyHint') }}</p>
   }
-  <p class="muted note">{{ tr('businessApp.loyalty.nonCash') }}</p>
 
   @if (loading()) {
-    <p class="muted" role="status">{{ tr('toast.loading') }}</p>
+    <div class="retention-skeleton" aria-hidden="true"></div>
   } @else if (!error()) {
-    @if (!configured()) {
-      <p class="muted note">{{ tr('businessApp.loyalty.notConfigured') }}</p>
-    }
-    @if (!isOwner()) {
-      <p class="muted note">{{ tr('businessApp.loyalty.ownerOnlyHint') }}</p>
-    }
+    <div class="loyalty-shell" [class.loyalty-shell--solo]="!showLoyaltySubTabs()">
+      @if (showLoyaltySubTabs()) {
+        <nav class="loyalty-shell__rail" [attr.aria-label]="tr('businessApp.loyalty.sectionNav')">
+          <adeni-tabs
+            [tabs]="loyaltyTabs()"
+            linkMode="query"
+            queryParam="loyaltyTab"
+            orientation="vertical"
+          />
+        </nav>
+      }
 
-    <div class="form">
-      <div class="field">
-        <label class="check">
-          <input type="checkbox" [disabled]="!isOwner()" [ngModel]="draft().isEnabled" (ngModelChange)="patch({ isEnabled: $event })" />
-          {{ tr('businessApp.loyalty.enabled') }}
-        </label>
-        <p class="muted hint">{{ tr('businessApp.loyalty.enabledHint') }}</p>
-      </div>
+      <div class="loyalty-shell__content">
+        @if (activeLoyaltyTab() === 'program') {
+    <section class="retention-card">
+      <header class="retention-card__head retention-card__head--split">
+        <div>
+          <h3>{{ tr('businessApp.loyalty.programHeading') }}</h3>
+          <p class="retention-card__lede">{{ tr('businessApp.loyalty.nonCashShort') }}</p>
+        </div>
+        <span class="loyalty-status" [class.loyalty-status--live]="configured() && draft().isEnabled">
+          {{
+            configured() && draft().isEnabled
+              ? tr('businessApp.loyalty.statusLive')
+              : configured()
+                ? tr('businessApp.loyalty.statusPaused')
+                : tr('businessApp.loyalty.statusDraft')
+          }}
+        </span>
+      </header>
 
-      <div class="field">
-        <label for="loyalty-currency">{{ tr('businessApp.loyalty.currency') }}</label>
-        <select id="loyalty-currency" [disabled]="!isOwner()" [ngModel]="draft().currency" (ngModelChange)="patch({ currency: $event })">
-          @for (code of currencies; track code) {
-            <option [value]="code">{{ code }}</option>
+      <div class="retention-panel-grid retention-panel-grid--program">
+        <div class="retention-panel">
+          <h4 class="retention-panel__title">{{ tr('businessApp.loyalty.statusHeading') }}</h4>
+          <label class="cds-toggle">
+            <input type="checkbox" role="switch" [disabled]="!isOwner()" [ngModel]="draft().isEnabled" (ngModelChange)="patch({ isEnabled: $event })" />
+            <span class="cds-toggle__track" aria-hidden="true"></span>
+            <span class="cds-toggle__label">{{ tr('businessApp.loyalty.enabled') }}</span>
+          </label>
+        </div>
+        <div class="retention-panel">
+          <h4 class="retention-panel__title">{{ tr('businessApp.loyalty.currency') }}</h4>
+          <div class="field field--compact">
+            <label class="sr-only" for="loyalty-currency">{{ tr('businessApp.loyalty.currency') }}</label>
+            <select id="loyalty-currency" [disabled]="!isOwner()" [ngModel]="draft().currency" (ngModelChange)="patch({ currency: $event })">
+              @for (code of currencies; track code) {
+                <option [value]="code">{{ code }}</option>
+              }
+            </select>
+          </div>
+        </div>
+        <div class="retention-panel retention-panel--span2">
+          <h4 class="retention-panel__title">{{ tr('businessApp.loyalty.earnHeading') }}</h4>
+          <div class="retention-inline-fields">
+            <div class="field field--compact">
+              <label for="loyalty-earn-points">{{ tr('businessApp.loyalty.earnPoints') }}</label>
+              <input id="loyalty-earn-points" type="number" min="1" max="1000" [disabled]="!isOwner()" [ngModel]="draft().earnPoints" (ngModelChange)="patch({ earnPoints: $event })" />
+            </div>
+            <div class="field field--compact">
+              <label for="loyalty-earn-amount">{{ tr('businessApp.loyalty.earnPerAmount') }}</label>
+              <input id="loyalty-earn-amount" type="number" min="0" step="0.01" [disabled]="!isOwner()" [ngModel]="draft().earnPerAmount" (ngModelChange)="patch({ earnPerAmount: $event })" />
+            </div>
+          </div>
+          @if (summaryEarn()) {
+            <p class="retention-summary">{{ summaryEarn() }}</p>
           }
-        </select>
+        </div>
+        <div class="retention-panel retention-panel--span2">
+          <h4 class="retention-panel__title">{{ tr('businessApp.loyalty.redeemHeading') }}</h4>
+          <div class="retention-inline-fields retention-inline-fields--3">
+            <div class="field field--compact">
+              <label for="loyalty-redeem-points">{{ tr('businessApp.loyalty.redeemPoints') }}</label>
+              <input id="loyalty-redeem-points" type="number" min="1" [disabled]="!isOwner()" [ngModel]="draft().redeemPoints" (ngModelChange)="patch({ redeemPoints: $event })" />
+            </div>
+            <div class="field field--compact">
+              <label for="loyalty-redeem-value">{{ tr('businessApp.loyalty.redeemValue') }}</label>
+              <input id="loyalty-redeem-value" type="number" min="0" step="0.01" [disabled]="!isOwner()" [ngModel]="draft().redeemValue" (ngModelChange)="patch({ redeemValue: $event })" />
+            </div>
+            <div class="field field--compact">
+              <label for="loyalty-min-redeem">{{ tr('businessApp.loyalty.minRedeem') }}</label>
+              <input id="loyalty-min-redeem" type="number" min="0" [disabled]="!isOwner()" [ngModel]="draft().minRedeemPoints" (ngModelChange)="patch({ minRedeemPoints: $event })" />
+            </div>
+          </div>
+          @if (summaryRedeem()) {
+            <p class="retention-summary">{{ summaryRedeem() }}</p>
+          }
+        </div>
+        <div class="retention-panel">
+          <h4 class="retention-panel__title">{{ tr('businessApp.loyalty.expiryHeading') }}</h4>
+          <label class="cds-toggle">
+            <input type="checkbox" role="switch" [disabled]="!isOwner()" [ngModel]="draft().neverExpires" (ngModelChange)="patch({ neverExpires: $event })" />
+            <span class="cds-toggle__track" aria-hidden="true"></span>
+            <span class="cds-toggle__label">{{ tr('businessApp.loyalty.expiryNever') }}</span>
+          </label>
+          @if (!draft().neverExpires) {
+            <div class="field field--compact">
+              <label for="loyalty-expiry">{{ tr('businessApp.loyalty.expiryMonths') }}</label>
+              <input id="loyalty-expiry" type="number" min="1" max="60" [disabled]="!isOwner()" [ngModel]="draft().pointsExpiryMonths" (ngModelChange)="patch({ pointsExpiryMonths: $event })" />
+            </div>
+          }
+        </div>
       </div>
 
-      <h3>{{ tr('businessApp.loyalty.earnHeading') }}</h3>
-      <div class="field-row">
-        <div class="field">
-          <label for="loyalty-earn-points">{{ tr('businessApp.loyalty.earnPoints') }}</label>
-          <input id="loyalty-earn-points" type="number" min="1" max="1000" [disabled]="!isOwner()" [ngModel]="draft().earnPoints" (ngModelChange)="patch({ earnPoints: $event })" />
-        </div>
-        <div class="field">
-          <label for="loyalty-earn-amount">{{ tr('businessApp.loyalty.earnPerAmount') }}</label>
-          <input id="loyalty-earn-amount" type="number" min="0" step="0.01" [disabled]="!isOwner()" [ngModel]="draft().earnPerAmount" (ngModelChange)="patch({ earnPerAmount: $event })" />
-        </div>
-      </div>
-      @if (summaryEarn()) {
-        <p class="muted hint">{{ summaryEarn() }}</p>
-      }
-
-      <h3>{{ tr('businessApp.loyalty.redeemHeading') }}</h3>
-      <div class="field-row">
-        <div class="field">
-          <label for="loyalty-redeem-points">{{ tr('businessApp.loyalty.redeemPoints') }}</label>
-          <input id="loyalty-redeem-points" type="number" min="1" [disabled]="!isOwner()" [ngModel]="draft().redeemPoints" (ngModelChange)="patch({ redeemPoints: $event })" />
-        </div>
-        <div class="field">
-          <label for="loyalty-redeem-value">{{ tr('businessApp.loyalty.redeemValue') }}</label>
-          <input id="loyalty-redeem-value" type="number" min="0" step="0.01" [disabled]="!isOwner()" [ngModel]="draft().redeemValue" (ngModelChange)="patch({ redeemValue: $event })" />
-        </div>
-        <div class="field">
-          <label for="loyalty-min-redeem">{{ tr('businessApp.loyalty.minRedeem') }}</label>
-          <input id="loyalty-min-redeem" type="number" min="0" [disabled]="!isOwner()" [ngModel]="draft().minRedeemPoints" (ngModelChange)="patch({ minRedeemPoints: $event })" />
-        </div>
-      </div>
-      @if (summaryRedeem()) {
-        <p class="muted hint">{{ summaryRedeem() }}</p>
-      }
-
-      <h3>{{ tr('businessApp.loyalty.expiryHeading') }}</h3>
-      <div class="field">
-        <label class="check">
-          <input type="checkbox" [disabled]="!isOwner()" [ngModel]="draft().neverExpires" (ngModelChange)="patch({ neverExpires: $event })" />
-          {{ tr('businessApp.loyalty.expiryNever') }}
-        </label>
-      </div>
-      @if (!draft().neverExpires) {
-        <div class="field">
-          <label for="loyalty-expiry">{{ tr('businessApp.loyalty.expiryMonths') }}</label>
-          <input id="loyalty-expiry" type="number" min="1" max="60" [disabled]="!isOwner()" [ngModel]="draft().pointsExpiryMonths" (ngModelChange)="patch({ pointsExpiryMonths: $event })" />
-        </div>
-      }
-
-      <div class="actions">
-        <button type="button" class="btn btn-primary" [disabled]="!canSave() || busy()" (click)="save()">
+      <footer class="settings-actions">
+        <button type="button" class="btn btn-primary" [disabled]="!canSave() || busy() || !isOwner()" (click)="save()">
           <adeni-carbon-icon name="save" [size]="16" />
           {{ tr('businessApp.loyalty.save') }}
         </button>
-      </div>
+      </footer>
+    </section>
+        }
 
-      @if (referralsEntitled()) {
-        <section class="loyalty-section">
+        @if (activeLoyaltyTab() === 'referrals' && referralsEntitled()) {
+      <section class="retention-card loyalty-section">
+        <header class="retention-card__head">
           <h3>{{ tr('businessApp.loyalty.referralsHeading') }}</h3>
-          <p class="muted hint">{{ tr('businessApp.loyalty.referralsHint') }}</p>
-          @if (!referralConfigured()) {
-            <p class="muted">{{ tr('businessApp.loyalty.referralNotConfigured') }}</p>
-          }
-          <div class="field">
-            <label class="check">
-              <input type="checkbox" [disabled]="!isOwner()" [ngModel]="referralDraft().isEnabled" (ngModelChange)="patchReferral({ isEnabled: $event })" />
-              {{ tr('businessApp.loyalty.referralEnabled') }}
+          <p class="retention-card__lede">{{ tr('businessApp.loyalty.referralsHintShort') }}</p>
+        </header>
+        <div class="retention-panel-grid">
+          <div class="retention-panel">
+            <label class="cds-toggle">
+              <input type="checkbox" role="switch" [disabled]="!isOwner()" [ngModel]="referralDraft().isEnabled" (ngModelChange)="patchReferral({ isEnabled: $event })" />
+              <span class="cds-toggle__track" aria-hidden="true"></span>
+              <span class="cds-toggle__label">{{ tr('businessApp.loyalty.referralEnabled') }}</span>
             </label>
           </div>
-          <div class="field-row">
-            <div class="field">
+          <div class="retention-panel">
+            <div class="field field--compact">
               <label>{{ tr('businessApp.loyalty.referrerPoints') }}</label>
               <input type="number" min="0" [disabled]="!isOwner()" [ngModel]="referralDraft().referrerRewardPoints" (ngModelChange)="patchReferral({ referrerRewardPoints: $event })" />
             </div>
-            <div class="field">
+            <div class="field field--compact">
               <label>{{ tr('businessApp.loyalty.refereePoints') }}</label>
               <input type="number" min="0" [disabled]="!isOwner()" [ngModel]="referralDraft().refereeRewardPoints" (ngModelChange)="patchReferral({ refereeRewardPoints: $event })" />
             </div>
           </div>
-          <div class="field">
-            <label class="check">
-              <input type="checkbox" [disabled]="!isOwner()" [ngModel]="referralDraft().unlimitedCap" (ngModelChange)="patchReferral({ unlimitedCap: $event })" />
-              {{ tr('businessApp.loyalty.referralUnlimitedCap') }}
-            </label>
+        </div>
+        <label class="cds-toggle referral-cap">
+          <input type="checkbox" [disabled]="!isOwner()" [ngModel]="referralDraft().unlimitedCap" (ngModelChange)="patchReferral({ unlimitedCap: $event })" />
+          <span class="cds-toggle__track" aria-hidden="true"></span>
+          <span class="cds-toggle__label">{{ tr('businessApp.loyalty.referralUnlimitedCap') }}</span>
+        </label>
+        @if (!referralDraft().unlimitedCap) {
+          <div class="field field--compact">
+            <label>{{ tr('businessApp.loyalty.referralMaxPerReferrer') }}</label>
+            <input type="number" min="0" [disabled]="!isOwner()" [ngModel]="referralDraft().maxRewardsPerReferrer" (ngModelChange)="patchReferral({ maxRewardsPerReferrer: $event })" />
           </div>
-          @if (!referralDraft().unlimitedCap) {
-            <div class="field">
-              <label>{{ tr('businessApp.loyalty.referralMaxPerReferrer') }}</label>
-              <input type="number" min="0" [disabled]="!isOwner()" [ngModel]="referralDraft().maxRewardsPerReferrer" (ngModelChange)="patchReferral({ maxRewardsPerReferrer: $event })" />
-            </div>
-          }
-          <p class="muted hint">{{ tr('businessApp.loyalty.referralShareHint') }}</p>
-          @if (isOwner()) {
-            <div class="actions">
-              <button type="button" class="btn btn-primary" [disabled]="!canSaveReferral() || referralBusy()" (click)="saveReferral()">
-                {{ tr('businessApp.loyalty.saveReferral') }}
-              </button>
-            </div>
-          }
-        </section>
-      }
+        }
+        @if (isOwner()) {
+          <footer class="settings-actions">
+            <button type="button" class="btn btn-primary" [disabled]="!canSaveReferral() || referralBusy()" (click)="saveReferral()">
+              <adeni-carbon-icon name="save" [size]="16" />
+              {{ tr('businessApp.loyalty.saveReferral') }}
+            </button>
+          </footer>
+        }
+      </section>
+        }
 
-      @if (loyaltyTiersEntitled()) {
-        <section class="loyalty-section">
+        @if (activeLoyaltyTab() === 'catalog' && loyaltyTiersEntitled()) {
+      <section class="retention-card loyalty-section">
+        <header class="retention-card__head">
           <h3>{{ tr('businessApp.loyalty.tiersHeading') }}</h3>
-          <p class="muted hint">{{ tr('businessApp.loyalty.tiersHint') }}</p>
+          <p class="sr-only">{{ tr('businessApp.loyalty.tiersHintShort') }}</p>
+        </header>
+        <div class="retention-panel-grid tier-grid">
           @for (tier of tierDrafts(); track $index) {
-            <div class="field-row tier-row">
-              <div class="field">
+            <div class="retention-panel tier-panel">
+              <div class="tier-panel__head">
+                <span class="tier-panel__badge">{{ tr('businessApp.loyalty.tierThreshold') }}</span>
+                <adeni-pill tone="brand" [compact]="true">{{ tier.minLifetimeEarned }}+ pts</adeni-pill>
+              </div>
+              <div class="field field--compact">
                 <label>{{ tr('businessApp.loyalty.tierName') }}</label>
                 <input type="text" [disabled]="!isOwner()" [ngModel]="tier.name" (ngModelChange)="patchTier($index, { name: $event })" />
               </div>
-              <div class="field">
+              <div class="field field--compact">
                 <label>{{ tr('businessApp.loyalty.tierThreshold') }}</label>
                 <input type="number" min="0" [disabled]="!isOwner()" [ngModel]="tier.minLifetimeEarned" (ngModelChange)="patchTier($index, { minLifetimeEarned: $event })" />
               </div>
               @if (isOwner()) {
-                <button type="button" class="btn btn-ghost icon-btn" [attr.aria-label]="tr('businessApp.loyalty.removeTier')" (click)="removeTierRow($index)">
-                  <adeni-carbon-icon name="trash-can" [size]="16" />
-                </button>
+                <adeni-icon-btn
+                  class="tier-panel__remove"
+                  icon="trash-can"
+                  [label]="tr('businessApp.loyalty.removeTier')"
+                  variant="ghost"
+                  [dense]="true"
+                  (click)="removeTierRow($index)"
+                />
               }
             </div>
           }
-          @if (isOwner()) {
-            <div class="actions">
-              <button type="button" class="btn btn-secondary" (click)="addTierRow()">{{ tr('businessApp.loyalty.addTier') }}</button>
-              <button type="button" class="btn btn-primary" [disabled]="!canSaveTiers() || tiersBusy()" (click)="saveTiers()">
-                {{ tr('businessApp.loyalty.saveTiers') }}
-              </button>
-            </div>
-          }
-        </section>
+        </div>
+        @if (isOwner()) {
+          <footer class="settings-actions">
+            <button type="button" class="btn btn-secondary" (click)="addTierRow()">
+              <adeni-carbon-icon name="add" [size]="16" />
+              {{ tr('businessApp.loyalty.addTier') }}
+            </button>
+            <button type="button" class="btn btn-primary" [disabled]="!canSaveTiers() || tiersBusy()" (click)="saveTiers()">
+              <adeni-carbon-icon name="save" [size]="16" />
+              {{ tr('businessApp.loyalty.saveTiers') }}
+            </button>
+          </footer>
+        }
+      </section>
 
-        <section class="loyalty-section">
+      <section class="retention-card loyalty-section">
+        <header class="retention-card__head retention-card__head--split">
           <h3>{{ tr('businessApp.loyalty.rewardsHeading') }}</h3>
-          <p class="muted hint">{{ tr('businessApp.loyalty.rewardsHint') }}</p>
-          @if (rewards().length === 0) {
-            <p class="muted">{{ tr('businessApp.loyalty.rewardsEmpty') }}</p>
-          } @else {
-            <ul class="reward-list">
-              @for (reward of rewards(); track reward.id) {
-                <li [class.inactive]="!reward.isActive">
-                  <span class="reward-list__name">{{ reward.name }}</span>
-                  <span class="muted">{{ rewardPointsCostLabel(reward.pointsCost) }}</span>
-                  @if (isOwner()) {
-                    <button type="button" class="btn btn-ghost" [disabled]="rewardsBusy()" (click)="toggleRewardActive(reward)">
-                      {{ reward.isActive ? tr('businessApp.loyalty.deactivateReward') : tr('businessApp.loyalty.activateReward') }}
-                    </button>
-                  }
-                </li>
-              }
-            </ul>
-          }
-          @if (isOwner()) {
+          <p class="sr-only">{{ tr('businessApp.loyalty.rewardsHintShort') }}</p>
+        </header>
+        @if (rewards().length === 0) {
+          <p class="muted">{{ tr('businessApp.loyalty.rewardsEmpty') }}</p>
+        } @else {
+          <ul class="reward-grid">
+            @for (reward of rewards(); track reward.id) {
+              <li class="reward-tile" [class.reward-tile--inactive]="!reward.isActive">
+                <div class="reward-tile__icon" aria-hidden="true">
+                  <adeni-carbon-icon name="gift" [size]="20" />
+                </div>
+                <div class="reward-tile__body">
+                  <p class="reward-tile__name">{{ displayCatalogLabel(reward.name) }}</p>
+                  <adeni-pill [tone]="reward.isActive ? 'brand' : 'neutral'" [compact]="true">
+                    {{ rewardPointsCostLabel(reward.pointsCost) }}
+                  </adeni-pill>
+                </div>
+                @if (isOwner()) {
+                  <adeni-icon-btn
+                    class="reward-tile__action"
+                    [icon]="reward.isActive ? 'close' : 'checkmark'"
+                    [label]="reward.isActive ? tr('businessApp.loyalty.deactivateReward') : tr('businessApp.loyalty.activateReward')"
+                    variant="table"
+                    [dense]="true"
+                    [disabled]="rewardsBusy()"
+                    (click)="toggleRewardActive(reward)"
+                  />
+                }
+              </li>
+            }
+          </ul>
+        }
+        @if (isOwner()) {
+          <div class="retention-panel reward-compose">
+            <h4 class="retention-panel__title">{{ tr('businessApp.loyalty.addReward') }}</h4>
             <div class="field-row">
-              <div class="field">
+              <div class="field field--compact">
                 <label for="new-reward-name">{{ tr('businessApp.loyalty.rewardName') }}</label>
                 <input id="new-reward-name" type="text" [ngModel]="newReward().name" (ngModelChange)="patchNewReward({ name: $event })" />
               </div>
-              <div class="field">
+              <div class="field field--compact">
                 <label for="new-reward-cost">{{ tr('businessApp.loyalty.rewardPointsCostLabel') }}</label>
                 <input id="new-reward-cost" type="number" min="1" [ngModel]="newReward().pointsCost" (ngModelChange)="patchNewReward({ pointsCost: $event })" />
               </div>
             </div>
-            <div class="actions">
+            <footer class="settings-actions settings-actions--compact">
               <button type="button" class="btn btn-primary" [disabled]="!canCreateReward() || rewardsBusy()" (click)="createReward()">
+                <adeni-carbon-icon name="add" [size]="16" />
                 {{ tr('businessApp.loyalty.addReward') }}
               </button>
-            </div>
-          }
-        </section>
-      }
+            </footer>
+          </div>
+        }
+      </section>
+        }
+      </div>
     </div>
   }
 </app-portal-page>

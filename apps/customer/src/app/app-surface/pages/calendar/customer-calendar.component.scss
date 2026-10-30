@@ -1,5 +1,5 @@
 @use "staff-layout" as *;
-$teal: var(--adeni-teal, #13c2a3);
+$accent: var(--interactive);
 $ink: #0f1c1a;
 $sand: var(--bg-subtle);
 $line: var(--border);
@@ -245,8 +245,8 @@ $line: var(--border);
 
 .event-block.color-by-staff,
 .month-pill.color-by-staff {
-  border-left-color: var(--event-accent, $teal);
-  background: color-mix(in srgb, var(--event-accent, $teal) 16%, var(--surface));
+  border-left-color: var(--event-accent, $accent);
+  background: color-mix(in srgb, var(--event-accent, $accent) 16%, var(--surface));
 }
 
 .back-link {
@@ -283,7 +283,7 @@ $line: var(--border);
 }
 
 .nav-btn:hover {
-  border-color: $teal;
+  border-color: $accent;
   transform: translateY(-1px);
 }
 
@@ -330,7 +330,7 @@ $line: var(--border);
 }
 
 .leg.is-confirmed::before {
-  background: $teal;
+  background: $accent;
 }
 
 .leg.is-pending::before {
@@ -461,7 +461,7 @@ $line: var(--border);
 }
 
 .month-cell.is-today {
-  background: color-mix(in srgb, $teal 10%, var(--surface));
+  background: color-mix(in srgb, $accent 10%, var(--surface));
 }
 
 .month-cell.is-closed {
@@ -521,8 +521,8 @@ $line: var(--border);
   text-overflow: ellipsis;
   white-space: nowrap;
   border: 0;
-  border-left: 3px solid $teal;
-  background: color-mix(in srgb, $teal 14%, var(--surface));
+  border-left: 3px solid $accent;
+  background: color-mix(in srgb, $accent 14%, var(--surface));
   color: $ink;
   font-size: 0.68rem;
   font-weight: 600;
@@ -605,7 +605,7 @@ $line: var(--border);
 }
 
 .day-head:hover {
-  background: color-mix(in srgb, $teal 8%, transparent);
+  background: color-mix(in srgb, $accent 8%, transparent);
 }
 
 .day-head.is-today .dom {
@@ -657,7 +657,7 @@ $line: var(--border);
   font-weight: 700;
   line-height: 1rem;
   color: #fff;
-  background: color-mix(in srgb, $teal 75%, $ink);
+  background: color-mix(in srgb, $accent 75%, $ink);
 }
 
 .density[data-n="hot"] {
@@ -714,7 +714,7 @@ $line: var(--border);
 }
 
 .day-col.is-today {
-  background-color: color-mix(in srgb, $teal 4%, var(--surface));
+  background-color: color-mix(in srgb, $accent 4%, var(--surface));
 }
 
 .off-band {
@@ -798,8 +798,8 @@ $line: var(--border);
   gap: 0.05rem;
   padding: 0.28rem 0.4rem;
   border: 0;
-  border-left: 3px solid $teal;
-  background: color-mix(in srgb, $teal 16%, var(--surface));
+  border-left: 3px solid $accent;
+  background: color-mix(in srgb, $accent 16%, var(--surface));
   color: $ink;
   text-align: left;
   cursor: pointer;
@@ -854,7 +854,7 @@ $line: var(--border);
 
 .event-block.is-requested {
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, $teal 18%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, $accent 18%, transparent),
     0 1px 0 color-mix(in srgb, $ink 6%, transparent);
 }
 
@@ -879,7 +879,7 @@ $line: var(--border);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: color-mix(in srgb, $teal 65%, $ink);
+  color: color-mix(in srgb, $accent 65%, $ink);
 }
 
 .rail-when {
@@ -910,7 +910,7 @@ $line: var(--border);
   padding: 0.2rem 0.45rem;
   font-size: 0.72rem;
   font-weight: 700;
-  background: color-mix(in srgb, $teal 16%, var(--surface));
+  background: color-mix(in srgb, $accent 16%, var(--surface));
   color: $ink;
 }
 

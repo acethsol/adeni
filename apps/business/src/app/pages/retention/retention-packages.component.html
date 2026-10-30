@@ -188,6 +188,47 @@
 
       @if (filtered().length === 0) {
         <adeni-portal-empty-state icon="search" [title]="tr('common.noMatches')" [compact]="true" />
+      } @else if (viewMode() === "cards") {
+        <ul class="catalog-grid">
+          @for (row of filtered(); track row.id) {
+            <li class="catalog-card" [class.catalog-card--inactive]="!row.isActive">
+              <div class="catalog-card__head">
+                <span class="catalog-card__mark" aria-hidden="true">{{ catalogInitials(row.name) }}</span>
+                <div class="catalog-card__title-block">
+                  <h4 class="catalog-card__name">{{ row.name }}</h4>
+                  <p class="catalog-card__price">{{ formatPrice(row.listPrice, row.currency) }}</p>
+                </div>
+              </div>
+              <p class="catalog-card__meta">{{ creditsSummary(row) }}</p>
+              <p class="catalog-card__meta">
+                {{ scopeLabel(row) }} · {{ tr('businessApp.retention.months', { count: row.effectiveExpiryMonths }) }}
+              </p>
+              <div class="catalog-card__pills">
+                <adeni-pill [tone]="row.isActive ? 'success' : 'neutral'" [compact]="true">
+                  {{ statusLabel(row) }}
+                </adeni-pill>
+              </div>
+              <div class="catalog-card__actions">
+                <adeni-icon-btn
+                  icon="checkmark"
+                  [label]="tr('businessApp.retention.sell')"
+                  variant="table"
+                  [dense]="true"
+                  [disabled]="!row.isActive || busy()"
+                  (click)="openSell(row)"
+                />
+                <adeni-icon-btn
+                  icon="close"
+                  [label]="tr('businessApp.retention.deactivate')"
+                  variant="table"
+                  [dense]="true"
+                  [disabled]="!row.isActive || busy()"
+                  (click)="deactivate(row)"
+                />
+              </div>
+            </li>
+          }
+        </ul>
       } @else {
         <div class="adeni-list-results">
           <adeni-data-table [rows]="filtered()" [columns]="columns()" [trackRow]="trackRow">

@@ -1,4 +1,6 @@
 @use "staff-layout" as *;
+@use "./retention-page";
+@use "./retention-catalog-list";
 
 .roster {
   width: 100%;
@@ -28,38 +30,67 @@
   margin-top: 1rem;
 }
 
-.mrr-panel__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.25rem;
-}
-
 .mrr-panel {
   margin-bottom: 1.25rem;
-  padding: 1rem 1.25rem;
-  border: 1px solid var(--cds-border-subtle, #e0e0e0);
-  border-radius: 4px;
 }
 
-.mrr-panel__title {
-  margin: 0 0 0.35rem;
-  font-size: 1rem;
+.mrr-panel__skeleton {
+  min-height: 6rem;
 }
 
-.mrr-panel__hint,
-.mrr-upgrade,
-.membership-location-hint {
-  margin: 0 0 1rem;
+.mrr-panel__empty,
+.mrr-upgrade {
+  margin: 0;
   font-size: 0.875rem;
 }
 
-.mrr-list {
-  list-style: none;
-  margin: 0.5rem 0 0;
-  padding: 0;
+.mrr-stat-grid {
   display: grid;
-  gap: 0.35rem;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+}
+
+.mrr-stat {
+  position: relative;
+  padding: 1rem 1.1rem 1.05rem;
+  border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--adeni-purple, #7f56ff) 6%, var(--surface)) 0%,
+    var(--surface) 55%
+  );
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--adeni-purple, #7f56ff), var(--adeni-teal, #2a9d8f));
+  }
+}
+
+.mrr-stat__currency {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.mrr-stat__amount {
+  margin: 0;
+  font-size: 1.65rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.mrr-stat__caption {
+  margin: 0.25rem 0 0.65rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
 }

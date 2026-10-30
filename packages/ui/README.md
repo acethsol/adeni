@@ -14,6 +14,8 @@ Component styles (cards, buttons, form fields):
 @use "staff-layout" as *;
 ```
 
+Staff shell sidebar accent (active nav, rail): `@use "staff-shell-accent" as *` and `@include staff-shell-nav-accent` on `.shell--staff-app-{business|admin|consumer}`. App color comes from `html[data-staff-app="…"]` in `_carbon-adeni-tokens.scss` (`--interactive`, links, `--brand-primary`); set `data-staff-app` in each app’s `index.html` bootstrap script and theme service.
+
 Requires `stylePreprocessorOptions.includePaths` → `../../packages/ui/src/styles` in the app `angular.json`.
 
 App-specific widgets remain under each app (e.g. portal `pending-bookings-bell`).

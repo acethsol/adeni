@@ -28,11 +28,65 @@
 
 .adeni-tabs a.active,
 .adeni-tabs button.active {
-  border-bottom-color: var(--adeni-purple, #7f56ff);
+  border-bottom-color: var(--interactive, #7f56ff);
   color: var(--text);
 }
 
 .adeni-tabs button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+.adeni-tabs--vertical {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0;
+  border-bottom: none;
+  min-width: 10.5rem;
+}
+
+.adeni-tabs--vertical a,
+.adeni-tabs--vertical button {
+  margin-bottom: 0;
+  padding: 0.55rem 0.75rem;
+  border-bottom: none;
+  border-left: 2px solid transparent;
+  text-align: left;
+  border-radius: 0;
+}
+
+.adeni-tabs--vertical a.active,
+.adeni-tabs--vertical button.active {
+  border-bottom-color: transparent;
+  border-left-color: var(--interactive, #7f56ff);
+  background: color-mix(in srgb, var(--interactive, #7f56ff) 6%, transparent);
+}
+
+@media (max-width: 768px) {
+  .adeni-tabs--vertical {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    min-width: 0;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.25rem;
+  }
+
+  .adeni-tabs--vertical a,
+  .adeni-tabs--vertical button {
+    border-left: none;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+  }
+
+  .adeni-tabs--vertical a.active,
+  .adeni-tabs--vertical button.active {
+    border-left-color: transparent;
+    border-bottom-color: var(--interactive, #7f56ff);
+    background: transparent;
+  }
 }

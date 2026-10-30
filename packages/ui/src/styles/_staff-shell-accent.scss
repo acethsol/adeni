@@ -1,0 +1,44 @@
+// Sidebar / nav active chrome for business, admin, and consumer staff shells.
+// App accent is set on `html[data-staff-app="…"]` in _carbon-adeni-tokens.scss (--interactive).
+
+@mixin staff-shell-nav-accent {
+  --staff-nav-accent: var(--interactive);
+
+  .sidebar {
+    box-shadow: inset 3px 0 0 color-mix(in srgb, var(--staff-nav-accent) 48%, transparent);
+  }
+
+  .nav-link.active {
+    background: color-mix(in srgb, var(--staff-nav-accent) 10%, transparent);
+
+    &::before {
+      background: var(--staff-nav-accent);
+    }
+  }
+
+  .nav-link.active .nav-ico {
+    color: var(--staff-nav-accent);
+  }
+
+  .nav-count {
+    background: var(--staff-nav-accent);
+  }
+
+  .nav-link:focus-visible,
+  .rail-toggle:focus-visible {
+    outline-color: var(--staff-nav-accent);
+  }
+
+  .menu-item:hover {
+    background: color-mix(in srgb, var(--staff-nav-accent) 8%, transparent);
+  }
+
+  .menu-item:focus-visible {
+    outline-color: var(--staff-nav-accent);
+  }
+
+  .menu-item[aria-checked="true"] {
+    color: var(--interactive-hover);
+    box-shadow: inset 3px 0 0 var(--staff-nav-accent);
+  }
+}

@@ -73,5 +73,6 @@ export class BusinessThemeService {
   private applyResolved(theme: businessTheme): void {
     this.theme.set(theme);
     document.documentElement.dataset["theme"] = theme;
+    document.documentElement.dataset["staffApp"] = "business";
   }
 }

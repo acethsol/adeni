@@ -55,21 +55,29 @@ export const routes: Routes = [
       },
       {
         path: "retention",
-        loadComponent: () => import("./pages/retention/retention-packages.component").then((m) => m.RetentionPackagesComponent),
-        title: "Packages",
+        loadComponent: () => import("./pages/retention/retention-shell.component").then((m) => m.RetentionShellComponent),
         canActivate: [businessPermissionGuard],
-      },
-      {
-        path: "retention/memberships",
-        loadComponent: () => import("./pages/retention/retention-memberships.component").then((m) => m.RetentionMembershipsComponent),
-        title: "Memberships",
-        canActivate: [businessPermissionGuard],
-      },
-      {
-        path: "retention/loyalty",
-        loadComponent: () => import("./pages/retention/retention-loyalty.component").then((m) => m.RetentionLoyaltyComponent),
-        title: "Loyalty",
-        canActivate: [businessPermissionGuard],
+        children: [
+          { path: "", redirectTo: "packages", pathMatch: "full" },
+          {
+            path: "packages",
+            loadComponent: () =>
+              import("./pages/retention/retention-packages.component").then((m) => m.RetentionPackagesComponent),
+            title: "Packages",
+          },
+          {
+            path: "memberships",
+            loadComponent: () =>
+              import("./pages/retention/retention-memberships.component").then((m) => m.RetentionMembershipsComponent),
+            title: "Memberships",
+          },
+          {
+            path: "loyalty",
+            loadComponent: () =>
+              import("./pages/retention/retention-loyalty.component").then((m) => m.RetentionLoyaltyComponent),
+            title: "Loyalty",
+          },
+        ],
       },
       {
         path: "customers/:id",

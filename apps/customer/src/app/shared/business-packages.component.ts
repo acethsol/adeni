@@ -1,7 +1,7 @@
 import { isPlatformBrowser } from "@angular/common";
 import { Component, inject, input, OnInit, PLATFORM_ID, signal } from "@angular/core";
 import { formatPrice, resolvePaymentCheckoutUrl, type PublicPackage } from "@adeni/shared";
-import { injectAdeniApiError, injectAdeniTranslate } from "@adeni/ui";
+import { AdeniConfirmService, injectAdeniApiError, injectAdeniTranslate } from "@adeni/ui";
 import { CustomerApiService } from "../core/services/customer-api.service";
 
 function newKey(): string {
@@ -70,6 +70,7 @@ export class BusinessPackagesComponent implements OnInit {
   protected readonly tr = injectAdeniTranslate();
   private readonly apiErr = injectAdeniApiError();
   private readonly api = inject(CustomerApiService);
+  private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   readonly slug = input.required<string>();
@@ -114,6 +115,9 @@ export class BusinessPackagesComponent implements OnInit {
 
   async buy(p: PublicPackage): Promise<void> {
     if (this.busyId()) return;
+    if (!(await this.confirmDialog.confirmKind("submit", { subject: p.name }))) {
+      return;
+    }
     this.error.set(null);
     this.busyId.set(p.id);
     try {

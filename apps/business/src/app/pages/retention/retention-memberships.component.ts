@@ -29,8 +29,10 @@ import {
   type AdeniListViewMode,
   injectAdeniApiError,
   injectAdeniTranslate,
+  readPersistedListViewMode,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { withRetentionPageLoading } from "./retention-page-loading";
 
 const CURRENCIES = ["NGN", "CAD", "USD"] as const;
 const INTERVALS: readonly MembershipBillingInterval[] = ["monthly", "quarterly", "annually"];
@@ -74,6 +76,7 @@ type CreateDraft = {
 })
 export class RetentionMembershipsComponent implements OnInit {
   protected readonly tr = injectAdeniTranslate();
+  protected readonly formatPrice = formatPrice;
   protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
@@ -104,7 +107,9 @@ export class RetentionMembershipsComponent implements OnInit {
     })),
   );
   readonly search = signal("");
-  readonly viewMode = signal<AdeniListViewMode>("table");
+  readonly viewMode = signal<AdeniListViewMode>(
+    readPersistedListViewMode("businessApp.retention.memberships", "cards"),
+  );
 
   readonly showCreate = signal(false);
   readonly createDraft = signal<CreateDraft>(this.emptyCreate());
@@ -149,6 +154,14 @@ export class RetentionMembershipsComponent implements OnInit {
     return row.benefits.map((b) => `${b.quantityPerCycle}× ${b.serviceName}`).join(", ");
   }
 
+  protected catalogInitials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+    }
+    return name.trim().slice(0, 2).toUpperCase() || "MB";
+  }
+
   statusLabel(row: MembershipPlan): string {
     return row.isActive ? this.tr("businessApp.memberships.active") : this.tr("businessApp.memberships.inactive");
   }
@@ -188,31 +201,37 @@ export class RetentionMembershipsComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     try {
-      await this.api.withAuthorizedClient(async (client) => {
-        const [list, services, planEntitlements, profile] = await Promise.all([
-          client.retention.listMembershipPlans(false),
-          client.getTenantServices().catch(() => [] as ServiceOffering[]),
-          client.getTenantEntitlements().catch(() => null),
-          client.getTenantProfile().catch(() => null),
-        ]);
-        const merged = mergeTenantEntitlements(planEntitlements, null, profile?.entitlements ?? null);
-        this.entitlements.set(merged);
-        this.plans.set(list.items);
-        this.services.set(services.filter((s) => s.isActive));
-        if (hasAdvancedRetentionAnalyticsEntitlement(merged)) {
-          this.mrrLoading.set(true);
-          try {
-            const mrr = await client.retention.membershipMrr();
-            this.mrrItems.set(mrr.items);
-          } catch {
-            this.mrrItems.set([]);
-          } finally {
-            this.mrrLoading.set(false);
-          }
-        } else {
-          this.mrrItems.set([]);
-        }
-      });
+      await withRetentionPageLoading(
+        this.feedback,
+        this.tr("toast.loading"),
+        this.tr("businessApp.retention.loadingSection"),
+        () =>
+          this.api.withAuthorizedClient(async (client) => {
+            const [list, services, planEntitlements, profile] = await Promise.all([
+              client.retention.listMembershipPlans(false),
+              client.getTenantServices().catch(() => [] as ServiceOffering[]),
+              client.getTenantEntitlements().catch(() => null),
+              client.getTenantProfile().catch(() => null),
+            ]);
+            const merged = mergeTenantEntitlements(planEntitlements, null, profile?.entitlements ?? null);
+            this.entitlements.set(merged);
+            this.plans.set(list.items);
+            this.services.set(services.filter((s) => s.isActive));
+            if (hasAdvancedRetentionAnalyticsEntitlement(merged)) {
+              this.mrrLoading.set(true);
+              try {
+                const mrr = await client.retention.membershipMrr();
+                this.mrrItems.set(mrr.items);
+              } catch {
+                this.mrrItems.set([]);
+              } finally {
+                this.mrrLoading.set(false);
+              }
+            } else {
+              this.mrrItems.set([]);
+            }
+          }),
+      );
     } catch (caught) {
       this.error.set(this.apiErr(caught, "businessApp.memberships.couldNotLoad"));
       this.plans.set([]);
@@ -269,6 +288,9 @@ export class RetentionMembershipsComponent implements OnInit {
   async saveCreate(): Promise<void> {
     if (!this.canCreate() || this.busy()) return;
     const d = this.createDraft();
+    if (!(await this.confirmDialog.confirmKind("create", { subject: d.name.trim() }))) {
+      return;
+    }
     this.busy.set(true);
     try {
       const created = await this.api.withAuthorizedClient((client) =>

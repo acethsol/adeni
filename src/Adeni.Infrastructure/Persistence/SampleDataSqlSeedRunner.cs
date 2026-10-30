@@ -18,11 +18,13 @@ public static partial class SampleDataSqlSeedRunner
         "admin-transactions-dev-seed.sql",
         "admin-commercial-audit-dev-seed.sql",
         "seed-lekki-cuts-demo.sql",
+        "seed-lekki-cuts-retention.sql",
         "seed-lekki-cuts-intake-consultation.sql",
     ];
 
     private static readonly string[] VolumeCleanupScripts =
     [
+        "seed-lekki-cuts-retention-cleanup.sql",
         "seed-lekki-cuts-intake-consultation-cleanup.sql",
         "seed-lekki-cuts-demo-cleanup.sql",
     ];

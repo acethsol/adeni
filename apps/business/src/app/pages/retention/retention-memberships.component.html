@@ -9,31 +9,41 @@
   }
 
   @if (showMrrPanel()) {
-    <section class="mrr-panel" aria-labelledby="membership-mrr-heading">
-      <div class="mrr-panel__head">
-        <h2 id="membership-mrr-heading" class="mrr-panel__title">{{ tr('businessApp.memberships.mrrHeading') }}</h2>
+    <section class="retention-card mrr-panel" aria-labelledby="membership-mrr-heading">
+      <header class="retention-card__head retention-card__head--split">
+        <div>
+          <h3 id="membership-mrr-heading">{{ tr('businessApp.memberships.mrrHeading') }}</h3>
+          <p class="retention-card__lede" [attr.title]="tr('businessApp.memberships.mrrHint')">
+            {{ tr('businessApp.memberships.mrrHintShort') }}
+          </p>
+        </div>
         <button type="button" class="btn btn-secondary btn-sm" [disabled]="mrrExporting()" (click)="downloadMrrCsv()">
+          <adeni-carbon-icon name="download" [size]="16" />
           {{ tr('businessApp.memberships.exportMrrCsv') }}
         </button>
-      </div>
-      <p class="muted mrr-panel__hint">{{ tr('businessApp.memberships.mrrHint') }}</p>
+      </header>
       @if (mrrLoading()) {
-        <p class="muted">{{ tr('toast.loading') }}</p>
+        <div class="retention-skeleton mrr-panel__skeleton" aria-hidden="true"></div>
       } @else if (mrrRows().length === 0) {
-        <p class="muted">{{ tr('businessApp.memberships.mrrEmpty') }}</p>
+        <p class="muted mrr-panel__empty">{{ tr('businessApp.memberships.mrrEmpty') }}</p>
       } @else {
-        <ul class="plain mrr-list">
+        <div class="mrr-stat-grid">
           @for (row of mrrRows(); track row.currency) {
-            <li>{{ tr('businessApp.memberships.mrrRow', { currency: row.currency, amount: row.amountLabel, count: row.memberCount }) }}</li>
+            <article class="mrr-stat">
+              <span class="mrr-stat__currency">{{ row.currency }}</span>
+              <p class="mrr-stat__amount">{{ row.amountLabel }}</p>
+              <p class="mrr-stat__caption">{{ tr('businessApp.memberships.mrrStatPerMonth') }}</p>
+              <adeni-pill tone="neutral" [compact]="true">
+                {{ tr('businessApp.memberships.mrrStatMembers', { count: row.memberCount }) }}
+              </adeni-pill>
+            </article>
           }
-        </ul>
+        </div>
       }
     </section>
   } @else if (mrrUpgradeHint()) {
     <p class="muted mrr-upgrade">{{ tr('businessApp.memberships.mrrUpgrade') }}</p>
   }
-
-  <p class="muted membership-location-hint">{{ tr('businessApp.retention.membershipCrossLocationHint') }}</p>
 
   <adeni-modal
     [open]="showCreate()"
@@ -144,6 +154,37 @@
 
       @if (filtered().length === 0) {
         <adeni-portal-empty-state icon="search" [title]="tr('common.noMatches')" [compact]="true" />
+      } @else if (viewMode() === "cards") {
+        <ul class="catalog-grid">
+          @for (row of filtered(); track row.id) {
+            <li class="catalog-card" [class.catalog-card--inactive]="!row.isActive">
+              <div class="catalog-card__head">
+                <span class="catalog-card__mark" aria-hidden="true">{{ catalogInitials(row.name) }}</span>
+                <div class="catalog-card__title-block">
+                  <h4 class="catalog-card__name">{{ row.name }}</h4>
+                  <p class="catalog-card__price">{{ formatPrice(row.price, row.currency) }}</p>
+                </div>
+              </div>
+              <p class="catalog-card__meta">{{ intervalLabel(row.billingInterval) }}</p>
+              <p class="catalog-card__meta">{{ creditsSummary(row) }}</p>
+              <div class="catalog-card__pills">
+                <adeni-pill [tone]="row.isActive ? 'success' : 'neutral'" [compact]="true">
+                  {{ statusLabel(row) }}
+                </adeni-pill>
+              </div>
+              <div class="catalog-card__actions">
+                <adeni-icon-btn
+                  icon="close"
+                  [label]="tr('businessApp.memberships.deactivate')"
+                  variant="table"
+                  [dense]="true"
+                  [disabled]="!row.isActive || busy()"
+                  (click)="deactivate(row)"
+                />
+              </div>
+            </li>
+          }
+        </ul>
       } @else {
         <div class="adeni-list-results">
           <adeni-data-table [rows]="filtered()" [columns]="columns()" [trackRow]="trackRow">

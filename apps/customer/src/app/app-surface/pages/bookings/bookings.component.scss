@@ -1,6 +1,6 @@
 @use "staff-layout" as *;
 
-$teal: var(--adeni-teal, #13c2a3);
+$accent: var(--interactive);
 
 .roster {
   width: 100%;
@@ -65,7 +65,7 @@ $teal: var(--adeni-teal, #13c2a3);
 }
 
 .booking-card[data-tone="confirmed"] {
-  border-left: 3px solid $teal;
+  border-left: 3px solid $accent;
 }
 
 .booking-card[data-tone="closed"] {
@@ -74,7 +74,7 @@ $teal: var(--adeni-teal, #13c2a3);
 }
 
 .booking-card:hover {
-  border-color: color-mix(in srgb, $teal 35%, var(--border));
+  border-color: color-mix(in srgb, $accent 35%, var(--border));
   box-shadow: 0 8px 24px color-mix(in srgb, var(--text) 8%, transparent);
 }
 
@@ -191,7 +191,7 @@ $teal: var(--adeni-teal, #13c2a3);
 
 .booking-card__business adeni-carbon-icon {
   flex-shrink: 0;
-  color: color-mix(in srgb, $teal 75%, var(--text-muted));
+  color: color-mix(in srgb, $accent 75%, var(--text-muted));
 }
 
 .booking-card__meta {
@@ -279,9 +279,9 @@ $teal: var(--adeni-teal, #13c2a3);
 }
 
 .booking-status[data-tone="confirmed"] {
-  border-color: color-mix(in srgb, $teal 45%, var(--border));
-  color: color-mix(in srgb, $teal 85%, var(--text));
-  background: color-mix(in srgb, $teal 12%, var(--surface));
+  border-color: color-mix(in srgb, $accent 45%, var(--border));
+  color: color-mix(in srgb, $accent 85%, var(--text));
+  background: color-mix(in srgb, $accent 12%, var(--surface));
 }
 
 .booking-status[data-tone="closed"] {

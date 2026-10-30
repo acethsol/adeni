@@ -358,6 +358,11 @@ export class CustomerMembershipsPanelComponent implements OnInit {
   async confirmEnrol(): Promise<void> {
     const draft = this.enrolDraft();
     if (!draft || !this.canEnrol()) return;
+    const plan = this.activePlans().find((p) => p.id === draft.membershipPlanId);
+    const subject = plan?.name ?? this.tr("businessApp.memberships.enrol");
+    if (!(await this.confirmDialog.confirmKind("grant", { subject }))) {
+      return;
+    }
     this.busy.set(true);
     try {
       const enrolled = await this.api.withAuthorizedClient((client) =>
@@ -387,10 +392,20 @@ export class CustomerMembershipsPanelComponent implements OnInit {
   // ---- Owner actions ----
 
   async freeze(m: CustomerMembership): Promise<void> {
+    if (!(await this.confirmDialog.confirm({
+      title: this.tr("businessApp.memberships.freeze"),
+      message: this.tr("common.confirm.submit.message", { subject: m.name }),
+      confirmLabel: this.tr("businessApp.memberships.freeze"),
+    }))) {
+      return;
+    }
     await this.run(m, (client) => client.retention.freezeCustomerMembership(m.id), "businessApp.memberships.frozenDone");
   }
 
   async unfreeze(m: CustomerMembership): Promise<void> {
+    if (!(await this.confirmDialog.confirmKind("reactivate", { subject: m.name, confirmLabel: this.tr("businessApp.memberships.unfreeze") }))) {
+      return;
+    }
     await this.run(m, (client) => client.retention.unfreezeCustomerMembership(m.id), "businessApp.memberships.unfrozenDone");
   }
 

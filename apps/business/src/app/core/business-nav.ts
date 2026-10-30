@@ -26,7 +26,11 @@ export type BusinessNavIconName =
   | "light"
   | "asleep"
   | "chevronDown"
-  | "search";
+  | "search"
+  | "retention"
+  | "package"
+  | "membership"
+  | "loyalty";
 
 /** Group ids are stable; display labels live in portal chrome i18n. */
 export type BusinessNavGroupId = "today" | "listing" | "business";
@@ -48,6 +52,8 @@ export type BusinessNavItem = {
   capability?: Capability;
   /** Subscription plan — hide route when not entitled (API enforces the same). */
   entitlement?: TenantEntitlementFlag;
+  /** Show when any listed entitlement is true (e.g. Retention hub). */
+  entitlementsAny?: readonly TenantEntitlementFlag[];
   /** Portal RBAC — any listed permission grants access. */
   permission?: BusinessPermission | readonly BusinessPermission[];
   /**
@@ -99,28 +105,6 @@ export const BUSINESS_NAV_GROUPS: BusinessNavGroup[] = [
         label: "Customers",
         icon: "customers",
         permission: ["business.bookings", "business.bookings.self"],
-      },
-      {
-        path: "/retention",
-        label: "Packages",
-        icon: "payments",
-        permission: "business.retention",
-        entitlement: "packages",
-        exact: true,
-      },
-      {
-        path: "/retention/memberships",
-        label: "Memberships",
-        icon: "payments",
-        permission: "business.retention",
-        entitlement: "memberships",
-      },
-      {
-        path: "/retention/loyalty",
-        label: "Loyalty",
-        icon: "payments",
-        permission: "business.retention",
-        entitlement: "loyaltyBasic",
       },
       {
         path: "/queue",
@@ -226,6 +210,18 @@ export const BUSINESS_NAV_GROUPS: BusinessNavGroup[] = [
         ],
       },
       {
+        path: "/retention",
+        label: "Retention",
+        icon: "retention",
+        permission: "business.retention",
+        entitlementsAny: ["packages", "memberships", "loyaltyBasic"],
+        tabs: [
+          { id: "packages", label: "Packages", entitlement: "packages" },
+          { id: "memberships", label: "Memberships", entitlement: "memberships" },
+          { id: "loyalty", label: "Loyalty", entitlement: "loyaltyBasic" },
+        ],
+      },
+      {
         path: "/finance",
         label: "Finance",
         icon: "payments",
@@ -266,6 +262,14 @@ export function findBusinessNavItem(path: string): { group: BusinessNavGroup; it
 export function activeBusinessTab(url: string, tabs: BusinessTab[] | undefined): string | null {
   if (!tabs?.length) {
     return null;
+  }
+  const path = url.split("?")[0] ?? url;
+  const retentionSegment = /^\/retention\/(packages|memberships|loyalty)(?:\/|$)/.exec(path);
+  if (retentionSegment) {
+    const id = retentionSegment[1];
+    if (tabs.some((tab) => tab.id === id)) {
+      return id;
+    }
   }
   const requested = new URLSearchParams(url.split("?")[1] ?? "").get("tab");
   if (requested && tabs.some((tab) => tab.id === requested)) {

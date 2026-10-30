@@ -60,5 +60,6 @@ export class AdminThemeService {
   private applyResolved(theme: AdminTheme): void {
     this.theme.set(theme);
     document.documentElement.dataset["theme"] = theme;
+    document.documentElement.dataset["staffApp"] = "admin";
   }
 }

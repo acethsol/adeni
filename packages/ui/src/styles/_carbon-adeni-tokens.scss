@@ -9,6 +9,9 @@
   --adeni-purple-deep: #6f42ff;
   --adeni-teal: #13c2a3;
   --adeni-teal-light: #25d0bc;
+  /* Consumer app accent — warm rose, distinct from portal purple and admin teal */
+  --adeni-rose: #e8488a;
+  --adeni-rose-deep: #c73672;
   --adeni-charcoal: #0b0f14;
   --adeni-ink: #161616;
   --adeni-light-gray: #f4f5f7;
@@ -126,5 +129,37 @@ html[data-theme="dark"] {
   --border: var(--cds-gray-80);
   --text: var(--cds-gray-10);
   --text-muted: var(--cds-gray-30);
+}
+
+/* Per-app accent: set once on html (see each app index.html + theme service). Shells use --interactive via staff-shell-accent. */
+html[data-staff-app="business"] {
+  --interactive: var(--adeni-purple);
+  --interactive-hover: var(--adeni-purple-deep);
+  --cds-link-primary: var(--adeni-purple);
+  --cds-link-primary-hover: var(--adeni-purple-deep);
+  --brand-primary: var(--adeni-purple);
+}
+
+html[data-staff-app="admin"] {
+  --interactive: var(--adeni-teal);
+  --interactive-hover: var(--adeni-teal-light);
+  --cds-link-primary: var(--adeni-teal);
+  --cds-link-primary-hover: var(--adeni-teal-light);
+  --brand-primary: var(--adeni-teal);
+}
+
+html[data-staff-app="consumer"] {
+  --interactive: var(--adeni-rose);
+  --interactive-hover: var(--adeni-rose-deep);
+  --cds-link-primary: var(--adeni-rose);
+  --cds-link-primary-hover: var(--adeni-rose-deep);
+  --brand-primary: var(--adeni-rose);
+}
+
+html[data-theme="dark"][data-staff-app="business"] {
   --interactive-hover: #c4b2ff;
+}
+
+html[data-theme="dark"][data-staff-app="consumer"] {
+  --interactive-hover: #f472b4;
 }

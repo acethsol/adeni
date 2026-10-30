@@ -30,8 +30,10 @@ import {
   type AdeniListViewMode,
   injectAdeniApiError,
   injectAdeniTranslate,
+  readPersistedListViewMode,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { withRetentionPageLoading } from "./retention-page-loading";
 
 const CURRENCIES = ["NGN", "CAD", "USD"] as const;
 
@@ -85,6 +87,7 @@ function newKey(): string {
 })
 export class RetentionPackagesComponent implements OnInit {
   protected readonly tr = injectAdeniTranslate();
+  protected readonly formatPrice = formatPrice;
   protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
@@ -100,7 +103,9 @@ export class RetentionPackagesComponent implements OnInit {
   readonly services = signal<ServiceOffering[]>([]);
   readonly locations = signal<BusinessLocation[]>([]);
   readonly search = signal("");
-  readonly viewMode = signal<AdeniListViewMode>("table");
+  readonly viewMode = signal<AdeniListViewMode>(
+    readPersistedListViewMode("businessApp.retention.packages", "cards"),
+  );
 
   readonly showCreate = signal(false);
   readonly createDraft = signal<CreateDraft>(this.emptyCreate());
@@ -155,6 +160,14 @@ export class RetentionPackagesComponent implements OnInit {
     return row.benefits.map((b) => `${b.quantityGranted}× ${b.serviceName}`).join(", ");
   }
 
+  protected catalogInitials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+    }
+    return name.trim().slice(0, 2).toUpperCase() || "PK";
+  }
+
   statusLabel(row: PackageDefinition): string {
     return row.isActive ? this.tr("businessApp.retention.active") : this.tr("businessApp.retention.inactive");
   }
@@ -182,21 +195,27 @@ export class RetentionPackagesComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     try {
-      await this.api.withAuthorizedClient(async (client) => {
-        const [list, services, locations, planEntitlements, profile] = await Promise.all([
-          client.retention.listPackages(false),
-          client.getTenantServices().catch(() => [] as ServiceOffering[]),
-          client.getTenantLocations().catch(() => [] as BusinessLocation[]),
-          client.getTenantEntitlements().catch(() => null),
-          client.getTenantProfile().catch(() => null),
-        ]);
-        this.entitlements.set(
-          mergeTenantEntitlements(planEntitlements, null, profile?.entitlements ?? null),
-        );
-        this.packages.set(list.items);
-        this.services.set(services.filter((s) => s.isActive));
-        this.locations.set(locations.filter((l) => l.isActive !== false));
-      });
+      await withRetentionPageLoading(
+        this.feedback,
+        this.tr("toast.loading"),
+        this.tr("businessApp.retention.loadingSection"),
+        () =>
+          this.api.withAuthorizedClient(async (client) => {
+            const [list, services, locations, planEntitlements, profile] = await Promise.all([
+              client.retention.listPackages(false),
+              client.getTenantServices().catch(() => [] as ServiceOffering[]),
+              client.getTenantLocations().catch(() => [] as BusinessLocation[]),
+              client.getTenantEntitlements().catch(() => null),
+              client.getTenantProfile().catch(() => null),
+            ]);
+            this.entitlements.set(
+              mergeTenantEntitlements(planEntitlements, null, profile?.entitlements ?? null),
+            );
+            this.packages.set(list.items);
+            this.services.set(services.filter((s) => s.isActive));
+            this.locations.set(locations.filter((l) => l.isActive !== false));
+          }),
+      );
     } catch (caught) {
       this.error.set(this.apiErr(caught, "businessApp.retention.couldNotLoad"));
       this.packages.set([]);
@@ -271,6 +290,9 @@ export class RetentionPackagesComponent implements OnInit {
   async saveCreate(): Promise<void> {
     if (!this.canCreate() || this.busy()) return;
     const d = this.createDraft();
+    if (!(await this.confirmDialog.confirmKind("create", { subject: d.name.trim() }))) {
+      return;
+    }
     this.busy.set(true);
     try {
       const created = await this.api.withAuthorizedClient((client) =>
@@ -379,7 +401,12 @@ export class RetentionPackagesComponent implements OnInit {
   async confirmSell(): Promise<void> {
     const draft = this.sellDraft();
     const customer = this.selectedCustomer();
+    const pkg = this.sellTarget();
     if (!draft || !customer || !this.canSell()) return;
+    const subject = pkg ? `${pkg.name} · ${customer.displayName}` : customer.displayName;
+    if (!(await this.confirmDialog.confirmKind("grant", { subject }))) {
+      return;
+    }
     this.busy.set(true);
     try {
       const sold = await this.api.withAuthorizedClient((client) =>

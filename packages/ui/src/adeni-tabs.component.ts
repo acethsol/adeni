@@ -16,7 +16,11 @@ export type AdeniTabsLinkMode = "query" | "path" | "button";
   standalone: true,
   imports: [RouterLink, RouterLinkActive],
   template: `
-    <div class="adeni-tabs" role="tablist">
+    <div
+      class="adeni-tabs"
+      [class.adeni-tabs--vertical]="orientation() === 'vertical'"
+      role="tablist"
+    >
       @for (tab of tabs(); track tab.id) {
         @if (linkMode() === "path") {
           <a
@@ -59,6 +63,8 @@ export class AdeniTabsComponent {
   readonly tabs = input.required<AdeniTab[]>();
   /** `query` — `?tab=` on current route. `path` — relative child routes. `button` — local state via `activeId`. */
   readonly linkMode = input<AdeniTabsLinkMode>("query");
+  /** Horizontal underline (default) or vertical rail for settings-style layouts. */
+  readonly orientation = input<"horizontal" | "vertical">("horizontal");
   readonly queryParam = input("tab");
   /** Required when `linkMode` is `button`. */
   readonly activeId = input<string | null>(null);

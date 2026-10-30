@@ -1,6 +1,6 @@
 @use "staff-layout" as *;
 
-$teal: var(--adeni-teal, #13c2a3);
+$accent: var(--interactive);
 
 .booking-detail-skeleton {
   display: flex;
@@ -52,7 +52,7 @@ $teal: var(--adeni-teal, #13c2a3);
 }
 
 .booking-detail[data-tone="confirmed"] {
-  border-top: 3px solid $teal;
+  border-top: 3px solid $accent;
 }
 
 .booking-detail[data-tone="closed"] {
@@ -68,7 +68,7 @@ $teal: var(--adeni-teal, #13c2a3);
   border-bottom: 1px solid var(--border);
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, $teal 5%, var(--surface)) 0%,
+    color-mix(in srgb, $accent 5%, var(--surface)) 0%,
     var(--surface) 100%
   );
 }
@@ -160,7 +160,7 @@ $teal: var(--adeni-teal, #13c2a3);
 .booking-detail__when-band adeni-carbon-icon {
   flex-shrink: 0;
   margin-top: 0.15rem;
-  color: color-mix(in srgb, $teal 80%, var(--text-muted));
+  color: color-mix(in srgb, $accent 80%, var(--text-muted));
 }
 
 .booking-detail__when-band strong {
@@ -303,9 +303,9 @@ $teal: var(--adeni-teal, #13c2a3);
 }
 
 .booking-status[data-tone="confirmed"] {
-  border-color: color-mix(in srgb, $teal 45%, var(--border));
-  color: color-mix(in srgb, $teal 85%, var(--text));
-  background: color-mix(in srgb, $teal 12%, var(--surface));
+  border-color: color-mix(in srgb, $accent 45%, var(--border));
+  color: color-mix(in srgb, $accent 85%, var(--text));
+  background: color-mix(in srgb, $accent 12%, var(--surface));
 }
 
 .booking-status[data-tone="closed"] {

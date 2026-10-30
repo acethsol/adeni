@@ -1,4 +1,4 @@
-<div class="shell shell--staff-app-business" [class.is-collapsed]="collapsed()">
+<div class="shell shell--staff-app-consumer" [class.is-collapsed]="collapsed()">
   @if (!collapsed()) {
     <button type="button" class="sidebar-scrim" [attr.aria-label]="tr('common.collapseSidebar')" (click)="collapseSidebar()"></button>
   }
@@ -10,7 +10,7 @@
           <adeni-brand-logo variant="mark" [surface]="logoSurface()" [size]="28" />
         } @else {
           <adeni-staff-sidebar-brand
-            app="business"
+            app="consumer"
             [surface]="logoSurface()"
             [logoHeight]="32"
             [caption]="tr('customer.app.shell.caption')"

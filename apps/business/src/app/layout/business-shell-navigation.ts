@@ -47,12 +47,16 @@ export function businessSearchResults(options: {
           || options.tabLabel(tab.id).toLowerCase().includes(query)
           || options.navLabel(item).toLowerCase().includes(query),
       )
-      .map((tab) => ({
-        id: `${item.path}?tab=${tab.id}`,
-        label: `${options.navLabel(item)} — ${options.tabLabel(tab.id)}`,
-        path: `${item.path}?tab=${tab.id}`,
-        icon: item.icon,
-      }));
+      .map((tab) => {
+        const path =
+          item.path === "/retention" ? `/retention/${tab.id}` : `${item.path}?tab=${tab.id}`;
+        return {
+          id: path,
+          label: `${options.navLabel(item)} — ${options.tabLabel(tab.id)}`,
+          path,
+          icon: item.icon,
+        };
+      });
   });
   const discoverLabel = options.discoverLabel;
   const discover =

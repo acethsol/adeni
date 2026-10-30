@@ -1,3 +1,5 @@
+@use "staff-shell-accent" as *;
+
 .shell {
   --sidebar-width: 15.5rem;
   display: grid;
@@ -355,23 +357,7 @@
 }
 
 .shell--staff-app-admin {
-  --staff-nav-accent: var(--adeni-teal, #13c2a3);
-
-  .sidebar {
-    box-shadow: inset 3px 0 0 color-mix(in srgb, var(--staff-nav-accent) 48%, transparent);
-  }
-
-  .nav-link.active {
-    background: color-mix(in srgb, var(--staff-nav-accent) 10%, transparent);
-
-    &::before {
-      background: var(--staff-nav-accent);
-    }
-  }
-
-  .nav-link.active .nav-ico {
-    color: var(--staff-nav-accent);
-  }
+  @include staff-shell-nav-accent;
 }
 
 .crumb {

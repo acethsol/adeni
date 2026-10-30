@@ -71,6 +71,13 @@ export function isBusinessNavItemVisible(item: BusinessNavItem, ctx: BusinessAcc
     return false;
   }
 
+  if (item.entitlementsAny?.length) {
+    const any = item.entitlementsAny.some((key) => hasTenantEntitlement(entitlements, key));
+    if (!any) {
+      return false;
+    }
+  }
+
   return true;
 }
 

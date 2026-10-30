@@ -43,8 +43,10 @@ import { AdeniBrandLogoComponent } from "./adeni-brand-logo.component";
       opacity: 0.88;
     }
 
-    .lockup[data-app="admin"] .caption {
-      color: color-mix(in srgb, var(--adeni-teal, #13c2a3) 38%, var(--text-muted));
+    .lockup[data-app="business"] .caption,
+    .lockup[data-app="admin"] .caption,
+    .lockup[data-app="consumer"] .caption {
+      color: color-mix(in srgb, var(--interactive, #7f56ff) 38%, var(--text-muted));
     }
   `,
 })
@@ -52,5 +54,5 @@ export class AdeniStaffSidebarBrandComponent {
   readonly caption = input<string | null>(null);
   readonly logoHeight = input(32);
   readonly surface = input<AdeniBrandSurface>("light");
-  readonly app = input<"business" | "admin">("business");
+  readonly app = input<"business" | "admin" | "consumer">("business");
 }

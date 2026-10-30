@@ -414,6 +414,9 @@ export class BusinessShellComponent {
       : id === "policies" ? "tabPolicies"
       : id === "messaging" ? "tabMessaging"
       : id === "walk-ins" ? "tabWalkIns"
+      : id === "packages" ? "tabPackages"
+      : id === "memberships" ? "tabMemberships"
+      : id === "loyalty" ? "tabLoyalty"
       : null;
     return key ? this.text(key) : id;
   }

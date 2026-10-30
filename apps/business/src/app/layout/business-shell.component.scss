@@ -1,3 +1,5 @@
+@use "staff-shell-accent" as *;
+
 .shell {
   --sidebar-width: 15.5rem;
   display: grid;
@@ -354,8 +356,8 @@
   gap: 0.25rem;
 }
 
-.shell--staff-app-business .sidebar {
-  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--adeni-purple, #7f56ff) 42%, transparent);
+.shell--staff-app-business {
+  @include staff-shell-nav-accent;
 }
 
 .crumb {

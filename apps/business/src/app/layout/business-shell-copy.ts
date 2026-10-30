@@ -32,6 +32,9 @@ export type ChromeKey =
   | "tabPolicies"
   | "tabMessaging"
   | "tabWalkIns"
+  | "tabPackages"
+  | "tabMemberships"
+  | "tabLoyalty"
   | "businessSettings"
   | "notificationSettings"
   | "chromePreferences"
@@ -53,6 +56,7 @@ export type ChromeKey =
   | "/public-page"
   | "/register"
   | "/finance"
+  | "/retention"
   | "/settings"
   | "/plan"
   | "/__discover";
@@ -90,6 +94,9 @@ export const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     tabPolicies: "Policies",
     tabMessaging: "Messaging",
     tabWalkIns: "Walk-ins",
+    tabPackages: "Packages",
+    tabMemberships: "Memberships",
+    tabLoyalty: "Loyalty",
     businessSettings: "Business settings",
     notificationSettings: "Notification preferences",
     chromePreferences: "Appearance & language",
@@ -111,6 +118,7 @@ export const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     "/public-page": "Public page",
     "/register": "Register",
     "/finance": "Finance",
+    "/retention": "Retention",
     "/settings": "Settings",
     "/plan": "Plan",
     "/__discover": "Discover",
@@ -147,6 +155,9 @@ export const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     tabPolicies: "Politiques",
     tabMessaging: "Messagerie",
     tabWalkIns: "Sans rendez-vous",
+    tabPackages: "Forfaits",
+    tabMemberships: "Abonnements",
+    tabLoyalty: "Fidélité",
     businessSettings: "Paramètres de l'entreprise",
     notificationSettings: "Préférences de notification",
     chromePreferences: "Apparence et langue",
@@ -168,6 +179,7 @@ export const CHROME: Record<LocaleId, Record<ChromeKey, string>> = {
     "/public-page": "Page publique",
     "/register": "Inscription",
     "/finance": "Finance",
+    "/retention": "Fidélisation",
     "/settings": "Paramètres",
     "/plan": "Forfait",
     "/__discover": "Découvrir",

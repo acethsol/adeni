@@ -12,7 +12,15 @@ import type {
 } from "@adeni/shared";
 import { resolvePaymentCheckoutUrl, t, parseBookingPreselection, bookingPreselectionQuery } from "@adeni/shared";
 import { AdeniApiError } from "@adeni/api-client";
-import { AdeniFeedbackService, AdeniLocaleService, AdeniWizardComponent, type AdeniWizardStep, injectAdeniTranslate, injectAdeniApiError } from "@adeni/ui";
+import {
+  AdeniConfirmService,
+  AdeniFeedbackService,
+  AdeniLocaleService,
+  AdeniWizardComponent,
+  type AdeniWizardStep,
+  injectAdeniTranslate,
+  injectAdeniApiError,
+} from "@adeni/ui";
 import { CustomerApiService } from "../core/services/customer-api.service";
 
 type Step = "service" | "staff" | "slot" | "guests" | "confirm" | "done";
@@ -44,6 +52,7 @@ export class BookingPanelComponent {
   private readonly api = inject(CustomerApiService);
   private readonly localeService = inject(AdeniLocaleService);
   private readonly feedback = inject(AdeniFeedbackService);
+  private readonly confirmDialog = inject(AdeniConfirmService);
 
   readonly slug = input.required<string>();
   readonly tenantId = input.required<string>();
@@ -579,6 +588,11 @@ export class BookingPanelComponent {
       this.step.set("slot");
       this.selectedSlot.set(null);
       await this.loadSlots(this.selectedStaffId());
+      return;
+    }
+
+    const bookingSubject = primary.name;
+    if (!(await this.confirmDialog.confirmKind("submit", { subject: bookingSubject, confirmLabel: this.label("business.booking.confirm") }))) {
       return;
     }
 
