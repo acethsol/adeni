@@ -67,4 +67,4 @@ BEGIN
     SET @i += 1;
 END
 
-PRINT CONCAT(N'Commercial audit dev seed complete (up to 32 rows, correlation devseed-commercial-audit-*).');
+PRINT N'Commercial audit dev seed complete (up to 32 rows, correlation devseed-commercial-audit-*).';

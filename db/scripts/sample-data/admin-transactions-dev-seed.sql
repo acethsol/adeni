@@ -92,4 +92,4 @@ BEGIN
     SET @i += 1;
 END
 
-PRINT CONCAT(N'devseed commerce + SaaS rows ensured (search admin Transactions for "devseed").');
+PRINT N'devseed commerce + SaaS rows ensured (search admin Transactions for "devseed").';

@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Persistence;
 
+using System.Data.Common;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -97,9 +98,29 @@ public static partial class SampleDataSqlSeedRunner
 
         var sql = await File.ReadAllTextAsync(path, cancellationToken);
 
-        foreach (var batch in SplitSqlBatches(sql))
+        var connection = db.Database.GetDbConnection();
+        var shouldClose = connection.State != System.Data.ConnectionState.Open;
+        if (shouldClose)
         {
-            await db.Database.ExecuteSqlRawAsync(batch, cancellationToken);
+            await connection.OpenAsync(cancellationToken);
+        }
+
+        try
+        {
+            foreach (var batch in SplitSqlBatches(sql))
+            {
+                await using var command = connection.CreateCommand();
+                command.CommandText = batch;
+                command.CommandTimeout = 300;
+                await command.ExecuteNonQueryAsync(cancellationToken);
+            }
+        }
+        finally
+        {
+            if (shouldClose)
+            {
+                await connection.CloseAsync();
+            }
         }
     }
 
