@@ -10,6 +10,8 @@ import {
 import { findBusinessNavItem } from "../business-nav";
 import { BusinessApiService } from "../services/business-api.service";
 import { BusinessSessionService } from "../services/business-session.service";
+import { businessRouteNavPath, retentionTabIdFromPath } from "./business-route-nav-path";
+
 /** Blocks routes the current role, plan, or business capabilities do not allow. */
 export const businessPermissionGuard: CanActivateFn = async (route) => {
   const session = inject(BusinessSessionService);
@@ -18,8 +20,7 @@ export const businessPermissionGuard: CanActivateFn = async (route) => {
 
   await session.ensureLoaded();
 
-  const path = "/" + (route.routeConfig?.path ?? "").split("/:")[0];
-  const navPath = path === "/" ? "/dashboard" : path;
+  const navPath = businessRouteNavPath(route);
   const match = findBusinessNavItem(navPath);
   if (!match) {
     return router.createUrlTree(["/forbidden"]);
@@ -53,6 +54,22 @@ export const businessPermissionGuard: CanActivateFn = async (route) => {
 
   if (item?.entitlement && !hasTenantEntitlement(entitlements, item.entitlement)) {
     return router.createUrlTree(["/dashboard"]);
+  }
+
+  if (item?.entitlementsAny?.length) {
+    const anyEntitled = item.entitlementsAny.some((key) => hasTenantEntitlement(entitlements, key));
+    if (!anyEntitled) {
+      return router.createUrlTree(["/dashboard"]);
+    }
+  }
+
+  const retentionTabId = retentionTabIdFromPath(navPath);
+  if (retentionTabId && item?.tabs?.length) {
+    const tab = item.tabs.find((entry) => entry.id === retentionTabId);
+    if (tab?.entitlement && !hasTenantEntitlement(entitlements, tab.entitlement)) {
+      const fallback = firstBusinessTabId(item, entitlements);
+      return fallback ? router.createUrlTree([`/retention/${fallback}`]) : router.createUrlTree(["/dashboard"]);
+    }
   }
 
   const tabId = route.queryParamMap.get("tab");

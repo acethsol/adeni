@@ -202,6 +202,38 @@ public sealed class ReferralQualificationService(
             return Result.Success();
         }
 
+        if (db.Database.IsRelational())
+        {
+            await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+            var issued = await IssueRewardsCoreAsync(program, attribution, bookingId, actor, cancellationToken);
+            if (issued.IsFailure)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return issued;
+            }
+
+            await db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return Result.Success();
+        }
+
+        return await IssueRewardsCoreAsync(program, attribution, bookingId, actor, cancellationToken);
+    }
+
+    private async Task<Result> IssueRewardsCoreAsync(
+        ReferralProgram program,
+        ReferralAttribution attribution,
+        Guid bookingId,
+        string actor,
+        CancellationToken cancellationToken)
+    {
+        if (!await ReferrerCapAllowsNewRewardAsync(program, attribution, cancellationToken))
+        {
+            attribution.Status = ReferralAttributionStatus.Rejected;
+            attribution.RejectReason = "referrer_cap";
+            return Result.Success();
+        }
+
         var now = clock.GetUtcNow();
         if (program.ReferrerRewardPoints > 0)
         {
@@ -248,6 +280,35 @@ public sealed class ReferralQualificationService(
             program.RefereeRewardPoints,
             now));
         return Result.Success();
+    }
+
+    /// <summary>
+    /// Serializes referrer cap checks on SQL Server (UPDLOCK on program row). In-memory provider skips the lock hint.
+    /// </summary>
+    private async Task<bool> ReferrerCapAllowsNewRewardAsync(
+        ReferralProgram program,
+        ReferralAttribution attribution,
+        CancellationToken cancellationToken)
+    {
+        if (program.MaxRewardsPerReferrer is not > 0)
+        {
+            return true;
+        }
+
+        if (db.Database.IsRelational())
+        {
+            await db.Database.ExecuteSqlInterpolatedAsync(
+                $"SELECT 1 FROM [retention].[referral_programs] WITH (UPDLOCK, ROWLOCK) WHERE [TenantId] = {program.TenantId}",
+                cancellationToken);
+        }
+
+        var rewarded = await db.Set<ReferralAttribution>()
+            .CountAsync(
+                x => x.TenantId == program.TenantId
+                    && x.ReferrerTenantCustomerId == attribution.ReferrerTenantCustomerId
+                    && x.Status == ReferralAttributionStatus.Rewarded,
+                cancellationToken);
+        return rewarded < program.MaxRewardsPerReferrer.Value;
     }
 
     private async Task<Result> CreditPointsAsync(
