@@ -56,6 +56,7 @@ exports.onExecutePostLogin = async (event, api) => {
 2. Local dev without Auth0: `devCustomerAuth0Sub: "auth0|local-customer"` (same as Next `DEV_CUSTOMER_AUTH0_SUB` / API seeder).
 3. See `apps/customer/.env.example.md` for environment fields (`publicAppUrl`, optional `envMarketId`).
 4. **You can defer Auth0 registration** until staging: leave `auth0.domain` / `clientId` empty and use dev customer sub with `Auth0:Enabled: false` on the API.
+5. **Post-login return path (C1):** `redirect_uri` stays the site origin; intended deep links are passed via Auth0 `appState.target` and allowlisted in `auth-return-target.ts` (`/app/*`, `/businesses/*`, `/discover`, `/pay`, `/`). Before treating customer Auth0 as launch-ready, verify on a **real Auth0 tenant** (not only `Auth0:Enabled: false`): unauthenticated hit to `/app/bookings/:id/intake` → login → lands back on that path; unsafe `appState.target` values are ignored.
 
 ## Angular web (customer, business, admin)
 

@@ -28,6 +28,14 @@ describe("seo paths", () => {
     expect(isSeoCategorySlug("plumbers")).toBe(false);
   });
 
+  it("reserves consumer-app path segments so SEO catch-alls never claim them", () => {
+    // C1 `/app/*` is declared before market routes; this pins the canMatch contract.
+    expect(isSeoMarketId("app")).toBe(false);
+    expect(isSeoMarketId("me")).toBe(false);
+    expect(isSeoMarketId("account")).toBe(false);
+    expect(isSeoCategorySlug("app")).toBe(false);
+  });
+
   it("builds canonical path segments", () => {
     expect(seoMarketPath("Lagos")).toBe("/lagos");
     expect(seoCategoryPath("Ottawa", "Hair-Grooming")).toBe("/ottawa/hair-grooming");

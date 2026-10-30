@@ -10,7 +10,7 @@ import {
   viewChild,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { RouterLink } from "@angular/router";
+import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { Subscription } from "rxjs";
 import type { ConversationDetail, ConversationMessage, ConversationSummary } from "@adeni/shared";
 import {
@@ -21,8 +21,8 @@ import {
   injectAdeniTranslate,
   injectAdeniApiError,
 } from "@adeni/ui";
-import { CustomerApiService } from "../../core/services/customer-api.service";
-import { CustomerMessagingBadgeService } from "../../app-surface/services/customer-messaging-badge.service";
+import { CustomerApiService } from "../../../core/services/customer-api.service";
+import { CustomerMessagingBadgeService } from "../../services/customer-messaging-badge.service";
 
 @Component({
   selector: "app-my-messages",
@@ -38,6 +38,8 @@ export class MyMessagesComponent implements OnInit, OnDestroy {
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly realtime = inject(AdeniMessagingRealtimeService);
   private readonly badge = inject(CustomerMessagingBadgeService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly subscriptions = new Subscription();
 
   private readonly transcriptEl = viewChild<ElementRef<HTMLElement>>("transcriptEl");
@@ -85,8 +87,15 @@ export class MyMessagesComponent implements OnInit, OnDestroy {
     try {
       const items = await this.api.withAuthorizedClient((c) => c.listCustomerConversations());
       this.conversations.set(items);
-      if (!this.selectedId() && items.length > 0 && !this.isNarrow()) {
-        await this.openConversation(items[0]!.id);
+      const deepLink = this.route.snapshot.queryParamMap.get("c");
+      const preferred =
+        deepLink && items.some((row) => row.id === deepLink)
+          ? deepLink
+          : !this.selectedId() && items.length > 0 && !this.isNarrow()
+            ? items[0]!.id
+            : null;
+      if (preferred) {
+        await this.openConversation(preferred);
       }
     } catch (caught) {
       this.error.set(this.apiErr(caught, "discover.myMessages.couldNotLoadMessagesTry"));
@@ -100,6 +109,12 @@ export class MyMessagesComponent implements OnInit, OnDestroy {
     this.selectedId.set(id);
     this.mobileThreadOpen.set(true);
     this.error.set(null);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { c: id },
+      queryParamsHandling: "merge",
+      replaceUrl: true,
+    });
     try {
       const detail = await this.api.withAuthorizedClient((c) => c.getCustomerConversation(id));
       this.detail.set(detail);

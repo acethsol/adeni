@@ -8,9 +8,8 @@ const MIN_REFRESH_INTERVAL_MS = 15_000;
  * Unread-conversation count for the shell Messages badge.
  *
  * Phase A: pull-based (`needsAttention` from the conversation list), refreshed by the shell on navigation.
- * TODO(C1 phase B): lift the SignalR connection out of `MyMessagesComponent` into a shell-scoped owner so the
- * badge updates live; the customer hub only pushes events for *joined* conversations today, so a per-customer
- * group is needed first (docs/specs/sprint-c1-consumer-app-experience.md §6.2, risk R6).
+ * Deferred: lift SignalR out of `MyMessagesComponent` into a shell-scoped owner for live badge updates
+ * (needs a per-customer hub group first — C1 risk R6).
  */
 @Injectable({ providedIn: "root" })
 export class CustomerMessagingBadgeService {

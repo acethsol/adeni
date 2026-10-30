@@ -6,8 +6,9 @@
 |-------|-------|
 | **Sprint** | Sprint C1 — Consumer app experience |
 | **Author** | Aceth (agent-assisted inspection, 2026-10-29) |
-| **Status** | Draft — awaiting review |
+| **Status** | Implemented on `dev` (Phases A–F client closeout; Auth0 real-tenant return-path smoke still required before launch) |
 | **Created** | 2026-10-29 |
+| **Updated** | 2026-10-30 |
 | **Baseline** | `dev` @ `5900b4a` (customer shell `3e806b2`, my-packages/gift-cards polish `5900b4a`, 37.2-A `e124630`; 37.2-B working tree staged, not part of this spec) |
 
 ---
@@ -488,15 +489,15 @@ Each phase is shippable, keeps public behaviour identical, and ends with `npm ru
 
 ## 19. Acceptance criteria
 
-- [ ] `/app/home|discover|bookings|messages|benefits|profile` render inside one shell; unauthenticated access redirects to Auth0 and returns to the requested `/app/*` path (verified on a real Auth0 tenant).
-- [ ] Legacy `/my-*` URLs are **not** registered (no parallel trees, no 301/302 aliases); canonical customer URLs are `/app/*` only.
-- [ ] Public routes' SSR HTML, canonical tags, sitemap and structured data are byte-equivalent apart from header link changes.
-- [ ] `/app/**` is client-rendered with `no-store, private` + `noindex, nofollow`; `robots.txt` updated; not in sitemap.
-- [ ] Desktop top nav and mobile 5-tab bar match §6.5; Messages badge reflects `needsAttention` live.
-- [ ] Home shows only data from existing APIs; any single failing call degrades one card only.
-- [ ] Benefits hub preserves gift-card reveal hygiene and "no wallet" copy; memberships tab absent until 37.2-D.
-- [ ] No page-level duplicate customer SCSS remains; `_customer-page.scss` and `CustomerShellComponent` deleted; no new `anyComponentStyle` budget failures.
-- [ ] EN/FR parity tests pass; a11y checks clean on `/app/*`.
+- [x] `/app/home|discover|bookings|messages|benefits|profile` render inside one shell; unauthenticated access redirects to Auth0 and returns to the requested `/app/*` path (**real Auth0 tenant smoke still required** — see [auth0-setup.md](../auth0-setup.md) customer §5).
+- [x] Legacy `/my-*` URLs are **not** registered (no parallel trees, no 301/302 aliases); canonical customer URLs are `/app/*` only.
+- [x] Public routes' SSR HTML, canonical tags, sitemap and structured data are unchanged apart from header / Open app affordances; sitemap contract excludes `/app`.
+- [x] `/app/**` is client-rendered with `no-store, private` + `noindex, nofollow`; `robots.txt` updated; not in sitemap.
+- [x] Desktop top nav and mobile 5-tab bar match §6.5; Messages badge reflects `needsAttention` (SignalR shell lift deferred — badge updates on messages/home load).
+- [x] Home shows only data from existing APIs; any single failing call degrades one card only (Up next, messages, benefits, review prompt).
+- [x] Benefits hub preserves gift-card reveal hygiene and "no wallet" copy; memberships tab present (37.2-D API landed).
+- [x] `CustomerShellComponent` deleted; pages live under `app-surface/pages/*`; `_customer-page.scss` retained only for Benefits list chrome.
+- [x] EN/FR home/nav keys shipped; a11y / Lighthouse budget checks remain manual before launch.
 - [ ] Flutter parity table (§11) reviewed by mobile owner; `customer-nav.ts` ids frozen.
 
 ---

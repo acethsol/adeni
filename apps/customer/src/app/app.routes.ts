@@ -51,12 +51,14 @@ export const routes: Routes = [
       },
       {
         path: "bookings",
-        loadComponent: () => import("./pages/my-bookings/my-bookings.component").then(m => m.MyBookingsComponent),
+        loadComponent: () =>
+          import("./app-surface/pages/bookings/my-bookings.component").then(m => m.MyBookingsComponent),
         title: "My bookings",
       },
       {
         path: "messages",
-        loadComponent: () => import("./pages/my-messages/my-messages.component").then(m => m.MyMessagesComponent),
+        loadComponent: () =>
+          import("./app-surface/pages/messages/my-messages.component").then(m => m.MyMessagesComponent),
         title: "Messages",
       },
       {
@@ -66,17 +68,24 @@ export const routes: Routes = [
           { path: "", pathMatch: "full", redirectTo: "packages" },
           {
             path: "packages",
-            loadComponent: () => import("./pages/my-packages/my-packages.component").then(m => m.MyPackagesComponent),
+            loadComponent: () =>
+              import("./app-surface/pages/benefits/packages/my-packages.component").then(m => m.MyPackagesComponent),
             title: "My packages",
           },
           {
             path: "memberships",
-            loadComponent: () => import("./pages/my-memberships/my-memberships.component").then(m => m.MyMembershipsComponent),
+            loadComponent: () =>
+              import("./app-surface/pages/benefits/memberships/my-memberships.component").then(
+                m => m.MyMembershipsComponent,
+              ),
             title: "My memberships",
           },
           {
             path: "gift-cards",
-            loadComponent: () => import("./pages/pay/purchased-gifts.component").then(m => m.PurchasedGiftsComponent),
+            loadComponent: () =>
+              import("./app-surface/pages/benefits/gift-cards/purchased-gifts.component").then(
+                m => m.PurchasedGiftsComponent,
+              ),
             title: "Purchased gift cards",
           },
         ],

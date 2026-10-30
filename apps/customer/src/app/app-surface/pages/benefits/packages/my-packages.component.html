@@ -1,17 +1,4 @@
-<div class="customer-page">
-  <header class="page-head">
-    <span class="wash" aria-hidden="true"></span>
-    <div class="head-copy">
-      <p class="kicker">Adeni</p>
-      <h1>{{ tr("discover.memberships.myTitle") }}</h1>
-      <p class="lede">{{ tr("discover.memberships.myDescription") }}</p>
-    </div>
-    <div class="head-actions">
-      <a class="cds-btn cds-btn--secondary" routerLink="/app/bookings">{{ tr("common.myBookings") }}</a>
-      <a class="cds-btn cds-btn--primary" routerLink="/discover">{{ tr("bookings.discoverBusinesses") }}</a>
-    </div>
-  </header>
-
+<div class="customer-page customer-page--embedded">
   @if (loading()) {
     <ul class="list skeletons" aria-hidden="true">
       @for (n of [1, 2]; track n) {
@@ -27,35 +14,32 @@
       <div class="empty-icon" aria-hidden="true">
         <adeni-carbon-icon name="task" [size]="40" />
       </div>
-      <h2>{{ tr("discover.memberships.loadErrorTitle") }}</h2>
+      <h2>{{ tr("discover.packages.loadErrorTitle") }}</h2>
       <p>{{ error() }}</p>
       <button type="button" class="cds-btn cds-btn--primary" (click)="load()">{{ tr("discover.tryAgain") }}</button>
     </div>
-  } @else if (memberships().length === 0) {
+  } @else if (packages().length === 0) {
     <div class="empty">
       <div class="empty-icon" aria-hidden="true">
         <adeni-carbon-icon name="task" [size]="40" />
       </div>
-      <h2>{{ tr("discover.memberships.myEmptyTitle") }}</h2>
-      <p>{{ tr("discover.memberships.myEmptyDescription") }}</p>
-      <a class="cds-btn cds-btn--primary" routerLink="/discover">{{ tr("bookings.discoverBusinesses") }}</a>
+      <h2>{{ tr("discover.packages.myEmptyTitle") }}</h2>
+      <p>{{ tr("discover.packages.myEmptyDescription") }}</p>
+      <a class="cds-btn cds-btn--primary" routerLink="/app/discover">{{ tr("bookings.discoverBusinesses") }}</a>
     </div>
   } @else {
     <ul class="list">
-      @for (m of memberships(); track m.id) {
-        <li class="card" [attr.data-tone]="tone(m)">
+      @for (p of packages(); track p.id) {
+        <li class="card" [attr.data-tone]="tone(p)">
           <div class="title-row">
-            <h2>{{ m.name }}</h2>
-            <span class="status" [attr.data-tone]="tone(m)">{{ statusLabel(m.status) }}</span>
+            <h2>{{ p.name }}</h2>
+            <span class="status" [attr.data-tone]="tone(p)">{{ statusLabel(p) }}</span>
           </div>
-          @if (m.businessName) {
-            <p class="meta">{{ m.businessName }}</p>
-          }
-          @if (m.currentCycleEnd) {
-            <p class="meta">{{ tr("businessApp.memberships.cycleEnds", { date: when(m.currentCycleEnd) }) }}</p>
+          @if (p.businessName) {
+            <p class="meta">{{ p.businessName }}</p>
           }
           <ul class="balances">
-            @for (b of m.balances; track b.id) {
+            @for (b of p.balances; track b.id) {
               <li>
                 <div class="balance-row">
                   <strong>{{ b.serviceName }}</strong>
@@ -75,6 +59,9 @@
               </li>
             }
           </ul>
+          @if (p.expiresAt) {
+            <p class="meta">{{ tr("discover.packages.expires", { date: when(p.expiresAt) }) }}</p>
+          }
         </li>
       }
     </ul>

@@ -4,7 +4,7 @@ import type { AdeniCarbonIconName } from "@adeni/ui";
  * Config-driven navigation for the signed-in customer app (`/app/*`).
  *
  * Ids are intentionally 1:1 with the future Flutter consumer app destinations
- * (docs/specs/sprint-c1-consumer-app-experience.md §11) — treat them as frozen.
+ * (`docs/specs/flutter-consumer-app.md`) — treat them as frozen.
  * Benefits is deliberately NOT a bottom tab: it is reachable from Home, Profile and the desktop nav.
  */
 export type CustomerNavId = "home" | "discover" | "bookings" | "messages" | "benefits" | "profile";

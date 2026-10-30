@@ -1,7 +1,7 @@
 import { Component, DestroyRef, PLATFORM_ID, inject, signal } from "@angular/core";
 import { isPlatformBrowser } from "@angular/common";
 import { RouterLink } from "@angular/router";
-import { CustomerApiService } from "../../core/services/customer-api.service";
+import { CustomerApiService } from "../../../../core/services/customer-api.service";
 import { formatPrice, type BusinessGiftCard } from "@adeni/shared";
 import { AdeniCarbonIconComponent, injectAdeniApiError, injectAdeniTranslate } from "@adeni/ui";
 

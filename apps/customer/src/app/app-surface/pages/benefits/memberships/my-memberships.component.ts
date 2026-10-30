@@ -7,7 +7,7 @@ import {
   injectAdeniApiError,
   injectAdeniTranslate,
 } from "@adeni/ui";
-import { CustomerApiService } from "../../core/services/customer-api.service";
+import { CustomerApiService } from "../../../../core/services/customer-api.service";
 
 type MembershipTone = "pending" | "active" | "inactive";
 

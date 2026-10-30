@@ -1,6 +1,5 @@
-// Shared "customer account page" pattern for the customer shell (my-packages, my-gift-cards, ...).
-// Mirrors the visual language of my-bookings: gradient page head, list cards, illustrated empty state.
-// Usage in a component stylesheet: `@use "../../layout/customer-page";`
+// List/empty patterns for Benefits hub child routes (`/app/benefits/*`).
+// Usage: `@use "../../../../layout/customer-page";` from `app-surface/pages/benefits/...`.
 
 :host {
   display: block;
@@ -10,6 +9,12 @@
   width: min(46rem, 100%);
   margin: 0 auto;
   padding: 1.5rem 1.25rem 3rem;
+}
+
+.customer-page--embedded {
+  width: 100%;
+  margin: 0;
+  padding: 0.75rem 0 1.5rem;
 }
 
 .page-head {

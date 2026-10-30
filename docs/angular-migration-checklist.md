@@ -149,7 +149,7 @@ Every handler that existed under archived Next `app/api/**` must end as **A**, *
 | `/discover` search + filters | | ☑ category, q, sort, minRating; market/geo cookies |
 | `/businesses/[slug]` profile SSR | JSON-LD / OG tags parity | ☑ LocalBusiness JSON-LD + OG on profile |
 | Booking flow + waitlist | | ☑ booking wizard, waitlist, deposit redirect; quote flow |
-| `/my-bookings` | | ☑ list + cancel |
+| `/app/bookings` (was `/my-bookings`) | | ☑ list + cancel + detail; C1 shell |
 | Market cookies (`adeni_market`, `adeni_coords`, `?market=`) | | ☑ shared constants in `@adeni/shared` |
 | Quote requests (Sprint 19) | | ☐ |
 | Ask Adeni (rule-based → Sprint 20 LLM UI) | API-first widget | ☐ |

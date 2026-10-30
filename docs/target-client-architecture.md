@@ -19,9 +19,9 @@ This document is the **north-star diagram** for who talks to what on the public 
                     │
                     ▼
         ┌─────────────────────┐
-        │  Discover Web       │
+        │  Customer Web       │
         │  Angular SSR        │
-        │  SEO / Public       │
+        │  SEO + `/app/*`     │
         └─────────────────────┘
 
  Business Users                 Consumers
@@ -56,7 +56,7 @@ This document is the **north-star diagram** for who talks to what on the public 
 
 | Client | Repo (target) | Audience | Notes |
 |--------|---------------|----------|--------|
-| **Customer web** | `apps/customer` | Consumers (web) | SSR for SEO, public discovery, business profiles, booking. Auth0 SPA for signed-in customers when enabled. |
+| **Customer web** | `apps/customer` | Consumers (web) | SSR for SEO (discovery, profiles, market/neighborhood hubs) **plus** authenticated consumer app under `/app/*` (home, bookings, messages, benefits, profile). Auth0 SPA; booking stays on canonical public business pages. |
 | **Business Portal** | `apps/business` | Business tenants | Services, availability, bookings, profile, payments/plan. Auth0 SPA (business role) or dev sub locally. |
 | **Admin Portal** | `apps/admin` | Adeni staff | Pending verification, markets, businesses, customer privacy (export/erasure). Separate origin recommended in production (e.g. `admin.adeni.com`). |
 | **Flutter mobile** | `apps/mobile` (business skeleton) | Native mobile only | Consumer mobile is the V1 mobile priority; checked-in owner/employee/front-desk skeleton is not the consumer app or an active web client. Same API + OpenAPI. |

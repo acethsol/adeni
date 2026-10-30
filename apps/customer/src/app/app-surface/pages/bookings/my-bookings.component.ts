@@ -17,11 +17,11 @@ import {
   injectAdeniTranslate,
   type AdeniPillTone,
 } from "@adeni/ui";
-import { CustomerApiService } from "../../core/services/customer-api.service";
+import { CustomerApiService } from "../../../core/services/customer-api.service";
 import {
   ADENI_DISCOVER_CONFIG,
   isDiscoverCustomerDevMode,
-} from "../../core/adeni-config";
+} from "../../../core/adeni-config";
 
 type BookingsTab = "upcoming" | "past";
 

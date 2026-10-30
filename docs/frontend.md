@@ -6,7 +6,7 @@ Clients for the Adeni marketplace API. Backend is a **modular monolith** — see
 
 ```
 apps/
-  customer/            Angular SSR — public SEO + signed-in consumer app (`npm run dev:customer`, :5190)
+  customer/            Angular SSR — public SEO + signed-in consumer app `/app/*` (`npm run dev:customer`, :5190)
   business/            Angular — business portal (`npm run dev:business`, :5173)
   admin/               Angular — admin portal (`npm run dev:admin`, :5180)
   mobile/              Flutter — business skeleton (owner / employee / front desk)
@@ -16,7 +16,7 @@ packages/
   ui/                  Shared Angular UI (portal + admin page chrome, staff SCSS)
 ```
 
-Flutter spec: [specs/flutter-business-mobile-skeleton.md](./specs/flutter-business-mobile-skeleton.md).
+**Customer app surfaces:** public SSR routes (`/`, `/discover`, `/businesses/:slug`, SEO hubs) stay crawlable; authenticated UX lives under `/app/*` (client-rendered, `noindex`) — [sprint-c1-consumer-app-experience.md](./specs/sprint-c1-consumer-app-experience.md). Flutter consumer stub: [specs/flutter-consumer-app.md](./specs/flutter-consumer-app.md). Business Flutter: [specs/flutter-business-mobile-skeleton.md](./specs/flutter-business-mobile-skeleton.md).
 
 Consumer **Flutter** (discover/book) remains planned after web GA (ADR-012). Archived **Next.js + Expo**: [legacy-clients-archive.md](./legacy-clients-archive.md).
 
@@ -48,7 +48,7 @@ Environment files: `apps/customer/.env.example.md`, `apps/business/.env.example.
 
 Protected routes: portal (business role), admin (admin role). Without Auth0 env vars, portals show setup instructions instead of login.
 
-Public booking and discovery: **customer** app (`/businesses/{slug}`, `/discover`, …).
+Public booking and discovery: **customer** app (`/businesses/{slug}`, `/discover`, SEO hubs). Signed-in home/bookings/messages/benefits: `/app/*`.
 
 ## Docs
 
