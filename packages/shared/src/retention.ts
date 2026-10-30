@@ -558,3 +558,34 @@ export const customerLoyaltyListSchema = z.object({
 export type LoyaltyRedeemQuote = z.infer<typeof loyaltyRedeemQuoteSchema>;
 export type CustomerLoyaltyAtBusiness = z.infer<typeof customerLoyaltyAtBusinessSchema>;
 export type CustomerLoyaltyList = z.infer<typeof customerLoyaltyListSchema>;
+
+// ---- Referrals (Sprint 37.3-E) ----
+
+export const referralProgramSchema = z.object({
+  configured: z.boolean(),
+  id: z.string().uuid().nullable(),
+  isEnabled: z.boolean(),
+  referrerRewardPoints: z.number().int().nonnegative(),
+  refereeRewardPoints: z.number().int().nonnegative(),
+  maxRewardsPerReferrer: z.number().int().nonnegative().nullable(),
+  createdAt: z.string().nullable(),
+  updatedAt: z.string().nullable(),
+});
+
+export const upsertReferralProgramRequestSchema = z.object({
+  isEnabled: z.boolean(),
+  referrerRewardPoints: z.number().int().min(0).max(1_000_000),
+  refereeRewardPoints: z.number().int().min(0).max(1_000_000),
+  maxRewardsPerReferrer: z.number().int().min(0).nullable().optional(),
+});
+
+export const referralCodeSchema = z.object({
+  tenantCustomerId: z.string().uuid(),
+  code: z.string(),
+  sharePath: z.string().nullable(),
+  createdAt: z.string(),
+});
+
+export type ReferralProgram = z.infer<typeof referralProgramSchema>;
+export type UpsertReferralProgramRequest = z.infer<typeof upsertReferralProgramRequestSchema>;
+export type ReferralCode = z.infer<typeof referralCodeSchema>;

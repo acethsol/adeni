@@ -89,3 +89,22 @@ public sealed record LoyaltyTierChanged(
     Guid? NewTierId,
     int LifetimeEarned,
     DateTimeOffset At) : IDomainEvent;
+
+/// <summary>Referee completed their first qualifying paid visit (Sprint 37.3-E).</summary>
+public sealed record ReferralQualified(
+    Guid TenantId,
+    Guid ReferralAttributionId,
+    Guid ReferrerTenantCustomerId,
+    Guid RefereeTenantCustomerId,
+    Guid QualifiedBookingId,
+    DateTimeOffset At) : IDomainEvent;
+
+/// <summary>Loyalty points were issued to referrer and referee (Sprint 37.3-E).</summary>
+public sealed record ReferralRewardIssued(
+    Guid TenantId,
+    Guid ReferralAttributionId,
+    Guid ReferrerTenantCustomerId,
+    Guid RefereeTenantCustomerId,
+    int ReferrerPoints,
+    int RefereePoints,
+    DateTimeOffset At) : IDomainEvent;

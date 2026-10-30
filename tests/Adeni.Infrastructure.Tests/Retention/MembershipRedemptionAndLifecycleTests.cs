@@ -54,6 +54,11 @@ public sealed class MembershipRedemptionAndLifecycleTests
 
         public Task<Domain.Common.Result> EnsureLoyaltyTiersEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
             Task.FromResult(Domain.Common.Result.Success());
+
+        public Task<bool> IsReferralsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) => Task.FromResult(true);
+
+        public Task<Domain.Common.Result> EnsureReferralsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Domain.Common.Result.Success());
     }
 
     private sealed class NullAudit : IAuditLogWriter

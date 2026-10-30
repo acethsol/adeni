@@ -23,6 +23,8 @@ public sealed class TenantLoyaltyController(
     ILoyaltyAccountService accounts,
     ILoyaltyTierService tiers,
     ILoyaltyRewardCatalogService rewards,
+    IReferralProgramService referralPrograms,
+    IReferralCodeService referralCodes,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet("program")]
@@ -120,6 +122,35 @@ public sealed class TenantLoyaltyController(
         if (ResolveActor() is not { } actor) return Unauthorized();
         return ApiResults.FromResult(
             await rewards.UpdateAsync(actor.TenantId, actor.Actor, rewardId, request, cancellationToken), Ok, HttpContext);
+    }
+
+    [HttpGet("referrals/program")]
+    [RequiresBusinessPermission(BusinessPermissions.Retention, BusinessPermissions.Bookings)]
+    public async Task<IActionResult> GetReferralProgram(CancellationToken cancellationToken)
+    {
+        if (ResolveActor() is not { } actor) return Unauthorized();
+        return ApiResults.FromResult(await referralPrograms.GetAsync(actor.TenantId, cancellationToken), Ok, HttpContext);
+    }
+
+    [HttpPut("referrals/program")]
+    [RequiresBusinessPermission(BusinessPermissions.Retention)]
+    public async Task<IActionResult> UpsertReferralProgram(
+        [FromBody] UpsertReferralProgramRequest request, CancellationToken cancellationToken)
+    {
+        if (ResolveActor() is not { } actor) return Unauthorized();
+        return ApiResults.FromResult(
+            await referralPrograms.UpsertAsync(actor.TenantId, actor.Actor, request, cancellationToken), Ok, HttpContext);
+    }
+
+    [HttpGet("customers/{tenantCustomerId:guid}/referral-code")]
+    [RequiresBusinessPermission(BusinessPermissions.Retention, BusinessPermissions.Bookings)]
+    public async Task<IActionResult> GetReferralCode(Guid tenantCustomerId, CancellationToken cancellationToken)
+    {
+        if (ResolveActor() is not { } actor) return Unauthorized();
+        return ApiResults.FromResult(
+            await referralCodes.GetOrCreateForCustomerAsync(actor.TenantId, tenantCustomerId, cancellationToken),
+            Ok,
+            HttpContext);
     }
 
     [HttpPost("customers/{tenantCustomerId:guid}/rewards/{rewardId:guid}/redeem")]

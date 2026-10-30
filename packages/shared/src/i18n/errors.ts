@@ -33,6 +33,7 @@ export const enErrorMessages: MessageTree = {
     loyalty_conflict: "The points balance changed at the same time. Refresh and try again.",
     loyalty_redeem_invalid: "Those loyalty points cannot be applied to this booking.",
     loyalty_program_disabled: "The loyalty program is not enabled for this business.",
+    referral_program_not_configured: "Set up the referral program before sharing codes.",
   },
   intake: {"validation": "Check the intake form fields.", "conflict": "The form changed or was already submitted. Refresh before continuing.", "submission_closed": "This booking is no longer open for intake submission."},
   subscription: {
@@ -113,6 +114,7 @@ export const enErrorMessages: MessageTree = {
     recurringMembershipBilling: "Recurring membership billing is not included on your current plan.",
     loyaltyBasic: "Loyalty is not included on your current plan.",
     loyaltyTiers: "Loyalty tiers and rewards are not included on your current plan.",
+    referrals: "Refer-a-friend is not included on your current plan.",
     exports: "Exports are not included on your current plan.",
     excel_export: "Excel export is not included on your current plan.",
     multi_location_reporting:
@@ -167,6 +169,7 @@ export const frErrorMessages: MessageTree = {
     loyalty_conflict: "Le solde de points a changé en même temps. Actualisez et réessayez.",
     loyalty_redeem_invalid: "Ces points de fidélité ne peuvent pas être appliqués à cette réservation.",
     loyalty_program_disabled: "Le programme de fidélité n’est pas activé pour cette entreprise.",
+    referral_program_not_configured: "Configurez le programme de parrainage avant de partager des codes.",
   },
   intake: {"validation": "Vérifiez les champs du formulaire.", "conflict": "Le formulaire a changé ou a déjà été envoyé. Actualisez avant de continuer.", "submission_closed": "Cette réservation ne permet plus d’envoyer ce formulaire."},
   subscription: {
@@ -228,6 +231,7 @@ export const frErrorMessages: MessageTree = {
     recurringMembershipBilling: "La facturation récurrente des abonnements n’est pas incluse dans votre forfait actuel.",
     loyaltyBasic: "La fidélité n’est pas incluse dans votre forfait actuel.",
     loyaltyTiers: "Les paliers et récompenses de fidélité ne sont pas inclus dans votre forfait actuel.",
+    referrals: "Le parrainage n'est pas inclus dans votre forfait actuel.",
     exports: "Les exportations ne sont pas incluses dans votre forfait actuel.",
     excel_export: "L'exportation Excel n'est pas incluse dans votre forfait actuel.",
     multi_location_reporting:

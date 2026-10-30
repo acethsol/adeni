@@ -25,6 +25,9 @@ public static class RetentionServiceCollectionExtensions
         services.AddScoped<LoyaltyExpiryHangfireJob>();
         services.AddScoped<ILoyaltyTierService, LoyaltyTierService>();
         services.AddScoped<ILoyaltyRewardCatalogService, LoyaltyRewardCatalogService>();
+        services.AddScoped<IReferralProgramService, ReferralProgramService>();
+        services.AddScoped<IReferralCodeService, ReferralCodeService>();
+        services.AddScoped<IReferralQualificationService, ReferralQualificationService>();
         services.AddScoped<IBenefitRedemptionService, BenefitRedemptionService>();
         services.AddScoped<IPackageStorefrontService, PackageStorefrontService>();
         services.AddScoped<IPackagePurchaseActivation, PackagePurchaseActivation>();

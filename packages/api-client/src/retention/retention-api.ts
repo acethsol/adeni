@@ -24,7 +24,10 @@ import {
   loyaltyRewardListSchema,
   loyaltyRewardSchema,
   loyaltyRewardRedemptionSchema,
+  referralProgramSchema,
+  referralCodeSchema,
   type CreateMembershipPlanRequest,
+  type UpsertReferralProgramRequest,
   type CreateLoyaltyRewardRequest,
   type ReplaceLoyaltyTiersRequest,
   type UpdateLoyaltyRewardRequest,
@@ -304,6 +307,18 @@ export class RetentionApi {
 
   updateLoyaltyReward(id: string, body: UpdateLoyaltyRewardRequest, signal?: AbortSignal) {
     return this.write(`${BASE}/loyalty/rewards/${encodeURIComponent(id)}`, body, loyaltyRewardSchema, "PATCH", undefined, signal);
+  }
+
+  getReferralProgram(signal?: AbortSignal) {
+    return this.get(`${BASE}/loyalty/referrals/program`, referralProgramSchema, signal);
+  }
+
+  saveReferralProgram(body: UpsertReferralProgramRequest, signal?: AbortSignal) {
+    return this.write(`${BASE}/loyalty/referrals/program`, body, referralProgramSchema, "PUT", undefined, signal);
+  }
+
+  getCustomerReferralCode(tenantCustomerId: string, signal?: AbortSignal) {
+    return this.get(`${BASE}/loyalty/customers/${tenantCustomerId}/referral-code`, referralCodeSchema, signal);
   }
 
   redeemLoyaltyRewardForCustomer(tenantCustomerId: string, rewardId: string, key: string, signal?: AbortSignal) {

@@ -45,7 +45,7 @@ Boundary vs the parent spec: **A–C = parent "37.1 Basic loyalty"** (finishing 
 | 37.3-B — Earn | `ILoyaltyEarnService.StageEarnForPaidBookingAsync`: earn on **Paid** `scheduled_appointment` bookings (qualifying spend after package credits; idempotent per booking), `LoyaltyPointsEarned` event, reversal on refund, portal customer **Loyalty** tab | `loyaltyBasic` | **Implemented (dev/local)** |
 | 37.3-C — Redeem + expiry | `ILoyaltyRedemptionService` fixed discount at booking create (multiples of `redeemPoints`, capped to payable after package credits); remaining balance respects discount; release on cancel/refund; FIFO expiry job; `GET /api/v1/me/retention/loyalty` + Discover `…/loyalty` + quote | `loyaltyBasic` | **Implemented (dev/local)** |
 | 37.3-D — Tiers + reward catalog | Configurable `LoyaltyTier` (threshold on **lifetime earned**, parent §14 default), tier evaluation on earn, `LoyaltyTierChanged` event; **reward catalog** (non-discount rewards, e.g. free add-on) + redemption beyond the simple discount | `loyaltyTiers` (Pro+) | **Implemented (dev/local)** |
-| 37.3-E — Referrals | Referral program config, code/link, qualification on referee's **first paid completed service**, fraud controls (self-referral, same-customer, per-referrer cap), **single** idempotent reward issuance, `ReferralQualified/ReferralRewardIssued` events | `referrals` (Pro+) | Draft |
+| 37.3-E — Referrals | Referral program config, code/link, qualification on referee's **first paid completed service**, fraud controls (self-referral, same-customer, per-referrer cap), **single** idempotent reward issuance, `ReferralQualified/ReferralRewardIssued` events | `referrals` (Pro+) | **Implemented (dev/local)** |
 
 ---
 

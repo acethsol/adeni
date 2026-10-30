@@ -71,7 +71,8 @@ public sealed class JsonPlanEntitlementsMatrix : IPlanEntitlementsMatrix
             Memberships: row.GetProperty("memberships").GetBoolean(),
             RecurringMembershipBilling: row.GetProperty("recurringMembershipBilling").GetBoolean(),
             LoyaltyBasic: row.GetProperty("loyaltyBasic").GetBoolean(),
-            LoyaltyTiers: row.GetProperty("loyaltyTiers").GetBoolean());
+            LoyaltyTiers: row.GetProperty("loyaltyTiers").GetBoolean(),
+            Referrals: row.GetProperty("referrals").GetBoolean());
 
     private static TenantEntitlements MapSeed(PlanEntitlementSeed seed) =>
         new(
@@ -109,6 +110,7 @@ public sealed class JsonPlanEntitlementsMatrix : IPlanEntitlementsMatrix
             RecurringMembershipBilling: seed.RecurringMembershipBilling,
             LoyaltyBasic: seed.LoyaltyBasic,
             LoyaltyTiers: seed.LoyaltyTiers,
+            Referrals: seed.Referrals,
             MultiLocation: seed.MaxLocations is null || seed.MaxLocations > 1);
 
     private sealed record PlanEntitlementSeed(
@@ -141,5 +143,6 @@ public sealed class JsonPlanEntitlementsMatrix : IPlanEntitlementsMatrix
         bool Memberships,
         bool RecurringMembershipBilling,
         bool LoyaltyBasic,
-        bool LoyaltyTiers);
+        bool LoyaltyTiers,
+        bool Referrals);
 }

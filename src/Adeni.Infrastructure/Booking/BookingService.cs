@@ -39,7 +39,8 @@ public sealed class BookingService(
     IBookingIntakeAssignmentWriter? intake = null,
     Application.Retention.IBenefitRedemptionService? benefits = null,
     Application.Retention.ILoyaltyEarnService? loyaltyEarn = null,
-    Application.Retention.ILoyaltyRedemptionService? loyaltyRedeem = null) : IBookingService
+    Application.Retention.ILoyaltyRedemptionService? loyaltyRedeem = null,
+    Application.Retention.IReferralQualificationService? referralQualification = null) : IBookingService
 {
     public async Task<Result<BookingResponse>> CreateAsync(
         string customerAuth0Sub,
@@ -427,6 +428,14 @@ public sealed class BookingService(
             if (booking.Status == BookingStatus.Confirmed)
             {
                 await tenantCustomers.EnsureFromBookingAsync(request.TenantId, customer.Id, cancellationToken);
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.ReferralCode) && referralQualification is not null)
+            {
+                await tenantCustomers.EnsureFromBookingAsync(request.TenantId, customer.Id, cancellationToken);
+                await referralQualification.TryAttachCodeForBookingAsync(
+                    request.TenantId, customer.Id, request.ReferralCode, booking.Id, cancellationToken);
+                await dbContext.SaveChangesAsync(cancellationToken);
             }
 
             return Result.Success(
@@ -1087,6 +1096,18 @@ public sealed class BookingService(
                 dbContext.ChangeTracker.Clear();
                 domainEventCollector.TakeAll();
                 return Result.Failure<BookingResponse>(staged.Error);
+            }
+        }
+
+        if (booking.Status == BookingStatus.Paid && referralQualification is not null)
+        {
+            var referral = await referralQualification.TryQualifyAndIssueRewardsForPaidBookingAsync(
+                tenantId, booking.Id, currentUser.UserId ?? "portal:unknown", cancellationToken);
+            if (referral.IsFailure)
+            {
+                dbContext.ChangeTracker.Clear();
+                domainEventCollector.TakeAll();
+                return Result.Failure<BookingResponse>(referral.Error);
             }
         }
 

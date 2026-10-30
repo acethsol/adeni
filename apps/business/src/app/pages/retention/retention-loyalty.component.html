@@ -92,6 +92,52 @@
         </button>
       </div>
 
+      @if (referralsEntitled()) {
+        <section class="loyalty-section">
+          <h3>{{ tr('businessApp.loyalty.referralsHeading') }}</h3>
+          <p class="muted hint">{{ tr('businessApp.loyalty.referralsHint') }}</p>
+          @if (!referralConfigured()) {
+            <p class="muted">{{ tr('businessApp.loyalty.referralNotConfigured') }}</p>
+          }
+          <div class="field">
+            <label class="check">
+              <input type="checkbox" [disabled]="!isOwner()" [ngModel]="referralDraft().isEnabled" (ngModelChange)="patchReferral({ isEnabled: $event })" />
+              {{ tr('businessApp.loyalty.referralEnabled') }}
+            </label>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>{{ tr('businessApp.loyalty.referrerPoints') }}</label>
+              <input type="number" min="0" [disabled]="!isOwner()" [ngModel]="referralDraft().referrerRewardPoints" (ngModelChange)="patchReferral({ referrerRewardPoints: $event })" />
+            </div>
+            <div class="field">
+              <label>{{ tr('businessApp.loyalty.refereePoints') }}</label>
+              <input type="number" min="0" [disabled]="!isOwner()" [ngModel]="referralDraft().refereeRewardPoints" (ngModelChange)="patchReferral({ refereeRewardPoints: $event })" />
+            </div>
+          </div>
+          <div class="field">
+            <label class="check">
+              <input type="checkbox" [disabled]="!isOwner()" [ngModel]="referralDraft().unlimitedCap" (ngModelChange)="patchReferral({ unlimitedCap: $event })" />
+              {{ tr('businessApp.loyalty.referralUnlimitedCap') }}
+            </label>
+          </div>
+          @if (!referralDraft().unlimitedCap) {
+            <div class="field">
+              <label>{{ tr('businessApp.loyalty.referralMaxPerReferrer') }}</label>
+              <input type="number" min="0" [disabled]="!isOwner()" [ngModel]="referralDraft().maxRewardsPerReferrer" (ngModelChange)="patchReferral({ maxRewardsPerReferrer: $event })" />
+            </div>
+          }
+          <p class="muted hint">{{ tr('businessApp.loyalty.referralShareHint') }}</p>
+          @if (isOwner()) {
+            <div class="actions">
+              <button type="button" class="btn btn-primary" [disabled]="!canSaveReferral() || referralBusy()" (click)="saveReferral()">
+                {{ tr('businessApp.loyalty.saveReferral') }}
+              </button>
+            </div>
+          }
+        </section>
+      }
+
       @if (loyaltyTiersEntitled()) {
         <section class="loyalty-section">
           <h3>{{ tr('businessApp.loyalty.tiersHeading') }}</h3>

@@ -721,6 +721,7 @@ export const createBookingRequestSchema = z
     businessLocationId: z.string().uuid().optional(),
     appliedBenefits: z.array(appliedBenefitRequestSchema).max(10).optional(),
     loyaltyPointsToRedeem: z.number().int().min(0).max(1_000_000).optional(),
+    referralCode: z.string().trim().min(4).max(32).optional(),
   })
   .refine((data) => (data.lines?.length ?? 0) > 0 || !!data.serviceOfferingId, {
     message: "serviceOfferingId or lines is required",
@@ -1006,6 +1007,8 @@ export const tenantEntitlementsSchema = z.object({
   /** Loyalty program + points ledger (Sprint 37.3). */
   loyaltyBasic: z.boolean(),
   loyaltyTiers: z.boolean(),
+  /** Refer-a-friend program (Sprint 37.3-E, Professional+). */
+  referrals: z.boolean(),
   multiLocation: z.boolean(),
 });
 

@@ -59,6 +59,14 @@ public sealed class LoyaltyServiceTests
             Task.FromResult(entitled
                 ? Domain.Common.Result.Success()
                 : Domain.Common.Result.Failure(RetentionErrorCodes.LoyaltyTiersNotEntitledError()));
+
+        public Task<bool> IsReferralsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(entitled);
+
+        public Task<Domain.Common.Result> EnsureReferralsEntitledAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(entitled
+                ? Domain.Common.Result.Success()
+                : Domain.Common.Result.Failure(RetentionErrorCodes.ReferralsNotEntitledError()));
     }
 
     private sealed class CapturingAudit : IAuditLogWriter

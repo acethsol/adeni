@@ -1,6 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { formatPrice, type LoyaltyProgram, type LoyaltyReward, type LoyaltyTier } from "@adeni/shared";
+import { formatPrice, type LoyaltyProgram, type LoyaltyReward, type LoyaltyTier, type ReferralProgram } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
   AdeniFeedbackService,
@@ -29,6 +29,14 @@ type TierDraft = { name: string; minLifetimeEarned: number; sortOrder: number };
 
 type NewRewardDraft = { name: string; pointsCost: number | null; sortOrder: number };
 
+type ReferralDraft = {
+  isEnabled: boolean;
+  referrerRewardPoints: number | null;
+  refereeRewardPoints: number | null;
+  maxRewardsPerReferrer: number | null;
+  unlimitedCap: boolean;
+};
+
 /**
  * Loyalty program settings (37.3-A–C) plus tiers and reward catalog when `loyaltyTiers` is entitled (37.3-D).
  */
@@ -51,10 +59,14 @@ export class RetentionLoyaltyComponent implements OnInit {
   readonly busy = signal(false);
   readonly tiersBusy = signal(false);
   readonly rewardsBusy = signal(false);
+  readonly referralBusy = signal(false);
   readonly error = signal<string | null>(null);
   readonly configured = signal(false);
   readonly draft = signal<Draft>(this.toDraft(null));
   readonly loyaltyTiersEntitled = signal(false);
+  readonly referralsEntitled = signal(false);
+  readonly referralConfigured = signal(false);
+  readonly referralDraft = signal<ReferralDraft>(this.toReferralDraft(null));
   readonly tierDrafts = signal<TierDraft[]>([]);
   readonly rewards = signal<LoyaltyReward[]>([]);
   readonly newReward = signal<NewRewardDraft>({ name: "", pointsCost: 100, sortOrder: 0 });
@@ -100,6 +112,14 @@ export class RetentionLoyaltyComponent implements OnInit {
           this.tierDrafts.set(tierList.items.map((t) => this.tierToDraft(t)));
           const rewardList = await client.retention.listLoyaltyRewards(false);
           this.rewards.set(rewardList.items);
+        }
+
+        const referralsOn = entitlements?.referrals === true;
+        this.referralsEntitled.set(referralsOn);
+        if (referralsOn) {
+          const referral = await client.retention.getReferralProgram();
+          this.referralConfigured.set(referral.configured);
+          this.referralDraft.set(this.toReferralDraft(referral));
         }
       });
     } catch (caught) {
@@ -270,5 +290,56 @@ export class RetentionLoyaltyComponent implements OnInit {
 
   private tierToDraft(tier: LoyaltyTier): TierDraft {
     return { name: tier.name, minLifetimeEarned: tier.minLifetimeEarned, sortOrder: tier.sortOrder };
+  }
+
+  patchReferral(patch: Partial<ReferralDraft>): void {
+    this.referralDraft.update((d) => ({ ...d, ...patch }));
+  }
+
+  canSaveReferral(): boolean {
+    const d = this.referralDraft();
+    return (
+      this.isOwner() &&
+      this.referralsEntitled() &&
+      d.referrerRewardPoints !== null &&
+      d.refereeRewardPoints !== null &&
+      d.referrerRewardPoints >= 0 &&
+      d.refereeRewardPoints >= 0 &&
+      (d.unlimitedCap || (d.maxRewardsPerReferrer !== null && d.maxRewardsPerReferrer >= 0)) &&
+      (!d.isEnabled || (d.referrerRewardPoints ?? 0) > 0 || (d.refereeRewardPoints ?? 0) > 0)
+    );
+  }
+
+  async saveReferral(): Promise<void> {
+    if (!this.canSaveReferral() || this.referralBusy()) return;
+    const d = this.referralDraft();
+    this.referralBusy.set(true);
+    try {
+      const saved = await this.api.withAuthorizedClient((client) =>
+        client.retention.saveReferralProgram({
+          isEnabled: d.isEnabled,
+          referrerRewardPoints: d.referrerRewardPoints ?? 0,
+          refereeRewardPoints: d.refereeRewardPoints ?? 0,
+          maxRewardsPerReferrer: d.unlimitedCap ? null : d.maxRewardsPerReferrer,
+        }),
+      );
+      this.referralConfigured.set(saved.configured);
+      this.referralDraft.set(this.toReferralDraft(saved));
+      this.feedback.success(this.tr("businessApp.loyalty.referralSaved"));
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "businessApp.loyalty.couldNotSaveReferral"));
+    } finally {
+      this.referralBusy.set(false);
+    }
+  }
+
+  private toReferralDraft(program: ReferralProgram | null): ReferralDraft {
+    return {
+      isEnabled: program?.isEnabled ?? false,
+      referrerRewardPoints: program?.referrerRewardPoints ?? 100,
+      refereeRewardPoints: program?.refereeRewardPoints ?? 50,
+      maxRewardsPerReferrer: program?.maxRewardsPerReferrer ?? 10,
+      unlimitedCap: program ? program.maxRewardsPerReferrer === null : false,
+    };
   }
 }

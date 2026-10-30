@@ -18,6 +18,7 @@ public sealed class PaymentBookingHandler(
     IStaffCompensationService staffCompensation,
     ILoyaltyEarnService loyaltyEarn,
     ILoyaltyRedemptionService loyaltyRedeem,
+    IReferralQualificationService referralQualification,
     ILogger<PaymentBookingHandler> logger) :
     IDomainEventHandler<PaymentCompleted>,
     IDomainEventHandler<PaymentFailed>,
@@ -113,6 +114,16 @@ public sealed class PaymentBookingHandler(
                     "Loyalty earn staging failed for booking {BookingId}: {Error}",
                     booking.Id,
                     staged.Error.Message);
+            }
+
+            var referral = await referralQualification.TryQualifyAndIssueRewardsForPaidBookingAsync(
+                domainEvent.TenantId, booking.Id, "payment:completed", cancellationToken);
+            if (referral.IsFailure)
+            {
+                logger.LogWarning(
+                    "Referral qualification failed for booking {BookingId}: {Error}",
+                    booking.Id,
+                    referral.Error!.Message);
             }
         }
 

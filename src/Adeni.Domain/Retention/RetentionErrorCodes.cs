@@ -15,6 +15,8 @@ public static class RetentionErrorCodes
     public const string MembershipFreezeNotAllowed = "retention.membership_freeze_not_allowed";
     public const string LoyaltyBasicNotEntitled = "entitlements.loyaltyBasic";
     public const string LoyaltyTiersNotEntitled = "entitlements.loyaltyTiers";
+    public const string ReferralsNotEntitled = "entitlements.referrals";
+    public const string ReferralProgramNotConfigured = "retention.referral_program_not_configured";
     public const string LoyaltyProgramNotConfigured = "retention.loyalty_program_not_configured";
     public const string LoyaltyInsufficientPoints = "retention.loyalty_insufficient_points";
     public const string LoyaltyConflict = "retention.loyalty_conflict";
@@ -68,6 +70,12 @@ public static class RetentionErrorCodes
 
     public static Error LoyaltyTiersNotEntitledError() =>
         new(LoyaltyTiersNotEntitled, "Loyalty tiers and rewards are not included on your current plan.");
+
+    public static Error ReferralsNotEntitledError() =>
+        new(ReferralsNotEntitled, "Referrals are not included on your current plan.");
+
+    public static Error ReferralProgramNotConfiguredError() =>
+        new(ReferralProgramNotConfigured, "Set up the referral program before sharing codes.");
 
     public static Error LoyaltyProgramNotConfiguredError() =>
         new(LoyaltyProgramNotConfigured, "Set up the loyalty program before adjusting points.");

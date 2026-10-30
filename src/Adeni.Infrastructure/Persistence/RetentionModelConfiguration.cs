@@ -396,5 +396,54 @@ public sealed partial class AdeniDbContext
                 .HasPrincipalKey(x => new { x.TenantId, x.Id })
                 .OnDelete(DeleteBehavior.Restrict);
         });
+
+        modelBuilder.Entity<ReferralProgram>(e =>
+        {
+            e.ToTable("referral_programs", "retention", t =>
+            {
+                t.HasCheckConstraint("CK_referral_programs_ReferrerRewardPoints", "[ReferrerRewardPoints] BETWEEN 0 AND 1000000");
+                t.HasCheckConstraint("CK_referral_programs_RefereeRewardPoints", "[RefereeRewardPoints] BETWEEN 0 AND 1000000");
+                t.HasCheckConstraint(
+                    "CK_referral_programs_MaxRewardsPerReferrer",
+                    "[MaxRewardsPerReferrer] IS NULL OR [MaxRewardsPerReferrer] >= 0");
+            });
+            e.HasKey(x => x.Id);
+            e.HasAlternateKey(x => new { x.TenantId, x.Id });
+            e.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+            e.HasOne<Tenant>().WithMany().HasForeignKey(x => x.TenantId).OnDelete(DeleteBehavior.Restrict);
+            e.Property(x => x.UpdatedBy).HasMaxLength(128);
+            e.HasIndex(x => x.TenantId).IsUnique();
+        });
+
+        modelBuilder.Entity<ReferralCode>(e =>
+        {
+            e.ToTable("referral_codes", "retention", t =>
+                t.HasCheckConstraint("CK_referral_codes_Code", "LEN([Code]) BETWEEN 4 AND 32"));
+            e.HasKey(x => x.Id);
+            e.HasAlternateKey(x => new { x.TenantId, x.Id });
+            e.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+            e.HasOne<Tenant>().WithMany().HasForeignKey(x => x.TenantId).OnDelete(DeleteBehavior.Restrict);
+            e.Property(x => x.Code).HasMaxLength(ReferralCode.MaxCodeLength);
+            e.HasIndex(x => new { x.TenantId, x.TenantCustomerId }).IsUnique();
+            e.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
+        });
+
+        modelBuilder.Entity<ReferralAttribution>(e =>
+        {
+            e.ToTable("referral_attributions", "retention", t =>
+                t.HasCheckConstraint("CK_referral_attributions_Status", "[Status] IN (0,1,2,3)"));
+            e.HasKey(x => x.Id);
+            e.HasAlternateKey(x => new { x.TenantId, x.Id });
+            e.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+            e.HasOne<Tenant>().WithMany().HasForeignKey(x => x.TenantId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<ReferralCode>().WithMany()
+                .HasForeignKey(x => new { x.TenantId, x.ReferralCodeId })
+                .HasPrincipalKey(x => new { x.TenantId, x.Id })
+                .OnDelete(DeleteBehavior.Restrict);
+            e.Property(x => x.RejectReason).HasMaxLength(64);
+            e.HasIndex(x => new { x.TenantId, x.RefereeTenantCustomerId }).IsUnique();
+            e.HasIndex(x => new { x.TenantId, x.QualifiedBookingId }).IsUnique()
+                .HasFilter("[QualifiedBookingId] IS NOT NULL");
+        });
     }
 }
