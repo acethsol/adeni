@@ -31,7 +31,9 @@
 
 **Already mitigated / no change:** Benefit ledger rowversion tests (`RetentionSqlServerTests`); backend entitlement guards on retention APIs (unchanged); Admin initial bundle currently under 2 MB error on local build.
 
-**Deferred with documentation:** `BusinessType.ScheduledAppointment` loyalty/referral gate (product); SQL concurrent referral cap test; full CSS budget cleanup; Auth0 localStorage + CSP deep pass; scoped admin roles.
+**Deferred with documentation:** `BusinessType.ScheduledAppointment` loyalty/referral gate (product); full CSS budget cleanup (non-dashboard/calendar sheets); Auth0 localStorage + CSP deep pass; scoped admin roles.
+
+**Follow-up (same branch):** SQL `ConcurrentReferralCap_AtLimit_ExactlyOneExtraReward`; `business-route-nav-path.spec.ts`; dashboard/calendar SCSS moved to global partials (production budget pass).
 
 ## 7–8. Security / correctness fixes
 
@@ -46,12 +48,14 @@ See `A2-retention-findings.md`, `A3-customer-boundary.md`, `A4-admin-authorizati
 ## 13–14. CI / budgets
 
 - CI runs shared + business + **customer** + **admin** unit tests.
-- Production builds **fail** on restored limits: Business `dashboard.component.scss` 28 kB; Customer `customer-calendar.component.scss` 18.88 kB.
+- Production builds **pass** restored `anyComponentStyle` error limits after dashboard/calendar SCSS extraction; other sheets may still warn.
 
 ## 15. Tests added
 
 - `StageEarn_WhenServiceCurrencyMissing_DoesNotFallbackToNgn`
 - `StageEarn_WhenProgramCadAndBookingNgn_DoesNotEarn`
+- `ConcurrentReferralCap_AtLimit_ExactlyOneExtraReward` (SQL Server opt-in)
+- `business-route-nav-path.spec.ts` (retention path + tab id helpers)
 
 ## 16–18. Validation (local)
 
@@ -59,8 +63,8 @@ See `A2-retention-findings.md`, `A3-customer-boundary.md`, `A4-admin-authorizati
 |-------|--------|
 | `dotnet test Adeni.slnx -c Release` | **875 passed**, 30 skipped (SQL Server opt-in) |
 | `npm test --workspace @adeni/shared` | **Passed** |
-| `npm run build:business` | **FAIL** (budget) |
-| `npm run build:customer` | **FAIL** (budget) |
+| `npm run build:business` | **PASS** (error budgets) |
+| `npm run build:customer` | **PASS** (error budgets) |
 | `npm run build:admin` | **PASS** (error budgets; warnings remain) |
 | SQL Server category | **Not run locally** (requires `ADENI_SQLSERVER_TESTS=1` + DACPAC) |
 
@@ -70,7 +74,7 @@ Not re-run in this session; CI continues `npm audit` + NuGet script.
 
 ## 20. Production blockers
 
-Angular component-style budgets (Business dashboard; Customer calendar; historical audit list still applies to other sheets).
+Historical audit warnings on other Business/Customer component sheets (profile, staff-calendar, app-surface pages); not production **error** blockers after dashboard/calendar extraction.
 
 ## 21–23. Risks / debt / product decisions
 

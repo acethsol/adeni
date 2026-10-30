@@ -29,8 +29,8 @@ Local production build after restore (2026-10-30):
 
 | App | Result | Fatal (`maximumError`) |
 |-----|--------|-------------------------|
-| **Business** | **FAIL** | `dashboard.component.scss` **28.03 kB** (budget **24 kB**) |
-| **Customer** | **FAIL** | `customer-calendar.component.scss` **18.88 kB** (budget **14 kB**) |
+| **Business** | **PASS** (error budgets) | Dashboard styles moved to `styles/_dashboard-page.scss`; component sheet minimal. Warnings remain on profile/staff-calendar. |
+| **Customer** | **PASS** (error budgets) | Calendar styles moved to `styles/_customer-calendar-page.scss`; component sheet minimal. Warnings on other app-surface sheets. |
 | **Admin** | **PASS** (error budgets) | Initial ~**1.69 MB** (under **2 MB** error); several styles **15–20 kB** (warnings only, still under **24 kB** error) |
 
 Inherited audit items (services/staff/plan ~24.5–28 kB, `_data-grid.scss` ~16.9 kB) may appear on other builds; re-run `npm run build:*` after CSS cleanup.

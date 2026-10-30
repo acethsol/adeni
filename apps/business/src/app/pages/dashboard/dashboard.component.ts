@@ -98,6 +98,7 @@ type StatusSlice = { status: number; label: string; count: number; percent: numb
 
 @Component({
   selector: "app-dashboard",
+  host: { class: "business-dashboard-page" },
   standalone: true,
   providers: [DashboardDataService],
   imports: [

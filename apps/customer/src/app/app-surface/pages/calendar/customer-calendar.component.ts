@@ -91,6 +91,7 @@ type MonthCell = DayColumn & {
 
 @Component({
   selector: "app-customer-calendar",
+  host: { class: "customer-calendar-page" },
   standalone: true,
   imports: [
     RouterLink,
