@@ -47,7 +47,7 @@ import { BusinessApiService } from "../../core/services/business-api.service";
 
       @if (!account() || (account()!.pointsBalance === 0 && transactions().length === 0)) {
         <adeni-portal-empty-state
-          icon="star"
+          icon="user--filled"
           [title]="tr('businessApp.loyalty.customerEmptyTitle')"
           [description]="tr('businessApp.loyalty.customerEmptyDescription')"
         />
@@ -207,7 +207,7 @@ export class CustomerLoyaltyPanelComponent implements OnInit {
       this.transactions.set(ledger.items);
       this.referral.set(referral);
     } catch (err) {
-      this.error.set(this.apiErr.message(err, "businessApp.loyalty.couldNotLoadCustomer"));
+      this.error.set(this.apiErr(err, "businessApp.loyalty.couldNotLoadCustomer"));
     } finally {
       this.loading.set(false);
     }
