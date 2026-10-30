@@ -25,13 +25,103 @@
           {{ tr('customer.app.dashboard.bookAgain') }}
         </a>
       }
+      <a class="btn" routerLink="/app/receipts">
+        <adeni-carbon-icon name="document" [size]="16" />
+        {{ tr('customer.app.receipts.shortTitle') }}
+      </a>
     </div>
   </section>
+
+  @if (todayNext(); as todayBooking) {
+    <section class="today-strip" [attr.aria-label]="tr('customer.app.dashboard.todayTitle')">
+      <div class="today-strip__copy">
+        <p class="today-strip__kicker">{{ tr('customer.app.dashboard.todayTitle') }}</p>
+        <p class="today-strip__title">
+          <strong>{{ todayBooking.serviceName }}</strong>
+          at {{ todayBooking.businessName }}
+        </p>
+        <p class="today-strip__meta app-muted">
+          {{ when(todayBooking.startAt) }}
+          @if (todayCountdownMinutes(); as mins) {
+            <span class="meta-sep">({{ countdownLabel(mins) }})</span>
+          }
+        </p>
+      </div>
+      <div class="today-strip__actions">
+        <a class="btn btn-primary" [routerLink]="['/app/bookings', todayBooking.id]">
+          <adeni-carbon-icon name="arrow--right" [size]="16" />
+          {{ tr('customer.app.dashboard.viewDetails') }}
+        </a>
+        <a class="btn" routerLink="/app/calendar">
+          <adeni-carbon-icon name="calendar" [size]="16" />
+          {{ tr('customer.app.dashboard.openCalendar') }}
+        </a>
+      </div>
+    </section>
+  }
+
+  @if (dashboardActions().length > 0) {
+    <section class="action-rail action-rail--panel" [attr.aria-label]="tr('customer.app.dashboard.actionNeeded')">
+      <div class="action-rail__intro">
+        <h3 class="action-rail__label">{{ tr('customer.app.dashboard.actionNeeded') }}</h3>
+        @if (reviewCandidate(); as review) {
+          <p class="action-rail__prompt app-muted">
+            {{ tr('customer.app.dashboard.reviewPrompt', { service: review.serviceName, business: review.businessName }) }}
+          </p>
+        }
+      </div>
+      <div class="action-rail__track">
+        @for (action of dashboardActions(); track action.id) {
+          @if (action.kind === 'review') {
+            <button type="button" class="action-chip" (click)="openReview()">
+              <adeni-carbon-icon [name]="action.icon" [size]="16" />
+              {{ tr(action.labelKey) }}
+            </button>
+          } @else {
+            <a
+              class="action-chip"
+              [routerLink]="action.route!"
+              [queryParams]="action.queryParams ?? null"
+            >
+              <adeni-carbon-icon [name]="action.icon" [size]="16" />
+              {{ tr(action.labelKey) }}
+            </a>
+          }
+        }
+      </div>
+    </section>
+  }
+
+  @if (benefitsExpiringSoon() && benefitsSnapshot().soonestExpiry; as expiry) {
+    <section class="benefits-spotlight">
+      <div>
+        <h3>{{ tr('customer.app.dashboard.benefitsSpotlightTitle') }}</h3>
+        <p class="app-muted">
+          {{ tr('customer.app.dashboard.benefitsSpotlightBody', { date: formatBenefitsExpiry(expiry) }) }}
+        </p>
+      </div>
+      <a class="btn btn-primary" routerLink="/app/benefits">
+        <adeni-carbon-icon name="gift" [size]="16" />
+        {{ tr('customer.app.dashboard.viewBenefits') }}
+      </a>
+    </section>
+  }
+
+  @if (todayAppointmentCount() > 0 && !todayNext()) {
+    <a class="calendar-teaser" routerLink="/app/calendar">
+      <adeni-carbon-icon name="calendar" [size]="20" />
+      <span>
+        {{ tr('customer.app.dashboard.todayAppointments', { count: todayAppointmentCount() }) }}
+        - {{ tr('customer.app.dashboard.openCalendar') }}
+      </span>
+      <adeni-carbon-icon name="arrow--right" [size]="16" />
+    </a>
+  }
 
   <div class="stats">
     <a class="stat-card stat-card--appointments" routerLink="/app/calendar">
       <span class="stat-icon"><adeni-carbon-icon name="calendar" [size]="20" /></span>
-      <span>
+      <span class="stat-copy">
         <p class="stat-label">{{ tr('customer.app.dashboard.upNext') }}</p>
         <p class="stat-value">{{ upcomingCount() }}</p>
         <p class="stat-hint">{{ tr('customer.app.nav.calendar') }}</p>
@@ -39,7 +129,7 @@
     </a>
     <a class="stat-card stat-card--messages" routerLink="/app/messages">
       <span class="stat-icon"><adeni-carbon-icon name="chat" [size]="20" /></span>
-      <span>
+      <span class="stat-copy">
         <p class="stat-label">{{ tr('customer.app.nav.messages') }}</p>
         <p class="stat-value">{{ badge.unread() }}</p>
         <p class="stat-hint">{{ tr('customer.app.dashboard.seeAllMessages') }}</p>
@@ -47,7 +137,7 @@
     </a>
     <a class="stat-card stat-card--benefits" routerLink="/app/benefits">
       <span class="stat-icon"><adeni-carbon-icon name="gift" [size]="20" /></span>
-      <span>
+      <span class="stat-copy">
         <p class="stat-label">{{ tr('customer.app.nav.benefits') }}</p>
         @if (benefitsLoading()) {
           <p class="stat-value">?</p>
@@ -61,7 +151,7 @@
     </a>
     <a class="stat-card" routerLink="/app/bookings">
       <span class="stat-icon"><adeni-carbon-icon name="task" [size]="20" /></span>
-      <span>
+      <span class="stat-copy">
         <p class="stat-label">{{ tr('customer.app.nav.bookings') }}</p>
         <p class="stat-value">{{ bookings().length }}</p>
         <p class="stat-hint">{{ tr('customer.app.dashboard.seeAll') }}</p>
@@ -92,13 +182,50 @@
       } @else if (next(); as booking) {
         <p><strong>{{ booking.serviceName }}</strong></p>
         <p class="app-muted">
-          {{ booking.businessName }} · {{ when(booking.startAt) }}
+          {{ booking.businessName }}, {{ when(booking.startAt) }}
         </p>
         <adeni-pill [tone]="statusTone(booking.status)" [compact]="true">{{ statusLabel(booking.status) }}</adeni-pill>
         <div class="app-actions">
           <a class="btn btn-primary" [routerLink]="['/app/bookings', booking.id]">
             <adeni-carbon-icon name="arrow--right" [size]="16" />
             {{ tr('customer.app.dashboard.viewDetails') }}
+          </a>
+          <a class="btn" routerLink="/app/bookings">
+            <adeni-carbon-icon name="task" [size]="16" />
+            {{ tr('customer.app.dashboard.seeAll') }}
+          </a>
+        </div>
+        @if (later().length > 0) {
+          <div class="coming-up">
+            <p class="coming-up__label">{{ tr('customer.app.dashboard.comingUp') }}</p>
+            <ul class="coming-up__list">
+              @for (item of later(); track item.id) {
+                <li>
+                  <a [routerLink]="['/app/bookings', item.id]">
+                    <strong>{{ item.serviceName }}</strong>
+                    <span class="app-muted">{{ when(item.startAt) }}</span>
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      } @else if (recentPast().length > 0) {
+        <p class="coming-up__label">{{ tr('customer.app.dashboard.recentVisits') }}</p>
+        <ul class="coming-up__list coming-up__list--recent">
+          @for (item of recentPast(); track item.id) {
+            <li>
+              <a [routerLink]="['/app/bookings', item.id]">
+                <strong>{{ item.serviceName }}</strong>
+                <span class="app-muted">{{ item.businessName }}, {{ when(item.startAt) }}</span>
+              </a>
+            </li>
+          }
+        </ul>
+        <div class="app-actions">
+          <a class="btn btn-primary" routerLink="/app/discover">
+            <adeni-carbon-icon name="search" [size]="16" />
+            {{ tr('customer.app.dashboard.findBusiness') }}
           </a>
           <a class="btn" routerLink="/app/bookings">
             <adeni-carbon-icon name="task" [size]="16" />
@@ -195,22 +322,6 @@
       }
     </div>
 
-    @if (reviewCandidate(); as review) {
-      <div class="widget-span-12 widget-card">
-        <div class="widget-card__head">
-          <h3>{{ tr('customer.app.dashboard.reviewTitle') }}</h3>
-        </div>
-        <p class="app-muted">
-          {{ tr('customer.app.dashboard.reviewPrompt', { service: review.serviceName, business: review.businessName }) }}
-        </p>
-        <div class="widget-card__actions">
-          <button type="button" class="btn btn-primary" (click)="openReview()">
-            <adeni-carbon-icon name="edit" [size]="16" />
-            {{ tr('customer.app.dashboard.leaveReview') }}
-          </button>
-        </div>
-      </div>
-    }
   </div>
 </app-portal-page>
 

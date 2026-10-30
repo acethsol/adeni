@@ -94,6 +94,92 @@ public sealed class BillingDocumentService(
         return Result.Success<IReadOnlyList<BillingDocumentResponse>>(items.Select(Map).ToArray());
     }
 
+    public async Task<Result<IReadOnlyList<BillingDocumentResponse>>> ListForCustomerAsync(
+        string customerAuth0Sub,
+        string? kind = null,
+        int page = 1,
+        int pageSize = 50,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(customerAuth0Sub))
+        {
+            return Result.Success<IReadOnlyList<BillingDocumentResponse>>(Array.Empty<BillingDocumentResponse>());
+        }
+
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
+        var customer = await dbContext.Customers.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Auth0Sub == customerAuth0Sub, cancellationToken);
+        if (customer is null)
+        {
+            return Result.Success<IReadOnlyList<BillingDocumentResponse>>(Array.Empty<BillingDocumentResponse>());
+        }
+
+        var bookingIds = await dbContext.Bookings.AsNoTracking()
+            .Where(b => b.CustomerId == customer.Id)
+            .Select(b => b.Id)
+            .ToListAsync(cancellationToken);
+        if (bookingIds.Count == 0)
+        {
+            return Result.Success<IReadOnlyList<BillingDocumentResponse>>(Array.Empty<BillingDocumentResponse>());
+        }
+
+        var paymentIntentIds = await dbContext.PaymentIntents.AsNoTracking()
+            .Where(p => p.BookingId != null && bookingIds.Contains(p.BookingId.Value))
+            .Select(p => p.Id)
+            .ToListAsync(cancellationToken);
+
+        var query = dbContext.BillingDocuments
+            .AsNoTracking()
+            .Include(x => x.Lines)
+            .Where(d => d.Status == BillingDocumentStatus.Issued)
+            .Where(d =>
+                (d.BookingId != null && bookingIds.Contains(d.BookingId.Value))
+                || (d.PaymentIntentId != null && paymentIntentIds.Contains(d.PaymentIntentId.Value)));
+
+        if (!string.IsNullOrWhiteSpace(kind)
+            && Enum.TryParse<BillingDocumentKind>(kind, ignoreCase: true, out var parsedKind))
+        {
+            query = query.Where(x => x.Kind == parsedKind);
+        }
+
+        var items = await query
+            .OrderByDescending(x => x.IssuedAt ?? x.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return Result.Success<IReadOnlyList<BillingDocumentResponse>>(items.Select(Map).ToArray());
+    }
+
+    public async Task<Result<BillingDocumentResponse>> GetForCustomerAsync(
+        string customerAuth0Sub,
+        Guid documentId,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(customerAuth0Sub))
+        {
+            return Result.Failure<BillingDocumentResponse>(ErrorCodes.CustomerAuthRequiredError());
+        }
+
+        var entity = await dbContext.BillingDocuments
+            .AsNoTracking()
+            .Include(x => x.Lines)
+            .FirstOrDefaultAsync(x => x.Id == documentId, cancellationToken);
+        if (entity is null || entity.Status != BillingDocumentStatus.Issued)
+        {
+            return Result.Failure<BillingDocumentResponse>(Error.NotFound("Document"));
+        }
+
+        if (!await CustomerCanAccessDocumentAsync(customerAuth0Sub, entity, cancellationToken))
+        {
+            return Result.Failure<BillingDocumentResponse>(ErrorCodes.PermissionDeniedError());
+        }
+
+        return Result.Success(Map(entity));
+    }
+
     public async Task<Result<BillingDocumentResponse>> CreateInvoiceAsync(
         CreateInvoiceRequest request,
         CancellationToken cancellationToken = default)
@@ -703,6 +789,42 @@ public sealed class BillingDocumentService(
 
         var name = string.IsNullOrWhiteSpace(customer?.Name) ? null : customer.Name;
         return (name, customer?.Email ?? fallbackEmail, lines);
+    }
+
+    private async Task<bool> CustomerCanAccessDocumentAsync(
+        string customerAuth0Sub,
+        BillingDocument entity,
+        CancellationToken cancellationToken)
+    {
+        var customer = await dbContext.Customers.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Auth0Sub == customerAuth0Sub, cancellationToken);
+        if (customer is null)
+        {
+            return false;
+        }
+
+        if (entity.BookingId is Guid bookingId)
+        {
+            return await dbContext.Bookings.AsNoTracking()
+                .AnyAsync(b => b.Id == bookingId && b.CustomerId == customer.Id, cancellationToken);
+        }
+
+        if (entity.PaymentIntentId is not Guid paymentIntentId)
+        {
+            return false;
+        }
+
+        var linkedBookingId = await dbContext.PaymentIntents.AsNoTracking()
+            .Where(p => p.Id == paymentIntentId)
+            .Select(p => p.BookingId)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (linkedBookingId is not Guid bid)
+        {
+            return false;
+        }
+
+        return await dbContext.Bookings.AsNoTracking()
+            .AnyAsync(b => b.Id == bid && b.CustomerId == customer.Id, cancellationToken);
     }
 
     private BillingDocumentResponse Map(BillingDocument entity)

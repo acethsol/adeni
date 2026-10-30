@@ -1,0 +1,48 @@
+<app-portal-page
+  [title]="tr('customer.app.receipts.title')"
+  [description]="tr('customer.app.receipts.description')"
+>
+  @if (loading()) {
+    <p class="muted">{{ tr('common.loading') }}</p>
+  } @else if (failed()) {
+    <adeni-portal-empty-state
+      icon="document"
+      [title]="tr('customer.app.receipts.loadErrorTitle')"
+      [description]="tr('customer.app.receipts.loadError')"
+    >
+      <button type="button" class="btn btn-primary" (click)="load()">
+        <adeni-carbon-icon name="restart" [size]="16" />
+        {{ tr('discover.tryAgain') }}
+      </button>
+    </adeni-portal-empty-state>
+  } @else if (documents().length === 0) {
+    <adeni-portal-empty-state
+      icon="document"
+      [title]="tr('customer.app.receipts.emptyTitle')"
+      [description]="tr('customer.app.receipts.emptyDescription')"
+    >
+      <a class="btn btn-primary" routerLink="/app/bookings">
+        <adeni-carbon-icon name="task" [size]="16" />
+        {{ tr('customer.app.nav.bookings') }}
+      </a>
+    </adeni-portal-empty-state>
+  } @else {
+    <ul class="doc-list">
+      @for (doc of documents(); track doc.id) {
+        <li>
+          <a class="doc-row" [routerLink]="documentPath(doc)">
+            <span class="doc-row__icon" aria-hidden="true">
+              <adeni-carbon-icon name="document" [size]="20" />
+            </span>
+            <span class="doc-row__copy">
+              <strong>{{ kindLabel(doc) }} - {{ doc.documentNumber }}</strong>
+              <span class="doc-row__meta">{{ doc.businessName }}, {{ when(doc.issuedAt) }}</span>
+            </span>
+            <span class="doc-row__amount">{{ totalLabel(doc) }}</span>
+            <adeni-carbon-icon name="arrow--right" [size]="16" />
+          </a>
+        </li>
+      }
+    </ul>
+  }
+</app-portal-page>

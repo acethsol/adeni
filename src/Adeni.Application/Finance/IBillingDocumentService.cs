@@ -62,6 +62,19 @@ public interface IBillingDocumentService
         int pageSize = 50,
         CancellationToken cancellationToken = default);
 
+    /// <summary>Issued receipts/invoices for bookings (and linked payments) owned by the signed-in customer.</summary>
+    Task<Result<IReadOnlyList<BillingDocumentResponse>>> ListForCustomerAsync(
+        string customerAuth0Sub,
+        string? kind = null,
+        int page = 1,
+        int pageSize = 50,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<BillingDocumentResponse>> GetForCustomerAsync(
+        string customerAuth0Sub,
+        Guid documentId,
+        CancellationToken cancellationToken = default);
+
     Task<Result<BillingDocumentResponse>> CreateInvoiceAsync(
         CreateInvoiceRequest request,
         CancellationToken cancellationToken = default);

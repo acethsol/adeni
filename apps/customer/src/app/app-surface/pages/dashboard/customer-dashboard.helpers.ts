@@ -31,6 +31,18 @@ export function pickNextBooking(
   return pickUpcomingBookings(bookings, now)[0] ?? null;
 }
 
+/** Past visits, most recent first — fills the dashboard when nothing is upcoming. */
+export function pickRecentPastBookings(
+  bookings: readonly CustomerBookingResponse[],
+  now: number,
+  limit = 3,
+): CustomerBookingResponse[] {
+  return bookings
+    .filter((b) => startMs(b) < now)
+    .sort((a, b) => startMs(b) - startMs(a))
+    .slice(0, Math.max(0, limit));
+}
+
 /** Most recent confirmed visit that already happened — the basis for "Book again". */
 export function pickBookAgainSource(
   bookings: readonly CustomerBookingResponse[],
@@ -154,4 +166,119 @@ export function hasBenefitsSnapshot(snapshot: HomeBenefitsSnapshot): boolean {
     || snapshot.creditsRemaining > 0
     || snapshot.giftBalancesByCurrency.length > 0
   );
+}
+
+export const BENEFITS_EXPIRY_WARN_DAYS = 14;
+
+export function isBookingOnLocalDay(startAtIso: string, nowMs: number): boolean {
+  const start = new Date(startAtIso);
+  const now = new Date(nowMs);
+  return (
+    start.getFullYear() === now.getFullYear()
+    && start.getMonth() === now.getMonth()
+    && start.getDate() === now.getDate()
+  );
+}
+
+export function countTodayUpcoming(
+  bookings: readonly CustomerBookingResponse[],
+  nowMs: number,
+): number {
+  return pickUpcomingBookings(bookings, nowMs).filter((b) => isBookingOnLocalDay(b.startAt, nowMs)).length;
+}
+
+export function pickTodayNextBooking(
+  bookings: readonly CustomerBookingResponse[],
+  nowMs: number,
+): CustomerBookingResponse | null {
+  return (
+    pickUpcomingBookings(bookings, nowMs).find((b) => isBookingOnLocalDay(b.startAt, nowMs)) ?? null
+  );
+}
+
+/** Whole minutes until start; null if already started or in the past. */
+export function minutesUntilStart(startAtIso: string, nowMs: number): number | null {
+  const diffMs = new Date(startAtIso).getTime() - nowMs;
+  if (diffMs <= 0) {
+    return null;
+  }
+  return Math.ceil(diffMs / 60_000);
+}
+
+export function formatDurationMinutes(totalMinutes: number): string {
+  if (totalMinutes < 60) {
+    return `${totalMinutes} min`;
+  }
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+}
+
+export function benefitsExpiryWithinDays(
+  soonestExpiry: string | null,
+  nowMs: number,
+  withinDays: number,
+): boolean {
+  if (!soonestExpiry) {
+    return false;
+  }
+  const expiryMs = new Date(soonestExpiry).getTime();
+  const horizonMs = nowMs + withinDays * 86_400_000;
+  return expiryMs > nowMs && expiryMs <= horizonMs;
+}
+
+export type DashboardActionKind = "link" | "review";
+
+export type DashboardAction = {
+  id: string;
+  kind: DashboardActionKind;
+  labelKey: string;
+  icon: "chat" | "edit" | "gift" | "document";
+  route?: string[];
+  queryParams?: Record<string, string>;
+};
+
+export function buildDashboardActions(input: {
+  unreadMessages: number;
+  review: CustomerBookingResponse | null;
+  benefitsExpiringSoon: boolean;
+  receiptCount: number;
+}): DashboardAction[] {
+  const actions: DashboardAction[] = [];
+  if (input.unreadMessages > 0) {
+    actions.push({
+      id: "messages",
+      kind: "link",
+      labelKey: "customer.app.dashboard.actionReplyMessages",
+      icon: "chat",
+      route: ["/app/messages"],
+    });
+  }
+  if (input.review) {
+    actions.push({
+      id: "review",
+      kind: "review",
+      labelKey: "customer.app.dashboard.leaveReview",
+      icon: "edit",
+    });
+  }
+  if (input.benefitsExpiringSoon) {
+    actions.push({
+      id: "benefits",
+      kind: "link",
+      labelKey: "customer.app.dashboard.actionUseBenefits",
+      icon: "gift",
+      route: ["/app/benefits"],
+    });
+  }
+  if (input.receiptCount > 0) {
+    actions.push({
+      id: "receipts",
+      kind: "link",
+      labelKey: "customer.app.dashboard.actionViewReceipts",
+      icon: "document",
+      route: ["/app/receipts"],
+    });
+  }
+  return actions;
 }

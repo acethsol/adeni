@@ -28,6 +28,14 @@ describe("crumbsForCustomerUrl", () => {
     expect(crumbs[3]?.path).toBe("/app/bookings/abc-123/intake");
   });
 
+  it("adds receipts crumbs under account", () => {
+    const crumbs = crumbsForCustomerUrl(tr, "/app/receipts");
+    expect(crumbs.map((c) => c.label)).toEqual([
+      "customer.app.shell.groupAccount",
+      "customer.app.receipts.title",
+    ]);
+  });
+
   it("adds booking detail only for booking page", () => {
     const crumbs = crumbsForCustomerUrl(tr, "/app/bookings/abc-123");
     expect(crumbs.at(-1)?.label).toBe("customer.app.breadcrumbs.bookingDetail");

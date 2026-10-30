@@ -232,7 +232,8 @@ internal static class BookingMapper
         bool hasReview = false,
         byte? reviewRating = null,
         string? staffDisplayName = null,
-        string? currency = null) =>
+        string? currency = null,
+        string? receiptPublicToken = null) =>
         new(
             entity.Id,
             entity.TenantId,
@@ -254,7 +255,8 @@ internal static class BookingMapper
             MapLines(entity, currency),
             MapGuests(entity),
             SumLinePrices(entity),
-            currency);
+            currency,
+            receiptPublicToken);
 
     private static IReadOnlyList<BookingLineResponse>? MapLines(BookingRecord entity, string? currency)
     {

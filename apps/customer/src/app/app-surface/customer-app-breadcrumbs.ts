@@ -5,6 +5,14 @@ export type CustomerCrumb = { label: string; path?: string };
 /** Top-bar breadcrumb trail for nested `/app/*` routes. */
 export function crumbsForCustomerUrl(tr: (key: string) => string, url: string): CustomerCrumb[] {
   const path = (url.split(/[?#]/)[0] ?? url).replace(/\/+$/, "") || "/app/dashboard";
+
+  if (path === "/app/receipts" || path.startsWith("/app/receipts/")) {
+    return [
+      { label: tr("customer.app.shell.groupAccount") },
+      { label: tr("customer.app.receipts.title") },
+    ];
+  }
+
   const match = findCustomerNavItem(path);
   if (!match) {
     return [{ label: tr("customer.app.nav.dashboard") }];

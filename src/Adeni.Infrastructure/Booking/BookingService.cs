@@ -679,6 +679,7 @@ public sealed class BookingService(
 
         var bookingIds = bookings.Select(x => x.Id).ToArray();
         var reviewsByBooking = await reviewService.GetReviewsForBookingsAsync(bookingIds, cancellationToken);
+        var receiptTokenByBooking = await LoadReceiptPublicTokensByBookingAsync(bookingIds, cancellationToken);
         var now = DateTimeOffset.UtcNow;
 
         return bookings
@@ -699,6 +700,8 @@ public sealed class BookingService(
                     staffNames.TryGetValue(sid, out staffName);
                 }
 
+                receiptTokenByBooking.TryGetValue(booking.Id, out var receiptToken);
+
                 return BookingMapper.ToCustomerResponse(
                     booking,
                     name,
@@ -708,9 +711,39 @@ public sealed class BookingService(
                     hasReview,
                     review?.Rating,
                     staffName,
-                    service?.Currency);
+                    service?.Currency,
+                    receiptToken);
             })
             .ToArray();
+    }
+
+    private async Task<IReadOnlyDictionary<Guid, string>> LoadReceiptPublicTokensByBookingAsync(
+        Guid[] bookingIds,
+        CancellationToken cancellationToken)
+    {
+        if (bookingIds.Length == 0)
+        {
+            return new Dictionary<Guid, string>();
+        }
+
+        var rows = await dbContext.BillingDocuments
+            .AsNoTracking()
+            .Where(d =>
+                d.BookingId != null
+                && bookingIds.Contains(d.BookingId.Value)
+                && d.Status == BillingDocumentStatus.Issued
+                && d.Kind == BillingDocumentKind.Receipt)
+            .OrderByDescending(d => d.IssuedAt ?? d.CreatedAt)
+            .Select(d => new { BookingId = d.BookingId!.Value, d.PublicToken })
+            .ToListAsync(cancellationToken);
+
+        var map = new Dictionary<Guid, string>();
+        foreach (var row in rows)
+        {
+            map.TryAdd(row.BookingId, row.PublicToken);
+        }
+
+        return map;
     }
 
     public Task<Result<BookingResponse>> AcceptAsync(

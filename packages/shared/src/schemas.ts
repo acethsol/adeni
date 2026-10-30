@@ -625,6 +625,7 @@ export const customerBookingResponseSchema = z.object({
   guests: z.array(bookingGuestResponseSchema).nullable().optional(),
   totalPriceAmount: z.number().nullable().optional(),
   currency: z.string().nullable().optional(),
+  receiptPublicToken: z.string().nullable().optional(),
 });
 
 export type CustomerBookingResponse = z.infer<typeof customerBookingResponseSchema>;

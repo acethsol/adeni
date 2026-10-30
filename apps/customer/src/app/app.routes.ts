@@ -103,6 +103,12 @@ export const routes: Routes = [
         ],
       },
       {
+        path: "receipts",
+        loadComponent: () =>
+          import("./app-surface/pages/receipts/my-receipts.component").then(m => m.MyReceiptsComponent),
+        title: "Receipts",
+      },
+      {
         path: "profile",
         loadComponent: () => import("./app-surface/pages/profile/customer-profile.component").then(m => m.CustomerProfileComponent),
         title: "Profile",

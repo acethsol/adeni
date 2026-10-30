@@ -76,7 +76,8 @@ public sealed record CustomerBookingResponse(
     IReadOnlyList<BookingLineResponse>? Lines = null,
     IReadOnlyList<BookingGuestResponse>? Guests = null,
     decimal? TotalPriceAmount = null,
-    string? Currency = null);
+    string? Currency = null,
+    string? ReceiptPublicToken = null);
 
 public sealed record CreateBookingLineRequest(
     Guid ServiceOfferingId,

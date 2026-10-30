@@ -1,5 +1,9 @@
 import {
+  buildDashboardActions,
+  countTodayUpcoming,
   hasBenefitsSnapshot,
+  isBookingOnLocalDay,
+  minutesUntilStart,
   pickHomeConversations,
   pickReviewCandidate,
   summarizeBenefits,
@@ -151,5 +155,24 @@ describe("customer-dashboard helpers (C2)", () => {
       { currency: "NGN", amount: 40 },
     ]);
     expect(hasBenefitsSnapshot(snap)).toBe(true);
+  });
+
+  it("detects same-local-day bookings and countdown", () => {
+    const now = Date.parse("2026-06-15T14:00:00.000Z");
+    const localStart = new Date(now);
+    localStart.setHours(localStart.getHours() + 2);
+    expect(isBookingOnLocalDay(localStart.toISOString(), now)).toBe(true);
+    expect(minutesUntilStart(localStart.toISOString(), now)).toBeGreaterThan(0);
+    expect(countTodayUpcoming([booking({ startAt: localStart.toISOString() })], now)).toBe(1);
+  });
+
+  it("builds dashboard actions from unread, review, and benefits", () => {
+    const actions = buildDashboardActions({
+      unreadMessages: 2,
+      review: booking({ id: "r1" }),
+      benefitsExpiringSoon: true,
+      receiptCount: 1,
+    });
+    expect(actions.map((a) => a.id)).toEqual(["messages", "review", "benefits", "receipts"]);
   });
 });

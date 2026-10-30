@@ -38,11 +38,19 @@ import { CustomerApiService } from "../../../core/services/customer-api.service"
 import { CustomerAppSessionService } from "../../services/customer-app-session.service";
 import { CustomerMessagingBadgeService } from "../../services/customer-messaging-badge.service";
 import {
+  BENEFITS_EXPIRY_WARN_DAYS,
+  benefitsExpiryWithinDays,
   bookAgainLink,
+  buildDashboardActions,
+  countTodayUpcoming,
+  formatDurationMinutes,
   hasBenefitsSnapshot,
+  minutesUntilStart,
   pickBookAgainSource,
   pickHomeConversations,
+  pickRecentPastBookings,
   pickReviewCandidate,
+  pickTodayNextBooking,
   pickUpcomingBookings,
   summarizeBenefits,
 } from "./customer-dashboard.helpers";
@@ -94,6 +102,9 @@ export class CustomerDashboardComponent implements OnInit {
   readonly packages = signal<CustomerPackage[]>([]);
   readonly giftCards = signal<BusinessGiftCard[]>([]);
 
+  readonly documentsLoading = signal(true);
+  readonly documentCount = signal(0);
+
   readonly reviewOpen = signal(false);
   readonly reviewSubmitting = signal(false);
   reviewRating = 5;
@@ -105,6 +116,7 @@ export class CustomerDashboardComponent implements OnInit {
   readonly upcomingCount = computed(() => this.upcoming().length);
   readonly next = computed(() => this.upcoming()[0] ?? null);
   readonly later = computed(() => this.upcoming().slice(1, 1 + UPCOMING_PREVIEW));
+  readonly recentPast = computed(() => pickRecentPastBookings(this.bookings(), this.now()));
   readonly bookAgainSource = computed(() => pickBookAgainSource(this.bookings(), this.now()));
   readonly bookAgain = computed(() => {
     const source = this.bookAgainSource();
@@ -122,7 +134,27 @@ export class CustomerDashboardComponent implements OnInit {
       || this.benefitsFailed()
       || hasBenefitsSnapshot(this.benefitsSnapshot()),
   );
-
+  readonly todayNext = computed(() => pickTodayNextBooking(this.bookings(), this.now()));
+  readonly todayAppointmentCount = computed(() => countTodayUpcoming(this.bookings(), this.now()));
+  readonly todayCountdownMinutes = computed(() => {
+    const next = this.todayNext();
+    return next ? minutesUntilStart(next.startAt, this.now()) : null;
+  });
+  readonly benefitsExpiringSoon = computed(() =>
+    benefitsExpiryWithinDays(
+      this.benefitsSnapshot().soonestExpiry,
+      this.now(),
+      BENEFITS_EXPIRY_WARN_DAYS,
+    ),
+  );
+  readonly dashboardActions = computed(() =>
+    buildDashboardActions({
+      unreadMessages: this.unreadMessagesCount(),
+      review: this.reviewCandidate(),
+      benefitsExpiringSoon: this.benefitsExpiringSoon(),
+      receiptCount: this.documentCount(),
+    }),
+  );
   readonly title = computed(() => {
     const name = this.session.firstName();
     return name
@@ -144,6 +176,25 @@ export class CustomerDashboardComponent implements OnInit {
       void this.loadBookings();
       void this.loadMessages();
       void this.loadBenefits();
+      void this.loadDocuments();
+    }
+  }
+
+  async loadDocuments(): Promise<void> {
+    this.documentsLoading.set(true);
+    try {
+      const items = await this.api.withAuthorizedClient((c) => c.listMyDocuments());
+      if (!this.abort.signal.aborted) {
+        this.documentCount.set(items.length);
+      }
+    } catch {
+      if (!this.abort.signal.aborted) {
+        this.documentCount.set(0);
+      }
+    } finally {
+      if (!this.abort.signal.aborted) {
+        this.documentsLoading.set(false);
+      }
     }
   }
 
@@ -307,6 +358,19 @@ export class CustomerDashboardComponent implements OnInit {
 
   statusTone(status: number): AdeniPillTone {
     return status === 1 ? "success" : status === 0 ? "warning" : "neutral";
+  }
+
+  countdownLabel(minutes: number | null): string | null {
+    if (minutes === null) {
+      return null;
+    }
+    return this.tr("customer.app.dashboard.startsIn", {
+      time: formatDurationMinutes(minutes),
+    });
+  }
+
+  formatBenefitsExpiry(iso: string): string {
+    return new Intl.DateTimeFormat(this.locale(), { dateStyle: "medium" }).format(new Date(iso));
   }
 
   dayPart(iso: string): { day: string; month: string; weekday: string } {

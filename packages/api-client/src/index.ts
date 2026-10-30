@@ -24,6 +24,7 @@ import { CustomersApi } from "./customers/customers-api";
 import { StaffApi } from "./staff/staff-api";
 import { MessagingApi } from "./messaging/messaging-api";
 import { CatalogApi } from "./catalog/catalog-api";
+import { MeDocumentsApi } from "./me/me-documents-api";
 
 /** Compatibility facade: domain operations share the same mutable transport/session state. */
 export class AdeniApiClient extends ApiTransport {
@@ -49,6 +50,7 @@ export class AdeniApiClient extends ApiTransport {
   private readonly staff = new StaffApi(this.context);
   private readonly messaging = new MessagingApi(this.context);
   private readonly catalog = new CatalogApi(this.context);
+  private readonly meDocuments = new MeDocumentsApi(this.context);
 
   getCategories(...args: Parameters<DiscoveryApi["getCategories"]>): ReturnType<DiscoveryApi["getCategories"]> {
     return this.discovery.getCategories(...args);
@@ -93,6 +95,14 @@ export class AdeniApiClient extends ApiTransport {
 
   getMyBookings(...args: Parameters<BookingApi["getMyBookings"]>): ReturnType<BookingApi["getMyBookings"]> {
     return this.booking.getMyBookings(...args);
+  }
+
+  listMyDocuments(...args: Parameters<MeDocumentsApi["listMyDocuments"]>): ReturnType<MeDocumentsApi["listMyDocuments"]> {
+    return this.meDocuments.listMyDocuments(...args);
+  }
+
+  getMyDocument(...args: Parameters<MeDocumentsApi["getMyDocument"]>): ReturnType<MeDocumentsApi["getMyDocument"]> {
+    return this.meDocuments.getMyDocument(...args);
   }
 
   cancelMyBooking(...args: Parameters<BookingApi["cancelMyBooking"]>): ReturnType<BookingApi["cancelMyBooking"]> {

@@ -112,6 +112,20 @@ public sealed class FinanceNotificationHandlerTests
             CancellationToken cancellationToken = default) =>
             throw new NotImplementedException();
 
+        public Task<Result<IReadOnlyList<BillingDocumentResponse>>> ListForCustomerAsync(
+            string customerAuth0Sub,
+            string? kind = null,
+            int page = 1,
+            int pageSize = 50,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Result.Success<IReadOnlyList<BillingDocumentResponse>>(Array.Empty<BillingDocumentResponse>()));
+
+        public Task<Result<BillingDocumentResponse>> GetForCustomerAsync(
+            string customerAuth0Sub,
+            Guid documentId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Result.Failure<BillingDocumentResponse>(Error.NotFound("Document")));
+
         public Task<Result<BillingDocumentResponse>> CreateInvoiceAsync(
             CreateInvoiceRequest request,
             CancellationToken cancellationToken = default) =>

@@ -103,6 +103,12 @@
       }
 
       <footer class="booking-detail__actions">
+        @if (b.receiptPublicToken) {
+          <a class="btn" [routerLink]="['/documents', b.receiptPublicToken]">
+            <adeni-carbon-icon name="document" [size]="16" />
+            {{ tr('discover.document.receipt') }}
+          </a>
+        }
         <a class="btn" [routerLink]="['/app/bookings', b.id, 'intake']">
           <adeni-carbon-icon name="document" [size]="16" />
           {{ tr('intake.title') }}
