@@ -15,7 +15,8 @@ using Adeni.Infrastructure.Markets;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
-/// Idempotent dev seed for the Beauty &amp; Wellness wedge (Lagos + Ottawa, enabled categories).
+/// Idempotent sample-environment seed (Development and Staging when <c>SampleData:Enabled</c>).
+/// Beauty &amp; Wellness wedge: Lagos + Ottawa verified businesses, Lekki Cuts portal fixture, dev Auth0 subs.
 /// Skips slugs that already exist. Drop tenant data and restart the API to reseed from scratch.
 /// </summary>
 public static class DevelopmentDataSeeder
@@ -175,7 +176,10 @@ public static class DevelopmentDataSeeder
         }
     }
 
-    public static async Task SeedAsync(AdeniDbContext db, CancellationToken cancellationToken = default)
+    public static async Task SeedAsync(
+        AdeniDbContext db,
+        string sampleDataScriptsDirectory,
+        CancellationToken cancellationToken = default)
     {
         var environment = new SeedHostEnvironment();
         await MarketCatalogSeeder.SeedIfEmptyAsync(db, environment, cancellationToken);
@@ -195,7 +199,18 @@ public static class DevelopmentDataSeeder
         await SeedDevMessagingAsync(db, cancellationToken);
         await SeedDevTenantCustomersAsync(db, cancellationToken);
         await SeedDevAdminPrivacyCustomersAsync(db, cancellationToken);
+        await SampleDataSqlSeedRunner.ApplyVolumeDemoAsync(db, sampleDataScriptsDirectory, cancellationToken);
     }
+
+    /// <summary>
+    /// Removes grid-volume demo rows (markers: seed-lekki-demo-v1, seed-lekki-intake-v1, devseed_*).
+    /// Set <c>SampleData:CleanupVolumeDemo</c> true on one API boot, or call before a full reseed.
+    /// </summary>
+    public static Task CleanupVolumeDemoAsync(
+        AdeniDbContext db,
+        string sampleDataScriptsDirectory,
+        CancellationToken cancellationToken = default) =>
+        SampleDataSqlSeedRunner.RemoveVolumeDemoAsync(db, sampleDataScriptsDirectory, cancellationToken);
 
     /// <summary>
     /// CRM-style tenant customers for Lekki Cuts (portal Customers list). Idempotent via seed email domain.
@@ -1188,7 +1203,7 @@ public static class DevelopmentDataSeeder
     /// <summary>
     /// Sample Adeni SaaS charges for portal <c>/plan</c> (Lekki Cuts / auth0|local-business).
     /// Idempotent via <c>devseed-portal-billing-*</c> keys. Restart API in Development to apply.
-    /// Admin Finance seed: <c>db/scripts/admin-transactions-dev-seed.sql</c>.
+    /// Admin Finance browse rows: <see cref="SampleDataSqlSeedRunner.ApplyVolumeDemoAsync"/>.
     /// </summary>
     private static async Task SeedDevPortalSubscriptionChargesAsync(
         AdeniDbContext db,

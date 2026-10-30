@@ -18,8 +18,9 @@ dotnet run --project src/Adeni.Api --launch-profile http
 
 | Step | Owns |
 |------|------|
-| `publish-db.ps1` | Build `.dacpac`, run pre-deploy → schema sync → post-deploy |
-| API (Development) | Idempotent sample seed only |
+| `publish-db.ps1` | Build `.dacpac`, schema sync, **post-deploy reference data** (pricing catalog) |
+| API startup (all envs) | **Markets** from JSON if `catalog.markets` is empty |
+| API (Development + Staging) | **Sample businesses** via `DevelopmentDataSeeder` when `SampleData:Enabled` (default on for those environments) |
 
 Connection string is preconfigured in `appsettings.Development.json`:
 
@@ -44,24 +45,22 @@ curl http://localhost:5169/health
 
 Expect `"database": "healthy"` when SQL Server is connected and the project has been published.
 
-## Development sample data
+## Sample data (Development + Staging)
 
-When the API runs in **Development** with SQL Server connected, it auto-seeds sample businesses (idempotent — skips slugs that already exist). Schema must already exist via SqlPackage.
+When `SampleData:Enabled` is true (default for Development and Staging), the API seeds after schema publish:
 
-Seed matches the Beauty & Wellness wedge: **Lagos + Ottawa** and the enabled wellness categories. See prior seed counts in git history / seeder constants if regenerating markets.
+1. **`DevelopmentDataSeeder` (C#)** — markets, Lagos/Ottawa discovery businesses, Lekki Cuts fixture (branches, roster, messaging, queue, billing stubs, dev Auth0 subs).
+2. **Sample SQL** (`db/scripts/sample-data/`) — admin Finance/audit browse rows (`devseed`), ~30 staff per Lekki branch, bookings/reviews/queue/calendar volume, wellness consultation intake. Idempotent via markers (`seed-lekki-demo-v1`, etc.). Shipped with the API publish output; not run in Production.
 
-To re-seed from scratch, drop/recreate the `adeni` database, re-run `./scripts/publish-db.ps1 -CreateNewDatabase`, then restart the API.
+**Fresh database:** drop/recreate `adeni` → `./scripts/publish-db.ps1 -CreateNewDatabase` → start API.
 
-**Lekki Cuts staff + branches (local dev):** After pulling location-scope changes, restart the API once in Development — `DevelopmentDataSeeder` adds the Phase 2 branch (`lekki-cuts-phase2`), assigns demo staff per branch, and backfills any existing Lekki staff rows that still have null `BusinessLocationId` to the primary branch. Existing databases that skip the seeder can run [`db/scripts/staff-location-scope.sql`](../db/scripts/staff-location-scope.sql) (backfill to primary) and then restart the API for the full Lekki roster seed.
+**Refresh grid dates without drop:** set `"SampleData": { "CleanupVolumeDemo": true }`, restart API once (cleanup then re-seed), set back to `false`.
 
-**Lekki Cuts demo volume (portal/admin grids):** the API seeder only creates a handful of rows. For ~30 staff per branch plus customers, bookings (past / today / upcoming), reviews, booking + profile message threads with unread, queue tickets and calendar blocks (leave, closed dates), run:
+**Staging:** same path with `ASPNETCORE_ENVIRONMENT=Staging`. Turn off sample data with `"SampleData": { "Enabled": false }`.
 
-```powershell
-./scripts/apply-lekki-cuts-demo-seed.ps1            # seed demo data + wellness consultation intake (idempotent)
-./scripts/apply-lekki-cuts-demo-seed.ps1 -Cleanup   # remove only the rows these scripts created
-```
+**Production:** sample seed off unless explicitly misconfigured.
 
-Requires `sqlcmd` on PATH, the schema published (`./scripts/publish-db.ps1`) and the API started once in Development (so `lekki-cuts`, its branches, services and the `auth0|local-business` owner exist). It reads `ConnectionStrings:AdeniDb` from `appsettings.Development.json` (SQL login or `-E`); or pass `-ConnectionString`. Direct: `sqlcmd -S localhost,1433 -U sa -P <pwd> -C -d adeni -I -i db/scripts/seed-lekki-cuts-demo.sql` then `-i db/scripts/seed-lekki-cuts-intake-consultation.sql` (`-I` = QUOTED_IDENTIFIER ON, needed for filtered indexes). SQL: [`seed-lekki-cuts-demo.sql`](../db/scripts/seed-lekki-cuts-demo.sql), [`seed-lekki-cuts-demo-cleanup.sql`](../db/scripts/seed-lekki-cuts-demo-cleanup.sql), [`seed-lekki-cuts-intake-consultation.sql`](../db/scripts/seed-lekki-cuts-intake-consultation.sql), [`seed-lekki-cuts-intake-consultation-cleanup.sql`](../db/scripts/seed-lekki-cuts-intake-consultation-cleanup.sql). The intake script publishes **Wellness consultation** (mapped from a scanned spa form) and links it to **Barbering**, **Braids**, and **Locs**. Fake PII only (`@seed.lekki.local`, `auth0|dev-lekki-demo-NNN`). Bookings are relative to the run time, so re-run cleanup + seed to refresh "today/upcoming" dates.
+Schema changes belong in **`db/Adeni.Database/`** only — do not add incremental patch scripts under `db/scripts/`.
 
 ## Optional Redis UI
 

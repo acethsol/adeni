@@ -34,7 +34,7 @@ Establish **Finance** as the extractable bounded context for commerce money move
 | 3 | **Tips / commissions** = allocation records + portal/API **export** (CSV/JSON) for external payroll tools — **not** pay runs, withholding, or custody. |
 | 4 | **V1 dev:** replace `/api/v1/payments/*` with `/api/v1/finance/*` cleanly (no alias routes). Update Paystack/Stripe webhook URLs in provider dashboards when deploying. |
 | 5 | Portal route **`/finance`**, permission **`portal.finance`** (replaces `portal.payments`). |
-| 6 | SQL schema **`finance.*`** (renamed from `payments.*`; pre-deploy transfer on publish). |
+| 6 | SQL schema **`finance.*`** (aligned with Finance module; object scripts under `db/Adeni.Database/finance/`). |
 | 7 | Config section **`Payments:`** in `appsettings` unchanged for now (provider keys); optional `Finance:` alias later. |
 
 ---

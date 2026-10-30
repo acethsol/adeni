@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="..\..\db\scripts\sample-data\*.sql" Link="db\scripts\sample-data\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\..\packages\shared\src\data\markets.json" Link="Markets\markets.json" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\packages\shared\src\data\category-workflows.json" Link="Catalog\category-workflows.json" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\packages\shared\src\data\wellness-categories.json" Link="Catalog\wellness-categories.json" CopyToOutputDirectory="PreserveNewest" />

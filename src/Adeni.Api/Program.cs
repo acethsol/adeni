@@ -63,17 +63,20 @@ if (builder.Environment.IsDevelopment())
 var app = builder.Build();
 var fileStorage = app.Services.GetRequiredService<IFileStorage>();
 
-if (app.Environment.IsDevelopment())
+if (ShouldSeedSampleData(app.Environment, app.Configuration))
 {
     try
     {
-        await SeedDevelopmentDataAsync(app.Services);
+        await SeedSampleDataAsync(app.Services);
     }
     catch (Exception ex)
     {
-        Log.Warning(ex, "Development seed skipped — publish the database first (./scripts/publish-db.ps1) and ensure SQL Server is running.");
+        Log.Warning(ex, "Sample data seed skipped — publish the database first (./scripts/publish-db.ps1) and ensure SQL Server is running.");
     }
+}
 
+if (app.Environment.IsDevelopment())
+{
     app.MapAdeniOpenApi();
 }
 
@@ -119,11 +122,27 @@ app.MapHub<Adeni.Api.Realtime.OperationsHub>("/hubs/operations");
 
 app.Run();
 
-static async Task SeedDevelopmentDataAsync(IServiceProvider services)
+static bool ShouldSeedSampleData(IHostEnvironment environment, IConfiguration configuration)
+{
+    var enabled = configuration.GetSection("SampleData").GetValue<bool?>("Enabled");
+    if (enabled.HasValue)
+    {
+        return enabled.Value;
+    }
+
+    return environment.IsDevelopment() || environment.IsStaging();
+}
+
+static async Task SeedSampleDataAsync(IServiceProvider services)
 {
     using var scope = services.CreateScope();
     var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
     var environment = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
+    if (!ShouldSeedSampleData(environment, configuration))
+    {
+        return;
+    }
+
     var hasSql = !string.IsNullOrWhiteSpace(configuration.GetConnectionString("AdeniDb"));
     // Empty AdeniDb in Development uses the in-memory provider — still seed sample tenants.
     if (!hasSql && !environment.IsDevelopment())
@@ -135,7 +154,13 @@ static async Task SeedDevelopmentDataAsync(IServiceProvider services)
     var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
     tenantContext.DisableTenantFilter();
     dbContext.SyncTenantFilter();
-    await DevelopmentDataSeeder.SeedAsync(dbContext);
+    var sampleSqlDir = SampleDataSqlSeedRunner.ResolveScriptsDirectory(environment, configuration);
+    if (configuration.GetValue<bool>("SampleData:CleanupVolumeDemo"))
+    {
+        await DevelopmentDataSeeder.CleanupVolumeDemoAsync(dbContext, sampleSqlDir);
+    }
+
+    await DevelopmentDataSeeder.SeedAsync(dbContext, sampleSqlDir);
     var loader = scope.ServiceProvider.GetRequiredService<IMarketCatalogLoader>();
     await loader.EnsureLoadedAsync();
 }
