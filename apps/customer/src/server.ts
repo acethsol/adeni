@@ -22,6 +22,7 @@ const browserDistFolder = join(import.meta.dirname, "../browser");
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
+// Baseline security headers for all customer SSR responses (see docs/ci.md path-aware smoke).
 app.use((_req, res, next) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("X-Frame-Options", "DENY");
