@@ -1,7 +1,7 @@
 import { DatePipe } from "@angular/common";
 import { Component, computed, DestroyRef, effect, inject } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { ActivatedRoute, RouterOutlet } from "@angular/router";
+import { ActivatedRoute, RouterLink, RouterOutlet } from "@angular/router";
 import { formatSubscriptionSku, formatTenantStatus } from "@adeni/shared";
 import {
   AdeniCarbonIconComponent,
@@ -22,6 +22,7 @@ import { BusinessDetailFacade } from "./business-detail.facade";
   providers: [BusinessDetailFacade],
   imports: [
     PortalPageComponent,
+    RouterLink,
     RouterOutlet,
     DatePipe,
     AdeniStaffButtonComponent,
