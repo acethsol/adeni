@@ -11,9 +11,39 @@ env:
   ADENI_SQL_CONNECTION: "Server=localhost,1433;Database=adeni;User Id=sa;Password=Adeni_Dev_Passw0rd!;TrustServerCertificate=True;Encrypt=False"
 
 jobs:
-  build-and-test:
+  detect-changes:
     runs-on: ubuntu-latest
+    outputs:
+      run_ci_all: ${{ steps.detect.outputs.run_ci_all }}
+      run_backend: ${{ steps.detect.outputs.run_backend }}
+      run_database: ${{ steps.detect.outputs.run_database }}
+      run_npm_audit: ${{ steps.detect.outputs.run_npm_audit }}
+      run_nuget: ${{ steps.detect.outputs.run_nuget }}
+      run_customer: ${{ steps.detect.outputs.run_customer }}
+      run_business: ${{ steps.detect.outputs.run_business }}
+      run_admin: ${{ steps.detect.outputs.run_admin }}
+      run_frontend_packages: ${{ steps.detect.outputs.run_frontend_packages }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
 
+      - name: Detect affected projects
+        id: detect
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+        run: bash scripts/ci/detect-affected.sh
+
+      - name: Self-test change detection rules
+        run: bash scripts/ci/detect-affected.test.sh
+
+  build-and-test:
+    needs: detect-changes
+    runs-on: ubuntu-latest
     services:
       redis:
         image: redis:7-alpine
@@ -24,61 +54,71 @@ jobs:
           --health-interval 5s
           --health-timeout 3s
           --health-retries 5
-
     env:
-      # Integration tests use InMemory (empty AdeniDb). Redis service reserved for future real-cache tests.
       ConnectionStrings__AdeniDb: ""
       Redis__ConnectionString: localhost:6379
-
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
+      - name: Skip (backend unaffected)
+        if: needs.detect-changes.outputs.run_backend != 'true' && needs.detect-changes.outputs.run_nuget != 'true'
+        run: echo "::notice::Backend job skipped — no affected paths."
+
       - name: Setup .NET
+        if: needs.detect-changes.outputs.run_backend == 'true' || needs.detect-changes.outputs.run_nuget == 'true'
         uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: 10.0.x
 
       - name: Restore
+        if: needs.detect-changes.outputs.run_backend == 'true'
         run: dotnet restore Adeni.slnx
 
       - name: Build
+        if: needs.detect-changes.outputs.run_backend == 'true'
         run: dotnet build Adeni.slnx -c Release --no-restore
 
       - name: Build database project
+        if: needs.detect-changes.outputs.run_backend == 'true'
         run: dotnet build db/Adeni.Database/Adeni.Database.sqlproj -c Release
 
       - name: Test
+        if: needs.detect-changes.outputs.run_backend == 'true'
         env:
           ConnectionStrings__AdeniDb: ""
           Redis__ConnectionString: ""
         run: dotnet test Adeni.slnx -c Release --no-build --verbosity normal
 
       - name: NuGet vulnerability scan (fail on findings)
+        if: needs.detect-changes.outputs.run_nuget == 'true'
         run: bash scripts/assert-no-vulnerable-nuget.sh Adeni.slnx
 
   sqlserver:
+    needs: detect-changes
     runs-on: ubuntu-latest
     services:
       sqlserver:
-        # GitHub runners are amd64 — use full SQL Server (local Docker Compose uses Azure SQL Edge for ARM).
         image: mcr.microsoft.com/mssql/server:2022-latest
         env:
           ACCEPT_EULA: "Y"
           MSSQL_SA_PASSWORD: "Adeni_Dev_Passw0rd!"
         ports:
           - 1433:1433
-        # Healthcheck omitted — mssql image tooling varies; steps wait on TCP :1433.
-
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
+      - name: Skip (database unaffected)
+        if: needs.detect-changes.outputs.run_database != 'true'
+        run: echo "::notice::SQL Server job skipped — no affected paths."
+
       - name: Setup .NET
+        if: needs.detect-changes.outputs.run_database == 'true'
         uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: 10.0.x
 
       - name: Setup PowerShell
-        # publish-db.ps1; ubuntu runners usually include pwsh — install if missing
+        if: needs.detect-changes.outputs.run_database == 'true'
         run: |
           if ! command -v pwsh >/dev/null 2>&1; then
             dotnet tool install --global PowerShell
@@ -86,6 +126,7 @@ jobs:
           fi
 
       - name: Wait for SQL Server
+        if: needs.detect-changes.outputs.run_database == 'true'
         run: |
           for i in $(seq 1 60); do
             if (echo >/dev/tcp/127.0.0.1/1433) >/dev/null 2>&1; then
@@ -98,9 +139,11 @@ jobs:
           exit 1
 
       - name: Publish database (SqlPackage)
+        if: needs.detect-changes.outputs.run_database == 'true'
         run: pwsh ./scripts/publish-db.ps1 -CreateNewDatabase -ConnectionString "${{ env.ADENI_SQL_CONNECTION }}"
 
       - name: SQL Server discovery tests
+        if: needs.detect-changes.outputs.run_database == 'true'
         env:
           ADENI_SQLSERVER_TESTS: "1"
           ConnectionStrings__AdeniDb: ${{ env.ADENI_SQL_CONNECTION }}
@@ -110,46 +153,217 @@ jobs:
           --filter "Category=SqlServer"
           --verbosity normal
 
-  frontend:
+  npm-audit:
+    needs: detect-changes
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
+      - name: Skip (npm deps unaffected)
+        if: needs.detect-changes.outputs.run_npm_audit != 'true'
+        run: echo "::notice::npm audit skipped — lockfile/root deps unchanged."
+
       - name: Setup Node.js
+        if: needs.detect-changes.outputs.run_npm_audit == 'true'
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "22.22.3"
           cache: npm
 
       - name: Install dependencies
+        if: needs.detect-changes.outputs.run_npm_audit == 'true'
         run: npm ci
 
-      - name: Typecheck workspaces
-        run: npm run typecheck
-
-      - name: Shared package tests
-        run: npm test --workspace @adeni/shared
-
-      - name: Business unit tests
-        run: npm test --workspace @adeni/business
-
-      - name: Customer unit tests
-        run: npm test --workspace @adeni/customer
-
-      - name: Admin unit tests
-        run: npm test --workspace @adeni/admin
-
-      - name: Build Angular business
-        run: npm run build:business
-
-      - name: Build Angular admin
-        run: npm run build:admin
-
-      - name: Build Angular customer
-        run: npm run build:customer
-
       - name: npm audit (production, fail on high+)
+        if: needs.detect-changes.outputs.run_npm_audit == 'true'
         run: npm audit --omit=dev --audit-level=high
 
       - name: npm audit (all deps, fail on critical)
+        if: needs.detect-changes.outputs.run_npm_audit == 'true'
         run: npm audit --audit-level=critical
+
+  frontend-customer:
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Skip (customer unaffected)
+        if: needs.detect-changes.outputs.run_customer != 'true'
+        run: echo "::notice::Customer frontend skipped — no affected paths."
+
+      - name: Setup Node.js
+        if: needs.detect-changes.outputs.run_customer == 'true'
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22.22.3"
+          cache: npm
+
+      - name: Install dependencies
+        if: needs.detect-changes.outputs.run_customer == 'true'
+        run: npm ci
+
+      - name: Shared package tests
+        if: needs.detect-changes.outputs.run_customer == 'true' && needs.detect-changes.outputs.run_frontend_packages == 'true'
+        run: npm test --workspace @adeni/shared
+
+      - name: Typecheck shared packages
+        if: needs.detect-changes.outputs.run_customer == 'true' && needs.detect-changes.outputs.run_frontend_packages == 'true'
+        run: |
+          npm run typecheck --workspace @adeni/shared
+          npm run typecheck --workspace @adeni/api-client
+          npm run typecheck --workspace @adeni/ui
+          npm run typecheck --workspace @adeni/brand
+
+      - name: Customer unit tests
+        if: needs.detect-changes.outputs.run_customer == 'true'
+        run: npm test --workspace @adeni/customer
+
+      - name: Typecheck customer
+        if: needs.detect-changes.outputs.run_customer == 'true'
+        run: npm run typecheck --workspace @adeni/customer
+
+      - name: Build Angular customer
+        if: needs.detect-changes.outputs.run_customer == 'true'
+        run: npm run build:customer
+
+  frontend-business:
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Skip (business unaffected)
+        if: needs.detect-changes.outputs.run_business != 'true'
+        run: echo "::notice::Business frontend skipped — no affected paths."
+
+      - name: Setup Node.js
+        if: needs.detect-changes.outputs.run_business == 'true'
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22.22.3"
+          cache: npm
+
+      - name: Install dependencies
+        if: needs.detect-changes.outputs.run_business == 'true'
+        run: npm ci
+
+      - name: Shared package tests
+        if: needs.detect-changes.outputs.run_business == 'true' && needs.detect-changes.outputs.run_frontend_packages == 'true'
+        run: npm test --workspace @adeni/shared
+
+      - name: Typecheck shared packages
+        if: needs.detect-changes.outputs.run_business == 'true' && needs.detect-changes.outputs.run_frontend_packages == 'true'
+        run: |
+          npm run typecheck --workspace @adeni/shared
+          npm run typecheck --workspace @adeni/api-client
+          npm run typecheck --workspace @adeni/ui
+          npm run typecheck --workspace @adeni/brand
+
+      - name: Business unit tests
+        if: needs.detect-changes.outputs.run_business == 'true'
+        run: npm test --workspace @adeni/business
+
+      - name: Typecheck business
+        if: needs.detect-changes.outputs.run_business == 'true'
+        run: npm run typecheck --workspace @adeni/business
+
+      - name: Build Angular business
+        if: needs.detect-changes.outputs.run_business == 'true'
+        run: npm run build:business
+
+  frontend-admin:
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Skip (admin unaffected)
+        if: needs.detect-changes.outputs.run_admin != 'true'
+        run: echo "::notice::Admin frontend skipped — no affected paths."
+
+      - name: Setup Node.js
+        if: needs.detect-changes.outputs.run_admin == 'true'
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22.22.3"
+          cache: npm
+
+      - name: Install dependencies
+        if: needs.detect-changes.outputs.run_admin == 'true'
+        run: npm ci
+
+      - name: Shared package tests
+        if: needs.detect-changes.outputs.run_admin == 'true' && needs.detect-changes.outputs.run_frontend_packages == 'true'
+        run: npm test --workspace @adeni/shared
+
+      - name: Typecheck shared packages
+        if: needs.detect-changes.outputs.run_admin == 'true' && needs.detect-changes.outputs.run_frontend_packages == 'true'
+        run: |
+          npm run typecheck --workspace @adeni/shared
+          npm run typecheck --workspace @adeni/api-client
+          npm run typecheck --workspace @adeni/ui
+          npm run typecheck --workspace @adeni/brand
+
+      - name: Admin unit tests
+        if: needs.detect-changes.outputs.run_admin == 'true'
+        run: npm test --workspace @adeni/admin
+
+      - name: Typecheck admin
+        if: needs.detect-changes.outputs.run_admin == 'true'
+        run: npm run typecheck --workspace @adeni/admin
+
+      - name: Build Angular admin
+        if: needs.detect-changes.outputs.run_admin == 'true'
+        run: npm run build:admin
+
+  frontend:
+    needs:
+      - detect-changes
+      - frontend-customer
+      - frontend-business
+      - frontend-admin
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Aggregate frontend checks
+        run: |
+          failed=0
+          for result in "${{ needs.frontend-customer.result }}" "${{ needs.frontend-business.result }}" "${{ needs.frontend-admin.result }}"; do
+            if [[ "$result" == "failure" ]]; then
+              failed=1
+            fi
+          done
+          if [[ "$failed" -ne 0 ]]; then
+            echo "::error::One or more frontend app jobs failed."
+            exit 1
+          fi
+          echo "Frontend aggregate OK (skipped apps count as success)."
+
+  ci-complete:
+    needs:
+      - detect-changes
+      - build-and-test
+      - sqlserver
+      - npm-audit
+      - frontend
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify required jobs
+        run: |
+          failed=0
+          for result in \
+            "${{ needs.build-and-test.result }}" \
+            "${{ needs.sqlserver.result }}" \
+            "${{ needs.npm-audit.result }}" \
+            "${{ needs.frontend.result }}"; do
+            if [[ "$result" == "failure" ]]; then
+              failed=1
+            fi
+          done
+          if [[ "$failed" -ne 0 ]]; then
+            echo "::error::CI failed."
+            exit 1
+          fi
+          echo "CI complete."

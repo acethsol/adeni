@@ -3,19 +3,50 @@
 Workflow: [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)  
 Runs on pushes and PRs targeting `dev`, `qa`, or `main`.
 
-| Job | What it does |
-|-----|----------------|
-| **build-and-test** | Restore/build .NET, build `Adeni.Database`, `dotnet test`, **fail** if NuGet reports vulnerable packages |
-| **sqlserver** | SQL Server 2022 service → `publish-db.ps1` (SqlPackage) → `Category=SqlServer` tests |
-| **frontend** | `npm ci`, workspace typecheck, Vitest/Jasmine for **shared**, **business**, **customer**, and **admin**, Angular production builds (business/admin/customer), **npm audit** (prod high+, all critical) |
+## Path-aware jobs
+
+[`scripts/ci/detect-affected.sh`](../scripts/ci/detect-affected.sh) compares the PR base SHA (or push `before` → `sha`) to changed paths and sets `run_*` flags. Jobs **always run** so branch protection check names stay stable; heavy steps are skipped when unaffected (job still succeeds).
+
+| Job | Runs heavy work when |
+|-----|----------------------|
+| **detect-changes** | Always (outputs flags + self-test) |
+| **build-and-test** | `src/`, `tests/`, `db/` (build slice), `Adeni.slnx`, shared catalog JSON, brand assets, `.github/` / CI scripts |
+| **sqlserver** | `db/`, `publish-db.ps1`, `packages/shared/src/data/` |
+| **npm-audit** | Root `package.json` / lockfile, brand sync scripts, or CI-all |
+| **frontend-customer** | `apps/customer/` or shared frontend packages |
+| **frontend-business** | `apps/business/` or shared frontend packages |
+| **frontend-admin** | `apps/admin/` or shared frontend packages |
+| **frontend** | Aggregates the three app jobs (required check name unchanged) |
+| **ci-complete** | Fails if any required leg failed |
+
+Shared package paths (`packages/ui`, `packages/shared`, `packages/api-client`, `packages/brand`) fan out to **all three** Angular apps. Backend-only changes do **not** build Angular apps.
+
+Validate rules locally:
+
+```bash
+bash scripts/ci/detect-affected.test.sh
+```
+
+## Dependency graph (frontend)
+
+```text
+apps/customer|business|admin
+  → @adeni/ui → @adeni/shared, @adeni/brand
+  → @adeni/api-client → @adeni/shared
+  → @adeni/brand
+```
+
+Backend copies selected files from `packages/shared/src/data/` and `packages/brand/assets/` (see `Adeni.Api.csproj`).
 
 ## Dependency updates
 
 [`.github/dependabot.yml`](../.github/dependabot.yml) — weekly PRs for NuGet, npm, and GitHub Actions.
 
-Root [`package.json`](../package.json) **overrides** pin transitive fixes for CI `npm audit --omit=dev --audit-level=high` (currently `body-parser@2.4.0`, `zod@4.6.7`; `@adeni/shared` depends on Zod 4). After changing overrides, run `npm install` and re-run the audit commands below.
+Root [`package.json`](../package.json) **overrides** pin transitive fixes for CI `npm audit --omit=dev --audit-level=high`.
 
 ## Local equivalents
+
+**Full matrix (same as CI-all):**
 
 ```powershell
 dotnet test Adeni.slnx -c Release
@@ -27,17 +58,14 @@ $env:ADENI_SQLSERVER_TESTS = "1"
 dotnet test tests/Adeni.Infrastructure.Tests --filter "Category=SqlServer"
 
 npm ci
-npm run typecheck
+npm run typecheck --workspace @adeni/customer   # or business/admin only
 npm test --workspace @adeni/shared
-npm test --workspace @adeni/business
 npm test --workspace @adeni/customer
-npm test --workspace @adeni/admin
-npm run build:business
-npm run build:admin
 npm run build:customer
 npm audit --omit=dev --audit-level=high
-npm audit --audit-level=critical
 ```
+
+**Customer-only example:** run customer test/build/typecheck; skip business/admin builds unless shared packages changed.
 
 ## Branch and environment promotion
 
@@ -45,14 +73,16 @@ npm audit --audit-level=critical
 
 | Branch | Meaning | Expected environment |
 |---|---|---|
-| `dev` | Active integration, feature/audit PR target | Development/integration |
-| `qa` | Staging promotion from reviewed `dev` | Staging, production-like infrastructure and real selected providers |
-| `main` | Production release promoted from validated `qa` | Production, approved immutable release artifact |
+| `dev` | Active integration | Development/integration |
+| `qa` | Staging promotion | Staging |
+| `main` | Production release | Production artifact by commit SHA |
 
-No direct production commits, force pushes, or bypass promotions. A production hotfix should use a reviewed PR and be reconciled through the integration/staging branches. This audit does not create branches, merge PRs, configure GitHub protections, or deploy environments.
+No deployment workflow is checked in yet. Independent release units (target): Customer Web, Business Web, Admin Web, Adeni API, Database — each promotable by artifact SHA without shipping unrelated apps.
 
-The checked-in workflow validates changes; **there is no Azure deployment job yet**. Adding `qa` to its push/PR filters extends validation without deployment side effects. The frontend job now also runs the existing Business unit-test script (ChromeHeadless on the hosted Ubuntu image), so API-client compatibility, navigation and realtime teardown regressions run in CI. Future delivery should build a versioned artifact, deploy to staging behind protected environment approvals, run provider/SQL/SSR smoke tests, then promote the same artifact to production with an explicit rollback plan. Environment secrets, origin restrictions and trusted proxy addresses must be configured separately; see [production infrastructure](production-infrastructure.md).
+## Branch protection
 
-Recommended protections for all three branches: PR-only changes, required approving review, required `build-and-test`, `sqlserver` and `frontend` checks, resolved review threads, stale-review dismissal, restricted force pushes/deletion and administrator bypass. Use CODEOWNERS review for auth, billing, CI and public contract changes where the team supports it. These are recommendations, not a claim that protections are installed.
+Recommended required checks: **`build-and-test`**, **`sqlserver`**, **`frontend`**. Optional: **`ci-complete`**. Per-app jobs (`frontend-customer`, etc.) are for parallelism and do not need to be required if `frontend` aggregate is required.
 
-The `frontend` check remains blocked by existing production stylesheet budgets (see [audit closeout](audit-hardening-closeout.md)). Do not waive it or raise budgets just to promote. Resolve the blocker, obtain green CI including real SQL Server tests, then review the audit PR into `dev`; promote `dev` → `qa` → `main` only after staging validation.
+When `.github/workflows/**` changes, detection sets **CI-all** and runs the full matrix.
+
+Spec: [path-aware-ci-independent-releases.md](specs/path-aware-ci-independent-releases.md).
