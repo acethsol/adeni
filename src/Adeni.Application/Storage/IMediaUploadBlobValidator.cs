@@ -9,4 +9,9 @@ public interface IMediaUploadBlobValidator
         MediaUploadPurpose purpose,
         string storageKey,
         CancellationToken cancellationToken = default);
+
+    Task<Result> ValidateCustomerQuotePhotoAsync(
+        Guid customerId,
+        string storageKey,
+        CancellationToken cancellationToken = default);
 }

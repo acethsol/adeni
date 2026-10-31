@@ -735,11 +735,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
     const allowed = new Set(["image/jpeg", "image/png", "application/pdf"]);
     if (!allowed.has(file.type)) {
-      this.error.set(this.tr("common.useJpegPngWebp"));
+      this.error.set(this.tr("businessApp.profile.verificationFileTypes"));
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      this.error.set(this.tr("common.photoMustBe5Mb"));
+      this.error.set(this.tr("businessApp.profile.verificationFileMax10Mb"));
       return;
     }
 

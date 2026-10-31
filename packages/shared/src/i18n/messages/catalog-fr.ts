@@ -1332,6 +1332,8 @@ export const frCatalog: MessageTree = {
       verificationSubmittedDocsTitle: "Documents soumis",
       verificationOptionalFile: "Fichier justificatif (facultatif)",
       verificationFileAttached: "Fichier joint",
+      verificationFileTypes: "Utilisez JPEG, PNG ou PDF pour les documents de vérification.",
+      verificationFileMax10Mb: "Le fichier de vérification doit faire 10 Mo ou moins.",
       verificationTrustBadgesTitle: "Badges de confiance",
       verificationTrustBadgesLead: "Une fois vérifiée, demandez des signaux de confiance supplémentaires (téléphone, CAC, adresse, licence).",
       verificationRequestBadge: "Demander un badge",
