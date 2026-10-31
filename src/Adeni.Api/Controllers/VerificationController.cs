@@ -1,8 +1,10 @@
 namespace Adeni.Api.Controllers;
 
 using System.Security.Claims;
+using Adeni.Api.Auth;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
+using Adeni.Domain.Identity;
 using Adeni.Application.Trust;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Auth;
@@ -17,6 +19,7 @@ public sealed record RequestVerificationBadgeApiRequest(
 
 [ApiController]
 [Route("api/v1/tenant/verification")]
+[RequiresBusinessPermission(BusinessPermissions.Profile)]
 public sealed class TenantVerificationController(
     IVerificationBadgeService badges,
     IOptions<Auth0Options> auth0Options) : ControllerBase

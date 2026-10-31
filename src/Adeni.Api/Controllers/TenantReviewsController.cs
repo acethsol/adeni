@@ -1,8 +1,10 @@
 namespace Adeni.Api.Controllers;
 
 using System.Security.Claims;
+using Adeni.Api.Auth;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
+using Adeni.Domain.Identity;
 using Adeni.Application.Tenancy;
 using Adeni.Application.Reviews;
 using Adeni.Infrastructure.Auth;
@@ -11,6 +13,7 @@ using Microsoft.Extensions.Options;
 
 [ApiController]
 [Route("api/v1/tenant/reviews")]
+[RequiresBusinessPermission(BusinessPermissions.Profile)]
 public sealed class TenantReviewsController(
     IReviewService reviews,
     ITenantLocationScopeService locationScope,
