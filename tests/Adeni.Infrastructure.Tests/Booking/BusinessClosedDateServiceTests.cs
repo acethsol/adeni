@@ -305,6 +305,7 @@ public sealed class BusinessClosedDateServiceTests
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();
         services.AddBookingTestRealtime();
         services.AddCheckoutRealtimeTokens();
+        services.AddPaymentOrchestratorDependencies();
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
         services.AddScoped<IStaffCompensationService, StaffCompensationService>();
         services.AddSingleton<Application.Notifications.INotificationDispatcher, ClosedTestNotifications>();

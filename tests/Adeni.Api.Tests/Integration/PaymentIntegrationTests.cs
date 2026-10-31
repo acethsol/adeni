@@ -126,7 +126,54 @@ public sealed class PaymentIntegrationTests : IClassFixture<WebApplicationFactor
     {
         const string customerSub = "auth0|payment-idem-customer";
         var tenantId = Guid.NewGuid();
+        var bookingId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var serviceId = Guid.NewGuid();
         const string idempotencyKey = "payment-idem-test-key";
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+            var now = DateTimeOffset.UtcNow;
+            db.Tenants.Add(new Tenant
+            {
+                Id = tenantId,
+                Name = "Idem Tenant",
+                Status = TenantStatus.Verified,
+                CreatedAt = now,
+                VerifiedAt = now,
+            });
+            db.BusinessProfiles.Add(new BusinessProfile
+            {
+                TenantId = tenantId,
+                CategorySlug = "barbers",
+                Phone = "+2348012345678",
+                DepositPercent = 25,
+                UpdatedAt = now,
+            });
+            db.ServiceOfferings.Add(new Adeni.Domain.Booking.ServiceOffering
+            {
+                Id = serviceId,
+                TenantId = tenantId,
+                Name = "Service",
+                PriceAmount = 4000m,
+                Currency = "NGN",
+                DurationMinutes = 30,
+                IsActive = true,
+            });
+            db.Customers.Add(new Customer { Id = customerId, Auth0Sub = customerSub });
+            db.Bookings.Add(new Adeni.Domain.Booking.BookingRecord
+            {
+                Id = bookingId,
+                TenantId = tenantId,
+                CustomerId = customerId,
+                ServiceOfferingId = serviceId,
+                Status = Adeni.Domain.Booking.BookingStatus.Pending,
+                StartAt = now.AddDays(1),
+                GuestCount = 1,
+            });
+            db.SaveChanges();
+        }
 
         var client = _factory.CreateClient();
         client.DefaultRequestHeaders.Add(DevCustomerAuthMiddleware.DevAuth0SubHeader, customerSub);
@@ -134,10 +181,9 @@ public sealed class PaymentIntegrationTests : IClassFixture<WebApplicationFactor
         var body = new
         {
             tenantId,
-            bookingId = (Guid?)null,
-            amount = 1500m,
+            bookingId,
             currency = "NGN",
-            type = "link"
+            type = "deposit",
         };
 
         using var firstRequest = new HttpRequestMessage(HttpMethod.Post, "/api/v1/finance/initialize")

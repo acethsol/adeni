@@ -4,8 +4,11 @@ using Adeni.Application.Abstractions;
 using Adeni.Application.Realtime;
 using Adeni.Application.Events;
 using Adeni.Application.Finance;
+using Adeni.Infrastructure.Booking;
+using Microsoft.Extensions.Hosting;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Subscriptions;
+using Adeni.Domain.Common;
 using Adeni.Domain.Finance;
 using Adeni.Infrastructure.Events;
 using Adeni.Infrastructure.Finance;
@@ -15,6 +18,45 @@ using Microsoft.Extensions.Options;
 
 public sealed class PaymentOrchestratorTests
 {
+    [Fact]
+    public async Task InitializeAsync_externalProviderCheckoutUrl_omitsRealtimeQueryParam()
+    {
+        await using var db = CreateDb();
+        var paymentsOptions = Options.Create(new FinanceOptions
+        {
+            Provider = "Paystack",
+            StubCheckoutBaseUrl = "/checkout/stub",
+        });
+        var callbackValidator = new PaymentCallbackUrlValidator(paymentsOptions, new TestHostEnvironment());
+        var orchestrator = new PaymentOrchestrator(
+            db,
+            new ExternalCheckoutPaymentProvider(),
+            new PlatformFeeCalculator(new TestMarketCatalog(), new TestPricingCatalog()),
+            new NoOpAuditLogWriter(),
+            new TestCorrelationContext(),
+            new DomainEventCollector(),
+            paymentsOptions,
+            new NoOpTenantRealtimePublisher(),
+            new PaymentCheckoutRealtimeTokenService(paymentsOptions),
+            new CustomerPaymentAccessQuery(db),
+            new BookingDepositCalculator(db),
+            callbackValidator);
+
+        var result = await orchestrator.InitializeAsync(
+            new InitializePaymentRequest(
+                Guid.NewGuid(),
+                BookingId: null,
+                Amount: 2500m,
+                Currency: "NGN",
+                Type: "link",
+                Description: "External"));
+
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Value!.CheckoutRealtimeToken);
+        Assert.DoesNotContain("rt=", result.Value!.CheckoutUrl, StringComparison.Ordinal);
+        Assert.StartsWith("https://checkout.paystack.com/", result.Value!.CheckoutUrl, StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task InitializeAsync_persists_stub_payment_intent()
     {
@@ -108,6 +150,10 @@ public sealed class PaymentOrchestratorTests
             StubCheckoutBaseUrl = "/checkout/stub",
         });
 
+        var callbackValidator = new PaymentCallbackUrlValidator(
+            paymentsOptions,
+            new TestHostEnvironment());
+
         return new PaymentOrchestrator(
             db,
             new StubPaymentProvider(db, paymentsOptions),
@@ -117,7 +163,48 @@ public sealed class PaymentOrchestratorTests
             new DomainEventCollector(),
             paymentsOptions,
             new NoOpTenantRealtimePublisher(),
-            new PaymentCheckoutRealtimeTokenService(paymentsOptions));
+            new PaymentCheckoutRealtimeTokenService(paymentsOptions),
+            new CustomerPaymentAccessQuery(db),
+            new BookingDepositCalculator(db),
+            callbackValidator);
+    }
+
+    private sealed class ExternalCheckoutPaymentProvider : IPaymentProvider
+    {
+        public string ProviderName => "Paystack";
+
+        public Task<Result<ProviderInitializeResult>> InitializeAsync(
+            ProviderInitializeRequest request,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Result.Success(new ProviderInitializeResult(
+                $"https://checkout.paystack.com/{request.ProviderReference}",
+                request.ProviderReference)));
+
+        public Task<Result<ProviderPaymentStatus>> GetProviderStatusAsync(
+            string providerReference,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public Task<Result<PaymentWebhookPayload>> ParseWebhookAsync(
+            string rawBody,
+            IReadOnlyDictionary<string, string> headers,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public Task<Result<ProviderRefundResult>> RefundAsync(
+            string providerReference,
+            decimal? amount,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+    }
+
+    private sealed class TestHostEnvironment : Microsoft.Extensions.Hosting.IHostEnvironment
+    {
+        public string EnvironmentName { get; set; } = "Testing";
+        public string ApplicationName { get; set; } = "test";
+        public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
+        public Microsoft.Extensions.FileProviders.IFileProvider ContentRootFileProvider { get; set; } =
+            new Microsoft.Extensions.FileProviders.NullFileProvider();
     }
 
     private static AdeniDbContext CreateDb()

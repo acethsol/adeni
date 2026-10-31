@@ -117,8 +117,22 @@ fi
 if $run_ci_all || files_match "$CHANGED" \
   '^db/' \
   '^scripts/publish-db\.ps1$' \
-  '^packages/shared/src/data/'; then
+  '^packages/shared/src/data/' \
+  '^src/Adeni\.Infrastructure/Persistence/' \
+  '^src/Adeni\.Infrastructure/Retention/' \
+  '^src/Adeni\.Infrastructure/Finance/' \
+  '^tests/.*SqlServer' \
+  '^tests/Adeni\.Infrastructure\.Tests/'; then
   run_database=true
+fi
+
+if $run_ci_all || files_match "$CHANGED" \
+  '^src/Adeni\.Application/' \
+  '^src/Adeni\.Domain/'; then
+  run_frontend_packages=true
+  run_customer=true
+  run_business=true
+  run_admin=true
 fi
 
 run_nuget=false

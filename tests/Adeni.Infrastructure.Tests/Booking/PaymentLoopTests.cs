@@ -252,6 +252,7 @@ public sealed class PaymentLoopTests
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();
         services.AddBookingTestRealtime();
         services.AddCheckoutRealtimeTokens();
+        services.AddPaymentOrchestratorDependencies();
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
         services.AddScoped<IStaffCompensationService, StaffCompensationService>();
         services.AddSingleton<INotificationDispatcher, LoopNotificationDispatcher>();
