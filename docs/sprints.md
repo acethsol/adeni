@@ -51,7 +51,7 @@ Current V1 authority: [product-direction.md](./product-direction.md). Supported 
 | **37** | **Retention (packages, loyalty, memberships)** | **✅ Done (dev/local)** — [37.1](./specs/sprint-37-1-packages-benefit-ledger.md)–[37.5](./specs/sprint-37-5-retention-analytics.md); online recurring/package checkout stub-gated until **Sprint 34**; closeout polish on `dev` |
 | **C1** | **Consumer app experience** (`apps/customer`, `/app/*`, no `/my-*`) | Implemented on dev — [sprint-c1-consumer-app-experience.md](./specs/sprint-c1-consumer-app-experience.md) |
 | **C2** | **Consumer portal** (dashboard, calendar, shared `@adeni/ui`) | Implemented on `dev` — [sprint-c2-consumer-portal.md](./specs/sprint-c2-consumer-portal.md) |
-| — | **Business supply landing** (`/welcome`, discover “For businesses”) | Draft spec — [business-supply-landing.md](./specs/business-supply-landing.md) |
+| — | **Business supply landing** (`/welcome`, discover “For businesses”) | ✅ Done — [business-supply-landing.md](./specs/business-supply-landing.md) |
 | **39-finance** | **Finance module boundaries (Phase 1)** | ✅ Done — [finance-module-boundaries.md](./specs/finance-module-boundaries.md); `/api/v1/finance/*`, portal `/finance` |
 | — | **Reporting module boundaries** | Spec — [reporting-module-boundaries.md](./specs/reporting-module-boundaries.md); runbook [reporting.md](./reporting.md) |
 | — | **Notifications module boundaries** | Spec — [notifications-module-boundaries.md](./specs/notifications-module-boundaries.md); runbook [notifications.md](./notifications.md) |
