@@ -4,10 +4,11 @@ using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using Adeni.Application.Booking;
 using Adeni.Application.Catalog;
+using Adeni.Application.Identity;
+using Adeni.Application.Tenancy;
 using Adeni.Application.Notifications;
 using Adeni.Application.Realtime;
 using Adeni.Application.Subscriptions;
-using Adeni.Application.Tenancy;
 using Adeni.Infrastructure.Realtime;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
@@ -23,6 +24,7 @@ public sealed class QueueService(
     INotificationDispatcher notificationDispatcher,
     ITenantCustomerService tenantCustomers,
     ITenantRealtimePublisher tenantRealtime,
+    IGuestPhoneVerificationProofValidator guestPhoneProof,
     IBookingIntakeAssignmentWriter? intake = null) : IQueueService
 {
     private static readonly Regex PhoneDigits = new(@"[^\d+]", RegexOptions.Compiled);
@@ -43,6 +45,18 @@ public sealed class QueueService(
         if (capability.IsFailure)
         {
             return Result.Failure<QueueTicketResponse>(capability.Error);
+        }
+
+        var normalizedPhone = PhoneNormalizer.Normalize(request.Phone);
+        if (normalizedPhone is null)
+        {
+            return Result.Failure<QueueTicketResponse>(Error.Validation("A valid phone number is required."));
+        }
+
+        var proofCheck = guestPhoneProof.Validate(normalizedPhone, request.PhoneVerificationProof);
+        if (proofCheck.IsFailure)
+        {
+            return Result.Failure<QueueTicketResponse>(proofCheck.Error);
         }
 
         return await CreateTicketAsync(

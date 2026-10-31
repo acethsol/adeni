@@ -138,6 +138,7 @@ public sealed class DiscoverySearchSqlServerTests
         services.AddSingleton<IFileStorage, FakeFileStorage>();
         AuditTestDoubles.Register(services);
         services.AddEntitlementsModule();
+        CustomerVerificationTestDoubles.Register(services);
         services.AddScoped<IReviewService, ReviewService>();
         services.AddScoped<DiscoveryService>();
 

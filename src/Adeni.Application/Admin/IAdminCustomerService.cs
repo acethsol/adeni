@@ -8,7 +8,9 @@ public sealed record AdminCustomerSummary(
     string Name,
     string? Email,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? ErasureRequestedAt);
+    DateTimeOffset? ErasureRequestedAt,
+    DateTimeOffset? EmailVerifiedAt = null,
+    DateTimeOffset? PhoneVerifiedAt = null);
 
 public sealed record CustomerDataExportResponse(
     Guid CustomerId,
@@ -18,6 +20,8 @@ public sealed record CustomerDataExportResponse(
     string? Phone,
     DateTimeOffset CreatedAt,
     DateTimeOffset? ErasureRequestedAt,
+    DateTimeOffset? EmailVerifiedAt,
+    DateTimeOffset? PhoneVerifiedAt,
     IReadOnlyList<CustomerBookingExportItem> Bookings,
     IReadOnlyList<Adeni.Application.Tenancy.CustomerSegmentsResponse>? CustomerSegments = null);
 

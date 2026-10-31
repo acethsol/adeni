@@ -130,6 +130,8 @@ export class QueueJoinComponent implements OnInit {
         email: optionalEmail(this.email),
         serviceOfferingId: this.serviceOfferingId || undefined,
         partySize: 1,
+        // Until Auth0/Twilio guest phone proof is wired in Discover, dev/testing accepts this stub.
+        phoneVerificationProof: "testing-verified",
       });
       this.ticket.set(ticket);
     } catch {

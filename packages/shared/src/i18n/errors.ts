@@ -48,6 +48,12 @@ export const enErrorMessages: MessageTree = {
     full: "The waiting list is full. Try again later.",
     no_capacity:
       "Walk-ins would conflict with upcoming appointments. Try again later or book an appointment.",
+    phone_not_verified: "Verify your phone number before joining the queue.",
+  },
+  customer: {
+    email_not_verified: "Verify your email before continuing.",
+    phone_not_verified: "Verify your phone number before continuing.",
+    verification_required: "Account verification is required for this action.",
   },
   messaging: {
     conversation_not_found: "Conversation was not found.",
@@ -253,6 +259,12 @@ export const frErrorMessages: MessageTree = {
     full: "La liste d'attente est pleine. Réessayez plus tard.",
     no_capacity:
       "Les clients sans rendez-vous entreraient en conflit avec les rendez-vous à venir. Réessayez plus tard ou prenez rendez-vous.",
+    phone_not_verified: "Vérifiez votre numéro de téléphone avant de rejoindre la file.",
+  },
+  customer: {
+    email_not_verified: "Vérifiez votre courriel avant de continuer.",
+    phone_not_verified: "Vérifiez votre numéro de téléphone avant de continuer.",
+    verification_required: "La vérification du compte est requise pour cette action.",
   },
   messaging: {
     conversation_not_found: "Conversation introuvable.",

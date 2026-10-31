@@ -25,6 +25,7 @@ import { StaffApi } from "./staff/staff-api";
 import { MessagingApi } from "./messaging/messaging-api";
 import { CatalogApi } from "./catalog/catalog-api";
 import { MeDocumentsApi } from "./me/me-documents-api";
+import { MeVerificationApi } from "./me/me-verification-api";
 
 /** Compatibility facade: domain operations share the same mutable transport/session state. */
 export class AdeniApiClient extends ApiTransport {
@@ -51,6 +52,7 @@ export class AdeniApiClient extends ApiTransport {
   private readonly messaging = new MessagingApi(this.context);
   private readonly catalog = new CatalogApi(this.context);
   private readonly meDocuments = new MeDocumentsApi(this.context);
+  private readonly meVerification = new MeVerificationApi(this.context);
 
   getCategories(...args: Parameters<DiscoveryApi["getCategories"]>): ReturnType<DiscoveryApi["getCategories"]> {
     return this.discovery.getCategories(...args);
@@ -99,6 +101,14 @@ export class AdeniApiClient extends ApiTransport {
 
   listMyDocuments(...args: Parameters<MeDocumentsApi["listMyDocuments"]>): ReturnType<MeDocumentsApi["listMyDocuments"]> {
     return this.meDocuments.listMyDocuments(...args);
+  }
+
+  getMeVerification(...args: Parameters<MeVerificationApi["getVerification"]>): ReturnType<MeVerificationApi["getVerification"]> {
+    return this.meVerification.getVerification(...args);
+  }
+
+  refreshMeVerification(...args: Parameters<MeVerificationApi["refreshVerification"]>): ReturnType<MeVerificationApi["refreshVerification"]> {
+    return this.meVerification.refreshVerification(...args);
   }
 
   getMyDocument(...args: Parameters<MeDocumentsApi["getMyDocument"]>): ReturnType<MeDocumentsApi["getMyDocument"]> {

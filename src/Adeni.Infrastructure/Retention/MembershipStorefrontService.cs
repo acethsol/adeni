@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Retention;
 
+using Adeni.Application.Identity;
 using Adeni.Application.Retention;
 using Adeni.Domain.Common;
 using Adeni.Domain.Retention;
@@ -14,7 +15,9 @@ using Microsoft.EntityFrameworkCore;
 public sealed class MembershipStorefrontService(
     AdeniDbContext db,
     IRetentionEntitlementGuard entitlements,
-    IMembershipBillingCoordinator billing) : IMembershipStorefrontService
+    IMembershipBillingCoordinator billing,
+    ICustomerTrustSyncService customerTrustSync,
+    ICustomerVerificationPolicy customerVerificationPolicy) : IMembershipStorefrontService
 {
     public async Task<Result<PublicMembershipPlanCatalogResponse>> GetPublicPlansAsync(
         string slug, CancellationToken cancellationToken = default)
@@ -61,6 +64,21 @@ public sealed class MembershipStorefrontService(
         string? idempotencyKey,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(customerAuth0Sub))
+        {
+            return Result.Failure<MembershipSubscribeResponse>(ErrorCodes.CustomerAuthRequiredError());
+        }
+
+        await customerTrustSync.SyncAsync(customerAuth0Sub, null, cancellationToken);
+        var verification = await customerVerificationPolicy.RequireEmailAndPhoneVerifiedAsync(
+            customerAuth0Sub,
+            null,
+            cancellationToken);
+        if (verification.IsFailure)
+        {
+            return Result.Failure<MembershipSubscribeResponse>(verification.Error);
+        }
+
         var tenantId = await ResolveTenantAsync(slug, cancellationToken);
         if (tenantId == Guid.Empty)
         {

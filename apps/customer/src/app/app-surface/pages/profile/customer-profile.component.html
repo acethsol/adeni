@@ -21,6 +21,33 @@
     </div>
   </section>
 
+  @if (verification(); as v) {
+    <section class="profile-section">
+      <h3 class="profile-section__label">{{ tr('customer.app.profile.verificationTitle') }}</h3>
+      <ul class="profile-verification">
+        <li>
+          @if (v.emailVerified) {
+            <adeni-carbon-icon name="checkmark--filled" [size]="16" />
+            {{ tr('customer.app.profile.emailVerified') }}
+          } @else {
+            <adeni-carbon-icon name="warning--filled" [size]="16" />
+            {{ tr('customer.app.profile.emailNotVerified') }}
+          }
+        </li>
+        <li>
+          @if (v.phoneVerified) {
+            <adeni-carbon-icon name="checkmark--filled" [size]="16" />
+            {{ tr('customer.app.profile.phoneVerified') }}
+          } @else {
+            <adeni-carbon-icon name="warning--filled" [size]="16" />
+            {{ tr('customer.app.profile.phoneNotVerified') }}
+          }
+        </li>
+      </ul>
+      <p class="profile-meta">{{ tr('customer.app.profile.identityNotRequired') }}</p>
+    </section>
+  }
+
   <section class="profile-section">
     <h3 class="profile-section__label">{{ tr('customer.app.profile.shortcuts') }}</h3>
     <ul class="profile-links">

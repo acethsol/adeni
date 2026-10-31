@@ -20,6 +20,7 @@ public static class ApplicationBuilderExtensions
         app.UseMiddleware<TenantScopeMiddleware>();
         app.UseMiddleware<TenantAccessMiddleware>();
         app.UseMiddleware<TenantFilterSyncMiddleware>();
+        app.UseMiddleware<CustomerTrustSyncMiddleware>();
         app.UseMiddleware<AuditMiddleware>();
         return app;
     }

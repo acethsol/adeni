@@ -138,6 +138,10 @@ public sealed partial class AdeniDbContext(
             entity.Property(x => x.Phone).HasMaxLength(32);
             entity.Property(x => x.PreferredLocale).HasMaxLength(8);
             entity.Property(x => x.ErasureRequestedAt);
+            entity.Property(x => x.EmailVerifiedAt);
+            entity.Property(x => x.PhoneVerifiedAt);
+            entity.Property(x => x.PhoneVerifiedFingerprint).HasMaxLength(64);
+            entity.Property(x => x.TrustUpdatedAt);
         });
 
         modelBuilder.Entity<Tenant>(entity =>

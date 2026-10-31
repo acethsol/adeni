@@ -6,6 +6,7 @@ using Adeni.Application.Booking;
 using Adeni.Application.Finance;
 using Adeni.Application.Messaging;
 using Adeni.Application.Subscriptions;
+using Adeni.Application.Identity;
 using Adeni.Application.Tenancy;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
@@ -20,11 +21,20 @@ public sealed class CustomerProfileQueryServiceTests
     private readonly Locations locations = new();
     private readonly Sources sources = new();
     private readonly Clock clock = new();
+    private readonly Trust trust = new();
 
     private CustomerProfileQueryService Service()
     {
         actor.TenantId = tenant;
-        return new(actor, context, locations, sources, sources, sources, new Cursor(), clock);
+        return new(actor, context, trust, locations, sources, sources, sources, new Cursor(), clock);
+    }
+
+    private sealed class Trust : ICustomerProfileTrustQuery
+    {
+        public Task<CustomerProfileTrustIndicators?> GetForPlatformCustomerAsync(
+            Guid? platformCustomerId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<CustomerProfileTrustIndicators?>(null);
     }
 
     [Theory]
@@ -62,7 +72,7 @@ public sealed class CustomerProfileQueryServiceTests
         context.Entitlements = context.Entitlements with { Packages = true };
         var summaries = new PackageSummaries(new(1, 2, ["Cut x3"]));
         actor.TenantId = tenant;
-        var service = new CustomerProfileQueryService(actor, context, locations, sources, sources, sources, new Cursor(), clock, summaries);
+        var service = new CustomerProfileQueryService(actor, context, trust, locations, sources, sources, sources, new Cursor(), clock, summaries);
 
         var result = await service.GetProfileAsync(tenant, customer, "actor");
 
@@ -77,7 +87,7 @@ public sealed class CustomerProfileQueryServiceTests
         context.Entitlements = context.Entitlements with { Packages = false };
         var summaries = new PackageSummaries(new(1, 2, ["Cut x3"]));
         actor.TenantId = tenant;
-        var service = new CustomerProfileQueryService(actor, context, locations, sources, sources, sources, new Cursor(), clock, summaries);
+        var service = new CustomerProfileQueryService(actor, context, trust, locations, sources, sources, sources, new Cursor(), clock, summaries);
 
         var result = await service.GetProfileAsync(tenant, customer, "actor");
 

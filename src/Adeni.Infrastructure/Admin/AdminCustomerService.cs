@@ -59,7 +59,9 @@ public sealed class AdminCustomerService(
                 c.Name,
                 c.Email,
                 c.CreatedAt,
-                c.ErasureRequestedAt))
+                c.ErasureRequestedAt,
+                c.EmailVerifiedAt,
+                c.PhoneVerifiedAt))
             .ToListAsync(cancellationToken);
 
         return Result.Success(new AdminPagedResult<AdminCustomerSummary>(
@@ -118,6 +120,8 @@ public sealed class AdminCustomerService(
             customer.Phone,
             customer.CreatedAt,
             customer.ErasureRequestedAt,
+            customer.EmailVerifiedAt,
+            customer.PhoneVerifiedAt,
             bookings,
             segments is null ? [] : await segments.ExportAsync(customerId, cancellationToken)));
     }
@@ -145,6 +149,10 @@ public sealed class AdminCustomerService(
         customer.Name = "[erased]";
         customer.Email = null;
         customer.Phone = null;
+        customer.EmailVerifiedAt = null;
+        customer.PhoneVerifiedAt = null;
+        customer.PhoneVerifiedFingerprint = null;
+        customer.TrustUpdatedAt = now;
         if (intakeRetention is not null) await intakeRetention.StagePrivacyPurgeAsync(customerId, cancellationToken);
         if (commercePrivacy is not null) await commercePrivacy.StageErasureAsync(customerId, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);

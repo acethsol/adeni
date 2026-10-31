@@ -30,7 +30,8 @@ public sealed record JoinQueueRequest(
     Guid? ServiceOfferingId = null,
     int PartySize = 1,
     string? Notes = null,
-    string? Email = null);
+    string? Email = null,
+    string? PhoneVerificationProof = null);
 
 public sealed record StaffAddQueueRequest(
     string DisplayName,
