@@ -18,6 +18,10 @@ public interface IFileStorage
 
     Task<bool> ExistsAsync(string storageKey, CancellationToken cancellationToken = default);
 
+    Task<StoredObjectMetadata?> GetStoredMetadataAsync(
+        string storageKey,
+        CancellationToken cancellationToken = default);
+
     Task<byte[]?> ReadBytesAsync(string storageKey, CancellationToken cancellationToken = default);
 
     Task DeleteAsync(string storageKey, CancellationToken cancellationToken = default);

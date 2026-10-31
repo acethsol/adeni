@@ -25,7 +25,8 @@ function auth0Providers() {
         redirect_uri: window.location.origin,
         audience: config.auth0.audience,
       },
-      cacheLocation: "localstorage",
+      cacheLocation: "memory",
+      useRefreshTokens: true,
       httpInterceptor: {
         allowedList: [
           {

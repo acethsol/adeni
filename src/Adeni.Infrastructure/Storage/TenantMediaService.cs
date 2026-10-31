@@ -1,9 +1,11 @@
 namespace Adeni.Infrastructure.Storage;
 
+using Adeni.Application.Auth;
 using Adeni.Application.Caching;
 using Adeni.Application.Storage;
 using Adeni.Application.Tenancy;
 using Adeni.Domain.Common;
+using Adeni.Domain.Identity;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +13,9 @@ using Microsoft.EntityFrameworkCore;
 public sealed class TenantMediaService(
     AdeniDbContext dbContext,
     IFileStorage fileStorage,
-    ICacheService cache) : ITenantMediaService
+    ICacheService cache,
+    IBusinessPermissionService permissions,
+    IMediaUploadBlobValidator uploadBlobValidator) : ITenantMediaService
 {
     public const int MaxGalleryImages = GalleryImageKeys.MaxCount;
     private const long MaxImageBytes = 5 * 1024 * 1024;
@@ -46,6 +50,12 @@ public sealed class TenantMediaService(
         if (!TryParsePurpose(request.Purpose, out var purpose))
         {
             return Result.Failure<MediaUploadUrlResponse>(Error.Validation("Upload purpose is not supported."));
+        }
+
+        var permissionCheck = await EnsurePurposePermissionAsync(auth0Sub, purpose, cancellationToken);
+        if (permissionCheck.IsFailure)
+        {
+            return Result.Failure<MediaUploadUrlResponse>(permissionCheck.Error);
         }
 
         var maxBytes = purpose == MediaUploadPurpose.VerificationDocument
@@ -109,9 +119,14 @@ public sealed class TenantMediaService(
             return Result.Failure<string>(Error.Validation("Cover image key is not valid for this business."));
         }
 
-        if (!await fileStorage.ExistsAsync(storageKey, cancellationToken))
+        var blobCheck = await uploadBlobValidator.ValidateConfirmedUploadAsync(
+            tenantId,
+            MediaUploadPurpose.Cover,
+            storageKey,
+            cancellationToken);
+        if (blobCheck.IsFailure)
         {
-            return Result.Failure<string>(Error.Validation("Cover image upload was not found. Upload the file before saving."));
+            return Result.Failure<string>(blobCheck.Error);
         }
 
         profile.CoverImageKey = storageKey;
@@ -150,10 +165,14 @@ public sealed class TenantMediaService(
                 Error.Validation("Gallery image key is not valid for this business."));
         }
 
-        if (!await fileStorage.ExistsAsync(storageKey, cancellationToken))
+        var blobCheck = await uploadBlobValidator.ValidateConfirmedUploadAsync(
+            tenantId,
+            MediaUploadPurpose.Gallery,
+            storageKey,
+            cancellationToken);
+        if (blobCheck.IsFailure)
         {
-            return Result.Failure<IReadOnlyList<GalleryImageResponse>>(
-                Error.Validation("Gallery image upload was not found. Upload the file before saving."));
+            return Result.Failure<IReadOnlyList<GalleryImageResponse>>(blobCheck.Error);
         }
 
         var keys = GalleryImageKeys.Deserialize(profile.GalleryImageKeysJson);
@@ -238,6 +257,33 @@ public sealed class TenantMediaService(
         {
             await cache.RemoveAsync(CacheKeys.LocationProfile(slug), cancellationToken);
         }
+    }
+
+    private async Task<Result> EnsurePurposePermissionAsync(
+        string auth0Sub,
+        MediaUploadPurpose purpose,
+        CancellationToken cancellationToken)
+    {
+        var required = purpose switch
+        {
+            MediaUploadPurpose.VerificationDocument => BusinessPermissions.Profile,
+            MediaUploadPurpose.StaffAvatar => BusinessPermissions.Staff,
+            MediaUploadPurpose.MessageAttachment => BusinessPermissions.Messages,
+            _ => BusinessPermissions.PublicPage,
+        };
+
+        var resolved = await permissions.ResolveAsync(auth0Sub, cancellationToken);
+        if (resolved.IsFailure || resolved.Value is null)
+        {
+            return Result.Failure(resolved.Error ?? Error.Forbidden("Authentication is required."));
+        }
+
+        if (!BusinessPermissionRoles.HasAny(resolved.Value.PermissionRole, required))
+        {
+            return Result.Failure(ErrorCodes.PermissionDeniedError());
+        }
+
+        return Result.Success();
     }
 
     private async Task<Result<BusinessProfile>> ResolveAccessAsync(

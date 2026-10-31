@@ -59,6 +59,22 @@ public sealed class LocalFileStorage(
     public Task<bool> ExistsAsync(string storageKey, CancellationToken cancellationToken = default) =>
         Task.FromResult(File.Exists(GetFullPath(storageKey)));
 
+    public Task<StoredObjectMetadata?> GetStoredMetadataAsync(
+        string storageKey,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var fullPath = GetFullPath(storageKey);
+        if (!File.Exists(fullPath))
+        {
+            return Task.FromResult<StoredObjectMetadata?>(null);
+        }
+
+        var info = new FileInfo(fullPath);
+        return Task.FromResult<StoredObjectMetadata?>(
+            new StoredObjectMetadata(info.Length, GuessContentType(fullPath)));
+    }
+
     public Task<byte[]?> ReadBytesAsync(string storageKey, CancellationToken cancellationToken = default)
     {
         if (IsAbsoluteUrl(storageKey))
@@ -88,6 +104,16 @@ public sealed class LocalFileStorage(
 
     public string GetRootPath() => Path.GetFullPath(_options.RootPath);
 
+    private static string? GuessContentType(string fullPath) =>
+        Path.GetExtension(fullPath).ToLowerInvariant() switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".webp" => "image/webp",
+            ".pdf" => "application/pdf",
+            _ => null,
+        };
+
     private static bool IsAbsoluteUrl(string storageKey) =>
         storageKey.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
         || storageKey.StartsWith("http://", StringComparison.OrdinalIgnoreCase);
@@ -95,10 +121,20 @@ public sealed class LocalFileStorage(
     private string GetFullPath(string storageKey)
     {
         var normalizedKey = storageKey.Replace('\\', '/').TrimStart('/');
-        var root = Path.GetFullPath(_options.RootPath);
-        var fullPath = Path.GetFullPath(Path.Combine(root, normalizedKey.Replace('/', Path.DirectorySeparatorChar)));
+        if (normalizedKey.Contains("..", StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("Invalid storage key path.");
+        }
 
-        if (!fullPath.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+        var root = Path.GetFullPath(_options.RootPath);
+        if (!root.EndsWith(Path.DirectorySeparatorChar))
+        {
+            root += Path.DirectorySeparatorChar;
+        }
+
+        var fullPath = Path.GetFullPath(Path.Combine(root, normalizedKey.Replace('/', Path.DirectorySeparatorChar)));
+        var relative = Path.GetRelativePath(root, fullPath);
+        if (relative.StartsWith("..", StringComparison.Ordinal) || Path.IsPathRooted(relative))
         {
             throw new InvalidOperationException("Invalid storage key path.");
         }

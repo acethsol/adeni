@@ -130,7 +130,7 @@ static bool ShouldSeedSampleData(IHostEnvironment environment, IConfiguration co
         return enabled.Value;
     }
 
-    return environment.IsDevelopment() || environment.IsStaging();
+    return environment.IsDevelopment();
 }
 
 static async Task SeedSampleDataAsync(IServiceProvider services)

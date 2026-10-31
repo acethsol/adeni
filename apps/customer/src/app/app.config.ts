@@ -39,7 +39,8 @@ function auth0Providers() {
         audience: config.auth0.audience,
       },
       // Avoid localStorage on SSR (NG0203 / Auth0 browser APIs).
-      cacheLocation: browser ? "localstorage" : "memory",
+      cacheLocation: "memory",
+      useRefreshTokens: true,
     }),
   ];
 }

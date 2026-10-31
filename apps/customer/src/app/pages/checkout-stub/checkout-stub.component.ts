@@ -55,7 +55,13 @@ export class CheckoutStubComponent implements OnInit, OnDestroy {
       return;
     }
 
-    void this.checkoutRealtime.watchCheckout(reference);
+    const realtimeToken = params.get("rt")?.trim() ?? "";
+    if (!realtimeToken) {
+      this.error.set(this.tr("discover.checkoutStub.paymentLinkInvalid"));
+      return;
+    }
+
+    void this.checkoutRealtime.watchCheckout(realtimeToken);
     this.realtimeSub = this.checkoutRealtime.paymentCompleted$.subscribe((event) => {
       const ref = event.providerReference?.trim();
       if (!ref || ref === reference) {

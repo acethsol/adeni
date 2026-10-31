@@ -34,6 +34,8 @@ public sealed class PaymentOrchestratorTests
         Assert.NotNull(result.Value);
         Assert.Equal("pending", result.Value!.Status);
         Assert.StartsWith("/checkout/stub/", result.Value!.CheckoutUrl);
+        Assert.Contains("rt=", result.Value!.CheckoutUrl, StringComparison.Ordinal);
+        Assert.False(string.IsNullOrWhiteSpace(result.Value!.CheckoutRealtimeToken));
 
         var stored = await db.PaymentIntents.SingleAsync();
         Assert.Equal(2500m, stored.Amount);
@@ -114,7 +116,8 @@ public sealed class PaymentOrchestratorTests
             new TestCorrelationContext(),
             new DomainEventCollector(),
             paymentsOptions,
-            new NoOpTenantRealtimePublisher());
+            new NoOpTenantRealtimePublisher(),
+            new PaymentCheckoutRealtimeTokenService(paymentsOptions));
     }
 
     private static AdeniDbContext CreateDb()

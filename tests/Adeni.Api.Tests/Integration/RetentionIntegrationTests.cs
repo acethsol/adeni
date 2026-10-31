@@ -279,8 +279,17 @@ public sealed class RetentionIntegrationTests : IClassFixture<WebApplicationFact
         return id;
     }
 
-    private static string ReferenceFrom(JsonElement purchase) =>
-        purchase.GetProperty("checkoutUrl").GetString()!.TrimEnd('/').Split('/').Last();
+    private static string ReferenceFrom(JsonElement purchase)
+    {
+        if (purchase.TryGetProperty("providerReference", out var direct) && direct.GetString() is { Length: > 0 } fromField)
+        {
+            return fromField;
+        }
+
+        var url = purchase.GetProperty("checkoutUrl").GetString()!;
+        var path = url.Split('?', 2)[0];
+        return path.TrimEnd('/').Split('/').Last();
+    }
 
     [Fact]
     public async Task PublicCatalog_IsAnonymous_ListsOnlyActivePackages_WithoutInternalFields()

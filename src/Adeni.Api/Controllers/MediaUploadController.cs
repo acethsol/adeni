@@ -11,8 +11,11 @@ public sealed class MediaUploadController(
     UploadSignatureValidator signatureValidator,
     IOptions<StorageOptions> storageOptions) : ControllerBase
 {
+    private const long DefaultMaxUploadBytes = 5 * 1024 * 1024;
+    private const long VerificationMaxUploadBytes = 10 * 1024 * 1024;
+
     [HttpPut("media-upload")]
-    [RequestSizeLimit(5 * 1024 * 1024)]
+    [RequestSizeLimit(10 * 1024 * 1024)]
     public async Task<IActionResult> Upload(
         [FromQuery] string key,
         [FromQuery] long expires,
@@ -28,6 +31,14 @@ public sealed class MediaUploadController(
             || !signatureValidator.TryValidate(key, expires, sig))
         {
             return Unauthorized();
+        }
+
+        var maxBytes = key.Contains("/verification/", StringComparison.OrdinalIgnoreCase)
+            ? VerificationMaxUploadBytes
+            : DefaultMaxUploadBytes;
+        if (Request.ContentLength is long contentLength && contentLength > maxBytes)
+        {
+            return StatusCode(StatusCodes.Status413PayloadTooLarge);
         }
 
         await fileStorage.SaveAsync(

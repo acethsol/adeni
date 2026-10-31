@@ -9,6 +9,7 @@ using Adeni.Domain.Booking;
 using Adeni.Domain.Identity;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Booking;
+using Adeni.Infrastructure.Storage;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Subscriptions;
@@ -429,6 +430,7 @@ public sealed class StaffServiceTests
             sp.GetRequiredService<Adeni.Infrastructure.Context.TenantContext>());
         services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
         services.AddEntitlementsModule();
+        services.AddScoped<IMediaUploadBlobValidator, MediaUploadBlobValidator>();
         services.AddScoped<IStaffService, StaffService>();
         return services.BuildServiceProvider();
     }
@@ -456,6 +458,11 @@ public sealed class StaffServiceTests
 
         public Task<bool> ExistsAsync(string storageKey, CancellationToken cancellationToken = default) =>
             Task.FromResult(false);
+
+        public Task<StoredObjectMetadata?> GetStoredMetadataAsync(
+            string storageKey,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<StoredObjectMetadata?>(null);
 
         public Task<byte[]?> ReadBytesAsync(string storageKey, CancellationToken cancellationToken = default) =>
             Task.FromResult<byte[]?>(null);

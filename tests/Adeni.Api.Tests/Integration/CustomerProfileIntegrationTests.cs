@@ -143,12 +143,12 @@ public sealed class CustomerProfileIntegrationTests : IClassFixture<WebApplicati
     }
 
     [Fact]
-    public async Task Practitioner_ExistingDetailPolicyRemainsUnchanged_NewAggregateIsDeferred()
+    public async Task Practitioner_CannotAccessCustomerDirectory_OrProfileEndpoints()
     {
         var data = await SeedAsync("practitioner");
         using var client = data.Client;
         var path = $"/api/v1/tenant/customers/{data.CustomerId}";
-        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync(path)).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync(path)).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync($"{path}/profile")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync($"{path}/activity")).StatusCode);
     }

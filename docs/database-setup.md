@@ -20,7 +20,7 @@ dotnet run --project src/Adeni.Api --launch-profile http
 |------|------|
 | `publish-db.ps1` | Build `.dacpac`, schema sync, **post-deploy reference data** (pricing catalog) |
 | API startup (all envs) | **Markets** from JSON if `catalog.markets` is empty |
-| API (Development + Staging) | **Sample businesses** via `DevelopmentDataSeeder` when `SampleData:Enabled` (default on for those environments) |
+| API (Development) | **Sample businesses** via `DevelopmentDataSeeder` when `SampleData:Enabled` is true (default on in Development only) |
 
 Connection string is preconfigured in `appsettings.Development.json`:
 
@@ -45,9 +45,9 @@ curl http://localhost:5169/health
 
 Expect `"database": "healthy"` when SQL Server is connected and the project has been published.
 
-## Sample data (Development + Staging)
+## Sample data (Development; Staging opt-in)
 
-When `SampleData:Enabled` is true (default for Development and Staging), the API seeds after schema publish:
+When `SampleData:Enabled` is true, the API seeds after schema publish. **Development** defaults to enabled when unset; **Staging/Production** must set `SampleData:Enabled` explicitly (Staging ships `false`) and the API **fails startup** if sample seed is enabled in Staging or Production.
 
 1. **`DevelopmentDataSeeder` (C#)** — markets, Lagos/Ottawa discovery businesses, Lekki Cuts fixture (branches, roster, messaging, queue, billing stubs, dev Auth0 subs).
 2. **Sample SQL** (`db/scripts/sample-data/`) — admin Finance/audit browse rows (`devseed`), ~30 staff per Lekki branch, bookings/reviews/queue/calendar volume, wellness consultation intake. Idempotent via markers (`seed-lekki-demo-v1`, etc.). Shipped with the API publish output; not run in Production.
@@ -56,9 +56,9 @@ When `SampleData:Enabled` is true (default for Development and Staging), the API
 
 **Refresh grid dates without drop:** set `"SampleData": { "CleanupVolumeDemo": true }`, restart API once (cleanup then re-seed), set back to `false`.
 
-**Staging:** same path with `ASPNETCORE_ENVIRONMENT=Staging`. Turn off sample data with `"SampleData": { "Enabled": false }`.
+**Staging:** set `"SampleData": { "Enabled": true }` only when you intentionally want Lekki/demo fixtures on a shared environment; otherwise leave `false`.
 
-**Production:** sample seed off unless explicitly misconfigured.
+**Production:** sample seed must remain off (startup validation).
 
 Schema changes belong in **`db/Adeni.Database/`** only — do not add incremental patch scripts under `db/scripts/`.
 

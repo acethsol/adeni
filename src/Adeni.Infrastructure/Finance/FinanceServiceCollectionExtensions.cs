@@ -25,6 +25,7 @@ public static class FinanceServiceCollectionExtensions
         services.AddHttpClient<PaystackPaymentProvider>();
         services.AddHttpClient<StripePaymentProvider>();
         services.AddScoped<StubPaymentProvider>();
+        services.AddSingleton<IPaymentCheckoutRealtimeTokenService, PaymentCheckoutRealtimeTokenService>();
 
         var provider = configuration.GetSection(FinanceOptions.SectionName)["Provider"]
             ?? configuration.GetSection(PaymentsOptions.SectionName)["Provider"]

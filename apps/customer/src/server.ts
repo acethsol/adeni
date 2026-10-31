@@ -22,6 +22,17 @@ const browserDistFolder = join(import.meta.dirname, "../browser");
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
+app.use((_req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+  if (_req.secure || _req.headers["x-forwarded-proto"] === "https") {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
+  next();
+});
+
 const API_BASE = (process.env["ADENI_API_BASE_URL"] ?? "http://localhost:5169").replace(
   /\/$/,
   "",

@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Tests.Booking;
 
+using Adeni.Infrastructure.Tests.Finance;
 using Adeni.Infrastructure.Tests.TestSupport;
 
 using Adeni.Infrastructure.Tests.Subscriptions;
@@ -250,6 +251,7 @@ public sealed class PaymentLoopTests
         services.AddScoped<IPlatformFeeCalculator, PlatformFeeCalculator>();
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();
         services.AddBookingTestRealtime();
+        services.AddCheckoutRealtimeTokens();
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
         services.AddScoped<IStaffCompensationService, StaffCompensationService>();
         services.AddSingleton<INotificationDispatcher, LoopNotificationDispatcher>();

@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Tests.Booking;
 
+using Adeni.Infrastructure.Tests.Finance;
 using Adeni.Infrastructure.Tests.TestSupport;
 
 using Adeni.Infrastructure.Tests.Subscriptions;
@@ -18,6 +19,7 @@ using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
 using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Booking;
+using Adeni.Infrastructure.Storage;
 using Adeni.Infrastructure.Tenancy;
 using Adeni.Infrastructure.Caching;
 using Adeni.Infrastructure.Events;
@@ -212,6 +214,7 @@ public sealed class PractitionerBookingScopeTests
         services.AddScoped<ITenantSchedulingTimeZone, TenantSchedulingTimeZone>();
         services.AddScoped<IBusinessClosedDateService, BusinessClosedDateService>();
         services.AddScoped<IAvailabilityService, AvailabilityService>();
+        services.AddScoped<IMediaUploadBlobValidator, MediaUploadBlobValidator>();
         services.AddScoped<IStaffService, StaffService>();
         services.AddScoped<IReviewService, ReviewService>();
         services.AddEntitlementsModule();
@@ -225,6 +228,7 @@ public sealed class PractitionerBookingScopeTests
         services.AddScoped<IPlatformFeeCalculator, PlatformFeeCalculator>();
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();
         services.AddBookingTestRealtime();
+        services.AddCheckoutRealtimeTokens();
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
         services.AddScoped<IStaffCompensationService, StaffCompensationService>();
         services.AddSingleton<Application.Notifications.INotificationDispatcher, ScopeTestNotifications>();
@@ -295,6 +299,11 @@ public sealed class PractitionerBookingScopeTests
 
         public Task<bool> ExistsAsync(string storageKey, CancellationToken cancellationToken = default) =>
             Task.FromResult(false);
+
+        public Task<StoredObjectMetadata?> GetStoredMetadataAsync(
+            string storageKey,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<StoredObjectMetadata?>(null);
 
         public Task<byte[]?> ReadBytesAsync(string storageKey, CancellationToken cancellationToken = default) =>
             Task.FromResult<byte[]?>(null);
