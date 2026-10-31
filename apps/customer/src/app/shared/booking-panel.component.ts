@@ -651,7 +651,11 @@ export class BookingPanelComponent {
             ? payment.checkoutUrl
             : `/checkout/stub/${payment.providerReference}`,
           window.location.origin,
-          { amount: payment.amount, currency: payment.currency },
+          {
+            amount: payment.amount,
+            currency: payment.currency,
+            checkoutRealtimeToken: payment.checkoutRealtimeToken,
+          },
         );
         return;
       }
