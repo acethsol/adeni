@@ -23,8 +23,95 @@ public sealed partial class PaymentOrchestrator(
     IOptions<FinanceOptions> paymentsOptions,
     ITenantRealtimePublisher tenantRealtime,
     IPaymentCheckoutRealtimeTokenService checkoutRealtimeTokens,
+    ICustomerPaymentAccessQuery customerPaymentAccess,
+    IBookingDepositCalculator bookingDepositCalculator,
+    IPaymentCallbackUrlValidator callbackUrlValidator,
     ICommercePaymentCompletion? commerce = null) : IPaymentOrchestrator
 {
+    public async Task<Result<PaymentIntentResponse>> InitializeCustomerBookingPaymentAsync(
+        string customerAuth0Sub,
+        InitializePaymentRequest request,
+        string? idempotencyKey = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(customerAuth0Sub))
+        {
+            return Result.Failure<PaymentIntentResponse>(ErrorCodes.AuthRequiredError());
+        }
+
+        var paymentType = ParsePaymentType(request.Type);
+        if (paymentType != PaymentIntentType.Deposit)
+        {
+            return Result.Failure<PaymentIntentResponse>(
+                Error.Validation("Customer checkout supports booking deposit payments only."));
+        }
+
+        if (request.BookingId is not Guid bookingId)
+        {
+            return Result.Failure<PaymentIntentResponse>(Error.Validation("Booking id is required."));
+        }
+
+        if (!await customerPaymentAccess.OwnsBookingAsync(customerAuth0Sub, bookingId, cancellationToken))
+        {
+            return Result.Failure<PaymentIntentResponse>(Error.Forbidden("You do not have access to this booking."));
+        }
+
+        var booking = await dbContext.Bookings.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == bookingId, cancellationToken);
+        if (booking is null)
+        {
+            return Result.Failure<PaymentIntentResponse>(Error.NotFound("Booking"));
+        }
+
+        if (request.TenantId != Guid.Empty && request.TenantId != booking.TenantId)
+        {
+            return Result.Failure<PaymentIntentResponse>(Error.Forbidden("Booking does not belong to the specified business."));
+        }
+
+        var depositResult = await bookingDepositCalculator.CalculateRequiredDepositAsync(bookingId, cancellationToken);
+        if (depositResult.IsFailure)
+        {
+            return Result.Failure<PaymentIntentResponse>(depositResult.Error);
+        }
+
+        var deposit = depositResult.Value!;
+        Guid? tipStaffId = request.TipStaffMemberId;
+        if (tipStaffId is Guid staffId)
+        {
+            var tipCheck = await ValidateTipStaffMemberAsync(booking.TenantId, staffId, cancellationToken);
+            if (tipCheck.IsFailure)
+            {
+                return Result.Failure<PaymentIntentResponse>(tipCheck.Error);
+            }
+        }
+
+        if (request.TipAmount is > 0 && tipStaffId is null)
+        {
+            return Result.Failure<PaymentIntentResponse>(Error.Validation("Tip staff member is required when tipping."));
+        }
+
+        var customerId = await dbContext.Customers.AsNoTracking()
+            .Where(c => c.Auth0Sub == customerAuth0Sub)
+            .Select(c => (Guid?)c.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return await CreatePaymentIntentAsync(
+            booking.TenantId,
+            bookingId,
+            deposit.Amount,
+            deposit.Currency,
+            PaymentIntentType.Deposit,
+            request.Description,
+            request.CustomerEmail,
+            callbackUrl: null,
+            idempotencyKey,
+            request.TipAmount,
+            tipStaffId,
+            idempotencyCustomerId: customerId,
+            useServerCallbackForCustomer: true,
+            cancellationToken);
+    }
+
     public Task<Result<PaymentIntentResponse>> InitializeAsync(
         InitializePaymentRequest request,
         string? idempotencyKey = null,
@@ -41,7 +128,7 @@ public sealed partial class PaymentOrchestrator(
             idempotencyKey,
             request.TipAmount,
             request.TipStaffMemberId,
-            cancellationToken);
+            cancellationToken: cancellationToken);
 
     public Task<Result<PaymentIntentResponse>> CreatePaymentLinkAsync(
         CreatePaymentLinkRequest request,
@@ -58,7 +145,7 @@ public sealed partial class PaymentOrchestrator(
             idempotencyKey: null,
             tipAmount: null,
             tipStaffMemberId: null,
-            cancellationToken);
+            cancellationToken: cancellationToken);
 
     public async Task<Result<PaymentIntentResponse>> GetAsync(
         Guid paymentIntentId,
@@ -328,22 +415,52 @@ public sealed partial class PaymentOrchestrator(
         string? idempotencyKey,
         decimal? tipAmount,
         Guid? tipStaffMemberId,
-        CancellationToken cancellationToken)
+        Guid? idempotencyCustomerId = null,
+        bool useServerCallbackForCustomer = false,
+        CancellationToken cancellationToken = default)
     {
+        if (tipStaffMemberId is Guid tipStaffId)
+        {
+            var tipCheck = await ValidateTipStaffMemberAsync(tenantId, tipStaffId, cancellationToken);
+            if (tipCheck.IsFailure)
+            {
+                return Result.Failure<PaymentIntentResponse>(tipCheck.Error);
+            }
+        }
+
+        if (!useServerCallbackForCustomer)
+        {
+            var callbackCheck = callbackUrlValidator.ValidateOptionalCallbackUrl(callbackUrl);
+            if (callbackCheck.IsFailure)
+            {
+                return Result.Failure<PaymentIntentResponse>(callbackCheck.Error);
+            }
+        }
+
         var normalizedIdempotencyKey = IdempotencyKeyNormalizer.Normalize(idempotencyKey);
         if (normalizedIdempotencyKey is not null)
         {
-            var existing = await dbContext.PaymentIntents
+            var existingQuery = dbContext.PaymentIntents
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.IdempotencyKey == normalizedIdempotencyKey, cancellationToken);
+                .Where(x => x.IdempotencyKey == normalizedIdempotencyKey && x.TenantId == tenantId);
 
+            if (idempotencyCustomerId is Guid scopedCustomerId)
+            {
+                existingQuery = existingQuery.Where(x =>
+                    x.BookingId != null
+                    && dbContext.Bookings.Any(b =>
+                        b.Id == x.BookingId
+                        && b.CustomerId == scopedCustomerId));
+            }
+
+            var existing = await existingQuery.FirstOrDefaultAsync(cancellationToken);
             if (existing is not null)
             {
                 return Result.Success(Map(existing));
             }
         }
 
-        var resolvedAmountResult = await ResolveAmountAsync(tenantId, bookingId, amount, type, cancellationToken);
+        var resolvedAmountResult = await ResolveAmountAsync(tenantId, bookingId, amount, currency, type, cancellationToken);
         if (resolvedAmountResult.IsFailure)
         {
             return Result.Failure<PaymentIntentResponse>(resolvedAmountResult.Error);
@@ -370,6 +487,10 @@ public sealed partial class PaymentOrchestrator(
         var paymentIntentId = Guid.NewGuid();
         var reference = $"{paymentProvider.ProviderName.ToLowerInvariant()}_{paymentIntentId:N}"[..32];
 
+        var resolvedCallbackUrl = useServerCallbackForCustomer
+            ? callbackUrlValidator.BuildCustomerBookingCallbackUrl(paymentIntentId)
+            : string.IsNullOrWhiteSpace(callbackUrl) ? null : callbackUrl.Trim();
+
         var entity = new PaymentIntentRecord
         {
             Id = paymentIntentId,
@@ -383,7 +504,7 @@ public sealed partial class PaymentOrchestrator(
             ProviderReference = reference,
             Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
             CustomerEmail = string.IsNullOrWhiteSpace(customerEmail) ? null : customerEmail.Trim(),
-            CallbackUrl = string.IsNullOrWhiteSpace(callbackUrl) ? null : callbackUrl.Trim(),
+            CallbackUrl = resolvedCallbackUrl,
             IdempotencyKey = normalizedIdempotencyKey,
             TipAmount = tipAmount is > 0 ? tipAmount : null,
             TipStaffMemberId = tipStaffMemberId,
@@ -428,7 +549,7 @@ public sealed partial class PaymentOrchestrator(
             cancellationToken);
 
         var realtimeToken = checkoutRealtimeTokens.Issue(entity.Id, entity.ProviderReference);
-        var checkoutUrl = AppendCheckoutRealtimeToken(providerResult.Value.CheckoutUrl, realtimeToken);
+        var checkoutUrl = BuildCheckoutUrlForResponse(providerResult.Value.CheckoutUrl, entity.ProviderReference, realtimeToken);
         var response = Map(entity) with
         {
             CheckoutUrl = checkoutUrl,
@@ -442,49 +563,55 @@ public sealed partial class PaymentOrchestrator(
         Guid tenantId,
         Guid? bookingId,
         decimal? amount,
+        string currency,
         PaymentIntentType type,
         CancellationToken cancellationToken)
     {
+        if (type == PaymentIntentType.Deposit && bookingId is Guid depositBookingId)
+        {
+            var bookingTenantMatches = await dbContext.Bookings.AsNoTracking()
+                .AnyAsync(x => x.Id == depositBookingId && x.TenantId == tenantId, cancellationToken);
+            if (!bookingTenantMatches)
+            {
+                return Result.Failure<(decimal, string)>(Error.NotFound("Booking"));
+            }
+
+            var deposit = await bookingDepositCalculator.CalculateRequiredDepositAsync(depositBookingId, cancellationToken);
+            if (deposit.IsFailure)
+            {
+                return Result.Failure<(decimal, string)>(deposit.Error);
+            }
+
+            return Result.Success((deposit.Value!.Amount, deposit.Value.Currency));
+        }
+
         if (amount.HasValue && amount.Value > 0)
         {
-            return Result.Success((amount.Value, "NGN"));
+            var resolvedCurrency = string.IsNullOrWhiteSpace(currency)
+                ? "NGN"
+                : currency.Trim().ToUpperInvariant();
+            return Result.Success((amount.Value, resolvedCurrency));
         }
 
-        if (!bookingId.HasValue || type != PaymentIntentType.Deposit)
+        return Result.Failure<(decimal, string)>(ErrorCodes.PaymentInvalidAmountError());
+    }
+
+    private async Task<Result> ValidateTipStaffMemberAsync(
+        Guid tenantId,
+        Guid staffMemberId,
+        CancellationToken cancellationToken)
+    {
+        var staff = await dbContext.StaffMembers.AsNoTracking()
+            .FirstOrDefaultAsync(
+                x => x.Id == staffMemberId && x.TenantId == tenantId,
+                cancellationToken);
+
+        if (staff is null || !staff.IsActive)
         {
-            return Result.Failure<(decimal, string)>(ErrorCodes.PaymentInvalidAmountError());
+            return Result.Failure(Error.Validation("Tip staff member is not valid for this business."));
         }
 
-        var bookingRow = await (
-            from booking in dbContext.Bookings.AsNoTracking().Include(b => b.Lines)
-            join service in dbContext.ServiceOfferings.AsNoTracking() on booking.ServiceOfferingId equals service.Id
-            join profile in dbContext.BusinessProfiles.AsNoTracking() on booking.TenantId equals profile.TenantId
-            where booking.Id == bookingId.Value && booking.TenantId == tenantId
-            select new { booking, service, profile })
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (bookingRow is null)
-        {
-            return Result.Failure<(decimal, string)>(Error.NotFound("Booking"));
-        }
-
-        if (bookingRow.profile.DepositPercent <= 0)
-        {
-            return Result.Failure<(decimal, string)>(ErrorCodes.PaymentDepositNotConfiguredError());
-        }
-
-        var cartTotal = bookingRow.booking.Lines.Count > 0
-            ? bookingRow.booking.Lines.Sum(x => x.PriceAmount)
-            : bookingRow.service.PriceAmount;
-        var guestCount = Math.Max(1, bookingRow.booking.GuestCount);
-        var taxableTotal = cartTotal * guestCount;
-
-        var depositAmount = Math.Round(
-            taxableTotal * bookingRow.profile.DepositPercent / 100m,
-            2,
-            MidpointRounding.AwayFromZero);
-
-        return Result.Success((depositAmount, bookingRow.service.Currency));
+        return Result.Success();
     }
 
     private async Task<string> ResolveMarketIdAsync(Guid tenantId, CancellationToken cancellationToken)
@@ -653,6 +780,7 @@ public sealed partial class PaymentOrchestrator(
     private PaymentIntentResponse Map(PaymentIntentRecord entity)
     {
         var token = checkoutRealtimeTokens.Issue(entity.Id, entity.ProviderReference);
+        var stubUrl = BuildCheckoutUrl(entity);
         return new(
             entity.Id,
             entity.TenantId,
@@ -662,12 +790,51 @@ public sealed partial class PaymentOrchestrator(
             entity.PlatformFeeAmount,
             entity.Currency,
             entity.Status.ToString().ToLowerInvariant(),
-            AppendCheckoutRealtimeToken(BuildCheckoutUrl(entity), token),
+            BuildCheckoutUrlForResponse(stubUrl, entity.ProviderReference, token),
             entity.ProviderReference,
             entity.Description,
             entity.CreatedAt,
             token);
     }
+
+    private string BuildCheckoutUrlForResponse(string providerOrStubUrl, string providerReference, string realtimeToken)
+    {
+        var checkoutUrl = string.IsNullOrWhiteSpace(providerOrStubUrl)
+            ? BuildCheckoutUrlFromReference(providerReference)
+            : providerOrStubUrl;
+
+        if (ShouldEmbedRealtimeTokenInCheckoutUrl(checkoutUrl))
+        {
+            return AppendCheckoutRealtimeToken(checkoutUrl, realtimeToken);
+        }
+
+        return checkoutUrl;
+    }
+
+    private bool ShouldEmbedRealtimeTokenInCheckoutUrl(string checkoutUrl)
+    {
+        if (string.IsNullOrWhiteSpace(checkoutUrl))
+        {
+            return false;
+        }
+
+        if (string.Equals(paymentProvider.ProviderName, "Stub", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (checkoutUrl.StartsWith("/", StringComparison.Ordinal)
+            && checkoutUrl.Contains("/checkout/stub/", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        var stubBase = paymentsOptions.Value.StubCheckoutBaseUrl.TrimEnd('/');
+        return checkoutUrl.StartsWith(stubBase, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private string BuildCheckoutUrlFromReference(string providerReference) =>
+        $"{paymentsOptions.Value.StubCheckoutBaseUrl.TrimEnd('/')}/{providerReference}";
 
     private static string AppendCheckoutRealtimeToken(string checkoutUrl, string token)
     {
