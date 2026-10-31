@@ -46,7 +46,7 @@ npm run dev:admin      # http://localhost:5180
 
 Environment files: `apps/customer/.env.example.md`, `apps/business/.env.example.md`, `apps/admin/.env.example.md`. Auth0 SPA keys can stay empty locally; use dev Auth0 subs — [auth0-setup.md](./auth0-setup.md).
 
-Protected routes: portal (business role), admin (admin role). Without Auth0 env vars, portals show setup instructions instead of login.
+Protected routes: portal (business role), admin (admin role). Without Auth0 env vars, the business portal shows the public **`/welcome`** supply landing (configure Auth0 or dev sub to register); **`/setup`** redirects to **`/welcome`**.
 
 Public booking and discovery: **customer** app (`/businesses/{slug}`, `/discover`, SEO hubs). Signed-in home/bookings/messages/benefits: `/app/*`.
 

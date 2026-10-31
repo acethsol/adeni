@@ -1,0 +1,162 @@
+<div class="welcome-page">
+  <header class="top-bar">
+    <a class="brand" [href]="discoverUrl" target="_blank" rel="noopener noreferrer">
+      <adeni-brand-lockup [height]="36" />
+    </a>
+    <nav class="top-nav" aria-label="Welcome">
+      <a [href]="discoverUrl" target="_blank" rel="noopener noreferrer">{{
+        tr("businessApp.welcome.exploreDiscover")
+      }}</a>
+      @if (portalAccessReady) {
+        <button type="button" class="link-btn" (click)="signIn()">
+          {{ tr("businessApp.welcome.signIn") }}
+        </button>
+      }
+    </nav>
+  </header>
+
+  @if (devSignedOut) {
+    <p class="dev-banner" role="status">{{ tr("businessApp.setup.youSignedOutLocalBusiness") }}</p>
+  }
+
+  <section class="hero" aria-labelledby="welcome-hero-title">
+    <p class="kicker">{{ tr("common.forBusinesses") }}</p>
+    <h1 id="welcome-hero-title">{{ tr("businessApp.welcome.heroTitle") }}</h1>
+    <p class="lede">{{ tr("businessApp.welcome.heroSubtitle") }}</p>
+    <div class="hero-actions">
+      @if (portalAccessReady) {
+        <button type="button" class="btn btn-primary" (click)="startFree()">
+          {{ tr("businessApp.welcome.startFree") }}
+        </button>
+        <a class="btn btn-secondary" href="#plans">{{ tr("businessApp.welcome.viewPricing") }}</a>
+      } @else {
+        <p class="configure-hint">{{ tr("businessApp.welcome.configureAccessHint") }}</p>
+      }
+    </div>
+  </section>
+
+  <section id="how-it-works" class="section flow-grid" aria-labelledby="how-title">
+    <h2 id="how-title">{{ tr("businessApp.setup.howAdeniWorksCustomers") }}</h2>
+    <p class="section-lede">{{ tr("businessApp.setup.whenYouRegisterYouBuilding") }}</p>
+
+    <div class="columns">
+      <article>
+        <h3>{{ tr("businessApp.setup.customerJourney") }}</h3>
+        <ol class="steps">
+          <li>
+            <strong>{{ tr("businessApp.setup.pickMarket") }}</strong>
+            {{ tr("businessApp.setup.lagosOttawaAnotherCityDiscovery") }}
+          </li>
+          <li>
+            <strong>{{ tr("businessApp.setup.exploreCategory") }}</strong>
+            {{ tr("businessApp.setup.eGMassageHairGrooming") }}
+          </li>
+          <li>
+            <strong>{{ tr("businessApp.setup.findBusiness") }}</strong>
+            {{ tr("businessApp.setup.youAppearWhen") }}
+            <em>{{ tr("businessApp.setup.primary") }}</em>
+            {{ tr("businessApp.setup.orAny") }}
+            <em>{{ tr("businessApp.setup.additional") }}</em>
+            {{ tr("businessApp.setup.categoryMatchesFilter") }}
+          </li>
+          <li>
+            <strong>{{ tr("businessApp.setup.bookService") }}</strong>
+            {{ tr("businessApp.setup.customerPicksServiceYouAdded") }}
+          </li>
+        </ol>
+      </article>
+
+      <article>
+        <h3>{{ tr("businessApp.setup.yourSetupBusinessPortal") }}</h3>
+        <ol class="steps">
+          <li>
+            <strong>{{ tr("common.primaryCategory") }}</strong>
+            {{ tr("businessApp.setup.mainTypeBusinessUsedSeo") }}
+          </li>
+          <li>
+            <strong>{{ tr("businessApp.setup.additionalCategories") }}</strong>
+            {{ tr("businessApp.setup.optionalTagsSpaAlsoOffering") }}
+          </li>
+          <li>
+            <strong>{{ tr("common.services") }}</strong>
+            {{ tr("businessApp.setup.addFromAdeniTemplatesCreate") }}
+          </li>
+          <li>
+            <strong>{{ tr("businessApp.setup.availability") }}</strong>
+            {{ tr("businessApp.setup.weeklyHoursSoCustomersCan") }}
+          </li>
+        </ol>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="what-you-get-title">
+    <h2 id="what-you-get-title">{{ tr("businessApp.welcome.whatYouGetTitle") }}</h2>
+    <ul class="benefits">
+      <li>{{ tr("businessApp.welcome.whatYouGetProfile") }}</li>
+      <li>{{ tr("businessApp.welcome.whatYouGetBooking") }}</li>
+      <li>{{ tr("businessApp.welcome.whatYouGetInbox") }}</li>
+      <li>{{ tr("businessApp.welcome.whatYouGetReviews") }}</li>
+    </ul>
+  </section>
+
+  <section id="plans" class="section" aria-labelledby="plans-title">
+    <h2 id="plans-title">{{ tr("businessApp.welcome.plansTitle") }}</h2>
+    @if (loading()) {
+      <p class="muted">{{ tr("discover.plan.loadingPrices") }}</p>
+    } @else {
+      @if (!selfServeEnabled()) {
+        <p class="notice" role="note">{{ tr("discover.plan.selfServeSignupNotAvailable") }}</p>
+      }
+      <div class="tier-grid">
+        @for (sku of skus; track sku) {
+          @let display = planDisplay(sku);
+          <section class="tier" [class.popular]="isPopular(sku)">
+            @if (isPopular(sku)) {
+              <span class="pill">{{ tr("common.mostPopular") }}</span>
+            }
+            <p class="tier-name">{{ display.name }}</p>
+            <p class="price">{{ display.priceLabel }}</p>
+            <p class="tagline">{{ display.tagline }}</p>
+          </section>
+        }
+      </div>
+      <p class="muted">
+        {{ tr("businessApp.welcome.plansCompareHint") }}
+        <a [href]="pricingOnDiscoverUrl" target="_blank" rel="noopener noreferrer">{{
+          tr("common.plansPricing")
+        }}</a>
+      </p>
+    }
+  </section>
+
+  <section class="section trust" aria-labelledby="trust-title">
+    <h2 id="trust-title">{{ tr("businessApp.welcome.trustTitle") }}</h2>
+    <ul class="benefits">
+      <li>{{ tr("businessApp.welcome.trustVerified") }}</li>
+      <li>{{ tr("businessApp.welcome.trustReviews") }}</li>
+      <li>{{ tr("businessApp.welcome.trustNoPayBadge") }}</li>
+    </ul>
+  </section>
+
+  <section class="section cta-band" aria-labelledby="cta-title">
+    <h2 id="cta-title" class="visually-hidden">{{ tr("common.getStarted") }}</h2>
+    @if (portalAccessReady) {
+      <button type="button" class="btn btn-primary" (click)="startFree()">
+        {{ tr("common.registerBusiness") }}
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="signIn()">
+        {{ tr("businessApp.welcome.signIn") }}
+      </button>
+    }
+    <a class="btn btn-ghost" [href]="discoverUrl" target="_blank" rel="noopener noreferrer">{{
+      tr("businessApp.welcome.footerBackToDiscover")
+    }}</a>
+  </section>
+
+  <footer class="welcome-footer">
+    <a [href]="discoverUrl" target="_blank" rel="noopener noreferrer">{{
+      tr("businessApp.welcome.footerBackToDiscover")
+    }}</a>
+  </footer>
+</div>

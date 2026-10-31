@@ -1,6 +1,7 @@
 import { Component, computed, effect, inject, OnInit, signal } from "@angular/core";
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
 import { filter } from "rxjs";
+import { resolveBusinessPortalWelcomeUrl } from "@adeni/shared";
 import {
   ADENI_DISCOVER_CONFIG,
   isAuth0Configured,
@@ -69,8 +70,7 @@ export class PublicShellComponent implements OnInit {
   readonly headerBrandHeight = computed(() => (this.headerCompact() ? 30 : 36));
 
   get businessPortalUrl(): string | null {
-    const businessPortalBaseUrl = this.config.portalAppUrl.trim();
-    return businessPortalBaseUrl || null;
+    return resolveBusinessPortalWelcomeUrl(this.config.portalAppUrl);
   }
 
   constructor() {

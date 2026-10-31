@@ -9,7 +9,12 @@ import { homeRedirectGuard } from "./core/guards/home-redirect.guard";
 import { staffCalendarGuard } from "./core/guards/staff-calendar.guard";
 
 export const routes: Routes = [
-  { path: "setup", loadComponent: () => import("./pages/setup/setup.component").then((m) => m.SetupComponent), title: "Setup" },
+  {
+    path: "welcome",
+    loadComponent: () => import("./pages/welcome/welcome.component").then((m) => m.WelcomeComponent),
+    title: "For businesses",
+  },
+  { path: "setup", redirectTo: "welcome", pathMatch: "full" },
   { path: "forbidden", loadComponent: () => import("./pages/forbidden/forbidden.component").then((m) => m.ForbiddenComponent), title: "Access denied" },
   { path: "accept-invite", loadComponent: () => import("./pages/accept-invite/accept-invite.component").then((m) => m.AcceptInviteComponent), title: "Accept invite" },
   {

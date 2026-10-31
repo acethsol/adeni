@@ -9,6 +9,8 @@ import {
   t,
   type LocaleRegionPreset,
   type MarketConfig,
+  resolveBusinessPortalRegisterUrl,
+  resolveBusinessPortalWelcomeUrl,
 } from "@adeni/shared";
 import { AdeniBrandLockupComponent, AdeniLocaleService, injectAdeniTranslate } from "@adeni/ui";
 import { ADENI_DISCOVER_CONFIG } from "../core/adeni-config";
@@ -62,17 +64,13 @@ export class PublicFooterComponent {
   /** Full catalog — isLive is GTM supply, not a browse gate (see docs/markets.md). */
   readonly cityLinks = computed((): MarketConfig[] => listMarkets());
 
-  readonly businessPortalRegisterUrl = computed(() => {
-    const businessPortalBaseUrl = this.config.portalAppUrl.trim();
-    return businessPortalBaseUrl
-      ? `${businessPortalBaseUrl.replace(/\/$/, "")}/register`
-      : null;
-  });
+  readonly businessPortalRegisterUrl = computed(() =>
+    resolveBusinessPortalRegisterUrl(this.config.portalAppUrl),
+  );
 
-  readonly businessPortalUrl = computed(() => {
-    const businessPortalBaseUrl = this.config.portalAppUrl.trim();
-    return businessPortalBaseUrl ? businessPortalBaseUrl.replace(/\/$/, "") : null;
-  });
+  readonly businessPortalUrl = computed(() =>
+    resolveBusinessPortalWelcomeUrl(this.config.portalAppUrl),
+  );
 
   label(key: string, params?: Record<string, string | number>): string {
     return t(this.locale(), key, params);
