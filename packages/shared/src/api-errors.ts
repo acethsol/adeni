@@ -34,6 +34,35 @@ export function isApiErrorResponse(value: unknown): value is ApiErrorResponse {
   return typeof value === "object" && value !== null;
 }
 
+const staffPresenceGateCodes = new Set([
+  "staff.presence_required",
+  "staff.presence_expired",
+  "staff.presence_location_mismatch",
+]);
+
+/** True when on-premises sensitive-data policy blocked the request. */
+export function isStaffPresenceGateError(error: unknown): boolean {
+  if (!isApiErrorResponse(error)) {
+    if (typeof error === "object" && error !== null && "code" in error) {
+      const code = (error as { code?: unknown }).code;
+      return typeof code === "string" && staffPresenceGateCodes.has(code);
+    }
+    return false;
+  }
+  return typeof error.code === "string" && staffPresenceGateCodes.has(error.code);
+}
+
+export function readApiErrorCode(error: unknown): string | undefined {
+  if (typeof error === "object" && error !== null && "code" in error) {
+    const code = (error as { code?: unknown }).code;
+    return typeof code === "string" ? code : undefined;
+  }
+  if (isApiErrorResponse(error) && typeof error.code === "string") {
+    return error.code;
+  }
+  return undefined;
+}
+
 function translateErrorCode(
   locale: string,
   code: string,

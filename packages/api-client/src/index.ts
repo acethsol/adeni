@@ -22,6 +22,8 @@ import { ReportingApi } from "./reporting/reporting-api";
 import { QueueApi } from "./queue/queue-api";
 import { CustomersApi } from "./customers/customers-api";
 import { StaffApi } from "./staff/staff-api";
+import { AttendanceApi } from "./attendance/attendance-api";
+import { PresenceApi } from "./attendance/presence-api";
 import { MessagingApi } from "./messaging/messaging-api";
 import { CatalogApi } from "./catalog/catalog-api";
 import { MeDocumentsApi } from "./me/me-documents-api";
@@ -49,6 +51,8 @@ export class AdeniApiClient extends ApiTransport {
   readonly intake = new IntakeApi(this.context);
   readonly retention = new RetentionApi(this.context);
   private readonly staff = new StaffApi(this.context);
+  private readonly attendance = new AttendanceApi(this.context);
+  private readonly presence = new PresenceApi(this.context);
   private readonly messaging = new MessagingApi(this.context);
   private readonly catalog = new CatalogApi(this.context);
   private readonly meDocuments = new MeDocumentsApi(this.context);
@@ -238,6 +242,18 @@ export class AdeniApiClient extends ApiTransport {
 
   updateTenantPublicPage(...args: Parameters<BusinessApi["updateTenantPublicPage"]>): ReturnType<BusinessApi["updateTenantPublicPage"]> {
     return this.business.updateTenantPublicPage(...args);
+  }
+
+  getLocationSecurityPolicy(
+    ...args: Parameters<BusinessApi["getLocationSecurityPolicy"]>
+  ): ReturnType<BusinessApi["getLocationSecurityPolicy"]> {
+    return this.business.getLocationSecurityPolicy(...args);
+  }
+
+  updateLocationSecurityPolicy(
+    ...args: Parameters<BusinessApi["updateLocationSecurityPolicy"]>
+  ): ReturnType<BusinessApi["updateLocationSecurityPolicy"]> {
+    return this.business.updateLocationSecurityPolicy(...args);
   }
 
   updateTenantPolicies(...args: Parameters<BusinessApi["updateTenantPolicies"]>): ReturnType<BusinessApi["updateTenantPolicies"]> {
@@ -573,6 +589,58 @@ export class AdeniApiClient extends ApiTransport {
 
   getTenantAvailability(...args: Parameters<BookingApi["getTenantAvailability"]>): ReturnType<BookingApi["getTenantAvailability"]> {
     return this.booking.getTenantAvailability(...args);
+  }
+
+  getMyAttendanceToday(...args: Parameters<AttendanceApi["getMyAttendanceToday"]>): ReturnType<AttendanceApi["getMyAttendanceToday"]> {
+    return this.attendance.getMyAttendanceToday(...args);
+  }
+
+  getMyScheduleToday(...args: Parameters<AttendanceApi["getMyScheduleToday"]>): ReturnType<AttendanceApi["getMyScheduleToday"]> {
+    return this.attendance.getMyScheduleToday(...args);
+  }
+
+  getStaffAttendanceHistory(
+    ...args: Parameters<AttendanceApi["getStaffAttendanceHistory"]>
+  ): ReturnType<AttendanceApi["getStaffAttendanceHistory"]> {
+    return this.attendance.getStaffAttendanceHistory(...args);
+  }
+
+  appendStaffAttendanceCorrection(
+    ...args: Parameters<AttendanceApi["appendStaffAttendanceCorrection"]>
+  ): ReturnType<AttendanceApi["appendStaffAttendanceCorrection"]> {
+    return this.attendance.appendStaffAttendanceCorrection(...args);
+  }
+
+  recordMyAttendanceEvent(...args: Parameters<AttendanceApi["recordMyAttendanceEvent"]>): ReturnType<AttendanceApi["recordMyAttendanceEvent"]> {
+    return this.attendance.recordMyAttendanceEvent(...args);
+  }
+
+  getTeamAttendance(
+    ...args: Parameters<AttendanceApi["getTeamAttendance"]>
+  ): ReturnType<AttendanceApi["getTeamAttendance"]> {
+    return this.attendance.getTeamAttendance(...args);
+  }
+
+  recordManagerAttendanceOverride(
+    ...args: Parameters<AttendanceApi["recordManagerAttendanceOverride"]>
+  ): ReturnType<AttendanceApi["recordManagerAttendanceOverride"]> {
+    return this.attendance.recordManagerAttendanceOverride(...args);
+  }
+
+  getMyPresenceSession(
+    ...args: Parameters<PresenceApi["getMyPresenceSession"]>
+  ): ReturnType<PresenceApi["getMyPresenceSession"]> {
+    return this.presence.getMyPresenceSession(...args);
+  }
+
+  verifyPresence(...args: Parameters<PresenceApi["verifyPresence"]>): ReturnType<PresenceApi["verifyPresence"]> {
+    return this.presence.verifyPresence(...args);
+  }
+
+  invalidateMyPresence(
+    ...args: Parameters<PresenceApi["invalidateMyPresence"]>
+  ): ReturnType<PresenceApi["invalidateMyPresence"]> {
+    return this.presence.invalidateMyPresence(...args);
   }
 
   replaceTenantAvailability(...args: Parameters<BookingApi["replaceTenantAvailability"]>): ReturnType<BookingApi["replaceTenantAvailability"]> {

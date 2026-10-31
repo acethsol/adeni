@@ -46,6 +46,8 @@ import { CustomerPackagesPanelComponent } from "./customer-packages-panel.compon
 import { CustomerProfilePanelComponent } from "./customer-profile-panel.component";
 import { CustomerProfileDataService } from "./customer-profile-data.service";
 import { BusinessSessionService } from "../../core/services/business-session.service";
+import { BusinessPresenceVerifyService } from "../../core/services/business-presence-verify.service";
+import { PresenceRequiredPanelComponent } from "../attendance/presence-required-panel.component";
 
 const CUSTOMER_DETAIL_TABS = new Set([
   "overview",
@@ -90,6 +92,7 @@ const PAID_STATUS = 6;
     CustomerPackagesPanelComponent,
     CustomerMembershipsPanelComponent,
     CustomerLoyaltyPanelComponent,
+    PresenceRequiredPanelComponent,
   ],
   templateUrl: "./customer-detail.component.html",
   styleUrl: "./customer-detail.component.scss",
@@ -148,6 +151,8 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
   });
 
   readonly error = signal<string | null>(null);
+  readonly presenceBlocked = signal(false);
+  private readonly presenceVerify = inject(BusinessPresenceVerifyService);
   readonly customer = signal<TenantCustomerDetail | null>(null);
   readonly statementDownloading = signal(false);
 
@@ -289,6 +294,7 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
     }
 
     this.error.set(null);
+    this.presenceBlocked.set(false);
     this.customer.set(null);
     try {
       await this.feedback.runLoading(async () => {
@@ -309,12 +315,39 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
       });
     } catch (err) {
       if (version !== this.loadVersion) return;
-      if (err instanceof AdeniApiError && err.statusCode === 404) {
+      if (this.presenceVerify.isPresenceGateError(err)) {
+        this.presenceBlocked.set(true);
+        this.error.set(null);
+      } else if (err instanceof AdeniApiError && err.statusCode === 404) {
         this.error.set(null);
       } else {
         this.error.set(this.apiErr(err, "businessApp.customers.couldNotLoadCustomer"));
       }
       this.customer.set(null);
+    }
+  }
+
+  async verifyPresenceForDetail(): Promise<void> {
+    try {
+      await this.presenceVerify.verifyAtActiveLocation();
+      await this.load();
+    } catch {
+      this.feedback.error(this.tr("businessApp.attendance.presenceVerifyFailed"));
+    }
+  }
+
+  async verifyPresenceForProfileTabs(): Promise<void> {
+    const id = this.customer()?.id;
+    if (!id) {
+      return;
+    }
+    try {
+      await this.presenceVerify.verifyAtActiveLocation();
+      this.profileData.activityPresenceBlocked.set(false);
+      this.profileData.giftsPresenceBlocked.set(false);
+      await this.profileData.load(id, this.profileLocationId());
+    } catch {
+      this.feedback.error(this.tr("businessApp.attendance.presenceVerifyFailed"));
     }
   }
 

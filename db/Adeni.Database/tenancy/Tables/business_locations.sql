@@ -11,6 +11,8 @@ CREATE TABLE [tenancy].[business_locations] (
     [TimeZoneId]  NVARCHAR (64)      NULL,
     [IsPrimary]   BIT                NOT NULL,
     [IsActive]    BIT                NOT NULL,
+    [AttendanceGeofenceEnabled] BIT NOT NULL CONSTRAINT [DF_business_locations_AttendanceGeofenceEnabled] DEFAULT (0),
+    [AttendanceGeofenceRadiusMeters] INT NOT NULL CONSTRAINT [DF_business_locations_AttendanceGeofenceRadiusMeters] DEFAULT (100),
     [CreatedAt]   DATETIMEOFFSET (7) NOT NULL,
     [UpdatedAt]   DATETIMEOFFSET (7) NOT NULL,
     CONSTRAINT [PK_business_locations] PRIMARY KEY CLUSTERED ([Id] ASC),

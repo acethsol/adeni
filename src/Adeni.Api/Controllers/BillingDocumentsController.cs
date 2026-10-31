@@ -46,6 +46,7 @@ public sealed class BillingDocumentsController(
 
     [HttpGet("{id:guid}")]
     [RequiresBusinessPermission(BusinessPermissions.Finance, BusinessPermissions.Bookings)]
+    [RequiresOnPremisesPresence]
     public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
     {
         if (ResolveBusinessAuth0Sub() is null || ResolveTenantId() is not { } tenantId)
@@ -72,6 +73,7 @@ public sealed class BillingDocumentsController(
     [HttpGet("{id:guid}/pdf")]
     [EnableRateLimiting(RateLimitingExtensions.PublicReadPolicy)]
     [RequiresBusinessPermission(BusinessPermissions.Finance, BusinessPermissions.Bookings)]
+    [RequiresOnPremisesPresence]
     public async Task<IActionResult> Pdf(Guid id, CancellationToken cancellationToken, [FromQuery] Guid? locationId = null)
     {
         if (ResolveBusinessAuth0Sub() is null || ResolveTenantId() is not { } tenantId)

@@ -1,5 +1,6 @@
 import { Injectable, inject, signal, type OnDestroy } from "@angular/core";
 import type { BusinessGiftCard, CustomerActivity, CustomerProfile } from "@adeni/shared";
+import { isStaffPresenceGateError } from "@adeni/shared";
 import { BusinessApiService } from "../../core/services/business-api.service";
 
 /** Page-scoped read state. A new customer/branch aborts old requests and discards late responses. */
@@ -15,6 +16,8 @@ export class CustomerProfileDataService implements OnDestroy {
   readonly loading = signal(false);
   readonly loadingMore = signal(false);
   readonly error = signal<unknown>(null);
+  readonly activityPresenceBlocked = signal(false);
+  readonly giftsPresenceBlocked = signal(false);
 
   async load(id: string, locationId?: string): Promise<void> {
     this.request?.abort();
@@ -26,21 +29,32 @@ export class CustomerProfileDataService implements OnDestroy {
     this.purchasedGiftCards.set(null);
     this.loadingGifts.set(false);
     this.error.set(null);
+    this.activityPresenceBlocked.set(false);
     this.loading.set(true);
     this.loadingMore.set(false);
     try {
-      const [profile, activity] = await this.api.withAuthorizedClient(client => Promise.all([
+      const profile = await this.api.withAuthorizedClient((client) =>
         client.getTenantCustomerProfile(id, locationId, request.signal),
-        client.getTenantCustomerActivity(id, { locationId }, request.signal),
-      ]));
+      );
       if (request.signal.aborted) return;
       this.profile.set(profile);
-      this.activity.set(activity);
+      try {
+        const activity = await this.api.withAuthorizedClient((client) =>
+          client.getTenantCustomerActivity(id, { locationId }, request.signal),
+        );
+        if (!request.signal.aborted) {
+          this.activity.set(activity);
+        }
+      } catch (activityError) {
+        if (!request.signal.aborted && isStaffPresenceGateError(activityError)) {
+          this.activityPresenceBlocked.set(true);
+        } else if (!request.signal.aborted) {
+          this.error.set(activityError);
+        }
+      }
     } catch (error) {
       if (!request.signal.aborted) {
         this.error.set(error);
-        // Cancel the sibling request if one of the two endpoints fails.
-        request.abort();
       }
     } finally {
       if (this.request === request) this.loading.set(false);
@@ -52,7 +66,12 @@ export class CustomerProfileDataService implements OnDestroy {
     if(!request||request.signal.aborted||!scope||scope.locationId||this.profile()?.availability.finance!=="available"||this.loadingGifts())return;
     this.loadingGifts.set(true);
     try{const rows=await this.api.withAuthorizedClient(c=>c.commerce.customerCards(scope.id,request.signal));if(!request.signal.aborted)this.purchasedGiftCards.set(rows);}
-    catch(e){if(!request.signal.aborted)this.error.set(e);}
+    catch(e){
+      if(!request.signal.aborted){
+        if(isStaffPresenceGateError(e))this.giftsPresenceBlocked.set(true);
+        else this.error.set(e);
+      }
+    }
     finally{if(this.request===request)this.loadingGifts.set(false);}
   }
 

@@ -40,7 +40,11 @@ public sealed record TenantEntitlements(
     bool Referrals,
     bool CrossLocationRetention,
     bool AdvancedRetentionAnalytics,
-    bool MultiLocation);
+    bool MultiLocation,
+    bool StaffAttendance,
+    bool AttendanceGeofence,
+    bool OnPremisesSensitiveData,
+    bool AttendanceReporting);
 
 public static class SubscriptionEntitlements
 {

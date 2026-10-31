@@ -105,6 +105,21 @@ export const routes: Routes = [
         canActivate: [businessPermissionGuard],
       },
       {
+        path: "attendance",
+        loadComponent: () => import("./pages/attendance/my-attendance.component").then((m) => m.MyAttendanceComponent),
+        title: "My attendance",
+        canActivate: [businessPermissionGuard],
+        data: { permission: "business.attendance.self" },
+      },
+      {
+        path: "attendance/team",
+        loadComponent: () =>
+          import("./pages/attendance/team-attendance.component").then((m) => m.TeamAttendanceComponent),
+        title: "Team attendance",
+        canActivate: [businessPermissionGuard],
+        data: { permission: "business.attendance" },
+      },
+      {
         path: "quotes",
         loadComponent: () => import("./pages/quotes/quotes.component").then((m) => m.QuotesComponent),
         title: "Quotes",

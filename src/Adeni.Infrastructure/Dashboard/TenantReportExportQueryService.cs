@@ -383,4 +383,52 @@ public sealed class TenantReportExportQueryService(
 
         return Result.Success<IReadOnlyList<TenantServiceExportRow>>(rows);
     }
+
+    public async Task<Result<IReadOnlyList<AttendanceRegisterExportRow>>> GetAttendanceRegisterAsync(
+        Guid tenantId,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        Guid? locationId,
+        CancellationToken cancellationToken = default)
+    {
+        var scoped = await TenantLocationScope.ValidateOptionalLocationIdAsync(
+            dbContext,
+            tenantId,
+            locationId,
+            cancellationToken);
+        if (scoped.IsFailure)
+        {
+            return Result.Failure<IReadOnlyList<AttendanceRegisterExportRow>>(scoped.Error);
+        }
+
+        var query = dbContext.StaffAttendanceEvents.AsNoTracking()
+            .Where(x => x.TenantId == tenantId && x.OccurredAt >= from && x.OccurredAt <= to);
+        if (scoped.Value is Guid loc)
+        {
+            query = query.Where(x => x.BusinessLocationId == loc);
+        }
+
+        var events = await query
+            .OrderBy(x => x.OccurredAt)
+            .Join(
+                dbContext.StaffMembers.AsNoTracking(),
+                e => e.StaffMemberId,
+                s => s.Id,
+                (e, s) => new { Event = e, StaffName = s.DisplayName })
+            .Join(
+                dbContext.BusinessLocations.AsNoTracking(),
+                x => x.Event.BusinessLocationId,
+                l => l.Id,
+                (x, l) => new AttendanceRegisterExportRow(
+                    x.Event.OccurredAt,
+                    x.StaffName,
+                    x.Event.EventType,
+                    l.Name,
+                    x.Event.LocationVerificationStatus,
+                    x.Event.VerificationMethod,
+                    x.Event.DistanceFromLocationMeters))
+            .ToListAsync(cancellationToken);
+
+        return Result.Success<IReadOnlyList<AttendanceRegisterExportRow>>(events);
+    }
 }

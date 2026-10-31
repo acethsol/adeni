@@ -1,4 +1,8 @@
 import {
+  locationSecurityPolicyResponseSchema,
+  updateLocationSecurityPolicyRequestSchema,
+  type LocationSecurityPolicyResponse,
+  type UpdateLocationSecurityPolicyRequest,
   authSessionSchema,
   businessContextResponseSchema,
   businessLocationSchema,
@@ -305,5 +309,22 @@ export class BusinessApi {
   async getMe(): Promise<AuthSession> {
     const response = await this.client.request("/api/v1/auth/me");
     return authSessionSchema.parse(await response.json());
+  }
+
+  async getLocationSecurityPolicy(): Promise<LocationSecurityPolicyResponse> {
+    const response = await this.client.request("/api/v1/tenant/settings/location-security");
+    return locationSecurityPolicyResponseSchema.parse(await response.json());
+  }
+
+  async updateLocationSecurityPolicy(
+    body: UpdateLocationSecurityPolicyRequest,
+  ): Promise<LocationSecurityPolicyResponse> {
+    const payload = updateLocationSecurityPolicyRequestSchema.parse(body);
+    const response = await this.client.request("/api/v1/tenant/settings/location-security", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return locationSecurityPolicyResponseSchema.parse(await response.json());
   }
 }

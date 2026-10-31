@@ -6,7 +6,11 @@
     <p class="error-banner">{{ error() }}</p>
   }
 
-  @if (totalCount() === 0 && !searchQuery().trim() && accountFilter() === "all" && !loading()) {
+  @if (presenceBlocked()) {
+    <app-presence-required-panel (verify)="verifyPresenceForCustomers()" />
+  }
+
+  @if (totalCount() === 0 && !searchQuery().trim() && accountFilter() === "all" && !loading() && !presenceBlocked()) {
     <adeni-portal-empty-state
       icon="user--filled"
       [title]="tr('businessApp.customers.noCustomersYet')"

@@ -42,6 +42,11 @@ export type PlanEntitlementSeed = {
   /** Sprint 37.4 — redeem packages/memberships at other branches (Business). */
   crossLocationRetention: boolean;
   advancedRetentionAnalytics: boolean;
+  /** Sprint 40 — staff attendance & timesheets (Professional+). */
+  staffAttendance: boolean;
+  attendanceGeofence: boolean;
+  onPremisesSensitiveData: boolean;
+  attendanceReporting: boolean;
 };
 
 export type PlanEntitlementsCatalog = Record<SubscriptionSku, PlanEntitlementSeed>;

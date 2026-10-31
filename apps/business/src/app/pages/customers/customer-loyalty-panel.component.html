@@ -1,4 +1,6 @@
-@if (loading()) {
+@if (presenceBlocked()) {
+  <app-presence-required-panel (verify)="verifyPresence()" />
+} @else if (loading()) {
   <p class="muted" role="status">{{ tr('toast.loading') }}</p>
 } @else if (error()) {
   <p class="error-banner" role="alert">{{ error() }}</p>

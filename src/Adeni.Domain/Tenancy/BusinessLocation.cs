@@ -29,6 +29,10 @@ public sealed class BusinessLocation : ITenantEntity
 
     public bool IsActive { get; set; } = true;
 
+    public bool AttendanceGeofenceEnabled { get; set; }
+
+    public int AttendanceGeofenceRadiusMeters { get; set; } = 100;
+
     public DateTimeOffset CreatedAt { get; set; }
 
     public DateTimeOffset UpdatedAt { get; set; }

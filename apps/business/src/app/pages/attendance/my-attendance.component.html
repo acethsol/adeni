@@ -1,0 +1,53 @@
+<app-portal-page [title]="tr('businessApp.attendance.myTitle')" [description]="tr('businessApp.attendance.myDescription')">
+  @if (loading()) {
+    <p class="muted">{{ tr("common.loading") }}</p>
+  } @else if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+    <adeni-staff-btn icon="restart" (pressed)="refresh()">{{ tr("common.retry") }}</adeni-staff-btn>
+  } @else if (today(); as t) {
+    <section class="attendance-card">
+      @if (t.attendanceGeofenceRequired) {
+        <p class="geofence-hint">{{ tr("businessApp.attendance.geofenceHint", { name: t.locationName ?? "" }) }}</p>
+      }
+      <p class="state-label">{{ tr("businessApp.attendance.workState." + t.workState) }}</p>
+      @if (presence(); as p) {
+        <p class="presence-active">
+          {{ tr("businessApp.attendance.presenceActiveUntil", { time: (p.expiresAt | date: "shortTime") ?? "" }) }}
+        </p>
+      } @else if (showVerifyPresence()) {
+        <p class="presence-hint">{{ tr("businessApp.attendance.presenceVerifyHint") }}</p>
+        <adeni-staff-btn icon="location" [disabled]="saving()" (pressed)="verifyPresence()">
+          {{ tr("businessApp.attendance.presenceVerifyAction") }}
+        </adeni-staff-btn>
+      }
+      @if (scheduledWindows().length) {
+        <p class="scheduled">
+          {{ tr("businessApp.attendance.scheduled") }}:
+          @for (w of scheduledWindows(); track w.openTime) {
+            <span>{{ w.openTime }} – {{ w.closeTime }}</span>
+          }
+        </p>
+      }
+      @if (nextAction(); as action) {
+        <adeni-staff-btn icon="time" [disabled]="saving()" (pressed)="act(action)">
+          {{ actionLabel(action) }}
+        </adeni-staff-btn>
+      }
+      @if (canClockOut()) {
+        <adeni-staff-btn icon="logout" [disabled]="saving()" (pressed)="act('clock_out')">
+          {{ actionLabel("clock_out") }}
+        </adeni-staff-btn>
+      }
+    </section>
+    @if (t.eventsToday.length) {
+      <ul class="event-list">
+        @for (ev of t.eventsToday; track ev.id) {
+          <li>
+            <span>{{ tr("businessApp.attendance.actions." + ev.eventType) }}</span>
+            <time>{{ ev.occurredAt | date: "shortTime" }}</time>
+          </li>
+        }
+      </ul>
+    }
+  }
+</app-portal-page>

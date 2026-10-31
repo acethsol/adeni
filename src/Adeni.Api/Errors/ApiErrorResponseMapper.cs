@@ -85,7 +85,17 @@ internal static class ApiErrorResponseMapper
             _ when code.StartsWith("payment.", StringComparison.Ordinal) => ResolvePaymentStatusCode(code),
             _ when code.StartsWith("messaging.", StringComparison.Ordinal) => ResolveMessagingStatusCode(code),
             _ when code.StartsWith("retention.", StringComparison.Ordinal) => ResolveRetentionStatusCode(code),
+            _ when code.StartsWith("attendance.", StringComparison.Ordinal) => ResolveAttendanceStatusCode(code),
             _ => StatusCodes.Status404NotFound,
+        };
+
+    private static int ResolveAttendanceStatusCode(string code) =>
+        code switch
+        {
+            ErrorCodes.AttendanceInvalidTransition => StatusCodes.Status409Conflict,
+            ErrorCodes.AttendanceStaffNotLinked => StatusCodes.Status403Forbidden,
+            ErrorCodes.AttendanceLocationNotConfigured => StatusCodes.Status400BadRequest,
+            _ => StatusCodes.Status400BadRequest,
         };
 
     private static int ResolveStaffStatusCode(string code) =>
@@ -98,6 +108,10 @@ internal static class ApiErrorResponseMapper
             ErrorCodes.StaffInviteExpired => StatusCodes.Status410Gone,
             ErrorCodes.StaffInviteEmailMismatch => StatusCodes.Status403Forbidden,
             ErrorCodes.StaffLastOwner => StatusCodes.Status409Conflict,
+            ErrorCodes.StaffLocationVerificationFailed => StatusCodes.Status403Forbidden,
+            ErrorCodes.StaffPresenceRequired => StatusCodes.Status403Forbidden,
+            ErrorCodes.StaffPresenceExpired => StatusCodes.Status403Forbidden,
+            ErrorCodes.StaffPresenceLocationMismatch => StatusCodes.Status403Forbidden,
             _ => StatusCodes.Status400BadRequest,
         };
 

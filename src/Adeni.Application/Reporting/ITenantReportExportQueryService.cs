@@ -114,4 +114,20 @@ public interface ITenantReportExportQueryService
     Task<Result<IReadOnlyList<TenantServiceExportRow>>> GetTenantServicesAsync(
         Guid tenantId,
         CancellationToken cancellationToken = default);
+
+    Task<Result<IReadOnlyList<AttendanceRegisterExportRow>>> GetAttendanceRegisterAsync(
+        Guid tenantId,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        Guid? locationId,
+        CancellationToken cancellationToken = default);
 }
+
+public sealed record AttendanceRegisterExportRow(
+    DateTimeOffset OccurredAt,
+    string StaffDisplayName,
+    string EventType,
+    string LocationName,
+    string LocationVerificationStatus,
+    string VerificationMethod,
+    int? DistanceFromLocationMeters);

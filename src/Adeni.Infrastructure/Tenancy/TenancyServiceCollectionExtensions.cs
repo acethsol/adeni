@@ -22,6 +22,7 @@ public static class TenancyServiceCollectionExtensions
         services.AddScoped<ICustomerProfileTrustQuery, CustomerProfileTrustQuery>();
         services.AddScoped<ICustomerSegmentContextQuery, CustomerSegmentContextQuery>();
         services.AddScoped<ICustomerSegmentsQueryService, CustomerSegmentsQueryService>();
+        services.AddScoped<ILocationSecurityPolicyService, LocationSecurityPolicyService>();
         return services;
     }
 }

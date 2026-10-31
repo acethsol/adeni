@@ -4,6 +4,7 @@ using Adeni.Api.Auth;
 using Adeni.Api.Errors;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
+using Adeni.Application.Identity;
 using Adeni.Application.Reporting;
 using System.Security.Claims;
 using Adeni.Application.Subscriptions;
@@ -18,6 +19,7 @@ using Microsoft.Extensions.Options;
 public sealed class TenantReportingController(
     IReportExportService reportExportService,
     IEntitlementsService entitlementsService,
+    IOnPremisesSensitiveAccessPolicy onPremisesPolicy,
     IOptions<Auth0Options> auth0Options) : ControllerBase
 {
     [HttpGet("exports/{reportKey}")]
@@ -63,6 +65,19 @@ public sealed class TenantReportingController(
         }
 
         var (_, staffScope) = PortalAccessHttpContext.ResolveBookingsStaffScope(access);
+
+        if (onPremisesPolicy.IsSensitiveReportKey(reportKey))
+        {
+            var presenceGate = await onPremisesPolicy.EnsureSensitiveAccessAsync(
+                access.TenantId,
+                access,
+                locationId,
+                cancellationToken);
+            if (presenceGate.IsFailure)
+            {
+                return ApiErrorResponseMapper.ToActionResult(presenceGate.Error, HttpContext);
+            }
+        }
 
         var result = await reportExportService.ExportAsync(
             new ReportExportRequest(

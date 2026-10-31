@@ -136,6 +136,20 @@ export const BUSINESS_NAV_GROUPS: BusinessNavGroup[] = [
         excludeIfPermission: "business.staff",
       },
       {
+        path: "/attendance",
+        label: "My attendance",
+        icon: "staff",
+        permission: "business.attendance.self",
+        entitlement: "staffAttendance",
+      },
+      {
+        path: "/attendance/team",
+        label: "Team attendance",
+        icon: "staff",
+        permission: "business.attendance",
+        entitlement: "staffAttendance",
+      },
+      {
         path: "/quotes",
         label: "Quotes",
         icon: "quotes",
@@ -207,6 +221,7 @@ export const BUSINESS_NAV_GROUPS: BusinessNavGroup[] = [
           { id: "notifications", label: "Notifications" },
           { id: "policies", label: "Policies" },
           { id: "messaging", label: "Messaging", entitlement: "messaging" },
+          { id: "security", label: "On-site access", entitlement: "onPremisesSensitiveData" },
         ],
       },
       {
