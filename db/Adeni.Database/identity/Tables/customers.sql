@@ -5,8 +5,12 @@ CREATE TABLE [identity].[customers] (
     [Email]              NVARCHAR (320)     NULL,
     [Phone]              NVARCHAR (32)      NULL,
     [PreferredLocale]    NVARCHAR (8)       NULL,
-    [CreatedAt]          DATETIMEOFFSET (7) NOT NULL,
-    [ErasureRequestedAt] DATETIMEOFFSET (7) NULL,
+    [CreatedAt]                 DATETIMEOFFSET (7) NOT NULL,
+    [ErasureRequestedAt]        DATETIMEOFFSET (7) NULL,
+    [EmailVerifiedAt]           DATETIMEOFFSET (7) NULL,
+    [PhoneVerifiedAt]           DATETIMEOFFSET (7) NULL,
+    [PhoneVerifiedFingerprint]  NVARCHAR (64)      NULL,
+    [TrustUpdatedAt]            DATETIMEOFFSET (7) NULL,
     CONSTRAINT [PK_customers] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 

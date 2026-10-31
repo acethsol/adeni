@@ -262,6 +262,7 @@ public sealed class PaymentLoopTests
         services.AddScoped<ITenantSchedulingTimeZone, TenantSchedulingTimeZone>();
         services.AddScoped<IBusinessClosedDateService, BusinessClosedDateService>();
         services.AddScoped<IAvailabilityService, AvailabilityService>();
+        CustomerVerificationTestDoubles.Register(services);
         services.AddScoped<IReviewService, ReviewService>();
         services.AddEntitlementsModule();
         services.AddAdeniDomainEvents();

@@ -1,5 +1,6 @@
 namespace Adeni.Application.Tenancy;
 
+using Adeni.Application.Identity;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Common;
 
@@ -16,7 +17,8 @@ public sealed record CustomerBookingProfile(CustomerVisitSummary? Visits, Custom
 public sealed record CustomerProfileResponse(Guid TenantCustomerId, DateTimeOffset AsOf, Guid? LocationId,
     CustomerSourceAvailability Availability, CustomerVisitSummary? VisitSummary, CustomerNextAppointment? NextAppointment,
     IReadOnlyList<CustomerCurrencyTotal>? RecordedOnlinePaymentsByCurrency,
-    Adeni.Application.Retention.CustomerPackageSummary? Packages = null);
+    Adeni.Application.Retention.CustomerPackageSummary? Packages = null,
+    CustomerProfileTrustIndicators? Trust = null);
 public sealed record CustomerActivityResponse(IReadOnlyList<CustomerActivityItem> Items, string? NextCursor,
     DateTimeOffset AsOf, DateTimeOffset From, bool IsTruncated, CustomerSourceAvailability Availability);
 

@@ -159,6 +159,7 @@ export const enOverlay: MessageTree = {
     notice: "Notice",
     loading: "Please wait…",
     loadingDetail: "Loading…",
+    loadingDepth: "{count} in progress",
     dismiss: "Dismiss",
   },
   common: {
@@ -322,6 +323,12 @@ export const enOverlay: MessageTree = {
         description: "Your Adeni account, shortcuts, and legal links.",
         shortcuts: "Shortcuts",
         more: "More",
+        verificationTitle: "Account verification",
+        emailVerified: "Email verified",
+        emailNotVerified: "Email not verified",
+        phoneVerified: "Phone verified",
+        phoneNotVerified: "Phone not verified",
+        identityNotRequired: "Identity verification is not required for Adeni bookings.",
       },
       breadcrumbs: {
         bookingDetail: "Booking details",

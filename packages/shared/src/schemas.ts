@@ -235,6 +235,8 @@ export const adminCustomerSummarySchema = z.object({
   email: z.string().nullable().optional(),
   createdAt: z.string(),
   erasureRequestedAt: z.string().nullable().optional(),
+  emailVerifiedAt: z.string().nullable().optional(),
+  phoneVerifiedAt: z.string().nullable().optional(),
 });
 
 export type AdminCustomerSummary = z.infer<typeof adminCustomerSummarySchema>;
@@ -329,6 +331,8 @@ export const customerDataExportSchema = z.object({
   phone: z.string().nullable().optional(),
   createdAt: z.string(),
   erasureRequestedAt: z.string().nullable().optional(),
+  emailVerifiedAt: z.string().nullable().optional(),
+  phoneVerifiedAt: z.string().nullable().optional(),
   bookings: z.array(customerBookingExportItemSchema),
 });
 
@@ -1822,6 +1826,7 @@ export const joinQueueRequestSchema = z.object({
   serviceOfferingId: z.string().uuid().nullable().optional(),
   partySize: z.number().int().min(1).max(6).optional(),
   notes: z.string().max(500).optional(),
+  phoneVerificationProof: z.string().max(2048).optional(),
 });
 
 export type JoinQueueRequest = z.infer<typeof joinQueueRequestSchema>;

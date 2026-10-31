@@ -28,6 +28,7 @@ using Adeni.Infrastructure.Retention;
 using Adeni.Infrastructure.Subscriptions;
 using Adeni.Infrastructure.Tenancy;
 using Adeni.Infrastructure.Translation;
+using Adeni.Application.Identity;
 using Adeni.Infrastructure.Trust;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -68,6 +69,7 @@ public static class ServiceCollectionExtensions
         services.AddAdeniMarkets();
         services.AddAdeniTranslation(configuration, environment);
         services.Configure<MarketOptions>(configuration.GetSection(MarketOptions.SectionName));
+        services.Configure<CustomerVerificationOptions>(configuration.GetSection(CustomerVerificationOptions.SectionName));
         services.AddAdeniAuth(configuration);
         services.AddIdentityModule();
         services.AddIntakeModule();

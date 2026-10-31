@@ -3,6 +3,7 @@ namespace Adeni.Application.Tenancy;
 using Adeni.Application.Auth;
 using Adeni.Application.Booking;
 using Adeni.Application.Finance;
+using Adeni.Application.Identity;
 using Adeni.Application.Messaging;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
@@ -10,6 +11,7 @@ using Adeni.Domain.Identity;
 public sealed class CustomerProfileQueryService(
     IBusinessPermissionService permissions,
     ICustomerProfileContextQuery contexts,
+    ICustomerProfileTrustQuery profileTrust,
     ITenantLocationScopeService locations,
     ICustomerBookingActivityQuery booking,
     ICustomerCommerceQuery finance,
@@ -32,8 +34,12 @@ public sealed class CustomerProfileQueryService(
         // Retention-owned read port; no fake zeros when the plan does not include packages.
         var packageSummary = access.Availability.Retention == "available" && packages is not null
             ? await packages.GetSummaryAsync(tenantId, tenantCustomerId, cancellationToken) : null;
+        var trust = await profileTrust.GetForPlatformCustomerAsync(
+            access.Context.CustomerId,
+            cancellationToken);
+
         return Result.Success(new CustomerProfileResponse(tenantCustomerId, now, access.Scope.LocationId,
-            access.Availability, profile.Visits, profile.NextAppointment, totals, packageSummary));
+            access.Availability, profile.Visits, profile.NextAppointment, totals, packageSummary, trust));
     }
 
     public async Task<Result<CustomerActivityResponse>> GetActivityAsync(Guid tenantId, Guid tenantCustomerId, string auth0Sub,

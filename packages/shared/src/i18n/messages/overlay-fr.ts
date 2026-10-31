@@ -159,6 +159,7 @@ export const frOverlay: MessageTree = {
     notice: "Avis",
     loading: "Veuillez patienter…",
     loadingDetail: "Chargement…",
+    loadingDepth: "{count} en cours",
     dismiss: "Fermer",
   },
   common: {
@@ -322,6 +323,12 @@ export const frOverlay: MessageTree = {
         description: "Votre compte Adeni, raccourcis et liens légaux.",
         shortcuts: "Raccourcis",
         more: "Plus",
+        verificationTitle: "Vérification du compte",
+        emailVerified: "Courriel vérifié",
+        emailNotVerified: "Courriel non vérifié",
+        phoneVerified: "Téléphone vérifié",
+        phoneNotVerified: "Téléphone non vérifié",
+        identityNotRequired: "La vérification d'identité n'est pas requise pour réserver sur Adeni.",
       },
       breadcrumbs: {
         bookingDetail: "Détails de la réservation",

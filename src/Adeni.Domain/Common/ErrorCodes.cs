@@ -168,6 +168,23 @@ public static class ErrorCodes
     public static Error CustomerAuthRequiredError() =>
         new(CustomerAuthRequired, "Customer authentication is required.");
 
+    public const string CustomerEmailNotVerified = "customer.email_not_verified";
+    public const string CustomerPhoneNotVerified = "customer.phone_not_verified";
+    public const string CustomerVerificationRequired = "customer.verification_required";
+    public const string QueuePhoneNotVerified = "queue.phone_not_verified";
+
+    public static Error CustomerEmailNotVerifiedError() =>
+        new(CustomerEmailNotVerified, "Verify your email before continuing.");
+
+    public static Error CustomerPhoneNotVerifiedError() =>
+        new(CustomerPhoneNotVerified, "Verify your phone number before continuing.");
+
+    public static Error CustomerVerificationRequiredError() =>
+        new(CustomerVerificationRequired, "Account verification is required for this action.");
+
+    public static Error QueuePhoneNotVerifiedError() =>
+        new(QueuePhoneNotVerified, "Phone verification is required to join the queue.");
+
     public static Error BusinessAccessDeniedError() =>
         new(BusinessAccessDenied, "You do not have access to this business.");
 

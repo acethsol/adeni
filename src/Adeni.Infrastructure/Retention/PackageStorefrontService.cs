@@ -2,6 +2,7 @@ namespace Adeni.Infrastructure.Retention;
 
 using Adeni.Application.Common;
 using Adeni.Application.Finance;
+using Adeni.Application.Identity;
 using Adeni.Application.Retention;
 using Adeni.Application.Tenancy;
 using Adeni.Domain.Common;
@@ -23,7 +24,9 @@ public sealed class PackageStorefrontService(
     ITenantCustomerService tenantCustomers,
     IBenefitRedemptionService redemption,
     IHostEnvironment environment,
-    TimeProvider clock) : IPackageStorefrontService
+    TimeProvider clock,
+    ICustomerTrustSyncService customerTrustSync,
+    ICustomerVerificationPolicy customerVerificationPolicy) : IPackageStorefrontService
 {
     private const string PurchaseKind = "purchase";
 
@@ -75,6 +78,16 @@ public sealed class PackageStorefrontService(
         if (string.IsNullOrWhiteSpace(customerAuth0Sub))
         {
             return Result.Failure<PackagePurchaseResponse>(ErrorCodes.CustomerAuthRequiredError());
+        }
+
+        await customerTrustSync.SyncAsync(customerAuth0Sub, null, cancellationToken);
+        var verification = await customerVerificationPolicy.RequireEmailAndPhoneVerifiedAsync(
+            customerAuth0Sub,
+            null,
+            cancellationToken);
+        if (verification.IsFailure)
+        {
+            return Result.Failure<PackagePurchaseResponse>(verification.Error);
         }
 
         var key = IdempotencyKeyNormalizer.Normalize(idempotencyKey);

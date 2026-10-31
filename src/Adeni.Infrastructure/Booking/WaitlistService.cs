@@ -1,6 +1,7 @@
 namespace Adeni.Infrastructure.Booking;
 
 using Adeni.Application.Booking;
+using Adeni.Application.Identity;
 using Adeni.Application.Subscriptions;
 using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
@@ -11,7 +12,9 @@ using Microsoft.EntityFrameworkCore;
 
 public sealed class WaitlistService(
     AdeniDbContext dbContext,
-    IEntitlementsService entitlementsService) : IWaitlistService
+    IEntitlementsService entitlementsService,
+    ICustomerTrustSyncService customerTrustSync,
+    ICustomerVerificationPolicy customerVerificationPolicy) : IWaitlistService
 {
     public async Task<Result<WaitlistEntryResponse>> JoinAsync(
         string customerAuth0Sub,
@@ -21,6 +24,16 @@ public sealed class WaitlistService(
         if (string.IsNullOrWhiteSpace(customerAuth0Sub))
         {
             return Result.Failure<WaitlistEntryResponse>(Error.Forbidden("Customer authentication is required."));
+        }
+
+        await customerTrustSync.SyncAsync(customerAuth0Sub, null, cancellationToken);
+        var verification = await customerVerificationPolicy.RequireEmailAndPhoneVerifiedAsync(
+            customerAuth0Sub,
+            null,
+            cancellationToken);
+        if (verification.IsFailure)
+        {
+            return Result.Failure<WaitlistEntryResponse>(verification.Error);
         }
 
         var tenant = await dbContext.Tenants

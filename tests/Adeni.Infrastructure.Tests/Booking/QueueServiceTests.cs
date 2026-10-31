@@ -13,6 +13,7 @@ using Adeni.Infrastructure.Persistence;
 using Adeni.Infrastructure.Tenancy;
 using Adeni.Infrastructure.Tests.Catalog;
 using Adeni.Infrastructure.Tests.Notifications;
+using Adeni.Infrastructure.Tests.TestSupport;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -237,6 +238,7 @@ public sealed class QueueServiceTests
         services.AddEntitlementsModule();
         services.AddScoped<ITenantCustomerService, TenantCustomerService>();
         services.AddBookingTestRealtime();
+        CustomerVerificationTestDoubles.Register(services);
         services.AddScoped<IQueueService, QueueService>();
         return services.BuildServiceProvider();
     }

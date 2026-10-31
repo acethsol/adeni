@@ -6,6 +6,7 @@ using Adeni.Application.Caching;
 using Adeni.Application.Common;
 using Adeni.Application.Events;
 using Adeni.Application.Finance;
+using Adeni.Application.Identity;
 using Adeni.Application.Security;
 using Adeni.Application.Subscriptions;
 using Adeni.Application.Realtime;
@@ -40,7 +41,9 @@ public sealed class BookingService(
     Application.Retention.IBenefitRedemptionService? benefits = null,
     Application.Retention.ILoyaltyEarnService? loyaltyEarn = null,
     Application.Retention.ILoyaltyRedemptionService? loyaltyRedeem = null,
-    Application.Retention.IReferralQualificationService? referralQualification = null) : IBookingService
+    Application.Retention.IReferralQualificationService? referralQualification = null,
+    ICustomerTrustSyncService? customerTrustSync = null,
+    ICustomerVerificationPolicy? customerVerificationPolicy = null) : IBookingService
 {
     public async Task<Result<BookingResponse>> CreateAsync(
         string customerAuth0Sub,
@@ -51,6 +54,23 @@ public sealed class BookingService(
         if (string.IsNullOrWhiteSpace(customerAuth0Sub))
         {
             return Result.Failure<BookingResponse>(ErrorCodes.CustomerAuthRequiredError());
+        }
+
+        if (customerTrustSync is not null)
+        {
+            await customerTrustSync.SyncAsync(customerAuth0Sub, null, cancellationToken);
+        }
+
+        if (customerVerificationPolicy is not null)
+        {
+            var emailGate = await customerVerificationPolicy.RequireEmailVerifiedAsync(
+                customerAuth0Sub,
+                null,
+                cancellationToken);
+            if (emailGate.IsFailure)
+            {
+                return Result.Failure<BookingResponse>(emailGate.Error);
+            }
         }
 
         var normalizedIdempotencyKey = IdempotencyKeyNormalizer.Normalize(idempotencyKey);

@@ -400,6 +400,7 @@ public sealed class BookingFlowTests
         services.AddScoped<ITenantSchedulingTimeZone, TenantSchedulingTimeZone>();
         services.AddScoped<IBusinessClosedDateService, BusinessClosedDateService>();
         services.AddScoped<IAvailabilityService, AvailabilityService>();
+        CustomerVerificationTestDoubles.Register(services);
         services.AddScoped<IReviewService, ReviewService>();
         services.AddEntitlementsModule();
         services.Configure<FinanceOptions>(options =>

@@ -18,4 +18,13 @@ public sealed class Customer
     public DateTimeOffset CreatedAt { get; set; }
 
     public DateTimeOffset? ErasureRequestedAt { get; set; }
+
+    public DateTimeOffset? EmailVerifiedAt { get; set; }
+
+    public DateTimeOffset? PhoneVerifiedAt { get; set; }
+
+    /// <summary>HMAC-SHA256 (hex) of normalized E.164 at last phone verification.</summary>
+    public string? PhoneVerifiedFingerprint { get; set; }
+
+    public DateTimeOffset? TrustUpdatedAt { get; set; }
 }

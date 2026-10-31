@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { customerProfileTrustSchema } from "./customer-verification";
 import { customerPackageSummarySchema } from "./retention";
 
 export const customerSourceAvailabilitySchema = z.object({
@@ -18,6 +19,7 @@ export const customerProfileSchema = z.object({
   nextAppointment: z.object({ bookingId: z.string(), startAt: z.string(), serviceName: z.string(), status: z.enum(["Pending", "Confirmed"]) }).nullable(),
   recordedOnlinePaymentsByCurrency: z.array(z.object({ currency: z.string(), amount: z.number() })).nullable(),
   packages: customerPackageSummarySchema.nullable().optional(),
+  trust: customerProfileTrustSchema.nullable().optional(),
 });
 
 export const customerActivityItemSchema = z.object({

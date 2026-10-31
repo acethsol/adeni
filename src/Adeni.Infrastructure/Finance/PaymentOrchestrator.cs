@@ -4,6 +4,7 @@ using Adeni.Application.Abstractions;
 using Adeni.Application.Common;
 using Adeni.Application.Events;
 using Adeni.Application.Finance;
+using Adeni.Application.Identity;
 using Adeni.Application.Realtime;
 using Adeni.Domain.Auditing;
 using Adeni.Domain.Common;
@@ -26,7 +27,9 @@ public sealed partial class PaymentOrchestrator(
     ICustomerPaymentAccessQuery customerPaymentAccess,
     IBookingDepositCalculator bookingDepositCalculator,
     IPaymentCallbackUrlValidator callbackUrlValidator,
-    ICommercePaymentCompletion? commerce = null) : IPaymentOrchestrator
+    ICommercePaymentCompletion? commerce = null,
+    ICustomerTrustSyncService? customerTrustSync = null,
+    ICustomerVerificationPolicy? customerVerificationPolicy = null) : IPaymentOrchestrator
 {
     public async Task<Result<PaymentIntentResponse>> InitializeCustomerBookingPaymentAsync(
         string customerAuth0Sub,
@@ -37,6 +40,23 @@ public sealed partial class PaymentOrchestrator(
         if (string.IsNullOrWhiteSpace(customerAuth0Sub))
         {
             return Result.Failure<PaymentIntentResponse>(ErrorCodes.AuthRequiredError());
+        }
+
+        if (customerTrustSync is not null)
+        {
+            await customerTrustSync.SyncAsync(customerAuth0Sub, null, cancellationToken);
+        }
+
+        if (customerVerificationPolicy is not null)
+        {
+            var emailGate = await customerVerificationPolicy.RequireEmailVerifiedAsync(
+                customerAuth0Sub,
+                null,
+                cancellationToken);
+            if (emailGate.IsFailure)
+            {
+                return Result.Failure<PaymentIntentResponse>(emailGate.Error);
+            }
         }
 
         var paymentType = ParsePaymentType(request.Type);

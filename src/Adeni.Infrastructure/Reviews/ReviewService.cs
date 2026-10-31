@@ -3,6 +3,7 @@ namespace Adeni.Infrastructure.Reviews;
 using Adeni.Application.Abstractions;
 using Adeni.Application.Caching;
 using Adeni.Application.Admin;
+using Adeni.Application.Identity;
 using Adeni.Application.Reviews;
 using Adeni.Domain.Auditing;
 using Adeni.Domain.Booking;
@@ -14,7 +15,9 @@ public sealed class ReviewService(
     AdeniDbContext dbContext,
     ICacheService cache,
     IAuditLogWriter auditLogWriter,
-    ICorrelationContext correlationContext) : IReviewService
+    ICorrelationContext correlationContext,
+    ICustomerTrustSyncService customerTrustSync,
+    ICustomerVerificationPolicy customerVerificationPolicy) : IReviewService
 {
     private const int DefaultPageSize = 10;
     private const int MaxPageSize = 50;
@@ -29,6 +32,16 @@ public sealed class ReviewService(
         if (string.IsNullOrWhiteSpace(customerAuth0Sub))
         {
             return Result.Failure<ReviewResponse>(Error.Forbidden("Customer authentication is required."));
+        }
+
+        await customerTrustSync.SyncAsync(customerAuth0Sub, null, cancellationToken);
+        var emailGate = await customerVerificationPolicy.RequireEmailVerifiedAsync(
+            customerAuth0Sub,
+            null,
+            cancellationToken);
+        if (emailGate.IsFailure)
+        {
+            return Result.Failure<ReviewResponse>(emailGate.Error);
         }
 
         if (request.Rating is < 1 or > 5)

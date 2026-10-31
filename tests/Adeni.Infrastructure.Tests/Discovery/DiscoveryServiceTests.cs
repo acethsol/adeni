@@ -244,6 +244,7 @@ public sealed class DiscoveryServiceTests
         services.AddDbContext<AdeniDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));
         services.AddSingleton<IFileStorage, FakeFileStorage>();
         AuditTestDoubles.Register(services);
+        CustomerVerificationTestDoubles.Register(services);
         services.AddScoped<IReviewService, ReviewService>();
         services.AddScoped<DiscoveryService>();
         var provider = services.BuildServiceProvider();

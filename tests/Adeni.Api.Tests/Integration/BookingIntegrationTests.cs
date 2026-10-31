@@ -24,7 +24,9 @@ public sealed class BookingIntegrationTests : IClassFixture<WebApplicationFactor
                 config.AddInMemoryCollection(new Dictionary<string, string?>
                 {
                     ["ConnectionStrings:AdeniDb"] = string.Empty,
-                    ["Redis:ConnectionString"] = string.Empty
+                    ["Redis:ConnectionString"] = string.Empty,
+                    ["CustomerVerification:AutoVerifyCustomerInTesting"] = "true",
+                    ["CustomerVerification:PhoneVerificationHmacKey"] = "api-integration-test-key",
                 });
             });
         });

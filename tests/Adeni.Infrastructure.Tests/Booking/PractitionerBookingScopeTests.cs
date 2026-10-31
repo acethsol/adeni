@@ -216,6 +216,7 @@ public sealed class PractitionerBookingScopeTests
         services.AddScoped<IAvailabilityService, AvailabilityService>();
         services.AddScoped<IMediaUploadBlobValidator, MediaUploadBlobValidator>();
         services.AddScoped<IStaffService, StaffService>();
+        CustomerVerificationTestDoubles.Register(services);
         services.AddScoped<IReviewService, ReviewService>();
         services.AddEntitlementsModule();
         services.Configure<FinanceOptions>(options =>
