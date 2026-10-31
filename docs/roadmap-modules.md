@@ -34,6 +34,7 @@ Each major build still needs a `docs/specs/sprint-XX-*.md` before implementation
 | 5 | **Reporting** | Partial | Next | `Reporting` + Dashboard queries, [reporting.md](./reporting.md) | **39A/39B shipped** — exports + admin MRR/GMV; portal sales-summary + JWT billing PDF wired; staging export audit pending |
 | 6 | **Messaging** | Shipped (client↔business) | Later (staff notes / WABA) | Messaging | Sprint 36 conversations + SignalR |
 | 7 | **Floor calendar & staff** | Shipped | Now (polish) | Booking + Identity | Team + practitioner boards |
+| 7b | **Staff attendance & on-premises data** | Planned | Next | Booking + Identity + Tenancy | **Approved** — [staff-attendance-verified-presence.md](./specs/staff-attendance-verified-presence.md); not payroll / no GPS tracking |
 | 8 | **Onboarding** | Shipped | Now (polish) | Tenancy | Supply-first; category-aware defaults |
 | 9 | **Discovery & public page** | Shipped | Now | Discovery | SEO + shareable book link |
 | 10 | **Quotes** | Shipped | Later (wedge) | Quotes | Outside beauty Explore; keep for trades |

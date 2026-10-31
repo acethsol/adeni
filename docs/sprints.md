@@ -55,6 +55,7 @@ Current V1 authority: [product-direction.md](./product-direction.md). Supported 
 | — | **Reporting module boundaries** | Spec — [reporting-module-boundaries.md](./specs/reporting-module-boundaries.md); runbook [reporting.md](./reporting.md) |
 | — | **Notifications module boundaries** | Spec — [notifications-module-boundaries.md](./specs/notifications-module-boundaries.md); runbook [notifications.md](./notifications.md) |
 | — | **Shared data grid (`@adeni/ui`)** | Spec — [shared-data-grid.md](./specs/shared-data-grid.md); Staff = reference impl |
+| **40** | **Staff attendance, verified presence & on-premises sensitive data** | **Approved — not started** — [staff-attendance-verified-presence.md](./specs/staff-attendance-verified-presence.md); Phases A→E |
 | — | Sprint 11d LLM agent | → Sprint 20 |
 | — | Staging deploy + Auth0 E2E | → Sprint 20 |
 | — | App Insights (Obs 1) | → Sprint 20 |
