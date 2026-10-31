@@ -40,4 +40,9 @@ public sealed class NoOpTenantRealtimePublisher : ITenantRealtimePublisher
         Guid? bookingId,
         string? providerReference = null,
         CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+    public Task PublishAttendanceTeamChangedAsync(
+        Guid tenantId,
+        Guid? businessLocationId = null,
+        CancellationToken cancellationToken = default) => Task.CompletedTask;
 }

@@ -8,7 +8,7 @@ using Adeni.Infrastructure.Auth;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Options;
 
-/// <summary>Push-only hub for bookings, queue, quotes, payments, admin verification.</summary>
+/// <summary>Push-only hub for bookings, queue, quotes, payments, attendance, admin verification.</summary>
 public sealed class OperationsHub(
     IOptions<Auth0Options> auth0Options,
     IBusinessPermissionService permissionService,

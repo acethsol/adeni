@@ -43,4 +43,10 @@ public interface ITenantRealtimePublisher
         Guid? bookingId,
         string? providerReference = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Team attendance roster changed (clock-in/out, override, correction).</summary>
+    Task PublishAttendanceTeamChangedAsync(
+        Guid tenantId,
+        Guid? businessLocationId = null,
+        CancellationToken cancellationToken = default);
 }

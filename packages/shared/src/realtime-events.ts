@@ -11,6 +11,12 @@ export const queueFloorChangedSchema = z.object({
 });
 export type QueueFloorChangedEvent = z.infer<typeof queueFloorChangedSchema>;
 
+export const attendanceTeamChangedSchema = z.object({
+  tenantId: z.string(),
+  businessLocationId: z.string().nullable().optional(),
+});
+export type AttendanceTeamChangedEvent = z.infer<typeof attendanceTeamChangedSchema>;
+
 export const quotePipelineChangedSchema = z.object({
   tenantId: z.string(),
   openCount: z.number(),
