@@ -1,16 +1,14 @@
 import { Component, inject } from "@angular/core";
+import { AdeniBrandLogoComponent } from "../adeni-brand-logo.component";
 import { AdeniFeedbackService } from "./adeni-feedback.service";
 
 @Component({
   selector: "adeni-global-loading-panel",
   standalone: true,
+  imports: [AdeniBrandLogoComponent],
   template: `
     @if (feedback.loadingVisible()) {
-      <div
-        class="load-backdrop"
-        role="presentation"
-        aria-hidden="true"
-      >
+      <div class="load-backdrop" role="presentation" aria-hidden="true">
         <div
           class="load-card"
           role="status"
@@ -18,13 +16,27 @@ import { AdeniFeedbackService } from "./adeni-feedback.service";
           aria-busy="true"
           aria-atomic="true"
         >
-          <span class="load-card__ring" aria-hidden="true"></span>
-          <div class="load-spinner-wrap" aria-hidden="true">
-            <span class="load-spinner"></span>
+          <div class="load-card__accent" aria-hidden="true"></div>
+
+          <div class="load-orbit" aria-hidden="true">
+            <span class="load-orbit__ring load-orbit__ring--outer"></span>
+            <span class="load-orbit__ring load-orbit__ring--inner"></span>
+            <span class="load-orbit__core">
+              <adeni-brand-logo variant="mark" [surface]="logoSurface()" [size]="22" />
+            </span>
           </div>
+
           <div class="load-card__body">
-            <strong>{{ feedback.loadingLabel() }}</strong>
+            <div class="load-card__head">
+              <strong>{{ feedback.loadingLabel() }}</strong>
+              @if (feedback.loadingDepth() > 1) {
+                <span class="load-card__depth">{{ depthLabel() }}</span>
+              }
+            </div>
             <p>{{ feedback.loadingDetail() }}</p>
+            <div class="load-card__track" aria-hidden="true">
+              <span class="load-card__track-fill"></span>
+            </div>
           </div>
         </div>
       </div>
@@ -34,4 +46,15 @@ import { AdeniFeedbackService } from "./adeni-feedback.service";
 })
 export class AdeniGlobalLoadingPanelComponent {
   readonly feedback = inject(AdeniFeedbackService);
+
+  logoSurface(): "light" | "dark" {
+    if (typeof document === "undefined") {
+      return "light";
+    }
+    return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+  }
+
+  depthLabel(): string {
+    return this.feedback.text("toast.loadingDepth", { count: this.feedback.loadingDepth() });
+  }
 }

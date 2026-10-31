@@ -32,6 +32,8 @@ export class AdeniFeedbackService {
   private readonly dismissTimers = new Map<number, ReturnType<typeof setTimeout>>();
 
   readonly loadingVisible = computed(() => this.loadingFrames().length > 0);
+  /** Nested `showLoading` count — used for subtle depth cue in the global panel. */
+  readonly loadingDepth = computed(() => this.loadingFrames().length);
   readonly loadingLabel = computed(() => {
     const top = this.topLoadingFrame();
     return top?.label ?? this.text("toast.loading");
