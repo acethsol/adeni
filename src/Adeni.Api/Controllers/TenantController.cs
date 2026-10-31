@@ -1,8 +1,10 @@
 namespace Adeni.Api.Controllers;
 
 using System.Security.Claims;
+using Adeni.Api.Auth;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
+using Adeni.Domain.Identity;
 using Adeni.Application.Notifications;
 using Adeni.Application.Subscriptions;
 using Adeni.Application.Tenancy;
@@ -66,6 +68,7 @@ public sealed class TenantController(
     }
 
     [HttpGet("profile")]
+    [RequiresBusinessPermission(BusinessPermissions.Profile)]
     public async Task<IActionResult> GetProfile(CancellationToken cancellationToken)
     {
         var auth0Sub = ResolveAuth0Sub();
@@ -80,6 +83,7 @@ public sealed class TenantController(
     }
 
     [HttpPatch("profile")]
+    [RequiresBusinessPermission(BusinessPermissions.Profile)]
     public async Task<IActionResult> UpdateProfile(
         [FromBody] UpdateBusinessProfileRequest request,
         CancellationToken cancellationToken)
@@ -96,6 +100,7 @@ public sealed class TenantController(
     }
 
     [HttpPatch("settings")]
+    [RequiresBusinessPermission(BusinessPermissions.Profile)]
     public async Task<IActionResult> UpdateSettings(
         [FromBody] UpdateBusinessSettingsRequest request,
         CancellationToken cancellationToken)
@@ -112,6 +117,7 @@ public sealed class TenantController(
     }
 
     [HttpPatch("public-page")]
+    [RequiresBusinessPermission(BusinessPermissions.PublicPage)]
     public async Task<IActionResult> UpdatePublicPage(
         [FromBody] UpdatePublicPageRequest request,
         CancellationToken cancellationToken)
@@ -132,6 +138,7 @@ public sealed class TenantController(
     }
 
     [HttpPatch("policies")]
+    [RequiresBusinessPermission(BusinessPermissions.Profile)]
     public async Task<IActionResult> UpdatePolicies(
         [FromBody] UpdateBusinessPoliciesRequest request,
         CancellationToken cancellationToken)
@@ -152,6 +159,7 @@ public sealed class TenantController(
     }
 
     [HttpGet("notification-preferences")]
+    [RequiresBusinessPermission(BusinessPermissions.Profile)]
     public async Task<IActionResult> GetNotificationPreferences(CancellationToken cancellationToken)
     {
         var auth0Sub = ResolveAuth0Sub();
@@ -166,6 +174,7 @@ public sealed class TenantController(
     }
 
     [HttpPatch("notification-preferences")]
+    [RequiresBusinessPermission(BusinessPermissions.Profile)]
     public async Task<IActionResult> UpdateNotificationPreferences(
         [FromBody] UpdateNotificationPreferencesRequest request,
         CancellationToken cancellationToken)
@@ -182,6 +191,7 @@ public sealed class TenantController(
     }
 
     [HttpPost("verification")]
+    [RequiresBusinessPermission(BusinessPermissions.Profile)]
     public async Task<IActionResult> SubmitVerification(
         [FromBody] SubmitVerificationRequest request,
         CancellationToken cancellationToken)
@@ -198,6 +208,10 @@ public sealed class TenantController(
     }
 
     [HttpGet("locations")]
+    [RequiresBusinessPermission(
+        BusinessPermissions.Locations,
+        BusinessPermissions.Bookings,
+        BusinessPermissions.BookingsSelf)]
     public async Task<IActionResult> ListLocations(CancellationToken cancellationToken)
     {
         var auth0Sub = ResolveAuth0Sub();
@@ -212,6 +226,7 @@ public sealed class TenantController(
     }
 
     [HttpPost("locations")]
+    [RequiresBusinessPermission(BusinessPermissions.Locations)]
     public async Task<IActionResult> AddLocation(
         [FromBody] UpsertBusinessLocationRequest request,
         CancellationToken cancellationToken)
@@ -228,6 +243,7 @@ public sealed class TenantController(
     }
 
     [HttpPatch("locations/{locationId:guid}")]
+    [RequiresBusinessPermission(BusinessPermissions.Locations)]
     public async Task<IActionResult> UpdateLocation(
         Guid locationId,
         [FromBody] UpsertBusinessLocationRequest request,
@@ -245,6 +261,7 @@ public sealed class TenantController(
     }
 
     [HttpDelete("locations/{locationId:guid}")]
+    [RequiresBusinessPermission(BusinessPermissions.Locations)]
     public async Task<IActionResult> DeactivateLocation(
         Guid locationId,
         CancellationToken cancellationToken)

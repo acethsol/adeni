@@ -143,6 +143,7 @@ public sealed class TenantIsolationIntegrationTests : IClassFixture<WebApplicati
         }
 
         var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add(DevBusinessAuthMiddleware.DevAuth0SubHeader, "auth0|owner-a");
         client.DefaultRequestHeaders.Add(TenantAccessMiddleware.TenantHeaderName, tenantA.ToString());
 
         var response = await client.GetAsync("/api/v1/tenant/services");

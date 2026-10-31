@@ -1884,6 +1884,7 @@ export const paymentIntentResponseSchema = z.object({
   status: z.string(),
   checkoutUrl: z.string(),
   providerReference: z.string(),
+  checkoutRealtimeToken: z.string().optional(),
   description: z.string().nullable().optional(),
   createdAt: z.string().optional(),
 });

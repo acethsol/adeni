@@ -123,6 +123,19 @@ Development (`appsettings.Development.json`):
 }
 ```
 
+## SPA token storage (P2 hardening)
+
+All Angular apps use `@auth0/auth0-angular` with:
+
+- `cacheLocation: "memory"` — access tokens are not persisted in `localStorage` (reduces XSS token theft vs long-lived browser storage).
+- `useRefreshTokens: true` — silent renewal via refresh token rotation.
+
+**Auth0 Dashboard:** enable **Refresh Token Rotation** on each SPA application. Allow offline access / refresh tokens as required by the SDK.
+
+**Tradeoffs:** Memory cache clears on full page reload (user may need to sign in again unless refresh cookie path is used — Auth0 handles via iframe/refresh where configured). A **BFF + httpOnly session** remains the long-term option for maximum XSS resistance; not required for V1 if CSP and input hygiene hold.
+
+Theme/sidebar preferences still use `localStorage` (non-auth UI state only).
+
 ## Staging
 
 Use `appsettings.Staging.json` or environment variables — see previous docs.

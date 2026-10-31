@@ -210,6 +210,7 @@ public sealed class ProductionConfigurationExtensionsTests
             ["Payments:Provider"] = "Paystack",
             ["Paystack:WebhookSecret"] = "test-paystack-secret",
             ["Stripe:WebhookSecret"] = "test-stripe-secret",
+            ["Finance:CheckoutRealtimeSigningKey"] = "test-checkout-realtime-signing-key",
             ["SubscriptionBilling:Provider"] = "Paystack",
             ["Notifications:Resend:ApiKey"] = "test-key",
             ["Notifications:Resend:From"] = "sender@example.com",

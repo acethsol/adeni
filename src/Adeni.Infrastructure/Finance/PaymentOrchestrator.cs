@@ -22,6 +22,7 @@ public sealed partial class PaymentOrchestrator(
     IDomainEventCollector domainEventCollector,
     IOptions<FinanceOptions> paymentsOptions,
     ITenantRealtimePublisher tenantRealtime,
+    IPaymentCheckoutRealtimeTokenService checkoutRealtimeTokens,
     ICommercePaymentCompletion? commerce = null) : IPaymentOrchestrator
 {
     public Task<Result<PaymentIntentResponse>> InitializeAsync(
@@ -426,9 +427,12 @@ public sealed partial class PaymentOrchestrator(
             entity.Id,
             cancellationToken);
 
+        var realtimeToken = checkoutRealtimeTokens.Issue(entity.Id, entity.ProviderReference);
+        var checkoutUrl = AppendCheckoutRealtimeToken(providerResult.Value.CheckoutUrl, realtimeToken);
         var response = Map(entity) with
         {
-            CheckoutUrl = providerResult.Value.CheckoutUrl,
+            CheckoutUrl = checkoutUrl,
+            CheckoutRealtimeToken = realtimeToken,
         };
 
         return Result.Success(response);
@@ -646,8 +650,10 @@ public sealed partial class PaymentOrchestrator(
             cancellationToken);
     }
 
-    private PaymentIntentResponse Map(PaymentIntentRecord entity) =>
-        new(
+    private PaymentIntentResponse Map(PaymentIntentRecord entity)
+    {
+        var token = checkoutRealtimeTokens.Issue(entity.Id, entity.ProviderReference);
+        return new(
             entity.Id,
             entity.TenantId,
             entity.BookingId,
@@ -656,10 +662,23 @@ public sealed partial class PaymentOrchestrator(
             entity.PlatformFeeAmount,
             entity.Currency,
             entity.Status.ToString().ToLowerInvariant(),
-            BuildCheckoutUrl(entity),
+            AppendCheckoutRealtimeToken(BuildCheckoutUrl(entity), token),
             entity.ProviderReference,
             entity.Description,
-            entity.CreatedAt);
+            entity.CreatedAt,
+            token);
+    }
+
+    private static string AppendCheckoutRealtimeToken(string checkoutUrl, string token)
+    {
+        if (string.IsNullOrWhiteSpace(checkoutUrl))
+        {
+            return checkoutUrl;
+        }
+
+        var separator = checkoutUrl.Contains('?', StringComparison.Ordinal) ? '&' : '?';
+        return $"{checkoutUrl}{separator}rt={Uri.EscapeDataString(token)}";
+    }
 
     private string BuildCheckoutUrl(PaymentIntentRecord entity)
     {

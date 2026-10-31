@@ -30,7 +30,7 @@ export class AdeniOperationsRealtimeService implements OnDestroy {
 
   private mode: OperationsMode | null = null;
   private tenantId: string | null = null;
-  private checkoutReference: string | null = null;
+  private checkoutRealtimeToken: string | null = null;
 
   private readonly pendingBookingsSubject = new Subject<PendingBookingsChangedEvent>();
   private readonly queueFloorSubject = new Subject<QueueFloorChangedEvent>();
@@ -110,24 +110,24 @@ export class AdeniOperationsRealtimeService implements OnDestroy {
     await this.session.invoke("JoinAdminVerification");
   }
 
-  /** Public checkout: anonymous hub join by Paystack reference. */
-  async watchCheckout(providerReference: string): Promise<void> {
-    return this.watchPaymentCheckout(providerReference);
+  /** Public checkout: anonymous hub join via signed token from payment initialize. */
+  async watchCheckout(checkoutRealtimeToken: string): Promise<void> {
+    return this.watchPaymentCheckout(checkoutRealtimeToken);
   }
 
-  async watchPaymentCheckout(providerReference: string): Promise<void> {
-    const reference = providerReference.trim();
-    if (!reference) {
+  async watchPaymentCheckout(checkoutRealtimeToken: string): Promise<void> {
+    const token = checkoutRealtimeToken.trim();
+    if (!token) {
       return;
     }
 
-    if (this.session.isConnected() && this.mode === "checkout" && this.checkoutReference === reference) {
+    if (this.session.isConnected() && this.mode === "checkout" && this.checkoutRealtimeToken === token) {
       return;
     }
 
     await this.stopInternal();
     this.mode = "checkout";
-    this.checkoutReference = reference;
+    this.checkoutRealtimeToken = token;
 
     await this.session.connect({
       hubUrl: this.auth.getHubUrl("operations"),
@@ -139,9 +139,9 @@ export class AdeniOperationsRealtimeService implements OnDestroy {
           }
         },
       },
-      onReconnected: () => this.session.invoke("JoinPaymentCheckout", reference),
+      onReconnected: () => this.session.invoke("JoinPaymentCheckout", token),
     });
-    await this.session.invoke("JoinPaymentCheckout", reference);
+    await this.session.invoke("JoinPaymentCheckout", token);
   }
 
   async stop(): Promise<void> {
@@ -204,14 +204,14 @@ export class AdeniOperationsRealtimeService implements OnDestroy {
   }
 
   private async stopInternal(): Promise<void> {
-    const reference = this.checkoutReference;
+    const token = this.checkoutRealtimeToken;
     this.mode = null;
     this.tenantId = null;
-    this.checkoutReference = null;
+    this.checkoutRealtimeToken = null;
 
-    if (reference && this.session.isConnected()) {
+    if (token && this.session.isConnected()) {
       try {
-        await this.session.invoke("LeavePaymentCheckout", reference);
+        await this.session.invoke("LeavePaymentCheckout", token);
       } catch {
         // ignore
       }

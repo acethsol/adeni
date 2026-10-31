@@ -2,6 +2,7 @@ namespace Adeni.Infrastructure.Tests.Booking;
 
 using Adeni.Domain.Auditing;
 using Adeni.Infrastructure.Auditing;
+using Adeni.Infrastructure.Tests.Finance;
 using Adeni.Infrastructure.Tests.TestSupport;
 using Adeni.Infrastructure.Tests.Subscriptions;
 using Adeni.Application.Abstractions;
@@ -411,6 +412,7 @@ public sealed class BookingFlowTests
         services.AddScoped<IPlatformFeeCalculator, PlatformFeeCalculator>();
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();
         services.AddBookingTestRealtime();
+        services.AddCheckoutRealtimeTokens();
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
         services.AddScoped<IStaffCompensationService, StaffCompensationService>();
         services.AddSingleton<Application.Notifications.INotificationDispatcher, LoopTestNotifications>();

@@ -214,6 +214,19 @@ public static class ProductionConfigurationExtensions
                 "Paystack:WebhookSecret and Stripe:WebhookSecret must both be set when Payments:Provider is MarketDefault.");
         }
 
+        if (configuration.GetSection("SampleData").GetValue<bool>("Enabled"))
+        {
+            errors.Add("SampleData:Enabled must be false in Staging/Production.");
+        }
+
+        var checkoutRealtimeKey = configuration.GetSection(FinanceOptions.SectionName)["CheckoutRealtimeSigningKey"]
+            ?? configuration.GetSection(PaymentsOptions.SectionName)["CheckoutRealtimeSigningKey"];
+        if (string.IsNullOrWhiteSpace(checkoutRealtimeKey)
+            || checkoutRealtimeKey == "dev-checkout-realtime-signing-key")
+        {
+            errors.Add("Finance:CheckoutRealtimeSigningKey must be set to a non-default secret in Staging/Production.");
+        }
+
         if (errors.Count > 0)
         {
             throw new InvalidOperationException(

@@ -2,6 +2,7 @@ namespace Adeni.Api.Controllers;
 
 using System.Security.Claims;
 using Adeni.Api.Auth;
+using Adeni.Api.Common;
 using Adeni.Api.Errors;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
@@ -211,8 +212,11 @@ public sealed class SubscriptionBillingController(
     [EnableRateLimiting(RateLimitingExtensions.WebhookPolicy)]
     public async Task<IActionResult> Webhook(CancellationToken cancellationToken)
     {
-        using var reader = new StreamReader(Request.Body);
-        var rawBody = await reader.ReadToEndAsync(cancellationToken);
+        var (ok, rawBody) = await WebhookBodyReader.TryReadAsync(Request, cancellationToken);
+        if (!ok || rawBody is null)
+        {
+            return StatusCode(StatusCodes.Status413PayloadTooLarge);
+        }
         var headers = Request.Headers.ToDictionary(
             h => h.Key,
             h => h.Value.ToString(),

@@ -42,7 +42,8 @@ public sealed record PaymentIntentResponse(
     string CheckoutUrl,
     string ProviderReference,
     string? Description = null,
-    DateTimeOffset? CreatedAt = null);
+    DateTimeOffset? CreatedAt = null,
+    string? CheckoutRealtimeToken = null);
 
 public sealed record PaymentLedgerEntry(
     Guid Id,

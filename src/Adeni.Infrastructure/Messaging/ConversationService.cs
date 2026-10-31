@@ -23,6 +23,7 @@ public sealed class ConversationService(
     IFaqAutoResponder faqAutoResponder,
     IMessagingRealtimePublisher realtime,
     IFileStorage fileStorage,
+    IMediaUploadBlobValidator uploadBlobValidator,
     IDomainEventDispatcher domainEventDispatcher,
     IConfiguration configuration) : IConversationService
 {
@@ -1045,11 +1046,15 @@ public sealed class ConversationService(
                     ErrorCodes.MessageAttachmentInvalidError("Attachment must be between 1 byte and 5 MB."));
             }
 
-            if (!await fileStorage.ExistsAsync(storageKey, cancellationToken))
+            var blobCheck = await uploadBlobValidator.ValidateConfirmedUploadAsync(
+                tenantId,
+                MediaUploadPurpose.MessageAttachment,
+                storageKey,
+                cancellationToken);
+            if (blobCheck.IsFailure)
             {
                 return Result.Failure<List<MessageAttachment>>(
-                    ErrorCodes.MessageAttachmentInvalidError(
-                        "Attachment upload was not found. Upload the file before sending."));
+                    ErrorCodes.MessageAttachmentInvalidError(blobCheck.Error?.Message ?? "Attachment validation failed."));
             }
 
             attachments.Add(new MessageAttachment

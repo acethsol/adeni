@@ -14,7 +14,8 @@ public sealed class StaffService(
     AdeniDbContext dbContext,
     IFileStorage fileStorage,
     ICacheService cache,
-    IEntitlementsService entitlementsService) : IStaffService
+    IEntitlementsService entitlementsService,
+    IMediaUploadBlobValidator uploadBlobValidator) : IStaffService
 {
     public async Task<IReadOnlyList<StaffMemberResponse>> ListForTenantAsync(
         Guid tenantId,
@@ -358,10 +359,14 @@ public sealed class StaffService(
                 Error.Validation("Avatar image key is not valid for this business."));
         }
 
-        if (!await fileStorage.ExistsAsync(storageKey, cancellationToken))
+        var blobCheck = await uploadBlobValidator.ValidateConfirmedUploadAsync(
+            tenantId,
+            MediaUploadPurpose.StaffAvatar,
+            storageKey,
+            cancellationToken);
+        if (blobCheck.IsFailure)
         {
-            return Result.Failure<StaffMemberResponse>(
-                Error.Validation("Avatar upload was not found. Upload the file before saving."));
+            return Result.Failure<StaffMemberResponse>(blobCheck.Error);
         }
 
         var entity = await dbContext.StaffMembers

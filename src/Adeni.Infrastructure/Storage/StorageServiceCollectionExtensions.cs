@@ -25,6 +25,7 @@ public static class StorageServiceCollectionExtensions
             services.AddSingleton<IFileStorage, LocalFileStorage>();
         }
 
+        services.AddScoped<IMediaUploadBlobValidator, MediaUploadBlobValidator>();
         services.AddScoped<ITenantMediaService, TenantMediaService>();
         services.AddScoped<ICustomerMediaService, CustomerMediaService>();
         return services;

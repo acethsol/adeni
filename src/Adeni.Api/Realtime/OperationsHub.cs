@@ -2,6 +2,7 @@ namespace Adeni.Api.Realtime;
 
 using Adeni.Api.Messaging;
 using Adeni.Application.Auth;
+using Adeni.Application.Finance;
 using Adeni.Domain.Identity;
 using Adeni.Infrastructure.Auth;
 using Microsoft.AspNetCore.SignalR;
@@ -10,7 +11,8 @@ using Microsoft.Extensions.Options;
 /// <summary>Push-only hub for bookings, queue, quotes, payments, admin verification.</summary>
 public sealed class OperationsHub(
     IOptions<Auth0Options> auth0Options,
-    IBusinessPermissionService permissionService) : Hub
+    IBusinessPermissionService permissionService,
+    IPaymentCheckoutRealtimeTokenService checkoutRealtimeTokens) : Hub
 {
     public static string TenantGroup(Guid tenantId) => $"tenant-ops:{tenantId:D}";
 
@@ -55,28 +57,30 @@ public sealed class OperationsHub(
         await Groups.AddToGroupAsync(Context.ConnectionId, AdminVerificationGroup);
     }
 
-    /// <summary>Public checkout pages — reference acts as the capability token.</summary>
-    public async Task JoinPaymentCheckout(string providerReference)
+    /// <summary>Public checkout pages — signed token from payment initialize response.</summary>
+    public async Task JoinPaymentCheckout(string checkoutRealtimeToken)
     {
-        if (string.IsNullOrWhiteSpace(providerReference))
+        if (!checkoutRealtimeTokens.TryResolve(checkoutRealtimeToken, out var claims)
+            || claims is null)
         {
-            throw new HubException("Invalid reference");
+            throw new HubException("Invalid checkout token");
         }
 
         await Groups.AddToGroupAsync(
             Context.ConnectionId,
-            PaymentReferenceGroup(providerReference));
+            PaymentReferenceGroup(claims.ProviderReference));
     }
 
-    public async Task LeavePaymentCheckout(string providerReference)
+    public async Task LeavePaymentCheckout(string checkoutRealtimeToken)
     {
-        if (string.IsNullOrWhiteSpace(providerReference))
+        if (!checkoutRealtimeTokens.TryResolve(checkoutRealtimeToken, out var claims)
+            || claims is null)
         {
             return;
         }
 
         await Groups.RemoveFromGroupAsync(
             Context.ConnectionId,
-            PaymentReferenceGroup(providerReference));
+            PaymentReferenceGroup(claims.ProviderReference));
     }
 }

@@ -1,5 +1,6 @@
 namespace Adeni.Infrastructure.Tests.Events;
 
+using Adeni.Infrastructure.Tests.Finance;
 using Adeni.Infrastructure.Tests.TestSupport;
 
 using Adeni.Infrastructure.Tests.Subscriptions;
@@ -166,6 +167,7 @@ public sealed class DomainEventDispatcherTests
         services.AddScoped<IPlatformFeeCalculator, PlatformFeeCalculator>();
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();
         services.AddBookingTestRealtime();
+        services.AddCheckoutRealtimeTokens();
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
         services.AddScoped<IStaffCompensationService, StaffCompensationService>();
         services.AddReportingModule();

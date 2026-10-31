@@ -30,6 +30,7 @@ public sealed class TenantKioskController(
     }
 
     [HttpPut("pin")]
+    [RequiresBusinessPermission(BusinessPermissions.Bookings)]
     public async Task<IActionResult> SetPin(
         [FromBody] SetKioskPinRequest body,
         CancellationToken cancellationToken)

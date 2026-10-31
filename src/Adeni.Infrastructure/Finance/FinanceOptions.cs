@@ -9,6 +9,11 @@ public sealed class FinanceOptions
     public string StubCheckoutBaseUrl { get; set; } = "/checkout/stub";
 
     public string ReceiptBaseUrl { get; set; } = "/checkout/receipt";
+
+    /// <summary>HMAC key for checkout SignalR join tokens (required Staging/Production).</summary>
+    public string CheckoutRealtimeSigningKey { get; set; } = "dev-checkout-realtime-signing-key";
+
+    public int CheckoutRealtimeTokenMinutes { get; set; } = 120;
 }
 
 /// <summary>Legacy appsettings section name (still bound into <see cref="FinanceOptions"/>).</summary>

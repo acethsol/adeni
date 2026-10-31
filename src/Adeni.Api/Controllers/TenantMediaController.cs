@@ -1,8 +1,10 @@
 namespace Adeni.Api.Controllers;
 
 using System.Security.Claims;
+using Adeni.Api.Auth;
 using Adeni.Api.Middleware;
 using Adeni.Application.Auth;
+using Adeni.Domain.Identity;
 using Adeni.Application.Storage;
 using Adeni.Infrastructure.Auth;
 using Microsoft.AspNetCore.Mvc;
@@ -31,6 +33,7 @@ public sealed class TenantMediaController(
     }
 
     [HttpPatch("profile/cover")]
+    [RequiresBusinessPermission(BusinessPermissions.PublicPage)]
     public async Task<IActionResult> UpdateCover(
         [FromBody] UpdateCoverImageRequest request,
         CancellationToken cancellationToken)
@@ -47,6 +50,7 @@ public sealed class TenantMediaController(
     }
 
     [HttpPost("profile/gallery")]
+    [RequiresBusinessPermission(BusinessPermissions.PublicPage)]
     public async Task<IActionResult> AddGalleryImage(
         [FromBody] AddGalleryImageRequest request,
         CancellationToken cancellationToken)
@@ -63,6 +67,7 @@ public sealed class TenantMediaController(
     }
 
     [HttpDelete("profile/gallery")]
+    [RequiresBusinessPermission(BusinessPermissions.PublicPage)]
     public async Task<IActionResult> RemoveGalleryImage(
         [FromBody] RemoveGalleryImageRequest request,
         CancellationToken cancellationToken)
