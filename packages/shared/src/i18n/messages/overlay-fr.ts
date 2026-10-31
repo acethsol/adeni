@@ -459,6 +459,31 @@ export const frOverlay: MessageTree = {
       presenceRequiredBody:
         "Votre entreprise limite l’accès aux informations sensibles des clients au personnel vérifié sur place. Vérifiez votre position pour continuer.",
     },
+    welcome: {
+      heroTitle: "Gérez votre salon avec Adeni",
+      heroSubtitle:
+        "Découverte, réservation en ligne et outils pour la beauté et le bien-être à Lagos et Ottawa.",
+      startFree: "Commencer gratuitement",
+      viewPricing: "Voir les tarifs",
+      exploreDiscover: "Explorer Discover",
+      signIn: "Se connecter",
+      whatYouGetTitle: "Ce que vous obtenez",
+      whatYouGetProfile:
+        "Un profil public vérifié sur Discover avec des liens de réservation partageables.",
+      whatYouGetBooking: "Services réservables, calendriers du personnel et rendez-vous clients.",
+      whatYouGetInbox: "Messages et notifications pour suivre chaque visite.",
+      whatYouGetReviews: "Avis liés aux réservations terminées — pas de badges payants.",
+      plansTitle: "Forfaits",
+      plansCompareHint: "Comparez toutes les fonctionnalités sur Discover :",
+      trustTitle: "Trust Every Booking",
+      trustVerified:
+        "Établissements vérifiés par Adeni avant d’apparaître dans la découverte.",
+      trustReviews: "Avis authentiques de clients ayant terminé une réservation.",
+      trustNoPayBadge: "Pas de badges payants — la confiance vient des vraies visites.",
+      configureAccessHint:
+        "Configurez Auth0 SPA ou un sub Auth0 business de dev pour vous inscrire dans cet environnement.",
+      footerBackToDiscover: "Retour à Discover",
+    },
     memberships: {
       title: "Abonnements",
       description: "Plans récurrents avec des crédits de séances à chaque cycle de facturation.",

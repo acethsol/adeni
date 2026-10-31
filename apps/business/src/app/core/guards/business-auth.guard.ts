@@ -16,11 +16,11 @@ export const businessAuthGuard: CanActivateFn = async () => {
   const router = inject(Router);
 
   if (isBusinessPortalDevMode(config)) {
-    return isPortalDevSignedOut() ? router.createUrlTree(["/setup"]) : true;
+    return isPortalDevSignedOut() ? router.createUrlTree(["/welcome"]) : true;
   }
 
   if (!isAuth0Configured(config)) {
-    return router.createUrlTree(["/setup"]);
+    return router.createUrlTree(["/welcome"]);
   }
 
   const auth = inject(AuthService);

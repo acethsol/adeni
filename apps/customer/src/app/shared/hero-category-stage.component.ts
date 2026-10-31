@@ -17,6 +17,7 @@ import {
   getCategoryVisual,
   resolveBusinessCoverImage,
   t,
+  resolveBusinessPortalWelcomeUrl,
 } from "@adeni/shared";
 import { AdeniBrandLockupComponent, AdeniLocaleService, injectAdeniTranslate } from "@adeni/ui";
 import { interval } from "rxjs";
@@ -97,10 +98,9 @@ export class HeroCategoryStageComponent implements OnInit {
   readonly verifiedLabel = computed(() => t(this.locale(), "business.verified"));
   readonly brandPill = computed(() => t(this.locale(), "home.brandPill"));
 
-  readonly businessPortalUrl = computed(() => {
-    const businessPortalBaseUrl = this.config.portalAppUrl.trim();
-    return businessPortalBaseUrl ? businessPortalBaseUrl.replace(/\/$/, "") : null;
-  });
+  readonly businessPortalUrl = computed(() =>
+    resolveBusinessPortalWelcomeUrl(this.config.portalAppUrl),
+  );
 
   readonly chips = computed<HeroCategoryChip[]>(() => {
     const locale = this.locale();

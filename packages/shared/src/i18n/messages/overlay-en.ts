@@ -458,6 +458,29 @@ export const enOverlay: MessageTree = {
       presenceRequiredBody:
         "Your business restricts sensitive customer information to staff who are verified at the branch. Verify your location to continue.",
     },
+    welcome: {
+      heroTitle: "Run your salon on Adeni",
+      heroSubtitle:
+        "Discovery, online booking, and business tools for beauty and wellness in Lagos and Ottawa.",
+      startFree: "Start free",
+      viewPricing: "View pricing",
+      exploreDiscover: "Explore Discover",
+      signIn: "Sign in",
+      whatYouGetTitle: "What you get",
+      whatYouGetProfile: "A verified public profile on Discover with shareable booking links.",
+      whatYouGetBooking: "Bookable services, staff calendars, and customer appointments.",
+      whatYouGetInbox: "Messages and notifications so you stay on top of every visit.",
+      whatYouGetReviews: "Reviews tied to completed bookings — no pay-to-verify badges.",
+      plansTitle: "Plans",
+      plansCompareHint: "Compare every feature on Discover:",
+      trustTitle: "Trust Every Booking",
+      trustVerified: "Verified businesses reviewed by Adeni before they appear in discovery.",
+      trustReviews: "Real reviews from customers who completed a booking.",
+      trustNoPayBadge: "No pay-to-verify badges — trust comes from real visits.",
+      configureAccessHint:
+        "Configure Auth0 SPA credentials or a dev business Auth0 sub to register from this environment.",
+      footerBackToDiscover: "Back to Discover",
+    },
     memberships: {
       title: "Memberships",
       description: "Recurring plans with session credits each billing cycle.",
