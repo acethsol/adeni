@@ -57,7 +57,7 @@ Current V1 authority: [product-direction.md](./product-direction.md). Supported 
 | — | **Notifications module boundaries** | Spec — [notifications-module-boundaries.md](./specs/notifications-module-boundaries.md); runbook [notifications.md](./notifications.md) |
 | — | **Shared data grid (`@adeni/ui`)** | Spec — [shared-data-grid.md](./specs/shared-data-grid.md); Staff = reference impl |
 | **40** | **Staff attendance, verified presence & on-premises sensitive data** | **Done (V1)** — [staff-attendance-verified-presence.md](./specs/staff-attendance-verified-presence.md); phases A–E including schedule-today, staff history, corrections, on-site policy + S surfaces, team timesheets + register export. Deferred: Redis presence cache, SignalR, Flutter/mobile attendance. |
-| **40.1** | **Attendance V1.1 — Redis presence cache + SignalR team board** | **Next** — write-through cache on verify/invalidate/clock-in; `attendance.team_updated` on existing tenant realtime hub; see spec § verified presence + team views. |
+| **40.1** | **Attendance V1.1 — Redis presence cache + SignalR team board** | **Done** — [#52](https://github.com/acethsol/adeni/issues/52); [sprint-40.1-attendance-realtime-cache.md](./specs/sprint-40.1-attendance-realtime-cache.md); Redis write-through + SQL fallback; `AttendanceTeamChanged` on operations hub. |
 | — | Sprint 11d LLM agent | → Sprint 20 |
 | — | Staging deploy + Auth0 E2E | → Sprint 20 |
 | — | App Insights (Obs 1) | → Sprint 20 |

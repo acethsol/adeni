@@ -1,5 +1,6 @@
 import { DatePipe } from "@angular/common";
 import { Component, computed, inject, signal } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import {
   REPORT_KEYS,
@@ -20,6 +21,7 @@ import {
   AdeniStaffButtonComponent,
   AdeniTabsComponent,
   PortalPageComponent,
+  TenantOperationsRealtimeService,
   injectAdeniTranslate,
   type AdeniExportMenuItem,
   type AdeniTab,
@@ -50,6 +52,7 @@ export class TeamAttendanceComponent {
   private readonly session = inject(BusinessSessionService);
   private readonly activeLocation = inject(BusinessActiveLocationService);
   private readonly feedback = inject(AdeniFeedbackService);
+  private readonly operationsRealtime = inject(TenantOperationsRealtimeService);
   protected readonly tr = injectAdeniTranslate();
 
   readonly loading = signal(true);
@@ -109,6 +112,13 @@ export class TeamAttendanceComponent {
   });
 
   constructor() {
+    this.operationsRealtime.attendanceTeamChanged$
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => {
+        if (this.managerView() === "today") {
+          void this.refreshTeamQuietly();
+        }
+      });
     void this.refresh();
   }
 
@@ -117,28 +127,40 @@ export class TeamAttendanceComponent {
     this.error.set(null);
     try {
       await this.session.ensureLoaded();
-      const data = await this.api.withAuthorizedClient(async (client) => {
-        const profile = await client.getTenantProfile().catch(() => null);
-        const planEntitlements = await client.getTenantEntitlements().catch(() => null);
-        const merged = mergeTenantEntitlements(
-          planEntitlements,
-          profile?.entitlements,
-          profile?.entitlements,
-        );
-        this.entitlements.set(merged);
-        const locationId =
-          this.activeLocation.tenantApiLocationId(merged) ??
-          this.activeLocation.resolveContextLocation(profile)?.id;
-        return client.getTeamAttendance(locationId ? { locationId } : undefined);
-      });
-      this.team.set(data.members);
-      if (!this.timesheetStaffId() && data.members.length > 0) {
-        this.timesheetStaffId.set(data.members[0]!.staffMemberId);
-      }
+      await this.loadTeamRoster();
     } catch {
       this.error.set(this.tr("businessApp.attendance.teamLoadFailed"));
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  private async refreshTeamQuietly(): Promise<void> {
+    try {
+      await this.loadTeamRoster();
+    } catch {
+      // keep last roster; user can refresh manually
+    }
+  }
+
+  private async loadTeamRoster(): Promise<void> {
+    const data = await this.api.withAuthorizedClient(async (client) => {
+      const profile = await client.getTenantProfile().catch(() => null);
+      const planEntitlements = await client.getTenantEntitlements().catch(() => null);
+      const merged = mergeTenantEntitlements(
+        planEntitlements,
+        profile?.entitlements,
+        profile?.entitlements,
+      );
+      this.entitlements.set(merged);
+      const locationId =
+        this.activeLocation.tenantApiLocationId(merged) ??
+        this.activeLocation.resolveContextLocation(profile)?.id;
+      return client.getTeamAttendance(locationId ? { locationId } : undefined);
+    });
+    this.team.set(data.members);
+    if (!this.timesheetStaffId() && data.members.length > 0) {
+      this.timesheetStaffId.set(data.members[0]!.staffMemberId);
     }
   }
 

@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Adeni.Api.Middleware;
 using Adeni.Application.Booking;
+using Adeni.Application.Caching;
 using Adeni.Application.Identity;
 using Adeni.Application.Tenancy;
 using Adeni.Domain.Booking;
@@ -14,6 +15,7 @@ using Adeni.Domain.Tenancy;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -175,6 +177,64 @@ public sealed class StaffAttendanceIntegrationTests : IClassFixture<WebApplicati
         using var client = Client(seed.PractitionerSub, seed.TenantId);
         var response = await client.GetAsync("/api/v1/tenant/attendance/team");
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PresenceCache_WriteThrough_OnClockIn_ClearedOnClockOut()
+    {
+        var seed = await SeedAsync(geofenceEnabled: false);
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        var practitionerUserId = await db.BusinessUsers.AsQueryable()
+            .Where(x => x.TenantId == seed.TenantId && x.StaffMemberId == seed.StaffMemberId)
+            .Select(x => x.Id)
+            .SingleAsync();
+        var cache = scope.ServiceProvider.GetRequiredService<ICacheService>();
+        var cacheKey = CacheKeys.TenantVerifiedPresence(seed.TenantId, practitionerUserId);
+
+        using var client = Client(seed.PractitionerSub, seed.TenantId);
+        await client.PostAsJsonAsync(
+            "/api/v1/tenant/attendance/me/events",
+            new RecordStaffAttendanceEventRequest("clock_in", seed.LocationId));
+        var cached = await cache.GetAsync<VerifiedPresenceCacheEntry>(cacheKey);
+        Assert.NotNull(cached);
+        Assert.Equal(seed.LocationId, cached!.BusinessLocationId);
+
+        await client.PostAsJsonAsync(
+            "/api/v1/tenant/attendance/me/events",
+            new RecordStaffAttendanceEventRequest("clock_out", seed.LocationId));
+        var after = await cache.GetAsync<VerifiedPresenceCacheEntry>(cacheKey);
+        Assert.Null(after);
+    }
+
+    [Fact]
+    public async Task SensitiveAccess_WorksFromSql_WhenPresenceCacheEmpty()
+    {
+        var seed = await SeedAsync(geofenceEnabled: false);
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AdeniDbContext>();
+        db.LocationSecurityPolicies.Add(new LocationSecurityPolicy
+        {
+            TenantId = seed.TenantId,
+            RequirePresenceForSensitiveCustomerData = true,
+            PresenceValidityMinutes = 90,
+            AllowManagerPresenceOverride = true,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+        var manager = await db.BusinessUsers.SingleAsync(x => x.Id == seed.ManagerUserId);
+        manager.StaffMemberId = seed.StaffMemberId;
+        await db.SaveChangesAsync();
+
+        using var managerClient = Client(seed.ManagerSub, seed.TenantId);
+        await managerClient.PostAsJsonAsync(
+            "/api/v1/tenant/attendance/me/events",
+            new RecordStaffAttendanceEventRequest("clock_in", seed.LocationId));
+
+        var cache = scope.ServiceProvider.GetRequiredService<ICacheService>();
+        await cache.RemoveAsync(CacheKeys.TenantVerifiedPresence(seed.TenantId, seed.ManagerUserId));
+
+        var customers = await managerClient.GetAsync("/api/v1/tenant/customers");
+        Assert.Equal(HttpStatusCode.OK, customers.StatusCode);
     }
 
     [Fact]

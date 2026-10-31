@@ -49,6 +49,9 @@ public static class CacheKeys
         + (durationMinutes is int mins ? $":dur:{mins}" : string.Empty);
 
     public static string PublicStaff(string slug) => $"location:{slug}:staff";
+
+    public static string TenantVerifiedPresence(Guid tenantId, Guid businessUserId) =>
+        $"tenant:{tenantId:N}:presence:{businessUserId:N}";
 }
 
 public interface ICacheService

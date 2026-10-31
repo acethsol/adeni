@@ -66,4 +66,9 @@ internal sealed class RecordingTenantRealtimePublisher : ITenantRealtimePublishe
         Guid? bookingId,
         string? providerReference = null,
         CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+    public Task PublishAttendanceTeamChangedAsync(
+        Guid tenantId,
+        Guid? businessLocationId = null,
+        CancellationToken cancellationToken = default) => Task.CompletedTask;
 }

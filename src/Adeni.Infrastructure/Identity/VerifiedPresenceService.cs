@@ -18,6 +18,7 @@ public sealed class VerifiedPresenceService(
     AdeniDbContext dbContext,
     IEntitlementsService entitlementsService,
     ILocationSecurityPolicyService locationSecurityPolicyService,
+    IVerifiedPresenceCache verifiedPresenceCache,
     IAuditLogWriter auditLogWriter,
     ICurrentUser currentUser,
     ICorrelationContext correlationContext,
@@ -155,6 +156,7 @@ public sealed class VerifiedPresenceService(
                 active.DistanceFromLocationMeters = distance;
                 active.ReportedAccuracyMeters = accuracy;
                 await dbContext.SaveChangesAsync(cancellationToken);
+                await verifiedPresenceCache.SetFromSessionAsync(active, cancellationToken);
                 await WriteVerifiedAuditAsync(tenantId, active, cancellationToken);
                 return Result.Success(ToResponse(active));
             }
@@ -182,6 +184,7 @@ public sealed class VerifiedPresenceService(
         };
         dbContext.VerifiedPresenceSessions.Add(session);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await verifiedPresenceCache.SetFromSessionAsync(session, cancellationToken);
         await WriteVerifiedAuditAsync(tenantId, session, cancellationToken);
         return Result.Success(ToResponse(session));
     }
@@ -262,6 +265,7 @@ public sealed class VerifiedPresenceService(
         };
         dbContext.VerifiedPresenceSessions.Add(session);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await verifiedPresenceCache.SetFromSessionAsync(session, cancellationToken);
         await WriteVerifiedAuditAsync(tenantId, session, cancellationToken);
     }
 
@@ -374,6 +378,7 @@ public sealed class VerifiedPresenceService(
         session.InvalidatedAt = now;
         session.InvalidationReason = reason;
         await dbContext.SaveChangesAsync(cancellationToken);
+        await verifiedPresenceCache.RemoveAsync(session.TenantId, session.BusinessUserId, cancellationToken);
         await WriteInvalidatedAuditAsync(session.TenantId, session, cancellationToken);
     }
 

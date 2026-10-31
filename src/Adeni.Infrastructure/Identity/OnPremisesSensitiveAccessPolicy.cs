@@ -14,6 +14,7 @@ public sealed class OnPremisesSensitiveAccessPolicy(
     AdeniDbContext dbContext,
     IEntitlementsService entitlementsService,
     ILocationSecurityPolicyService locationSecurityPolicyService,
+    IVerifiedPresenceCache verifiedPresenceCache,
     TimeProvider clock) : IOnPremisesSensitiveAccessPolicy
 {
     private static readonly HashSet<string> SensitiveReportKeys = new(StringComparer.OrdinalIgnoreCase)
@@ -51,25 +52,36 @@ public sealed class OnPremisesSensitiveAccessPolicy(
         }
 
         var now = clock.GetUtcNow();
-        var session = await dbContext.VerifiedPresenceSessions.AsNoTracking()
-            .Where(x => x.TenantId == tenantId
-                && x.BusinessUserId == actor.BusinessUserId
-                && x.InvalidatedAt == null
-                && x.ExpiresAt > now)
-            .OrderByDescending(x => x.VerifiedAt)
-            .FirstOrDefaultAsync(cancellationToken);
+        var cached = await verifiedPresenceCache.TryGetActiveAsync(
+            tenantId,
+            actor.BusinessUserId,
+            now,
+            cancellationToken);
 
-        if (session is null)
+        Guid sessionLocationId;
+        if (cached is not null)
         {
-            return Result.Failure(ErrorCodes.StaffPresenceRequiredError());
+            sessionLocationId = cached.BusinessLocationId;
+        }
+        else
+        {
+            var session = await dbContext.VerifiedPresenceSessions.AsNoTracking()
+                .Where(x => x.TenantId == tenantId
+                    && x.BusinessUserId == actor.BusinessUserId
+                    && x.InvalidatedAt == null
+                    && x.ExpiresAt > now)
+                .OrderByDescending(x => x.VerifiedAt)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (session is null)
+            {
+                return Result.Failure(ErrorCodes.StaffPresenceRequiredError());
+            }
+
+            sessionLocationId = session.BusinessLocationId;
         }
 
-        if (session.ExpiresAt <= now)
-        {
-            return Result.Failure(ErrorCodes.StaffPresenceExpiredError());
-        }
-
-        if (requiredLocationId is Guid locationId && session.BusinessLocationId != locationId)
+        if (requiredLocationId is Guid locationId && sessionLocationId != locationId)
         {
             var canCrossBranch = entitlements.MultiLocationReporting
                 && actor.Permissions.Contains(BusinessPermissions.Attendance);

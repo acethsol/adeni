@@ -10,6 +10,7 @@ using Adeni.Domain.Booking;
 using Adeni.Domain.Common;
 using Adeni.Domain.Identity;
 using Adeni.Domain.Tenancy;
+using Adeni.Application.Realtime;
 using Adeni.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,6 +18,7 @@ public sealed class StaffAttendanceService(
     AdeniDbContext dbContext,
     IEntitlementsService entitlementsService,
     IVerifiedPresenceService verifiedPresenceService,
+    ITenantRealtimePublisher tenantRealtime,
     IAuditLogWriter auditLogWriter,
     ICurrentUser currentUser,
     ICorrelationContext correlationContext,
@@ -279,6 +281,7 @@ public sealed class StaffAttendanceService(
         dbContext.StaffAttendanceEvents.Add(entity);
         await dbContext.SaveChangesAsync(cancellationToken);
         await WriteCorrectionAuditAsync(tenantId, entity, cancellationToken);
+        await PublishTeamChangedAsync(tenantId, entity.BusinessLocationId, cancellationToken);
 
         return Result.Success(ToResponse(entity));
     }
@@ -394,6 +397,7 @@ public sealed class StaffAttendanceService(
             actor.BusinessUserId,
             actor.StaffMemberId,
             cancellationToken);
+        await PublishTeamChangedAsync(tenantId, entity.BusinessLocationId, cancellationToken);
 
         return Result.Success(ToResponse(entity));
     }
@@ -479,8 +483,16 @@ public sealed class StaffAttendanceService(
                 cancellationToken);
         }
 
+        await PublishTeamChangedAsync(tenantId, entity.BusinessLocationId, cancellationToken);
+
         return Result.Success(ToResponse(entity));
     }
+
+    private Task PublishTeamChangedAsync(
+        Guid tenantId,
+        Guid businessLocationId,
+        CancellationToken cancellationToken) =>
+        tenantRealtime.PublishAttendanceTeamChangedAsync(tenantId, businessLocationId, cancellationToken);
 
     private async Task<Guid?> ResolveBusinessUserIdForStaffAsync(
         Guid tenantId,

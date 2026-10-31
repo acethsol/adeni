@@ -76,4 +76,15 @@ public sealed class SignalRTenantRealtimePublisher(IHubContext<OperationsHub> hu
                 .SendAsync("PaymentCompleted", payload, cancellationToken);
         }
     }
+
+    public Task PublishAttendanceTeamChangedAsync(
+        Guid tenantId,
+        Guid? businessLocationId = null,
+        CancellationToken cancellationToken = default) =>
+        hub.Clients
+            .Group(OperationsHub.TenantGroup(tenantId))
+            .SendAsync(
+                "AttendanceTeamChanged",
+                new { tenantId, businessLocationId },
+                cancellationToken);
 }
