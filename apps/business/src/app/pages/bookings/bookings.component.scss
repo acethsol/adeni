@@ -242,6 +242,17 @@ h3 {
   color: var(--text);
 }
 
+.intake-cell-link,
+.booking-card__intake {
+  text-decoration: none;
+  color: inherit;
+}
+
+.intake-cell-link adeni-pill,
+.booking-card__intake adeni-pill {
+  cursor: pointer;
+}
+
 @media (max-width: 639px) {
   .booking-grid {
     grid-template-columns: 1fr;

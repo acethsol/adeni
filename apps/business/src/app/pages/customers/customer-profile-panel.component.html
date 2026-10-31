@@ -14,16 +14,55 @@
             <h3 class="section-title">{{ tr('customerProfile.title') }}</h3>
             <p class="muted section-lede">{{ tr('customerProfile.overviewLede') }}</p>
           </div>
-          <button
-            type="button"
-            class="btn btn-ghost"
-            (click)="refresh()"
+          <adeni-staff-btn
+            icon="restart"
             [disabled]="data.loading() || data.loadingMore()"
+            (pressed)="refresh()"
           >
-            <adeni-carbon-icon name="restart" [size]="16" />
             {{ tr('customerProfile.refresh') }}
-          </button>
+          </adeni-staff-btn>
         </div>
+
+        @if (profile.trust; as trust) {
+          <section class="customer-trust" [attr.aria-label]="tr('customerProfile.trustTitle')">
+            <div class="customer-trust__head">
+              <h4 class="customer-trust__title">{{ tr('customerProfile.trustTitle') }}</h4>
+              <p class="muted customer-trust__lede">{{ tr('customerProfile.trustLede') }}</p>
+            </div>
+            <div class="customer-trust__tiles">
+              <article class="customer-trust__tile" [class.customer-trust__tile--verified]="trust.phoneVerified">
+                <span class="customer-trust__icon" aria-hidden="true">
+                  <adeni-carbon-icon name="phone" [size]="20" />
+                </span>
+                <div class="customer-trust__copy">
+                  <p class="customer-trust__label">
+                    {{
+                      trust.phoneVerified
+                        ? tr('customerProfile.trustPhoneVerified')
+                        : tr('customerProfile.trustPhoneNotVerified')
+                    }}
+                  </p>
+                  <adeni-pill [tone]="trust.phoneVerified ? 'success' : 'warning'" [compact]="true">
+                    {{
+                      trust.phoneVerified
+                        ? tr('customerProfile.heroPhoneVerified')
+                        : tr('customerProfile.heroPhonePending')
+                    }}
+                  </adeni-pill>
+                </div>
+              </article>
+              <article class="customer-trust__tile customer-trust__tile--since">
+                <span class="customer-trust__icon" aria-hidden="true">
+                  <adeni-carbon-icon name="user--follow" [size]="20" />
+                </span>
+                <div class="customer-trust__copy">
+                  <p class="customer-trust__label">{{ tr('customerProfile.trustCustomerSince') }}</p>
+                  <p class="customer-trust__value">{{ formatSlotTime(trust.customerSince) }}</p>
+                </div>
+              </article>
+            </div>
+          </section>
+        }
 
         <div class="insights-stat-tiles">
           @if (profile.visitSummary; as visits) {
@@ -154,15 +193,13 @@
               }
             </ul>
           </div>
-          <button
-            type="button"
-            class="btn btn-ghost"
-            (click)="refresh()"
+          <adeni-staff-btn
+            icon="restart"
             [disabled]="data.loading() || data.loadingMore()"
+            (pressed)="refresh()"
           >
-            <adeni-carbon-icon name="restart" [size]="16" />
             {{ tr('customerProfile.refresh') }}
-          </button>
+          </adeni-staff-btn>
         </div>
 
         @if (data.activity(); as activity) {
@@ -173,36 +210,84 @@
               [compact]="true"
             />
           } @else {
-            <ul class="activity-timeline">
-              @for (item of activity.items; track item.id) {
-                <li class="activity-card">
-                  <div class="activity-card__head">
-                    <strong class="activity-card__kind">{{ tr('customerProfile.kinds.' + item.kind) }}</strong>
-                    <time class="activity-card__when muted" [attr.datetime]="item.occurredAt">
-                      {{ formatSlotTime(item.occurredAt) }}
-                    </time>
-                  </div>
-                  <div class="activity-card__meta">
-                    @if (item.serviceName) {
-                      <span class="activity-card__service">{{ item.serviceName }}</span>
-                    }
-                    @if (item.currentStatus) {
-                      <adeni-pill [tone]="activityStatusTone(item.currentStatus)" [compact]="true">
-                        {{ tr('customerProfile.statuses.' + item.currentStatus) }}
-                      </adeni-pill>
-                    }
-                    @if (item.amount !== null && item.currency) {
-                      <span class="activity-card__amount">{{ formatPrice(item.amount, item.currency) }}</span>
-                    }
-                  </div>
-                  @if (item.source === 'booking') {
-                    <a class="activity-card__link" [routerLink]="['/bookings']" [queryParams]="bookingQueryParams(item)">
-                      {{ tr('customerProfile.openBooking') }}
-                    </a>
-                  }
-                </li>
+            <div class="activity-grid">
+              <adeni-list-toolbar
+                storageKey="businessApp.customer-detail.activity"
+                [showViewSwitcher]="false"
+                [count]="filteredActivityItems().length"
+                [singularCountLabel]="tr('customerProfile.activity')"
+                [pluralCountLabel]="tr('customerProfile.activity')"
+                [searchPlaceholder]="tr('customerProfile.activitySearchPlaceholder')"
+                [searchQuery]="activitySearchQuery()"
+                (searchQueryChange)="activitySearchQuery.set($event)"
+              />
+              @if (filteredActivityItems().length === 0) {
+                <adeni-portal-empty-state
+                  icon="search"
+                  [title]="tr('common.noMatches')"
+                  [description]="tr('common.tryDifferentSearchTerm')"
+                  [compact]="true"
+                />
+              } @else {
+                <div class="adeni-list-results">
+                  <adeni-data-table
+                    [rows]="filteredActivityItems()"
+                    [columns]="activityColumns()"
+                    [trackRow]="trackActivityRow"
+                    [sortColumnId]="activitySortColumn()"
+                    (sortColumnIdChange)="activitySortColumn.set($event)"
+                    [sortDirection]="activitySortDirection()"
+                    (sortDirectionChange)="activitySortDirection.set($event)"
+                  >
+                    <ng-template adeniDataTableCell="when" let-row>
+                      <time class="adeni-data-table-text" [attr.datetime]="row.occurredAt">
+                        {{ formatSlotTime(row.occurredAt) }}
+                      </time>
+                    </ng-template>
+                    <ng-template adeniDataTableCell="event" let-row>
+                      <span class="cell-primary">{{ activityKindLabel(row) }}</span>
+                    </ng-template>
+                    <ng-template adeniDataTableCell="details" let-row>
+                      @if (row.serviceName) {
+                        <span class="cell-primary">{{ row.serviceName }}</span>
+                      } @else {
+                        <span class="muted">—</span>
+                      }
+                    </ng-template>
+                    <ng-template adeniDataTableCell="status" let-row>
+                      @if (row.currentStatus) {
+                        <adeni-pill [tone]="activityStatusTone(row.currentStatus)" [compact]="true">
+                          {{ tr('customerProfile.statuses.' + row.currentStatus) }}
+                        </adeni-pill>
+                      } @else {
+                        <span class="muted">—</span>
+                      }
+                    </ng-template>
+                    <ng-template adeniDataTableCell="amount" let-row>
+                      @if (row.amount !== null && row.currency) {
+                        <span class="adeni-data-table-text">{{ formatPrice(row.amount, row.currency) }}</span>
+                      } @else {
+                        <span class="muted">—</span>
+                      }
+                    </ng-template>
+                    <ng-template adeniDataTableActions let-row>
+                      @if (row.source === 'booking') {
+                        <adeni-row-action-bar>
+                          <adeni-icon-btn
+                            icon="launch"
+                            [label]="tr('customerProfile.openBooking')"
+                            variant="table"
+                            [dense]="true"
+                            [routerLink]="['/bookings']"
+                            [queryParams]="bookingQueryParams(row)"
+                          />
+                        </adeni-row-action-bar>
+                      }
+                    </ng-template>
+                  </adeni-data-table>
+                </div>
               }
-            </ul>
+            </div>
           }
 
           @if (activity.nextCursor) {

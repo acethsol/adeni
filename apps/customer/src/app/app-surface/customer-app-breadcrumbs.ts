@@ -58,6 +58,10 @@ export function crumbsForCustomerUrl(tr: (key: string) => string, url: string): 
     return base;
   }
 
-  base.push({ label: tr(match.item.labelKey) });
+  const onNested = path !== match.item.path;
+  base.push({
+    label: tr(match.item.labelKey),
+    path: onNested ? match.item.path : undefined,
+  });
   return base;
 }

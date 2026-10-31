@@ -1,0 +1,177 @@
+<div class="membership-dashboard">
+  <header class="membership-dashboard__head">
+    <div>
+      <h3 class="membership-dashboard__title">{{ tr('businessApp.memberships.customerHeadline') }}</h3>
+      <p class="muted membership-dashboard__lede">{{ tr('businessApp.memberships.creditsAreSessions') }}</p>
+    </div>
+    <button type="button" class="btn btn-primary" [disabled]="loading() || !!error()" (click)="openEnrol()">
+      <adeni-carbon-icon name="add" [size]="16" />
+      {{ tr('businessApp.memberships.enrol') }}
+    </button>
+  </header>
+
+  @if (loading()) {
+    <p class="muted" role="status">{{ tr('toast.loading') }}</p>
+  } @else if (error()) {
+    <p class="error-banner" role="alert">{{ error() }}</p>
+  } @else if (memberships().length === 0) {
+    <adeni-portal-empty-state
+      icon="user--filled"
+      [title]="tr('businessApp.memberships.customerEmptyTitle')"
+      [description]="tr('businessApp.memberships.customerEmptyDescription')"
+    />
+  } @else {
+    <div class="membership-dashboard__stats">
+      <article class="membership-stat">
+        <span class="membership-stat__label">{{ tr('businessApp.memberships.customerActivePlans') }}</span>
+        <strong class="membership-stat__value">{{ activeMembershipCount() }}</strong>
+      </article>
+      <article class="membership-stat membership-stat--accent">
+        <span class="membership-stat__label">{{ tr('businessApp.memberships.customerCycleSessionsLeft') }}</span>
+        <strong class="membership-stat__value">{{ totalCycleSessionsLeft() }}</strong>
+      </article>
+    </div>
+
+    <ul class="membership-grid">
+      @for (m of memberships(); track m.id) {
+        <li class="membership-card card" [class.membership-card--live]="m.status === 'active'">
+          <div class="membership-card__hero">
+            <div class="membership-card__title-row">
+              <h4 class="membership-card__name">{{ m.name }}</h4>
+              <adeni-pill [tone]="statusTone(m)" [compact]="true">{{ statusLabel(m) }}</adeni-pill>
+            </div>
+            @if (membershipProgress(m); as progress) {
+              <div class="membership-card__progress">
+                <div class="membership-card__ring" [style.--member-progress]="progress.deg">
+                  <span class="membership-card__ring-inner">
+                    <strong>{{ progress.remaining }}</strong>
+                    <span class="muted">{{ tr('businessApp.retention.remaining') }}</span>
+                  </span>
+                </div>
+              </div>
+            }
+          </div>
+
+          <ul class="membership-card__chips muted">
+            <li>
+              <adeni-carbon-icon name="wallet" [size]="16" />
+              {{ price(m) }} / {{ intervalLabel(m) }}
+            </li>
+            <li>
+              <adeni-carbon-icon name="calendar" [size]="16" />
+              {{ tr('businessApp.memberships.since') }} {{ when(m.activatedAt ?? m.createdAt) }}
+            </li>
+            @if (m.currentCycleEnd) {
+              <li>
+                <adeni-carbon-icon name="restart" [size]="16" />
+                {{ cycleEndLabel(m) }}
+              </li>
+            }
+          </ul>
+
+          @if (m.balances.length > 0) {
+            <div class="membership-card__usage">
+              <h5 class="membership-card__usage-title">{{ tr('businessApp.memberships.cycleCredits') }}</h5>
+              <ul class="usage-rows">
+                @for (b of m.balances; track b.id) {
+                  <li class="usage-row">
+                    <div class="usage-row__head">
+                      <span class="usage-row__service">{{ b.serviceName }}</span>
+                      <span class="usage-row__counts muted">{{ b.remaining }} / {{ b.granted }}</span>
+                    </div>
+                    <div class="usage-row__bar" aria-hidden="true">
+                      <span class="usage-row__fill" [style.width.%]="balancePercent(b)"></span>
+                    </div>
+                    <div class="usage-row__meta muted">
+                      <span>{{ tr('businessApp.retention.used') }}: {{ b.used }}</span>
+                      <span>{{ tr('businessApp.retention.reserved') }}: {{ b.reserved }}</span>
+                    </div>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+
+          @if (canManage(m)) {
+            <div class="membership-card__actions">
+              @if (m.status === 'active' && m.allowFreeze) {
+                <button type="button" class="btn" [disabled]="busy()" (click)="freeze(m)">
+                  <adeni-carbon-icon name="time" [size]="16" />
+                  {{ tr('businessApp.memberships.freeze') }}
+                </button>
+              }
+              @if (m.status === 'frozen') {
+                <button type="button" class="btn" [disabled]="busy()" (click)="unfreeze(m)">
+                  <adeni-carbon-icon name="restart" [size]="16" />
+                  {{ tr('businessApp.memberships.unfreeze') }}
+                </button>
+              }
+              <button type="button" class="btn btn-danger" [disabled]="busy()" (click)="cancel(m)">
+                <adeni-carbon-icon name="misuse" [size]="16" />
+                {{ tr('businessApp.memberships.cancelMembership') }}
+              </button>
+            </div>
+          } @else if (isLive(m) && !isOwner()) {
+            <p class="muted membership-card__owner-hint">{{ tr('businessApp.memberships.ownerOnlyHint') }}</p>
+          }
+        </li>
+      }
+    </ul>
+  }
+</div>
+
+<adeni-modal
+  [open]="enrolDraft() !== null"
+  [title]="tr('businessApp.memberships.enrolTitle')"
+  [subtitle]="tr('businessApp.memberships.enrolSubtitle')"
+  size="lg"
+  [hasFooter]="false"
+  (closed)="closeEnrol()"
+>
+  @if (enrolDraft(); as draft) {
+    @if (activePlans().length === 0) {
+      <p class="muted">{{ tr('businessApp.memberships.noActivePlans') }}</p>
+    } @else {
+      <div class="field">
+        <label for="enrol-plan">{{ tr('businessApp.memberships.selectPlan') }}</label>
+        <select id="enrol-plan" [ngModel]="draft.membershipPlanId" (ngModelChange)="patchEnrol({ membershipPlanId: $event })">
+          @for (plan of activePlans(); track plan.id) {
+            <option [value]="plan.id">{{ plan.name }} · {{ formatPlanPrice(plan) }}</option>
+          }
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="enrol-location">{{ tr('businessApp.retention.location') }}</label>
+          <select id="enrol-location" [ngModel]="draft.businessLocationId" (ngModelChange)="patchEnrol({ businessLocationId: $event })">
+            @for (location of locations(); track location.id) {
+              <option [value]="location.id">{{ location.name || location.slug }}</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label for="enrol-method">{{ tr('businessApp.retention.paymentMethod') }}</label>
+          <select id="enrol-method" [ngModel]="draft.paymentMethod" (ngModelChange)="patchEnrol({ paymentMethod: $event })">
+            <option value="till">{{ tr('businessApp.retention.till') }}</option>
+            <option value="transfer">{{ tr('businessApp.retention.transfer') }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="enrol-note">{{ tr('businessApp.retention.note') }}</label>
+        <input id="enrol-note" maxlength="500" [ngModel]="draft.note" (ngModelChange)="patchEnrol({ note: $event })" />
+      </div>
+      <p class="muted">{{ tr('businessApp.retention.noOnlineCharge') }}</p>
+    }
+    <div class="modal-actions">
+      <button type="button" class="btn" (click)="closeEnrol()">
+        <adeni-carbon-icon name="close" [size]="16" />
+        {{ tr('common.cancel') }}
+      </button>
+      <button type="button" class="btn btn-primary" [disabled]="!canEnrol()" (click)="confirmEnrol()">
+        <adeni-carbon-icon name="checkmark" [size]="16" />
+        {{ tr('businessApp.memberships.enrol') }}
+      </button>
+    </div>
+  }
+</adeni-modal>

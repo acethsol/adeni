@@ -41,170 +41,8 @@ function newKey(): string {
   selector: "app-customer-memberships-panel",
   standalone: true,
   imports: [FormsModule, AdeniCarbonIconComponent, AdeniModalComponent, AdeniPillComponent, AdeniPortalEmptyStateComponent],
-  template: `
-    <div class="memberships__toolbar">
-      <p class="muted note">{{ tr('businessApp.memberships.creditsAreSessions') }}</p>
-      <button type="button" class="btn btn-primary" [disabled]="loading() || !!error()" (click)="openEnrol()">
-        <adeni-carbon-icon name="add" [size]="16" />
-        {{ tr('businessApp.memberships.enrol') }}
-      </button>
-    </div>
-
-    @if (loading()) {
-      <p class="muted" role="status">{{ tr('toast.loading') }}</p>
-    } @else if (error()) {
-      <p class="error-banner" role="alert">{{ error() }}</p>
-    } @else if (memberships().length === 0) {
-      <adeni-portal-empty-state
-        icon="user--filled"
-        [title]="tr('businessApp.memberships.customerEmptyTitle')"
-        [description]="tr('businessApp.memberships.customerEmptyDescription')"
-      />
-    } @else {
-      <ul class="memberships">
-        @for (m of memberships(); track m.id) {
-          <li class="card membership">
-            <div class="membership__head">
-              <h3 class="membership__name">{{ m.name }}</h3>
-              <adeni-pill [tone]="statusTone(m)" [compact]="true">{{ statusLabel(m) }}</adeni-pill>
-            </div>
-            <dl class="membership__meta muted">
-              <div><dt>{{ tr('businessApp.memberships.price') }}</dt><dd>{{ price(m) }} / {{ intervalLabel(m) }}</dd></div>
-              <div><dt>{{ tr('businessApp.memberships.since') }}</dt><dd>{{ when(m.activatedAt ?? m.createdAt) }}</dd></div>
-              @if (m.currentCycleEnd) {
-                <div>
-                  <dt>{{ tr('businessApp.memberships.cycle', { number: m.currentCycleNumber }) }}</dt>
-                  <dd>{{ cycleEndLabel(m) }}</dd>
-                </div>
-              }
-            </dl>
-            @if (m.balances.length > 0) {
-              <table class="balances">
-                <caption class="muted">{{ tr('businessApp.memberships.cycleCredits') }}</caption>
-                <thead>
-                  <tr>
-                    <th scope="col">{{ tr('businessApp.retention.service') }}</th>
-                    <th scope="col">{{ tr('businessApp.retention.granted') }}</th>
-                    <th scope="col">{{ tr('businessApp.retention.used') }}</th>
-                    <th scope="col">{{ tr('businessApp.retention.reserved') }}</th>
-                    <th scope="col">{{ tr('businessApp.retention.remaining') }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (b of m.balances; track b.id) {
-                    <tr>
-                      <th scope="row">{{ b.serviceName }}</th>
-                      <td>{{ b.granted }}</td>
-                      <td>{{ b.used }}</td>
-                      <td>{{ b.reserved }}</td>
-                      <td><strong>{{ b.remaining }}</strong></td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            }
-            @if (canManage(m)) {
-              <div class="membership__actions">
-                @if (m.status === 'active' && m.allowFreeze) {
-                  <button type="button" class="btn" [disabled]="busy()" (click)="freeze(m)">
-                    {{ tr('businessApp.memberships.freeze') }}
-                  </button>
-                }
-                @if (m.status === 'frozen') {
-                  <button type="button" class="btn" [disabled]="busy()" (click)="unfreeze(m)">
-                    {{ tr('businessApp.memberships.unfreeze') }}
-                  </button>
-                }
-                <button type="button" class="btn btn-danger" [disabled]="busy()" (click)="cancel(m)">
-                  {{ tr('businessApp.memberships.cancelMembership') }}
-                </button>
-              </div>
-            } @else if (isLive(m) && !isOwner()) {
-              <p class="muted note">{{ tr('businessApp.memberships.ownerOnlyHint') }}</p>
-            }
-          </li>
-        }
-      </ul>
-    }
-
-    <adeni-modal
-      [open]="enrolDraft() !== null"
-      [title]="tr('businessApp.memberships.enrolTitle')"
-      [subtitle]="tr('businessApp.memberships.enrolSubtitle')"
-      size="lg"
-      [hasFooter]="false"
-      (closed)="closeEnrol()"
-    >
-      @if (enrolDraft(); as draft) {
-        @if (activePlans().length === 0) {
-          <p class="muted">{{ tr('businessApp.memberships.noActivePlans') }}</p>
-        } @else {
-          <div class="field">
-            <label for="enrol-plan">{{ tr('businessApp.memberships.selectPlan') }}</label>
-            <select id="enrol-plan" [ngModel]="draft.membershipPlanId" (ngModelChange)="patchEnrol({ membershipPlanId: $event })">
-              @for (plan of activePlans(); track plan.id) {
-                <option [value]="plan.id">{{ plan.name }} � {{ formatPlanPrice(plan) }}</option>
-              }
-            </select>
-          </div>
-          <div class="field-row">
-            <div class="field">
-              <label for="enrol-location">{{ tr('businessApp.retention.location') }}</label>
-              <select id="enrol-location" [ngModel]="draft.businessLocationId" (ngModelChange)="patchEnrol({ businessLocationId: $event })">
-                @for (location of locations(); track location.id) {
-                  <option [value]="location.id">{{ location.name || location.slug }}</option>
-                }
-              </select>
-            </div>
-            <div class="field">
-              <label for="enrol-method">{{ tr('businessApp.retention.paymentMethod') }}</label>
-              <select id="enrol-method" [ngModel]="draft.paymentMethod" (ngModelChange)="patchEnrol({ paymentMethod: $event })">
-                <option value="till">{{ tr('businessApp.retention.till') }}</option>
-                <option value="transfer">{{ tr('businessApp.retention.transfer') }}</option>
-              </select>
-            </div>
-          </div>
-          <div class="field">
-            <label for="enrol-note">{{ tr('businessApp.retention.note') }}</label>
-            <input id="enrol-note" maxlength="500" [ngModel]="draft.note" (ngModelChange)="patchEnrol({ note: $event })" />
-          </div>
-          <p class="muted">{{ tr('businessApp.retention.noOnlineCharge') }}</p>
-        }
-        <div class="actions">
-          <button type="button" class="btn" (click)="closeEnrol()">
-            <adeni-carbon-icon name="close" [size]="16" />
-            {{ tr('common.cancel') }}
-          </button>
-          <button type="button" class="btn btn-primary" [disabled]="!canEnrol()" (click)="confirmEnrol()">
-            <adeni-carbon-icon name="checkmark" [size]="16" />
-            {{ tr('businessApp.memberships.enrol') }}
-          </button>
-        </div>
-      }
-    </adeni-modal>
-  `,
-  styles: [
-    `
-      .memberships__toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
-      .memberships { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
-      .note { margin: 0; }
-      .membership { padding: 1rem 1.25rem; }
-      .membership__head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
-      .membership__name { margin: 0; font-size: 1rem; }
-      .membership__meta { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; margin: 0.75rem 0; }
-      .membership__meta div { display: flex; gap: 0.35rem; }
-      .membership__meta dt, .membership__meta dd { margin: 0; }
-      .membership__meta dt::after { content: ":"; }
-      .membership__actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
-      .balances { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-      .balances caption { text-align: left; padding-bottom: 0.25rem; }
-      .balances th, .balances td { padding: 0.35rem 0.5rem; text-align: right; border-top: 1px solid var(--cds-border-subtle, #e0e0e0); }
-      .balances th:first-child { text-align: left; font-weight: 500; }
-      .field { display: grid; gap: 0.25rem; margin-bottom: 0.75rem; }
-      .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-      .actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem; }
-    `,
-  ],
+  templateUrl: "./customer-memberships-panel.component.html",
+  styleUrl: "./customer-memberships-panel.component.scss",
 })
 export class CustomerMembershipsPanelComponent implements OnInit {
   protected readonly tr = injectAdeniTranslate();
@@ -225,6 +63,15 @@ export class CustomerMembershipsPanelComponent implements OnInit {
   readonly enrolDraft = signal<EnrolDraft | null>(null);
   readonly activePlans = computed(() => this.plans().filter((p) => p.isActive));
   readonly isOwner = computed(() => this.session.permissionRole() === "owner");
+  readonly activeMembershipCount = computed(
+    () => this.memberships().filter((m) => m.status === "active" || m.status === "past_due").length,
+  );
+  readonly totalCycleSessionsLeft = computed(() =>
+    this.memberships().reduce(
+      (sum, m) => sum + m.balances.reduce((line, b) => line + b.remaining, 0),
+      0,
+    ),
+  );
   private enrolKey = newKey();
 
   ngOnInit(): void {
@@ -253,7 +100,21 @@ export class CustomerMembershipsPanelComponent implements OnInit {
     }
   }
 
-  // ---- Display ----
+  membershipProgress(m: CustomerMembership): { remaining: number; granted: number; deg: string } | null {
+    const granted = m.balances.reduce((sum, b) => sum + b.granted, 0);
+    const remaining = m.balances.reduce((sum, b) => sum + b.remaining, 0);
+    if (granted <= 0) {
+      return null;
+    }
+    return { remaining, granted, deg: `${(remaining / granted) * 360}deg` };
+  }
+
+  balancePercent(b: CustomerMembership["balances"][number]): number {
+    if (b.granted <= 0) {
+      return 0;
+    }
+    return Math.max(0, Math.min(100, Math.round((b.remaining / b.granted) * 100)));
+  }
 
   price(m: CustomerMembership): string {
     return formatPrice(m.price, m.currency);

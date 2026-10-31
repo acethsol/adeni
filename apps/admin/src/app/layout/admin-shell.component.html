@@ -73,18 +73,7 @@
   <div class="main">
     <header class="topbar">
       <div class="topbar-lead">
-        <nav class="crumb" [attr.aria-label]="tr('common.breadcrumb')">
-          @for (crumb of crumbs(); track crumb.label; let last = $last) {
-            @if (last || !crumb.path) {
-              <span [class.crumb-current]="last">{{ crumb.label }}</span>
-            } @else {
-              <a [routerLink]="crumb.path">{{ crumb.label }}</a>
-            }
-            @if (!last) {
-              <span class="crumb-sep" aria-hidden="true"></span>
-            }
-          }
-        </nav>
+        <adeni-breadcrumb-nav [crumbs]="crumbs()" [ariaLabel]="tr('common.breadcrumb')" />
       </div>
 
       <div class="search-root" data-menu-root="search">

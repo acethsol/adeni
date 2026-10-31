@@ -27,6 +27,8 @@ export {
 } from "./adeni-staff-app-context.component";
 export { AdeniStaffShellFooterComponent } from "./adeni-staff-shell-footer.component";
 export { AdeniCarbonIconComponent } from "./adeni-carbon-icon.component";
+export { AdeniBreadcrumbNavComponent } from "./adeni-breadcrumb-nav.component";
+export { AdeniPageBreadcrumbService } from "./adeni-page-breadcrumb.service";
 export {
   AdeniPortalNavIconComponent,
   type AdeniPortalNavIconName,

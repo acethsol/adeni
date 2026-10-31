@@ -21,6 +21,22 @@
         />
         <div class="profile-hero__meta adeni-cell-pills">
           <adeni-pill [tone]="accountPillTone(c)" [compact]="true">{{ accountLabel(c) }}</adeni-pill>
+          @if (c.platformCustomerId) {
+            @if (profileData.loading() && !platformTrust()) {
+              <adeni-pill tone="neutral" [compact]="true">{{ tr('customerProfile.trustLoading') }}</adeni-pill>
+            } @else if (platformTrust(); as trust) {
+              <adeni-pill [tone]="phoneTrustPillTone(trust)" [compact]="true">
+                {{
+                  trust.phoneVerified
+                    ? tr('customerProfile.heroPhoneVerified')
+                    : tr('customerProfile.heroPhonePending')
+                }}
+              </adeni-pill>
+              <adeni-pill tone="info" [compact]="true">
+                {{ tr('customerProfile.heroMemberSince', { date: formatMemberSince(trust.customerSince) }) }}
+              </adeni-pill>
+            }
+          }
           <adeni-pill tone="neutral" [compact]="true">Last seen {{ formatSlotTime(c.lastSeenAt) }}</adeni-pill>
         </div>
       </div>
@@ -257,6 +273,7 @@
                           variant="table"
                           [dense]="true"
                           [routerLink]="['/bookings', row.id, 'intake']"
+                          [state]="intakeBreadcrumbState()"
                         />
                       }
                       <adeni-icon-btn

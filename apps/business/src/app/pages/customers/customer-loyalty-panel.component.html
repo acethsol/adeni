@@ -1,0 +1,90 @@
+@if (loading()) {
+  <p class="muted" role="status">{{ tr('toast.loading') }}</p>
+} @else if (error()) {
+  <p class="error-banner" role="alert">{{ error() }}</p>
+} @else if (!hasLoyaltyData()) {
+  <adeni-portal-empty-state
+    icon="gift"
+    [title]="tr('businessApp.loyalty.customerEmptyTitle')"
+    [description]="tr('businessApp.loyalty.customerEmptyDescription')"
+  />
+} @else {
+  <div class="loyalty-dashboard">
+    <header class="loyalty-dashboard__head">
+      <div>
+        <h3 class="loyalty-dashboard__title">{{ tr('businessApp.loyalty.customerHeadline') }}</h3>
+        <p class="muted loyalty-dashboard__lede">{{ tr('businessApp.loyalty.customerLede') }}</p>
+      </div>
+    </header>
+
+    <div class="loyalty-dashboard__stats">
+      <article class="loyalty-stat loyalty-stat--hero">
+        <span class="loyalty-stat__label">{{ tr('businessApp.loyalty.pointsBalance') }}</span>
+        <strong class="loyalty-stat__value">{{ account()!.pointsBalance }}</strong>
+        @if (redeemProgress(); as progress) {
+          <div class="loyalty-stat__meter" aria-hidden="true">
+            <span class="loyalty-stat__meter-fill" [style.width.%]="progress.percent"></span>
+          </div>
+          <p class="muted loyalty-stat__hint">{{ progress.hint }}</p>
+        }
+      </article>
+      <article class="loyalty-stat">
+        <span class="loyalty-stat__label">{{ tr('businessApp.loyalty.lifetimeEarned') }}</span>
+        <strong class="loyalty-stat__value">{{ account()!.lifetimeEarned }}</strong>
+      </article>
+      <article class="loyalty-stat">
+        <span class="loyalty-stat__label">{{ tr('businessApp.loyalty.lifetimeRedeemed') }}</span>
+        <strong class="loyalty-stat__value">{{ account()!.lifetimeRedeemed }}</strong>
+      </article>
+    </div>
+
+    @if (referral(); as ref) {
+      <section class="loyalty-referral card" aria-labelledby="customer-referral-heading">
+        <div class="loyalty-referral__copy">
+          <h4 id="customer-referral-heading" class="loyalty-referral__title">
+            <adeni-carbon-icon name="user--follow" [size]="18" />
+            {{ tr('businessApp.loyalty.customerReferralHeading') }}
+          </h4>
+          <p class="muted loyalty-referral__lede">{{ tr('businessApp.loyalty.customerReferralHint') }}</p>
+        </div>
+        <div class="loyalty-referral__code-block">
+          <span class="loyalty-referral__code">{{ ref.code }}</span>
+          <div class="loyalty-referral__actions">
+            <button type="button" class="btn btn-secondary btn-sm" (click)="copyReferralCode(ref.code)">
+              <adeni-carbon-icon name="copy" [size]="16" />
+              {{ tr('businessApp.loyalty.copyReferralCode') }}
+            </button>
+            @if (referralBookingUrl(ref); as bookingUrl) {
+              <button type="button" class="btn btn-sm" (click)="copyText(bookingUrl)">
+                <adeni-carbon-icon name="launch" [size]="16" />
+                {{ tr('businessApp.loyalty.copyReferralLink') }}
+              </button>
+            }
+          </div>
+        </div>
+      </section>
+    }
+
+    @if (transactions().length > 0) {
+      <section class="loyalty-ledger" aria-labelledby="loyalty-ledger-heading">
+        <h4 id="loyalty-ledger-heading" class="loyalty-ledger__title">{{ tr('businessApp.loyalty.customerLedgerTitle') }}</h4>
+        <ul class="loyalty-ledger__list">
+          @for (row of transactions(); track row.id) {
+            <li class="loyalty-ledger__row">
+              <div class="loyalty-ledger__when">
+                <span class="loyalty-ledger__date">{{ formatSlotTime(row.occurredAt) }}</span>
+                <adeni-pill [tone]="kindTone(row)" [compact]="true">{{ kindLabel(row) }}</adeni-pill>
+              </div>
+              <div class="loyalty-ledger__amounts">
+                <span class="loyalty-ledger__points" [class.loyalty-ledger__points--pos]="row.points > 0" [class.loyalty-ledger__points--neg]="row.points < 0">
+                  {{ row.points > 0 ? '+' + row.points : row.points }}
+                </span>
+                <span class="muted loyalty-ledger__balance">{{ tr('businessApp.loyalty.balanceAfter') }} {{ row.balanceAfter }}</span>
+              </div>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  </div>
+}

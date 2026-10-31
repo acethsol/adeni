@@ -1,0 +1,207 @@
+@use "staff-layout" as *;
+
+.loyalty-dashboard__head {
+  margin-bottom: var(--cds-spacing-05);
+}
+
+.loyalty-dashboard__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 650;
+}
+
+.loyalty-dashboard__lede {
+  margin: 0.35rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  max-width: 40rem;
+}
+
+.loyalty-dashboard__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: var(--cds-spacing-04);
+  margin-bottom: var(--cds-spacing-05);
+}
+
+.loyalty-stat {
+  padding: var(--cds-spacing-04) var(--cds-spacing-05);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--text) 4%, transparent);
+}
+
+.loyalty-stat--hero {
+  grid-column: span 1;
+  border-color: color-mix(in srgb, var(--adeni-purple, #7f56ff) 32%, var(--border));
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--adeni-purple, #7f56ff) 10%, var(--surface)) 0%,
+    var(--surface) 65%
+  );
+}
+
+.loyalty-stat__label {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.loyalty-stat__value {
+  display: block;
+  margin-top: var(--cds-spacing-03);
+  font-size: 1.85rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.loyalty-stat__meter {
+  margin-top: var(--cds-spacing-03);
+  height: 0.35rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 10%, var(--surface));
+  overflow: hidden;
+}
+
+.loyalty-stat__meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--adeni-purple, #7f56ff), color-mix(in srgb, #24a148 40%, var(--adeni-purple, #7f56ff)));
+}
+
+.loyalty-stat__hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+}
+
+.loyalty-referral {
+  display: grid;
+  gap: var(--cds-spacing-04);
+  padding: var(--cds-spacing-05);
+  margin-bottom: var(--cds-spacing-05);
+  border: 1px solid var(--border);
+}
+
+@media (min-width: 720px) {
+  .loyalty-referral {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+}
+
+.loyalty-referral__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.loyalty-referral__lede {
+  margin: 0.35rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  max-width: 28rem;
+}
+
+.loyalty-referral__code-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--cds-spacing-03);
+}
+
+.loyalty-referral__code {
+  font-family: var(--cds-code-01-font-family, ui-monospace, monospace);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 0.35rem 0.65rem;
+  border: 1px dashed color-mix(in srgb, var(--adeni-purple, #7f56ff) 35%, var(--border));
+  background: color-mix(in srgb, var(--adeni-purple, #7f56ff) 6%, var(--surface));
+}
+
+.loyalty-referral__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.loyalty-referral__actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.loyalty-ledger__title {
+  margin: 0 0 var(--cds-spacing-04);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.loyalty-ledger__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+}
+
+.loyalty-ledger__row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--cds-spacing-03) var(--cds-spacing-05);
+  padding: var(--cds-spacing-04) var(--cds-spacing-05);
+  border-bottom: 1px solid var(--border);
+}
+
+.loyalty-ledger__row:last-child {
+  border-bottom: none;
+}
+
+.loyalty-ledger__when {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 10rem;
+}
+
+.loyalty-ledger__date {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.loyalty-ledger__amounts {
+  text-align: right;
+}
+
+.loyalty-ledger__points {
+  display: block;
+  font-size: 1.125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.loyalty-ledger__points--pos {
+  color: var(--cds-support-success, #24a148);
+}
+
+.loyalty-ledger__points--neg {
+  color: var(--cds-support-error, #da1e28);
+}
+
+.loyalty-ledger__balance {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.75rem;
+}

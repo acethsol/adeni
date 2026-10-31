@@ -1,0 +1,113 @@
+@if (loading()) {
+  <p class="muted" role="status">{{ tr('toast.loading') }}</p>
+} @else if (error()) {
+  <p class="error-banner" role="alert">{{ error() }}</p>
+} @else if (packages().length === 0) {
+  <adeni-portal-empty-state
+    icon="user--filled"
+    [title]="tr('businessApp.retention.customerEmptyTitle')"
+    [description]="tr('businessApp.retention.customerEmptyDescription')"
+  />
+} @else {
+  <div class="package-dashboard">
+    <header class="package-dashboard__head">
+      <div>
+        <h3 class="package-dashboard__title">{{ tr('businessApp.retention.customerPackagesHeadline') }}</h3>
+        <p class="muted package-dashboard__lede">{{ tr('businessApp.retention.creditsAreSessions') }}</p>
+      </div>
+    </header>
+
+    <div class="package-dashboard__stats">
+      <article class="package-stat">
+        <span class="package-stat__label">{{ tr('businessApp.retention.customerPackagesActivePacks') }}</span>
+        <strong class="package-stat__value">{{ activePackageCount() }}</strong>
+      </article>
+      <article class="package-stat package-stat--accent">
+        <span class="package-stat__label">{{ tr('businessApp.retention.customerPackagesSessionsLeft') }}</span>
+        <strong class="package-stat__value">{{ totalSessionsLeft() }}</strong>
+      </article>
+    </div>
+
+    <ul class="package-grid">
+      @for (p of packages(); track p.id) {
+        <li class="package-card card" [class.package-card--active]="p.status === 'active'">
+          <div class="package-card__hero">
+            <div class="package-card__title-row">
+              <h4 class="package-card__name">{{ p.name }}</h4>
+              <adeni-pill [tone]="statusTone(p)" [compact]="true">{{ statusLabel(p) }}</adeni-pill>
+            </div>
+            @if (packageProgress(p); as progress) {
+              <div class="package-card__progress" role="presentation">
+                <div class="package-card__ring" [style.--pack-progress]="progress.deg">
+                  <span class="package-card__ring-inner">
+                    <strong>{{ progress.remaining }}</strong>
+                    <span class="muted">{{ tr('businessApp.retention.remaining') }}</span>
+                  </span>
+                </div>
+                <p class="package-card__progress-copy muted">
+                  {{ tr('businessApp.retention.customerPackageCreditsProgress', { remaining: progress.remaining, granted: progress.granted }) }}
+                </p>
+              </div>
+            }
+          </div>
+
+          <ul class="package-card__chips muted">
+            <li>
+              <adeni-carbon-icon name="wallet" [size]="16" />
+              {{ channelLabel(p) }}
+            </li>
+            @if (p.soldAtLocationId) {
+              <li>
+                <adeni-carbon-icon name="location" [size]="16" />
+                {{ locationName(p.soldAtLocationId) }}
+              </li>
+            }
+            <li>
+              <adeni-carbon-icon name="launch" [size]="16" />
+              {{ scopeLabel(p) }}
+            </li>
+            <li>
+              <adeni-carbon-icon name="calendar" [size]="16" />
+              {{
+                p.expiresAt
+                  ? tr('businessApp.retention.expires', { date: when(p.expiresAt) })
+                  : tr('businessApp.retention.noExpiry')
+              }}
+            </li>
+            <li class="package-card__price">
+              <strong>{{ price(p) }}</strong>
+            </li>
+          </ul>
+
+          @if (showCrossLocationFootnote(p)) {
+            <p class="package-card__footnote muted">{{ tr('businessApp.retention.crossLocationScopeFootnote') }}</p>
+          }
+
+          <div class="package-card__usage">
+            <h5 class="package-card__usage-title">{{ tr('businessApp.retention.customerPackageUsage') }}</h5>
+            <ul class="usage-rows">
+              @for (b of p.balances; track b.id) {
+                <li class="usage-row">
+                  <div class="usage-row__head">
+                    <span class="usage-row__service">{{ b.serviceName }}</span>
+                    <span class="usage-row__counts muted">{{ b.remaining }} / {{ b.granted }}</span>
+                  </div>
+                  <div class="usage-row__bar" aria-hidden="true">
+                    <span
+                      class="usage-row__fill"
+                      [style.width.%]="balancePercent(b)"
+                    ></span>
+                  </div>
+                  <div class="usage-row__meta muted">
+                    <span>{{ tr('businessApp.retention.used') }}: {{ b.used }}</span>
+                    <span>{{ tr('businessApp.retention.reserved') }}: {{ b.reserved }}</span>
+                  </div>
+                </li>
+              }
+            </ul>
+          </div>
+        </li>
+      }
+    </ul>
+  </div>
+}

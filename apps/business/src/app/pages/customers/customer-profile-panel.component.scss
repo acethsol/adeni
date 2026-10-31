@@ -40,6 +40,85 @@
   border-top: 1px solid var(--border);
 }
 
+.customer-trust {
+  margin-bottom: var(--cds-spacing-05);
+  padding: var(--cds-spacing-05);
+  border: 1px solid color-mix(in srgb, var(--adeni-purple, #7f56ff) 22%, var(--border));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--adeni-purple, #7f56ff) 7%, var(--surface)) 0%,
+    var(--surface) 70%
+  );
+}
+
+.customer-trust__head {
+  margin-bottom: var(--cds-spacing-04);
+}
+
+.customer-trust__title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+
+.customer-trust__lede {
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.customer-trust__tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--cds-spacing-04);
+}
+
+.customer-trust__tile {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--cds-spacing-04);
+  align-items: start;
+  padding: var(--cds-spacing-04);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.customer-trust__tile--verified {
+  border-color: color-mix(in srgb, var(--cds-support-success, #24a148) 35%, var(--border));
+}
+
+.customer-trust__icon {
+  display: grid;
+  place-items: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  color: color-mix(in srgb, var(--adeni-purple, #7f56ff) 70%, var(--text));
+  background: color-mix(in srgb, var(--adeni-purple, #7f56ff) 10%, var(--surface));
+}
+
+.customer-trust__tile--verified .customer-trust__icon {
+  color: color-mix(in srgb, var(--cds-support-success, #24a148) 75%, var(--text));
+  background: color-mix(in srgb, var(--cds-support-success, #24a148) 10%, var(--surface));
+}
+
+.customer-trust__label {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.customer-trust__value {
+  margin: 0.35rem 0 0;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.customer-trust__copy adeni-pill {
+  margin-top: 0.35rem;
+}
+
 .insights-stat-tiles {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
@@ -170,62 +249,18 @@
   margin-top: 0.15rem;
 }
 
-.activity-timeline {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--cds-spacing-04);
+.activity-grid {
+  margin-top: var(--cds-spacing-03);
 }
 
-.activity-card {
-  position: relative;
-  padding: var(--cds-spacing-04) var(--cds-spacing-05);
+.activity-grid .adeni-list-results {
   border: 1px solid var(--border);
   background: var(--surface);
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--text) 4%, transparent);
-}
 
-.activity-card__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--cds-spacing-03);
-}
-
-.activity-card__kind {
-  font-size: 0.9375rem;
-}
-
-.activity-card__when {
-  font-size: 0.8125rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.activity-card__meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--cds-spacing-03);
-  margin-top: var(--cds-spacing-03);
-}
-
-.activity-card__service {
-  font-size: 0.875rem;
-}
-
-.activity-card__amount {
-  font-size: 0.875rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.activity-card__link {
-  display: inline-block;
-  margin-top: var(--cds-spacing-03);
-  font-size: 0.8125rem;
+  adeni-data-table ::ng-deep .adeni-data-table-shell {
+    border: none;
+    padding: 0;
+  }
 }
 
 .activity-load-more {

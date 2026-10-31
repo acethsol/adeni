@@ -2,12 +2,6 @@
   [title]="facade.business()?.name ?? tr('common.business')"
   [description]="pageDescription()"
 >
-  <nav class="breadcrumb" [attr.aria-label]="tr('common.breadcrumb')">
-    <a routerLink="/businesses">{{ tr('common.businesses') }}</a>
-    <span aria-hidden="true">/</span>
-    <span>{{ facade.business()?.name ?? "…" }}</span>
-  </nav>
-
   @if (facade.error()) {
     <p class="error-banner">{{ facade.error() }}</p>
   }

@@ -1,0 +1,69 @@
+@use "staff-layout" as *;
+
+.clinical-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0 0 var(--cds-spacing-05);
+  padding: var(--cds-spacing-04) var(--cds-spacing-05);
+  border: 1px solid color-mix(in srgb, var(--adeni-purple, #7f56ff) 22%, var(--border));
+  background: color-mix(in srgb, var(--adeni-purple, #7f56ff) 6%, var(--surface));
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.loading-line {
+  margin: var(--cds-spacing-04) 0;
+}
+
+.intake-status-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--cds-spacing-04);
+}
+
+.intake-status-card {
+  padding: var(--cds-spacing-05);
+}
+
+.intake-status-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--cds-spacing-04);
+  margin-bottom: var(--cds-spacing-04);
+}
+
+.intake-status-card__title {
+  margin: 0 0 var(--cds-spacing-03);
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.intake-status-card__when {
+  font-size: 0.8125rem;
+}
+
+.restricted-note {
+  margin-top: var(--cds-spacing-04);
+  font-size: 0.875rem;
+}
+
+.intake-review-panel {
+  margin-top: var(--cds-spacing-05);
+  padding: var(--cds-spacing-05);
+}
+
+.intake-review-panel__title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 650;
+}
+
+.intake-review-panel__lede {
+  margin: 0.35rem 0 var(--cds-spacing-05);
+  line-height: 1.45;
+}

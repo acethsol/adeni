@@ -14,6 +14,7 @@ import {
   loyaltyAccountSchema,
   loyaltyAdjustmentSchema,
   loyaltyProgramSchema,
+  loyaltyTransactionSchema,
   loyaltyTransactionKindSchema,
   packagePurchaseResponseSchema,
   publicMembershipPlanCatalogSchema,
@@ -136,6 +137,18 @@ describe("retention contracts", () => {
       transaction: { id, sequence: 1, kind: "adjust", points: 120, balanceAfter: 120, reason: "Welcome", bookingId: null, occurredAt: "2026-10-29T12:00:00Z" },
     });
     expect(adjustment.transaction.kind).toBe("adjust");
+    expect(
+      loyaltyTransactionSchema.safeParse({
+        id,
+        sequence: 0,
+        kind: "earn",
+        points: 100,
+        balanceAfter: 100,
+        reason: null,
+        bookingId: null,
+        occurredAt: "2026-10-29T12:00:00Z",
+      }).success,
+    ).toBe(true);
     expect(loyaltyTransactionKindSchema.safeParse("transfer").success).toBe(false);
 
     expect(adjustLoyaltyPointsRequestSchema.safeParse({ points: -5, reason: "Fix" }).success).toBe(true);
