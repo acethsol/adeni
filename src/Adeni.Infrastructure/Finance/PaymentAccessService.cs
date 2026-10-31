@@ -2,9 +2,10 @@ namespace Adeni.Infrastructure.Finance;
 
 using Adeni.Application.Auth;
 using Adeni.Application.Finance;
+using Adeni.Domain.Identity;
 
 public sealed class PaymentAccessService(
-    IBusinessMembershipQuery businessMembership,
+    IBusinessPermissionService businessPermissions,
     ICustomerPaymentAccessQuery customerAccess) : IPaymentAccessService
 {
     public async Task<bool> CanAccessAsync(
@@ -13,10 +14,19 @@ public sealed class PaymentAccessService(
         string? businessAuth0Sub,
         CancellationToken cancellationToken = default)
     {
-        if (businessAuth0Sub is not null
-            && await businessMembership.IsMemberAsync(businessAuth0Sub, payment.TenantId, cancellationToken))
+        if (businessAuth0Sub is not null)
         {
-            return true;
+            var resolved = await businessPermissions.ResolveAsync(businessAuth0Sub, cancellationToken);
+            if (resolved.IsSuccess
+                && resolved.Value is not null
+                && resolved.Value.TenantId == payment.TenantId
+                && BusinessPermissionRoles.HasAny(
+                    resolved.Value.PermissionRole,
+                    BusinessPermissions.Finance,
+                    BusinessPermissions.Bookings))
+            {
+                return true;
+            }
         }
 
         return customerAuth0Sub is not null && payment.BookingId is Guid bookingId

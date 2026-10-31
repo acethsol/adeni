@@ -14,6 +14,9 @@ public sealed class FinanceOptions
     public string CheckoutRealtimeSigningKey { get; set; } = "dev-checkout-realtime-signing-key";
 
     public int CheckoutRealtimeTokenMinutes { get; set; } = 120;
+
+    /// <summary>HTTPS origins allowed for business pay-link callbacks (Staging/Production).</summary>
+    public List<string> AllowedCallbackOrigins { get; set; } = [];
 }
 
 /// <summary>Legacy appsettings section name (still bound into <see cref="FinanceOptions"/>).</summary>
