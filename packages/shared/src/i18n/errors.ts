@@ -86,6 +86,11 @@ export const enErrorMessages: MessageTree = {
     presence_expired: "Your on-premises verification expired. Verify again at the branch.",
     presence_location_mismatch: "Your verification is for a different branch. Verify at this location.",
   },
+  attendance: {
+    invalid_transition: "That attendance action is not allowed in your current shift state.",
+    staff_not_linked: "Your account is not linked to a staff profile for this business.",
+    location_not_configured: "This branch does not have map coordinates for attendance. Update the location in Settings.",
+  },
   payment: {
     invalid_amount: "Payment amount must be greater than zero.",
     invalid_currency: "Currency must be a 3-letter ISO code.",
@@ -132,6 +137,7 @@ export const enErrorMessages: MessageTree = {
     excel_export: "Excel export is not included on your current plan.",
     multi_location_reporting:
       "Cross-location reporting requires the Business plan. Choose a location to export one branch, or upgrade for all locations.",
+    attendance_required: "Staff attendance is not included on your current plan.",
   },
   reporting: {
     report_not_found: "That report is not available.",
@@ -217,6 +223,11 @@ export const frErrorMessages: MessageTree = {
     presence_expired: "Votre vérification sur site a expiré. Vérifiez à nouveau à la succursale.",
     presence_location_mismatch: "Votre vérification concerne une autre succursale. Vérifiez à cet emplacement.",
   },
+  attendance: {
+    invalid_transition: "Cette action de présence n’est pas permise dans votre état de service actuel.",
+    staff_not_linked: "Votre compte n’est pas lié à un profil du personnel pour cette entreprise.",
+    location_not_configured: "Cette succursale n’a pas de coordonnées pour la présence. Mettez à jour l’emplacement dans les paramètres.",
+  },
   payment: {
     invalid_amount: "Le montant du paiement doit être supérieur à zéro.",
     invalid_currency: "La devise doit être un code ISO à 3 lettres.",
@@ -257,6 +268,7 @@ export const frErrorMessages: MessageTree = {
     excel_export: "L'exportation Excel n'est pas incluse dans votre forfait actuel.",
     multi_location_reporting:
       "Les rapports multi-succursales nécessitent le forfait Business. Choisissez un emplacement pour une succursale, ou passez à un forfait supérieur pour tous les emplacements.",
+    attendance_required: "La présence du personnel n’est pas incluse dans votre forfait actuel.",
   },
   reporting: {
     report_not_found: "Ce rapport n'est pas disponible.",

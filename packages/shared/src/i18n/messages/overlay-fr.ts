@@ -455,6 +455,9 @@ export const frOverlay: MessageTree = {
       presenceVerifyHint: "Renouvelez la vérification sur site sans repointer (prolongation toutes les 30+ minutes).",
       presenceVerifyAction: "Vérifier la position",
       presenceVerifyFailed: "Impossible de vérifier votre position.",
+      presenceRequiredTitle: "Vérification sur site requise",
+      presenceRequiredBody:
+        "Votre entreprise limite l’accès aux informations sensibles des clients au personnel vérifié sur place. Vérifiez votre position pour continuer.",
     },
     memberships: {
       title: "Abonnements",
