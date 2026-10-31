@@ -32,7 +32,11 @@
     "loyaltyTiers": false,
     "referrals": false,
     "crossLocationRetention": false,
-    "advancedRetentionAnalytics": false
+    "advancedRetentionAnalytics": false,
+    "staffAttendance": false,
+    "attendanceGeofence": false,
+    "onPremisesSensitiveData": false,
+    "attendanceReporting": false
   },
   "professional": {
     "maxLocations": 1,
@@ -67,7 +71,11 @@
     "loyaltyTiers": true,
     "referrals": true,
     "crossLocationRetention": false,
-    "advancedRetentionAnalytics": true
+    "advancedRetentionAnalytics": true,
+    "staffAttendance": true,
+    "attendanceGeofence": true,
+    "onPremisesSensitiveData": true,
+    "attendanceReporting": false
   },
   "business": {
     "maxLocations": 3,
@@ -102,6 +110,10 @@
     "loyaltyTiers": true,
     "referrals": true,
     "crossLocationRetention": true,
-    "advancedRetentionAnalytics": true
+    "advancedRetentionAnalytics": true,
+    "staffAttendance": true,
+    "attendanceGeofence": true,
+    "onPremisesSensitiveData": true,
+    "attendanceReporting": true
   }
 }

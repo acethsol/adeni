@@ -1,0 +1,152 @@
+<app-portal-page
+  [title]="tr('businessApp.attendance.teamTitle')"
+  [description]="tr('businessApp.attendance.teamDescription')"
+>
+  @if (canExportRegister()) {
+    <adeni-export-menu
+      pageActions
+      [label]="tr('common.export')"
+      [items]="exportMenuItems()"
+      (exportSelect)="downloadAttendanceRegister($event)"
+    />
+  }
+
+  @if (loading()) {
+    <p class="muted">{{ tr("common.loading") }}</p>
+  } @else if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+    <adeni-staff-btn icon="restart" (pressed)="refresh()">{{ tr("common.retry") }}</adeni-staff-btn>
+  } @else {
+    <adeni-tabs
+      [tabs]="managerTabs()"
+      [activeId]="managerView()"
+      linkMode="button"
+      (activeIdChange)="onManagerTabChange($event)"
+    />
+
+    @if (managerView() === "today") {
+    @if (team().length > 0) {
+      <p class="team-summary muted">
+        {{ tr("businessApp.attendance.teamSummaryWorking", { count: workingCount() }) }}
+        ·
+        {{ tr("businessApp.attendance.teamSummaryOnBreak", { count: onBreakCount() }) }}
+      </p>
+    }
+    @if (team().length === 0) {
+      <p class="muted">{{ tr("businessApp.attendance.teamEmpty") }}</p>
+    } @else {
+      <table class="team-table">
+        <thead>
+          <tr>
+            <th>{{ tr("common.name") }}</th>
+            <th>{{ tr("businessApp.attendance.teamStateColumn") }}</th>
+            <th>{{ tr("businessApp.attendance.teamLastEventColumn") }}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (member of team(); track member.staffMemberId) {
+            <tr>
+              <td>{{ member.displayName }}</td>
+              <td>{{ workStateLabel(member.workState) }}</td>
+              <td>
+                @if (member.lastEventType && member.lastEventAt) {
+                  {{ tr("businessApp.attendance.actions." + member.lastEventType) }} ·
+                  {{ member.lastEventAt | date: "shortTime" }}
+                } @else {
+                  —
+                }
+              </td>
+              <td class="team-actions">
+                <adeni-staff-btn icon="calendar" (pressed)="openTimesheet(member)">
+                  {{ tr("businessApp.attendance.timesheetAction") }}
+                </adeni-staff-btn>
+                <adeni-staff-btn icon="user--follow" (pressed)="openOverride(member)">
+                  {{ tr("businessApp.attendance.overrideAction") }}
+                </adeni-staff-btn>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+    } @else {
+      <div class="timesheet-filters">
+        <div class="field">
+          <label>{{ tr("common.staff") }}</label>
+          <select [ngModel]="timesheetStaffId()" (ngModelChange)="timesheetStaffId.set($event); loadHistory()">
+            @for (member of team(); track member.staffMemberId) {
+              <option [value]="member.staffMemberId">{{ member.displayName }}</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label>{{ tr("businessApp.attendance.historyFrom") }}</label>
+          <input type="date" [ngModel]="historyFrom()" (ngModelChange)="historyFrom.set($event)" />
+        </div>
+        <div class="field">
+          <label>{{ tr("businessApp.attendance.historyTo") }}</label>
+          <input type="date" [ngModel]="historyTo()" (ngModelChange)="historyTo.set($event)" />
+        </div>
+        <adeni-staff-btn icon="restart" (pressed)="loadHistory()">
+          {{ tr("businessApp.attendance.historyLoad") }}
+        </adeni-staff-btn>
+      </div>
+      @if (historyLoading()) {
+        <p class="muted">{{ tr("common.loading") }}</p>
+      } @else if (!history()?.events.length) {
+        <p class="muted">{{ tr("businessApp.attendance.historyEmpty") }}</p>
+      } @else {
+        <table class="team-table">
+          <thead>
+            <tr>
+              <th>{{ tr("businessApp.attendance.historyEventColumn") }}</th>
+              <th>{{ tr("businessApp.attendance.historyWhenColumn") }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (ev of history()!.events; track ev.id) {
+              <tr>
+                <td>{{ tr("businessApp.attendance.actions." + ev.eventType) }}</td>
+                <td>{{ ev.occurredAt | date: "medium" }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    }
+  }
+
+  <adeni-modal
+    [open]="overrideMember() !== null"
+    [title]="tr('businessApp.attendance.overrideModalTitle')"
+    [subtitle]="overrideMember()?.displayName ?? ''"
+    size="md"
+    [hasFooter]="false"
+    (closed)="closeOverride()"
+  >
+    <div class="field">
+      <label>{{ tr("businessApp.attendance.overrideEventLabel") }}</label>
+      <select [ngModel]="overrideEventType()" (ngModelChange)="overrideEventType.set($event)">
+        @for (action of overrideActions(); track action) {
+          <option [value]="action">{{ actionLabel(action) }}</option>
+        }
+      </select>
+    </div>
+    <div class="field">
+      <label>{{ tr("businessApp.attendance.overrideReasonLabel") }}</label>
+      <textarea
+        rows="3"
+        [ngModel]="overrideReason()"
+        (ngModelChange)="overrideReason.set($event)"
+        [placeholder]="tr('businessApp.attendance.overrideReasonPlaceholder')"
+      ></textarea>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn" (click)="closeOverride()">{{ tr("common.cancel") }}</button>
+      <adeni-staff-btn icon="checkmark" [disabled]="saving()" (pressed)="submitOverride()">
+        {{ tr("businessApp.attendance.overrideSubmit") }}
+      </adeni-staff-btn>
+    </div>
+  </adeni-modal>
+</app-portal-page>

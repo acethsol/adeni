@@ -9,6 +9,7 @@ Redis is required in staging and production (Azure Cache for Redis). Local devel
 | Tenant public profile | `tenant:{id}:profile` | 5 min |
 | Discovery search results | `discovery:{lat}:{lng}:{cat}:{page}` | 2 min |
 | Booking slot locks | `slot-lock:{tenant}:{start}:{service}` | 30 sec |
+| Verified presence (on-site gate) | `tenant:{id}:presence:{businessUserId}` | remaining session validity |
 | Category tree | `categories:all` | 1 hour |
 
 The API uses `ICacheService` (`IDistributedCache` under the hood) and `IDistributedLockProvider` for slot locking.

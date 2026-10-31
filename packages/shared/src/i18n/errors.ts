@@ -81,6 +81,15 @@ export const enErrorMessages: MessageTree = {
     invite_expired: "This invite has expired. Ask the business owner to resend it.",
     invite_email_mismatch: "Sign in with the email address this invite was sent to.",
     last_owner: "Cannot remove or demote the last owner of this business.",
+    location_verification_failed: "Location verification failed. You must be at the business location.",
+    presence_required: "On-premises verification is required. Verify your location at the branch.",
+    presence_expired: "Your on-premises verification expired. Verify again at the branch.",
+    presence_location_mismatch: "Your verification is for a different branch. Verify at this location.",
+  },
+  attendance: {
+    invalid_transition: "That attendance action is not allowed in your current shift state.",
+    staff_not_linked: "Your account is not linked to a staff profile for this business.",
+    location_not_configured: "This branch does not have map coordinates for attendance. Update the location in Settings.",
   },
   payment: {
     invalid_amount: "Payment amount must be greater than zero.",
@@ -128,6 +137,7 @@ export const enErrorMessages: MessageTree = {
     excel_export: "Excel export is not included on your current plan.",
     multi_location_reporting:
       "Cross-location reporting requires the Business plan. Choose a location to export one branch, or upgrade for all locations.",
+    attendance_required: "Staff attendance is not included on your current plan.",
   },
   reporting: {
     report_not_found: "That report is not available.",
@@ -208,6 +218,15 @@ export const frErrorMessages: MessageTree = {
     invite_expired: "Cette invitation a expiré. Demandez au propriétaire de la renvoyer.",
     invite_email_mismatch: "Connectez-vous avec l'adresse e-mail à laquelle l'invitation a été envoyée.",
     last_owner: "Impossible de retirer ou de rétrograder le dernier propriétaire.",
+    location_verification_failed: "Échec de la vérification de position. Vous devez être sur le site.",
+    presence_required: "Une vérification sur site est requise. Vérifiez votre position à la succursale.",
+    presence_expired: "Votre vérification sur site a expiré. Vérifiez à nouveau à la succursale.",
+    presence_location_mismatch: "Votre vérification concerne une autre succursale. Vérifiez à cet emplacement.",
+  },
+  attendance: {
+    invalid_transition: "Cette action de présence n’est pas permise dans votre état de service actuel.",
+    staff_not_linked: "Votre compte n’est pas lié à un profil du personnel pour cette entreprise.",
+    location_not_configured: "Cette succursale n’a pas de coordonnées pour la présence. Mettez à jour l’emplacement dans les paramètres.",
   },
   payment: {
     invalid_amount: "Le montant du paiement doit être supérieur à zéro.",
@@ -249,6 +268,7 @@ export const frErrorMessages: MessageTree = {
     excel_export: "L'exportation Excel n'est pas incluse dans votre forfait actuel.",
     multi_location_reporting:
       "Les rapports multi-succursales nécessitent le forfait Business. Choisissez un emplacement pour une succursale, ou passez à un forfait supérieur pour tous les emplacements.",
+    attendance_required: "La présence du personnel n’est pas incluse dans votre forfait actuel.",
   },
   reporting: {
     report_not_found: "Ce rapport n'est pas disponible.",

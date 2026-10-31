@@ -151,6 +151,30 @@ internal static class ReportSpreadsheetBuilder
         return builder.ToString();
     }
 
+    public static string BuildAttendanceRegisterCsv(IReadOnlyList<AttendanceRegisterExportRow> rows)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine("OccurredAt,StaffDisplayName,EventType,LocationName,LocationVerificationStatus,VerificationMethod,DistanceFromLocationMeters");
+        foreach (var row in rows)
+        {
+            builder.Append(CsvField.Format(row.OccurredAt.ToString("O")));
+            builder.Append(',');
+            builder.Append(CsvField.Format(row.StaffDisplayName));
+            builder.Append(',');
+            builder.Append(CsvField.Format(row.EventType));
+            builder.Append(',');
+            builder.Append(CsvField.Format(row.LocationName));
+            builder.Append(',');
+            builder.Append(CsvField.Format(row.LocationVerificationStatus));
+            builder.Append(',');
+            builder.Append(CsvField.Format(row.VerificationMethod));
+            builder.Append(',');
+            builder.AppendLine(row.DistanceFromLocationMeters?.ToString(CultureInfo.InvariantCulture) ?? "");
+        }
+
+        return builder.ToString();
+    }
+
     public static string BuildTenantCustomersCsv(IReadOnlyList<TenantCustomerExportRow> rows)
     {
         var builder = new StringBuilder();

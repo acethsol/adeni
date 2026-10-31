@@ -10,6 +10,10 @@
     <p class="error-banner">{{ error() }}</p>
   }
 
+  @if (presenceBlocked()) {
+    <app-presence-required-panel (verify)="verifyPresenceForDetail()" />
+  }
+
   @if (customer(); as c) {
     <section class="card profile-hero">
       <div class="profile-hero__identity">
@@ -359,12 +363,16 @@
       </section>
     } @else if (tab() === "activity") {
       <div class="tab-panel">
-        <app-customer-profile-panel
-          [customerId]="c.id"
-          [locationId]="profileLocationId()"
-          [overviewVisible]="false"
-          [activityVisible]="true"
-        />
+        @if (profileData.activityPresenceBlocked()) {
+          <app-presence-required-panel (verify)="verifyPresenceForProfileTabs()" />
+        } @else {
+          <app-customer-profile-panel
+            [customerId]="c.id"
+            [locationId]="profileLocationId()"
+            [overviewVisible]="false"
+            [activityVisible]="true"
+          />
+        }
       </div>
     } @else if (tab() === "packages" && session.can("business.retention")) {
       <div class="tab-panel">

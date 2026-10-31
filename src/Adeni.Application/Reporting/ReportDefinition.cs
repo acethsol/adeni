@@ -12,4 +12,5 @@ public sealed record ReportDefinition(
     ReportBaseEntitlement BaseEntitlement,
     IReadOnlySet<ReportExportFormat> SupportedFormats,
     bool RequiresMultiLocationReportingGate = false,
-    bool RequiresAdvancedRetentionAnalytics = false);
+    bool RequiresAdvancedRetentionAnalytics = false,
+    bool RequiresAttendanceReporting = false);

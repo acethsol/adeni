@@ -17,12 +17,14 @@ import {
   type AdeniPillTone,
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { BusinessPresenceVerifyService } from "../../core/services/business-presence-verify.service";
+import { PresenceRequiredPanelComponent } from "../attendance/presence-required-panel.component";
 
 /** Customer detail → Packages tab: sold location/channel, redemption scope, balances and expiry (read-only). */
 @Component({
   selector: "app-customer-packages-panel",
   standalone: true,
-  imports: [AdeniCarbonIconComponent, AdeniPillComponent, AdeniPortalEmptyStateComponent],
+  imports: [AdeniCarbonIconComponent, AdeniPillComponent, AdeniPortalEmptyStateComponent, PresenceRequiredPanelComponent],
   templateUrl: "./customer-packages-panel.component.html",
   styleUrl: "./customer-packages-panel.component.scss",
 })
@@ -30,11 +32,13 @@ export class CustomerPackagesPanelComponent implements OnInit {
   protected readonly tr = injectAdeniTranslate();
   protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
+  private readonly presenceVerify = inject(BusinessPresenceVerifyService);
 
   readonly customerId = input.required<string>();
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
+  readonly presenceBlocked = signal(false);
   readonly packages = signal<CustomerPackage[]>([]);
   private readonly entitlements = signal<TenantEntitlements | null>(null);
   private readonly locations = signal<BusinessLocation[]>([]);
@@ -58,6 +62,7 @@ export class CustomerPackagesPanelComponent implements OnInit {
   async load(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
+    this.presenceBlocked.set(false);
     try {
       await this.api.withAuthorizedClient(async (client) => {
         const [list, locations, planEntitlements, profile] = await Promise.all([
@@ -73,10 +78,24 @@ export class CustomerPackagesPanelComponent implements OnInit {
         this.locations.set(locations);
       });
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "businessApp.retention.customerCouldNotLoad"));
+      if (this.presenceVerify.isPresenceGateError(caught)) {
+        this.presenceBlocked.set(true);
+        this.error.set(null);
+      } else {
+        this.error.set(this.apiErr(caught, "businessApp.retention.customerCouldNotLoad"));
+      }
       this.packages.set([]);
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  async verifyPresence(): Promise<void> {
+    try {
+      await this.presenceVerify.verifyAtActiveLocation();
+      await this.load();
+    } catch {
+      /* parent may show toast */
     }
   }
 

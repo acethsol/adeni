@@ -51,11 +51,13 @@ Current V1 authority: [product-direction.md](./product-direction.md). Supported 
 | **37** | **Retention (packages, loyalty, memberships)** | **✅ Done (dev/local)** — [37.1](./specs/sprint-37-1-packages-benefit-ledger.md)–[37.5](./specs/sprint-37-5-retention-analytics.md); online recurring/package checkout stub-gated until **Sprint 34**; closeout polish on `dev` |
 | **C1** | **Consumer app experience** (`apps/customer`, `/app/*`, no `/my-*`) | Implemented on dev — [sprint-c1-consumer-app-experience.md](./specs/sprint-c1-consumer-app-experience.md) |
 | **C2** | **Consumer portal** (dashboard, calendar, shared `@adeni/ui`) | Implemented on `dev` — [sprint-c2-consumer-portal.md](./specs/sprint-c2-consumer-portal.md) |
+| — | **Business supply landing** (`/welcome`, discover “For businesses”) | ✅ Done — [business-supply-landing.md](./specs/business-supply-landing.md) |
 | **39-finance** | **Finance module boundaries (Phase 1)** | ✅ Done — [finance-module-boundaries.md](./specs/finance-module-boundaries.md); `/api/v1/finance/*`, portal `/finance` |
 | — | **Reporting module boundaries** | Spec — [reporting-module-boundaries.md](./specs/reporting-module-boundaries.md); runbook [reporting.md](./reporting.md) |
 | — | **Notifications module boundaries** | Spec — [notifications-module-boundaries.md](./specs/notifications-module-boundaries.md); runbook [notifications.md](./notifications.md) |
 | — | **Shared data grid (`@adeni/ui`)** | Spec — [shared-data-grid.md](./specs/shared-data-grid.md); Staff = reference impl |
-| **40** | **Staff attendance, verified presence & on-premises sensitive data** | **Approved — not started** — [staff-attendance-verified-presence.md](./specs/staff-attendance-verified-presence.md); Phases A→E |
+| **40** | **Staff attendance, verified presence & on-premises sensitive data** | **Done (V1)** — [staff-attendance-verified-presence.md](./specs/staff-attendance-verified-presence.md); phases A–E including schedule-today, staff history, corrections, on-site policy + S surfaces, team timesheets + register export. Deferred: Redis presence cache, SignalR, Flutter/mobile attendance. |
+| **40.1** | **Attendance V1.1 — Redis presence cache + SignalR team board** | **Done** — [#52](https://github.com/acethsol/adeni/issues/52); [sprint-40.1-attendance-realtime-cache.md](./specs/sprint-40.1-attendance-realtime-cache.md); Redis write-through + SQL fallback; `AttendanceTeamChanged` on operations hub. |
 | — | Sprint 11d LLM agent | → Sprint 20 |
 | — | Staging deploy + Auth0 E2E | → Sprint 20 |
 | — | App Insights (Obs 1) | → Sprint 20 |

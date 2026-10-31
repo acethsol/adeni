@@ -66,6 +66,7 @@ public sealed class TenantRetentionController(
 
     [HttpGet("customers/{tenantCustomerId:guid}/packages")]
     [RequiresBusinessPermission(BusinessPermissions.Retention, BusinessPermissions.Bookings)]
+    [RequiresOnPremisesPresence]
     public async Task<IActionResult> ListCustomerPackages(Guid tenantCustomerId, CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();

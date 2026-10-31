@@ -20,6 +20,9 @@ export const BUSINESS_PERMISSIONS = [
   "business.finance",
   "business.plan",
   "business.retention",
+  "business.attendance",
+  "business.attendance.self",
+  "business.attendance.manage",
 ] as const;
 
 export type BusinessPermission = (typeof BUSINESS_PERMISSIONS)[number];
@@ -47,6 +50,8 @@ const RECEPTIONIST: readonly BusinessPermission[] = [
   "business.services",
   "business.hours",
   "business.retention",
+  "business.attendance.self",
+  "business.attendance",
 ];
 
 const PRACTITIONER: readonly BusinessPermission[] = [
@@ -54,6 +59,7 @@ const PRACTITIONER: readonly BusinessPermission[] = [
   "business.bookings.self",
   "business.staff.self",
   "business.messages",
+  "business.attendance.self",
 ];
 
 const ACCOUNTANT: readonly BusinessPermission[] = [

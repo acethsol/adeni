@@ -355,7 +355,7 @@ export class BusinessShellComponent {
       return;
     }
     signOutPortalDev();
-    void this.router.navigateByUrl("/setup");
+    void this.router.navigateByUrl("/welcome");
   }
 
   discoverUrl(): string {

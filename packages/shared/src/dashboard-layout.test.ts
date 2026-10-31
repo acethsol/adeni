@@ -25,6 +25,10 @@ const starterEntitlements = {
   crossLocationRetention: false,
   advancedRetentionAnalytics: false,
   multiLocation: false,
+  staffAttendance: false,
+  attendanceGeofence: false,
+  onPremisesSensitiveData: false,
+  attendanceReporting: false,
 } as const;
 
 function ctx(

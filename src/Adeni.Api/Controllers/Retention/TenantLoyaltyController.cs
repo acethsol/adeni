@@ -46,6 +46,7 @@ public sealed class TenantLoyaltyController(
 
     [HttpGet("customers/{tenantCustomerId:guid}/account")]
     [RequiresBusinessPermission(BusinessPermissions.Retention, BusinessPermissions.Bookings)]
+    [RequiresOnPremisesPresence]
     public async Task<IActionResult> GetAccount(Guid tenantCustomerId, CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();
@@ -55,6 +56,7 @@ public sealed class TenantLoyaltyController(
 
     [HttpGet("customers/{tenantCustomerId:guid}/transactions")]
     [RequiresBusinessPermission(BusinessPermissions.Retention, BusinessPermissions.Bookings)]
+    [RequiresOnPremisesPresence]
     public async Task<IActionResult> ListTransactions(
         Guid tenantCustomerId, [FromQuery] int limit = 50, CancellationToken cancellationToken = default)
     {

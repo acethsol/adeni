@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Mvc;
 [ApiController]
 [Route("api/v1/tenant/customers")]
 [RequiresBusinessPermission(BusinessPermissions.Bookings)]
+[RequiresOnPremisesPresence]
 public sealed class TenantCustomersController(
     ITenantCustomerService customers,
     ITenantReportExportQueryService reportQueries,

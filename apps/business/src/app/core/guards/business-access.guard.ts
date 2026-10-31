@@ -5,7 +5,7 @@ import {
   canAccessBusinessPortal,
 } from "../adeni-config";
 
-/** Sends users to /setup when Auth0 and dev sub are both unset. */
+/** Sends users to /welcome when Auth0 and dev sub are both unset. */
 export const businessAccessGuard: CanActivateFn = () => {
   const config = inject(ADENI_PORTAL_CONFIG);
   const router = inject(Router);
@@ -14,5 +14,5 @@ export const businessAccessGuard: CanActivateFn = () => {
     return true;
   }
 
-  return router.createUrlTree(["/setup"]);
+  return router.createUrlTree(["/welcome"]);
 };

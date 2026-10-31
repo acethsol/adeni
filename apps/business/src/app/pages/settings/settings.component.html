@@ -371,5 +371,29 @@
         </footer>
       </section>
     }
+
+    @if (tab() === "security") {
+      <section class="card settings-card">
+        <header class="settings-card__head">
+          <h3>{{ tr('businessApp.settings.onSiteAccessTitle') }}</h3>
+          <p class="lede">{{ tr('businessApp.settings.onSiteAccessDescription') }}</p>
+        </header>
+        <label class="cds-toggle">
+          <input type="checkbox" role="switch" [(ngModel)]="requireSensitivePresence" />
+          <span class="cds-toggle__track" aria-hidden="true"></span>
+          <span class="cds-toggle__label">{{ tr('businessApp.settings.requireSensitivePresence') }}</span>
+        </label>
+        <div class="field field--compact">
+          <label for="presenceValidity">{{ tr('businessApp.settings.presenceValidityMinutes') }}</label>
+          <input id="presenceValidity" type="number" min="30" max="180" [(ngModel)]="presenceValidityMinutes" />
+        </div>
+        <footer class="settings-actions">
+          <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="saveSecurity()">
+            <adeni-carbon-icon name="save" [size]="16" />
+            {{ tr('common.save') }}
+          </button>
+        </footer>
+      </section>
+    }
   }
 </app-portal-page>

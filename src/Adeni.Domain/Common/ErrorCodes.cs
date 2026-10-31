@@ -20,6 +20,14 @@ public static class ErrorCodes
     public const string StaffHoursInvalid = "staff.hours_invalid";
     public const string StaffLeaveOverlap = "staff.leave_overlap";
     public const string StaffLeaveNotFound = "staff.leave_not_found";
+    public const string AttendanceInvalidTransition = "attendance.invalid_transition";
+    public const string AttendanceStaffNotLinked = "attendance.staff_not_linked";
+    public const string AttendanceNotEntitled = "entitlements.attendance_required";
+    public const string StaffLocationVerificationFailed = "staff.location_verification_failed";
+    public const string AttendanceLocationNotConfigured = "attendance.location_not_configured";
+    public const string StaffPresenceRequired = "staff.presence_required";
+    public const string StaffPresenceExpired = "staff.presence_expired";
+    public const string StaffPresenceLocationMismatch = "staff.presence_location_mismatch";
     public const string CartEmpty = "booking.cart_empty";
     public const string AddonRequiresParent = "booking.addon_requires_parent";
     public const string GuestLimit = "booking.guest_limit";
@@ -135,6 +143,43 @@ public static class ErrorCodes
 
     public static Error StaffLeaveNotFoundError() =>
         new(StaffLeaveNotFound, "Leave entry was not found.");
+
+    public static Error AttendanceInvalidTransitionError() =>
+        new(AttendanceInvalidTransition, "That attendance action is not allowed in the current state.");
+
+    public static Error AttendanceStaffNotLinkedError() =>
+        new(AttendanceStaffNotLinked, "Link your portal login to a staff profile to use attendance.");
+
+    public static Error AttendanceNotEntitledError() =>
+        new(AttendanceNotEntitled, "Staff attendance is not included on your plan.");
+
+    public static Error StaffLocationVerificationFailedError(int? distanceMeters = null, int? radiusMeters = null) =>
+        new(
+            StaffLocationVerificationFailed,
+            "Location verification failed. You must be at the business location to clock in.",
+            distanceMeters is null && radiusMeters is null
+                ? null
+                : new Dictionary<string, object?>
+                {
+                    ["distanceMeters"] = distanceMeters,
+                    ["radiusMeters"] = radiusMeters,
+                });
+
+    public static Error AttendanceLocationNotConfiguredError() =>
+        new(
+            AttendanceLocationNotConfigured,
+            "This location does not have map coordinates configured for attendance geofence.");
+
+    public static Error StaffPresenceRequiredError() =>
+        new(StaffPresenceRequired, "On-premises verification is required. Verify your location at the branch.");
+
+    public static Error StaffPresenceExpiredError() =>
+        new(StaffPresenceExpired, "Your on-premises verification expired. Verify again at the branch.");
+
+    public static Error StaffPresenceLocationMismatchError() =>
+        new(
+            StaffPresenceLocationMismatch,
+            "Your verification is for a different branch. Verify at this location.");
 
     public static Error CartEmptyError() =>
         new(CartEmpty, "Add at least one service to book.");

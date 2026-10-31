@@ -23,6 +23,7 @@ public sealed class TenantCustomerProfileController(ICustomerProfileQueryService
     }
 
     [HttpGet("activity")]
+    [RequiresOnPremisesPresence]
     public async Task<IActionResult> Activity(Guid id, [FromQuery] Guid? locationId, [FromQuery] int pageSize = 25,
         [FromQuery] string? cursor = null, CancellationToken cancellationToken = default)
     {

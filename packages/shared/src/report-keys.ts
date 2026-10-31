@@ -8,6 +8,7 @@ export const REPORT_KEYS = {
   tenantLocations: "tenant-locations",
   tenantServices: "tenant-services",
   retentionMembershipMrr: "retention-membership-mrr",
+  attendanceRegister: "attendance-register",
   adminBusinessDirectory: "admin-business-directory",
   adminPendingVerifications: "admin-pending-verifications",
   adminTransactions: "admin-transactions",

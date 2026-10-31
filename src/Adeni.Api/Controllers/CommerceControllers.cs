@@ -88,5 +88,6 @@ public sealed class CommercePrivacyController(ICommercePrivacyService privacy) :
 public sealed class CustomerGiftMetadataController(Adeni.Application.Tenancy.ICustomerGiftCardsQueryService gifts) : CommerceControllerBase
 {
     [HttpGet("{id:guid}/purchased-gift-cards")]
+    [RequiresOnPremisesPresence]
     public async Task<IActionResult> Get(Guid id, [FromQuery] Guid? locationId, CancellationToken ct) => Actor is not { } actor || Tenant is not { } tenant ? Unauthorized() : Map(await gifts.GetAsync(tenant,id,actor,locationId,ct));
 }

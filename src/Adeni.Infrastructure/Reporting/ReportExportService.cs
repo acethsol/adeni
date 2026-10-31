@@ -98,6 +98,7 @@ public sealed class ReportExportService(
             ReportKeys.TenantLocations => await ExportTenantLocationsAsync(request, cancellationToken),
             ReportKeys.TenantServices => await ExportTenantServicesAsync(request, cancellationToken),
             ReportKeys.RetentionMembershipMrr => await ExportRetentionMembershipMrrAsync(request, cancellationToken),
+            ReportKeys.AttendanceRegister => await ExportAttendanceRegisterAsync(request, cancellationToken),
             _ => Result.Failure<ReportExportPayload>(ErrorCodes.ReportNotFoundError(request.ReportKey)),
         };
 
@@ -177,7 +178,35 @@ public sealed class ReportExportService(
             return RetentionErrorCodes.AdvancedRetentionAnalyticsNotEntitledError();
         }
 
+        if (definition.RequiresAttendanceReporting && !entitlements.AttendanceReporting)
+        {
+            return ErrorCodes.AttendanceNotEntitledError();
+        }
+
         return null;
+    }
+
+    private async Task<Result<ReportExportPayload>> ExportAttendanceRegisterAsync(
+        ReportExportRequest request,
+        CancellationToken cancellationToken)
+    {
+        var rowsResult = await exportQueries.GetAttendanceRegisterAsync(
+            request.TenantId,
+            request.From,
+            request.To,
+            request.LocationId,
+            cancellationToken);
+        if (rowsResult.IsFailure)
+        {
+            return Result.Failure<ReportExportPayload>(rowsResult.Error);
+        }
+
+        var rows = rowsResult.Value!;
+        var csv = ReportSpreadsheetBuilder.BuildAttendanceRegisterCsv(rows);
+        return Result.Success(new ReportExportPayload(
+            "text/csv; charset=utf-8",
+            "attendance-register.csv",
+            Encoding.UTF8.GetBytes(csv)));
     }
 
     private async Task<Result<ReportExportPayload>> ExportRetentionMembershipMrrAsync(

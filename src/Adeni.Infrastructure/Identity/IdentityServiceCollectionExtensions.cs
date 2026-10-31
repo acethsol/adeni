@@ -24,6 +24,9 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<IPortalTenantAccessQuery, PortalTenantAccessQuery>();
         services.AddScoped<ICustomerErasureQuery, PortalTenantAccessQuery>();
         services.AddScoped<IStaffAccessService, StaffAccessService>();
+        services.AddScoped<IVerifiedPresenceCache, VerifiedPresenceCache>();
+        services.AddScoped<IVerifiedPresenceService, VerifiedPresenceService>();
+        services.AddScoped<IOnPremisesSensitiveAccessPolicy, OnPremisesSensitiveAccessPolicy>();
         return services;
     }
 }

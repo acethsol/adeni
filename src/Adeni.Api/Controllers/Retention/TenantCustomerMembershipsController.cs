@@ -24,6 +24,7 @@ public sealed class TenantCustomerMembershipsController(
 {
     [HttpGet("customers/{tenantCustomerId:guid}/memberships")]
     [RequiresBusinessPermission(BusinessPermissions.Retention, BusinessPermissions.Bookings)]
+    [RequiresOnPremisesPresence]
     public async Task<IActionResult> ListForCustomer(Guid tenantCustomerId, CancellationToken cancellationToken)
     {
         if (ResolveActor() is not { } actor) return Unauthorized();

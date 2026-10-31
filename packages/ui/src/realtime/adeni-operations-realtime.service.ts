@@ -8,7 +8,9 @@ import {
   quotePipelineChangedSchema,
   tenantBadgesChangedSchema,
   tenantVerificationChangedSchema,
+  attendanceTeamChangedSchema,
   type AdminBadgesChangedEvent,
+  type AttendanceTeamChangedEvent,
   type AdminVerificationChangedEvent,
   type PaymentCompletedRealtimeEvent,
   type PendingBookingsChangedEvent,
@@ -40,6 +42,7 @@ export class AdeniOperationsRealtimeService implements OnDestroy {
   private readonly adminBadgesSubject = new Subject<AdminBadgesChangedEvent>();
   private readonly tenantVerificationSubject = new Subject<TenantVerificationChangedEvent>();
   private readonly tenantBadgesSubject = new Subject<TenantBadgesChangedEvent>();
+  private readonly attendanceTeamSubject = new Subject<AttendanceTeamChangedEvent>();
 
   readonly pendingBookingsChanged$ = this.pendingBookingsSubject.asObservable();
   readonly queueFloorChanged$ = this.queueFloorSubject.asObservable();
@@ -49,6 +52,7 @@ export class AdeniOperationsRealtimeService implements OnDestroy {
   readonly adminBadgesChanged$ = this.adminBadgesSubject.asObservable();
   readonly tenantVerificationChanged$ = this.tenantVerificationSubject.asObservable();
   readonly tenantBadgesChanged$ = this.tenantBadgesSubject.asObservable();
+  readonly attendanceTeamChanged$ = this.attendanceTeamSubject.asObservable();
 
   isConnected(): boolean {
     return this.session.isConnected();
@@ -188,6 +192,12 @@ export class AdeniOperationsRealtimeService implements OnDestroy {
         const parsed = tenantBadgesChangedSchema.safeParse(payload);
         if (parsed.success) {
           this.tenantBadgesSubject.next(parsed.data);
+        }
+      },
+      AttendanceTeamChanged: (payload) => {
+        const parsed = attendanceTeamChangedSchema.safeParse(payload);
+        if (parsed.success) {
+          this.attendanceTeamSubject.next(parsed.data);
         }
       },
     };

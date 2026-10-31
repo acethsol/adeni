@@ -22,6 +22,9 @@ public static class BusinessPermissions
     public const string Finance = "business.finance";
     public const string Plan = "business.plan";
     public const string Retention = "business.retention";
+    public const string Attendance = "business.attendance";
+    public const string AttendanceSelf = "business.attendance.self";
+    public const string AttendanceManage = "business.attendance.manage";
 
     public static readonly IReadOnlyList<string> All =
     [
@@ -40,6 +43,9 @@ public static class BusinessPermissions
         Finance,
         Plan,
         Retention,
+        Attendance,
+        AttendanceSelf,
+        AttendanceManage,
     ];
 }
 
@@ -87,6 +93,8 @@ public static class BusinessPermissionRoles
                 BusinessPermissions.Services,
                 BusinessPermissions.Hours,
                 BusinessPermissions.Retention,
+                BusinessPermissions.Attendance,
+                BusinessPermissions.AttendanceSelf,
             ],
             Practitioner =>
             [
@@ -94,6 +102,7 @@ public static class BusinessPermissionRoles
                 BusinessPermissions.BookingsSelf,
                 BusinessPermissions.StaffSelf,
                 BusinessPermissions.Messages,
+                BusinessPermissions.AttendanceSelf,
             ],
             Accountant =>
             [

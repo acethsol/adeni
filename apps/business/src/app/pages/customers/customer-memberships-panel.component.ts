@@ -21,6 +21,8 @@ import {
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { BusinessSessionService } from "../../core/services/business-session.service";
+import { BusinessPresenceVerifyService } from "../../core/services/business-presence-verify.service";
+import { PresenceRequiredPanelComponent } from "../attendance/presence-required-panel.component";
 
 type EnrolDraft = {
   membershipPlanId: string;
@@ -40,7 +42,14 @@ function newKey(): string {
 @Component({
   selector: "app-customer-memberships-panel",
   standalone: true,
-  imports: [FormsModule, AdeniCarbonIconComponent, AdeniModalComponent, AdeniPillComponent, AdeniPortalEmptyStateComponent],
+  imports: [
+    FormsModule,
+    AdeniCarbonIconComponent,
+    AdeniModalComponent,
+    AdeniPillComponent,
+    AdeniPortalEmptyStateComponent,
+    PresenceRequiredPanelComponent,
+  ],
   templateUrl: "./customer-memberships-panel.component.html",
   styleUrl: "./customer-memberships-panel.component.scss",
 })
@@ -51,12 +60,14 @@ export class CustomerMembershipsPanelComponent implements OnInit {
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly session = inject(BusinessSessionService);
+  private readonly presenceVerify = inject(BusinessPresenceVerifyService);
 
   readonly customerId = input.required<string>();
 
   readonly loading = signal(true);
   readonly busy = signal(false);
   readonly error = signal<string | null>(null);
+  readonly presenceBlocked = signal(false);
   readonly memberships = signal<CustomerMembership[]>([]);
   readonly plans = signal<MembershipPlan[]>([]);
   readonly locations = signal<BusinessLocation[]>([]);
@@ -81,6 +92,7 @@ export class CustomerMembershipsPanelComponent implements OnInit {
   async load(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
+    this.presenceBlocked.set(false);
     try {
       await this.api.withAuthorizedClient(async (client) => {
         const [list, plans, locations] = await Promise.all([
@@ -93,10 +105,24 @@ export class CustomerMembershipsPanelComponent implements OnInit {
         this.locations.set(locations);
       });
     } catch (caught) {
-      this.error.set(this.apiErr(caught, "businessApp.memberships.customerCouldNotLoad"));
+      if (this.presenceVerify.isPresenceGateError(caught)) {
+        this.presenceBlocked.set(true);
+        this.error.set(null);
+      } else {
+        this.error.set(this.apiErr(caught, "businessApp.memberships.customerCouldNotLoad"));
+      }
       this.memberships.set([]);
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  async verifyPresence(): Promise<void> {
+    try {
+      await this.presenceVerify.verifyAtActiveLocation();
+      await this.load();
+    } catch {
+      /* ignore */
     }
   }
 

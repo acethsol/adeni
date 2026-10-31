@@ -159,6 +159,12 @@ public sealed class BusinessLocationService(
             UpdatedAt = now,
         };
 
+        var geofenceOnCreate = ApplyGeofenceSettings(tenant, location, request);
+        if (geofenceOnCreate.IsFailure)
+        {
+            return Result.Failure<BusinessLocationResponse>(geofenceOnCreate.Error);
+        }
+
         dbContext.BusinessLocations.Add(location);
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -223,6 +229,12 @@ public sealed class BusinessLocationService(
         location.Latitude = request.Latitude;
         location.Longitude = request.Longitude;
         location.TimeZoneId = string.IsNullOrWhiteSpace(request.TimeZoneId) ? null : request.TimeZoneId.Trim();
+        var geofenceApply = ApplyGeofenceSettings(tenant, location, request);
+        if (geofenceApply.IsFailure)
+        {
+            return Result.Failure<BusinessLocationResponse>(geofenceApply.Error);
+        }
+
         location.UpdatedAt = DateTimeOffset.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -354,7 +366,43 @@ public sealed class BusinessLocationService(
             location.Longitude,
             location.TimeZoneId,
             location.IsPrimary,
-            location.IsActive);
+            location.IsActive,
+            location.AttendanceGeofenceEnabled,
+            location.AttendanceGeofenceRadiusMeters);
+
+    private Result ApplyGeofenceSettings(
+        Tenant tenant,
+        BusinessLocation location,
+        UpsertBusinessLocationRequest request)
+    {
+        if (request.AttendanceGeofenceEnabled is null && request.AttendanceGeofenceRadiusMeters is null)
+        {
+            return Result.Success();
+        }
+
+        var entitlements = entitlementsService.GetEntitlementsForTenant(tenant);
+        if (!entitlements.AttendanceGeofence)
+        {
+            if (request.AttendanceGeofenceEnabled == true)
+            {
+                return Result.Failure(ErrorCodes.AttendanceNotEntitledError());
+            }
+
+            return Result.Success();
+        }
+
+        if (request.AttendanceGeofenceEnabled is bool enabled)
+        {
+            location.AttendanceGeofenceEnabled = enabled;
+        }
+
+        if (request.AttendanceGeofenceRadiusMeters is int radius)
+        {
+            location.AttendanceGeofenceRadiusMeters = Math.Clamp(radius, 50, 250);
+        }
+
+        return Result.Success();
+    }
 
     internal static IReadOnlyList<BusinessLocationResponse> MapLocations(
         IReadOnlyList<BusinessLocation> locations) =>

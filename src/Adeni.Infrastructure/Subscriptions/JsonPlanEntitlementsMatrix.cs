@@ -74,7 +74,11 @@ public sealed class JsonPlanEntitlementsMatrix : IPlanEntitlementsMatrix
             LoyaltyTiers: row.GetProperty("loyaltyTiers").GetBoolean(),
             Referrals: row.GetProperty("referrals").GetBoolean(),
             CrossLocationRetention: row.GetProperty("crossLocationRetention").GetBoolean(),
-            AdvancedRetentionAnalytics: row.GetProperty("advancedRetentionAnalytics").GetBoolean());
+            AdvancedRetentionAnalytics: row.GetProperty("advancedRetentionAnalytics").GetBoolean(),
+            StaffAttendance: row.GetProperty("staffAttendance").GetBoolean(),
+            AttendanceGeofence: row.GetProperty("attendanceGeofence").GetBoolean(),
+            OnPremisesSensitiveData: row.GetProperty("onPremisesSensitiveData").GetBoolean(),
+            AttendanceReporting: row.GetProperty("attendanceReporting").GetBoolean());
 
     private static TenantEntitlements MapSeed(PlanEntitlementSeed seed) =>
         new(
@@ -115,7 +119,11 @@ public sealed class JsonPlanEntitlementsMatrix : IPlanEntitlementsMatrix
             Referrals: seed.Referrals,
             CrossLocationRetention: seed.CrossLocationRetention,
             AdvancedRetentionAnalytics: seed.AdvancedRetentionAnalytics,
-            MultiLocation: seed.MaxLocations is null || seed.MaxLocations > 1);
+            MultiLocation: seed.MaxLocations is null || seed.MaxLocations > 1,
+            StaffAttendance: seed.StaffAttendance,
+            AttendanceGeofence: seed.AttendanceGeofence,
+            OnPremisesSensitiveData: seed.OnPremisesSensitiveData,
+            AttendanceReporting: seed.AttendanceReporting);
 
     private sealed record PlanEntitlementSeed(
         int? MaxLocations,
@@ -150,5 +158,9 @@ public sealed class JsonPlanEntitlementsMatrix : IPlanEntitlementsMatrix
         bool LoyaltyTiers,
         bool Referrals,
         bool CrossLocationRetention,
-        bool AdvancedRetentionAnalytics);
+        bool AdvancedRetentionAnalytics,
+        bool StaffAttendance,
+        bool AttendanceGeofence,
+        bool OnPremisesSensitiveData,
+        bool AttendanceReporting);
 }

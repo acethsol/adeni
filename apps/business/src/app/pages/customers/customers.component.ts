@@ -39,6 +39,8 @@ import {
 } from "@adeni/ui";
 import { BusinessApiService } from "../../core/services/business-api.service";
 import { BusinessActiveLocationService } from "../../core/services/business-active-location.service";
+import { BusinessPresenceVerifyService } from "../../core/services/business-presence-verify.service";
+import { PresenceRequiredPanelComponent } from "../attendance/presence-required-panel.component";
 
 export type CustomerAccountFilter = "all" | "discover" | "walk_in";
 
@@ -61,6 +63,7 @@ export type CustomerAccountFilter = "all" | "discover" | "walk_in";
     AdeniTablePersonCellComponent,
     AdeniPillComponent,
     RouterLink,
+    PresenceRequiredPanelComponent,
   ],
   templateUrl: "./customers.component.html",
   styleUrl: "./customers.component.scss",
@@ -71,11 +74,13 @@ export class CustomersComponent implements OnInit, OnDestroy {
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly activeLocation = inject(BusinessActiveLocationService);
+  private readonly presenceVerify = inject(BusinessPresenceVerifyService);
   private loadGeneration = 0;
   private branchSub: Subscription | null = null;
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
+  readonly presenceBlocked = signal(false);
   readonly items = signal<TenantCustomerListItem[]>([]);
   readonly totalCount = signal(0);
   readonly page = signal(1);
@@ -213,6 +218,7 @@ export class CustomersComponent implements OnInit, OnDestroy {
     const generation = ++this.loadGeneration;
     this.loading.set(true);
     this.error.set(null);
+    this.presenceBlocked.set(false);
     try {
       await this.feedback.runLoading(async () => {
         const term = this.searchQuery().trim();
@@ -248,12 +254,26 @@ export class CustomersComponent implements OnInit, OnDestroy {
       });
     } catch (caught) {
       if (generation !== this.loadGeneration) return;
+      if (this.presenceVerify.isPresenceGateError(caught)) {
+        this.presenceBlocked.set(true);
+        this.error.set(null);
+        return;
+      }
       this.error.set(this.apiErr(caught, "businessApp.customers.couldNotLoadCustomersTry"));
       this.feedback.error(this.apiErr(caught, "businessApp.customers.couldNotLoadCustomers"));
       this.items.set([]);
       this.totalCount.set(0);
     } finally {
       if (generation === this.loadGeneration) this.loading.set(false);
+    }
+  }
+
+  async verifyPresenceForCustomers(): Promise<void> {
+    try {
+      await this.presenceVerify.verifyAtActiveLocation();
+      await this.load();
+    } catch {
+      this.feedback.error(this.tr("businessApp.attendance.presenceVerifyFailed"));
     }
   }
 
