@@ -24,6 +24,7 @@ public sealed class BusinessOnboardingService(
     ICategoryService categoryService,
     IBusinessCapabilitiesService businessCapabilitiesService,
     IFileStorage fileStorage,
+    IMediaUploadBlobValidator uploadBlobValidator,
     IMarketCatalog marketCatalog,
     ICacheService cache,
     ITenantRealtimePublisher tenantRealtime,
@@ -483,6 +484,16 @@ public sealed class BusinessOnboardingService(
                 if (!await fileStorage.ExistsAsync(key, cancellationToken))
                 {
                     return Result.Failure(Error.Validation("Verification file upload was not found. Upload the file before submitting."));
+                }
+
+                var blobCheck = await uploadBlobValidator.ValidateConfirmedUploadAsync(
+                    tenantId,
+                    MediaUploadPurpose.VerificationDocument,
+                    key,
+                    cancellationToken);
+                if (blobCheck.IsFailure)
+                {
+                    return blobCheck;
                 }
             }
         }

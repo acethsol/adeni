@@ -2159,6 +2159,7 @@ export const mediaUploadPurposeSchema = z.enum([
   "quote_photo",
   "message_attachment",
   "messageAttachment",
+  "verification_document",
 ]);
 
 export const updateStaffAvatarRequestSchema = z.object({

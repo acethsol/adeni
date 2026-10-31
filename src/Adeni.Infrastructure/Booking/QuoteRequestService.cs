@@ -16,6 +16,7 @@ using Microsoft.EntityFrameworkCore;
 public sealed class QuoteRequestService(
     AdeniDbContext dbContext,
     IFileStorage fileStorage,
+    IMediaUploadBlobValidator uploadBlobValidator,
     ITenantRealtimePublisher tenantRealtime,
     IEntitlementsService entitlementsService,
     IBookingIntakeAssignmentWriter? intake = null) : IQuoteRequestService
@@ -466,6 +467,12 @@ public sealed class QuoteRequestService(
             if (!await fileStorage.ExistsAsync(key, cancellationToken))
             {
                 return Result.Failure<IReadOnlyList<string>>(Error.Validation("Photo upload was not found. Upload photos before submitting."));
+            }
+
+            var blobCheck = await uploadBlobValidator.ValidateCustomerQuotePhotoAsync(customerId, key, cancellationToken);
+            if (blobCheck.IsFailure)
+            {
+                return Result.Failure<IReadOnlyList<string>>(blobCheck.Error!);
             }
 
             validated.Add(key);

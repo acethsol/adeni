@@ -44,7 +44,9 @@ public sealed class FinanceController(
             return this.InvalidIdempotencyKeyResult();
         }
 
-        var result = await paymentOrchestrator.InitializeAsync(
+        var customerSub = ResolveCustomerAuth0Sub()!;
+        var result = await paymentOrchestrator.InitializeCustomerBookingPaymentAsync(
+            customerSub,
             request,
             Request.GetIdempotencyKey(),
             cancellationToken);

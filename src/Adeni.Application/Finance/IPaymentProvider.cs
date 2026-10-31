@@ -137,6 +137,12 @@ public sealed record ProviderRefundResult(
 
 public interface IPaymentOrchestrator
 {
+    Task<Result<PaymentIntentResponse>> InitializeCustomerBookingPaymentAsync(
+        string customerAuth0Sub,
+        InitializePaymentRequest request,
+        string? idempotencyKey = null,
+        CancellationToken cancellationToken = default);
+
     Task<Result<PaymentIntentResponse>> InitializeAsync(
         InitializePaymentRequest request,
         string? idempotencyKey = null,

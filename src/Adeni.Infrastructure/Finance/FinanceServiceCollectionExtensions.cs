@@ -18,7 +18,18 @@ public static class FinanceServiceCollectionExtensions
             {
                 config.GetSection(PaymentsOptions.SectionName).Bind(options);
                 config.GetSection(FinanceOptions.SectionName).Bind(options);
+                var publicWeb = config["App:PublicWebBaseUrl"]?.Trim();
+                if (!string.IsNullOrWhiteSpace(publicWeb)
+                    && Uri.TryCreate(publicWeb, UriKind.Absolute, out var publicUri))
+                {
+                    var origin = $"{publicUri.Scheme}://{publicUri.Authority}".TrimEnd('/');
+                    if (!options.AllowedCallbackOrigins.Contains(origin, StringComparer.OrdinalIgnoreCase))
+                    {
+                        options.AllowedCallbackOrigins.Add(origin);
+                    }
+                }
             });
+        services.AddScoped<IPaymentCallbackUrlValidator, PaymentCallbackUrlValidator>();
         services.Configure<PaystackOptions>(configuration.GetSection(PaystackOptions.SectionName));
         services.Configure<StripeOptions>(configuration.GetSection(StripeOptions.SectionName));
 

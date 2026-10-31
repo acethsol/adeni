@@ -87,6 +87,15 @@ public sealed class StaffCompensationService(AdeniDbContext dbContext) : IStaffC
             return Result.Success();
         }
 
+        var staffTenantOk = await dbContext.StaffMembers.AsNoTracking()
+            .AnyAsync(
+                x => x.Id == staffId.Value && x.TenantId == intent.TenantId && x.IsActive,
+                cancellationToken);
+        if (!staffTenantOk)
+        {
+            return Result.Success();
+        }
+
         var exists = await dbContext.StaffCompensationAllocations
             .AnyAsync(
                 x => x.PaymentIntentId == paymentIntentId && x.Type == StaffCompensationType.Tip,

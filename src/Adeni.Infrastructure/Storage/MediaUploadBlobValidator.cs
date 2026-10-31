@@ -71,6 +71,46 @@ public sealed class MediaUploadBlobValidator(IFileStorage fileStorage) : IMediaU
         return Result.Success();
     }
 
+    public async Task<Result> ValidateCustomerQuotePhotoAsync(
+        Guid customerId,
+        string storageKey,
+        CancellationToken cancellationToken = default)
+    {
+        var key = storageKey.Trim();
+        var prefix = $"customers/{customerId:N}/quote-photos/";
+        if (!key.StartsWith(prefix, StringComparison.Ordinal))
+        {
+            return Result.Failure(Error.Validation("Photo key is not valid for this customer."));
+        }
+
+        var metadata = await fileStorage.GetStoredMetadataAsync(key, cancellationToken);
+        if (metadata is null)
+        {
+            return Result.Failure(Error.Validation("Photo upload was not found. Upload photos before submitting."));
+        }
+
+        if (metadata.ContentLength <= 0 || metadata.ContentLength > MaxImageBytes)
+        {
+            return Result.Failure(Error.Validation("Image must be between 1 byte and 5 MB."));
+        }
+
+        var contentType = metadata.ContentType?.Trim();
+        if (string.IsNullOrWhiteSpace(contentType) || !AllowedImageContentTypes.Contains(contentType))
+        {
+            await TryDeleteInvalidAsync(key, cancellationToken);
+            return Result.Failure(Error.Validation("Uploaded file type is not supported."));
+        }
+
+        var sniff = await fileStorage.ReadBytesAsync(key, cancellationToken);
+        if (sniff is null || !MatchesMagicBytes(MediaUploadPurpose.Gallery, contentType, sniff))
+        {
+            await TryDeleteInvalidAsync(key, cancellationToken);
+            return Result.Failure(Error.Validation("Uploaded file content does not match the declared type."));
+        }
+
+        return Result.Success();
+    }
+
     private async Task TryDeleteInvalidAsync(string storageKey, CancellationToken cancellationToken)
     {
         try

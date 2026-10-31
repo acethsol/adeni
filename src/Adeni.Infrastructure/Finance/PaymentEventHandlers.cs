@@ -16,6 +16,7 @@ public sealed class PaymentBookingHandler(
     IDomainEventCollector domainEventCollector,
     IBillingDocumentService billingDocuments,
     IStaffCompensationService staffCompensation,
+    IBookingDepositCalculator bookingDepositCalculator,
     ILoyaltyEarnService loyaltyEarn,
     ILoyaltyRedemptionService loyaltyRedeem,
     IReferralQualificationService referralQualification,
@@ -59,18 +60,52 @@ public sealed class PaymentBookingHandler(
 
         var now = DateTimeOffset.UtcNow;
 
-        // Deposit success still auto-confirms pending bookings.
+        // Deposit success confirms pending bookings only when required deposit is satisfied.
         if (domainEvent.Type == PaymentIntentType.Deposit && booking.Status == BookingStatus.Pending)
         {
-            booking.Status = BookingStatus.Confirmed;
-            booking.UpdatedAt = now;
-
-            domainEventCollector.Add(new BookingConfirmed(
+            var requiredDeposit = await bookingDepositCalculator.CalculateRequiredDepositAsync(
                 booking.Id,
-                booking.TenantId,
-                booking.CustomerId,
-                booking.StartAt,
-                now));
+                cancellationToken);
+            if (requiredDeposit.IsFailure)
+            {
+                logger.LogWarning(
+                    "Could not evaluate deposit requirement for booking {BookingId}: {Error}",
+                    booking.Id,
+                    requiredDeposit.Error.Message);
+            }
+            else
+            {
+                var completedDeposits = await dbContext.PaymentIntents
+                    .AsNoTracking()
+                    .Where(x =>
+                        x.BookingId == booking.Id
+                        && x.TenantId == booking.TenantId
+                        && x.Type == PaymentIntentType.Deposit
+                        && x.Status == PaymentIntentStatus.Completed)
+                    .SumAsync(x => x.Amount, cancellationToken);
+
+                if (completedDeposits >= requiredDeposit.Value!.Amount)
+                {
+                    booking.Status = BookingStatus.Confirmed;
+                    booking.UpdatedAt = now;
+
+                    domainEventCollector.Add(new BookingConfirmed(
+                        booking.Id,
+                        booking.TenantId,
+                        booking.CustomerId,
+                        booking.StartAt,
+                        now));
+                }
+                else
+                {
+                    logger.LogWarning(
+                        "Deposit payment {PaymentIntentId} for booking {BookingId} is below required deposit ({Paid} < {Required}).",
+                        domainEvent.PaymentIntentId,
+                        booking.Id,
+                        completedDeposits,
+                        requiredDeposit.Value.Amount);
+                }
+            }
         }
 
         // Balance / any booking-linked payment may close the floor loop.

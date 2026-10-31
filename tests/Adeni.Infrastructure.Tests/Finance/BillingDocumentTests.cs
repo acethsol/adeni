@@ -199,6 +199,7 @@ public sealed class BillingDocumentTests
         services.AddScoped<IPaymentProvider, StubPaymentProvider>();
         services.AddBookingTestRealtime();
         services.AddCheckoutRealtimeTokens();
+        services.AddPaymentOrchestratorDependencies();
         services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
         services.AddSingleton<Adeni.Application.Storage.IFileStorage, Adeni.Infrastructure.Tests.Storage.FakeFileStorage>();
         services.AddReportingModule();

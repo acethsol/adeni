@@ -118,6 +118,13 @@ public sealed class MembershipBillingCoordinatorTests
 
         public int InitializeCalls { get; private set; }
 
+        public Task<Result<PaymentIntentResponse>> InitializeCustomerBookingPaymentAsync(
+            string customerAuth0Sub,
+            InitializePaymentRequest request,
+            string? idempotencyKey = null,
+            CancellationToken cancellationToken = default) =>
+            InitializeAsync(request, idempotencyKey, cancellationToken);
+
         public Task<Result<PaymentIntentResponse>> InitializeAsync(
             InitializePaymentRequest request, string? idempotencyKey = null, CancellationToken cancellationToken = default)
         {

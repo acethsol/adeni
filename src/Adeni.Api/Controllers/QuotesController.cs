@@ -14,6 +14,7 @@ using Microsoft.Extensions.Options;
 
 [ApiController]
 [Route("api/v1/tenant/quotes")]
+[RequiresBusinessPermission(BusinessPermissions.Quotes)]
 public sealed class TenantQuotesController(
     IQuoteRequestService quotes,
     IReportRenderer reportRenderer,
@@ -36,7 +37,6 @@ public sealed class TenantQuotesController(
     }
 
     [HttpGet("{id:guid}/pdf")]
-    [RequiresBusinessPermission(BusinessPermissions.Quotes)]
     public async Task<IActionResult> Pdf(Guid id, CancellationToken cancellationToken)
     {
         var auth0Sub = ResolveAuth0Sub();

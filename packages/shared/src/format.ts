@@ -67,7 +67,7 @@ export function slotRange(from: Date, days: number) {
 export function resolvePaymentCheckoutUrl(
   checkoutUrl: string,
   publicWebOrigin: string,
-  details?: { amount?: number; currency?: string },
+  details?: { amount?: number; currency?: string; checkoutRealtimeToken?: string },
 ): string {
   const origin = publicWebOrigin.replace(/\/$/, "");
   const absolute = checkoutUrl.startsWith("http")
@@ -83,6 +83,10 @@ export function resolvePaymentCheckoutUrl(
     if (url.pathname.includes("/checkout/stub/")) {
       url.searchParams.set("amount", String(details.amount));
       url.searchParams.set("currency", details.currency);
+      const rt = details.checkoutRealtimeToken?.trim();
+      if (rt && !url.searchParams.has("rt")) {
+        url.searchParams.set("rt", rt);
+      }
     }
     return url.toString();
   } catch {

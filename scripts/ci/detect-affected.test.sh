@@ -75,4 +75,15 @@ assert_flag "$o" run_ci_all true
 assert_flag "$o" run_backend true
 assert_flag "$o" run_customer true
 
+echo "Scenario 9: SQL-sensitive infrastructure finance path"
+o="$(run_detect $'src/Adeni.Infrastructure/Finance/PaymentOrchestrator.cs\n')"
+assert_flag "$o" run_database true
+assert_flag "$o" run_backend true
+
+echo "Scenario 10: Application contract path fans out frontend"
+o="$(run_detect $'src/Adeni.Application/Finance/IPaymentProvider.cs\n')"
+assert_flag "$o" run_customer true
+assert_flag "$o" run_business true
+assert_flag "$o" run_admin true
+
 echo "All detect-affected scenarios passed."

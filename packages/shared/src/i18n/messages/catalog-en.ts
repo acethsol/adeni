@@ -1332,6 +1332,8 @@ export const enCatalog: MessageTree = {
       verificationSubmittedDocsTitle: "Submitted documents",
       verificationOptionalFile: "Supporting file (optional)",
       verificationFileAttached: "File attached",
+      verificationFileTypes: "Use JPEG, PNG, or PDF for verification documents.",
+      verificationFileMax10Mb: "Verification file must be 10 MB or smaller.",
       verificationTrustBadgesTitle: "Trust badges",
       verificationTrustBadgesLead: "After you are verified, request supplemental trust signals (phone, CAC, address, license).",
       verificationRequestBadge: "Request badge",

@@ -104,7 +104,7 @@ export const BUSINESS_NAV_GROUPS: BusinessNavGroup[] = [
         path: "/customers",
         label: "Customers",
         icon: "customers",
-        permission: ["business.bookings", "business.bookings.self"],
+        permission: ["business.bookings"],
       },
       {
         path: "/queue",

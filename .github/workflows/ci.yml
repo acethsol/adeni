@@ -330,15 +330,15 @@ jobs:
         run: |
           failed=0
           for result in "${{ needs.frontend-customer.result }}" "${{ needs.frontend-business.result }}" "${{ needs.frontend-admin.result }}"; do
-            if [[ "$result" == "failure" ]]; then
+            if [[ "$result" != "success" ]]; then
               failed=1
             fi
           done
           if [[ "$failed" -ne 0 ]]; then
-            echo "::error::One or more frontend app jobs failed."
+            echo "::error::One or more frontend app jobs did not succeed."
             exit 1
           fi
-          echo "Frontend aggregate OK (skipped apps count as success)."
+          echo "Frontend aggregate OK."
 
   ci-complete:
     needs:
@@ -354,11 +354,12 @@ jobs:
         run: |
           failed=0
           for result in \
+            "${{ needs.detect-changes.result }}" \
             "${{ needs.build-and-test.result }}" \
             "${{ needs.sqlserver.result }}" \
             "${{ needs.npm-audit.result }}" \
             "${{ needs.frontend.result }}"; do
-            if [[ "$result" == "failure" ]]; then
+            if [[ "$result" != "success" ]]; then
               failed=1
             fi
           done
