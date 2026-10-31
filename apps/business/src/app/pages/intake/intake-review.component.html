@@ -1,0 +1,72 @@
+<app-portal-page [title]="tr('intake.status')" [description]="tr('intake.nonClinical')">
+  <a pageActions routerLink="/bookings" class="btn btn-ghost">
+    <adeni-carbon-icon name="arrow--left" [size]="16" />
+    {{ tr('common.bookings') }}
+  </a>
+
+  <p class="clinical-note">
+    <adeni-carbon-icon name="security" [size]="16" aria-hidden="true" />
+    <span>{{ tr('intake.nonClinical') }}</span>
+  </p>
+
+  @if (error()) {
+    <p class="error-banner" role="alert">{{ error() }}</p>
+  }
+  @if (loading()) {
+    <p class="muted loading-line" role="status">{{ tr('intake.loading') }}</p>
+  }
+
+  @if (!loading() && statuses().length === 0) {
+    <adeni-portal-empty-state
+      icon="document"
+      [title]="tr('intake.reviewEmptyTitle')"
+      [description]="tr('intake.reviewEmptyDescription')"
+    >
+      <a routerLink="/services/intake" class="btn btn-ghost">{{ tr('intake.title') }}</a>
+    </adeni-portal-empty-state>
+  } @else if (statuses().length > 0) {
+    <ul class="intake-status-list">
+      @for (row of statuses(); track row.id) {
+        <li class="card intake-status-card">
+          <div class="intake-status-card__head">
+            <div>
+              <h2 class="intake-status-card__title">{{ tr('intake.form') }}</h2>
+              <adeni-pill [tone]="intakePillTone([row])" [compact]="true">
+                {{ tr('intake.states.' + row.state) }}
+              </adeni-pill>
+            </div>
+            @if (row.submittedAt) {
+              <time class="muted intake-status-card__when" [attr.datetime]="row.submittedAt">
+                {{ tr('intake.submittedAt') }} · {{ row.submittedAt }}
+              </time>
+            }
+          </div>
+          @if (canReview()) {
+            <button type="button" class="btn btn-ghost" (click)="review(row.id)">
+              <adeni-carbon-icon name="document" [size]="16" />
+              {{ tr('intake.review') }}
+            </button>
+          }
+        </li>
+      }
+    </ul>
+  }
+
+  @if (!canReview()) {
+    <p class="muted restricted-note">{{ tr('intake.noAccess') }}</p>
+  }
+
+  @if (view(); as v) {
+    <section class="card intake-review-panel" [attr.aria-label]="tr('intake.review')">
+      <h2 class="intake-review-panel__title">{{ v.definition.title }}</h2>
+      @if (v.definition.instructions) {
+        <p class="muted intake-review-panel__lede">{{ v.definition.instructions }}</p>
+      }
+      @if (v.answers) {
+        <adeni-intake-fields [definition]="v.definition" [answers]="v.answers" [readOnly]="true" />
+      } @else {
+        <p class="muted">{{ tr('intake.unavailable') }}</p>
+      }
+    </section>
+  }
+</app-portal-page>

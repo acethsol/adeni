@@ -105,8 +105,11 @@
                 <p class="booking-card__when">
                   {{ formatSlotTime(booking.startAt) }}
                 </p>
-                <a [routerLink]="['/bookings', booking.id, 'intake']">{{tr('intake.status')}}</a>
-                @if(intakeStatuses.rows()[booking.id];as forms){<small>{{tr('intake.status')}}: @for(form of forms;track form.id){ {{tr('intake.states.'+form.state)}} }@empty{ {{tr('intake.notRequired')}} }</small>}
+                @if (intakeForms(booking.id); as forms) {
+                  <a class="booking-card__intake" [routerLink]="['/bookings', booking.id, 'intake']" [state]="intakeBreadcrumbState(booking)">
+                    <adeni-pill [tone]="intakePillTone(forms)" [compact]="true">{{ intakeLabel(forms) }}</adeni-pill>
+                  </a>
+                }
 <p class="booking-card__service">{{ booking.serviceName }}</p>
                 @if (booking.customerPhoneMasked) {
                   <p class="booking-card__meta">{{ booking.customerPhoneMasked }}</p>
@@ -221,18 +224,32 @@
               avatarTone="neutral"
             />
           </ng-template>
+          <ng-template adeniDataTableCell="intake" let-booking>
+            @if (intakeForms(booking.id); as forms) {
+              <a class="intake-cell-link" [routerLink]="['/bookings', booking.id, 'intake']" [state]="intakeBreadcrumbState(booking)">
+                <adeni-pill [tone]="intakePillTone(forms)" [compact]="true">{{ intakeLabel(forms) }}</adeni-pill>
+              </a>
+            } @else {
+              <span class="muted">—</span>
+            }
+          </ng-template>
           <ng-template adeniDataTableCell="status" let-booking>
-@if(intakeStatuses.rows()[booking.id];as forms){<small>{{tr('intake.status')}}: @for(form of forms;track form.id){ {{tr('intake.states.'+form.state)}} }@empty{ {{tr('intake.notRequired')}} }</small>}
-
             @let statusView = bookingStatusView(booking.status);
             <adeni-pill [tone]="bookingPillTone(booking.status)" [compact]="true">
               {{ statusView.label }}
             </adeni-pill>
           </ng-template>
           <ng-template adeniDataTableActions let-booking>
-            <a [routerLink]="['/bookings', booking.id, 'intake']">{{tr('intake.status')}}</a>
-            @if (showBookingActions(booking)) {
-              <adeni-row-action-bar>
+            <adeni-row-action-bar>
+              <adeni-icon-btn
+                icon="document"
+                [label]="tr('intake.status')"
+                variant="table"
+                [dense]="true"
+                [routerLink]="['/bookings', booking.id, 'intake']"
+                [state]="intakeBreadcrumbState(booking)"
+              />
+              @if (showBookingActions(booking)) {
                 @if (tab() === "pending" && booking.status === 0) {
                   <adeni-icon-btn
                     icon="misuse"
@@ -286,8 +303,8 @@
                     (pressed)="markPaid(booking)"
                   />
                 }
-              </adeni-row-action-bar>
-            }
+              }
+            </adeni-row-action-bar>
           </ng-template>
         </adeni-data-table>
         <adeni-list-pagination

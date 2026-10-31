@@ -1,4 +1,11 @@
+import { bookingIntakeBreadcrumbRouterState } from "../../core/business-breadcrumb-navigation";
 import { IntakeBookingStatusService } from "../intake/intake-booking-status.service";
+import {
+  intakeFormsForBooking,
+  intakePillTone,
+  intakePrimaryState,
+} from "../intake/intake-booking-display";
+import type { IntakeStatus } from "@adeni/shared";
 import { Component, computed, effect, inject, signal } from "@angular/core";
 import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
@@ -90,6 +97,7 @@ export class BookingsComponent {
   protected readonly apiErr = injectAdeniApiError();
   private readonly api = inject(BusinessApiService);
   readonly intakeStatuses = inject(IntakeBookingStatusService);
+  readonly intakePillTone = intakePillTone;
   private readonly config = inject(ADENI_PORTAL_CONFIG);
   private readonly confirmDialog = inject(AdeniConfirmService);
   private readonly feedback = inject(AdeniFeedbackService);
@@ -179,6 +187,12 @@ export class BookingsComponent {
       sortValue: (b) => b.serviceName.toLowerCase(),
     },
     {
+      id: "intake",
+      header: this.tr("intake.status"),
+      cell: () => "",
+      sortValue: (b) => this.intakeSortValue(b.id),
+    },
+    {
       id: "status",
       header: this.tr("common.status"),
       cell: () => "",
@@ -198,6 +212,29 @@ export class BookingsComponent {
   ]);
 
   readonly formatSlotTime = formatSlotTime;
+
+  intakeForms(bookingId: string): IntakeStatus[] | undefined {
+    return intakeFormsForBooking(this.intakeStatuses.rows(), bookingId);
+  }
+
+  intakeLabel(forms: readonly IntakeStatus[]): string {
+    if (forms.length === 0) {
+      return this.tr("intake.notAssignedShort");
+    }
+    if (forms.length === 1) {
+      const state = intakePrimaryState(forms);
+      return state ? this.tr(`intake.states.${state}`) : this.tr("intake.notAssignedShort");
+    }
+    return this.tr("intake.formsAttached", { count: forms.length });
+  }
+
+  private intakeSortValue(bookingId: string): string {
+    const forms = this.intakeForms(bookingId);
+    if (!forms || forms.length === 0) {
+      return "z";
+    }
+    return intakePrimaryState(forms) ?? "a";
+  }
 
   isPinned(bookingId: string): boolean {
     return this.focusBookingId() === bookingId;
@@ -411,6 +448,10 @@ export class BookingsComponent {
       queryParamsHandling: "merge",
     });
     void this.load();
+  }
+
+  intakeBreadcrumbState(booking: BookingResponse) {
+    return bookingIntakeBreadcrumbRouterState(booking, this.tr("businessApp.bookings.guest"));
   }
 
   showBookingActions(booking: BookingResponse): boolean {

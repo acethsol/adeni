@@ -66,6 +66,188 @@ $accent: var(--interactive);
   color: var(--text-muted);
 }
 
+.trust-card {
+  padding: var(--cds-spacing-05);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--text) 4%, transparent);
+}
+
+.trust-card__hero {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--cds-spacing-05);
+  align-items: center;
+  padding-bottom: var(--cds-spacing-05);
+  border-bottom: 1px solid var(--border);
+}
+
+.trust-ring {
+  --trust-track: color-mix(in srgb, var(--text) 10%, var(--surface));
+  --trust-fill: var(--interactive);
+  position: relative;
+  width: 4.25rem;
+  height: 4.25rem;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--trust-fill) 0 var(--trust-progress, 0deg),
+    var(--trust-track) var(--trust-progress, 0deg) 360deg
+  );
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--interactive) 18%, transparent);
+}
+
+.trust-ring--complete {
+  --trust-fill: color-mix(in srgb, var(--cds-support-success, #24a148) 85%, var(--interactive));
+}
+
+.trust-ring__inner {
+  position: absolute;
+  inset: 5px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface);
+  font-size: 0.8125rem;
+  font-weight: 750;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.trust-ring__count {
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.trust-card__headline {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.trust-card__sub {
+  margin: 0.35rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.trust-factors {
+  margin: 0;
+  padding: var(--cds-spacing-04) 0 0;
+  list-style: none;
+  display: grid;
+  gap: var(--cds-spacing-04);
+}
+
+.trust-factor {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--cds-spacing-04);
+  align-items: start;
+  padding: var(--cds-spacing-04);
+  border: 1px solid color-mix(in srgb, var(--text) 8%, var(--border));
+  background: color-mix(in srgb, var(--text) 2%, var(--surface));
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.trust-factor--done {
+  border-color: color-mix(in srgb, var(--cds-support-success, #24a148) 35%, var(--border));
+  background: color-mix(in srgb, var(--cds-support-success, #24a148) 6%, var(--surface));
+}
+
+.trust-factor__icon {
+  display: grid;
+  place-items: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  color: color-mix(in srgb, $accent 75%, var(--text));
+  background: color-mix(in srgb, $accent 12%, var(--surface));
+}
+
+.trust-factor--done .trust-factor__icon {
+  color: color-mix(in srgb, var(--cds-support-success, #24a148) 80%, var(--text));
+  background: color-mix(in srgb, var(--cds-support-success, #24a148) 12%, var(--surface));
+}
+
+.trust-factor__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.trust-factor__title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.trust-factor__role {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.trust-factor__meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.trust-factor__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cds-support-warning, #f1c21b);
+  background: color-mix(in srgb, var(--cds-support-warning, #f1c21b) 14%, var(--surface));
+  white-space: nowrap;
+}
+
+.trust-factor__pill--done {
+  color: var(--cds-support-success, #24a148);
+  background: color-mix(in srgb, var(--cds-support-success, #24a148) 14%, var(--surface));
+}
+
+.trust-card__footnote {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin: var(--cds-spacing-05) 0 0;
+  padding-top: var(--cds-spacing-04);
+  border-top: 1px dashed var(--border);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.trust-card__footnote adeni-carbon-icon {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+  color: color-mix(in srgb, $accent 65%, var(--text-muted));
+}
+
+@media (max-width: 520px) {
+  .trust-card__hero {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .trust-factor {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .trust-factor__pill {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+
 .profile-links {
   margin: 0;
   padding: 0;

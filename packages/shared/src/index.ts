@@ -53,3 +53,4 @@ export type { CalendarProvider, CalendarConnection, CalendarSelection, ExternalC
 export { parseBookingPreselection, bookingPreselectionQuery, type BookingPreselection } from "./booking-preselection";
 
 export * from "./customer-segments";
+export * from "./breadcrumbs";

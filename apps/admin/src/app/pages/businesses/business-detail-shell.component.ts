@@ -1,5 +1,5 @@
 import { DatePipe } from "@angular/common";
-import { Component, computed, inject } from "@angular/core";
+import { Component, computed, DestroyRef, effect, inject } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, RouterLink, RouterOutlet } from "@angular/router";
 import { formatSubscriptionSku, formatTenantStatus } from "@adeni/shared";
@@ -9,6 +9,7 @@ import {
   AdeniTabsComponent,
   type AdeniTab,
   PortalPageComponent,
+  AdeniPageBreadcrumbService,
   injectAdeniTranslate,
 } from "@adeni/ui";
 import { AdminPillComponent } from "../../shared/admin-pill.component";
@@ -35,6 +36,8 @@ import { BusinessDetailFacade } from "./business-detail.facade";
 export class BusinessDetailShellComponent {
   protected readonly tr = injectAdeniTranslate();
   private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly pageBreadcrumbs = inject(AdeniPageBreadcrumbService);
   readonly facade = inject(BusinessDetailFacade);
 
   readonly tenantStatusPill = tenantStatusPill;
@@ -71,5 +74,14 @@ export class BusinessDetailShellComponent {
         this.facade.ensureLoaded(id);
       }
     });
+
+    effect(() => {
+      const business = this.facade.business();
+      const id = this.route.snapshot.paramMap.get("tenantId");
+      if (business && id) {
+        this.pageBreadcrumbs.setExtras([{ label: business.name, path: `/businesses/${id}` }]);
+      }
+    });
+    this.destroyRef.onDestroy(() => this.pageBreadcrumbs.clearExtras());
   }
 }

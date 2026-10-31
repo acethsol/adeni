@@ -17,6 +17,7 @@ import type { AdeniBrandSurface } from "@adeni/brand";
 import type { LocaleId } from "@adeni/shared";
 import {
   AdeniBrandLogoComponent,
+  AdeniBreadcrumbNavComponent,
   AdeniPortalNavIconComponent,
   AdeniLocaleService,
   AdeniStaffShellFooterComponent,
@@ -73,6 +74,7 @@ function readSidebarCollapsed(): boolean {
     RouterLink,
     RouterLinkActive,
     AdeniBrandLogoComponent,
+    AdeniBreadcrumbNavComponent,
     AdeniStaffSidebarBrandComponent,
     AdeniPortalNavIconComponent,
     CustomerMessagesShortcutComponent,

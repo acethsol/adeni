@@ -2,10 +2,11 @@ import { CHROME, type ChromeKey } from "./business-shell-copy";
 import { businessNavigationGroups, businessSearchResults, type SearchHit } from "./business-shell-navigation";
 import { Component, computed, ElementRef, HostListener, inject, Injector, signal, viewChild } from "@angular/core";
 import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
-import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
+import { NavigationEnd, NavigationStart, Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
 import type { AuthService } from "@auth0/auth0-angular";
 import type { AdeniBrandSurface } from "@adeni/brand";
 import {
+  breadcrumbPathname,
   formatTenantStatus,
   hasTenantEntitlement,
   permissionsForRole,
@@ -14,6 +15,8 @@ import {
 } from "@adeni/shared";
 import {
   AdeniBrandLogoComponent,
+  AdeniBreadcrumbNavComponent,
+  AdeniPageBreadcrumbService,
   AdeniStaffSidebarBrandComponent,
   AdeniConfirmHostComponent,
   AdeniDocumentTitleStrategy,
@@ -31,13 +34,8 @@ import {
   filterBusinessTabs,
   businessEntitlements,
 } from "../core/business-access";
-import {
-  BUSINESS_NAV,
-  activeBusinessTab,
-  findBusinessNavItem,
-  type BusinessNavGroup,
-  type BusinessNavItem,
-} from "../core/business-nav";
+import { crumbsForBusinessUrl, mergeBusinessDetailBreadcrumbExtras } from "../core/business-breadcrumbs";
+import type { BusinessNavGroup, BusinessNavItem } from "../core/business-nav";
 import { BusinessApiService } from "../core/services/business-api.service";
 import { BusinessActiveLocationService } from "../core/services/business-active-location.service";
 import { BusinessSessionService } from "../core/services/business-session.service";
@@ -99,6 +97,7 @@ function readSidebarCollapsed(): boolean {
     RouterLink,
     RouterLinkActive,
     AdeniBrandLogoComponent,
+    AdeniBreadcrumbNavComponent,
     AdeniStaffSidebarBrandComponent,
     AdeniStaffShellFooterComponent,
     AdeniGlobalLoadingPanelComponent,
@@ -163,7 +162,18 @@ export class BusinessShellComponent {
     ),
     { initialValue: this.router.url },
   );
-  readonly crumbs = computed(() => this.crumbsForUrl(this.url()));
+  private readonly pageBreadcrumbs = inject(AdeniPageBreadcrumbService);
+
+  readonly crumbs = computed(() => {
+    const base = crumbsForBusinessUrl(this.url(), {
+      groupLabel: (group) => this.groupLabel(group),
+      navLabel: (item) => this.navLabel(item),
+      tabLabel: (id) => this.tabLabel(id),
+      tr: (key) => this.tr(key),
+      fallbackGroupLabel: () => this.text("groupToday"),
+    });
+    return mergeBusinessDetailBreadcrumbExtras(this.url(), base, this.pageBreadcrumbs.extras());
+  });
   readonly visibleGroups = computed(() => this.groupsForProfile());
   readonly businessSettingsVisible = computed(() =>
     this.visibleGroups().some((group) => group.items.some((item) => item.path === "/settings")),
@@ -204,6 +214,20 @@ export class BusinessShellComponent {
       void this.activeLocation.runOnBranchSwitch(() => this.loadBadges());
     });
     void this.loadProfile();
+
+    let breadcrumbPath = breadcrumbPathname(this.router.url);
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationStart => event instanceof NavigationStart),
+        takeUntilDestroyed(),
+      )
+      .subscribe((event) => {
+        const nextPath = breadcrumbPathname(event.url);
+        if (nextPath !== breadcrumbPath) {
+          this.pageBreadcrumbs.clearExtras();
+          breadcrumbPath = nextPath;
+        }
+      });
   }
 
   text(key: ChromeKey): string {
@@ -377,23 +401,6 @@ export class BusinessShellComponent {
     this.settingsOpen.set(false);
     this.userOpen.set(false);
     this.searchOpen.set(false);
-  }
-
-  private crumbsForUrl(url: string): { label: string; path?: string }[] {
-    const match = findBusinessNavItem(url) ?? findBusinessNavItem(BUSINESS_NAV[0].path);
-    if (!match) {
-      return [{ label: this.text("groupToday") }];
-    }
-    const crumbs = [
-      { label: this.groupLabel(match.group) },
-      { label: this.navLabel(match.item), path: match.item.tabs ? match.item.path : undefined },
-    ];
-    const tabId = activeBusinessTab(url, match.item.tabs);
-    const tab = match.item.tabs?.find((entry) => entry.id === tabId);
-    if (tab) {
-      crumbs.push({ label: this.tabLabel(tab.id) });
-    }
-    return crumbs;
   }
 
   private tabLabel(id: string): string {

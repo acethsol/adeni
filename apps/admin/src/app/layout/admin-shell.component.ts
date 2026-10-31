@@ -1,24 +1,26 @@
 import { Component, computed, DestroyRef, ElementRef, HostListener, inject, Injector, signal, viewChild } from "@angular/core";
 import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
-import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
+import { NavigationEnd, NavigationStart, Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
 import type { AuthService } from "@auth0/auth0-angular";
 import type { AdeniBrandSurface } from "@adeni/brand";
-import { type LocaleId } from "@adeni/shared";
+import { breadcrumbPathname, mergeBreadcrumbTrails, type LocaleId } from "@adeni/shared";
 import {
   AdeniBrandLogoComponent,
+  AdeniBreadcrumbNavComponent,
   AdeniConfirmHostComponent,
   AdeniGlobalLoadingPanelComponent,
   AdeniLocaleService,
+  AdeniPageBreadcrumbService,
   AdeniStaffSidebarBrandComponent,
   AdeniStaffShellFooterComponent,
   AdeniToastHostComponent,
   injectAdeniTranslate,
 } from "@adeni/ui";
 import { filter, map, startWith } from "rxjs";
+import { appendAdminBusinessDetailTab, crumbsForAdminUrl } from "../core/admin-breadcrumbs";
 import {
   ADMIN_NAV,
   ADMIN_NAV_GROUPS,
-  findAdminNavItem,
   type AdminNavGroup,
   type AdminNavIconName,
   type AdminNavItem,
@@ -174,6 +176,7 @@ function readSidebarCollapsed(): boolean {
     RouterLink,
     RouterLinkActive,
   AdeniBrandLogoComponent,
+  AdeniBreadcrumbNavComponent,
   AdeniStaffSidebarBrandComponent,
   AdeniStaffShellFooterComponent,
   AdeniGlobalLoadingPanelComponent,
@@ -229,7 +232,18 @@ export class AdminShellComponent {
     ),
     { initialValue: this.router.url },
   );
-  readonly crumbs = computed(() => this.crumbsForUrl(this.url()));
+  private readonly pageBreadcrumbs = inject(AdeniPageBreadcrumbService);
+
+  readonly crumbs = computed(() => {
+    const base = crumbsForAdminUrl(this.url(), {
+      groupLabel: (group) => this.groupLabel(group),
+      navLabel: (item) => this.navLabel(item),
+      tr: (key) => this.tr(key),
+      chrome: (key) => this.text(key as ChromeKey),
+    });
+    const merged = mergeBreadcrumbTrails(base, this.pageBreadcrumbs.extras());
+    return appendAdminBusinessDetailTab(this.url(), merged, (key) => this.tr(key));
+  });
   readonly queueCount = signal<number | null>(null);
   readonly pendingBadgeCount = signal<number | null>(null);
   readonly queueLabel = computed(() => {
@@ -302,6 +316,13 @@ export class AdminShellComponent {
       .subscribe((event) => {
         this.pendingBadgeCount.set(event.pendingCount);
       });
+
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationStart => event instanceof NavigationStart),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => this.pageBreadcrumbs.clearExtras());
   }
 
   text(key: ChromeKey): string {
@@ -471,17 +492,6 @@ export class AdminShellComponent {
     this.settingsOpen.set(false);
     this.userOpen.set(false);
     this.searchOpen.set(false);
-  }
-
-  private crumbsForUrl(url: string): { label: string; path?: string }[] {
-    const match = findAdminNavItem(url) ?? findAdminNavItem(ADMIN_NAV[0].path);
-    if (!match) {
-      return [{ label: this.text("groupOperations") }, { label: this.text("/dashboard") }];
-    }
-    return [
-      { label: this.groupLabel(match.group) },
-      { label: this.navLabel(match.item), path: match.item.path },
-    ];
   }
 
   private scheduleRemoteSearch(query: string): void {

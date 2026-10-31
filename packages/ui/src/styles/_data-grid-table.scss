@@ -136,8 +136,8 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 0.35rem 0.5rem;
+  flex-wrap: nowrap;
+  gap: 0.25rem;
   width: 100%;
   min-width: 0;
 }

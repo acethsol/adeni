@@ -1,4 +1,4 @@
-import { Component, computed, DestroyRef, inject, OnDestroy, OnInit, signal } from "@angular/core";
+import { Component, computed, DestroyRef, effect, inject, OnDestroy, OnInit, signal } from "@angular/core";
 import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { distinctUntilChanged, map } from "rxjs";
@@ -18,6 +18,7 @@ import {
   AdeniTablePersonCellComponent,
   PortalPageComponent,
   AdeniTabsComponent,
+  AdeniPageBreadcrumbService,
   type AdeniPillTone,
   type AdeniTab,
   injectAdeniTranslate,
@@ -68,6 +69,11 @@ export class ServiceDetailComponent implements OnInit, OnDestroy {
   private readonly activeLocation = inject(BusinessActiveLocationService);
   private readonly destroyRef = inject(DestroyRef);
   readonly session = inject(BusinessSessionService);
+  private readonly pageBreadcrumbs = inject(AdeniPageBreadcrumbService);
+  private readonly serviceRouteId = toSignal(
+    this.route.paramMap.pipe(map((params) => params.get("id"))),
+    { initialValue: this.route.snapshot.paramMap.get("id") },
+  );
 
   private loadVersion = 0;
   private branchSub: Subscription | null = null;
@@ -106,6 +112,17 @@ export class ServiceDetailComponent implements OnInit, OnDestroy {
     ];
     return base;
   });
+
+  constructor() {
+    effect(() => {
+      const service = this.service();
+      const id = this.serviceRouteId();
+      if (service && id) {
+        this.pageBreadcrumbs.setExtras([{ label: service.name, path: `/services/${id}` }]);
+      }
+    });
+    this.destroyRef.onDestroy(() => this.pageBreadcrumbs.clearExtras());
+  }
 
   ngOnInit(): void {
     this.route.paramMap

@@ -1,5 +1,7 @@
+import { ADENI_BREADCRUMB_EXTRAS_STATE } from "../../core/business-breadcrumb-navigation";
 import { IntakeBookingStatusService } from "../intake/intake-booking-status.service";
 import { Component, computed, effect, DestroyRef, inject, OnDestroy, OnInit, signal } from "@angular/core";
+import type { CustomerProfileTrust } from "@adeni/shared";
 import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import { distinctUntilChanged, map } from "rxjs";
@@ -24,7 +26,9 @@ import {
   AdeniTablePersonCellComponent,
   PortalPageComponent,
   AdeniTabsComponent,
+  AdeniPageBreadcrumbService,
   AdeniStaffButtonComponent,
+  AdeniLocaleService,
   type AdeniDataTableColumn,
   type AdeniDataTableSortDirection,
   type AdeniPillTone,
@@ -40,6 +44,7 @@ import { CustomerMembershipsPanelComponent } from "./customer-memberships-panel.
 import { CustomerLoyaltyPanelComponent } from "./customer-loyalty-panel.component";
 import { CustomerPackagesPanelComponent } from "./customer-packages-panel.component";
 import { CustomerProfilePanelComponent } from "./customer-profile-panel.component";
+import { CustomerProfileDataService } from "./customer-profile-data.service";
 import { BusinessSessionService } from "../../core/services/business-session.service";
 
 const CUSTOMER_DETAIL_TABS = new Set([
@@ -65,7 +70,7 @@ const PAID_STATUS = 6;
 @Component({
   selector: "app-customer-detail",
   standalone: true,
-  providers: [IntakeBookingStatusService],
+  providers: [IntakeBookingStatusService, CustomerProfileDataService],
   imports: [
     PortalPageComponent,
     AdeniTabsComponent,
@@ -97,8 +102,19 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly activeLocation = inject(BusinessActiveLocationService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly pageBreadcrumbs = inject(AdeniPageBreadcrumbService);
+  private readonly customerRouteId = toSignal(
+    this.route.paramMap.pipe(map((params) => params.get("id"))),
+    { initialValue: this.route.snapshot.paramMap.get("id") },
+  );
+  private readonly customerTabQuery = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get("tab") ?? "overview")),
+    { initialValue: this.route.snapshot.queryParamMap.get("tab") ?? "overview" },
+  );
   readonly session = inject(BusinessSessionService);
   readonly intakeStatuses = inject(IntakeBookingStatusService);
+  protected readonly profileData = inject(CustomerProfileDataService);
+  private readonly locale = inject(AdeniLocaleService);
   readonly profileLocationId = signal<string | undefined>(undefined);
   private loadVersion = 0;
   private branchSub: Subscription | null = null;
@@ -136,6 +152,8 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
   readonly statementDownloading = signal(false);
 
   readonly formatSlotTime = formatSlotTime;
+
+  readonly platformTrust = computed((): CustomerProfileTrust | null => this.profileData.profile()?.trust ?? null);
 
   readonly bookingSearchQuery = signal("");
   readonly queueSearchQuery = signal("");
@@ -215,6 +233,38 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
 
   constructor() {
     effect(() => { void this.intakeStatuses.load(this.session.can("business.bookings") ? this.customer()?.recentBookings.map(x => x.id) ?? [] : []); });
+    effect(() => {
+      const c = this.customer();
+      const id = this.customerRouteId();
+      void this.customerTabQuery();
+      if (c && id) {
+        this.pageBreadcrumbs.setExtras([{ label: c.displayName, path: `/customers/${id}` }]);
+      }
+    });
+    this.destroyRef.onDestroy(() => this.pageBreadcrumbs.clearExtras());
+    effect((onCleanup) => {
+      const c = this.customer();
+      const locationId = this.profileLocationId();
+      let active = true;
+      onCleanup(() => {
+        active = false;
+        this.profileData.cancel();
+      });
+      void this.session.ensureLoaded().then(() => {
+        if (!active || !c?.platformCustomerId || !this.session.can("business.bookings")) {
+          return;
+        }
+        void this.profileData.load(c.id, locationId);
+      });
+    });
+  }
+
+  formatMemberSince(iso: string): string {
+    return new Intl.DateTimeFormat(this.locale.locale(), { dateStyle: "medium" }).format(new Date(iso));
+  }
+
+  phoneTrustPillTone(trust: CustomerProfileTrust): AdeniPillTone {
+    return trust.phoneVerified ? "success" : "warning";
   }
 
   ngOnInit(): void {
@@ -379,6 +429,17 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
     return {
       tab: isPast ? "past" : row.status === PENDING_STATUS ? "pending" : "upcoming",
       focus: row.id,
+    };
+  }
+
+  intakeBreadcrumbState(): Record<string, { label: string; path: string }[]> | undefined {
+    const c = this.customer();
+    const id = this.customerRouteId();
+    if (!c || !id) {
+      return undefined;
+    }
+    return {
+      [ADENI_BREADCRUMB_EXTRAS_STATE]: [{ label: c.displayName, path: `/customers/${id}` }],
     };
   }
 

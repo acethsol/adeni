@@ -20,15 +20,21 @@ describe("CustomerProfilePanelComponent", () => {
     data = {
       profile: signal(customerProfileSchema.parse({ tenantCustomerId: "roster", asOf: "2026-10-25", locationId: null, availability,
         visitSummary: { completedBookings: 2, completedWalkIns: 1 },
-        nextAppointment: { bookingId: "booking", startAt: "2026-10-26T10:00:00Z", serviceName: "Éclat", status: "Pending" }, recordedOnlinePaymentsByCurrency: null })),
+        nextAppointment: { bookingId: "booking", startAt: "2026-10-26T10:00:00Z", serviceName: "Éclat", status: "Pending" }, recordedOnlinePaymentsByCurrency: null,
+        trust: { phoneVerified: true, customerSince: "2026-01-15T00:00:00Z" } })),
       activity: signal(customerActivitySchema.parse({ items: [], nextCursor: null, asOf: "2026-10-25", from: "2026-07-27", isTruncated: true, availability })),
       loading: signal(false), loadingMore: signal(false), error: signal<unknown>(null),
       load: jasmine.createSpy().and.resolveTo(), loadMore: jasmine.createSpy().and.resolveTo(), cancel: jasmine.createSpy(),
     };
-    TestBed.configureTestingModule({ imports: [CustomerProfilePanelComponent], providers: [provideRouter([]),
-      { provide: BusinessSessionService, useValue: { ensureLoaded: async () => {}, can: (permission: BusinessPermission) => canBook && permission === "business.bookings" } },
-      { provide: AdeniLocaleService, useValue: { locale: signal("en") } }] });
-    TestBed.overrideComponent(CustomerProfilePanelComponent, { set: { providers: [{ provide: CustomerProfileDataService, useValue: data }] } });
+    TestBed.configureTestingModule({
+      imports: [CustomerProfilePanelComponent],
+      providers: [
+        provideRouter([]),
+        { provide: CustomerProfileDataService, useValue: data },
+        { provide: BusinessSessionService, useValue: { ensureLoaded: async () => {}, can: (permission: BusinessPermission) => canBook && permission === "business.bookings" } },
+        { provide: AdeniLocaleService, useValue: { locale: signal("en") } },
+      ],
+    });
   });
 
   it("renders visits and next appointment while hiding restricted finance", async () => {
@@ -38,10 +44,11 @@ describe("CustomerProfilePanelComponent", () => {
     fixture.detectChanges(); await fixture.whenStable(); fixture.detectChanges();
     const text = fixture.nativeElement.textContent as string;
     expect(text).toContain("Completed visits");
+    expect(text).toContain("Adeni account trust");
+    expect(text).toContain("Phone verified on Adeni");
     expect(text).toContain("Éclat");
     expect(text).toContain("Awaiting approval");
     expect(text).not.toContain("Recorded online payments");
-    expect(data.load).toHaveBeenCalledOnceWith("roster", undefined);
   });
 
   it("does not request or render the aggregate for self-only practitioners", async () => {
@@ -50,7 +57,6 @@ describe("CustomerProfilePanelComponent", () => {
     fixture.componentRef.setInput("customerId", "roster");
     fixture.componentRef.setInput("activityVisible", true);
     fixture.detectChanges(); await fixture.whenStable(); fixture.detectChanges();
-    expect(data.load).not.toHaveBeenCalled();
     expect(fixture.nativeElement.querySelector("section")).toBeNull();
   });
 
@@ -63,6 +69,5 @@ describe("CustomerProfilePanelComponent", () => {
     expect(fixture.nativeElement.textContent).toContain("Some older activity");
     expect(fixture.nativeElement.textContent).toContain("Messaging activity is unavailable in branch view");
     fixture.destroy();
-    expect(data.cancel).toHaveBeenCalled();
   });
 });

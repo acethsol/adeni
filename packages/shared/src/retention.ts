@@ -484,7 +484,8 @@ export const updateLoyaltyRewardRequestSchema = z.object({
 
 export const loyaltyTransactionSchema = z.object({
   id: z.string().uuid(),
-  sequence: z.number().int().positive(),
+  /** Account ledger uses monotonic sequence; legacy/seed rows may start at 0. */
+  sequence: z.number().int().nonnegative(),
   kind: loyaltyTransactionKindSchema,
   points: z.number().int(),
   balanceAfter: z.number().int().nonnegative(),

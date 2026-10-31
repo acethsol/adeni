@@ -198,6 +198,7 @@ public static class DevelopmentDataSeeder
         await SeedDevQueueFloorAsync(db, cancellationToken);
         await SeedDevMessagingAsync(db, cancellationToken);
         await SeedDevTenantCustomersAsync(db, cancellationToken);
+        await EnsureDevLocalCustomerBranchBookingAsync(db, cancellationToken);
         await SeedDevAdminPrivacyCustomersAsync(db, cancellationToken);
         await SampleDataSqlSeedRunner.ApplyVolumeDemoAsync(db, sampleDataScriptsDirectory, cancellationToken);
     }
@@ -250,7 +251,7 @@ public static class DevelopmentDataSeeder
             new("Fatima Bello", "Fatima", "Bello", "2348015550103", $"fatima{seedEmailSuffix}", null, 12),
             new("Jordan Expected", "Jordan", "Expected", "2348012300003", $"jordan{seedEmailSuffix}", "dev-queue-expected", 2),
             new("Sam Checked-in", "Sam", "Checked-in", "2348012300004", $"sam{seedEmailSuffix}", "dev-queue-checked-in", 4),
-            new("Local Customer", "Local", "Customer", "2348015550199", $"local{seedEmailSuffix}", DevCustomerAuth0Sub, 0),
+            new("Dev Customer", "Dev", "Customer", "2348015550199", $"local{seedEmailSuffix}", DevCustomerAuth0Sub, 0),
         };
 
         foreach (var seed in seeds)
@@ -479,7 +480,7 @@ public static class DevelopmentDataSeeder
             {
                 Id = Guid.NewGuid(),
                 Auth0Sub = DevCustomerAuth0Sub,
-                Name = "Local Customer",
+                Name = "Dev Customer",
                 CreatedAt = DateTimeOffset.UtcNow,
             };
             db.Customers.Add(localCustomer);
@@ -1559,7 +1560,7 @@ public static class DevelopmentDataSeeder
             {
                 Id = Guid.NewGuid(),
                 Auth0Sub = DevCustomerAuth0Sub,
-                Name = "Local Customer",
+                Name = "Dev Customer",
                 CreatedAt = DateTimeOffset.UtcNow,
             };
             db.Customers.Add(customer);
@@ -1611,6 +1612,7 @@ public static class DevelopmentDataSeeder
         {
             Id = Guid.NewGuid(),
             TenantId = location.TenantId,
+            BusinessLocationId = location.Id,
             ServiceOfferingId = service.Id,
             CustomerId = customer.Id,
             StartAt = startAt,
@@ -1620,6 +1622,123 @@ public static class DevelopmentDataSeeder
             CreatedAt = startAt,
             UpdatedAt = startAt,
         });
+
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private const string DevLocalCustomerBranchBookingNote = "Dev seed — local customer branch visibility";
+
+    /// <summary>
+    /// Portal Customers list is branch-scoped when a location is selected; ensure
+    /// <see cref="DevCustomerAuth0Sub"/> has at least one booking at Lekki Cuts primary branch.
+    /// </summary>
+    private static async Task EnsureDevLocalCustomerBranchBookingAsync(
+        AdeniDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var location = await db.BusinessLocations
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(entry => entry.Slug == SeedMarkerSlug, cancellationToken);
+        if (location is null)
+        {
+            return;
+        }
+
+        var customer = await db.Customers
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(entry => entry.Auth0Sub == DevCustomerAuth0Sub, cancellationToken);
+        if (customer is null)
+        {
+            return;
+        }
+
+        if (!string.Equals(customer.Name, "Dev Customer", StringComparison.Ordinal))
+        {
+            customer.Name = "Dev Customer";
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
+        var tenantCustomer = await db.TenantCustomers
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(
+                entry => entry.TenantId == location.TenantId && entry.CustomerId == customer.Id,
+                cancellationToken);
+        if (tenantCustomer is not null
+            && !string.Equals(tenantCustomer.DisplayName, "Dev Customer", StringComparison.Ordinal))
+        {
+            tenantCustomer.DisplayName = "Dev Customer";
+            tenantCustomer.FirstName = "Dev";
+            tenantCustomer.LastName = "Customer";
+            tenantCustomer.UpdatedAt = DateTimeOffset.UtcNow;
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
+        var orphanBookings = await db.Bookings
+            .IgnoreQueryFilters()
+            .Where(booking =>
+                booking.TenantId == location.TenantId
+                && booking.CustomerId == customer.Id
+                && booking.BusinessLocationId == null)
+            .ToListAsync(cancellationToken);
+        if (orphanBookings.Count > 0)
+        {
+            foreach (var booking in orphanBookings)
+            {
+                booking.BusinessLocationId = location.Id;
+            }
+
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
+        var hasBranchBooking = await db.Bookings
+            .IgnoreQueryFilters()
+            .AnyAsync(
+                booking =>
+                    booking.TenantId == location.TenantId
+                    && booking.CustomerId == customer.Id
+                    && booking.BusinessLocationId == location.Id,
+                cancellationToken);
+        if (hasBranchBooking)
+        {
+            return;
+        }
+
+        var service = await db.ServiceOfferings
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(entry => entry.TenantId == location.TenantId && entry.IsActive)
+            .OrderBy(entry => entry.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (service is null)
+        {
+            return;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var startAt = now.AddDays(-2);
+        var endAt = startAt.AddMinutes(service.DurationMinutes);
+        db.Bookings.Add(new BookingRecord
+        {
+            Id = Guid.NewGuid(),
+            TenantId = location.TenantId,
+            BusinessLocationId = location.Id,
+            ServiceOfferingId = service.Id,
+            CustomerId = customer.Id,
+            StartAt = startAt,
+            EndAt = endAt,
+            Status = BookingStatus.Completed,
+            CustomerNotes = DevLocalCustomerBranchBookingNote,
+            CreatedAt = startAt,
+            UpdatedAt = endAt,
+        });
+
+        if (tenantCustomer is not null)
+        {
+            tenantCustomer.LastBookingAt = startAt;
+            tenantCustomer.LastSeenAt = now;
+            tenantCustomer.UpdatedAt = now;
+        }
 
         await db.SaveChangesAsync(cancellationToken);
     }

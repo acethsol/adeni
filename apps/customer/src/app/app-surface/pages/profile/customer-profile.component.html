@@ -22,29 +22,89 @@
   </section>
 
   @if (verification(); as v) {
-    <section class="profile-section">
-      <h3 class="profile-section__label">{{ tr('customer.app.profile.verificationTitle') }}</h3>
-      <ul class="profile-verification">
-        <li>
-          @if (v.emailVerified) {
-            <adeni-carbon-icon name="checkmark--filled" [size]="16" />
-            {{ tr('customer.app.profile.emailVerified') }}
-          } @else {
-            <adeni-carbon-icon name="warning--filled" [size]="16" />
-            {{ tr('customer.app.profile.emailNotVerified') }}
-          }
-        </li>
-        <li>
-          @if (v.phoneVerified) {
-            <adeni-carbon-icon name="checkmark--filled" [size]="16" />
-            {{ tr('customer.app.profile.phoneVerified') }}
-          } @else {
-            <adeni-carbon-icon name="warning--filled" [size]="16" />
-            {{ tr('customer.app.profile.phoneNotVerified') }}
-          }
-        </li>
-      </ul>
-      <p class="profile-meta">{{ tr('customer.app.profile.identityNotRequired') }}</p>
+    <section class="profile-section" aria-labelledby="profile-trust-heading">
+      <h3 id="profile-trust-heading" class="profile-section__label">
+        {{ tr('customer.app.profile.verificationTitle') }}
+      </h3>
+      <div class="trust-card card">
+        <div class="trust-card__hero">
+          <div
+            class="trust-ring"
+            [class.trust-ring--complete]="trustStepsDone() === 2"
+            [style.--trust-progress]="trustProgressDeg()"
+            role="img"
+            [attr.aria-label]="tr('customer.app.profile.trustStepsLabel', { done: trustStepsDone(), total: 2 })"
+          >
+            <span class="trust-ring__inner">
+              <strong class="trust-ring__count">{{ trustStepsDone() }}/2</strong>
+            </span>
+          </div>
+          <div class="trust-card__copy">
+            <p class="trust-card__headline">{{ tr(trustHeadlineKey()) }}</p>
+            <p class="trust-card__sub">{{ tr(trustSubtitleKey()) }}</p>
+          </div>
+        </div>
+
+        <ul class="trust-factors">
+          <li class="trust-factor" [class.trust-factor--done]="v.emailVerified">
+            <span class="trust-factor__icon" aria-hidden="true">
+              <adeni-carbon-icon name="email" [size]="20" />
+            </span>
+            <div class="trust-factor__body">
+              <span class="trust-factor__title">{{ tr('customer.app.profile.trustEmailLabel') }}</span>
+              <span class="trust-factor__role">{{ tr('customer.app.profile.trustEmailRole') }}</span>
+              @if (formatVerifiedAt(v.emailVerifiedAt); as since) {
+                <span class="trust-factor__meta">{{ tr('customer.app.profile.trustVerifiedOn', { date: since }) }}</span>
+              } @else if (!v.emailVerified) {
+                <span class="trust-factor__meta">{{ tr('customer.app.profile.emailNotVerified') }}</span>
+              }
+            </div>
+            <span
+              class="trust-factor__pill"
+              [class.trust-factor__pill--done]="v.emailVerified"
+            >
+              @if (v.emailVerified) {
+                <adeni-carbon-icon name="checkmark--filled" [size]="14" />
+                {{ tr('customer.app.profile.trustStatusVerified') }}
+              } @else {
+                <adeni-carbon-icon name="time" [size]="14" />
+                {{ tr('customer.app.profile.trustStatusPending') }}
+              }
+            </span>
+          </li>
+          <li class="trust-factor" [class.trust-factor--done]="v.phoneVerified">
+            <span class="trust-factor__icon" aria-hidden="true">
+              <adeni-carbon-icon name="phone" [size]="20" />
+            </span>
+            <div class="trust-factor__body">
+              <span class="trust-factor__title">{{ tr('customer.app.profile.trustPhoneLabel') }}</span>
+              <span class="trust-factor__role">{{ tr('customer.app.profile.trustPhoneRole') }}</span>
+              @if (formatVerifiedAt(v.phoneVerifiedAt); as since) {
+                <span class="trust-factor__meta">{{ tr('customer.app.profile.trustVerifiedOn', { date: since }) }}</span>
+              } @else if (!v.phoneVerified) {
+                <span class="trust-factor__meta">{{ tr('customer.app.profile.phoneNotVerified') }}</span>
+              }
+            </div>
+            <span
+              class="trust-factor__pill"
+              [class.trust-factor__pill--done]="v.phoneVerified"
+            >
+              @if (v.phoneVerified) {
+                <adeni-carbon-icon name="checkmark--filled" [size]="14" />
+                {{ tr('customer.app.profile.trustStatusVerified') }}
+              } @else {
+                <adeni-carbon-icon name="time" [size]="14" />
+                {{ tr('customer.app.profile.trustStatusPending') }}
+              }
+            </span>
+          </li>
+        </ul>
+
+        <p class="trust-card__footnote">
+          <adeni-carbon-icon name="security" [size]="16" />
+          {{ tr('customer.app.profile.identityNotRequired') }}
+        </p>
+      </div>
     </section>
   }
 
