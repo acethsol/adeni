@@ -32,12 +32,21 @@ describe("CustomerProfileDataService", () => {
 
   it("aborts obsolete scope requests and ignores responses that arrive late", async () => {
     let finish!: (value: CustomerActivity) => void;
-    client.getTenantCustomerActivity.and.returnValue(new Promise(resolve => { finish = resolve; }));
+    let oldSignal: AbortSignal | undefined;
+    client.getTenantCustomerActivity.and.callFake((_id, _opts, sig) => {
+      if (!oldSignal) {
+        oldSignal = sig;
+        return new Promise((resolve) => {
+          finish = resolve;
+        });
+      }
+      return Promise.resolve(activity);
+    });
     const old = service.load("old", "old-branch");
-    const signal = client.getTenantCustomerActivity.calls.mostRecent().args[2]!;
-    client.getTenantCustomerActivity.and.resolveTo(activity);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(oldSignal).toBeDefined();
     await service.load("new", "new-branch");
-    expect(signal.aborted).toBeTrue();
+    expect(oldSignal!.aborted).toBeTrue();
     finish({ ...activity, nextCursor: "obsolete" });
     await old;
     expect(service.activity()?.nextCursor).toBe("next");
