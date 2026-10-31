@@ -11,6 +11,7 @@ public static class ReportKeys
     public const string TenantLocations = "tenant-locations";
     public const string TenantServices = "tenant-services";
     public const string RetentionMembershipMrr = "retention-membership-mrr";
+    public const string AttendanceRegister = "attendance-register";
 
     public static readonly IReadOnlySet<string> All = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
@@ -23,6 +24,7 @@ public static class ReportKeys
         TenantLocations,
         TenantServices,
         RetentionMembershipMrr,
+        AttendanceRegister,
     };
 
     public static bool IsKnown(string? reportKey) =>

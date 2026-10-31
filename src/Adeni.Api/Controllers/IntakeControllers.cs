@@ -82,6 +82,7 @@ public sealed class IntakeReviewController(IIntakeSubmissionService intake, IOpt
         return Ok(rows);
     }
     [HttpGet("{bookingId:guid}/forms/{assignmentId:guid}/submission")]
+    [RequiresOnPremisesPresence]
     public async Task<IActionResult> Review(Guid bookingId, Guid assignmentId, CancellationToken ct) => Actor is not { } actor || Tenant is not { } tenant ? Unauthorized() : Map(await intake.ReviewAsync(tenant, actor, bookingId, assignmentId, ct));
 }
 

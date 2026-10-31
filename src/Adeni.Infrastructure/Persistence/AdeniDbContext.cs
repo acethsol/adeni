@@ -62,6 +62,11 @@ public sealed partial class AdeniDbContext(
     public DbSet<StaffWeeklyAvailability> StaffWeeklyAvailabilities => Set<StaffWeeklyAvailability>();
 
     public DbSet<StaffLeave> StaffLeaves => Set<StaffLeave>();
+    public DbSet<StaffAttendanceEvent> StaffAttendanceEvents => Set<StaffAttendanceEvent>();
+
+    public DbSet<VerifiedPresenceSession> VerifiedPresenceSessions => Set<VerifiedPresenceSession>();
+
+    public DbSet<LocationSecurityPolicy> LocationSecurityPolicies => Set<LocationSecurityPolicy>();
 
     public DbSet<WeeklyAvailability> WeeklyAvailabilities => Set<WeeklyAvailability>();
 
@@ -262,6 +267,7 @@ public sealed partial class AdeniDbContext(
             entity.Property(x => x.AddressLine).HasMaxLength(500);
             entity.Property(x => x.Area).HasMaxLength(120);
             entity.Property(x => x.TimeZoneId).HasMaxLength(64);
+            entity.Property(x => x.AttendanceGeofenceRadiusMeters).HasDefaultValue(100);
             // SQL Server rejects multiple CASCADE paths (Tenant → Profile → Location and Tenant → Location).
             entity.HasOne(x => x.Tenant).WithMany().HasForeignKey(x => x.TenantId)
                 .OnDelete(DeleteBehavior.NoAction);
@@ -443,6 +449,46 @@ public sealed partial class AdeniDbContext(
             entity.HasIndex(x => new { x.TenantId, x.StaffMemberId, x.StartAt });
             entity.HasOne(x => x.StaffMember)
                 .WithMany(x => x.LeaveEntries)
+                .HasForeignKey(x => x.StaffMemberId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<LocationSecurityPolicy>(entity =>
+        {
+            entity.ToTable("location_security_policies", "tenancy");
+            entity.HasKey(x => x.TenantId);
+            entity.Property(x => x.PresenceValidityMinutes).HasDefaultValue(90);
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<VerifiedPresenceSession>(entity =>
+        {
+            entity.ToTable("verified_presence_sessions", "identity");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.VerificationMethod).HasMaxLength(32);
+            entity.Property(x => x.InvalidationReason).HasMaxLength(32);
+            entity.HasIndex(x => new { x.TenantId, x.BusinessUserId, x.InvalidatedAt, x.ExpiresAt });
+            entity.HasOne(x => x.BusinessUser)
+                .WithMany()
+                .HasForeignKey(x => x.BusinessUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);
+        });
+
+        modelBuilder.Entity<StaffAttendanceEvent>(entity =>
+        {
+            entity.ToTable("staff_attendance_events", "booking");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.EventType).HasMaxLength(32);
+            entity.Property(x => x.LocationVerificationStatus).HasMaxLength(32);
+            entity.Property(x => x.VerificationMethod).HasMaxLength(32);
+            entity.Property(x => x.ManagerOverrideReason).HasMaxLength(500);
+            entity.Property(x => x.CorrectionReason).HasMaxLength(500);
+            entity.HasIndex(x => new { x.TenantId, x.StaffMemberId, x.OccurredAt });
+            entity.HasIndex(x => new { x.TenantId, x.BusinessLocationId, x.OccurredAt });
+            entity.HasOne(x => x.StaffMember)
+                .WithMany()
                 .HasForeignKey(x => x.StaffMemberId)
                 .OnDelete(DeleteBehavior.Cascade);
             entity.HasQueryFilter(x => ActiveTenantFilterId == null || x.TenantId == ActiveTenantFilterId);

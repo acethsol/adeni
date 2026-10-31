@@ -108,6 +108,9 @@ export class SettingsComponent implements OnInit {
   maxWalkInWaiting: number | null = null;
   walkInCalendarPolicy: "relaxed" | "strict" = "relaxed";
 
+  requireSensitivePresence = false;
+  presenceValidityMinutes = 90;
+
   ngOnInit(): void {
     const routeTab = this.route.snapshot.data["settingsTab"] as string | undefined;
     if (routeTab && !this.route.snapshot.queryParamMap.get("tab")) {
@@ -138,6 +141,15 @@ export class SettingsComponent implements OnInit {
           this.policyCancellation = profile.policies?.cancellation ?? "";
           this.policyTerms = profile.policies?.terms ?? "";
           this.requireAcceptance = profile.policies?.requireAcceptance ?? false;
+          if (profile.entitlements?.onPremisesSensitiveData) {
+            try {
+              const policy = await client.getLocationSecurityPolicy();
+              this.requireSensitivePresence = policy.requirePresenceForSensitiveCustomerData;
+              this.presenceValidityMinutes = policy.presenceValidityMinutes;
+            } catch {
+              /* policy defaults */
+            }
+          }
           try {
             const prefs = await client.getNotificationPreferences();
             this.emailEnabled = prefs.emailEnabled;
@@ -445,6 +457,31 @@ export class SettingsComponent implements OnInit {
       });
     } catch (caught) {
       this.feedback.error(this.apiErr(caught, "businessApp.settings.couldNotSaveMessagingSettings"));
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  async saveSecurity(): Promise<void> {
+    if (!hasTenantEntitlement(this.profile()?.entitlements, "onPremisesSensitiveData")) {
+      return;
+    }
+    if (!(await this.confirmSave("security"))) {
+      return;
+    }
+    this.saving.set(true);
+    try {
+      await this.feedback.runLoading(async () => {
+        await this.api.withAuthorizedClient((c) =>
+          c.updateLocationSecurityPolicy({
+            requirePresenceForSensitiveCustomerData: this.requireSensitivePresence,
+            presenceValidityMinutes: this.presenceValidityMinutes,
+          }),
+        );
+        this.feedback.success(this.tr("businessApp.settings.onSiteAccessSaved"));
+      });
+    } catch (caught) {
+      this.feedback.error(this.apiErr(caught, "businessApp.settings.couldNotSaveOnSiteAccess"));
     } finally {
       this.saving.set(false);
     }

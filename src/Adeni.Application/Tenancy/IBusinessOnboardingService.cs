@@ -39,7 +39,9 @@ public sealed record UpsertBusinessLocationRequest(
     double? Latitude,
     double? Longitude,
     string? TimeZoneId = null,
-    bool? IsPrimary = null);
+    bool? IsPrimary = null,
+    bool? AttendanceGeofenceEnabled = null,
+    int? AttendanceGeofenceRadiusMeters = null);
 
 public sealed record VerificationDocumentRequest(
     VerificationDocumentType DocumentType,
@@ -60,7 +62,9 @@ public sealed record BusinessLocationResponse(
     double? Longitude,
     string? TimeZoneId,
     bool IsPrimary,
-    bool IsActive);
+    bool IsActive,
+    bool AttendanceGeofenceEnabled,
+    int AttendanceGeofenceRadiusMeters);
 
 public sealed record UpdateBusinessSettingsRequest(bool AutoConfirmBookings, int DepositPercent = 0);
 

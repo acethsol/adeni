@@ -53,6 +53,13 @@ public static class ReportDefinitionRegistry
                 ReportBaseEntitlement.BasicExports,
                 new HashSet<ReportExportFormat> { ReportExportFormat.Csv },
                 RequiresAdvancedRetentionAnalytics: true),
+            [ReportKeys.AttendanceRegister] = new(
+                ReportKeys.AttendanceRegister,
+                BusinessPermissions.Attendance,
+                ReportBaseEntitlement.BasicExports,
+                new HashSet<ReportExportFormat> { ReportExportFormat.Csv },
+                RequiresMultiLocationReportingGate: true,
+                RequiresAttendanceReporting: true),
         };
 
     public static bool TryGet(string reportKey, out ReportDefinition definition) =>

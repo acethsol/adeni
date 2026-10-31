@@ -937,6 +937,8 @@ export const businessLocationSchema = z.object({
   timeZoneId: z.string().nullable().optional(),
   isPrimary: z.boolean(),
   isActive: z.boolean(),
+  attendanceGeofenceEnabled: z.boolean().optional(),
+  attendanceGeofenceRadiusMeters: z.number().int().optional(),
 });
 
 export type BusinessLocation = z.infer<typeof businessLocationSchema>;
@@ -955,6 +957,8 @@ export const upsertBusinessLocationRequestSchema = z.object({
   longitude: z.number().nullable().optional(),
   timeZoneId: z.string().nullable().optional(),
   isPrimary: z.boolean().optional(),
+  attendanceGeofenceEnabled: z.boolean().optional(),
+  attendanceGeofenceRadiusMeters: z.number().int().min(50).max(250).optional(),
 });
 
 export type UpsertBusinessLocationRequest = z.infer<
@@ -1017,6 +1021,11 @@ export const tenantEntitlementsSchema = z.object({
   crossLocationRetention: z.boolean(),
   advancedRetentionAnalytics: z.boolean(),
   multiLocation: z.boolean(),
+  /** Staff clock-in/out and timesheets (Sprint 40). */
+  staffAttendance: z.boolean(),
+  attendanceGeofence: z.boolean(),
+  onPremisesSensitiveData: z.boolean(),
+  attendanceReporting: z.boolean(),
 });
 
 export type TenantEntitlements = z.infer<typeof tenantEntitlementsSchema>;

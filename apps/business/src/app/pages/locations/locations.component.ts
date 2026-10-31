@@ -10,6 +10,7 @@ import {
   REPORT_KEYS,
   sliceListPage,
   type BusinessLocation,
+  type UpsertBusinessLocationRequest,
   type MarketConfig,
   type ReportExportFormat,
   type TenantEntitlements,
@@ -67,6 +68,8 @@ type LocationDraft = {
   area: string;
   marketId: string;
   isPrimary: boolean;
+  attendanceGeofenceEnabled: boolean;
+  attendanceGeofenceRadiusMeters: number;
 };
 
 @Component({
@@ -128,6 +131,10 @@ export class LocationsComponent implements OnInit {
 
   readonly canAddLocation = computed(() =>
     canAddLocationAtCount(this.entitlements(), this.locations().length),
+  );
+
+  readonly canConfigureAttendanceGeofence = computed(
+    () => this.entitlements()?.attendanceGeofence === true,
   );
 
   readonly filteredLocations = computed(() => {
@@ -222,6 +229,8 @@ export class LocationsComponent implements OnInit {
       area: "",
       marketId: this.defaultMarketId,
       isPrimary: false,
+      attendanceGeofenceEnabled: false,
+      attendanceGeofenceRadiusMeters: 100,
     };
   }
 
@@ -292,6 +301,8 @@ export class LocationsComponent implements OnInit {
       area: loc.area,
       marketId: loc.marketId,
       isPrimary: loc.isPrimary,
+      attendanceGeofenceEnabled: loc.attendanceGeofenceEnabled ?? false,
+      attendanceGeofenceRadiusMeters: loc.attendanceGeofenceRadiusMeters ?? 100,
     };
     this.showForm.set(true);
   }
@@ -309,30 +320,37 @@ export class LocationsComponent implements OnInit {
       return;
     }
 
-    const body = {
+    const body: UpsertBusinessLocationRequest = {
       slug,
       name: this.draft.name.trim() || undefined,
       addressLine: this.draft.addressLine.trim(),
       area: this.draft.area.trim(),
       marketId: this.draft.marketId,
       isPrimary: this.draft.isPrimary,
+      ...(this.canConfigureAttendanceGeofence()
+        ? {
+            attendanceGeofenceEnabled: this.draft.attendanceGeofenceEnabled,
+            ...(this.draft.attendanceGeofenceEnabled
+              ? {
+                  attendanceGeofenceRadiusMeters: Math.min(
+                    250,
+                    Math.max(50, Math.round(this.draft.attendanceGeofenceRadiusMeters)),
+                  ),
+                }
+              : {}),
+          }
+        : {}),
     };
-
-    const confirmed = await this.confirmDialog.confirmKind(this.editingId() ? "save" : "create", {
-      subject: body.name ?? slug,
-    });
-    if (!confirmed) {
-      return;
-    }
 
     this.busy.set(this.editingId() ?? "new");
     this.error.set(null);
     try {
       await this.feedback.runLoading(async () => {
-        const id = this.editingId();
-        if (id) {
-          const updated = await this.api.withAuthorizedClient((c) => c.updateTenantLocation(id, body));
-          this.locations.update((list) => mergeSavedLocation(list, updated, id));
+        if (this.editingId()) {
+          const updated = await this.api.withAuthorizedClient((c) =>
+            c.updateTenantLocation(this.editingId()!, body),
+          );
+          this.locations.update((list) => mergeSavedLocation(list, updated, this.editingId()));
         } else {
           const created = await this.api.withAuthorizedClient((c) => c.addTenantLocation(body));
           this.locations.update((list) => mergeSavedLocation(list, created, null));

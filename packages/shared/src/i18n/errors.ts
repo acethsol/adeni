@@ -81,6 +81,10 @@ export const enErrorMessages: MessageTree = {
     invite_expired: "This invite has expired. Ask the business owner to resend it.",
     invite_email_mismatch: "Sign in with the email address this invite was sent to.",
     last_owner: "Cannot remove or demote the last owner of this business.",
+    location_verification_failed: "Location verification failed. You must be at the business location.",
+    presence_required: "On-premises verification is required. Verify your location at the branch.",
+    presence_expired: "Your on-premises verification expired. Verify again at the branch.",
+    presence_location_mismatch: "Your verification is for a different branch. Verify at this location.",
   },
   payment: {
     invalid_amount: "Payment amount must be greater than zero.",
@@ -208,6 +212,10 @@ export const frErrorMessages: MessageTree = {
     invite_expired: "Cette invitation a expiré. Demandez au propriétaire de la renvoyer.",
     invite_email_mismatch: "Connectez-vous avec l'adresse e-mail à laquelle l'invitation a été envoyée.",
     last_owner: "Impossible de retirer ou de rétrograder le dernier propriétaire.",
+    location_verification_failed: "Échec de la vérification de position. Vous devez être sur le site.",
+    presence_required: "Une vérification sur site est requise. Vérifiez votre position à la succursale.",
+    presence_expired: "Votre vérification sur site a expiré. Vérifiez à nouveau à la succursale.",
+    presence_location_mismatch: "Votre vérification concerne une autre succursale. Vérifiez à cet emplacement.",
   },
   payment: {
     invalid_amount: "Le montant du paiement doit être supérieur à zéro.",

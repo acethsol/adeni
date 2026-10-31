@@ -19,6 +19,7 @@ public sealed class DocumentPreviewController(IDocumentPreviewService previews, 
 {
     [HttpGet("{id:guid}/preview")]
     [EnableRateLimiting(RateLimitingExtensions.PublicReadPolicy)]
+    [RequiresOnPremisesPresence]
     public async Task<IActionResult> Preview(Guid id, [FromQuery] Guid? locationId, CancellationToken ct)
     {
         Response.Headers.CacheControl = "private, no-store";

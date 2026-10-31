@@ -52,6 +52,26 @@
       <span class="cds-toggle__track" aria-hidden="true"></span>
       <span class="cds-toggle__label">{{ tr('businessApp.locations.primaryLocation') }}</span>
     </label>
+    @if (canConfigureAttendanceGeofence()) {
+      <label class="cds-toggle">
+        <input type="checkbox" role="switch" [(ngModel)]="draft.attendanceGeofenceEnabled" />
+        <span class="cds-toggle__track" aria-hidden="true"></span>
+        <span class="cds-toggle__label">{{ tr('businessApp.locations.attendanceGeofenceEnabled') }}</span>
+      </label>
+      <p class="field-hint">{{ tr('businessApp.locations.attendanceGeofenceHint') }}</p>
+      @if (draft.attendanceGeofenceEnabled) {
+        <div class="field">
+          <label>{{ tr('businessApp.locations.attendanceGeofenceRadius') }}</label>
+          <input
+            type="number"
+            min="50"
+            max="250"
+            step="10"
+            [(ngModel)]="draft.attendanceGeofenceRadiusMeters"
+          />
+        </div>
+      }
+    }
     <div class="actions">
       <button type="button" class="btn" (click)="cancelForm()">
         <adeni-carbon-icon name="close" [size]="16" />

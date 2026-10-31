@@ -19,11 +19,13 @@ import {
 } from "@adeni/ui";
 import { ADENI_PORTAL_CONFIG } from "../../core/adeni-config";
 import { BusinessApiService } from "../../core/services/business-api.service";
+import { BusinessPresenceVerifyService } from "../../core/services/business-presence-verify.service";
+import { PresenceRequiredPanelComponent } from "../attendance/presence-required-panel.component";
 
 @Component({
   selector: "app-customer-loyalty-panel",
   standalone: true,
-  imports: [AdeniCarbonIconComponent, AdeniPillComponent, AdeniPortalEmptyStateComponent],
+  imports: [AdeniCarbonIconComponent, AdeniPillComponent, AdeniPortalEmptyStateComponent, PresenceRequiredPanelComponent],
   templateUrl: "./customer-loyalty-panel.component.html",
   styleUrl: "./customer-loyalty-panel.component.scss",
 })
@@ -34,9 +36,11 @@ export class CustomerLoyaltyPanelComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
   private readonly feedback = inject(AdeniFeedbackService);
   private readonly portalConfig = inject(ADENI_PORTAL_CONFIG);
+  private readonly presenceVerify = inject(BusinessPresenceVerifyService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
+  readonly presenceBlocked = signal(false);
   readonly account = signal<LoyaltyAccount | null>(null);
   readonly transactions = signal<LoyaltyTransaction[]>([]);
   readonly referral = signal<ReferralCode | null>(null);
@@ -125,6 +129,7 @@ export class CustomerLoyaltyPanelComponent implements OnInit {
   private async load(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
+    this.presenceBlocked.set(false);
     this.referral.set(null);
     try {
       const id = this.customerId();
@@ -154,9 +159,23 @@ export class CustomerLoyaltyPanelComponent implements OnInit {
       this.transactions.set(ledger.items);
       this.referral.set(referral);
     } catch (err) {
-      this.error.set(this.apiErr(err, "businessApp.loyalty.couldNotLoadCustomer"));
+      if (this.presenceVerify.isPresenceGateError(err)) {
+        this.presenceBlocked.set(true);
+        this.error.set(null);
+      } else {
+        this.error.set(this.apiErr(err, "businessApp.loyalty.couldNotLoadCustomer"));
+      }
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  async verifyPresence(): Promise<void> {
+    try {
+      await this.presenceVerify.verifyAtActiveLocation();
+      await this.load();
+    } catch {
+      /* ignore */
     }
   }
 }
